@@ -1,0 +1,47 @@
+# --- Build Directories ---
+build/
+bin/
+lib/
+out/
+dist/
+*.egg-info/
+
+# --- Python ---
+.venv/
+env/
+venv/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# --- IDE / Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.clangd/
+.cache/
+compile_commands.json
+
+# --- CMake ---
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+_deps/
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Project Specific ---
+*.log
+recordings/
