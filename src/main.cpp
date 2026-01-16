@@ -1,41 +1,22 @@
-#include <flecs.h>
+#include "core/simulation_kernel.h"
 #include <spdlog/spdlog.h>
-#include <iostream>
+#include "components/common.h"
 
-// Component
-struct Position {
-    double x, y;
-};
+int main() {
+    SimulationKernel kernel;
+    kernel.reset(42);
 
-struct Velocity {
-    double x, y;
-};
+    spdlog::info("C++ App: Spawning Unit");
+    auto e = kernel.spawn_unit(Side::Blue, UnitType::Aircraft, 0, 0, 0, 10, 5, 0);
 
-void run_simulation() {
-    flecs::world ecs;
-
-    ecs.system<Position, const Velocity>("Move")
-        .each([](Position& p, const Velocity& v) {
-            p.x += v.x;
-            p.y += v.y;
-            spdlog::info("Moved to ({}, {})", p.x, p.y);
-        });
-
-    auto e = ecs.entity("MyEntity")
-        .set<Position>({0, 0})
-        .set<Velocity>({1, 1});
-
-    spdlog::info("Simulation started. Entity created: {}", e.name().c_str());
-
-    // Run for a few ticks
-    for (int i = 0; i < 5; ++i) {
-        ecs.progress();
+    spdlog::info("C++ App: Running Simulation");
+    for (int i = 0; i < 60; ++i) {
+        kernel.step();
+        const auto* t = e.get<Transform>();
+        if (i % 10 == 0) {
+            spdlog::info("Tick {}: Unit at ({:.2f}, {:.2f}, {:.2f})", i, t->x, t->y, t->z);
+        }
     }
-}
-
-int main(int argc, char* argv[]) {
-    // Basic check to run only if it's the standalone app
-    // In a real app we might handle args differently
-    run_simulation();
+    
     return 0;
 }

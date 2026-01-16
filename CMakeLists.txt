@@ -35,7 +35,8 @@ FetchContent_MakeAvailable(nanobind)
 
 # --- Core Library ---
 add_library(cmo_core STATIC
-    src/main.cpp
+    src/core/simulation_kernel.cpp
+    # Add other core source files here if they become cpp
 )
 
 target_include_directories(cmo_core PUBLIC 
@@ -48,6 +49,7 @@ target_link_libraries(cmo_core PUBLIC
 )
 
 # --- Standalone App ---
+# We keep src/main.cpp for local C++ testing, but now it needs to include/use SimulationKernel
 add_executable(cmo_app src/main.cpp)
 target_link_libraries(cmo_app PRIVATE cmo_core)
 
