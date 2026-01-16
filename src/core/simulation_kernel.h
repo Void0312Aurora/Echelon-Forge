@@ -1,6 +1,7 @@
 #pragma once
 
 #include <flecs.h>
+#include <cmath>
 #include <random>
 #include "components/common.h"
 
@@ -25,6 +26,15 @@ public:
 
     double get_time_step() const { return time_step; }
     void set_time_step(double dt) { time_step = dt; }
+
+    // Action Interface: Set command for a unit
+    void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps);
+    
+    // Observation Interface
+    std::vector<double> get_unit_position(uint64_t entity_id); // Returns [x, y, z]
+    
+    // Weapon Interface: Fire missile
+    flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);
 
 private:
     flecs::world ecs;

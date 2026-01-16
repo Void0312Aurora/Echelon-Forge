@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CMO Real-Time Visualization</title>
+    <!-- Use local static file for reliability -->
+    <script src="/static/socket.io.min.js"></script>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: sans-serif;
+            text-align: center;
+        }
+
+        canvas {
+            background-color: #252526;
+            border: 1px solid #444;
+            margin-top: 20px;
+        }
+
+        #status {
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        #debug {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CMO Simulation Stream</h1>
+    <div id="controls">
+        <button id="startBtn"
+            style="padding: 10px 20px; font-size: 16px; background: #28a745; color: white; border: none; cursor: pointer;">Start
+            Simulation</button>
+    </div>
+    <div id="status">Status: Waiting for user to start...</div>
+    <div id="debug">Waiting for data...</div>
+    <canvas id="simCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusDiv = document.getElementById('status');
+        const debugDiv = document.getElementById('debug');
+
+        // Check if SocketIO loaded
+        if (typeof io === 'undefined') {
+            statusDiv.textContent = 'Error: Socket.IO library failed to load.';
+            statusDiv.style.color = 'red';
+            throw new Error("Socket.IO not found");
+        }
+
+        // Camera State
+        let camera = {
+            scale: 0.05,       // Pixels per meter
+            offsetX: 400,      // Screen X of World Origin (0,0)
+            offsetY: 300,      // Screen Y of World Origin (0,0)
+            isDragging: false,
+            lastX: 0,
+            lastY: 0
+        };
+
+        // --- Interaction Handlers ---
+        canvas.addEventListener('mousedown', (e) => {
+            camera.isDragging = true;
+            camera.lastX = e.clientX;
+            camera.lastY = e.clientY;
+        });
+
+        window.addEventListener('mouseup', () => {
+            camera.isDragging = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (camera.isDragging) {
+                const dx = e.clientX - camera.lastX;
+                const dy = e.clientY - camera.lastY;
+                camera.offsetX += dx;
+                camera.offsetY += dy;
+                camera.lastX = e.clientX;
+                camera.lastY = e.clientY;
+            }
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomIntensity = 0.1;
+            const direction = e.deltaY < 0 ? 1 : -1;
+            const factor = (1 + zoomIntensity * direction);
+
+            // Zoom towards mouse pointer
+            // 1. Get mouse pos relative to canvas
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // 2. Calculate world pos under mouse before zoom
+            // ScreenX = OffsetX + WorldX * Scale
+            // WorldX = (ScreenX - OffsetX) / Scale
+            const worldX = (mouseX - camera.offsetX) / camera.scale;
+            const worldY = (camera.offsetY - mouseY) / camera.scale; // Y is inverted
+
+            // 3. Apply Zoom
+            camera.scale *= factor;
+            camera.scale = Math.max(0.001, camera.scale); // Min zoom
+
+            // 4. Adjust offset to keep world pos under mouse
+            // NewOffsetX = MouseX - WorldX * NewScale
+            camera.offsetX = mouseX - worldX * camera.scale;
+            camera.offsetY = mouseY + worldY * camera.scale;
+        });
+
+        const startBtn = document.getElementById('startBtn');
+
+        startBtn.addEventListener('click', () => {
+            console.log("Start button clicked");
+            socket.emit('start_sim');
+            startBtn.disabled = true;
+            startBtn.style.background = '#555';
+            startBtn.textContent = "Simulation Running...";
+        });
+
+        // --- Drawing Loop ---
+        socket.on('connect', () => {
+            statusDiv.textContent = 'Connected. Click Start to begin.';
+            statusDiv.style.color = '#ffff00';
+        });
+
+        socket.on('disconnect', () => {
+            statusDiv.textContent = 'Disconnected';
+            statusDiv.style.color = '#ff0000';
+            startBtn.disabled = false;
+        });
+
+        socket.on('state_update', (data) => {
+            debugDiv.textContent = `Tick: ${data.tick.toFixed(2)} | Units: ${data.units.length} | Scale: 1px=${(1 / camera.scale).toFixed(1)}m`;
+
+            // clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Grid (Dynamic)
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+
+            // Calculate visible world bounds for efficient grid drawing
+            // Simple approach: Draw grid lines based on offset
+            const gridSize = 1000 * camera.scale; // 1km grid lines
+            const startX = camera.offsetX % gridSize;
+            const startY = camera.offsetY % gridSize;
+
+            for (let i = startX - gridSize; i < canvas.width; i += gridSize) { ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); }
+            for (let i = startY - gridSize; i < canvas.height; i += gridSize) { ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); }
+            ctx.stroke();
+
+            // Draw Origin Crosshair
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(camera.offsetX - 10, camera.offsetY); ctx.lineTo(camera.offsetX + 10, camera.offsetY);
+            ctx.moveTo(camera.offsetX, camera.offsetY - 10); ctx.lineTo(camera.offsetX, camera.offsetY + 10);
+            ctx.stroke();
+
+            // Draw Units
+            data.units.forEach(unit => {
+                // Map coordinates: ENU (x=East, y=North) -> Screen
+                const sx = camera.offsetX + unit.x * camera.scale;
+                const sy = camera.offsetY - unit.y * camera.scale; // Invert North to go Up
+
+                ctx.save();
+                ctx.translate(sx, sy);
+
+                // Draw Label
+                ctx.fillStyle = unit.side === 'Blue' ? '#4488ff' : '#ff4444';
+                ctx.font = '12px Arial';
+                ctx.fillText(unit.type === 'Missile' ? 'M' : unit.side, 10, -10);
+
+                // Rotate for Heading
+                // unit.heading is degrees (0=East? No, usually 0=North in Nav, but physics might be 0=East)
+                // In our C++: heading = atan2(vy, vx). 0 is East (+X). 90 is North (+Y).
+                // Canvas 0 is East (+X). So rotation = -heading (because Y is inverted)? 
+                // Let's assume standard Math rotation first.
+                // Physics: 0=East, CCW. Canvas: Y down.
+                // If heading is 90 (North), Physics (0, 1). Canvas needs to point Up.
+                // Canvas rotation is CW.
+                // Let's use negative heading for Canvas logic if Y is inverted.
+
+                const headingRad = -(unit.heading * Math.PI / 180.0);
+                ctx.rotate(headingRad);
+
+                // Draw Shape
+                ctx.beginPath();
+                if (unit.type === 'Missile') {
+                    // Small Triangle (Yellow)
+                    ctx.fillStyle = '#ffff00';
+                    ctx.moveTo(10, 0);
+                    ctx.lineTo(-5, 5);
+                    ctx.lineTo(-5, -5);
+                    ctx.fill();
+                } else {
+                    // Aircraft (Chevron)
+                    ctx.fillStyle = unit.side === 'Blue' ? '#00ccff' : '#ff0000';
+                    ctx.moveTo(15, 0);
+                    ctx.lineTo(-10, 10);
+                    ctx.lineTo(-5, 0);
+                    ctx.lineTo(-10, -10);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            });
+        });
+    </script>
+</body>
+
+</html>
