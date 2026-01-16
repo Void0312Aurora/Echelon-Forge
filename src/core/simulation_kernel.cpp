@@ -21,30 +21,34 @@ SimulationKernel::SimulationKernel() {
     ecs.component<MovementCommand>();
     ecs.component<Missile>();
     ecs.component<FlightModel>(); 
-    ecs.component<Score>(); // Register Score
+    ecs.component<Score>();
 
-    // Register Systems
-    register_control_system(ecs);
-    register_guidance_system(ecs);
-    register_movement_system(ecs);
-    register_damage_system(ecs);
-    register_sensor_system(ecs);
+    // Define Pipeline Phases (explicit ordering)
+    // Phase 1: Control - writes platform Velocity based on commands
+    // Phase 2: Guidance - writes weapon Velocity (missiles)
+    // Phase 3: Movement - integrates Velocity → Transform
+    // Phase 4: Sensor - scans for contacts
+    // Phase 5: Damage - proximity fuse, hit effects
+    
+    // Note: With flecs, systems registered on OnUpdate run in registration order.
+    // For guaranteed ordering, we use .kind() with custom phases or depends_on.
+    // For MVP, registration order is sufficient as long as it's explicit.
+    
+    // Register Systems IN ORDER (dependency chain)
+    register_control_system(ecs);   // Phase 1: Control
+    register_guidance_system(ecs);  // Phase 2: Guidance
+    register_movement_system(ecs);  // Phase 3: Movement (integrate)
+    register_sensor_system(ecs);    // Phase 4: Sensor
+    register_damage_system(ecs);    // Phase 5: Damage/Effects
 
     reset(42); // Default reset
 }
 
 void SimulationKernel::reset(unsigned int seed) {
-    // Determine the cleanup strategy. 
-    // ecs.reset() might be too aggressive (clearing systems/components).
-    // Usage of .delete_with(flecs::Wildcard) cleans up all entities.
-    
-    // However, since we might have singleton entities or system entities, 
-    // we should be careful. 
-    // For now, let's just delete all entities that have Transform (our units).
-    // Or iterate the root scope.
-    
-    // ecs.delete_with(flecs::Wildcard); // UNSAFE: Deletes component definitions
-    ecs.delete_with<Transform>();
+    // Delete all simulation entities (tagged with SimObject)
+    // This is safer than delete_with<Transform> as it won't affect
+    // potential non-simulation entities (e.g., UI, config singletons)
+    ecs.delete_with<SimObject>();
     
     rng.seed(seed);
     

@@ -42,7 +42,7 @@ class EchelonForgeEnv(gym.Env):
         self.agent_id = -1
         self.target_id = -1
         self.sim_time = 0.0
-        self.max_steps = 1000 # 1000 ticks = 100s at 10Hz
+        self.max_steps = 6000 # 6000 ticks @ 60Hz = 100s
         
         # State tracking
         self.current_cmd = {'heading': 0.0, 'speed': 300.0, 'alt': 5000.0}
@@ -68,38 +68,45 @@ class EchelonForgeEnv(gym.Env):
         return observation, info
 
     def step(self, action):
+        # Get dt from kernel for proper scaling
+        dt = self.kernel.get_time_step()
+        
         # 1. Parse Action
         turn_cmd = float(action[0]) # -1 to 1
-        speed_cmd = float(action[1]) # -1 to 1
+        speed_cmd = float(action[1]) # -1 to 1  
         climb_cmd = float(action[2]) # -1 to 1
         fire_cmd = float(action[3])
         
-        # Update Commands (Integration)
-        # Heading: Turn Rate ~20 deg/s * 0.1s = 2 deg/tick
-        self.current_cmd['heading'] += turn_cmd * 5.0 
+        # Action rates (scaled by dt for tick-frequency independence)
+        MAX_TURN_RATE = 20.0   # deg/s
+        MAX_ACCEL = 10.0       # m/s²
+        MAX_CLIMB_CMD = 50.0   # m/s command change rate
+        
+        # Update Commands (Integration with dt scaling)
+        self.current_cmd['heading'] += turn_cmd * MAX_TURN_RATE * dt
         self.current_cmd['heading'] = (self.current_cmd['heading'] + 360) % 360
         
-        # Speed: +/- 10 m/s per tick
-        self.current_cmd['speed'] = np.clip(self.current_cmd['speed'] + speed_cmd * 5.0, 100.0, 600.0)
+        self.current_cmd['speed'] = np.clip(
+            self.current_cmd['speed'] + speed_cmd * MAX_ACCEL * dt, 
+            100.0, 600.0)
         
-        # Alt: +/- 20 m per tick
-        self.current_cmd['alt'] = np.clip(self.current_cmd['alt'] + climb_cmd * 30.0, 100.0, 15000.0)
+        self.current_cmd['alt'] = np.clip(
+            self.current_cmd['alt'] + climb_cmd * MAX_CLIMB_CMD * dt, 
+            100.0, 15000.0)
         
-        # Apple Command
+        # Apply Command
         self.kernel.set_command(self.agent_id, 
                                self.current_cmd['heading'], 
                                self.current_cmd['speed'], 
                                self.current_cmd['alt'])
         
-        # Fire Logic
+        # Fire Logic  
         if fire_cmd > 0.5:
-            # Simple debounce or cooldown logic needed? 
-            # For now, just try to fire every tick if trigger held (Engine handles cooldown if implemented, or just spams)
             self.kernel.fire_missile(self.agent_id, self.target_id)
 
         # 2. Step Simulation
         self.kernel.step()
-        self.sim_time += self.kernel.get_time_step()
+        self.sim_time += dt
         
         # 3. Compute Reward & Done
         obs = self._get_obs()

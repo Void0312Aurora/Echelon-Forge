@@ -55,18 +55,23 @@ NB_MODULE(ef_py, m) {
              return std::make_tuple(p[0], p[1], p[2]);
         }, "Get unit position (x,y,z)")
         
-        // Helper to get unit heading (degrees)
+        // Helper to get unit heading (degrees, NAV convention: 0=North, CW)
         .def("get_unit_heading", [](SimulationKernel& self, uint64_t entity_id) {
              flecs::world& world = self.get_world();
              auto e = world.entity(entity_id);
              if(!e.is_valid()) return 0.0;
              const Velocity* v = e.get<Velocity>();
              if(!v) return 0.0;
-             double rad = std::atan2(v->vy, v->vx);
-             double deg = rad * 180.0 / M_PI;
-             if(deg < 0) deg += 360.0;
-             return deg;
-        }, "Get unit heading in degrees")
+             // Math angle: atan2(vy, vx) where 0=East, CCW positive
+             double math_rad = std::atan2(v->vy, v->vx);
+             double math_deg = math_rad * 180.0 / M_PI;
+             // NAV angle: 0=North, CW positive => NAV = 90 - Math
+             double nav_deg = 90.0 - math_deg;
+             // Normalize to [0, 360)
+             while (nav_deg < 0) nav_deg += 360.0;
+             while (nav_deg >= 360.0) nav_deg -= 360.0;
+             return nav_deg;
+        }, "Get unit heading in degrees (NAV: 0=North, CW)")
         
         // Helper to get unit type
         .def("get_unit_type", [](SimulationKernel& self, uint64_t entity_id) {
