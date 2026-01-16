@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "name": "two_fighters",
+  "seed": 7,
+  "unit_definitions": "content/units/default_units.json",
+  "duration_seconds": 20.0,
+  "tick_hz": 60,
+  "entities": [
+    {
+      "id": "blue",
+      "side": "Blue",
+      "type": "Aircraft",
+      "position": [0.0, 0.0, 5000.0],
+      "velocity": [250.0, 0.0, 0.0]
+    },
+    {
+      "id": "red",
+      "side": "Red",
+      "type": "Aircraft",
+      "position": [10000.0, 0.0, 5000.0],
+      "velocity": [-250.0, 0.0, 0.0]
+    }
+  ],
+  "behaviors": [
+    {"entity": "blue", "type": "pursuit", "target": "red", "speed": 350.0},
+    {"entity": "red", "type": "pursuit", "target": "blue", "speed": 300.0}
+  ],
+  "output": {
+    "run_dir": "logs",
+    "log_path": "log.jsonl",
+    "metrics_path": "metrics.json",
+    "gif_path": "playback.gif",
+    "gif_fps": 20,
+    "gif_max_frames": 600
+  },
+  "expectations": {
+    "require_detection": true
+  }
+}

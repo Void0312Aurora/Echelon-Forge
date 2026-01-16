@@ -5,14 +5,23 @@
 #include "systems/damage_system.h"
 #include "systems/sensor_system.h"
 #include "components/action.h"
+#include "core/control_model.h"
+#include "core/effects_model.h"
+#include "core/guidance_model.h"
+#include "core/sensor_model.h"
+#include "core/unit_factory.h"
+#include "models/default_unit_factory.h"
 #include <spdlog/spdlog.h>
 
 #include "components/performance.h"
 #include "components/scoring.h" // Added scoring
 
-// ... (previous includes)
-
-SimulationKernel::SimulationKernel() {
+SimulationKernel::SimulationKernel()
+    : unit_factory_(std::make_unique<DefaultUnitFactory>()),
+      effects_model_(make_default_effects_model()),
+      sensor_model_(make_default_sensor_model()),
+      control_model_(make_default_control_model()),
+      guidance_model_(make_default_guidance_model()) {
     // Initialize common components
     ecs.component<Transform>();
     ecs.component<Velocity>();
@@ -22,6 +31,10 @@ SimulationKernel::SimulationKernel() {
     ecs.component<Missile>();
     ecs.component<FlightModel>(); 
     ecs.component<Score>();
+    ecs.component<EffectsModelRef>();
+    ecs.component<SensorModelRef>();
+    ecs.component<ControlModelRef>();
+    ecs.component<GuidanceModelRef>();
 
     // Define Pipeline Phases (explicit ordering)
     // Phase 1: Control - writes platform Velocity based on commands
@@ -41,7 +54,66 @@ SimulationKernel::SimulationKernel() {
     register_sensor_system(ecs);    // Phase 4: Sensor
     register_damage_system(ecs);    // Phase 5: Damage/Effects
 
+    ecs.set<EffectsModelRef>({effects_model_.get()});
+    ecs.set<SensorModelRef>({sensor_model_.get()});
+    ecs.set<ControlModelRef>({control_model_.get()});
+    ecs.set<GuidanceModelRef>({guidance_model_.get()});
+
     reset(42); // Default reset
+}
+
+SimulationKernel::~SimulationKernel() = default;
+
+void SimulationKernel::set_unit_factory(std::unique_ptr<IUnitFactory> factory) {
+    if (factory) {
+        unit_factory_ = std::move(factory);
+    } else {
+        spdlog::warn("Attempted to set a null unit factory; keeping current factory.");
+    }
+}
+
+void SimulationKernel::set_effects_model(std::unique_ptr<IEffectsModel> model) {
+    if (model) {
+        effects_model_ = std::move(model);
+        ecs.set<EffectsModelRef>({effects_model_.get()});
+    } else {
+        spdlog::warn("Attempted to set a null effects model; keeping current model.");
+    }
+}
+
+void SimulationKernel::set_sensor_model(std::unique_ptr<ISensorModel> model) {
+    if (model) {
+        sensor_model_ = std::move(model);
+        ecs.set<SensorModelRef>({sensor_model_.get()});
+    } else {
+        spdlog::warn("Attempted to set a null sensor model; keeping current model.");
+    }
+}
+
+void SimulationKernel::set_control_model(std::unique_ptr<IControlModel> model) {
+    if (model) {
+        control_model_ = std::move(model);
+        ecs.set<ControlModelRef>({control_model_.get()});
+    } else {
+        spdlog::warn("Attempted to set a null control model; keeping current model.");
+    }
+}
+
+void SimulationKernel::set_guidance_model(std::unique_ptr<IGuidanceModel> model) {
+    if (model) {
+        guidance_model_ = std::move(model);
+        ecs.set<GuidanceModelRef>({guidance_model_.get()});
+    } else {
+        spdlog::warn("Attempted to set a null guidance model; keeping current model.");
+    }
+}
+
+bool SimulationKernel::load_unit_definitions(const std::string& path, std::string* error) {
+    if (!unit_factory_) {
+        if (error) *error = "Unit factory not set.";
+        return false;
+    }
+    return unit_factory_->load_definitions(path, error);
 }
 
 void SimulationKernel::reset(unsigned int seed) {
@@ -65,46 +137,22 @@ void SimulationKernel::step() {
 flecs::entity SimulationKernel::spawn_unit(Side side, UnitType type, 
                                            double x, double y, double z, 
                                            double vx, double vy, double vz) {
-    auto e = ecs.entity()
-        .set<Transform>({x, y, z, 0, 0, 0})
-        .set<Velocity>({vx, vy, vz})
-        .set<Alliance>({side})
-        .set<KeyEntity>({type})
-        .set<Health>({100.0, 100.0}) // Default 100 HP
-        .set<Sensor>({30000.0, 120.0, 1.0, -1.0}) // Default 30km, 120deg
-        .set<ContactList>({})
-        .add<SimObject>(); // Tag for cleanup
-
-    // Add Flight Model based on Type
-    if (type == UnitType::Aircraft) {
-        // Generic Fighter Performance
-        e.set<FlightModel>({
-            600.0,  // max_speed (m/s) ~ Mach 1.8
-            50.0,   // min_speed (m/s)
-            20.0,   // max_turn_rate (deg/s)
-            50.0,   // max_accel (m/s^2)
-            300.0,  // max_climb_rate (m/s)
-            9.0     // max_g
-        });
-        // Init command to maintain current state
-        double heading = std::atan2(vy, vx) * 180.0 / M_PI;
-        double speed = std::sqrt(vx*vx + vy*vy + vz*vz);
-        e.set<MovementCommand>({heading, speed, z, true});
-    } else if (type == UnitType::Missile) {
-        // Missile Performance
-        e.set<FlightModel>({
-            1200.0, // max_speed
-            100.0,  // min_speed
-            40.0,   // max_turn_rate
-            100.0,  // max_accel
-            600.0,  // max_climb_rate
-            30.0    // max_g
-        });
-        double heading = std::atan2(vy, vx) * 180.0 / M_PI;
-        double speed = std::sqrt(vx*vx + vy*vy + vz*vz);
-        e.set<MovementCommand>({heading, speed, z, true});
+    if (!unit_factory_) {
+        spdlog::error("Unit factory not set; cannot spawn unit.");
+        return flecs::entity::null();
     }
-    
+
+    const UnitDefinition* def = unit_factory_->get_definition(type);
+    if (!def) {
+        spdlog::warn("No UnitDefinition found for type {}", static_cast<int>(type));
+        return flecs::entity::null();
+    }
+
+    SpawnParams params{side, x, y, z, vx, vy, vz};
+    auto e = unit_factory_->spawn(ecs, *def, params);
+    if (e.is_valid()) {
+        e.add<SimObject>(); // Tag for cleanup
+    }
     return e;
 }
 
@@ -147,7 +195,7 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     double launch_y = p->y + 20.0 * std::sin(heading);
     
     auto m = ecs.entity()
-        .set<Transform>({launch_x, launch_y, p->z, 0, 0, 0})
+        .set<Transform>({launch_x, launch_y, p->z, p->heading, 0, 0})
         .set<Velocity>({v->vx, v->vy, v->vz}) // Inherit platform velocity
         .set<Alliance>({side->side})
         .set<KeyEntity>({UnitType::Missile})
@@ -204,13 +252,7 @@ std::vector<UnitData> SimulationKernel::get_all_units() {
             data.x = p->x;
             data.y = p->y;
             data.z = p->z;
-            // Convert Math angle (0=East, CCW) to NAV angle (0=North, CW)
-            double math_deg = std::atan2(v->vy, v->vx) * 180.0 / M_PI;
-            double nav_deg = 90.0 - math_deg;
-            // Normalize to [0, 360)
-            while (nav_deg < 0) nav_deg += 360.0;
-            while (nav_deg >= 360.0) nav_deg -= 360.0;
-            data.heading = nav_deg;
+            data.heading = p->heading;
             
             units.push_back(data);
         }
@@ -259,13 +301,8 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
             track.range = det.range;
             track.time_since_update = obs.sim_time - det.timestamp;
             
-            // Calculate Azimuth/Elev Relative to Nose
-            // det.bearing is absolute ENU bearing
-            // self heading is ENU heading
-            double az = det.bearing - (p ? p->heading : 0.0);
-            while (az > 180.0) az -= 360.0;
-            while (az < -180.0) az += 360.0;
-            track.azimuth = az;
+            // Sensor already provides relative azimuth in NAV degrees.
+            track.azimuth = det.bearing;
             
             // Elevation: Need Target Z. Detection struct currently doesn't store Target Z (only 2D bearing).
             // Sensor System (Phase 1/2) only calculated 2D bearing range.

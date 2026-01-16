@@ -57,6 +57,6 @@ class RedScriptedAgent:
         target_heading = target_heading % 360.0
         
         # Apply Command
-        self.kernel.set_command(self.unit_id, target_heading, target_speed)
+        self.kernel.set_command(self.unit_id, target_heading, target_speed, my_pos[2])
         
         return {"evading": self.evading, "dist": dist}

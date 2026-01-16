@@ -5,6 +5,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+if (CMAKE_RANLIB)
+    # Ensure static archives get a symbol index on all toolchains.
+    set(CMAKE_C_ARCHIVE_FINISH "<CMAKE_RANLIB> <TARGET>")
+    set(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> <TARGET>")
+endif()
+
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 include(FetchContent)
@@ -33,9 +39,22 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nanobind)
 
+# 4. nlohmann_json (Config Loading)
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG        v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
 # --- Core Library ---
 add_library(ef_core STATIC
     src/core/simulation_kernel.cpp
+    src/models/default_effects_model.cpp
+    src/models/default_sensor_model.cpp
+    src/content/unit_definition_loader.cpp
+    src/models/default_control_model.cpp
+    src/models/default_guidance_model.cpp
     # Add other core source files here if they become cpp
 )
 
@@ -46,6 +65,7 @@ target_include_directories(ef_core PUBLIC
 target_link_libraries(ef_core PUBLIC
     flecs::flecs
     spdlog::spdlog
+    nlohmann_json::nlohmann_json
 )
 
 # --- Standalone App ---
@@ -54,5 +74,5 @@ add_executable(ef_app src/main.cpp)
 target_link_libraries(ef_app PRIVATE ef_core)
 
 # --- Python Module ---
-nanobind_add_module(ef_py src/bindings/python_module.cpp)
+nanobind_add_module(ef_py src/interfaces/python/python_module.cpp)
 target_link_libraries(ef_py PRIVATE ef_core)

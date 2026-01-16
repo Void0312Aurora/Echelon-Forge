@@ -12,7 +12,7 @@ struct Sensor {
 struct Detection { 
     uint64_t target_id; 
     double range;           // Meters
-    double bearing;         // Degrees (relative to nose)
+    double bearing;         // Degrees (relative azimuth, NAV: -180..180)
     double timestamp;       // Simulation time
 };
 

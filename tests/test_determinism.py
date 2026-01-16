@@ -4,21 +4,21 @@ import os
 # Ensure we can import the module from build/
 sys.path.append(os.path.join(os.getcwd(), "build"))
 
-import cmo_py
+import ef_py
 import math
 
 def test_determinism():
     print("Test 1: Determinism Check")
-    kernel1 = cmo_py.SimulationKernel()
-    kernel2 = cmo_py.SimulationKernel()
+    kernel1 = ef_py.SimulationKernel()
+    kernel2 = ef_py.SimulationKernel()
 
     seed = 12345
     kernel1.reset(seed)
     kernel2.reset(seed)
 
     # Spawn identical units
-    e1 = kernel1.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 0, 0, 0, 10, 5, 1)
-    e2 = kernel2.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 0, 0, 0, 10, 5, 1)
+    e1 = kernel1.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 0, 0, 0, 10, 5, 1)
+    e2 = kernel2.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 0, 0, 0, 10, 5, 1)
 
     steps = 1000
     mismatch = False
@@ -43,11 +43,11 @@ def test_determinism():
 
 def test_physics():
     print("\nTest 2: Basic Physics Check")
-    kernel = cmo_py.SimulationKernel()
+    kernel = ef_py.SimulationKernel()
     kernel.reset(42)
 
     # V = (10, 0, 0)
-    e = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Ship, 0, 0, 0, 10, 0, 0)
+    e = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Ship, 0, 0, 0, 10, 0, 0)
     
     # Run 60 ticks (1 second at 60Hz)
     for _ in range(60):

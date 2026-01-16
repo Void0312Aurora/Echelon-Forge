@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScenarioConfig",
+  "type": "object",
+  "required": ["name", "seed", "unit_definitions", "duration_seconds", "tick_hz", "entities"],
+  "properties": {
+    "schema_version": {"type": "integer"},
+    "name": {"type": "string"},
+    "seed": {"type": "integer"},
+    "unit_definitions": {"type": "string"},
+    "duration_seconds": {"type": "number"},
+    "tick_hz": {"type": "number"},
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "side", "type", "position", "velocity"],
+        "properties": {
+          "id": {"type": "string"},
+          "side": {"type": "string", "enum": ["Blue", "Red", "Neutral", "Unknown"]},
+          "type": {"type": "string", "enum": ["Aircraft", "Ship", "Missile", "Facility"]},
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {"type": "number"}
+          },
+          "velocity": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {"type": "number"}
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "behaviors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entity", "type"],
+        "properties": {
+          "entity": {"type": "string"},
+          "type": {"type": "string"},
+          "target": {"type": "string"},
+          "speed": {"type": "number"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "run_dir": {"type": "string"},
+        "log_path": {"type": "string"},
+        "metrics_path": {"type": "string"},
+        "gif_path": {"type": "string"},
+        "gif_fps": {"type": "number"},
+        "gif_max_frames": {"type": "integer"}
+      },
+      "additionalProperties": false
+    },
+    "expectations": {
+      "type": "object",
+      "properties": {
+        "require_detection": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,10 @@
+{
+  "scenarios": [
+    {
+      "id": "two_fighters",
+      "path": "content/scenarios/two_fighters.json",
+      "description": "Two aircraft in mutual pursuit with detection requirement",
+      "default": true
+    }
+  ]
+}

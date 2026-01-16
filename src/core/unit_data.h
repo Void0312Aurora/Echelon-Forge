@@ -8,5 +8,5 @@ struct UnitData {
     int side;       // 0=Blue, 1=Red
     int type;       // 0=Aircraft, 1=Missile, etc.
     double x, y, z;
-    double heading; // Degrees
+    double heading; // Degrees (NAV: 0=North, CW)
 };

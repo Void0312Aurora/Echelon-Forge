@@ -1,5 +1,11 @@
-#include "components/health.h"
-#include "components/scoring.h" // Added score
+#pragma once
+
+#include <flecs.h>
+#include <spdlog/spdlog.h>
+
+#include "components/common.h"
+#include "components/weapon.h"
+#include "core/effects_model.h"
 #include <spdlog/spdlog.h>
 
 inline void register_damage_system(flecs::world& ecs) {
@@ -9,6 +15,7 @@ inline void register_damage_system(flecs::world& ecs) {
             while (it.next()) {
                 auto p = it.field<const Transform>(0);
                 auto m = it.field<Missile>(1);
+                const EffectsModelRef* effects_ref = it.world().get<EffectsModelRef>();
                 
                 for (auto i : it) {
                     if (!m[i].active) continue;
@@ -30,45 +37,17 @@ inline void register_damage_system(flecs::world& ecs) {
                     double fuse_sq = m[i].fuse_distance * m[i].fuse_distance;
                     
                     if (dist_sq < fuse_sq) {
-                        // HIT Logic
-                        Health* hp = target_entity.get_mut<Health>();
-                        bool destroyed = false;
-                        
-                        // Scoring Logic: Find Attacker
-                        Score* score = nullptr;
-                        auto attacker = it.world().entity(m[i].attacker_id);
-                        if (attacker.is_valid()) {
-                            score = attacker.get_mut<Score>();
+                        if (!effects_ref || !effects_ref->model) {
+                            spdlog::warn("Effects model not configured; skipping hit resolution.");
+                            it.entity(i).destruct();
+                            continue;
                         }
 
-                        if (hp) {
-                            hp->current_hp -= m[i].damage;
-                            
-                            if (score) {
-                                score->total_reward += m[i].damage; // Data Damage = Score
-                                score->hits_landed++;
-                            }
-
-                            spdlog::info("HIT! Missile {} hit Target {} for {:.1f} dmg. Rem HP: {:.1f}", 
-                                it.entity(i).id(), m[i].target_id, m[i].damage, hp->current_hp);
-                            
-                            if (hp->current_hp <= 0) {
-                                target_entity.destruct();
-                                destroyed = true;
-                                spdlog::info("SPLASH! Target {} Destroyed.", m[i].target_id);
-                            }
-                        } else {
-                            target_entity.destruct();
-                            destroyed = true;
-                            spdlog::info("SPLASH! Target {} Destroyed (No HP).", m[i].target_id);
+                        EffectsResult result = effects_ref->model->on_proximity_hit(
+                            it.world(), it.entity(i), m[i], target_entity);
+                        if (result.destroy_missile) {
+                            it.entity(i).destruct();
                         }
-                        
-                        if (destroyed && score) {
-                            score->total_reward += 1000.0; // Kill Bonus
-                            score->kills_confirmed++;
-                        }
-
-                        it.entity(i).destruct();
                     }
                 }
             }

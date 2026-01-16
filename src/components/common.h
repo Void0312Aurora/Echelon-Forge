@@ -7,7 +7,7 @@
 struct Transform {
     // Local ENU (East-North-Up) coordinates relative to scenario origin
     double x, y, z; 
-    // Euler angles in radians (Heading, Pitch, Roll)
+    // Euler angles in degrees (Heading in NAV: 0=North, Clockwise)
     double heading, pitch, roll;
 };
 
