@@ -204,8 +204,13 @@ std::vector<UnitData> SimulationKernel::get_all_units() {
             data.x = p->x;
             data.y = p->y;
             data.z = p->z;
-            data.heading = std::atan2(v->vy, v->vx) * 180.0 / M_PI;
-            if (data.heading < 0) data.heading += 360.0;
+            // Convert Math angle (0=East, CCW) to NAV angle (0=North, CW)
+            double math_deg = std::atan2(v->vy, v->vx) * 180.0 / M_PI;
+            double nav_deg = 90.0 - math_deg;
+            // Normalize to [0, 360)
+            while (nav_deg < 0) nav_deg += 360.0;
+            while (nav_deg >= 360.0) nav_deg -= 360.0;
+            data.heading = nav_deg;
             
             units.push_back(data);
         }

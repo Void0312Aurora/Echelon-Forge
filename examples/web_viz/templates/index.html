@@ -192,8 +192,9 @@
                     unit.sensors.forEach(sensor => {
                         ctx.save();
                         ctx.translate(sx, sy);
-                        // Rotate to match heading
-                        const headingRad = -(unit.heading * Math.PI / 180.0);
+                        // Rotate to match NAV heading (0=North, CW)
+                        // With Y-axis inverted, canvas_angle = (heading - 90) degrees
+                        const headingRad = (unit.heading - 90) * Math.PI / 180.0;
                         ctx.rotate(headingRad);
 
                         ctx.beginPath();
@@ -262,8 +263,8 @@
                 // Draw ID for debug
                 // ctx.fillText(unit.id, 10, -25);
 
-                // Rotate for Heading
-                const headingRad = -(unit.heading * Math.PI / 180.0);
+                // Rotate for NAV Heading (0=North, CW) with Y-axis inverted
+                const headingRad = (unit.heading - 90) * Math.PI / 180.0;
                 ctx.rotate(headingRad);
 
                 // Draw Shape
