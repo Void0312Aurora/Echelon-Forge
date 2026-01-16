@@ -52,6 +52,12 @@ NB_MODULE(ef_py, m) {
         // Action Interface
         .def("set_command", &SimulationKernel::set_unit_command, "Set movement command for a unit",
              nb::arg("entity_id"), nb::arg("heading_deg"), nb::arg("speed_mps"), nb::arg("altitude_m"))
+        .def("set_action", &SimulationKernel::set_unit_action, "Set normalized action for a unit",
+             nb::arg("entity_id"),
+             nb::arg("turn_rate_cmd"),
+             nb::arg("accel_cmd"),
+             nb::arg("climb_rate_cmd"),
+             nb::arg("fire_cmd"))
              
         .def("fire_missile", [](SimulationKernel& self, uint64_t attacker_id, uint64_t target_id) {
              auto e = self.fire_missile(attacker_id, target_id);

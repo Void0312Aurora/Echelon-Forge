@@ -6,13 +6,13 @@
 #include "core/guidance_model.h"
 
 inline void register_guidance_system(flecs::world& ecs) {
-    ecs.system<Velocity, const Transform, const Missile>("MissileGuidance")
+    ecs.system<Velocity, const Transform, Missile>("MissileGuidance")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter& it) {
             while (it.next()) {
                 auto v = it.field<Velocity>(0);
                 auto p = it.field<const Transform>(1);
-                auto missile_comp = it.field<const Missile>(2);
+                auto missile_comp = it.field<Missile>(2);
                 const GuidanceModelRef* model_ref = it.world().get<GuidanceModelRef>();
                 
                 double dt = it.delta_time();

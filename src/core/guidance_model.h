@@ -15,7 +15,7 @@ public:
                         flecs::entity missile_entity,
                         Velocity& velocity,
                         const Transform& transform,
-                        const Missile& missile,
+                        Missile& missile,
                         double dt) = 0;
 };
 

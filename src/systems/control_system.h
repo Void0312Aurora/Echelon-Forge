@@ -8,13 +8,13 @@
 #include "core/control_model.h"
 
 inline void register_control_system(flecs::world& ecs) {
-    ecs.system<Velocity, Transform, const MovementCommand, const FlightModel>("FlightControl")
+    ecs.system<Velocity, Transform, const LaggedCommand, const FlightModel>("FlightControl")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter& it) {
             while (it.next()) {
                 auto v = it.field<Velocity>(0);
                 auto p = it.field<Transform>(1);
-                auto cmd = it.field<const MovementCommand>(2);
+                auto cmd = it.field<const LaggedCommand>(2);
                 auto fm = it.field<const FlightModel>(3);
                 const ControlModelRef* model_ref = it.world().get<ControlModelRef>();
                 double dt = it.delta_time();
@@ -25,11 +25,17 @@ inline void register_control_system(flecs::world& ecs) {
                         continue;
                     }
 
+                    MovementCommand lagged_cmd{
+                        cmd[i].target_heading,
+                        cmd[i].target_speed,
+                        cmd[i].target_altitude,
+                        cmd[i].active
+                    };
                     model_ref->model->update(it.world(),
                                              it.entity(i),
                                              v[i],
                                              p[i],
-                                             cmd[i],
+                                             lagged_cmd,
                                              fm[i],
                                              dt);
                 }

@@ -8,6 +8,7 @@
 #include "components/performance.h"
 #include "components/scoring.h"
 #include "components/sensor.h"
+#include "components/weapon.h"
 
 struct UnitDefinition {
     UnitType type;
@@ -22,6 +23,9 @@ struct UnitDefinition {
 
     bool has_score;
     Score score;
+
+    bool has_ammo;
+    Ammo ammo;
 };
 
 struct UnitTypeHash {

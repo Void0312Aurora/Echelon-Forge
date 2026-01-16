@@ -14,7 +14,9 @@
     },
     "require_detection": {"type": "boolean"},
     "detected": {"type": "boolean"},
-    "steps": {"type": "integer"}
+    "steps": {"type": "integer"},
+    "termination_reason": {"type": ["string", "null"]},
+    "termination_time": {"type": ["number", "null"]}
   },
   "additionalProperties": false
 }

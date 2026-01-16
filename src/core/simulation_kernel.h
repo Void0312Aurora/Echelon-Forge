@@ -41,6 +41,11 @@ public:
 
     // Action Interface: Set command for a unit
     void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m);
+    void set_unit_action(uint64_t entity_id,
+                         double turn_rate_cmd,
+                         double accel_cmd,
+                         double climb_rate_cmd,
+                         double fire_cmd);
     
     // Observation Interface
     std::vector<double> get_unit_position(uint64_t entity_id); // Returns [x, y, z]

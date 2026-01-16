@@ -36,11 +36,13 @@ public:
         aircraft.name = "Aircraft";
         aircraft.health = {100.0, 100.0};
         aircraft.has_sensor = true;
-        aircraft.sensor = {30000.0, 120.0, 1.0, -1.0};
+        aircraft.sensor = {30000.0, 120.0, 1.0, -1.0, 0.9, 2.0, 1.0, 25.0, 2.0, 0.3};
         aircraft.has_flight_model = true;
         aircraft.flight_model = {600.0, 50.0, 20.0, 50.0, 300.0, 9.0};
         aircraft.has_score = true;
         aircraft.score = {0.0, 0, 0, 0};
+        aircraft.has_ammo = true;
+        aircraft.ammo = {4, 4};
         definitions_.emplace(aircraft.type, aircraft);
 
         UnitDefinition missile{};
@@ -48,11 +50,13 @@ public:
         missile.name = "Missile";
         missile.health = {100.0, 100.0};
         missile.has_sensor = true;
-        missile.sensor = {30000.0, 120.0, 1.0, -1.0};
+        missile.sensor = {30000.0, 120.0, 0.2, -1.0, 0.95, 2.0, 0.5, 15.0, 0.5, 0.2};
         missile.has_flight_model = true;
         missile.flight_model = {1200.0, 100.0, 40.0, 100.0, 600.0, 30.0};
         missile.has_score = true;
         missile.score = {0.0, 0, 0, 0};
+        missile.has_ammo = false;
+        missile.ammo = {0, 0};
         definitions_.emplace(missile.type, missile);
 
         UnitDefinition ship{};
@@ -60,10 +64,12 @@ public:
         ship.name = "Ship";
         ship.health = {100.0, 100.0};
         ship.has_sensor = true;
-        ship.sensor = {30000.0, 120.0, 1.0, -1.0};
+        ship.sensor = {30000.0, 120.0, 2.0, -1.0, 0.9, 2.0, 2.0, 50.0, 3.0, 0.2};
         ship.has_flight_model = false;
         ship.has_score = true;
         ship.score = {0.0, 0, 0, 0};
+        ship.has_ammo = false;
+        ship.ammo = {0, 0};
         definitions_.emplace(ship.type, ship);
 
         UnitDefinition facility{};
@@ -71,10 +77,12 @@ public:
         facility.name = "Facility";
         facility.health = {100.0, 100.0};
         facility.has_sensor = true;
-        facility.sensor = {30000.0, 120.0, 1.0, -1.0};
+        facility.sensor = {30000.0, 120.0, 2.0, -1.0, 0.9, 2.0, 2.0, 50.0, 3.0, 0.2};
         facility.has_flight_model = false;
         facility.has_score = true;
         facility.score = {0.0, 0, 0, 0};
+        facility.has_ammo = false;
+        facility.ammo = {0, 0};
         definitions_.emplace(facility.type, facility);
 
         if (!config_path.empty()) {
@@ -115,12 +123,26 @@ public:
         if (def.has_score) {
             e.set<Score>(def.score);
         }
+        if (def.has_ammo) {
+            e.set<Ammo>(def.ammo);
+        }
         if (def.has_flight_model) {
             e.set<FlightModel>(def.flight_model);
             double speed = std::sqrt(params.vx * params.vx +
                                      params.vy * params.vy +
                                      params.vz * params.vz);
             e.set<MovementCommand>({heading_init, speed, params.z, true});
+            e.set<LaggedCommand>({heading_init, speed, params.z, true});
+            e.set<ActionSpaceConfig>({
+                def.flight_model.max_turn_rate,
+                def.flight_model.max_accel,
+                def.flight_model.max_climb_rate,
+                def.flight_model.min_speed,
+                def.flight_model.max_speed,
+                0.0,
+                20000.0
+            });
+            e.set<CommandLag>({0.5, 1.0, 1.5});
         }
 
         return e;

@@ -62,13 +62,19 @@ bool load_unit_definitions_json(const std::string& path,
         }
 
         def.has_sensor = true;
-        def.sensor = {30000.0, 120.0, 1.0, -1.0};
+        def.sensor = {30000.0, 120.0, 1.0, -1.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0};
         if (entry.contains("sensor")) {
             const auto& s = entry["sensor"];
             def.sensor.max_range = s.value("max_range", def.sensor.max_range);
             def.sensor.fov_deg = s.value("fov_deg", def.sensor.fov_deg);
             def.sensor.scan_period = s.value("scan_period", def.sensor.scan_period);
             def.sensor.last_scan_time = s.value("last_scan_time", def.sensor.last_scan_time);
+            def.sensor.detection_prob = s.value("detection_prob", def.sensor.detection_prob);
+            def.sensor.range_power = s.value("range_power", def.sensor.range_power);
+            def.sensor.bearing_noise_std = s.value("bearing_noise_std", def.sensor.bearing_noise_std);
+            def.sensor.range_noise_std = s.value("range_noise_std", def.sensor.range_noise_std);
+            def.sensor.track_memory_s = s.value("track_memory_s", def.sensor.track_memory_s);
+            def.sensor.aspect_influence = s.value("aspect_influence", def.sensor.aspect_influence);
         } else if (entry.contains("has_sensor")) {
             def.has_sensor = entry.value("has_sensor", def.has_sensor);
         }
@@ -94,6 +100,15 @@ bool load_unit_definitions_json(const std::string& path,
             def.score.missiles_fired = sc.value("missiles_fired", def.score.missiles_fired);
             def.score.hits_landed = sc.value("hits_landed", def.score.hits_landed);
             def.score.kills_confirmed = sc.value("kills_confirmed", def.score.kills_confirmed);
+        }
+
+        def.has_ammo = entry.value("has_ammo", false);
+        def.ammo = {0, 0};
+        if (entry.contains("ammo")) {
+            def.has_ammo = true;
+            const auto& ammo = entry["ammo"];
+            def.ammo.missiles_remaining = ammo.value("missiles_remaining", def.ammo.missiles_remaining);
+            def.ammo.max_missiles = ammo.value("max_missiles", def.ammo.max_missiles);
         }
 
         out_definitions[def.type] = def;

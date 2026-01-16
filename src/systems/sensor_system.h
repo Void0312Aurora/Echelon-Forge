@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <unordered_set>
 #include "components/common.h"
 #include "components/sensor.h"
 #include "components/tags.h"
@@ -26,22 +27,51 @@ void register_sensor_system(flecs::world& ecs) {
                 for (auto i : it) {
                     double time_since_last = current_time - s[i].last_scan_time;
                     if (time_since_last < s[i].scan_period) {
+                        if (s[i].track_memory_s > 0.0 && !c[i].contacts.empty()) {
+                            auto& contacts = c[i].contacts;
+                            contacts.erase(
+                                std::remove_if(contacts.begin(),
+                                               contacts.end(),
+                                               [&](const Detection& det) {
+                                                   return (current_time - det.timestamp) >
+                                                          s[i].track_memory_s;
+                                               }),
+                                contacts.end());
+                        }
                         continue; 
                     }
                     s[i].last_scan_time = current_time;
-                    c[i].contacts.clear();
+                    std::vector<Detection> previous_contacts = c[i].contacts;
 
                     if (!model_ref || !model_ref->model) {
                         spdlog::warn("Sensor model not configured; skipping scan.");
                         continue;
                     }
 
+                    ContactList fresh_contacts;
                     model_ref->model->scan(it.world(),
                                            it.entity(i),
                                            t[i],
                                            s[i],
-                                           c[i],
+                                           fresh_contacts,
                                            current_time);
+
+                    std::unordered_set<uint64_t> seen;
+                    std::vector<Detection> merged;
+                    merged.reserve(fresh_contacts.contacts.size() + previous_contacts.size());
+                    for (const auto& det : fresh_contacts.contacts) {
+                        merged.push_back(det);
+                        seen.insert(det.target_id);
+                    }
+                    if (s[i].track_memory_s > 0.0) {
+                        for (const auto& det : previous_contacts) {
+                            if (seen.find(det.target_id) != seen.end()) continue;
+                            if ((current_time - det.timestamp) <= s[i].track_memory_s) {
+                                merged.push_back(det);
+                            }
+                        }
+                    }
+                    c[i].contacts.swap(merged);
                 }
             }
         });

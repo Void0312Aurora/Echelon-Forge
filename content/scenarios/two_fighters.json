@@ -33,6 +33,13 @@
     "gif_fps": 20,
     "gif_max_frames": 600
   },
+  "termination": {
+    "disengage_range_m": 25000.0,
+    "disengage_hold_s": 2.0,
+    "min_specific_energy_j_kg": 50000.0,
+    "energy_hold_s": 2.0,
+    "ammo_depletion_ends": true
+  },
   "expectations": {
     "require_detection": true
   }

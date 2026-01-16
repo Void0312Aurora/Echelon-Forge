@@ -1,5 +1,6 @@
 #include "simulation_kernel.h"
 #include "systems/movement_system.h"
+#include "systems/operation_system.h"
 #include "systems/control_system.h"
 #include "systems/guidance_system.h"
 #include "systems/damage_system.h"
@@ -11,10 +12,12 @@
 #include "core/sensor_model.h"
 #include "core/unit_factory.h"
 #include "models/default_unit_factory.h"
+#include <algorithm>
 #include <spdlog/spdlog.h>
 
 #include "components/performance.h"
 #include "components/scoring.h" // Added scoring
+#include "components/weapon.h"
 
 SimulationKernel::SimulationKernel()
     : unit_factory_(std::make_unique<DefaultUnitFactory>()),
@@ -28,7 +31,12 @@ SimulationKernel::SimulationKernel()
     ecs.component<Alliance>();
     ecs.component<KeyEntity>();
     ecs.component<MovementCommand>();
+    ecs.component<ActionCommand>();
+    ecs.component<ActionSpaceConfig>();
+    ecs.component<CommandLag>();
+    ecs.component<LaggedCommand>();
     ecs.component<Missile>();
+    ecs.component<Ammo>();
     ecs.component<FlightModel>(); 
     ecs.component<Score>();
     ecs.component<EffectsModelRef>();
@@ -48,11 +56,13 @@ SimulationKernel::SimulationKernel()
     // For MVP, registration order is sufficient as long as it's explicit.
     
     // Register Systems IN ORDER (dependency chain)
-    register_control_system(ecs);   // Phase 1: Control
-    register_guidance_system(ecs);  // Phase 2: Guidance
-    register_movement_system(ecs);  // Phase 3: Movement (integrate)
-    register_sensor_system(ecs);    // Phase 4: Sensor
-    register_damage_system(ecs);    // Phase 5: Damage/Effects
+    register_action_mapping_system(ecs); // Phase 0: Action Mapping
+    register_command_lag_system(ecs);    // Phase 1: Command Lag
+    register_control_system(ecs);        // Phase 2: Control
+    register_guidance_system(ecs);       // Phase 3: Guidance
+    register_movement_system(ecs);       // Phase 4: Movement (integrate)
+    register_sensor_system(ecs);         // Phase 5: Sensor
+    register_damage_system(ecs);         // Phase 6: Damage/Effects
 
     ecs.set<EffectsModelRef>({effects_model_.get()});
     ecs.set<SensorModelRef>({sensor_model_.get()});
@@ -160,8 +170,32 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         e.set<MovementCommand>({heading_deg, speed_mps, altitude_m, true});
+        if (!e.has<LaggedCommand>()) {
+            e.set<LaggedCommand>({heading_deg, speed_mps, altitude_m, true});
+        }
     } else {
         spdlog::warn("Attempted to set command for invalid entity ID: {}", entity_id);
+    }
+}
+
+void SimulationKernel::set_unit_action(uint64_t entity_id,
+                                       double turn_rate_cmd,
+                                       double accel_cmd,
+                                       double climb_rate_cmd,
+                                       double fire_cmd) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        auto clamp_cmd = [](double v) { return std::clamp(v, -1.0, 1.0); };
+        double fire = std::clamp(fire_cmd, 0.0, 1.0);
+        e.set<ActionCommand>({
+            clamp_cmd(turn_rate_cmd),
+            clamp_cmd(accel_cmd),
+            clamp_cmd(climb_rate_cmd),
+            fire,
+            true
+        });
+    } else {
+        spdlog::warn("Attempted to set action for invalid entity ID: {}", entity_id);
     }
 }
 
@@ -186,8 +220,23 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     const Transform* p = attacker.get<Transform>();
     const Velocity* v = attacker.get<Velocity>();
     const Alliance* side = attacker.get<Alliance>();
+    Ammo* ammo = attacker.get_mut<Ammo>();
+    Score* score = attacker.get_mut<Score>();
     
     if (!p || !v || !side) return flecs::entity::null();
+    if (ammo) {
+        if (ammo->missiles_remaining <= 0) {
+            spdlog::warn("Attacker {} has no missiles remaining.", attacker_id);
+            return flecs::entity::null();
+        }
+        ammo->missiles_remaining -= 1;
+    }
+    if (score) {
+        score->missiles_fired += 1;
+    }
+
+    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+    double current_time = info ? (double)info->world_time_total : 0.0;
     
     // Spawn Missile slightly in front
     double heading = std::atan2(v->vy, v->vx);
@@ -199,8 +248,23 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
         .set<Velocity>({v->vx, v->vy, v->vz}) // Inherit platform velocity
         .set<Alliance>({side->side})
         .set<KeyEntity>({UnitType::Missile})
-        .set<Missile>({attacker_id, target_id, 1000.0, 30.0, 100.0, 55.0, true}) // 1000m/s, 30deg/s, 100m fuse, 55 DMG
-        .set<Sensor>({15000.0, 45.0, 0.1, -1.0}) // Seeker 15km, 45deg
+        .set<Missile>({
+            attacker_id,
+            target_id,
+            1000.0,
+            30.0,
+            100.0,
+            55.0,
+            45.0,
+            15000.0,
+            0.3,
+            0.1,
+            -1.0,
+            current_time,
+            3.0,
+            true
+        }) // 1000m/s, 30deg/s, 100m fuse, 55 DMG
+        .set<Sensor>({15000.0, 45.0, 0.1, -1.0, 0.95, 2.0, 0.5, 10.0, 0.2, 0.2}) // Seeker 15km, 45deg
         .set<ContactList>({})
         .add<SimObject>(); // Tag for cleanup
         
@@ -316,8 +380,14 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
     }
     
     // Weapons check (Placeholder)
-    obs.missiles_remaining = 4; // Infinite for now
-    obs.can_fire = true;
+    const Ammo* ammo = e.get<Ammo>();
+    if (ammo) {
+        obs.missiles_remaining = ammo->missiles_remaining;
+        obs.can_fire = ammo->missiles_remaining > 0;
+    } else {
+        obs.missiles_remaining = -1;
+        obs.can_fire = true;
+    }
     
     const Score* s = e.get<Score>();
     obs.total_reward = s ? s->total_reward : 0.0;

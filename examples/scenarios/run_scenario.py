@@ -117,6 +117,12 @@ def main():
     steps = int(duration_seconds / dt)
     require_detection = scenario.get("expectations", {}).get("require_detection", False)
     detected = False
+    termination_cfg = scenario.get("termination", {})
+    disengage_range_m = termination_cfg.get("disengage_range_m")
+    disengage_hold_s = float(termination_cfg.get("disengage_hold_s", 0.0))
+    min_specific_energy = termination_cfg.get("min_specific_energy_j_kg")
+    energy_hold_s = float(termination_cfg.get("energy_hold_s", 0.0))
+    ammo_depletion_ends = bool(termination_cfg.get("ammo_depletion_ends", False))
 
     output_cfg = scenario.get("output", {})
     log_path = output_cfg.get("log_path")
@@ -148,6 +154,24 @@ def main():
     logger = ScenarioLogger(log_path, metadata) if log_path else None
     metrics = ScenarioMetrics(entity_map.keys())
 
+    engagement_pairs = []
+    engaged_entities = set()
+    for behavior in behaviors:
+        if behavior.get("type") != "pursuit":
+            continue
+        entity_name = behavior.get("entity")
+        target_name = behavior.get("target")
+        if entity_name and target_name:
+            engagement_pairs.append((entity_name, target_name))
+            engaged_entities.add(entity_name)
+            engaged_entities.add(target_name)
+
+    disengage_timer = {pair: 0.0 for pair in engagement_pairs}
+    energy_timer = {name: 0.0 for name in engaged_entities}
+
+    termination_reason = None
+    termination_time = None
+
     for step_index in range(steps):
         positions = {name: kernel.get_unit_position(eid) for name, eid in entity_map.items()}
         healths = {name: kernel.get_unit_health(eid) for name, eid in entity_map.items()}
@@ -169,21 +193,84 @@ def main():
 
         kernel.step()
 
+        positions = {name: kernel.get_unit_position(eid) for name, eid in entity_map.items()}
+        healths = {name: kernel.get_unit_health(eid) for name, eid in entity_map.items()}
+        observations = {name: kernel.get_agent_observation(eid) for name, eid in entity_map.items()}
         detections = {name: kernel.get_detections(eid) for name, eid in entity_map.items()}
-        metrics.update(step_index * dt, positions, detections, healths)
+        sim_time = (step_index + 1) * dt
+        metrics.update(sim_time, positions, detections, healths)
         if logger:
-            logger.log_tick(step_index, step_index * dt, positions, detections)
+            logger.log_tick(step_index, sim_time, positions, detections)
 
         if require_detection and not detected:
             for contacts in detections.values():
                 if contacts:
                     detected = True
                     break
+        if termination_reason:
+            break
+
+        if disengage_range_m is not None and engagement_pairs:
+            for pair in engagement_pairs:
+                entity_name, target_name = pair
+                a = positions[entity_name]
+                b = positions[target_name]
+                dx = a[0] - b[0]
+                dy = a[1] - b[1]
+                dz = a[2] - b[2]
+                dist = (dx * dx + dy * dy + dz * dz) ** 0.5
+                if dist > disengage_range_m:
+                    disengage_timer[pair] += dt
+                else:
+                    disengage_timer[pair] = 0.0
+                if disengage_hold_s <= 0.0 or disengage_timer[pair] >= disengage_hold_s:
+                    termination_reason = f"disengage_range:{entity_name}->{target_name}"
+                    termination_time = sim_time
+                    break
+            if termination_reason:
+                break
+
+        if min_specific_energy is not None:
+            for name in engaged_entities:
+                obs = observations.get(name)
+                if not obs:
+                    continue
+                specific_energy = 0.5 * obs.speed * obs.speed + 9.80665 * obs.z
+                if specific_energy < min_specific_energy:
+                    energy_timer[name] += dt
+                else:
+                    energy_timer[name] = 0.0
+                if energy_hold_s <= 0.0 or energy_timer[name] >= energy_hold_s:
+                    termination_reason = f"energy_low:{name}"
+                    termination_time = sim_time
+                    break
+            if termination_reason:
+                break
+
+        if ammo_depletion_ends and engaged_entities:
+            ammo_values = []
+            for name in engaged_entities:
+                obs = observations.get(name)
+                if not obs:
+                    continue
+                if obs.missiles_remaining >= 0:
+                    ammo_values.append(obs.missiles_remaining)
+            if ammo_values and all(v <= 0 for v in ammo_values):
+                missiles_in_flight = [
+                    unit for unit in kernel.get_all_units()
+                    if unit.type == int(ef_py.UnitType.Missile)
+                ]
+                if not missiles_in_flight:
+                    termination_reason = "ammo_depleted"
+                    termination_time = sim_time
+                    break
 
     summary = metrics.summary()
     summary["require_detection"] = require_detection
     summary["detected"] = detected
     summary["steps"] = steps
+    summary["termination_reason"] = termination_reason
+    summary["termination_time"] = termination_time
     summary["schema_version"] = 1
 
     if logger:

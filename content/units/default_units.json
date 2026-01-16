@@ -4,7 +4,10 @@
       "type": "Aircraft",
       "name": "Aircraft",
       "health": {"current_hp": 100.0, "max_hp": 100.0},
-      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 1.0, "last_scan_time": -1.0},
+      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 1.0, "last_scan_time": -1.0,
+                 "detection_prob": 0.9, "range_power": 2.0, "bearing_noise_std": 1.0,
+                 "range_noise_std": 25.0, "track_memory_s": 2.0, "aspect_influence": 0.3},
+      "ammo": {"missiles_remaining": 4, "max_missiles": 4},
       "flight_model": {"max_speed": 600.0, "min_speed": 50.0, "max_turn_rate": 20.0, "max_accel": 50.0, "max_climb_rate": 300.0, "max_g": 9.0},
       "score": {"total_reward": 0.0, "missiles_fired": 0, "hits_landed": 0, "kills_confirmed": 0}
     },
@@ -12,7 +15,9 @@
       "type": "Missile",
       "name": "Missile",
       "health": {"current_hp": 100.0, "max_hp": 100.0},
-      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 1.0, "last_scan_time": -1.0},
+      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 0.2, "last_scan_time": -1.0,
+                 "detection_prob": 0.95, "range_power": 2.0, "bearing_noise_std": 0.5,
+                 "range_noise_std": 15.0, "track_memory_s": 0.5, "aspect_influence": 0.2},
       "flight_model": {"max_speed": 1200.0, "min_speed": 100.0, "max_turn_rate": 40.0, "max_accel": 100.0, "max_climb_rate": 600.0, "max_g": 30.0},
       "score": {"total_reward": 0.0, "missiles_fired": 0, "hits_landed": 0, "kills_confirmed": 0}
     },
@@ -20,14 +25,18 @@
       "type": "Ship",
       "name": "Ship",
       "health": {"current_hp": 100.0, "max_hp": 100.0},
-      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 1.0, "last_scan_time": -1.0},
+      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 2.0, "last_scan_time": -1.0,
+                 "detection_prob": 0.9, "range_power": 2.0, "bearing_noise_std": 2.0,
+                 "range_noise_std": 50.0, "track_memory_s": 3.0, "aspect_influence": 0.2},
       "score": {"total_reward": 0.0, "missiles_fired": 0, "hits_landed": 0, "kills_confirmed": 0}
     },
     {
       "type": "Facility",
       "name": "Facility",
       "health": {"current_hp": 100.0, "max_hp": 100.0},
-      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 1.0, "last_scan_time": -1.0},
+      "sensor": {"max_range": 30000.0, "fov_deg": 120.0, "scan_period": 2.0, "last_scan_time": -1.0,
+                 "detection_prob": 0.9, "range_power": 2.0, "bearing_noise_std": 2.0,
+                 "range_noise_std": 50.0, "track_memory_s": 3.0, "aspect_influence": 0.2},
       "score": {"total_reward": 0.0, "missiles_fired": 0, "hits_landed": 0, "kills_confirmed": 0}
     }
   ]

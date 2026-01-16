@@ -67,6 +67,17 @@
         "require_detection": {"type": "boolean"}
       },
       "additionalProperties": false
+    },
+    "termination": {
+      "type": "object",
+      "properties": {
+        "disengage_range_m": {"type": "number"},
+        "disengage_hold_s": {"type": "number"},
+        "min_specific_energy_j_kg": {"type": "number"},
+        "energy_hold_s": {"type": "number"},
+        "ammo_depletion_ends": {"type": "boolean"}
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
