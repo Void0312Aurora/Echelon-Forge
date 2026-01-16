@@ -10,7 +10,7 @@ from flask_socketio import SocketIO
 
 # Import CMO Engine
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "build")))
-import cmo_py
+import ef_py
 
 # Setup Web Server (Use absolute paths)
 base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -22,12 +22,12 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Simulation Setup
-kernel = cmo_py.SimulationKernel()
+kernel = ef_py.SimulationKernel()
 kernel.reset(42)
 
 # Entities
-target = kernel.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 200, 200, 5000, 150, 0, 0) # Moving East
-interceptor = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Aircraft, 0, 0, 5000, 0, 100, 0) # Start Moving North
+target = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 200, 200, 5000, 150, 0, 0) # Moving East
+interceptor = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 0, 0, 5000, 0, 100, 0) # Start Moving North
 
 print(f"Entities Spawned: Target={target}, Interceptor={interceptor}")
 

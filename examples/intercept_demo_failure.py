@@ -6,7 +6,7 @@ import time
 # Ensure we can import the module from build/
 sys.path.append(os.path.join(os.getcwd(), "build"))
 
-import cmo_py
+import ef_py
 
 def normalize(v):
     mag = math.sqrt(v[0]**2 + v[1]**2 + v[2]**2)
@@ -14,18 +14,18 @@ def normalize(v):
     return [v[0]/mag, v[1]/mag, v[2]/mag]
 
 def run_intercept_demo():
-    kernel = cmo_py.SimulationKernel()
+    kernel = ef_py.SimulationKernel()
     kernel.reset(42)
 
     # 1. Spawn a Target (Red Bomber) flying straight
     # Position: (100, 100, 5000), Velocity: (10, 0, 0)
-    target = kernel.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 
+    target = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 
                                100, 100, 5000, 
                                10, 0, 0)
 
     # 2. Spawn an Interceptor (Blue Fighter)
     # Position: (0, 0, 5000) - 500 ticks running
-    interceptor = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Aircraft, 
+    interceptor = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 
                                     0, 0, 5000, 
                                     0, 0, 0) # Initially stationary
 

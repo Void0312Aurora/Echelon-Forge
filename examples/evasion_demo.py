@@ -12,7 +12,7 @@ from flask_socketio import SocketIO
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "build")))
 sys.path.append(os.path.abspath(os.getcwd())) # To find examples.agents
 
-import cmo_py
+import ef_py
 from examples.agents.red_agent import RedScriptedAgent
 
 # Setup Web Server (Use absolute paths for robustness)
@@ -26,13 +26,13 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Simulation Setup
-kernel = cmo_py.SimulationKernel()
+kernel = ef_py.SimulationKernel()
 kernel.reset(42)
 
 # Entities
 # Red starts further away to allow engagement geometry to develop
-target_id = kernel.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 5000, 5000, 5000, 200, 0, 0) 
-interceptor_id = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Aircraft, 0, 0, 5000, 0, 100, 0) 
+target_id = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 5000, 5000, 5000, 200, 0, 0) 
+interceptor_id = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 0, 0, 5000, 0, 100, 0) 
 
 red_agent = RedScriptedAgent(kernel, target_id)
 

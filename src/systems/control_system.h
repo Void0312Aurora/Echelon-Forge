@@ -2,9 +2,11 @@
 
 #include <flecs.h>
 #include <cmath>
+#include <algorithm>
+#include <spdlog/spdlog.h>
 #include "components/common.h"
 #include "components/action.h"
-#include <algorithm>
+#include "components/performance.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -20,49 +22,68 @@ inline double to_degrees(double rad) { return rad * 180.0 / M_PI; }
 inline double to_radians(double deg) { return deg * M_PI / 180.0; }
 
 inline void register_control_system(flecs::world& ecs) {
-    ecs.system<Velocity, const MovementCommand>("KinematicControl")
+    ecs.system<Velocity, Transform, const MovementCommand, const FlightModel>("FlightControl")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter& it) {
-            // Constants for MVP (Could be components later)
-            const double MAX_TURN_RATE = 15.0; // deg/s
-            const double MAX_ACCEL = 50.0;     // m/s^2
-
             while (it.next()) {
                 auto v = it.field<Velocity>(0);
-                auto cmd = it.field<const MovementCommand>(1);
+                auto p = it.field<Transform>(1);
+                auto cmd = it.field<const MovementCommand>(2);
+                auto fm = it.field<const FlightModel>(3);
                 double dt = it.delta_time();
                 
                 for (auto i : it) {
                     if (!cmd[i].active) continue;
 
                     // 1. Current State
-                    double current_speed = std::sqrt(v[i].vx*v[i].vx + v[i].vy*v[i].vy);
+                    double current_speed = std::sqrt(v[i].vx*v[i].vx + v[i].vy*v[i].vy + v[i].vz*v[i].vz);
                     
-                    // Avoid atan2(0,0) by assuming heading 0 if stopped
-                    double current_heading_math = std::atan2(v[i].vy, v[i].vx); // radians, 0=East, CCW
+                    // Heading (2D plane)
+                    double current_heading_math = std::atan2(v[i].vy, v[i].vx); 
                     double current_heading_nav = 90.0 - to_degrees(current_heading_math);
                     current_heading_nav = normalize_angle(current_heading_nav);
 
-                    // 2. Heading Control
+                    // 2. Heading Control (Turn)
                     double heading_error = normalize_angle(cmd[i].target_heading - current_heading_nav);
-                    double max_turn = MAX_TURN_RATE * dt;
-                    
-                    // Clamp turn
+                    double max_turn = fm[i].max_turn_rate * dt;
                     double turn = std::clamp(heading_error, -max_turn, max_turn);
                     double new_heading_nav = current_heading_nav + turn;
                     
                     // 3. Speed Control
-                    double speed_error = cmd[i].target_speed - current_speed;
-                    double max_accel = MAX_ACCEL * dt;
-                    double accel = std::clamp(speed_error, -max_accel, max_accel);
-                    double new_speed = std::max(0.0, current_speed + accel);
+                    double safe_target_speed = std::clamp(cmd[i].target_speed, fm[i].min_speed, fm[i].max_speed);
+                    double speed_error = safe_target_speed - current_speed;
+                    double max_accel_step = fm[i].max_accel * dt;
+                    double accel = std::clamp(speed_error, -max_accel_step, max_accel_step);
+                    double new_speed = std::max(0.0, current_speed + accel); 
 
-                    // 4. Update Velocity
-                    double new_heading_math = to_radians(90.0 - new_heading_nav);
+                    // 4. Altitude Control (Climb/Dive)
+                    double alt_error = cmd[i].target_altitude - p[i].z;
+                    double desired_climb_rate = alt_error; 
+                    double max_climb = fm[i].max_climb_rate;
+                    double climb_rate = std::clamp(desired_climb_rate, -max_climb, max_climb);
                     
-                    v[i].vx = new_speed * std::cos(new_heading_math);
-                    v[i].vy = new_speed * std::sin(new_heading_math);
-                    // Ignore Z for now (2D control)
+                    // 5. Update Velocity Vector (3D)
+                    double pitch_rad = 0.0;
+                    if (new_speed > 1.0) {
+                        pitch_rad = std::asin(std::clamp(climb_rate / new_speed, -1.0, 1.0));
+                    }
+                    
+                    double h_speed = new_speed * std::cos(pitch_rad);
+                    double new_heading_math_rad = to_radians(90.0 - new_heading_nav);
+                    
+                    v[i].vx = h_speed * std::cos(new_heading_math_rad);
+                    v[i].vy = h_speed * std::sin(new_heading_math_rad);
+                    v[i].vz = new_speed * std::sin(pitch_rad);
+                    
+                    p[i].heading = new_heading_nav;
+                    p[i].pitch = to_degrees(pitch_rad); 
+                    p[i].roll = turn * 2.0; 
+
+                    // DEBUG LOG (Only for first entity to avoid spam)
+                    if (i == 0) {
+                          // spdlog::info("Control: ID {}, Speed {:.1f}->{:.1f}, AltErr {:.1f}, VX {:.1f}", 
+                          //    it.entity(i).id(), current_speed, new_speed, alt_error, v[i].vx);
+                    }
                 }
             }
         });

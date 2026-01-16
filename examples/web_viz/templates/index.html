@@ -43,7 +43,9 @@
     <canvas id="simCanvas" width="800" height="600"></canvas>
 
     <script>
-        const socket = io();
+        const socket = io({
+            transports: ['websocket', 'polling'] // Force stable transport options
+        });
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
         const statusDiv = document.getElementById('status');
@@ -130,19 +132,32 @@
         socket.on('connect', () => {
             statusDiv.textContent = 'Connected. Click Start to begin.';
             statusDiv.style.color = '#ffff00';
+            startBtn.disabled = false; // Re-enable on connect
         });
 
         socket.on('disconnect', () => {
-            statusDiv.textContent = 'Disconnected';
+            statusDiv.textContent = 'Disconnected - Auto Reconnecting...';
             statusDiv.style.color = '#ff0000';
             startBtn.disabled = false;
         });
 
+        socket.on('connect_error', (err) => {
+            console.log("Connection Error: ", err);
+            statusDiv.textContent = 'Connection Error: ' + err;
+        });
+
         socket.on('state_update', (data) => {
+            console.log("Received state_update:", data); // DEBUG
             debugDiv.textContent = `Tick: ${data.tick.toFixed(2)} | Units: ${data.units.length} | Scale: 1px=${(1 / camera.scale).toFixed(1)}m`;
 
             // clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Debug: Draw a red circle at origin to confirm canvas is working
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(camera.offsetX, camera.offsetY, 5, 0, Math.PI * 2);
+            ctx.fill();
 
             // Draw Grid (Dynamic)
             ctx.strokeStyle = '#333';
@@ -150,7 +165,6 @@
             ctx.beginPath();
 
             // Calculate visible world bounds for efficient grid drawing
-            // Simple approach: Draw grid lines based on offset
             const gridSize = 1000 * camera.scale; // 1km grid lines
             const startX = camera.offsetX % gridSize;
             const startY = camera.offsetY % gridSize;
@@ -173,6 +187,53 @@
                 const sx = camera.offsetX + unit.x * camera.scale;
                 const sy = camera.offsetY - unit.y * camera.scale; // Invert North to go Up
 
+                // --- Visualizing Sensors (Underlay) ---
+                if (unit.sensors) {
+                    unit.sensors.forEach(sensor => {
+                        ctx.save();
+                        ctx.translate(sx, sy);
+                        // Rotate to match heading
+                        const headingRad = -(unit.heading * Math.PI / 180.0);
+                        ctx.rotate(headingRad);
+
+                        ctx.beginPath();
+                        const r = sensor.radius * camera.scale;
+                        const halfFov = (sensor.fov * Math.PI / 180.0) / 2.0;
+
+                        // Draw Sector
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, r, -halfFov, halfFov);
+                        ctx.closePath();
+
+                        ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+                        ctx.stroke();
+                        ctx.restore();
+                    });
+                }
+
+                // --- Visualizing Detections (Overlay) ---
+                if (unit.detections) {
+                    unit.detections.forEach(det => {
+                        const target = data.units.find(u => u.id === det.target_id);
+                        if (target) {
+                            const tx = camera.offsetX + target.x * camera.scale;
+                            const ty = camera.offsetY - target.y * camera.scale;
+
+                            ctx.save();
+                            ctx.strokeStyle = '#00ff00';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([5, 5]);
+                            ctx.beginPath();
+                            ctx.moveTo(sx, sy);
+                            ctx.lineTo(tx, ty);
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                    });
+                }
+
                 ctx.save();
                 ctx.translate(sx, sy);
 
@@ -181,16 +242,27 @@
                 ctx.font = '12px Arial';
                 ctx.fillText(unit.type === 'Missile' ? 'M' : unit.side, 10, -10);
 
-                // Rotate for Heading
-                // unit.heading is degrees (0=East? No, usually 0=North in Nav, but physics might be 0=East)
-                // In our C++: heading = atan2(vy, vx). 0 is East (+X). 90 is North (+Y).
-                // Canvas 0 is East (+X). So rotation = -heading (because Y is inverted)? 
-                // Let's assume standard Math rotation first.
-                // Physics: 0=East, CCW. Canvas: Y down.
-                // If heading is 90 (North), Physics (0, 1). Canvas needs to point Up.
-                // Canvas rotation is CW.
-                // Let's use negative heading for Canvas logic if Y is inverted.
+                // Draw HP Bar
+                if (unit.max_hp > 0 && unit.hp < unit.max_hp) { // Only show if damaged or explicit
+                    const hpPct = Math.max(0, unit.hp / unit.max_hp);
+                    const barWidth = 30;
+                    const barHeight = 4;
+                    const barX = -15;
+                    const barY = -25;
 
+                    // Background
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+                    // Foreground
+                    ctx.fillStyle = hpPct > 0.5 ? '#00ff00' : (hpPct > 0.2 ? '#ffff00' : '#ff0000');
+                    ctx.fillRect(barX, barY, barWidth * hpPct, barHeight);
+                }
+
+                // Draw ID for debug
+                // ctx.fillText(unit.id, 10, -25);
+
+                // Rotate for Heading
                 const headingRad = -(unit.heading * Math.PI / 180.0);
                 ctx.rotate(headingRad);
 

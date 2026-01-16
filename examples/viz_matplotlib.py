@@ -8,18 +8,18 @@ from matplotlib.animation import PillowWriter
 # Ensure we can import the module from build/
 sys.path.append(os.path.join(os.getcwd(), "build"))
 
-import cmo_py
+import ef_py
 
 def run_matplotlib_demo():
     print("Initializing Simulation...")
-    kernel = cmo_py.SimulationKernel()
+    kernel = ef_py.SimulationKernel()
     kernel.reset(42)
 
     # Spawn Units
     # Red: (100, 100, 5000)
-    target = kernel.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 100, 100, 5000, 10, 0, 0)
+    target = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 100, 100, 5000, 10, 0, 0)
     # Blue: (0, 0, 5000)
-    interceptor = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Aircraft, 0, 0, 5000, 0, 0, 0)
+    interceptor = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 0, 0, 5000, 0, 0, 0)
 
     # Simulation Loop to collect data
     history_target = []

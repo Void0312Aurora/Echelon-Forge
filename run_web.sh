@@ -9,4 +9,4 @@ echo "Starting Web Visualization..."
 echo "Please forward port 5000: ssh -L 5000:localhost:5000 ..."
 echo "Then visit http://localhost:5000"
 
-python3 examples/missile_demo.py
+python3 examples/perception_viz.py

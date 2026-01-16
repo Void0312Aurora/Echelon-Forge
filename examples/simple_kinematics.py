@@ -5,23 +5,23 @@ import math
 # Ensure we can import the module from build/
 sys.path.append(os.path.join(os.getcwd(), "build"))
 
-import cmo_py
+import ef_py
 
 def run_fire_and_forget_demo():
     """
     Demonstrates what works: Initial State -> Deterministic Projection
     """
-    kernel = cmo_py.SimulationKernel()
+    kernel = ef_py.SimulationKernel()
     kernel.reset(42)
 
     # Scenario: Head-on collision course
     # Red Unit: at x=100, moving Left (-10)
-    red = kernel.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 
+    red = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 
                             100, 0, 5000, 
                             -10, 0, 0)
     
     # Blue Unit: at x=0, moving Right (+10)
-    blue = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Aircraft, 
+    blue = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 
                              0, 0, 5000, 
                              10, 0, 0)
 

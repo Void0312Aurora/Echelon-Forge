@@ -7,7 +7,7 @@ import rerun as rr
 # Ensure we can import the module from build/
 sys.path.append(os.path.join(os.getcwd(), "build"))
 
-import cmo_py
+import ef_py
 
 def run_visualized_demo():
     # 1. Initialize Rerun
@@ -17,11 +17,11 @@ def run_visualized_demo():
     rr.init("cmo_intercept_demo", spawn=False)
     rr.save("demo.rrd")
     
-    kernel = cmo_py.SimulationKernel()
+    kernel = ef_py.SimulationKernel()
     kernel.reset(42)
 
-    target = kernel.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 100, 100, 5000, 10, 0, 0)
-    interceptor = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Aircraft, 0, 0, 5000, 0, 0, 0)
+    target = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 100, 100, 5000, 10, 0, 0)
+    interceptor = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 0, 0, 5000, 0, 0, 0)
 
     print("--- Rerun Visualization Started (File Mode) ---")
     print("Generating demo.rrd...")

@@ -4,6 +4,9 @@
 #include <cmath>
 #include <random>
 #include "components/common.h"
+#include "components/sensor.h"
+#include "unit_data.h"
+#include "observation.h"
 
 class SimulationKernel {
 public:
@@ -28,11 +31,15 @@ public:
     void set_time_step(double dt) { time_step = dt; }
 
     // Action Interface: Set command for a unit
-    void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps);
+    void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m);
     
     // Observation Interface
     std::vector<double> get_unit_position(uint64_t entity_id); // Returns [x, y, z]
-    
+    std::vector<UnitData> get_all_units(); // Bulk observation
+    AgentObservation get_agent_observation(uint64_t entity_id); // RL Observation
+    std::vector<Detection> get_detections(uint64_t entity_id); // Sensor Output
+    std::vector<double> get_unit_health(uint64_t entity_id);   // Returns [current, max]
+
     // Weapon Interface: Fire missile
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);
 
@@ -44,3 +51,6 @@ private:
     // In production we might use Xoshiro/PCG
     std::mt19937 rng;
 };
+
+// Tag Component for Reset Logic
+struct SimObject {};

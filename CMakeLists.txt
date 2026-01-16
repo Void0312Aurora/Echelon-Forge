@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(CMO VERSION 0.1.0 LANGUAGES CXX C)
+project(EchelonForge VERSION 0.1.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,25 +34,25 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nanobind)
 
 # --- Core Library ---
-add_library(cmo_core STATIC
+add_library(ef_core STATIC
     src/core/simulation_kernel.cpp
     # Add other core source files here if they become cpp
 )
 
-target_include_directories(cmo_core PUBLIC 
+target_include_directories(ef_core PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(cmo_core PUBLIC
+target_link_libraries(ef_core PUBLIC
     flecs::flecs
     spdlog::spdlog
 )
 
 # --- Standalone App ---
 # We keep src/main.cpp for local C++ testing, but now it needs to include/use SimulationKernel
-add_executable(cmo_app src/main.cpp)
-target_link_libraries(cmo_app PRIVATE cmo_core)
+add_executable(ef_app src/main.cpp)
+target_link_libraries(ef_app PRIVATE ef_core)
 
 # --- Python Module ---
-nanobind_add_module(cmo_py src/bindings/python_module.cpp)
-target_link_libraries(cmo_py PRIVATE cmo_core)
+nanobind_add_module(ef_py src/bindings/python_module.cpp)
+target_link_libraries(ef_py PRIVATE ef_core)

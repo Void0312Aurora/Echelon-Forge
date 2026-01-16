@@ -11,7 +11,7 @@ from flask_socketio import SocketIO
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "build")))
 sys.path.append(os.path.abspath(os.getcwd()))
 
-import cmo_py
+import ef_py
 from examples.agents.red_agent import RedScriptedAgent
 
 # Setup Web Server
@@ -24,17 +24,17 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Simulation Setup
-kernel = cmo_py.SimulationKernel()
+kernel = ef_py.SimulationKernel()
 kernel.reset(42)
 
 # Entities
 # Red starts at 10km distance
 active_units = set()
 
-target_id = kernel.spawn_unit(cmo_py.Side.Red, cmo_py.UnitType.Aircraft, 10000, 5000, 5000, 200, 0, 0)
+target_id = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 10000, 5000, 5000, 200, 0, 0)
 active_units.add(target_id)
 
-interceptor_id = kernel.spawn_unit(cmo_py.Side.Blue, cmo_py.UnitType.Aircraft, 0, 0, 5000, 0, 100, 0)
+interceptor_id = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 0, 0, 5000, 0, 100, 0)
 active_units.add(interceptor_id)
 
 red_agent = RedScriptedAgent(kernel, target_id)
@@ -118,44 +118,41 @@ def simulation_loop():
             kernel.step()
             sim_time += kernel.get_time_step()
             
-            # 4. Visualization packet
+            # 4. Visualization packet (Optimized Bulk API)
             units_data = []
             
-            # Filter dead units
-            dead_units = set()
-            for uid in active_units:
-                if not kernel.is_unit_active(uid):
-                    dead_units.add(uid)
-                    continue
-                    
-                pos = kernel.get_unit_position(uid)
-                heading = kernel.get_unit_heading(uid)
-                utype = kernel.get_unit_type(uid)
+            # Use C++ helper for bulk state
+            all_units = kernel.get_all_units()
+            
+            for u in all_units:
+                # Update our active tracking set (useful for logic)
+                active_units.add(u.id)
                 
-                # Determine Side (We don't have get_unit_side helper yet, but logic is implicit)
-                # Hack: 1=Blue, 2=Red. 
-                # Blue entities: interceptor, missile. Red: target.
                 side_str = "Neutral"
-                if uid == interceptor_id: side_str = "Blue"
-                elif uid == target_id: side_str = "Red"
-                elif uid > interceptor_id: side_str = "Blue" # Newtons assumption: Missile ID > Interceptor ID
+                if u.side == 1: side_str = "Blue"
+                elif u.side == 2: side_str = "Red"
                 
-                # Unit Type Mapping: 1=Air, 3=Missile
                 type_str = "Unknown"
-                if utype == 1: type_str = "Aircraft"
-                elif utype == 3: type_str = "Missile"
+                if u.type == 1: type_str = "Aircraft"
+                elif u.type == 3: type_str = "Missile"
                 
                 units_data.append({
-                    "id": uid, 
-                    "side": side_str, 
+                    "id": u.id,
+                    "side": side_str,
                     "type": type_str,
-                    "x": pos[0], 
-                    "y": pos[1], 
-                    "z": pos[2],
-                    "heading": heading
+                    "x": u.x,
+                    "y": u.y,
+                    "z": u.z,
+                    "heading": u.heading
                 })
                 
-            # Remove dead units from registry
+            # Check if target died (it won't be in the list returned by get_all_units if destroyed)
+            # Logic: If target_id was in active_units but not in current snapshot -> Destroyed
+            
+            # Sync active_units with current reality (remove dead ones)
+            current_ids = {u.id for u in all_units}
+            dead_units = active_units - current_ids
+            
             for dead in dead_units:
                 active_units.remove(dead)
                 if dead == target_id:

@@ -2,11 +2,13 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include "core/simulation_kernel.h"
+#include "core/unit_data.h"
+#include "components/sensor.h"
 #include <spdlog/spdlog.h>
 
 namespace nb = nanobind;
 
-NB_MODULE(cmo_py, m) {
+NB_MODULE(ef_py, m) {
     // Bind Side Enum
     nb::enum_<Side>(m, "Side")
         .value("Blue", Side::Blue)
@@ -40,7 +42,7 @@ NB_MODULE(cmo_py, m) {
 
         // Action Interface
         .def("set_command", &SimulationKernel::set_unit_command, "Set movement command for a unit",
-             nb::arg("entity_id"), nb::arg("heading_deg"), nb::arg("speed_mps"))
+             nb::arg("entity_id"), nb::arg("heading_deg"), nb::arg("speed_mps"), nb::arg("altitude_m"))
              
         .def("fire_missile", [](SimulationKernel& self, uint64_t attacker_id, uint64_t target_id) {
              auto e = self.fire_missile(attacker_id, target_id);
@@ -55,7 +57,7 @@ NB_MODULE(cmo_py, m) {
         
         // Helper to get unit heading (degrees)
         .def("get_unit_heading", [](SimulationKernel& self, uint64_t entity_id) {
-             auto world = self.get_world();
+             flecs::world& world = self.get_world();
              auto e = world.entity(entity_id);
              if(!e.is_valid()) return 0.0;
              const Velocity* v = e.get<Velocity>();
@@ -68,7 +70,7 @@ NB_MODULE(cmo_py, m) {
         
         // Helper to get unit type
         .def("get_unit_type", [](SimulationKernel& self, uint64_t entity_id) {
-             auto world = self.get_world();
+             flecs::world& world = self.get_world();
              auto e = world.entity(entity_id);
              if(!e.is_valid()) return 0;
              const KeyEntity* k = e.get<KeyEntity>();
@@ -77,7 +79,53 @@ NB_MODULE(cmo_py, m) {
         
         // Helper to check if unit is active/alive
         .def("is_unit_active", [](SimulationKernel& self, uint64_t entity_id) {
-             auto world = self.get_world();
+             flecs::world& world = self.get_world();
              return world.entity(entity_id).is_valid();
-        }, "Check if unit exists");
+        }, "Check if unit exists")
+        
+        .def("get_all_units", &SimulationKernel::get_all_units, "Get all units state")
+        .def("get_detections", &SimulationKernel::get_detections, "Get unit sensor contacts")
+        .def("get_unit_health", &SimulationKernel::get_unit_health, "Get unit health [current, max]")
+        .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation");
+    
+    nb::class_<UnitData>(m, "UnitData")
+        .def_ro("id", &UnitData::id)
+        .def_ro("side", &UnitData::side)
+        .def_ro("type", &UnitData::type)
+        .def_ro("x", &UnitData::x)
+        .def_ro("y", &UnitData::y)
+        .def_ro("z", &UnitData::z)
+        .def_ro("heading", &UnitData::heading);
+
+    nb::class_<Detection>(m, "Detection")
+        .def_ro("target_id", &Detection::target_id)
+        .def_ro("range", &Detection::range)
+        .def_ro("bearing", &Detection::bearing)
+        .def_ro("timestamp", &Detection::timestamp);
+
+    nb::class_<TrackData>(m, "TrackData")
+        .def_ro("id", &TrackData::id)
+        .def_ro("range", &TrackData::range)
+        .def_ro("azimuth", &TrackData::azimuth)
+        .def_ro("elevation", &TrackData::elevation)
+        .def_ro("time_since_update", &TrackData::time_since_update);
+
+    nb::class_<AgentObservation>(m, "AgentObservation")
+        .def_ro("sim_time", &AgentObservation::sim_time)
+        .def_ro("id", &AgentObservation::id)
+        .def_ro("x", &AgentObservation::x)
+        .def_ro("y", &AgentObservation::y)
+        .def_ro("z", &AgentObservation::z)
+        .def_ro("vx", &AgentObservation::vx)
+        .def_ro("vy", &AgentObservation::vy)
+        .def_ro("vz", &AgentObservation::vz)
+        .def_ro("heading", &AgentObservation::heading)
+        .def_ro("pitch", &AgentObservation::pitch)
+        .def_ro("roll", &AgentObservation::roll)
+        .def_ro("speed", &AgentObservation::speed)
+        .def_ro("health", &AgentObservation::health)
+        .def_ro("contacts", &AgentObservation::contacts)
+        .def_ro("missiles_remaining", &AgentObservation::missiles_remaining)
+        .def_ro("can_fire", &AgentObservation::can_fire)
+        .def_ro("total_reward", &AgentObservation::total_reward);
 }
