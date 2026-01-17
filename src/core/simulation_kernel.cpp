@@ -1,6 +1,7 @@
 #include "simulation_kernel.h"
 #include "systems/movement_system.h"
 #include "systems/operation_system.h"
+#include "systems/command_link_system.h"
 #include "systems/control_system.h"
 #include "systems/guidance_system.h"
 #include "systems/damage_system.h"
@@ -35,6 +36,9 @@ SimulationKernel::SimulationKernel()
     ecs.component<ActionSpaceConfig>();
     ecs.component<CommandLag>();
     ecs.component<LaggedCommand>();
+    ecs.component<CommandLink>();
+    ecs.component<PendingMovementCommand>();
+    ecs.component<PendingActionCommand>();
     ecs.component<Missile>();
     ecs.component<Ammo>();
     ecs.component<FlightModel>(); 
@@ -56,13 +60,14 @@ SimulationKernel::SimulationKernel()
     // For MVP, registration order is sufficient as long as it's explicit.
     
     // Register Systems IN ORDER (dependency chain)
-    register_action_mapping_system(ecs); // Phase 0: Action Mapping
-    register_command_lag_system(ecs);    // Phase 1: Command Lag
-    register_control_system(ecs);        // Phase 2: Control
-    register_guidance_system(ecs);       // Phase 3: Guidance
-    register_movement_system(ecs);       // Phase 4: Movement (integrate)
-    register_sensor_system(ecs);         // Phase 5: Sensor
-    register_damage_system(ecs);         // Phase 6: Damage/Effects
+    register_command_link_system(ecs);   // Phase 0: Command Link
+    register_action_mapping_system(ecs); // Phase 1: Action Mapping
+    register_command_lag_system(ecs);    // Phase 2: Command Lag
+    register_control_system(ecs);        // Phase 3: Control
+    register_guidance_system(ecs);       // Phase 4: Guidance
+    register_movement_system(ecs);       // Phase 5: Movement (integrate)
+    register_sensor_system(ecs);         // Phase 6: Sensor
+    register_damage_system(ecs);         // Phase 7: Damage/Effects
 
     ecs.set<EffectsModelRef>({effects_model_.get()});
     ecs.set<SensorModelRef>({sensor_model_.get()});
@@ -73,6 +78,20 @@ SimulationKernel::SimulationKernel()
 }
 
 SimulationKernel::~SimulationKernel() = default;
+
+namespace {
+uint64_t splitmix64(uint64_t seed) {
+    uint64_t z = seed + 0x9e3779b97f4a7c15ULL;
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+    return z ^ (z >> 31);
+}
+
+double deterministic_uniform01(uint64_t seed) {
+    uint64_t z = splitmix64(seed);
+    return (z >> 11) * (1.0 / 9007199254740992.0);
+}
+} // namespace
 
 void SimulationKernel::set_unit_factory(std::unique_ptr<IUnitFactory> factory) {
     if (factory) {
@@ -169,9 +188,24 @@ flecs::entity SimulationKernel::spawn_unit(Side side, UnitType type,
 void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
-        e.set<MovementCommand>({heading_deg, speed_mps, altitude_m, true});
-        if (!e.has<LaggedCommand>()) {
-            e.set<LaggedCommand>({heading_deg, speed_mps, altitude_m, true});
+        const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+        double current_time = info ? (double)info->world_time_total : 0.0;
+        const CommandLink* link = e.get<CommandLink>();
+        if (link && (link->latency_s > 0.0 || link->drop_prob > 0.0)) {
+            uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
+                            (entity_id * 0xbf58476d1ce4e5b9ULL) ^ 0x12345678ULL;
+            double roll = deterministic_uniform01(seed);
+            if (roll >= link->drop_prob) {
+                PendingMovementCommand pending{{heading_deg, speed_mps, altitude_m, true},
+                                               current_time + link->latency_s,
+                                               true};
+                e.set<PendingMovementCommand>(pending);
+            }
+        } else {
+            e.set<MovementCommand>({heading_deg, speed_mps, altitude_m, true});
+            if (!e.has<LaggedCommand>()) {
+                e.set<LaggedCommand>({heading_deg, speed_mps, altitude_m, true});
+            }
         }
     } else {
         spdlog::warn("Attempted to set command for invalid entity ID: {}", entity_id);
@@ -187,13 +221,37 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
     if (e.is_valid()) {
         auto clamp_cmd = [](double v) { return std::clamp(v, -1.0, 1.0); };
         double fire = std::clamp(fire_cmd, 0.0, 1.0);
-        e.set<ActionCommand>({
-            clamp_cmd(turn_rate_cmd),
-            clamp_cmd(accel_cmd),
-            clamp_cmd(climb_rate_cmd),
-            fire,
-            true
-        });
+        const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+        double current_time = info ? (double)info->world_time_total : 0.0;
+        const CommandLink* link = e.get<CommandLink>();
+        if (link && (link->latency_s > 0.0 || link->drop_prob > 0.0)) {
+            if (!e.has<ActionCommand>()) {
+                e.set<ActionCommand>({0.0, 0.0, 0.0, 0.0, false});
+            }
+            uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
+                            (entity_id * 0x94d049bb133111ebULL) ^ 0x87654321ULL;
+            double roll = deterministic_uniform01(seed);
+            if (roll >= link->drop_prob) {
+                PendingActionCommand pending{{
+                                                clamp_cmd(turn_rate_cmd),
+                                                clamp_cmd(accel_cmd),
+                                                clamp_cmd(climb_rate_cmd),
+                                                fire,
+                                                true
+                                            },
+                                            current_time + link->latency_s,
+                                            true};
+                e.set<PendingActionCommand>(pending);
+            }
+        } else {
+            e.set<ActionCommand>({
+                clamp_cmd(turn_rate_cmd),
+                clamp_cmd(accel_cmd),
+                clamp_cmd(climb_rate_cmd),
+                fire,
+                true
+            });
+        }
     } else {
         spdlog::warn("Attempted to set action for invalid entity ID: {}", entity_id);
     }
@@ -296,30 +354,22 @@ std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
 
 std::vector<UnitData> SimulationKernel::get_all_units() {
     std::vector<UnitData> units;
-    
-    // Brute Force Iteration: Iterate ALL entities and filter manually.
-    // This is 100% safe against Flecs C++ API version quirks regarding filters/queries.
-    ecs.each([&](flecs::entity e) {
-        // Fast filtering: Must have KeyEntity and SimObject (implied)
-        const KeyEntity* k = e.get<KeyEntity>();
-        if (!k) return; 
-        
-        const Transform* p = e.get<Transform>();
-        const Velocity* v = e.get<Velocity>();
-        const Alliance* a = e.get<Alliance>();
-        
-        if (p && v && a) {
-            UnitData data;
-            data.id = e.id();
-            data.side = static_cast<int>(a->side);
-            data.type = static_cast<int>(k->type);
-            data.x = p->x;
-            data.y = p->y;
-            data.z = p->z;
-            data.heading = p->heading;
-            
-            units.push_back(data);
-        }
+
+    auto query = ecs.query<const KeyEntity, const Transform, const Velocity, const Alliance>();
+    query.each([&](flecs::entity e,
+                   const KeyEntity& k,
+                   const Transform& p,
+                   const Velocity& /*v*/,
+                   const Alliance& a) {
+        UnitData data;
+        data.id = e.id();
+        data.side = static_cast<int>(a.side);
+        data.type = static_cast<int>(k.type);
+        data.x = p.x;
+        data.y = p.y;
+        data.z = p.z;
+        data.heading = p.heading;
+        units.push_back(data);
     });
 
     return units;

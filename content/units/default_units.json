@@ -8,6 +8,7 @@
                  "detection_prob": 0.9, "range_power": 2.0, "bearing_noise_std": 1.0,
                  "range_noise_std": 25.0, "track_memory_s": 2.0, "aspect_influence": 0.3},
       "ammo": {"missiles_remaining": 4, "max_missiles": 4},
+      "command_link": {"latency_s": 0.2, "drop_prob": 0.0},
       "flight_model": {"max_speed": 600.0, "min_speed": 50.0, "max_turn_rate": 20.0, "max_accel": 50.0, "max_climb_rate": 300.0, "max_g": 9.0},
       "score": {"total_reward": 0.0, "missiles_fired": 0, "hits_landed": 0, "kills_confirmed": 0}
     },

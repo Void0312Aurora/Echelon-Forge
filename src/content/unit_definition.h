@@ -5,6 +5,7 @@
 
 #include "components/common.h"
 #include "components/health.h"
+#include "components/action.h"
 #include "components/performance.h"
 #include "components/scoring.h"
 #include "components/sensor.h"
@@ -26,6 +27,9 @@ struct UnitDefinition {
 
     bool has_ammo;
     Ammo ammo;
+
+    bool has_command_link;
+    CommandLink command_link;
 };
 
 struct UnitTypeHash {

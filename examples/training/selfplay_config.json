@@ -1,14 +1,29 @@
 {
   "seed": 7,
-  "episodes": 30,
-  "max_steps": 600,
-  "learning_rate": 0.01,
-  "gamma": 0.99,
+  "episodes": 1000,
+  "max_steps": 1000,
+  "learning_rate": 0.001,
+  "gamma": 0.996,
+  "num_envs": 32,
   "unit_definitions": "content/units/default_units.json",
+  "log_level": "warn",
+  "output_dir": "logs/selfplay",
+  "checkpoint_interval": 50,
+  "resume_dir": "",
   "policy": {
     "obs_dim": 12,
     "act_dim": 4,
-    "std": 0.2
+    "hidden_sizes": [256, 256],
+    "log_std_init": -0.5,
+    "use_cuda": true
+  },
+  "training": {
+    "entropy_coef": 0.003,
+    "grad_clip_norm": 0.5,
+    "advantage_norm": true,
+    "normalize_observations": false,
+    "mask_fire_if_unavailable": true,
+    "symmetric_training": true
   },
   "spawn": {
     "blue": {
@@ -21,17 +36,15 @@
     }
   },
   "reward": {
-    "distance_weight": -0.0001,
-    "detection_reward": 0.1,
-    "action_penalty": 0.01,
-    "kill_reward": 100.0,
-    "death_penalty": -100.0
+    "distance_weight": -0.00001,
+    "detection_reward": 0.05,
+    "action_penalty": 0.005,
+    "fire_penalty": 2.0,
+    "damage_reward": 8.0,
+    "kill_reward": 800.0,
+    "death_penalty": -800.0
   },
   "termination": {
-    "disengage_range_m": 25000.0,
-    "disengage_hold_s": 2.0,
-    "min_specific_energy_j_kg": 50000.0,
-    "energy_hold_s": 2.0,
     "ammo_depletion_ends": true
   },
   "fire_enabled": true,

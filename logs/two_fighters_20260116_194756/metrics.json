@@ -1,0 +1,12 @@
+{
+  "min_range": 0.000521540641784668,
+  "first_detection_time": 0.016666666666666666,
+  "detection_count": 2280,
+  "destroyed": {},
+  "require_detection": true,
+  "detected": true,
+  "steps": 1200,
+  "termination_reason": null,
+  "termination_time": null,
+  "schema_version": 1
+}

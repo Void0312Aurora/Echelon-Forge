@@ -111,6 +111,15 @@ bool load_unit_definitions_json(const std::string& path,
             def.ammo.max_missiles = ammo.value("max_missiles", def.ammo.max_missiles);
         }
 
+        def.has_command_link = entry.value("has_command_link", false);
+        def.command_link = {0.0, 0.0};
+        if (entry.contains("command_link")) {
+            def.has_command_link = true;
+            const auto& link = entry["command_link"];
+            def.command_link.latency_s = link.value("latency_s", def.command_link.latency_s);
+            def.command_link.drop_prob = link.value("drop_prob", def.command_link.drop_prob);
+        }
+
         out_definitions[def.type] = def;
     }
 

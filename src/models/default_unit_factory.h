@@ -43,6 +43,8 @@ public:
         aircraft.score = {0.0, 0, 0, 0};
         aircraft.has_ammo = true;
         aircraft.ammo = {4, 4};
+        aircraft.has_command_link = true;
+        aircraft.command_link = {0.2, 0.0};
         definitions_.emplace(aircraft.type, aircraft);
 
         UnitDefinition missile{};
@@ -57,6 +59,8 @@ public:
         missile.score = {0.0, 0, 0, 0};
         missile.has_ammo = false;
         missile.ammo = {0, 0};
+        missile.has_command_link = false;
+        missile.command_link = {0.0, 0.0};
         definitions_.emplace(missile.type, missile);
 
         UnitDefinition ship{};
@@ -70,6 +74,8 @@ public:
         ship.score = {0.0, 0, 0, 0};
         ship.has_ammo = false;
         ship.ammo = {0, 0};
+        ship.has_command_link = false;
+        ship.command_link = {0.0, 0.0};
         definitions_.emplace(ship.type, ship);
 
         UnitDefinition facility{};
@@ -83,6 +89,8 @@ public:
         facility.score = {0.0, 0, 0, 0};
         facility.has_ammo = false;
         facility.ammo = {0, 0};
+        facility.has_command_link = false;
+        facility.command_link = {0.0, 0.0};
         definitions_.emplace(facility.type, facility);
 
         if (!config_path.empty()) {
@@ -126,12 +134,18 @@ public:
         if (def.has_ammo) {
             e.set<Ammo>(def.ammo);
         }
+        if (def.has_command_link) {
+            e.set<CommandLink>(def.command_link);
+            e.set<PendingMovementCommand>({{0.0, 0.0, 0.0, false}, 0.0, false});
+            e.set<PendingActionCommand>({{0.0, 0.0, 0.0, 0.0, false}, 0.0, false});
+        }
         if (def.has_flight_model) {
             e.set<FlightModel>(def.flight_model);
             double speed = std::sqrt(params.vx * params.vx +
                                      params.vy * params.vy +
                                      params.vz * params.vz);
             e.set<MovementCommand>({heading_init, speed, params.z, true});
+            e.set<ActionCommand>({0.0, 0.0, 0.0, 0.0, false});
             e.set<LaggedCommand>({heading_init, speed, params.z, true});
             e.set<ActionSpaceConfig>({
                 def.flight_model.max_turn_rate,
