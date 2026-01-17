@@ -56,7 +56,10 @@
     "range_source": "track"
   },
   "termination": {
-    "ammo_depletion_ends": true
+    "ammo_depletion_ends": true,
+    "disengage_range_m": 22000.0,
+    "disengage_hold_s": 3.0,
+    "disengage_assign_loss": true
   },
   "observation": {
     "mode": "track",

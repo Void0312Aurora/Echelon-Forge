@@ -156,6 +156,7 @@ NB_MODULE(ef_py, m) {
         .def_ro("target_id", &Detection::target_id)
         .def_ro("range", &Detection::range)
         .def_ro("bearing", &Detection::bearing)
+        .def_ro("elevation", &Detection::elevation)
         .def_ro("timestamp", &Detection::timestamp);
 
     nb::class_<TrackData>(m, "TrackData")

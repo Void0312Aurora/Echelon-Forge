@@ -102,6 +102,12 @@ public:
                     return;
                 }
 
+                double horizontal_dist = std::sqrt(std::max(0.0, dx * dx + dy * dy));
+                double elevation_deg = 0.0;
+                if (horizontal_dist > 1e-6) {
+                    elevation_deg = std::atan2(dz, horizontal_dist) * 180.0 / M_PI;
+                }
+
                 double noisy_bearing = rel_bearing;
                 if (sensor.bearing_noise_std > 0.0) {
                     noisy_bearing += rand_normal(seed_det ^ 0x12345678ULL,
@@ -120,6 +126,7 @@ public:
                     target_e.id(),
                     noisy_range,
                     normalize_angle_deg(noisy_bearing),
+                    std::clamp(elevation_deg, -90.0, 90.0),
                     current_time
                 });
             }

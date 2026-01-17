@@ -178,6 +178,32 @@ def in_launch_envelope(track, envelope_cfg):
     return True
 
 
+def determine_disengage_loser(blue_obs, red_obs, range_m):
+    if range_m <= 1e-6:
+        return None
+    rx = red_obs.x - blue_obs.x
+    ry = red_obs.y - blue_obs.y
+    rz = red_obs.z - blue_obs.z
+    r_norm = math.sqrt(rx * rx + ry * ry + rz * rz)
+    if r_norm <= 1e-6:
+        return None
+    r_hat_x = rx / r_norm
+    r_hat_y = ry / r_norm
+    r_hat_z = rz / r_norm
+
+    blue_dot = blue_obs.vx * r_hat_x + blue_obs.vy * r_hat_y + blue_obs.vz * r_hat_z
+    red_dot = red_obs.vx * r_hat_x + red_obs.vy * r_hat_y + red_obs.vz * r_hat_z
+
+    blue_away = blue_dot < 0.0
+    red_away = red_dot > 0.0
+
+    if blue_away and not red_away:
+        return "blue"
+    if red_away and not blue_away:
+        return "red"
+    return None
+
+
 class MLPPolicy(nn.Module):
     def __init__(self, obs_dim, act_dim, hidden_sizes, log_std_init, device,
                  log_std_min=-3.0, log_std_max=0.5):
@@ -374,6 +400,7 @@ def run_episode_worker(payload):
     termination_cfg = cfg.get("termination", {})
     disengage_range_m = termination_cfg.get("disengage_range_m")
     disengage_hold_s = float(termination_cfg.get("disengage_hold_s", 0.0))
+    disengage_assign_loss = bool(termination_cfg.get("disengage_assign_loss", False))
     min_specific_energy = termination_cfg.get("min_specific_energy_j_kg")
     energy_hold_s = float(termination_cfg.get("energy_hold_s", 0.0))
     ammo_depletion_ends = bool(termination_cfg.get("ammo_depletion_ends", False))
@@ -443,6 +470,10 @@ def run_episode_worker(payload):
     steps_taken = 0
     prev_blue_detected = False
     prev_red_detected = False
+    termination_reason = None
+    disengage_loser = None
+    termination_reason = None
+    disengage_loser = None
 
     for step in range(max_steps):
         blue_obs = kernel.get_agent_observation(blue_id)
@@ -568,55 +599,66 @@ def run_episode_worker(payload):
             reward_blue += kill_reward
             reward_red += death_penalty
             terminated = True
+            termination_reason = "red_killed"
         if blue_health <= 0:
             reward_blue += death_penalty
             reward_red += kill_reward
             terminated = True
+            termination_reason = "blue_killed"
         if mutual_kill_penalty > 0.0 and blue_health <= 0 and red_health <= 0:
             reward_blue -= mutual_kill_penalty
             reward_red -= mutual_kill_penalty
+            termination_reason = "mutual_kill"
 
-        if disengage_range_m is not None:
-            if range_m > disengage_range_m:
-                disengage_timer += dt
-            else:
-                disengage_timer = 0.0
-            if disengage_hold_s <= 0.0 or disengage_timer >= disengage_hold_s:
-                terminated = True
-
-        if min_specific_energy is not None:
-            blue_energy = 0.5 * blue_obs.speed * blue_obs.speed + 9.80665 * blue_obs.z
-            red_energy = 0.5 * red_obs.speed * red_obs.speed + 9.80665 * red_obs.z
-            if blue_energy < min_specific_energy:
-                energy_timer_blue += dt
-            else:
-                energy_timer_blue = 0.0
-            if red_energy < min_specific_energy:
-                energy_timer_red += dt
-            else:
-                energy_timer_red = 0.0
-            if energy_hold_s <= 0.0:
-                if blue_energy < min_specific_energy or red_energy < min_specific_energy:
+        if not terminated:
+            if disengage_range_m is not None:
+                if range_m > disengage_range_m:
+                    disengage_timer += dt
+                else:
+                    disengage_timer = 0.0
+                if disengage_hold_s <= 0.0 or disengage_timer >= disengage_hold_s:
                     terminated = True
-            elif energy_timer_blue >= energy_hold_s or energy_timer_red >= energy_hold_s:
-                terminated = True
+                    termination_reason = "disengage"
+                    if disengage_assign_loss:
+                        disengage_loser = determine_disengage_loser(blue_obs, red_obs, range_m)
 
-        if no_detection_hold_s > 0.0:
-            if not blue_det and not red_det:
-                no_detection_timer += dt
-            else:
-                no_detection_timer = 0.0
-            if no_detection_timer >= no_detection_hold_s:
-                terminated = True
-
-        if ammo_depletion_ends:
-            if blue_obs.missiles_remaining == 0 and red_obs.missiles_remaining == 0:
-                missiles_in_flight = [
-                    unit for unit in kernel.get_all_units()
-                    if unit.type == int(ef_local.UnitType.Missile)
-                ]
-                if not missiles_in_flight:
+            if min_specific_energy is not None and not terminated:
+                blue_energy = 0.5 * blue_obs.speed * blue_obs.speed + 9.80665 * blue_obs.z
+                red_energy = 0.5 * red_obs.speed * red_obs.speed + 9.80665 * red_obs.z
+                if blue_energy < min_specific_energy:
+                    energy_timer_blue += dt
+                else:
+                    energy_timer_blue = 0.0
+                if red_energy < min_specific_energy:
+                    energy_timer_red += dt
+                else:
+                    energy_timer_red = 0.0
+                if energy_hold_s <= 0.0:
+                    if blue_energy < min_specific_energy or red_energy < min_specific_energy:
+                        terminated = True
+                        termination_reason = "energy_low"
+                elif energy_timer_blue >= energy_hold_s or energy_timer_red >= energy_hold_s:
                     terminated = True
+                    termination_reason = "energy_low"
+
+            if no_detection_hold_s > 0.0 and not terminated:
+                if not blue_det and not red_det:
+                    no_detection_timer += dt
+                else:
+                    no_detection_timer = 0.0
+                if no_detection_timer >= no_detection_hold_s:
+                    terminated = True
+                    termination_reason = "no_detection"
+
+            if ammo_depletion_ends and not terminated:
+                if blue_obs.missiles_remaining == 0 and red_obs.missiles_remaining == 0:
+                    missiles_in_flight = [
+                        unit for unit in kernel.get_all_units()
+                        if unit.type == int(ef_local.UnitType.Missile)
+                    ]
+                    if not missiles_in_flight:
+                        terminated = True
+                        termination_reason = "ammo_depletion"
 
         if terminated and blue_health > 0 and red_health > 0 and draw_penalty != 0.0:
             reward_blue += draw_penalty
@@ -634,6 +676,9 @@ def run_episode_worker(payload):
         if terminated:
             break
 
+    if termination_reason is None:
+        termination_reason = "max_steps"
+
     blue_side_dead = blue_health <= 0
     red_side_dead = red_health <= 0
     if swap_sides:
@@ -642,6 +687,14 @@ def run_episode_worker(payload):
     else:
         blue_policy_win = red_side_dead
         red_policy_win = blue_side_dead
+
+    if termination_reason == "disengage" and disengage_assign_loss and disengage_loser in ("blue", "red"):
+        if swap_sides:
+            blue_policy_win = disengage_loser == "blue"
+            red_policy_win = disengage_loser == "red"
+        else:
+            blue_policy_win = disengage_loser == "red"
+            red_policy_win = disengage_loser == "blue"
 
     if not blue_side_dead and not red_side_dead:
         if blue_health > red_health:
@@ -672,6 +725,7 @@ def run_episode_worker(payload):
         "red_policy_fire_count": int(policy_fire_count["red"]),
         "blue_policy_detection_steps": int(policy_detection_steps["blue"]),
         "red_policy_detection_steps": int(policy_detection_steps["red"]),
+        "termination_reason": termination_reason,
     }
 
     return {
@@ -772,6 +826,7 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
     termination_cfg = cfg.get("termination", {})
     disengage_range_m = termination_cfg.get("disengage_range_m")
     disengage_hold_s = float(termination_cfg.get("disengage_hold_s", 0.0))
+    disengage_assign_loss = bool(termination_cfg.get("disengage_assign_loss", False))
     min_specific_energy = termination_cfg.get("min_specific_energy_j_kg")
     energy_hold_s = float(termination_cfg.get("energy_hold_s", 0.0))
     ammo_depletion_ends = bool(termination_cfg.get("ammo_depletion_ends", False))
@@ -964,55 +1019,66 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
             reward_blue += kill_reward
             reward_red += death_penalty
             terminated = True
+            termination_reason = "red_killed"
         if blue_health <= 0:
             reward_blue += death_penalty
             reward_red += kill_reward
             terminated = True
+            termination_reason = "blue_killed"
         if mutual_kill_penalty > 0.0 and blue_health <= 0 and red_health <= 0:
             reward_blue -= mutual_kill_penalty
             reward_red -= mutual_kill_penalty
+            termination_reason = "mutual_kill"
 
-        if disengage_range_m is not None:
-            if range_m > disengage_range_m:
-                disengage_timer += dt
-            else:
-                disengage_timer = 0.0
-            if disengage_hold_s <= 0.0 or disengage_timer >= disengage_hold_s:
-                terminated = True
-
-        if min_specific_energy is not None:
-            blue_energy = 0.5 * blue_obs.speed * blue_obs.speed + 9.80665 * blue_obs.z
-            red_energy = 0.5 * red_obs.speed * red_obs.speed + 9.80665 * red_obs.z
-            if blue_energy < min_specific_energy:
-                energy_timer_blue += dt
-            else:
-                energy_timer_blue = 0.0
-            if red_energy < min_specific_energy:
-                energy_timer_red += dt
-            else:
-                energy_timer_red = 0.0
-            if energy_hold_s <= 0.0:
-                if blue_energy < min_specific_energy or red_energy < min_specific_energy:
+        if not terminated:
+            if disengage_range_m is not None:
+                if range_m > disengage_range_m:
+                    disengage_timer += dt
+                else:
+                    disengage_timer = 0.0
+                if disengage_hold_s <= 0.0 or disengage_timer >= disengage_hold_s:
                     terminated = True
-            elif energy_timer_blue >= energy_hold_s or energy_timer_red >= energy_hold_s:
-                terminated = True
+                    termination_reason = "disengage"
+                    if disengage_assign_loss:
+                        disengage_loser = determine_disengage_loser(blue_obs, red_obs, range_m)
 
-        if no_detection_hold_s > 0.0:
-            if not blue_det and not red_det:
-                no_detection_timer += dt
-            else:
-                no_detection_timer = 0.0
-            if no_detection_timer >= no_detection_hold_s:
-                terminated = True
-
-        if ammo_depletion_ends:
-            if blue_obs.missiles_remaining == 0 and red_obs.missiles_remaining == 0:
-                missiles_in_flight = [
-                    unit for unit in kernel.get_all_units()
-                    if unit.type == int(ef_py.UnitType.Missile)
-                ]
-                if not missiles_in_flight:
+            if min_specific_energy is not None and not terminated:
+                blue_energy = 0.5 * blue_obs.speed * blue_obs.speed + 9.80665 * blue_obs.z
+                red_energy = 0.5 * red_obs.speed * red_obs.speed + 9.80665 * red_obs.z
+                if blue_energy < min_specific_energy:
+                    energy_timer_blue += dt
+                else:
+                    energy_timer_blue = 0.0
+                if red_energy < min_specific_energy:
+                    energy_timer_red += dt
+                else:
+                    energy_timer_red = 0.0
+                if energy_hold_s <= 0.0:
+                    if blue_energy < min_specific_energy or red_energy < min_specific_energy:
+                        terminated = True
+                        termination_reason = "energy_low"
+                elif energy_timer_blue >= energy_hold_s or energy_timer_red >= energy_hold_s:
                     terminated = True
+                    termination_reason = "energy_low"
+
+            if no_detection_hold_s > 0.0 and not terminated:
+                if not blue_det and not red_det:
+                    no_detection_timer += dt
+                else:
+                    no_detection_timer = 0.0
+                if no_detection_timer >= no_detection_hold_s:
+                    terminated = True
+                    termination_reason = "no_detection"
+
+            if ammo_depletion_ends and not terminated:
+                if blue_obs.missiles_remaining == 0 and red_obs.missiles_remaining == 0:
+                    missiles_in_flight = [
+                        unit for unit in kernel.get_all_units()
+                        if unit.type == int(ef_py.UnitType.Missile)
+                    ]
+                    if not missiles_in_flight:
+                        terminated = True
+                        termination_reason = "ammo_depletion"
 
         if terminated and blue_health > 0 and red_health > 0 and draw_penalty != 0.0:
             reward_blue += draw_penalty
@@ -1030,10 +1096,16 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         if terminated:
             break
 
+    if termination_reason is None:
+        termination_reason = "max_steps"
+
     blue_side_dead = blue_health <= 0
     red_side_dead = red_health <= 0
 
-    if blue_side_dead and not red_side_dead:
+    winner = None
+    if termination_reason == "disengage" and disengage_assign_loss and disengage_loser in ("blue", "red"):
+        winner = red_side_policy_name if disengage_loser == "blue" else blue_side_policy_name
+    elif blue_side_dead and not red_side_dead:
         winner = red_side_policy_name
     elif red_side_dead and not blue_side_dead:
         winner = blue_side_policy_name
@@ -1042,10 +1114,6 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
             winner = blue_side_policy_name
         elif red_health > blue_health:
             winner = red_side_policy_name
-        else:
-            winner = None
-    else:
-        winner = None
 
     outcome = "draw"
     if winner == "blue":
@@ -1066,6 +1134,7 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         "red_policy_fire_count": int(policy_fire_count["red"]),
         "blue_policy_detection_steps": int(policy_detection_steps["blue"]),
         "red_policy_detection_steps": int(policy_detection_steps["red"]),
+        "termination_reason": termination_reason,
     }
     return (total_reward_blue, total_reward_red,
             blue_log_probs, blue_entropies, blue_rewards,
@@ -1454,6 +1523,10 @@ def main():
             avg_red_fire = float(np.mean([s.get("red_policy_fire_count", s.get("red_fire_count", 0.0)) for s in batch_stats])) if batch_stats else 0.0
             avg_blue_det = float(np.mean([s.get("blue_policy_detection_steps", s.get("blue_detection_steps", 0.0)) for s in batch_stats])) if batch_stats else 0.0
             avg_red_det = float(np.mean([s.get("red_policy_detection_steps", s.get("red_detection_steps", 0.0)) for s in batch_stats])) if batch_stats else 0.0
+            termination_counts = {}
+            for s in batch_stats:
+                reason = s.get("termination_reason", "unknown")
+                termination_counts[reason] = termination_counts.get(reason, 0) + 1
 
             record = {
                 "update": episode + 1,
@@ -1469,6 +1542,7 @@ def main():
                 "avg_blue_detection_steps": avg_blue_det,
                 "avg_red_detection_steps": avg_red_det,
                 "history_opponent_rate": history_used_count / max(1, len(batch_stats)),
+                "termination_reasons": termination_counts,
             }
             write_jsonl(log_path, record)
             render_progress(episode + 1, episodes, record)

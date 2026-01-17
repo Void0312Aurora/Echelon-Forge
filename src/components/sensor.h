@@ -19,6 +19,7 @@ struct Detection {
     uint64_t target_id; 
     double range;           // Meters
     double bearing;         // Degrees (relative azimuth, NAV: -180..180)
+    double elevation;       // Degrees (relative elevation, -90..90)
     double timestamp;       // Simulation time
 };
 

@@ -520,13 +520,7 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
             
             // Sensor already provides relative azimuth in NAV degrees.
             track.azimuth = det.bearing;
-            
-            // Elevation: Need Target Z. Detection struct currently doesn't store Target Z (only 2D bearing).
-            // Sensor System (Phase 1/2) only calculated 2D bearing range.
-            // Temp-03.md says "don't give true pos".
-            // So we can assume Elevation is 0 OR update Detection to include Elevation.
-            // For now, let's leave elevation 0.0 if not available in Detection.
-            track.elevation = 0.0;
+            track.elevation = det.elevation;
             
             obs.contacts.push_back(track);
         }
