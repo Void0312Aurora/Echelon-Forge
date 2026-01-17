@@ -450,6 +450,14 @@ def run_episode_worker(payload):
     policy_fire_count = {"blue": 0, "red": 0}
     policy_detection_steps = {"blue": 0, "red": 0}
     policy_return = {"blue": 0.0, "red": 0.0}
+    blue_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
+    red_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
+    blue_mask_total = 0
+    red_mask_total = 0
+    blue_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
+    red_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
+    blue_mask_total = 0
+    red_mask_total = 0
 
     def record_step(policy_name, obs, raw, reward, masked):
         if policy_name == "blue" and train_blue:
@@ -492,32 +500,34 @@ def run_episode_worker(payload):
 
         blue_masked = False
         red_masked = False
-        blue_has_track = blue_track is not None
-        red_has_track = red_track is not None
-        if mask_fire and not blue_obs.can_fire:
-            blue_action[3] = -1.0
-            blue_raw[3] = 0.0
-            blue_masked = True
-        if mask_fire and not red_obs.can_fire:
-            red_action[3] = -1.0
-            red_raw[3] = 0.0
-            red_masked = True
-        if mask_fire and not blue_has_track:
-            blue_action[3] = -1.0
-            blue_raw[3] = 0.0
-            blue_masked = True
-        if mask_fire and not red_has_track:
-            red_action[3] = -1.0
-            red_raw[3] = 0.0
-            red_masked = True
-        if mask_fire and not in_launch_envelope(blue_track, launch_envelope):
-            blue_action[3] = -1.0
-            blue_raw[3] = 0.0
-            blue_masked = True
-        if mask_fire and not in_launch_envelope(red_track, launch_envelope):
-            red_action[3] = -1.0
-            red_raw[3] = 0.0
-            red_masked = True
+        if mask_fire:
+            blue_mask_reason = None
+            if not blue_obs.can_fire:
+                blue_mask_reason = "can_fire"
+            elif blue_track is None:
+                blue_mask_reason = "no_track"
+            elif not in_launch_envelope(blue_track, launch_envelope):
+                blue_mask_reason = "envelope"
+            if blue_mask_reason:
+                blue_action[3] = -1.0
+                blue_raw[3] = 0.0
+                blue_masked = True
+                blue_mask_total += 1
+                blue_mask_counts[blue_mask_reason] += 1
+
+            red_mask_reason = None
+            if not red_obs.can_fire:
+                red_mask_reason = "can_fire"
+            elif red_track is None:
+                red_mask_reason = "no_track"
+            elif not in_launch_envelope(red_track, launch_envelope):
+                red_mask_reason = "envelope"
+            if red_mask_reason:
+                red_action[3] = -1.0
+                red_raw[3] = 0.0
+                red_masked = True
+                red_mask_total += 1
+                red_mask_counts[red_mask_reason] += 1
 
         blue_fire = (blue_action[3] + 1.0) * 0.5
         red_fire = (red_action[3] + 1.0) * 0.5
@@ -726,6 +736,14 @@ def run_episode_worker(payload):
         "blue_policy_detection_steps": int(policy_detection_steps["blue"]),
         "red_policy_detection_steps": int(policy_detection_steps["red"]),
         "termination_reason": termination_reason,
+        "blue_fire_mask_total": int(blue_mask_total),
+        "red_fire_mask_total": int(red_mask_total),
+        "blue_fire_mask_can_fire": int(blue_mask_counts["can_fire"]),
+        "blue_fire_mask_no_track": int(blue_mask_counts["no_track"]),
+        "blue_fire_mask_envelope": int(blue_mask_counts["envelope"]),
+        "red_fire_mask_can_fire": int(red_mask_counts["can_fire"]),
+        "red_fire_mask_no_track": int(red_mask_counts["no_track"]),
+        "red_fire_mask_envelope": int(red_mask_counts["envelope"]),
     }
 
     return {
@@ -908,36 +926,36 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         blue_action, blue_logp, blue_entropy = act_for_side(blue_side_policy, obs_blue, blue_side_train)
         red_action, red_logp, red_entropy = act_for_side(red_side_policy, obs_red, red_side_train)
 
-        if mask_fire and not blue_obs.can_fire:
-            blue_action[3] = -1.0
-            if blue_side_train and blue_logp is not None:
-                blue_logp = blue_logp[:3]
-                blue_entropy = blue_entropy[:3]
-        if mask_fire and not red_obs.can_fire:
-            red_action[3] = -1.0
-            if red_side_train and red_logp is not None:
-                red_logp = red_logp[:3]
-                red_entropy = red_entropy[:3]
-        if mask_fire and blue_track is None:
-            blue_action[3] = -1.0
-            if blue_side_train and blue_logp is not None:
-                blue_logp = blue_logp[:3]
-                blue_entropy = blue_entropy[:3]
-        if mask_fire and red_track is None:
-            red_action[3] = -1.0
-            if red_side_train and red_logp is not None:
-                red_logp = red_logp[:3]
-                red_entropy = red_entropy[:3]
-        if mask_fire and not in_launch_envelope(blue_track, launch_envelope):
-            blue_action[3] = -1.0
-            if blue_side_train and blue_logp is not None:
-                blue_logp = blue_logp[:3]
-                blue_entropy = blue_entropy[:3]
-        if mask_fire and not in_launch_envelope(red_track, launch_envelope):
-            red_action[3] = -1.0
-            if red_side_train and red_logp is not None:
-                red_logp = red_logp[:3]
-                red_entropy = red_entropy[:3]
+        if mask_fire:
+            blue_mask_reason = None
+            if not blue_obs.can_fire:
+                blue_mask_reason = "can_fire"
+            elif blue_track is None:
+                blue_mask_reason = "no_track"
+            elif not in_launch_envelope(blue_track, launch_envelope):
+                blue_mask_reason = "envelope"
+            if blue_mask_reason:
+                blue_action[3] = -1.0
+                if blue_side_train and blue_logp is not None:
+                    blue_logp = blue_logp[:3]
+                    blue_entropy = blue_entropy[:3]
+                blue_mask_total += 1
+                blue_mask_counts[blue_mask_reason] += 1
+
+            red_mask_reason = None
+            if not red_obs.can_fire:
+                red_mask_reason = "can_fire"
+            elif red_track is None:
+                red_mask_reason = "no_track"
+            elif not in_launch_envelope(red_track, launch_envelope):
+                red_mask_reason = "envelope"
+            if red_mask_reason:
+                red_action[3] = -1.0
+                if red_side_train and red_logp is not None:
+                    red_logp = red_logp[:3]
+                    red_entropy = red_entropy[:3]
+                red_mask_total += 1
+                red_mask_counts[red_mask_reason] += 1
 
         blue_fire = (blue_action[3] + 1.0) * 0.5
         red_fire = (red_action[3] + 1.0) * 0.5
@@ -1135,6 +1153,14 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         "blue_policy_detection_steps": int(policy_detection_steps["blue"]),
         "red_policy_detection_steps": int(policy_detection_steps["red"]),
         "termination_reason": termination_reason,
+        "blue_fire_mask_total": int(blue_mask_total),
+        "red_fire_mask_total": int(red_mask_total),
+        "blue_fire_mask_can_fire": int(blue_mask_counts["can_fire"]),
+        "blue_fire_mask_no_track": int(blue_mask_counts["no_track"]),
+        "blue_fire_mask_envelope": int(blue_mask_counts["envelope"]),
+        "red_fire_mask_can_fire": int(red_mask_counts["can_fire"]),
+        "red_fire_mask_no_track": int(red_mask_counts["no_track"]),
+        "red_fire_mask_envelope": int(red_mask_counts["envelope"]),
     }
     return (total_reward_blue, total_reward_red,
             blue_log_probs, blue_entropies, blue_rewards,
@@ -1523,6 +1549,14 @@ def main():
             avg_red_fire = float(np.mean([s.get("red_policy_fire_count", s.get("red_fire_count", 0.0)) for s in batch_stats])) if batch_stats else 0.0
             avg_blue_det = float(np.mean([s.get("blue_policy_detection_steps", s.get("blue_detection_steps", 0.0)) for s in batch_stats])) if batch_stats else 0.0
             avg_red_det = float(np.mean([s.get("red_policy_detection_steps", s.get("red_detection_steps", 0.0)) for s in batch_stats])) if batch_stats else 0.0
+            avg_blue_mask_total = float(np.mean([s.get("blue_fire_mask_total", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_red_mask_total = float(np.mean([s.get("red_fire_mask_total", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_blue_mask_can_fire = float(np.mean([s.get("blue_fire_mask_can_fire", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_blue_mask_no_track = float(np.mean([s.get("blue_fire_mask_no_track", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_blue_mask_envelope = float(np.mean([s.get("blue_fire_mask_envelope", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_red_mask_can_fire = float(np.mean([s.get("red_fire_mask_can_fire", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_red_mask_no_track = float(np.mean([s.get("red_fire_mask_no_track", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_red_mask_envelope = float(np.mean([s.get("red_fire_mask_envelope", 0.0) for s in batch_stats])) if batch_stats else 0.0
             termination_counts = {}
             for s in batch_stats:
                 reason = s.get("termination_reason", "unknown")
@@ -1541,6 +1575,14 @@ def main():
                 "avg_red_fire": avg_red_fire,
                 "avg_blue_detection_steps": avg_blue_det,
                 "avg_red_detection_steps": avg_red_det,
+                "avg_blue_fire_mask": avg_blue_mask_total,
+                "avg_red_fire_mask": avg_red_mask_total,
+                "avg_blue_fire_mask_can_fire": avg_blue_mask_can_fire,
+                "avg_blue_fire_mask_no_track": avg_blue_mask_no_track,
+                "avg_blue_fire_mask_envelope": avg_blue_mask_envelope,
+                "avg_red_fire_mask_can_fire": avg_red_mask_can_fire,
+                "avg_red_fire_mask_no_track": avg_red_mask_no_track,
+                "avg_red_fire_mask_envelope": avg_red_mask_envelope,
                 "history_opponent_rate": history_used_count / max(1, len(batch_stats)),
                 "termination_reasons": termination_counts,
             }
