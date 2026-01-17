@@ -84,7 +84,7 @@ public:
     std::vector<Detection> get_detections(uint64_t entity_id); // Sensor Output
     std::vector<double> get_unit_velocity(uint64_t entity_id); // Returns [vx, vy, vz]
     double get_unit_heading(uint64_t entity_id);   // Returns heading
-    std::map<std::string, double> get_unit_health(uint64_t entity_id);
+    std::vector<double> get_unit_health(uint64_t entity_id); // Returns [current, max]
     std::vector<double> get_unit_fuel(uint64_t entity_id); // Returns [internal, max_internal, external, max_external]
     std::vector<CommPacket> get_unit_messages(uint64_t entity_id);
     void send_message_command(uint64_t entity_id, uint64_t recipient_id, int msg_type, uint64_t msg_arg);

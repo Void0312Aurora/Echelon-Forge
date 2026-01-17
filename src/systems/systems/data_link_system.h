@@ -76,6 +76,11 @@
                     
                     if (dist_km > horizon_km) continue;
 
+                    // Security Check: Alliance Match
+                    const Alliance* s_side = sender.entity.get<Alliance>();
+                    const Alliance* r_side = receiver.entity.get<Alliance>();
+                    if (!s_side || !r_side || s_side->side != r_side->side) continue;
+
                     // --- TASK 1: FUSION ---
                     if (has_contacts) {
                         std::vector<uint64_t> receiver_known_ids;

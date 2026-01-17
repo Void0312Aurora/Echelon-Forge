@@ -67,9 +67,7 @@ SimulationKernel::SimulationKernel()
     ecs.component<Jammer>();
     ecs.component<Countermeasures>();
     ecs.component<RWR>();
-    ecs.component<RWR>();
     ecs.component<RCSProfile>();
-    ecs.component<RWR>();
     ecs.component<Lifetime>();
     ecs.component<FuelSystem>();
     ecs.component<MassProperties>();
@@ -79,8 +77,6 @@ SimulationKernel::SimulationKernel()
 
     ecs.component<Sensor>();
     ecs.component<ContactList>();
-    ecs.component<FlightModel>(); 
-    ecs.component<Score>();
     ecs.component<FlightModel>(); 
     ecs.component<Score>();
     ecs.component<DataLink>(); // New Component
@@ -511,16 +507,14 @@ int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
     return -1;
 }
 
-std::map<std::string, double> SimulationKernel::get_unit_health(uint64_t entity_id) {
+std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    std::map<std::string, double> health_data;
-    if (!e.is_valid()) return health_data;
+    if (!e.is_valid()) return {0.0, 0.0};
 
     if (const Health* h = e.get<Health>()) {
-        health_data["current_hp"] = h->current_hp;
-        health_data["max_hp"] = h->max_hp;
+        return {h->current_hp, h->max_hp};
     }
-    return health_data;
+    return {0.0, 0.0};
 }
 
 std::vector<double> SimulationKernel::get_unit_fuel(uint64_t entity_id) {
