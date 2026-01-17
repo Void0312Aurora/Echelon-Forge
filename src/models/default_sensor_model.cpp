@@ -4,8 +4,6 @@
 #include <cmath>
 #include <cstdint>
 
-#include "components/tags.h"
-
 namespace {
 
 #ifndef M_PI
@@ -54,11 +52,11 @@ public:
               const Sensor& sensor,
               ContactList& out_contacts,
               double current_time) override {
-        auto target_query = world.query<Transform, SimObject>();
+        auto target_query = world.query<const KeyEntity, const Transform>();
 
         target_query.each([&](flecs::entity target_e,
-                              const Transform& target_t,
-                              const SimObject& /*tag*/) {
+                              const KeyEntity& /*key*/,
+                              const Transform& target_t) {
             if (target_e == owner) return;
             if (sensor.max_range <= 0.0 || sensor.detection_prob <= 0.0) return;
 

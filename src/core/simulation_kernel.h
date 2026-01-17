@@ -53,6 +53,8 @@ public:
     AgentObservation get_agent_observation(uint64_t entity_id); // RL Observation
     std::vector<Detection> get_detections(uint64_t entity_id); // Sensor Output
     std::vector<double> get_unit_health(uint64_t entity_id);   // Returns [current, max]
+    double debug_get_last_scan_time(uint64_t entity_id);
+    int debug_get_contact_count(uint64_t entity_id);
 
     // Weapon Interface: Fire missile
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);

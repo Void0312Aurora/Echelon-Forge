@@ -117,7 +117,9 @@ NB_MODULE(ef_py, m) {
         .def("get_all_units", &SimulationKernel::get_all_units, "Get all units state")
         .def("get_detections", &SimulationKernel::get_detections, "Get unit sensor contacts")
         .def("get_unit_health", &SimulationKernel::get_unit_health, "Get unit health [current, max]")
-        .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation");
+        .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
+        .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time, "Debug: get sensor last_scan_time")
+        .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size");
     
     nb::class_<UnitData>(m, "UnitData")
         .def_ro("id", &UnitData::id)

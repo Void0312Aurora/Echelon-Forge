@@ -8,13 +8,13 @@
   "unit_definitions": "content/units/default_units.json",
   "log_level": "warn",
   "output_dir": "logs/selfplay",
-  "checkpoint_interval": 50,
+  "checkpoint_interval": 250,
   "resume_dir": "",
   "policy": {
     "obs_dim": 12,
     "act_dim": 4,
     "hidden_sizes": [256, 256],
-    "log_std_init": -0.5,
+    "log_std_init": -1.5,
     "use_cuda": true
   },
   "training": {
@@ -35,14 +35,22 @@
       "velocity": [-250.0, 0.0, 0.0]
     }
   },
+  "spawn_randomization": {
+    "enabled": true,
+    "separation_m": [8000.0, 14000.0],
+    "lateral_m": 3000.0,
+    "alt_m": 500.0,
+    "speed_delta_mps": 20.0
+  },
   "reward": {
     "distance_weight": -0.00001,
     "detection_reward": 0.05,
     "action_penalty": 0.005,
     "fire_penalty": 2.0,
     "damage_reward": 8.0,
+    "mutual_kill_penalty": 400.0,
     "kill_reward": 800.0,
-    "death_penalty": -800.0
+    "death_penalty": -1200.0
   },
   "termination": {
     "ammo_depletion_ends": true

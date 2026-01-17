@@ -11,6 +11,7 @@
 #include "components/performance.h"
 #include "components/scoring.h"
 #include "components/sensor.h"
+#include "components/weapon.h"
 #include "content/unit_definition_loader.h"
 #include "core/unit_factory.h"
 
@@ -133,6 +134,7 @@ public:
         }
         if (def.has_ammo) {
             e.set<Ammo>(def.ammo);
+            e.set<WeaponCooldown>({2.0, -1.0});
         }
         if (def.has_command_link) {
             e.set<CommandLink>(def.command_link);

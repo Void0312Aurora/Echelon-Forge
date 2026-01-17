@@ -23,6 +23,44 @@ sys.path.append(os.path.join(repo_root, "build"))
 import ef_py
 
 
+def sample_spawn(rng, cfg, blue_pos, blue_vel, red_pos, red_vel):
+    random_cfg = cfg.get("spawn_randomization", {}) if isinstance(cfg, dict) else {}
+    if not random_cfg or not bool(random_cfg.get("enabled", False)):
+        return blue_pos, blue_vel, red_pos, red_vel
+
+    sep = random_cfg.get("separation_m", [8000.0, 20000.0])
+    if isinstance(sep, (int, float)):
+        sep_min = sep_max = float(sep)
+    else:
+        sep_min = float(sep[0])
+        sep_max = float(sep[1])
+    sep_m = float(rng.uniform(min(sep_min, sep_max), max(sep_min, sep_max)))
+    lateral_m = float(random_cfg.get("lateral_m", 0.0))
+    alt_m = float(random_cfg.get("alt_m", 0.0))
+    speed_delta = float(random_cfg.get("speed_delta_mps", 0.0))
+
+    cx = 0.5 * (float(blue_pos[0]) + float(red_pos[0]))
+    cy = 0.5 * (float(blue_pos[1]) + float(red_pos[1]))
+    cz = 0.5 * (float(blue_pos[2]) + float(red_pos[2]))
+
+    dy = float(rng.uniform(-lateral_m, lateral_m)) if lateral_m > 0.0 else 0.0
+    dz_blue = float(rng.uniform(-alt_m, alt_m)) if alt_m > 0.0 else 0.0
+    dz_red = float(rng.uniform(-alt_m, alt_m)) if alt_m > 0.0 else 0.0
+
+    blue_pos = [cx - 0.5 * sep_m, cy - 0.5 * dy, cz + dz_blue]
+    red_pos = [cx + 0.5 * sep_m, cy + 0.5 * dy, cz + dz_red]
+
+    blue_speed = float(np.linalg.norm(blue_vel))
+    red_speed = float(np.linalg.norm(red_vel))
+    if speed_delta > 0.0:
+        blue_speed = max(50.0, blue_speed + float(rng.uniform(-speed_delta, speed_delta)))
+        red_speed = max(50.0, red_speed + float(rng.uniform(-speed_delta, speed_delta)))
+
+    blue_vel = [blue_speed, 0.0, 0.0]
+    red_vel = [-red_speed, 0.0, 0.0]
+    return blue_pos, blue_vel, red_pos, red_vel
+
+
 def render_progress(current, total, metrics):
     message = (
         f"{current}/{total} "
@@ -80,7 +118,8 @@ def build_observation(self_obs, target_obs):
 
 
 class MLPPolicy(nn.Module):
-    def __init__(self, obs_dim, act_dim, hidden_sizes, log_std_init, device):
+    def __init__(self, obs_dim, act_dim, hidden_sizes, log_std_init, device,
+                 log_std_min=-3.0, log_std_max=0.5):
         super().__init__()
         layers = []
         input_dim = obs_dim
@@ -91,13 +130,15 @@ class MLPPolicy(nn.Module):
         self.backbone = nn.Sequential(*layers)
         self.mean_head = nn.Linear(input_dim, act_dim)
         self.log_std = nn.Parameter(torch.full((act_dim,), log_std_init))
+        self.log_std_min = float(log_std_min)
+        self.log_std_max = float(log_std_max)
         self.device = device
         self.to(device)
 
     def forward(self, obs_tensor):
         x = self.backbone(obs_tensor)
-        mean = torch.tanh(self.mean_head(x))
-        log_std = torch.clamp(self.log_std, -4.0, 2.0)
+        mean = self.mean_head(x)
+        log_std = torch.clamp(self.log_std, self.log_std_min, self.log_std_max)
         std = torch.exp(log_std)
         return mean, std
 
@@ -106,10 +147,10 @@ class MLPPolicy(nn.Module):
         mean, std = self(obs_tensor)
         dist = torch.distributions.Normal(mean, std)
         raw_action = dist.sample()
-        log_probs = dist.log_prob(raw_action).squeeze(0)
-        entropy = dist.entropy().squeeze(0)
-        action = torch.clamp(raw_action, -1.0, 1.0)
-        return action.squeeze(0).cpu().numpy(), log_probs, entropy
+        action = torch.tanh(raw_action)
+        log_probs = dist.log_prob(raw_action) - torch.log(1.0 - action * action + 1e-6)
+        entropy = dist.entropy()
+        return action.squeeze(0).cpu().numpy(), log_probs.squeeze(0), entropy.squeeze(0)
 
     def act_no_grad(self, obs_np):
         with torch.no_grad():
@@ -117,14 +158,14 @@ class MLPPolicy(nn.Module):
             mean, std = self(obs_tensor)
             dist = torch.distributions.Normal(mean, std)
             raw_action = dist.sample()
-            action = torch.clamp(raw_action, -1.0, 1.0)
+            action = torch.tanh(raw_action)
             return action.squeeze(0).cpu().numpy()
 
     def act_mean(self, obs_np):
         with torch.no_grad():
             obs_tensor = torch.as_tensor(obs_np, dtype=torch.float32, device=self.device).unsqueeze(0)
             mean, _ = self(obs_tensor)
-            action = torch.clamp(mean, -1.0, 1.0)
+            action = torch.tanh(mean)
             return action.squeeze(0).cpu().numpy()
 
 
@@ -178,7 +219,8 @@ def compute_log_probs(policy, obs_batch, raw_batch, fire_mask_batch):
     raw_tensor = torch.as_tensor(raw_batch, dtype=torch.float32, device=policy.device)
     mean, std = policy(obs_tensor)
     dist = torch.distributions.Normal(mean, std)
-    log_probs = dist.log_prob(raw_tensor)
+    action = torch.tanh(raw_tensor)
+    log_probs = dist.log_prob(raw_tensor) - torch.log(1.0 - action * action + 1e-6)
     entropies = dist.entropy()
     if fire_mask_batch is not None and len(fire_mask_batch):
         mask = torch.as_tensor(fire_mask_batch, dtype=torch.bool, device=policy.device)
@@ -193,7 +235,7 @@ def _sample_action(policy, obs_np):
     mean, std = policy(obs_tensor)
     dist = torch.distributions.Normal(mean, std)
     raw_action = dist.sample()
-    action = torch.clamp(raw_action, -1.0, 1.0)
+    action = torch.tanh(raw_action)
     return raw_action.squeeze(0).cpu().numpy(), action.squeeze(0).cpu().numpy()
 
 
@@ -201,6 +243,7 @@ def run_episode_worker(payload):
     import ef_py as ef_local
 
     torch.set_num_threads(1)
+    rng = np.random.default_rng(int(payload.get("seed", 0)))
     cfg = payload["cfg"]
     unit_defs_path = payload["unit_defs_path"]
     seed = payload["seed"]
@@ -217,15 +260,21 @@ def run_episode_worker(payload):
     act_dim = int(policy_cfg.get("act_dim", 4))
     hidden_sizes = policy_cfg.get("hidden_sizes", [64, 64])
     log_std_init = float(policy_cfg.get("log_std_init", -0.5))
+    log_std_min = float(policy_cfg.get("log_std_min", -3.0))
+    log_std_max = float(policy_cfg.get("log_std_max", 0.5))
 
     blue_policy = MLPPolicy(obs_dim=obs_dim, act_dim=act_dim,
                             hidden_sizes=hidden_sizes,
                             log_std_init=log_std_init,
-                            device=torch.device("cpu"))
+                            device=torch.device("cpu"),
+                            log_std_min=log_std_min,
+                            log_std_max=log_std_max)
     red_policy = MLPPolicy(obs_dim=obs_dim, act_dim=act_dim,
                            hidden_sizes=hidden_sizes,
                            log_std_init=log_std_init,
-                           device=torch.device("cpu"))
+                           device=torch.device("cpu"),
+                           log_std_min=log_std_min,
+                           log_std_max=log_std_max)
     blue_policy.load_state_dict(blue_state)
     red_policy.load_state_dict(red_state)
     blue_policy.eval()
@@ -252,6 +301,7 @@ def run_episode_worker(payload):
     blue_vel = blue_spawn.get("velocity", [250.0, 0.0, 0.0])
     red_pos = red_spawn.get("position", [10000.0, 0.0, 5000.0])
     red_vel = red_spawn.get("velocity", [-250.0, 0.0, 0.0])
+    blue_pos, blue_vel, red_pos, red_vel = sample_spawn(rng, cfg, blue_pos, blue_vel, red_pos, red_vel)
 
     blue_id = kernel.spawn_unit(ef_local.Side.Blue, ef_local.UnitType.Aircraft,
                                 blue_pos[0], blue_pos[1], blue_pos[2],
@@ -275,6 +325,7 @@ def run_episode_worker(payload):
     action_penalty = float(reward_cfg.get("action_penalty", 0.01))
     fire_penalty = float(reward_cfg.get("fire_penalty", 0.0))
     damage_reward = float(reward_cfg.get("damage_reward", 0.0))
+    mutual_kill_penalty = float(reward_cfg.get("mutual_kill_penalty", 0.0))
     kill_reward = float(reward_cfg.get("kill_reward", 100.0))
     death_penalty = float(reward_cfg.get("death_penalty", -100.0))
 
@@ -339,13 +390,23 @@ def run_episode_worker(payload):
 
         blue_masked = False
         red_masked = False
+        blue_has_track = any(t.id == red_id for t in blue_obs.contacts)
+        red_has_track = any(t.id == blue_id for t in red_obs.contacts)
         if mask_fire and not blue_obs.can_fire:
             blue_action[3] = -1.0
-            blue_raw[3] = blue_action[3]
+            blue_raw[3] = 0.0
             blue_masked = True
         if mask_fire and not red_obs.can_fire:
             red_action[3] = -1.0
-            red_raw[3] = red_action[3]
+            red_raw[3] = 0.0
+            red_masked = True
+        if mask_fire and not blue_has_track:
+            blue_action[3] = -1.0
+            blue_raw[3] = 0.0
+            blue_masked = True
+        if mask_fire and not red_has_track:
+            red_action[3] = -1.0
+            red_raw[3] = 0.0
             red_masked = True
 
         blue_fire = (blue_action[3] + 1.0) * 0.5
@@ -354,14 +415,16 @@ def run_episode_worker(payload):
         kernel.set_action(blue_id, blue_action[0], blue_action[1], blue_action[2], blue_fire)
         kernel.set_action(red_id, red_action[0], red_action[1], red_action[2], red_fire)
 
-        blue_fired = fire_enabled and blue_fire > 0.5 and blue_obs.can_fire
-        red_fired = fire_enabled and red_fire > 0.5 and red_obs.can_fire
-        if blue_fired:
-            kernel.fire_missile(blue_id, red_id)
-            blue_fire_count += 1
-        if red_fired:
-            kernel.fire_missile(red_id, blue_id)
-            red_fire_count += 1
+        blue_fired = False
+        red_fired = False
+        if fire_enabled and blue_fire > 0.5 and blue_obs.can_fire:
+            if kernel.fire_missile(blue_id, red_id) != 0:
+                blue_fired = True
+                blue_fire_count += 1
+        if fire_enabled and red_fire > 0.5 and red_obs.can_fire:
+            if kernel.fire_missile(red_id, blue_id) != 0:
+                red_fired = True
+                red_fire_count += 1
 
         kernel.step()
 
@@ -413,6 +476,9 @@ def run_episode_worker(payload):
             reward_blue += death_penalty
             reward_red += kill_reward
             terminated = True
+        if mutual_kill_penalty > 0.0 and blue_health <= 0 and red_health <= 0:
+            reward_blue -= mutual_kill_penalty
+            reward_red -= mutual_kill_penalty
 
         policy_return[blue_side_policy_name] += reward_blue
         policy_return[red_side_policy_name] += reward_red
@@ -473,6 +539,16 @@ def run_episode_worker(payload):
     else:
         blue_policy_win = red_side_dead
         red_policy_win = blue_side_dead
+
+    if not blue_side_dead and not red_side_dead:
+        if blue_health > red_health:
+            winner = blue_side_policy_name
+        elif red_health > blue_health:
+            winner = red_side_policy_name
+        else:
+            winner = None
+        blue_policy_win = (winner == "blue")
+        red_policy_win = (winner == "red")
 
     outcome = "draw"
     if blue_policy_win and not red_policy_win:
@@ -562,6 +638,7 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
     blue_vel = blue_spawn.get("velocity", [250.0, 0.0, 0.0])
     red_pos = red_spawn.get("position", [10000.0, 0.0, 5000.0])
     red_vel = red_spawn.get("velocity", [-250.0, 0.0, 0.0])
+    blue_pos, blue_vel, red_pos, red_vel = sample_spawn(rng, cfg, blue_pos, blue_vel, red_pos, red_vel)
 
     blue_id = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft,
                                 blue_pos[0], blue_pos[1], blue_pos[2],
@@ -608,6 +685,7 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
     action_penalty = float(reward_cfg.get("action_penalty", 0.01))
     fire_penalty = float(reward_cfg.get("fire_penalty", 0.0))
     damage_reward = float(reward_cfg.get("damage_reward", 0.0))
+    mutual_kill_penalty = float(reward_cfg.get("mutual_kill_penalty", 0.0))
     kill_reward = float(reward_cfg.get("kill_reward", 100.0))
     death_penalty = float(reward_cfg.get("death_penalty", -100.0))
     fire_enabled = bool(cfg.get("fire_enabled", True))
@@ -672,6 +750,16 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
             if red_side_train and red_logp is not None:
                 red_logp = red_logp[:3]
                 red_entropy = red_entropy[:3]
+        if mask_fire and not any(t.id == red_id for t in blue_obs.contacts):
+            blue_action[3] = -1.0
+            if blue_side_train and blue_logp is not None:
+                blue_logp = blue_logp[:3]
+                blue_entropy = blue_entropy[:3]
+        if mask_fire and not any(t.id == blue_id for t in red_obs.contacts):
+            red_action[3] = -1.0
+            if red_side_train and red_logp is not None:
+                red_logp = red_logp[:3]
+                red_entropy = red_entropy[:3]
 
         blue_fire = (blue_action[3] + 1.0) * 0.5
         red_fire = (red_action[3] + 1.0) * 0.5
@@ -679,14 +767,16 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         kernel.set_action(blue_id, blue_action[0], blue_action[1], blue_action[2], blue_fire)
         kernel.set_action(red_id, red_action[0], red_action[1], red_action[2], red_fire)
 
-        blue_fired = fire_enabled and blue_fire > 0.5 and blue_obs.can_fire
-        red_fired = fire_enabled and red_fire > 0.5 and red_obs.can_fire
-        if blue_fired:
-            kernel.fire_missile(blue_id, red_id)
-            blue_fire_count += 1
-        if red_fired:
-            kernel.fire_missile(red_id, blue_id)
-            red_fire_count += 1
+        blue_fired = False
+        red_fired = False
+        if fire_enabled and blue_fire > 0.5 and blue_obs.can_fire:
+            if kernel.fire_missile(blue_id, red_id) != 0:
+                blue_fired = True
+                blue_fire_count += 1
+        if fire_enabled and red_fire > 0.5 and red_obs.can_fire:
+            if kernel.fire_missile(red_id, blue_id) != 0:
+                red_fired = True
+                red_fire_count += 1
 
         kernel.step()
 
@@ -738,6 +828,9 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
             reward_blue += death_penalty
             reward_red += kill_reward
             terminated = True
+        if mutual_kill_penalty > 0.0 and blue_health <= 0 and red_health <= 0:
+            reward_blue -= mutual_kill_penalty
+            reward_red -= mutual_kill_penalty
 
         policy_return[blue_side_policy_name] += reward_blue
         policy_return[red_side_policy_name] += reward_red
@@ -792,17 +885,25 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
 
     blue_side_dead = blue_health <= 0
     red_side_dead = red_health <= 0
-    if swap_sides:
-        blue_policy_win = blue_side_dead
-        red_policy_win = red_side_dead
+
+    if blue_side_dead and not red_side_dead:
+        winner = red_side_policy_name
+    elif red_side_dead and not blue_side_dead:
+        winner = blue_side_policy_name
+    elif not blue_side_dead and not red_side_dead:
+        if blue_health > red_health:
+            winner = blue_side_policy_name
+        elif red_health > blue_health:
+            winner = red_side_policy_name
+        else:
+            winner = None
     else:
-        blue_policy_win = red_side_dead
-        red_policy_win = blue_side_dead
+        winner = None
 
     outcome = "draw"
-    if blue_policy_win and not red_policy_win:
+    if winner == "blue":
         outcome = "blue_win"
-    elif red_policy_win and not blue_policy_win:
+    elif winner == "red":
         outcome = "red_win"
 
     stats = {
@@ -931,6 +1032,8 @@ def main():
     act_dim = int(policy_cfg.get("act_dim", 4))
     hidden_sizes = policy_cfg.get("hidden_sizes", [64, 64])
     log_std_init = float(policy_cfg.get("log_std_init", -0.5))
+    log_std_min = float(policy_cfg.get("log_std_min", -3.0))
+    log_std_max = float(policy_cfg.get("log_std_max", 0.5))
     use_cuda = bool(policy_cfg.get("use_cuda", False))
     device = torch.device("cuda" if use_cuda and torch.cuda.is_available() else "cpu")
 
@@ -940,7 +1043,9 @@ def main():
                          act_dim=act_dim,
                          hidden_sizes=hidden_sizes,
                          log_std_init=log_std_init,
-                         device=device)
+                         device=device,
+                         log_std_min=log_std_min,
+                         log_std_max=log_std_max)
 
     blue_policy = make_policy(0)
     red_policy = make_policy(1)

@@ -13,6 +13,7 @@
 
 void register_sensor_system(flecs::world& ecs) {
     ecs.system<Transform, Sensor, ContactList>("SensorSystem")
+        .kind(flecs::OnUpdate)
         .run([=](flecs::iter& it) {
             while (it.next()) {
                 auto t = it.field<Transform>(0);

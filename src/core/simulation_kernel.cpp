@@ -14,6 +14,7 @@
 #include "core/unit_factory.h"
 #include "models/default_unit_factory.h"
 #include <algorithm>
+#include <limits>
 #include <spdlog/spdlog.h>
 
 #include "components/performance.h"
@@ -41,6 +42,9 @@ SimulationKernel::SimulationKernel()
     ecs.component<PendingActionCommand>();
     ecs.component<Missile>();
     ecs.component<Ammo>();
+    ecs.component<WeaponCooldown>();
+    ecs.component<Sensor>();
+    ecs.component<ContactList>();
     ecs.component<FlightModel>(); 
     ecs.component<Score>();
     ecs.component<EffectsModelRef>();
@@ -279,9 +283,37 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     const Velocity* v = attacker.get<Velocity>();
     const Alliance* side = attacker.get<Alliance>();
     Ammo* ammo = attacker.get_mut<Ammo>();
+    WeaponCooldown* cooldown = attacker.get_mut<WeaponCooldown>();
     Score* score = attacker.get_mut<Score>();
     
     if (!p || !v || !side) return flecs::entity::null();
+
+    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+    double current_time = info ? (double)info->world_time_total : 0.0;
+
+    if (cooldown && cooldown->cooldown_s > 0.0 && cooldown->last_fire_time >= 0.0) {
+        if (current_time - cooldown->last_fire_time < cooldown->cooldown_s) {
+            return flecs::entity::null();
+        }
+    }
+
+    // Require an active track on the target to fire (prevents blind spam).
+    const ContactList* contacts = attacker.get<ContactList>();
+    if (!contacts) {
+        return flecs::entity::null();
+    }
+    bool has_track = false;
+    Detection det{};
+    for (const auto& c : contacts->contacts) {
+        if (c.target_id != target_id) continue;
+        det = c;
+        has_track = true;
+        break;
+    }
+    if (!has_track) {
+        return flecs::entity::null();
+    }
+
     if (ammo) {
         if (ammo->missiles_remaining <= 0) {
             spdlog::warn("Attacker {} has no missiles remaining.", attacker_id);
@@ -292,14 +324,18 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     if (score) {
         score->missiles_fired += 1;
     }
-
-    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
-    double current_time = info ? (double)info->world_time_total : 0.0;
+    if (cooldown) {
+        cooldown->last_fire_time = current_time;
+    }
     
     // Spawn Missile slightly in front
     double heading = std::atan2(v->vy, v->vx);
     double launch_x = p->x + 20.0 * std::cos(heading);
     double launch_y = p->y + 20.0 * std::sin(heading);
+
+    uint64_t missile_seed = splitmix64(static_cast<uint64_t>(current_time * 1000.0) ^
+                                       (attacker_id * 0x9e3779b97f4a7c15ULL) ^
+                                       (target_id * 0xbf58476d1ce4e5b9ULL));
     
     auto m = ecs.entity()
         .set<Transform>({launch_x, launch_y, p->z, p->heading, 0, 0})
@@ -310,19 +346,24 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
             attacker_id,
             target_id,
             1000.0,
-            30.0,
-            100.0,
-            55.0,
-            45.0,
-            15000.0,
-            0.3,
-            0.1,
+            35.0,
+            300.0,
+            120.0,
+            180.0,
+            30000.0,
+            0.0,
+            0.0,
             -1.0,
             current_time,
+            15.0,
             3.0,
-            true
-        }) // 1000m/s, 30deg/s, 100m fuse, 55 DMG
-        .set<Sensor>({15000.0, 45.0, 0.1, -1.0, 0.95, 2.0, 0.5, 10.0, 0.2, 0.2}) // Seeker 15km, 45deg
+            true,
+            missile_seed,
+            std::numeric_limits<double>::infinity(),
+            std::numeric_limits<double>::infinity(),
+            false
+        }) // 1000m/s, 35deg/s, 300m fuse, 120 DMG
+        .set<Sensor>({30000.0, 180.0, 0.05, -1.0, 0.98, 2.0, 0.2, 10.0, 2.0, 0.2}) // Seeker 30km, 180deg
         .set<ContactList>({})
         .add<SimObject>(); // Tag for cleanup
         
@@ -339,6 +380,24 @@ std::vector<Detection> SimulationKernel::get_detections(uint64_t entity_id) {
         }
     }
     return {};
+}
+
+double SimulationKernel::debug_get_last_scan_time(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        const Sensor* s = e.get<Sensor>();
+        if (s) return s->last_scan_time;
+    }
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
+int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        const ContactList* c = e.get<ContactList>();
+        if (c) return static_cast<int>(c->contacts.size());
+    }
+    return -1;
 }
 
 std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
@@ -431,9 +490,13 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
     
     // Weapons check (Placeholder)
     const Ammo* ammo = e.get<Ammo>();
+    const WeaponCooldown* cooldown = e.get<WeaponCooldown>();
     if (ammo) {
         obs.missiles_remaining = ammo->missiles_remaining;
         obs.can_fire = ammo->missiles_remaining > 0;
+        if (obs.can_fire && cooldown && cooldown->cooldown_s > 0.0 && cooldown->last_fire_time >= 0.0) {
+            obs.can_fire = (obs.sim_time - cooldown->last_fire_time) >= cooldown->cooldown_s;
+        }
     } else {
         obs.missiles_remaining = -1;
         obs.can_fire = true;
