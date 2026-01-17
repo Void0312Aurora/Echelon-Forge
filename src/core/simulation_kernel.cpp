@@ -149,6 +149,10 @@ bool SimulationKernel::load_unit_definitions(const std::string& path, std::strin
     return unit_factory_->load_definitions(path, error);
 }
 
+void SimulationKernel::set_missile_tuning(const MissileTuning& tuning) {
+    missile_tuning_ = tuning;
+}
+
 void SimulationKernel::reset(unsigned int seed) {
     // Delete all simulation entities (tagged with SimObject)
     // This is safer than delete_with<Transform> as it won't affect
@@ -328,6 +332,44 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
         cooldown->last_fire_time = current_time;
     }
     
+    double missile_max_speed = 1000.0;
+    double missile_turn_rate = 35.0;
+    double missile_fuse_distance = 300.0;
+    double missile_damage = 120.0;
+    double missile_seeker_fov = 180.0;
+    double missile_seeker_range = 30000.0;
+    double missile_guidance_delay = 0.0;
+    double missile_guidance_period = 0.0;
+    double missile_max_flight_time = 15.0;
+    double missile_nav_gain = 3.0;
+
+    if (std::isfinite(missile_tuning_.max_speed)) missile_max_speed = missile_tuning_.max_speed;
+    if (std::isfinite(missile_tuning_.turn_rate)) missile_turn_rate = missile_tuning_.turn_rate;
+    if (std::isfinite(missile_tuning_.fuse_distance)) missile_fuse_distance = missile_tuning_.fuse_distance;
+    if (std::isfinite(missile_tuning_.damage)) missile_damage = missile_tuning_.damage;
+    if (std::isfinite(missile_tuning_.seeker_fov_deg)) missile_seeker_fov = missile_tuning_.seeker_fov_deg;
+    if (std::isfinite(missile_tuning_.seeker_lock_range)) missile_seeker_range = missile_tuning_.seeker_lock_range;
+    if (std::isfinite(missile_tuning_.guidance_delay_s)) missile_guidance_delay = missile_tuning_.guidance_delay_s;
+    if (std::isfinite(missile_tuning_.guidance_update_period_s)) missile_guidance_period = missile_tuning_.guidance_update_period_s;
+    if (std::isfinite(missile_tuning_.max_flight_time_s)) missile_max_flight_time = missile_tuning_.max_flight_time_s;
+    if (std::isfinite(missile_tuning_.nav_gain)) missile_nav_gain = missile_tuning_.nav_gain;
+
+    double sensor_max_range = missile_seeker_range;
+    double sensor_fov_deg = missile_seeker_fov;
+    double sensor_scan_period = 0.05;
+    double sensor_detection_prob = 0.98;
+    double sensor_bearing_noise = 0.2;
+    double sensor_range_noise = 10.0;
+    double sensor_track_memory = 2.0;
+
+    if (std::isfinite(missile_tuning_.sensor_max_range)) sensor_max_range = missile_tuning_.sensor_max_range;
+    if (std::isfinite(missile_tuning_.sensor_fov_deg)) sensor_fov_deg = missile_tuning_.sensor_fov_deg;
+    if (std::isfinite(missile_tuning_.sensor_scan_period)) sensor_scan_period = missile_tuning_.sensor_scan_period;
+    if (std::isfinite(missile_tuning_.sensor_detection_prob)) sensor_detection_prob = missile_tuning_.sensor_detection_prob;
+    if (std::isfinite(missile_tuning_.sensor_bearing_noise_std)) sensor_bearing_noise = missile_tuning_.sensor_bearing_noise_std;
+    if (std::isfinite(missile_tuning_.sensor_range_noise_std)) sensor_range_noise = missile_tuning_.sensor_range_noise_std;
+    if (std::isfinite(missile_tuning_.sensor_track_memory_s)) sensor_track_memory = missile_tuning_.sensor_track_memory_s;
+
     // Spawn Missile slightly in front
     double heading = std::atan2(v->vy, v->vx);
     double launch_x = p->x + 20.0 * std::cos(heading);
@@ -345,25 +387,27 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
         .set<Missile>({
             attacker_id,
             target_id,
-            1000.0,
-            35.0,
-            300.0,
-            120.0,
-            180.0,
-            30000.0,
-            0.0,
-            0.0,
+            missile_max_speed,
+            missile_turn_rate,
+            missile_fuse_distance,
+            missile_damage,
+            missile_seeker_fov,
+            missile_seeker_range,
+            missile_guidance_delay,
+            missile_guidance_period,
             -1.0,
             current_time,
-            15.0,
-            3.0,
+            missile_max_flight_time,
+            missile_nav_gain,
             true,
             missile_seed,
             std::numeric_limits<double>::infinity(),
             std::numeric_limits<double>::infinity(),
             false
         }) // 1000m/s, 35deg/s, 300m fuse, 120 DMG
-        .set<Sensor>({30000.0, 180.0, 0.05, -1.0, 0.98, 2.0, 0.2, 10.0, 2.0, 0.2}) // Seeker 30km, 180deg
+        .set<Sensor>({sensor_max_range, sensor_fov_deg, sensor_scan_period, -1.0,
+                      sensor_detection_prob, 2.0, sensor_bearing_noise,
+                      sensor_range_noise, sensor_track_memory, 0.2}) // Seeker sensor
         .set<ContactList>({})
         .add<SimObject>(); // Tag for cleanup
         

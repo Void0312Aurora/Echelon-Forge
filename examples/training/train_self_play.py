@@ -90,7 +90,49 @@ def nav_heading_to_target(src, dst):
     return nav_heading % 360.0
 
 
-def build_observation(self_obs, target_obs):
+def extract_track(obs, target_id):
+    for track in obs.contacts:
+        if track.id == target_id:
+            return track
+    return None
+
+
+def build_observation_from_track(self_obs, track, obs_cfg):
+    no_track_range_m = float(obs_cfg.get("no_track_range_m", 20000.0))
+    range_m = no_track_range_m
+    rel_bearing = 0.0
+    if track is not None:
+        range_m = max(1.0, float(track.range))
+        rel_bearing = float(track.azimuth)
+
+    nav_bearing = normalize_angle_deg(self_obs.heading + rel_bearing)
+    math_angle = math.radians(90.0 - nav_bearing)
+    rx = range_m * math.cos(math_angle)
+    ry = range_m * math.sin(math_angle)
+    rz = 0.0
+
+    return np.array([
+        rx / 10000.0,
+        ry / 10000.0,
+        rz / 10000.0,
+        0.0,
+        0.0,
+        0.0,
+        self_obs.speed / 300.0,
+        0.0,
+        self_obs.z / 10000.0,
+        self_obs.z / 10000.0,
+        rel_bearing / 180.0,
+        range_m / 20000.0,
+    ], dtype=np.float32)
+
+
+def build_observation(self_obs, target_obs, track=None, obs_mode="truth", obs_cfg=None):
+    if obs_cfg is None:
+        obs_cfg = {}
+    if obs_mode == "track":
+        return build_observation_from_track(self_obs, track, obs_cfg)
+
     rx = target_obs.x - self_obs.x
     ry = target_obs.y - self_obs.y
     rz = target_obs.z - self_obs.z
@@ -115,6 +157,25 @@ def build_observation(self_obs, target_obs):
         rel_bearing / 180.0,
         range_m / 20000.0,
     ], dtype=np.float32)
+
+
+def in_launch_envelope(track, envelope_cfg):
+    if not envelope_cfg:
+        return True
+    if track is None:
+        return False
+    rng = float(track.range)
+    bearing = float(track.azimuth)
+    min_range = envelope_cfg.get("min_range_m")
+    max_range = envelope_cfg.get("max_range_m")
+    max_bearing = envelope_cfg.get("max_bearing_deg")
+    if min_range is not None and rng < float(min_range):
+        return False
+    if max_range is not None and rng > float(max_range):
+        return False
+    if max_bearing is not None and abs(bearing) > float(max_bearing):
+        return False
+    return True
 
 
 class MLPPolicy(nn.Module):
@@ -322,16 +383,22 @@ def run_episode_worker(payload):
     reward_cfg = cfg.get("reward", {})
     distance_weight = float(reward_cfg.get("distance_weight", -1e-4))
     detection_reward = float(reward_cfg.get("detection_reward", 0.1))
+    detection_reward_mode = str(reward_cfg.get("detection_reward_mode", "step"))
     action_penalty = float(reward_cfg.get("action_penalty", 0.01))
     fire_penalty = float(reward_cfg.get("fire_penalty", 0.0))
     damage_reward = float(reward_cfg.get("damage_reward", 0.0))
     mutual_kill_penalty = float(reward_cfg.get("mutual_kill_penalty", 0.0))
     kill_reward = float(reward_cfg.get("kill_reward", 100.0))
     death_penalty = float(reward_cfg.get("death_penalty", -100.0))
+    draw_penalty = float(reward_cfg.get("draw_penalty", 0.0))
+    range_source = str(reward_cfg.get("range_source", "truth"))
 
     train_cfg = cfg.get("training", {})
     mask_fire = bool(train_cfg.get("mask_fire_if_unavailable", True))
     normalize_obs = bool(train_cfg.get("normalize_observations", False))
+    obs_cfg = cfg.get("observation", {})
+    obs_mode = str(obs_cfg.get("mode", "truth"))
+    launch_envelope = cfg.get("launch_envelope", {})
 
     dt = kernel.get_time_step()
     max_steps = int(cfg.get("max_steps", 600))
@@ -374,13 +441,17 @@ def run_episode_worker(payload):
     prev_blue_health = blue_health
     prev_red_health = red_health
     steps_taken = 0
+    prev_blue_detected = False
+    prev_red_detected = False
 
     for step in range(max_steps):
         blue_obs = kernel.get_agent_observation(blue_id)
         red_obs = kernel.get_agent_observation(red_id)
 
-        obs_blue = build_observation(blue_obs, red_obs)
-        obs_red = build_observation(red_obs, blue_obs)
+        blue_track = extract_track(blue_obs, red_id)
+        red_track = extract_track(red_obs, blue_id)
+        obs_blue = build_observation(blue_obs, red_obs, blue_track, obs_mode, obs_cfg)
+        obs_red = build_observation(red_obs, blue_obs, red_track, obs_mode, obs_cfg)
         if normalize_obs and norm_state is not None:
             obs_blue = normalize_with_state(obs_blue, norm_state)
             obs_red = normalize_with_state(obs_red, norm_state)
@@ -390,8 +461,8 @@ def run_episode_worker(payload):
 
         blue_masked = False
         red_masked = False
-        blue_has_track = any(t.id == red_id for t in blue_obs.contacts)
-        red_has_track = any(t.id == blue_id for t in red_obs.contacts)
+        blue_has_track = blue_track is not None
+        red_has_track = red_track is not None
         if mask_fire and not blue_obs.can_fire:
             blue_action[3] = -1.0
             blue_raw[3] = 0.0
@@ -405,6 +476,14 @@ def run_episode_worker(payload):
             blue_raw[3] = 0.0
             blue_masked = True
         if mask_fire and not red_has_track:
+            red_action[3] = -1.0
+            red_raw[3] = 0.0
+            red_masked = True
+        if mask_fire and not in_launch_envelope(blue_track, launch_envelope):
+            blue_action[3] = -1.0
+            blue_raw[3] = 0.0
+            blue_masked = True
+        if mask_fire and not in_launch_envelope(red_track, launch_envelope):
             red_action[3] = -1.0
             red_raw[3] = 0.0
             red_masked = True
@@ -440,21 +519,38 @@ def run_episode_worker(payload):
         dx = blue_pos[0] - red_pos[0]
         dy = blue_pos[1] - red_pos[1]
         dz = blue_pos[2] - red_pos[2]
-        range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+        range_truth_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+        range_m = range_truth_m
+        if range_source == "track":
+            if blue_track is not None:
+                range_m = float(blue_track.range)
+            elif red_track is not None:
+                range_m = float(red_track.range)
 
         blue_det = kernel.get_detections(blue_id)
         red_det = kernel.get_detections(red_id)
 
         reward_blue = distance_weight * range_m
         reward_red = distance_weight * range_m
-        if blue_det:
-            reward_blue += detection_reward
+        blue_has_det = bool(blue_det)
+        red_has_det = bool(red_det)
+        if blue_has_det:
             blue_detection_steps += 1
             policy_detection_steps[blue_side_policy_name] += 1
-        if red_det:
-            reward_red += detection_reward
+        if red_has_det:
             red_detection_steps += 1
             policy_detection_steps[red_side_policy_name] += 1
+        if detection_reward > 0.0:
+            if detection_reward_mode == "acquire":
+                if blue_has_det and not prev_blue_detected:
+                    reward_blue += detection_reward
+                if red_has_det and not prev_red_detected:
+                    reward_red += detection_reward
+            else:
+                if blue_has_det:
+                    reward_blue += detection_reward
+                if red_has_det:
+                    reward_red += detection_reward
         reward_blue -= action_penalty * float(blue_action[0] ** 2 + blue_action[1] ** 2 + blue_action[2] ** 2)
         reward_red -= action_penalty * float(red_action[0] ** 2 + red_action[1] ** 2 + red_action[2] ** 2)
         if blue_fired:
@@ -479,12 +575,6 @@ def run_episode_worker(payload):
         if mutual_kill_penalty > 0.0 and blue_health <= 0 and red_health <= 0:
             reward_blue -= mutual_kill_penalty
             reward_red -= mutual_kill_penalty
-
-        policy_return[blue_side_policy_name] += reward_blue
-        policy_return[red_side_policy_name] += reward_red
-
-        record_step(blue_side_policy_name, obs_blue, blue_raw, reward_blue, blue_masked)
-        record_step(red_side_policy_name, obs_red, red_raw, reward_red, red_masked)
 
         if disengage_range_m is not None:
             if range_m > disengage_range_m:
@@ -527,6 +617,19 @@ def run_episode_worker(payload):
                 ]
                 if not missiles_in_flight:
                     terminated = True
+
+        if terminated and blue_health > 0 and red_health > 0 and draw_penalty != 0.0:
+            reward_blue += draw_penalty
+            reward_red += draw_penalty
+
+        policy_return[blue_side_policy_name] += reward_blue
+        policy_return[red_side_policy_name] += reward_red
+
+        record_step(blue_side_policy_name, obs_blue, blue_raw, reward_blue, blue_masked)
+        record_step(red_side_policy_name, obs_red, red_raw, reward_red, red_masked)
+
+        prev_blue_detected = blue_has_det
+        prev_red_detected = red_has_det
 
         if terminated:
             break
@@ -682,16 +785,22 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
     reward_cfg = cfg.get("reward", {})
     distance_weight = float(reward_cfg.get("distance_weight", -1e-4))
     detection_reward = float(reward_cfg.get("detection_reward", 0.1))
+    detection_reward_mode = str(reward_cfg.get("detection_reward_mode", "step"))
     action_penalty = float(reward_cfg.get("action_penalty", 0.01))
     fire_penalty = float(reward_cfg.get("fire_penalty", 0.0))
     damage_reward = float(reward_cfg.get("damage_reward", 0.0))
     mutual_kill_penalty = float(reward_cfg.get("mutual_kill_penalty", 0.0))
     kill_reward = float(reward_cfg.get("kill_reward", 100.0))
     death_penalty = float(reward_cfg.get("death_penalty", -100.0))
+    draw_penalty = float(reward_cfg.get("draw_penalty", 0.0))
+    range_source = str(reward_cfg.get("range_source", "truth"))
     fire_enabled = bool(cfg.get("fire_enabled", True))
     train_cfg = cfg.get("training", {})
     mask_fire = bool(train_cfg.get("mask_fire_if_unavailable", True))
     normalize_obs = bool(train_cfg.get("normalize_observations", False))
+    obs_cfg = cfg.get("observation", {})
+    obs_mode = str(obs_cfg.get("mode", "truth"))
+    launch_envelope = cfg.get("launch_envelope", {})
 
     blue_fire_count = 0
     red_fire_count = 0
@@ -725,13 +834,17 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
     prev_blue_health = blue_health
     prev_red_health = red_health
     steps_taken = 0
+    prev_blue_detected = False
+    prev_red_detected = False
 
     for step in range(max_steps):
         blue_obs = kernel.get_agent_observation(blue_id)
         red_obs = kernel.get_agent_observation(red_id)
 
-        obs_blue = build_observation(blue_obs, red_obs)
-        obs_red = build_observation(red_obs, blue_obs)
+        blue_track = extract_track(blue_obs, red_id)
+        red_track = extract_track(red_obs, blue_id)
+        obs_blue = build_observation(blue_obs, red_obs, blue_track, obs_mode, obs_cfg)
+        obs_red = build_observation(red_obs, blue_obs, red_track, obs_mode, obs_cfg)
         if normalize_obs and obs_stats is not None:
             obs_stats.update([obs_blue, obs_red])
             obs_blue = obs_stats.normalize(obs_blue)
@@ -750,12 +863,22 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
             if red_side_train and red_logp is not None:
                 red_logp = red_logp[:3]
                 red_entropy = red_entropy[:3]
-        if mask_fire and not any(t.id == red_id for t in blue_obs.contacts):
+        if mask_fire and blue_track is None:
             blue_action[3] = -1.0
             if blue_side_train and blue_logp is not None:
                 blue_logp = blue_logp[:3]
                 blue_entropy = blue_entropy[:3]
-        if mask_fire and not any(t.id == blue_id for t in red_obs.contacts):
+        if mask_fire and red_track is None:
+            red_action[3] = -1.0
+            if red_side_train and red_logp is not None:
+                red_logp = red_logp[:3]
+                red_entropy = red_entropy[:3]
+        if mask_fire and not in_launch_envelope(blue_track, launch_envelope):
+            blue_action[3] = -1.0
+            if blue_side_train and blue_logp is not None:
+                blue_logp = blue_logp[:3]
+                blue_entropy = blue_entropy[:3]
+        if mask_fire and not in_launch_envelope(red_track, launch_envelope):
             red_action[3] = -1.0
             if red_side_train and red_logp is not None:
                 red_logp = red_logp[:3]
@@ -792,21 +915,38 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         dx = blue_pos[0] - red_pos[0]
         dy = blue_pos[1] - red_pos[1]
         dz = blue_pos[2] - red_pos[2]
-        range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+        range_truth_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+        range_m = range_truth_m
+        if range_source == "track":
+            if blue_track is not None:
+                range_m = float(blue_track.range)
+            elif red_track is not None:
+                range_m = float(red_track.range)
 
         blue_det = kernel.get_detections(blue_id)
         red_det = kernel.get_detections(red_id)
 
         reward_blue = distance_weight * range_m
         reward_red = distance_weight * range_m
-        if blue_det:
-            reward_blue += detection_reward
+        blue_has_det = bool(blue_det)
+        red_has_det = bool(red_det)
+        if blue_has_det:
             blue_detection_steps += 1
             policy_detection_steps[blue_side_policy_name] += 1
-        if red_det:
-            reward_red += detection_reward
+        if red_has_det:
             red_detection_steps += 1
             policy_detection_steps[red_side_policy_name] += 1
+        if detection_reward > 0.0:
+            if detection_reward_mode == "acquire":
+                if blue_has_det and not prev_blue_detected:
+                    reward_blue += detection_reward
+                if red_has_det and not prev_red_detected:
+                    reward_red += detection_reward
+            else:
+                if blue_has_det:
+                    reward_blue += detection_reward
+                if red_has_det:
+                    reward_red += detection_reward
         reward_blue -= action_penalty * float(blue_action[0] ** 2 + blue_action[1] ** 2 + blue_action[2] ** 2)
         reward_red -= action_penalty * float(red_action[0] ** 2 + red_action[1] ** 2 + red_action[2] ** 2)
         if blue_fired:
@@ -831,12 +971,6 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         if mutual_kill_penalty > 0.0 and blue_health <= 0 and red_health <= 0:
             reward_blue -= mutual_kill_penalty
             reward_red -= mutual_kill_penalty
-
-        policy_return[blue_side_policy_name] += reward_blue
-        policy_return[red_side_policy_name] += reward_red
-
-        record_step(blue_side_policy_name, reward_blue, blue_logp, blue_entropy)
-        record_step(red_side_policy_name, reward_red, red_logp, red_entropy)
 
         if disengage_range_m is not None:
             if range_m > disengage_range_m:
@@ -879,6 +1013,19 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
                 ]
                 if not missiles_in_flight:
                     terminated = True
+
+        if terminated and blue_health > 0 and red_health > 0 and draw_penalty != 0.0:
+            reward_blue += draw_penalty
+            reward_red += draw_penalty
+
+        policy_return[blue_side_policy_name] += reward_blue
+        policy_return[red_side_policy_name] += reward_red
+
+        record_step(blue_side_policy_name, reward_blue, blue_logp, blue_entropy)
+        record_step(red_side_policy_name, reward_red, red_logp, red_entropy)
+
+        prev_blue_detected = blue_has_det
+        prev_red_detected = red_has_det
 
         if terminated:
             break

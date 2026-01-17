@@ -2,6 +2,7 @@
 
 #include <flecs.h>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <random>
 #include <string>
@@ -16,6 +17,26 @@ class IEffectsModel;
 class ISensorModel;
 class IControlModel;
 class IGuidanceModel;
+
+struct MissileTuning {
+    double max_speed = std::numeric_limits<double>::quiet_NaN();
+    double turn_rate = std::numeric_limits<double>::quiet_NaN();
+    double fuse_distance = std::numeric_limits<double>::quiet_NaN();
+    double damage = std::numeric_limits<double>::quiet_NaN();
+    double seeker_fov_deg = std::numeric_limits<double>::quiet_NaN();
+    double seeker_lock_range = std::numeric_limits<double>::quiet_NaN();
+    double guidance_delay_s = std::numeric_limits<double>::quiet_NaN();
+    double guidance_update_period_s = std::numeric_limits<double>::quiet_NaN();
+    double max_flight_time_s = std::numeric_limits<double>::quiet_NaN();
+    double nav_gain = std::numeric_limits<double>::quiet_NaN();
+    double sensor_max_range = std::numeric_limits<double>::quiet_NaN();
+    double sensor_fov_deg = std::numeric_limits<double>::quiet_NaN();
+    double sensor_scan_period = std::numeric_limits<double>::quiet_NaN();
+    double sensor_detection_prob = std::numeric_limits<double>::quiet_NaN();
+    double sensor_bearing_noise_std = std::numeric_limits<double>::quiet_NaN();
+    double sensor_range_noise_std = std::numeric_limits<double>::quiet_NaN();
+    double sensor_track_memory_s = std::numeric_limits<double>::quiet_NaN();
+};
 
 class SimulationKernel {
 public:
@@ -66,6 +87,7 @@ public:
     void set_control_model(std::unique_ptr<IControlModel> model);
     void set_guidance_model(std::unique_ptr<IGuidanceModel> model);
     bool load_unit_definitions(const std::string& path, std::string* error = nullptr);
+    void set_missile_tuning(const MissileTuning& tuning);
 
 private:
     flecs::world ecs;
@@ -80,4 +102,5 @@ private:
     std::unique_ptr<ISensorModel> sensor_model_;
     std::unique_ptr<IControlModel> control_model_;
     std::unique_ptr<IGuidanceModel> guidance_model_;
+    MissileTuning missile_tuning_;
 };

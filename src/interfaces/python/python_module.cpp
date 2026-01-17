@@ -34,6 +34,26 @@ NB_MODULE(ef_py, m) {
         .value("Facility", UnitType::Facility);
 
     // Bind SimulationKernel
+    nb::class_<MissileTuning>(m, "MissileTuning")
+        .def(nb::init<>())
+        .def_rw("max_speed", &MissileTuning::max_speed)
+        .def_rw("turn_rate", &MissileTuning::turn_rate)
+        .def_rw("fuse_distance", &MissileTuning::fuse_distance)
+        .def_rw("damage", &MissileTuning::damage)
+        .def_rw("seeker_fov_deg", &MissileTuning::seeker_fov_deg)
+        .def_rw("seeker_lock_range", &MissileTuning::seeker_lock_range)
+        .def_rw("guidance_delay_s", &MissileTuning::guidance_delay_s)
+        .def_rw("guidance_update_period_s", &MissileTuning::guidance_update_period_s)
+        .def_rw("max_flight_time_s", &MissileTuning::max_flight_time_s)
+        .def_rw("nav_gain", &MissileTuning::nav_gain)
+        .def_rw("sensor_max_range", &MissileTuning::sensor_max_range)
+        .def_rw("sensor_fov_deg", &MissileTuning::sensor_fov_deg)
+        .def_rw("sensor_scan_period", &MissileTuning::sensor_scan_period)
+        .def_rw("sensor_detection_prob", &MissileTuning::sensor_detection_prob)
+        .def_rw("sensor_bearing_noise_std", &MissileTuning::sensor_bearing_noise_std)
+        .def_rw("sensor_range_noise_std", &MissileTuning::sensor_range_noise_std)
+        .def_rw("sensor_track_memory_s", &MissileTuning::sensor_track_memory_s);
+
     nb::class_<SimulationKernel>(m, "SimulationKernel")
         .def(nb::init<>())
         .def("reset", &SimulationKernel::reset, "Reset the simulation", nb::arg("seed") = 42)
@@ -119,7 +139,9 @@ NB_MODULE(ef_py, m) {
         .def("get_unit_health", &SimulationKernel::get_unit_health, "Get unit health [current, max]")
         .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
         .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time, "Debug: get sensor last_scan_time")
-        .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size");
+        .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size")
+        .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
+             "Override missile parameters for diagnostics", nb::arg("tuning"));
     
     nb::class_<UnitData>(m, "UnitData")
         .def_ro("id", &UnitData::id)
