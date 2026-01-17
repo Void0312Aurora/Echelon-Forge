@@ -1,0 +1,11 @@
+{
+    "name": "F110-GE-129",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 76310.0,
+        "ab_thrust_n": 131000.0,
+        "sfc_mil": 0.76,
+        "sfc_ab": 1.90,
+        "bypass_ratio": 0.76
+    }
+}

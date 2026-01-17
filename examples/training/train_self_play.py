@@ -58,6 +58,11 @@ def sample_spawn(rng, cfg, blue_pos, blue_vel, red_pos, red_vel):
 
     blue_vel = [blue_speed, 0.0, 0.0]
     red_vel = [-red_speed, 0.0, 0.0]
+
+    swap_prob = float(random_cfg.get("swap_sides_prob", 0.0))
+    if swap_prob > 0.0 and rng.random() < swap_prob:
+        blue_pos, red_pos = red_pos, blue_pos
+        blue_vel, red_vel = red_vel, blue_vel
     return blue_pos, blue_vel, red_pos, red_vel
 
 
@@ -90,6 +95,56 @@ def nav_heading_to_target(src, dst):
     return nav_heading % 360.0
 
 
+def _clamp(value, low=-1.0, high=1.0):
+    return max(low, min(high, value))
+
+
+def scripted_action(self_obs, target_obs, track, scripted_cfg, launch_envelope):
+    if not isinstance(scripted_cfg, dict):
+        scripted_cfg = {}
+    mode = str(scripted_cfg.get("mode", "pursuit"))
+    fire_mode = str(scripted_cfg.get("fire_mode", "envelope"))
+    speed_mps = float(scripted_cfg.get("speed_mps", self_obs.speed))
+    altitude_mode = str(scripted_cfg.get("altitude_mode", "hold"))
+    altitude_m = float(scripted_cfg.get("altitude_m", self_obs.z))
+    if altitude_mode == "target":
+        altitude_m = float(target_obs.z)
+    elif altitude_mode == "hold":
+        altitude_m = float(self_obs.z)
+
+    desired_heading = nav_heading_to_target((self_obs.x, self_obs.y), (target_obs.x, target_obs.y))
+    if mode == "evasion":
+        desired_heading = (desired_heading + 180.0) % 360.0
+    heading_error = normalize_angle_deg(desired_heading - self_obs.heading)
+
+    turn_scale = float(scripted_cfg.get("turn_scale_deg", 45.0))
+    accel_scale = float(scripted_cfg.get("accel_scale_mps", 50.0))
+    climb_scale = float(scripted_cfg.get("climb_scale_m", 2000.0))
+    if turn_scale <= 0.0:
+        turn_scale = 45.0
+    if accel_scale <= 0.0:
+        accel_scale = 50.0
+    if climb_scale <= 0.0:
+        climb_scale = 2000.0
+
+    turn_cmd = _clamp(heading_error / turn_scale)
+    accel_cmd = _clamp((speed_mps - self_obs.speed) / accel_scale)
+    climb_cmd = _clamp((altitude_m - self_obs.z) / climb_scale)
+
+    should_fire = False
+    if fire_mode == "always":
+        should_fire = True
+    elif fire_mode == "track":
+        should_fire = track is not None
+    elif fire_mode == "envelope":
+        should_fire = track is not None and in_launch_envelope(track, launch_envelope)
+
+    if not self_obs.can_fire or self_obs.missiles_remaining <= 0:
+        should_fire = False
+    fire_cmd = 1.0 if should_fire else -1.0
+    return np.array([turn_cmd, accel_cmd, climb_cmd, fire_cmd], dtype=np.float32)
+
+
 def extract_track(obs, target_id):
     for track in obs.contacts:
         if track.id == target_id:
@@ -99,6 +154,9 @@ def extract_track(obs, target_id):
 
 def build_observation_from_track(self_obs, track, obs_cfg):
     no_track_range_m = float(obs_cfg.get("no_track_range_m", 20000.0))
+    max_missiles = float(obs_cfg.get("max_missiles", 4.0))
+    if max_missiles <= 0.0:
+        max_missiles = 1.0
     range_m = no_track_range_m
     rel_bearing = 0.0
     if track is not None:
@@ -110,6 +168,11 @@ def build_observation_from_track(self_obs, track, obs_cfg):
     rx = range_m * math.cos(math_angle)
     ry = range_m * math.sin(math_angle)
     rz = 0.0
+    missiles_remaining = float(self_obs.missiles_remaining)
+    if missiles_remaining < 0.0:
+        missiles_remaining = 0.0
+    missiles_norm = min(missiles_remaining, max_missiles) / max_missiles
+    can_fire = 1.0 if self_obs.can_fire else 0.0
 
     return np.array([
         rx / 10000.0,
@@ -124,12 +187,17 @@ def build_observation_from_track(self_obs, track, obs_cfg):
         self_obs.z / 10000.0,
         rel_bearing / 180.0,
         range_m / 20000.0,
+        missiles_norm,
+        can_fire,
     ], dtype=np.float32)
 
 
 def build_observation(self_obs, target_obs, track=None, obs_mode="truth", obs_cfg=None):
     if obs_cfg is None:
         obs_cfg = {}
+    max_missiles = float(obs_cfg.get("max_missiles", 4.0))
+    if max_missiles <= 0.0:
+        max_missiles = 1.0
     if obs_mode == "track":
         return build_observation_from_track(self_obs, track, obs_cfg)
 
@@ -142,6 +210,11 @@ def build_observation(self_obs, target_obs, track=None, obs_mode="truth", obs_cf
     range_m = math.sqrt(rx * rx + ry * ry + rz * rz)
     nav_bearing = nav_heading_to_target((self_obs.x, self_obs.y), (target_obs.x, target_obs.y))
     rel_bearing = normalize_angle_deg(nav_bearing - self_obs.heading)
+    missiles_remaining = float(self_obs.missiles_remaining)
+    if missiles_remaining < 0.0:
+        missiles_remaining = 0.0
+    missiles_norm = min(missiles_remaining, max_missiles) / max_missiles
+    can_fire = 1.0 if self_obs.can_fire else 0.0
 
     return np.array([
         rx / 10000.0,
@@ -156,6 +229,8 @@ def build_observation(self_obs, target_obs, track=None, obs_mode="truth", obs_cf
         target_obs.z / 10000.0,
         rel_bearing / 180.0,
         range_m / 20000.0,
+        missiles_norm,
+        can_fire,
     ], dtype=np.float32)
 
 
@@ -301,6 +376,19 @@ def normalize_with_state(obs_batch, state):
     return (obs_batch - mean) / (np.sqrt(var) + 1e-8)
 
 
+def apply_missile_tuning(kernel, cfg, ef_module):
+    tuning_cfg = cfg.get("missile_tuning")
+    if not isinstance(tuning_cfg, dict) or not tuning_cfg:
+        return
+    tuning = ef_module.MissileTuning()
+    for key, value in tuning_cfg.items():
+        if value is None:
+            continue
+        if hasattr(tuning, key):
+            setattr(tuning, key, float(value))
+    kernel.set_missile_tuning(tuning)
+
+
 def compute_log_probs(policy, obs_batch, raw_batch, fire_mask_batch):
     obs_tensor = torch.as_tensor(obs_batch, dtype=torch.float32, device=policy.device)
     raw_tensor = torch.as_tensor(raw_batch, dtype=torch.float32, device=policy.device)
@@ -342,8 +430,10 @@ def run_episode_worker(payload):
     norm_state = payload.get("norm_state")
     log_level = payload.get("log_level", "warn")
     swap_sides = bool(payload.get("swap_sides", False))
+    scripted_side = payload.get("scripted_side")
+    scripted_cfg = payload.get("scripted_cfg")
 
-    obs_dim = int(policy_cfg.get("obs_dim", 12))
+    obs_dim = int(policy_cfg.get("obs_dim", 14))
     act_dim = int(policy_cfg.get("act_dim", 4))
     hidden_sizes = policy_cfg.get("hidden_sizes", [64, 64])
     log_std_init = float(policy_cfg.get("log_std_init", -0.5))
@@ -379,6 +469,7 @@ def run_episode_worker(payload):
     kernel.reset(seed)
     if unit_defs_path:
         kernel.load_unit_definitions(unit_defs_path)
+    apply_missile_tuning(kernel, cfg, ef_local)
 
     spawn_cfg = cfg.get("spawn", {})
     blue_spawn = spawn_cfg.get("blue", {})
@@ -418,6 +509,7 @@ def run_episode_worker(payload):
     kill_reward = float(reward_cfg.get("kill_reward", 100.0))
     death_penalty = float(reward_cfg.get("death_penalty", -100.0))
     draw_penalty = float(reward_cfg.get("draw_penalty", 0.0))
+    max_steps_penalty = float(reward_cfg.get("max_steps_penalty", 0.0))
     range_source = str(reward_cfg.get("range_source", "truth"))
 
     train_cfg = cfg.get("training", {})
@@ -454,10 +546,14 @@ def run_episode_worker(payload):
     red_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
     blue_mask_total = 0
     red_mask_total = 0
-    blue_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
-    red_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
-    blue_mask_total = 0
-    red_mask_total = 0
+    blue_fire_intent_count = 0
+    red_fire_intent_count = 0
+    blue_envelope_range_sum = 0.0
+    blue_envelope_bearing_abs_sum = 0.0
+    blue_envelope_samples = 0
+    red_envelope_range_sum = 0.0
+    red_envelope_bearing_abs_sum = 0.0
+    red_envelope_samples = 0
 
     def record_step(policy_name, obs, raw, reward, masked):
         if policy_name == "blue" and train_blue:
@@ -480,8 +576,6 @@ def run_episode_worker(payload):
     prev_red_detected = False
     termination_reason = None
     disengage_loser = None
-    termination_reason = None
-    disengage_loser = None
 
     for step in range(max_steps):
         blue_obs = kernel.get_agent_observation(blue_id)
@@ -495,8 +589,24 @@ def run_episode_worker(payload):
             obs_blue = normalize_with_state(obs_blue, norm_state)
             obs_red = normalize_with_state(obs_red, norm_state)
 
-        blue_raw, blue_action = _sample_action(blue_side_policy, obs_blue)
-        red_raw, red_action = _sample_action(red_side_policy, obs_red)
+        if scripted_side == "blue":
+            blue_action = scripted_action(blue_obs, red_obs, blue_track, scripted_cfg, launch_envelope)
+            blue_raw = np.zeros_like(blue_action)
+        else:
+            blue_raw, blue_action = _sample_action(blue_side_policy, obs_blue)
+
+        if scripted_side == "red":
+            red_action = scripted_action(red_obs, blue_obs, red_track, scripted_cfg, launch_envelope)
+            red_raw = np.zeros_like(red_action)
+        else:
+            red_raw, red_action = _sample_action(red_side_policy, obs_red)
+
+        blue_fire_intent = (blue_action[3] + 1.0) * 0.5 > 0.5
+        red_fire_intent = (red_action[3] + 1.0) * 0.5 > 0.5
+        if blue_fire_intent:
+            blue_fire_intent_count += 1
+        if red_fire_intent:
+            red_fire_intent_count += 1
 
         blue_masked = False
         red_masked = False
@@ -514,6 +624,10 @@ def run_episode_worker(payload):
                 blue_masked = True
                 blue_mask_total += 1
                 blue_mask_counts[blue_mask_reason] += 1
+                if blue_mask_reason == "envelope" and blue_track is not None:
+                    blue_envelope_range_sum += float(blue_track.range)
+                    blue_envelope_bearing_abs_sum += abs(float(blue_track.azimuth))
+                    blue_envelope_samples += 1
 
             red_mask_reason = None
             if not red_obs.can_fire:
@@ -528,6 +642,10 @@ def run_episode_worker(payload):
                 red_masked = True
                 red_mask_total += 1
                 red_mask_counts[red_mask_reason] += 1
+                if red_mask_reason == "envelope" and red_track is not None:
+                    red_envelope_range_sum += float(red_track.range)
+                    red_envelope_bearing_abs_sum += abs(float(red_track.azimuth))
+                    red_envelope_samples += 1
 
         blue_fire = (blue_action[3] + 1.0) * 0.5
         red_fire = (red_action[3] + 1.0) * 0.5
@@ -670,6 +788,14 @@ def run_episode_worker(payload):
                         terminated = True
                         termination_reason = "ammo_depletion"
 
+        if not terminated and step == max_steps - 1:
+            terminated = True
+            termination_reason = "max_steps"
+
+        if terminated and termination_reason == "max_steps" and max_steps_penalty != 0.0:
+            reward_blue += max_steps_penalty
+            reward_red += max_steps_penalty
+
         if terminated and blue_health > 0 and red_health > 0 and draw_penalty != 0.0:
             reward_blue += draw_penalty
             reward_red += draw_penalty
@@ -688,6 +814,16 @@ def run_episode_worker(payload):
 
     if termination_reason is None:
         termination_reason = "max_steps"
+
+    final_blue_obs = kernel.get_agent_observation(blue_id)
+    final_red_obs = kernel.get_agent_observation(red_id)
+
+    blue_missiles_remaining = int(final_blue_obs.missiles_remaining)
+    red_missiles_remaining = int(final_red_obs.missiles_remaining)
+    if blue_missiles_remaining < 0:
+        blue_missiles_remaining = 0
+    if red_missiles_remaining < 0:
+        red_missiles_remaining = 0
 
     blue_side_dead = blue_health <= 0
     red_side_dead = red_health <= 0
@@ -736,6 +872,12 @@ def run_episode_worker(payload):
         "blue_policy_detection_steps": int(policy_detection_steps["blue"]),
         "red_policy_detection_steps": int(policy_detection_steps["red"]),
         "termination_reason": termination_reason,
+        "blue_missiles_remaining": blue_missiles_remaining,
+        "red_missiles_remaining": red_missiles_remaining,
+        "blue_can_fire_end": bool(final_blue_obs.can_fire),
+        "red_can_fire_end": bool(final_red_obs.can_fire),
+        "blue_fire_intent_count": int(blue_fire_intent_count),
+        "red_fire_intent_count": int(red_fire_intent_count),
         "blue_fire_mask_total": int(blue_mask_total),
         "red_fire_mask_total": int(red_mask_total),
         "blue_fire_mask_can_fire": int(blue_mask_counts["can_fire"]),
@@ -744,7 +886,16 @@ def run_episode_worker(payload):
         "red_fire_mask_can_fire": int(red_mask_counts["can_fire"]),
         "red_fire_mask_no_track": int(red_mask_counts["no_track"]),
         "red_fire_mask_envelope": int(red_mask_counts["envelope"]),
+        "blue_envelope_range_sum": float(blue_envelope_range_sum),
+        "blue_envelope_bearing_abs_sum": float(blue_envelope_bearing_abs_sum),
+        "blue_envelope_samples": int(blue_envelope_samples),
+        "red_envelope_range_sum": float(red_envelope_range_sum),
+        "red_envelope_bearing_abs_sum": float(red_envelope_bearing_abs_sum),
+        "red_envelope_samples": int(red_envelope_samples),
     }
+    if termination_reason == "max_steps":
+        stats["max_steps_blue_missiles_remaining"] = blue_missiles_remaining
+        stats["max_steps_red_missiles_remaining"] = red_missiles_remaining
 
     return {
         "train_blue": train_blue,
@@ -800,10 +951,12 @@ def compute_returns(rewards, gamma):
 
 
 def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path, cfg,
-                train_blue, train_red, obs_stats, swap_sides=False):
+                train_blue, train_red, obs_stats, swap_sides=False,
+                scripted_side=None, scripted_cfg=None):
     kernel.reset(rng.integers(0, 2**31 - 1))
     if unit_defs_path:
         kernel.load_unit_definitions(unit_defs_path)
+    apply_missile_tuning(kernel, cfg, ef_py)
 
     spawn_cfg = cfg.get("spawn", {})
     blue_spawn = spawn_cfg.get("blue", {})
@@ -866,6 +1019,7 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
     kill_reward = float(reward_cfg.get("kill_reward", 100.0))
     death_penalty = float(reward_cfg.get("death_penalty", -100.0))
     draw_penalty = float(reward_cfg.get("draw_penalty", 0.0))
+    max_steps_penalty = float(reward_cfg.get("max_steps_penalty", 0.0))
     range_source = str(reward_cfg.get("range_source", "truth"))
     fire_enabled = bool(cfg.get("fire_enabled", True))
     train_cfg = cfg.get("training", {})
@@ -882,6 +1036,18 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
     policy_fire_count = {"blue": 0, "red": 0}
     policy_detection_steps = {"blue": 0, "red": 0}
     policy_return = {"blue": 0.0, "red": 0.0}
+    blue_fire_intent_count = 0
+    red_fire_intent_count = 0
+    blue_envelope_range_sum = 0.0
+    blue_envelope_bearing_abs_sum = 0.0
+    blue_envelope_samples = 0
+    red_envelope_range_sum = 0.0
+    red_envelope_bearing_abs_sum = 0.0
+    red_envelope_samples = 0
+    blue_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
+    red_mask_counts = {"can_fire": 0, "no_track": 0, "envelope": 0}
+    blue_mask_total = 0
+    red_mask_total = 0
 
     def act_for_side(policy, obs, train_policy):
         if train_policy:
@@ -923,8 +1089,24 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
             obs_blue = obs_stats.normalize(obs_blue)
             obs_red = obs_stats.normalize(obs_red)
 
-        blue_action, blue_logp, blue_entropy = act_for_side(blue_side_policy, obs_blue, blue_side_train)
-        red_action, red_logp, red_entropy = act_for_side(red_side_policy, obs_red, red_side_train)
+        if scripted_side == "blue":
+            blue_action = scripted_action(blue_obs, red_obs, blue_track, scripted_cfg, launch_envelope)
+            blue_logp, blue_entropy = None, None
+        else:
+            blue_action, blue_logp, blue_entropy = act_for_side(blue_side_policy, obs_blue, blue_side_train)
+
+        if scripted_side == "red":
+            red_action = scripted_action(red_obs, blue_obs, red_track, scripted_cfg, launch_envelope)
+            red_logp, red_entropy = None, None
+        else:
+            red_action, red_logp, red_entropy = act_for_side(red_side_policy, obs_red, red_side_train)
+
+        blue_fire_intent = (blue_action[3] + 1.0) * 0.5 > 0.5
+        red_fire_intent = (red_action[3] + 1.0) * 0.5 > 0.5
+        if blue_fire_intent:
+            blue_fire_intent_count += 1
+        if red_fire_intent:
+            red_fire_intent_count += 1
 
         if mask_fire:
             blue_mask_reason = None
@@ -941,6 +1123,10 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
                     blue_entropy = blue_entropy[:3]
                 blue_mask_total += 1
                 blue_mask_counts[blue_mask_reason] += 1
+                if blue_mask_reason == "envelope" and blue_track is not None:
+                    blue_envelope_range_sum += float(blue_track.range)
+                    blue_envelope_bearing_abs_sum += abs(float(blue_track.azimuth))
+                    blue_envelope_samples += 1
 
             red_mask_reason = None
             if not red_obs.can_fire:
@@ -956,6 +1142,10 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
                     red_entropy = red_entropy[:3]
                 red_mask_total += 1
                 red_mask_counts[red_mask_reason] += 1
+                if red_mask_reason == "envelope" and red_track is not None:
+                    red_envelope_range_sum += float(red_track.range)
+                    red_envelope_bearing_abs_sum += abs(float(red_track.azimuth))
+                    red_envelope_samples += 1
 
         blue_fire = (blue_action[3] + 1.0) * 0.5
         red_fire = (red_action[3] + 1.0) * 0.5
@@ -1098,6 +1288,14 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
                         terminated = True
                         termination_reason = "ammo_depletion"
 
+        if not terminated and step == max_steps - 1:
+            terminated = True
+            termination_reason = "max_steps"
+
+        if terminated and termination_reason == "max_steps" and max_steps_penalty != 0.0:
+            reward_blue += max_steps_penalty
+            reward_red += max_steps_penalty
+
         if terminated and blue_health > 0 and red_health > 0 and draw_penalty != 0.0:
             reward_blue += draw_penalty
             reward_red += draw_penalty
@@ -1116,6 +1314,16 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
 
     if termination_reason is None:
         termination_reason = "max_steps"
+
+    final_blue_obs = kernel.get_agent_observation(blue_id)
+    final_red_obs = kernel.get_agent_observation(red_id)
+
+    blue_missiles_remaining = int(final_blue_obs.missiles_remaining)
+    red_missiles_remaining = int(final_red_obs.missiles_remaining)
+    if blue_missiles_remaining < 0:
+        blue_missiles_remaining = 0
+    if red_missiles_remaining < 0:
+        red_missiles_remaining = 0
 
     blue_side_dead = blue_health <= 0
     red_side_dead = red_health <= 0
@@ -1153,6 +1361,12 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         "blue_policy_detection_steps": int(policy_detection_steps["blue"]),
         "red_policy_detection_steps": int(policy_detection_steps["red"]),
         "termination_reason": termination_reason,
+        "blue_missiles_remaining": blue_missiles_remaining,
+        "red_missiles_remaining": red_missiles_remaining,
+        "blue_can_fire_end": bool(final_blue_obs.can_fire),
+        "red_can_fire_end": bool(final_red_obs.can_fire),
+        "blue_fire_intent_count": int(blue_fire_intent_count),
+        "red_fire_intent_count": int(red_fire_intent_count),
         "blue_fire_mask_total": int(blue_mask_total),
         "red_fire_mask_total": int(red_mask_total),
         "blue_fire_mask_can_fire": int(blue_mask_counts["can_fire"]),
@@ -1161,7 +1375,16 @@ def run_episode(kernel, blue_policy, red_policy, rng, max_steps, unit_defs_path,
         "red_fire_mask_can_fire": int(red_mask_counts["can_fire"]),
         "red_fire_mask_no_track": int(red_mask_counts["no_track"]),
         "red_fire_mask_envelope": int(red_mask_counts["envelope"]),
+        "blue_envelope_range_sum": float(blue_envelope_range_sum),
+        "blue_envelope_bearing_abs_sum": float(blue_envelope_bearing_abs_sum),
+        "blue_envelope_samples": int(blue_envelope_samples),
+        "red_envelope_range_sum": float(red_envelope_range_sum),
+        "red_envelope_bearing_abs_sum": float(red_envelope_bearing_abs_sum),
+        "red_envelope_samples": int(red_envelope_samples),
     }
+    if termination_reason == "max_steps":
+        stats["max_steps_blue_missiles_remaining"] = blue_missiles_remaining
+        stats["max_steps_red_missiles_remaining"] = red_missiles_remaining
     return (total_reward_blue, total_reward_red,
             blue_log_probs, blue_entropies, blue_rewards,
             red_log_probs, red_entropies, red_rewards,
@@ -1270,7 +1493,7 @@ def main():
 
     torch.manual_seed(seed)
     policy_cfg = cfg.get("policy", {})
-    obs_dim = int(policy_cfg.get("obs_dim", 12))
+    obs_dim = int(policy_cfg.get("obs_dim", 14))
     act_dim = int(policy_cfg.get("act_dim", 4))
     hidden_sizes = policy_cfg.get("hidden_sizes", [64, 64])
     log_std_init = float(policy_cfg.get("log_std_init", -0.5))
@@ -1300,6 +1523,10 @@ def main():
     pool_update_interval = int(pool_cfg.get("update_interval", 5))
     pool_burn_in = int(pool_cfg.get("burn_in", 3))
     history_prob = float(pool_cfg.get("history_prob", 0.5))
+    fixed_cfg = cfg.get("fixed_opponent", {})
+    fixed_enabled = bool(fixed_cfg.get("enabled", False))
+    fixed_prob = float(fixed_cfg.get("prob", 0.0)) if fixed_enabled else 0.0
+    fixed_side = str(fixed_cfg.get("side", "random"))
 
     strategy_pool = StrategyPool(pool_size, rng)
 
@@ -1355,6 +1582,7 @@ def main():
             batch_red_returns = []
             batch_stats = []
             history_used_count = 0
+            fixed_used_count = 0
 
             norm_state = obs_stats.snapshot() if obs_stats is not None else None
 
@@ -1366,7 +1594,29 @@ def main():
                     train_red = True
                     blue_state = blue_policy.state_dict()
                     red_state = red_policy.state_dict()
-                    if (rng.random() < history_prob) and strategy_pool.pool:
+                    scripted_side = None
+                    if fixed_enabled and rng.random() < fixed_prob:
+                        fixed_used_count += 1
+                        if fixed_side == "random":
+                            scripted_side = "blue" if rng.random() < 0.5 else "red"
+                        elif fixed_side in ("blue", "red"):
+                            scripted_side = fixed_side
+
+                    blue_policy_name = "red" if swap_sides else "blue"
+                    red_policy_name = "blue" if swap_sides else "red"
+
+                    if scripted_side is not None:
+                        if scripted_side == "blue":
+                            if blue_policy_name == "blue":
+                                train_blue = False
+                            else:
+                                train_red = False
+                        elif scripted_side == "red":
+                            if red_policy_name == "blue":
+                                train_blue = False
+                            else:
+                                train_red = False
+                    elif (rng.random() < history_prob) and strategy_pool.pool:
                         sampled = strategy_pool.sample_policy(lambda: make_policy(1000 + episode + env_idx))
                         if sampled is not None:
                             history_used_count += 1
@@ -1389,6 +1639,8 @@ def main():
                         "norm_state": norm_state,
                         "log_level": log_level,
                         "swap_sides": swap_sides,
+                        "scripted_side": scripted_side,
+                        "scripted_cfg": fixed_cfg if scripted_side is not None else None,
                     }
                     tasks.append(task)
                 results = mp_pool.map(run_episode_worker, tasks)
@@ -1456,7 +1708,29 @@ def main():
                     train_red = True
                     blue_policy_used = blue_policy
                     red_policy_used = red_policy
-                    if (rng.random() < history_prob) and strategy_pool.pool:
+                    scripted_side = None
+                    if fixed_enabled and rng.random() < fixed_prob:
+                        fixed_used_count += 1
+                        if fixed_side == "random":
+                            scripted_side = "blue" if rng.random() < 0.5 else "red"
+                        elif fixed_side in ("blue", "red"):
+                            scripted_side = fixed_side
+
+                    blue_policy_name = "red" if swap_sides else "blue"
+                    red_policy_name = "blue" if swap_sides else "red"
+
+                    if scripted_side is not None:
+                        if scripted_side == "blue":
+                            if blue_policy_name == "blue":
+                                train_blue = False
+                            else:
+                                train_red = False
+                        elif scripted_side == "red":
+                            if red_policy_name == "blue":
+                                train_blue = False
+                            else:
+                                train_red = False
+                    elif (rng.random() < history_prob) and strategy_pool.pool:
                         sampled = strategy_pool.sample_policy(lambda: make_policy(1000 + episode + env_idx))
                         if sampled is not None:
                             history_used_count += 1
@@ -1481,7 +1755,9 @@ def main():
                         train_blue=train_blue,
                         train_red=train_red,
                         obs_stats=obs_stats,
-                        swap_sides=swap_sides
+                        swap_sides=swap_sides,
+                        scripted_side=scripted_side,
+                        scripted_cfg=fixed_cfg if scripted_side is not None else None
                     )
 
                     returns_blue = compute_returns(blue_rewards, gamma)
@@ -1557,6 +1833,28 @@ def main():
             avg_red_mask_can_fire = float(np.mean([s.get("red_fire_mask_can_fire", 0.0) for s in batch_stats])) if batch_stats else 0.0
             avg_red_mask_no_track = float(np.mean([s.get("red_fire_mask_no_track", 0.0) for s in batch_stats])) if batch_stats else 0.0
             avg_red_mask_envelope = float(np.mean([s.get("red_fire_mask_envelope", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_blue_missiles_remaining = float(np.mean([s.get("blue_missiles_remaining", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_red_missiles_remaining = float(np.mean([s.get("red_missiles_remaining", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_blue_can_fire_end = float(np.mean([1.0 if s.get("blue_can_fire_end", False) else 0.0 for s in batch_stats])) if batch_stats else 0.0
+            avg_red_can_fire_end = float(np.mean([1.0 if s.get("red_can_fire_end", False) else 0.0 for s in batch_stats])) if batch_stats else 0.0
+            avg_blue_fire_intent = float(np.mean([s.get("blue_fire_intent_count", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            avg_red_fire_intent = float(np.mean([s.get("red_fire_intent_count", 0.0) for s in batch_stats])) if batch_stats else 0.0
+            total_blue_envelope_samples = int(sum(s.get("blue_envelope_samples", 0) for s in batch_stats))
+            total_red_envelope_samples = int(sum(s.get("red_envelope_samples", 0) for s in batch_stats))
+            total_blue_envelope_range = float(sum(s.get("blue_envelope_range_sum", 0.0) for s in batch_stats))
+            total_red_envelope_range = float(sum(s.get("red_envelope_range_sum", 0.0) for s in batch_stats))
+            total_blue_envelope_bearing = float(sum(s.get("blue_envelope_bearing_abs_sum", 0.0) for s in batch_stats))
+            total_red_envelope_bearing = float(sum(s.get("red_envelope_bearing_abs_sum", 0.0) for s in batch_stats))
+            avg_blue_envelope_range = (total_blue_envelope_range / total_blue_envelope_samples) if total_blue_envelope_samples else 0.0
+            avg_red_envelope_range = (total_red_envelope_range / total_red_envelope_samples) if total_red_envelope_samples else 0.0
+            avg_blue_envelope_bearing_abs = (total_blue_envelope_bearing / total_blue_envelope_samples) if total_blue_envelope_samples else 0.0
+            avg_red_envelope_bearing_abs = (total_red_envelope_bearing / total_red_envelope_samples) if total_red_envelope_samples else 0.0
+            max_steps_blue_missiles = [s.get("max_steps_blue_missiles_remaining") for s in batch_stats if s.get("termination_reason") == "max_steps"]
+            max_steps_red_missiles = [s.get("max_steps_red_missiles_remaining") for s in batch_stats if s.get("termination_reason") == "max_steps"]
+            max_steps_blue_missiles = [v for v in max_steps_blue_missiles if v is not None]
+            max_steps_red_missiles = [v for v in max_steps_red_missiles if v is not None]
+            avg_blue_max_steps_missiles = float(np.mean(max_steps_blue_missiles)) if max_steps_blue_missiles else 0.0
+            avg_red_max_steps_missiles = float(np.mean(max_steps_red_missiles)) if max_steps_red_missiles else 0.0
             termination_counts = {}
             for s in batch_stats:
                 reason = s.get("termination_reason", "unknown")
@@ -1583,7 +1881,20 @@ def main():
                 "avg_red_fire_mask_can_fire": avg_red_mask_can_fire,
                 "avg_red_fire_mask_no_track": avg_red_mask_no_track,
                 "avg_red_fire_mask_envelope": avg_red_mask_envelope,
+                "avg_blue_fire_intent": avg_blue_fire_intent,
+                "avg_red_fire_intent": avg_red_fire_intent,
+                "avg_blue_envelope_range": avg_blue_envelope_range,
+                "avg_red_envelope_range": avg_red_envelope_range,
+                "avg_blue_envelope_bearing_abs": avg_blue_envelope_bearing_abs,
+                "avg_red_envelope_bearing_abs": avg_red_envelope_bearing_abs,
+                "avg_blue_max_steps_missiles_remaining": avg_blue_max_steps_missiles,
+                "avg_red_max_steps_missiles_remaining": avg_red_max_steps_missiles,
+                "avg_blue_missiles_remaining": avg_blue_missiles_remaining,
+                "avg_red_missiles_remaining": avg_red_missiles_remaining,
+                "avg_blue_can_fire_end": avg_blue_can_fire_end,
+                "avg_red_can_fire_end": avg_red_can_fire_end,
                 "history_opponent_rate": history_used_count / max(1, len(batch_stats)),
+                "fixed_opponent_rate": fixed_used_count / max(1, len(batch_stats)),
                 "termination_reasons": termination_counts,
             }
             write_jsonl(log_path, record)

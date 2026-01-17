@@ -1,0 +1,31 @@
+{
+    "name": "E-3_Sentry_AWACS",
+    "type": "C2Node",
+    "health": {
+        "current_hp": 500.0,
+        "max_hp": 500.0
+    },
+    "flight_model": {
+        "max_speed": 250.0,
+        "min_speed": 100.0,
+        "max_turn_rate": 3.0,
+        "max_climb_rate": 10.0,
+        "max_accel": 2.0,
+        "max_g": 2.0
+    },
+    "sensor": {
+        "max_range": 400000.0,
+        "fov_deg": 360.0,
+        "scan_period": 10.0,
+        "detection_prob": 0.99,
+        "bearing_noise_std": 1.0,
+        "range_noise_std": 100.0,
+        "track_memory_s": 20.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 10.0
+    },
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "has_command_link": true
+}

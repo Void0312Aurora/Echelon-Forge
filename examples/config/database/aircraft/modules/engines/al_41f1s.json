@@ -1,0 +1,11 @@
+{
+    "name": "AL-41F1S",
+    "type": "Engine",
+    "engine": {
+        "mil_thrust_n": 86300.0,
+        "ab_thrust_n": 142200.0,
+        "sfc_mil": 0.78,
+        "sfc_ab": 1.95,
+        "bypass_ratio": 0.59
+    }
+}

@@ -1,0 +1,107 @@
+{
+    "name": "F-16C_Block50",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 8570.0,
+        "max_fuel_kg": 3175.0,
+        "drag_coefficient": 0.02,
+        "reference_area": 27.87,
+        "length_m": 15.06,
+        "wingspan_m": 9.96,
+        "height_m": 4.88,
+        "configuration": "Conventional"
+    },
+    "damage_model": {},
+    "flight_model": {
+        "current_hp": 100.0,
+        "max_hp": 100.0,
+        "max_speed": 600.0,
+        "min_speed": 80.0,
+        "max_turn_rate": 26.0,
+        "max_climb_rate": 254.0,
+        "max_accel": 9.0,
+        "max_g": 9.0
+    },
+    "engine_ref": "F110-GE-129",
+    "sensor_ref": "AN/APG-68(V)9",
+    "hardpoints": [
+        {
+            "station_id": 1,
+            "type": [
+                "Rail",
+                "Tip"
+            ],
+            "capacity_kg": 150.0
+        },
+        {
+            "station_id": 2,
+            "type": [
+                "Pylon",
+                "Light"
+            ],
+            "capacity_kg": 300.0
+        },
+        {
+            "station_id": 3,
+            "type": [
+                "Pylon",
+                "Heavy"
+            ],
+            "capacity_kg": 1000.0
+        },
+        {
+            "station_id": 4,
+            "type": [
+                "Pylon",
+                "Medium"
+            ],
+            "capacity_kg": 500.0
+        },
+        {
+            "station_id": 5,
+            "type": [
+                "Fuselage"
+            ],
+            "capacity_kg": 1200.0
+        },
+        {
+            "station_id": 6,
+            "type": [
+                "Pylon",
+                "Medium"
+            ],
+            "capacity_kg": 500.0
+        },
+        {
+            "station_id": 7,
+            "type": [
+                "Pylon",
+                "Heavy"
+            ],
+            "capacity_kg": 1000.0
+        },
+        {
+            "station_id": 8,
+            "type": [
+                "Pylon",
+                "Light"
+            ],
+            "capacity_kg": 300.0
+        },
+        {
+            "station_id": 9,
+            "type": [
+                "Rail",
+                "Tip"
+            ],
+            "capacity_kg": 150.0
+        }
+    ],
+    "default_loadout": {
+        "1": "AIM-120C-7",
+        "2": "AIM-9X",
+        "8": "AIM-9X",
+        "9": "AIM-120C-7"
+    },
+    "has_ammo": false
+}

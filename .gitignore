@@ -48,3 +48,5 @@ recordings/
 docs/
 archive/
 logs/
+compat_data/
+ipc/

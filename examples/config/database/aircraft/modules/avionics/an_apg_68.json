@@ -1,0 +1,16 @@
+{
+    "name": "AN/APG-68(V)9",
+    "type": "Sensor",
+    "sensor": {
+        "max_range": 80000.0,
+        "fov_deg": 120.0,
+        "scan_period": 2.0,
+        "detection_prob": 0.9,
+        "bearing_noise_std": 0.5,
+        "range_noise_std": 20.0,
+        "track_memory_s": 5.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.3,
+        "doppler_notch_width": 25.0
+    }
+}

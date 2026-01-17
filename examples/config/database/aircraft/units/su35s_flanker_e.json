@@ -1,0 +1,134 @@
+{
+    "name": "Su-35S_Flanker-E",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 18400.0,
+        "max_fuel_kg": 11500.0,
+        "drag_coefficient": 0.03,
+        "reference_area": 62.0,
+        "length_m": 21.9,
+        "wingspan_m": 15.3,
+        "height_m": 5.9,
+        "configuration": "Flanker"
+    },
+    "health": {
+        "current_hp": 120.0,
+        "max_hp": 120.0
+    },
+    "flight_model": {
+        "max_speed": 650.0,
+        "min_speed": 70.0,
+        "max_turn_rate": 28.0,
+        "max_climb_rate": 280.0,
+        "max_accel": 10.0,
+        "max_g": 9.5
+    },
+    "engine_ref": "AL-41F1S",
+    "sensor_ref": "Irbis-E",
+    "hardpoints": [
+        {
+            "station_id": 1,
+            "type": [
+                "Rail",
+                "Tip"
+            ],
+            "capacity_kg": 150.0
+        },
+        {
+            "station_id": 2,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 300.0
+        },
+        {
+            "station_id": 3,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 500.0
+        },
+        {
+            "station_id": 4,
+            "type": [
+                "Pylon",
+                "Heavy"
+            ],
+            "capacity_kg": 1000.0
+        },
+        {
+            "station_id": 5,
+            "type": [
+                "Fuselage"
+            ],
+            "capacity_kg": 800.0
+        },
+        {
+            "station_id": 6,
+            "type": [
+                "Fuselage"
+            ],
+            "capacity_kg": 800.0
+        },
+        {
+            "station_id": 7,
+            "type": [
+                "Pylon",
+                "Heavy"
+            ],
+            "capacity_kg": 1000.0
+        },
+        {
+            "station_id": 8,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 500.0
+        },
+        {
+            "station_id": 9,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 300.0
+        },
+        {
+            "station_id": 10,
+            "type": [
+                "Rail",
+                "Tip"
+            ],
+            "capacity_kg": 150.0
+        },
+        {
+            "station_id": 11,
+            "type": [
+                "Rail"
+            ],
+            "capacity_kg": 150.0
+        },
+        {
+            "station_id": 12,
+            "type": [
+                "Rail"
+            ],
+            "capacity_kg": 150.0
+        }
+    ],
+    "default_loadout": {
+        "1": "R-77-1",
+        "2": "R-73",
+        "11": "R-73",
+        "12": "R-77-1"
+    },
+    "ammo": {
+        "missile_count": 8,
+        "max_missile_count": 8
+    },
+    "command_link": {
+        "latency_s": 0.2,
+        "drop_prob": 0.05
+    },
+    "has_data_link": true,
+    "data_link_network_id": 2
+}

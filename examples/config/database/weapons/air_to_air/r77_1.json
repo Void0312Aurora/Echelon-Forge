@@ -1,0 +1,19 @@
+{
+    "name": "R-77-1",
+    "type": "Missile",
+    "mass_kg": 190.0,
+    "flight_model": {
+        "max_speed": 1300.0,
+        "max_g": 40.0,
+        "max_turn_rate": 35.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 15000.0
+    },
+    "warhead": {
+        "type": "Frag",
+        "mass_kg": 22.0,
+        "lethal_radius": 18.0
+    }
+}

@@ -49,12 +49,13 @@ FetchContent_MakeAvailable(nlohmann_json)
 
 # --- Core Library ---
 add_library(ef_core STATIC
-    src/core/simulation_kernel.cpp
-    src/models/default_effects_model.cpp
-    src/models/default_sensor_model.cpp
+    src/core/engine/simulation_kernel.cpp
+    src/models/weapons/default_effects_model.cpp
+    src/models/systems/default_sensor_model.cpp
+    src/models/environment/default_environment_model.cpp
     src/content/unit_definition_loader.cpp
-    src/models/default_control_model.cpp
-    src/models/default_guidance_model.cpp
+    src/models/air/default_control_model.cpp
+    src/models/weapons/default_guidance_model.cpp
     # Add other core source files here if they become cpp
 )
 

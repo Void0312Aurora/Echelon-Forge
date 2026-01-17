@@ -11,7 +11,7 @@
   "checkpoint_interval": 250,
   "resume_dir": "",
   "policy": {
-    "obs_dim": 12,
+    "obs_dim": 14,
     "act_dim": 4,
     "hidden_sizes": [256, 256],
     "log_std_init": -1.5,
@@ -40,7 +40,8 @@
     "separation_m": [8000.0, 14000.0],
     "lateral_m": 3000.0,
     "alt_m": 500.0,
-    "speed_delta_mps": 20.0
+    "speed_delta_mps": 20.0,
+    "swap_sides_prob": 0.5
   },
   "reward": {
     "distance_weight": -0.00001,
@@ -53,6 +54,7 @@
     "kill_reward": 800.0,
     "death_penalty": -1200.0,
     "draw_penalty": -50.0,
+    "max_steps_penalty": -100.0,
     "range_source": "track"
   },
   "termination": {
@@ -63,12 +65,16 @@
   },
   "observation": {
     "mode": "track",
-    "no_track_range_m": 20000.0
+    "no_track_range_m": 20000.0,
+    "max_missiles": 4.0
+  },
+  "missile_tuning": {
+    "max_flight_time_s": 8.0
   },
   "launch_envelope": {
-    "min_range_m": 2000.0,
-    "max_range_m": 16000.0,
-    "max_bearing_deg": 60.0
+    "min_range_m": 3000.0,
+    "max_range_m": 12000.0,
+    "max_bearing_deg": 45.0
   },
   "fire_enabled": true,
   "opponent_pool": {
@@ -76,5 +82,17 @@
     "max_size": 8,
     "update_interval": 5,
     "burn_in": 3
+  },
+  "fixed_opponent": {
+    "enabled": true,
+    "prob": 0.8,
+    "side": "random",
+    "mode": "pursuit",
+    "speed_mps": 320.0,
+    "altitude_mode": "target",
+    "turn_scale_deg": 45.0,
+    "accel_scale_mps": 50.0,
+    "climb_scale_m": 2000.0,
+    "fire_mode": "envelope"
   }
 }

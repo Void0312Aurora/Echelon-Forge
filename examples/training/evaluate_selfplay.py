@@ -20,7 +20,13 @@ sys.path.append(os.path.join(repo_root, "build"))
 sys.path.append(repo_root)
 
 import ef_py
-from examples.training.train_self_play import MLPPolicy, build_observation
+from examples.training.train_self_play import (
+    MLPPolicy,
+    apply_missile_tuning,
+    build_observation,
+    extract_track,
+    scripted_action,
+)
 from python.scenario_metrics import ScenarioLogger, ScenarioMetrics
 from python.scenario_visualizer import render_gif
 
@@ -38,10 +44,12 @@ def resolve_path(path):
     return os.path.join(repo_root, path)
 
 
-def run_eval_episode(kernel, blue_policy, red_policy, cfg, unit_defs_path, output_dir, episode_idx, deterministic):
+def run_eval_episode(kernel, blue_policy, red_policy, cfg, unit_defs_path, output_dir, episode_idx,
+                     deterministic, scripted_side=None, scripted_cfg=None):
     kernel.reset(42 + episode_idx)
     if unit_defs_path:
         kernel.load_unit_definitions(unit_defs_path)
+    apply_missile_tuning(kernel, cfg, ef_py)
 
     spawn_cfg = cfg.get("spawn", {})
     blue_spawn = spawn_cfg.get("blue", {})
@@ -91,18 +99,36 @@ def run_eval_episode(kernel, blue_policy, red_policy, cfg, unit_defs_path, outpu
     logger = ScenarioLogger(log_path, metadata)
     metrics = ScenarioMetrics(["blue", "red"])
 
+    obs_cfg = cfg.get("observation", {})
+    obs_mode = str(obs_cfg.get("mode", "truth"))
+
     for step in range(max_steps):
         blue_obs = kernel.get_agent_observation(blue_id)
         red_obs = kernel.get_agent_observation(red_id)
-        obs_blue = build_observation(blue_obs, red_obs)
-        obs_red = build_observation(red_obs, blue_obs)
+        blue_track = extract_track(blue_obs, red_id) if obs_mode == "track" else None
+        red_track = extract_track(red_obs, blue_id) if obs_mode == "track" else None
+        obs_blue = build_observation(blue_obs, red_obs, blue_track, obs_mode, obs_cfg)
+        obs_red = build_observation(red_obs, blue_obs, red_track, obs_mode, obs_cfg)
 
-        if deterministic:
-            blue_action = blue_policy.act_mean(obs_blue)
-            red_action = red_policy.act_mean(obs_red)
+        if scripted_side == "blue":
+            blue_action = scripted_action(blue_obs, red_obs, blue_track, scripted_cfg, cfg.get("launch_envelope", {}))
+            if deterministic:
+                red_action = red_policy.act_mean(obs_red)
+            else:
+                red_action = red_policy.act_no_grad(obs_red)
+        elif scripted_side == "red":
+            red_action = scripted_action(red_obs, blue_obs, red_track, scripted_cfg, cfg.get("launch_envelope", {}))
+            if deterministic:
+                blue_action = blue_policy.act_mean(obs_blue)
+            else:
+                blue_action = blue_policy.act_no_grad(obs_blue)
         else:
-            blue_action = blue_policy.act_no_grad(obs_blue)
-            red_action = red_policy.act_no_grad(obs_red)
+            if deterministic:
+                blue_action = blue_policy.act_mean(obs_blue)
+                red_action = red_policy.act_mean(obs_red)
+            else:
+                blue_action = blue_policy.act_no_grad(obs_blue)
+                red_action = red_policy.act_no_grad(obs_red)
 
         blue_fire = (blue_action[3] + 1.0) * 0.5
         red_fire = (red_action[3] + 1.0) * 0.5
@@ -204,13 +230,16 @@ def main():
     parser.add_argument("--episodes", type=int, default=1)
     parser.add_argument("--output-dir", type=str, default="logs/selfplay_eval")
     parser.add_argument("--deterministic", action="store_true", help="Use mean actions (no noise)")
+    parser.add_argument("--fixed-opponent", action="store_true",
+                        help="Use scripted opponent from config.fixed_opponent")
+    parser.add_argument("--fixed-side", choices=["blue", "red", "random"], default="red")
     args = parser.parse_args()
 
     cfg = load_json(resolve_path(args.config))
     unit_defs_path = resolve_path(cfg.get("unit_definitions", "content/units/default_units.json"))
 
     policy_cfg = cfg.get("policy", {})
-    obs_dim = int(policy_cfg.get("obs_dim", 12))
+    obs_dim = int(policy_cfg.get("obs_dim", 14))
     act_dim = int(policy_cfg.get("act_dim", 4))
     hidden_sizes = policy_cfg.get("hidden_sizes", [64, 64])
     log_std_init = float(policy_cfg.get("log_std_init", -0.5))
@@ -252,13 +281,24 @@ def main():
     blue_policy.eval()
     red_policy.eval()
 
+    fixed_cfg = cfg.get("fixed_opponent", {})
     output_dir = resolve_path(args.output_dir)
     os.makedirs(output_dir, exist_ok=True)
     for ep in range(args.episodes):
         kernel = ef_py.SimulationKernel()
+        scripted_side = None
+        scripted_cfg = None
+        if args.fixed_opponent:
+            scripted_cfg = fixed_cfg
+            if args.fixed_side == "random":
+                scripted_side = "blue" if (ep % 2 == 0) else "red"
+            else:
+                scripted_side = args.fixed_side
         run_dir = run_eval_episode(kernel, blue_policy, red_policy,
                                    cfg, unit_defs_path, output_dir,
-                                   ep + 1, deterministic=args.deterministic)
+                                   ep + 1, deterministic=args.deterministic,
+                                   scripted_side=scripted_side,
+                                   scripted_cfg=scripted_cfg)
         print(f"Episode {ep + 1} saved to {run_dir}")
 
 
