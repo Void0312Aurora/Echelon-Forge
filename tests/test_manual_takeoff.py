@@ -39,11 +39,22 @@ def main():
         # Throttle = full
         action[3] = 1.0
         
-        # Pitch control
-        if speed > 80.0:  # Rotation speed
-            action[0] = 0.3  # Pull back gently
+        # Pitch control logic (Proportional Controller for Pitch Angle)
+        target_pitch = 15.0
+        
+        if speed < 100.0:
+            action[0] = 0.0 # Wait for Vr
         else:
-            action[0] = 0.0  # Neutral
+            # Simple P-controller
+            pitch_err = target_pitch - pitch
+            # kP = 0.05
+            # If pitch is 0, err=15, action=0.75 (clamped to 1.0)
+            # If pitch is 15, err=0, action=0
+            # If pitch is 20, err=-5, action=-0.25
+            action[0] = np.clip(pitch_err * 0.05, -1.0, 1.0) 
+            
+            # Dampen pitch rate if needed? 
+            # (Let's stick to P-control for angle first)
         
         # Gear control
         if alt > 30.0:

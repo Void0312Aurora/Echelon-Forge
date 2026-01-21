@@ -5,8 +5,6 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-# Build path setup
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../build")))
 import ef_py
 from gym_envs.scenario_loader import ScenarioLoader
 
@@ -72,11 +70,17 @@ class UniversalEnv(gym.Env):
         # Instrument State Size: see _get_obs
         self.obs_size = 24 
         
+        # ARB Visual observation dimensions
+        self.arb_height = 48
+        self.arb_width = 96
+        self.arb_channels = 10
+        
         self.observation_space = spaces.Dict({
             "instruments": spaces.Box(low=-np.inf, high=np.inf, shape=(self.obs_size,), dtype=np.float32),
             "contacts": spaces.Box(low=-np.inf, high=np.inf, shape=(self.max_contacts, 5), dtype=np.float32),
             "rwr": spaces.Box(low=-np.inf, high=np.inf, shape=(self.max_rwr, 4), dtype=np.float32),
-            "mission": spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
+            "mission": spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32),
+            "visual": spaces.Box(low=-np.inf, high=np.inf, shape=(self.arb_height, self.arb_width, self.arb_channels), dtype=np.float32)
         })
         
         self.agent_id = None
@@ -180,10 +184,17 @@ class UniversalEnv(gym.Env):
         
         # 3. Mission Command (From Loader)
         miss_vec = self.loader.get_mission_observation()
+        
+        # 4. Visual Observation (ARB)
+        visual_flat = self.sim.get_visual_observation(self.agent_id)
+        visual = np.array(visual_flat, dtype=np.float32).reshape(
+            self.arb_height, self.arb_width, self.arb_channels
+        )
             
         return {
             "instruments": inst_vec,
             "contacts": contacts,
             "rwr": rwr,
-            "mission": miss_vec
+            "mission": miss_vec,
+            "visual": visual
         }

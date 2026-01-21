@@ -22,6 +22,7 @@
 #include "components/systems/logistics.h" // Added logistics.h
 #include "systems/systems/ew_system.h"
 #include "systems/systems/logistics_system.h" // Added logistics_system.h
+#include "systems/visual/visual_system.h" // ARB Visual System
 #include "core/interfaces/control_model.h"
 #include "core/interfaces/effects_model.h"
 #include "core/interfaces/guidance_model.h"
@@ -123,7 +124,7 @@ SimulationKernel::SimulationKernel()
     register_aero_state_system(ecs);     // Phase 3.3: Aero State (AoA/beta/q)
     register_force_system(ecs);          // Phase 3.4: Forces (gravity/thrust/ground reaction)
     register_aerodynamics_system(ecs);   // Phase 3.5: Aerodynamics (lift/drag)
-    register_ground_contact_system(ecs); // Phase 3.6: Ground contact + friction
+    register_ground_contact_system(ecs, environment_model_.get()); // Phase 3.6: Ground contact + friction
     register_guidance_system(ecs);       // Phase 4: Guidance
     register_leapfrog_integration_system(ecs); // Phase 5: Leapfrog Integration (translation)
     // register_movement_system(ecs);       // Phase 5.5: Movement (disabled - replaced by Leapfrog)
@@ -900,4 +901,70 @@ void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionComm
     } else {
         spdlog::warn("Attempted to set mission command for invalid entity ID: {}", entity_id);
     }
+}
+
+std::vector<float> SimulationKernel::get_visual_observation(uint64_t entity_id) {
+    using namespace arb;
+    
+    std::vector<float> output(ARB_HEIGHT * ARB_WIDTH * ARB_CHANNELS, 0.0f);
+    
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) return output;
+    
+    const Transform* cam_t = e.get<Transform>();
+    const Velocity* cam_v = e.get<Velocity>();
+    const Alliance* cam_a = e.get<Alliance>();
+    
+    if (!cam_t) return output;
+    
+    Math::Vector3 cam_pos = {cam_t->x, cam_t->y, cam_t->z};
+    double cam_heading = cam_t->heading;
+    double cam_pitch = cam_t->pitch;
+    
+    int my_side = cam_a ? static_cast<int>(cam_a->side) : 0;
+    
+    // Collect visible objects
+    std::vector<VisibleObject> objects;
+    
+    ecs.each([&](flecs::entity other_e, const Transform& t, const Velocity& v, const Alliance& a, const KeyEntity& k) {
+        if (other_e.id() == entity_id) return;  // Skip self
+        
+        VisibleObject obj;
+        obj.x = t.x;
+        obj.y = t.y;
+        obj.z = t.z;
+        obj.vx = v.vx;
+        obj.vy = v.vy;
+        obj.vz = v.vz;
+        
+        // Estimate bounding radius based on unit type
+        switch (k.type) {
+            case UnitType::Aircraft: obj.bounding_radius = 10.0; obj.cls = 0; break;
+            case UnitType::Ship: obj.bounding_radius = 50.0; obj.cls = 2; break;
+            case UnitType::Missile: obj.bounding_radius = 2.0; obj.cls = 0; break;
+            case UnitType::Facility: obj.bounding_radius = 20.0; obj.cls = 1; break;
+            default: obj.bounding_radius = 5.0; obj.cls = 1; break;
+        }
+        
+        // Determine team relative to observer
+        int other_side = static_cast<int>(a.side);
+        if (other_side == my_side) {
+            obj.team = 1;  // Friendly
+        } else if (other_side == 0) {
+            obj.team = 0;  // Neutral
+        } else {
+            obj.team = -1; // Enemy
+        }
+        
+        objects.push_back(obj);
+    });
+    
+    // Render ARB
+    RetinaBuffer buf;
+    render_retina(cam_pos, cam_heading, cam_pitch, 180.0, 90.0, objects, environment_model_.get(), buf);
+    
+    // Convert to flat tensor
+    buf.to_tensor(output.data());
+    
+    return output;
 }

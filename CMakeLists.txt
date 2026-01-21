@@ -77,3 +77,7 @@ target_link_libraries(ef_app PRIVATE ef_core)
 # --- Python Module ---
 nanobind_add_module(ef_py src/interfaces/python/python_module.cpp)
 target_link_libraries(ef_py PRIVATE ef_core)
+
+# Install the extension module
+install(TARGETS ef_py DESTINATION .)
+set_target_properties(ef_py PROPERTIES INSTALL_RPATH "$ORIGIN/lib")

@@ -257,6 +257,28 @@ class ScenarioLoader:
             g_lim = cfg.get("overload_g_threshold", 6.0)
             if abs(curr_g) > g_lim:
                 reward += cfg.get("overload_penalty", -1.0) * (abs(curr_g) - g_lim)
+
+            # 4. Early Termination (Fail Fast)
+            # Prevent "Stall Hell" where agent accumulates -2000 points over 2000 steps.
+            # If flight envelope is excessively violated, kill episode.
+            
+            # Condition A: Deep Stall / Spin (AoA > 50 deg)
+            if abs(curr_aoa) > 50.0:
+                 reward -= 50.0 # Fixed penalty instead of accumulation
+                 terminated = True
+                 status[3] = -1.0 # Fail code
+            
+            # Condition B: Inverted Flight at low alt (Roll > 135 deg while < 100m)
+            elif truth.z < 100.0 and abs(curr_roll) > 135.0:
+                 reward -= 50.0
+                 terminated = True
+                 status[3] = -1.0
+                 
+            # Condition C: Extreme Pitch (Cobra) > 85 deg
+            elif abs(truth.pitch) > 85.0:
+                 reward -= 50.0
+                 terminated = True
+                 status[3] = -1.0
                 
             # Roll Stability (Penalize extreme bank angles at low altitude)
             if truth.z < 100.0:

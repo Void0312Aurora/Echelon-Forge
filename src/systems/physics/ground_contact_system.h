@@ -8,20 +8,14 @@
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h" // For GroundState
 #include "components/physics/performance.h" // For LandingGear
+#include "core/interfaces/environment_model.h"
 
 namespace {
     // Penalty Method Constants
-    // Spring K ~ Vehicle Mass * Gravity / Desired Compression (0.1m)
-    // 15000 * 10 / 0.1 = 1,500,000
     constexpr double kGroundSpring = 2000000.0;
-    
-    // Damping C ~ 2 * sqrt(m * k) 
-    // sqrt(15000 * 2000000) = sqrt(3e10) ~ 170000. 
-    // 2 * 170000 = 340000.
     constexpr double kGroundDamper = 350000.0; 
     
-    // Friction
-    constexpr double kMuRolling = 0.02;
+    // Default Friction (Fallback)
     constexpr double kMuBraking = 0.8;
 }
 
@@ -29,15 +23,13 @@ namespace {
  * GroundContactSystem
  * 
  * Implements a Penalty Method for ground interaction.
- * Instead of hard position clamping, it applies:
- * 1. Normal Force (Spring-Damper) when penetration occurs.
- * 2. Friction Force (Coulomb) opposite to velocity.
+ * Integrates with EnvironmentModel for surface-dependent physics (Friction, Damage).
  */
-inline void register_ground_contact_system(flecs::world& ecs) {
+inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel* env) {
     ecs.system<ForceAccumulator, const Transform, const Velocity, const Mass, GroundState>("GroundContact")
         .kind(flecs::OnUpdate)
         // Must run BEFORE Integration but AFTER Aerodynamics
-        .run([](flecs::iter& it) {
+        .run([env](flecs::iter& it) {
             while (it.next()) {
                 auto forces = it.field<ForceAccumulator>(0);
                 auto transform = it.field<const Transform>(1);
@@ -49,13 +41,16 @@ inline void register_ground_contact_system(flecs::world& ecs) {
                     double m = mass[i].get_total_kg();
                     if (m < 1.0) m = 15000.0;
 
-                    // 1. Detection
-                    double terrain_z = ground[i].terrain_elevation; // Usually 0.0 for now
+                    // 1. Detection: Query Environment
+                    // Use current position (x, y)
+                    auto terrain = env->get_terrain_at(transform[i].x, transform[i].y);
+                    
+                    double terrain_z = terrain.elevation;
+                    ground[i].terrain_elevation = terrain_z;
+                    
                     double z = transform[i].z;
                     
                     // Simple logic: Assume pivot is at CG. Gear extends downwards by l_gear.
-                    // For now, let's treat 'z' as altitude AGL for simplicity, or assume CG height.
-                    // Let's assume z is CG altitude. When z < 2.0 (gear height), we touch.
                     double gear_height = 2.0; 
                     
                     double penetration = gear_height - (z - terrain_z);
@@ -66,62 +61,88 @@ inline void register_ground_contact_system(flecs::world& ecs) {
                     if (!is_touching) continue;
                     
                     // 2. Normal Force (Spring-Damper)
-                    // F_spring = k * x
                     double f_spring = kGroundSpring * penetration;
                     
-                    // F_damper = -c * v_z (only if moving down?)
-                    // Daming should resist compression and expansion
                     double vz = velocity[i].vz;
                     double f_damper = -kGroundDamper * vz;
                     
-                    // Total Normal Force (Unilateral constraint: Ground pushes up, never pulls down)
-                    double Fn = f_spring + f_damper;
-                    if (Fn < 0.0) Fn = 0.0;
+                    double Fn = std::max(0.0, f_spring + f_damper); // Unilateral
                     
                     forces[i].add_force(0.0, 0.0, Fn);
                     
-                    // 3. Friction
-                    // F_f = -mu * Fn * v_tangent_normalized
+                    // 3. Friction & Surface Interaction
                     double vx = velocity[i].vx;
                     double vy = velocity[i].vy;
                     double v_h_sq = vx*vx + vy*vy;
                     
                     if (v_h_sq > 0.001) {
                          double v_h = std::sqrt(v_h_sq);
-                         double mu = kMuRolling;
                          
-                         // Check friction brakes (from PilotAction or Command)
+                         // --- Surface Logic ---
+                         double mu_rolling = 0.02; // Default Concrete
+                         
+                         using Surface = IEnvironmentModel::SurfaceType;
+                         bool is_offroad = false;
+
+                         switch (terrain.type) {
+                             case Surface::Concrete:   mu_rolling = 0.02; break;
+                             case Surface::Asphalt:    mu_rolling = 0.025; break;
+                             case Surface::HardPacked: mu_rolling = 0.05; is_offroad = true; break;
+                             case Surface::SoftDirt:   mu_rolling = 0.15; is_offroad = true; break;
+                             case Surface::Water:      mu_rolling = 0.80; is_offroad = true; break; // Sinking
+                             case Surface::Obstacle:   mu_rolling = 1.0;  is_offroad = true; break; // Collision
+                             default:                  mu_rolling = 0.10; is_offroad = true; break;
+                         }
+                         
+                         // --- Damage Logic ---
+                         // If fast off-road, risk damage or catastrophic drag
+                         if (is_offroad && v_h > 40.0) { // > 80 kts
+                             // Exponentially increase friction to represent digging in / gear stress
+                             // This effectively stops the plane or prevents takeoff
+                             mu_rolling *= 5.0; 
+                             
+                             // In a full ECS, we would emit a 'DamageEvent' or modify Health
+                             // For now, the high friction acts as a soft "crash" (can't take off)
+                         }
+
+                         double mu = mu_rolling;
+                         
+                         // Check friction brakes
                          const PilotAction* pilot = it.entity(i).get<PilotAction>();
-                         // Or Legacy
                          const MovementCommand* cmd = it.entity(i).get<MovementCommand>();
                          
                          bool braking = false;
                          if (pilot && pilot->active) {
-                             // Assuming some brake flag or low throttle implies braking on ground?
-                             // For now, let's say throttle < 0.1 on ground = brakes? 
-                             // Or add specific brake input.
-                             // Let's use: if throttle == 0, brakes applied lightly.
-                             if (pilot->throttle < 0.05) braking = true;
+                             if (pilot->brake > 0.1) braking = true;
+                             if (pilot->throttle < 0.01 && v_h < 10.0) braking = true; // Auto-stop
                          } else if (cmd && cmd->active) {
-                             if (cmd->throttle_cmd < 0.05) braking = true;
+                             if (cmd->throttle_cmd < 0.01) braking = true;
                          }
                          
                          if (braking) mu = kMuBraking;
                          
                          // Friction vector
-                         double fx = -mu * Fn * (vx / v_h);
-                         double fy = -mu * Fn * (vy / v_h);
+                         double f_fric = mu * Fn;
+                         double fx = -f_fric * (vx / v_h);
+                         double fy = -f_fric * (vy / v_h);
                          
                          forces[i].add_force(fx, fy, 0.0);
+                         
+                         // 4. Rotational Friction (Yaw Damping)
+                         const AngularVelocity* ang_vel = it.entity(i).get<AngularVelocity>();
+                         if (ang_vel) {
+                             double r = ang_vel->r;
+                             if (std::abs(r) > 0.001) {
+                                 double mu_rot = 2.0; 
+                                 double tau_z = -mu_rot * Fn * r * 0.1;
+                                 forces[i].add_torque(0.0, 0.0, tau_z);
+                             }
+                         }
                     } else {
-                         // Static kill (prevent creeping)
+                         // Static stiction (simplified)
                          if (std::abs(vx) < 0.1 && std::abs(vy) < 0.1) {
-                             // Zero out velocity directly? 
-                             // Physics engine purity says NO, apply opposing force.
-                             // But for stability, a small velocity kill near zero is acceptable in games.
-                             // Let's apply a "stiction" force equal and opposite to other horizontal forces
-                             // Up to max static friction.
-                             // (Skipping complex stiction for now)
+                             // Apply small opposing force to zero out creep?
+                             // Needed for absolute stillness.
                          }
                     }
                 }

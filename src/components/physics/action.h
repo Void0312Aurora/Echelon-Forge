@@ -22,6 +22,7 @@ struct PilotAction {
     float gear_handle;       // 0.0 (Up) to 1.0 (Down)
     float flaps;             // 0.0 (Up) to 1.0 (Full)
     float speedbrake;        // 0.0 (Retracted) to 1.0 (Extended)
+    double brake;            // 0.0 (Off) to 1.0 (Full)
     bool brake_left;         // Wheel brake
     bool brake_right;        // Wheel brake
     

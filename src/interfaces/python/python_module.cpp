@@ -148,6 +148,7 @@ NB_MODULE(ef_py, m) {
         .def_rw("gear_handle", &PilotAction::gear_handle)
         .def_rw("flaps", &PilotAction::flaps)
         .def_rw("speedbrake", &PilotAction::speedbrake)
+        .def_rw("brake", &PilotAction::brake)
         .def_rw("brake_left", &PilotAction::brake_left)
         .def_rw("brake_right", &PilotAction::brake_right)
         .def_rw("radar_active", &PilotAction::radar_active)
@@ -317,6 +318,8 @@ NB_MODULE(ef_py, m) {
         .def("get_unit_fuel", &SimulationKernel::get_unit_fuel, nb::arg("entity_id"),
              "Returns [internal, max_internal, external, max_external]")
         .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
+        .def("get_visual_observation", &SimulationKernel::get_visual_observation, 
+             "Get ARB visual observation [H*W*C] tensor", nb::arg("entity_id"))
         .def("get_unit_messages", &SimulationKernel::get_unit_messages, "Get inbox")
         .def("send_message_command", &SimulationKernel::send_message_command, 
              nb::arg("entity_id"), nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"))

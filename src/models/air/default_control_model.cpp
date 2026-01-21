@@ -97,26 +97,47 @@ public:
         // --- 3. Apply PHYSICAL Torques (Fly-By-Wire) ---
         auto* forces = entity.get_mut<ForceAccumulator>();
         const auto* ang_vel = entity.get<AngularVelocity>();
+        const auto* aero = entity.get<AeroState>();
 
-        if (forces && ang_vel) {
-            // Aerodynamic Authority Scaling (Dynamic Pressure)
-            // For MVP: Constant max torque + Damping
-            // In reality: Torque ~ q * S * l * Deflection
+        if (forces && ang_vel && aero) {
+            // Aerodynamic Authority Scaling
+            // Torque = Coeff * q * deflection
+            // We tune 'Coeff' s.t. at rotation speed (Vr ~ 70 m/s, q ~ 3000 Pa) we have enough torque to rotate.
+            // Requirement: Rotate 15000kg aircraft with gear 1m behind CG.
+            // Weight Moment ~ 15000 * 9.8 * 1.0 ~ 150,000 Nm.
+            // So at q=3000, Torque should be > 150,000.
+            // Coeff_pitch = 150,000 / 3000 = 50.0.
             
-            double max_roll_torque = 500000.0;
-            double max_pitch_torque = 500000.0;
-            double max_yaw_torque = 200000.0;
+            // To be safe and allow crisp handling:
+            double q_bar = aero->dynamic_pressure;
+            
+            // Limit q_bar for numerical stability at very low speeds (though 0 is fine for 0 torque)
+            // But lets clamp max q for "stiffening" at high speed if needed (fly-by-wire Limiter)
+            // For now, pure physical scaling.
+            
+            double scaling_roll = 40.0 * q_bar;  
+            double scaling_pitch = 60.0 * q_bar; // 60 * 3000 = 180,000 Nm @ 70m/s
+            double scaling_yaw = 20.0 * q_bar;
+            
+            // Damping also scales with q? Or standard rotational damping?
+            // Standard damping is usually proportional to speed or constant "friction".
+            // Aerodynamic damping (Cm_q) scales with q and velocity.
+            // For MVP, we stick to constant damping or linear speed damping, 
+            // but let's keep the existing damping constants for stability first, 
+            // maybe scale them slightly with speed? 
+            // Existing: 40000. Let's keep them constant for now to dampen the "spring" effect of high torque.
             
             double damping_roll = 40000.0; 
             double damping_pitch = 60000.0;
             double damping_yaw = 40000.0;
 
             forces->add_torque(
-                stick_roll * max_roll_torque - ang_vel->p * damping_roll,
-                stick_pitch * max_pitch_torque - ang_vel->q * damping_pitch, 
-                stick_yaw * max_yaw_torque - ang_vel->r * damping_yaw
+                stick_roll * scaling_roll - ang_vel->p * damping_roll,
+                stick_pitch * scaling_pitch - ang_vel->q * damping_pitch, 
+                stick_yaw * scaling_yaw - ang_vel->r * damping_yaw
             );
         }
+
 
         // --- 4. Secondary Systems (Gear) ---
         LandingGear* gear = entity.get_mut<LandingGear>();
