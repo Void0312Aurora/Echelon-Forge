@@ -16,6 +16,8 @@
 #include "systems/combat/damage_system.h"
 #include "systems/systems/sensor_system.h"
 #include "systems/systems/data_link_system.h"
+#include "systems/systems/navigation_system.h" 
+#include "systems/systems/track_manager_system.h" // Added track_manager_system.h
 #include "components/physics/action.h"
 #include "components/physics/forces.h"
 #include "components/systems/ew.h"
@@ -49,7 +51,8 @@ SimulationKernel::SimulationKernel()
        .kind(flecs::PreUpdate)
        .each([](flecs::entity e, RWR& rwr) {
            rwr.detected_radar_ids.clear();
-           rwr.is_locked = false;
+           rwr.locking_radar_ids.clear();
+           // rwr.is_locked = false; // Removed
            rwr.is_missile_launch = false;
        });
 
@@ -96,6 +99,19 @@ SimulationKernel::SimulationKernel()
     ecs.component<Score>();
     ecs.component<DataLink>(); // New Component
     ecs.component<InstrumentState>(); // New Component for Digital Pilot
+    ecs.component<EGI>(); // GPS/INS
+    ecs.component<TrackDatabase>();
+
+    // Initialize Systems
+    register_movement_system(ecs);
+    register_force_clear_system(ecs);
+    register_control_system(ecs, control_model_);
+    // ...
+    register_sensor_system(ecs, sensor_model_);
+    register_data_link_system(ecs);
+    register_navigation_system(ecs); 
+    register_track_manager_system(ecs); // Runs after Sensor/DL
+    // ...
 
     ecs.component<EffectsModelRef>();
     ecs.component<SensorModelRef>();
@@ -620,7 +636,9 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
         }) // 1000m/s, 35deg/s, 300m fuse, 120 DMG
         .set<Sensor>({sensor_max_range, sensor_fov_deg, sensor_scan_period, -1.0,
                       sensor_detection_prob, 2.0, sensor_bearing_noise,
-                      sensor_range_noise, sensor_track_memory, 0.2}) // Seeker sensor
+                      sensor_range_noise, sensor_track_memory, 0.2,
+                      20.0, // doppler_notch_width (m/s)
+                      static_cast<int>(sensor_max_range > 8000.0 ? SensorType::Radar : SensorType::Infrared)}) // Seeker sensor
         .set<ContactList>({})
         .add<SimObject>(); // Tag for cleanup
         
@@ -746,6 +764,9 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
     const Velocity* v = e.get<Velocity>();
     const Health* h = e.get<Health>();
     
+    // Safety Check: Transform is required for relative calculations (RWR)
+    if (!p) return obs;
+
     if (p) {
         obs.x = p->x; obs.y = p->y; obs.z = p->z;
         obs.heading = p->heading; obs.pitch = p->pitch; obs.roll = p->roll;
@@ -760,21 +781,40 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
         obs.health = 0.0;
     }
     
-    // Sensors
-    const ContactList* c = e.get<ContactList>();
-    if (c) {
-        for (const auto& det : c->contacts) {
-            TrackData track;
-            track.id = det.target_id;
-            track.range = det.range;
-            track.time_since_update = obs.sim_time - det.timestamp;
-            
-            // Sensor already provides relative azimuth in NAV degrees.
-            track.azimuth = det.bearing;
-            track.elevation = det.elevation;
-            track.closing_speed = det.closing_speed;
-            
-            obs.contacts.push_back(track);
+    // Tracks (Fused Picture)
+    const TrackDatabase* tracks = e.get<TrackDatabase>();
+    if (tracks) {
+         for (const auto& trk : tracks->tracks) {
+             TrackData d;
+             d.id = trk.track_id;
+             d.range = trk.range;
+             d.azimuth = trk.azimuth;
+             d.elevation = trk.elevation;
+             d.closing_speed = 0.0; // Not stored in SystemTrack yet, could be deriv
+             d.time_since_update = trk.time_since_update;
+             d.source = (int)trk.main_source;
+             d.classification = (int)trk.classification;
+             obs.contacts.push_back(d);
+         }
+    } else {
+        // Fallback to raw sensor contacts
+        const ContactList* c = e.get<ContactList>();
+        if (c) {
+            for (const auto& det : c->contacts) {
+                TrackData track;
+                track.id = det.target_id;
+                track.range = det.range;
+                track.time_since_update = obs.sim_time - det.timestamp;
+                
+                // Sensor already provides relative azimuth in NAV degrees.
+                track.azimuth = det.bearing;
+                track.elevation = det.elevation;
+                track.closing_speed = det.closing_speed;
+                track.source = 1; // Radar (Default)
+                track.classification = 0; // Unknown
+                
+                obs.contacts.push_back(track);
+            }
         }
     }
     
@@ -814,9 +854,17 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
             double dist_sq = dx*dx + dy*dy;
             event.signal_strength = 1.0 / (dist_sq + 1.0); 
             
-            event.is_lock = rwr->is_locked; // Binary state for now (Global lock? Or per source?)
-            // RWR struct has single "is_locked". This is a simplification. 
-            // Ideally we check if *this specific source* is locking.
+            event.signal_strength = 1.0 / (dist_sq + 1.0); 
+            
+            // Per-source Lock Check
+            event.is_lock = false;
+            for (auto lock_id : rwr->locking_radar_ids) {
+                if (lock_id == source_id) {
+                    event.is_lock = true;
+                    break;
+                }
+            }
+            // event.is_lock = rwr->is_locked; // Old global flag
             // For MVP, if *anyone* locks, we assume the strongest/all sources might be it?
             // Actually RWR struct needs IsLocked per source. 
             // Current struct: bool is_locked. 

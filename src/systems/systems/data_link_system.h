@@ -36,7 +36,8 @@
             }
             
              // P2P Sharing Loop (O(N^2))
-            double current_time = 0.0; // TODO: Get Abs Time
+            const ecs_world_info_t* info = ecs_get_world_info(it.world().c_ptr());
+            double current_time = info ? (double)info->world_time_total : 0.0;
 
             for (const auto& sender : nodes) {
                 if (!sender.link->active) continue;
@@ -134,7 +135,9 @@
                                     static_cast<CommMsgType>(cmd->msg_type),
                                     cmd->msg_arg,
                                     sender.trans->x, sender.trans->y, sender.trans->z,
-                                    current_time
+                                    0.0, // value (default 0 as ActionCommand doesn't have it)
+                                    0,   // status_code
+                                    current_time // Actual Timestamp
                                 });
                                 spdlog::trace("Msg delivered from {} to {}", sender.entity.id(), receiver.entity.id());
                             }
@@ -149,14 +152,21 @@
             }
         });
 
-    // Clear Inbox System (Run at start of frame)
+    // Clear Inbox System (TTL-based Pruning)
     ecs.system<CommQueue>("ClearCommInbox")
        .kind(flecs::PreUpdate)
        .run([](flecs::iter& it) {
+           const ecs_world_info_t* info = ecs_get_world_info(it.world().c_ptr());
+           double time = info ? (double)info->world_time_total : 0.0;
+           constexpr double kMessageTTL = 0.5; // Keep messages for 0.5s
+
            while(it.next()) {
                 auto q = it.field<CommQueue>(0);
                 for(auto i : it) {
-                    q[i].inbox.clear();
+                    // Remove messages older than TTL
+                    std::erase_if(q[i].inbox, [time](const CommPacket& pkg) {
+                        return (time - pkg.timestamp) > kMessageTTL;
+                    });
                 }
            }
        });

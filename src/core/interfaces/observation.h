@@ -9,6 +9,8 @@ struct TrackData {
     double elevation; // Degrees relative to horizon
     double closing_speed; // m/s (Positive = Approaching)
     double time_since_update; // Seconds
+    int source; // 0=None, 1=Radar, 2=RWR, 3=DL, 4=Fused
+    int classification; // 0=Unknown, 1=Friend, 2=Hostile, 3=Neutral
 };
 
 struct RWREvent {

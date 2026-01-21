@@ -104,10 +104,21 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
         def.sensor.track_memory_s = s.value("track_memory_s", def.sensor.track_memory_s);
         def.sensor.aspect_influence = s.value("aspect_influence", def.sensor.aspect_influence);
         
+
         // Backwards compatibility for dopper_notch_width if missing in struct default
         if (s.contains("doppler_notch_width")) {
-             // If we add this field to Sensor struct, parse it here
+             def.sensor.doppler_notch_width = s.value("doppler_notch_width", 0.0);
+        } else {
+             def.sensor.doppler_notch_width = 0.0;
         }
+
+        // Parse Sensor Type (String to auto-mapped int)
+        std::string type_str = s.value("type", "Visual");
+        if (type_str == "Visual") def.sensor.type = static_cast<int>(SensorType::Visual);
+        else if (type_str == "Infrared") def.sensor.type = static_cast<int>(SensorType::Infrared);
+        else if (type_str == "Radar") def.sensor.type = static_cast<int>(SensorType::Radar);
+        else if (type_str == "RWR") def.sensor.type = static_cast<int>(SensorType::RWR);
+        else def.sensor.type = static_cast<int>(SensorType::Visual);
     } else if (entry.contains("has_sensor")) {
         def.has_sensor = entry.value("has_sensor", def.has_sensor);
     }

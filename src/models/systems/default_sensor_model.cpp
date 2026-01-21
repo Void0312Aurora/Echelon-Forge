@@ -138,20 +138,37 @@ public:
                 
                 double doppler_factor = 1.0;
 
+#include "components/combat/weapon.h"
+
+// ... (in Sensor logic)
                 // RWR Update (Electronic Warfare)
                 // If Owner is a Radar, painting the target
-                if (sensor.type == 2) {
+                if (sensor.type == static_cast<int>(SensorType::Radar)) {
                     // We use get_mut because we are modifying the Target's RWR state
                     RWR* target_rwr = target_e.get_mut<RWR>();
                     if (target_rwr) {
                         // Sensitivity Check (Simplified: Range * 1.5)
                         if (dist < sensor.max_range * 1.5) {
+                            // 1. Add to Detected List (Search)
                             bool found = false;
                             for (auto id : target_rwr->detected_radar_ids) {
                                 if (id == owner.id()) { found = true; break; }
                             }
                             if (!found) {
                                 target_rwr->detected_radar_ids.push_back(owner.id());
+                            }
+                            
+                            // 2. Add to Locking List (Track/STT)
+                            // Heuristic: If source is a Missile, it IS Locking.
+                            // Future: Check for STT mode on fighters.
+                            if (owner.has<Missile>()) {
+                                bool locked = false;
+                                for (auto id : target_rwr->locking_radar_ids) {
+                                    if (id == owner.id()) { locked = true; break; }
+                                }
+                                if (!locked) {
+                                    target_rwr->locking_radar_ids.push_back(owner.id());
+                                }
                             }
                         }
                     }
@@ -169,8 +186,8 @@ public:
                     
                     v_closing = -(v_rel_x * rx + v_rel_y * ry + v_rel_z * rz);
                     
-                    constexpr double kDopplerGate = 25.0; 
-                    if (std::abs(v_closing) < kDopplerGate) {
+                    double notch_width = sensor.doppler_notch_width > 0.0 ? sensor.doppler_notch_width : 25.0; 
+                    if (std::abs(v_closing) < notch_width) {
                          doppler_factor = 0.1;
                     }
                 }

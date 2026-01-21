@@ -9,6 +9,7 @@
 #include "components/physics/forces.h"       // AeroState, ForceAccumulator, AngularVelocity
 #include "components/physics/dynamics.h"     // Mass, Propulsion
 #include "components/systems/ew.h"           // RWR
+#include "components/combat/weapon.h"        // Ammo
 #include "core/interfaces/environment_model.h"
 
 namespace {
@@ -132,12 +133,14 @@ inline void register_instrument_system(flecs::world& ecs) {
                     inst[i].g_load_axial  = f_body.x / (total_mass * 9.80665);
                     
                     // 2. Propulsion
+                    double tsfc = propulsion[i].afterburner_active ? 0.25 : 0.1; // kg/N/h approx
+                    inst[i].fuel_flow_kg_h = std::abs(propulsion[i].current_thrust_n) * tsfc;
+                    
                     if (propulsion[i].afterburner_active) {
                         inst[i].engine_rpm_pct = 100.0 + (propulsion[i].current_thrust_n / (propulsion[i].ab_thrust_n + 1e-6)) * 10.0;
                     } else {
                         inst[i].engine_rpm_pct = (propulsion[i].current_thrust_n / (propulsion[i].mil_thrust_n + 1e-6)) * 100.0;
                     }
-                    inst[i].fuel_flow_kg_h = mass[i].fuel_leak_rate_kg_s * 3600.0; // Approximation if leak rate used as burn rate
                     inst[i].engine_temp_c = 600.0 + inst[i].engine_rpm_pct * 3.0; // Mocked EGT
                     
                     inst[i].fuel_internal_kg = mass[i].fuel_mass_kg; 
@@ -158,12 +161,13 @@ inline void register_instrument_system(flecs::world& ecs) {
                         inst[i].cmd_alt_m = inst[i].alt_baro_m;
                         inst[i].cmd_speed_mps = inst[i].ias_mps;
                     }
-
+ 
                     // 4. EW
                     const RWR* rwr = it.entity(i).get<RWR>();
                     inst[i].rwr_active = (rwr && !rwr->detected_radar_ids.empty());
                     
-                    inst[i].missiles_remaining = 0; // Placeholder
+                    const Ammo* ammo = it.entity(i).get<Ammo>();
+                    inst[i].missiles_remaining = ammo ? ammo->missiles_remaining : 0;
                 }
             }
         });

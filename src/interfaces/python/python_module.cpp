@@ -10,6 +10,7 @@
 #include "components/physics/action.h" // Added action.h
 #include "components/physics/instruments.h" // Added instruments.h
 #include "components/systems/sensor.h"
+#include "components/systems/navigation.h" // Added navigation.h
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
@@ -117,6 +118,28 @@ NB_MODULE(ef_py, m) {
         .def_rw("rwr_active", &InstrumentState::rwr_active)
         .def_rw("missiles_remaining", &InstrumentState::missiles_remaining);
 
+    // Bind EGI
+    nb::class_<EGI>(m, "EGI")
+        .def(nb::init<>())
+        .def_rw("lat", &EGI::lat_deg)
+        .def_rw("lon", &EGI::lon_deg)
+        .def_rw("alt_baro", &EGI::alt_baro_m)
+        .def_rw("alt_radar", &EGI::alt_radar_m)
+        .def_rw("vn", &EGI::vn_mps)
+        .def_rw("ve", &EGI::ve_mps)
+        .def_rw("vd", &EGI::vd_mps)
+        .def_rw("heading", &EGI::heading_deg)
+        .def_rw("pitch", &EGI::pitch_deg)
+        .def_rw("roll", &EGI::roll_deg)
+        .def_rw("wind_speed", &EGI::wind_speed_mps)
+        .def_rw("wind_dir", &EGI::wind_dir_deg)
+        .def_rw("drift_lat", &EGI::drift_lat_m)
+        .def_rw("drift_lon", &EGI::drift_lon_m)
+        .def_rw("drift_alt", &EGI::drift_alt_m)
+        .def_rw("pos_uncertainty", &EGI::position_uncertainty_m)
+        .def_rw("time_since_fix", &EGI::time_since_last_gps_fix)
+        .def_rw("gps_avail", &EGI::gps_available);
+
     // Bind MissileTuning
     nb::class_<MissileTuning>(m, "MissileTuning")
         .def(nb::init<>())
@@ -189,6 +212,14 @@ NB_MODULE(ef_py, m) {
             }
             return InstrumentState{};
         }, "Get the instrument state for a unit")
+        .def("get_egi_state", [](SimulationKernel& self, uint64_t entity_id) {
+            auto e = self.get_world().entity(entity_id);
+            if (e.is_valid()) {
+                const EGI* egi = e.get<EGI>();
+                if (egi) return *egi;
+            }
+            return EGI{};
+        }, "Get the EGI state for a unit")
         .def("reset", &SimulationKernel::reset, "Reset the simulation", nb::arg("seed") = 42)
         .def("load_database", &SimulationKernel::load_database, nb::arg("path"), "Load unit definitions from JSON directory")
         .def("step", &SimulationKernel::step, "Advance simulation by one fixed tick")
@@ -351,7 +382,9 @@ NB_MODULE(ef_py, m) {
         .def_ro("azimuth", &TrackData::azimuth)
         .def_ro("elevation", &TrackData::elevation)
         .def_ro("closing_speed", &TrackData::closing_speed)
-        .def_ro("time_since_update", &TrackData::time_since_update);
+        .def_ro("time_since_update", &TrackData::time_since_update)
+        .def_ro("source", &TrackData::source)
+        .def_ro("classification", &TrackData::classification);
 
     nb::class_<AgentObservation>(m, "AgentObservation")
         .def_ro("sim_time", &AgentObservation::sim_time)

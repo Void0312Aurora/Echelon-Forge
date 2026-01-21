@@ -29,7 +29,8 @@ struct Countermeasures {
 struct RWR {
     double sensitivity_dbm;             // Min detectable signal
     std::vector<uint64_t> detected_radar_ids; // IDs of painting radars
-    bool is_locked;                     // STT (Single Target Track) warning
+    std::vector<uint64_t> locking_radar_ids;  // IDs of locking (STT) radars
+    // bool is_locked; // Removed in favor of locking_radar_ids
     bool is_missile_launch;             // MAWS (Missile Approach) warning
 };
 

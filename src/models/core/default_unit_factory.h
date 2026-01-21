@@ -19,6 +19,8 @@
 #include "components/systems/logistics.h"
 #include "components/systems/comm.h"
 #include "components/systems/ew.h"
+#include "components/systems/navigation.h"
+#include "components/systems/track_management.h"
 #include "content/unit_definition_loader.h"
 #include "core/interfaces/unit_factory.h"
 
@@ -258,7 +260,7 @@ public:
             }
         } else {
              // Defaults or Minimal
-             e.set<RWR>({-80.0, {}, false, false});
+             e.set<RWR>({-80.0, {}, {}, false});
              e.set<Jammer>({false, 0.0, 0.0, JammingType::NoiseBarrage, 0.0});
              e.set<Countermeasures>({0, 0, 1.0, 0.0, false});
         }
@@ -299,6 +301,27 @@ public:
         
         // Initialize Loadout (Empty for now)
         e.set<Loadout>({});
+
+        // Initialize EGI (Embedded GPS/INS)
+        // Assume perfect alignment at spawn
+        // Recalculate Initial Lat/Lon (Use same constants as NavigationSystem)
+        constexpr double kRefLat = 36.24;
+        constexpr double kRefLon = -115.05;
+        constexpr double kMetersPerDegLat = 111132.954;
+        constexpr double kMetersPerDegLon = 90000.0;
+        
+        double lat = kRefLat + (params.y / kMetersPerDegLat);
+        double lon = kRefLon + (params.x / kMetersPerDegLon);
+        
+        e.set<EGI>({
+            lat, lon, params.z, params.z, // Pos
+            params.vy, params.vx, -params.vz, // Vel (NED)
+            heading_init, 0.0, 0.0, // Att
+            0.0, 0.0, // Wind
+            0.0, 0.0, 0.0, // Drift
+            5.0, 0.0, // Uncertainty, TimeSinceFix
+            0.5, true // Drift Rate, GPS Avail
+        });
         
         if (def.has_score) {
             e.set<Score>(def.score);
@@ -397,9 +420,11 @@ public:
             });
             e.add<CommQueue>(); // Enable Messaging
         } else {
-            // Force disable
             e.remove<DataLink>();
         }
+
+        // Initialize Track Database
+        e.set<TrackDatabase>({});
 
         // Initialize Logistics Node for Facilities/Carriers
         if (def.type == UnitType::Facility || def.name.find("Airbase") != std::string::npos) {
