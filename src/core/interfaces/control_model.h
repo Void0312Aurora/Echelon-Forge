@@ -12,13 +12,15 @@ class IControlModel {
 public:
     virtual ~IControlModel() = default;
 
+#include "core/interfaces/environment_model.h"
+
     virtual void update(flecs::world world,
                         flecs::entity entity,
                         Velocity& velocity,
                         Transform& transform,
-                        const MovementCommand& command,
                         const FlightModel& flight_model,
-                        double dt) = 0;
+                        double dt,
+                        IEnvironmentModel* env_model = nullptr) = 0;
 };
 
 struct ControlModelRef {

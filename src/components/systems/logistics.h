@@ -22,6 +22,11 @@ struct MassProperties {
     double current_total_mass_kg; // Calculated every frame
     double base_drag_index;     // Clean config drag
     double current_drag_index;  // Calculated drag
+    double reference_area_m2{0.0}; // Reference area for aero drag calculations
+    
+    // Aerodynamic References
+    double wing_span_m{10.0};       // [NEW] Span b
+    double chord_m{3.0};            // [NEW] Mean Aerodynamic Chord c_bar
 };
 
 struct WeaponStation {
@@ -43,9 +48,15 @@ struct LogisticsNode {
     // Could add fuel/ammo stocks here later
 };
 
-// State for units currently resupplying
 struct ResupplyState {
     double time_remaining_s;    // Implementation of "Turnaround Time"
     bool is_refueling;
     bool is_rearming;
+};
+
+// Ground Contact State
+struct GroundState {
+    bool on_ground;
+    double terrain_elevation;
+    double surface_friction{0.6}; // Default friction
 };

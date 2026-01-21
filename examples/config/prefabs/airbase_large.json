@@ -1,0 +1,42 @@
+{
+    "name": "Standard Airbase (Large)",
+    "description": "A standard large airbase with a concrete runway and asphalt apron.",
+    "zones": [
+        {
+            "name": "Runway 09",
+            "x": 1500.0,
+            "y": 0.0,
+            "width": 60.0,
+            "length": 3000.0,
+            "heading": 90.0,
+            "surface": "Concrete"
+        },
+        {
+            "name": "Apron",
+            "x": 1500.0,
+            "y": 0.0,
+            "width": 1000.0,
+            "length": 4000.0,
+            "heading": 90.0,
+            "surface": "Asphalt"
+        }
+    ],
+    "entities": [
+        {
+            "name": "Control_Tower",
+            "type": "Facility",
+            "side": "Blue",
+            "pos": [
+                0.0,
+                300.0,
+                0.0
+            ],
+            "vel": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "heading": 0.0
+        }
+    ]
+}

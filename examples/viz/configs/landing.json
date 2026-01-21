@@ -1,0 +1,18 @@
+{
+    "name": "F-16 Landing",
+    "env_module": "gym_envs.f16_landing_waypoint_env",
+    "env_class": "F16LandingWaypointEnv",
+    "env_kwargs": {
+        "frame_skip": 6,
+        "max_steps_s": 300.0,
+        "glideslope_deg": 3.0,
+        "approach_speed_mps": 90.0,
+        "start_dist_m_min": 8000.0,
+        "start_dist_m_max": 12000.0,
+        "log_level": "error"
+    },
+    "model_path": "ppo_f16_landing.zip",
+    "viz_settings": {
+        "port": 5000
+    }
+}

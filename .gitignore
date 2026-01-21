@@ -50,3 +50,6 @@ archive/
 logs/
 compat_data/
 ipc/
+*.zip
+checkpoint/
+experiments

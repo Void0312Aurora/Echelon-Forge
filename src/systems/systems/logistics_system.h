@@ -1,9 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 #include "components/basic/common.h"
 #include "components/physics/action.h"
+#include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 
 inline void register_logistics_system(flecs::world& ecs) {
@@ -69,20 +71,26 @@ inline void register_logistics_system(flecs::world& ecs) {
         });
 
     // 2. Mass Update System
-    ecs.system<MassProperties, const FuelSystem>("MassUpdate")
+    ecs.system<MassProperties, Mass, const FuelSystem>("MassUpdate")
         .run([](flecs::iter& it) {
             while (it.next()) {
                 auto mass = it.field<MassProperties>(0);
-                auto fuel = it.field<const FuelSystem>(1);
+                auto rigid_mass = it.field<Mass>(1);
+                auto fuel = it.field<const FuelSystem>(2);
                 // Optional: const Loadout* loadout = it.field<const Loadout>(2); 
 
                 for (auto i : it) {
                     double load_mass = 0.0;
                     // TODO: Iterate loadout if present
                     
+                    const double fuel_kg =
+                        std::max(0.0, fuel[i].internal_fuel_kg) + std::max(0.0, fuel[i].external_fuel_kg);
+
+                    // Keep the physics mass component consistent with the fuel system.
+                    rigid_mass[i].fuel_mass_kg = fuel_kg;
+
                     mass[i].current_total_mass_kg = mass[i].empty_mass_kg + 
-                                                    fuel[i].internal_fuel_kg + 
-                                                    fuel[i].external_fuel_kg + 
+                                                    fuel_kg +
                                                     load_mass;
                 }
             }

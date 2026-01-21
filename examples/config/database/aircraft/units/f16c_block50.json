@@ -22,8 +22,15 @@
         "max_accel": 9.0,
         "max_g": 9.0
     },
+    "landing_gear": {
+        "can_use_unpaved": false,
+        "rolling_friction_coeff": 0.02,
+        "max_load_factor": 4.0
+    },
     "engine_ref": "F110-GE-129",
     "sensor_ref": "AN/APG-68(V)9",
+    "ew_suite_ref": "Generic_Gen4_EW",
+    "rcs_profile_ref": "Standard_Fighter_RCS",
     "hardpoints": [
         {
             "station_id": 1,

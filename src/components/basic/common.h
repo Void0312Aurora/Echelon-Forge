@@ -1,6 +1,28 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+namespace Math {
+    inline double to_radians(double deg) { return deg * M_PI / 180.0; }
+    inline double to_degrees(double rad) { return rad * 180.0 / M_PI; }
+    
+    struct Vector3 { double x, y, z; };
+    
+    inline double vec_mag(const Vector3& v) {
+        return std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    }
+    
+    inline Vector3 vec_norm(const Vector3& v) {
+        double m = vec_mag(v);
+        if (m < 1e-6) return {0,0,0};
+        return {v.x/m, v.y/m, v.z/m};
+    }
+}
 
 // Components
 
@@ -35,7 +57,9 @@ enum class UnitType : uint8_t {
     Facility,
     C2Node,
     Sensor,
-    Engine
+    Engine,
+    EWSuite,
+    RCSProfile
 };
 
 struct KeyEntity {

@@ -1,0 +1,98 @@
+{
+    "meta": {
+        "name": "Capture Node Phase 1",
+        "description": "Blue aircraft must enter the capture zone of the target node while avoiding/engaging a Red defender.",
+        "max_steps": 2000
+    },
+    "environment": {
+        "time_step": 0.016666666666666666,
+        "bounds": {
+            "x_min": -50000,
+            "x_max": 50000,
+            "y_min": -50000,
+            "y_max": 50000
+        }
+    },
+    "entities": [
+        {
+            "name": "Agent_Blue",
+            "side": "Blue",
+            "type": "F-16C_Block50",
+            "pos": [
+                0,
+                0,
+                5000
+            ],
+            "vel": [
+                300,
+                0,
+                0
+            ],
+            "heading": 90,
+            "is_agent": true
+        },
+        {
+            "name": "Target_Node",
+            "side": "Neutral",
+            "type": "Generic_Airbase",
+            "pos": [
+                20000,
+                5000,
+                0
+            ],
+            "vel": [
+                0,
+                0,
+                0
+            ],
+            "heading": 0,
+            "is_agent": false,
+            "behavior": "static"
+        },
+        {
+            "name": "Defender_Red",
+            "side": "Red",
+            "type": "Su-35S_Flanker-E",
+            "pos": [
+                25000,
+                5000,
+                5000
+            ],
+            "vel": [
+                -200,
+                0,
+                0
+            ],
+            "heading": 270,
+            "is_agent": false,
+            "behavior": "patrol_box",
+            "behavior_params": {
+                "center": [
+                    20000,
+                    5000,
+                    5000
+                ],
+                "width": 10000,
+                "length": 5000
+            }
+        }
+    ],
+    "objectives": [
+        {
+            "type": "capture_zone",
+            "target": "Target_Node",
+            "agent": "Agent_Blue",
+            "radius": 2000,
+            "duration": 10,
+            "reward": 1000
+        }
+    ],
+    "rewards": {
+        "distance_to_target": {
+            "target": "Target_Node",
+            "weight": -0.01,
+            "max_dist": 50000
+        },
+        "survival": 0.1
+    }
+}

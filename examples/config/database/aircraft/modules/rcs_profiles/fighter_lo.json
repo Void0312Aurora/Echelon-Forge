@@ -1,0 +1,11 @@
+{
+    "name": "LO_Fighter_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 0.01,
+        "side_rcs": 0.5,
+        "rear_rcs": 0.1,
+        "top_rcs": 1.0,
+        "bottom_rcs": 1.0
+    }
+}

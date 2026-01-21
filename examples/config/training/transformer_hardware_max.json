@@ -1,0 +1,30 @@
+{
+    "algo": "PPO",
+    "policy": "MultiInputPolicy",
+    "total_timesteps": 5000000,
+    "n_envs": 20,
+    "save_freq": 100000,
+    "hyperparameters": {
+        "learning_rate": 0.0003,
+        "n_steps": 8192,
+        "batch_size": 8192,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "normalize_advantage": true,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "target_kl": 0.03,
+        "policy_kwargs": {
+            "features_extractor_class": "TransformerExtractor",
+            "features_extractor_kwargs": {
+                "features_dim": 1024,
+                "n_heads": 8,
+                "n_layers": 6
+            },
+            "net_arch": []
+        }
+    }
+}

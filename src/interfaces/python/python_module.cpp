@@ -7,10 +7,32 @@
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
 #include "components/basic/common.h"
+#include "components/physics/action.h" // Added action.h
+#include "components/physics/instruments.h" // Added instruments.h
 #include "components/systems/sensor.h"
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 
 namespace nb = nanobind;
+
+namespace {
+const char* default_unit_name_for(UnitType type) {
+    switch (type) {
+        case UnitType::Aircraft:
+            return "Aircraft";
+        case UnitType::Ship:
+            return "Ship";
+        case UnitType::Missile:
+            return "Missile";
+        case UnitType::Facility:
+            return "Facility";
+        case UnitType::C2Node:
+            return "AWACS";
+        default:
+            throw std::invalid_argument("Unsupported UnitType for spawn_unit (use type_name string instead)");
+    }
+}
+} // namespace
 
 NB_MODULE(ef_py, m) {
     m.def("set_log_level", [](const std::string& level) {
@@ -45,6 +67,13 @@ NB_MODULE(ef_py, m) {
         .def_rw("entity_ref", &CommPacket::entity_ref)
         .def_rw("timestamp", &CommPacket::timestamp);
 
+    nb::class_<RWREvent>(m, "RWREvent")
+        .def_ro("source_id", &RWREvent::source_id)
+        .def_ro("bearing", &RWREvent::bearing)
+        .def_ro("signal_strength", &RWREvent::signal_strength)
+        .def_ro("is_lock", &RWREvent::is_lock)
+        .def_ro("is_launch", &RWREvent::is_launch);
+
     // Bind UnitType Enum
     nb::enum_<UnitType>(m, "UnitType")
         .value("Aircraft", UnitType::Aircraft)
@@ -53,7 +82,42 @@ NB_MODULE(ef_py, m) {
         .value("Facility", UnitType::Facility)
         .value("C2Node", UnitType::C2Node);
 
-    // Bind SimulationKernel
+    // Bind InstrumentState
+    nb::class_<InstrumentState>(m, "InstrumentState")
+        .def(nb::init<>())
+        .def_rw("alt_baro", &InstrumentState::alt_baro_m)
+        .def_rw("alt_radar", &InstrumentState::alt_radar_m)
+        .def_rw("ias", &InstrumentState::ias_mps)
+        .def_rw("mach", &InstrumentState::mach)
+        .def_rw("vvi", &InstrumentState::vvi_mps)
+        .def_rw("pitch", &InstrumentState::pitch_deg)
+        .def_rw("roll", &InstrumentState::roll_deg)
+        .def_rw("heading", &InstrumentState::heading_deg)
+        .def_rw("aoa", &InstrumentState::aoa_deg)
+        .def_rw("beta", &InstrumentState::beta_deg)
+        .def_rw("g_load", &InstrumentState::g_load_normal)
+        .def_rw("g_load_axial", &InstrumentState::g_load_axial)
+        .def_rw("p", &InstrumentState::p_deg_s)
+        .def_rw("q", &InstrumentState::q_deg_s)
+        .def_rw("r", &InstrumentState::r_deg_s)
+        .def_rw("engine_rpm", &InstrumentState::engine_rpm_pct)
+        .def_rw("engine_temp", &InstrumentState::engine_temp_c)
+        .def_rw("fuel_flow", &InstrumentState::fuel_flow_kg_h)
+        .def_rw("throttle_pos", &InstrumentState::throttle_pos)
+        .def_rw("fuel_internal", &InstrumentState::fuel_internal_kg)
+        .def_rw("fuel_external", &InstrumentState::fuel_external_kg)
+        .def_rw("gear_pos", &InstrumentState::gear_pos)
+        .def_rw("flaps_pos", &InstrumentState::flaps_pos)
+        .def_rw("speedbrake_pos", &InstrumentState::speedbrake_pos)
+        .def_rw("master_arm", &InstrumentState::master_arm)
+        .def_rw("oat", &InstrumentState::oat_c)
+        .def_rw("cmd_heading", &InstrumentState::cmd_heading_deg)
+        .def_rw("cmd_alt", &InstrumentState::cmd_alt_m)
+        .def_rw("cmd_speed", &InstrumentState::cmd_speed_mps)
+        .def_rw("rwr_active", &InstrumentState::rwr_active)
+        .def_rw("missiles_remaining", &InstrumentState::missiles_remaining);
+
+    // Bind MissileTuning
     nb::class_<MissileTuning>(m, "MissileTuning")
         .def(nb::init<>())
         .def_rw("max_speed", &MissileTuning::max_speed)
@@ -74,12 +138,61 @@ NB_MODULE(ef_py, m) {
         .def_rw("sensor_range_noise_std", &MissileTuning::sensor_range_noise_std)
         .def_rw("sensor_track_memory_s", &MissileTuning::sensor_track_memory_s);
 
+    // Bind PilotAction
+    nb::class_<PilotAction>(m, "PilotAction")
+        .def(nb::init<>())
+        .def_rw("stick_pitch", &PilotAction::stick_pitch)
+        .def_rw("stick_roll", &PilotAction::stick_roll)
+        .def_rw("rudder", &PilotAction::rudder)
+        .def_rw("throttle", &PilotAction::throttle)
+        .def_rw("gear_handle", &PilotAction::gear_handle)
+        .def_rw("flaps", &PilotAction::flaps)
+        .def_rw("speedbrake", &PilotAction::speedbrake)
+        .def_rw("brake_left", &PilotAction::brake_left)
+        .def_rw("brake_right", &PilotAction::brake_right)
+        .def_rw("radar_active", &PilotAction::radar_active)
+        .def_rw("radar_scan_az", &PilotAction::radar_scan_az)
+        .def_rw("radar_scan_el", &PilotAction::radar_scan_el)
+        .def_rw("tms_up", &PilotAction::tms_up)
+        .def_rw("master_arm", &PilotAction::master_arm)
+        .def_rw("fire_weapon", &PilotAction::fire_weapon)
+        .def_rw("fire_gun", &PilotAction::fire_gun)
+        .def_rw("weapon_select_id", &PilotAction::weapon_select_id)
+        .def_rw("jettison_emergency", &PilotAction::jettison_emergency)
+        .def_rw("program_chaff", &PilotAction::program_chaff)
+        .def_rw("program_flare", &PilotAction::program_flare)
+        .def_rw("active", &PilotAction::active);
+
+    // Bind MissionCommand
+    nb::class_<MissionCommand>(m, "MissionCommand")
+        .def(nb::init<>())
+        .def_rw("cmd_heading_deg", &MissionCommand::cmd_heading_deg)
+        .def_rw("cmd_altitude_m", &MissionCommand::cmd_altitude_m)
+        .def_rw("cmd_speed_mps", &MissionCommand::cmd_speed_mps)
+        .def_rw("command_code", &MissionCommand::command_code)
+        .def_rw("formation_id", &MissionCommand::formation_id)
+        .def_rw("form_offset_x", &MissionCommand::form_offset_x)
+        .def_rw("form_offset_y", &MissionCommand::form_offset_y)
+        .def_rw("form_offset_z", &MissionCommand::form_offset_z)
+        .def_rw("assigned_target_id", &MissionCommand::assigned_target_id)
+        .def_rw("authorization_to_fire", &MissionCommand::authorization_to_fire)
+        .def_rw("active", &MissionCommand::active);
+
     nb::class_<SimulationKernel>(m, "SimulationKernel")
         .def(nb::init<>())
+        .def("get_instrument_state", [](SimulationKernel& self, uint64_t entity_id) {
+            auto e = self.get_world().entity(entity_id);
+            if (e.is_valid()) {
+                const InstrumentState* inst = e.get<InstrumentState>();
+                if (inst) return *inst;
+            }
+            return InstrumentState{};
+        }, "Get the instrument state for a unit")
         .def("reset", &SimulationKernel::reset, "Reset the simulation", nb::arg("seed") = 42)
         .def("load_database", &SimulationKernel::load_database, nb::arg("path"), "Load unit definitions from JSON directory")
         .def("step", &SimulationKernel::step, "Advance simulation by one fixed tick")
         .def("get_time_step", &SimulationKernel::get_time_step, "Get the fixed time step in seconds")
+        .def("set_time_step", &SimulationKernel::set_time_step, "Set the fixed time step in seconds")
         .def("load_unit_definitions", [](SimulationKernel& self, const std::string& path) {
             std::string error;
             bool ok = self.load_unit_definitions(path, &error);
@@ -88,6 +201,10 @@ NB_MODULE(ef_py, m) {
             }
             return ok;
         }, "Load unit definitions from JSON", nb::arg("path"))
+        .def("clear_zones", &SimulationKernel::clear_zones, "Clear all environment zones")
+        .def("add_zone", &SimulationKernel::add_zone, 
+             "Add a new environment zone",
+             nb::arg("name"), nb::arg("x"), nb::arg("y"), nb::arg("width"), nb::arg("height"), nb::arg("heading"), nb::arg("surface_type"))
         .def("spawn_unit", [](SimulationKernel& self, Side side, const std::string& type, 
                               double x, double y, double z, 
                               double vx, double vy, double vz) {
@@ -98,10 +215,21 @@ NB_MODULE(ef_py, m) {
            nb::arg("side"), nb::arg("type_name"), 
            nb::arg("x"), nb::arg("y"), nb::arg("z"), 
            nb::arg("vx")=0, nb::arg("vy")=0, nb::arg("vz")=0)
+        .def("spawn_unit", [](SimulationKernel& self, Side side, UnitType type,
+                              double x, double y, double z,
+                              double vx, double vy, double vz) {
+            auto e = self.spawn_unit(side, default_unit_name_for(type), x, y, z, vx, vy, vz);
+            return e.id();
+        }, "Spawn a default unit for the given UnitType and return its Entity ID",
+           nb::arg("side"), nb::arg("type"),
+           nb::arg("x"), nb::arg("y"), nb::arg("z"),
+           nb::arg("vx")=0, nb::arg("vy")=0, nb::arg("vz")=0)
 
         // Action Interface
         .def("set_command", &SimulationKernel::set_unit_command, "Set movement command for a unit",
              nb::arg("entity_id"), nb::arg("heading_deg"), nb::arg("speed_mps"), nb::arg("altitude_m"))
+        .def("set_stick_command", &SimulationKernel::set_unit_stick_command, "Set stick inputs",
+             nb::arg("entity_id"), nb::arg("stick_roll"), nb::arg("stick_pitch"), nb::arg("throttle"), nb::arg("gear_down")=true)
         .def("set_action", &SimulationKernel::set_unit_action, "Set normalized action for a unit",
              nb::arg("entity_id"),
              nb::arg("turn_rate_cmd"),
@@ -111,6 +239,31 @@ NB_MODULE(ef_py, m) {
              nb::arg("release_chaff") = false,
              nb::arg("release_flare") = false,
              nb::arg("jettison_tanks") = false)
+        .def("set_action_space_config", &SimulationKernel::set_action_space_config, "Override action mapping scales for a unit",
+             nb::arg("entity_id"),
+             nb::arg("max_turn_rate_deg_s"),
+             nb::arg("max_accel_mps2"),
+             nb::arg("max_climb_rate_mps"),
+             nb::arg("min_speed_mps"),
+             nb::arg("max_speed_mps"),
+             nb::arg("min_alt_m"),
+             nb::arg("max_alt_m"))
+        
+        // Digital Pilot Bindings
+        .def("set_pilot_action", &SimulationKernel::set_pilot_action, 
+             "Set raw pilot inputs (stick, throttle, etc) for Digital Pilot",
+             nb::arg("entity_id"), nb::arg("action"))
+        .def("set_mission_command", &SimulationKernel::set_mission_command,
+             "Set high-level mission intent for Digital Pilot",
+             nb::arg("entity_id"), nb::arg("command"))
+
+        .def("set_command_lag", &SimulationKernel::set_command_lag, "Override command lag time constants for a unit",
+             nb::arg("entity_id"),
+             nb::arg("heading_tau_s"),
+             nb::arg("speed_tau_s"),
+             nb::arg("altitude_tau_s"))
+        .def("set_command_link", &SimulationKernel::set_command_link, "Set command link latency/drop probability",
+             nb::arg("entity_id"), nb::arg("latency_s"), nb::arg("drop_prob"))
              
         .def("fire_missile", [](SimulationKernel& self, uint64_t attacker_id, uint64_t target_id) {
              auto e = self.fire_missile(attacker_id, target_id);
@@ -194,6 +347,7 @@ NB_MODULE(ef_py, m) {
         .def_ro("range", &TrackData::range)
         .def_ro("azimuth", &TrackData::azimuth)
         .def_ro("elevation", &TrackData::elevation)
+        .def_ro("closing_speed", &TrackData::closing_speed)
         .def_ro("time_since_update", &TrackData::time_since_update);
 
     nb::class_<AgentObservation>(m, "AgentObservation")
@@ -211,7 +365,10 @@ NB_MODULE(ef_py, m) {
         .def_ro("speed", &AgentObservation::speed)
         .def_ro("health", &AgentObservation::health)
         .def_ro("contacts", &AgentObservation::contacts)
+        .def_ro("rwr_warnings", &AgentObservation::rwr_warnings)
         .def_ro("missiles_remaining", &AgentObservation::missiles_remaining)
         .def_ro("can_fire", &AgentObservation::can_fire)
+        .def_ro("gear_state", &AgentObservation::gear_state)
+        .def_ro("throttle", &AgentObservation::throttle)
         .def_ro("total_reward", &AgentObservation::total_reward);
 }

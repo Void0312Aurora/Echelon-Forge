@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include "components/basic/common.h"
+#include "components/physics/action.h"
 #include "components/systems/sensor.h"
 #include "components/systems/comm.h"
 #include "components/basic/tags.h"
@@ -65,9 +66,12 @@ public:
 
     // Configuration
     bool load_database(const std::string& path);
+    void clear_zones();
+    void add_zone(const std::string& name, double x, double y, double width, double height, double heading, int surface_type);
     
     // Action Interface: Set command for a unit
     void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m);
+    void set_unit_stick_command(uint64_t entity_id, double stick_roll, double stick_pitch, double throttle, bool gear_down);
     void set_unit_action(uint64_t entity_id,
                          double turn_rate_cmd,
                          double accel_cmd,
@@ -76,6 +80,20 @@ public:
                          bool release_chaff = false,
                          bool release_flare = false,
                          bool jettison_tanks = false);
+    void set_command_link(uint64_t entity_id, double latency_s, double drop_prob);
+    void set_action_space_config(uint64_t entity_id,
+                                 double max_turn_rate_deg_s,
+                                 double max_accel_mps2,
+                                 double max_climb_rate_mps,
+                                 double min_speed_mps,
+                                 double max_speed_mps,
+                                 double min_alt_m,
+                                 double max_alt_m);
+    void set_command_lag(uint64_t entity_id, double heading_tau_s, double speed_tau_s, double altitude_tau_s);
+    
+    // [NEW] Digital Pilot Interface
+    void set_pilot_action(uint64_t entity_id, const PilotAction& action);
+    void set_mission_command(uint64_t entity_id, const MissionCommand& cmd);
     
     // Observation Interface
     std::vector<double> get_unit_position(uint64_t entity_id); // Returns [x, y, z]

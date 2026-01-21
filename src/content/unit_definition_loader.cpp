@@ -16,6 +16,8 @@ bool parse_unit_type(const std::string& value, UnitType* out_type) {
     if (value == "C2Node") { *out_type = UnitType::C2Node; return true; }
     if (value == "Sensor") { *out_type = UnitType::Sensor; return true; }
     if (value == "Engine") { *out_type = UnitType::Engine; return true; }
+    if (value == "EWSuite") { *out_type = UnitType::EWSuite; return true; }
+    if (value == "RCSProfile") { *out_type = UnitType::RCSProfile; return true; }
     *out_type = UnitType::Unknown;
     return false;
 }
@@ -121,6 +123,21 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
         def.flight_model.max_accel = fm.value("max_accel", def.flight_model.max_accel);
         def.flight_model.max_climb_rate = fm.value("max_climb_rate", def.flight_model.max_climb_rate);
         def.flight_model.max_g = fm.value("max_g", def.flight_model.max_g);
+        def.flight_model.min_g = fm.value("min_g", -3.0); // Default to -3.0
+        
+        def.flight_model.takeoff_speed = fm.value("takeoff_speed", 80.0);
+        def.flight_model.landing_speed = fm.value("landing_speed", 70.0);
+        def.flight_model.taxi_turn_rate = fm.value("taxi_turn_rate", 15.0);
+    }
+
+    def.has_landing_gear = entry.value("has_landing_gear", false);
+    def.landing_gear = {false, 0.02, 3.0}; // Default Paved Only
+    if (entry.contains("landing_gear")) {
+        def.has_landing_gear = true;
+        const auto& lg = entry["landing_gear"];
+        def.landing_gear.can_use_unpaved = lg.value("can_use_unpaved", def.landing_gear.can_use_unpaved);
+        def.landing_gear.rolling_friction_coeff = lg.value("rolling_friction_coeff", def.landing_gear.rolling_friction_coeff);
+        def.landing_gear.max_load_factor = lg.value("max_load_factor", def.landing_gear.max_load_factor);
     }
 
     def.has_score = entry.value("has_score", true);

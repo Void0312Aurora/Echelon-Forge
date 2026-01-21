@@ -157,6 +157,7 @@ public:
                     }
                 }
                 
+                double v_closing = 0.0;
                 if (owner_v && target_v && dist > 1.0) {
                     double rx = dx / dist;
                     double ry = dy / dist;
@@ -166,7 +167,7 @@ public:
                     double v_rel_y = target_v->vy - owner_v->vy;
                     double v_rel_z = target_v->vz - owner_v->vz;
                     
-                    double v_closing = -(v_rel_x * rx + v_rel_y * ry + v_rel_z * rz);
+                    v_closing = -(v_rel_x * rx + v_rel_y * ry + v_rel_z * rz);
                     
                     constexpr double kDopplerGate = 25.0; 
                     if (std::abs(v_closing) < kDopplerGate) {
@@ -255,6 +256,7 @@ public:
                     noisy_range,
                     normalize_angle_deg(noisy_bearing),
                     std::clamp(elevation_deg, -90.0, 90.0),
+                    v_closing,
                     signal_strength,
                     current_time
                 });

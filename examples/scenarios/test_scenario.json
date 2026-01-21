@@ -1,0 +1,77 @@
+{
+    "meta": {
+        "max_steps": 500
+    },
+    "environment": {
+        "time_step": 0.05,
+        "zones": [
+            {
+                "name": "TestArea",
+                "x": 0,
+                "y": 0,
+                "width": 50000,
+                "length": 50000,
+                "heading": 0,
+                "surface": "HardPacked"
+            }
+        ]
+    },
+    "entities": [
+        {
+            "name": "BlueLeader",
+            "side": "Blue",
+            "type": "Aircraft",
+            "is_agent": true,
+            "pos": [
+                0,
+                0,
+                5000
+            ],
+            "vel": [
+                200,
+                0,
+                0
+            ]
+        },
+        {
+            "name": "Aggressor",
+            "side": "Red",
+            "type": "Aircraft",
+            "pos": [
+                5000,
+                5000,
+                5000
+            ],
+            "vel": [
+                0,
+                -200,
+                0
+            ]
+        }
+    ],
+    "objectives": [
+        {
+            "type": "conditional",
+            "conditions": [
+                {
+                    "property": "speed",
+                    "op": ">=",
+                    "value": 250
+                },
+                {
+                    "property": "altitude",
+                    "op": ">=",
+                    "value": 6000
+                }
+            ],
+            "reward": 100
+        }
+    ],
+    "rewards": {
+        "survival": 0.01,
+        "crash_penalty": -100.0,
+        "distance_to_target": {
+            "weight": 0.0
+        }
+    }
+}

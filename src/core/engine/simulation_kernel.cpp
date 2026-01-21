@@ -1,5 +1,14 @@
 #include "simulation_kernel.h"
+#include "core/interfaces/environment_model.h"
 #include "systems/physics/movement_system.h"
+#include "systems/physics/force_clear_system.h"
+#include "systems/physics/force_system.h"
+#include "systems/physics/aero_state_system.h"
+#include "systems/physics/aerodynamics_system.h"
+#include "systems/physics/ground_contact_system.h"
+#include "systems/physics/instrument_system.h" // Added instrument_system.h
+#include "systems/physics/rotational_system.h"
+#include "systems/physics/leapfrog_system.h"
 #include "systems/core/operation_system.h"
 #include "systems/systems/command_link_system.h"
 #include "systems/physics/control_system.h"
@@ -8,6 +17,7 @@
 #include "systems/systems/sensor_system.h"
 #include "systems/systems/data_link_system.h"
 #include "components/physics/action.h"
+#include "components/physics/forces.h"
 #include "components/systems/ew.h"
 #include "components/systems/logistics.h" // Added logistics.h
 #include "systems/systems/ew_system.h"
@@ -16,7 +26,6 @@
 #include "core/interfaces/effects_model.h"
 #include "core/interfaces/guidance_model.h"
 #include "core/interfaces/sensor_model.h"
-#include "core/interfaces/environment_model.h"
 #include "core/interfaces/unit_factory.h"
 #include "models/core/default_unit_factory.h"
 #include <algorithm>
@@ -49,6 +58,8 @@ SimulationKernel::SimulationKernel()
     ecs.component<Alliance>();
     ecs.component<KeyEntity>();
     ecs.component<MovementCommand>();
+    ecs.component<PilotAction>(); // New
+    ecs.component<MissionCommand>(); // New
     ecs.component<ActionCommand>();
     ecs.component<ActionSpaceConfig>();
     ecs.component<CommandLag>();
@@ -56,9 +67,12 @@ SimulationKernel::SimulationKernel()
     ecs.component<CommandLink>();
     ecs.component<PendingMovementCommand>();
     ecs.component<PendingActionCommand>();
-    ecs.component<Missile>();
-    ecs.component<Ammo>();
-    ecs.component<WeaponCooldown>();
+    
+    // Physics
+    ecs.component<LandingGear>();
+    ecs.component<MassProperties>();
+    ecs.component<ForceAccumulator>();
+    ecs.component<AeroState>();
     ecs.component<Missile>();
     ecs.component<Ammo>();
     ecs.component<WeaponCooldown>();
@@ -80,6 +94,7 @@ SimulationKernel::SimulationKernel()
     ecs.component<FlightModel>(); 
     ecs.component<Score>();
     ecs.component<DataLink>(); // New Component
+    ecs.component<InstrumentState>(); // New Component for Digital Pilot
 
     ecs.component<EffectsModelRef>();
     ecs.component<SensorModelRef>();
@@ -103,10 +118,18 @@ SimulationKernel::SimulationKernel()
     register_action_mapping_system(ecs); // Phase 1: Action Mapping
     register_command_lag_system(ecs);    // Phase 2: Command Lag
     register_control_system(ecs);        // Phase 3: Control
+    register_force_clear_system(ecs);    // Phase 3.1: Clear Forces (per-frame)
+    register_rotational_integration_system(ecs); // Phase 3.2: Rotational Dynamics (torques -> attitude)
+    register_aero_state_system(ecs);     // Phase 3.3: Aero State (AoA/beta/q)
+    register_force_system(ecs);          // Phase 3.4: Forces (gravity/thrust/ground reaction)
+    register_aerodynamics_system(ecs);   // Phase 3.5: Aerodynamics (lift/drag)
+    register_ground_contact_system(ecs); // Phase 3.6: Ground contact + friction
     register_guidance_system(ecs);       // Phase 4: Guidance
-    register_movement_system(ecs);       // Phase 5: Movement (integrate)
+    register_leapfrog_integration_system(ecs); // Phase 5: Leapfrog Integration (translation)
+    // register_movement_system(ecs);       // Phase 5.5: Movement (disabled - replaced by Leapfrog)
     register_sensor_system(ecs);         // Phase 6: Sensor
     register_data_link_system(ecs);      // Phase 6.5: Data Link Fusion (Post-Sensor)
+    register_instrument_system(ecs);     // Phase 6.6: Instruments (Read Physics & Sensor State)
     register_damage_system(ecs);         // Phase 7: Damage/Effects
     register_ew_system(ecs);             // Phase 8: EW Actions
     register_logistics_system(ecs);      // Phase 9: Logistics
@@ -206,6 +229,9 @@ void SimulationKernel::reset(unsigned int seed) {
     // This is safer than delete_with<Transform> as it won't affect
     // potential non-simulation entities (e.g., UI, config singletons)
     ecs.delete_with<SimObject>();
+
+    // Reset simulation time so resets are reproducible and episode-local.
+    ecs_reset_clock(ecs.c_ptr());
     
     rng.seed(seed);
     
@@ -258,19 +284,72 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
                             (entity_id * 0xbf58476d1ce4e5b9ULL) ^ 0x12345678ULL;
             double roll = deterministic_uniform01(seed);
             if (roll >= link->drop_prob) {
-                PendingMovementCommand pending{{heading_deg, speed_mps, altitude_m, true},
+                PendingMovementCommand pending{{heading_deg,
+                                                speed_mps,
+                                                altitude_m,
+                                                false, // use_stick_control
+                                                0.0,   // stick_roll
+                                                0.0,   // stick_pitch
+                                                0.0,   // throttle_cmd
+                                                true,  // gear_handle
+                                                true   // active
+                                               },
                                                current_time + link->latency_s,
                                                true};
                 e.set<PendingMovementCommand>(pending);
             }
         } else {
-            e.set<MovementCommand>({heading_deg, speed_mps, altitude_m, true});
+            e.set<MovementCommand>({
+                heading_deg,
+                speed_mps,
+                altitude_m,
+                false, // use_stick_control
+                0.0,   // stick_roll
+                0.0,   // stick_pitch
+                0.0,   // throttle_cmd
+                true,  // gear_handle
+                true   // active
+            });
             if (!e.has<LaggedCommand>()) {
                 e.set<LaggedCommand>({heading_deg, speed_mps, altitude_m, true});
             }
         }
     } else {
         spdlog::warn("Attempted to set command for invalid entity ID: {}", entity_id);
+    }
+}
+
+void SimulationKernel::set_unit_stick_command(uint64_t entity_id, double stick_roll, double stick_pitch, double throttle, bool gear_down) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+        double current_time = info ? (double)info->world_time_total : 0.0;
+        
+        // Stick commands override Autopilot commands
+        // We set use_stick_control = true
+        // and fill the stick inputs (mapped to MovementCommand fields)
+        if (e.has<MovementCommand>()) {
+             MovementCommand* cmd = e.get_mut<MovementCommand>();
+             cmd->use_stick_control = true;
+             cmd->stick_roll = std::clamp(stick_roll, -1.0, 1.0);
+             cmd->stick_pitch = std::clamp(stick_pitch, -1.0, 1.0);
+             cmd->throttle_cmd = std::clamp(throttle, 0.0, 1.0);
+             cmd->gear_handle = gear_down;
+             cmd->active = true;
+        } else {
+             // Create if missing
+             e.set<MovementCommand>({
+                 0.0, 0.0, 0.0, // Autopilot defaults (ignored)
+                 true, // use_stick_control
+                 std::clamp(stick_roll, -1.0, 1.0),
+                 std::clamp(stick_pitch, -1.0, 1.0),
+                 std::clamp(throttle, 0.0, 1.0),
+                 gear_down, // gear_handle
+                 true // active
+             });
+        }
+    } else {
+        spdlog::warn("Attempted to set stick command for invalid entity ID: {}", entity_id);
     }
 }
 
@@ -305,7 +384,11 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
                                                 release_chaff,
                                                 release_flare,
                                                 jettison_tanks,
-                                                true
+                                                false, // send_msg
+                                                0,     // msg_type
+                                                0,     // msg_recipient
+                                                0,     // msg_arg
+                                                true   // active
                                             },
                                             current_time + link->latency_s,
                                             true};
@@ -320,12 +403,78 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
                 release_chaff,
                 release_flare,
                 jettison_tanks,
-                true
+                false, // send_msg
+                0,     // msg_type
+                0,     // msg_recipient
+                0,     // msg_arg
+                true   // active
             });
         }
     } else {
         spdlog::warn("Attempted to set action for invalid entity ID: {}", entity_id);
     }
+}
+
+void SimulationKernel::set_command_link(uint64_t entity_id, double latency_s, double drop_prob) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        spdlog::warn("Attempted to set command link for invalid entity ID: {}", entity_id);
+        return;
+    }
+    if (auto* link = e.get_mut<CommandLink>()) {
+        link->latency_s = std::max(0.0, latency_s);
+        link->drop_prob = std::clamp(drop_prob, 0.0, 1.0);
+    } else {
+        e.set<CommandLink>({std::max(0.0, latency_s), std::clamp(drop_prob, 0.0, 1.0)});
+        if (!e.has<PendingMovementCommand>()) {
+            e.set<PendingMovementCommand>({{0.0, 0.0, 0.0, false}, 0.0, false});
+        }
+        if (!e.has<PendingActionCommand>()) {
+            e.set<PendingActionCommand>({{0.0, 0.0, 0.0, 0.0, false}, 0.0, false});
+        }
+    }
+}
+
+void SimulationKernel::set_action_space_config(uint64_t entity_id,
+                                               double max_turn_rate_deg_s,
+                                               double max_accel_mps2,
+                                               double max_climb_rate_mps,
+                                               double min_speed_mps,
+                                               double max_speed_mps,
+                                               double min_alt_m,
+                                               double max_alt_m) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        spdlog::warn("Attempted to set action space config for invalid entity ID: {}", entity_id);
+        return;
+    }
+
+    ActionSpaceConfig cfg;
+    cfg.max_turn_rate_deg_s = std::max(0.0, max_turn_rate_deg_s);
+    cfg.max_accel_mps2 = std::max(0.0, max_accel_mps2);
+    cfg.max_climb_rate_mps = std::max(0.0, max_climb_rate_mps);
+
+    cfg.min_speed_mps = std::max(0.0, min_speed_mps);
+    cfg.max_speed_mps = std::max(cfg.min_speed_mps, max_speed_mps);
+
+    cfg.min_alt_m = min_alt_m;
+    cfg.max_alt_m = std::max(cfg.min_alt_m, max_alt_m);
+
+    e.set<ActionSpaceConfig>(cfg);
+}
+
+void SimulationKernel::set_command_lag(uint64_t entity_id,
+                                       double heading_tau_s,
+                                       double speed_tau_s,
+                                       double altitude_tau_s) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        spdlog::warn("Attempted to set command lag for invalid entity ID: {}", entity_id);
+        return;
+    }
+
+    e.set<CommandLag>(
+        {std::max(0.0, heading_tau_s), std::max(0.0, speed_tau_s), std::max(0.0, altitude_tau_s)});
 }
 
 std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
@@ -622,8 +771,59 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
             // Sensor already provides relative azimuth in NAV degrees.
             track.azimuth = det.bearing;
             track.elevation = det.elevation;
+            track.closing_speed = det.closing_speed;
             
             obs.contacts.push_back(track);
+        }
+    }
+    
+    // RWR Warnings (Electronic Warfare)
+    const RWR* rwr = e.get<RWR>();
+    if (rwr) {
+        for (uint64_t source_id : rwr->detected_radar_ids) {
+            // Retrieve source truth to simulate RWR processing
+            // Note: In real life, RWR measures specific emitter parameters. 
+            // Here we simulate the result of that measurement.
+            auto source_e = ecs.entity(source_id);
+            if (!source_e.is_valid()) continue;
+            
+            const Transform* source_t = source_e.get<Transform>();
+            if (!source_t) continue;
+            
+            RWREvent event;
+            event.source_id = source_id;
+            
+            // Calculate Bearing
+            double dx = source_t->x - p->x;
+            double dy = source_t->y - p->y;
+            double bearing_rad = std::atan2(dy, dx);
+            double bearing_math_deg = bearing_rad * 180.0 / M_PI;
+            double bearing_nav_deg = 90.0 - bearing_math_deg; // Norm handled by simple math? 
+            // 90 - (-170) = 260. Need wrap.
+            if (bearing_nav_deg < 0) bearing_nav_deg += 360.0;
+            if (bearing_nav_deg >= 360.0) bearing_nav_deg -= 360.0;
+            
+            double rel_bearing = bearing_nav_deg - p->heading;
+            while (rel_bearing > 180.0) rel_bearing -= 360.0;
+            while (rel_bearing < -180.0) rel_bearing += 360.0;
+            
+            event.bearing = rel_bearing; // Raw bearing for now (could add noise)
+            
+            // Signal Strength (1/R^2 approximation for RWR)
+            double dist_sq = dx*dx + dy*dy;
+            event.signal_strength = 1.0 / (dist_sq + 1.0); 
+            
+            event.is_lock = rwr->is_locked; // Binary state for now (Global lock? Or per source?)
+            // RWR struct has single "is_locked". This is a simplification. 
+            // Ideally we check if *this specific source* is locking.
+            // For MVP, if *anyone* locks, we assume the strongest/all sources might be it?
+            // Actually RWR struct needs IsLocked per source. 
+            // Current struct: bool is_locked. 
+            // So we just flag it.
+            
+            event.is_launch = rwr->is_missile_launch;
+            
+            obs.rwr_warnings.push_back(event);
         }
     }
     
@@ -644,5 +844,60 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
     const Score* s = e.get<Score>();
     obs.total_reward = s ? s->total_reward : 0.0;
     
+    // System Status
+    const LandingGear* gear = e.get<LandingGear>();
+    obs.gear_state = gear ? gear->extension_state : 0.0;
+
+    // Afterburner Visualization
+    const InstrumentState* inst = e.get<InstrumentState>();
+    if (inst) {
+        // Normalize RPM. >100% usually means AB.
+        // Assume 100% = MIL, 150% = Max AB roughly for viz scaling
+        obs.throttle = inst->engine_rpm_pct / 100.0;
+    } else {
+        const Propulsion* prop = e.get<Propulsion>();
+        if (prop && prop->mil_thrust_n > 0.1) {
+             obs.throttle = prop->current_thrust_n / prop->mil_thrust_n;
+             if (prop->afterburner_active) obs.throttle = 1.5; 
+        } else {
+             obs.throttle = 0.0;
+        }
+    }
+    
     return obs;
+}
+
+void SimulationKernel::clear_zones() {
+    if (environment_model_) {
+        environment_model_->clear_zones();
+    }
+}
+
+void SimulationKernel::add_zone(const std::string& name, double x, double y, double width, double height, double heading, int surface_type) {
+    if (environment_model_) {
+        environment_model_->add_zone(name, x, y, width, height, heading, (IEnvironmentModel::SurfaceType)surface_type);
+    }
+}
+
+void SimulationKernel::set_pilot_action(uint64_t entity_id, const PilotAction& action) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        e.set<PilotAction>(action);
+        // Ensure legacy compatibility or active flag management if needed
+        PilotAction* pa = e.get_mut<PilotAction>();
+        pa->active = true;
+    } else {
+        spdlog::warn("Attempted to set pilot action for invalid entity ID: {}", entity_id);
+    }
+}
+
+void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionCommand& cmd) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        e.set<MissionCommand>(cmd);
+        MissionCommand* mc = e.get_mut<MissionCommand>();
+        mc->active = true;
+    } else {
+        spdlog::warn("Attempted to set mission command for invalid entity ID: {}", entity_id);
+    }
 }

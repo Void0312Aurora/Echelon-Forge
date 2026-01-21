@@ -21,6 +21,7 @@ struct Detection {
     double range;           // Meters
     double bearing;         // Degrees (relative azimuth, NAV: -180..180)
     double elevation;       // Degrees (relative elevation, -90..90)
+    double closing_speed;   // m/s (Positive = Approaching)
     double signal_strength; // Signal intensity (RCS/R^4 or similar linear scale)
     double timestamp;       // Simulation time
 };

@@ -12,6 +12,7 @@
 #include "components/systems/sensor.h"
 #include "components/combat/weapon.h"
 #include "components/combat/damage.h"
+#include "components/systems/ew.h"
 
 
 
@@ -50,6 +51,8 @@ struct UnitDefinition {
     // Component References (Modular)
     std::string sensor_ref;
     std::string engine_ref;
+    std::string ew_suite_ref;
+    std::string rcs_profile_ref;
     
     // Modular Data
     std::vector<Hardpoint> hardpoints;
@@ -57,6 +60,20 @@ struct UnitDefinition {
     
     // Module Definitions (if type == Engine)
     Engine engine_data;
+    
+    // EW Data (if type == EWSuite)
+    // We can reuse UnitDefinition as a generic container or add specific structs
+    // For simplicity, let's keep them here for now
+    // Actually, to keep it clean, let's add these to components/systems/ew.h and include here?
+    // They are already included.
+    // We need to store the *loaded data* in the definition map.
+    // So if "Generic_EW" is loaded, it stores RWR/Jammer configs here.
+    Jammer jammer_data;
+    RWR rwr_data;
+    Countermeasures cms_data;
+    
+    // RCS Data
+    RCSProfile rcs_data;
     
     // Platform Data
     Airframe airframe;
@@ -69,6 +86,9 @@ struct UnitDefinition {
 
     bool has_flight_model;
     FlightModel flight_model;
+
+    bool has_landing_gear;
+    LandingGear landing_gear;
 
     bool has_score;
     Score score;

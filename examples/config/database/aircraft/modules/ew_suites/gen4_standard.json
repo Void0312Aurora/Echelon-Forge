@@ -1,0 +1,23 @@
+{
+    "name": "Generic_Gen4_EW",
+    "type": "EWSuite",
+    "rwr": {
+        "sensitivity_dbm": -90.0,
+        "detect_band": "All",
+        "library_generation": 4,
+        "is_active": true
+    },
+    "jammer": {
+        "power_watts": 1000.0,
+        "bandwidth_mhz": 2000.0,
+        "type": "NoiseBarrage",
+        "effective_angle": 60.0,
+        "is_active": false
+    },
+    "countermeasures": {
+        "chaff_count": 60,
+        "flare_count": 30,
+        "release_interval": 0.5,
+        "auto_mode": true
+    }
+}

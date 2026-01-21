@@ -1,0 +1,55 @@
+{
+    "scenario_name": "F-16 Takeoff Training",
+    "description": "Train agent to take off and reach safe altitude.",
+    "imports": [
+        {
+            "file": "examples/config/prefabs/airbase_large.json"
+        }
+    ],
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 2000,
+        "terrain_type": "flat"
+    },
+    "entities": [
+        {
+            "name": "Blue_F16",
+            "type": "Aircraft",
+            "side": "Blue",
+            "pos": [
+                10.0,
+                0.0,
+                2.1
+            ],
+            "vel": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "heading": 0.0,
+            "is_agent": true
+        }
+    ],
+    "objectives": [
+        {
+            "type": "conditional",
+            "conditions": [
+                {
+                    "property": "altitude",
+                    "op": ">=",
+                    "value": 300.0
+                },
+                {
+                    "property": "speed",
+                    "op": ">=",
+                    "value": 150.0
+                }
+            ],
+            "reward": 2000.0
+        }
+    ],
+    "rewards": {
+        "survival": 0.05,
+        "crash_penalty": -1000.0
+    }
+}

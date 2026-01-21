@@ -2,292 +2,525 @@
 <html>
 
 <head>
-    <title>CMO Real-Time Visualization</title>
-    <!-- Use local static file for reliability -->
+    <title>Universal 3D Viz</title>
     <script src="/static/socket.io.min.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
     <style>
         body {
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            font-family: sans-serif;
-            text-align: center;
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Courier New', monospace;
+            color: #ddd;
         }
 
-        canvas {
-            background-color: #252526;
+        #overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
             border: 1px solid #444;
-            margin-top: 20px;
+            min-width: 250px;
         }
 
-        #status {
+        h3 {
+            margin-top: 0;
+            color: #00ccff;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .label {
             color: #888;
-            margin-bottom: 10px;
+            margin-right: 15px;
         }
 
-        #debug {
+        .value {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #unit-list {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border: 1px solid #444;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .unit-item {
+            padding: 5px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+            font-size: 12px;
+        }
+
+        .unit-item:hover {
+            background: #333;
+        }
+
+        .unit-item.active {
+            border-left: 3px solid #00ccff;
+            background: #222;
+        }
+
+        #controls-help {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
             font-size: 12px;
             color: #666;
+            pointer-events: none;
+        }
+
+        #ui-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            pointer-events: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #222;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #333;
+            color: #fff;
+        }
+
+        button.primary {
+            border-color: #00ccff;
+            color: #00ccff;
         }
     </style>
 </head>
 
 <body>
-    <h1>CMO Simulation Stream</h1>
-    <div id="controls">
-        <button id="startBtn"
-            style="padding: 10px 20px; font-size: 16px; background: #28a745; color: white; border: none; cursor: pointer;">Start
-            Simulation</button>
+    <div id="overlay">
+        <h3>TELEMETRY</h3>
+        <div class="data-row"><span class="label">TIME</span><span id="v-time" class="value">0.00 s</span></div>
+        <div id="focused-unit-stats">
+            <div class="data-row"><span class="label">UNIT</span><span id="v-name" class="value">--</span></div>
+            <div class="data-row"><span class="label">ALT (ASL)</span><span id="v-alt" class="value">0.0 m</span></div>
+            <div class="data-row"><span class="label">SPEED</span><span id="v-spd" class="value">0.0 m/s</span></div>
+            <div class="data-row"><span class="label">HEADING</span><span id="v-hdg" class="value">000</span></div>
+            <div class="data-row"><span class="label">PITCH</span><span id="v-pitch" class="value">0.0</span></div>
+            <div class="data-row"><span class="label">ROLL</span><span id="v-roll" class="value">0.0</span></div>
+        </div>
     </div>
-    <div id="status">Status: Waiting for user to start...</div>
-    <div id="debug">Waiting for data...</div>
-    <canvas id="simCanvas" width="800" height="600"></canvas>
 
-    <script>
-        const socket = io({
-            transports: ['websocket', 'polling'] // Force stable transport options
+    <div id="unit-list">
+        <h3>UNITS</h3>
+        <div id="unit-list-content"></div>
+    </div>
+
+    <div id="controls-help">[WASD] Camera | [Right-Click] Orbit | [Wheel] Zoom | Click Unit to Focus</div>
+
+    <div id="ui-controls">
+        <button id="btn-cam" onclick="toggleCamera()">CAM: CHASE</button>
+        <button id="btn-start" class="primary" onclick="startSim()">START</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Config ---
+        const SCENE_BG = 0x111111;
+        const GRID_COLOR = 0x333333;
+
+        // --- State ---
+        let units = new Map(); // id -> { mesh, data, trail }
+        let focusedId = null;
+        let viewMode = 'CHASE'; // CHASE, FREE
+        let cameraOffset = new THREE.Vector3(0, 50, 100);
+        let simTime = 0;
+
+        // Input State
+        const keys = { w: false, a: false, s: false, d: false, q: false, e: false, Shift: false };
+        let simPaused = false;
+
+        // --- Init ThreeJS ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(SCENE_BG);
+        scene.fog = new THREE.FogExp2(SCENE_BG, 0.00005);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
+        camera.position.set(0, 100, 200);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.enabled = false; // Start in Chase
+
+        // --- Environment ---
+        const grid = new THREE.GridHelper(50000, 500, GRID_COLOR, 0x222222);
+        grid.position.y = -5.0; // Lower grid significantly to prevent z-fighting
+        scene.add(grid);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight.position.set(100, 200, 50);
+        scene.add(dirLight);
+
+        // --- Asset Loading ---
+        const loader = new GLTFLoader();
+        let f16Model = null;
+        loader.load('/static/assets/f16.glb', (gltf) => {
+            f16Model = gltf.scene;
+            f16Model.scale.set(1, 1, 1);
+            // Revert to Math.PI per user feedback
+            f16Model.rotation.y = Math.PI;
+            console.log("F-16 Asset Loaded. Structure:");
+            f16Model.traverse((n) => {
+                if (n.isMesh) console.log(" - Mesh:", n.name);
+                else console.log(" - Node:", n.name);
+            });
         });
-        const canvas = document.getElementById('simCanvas');
-        const ctx = canvas.getContext('2d');
-        const statusDiv = document.getElementById('status');
-        const debugDiv = document.getElementById('debug');
 
-        // Check if SocketIO loaded
-        if (typeof io === 'undefined') {
-            statusDiv.textContent = 'Error: Socket.IO library failed to load.';
-            statusDiv.style.color = 'red';
-            throw new Error("Socket.IO not found");
-        }
+        // --- Socket ---
+        const socket = io({ transports: ['websocket'] });
 
-        // Camera State
-        let camera = {
-            scale: 0.05,       // Pixels per meter
-            offsetX: 400,      // Screen X of World Origin (0,0)
-            offsetY: 300,      // Screen Y of World Origin (0,0)
-            isDragging: false,
-            lastX: 0,
-            lastY: 0
+        window.startSim = function () {
+            socket.emit('start_sim');
+            document.getElementById('btn-start').disabled = true;
+            document.getElementById('btn-start').innerText = "RUNNING";
         };
 
-        // --- Interaction Handlers ---
-        canvas.addEventListener('mousedown', (e) => {
-            camera.isDragging = true;
-            camera.lastX = e.clientX;
-            camera.lastY = e.clientY;
+        window.toggleCamera = function () {
+            viewMode = viewMode === 'CHASE' ? 'FREE' : 'CHASE';
+            controls.enabled = (viewMode === 'FREE');
+            document.getElementById('btn-cam').innerText = "CAM: " + viewMode;
+        };
+
+        window.setFocus = function (id) {
+            focusedId = id;
+            renderUnitList();
+        };
+
+        window.togglePause = function () {
+            simPaused = !simPaused;
+            if (simPaused) {
+                socket.emit('pause_sim');
+                document.getElementById('btn-start').innerText = "PAUSED";
+            } else {
+                socket.emit('resume_sim');
+                document.getElementById('btn-start').innerText = "RUNNING";
+            }
+        };
+
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (keys.hasOwnProperty(k)) keys[k] = true;
+            if (e.key === 'Shift') keys.Shift = true;
+            if (e.key === ' ') togglePause();
         });
 
-        window.addEventListener('mouseup', () => {
-            camera.isDragging = false;
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (keys.hasOwnProperty(k)) keys[k] = false;
+            if (e.key === 'Shift') keys.Shift = false;
         });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (camera.isDragging) {
-                const dx = e.clientX - camera.lastX;
-                const dy = e.clientY - camera.lastY;
-                camera.offsetX += dx;
-                camera.offsetY += dy;
-                camera.lastX = e.clientX;
-                camera.lastY = e.clientY;
+        // --- Logic ---
+        function getOrSpawnUnit(uData) {
+            if (units.has(uData.id)) return units.get(uData.id);
+
+            console.log("Spawning Unit:", uData);
+
+            // Spawn
+            const group = new THREE.Group();
+
+            // Model
+            if (uData.type === 'Aircraft' && f16Model) {
+                const modelClone = f16Model.clone();
+                group.add(modelClone);
+
+                // Initialize existing flame nodes to invisible
+                const exFlame = modelClone.getObjectByName("ExternalFlame");
+                const inFlame = modelClone.getObjectByName("InternalFlame");
+                if (exFlame) exFlame.visible = false;
+                if (inFlame) inFlame.visible = false;
+            } else {
+                // Fallback geometry - Make it VISIBLE (e.g. Building/Tower)
+                // Box 30x60x30
+                const geo = new THREE.BoxGeometry(30, 60, 30);
+                // geo.rotateX(Math.PI / 2); // Box needs no rotation to stand up? 
+                // BoxGeometry creates centered at 0,0,0. Lift it up y/2.
+                geo.translate(0, 30, 0);
+
+                const mat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xff0000 : 0xffaa00 });
+                group.add(new THREE.Mesh(geo, mat));
+            }
+
+            scene.add(group);
+
+            // Trail
+            const trailGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(3000 * 3); // 1000 points
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            trailGeo.setDrawRange(0, 0);
+            const trailMat = new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.5, transparent: true });
+            const trail = new THREE.Line(trailGeo, trailMat);
+            trail.frustumCulled = false;
+            scene.add(trail);
+
+            const unitObj = {
+                id: uData.id,
+                mesh: group,
+                trail: trail,
+                trailIdx: 0,
+                trailPos: positions,
+                trailPos: positions,
+                data: uData,
+                isNew: true
+            };
+
+            units.set(uData.id, unitObj);
+
+            // Auto focus logic: First unit
+            if (focusedId === null) focusedId = uData.id;
+
+            renderUnitList();
+            return unitObj;
+        }
+
+        function updateUnit(uObj, uData) {
+            uObj.data = uData;
+
+            // Update Transform
+            // Sim (ENU: X=East, Y=North, Z=Up) -> Three (Y-Up: X=East, Y=Up, Z=-North)
+            const tx = uData.x;
+            const ty = uData.z + (uData.type === 'Aircraft' ? 2.5 : 0); // Z is Up. Add 2.5m for Gear.
+            const tz = -uData.y; // Y is North -> -Z
+
+            // LERP for smoothness, but SNAP on first update
+            if (uObj.isNew) {
+                uObj.mesh.position.copy(new THREE.Vector3(tx, ty, tz));
+                uObj.isNew = false;
+            } else {
+                uObj.mesh.position.lerp(new THREE.Vector3(tx, ty, tz), 0.2);
+            }
+
+            // --- FX Updates ---
+            const exFlame = uObj.mesh.getObjectByName("ExternalFlame");
+            const inFlame = uObj.mesh.getObjectByName("InternalFlame");
+
+            const thr = uData.throttle || 0;
+            const abActive = thr > 1.0;
+
+            if (exFlame) {
+                exFlame.visible = abActive;
+                if (abActive && exFlame.material) {
+                    // Pulse opacity if possible (needs transparent material)
+                    // If material is shared, clone it first?
+                    // For now, just toggle visibility.
+                    exFlame.visible = true;
+                }
+            }
+            if (inFlame) {
+                inFlame.visible = abActive;
+            }
+
+            // Rotation
+            // Heading 0 = North (-Z). Three 0 = -Z (Identity).
+            // Heading 90 = East (+X). Three RotY(-90)?
+            // Sim Heading is CW from North. Three RotY is CCW.
+            // So RotY = -Heading.
+
+            const rad = Math.PI / 180;
+            const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -uData.heading * rad);
+            // Pitch: Sim +Pitch is Nose Up. Three +X axis is Right. RotX + is Nose Up?
+            const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), uData.pitch * rad);
+            const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -uData.roll * rad);
+
+            uObj.mesh.quaternion.slerp(qYaw.multiply(qPitch).multiply(qRoll), 0.2);
+
+            // Update Trail (every 5 frames or distance check)
+            const idx = uObj.trailIdx;
+            if (idx < 3000) {
+                uObj.trailPos[idx * 3] = uObj.mesh.position.x;
+                uObj.trailPos[idx * 3 + 1] = uObj.mesh.position.y;
+                uObj.trailPos[idx * 3 + 2] = uObj.mesh.position.z;
+                uObj.trail.geometry.setDrawRange(0, idx + 1);
+                uObj.trail.geometry.attributes.position.needsUpdate = true;
+                uObj.trailIdx++;
+            }
+        }
+
+        function renderUnitList() {
+            const list = document.getElementById('unit-list-content');
+            list.innerHTML = '';
+            units.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'unit-item' + (u.id === focusedId ? ' active' : '');
+                div.innerText = `[${u.data.id}] ${u.data.name || 'Unit'}`;
+                div.onclick = () => setFocus(u.id);
+                list.appendChild(div);
+            });
+        }
+
+        // --- Map Logic ---
+        socket.on('map_setup', (data) => {
+            console.log("Map Data Received:", data);
+            if (data.zones) {
+                data.zones.forEach(zone => {
+                    // Create Zone Mesh
+                    // Zone uses width/length. 
+                    const geo = new THREE.PlaneGeometry(zone.width, zone.length);
+                    // Color based on surface - Brighter for visibility
+                    let color = 0x666666; // Concrete
+                    if (zone.surface === 'Asphalt') color = 0x444444;
+                    if (zone.surface === 'SoftDirt') color = 0x8B5a2B;
+
+                    // Use BasicMaterial to ignore lighting issues (make it flat visible)
+                    const mat = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide });
+
+                    // Base Mesh
+                    const geo2 = new THREE.PlaneGeometry(zone.width, zone.length);
+                    geo2.rotateX(-Math.PI / 2);
+                    const mesh2 = new THREE.Mesh(geo2, mat);
+
+                    // Layering to prevent Z-fighting
+                    // Apron (Asphalt) at 0.01
+                    // Runway (Concrete) at 0.02
+                    let heightOffset = 0.01;
+                    if (zone.surface === 'Concrete') heightOffset = 0.02;
+
+                    mesh2.position.set(zone.x, heightOffset, -zone.y);
+                    mesh2.rotation.y = -zone.heading * (Math.PI / 180);
+
+                    scene.add(mesh2);
+
+                    // Add Yellow Outline
+                    const edges = new THREE.EdgesGeometry(geo2);
+                    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffff00 }));
+
+                    // Copy transforms manually since edges don't inherit mesh transform if not child?
+                    // Better to make mesh2 a Group or add line as child.
+                    mesh2.add(line);
+                });
             }
         });
 
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const zoomIntensity = 0.1;
-            const direction = e.deltaY < 0 ? 1 : -1;
-            const factor = (1 + zoomIntensity * direction);
+        socket.on('state_update', (state) => {
+            simTime = state.tick;
+            document.getElementById('v-time').innerText = simTime.toFixed(2) + " s";
 
-            // Zoom towards mouse pointer
-            // 1. Get mouse pos relative to canvas
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const activeIds = new Set();
 
-            // 2. Calculate world pos under mouse before zoom
-            // ScreenX = OffsetX + WorldX * Scale
-            // WorldX = (ScreenX - OffsetX) / Scale
-            const worldX = (mouseX - camera.offsetX) / camera.scale;
-            const worldY = (camera.offsetY - mouseY) / camera.scale; // Y is inverted
+            state.units.forEach(uData => {
+                activeIds.add(uData.id);
+                const uObj = getOrSpawnUnit(uData);
+                updateUnit(uObj, uData);
 
-            // 3. Apply Zoom
-            camera.scale *= factor;
-            camera.scale = Math.max(0.001, camera.scale); // Min zoom
-
-            // 4. Adjust offset to keep world pos under mouse
-            // NewOffsetX = MouseX - WorldX * NewScale
-            camera.offsetX = mouseX - worldX * camera.scale;
-            camera.offsetY = mouseY + worldY * camera.scale;
-        });
-
-        const startBtn = document.getElementById('startBtn');
-
-        startBtn.addEventListener('click', () => {
-            console.log("Start button clicked");
-            socket.emit('start_sim');
-            startBtn.disabled = true;
-            startBtn.style.background = '#555';
-            startBtn.textContent = "Simulation Running...";
-        });
-
-        // --- Drawing Loop ---
-        socket.on('connect', () => {
-            statusDiv.textContent = 'Connected. Click Start to begin.';
-            statusDiv.style.color = '#ffff00';
-            startBtn.disabled = false; // Re-enable on connect
-        });
-
-        socket.on('disconnect', () => {
-            statusDiv.textContent = 'Disconnected - Auto Reconnecting...';
-            statusDiv.style.color = '#ff0000';
-            startBtn.disabled = false;
-        });
-
-        socket.on('connect_error', (err) => {
-            console.log("Connection Error: ", err);
-            statusDiv.textContent = 'Connection Error: ' + err;
-        });
-
-        socket.on('state_update', (data) => {
-            console.log("Received state_update:", data); // DEBUG
-            debugDiv.textContent = `Tick: ${data.tick.toFixed(2)} | Units: ${data.units.length} | Scale: 1px=${(1 / camera.scale).toFixed(1)}m`;
-
-            // clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Debug: Draw a red circle at origin to confirm canvas is working
-            ctx.fillStyle = 'red';
-            ctx.beginPath();
-            ctx.arc(camera.offsetX, camera.offsetY, 5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Draw Grid (Dynamic)
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-
-            // Calculate visible world bounds for efficient grid drawing
-            const gridSize = 1000 * camera.scale; // 1km grid lines
-            const startX = camera.offsetX % gridSize;
-            const startY = camera.offsetY % gridSize;
-
-            for (let i = startX - gridSize; i < canvas.width; i += gridSize) { ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); }
-            for (let i = startY - gridSize; i < canvas.height; i += gridSize) { ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); }
-            ctx.stroke();
-
-            // Draw Origin Crosshair
-            ctx.strokeStyle = '#555';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(camera.offsetX - 10, camera.offsetY); ctx.lineTo(camera.offsetX + 10, camera.offsetY);
-            ctx.moveTo(camera.offsetX, camera.offsetY - 10); ctx.lineTo(camera.offsetX, camera.offsetY + 10);
-            ctx.stroke();
-
-            // Draw Units
-            data.units.forEach(unit => {
-                // Map coordinates: ENU (x=East, y=North) -> Screen
-                const sx = camera.offsetX + unit.x * camera.scale;
-                const sy = camera.offsetY - unit.y * camera.scale; // Invert North to go Up
-
-                // --- Visualizing Sensors (Underlay) ---
-                if (unit.sensors) {
-                    unit.sensors.forEach(sensor => {
-                        ctx.save();
-                        ctx.translate(sx, sy);
-                        // Rotate to match NAV heading (0=North, CW)
-                        // With Y-axis inverted, canvas_angle = (heading - 90) degrees
-                        const headingRad = (unit.heading - 90) * Math.PI / 180.0;
-                        ctx.rotate(headingRad);
-
-                        ctx.beginPath();
-                        const r = sensor.radius * camera.scale;
-                        const halfFov = (sensor.fov * Math.PI / 180.0) / 2.0;
-
-                        // Draw Sector
-                        ctx.moveTo(0, 0);
-                        ctx.arc(0, 0, r, -halfFov, halfFov);
-                        ctx.closePath();
-
-                        ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
-                        ctx.fill();
-                        ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
-                        ctx.stroke();
-                        ctx.restore();
-                    });
+                // Update UI if focused
+                if (uData.id === focusedId) {
+                    document.getElementById('v-name').innerText = uData.name || uData.id;
+                    document.getElementById('v-alt').innerText = uData.z.toFixed(0) + " m";
+                    document.getElementById('v-spd').innerText = uData.speed.toFixed(0) + " m/s";
+                    document.getElementById('v-hdg').innerText = uData.heading.toFixed(0);
+                    document.getElementById('v-pitch').innerText = (uData.pitch || 0).toFixed(1);
+                    document.getElementById('v-roll').innerText = (uData.roll || 0).toFixed(1);
                 }
-
-                // --- Visualizing Detections (Overlay) ---
-                if (unit.detections) {
-                    unit.detections.forEach(det => {
-                        const target = data.units.find(u => u.id === det.target_id);
-                        if (target) {
-                            const tx = camera.offsetX + target.x * camera.scale;
-                            const ty = camera.offsetY - target.y * camera.scale;
-
-                            ctx.save();
-                            ctx.strokeStyle = '#00ff00';
-                            ctx.lineWidth = 1;
-                            ctx.setLineDash([5, 5]);
-                            ctx.beginPath();
-                            ctx.moveTo(sx, sy);
-                            ctx.lineTo(tx, ty);
-                            ctx.stroke();
-                            ctx.restore();
-                        }
-                    });
-                }
-
-                ctx.save();
-                ctx.translate(sx, sy);
-
-                // Draw Label
-                ctx.fillStyle = unit.side === 'Blue' ? '#4488ff' : '#ff4444';
-                ctx.font = '12px Arial';
-                ctx.fillText(unit.type === 'Missile' ? 'M' : unit.side, 10, -10);
-
-                // Draw HP Bar
-                if (unit.max_hp > 0 && unit.hp < unit.max_hp) { // Only show if damaged or explicit
-                    const hpPct = Math.max(0, unit.hp / unit.max_hp);
-                    const barWidth = 30;
-                    const barHeight = 4;
-                    const barX = -15;
-                    const barY = -25;
-
-                    // Background
-                    ctx.fillStyle = '#333';
-                    ctx.fillRect(barX, barY, barWidth, barHeight);
-
-                    // Foreground
-                    ctx.fillStyle = hpPct > 0.5 ? '#00ff00' : (hpPct > 0.2 ? '#ffff00' : '#ff0000');
-                    ctx.fillRect(barX, barY, barWidth * hpPct, barHeight);
-                }
-
-                // Draw ID for debug
-                // ctx.fillText(unit.id, 10, -25);
-
-                // Rotate for NAV Heading (0=North, CW) with Y-axis inverted
-                const headingRad = (unit.heading - 90) * Math.PI / 180.0;
-                ctx.rotate(headingRad);
-
-                // Draw Shape
-                ctx.beginPath();
-                if (unit.type === 'Missile') {
-                    // Small Triangle (Yellow)
-                    ctx.fillStyle = '#ffff00';
-                    ctx.moveTo(10, 0);
-                    ctx.lineTo(-5, 5);
-                    ctx.lineTo(-5, -5);
-                    ctx.fill();
-                } else {
-                    // Aircraft (Chevron)
-                    ctx.fillStyle = unit.side === 'Blue' ? '#00ccff' : '#ff0000';
-                    ctx.moveTo(15, 0);
-                    ctx.lineTo(-10, 10);
-                    ctx.lineTo(-5, 0);
-                    ctx.lineTo(-10, -10);
-                    ctx.fill();
-                }
-
-                ctx.restore();
             });
+
+            // Cleanup Despawned?
+            // For now keep them to avoid flickering if packet loss, or implement TTL.
+        });
+
+        // --- Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Camera Logic
+            if (viewMode === 'FREE') {
+                const dt = 0.016; // Approx
+                const baseSpeed = 100.0;
+                const speed = keys.Shift ? baseSpeed * 5.0 : baseSpeed;
+                const moveDist = speed * dt;
+
+                const fwd = new THREE.Vector3();
+                camera.getWorldDirection(fwd);
+                fwd.y = 0; // Move on XZ plane by default for WASD
+                fwd.normalize();
+
+                const right = new THREE.Vector3();
+                right.crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+
+                const moveParams = new THREE.Vector3();
+
+                if (keys.w) moveParams.add(fwd);
+                if (keys.s) moveParams.add(fwd.clone().negate());
+                if (keys.d) moveParams.add(right);
+                if (keys.a) moveParams.add(right.clone().negate());
+
+                // Vertical
+                if (keys.e) moveParams.y += 1;
+                if (keys.q) moveParams.y -= 1;
+
+                if (moveParams.lengthSq() > 0) {
+                    moveParams.normalize().multiplyScalar(moveDist);
+
+                    // Move Camera
+                    camera.position.add(moveParams);
+                    // Move Controls Target too so we orbit around new pos
+                    controls.target.add(moveParams);
+                }
+            } else if (viewMode === 'CHASE' && focusedId && units.has(focusedId)) {
+                const target = units.get(focusedId).mesh;
+
+                // Camera Follow Logic
+                // Offset relative to target orientation
+                const relativeOffset = new THREE.Vector3(0, 30, 80); // Behind and Up
+                relativeOffset.applyQuaternion(target.quaternion);
+
+                const camPos = target.position.clone().add(relativeOffset);
+                camera.position.lerp(camPos, 0.1);
+                camera.lookAt(target.position);
+                controls.target.copy(target.position); // Sync Orbit target
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>

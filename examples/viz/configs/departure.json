@@ -1,0 +1,20 @@
+{
+    "name": "F-16 Departure",
+    "env_module": "gym_envs.f16_departure_waypoint_env",
+    "env_class": "F16DepartureWaypointEnv",
+    "env_kwargs": {
+        "frame_skip": 6,
+        "max_waypoints": 8,
+        "segment_length_m": 10000.0,
+        "waypoint_radius_m": 500.0,
+        "max_steps_s": 3600.0,
+        "air_start_prob": 0.0,
+        "high_speed_ground_start_prob": 0.0,
+        "rotate_speed_mps": 105.0,
+        "log_level": "error"
+    },
+    "model_path": "ppo_f16_departure_transformer.zip",
+    "viz_settings": {
+        "port": 5000
+    }
+}

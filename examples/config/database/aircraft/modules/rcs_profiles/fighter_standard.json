@@ -1,0 +1,11 @@
+{
+    "name": "Standard_Fighter_RCS",
+    "type": "RCSProfile",
+    "rcs": {
+        "frontal_rcs": 5.0,
+        "side_rcs": 25.0,
+        "rear_rcs": 8.0,
+        "top_rcs": 20.0,
+        "bottom_rcs": 20.0
+    }
+}

@@ -12,11 +12,13 @@
 #include "components/combat/scoring.h"
 #include "components/systems/sensor.h"
 #include "components/physics/dynamics.h"
+#include "components/physics/forces.h"
 #include "components/combat/damage.h"
 #include "components/combat/weapon.h"
 #include "components/systems/data_link.h"
 #include "components/systems/logistics.h"
 #include "components/systems/comm.h"
+#include "components/systems/ew.h"
 #include "content/unit_definition_loader.h"
 #include "core/interfaces/unit_factory.h"
 
@@ -44,7 +46,7 @@ public:
         aircraft.has_sensor = true;
         aircraft.sensor = {30000.0, 120.0, 1.0, -1.0, 0.9, 2.0, 1.0, 25.0, 2.0, 0.3};
         aircraft.has_flight_model = true;
-        aircraft.flight_model = {600.0, 50.0, 20.0, 50.0, 300.0, 9.0};
+        aircraft.flight_model = {600.0, 50.0, 20.0, 50.0, 300.0, 9.0, 80.0, 70.0, 20.0};
         aircraft.has_score = true;
         aircraft.score = {0.0, 0, 0, 0};
         aircraft.has_ammo = true;
@@ -62,7 +64,7 @@ public:
         missile.has_sensor = true;
         missile.sensor = {30000.0, 120.0, 0.2, -1.0, 0.95, 2.0, 0.5, 15.0, 0.5, 0.2};
         missile.has_flight_model = true;
-        missile.flight_model = {1200.0, 100.0, 40.0, 100.0, 600.0, 30.0};
+        missile.flight_model = {1200.0, 100.0, 40.0, 100.0, 600.0, 30.0, 0.0, 0.0, 0.0};
         missile.has_score = true;
         missile.score = {0.0, 0, 0, 0};
         missile.has_ammo = false;
@@ -115,7 +117,7 @@ public:
         // Big Radar: 400km Range, 360 scan, 5s period (slow scan)
         c2node.sensor = {400000.0, 360.0, 5.0, -1.0, 0.99, 2.0, 0.5, 50.0, 10.0, 0.0};
         c2node.has_flight_model = true; // It flies
-        c2node.flight_model = {250.0, 100.0, 5.0, 5.0, 50.0, 2.0}; // Slow, low G
+        c2node.flight_model = {250.0, 100.0, 5.0, 5.0, 50.0, 2.0, 70.0, 60.0, 10.0}; // Slow, low G
         c2node.has_score = true;
         c2node.score = {0.0,0,0,0};
         c2node.has_ammo = false;
@@ -206,6 +208,9 @@ public:
         // If airframe data is present (non-zero), use it. otherwise fallback to 0 (or legacy handling?)
         if (def.airframe.empty_mass_kg > 0) {
              e.set<Mass>({def.airframe.empty_mass_kg, def.airframe.max_fuel_kg, stores_kg});
+        } else if (def.type == UnitType::Aircraft || def.has_flight_model) {
+             // Fallback Mass
+             e.set<Mass>({10000.0, 3000.0, stores_kg});
         }
 
         // Initialize Logistics Variables
@@ -225,9 +230,10 @@ public:
             } else {
                  spdlog::warn("Unit {} references unknown engine {}", unit_name, def.engine_ref);
             }
+        } else if (def.type == UnitType::Aircraft || def.has_flight_model) {
+             // Fallback Generic Propulsion
+             e.set<Propulsion>({40000.0, 70000.0, 0.0, false});
         }
-        
-        // Initialize FuelSystem
         double internal_fuel = (def.airframe.max_fuel_kg > 0) ? def.airframe.max_fuel_kg : 2000.0;
         e.set<FuelSystem>({
              internal_fuel, // Current
@@ -238,15 +244,56 @@ public:
              ab_mult
         });
 
+        // Initialize EW Suite
+        if (!def.ew_suite_ref.empty()) {
+            auto ew_it = definitions_.find(def.ew_suite_ref);
+            if (ew_it != definitions_.end()) {
+                const auto& ew_def = ew_it->second;
+                e.set<RWR>(ew_def.rwr_data);
+                e.set<Jammer>(ew_def.jammer_data);
+                e.set<Countermeasures>(ew_def.cms_data);
+            } else {
+                spdlog::warn("Unit {} references unknown EW suite {}", unit_name, def.ew_suite_ref);
+            }
+        } else {
+             // Defaults or Minimal
+             e.set<RWR>({-80.0, {}, false, false});
+             e.set<Jammer>({false, 0.0, 0.0, JammingType::NoiseBarrage, 0.0});
+             e.set<Countermeasures>({0, 0, 1.0, 0.0, false});
+        }
+        
+        // Initialize RCS Profile
+        if (!def.rcs_profile_ref.empty()) {
+             auto rcs_it = definitions_.find(def.rcs_profile_ref);
+             if (rcs_it != definitions_.end()) {
+                 e.set<RCSProfile>(rcs_it->second.rcs_data);
+             } else {
+                 spdlog::warn("Unit {} references unknown RCS profile {}", unit_name, def.rcs_profile_ref);
+             }
+        } else {
+             // Fallback
+             e.set<RCSProfile>({5.0, 5.0, 5.0});
+        }
+
         // Initialize MassProperties
         double empty_mass = (def.airframe.empty_mass_kg > 0) ? def.airframe.empty_mass_kg : 10000.0;
         double drag_coef = (def.airframe.drag_coefficient > 0) ? def.airframe.drag_coefficient : 0.02;
+        double ref_area = (def.airframe.reference_area > 0) ? def.airframe.reference_area : 30.0;
         e.set<MassProperties>({
             empty_mass,
             empty_mass + internal_fuel, // Initial Total
             drag_coef,
-            drag_coef
+            drag_coef,
+            ref_area
         });
+        
+        // Initialize New Physics Components
+        e.set<ForceAccumulator>({});
+        e.set<AeroState>({});
+        e.set<Inertia>({30000.0, 50000.0, 60000.0}); // Default Fighter Inertia (approx)
+        e.set<Inertia>({30000.0, 50000.0, 60000.0}); // Default Fighter Inertia (approx)
+        e.set<AngularVelocity>({0.0, 0.0, 0.0});
+        e.set<GroundState>({false, 0.0}); // Initialize Ground Contact
         
         // Initialize Loadout (Empty for now)
         e.set<Loadout>({});
@@ -270,12 +317,30 @@ public:
         false, 0, 0, 0,      // SendMsg, Type, Recipient, Arg
         false // Active
     });
+    
+    if (def.has_landing_gear) {
+        e.set<LandingGear>(def.landing_gear);
+    } else if (def.type == UnitType::Aircraft) {
+        // Fallback for aircraft without explicit config (assume paved only)
+        e.set<LandingGear>({false, 0.02, 3.0});
+    }
+
         if (def.has_flight_model) {
             e.set<FlightModel>(def.flight_model);
             double speed = std::sqrt(params.vx * params.vx +
                                      params.vy * params.vy +
                                      params.vz * params.vz);
-            e.set<MovementCommand>({heading_init, speed, params.z, true});
+            e.set<MovementCommand>({
+                heading_init,
+                speed,
+                params.z,
+                false, // use_stick_control
+                0.0,   // stick_roll
+                0.0,   // stick_pitch
+                0.0,   // throttle_cmd (ignored in autopilot)
+                true,  // gear_handle (down)
+                true   // active
+            });
             e.set<ActionCommand>({0.0, 0.0, 0.0, 0.0, false});
             e.set<LaggedCommand>({heading_init, speed, params.z, true});
             e.set<ActionSpaceConfig>({

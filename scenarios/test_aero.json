@@ -1,0 +1,29 @@
+{
+    "scenario_name": "Aerodynamics Test",
+    "description": "High speed flight to test Lift/Drag.",
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 200,
+        "terrain_type": "flat"
+    },
+    "entities": [
+        {
+            "name": "TestJet",
+            "type": "Aircraft",
+            "side": "Blue",
+            "pos": [
+                0.0,
+                0.0,
+                1000.0
+            ],
+            "vel": [
+                200.0,
+                0.0,
+                0.0
+            ],
+            "heading": 0.0,
+            "is_agent": true
+        }
+    ],
+    "objectives": []
+}
