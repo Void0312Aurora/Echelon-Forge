@@ -1,6 +1,7 @@
 #include "core/interfaces/sensor_model.h"
 #include "core/interfaces/environment_model.h"
 #include "components/systems/ew.h"
+#include "components/combat/weapon.h"
 
 #include <algorithm>
 #include <cmath>
@@ -135,12 +136,12 @@ public:
                 // Doppler Logic
                 const Velocity* owner_v = world.entity(owner).get<Velocity>();
                 const Velocity* target_v = target_e.get<Velocity>();
-                
-                double doppler_factor = 1.0;
-
-#include "components/combat/weapon.h"
-
-// ... (in Sensor logic)
+                // 2. Frequency/Doppler Shift
+        double doppler_factor = 1.0;
+        
+        // ... (in Sensor logic)
+        // Check relative velocity for Doppler Notch
+        // Rel Vel > notch_width (e.g. 50 m/s)/ If Owner is a Radar, painting the target
                 // RWR Update (Electronic Warfare)
                 // If Owner is a Radar, painting the target
                 if (sensor.type == static_cast<int>(SensorType::Radar)) {

@@ -81,11 +81,16 @@ inline void register_navigation_system(flecs::world& ecs) {
                 egi[i].alt_radar_m = std::max(0.0, nav_z); // Assuming flat ground at Z=0
                 
                 // Attitude (Truth for now, INS alignment is complex)
-                egi[i].heading_deg = 90.0 - (trans[i].heading * 180.0 / 3.14159); // Math to Nav
-                if (egi[i].heading_deg < 0) egi[i].heading_deg += 360.0;
+                // Transform uses DEGREES (NAV: 0=North, CW) according to common.h
+                // "double heading, pitch, roll; // degrees"
                 
-                egi[i].pitch_deg = trans[i].pitch * 180.0 / 3.14159;
-                egi[i].roll_deg = trans[i].roll * 180.0 / 3.14159;
+                egi[i].heading_deg = trans[i].heading;
+                egi[i].pitch_deg = trans[i].pitch;
+                egi[i].roll_deg = trans[i].roll;
+                
+                // Wrap Heading [0, 360) just in case
+                while (egi[i].heading_deg < 0.0) egi[i].heading_deg += 360.0;
+                while (egi[i].heading_deg >= 360.0) egi[i].heading_deg -= 360.0;
             }
         });
 }

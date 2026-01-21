@@ -105,9 +105,9 @@ SimulationKernel::SimulationKernel()
     // Initialize Systems
     register_movement_system(ecs);
     register_force_clear_system(ecs);
-    register_control_system(ecs, control_model_);
+    register_control_system(ecs);
     // ...
-    register_sensor_system(ecs, sensor_model_);
+    register_sensor_system(ecs);
     register_data_link_system(ecs);
     register_navigation_system(ecs); 
     register_track_manager_system(ecs); // Runs after Sensor/DL
