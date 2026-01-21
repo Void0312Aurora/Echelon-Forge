@@ -38,6 +38,12 @@ class TransformerExtractor(BaseFeaturesExtractor):
         # 0=Instruments, 1=Contact, 2=RWR, 3=Mission
         self.type_embed = nn.Embedding(4, self.d_model)
         
+        # Register type indices as buffers (not parameters, but move with model)
+        self.register_buffer('idx_inst', torch.tensor(0))
+        self.register_buffer('idx_contact', torch.tensor(1))
+        self.register_buffer('idx_rwr', torch.tensor(2))
+        self.register_buffer('idx_mission', torch.tensor(3))
+        
         # 2. Transformer
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=self.d_model,
@@ -46,7 +52,12 @@ class TransformerExtractor(BaseFeaturesExtractor):
             dropout=0.0,
             batch_first=True
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers, enable_nested_tensor=False)
+        
+        # Enable gradient checkpointing to reduce memory at cost of compute
+        # This recomputes activations during backward pass instead of storing them
+        from torch.utils.checkpoint import checkpoint_sequential
+        self._use_checkpointing = True
         
         # 3. Output Head
         # We just use the first token (Instruments) as the summary representation
@@ -57,44 +68,53 @@ class TransformerExtractor(BaseFeaturesExtractor):
         # Total tokens = 1 (Self) + 10 (Contacts) + 4 (RWR) + 1 (Mission) = 16
         
     def forward(self, observations: dict) -> torch.Tensor:
-        # PPO passes a dict of tensors
-        
-        # 1. Get Components
-        # shapes: (Batch, 24), (Batch, 10, 5), (Batch, 4, 4), (Batch, 4)
-        s_inst = observations["instruments"]
-        s_contacts = observations["contacts"]
-        s_rwr = observations["rwr"]
-        s_mission = observations["mission"]
-        
-        batch_size = s_inst.shape[0]
-        
-        # 2. Embed
-        # (B, 24) -> (B, 1, d_model)
-        emb_inst = self.embed_instruments(s_inst).unsqueeze(1) + self.type_embed(torch.tensor(0, device=s_inst.device))
-        
-        # (B, 10, 5) -> (B, 10, d_model)
-        emb_contacts = self.embed_contact(s_contacts) + self.type_embed(torch.tensor(1, device=s_contacts.device))
-        
-        # (B, 4, 4) -> (B, 4, d_model)
-        emb_rwr = self.embed_rwr(s_rwr) + self.type_embed(torch.tensor(2, device=s_rwr.device))
-        
-        # (B, 4) -> (B, 1, d_model)
-        emb_mission = self.embed_mission(s_mission).unsqueeze(1) + self.type_embed(torch.tensor(3, device=s_mission.device))
-        
-        # 3. Concat Sequence
-        # Order: [Instruments, Mission, Contacts..., RWR...]
-        sequence = torch.cat([emb_inst, emb_mission, emb_contacts, emb_rwr], dim=1)
-        # Shape: (B, 16, d_model)
-        
-        # 4. Transform
-        # Masking: We could mask empty contacts/rwr if we had a valid mask. 
-        # UniversalEnv pads with 0. 0-padding is a valid input for NN, though attention might check it.
-        # For now, we assume all slots are potentially relevant (even 0s imply "empty/no info").
-        transformed = self.transformer(sequence)
-        
-        # 5. Extract "Instruments" token (Index 0)
-        # This token has attended to all other context
-        cls_token = transformed[:, 0, :]
-        
-        out = self.ln_final(cls_token)
+        # Use automatic mixed precision for memory efficiency
+        # autocast automatically converts operations to FP16 where safe
+        with torch.amp.autocast('cuda', enabled=torch.cuda.is_available()):
+            # 1. Get Components
+            # shapes: (Batch, 24), (Batch, 10, 5), (Batch, 4, 4), (Batch, 4)
+            s_inst = observations["instruments"]
+            s_contacts = observations["contacts"]
+            s_rwr = observations["rwr"]
+            s_mission = observations["mission"]
+            
+            batch_size = s_inst.shape[0]
+            
+            # 2. Embed (using pre-registered buffer indices)
+            # (B, 24) -> (B, 1, d_model)
+            emb_inst = self.embed_instruments(s_inst).unsqueeze(1) + self.type_embed(self.idx_inst)
+            
+            # (B, 10, 5) -> (B, 10, d_model)
+            emb_contacts = self.embed_contact(s_contacts) + self.type_embed(self.idx_contact)
+            
+            # (B, 4, 4) -> (B, 4, d_model)
+            emb_rwr = self.embed_rwr(s_rwr) + self.type_embed(self.idx_rwr)
+            
+            # (B, 4) -> (B, 1, d_model)
+            emb_mission = self.embed_mission(s_mission).unsqueeze(1) + self.type_embed(self.idx_mission)
+            
+            # 3. Concat Sequence
+            # Order: [Instruments, Mission, Contacts..., RWR...]
+            sequence = torch.cat([emb_inst, emb_mission, emb_contacts, emb_rwr], dim=1)
+            # Shape: (B, 16, d_model)
+            
+            # 4. Transform with optional gradient checkpointing
+            # Masking: We could mask empty contacts/rwr if we had a valid mask. 
+            # UniversalEnv pads with 0. 0-padding is a valid input for NN, though attention might check it.
+            # For now, we assume all slots are potentially relevant (even 0s imply "empty/no info").
+            if self._use_checkpointing and self.training:
+                from torch.utils.checkpoint import checkpoint
+                # Apply checkpointing to each layer individually
+                x = sequence
+                for layer in self.transformer.layers:
+                    x = checkpoint(layer, x, use_reentrant=False)
+                transformed = x
+            else:
+                transformed = self.transformer(sequence)
+            
+            # 5. Extract "Instruments" token (Index 0)
+            # This token has attended to all other context
+            cls_token = transformed[:, 0, :]
+            
+            out = self.ln_final(cls_token)
         return out

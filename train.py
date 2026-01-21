@@ -4,6 +4,11 @@ import sys
 import json
 import shutil
 from datetime import datetime
+
+import torch
+# Enable TF32 for Ampere+ GPUs (significant speedup and memory savings)
+torch.set_float32_matmul_precision('high')
+
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.env_util import make_vec_env
@@ -86,8 +91,16 @@ def main():
             run_name = f"{timestamp}_{cfg_name}"
             
         exp_dir = os.path.join(args.output_base, run_name)
-        os.makedirs(exp_dir, exist_ok=True)
-        print(f"Starting New Experiment: {run_name} at {exp_dir}")
+        
+        # Check for existing interrupted model in this run folder
+        interrupted_path = os.path.join(exp_dir, "checkpoints", "interrupted_model.zip")
+        if os.path.exists(interrupted_path):
+            print(f"Found interrupted checkpoint at {interrupted_path}")
+            print("Auto-resuming from interrupted checkpoint...")
+            args.resume_path = interrupted_path
+        else:
+            os.makedirs(exp_dir, exist_ok=True)
+            print(f"Starting New Experiment: {run_name} at {exp_dir}")
         
         # Backup config
         shutil.copy(train_cfg_path, os.path.join(exp_dir, "train_config_backup.json"))
