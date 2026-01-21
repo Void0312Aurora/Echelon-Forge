@@ -222,6 +222,7 @@ public:
             auto eng_it = definitions_.find(def.engine_ref);
             if (eng_it != definitions_.end()) {
                  const auto& eng_data = eng_it->second.engine_data;
+                 e.set<InstrumentState>({});
                  e.set<Propulsion>({eng_data.mil_thrust_n, eng_data.ab_thrust_n, 0.0, false});
                  
                  // Heuristic flow rate if SFC not provided (0.0): ~ 1kg/s per 40kN ?
@@ -290,6 +291,7 @@ public:
         // Initialize New Physics Components
         e.set<ForceAccumulator>({});
         e.set<AeroState>({});
+        e.set<InstrumentState>({});
         e.set<Inertia>({30000.0, 50000.0, 60000.0}); // Default Fighter Inertia (approx)
         e.set<Inertia>({30000.0, 50000.0, 60000.0}); // Default Fighter Inertia (approx)
         e.set<AngularVelocity>({0.0, 0.0, 0.0});

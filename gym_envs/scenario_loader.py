@@ -34,6 +34,11 @@ class ScenarioLoader:
         if "imports" in self.scenario_data:
             self._process_imports(self.scenario_data["imports"])
             
+        # Parse Mission Command
+        self.mission_cmd = self.scenario_data.get("mission_command", {
+            "command_code": 0, "target_heading": 0.0, "target_altitude": 0.0, "target_speed": 0.0
+        })
+            
         # 1. Setup Environment
         if "environment" in self.scenario_data:
             env_cfg = self.scenario_data["environment"]
@@ -94,7 +99,51 @@ class ScenarioLoader:
         self.agent_id = agents[0] if agents else None
         self.steps = 0
         self.captured_time = 0.0
+        
+        # Reset State Tracking for Rewards
+        self.prev_alt = 0.0
+        self.prev_speed = 0.0
+        self.gear_bonus_awarded = False
+        
+        # Randomize Mission if ranges provided
+        self._randomize_mission()
+        
+        # Initialize prev state if agent exists
+        if self.agent_id is not None:
+             truth = self.sim.get_agent_observation(self.agent_id)
+             self.prev_alt = truth.z
+             self.prev_speed = truth.speed
+             
         return self.agent_id
+
+    def _randomize_mission(self):
+        """Randomize mission parameters if ranges are specified in config."""
+        import random
+        base_cmd = self.scenario_data.get("mission_command", {})
+        
+        # Check for randomization config
+        rand_cfg = base_cmd.get("randomization", {})
+        
+        # 1. Heading
+        if "heading_range" in rand_cfg:
+            r = rand_cfg["heading_range"]
+            self.mission_cmd["target_heading"] = random.uniform(r[0], r[1])
+        
+        # 2. Altitude
+        if "altitude_range" in rand_cfg:
+            r = rand_cfg["altitude_range"]
+            self.mission_cmd["target_altitude"] = random.uniform(r[0], r[1])
+            
+        # 3. Speed
+        if "speed_range" in rand_cfg:
+            r = rand_cfg["speed_range"]
+            self.mission_cmd["target_speed"] = random.uniform(r[0], r[1])
+        
+        # Ensure values are floats
+        self.mission_cmd["target_heading"] = float(self.mission_cmd.get("target_heading", 0.0))
+        self.mission_cmd["target_altitude"] = float(self.mission_cmd.get("target_altitude", 0.0))
+        self.mission_cmd["target_speed"] = float(self.mission_cmd.get("target_speed", 0.0))
+        self.mission_cmd["command_code"] = int(self.mission_cmd.get("command_code", 0))
 
     def _process_imports(self, imports):
         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -125,7 +174,7 @@ class ScenarioLoader:
                 self.scenario_data["entities"] = current_ents
 
     def get_max_steps(self):
-        return self.scenario_data.get("meta", {}).get("max_steps", 1000)
+        return self.scenario_data.get("meta", {}).get("max_steps", 2000) # Default increased to 2000
 
     def get_rewards_config(self):
         return self.scenario_data.get("rewards", {})
@@ -135,6 +184,15 @@ class ScenarioLoader:
     
     def get_entity_id(self, name):
         return self.entities.get(name)
+        
+    def get_mission_observation(self):
+        """Returns [command_code, target_heading, target_altitude, target_speed]"""
+        return np.array([
+            float(self.mission_cmd["command_code"]),
+            float(self.mission_cmd["target_heading"]),
+            float(self.mission_cmd["target_altitude"]),
+            float(self.mission_cmd["target_speed"])
+        ], dtype=np.float32)
 
     def update_behaviors(self, sim_time):
         pass
@@ -146,69 +204,111 @@ class ScenarioLoader:
         # Get Truth State for Scoring
         truth = sim.get_agent_observation(self.agent_id)
         
+        # Extract Physical Props from Instruments for Safety Checks
+        # Obs layout: [ias(0), mach, alt_baro(2), ..., aoa(5), ..., roll(8), heading(9), g_load(10), ..., gear(18)]
+        inst = obs["instruments"]
+        curr_aoa = inst[5]
+        curr_roll = inst[8]
+        curr_g = inst[10]
+        curr_gear = inst[18]
+        
         reward = 0.0
         terminated = False
         truncated = (steps >= max_steps)
         status = [0.0]*4
         
+        # 1. Base Survival & Crash
         if truth.health <= 0:
             reward += cfg.get("crash_penalty", -1000.0)
             terminated = True
         else:
             reward += cfg.get("survival", 0.01)
             
+        # 2. Progress Shaping (Reward for increasing Alt/Speed towards target)
+        # Only apply if not crashed
+        if not terminated:
+            # Altitude Progress
+            d_alt = truth.z - self.prev_alt
+            if d_alt > 0: # Only reward climbing, don't penalize sinking heavily (gravity does that via crash)
+                reward += d_alt * cfg.get("altitude_progress_weight", 0.0)
+            elif truth.z < 10.0 and d_alt < -1.0: # Penalize rapid descent near ground
+                 reward += d_alt * 0.1 
+                 
+            # Speed Progress (Until target speed)
+            tgt_spd = self.mission_cmd.get("target_speed", 180.0)
+            if truth.speed < tgt_spd:
+                d_spd = truth.speed - self.prev_speed
+                if d_spd > 0:
+                    reward += d_spd * cfg.get("speed_progress_weight", 0.0)
+            
+            # Gear Bonus (One-time)
+            # If above 50m and gear is up (<0.1), and haven't awarded yet
+            if truth.z > 50.0 and curr_gear < 0.1 and not self.gear_bonus_awarded:
+                reward += cfg.get("gear_up_bonus", 0.0)
+                self.gear_bonus_awarded = True
+                
+            # 3. Safety Constraints (Penalties)
+            # Stall
+            stall_lim = cfg.get("stall_aoa_threshold", 15.0)
+            if abs(curr_aoa) > stall_lim:
+                reward += cfg.get("stall_penalty", -1.0) * (abs(curr_aoa) - stall_lim)
+                
+            # Overload
+            g_lim = cfg.get("overload_g_threshold", 6.0)
+            if abs(curr_g) > g_lim:
+                reward += cfg.get("overload_penalty", -1.0) * (abs(curr_g) - g_lim)
+                
+            # Roll Stability (Penalize extreme bank angles at low altitude)
+            if truth.z < 100.0:
+                reward += abs(curr_roll) * cfg.get("roll_stability_weight", 0.0)
+                
+            # 4. Command Adherence (Error Penalty)
+            # Only if strictly requested (usually better to let Objectives handle final success)
+            if cfg.get("heading_error_weight", 0.0) != 0.0:
+                 tgt_hdg = self.mission_cmd.get("target_heading", 0.0)
+                 # Angular difference
+                 diff = abs(tgt_hdg - truth.heading)
+                 if diff > 180: diff = 360 - diff
+                 reward += diff * cfg.get("heading_error_weight")
+        
+        # Update Prev State
+        self.prev_alt = truth.z
+        self.prev_speed = truth.speed
+            
+        # 5. Objectives (Binary Success)
         for obj in rules:
-            if obj["type"] == "capture_zone":
-                target_id = self.entities.get(obj.get("target"))
-                if target_id is not None:
-                     t_pos = sim.get_unit_position(target_id)
-                     # Truth Position
-                     dist = math.sqrt((t_pos[0]-truth.x)**2 + (t_pos[1]-truth.y)**2 + (t_pos[2]-truth.z)**2)
-                     
-                     dist_cfg = cfg.get("distance_to_target", {})
-                     if dist_cfg:
-                         reward += dist * dist_cfg.get("weight", -0.001)
-                         
-                     if dist < obj.get("radius", 1000.0):
-                         self.captured_time += sim.get_time_step()
-                         reward += 1.0
-                         if self.captured_time >= obj.get("duration", 10.0):
-                             reward += obj.get("reward", 1000.0)
-                             terminated = True
-                             
-                     status[0] = dist
-                     status[1] = obj.get("duration", 10.0) - self.captured_time
-                     
-            elif obj["type"] == "conditional":
+            if obj["type"] == "conditional":
                 conds_met = True
                 for i, cond in enumerate(obj.get("conditions", [])):
                     prop = cond.get("property")
                     op = cond.get("op", ">=")
+                    
+                    # DYNAMIC TARGET RESOLUTION
+                    # Instead of using static 'value' from JSON, check if we should use mission_cmd
+                    # If value is string 'CMD_ALT', 'CMD_SPEED', etc., resolve it
+                    # OR, for this specific scenario, just override for known properties
+                    
                     tgt = cond.get("value", 0.0)
                     
-                    # Fetch property from Truth State
+                    # Override with randomized mission command if property matches
+                    if prop == "altitude" and "target_altitude" in self.mission_cmd:
+                        # Allow some tolerance, e.g. 90% of target alt
+                         tgt = self.mission_cmd["target_altitude"] * 0.95 
+                    elif prop == "speed" and "target_speed" in self.mission_cmd:
+                         tgt = self.mission_cmd["target_speed"] * 0.90
+                    
                     val = 0.0
                     if prop == "altitude": val = truth.z
                     elif prop == "speed": val = truth.speed
-                    elif prop == "heading": val = truth.heading
-                    elif prop == "pitch": val = truth.pitch
-                    elif prop == "roll": val = truth.roll
-                    elif prop == "health": val = truth.health
-                    elif prop == "missiles": val = float(truth.missiles_remaining)
-                    # Add more mappings as needed
                     
-                    # Shaping
-                    if op in [">=", ">"] and tgt != 0:
-                        reward += (val / tgt) * 0.0005
-                        
                     # Check
                     if op == ">=" and val < tgt: conds_met = False
                     elif op == ">" and val <= tgt: conds_met = False
                     elif op == "<=" and val > tgt: conds_met = False
                     elif op == "<" and val >= tgt: conds_met = False
                     
-                    # Status
-                    if i < 4: status[i] = tgt - val
+                    # Status for TensorBoard
+                    if i < 4: status[i] = val # Log current value
                     
                 if conds_met:
                     reward += obj.get("reward", 1000.0)

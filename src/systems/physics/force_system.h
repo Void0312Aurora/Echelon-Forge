@@ -47,9 +47,13 @@ inline void register_force_system(flecs::world& ecs) {
                 auto command = it.field<const MovementCommand>(6);
                 
                 for (auto i : it) {
-
+                    // Check if entity has an active control source
+                    // Skip only if BOTH PilotAction and MovementCommand are inactive
+                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
+                    bool has_pilot = (pilot && pilot->active);
+                    bool has_legacy = command[i].active;
                     
-                    if (!command[i].active) continue;
+                    if (!has_pilot && !has_legacy) continue;
                     
                     double m = mass[i].get_total_kg();
                     if (m < 1.0) m = 15000.0;  // Fallback
@@ -76,9 +80,8 @@ inline void register_force_system(flecs::world& ecs) {
                     
                     double throttle_input = 0.0;
                     
-                    // Priority 1: Pilot Action
-                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
-                    if (pilot && pilot->active) {
+                    // Priority 1: Pilot Action (reuse pilot from above)
+                    if (has_pilot) {
                         throttle_input = pilot->throttle;
                     } 
                     // Priority 2: Legacy MovementCommand (Backwards Compatibility)

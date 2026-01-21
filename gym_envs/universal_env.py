@@ -112,19 +112,19 @@ class UniversalEnv(gym.Env):
         pilot_act.gear_handle = float(action[4])
         pilot_act.flaps = float(action[5])
         pilot_act.speedbrake = float(action[6])
-        pilot_act.brake_left = action[7] > 0.5
-        pilot_act.brake_right = action[8] > 0.5
+        pilot_act.brake_left = bool(action[7] > 0.5)
+        pilot_act.brake_right = bool(action[8] > 0.5)
         
         # Sensors
-        pilot_act.radar_active = action[9] > 0.5
+        pilot_act.radar_active = bool(action[9] > 0.5)
         pilot_act.radar_scan_az = float(action[10]) * 60.0  # Map to degrees
         pilot_act.radar_scan_el = float(action[11]) * 30.0  # Map to degrees
-        pilot_act.tms_up = action[12] > 0.5
+        pilot_act.tms_up = bool(action[12] > 0.5)
         
         # Weapons
-        pilot_act.master_arm = action[13] > 0.5
-        pilot_act.fire_weapon = action[14] > 0.5
-        pilot_act.fire_gun = action[15] > 0.5
+        pilot_act.master_arm = bool(action[13] > 0.5)
+        pilot_act.fire_weapon = bool(action[14] > 0.5)
+        pilot_act.fire_gun = bool(action[15] > 0.5)
         pilot_act.weapon_select_id = int(action[16] * 7)  # Map to 0-7
         
         # Countermeasures (not in action space yet, default off)
@@ -177,10 +177,13 @@ class UniversalEnv(gym.Env):
         for i, w in enumerate(raw_truth.rwr_warnings):
             if i >= self.max_rwr: break
             rwr[i] = [w.bearing, w.signal_strength, 1.0 if w.is_lock else 0.0, 1.0 if w.is_launch else 0.0]
+        
+        # 3. Mission Command (From Loader)
+        miss_vec = self.loader.get_mission_observation()
             
         return {
             "instruments": inst_vec,
             "contacts": contacts,
             "rwr": rwr,
-            "mission": np.zeros(4, dtype=np.float32)
+            "mission": miss_vec
         }

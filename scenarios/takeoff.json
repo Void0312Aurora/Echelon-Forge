@@ -1,6 +1,6 @@
 {
     "scenario_name": "F-16 Takeoff Training",
-    "description": "Train agent to take off and reach safe altitude.",
+    "description": "Train agent to take off and reach safe altitude when given TAKEOFF command.",
     "imports": [
         {
             "file": "examples/config/prefabs/airbase_large.json"
@@ -10,6 +10,26 @@
         "time_step": 0.05,
         "max_steps": 2000,
         "terrain_type": "flat"
+    },
+    "mission_command": {
+        "command_code": 1,
+        "target_heading": 0.0,
+        "target_altitude": 500.0,
+        "target_speed": 180.0,
+        "randomization": {
+            "heading_range": [
+                -20.0,
+                20.0
+            ],
+            "altitude_range": [
+                300.0,
+                600.0
+            ],
+            "speed_range": [
+                140.0,
+                220.0
+            ]
+        }
     },
     "entities": [
         {
@@ -49,7 +69,17 @@
         }
     ],
     "rewards": {
-        "survival": 0.05,
-        "crash_penalty": -1000.0
+        "survival": 0.1,
+        "crash_penalty": -1000.0,
+        "altitude_progress_weight": 0.05,
+        "speed_progress_weight": 0.05,
+        "gear_up_bonus": 50.0,
+        "stall_penalty": -0.1,
+        "stall_aoa_threshold": 15.0,
+        "overload_penalty": -0.1,
+        "overload_g_threshold": 6.0,
+        "roll_stability_weight": -0.001,
+        "heading_error_weight": -0.001,
+        "altitude_error_weight": -0.0001
     }
 }
