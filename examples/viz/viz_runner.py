@@ -10,10 +10,13 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO
 from stable_baselines3 import PPO
 
-# Path Setup to include root for imports
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-sys.path.append(repo_root)
-sys.path.append(os.path.join(repo_root, "build"))
+build_dir = os.path.join(repo_root, "build")
+
+# Prefer the locally built `ef_py` extension when present.
+if os.path.isdir(build_dir) and any(fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(build_dir)):
+    sys.path.insert(0, build_dir)
+sys.path.insert(0, repo_root)
 
 # Import ef_py before numpy/torch-heavy libs
 import ef_py
@@ -75,9 +78,6 @@ def index():
 def simulation_loop():
     global simulation_running, simulation_paused, env, model, episode_return, args
     
-    print(f"Initializing Universal Environment with scenario: {args.scenario}")
-    env = UniversalEnv(args.scenario)
-    
     # Load Model if provided
     if args.model and os.path.exists(args.model):
         print(f"Loading PPO model from {args.model}...")
@@ -93,6 +93,24 @@ def simulation_loop():
         print("No model loaded. Running with random/noop actions.")
         model = None
 
+    action_mode = args.action_mode
+    if action_mode == "auto":
+        if model is not None:
+            act_space = getattr(model, "action_space", None)
+            act_shape = getattr(act_space, "shape", None)
+            act_dim = int(act_shape[0]) if act_shape and len(act_shape) == 1 else None
+            if act_dim == 2:
+                action_mode = "takeoff2"
+            elif act_dim == 4:
+                action_mode = "takeoff4"
+            else:
+                action_mode = "full"
+        else:
+            action_mode = "full"
+
+    print(f"Initializing Universal Environment with scenario: {args.scenario} (action_mode={action_mode})")
+    env = UniversalEnv(args.scenario, action_mode=action_mode, include_visual=True)
+
     print("Server ready. Waiting for start...")
     obs, _ = env.reset()
     episode_return = 0.0
@@ -105,10 +123,14 @@ def simulation_loop():
     
     # --- Map Setup ---
     global map_data
-    map_data = {
-        "zones": env.loader.scenario_data.get("environment", {}).get("zones", [])
-    }
-    print(f"Sending Map Data: {len(map_data['zones'])} zones")
+    zones = env.loader.scenario_data.get("environment", {}).get("zones", [])
+    map_data = {"zones": zones}
+    print(f"=" * 60)
+    print(f"MAP DATA SENT TO VIZ:")
+    for z in zones:
+        print(f"  Zone '{z.get('name')}': x={z.get('x')}, y={z.get('y')}, "
+              f"width={z.get('width')}, length={z.get('length')}, heading={z.get('heading')}")
+    print(f"=" * 60)
     socketio.emit('map_setup', map_data)
     
     while True:
@@ -126,9 +148,15 @@ def simulation_loop():
                 # We need to map the env observation to what the model expects
                 # UniversalEnv returns a Dict observation. SB3 PPO handles Dict if trained on it.
                 action, _ = model.predict(obs, deterministic=True)
+                if action.shape != env.action_space.shape:
+                    raise ValueError(
+                        f"Action shape mismatch: model produced {action.shape} but env expects {env.action_space.shape} "
+                        f"(hint: set --action_mode to match the training action space)."
+                    )
+                if sim_time < 2.0:
+                    print(f"Action: {action}")
             else:
                 # No model: Do nothing (zeros)
-                # UniversalEnv action space is Box(3) or Box(4)
                 action = np.zeros(env.action_space.shape, dtype=np.float32)
 
             obs, reward, terminated, truncated, info = env.step(action)
@@ -229,6 +257,13 @@ def main():
     parser.add_argument("--scenario", type=str, required=True, help="Path to scenario JSON")
     parser.add_argument("--model", type=str, help="Path to trained model zip")
     parser.add_argument("--port", type=int, default=5000)
+    parser.add_argument(
+        "--action_mode",
+        type=str,
+        default="auto",
+        choices=["auto", "full", "takeoff2", "takeoff4"],
+        help="Action space mode; use 'auto' to infer from the model action dimension.",
+    )
     args = parser.parse_args()
     
     app.config['SECRET_KEY'] = 'universal_viz_secret'
@@ -239,4 +274,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

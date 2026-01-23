@@ -59,7 +59,9 @@ inline void cartesian_to_spherical(
     }
     
     // Elevation
-    out_el_deg = std::asin(dz / out_range) * 180.0 / 3.1415926535;
+    double el_arg = dz / out_range;
+    el_arg = std::clamp(el_arg, -1.0, 1.0);
+    out_el_deg = std::asin(el_arg) * 180.0 / 3.1415926535;
     
     // Azimuth (Global, 0=North, CW)
     // math_az (0=East, CCW) = atan2(dy, dx)

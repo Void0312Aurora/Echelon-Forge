@@ -8,8 +8,11 @@
 #include "components/physics/action.h"       // MissionCommand
 #include "components/physics/forces.h"       // AeroState, ForceAccumulator, AngularVelocity
 #include "components/physics/dynamics.h"     // Mass, Propulsion
+#include "components/physics/performance.h"  // LandingGear
 #include "components/systems/ew.h"           // RWR
 #include "components/combat/weapon.h"        // Ammo
+#include "components/systems/logistics.h"    // FuelSystem
+#include "components/systems/navigation.h"   // EGI
 #include "core/interfaces/environment_model.h"
 
 namespace {
@@ -129,7 +132,7 @@ inline void register_instrument_system(flecs::world& ecs) {
                     Math::Vector3 f_body = project_forces_to_body(f_contact, transform[i]);
                     
                     // Gs usually defined as Load / Weight. Load = f_sensor.
-                    inst[i].g_load_normal = -f_body.z / (total_mass * 9.80665); // Positive G is Up (Body -Z)
+                    inst[i].g_load_normal = f_body.z / (total_mass * 9.80665);
                     inst[i].g_load_axial  = f_body.x / (total_mass * 9.80665);
                     
                     // 2. Propulsion
@@ -143,11 +146,63 @@ inline void register_instrument_system(flecs::world& ecs) {
                     }
                     inst[i].engine_temp_c = 600.0 + inst[i].engine_rpm_pct * 3.0; // Mocked EGT
                     
-                    inst[i].fuel_internal_kg = mass[i].fuel_mass_kg; 
-                    inst[i].fuel_external_kg = mass[i].stores_mass_kg; // Simplified
+                    if (const FuelSystem* fuel = it.entity(i).get<FuelSystem>()) {
+                        inst[i].fuel_internal_kg = fuel->internal_fuel_kg;
+                        inst[i].fuel_external_kg = fuel->external_fuel_kg;
+                    } else {
+                        inst[i].fuel_internal_kg = mass[i].fuel_mass_kg;
+                        inst[i].fuel_external_kg = 0.0;
+                    }
+
+                    // 3. Configuration / Switches (Pilot-visible)
+                    if (const LandingGear* gear = it.entity(i).get<LandingGear>()) {
+                        inst[i].gear_pos = static_cast<float>(std::clamp(gear->extension_state, 0.0, 1.0));
+                    } else {
+                        inst[i].gear_pos = 0.0f;
+                    }
+
+                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
+                    const MovementCommand* legacy = it.entity(i).get<MovementCommand>();
+
+                    if (pilot && pilot->active) {
+                        inst[i].throttle_pos = std::clamp(pilot->throttle, 0.0, 1.0);
+                        inst[i].flaps_pos = std::clamp(pilot->flaps, 0.0f, 1.0f);
+                        inst[i].speedbrake_pos = std::clamp(pilot->speedbrake, 0.0f, 1.0f);
+                        inst[i].master_arm = pilot->master_arm;
+                        inst[i].weapon_selected = pilot->weapon_select_id;
+                    } else if (legacy && legacy->active) {
+                        inst[i].throttle_pos = std::clamp(legacy->throttle_cmd, 0.0, 1.0);
+                        inst[i].flaps_pos = 0.0f;
+                        inst[i].speedbrake_pos = 0.0f;
+                        inst[i].master_arm = false;
+                        inst[i].weapon_selected = 0;
+                    } else {
+                        inst[i].throttle_pos = 0.0;
+                        inst[i].flaps_pos = 0.0f;
+                        inst[i].speedbrake_pos = 0.0f;
+                        inst[i].master_arm = false;
+                        inst[i].weapon_selected = 0;
+                    }
                     
                     // 3. Env
-                    inst[i].oat_c = 15.0 - (transform[i].z / 1000.0) * 6.5; 
+                    if (env_ref && env_ref->model) {
+                        AtmosphericData atm = env_ref->model->get_atmosphere_at(transform[i].x, transform[i].y, transform[i].z);
+                        inst[i].oat_c = atm.temperature - 273.15;
+
+                        double wx = atm.wind_velocity.x;
+                        double wy = atm.wind_velocity.y;
+                        inst[i].wind_speed_mps = std::sqrt(wx * wx + wy * wy);
+                        // Wind direction is conventionally "from" (deg NAV, CW from North).
+                        double wind_to_deg = std::atan2(wx, wy) * 180.0 / M_PI;
+                        double wind_from_deg = wind_to_deg + 180.0;
+                        while (wind_from_deg < 0.0) wind_from_deg += 360.0;
+                        while (wind_from_deg >= 360.0) wind_from_deg -= 360.0;
+                        inst[i].wind_dir_deg = wind_from_deg;
+                    } else {
+                        inst[i].oat_c = 15.0 - (transform[i].z / 1000.0) * 6.5;
+                        inst[i].wind_speed_mps = 0.0;
+                        inst[i].wind_dir_deg = 0.0;
+                    }
                     
                     // Command Bugs
                     const MissionCommand* mission = it.entity(i).get<MissionCommand>();
@@ -168,6 +223,53 @@ inline void register_instrument_system(flecs::world& ecs) {
                     
                     const Ammo* ammo = it.entity(i).get<Ammo>();
                     inst[i].missiles_remaining = ammo ? ammo->missiles_remaining : 0;
+                    
+                    // 5. EGI / Navigation
+                    const EGI* egi = it.entity(i).get<EGI>();
+                    if (egi) {
+                        inst[i].lat_deg = egi->lat_deg;
+                        inst[i].lon_deg = egi->lon_deg;
+                        inst[i].vn_mps = egi->vn_mps;
+                        inst[i].ve_mps = egi->ve_mps;
+                        inst[i].vd_mps = egi->vd_mps;
+                        
+                        // Compute ground speed and track from NED velocity
+                        inst[i].ground_speed_mps = std::sqrt(egi->vn_mps * egi->vn_mps + egi->ve_mps * egi->ve_mps);
+                        if (inst[i].ground_speed_mps > 0.1) {
+                            // atan2(East, North) gives angle from North, clockwise positive
+                            inst[i].ground_track_deg = std::atan2(egi->ve_mps, egi->vn_mps) * 180.0 / M_PI;
+                            if (inst[i].ground_track_deg < 0) inst[i].ground_track_deg += 360.0;
+                        } else {
+                            inst[i].ground_track_deg = inst[i].heading_deg; // Use heading when stationary
+                        }
+                        
+                        // GPS status
+                        inst[i].gps_available = egi->gps_available;
+                        inst[i].position_uncertainty_m = egi->position_uncertainty_m;
+                    } else {
+                        // Fallback: no EGI data
+                        inst[i].lat_deg = 0.0;
+                        inst[i].lon_deg = 0.0;
+                        inst[i].vn_mps = 0.0;
+                        inst[i].ve_mps = 0.0;
+                        inst[i].vd_mps = 0.0;
+                        inst[i].ground_speed_mps = 0.0;
+                        inst[i].ground_track_deg = inst[i].heading_deg;
+                        inst[i].gps_available = false;
+                        inst[i].position_uncertainty_m = 1000.0; // Large uncertainty
+                    }
+                    
+                    // 6. Gear State (for RL penalty - NOT for observation)
+                    const GearState* gear = it.entity(i).get<GearState>();
+                    if (gear) {
+                        inst[i].gear_stress = gear->stress;
+                        inst[i].gear_collapsed = gear->collapsed;
+                        inst[i].on_runway = gear->on_runway;
+                    } else {
+                        inst[i].gear_stress = 0.0;
+                        inst[i].gear_collapsed = false;
+                        inst[i].on_runway = true;
+                    }
                 }
             }
         });

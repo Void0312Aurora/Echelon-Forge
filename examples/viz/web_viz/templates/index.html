@@ -197,16 +197,27 @@
         // --- Asset Loading ---
         const loader = new GLTFLoader();
         let f16Model = null;
+        // --- Load Assets ---
         loader.load('/static/assets/f16.glb', (gltf) => {
             f16Model = gltf.scene;
             f16Model.scale.set(1, 1, 1);
-            // Revert to Math.PI per user feedback
-            f16Model.rotation.y = Math.PI;
-            console.log("F-16 Asset Loaded. Structure:");
-            f16Model.traverse((n) => {
-                if (n.isMesh) console.log(" - Mesh:", n.name);
-                else console.log(" - Node:", n.name);
-            });
+
+            // Standardize Model Orientation:
+            // Source Model faces +X. 
+            // We want ALL assets to align with Three.js default forward (-Z).
+            // Rotate +90 deg around Y: +X becomes -Z.
+            // USER FEEDBACK: Was 180 deg off. So rotate -90 deg instead.
+            // Native +X -> Rot -90 -> +Z (South)? 
+            // Or Native -X -> Rot -90 -> -Z (North)?
+            // Whatever the native state, user asked for 180 flip.
+            f16Model.rotation.y = -Math.PI / 2;
+
+            // Wrap in a group so we rotate the group, not the mesh inside (Cleaner)
+            const wrapper = new THREE.Group();
+            wrapper.add(f16Model);
+            f16Model = wrapper;
+
+            console.log("F-16 Asset Loaded and Standardized (Adjusted for 180 flip).");
         });
 
         // --- Socket ---
@@ -352,18 +363,26 @@
             if (inFlame) {
                 inFlame.visible = abActive;
             }
-
-            // Rotation
-            // Heading 0 = North (-Z). Three 0 = -Z (Identity).
-            // Heading 90 = East (+X). Three RotY(-90)?
-            // Sim Heading is CW from North. Three RotY is CCW.
-            // So RotY = -Heading.
+            // Rotation Logic (Unified)
+            // ==========================================
+            // Principle: All assets are now standardized to Face North (-Z).
+            // Sim: Heading 0 = North. Heading 90 = East (CW).
+            // Three: Rot 0 = North (-Z). Rot -90 = East (CCW around Y).
+            // Formula: RotY = -Heading
 
             const rad = Math.PI / 180;
-            const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -uData.heading * rad);
-            // Pitch: Sim +Pitch is Nose Up. Three +X axis is Right. RotX + is Nose Up?
+            const yawRad = -uData.heading * rad;
+
+            const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawRad);
+            // Pitch: Sim +Pitch is Nose Up. RotX + is nose up.
             const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), uData.pitch * rad);
+            // Roll: Sim +Roll is right wing down.
             const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -uData.roll * rad);
+
+            // DEBUG: Log first few frames
+            if (simTime < 0.5 && uData.type === 'Aircraft') {
+                console.log(`Aircraft '${uData.name}' (Unified): hdg=${uData.heading} -> RotY=${yawRad.toFixed(2)}rad`);
+            }
 
             uObj.mesh.quaternion.slerp(qYaw.multiply(qPitch).multiply(qRoll), 0.2);
 
@@ -393,7 +412,8 @@
 
         // --- Map Logic ---
         socket.on('map_setup', (data) => {
-            console.log("Map Data Received:", data);
+            console.log("====== MAP SETUP DEBUG ======");
+            console.log("Raw zone data received:", JSON.stringify(data.zones, null, 2));
             if (data.zones) {
                 data.zones.forEach(zone => {
                     // Create Zone Mesh
@@ -420,6 +440,8 @@
 
                     mesh2.position.set(zone.x, heightOffset, -zone.y);
                     mesh2.rotation.y = -zone.heading * (Math.PI / 180);
+
+                    console.log(`Zone '${zone.name}': sim(x=${zone.x}, y=${zone.y}, hdg=${zone.heading}) -> Three(pos=${mesh2.position.x},${mesh2.position.y},${mesh2.position.z}, rotY=${mesh2.rotation.y.toFixed(2)}rad)`);
 
                     scene.add(mesh2);
 

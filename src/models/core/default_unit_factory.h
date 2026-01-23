@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <unordered_map>
 
@@ -152,15 +153,32 @@ public:
             return flecs::entity::null();
         }
         const UnitDefinition& def = it->second;
-        double heading_init = 0.0;
-        double h_speed_sq = params.vx * params.vx + params.vy * params.vy;
-        if (h_speed_sq > 1e-12) {
-            double math_deg = std::atan2(params.vy, params.vx) * 180.0 / M_PI;
-            heading_init = default_factory_math_deg_to_nav_deg(math_deg);
+        double heading_init = params.heading;
+        double pitch_init = params.pitch;
+        double roll_init = params.roll;
+        
+        // Only infer if heading is exactly 0 and velocity is significant? 
+        // Or trust the caller? 
+        // Let's trust the caller. If they want to align with velocity, they should calculate it.
+        // However, existing code might define 0.
+        // Let's keep the velocity inference ONLY if all angles are 0?
+        if (std::abs(heading_init) < 1e-6 && std::abs(pitch_init) < 1e-6 && std::abs(roll_init) < 1e-6) {
+             double h_speed_sq = params.vx * params.vx + params.vy * params.vy;
+             if (h_speed_sq > 1e-12) {
+                 double math_deg = std::atan2(params.vy, params.vx) * 180.0 / M_PI;
+                 heading_init = default_factory_math_deg_to_nav_deg(math_deg);
+                 // Pitch from vertical velocity?
+                 double speed = std::sqrt(h_speed_sq + params.vz * params.vz);
+                 if (speed > 1e-3) {
+                     double pitch_arg = params.vz / speed;
+                     pitch_arg = std::clamp(pitch_arg, -1.0, 1.0);
+                     pitch_init = std::asin(pitch_arg) * 180.0 / M_PI;
+                 }
+             }
         }
 
         auto e = ecs.entity()
-            .set<Transform>({params.x, params.y, params.z, heading_init, 0, 0})
+            .set<Transform>({params.x, params.y, params.z, heading_init, pitch_init, roll_init})
             .set<Velocity>({params.vx, params.vy, params.vz})
             .set<Alliance>({params.side})
             .set<KeyEntity>({def.type})
@@ -291,13 +309,28 @@ public:
         });
         
         // Initialize New Physics Components
+        // Initialize New Physics Components
         e.set<ForceAccumulator>({});
         e.set<AeroState>({});
-        e.set<InstrumentState>({});
-        e.set<Inertia>({30000.0, 50000.0, 60000.0}); // Default Fighter Inertia (approx)
+        
+        // Initialize InstrumentState with valid starting values
+        InstrumentState initial_instruments{};
+        initial_instruments.heading_deg = heading_init;
+        initial_instruments.pitch_deg = pitch_init;
+        initial_instruments.roll_deg = roll_init;
+        initial_instruments.alt_baro_m = params.z;
+        initial_instruments.alt_radar_m = params.z; // Assume flat ground for init
+        initial_instruments.ias_mps = std::sqrt(params.vx*params.vx + params.vy*params.vy + params.vz*params.vz);
+        initial_instruments.fuel_internal_kg = internal_fuel;
+        initial_instruments.fuel_external_kg = 0.0;
+        initial_instruments.gear_pos = 1.0f;
+        // ... fill others if needed
+        e.set<InstrumentState>(initial_instruments);
+
         e.set<Inertia>({30000.0, 50000.0, 60000.0}); // Default Fighter Inertia (approx)
         e.set<AngularVelocity>({0.0, 0.0, 0.0});
         e.set<GroundState>({false, 0.0}); // Initialize Ground Contact
+        e.set<GearState>({true, 0.0, false, 0.0, true}); // gear_down, stress, collapsed, stress_rate, on_runway
         
         // Initialize Loadout (Empty for now)
         e.set<Loadout>({});
@@ -316,7 +349,7 @@ public:
         e.set<EGI>({
             lat, lon, params.z, params.z, // Pos
             params.vy, params.vx, -params.vz, // Vel (NED)
-            heading_init, 0.0, 0.0, // Att
+            heading_init, pitch_init, roll_init, // Att
             0.0, 0.0, // Wind
             0.0, 0.0, 0.0, // Drift
             5.0, 0.0, // Uncertainty, TimeSinceFix
@@ -347,7 +380,7 @@ public:
         e.set<LandingGear>(def.landing_gear);
     } else if (def.type == UnitType::Aircraft) {
         // Fallback for aircraft without explicit config (assume paved only)
-        e.set<LandingGear>({false, 0.02, 3.0});
+        e.set<LandingGear>({false, 0.02, 3.0, 1.0, false, 5.0});
     }
 
         if (def.has_flight_model) {

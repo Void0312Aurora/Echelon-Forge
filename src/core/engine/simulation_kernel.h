@@ -56,6 +56,7 @@ public:
     // Spawn a basic unit (for testing/gym API)
     flecs::entity spawn_unit(Side side, const std::string& unit_name, 
                              double x, double y, double z, 
+                             double heading, double pitch, double roll,
                              double vx, double vy, double vz);
 
     // Get the Flecs world (for systems/bindings)
@@ -68,6 +69,7 @@ public:
     bool load_database(const std::string& path);
     void clear_zones();
     void add_zone(const std::string& name, double x, double y, double width, double height, double heading, int surface_type);
+    void set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km = 0.0);
     
     // Action Interface: Set command for a unit
     void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m);

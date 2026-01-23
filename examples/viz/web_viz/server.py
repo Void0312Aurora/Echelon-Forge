@@ -22,8 +22,32 @@ kernel = ef_py.SimulationKernel()
 kernel.reset(42)
 
 # Entities to track
-target = kernel.spawn_unit(ef_py.Side.Red, ef_py.UnitType.Aircraft, 100, 100, 5000, 20, 0, 0) # Faster for demo
-interceptor = kernel.spawn_unit(ef_py.Side.Blue, ef_py.UnitType.Aircraft, 0, 0, 5000, 0, 10, 0) # Moving North for demo
+target = kernel.spawn_unit(
+    ef_py.Side.Red,
+    ef_py.UnitType.Aircraft,
+    100,
+    100,
+    5000,
+    heading=90.0,
+    pitch=0.0,
+    roll=0.0,
+    vx=20.0,
+    vy=0.0,
+    vz=0.0,
+)  # Faster for demo
+interceptor = kernel.spawn_unit(
+    ef_py.Side.Blue,
+    ef_py.UnitType.Aircraft,
+    0,
+    0,
+    5000,
+    heading=0.0,
+    pitch=0.0,
+    roll=0.0,
+    vx=0.0,
+    vy=10.0,
+    vz=0.0,
+)  # Moving North for demo
 
 sim_running = True
 

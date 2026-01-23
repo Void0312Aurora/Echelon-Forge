@@ -6,8 +6,16 @@ import time
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 
+# Prefer locally built `ef_py` extension when present.
+_REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+_BUILD_DIR = os.path.join(_REPO_ROOT, "build")
+if os.path.isdir(_BUILD_DIR) and any(
+    fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_BUILD_DIR)
+):
+    sys.path.insert(0, _BUILD_DIR)
+
 # Add local path for gym wrapper
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
 from python.models.transformer import TransformerExtractor
 
@@ -17,6 +25,13 @@ def main():
     parser.add_argument("--model", type=str, required=True, help="Path to trained model (zip)")
     parser.add_argument("--episodes", type=int, default=10, help="Number of episodes to evaluate")
     parser.add_argument("--render", action="store_true", help="Render simulation (if supported)")
+    parser.add_argument(
+        "--action_mode",
+        type=str,
+        default="full",
+        choices=["full", "takeoff2", "takeoff4"],
+        help="Action space mode (must match training): full=17D, takeoff2=(pitch,throttle), takeoff4=(pitch,roll,rudder,throttle)",
+    )
     
     args = parser.parse_args()
     
@@ -30,7 +45,7 @@ def main():
     
     # Create Env
     def make_env():
-        return UniversalEnv(scenario_path)
+        return UniversalEnv(scenario_path, action_mode=args.action_mode)
     
     vec_env = DummyVecEnv([make_env])
     
@@ -61,7 +76,7 @@ def main():
         survived = True
         
         while not done:
-            action, _ = model.predict(obs)
+            action, _ = model.predict(obs, deterministic=True)
             obs, rewards, dones, infos = vec_env.step(action)
             
             total_reward += rewards[0]

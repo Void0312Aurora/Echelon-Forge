@@ -32,7 +32,7 @@ namespace {
  */
 inline void register_force_system(flecs::world& ecs) {
     ecs.system<ForceAccumulator, const Transform, const Velocity, 
-               const Mass, const Propulsion, const FlightModel, const MovementCommand>("ComputeForces")
+               const Mass, Propulsion, const FlightModel, const MovementCommand>("ComputeForces")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter& it) {
             const EnvironmentModelRef* env_ref = it.world().get<EnvironmentModelRef>();
@@ -42,7 +42,7 @@ inline void register_force_system(flecs::world& ecs) {
                 auto transform = it.field<const Transform>(1);
                 auto velocity = it.field<const Velocity>(2);
                 auto mass = it.field<const Mass>(3);
-                auto propulsion = it.field<const Propulsion>(4);
+                auto propulsion = it.field<Propulsion>(4);
                 auto flight_model = it.field<const FlightModel>(5);
                 auto command = it.field<const MovementCommand>(6);
                 
@@ -88,10 +88,14 @@ inline void register_force_system(flecs::world& ecs) {
                     else if (command[i].active) {
                         throttle_input = command[i].throttle_cmd;
                     }
+
+                    throttle_input = std::clamp(throttle_input, 0.0, 1.0);
                     
                     double thrust_magnitude = 0.0;
+                    bool afterburner_active = false;
                     if (throttle_input > 0.9) {
                         thrust_magnitude = propulsion[i].ab_thrust_n;
+                        afterburner_active = true;
                     } else {
                         thrust_magnitude = propulsion[i].mil_thrust_n * throttle_input;
                     }
@@ -118,6 +122,10 @@ inline void register_force_system(flecs::world& ecs) {
                          
                          thrust_magnitude *= sigma * ram_factor;
                     }
+
+                    // Cache propulsion state for instruments/observation.
+                    propulsion[i].current_thrust_n = thrust_magnitude;
+                    propulsion[i].afterburner_active = afterburner_active;
 
                     forces[i].add_force(
                         thrust_magnitude * nose_x,

@@ -8,7 +8,7 @@ int main() {
 
     spdlog::info("C++ App: Spawning Unit");
     spdlog::info("C++ App: Spawning Unit");
-    auto e = kernel.spawn_unit(Side::Blue, "Aircraft", 0, 0, 0, 10, 5, 0);
+    auto e = kernel.spawn_unit(Side::Blue, "Aircraft", 0, 0, 0, 0, 0, 0, 10, 5, 0);
 
     spdlog::info("C++ App: Running Simulation");
     for (int i = 0; i < 60; ++i) {

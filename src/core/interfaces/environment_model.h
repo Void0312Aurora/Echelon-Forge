@@ -46,6 +46,11 @@ public:
     // Dynamic Configuration
     virtual void clear_zones() = 0;
     virtual void add_zone(const std::string& name, double x, double y, double width, double height, double heading, SurfaceType surface) = 0;
+
+    // Wind configuration
+    // dir_from_deg uses NAV convention: 0=North, CW positive.
+    // shear_mps_per_km is applied in the "to" direction (same as the base wind).
+    virtual void set_wind(double /*speed_mps*/, double /*dir_from_deg*/, double /*shear_mps_per_km*/) {}
 };
 
 struct EnvironmentModelRef {

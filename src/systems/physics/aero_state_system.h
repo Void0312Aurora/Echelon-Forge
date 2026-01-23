@@ -81,37 +81,48 @@ inline void register_aero_state_system(flecs::world& ecs) {
                 auto velocity = it.field<const Velocity>(2);
                 
                 for (auto i : it) {
-                    double vx = velocity[i].vx;
-                    double vy = velocity[i].vy;
-                    double vz = velocity[i].vz;
-                    double v_sq = vx*vx + vy*vy + vz*vz;
-                    
-                    if (v_sq < 0.1) {
-                        aero[i].angle_of_attack = 0.0;
-                        aero[i].sideslip_angle = 0.0;
-                        aero[i].dynamic_pressure = 0.0;
-                        aero[i].mach_number = 0.0;
-                        continue;
-                    }
-                    
-                    double v_total = std::sqrt(v_sq);
-                    
-                    // 1. Atmosphere
+                    // Ground-relative velocity (world frame)
+                    double vx_gnd = velocity[i].vx;
+                    double vy_gnd = velocity[i].vy;
+                    double vz_gnd = velocity[i].vz;
+
+                    // Atmosphere (includes wind). Treat aerodynamic state as air-relative.
                     double rho = 1.225;
                     double speed_of_sound = 340.29;
-                    
+                    Vec3 wind = {0.0, 0.0, 0.0};
+
                     if (env_ref && env_ref->model) {
                         auto atmo = env_ref->model->get_atmosphere_at(
                             transform[i].x, transform[i].y, transform[i].z);
                         rho = atmo.air_density;
                         speed_of_sound = atmo.speed_of_sound;
+                        wind = atmo.wind_velocity;
                     } else {
-                        // Simple Model
+                        // Simple fallback atmosphere model
                         double alt_km = std::max(0.0, transform[i].z) / 1000.0;
                         rho = 1.225 * std::exp(-alt_km / 7.2);
                         speed_of_sound = 340.29 - (4.0 * alt_km); // Very rough linear approx
                         if (speed_of_sound < 295.0) speed_of_sound = 295.0;
                     }
+
+                    double vx = vx_gnd - wind.x;
+                    double vy = vy_gnd - wind.y;
+                    double vz = vz_gnd - wind.z;
+
+                    double v_sq = vx*vx + vy*vy + vz*vz;
+                    
+                    // Low-speed guard: AoA is meaningless at very low speeds
+                    // Threshold: 5 m/s² means ~2.2 m/s.  Below this, aerodynamic
+                    // angles are unstable due to small velocity components.
+                    if (v_sq < 25.0) {  // 5 m/s threshold
+                        aero[i].angle_of_attack = 0.0;
+                        aero[i].sideslip_angle = 0.0;
+                        aero[i].dynamic_pressure = 0.5 * 1.225 * v_sq; // Still compute q
+                        aero[i].mach_number = 0.0;
+                        continue;
+                    }
+                    
+                    double v_total = std::sqrt(v_sq);
                     
                     // 2. Dynamic Pressure & Mach
                     aero[i].dynamic_pressure = 0.5 * rho * v_sq;
@@ -131,7 +142,9 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     aero[i].angle_of_attack = Math::to_degrees(std::atan2(-v_body.z, v_body.x));
                     
                     // Beta = asin(v_body.y / v_total)
-                    aero[i].sideslip_angle = Math::to_degrees(std::asin(v_body.y / v_total));
+                    double beta_arg = v_body.y / v_total;
+                    beta_arg = std::clamp(beta_arg, -1.0, 1.0);
+                    aero[i].sideslip_angle = Math::to_degrees(std::asin(beta_arg));
                     
                     // Clamp for safety
                     aero[i].angle_of_attack = std::max(-90.0, std::min(90.0, aero[i].angle_of_attack));

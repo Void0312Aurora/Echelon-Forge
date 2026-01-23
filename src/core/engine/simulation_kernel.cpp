@@ -102,16 +102,10 @@ SimulationKernel::SimulationKernel()
     ecs.component<EGI>(); // GPS/INS
     ecs.component<TrackDatabase>();
 
-    // Initialize Systems
-    register_movement_system(ecs);
-    register_force_clear_system(ecs);
-    register_control_system(ecs);
-    // ...
-    register_sensor_system(ecs);
-    register_data_link_system(ecs);
-    register_navigation_system(ecs); 
-    register_track_manager_system(ecs); // Runs after Sensor/DL
-    // ...
+    ecs.component<TrackDatabase>();
+
+    // Systems are registered sequentially below to ensure correct execution order.
+    // See "Register Systems IN ORDER" block.
 
     ecs.component<EffectsModelRef>();
     ecs.component<SensorModelRef>();
@@ -134,16 +128,17 @@ SimulationKernel::SimulationKernel()
     register_command_link_system(ecs);   // Phase 0: Command Link
     register_action_mapping_system(ecs); // Phase 1: Action Mapping
     register_command_lag_system(ecs);    // Phase 2: Command Lag
-    register_control_system(ecs);        // Phase 3: Control
+    register_control_system(ecs);        // Phase 3: Control (adds control torques)
     register_force_clear_system(ecs);    // Phase 3.1: Clear Forces (per-frame)
-    register_rotational_integration_system(ecs); // Phase 3.2: Rotational Dynamics (torques -> attitude)
-    register_aero_state_system(ecs);     // Phase 3.3: Aero State (AoA/beta/q)
-    register_force_system(ecs);          // Phase 3.4: Forces (gravity/thrust/ground reaction)
-    register_aerodynamics_system(ecs);   // Phase 3.5: Aerodynamics (lift/drag)
-    register_ground_contact_system(ecs, environment_model_.get()); // Phase 3.6: Ground contact + friction
+    register_aero_state_system(ecs);     // Phase 3.2: Aero State (AoA/beta/q)
+    register_force_system(ecs);          // Phase 3.3: Forces (gravity/thrust)
+    register_aerodynamics_system(ecs);   // Phase 3.4: Aerodynamics (lift/drag + aero torques)
+    register_ground_contact_system(ecs, environment_model_.get()); // Phase 3.5: Ground contact/friction/pitch damping
+    register_rotational_integration_system(ecs); // Phase 3.6: Rotational Dynamics (ALL torques -> attitude)
     register_guidance_system(ecs);       // Phase 4: Guidance
     register_leapfrog_integration_system(ecs); // Phase 5: Leapfrog Integration (translation)
     // register_movement_system(ecs);       // Phase 5.5: Movement (disabled - replaced by Leapfrog)
+    register_navigation_system(ecs);     // Phase 5.8: Navigation/EGI (after integration, before instruments)
     register_sensor_system(ecs);         // Phase 6: Sensor
     register_data_link_system(ecs);      // Phase 6.5: Data Link Fusion (Post-Sensor)
     register_instrument_system(ecs);     // Phase 6.6: Instruments (Read Physics & Sensor State)
@@ -274,6 +269,7 @@ bool SimulationKernel::load_database(const std::string& path) {
 
 flecs::entity SimulationKernel::spawn_unit(Side side, const std::string& unit_name, 
                                            double x, double y, double z, 
+                                           double heading, double pitch, double roll,
                                            double vx, double vy, double vz) {
     if (!unit_factory_) {
         spdlog::error("Unit factory not set; cannot spawn unit.");
@@ -282,7 +278,7 @@ flecs::entity SimulationKernel::spawn_unit(Side side, const std::string& unit_na
 
     // Optional: Check existence first or trust spawn to handle it.
     // The factory->spawn is responsible for lookup now.
-    SpawnParams params{side, x, y, z, vx, vy, vz};
+    SpawnParams params{side, x, y, z, heading, pitch, roll, vx, vy, vz};
     auto e = unit_factory_->spawn(ecs, unit_name, params);
     if (e.is_valid()) {
         e.add<SimObject>(); // Tag for cleanup
@@ -925,6 +921,12 @@ void SimulationKernel::clear_zones() {
 void SimulationKernel::add_zone(const std::string& name, double x, double y, double width, double height, double heading, int surface_type) {
     if (environment_model_) {
         environment_model_->add_zone(name, x, y, width, height, heading, (IEnvironmentModel::SurfaceType)surface_type);
+    }
+}
+
+void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km) {
+    if (environment_model_) {
+        environment_model_->set_wind(speed_mps, dir_from_deg, shear_mps_per_km);
     }
 }
 

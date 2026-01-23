@@ -30,7 +30,12 @@ def test_drop():
         ef_py.Side.Blue,
         "F-16C_Block50", # Must match database name
         0.0, 0.0, 100.0, # Pos
-        0.0, 0.0, 0.0    # Vel
+        heading=0.0,
+        pitch=0.0,
+        roll=0.0,
+        vx=0.0,
+        vy=0.0,
+        vz=0.0,
     )
     
     print(f"Spawned Unit {eid} at [0, 0, 100]")

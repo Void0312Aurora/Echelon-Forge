@@ -11,6 +11,7 @@
 struct SpawnParams {
     Side side;
     double x, y, z;
+    double heading, pitch, roll;
     double vx, vy, vz;
 };
 

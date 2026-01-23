@@ -1,6 +1,7 @@
 #include "core/interfaces/effects_model.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cmath>
 #include <spdlog/spdlog.h>
 
@@ -70,6 +71,18 @@ Vec3 world_to_body(const Transform& t, double wx, double wy, double wz) {
     double local_z = dz; // Assuming flat pitch/roll for MVP interception
     
     return {local_x, local_y, local_z};
+}
+
+uint64_t splitmix64(uint64_t& state) {
+    uint64_t z = (state += 0x9e3779b97f4a7c15ULL);
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+    return z ^ (z >> 31);
+}
+
+double rand_uniform01(uint64_t& state) {
+    // 53 random bits / 2^53
+    return (splitmix64(state) >> 11) * (1.0 / 9007199254740992.0);
 }
 
 bool check_hitbox(const Vec3& local_p, const Hitbox& box) {
@@ -185,13 +198,18 @@ public:
              if (hp && hp->max_hp > 0) severity = missile.damage / hp->max_hp;
              
              // Randomly damage sensor
-             // Simple fallback uniform for now
-             if ((float)rand() / RAND_MAX < 0.3 + 0.5*severity) {
+             double p = std::clamp(0.3 + 0.5 * severity, 0.0, 1.0);
+             uint64_t rng_state = missile.rng_state;
+             double u = rand_uniform01(rng_state);
+             if (u < p) {
                  // if (Sensor* s = target_entity.get_mut<Sensor>()) apply_sensor_damage(*s, severity);
                  // Skip apply_sensor_damage for now as helpers are gone, simple blind
                  if (Sensor* s = target_entity.get_mut<Sensor>()) {
                     s->max_range *= 0.5;
                  }
+             }
+             if (Missile* m = missile_entity.get_mut<Missile>()) {
+                 m->rng_state = rng_state;
              }
         }
 

@@ -4,16 +4,24 @@ Manual Takeoff Test Script
 Tests if the physics engine allows the aircraft to naturally take off.
 Applies: Full throttle, gradual elevator pull at rotation speed.
 """
-import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import sys
 
-from gym_envs.universal_env import UniversalEnv
 import numpy as np
 
+# Add repo root and build to path
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(base_dir)
+sys.path.append(os.path.join(base_dir, "build"))
+
+import ef_py
+from gym_envs.scenario_loader import ScenarioLoader
+
 def main():
-    env = UniversalEnv("scenarios/takeoff.json")
-    obs, _ = env.reset()
+    sim = ef_py.SimulationKernel()
+    sim.load_database("examples/config/database")
+    loader = ScenarioLoader(sim)
+    agent_id = loader.load_scenario(os.path.join(base_dir, "scenarios/takeoff.json"), seed=42)
     
     print("="*60)
     print("MANUAL TAKEOFF TEST")
@@ -25,51 +33,61 @@ def main():
     # - Neutral stick until speed > 80 m/s, then pull back (pitch up)
     # - Retract gear after altitude > 20m
     
+    target_pitch = 15.0
+
     for step in range(2000):
-        inst = obs["instruments"]
-        speed = inst[0]  # IAS
-        alt = inst[2]    # alt_baro
-        aoa = inst[5]
-        pitch = inst[7]
-        gear = inst[18]
-        
-        # Build action (17 dims)
-        action = np.zeros(17, dtype=np.float32)
-        
-        # Throttle = full
-        action[3] = 1.0
-        
-        # Pitch control logic (Proportional Controller for Pitch Angle)
-        target_pitch = 15.0
-        
+        inst = sim.get_instrument_state(agent_id)
+        speed = inst.ias
+        alt = inst.alt_baro
+        aoa = inst.aoa
+        pitch = inst.pitch
+        gear = inst.gear_pos
+
+        pa = ef_py.PilotAction()
+        pa.active = True
+
+        pa.stick_roll = 0.0
+        pa.rudder = 0.0
+        pa.throttle = 1.0
+        pa.flaps = 0.0
+        pa.speedbrake = 0.0
+        pa.brake = 0.0
+        pa.brake_left = False
+        pa.brake_right = False
+
         if speed < 100.0:
-            action[0] = 0.0 # Wait for Vr
+            pa.stick_pitch = 0.0  # Wait for Vr
         else:
-            # Simple P-controller
             pitch_err = target_pitch - pitch
-            # kP = 0.05
-            # If pitch is 0, err=15, action=0.75 (clamped to 1.0)
-            # If pitch is 15, err=0, action=0
-            # If pitch is 20, err=-5, action=-0.25
-            action[0] = np.clip(pitch_err * 0.05, -1.0, 1.0) 
-            
-            # Dampen pitch rate if needed? 
-            # (Let's stick to P-control for angle first)
-        
+            pa.stick_pitch = float(np.clip(pitch_err * 0.05, -1.0, 1.0))
+
         # Gear control
-        if alt > 30.0:
-            action[4] = 0.0  # Retract gear
-        else:
-            action[4] = 1.0  # Gear down
-        
-        obs, reward, terminated, truncated, info = env.step(action)
-        
-        # Get raw truth to see actual velocity
-        truth = env.sim.get_agent_observation(env.agent_id)
+        pa.gear_handle = 0.0 if alt > 30.0 else 1.0
+
+        # Avionics/weapons off
+        pa.radar_active = False
+        pa.radar_scan_az = 0.0
+        pa.radar_scan_el = 0.0
+        pa.tms_up = False
+        pa.master_arm = False
+        pa.fire_weapon = False
+        pa.fire_gun = False
+        pa.weapon_select_id = 0
+        pa.program_chaff = False
+        pa.program_flare = False
+        pa.jettison_emergency = False
+
+        sim.set_pilot_action(agent_id, pa)
+        sim.step()
+
+        truth = sim.get_agent_observation(agent_id)
         
         # Print status every 50 steps
         if step % 50 == 0:
-            print(f"[Step {step:4d}] Speed: {speed:6.1f} m/s | Alt: {alt:6.1f} m | AoA: {aoa:5.1f}° | Pitch: {pitch:5.1f}° | Gear: {gear:.1f} | Reward: {reward:7.2f}")
+            print(
+                f"[Step {step:4d}] Speed: {speed:6.1f} m/s | Alt: {alt:6.1f} m | "
+                f"AoA: {aoa:5.1f}° | Pitch: {pitch:5.1f}° | Gear: {gear:.1f}"
+            )
             print(f"         -> Truth: vx={truth.vx:.2f}, vy={truth.vy:.2f}, vz={truth.vz:.2f}, z={truth.z:.2f}, health={truth.health}")
         
         # Check for success
@@ -80,12 +98,6 @@ def main():
             print("="*60)
             return True
             
-        if terminated:
-            print("\n" + "="*60)
-            print(f"FAILED! Episode terminated at step {step}.")
-            print(f"Final: Alt={alt:.1f}m, Speed={speed:.1f}m/s")
-            print("="*60)
-            return False
     
     print("\n" + "="*60)
     print(f"TIMEOUT! Did not reach target in 2000 steps.")

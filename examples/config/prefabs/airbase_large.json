@@ -4,16 +4,23 @@
     "zones": [
         {
             "name": "Runway 09",
-            "x": 1500.0,
+            "x": 0.0,
             "y": 0.0,
             "width": 60.0,
             "length": 3000.0,
             "heading": 90.0,
-            "surface": "Concrete"
+            "surface": "Concrete",
+            "ils": {
+                "enabled": true,
+                "glide_slope_deg": 3.0,
+                "loc_max_deg": 2.5,
+                "gs_max_deg": 0.7,
+                "range_m": 25000.0
+            }
         },
         {
             "name": "Apron",
-            "x": 1500.0,
+            "x": 0.0,
             "y": 0.0,
             "width": 1000.0,
             "length": 4000.0,

@@ -7,6 +7,7 @@
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h" // For MassProperties (RefArea)
 #include "components/physics/performance.h" // For LandingGear
+#include "components/physics/action.h"       // For PilotAction (flaps/speedbrake)
 #include "components/systems/logistics.h" // For MassProperties definition
 
 namespace {
@@ -79,6 +80,17 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // So 0.1 is a valid physical approximation for subsonic flight.
                     double Cl = 0.0 + 0.1 * alpha;
                     
+                    // [F1 FIX] Flaps Lift Augmentation
+                    // Flaps increase camber, boosting Cl by ~0.3-0.5 at full deflection
+                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
+                    double flaps_deflection = 0.0;
+                    double speedbrake_pos = 0.0;
+                    if (pilot && pilot->active) {
+                        flaps_deflection = std::clamp(static_cast<double>(pilot->flaps), 0.0, 1.0);
+                        speedbrake_pos = std::clamp(static_cast<double>(pilot->speedbrake), 0.0, 1.0);
+                    }
+                    Cl += flaps_deflection * 0.35; // dCl_flaps ~ 0.35 at full deflection
+                    
                     // Stall Logic (Simple)
                     if (std::abs(alpha) > 15.0) {
                         // Post-stall drop
@@ -98,6 +110,12 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     if (gear) {
                          Cd0 += gear->extension_state * 0.04;
                     }
+                    
+                    // [F2 FIX] Speedbrake Drag Penalty
+                    Cd0 += speedbrake_pos * 0.08; // dCd_speedbrake ~ 0.08 at full extension
+                    
+                    // Flaps also add some drag (induced + profile)
+                    Cd0 += flaps_deflection * 0.02;
                     
                     double k = 0.1;
                     double Cd = Cd0 + k * Cl * Cl;

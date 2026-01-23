@@ -9,7 +9,34 @@
     "environment": {
         "time_step": 0.05,
         "max_steps": 2000,
-        "terrain_type": "flat"
+        "terrain_type": "flat",
+        "wind": {
+            "speed_mps": 3.0,
+            "dir_from_deg": 270.0,
+            "shear_mps_per_km": 0.0
+        },
+        "randomization": {
+            "world_yaw_range": [
+                0.0,
+                360.0
+            ],
+            "world_yaw_origin": [
+                0.0,
+                0.0
+            ],
+            "wind_speed_range": [
+                0.0,
+                12.0
+            ],
+            "wind_dir_from_range": [
+                0.0,
+                360.0
+            ],
+            "wind_shear_range": [
+                0.0,
+                6.0
+            ]
+        }
     },
     "mission_command": {
         "command_code": 1,
@@ -18,16 +45,16 @@
         "target_speed": 180.0,
         "randomization": {
             "heading_range": [
-                -20.0,
-                20.0
+                0.0,
+                0.0
             ],
             "altitude_range": [
-                300.0,
-                600.0
+                500.0,
+                500.0
             ],
             "speed_range": [
-                140.0,
-                220.0
+                180.0,
+                180.0
             ]
         }
     },
@@ -37,7 +64,7 @@
             "type": "Aircraft",
             "side": "Blue",
             "pos": [
-                10.0,
+                -1400.0,
                 0.0,
                 2.1
             ],
@@ -69,17 +96,26 @@
         }
     ],
     "rewards": {
-        "survival": 0.1,
+        "survival": 0.0,
         "crash_penalty": -1000.0,
-        "altitude_progress_weight": 0.05,
-        "speed_progress_weight": 0.05,
-        "gear_up_bonus": 50.0,
-        "stall_penalty": -0.1,
+        "altitude_progress_target": 300.0,
+        "speed_progress_target": 150.0,
+        "altitude_progress_weight": 0.5,
+        "speed_progress_weight": 1.0,
+        "speed_progress_weight_negative": 0.2,
+        "gear_up_bonus": 100.0,
+        "stall_penalty": -0.5,
         "stall_aoa_threshold": 15.0,
-        "overload_penalty": -0.1,
+        "overload_penalty": -0.5,
         "overload_g_threshold": 6.0,
-        "roll_stability_weight": -0.001,
-        "heading_error_weight": -0.001,
-        "altitude_error_weight": -0.0001
+        "roll_stability_weight": -0.5,
+        "heading_error_weight": 0.0,
+        "altitude_error_weight": -0.001,
+        "off_runway_penalty": -2.0,
+        "gear_collapse_penalty": -1000.0,
+        "gear_stress_penalty": -10.0,
+        "stationary_penalty": -2.0,
+        "speed_reward_weight": 0.01,
+        "alignment_reward_weight": 0.5
     }
 }

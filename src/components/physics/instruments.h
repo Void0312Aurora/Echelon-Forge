@@ -51,4 +51,26 @@ struct InstrumentState {
     bool rwr_active;        // RWR is detecting threats
     int weapon_selected;    // Ind index of selected weapon
     int missiles_remaining; // Total count? Or per type? Simple count for now.
+    
+    // 6. EGI / Navigation (What pilot sees on HSD/TSD)
+    double lat_deg;         // Latitude (from EGI)
+    double lon_deg;         // Longitude (from EGI)
+    double vn_mps;          // Velocity North (from EGI)
+    double ve_mps;          // Velocity East (from EGI)
+    double vd_mps;          // Velocity Down (from EGI)
+    double ground_speed_mps;// Ground Speed (computed from vn, ve)
+    double ground_track_deg;// Ground Track / Course (computed from vn, ve)
+    
+    // 7. Wind Estimation (EGI)
+    double wind_speed_mps;  // Estimated wind speed
+    double wind_dir_deg;    // Estimated wind direction (from)
+    
+    // 8. GPS/INS Status
+    bool gps_available;     // GPS fix available
+    double position_uncertainty_m; // EPE (Estimated Position Error)
+    
+    // 9. Internal Physics (NOT for observation, only for reward calculation)
+    double gear_stress;     // Accumulated gear stress (0.0-1.0)
+    bool gear_collapsed;    // Has gear failed?
+    bool on_runway;         // Is aircraft on paved surface?
 };

@@ -56,7 +56,9 @@ public:
             stick_roll = pilot->stick_roll;
             stick_pitch = pilot->stick_pitch;
             stick_yaw = pilot->rudder;
-            gear_cmd_down = (pilot->gear_handle > 0.5);
+            // Treat the midpoint as "down" so an untrained policy (often near action midpoints)
+            // doesn't retract the gear on the runway.
+            gear_cmd_down = (pilot->gear_handle >= 0.5);
         } 
         else if (has_mission) {
             // [B] Legacy Autopilot (Rule-Based Helper)

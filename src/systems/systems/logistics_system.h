@@ -10,16 +10,43 @@
 
 inline void register_logistics_system(flecs::world& ecs) {
     // 1. Fuel Consumption System
-    ecs.system<FuelSystem, const ActionCommand>("FuelConsumption")
+    ecs.system<FuelSystem>("FuelConsumption")
         .run([](flecs::iter& it) {
             while (it.next()) {
                 auto fuel = it.field<FuelSystem>(0);
-                auto cmd = it.field<const ActionCommand>(1);
                 double dt = it.delta_time();
 
                 for (auto i : it) {
-                    double burn_rate = 0.0;
-                    double throttle = cmd[i].accel_cmd; // [-1.0, 1.0]
+                    double throttle = 0.0; // [0, 1]
+                    bool throttle_set = false;
+
+                    // Priority 1: Digital Pilot
+                    if (const PilotAction* pilot = it.entity(i).get<PilotAction>()) {
+                        if (pilot->active) {
+                            throttle = std::clamp(pilot->throttle, 0.0, 1.0);
+                            throttle_set = true;
+                        }
+                    }
+
+                    // Priority 2: Legacy MovementCommand
+                    if (!throttle_set) {
+                        if (const MovementCommand* legacy = it.entity(i).get<MovementCommand>()) {
+                            if (legacy->active) {
+                                throttle = std::clamp(legacy->throttle_cmd, 0.0, 1.0);
+                                throttle_set = true;
+                            }
+                        }
+                    }
+
+                    // Priority 3: ActionCommand (normalized [-1,1] -> [0,1])
+                    if (!throttle_set) {
+                        if (const ActionCommand* act = it.entity(i).get<ActionCommand>()) {
+                            if (act->active) {
+                                throttle = std::clamp((act->accel_cmd + 1.0) * 0.5, 0.0, 1.0);
+                                throttle_set = true;
+                            }
+                        }
+                    }
 
                     // Mapping Throttle to Burn Rate
                     // Idle: 10% of Mil
@@ -28,17 +55,17 @@ inline void register_logistics_system(flecs::world& ecs) {
 
                     // Simple mapping:
                     // < 0: Idle flow (approx)
-                    // 0.0 - 0.8: Linear interpolation 
-                    // > 0.8: Afterburner
+                    // 0.0 - 0.9: Linear interpolation 
+                    // > 0.9: Afterburner
 
-                    if (throttle > 0.8) {
+                    constexpr double kAfterburnerThreshold = 0.9;
+                    if (throttle > kAfterburnerThreshold) {
                         fuel[i].current_flow_rate = fuel[i].mil_power_flow_rate * fuel[i].ab_flow_rate_multiplier;
                         fuel[i].afterburner_active = true;
-                    } else if (throttle >= 0.0) {
-                        fuel[i].current_flow_rate = fuel[i].mil_power_flow_rate * (0.1 + 0.9 * (throttle / 0.8));
-                        fuel[i].afterburner_active = false;
                     } else {
-                        fuel[i].current_flow_rate = fuel[i].mil_power_flow_rate * 0.1; // Idle
+                        // Linear interpolation from idle -> MIL as throttle goes 0..0.9
+                        fuel[i].current_flow_rate =
+                            fuel[i].mil_power_flow_rate * (0.1 + 0.9 * (throttle / kAfterburnerThreshold));
                         fuel[i].afterburner_active = false;
                     }
 

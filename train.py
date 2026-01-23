@@ -12,12 +12,25 @@ torch.set_float32_matmul_precision('high')
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback
+
+# Prefer the locally built `ef_py` extension when present (avoids accidentally using a stale
+# site-packages wheel/so from the venv).
+_REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+_BUILD_DIR = os.path.join(_REPO_ROOT, "build")
+if os.path.isdir(_BUILD_DIR):
+    for _name in ("ef_py", "ef_py.cpython-313-x86_64-linux-gnu.so"):
+        if os.path.exists(os.path.join(_BUILD_DIR, _name)) or any(
+            fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_BUILD_DIR)
+        ):
+            sys.path.insert(0, _BUILD_DIR)
+            break
 
 # Add local path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
-from python.models.transformer import TransformerExtractor
+from python.models.transformer import TransformerExtractor, TransformerVisualExtractor
+from python.training_callbacks import CMODiagnosticsCallback
 
 def get_policy_kwargs(train_config):
     # Parse policy_kwargs from JSON
@@ -27,20 +40,76 @@ def get_policy_kwargs(train_config):
     fe_name = kwargs.get("features_extractor_class")
     if fe_name == "TransformerExtractor":
         kwargs["features_extractor_class"] = TransformerExtractor
+    elif fe_name == "TransformerVisualExtractor":
+        kwargs["features_extractor_class"] = TransformerVisualExtractor
     
     return kwargs
+
+
+def apply_safe_action_bias(model: PPO, action_mode: str):
+    """
+    Improve early exploration for mixed-range action spaces.
+
+    SB3 PPO uses an (unbounded) Gaussian policy. For dimensions with bounds [0, 1],
+    the default mean initialization at 0.0 tends to clip to 0.0 (e.g. throttle=0),
+    which can trap learning in the "stationary on runway" regime. We bias those
+    outputs toward realistic neutral/safe defaults.
+    """
+    if action_mode != "full":
+        return
+    try:
+        action_net = getattr(model.policy, "action_net", None)
+        if action_net is None or getattr(action_net, "bias", None) is None:
+            return
+        b = action_net.bias
+        if b is None or int(b.shape[0]) < 17:
+            return
+        with torch.no_grad():
+            # Safe defaults for the 17D "full" action layout in `gym_envs/universal_env.py`.
+            # - throttle: mid power to ensure ground roll starts
+            # - gear: down
+            # Note: flaps/speedbrake/brakes use `half_to_unit()`, where any value <= 0.5 maps to "off".
+            # Keeping their initial mean at 0.0 avoids unintended random braking.
+            b[3] = 0.5   # throttle
+            b[4] = 1.0   # gear handle down
+
+            # Avionics/weapons default off.
+            for idx in (9, 12, 13, 14, 15, 16):
+                b[idx] = 0.0
+    except Exception:
+        return
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Training Base for CMO")
     parser.add_argument("--scenario", type=str, required=True, help="Path to JSON scenario file")
     parser.add_argument("--train_config", type=str, default="examples/config/training/default_ppo.json", help="Path to training config JSON")
     parser.add_argument("--test_only", action="store_true", help="Run in test mode without training")
+    parser.add_argument("--include_visual", action="store_true", help="Include ARB visual observation (large/slow)")
+    parser.add_argument(
+        "--action_mode",
+        type=str,
+        default="full",
+        choices=["full", "takeoff2", "takeoff4"],
+        help="Action space mode (curriculum): full=17D, takeoff2=(pitch,throttle), takeoff4=(pitch,roll,rudder,throttle)",
+    )
     
     # New Experiment Args
     parser.add_argument("--run_name", type=str, default=None, help="Name of the run. If None, uses Timestamp.")
     parser.add_argument("--resume_path", type=str, default=None, help="Path to .zip model to resume training from.")
     parser.add_argument("--output_base", type=str, default="experiments", help="Base directory for experiments.")
     parser.add_argument("--n_envs", type=int, default=None, help="Number of parallel environments (overrides config)")
+    parser.add_argument("--diagnostics", action="store_true", help="Log extra diagnostics scalars to TensorBoard")
+    parser.add_argument(
+        "--diagnostics_every",
+        type=int,
+        default=50000,
+        help="Diagnostics logging interval (in environment timesteps, not gradient updates)",
+    )
+    parser.add_argument(
+        "--no_init_safe_action_bias",
+        action="store_true",
+        help="Disable safe initialization bias for mixed-range actions (throttle/brakes/flaps/etc).",
+    )
     
     args = parser.parse_args()
     
@@ -117,6 +186,21 @@ def main():
     
     print(f"Creating {n_envs} parallel environments...")
     print(f"Logging to {log_dir}")
+
+    # Rough rollout-buffer memory warning for visual observations (DictRolloutBuffer stores full obs).
+    try:
+        n_steps = int(train_config.get("hyperparameters", {}).get("n_steps", 2048))
+    except Exception:
+        n_steps = 2048
+    if args.include_visual:
+        visual_elems = 48 * 96 * 10
+        est_bytes = int(n_envs) * int(n_steps) * int(visual_elems) * 4
+        if est_bytes >= 4 * 1024**3:
+            gib = est_bytes / (1024**3)
+            print(
+                f"[WARN] include_visual=True with n_envs={n_envs}, n_steps={n_steps} will allocate ~{gib:.1f} GiB "
+                "just for the visual rollout buffer. Consider reducing n_envs and/or n_steps."
+            )
     
     # We must delay env creation for resume if we want to ensure same config? 
     # For now we assume user provides correct params for resumption.
@@ -124,7 +208,11 @@ def main():
     vec_env = make_vec_env(
         UniversalEnv,
         n_envs=n_envs,
-        env_kwargs={"scenario_path": scenario_path},
+        env_kwargs={
+            "scenario_path": scenario_path,
+            "include_visual": args.include_visual,
+            "action_mode": args.action_mode,
+        },
         vec_env_cls=vec_cls
     )
     
@@ -146,7 +234,7 @@ def main():
         
         obs = vec_env.reset()
         for i in range(1000):
-            action, _ = model.predict(obs)
+            action, _ = model.predict(obs, deterministic=True)
             obs, rewards, dones, info = vec_env.step(action)
             if i % 100 == 0:
                 print(f"Step {i}: Reward={rewards[0]:.2f}")
@@ -166,6 +254,9 @@ def main():
         if p_kwargs.get("features_extractor_class") == "TransformerExtractor":
             print("Using Transformer Feature Extractor")
             p_kwargs["features_extractor_class"] = TransformerExtractor
+        elif p_kwargs.get("features_extractor_class") == "TransformerVisualExtractor":
+            print("Using Transformer+Visual Feature Extractor")
+            p_kwargs["features_extractor_class"] = TransformerVisualExtractor
 
     if args.resume_path:
         print(f"Loading Checkpoint: {args.resume_path}")
@@ -183,6 +274,8 @@ def main():
     else:
         policy_name = train_config.get("policy", "MultiInputPolicy")
         model = PPO(policy_name, vec_env, verbose=1, tensorboard_log=log_dir, **hyperparams)
+        if not args.no_init_safe_action_bias:
+            apply_safe_action_bias(model, args.action_mode)
     
     print(f"Starting Training for {total_timesteps} steps...")
     
@@ -191,11 +284,15 @@ def main():
         save_path=ckpt_dir,
         name_prefix="model" # naming: model_50000_steps.zip
     )
+    callbacks = [checkpoint_callback]
+    if args.diagnostics:
+        callbacks.append(CMODiagnosticsCallback(log_every_timesteps=int(args.diagnostics_every)))
+    callback = CallbackList(callbacks) if len(callbacks) > 1 else checkpoint_callback
     
     try:
         # If resuming, we might want to adjust total_timesteps? 
         # reset_num_timesteps=False allows continuing TB logs seamlessly
-        model.learn(total_timesteps=total_timesteps, callback=checkpoint_callback, reset_num_timesteps=(not args.resume_path))
+        model.learn(total_timesteps=total_timesteps, callback=callback, reset_num_timesteps=(not args.resume_path))
         
         final_path = os.path.join(exp_dir, "final_model")
         print(f"Saving final model to {final_path}")

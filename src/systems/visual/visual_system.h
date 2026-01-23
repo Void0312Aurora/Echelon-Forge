@@ -123,8 +123,93 @@ inline void render_retina(
     double half_fov_h = Math::to_radians(fov_h / 2.0);
     double half_fov_v = Math::to_radians(fov_v / 2.0);
     
-    // === PASS 1: Terrain (optional, sample grid) ===
-    // For now, skip terrain pass - focus on entities
+    // === PASS 1: Terrain / Runway Surface ===
+    // Ray-cast each ARB cell to the terrain to provide a visual cue for ground/runway alignment.
+    // This is intentionally low-res (ARB 48x96) and is only computed when the caller requests
+    // ARB output.
+    if (env) {
+        // Precompute tan(theta/phi) per pixel for speed.
+        double tan_theta[ARB_WIDTH];
+        double tan_phi[ARB_HEIGHT];
+
+        for (int u = 0; u < ARB_WIDTH; ++u) {
+            double theta = (static_cast<double>(u) / std::max(1, ARB_WIDTH - 1)) * (2.0 * half_fov_h) - half_fov_h;
+            tan_theta[u] = std::tan(theta);
+        }
+        for (int v = 0; v < ARB_HEIGHT; ++v) {
+            double phi = (static_cast<double>(v) / std::max(1, ARB_HEIGHT - 1)) * (2.0 * half_fov_v) - half_fov_v;
+            tan_phi[v] = std::tan(phi);
+        }
+
+        // Seed ground elevation near the camera and refine per-pixel with a tiny fixed-point iteration.
+        double ground_z_seed = env->get_terrain_elevation(cam_pos.x, cam_pos.y);
+
+        for (int v = 0; v < ARB_HEIGHT; ++v) {
+            for (int u = 0; u < ARB_WIDTH; ++u) {
+                // Build a unit direction in camera space: (tan(theta), tan(phi), 1).
+                double x_cam = tan_theta[u];
+                double y_cam = tan_phi[v];
+                double z_cam = 1.0;
+
+                double inv_norm = 1.0 / std::sqrt(x_cam * x_cam + y_cam * y_cam + z_cam * z_cam);
+                x_cam *= inv_norm;
+                y_cam *= inv_norm;
+                z_cam *= inv_norm;
+
+                // Transform to world space using camera basis vectors.
+                double dir_x = right_x * x_cam + up_x * y_cam + fwd_x * z_cam;
+                double dir_y = right_y * x_cam + up_y * y_cam + fwd_y * z_cam;
+                double dir_z = right_z * x_cam + up_z * y_cam + fwd_z * z_cam;
+
+                // Only rays pointing downward can intersect the terrain.
+                if (dir_z >= -1e-6) continue;
+
+                double ground_z = ground_z_seed;
+                double t = 0.0;
+
+                // 2-step fixed-point refinement: z depends on (x,y), which depends on t.
+                for (int iter = 0; iter < 2; ++iter) {
+                    t = (ground_z - cam_pos.z) / dir_z;  // dir_z < 0
+                    if (t <= 0.0) break;
+                    double ix = cam_pos.x + dir_x * t;
+                    double iy = cam_pos.y + dir_y * t;
+                    ground_z = env->get_terrain_elevation(ix, iy);
+                }
+
+                if (t <= 0.0) continue;
+
+                double ix = cam_pos.x + dir_x * t;
+                double iy = cam_pos.y + dir_y * t;
+
+                const auto cell = env->get_terrain_at(ix, iy);
+
+                int cls = 3; // Terrain by default
+                switch (cell.type) {
+                    case IEnvironmentModel::SurfaceType::Concrete:
+                    case IEnvironmentModel::SurfaceType::Asphalt:
+                        cls = 1; // Ground (paved) => runway/taxiway cue
+                        break;
+                    case IEnvironmentModel::SurfaceType::Water:
+                        cls = 2;
+                        break;
+                    default:
+                        cls = 3;
+                        break;
+                }
+
+                auto& out_cell = out.cells[v][u];
+                out_cell.z = static_cast<float>(t);
+                out_cell.depth_log = std::log1p(out_cell.z);
+                out_cell.inv_depth = 1.0f / (out_cell.z + 1e-3f);
+                out_cell.coverage = 1.0f;
+                out_cell.ang_size = 0.0f;
+                out_cell.cls = cls;
+                out_cell.team = 0;
+                out_cell.vr = 0.0f;
+                out_cell.conf = 1.0f;
+            }
+        }
+    }
     
     // === PASS 2: Render each object ===
     for (const auto& obj : objects) {

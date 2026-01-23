@@ -116,7 +116,23 @@ NB_MODULE(ef_py, m) {
         .def_rw("cmd_alt", &InstrumentState::cmd_alt_m)
         .def_rw("cmd_speed", &InstrumentState::cmd_speed_mps)
         .def_rw("rwr_active", &InstrumentState::rwr_active)
-        .def_rw("missiles_remaining", &InstrumentState::missiles_remaining);
+        .def_rw("missiles_remaining", &InstrumentState::missiles_remaining)
+        // EGI / Navigation
+        .def_rw("lat", &InstrumentState::lat_deg)
+        .def_rw("lon", &InstrumentState::lon_deg)
+        .def_rw("vn", &InstrumentState::vn_mps)
+        .def_rw("ve", &InstrumentState::ve_mps)
+        .def_rw("vd", &InstrumentState::vd_mps)
+        .def_rw("ground_speed", &InstrumentState::ground_speed_mps)
+        .def_rw("ground_track", &InstrumentState::ground_track_deg)
+        .def_rw("wind_speed", &InstrumentState::wind_speed_mps)
+        .def_rw("wind_dir", &InstrumentState::wind_dir_deg)
+        .def_rw("gps_available", &InstrumentState::gps_available)
+        .def_rw("position_uncertainty", &InstrumentState::position_uncertainty_m)
+        // Internal physics (for reward, not observation)
+        .def_rw("gear_stress", &InstrumentState::gear_stress)
+        .def_rw("gear_collapsed", &InstrumentState::gear_collapsed)
+        .def_rw("on_runway", &InstrumentState::on_runway);
 
     // Bind EGI
     nb::class_<EGI>(m, "EGI")
@@ -237,25 +253,32 @@ NB_MODULE(ef_py, m) {
         .def("add_zone", &SimulationKernel::add_zone, 
              "Add a new environment zone",
              nb::arg("name"), nb::arg("x"), nb::arg("y"), nb::arg("width"), nb::arg("height"), nb::arg("heading"), nb::arg("surface_type"))
+        .def("set_wind", &SimulationKernel::set_wind,
+             "Set global wind (speed m/s, dir_from_deg NAV, shear m/s per km)",
+             nb::arg("speed_mps"), nb::arg("dir_from_deg"), nb::arg("shear_mps_per_km") = 0.0)
         .def("spawn_unit", [](SimulationKernel& self, Side side, const std::string& type, 
                               double x, double y, double z, 
+                              double heading, double pitch, double roll,
                               double vx, double vy, double vz) {
             // We return the Entity ID as an integer for MVP
-            auto e = self.spawn_unit(side, type, x, y, z, vx, vy, vz);
+            auto e = self.spawn_unit(side, type, x, y, z, heading, pitch, roll, vx, vy, vz);
             return e.id();
-        }, "Spawn a unit by name and return its Entity ID", 
+        }, "Spawn a unit by name with orientation and return its Entity ID", 
            nb::arg("side"), nb::arg("type_name"), 
            nb::arg("x"), nb::arg("y"), nb::arg("z"), 
-           nb::arg("vx")=0, nb::arg("vy")=0, nb::arg("vz")=0)
+           nb::arg("heading")=0.0, nb::arg("pitch")=0.0, nb::arg("roll")=0.0,
+           nb::arg("vx")=0.0, nb::arg("vy")=0.0, nb::arg("vz")=0.0)
         .def("spawn_unit", [](SimulationKernel& self, Side side, UnitType type,
                               double x, double y, double z,
+                              double heading, double pitch, double roll,
                               double vx, double vy, double vz) {
-            auto e = self.spawn_unit(side, default_unit_name_for(type), x, y, z, vx, vy, vz);
+            auto e = self.spawn_unit(side, default_unit_name_for(type), x, y, z, heading, pitch, roll, vx, vy, vz);
             return e.id();
-        }, "Spawn a default unit for the given UnitType and return its Entity ID",
+        }, "Spawn a default unit for the given UnitType with orientation and return its Entity ID",
            nb::arg("side"), nb::arg("type"),
            nb::arg("x"), nb::arg("y"), nb::arg("z"),
-           nb::arg("vx")=0, nb::arg("vy")=0, nb::arg("vz")=0)
+           nb::arg("heading")=0.0, nb::arg("pitch")=0.0, nb::arg("roll")=0.0,
+           nb::arg("vx")=0.0, nb::arg("vy")=0.0, nb::arg("vz")=0.0)
 
         // Action Interface
         .def("set_command", &SimulationKernel::set_unit_command, "Set movement command for a unit",

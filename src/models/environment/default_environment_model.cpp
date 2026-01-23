@@ -68,6 +68,9 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     std::vector<WeatherZoneImpl> weather_zones_;
     std::vector<Zone> zones_;
     RasterGrid raster_layer_;
+    double base_wind_speed_mps_ = 10.0;
+    double base_wind_dir_from_deg_ = 270.0;   // Wind "from" West => blowing to East (+X)
+    double wind_shear_mps_per_km_ = 4.0;      // Matches legacy (h/250 => +4 m/s per km)
 
 public:
     DefaultEnvironmentModel() {
@@ -114,7 +117,18 @@ public:
         }
         data.air_density = data.pressure / (kR * data.temperature);
         data.speed_of_sound = std::sqrt(1.4 * kR * data.temperature);
-        data.wind_velocity = {10.0 + h/250.0, 0.0, 0.0}; // Simplified
+
+        // Wind (world frame). dir_from is NAV: 0=N, CW positive. Convert to a "to" unit vector.
+        double dir_to_deg = std::fmod(base_wind_dir_from_deg_ + 180.0, 360.0);
+        if (dir_to_deg < 0.0) dir_to_deg += 360.0;
+        double dir_to_rad = dir_to_deg * M_PI / 180.0;
+        double ux = std::sin(dir_to_rad);
+        double uy = std::cos(dir_to_rad);
+
+        double alt_km = h / 1000.0;
+        double speed_mps = base_wind_speed_mps_ + wind_shear_mps_per_km_ * alt_km;
+        if (speed_mps < 0.0) speed_mps = 0.0;
+        data.wind_velocity = {ux * speed_mps, uy * speed_mps, 0.0};
         return data;
     }
 
@@ -151,19 +165,27 @@ public:
         
         for (const auto& zone : zones_) {
             // Transform point to Zone Local Frame
-            // 1. Translate
+            // Translate to center.
             double dx = x - zone.center.x;
             double dy = y - zone.center.y;
-            
-            // NOTE: Zones are currently axis-aligned for MVP terrain.
+
             bool inside = false;
-            
-            if (zone.type == 0) { // Rect
-                if (std::abs(dx) <= zone.width / 2.0 && std::abs(dy) <= zone.length / 2.0) {
-                     inside = true;
+
+            if (zone.type == 0) { // Rect (rotated by heading)
+                // Convert NAV heading (0=N, CW) to math yaw (0=+X, CCW).
+                double yaw = std::fmod(90.0 - zone.heading, 360.0) * M_PI / 180.0;
+                double c = std::cos(yaw);
+                double s = std::sin(yaw);
+
+                // Local axes: length axis points along heading, width axis is perpendicular.
+                double local_len = dx * c + dy * s;
+                double local_wid = dx * (-s) + dy * c;
+
+                if (std::abs(local_wid) <= zone.width / 2.0 && std::abs(local_len) <= zone.length / 2.0) {
+                    inside = true;
                 }
             } else if (zone.type == 1) { // Circle
-                if (dx*dx + dy*dy <= zone.width * zone.width) { // width = radius
+                if (dx * dx + dy * dy <= zone.width * zone.width) { // width = radius
                     inside = true;
                 }
             }
@@ -239,6 +261,13 @@ public:
         std::sort(zones_.begin(), zones_.end(), [](const Zone& a, const Zone& b){
             return a.z_order > b.z_order;
         });
+    }
+
+    void set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km) override {
+        base_wind_speed_mps_ = std::max(0.0, speed_mps);
+        base_wind_dir_from_deg_ = std::fmod(dir_from_deg, 360.0);
+        if (base_wind_dir_from_deg_ < 0.0) base_wind_dir_from_deg_ += 360.0;
+        wind_shear_mps_per_km_ = shear_mps_per_km;
     }
 };
 

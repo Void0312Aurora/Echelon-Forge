@@ -142,7 +142,7 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
     }
 
     def.has_landing_gear = entry.value("has_landing_gear", false);
-    def.landing_gear = {false, 0.02, 3.0}; // Default Paved Only
+    def.landing_gear = {false, 0.02, 3.0, 1.0, false, 5.0}; // Default Paved Only
     if (entry.contains("landing_gear")) {
         def.has_landing_gear = true;
         const auto& lg = entry["landing_gear"];

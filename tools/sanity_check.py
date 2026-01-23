@@ -20,7 +20,19 @@ def main():
     kernel.reset(42)
     
     # Spawn Unit
-    u1 = kernel.spawn_unit(Side.Blue, "Aircraft", 0, 0, 1000, 100, 0, 0)
+    u1 = kernel.spawn_unit(
+        Side.Blue,
+        "Aircraft",
+        0,
+        0,
+        1000,
+        heading=0.0,
+        pitch=0.0,
+        roll=0.0,
+        vx=100.0,
+        vy=0.0,
+        vz=0.0,
+    )
     
     # 1. Check get_unit_health
     health = kernel.get_unit_health(u1)
