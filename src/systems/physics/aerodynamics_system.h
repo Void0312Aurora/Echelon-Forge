@@ -9,6 +9,7 @@
 #include "components/physics/performance.h" // For LandingGear
 #include "components/physics/action.h"       // For PilotAction (flaps/speedbrake)
 #include "components/systems/logistics.h" // For MassProperties definition
+#include "core/interfaces/environment_model.h"
 
 namespace {
     inline Math::Vector3 vec_cross(const Math::Vector3& a, const Math::Vector3& b) {
@@ -56,6 +57,7 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
         // This system only adds lift/drag; ordering within OnUpdate is controlled
         // by registration order in SimulationKernel.
         .run([](flecs::iter& it) {
+            const EnvironmentModelRef* env_ref = it.world().get<EnvironmentModelRef>();
             while (it.next()) {
                 auto forces = it.field<ForceAccumulator>(0);
                 auto aero = it.field<AeroState>(1);
@@ -118,7 +120,26 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     Cd0 += flaps_deflection * 0.02;
                     
                     double k = 0.1;
-                    double Cd = Cd0 + k * Cl * Cl;
+
+                    // Ground effect (real physics):
+                    // - increases effective lift slightly
+                    // - reduces induced drag near the ground
+                    double ge = 0.0;
+                    if (env_ref && env_ref->model) {
+                        const double terrain_z = env_ref->model->get_terrain_elevation(transform[i].x, transform[i].y);
+                        const double alt_agl = std::max(0.0, transform[i].z - terrain_z);
+                        const double b_ref = std::max(1.0, props[i].wing_span_m);
+                        const double ge_fade_h = 0.5 * b_ref; // fade out by ~0.5 span
+                        if (ge_fade_h > 1.0e-6 && alt_agl < ge_fade_h) {
+                            ge = 1.0 - (alt_agl / ge_fade_h);
+                            ge = std::clamp(ge, 0.0, 1.0);
+                        }
+                    }
+                    // Conservative scaling (keeps training stable while improving takeoff realism).
+                    Cl *= (1.0 + 0.08 * ge);
+                    const double k_eff = k * (1.0 - 0.70 * ge);
+
+                    double Cd = Cd0 + k_eff * Cl * Cl;
                     
                     // Cache coefficients for readout
                     aero[i].lift_coefficient = Cl;
@@ -129,7 +150,14 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     double drag_mag = q * S * Cd;
                     
                     // --- Directions ---
+                    // Use air-relative velocity for drag/lift direction (wind realism).
                     Math::Vector3 v_vec = {velocity[i].vx, velocity[i].vy, velocity[i].vz};
+                    if (env_ref && env_ref->model) {
+                        AtmosphericData atm = env_ref->model->get_atmosphere_at(transform[i].x, transform[i].y, transform[i].z);
+                        v_vec.x -= atm.wind_velocity.x;
+                        v_vec.y -= atm.wind_velocity.y;
+                        v_vec.z -= atm.wind_velocity.z;
+                    }
                     Math::Vector3 v_hat = Math::vec_norm(v_vec);
                     
                     // Drag Direction: -Velocity

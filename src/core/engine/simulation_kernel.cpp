@@ -19,6 +19,7 @@
 #include "systems/systems/navigation_system.h" 
 #include "systems/systems/track_manager_system.h" // Added track_manager_system.h
 #include "components/physics/action.h"
+#include "components/physics/control_law.h"
 #include "components/physics/forces.h"
 #include "components/systems/ew.h"
 #include "components/systems/logistics.h" // Added logistics.h
@@ -77,6 +78,7 @@ SimulationKernel::SimulationKernel()
     ecs.component<MassProperties>();
     ecs.component<ForceAccumulator>();
     ecs.component<AeroState>();
+    ecs.component<ControlLawState>();
     ecs.component<Missile>();
     ecs.component<Ammo>();
     ecs.component<WeaponCooldown>();

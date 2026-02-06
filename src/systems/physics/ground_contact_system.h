@@ -8,6 +8,7 @@
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h" // For GroundState
 #include "components/physics/performance.h" // For LandingGear
+#include "components/physics/control_law.h" // For ControlLawState (FBW filtered inputs)
 #include "components/combat/health.h"        // For Health
 #include "core/interfaces/environment_model.h"
 
@@ -20,14 +21,31 @@ namespace {
     constexpr double kMuBraking = 0.8;
 
     // Simple Nose Wheel Steering (NWS) approximation:
-    // Map rudder pedal input to a ground yaw moment at low speeds when weight-on-wheels.
+    // Map rudder pedal input to a nose-wheel steering angle at low speeds when weight-on-wheels.
     // This provides realistic directional control during the takeoff roll (rudder surfaces have little authority
     // at low airspeed). The effect fades out at higher speeds to avoid unrealistic high-speed steering.
-    constexpr double kNwsLeverArmM = 2.0;          // Effective wheelbase lever arm
-    constexpr double kNwsLateralMu = 0.6;          // Tire lateral grip approximation
     constexpr double kNwsMinSpeedMps = 2.0;        // No steering at (near) standstill
-    constexpr double kNwsFadeStartMps = 45.0;      // Begin fading out toward aero rudder
-    constexpr double kNwsFadeEndMps = 80.0;        // Fully faded out by this speed
+    constexpr double kNwsFadeStartMps = 30.0;      // Begin fading out toward aero rudder
+    constexpr double kNwsFadeEndMps = 55.0;        // Fully faded out by this speed
+    constexpr double kNwsDeadzone = 0.02;          // Ignore tiny pedal noise
+    constexpr double kNwsMaxSteerDeg = 25.0;       // Max nose wheel steer angle (low speed, NWS engaged)
+    constexpr double kNwsHighSpeedFrac = 0.15;     // Residual steering fraction at/above fade end (~3-4 deg)
+    constexpr double kNwsInputScaler = 1.0;        // Pedals map directly; ControlLawState filtering handles PIO
+
+    // Wheel contact patch approximation (tricycle gear as two effective contact points along body X axis).
+    constexpr double kWheelContactNoseX = 4.0;      // meters forward of CG
+    constexpr double kWheelContactMainX = -2.0;     // meters aft of CG
+    constexpr double kWheelFnNoseFrac = 0.20;       // weight on nose gear
+    constexpr double kWheelFnMainFrac = 0.80;       // weight on main gear
+
+    // Tire model knobs (lightweight, training-stable):
+    // - Lateral force from slip angle with linear cornering stiffness and saturation at mu_lat * Fn.
+    // - Longitudinal rolling resistance as separate drag term (does not consume friction ellipse budget).
+    // - Braking uses Coulomb-style slip force and is coupled to lateral via a friction ellipse.
+    constexpr double kTireCorneringStiffnessPerFn = 18.0;  // [N/rad] per [N] of normal load (dimensionless)
+    constexpr double kTireAlphaMaxDeg = 20.0;              // Clamp slip angle to avoid low-speed blowups
+    constexpr double kTireVrefRollMps = 1.0;               // Smoothing speed for rolling resistance
+    constexpr double kTireVrefBrakeMps = 0.5;              // Smoothing speed for braking force
 }
 
 /**
@@ -69,10 +87,10 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     bool is_touching = (penetration > 0.0);
                     ground[i].on_ground = is_touching;
                     
-                    if (!is_touching) continue;
-                    
-                    // 2. Normal Force (Spring-Damper)
-                    double f_spring = kGroundSpring * penetration;
+	                    if (!is_touching) continue;
+	                    
+	                    // 2. Normal Force (Spring-Damper)
+	                    double f_spring = kGroundSpring * penetration;
                     
                     double vz = velocity[i].vz;
                     double f_damper = -kGroundDamper * vz;
@@ -81,32 +99,54 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     
                     forces[i].add_force(0.0, 0.0, Fn);
                     
-                    // 2.5 Pitch Damping When On Ground
-                    // Prevent uncontrolled pitch-up rotation on ground roll.
-                    // The gear pivot creates a restoring moment that limits pitch.
-                    // Acting like a torsional spring-damper on pitch.
-                    const AngularVelocity* ang_vel = it.entity(i).get<AngularVelocity>();
-                    if (ang_vel) {
-                        double q_rate = ang_vel->q; // Pitch rate (rad/s)
-                        double pitch_deg = transform[i].pitch;
-                        
-                        // Ground pitch limit: ~10 degrees (rotation attitude)
-                        // Stiffness must exceed aerodynamic control moment.
-                        // Control: ~60 * q * 0.8 @ q=3000 -> 144,000 Nm
+	                    // 2.5 Pitch Damping When On Ground
+	                    // Prevent uncontrolled pitch-up rotation on ground roll.
+	                    // The gear pivot creates a restoring moment that limits pitch.
+	                    // Acting like a torsional spring-damper on pitch.
+	                    const AngularVelocity* ang_vel = it.entity(i).get<AngularVelocity>();
+	                    if (ang_vel) {
+	                        double q_rate = ang_vel->q; // Pitch rate (rad/s)
+	                        double pitch_deg = transform[i].pitch;
+	                        double p_rate = ang_vel->p; // Roll rate (rad/s)
+	                        double roll_deg = transform[i].roll;
+	                        
+	                        // Ground pitch limit: ~10 degrees (rotation attitude)
+	                        // Stiffness must exceed aerodynamic control moment.
+	                        // Control: ~60 * q * 0.8 @ q=3000 -> 144,000 Nm
                         // We need restoring > 144,000 at 10 deg -> Kp > 825,000/rad
                         double kp_pitch = 2000000.0;  // 2 MNm per radian
                         double kd_pitch = 200000.0;   // 200 kNm per rad/s
                         
-                        // Always apply restoring if pitch > 2 degrees on ground
-                        if (pitch_deg > 2.0) {
-                            double restoring_torque = -kp_pitch * Math::to_radians(pitch_deg - 2.0);
-                            double damping_torque = -kd_pitch * q_rate;
-                            forces[i].add_torque(0.0, restoring_torque + damping_torque, 0.0);
-                        } else if (std::abs(q_rate) > 0.01) {
-                            // Just damping for small angles
-                            forces[i].add_torque(0.0, -kd_pitch * q_rate, 0.0);
-                        }
-                    }
+	                        // Allow a realistic ground rotation attitude (~10 deg) before the gear constraint
+	                        // starts resisting further pitch-up. This prevents the previous behavior where the
+	                        // aircraft was effectively "pinned" near 2 deg pitch and required unrealistically
+	                        // high takeoff speeds/ground-roll distances to lift off.
+	                        constexpr double kGroundPitchFreeDeg = 10.0;
+
+	                        if (pitch_deg > kGroundPitchFreeDeg) {
+	                            const double err_deg = pitch_deg - kGroundPitchFreeDeg;
+	                            const double restoring_torque = -kp_pitch * Math::to_radians(err_deg);
+	                            const double damping_torque = -kd_pitch * q_rate;
+	                            forces[i].add_torque(0.0, restoring_torque + damping_torque, 0.0);
+	                        } else if (std::abs(q_rate) > 0.01) {
+	                            // Just damping for small angles
+	                            forces[i].add_torque(0.0, -kd_pitch * q_rate, 0.0);
+	                        }
+	
+	                        // Ground roll/gear constraint: prevent unrealistic banking on the runway.
+	                        // Without this, small roll-stick errors can accumulate to >30deg roll while still "on ground",
+	                        // which is physically impossible with landing gear contact and ruins takeoff training.
+	                        double kp_roll = 2000000.0;  // 2 MNm per radian
+	                        double kd_roll = 200000.0;   // 200 kNm per rad/s
+	                        double abs_roll = std::abs(roll_deg);
+	                        if (abs_roll > 2.0) {
+	                            double restoring = -kp_roll * Math::to_radians(roll_deg);
+	                            double damping = -kd_roll * p_rate;
+	                            forces[i].add_torque(restoring + damping, 0.0, 0.0);
+	                        } else if (std::abs(p_rate) > 0.01) {
+	                            forces[i].add_torque(-kd_roll * p_rate, 0.0, 0.0);
+	                        }
+	                    }
                     
                     // 3. Friction & Surface Interaction
                     double vx = velocity[i].vx;
@@ -173,40 +213,52 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                              }
                          }
 
-                         double mu = mu_rolling;
-                         
-	                         // Check friction brakes
+	                         // Check friction brakes / control inputs
 	                         const PilotAction* pilot = it.entity(i).get<PilotAction>();
 	                         const MovementCommand* cmd = it.entity(i).get<MovementCommand>();
 
-	                         // 3.5 Nose Wheel Steering (ground yaw control)
-	                         // Use rudder pedal input as steering demand when on ground.
+	                         // 3.5 Nose Wheel Steering (NWS): rudder pedal -> steer angle (low speed, WoW).
+	                         // NOTE: Sign convention: PilotAction.rudder > 0 means "nose right". In our NAV heading
+	                         // convention, increasing heading is a right turn, which corresponds to NEGATIVE yaw torque
+	                         // (see RotationalIntegrate). Here we model steering via the wheel, so we set a negative
+	                         // steer angle for positive rudder.
+	                         double nws_steer_rad = 0.0;
 	                         if (pilot && pilot->active) {
-                                 // [Modified] Reduce input sensitivity to prevent PIO/Rollover at high speed.
-                                 // A raw steer of 1.0 (noise) at 30m/s was causing immediate rollover.
-                                 // Scale input by 0.2 (divide by 5) to widen the stability margin.
-                                 // Update: Bumped to 0.4 to tackle understeer in Phase 15.
-                                 constexpr double kNwsInputScaler = 0.4; 
-	                             double steer = std::clamp(pilot->rudder, -1.0, 1.0) * kNwsInputScaler;
-	                             
+	                             double yaw_cmd = pilot->rudder;
+	                             if (const ControlLawState* ctl = it.entity(i).get<ControlLawState>()) {
+	                                 // Use the *filtered pedal* (not the yaw-rate-limited command) for NWS.
+	                                 // NWS is a mechanical linkage from pedals to the nose wheel at low speed;
+	                                 // it should not inherit the high-speed yaw authority limits intended for
+	                                 // aerodynamic rudder control.
+	                                 //
+	                                 // ControlLawState.stick_yaw_filt is stored in the sim's internal yaw sign
+	                                 // (positive corresponds to decreasing heading). Convert back to the PilotAction
+	                                 // convention (positive = nose right / increasing heading) for NWS.
+	                                 yaw_cmd = -ctl->stick_yaw_filt;
+	                             }
+	                             double steer = std::clamp(yaw_cmd, -1.0, 1.0) * kNwsInputScaler;
+	                             if (std::abs(steer) < kNwsDeadzone) {
+	                                 steer = 0.0;
+	                             }
+
 	                             if (std::abs(steer) > 1e-6) {
-	                                 // Require gear mostly extended (if present).
 	                                 bool gear_extended = true;
 	                                 if (const LandingGear* lg = it.entity(i).get<LandingGear>()) {
 	                                     gear_extended = (lg->extension_state >= 0.5);
 	                                 }
-
 	                                 if (gear_extended) {
 	                                     double speed_factor = std::clamp(v_h / kNwsMinSpeedMps, 0.0, 1.0);
 	                                     double fade = 1.0;
 	                                     if (v_h >= kNwsFadeStartMps) {
 	                                         double t = (v_h - kNwsFadeStartMps) / (kNwsFadeEndMps - kNwsFadeStartMps);
-	                                         fade = 1.0 - std::clamp(t, 0.0, 1.0);
+	                                         t = std::clamp(t, 0.0, 1.0);
+	                                         // Fade down to a small residual steering authority instead of zero.
+	                                         // Many aircraft retain a limited pedal->nosewheel linkage at higher speeds.
+	                                         fade = (1.0 - t) * (1.0 - kNwsHighSpeedFrac) + kNwsHighSpeedFrac;
 	                                     }
 	                                     double gain = speed_factor * fade;
 	                                     if (gain > 0.0) {
-	                                         double tau_nws = steer * (Fn * kNwsLateralMu) * kNwsLeverArmM * gain;
-	                                         forces[i].add_torque(0.0, 0.0, tau_nws);
+	                                         nws_steer_rad = -steer * Math::to_radians(kNwsMaxSteerDeg) * gain;
 	                                     }
 	                                 }
 	                             }
@@ -228,33 +280,129 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                              if (cmd->throttle_cmd < 0.01) brake_amount = 1.0;
                          }
                          
-                         // Blend rolling friction to braking friction using brake amount.
-                         // brake=0 -> rolling; brake=1 -> full braking.
-                         if (brake_amount > 0.0) {
-                             mu = mu_rolling + brake_amount * (kMuBraking - mu_rolling);
-                         }
+	                         // Rolling resistance (drag) and braking (slip) are treated separately.
+	                         // Rolling resistance should not reduce lateral grip (no friction ellipse coupling).
+	                         double mu_roll = mu_rolling;
+	                         double mu_brake = std::clamp(brake_amount, 0.0, 1.0) * kMuBraking;
+
+	                         // Tire lateral grip is much higher than rolling resistance.
+	                         double mu_lat = mu_rolling;
+	                         switch (terrain.type) {
+	                             case Surface::Concrete:   mu_lat = 0.80; break;
+	                             case Surface::Asphalt:    mu_lat = 0.75; break;
+	                             case Surface::HardPacked: mu_lat = 0.60; break;
+	                             case Surface::SoftDirt:   mu_lat = 0.50; break;
+	                             case Surface::Water:      mu_lat = 0.20; break;
+	                             case Surface::Obstacle:   mu_lat = 1.00; break;
+	                             default:                  mu_lat = 0.40; break;
+	                         }
+	                         mu_lat = std::max(mu_lat, mu_roll);
+
+	                         // Resolve velocity into body-forward / body-left components using heading.
+	                         const double hdg_rad = Math::to_radians(transform[i].heading);
+	                         const double fwd_x = std::sin(hdg_rad);
+	                         const double fwd_y = std::cos(hdg_rad);
+	                         // Note: The sim's body frame uses +Y = LEFT (consistent with AeroState world_to_body).
+	                         const double left_x = -std::cos(hdg_rad);
+	                         const double left_y = std::sin(hdg_rad);
+	                         const double v_long = vx * fwd_x + vy * fwd_y;
+	                         const double v_lat_comp = vx * left_x + vy * left_y;
+
+	                         auto smooth_coulomb = [](double v, double mu_in, double Fn_in, double v_ref) {
+	                             if (Fn_in <= 0.0 || mu_in <= 0.0) return 0.0;
+	                             v_ref = std::max(v_ref, 1e-3);
+	                             const double s = std::tanh(v / v_ref);  // smooth sign
+	                             return -mu_in * Fn_in * s;
+	                         };
+
+	                         // Wheel-based tire forces (apply at effective contact points so yaw moments emerge naturally).
+	                         const double alpha_max = Math::to_radians(kTireAlphaMaxDeg);
+	                         const double Fn_nose = Fn * kWheelFnNoseFrac;
+	                         const double Fn_main = Fn * kWheelFnMainFrac;
+
+	                         // Yaw rate (body frame). Used to compute contact patch lateral velocity v = v_cg + r*x.
+	                         double r = 0.0;
+	                         if (const AngularVelocity* ang_vel = it.entity(i).get<AngularVelocity>()) {
+	                             r = ang_vel->r;
+	                         }
+
+	                         auto apply_wheel = [&](double x_body_m, double Fn_w, double steer_rad, double mu_brake_w, double& f_long_sum, double& f_lat_sum, double& tau_yaw_sum) {
+	                             if (Fn_w <= 0.0) return;
+
+	                             // Local slip velocity at wheel contact (body forward/left).
+	                             const double v_long_w = v_long;
+	                             const double v_lat_w = v_lat_comp + r * x_body_m;
+
+	                             const double c = std::cos(steer_rad);
+	                             const double s = std::sin(steer_rad);
+
+	                             // Wheel-frame velocities (forward/left)
+	                             const double v_long_wf = v_long_w * c + v_lat_w * s;
+	                             const double v_lat_wf = -v_long_w * s + v_lat_w * c;
+
+	                             // Longitudinal: rolling resistance (drag) + braking (slip)
+	                             const double fx_roll = smooth_coulomb(v_long_wf, mu_roll, Fn_w, kTireVrefRollMps);
+	                             double fx_brake = 0.0;
+	                             if (mu_brake_w > 1e-6) {
+	                                 fx_brake = smooth_coulomb(v_long_wf, mu_brake_w, Fn_w, kTireVrefBrakeMps);
+	                             }
+
+	                             // Lateral: slip angle with cornering stiffness, saturated at mu_lat*Fn
+	                             double alpha = std::atan2(v_lat_wf, std::abs(v_long_wf) + 1e-3);
+	                             alpha = std::clamp(alpha, -alpha_max, alpha_max);
+	                             const double C_alpha = kTireCorneringStiffnessPerFn * Fn_w;
+	                             double fy = -C_alpha * alpha;
+	                             const double fy_max = mu_lat * Fn_w;
+	                             if (fy_max > 0.0) {
+	                                 fy = std::clamp(fy, -fy_max, fy_max);
+	                             } else {
+	                                 fy = 0.0;
+	                             }
+
+	                             // Friction ellipse coupling (braking vs lateral). Rolling resistance is excluded.
+	                             if (mu_brake_w > 1e-6 && fy_max > 1e-6) {
+	                                 const double fx_max = (mu_brake_w * Fn_w);
+	                                 const double ux = fx_brake / std::max(fx_max, 1e-6);
+	                                 const double uy = fy / std::max(fy_max, 1e-6);
+	                                 const double u = std::sqrt(ux * ux + uy * uy);
+	                                 if (u > 1.0) {
+	                                     fx_brake /= u;
+	                                     fy /= u;
+	                                 }
+	                             }
+
+	                             const double fx_wf = fx_roll + fx_brake;
+	                             const double fy_wf = fy;
+
+	                             // Rotate wheel forces back to body (forward/left)
+	                             const double fx_b = fx_wf * c - fy_wf * s;
+	                             const double fy_b = fx_wf * s + fy_wf * c;
+
+	                             f_long_sum += fx_b;
+	                             f_lat_sum += fy_b;
+	                             tau_yaw_sum += x_body_m * fy_b;
+	                         };
+
+	                         double f_long_sum = 0.0;
+	                         double f_lat_sum = 0.0;
+	                         double tau_yaw = 0.0;
+
+	                         // Brakes primarily act on main gear; nose wheel is treated as unbraked for realism.
+	                         apply_wheel(kWheelContactNoseX, Fn_nose, nws_steer_rad, 0.0, f_long_sum, f_lat_sum, tau_yaw);
+	                         apply_wheel(kWheelContactMainX, Fn_main, 0.0, mu_brake, f_long_sum, f_lat_sum, tau_yaw);
+
+	                         // Apply summed forces in world frame.
+	                         const double fx = f_long_sum * fwd_x + f_lat_sum * left_x;
+	                         const double fy = f_long_sum * fwd_y + f_lat_sum * left_y;
+
+	                         forces[i].add_force(fx, fy, 0.0);
+	                         forces[i].add_torque(0.0, 0.0, tau_yaw);
                          
-                         // Friction vector
-                         double f_fric = mu * Fn;
-                         double fx = -f_fric * (vx / v_h);
-                         double fy = -f_fric * (vy / v_h);
-                         
-                         forces[i].add_force(fx, fy, 0.0);
-                         
-                         // 4. Rotational Friction (Yaw Damping)
-                         const AngularVelocity* ang_vel = it.entity(i).get<AngularVelocity>();
-                         if (ang_vel) {
-                             double r = ang_vel->r;
-                             if (std::abs(r) > 0.001) {
-                                 double mu_rot = 2.0; 
-                                 double tau_z = -mu_rot * Fn * r * 0.1;
-                                 forces[i].add_torque(0.0, 0.0, tau_z);
-                             }
-                         }
-                    } else {
-                         // Static stiction (simplified)
-                         if (std::abs(vx) < 0.1 && std::abs(vy) < 0.1) {
-                             // Apply small opposing force to zero out creep?
+	                         // 4. Yaw stability is handled implicitly by wheel contact forces/moments above.
+	                    } else {
+	                         // Static stiction (simplified)
+	                         if (std::abs(vx) < 0.1 && std::abs(vy) < 0.1) {
+	                             // Apply small opposing force to zero out creep?
                              // Needed for absolute stillness.
                          }
                     }

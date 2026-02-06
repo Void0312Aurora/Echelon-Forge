@@ -9,7 +9,7 @@
     "entities": [
         {
             "name": "TestJet",
-            "type": "Aircraft",
+            "type": "F-16C_Block50",
             "side": "Blue",
             "pos": [
                 0.0,

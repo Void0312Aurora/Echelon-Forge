@@ -194,6 +194,19 @@
         dirLight.position.set(100, 200, 50);
         scene.add(dirLight);
 
+        // --- Human-only NAV markers (mission / cruise points) ---
+        const navGroup = new THREE.Group();
+        scene.add(navGroup);
+        function clearNavGroup() {
+            // Dispose geometries/materials to avoid leaks during episode resets.
+            while (navGroup.children.length > 0) {
+                const obj = navGroup.children[0];
+                navGroup.remove(obj);
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) obj.material.dispose();
+            }
+        }
+
         // --- Asset Loading ---
         const loader = new GLTFLoader();
         let f16Model = null;
@@ -453,6 +466,31 @@
                     // Better to make mesh2 a Group or add line as child.
                     mesh2.add(line);
                 });
+            }
+        });
+
+        socket.on('nav_setup', (data) => {
+            clearNavGroup();
+            if (!data || !data.markers) return;
+
+            // Draw markers (yellow spheres) in the same coordinate mapping as units:
+            // Sim (ENU) -> Three (X=East, Y=Up, Z=-North).
+            data.markers.forEach(m => {
+                const r = (m.radius_m !== undefined) ? m.radius_m : 80.0;
+                const color = (m.color !== undefined) ? m.color : 0xffff00;
+                const geo = new THREE.SphereGeometry(r, 16, 12);
+                const mat = new THREE.MeshBasicMaterial({ color: color });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(m.x, m.z, -m.y);
+                navGroup.add(mesh);
+            });
+
+            // Optional: connect markers with a thin line for readability.
+            if (data.markers.length >= 2) {
+                const pts = data.markers.map(m => new THREE.Vector3(m.x, m.z, -m.y));
+                const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+                const lineMat = new THREE.LineBasicMaterial({ color: 0xffff00, opacity: 0.5, transparent: true });
+                navGroup.add(new THREE.Line(lineGeo, lineMat));
             }
         });
 

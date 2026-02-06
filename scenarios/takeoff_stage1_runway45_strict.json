@@ -1,14 +1,14 @@
 {
-    "scenario_name": "F-16 Takeoff Training",
-    "description": "Train agent to take off and reach safe altitude when given TAKEOFF command.",
+    "scenario_name": "F-16 Takeoff (Stage 1: Wheels-Off, Runway 45m, Strict Centerline)",
+    "description": "Stage 1 takeoff curriculum on a realistic 45m runway with stricter centerline discipline. Realism-first: no runway-heading leakage; use ILS/EGI/wind like a real pilot.",
     "imports": [
         {
-            "file": "examples/config/prefabs/airbase_large.json"
+            "file": "examples/config/prefabs/airbase_large_runway45.json"
         }
     ],
     "environment": {
         "time_step": 0.05,
-        "max_steps": 2000,
+        "max_steps": 800,
         "terrain_type": "flat",
         "wind": {
             "speed_mps": 3.0,
@@ -85,23 +85,23 @@
                 {
                     "property": "altitude",
                     "op": ">=",
-                    "value": 300.0
+                    "value": 30.0
                 },
                 {
                     "property": "speed",
                     "op": ">=",
-                    "value": 150.0
+                    "value": 80.0
                 }
             ],
-            "reward": 2000.0
+            "reward": 800.0
         }
     ],
     "rewards": {
         "survival": 0.0,
         "crash_penalty": -1000.0,
-        "altitude_progress_target": 300.0,
-        "speed_progress_target": 150.0,
-        "altitude_progress_weight": 0.5,
+        "altitude_progress_target": 60.0,
+        "speed_progress_target": 120.0,
+        "altitude_progress_weight": 0.6,
         "speed_progress_weight": 1.0,
         "speed_progress_weight_negative": 1.0,
         "liftoff_bonus": 300.0,
@@ -112,7 +112,7 @@
         "rotation_alt_threshold": 5.0,
         "rotation_pitch_cap": 12.0,
         "rotation_overpitch_penalty_weight": -0.5,
-        "gear_up_bonus": 100.0,
+        "gear_up_bonus": 50.0,
         "stall_penalty": -3.0,
         "stall_aoa_threshold": 12.0,
         "overload_penalty": -0.5,
@@ -121,23 +121,27 @@
         "heading_error_weight": 0.0,
         "altitude_error_weight": -0.001,
         "altitude_error_min_alt": 150.0,
-        "runway_centerline_penalty_weight": -1.0,
+        "runway_centerline_m_penalty_weight": -1.0,
+        "runway_centerline_m_norm_m": 5.0,
+        "runway_centerline_m_power": 2.0,
+        "runway_centerline_m_deadband_m": 0.0,
+        "runway_centerline_penalty_weight": -0.2,
         "runway_centerline_safe_frac": 0.0,
         "runway_centerline_penalty_power": 2.0,
         "runway_centerline_penalty_min_ias": 5.0,
         "runway_centerline_penalty_max_ias": 80.0,
-        "runway_centerline_barrier_weight": -1.0,
+        "runway_centerline_barrier_weight": -2.0,
         "runway_centerline_barrier_clip_frac": 0.995,
         "runway_width_margin_m": 1.0,
-        "off_runway_penalty": -2.0,
-        "off_runway_terminate_speed": 60.0,
-        "off_runway_terminate_grace_s": 0.5,
-        "off_runway_terminate_penalty": -200.0,
+        "off_runway_penalty": -5.0,
+        "off_runway_terminate_speed": 10.0,
+        "off_runway_terminate_grace_s": 0.2,
+        "off_runway_terminate_penalty": -500.0,
         "gear_collapse_penalty": -1000.0,
         "gear_stress_penalty": -10.0,
         "stationary_penalty": -2.0,
         "speed_reward_weight": 0.01,
-        "alignment_reward_weight": 0.5,
+        "alignment_reward_weight": 1.0,
         "mission_alignment_min_alt": 150.0
     }
 }

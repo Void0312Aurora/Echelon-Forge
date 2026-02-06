@@ -300,12 +300,16 @@ public:
         double empty_mass = (def.airframe.empty_mass_kg > 0) ? def.airframe.empty_mass_kg : 10000.0;
         double drag_coef = (def.airframe.drag_coefficient > 0) ? def.airframe.drag_coefficient : 0.02;
         double ref_area = (def.airframe.reference_area > 0) ? def.airframe.reference_area : 30.0;
+        double span_m = (def.airframe.wingspan_m > 1.0) ? def.airframe.wingspan_m : 10.0;
+        double chord_m = (span_m > 1.0) ? (ref_area / span_m) : 3.0;
         e.set<MassProperties>({
             empty_mass,
             empty_mass + internal_fuel, // Initial Total
             drag_coef,
             drag_coef,
-            ref_area
+            ref_area,
+            span_m,
+            chord_m
         });
         
         // Initialize New Physics Components
@@ -327,7 +331,29 @@ public:
         // ... fill others if needed
         e.set<InstrumentState>(initial_instruments);
 
-        e.set<Inertia>({30000.0, 50000.0, 60000.0}); // Default Fighter Inertia (approx)
+        // Inertia: approximate from airframe geometry for aircraft.
+        // The previous fixed inertia was far too small for fighter-sized masses, producing unrealistically
+        // high yaw/roll accelerations on the ground (e.g., excessive weathervaning in crosswind).
+        Inertia inertia_guess{30000.0, 50000.0, 60000.0}; // legacy minimums (kg*m^2)
+        if (def.type == UnitType::Aircraft) {
+            const double m_total = std::max(1.0, empty_mass + internal_fuel + stores_kg);
+            const double l_m = (def.airframe.length_m > 1.0) ? def.airframe.length_m : 15.0;
+            const double b_m = (def.airframe.wingspan_m > 1.0) ? def.airframe.wingspan_m : 10.0;
+            const double h_m = (def.airframe.height_m > 0.5) ? def.airframe.height_m : 5.0;
+
+            // Box inertia scaled down to reflect centralized mass distribution (engines/fuel near CG).
+            // Scale chosen to keep fighter Izz on the order of 1e5 kg*m^2.
+            constexpr double kInertiaScale = 0.5;
+            const double m_over_12 = m_total / 12.0;
+            const double ixx = kInertiaScale * m_over_12 * (b_m * b_m + h_m * h_m);
+            const double iyy = kInertiaScale * m_over_12 * (l_m * l_m + h_m * h_m);
+            const double izz = kInertiaScale * m_over_12 * (l_m * l_m + b_m * b_m);
+
+            inertia_guess.ixx = std::max(inertia_guess.ixx, ixx);
+            inertia_guess.iyy = std::max(inertia_guess.iyy, iyy);
+            inertia_guess.izz = std::max(inertia_guess.izz, izz);
+        }
+        e.set<Inertia>(inertia_guess);
         e.set<AngularVelocity>({0.0, 0.0, 0.0});
         e.set<GroundState>({false, 0.0}); // Initialize Ground Contact
         e.set<GearState>({true, 0.0, false, 0.0, true}); // gear_down, stress, collapsed, stress_rate, on_runway

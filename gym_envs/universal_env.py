@@ -1,6 +1,15 @@
+import glob
 import os
+import sys
 
 import numpy as np
+
+# Prefer the in-repo C++ extension (built via CMake into `./build`) when present.
+# This avoids stale site-packages wheels during active physics iteration.
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_BUILD_DIR = os.path.join(_REPO_ROOT, "build")
+if os.path.isdir(_BUILD_DIR) and glob.glob(os.path.join(_BUILD_DIR, "ef_py*.so")):
+    sys.path.insert(0, _BUILD_DIR)
 
 import ef_py
 from gym_envs.scenario_loader import ScenarioLoader
@@ -46,14 +55,23 @@ else:
 
         metadata = {"render_modes": ["human"], "render_fps": 60}
 
-        def __init__(self, scenario_path, render_mode=None, include_visual: bool = False, action_mode: str = "full"):
+        def __init__(
+            self,
+            scenario_path,
+            render_mode=None,
+            include_visual: bool = False,
+            include_proprio: bool = False,
+            action_mode: str = "full",
+        ):
             super().__init__()
             self.render_mode = render_mode
             self.scenario_path = scenario_path
             self.include_visual = bool(include_visual)
+            self.include_proprio = bool(include_proprio)
             self.action_mode = str(action_mode)
             self._last_inst = None
             self._last_truth = None
+            self._last_action = None
 
             # Initialize Core
             self.sim = ef_py.SimulationKernel()
@@ -132,6 +150,13 @@ else:
                 "rwr": spaces.Box(low=-np.inf, high=np.inf, shape=(self.max_rwr, 4), dtype=np.float32),
                 "mission": spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32),
             }
+            if self.include_proprio:
+                obs_spaces["proprio"] = spaces.Box(
+                    low=self.action_space.low.astype(np.float32, copy=False),
+                    high=self.action_space.high.astype(np.float32, copy=False),
+                    shape=self.action_space.shape,
+                    dtype=np.float32,
+                )
             if self.include_visual:
                 obs_spaces["visual"] = spaces.Box(
                     low=-np.inf,
@@ -154,7 +179,20 @@ else:
                 raise ValueError("Scenario must define at least one entity with 'is_agent': true")
 
             self.steps = 0
+            self._last_action = None
             return self._get_obs(), {}
+
+        def set_randomization_overrides(self, overrides: dict | None) -> None:
+            """
+            Called by training callbacks (e.g. curriculum) to override scenario randomization ranges.
+
+            Note: overrides are applied on the *next* reset/load_scenario().
+            """
+            try:
+                self.loader.set_randomization_overrides(overrides)
+            except Exception:
+                # Best-effort: do not crash the training loop for a bad curriculum config.
+                return
 
         def step(self, action):
             self.steps += 1
@@ -177,6 +215,7 @@ else:
                 action = np.clip(action, self.action_space.low, self.action_space.high)
             except Exception:
                 pass
+            self._last_action = action.astype(np.float32, copy=True)
 
             # 1. Apply Action (Full Digital Pilot)
             pilot_act = ef_py.PilotAction()
@@ -197,8 +236,12 @@ else:
                 pilot_act.flaps = float(half_to_unit(float(action[5])))
                 pilot_act.speedbrake = float(half_to_unit(float(action[6])))
 
-                pilot_act.brake_left = bool(action[7] > 0.5)
-                pilot_act.brake_right = bool(action[8] > 0.5)
+                # Brakes: use analog braking via `brake` only.
+                # NOTE: `brake_left/brake_right` are *binary* flags in the physics engine and force full braking
+                # when asserted. Mapping continuous RL actions to those flags makes it too easy to get stuck
+                # (tiny noise -> full braking). Keep them false and let `brake` handle intensity.
+                pilot_act.brake_left = False
+                pilot_act.brake_right = False
                 pilot_act.brake = float(half_to_unit(float(max(action[7], action[8]))))
 
                 # Sensors
@@ -276,6 +319,33 @@ else:
                 info["on_runway"] = float(bool(getattr(inst_now, "on_runway", True)))
                 info["gear_collapsed"] = float(bool(getattr(inst_now, "gear_collapsed", False)))
                 info["gear_stress"] = float(getattr(inst_now, "gear_stress", 0.0))
+                alt_agl = float(getattr(inst_now, "alt_radar", 0.0))
+                cfg = self.loader.get_rewards_config()
+                on_ground_alt_threshold = float(cfg.get("on_ground_alt_threshold", 2.5))
+                airborne_alt_threshold = float(cfg.get("airborne_alt_threshold", cfg.get("liftoff_alt_threshold", 5.0)))
+                on_ground = alt_agl <= on_ground_alt_threshold
+                airborne = alt_agl >= airborne_alt_threshold
+                preliftoff = not airborne
+                info["on_ground"] = float(on_ground)
+                try:
+                    truth_now = self._last_truth if self._last_truth is not None else self.sim.get_agent_observation(self.agent_id)
+                    valid_rf, along_m, cross_m, rw_len, rw_wid = self.loader.get_runway_local_frame(
+                        float(truth_now.x), float(truth_now.y)
+                    )
+                    if valid_rf and rw_len > 1.0 and rw_wid > 1.0:
+                        runway_width_margin_m = float(cfg.get("runway_width_margin_m", 2.0))
+                        runway_length_margin_m = float(cfg.get("runway_length_margin_m", 0.0))
+                        info["on_runway_geom"] = float(
+                            bool(
+                                preliftoff
+                                and abs(cross_m) <= 0.5 * rw_wid + runway_width_margin_m
+                                and abs(along_m) <= 0.5 * rw_len + runway_length_margin_m
+                            )
+                        )
+                        info["runway_cross_m"] = float(cross_m)
+                        info["runway_along_m"] = float(along_m)
+                except Exception:
+                    pass
             except Exception:
                 pass
 
@@ -334,9 +404,9 @@ else:
                     # 8. Tactical (2)
                     float(getattr(inst, 'rwr_active', False)),
                     float(getattr(inst, 'missiles_remaining', 0)),
-                    # Total: 14 + 3 + 3 + 3 + 9 + 1 + 2 + 2 = 37
+                    # Total: 15 + 3 + 3 + 3 + 9 + 1 + 2 + 2 = 38
                 ],
-                dtype=np.float32,
+                dtype=np.float64,
             )
 
             # 2. Contacts (Via Truth for now, simulating Sensor Fusion)
@@ -367,7 +437,9 @@ else:
             ils_vec = self.loader.get_ils_observation(float(raw_truth.x), float(raw_truth.y), float(inst.alt_baro))
 
             # Append ILS to the instrument vector to keep policy/model code simple.
-            inst_vec = np.concatenate([inst_vec, ils_vec], axis=0).astype(np.float32, copy=False)
+            inst_vec = np.concatenate([inst_vec, ils_vec.astype(np.float64, copy=False)], axis=0)
+            inst_vec = np.nan_to_num(inst_vec, nan=0.0, posinf=0.0, neginf=0.0)
+            inst_vec = np.clip(inst_vec, -1.0e6, 1.0e6).astype(np.float32, copy=False)
 
             obs = {
                 "instruments": inst_vec,
@@ -375,6 +447,12 @@ else:
                 "rwr": rwr,
                 "mission": miss_vec,
             }
+            if self.include_proprio:
+                if self._last_action is None:
+                    proprio = np.zeros((int(self.action_space.shape[0]),), dtype=np.float32)
+                else:
+                    proprio = np.asarray(self._last_action, dtype=np.float32).reshape(-1)
+                obs["proprio"] = proprio
             if self.include_visual:
                 visual_flat = self.sim.get_visual_observation(self.agent_id)
                 obs["visual"] = np.array(visual_flat, dtype=np.float32).reshape(

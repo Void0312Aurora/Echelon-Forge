@@ -1,6 +1,7 @@
 #pragma once
 
 #include <flecs.h>
+#include <algorithm>
 #include <cmath>
 #include "components/basic/common.h"
 #include "components/physics/forces.h"
@@ -9,7 +10,12 @@
 namespace {
     inline double deg_to_rad(double deg) { return deg * M_PI / 180.0; }
     inline double rad_to_deg(double rad) { return rad * 180.0 / M_PI; }
-    
+
+    inline double clamp_finite(double v, double lo, double hi) {
+        if (!std::isfinite(v)) return 0.0;
+        return std::clamp(v, lo, hi);
+    }
+	    
     inline double wrap_360(double deg) {
         deg = std::fmod(deg, 360.0);
         if (deg < 0) deg += 360.0;
@@ -43,13 +49,20 @@ inline void register_rotational_integration_system(flecs::world& ecs) {
                     double Iyy = inertia[i].iyy;
                     double Izz = inertia[i].izz;
                     
-                    double p = ang_vel[i].p;
-                    double q = ang_vel[i].q;
-                    double r = ang_vel[i].r;
-                    
-                    double L = forces[i].torque_roll;
-                    double M_moment = forces[i].torque_pitch;
-                    double N = forces[i].torque_yaw;
+                    // Numeric stability guard: cap rates used in cross-coupling terms to
+                    // prevent floating overflow when the sim enters an unrecoverable tumble.
+                    // This is a proxy for real-world structural/aero limits and keeps RL
+                    // observations finite.
+                    constexpr double kMaxRateForCrossRadS = 50.0; // ~2865 deg/s
+                    double p = clamp_finite(ang_vel[i].p, -kMaxRateForCrossRadS, kMaxRateForCrossRadS);
+                    double q = clamp_finite(ang_vel[i].q, -kMaxRateForCrossRadS, kMaxRateForCrossRadS);
+                    double r = clamp_finite(ang_vel[i].r, -kMaxRateForCrossRadS, kMaxRateForCrossRadS);
+
+                    // Also cap applied moments; control laws can generate stiff dynamics at high qbar.
+                    constexpr double kMaxTorqueNm = 5.0e6;
+                    double L = clamp_finite(forces[i].torque_roll, -kMaxTorqueNm, kMaxTorqueNm);
+                    double M_moment = clamp_finite(forces[i].torque_pitch, -kMaxTorqueNm, kMaxTorqueNm);
+                    double N = clamp_finite(forces[i].torque_yaw, -kMaxTorqueNm, kMaxTorqueNm);
                     
                     // dp/dt = (L - (Izz - Iyy)*q*r) / Ixx
                     double p_dot = (L - (Izz - Iyy) * q * r) / Ixx;
@@ -61,9 +74,16 @@ inline void register_rotational_integration_system(flecs::world& ecs) {
                     double r_dot = (N - (Iyy - Ixx) * p * q) / Izz;
                     
                     // Integrate Rates
-                    ang_vel[i].p += p_dot * dt;
-                    ang_vel[i].q += q_dot * dt;
-                    ang_vel[i].r += r_dot * dt;
+                    p += clamp_finite(p_dot, -1.0e4, 1.0e4) * dt;
+                    q += clamp_finite(q_dot, -1.0e4, 1.0e4) * dt;
+                    r += clamp_finite(r_dot, -1.0e4, 1.0e4) * dt;
+
+                    // Physical-ish envelope: keep angular rates bounded.
+                    // Fighters rarely exceed a few hundred deg/s in sustained motion.
+                    constexpr double kMaxRateRadS = 6.0; // ~343 deg/s
+                    ang_vel[i].p = clamp_finite(p, -kMaxRateRadS, kMaxRateRadS);
+                    ang_vel[i].q = clamp_finite(q, -kMaxRateRadS, kMaxRateRadS);
+                    ang_vel[i].r = clamp_finite(r, -kMaxRateRadS, kMaxRateRadS);
                     
                     // Damping (temporary stability hack until Aerodynamics provides damping)
                     // In real life, aero damping (C_lp, C_mq, C_nr) would be in the "Forces" (Torques).
@@ -87,7 +107,10 @@ inline void register_rotational_integration_system(flecs::world& ecs) {
                     double c_theta = std::cos(theta);
                     double s_theta = std::sin(theta);
                     
-                    if (std::abs(c_theta) < 1e-4) c_theta = 1e-4; // Avoid div by zero
+                    // Avoid gimbal-lock amplification near +/- 90 deg pitch.
+                    // Clamp the effective cos(theta) to +/-cos(85deg).
+                    constexpr double kMinAbsCosTheta = 0.0871557427; // cos(85deg)
+                    if (std::abs(c_theta) < kMinAbsCosTheta) c_theta = std::copysign(kMinAbsCosTheta, c_theta);
                     double t_theta = s_theta / c_theta; // tan(theta)
                     double sec_theta = 1.0 / c_theta;   // sec(theta)
                     

@@ -49,8 +49,9 @@ def test_midpoint_ground_roll():
         pa.flaps = float(half_to_unit(float(action[5])))
         pa.speedbrake = float(half_to_unit(float(action[6])))
 
-        pa.brake_left = bool(action[7] > 0.5)
-        pa.brake_right = bool(action[8] > 0.5)
+        # Wheel-brake flags are binary and force full braking; use analog brake only.
+        pa.brake_left = False
+        pa.brake_right = False
         pa.brake = float(half_to_unit(float(max(action[7], action[8]))))
 
         pa.radar_active = bool(action[9] > 0.5)
@@ -77,4 +78,3 @@ def test_midpoint_ground_roll():
 if __name__ == "__main__":
     test_midpoint_ground_roll()
     print("PASS: midpoint ground roll")
-

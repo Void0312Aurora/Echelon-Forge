@@ -1,0 +1,115 @@
+{
+    "scenario_name": "F-16 Cruise Waypoints (Stage 2: Navigate Waypoints, Stress Wind)",
+    "description": "Airborne cruise mission: reach a sequence of steerpoints (waypoints). Realism-first: waypoints are mission command (like FMS/EGI steerpoints), no privileged geometry leakage. Wind/shear randomized for generalization.",
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 6000,
+        "terrain_type": "flat",
+        "wind": {
+            "speed_mps": 8.0,
+            "dir_from_deg": 270.0,
+            "shear_mps_per_km": 0.0
+        },
+        "randomization": {
+            "world_yaw_range": [
+                0.0,
+                360.0
+            ],
+            "world_yaw_origin": [
+                0.0,
+                0.0
+            ],
+            "wind_speed_range": [
+                0.0,
+                20.0
+            ],
+            "wind_dir_from_range": [
+                0.0,
+                360.0
+            ],
+            "wind_shear_range": [
+                0.0,
+                12.0
+            ]
+        }
+    },
+    "mission_command": {
+        "command_code": 3,
+        "target_heading": 90.0,
+        "target_altitude": 1200.0,
+        "target_speed": 210.0,
+        "waypoint_mode": "flyby",
+        "waypoint_radius_m": 1000.0,
+        "lnav_bank_limit_deg": 30.0,
+        "lnav_max_intercept_deg": 25.0,
+        "lnav_lookahead_m": 1500.0,
+        "waypoints": [
+            {
+                "x": 15000.0,
+                "y": 2000.0,
+                "z": 1200.0
+            },
+            {
+                "x": 30000.0,
+                "y": -8000.0,
+                "z": 1200.0
+            },
+            {
+                "x": 45000.0,
+                "y": 6000.0,
+                "z": 1200.0
+            }
+        ]
+    },
+    "entities": [
+        {
+            "name": "Blue_F16",
+            "type": "F-16C_Block50",
+            "side": "Blue",
+            "pos": [
+                0.0,
+                0.0,
+                1200.0
+            ],
+            "vel": [
+                210.0,
+                0.0,
+                0.0
+            ],
+            "heading": 90.0,
+            "is_agent": true
+        }
+    ],
+    "objectives": [],
+    "rewards": {
+        "survival": 0.05,
+        "crash_penalty": -1000.0,
+        "waypoint_progress_weight": 0.02,
+        "waypoint_distance_weight": -0.00005,
+        "waypoint_reached_bonus": 200.0,
+        "waypoint_mission_success_bonus": 1000.0,
+        "altitude_error_weight": -0.15,
+        "altitude_error_deadband_m": 30.0,
+        "altitude_error_norm_m": 150.0,
+        "altitude_error_power": 2.0,
+        "speed_error_weight": -0.10,
+        "speed_error_deadband": 8.0,
+        "speed_error_norm": 40.0,
+        "speed_error_power": 2.0,
+        "roll_abs_weight": -0.01,
+        "roll_abs_norm_deg": 20.0,
+        "roll_abs_power": 2.0,
+        "pitch_abs_weight": -0.005,
+        "pitch_abs_norm_deg": 20.0,
+        "pitch_abs_power": 2.0,
+        "yaw_rate_abs_weight": -0.005,
+        "yaw_rate_abs_norm_deg_s": 10.0,
+        "yaw_rate_abs_power": 2.0,
+        "beta_abs_weight": -0.01,
+        "beta_abs_norm_deg": 10.0,
+        "beta_abs_power": 2.0,
+        "g_deviation_weight": -0.02,
+        "g_deviation_norm": 0.6,
+        "g_deviation_power": 2.0
+    }
+}

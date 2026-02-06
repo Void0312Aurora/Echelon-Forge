@@ -1,0 +1,49 @@
+{
+    "name": "Standard Airbase (Large, Runway 45m)",
+    "description": "Large airbase prefab with a narrower (45m) concrete runway for strict takeoff/landing realism.",
+    "zones": [
+        {
+            "name": "Runway 09",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 45.0,
+            "length": 3000.0,
+            "heading": 90.0,
+            "surface": "Concrete",
+            "ils": {
+                "enabled": true,
+                "glide_slope_deg": 3.0,
+                "loc_max_deg": 2.5,
+                "gs_max_deg": 0.7,
+                "range_m": 25000.0
+            }
+        },
+        {
+            "name": "Apron",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 1000.0,
+            "length": 4000.0,
+            "heading": 90.0,
+            "surface": "Asphalt"
+        }
+    ],
+    "entities": [
+        {
+            "name": "Control_Tower",
+            "type": "Facility",
+            "side": "Blue",
+            "pos": [
+                0.0,
+                300.0,
+                0.0
+            ],
+            "vel": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "heading": 0.0
+        }
+    ]
+}

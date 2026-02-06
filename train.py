@@ -30,7 +30,10 @@ if os.path.isdir(_BUILD_DIR):
 sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
 from python.models.transformer import TransformerExtractor, TransformerVisualExtractor
-from python.training_callbacks import CMODiagnosticsCallback
+from python.training_callbacks import CMODiagnosticsCallback, ScenarioCurriculumCallback
+from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.policies import SquashedMultiInputPolicy
+from python.rl.wrappers import MultiTimescaleActionWrapper
 
 def get_policy_kwargs(train_config):
     # Parse policy_kwargs from JSON
@@ -64,18 +67,27 @@ def apply_safe_action_bias(model: PPO, action_mode: str):
         b = action_net.bias
         if b is None or int(b.shape[0]) < 17:
             return
+        squash = bool(getattr(model.policy, "squash_output", False))
         with torch.no_grad():
             # Safe defaults for the 17D "full" action layout in `gym_envs/universal_env.py`.
-            # - throttle: mid power to ensure ground roll starts
+            # - throttle: enough power to start ground roll
             # - gear: down
-            # Note: flaps/speedbrake/brakes use `half_to_unit()`, where any value <= 0.5 maps to "off".
-            # Keeping their initial mean at 0.0 avoids unintended random braking.
-            b[3] = 0.5   # throttle
-            b[4] = 1.0   # gear handle down
+            # - keep brakes/speedbrake/flaps and combat switches off by default
+            if squash:
+                # With tanh-squash + unscale, bias=0 maps to the midpoint of [low,high].
+                # Push "off" switches below 0.5 by using negative pre-squash means.
+                b[3] = 1.5   # throttle -> ~0.95 after tanh+unscale (realistic takeoff power)
+                b[4] = 2.0   # gear down  -> ~0.98 after tanh+unscale
 
-            # Avionics/weapons default off.
-            for idx in (9, 12, 13, 14, 15, 16):
-                b[idx] = 0.0
+                off_pre = -2.0
+                for idx in (5, 6, 7, 8, 9, 12, 13, 14, 15, 16):
+                    b[idx] = off_pre
+            else:
+                # Unbounded Gaussian + clip: bias directly corresponds to env action value.
+                b[3] = 0.5   # throttle
+                b[4] = 1.0   # gear down
+                for idx in (5, 6, 7, 8, 9, 12, 13, 14, 15, 16):
+                    b[idx] = 0.0
     except Exception:
         return
 
@@ -205,6 +217,28 @@ def main():
     # We must delay env creation for resume if we want to ensure same config? 
     # For now we assume user provides correct params for resumption.
     vec_cls = SubprocVecEnv if n_envs > 1 else DummyVecEnv
+
+    wrapper_class = None
+    wrapper_kwargs = None
+    wrappers_cfg = train_config.get("wrappers", {}) if isinstance(train_config.get("wrappers", {}), dict) else {}
+    mts_cfg = wrappers_cfg.get("multi_timescale_action")
+    if isinstance(mts_cfg, dict) and bool(mts_cfg.get("enabled", False)):
+        wrapper_class = MultiTimescaleActionWrapper
+        wrapper_kwargs = {
+            "hold_steps": int(mts_cfg.get("hold_steps", 4)),
+            "low_freq_indices": mts_cfg.get(
+                "low_freq_indices",
+                # Do NOT include brakes in low-frequency indices: they are analog and needed for fine control.
+                [4, 5, 6, 9, 12, 13, 14, 15, 16],
+            ),
+            "snap_binary_indices": mts_cfg.get(
+                "snap_binary_indices",
+                # Do NOT snap brakes to {0,1}: it turns small exploration noise into full braking.
+                [4, 9, 12, 13, 14, 15],
+            ),
+            "action_rate_penalty_coef": float(mts_cfg.get("action_rate_penalty_coef", 0.0)),
+        }
+
     vec_env = make_vec_env(
         UniversalEnv,
         n_envs=n_envs,
@@ -213,8 +247,20 @@ def main():
             "include_visual": args.include_visual,
             "action_mode": args.action_mode,
         },
-        vec_env_cls=vec_cls
+        vec_env_cls=vec_cls,
+        wrapper_class=wrapper_class,
+        wrapper_kwargs=wrapper_kwargs,
     )
+
+    curriculum_cfg = train_config.get("curriculum", {}) if isinstance(train_config.get("curriculum", {}), dict) else {}
+    # Apply curriculum stage 0 *before* SB3 does its initial env.reset() inside learn().
+    if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
+        try:
+            st0 = list(curriculum_cfg["stages"])[0]
+            overrides0 = st0.get("randomization_overrides", st0.get("randomization", {}))
+            vec_env.env_method("set_randomization_overrides", overrides0)
+        except Exception:
+            pass
     
     # Test Mode
     if args.test_only:
@@ -258,22 +304,20 @@ def main():
             print("Using Transformer+Visual Feature Extractor")
             p_kwargs["features_extractor_class"] = TransformerVisualExtractor
 
+    algo_name = str(train_config.get("algo", "PPO"))
+    algo_cls = PPO
+    if algo_name in ("AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+        algo_cls = AdaptiveKLPPO
+
     if args.resume_path:
         print(f"Loading Checkpoint: {args.resume_path}")
-        # Note: When loading, we might want to override env? PPO.load handles it.
-        # But we must ensure hyperparameters match if we want to continue seamlessly?
-        # PPO.load loads params from zip. The CLI hyperparams might be ignored? 
-        # Yes, SB3 load Overwrites params. But we can pass custom_objects.
-        # For simple resume, PPO.load is enough.
-        model = PPO.load(args.resume_path, env=vec_env, tensorboard_log=log_dir, **hyperparams) 
-        # Warning: passing hyperparams to load might error if they conflict with saved ones differently.
-        # usually load(path, env=env) uses saved params.
-        # But we want to use the NEW config if changed? No, resume implies continuing.
-        # Let's just load.
-        # Re-attaching tensorboard log is tricky. we need specific call.
+        model = algo_cls.load(args.resume_path, env=vec_env, tensorboard_log=log_dir)
     else:
         policy_name = train_config.get("policy", "MultiInputPolicy")
-        model = PPO(policy_name, vec_env, verbose=1, tensorboard_log=log_dir, **hyperparams)
+        policy_cls = policy_name
+        if policy_name == "SquashedMultiInputPolicy":
+            policy_cls = SquashedMultiInputPolicy
+        model = algo_cls(policy_cls, vec_env, verbose=1, tensorboard_log=log_dir, **hyperparams)
         if not args.no_init_safe_action_bias:
             apply_safe_action_bias(model, args.action_mode)
     
@@ -287,6 +331,13 @@ def main():
     callbacks = [checkpoint_callback]
     if args.diagnostics:
         callbacks.append(CMODiagnosticsCallback(log_every_timesteps=int(args.diagnostics_every)))
+    if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
+        callbacks.append(
+            ScenarioCurriculumCallback(
+                stages=list(curriculum_cfg["stages"]),
+                check_freq=int(curriculum_cfg.get("check_freq", 10_000)),
+            )
+        )
     callback = CallbackList(callbacks) if len(callbacks) > 1 else checkpoint_callback
     
     try:

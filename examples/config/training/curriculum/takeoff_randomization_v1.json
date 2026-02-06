@@ -1,0 +1,61 @@
+{
+  "name": "takeoff_randomization_v1",
+  "description": "Deterministic -> yaw-only -> wind ramp curriculum for takeoff generalization (realism-first).",
+  "stages": [
+    {
+      "until_episodes": 10,
+      "until_steps": 500,
+      "randomization_overrides": {
+        "world_yaw_range": [0.0, 0.0],
+        "wind_headwind_range": [0.0, 0.0],
+        "wind_crosswind_range": [0.0, 0.0],
+        "wind_shear_range": [0.0, 0.0],
+        "wind_tailwind_max_mps": 0.0
+      }
+    },
+    {
+      "until_episodes": 20,
+      "until_steps": 1500,
+      "randomization_overrides": {
+        "world_yaw_range": [0.0, 360.0],
+        "wind_headwind_range": [0.0, 0.0],
+        "wind_crosswind_range": [0.0, 0.0],
+        "wind_shear_range": [0.0, 0.0],
+        "wind_tailwind_max_mps": 0.0
+      }
+    },
+    {
+      "until_episodes": 25,
+      "until_steps": 3000,
+      "randomization_overrides": {
+        "world_yaw_range": [0.0, 360.0],
+        "wind_headwind_range": [0.0, 4.0],
+        "wind_crosswind_range": [-2.0, 2.0],
+        "wind_shear_range": [0.0, 1.0],
+        "wind_tailwind_max_mps": 0.0
+      }
+    },
+    {
+      "until_episodes": 30,
+      "until_steps": 5000,
+      "randomization_overrides": {
+        "world_yaw_range": [0.0, 360.0],
+        "wind_headwind_range": [0.0, 8.0],
+        "wind_crosswind_range": [-4.0, 4.0],
+        "wind_shear_range": [0.0, 3.0],
+        "wind_tailwind_max_mps": 0.0
+      }
+    },
+    {
+      "until_episodes": null,
+      "until_steps": null,
+      "randomization_overrides": {
+        "world_yaw_range": [0.0, 360.0],
+        "wind_headwind_range": [0.0, 12.0],
+        "wind_crosswind_range": [-6.0, 6.0],
+        "wind_shear_range": [0.0, 6.0],
+        "wind_tailwind_max_mps": 0.0
+      }
+    }
+  ]
+}

@@ -1,14 +1,14 @@
 {
-    "scenario_name": "F-16 Takeoff Training",
-    "description": "Train agent to take off and reach safe altitude when given TAKEOFF command.",
+    "scenario_name": "F-16 Takeoff (Stage 1: Wheels-Off, Runway 45m)",
+    "description": "Stage 1 takeoff curriculum on a realistic 45m runway. Realism-first: no runway-heading leakage; use ILS/EGI/wind like a real pilot.",
     "imports": [
         {
-            "file": "examples/config/prefabs/airbase_large.json"
+            "file": "examples/config/prefabs/airbase_large_runway45.json"
         }
     ],
     "environment": {
         "time_step": 0.05,
-        "max_steps": 2000,
+        "max_steps": 800,
         "terrain_type": "flat",
         "wind": {
             "speed_mps": 3.0,
@@ -85,23 +85,23 @@
                 {
                     "property": "altitude",
                     "op": ">=",
-                    "value": 300.0
+                    "value": 30.0
                 },
                 {
                     "property": "speed",
                     "op": ">=",
-                    "value": 150.0
+                    "value": 80.0
                 }
             ],
-            "reward": 2000.0
+            "reward": 800.0
         }
     ],
     "rewards": {
         "survival": 0.0,
         "crash_penalty": -1000.0,
-        "altitude_progress_target": 300.0,
-        "speed_progress_target": 150.0,
-        "altitude_progress_weight": 0.5,
+        "altitude_progress_target": 60.0,
+        "speed_progress_target": 120.0,
+        "altitude_progress_weight": 0.6,
         "speed_progress_weight": 1.0,
         "speed_progress_weight_negative": 1.0,
         "liftoff_bonus": 300.0,
@@ -112,7 +112,7 @@
         "rotation_alt_threshold": 5.0,
         "rotation_pitch_cap": 12.0,
         "rotation_overpitch_penalty_weight": -0.5,
-        "gear_up_bonus": 100.0,
+        "gear_up_bonus": 50.0,
         "stall_penalty": -3.0,
         "stall_aoa_threshold": 12.0,
         "overload_penalty": -0.5,
