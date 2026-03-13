@@ -148,7 +148,9 @@ class ScenarioCurriculumCallback(BaseCallback):
         # Broadcast to all parallel envs (works for DummyVecEnv/SubprocVecEnv).
         try:
             self.training_env.env_method("set_randomization_overrides", overrides)  # type: ignore[union-attr]
-        except Exception:
+        except Exception as e:
+            if self.verbose > 0:
+                print(f"[WARN] curriculum stage {idx} apply failed: {e}")
             return
 
         self._active_stage_idx = int(idx)

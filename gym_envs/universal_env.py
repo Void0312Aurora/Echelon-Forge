@@ -190,8 +190,9 @@ else:
             """
             try:
                 self.loader.set_randomization_overrides(overrides)
-            except Exception:
+            except Exception as e:
                 # Best-effort: do not crash the training loop for a bad curriculum config.
+                print(f"[WARN] set_randomization_overrides failed: {e}")
                 return
 
         def step(self, action):

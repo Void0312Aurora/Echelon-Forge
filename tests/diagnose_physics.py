@@ -60,7 +60,8 @@ def main():
     print(f"  Gear: {pilot.gear_handle}")
     
     # Step simulation and track progress
-    print(f"\n3. SIMULATION PROGRESS (100 steps @ 0.05s = 5s)")
+    n_steps = 100
+    print(f"\n3. SIMULATION PROGRESS ({n_steps} steps)")
     print("-" * 50)
     
     dt = sim.get_time_step()
@@ -69,7 +70,7 @@ def main():
     positions = []
     speeds = []
     
-    for i in range(100):
+    for i in range(n_steps):
         sim.step()
         
         obs = sim.get_agent_observation(eid)
@@ -91,15 +92,17 @@ def main():
     # Thrust F = 76310 N (mil) at throttle=1.0 (below 0.9 threshold for AB)
     # Mass m = 8570 kg (empty)
     # Acceleration a = F/m = 76310/8570 = 8.9 m/s²
-    # After 5s: v = a*t = 8.9 * 5 = 44.5 m/s (ignoring drag/friction)
+    # Compare against the actual simulated horizon (n_steps * dt), not a hardcoded 5s.
     
     final_speed = speeds[-1]
     expected_accel = 76310.0 / 8570.0  # ~8.9 m/s²
-    expected_speed = expected_accel * 5.0  # After 5 seconds
+    total_time = n_steps * dt
+    expected_speed = expected_accel * total_time
     
     print(f"  Expected accel (no drag): {expected_accel:.1f} m/s²")
-    print(f"  Expected speed at 5s: {expected_speed:.1f} m/s")
-    print(f"  Actual speed at 5s: {final_speed:.1f} m/s")
+    print(f"  Simulated horizon: {total_time:.2f} s")
+    print(f"  Expected speed at {total_time:.2f}s: {expected_speed:.1f} m/s")
+    print(f"  Actual speed at {total_time:.2f}s: {final_speed:.1f} m/s")
     print(f"  Ratio: {final_speed/expected_speed*100:.1f}%")
     
     # Check if moving at all

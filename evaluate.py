@@ -18,11 +18,19 @@ if os.path.isdir(_BUILD_DIR) and any(
 sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
 from python.models.transformer import TransformerExtractor
+from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Evaluation for CMO")
     parser.add_argument("--scenario", type=str, required=True, help="Path to JSON scenario file")
     parser.add_argument("--model", type=str, required=True, help="Path to trained model (zip)")
+    parser.add_argument(
+        "--algo",
+        type=str,
+        default="PPO",
+        choices=["PPO", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"],
+        help="Algorithm class used during training (must match checkpoint class).",
+    )
     parser.add_argument("--episodes", type=int, default=10, help="Number of episodes to evaluate")
     parser.add_argument("--render", action="store_true", help="Render simulation (if supported)")
     parser.add_argument(
@@ -54,7 +62,10 @@ def main():
         model_path = args.model
         if model_path.endswith(".zip"):
             model_path = model_path[:-4]
-        model = PPO.load(model_path, env=vec_env)
+        algo_cls = PPO
+        if args.algo in ("AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+            algo_cls = AdaptiveKLPPO
+        model = algo_cls.load(model_path, env=vec_env)
     except Exception as e:
         print(f"Error loading model: {e}")
         return

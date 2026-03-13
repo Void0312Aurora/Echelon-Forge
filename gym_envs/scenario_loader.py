@@ -1581,6 +1581,16 @@ class ScenarioLoader:
                             val = float(truth.z)
                         elif prop == "speed":
                             val = float(curr_ias)
+                        elif prop == "heading":
+                            val = float(truth.heading)
+                        elif prop == "x":
+                            val = float(truth.x)
+                        elif prop == "y":
+                            val = float(truth.y)
+                        else:
+                            # Unknown objective property should not silently pass.
+                            conds_met = False
+                            continue
 
                         # Status for TensorBoard (log up to first 3 values; slot 3 is reserved for terminal flag).
                         if i < 3:

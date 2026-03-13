@@ -253,14 +253,19 @@ def main():
     )
 
     curriculum_cfg = train_config.get("curriculum", {}) if isinstance(train_config.get("curriculum", {}), dict) else {}
+    algo_name = str(train_config.get("algo", "PPO"))
+    algo_cls = PPO
+    if algo_name in ("AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+        algo_cls = AdaptiveKLPPO
+
     # Apply curriculum stage 0 *before* SB3 does its initial env.reset() inside learn().
     if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
         try:
             st0 = list(curriculum_cfg["stages"])[0]
             overrides0 = st0.get("randomization_overrides", st0.get("randomization", {}))
             vec_env.env_method("set_randomization_overrides", overrides0)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[WARN] failed to apply initial curriculum stage overrides: {e}")
     
     # Test Mode
     if args.test_only:
@@ -276,7 +281,7 @@ def main():
             load_path = args.resume_path
             
         print(f"Loading model for testing: {load_path}")
-        model = PPO.load(load_path, env=vec_env)
+        model = algo_cls.load(load_path, env=vec_env)
         
         obs = vec_env.reset()
         for i in range(1000):
@@ -303,11 +308,6 @@ def main():
         elif p_kwargs.get("features_extractor_class") == "TransformerVisualExtractor":
             print("Using Transformer+Visual Feature Extractor")
             p_kwargs["features_extractor_class"] = TransformerVisualExtractor
-
-    algo_name = str(train_config.get("algo", "PPO"))
-    algo_cls = PPO
-    if algo_name in ("AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
-        algo_cls = AdaptiveKLPPO
 
     if args.resume_path:
         print(f"Loading Checkpoint: {args.resume_path}")
