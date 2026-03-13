@@ -11,7 +11,9 @@
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
+#include <string>
 
 namespace {
 
@@ -27,6 +29,24 @@ double normalize_angle(double angle) {
 
 double to_degrees(double rad) { return rad * 180.0 / M_PI; }
 double to_radians(double deg) { return deg * M_PI / 180.0; }
+
+enum class FbwProtectionMode {
+    Strict,
+    Relaxed,
+    Off,
+};
+
+FbwProtectionMode get_fbw_protection_mode() {
+    static FbwProtectionMode cached = []() {
+        const char* v = std::getenv("CMO_FBW_PROTECTION_MODE");
+        if (!v) return FbwProtectionMode::Strict;
+        const std::string s(v);
+        if (s == "off" || s == "OFF" || s == "0") return FbwProtectionMode::Off;
+        if (s == "relaxed" || s == "RELAXED" || s == "1") return FbwProtectionMode::Relaxed;
+        return FbwProtectionMode::Strict;
+    }();
+    return cached;
+}
 
 class DefaultControlModel : public IControlModel {
 public:
@@ -136,23 +156,30 @@ public:
 	            // Prevents unrealistically stiff controls and training instabilities.
 	            const double q_bar_eff = std::min(q_bar, 9000.0);
 
-	            // Ground directional-control protection:
+                // Ground directional-control protection:
 	            // At high speed on the runway, full-scale rudder pedal input should not directly map
 	            // to max yaw commands (prevents runway departure from a single saturated action).
 	            // This acts like a mechanical/FBW limit schedule and uses only physical state.
+                const FbwProtectionMode fbw_mode = get_fbw_protection_mode();
+                const bool rl_mode = has_pilot;
+                const bool fbw_relaxed_for_rl = rl_mode && (fbw_mode == FbwProtectionMode::Relaxed);
+                const bool fbw_off_for_rl = rl_mode && (fbw_mode == FbwProtectionMode::Off);
+
 	            double stick_yaw_cmd = stick_yaw_f;
-	            if (on_ground) {
+                if (on_ground && !fbw_off_for_rl) {
 	                const double v_h = std::sqrt(velocity.vx * velocity.vx + velocity.vy * velocity.vy);
 	                constexpr double kYawLimitStartMps = 5.0;
 	                constexpr double kYawLimitEndMps = 80.0;
 	                constexpr double kYawMaxLowSpeed = 1.0;
 	                constexpr double kYawMaxHighSpeed = 0.35;
+                    constexpr double kYawMaxHighSpeedRelaxed = 0.60;
 	                double t = 0.0;
 	                if (v_h > kYawLimitStartMps) {
 	                    t = (v_h - kYawLimitStartMps) / (kYawLimitEndMps - kYawLimitStartMps);
 	                    t = std::clamp(t, 0.0, 1.0);
 	                }
-	                const double yaw_max = kYawMaxLowSpeed + t * (kYawMaxHighSpeed - kYawMaxLowSpeed);
+                    const double yaw_high = fbw_relaxed_for_rl ? kYawMaxHighSpeedRelaxed : kYawMaxHighSpeed;
+                    const double yaw_max = kYawMaxLowSpeed + t * (yaw_high - kYawMaxLowSpeed);
 	                stick_yaw_cmd = std::clamp(stick_yaw_cmd, -yaw_max, yaw_max);
 	            }
 	            ctl.stick_yaw_cmd = stick_yaw_cmd;
@@ -166,33 +193,37 @@ public:
 	            double q_cmd = stick_pitch_f * kQMaxRadS;
 	            double r_cmd = stick_yaw_cmd * kRMaxRadS;
 
-	            // Ground rotation/attitude protection (tailstrike/PIO reduction).
-	            if (on_ground) {
+                // Ground rotation/attitude protection (tailstrike/PIO reduction).
+                if (on_ground && !fbw_off_for_rl) {
 	                constexpr double kPitchSoftDeg = 8.0;
 	                constexpr double kPitchHardDeg = 12.0;
+                    const double protect_gain = fbw_relaxed_for_rl ? 0.45 : 1.0;
 	                if (transform.pitch > kPitchSoftDeg && q_cmd > 0.0) {
 	                    double t = (transform.pitch - kPitchSoftDeg) / (kPitchHardDeg - kPitchSoftDeg);
-	                    double scale = 1.0 - std::clamp(t, 0.0, 1.0);
+                        double scale = 1.0 - protect_gain * std::clamp(t, 0.0, 1.0);
 	                    q_cmd *= scale;
 	                }
 	                if (transform.pitch > kPitchHardDeg) {
-	                    q_cmd = std::min(q_cmd, -0.2);
+                        const double q_hard = fbw_relaxed_for_rl ? -0.08 : -0.2;
+                        q_cmd = std::min(q_cmd, q_hard);
 	                }
 	            }
 	
 	            // Airborne pitch-attitude protection: prevent unrealistic near-vertical attitudes that
 	            // frequently destabilize RL training (and are outside normal takeoff envelopes).
 	            // This is a realistic FBW-style limit schedule using only physical state.
-	            if (!on_ground) {
+                if (!on_ground && !fbw_off_for_rl) {
 	                constexpr double kPitchSoftDeg = 60.0;
 	                constexpr double kPitchHardDeg = 80.0;
+                    const double protect_gain = fbw_relaxed_for_rl ? 0.55 : 1.0;
 	                if (transform.pitch > kPitchSoftDeg && q_cmd > 0.0) {
 	                    double t = (transform.pitch - kPitchSoftDeg) / (kPitchHardDeg - kPitchSoftDeg);
-	                    double scale = 1.0 - std::clamp(t, 0.0, 1.0);
+                        double scale = 1.0 - protect_gain * std::clamp(t, 0.0, 1.0);
 	                    q_cmd *= scale;
 	                }
 	                if (transform.pitch > kPitchHardDeg) {
-	                    q_cmd = std::min(q_cmd, -0.2);
+                        const double q_hard = fbw_relaxed_for_rl ? -0.10 : -0.2;
+                        q_cmd = std::min(q_cmd, q_hard);
 	                }
 	            }
 
@@ -202,14 +233,16 @@ public:
 	            const double alpha_abs = std::abs(alpha_deg);
 	            constexpr double kAoASoftDeg = 10.0;
 	            constexpr double kAoAHardDeg = 18.0;
-	            if (alpha_abs > kAoASoftDeg) {
+                if (!fbw_off_for_rl && alpha_abs > kAoASoftDeg) {
 	                double t = (alpha_abs - kAoASoftDeg) / (kAoAHardDeg - kAoASoftDeg);
-	                double scale = 1.0 - std::clamp(t, 0.0, 1.0);
+                    const double protect_gain = fbw_relaxed_for_rl ? 0.50 : 1.0;
+                    double scale = 1.0 - protect_gain * std::clamp(t, 0.0, 1.0);
 	                q_cmd *= scale;
 	            }
-	            if (alpha_abs > kAoAHardDeg) {
+                if (!fbw_off_for_rl && alpha_abs > kAoAHardDeg) {
 	                // Hard recovery: unload the wing with a pitch-down command when AoA is excessive.
-	                q_cmd = std::min(q_cmd, -0.15);
+                    const double q_hard = fbw_relaxed_for_rl ? -0.06 : -0.15;
+                    q_cmd = std::min(q_cmd, q_hard);
 	            }
 
             // Rate-command control moments: M = q_bar * K * (rate_cmd - rate)

@@ -43,6 +43,11 @@ namespace {
              c_theta * s_phi
         };
     }
+
+    inline double smoothstep01(double x) {
+        x = std::clamp(x, 0.0, 1.0);
+        return x * x * (3.0 - 2.0 * x);
+    }
 }
 
 /**
@@ -74,13 +79,11 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     if (S < 1.0) S = 30.0; // Fallback
                     
                     // --- Coefficient Models ---
-                    // Simple Linear Lift
-                    // Cl0 = 0.1 (symm airfoil has 0, but usually some incidence)
-                    // Cla = 0.1 per deg
-                    // THEORY: Thin Airfoil Theory gives dCl/dAlpha = 2*PI per radian.
-                    // 2*PI rad^-1 = 6.28 / 57.3 deg^-1 approx 0.11 deg^-1.
-                    // So 0.1 is a valid physical approximation for subsonic flight.
-                    double Cl = 0.0 + 0.1 * alpha;
+                    // Lift model: linear regime + flap-aware post-stall blend + deep-stall plateau.
+                    // This avoids abrupt clipping and better reflects loss of lift at very high AoA.
+                    constexpr double kClAlphaPerDeg = 0.1;
+                    constexpr double kCl0 = 0.0;
+                    double Cl = kCl0 + kClAlphaPerDeg * alpha;
                     
                     // [F1 FIX] Flaps Lift Augmentation
                     // Flaps increase camber, boosting Cl by ~0.3-0.5 at full deflection
@@ -92,12 +95,31 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                         speedbrake_pos = std::clamp(static_cast<double>(pilot->speedbrake), 0.0, 1.0);
                     }
                     Cl += flaps_deflection * 0.35; // dCl_flaps ~ 0.35 at full deflection
-                    
-                    // Stall Logic (Simple)
-                    if (std::abs(alpha) > 15.0) {
-                        // Post-stall drop
-                        double stall_factor = std::max(0.0, 1.0 - (std::abs(alpha) - 15.0) * 0.1);
-                        Cl *= stall_factor;
+
+                    const double alpha_abs = std::abs(alpha);
+                    const double alpha_sign = (alpha >= 0.0) ? 1.0 : -1.0;
+
+                    // Flaps increase max-lift and delay stall onset modestly.
+                    const double alpha_stall_deg = 15.0 + 6.0 * flaps_deflection;
+                    const double alpha_peak_deg = alpha_stall_deg + 8.0;
+                    const double alpha_deep_deg = alpha_peak_deg + 18.0;
+
+                    const double cl_peak_mag = 1.25 + 0.45 * flaps_deflection;
+                    const double cl_deep_mag = 0.22 + 0.10 * flaps_deflection;
+
+                    if (alpha_abs > alpha_stall_deg) {
+                        if (alpha_abs <= alpha_peak_deg) {
+                            const double t = smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_peak_deg - alpha_stall_deg)));
+                            const double cl_target = alpha_sign * cl_peak_mag;
+                            Cl = (1.0 - t) * Cl + t * cl_target;
+                        } else if (alpha_abs <= alpha_deep_deg) {
+                            const double t = smoothstep01((alpha_abs - alpha_peak_deg) / std::max(1e-6, (alpha_deep_deg - alpha_peak_deg)));
+                            const double cl_target = alpha_sign * cl_deep_mag;
+                            const double cl_peak = alpha_sign * cl_peak_mag;
+                            Cl = (1.0 - t) * cl_peak + t * cl_target;
+                        } else {
+                            Cl = alpha_sign * cl_deep_mag;
+                        }
                     }
                     
                     // Drag Polar
@@ -139,7 +161,15 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     Cl *= (1.0 + 0.08 * ge);
                     const double k_eff = k * (1.0 - 0.70 * ge);
 
-                    double Cd = Cd0 + k_eff * Cl * Cl;
+                    // Post-stall drag rise: strong drag increase after stall and into deep stall.
+                    double stall_drag = 0.0;
+                    if (alpha_abs > alpha_stall_deg) {
+                        const double s1 = smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_peak_deg - alpha_stall_deg)));
+                        const double s2 = smoothstep01((alpha_abs - alpha_peak_deg) / std::max(1e-6, (alpha_deep_deg - alpha_peak_deg)));
+                        stall_drag = 0.25 * s1 + 0.55 * s2;
+                    }
+
+                    double Cd = Cd0 + k_eff * Cl * Cl + stall_drag;
                     
                     // Cache coefficients for readout
                     aero[i].lift_coefficient = Cl;
@@ -208,8 +238,12 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Cm0 is usually trim. Assume 0 for symmetric airfoil.
                     // Cm_alpha < 0 for stability (Stable: -0.5 to -1.5)
                     // Cm_q < 0 for damping (Damping: -10 to -20)
-                    double Cm_alpha = -0.8; 
-                    double Cm_q = -12.0;
+                    // Damping fades in deep stall where attached-flow derivatives lose authority.
+                    const double stall_rel = smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_deep_deg - alpha_stall_deg)));
+                    const double damp_scale = std::clamp(1.0 - 0.7 * stall_rel, 0.25, 1.0);
+
+                    double Cm_alpha = -0.8;
+                    double Cm_q = -12.0 * damp_scale;
                     double Cm = Cm_alpha * Math::to_radians(alpha) + Cm_q * q_hat;
                     
                     // --- 2. Rolling Moment (Cl) ---
@@ -218,7 +252,7 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Cl_p < 0 for roll damping. (-0.4)
                     double beta = aero[i].sideslip_angle; // Degrees
                     double Cl_beta = -0.1;
-                    double Cl_p = -0.45;
+                    double Cl_p = -0.45 * damp_scale;
                     double Cl_r = 0.1; // Yaw-induced roll
                     double Cl_mom = Cl_beta * Math::to_radians(beta) + Cl_p * p_hat + Cl_r * r_hat;
                     
@@ -227,7 +261,7 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Cn_beta > 0 for directional stability ("Weathercock"). (+0.15)
                     // Cn_r < 0 for yaw damping. (-0.2)
                     double Cn_beta = 0.15;
-                    double Cn_r = -0.25;
+                    double Cn_r = -0.25 * damp_scale;
                     double Cn_mom = Cn_beta * Math::to_radians(beta) + Cn_r * r_hat; // Neglect Cn_p for now
                     
                     // Convert Coefficients to Torque
