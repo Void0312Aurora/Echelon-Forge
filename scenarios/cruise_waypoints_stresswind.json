@@ -84,9 +84,9 @@
     "rewards": {
         "survival": 0.05,
         "crash_penalty": -1000.0,
-        "waypoint_progress_weight": 0.02,
-        "waypoint_distance_weight": -0.00005,
-        "waypoint_reached_bonus": 200.0,
+        "waypoint_progress_weight": 0.04,
+        "waypoint_distance_weight": -0.00015,
+        "waypoint_reached_bonus": 220.0,
         "waypoint_mission_success_bonus": 1000.0,
         "altitude_error_weight": -0.15,
         "altitude_error_deadband_m": 30.0,

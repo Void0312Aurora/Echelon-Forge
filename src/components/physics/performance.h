@@ -18,6 +18,7 @@ struct LandingGear {
     bool can_use_unpaved = false;         // Helper/Transport aircraft feature
     double rolling_friction_coeff = 0.02; // Default for concrete
     double max_load_factor = 3.0;         // G-limit before collapse
+    double contact_height_m = 2.0;        // Gear contact reference height from CG to wheel contact (extended)
     
     // Dynamic State
     double extension_state = 1.0;         // 0.0=Retracted, 1.0=Extended

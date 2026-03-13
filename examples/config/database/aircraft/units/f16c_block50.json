@@ -25,7 +25,8 @@
     "landing_gear": {
         "can_use_unpaved": false,
         "rolling_friction_coeff": 0.02,
-        "max_load_factor": 4.0
+        "max_load_factor": 4.0,
+        "contact_height_m": 2.1
     },
     "engine_ref": "F110-GE-129",
     "sensor_ref": "AN/APG-68(V)9",

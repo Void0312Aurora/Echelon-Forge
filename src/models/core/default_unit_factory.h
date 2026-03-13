@@ -406,7 +406,7 @@ public:
         e.set<LandingGear>(def.landing_gear);
     } else if (def.type == UnitType::Aircraft) {
         // Fallback for aircraft without explicit config (assume paved only)
-        e.set<LandingGear>({false, 0.02, 3.0, 1.0, false, 5.0});
+        e.set<LandingGear>({false, 0.02, 3.0, 2.0, 1.0, false, 5.0});
     }
 
         if (def.has_flight_model) {

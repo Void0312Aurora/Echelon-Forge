@@ -79,9 +79,13 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     
                     double z = transform[i].z;
                     
-                    // Simple logic: Assume pivot is at CG. Gear extends downwards by l_gear.
-                    double gear_height = 2.0; 
-                    
+                    // Contact height is model-specific and scales with extension state.
+                    double gear_height = 2.0;
+                    if (const LandingGear* lg = it.entity(i).get<LandingGear>()) {
+                        const double ext = std::clamp(lg->extension_state, 0.0, 1.0);
+                        gear_height = std::max(0.4, lg->contact_height_m) * ext;
+                    }
+
                     double penetration = gear_height - (z - terrain_z);
                     
                     bool is_touching = (penetration > 0.0);

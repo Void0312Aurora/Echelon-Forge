@@ -142,13 +142,14 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
     }
 
     def.has_landing_gear = entry.value("has_landing_gear", false);
-    def.landing_gear = {false, 0.02, 3.0, 1.0, false, 5.0}; // Default Paved Only
+    def.landing_gear = {false, 0.02, 3.0, 2.0, 1.0, false, 5.0}; // Default Paved Only
     if (entry.contains("landing_gear")) {
         def.has_landing_gear = true;
         const auto& lg = entry["landing_gear"];
         def.landing_gear.can_use_unpaved = lg.value("can_use_unpaved", def.landing_gear.can_use_unpaved);
         def.landing_gear.rolling_friction_coeff = lg.value("rolling_friction_coeff", def.landing_gear.rolling_friction_coeff);
         def.landing_gear.max_load_factor = lg.value("max_load_factor", def.landing_gear.max_load_factor);
+        def.landing_gear.contact_height_m = lg.value("contact_height_m", def.landing_gear.contact_height_m);
     }
 
     def.has_score = entry.value("has_score", true);

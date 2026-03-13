@@ -111,22 +111,11 @@ inline void register_aero_state_system(flecs::world& ecs) {
 
                     double v_sq = vx*vx + vy*vy + vz*vz;
                     
-                    // Low-speed guard: AoA is meaningless at very low speeds
-                    // Threshold: 5 m/s² means ~2.2 m/s.  Below this, aerodynamic
-                    // angles are unstable due to small velocity components.
-                    if (v_sq < 25.0) {  // 5 m/s threshold
-                        aero[i].angle_of_attack = 0.0;
-                        aero[i].sideslip_angle = 0.0;
-                        aero[i].dynamic_pressure = 0.5 * 1.225 * v_sq; // Still compute q
-                        aero[i].mach_number = 0.0;
-                        continue;
-                    }
-                    
                     double v_total = std::sqrt(v_sq);
                     
                     // 2. Dynamic Pressure & Mach
                     aero[i].dynamic_pressure = 0.5 * rho * v_sq;
-                    aero[i].mach_number = v_total / speed_of_sound;
+                    aero[i].mach_number = (speed_of_sound > 1.0) ? (v_total / speed_of_sound) : 0.0;
                     
                     // 3. Body Frame Velocity for Alpha/Beta
                     Math::Vector3 v_body = world_to_body(
@@ -139,12 +128,27 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     // u = Forward (X), v = Side (Y), w = Down (Z-down? No, Z-up system: w is Up)
                     // ...
                     
-                    aero[i].angle_of_attack = Math::to_degrees(std::atan2(-v_body.z, v_body.x));
+                    const double alpha_raw = Math::to_degrees(std::atan2(-v_body.z, v_body.x));
                     
                     // Beta = asin(v_body.y / v_total)
-                    double beta_arg = v_body.y / v_total;
+                    double beta_arg = v_body.y / std::max(v_total, 1.0e-6);
                     beta_arg = std::clamp(beta_arg, -1.0, 1.0);
-                    aero[i].sideslip_angle = Math::to_degrees(std::asin(beta_arg));
+                    const double beta_raw = Math::to_degrees(std::asin(beta_arg));
+
+                    // Smooth low-speed transition to avoid abrupt angle jumps during taxi/takeoff roll.
+                    // Keep previous angles at very low speed and blend toward measured values as speed rises.
+                    constexpr double kBlendStartMps = 2.0;
+                    constexpr double kBlendEndMps = 8.0;
+                    double w = 1.0;
+                    if (v_total <= kBlendStartMps) {
+                        w = 0.0;
+                    } else if (v_total < kBlendEndMps) {
+                        w = (v_total - kBlendStartMps) / (kBlendEndMps - kBlendStartMps);
+                    }
+                    w = std::clamp(w, 0.0, 1.0);
+
+                    aero[i].angle_of_attack = (1.0 - w) * aero[i].angle_of_attack + w * alpha_raw;
+                    aero[i].sideslip_angle = (1.0 - w) * aero[i].sideslip_angle + w * beta_raw;
                     
                     // Clamp for safety
                     aero[i].angle_of_attack = std::max(-90.0, std::min(90.0, aero[i].angle_of_attack));
