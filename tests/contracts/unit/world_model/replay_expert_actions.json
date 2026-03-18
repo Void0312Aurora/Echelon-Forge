@@ -1,0 +1,22 @@
+{
+  "type": "unit_regression",
+  "check_kind": "replay_expert_actions",
+  "expert_offset": 0.123,
+  "roundtrip": {
+    "T": 8,
+    "obs_dim": 4,
+    "action_dim": 3,
+    "seed": 123,
+    "batch_size": 2,
+    "seq_len": 5,
+    "batch_rng_seed": 1
+  },
+  "fallback": {
+    "T": 6,
+    "obs_dim": 3,
+    "action_dim": 2,
+    "batch_size": 1,
+    "seq_len": 6,
+    "batch_rng_seed": 2
+  }
+}

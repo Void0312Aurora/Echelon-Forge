@@ -1,0 +1,14 @@
+{
+  "type": "unit_regression",
+  "check_kind": "scripted_stable_flight_rudder_sign",
+  "action_dim": 17,
+  "dt": 0.05,
+  "instrument_dim": 42,
+  "mission": [3.0, 90.0, 1200.0, 210.0],
+  "beta_index": 6,
+  "beta_deg": 5.0,
+  "yaw_rate_index": 14,
+  "yaw_rate_dps": 10.0,
+  "rudder_index": 2,
+  "rudder_min": 0.0
+}

@@ -23,11 +23,15 @@ class ScriptedTakeoffController:
         self.action_dim = int(action_dim)
         self.dt = float(dt)
         self._loc_int = 0.0
+        self._dep_trk_int = 0.0
         self._target_track_deg: float | None = None
+        self._mission_track_deg: float | None = None
 
     def reset(self, obs: dict | None = None) -> None:
         self._loc_int = 0.0
+        self._dep_trk_int = 0.0
         self._target_track_deg = None
+        self._mission_track_deg = None
         if obs is not None:
             try:
                 inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
@@ -37,17 +41,32 @@ class ScriptedTakeoffController:
                     self._target_track_deg = float(inst[9])
             except Exception:
                 self._target_track_deg = None
+            try:
+                mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
+                if mission.size >= 2:
+                    self._mission_track_deg = float(mission[1])
+            except Exception:
+                self._mission_track_deg = None
 
     def step(self, obs: dict) -> np.ndarray:
         inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
+        mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
         ias = float(inst[0]) if inst.size >= 1 else 0.0
         alt_radar = float(inst[3]) if inst.size >= 4 else 0.0
+        if mission.size >= 2:
+            try:
+                self._mission_track_deg = float(mission[1])
+            except Exception:
+                pass
 
         dt = self.dt if self.dt > 1.0e-6 else 0.05
 
         # Initialize the runway/desired track the first time we see a valid heading, while clearly on ground.
         if self._target_track_deg is None and inst.size >= 10 and alt_radar < 5.0 and ias < 25.0:
             self._target_track_deg = float(inst[9])
+        desired_track_deg = self._mission_track_deg
+        if desired_track_deg is None:
+            desired_track_deg = self._target_track_deg
 
         a = np.zeros((int(self.action_dim),), dtype=np.float32)
 
@@ -145,10 +164,50 @@ class ScriptedTakeoffController:
                 # If ILS is invalid or we're well airborne, bleed off integrator.
                 self._loc_int *= max(0.0, 1.0 - 2.0 * dt)
 
-                # Without ILS (or after liftoff), hold runway *track* with a small correction.
-                if self.action_dim >= 3 and ias > 10.0 and alt_radar < 30.0 and self._target_track_deg is not None:
-                    trk_gain = 0.02
-                    a[2] = float(np.clip(-trk_gain * trk_err, -0.6, 0.6))
+            # Departure hold after liftoff: keep the runway/departure ground track until a safe climb height.
+            if desired_track_deg is not None and 5.0 <= alt_radar < 150.0:
+                trk_deg = float(inst[30]) if inst.size >= 31 else (float(inst[9]) if inst.size >= 10 else 0.0)
+                if not np.isfinite(trk_deg):
+                    trk_deg = float(inst[9]) if inst.size >= 10 else 0.0
+                roll_deg = float(inst[8]) if inst.size >= 9 else 0.0
+                hdg_deg = float(inst[9]) if inst.size >= 10 else trk_deg
+                beta = float(inst[6]) if inst.size >= 7 else 0.0
+                p_deg_s = float(inst[12]) if inst.size >= 13 else 0.0
+                r_deg_s = float(inst[14]) if inst.size >= 15 else 0.0
+                trk_err_air = float(_wrap_deg(float(desired_track_deg) - trk_deg))
+                hdg_err_air = float(_wrap_deg(float(desired_track_deg) - hdg_deg))
+
+                # Keep a bounded integral on track error to learn the crab bias required under crosswind/shear.
+                leak = 0.35  # 1/s
+                self._dep_trk_int = float(self._dep_trk_int) * max(0.0, 1.0 - leak * dt) + trk_err_air * dt
+                self._dep_trk_int = float(np.clip(self._dep_trk_int, -12.0, 12.0))
+
+                # Build a gentle bank command rather than trying to yaw the aircraft onto track.
+                if alt_radar < 30.0:
+                    bank_limit = 10.0
+                elif alt_radar < 80.0:
+                    bank_limit = 14.0
+                else:
+                    bank_limit = 18.0
+                bank_cmd = float(
+                    np.clip(
+                        0.95 * trk_err_air + 0.10 * self._dep_trk_int + 0.08 * hdg_err_air,
+                        -bank_limit,
+                        bank_limit,
+                    )
+                )
+                stick_roll = float(np.clip(0.065 * (bank_cmd - roll_deg) - 0.028 * p_deg_s, -0.40, 0.40))
+
+                # Keep rudder mostly as coordination/yaw damping, with only a small track-error feedforward.
+                rud_ff = 0.016 * trk_err_air + 0.006 * hdg_err_air + 0.010 * self._dep_trk_int
+                rud_cmd = float(np.clip(rud_ff + 0.12 * beta + 0.08 * r_deg_s, -0.35, 0.35))
+
+                if self.action_dim >= 4:
+                    a[1] = stick_roll
+                if self.action_dim >= 3:
+                    a[2] = rud_cmd
+            else:
+                self._dep_trk_int *= max(0.0, 1.0 - 1.5 * dt)
 
         # Rotate/climb schedule (stick pitch)
         if self.action_dim >= 1:

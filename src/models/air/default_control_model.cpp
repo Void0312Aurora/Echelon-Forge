@@ -193,6 +193,23 @@ public:
 	            double q_cmd = stick_pitch_f * kQMaxRadS;
 	            double r_cmd = stick_yaw_cmd * kRMaxRadS;
 
+                // F-16-style directional stability augmentation:
+                // - damp sideslip (beta)
+                // - damp yaw rate
+                // This uses only physical state and prevents RL or scripted policies from turning rudder
+                // exploration into an unrecoverable dutch-roll / slip oscillation.
+                if (!on_ground && !fbw_off_for_rl) {
+                    const double beta_rad = to_radians(aero->sideslip_angle);
+                    double beta_gain = 1.10;
+                    double yaw_rate_gain = 0.55;
+                    if (fbw_relaxed_for_rl) {
+                        beta_gain *= 0.7;
+                        yaw_rate_gain *= 0.7;
+                    }
+                    r_cmd += (-beta_gain * beta_rad) + (-yaw_rate_gain * ang_vel->r);
+                    r_cmd = std::clamp(r_cmd, -kRMaxRadS, kRMaxRadS);
+                }
+
                 // Ground rotation/attitude protection (tailstrike/PIO reduction).
                 if (on_ground && !fbw_off_for_rl) {
 	                constexpr double kPitchSoftDeg = 8.0;

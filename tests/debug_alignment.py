@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from gym_envs.universal_env import UniversalEnv
 
 def debug_alignment():
-    env = UniversalEnv(scenario_path="scenarios/takeoff.json")
+    env = UniversalEnv(scenario_path="scenarios/takeoff/takeoff.json")
     
     # Reset FIRST to trigger import/merge
     obs, _ = env.reset(seed=42)

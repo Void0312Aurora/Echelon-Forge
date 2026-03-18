@@ -1,0 +1,14 @@
+{
+  "type": "unit_regression",
+  "check_kind": "takeoff_safe_action_bias",
+  "action_mode": "takeoff4",
+  "scenario": "scenarios/takeoff/takeoff_stage1_runway45.json",
+  "n_steps": 8,
+  "batch_size": 8,
+  "n_epochs": 1,
+  "learning_rate": 0.0003,
+  "gamma": 0.99,
+  "min_action_dim": 4,
+  "expected_throttle_bias": 1.0,
+  "neutral_indices": [0, 1, 2]
+}

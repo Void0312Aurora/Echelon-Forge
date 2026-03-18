@@ -17,7 +17,7 @@ set -euo pipefail
 PY="${PY:-./.venv/bin/python}"
 PY_ARGS=(-u)
 
-SCENARIO="${SCENARIO:-scenarios/cruise_waypoints_stresswind.json}"
+SCENARIO="${SCENARIO:-scenarios/cruise/cruise_waypoints_stresswind_rewardbalance_v1.json}"
 
 # Base checkpoint: a stable-flight world-model policy trained with full action + ARB visual + proprio.
 BASE_CKPT="${BASE_CKPT:-experiments/wm_stable_flight_full_visual_proprio_offline_bc_v28_mixv4_dagger_ft_thr10/checkpoint.pt}"

@@ -1,0 +1,12 @@
+{
+  "type": "loader_command_chain",
+  "scenario": "scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
+  "seed": 7,
+  "expected_phase_names": [
+    "scramble",
+    "takeoff",
+    "departure"
+  ],
+  "expected_intent_command_code": 1,
+  "expected_kernel_command_code": 1
+}

@@ -1,0 +1,16 @@
+{
+  "type": "unit_regression",
+  "check_kind": "kernel_flight_regression",
+  "controller_kind": "manual_takeoff",
+  "scenario": "scenarios/takeoff/takeoff.json",
+  "seed": 42,
+  "max_steps": 2000,
+  "target_pitch_deg": 15.0,
+  "rotation_speed_mps": 100.0,
+  "pitch_gain": 0.05,
+  "gear_up_alt_m": 30.0,
+  "checks": {
+    "success_alt_min": 300.0,
+    "success_speed_min": 150.0
+  }
+}

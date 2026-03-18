@@ -51,6 +51,11 @@ public:
     // dir_from_deg uses NAV convention: 0=North, CW positive.
     // shear_mps_per_km is applied in the "to" direction (same as the base wind).
     virtual void set_wind(double /*speed_mps*/, double /*dir_from_deg*/, double /*shear_mps_per_km*/) {}
+
+    // Terrain profile configuration.
+    // "flat" means zero-elevation terrain outside explicit zones.
+    // "legacy"/"hill"/"gaussian_hill" preserve the historical procedural mountain.
+    virtual void set_terrain_type(const std::string& /*terrain_type*/) {}
 };
 
 struct EnvironmentModelRef {

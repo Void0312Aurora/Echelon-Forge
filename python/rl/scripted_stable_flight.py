@@ -83,12 +83,14 @@ class ScriptedStableFlightController:
             trk_err = _wrap_deg(float(self._hdg_ref) - gtrk)
             bank_cmd = float(np.clip(0.80 * trk_err, -35.0, 35.0))
             stick_roll = float(np.clip(0.06 * (bank_cmd - roll) - 0.03 * p_rate, -0.9, 0.9))
-            rudder = float(np.clip(-0.25 * beta - 0.06 * r_rate, -0.6, 0.6))
+            # PilotAction.rudder uses "positive = nose right". Positive beta / positive yaw rate in this sim
+            # need a positive pedal command for damping; the previous sign created a positive-feedback yaw loop.
+            rudder = float(np.clip(0.25 * beta + 0.06 * r_rate, -0.6, 0.6))
         else:
             hdg_err = _wrap_deg(float(self._hdg_ref) - hdg)
             bank_cmd = float(np.clip(0.60 * hdg_err, -35.0, 35.0))
             stick_roll = float(np.clip(0.05 * (bank_cmd - roll) - 0.02 * p_rate, -0.8, 0.8))
-            rudder = float(np.clip(-0.20 * beta - 0.05 * r_rate, -0.5, 0.5))
+            rudder = float(np.clip(0.20 * beta + 0.05 * r_rate, -0.5, 0.5))
 
         # --- Altitude hold -> pitch target (deg) ---
         # The sim uses a relatively high cruise speed by default; tighten altitude holding with

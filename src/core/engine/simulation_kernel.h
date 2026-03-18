@@ -70,6 +70,7 @@ public:
     void clear_zones();
     void add_zone(const std::string& name, double x, double y, double width, double height, double heading, int surface_type);
     void set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km = 0.0);
+    void set_terrain_type(const std::string& terrain_type);
     
     // Action Interface: Set command for a unit
     void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m);
@@ -96,6 +97,13 @@ public:
     // [NEW] Digital Pilot Interface
     void set_pilot_action(uint64_t entity_id, const PilotAction& action);
     void set_mission_command(uint64_t entity_id, const MissionCommand& cmd);
+    void set_task_order(uint64_t entity_id, const TaskOrder& order);
+    void set_leader_intent(uint64_t entity_id, const LeaderIntent& intent);
+    void set_pilot_report(uint64_t entity_id, const PilotReport& report);
+    TaskOrder get_task_order(uint64_t entity_id);
+    LeaderIntent get_leader_intent(uint64_t entity_id);
+    MissionCommand get_mission_command(uint64_t entity_id);
+    PilotReport get_pilot_report(uint64_t entity_id);
     
     // Observation Interface
     std::vector<double> get_unit_position(uint64_t entity_id); // Returns [x, y, z]

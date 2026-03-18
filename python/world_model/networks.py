@@ -106,17 +106,109 @@ class ObservationEncoder(nn.Module):
 
 
 class VisualEncoder(nn.Module):
-    def __init__(self, *, visual_dim: int, embed_dim: int = 256):
+    def __init__(
+        self,
+        *,
+        visual_shape: tuple[int, int, int] | None,
+        visual_dim: int,
+        embed_dim: int = 256,
+        encoder_type: str = "cnn",
+        cnn_channels: int = 64,
+    ):
         super().__init__()
+        self.visual_shape = None if visual_shape is None else tuple(int(x) for x in visual_shape)
         self.visual_dim = int(visual_dim)
         self.embed_dim = int(embed_dim)
-        hidden = [1024, 1024] if self.visual_dim <= 5000 else [512, 512]
-        self.net = MLP(self.visual_dim, hidden, self.embed_dim, layer_norm=True)
+        self.encoder_type = str(encoder_type).strip().lower()
+        self.cnn_channels = int(cnn_channels)
+
+        if self.encoder_type not in ("cnn", "mlp"):
+            raise ValueError(f"Unknown visual encoder_type: {encoder_type!r}")
+
+        if self.encoder_type == "cnn":
+            if self.visual_shape is None:
+                raise ValueError("CNN visual encoder requires visual_shape")
+            h, w, c = self.visual_shape
+            c1 = max(16, int(self.cnn_channels))
+            c2 = max(32, c1)
+            c3 = max(32, c1)
+            if (h, w) == (48, 96):
+                self.net = nn.Sequential(
+                    nn.Conv2d(c, c1, kernel_size=8, stride=4),
+                    nn.ReLU(),
+                    nn.Conv2d(c1, c2, kernel_size=4, stride=2),
+                    nn.ReLU(),
+                    nn.Conv2d(c2, c3, kernel_size=3, stride=1),
+                    nn.ReLU(),
+                    nn.Flatten(),
+                )
+            else:
+                layers: list[nn.Module] = []
+                in_ch = c
+                cur_h = h
+                cur_w = w
+                conv_specs = ((c1, 5, 2), (c2, 3, 2), (c3, 3, 1))
+
+                applied = 0
+                for out_ch, kernel, stride in conv_specs:
+                    if cur_h < kernel or cur_w < kernel:
+                        continue
+                    layers.append(nn.Conv2d(in_ch, out_ch, kernel_size=kernel, stride=stride))
+                    layers.append(nn.ReLU())
+                    cur_h = (cur_h - kernel) // stride + 1
+                    cur_w = (cur_w - kernel) // stride + 1
+                    in_ch = out_ch
+                    applied += 1
+
+                if applied == 0:
+                    kernel = 3 if min(cur_h, cur_w) >= 3 else 1
+                    layers.append(nn.Conv2d(in_ch, c1, kernel_size=kernel, stride=1))
+                    layers.append(nn.ReLU())
+                    cur_h = max(1, cur_h - kernel + 1)
+                    cur_w = max(1, cur_w - kernel + 1)
+
+                layers.append(nn.AdaptiveAvgPool2d((max(1, min(2, cur_h)), max(1, min(4, cur_w)))))
+                layers.append(nn.Flatten())
+                self.net = nn.Sequential(*layers)
+
+            with torch.no_grad():
+                sample = torch.zeros((1, c, h, w), dtype=torch.float32)
+                flatten_dim = int(self.net(sample).shape[1])
+            self.proj = nn.Linear(flatten_dim, self.embed_dim)
+        else:
+            hidden = [1024, 1024] if self.visual_dim <= 5000 else [512, 512]
+            self.net = MLP(self.visual_dim, hidden, self.embed_dim, layer_norm=True)
+            self.proj = None
 
     def forward(self, visual: torch.Tensor) -> torch.Tensor:
-        if visual.ndim > 2:
-            visual = visual.reshape(visual.shape[0], -1)
-        return self.net(visual)
+        if self.encoder_type == "mlp":
+            if visual.ndim > 2:
+                visual = visual.reshape(visual.shape[0], -1)
+            return self.net(visual)
+
+        if self.visual_shape is None:
+            raise RuntimeError("CNN visual encoder is missing visual_shape")
+        h, w, c = self.visual_shape
+        if visual.ndim == 2:
+            if int(visual.shape[1]) != int(self.visual_dim):
+                raise ValueError(
+                    f"Expected flattened visual dim={self.visual_dim}, got shape={tuple(visual.shape)}"
+                )
+            visual = visual.reshape(visual.shape[0], h, w, c)
+        elif visual.ndim != 4:
+            raise ValueError(f"Expected visual ndim in (2, 4), got shape={tuple(visual.shape)}")
+
+        if visual.ndim == 4 and tuple(int(x) for x in visual.shape[1:]) == (h, w, c):
+            visual = visual.permute(0, 3, 1, 2)
+        elif visual.ndim == 4 and tuple(int(x) for x in visual.shape[1:]) == (c, h, w):
+            pass
+        else:
+            raise ValueError(
+                f"Unexpected visual shape={tuple(visual.shape)}; expected "
+                f"(B,{h},{w},{c}) or (B,{c},{h},{w})"
+            )
+        feat = self.net(visual)
+        return self.proj(feat)
 
 
 class MultiModalEncoder(nn.Module):
@@ -125,19 +217,33 @@ class MultiModalEncoder(nn.Module):
         *,
         obs_vec_dim: int,
         vec_embed_dim: int = 256,
-        visual_dim: int | None = None,
+        visual_shape: tuple[int, int, int] | None = None,
         visual_embed_dim: int = 256,
+        visual_encoder_type: str = "cnn",
+        visual_cnn_channels: int = 64,
     ):
         super().__init__()
         self.obs_vec_dim = int(obs_vec_dim)
         self.vec_embed_dim = int(vec_embed_dim)
-        self.visual_dim = None if visual_dim is None else int(visual_dim)
+        self.visual_shape = None if visual_shape is None else tuple(int(x) for x in visual_shape)
+        self.visual_dim = None
+        if self.visual_shape is not None:
+            h, w, c = self.visual_shape
+            self.visual_dim = int(h * w * c)
         self.visual_embed_dim = int(visual_embed_dim)
+        self.visual_encoder_type = str(visual_encoder_type).strip().lower()
+        self.visual_cnn_channels = int(visual_cnn_channels)
 
         self.vec = ObservationEncoder(obs_vec_dim=self.obs_vec_dim, embed_dim=self.vec_embed_dim)
         self.visual = None
         if self.visual_dim is not None:
-            self.visual = VisualEncoder(visual_dim=self.visual_dim, embed_dim=self.visual_embed_dim)
+            self.visual = VisualEncoder(
+                visual_shape=self.visual_shape,
+                visual_dim=self.visual_dim,
+                embed_dim=self.visual_embed_dim,
+                encoder_type=self.visual_encoder_type,
+                cnn_channels=self.visual_cnn_channels,
+            )
 
     @property
     def embed_dim(self) -> int:
@@ -203,27 +309,26 @@ class WorldModel(nn.Module):
         visual_shape: tuple[int, int, int] | None = None,
         vec_embed_dim: int = 256,
         visual_embed_dim: int = 256,
+        visual_encoder_type: str = "cnn",
+        visual_cnn_channels: int = 64,
         deter_dim: int = 512,
         stoch_dim: int = 64,
     ):
         super().__init__()
-        visual_dim = None
-        if visual_shape is not None:
-            h, w, c = (int(visual_shape[0]), int(visual_shape[1]), int(visual_shape[2]))
-            visual_dim = h * w * c
-
         self.encoder = MultiModalEncoder(
             obs_vec_dim=obs_vec_dim,
             vec_embed_dim=vec_embed_dim,
-            visual_dim=visual_dim,
+            visual_shape=visual_shape,
             visual_embed_dim=visual_embed_dim,
+            visual_encoder_type=visual_encoder_type,
+            visual_cnn_channels=visual_cnn_channels,
         )
         self.rssm = RSSM(action_dim=action_dim, embed_dim=self.encoder.embed_dim, deter_dim=deter_dim, stoch_dim=stoch_dim)
         feat_dim = deter_dim + stoch_dim
         self.decoder = ObservationDecoder(feat_dim=feat_dim, obs_vec_dim=obs_vec_dim)
         self.visual_decoder = None
-        if visual_dim is not None:
-            self.visual_decoder = VisualDecoder(feat_dim=feat_dim, visual_dim=visual_dim)
+        if self.encoder.visual_dim is not None:
+            self.visual_decoder = VisualDecoder(feat_dim=feat_dim, visual_dim=int(self.encoder.visual_dim))
         self.reward = RewardHead(feat_dim=feat_dim)
         self.cont = ContinueHead(feat_dim=feat_dim)
 

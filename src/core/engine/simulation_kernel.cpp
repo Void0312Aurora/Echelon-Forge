@@ -65,6 +65,9 @@ SimulationKernel::SimulationKernel()
     ecs.component<MovementCommand>();
     ecs.component<PilotAction>(); // New
     ecs.component<MissionCommand>(); // New
+    ecs.component<TaskOrder>();
+    ecs.component<LeaderIntent>();
+    ecs.component<PendingMissionCommand>();
     ecs.component<ActionCommand>();
     ecs.component<ActionSpaceConfig>();
     ecs.component<CommandLag>();
@@ -100,6 +103,7 @@ SimulationKernel::SimulationKernel()
     ecs.component<FlightModel>(); 
     ecs.component<Score>();
     ecs.component<DataLink>(); // New Component
+    ecs.component<PilotReport>();
     ecs.component<InstrumentState>(); // New Component for Digital Pilot
     ecs.component<EGI>(); // GPS/INS
     ecs.component<TrackDatabase>();
@@ -446,6 +450,9 @@ void SimulationKernel::set_command_link(uint64_t entity_id, double latency_s, do
         }
         if (!e.has<PendingActionCommand>()) {
             e.set<PendingActionCommand>({{0.0, 0.0, 0.0, 0.0, false}, 0.0, false});
+        }
+        if (!e.has<PendingMissionCommand>()) {
+            e.set<PendingMissionCommand>({{}, 0.0, false});
         }
     }
 }
@@ -932,6 +939,12 @@ void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double sh
     }
 }
 
+void SimulationKernel::set_terrain_type(const std::string& terrain_type) {
+    if (environment_model_) {
+        environment_model_->set_terrain_type(terrain_type);
+    }
+}
+
 void SimulationKernel::set_pilot_action(uint64_t entity_id, const PilotAction& action) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
@@ -947,12 +960,103 @@ void SimulationKernel::set_pilot_action(uint64_t entity_id, const PilotAction& a
 void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionCommand& cmd) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
-        e.set<MissionCommand>(cmd);
-        MissionCommand* mc = e.get_mut<MissionCommand>();
-        mc->active = true;
+        const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+        double current_time = info ? (double)info->world_time_total : 0.0;
+        const CommandLink* link = e.get<CommandLink>();
+        if (link && (link->latency_s > 0.0 || link->drop_prob > 0.0)) {
+            if (!e.has<MissionCommand>()) {
+                e.set<MissionCommand>({});
+            }
+            uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
+                            (entity_id * 0xd6e8feb86659fd93ULL) ^ 0x13579bdfULL;
+            double roll = deterministic_uniform01(seed);
+            if (roll >= link->drop_prob) {
+                MissionCommand pending_cmd = cmd;
+                pending_cmd.active = true;
+                e.set<PendingMissionCommand>({pending_cmd, current_time + link->latency_s, true});
+            }
+            return;
+        }
+
+        MissionCommand next = cmd;
+        next.active = true;
+        e.set<MissionCommand>(next);
     } else {
         spdlog::warn("Attempted to set mission command for invalid entity ID: {}", entity_id);
     }
+}
+
+void SimulationKernel::set_task_order(uint64_t entity_id, const TaskOrder& order) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        TaskOrder next = order;
+        next.active = true;
+        e.set<TaskOrder>(next);
+    } else {
+        spdlog::warn("Attempted to set task order for invalid entity ID: {}", entity_id);
+    }
+}
+
+void SimulationKernel::set_leader_intent(uint64_t entity_id, const LeaderIntent& intent) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        LeaderIntent next = intent;
+        next.active = true;
+        e.set<LeaderIntent>(next);
+    } else {
+        spdlog::warn("Attempted to set leader intent for invalid entity ID: {}", entity_id);
+    }
+}
+
+void SimulationKernel::set_pilot_report(uint64_t entity_id, const PilotReport& report) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        PilotReport next = report;
+        next.active = true;
+        e.set<PilotReport>(next);
+    } else {
+        spdlog::warn("Attempted to set pilot report for invalid entity ID: {}", entity_id);
+    }
+}
+
+TaskOrder SimulationKernel::get_task_order(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const TaskOrder* order = e.get<TaskOrder>()) {
+            return *order;
+        }
+    }
+    return TaskOrder{};
+}
+
+LeaderIntent SimulationKernel::get_leader_intent(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const LeaderIntent* intent = e.get<LeaderIntent>()) {
+            return *intent;
+        }
+    }
+    return LeaderIntent{};
+}
+
+MissionCommand SimulationKernel::get_mission_command(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const MissionCommand* cmd = e.get<MissionCommand>()) {
+            return *cmd;
+        }
+    }
+    return MissionCommand{};
+}
+
+PilotReport SimulationKernel::get_pilot_report(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const PilotReport* report = e.get<PilotReport>()) {
+            return *report;
+        }
+    }
+    return PilotReport{};
 }
 
 std::vector<float> SimulationKernel::get_visual_observation(uint64_t entity_id) {

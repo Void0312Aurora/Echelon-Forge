@@ -393,6 +393,7 @@ public:
             e.set<CommandLink>(def.command_link);
             e.set<PendingMovementCommand>({{0.0, 0.0, 0.0, false}, 0.0, false});
             e.set<PendingActionCommand>({{0.0, 0.0, 0.0, 0.0, false}, 0.0, false});
+            e.set<PendingMissionCommand>({{}, 0.0, false});
         }
        // ActionCommand
     e.set<ActionCommand>({

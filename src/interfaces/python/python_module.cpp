@@ -55,18 +55,93 @@ NB_MODULE(ef_py, m) {
 
     nb::enum_<CommMsgType>(m, "CommMsgType")
         .value("None", CommMsgType::None)
+        .value("REP_WILCO", CommMsgType::REP_WILCO)
+        .value("REP_ROGER", CommMsgType::REP_ROGER)
+        .value("REP_UNABLE", CommMsgType::REP_UNABLE)
+        .value("REP_CANT_DO", CommMsgType::REP_CANT_DO)
+        .value("STATUS_FUEL", CommMsgType::STATUS_FUEL)
+        .value("STATUS_AMMO", CommMsgType::STATUS_AMMO)
+        .value("STATUS_DAMAGE", CommMsgType::STATUS_DAMAGE)
+        .value("STATUS_POS", CommMsgType::STATUS_POS)
+        .value("REP_TALLY", CommMsgType::REP_TALLY)
+        .value("REP_VISUAL", CommMsgType::REP_VISUAL)
+        .value("REP_BLIND", CommMsgType::REP_BLIND)
+        .value("REP_SPIKE", CommMsgType::REP_SPIKE)
+        .value("REP_FAILED_SORT", CommMsgType::REP_FAILED_SORT)
+        .value("REP_ENGAGED", CommMsgType::REP_ENGAGED)
+        .value("REP_SPLASH", CommMsgType::REP_SPLASH)
+        .value("REP_DEFENDING", CommMsgType::REP_DEFENDING)
+        .value("REP_ON_STATION", CommMsgType::REP_ON_STATION)
+        .value("REP_FENCE_IN", CommMsgType::REP_FENCE_IN)
+        .value("REP_FENCE_OUT", CommMsgType::REP_FENCE_OUT)
+        .value("REP_RTB", CommMsgType::REP_RTB)
+        .value("WARN_FLAMEOUT", CommMsgType::WARN_FLAMEOUT)
+        .value("WARN_BINGO", CommMsgType::WARN_BINGO)
+        .value("WARN_LAUNCH", CommMsgType::WARN_LAUNCH)
+        .value("ACK_WILCO", CommMsgType::ACK_WILCO)
+        .value("ACK_ROGER", CommMsgType::ACK_ROGER)
+        .value("ACK_UNABLE", CommMsgType::ACK_UNABLE)
+        .value("ACK_CANT_DO", CommMsgType::ACK_CANT_DO)
         .value("ReportContact", CommMsgType::ReportContact)
         .value("AssignTask", CommMsgType::AssignTask)
         .value("StatusUpdate", CommMsgType::StatusUpdate)
         .value("RequestSupport", CommMsgType::RequestSupport)
         .export_values();
 
+    nb::enum_<TaskType>(m, "TaskType")
+        .value("Idle", TaskType::Idle)
+        .value("Scramble", TaskType::Scramble)
+        .value("CAP", TaskType::CAP)
+        .value("RTB", TaskType::RTB)
+        .value("RecoverLand", TaskType::RecoverLand)
+        .value("CAPMission", TaskType::CAPMission);
+
+    nb::enum_<StationType>(m, "StationType")
+        .value("Orbit", StationType::Orbit)
+        .value("Racetrack", StationType::Racetrack)
+        .value("RouteCAP", StationType::RouteCAP);
+
+    nb::enum_<LeaderPhase>(m, "LeaderPhase")
+        .value("Idle", LeaderPhase::Idle)
+        .value("Scramble", LeaderPhase::Scramble)
+        .value("Takeoff", LeaderPhase::Takeoff)
+        .value("Departure", LeaderPhase::Departure)
+        .value("TransitToStation", LeaderPhase::TransitToStation)
+        .value("EstablishCAP", LeaderPhase::EstablishCAP)
+        .value("OnStation", LeaderPhase::OnStation)
+        .value("Reposition", LeaderPhase::Reposition)
+        .value("RTB", LeaderPhase::RTB)
+        .value("ApproachArmed", LeaderPhase::ApproachArmed)
+        .value("LandingFinal", LeaderPhase::LandingFinal)
+        .value("Rollout", LeaderPhase::Rollout)
+        .value("Abort", LeaderPhase::Abort);
+
     nb::class_<CommPacket>(m, "CommPacket")
+        .def(nb::init<>())
         .def_rw("sender_id", &CommPacket::sender_id)
         .def_rw("target_receiver_id", &CommPacket::target_receiver_id)
         .def_rw("type", &CommPacket::type)
         .def_rw("entity_ref", &CommPacket::entity_ref)
+        .def_rw("location_x", &CommPacket::location_x)
+        .def_rw("location_y", &CommPacket::location_y)
+        .def_rw("location_z", &CommPacket::location_z)
+        .def_rw("value", &CommPacket::value)
+        .def_rw("status_code", &CommPacket::status_code)
         .def_rw("timestamp", &CommPacket::timestamp);
+
+    nb::class_<PilotReport>(m, "PilotReport")
+        .def(nb::init<>())
+        .def_rw("report_type", &PilotReport::report_type)
+        .def_rw("sender_id", &PilotReport::sender_id)
+        .def_rw("task_id", &PilotReport::task_id)
+        .def_rw("phase_id", &PilotReport::phase_id)
+        .def_rw("timestamp_s", &PilotReport::timestamp_s)
+        .def_rw("status_value", &PilotReport::status_value)
+        .def_rw("entity_ref", &PilotReport::entity_ref)
+        .def_rw("location_x_m", &PilotReport::location_x_m)
+        .def_rw("location_y_m", &PilotReport::location_y_m)
+        .def_rw("location_z_m", &PilotReport::location_z_m)
+        .def_rw("active", &PilotReport::active);
 
     nb::class_<RWREvent>(m, "RWREvent")
         .def_ro("source_id", &RWREvent::source_id)
@@ -218,6 +293,53 @@ NB_MODULE(ef_py, m) {
         .def_rw("authorization_to_fire", &MissionCommand::authorization_to_fire)
         .def_rw("active", &MissionCommand::active);
 
+    nb::class_<TaskOrder>(m, "TaskOrder")
+        .def(nb::init<>())
+        .def_rw("task_id", &TaskOrder::task_id)
+        .def_rw("task_type", &TaskOrder::task_type)
+        .def_rw("priority", &TaskOrder::priority)
+        .def_rw("issuer_id", &TaskOrder::issuer_id)
+        .def_rw("assignee_id", &TaskOrder::assignee_id)
+        .def_rw("active", &TaskOrder::active)
+        .def_rw("issue_time_s", &TaskOrder::issue_time_s)
+        .def_rw("anchor_x_m", &TaskOrder::anchor_x_m)
+        .def_rw("anchor_y_m", &TaskOrder::anchor_y_m)
+        .def_rw("anchor_z_m", &TaskOrder::anchor_z_m)
+        .def_rw("station_type", &TaskOrder::station_type)
+        .def_rw("station_radius_m", &TaskOrder::station_radius_m)
+        .def_rw("station_leg_length_m", &TaskOrder::station_leg_length_m)
+        .def_rw("station_heading_deg", &TaskOrder::station_heading_deg)
+        .def_rw("altitude_block_min_m", &TaskOrder::altitude_block_min_m)
+        .def_rw("altitude_block_max_m", &TaskOrder::altitude_block_max_m)
+        .def_rw("target_altitude_m", &TaskOrder::target_altitude_m)
+        .def_rw("speed_min_mps", &TaskOrder::speed_min_mps)
+        .def_rw("speed_max_mps", &TaskOrder::speed_max_mps)
+        .def_rw("target_speed_mps", &TaskOrder::target_speed_mps)
+        .def_rw("entry_condition_code", &TaskOrder::entry_condition_code)
+        .def_rw("exit_condition_code", &TaskOrder::exit_condition_code)
+        .def_rw("on_station_time_s", &TaskOrder::on_station_time_s)
+        .def_rw("fuel_bingo_override_kg", &TaskOrder::fuel_bingo_override_kg)
+        .def_rw("recovery_base_id", &TaskOrder::recovery_base_id)
+        .def_rw("recovery_runway_id", &TaskOrder::recovery_runway_id);
+
+    nb::class_<LeaderIntent>(m, "LeaderIntent")
+        .def(nb::init<>())
+        .def_rw("phase_id", &LeaderIntent::phase_id)
+        .def_rw("command_code", &LeaderIntent::command_code)
+        .def_rw("cmd_heading_deg", &LeaderIntent::cmd_heading_deg)
+        .def_rw("cmd_altitude_m", &LeaderIntent::cmd_altitude_m)
+        .def_rw("cmd_speed_mps", &LeaderIntent::cmd_speed_mps)
+        .def_rw("formation_id", &LeaderIntent::formation_id)
+        .def_rw("form_offset_x", &LeaderIntent::form_offset_x)
+        .def_rw("form_offset_y", &LeaderIntent::form_offset_y)
+        .def_rw("form_offset_z", &LeaderIntent::form_offset_z)
+        .def_rw("assigned_target_id", &LeaderIntent::assigned_target_id)
+        .def_rw("authorization_to_fire", &LeaderIntent::authorization_to_fire)
+        .def_rw("approach_armed", &LeaderIntent::approach_armed)
+        .def_rw("commit_to_land", &LeaderIntent::commit_to_land)
+        .def_rw("abort_flag", &LeaderIntent::abort_flag)
+        .def_rw("active", &LeaderIntent::active);
+
     nb::class_<SimulationKernel>(m, "SimulationKernel")
         .def(nb::init<>())
         .def("get_instrument_state", [](SimulationKernel& self, uint64_t entity_id) {
@@ -256,6 +378,9 @@ NB_MODULE(ef_py, m) {
         .def("set_wind", &SimulationKernel::set_wind,
              "Set global wind (speed m/s, dir_from_deg NAV, shear m/s per km)",
              nb::arg("speed_mps"), nb::arg("dir_from_deg"), nb::arg("shear_mps_per_km") = 0.0)
+        .def("set_terrain_type", &SimulationKernel::set_terrain_type,
+             "Set terrain profile (e.g. 'flat', 'legacy', 'hill')",
+             nb::arg("terrain_type"))
         .def("spawn_unit", [](SimulationKernel& self, Side side, const std::string& type, 
                               double x, double y, double z, 
                               double heading, double pitch, double roll,
@@ -311,6 +436,15 @@ NB_MODULE(ef_py, m) {
         .def("set_mission_command", &SimulationKernel::set_mission_command,
              "Set high-level mission intent for Digital Pilot",
              nb::arg("entity_id"), nb::arg("command"))
+        .def("set_task_order", &SimulationKernel::set_task_order,
+             "Set the C2 task order for the entity",
+             nb::arg("entity_id"), nb::arg("task_order"))
+        .def("set_leader_intent", &SimulationKernel::set_leader_intent,
+             "Set the leader-layer intent for the entity",
+             nb::arg("entity_id"), nb::arg("leader_intent"))
+        .def("set_pilot_report", &SimulationKernel::set_pilot_report,
+             "Store the latest pilot report for the entity",
+             nb::arg("entity_id"), nb::arg("pilot_report"))
 
         .def("set_command_lag", &SimulationKernel::set_command_lag, "Override command lag time constants for a unit",
              nb::arg("entity_id"),
@@ -371,6 +505,10 @@ NB_MODULE(ef_py, m) {
         .def("get_unit_health", &SimulationKernel::get_unit_health, "Get unit health [current, max]")
         .def("get_unit_fuel", &SimulationKernel::get_unit_fuel, nb::arg("entity_id"),
              "Returns [internal, max_internal, external, max_external]")
+        .def("get_task_order", &SimulationKernel::get_task_order, "Get the latest task order", nb::arg("entity_id"))
+        .def("get_leader_intent", &SimulationKernel::get_leader_intent, "Get the latest leader intent", nb::arg("entity_id"))
+        .def("get_mission_command", &SimulationKernel::get_mission_command, "Get the active mission command", nb::arg("entity_id"))
+        .def("get_pilot_report", &SimulationKernel::get_pilot_report, "Get the latest pilot report", nb::arg("entity_id"))
         .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
         .def("get_visual_observation", &SimulationKernel::get_visual_observation, 
              "Get ARB visual observation [H*W*C] tensor", nb::arg("entity_id"))

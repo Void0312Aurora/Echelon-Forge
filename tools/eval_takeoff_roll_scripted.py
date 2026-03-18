@@ -4,75 +4,32 @@ import sys
 
 import numpy as np
 
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
-def _repo_root() -> str:
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def _prepend_local_ef_py(repo_root: str) -> None:
-    build_dir = os.path.join(repo_root, "build")
-    if not os.path.isdir(build_dir):
-        return
-    if any(fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(build_dir)):
-        sys.path.insert(0, build_dir)
-
-
-def _percentile(xs: list[float], q: float) -> float:
-    if not xs:
-        return float("nan")
-    return float(np.percentile(np.asarray(xs, dtype=np.float64), q))
-
-
-def _fmt_stats(name: str, xs: list[float], *, unit: str = "") -> str:
-    if not xs:
-        return f"{name}: <empty>"
-    mean = float(np.mean(xs))
-    std = float(np.std(xs))
-    p50 = _percentile(xs, 50)
-    p90 = _percentile(xs, 90)
-    p95 = _percentile(xs, 95)
-    mn = float(np.min(xs))
-    mx = float(np.max(xs))
-    suffix = f" {unit}" if unit else ""
-    return (
-        f"{name}: mean={mean:.2f}{suffix} std={std:.2f}{suffix} "
-        f"p50={p50:.2f}{suffix} p90={p90:.2f}{suffix} p95={p95:.2f}{suffix} "
-        f"min={mn:.2f}{suffix} max={mx:.2f}{suffix}"
-    )
+from tools.eval_utils import add_common_env_args, bootstrap_repo_imports, format_stats, make_universal_env_from_args
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate takeoff ground-roll distance for the scripted controller")
-    parser.add_argument("--scenario", required=True)
-    parser.add_argument("--episodes", type=int, default=50)
-    parser.add_argument("--max_steps", type=int, default=2000)
-    parser.add_argument("--seed", type=int, default=140)
-    parser.add_argument("--action_mode", type=str, default="takeoff4", choices=["full", "takeoff2", "takeoff4"])
-    parser.add_argument("--include_visual", action="store_true")
-    parser.add_argument("--include_proprio", action="store_true")
-    parser.add_argument("--no_randomization", action="store_true")
+    add_common_env_args(
+        parser,
+        episodes_default=50,
+        max_steps_default=2000,
+        seed_default=140,
+        default_action_mode="takeoff4",
+        include_no_randomization=True,
+    )
     parser.add_argument("--wheel_off_alt_threshold", type=float, default=None)
     parser.add_argument("--liftoff_alt_threshold", type=float, default=None)
     parser.add_argument("--liftoff_ias_threshold", type=float, default=None)
     args = parser.parse_args()
 
-    repo_root = _repo_root()
-    _prepend_local_ef_py(repo_root)
-    sys.path.insert(0, repo_root)
+    bootstrap_repo_imports()
 
-    from gym_envs.universal_env import UniversalEnv  # noqa: E402
     from python.rl.scripted_takeoff import ScriptedTakeoffController  # noqa: E402
-
-    import world_model_train as wmt  # noqa: E402
-
-    env = UniversalEnv(
-        args.scenario,
-        include_visual=bool(args.include_visual),
-        include_proprio=bool(args.include_proprio),
-        action_mode=str(args.action_mode),
-    )
-    if bool(args.no_randomization):
-        wmt._apply_env_overrides(env, args)
+    env = make_universal_env_from_args(args)
 
     dt = float(env.sim.get_time_step())
 
@@ -221,16 +178,15 @@ def main() -> None:
     print(f"seed:       {args.seed}..{args.seed + total_eps - 1}")
     print(f"action_mode:{args.action_mode}")
     print("-" * 60)
-    print(_fmt_stats("wheel_off_distance", wheel_off_dist_m, unit="m"))
-    print(_fmt_stats("wheel_off_time", wheel_off_time_s, unit="s"))
-    print(_fmt_stats("wheel_off_ias", wheel_off_ias_mps, unit="m/s"))
+    print(format_stats("wheel_off_distance", wheel_off_dist_m, unit="m"))
+    print(format_stats("wheel_off_time", wheel_off_time_s, unit="s"))
+    print(format_stats("wheel_off_ias", wheel_off_ias_mps, unit="m/s"))
     print("-" * 60)
-    print(_fmt_stats("liftoff_distance", liftoff_dist_m, unit="m"))
-    print(_fmt_stats("liftoff_time", liftoff_time_s, unit="s"))
-    print(_fmt_stats("liftoff_ias", liftoff_ias_mps, unit="m/s"))
+    print(format_stats("liftoff_distance", liftoff_dist_m, unit="m"))
+    print(format_stats("liftoff_time", liftoff_time_s, unit="s"))
+    print(format_stats("liftoff_ias", liftoff_ias_mps, unit="m/s"))
     print("=" * 60)
 
 
 if __name__ == "__main__":
     main()
-

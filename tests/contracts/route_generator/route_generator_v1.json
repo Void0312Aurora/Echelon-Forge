@@ -1,0 +1,58 @@
+{
+  "type": "route_generator",
+  "scenario_inline": {
+    "scenario_name": "route_generator_v1_regression",
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 6000,
+      "terrain_type": "flat",
+      "randomization": {"world_yaw_range": [0.0, 0.0]},
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0}
+    },
+    "mission_command": {
+      "command_code": 3,
+      "target_heading": 90.0,
+      "target_altitude": 1200.0,
+      "target_speed": 210.0,
+      "waypoint_radius_m": 1000.0,
+      "randomization": {
+        "route_generator": {
+          "enabled": true,
+          "waypoint_count_range": [3, 5],
+          "first_leg_heading_delta_deg_range": [-20.0, 20.0],
+          "leg_length_m_range": [12000.0, 18000.0],
+          "turn_angle_deg_range": [-80.0, 80.0],
+          "min_turn_abs_deg": 15.0,
+          "altitude_m_range": [900.0, 1800.0],
+          "altitude_step_m_range": [-250.0, 250.0],
+          "speed_mps_range": [190.0, 230.0],
+          "waypoint_radius_m_range": [800.0, 1400.0]
+        }
+      }
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [0.0, 0.0, 1200.0],
+        "vel": [210.0, 0.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [],
+    "rewards": {"survival": 0.0}
+  },
+  "seeds": [11, 22],
+  "checks": {
+    "waypoint_count_range": [3, 5],
+    "distinct_routes": true,
+    "waypoint_attr_ranges": {
+      "altitude_m": [900.0, 1800.0],
+      "speed_mps": [190.0, 230.0]
+    },
+    "reachability_budget_from_scenario": true,
+    "reachability_budget_tolerance_m": 1.0
+  }
+}

@@ -186,6 +186,39 @@ def _parse_angle_deg_indices(value: str | None) -> tuple[int, ...]:
     return tuple(int(p) for p in parts)
 
 
+def _resolve_visual_encoder_settings(
+    *,
+    args: argparse.Namespace | None = None,
+    ckpt_cfg: dict | None = None,
+) -> tuple[str, int]:
+    if isinstance(ckpt_cfg, dict):
+        enc_type = str(ckpt_cfg.get("visual_encoder_type", "mlp")).strip().lower()
+        channels = int(ckpt_cfg.get("visual_cnn_channels", 64))
+    else:
+        enc_type = str(getattr(args, "visual_encoder_type", "cnn")).strip().lower()
+        channels = int(getattr(args, "visual_cnn_channels", 64))
+    if enc_type not in ("cnn", "mlp"):
+        raise ValueError(f"Unknown visual_encoder_type: {enc_type!r}")
+    return enc_type, max(16, channels)
+
+
+def _build_world_model(
+    *,
+    action_dim: int,
+    obs_vec_dim: int,
+    visual_shape: tuple[int, int, int] | None,
+    visual_encoder_type: str,
+    visual_cnn_channels: int,
+) -> WorldModel:
+    return WorldModel(
+        action_dim=action_dim,
+        obs_vec_dim=obs_vec_dim,
+        visual_shape=visual_shape,
+        visual_encoder_type=str(visual_encoder_type),
+        visual_cnn_channels=int(visual_cnn_channels),
+    )
+
+
 def collect_dataset(args: argparse.Namespace) -> None:
     set_seed(int(args.seed))
     rng = np.random.default_rng(int(args.seed))
@@ -285,14 +318,19 @@ def collect_dataset(args: argparse.Namespace) -> None:
         student_deterministic_state = bool(cfg.get("bc_deterministic_state", True))
         student_obs_norm_clip = cfg.get("obs_norm_clip", None)
         student_visual_norm_clip = cfg.get("visual_norm_clip", None)
+        student_visual_encoder_type, student_visual_cnn_channels = _resolve_visual_encoder_settings(ckpt_cfg=cfg)
         try:
             student_angle_deg_indices = tuple(int(x) for x in cfg.get("angle_deg_indices", DEFAULT_ANGLE_DEG_INDICES))
         except Exception:
             student_angle_deg_indices = DEFAULT_ANGLE_DEG_INDICES
 
-        student_wm = WorldModel(action_dim=spec.action_dim, obs_vec_dim=spec.obs_vec_dim, visual_shape=spec.visual_shape).to(
-            student_device
-        )
+        student_wm = _build_world_model(
+            action_dim=spec.action_dim,
+            obs_vec_dim=spec.obs_vec_dim,
+            visual_shape=spec.visual_shape,
+            visual_encoder_type=student_visual_encoder_type,
+            visual_cnn_channels=student_visual_cnn_channels,
+        ).to(student_device)
         if "world_model" not in ckpt:
             raise ValueError("student_checkpoint missing 'world_model' weights")
         student_wm.load_state_dict(ckpt["world_model"])
@@ -733,6 +771,23 @@ def train_world_model(args: argparse.Namespace) -> None:
     reward_symlog_clip: float | None = float(args.reward_symlog_clip)
     if reward_symlog_clip <= 0.0:
         reward_symlog_clip = None
+    dataset = EpisodeDataset(args.dataset_dir)
+    ckpt = None
+    ckpt_cfg = None
+    if getattr(args, "checkpoint", None):
+        ckpt_path = str(args.checkpoint)
+        try:
+            ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        except TypeError:
+            ckpt = torch.load(ckpt_path, map_location=device)
+        if "spec" in ckpt:
+            spec = ckpt.get("spec", {})
+            if int(spec.get("action_dim", dataset.spec.action_dim)) != int(dataset.spec.action_dim):
+                raise ValueError("Checkpoint action_dim does not match dataset spec")
+            if int(spec.get("obs_vec_dim", dataset.spec.obs_vec_dim)) != int(dataset.spec.obs_vec_dim):
+                raise ValueError("Checkpoint obs_vec_dim does not match dataset spec")
+        ckpt_cfg = ckpt.get("cfg", {}) if isinstance(ckpt, dict) else {}
+    visual_encoder_type, visual_cnn_channels = _resolve_visual_encoder_settings(args=args, ckpt_cfg=ckpt_cfg)
     cfg = DreamerConfig(
         seed=int(args.seed),
         batch_size=int(args.batch_size),
@@ -764,28 +819,21 @@ def train_world_model(args: argparse.Namespace) -> None:
         actor_input=str(getattr(args, "actor_input", "rssm")),
         angle_deg_indices=_parse_angle_deg_indices(getattr(args, "angle_deg_indices", None)),
         stats_force_recompute=bool(getattr(args, "recompute_stats", False)),
+        visual_encoder_type=visual_encoder_type,
+        visual_cnn_channels=visual_cnn_channels,
     )
-    dataset = EpisodeDataset(args.dataset_dir)
 
-    wm = WorldModel(
+    wm = _build_world_model(
         action_dim=dataset.spec.action_dim,
         obs_vec_dim=dataset.spec.obs_vec_dim,
         visual_shape=dataset.spec.visual_shape,
+        visual_encoder_type=visual_encoder_type,
+        visual_cnn_channels=visual_cnn_channels,
     )
     trainer = DreamerTrainer(dataset=dataset, world_model=wm, device=device, cfg=cfg)
 
-    if getattr(args, "checkpoint", None):
+    if ckpt is not None:
         ckpt_path = str(args.checkpoint)
-        try:
-            ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-        except TypeError:
-            ckpt = torch.load(ckpt_path, map_location=device)
-        if "spec" in ckpt:
-            spec = ckpt.get("spec", {})
-            if int(spec.get("action_dim", dataset.spec.action_dim)) != int(dataset.spec.action_dim):
-                raise ValueError("Checkpoint action_dim does not match dataset spec")
-            if int(spec.get("obs_vec_dim", dataset.spec.obs_vec_dim)) != int(dataset.spec.obs_vec_dim):
-                raise ValueError("Checkpoint obs_vec_dim does not match dataset spec")
         if "world_model" in ckpt:
             trainer.wm.load_state_dict(ckpt["world_model"])
         ckpt_cfg = ckpt.get("cfg", {}) if isinstance(ckpt, dict) else {}
@@ -994,6 +1042,18 @@ def online_train(args: argparse.Namespace) -> None:
     reward_symlog_clip: float | None = float(args.reward_symlog_clip)
     if reward_symlog_clip <= 0.0:
         reward_symlog_clip = None
+    dataset = EpisodeDataset(args.dataset_dir)
+    store = EpisodeStore(args.dataset_dir, dataset.spec)
+    ckpt = None
+    ckpt_cfg = None
+    if args.checkpoint is not None:
+        ckpt_path = str(args.checkpoint)
+        try:
+            ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        except TypeError:
+            ckpt = torch.load(ckpt_path, map_location=device)
+        ckpt_cfg = ckpt.get("cfg", {}) if isinstance(ckpt, dict) else {}
+    visual_encoder_type, visual_cnn_channels = _resolve_visual_encoder_settings(args=args, ckpt_cfg=ckpt_cfg)
 
     cfg = DreamerConfig(
         seed=int(args.seed),
@@ -1026,27 +1086,23 @@ def online_train(args: argparse.Namespace) -> None:
         actor_input=str(getattr(args, "actor_input", "rssm")),
         angle_deg_indices=_parse_angle_deg_indices(getattr(args, "angle_deg_indices", None)),
         stats_force_recompute=bool(getattr(args, "recompute_stats", False)),
+        visual_encoder_type=visual_encoder_type,
+        visual_cnn_channels=visual_cnn_channels,
     )
 
-    dataset = EpisodeDataset(args.dataset_dir)
-    store = EpisodeStore(args.dataset_dir, dataset.spec)
-
-    wm = WorldModel(
+    wm = _build_world_model(
         action_dim=dataset.spec.action_dim,
         obs_vec_dim=dataset.spec.obs_vec_dim,
         visual_shape=dataset.spec.visual_shape,
+        visual_encoder_type=visual_encoder_type,
+        visual_cnn_channels=visual_cnn_channels,
     )
     trainer = DreamerTrainer(dataset=dataset, world_model=wm, device=device, cfg=cfg)
 
-    if args.checkpoint is not None:
+    if ckpt is not None:
         ckpt_path = str(args.checkpoint)
-        try:
-            ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-        except TypeError:
-            ckpt = torch.load(ckpt_path, map_location=device)
         if "world_model" in ckpt:
             trainer.wm.load_state_dict(ckpt["world_model"])
-        ckpt_cfg = ckpt.get("cfg", {}) if isinstance(ckpt, dict) else {}
         ckpt_actor_input = str(ckpt_cfg.get("actor_input", "rssm")) if isinstance(ckpt_cfg, dict) else "rssm"
         if "actor" in ckpt and str(cfg.actor_input) == ckpt_actor_input:
             try:
@@ -1581,7 +1637,16 @@ def rollout_policy(args: argparse.Namespace) -> None:
     action_low = np.asarray(action_low, dtype=np.float32).reshape(-1)
     action_high = np.asarray(action_high, dtype=np.float32).reshape(-1)
 
-    wm = WorldModel(action_dim=action_dim, obs_vec_dim=obs_vec_dim, visual_shape=visual_shape).to(device)
+    visual_encoder_type, visual_cnn_channels = _resolve_visual_encoder_settings(
+        ckpt_cfg=(cfg if isinstance(cfg, dict) else None)
+    )
+    wm = _build_world_model(
+        action_dim=action_dim,
+        obs_vec_dim=obs_vec_dim,
+        visual_shape=visual_shape,
+        visual_encoder_type=visual_encoder_type,
+        visual_cnn_channels=visual_cnn_channels,
+    ).to(device)
     wm.load_state_dict(ckpt["world_model"])
     wm.eval()
 
@@ -2107,6 +2172,19 @@ def main() -> None:
         default=None,
         help="Comma-separated obs_vec indices (raw degrees) to encode as sin/cos features for *_sincos actor inputs.",
     )
+    p_train.add_argument(
+        "--visual_encoder_type",
+        type=str,
+        default="cnn",
+        choices=["cnn", "mlp"],
+        help="World-model visual encoder architecture for new runs. Checkpoint resume keeps the checkpoint architecture.",
+    )
+    p_train.add_argument(
+        "--visual_cnn_channels",
+        type=int,
+        default=64,
+        help="Base channel count for the CNN visual encoder.",
+    )
     p_train.add_argument("--train_policy", action="store_true")
     p_train.add_argument("--policy_mode", type=str, default="dreamer", choices=["dreamer", "bc"])
     p_train.add_argument(
@@ -2280,6 +2358,19 @@ def main() -> None:
         type=str,
         default=None,
         help="Comma-separated obs_vec indices (raw degrees) to encode as sin/cos features for *_sincos actor inputs.",
+    )
+    p_online.add_argument(
+        "--visual_encoder_type",
+        type=str,
+        default="cnn",
+        choices=["cnn", "mlp"],
+        help="World-model visual encoder architecture for new runs. Checkpoint resume keeps the checkpoint architecture.",
+    )
+    p_online.add_argument(
+        "--visual_cnn_channels",
+        type=int,
+        default=64,
+        help="Base channel count for the CNN visual encoder.",
     )
     p_online.add_argument("--train_policy", action="store_true")
     p_online.add_argument("--policy_mode", type=str, default="dreamer", choices=["dreamer", "bc"])

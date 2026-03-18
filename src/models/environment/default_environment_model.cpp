@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <cctype>
 
 namespace {
 
@@ -71,6 +72,7 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     double base_wind_speed_mps_ = 10.0;
     double base_wind_dir_from_deg_ = 270.0;   // Wind "from" West => blowing to East (+X)
     double wind_shear_mps_per_km_ = 4.0;      // Matches legacy (h/250 => +4 m/s per km)
+    bool flat_terrain_ = false;
 
 public:
     DefaultEnvironmentModel() {
@@ -133,6 +135,9 @@ public:
     }
 
     double get_terrain_elevation(double x, double y) override {
+         if (flat_terrain_) {
+             return 0.0;
+         }
          constexpr double kPeakX = 25000.0, kPeakY = 25000.0, kPeakH = 2000.0, kSigmaSq = 25000000.0;
          double d2 = (x-kPeakX)*(x-kPeakX) + (y-kPeakY)*(y-kPeakY);
          return kPeakH * std::exp(-d2 / (2.0*kSigmaSq));
@@ -268,6 +273,23 @@ public:
         base_wind_dir_from_deg_ = std::fmod(dir_from_deg, 360.0);
         if (base_wind_dir_from_deg_ < 0.0) base_wind_dir_from_deg_ += 360.0;
         wind_shear_mps_per_km_ = shear_mps_per_km;
+    }
+
+    void set_terrain_type(const std::string& terrain_type) override {
+        std::string key = terrain_type;
+        std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        if (key.empty() || key == "legacy" || key == "hill" || key == "gaussian_hill" || key == "mountain") {
+            flat_terrain_ = false;
+            return;
+        }
+        if (key == "flat") {
+            flat_terrain_ = true;
+            return;
+        }
+        // Unknown terrain types fall back to the historical profile for backward compatibility.
+        flat_terrain_ = false;
     }
 };
 

@@ -4,80 +4,39 @@ import sys
 
 import numpy as np
 
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
-def _repo_root() -> str:
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def _prepend_local_ef_py(repo_root: str) -> None:
-    build_dir = os.path.join(repo_root, "build")
-    if not os.path.isdir(build_dir):
-        return
-    if any(fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(build_dir)):
-        sys.path.insert(0, build_dir)
-
-
-def _wrap_deg(x: float) -> float:
-    y = (float(x) + 180.0) % 360.0 - 180.0
-    return 0.0 if abs(y) < 1.0e-9 else y
-
-
-def _percentile(xs: list[float], q: float) -> float:
-    if not xs:
-        return float("nan")
-    return float(np.percentile(np.asarray(xs, dtype=np.float64), q))
-
-
-def _fmt_stats(name: str, xs: list[float], *, unit: str = "") -> str:
-    if not xs:
-        return f"{name}: <empty>"
-    mean = float(np.mean(xs))
-    std = float(np.std(xs))
-    p50 = _percentile(xs, 50)
-    p90 = _percentile(xs, 90)
-    p95 = _percentile(xs, 95)
-    mn = float(np.min(xs))
-    mx = float(np.max(xs))
-    suffix = f" {unit}" if unit else ""
-    return (
-        f"{name}: mean={mean:.3f}{suffix} std={std:.3f}{suffix} "
-        f"p50={p50:.3f}{suffix} p90={p90:.3f}{suffix} p95={p95:.3f}{suffix} "
-        f"min={mn:.3f}{suffix} max={mx:.3f}{suffix}"
-    )
+from tools.eval_utils import (
+    add_common_env_args,
+    bootstrap_repo_imports,
+    format_stats,
+    make_universal_env_from_args,
+    wrap_deg,
+)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate stable-flight tracking for the scripted controller")
-    parser.add_argument("--scenario", required=True)
-    parser.add_argument("--episodes", type=int, default=20)
-    parser.add_argument("--max_steps", type=int, default=2000)
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--action_mode", type=str, default="full", choices=["full", "takeoff2", "takeoff4"])
-    parser.add_argument("--include_visual", action="store_true")
-    parser.add_argument("--include_proprio", action="store_true")
-    parser.add_argument("--no_randomization", action="store_true")
+    add_common_env_args(
+        parser,
+        episodes_default=20,
+        max_steps_default=2000,
+        seed_default=0,
+        default_action_mode="full",
+        include_no_randomization=True,
+    )
     parser.add_argument("--warmup_steps", type=int, default=100)
     parser.add_argument("--alt_tol_m", type=float, default=30.0)
     parser.add_argument("--spd_tol_mps", type=float, default=10.0)
     parser.add_argument("--hdg_tol_deg", type=float, default=10.0)
     args = parser.parse_args()
 
-    repo_root = _repo_root()
-    _prepend_local_ef_py(repo_root)
-    sys.path.insert(0, repo_root)
+    bootstrap_repo_imports()
 
-    from gym_envs.universal_env import UniversalEnv  # noqa: E402
     from python.rl.scripted_stable_flight import ScriptedStableFlightController  # noqa: E402
-    import world_model_train as wmt  # noqa: E402
-
-    env = UniversalEnv(
-        args.scenario,
-        include_visual=bool(args.include_visual),
-        include_proprio=bool(args.include_proprio),
-        action_mode=str(args.action_mode),
-    )
-    if bool(args.no_randomization):
-        wmt._apply_env_overrides(env, args)
+    env = make_universal_env_from_args(args)
 
     alt_err_abs: list[float] = []
     spd_err_abs: list[float] = []
@@ -127,7 +86,7 @@ def main() -> None:
 
                 alt_e = abs(alt - tgt_alt)
                 spd_e = abs(ias - tgt_spd)
-                hdg_e = abs(_wrap_deg(hdg - tgt_hdg))
+                hdg_e = abs(wrap_deg(hdg - tgt_hdg))
 
                 alt_err_abs.append(alt_e)
                 spd_err_abs.append(spd_e)
@@ -165,21 +124,20 @@ def main() -> None:
     print(f"action_mode:{args.action_mode} include_visual={bool(args.include_visual)} include_proprio={bool(args.include_proprio)}")
     print(f"tolerances: alt<= {float(args.alt_tol_m):.1f}m, spd<= {float(args.spd_tol_mps):.1f}m/s, hdg<= {float(args.hdg_tol_deg):.1f}deg (warmup={int(args.warmup_steps)} steps)")
     print("-" * 60)
-    print(_fmt_stats("episode_reward", ep_rewards))
-    print(_fmt_stats("episode_steps", [float(x) for x in ep_steps]))
-    print(_fmt_stats("episode_alt_err_mean", ep_alt_err_mean, unit="m"))
-    print(_fmt_stats("episode_spd_err_mean", ep_spd_err_mean, unit="m/s"))
-    print(_fmt_stats("episode_hdg_err_mean", ep_hdg_err_mean, unit="deg"))
-    print(_fmt_stats("episode_hold_frac", ep_hold_frac))
+    print(format_stats("episode_reward", ep_rewards))
+    print(format_stats("episode_steps", [float(x) for x in ep_steps]))
+    print(format_stats("episode_alt_err_mean", ep_alt_err_mean, unit="m"))
+    print(format_stats("episode_spd_err_mean", ep_spd_err_mean, unit="m/s"))
+    print(format_stats("episode_hdg_err_mean", ep_hdg_err_mean, unit="deg"))
+    print(format_stats("episode_hold_frac", ep_hold_frac))
     print("-" * 60)
-    print(_fmt_stats("all_alt_err_abs", alt_err_abs, unit="m"))
-    print(_fmt_stats("all_spd_err_abs", spd_err_abs, unit="m/s"))
-    print(_fmt_stats("all_hdg_err_abs", hdg_err_abs, unit="deg"))
-    print(_fmt_stats("all_roll_abs", roll_abs, unit="deg"))
-    print(_fmt_stats("all_pitch_abs", pitch_abs, unit="deg"))
+    print(format_stats("all_alt_err_abs", alt_err_abs, unit="m"))
+    print(format_stats("all_spd_err_abs", spd_err_abs, unit="m/s"))
+    print(format_stats("all_hdg_err_abs", hdg_err_abs, unit="deg"))
+    print(format_stats("all_roll_abs", roll_abs, unit="deg"))
+    print(format_stats("all_pitch_abs", pitch_abs, unit="deg"))
     print("=" * 60)
 
 
 if __name__ == "__main__":
     main()
-

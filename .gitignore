@@ -27,6 +27,7 @@ htmlcov/
 *.swo
 .clangd/
 .cache/
+.agent
 compile_commands.json
 
 # --- CMake ---
@@ -47,10 +48,13 @@ Thumbs.db
 recordings/
 docs/
 archive/
+artifacts/
 logs/
 compat_data/
 ipc/
 *.zip
 checkpoint/
-experiments
+experiments/
+experiments_tmp/
+scenarios/
 datasets/

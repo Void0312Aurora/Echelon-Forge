@@ -1,0 +1,8 @@
+{
+  "type": "route_generator",
+  "scenario": "scenarios/combined/takeoff_to_cruise_paramroute_navv2_mixedmode_eval_v1.json",
+  "seeds": [3, 7, 11],
+  "checks": {
+    "waypoint_modes_from_scenario": true
+  }
+}

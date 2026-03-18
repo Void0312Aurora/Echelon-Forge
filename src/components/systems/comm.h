@@ -4,12 +4,12 @@
 #include <cstdint>
 
 enum class CommMsgType {
-    None,
+    None = 0,
     // 1. Command Acknowledgment
-    ACK_WILCO,     // "Will Comply"
-    ACK_ROGER,     // "Received"
-    ACK_UNABLE,    // "Cannot Comply" (Reason)
-    ACK_CANT_DO,   // "Technical Limitation"
+    REP_WILCO,     // "Will Comply"
+    REP_ROGER,     // "Received"
+    REP_UNABLE,    // "Cannot Comply" (Reason)
+    REP_CANT_DO,   // "Technical Limitation"
 
     // 2. Status Report
     STATUS_FUEL,   // Arg: Joker/Bingo/State
@@ -38,6 +38,12 @@ enum class CommMsgType {
     WARN_BINGO,    // Fuel Critical
     WARN_LAUNCH,   // Missile Launch Detected
 
+    // Legacy aliases retained for compatibility with earlier code/docs.
+    ACK_WILCO = REP_WILCO,
+    ACK_ROGER = REP_ROGER,
+    ACK_UNABLE = REP_UNABLE,
+    ACK_CANT_DO = REP_CANT_DO,
+
     // 6. Python Binding Compatibility
     ReportContact,
     AssignTask,
@@ -63,4 +69,18 @@ struct CommPacket {
 
 struct CommQueue {
     std::vector<CommPacket> inbox;
+};
+
+struct PilotReport {
+    CommMsgType report_type = CommMsgType::None;
+    uint64_t sender_id = 0;
+    uint64_t task_id = 0;
+    int phase_id = 0;
+    double timestamp_s = 0.0;
+    double status_value = 0.0;
+    uint64_t entity_ref = 0;
+    double location_x_m = 0.0;
+    double location_y_m = 0.0;
+    double location_z_m = 0.0;
+    bool active = false;
 };

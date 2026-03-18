@@ -1,0 +1,87 @@
+{
+  "type": "unit_regression",
+  "check_kind": "wrapper_scripted_mode_sequence",
+  "controllers": {
+    "takeoff": 0.2,
+    "stable_flight": 0.6,
+    "landing_ils": 0.9
+  },
+  "env": {
+    "action_dim": 4,
+    "instrument_dim": 40,
+    "mission_dim": 8,
+    "default_mission_values": {
+      "1": 90.0,
+      "2": 1400.0,
+      "3": 210.0
+    },
+    "loader": {
+      "waypoint_count": 4,
+      "waypoint_idx": 0,
+      "mission_cmd": {
+        "command_code": 3
+      },
+      "mission_phase_name": "scramble",
+      "leader_intent_phase_id": "Idle"
+    },
+    "reset_obs": {
+      "alt_agl": 0.0,
+      "cmd_code": 3.0
+    },
+    "steps": [
+      {
+        "loader_updates": {
+          "mission_phase_name": "transit_to_station"
+        },
+        "next_obs": {
+          "alt_agl": 250.0,
+          "cmd_code": 3.0
+        }
+      },
+      {
+        "loader_updates": {
+          "mission_phase_name": "approach_armed"
+        },
+        "next_obs": {
+          "alt_agl": 250.0,
+          "cmd_code": 3.0
+        }
+      },
+      {
+        "loader_updates": {
+          "mission_phase_name": "approach_armed"
+        },
+        "next_obs": {
+          "alt_agl": 250.0,
+          "cmd_code": 3.0
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "leader_phase_priority",
+      "wrapper": {
+        "scripted_baseline_mode": "takeoff_cruise_landing",
+        "scripted_transition_alt_agl_m": 140.0,
+        "scripted_residual_scale": 0.0,
+        "scripted_blend_indices": [0, 1, 2, 3]
+      },
+      "expected_initial_mode": "takeoff",
+      "rollout": [
+        {
+          "expected_mode": "takeoff",
+          "expected_action": 0.2
+        },
+        {
+          "expected_mode": "stable_flight",
+          "expected_action": 0.6
+        },
+        {
+          "expected_mode": "landing_ils",
+          "expected_action": 0.9
+        }
+      ]
+    }
+  ]
+}

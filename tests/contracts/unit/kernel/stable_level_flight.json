@@ -1,0 +1,15 @@
+{
+  "type": "unit_regression",
+  "check_kind": "kernel_flight_regression",
+  "controller_kind": "stable_level_hold",
+  "scenario": "scenarios/test/test_aero.json",
+  "seed": 0,
+  "duration_s": 200.0,
+  "initial_throttle": 0.6,
+  "checks": {
+    "min_alt_min": 800.0,
+    "max_abs_roll_max": 10.0,
+    "max_abs_pitch_max": 15.0,
+    "max_abs_g_max": 3.0
+  }
+}

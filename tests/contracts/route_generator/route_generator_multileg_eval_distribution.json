@@ -1,0 +1,19 @@
+{
+  "type": "route_generator",
+  "scenario": "scenarios/combined/takeoff_to_cruise_paramroute_navv2_multileg_eval_v1.json",
+  "seeds": [5, 11, 19],
+  "checks": {
+    "waypoint_count_range": [4, 6],
+    "first_leg_range": [18000.0, 24000.0],
+    "subsequent_leg_range": [9999.0, 19000.0],
+    "waypoint_attr_ranges": {
+      "altitude_m": [1200.0, 2800.0],
+      "speed_mps": [195.0, 235.0],
+      "radius_m": [1100.0, 1700.0]
+    },
+    "reachability_budget_from_scenario": true,
+    "reachability_budget_tolerance_m": 1.0,
+    "turn_feasibility_from_scenario": true,
+    "turn_feasibility_tolerance_m": 1.0
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "type": "unit_regression",
+  "check_kind": "env_config_resolution",
+  "train_config": {
+    "env": {
+      "include_proprio": true,
+      "mission_obs_mode": "basic",
+      "visual_downsample": 2,
+      "visual_update_interval": 2,
+      "action_mode": "full"
+    },
+    "hyperparameters": {
+      "policy_kwargs": {
+        "features_extractor_class": "TransformerVisualExtractor"
+      }
+    }
+  },
+  "expected_defaults": {
+    "include_visual": true,
+    "include_proprio": true,
+    "action_mode": "full",
+    "visual_downsample": 2,
+    "visual_update_interval": 2
+  },
+  "overrides": {
+    "include_visual": false,
+    "include_proprio": false,
+    "mission_obs_mode": "nav_v2",
+    "visual_downsample": 4,
+    "visual_update_interval": 5,
+    "action_mode": "takeoff4"
+  },
+  "expected_overrides": {
+    "include_visual": false,
+    "include_proprio": false,
+    "mission_obs_mode": "nav_v2",
+    "visual_downsample": 4,
+    "visual_update_interval": 5,
+    "action_mode": "takeoff4"
+  }
+}

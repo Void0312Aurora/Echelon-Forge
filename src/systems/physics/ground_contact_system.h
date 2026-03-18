@@ -55,20 +55,21 @@ namespace {
  * Integrates with EnvironmentModel for surface-dependent physics (Friction, Damage).
  */
 inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel* env) {
-    ecs.system<ForceAccumulator, const Transform, const Velocity, const Mass, GroundState>("GroundContact")
+    ecs.system<ForceAccumulator, const Transform, Velocity, const Mass, GroundState>("GroundContact")
         .kind(flecs::OnUpdate)
         // Must run BEFORE Integration but AFTER Aerodynamics
         .run([env](flecs::iter& it) {
             while (it.next()) {
                 auto forces = it.field<ForceAccumulator>(0);
                 auto transform = it.field<const Transform>(1);
-                auto velocity = it.field<const Velocity>(2);
+                auto velocity = it.field<Velocity>(2);
                 auto mass = it.field<const Mass>(3);
                 auto ground = it.field<GroundState>(4);
                 
                 for (auto i : it) {
                     double m = mass[i].get_total_kg();
                     if (m < 1.0) m = 15000.0;
+                    const double dt = std::max(1.0e-3, static_cast<double>(it.delta_time()));
 
                     // 1. Detection: Query Environment
                     // Use current position (x, y)
@@ -156,24 +157,43 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     double vx = velocity[i].vx;
                     double vy = velocity[i].vy;
                     double v_h_sq = vx*vx + vy*vy;
+                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
+                    const MovementCommand* cmd = it.entity(i).get<MovementCommand>();
+                    bool throttle_idle = false;
+                    double brake_amount = 0.0;
+                    if (pilot && pilot->active) {
+                        throttle_idle = (pilot->throttle < 0.01);
+                        brake_amount = std::clamp(pilot->brake, 0.0, 1.0);
+                        if (pilot->brake_left || pilot->brake_right) {
+                            brake_amount = std::max(brake_amount, 1.0);
+                        }
+                    } else if (cmd && cmd->active) {
+                        throttle_idle = (cmd->throttle_cmd < 0.01);
+                        if (throttle_idle) brake_amount = 1.0;
+                    }
                     
                     if (v_h_sq > 0.001) {
                          double v_h = std::sqrt(v_h_sq);
                          
                          // --- Surface Logic ---
-                         double mu_rolling = 0.02; // Default Concrete
+                         double gear_mu_roll = 0.02; // Default paved-surface rolling coefficient
+                         if (const LandingGear* lg = it.entity(i).get<LandingGear>()) {
+                             gear_mu_roll = std::max(0.0, lg->rolling_friction_coeff);
+                         }
+
+                         double mu_rolling = gear_mu_roll;
                          
                          using Surface = IEnvironmentModel::SurfaceType;
                          bool is_offroad = false;
 
                          switch (terrain.type) {
-                             case Surface::Concrete:   mu_rolling = 0.02; break;
-                             case Surface::Asphalt:    mu_rolling = 0.025; break;
-                             case Surface::HardPacked: mu_rolling = 0.05; is_offroad = true; break;
-                             case Surface::SoftDirt:   mu_rolling = 0.15; is_offroad = true; break;
-                             case Surface::Water:      mu_rolling = 0.80; is_offroad = true; break; // Sinking
-                             case Surface::Obstacle:   mu_rolling = 1.0;  is_offroad = true; break; // Collision
-                             default:                  mu_rolling = 0.10; is_offroad = true; break;
+                             case Surface::Concrete:   mu_rolling = std::max(0.01, gear_mu_roll); break;
+                             case Surface::Asphalt:    mu_rolling = std::max(0.0125, gear_mu_roll * 1.25); break;
+                             case Surface::HardPacked: mu_rolling = std::max(0.05, gear_mu_roll * 2.5); is_offroad = true; break;
+                             case Surface::SoftDirt:   mu_rolling = std::max(0.15, gear_mu_roll * 7.5); is_offroad = true; break;
+                             case Surface::Water:      mu_rolling = std::max(0.80, gear_mu_roll * 20.0); is_offroad = true; break; // Sinking
+                             case Surface::Obstacle:   mu_rolling = std::max(1.0, gear_mu_roll * 25.0);  is_offroad = true; break; // Collision
+                             default:                  mu_rolling = std::max(0.10, gear_mu_roll * 5.0); is_offroad = true; break;
                          }
                          
                          // --- Gear State Update ---
@@ -216,10 +236,6 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                                  mu_rolling *= 5.0;
                              }
                          }
-
-	                         // Check friction brakes / control inputs
-	                         const PilotAction* pilot = it.entity(i).get<PilotAction>();
-	                         const MovementCommand* cmd = it.entity(i).get<MovementCommand>();
 
 	                         // 3.5 Nose Wheel Steering (NWS): rudder pedal -> steer angle (low speed, WoW).
 	                         // NOTE: Sign convention: PilotAction.rudder > 0 means "nose right". In our NAV heading
@@ -268,20 +284,9 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
 	                             }
 	                         }
 	                         
-	                         double brake_amount = 0.0;
-	                         if (pilot && pilot->active) {
-	                             brake_amount = std::clamp(pilot->brake, 0.0, 1.0);
-                             // Optional: if either wheel brake is explicitly asserted, treat as full braking.
-                             if (pilot->brake_left || pilot->brake_right) {
-                                 brake_amount = std::max(brake_amount, 1.0);
-                             }
-                             // Auto-stop / parking brake when throttle is idle at low speed.
-                             if (pilot->throttle < 0.01 && v_h < 10.0) {
-                                 brake_amount = std::max(brake_amount, 1.0);
-                             }
-                         } else if (cmd && cmd->active) {
-                             // Legacy: treat throttle idle as braking when no PilotAction is present.
-                             if (cmd->throttle_cmd < 0.01) brake_amount = 1.0;
+	                         // Auto-stop / parking brake when throttle is idle at low speed.
+                         if (throttle_idle && v_h < 10.0) {
+                             brake_amount = std::max(brake_amount, 1.0);
                          }
                          
 	                         // Rolling resistance (drag) and braking (slip) are treated separately.
@@ -401,13 +406,31 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
 
 	                         forces[i].add_force(fx, fy, 0.0);
 	                         forces[i].add_torque(0.0, 0.0, tau_yaw);
+
+                             // Low-speed stop-hold:
+                             // Coulomb braking alone leaves a long tail of tiny rollout velocities, especially after
+                             // landing in wind. When brakes are held and thrust is idle, use a bounded static-friction
+                             // style hold force to settle the aircraft to a full stop instead of letting it creep.
+                             if (throttle_idle && brake_amount > 0.2 && v_h < 3.0) {
+                                 const double hold_force_max = std::max(0.0, 1.20 * Fn);
+                                 const double hold_force_need = (m * v_h) / dt;
+                                 const double hold_force = std::min(hold_force_need, hold_force_max);
+                                 if (hold_force > 0.0 && v_h > 1.0e-6) {
+                                     const double inv_v = 1.0 / v_h;
+                                     forces[i].add_force(-vx * inv_v * hold_force, -vy * inv_v * hold_force, 0.0);
+                                 }
+                                 if (v_h < 0.25) {
+                                     velocity[i].vx = 0.0;
+                                     velocity[i].vy = 0.0;
+                                 }
+                             }
                          
 	                         // 4. Yaw stability is handled implicitly by wheel contact forces/moments above.
 	                    } else {
 	                         // Static stiction (simplified)
-	                         if (std::abs(vx) < 0.1 && std::abs(vy) < 0.1) {
-	                             // Apply small opposing force to zero out creep?
-                             // Needed for absolute stillness.
+	                         if (throttle_idle && std::abs(vx) < 0.25 && std::abs(vy) < 0.25) {
+                                 velocity[i].vx = 0.0;
+                                 velocity[i].vy = 0.0;
                          }
                     }
                 }

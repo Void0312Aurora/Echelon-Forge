@@ -90,6 +90,7 @@
             font-size: 12px;
             color: #666;
             pointer-events: none;
+            max-width: 340px;
         }
 
         #ui-controls {
@@ -118,6 +119,11 @@
             border-color: #00ccff;
             color: #00ccff;
         }
+
+        .pill {
+            min-width: 72px;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -128,7 +134,7 @@
         <div id="focused-unit-stats">
             <div class="data-row"><span class="label">UNIT</span><span id="v-name" class="value">--</span></div>
             <div class="data-row"><span class="label">ALT (ASL)</span><span id="v-alt" class="value">0.0 m</span></div>
-            <div class="data-row"><span class="label">SPEED</span><span id="v-spd" class="value">0.0 m/s</span></div>
+            <div class="data-row"><span class="label">IAS / GS</span><span id="v-spd" class="value">0.0 / 0.0 m/s</span></div>
             <div class="data-row"><span class="label">HEADING</span><span id="v-hdg" class="value">000</span></div>
             <div class="data-row"><span class="label">PITCH</span><span id="v-pitch" class="value">0.0</span></div>
             <div class="data-row"><span class="label">ROLL</span><span id="v-roll" class="value">0.0</span></div>
@@ -140,10 +146,13 @@
         <div id="unit-list-content"></div>
     </div>
 
-    <div id="controls-help">[WASD] Camera | [Right-Click] Orbit | [Wheel] Zoom | Click Unit to Focus</div>
+    <div id="controls-help">[WASD/QE] Free Camera | [Mouse Drag] Orbit | [Wheel] Zoom | [Space] Pause | Chase mode supports orbit + zoom around the focused unit</div>
 
     <div id="ui-controls">
         <button id="btn-cam" onclick="toggleCamera()">CAM: CHASE</button>
+        <button id="btn-speed-down" onclick="adjustSpeed(-1)">SLOW</button>
+        <button id="btn-speed" class="pill" onclick="cycleSpeed()">SPD: 1x</button>
+        <button id="btn-speed-up" onclick="adjustSpeed(1)">FAST</button>
         <button id="btn-start" class="primary" onclick="startSim()">START</button>
     </div>
 
@@ -160,19 +169,23 @@
         let units = new Map(); // id -> { mesh, data, trail }
         let focusedId = null;
         let viewMode = 'CHASE'; // CHASE, FREE
-        let cameraOffset = new THREE.Vector3(0, 50, 100);
         let simTime = 0;
+        let simSpeed = 1;
+        let lastFrameTs = performance.now();
+        let chaseTargetPrev = null;
+        let trailFrameCounter = 0;
 
         // Input State
         const keys = { w: false, a: false, s: false, d: false, q: false, e: false, Shift: false };
         let simPaused = false;
+        const SPEED_STEPS = [1, 2, 4, 8];
 
         // --- Init ThreeJS ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(SCENE_BG);
         scene.fog = new THREE.FogExp2(SCENE_BG, 0.00005);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 300000);
         camera.position.set(0, 100, 200);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -181,12 +194,37 @@
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.enabled = false; // Start in Chase
+        controls.enabled = true;
+        controls.enablePan = false;
+        controls.rotateSpeed = 0.9;
+        controls.zoomSpeed = 1.2;
+        controls.target.set(0, 0, 0);
 
         // --- Environment ---
-        const grid = new THREE.GridHelper(50000, 500, GRID_COLOR, 0x222222);
-        grid.position.y = -5.0; // Lower grid significantly to prevent z-fighting
-        scene.add(grid);
+        const GRID_MIN_SIZE = 150000;
+        const GRID_MAX_SIZE = 400000;
+        const GRID_STEP = 50000;
+        let grid = null;
+        let gridSize = 0;
+        function rebuildGrid(size) {
+            const clamped = Math.max(GRID_MIN_SIZE, Math.min(GRID_MAX_SIZE, size));
+            const snapped = Math.ceil(clamped / GRID_STEP) * GRID_STEP;
+            if (grid && snapped === gridSize) return;
+            if (grid) {
+                scene.remove(grid);
+                if (grid.geometry) grid.geometry.dispose();
+                if (grid.material) grid.material.dispose();
+            }
+            gridSize = snapped;
+            grid = new THREE.GridHelper(gridSize, Math.max(100, Math.floor(gridSize / 100)), GRID_COLOR, 0x222222);
+            grid.position.y = -5.0;
+            scene.add(grid);
+        }
+        function ensureGridContainsPoint(x, z, pad = 5000.0) {
+            const extent = Math.max(Math.abs(x), Math.abs(z)) + pad;
+            if ((extent * 2.0) > gridSize) rebuildGrid(extent * 2.0);
+        }
+        rebuildGrid(GRID_MIN_SIZE);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
         scene.add(ambientLight);
@@ -205,6 +243,20 @@
                 if (obj.geometry) obj.geometry.dispose();
                 if (obj.material) obj.material.dispose();
             }
+        }
+
+        function makeHorizontalRing(radius, color, y = 0.0) {
+            const segs = 96;
+            const pts = [];
+            for (let i = 0; i < segs; i++) {
+                const t = (i / segs) * Math.PI * 2.0;
+                pts.push(new THREE.Vector3(Math.cos(t) * radius, y, Math.sin(t) * radius));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            return new THREE.LineLoop(
+                geo,
+                new THREE.LineBasicMaterial({ color: color, opacity: 0.85, transparent: true })
+            );
         }
 
         // --- Asset Loading ---
@@ -244,13 +296,34 @@
 
         window.toggleCamera = function () {
             viewMode = viewMode === 'CHASE' ? 'FREE' : 'CHASE';
-            controls.enabled = (viewMode === 'FREE');
+            controls.enabled = true;
+            controls.enablePan = (viewMode === 'FREE');
+            chaseTargetPrev = null;
             document.getElementById('btn-cam').innerText = "CAM: " + viewMode;
         };
 
         window.setFocus = function (id) {
             focusedId = id;
+            chaseTargetPrev = null;
             renderUnitList();
+        };
+
+        function setSpeed(value) {
+            simSpeed = value;
+            socket.emit('set_speed', { value });
+            document.getElementById('btn-speed').innerText = `SPD: ${value}x`;
+        }
+
+        window.adjustSpeed = function (dir) {
+            const idx = Math.max(0, SPEED_STEPS.indexOf(simSpeed));
+            const nextIdx = Math.max(0, Math.min(SPEED_STEPS.length - 1, idx + dir));
+            setSpeed(SPEED_STEPS[nextIdx]);
+        };
+
+        window.cycleSpeed = function () {
+            const idx = SPEED_STEPS.indexOf(simSpeed);
+            const nextIdx = idx >= 0 ? (idx + 1) % SPEED_STEPS.length : 0;
+            setSpeed(SPEED_STEPS[nextIdx]);
         };
 
         window.togglePause = function () {
@@ -312,7 +385,7 @@
 
             // Trail
             const trailGeo = new THREE.BufferGeometry();
-            const positions = new Float32Array(3000 * 3); // 1000 points
+            const positions = new Float32Array(6000 * 3);
             trailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             trailGeo.setDrawRange(0, 0);
             const trailMat = new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.5, transparent: true });
@@ -326,9 +399,10 @@
                 trail: trail,
                 trailIdx: 0,
                 trailPos: positions,
-                trailPos: positions,
                 data: uData,
-                isNew: true
+                isNew: true,
+                targetPosition: new THREE.Vector3(),
+                targetQuaternion: new THREE.Quaternion(),
             };
 
             units.set(uData.id, unitObj);
@@ -349,12 +423,15 @@
             const ty = uData.z + (uData.type === 'Aircraft' ? 2.5 : 0); // Z is Up. Add 2.5m for Gear.
             const tz = -uData.y; // Y is North -> -Z
 
+            const nextPosition = new THREE.Vector3(tx, ty, tz);
+
             // LERP for smoothness, but SNAP on first update
             if (uObj.isNew) {
-                uObj.mesh.position.copy(new THREE.Vector3(tx, ty, tz));
+                uObj.mesh.position.copy(nextPosition);
+                uObj.targetPosition.copy(nextPosition);
                 uObj.isNew = false;
             } else {
-                uObj.mesh.position.lerp(new THREE.Vector3(tx, ty, tz), 0.2);
+                uObj.targetPosition.copy(nextPosition);
             }
 
             // --- FX Updates ---
@@ -397,18 +474,46 @@
                 console.log(`Aircraft '${uData.name}' (Unified): hdg=${uData.heading} -> RotY=${yawRad.toFixed(2)}rad`);
             }
 
-            uObj.mesh.quaternion.slerp(qYaw.multiply(qPitch).multiply(qRoll), 0.2);
-
-            // Update Trail (every 5 frames or distance check)
-            const idx = uObj.trailIdx;
-            if (idx < 3000) {
-                uObj.trailPos[idx * 3] = uObj.mesh.position.x;
-                uObj.trailPos[idx * 3 + 1] = uObj.mesh.position.y;
-                uObj.trailPos[idx * 3 + 2] = uObj.mesh.position.z;
-                uObj.trail.geometry.setDrawRange(0, idx + 1);
-                uObj.trail.geometry.attributes.position.needsUpdate = true;
-                uObj.trailIdx++;
+            const targetQuat = qYaw.multiply(qPitch).multiply(qRoll);
+            if (uObj.mesh.quaternion.lengthSq() < 1e-8) {
+                uObj.mesh.quaternion.copy(targetQuat);
             }
+            uObj.targetQuaternion.copy(targetQuat);
+        }
+
+        function animateUnits(dt) {
+            const alpha = 1.0 - Math.exp(-Math.max(0.0, dt) * 10.0);
+            trailFrameCounter = (trailFrameCounter + 1) % 3;
+            units.forEach((uObj) => {
+                if (!uObj.targetPosition || !uObj.targetQuaternion) return;
+                uObj.mesh.position.lerp(uObj.targetPosition, alpha);
+                uObj.mesh.quaternion.slerp(uObj.targetQuaternion, alpha);
+
+                if (trailFrameCounter !== 0) return;
+                const idx = uObj.trailIdx;
+                if ((idx * 3 + 2) >= uObj.trailPos.length) {
+                    const grown = new Float32Array(uObj.trailPos.length * 2);
+                    grown.set(uObj.trailPos);
+                    uObj.trailPos = grown;
+                    uObj.trail.geometry.setAttribute('position', new THREE.BufferAttribute(grown, 3));
+                }
+                const prevIdx = Math.max(0, idx - 1);
+                const px = uObj.trailPos[prevIdx * 3];
+                const py = uObj.trailPos[prevIdx * 3 + 1];
+                const pz = uObj.trailPos[prevIdx * 3 + 2];
+                const dx = uObj.mesh.position.x - px;
+                const dy = uObj.mesh.position.y - py;
+                const dz = uObj.mesh.position.z - pz;
+                if (idx === 0 || (dx * dx + dy * dy + dz * dz) > 25.0) {
+                    uObj.trailPos[idx * 3] = uObj.mesh.position.x;
+                    uObj.trailPos[idx * 3 + 1] = uObj.mesh.position.y;
+                    uObj.trailPos[idx * 3 + 2] = uObj.mesh.position.z;
+                    uObj.trail.geometry.setDrawRange(0, idx + 1);
+                    uObj.trail.geometry.attributes.position.needsUpdate = true;
+                    uObj.trailIdx++;
+                    ensureGridContainsPoint(uObj.mesh.position.x, uObj.mesh.position.z);
+                }
+            });
         }
 
         function renderUnitList() {
@@ -429,6 +534,8 @@
             console.log("Raw zone data received:", JSON.stringify(data.zones, null, 2));
             if (data.zones) {
                 data.zones.forEach(zone => {
+                    ensureGridContainsPoint(zone.x + zone.width * 0.5, -zone.y + zone.length * 0.5, 15000.0);
+                    ensureGridContainsPoint(zone.x - zone.width * 0.5, -zone.y - zone.length * 0.5, 15000.0);
                     // Create Zone Mesh
                     // Zone uses width/length. 
                     const geo = new THREE.PlaneGeometry(zone.width, zone.length);
@@ -473,16 +580,34 @@
             clearNavGroup();
             if (!data || !data.markers) return;
 
-            // Draw markers (yellow spheres) in the same coordinate mapping as units:
+            // Draw markers in the same coordinate mapping as units:
             // Sim (ENU) -> Three (X=East, Y=Up, Z=-North).
             data.markers.forEach(m => {
-                const r = (m.radius_m !== undefined) ? m.radius_m : 80.0;
-                const color = (m.color !== undefined) ? m.color : 0xffff00;
-                const geo = new THREE.SphereGeometry(r, 16, 12);
-                const mat = new THREE.MeshBasicMaterial({ color: color });
+                const arrivalRadius = Number.isFinite(m.arrival_radius_m) ? Math.max(1.0, m.arrival_radius_m) : 1000.0;
+                const sequenceGate = Number.isFinite(m.sequence_gate_m) ? Math.max(arrivalRadius, m.sequence_gate_m) : null;
+                const isActive = !!m.is_active;
+                const mode = String(m.waypoint_mode || 'flyby').toLowerCase();
+
+                const markerColor = isActive ? 0x00ff00 : 0xffff00;
+                const sphereRadius = Math.max(45.0, Math.min(140.0, arrivalRadius * 0.05));
+                const geo = new THREE.SphereGeometry(sphereRadius, 16, 12);
+                const mat = new THREE.MeshBasicMaterial({ color: markerColor });
                 const mesh = new THREE.Mesh(geo, mat);
                 mesh.position.set(m.x, m.z, -m.y);
                 navGroup.add(mesh);
+
+                const arrivalRingColor = (mode === 'flyover') ? 0xff8844 : markerColor;
+                const arrivalRing = makeHorizontalRing(arrivalRadius, arrivalRingColor, 0.0);
+                arrivalRing.position.set(m.x, m.z, -m.y);
+                navGroup.add(arrivalRing);
+
+                if (isActive && sequenceGate !== null && sequenceGate > arrivalRadius + 1.0) {
+                    const gateRing = makeHorizontalRing(sequenceGate, 0x00ffff, 0.0);
+                    gateRing.position.set(m.x, m.z + 8.0, -m.y);
+                    navGroup.add(gateRing);
+                }
+
+                ensureGridContainsPoint(m.x, -m.y, 15000.0);
             });
 
             // Optional: connect markers with a thin line for readability.
@@ -509,7 +634,9 @@
                 if (uData.id === focusedId) {
                     document.getElementById('v-name').innerText = uData.name || uData.id;
                     document.getElementById('v-alt').innerText = uData.z.toFixed(0) + " m";
-                    document.getElementById('v-spd').innerText = uData.speed.toFixed(0) + " m/s";
+                    const ias = Number.isFinite(uData.ias) ? uData.ias : (uData.speed || 0);
+                    const gs = Number.isFinite(uData.speed) ? uData.speed : 0;
+                    document.getElementById('v-spd').innerText = `${ias.toFixed(1)} / ${gs.toFixed(1)} m/s`;
                     document.getElementById('v-hdg').innerText = uData.heading.toFixed(0);
                     document.getElementById('v-pitch').innerText = (uData.pitch || 0).toFixed(1);
                     document.getElementById('v-roll').innerText = (uData.roll || 0).toFixed(1);
@@ -520,13 +647,23 @@
             // For now keep them to avoid flickering if packet loss, or implement TTL.
         });
 
+        socket.on('speed_update', (data) => {
+            const value = Number(data?.value);
+            if (!Number.isFinite(value) || value < 1) return;
+            simSpeed = value;
+            document.getElementById('btn-speed').innerText = `SPD: ${simSpeed}x`;
+        });
+
         // --- Loop ---
         function animate() {
             requestAnimationFrame(animate);
+            const now = performance.now();
+            const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTs) / 1000.0));
+            lastFrameTs = now;
+            animateUnits(dt);
 
             // Camera Logic
             if (viewMode === 'FREE') {
-                const dt = 0.016; // Approx
                 const baseSpeed = 100.0;
                 const speed = keys.Shift ? baseSpeed * 5.0 : baseSpeed;
                 const moveDist = speed * dt;
@@ -560,16 +697,18 @@
                 }
             } else if (viewMode === 'CHASE' && focusedId && units.has(focusedId)) {
                 const target = units.get(focusedId).mesh;
-
-                // Camera Follow Logic
-                // Offset relative to target orientation
-                const relativeOffset = new THREE.Vector3(0, 30, 80); // Behind and Up
-                relativeOffset.applyQuaternion(target.quaternion);
-
-                const camPos = target.position.clone().add(relativeOffset);
-                camera.position.lerp(camPos, 0.1);
-                camera.lookAt(target.position);
-                controls.target.copy(target.position); // Sync Orbit target
+                const targetPos = target.position.clone();
+                if (chaseTargetPrev === null) {
+                    chaseTargetPrev = targetPos.clone();
+                    const fallbackOffset = new THREE.Vector3(0, 30, 80).applyQuaternion(target.quaternion);
+                    camera.position.copy(targetPos.clone().add(fallbackOffset));
+                    controls.target.copy(targetPos);
+                } else {
+                    const delta = targetPos.clone().sub(chaseTargetPrev);
+                    camera.position.add(delta);
+                    chaseTargetPrev.copy(targetPos);
+                    controls.target.lerp(targetPos, 1.0 - Math.exp(-dt * 12.0));
+                }
             }
 
             controls.update();

@@ -1,0 +1,47 @@
+{
+  "type": "unit_regression",
+  "check_kind": "leader_phase_manager_approach_arm",
+  "terminal_waypoint_count": 2,
+  "sim_time_s": 10.0,
+  "truth": {
+    "x": -9000.0,
+    "y": 0.0,
+    "z": 520.0,
+    "heading": 90.0
+  },
+  "instruments": {
+    "alt_radar": 520.0,
+    "alt_baro": 520.0,
+    "ground_speed": 115.0
+  },
+  "loader": {
+    "agent_id": 42,
+    "waypoints": [
+      { "x": -12000.0, "y": 0.0 },
+      { "x": -8200.0, "y": 0.0 }
+    ],
+    "waypoint_idx": 0,
+    "mission_cmd": {
+      "command_code": 3,
+      "target_heading": 90.0,
+      "target_altitude": 560.0,
+      "target_speed": 96.0
+    },
+    "post_waypoint_transition": {
+      "phase_name": "landing_ils",
+      "command_code": 4,
+      "target_heading": 90.0,
+      "target_altitude": 0.0,
+      "target_speed": 82.0,
+      "landing_mode": "ils_final"
+    },
+    "mission_phase_name": "rtb",
+    "ils_observation": [1.0, 0.05, 0.15, 8000.0],
+    "nearest_ils_beacon": {
+      "heading": 90.0
+    }
+  },
+  "expected_transition_calls": 1,
+  "expected_phase_name": "approach_armed",
+  "expected_command_code": 4
+}

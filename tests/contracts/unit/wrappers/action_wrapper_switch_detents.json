@@ -1,0 +1,130 @@
+{
+  "type": "unit_regression",
+  "check_kind": "wrapper_action_processing_sequence",
+  "controllers": {
+    "takeoff": {
+      "values": {
+        "3": 1.0,
+        "4": 1.0,
+        "5": 0.6
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "switch_hysteresis_and_deadband",
+      "env": {
+        "action_dim": 17,
+        "obs_kind": "box",
+        "obs_dim": 1
+      },
+      "wrapper": {
+        "hold_steps": 1,
+        "snap_binary_indices": [],
+        "binary_hysteresis_indices": [4, 9],
+        "binary_on_threshold": 0.75,
+        "binary_off_threshold": 0.25,
+        "binary_initial_values": {
+          "4": 0.0,
+          "9": 0.0
+        },
+        "center_deadband_indices": [7, 8],
+        "center_deadband_center": 0.5,
+        "center_deadband_half_width": 0.2
+      },
+      "rollout": [
+        {
+          "action_input": {
+            "default": 0.5,
+            "values": {
+              "4": 0.6,
+              "7": 0.62
+            }
+          },
+          "expected_action_values": {
+            "4": 0.0,
+            "7": 0.5
+          },
+          "expected_info_keys": ["effective_action"]
+        },
+        {
+          "action_input": {
+            "default": 0.5,
+            "values": {
+              "4": 0.9
+            }
+          },
+          "expected_action_values": {
+            "4": 1.0
+          }
+        },
+        {
+          "action_input": {
+            "default": 0.5,
+            "values": {
+              "4": 0.4
+            }
+          },
+          "expected_action_values": {
+            "4": 1.0
+          }
+        },
+        {
+          "action_input": {
+            "default": 0.5,
+            "values": {
+              "4": 0.1
+            }
+          },
+          "expected_action_values": {
+            "4": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "scripted_locked_indices_bypass_deadband",
+      "env": {
+        "action_dim": 17,
+        "obs_kind": "dict",
+        "instrument_dim": 42,
+        "mission_dim": 4
+      },
+      "wrapper": {
+        "hold_steps": 4,
+        "low_freq_indices": [4, 5, 6, 9, 12, 13, 14, 15, 16],
+        "snap_binary_indices": [],
+        "binary_hysteresis_indices": [4, 9, 12, 13, 14, 15],
+        "binary_on_threshold": 0.75,
+        "binary_off_threshold": 0.25,
+        "binary_initial_values": {
+          "4": 1.0,
+          "9": 0.0,
+          "12": 0.0,
+          "13": 0.0,
+          "14": 0.0,
+          "15": 0.0
+        },
+        "center_deadband_indices": [5, 6, 7, 8],
+        "center_deadband_center": 0.5,
+        "center_deadband_half_width": 0.18,
+        "scripted_baseline_mode": "takeoff",
+        "scripted_residual_scale": 0.0,
+        "scripted_blend_indices": [0, 1, 2, 3],
+        "scripted_lock_indices": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+      },
+      "expected_initial_mode": "takeoff",
+      "rollout": [
+        {
+          "action_input": 0.0,
+          "expected_mode": "takeoff",
+          "expected_action_values": {
+            "4": 1.0,
+            "5": 0.6
+          },
+          "expected_info_keys": ["effective_action", "baseline_action", "scripted_baseline_mode_active"]
+        }
+      ]
+    }
+  ]
+}

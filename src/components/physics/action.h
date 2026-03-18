@@ -5,6 +5,37 @@
 
 // --- New Standards Implementation ---
 
+enum class TaskType : int {
+    Idle = 0,
+    Scramble = 1,
+    CAP = 2,
+    RTB = 3,
+    RecoverLand = 4,
+    CAPMission = 5,
+};
+
+enum class StationType : int {
+    Orbit = 0,
+    Racetrack = 1,
+    RouteCAP = 2,
+};
+
+enum class LeaderPhase : int {
+    Idle = 0,
+    Scramble = 1,
+    Takeoff = 2,
+    Departure = 3,
+    TransitToStation = 4,
+    EstablishCAP = 5,
+    OnStation = 6,
+    Reposition = 7,
+    RTB = 8,
+    ApproachArmed = 9,
+    LandingFinal = 10,
+    Rollout = 11,
+    Abort = 12,
+};
+
 /**
  * PilotAction
  * Implements [act.md]: The physical interface for the Digital Pilot.
@@ -57,7 +88,13 @@ struct MissionCommand {
     double cmd_speed_mps;    // Target Speed (TAS/IAS mix? Let's assume TAS for now or specify)
     
     // 2. Macro Codes
-    int command_code;        // 0=Idle, 1=Takeoff, 2=Cruise, 3=Attack, 4=RTB, etc.
+    // Project-local convention used by the current RL/scenario stack:
+    //   0 = Idle / no mission
+    //   1 = Takeoff / runway departure
+    //   2 = Heading-altitude-speed vectoring / stable flight
+    //   3 = Waypoint / LNAV route navigation
+    // Tactical task codes (attack/RTB/etc.) are reserved for future mission layers.
+    int command_code;
     
     // 3. Formation
     int formation_id;
@@ -70,6 +107,64 @@ struct MissionCommand {
     bool authorization_to_fire;
     
     bool active;
+};
+
+/**
+ * TaskOrder
+ * Implements task_order_leader_standard.md: the C2 -> Leader task object.
+ */
+struct TaskOrder {
+    uint64_t task_id = 0;
+    TaskType task_type = TaskType::Idle;
+    int priority = 0;
+    uint64_t issuer_id = 0;
+    uint64_t assignee_id = 0;
+    bool active = false;
+    double issue_time_s = 0.0;
+
+    double anchor_x_m = 0.0;
+    double anchor_y_m = 0.0;
+    double anchor_z_m = 0.0;
+    StationType station_type = StationType::Orbit;
+    double station_radius_m = 0.0;
+    double station_leg_length_m = 0.0;
+    double station_heading_deg = 0.0;
+
+    double altitude_block_min_m = 0.0;
+    double altitude_block_max_m = 0.0;
+    double target_altitude_m = 0.0;
+    double speed_min_mps = 0.0;
+    double speed_max_mps = 0.0;
+    double target_speed_mps = 0.0;
+
+    int entry_condition_code = 0;
+    int exit_condition_code = 0;
+    double on_station_time_s = 0.0;
+    double fuel_bingo_override_kg = 0.0;
+    uint64_t recovery_base_id = 0;
+    uint64_t recovery_runway_id = 0;
+};
+
+/**
+ * LeaderIntent
+ * Internal Leader-layer output before mapping into MissionCommand.
+ */
+struct LeaderIntent {
+    LeaderPhase phase_id = LeaderPhase::Idle;
+    int command_code = 0;
+    double cmd_heading_deg = 0.0;
+    double cmd_altitude_m = 0.0;
+    double cmd_speed_mps = 0.0;
+    int formation_id = 0;
+    double form_offset_x = 0.0;
+    double form_offset_y = 0.0;
+    double form_offset_z = 0.0;
+    uint64_t assigned_target_id = 0;
+    bool authorization_to_fire = false;
+    bool approach_armed = false;
+    bool commit_to_land = false;
+    bool abort_flag = false;
+    bool active = false;
 };
 
 
@@ -142,6 +237,12 @@ struct PendingMovementCommand {
 
 struct PendingActionCommand {
     ActionCommand command;
+    double deliver_time;
+    bool active;
+};
+
+struct PendingMissionCommand {
+    MissionCommand command;
     double deliver_time;
     bool active;
 };

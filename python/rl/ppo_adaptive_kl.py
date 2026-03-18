@@ -17,8 +17,8 @@ class AdaptiveKLPPO(PPO):
     - Adds an (optional) KL penalty term to the loss.
     - Adapts learning-rate and clip-range multipliers to keep the observed KL near `target_kl`.
 
-    This is designed to improve stability (avoid destructive updates) and also avoid "too tiny" updates
-    when `approx_kl` stays far below target.
+    This is designed to improve stability (avoid destructive updates). Low-KL boost behavior is
+    intentionally conservative by default to avoid runaway update aggressiveness.
     """
 
     def __init__(
@@ -33,6 +33,9 @@ class AdaptiveKLPPO(PPO):
         lr_mult_max: float = 3.0,
         clip_mult_min: float = 0.5,
         clip_mult_max: float = 2.0,
+        low_kl_boost_patience: int = 2,
+        boost_lr_on_low_kl: bool = True,
+        boost_clip_on_low_kl: bool = False,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -46,6 +49,10 @@ class AdaptiveKLPPO(PPO):
         self.lr_mult_max = float(lr_mult_max)
         self.clip_mult_min = float(clip_mult_min)
         self.clip_mult_max = float(clip_mult_max)
+        self.low_kl_boost_patience = max(1, int(low_kl_boost_patience))
+        self.boost_lr_on_low_kl = bool(boost_lr_on_low_kl)
+        self.boost_clip_on_low_kl = bool(boost_clip_on_low_kl)
+        self._low_kl_streak = 0
         super().__init__(*args, **kwargs)
 
     def _apply_lr_multiplier(self) -> None:
@@ -71,6 +78,7 @@ class AdaptiveKLPPO(PPO):
 
         # If KL is too high: shrink step sizes and increase penalty.
         if mean_kl > high:
+            self._low_kl_streak = 0
             self._lr_mult = max(self._lr_mult / self.kl_adapt_factor, self.lr_mult_min)
             self._clip_mult = max(self._clip_mult / self.kl_adapt_factor, self.clip_mult_min)
             if self.kl_penalty_coef > 0.0:
@@ -81,9 +89,15 @@ class AdaptiveKLPPO(PPO):
 
         # If KL is too low: grow step sizes and relax penalty.
         elif mean_kl < low:
-            self._lr_mult = min(self._lr_mult * self.kl_adapt_factor, self.lr_mult_max)
-            self._clip_mult = min(self._clip_mult * self.kl_adapt_factor, self.clip_mult_max)
-            self.kl_penalty_coef = max(self.kl_penalty_coef / self.kl_adapt_factor, self.kl_penalty_coef_min)
+            self._low_kl_streak += 1
+            if self._low_kl_streak >= self.low_kl_boost_patience:
+                if self.boost_lr_on_low_kl:
+                    self._lr_mult = min(self._lr_mult * self.kl_adapt_factor, self.lr_mult_max)
+                if self.boost_clip_on_low_kl:
+                    self._clip_mult = min(self._clip_mult * self.kl_adapt_factor, self.clip_mult_max)
+                self.kl_penalty_coef = max(self.kl_penalty_coef / self.kl_adapt_factor, self.kl_penalty_coef_min)
+        else:
+            self._low_kl_streak = 0
 
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
         # Switch to train mode (affects batch norm / dropout)
@@ -210,4 +224,4 @@ class AdaptiveKLPPO(PPO):
         self.logger.record("train/kl_penalty_coef", float(self.kl_penalty_coef))
         self.logger.record("train/kl_lr_mult", float(self._lr_mult))
         self.logger.record("train/kl_clip_mult", float(self._clip_mult))
-
+        self.logger.record("train/kl_low_streak", int(self._low_kl_streak))

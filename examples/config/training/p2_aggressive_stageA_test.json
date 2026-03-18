@@ -1,0 +1,73 @@
+{
+  "algo": "AdaptiveKLPPO",
+  "policy": "SquashedMultiInputPolicy",
+  "total_timesteps": 120000,
+  "n_envs": 40,
+  "save_freq": 20000,
+  "wrappers": {
+    "multi_timescale_action": {
+      "enabled": true,
+      "hold_steps": 3,
+      "low_freq_indices": [4, 5, 6, 9, 12, 13, 14, 15, 16],
+      "snap_binary_indices": [4, 9, 12, 13, 14, 15],
+      "action_rate_penalty_coef": 0.0003
+    }
+  },
+  "curriculum": {
+    "check_freq": 20000,
+    "stages": [
+      {
+        "until_timesteps": 80000,
+        "randomization": {
+          "world_yaw_range": [0.0, 0.0],
+          "wind_speed_range": [0.0, 4.0],
+          "wind_dir_from_range": [250.0, 290.0],
+          "wind_shear_range": [0.0, 2.0]
+        }
+      },
+      {
+        "until_timesteps": null,
+        "randomization": {
+          "world_yaw_range": [-30.0, 30.0],
+          "wind_speed_range": [0.0, 10.0],
+          "wind_dir_from_range": [210.0, 330.0],
+          "wind_shear_range": [0.0, 6.0]
+        }
+      }
+    ]
+  },
+  "hyperparameters": {
+    "learning_rate": 3e-05,
+    "n_steps": 256,
+    "batch_size": 5120,
+    "n_epochs": 4,
+    "gamma": 0.999,
+    "gae_lambda": 0.97,
+    "clip_range": 0.1,
+    "clip_range_vf": 0.1,
+    "normalize_advantage": true,
+    "ent_coef": 0.0003,
+    "vf_coef": 0.5,
+    "max_grad_norm": 0.5,
+    "target_kl": 0.02,
+    "kl_penalty_coef": 0.0,
+    "kl_adaptive": true,
+    "device": "cuda",
+    "policy_kwargs": {
+      "features_extractor_class": "TransformerVisualExtractor",
+      "features_extractor_kwargs": {
+        "features_dim": 256,
+        "n_heads": 4,
+        "n_layers": 4,
+        "visual_cnn_channels": 64,
+        "use_amp": true,
+        "use_checkpointing": true
+      },
+      "log_std_init": -1.5,
+      "net_arch": {
+        "pi": [256, 256],
+        "vf": [256, 256]
+      }
+    }
+  }
+}

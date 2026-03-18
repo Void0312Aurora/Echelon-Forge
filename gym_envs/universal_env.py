@@ -31,6 +31,17 @@ def half_to_unit(x: float) -> float:
     return y
 
 
+def downsample_visual_mean(visual: np.ndarray, factor: int) -> np.ndarray:
+    if factor <= 1:
+        return visual.astype(np.float32, copy=False)
+    h, w, c = visual.shape
+    if h % factor != 0 or w % factor != 0:
+        raise ValueError(f"visual shape {visual.shape} not divisible by downsample factor {factor}")
+    nh, nw = h // factor, w // factor
+    out = visual.reshape(nh, factor, nw, factor, c).mean(axis=(1, 3))
+    return out.astype(np.float32, copy=False)
+
+
 if gym is None:
     class UniversalEnv:  # pragma: no cover
         def __init__(self, *args, **kwargs):
@@ -62,6 +73,9 @@ else:
             include_visual: bool = False,
             include_proprio: bool = False,
             action_mode: str = "full",
+            mission_obs_mode: str = "basic",
+            visual_downsample: int = 1,
+            visual_update_interval: int = 1,
         ):
             super().__init__()
             self.render_mode = render_mode
@@ -69,9 +83,14 @@ else:
             self.include_visual = bool(include_visual)
             self.include_proprio = bool(include_proprio)
             self.action_mode = str(action_mode)
+            self.mission_obs_mode = str(mission_obs_mode).strip().lower()
+            self.visual_downsample = max(1, int(visual_downsample))
+            self.visual_update_interval = max(1, int(visual_update_interval))
             self._last_inst = None
             self._last_truth = None
             self._last_action = None
+            self._visual_cache = None
+            self._visual_cache_step = -1
 
             # Initialize Core
             self.sim = ef_py.SimulationKernel()
@@ -141,14 +160,30 @@ else:
             self.obs_size = 42
 
             # ARB Visual observation dimensions
-            self.arb_height = 48
-            self.arb_width = 96
+            self.arb_height_native = 48
+            self.arb_width_native = 96
             self.arb_channels = 10
+            if self.arb_height_native % self.visual_downsample != 0 or self.arb_width_native % self.visual_downsample != 0:
+                raise ValueError(
+                    f"visual_downsample={self.visual_downsample} must divide "
+                    f"{self.arb_height_native}x{self.arb_width_native}"
+                )
+            self.arb_height = self.arb_height_native // self.visual_downsample
+            self.arb_width = self.arb_width_native // self.visual_downsample
+            if self.mission_obs_mode == "basic":
+                mission_dim = 4
+            elif self.mission_obs_mode == "nav_v1":
+                mission_dim = 11
+            elif self.mission_obs_mode == "nav_v2":
+                mission_dim = 14
+            else:
+                raise ValueError(f"Unknown mission_obs_mode: {self.mission_obs_mode}")
+
             obs_spaces = {
                 "instruments": spaces.Box(low=-np.inf, high=np.inf, shape=(self.obs_size,), dtype=np.float32),
                 "contacts": spaces.Box(low=-np.inf, high=np.inf, shape=(self.max_contacts, 5), dtype=np.float32),
                 "rwr": spaces.Box(low=-np.inf, high=np.inf, shape=(self.max_rwr, 4), dtype=np.float32),
-                "mission": spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32),
+                "mission": spaces.Box(low=-np.inf, high=np.inf, shape=(mission_dim,), dtype=np.float32),
             }
             if self.include_proprio:
                 obs_spaces["proprio"] = spaces.Box(
@@ -180,6 +215,8 @@ else:
 
             self.steps = 0
             self._last_action = None
+            self._visual_cache = None
+            self._visual_cache_step = -1
             return self._get_obs(), {}
 
         def set_randomization_overrides(self, overrides: dict | None) -> None:
@@ -296,8 +333,9 @@ else:
                     raise ValueError(f"Unknown action_mode: {self.action_mode}")
 
                 # Auto gear retraction after liftoff for takeoff curricula.
+                # Use radar altitude (AGL), not baro/MSL, so high-elevation airfields do not retract on the ground.
                 inst_now = self.sim.get_instrument_state(self.agent_id)
-                pilot_act.gear_handle = 0.0 if float(inst_now.alt_baro) > 30.0 else 1.0
+                pilot_act.gear_handle = 0.0 if float(inst_now.alt_radar) > 30.0 else 1.0
 
             self.sim.set_pilot_action(self.agent_id, pilot_act)
 
@@ -314,7 +352,23 @@ else:
             )
             # Keep obs["mission"] as the mission command ([cmd, hdg, alt, spd]) every step.
             # Return mission progress/status via info for logging/debugging.
-            info = {"mission_status": np.array(mission_status, dtype=np.float32)}
+            info = {
+                "mission_status": np.array(mission_status, dtype=np.float32),
+                "terminated": float(bool(terminated)),
+                "truncated": float(bool(truncated)),
+            }
+            try:
+                tr = getattr(self.loader, "last_termination_reason", None)
+                if isinstance(tr, str) and tr:
+                    info["termination_reason"] = tr
+            except Exception:
+                pass
+            try:
+                rb = getattr(self.loader, "last_reward_breakdown", None)
+                if isinstance(rb, dict) and rb:
+                    info["reward_terms"] = {k: float(v) for k, v in rb.items()}
+            except Exception:
+                pass
             try:
                 inst_now = self._last_inst if self._last_inst is not None else self.sim.get_instrument_state(self.agent_id)
                 info["on_runway"] = float(bool(getattr(inst_now, "on_runway", True)))
@@ -432,7 +486,7 @@ else:
                 ]
 
             # 3. Mission Command (From Loader)
-            miss_vec = self.loader.get_mission_observation()
+            miss_vec = self.loader.get_mission_observation(self.mission_obs_mode)
 
             # 4. ILS (derived from scenario geometry; enables runway alignment without exposing runway heading directly)
             ils_vec = self.loader.get_ils_observation(float(raw_truth.x), float(raw_truth.y), float(inst.alt_baro))
@@ -455,8 +509,18 @@ else:
                     proprio = np.asarray(self._last_action, dtype=np.float32).reshape(-1)
                 obs["proprio"] = proprio
             if self.include_visual:
-                visual_flat = self.sim.get_visual_observation(self.agent_id)
-                obs["visual"] = np.array(visual_flat, dtype=np.float32).reshape(
-                    self.arb_height, self.arb_width, self.arb_channels
+                need_refresh = (
+                    self._visual_cache is None
+                    or self.visual_update_interval <= 1
+                    or self.steps <= 0
+                    or (self.steps - self._visual_cache_step) >= self.visual_update_interval
                 )
+                if need_refresh:
+                    visual_flat = self.sim.get_visual_observation(self.agent_id)
+                    visual = np.asarray(visual_flat, dtype=np.float32).reshape(
+                        self.arb_height_native, self.arb_width_native, self.arb_channels
+                    )
+                    self._visual_cache = downsample_visual_mean(visual, self.visual_downsample)
+                    self._visual_cache_step = int(self.steps)
+                obs["visual"] = np.asarray(self._visual_cache, dtype=np.float32, copy=False)
             return obs

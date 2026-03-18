@@ -76,6 +76,8 @@ class DreamerConfig:
     obs_norm_clip: float | None = 10.0
     visual_min_std: float = 0.1
     visual_norm_clip: float | None = 10.0
+    visual_encoder_type: str = "cnn"
+    visual_cnn_channels: int = 64
     # Behavior cloning stability: roll in the RSSM using the actor's own actions
     # (DAgger-style) to reduce covariate shift at deployment.
     bc_rollin_prob: float = 0.0  # 0=teacher forcing, 1=fully closed-loop roll-in

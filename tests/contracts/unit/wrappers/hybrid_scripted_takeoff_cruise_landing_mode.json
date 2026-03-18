@@ -1,0 +1,146 @@
+{
+  "type": "unit_regression",
+  "check_kind": "wrapper_scripted_mode_sequence",
+  "controllers": {
+    "takeoff": 0.25,
+    "stable_flight": 0.75,
+    "landing_ils": 0.5
+  },
+  "env": {
+    "action_dim": 4,
+    "instrument_dim": 40,
+    "mission_dim": 8,
+    "default_mission_values": {
+      "1": 90.0,
+      "2": 1400.0,
+      "3": 210.0
+    },
+    "loader": {
+      "waypoint_count": 4,
+      "waypoint_idx": 0,
+      "mission_cmd": {
+        "command_code": 3
+      }
+    },
+    "reset_obs": {
+      "alt_agl": 0.0,
+      "cmd_code": 3.0
+    },
+    "steps": [
+      {
+        "loader_updates": {
+          "waypoint_idx": 1
+        },
+        "next_obs": {
+          "alt_agl": 220.0,
+          "cmd_code": 3.0
+        }
+      },
+      {
+        "loader_updates": {
+          "waypoint_idx": 2
+        },
+        "next_obs": {
+          "alt_agl": 80.0,
+          "cmd_code": 3.0
+        }
+      },
+      {
+        "loader_updates": {
+          "waypoint_idx": 3,
+          "mission_cmd": {
+            "command_code": 4
+          }
+        },
+        "next_obs": {
+          "alt_agl": 220.0,
+          "cmd_code": 4.0
+        }
+      },
+      {
+        "loader_updates": {
+          "mission_cmd": {
+            "command_code": 4
+          }
+        },
+        "next_obs": {
+          "alt_agl": 220.0,
+          "cmd_code": 4.0
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "continuous_mode_handoff",
+      "wrapper": {
+        "scripted_baseline_mode": "takeoff_cruise_landing",
+        "scripted_transition_alt_agl_m": 140.0,
+        "scripted_residual_scale": 0.0,
+        "scripted_blend_indices": [0, 1, 2, 3]
+      },
+      "expected_initial_mode": "takeoff",
+      "rollout": [
+        {
+          "expected_mode": "takeoff",
+          "expected_action": 0.25
+        },
+        {
+          "expected_mode": "stable_flight",
+          "expected_action": 0.75
+        },
+        {
+          "expected_mode": "stable_flight",
+          "expected_action": 0.75
+        },
+        {
+          "expected_mode": "landing_ils",
+          "expected_action": 0.5
+        }
+      ],
+      "expected_reset_counts": {
+        "stable_flight": { "min": 1 },
+        "landing_ils": { "min": 1 }
+      }
+    },
+    {
+      "name": "continuous_mode_residual_caps",
+      "wrapper": {
+        "scripted_baseline_mode": "takeoff_cruise_landing",
+        "scripted_transition_alt_agl_m": 140.0,
+        "scripted_residual_scale": 1.0,
+        "scripted_residual_mode_scales": {
+          "takeoff": 0.5,
+          "stable_flight": 0.0,
+          "landing_ils": 0.25
+        },
+        "scripted_residual_terminal_waypoint_count": 2,
+        "scripted_residual_terminal_scale": 0.0,
+        "scripted_blend_indices": [0, 1, 2, 3]
+      },
+      "expected_initial_mode": "takeoff",
+      "rollout": [
+        {
+          "expected_mode": "takeoff",
+          "expected_action": 0.125
+        },
+        {
+          "expected_mode": "stable_flight",
+          "expected_action": 0.75
+        },
+        {
+          "expected_mode": "stable_flight",
+          "expected_action": 0.75
+        },
+        {
+          "expected_mode": "landing_ils",
+          "expected_action": 0.375
+        }
+      ],
+      "expected_reset_counts": {
+        "stable_flight": { "min": 1 },
+        "landing_ils": { "min": 1 }
+      }
+    }
+  ]
+}

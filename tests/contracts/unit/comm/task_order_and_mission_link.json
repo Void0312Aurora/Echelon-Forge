@@ -1,0 +1,52 @@
+{
+  "type": "unit_regression",
+  "check_kind": "task_order_and_mission_link",
+  "task_order": {
+    "task_id": 77,
+    "task_type": "CAP",
+    "priority": 3,
+    "issuer_id": 1001,
+    "anchor_x_m": 12000.0,
+    "anchor_y_m": -8000.0,
+    "anchor_z_m": 6500.0,
+    "station_type": "Racetrack",
+    "station_radius_m": 18000.0,
+    "station_leg_length_m": 30000.0,
+    "station_heading_deg": 45.0,
+    "target_altitude_m": 7000.0,
+    "target_speed_mps": 210.0,
+    "on_station_time_s": 900.0,
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7
+  },
+  "leader_intent": {
+    "phase_id": "TransitToStation",
+    "command_code": 3,
+    "cmd_heading_deg": 135.0,
+    "cmd_altitude_m": 6800.0,
+    "cmd_speed_mps": 205.0,
+    "approach_armed": false
+  },
+  "pilot_report": {
+    "report_type": "REP_ON_STATION",
+    "task_id": 77,
+    "phase_id": "OnStation",
+    "timestamp_s": 12.5,
+    "status_value": 1.0,
+    "location_x_m": 12010.0,
+    "location_y_m": -7990.0,
+    "location_z_m": 6980.0
+  },
+  "command_link": {
+    "latency_s": 0.2,
+    "loss_probability": 0.0
+  },
+  "mission_command": {
+    "cmd_heading_deg": 222.0,
+    "cmd_altitude_m": 5000.0,
+    "cmd_speed_mps": 190.0,
+    "command_code": 4
+  },
+  "pre_link_command_code": 0,
+  "link_settle_steps": 20
+}

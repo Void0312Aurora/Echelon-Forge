@@ -3,8 +3,10 @@ import os
 import sys
 import json
 import shutil
+import math
 from datetime import datetime
 
+import numpy as np
 import torch
 # Enable TF32 for Ampere+ GPUs (significant speedup and memory savings)
 torch.set_float32_matmul_precision('high')
@@ -30,10 +32,15 @@ if os.path.isdir(_BUILD_DIR):
 sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
 from python.models.transformer import TransformerExtractor, TransformerVisualExtractor
-from python.training_callbacks import CMODiagnosticsCallback, ScenarioCurriculumCallback
+from python.training_callbacks import (
+    CMODiagnosticsCallback,
+    ScenarioCurriculumCallback,
+    RewardPlateauEarlyStopCallback,
+)
+from python.env_config import resolve_env_settings
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policies import SquashedMultiInputPolicy
-from python.rl.wrappers import MultiTimescaleActionWrapper
+from python.rl.wrappers import get_action_wrapper_spec
 
 def get_policy_kwargs(train_config):
     # Parse policy_kwargs from JSON
@@ -49,7 +56,50 @@ def get_policy_kwargs(train_config):
     return kwargs
 
 
-def apply_safe_action_bias(model: PPO, action_mode: str):
+def _unit_to_presquash(value: float) -> float:
+    x = float(np.clip(2.0 * float(value) - 1.0, -0.999, 0.999))
+    return float(math.atanh(x))
+
+
+def infer_full_action_safe_defaults(scenario_path: str) -> tuple[float, float, float, float]:
+    """
+    Infer reasonable initial throttle/gear defaults from the scenario.
+
+    Full-action tasks are not all takeoff tasks. Airborne/cruise scenarios should not
+    inherit a takeoff-style "gear down, near-max throttle" bias, otherwise PPO can get
+    stuck around a bad initial mean for configuration controls.
+    """
+    throttle_default = 0.95
+    gear_default = 1.0
+    flaps_default = 0.0
+    speedbrake_default = 0.0
+    try:
+        with open(scenario_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        mission = data.get("mission_command", {}) if isinstance(data, dict) else {}
+        entities = data.get("entities", []) if isinstance(data, dict) else []
+        agent = next((e for e in entities if isinstance(e, dict) and bool(e.get("is_agent", False))), None)
+        pos = agent.get("pos", []) if isinstance(agent, dict) else []
+        spawn_alt_m = float(pos[2]) if isinstance(pos, list) and len(pos) > 2 else 0.0
+        cmd_code = int(mission.get("command_code", 0)) if isinstance(mission, dict) else 0
+
+        airborne_start = spawn_alt_m > 50.0
+        if cmd_code == 4:
+            throttle_default = 0.45
+            gear_default = 1.0
+            flaps_default = 1.0
+            speedbrake_default = 0.0
+        elif airborne_start or cmd_code == 3:
+            throttle_default = 0.60
+            gear_default = 0.0
+            flaps_default = 0.0
+            speedbrake_default = 0.0
+    except Exception:
+        pass
+    return float(throttle_default), float(gear_default), float(flaps_default), float(speedbrake_default)
+
+
+def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
     """
     Improve early exploration for mixed-range action spaces.
 
@@ -58,36 +108,62 @@ def apply_safe_action_bias(model: PPO, action_mode: str):
     which can trap learning in the "stationary on runway" regime. We bias those
     outputs toward realistic neutral/safe defaults.
     """
-    if action_mode != "full":
-        return
     try:
         action_net = getattr(model.policy, "action_net", None)
         if action_net is None or getattr(action_net, "bias", None) is None:
             return
         b = action_net.bias
-        if b is None or int(b.shape[0]) < 17:
+        if b is None:
             return
         squash = bool(getattr(model.policy, "squash_output", False))
         with torch.no_grad():
-            # Safe defaults for the 17D "full" action layout in `gym_envs/universal_env.py`.
-            # - throttle: enough power to start ground roll
-            # - gear: down
-            # - keep brakes/speedbrake/flaps and combat switches off by default
-            if squash:
-                # With tanh-squash + unscale, bias=0 maps to the midpoint of [low,high].
-                # Push "off" switches below 0.5 by using negative pre-squash means.
-                b[3] = 1.5   # throttle -> ~0.95 after tanh+unscale (realistic takeoff power)
-                b[4] = 2.0   # gear down  -> ~0.98 after tanh+unscale
+            if action_mode == "full":
+                if int(b.shape[0]) < 17:
+                    return
+                throttle_default, gear_default, flaps_default, speedbrake_default = infer_full_action_safe_defaults(scenario_path)
+                # Safe defaults for the 17D "full" action layout in `gym_envs/universal_env.py`.
+                # - throttle/gear are scenario-aware: takeoff starts on-ground, cruise starts airborne
+                # - keep brakes/speedbrake/flaps and combat switches off by default
+                if squash:
+                    # With tanh-squash + unscale, bias=0 maps to the midpoint of [low,high].
+                    # Push "off" switches below 0.5 by using negative pre-squash means.
+                    b[3] = _unit_to_presquash(throttle_default)
+                    b[4] = _unit_to_presquash(gear_default)
+                    b[5] = _unit_to_presquash(flaps_default)
+                    b[6] = _unit_to_presquash(speedbrake_default)
 
-                off_pre = -2.0
-                for idx in (5, 6, 7, 8, 9, 12, 13, 14, 15, 16):
-                    b[idx] = off_pre
-            else:
-                # Unbounded Gaussian + clip: bias directly corresponds to env action value.
-                b[3] = 0.5   # throttle
-                b[4] = 1.0   # gear down
-                for idx in (5, 6, 7, 8, 9, 12, 13, 14, 15, 16):
-                    b[idx] = 0.0
+                    off_pre = -2.0
+                    for idx in (7, 8, 9, 12, 13, 14, 15, 16):
+                        b[idx] = off_pre
+                else:
+                    # Unbounded Gaussian + clip: bias directly corresponds to env action value.
+                    b[3] = throttle_default
+                    b[4] = gear_default
+                    b[5] = flaps_default
+                    b[6] = speedbrake_default
+                    for idx in (7, 8, 9, 12, 13, 14, 15, 16):
+                        b[idx] = 0.0
+            elif action_mode == "takeoff2":
+                if int(b.shape[0]) < 2:
+                    return
+                throttle_default = 1.0
+                if squash:
+                    b[1] = _unit_to_presquash(throttle_default)
+                else:
+                    b[1] = throttle_default
+            elif action_mode == "takeoff4":
+                if int(b.shape[0]) < 4:
+                    return
+                throttle_default = 1.0
+                if squash:
+                    b[3] = _unit_to_presquash(throttle_default)
+                else:
+                    b[3] = throttle_default
+                # Keep lateral controls neutral at initialization so the early rollout explores
+                # "accelerate straight" before searching over crosswind corrections.
+                b[0] = 0.0
+                b[1] = 0.0
+                b[2] = 0.0
     except Exception:
         return
 
@@ -96,26 +172,69 @@ def main():
     parser.add_argument("--scenario", type=str, required=True, help="Path to JSON scenario file")
     parser.add_argument("--train_config", type=str, default="examples/config/training/default_ppo.json", help="Path to training config JSON")
     parser.add_argument("--test_only", action="store_true", help="Run in test mode without training")
-    parser.add_argument("--include_visual", action="store_true", help="Include ARB visual observation (large/slow)")
+    parser.add_argument(
+        "--include_visual",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Include ARB visual observation (defaults to train_config env/policy settings).",
+    )
+    parser.add_argument(
+        "--include_proprio",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Include previous action in observations (defaults to train_config env settings).",
+    )
+    parser.add_argument(
+        "--mission_obs_mode",
+        type=str,
+        default=None,
+        choices=["basic", "nav_v1", "nav_v2"],
+        help="Mission observation format (defaults to train_config env settings).",
+    )
+    parser.add_argument(
+        "--visual_downsample",
+        type=int,
+        default=None,
+        help="Visual downsample factor (defaults to train_config env settings).",
+    )
+    parser.add_argument(
+        "--visual_update_interval",
+        type=int,
+        default=None,
+        help="Visual refresh interval (defaults to train_config env settings).",
+    )
     parser.add_argument(
         "--action_mode",
         type=str,
-        default="full",
+        default=None,
         choices=["full", "takeoff2", "takeoff4"],
-        help="Action space mode (curriculum): full=17D, takeoff2=(pitch,throttle), takeoff4=(pitch,roll,rudder,throttle)",
+        help="Action space mode (defaults to train_config env settings).",
     )
     
     # New Experiment Args
     parser.add_argument("--run_name", type=str, default=None, help="Name of the run. If None, uses Timestamp.")
     parser.add_argument("--resume_path", type=str, default=None, help="Path to .zip model to resume training from.")
+    parser.add_argument(
+        "--init_from",
+        type=str,
+        default=None,
+        help="Path to a .zip model checkpoint used only to initialize model parameters. "
+             "This preserves the new run directory, optimizer state, and hyperparameters.",
+    )
     parser.add_argument("--output_base", type=str, default="experiments", help="Base directory for experiments.")
     parser.add_argument("--n_envs", type=int, default=None, help="Number of parallel environments (overrides config)")
     parser.add_argument("--diagnostics", action="store_true", help="Log extra diagnostics scalars to TensorBoard")
     parser.add_argument(
         "--diagnostics_every",
         type=int,
-        default=50000,
+        default=10000,
         help="Diagnostics logging interval (in environment timesteps, not gradient updates)",
+    )
+    parser.add_argument(
+        "--diagnostics_preterm_window",
+        type=int,
+        default=32,
+        help="How many recent steps to aggregate for pre-termination diagnostics.",
     )
     parser.add_argument(
         "--no_init_safe_action_bias",
@@ -139,10 +258,16 @@ def main():
     with open(train_cfg_path, 'r') as f:
         train_config = json.load(f)
 
+    env_settings = resolve_env_settings(train_config, args)
+
     # 2. Setup Experiment Directory
     exp_dir = ""
     run_name = ""
     
+    if args.resume_path and args.init_from:
+        print("Error: --resume_path and --init_from are mutually exclusive.")
+        return
+
     if args.resume_path:
         # Resume Mode: Use existing directory structure
         if not os.path.exists(args.resume_path):
@@ -198,54 +323,45 @@ def main():
     
     print(f"Creating {n_envs} parallel environments...")
     print(f"Logging to {log_dir}")
+    print(
+        "Effective env settings: "
+        f"action_mode={env_settings['action_mode']} "
+        f"include_visual={env_settings['include_visual']} "
+        f"include_proprio={env_settings['include_proprio']} "
+        f"mission_obs_mode={env_settings['mission_obs_mode']} "
+        f"visual_downsample={env_settings['visual_downsample']} "
+        f"visual_update_interval={env_settings['visual_update_interval']}"
+    )
 
     # Rough rollout-buffer memory warning for visual observations (DictRolloutBuffer stores full obs).
     try:
         n_steps = int(train_config.get("hyperparameters", {}).get("n_steps", 2048))
     except Exception:
         n_steps = 2048
-    if args.include_visual:
-        visual_elems = 48 * 96 * 10
+    if env_settings["include_visual"]:
+        ds = int(env_settings["visual_downsample"])
+        visual_elems = (48 // ds) * (96 // ds) * 10
         est_bytes = int(n_envs) * int(n_steps) * int(visual_elems) * 4
         if est_bytes >= 4 * 1024**3:
             gib = est_bytes / (1024**3)
             print(
-                f"[WARN] include_visual=True with n_envs={n_envs}, n_steps={n_steps} will allocate ~{gib:.1f} GiB "
-                "just for the visual rollout buffer. Consider reducing n_envs and/or n_steps."
+                f"[WARN] include_visual=True with visual_downsample={ds}, n_envs={n_envs}, n_steps={n_steps} "
+                f"will allocate ~{gib:.1f} GiB just for the visual rollout buffer. "
+                "Consider reducing n_envs/n_steps or increasing --visual_downsample."
             )
     
     # We must delay env creation for resume if we want to ensure same config? 
     # For now we assume user provides correct params for resumption.
     vec_cls = SubprocVecEnv if n_envs > 1 else DummyVecEnv
 
-    wrapper_class = None
-    wrapper_kwargs = None
-    wrappers_cfg = train_config.get("wrappers", {}) if isinstance(train_config.get("wrappers", {}), dict) else {}
-    mts_cfg = wrappers_cfg.get("multi_timescale_action")
-    if isinstance(mts_cfg, dict) and bool(mts_cfg.get("enabled", False)):
-        wrapper_class = MultiTimescaleActionWrapper
-        wrapper_kwargs = {
-            "hold_steps": int(mts_cfg.get("hold_steps", 4)),
-            "low_freq_indices": mts_cfg.get(
-                "low_freq_indices",
-                # Do NOT include brakes in low-frequency indices: they are analog and needed for fine control.
-                [4, 5, 6, 9, 12, 13, 14, 15, 16],
-            ),
-            "snap_binary_indices": mts_cfg.get(
-                "snap_binary_indices",
-                # Do NOT snap brakes to {0,1}: it turns small exploration noise into full braking.
-                [4, 9, 12, 13, 14, 15],
-            ),
-            "action_rate_penalty_coef": float(mts_cfg.get("action_rate_penalty_coef", 0.0)),
-        }
+    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
 
     vec_env = make_vec_env(
         UniversalEnv,
         n_envs=n_envs,
         env_kwargs={
             "scenario_path": scenario_path,
-            "include_visual": args.include_visual,
-            "action_mode": args.action_mode,
+            **env_settings,
         },
         vec_env_cls=vec_cls,
         wrapper_class=wrapper_class,
@@ -318,8 +434,15 @@ def main():
         if policy_name == "SquashedMultiInputPolicy":
             policy_cls = SquashedMultiInputPolicy
         model = algo_cls(policy_cls, vec_env, verbose=1, tensorboard_log=log_dir, **hyperparams)
-        if not args.no_init_safe_action_bias:
-            apply_safe_action_bias(model, args.action_mode)
+        if args.init_from:
+            init_path = os.path.abspath(args.init_from)
+            if not os.path.exists(init_path):
+                print(f"Error: Initialization checkpoint not found: {init_path}")
+                return
+            print(f"Initializing Parameters From: {init_path}")
+            model.set_parameters(init_path, exact_match=False, device=hyperparams.get("device", "auto"))
+        elif not args.no_init_safe_action_bias:
+            apply_safe_action_bias(model, env_settings["action_mode"], scenario_path)
     
     print(f"Starting Training for {total_timesteps} steps...")
     
@@ -330,7 +453,12 @@ def main():
     )
     callbacks = [checkpoint_callback]
     if args.diagnostics:
-        callbacks.append(CMODiagnosticsCallback(log_every_timesteps=int(args.diagnostics_every)))
+        callbacks.append(
+            CMODiagnosticsCallback(
+                log_every_timesteps=int(args.diagnostics_every),
+                preterm_window_steps=int(args.diagnostics_preterm_window),
+            )
+        )
     if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
         callbacks.append(
             ScenarioCurriculumCallback(
@@ -338,6 +466,22 @@ def main():
                 check_freq=int(curriculum_cfg.get("check_freq", 10_000)),
             )
         )
+
+    early_stop_cfg = train_config.get("early_stop", {}) if isinstance(train_config.get("early_stop", {}), dict) else {}
+    best_ema_ckpt = os.path.join(ckpt_dir, "best_ema_model.zip")
+    if bool(early_stop_cfg.get("enabled", False)):
+        callbacks.append(
+            RewardPlateauEarlyStopCallback(
+                min_timesteps=int(early_stop_cfg.get("min_timesteps", 200_000)),
+                check_every_timesteps=int(early_stop_cfg.get("check_every_timesteps", 20_000)),
+                patience_checks=int(early_stop_cfg.get("patience_checks", 6)),
+                min_improvement=float(early_stop_cfg.get("min_improvement", 0.5)),
+                ema_alpha=float(early_stop_cfg.get("ema_alpha", 0.05)),
+                best_model_path=os.path.join(ckpt_dir, "best_ema_model"),
+                verbose=1,
+            )
+        )
+
     callback = CallbackList(callbacks) if len(callbacks) > 1 else checkpoint_callback
     
     try:
@@ -346,8 +490,16 @@ def main():
         model.learn(total_timesteps=total_timesteps, callback=callback, reset_num_timesteps=(not args.resume_path))
         
         final_path = os.path.join(exp_dir, "final_model")
-        print(f"Saving final model to {final_path}")
-        model.save(final_path)
+        export_best = bool(early_stop_cfg.get("enabled", False)) and bool(
+            early_stop_cfg.get("export_best_as_final", True)
+        )
+        if export_best and os.path.exists(best_ema_ckpt):
+            print(f"Saving final model from best EMA checkpoint: {best_ema_ckpt}")
+            best_model = algo_cls.load(best_ema_ckpt, env=vec_env, tensorboard_log=log_dir)
+            best_model.save(final_path)
+        else:
+            print(f"Saving final model to {final_path}")
+            model.save(final_path)
         print("Training Complete.")
         
     except KeyboardInterrupt:

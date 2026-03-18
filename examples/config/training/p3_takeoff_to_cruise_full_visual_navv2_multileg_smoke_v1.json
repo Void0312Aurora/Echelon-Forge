@@ -1,0 +1,119 @@
+{
+  "algo": "AdaptiveKLPPO",
+  "policy": "SquashedMultiInputPolicy",
+  "total_timesteps": 32768,
+  "n_envs": 4,
+  "save_freq": 8192,
+  "env": {
+    "include_proprio": true,
+    "mission_obs_mode": "nav_v2",
+    "visual_downsample": 2,
+    "visual_update_interval": 2,
+    "action_mode": "full"
+  },
+  "early_stop": {
+    "enabled": false
+  },
+  "wrappers": {
+    "multi_timescale_action": {
+      "enabled": true,
+      "hold_steps": 4,
+      "low_freq_indices": [4, 5, 6, 9, 12, 13, 14, 15, 16],
+      "snap_binary_indices": [],
+      "binary_hysteresis_indices": [4, 9, 12, 13, 14, 15],
+      "binary_on_threshold": 0.75,
+      "binary_off_threshold": 0.25,
+      "binary_initial_values": {
+        "4": 1.0,
+        "9": 0.0,
+        "12": 0.0,
+        "13": 0.0,
+        "14": 0.0,
+        "15": 0.0
+      },
+      "center_deadband_indices": [5, 6, 7, 8],
+      "center_deadband_center": 0.5,
+      "center_deadband_half_width": 0.18,
+      "scripted_baseline_mode": "takeoff_then_stable_flight",
+      "scripted_transition_alt_agl_m": 160.0,
+      "scripted_residual_scale": 0.22,
+      "scripted_residual_alt_breakpoints_m": [0.0, 20.0, 160.0, 500.0, 1500.0],
+      "scripted_residual_alt_scales": [0.15, 0.15, 0.22, 0.32, 0.42],
+      "scripted_blend_indices": [0, 1, 2, 3],
+      "scripted_lock_indices": [4, 5, 6, 7, 8],
+      "action_rate_penalty_coef": 0.0002
+    }
+  },
+  "curriculum": {
+    "check_freq": 2048,
+    "stages": [
+      {
+        "until_timesteps": 8192,
+        "randomization": {
+          "world_yaw_range": [0.0, 0.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 6.0],
+          "wind_crosswind_range": [-3.0, 3.0],
+          "wind_tailwind_max_mps": 1.0,
+          "wind_shear_range": [0.0, 2.0]
+        }
+      },
+      {
+        "until_timesteps": 16384,
+        "randomization": {
+          "world_yaw_range": [0.0, 180.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 12.0],
+          "wind_crosswind_range": [-6.0, 6.0],
+          "wind_tailwind_max_mps": 3.0,
+          "wind_shear_range": [0.0, 6.0]
+        }
+      },
+      {
+        "until_timesteps": null,
+        "randomization": {
+          "world_yaw_range": [0.0, 360.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 20.0],
+          "wind_crosswind_range": [-12.0, 12.0],
+          "wind_tailwind_max_mps": 5.0,
+          "wind_shear_range": [0.0, 12.0]
+        }
+      }
+    ]
+  },
+  "hyperparameters": {
+    "learning_rate": 3e-05,
+    "n_steps": 128,
+    "batch_size": 256,
+    "n_epochs": 4,
+    "gamma": 0.999,
+    "gae_lambda": 0.97,
+    "clip_range": 0.1,
+    "clip_range_vf": 0.1,
+    "normalize_advantage": true,
+    "ent_coef": 0.0002,
+    "vf_coef": 0.7,
+    "max_grad_norm": 0.5,
+    "target_kl": 0.02,
+    "kl_penalty_coef": 0.0,
+    "kl_adaptive": true,
+    "device": "cuda",
+    "policy_kwargs": {
+      "features_extractor_class": "TransformerVisualExtractor",
+      "features_extractor_kwargs": {
+        "features_dim": 256,
+        "n_heads": 4,
+        "n_layers": 4,
+        "visual_cnn_channels": 64,
+        "use_amp": false,
+        "use_checkpointing": true
+      },
+      "log_std_init": -1.5,
+      "net_arch": {
+        "pi": [256, 256],
+        "vf": [256, 256]
+      }
+    }
+  }
+}
