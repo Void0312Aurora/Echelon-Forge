@@ -1,4 +1,6 @@
 import argparse
+import atexit
+import fcntl
 import os
 import sys
 import json
@@ -41,6 +43,59 @@ from python.env_config import resolve_env_settings
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policies import SquashedMultiInputPolicy
 from python.rl.wrappers import get_action_wrapper_spec
+
+
+def acquire_experiment_lock(exp_dir: str):
+    """
+    Prevent concurrent training processes from writing into the same experiment directory.
+
+    This is especially important for resume flows, where a second accidental `train.py`
+    invocation can silently corrupt checkpoints/logs and saturate CPU by duplicating the
+    full simulation workload.
+    """
+    lock_path = os.path.join(exp_dir, ".train.lock")
+    os.makedirs(exp_dir, exist_ok=True)
+    lock_file = open(lock_path, "a+", encoding="utf-8")
+    try:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        lock_file.seek(0)
+        holder = lock_file.read().strip()
+        print(f"Error: experiment directory is already locked by another training process: {exp_dir}")
+        if holder:
+            print(f"Active lock info: {holder}")
+        lock_file.close()
+        return None
+
+    lock_info = {
+        "pid": os.getpid(),
+        "cwd": os.getcwd(),
+        "argv": sys.argv,
+        "acquired_at": datetime.now().isoformat(timespec="seconds"),
+    }
+    lock_file.seek(0)
+    lock_file.truncate()
+    lock_file.write(json.dumps(lock_info, ensure_ascii=True) + "\n")
+    lock_file.flush()
+
+    def _release_lock():
+        try:
+            lock_file.seek(0)
+            lock_file.truncate()
+            lock_file.flush()
+        except Exception:
+            pass
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        except Exception:
+            pass
+        try:
+            lock_file.close()
+        except Exception:
+            pass
+
+    atexit.register(_release_lock)
+    return lock_file
 
 def get_policy_kwargs(train_config):
     # Parse policy_kwargs from JSON
@@ -167,6 +222,90 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
     except Exception:
         return
 
+
+def apply_leader_action_bias(model: PPO):
+    """
+    Bias leader policies toward a mild post-departure route-selection default.
+
+    The leader phase action uses:
+    - near 0.0 -> teacher
+    - moderately negative -> route
+
+    A small negative bias helps the policy discover "leave departure / start route
+    tasking" much earlier, while low-altitude guardrails in `LeaderTrainingEnv`
+    still keep takeoff and early departure safe.
+    """
+    try:
+        action_net = getattr(model.policy, "action_net", None)
+        if action_net is None or getattr(action_net, "bias", None) is None:
+            return
+        b = action_net.bias
+        if b is None or int(b.shape[0]) < 4:
+            return
+        squash = bool(getattr(model.policy, "squash_output", False))
+        with torch.no_grad():
+            phase_default = -0.35
+            b[0] = float(np.arctanh(np.clip(phase_default, -0.999, 0.999))) if squash else phase_default
+            b[1] = 0.0
+            b[2] = 0.0
+            b[3] = 0.0
+    except Exception:
+        return
+
+
+def resolve_vec_env_spec(
+    *,
+    agent_layer: str,
+    n_envs: int,
+    runtime_cfg: dict,
+    leader_batched_vec_env_cls,
+):
+    """
+    Pick the vectorized-environment backend for the current training run.
+
+    Leader training briefly experimented with `LeaderBatchedVecEnv`, which batches frozen
+    execution-policy inference across envs on one process. In practice that optimization
+    regressed throughput badly because it also collapsed environment stepping from
+    `SubprocVecEnv` back to a single-process `DummyVecEnv`-style loop.
+
+    Keep the experimental path available behind an explicit opt-in, but default leader
+    runs back to normal multi-process vectorization.
+    """
+    use_batched_execution_inference = bool(runtime_cfg.get("batched_execution_inference", False))
+    allow_experimental_singleprocess_batched_leader = bool(
+        runtime_cfg.get("allow_experimental_singleprocess_batched_leader", False)
+    )
+
+    if agent_layer != "leader":
+        return SubprocVecEnv if int(n_envs) > 1 else DummyVecEnv, {}, False
+
+    if use_batched_execution_inference and not allow_experimental_singleprocess_batched_leader:
+        print(
+            "[WARN] runtime.batched_execution_inference is currently disabled by default for leader training. "
+            "The available implementation routes all leader envs through a single-process batched loop and "
+            "has measured significantly lower FPS than SubprocVecEnv with frozen execution. "
+            "Using standard multi-process env stepping instead."
+        )
+
+    if use_batched_execution_inference and allow_experimental_singleprocess_batched_leader:
+        if leader_batched_vec_env_cls is None:
+            print(
+                "[WARN] experimental leader batched vec env requested, but LeaderBatchedVecEnv is unavailable. "
+                "Falling back to standard vec env."
+            )
+        else:
+            return (
+                leader_batched_vec_env_cls,
+                {
+                    "execution_device": str(runtime_cfg.get("execution_device", "cuda")),
+                    "execution_use_autocast": bool(runtime_cfg.get("execution_use_autocast", True)),
+                    "step_executor_workers": int(runtime_cfg.get("step_executor_workers", 0)),
+                },
+                True,
+            )
+
+    return SubprocVecEnv if int(n_envs) > 1 else DummyVecEnv, {}, False
+
 def main():
     parser = argparse.ArgumentParser(description="Universal Training Base for CMO")
     parser.add_argument("--scenario", type=str, required=True, help="Path to JSON scenario file")
@@ -223,6 +362,18 @@ def main():
     )
     parser.add_argument("--output_base", type=str, default="experiments", help="Base directory for experiments.")
     parser.add_argument("--n_envs", type=int, default=None, help="Number of parallel environments (overrides config)")
+    parser.add_argument(
+        "--torch_threads",
+        type=int,
+        default=None,
+        help="PyTorch intra-op CPU threads per process. If omitted, keep PyTorch defaults.",
+    )
+    parser.add_argument(
+        "--torch_interop_threads",
+        type=int,
+        default=None,
+        help="PyTorch inter-op CPU threads per process. If omitted, keep PyTorch defaults.",
+    )
     parser.add_argument("--diagnostics", action="store_true", help="Log extra diagnostics scalars to TensorBoard")
     parser.add_argument(
         "--diagnostics_every",
@@ -258,7 +409,19 @@ def main():
     with open(train_cfg_path, 'r') as f:
         train_config = json.load(f)
 
-    env_settings = resolve_env_settings(train_config, args)
+    agent_layer = str(train_config.get("agent_layer", "execution")).strip().lower() or "execution"
+    if agent_layer not in {"execution", "leader"}:
+        print(f"Error: unknown agent_layer {agent_layer!r} in train config")
+        return
+
+    if agent_layer == "leader":
+        from gym_envs.leader_env import LeaderTrainingEnv
+        from python.rl.leader_batched_vec_env import LeaderBatchedVecEnv
+    else:
+        LeaderTrainingEnv = None
+        LeaderBatchedVecEnv = None
+
+    env_settings = resolve_env_settings(train_config, args) if agent_layer == "execution" else None
 
     # 2. Setup Experiment Directory
     exp_dir = ""
@@ -317,28 +480,86 @@ def main():
     log_dir = os.path.join(exp_dir, "logs")
     os.makedirs(ckpt_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
+    exp_lock = acquire_experiment_lock(exp_dir)
+    if exp_lock is None:
+        return
+
+    runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config.get("runtime", {}), dict) else {}
+
+    torch_threads = args.torch_threads
+    if torch_threads is None:
+        torch_threads = runtime_cfg.get("torch_threads")
+    if torch_threads is not None:
+        torch_threads = max(1, int(torch_threads))
+        torch.set_num_threads(torch_threads)
+    else:
+        torch_threads = int(torch.get_num_threads())
+
+    torch_interop_threads = args.torch_interop_threads
+    if torch_interop_threads is None:
+        torch_interop_threads = runtime_cfg.get("torch_interop_threads")
+    if torch_interop_threads is not None:
+        torch_interop_threads = max(1, int(torch_interop_threads))
+        try:
+            torch.set_num_interop_threads(torch_interop_threads)
+        except RuntimeError:
+            pass
+    else:
+        try:
+            torch_interop_threads = int(torch.get_num_interop_threads())
+        except Exception:
+            torch_interop_threads = -1
 
     # 3. Environment Setup
     n_envs = args.n_envs if args.n_envs is not None else train_config.get("n_envs", 1)
     
     print(f"Creating {n_envs} parallel environments...")
     print(f"Logging to {log_dir}")
+    print(f"Agent layer: {agent_layer}")
     print(
-        "Effective env settings: "
-        f"action_mode={env_settings['action_mode']} "
-        f"include_visual={env_settings['include_visual']} "
-        f"include_proprio={env_settings['include_proprio']} "
-        f"mission_obs_mode={env_settings['mission_obs_mode']} "
-        f"visual_downsample={env_settings['visual_downsample']} "
-        f"visual_update_interval={env_settings['visual_update_interval']}"
+        "Runtime parallelism: "
+        f"torch_threads={torch_threads} "
+        f"torch_interop_threads={torch_interop_threads} "
+        f"OMP_NUM_THREADS={os.environ.get('OMP_NUM_THREADS', '<unset>')} "
+        f"MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS', '<unset>')} "
+        f"OPENBLAS_NUM_THREADS={os.environ.get('OPENBLAS_NUM_THREADS', '<unset>')}"
     )
+    if agent_layer == "leader":
+        print(
+            "Leader runtime: "
+            f"batched_execution_inference={bool(runtime_cfg.get('batched_execution_inference', False))} "
+            f"execution_device={str(runtime_cfg.get('execution_device', 'cuda'))} "
+            f"execution_use_autocast={bool(runtime_cfg.get('execution_use_autocast', True))} "
+            f"step_executor_workers={int(runtime_cfg.get('step_executor_workers', 0))} "
+            f"leader_execution_torch_threads={runtime_cfg.get('leader_execution_torch_threads', '<auto>')} "
+            f"leader_execution_torch_interop_threads={runtime_cfg.get('leader_execution_torch_interop_threads', '<auto>')}"
+        )
+    if agent_layer == "execution":
+        print(
+            "Effective env settings: "
+            f"action_mode={env_settings['action_mode']} "
+            f"include_visual={env_settings['include_visual']} "
+            f"include_proprio={env_settings['include_proprio']} "
+            f"mission_obs_mode={env_settings['mission_obs_mode']} "
+            f"visual_downsample={env_settings['visual_downsample']} "
+            f"visual_update_interval={env_settings['visual_update_interval']}"
+        )
+    else:
+        leader_cfg = train_config.get("leader_env", {}) if isinstance(train_config.get("leader_env", {}), dict) else {}
+        print(
+            "Leader env settings: "
+            f"decision_interval_steps={int(leader_cfg.get('decision_interval_steps', 20))} "
+            f"execution_backend={str(leader_cfg.get('execution_backend', 'scripted'))} "
+            f"execution_train_config={leader_cfg.get('execution_train_config', '<none>')} "
+            f"execution_model_path={leader_cfg.get('execution_model_path', '<none>')}"
+        )
 
     # Rough rollout-buffer memory warning for visual observations (DictRolloutBuffer stores full obs).
     try:
         n_steps = int(train_config.get("hyperparameters", {}).get("n_steps", 2048))
     except Exception:
         n_steps = 2048
-    if env_settings["include_visual"]:
+    if agent_layer == "execution" and env_settings["include_visual"]:
         ds = int(env_settings["visual_downsample"])
         visual_elems = (48 // ds) * (96 // ds) * 10
         est_bytes = int(n_envs) * int(n_steps) * int(visual_elems) * 4
@@ -352,21 +573,72 @@ def main():
     
     # We must delay env creation for resume if we want to ensure same config? 
     # For now we assume user provides correct params for resumption.
-    vec_cls = SubprocVecEnv if n_envs > 1 else DummyVecEnv
-
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
-
-    vec_env = make_vec_env(
-        UniversalEnv,
+    vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
+        agent_layer=agent_layer,
         n_envs=n_envs,
-        env_kwargs={
-            "scenario_path": scenario_path,
-            **env_settings,
-        },
-        vec_env_cls=vec_cls,
-        wrapper_class=wrapper_class,
-        wrapper_kwargs=wrapper_kwargs,
+        runtime_cfg=runtime_cfg,
+        leader_batched_vec_env_cls=LeaderBatchedVecEnv,
     )
+
+    if agent_layer == "execution":
+        wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+        vec_env = make_vec_env(
+            UniversalEnv,
+            n_envs=n_envs,
+            env_kwargs={
+                "scenario_path": scenario_path,
+                **env_settings,
+            },
+            vec_env_cls=vec_cls,
+            vec_env_kwargs=vec_env_kwargs,
+            wrapper_class=wrapper_class,
+            wrapper_kwargs=wrapper_kwargs,
+        )
+    else:
+        leader_cfg = train_config.get("leader_env", {}) if isinstance(train_config.get("leader_env", {}), dict) else {}
+        leader_execution_torch_threads = runtime_cfg.get("leader_execution_torch_threads")
+        if leader_execution_torch_threads is None:
+            if n_envs > 1 and str(leader_cfg.get("execution_backend", "scripted")).strip().lower() == "frozen_model":
+                leader_execution_torch_threads = 1
+        leader_execution_torch_interop_threads = runtime_cfg.get("leader_execution_torch_interop_threads")
+        if leader_execution_torch_interop_threads is None:
+            if n_envs > 1 and str(leader_cfg.get("execution_backend", "scripted")).strip().lower() == "frozen_model":
+                leader_execution_torch_interop_threads = 1
+        vec_env = make_vec_env(
+            LeaderTrainingEnv,
+            n_envs=n_envs,
+            env_kwargs={
+                "scenario_path": scenario_path,
+                "decision_interval_steps": int(leader_cfg.get("decision_interval_steps", 20)),
+                "execution_backend": str(leader_cfg.get("execution_backend", "scripted")),
+                "execution_train_config": leader_cfg.get("execution_train_config"),
+                "execution_model_path": leader_cfg.get("execution_model_path"),
+                "execution_algo": str(leader_cfg.get("execution_algo", "auto")),
+                "scripted_transition_alt_agl_m": float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
+                "heading_bias_limit_deg": float(leader_cfg.get("heading_bias_limit_deg", 45.0)),
+                "altitude_bias_limit_m": float(leader_cfg.get("altitude_bias_limit_m", 800.0)),
+                "speed_bias_limit_mps": float(leader_cfg.get("speed_bias_limit_mps", 40.0)),
+                "command_change_penalty": float(leader_cfg.get("command_change_penalty", 0.0)),
+                "teacher_keep_deadband": float(leader_cfg.get("teacher_keep_deadband", 0.20)),
+                "invalid_phase_penalty": float(leader_cfg.get("invalid_phase_penalty", 0.0)),
+                "premature_approach_penalty": float(leader_cfg.get("premature_approach_penalty", 0.0)),
+                "baseline_deviation_penalty": float(leader_cfg.get("baseline_deviation_penalty", 0.0)),
+                "mode_change_penalty": float(leader_cfg.get("mode_change_penalty", 0.0)),
+                "approach_gate_distance_m": float(leader_cfg.get("approach_gate_distance_m", 18000.0)),
+                "approach_gate_cross_m": float(leader_cfg.get("approach_gate_cross_m", 3500.0)),
+                "approach_gate_heading_error_deg": float(leader_cfg.get("approach_gate_heading_error_deg", 85.0)),
+                "execution_torch_threads": (
+                    None if leader_execution_torch_threads is None else int(leader_execution_torch_threads)
+                ),
+                "execution_torch_interop_threads": (
+                    None
+                    if leader_execution_torch_interop_threads is None
+                    else int(leader_execution_torch_interop_threads)
+                ),
+            },
+            vec_env_cls=vec_cls,
+            vec_env_kwargs=vec_env_kwargs,
+        )
 
     curriculum_cfg = train_config.get("curriculum", {}) if isinstance(train_config.get("curriculum", {}), dict) else {}
     algo_name = str(train_config.get("algo", "PPO"))
@@ -380,6 +652,9 @@ def main():
             st0 = list(curriculum_cfg["stages"])[0]
             overrides0 = st0.get("randomization_overrides", st0.get("randomization", {}))
             vec_env.env_method("set_randomization_overrides", overrides0)
+            leader_overrides0 = st0.get("leader_env_overrides", {})
+            if isinstance(leader_overrides0, dict) and leader_overrides0:
+                vec_env.env_method("set_leader_overrides", leader_overrides0)
         except Exception as e:
             print(f"[WARN] failed to apply initial curriculum stage overrides: {e}")
     
@@ -413,7 +688,11 @@ def main():
     # 4. Training Setup
     hyperparams = train_config.get("hyperparameters", {})
     total_timesteps = train_config.get("total_timesteps", 100000)
-    save_freq = train_config.get("save_freq", 50000)
+    save_freq = int(train_config.get("save_freq", 50000))
+    # SB3 CheckpointCallback counts callback invocations, not aggregate env timesteps.
+    # Interpret config `save_freq` as total timesteps so multi-env runs checkpoint on the
+    # expected cadence instead of being stretched by `n_envs`.
+    checkpoint_freq = max(1, int(math.ceil(float(save_freq) / float(max(1, n_envs)))))
 
     # Feature Extractor Logic
     if "policy_kwargs" in hyperparams:
@@ -441,13 +720,18 @@ def main():
                 return
             print(f"Initializing Parameters From: {init_path}")
             model.set_parameters(init_path, exact_match=False, device=hyperparams.get("device", "auto"))
-        elif not args.no_init_safe_action_bias:
+        elif agent_layer == "execution" and not args.no_init_safe_action_bias:
             apply_safe_action_bias(model, env_settings["action_mode"], scenario_path)
+        elif agent_layer == "leader":
+            apply_leader_action_bias(model)
     
-    print(f"Starting Training for {total_timesteps} steps...")
-    
+    print(
+        f"Starting Training for {total_timesteps} steps... "
+        f"(checkpoint every {save_freq} total timesteps -> every {checkpoint_freq} callback steps)"
+    )
+
     checkpoint_callback = CheckpointCallback(
-        save_freq=save_freq, 
+        save_freq=checkpoint_freq,
         save_path=ckpt_dir,
         name_prefix="model" # naming: model_50000_steps.zip
     )

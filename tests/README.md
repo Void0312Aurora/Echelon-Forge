@@ -41,6 +41,7 @@ Standalone Python tests should now be the exception, not the default.
   - Validates wrapper-driven scripted baselines against scenario success criteria.
 - `unit_regression`
   - Validates pure-Python controller/config/loader/wrapper handoff logic without needing full scenario stepping.
+  - Also hosts parameterized leader-task generalization checks that mutate C2 task inputs and validate emitted mission-command behavior.
 
 Contract execution lives in [scenario_contract_runner.py](/home/void0312/CMO/python/testing/scenario_contract_runner.py).
 
@@ -159,6 +160,7 @@ Prefer a standalone Python test only when you truly need:
   - Static scenario/template geometry checks that validate mission JSON assumptions.
 - `tests/contracts/unit/training/`
   - Training-time helper contracts that do not need full scenario stepping.
+  - Includes leader-task parameter generalization contracts that vary CAP-task inputs and check mission-code reasonableness.
 - `tests/contracts/unit/wrappers/`
   - Wrapper/controller handoff contracts driven by dummy observations and loader phases.
 - `tests/contracts/unit/world_model/`

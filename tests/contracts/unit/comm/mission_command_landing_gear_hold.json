@@ -1,0 +1,44 @@
+{
+  "type": "unit_regression",
+  "check_kind": "mission_command_landing_gear_hold",
+  "scenario_base": "scenarios/takeoff/takeoff.json",
+  "seed": 0,
+  "scenario_patch": {
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [-900.0, 0.0, 260.0],
+        "vel": [0.0, 150.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "mission_command": {
+      "command_code": 4,
+      "target_heading": 90.0,
+      "target_altitude": 0.0,
+      "target_speed": 82.0,
+      "landing_mode": "ils_final"
+    }
+  },
+  "randomization_overrides": {
+    "world_yaw_range": [0.0, 0.0],
+    "wind_headwind_range": [0.0, 0.0],
+    "wind_crosswind_range": [0.0, 0.0],
+    "wind_tailwind_max_mps": 0.0,
+    "wind_shear_range": [0.0, 0.0]
+  },
+  "mission_command": {
+    "command_code": 4,
+    "cmd_heading_deg": 90.0,
+    "cmd_altitude_m": 0.0,
+    "cmd_speed_mps": 82.0,
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS"
+  },
+  "step_count": 30,
+  "min_gear_pos": 0.9
+}

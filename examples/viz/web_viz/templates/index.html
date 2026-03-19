@@ -29,7 +29,7 @@
             background: rgba(0, 0, 0, 0.6);
             padding: 15px;
             border: 1px solid #444;
-            min-width: 250px;
+            min-width: 320px;
         }
 
         h3 {
@@ -124,6 +124,73 @@
             min-width: 72px;
             text-align: center;
         }
+
+        .section-spacer {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+        }
+
+        .task-sequence {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .task-chip {
+            border: 1px solid #444;
+            padding: 3px 8px;
+            font-size: 11px;
+            color: #888;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .task-chip.done {
+            color: #b7f59e;
+            border-color: #3f7e2c;
+            background: rgba(63, 126, 44, 0.18);
+        }
+
+        .task-chip.active {
+            color: #0b0f11;
+            border-color: #00ccff;
+            background: #00ccff;
+            font-weight: bold;
+        }
+
+        .task-chip.pending {
+            color: #777;
+        }
+
+        #mission-history {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 360px;
+        }
+
+        .history-item {
+            font-size: 11px;
+            color: #bbb;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            border-bottom: 1px dotted #2d2d2d;
+            padding-bottom: 3px;
+        }
+
+        .history-time {
+            color: #888;
+            flex: 0 0 auto;
+        }
+
+        .history-text {
+            color: #ddd;
+            text-align: right;
+            flex: 1 1 auto;
+        }
     </style>
 </head>
 
@@ -138,6 +205,17 @@
             <div class="data-row"><span class="label">HEADING</span><span id="v-hdg" class="value">000</span></div>
             <div class="data-row"><span class="label">PITCH</span><span id="v-pitch" class="value">0.0</span></div>
             <div class="data-row"><span class="label">ROLL</span><span id="v-roll" class="value">0.0</span></div>
+        </div>
+        <div class="section-spacer">
+            <h3>MISSION</h3>
+            <div class="data-row"><span class="label">C2 TASK</span><span id="m-task" class="value">--</span></div>
+            <div class="data-row"><span class="label">PHASE</span><span id="m-phase" class="value">--</span></div>
+            <div class="data-row"><span class="label">COMMAND</span><span id="m-command" class="value">--</span></div>
+            <div class="data-row"><span class="label">WAYPOINT</span><span id="m-waypoint" class="value">--</span></div>
+            <div class="label">SEQUENCE</div>
+            <div id="m-sequence" class="task-sequence"></div>
+            <div class="label" style="margin-top: 10px;">RECENT SWITCHES</div>
+            <div id="mission-history"></div>
         </div>
     </div>
 
@@ -528,6 +606,77 @@
             });
         }
 
+        function renderMissionStatus(status) {
+            const taskEl = document.getElementById('m-task');
+            const phaseEl = document.getElementById('m-phase');
+            const cmdEl = document.getElementById('m-command');
+            const wpEl = document.getElementById('m-waypoint');
+            const seqEl = document.getElementById('m-sequence');
+            const histEl = document.getElementById('mission-history');
+
+            if (!status) {
+                taskEl.innerText = '--';
+                phaseEl.innerText = '--';
+                cmdEl.innerText = '--';
+                wpEl.innerText = '--';
+                seqEl.innerHTML = '';
+                histEl.innerHTML = '';
+                return;
+            }
+
+            taskEl.innerText = status.c2_task_label || status.c2_task || '--';
+            phaseEl.innerText = status.phase_label || status.phase_name || '--';
+            const cmdCode = Number.isFinite(status.command_code) ? status.command_code : '--';
+            cmdEl.innerText = `${status.command_name || '--'} (${cmdCode})`;
+
+            if (Number(status.waypoint_total || 0) > 0) {
+                const activeWp = Number(status.active_waypoint || 0);
+                const totalWp = Number(status.waypoint_total || 0);
+                wpEl.innerText = `${activeWp}/${totalWp}`;
+            } else {
+                wpEl.innerText = '--';
+            }
+
+            const sequence = Array.isArray(status.task_sequence) ? status.task_sequence : [];
+            const activeIdx = Number.isFinite(status.task_sequence_index) ? status.task_sequence_index : -1;
+            seqEl.innerHTML = '';
+            sequence.forEach((taskName, idx) => {
+                const chip = document.createElement('span');
+                const label = String(taskName || '').replace(/^TASK_/, '').replaceAll('_', ' ');
+                chip.className = 'task-chip';
+                if (idx < activeIdx) chip.classList.add('done');
+                else if (idx === activeIdx) chip.classList.add('active');
+                else chip.classList.add('pending');
+                chip.innerText = label;
+                seqEl.appendChild(chip);
+            });
+
+            const history = Array.isArray(status.history) ? status.history : [];
+            histEl.innerHTML = '';
+            history.slice().reverse().forEach((entry) => {
+                const row = document.createElement('div');
+                row.className = 'history-item';
+
+                const time = document.createElement('span');
+                time.className = 'history-time';
+                const t = Number(entry.time_s || 0);
+                time.innerText = `${t.toFixed(1)}s`;
+
+                const text = document.createElement('span');
+                text.className = 'history-text';
+                const taskLabel = entry.c2_task_label || entry.c2_task || '--';
+                const phaseLabel = entry.phase_label || entry.phase_name || '--';
+                const waypointText = entry.waypoint_text && entry.waypoint_text !== '--'
+                    ? ` | WP ${entry.waypoint_text}`
+                    : '';
+                text.innerText = `${taskLabel} / ${phaseLabel}${waypointText}`;
+
+                row.appendChild(time);
+                row.appendChild(text);
+                histEl.appendChild(row);
+            });
+        }
+
         // --- Map Logic ---
         socket.on('map_setup', (data) => {
             console.log("====== MAP SETUP DEBUG ======");
@@ -622,6 +771,7 @@
         socket.on('state_update', (state) => {
             simTime = state.tick;
             document.getElementById('v-time').innerText = simTime.toFixed(2) + " s";
+            renderMissionStatus(state.mission_status);
 
             const activeIds = new Set();
 

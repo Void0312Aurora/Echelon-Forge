@@ -30,6 +30,57 @@ double normalize_angle(double angle) {
 double to_degrees(double rad) { return rad * 180.0 / M_PI; }
 double to_radians(double deg) { return deg * M_PI / 180.0; }
 
+bool is_runway_like_surface(IControlModel::IEnvironmentModel::SurfaceType surface) {
+    return surface == IControlModel::IEnvironmentModel::SurfaceType::Concrete
+        || surface == IControlModel::IEnvironmentModel::SurfaceType::Asphalt;
+}
+
+double landing_bank_limit_deg(const MissionCommand& mission) {
+    switch (mission.recovery_approach_type) {
+        case RecoveryApproachType::ILS:
+            return 18.0;
+        case RecoveryApproachType::Visual:
+            return 24.0;
+        case RecoveryApproachType::Overhead:
+            return 30.0;
+        case RecoveryApproachType::TACAN:
+            return 20.0;
+        case RecoveryApproachType::StraightIn:
+            return 20.0;
+        case RecoveryApproachType::None:
+        default:
+            return 22.0;
+    }
+}
+
+double ground_track_deg_from_velocity(const Velocity& velocity, double fallback_heading_deg) {
+    const double horiz_speed = std::hypot(velocity.vx, velocity.vy);
+    if (horiz_speed <= 1.0) {
+        return fallback_heading_deg;
+    }
+    double track_deg = std::fmod(to_degrees(std::atan2(velocity.vx, velocity.vy)), 360.0);
+    if (track_deg < 0.0) track_deg += 360.0;
+    return track_deg;
+}
+
+double landing_heading_reference_deg(
+    const MissionCommand& mission,
+    const Transform& transform,
+    IControlModel::IEnvironmentModel* env_model
+) {
+    if (env_model) {
+        const auto terrain = env_model->get_terrain_at(transform.x, transform.y);
+        if (is_runway_like_surface(terrain.type) && std::isfinite(terrain.runway_heading)) {
+            double hdg = std::fmod(terrain.runway_heading, 360.0);
+            if (hdg < 0.0) hdg += 360.0;
+            return hdg;
+        }
+    }
+    // Fallback: until the kernel carries richer recovery geometry, treat the
+    // terminal cmd heading as the baked recovery-program reference.
+    return mission.cmd_heading_deg;
+}
+
 enum class FbwProtectionMode {
     Strict,
     Relaxed,
@@ -70,6 +121,8 @@ public:
 
         bool has_pilot = (pilot && pilot->active);
         bool has_mission = (mission && mission->active);
+        const auto* ground_state = entity.get<GroundState>();
+        const bool on_ground_hint = ground_state ? ground_state->on_ground : false;
 
         // --- 2. Determine Source of Control (Autopilot vs Manual) ---
         if (has_pilot) {
@@ -85,34 +138,81 @@ public:
             gear_cmd_down = (pilot->gear_handle >= 0.5);
         } 
         else if (has_mission) {
-            // [B] Legacy Autopilot (Rule-Based Helper)
-            //     Goal: Translate Mission (Heading/Alt/Speed) -> Stick Inputs (Roll/Pitch)
-            
-            // B.1 Heading -> Roll -> Stick Roll
-            double current_heading = transform.heading; // Magnetic
-            double heading_err = normalize_angle(mission->cmd_heading_deg - current_heading);
-            
-            // Simple P-Controller for Bank Angle
-            double target_bank = std::clamp(heading_err * 2.0, -60.0, 60.0);
-            double bank_err = target_bank - transform.roll;
-            stick_roll = std::clamp(bank_err * 0.05, -1.0, 1.0); // kP = 0.05
-            
-            // B.2 Altitude -> Pitch -> Stick Pitch
-            double alt_err = mission->cmd_altitude_m - transform.z;
-            double target_pitch = std::clamp(alt_err * 0.1, -15.0, 20.0);
-            double pitch_err = target_pitch - transform.pitch;
-            stick_pitch = std::clamp(pitch_err * 0.1, -1.0, 1.0); // kP = 0.1
-            
-            // B.3 Yaw (Coordination)
-            stick_yaw = 0.0; // Assume auto-coordination or fly-by-wire handles it
-            
-            // B.4 Config (Gear)
-            // Retract gear if speed > 100 m/s or alt > 200m
-            double speed = std::sqrt(velocity.vx*velocity.vx + velocity.vy*velocity.vy + velocity.vz*velocity.vz);
-            if (speed < 100.0 || (transform.z < 200.0 && mission->cmd_altitude_m < 500.0)) {
-                 gear_cmd_down = true; 
-            } else {
-                 gear_cmd_down = false;
+            // [B] Mission-command autopilot.
+            // Interpret cmd_* according to command_code semantics rather than treating
+            // them as globally free heading/altitude/speed parameters.
+            const int command_code = mission->command_code;
+            const bool is_route_command = (command_code == 3);
+            const bool is_landing_command = (command_code == 4);
+
+            const double current_heading_deg = transform.heading;
+            const double current_track_deg = ground_track_deg_from_velocity(velocity, current_heading_deg);
+            double reference_heading_deg = mission->cmd_heading_deg;
+            double lateral_reference_deg = current_heading_deg;
+            double bank_limit_deg = 60.0;
+            double heading_to_bank_gain = 2.0;
+            double bank_to_stick_gain = 0.05;
+            double altitude_to_pitch_gain = 0.1;
+            double pitch_min_deg = -15.0;
+            double pitch_max_deg = 20.0;
+            double pitch_to_stick_gain = 0.1;
+
+            if (is_route_command) {
+                // Route/LNAV uses target_heading as a track bug.
+                lateral_reference_deg = current_track_deg;
+                bank_limit_deg = 45.0;
+            } else if (is_landing_command) {
+                // Landing/final is a terminal recovery program. Keep the aircraft configured
+                // for recovery and use a much gentler terminal gain schedule.
+                reference_heading_deg = landing_heading_reference_deg(*mission, transform, env_model);
+                bank_limit_deg = landing_bank_limit_deg(*mission);
+                if (on_ground_hint) {
+                    bank_limit_deg = std::min(bank_limit_deg, 8.0);
+                }
+                heading_to_bank_gain = 1.0;
+                bank_to_stick_gain = 0.04;
+                altitude_to_pitch_gain = 0.05;
+                pitch_min_deg = on_ground_hint ? -2.0 : -8.0;
+                pitch_max_deg = on_ground_hint ? 5.0 : 12.0;
+                pitch_to_stick_gain = 0.08;
+                gear_cmd_down = true;
+            } else if (command_code == 1) {
+                bank_limit_deg = 30.0;
+                heading_to_bank_gain = 1.4;
+            }
+
+            const double heading_err = normalize_angle(reference_heading_deg - lateral_reference_deg);
+            const double target_bank = std::clamp(
+                heading_err * heading_to_bank_gain,
+                -bank_limit_deg,
+                bank_limit_deg
+            );
+            const double bank_err = target_bank - transform.roll;
+            stick_roll = std::clamp(bank_err * bank_to_stick_gain, -1.0, 1.0);
+
+            const double alt_err = mission->cmd_altitude_m - transform.z;
+            const double target_pitch = std::clamp(
+                alt_err * altitude_to_pitch_gain,
+                pitch_min_deg,
+                pitch_max_deg
+            );
+            const double pitch_err = target_pitch - transform.pitch;
+            stick_pitch = std::clamp(pitch_err * pitch_to_stick_gain, -1.0, 1.0);
+
+            // Yaw/coordination is handled by the FBW / SAS later in the pipeline.
+            stick_yaw = 0.0;
+
+            if (!is_landing_command) {
+                const double speed = std::sqrt(
+                    velocity.vx * velocity.vx +
+                    velocity.vy * velocity.vy +
+                    velocity.vz * velocity.vz
+                );
+                if (speed < 100.0 || (transform.z < 200.0 && mission->cmd_altitude_m < 500.0)) {
+                    gear_cmd_down = true;
+                } else {
+                    gear_cmd_down = false;
+                }
             }
         }
         else {

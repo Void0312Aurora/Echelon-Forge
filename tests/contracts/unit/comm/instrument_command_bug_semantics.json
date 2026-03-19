@@ -1,0 +1,42 @@
+{
+  "type": "unit_regression",
+  "check_kind": "instrument_command_bug_semantics",
+  "scenario_base": "scenarios/takeoff/takeoff.json",
+  "seed": 0,
+  "scenario_patch": {
+    "mission_command": {
+      "command_code": 4,
+      "target_heading": 222.0,
+      "target_altitude": 0.0,
+      "target_speed": 82.0,
+      "landing_mode": "ils_final",
+      "recovery_base_id": 55,
+      "recovery_runway_id": 7,
+      "recovery_approach_type": "ILS"
+    }
+  },
+  "randomization_overrides": {
+    "world_yaw_range": [0.0, 0.0],
+    "wind_headwind_range": [0.0, 0.0],
+    "wind_crosswind_range": [0.0, 0.0],
+    "wind_tailwind_max_mps": 0.0,
+    "wind_shear_range": [0.0, 0.0]
+  },
+  "mission_command": {
+    "command_code": 4,
+    "cmd_heading_deg": 222.0,
+    "cmd_altitude_m": 0.0,
+    "cmd_speed_mps": 82.0,
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS"
+  },
+  "step_count": 2,
+  "expected": {
+    "cmd_heading_deg": 90.0,
+    "cmd_alt_m": 0.0,
+    "cmd_speed_mps": 82.0,
+    "heading_tol_deg": 0.001,
+    "scalar_tol": 0.001
+  }
+}

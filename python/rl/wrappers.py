@@ -5,7 +5,12 @@ from typing import Iterable, Optional
 import numpy as np
 
 import gymnasium as gym
-from python.rl.mission_defs import is_landing_command_code, is_route_command_code, scripted_mode_for_phase_name
+from python.rl.mission_defs import (
+    is_route_command_code,
+    normalize_command_code,
+    scripted_mode_for_command_code,
+    scripted_mode_for_phase_name,
+)
 from python.rl.scripted_landing import ScriptedLandingController
 from python.rl.scripted_takeoff import ScriptedTakeoffController
 from python.rl.scripted_stable_flight import ScriptedStableFlightController
@@ -185,11 +190,52 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 return loader
         return None
 
+    def _obs_alt_agl_m(self, obs) -> float | None:
+        try:
+            if isinstance(obs, dict):
+                inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
+                if inst.size >= 4:
+                    return float(inst[3])
+        except Exception:
+            pass
+        return None
+
+    def _scripted_mode_from_command_code(self, command_code, *, alt_agl_m: float | None = None) -> str | None:
+        mode = scripted_mode_for_command_code(
+            command_code,
+            alt_agl_m=alt_agl_m,
+            takeoff_transition_alt_agl_m=self.scripted_transition_alt_agl_m,
+        )
+        code = normalize_command_code(command_code, default=0)
+        if (
+            mode == "stable_flight"
+            and code in (2, 3)
+            and alt_agl_m is not None
+            and alt_agl_m < self.scripted_transition_alt_agl_m
+            and self._scripted_active_mode not in ("stable_flight", "landing_ils")
+        ):
+            return "takeoff"
+        return mode
+
+    @staticmethod
+    def _loader_command_code(loader) -> int | None:
+        if loader is None:
+            return None
+        mission_cmd = getattr(loader, "mission_cmd", None)
+        if isinstance(mission_cmd, dict):
+            return mission_cmd.get("command_code", None)
+        return getattr(mission_cmd, "command_code", None)
+
     def _infer_scripted_mode_from_loader(self) -> str | None:
         loader = self._get_loader()
         if loader is None:
             return None
+        alt_agl = self._obs_alt_agl_m(self._last_obs)
         phase_name = str(getattr(loader, "mission_phase_name", "")).strip().lower()
+        if phase_name == "departure":
+            if alt_agl is not None and alt_agl >= self.scripted_transition_alt_agl_m:
+                return "stable_flight"
+            return "takeoff"
         mode = scripted_mode_for_phase_name(phase_name)
         if mode is not None:
             return mode
@@ -197,7 +243,29 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
             intent = getattr(loader, "leader_intent", None)
             if intent is not None:
                 phase_name = str(getattr(intent, "phase_id", "")).split(".")[-1].strip().lower()
-                return scripted_mode_for_phase_name(phase_name)
+                if phase_name == "departure":
+                    if alt_agl is not None and alt_agl >= self.scripted_transition_alt_agl_m:
+                        return "stable_flight"
+                    return "takeoff"
+                mode = scripted_mode_for_phase_name(phase_name)
+                if mode is not None:
+                    return mode
+                mode = self._scripted_mode_from_command_code(getattr(intent, "command_code", None), alt_agl_m=alt_agl)
+                if mode is not None:
+                    return mode
+        except Exception:
+            pass
+        return self._scripted_mode_from_command_code(self._loader_command_code(loader), alt_agl_m=alt_agl)
+
+    def _infer_scripted_mode_from_obs_command(self, obs) -> str | None:
+        try:
+            if isinstance(obs, dict):
+                mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
+                if mission.size >= 1:
+                    return self._scripted_mode_from_command_code(
+                        int(round(float(mission[0]))),
+                        alt_agl_m=self._obs_alt_agl_m(obs),
+                    )
         except Exception:
             pass
         return None
@@ -213,35 +281,24 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
             loader_mode = self._infer_scripted_mode_from_loader()
             if loader_mode is not None:
                 return loader_mode
-            try:
-                mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
-                if mission.size >= 1 and is_landing_command_code(int(round(float(mission[0])))):
-                    return "landing_ils"
+            obs_mode = self._infer_scripted_mode_from_obs_command(obs)
+            if obs_mode is not None:
+                return obs_mode
+            alt_agl = self._obs_alt_agl_m(obs)
+            if alt_agl is not None:
+                if alt_agl >= self.scripted_transition_alt_agl_m:
+                    return "stable_flight"
                 if self._scripted_active_mode in ("stable_flight", "landing_ils"):
-                    return "stable_flight"
-            except Exception:
-                pass
-            try:
-                inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
-                if inst.size >= 4:
-                    alt_agl = float(inst[3])
-                    if alt_agl < self.scripted_transition_alt_agl_m:
-                        return "takeoff"
-                    return "stable_flight"
-            except Exception:
-                pass
+                    return self._scripted_active_mode
+                return "takeoff"
             return self._scripted_active_mode or "takeoff"
         if self.scripted_baseline_mode != "takeoff_then_stable_flight":
             return None
-        try:
-            inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
-            if inst.size >= 4:
-                alt_agl = float(inst[3])
-                if alt_agl < self.scripted_transition_alt_agl_m:
-                    return "takeoff"
-                return "stable_flight"
-        except Exception:
-            pass
+        alt_agl = self._obs_alt_agl_m(obs)
+        if alt_agl is not None:
+            if alt_agl < self.scripted_transition_alt_agl_m:
+                return "takeoff"
+            return "stable_flight"
         return self._scripted_active_mode or "takeoff"
 
     def _get_scripted_controller(self):
@@ -300,10 +357,10 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
             scale = min(scale, float(self.scripted_residual_mode_scales[mode]))
         if self.scripted_residual_terminal_waypoint_count > 0:
             try:
-                loader = getattr(self.unwrapped, "loader", None)
+                loader = self._get_loader()
                 waypoints = list(getattr(loader, "waypoints", []) or [])
                 wp_idx = int(getattr(loader, "waypoint_idx", 0))
-                cmd_code = int(getattr(loader, "mission_cmd", {}).get("command_code", 0))
+                cmd_code = int(self._loader_command_code(loader) or 0)
                 remaining = max(0, len(waypoints) - wp_idx)
                 if waypoints and is_route_command_code(cmd_code) and remaining <= self.scripted_residual_terminal_waypoint_count:
                     scale = min(scale, self.scripted_residual_terminal_scale)
@@ -342,14 +399,14 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         a = np.asarray(action, dtype=np.float32).reshape(-1).copy()
         baseline_action = None
         locked_idx: tuple[int, ...] = ()
+        scripted_ctrl = None
 
         if (
-            self._get_scripted_controller() is not None
+            (scripted_ctrl := self._get_scripted_controller()) is not None
             and isinstance(self._last_obs, dict)
             and (self.scripted_blend_indices or self.scripted_lock_indices)
         ):
             try:
-                scripted_ctrl = self._get_scripted_controller()
                 baseline_action = np.asarray(scripted_ctrl.step(self._last_obs), dtype=np.float32).reshape(-1)
             except Exception:
                 baseline_action = None

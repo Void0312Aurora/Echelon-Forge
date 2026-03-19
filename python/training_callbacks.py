@@ -39,6 +39,15 @@ class CMODiagnosticsCallback(BaseCallback):
         "objective_bonus",
     )
 
+    LEADER_REWARD_KEYS = (
+        "execution_reward",
+        "command_change_penalty",
+        "invalid_phase_penalty",
+        "premature_approach_penalty",
+        "baseline_deviation_penalty",
+        "mode_change_penalty",
+    )
+
     def __init__(self, log_every_timesteps: int = 50_000, preterm_window_steps: int = 32, verbose: int = 0):
         super().__init__(verbose=verbose)
         self.log_every_timesteps = int(log_every_timesteps)
@@ -276,6 +285,154 @@ class CMODiagnosticsCallback(BaseCallback):
         self._terminal_reward_window = defaultdict(list)
         self._preterm_stats_window = defaultdict(list)
 
+    @staticmethod
+    def _mean_info_values(infos: list[dict], key: str) -> float | None:
+        vals = []
+        for info in infos:
+            if not isinstance(info, dict) or key not in info:
+                continue
+            try:
+                vals.append(float(info[key]))
+            except Exception:
+                continue
+        return _safe_mean(vals)
+
+    @staticmethod
+    def _mean_reward_term_values(infos: list[dict], info_key: str, term_key: str) -> float | None:
+        vals = []
+        for info in infos:
+            if not isinstance(info, dict):
+                continue
+            rt = info.get(info_key)
+            if not isinstance(rt, dict) or term_key not in rt:
+                continue
+            try:
+                vals.append(float(rt[term_key]))
+            except Exception:
+                continue
+        return _safe_mean(vals)
+
+    def _record_leader_diagnostics(self, obs, infos: list[dict]) -> None:
+        if isinstance(obs, dict) and "ownship" in obs:
+            try:
+                own = np.asarray(obs["ownship"], dtype=np.float32)
+                if own.ndim == 1:
+                    own = own.reshape(1, -1)
+                if own.ndim == 2 and own.shape[1] >= 12:
+                    self.logger.record("leader_diag/ias_mean", float(own[:, 0].mean()))
+                    self.logger.record("leader_diag/alt_agl_mean", float(own[:, 2].mean()))
+                    self.logger.record("leader_diag/alt_baro_mean", float(own[:, 3].mean()))
+                    self.logger.record("leader_diag/vvi_mean", float(own[:, 4].mean()))
+                    self.logger.record("leader_diag/heading_mean", float(own[:, 5].mean()))
+                    self.logger.record("leader_diag/roll_abs_mean", float(np.abs(own[:, 7]).mean()))
+                    self.logger.record("leader_diag/pitch_abs_mean", float(np.abs(own[:, 8]).mean()))
+                    self.logger.record("leader_diag/gear_mean", float(own[:, 11].mean()))
+            except Exception:
+                pass
+
+        if isinstance(obs, dict) and "terminal" in obs:
+            try:
+                terminal = np.asarray(obs["terminal"], dtype=np.float32)
+                if terminal.ndim == 1:
+                    terminal = terminal.reshape(1, -1)
+                if terminal.ndim == 2 and terminal.shape[1] >= 8:
+                    self.logger.record("leader_diag/dme_mean_m", float(terminal[:, 0].mean()))
+                    self.logger.record("leader_diag/loc_abs_mean", float(np.abs(terminal[:, 1]).mean()))
+                    self.logger.record("leader_diag/gs_abs_mean", float(np.abs(terminal[:, 2]).mean()))
+                    self.logger.record("leader_diag/runway_cross_abs_mean_m", float(np.abs(terminal[:, 4]).mean()))
+                    self.logger.record("leader_diag/runway_heading_abs_mean_deg", float(np.abs(terminal[:, 5]).mean()))
+                    self.logger.record("leader_diag/approach_phase_frac", float((terminal[:, 6] > 0.5).mean()))
+                    self.logger.record("leader_diag/landing_cmd_frac", float((terminal[:, 7] > 0.5).mean()))
+            except Exception:
+                pass
+
+        if not infos:
+            return
+
+        mean_guarded = self._mean_info_values(infos, "leader_phase_guarded")
+        if mean_guarded is not None:
+            self.logger.record("leader_diag/phase_guarded_frac", float(mean_guarded))
+        mean_bias_guarded = self._mean_info_values(infos, "leader_bias_guarded")
+        if mean_bias_guarded is not None:
+            self.logger.record("leader_diag/bias_guarded_frac", float(mean_bias_guarded))
+        mean_terminal_feasible = self._mean_info_values(infos, "leader_terminal_feasible")
+        if mean_terminal_feasible is not None:
+            self.logger.record("leader_diag/terminal_feasible_frac", float(mean_terminal_feasible))
+
+        mode_counts: dict[str, int] = defaultdict(int)
+        req_counts: dict[str, int] = defaultdict(int)
+        reason_counts: dict[str, int] = defaultdict(int)
+        bias_reason_counts: dict[str, int] = defaultdict(int)
+        c2_task_counts: dict[str, int] = defaultdict(int)
+        c2_transition_reason_counts: dict[str, int] = defaultdict(int)
+        cmd_deltas = []
+        for info in infos:
+            if not isinstance(info, dict):
+                continue
+            mode = info.get("leader_phase_bucket")
+            if isinstance(mode, str) and mode.strip():
+                mode_counts[self._normalize_reason(mode)] += 1
+            req = info.get("leader_requested_phase_bucket")
+            if isinstance(req, str) and req.strip():
+                req_counts[self._normalize_reason(req)] += 1
+            reason = info.get("leader_phase_guard_reason")
+            if isinstance(reason, str) and reason.strip():
+                reason_counts[self._normalize_reason(reason)] += 1
+            bias_reason = info.get("leader_bias_guard_reason")
+            if isinstance(bias_reason, str) and bias_reason.strip():
+                bias_reason_counts[self._normalize_reason(bias_reason)] += 1
+            c2_task = info.get("leader_c2_task_name")
+            if isinstance(c2_task, str) and c2_task.strip():
+                c2_task_counts[self._normalize_reason(c2_task)] += 1
+            c2_reason = info.get("leader_c2_transition_reason")
+            if isinstance(c2_reason, str) and c2_reason.strip():
+                c2_transition_reason_counts[self._normalize_reason(c2_reason)] += 1
+            eff = info.get("leader_effective_command")
+            base = info.get("leader_baseline_command")
+            try:
+                if eff is not None and base is not None:
+                    eff_arr = np.asarray(eff, dtype=np.float32).reshape(-1)
+                    base_arr = np.asarray(base, dtype=np.float32).reshape(-1)
+                    if eff_arr.size >= 4 and base_arr.size >= 4:
+                        cmd_deltas.append(
+                            abs(float(eff_arr[0]) - float(base_arr[0]))
+                            + abs(float(eff_arr[1]) - float(base_arr[1])) / 180.0
+                            + abs(float(eff_arr[2]) - float(base_arr[2])) / max(1.0, abs(float(base_arr[2])) + 1.0)
+                            + abs(float(eff_arr[3]) - float(base_arr[3])) / max(1.0, abs(float(base_arr[3])) + 1.0)
+                        )
+            except Exception:
+                continue
+
+        total = float(max(1, len(infos)))
+        for mode, count in sorted(mode_counts.items()):
+            self.logger.record(f"leader_diag/phase_frac_{mode}", float(count) / total)
+        for req, count in sorted(req_counts.items()):
+            self.logger.record(f"leader_diag/request_frac_{req}", float(count) / total)
+        for reason, count in sorted(reason_counts.items()):
+            self.logger.record(f"leader_diag/guard_reason_frac_{reason}", float(count) / total)
+        for reason, count in sorted(bias_reason_counts.items()):
+            self.logger.record(f"leader_diag/bias_guard_reason_frac_{reason}", float(count) / total)
+        for task_name, count in sorted(c2_task_counts.items()):
+            self.logger.record(f"leader_diag/c2_task_frac_{task_name}", float(count) / total)
+        for reason, count in sorted(c2_transition_reason_counts.items()):
+            self.logger.record(f"leader_diag/c2_transition_reason_frac_{reason}", float(count) / total)
+        if cmd_deltas:
+            self.logger.record(
+                "leader_diag/cmd_vs_baseline_delta_mean",
+                float(np.mean(np.asarray(cmd_deltas, dtype=np.float32))),
+            )
+        report_valid = self._mean_info_values(infos, "leader_report_valid")
+        if report_valid is not None:
+            self.logger.record("leader_diag/report_valid_frac", float(report_valid))
+        c2_transitioned = self._mean_info_values(infos, "leader_c2_transitioned")
+        if c2_transitioned is not None:
+            self.logger.record("leader_diag/c2_transition_frac", float(c2_transitioned))
+
+        for key in self.LEADER_REWARD_KEYS:
+            mean_val = self._mean_reward_term_values(infos, "leader_reward_terms", key)
+            if mean_val is not None:
+                self.logger.record(f"leader_diag/reward_{key}", float(mean_val))
+
     def _on_step(self) -> bool:
         obs = self.locals.get("new_obs")
         actions = self.locals.get("clipped_actions", self.locals.get("actions"))
@@ -489,6 +646,8 @@ class CMODiagnosticsCallback(BaseCallback):
             if gear_stress:
                 self.logger.record("diag/gear_stress_mean", float(np.asarray(gear_stress, dtype=np.float32).mean()))
 
+            self._record_leader_diagnostics(obs, list(infos))
+
         self._record_event_diagnostics()
         return True
 
@@ -498,7 +657,7 @@ class ScenarioCurriculumCallback(BaseCallback):
     Time-based curriculum for scenario randomization.
 
     Applies `ScenarioLoader.set_randomization_overrides()` (via `env_method`) according to staged schedule:
-      stages = [{"until_timesteps": 200000, "randomization": {...}}, {..., "until_timesteps": null, ...}]
+      stages = [{"until_timesteps": 200000, "randomization": {...}, "leader_env_overrides": {...}}, {..., "until_timesteps": null, ...}]
     """
 
     def __init__(self, stages: list[dict[str, Any]], check_freq: int = 10_000, verbose: int = 0):
@@ -533,7 +692,20 @@ class ScenarioCurriculumCallback(BaseCallback):
         except Exception as e:
             if self.verbose > 0:
                 print(f"[WARN] curriculum stage {idx} apply failed: {e}")
-            return
+
+        leader_overrides = st.get("leader_env_overrides", {})
+        if leader_overrides is None:
+            leader_overrides = {}
+        if not isinstance(leader_overrides, dict):
+            raise TypeError(
+                f"curriculum stage leader_env_overrides must be a dict, got {type(leader_overrides)}"
+            )
+        if leader_overrides:
+            try:
+                self.training_env.env_method("set_leader_overrides", leader_overrides)  # type: ignore[union-attr]
+            except Exception as e:
+                if self.verbose > 0:
+                    print(f"[WARN] curriculum leader stage {idx} apply failed: {e}")
 
         self._active_stage_idx = int(idx)
         self.logger.record("curriculum/stage", int(idx))

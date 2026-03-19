@@ -23,7 +23,15 @@ import ef_py
 import numpy as np
 # Import Universal Env
 from gym_envs.universal_env import UniversalEnv, half_to_unit
+from gym_envs.leader_env import LeaderTrainingEnv
 from python.models.transformer import TransformerExtractor
+from python.rl.mission_defs import (
+    COMMAND_NAME_TO_CODE,
+    CRUISE_PHASE_NAMES,
+    LANDING_PHASE_NAMES,
+    TAKEOFF_PHASE_NAMES,
+    normalize_phase_name,
+)
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.scripted_landing import ScriptedLandingController
 from python.rl.scripted_stable_flight import ScriptedStableFlightController
@@ -77,6 +85,104 @@ def _unnormalize_action(action: np.ndarray, low: np.ndarray, high: np.ndarray) -
     high = np.asarray(high, dtype=np.float32).reshape(-1)
     out = low + 0.5 * (action + 1.0) * (high - low)
     return np.clip(out, low, high).astype(np.float32, copy=False)
+
+
+COMMAND_CODE_TO_NAME = {int(v): str(k).upper() for k, v in COMMAND_NAME_TO_CODE.items()}
+DEFAULT_C2_TASK_SEQUENCE = [
+    "TASK_SCRAMBLE",
+    "TASK_CAP",
+    "TASK_RTB",
+    "TASK_RECOVER_LAND",
+]
+
+
+def _pretty_label(name: str | None) -> str:
+    text = str(name or "").strip()
+    if not text:
+        return "--"
+    if text.startswith("TASK_"):
+        text = text[5:]
+    return text.replace("_", " ").title()
+
+
+def _infer_c2_task(phase_name: str | None, *, command_code: int | None = None) -> str:
+    phase = normalize_phase_name(phase_name)
+    if phase == "rtb":
+        return "TASK_RTB"
+    if phase in TAKEOFF_PHASE_NAMES:
+        return "TASK_SCRAMBLE"
+    if phase in LANDING_PHASE_NAMES:
+        return "TASK_RECOVER_LAND"
+    if phase in CRUISE_PHASE_NAMES:
+        return "TASK_CAP"
+    try:
+        if int(command_code) == 4:
+            return "TASK_RECOVER_LAND"
+        if int(command_code) == 3:
+            return "TASK_CAP"
+        if int(command_code) == 1:
+            return "TASK_SCRAMBLE"
+    except Exception:
+        pass
+    return "TASK_IDLE"
+
+
+def _build_mission_status_payload(
+    sim_env,
+    *,
+    sim_time: float,
+    history: list[dict],
+) -> dict | None:
+    loader = getattr(sim_env, "loader", None)
+    if loader is None:
+        return None
+
+    mission_cmd = getattr(loader, "mission_cmd", {}) or {}
+    phase_name = normalize_phase_name(getattr(loader, "mission_phase_name", "idle"))
+    try:
+        command_code = int(mission_cmd.get("command_code", 0))
+    except Exception:
+        command_code = 0
+
+    c2_task = str(getattr(loader, "c2_task_name", "") or "").strip().upper()
+    if not c2_task:
+        c2_task = _infer_c2_task(phase_name, command_code=command_code)
+    seq = list(DEFAULT_C2_TASK_SEQUENCE)
+    try:
+        meta = getattr(loader, "scenario_data", {}).get("meta", {})
+        custom_seq = meta.get("demo_task_sequence", None) if isinstance(meta, dict) else None
+        if isinstance(custom_seq, list) and custom_seq:
+            seq = [str(x).strip() for x in custom_seq if str(x).strip()]
+    except Exception:
+        pass
+
+    try:
+        sequence_index = seq.index(c2_task)
+    except ValueError:
+        sequence_index = -1
+
+    waypoints = list(getattr(loader, "waypoints", []) or [])
+    waypoint_total = int(len(waypoints))
+    waypoint_idx = int(getattr(loader, "waypoint_idx", 0) or 0)
+    active_waypoint = 0
+    if waypoint_total > 0:
+        active_waypoint = max(1, min(waypoint_total, waypoint_idx + 1))
+
+    return {
+        "sim_time_s": float(sim_time),
+        "c2_task": str(c2_task),
+        "c2_task_label": _pretty_label(c2_task),
+        "phase_name": phase_name or "idle",
+        "phase_label": _pretty_label(phase_name),
+        "command_code": int(command_code),
+        "command_name": COMMAND_CODE_TO_NAME.get(int(command_code), f"CODE_{int(command_code)}"),
+        "waypoint_index": int(waypoint_idx),
+        "waypoint_total": int(waypoint_total),
+        "active_waypoint": int(active_waypoint),
+        "task_sequence": seq,
+        "task_sequence_index": int(sequence_index),
+        "history": list(history),
+    }
 
 
 class _WorldModelPolicy:
@@ -574,6 +680,21 @@ def _env_defaults_from_train_config(train_config: dict | None) -> dict:
     return env_cfg if isinstance(env_cfg, dict) else {}
 
 
+def _is_leader_train_config(train_config: dict | None) -> bool:
+    if not isinstance(train_config, dict):
+        return False
+    return str(train_config.get("agent_layer", "execution")).strip().lower() == "leader"
+
+
+def _model_looks_like_leader(model_obj) -> bool:
+    obs_space = getattr(model_obj, "observation_space", None)
+    try:
+        keys = set(getattr(obs_space, "spaces", {}).keys())
+    except Exception:
+        keys = set()
+    return {"ownship", "task", "navigation", "terminal", "link"}.issubset(keys)
+
+
 def _infer_visual_downsample(model_obj, requested_factor: int | None) -> int:
     if requested_factor is not None and int(requested_factor) > 0:
         return int(requested_factor)
@@ -693,9 +814,15 @@ def simulation_loop():
     global simulation_running, simulation_paused, env, model, episode_return, args, nav_data, sim_speed
 
     train_config = _load_train_config_for_viz(getattr(args, "model", None), getattr(args, "train_config", None))
+    leader_mode = _is_leader_train_config(train_config)
     wrapper_class = None
     wrapper_kwargs = None
     sim_env = None
+    mission_transition_log: list[dict] = []
+    last_phase_name = ""
+    last_c2_task = ""
+    leader_exec_steps_remaining = 0
+    leader_decision_pending = False
     scripted_mode = str(getattr(args, "scripted", "")).strip().lower()
     if scripted_mode in ("", "none", "null", "false", "0"):
         scripted_mode = ""
@@ -735,7 +862,10 @@ def simulation_loop():
         print("No model loaded. Running with random/noop actions.")
         model = None
 
-    if train_config is not None:
+    if not leader_mode and model is not None and _model_looks_like_leader(model):
+        leader_mode = True
+
+    if train_config is not None and not leader_mode:
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
         if wrapper_kwargs is not None:
             wrapper_kwargs = dict(wrapper_kwargs)
@@ -751,80 +881,140 @@ def simulation_loop():
         wrapper_kwargs["action_rate_penalty_coef"] = 0.0
 
     action_mode = args.action_mode
-    if action_mode == "auto":
-        act_dim = None
-        if model is not None:
-            act_dim = getattr(model, "action_dim", None)
-            if act_dim is None:
-                act_space = getattr(model, "action_space", None)
-                act_shape = getattr(act_space, "shape", None)
-                act_dim = int(act_shape[0]) if act_shape and len(act_shape) == 1 else None
-        elif scripted_mode:
-            act_dim = 17
-        if act_dim == 2:
-            action_mode = "takeoff2"
-        elif act_dim == 4:
-            action_mode = "takeoff4"
-        else:
-            action_mode = "full"
-
     env_defaults = _env_defaults_from_train_config(train_config)
 
-    include_proprio = bool(getattr(args, "include_proprio", False))
-    if model is not None and not include_proprio:
-        include_proprio = _model_expects_proprio(model)
-    elif model is None and not include_proprio:
-        include_proprio = bool(env_defaults.get("include_proprio", False))
+    if not leader_mode:
+        if action_mode == "auto":
+            act_dim = None
+            if model is not None:
+                act_dim = getattr(model, "action_dim", None)
+                if act_dim is None:
+                    act_space = getattr(model, "action_space", None)
+                    act_shape = getattr(act_space, "shape", None)
+                    act_dim = int(act_shape[0]) if act_shape and len(act_shape) == 1 else None
+            elif scripted_mode:
+                act_dim = 17
+            if act_dim == 2:
+                action_mode = "takeoff2"
+            elif act_dim == 4:
+                action_mode = "takeoff4"
+            else:
+                action_mode = "full"
 
-    if model is not None:
-        mission_obs_mode = _infer_mission_obs_mode(model, getattr(args, "mission_obs_mode", None))
-        visual_downsample = _infer_visual_downsample(model, getattr(args, "visual_downsample", None))
+        include_proprio = bool(getattr(args, "include_proprio", False))
+        if model is not None and not include_proprio:
+            include_proprio = _model_expects_proprio(model)
+        elif model is None and not include_proprio:
+            include_proprio = bool(env_defaults.get("include_proprio", False))
+
+        if model is not None:
+            mission_obs_mode = _infer_mission_obs_mode(model, getattr(args, "mission_obs_mode", None))
+            visual_downsample = _infer_visual_downsample(model, getattr(args, "visual_downsample", None))
+        else:
+            mission_obs_mode = str(
+                getattr(args, "mission_obs_mode", None)
+                or env_defaults.get("mission_obs_mode", "basic")
+            ).strip().lower()
+            visual_downsample = int(
+                getattr(args, "visual_downsample", None)
+                or env_defaults.get("visual_downsample", 1)
+                or 1
+            )
+        visual_update_interval = _infer_visual_update_interval(train_config, getattr(args, "visual_update_interval", None))
     else:
-        mission_obs_mode = str(
-            getattr(args, "mission_obs_mode", None)
-            or env_defaults.get("mission_obs_mode", "basic")
-        ).strip().lower()
-        visual_downsample = int(
-            getattr(args, "visual_downsample", None)
-            or env_defaults.get("visual_downsample", 1)
-            or 1
-        )
-    visual_update_interval = _infer_visual_update_interval(train_config, getattr(args, "visual_update_interval", None))
+        include_proprio = False
+        mission_obs_mode = "leader"
+        visual_downsample = 1
+        visual_update_interval = 1
 
-    print(
-        f"Initializing Universal Environment with scenario: {args.scenario} "
-        f"(action_mode={action_mode}, include_proprio={include_proprio}, mission_obs_mode={mission_obs_mode}, "
-        f"visual_downsample={visual_downsample}, visual_update_interval={visual_update_interval})"
-    )
-    base_env = UniversalEnv(
-        args.scenario,
-        action_mode=action_mode,
-        include_visual=True,
-        include_proprio=include_proprio,
-        mission_obs_mode=mission_obs_mode,
-        visual_downsample=visual_downsample,
-        visual_update_interval=visual_update_interval,
-    )
-    if bool(getattr(args, "zero_randomization", False)):
-        base_env.set_randomization_overrides(
-            {
-                "world_yaw_range": [0.0, 0.0],
-                "wind_speed_range": [0.0, 0.0],
-                "wind_dir_from_range": [0.0, 0.0],
-                "wind_headwind_range": [0.0, 0.0],
-                "wind_crosswind_range": [0.0, 0.0],
-                "wind_tailwind_max_mps": 0.0,
-                "wind_shear_range": [0.0, 0.0],
-            }
+    if not leader_mode:
+        print(
+            f"Initializing Universal Environment with scenario: {args.scenario} "
+            f"(action_mode={action_mode}, include_proprio={include_proprio}, mission_obs_mode={mission_obs_mode}, "
+            f"visual_downsample={visual_downsample}, visual_update_interval={visual_update_interval})"
         )
-    env = wrapper_class(base_env, **(wrapper_kwargs or {})) if wrapper_class is not None else base_env
-    sim_env = env.unwrapped if hasattr(env, "unwrapped") else base_env
-    if scripted_mode and scripted_mode != "takeoff_cruise_landing":
-        model = _ScriptedPolicy(
-            scripted_mode,
-            action_dim=int(env.action_space.shape[0]),
-            dt=float(sim_env.sim.get_time_step()),
+        base_env = UniversalEnv(
+            args.scenario,
+            action_mode=action_mode,
+            include_visual=True,
+            include_proprio=include_proprio,
+            mission_obs_mode=mission_obs_mode,
+            visual_downsample=visual_downsample,
+            visual_update_interval=visual_update_interval,
         )
+        if bool(getattr(args, "zero_randomization", False)):
+            base_env.set_randomization_overrides(
+                {
+                    "world_yaw_range": [0.0, 0.0],
+                    "wind_speed_range": [0.0, 0.0],
+                    "wind_dir_from_range": [0.0, 0.0],
+                    "wind_headwind_range": [0.0, 0.0],
+                    "wind_crosswind_range": [0.0, 0.0],
+                    "wind_tailwind_max_mps": 0.0,
+                    "wind_shear_range": [0.0, 0.0],
+                }
+            )
+        env = wrapper_class(base_env, **(wrapper_kwargs or {})) if wrapper_class is not None else base_env
+        sim_env = env.unwrapped if hasattr(env, "unwrapped") else base_env
+        if scripted_mode and scripted_mode != "takeoff_cruise_landing":
+            model = _ScriptedPolicy(
+                scripted_mode,
+                action_dim=int(env.action_space.shape[0]),
+                dt=float(sim_env.sim.get_time_step()),
+            )
+    else:
+        leader_cfg = dict(train_config.get("leader_env", {}) or {}) if isinstance(train_config, dict) else {}
+        if not leader_cfg:
+            raise ValueError("Leader visualization requires a leader train config with a 'leader_env' section.")
+        execution_train_config = leader_cfg.get("execution_train_config", None)
+        execution_model_path = leader_cfg.get("execution_model_path", None)
+        if execution_train_config:
+            execution_train_config = os.path.abspath(os.path.join(repo_root, str(execution_train_config)))
+        if execution_model_path:
+            execution_model_path = os.path.abspath(os.path.join(repo_root, str(execution_model_path)))
+        print(
+            f"Initializing Leader Environment with scenario: {args.scenario} "
+            f"(decision_interval_steps={int(leader_cfg.get('decision_interval_steps', 20))}, "
+            f"execution_backend={str(leader_cfg.get('execution_backend', 'scripted'))})"
+        )
+        env = LeaderTrainingEnv(
+            args.scenario,
+            decision_interval_steps=int(leader_cfg.get("decision_interval_steps", 20)),
+            execution_backend=str(leader_cfg.get("execution_backend", "scripted")),
+            execution_train_config=execution_train_config,
+            execution_model_path=execution_model_path,
+            execution_algo=str(leader_cfg.get("execution_algo", "auto")),
+            scripted_transition_alt_agl_m=float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
+            heading_bias_limit_deg=float(leader_cfg.get("heading_bias_limit_deg", 45.0)),
+            altitude_bias_limit_m=float(leader_cfg.get("altitude_bias_limit_m", 800.0)),
+            speed_bias_limit_mps=float(leader_cfg.get("speed_bias_limit_mps", 40.0)),
+            command_change_penalty=float(leader_cfg.get("command_change_penalty", 0.0)),
+            teacher_keep_deadband=float(leader_cfg.get("teacher_keep_deadband", 0.20)),
+            invalid_phase_penalty=float(leader_cfg.get("invalid_phase_penalty", 0.0)),
+            premature_approach_penalty=float(leader_cfg.get("premature_approach_penalty", 0.0)),
+            baseline_deviation_penalty=float(leader_cfg.get("baseline_deviation_penalty", 0.0)),
+            mode_change_penalty=float(leader_cfg.get("mode_change_penalty", 0.0)),
+            approach_gate_distance_m=float(leader_cfg.get("approach_gate_distance_m", 18000.0)),
+            approach_gate_cross_m=float(leader_cfg.get("approach_gate_cross_m", 3500.0)),
+            approach_gate_heading_error_deg=float(leader_cfg.get("approach_gate_heading_error_deg", 85.0)),
+        )
+        if bool(getattr(args, "zero_randomization", False)):
+            env.set_randomization_overrides(
+                {
+                    "world_yaw_range": [0.0, 0.0],
+                    "wind_speed_range": [0.0, 0.0],
+                    "wind_dir_from_range": [0.0, 0.0],
+                    "wind_headwind_range": [0.0, 0.0],
+                    "wind_crosswind_range": [0.0, 0.0],
+                    "wind_tailwind_max_mps": 0.0,
+                    "wind_shear_range": [0.0, 0.0],
+                }
+            )
+        sim_env = env.unwrapped
+        action_mode = str(getattr(sim_env, "action_mode", "full"))
+        if scripted_mode:
+            print("[WARN] scripted visual controllers are only supported for execution-env mode; ignoring --scripted for leader mode.")
+            scripted_mode = ""
 
     print("Server ready. Waiting for start...")
     if args.seed is not None:
@@ -834,6 +1024,49 @@ def simulation_loop():
     if isinstance(model, (_WorldModelPolicy, _ScriptedPolicy)):
         model.reset(obs)
     episode_return = 0.0
+
+    def _reset_mission_status_tracking() -> None:
+        nonlocal mission_transition_log, last_phase_name, last_c2_task
+        mission_transition_log = []
+        last_phase_name = ""
+        last_c2_task = ""
+
+    def _capture_mission_status(sim_time_now: float) -> dict | None:
+        nonlocal mission_transition_log, last_phase_name, last_c2_task
+        status = _build_mission_status_payload(
+            sim_env,
+            sim_time=float(sim_time_now),
+            history=mission_transition_log,
+        )
+        if not isinstance(status, dict):
+            return None
+
+        phase_name = str(status.get("phase_name", "")).strip().lower()
+        c2_task = str(status.get("c2_task", "")).strip().upper()
+        if phase_name != last_phase_name or c2_task != last_c2_task:
+            mission_transition_log.append(
+                {
+                    "time_s": float(sim_time_now),
+                    "phase_name": phase_name or "idle",
+                    "phase_label": str(status.get("phase_label", "--")),
+                    "c2_task": c2_task or "TASK_IDLE",
+                    "c2_task_label": str(status.get("c2_task_label", "--")),
+                    "command_code": int(status.get("command_code", 0)),
+                    "waypoint_text": (
+                        f"{int(status.get('active_waypoint', 0))}/{int(status.get('waypoint_total', 0))}"
+                        if int(status.get("waypoint_total", 0)) > 0
+                        else "--"
+                    ),
+                }
+            )
+            mission_transition_log = mission_transition_log[-8:]
+            last_phase_name = phase_name
+            last_c2_task = c2_task
+            status["history"] = list(mission_transition_log)
+        return status
+
+    _reset_mission_status_tracking()
+    _capture_mission_status(0.0)
 
     def _update_nav_markers(obs_now: dict) -> None:
         """
@@ -1112,40 +1345,91 @@ def simulation_loop():
             truncated = False
             info = {}
 
-            for _ in range(substeps):
-                if args.fixed_action is not None:
-                    action = np.asarray(args.fixed_action, dtype=np.float32).reshape(-1)
-                elif model:
-                    # We need to map the env observation to what the model expects
-                    # UniversalEnv returns a Dict observation. SB3 PPO handles Dict if trained on it.
-                    action, _ = model.predict(obs, deterministic=True)
-                    if action.shape != env.action_space.shape:
-                        raise ValueError(
-                            f"Action shape mismatch: model produced {action.shape} but env expects {env.action_space.shape} "
-                            f"(hint: set --action_mode to match the training action space)."
-                        )
-                    if sim_time < 2.0:
-                        print(f"Action: {action}")
-                else:
-                    # No model: Do nothing (zeros)
-                    action = np.zeros(env.action_space.shape, dtype=np.float32)
+            if leader_mode:
+                for _ in range(substeps):
+                    if not leader_decision_pending:
+                        if args.fixed_action is not None:
+                            action = np.asarray(args.fixed_action, dtype=np.float32).reshape(-1)
+                        elif model:
+                            action, _ = model.predict(obs, deterministic=True)
+                            if action.shape != env.action_space.shape:
+                                raise ValueError(
+                                    f"Leader action shape mismatch: model produced {action.shape} but env expects {env.action_space.shape}"
+                                )
+                        else:
+                            action = np.zeros(env.action_space.shape, dtype=np.float32)
+                        env.begin_batched_leader_step(action)
+                        leader_decision_pending = True
+                        leader_exec_steps_remaining = int(getattr(env, "decision_interval_steps", 1))
+                        if sim_time < 2.0:
+                            print(f"Leader Action: {action}")
 
-                next_obs, reward, terminated, truncated, info = env.step(action)
-                episode_return += float(reward)
-                sim_time += sim_env.sim.get_time_step() # Use internal sim step
-                try:
-                    inst_step = sim_env._last_inst if getattr(sim_env, "_last_inst", None) is not None else sim_env.sim.get_instrument_state(sim_env.agent_id)
-                    truth_step = sim_env._last_truth if getattr(sim_env, "_last_truth", None) is not None else sim_env.sim.get_agent_observation(sim_env.agent_id)
-                    episode_max_ias = max(episode_max_ias, float(getattr(inst_step, "ias", 0.0)))
-                    episode_max_gs = max(episode_max_gs, float(getattr(truth_step, "speed", 0.0)))
-                    episode_max_agl = max(episode_max_agl, float(getattr(inst_step, "alt_radar", 0.0)))
-                except Exception:
-                    pass
-                if isinstance(model, _WorldModelPolicy):
-                    model.observe(next_obs)
-                obs = next_obs
-                if terminated or truncated:
-                    break
+                    if env.has_pending_execution_step() and leader_exec_steps_remaining > 0:
+                        exec_obs = env.current_execution_observation()
+                        exec_action = env._predict_execution_action(exec_obs)
+                        env.step_execution_once(exec_action)
+                        leader_exec_steps_remaining -= 1
+                        sim_time += sim_env.sim.get_time_step()
+                        info = {}
+                        try:
+                            pending_state = getattr(env, "_pending_leader_state", None)
+                            if pending_state is not None:
+                                info = dict(getattr(pending_state, "last_info", {}) or {})
+                        except Exception:
+                            info = {}
+                        try:
+                            inst_step = sim_env._last_inst if getattr(sim_env, "_last_inst", None) is not None else sim_env.sim.get_instrument_state(sim_env.agent_id)
+                            truth_step = sim_env._last_truth if getattr(sim_env, "_last_truth", None) is not None else sim_env.sim.get_agent_observation(sim_env.agent_id)
+                            episode_max_ias = max(episode_max_ias, float(getattr(inst_step, "ias", 0.0)))
+                            episode_max_gs = max(episode_max_gs, float(getattr(truth_step, "speed", 0.0)))
+                            episode_max_agl = max(episode_max_agl, float(getattr(inst_step, "alt_radar", 0.0)))
+                        except Exception:
+                            pass
+
+                    if leader_decision_pending and (
+                        leader_exec_steps_remaining <= 0 or not env.has_pending_execution_step()
+                    ):
+                        obs, reward, terminated, truncated, info = env.finish_batched_leader_step()
+                        leader_decision_pending = False
+                        leader_exec_steps_remaining = 0
+                        episode_return += float(reward)
+                        if terminated or truncated:
+                            break
+            else:
+                for _ in range(substeps):
+                    if args.fixed_action is not None:
+                        action = np.asarray(args.fixed_action, dtype=np.float32).reshape(-1)
+                    elif model:
+                        # We need to map the env observation to what the model expects
+                        # UniversalEnv returns a Dict observation. SB3 PPO handles Dict if trained on it.
+                        action, _ = model.predict(obs, deterministic=True)
+                        if action.shape != env.action_space.shape:
+                            raise ValueError(
+                                f"Action shape mismatch: model produced {action.shape} but env expects {env.action_space.shape} "
+                                f"(hint: set --action_mode to match the training action space)."
+                            )
+                        if sim_time < 2.0:
+                            print(f"Action: {action}")
+                    else:
+                        # No model: Do nothing (zeros)
+                        action = np.zeros(env.action_space.shape, dtype=np.float32)
+
+                    next_obs, reward, terminated, truncated, info = env.step(action)
+                    episode_return += float(reward)
+                    sim_time += sim_env.sim.get_time_step() # Use internal sim step
+                    try:
+                        inst_step = sim_env._last_inst if getattr(sim_env, "_last_inst", None) is not None else sim_env.sim.get_instrument_state(sim_env.agent_id)
+                        truth_step = sim_env._last_truth if getattr(sim_env, "_last_truth", None) is not None else sim_env.sim.get_agent_observation(sim_env.agent_id)
+                        episode_max_ias = max(episode_max_ias, float(getattr(inst_step, "ias", 0.0)))
+                        episode_max_gs = max(episode_max_gs, float(getattr(truth_step, "speed", 0.0)))
+                        episode_max_agl = max(episode_max_agl, float(getattr(inst_step, "alt_radar", 0.0)))
+                    except Exception:
+                        pass
+                    if isinstance(model, _WorldModelPolicy):
+                        model.observe(next_obs)
+                    obs = next_obs
+                    if terminated or truncated:
+                        break
 
             # Waypoint cruise: update markers when advancing waypoints (cheap; emits only on index change).
             try:
@@ -1282,7 +1566,8 @@ def simulation_loop():
             
             state = {
                 "tick": sim_time,
-                "units": units_data
+                "units": units_data,
+                "mission_status": _capture_mission_status(sim_time),
             }
             
             socketio.emit('state_update', state)
@@ -1319,8 +1604,12 @@ def simulation_loop():
                         obs, _ = env.reset(seed=int(args.seed))
                     else:
                         obs, _ = env.reset()
+                    leader_decision_pending = False
+                    leader_exec_steps_remaining = 0
                     if isinstance(model, _WorldModelPolicy) or isinstance(model, _ScriptedPolicy):
                         model.reset(obs)
+                    _reset_mission_status_tracking()
+                    _capture_mission_status(0.0)
                     _update_nav_markers(obs)
                     episode_return = 0.0
                     episode_debug_next_t = 0.0

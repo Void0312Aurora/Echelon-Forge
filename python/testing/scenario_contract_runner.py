@@ -1692,11 +1692,32 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
     if check_kind == "task_order_and_mission_link":
         import ef_py
 
+        def _recovery_approach_enum(raw_value, default_name: str = "None"):
+            namespace = getattr(ef_py, "RecoveryApproachType", None)
+            if namespace is None:
+                try:
+                    return int(raw_value)
+                except Exception:
+                    return 0
+            default_value = getattr(namespace, default_name, 0)
+            if raw_value is None:
+                return default_value
+            if isinstance(raw_value, str):
+                return getattr(namespace, raw_value, default_value)
+            try:
+                return namespace(int(raw_value))
+            except Exception:
+                pass
+            try:
+                return int(raw_value)
+            except Exception:
+                return default_value
+
         def _spawn_aircraft(sim):
             sim.load_database(resolve_repo_path("examples", "config", "database"))
             return sim.spawn_unit(
                 ef_py.Side.Blue,
-                "Aircraft",
+                "F-16C_Block50",
                 0.0,
                 0.0,
                 1200.0,
@@ -1730,6 +1751,8 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         order.on_station_time_s = float(order_spec.get("on_station_time_s", 900.0))
         order.recovery_base_id = int(order_spec.get("recovery_base_id", 55))
         order.recovery_runway_id = int(order_spec.get("recovery_runway_id", 7))
+        if hasattr(order, "recovery_approach_type"):
+            order.recovery_approach_type = _recovery_approach_enum(order_spec.get("recovery_approach_type", "None"))
         sim.set_task_order(entity_id, order)
 
         stored_order = sim.get_task_order(entity_id)
@@ -1743,11 +1766,27 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             return False, f"stored station_type mismatch: {stored_order.station_type} != {order.station_type}"
         if not math.isclose(float(stored_order.target_speed_mps), float(order.target_speed_mps), rel_tol=1e-6, abs_tol=1e-6):
             return False, f"stored target_speed mismatch: {stored_order.target_speed_mps} != {order.target_speed_mps}"
+        if int(getattr(stored_order, "recovery_base_id", 0)) != int(getattr(order, "recovery_base_id", 0)):
+            return False, f"stored recovery_base_id mismatch: {stored_order.recovery_base_id} != {order.recovery_base_id}"
+        if int(getattr(stored_order, "recovery_runway_id", 0)) != int(getattr(order, "recovery_runway_id", 0)):
+            return False, f"stored recovery_runway_id mismatch: {stored_order.recovery_runway_id} != {order.recovery_runway_id}"
+        if hasattr(order, "recovery_approach_type") and int(getattr(stored_order, "recovery_approach_type", 0)) != int(getattr(order, "recovery_approach_type", 0)):
+            return False, f"stored recovery_approach_type mismatch: {stored_order.recovery_approach_type} != {order.recovery_approach_type}"
 
         intent_spec = dict(spec.get("leader_intent", {}) or {})
         intent = ef_py.LeaderIntent()
         intent.phase_id = getattr(ef_py.LeaderPhase, str(intent_spec.get("phase_id", "TransitToStation")))
         intent.command_code = int(intent_spec.get("command_code", 3))
+        if hasattr(intent, "route_ref_id"):
+            intent.route_ref_id = int(intent_spec.get("route_ref_id", 0))
+        if hasattr(intent, "recovery_base_id"):
+            intent.recovery_base_id = int(intent_spec.get("recovery_base_id", order.recovery_base_id))
+        if hasattr(intent, "recovery_runway_id"):
+            intent.recovery_runway_id = int(intent_spec.get("recovery_runway_id", order.recovery_runway_id))
+        if hasattr(intent, "recovery_approach_type"):
+            intent.recovery_approach_type = _recovery_approach_enum(
+                intent_spec.get("recovery_approach_type", order_spec.get("recovery_approach_type", "None"))
+            )
         intent.cmd_heading_deg = float(intent_spec.get("cmd_heading_deg", 135.0))
         intent.cmd_altitude_m = float(intent_spec.get("cmd_altitude_m", 6800.0))
         intent.cmd_speed_mps = float(intent_spec.get("cmd_speed_mps", 205.0))
@@ -1763,6 +1802,14 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             return False, f"stored command_code mismatch: {stored_intent.command_code} != {intent.command_code}"
         if not math.isclose(float(stored_intent.cmd_heading_deg), float(intent.cmd_heading_deg), rel_tol=1e-6, abs_tol=1e-6):
             return False, f"stored intent heading mismatch: {stored_intent.cmd_heading_deg} != {intent.cmd_heading_deg}"
+        if hasattr(intent, "route_ref_id") and int(getattr(stored_intent, "route_ref_id", 0)) != int(getattr(intent, "route_ref_id", 0)):
+            return False, f"stored route_ref_id mismatch: {stored_intent.route_ref_id} != {intent.route_ref_id}"
+        if hasattr(intent, "recovery_base_id") and int(getattr(stored_intent, "recovery_base_id", 0)) != int(getattr(intent, "recovery_base_id", 0)):
+            return False, f"stored intent recovery_base_id mismatch: {stored_intent.recovery_base_id} != {intent.recovery_base_id}"
+        if hasattr(intent, "recovery_runway_id") and int(getattr(stored_intent, "recovery_runway_id", 0)) != int(getattr(intent, "recovery_runway_id", 0)):
+            return False, f"stored intent recovery_runway_id mismatch: {stored_intent.recovery_runway_id} != {intent.recovery_runway_id}"
+        if hasattr(intent, "recovery_approach_type") and int(getattr(stored_intent, "recovery_approach_type", 0)) != int(getattr(intent, "recovery_approach_type", 0)):
+            return False, f"stored intent recovery_approach_type mismatch: {stored_intent.recovery_approach_type} != {intent.recovery_approach_type}"
 
         report_spec = dict(spec.get("pilot_report", {}) or {})
         report = ef_py.PilotReport()
@@ -1801,6 +1848,16 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         command.cmd_altitude_m = float(mission_spec.get("cmd_altitude_m", 5000.0))
         command.cmd_speed_mps = float(mission_spec.get("cmd_speed_mps", 190.0))
         command.command_code = int(mission_spec.get("command_code", 4))
+        if hasattr(command, "route_ref_id"):
+            command.route_ref_id = int(mission_spec.get("route_ref_id", 0))
+        if hasattr(command, "recovery_base_id"):
+            command.recovery_base_id = int(mission_spec.get("recovery_base_id", order.recovery_base_id))
+        if hasattr(command, "recovery_runway_id"):
+            command.recovery_runway_id = int(mission_spec.get("recovery_runway_id", order.recovery_runway_id))
+        if hasattr(command, "recovery_approach_type"):
+            command.recovery_approach_type = _recovery_approach_enum(
+                mission_spec.get("recovery_approach_type", order_spec.get("recovery_approach_type", "None"))
+            )
         latency_sim.set_mission_command(latency_entity_id, command)
 
         before = latency_sim.get_mission_command(latency_entity_id)
@@ -1819,7 +1876,447 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             return False, f"post-link heading mismatch: {after.cmd_heading_deg} != {command.cmd_heading_deg}"
         if not math.isclose(float(after.cmd_altitude_m), float(command.cmd_altitude_m), rel_tol=1e-6, abs_tol=1e-6):
             return False, f"post-link altitude mismatch: {after.cmd_altitude_m} != {command.cmd_altitude_m}"
+        if hasattr(command, "recovery_base_id") and int(getattr(after, "recovery_base_id", 0)) != int(getattr(command, "recovery_base_id", 0)):
+            return False, f"post-link recovery_base_id mismatch: {after.recovery_base_id} != {command.recovery_base_id}"
+        if hasattr(command, "recovery_runway_id") and int(getattr(after, "recovery_runway_id", 0)) != int(getattr(command, "recovery_runway_id", 0)):
+            return False, f"post-link recovery_runway_id mismatch: {after.recovery_runway_id} != {command.recovery_runway_id}"
+        if hasattr(command, "recovery_approach_type") and int(getattr(after, "recovery_approach_type", 0)) != int(getattr(command, "recovery_approach_type", 0)):
+            return False, f"post-link recovery_approach_type mismatch: {after.recovery_approach_type} != {command.recovery_approach_type}"
         return True, "task order / mission link contract passed"
+
+    if check_kind == "leader_training_env":
+        try:
+            import gymnasium  # noqa: F401
+        except ModuleNotFoundError as exc:
+            raise ContractSkipped("gymnasium not installed") from exc
+        import numpy as np
+        from gym_envs.leader_env import LeaderTrainingEnv
+
+        scenario_path = resolve_repo_path(str(spec["scenario"]))
+        leader_cfg = dict(spec.get("leader_env", {}) or {})
+        env = LeaderTrainingEnv(
+            scenario_path=scenario_path,
+            decision_interval_steps=int(leader_cfg.get("decision_interval_steps", 5)),
+            execution_backend=str(leader_cfg.get("execution_backend", "scripted")),
+            execution_train_config=(
+                resolve_repo_path(str(leader_cfg["execution_train_config"]))
+                if leader_cfg.get("execution_train_config")
+                else None
+            ),
+            execution_model_path=(
+                resolve_repo_path(str(leader_cfg["execution_model_path"]))
+                if leader_cfg.get("execution_model_path")
+                else None
+            ),
+            execution_algo=str(leader_cfg.get("execution_algo", "auto")),
+            scripted_transition_alt_agl_m=float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
+            heading_bias_limit_deg=float(leader_cfg.get("heading_bias_limit_deg", 35.0)),
+            altitude_bias_limit_m=float(leader_cfg.get("altitude_bias_limit_m", 600.0)),
+            speed_bias_limit_mps=float(leader_cfg.get("speed_bias_limit_mps", 30.0)),
+            command_change_penalty=float(leader_cfg.get("command_change_penalty", 0.0)),
+            teacher_keep_deadband=float(leader_cfg.get("teacher_keep_deadband", 0.2)),
+            invalid_phase_penalty=float(leader_cfg.get("invalid_phase_penalty", 0.0)),
+            premature_approach_penalty=float(leader_cfg.get("premature_approach_penalty", 0.0)),
+            baseline_deviation_penalty=float(leader_cfg.get("baseline_deviation_penalty", 0.0)),
+            mode_change_penalty=float(leader_cfg.get("mode_change_penalty", 0.0)),
+            approach_gate_distance_m=float(leader_cfg.get("approach_gate_distance_m", 18000.0)),
+            approach_gate_cross_m=float(leader_cfg.get("approach_gate_cross_m", 3500.0)),
+            approach_gate_heading_error_deg=float(leader_cfg.get("approach_gate_heading_error_deg", 85.0)),
+        )
+        obs, info = env.reset(seed=int(spec.get("seed", 7)))
+        expected_obs_shapes = dict(spec.get("expected_obs_shapes", {}) or {})
+        for key, shape in expected_obs_shapes.items():
+            arr = np.asarray(obs.get(key))
+            if tuple(arr.shape) != tuple(shape):
+                return False, f"leader obs {key!r} shape mismatch: {tuple(arr.shape)} != {tuple(shape)}"
+
+        action = np.asarray(spec.get("action", [0.0, 0.0, 0.0, 0.0]), dtype=np.float32).reshape(-1)
+        obs2, reward, terminated, truncated, info2 = env.step(action)
+        if not isinstance(info, dict):
+            return False, "leader env reset info should be a dict"
+        if not isinstance(info2, dict):
+            return False, "leader env step info should be a dict"
+        if "leader_effective_command" not in info2:
+            return False, "leader_effective_command missing from info"
+        eff_cmd = np.asarray(info2["leader_effective_command"], dtype=np.float32).reshape(-1)
+        if tuple(eff_cmd.shape) != (4,):
+            return False, f"leader_effective_command shape mismatch: {tuple(eff_cmd.shape)}"
+        allowed_codes = set(int(x) for x in spec.get("allowed_command_codes", [1, 2, 3, 4]))
+        if int(round(float(eff_cmd[0]))) not in allowed_codes:
+            return False, f"unexpected effective command code {eff_cmd[0]}"
+        if "leader_backend" not in info2:
+            return False, "leader_backend missing from info"
+        expected_info = dict(spec.get("expected_info", {}) or {})
+        for key, expected in expected_info.items():
+            if key not in info2:
+                return False, f"expected info key missing: {key}"
+            actual = info2.get(key)
+            if isinstance(expected, bool):
+                if bool(actual) != bool(expected):
+                    return False, f"info[{key!r}] mismatch: {actual!r} != {expected!r}"
+            elif isinstance(expected, (int, float)):
+                if not math.isclose(float(actual), float(expected), rel_tol=1e-6, abs_tol=1e-6):
+                    return False, f"info[{key!r}] mismatch: {actual!r} != {expected!r}"
+            else:
+                if str(actual) != str(expected):
+                    return False, f"info[{key!r}] mismatch: {actual!r} != {expected!r}"
+        reward_term_keys = list(spec.get("expected_reward_term_keys", []) or [])
+        if reward_term_keys:
+            reward_terms = info2.get("leader_reward_terms", {})
+            if not isinstance(reward_terms, dict):
+                return False, "leader_reward_terms missing or not a dict"
+            for key in reward_term_keys:
+                if key not in reward_terms:
+                    return False, f"leader_reward_terms missing key: {key}"
+        if not isinstance(reward, (float, int)):
+            return False, f"leader reward has unexpected type: {type(reward)}"
+        if not isinstance(bool(terminated), bool) or not isinstance(bool(truncated), bool):
+            return False, "terminated/truncated flags could not be coerced to bool"
+        for key, shape in expected_obs_shapes.items():
+            arr = np.asarray(obs2.get(key))
+            if tuple(arr.shape) != tuple(shape):
+                return False, f"post-step leader obs {key!r} shape mismatch: {tuple(arr.shape)} != {tuple(shape)}"
+        return True, "leader training env contract passed"
+
+    if check_kind == "leader_policy_generalization":
+        try:
+            import gymnasium  # noqa: F401
+        except ModuleNotFoundError as exc:
+            raise ContractSkipped("gymnasium not installed") from exc
+        import numpy as np
+        from stable_baselines3 import PPO
+        from gym_envs.leader_env import LeaderTrainingEnv
+        from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
+
+        def _load_leader_policy(model_path: str, algo_name: str):
+            load_path = model_path[:-4] if str(model_path).endswith(".zip") else str(model_path)
+            algo_norm = str(algo_name or "auto").strip()
+            if algo_norm in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
+                try:
+                    return AdaptiveKLPPO.load(load_path, device="cpu")
+                except Exception:
+                    if algo_norm != "auto":
+                        raise
+            return PPO.load(load_path, device="cpu")
+
+        def _bearing_deg(x0: float, y0: float, x1: float, y1: float) -> float:
+            return float((math.degrees(math.atan2(float(x1) - float(x0), float(y1) - float(y0))) + 360.0) % 360.0)
+
+        def _task_block_ok(value: float, lo: float, hi: float) -> bool:
+            if float(hi) > float(lo) + 1.0:
+                return bool(float(lo) - 1.0e-6 <= float(value) <= float(hi) + 1.0e-6)
+            return True
+
+        def _active_nav_target(loader: Any, task: Any) -> tuple[str | None, float | None, float | None]:
+            waypoints = list(getattr(loader, "waypoints", []) or [])
+            waypoint_idx = int(getattr(loader, "waypoint_idx", 0) or 0)
+            if 0 <= waypoint_idx < len(waypoints):
+                wp = waypoints[waypoint_idx]
+                return "waypoint", float(wp.get("x", 0.0)), float(wp.get("y", 0.0))
+            if task is not None and bool(getattr(task, "active", False)):
+                return "anchor", float(getattr(task, "anchor_x_m", 0.0)), float(getattr(task, "anchor_y_m", 0.0))
+            return None, None, None
+
+        def _build_case_scenario(case_spec: dict[str, Any]) -> tuple[str, bool]:
+            if "scenario" in case_spec or "scenario_inline" in case_spec or "scenario_base" in case_spec:
+                return _materialize_scenario_path(case_spec)
+            if base_scenario is None:
+                raise ValueError("leader_policy_generalization requires top-level scenario_base/scenario or per-case scenario")
+            scenario_obj = copy.deepcopy(base_scenario)
+            if isinstance(top_level_patch, dict) and top_level_patch:
+                scenario_obj = _deep_merge(scenario_obj, top_level_patch)
+            case_patch = case_spec.get("scenario_patch", None)
+            if case_patch is not None:
+                if not isinstance(case_patch, dict):
+                    raise ValueError("leader_policy_generalization case scenario_patch must be a dict")
+                scenario_obj = _deep_merge(scenario_obj, case_patch)
+            return _write_inline_scenario(scenario_obj), True
+
+        policy_cfg = dict(spec.get("leader_policy", {}) or {})
+        leader_cfg = dict(spec.get("leader_env", {}) or {})
+        cases = list(spec.get("cases", []) or [])
+        if not cases:
+            return False, "leader_policy_generalization requires non-empty cases list"
+
+        deterministic = bool(policy_cfg.get("deterministic", True))
+        fallback_action = np.asarray(policy_cfg.get("fallback_action", []), dtype=np.float32).reshape(-1)
+        fallback_schedule_raw = list(policy_cfg.get("fallback_schedule", []) or [])
+        fallback_schedule: list[tuple[int, np.ndarray]] = []
+        for item in fallback_schedule_raw:
+            if not isinstance(item, dict):
+                continue
+            arr = np.asarray(item.get("action", []), dtype=np.float32).reshape(-1)
+            if arr.size != 4:
+                continue
+            fallback_schedule.append((int(item.get("from_decision", 0)), arr))
+        fallback_schedule.sort(key=lambda x: x[0])
+        model_path_raw = policy_cfg.get("model_path", None)
+        leader_model = None
+        using_model = False
+        if model_path_raw:
+            leader_model = _load_leader_policy(resolve_repo_path(str(model_path_raw)), str(policy_cfg.get("algo", "auto")))
+            using_model = True
+        elif fallback_action.size != 4:
+            raise ContractSkipped("leader model not provided and fallback_action is missing")
+
+        base_scenario = None
+        top_level_patch = spec.get("scenario_patch", None)
+        if "scenario_base" in spec:
+            base_scenario = _load_json_file(resolve_repo_path(str(spec["scenario_base"])))
+        elif "scenario" in spec:
+            base_scenario = _load_json_file(resolve_repo_path(str(spec["scenario"])))
+        elif "scenario_inline" in spec and isinstance(spec.get("scenario_inline"), dict):
+            base_scenario = copy.deepcopy(spec["scenario_inline"])
+
+        default_seed = int(spec.get("seed", 7))
+        default_max_decisions = int(spec.get("max_decisions", 24))
+        default_checks = dict(spec.get("checks", {}) or {})
+
+        case_summaries: list[str] = []
+        for idx, raw_case in enumerate(cases):
+            case = dict(raw_case or {})
+            case_name = str(case.get("name", f"case_{idx+1}"))
+            scenario_path, should_cleanup = _build_case_scenario(case)
+            env = None
+            try:
+                env = LeaderTrainingEnv(
+                    scenario_path=scenario_path,
+                    decision_interval_steps=int(leader_cfg.get("decision_interval_steps", 20)),
+                    execution_backend=str(leader_cfg.get("execution_backend", "scripted")),
+                    execution_train_config=(
+                        resolve_repo_path(str(leader_cfg["execution_train_config"]))
+                        if leader_cfg.get("execution_train_config")
+                        else None
+                    ),
+                    execution_model_path=(
+                        resolve_repo_path(str(leader_cfg["execution_model_path"]))
+                        if leader_cfg.get("execution_model_path")
+                        else None
+                    ),
+                    execution_algo=str(leader_cfg.get("execution_algo", "auto")),
+                    scripted_transition_alt_agl_m=float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
+                    heading_bias_limit_deg=float(leader_cfg.get("heading_bias_limit_deg", 35.0)),
+                    altitude_bias_limit_m=float(leader_cfg.get("altitude_bias_limit_m", 600.0)),
+                    speed_bias_limit_mps=float(leader_cfg.get("speed_bias_limit_mps", 30.0)),
+                    command_change_penalty=float(leader_cfg.get("command_change_penalty", 0.0)),
+                    teacher_keep_deadband=float(leader_cfg.get("teacher_keep_deadband", 0.2)),
+                    invalid_phase_penalty=float(leader_cfg.get("invalid_phase_penalty", 0.0)),
+                    premature_approach_penalty=float(leader_cfg.get("premature_approach_penalty", 0.0)),
+                    baseline_deviation_penalty=float(leader_cfg.get("baseline_deviation_penalty", 0.0)),
+                    mode_change_penalty=float(leader_cfg.get("mode_change_penalty", 0.0)),
+                    approach_gate_distance_m=float(leader_cfg.get("approach_gate_distance_m", 18000.0)),
+                    approach_gate_cross_m=float(leader_cfg.get("approach_gate_cross_m", 3500.0)),
+                    approach_gate_heading_error_deg=float(leader_cfg.get("approach_gate_heading_error_deg", 85.0)),
+                )
+
+                randomization_overrides = case.get("randomization_overrides", spec.get("randomization_overrides", None))
+                if randomization_overrides is not None:
+                    env.set_randomization_overrides(dict(randomization_overrides))
+
+                obs, _info0 = env.reset(seed=int(case.get("seed", default_seed)))
+                max_decisions = int(case.get("max_decisions", default_max_decisions))
+                checks = dict(default_checks)
+                checks.update(dict(case.get("checks", {}) or {}))
+                snapshots: list[dict[str, Any]] = []
+                final_info: dict[str, Any] = {}
+
+                for decision_idx in range(max_decisions):
+                    if using_model:
+                        action, _ = leader_model.predict(obs, deterministic=deterministic)
+                        action_np = np.asarray(action, dtype=np.float32).reshape(-1)
+                    else:
+                        action_np = np.asarray(fallback_action, dtype=np.float32).reshape(-1)
+                        for from_decision, scheduled_action in fallback_schedule:
+                            if int(decision_idx) >= int(from_decision):
+                                action_np = np.asarray(scheduled_action, dtype=np.float32).reshape(-1)
+                            else:
+                                break
+                    obs, _reward, terminated, truncated, info = env.step(action_np)
+                    final_info = dict(info or {})
+                    loader = env.unwrapped.loader
+                    task = getattr(loader, "task_order", None)
+                    truth = env.unwrapped.sim.get_agent_observation(env.unwrapped.agent_id)
+
+                    command_code = int(loader.mission_cmd.get("command_code", 0))
+                    heading_deg = float(loader.mission_cmd.get("target_heading", 0.0))
+                    altitude_m = float(loader.mission_cmd.get("target_altitude", 0.0))
+                    speed_mps = float(loader.mission_cmd.get("target_speed", 0.0))
+                    phase_name = str(getattr(loader, "mission_phase_name", "")).strip().lower()
+                    target_kind, target_x, target_y = _active_nav_target(loader, task)
+                    heading_err_deg = None
+                    if target_x is not None and target_y is not None:
+                        desired_bearing = _bearing_deg(
+                            float(getattr(truth, "x", 0.0)),
+                            float(getattr(truth, "y", 0.0)),
+                            float(target_x),
+                            float(target_y),
+                        )
+                        heading_err_deg = abs(_wrap_deg(heading_deg - desired_bearing))
+
+                    snapshots.append(
+                        {
+                            "decision_idx": int(decision_idx),
+                            "phase_name": phase_name,
+                            "command_code": int(command_code),
+                            "heading_deg": float(heading_deg),
+                            "altitude_m": float(altitude_m),
+                            "speed_mps": float(speed_mps),
+                            "waypoint_idx": int(getattr(loader, "waypoint_idx", 0) or 0),
+                            "waypoint_total": int(len(list(getattr(loader, "waypoints", []) or []))),
+                            "target_kind": target_kind,
+                            "heading_error_deg": heading_err_deg,
+                            "terminal_feasible": bool(info.get("leader_terminal_feasible", False)),
+                            "c2_task_name": str(info.get("leader_c2_task_name", "")),
+                            "c2_transitioned": bool(info.get("leader_c2_transitioned", False)),
+                            "c2_transition_reason": str(info.get("leader_c2_transition_reason", "")),
+                            "report_valid": bool(info.get("leader_report_valid", False)),
+                            "report_reason": str(info.get("leader_report_reason", "")),
+                            "altitude_ok": _task_block_ok(
+                                altitude_m,
+                                float(getattr(task, "altitude_block_min_m", 0.0) if task is not None else 0.0),
+                                float(getattr(task, "altitude_block_max_m", 0.0) if task is not None else 0.0),
+                            ),
+                            "speed_ok": _task_block_ok(
+                                speed_mps,
+                                float(getattr(task, "speed_min_mps", 0.0) if task is not None else 0.0),
+                                float(getattr(task, "speed_max_mps", 0.0) if task is not None else 0.0),
+                            ),
+                        }
+                    )
+                    if bool(terminated) or bool(truncated):
+                        break
+
+                if not snapshots:
+                    return False, f"{case_name}: no leader rollout snapshots were collected"
+
+                allowed_codes = set(int(x) for x in checks.get("allowed_command_codes", [1, 2, 3, 4]))
+                for snap in snapshots:
+                    if int(snap["command_code"]) not in allowed_codes:
+                        return False, f"{case_name}: unexpected command code {snap['command_code']} at decision {snap['decision_idx']}"
+
+                required_codes = set(int(x) for x in checks.get("required_command_codes", []) or [])
+                seen_codes = {int(snap["command_code"]) for snap in snapshots}
+                missing = sorted(required_codes - seen_codes)
+                if missing:
+                    return False, f"{case_name}: missing required command codes {missing}, saw {sorted(seen_codes)}"
+
+                phase_expect = {
+                    str(k).strip().lower(): {int(x) for x in v}
+                    for k, v in dict(checks.get("phase_command_expectations", {}) or {}).items()
+                    if isinstance(v, (list, tuple))
+                }
+                for snap in snapshots:
+                    allowed = phase_expect.get(str(snap["phase_name"]).strip().lower(), None)
+                    if allowed is not None and int(snap["command_code"]) not in allowed:
+                        return False, (
+                            f"{case_name}: phase {snap['phase_name']!r} emitted command code "
+                            f"{snap['command_code']} outside allowed set {sorted(allowed)}"
+                        )
+
+                if bool(checks.get("require_altitude_within_task_block", False)):
+                    bad = next((snap for snap in snapshots if not bool(snap["altitude_ok"])), None)
+                    if bad is not None:
+                        return False, f"{case_name}: altitude left task block at decision {bad['decision_idx']}"
+
+                if bool(checks.get("require_speed_within_task_block", False)):
+                    bad = next((snap for snap in snapshots if not bool(snap["speed_ok"])), None)
+                    if bad is not None:
+                        return False, f"{case_name}: speed left task block at decision {bad['decision_idx']}"
+
+                if bool(checks.get("disallow_landing_before_terminal_feasible", True)):
+                    bad = next(
+                        (
+                            snap for snap in snapshots
+                            if int(snap["command_code"]) == 4 and not bool(snap["terminal_feasible"])
+                        ),
+                        None,
+                    )
+                    if bad is not None:
+                        return False, f"{case_name}: landing command issued before terminal feasibility at decision {bad['decision_idx']}"
+
+                heading_abs_max = checks.get("active_target_heading_abs_max_deg", None)
+                if heading_abs_max is not None:
+                    filter_phases = {str(x).strip().lower() for x in checks.get("heading_alignment_phases", []) or []}
+                    samples = [
+                        float(snap["heading_error_deg"])
+                        for snap in snapshots
+                        if snap.get("heading_error_deg") is not None
+                        and (not filter_phases or str(snap["phase_name"]).strip().lower() in filter_phases)
+                    ]
+                    min_samples = int(checks.get("min_heading_alignment_samples", 1))
+                    if len(samples) < min_samples:
+                        return False, f"{case_name}: insufficient heading-alignment samples ({len(samples)} < {min_samples})"
+                    if max(samples) > float(heading_abs_max):
+                        return False, f"{case_name}: heading-to-target error exceeded limit ({max(samples):.1f} > {float(heading_abs_max):.1f})"
+
+                if bool(checks.get("require_waypoint_progress", False)):
+                    initial_idx = int(snapshots[0]["waypoint_idx"])
+                    max_idx = max(int(snap["waypoint_idx"]) for snap in snapshots)
+                    if max_idx <= initial_idx:
+                        return False, f"{case_name}: no waypoint progress observed"
+
+                required_c2_tasks = {
+                    str(x).strip().upper()
+                    for x in checks.get("required_c2_tasks", []) or []
+                    if str(x).strip()
+                }
+                if required_c2_tasks:
+                    seen_c2_tasks = {
+                        str(snap.get("c2_task_name", "")).strip().upper()
+                        for snap in snapshots
+                        if str(snap.get("c2_task_name", "")).strip()
+                    }
+                    missing = sorted(required_c2_tasks - seen_c2_tasks)
+                    if missing:
+                        return False, f"{case_name}: missing required C2 tasks {missing}, saw {sorted(seen_c2_tasks)}"
+
+                min_report_valid_frac = checks.get("min_report_valid_fraction", None)
+                if min_report_valid_frac is not None:
+                    report_valid_frac = float(
+                        sum(1 for snap in snapshots if bool(snap.get("report_valid", False))) / max(1, len(snapshots))
+                    )
+                    if report_valid_frac < float(min_report_valid_frac):
+                        return False, (
+                            f"{case_name}: report-valid fraction too low "
+                            f"({report_valid_frac:.3f} < {float(min_report_valid_frac):.3f})"
+                        )
+
+                min_c2_transitions = checks.get("min_c2_transition_count", None)
+                if min_c2_transitions is not None:
+                    transition_count = sum(1 for snap in snapshots if bool(snap.get("c2_transitioned", False)))
+                    if transition_count < int(min_c2_transitions):
+                        return False, (
+                            f"{case_name}: insufficient C2 transitions "
+                            f"({transition_count} < {int(min_c2_transitions)})"
+                        )
+
+                expected_reason = case.get("expected_termination_reason", spec.get("expected_termination_reason", None))
+                if expected_reason is not None:
+                    final_reason = str(final_info.get("termination_reason", ""))
+                    if final_reason != str(expected_reason):
+                        return False, (
+                            f"{case_name}: termination reason mismatch "
+                            f"({final_reason!r} != {str(expected_reason)!r})"
+                        )
+
+                case_summaries.append(
+                    f"{case_name}[steps={len(snapshots)}, cmds={sorted(seen_codes)}, "
+                    f"c2={sorted({str(s.get('c2_task_name', '')).strip().upper() for s in snapshots if str(s.get('c2_task_name', '')).strip()})}, "
+                    f"wp={snapshots[0]['waypoint_idx']}->{max(int(s['waypoint_idx']) for s in snapshots)}]"
+                )
+            finally:
+                if env is not None:
+                    try:
+                        env.close()
+                    except Exception:
+                        pass
+                if should_cleanup and os.path.exists(scenario_path):
+                    try:
+                        os.remove(scenario_path)
+                    except OSError:
+                        pass
+        policy_desc = "model" if using_model else "fallback_action"
+        return True, f"leader policy generalization contract passed ({policy_desc}): " + "; ".join(case_summaries)
 
     if check_kind == "leader_phase_manager_approach_arm":
         import ef_py
@@ -2177,6 +2674,197 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         if not (float(sink_bounds[0]) <= float(vel[2]) <= float(sink_bounds[1])):
             return False, "sink rate out of configured range"
         return True, "landing entity spawn randomization contract passed"
+
+    if check_kind == "scenario_loader_mission_semantics":
+        import ef_py
+        from gym_envs.scenario_loader import ScenarioLoader
+
+        scenario_path, cleanup = _materialize_scenario_path(spec)
+        try:
+            sim = ef_py.SimulationKernel()
+            sim.load_database(resolve_repo_path("examples", "config", "database"))
+            loader = ScenarioLoader(sim)
+            randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
+            if randomization_overrides:
+                loader.set_randomization_overrides(randomization_overrides)
+            seed = int(spec.get("seed", 0))
+            agent_id = loader.load_scenario(scenario_path, seed=seed)
+            if agent_id is None:
+                return False, "scenario did not spawn an agent"
+
+            expected_initial = dict(spec.get("expected_initial", {}) or {})
+            for key, expected in expected_initial.items():
+                got = loader.mission_cmd.get(key, None)
+                if got != expected:
+                    return False, f"initial mission_cmd[{key!r}] mismatch: {got!r} != {expected!r}"
+
+            expected_post = dict(spec.get("expected_post_transition", {}) or {})
+            if expected_post:
+                post = getattr(loader, "post_waypoint_transition", None)
+                if not isinstance(post, dict):
+                    return False, "expected normalized post_waypoint_transition, got none"
+                for key, expected in expected_post.items():
+                    got = post.get(key, None)
+                    if got != expected:
+                        return False, f"post transition field {key!r} mismatch: {got!r} != {expected!r}"
+
+            if bool(spec.get("activate_post_transition", True)):
+                transitioned = loader._activate_post_waypoint_transition()
+                if not isinstance(transitioned, dict):
+                    return False, "post_waypoint_transition did not activate"
+                expected_activated = dict(spec.get("expected_activated", expected_post) or {})
+                for key, expected in expected_activated.items():
+                    got = loader.mission_cmd.get(key, None)
+                    if got != expected:
+                        return False, f"activated mission_cmd[{key!r}] mismatch: {got!r} != {expected!r}"
+            return True, "scenario loader mission semantics contract passed"
+        finally:
+            if cleanup:
+                try:
+                    os.remove(scenario_path)
+                except OSError:
+                    pass
+
+    if check_kind == "mission_command_landing_gear_hold":
+        import ef_py
+        from gym_envs.scenario_loader import ScenarioLoader
+
+        scenario_path, cleanup = _materialize_scenario_path(spec)
+        try:
+            sim = ef_py.SimulationKernel()
+            sim.load_database(resolve_repo_path("examples", "config", "database"))
+            loader = ScenarioLoader(sim)
+            randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
+            if randomization_overrides:
+                loader.set_randomization_overrides(randomization_overrides)
+            seed = int(spec.get("seed", 0))
+            agent_id = loader.load_scenario(scenario_path, seed=seed)
+            if agent_id is None:
+                return False, "scenario did not spawn an agent"
+
+            mission_spec = dict(spec.get("mission_command", {}) or {})
+            cmd = ef_py.MissionCommand()
+            cmd.active = True
+            cmd.command_code = int(mission_spec.get("command_code", 4))
+            cmd.cmd_heading_deg = float(mission_spec.get("cmd_heading_deg", 90.0))
+            cmd.cmd_altitude_m = float(mission_spec.get("cmd_altitude_m", 0.0))
+            cmd.cmd_speed_mps = float(mission_spec.get("cmd_speed_mps", 82.0))
+            if hasattr(cmd, "recovery_base_id"):
+                cmd.recovery_base_id = int(mission_spec.get("recovery_base_id", 1))
+            if hasattr(cmd, "recovery_runway_id"):
+                cmd.recovery_runway_id = int(mission_spec.get("recovery_runway_id", 1))
+            if hasattr(cmd, "recovery_approach_type") and hasattr(ef_py, "RecoveryApproachType"):
+                raw = mission_spec.get("recovery_approach_type", "ILS")
+                cmd.recovery_approach_type = (
+                    getattr(ef_py.RecoveryApproachType, str(raw), ef_py.RecoveryApproachType.ILS)
+                    if isinstance(raw, str)
+                    else ef_py.RecoveryApproachType(int(raw))
+                )
+            sim.set_mission_command(agent_id, cmd)
+
+            min_gear_pos = float("inf")
+            step_count = int(spec.get("step_count", 30))
+            for _ in range(step_count):
+                sim.step()
+                truth = sim.get_agent_observation(agent_id)
+                if float(getattr(truth, "health", 0.0)) <= 0.0:
+                    return False, "aircraft crashed during landing gear hold contract"
+                inst = sim.get_instrument_state(agent_id)
+                min_gear_pos = min(min_gear_pos, float(getattr(inst, "gear_pos", 0.0)))
+
+            required_min = float(spec.get("min_gear_pos", 0.9))
+            if min_gear_pos < required_min:
+                return False, f"landing command retracted gear too far: min gear_pos={min_gear_pos:.3f} < {required_min:.3f}"
+            return True, f"landing gear hold contract passed with min gear_pos={min_gear_pos:.3f}"
+        finally:
+            if cleanup:
+                try:
+                    os.remove(scenario_path)
+                except OSError:
+                    pass
+
+    if check_kind == "instrument_command_bug_semantics":
+        import ef_py
+        from gym_envs.scenario_loader import ScenarioLoader
+
+        scenario_path, cleanup = _materialize_scenario_path(spec)
+        try:
+            sim = ef_py.SimulationKernel()
+            sim.load_database(resolve_repo_path("examples", "config", "database"))
+            loader = ScenarioLoader(sim)
+            randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
+            if randomization_overrides:
+                loader.set_randomization_overrides(randomization_overrides)
+            seed = int(spec.get("seed", 0))
+            agent_id = loader.load_scenario(scenario_path, seed=seed)
+            if agent_id is None:
+                return False, "scenario did not spawn an agent"
+
+            mission_spec = dict(spec.get("mission_command", {}) or {})
+            cmd = ef_py.MissionCommand()
+            cmd.active = True
+            cmd.command_code = int(mission_spec.get("command_code", 3))
+            cmd.cmd_heading_deg = float(mission_spec.get("cmd_heading_deg", 90.0))
+            cmd.cmd_altitude_m = float(mission_spec.get("cmd_altitude_m", 1200.0))
+            cmd.cmd_speed_mps = float(mission_spec.get("cmd_speed_mps", 180.0))
+            if hasattr(cmd, "route_ref_id"):
+                cmd.route_ref_id = int(mission_spec.get("route_ref_id", 0))
+            if hasattr(cmd, "recovery_base_id"):
+                cmd.recovery_base_id = int(mission_spec.get("recovery_base_id", 0))
+            if hasattr(cmd, "recovery_runway_id"):
+                cmd.recovery_runway_id = int(mission_spec.get("recovery_runway_id", 0))
+            if hasattr(cmd, "recovery_approach_type") and hasattr(ef_py, "RecoveryApproachType"):
+                raw = mission_spec.get("recovery_approach_type", "None")
+                default_recovery = getattr(ef_py.RecoveryApproachType, "None")
+                cmd.recovery_approach_type = (
+                    getattr(ef_py.RecoveryApproachType, str(raw), default_recovery)
+                    if isinstance(raw, str)
+                    else ef_py.RecoveryApproachType(int(raw))
+                )
+            sim.set_mission_command(agent_id, cmd)
+
+            inst = None
+            step_count = max(1, int(spec.get("step_count", 1)))
+            for _ in range(step_count):
+                sim.step()
+                truth = sim.get_agent_observation(agent_id)
+                if float(getattr(truth, "health", 0.0)) <= 0.0:
+                    return False, "aircraft crashed during instrument command bug contract"
+                inst = sim.get_instrument_state(agent_id)
+
+            if inst is None:
+                inst = sim.get_instrument_state(agent_id)
+            expected = dict(spec.get("expected", {}) or {})
+            heading_tol = float(expected.get("heading_tol_deg", 1.0e-3))
+            scalar_tol = float(expected.get("scalar_tol", 1.0e-3))
+
+            if "cmd_heading_deg" in expected:
+                actual_heading = float(
+                    getattr(inst, "cmd_heading", getattr(inst, "cmd_heading_deg", 0.0))
+                )
+                if not math.isclose(actual_heading, float(expected["cmd_heading_deg"]), rel_tol=1.0e-6, abs_tol=heading_tol):
+                    return False, (
+                        f"instrument cmd_heading mismatch: {actual_heading:.6f} != "
+                        f"{float(expected['cmd_heading_deg']):.6f}"
+                    )
+            if "cmd_alt_m" in expected:
+                actual_alt = float(getattr(inst, "cmd_alt", getattr(inst, "cmd_alt_m", 0.0)))
+                if not math.isclose(actual_alt, float(expected["cmd_alt_m"]), rel_tol=1.0e-6, abs_tol=scalar_tol):
+                    return False, f"instrument cmd_alt mismatch: {actual_alt:.6f} != {float(expected['cmd_alt_m']):.6f}"
+            if "cmd_speed_mps" in expected:
+                actual_speed = float(getattr(inst, "cmd_speed", getattr(inst, "cmd_speed_mps", 0.0)))
+                if not math.isclose(actual_speed, float(expected["cmd_speed_mps"]), rel_tol=1.0e-6, abs_tol=scalar_tol):
+                    return False, (
+                        f"instrument cmd_speed mismatch: {actual_speed:.6f} != "
+                        f"{float(expected['cmd_speed_mps']):.6f}"
+                    )
+            return True, "instrument command bug semantics contract passed"
+        finally:
+            if cleanup:
+                try:
+                    os.remove(scenario_path)
+                except OSError:
+                    pass
 
     if check_kind == "scripted_takeoff_takeoff2_throttle":
         import numpy as np

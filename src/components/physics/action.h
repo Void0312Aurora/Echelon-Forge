@@ -36,6 +36,15 @@ enum class LeaderPhase : int {
     Abort = 12,
 };
 
+enum class RecoveryApproachType : int {
+    None = 0,
+    StraightIn = 1,
+    ILS = 2,
+    Visual = 3,
+    Overhead = 4,
+    TACAN = 5,
+};
+
 /**
  * PilotAction
  * Implements [act.md]: The physical interface for the Digital Pilot.
@@ -82,11 +91,17 @@ struct PilotAction {
  * Implements [aim.md]: The high-level intent from Commander.
  */
 struct MissionCommand {
-    // 1. Core Vectoring
-    double cmd_heading_deg;  // Target Heading (0-360)
-    double cmd_altitude_m;   // Target Altitude (MSL)
-    double cmd_speed_mps;    // Target Speed (TAS/IAS mix? Let's assume TAS for now or specify)
-    
+    // 1. Command-bound parameters
+    // These fields are not globally free parameters. They must be interpreted
+    // according to command_code:
+    //   - command_code == 3: route/LNAV target track-altitude-speed reference
+    //   - command_code == 4: terminal recovery metadata selects the procedure;
+    //                        terminal heading/alt/speed should come from the
+    //                        chosen recovery program rather than free leader bias
+    double cmd_heading_deg;  // Route/LNAV track bug when command_code == 3
+    double cmd_altitude_m;   // Route/stage reference altitude
+    double cmd_speed_mps;    // Route/stage reference speed
+
     // 2. Macro Codes
     // Project-local convention used by the current RL/scenario stack:
     //   0 = Idle / no mission
@@ -95,6 +110,12 @@ struct MissionCommand {
     //   3 = Waypoint / LNAV route navigation
     // Tactical task codes (attack/RTB/etc.) are reserved for future mission layers.
     int command_code;
+
+    // 2.1 Route / recovery references
+    uint64_t route_ref_id;
+    uint64_t recovery_base_id;
+    uint64_t recovery_runway_id;
+    RecoveryApproachType recovery_approach_type;
     
     // 3. Formation
     int formation_id;
@@ -105,7 +126,7 @@ struct MissionCommand {
     // 4. Tactical
     uint64_t assigned_target_id;
     bool authorization_to_fire;
-    
+
     bool active;
 };
 
@@ -143,6 +164,7 @@ struct TaskOrder {
     double fuel_bingo_override_kg = 0.0;
     uint64_t recovery_base_id = 0;
     uint64_t recovery_runway_id = 0;
+    RecoveryApproachType recovery_approach_type = RecoveryApproachType::None;
 };
 
 /**
@@ -152,6 +174,10 @@ struct TaskOrder {
 struct LeaderIntent {
     LeaderPhase phase_id = LeaderPhase::Idle;
     int command_code = 0;
+    uint64_t route_ref_id = 0;
+    uint64_t recovery_base_id = 0;
+    uint64_t recovery_runway_id = 0;
+    RecoveryApproachType recovery_approach_type = RecoveryApproachType::None;
     double cmd_heading_deg = 0.0;
     double cmd_altitude_m = 0.0;
     double cmd_speed_mps = 0.0;

@@ -116,6 +116,14 @@ NB_MODULE(ef_py, m) {
         .value("Rollout", LeaderPhase::Rollout)
         .value("Abort", LeaderPhase::Abort);
 
+    nb::enum_<RecoveryApproachType>(m, "RecoveryApproachType")
+        .value("None", RecoveryApproachType::None)
+        .value("StraightIn", RecoveryApproachType::StraightIn)
+        .value("ILS", RecoveryApproachType::ILS)
+        .value("Visual", RecoveryApproachType::Visual)
+        .value("Overhead", RecoveryApproachType::Overhead)
+        .value("TACAN", RecoveryApproachType::TACAN);
+
     nb::class_<CommPacket>(m, "CommPacket")
         .def(nb::init<>())
         .def_rw("sender_id", &CommPacket::sender_id)
@@ -285,6 +293,10 @@ NB_MODULE(ef_py, m) {
         .def_rw("cmd_altitude_m", &MissionCommand::cmd_altitude_m)
         .def_rw("cmd_speed_mps", &MissionCommand::cmd_speed_mps)
         .def_rw("command_code", &MissionCommand::command_code)
+        .def_rw("route_ref_id", &MissionCommand::route_ref_id)
+        .def_rw("recovery_base_id", &MissionCommand::recovery_base_id)
+        .def_rw("recovery_runway_id", &MissionCommand::recovery_runway_id)
+        .def_rw("recovery_approach_type", &MissionCommand::recovery_approach_type)
         .def_rw("formation_id", &MissionCommand::formation_id)
         .def_rw("form_offset_x", &MissionCommand::form_offset_x)
         .def_rw("form_offset_y", &MissionCommand::form_offset_y)
@@ -320,12 +332,17 @@ NB_MODULE(ef_py, m) {
         .def_rw("on_station_time_s", &TaskOrder::on_station_time_s)
         .def_rw("fuel_bingo_override_kg", &TaskOrder::fuel_bingo_override_kg)
         .def_rw("recovery_base_id", &TaskOrder::recovery_base_id)
-        .def_rw("recovery_runway_id", &TaskOrder::recovery_runway_id);
+        .def_rw("recovery_runway_id", &TaskOrder::recovery_runway_id)
+        .def_rw("recovery_approach_type", &TaskOrder::recovery_approach_type);
 
     nb::class_<LeaderIntent>(m, "LeaderIntent")
         .def(nb::init<>())
         .def_rw("phase_id", &LeaderIntent::phase_id)
         .def_rw("command_code", &LeaderIntent::command_code)
+        .def_rw("route_ref_id", &LeaderIntent::route_ref_id)
+        .def_rw("recovery_base_id", &LeaderIntent::recovery_base_id)
+        .def_rw("recovery_runway_id", &LeaderIntent::recovery_runway_id)
+        .def_rw("recovery_approach_type", &LeaderIntent::recovery_approach_type)
         .def_rw("cmd_heading_deg", &LeaderIntent::cmd_heading_deg)
         .def_rw("cmd_altitude_m", &LeaderIntent::cmd_altitude_m)
         .def_rw("cmd_speed_mps", &LeaderIntent::cmd_speed_mps)

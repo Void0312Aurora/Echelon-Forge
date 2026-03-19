@@ -78,11 +78,19 @@ SimulationKernel::SimulationKernel()
     
     // Physics
     ecs.component<LandingGear>();
+    ecs.component<Health>();
+    ecs.component<Mass>();
     ecs.component<MassProperties>();
+    ecs.component<Propulsion>();
     ecs.component<ForceAccumulator>();
     ecs.component<AeroState>();
     ecs.component<ControlLawState>();
+    ecs.component<Inertia>();
+    ecs.component<AngularVelocity>();
+    ecs.component<GroundState>();
+    ecs.component<GearState>();
     ecs.component<Missile>();
+    ecs.component<Munition>();
     ecs.component<Ammo>();
     ecs.component<WeaponCooldown>();
     
@@ -103,12 +111,13 @@ SimulationKernel::SimulationKernel()
     ecs.component<FlightModel>(); 
     ecs.component<Score>();
     ecs.component<DataLink>(); // New Component
+    ecs.component<CommQueue>();
     ecs.component<PilotReport>();
     ecs.component<InstrumentState>(); // New Component for Digital Pilot
     ecs.component<EGI>(); // GPS/INS
     ecs.component<TrackDatabase>();
-
-    ecs.component<TrackDatabase>();
+    ecs.component<HitboxConfig>();
+    ecs.component<SystemHealth>();
 
     // Systems are registered sequentially below to ensure correct execution order.
     // See "Register Systems IN ORDER" block.

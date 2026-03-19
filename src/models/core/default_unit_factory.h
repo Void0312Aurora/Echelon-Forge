@@ -478,7 +478,7 @@ public:
                 LinkType::Link16,
                 500.0 // Default 500km range
             });
-            e.add<CommQueue>(); // Enable Messaging
+            e.set<CommQueue>({}); // Enable messaging with an explicit empty inbox
         } else {
             e.remove<DataLink>();
         }

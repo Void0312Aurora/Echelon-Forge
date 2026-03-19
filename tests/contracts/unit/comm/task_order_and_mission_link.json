@@ -17,11 +17,16 @@
     "target_speed_mps": 210.0,
     "on_station_time_s": 900.0,
     "recovery_base_id": 55,
-    "recovery_runway_id": 7
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS"
   },
   "leader_intent": {
     "phase_id": "TransitToStation",
     "command_code": 3,
+    "route_ref_id": 91001,
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS",
     "cmd_heading_deg": 135.0,
     "cmd_altitude_m": 6800.0,
     "cmd_speed_mps": 205.0,
@@ -45,7 +50,10 @@
     "cmd_heading_deg": 222.0,
     "cmd_altitude_m": 5000.0,
     "cmd_speed_mps": 190.0,
-    "command_code": 4
+    "command_code": 4,
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS"
   },
   "pre_link_command_code": 0,
   "link_settle_steps": 20

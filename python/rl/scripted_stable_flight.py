@@ -122,7 +122,16 @@ class ScriptedStableFlightController:
         if self.action_dim >= 6:
             a[5] = 0.5  # neutral (half_to_unit -> 0)
         if self.action_dim >= 7:
-            a[6] = 0.0  # speedbrake stowed (half_to_unit -> 0)
+            overspeed_mps = float(ias - float(self._ias_ref))
+            # Mixed takeoff-cruise-landing tasks can hand the stable-flight controller a jet that is still
+            # carrying a large post-takeoff energy surplus. A small speedbrake schedule keeps turn radii
+            # realistic enough for multileg LNAV recovery without affecting normal on-speed cruise behavior.
+            if overspeed_mps > 40.0:
+                a[6] = 1.0
+            elif overspeed_mps > 20.0:
+                a[6] = 0.75
+            else:
+                a[6] = 0.0
         if self.action_dim >= 9:
             a[7] = 0.0  # brakes off
             a[8] = 0.0

@@ -1,0 +1,121 @@
+{
+  "agent_layer": "leader",
+  "algo": "AdaptiveKLPPO",
+  "policy": "SquashedMultiInputPolicy",
+  "total_timesteps": 163840,
+  "n_envs": 40,
+  "save_freq": 20480,
+  "runtime": {
+    "torch_threads": 1,
+    "torch_interop_threads": 1,
+    "leader_execution_torch_threads": 1,
+    "leader_execution_torch_interop_threads": 1
+  },
+  "leader_env": {
+    "decision_interval_steps": 20,
+    "execution_backend": "frozen_model",
+    "execution_train_config": "examples/config/training/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json",
+    "execution_model_path": "experiments_tmp/20260318_p5_takeoff_to_landing_continuous_v3_retrain_v1/final_model.zip",
+    "execution_algo": "auto",
+    "scripted_transition_alt_agl_m": 140.0,
+    "heading_bias_limit_deg": 35.0,
+    "altitude_bias_limit_m": 600.0,
+    "speed_bias_limit_mps": 30.0,
+    "command_change_penalty": 0.0004,
+    "teacher_keep_deadband": 0.24,
+    "invalid_phase_penalty": 0.16,
+    "premature_approach_penalty": 0.75,
+    "baseline_deviation_penalty": 0.00025,
+    "mode_change_penalty": 0.003,
+    "approach_gate_distance_m": 18000.0,
+    "approach_gate_cross_m": 3500.0,
+    "approach_gate_heading_error_deg": 85.0
+  },
+  "early_stop": {
+    "enabled": false
+  },
+  "curriculum": {
+    "check_freq": 10240,
+    "stages": [
+      {
+        "until_timesteps": 20480,
+        "randomization": {
+          "world_yaw_range": [0.0, 80.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 8.0],
+          "wind_crosswind_range": [-3.0, 3.0],
+          "wind_tailwind_max_mps": 1.0,
+          "wind_shear_range": [0.0, 2.0]
+        },
+        "leader_env_overrides": {
+          "teacher_keep_deadband": 0.24,
+          "invalid_phase_penalty": 0.16,
+          "premature_approach_penalty": 0.75,
+          "baseline_deviation_penalty": 0.00025,
+          "mode_change_penalty": 0.003
+        }
+      },
+      {
+        "until_timesteps": 81920,
+        "randomization": {
+          "world_yaw_range": [0.0, 240.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 12.0],
+          "wind_crosswind_range": [-5.0, 5.0],
+          "wind_tailwind_max_mps": 2.0,
+          "wind_shear_range": [0.0, 4.0]
+        },
+        "leader_env_overrides": {
+          "teacher_keep_deadband": 0.12,
+          "invalid_phase_penalty": 0.08,
+          "premature_approach_penalty": 0.50,
+          "baseline_deviation_penalty": 0.00012,
+          "mode_change_penalty": 0.001
+        }
+      },
+      {
+        "until_timesteps": null,
+        "randomization": {
+          "world_yaw_range": [0.0, 360.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 16.0],
+          "wind_crosswind_range": [-8.0, 8.0],
+          "wind_tailwind_max_mps": 3.0,
+          "wind_shear_range": [0.0, 6.0]
+        },
+        "leader_env_overrides": {
+          "teacher_keep_deadband": 0.08,
+          "invalid_phase_penalty": 0.05,
+          "premature_approach_penalty": 0.35,
+          "baseline_deviation_penalty": 0.0001,
+          "mode_change_penalty": 0.0
+        }
+      }
+    ]
+  },
+  "hyperparameters": {
+    "learning_rate": 8e-05,
+    "n_steps": 64,
+    "batch_size": 2560,
+    "n_epochs": 1,
+    "gamma": 0.999,
+    "gae_lambda": 0.97,
+    "clip_range": 0.1,
+    "clip_range_vf": 0.1,
+    "normalize_advantage": true,
+    "ent_coef": 0.0005,
+    "vf_coef": 0.7,
+    "max_grad_norm": 0.5,
+    "target_kl": 0.02,
+    "kl_penalty_coef": 0.0,
+    "kl_adaptive": true,
+    "device": "cuda",
+    "policy_kwargs": {
+      "net_arch": {
+        "pi": [256, 256],
+        "vf": [256, 256]
+      },
+      "log_std_init": -1.6
+    }
+  }
+}

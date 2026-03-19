@@ -17,6 +17,55 @@
 
 namespace {
     inline double inst_rad_to_deg(double rad) { return rad * 180.0 / M_PI; }
+
+    inline double inst_normalize_heading_deg(double heading_deg) {
+        if (!std::isfinite(heading_deg)) return 0.0;
+        double out = std::fmod(heading_deg, 360.0);
+        if (out < 0.0) out += 360.0;
+        return out;
+    }
+
+    inline bool inst_is_runway_like_surface(IEnvironmentModel::SurfaceType surface) {
+        return surface == IEnvironmentModel::SurfaceType::Concrete
+            || surface == IEnvironmentModel::SurfaceType::Asphalt;
+    }
+
+    inline double inst_ground_track_deg_from_velocity(const Velocity& velocity, double fallback_heading_deg) {
+        const double horiz_speed = std::hypot(velocity.vx, velocity.vy);
+        if (horiz_speed <= 1.0) {
+            return inst_normalize_heading_deg(fallback_heading_deg);
+        }
+        return inst_normalize_heading_deg(std::atan2(velocity.vx, velocity.vy) * 180.0 / M_PI);
+    }
+
+    inline double inst_mission_heading_bug(
+        const MissionCommand& mission,
+        const Transform& transform,
+        const Velocity& velocity,
+        const EnvironmentModelRef* env_ref
+    ) {
+        const double fallback_heading_deg = inst_ground_track_deg_from_velocity(velocity, transform.heading);
+        if (mission.command_code == 4) {
+            if (env_ref && env_ref->model) {
+                const auto cell = env_ref->model->get_terrain_at(transform.x, transform.y);
+                if (inst_is_runway_like_surface(cell.type) && std::isfinite(cell.runway_heading)) {
+                    return inst_normalize_heading_deg(cell.runway_heading);
+                }
+            }
+        }
+        if (std::isfinite(mission.cmd_heading_deg)) {
+            return inst_normalize_heading_deg(mission.cmd_heading_deg);
+        }
+        return fallback_heading_deg;
+    }
+
+    inline double inst_mission_alt_bug(const MissionCommand& mission, double fallback_alt_m) {
+        return std::isfinite(mission.cmd_altitude_m) ? mission.cmd_altitude_m : fallback_alt_m;
+    }
+
+    inline double inst_mission_speed_bug(const MissionCommand& mission, double fallback_speed_mps) {
+        return std::isfinite(mission.cmd_speed_mps) ? mission.cmd_speed_mps : fallback_speed_mps;
+    }
     
     // Body Frame acceleration projection
     // Returns [ax, ay, az] in body frame
@@ -207,9 +256,12 @@ inline void register_instrument_system(flecs::world& ecs) {
                     // Command Bugs
                     const MissionCommand* mission = it.entity(i).get<MissionCommand>();
                     if (mission && mission->active) {
-                        inst[i].cmd_heading_deg = mission->cmd_heading_deg;
-                        inst[i].cmd_alt_m = mission->cmd_altitude_m;
-                        inst[i].cmd_speed_mps = mission->cmd_speed_mps;
+                        // The instrument bugs must reflect command-bound semantics:
+                        // route commands expose an LNAV/track bug, while landing commands
+                        // prefer the active runway / recovery course instead of a free heading hold.
+                        inst[i].cmd_heading_deg = inst_mission_heading_bug(*mission, transform[i], velocity[i], env_ref);
+                        inst[i].cmd_alt_m = inst_mission_alt_bug(*mission, inst[i].alt_baro_m);
+                        inst[i].cmd_speed_mps = inst_mission_speed_bug(*mission, inst[i].ias_mps);
                     } else {
                         // Fallback to legacy or hold current
                         inst[i].cmd_heading_deg = inst[i].heading_deg; // Center bug

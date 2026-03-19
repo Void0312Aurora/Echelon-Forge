@@ -70,6 +70,13 @@ python tools/run_scenario_contract.py --spec \
   tests/contracts/env/mission_obs/mission_obs_nav_v1.json
 ```
 
+Run the leader C2-parameter generalization contract:
+
+```bash
+python tools/run_scenario_contract.py --spec \
+  tests/contracts/unit/training/leader_task_generalization_c2_params.json
+```
+
 Run a scripted eval:
 
 ```bash

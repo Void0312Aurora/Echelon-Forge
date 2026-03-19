@@ -1,0 +1,49 @@
+{
+  "type": "unit_regression",
+  "check_kind": "scenario_loader_mission_semantics",
+  "scenario_base": "scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
+  "seed": 0,
+  "scenario_patch": {
+    "task_order": {
+      "recovery_base_id": 55,
+      "recovery_runway_id": 7,
+      "recovery_approach_type": "ILS"
+    },
+    "mission_command": {
+      "command_code": 3,
+      "target_heading": 90.0,
+      "target_altitude": 1700.0,
+      "target_speed": 210.0,
+      "post_waypoint_transition": {
+        "command_code": 4,
+        "target_heading": 90.0,
+        "target_altitude": 0.0,
+        "target_speed": 82.0,
+        "landing_mode": "ils_final"
+      }
+    }
+  },
+  "randomization_overrides": {
+    "world_yaw_range": [0.0, 0.0],
+    "wind_headwind_range": [0.0, 0.0],
+    "wind_crosswind_range": [0.0, 0.0],
+    "wind_tailwind_max_mps": 0.0,
+    "wind_shear_range": [0.0, 0.0]
+  },
+  "expected_initial": {
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS"
+  },
+  "expected_post_transition": {
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS"
+  },
+  "expected_activated": {
+    "command_code": 4,
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7,
+    "recovery_approach_type": "ILS"
+  }
+}

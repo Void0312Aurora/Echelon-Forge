@@ -78,3 +78,25 @@ def scripted_mode_for_phase_name(phase_name: str | None) -> str | None:
     if phase in CRUISE_PHASE_NAMES:
         return "stable_flight"
     return None
+
+
+def scripted_mode_for_command_code(
+    command_code: int | float | str | None,
+    *,
+    alt_agl_m: float | None = None,
+    takeoff_transition_alt_agl_m: float | None = None,
+) -> str | None:
+    code = normalize_command_code(command_code, default=COMMAND_CODE_IDLE)
+    if code == COMMAND_CODE_LANDING:
+        return "landing_ils"
+    if code in (COMMAND_CODE_VECTOR, COMMAND_CODE_ROUTE):
+        return "stable_flight"
+    if code == COMMAND_CODE_TAKEOFF:
+        if (
+            alt_agl_m is not None
+            and takeoff_transition_alt_agl_m is not None
+            and float(alt_agl_m) >= float(takeoff_transition_alt_agl_m)
+        ):
+            return "stable_flight"
+        return "takeoff"
+    return None

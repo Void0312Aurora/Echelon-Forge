@@ -7,6 +7,56 @@ import numpy as np
 from python.rl.leader_tasking import RuleBasedLeaderPhaseManager, build_kernel_mission_command
 from python.rl.mission_defs import COMMAND_CODE_LANDING, is_landing_command_code
 
+
+def _coerce_nonnegative_int(value, default: int = 0) -> int:
+    try:
+        out = int(value)
+    except Exception:
+        return int(default)
+    return out if out >= 0 else int(default)
+
+
+def _canonical_recovery_approach_name(value, *, landing_mode: str = "") -> str:
+    default_by_mode = {
+        "ils": "ILS",
+        "ils_final": "ILS",
+        "visual": "Visual",
+        "overhead": "Overhead",
+        "tacan": "TACAN",
+    }
+    default_name = default_by_mode.get(str(landing_mode or "").strip().lower(), "StraightIn")
+    if value is None:
+        return default_name
+    try:
+        if hasattr(value, "name"):
+            value = value.name
+    except Exception:
+        pass
+    if isinstance(value, str):
+        key = str(value).strip().lower()
+        mapping = {
+            "": default_name,
+            "none": "None",
+            "straightin": "StraightIn",
+            "straight_in": "StraightIn",
+            "ils": "ILS",
+            "ils_final": "ILS",
+            "visual": "Visual",
+            "overhead": "Overhead",
+            "tacan": "TACAN",
+        }
+        return mapping.get(key, default_name)
+    mapping_by_int = {
+        0: "None",
+        1: "StraightIn",
+        2: "ILS",
+        3: "Visual",
+        4: "Overhead",
+        5: "TACAN",
+    }
+    return mapping_by_int.get(_coerce_nonnegative_int(value, 0), default_name)
+
+
 class ScenarioLoader:
     def __init__(self, sim_kernel):
         self.sim = sim_kernel
@@ -52,6 +102,63 @@ class ScenarioLoader:
         self.leader_intent = None
         self.pilot_report = None
         self._leader_phase_manager = RuleBasedLeaderPhaseManager()
+
+    def _task_order_spec(self) -> dict:
+        task_cfg = self.scenario_data.get("task_order", None)
+        return task_cfg if isinstance(task_cfg, dict) else {}
+
+    def _normalize_mission_command_dict(self, cmd: dict | None) -> dict:
+        if not isinstance(cmd, dict):
+            return {
+                "command_code": 0,
+                "target_heading": 0.0,
+                "target_altitude": 0.0,
+                "target_speed": 0.0,
+                "route_ref_id": 0,
+                "recovery_base_id": 0,
+                "recovery_runway_id": 0,
+                "recovery_approach_type": "None",
+            }
+
+        task_cfg = self._task_order_spec()
+        cmd["command_code"] = int(cmd.get("command_code", 0))
+        cmd["target_heading"] = float(cmd.get("target_heading", 0.0))
+        cmd["target_altitude"] = float(cmd.get("target_altitude", 0.0))
+        cmd["target_speed"] = float(cmd.get("target_speed", 0.0))
+        cmd["route_ref_id"] = _coerce_nonnegative_int(cmd.get("route_ref_id", 0), 0)
+
+        recovery_base_id = _coerce_nonnegative_int(
+            cmd.get("recovery_base_id", task_cfg.get("recovery_base_id", 0)),
+            0,
+        )
+        recovery_runway_id = _coerce_nonnegative_int(
+            cmd.get("recovery_runway_id", task_cfg.get("recovery_runway_id", 0)),
+            0,
+        )
+        landing_mode = str(cmd.get("landing_mode", "")).strip().lower()
+        is_terminal_cmd = bool(
+            int(cmd.get("command_code", 0)) == COMMAND_CODE_LANDING
+            or landing_mode
+            or recovery_base_id > 0
+            or recovery_runway_id > 0
+        )
+        recovery_approach_raw = cmd.get(
+            "recovery_approach_type",
+            task_cfg.get("recovery_approach_type", None),
+        )
+        if recovery_approach_raw is None and is_terminal_cmd:
+            recovery_approach_raw = "StraightIn"
+        cmd["recovery_base_id"] = int(recovery_base_id)
+        cmd["recovery_runway_id"] = int(recovery_runway_id)
+        cmd["recovery_approach_type"] = _canonical_recovery_approach_name(
+            recovery_approach_raw,
+            landing_mode=landing_mode,
+        )
+
+        post = cmd.get("post_waypoint_transition", None)
+        if isinstance(post, dict):
+            cmd["post_waypoint_transition"] = self._normalize_mission_command_dict(copy.deepcopy(post))
+        return cmd
 
     def _sample_uniform(self, value, default: float) -> float:
         if isinstance(value, (list, tuple)) and len(value) >= 2:
@@ -649,6 +756,8 @@ class ScenarioLoader:
         
         # Randomize Mission if ranges provided
         self._randomize_mission()
+        self._randomize_task_order()
+        self.mission_cmd = self._normalize_mission_command_dict(self.mission_cmd)
 
         post_transition_cfg = self.mission_cmd.get("post_waypoint_transition", None)
         if isinstance(post_transition_cfg, dict) and post_transition_cfg:
@@ -944,10 +1053,123 @@ class ScenarioLoader:
                 self.mission_cmd["_waypoint_template_idx"] = int(idx)
         
         # Ensure values are floats
-        self.mission_cmd["target_heading"] = float(self.mission_cmd.get("target_heading", 0.0))
-        self.mission_cmd["target_altitude"] = float(self.mission_cmd.get("target_altitude", 0.0))
-        self.mission_cmd["target_speed"] = float(self.mission_cmd.get("target_speed", 0.0))
-        self.mission_cmd["command_code"] = int(self.mission_cmd.get("command_code", 0))
+        self.mission_cmd = self._normalize_mission_command_dict(self.mission_cmd)
+
+    def _randomize_task_order(self):
+        """Randomize top-level C2 task parameters when ranges are specified in scenario.task_order."""
+        task_cfg = self.scenario_data.get("task_order", None)
+        if not isinstance(task_cfg, dict):
+            return
+
+        rand_cfg = task_cfg.get("randomization", None)
+        if not isinstance(rand_cfg, dict) or not rand_cfg:
+            return
+
+        def _sample_uniform(name: str):
+            raw = rand_cfg.get(name, None)
+            if not isinstance(raw, (list, tuple)) or len(raw) < 2:
+                return None
+            try:
+                return float(self.rng.uniform(float(raw[0]), float(raw[1])))
+            except Exception:
+                return None
+
+        def _sample_int(name: str):
+            raw = rand_cfg.get(name, None)
+            if not isinstance(raw, (list, tuple)) or len(raw) < 2:
+                return None
+            try:
+                lo = int(raw[0])
+                hi = int(raw[1])
+            except Exception:
+                return None
+            if hi < lo:
+                lo, hi = hi, lo
+            try:
+                return int(self.rng.randint(lo, hi + 1))
+            except Exception:
+                return None
+
+        def _f(value, default: float = 0.0) -> float:
+            try:
+                return float(value)
+            except Exception:
+                return float(default)
+
+        base_target_alt = _f(task_cfg.get("target_altitude_m", task_cfg.get("anchor_z_m", 0.0)), 0.0)
+        base_alt_lo = _f(task_cfg.get("altitude_block_min_m", max(0.0, base_target_alt - 500.0)), max(0.0, base_target_alt - 500.0))
+        base_alt_hi = _f(task_cfg.get("altitude_block_max_m", base_target_alt + 500.0), base_target_alt + 500.0)
+        base_target_speed = _f(task_cfg.get("target_speed_mps", 0.0), 0.0)
+        base_spd_lo = _f(task_cfg.get("speed_min_mps", max(0.0, base_target_speed - 40.0)), max(0.0, base_target_speed - 40.0))
+        base_spd_hi = _f(task_cfg.get("speed_max_mps", base_target_speed + 40.0), base_target_speed + 40.0)
+
+        alt_target = _sample_uniform("target_altitude_range_m")
+        if alt_target is not None:
+            task_cfg["target_altitude_m"] = float(alt_target)
+        speed_target = _sample_uniform("target_speed_range_mps")
+        if speed_target is not None:
+            task_cfg["target_speed_mps"] = float(speed_target)
+
+        for rand_key, field_name in (
+            ("anchor_x_range_m", "anchor_x_m"),
+            ("anchor_y_range_m", "anchor_y_m"),
+            ("anchor_z_range_m", "anchor_z_m"),
+            ("station_radius_range_m", "station_radius_m"),
+            ("station_leg_length_range_m", "station_leg_length_m"),
+            ("station_heading_range_deg", "station_heading_deg"),
+            ("on_station_time_range_s", "on_station_time_s"),
+            ("fuel_bingo_override_range_kg", "fuel_bingo_override_kg"),
+        ):
+            sampled = _sample_uniform(rand_key)
+            if sampled is not None:
+                task_cfg[field_name] = float(sampled)
+
+        priority = _sample_int("priority_range")
+        if priority is not None:
+            task_cfg["priority"] = int(priority)
+
+        task_id = _sample_int("task_id_range")
+        if task_id is not None:
+            task_cfg["task_id"] = int(task_id)
+
+        station_choices = rand_cfg.get("station_type_choices", None)
+        if isinstance(station_choices, list):
+            station_choices = [str(x) for x in station_choices if str(x).strip()]
+            if station_choices:
+                try:
+                    idx = int(self.rng.randint(0, len(station_choices)))
+                except Exception:
+                    idx = 0
+                task_cfg["station_type"] = str(station_choices[idx])
+
+        target_alt = _f(task_cfg.get("target_altitude_m", base_target_alt), base_target_alt)
+        alt_halfspan = _sample_uniform("altitude_block_halfspan_range_m")
+        if alt_halfspan is not None:
+            alt_halfspan = max(0.0, float(alt_halfspan))
+            task_cfg["altitude_block_min_m"] = max(0.0, target_alt - alt_halfspan)
+            task_cfg["altitude_block_max_m"] = max(float(task_cfg["altitude_block_min_m"]), target_alt + alt_halfspan)
+        else:
+            lo_offset = max(0.0, base_target_alt - base_alt_lo)
+            hi_offset = max(0.0, base_alt_hi - base_target_alt)
+            task_cfg["altitude_block_min_m"] = max(0.0, target_alt - lo_offset)
+            task_cfg["altitude_block_max_m"] = max(float(task_cfg["altitude_block_min_m"]), target_alt + hi_offset)
+
+        target_speed = _f(task_cfg.get("target_speed_mps", base_target_speed), base_target_speed)
+        speed_halfspan = _sample_uniform("speed_block_halfspan_range_mps")
+        if speed_halfspan is not None:
+            speed_halfspan = max(0.0, float(speed_halfspan))
+            task_cfg["speed_min_mps"] = max(0.0, target_speed - speed_halfspan)
+            task_cfg["speed_max_mps"] = max(float(task_cfg["speed_min_mps"]), target_speed + speed_halfspan)
+        else:
+            lo_offset = max(0.0, base_target_speed - base_spd_lo)
+            hi_offset = max(0.0, base_spd_hi - base_target_speed)
+            task_cfg["speed_min_mps"] = max(0.0, target_speed - lo_offset)
+            task_cfg["speed_max_mps"] = max(float(task_cfg["speed_min_mps"]), target_speed + hi_offset)
+
+        task_cfg["target_altitude_m"] = float(task_cfg.get("target_altitude_m", target_alt))
+        task_cfg["target_speed_mps"] = float(task_cfg.get("target_speed_mps", target_speed))
+        task_cfg["anchor_z_m"] = float(task_cfg.get("anchor_z_m", task_cfg["target_altitude_m"]))
+        task_cfg["station_heading_deg"] = float(task_cfg.get("station_heading_deg", 0.0)) % 360.0
 
     @staticmethod
     def _rotate_xy_clockwise(x, y, origin_x, origin_y, yaw_deg):
@@ -1022,6 +1244,29 @@ class ScenarioLoader:
                         px, py = self._rotate_xy_clockwise(wp[0], wp[1], origin_x, origin_y, yaw_deg)
                         wp[0] = px
                         wp[1] = py
+
+        # Task-order geometry should rotate with the rest of the world so CAP anchors/station
+        # headings remain consistent under world-yaw randomization.
+        task = self.scenario_data.get("task_order", None)
+        if isinstance(task, dict):
+            if "anchor_x_m" in task and "anchor_y_m" in task:
+                try:
+                    px, py = self._rotate_xy_clockwise(
+                        float(task.get("anchor_x_m", 0.0)),
+                        float(task.get("anchor_y_m", 0.0)),
+                        origin_x,
+                        origin_y,
+                        yaw_deg,
+                    )
+                    task["anchor_x_m"] = px
+                    task["anchor_y_m"] = py
+                except Exception:
+                    pass
+            if "station_heading_deg" in task:
+                try:
+                    task["station_heading_deg"] = (float(task.get("station_heading_deg", 0.0)) + float(yaw_deg)) % 360.0
+                except Exception:
+                    pass
 
     def _parse_waypoints(self) -> None:
         """
@@ -1727,6 +1972,8 @@ class ScenarioLoader:
                 continue
             self.mission_cmd[key] = value
 
+        self.mission_cmd = self._normalize_mission_command_dict(self.mission_cmd)
+
         self.post_waypoint_transition = None
         self.mission_phase_name = str(next_cmd.get("phase_name", next_cmd.get("landing_mode", "post_waypoint"))).strip() or "post_waypoint"
         self.waypoints = []
@@ -1738,7 +1985,7 @@ class ScenarioLoader:
         self._approach_prev_gs_abs = None
         self._sync_kernel_mission_command()
         return next_cmd
-    
+
     def get_entity_id(self, name):
         return self.entities.get(name)
         

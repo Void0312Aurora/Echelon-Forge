@@ -141,6 +141,99 @@
         "stable_flight": { "min": 1 },
         "landing_ils": { "min": 1 }
       }
+    },
+    {
+      "name": "command_code_bridge_without_phase",
+      "env_overrides": {
+        "loader": {
+          "waypoint_count": 2,
+          "waypoint_idx": 0,
+          "mission_cmd": {
+            "command_code": 1
+          },
+          "mission_phase_name": ""
+        },
+        "reset_obs": {
+          "alt_agl": 0.0,
+          "cmd_code": 1.0
+        },
+        "steps": [
+          {
+            "loader_updates": {
+              "mission_cmd": {
+                "command_code": 3
+              },
+              "waypoint_idx": 1
+            },
+            "next_obs": {
+              "alt_agl": 260.0,
+              "cmd_code": 3.0
+            }
+          },
+          {
+            "loader_updates": {
+              "mission_cmd": {
+                "command_code": 3
+              }
+            },
+            "next_obs": {
+              "alt_agl": 60.0,
+              "cmd_code": 3.0
+            }
+          },
+          {
+            "loader_updates": {
+              "mission_cmd": {
+                "command_code": 4
+              }
+            },
+            "next_obs": {
+              "alt_agl": 180.0,
+              "cmd_code": 4.0
+            }
+          },
+          {
+            "loader_updates": {
+              "mission_cmd": {
+                "command_code": 4
+              }
+            },
+            "next_obs": {
+              "alt_agl": 140.0,
+              "cmd_code": 4.0
+            }
+          }
+        ]
+      },
+      "wrapper": {
+        "scripted_baseline_mode": "takeoff_cruise_landing",
+        "scripted_transition_alt_agl_m": 140.0,
+        "scripted_residual_scale": 0.0,
+        "scripted_blend_indices": [0, 1, 2, 3]
+      },
+      "expected_initial_mode": "takeoff",
+      "rollout": [
+        {
+          "expected_mode": "takeoff",
+          "expected_action": 0.25
+        },
+        {
+          "expected_mode": "stable_flight",
+          "expected_action": 0.75
+        },
+        {
+          "expected_mode": "stable_flight",
+          "expected_action": 0.75
+        },
+        {
+          "expected_mode": "landing_ils",
+          "expected_action": 0.5
+        }
+      ],
+      "expected_reset_counts": {
+        "stable_flight": { "min": 1 },
+        "landing_ils": { "min": 1 }
+      }
     }
   ]
 }
