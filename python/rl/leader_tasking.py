@@ -759,6 +759,7 @@ class ScriptedC2TaskManager:
         init_task = meta.get("initial_c2_task", self.TASK_SCRAMBLE) if isinstance(meta, dict) else self.TASK_SCRAMBLE
         self.current_task_name = str(init_task or self.TASK_SCRAMBLE).strip().upper()
         self.station_entry_time_s = None
+        self._retask_order(loader, task_name=self.current_task_name, sim_time_s=float(sim_time_s))
         return self._apply_loader_state(
             loader,
             task_name=self.current_task_name,
@@ -797,12 +798,51 @@ class ScriptedC2TaskManager:
             anchor_y_m = float(wp.get("y", 0.0))
         return target_altitude_m, target_speed_mps, anchor_x_m, anchor_y_m
 
+    @staticmethod
+    def _retarget_block(
+        order: Any,
+        *,
+        target_attr: str,
+        min_attr: str,
+        max_attr: str,
+        target_value: float,
+        default_lower_margin: float,
+        default_upper_margin: float,
+        floor_value: float = 0.0,
+    ) -> None:
+        current_target = float(getattr(order, target_attr, target_value))
+        current_min = float(getattr(order, min_attr, floor_value))
+        current_max = float(getattr(order, max_attr, floor_value))
+
+        if current_max > current_min + 1.0e-6:
+            lower_margin = max(0.0, current_target - current_min)
+            upper_margin = max(0.0, current_max - current_target)
+        else:
+            lower_margin = max(0.0, float(default_lower_margin))
+            upper_margin = max(0.0, float(default_upper_margin))
+
+        target_value = float(target_value)
+        setattr(order, target_attr, target_value)
+        new_min = max(float(floor_value), target_value - lower_margin)
+        new_max = max(new_min, target_value + upper_margin)
+        setattr(order, min_attr, float(new_min))
+        setattr(order, max_attr, float(new_max))
+
     def _retask_order(self, loader: Any, *, task_name: str, sim_time_s: float) -> None:
         order = getattr(loader, "task_order", None)
         if order is None:
             return
 
         task_name = str(task_name).strip().upper()
+        task_type_by_name = {
+            self.TASK_IDLE: getattr(ef_py.TaskType, "Idle"),
+            self.TASK_SCRAMBLE: getattr(ef_py.TaskType, "Scramble"),
+            self.TASK_CAP: getattr(ef_py.TaskType, "CAP"),
+            self.TASK_RTB: getattr(ef_py.TaskType, "RTB"),
+            self.TASK_RECOVER_LAND: getattr(ef_py.TaskType, "RecoverLand"),
+        }
+        order.task_type = task_type_by_name.get(task_name, getattr(order, "task_type", getattr(ef_py.TaskType, "Idle")))
+
         if task_name in (self.TASK_SCRAMBLE, self.TASK_CAP):
             scenario_order_cfg = self._scenario_task_order_cfg(loader)
             if isinstance(scenario_order_cfg, dict) and scenario_order_cfg:
@@ -812,6 +852,32 @@ class ScriptedC2TaskManager:
                     default_assignee_id=int(getattr(loader, "agent_id", 0) or 0),
                 )
                 order.issue_time_s = float(sim_time_s)
+            order.task_type = task_type_by_name.get(task_name, getattr(order, "task_type", getattr(ef_py.TaskType, "Idle")))
+            target_altitude_m, target_speed_mps, _anchor_x_m, _anchor_y_m = self._active_waypoint_targets(loader)
+            # CAP is a task-level state, but for route-driven CAP missions the active
+            # altitude/speed reference still belongs to the current route leg. Keep the
+            # task block centered on the live mission reference so the leader task
+            # constraints do not silently drift away from the execution-layer command.
+            self._retarget_block(
+                order,
+                target_attr="target_altitude_m",
+                min_attr="altitude_block_min_m",
+                max_attr="altitude_block_max_m",
+                target_value=float(target_altitude_m),
+                default_lower_margin=500.0,
+                default_upper_margin=500.0,
+                floor_value=0.0,
+            )
+            self._retarget_block(
+                order,
+                target_attr="target_speed_mps",
+                min_attr="speed_min_mps",
+                max_attr="speed_max_mps",
+                target_value=float(target_speed_mps),
+                default_lower_margin=40.0,
+                default_upper_margin=40.0,
+                floor_value=40.0,
+            )
             return
 
         target_altitude_m, target_speed_mps, anchor_x_m, anchor_y_m = self._active_waypoint_targets(loader)

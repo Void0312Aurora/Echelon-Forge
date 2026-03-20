@@ -1,7 +1,9 @@
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include "components/visual/visual_sensor.h"
 #include "core/engine/simulation_kernel.h"
 #include "components/systems/comm.h"
 #include "core/interfaces/unit_data.h"
@@ -13,6 +15,7 @@
 #include "components/systems/navigation.h" // Added navigation.h
 #include <spdlog/spdlog.h>
 #include <stdexcept>
+#include <utility>
 
 namespace nb = nanobind;
 
@@ -32,6 +35,61 @@ const char* default_unit_name_for(UnitType type) {
         default:
             throw std::invalid_argument("Unsupported UnitType for spawn_unit (use type_name string instead)");
     }
+}
+
+template <typename Shape>
+auto visual_tensor_to_numpy(std::vector<float>&& data, size_t ndim, const size_t* shape) {
+    auto* output = new std::vector<float>(std::move(data));
+    nb::capsule owner(output, [](void* ptr) noexcept {
+        delete static_cast<std::vector<float>*>(ptr);
+    });
+    return nb::ndarray<nb::numpy, const float, Shape>(output->data(), ndim, shape, owner);
+}
+
+std::vector<float> downsample_visual_tensor(std::vector<float>&& input, int factor) {
+    using namespace arb;
+
+    if (factor <= 1) {
+        return std::move(input);
+    }
+    if (ARB_HEIGHT % factor != 0 || ARB_WIDTH % factor != 0) {
+        throw std::invalid_argument("visual downsample factor must divide native ARB dimensions");
+    }
+
+    const size_t in_height = static_cast<size_t>(ARB_HEIGHT);
+    const size_t in_width = static_cast<size_t>(ARB_WIDTH);
+    const size_t channels = static_cast<size_t>(ARB_CHANNELS);
+    const size_t out_height = in_height / static_cast<size_t>(factor);
+    const size_t out_width = in_width / static_cast<size_t>(factor);
+    const size_t area = static_cast<size_t>(factor) * static_cast<size_t>(factor);
+
+    std::vector<float> output(out_height * out_width * channels, 0.0f);
+    const float* src = input.data();
+    float* dst = output.data();
+    const float scale = 1.0f / static_cast<float>(area);
+
+    for (size_t oy = 0; oy < out_height; ++oy) {
+        const size_t iy0 = oy * static_cast<size_t>(factor);
+        for (size_t ox = 0; ox < out_width; ++ox) {
+            const size_t ix0 = ox * static_cast<size_t>(factor);
+            const size_t out_base = (oy * out_width + ox) * channels;
+            for (int fy = 0; fy < factor; ++fy) {
+                const size_t iy = iy0 + static_cast<size_t>(fy);
+                for (int fx = 0; fx < factor; ++fx) {
+                    const size_t ix = ix0 + static_cast<size_t>(fx);
+                    const size_t in_base = (iy * in_width + ix) * channels;
+                    for (size_t c = 0; c < channels; ++c) {
+                        dst[out_base + c] += src[in_base + c];
+                    }
+                }
+            }
+            for (size_t c = 0; c < channels; ++c) {
+                dst[out_base + c] *= scale;
+            }
+        }
+    }
+
+    return output;
 }
 } // namespace
 
@@ -527,8 +585,36 @@ NB_MODULE(ef_py, m) {
         .def("get_mission_command", &SimulationKernel::get_mission_command, "Get the active mission command", nb::arg("entity_id"))
         .def("get_pilot_report", &SimulationKernel::get_pilot_report, "Get the latest pilot report", nb::arg("entity_id"))
         .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
-        .def("get_visual_observation", &SimulationKernel::get_visual_observation, 
-             "Get ARB visual observation [H*W*C] tensor", nb::arg("entity_id"))
+        .def("get_visual_observation", [](SimulationKernel& self, uint64_t entity_id) {
+             size_t shape[3] = {
+                 static_cast<size_t>(arb::ARB_HEIGHT),
+                 static_cast<size_t>(arb::ARB_WIDTH),
+                 static_cast<size_t>(arb::ARB_CHANNELS),
+             };
+             return visual_tensor_to_numpy<
+                 nb::shape<
+                     static_cast<size_t>(arb::ARB_HEIGHT),
+                     static_cast<size_t>(arb::ARB_WIDTH),
+                     static_cast<size_t>(arb::ARB_CHANNELS)
+                 >
+             >(self.get_visual_observation(entity_id), 3, shape);
+        }, "Get ARB visual observation [H, W, C] tensor", nb::arg("entity_id"))
+        .def("get_visual_observation_downsampled", [](SimulationKernel& self, uint64_t entity_id, int factor) {
+             const int downsample = factor > 1 ? factor : 1;
+             auto downsampled = downsample_visual_tensor(self.get_visual_observation(entity_id), downsample);
+             size_t shape[3] = {
+                 static_cast<size_t>(arb::ARB_HEIGHT / downsample),
+                 static_cast<size_t>(arb::ARB_WIDTH / downsample),
+                 static_cast<size_t>(arb::ARB_CHANNELS),
+             };
+             return visual_tensor_to_numpy<
+                 nb::shape<
+                     nb::any,
+                     nb::any,
+                     static_cast<size_t>(arb::ARB_CHANNELS)
+                 >
+             >(std::move(downsampled), 3, shape);
+        }, "Get ARB visual observation [H/f, W/f, C] tensor", nb::arg("entity_id"), nb::arg("factor"))
         .def("get_unit_messages", &SimulationKernel::get_unit_messages, "Get inbox")
         .def("send_message_command", &SimulationKernel::send_message_command, 
              nb::arg("entity_id"), nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"))

@@ -6,6 +6,7 @@ import sys
 import json
 import shutil
 import math
+import random
 from datetime import datetime
 
 import numpy as np
@@ -43,6 +44,15 @@ from python.env_config import resolve_env_settings
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policies import SquashedMultiInputPolicy
 from python.rl.wrappers import get_action_wrapper_spec
+
+
+def apply_global_seed(seed: int) -> None:
+    seed = int(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 def acquire_experiment_lock(exp_dir: str):
@@ -376,6 +386,12 @@ def main():
     )
     parser.add_argument("--diagnostics", action="store_true", help="Log extra diagnostics scalars to TensorBoard")
     parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Global training seed for Python/NumPy/Torch and vec-env construction.",
+    )
+    parser.add_argument(
         "--diagnostics_every",
         type=int,
         default=10000,
@@ -485,6 +501,15 @@ def main():
         return
 
     runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config.get("runtime", {}), dict) else {}
+    training_seed = args.seed
+    if training_seed is None and "seed" in train_config:
+        try:
+            training_seed = int(train_config.get("seed"))
+        except Exception:
+            training_seed = None
+    if training_seed is not None:
+        apply_global_seed(int(training_seed))
+        print(f"Training seed: {int(training_seed)}")
 
     torch_threads = args.torch_threads
     if torch_threads is None:
@@ -570,6 +595,12 @@ def main():
                 f"will allocate ~{gib:.1f} GiB just for the visual rollout buffer. "
                 "Consider reducing n_envs/n_steps or increasing --visual_downsample."
             )
+        if ds > 1:
+            print(
+                f"[INFO] visual_downsample={ds} reduces visual tensor size and model/rollout cost, "
+                "but the current ARB path still renders native resolution before downsampling. "
+                "For simulator wall-clock gains, also consider increasing --visual_update_interval."
+            )
     
     # We must delay env creation for resume if we want to ensure same config? 
     # For now we assume user provides correct params for resumption.
@@ -589,6 +620,7 @@ def main():
                 "scenario_path": scenario_path,
                 **env_settings,
             },
+            seed=training_seed,
             vec_env_cls=vec_cls,
             vec_env_kwargs=vec_env_kwargs,
             wrapper_class=wrapper_class,
@@ -636,6 +668,7 @@ def main():
                     else int(leader_execution_torch_interop_threads)
                 ),
             },
+            seed=training_seed,
             vec_env_cls=vec_cls,
             vec_env_kwargs=vec_env_kwargs,
         )
@@ -687,6 +720,9 @@ def main():
 
     # 4. Training Setup
     hyperparams = train_config.get("hyperparameters", {})
+    if training_seed is not None and "seed" not in hyperparams:
+        hyperparams = dict(hyperparams)
+        hyperparams["seed"] = int(training_seed)
     total_timesteps = train_config.get("total_timesteps", 100000)
     save_freq = int(train_config.get("save_freq", 50000))
     # SB3 CheckpointCallback counts callback invocations, not aggregate env timesteps.

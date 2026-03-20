@@ -1983,6 +1983,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             import gymnasium  # noqa: F401
         except ModuleNotFoundError as exc:
             raise ContractSkipped("gymnasium not installed") from exc
+        import concurrent.futures
         import numpy as np
         from stable_baselines3 import PPO
         from gym_envs.leader_env import LeaderTrainingEnv
@@ -2016,6 +2017,191 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             if task is not None and bool(getattr(task, "active", False)):
                 return "anchor", float(getattr(task, "anchor_x_m", 0.0)), float(getattr(task, "anchor_y_m", 0.0))
             return None, None, None
+
+        def _scheduled_fallback_action(decision_idx: int) -> np.ndarray:
+            action_np = np.asarray(fallback_action, dtype=np.float32).reshape(-1)
+            for from_decision, scheduled_action in fallback_schedule:
+                if int(decision_idx) >= int(from_decision):
+                    action_np = np.asarray(scheduled_action, dtype=np.float32).reshape(-1)
+                else:
+                    break
+            return action_np
+
+        def _collect_leader_snapshot(env: LeaderTrainingEnv, info: dict[str, Any], decision_idx: int) -> dict[str, Any]:
+            loader = env.unwrapped.loader
+            task = getattr(loader, "task_order", None)
+            truth = env.unwrapped.sim.get_agent_observation(env.unwrapped.agent_id)
+
+            command_code = int(loader.mission_cmd.get("command_code", 0))
+            heading_deg = float(loader.mission_cmd.get("target_heading", 0.0))
+            altitude_m = float(loader.mission_cmd.get("target_altitude", 0.0))
+            speed_mps = float(loader.mission_cmd.get("target_speed", 0.0))
+            phase_name = str(getattr(loader, "mission_phase_name", "")).strip().lower()
+            target_kind, target_x, target_y = _active_nav_target(loader, task)
+            heading_err_deg = None
+            if target_x is not None and target_y is not None:
+                desired_bearing = _bearing_deg(
+                    float(getattr(truth, "x", 0.0)),
+                    float(getattr(truth, "y", 0.0)),
+                    float(target_x),
+                    float(target_y),
+                )
+                heading_err_deg = abs(_wrap_deg(heading_deg - desired_bearing))
+
+            return {
+                "decision_idx": int(decision_idx),
+                "phase_name": phase_name,
+                "command_code": int(command_code),
+                "heading_deg": float(heading_deg),
+                "altitude_m": float(altitude_m),
+                "speed_mps": float(speed_mps),
+                "waypoint_idx": int(getattr(loader, "waypoint_idx", 0) or 0),
+                "waypoint_total": int(len(list(getattr(loader, "waypoints", []) or []))),
+                "target_kind": target_kind,
+                "heading_error_deg": heading_err_deg,
+                "terminal_feasible": bool(info.get("leader_terminal_feasible", False)),
+                "c2_task_name": str(info.get("leader_c2_task_name", "")),
+                "c2_transitioned": bool(info.get("leader_c2_transitioned", False)),
+                "c2_transition_reason": str(info.get("leader_c2_transition_reason", "")),
+                "report_valid": bool(info.get("leader_report_valid", False)),
+                "report_reason": str(info.get("leader_report_reason", "")),
+                "altitude_ok": _task_block_ok(
+                    altitude_m,
+                    float(getattr(task, "altitude_block_min_m", 0.0) if task is not None else 0.0),
+                    float(getattr(task, "altitude_block_max_m", 0.0) if task is not None else 0.0),
+                ),
+                "speed_ok": _task_block_ok(
+                    speed_mps,
+                    float(getattr(task, "speed_min_mps", 0.0) if task is not None else 0.0),
+                    float(getattr(task, "speed_max_mps", 0.0) if task is not None else 0.0),
+                ),
+            }
+
+        def _validate_leader_case_rollout(
+            *,
+            case_name: str,
+            snapshots: list[dict[str, Any]],
+            checks: dict[str, Any],
+            final_info: dict[str, Any],
+            expected_reason: Any,
+        ) -> tuple[bool, str]:
+            if not snapshots:
+                return False, f"{case_name}: no leader rollout snapshots were collected"
+
+            allowed_codes = set(int(x) for x in checks.get("allowed_command_codes", [1, 2, 3, 4]))
+            for snap in snapshots:
+                if int(snap["command_code"]) not in allowed_codes:
+                    return False, f"{case_name}: unexpected command code {snap['command_code']} at decision {snap['decision_idx']}"
+
+            required_codes = set(int(x) for x in checks.get("required_command_codes", []) or [])
+            seen_codes = {int(snap["command_code"]) for snap in snapshots}
+            missing = sorted(required_codes - seen_codes)
+            if missing:
+                return False, f"{case_name}: missing required command codes {missing}, saw {sorted(seen_codes)}"
+
+            phase_expect = {
+                str(k).strip().lower(): {int(x) for x in v}
+                for k, v in dict(checks.get("phase_command_expectations", {}) or {}).items()
+                if isinstance(v, (list, tuple))
+            }
+            for snap in snapshots:
+                allowed = phase_expect.get(str(snap["phase_name"]).strip().lower(), None)
+                if allowed is not None and int(snap["command_code"]) not in allowed:
+                    return False, (
+                        f"{case_name}: phase {snap['phase_name']!r} emitted command code "
+                        f"{snap['command_code']} outside allowed set {sorted(allowed)}"
+                    )
+
+            if bool(checks.get("require_altitude_within_task_block", False)):
+                bad = next((snap for snap in snapshots if not bool(snap["altitude_ok"])), None)
+                if bad is not None:
+                    return False, f"{case_name}: altitude left task block at decision {bad['decision_idx']}"
+
+            if bool(checks.get("require_speed_within_task_block", False)):
+                bad = next((snap for snap in snapshots if not bool(snap["speed_ok"])), None)
+                if bad is not None:
+                    return False, f"{case_name}: speed left task block at decision {bad['decision_idx']}"
+
+            if bool(checks.get("disallow_landing_before_terminal_feasible", True)):
+                bad = next(
+                    (
+                        snap for snap in snapshots
+                        if int(snap["command_code"]) == 4 and not bool(snap["terminal_feasible"])
+                    ),
+                    None,
+                )
+                if bad is not None:
+                    return False, f"{case_name}: landing command issued before terminal feasibility at decision {bad['decision_idx']}"
+
+            heading_abs_max = checks.get("active_target_heading_abs_max_deg", None)
+            if heading_abs_max is not None:
+                filter_phases = {str(x).strip().lower() for x in checks.get("heading_alignment_phases", []) or []}
+                samples = [
+                    float(snap["heading_error_deg"])
+                    for snap in snapshots
+                    if snap.get("heading_error_deg") is not None
+                    and (not filter_phases or str(snap["phase_name"]).strip().lower() in filter_phases)
+                ]
+                min_samples = int(checks.get("min_heading_alignment_samples", 1))
+                if len(samples) < min_samples:
+                    return False, f"{case_name}: insufficient heading-alignment samples ({len(samples)} < {min_samples})"
+                if max(samples) > float(heading_abs_max):
+                    return False, f"{case_name}: heading-to-target error exceeded limit ({max(samples):.1f} > {float(heading_abs_max):.1f})"
+
+            if bool(checks.get("require_waypoint_progress", False)):
+                initial_idx = int(snapshots[0]["waypoint_idx"])
+                max_idx = max(int(snap["waypoint_idx"]) for snap in snapshots)
+                if max_idx <= initial_idx:
+                    return False, f"{case_name}: no waypoint progress observed"
+
+            required_c2_tasks = {
+                str(x).strip().upper()
+                for x in checks.get("required_c2_tasks", []) or []
+                if str(x).strip()
+            }
+            if required_c2_tasks:
+                seen_c2_tasks = {
+                    str(snap.get("c2_task_name", "")).strip().upper()
+                    for snap in snapshots
+                    if str(snap.get("c2_task_name", "")).strip()
+                }
+                missing = sorted(required_c2_tasks - seen_c2_tasks)
+                if missing:
+                    return False, f"{case_name}: missing required C2 tasks {missing}, saw {sorted(seen_c2_tasks)}"
+
+            min_report_valid_frac = checks.get("min_report_valid_fraction", None)
+            if min_report_valid_frac is not None:
+                report_valid_frac = float(
+                    sum(1 for snap in snapshots if bool(snap.get("report_valid", False))) / max(1, len(snapshots))
+                )
+                if report_valid_frac < float(min_report_valid_frac):
+                    return False, (
+                        f"{case_name}: report-valid fraction too low "
+                        f"({report_valid_frac:.3f} < {float(min_report_valid_frac):.3f})"
+                    )
+
+            min_c2_transitions = checks.get("min_c2_transition_count", None)
+            if min_c2_transitions is not None:
+                transition_count = sum(1 for snap in snapshots if bool(snap.get("c2_transitioned", False)))
+                if transition_count < int(min_c2_transitions):
+                    return False, (
+                        f"{case_name}: insufficient C2 transitions "
+                        f"({transition_count} < {int(min_c2_transitions)})"
+                    )
+
+            if expected_reason is not None:
+                final_reason = str(final_info.get("termination_reason", ""))
+                if final_reason != str(expected_reason):
+                    return False, (
+                        f"{case_name}: termination reason mismatch "
+                        f"({final_reason!r} != {str(expected_reason)!r})"
+                    )
+
+            return True, (
+                f"{case_name}[steps={len(snapshots)}, cmds={sorted(seen_codes)}, "
+                f"c2={sorted({str(s.get('c2_task_name', '')).strip().upper() for s in snapshots if str(s.get('c2_task_name', '')).strip()})}, "
+                f"wp={snapshots[0]['waypoint_idx']}->{max(int(s['waypoint_idx']) for s in snapshots)}]"
+            )
 
         def _build_case_scenario(case_spec: dict[str, Any]) -> tuple[str, bool]:
             if "scenario" in case_spec or "scenario_inline" in case_spec or "scenario_base" in case_spec:
@@ -2071,248 +2257,137 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         default_seed = int(spec.get("seed", 7))
         default_max_decisions = int(spec.get("max_decisions", 24))
         default_checks = dict(spec.get("checks", {}) or {})
+        def _make_leader_env(scenario_path: str) -> LeaderTrainingEnv:
+            return LeaderTrainingEnv(
+                scenario_path=scenario_path,
+                decision_interval_steps=int(leader_cfg.get("decision_interval_steps", 20)),
+                execution_backend=str(leader_cfg.get("execution_backend", "scripted")),
+                execution_train_config=(
+                    resolve_repo_path(str(leader_cfg["execution_train_config"]))
+                    if leader_cfg.get("execution_train_config")
+                    else None
+                ),
+                execution_model_path=(
+                    resolve_repo_path(str(leader_cfg["execution_model_path"]))
+                    if leader_cfg.get("execution_model_path")
+                    else None
+                ),
+                execution_algo=str(leader_cfg.get("execution_algo", "auto")),
+                scripted_transition_alt_agl_m=float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
+                heading_bias_limit_deg=float(leader_cfg.get("heading_bias_limit_deg", 35.0)),
+                altitude_bias_limit_m=float(leader_cfg.get("altitude_bias_limit_m", 600.0)),
+                speed_bias_limit_mps=float(leader_cfg.get("speed_bias_limit_mps", 30.0)),
+                command_change_penalty=float(leader_cfg.get("command_change_penalty", 0.0)),
+                teacher_keep_deadband=float(leader_cfg.get("teacher_keep_deadband", 0.2)),
+                invalid_phase_penalty=float(leader_cfg.get("invalid_phase_penalty", 0.0)),
+                premature_approach_penalty=float(leader_cfg.get("premature_approach_penalty", 0.0)),
+                baseline_deviation_penalty=float(leader_cfg.get("baseline_deviation_penalty", 0.0)),
+                mode_change_penalty=float(leader_cfg.get("mode_change_penalty", 0.0)),
+                approach_gate_distance_m=float(leader_cfg.get("approach_gate_distance_m", 18000.0)),
+                approach_gate_cross_m=float(leader_cfg.get("approach_gate_cross_m", 3500.0)),
+                approach_gate_heading_error_deg=float(leader_cfg.get("approach_gate_heading_error_deg", 85.0)),
+            )
 
-        case_summaries: list[str] = []
+        case_contexts: list[dict[str, Any]] = []
         for idx, raw_case in enumerate(cases):
             case = dict(raw_case or {})
-            case_name = str(case.get("name", f"case_{idx+1}"))
             scenario_path, should_cleanup = _build_case_scenario(case)
-            env = None
-            try:
-                env = LeaderTrainingEnv(
-                    scenario_path=scenario_path,
-                    decision_interval_steps=int(leader_cfg.get("decision_interval_steps", 20)),
-                    execution_backend=str(leader_cfg.get("execution_backend", "scripted")),
-                    execution_train_config=(
-                        resolve_repo_path(str(leader_cfg["execution_train_config"]))
-                        if leader_cfg.get("execution_train_config")
-                        else None
-                    ),
-                    execution_model_path=(
-                        resolve_repo_path(str(leader_cfg["execution_model_path"]))
-                        if leader_cfg.get("execution_model_path")
-                        else None
-                    ),
-                    execution_algo=str(leader_cfg.get("execution_algo", "auto")),
-                    scripted_transition_alt_agl_m=float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
-                    heading_bias_limit_deg=float(leader_cfg.get("heading_bias_limit_deg", 35.0)),
-                    altitude_bias_limit_m=float(leader_cfg.get("altitude_bias_limit_m", 600.0)),
-                    speed_bias_limit_mps=float(leader_cfg.get("speed_bias_limit_mps", 30.0)),
-                    command_change_penalty=float(leader_cfg.get("command_change_penalty", 0.0)),
-                    teacher_keep_deadband=float(leader_cfg.get("teacher_keep_deadband", 0.2)),
-                    invalid_phase_penalty=float(leader_cfg.get("invalid_phase_penalty", 0.0)),
-                    premature_approach_penalty=float(leader_cfg.get("premature_approach_penalty", 0.0)),
-                    baseline_deviation_penalty=float(leader_cfg.get("baseline_deviation_penalty", 0.0)),
-                    mode_change_penalty=float(leader_cfg.get("mode_change_penalty", 0.0)),
-                    approach_gate_distance_m=float(leader_cfg.get("approach_gate_distance_m", 18000.0)),
-                    approach_gate_cross_m=float(leader_cfg.get("approach_gate_cross_m", 3500.0)),
-                    approach_gate_heading_error_deg=float(leader_cfg.get("approach_gate_heading_error_deg", 85.0)),
-                )
+            checks = dict(default_checks)
+            checks.update(dict(case.get("checks", {}) or {}))
+            case_contexts.append(
+                {
+                    "case_name": str(case.get("name", f"case_{idx+1}")),
+                    "case": case,
+                    "scenario_path": scenario_path,
+                    "should_cleanup": should_cleanup,
+                    "seed": int(case.get("seed", default_seed)),
+                    "max_decisions": int(case.get("max_decisions", default_max_decisions)),
+                    "checks": checks,
+                    "randomization_overrides": case.get("randomization_overrides", spec.get("randomization_overrides", None)),
+                    "expected_reason": case.get("expected_termination_reason", spec.get("expected_termination_reason", None)),
+                }
+            )
 
-                randomization_overrides = case.get("randomization_overrides", spec.get("randomization_overrides", None))
+        use_batched_rollout = (
+            len(case_contexts) > 1
+            and bool(spec.get("parallel_case_rollouts", True))
+        )
+
+        def _run_leader_case_rollout(ctx: dict[str, Any], *, model_override: Any = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+            env = None
+            local_model = model_override
+            try:
+                env = _make_leader_env(str(ctx["scenario_path"]))
+                randomization_overrides = ctx.get("randomization_overrides", None)
                 if randomization_overrides is not None:
                     env.set_randomization_overrides(dict(randomization_overrides))
-
-                obs, _info0 = env.reset(seed=int(case.get("seed", default_seed)))
-                max_decisions = int(case.get("max_decisions", default_max_decisions))
-                checks = dict(default_checks)
-                checks.update(dict(case.get("checks", {}) or {}))
+                obs, _info0 = env.reset(seed=int(ctx["seed"]))
+                if using_model and local_model is None:
+                    local_model = _load_leader_policy(
+                        resolve_repo_path(str(model_path_raw)),
+                        str(policy_cfg.get("algo", "auto")),
+                    )
                 snapshots: list[dict[str, Any]] = []
                 final_info: dict[str, Any] = {}
-
-                for decision_idx in range(max_decisions):
+                for decision_idx in range(int(ctx["max_decisions"])):
                     if using_model:
-                        action, _ = leader_model.predict(obs, deterministic=deterministic)
+                        action, _ = local_model.predict(obs, deterministic=deterministic)
                         action_np = np.asarray(action, dtype=np.float32).reshape(-1)
                     else:
-                        action_np = np.asarray(fallback_action, dtype=np.float32).reshape(-1)
-                        for from_decision, scheduled_action in fallback_schedule:
-                            if int(decision_idx) >= int(from_decision):
-                                action_np = np.asarray(scheduled_action, dtype=np.float32).reshape(-1)
-                            else:
-                                break
+                        action_np = _scheduled_fallback_action(decision_idx)
                     obs, _reward, terminated, truncated, info = env.step(action_np)
                     final_info = dict(info or {})
-                    loader = env.unwrapped.loader
-                    task = getattr(loader, "task_order", None)
-                    truth = env.unwrapped.sim.get_agent_observation(env.unwrapped.agent_id)
-
-                    command_code = int(loader.mission_cmd.get("command_code", 0))
-                    heading_deg = float(loader.mission_cmd.get("target_heading", 0.0))
-                    altitude_m = float(loader.mission_cmd.get("target_altitude", 0.0))
-                    speed_mps = float(loader.mission_cmd.get("target_speed", 0.0))
-                    phase_name = str(getattr(loader, "mission_phase_name", "")).strip().lower()
-                    target_kind, target_x, target_y = _active_nav_target(loader, task)
-                    heading_err_deg = None
-                    if target_x is not None and target_y is not None:
-                        desired_bearing = _bearing_deg(
-                            float(getattr(truth, "x", 0.0)),
-                            float(getattr(truth, "y", 0.0)),
-                            float(target_x),
-                            float(target_y),
-                        )
-                        heading_err_deg = abs(_wrap_deg(heading_deg - desired_bearing))
-
-                    snapshots.append(
-                        {
-                            "decision_idx": int(decision_idx),
-                            "phase_name": phase_name,
-                            "command_code": int(command_code),
-                            "heading_deg": float(heading_deg),
-                            "altitude_m": float(altitude_m),
-                            "speed_mps": float(speed_mps),
-                            "waypoint_idx": int(getattr(loader, "waypoint_idx", 0) or 0),
-                            "waypoint_total": int(len(list(getattr(loader, "waypoints", []) or []))),
-                            "target_kind": target_kind,
-                            "heading_error_deg": heading_err_deg,
-                            "terminal_feasible": bool(info.get("leader_terminal_feasible", False)),
-                            "c2_task_name": str(info.get("leader_c2_task_name", "")),
-                            "c2_transitioned": bool(info.get("leader_c2_transitioned", False)),
-                            "c2_transition_reason": str(info.get("leader_c2_transition_reason", "")),
-                            "report_valid": bool(info.get("leader_report_valid", False)),
-                            "report_reason": str(info.get("leader_report_reason", "")),
-                            "altitude_ok": _task_block_ok(
-                                altitude_m,
-                                float(getattr(task, "altitude_block_min_m", 0.0) if task is not None else 0.0),
-                                float(getattr(task, "altitude_block_max_m", 0.0) if task is not None else 0.0),
-                            ),
-                            "speed_ok": _task_block_ok(
-                                speed_mps,
-                                float(getattr(task, "speed_min_mps", 0.0) if task is not None else 0.0),
-                                float(getattr(task, "speed_max_mps", 0.0) if task is not None else 0.0),
-                            ),
-                        }
-                    )
+                    snapshots.append(_collect_leader_snapshot(env, final_info, decision_idx))
                     if bool(terminated) or bool(truncated):
                         break
-
-                if not snapshots:
-                    return False, f"{case_name}: no leader rollout snapshots were collected"
-
-                allowed_codes = set(int(x) for x in checks.get("allowed_command_codes", [1, 2, 3, 4]))
-                for snap in snapshots:
-                    if int(snap["command_code"]) not in allowed_codes:
-                        return False, f"{case_name}: unexpected command code {snap['command_code']} at decision {snap['decision_idx']}"
-
-                required_codes = set(int(x) for x in checks.get("required_command_codes", []) or [])
-                seen_codes = {int(snap["command_code"]) for snap in snapshots}
-                missing = sorted(required_codes - seen_codes)
-                if missing:
-                    return False, f"{case_name}: missing required command codes {missing}, saw {sorted(seen_codes)}"
-
-                phase_expect = {
-                    str(k).strip().lower(): {int(x) for x in v}
-                    for k, v in dict(checks.get("phase_command_expectations", {}) or {}).items()
-                    if isinstance(v, (list, tuple))
-                }
-                for snap in snapshots:
-                    allowed = phase_expect.get(str(snap["phase_name"]).strip().lower(), None)
-                    if allowed is not None and int(snap["command_code"]) not in allowed:
-                        return False, (
-                            f"{case_name}: phase {snap['phase_name']!r} emitted command code "
-                            f"{snap['command_code']} outside allowed set {sorted(allowed)}"
-                        )
-
-                if bool(checks.get("require_altitude_within_task_block", False)):
-                    bad = next((snap for snap in snapshots if not bool(snap["altitude_ok"])), None)
-                    if bad is not None:
-                        return False, f"{case_name}: altitude left task block at decision {bad['decision_idx']}"
-
-                if bool(checks.get("require_speed_within_task_block", False)):
-                    bad = next((snap for snap in snapshots if not bool(snap["speed_ok"])), None)
-                    if bad is not None:
-                        return False, f"{case_name}: speed left task block at decision {bad['decision_idx']}"
-
-                if bool(checks.get("disallow_landing_before_terminal_feasible", True)):
-                    bad = next(
-                        (
-                            snap for snap in snapshots
-                            if int(snap["command_code"]) == 4 and not bool(snap["terminal_feasible"])
-                        ),
-                        None,
-                    )
-                    if bad is not None:
-                        return False, f"{case_name}: landing command issued before terminal feasibility at decision {bad['decision_idx']}"
-
-                heading_abs_max = checks.get("active_target_heading_abs_max_deg", None)
-                if heading_abs_max is not None:
-                    filter_phases = {str(x).strip().lower() for x in checks.get("heading_alignment_phases", []) or []}
-                    samples = [
-                        float(snap["heading_error_deg"])
-                        for snap in snapshots
-                        if snap.get("heading_error_deg") is not None
-                        and (not filter_phases or str(snap["phase_name"]).strip().lower() in filter_phases)
-                    ]
-                    min_samples = int(checks.get("min_heading_alignment_samples", 1))
-                    if len(samples) < min_samples:
-                        return False, f"{case_name}: insufficient heading-alignment samples ({len(samples)} < {min_samples})"
-                    if max(samples) > float(heading_abs_max):
-                        return False, f"{case_name}: heading-to-target error exceeded limit ({max(samples):.1f} > {float(heading_abs_max):.1f})"
-
-                if bool(checks.get("require_waypoint_progress", False)):
-                    initial_idx = int(snapshots[0]["waypoint_idx"])
-                    max_idx = max(int(snap["waypoint_idx"]) for snap in snapshots)
-                    if max_idx <= initial_idx:
-                        return False, f"{case_name}: no waypoint progress observed"
-
-                required_c2_tasks = {
-                    str(x).strip().upper()
-                    for x in checks.get("required_c2_tasks", []) or []
-                    if str(x).strip()
-                }
-                if required_c2_tasks:
-                    seen_c2_tasks = {
-                        str(snap.get("c2_task_name", "")).strip().upper()
-                        for snap in snapshots
-                        if str(snap.get("c2_task_name", "")).strip()
-                    }
-                    missing = sorted(required_c2_tasks - seen_c2_tasks)
-                    if missing:
-                        return False, f"{case_name}: missing required C2 tasks {missing}, saw {sorted(seen_c2_tasks)}"
-
-                min_report_valid_frac = checks.get("min_report_valid_fraction", None)
-                if min_report_valid_frac is not None:
-                    report_valid_frac = float(
-                        sum(1 for snap in snapshots if bool(snap.get("report_valid", False))) / max(1, len(snapshots))
-                    )
-                    if report_valid_frac < float(min_report_valid_frac):
-                        return False, (
-                            f"{case_name}: report-valid fraction too low "
-                            f"({report_valid_frac:.3f} < {float(min_report_valid_frac):.3f})"
-                        )
-
-                min_c2_transitions = checks.get("min_c2_transition_count", None)
-                if min_c2_transitions is not None:
-                    transition_count = sum(1 for snap in snapshots if bool(snap.get("c2_transitioned", False)))
-                    if transition_count < int(min_c2_transitions):
-                        return False, (
-                            f"{case_name}: insufficient C2 transitions "
-                            f"({transition_count} < {int(min_c2_transitions)})"
-                        )
-
-                expected_reason = case.get("expected_termination_reason", spec.get("expected_termination_reason", None))
-                if expected_reason is not None:
-                    final_reason = str(final_info.get("termination_reason", ""))
-                    if final_reason != str(expected_reason):
-                        return False, (
-                            f"{case_name}: termination reason mismatch "
-                            f"({final_reason!r} != {str(expected_reason)!r})"
-                        )
-
-                case_summaries.append(
-                    f"{case_name}[steps={len(snapshots)}, cmds={sorted(seen_codes)}, "
-                    f"c2={sorted({str(s.get('c2_task_name', '')).strip().upper() for s in snapshots if str(s.get('c2_task_name', '')).strip()})}, "
-                    f"wp={snapshots[0]['waypoint_idx']}->{max(int(s['waypoint_idx']) for s in snapshots)}]"
-                )
+                return snapshots, final_info
             finally:
                 if env is not None:
                     try:
                         env.close()
                     except Exception:
                         pass
-                if should_cleanup and os.path.exists(scenario_path):
+
+        try:
+            if use_batched_rollout:
+                max_workers = int(spec.get("parallel_case_workers", len(case_contexts)))
+                max_workers = max(1, min(max_workers, len(case_contexts)))
+                rollout_results: list[tuple[list[dict[str, Any]], dict[str, Any]] | None] = [None] * len(case_contexts)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    future_to_idx = {
+                        executor.submit(_run_leader_case_rollout, ctx, model_override=None): idx
+                        for idx, ctx in enumerate(case_contexts)
+                    }
+                    for future in concurrent.futures.as_completed(future_to_idx):
+                        idx = int(future_to_idx[future])
+                        rollout_results[idx] = future.result()
+            else:
+                rollout_results = [
+                    _run_leader_case_rollout(ctx, model_override=leader_model if using_model else None)
+                    for ctx in case_contexts
+                ]
+
+            case_summaries: list[str] = []
+            for idx, ctx in enumerate(case_contexts):
+                result = rollout_results[idx]
+                if result is None:
+                    return False, f"{ctx['case_name']}: rollout result missing"
+                snapshots, final_info = result
+                ok, detail = _validate_leader_case_rollout(
+                    case_name=str(ctx["case_name"]),
+                    snapshots=list(snapshots),
+                    checks=dict(ctx["checks"]),
+                    final_info=dict(final_info),
+                    expected_reason=ctx.get("expected_reason", None),
+                )
+                if not ok:
+                    return False, detail
+                case_summaries.append(detail)
+        finally:
+            for ctx in case_contexts:
+                if bool(ctx.get("should_cleanup", False)) and os.path.exists(str(ctx["scenario_path"])):
                     try:
-                        os.remove(scenario_path)
+                        os.remove(str(ctx["scenario_path"]))
                     except OSError:
                         pass
         policy_desc = "model" if using_model else "fallback_action"

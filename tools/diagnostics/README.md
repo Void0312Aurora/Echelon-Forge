@@ -11,6 +11,10 @@ These scripts are intentionally separate from the top-level `tools/` entrypoints
 
 Current examples:
 
+- [ablate_visual_training_effect.py](/home/void0312/CMO/tools/diagnostics/ablate_visual_training_effect.py)
+  - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
+- [benchmark_visual_resolution.py](/home/void0312/CMO/tools/diagnostics/benchmark_visual_resolution.py)
+  - Sweeps `visual_downsample` and reports visual tensor size, rollout-buffer cost, env-step throughput, and visual extractor forward latency proxies.
 - [diagnose_training_matrix.py](/home/void0312/CMO/tools/diagnostics/diagnose_training_matrix.py)
   - Runs a small evaluation matrix across model/scenario pairs and extracts headline metrics from evaluator output.
 - [sanity_check.py](/home/void0312/CMO/tools/diagnostics/sanity_check.py)

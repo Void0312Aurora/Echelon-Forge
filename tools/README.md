@@ -38,6 +38,11 @@ The recent cleanup work is moving this directory toward shared bootstrap helpers
 These scripts now share common environment/bootstrap logic through `eval_utils.py`.
 The world-model variants also share rollout/runtime code through `world_model_eval_utils.py`.
 
+## Model Eval Entrypoints
+
+- [eval_sb3_policy.py](/home/void0312/CMO/tools/eval_sb3_policy.py)
+  - Generic SB3 execution-policy evaluator that rebuilds `UniversalEnv` from a train config and summarizes reward, success, survival, and termination reasons.
+
 ## Maintenance Helpers
 
 - [redundancy_audit.py](/home/void0312/CMO/tools/redundancy_audit.py)
@@ -47,6 +52,8 @@ The world-model variants also share rollout/runtime code through `world_model_ev
 
 ## Diagnostics
 
+- [tools/diagnostics/ablate_visual_training_effect.py](/home/void0312/CMO/tools/diagnostics/ablate_visual_training_effect.py)
+  - Runs a `visual_downsample` training/eval matrix for visual execution policies and aggregates per-factor outcomes.
 - [tools/diagnostics/diagnose_training_matrix.py](/home/void0312/CMO/tools/diagnostics/diagnose_training_matrix.py)
   - Runs an evaluator over multiple model/scenario pairs and summarizes extracted metrics.
 - [tools/diagnostics/sanity_check.py](/home/void0312/CMO/tools/diagnostics/sanity_check.py)

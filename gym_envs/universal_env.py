@@ -22,6 +22,25 @@ except ModuleNotFoundError:  # Optional dependency for non-training workflows
     spaces = None
 
 
+def _configure_sim_log_level() -> None:
+    """
+    Keep RL workloads from spending wall-clock time on per-reset info logging.
+
+    The physics kernel exposes a global spdlog level through `ef_py.set_log_level`.
+    Training creates many environments and frequent episode resets, especially for
+    leader-layer curricula. Defaulting to `warn` preserves real diagnostics while
+    avoiding a large stream of hot-path `info` messages.
+    """
+    level = str(os.environ.get("CMO_SIM_LOG_LEVEL", "warn")).strip().lower() or "warn"
+    try:
+        ef_py.set_log_level(level)
+    except Exception:
+        pass
+
+
+_configure_sim_log_level()
+
+
 def half_to_unit(x: float) -> float:
     y = (x - 0.5) * 2.0
     if y <= 0.0:
@@ -516,11 +535,22 @@ else:
                     or (self.steps - self._visual_cache_step) >= self.visual_update_interval
                 )
                 if need_refresh:
-                    visual_flat = self.sim.get_visual_observation(self.agent_id)
-                    visual = np.asarray(visual_flat, dtype=np.float32).reshape(
-                        self.arb_height_native, self.arb_width_native, self.arb_channels
-                    )
-                    self._visual_cache = downsample_visual_mean(visual, self.visual_downsample)
+                    if self.visual_downsample > 1 and hasattr(self.sim, "get_visual_observation_downsampled"):
+                        visual_raw = self.sim.get_visual_observation_downsampled(
+                            self.agent_id, self.visual_downsample
+                        )
+                        visual = np.asarray(visual_raw, dtype=np.float32)
+                        if visual.ndim == 1:
+                            visual = visual.reshape(self.arb_height, self.arb_width, self.arb_channels)
+                        self._visual_cache = visual
+                    else:
+                        visual_raw = self.sim.get_visual_observation(self.agent_id)
+                        visual = np.asarray(visual_raw, dtype=np.float32)
+                        if visual.ndim == 1:
+                            visual = visual.reshape(
+                                self.arb_height_native, self.arb_width_native, self.arb_channels
+                            )
+                        self._visual_cache = downsample_visual_mean(visual, self.visual_downsample)
                     self._visual_cache_step = int(self.steps)
                 obs["visual"] = np.asarray(self._visual_cache, dtype=np.float32, copy=False)
             return obs

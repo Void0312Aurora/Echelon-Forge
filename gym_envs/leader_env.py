@@ -841,6 +841,36 @@ else:
                 report_status_value=float(0.5 * (float(np.clip(float(action[5]), -1.0, 1.0)) + 1.0)),
             )
 
+        @staticmethod
+        def _mapping_has_bias(mapping: _LeaderActionMapping) -> bool:
+            return (
+                abs(float(mapping.heading_bias_deg)) > 1e-6
+                or abs(float(mapping.altitude_bias_m)) > 1e-6
+                or abs(float(mapping.speed_bias_mps)) > 1e-6
+            )
+
+        @staticmethod
+        def _zero_mapping_biases(mapping: _LeaderActionMapping) -> _LeaderActionMapping:
+            return _LeaderActionMapping(
+                phase_bucket=str(mapping.phase_bucket),
+                heading_bias_deg=0.0,
+                altitude_bias_m=0.0,
+                speed_bias_mps=0.0,
+                report_bucket=str(mapping.report_bucket),
+                report_status_value=float(mapping.report_status_value),
+            )
+
+        @staticmethod
+        def _bucket_allows_command_bias(phase_bucket: str) -> bool:
+            """
+            Leader actions should primarily choose mission mode / phase timing.
+
+            Keep continuous heading/altitude/speed trims only on route-like buckets,
+            where the command semantics are still "track / stage reference". Teacher,
+            takeoff, approach, and abort should not act like a generic vector editor.
+            """
+            return str(phase_bucket).strip().lower() in {"route", "rtb"}
+
         def _resolve_report_type(self, mapping: _LeaderActionMapping, *, phase_bucket: str):
             report_bucket = str(mapping.report_bucket)
             if report_bucket == "wilco":
@@ -1004,18 +1034,16 @@ else:
                 reason = "abort_not_terminal"
 
             sanitized_mapping = mapping
-            if critical_takeoff and (
-                abs(float(mapping.heading_bias_deg)) > 1e-6
-                or abs(float(mapping.altitude_bias_m)) > 1e-6
-                or abs(float(mapping.speed_bias_mps)) > 1e-6
-            ):
-                sanitized_mapping = _LeaderActionMapping(
-                    phase_bucket=str(applied_bucket),
-                    heading_bias_deg=0.0,
-                    altitude_bias_m=0.0,
-                    speed_bias_mps=0.0,
-                    report_bucket=str(mapping.report_bucket),
-                    report_status_value=float(mapping.report_status_value),
+            if critical_takeoff and self._mapping_has_bias(mapping):
+                sanitized_mapping = self._zero_mapping_biases(
+                    _LeaderActionMapping(
+                        phase_bucket=str(applied_bucket),
+                        heading_bias_deg=float(mapping.heading_bias_deg),
+                        altitude_bias_m=float(mapping.altitude_bias_m),
+                        speed_bias_mps=float(mapping.speed_bias_mps),
+                        report_bucket=str(mapping.report_bucket),
+                        report_status_value=float(mapping.report_status_value),
+                    )
                 )
                 bias_guarded = True
                 bias_guard_reason = "departure_low_altitude"
@@ -1028,6 +1056,12 @@ else:
                     report_bucket=str(mapping.report_bucket),
                     report_status_value=float(mapping.report_status_value),
                 )
+
+            if self._mapping_has_bias(sanitized_mapping) and not self._bucket_allows_command_bias(applied_bucket):
+                sanitized_mapping = self._zero_mapping_biases(sanitized_mapping)
+                bias_guarded = True
+                if not bias_guard_reason:
+                    bias_guard_reason = f"{str(applied_bucket)}_disallows_bias"
 
             if applied_bucket == requested_bucket:
                 return sanitized_mapping, {
@@ -1107,7 +1141,7 @@ else:
                     heading_deg, altitude_m, speed_mps = landing_ref
                 speed_mps = min(speed_mps, max(70.0, float(loader.mission_cmd.get("target_speed", speed_mps))))
                 altitude_m = min(altitude_m, max(0.0, float(loader.mission_cmd.get("target_altitude", altitude_m))))
-            else:
+            elif self._bucket_allows_command_bias(mapping.phase_bucket):
                 heading_deg = float((heading_deg + mapping.heading_bias_deg + 360.0) % 360.0)
                 altitude_m = self._clip_altitude(task, altitude_m + mapping.altitude_bias_m)
                 speed_mps = self._clip_speed(task, speed_mps + mapping.speed_bias_mps)

@@ -1,0 +1,110 @@
+{
+  "scenario": "/home/void0312/CMO/scenarios/takeoff/takeoff.json",
+  "train_config": "/home/void0312/CMO/experiments/20260319_perf_probe_visual/train_config_backup.json",
+  "factors": [
+    2
+  ],
+  "seeds": [
+    7
+  ],
+  "total_timesteps": 64,
+  "visual_update_interval": null,
+  "eval_episodes": 1,
+  "eval_seed": 1000,
+  "rows": [
+    {
+      "visual_downsample": 2,
+      "seed": 7,
+      "run_name": "visual_ds_smoke_ds2_seed7",
+      "run_dir": "/home/void0312/CMO/experiments_ablation_smoke/visual_ds_smoke_ds2_seed7",
+      "config_copy": "/home/void0312/CMO/experiments_ablation_smoke/_ablation_configs/visual_ds_smoke_ds2_seed7.json",
+      "train_command": [
+        "/home/void0312/CMO/.venv/bin/python",
+        "/home/void0312/CMO/train.py",
+        "--scenario",
+        "/home/void0312/CMO/scenarios/takeoff/takeoff.json",
+        "--train_config",
+        "/home/void0312/CMO/experiments_ablation_smoke/_ablation_configs/visual_ds_smoke_ds2_seed7.json",
+        "--run_name",
+        "visual_ds_smoke_ds2_seed7",
+        "--output_base",
+        "/home/void0312/CMO/experiments_ablation_smoke",
+        "--seed",
+        "7",
+        "--n_envs",
+        "1"
+      ],
+      "train_returncode": 0,
+      "train_ok": true,
+      "train_wall_time_s": 4.77726636800071,
+      "final_model": "/home/void0312/CMO/experiments_ablation_smoke/visual_ds_smoke_ds2_seed7/final_model.zip",
+      "eval_command": [
+        "/home/void0312/CMO/.venv/bin/python",
+        "/home/void0312/CMO/tools/eval_sb3_policy.py",
+        "--scenario",
+        "/home/void0312/CMO/scenarios/takeoff/takeoff.json",
+        "--train_config",
+        "/home/void0312/CMO/experiments_ablation_smoke/_ablation_configs/visual_ds_smoke_ds2_seed7.json",
+        "--model",
+        "/home/void0312/CMO/experiments_ablation_smoke/visual_ds_smoke_ds2_seed7/final_model.zip",
+        "--algo",
+        "auto",
+        "--episodes",
+        "1",
+        "--seed",
+        "1000",
+        "--json_out",
+        "/home/void0312/CMO/experiments_ablation_smoke/visual_ds_smoke_ds2_seed7/eval_summary.json",
+        "--max_steps",
+        "120"
+      ],
+      "eval_returncode": 0,
+      "eval_ok": true,
+      "eval_wall_time_s": 4.375871016000019,
+      "eval_summary": {
+        "scenario": "/home/void0312/CMO/scenarios/takeoff/takeoff.json",
+        "train_config": "/home/void0312/CMO/experiments_ablation_smoke/_ablation_configs/visual_ds_smoke_ds2_seed7.json",
+        "model": "/home/void0312/CMO/experiments_ablation_smoke/visual_ds_smoke_ds2_seed7/final_model.zip",
+        "algo": "auto",
+        "episodes": 1,
+        "seed_start": 1000,
+        "env_settings": {
+          "include_visual": true,
+          "include_proprio": false,
+          "action_mode": "full",
+          "mission_obs_mode": "basic",
+          "visual_downsample": 2,
+          "visual_update_interval": 1
+        },
+        "success_rate": 0.0,
+        "survival_rate": 1.0,
+        "mean_reward": 87.12077353559397,
+        "mean_steps": 120.0,
+        "termination_counts": {
+          "running": 1
+        },
+        "rows": [
+          {
+            "reward": 87.12077353559397,
+            "steps": 120,
+            "success": false,
+            "survived": true,
+            "termination_reason": "running",
+            "final_waypoint_idx": 0,
+            "final_command_code": 1
+          }
+        ]
+      }
+    }
+  ],
+  "aggregates": [
+    {
+      "visual_downsample": 2,
+      "runs": 1,
+      "completed_runs": 1,
+      "mean_success_rate": 0.0,
+      "mean_reward": 87.12077353559397,
+      "mean_steps": 120.0
+    }
+  ]
+}
