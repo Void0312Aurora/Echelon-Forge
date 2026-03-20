@@ -52,6 +52,9 @@ The world-model variants also share rollout/runtime code through `world_model_ev
 
 ## Diagnostics
 
+- [leader_perf_probe.py](/home/void0312/CMO/tools/leader_perf_probe.py)
+  - Quick leader-layer throughput probe for `subproc`, shared-memory, and experimental batched execution-inference backends.
+  - Reports `leader_fps` and `estimated_low_level_fps` for a given scenario/config pair.
 - [tools/diagnostics/ablate_visual_training_effect.py](/home/void0312/CMO/tools/diagnostics/ablate_visual_training_effect.py)
   - Runs a `visual_downsample` training/eval matrix for visual execution policies and aggregates per-factor outcomes.
 - [tools/diagnostics/diagnose_training_matrix.py](/home/void0312/CMO/tools/diagnostics/diagnose_training_matrix.py)
@@ -104,6 +107,17 @@ Run a diagnostic matrix:
 
 ```bash
 python tools/diagnostics/diagnose_training_matrix.py --help
+```
+
+Probe leader-layer throughput:
+
+```bash
+./.venv/bin/python tools/leader_perf_probe.py \
+  --scenario scenarios/combined/takeoff_to_cruise_paramroute_navv2_mixedmode_eval_v2.json \
+  --train_config examples/config/training/p7_leader_layer_c2_reporting_generalization_fast_v1.json \
+  --n_envs 4 \
+  --leader_steps 24 \
+  --vec_backend shared
 ```
 
 ## Maintenance Guidance

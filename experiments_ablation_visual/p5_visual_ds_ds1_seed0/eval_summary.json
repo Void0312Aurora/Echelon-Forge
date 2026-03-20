@@ -1,0 +1,97 @@
+{
+  "scenario": "/home/void0312/CMO/scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
+  "train_config": "/home/void0312/CMO/experiments_ablation_visual/_ablation_configs/p5_visual_ds_ds1_seed0.json",
+  "model": "/home/void0312/CMO/experiments_ablation_visual/p5_visual_ds_ds1_seed0/final_model.zip",
+  "algo": "auto",
+  "episodes": 8,
+  "seed_start": 1000,
+  "env_settings": {
+    "include_visual": true,
+    "include_proprio": true,
+    "action_mode": "full",
+    "mission_obs_mode": "nav_v2",
+    "visual_downsample": 1,
+    "visual_update_interval": 2
+  },
+  "success_rate": 1.0,
+  "survival_rate": 1.0,
+  "mean_reward": 16649.245335780088,
+  "mean_steps": 15365.375,
+  "termination_counts": {
+    "success_objective": 8
+  },
+  "rows": [
+    {
+      "reward": 19457.191665937273,
+      "steps": 15364,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    },
+    {
+      "reward": 16521.475733642972,
+      "steps": 15366,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    },
+    {
+      "reward": 17533.784023800676,
+      "steps": 15245,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    },
+    {
+      "reward": 16415.75349146168,
+      "steps": 15438,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    },
+    {
+      "reward": 16376.050426617225,
+      "steps": 15607,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    },
+    {
+      "reward": 17784.277160142585,
+      "steps": 15173,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    },
+    {
+      "reward": 14188.760778519116,
+      "steps": 14991,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    },
+    {
+      "reward": 14916.669406119163,
+      "steps": 15739,
+      "success": true,
+      "survived": true,
+      "termination_reason": "success_objective",
+      "final_waypoint_idx": 0,
+      "final_command_code": 4
+    }
+  ]
+}

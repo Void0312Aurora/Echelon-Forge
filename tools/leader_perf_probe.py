@@ -18,6 +18,8 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from gym_envs.leader_env import LeaderTrainingEnv  # noqa: E402
+from python.rl.leader_batched_vec_env import LeaderBatchedVecEnv  # noqa: E402
+from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
 
 
 def parse_args():
@@ -28,12 +30,25 @@ def parse_args():
     parser.add_argument("--leader_steps", type=int, default=16, help="Number of vectorized leader steps to run.")
     parser.add_argument(
         "--vec_backend",
-        choices=["auto", "subproc", "dummy"],
+        choices=["auto", "subproc", "shared", "dummy", "batched"],
         default="auto",
         help="Vector env backend for the probe.",
     )
     parser.add_argument("--torch_threads", type=int, default=None, help="Optional PyTorch intra-op thread count.")
     parser.add_argument("--torch_interop_threads", type=int, default=None, help="Optional PyTorch inter-op thread count.")
+    parser.add_argument("--execution_device", type=str, default=None, help="Device for batched execution inference.")
+    parser.add_argument(
+        "--execution_use_autocast",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Enable autocast for batched execution inference.",
+    )
+    parser.add_argument(
+        "--step_executor_workers",
+        type=int,
+        default=None,
+        help="Optional threaded stepping fan-out for batched execution inference.",
+    )
     return parser.parse_args()
 
 
@@ -71,10 +86,30 @@ def main():
 
     if args.vec_backend == "subproc":
         vec_cls = SubprocVecEnv
+    elif args.vec_backend == "shared":
+        vec_cls = SharedMemorySubprocVecEnv
     elif args.vec_backend == "dummy":
         vec_cls = DummyVecEnv
+    elif args.vec_backend == "batched":
+        vec_cls = LeaderBatchedVecEnv
     else:
         vec_cls = SubprocVecEnv if n_envs > 1 else DummyVecEnv
+
+    vec_env_kwargs = {}
+    if vec_cls is LeaderBatchedVecEnv:
+        vec_env_kwargs = {
+            "execution_device": str(args.execution_device or runtime_cfg.get("execution_device", "cuda")),
+            "execution_use_autocast": bool(
+                runtime_cfg.get("execution_use_autocast", True)
+                if args.execution_use_autocast is None
+                else args.execution_use_autocast
+            ),
+            "step_executor_workers": int(
+                runtime_cfg.get("step_executor_workers", 0)
+                if args.step_executor_workers is None
+                else args.step_executor_workers
+            ),
+        }
 
     vec_env = make_vec_env(
         LeaderTrainingEnv,
@@ -86,6 +121,7 @@ def main():
             "execution_train_config": leader_cfg.get("execution_train_config"),
             "execution_model_path": leader_cfg.get("execution_model_path"),
             "execution_algo": str(leader_cfg.get("execution_algo", "auto")),
+            "execution_action_repeat": int(leader_cfg.get("execution_action_repeat", 1)),
             "scripted_transition_alt_agl_m": float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
             "heading_bias_limit_deg": float(leader_cfg.get("heading_bias_limit_deg", 45.0)),
             "altitude_bias_limit_m": float(leader_cfg.get("altitude_bias_limit_m", 800.0)),
@@ -109,6 +145,7 @@ def main():
             ),
         },
         vec_env_cls=vec_cls,
+        vec_env_kwargs=vec_env_kwargs,
     )
 
     try:
@@ -133,6 +170,7 @@ def main():
                     "n_envs": n_envs,
                     "leader_steps": int(args.leader_steps),
                     "decision_interval_steps": decision_interval_steps,
+                    "execution_action_repeat": int(leader_cfg.get("execution_action_repeat", 1)),
                     "leader_fps": leader_fps,
                     "estimated_low_level_fps": low_level_fps,
                     "torch_threads": int(torch.get_num_threads()),

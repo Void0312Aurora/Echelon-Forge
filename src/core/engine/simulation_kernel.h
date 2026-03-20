@@ -110,6 +110,7 @@ public:
     std::vector<UnitData> get_all_units(); // Bulk observation
     AgentObservation get_agent_observation(uint64_t entity_id); // RL Observation
     std::vector<float> get_visual_observation(uint64_t entity_id); // ARB Visual Observation
+    std::vector<float> get_visual_observation_downsampled(uint64_t entity_id, int factor); // ARB downsampled visual
     std::vector<Detection> get_detections(uint64_t entity_id); // Sensor Output
     std::vector<double> get_unit_velocity(uint64_t entity_id); // Returns [vx, vy, vz]
     double get_unit_heading(uint64_t entity_id);   // Returns heading

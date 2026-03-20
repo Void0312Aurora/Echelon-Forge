@@ -43,6 +43,7 @@ from python.training_callbacks import (
 from python.env_config import resolve_env_settings
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policies import SquashedMultiInputPolicy
+from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv
 from python.rl.wrappers import get_action_wrapper_spec
 
 
@@ -285,9 +286,12 @@ def resolve_vec_env_spec(
     allow_experimental_singleprocess_batched_leader = bool(
         runtime_cfg.get("allow_experimental_singleprocess_batched_leader", False)
     )
+    use_shared_memory_vec_env = bool(runtime_cfg.get("shared_memory_vec_env", False))
 
     if agent_layer != "leader":
-        return SubprocVecEnv if int(n_envs) > 1 else DummyVecEnv, {}, False
+        if int(n_envs) <= 1:
+            return DummyVecEnv, {}, False
+        return (SharedMemorySubprocVecEnv if use_shared_memory_vec_env else SubprocVecEnv), {}, False
 
     if use_batched_execution_inference and not allow_experimental_singleprocess_batched_leader:
         print(
@@ -298,6 +302,11 @@ def resolve_vec_env_spec(
         )
 
     if use_batched_execution_inference and allow_experimental_singleprocess_batched_leader:
+        if use_shared_memory_vec_env:
+            print(
+                "[WARN] runtime.shared_memory_vec_env is ignored when experimental single-process "
+                "batched leader inference is enabled."
+            )
         if leader_batched_vec_env_cls is None:
             print(
                 "[WARN] experimental leader batched vec env requested, but LeaderBatchedVecEnv is unavailable. "
@@ -314,7 +323,9 @@ def resolve_vec_env_spec(
                 True,
             )
 
-    return SubprocVecEnv if int(n_envs) > 1 else DummyVecEnv, {}, False
+    if int(n_envs) <= 1:
+        return DummyVecEnv, {}, False
+    return (SharedMemorySubprocVecEnv if use_shared_memory_vec_env else SubprocVecEnv), {}, False
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Training Base for CMO")
@@ -545,6 +556,7 @@ def main():
         "Runtime parallelism: "
         f"torch_threads={torch_threads} "
         f"torch_interop_threads={torch_interop_threads} "
+        f"shared_memory_vec_env={bool(runtime_cfg.get('shared_memory_vec_env', False))} "
         f"OMP_NUM_THREADS={os.environ.get('OMP_NUM_THREADS', '<unset>')} "
         f"MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS', '<unset>')} "
         f"OPENBLAS_NUM_THREADS={os.environ.get('OPENBLAS_NUM_THREADS', '<unset>')}"
@@ -575,6 +587,7 @@ def main():
             "Leader env settings: "
             f"decision_interval_steps={int(leader_cfg.get('decision_interval_steps', 20))} "
             f"execution_backend={str(leader_cfg.get('execution_backend', 'scripted'))} "
+            f"execution_action_repeat={int(leader_cfg.get('execution_action_repeat', 1))} "
             f"execution_train_config={leader_cfg.get('execution_train_config', '<none>')} "
             f"execution_model_path={leader_cfg.get('execution_model_path', '<none>')}"
         )
@@ -597,9 +610,8 @@ def main():
             )
         if ds > 1:
             print(
-                f"[INFO] visual_downsample={ds} reduces visual tensor size and model/rollout cost, "
-                "but the current ARB path still renders native resolution before downsampling. "
-                "For simulator wall-clock gains, also consider increasing --visual_update_interval."
+                f"[INFO] visual_downsample={ds} reduces ARB render resolution, visual tensor size, and model/rollout cost. "
+                "For additional simulator wall-clock gains, also consider increasing --visual_update_interval."
             )
     
     # We must delay env creation for resume if we want to ensure same config? 
@@ -646,6 +658,7 @@ def main():
                 "execution_train_config": leader_cfg.get("execution_train_config"),
                 "execution_model_path": leader_cfg.get("execution_model_path"),
                 "execution_algo": str(leader_cfg.get("execution_algo", "auto")),
+                "execution_action_repeat": int(leader_cfg.get("execution_action_repeat", 1)),
                 "scripted_transition_alt_agl_m": float(leader_cfg.get("scripted_transition_alt_agl_m", 140.0)),
                 "heading_bias_limit_deg": float(leader_cfg.get("heading_bias_limit_deg", 45.0)),
                 "altitude_bias_limit_m": float(leader_cfg.get("altitude_bias_limit_m", 800.0)),

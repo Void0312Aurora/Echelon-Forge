@@ -363,6 +363,7 @@ else:
             execution_train_config: str | None = None,
             execution_model_path: str | None = None,
             execution_algo: str = "auto",
+            execution_action_repeat: int = 1,
             scripted_transition_alt_agl_m: float = 140.0,
             heading_bias_limit_deg: float = 45.0,
             altitude_bias_limit_m: float = 800.0,
@@ -388,6 +389,7 @@ else:
             )
             self.execution_model_path = None if not execution_model_path else os.path.abspath(str(execution_model_path))
             self.execution_algo = str(execution_algo or "auto")
+            self.execution_action_repeat = max(1, int(execution_action_repeat))
             self.scripted_transition_alt_agl_m = max(10.0, float(scripted_transition_alt_agl_m))
             self.heading_bias_limit_deg = max(0.0, float(heading_bias_limit_deg))
             self.altitude_bias_limit_m = max(0.0, float(altitude_bias_limit_m))
@@ -416,6 +418,9 @@ else:
             self._c2_manager = ScriptedC2TaskManager()
             self._bridge = _LeaderCommandBridge()
             self._last_exec_obs = None
+            self._last_exec_action: np.ndarray | None = None
+            self._exec_action_repeat_remaining = 0
+            self._last_effective_execution_action_repeat = 1
             self._last_leader_command: tuple[int, float, float, float] | None = None
             self._last_leader_mode = "teacher"
             self._last_requested_bucket = "teacher"
@@ -485,6 +490,9 @@ else:
             _ = options
             obs, info = self._exec_env.reset(seed=seed)
             self._last_exec_obs = obs
+            self._last_exec_action = None
+            self._exec_action_repeat_remaining = 0
+            self._last_effective_execution_action_repeat = 1
             self._pending_leader_state = None
             self._exec_policy_reset(obs)
             loader = self.unwrapped.loader
@@ -531,6 +539,9 @@ else:
                 raise RuntimeError("LeaderTrainingEnv already has a pending batched leader step")
             action = self._normalize_leader_action(action)
             mapping = self._decode_action(action)
+            self._last_exec_action = None
+            self._exec_action_repeat_remaining = 0
+            self._last_effective_execution_action_repeat = 1
 
             self._update_scripted_c2()
             decision_c2_transitioned = bool(self._last_c2_info.get("transitioned", False))
@@ -674,6 +685,7 @@ else:
             info_out["leader_backend"] = str(self.execution_backend)
             info_out["leader_mode"] = str(self._last_leader_mode)
             info_out["leader_decision_interval_steps"] = int(self.decision_interval_steps)
+            info_out["leader_execution_action_repeat"] = int(self._last_effective_execution_action_repeat)
             info_out["leader_effective_command"] = np.asarray(self._last_leader_command, dtype=np.float32)
             report = getattr(loader, "pilot_report", None)
             info_out["leader_effective_report"] = np.asarray(
@@ -750,10 +762,19 @@ else:
                     pass
 
         def _predict_execution_action(self, obs: dict) -> np.ndarray:
+            if self._last_exec_action is not None and self._exec_action_repeat_remaining > 0:
+                self._exec_action_repeat_remaining -= 1
+                return np.asarray(self._last_exec_action, dtype=np.float32).reshape(-1)
+            resolved_repeat = max(1, int(self.execution_action_repeat))
             if self.execution_backend == "scripted":
-                return np.asarray(self._exec_policy.predict(obs), dtype=np.float32).reshape(-1)
-            action, _ = self._exec_policy.predict(obs, deterministic=True)
-            return np.asarray(action, dtype=np.float32).reshape(-1)
+                action = np.asarray(self._exec_policy.predict(obs), dtype=np.float32).reshape(-1)
+            else:
+                action, _ = self._exec_policy.predict(obs, deterministic=True)
+                action = np.asarray(action, dtype=np.float32).reshape(-1)
+            self._last_exec_action = np.asarray(action, dtype=np.float32).reshape(-1)
+            self._last_effective_execution_action_repeat = int(resolved_repeat)
+            self._exec_action_repeat_remaining = max(0, int(resolved_repeat) - 1)
+            return np.asarray(self._last_exec_action, dtype=np.float32).reshape(-1)
 
         def _snapshot_leader_state(self) -> dict[str, Any]:
             loader = self.unwrapped.loader

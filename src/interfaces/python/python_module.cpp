@@ -601,7 +601,7 @@ NB_MODULE(ef_py, m) {
         }, "Get ARB visual observation [H, W, C] tensor", nb::arg("entity_id"))
         .def("get_visual_observation_downsampled", [](SimulationKernel& self, uint64_t entity_id, int factor) {
              const int downsample = factor > 1 ? factor : 1;
-             auto downsampled = downsample_visual_tensor(self.get_visual_observation(entity_id), downsample);
+             auto downsampled = self.get_visual_observation_downsampled(entity_id, downsample);
              size_t shape[3] = {
                  static_cast<size_t>(arb::ARB_HEIGHT / downsample),
                  static_cast<size_t>(arb::ARB_WIDTH / downsample),
