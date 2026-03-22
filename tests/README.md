@@ -10,16 +10,18 @@
 
 ## Current Structure
 
-- `test_chain_contracts.py`
-  - Batch runner for command-chain contracts in `tests/contracts/chain/`.
-- `test_route_generator_contracts.py`
-  - Batch runner for route-generator contracts in `tests/contracts/route_generator/`.
-- `test_env_regression_contracts.py`
-  - Batch runner for `UniversalEnv`-based contracts under `tests/contracts/env/`.
-- `test_unit_regression_contracts.py`
-  - Batch runner for pure Python/controller/config/loader contracts under `tests/contracts/unit/`.
-- `test_scripted_bridge_contracts.py`
-  - Batch runner for scripted bridge contracts under `tests/contracts/bridges/`.
+- `runtime/`
+  - Runtime-contract tests for mission, execution-step, and loader parity.
+- `world_batch/`
+  - Batch kernel and vec-env adapter tests.
+- `scenario/`
+  - Scenario compiler and spatial-query tests.
+- `leader/`
+  - Leader-layer wiring and runtime-control tests.
+- `runners/`
+  - Batch runners for grouped JSON contract suites.
+- `support/`
+  - Shared fakes and helper fixtures used by multiple Python tests.
 - `contracts/`
   - JSON specs for contract-driven regressions, grouped by category.
 - `diagnostics/`
@@ -28,6 +30,12 @@
   - Reusable scenario fixtures when inline JSON is not practical, for example imported prefab dependencies.
 
 Standalone Python tests should now be the exception, not the default.
+
+When a standalone test is needed, prefer:
+
+- one focused file per runtime or adapter boundary
+- small internal support modules under `tests/` for shared fakes/builders
+- compatibility shims only when an old entrypoint still needs to exist
 
 ## Contract Types
 
@@ -51,14 +59,14 @@ Run one contract directly:
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tools/run_scenario_contract.py --spec tests/contracts/chain/loader_command_chain_takeoff_to_landing.json
+python tools/runners/run_scenario_contract.py --spec tests/contracts/chain/loader_command_chain_takeoff_to_landing.json
 ```
 
 Run multiple contracts in one call:
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tools/run_scenario_contract.py --spec \
+python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_v1.json \
   tests/contracts/route_generator/route_generator_waypoint_modes.json
 ```
@@ -66,11 +74,11 @@ python tools/run_scenario_contract.py --spec \
 Run a batch runner:
 
 ```bash
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO python tests/test_chain_contracts.py
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO python tests/test_route_generator_contracts.py
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO python tests/test_env_regression_contracts.py
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO python tests/test_unit_regression_contracts.py
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO python tests/test_scripted_bridge_contracts.py
+PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
+python tests/runners/test_contract_batches.py --group chain --group env
+
+PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
+python tests/runners/test_contract_batches.py --group unit --group bridges --group route_generator
 ```
 
 ## Dependency Notes

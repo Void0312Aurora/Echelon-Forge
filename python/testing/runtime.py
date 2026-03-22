@@ -22,5 +22,18 @@ def ensure_repo_imports() -> str:
     return root
 
 
+def configure_sim_log_level(level: str = "warn") -> str:
+    root = ensure_repo_imports()
+    normalized = str(level or "warn").strip().lower() or "warn"
+    os.environ["CMO_SIM_LOG_LEVEL"] = normalized
+    try:
+        import ef_py  # type: ignore
+
+        ef_py.set_log_level(normalized)
+    except Exception:
+        pass
+    return root
+
+
 def resolve_repo_path(*parts: str) -> str:
     return os.path.join(repo_root(), *parts)

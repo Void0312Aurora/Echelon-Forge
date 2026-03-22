@@ -5,6 +5,7 @@ from typing import Any
 
 VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4"}
 VALID_MISSION_OBS_MODES = {"basic", "nav_v1", "nav_v2"}
+VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled", "legacy"}
 
 
 def infer_include_visual_from_train_config(train_config: dict[str, Any] | None) -> bool:
@@ -63,6 +64,14 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
     else:
         visual_update_interval = int(visual_update_interval)
 
+    execution_step_runtime_mode = getattr(args, "execution_step_runtime_mode", None)
+    if execution_step_runtime_mode is None:
+        execution_step_runtime_mode = env_cfg.get("execution_step_runtime_mode")
+    if execution_step_runtime_mode is not None:
+        execution_step_runtime_mode = str(execution_step_runtime_mode).strip().lower()
+        if execution_step_runtime_mode == "":
+            execution_step_runtime_mode = None
+
     action_mode = action_mode.strip()
     mission_obs_mode = mission_obs_mode.strip().lower()
     visual_downsample = max(1, int(visual_downsample))
@@ -72,6 +81,10 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         raise ValueError(f"Unknown action_mode in merged env config: {action_mode!r}")
     if mission_obs_mode not in VALID_MISSION_OBS_MODES:
         raise ValueError(f"Unknown mission_obs_mode in merged env config: {mission_obs_mode!r}")
+    if execution_step_runtime_mode is not None and execution_step_runtime_mode not in VALID_EXECUTION_STEP_RUNTIME_MODES:
+        raise ValueError(
+            f"Unknown execution_step_runtime_mode in merged env config: {execution_step_runtime_mode!r}"
+        )
 
     return {
         "include_visual": bool(include_visual),
@@ -80,4 +93,5 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         "mission_obs_mode": mission_obs_mode,
         "visual_downsample": visual_downsample,
         "visual_update_interval": visual_update_interval,
+        "execution_step_runtime_mode": execution_step_runtime_mode,
     }

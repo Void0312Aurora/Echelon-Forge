@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Iterable, Optional
 
 import numpy as np
@@ -14,6 +15,14 @@ from python.rl.mission_defs import (
 from python.rl.scripted_landing import ScriptedLandingController
 from python.rl.scripted_takeoff import ScriptedTakeoffController
 from python.rl.scripted_stable_flight import ScriptedStableFlightController
+
+
+@dataclass
+class PreparedMultiTimescaleAction:
+    action: np.ndarray
+    baseline_action: np.ndarray | None
+    rate_penalty: float
+    scripted_active_mode: str | None
 
 
 class MultiTimescaleActionWrapper(gym.Wrapper):
@@ -111,7 +120,15 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         self._scripted_landing_ctrl: Optional[ScriptedLandingController] = None
         self._scripted_active_mode: str | None = None
 
-    def reset(self, **kwargs):
+    def _get_reset_dt(self) -> float:
+        dt = 0.05
+        try:
+            dt = float(getattr(self.unwrapped.sim, "get_time_step", lambda: 0.05)())
+        except Exception:
+            dt = 0.05
+        return dt
+
+    def reset_state(self, obs) -> None:
         self._t = 0
         self._held_action = None
         self._binary_state = {int(k): float(v) for k, v in self.binary_initial_values.items()}
@@ -120,14 +137,9 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         self._scripted_stable_ctrl = None
         self._scripted_landing_ctrl = None
         self._scripted_active_mode = None
-        obs, info = self.env.reset(**kwargs)
         self._last_obs = obs
         if self.scripted_baseline_mode in ("stable_flight", "takeoff", "takeoff_then_stable_flight", "landing_ils", "takeoff_cruise_landing"):
-            dt = 0.05
-            try:
-                dt = float(getattr(self.unwrapped.sim, "get_time_step", lambda: 0.05)())
-            except Exception:
-                dt = 0.05
+            dt = self._get_reset_dt()
             if self.scripted_baseline_mode == "takeoff":
                 self._scripted_takeoff_ctrl = ScriptedTakeoffController(
                     action_dim=int(self.action_space.shape[0]),
@@ -177,6 +189,10 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 self._scripted_active_mode = "stable_flight"
             if isinstance(obs, dict) and self._scripted_ctrl is not None:
                 self._scripted_ctrl.reset(obs)
+
+    def reset(self, **kwargs):
+        obs, info = self.env.reset(**kwargs)
+        self.reset_state(obs)
         return obs, info
 
     def _get_loader(self):
@@ -395,7 +411,7 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
                 pass
         return float(np.clip(scale, 0.0, 1.0))
 
-    def step(self, action):
+    def prepare_action(self, action) -> PreparedMultiTimescaleAction:
         a = np.asarray(action, dtype=np.float32).reshape(-1).copy()
         baseline_action = None
         locked_idx: tuple[int, ...] = ()
@@ -461,24 +477,35 @@ class MultiTimescaleActionWrapper(gym.Wrapper):
         if self.action_rate_penalty_coef > 0.0 and self._held_action is not None:
             rate_penalty = float(self.action_rate_penalty_coef) * float(np.mean(np.abs(a - self._held_action)))
 
-        obs, reward, terminated, truncated, info = self.env.step(a)
+        return PreparedMultiTimescaleAction(
+            action=a.astype(np.float32, copy=True),
+            baseline_action=None if baseline_action is None else baseline_action.astype(np.float32, copy=True),
+            rate_penalty=float(rate_penalty),
+            scripted_active_mode=None if self._scripted_active_mode is None else str(self._scripted_active_mode),
+        )
+
+    def finalize_step_result(self, obs, reward, info, prepared: PreparedMultiTimescaleAction):
         self._last_obs = obs
+        info_out = dict(info or {})
+        info_out["effective_action"] = np.asarray(prepared.action, dtype=np.float32, copy=True)
+        if prepared.baseline_action is not None and prepared.baseline_action.size == prepared.action.size:
+            info_out["baseline_action"] = np.asarray(prepared.baseline_action, dtype=np.float32, copy=True)
+        if prepared.scripted_active_mode is not None:
+            info_out["scripted_baseline_mode_active"] = str(prepared.scripted_active_mode)
 
-        if isinstance(info, dict):
-            info = dict(info)
-            info["effective_action"] = a.astype(np.float32, copy=True)
-            if baseline_action is not None and baseline_action.size == a.size:
-                info["baseline_action"] = baseline_action.astype(np.float32, copy=True)
-            if self._scripted_active_mode is not None:
-                info["scripted_baseline_mode_active"] = str(self._scripted_active_mode)
+        reward_out = float(reward)
+        if prepared.rate_penalty != 0.0:
+            reward_out -= float(prepared.rate_penalty)
+            info_out["action_rate_penalty"] = float(prepared.rate_penalty)
 
-        if rate_penalty != 0.0:
-            reward = float(reward) - rate_penalty
-            if isinstance(info, dict):
-                info["action_rate_penalty"] = float(rate_penalty)
-
-        self._held_action = a.copy()
+        self._held_action = np.asarray(prepared.action, dtype=np.float32, copy=True)
         self._t += 1
+        return obs, reward_out, info_out
+
+    def step(self, action):
+        prepared = self.prepare_action(action)
+        obs, reward, terminated, truncated, info = self.env.step(prepared.action)
+        obs, reward, info = self.finalize_step_result(obs, reward, info, prepared)
         return obs, reward, terminated, truncated, info
 
 

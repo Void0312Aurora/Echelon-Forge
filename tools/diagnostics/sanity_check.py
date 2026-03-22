@@ -1,9 +1,12 @@
-import sys
 import os
-import math
+import sys
 
-# Add build/ to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '../build'))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BUILD_ROOT = os.path.join(REPO_ROOT, "build")
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+if BUILD_ROOT not in sys.path:
+    sys.path.insert(0, BUILD_ROOT)
 
 import ef_py
 from ef_py import Side, SimulationKernel, CommMsgType

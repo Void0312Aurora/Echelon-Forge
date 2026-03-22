@@ -12,7 +12,7 @@ Leader-layer configs can reduce frozen execution-policy inference cost with:
   - `2` means one prediction is reused for two low-level steps.
   - Larger values improve throughput but reduce low-level control bandwidth.
 
-This knob is implemented in [leader_env.py](/home/void0312/CMO/gym_envs/leader_env.py) and is reported by [leader_perf_probe.py](/home/void0312/CMO/tools/leader_perf_probe.py).
+This knob is implemented in [leader_env.py](/home/void0312/CMO/gym_envs/leader_env.py) and is reported by [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py).
 
 ## Visual Performance Knobs
 
@@ -40,16 +40,27 @@ Training runtime config also supports:
   - Worker processes write observations into parent-owned shared memory.
   - Pipe traffic is reduced to reward/done/info/reset metadata, which avoids large per-step observation serialization costs.
 
-- `runtime.batched_execution_inference`
-  - Keeps the older experimental single-process batched leader inference path.
-  - This is still available for investigation, but it has historically measured worse wall-clock FPS than multi-process env stepping.
+- `runtime.world_batch_vec_env`
+  - Uses [world_batch_vec_env.py](/home/void0312/CMO/python/rl/world_batch_vec_env.py) for execution-layer training instead of `DummyVecEnv`/`SubprocVecEnv`.
+  - This routes execution rollouts through one `ef_py.WorldBatchRuntime`, so stepping and readback use batch C++ APIs instead of per-env Python loops.
+  - Current Phase 4 guardrail: only supported for non-visual execution runs without action wrappers.
+
+- `runtime.world_batch_threads`
+  - Controls `ef_py.WorldBatchRuntime.set_worker_threads()`.
+  - Default is `1`.
+  - Use `0` only if you explicitly want auto mode.
+  - Current Phase 4 benchmark on this codebase shows that aggressive intra-runtime threading can be slower than `1`, because a single world step is still too cheap relative to thread scheduling overhead.
+  - If you added more CPU, the safer first move is usually increasing `n_envs`; treat `world_batch_threads` as a measured tuning knob, not a “more is always faster” switch.
+
+- The earlier single-process batched/shared-runtime leader route is no longer the maintained baseline in this repo.
+  - Use [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py) to compare the maintained `subproc`, `shared`, and `dummy` backends instead of relying on the old experimental flags.
 
 ## Useful Probes
 
 - Leader throughput:
 
 ```bash
-./.venv/bin/python tools/leader_perf_probe.py \
+./.venv/bin/python tools/diagnostics/leader_perf_probe.py \
   --scenario scenarios/takeoff/takeoff.json \
   --train_config examples/config/training/p7_leader_layer_c2_reporting_generalization_fast_v1.json \
   --n_envs 4 \
@@ -60,7 +71,7 @@ Training runtime config also supports:
 - Leader throughput with shared-memory vec env:
 
 ```bash
-./.venv/bin/python tools/leader_perf_probe.py \
+./.venv/bin/python tools/diagnostics/leader_perf_probe.py \
   --scenario scenarios/takeoff/takeoff.json \
   --train_config examples/config/training/p7_leader_layer_c2_reporting_generalization_fast_v1.json \
   --n_envs 4 \
@@ -72,4 +83,14 @@ Training runtime config also supports:
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark_visual_resolution.py --help
+```
+
+- Phase 4 execution batch-runtime rollout benchmark:
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark_world_batch_vec_env_phase4.py \
+  --scenario scenarios/combined/takeoff_to_landing_continuous_train_v1.json \
+  --n-envs 8 \
+  --steps 128 \
+  --mission-obs-mode nav_v2
 ```

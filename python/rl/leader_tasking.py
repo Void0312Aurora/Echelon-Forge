@@ -117,6 +117,13 @@ def _stable_ref_id(payload: Any) -> int:
 
 
 def infer_route_ref_id(loader: Any) -> int:
+    cached = getattr(loader, "_cached_route_ref_id", None)
+    if cached is not None:
+        try:
+            return int(cached)
+        except Exception:
+            pass
+
     mission_cmd = _mission_cmd_dict(loader)
     mission_cfg = _scenario_mission_cfg(loader)
     for raw_value in (
@@ -125,10 +132,18 @@ def infer_route_ref_id(loader: Any) -> int:
     ):
         value = _coerce_positive_int(raw_value)
         if value > 0:
+            try:
+                loader._cached_route_ref_id = int(value)
+            except Exception:
+                pass
             return value
 
     waypoints = list(getattr(loader, "waypoints", []) or [])
     if not waypoints:
+        try:
+            loader._cached_route_ref_id = 0
+        except Exception:
+            pass
         return 0
     payload = []
     for idx, wp in enumerate(waypoints):
@@ -146,7 +161,12 @@ def infer_route_ref_id(loader: Any) -> int:
                 "waypoint_mode": str(wp.get("waypoint_mode", "")),
             }
         )
-    return int(_stable_ref_id(payload))
+    value = int(_stable_ref_id(payload))
+    try:
+        loader._cached_route_ref_id = int(value)
+    except Exception:
+        pass
+    return value
 
 
 def infer_recovery_base_id(loader: Any, task: Any | None = None) -> int:
@@ -368,25 +388,44 @@ class RuleBasedLeaderPhaseManager:
         self.rollout_alt_agl_m = float(rollout_alt_agl_m)
         self.scramble_ground_speed_max_mps = float(scramble_ground_speed_max_mps)
 
-    def reset(self, loader: Any, sim_time_s: float = 0.0) -> None:
+    def reset(
+        self,
+        loader: Any,
+        sim_time_s: float = 0.0,
+        *,
+        truth: Any = None,
+        inst: Any = None,
+        sync_to_kernel: bool = True,
+    ) -> None:
         loader.task_order = self._build_task_order(loader, sim_time_s=sim_time_s)
         loader.leader_intent = ef_py.LeaderIntent()
         loader.pilot_report = self._make_report(
             loader,
             report_type=ef_py.CommMsgType.REP_WILCO,
             sim_time_s=sim_time_s,
+            truth=truth,
         )
-        self.update(loader, sim_time_s=sim_time_s)
+        self.update(loader, sim_time_s=sim_time_s, truth=truth, inst=inst, sync_to_kernel=sync_to_kernel)
 
-    def update(self, loader: Any, sim_time_s: float = 0.0) -> None:
+    def update(
+        self,
+        loader: Any,
+        sim_time_s: float = 0.0,
+        *,
+        truth: Any = None,
+        inst: Any = None,
+        sync_to_kernel: bool = True,
+    ) -> None:
         if getattr(loader, "agent_id", None) is None:
             return
 
         if getattr(loader, "task_order", None) is None:
             loader.task_order = self._build_task_order(loader, sim_time_s=sim_time_s)
 
-        truth = loader.sim.get_agent_observation(loader.agent_id)
-        inst = loader.sim.get_instrument_state(loader.agent_id)
+        if truth is None:
+            truth = loader.sim.get_agent_observation(loader.agent_id)
+        if inst is None:
+            inst = loader.sim.get_instrument_state(loader.agent_id)
 
         alt_agl = float(getattr(inst, "alt_radar", 0.0))
         ground_speed = float(getattr(inst, "ground_speed", 0.0))
@@ -419,7 +458,7 @@ class RuleBasedLeaderPhaseManager:
             dme_m=dme_m,
             remaining_waypoints=remaining_waypoints,
         ):
-            loader._activate_post_waypoint_transition()
+            loader._activate_post_waypoint_transition(sync_to_kernel=sync_to_kernel)
             cmd_code = int(getattr(loader, "mission_cmd", {}).get("command_code", cmd_code))
 
         phase_name = self._infer_phase_name(
@@ -468,12 +507,14 @@ class RuleBasedLeaderPhaseManager:
                 loader,
                 report_type=ef_py.CommMsgType.REP_RTB,
                 sim_time_s=sim_time_s,
+                truth=truth,
             )
         elif prev_report is None:
             loader.pilot_report = self._make_report(
                 loader,
                 report_type=ef_py.CommMsgType.REP_WILCO,
                 sim_time_s=sim_time_s,
+                truth=truth,
             )
 
     def sync_to_kernel(self, loader: Any) -> None:
@@ -546,7 +587,7 @@ class RuleBasedLeaderPhaseManager:
                 order.recovery_approach_type = infer_recovery_approach_type(loader, task=order)
         return order
 
-    def _make_report(self, loader: Any, *, report_type: Any, sim_time_s: float) -> ef_py.PilotReport:
+    def _make_report(self, loader: Any, *, report_type: Any, sim_time_s: float, truth: Any = None) -> ef_py.PilotReport:
         report = ef_py.PilotReport()
         report.active = True
         report.report_type = report_type
@@ -555,7 +596,8 @@ class RuleBasedLeaderPhaseManager:
         report.phase_id = int(self._phase_enum_for_name(getattr(loader, "mission_phase_name", "idle")))
         report.timestamp_s = float(sim_time_s)
         try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
+            if truth is None:
+                truth = loader.sim.get_agent_observation(loader.agent_id)
             report.location_x_m = float(getattr(truth, "x", 0.0))
             report.location_y_m = float(getattr(truth, "y", 0.0))
             report.location_z_m = float(getattr(truth, "z", 0.0))
@@ -753,7 +795,8 @@ class ScriptedC2TaskManager:
             "on_station_elapsed_s": float(getattr(loader, "c2_on_station_elapsed_s", 0.0)),
         }
 
-    def reset(self, loader: Any, sim_time_s: float = 0.0) -> dict[str, Any]:
+    def reset(self, loader: Any, sim_time_s: float = 0.0, *, truth: Any = None, inst: Any = None, sync_to_kernel: bool = True) -> dict[str, Any]:
+        _ = (truth, inst, sync_to_kernel)
         scenario_data = getattr(loader, "scenario_data", {}) or {}
         meta = scenario_data.get("meta", {}) if isinstance(scenario_data, dict) else {}
         init_task = meta.get("initial_c2_task", self.TASK_SCRAMBLE) if isinstance(meta, dict) else self.TASK_SCRAMBLE
@@ -781,6 +824,10 @@ class ScriptedC2TaskManager:
             return None
         order_cfg = scenario_data.get("task_order", None)
         return order_cfg if isinstance(order_cfg, dict) else None
+
+    @staticmethod
+    def _has_route_waypoints(loader: Any) -> bool:
+        return bool(list(getattr(loader, "waypoints", []) or []))
 
     def _active_waypoint_targets(self, loader: Any) -> tuple[float, float, float | None, float | None]:
         mission_cmd = getattr(loader, "mission_cmd", {}) or {}
@@ -853,31 +900,30 @@ class ScriptedC2TaskManager:
                 )
                 order.issue_time_s = float(sim_time_s)
             order.task_type = task_type_by_name.get(task_name, getattr(order, "task_type", getattr(ef_py.TaskType, "Idle")))
-            target_altitude_m, target_speed_mps, _anchor_x_m, _anchor_y_m = self._active_waypoint_targets(loader)
-            # CAP is a task-level state, but for route-driven CAP missions the active
-            # altitude/speed reference still belongs to the current route leg. Keep the
-            # task block centered on the live mission reference so the leader task
-            # constraints do not silently drift away from the execution-layer command.
-            self._retarget_block(
-                order,
-                target_attr="target_altitude_m",
-                min_attr="altitude_block_min_m",
-                max_attr="altitude_block_max_m",
-                target_value=float(target_altitude_m),
-                default_lower_margin=500.0,
-                default_upper_margin=500.0,
-                floor_value=0.0,
-            )
-            self._retarget_block(
-                order,
-                target_attr="target_speed_mps",
-                min_attr="speed_min_mps",
-                max_attr="speed_max_mps",
-                target_value=float(target_speed_mps),
-                default_lower_margin=40.0,
-                default_upper_margin=40.0,
-                floor_value=40.0,
-            )
+            if self._has_route_waypoints(loader):
+                target_altitude_m, target_speed_mps, _anchor_x_m, _anchor_y_m = self._active_waypoint_targets(loader)
+                # Route-driven CAP missions inherit the live leg altitude/speed target
+                # while preserving the task block half-widths from the authored order.
+                self._retarget_block(
+                    order,
+                    target_attr="target_altitude_m",
+                    min_attr="altitude_block_min_m",
+                    max_attr="altitude_block_max_m",
+                    target_value=float(target_altitude_m),
+                    default_lower_margin=500.0,
+                    default_upper_margin=500.0,
+                    floor_value=0.0,
+                )
+                self._retarget_block(
+                    order,
+                    target_attr="target_speed_mps",
+                    min_attr="speed_min_mps",
+                    max_attr="speed_max_mps",
+                    target_value=float(target_speed_mps),
+                    default_lower_margin=40.0,
+                    default_upper_margin=40.0,
+                    floor_value=40.0,
+                )
             return
 
         target_altitude_m, target_speed_mps, anchor_x_m, anchor_y_m = self._active_waypoint_targets(loader)
@@ -905,24 +951,36 @@ class ScriptedC2TaskManager:
             order.speed_max_mps = max(float(order.speed_min_mps), float(target_speed_mps) + 20.0)
             return
 
-    def _fuel_margin_frac(self, loader: Any) -> tuple[float, float]:
-        try:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
-            fuel_total_kg = float(max(0.0, getattr(inst, "fuel_internal", 0.0) + getattr(inst, "fuel_external", 0.0)))
-        except Exception:
-            fuel_total_kg = 0.0
+    def _fuel_margin_frac(self, loader: Any, *, inst: Any = None) -> tuple[float, float]:
+        if inst is None:
+            try:
+                inst = loader.sim.get_instrument_state(loader.agent_id)
+            except Exception:
+                inst = None
+        fuel_total_kg = (
+            float(max(0.0, getattr(inst, "fuel_internal", 0.0) + getattr(inst, "fuel_external", 0.0)))
+            if inst is not None
+            else 0.0
+        )
         task = getattr(loader, "task_order", None)
         bingo_kg = float(max(0.0, getattr(task, "fuel_bingo_override_kg", 0.0) if task is not None else 0.0))
         if bingo_kg <= 1.0:
             return fuel_total_kg, 1.0
         return fuel_total_kg, float((fuel_total_kg - bingo_kg) / max(bingo_kg, 1.0))
 
-    def _station_metrics(self, loader: Any) -> dict[str, float | bool]:
+    def _station_metrics(self, loader: Any, *, truth: Any = None, inst: Any = None) -> dict[str, float | bool]:
         task = getattr(loader, "task_order", None)
-        try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
-            inst = loader.sim.get_instrument_state(loader.agent_id)
-        except Exception:
+        if truth is None:
+            try:
+                truth = loader.sim.get_agent_observation(loader.agent_id)
+            except Exception:
+                truth = None
+        if inst is None:
+            try:
+                inst = loader.sim.get_instrument_state(loader.agent_id)
+            except Exception:
+                inst = None
+        if truth is None or inst is None:
             return {"near_station": False, "anchor_dist_m": float("inf")}
         anchor_x = float(getattr(task, "anchor_x_m", 0.0) if task is not None else 0.0)
         anchor_y = float(getattr(task, "anchor_y_m", 0.0) if task is not None else 0.0)
@@ -949,10 +1007,20 @@ class ScriptedC2TaskManager:
             "anchor_dist_m": float(anchor_dist_m),
         }
 
-    def _recovery_ready(self, loader: Any) -> bool:
+    def _recovery_ready(self, loader: Any, *, truth: Any = None, inst: Any = None) -> bool:
+        if truth is None:
+            try:
+                truth = loader.sim.get_agent_observation(loader.agent_id)
+            except Exception:
+                truth = None
+        if inst is None:
+            try:
+                inst = loader.sim.get_instrument_state(loader.agent_id)
+            except Exception:
+                inst = None
+        if truth is None or inst is None:
+            return False
         try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
-            inst = loader.sim.get_instrument_state(loader.agent_id)
             ils = loader.get_ils_observation(
                 float(getattr(truth, "x", 0.0)),
                 float(getattr(truth, "y", 0.0)),
@@ -973,19 +1041,19 @@ class ScriptedC2TaskManager:
             and gs_abs <= self.recover_arm_gs_abs_max
         )
 
-    def _report_assessment(self, loader: Any) -> tuple[bool, str]:
+    def _report_assessment(self, loader: Any, *, truth: Any = None, inst: Any = None) -> tuple[bool, str]:
         report = getattr(loader, "pilot_report", None)
         if report is None or not bool(getattr(report, "active", False)):
             return False, "no_report"
         task = getattr(loader, "task_order", None)
         report_type = int(getattr(report, "report_type", getattr(ef_py.CommMsgType, "None")))
         if report_type == int(getattr(ef_py.CommMsgType, "REP_ON_STATION")):
-            metrics = self._station_metrics(loader)
+            metrics = self._station_metrics(loader, truth=truth, inst=inst)
             return (bool(metrics["near_station"]), "on_station" if bool(metrics["near_station"]) else "station_not_reached")
         if report_type == int(getattr(ef_py.CommMsgType, "REP_RTB")):
             return True, "rtb_report"
         if report_type == int(getattr(ef_py.CommMsgType, "WARN_BINGO")):
-            _fuel_total_kg, margin = self._fuel_margin_frac(loader)
+            _fuel_total_kg, margin = self._fuel_margin_frac(loader, inst=inst)
             return (bool(margin <= 0.15), "bingo_report" if margin <= 0.15 else "fuel_not_bingo")
         if report_type == int(getattr(ef_py.CommMsgType, "REP_UNABLE")):
             return True, "unable_report"
@@ -993,19 +1061,20 @@ class ScriptedC2TaskManager:
             return True, "wilco_report"
         return False, "unsupported_report"
 
-    def update(self, loader: Any, sim_time_s: float = 0.0) -> dict[str, Any]:
+    def update(self, loader: Any, sim_time_s: float = 0.0, *, truth: Any = None, inst: Any = None, sync_to_kernel: bool = True) -> dict[str, Any]:
+        _ = sync_to_kernel
         cfg = self._task_cfg(loader)
-        report_valid, report_reason = self._report_assessment(loader)
+        report_valid, report_reason = self._report_assessment(loader, truth=truth, inst=inst)
         report = getattr(loader, "pilot_report", None)
         report_type = int(getattr(report, "report_type", getattr(ef_py.CommMsgType, "None"))) if report is not None else int(getattr(ef_py.CommMsgType, "None"))
 
-        try:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
-            alt_agl_m = float(getattr(inst, "alt_radar", 0.0))
-            ground_speed_mps = float(getattr(inst, "ground_speed", 0.0))
-        except Exception:
-            alt_agl_m = 0.0
-            ground_speed_mps = 0.0
+        if inst is None:
+            try:
+                inst = loader.sim.get_instrument_state(loader.agent_id)
+            except Exception:
+                inst = None
+        alt_agl_m = float(getattr(inst, "alt_radar", 0.0)) if inst is not None else 0.0
+        ground_speed_mps = float(getattr(inst, "ground_speed", 0.0)) if inst is not None else 0.0
 
         task = getattr(loader, "task_order", None)
         on_station_time_s = float(getattr(task, "on_station_time_s", 0.0) if task is not None else 0.0)
@@ -1020,7 +1089,7 @@ class ScriptedC2TaskManager:
                 reason = "scramble_complete"
 
         elif current == self.TASK_CAP:
-            metrics = self._station_metrics(loader)
+            metrics = self._station_metrics(loader, truth=truth, inst=inst)
             if bool(metrics["near_station"]):
                 if self.station_entry_time_s is None:
                     self.station_entry_time_s = float(sim_time_s)
@@ -1042,7 +1111,7 @@ class ScriptedC2TaskManager:
                     reason = "station_time_complete"
 
         elif current == self.TASK_RTB:
-            if self._recovery_ready(loader) and report_type in (
+            if self._recovery_ready(loader, truth=truth, inst=inst) and report_type in (
                 int(getattr(ef_py.CommMsgType, "REP_RTB")),
                 int(getattr(ef_py.CommMsgType, "WARN_BINGO")),
                 int(getattr(ef_py.CommMsgType, "REP_UNABLE")),

@@ -12,6 +12,7 @@ if (CMAKE_RANLIB)
 endif()
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Threads REQUIRED)
 
 include(FetchContent)
 
@@ -50,6 +51,16 @@ FetchContent_MakeAvailable(nlohmann_json)
 # --- Core Library ---
 add_library(ef_core STATIC
     src/core/engine/simulation_kernel.cpp
+    src/core/engine/world_batch_runtime.cpp
+    src/core/geometry/spatial_query_runtime.cpp
+    src/core/mission/execution_observation_runtime.cpp
+    src/core/mission/mission_runtime.cpp
+    src/core/mission/execution_step_runtime.cpp
+    src/core/mission/execution_frame_runtime.cpp
+    src/core/mission/execution_episode_runtime.cpp
+    src/core/mission/reward_runtime.cpp
+    src/core/mission/objective_runtime.cpp
+    src/core/mission/termination_runtime.cpp
     src/models/weapons/default_effects_model.cpp
     src/models/systems/default_sensor_model.cpp
     src/models/environment/default_environment_model.cpp
@@ -67,6 +78,7 @@ target_link_libraries(ef_core PUBLIC
     flecs::flecs
     spdlog::spdlog
     nlohmann_json::nlohmann_json
+    Threads::Threads
 )
 
 # --- Standalone App ---

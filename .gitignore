@@ -46,7 +46,11 @@ Thumbs.db
 # --- Project Specific ---
 *.log
 recordings/
-docs/
+docs/*
+!docs/rearchitecture/
+!docs/rearchitecture/*.md
+!docs/speed_rearchitecture/
+!docs/speed_rearchitecture/*.md
 archive/
 artifacts/
 logs/

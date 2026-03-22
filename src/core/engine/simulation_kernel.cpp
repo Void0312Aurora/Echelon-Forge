@@ -821,7 +821,7 @@ std::vector<UnitData> SimulationKernel::get_all_units() {
     return units;
 }
 
-AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) {
+AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) const {
     AgentObservation obs{};
     obs.id = entity_id;
     obs.sim_time = 0.0;
@@ -1092,7 +1092,7 @@ void SimulationKernel::set_pilot_report(uint64_t entity_id, const PilotReport& r
     }
 }
 
-TaskOrder SimulationKernel::get_task_order(uint64_t entity_id) {
+TaskOrder SimulationKernel::get_task_order(uint64_t entity_id) const {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         if (const TaskOrder* order = e.get<TaskOrder>()) {
@@ -1102,7 +1102,7 @@ TaskOrder SimulationKernel::get_task_order(uint64_t entity_id) {
     return TaskOrder{};
 }
 
-LeaderIntent SimulationKernel::get_leader_intent(uint64_t entity_id) {
+LeaderIntent SimulationKernel::get_leader_intent(uint64_t entity_id) const {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         if (const LeaderIntent* intent = e.get<LeaderIntent>()) {
@@ -1112,7 +1112,7 @@ LeaderIntent SimulationKernel::get_leader_intent(uint64_t entity_id) {
     return LeaderIntent{};
 }
 
-MissionCommand SimulationKernel::get_mission_command(uint64_t entity_id) {
+MissionCommand SimulationKernel::get_mission_command(uint64_t entity_id) const {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         if (const MissionCommand* cmd = e.get<MissionCommand>()) {
@@ -1122,7 +1122,7 @@ MissionCommand SimulationKernel::get_mission_command(uint64_t entity_id) {
     return MissionCommand{};
 }
 
-PilotReport SimulationKernel::get_pilot_report(uint64_t entity_id) {
+PilotReport SimulationKernel::get_pilot_report(uint64_t entity_id) const {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         if (const PilotReport* report = e.get<PilotReport>()) {

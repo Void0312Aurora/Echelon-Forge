@@ -61,6 +61,7 @@ public:
 
     // Get the Flecs world (for systems/bindings)
     flecs::world& get_world() { return ecs; }
+    const flecs::world& get_world() const { return ecs; }
 
     double get_time_step() const { return time_step; }
     void set_time_step(double dt) { time_step = dt; }
@@ -100,15 +101,15 @@ public:
     void set_task_order(uint64_t entity_id, const TaskOrder& order);
     void set_leader_intent(uint64_t entity_id, const LeaderIntent& intent);
     void set_pilot_report(uint64_t entity_id, const PilotReport& report);
-    TaskOrder get_task_order(uint64_t entity_id);
-    LeaderIntent get_leader_intent(uint64_t entity_id);
-    MissionCommand get_mission_command(uint64_t entity_id);
-    PilotReport get_pilot_report(uint64_t entity_id);
+    TaskOrder get_task_order(uint64_t entity_id) const;
+    LeaderIntent get_leader_intent(uint64_t entity_id) const;
+    MissionCommand get_mission_command(uint64_t entity_id) const;
+    PilotReport get_pilot_report(uint64_t entity_id) const;
     
     // Observation Interface
     std::vector<double> get_unit_position(uint64_t entity_id); // Returns [x, y, z]
     std::vector<UnitData> get_all_units(); // Bulk observation
-    AgentObservation get_agent_observation(uint64_t entity_id); // RL Observation
+    AgentObservation get_agent_observation(uint64_t entity_id) const; // RL Observation
     std::vector<float> get_visual_observation(uint64_t entity_id); // ARB Visual Observation
     std::vector<float> get_visual_observation_downsampled(uint64_t entity_id, int factor); // ARB downsampled visual
     std::vector<Detection> get_detections(uint64_t entity_id); // Sensor Output

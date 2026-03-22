@@ -44,6 +44,7 @@ from python.env_config import resolve_env_settings
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policies import SquashedMultiInputPolicy
 from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv
+from python.rl.world_batch_vec_env import WorldBatchVecEnv
 from python.rl.wrappers import get_action_wrapper_spec
 
 
@@ -319,6 +320,8 @@ def resolve_vec_env_spec(
                     "execution_device": str(runtime_cfg.get("execution_device", "cuda")),
                     "execution_use_autocast": bool(runtime_cfg.get("execution_use_autocast", True)),
                     "step_executor_workers": int(runtime_cfg.get("step_executor_workers", 0)),
+                    "use_shared_world_batch_runtime": bool(runtime_cfg.get("leader_world_batch_runtime", False)),
+                    "world_batch_threads": runtime_cfg.get("world_batch_threads"),
                 },
                 True,
             )
@@ -557,6 +560,8 @@ def main():
         f"torch_threads={torch_threads} "
         f"torch_interop_threads={torch_interop_threads} "
         f"shared_memory_vec_env={bool(runtime_cfg.get('shared_memory_vec_env', False))} "
+        f"world_batch_vec_env={bool(runtime_cfg.get('world_batch_vec_env', False))} "
+        f"world_batch_threads={runtime_cfg.get('world_batch_threads', '<default=1>')} "
         f"OMP_NUM_THREADS={os.environ.get('OMP_NUM_THREADS', '<unset>')} "
         f"MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS', '<unset>')} "
         f"OPENBLAS_NUM_THREADS={os.environ.get('OPENBLAS_NUM_THREADS', '<unset>')}"
@@ -565,8 +570,9 @@ def main():
         print(
             "Leader runtime: "
             f"batched_execution_inference={bool(runtime_cfg.get('batched_execution_inference', False))} "
-            f"execution_device={str(runtime_cfg.get('execution_device', 'cuda'))} "
-            f"execution_use_autocast={bool(runtime_cfg.get('execution_use_autocast', True))} "
+            f"leader_world_batch_runtime={bool(runtime_cfg.get('leader_world_batch_runtime', False))} "
+            f"execution_device={str(runtime_cfg.get('execution_device', 'cpu'))} "
+            f"execution_use_autocast={bool(runtime_cfg.get('execution_use_autocast', False))} "
             f"step_executor_workers={int(runtime_cfg.get('step_executor_workers', 0))} "
             f"leader_execution_torch_threads={runtime_cfg.get('leader_execution_torch_threads', '<auto>')} "
             f"leader_execution_torch_interop_threads={runtime_cfg.get('leader_execution_torch_interop_threads', '<auto>')}"
@@ -614,31 +620,66 @@ def main():
                 "For additional simulator wall-clock gains, also consider increasing --visual_update_interval."
             )
     
-    # We must delay env creation for resume if we want to ensure same config? 
-    # For now we assume user provides correct params for resumption.
-    vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
-        agent_layer=agent_layer,
-        n_envs=n_envs,
-        runtime_cfg=runtime_cfg,
-        leader_batched_vec_env_cls=LeaderBatchedVecEnv,
-    )
-
     if agent_layer == "execution":
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
-        vec_env = make_vec_env(
-            UniversalEnv,
-            n_envs=n_envs,
-            env_kwargs={
-                "scenario_path": scenario_path,
+        use_world_batch_vec_env = bool(runtime_cfg.get("world_batch_vec_env", False))
+        if use_world_batch_vec_env and env_settings["include_visual"]:
+            print(
+                "[WARN] runtime.world_batch_vec_env currently does not support include_visual=True. "
+                "Falling back to the standard vec env backend."
+            )
+            use_world_batch_vec_env = False
+        if use_world_batch_vec_env and wrapper_class is not None:
+            print(
+                "[WARN] runtime.world_batch_vec_env currently does not support action wrappers. "
+                "Falling back to the standard vec env backend."
+            )
+            use_world_batch_vec_env = False
+
+        if use_world_batch_vec_env:
+            world_batch_threads = runtime_cfg.get("world_batch_threads")
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=n_envs,
+                worker_threads=world_batch_threads,
                 **env_settings,
-            },
-            seed=training_seed,
-            vec_env_cls=vec_cls,
-            vec_env_kwargs=vec_env_kwargs,
-            wrapper_class=wrapper_class,
-            wrapper_kwargs=wrapper_kwargs,
-        )
+            )
+            vec_env.seed(training_seed)
+            print(
+                "World batch runtime: "
+                f"configured_threads={vec_env.batch_runtime.worker_threads()} "
+                f"effective_threads={vec_env.batch_runtime.effective_worker_threads()}"
+            )
+            active_batched_execution_inference = False
+        else:
+            # We must delay env creation for resume if we want to ensure same config?
+            # For now we assume user provides correct params for resumption.
+            vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
+                agent_layer=agent_layer,
+                n_envs=n_envs,
+                runtime_cfg=runtime_cfg,
+                leader_batched_vec_env_cls=LeaderBatchedVecEnv,
+            )
+            vec_env = make_vec_env(
+                UniversalEnv,
+                n_envs=n_envs,
+                env_kwargs={
+                    "scenario_path": scenario_path,
+                    **env_settings,
+                },
+                seed=training_seed,
+                vec_env_cls=vec_cls,
+                vec_env_kwargs=vec_env_kwargs,
+                wrapper_class=wrapper_class,
+                wrapper_kwargs=wrapper_kwargs,
+            )
     else:
+        vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
+            agent_layer=agent_layer,
+            n_envs=n_envs,
+            runtime_cfg=runtime_cfg,
+            leader_batched_vec_env_cls=LeaderBatchedVecEnv,
+        )
         leader_cfg = train_config.get("leader_env", {}) if isinstance(train_config.get("leader_env", {}), dict) else {}
         leader_execution_torch_threads = runtime_cfg.get("leader_execution_torch_threads")
         if leader_execution_torch_threads is None:
@@ -672,6 +713,8 @@ def main():
                 "approach_gate_distance_m": float(leader_cfg.get("approach_gate_distance_m", 18000.0)),
                 "approach_gate_cross_m": float(leader_cfg.get("approach_gate_cross_m", 3500.0)),
                 "approach_gate_heading_error_deg": float(leader_cfg.get("approach_gate_heading_error_deg", 85.0)),
+                "execution_world_batch_runtime": bool(runtime_cfg.get("execution_world_batch_runtime", False)),
+                "execution_world_batch_threads": runtime_cfg.get("execution_world_batch_threads"),
                 "execution_torch_threads": (
                     None if leader_execution_torch_threads is None else int(leader_execution_torch_threads)
                 ),
@@ -680,6 +723,8 @@ def main():
                     if leader_execution_torch_interop_threads is None
                     else int(leader_execution_torch_interop_threads)
                 ),
+                "execution_device": str(runtime_cfg.get("execution_device", "cpu")),
+                "execution_use_autocast": bool(runtime_cfg.get("execution_use_autocast", False)),
             },
             seed=training_seed,
             vec_env_cls=vec_cls,

@@ -255,7 +255,7 @@ def main() -> int:
 
             eval_cmd = [
                 sys.executable,
-                resolve_repo_path("tools", "eval_sb3_policy.py"),
+                resolve_repo_path("tools", "eval", "eval_sb3_policy.py"),
                 "--scenario",
                 scenario_path,
                 "--train_config",

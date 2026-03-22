@@ -5,7 +5,8 @@ import json
 import math
 import os
 import sys
-from dataclasses import dataclass, field
+import time
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -26,7 +27,7 @@ except ModuleNotFoundError:  # pragma: no cover
     spaces = None
 
 from gym_envs.universal_env import UniversalEnv
-from python.env_config import resolve_env_settings
+from python.env_config import VALID_EXECUTION_STEP_RUNTIME_MODES, resolve_env_settings
 from python.rl.leader_tasking import (
     RuleBasedLeaderPhaseManager,
     ScriptedC2TaskManager,
@@ -43,10 +44,17 @@ from python.rl.mission_defs import (
     normalize_phase_name,
     scripted_mode_for_phase_name,
 )
+from python.rl.execution_runtime import SingleExecutionRuntime, coerce_timing_dict
+from python.rl.leader_window_runtime import (
+    LeaderDecisionState,
+    LocalLeaderWindowRuntime,
+    WorldBatchLeaderWindowRuntime,
+)
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.scripted_landing import ScriptedLandingController
 from python.rl.scripted_stable_flight import ScriptedStableFlightController
 from python.rl.scripted_takeoff import ScriptedTakeoffController
+from python.rl.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.wrappers import get_action_wrapper_spec
 from stable_baselines3 import PPO
 
@@ -55,39 +63,78 @@ def _wrap_deg(angle_deg: float) -> float:
     return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
 
 
+_TASK_ORDER_FIELDS = (
+    "task_id",
+    "task_type",
+    "priority",
+    "issuer_id",
+    "assignee_id",
+    "active",
+    "issue_time_s",
+    "anchor_x_m",
+    "anchor_y_m",
+    "anchor_z_m",
+    "station_type",
+    "station_radius_m",
+    "station_leg_length_m",
+    "station_heading_deg",
+    "altitude_block_min_m",
+    "altitude_block_max_m",
+    "target_altitude_m",
+    "speed_min_mps",
+    "speed_max_mps",
+    "target_speed_mps",
+    "entry_condition_code",
+    "exit_condition_code",
+    "on_station_time_s",
+    "fuel_bingo_override_kg",
+    "recovery_base_id",
+    "recovery_runway_id",
+    "recovery_approach_type",
+)
+
+_LEADER_INTENT_FIELDS = (
+    "phase_id",
+    "command_code",
+    "route_ref_id",
+    "recovery_base_id",
+    "recovery_runway_id",
+    "recovery_approach_type",
+    "cmd_heading_deg",
+    "cmd_altitude_m",
+    "cmd_speed_mps",
+    "formation_id",
+    "form_offset_x",
+    "form_offset_y",
+    "form_offset_z",
+    "assigned_target_id",
+    "authorization_to_fire",
+    "approach_armed",
+    "commit_to_land",
+    "abort_flag",
+    "active",
+)
+
+_PILOT_REPORT_FIELDS = (
+    "report_type",
+    "sender_id",
+    "task_id",
+    "phase_id",
+    "timestamp_s",
+    "status_value",
+    "entity_ref",
+    "location_x_m",
+    "location_y_m",
+    "location_z_m",
+    "active",
+)
+
+
 def _clone_task_order(order: Any) -> ef_py.TaskOrder:
     out = ef_py.TaskOrder()
     if order is None:
         return out
-    for name in (
-        "task_id",
-        "task_type",
-        "priority",
-        "issuer_id",
-        "assignee_id",
-        "active",
-        "issue_time_s",
-        "anchor_x_m",
-        "anchor_y_m",
-        "anchor_z_m",
-        "station_type",
-        "station_radius_m",
-        "station_leg_length_m",
-        "station_heading_deg",
-        "altitude_block_min_m",
-        "altitude_block_max_m",
-        "target_altitude_m",
-        "speed_min_mps",
-        "speed_max_mps",
-        "target_speed_mps",
-        "entry_condition_code",
-        "exit_condition_code",
-        "on_station_time_s",
-        "fuel_bingo_override_kg",
-        "recovery_base_id",
-        "recovery_runway_id",
-        "recovery_approach_type",
-    ):
+    for name in _TASK_ORDER_FIELDS:
         try:
             setattr(out, name, getattr(order, name))
         except Exception:
@@ -99,27 +146,7 @@ def _clone_leader_intent(intent: Any) -> ef_py.LeaderIntent:
     out = ef_py.LeaderIntent()
     if intent is None:
         return out
-    for name in (
-        "phase_id",
-        "command_code",
-        "route_ref_id",
-        "recovery_base_id",
-        "recovery_runway_id",
-        "recovery_approach_type",
-        "cmd_heading_deg",
-        "cmd_altitude_m",
-        "cmd_speed_mps",
-        "formation_id",
-        "form_offset_x",
-        "form_offset_y",
-        "form_offset_z",
-        "assigned_target_id",
-        "authorization_to_fire",
-        "approach_armed",
-        "commit_to_land",
-        "abort_flag",
-        "active",
-    ):
+    for name in _LEADER_INTENT_FIELDS:
         try:
             setattr(out, name, getattr(intent, name))
         except Exception:
@@ -131,19 +158,7 @@ def _clone_pilot_report(report: Any) -> ef_py.PilotReport:
     out = ef_py.PilotReport()
     if report is None:
         return out
-    for name in (
-        "report_type",
-        "sender_id",
-        "task_id",
-        "phase_id",
-        "timestamp_s",
-        "status_value",
-        "entity_ref",
-        "location_x_m",
-        "location_y_m",
-        "location_z_m",
-        "active",
-    ):
+    for name in _PILOT_REPORT_FIELDS:
         try:
             setattr(out, name, getattr(report, name))
         except Exception:
@@ -167,6 +182,7 @@ def _make_args_stub() -> Any:
         mission_obs_mode = None
         visual_downsample = None
         visual_update_interval = None
+        execution_step_runtime_mode = None
 
     return _Args()
 
@@ -183,6 +199,43 @@ def _load_policy(model_path: str, algo_name: str = "auto", device: str = "cpu"):
     return PPO.load(load_path, device=device)
 
 
+class _FrozenExecutionPolicyAdapter:
+    """
+    Thin inference wrapper around a frozen SB3 policy.
+
+    LeaderTrainingEnv was previously calling ``model.predict()`` for every low-level step,
+    which repeats observation conversion and policy dispatch in Python. This adapter keeps the
+    existing output semantics while using the thinner ``policy.obs_to_tensor()`` +
+    ``policy._predict()`` path directly.
+    """
+
+    def __init__(self, model: Any, *, device: str = "cpu", use_autocast: bool = False) -> None:
+        self.model = model
+        self.policy = model.policy
+        self.device = str(device or "cpu")
+        self.use_autocast = bool(use_autocast)
+        self.policy.set_training_mode(False)
+
+    def predict(self, obs: Any, deterministic: bool = True):
+        obs_tensor, _ = self.policy.obs_to_tensor(obs)
+        if isinstance(obs_tensor, dict):
+            obs_tensor = {
+                key: value.to(self.device, non_blocking=self.device.startswith("cuda"))
+                for key, value in obs_tensor.items()
+            }
+        else:
+            obs_tensor = obs_tensor.to(self.device, non_blocking=self.device.startswith("cuda"))
+        autocast_enabled = self.use_autocast and self.device.startswith("cuda")
+        with torch.inference_mode(), torch.autocast("cuda", enabled=autocast_enabled):
+            actions = self.policy._predict(obs_tensor, deterministic=deterministic)
+        actions_np = actions.detach().cpu().numpy()
+        if bool(getattr(self.policy, "squash_output", False)):
+            actions_np = self.policy.unscale_action(actions_np)
+        return np.asarray(actions_np, dtype=np.float32).reshape(-1), None
+
+    def reset(self, obs: Any) -> None:
+        if hasattr(self.model, "reset"):
+            self.model.reset(obs)
 class _LeaderCommandBridge:
     """
     Small bridge object installed into ScenarioLoader to replace the rule-only phase manager.
@@ -208,11 +261,11 @@ class _LeaderCommandBridge:
         self.leader_intent = _clone_leader_intent(leader_intent)
         self.pilot_report = _clone_pilot_report(pilot_report)
 
-    def reset(self, loader: Any, sim_time_s: float = 0.0) -> None:
-        self.update(loader, sim_time_s=sim_time_s)
+    def reset(self, loader: Any, sim_time_s: float = 0.0, **kwargs) -> None:
+        self.update(loader, sim_time_s=sim_time_s, **kwargs)
 
-    def update(self, loader: Any, sim_time_s: float = 0.0) -> None:
-        _ = sim_time_s
+    def update(self, loader: Any, sim_time_s: float = 0.0, **kwargs) -> None:
+        _ = (sim_time_s, kwargs)
         loader.task_order = _clone_task_order(self.task_order)
         loader.leader_intent = _clone_leader_intent(self.leader_intent)
         loader.pilot_report = _clone_pilot_report(self.pilot_report)
@@ -235,7 +288,6 @@ class _LeaderCommandBridge:
                 loader.sim.set_pilot_report(loader.agent_id, _clone_pilot_report(self.pilot_report))
         except Exception:
             pass
-
 
 class _ScriptedExecutiveController:
     def __init__(self, env: Any, *, transition_alt_agl_m: float = 140.0):
@@ -323,19 +375,6 @@ class _LeaderActionMapping:
     report_status_value: float
 
 
-@dataclass
-class _LeaderDecisionState:
-    mapping: _LeaderActionMapping
-    guard_info: dict[str, Any]
-    prev_mode: str
-    exec_reward: float = 0.0
-    terminated: bool = False
-    truncated: bool = False
-    last_info: dict[str, Any] = field(default_factory=dict)
-    decision_c2_transitioned: bool = False
-    decision_c2_transition_reason: str = ""
-
-
 if gym is None:
     class LeaderTrainingEnv:  # pragma: no cover
         def __init__(self, *args, **kwargs):
@@ -379,6 +418,13 @@ else:
             approach_gate_heading_error_deg: float = 85.0,
             execution_torch_threads: int | None = None,
             execution_torch_interop_threads: int | None = None,
+            execution_device: str = "cpu",
+            execution_use_autocast: bool = False,
+            execution_step_runtime_mode: str | None = None,
+            execution_world_batch_runtime: bool = False,
+            execution_world_batch_threads: int | None = None,
+            execution_runtime: Any | None = None,
+            collect_step_timing: bool = False,
         ):
             super().__init__()
             self.scenario_path = os.path.abspath(str(scenario_path))
@@ -411,22 +457,53 @@ else:
                 if execution_torch_interop_threads is None
                 else max(1, int(execution_torch_interop_threads))
             )
+            self.execution_device = str(execution_device or "cpu")
+            self.execution_use_autocast = bool(execution_use_autocast)
+            self.execution_step_runtime_mode = (
+                None if execution_step_runtime_mode is None else str(execution_step_runtime_mode).strip().lower()
+            )
+            self.execution_world_batch_runtime = bool(execution_world_batch_runtime)
+            self.execution_world_batch_threads = (
+                None if execution_world_batch_threads is None else max(0, int(execution_world_batch_threads))
+            )
+            if (
+                self.execution_step_runtime_mode is not None
+                and self.execution_step_runtime_mode not in VALID_EXECUTION_STEP_RUNTIME_MODES
+            ):
+                raise ValueError(
+                    f"Unknown execution_step_runtime_mode: {execution_step_runtime_mode!r}"
+                )
+            self.collect_step_timing = bool(collect_step_timing)
+            self._execution_env_settings: dict[str, Any] = {}
+            self._execution_wrapper_class = None
+            self._execution_wrapper_kwargs: dict[str, Any] | None = None
+            self.last_reset_timing: dict[str, float] = {}
+            self.last_step_timing: dict[str, float] = {}
 
-            self._exec_env = self._build_execution_env()
+            self._exec_runtime = (
+                execution_runtime
+                if execution_runtime is not None
+                else self._build_execution_runtime()
+            )
             self._exec_policy = self._build_execution_policy()
             self._teacher_manager = RuleBasedLeaderPhaseManager()
             self._c2_manager = ScriptedC2TaskManager()
             self._bridge = _LeaderCommandBridge()
             self._last_exec_obs = None
+            self._last_exec_inst = None
+            self._last_exec_truth = None
             self._last_exec_action: np.ndarray | None = None
             self._exec_action_repeat_remaining = 0
             self._last_effective_execution_action_repeat = 1
+            self._defer_kernel_command_sync = False
+            self._kernel_command_sync_dirty = False
             self._last_leader_command: tuple[int, float, float, float] | None = None
             self._last_leader_mode = "teacher"
             self._last_requested_bucket = "teacher"
             self._last_baseline_snapshot: dict[str, Any] = {}
             self._last_c2_info: dict[str, Any] = {}
-            self._pending_leader_state: _LeaderDecisionState | None = None
+            self._pending_leader_state: LeaderDecisionState | None = None
+            self._leader_window_runtime = self._build_default_leader_window_runtime()
 
             self.action_space = spaces.Box(
                 low=np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0], dtype=np.float32),
@@ -445,16 +522,69 @@ else:
 
         @property
         def unwrapped(self):
-            return self._exec_env.unwrapped
+            return self._exec_runtime.unwrapped
+
+        def _build_default_leader_window_runtime(self):
+            execution_runtime = getattr(self, "_exec_runtime", None)
+            if bool(getattr(self, "execution_world_batch_runtime", False)) and hasattr(execution_runtime, "rollout_window"):
+                return WorldBatchLeaderWindowRuntime(self)
+            return LocalLeaderWindowRuntime(self)
+
+        def _ensure_leader_window_runtime(self):
+            runtime = getattr(self, "_leader_window_runtime", None)
+            if runtime is None:
+                runtime = self._build_default_leader_window_runtime()
+                self._leader_window_runtime = runtime
+            return runtime
+
+        @property
+        def leader_window_runtime(self):
+            return self._ensure_leader_window_runtime()
 
         def set_randomization_overrides(self, overrides: dict | None) -> None:
-            if hasattr(self._exec_env, "set_randomization_overrides"):
-                self._exec_env.set_randomization_overrides(overrides)
-                return
             try:
-                self._exec_env.env_method("set_randomization_overrides", overrides)
+                self._exec_runtime.set_randomization_overrides(overrides)
             except Exception:
                 pass
+
+        def set_execution_runtime(self, execution_runtime: Any) -> None:
+            old_runtime = getattr(self, "_exec_runtime", None)
+            self._exec_runtime = execution_runtime
+            if self.execution_backend == "scripted":
+                self._exec_policy = self._build_execution_policy()
+            self._last_exec_obs = None
+            self._last_exec_inst = None
+            self._last_exec_truth = None
+            self._last_exec_action = None
+            self._exec_action_repeat_remaining = 0
+            self._last_effective_execution_action_repeat = 1
+            self._kernel_command_sync_dirty = False
+            self._close_execution_runtime(old_runtime, active_runtime=execution_runtime)
+
+        def set_leader_window_runtime(self, leader_window_runtime: Any | None) -> None:
+            self._leader_window_runtime = leader_window_runtime or self._build_default_leader_window_runtime()
+
+        def set_deferred_kernel_command_sync(self, enabled: bool) -> None:
+            self._defer_kernel_command_sync = bool(enabled)
+            if not self._defer_kernel_command_sync:
+                self.flush_kernel_command_sync()
+
+        def flush_kernel_command_sync(self) -> None:
+            loader = self.unwrapped.loader
+            try:
+                loader._sync_kernel_mission_command()
+            except Exception:
+                pass
+            self._bridge.set_state(
+                task_order=getattr(loader, "task_order", None),
+                leader_intent=getattr(loader, "leader_intent", None),
+                pilot_report=getattr(loader, "pilot_report", None),
+            )
+            try:
+                self._bridge.sync_to_kernel(loader)
+            except Exception:
+                pass
+            self._kernel_command_sync_dirty = False
 
         def set_leader_overrides(self, overrides: dict | None) -> None:
             if not isinstance(overrides, dict):
@@ -488,8 +618,29 @@ else:
 
         def reset(self, *, seed: int | None = None, options: dict | None = None):
             _ = options
-            obs, info = self._exec_env.reset(seed=seed)
+            collect_step_timing = bool(getattr(self, "collect_step_timing", False))
+            reset_t0 = time.perf_counter() if collect_step_timing else 0.0
+            obs, info = self._exec_runtime.reset(seed=seed)
+            base_timing = None
+            if collect_step_timing:
+                base_timing = {
+                    "execution_reset_ms": float((time.perf_counter() - reset_t0) * 1000.0),
+                }
+            return self._finish_execution_reset(obs, info, base_timing=base_timing)
+
+        def _finish_execution_reset(self, obs, info, *, base_timing: dict[str, float] | None = None):
+            collect_step_timing = bool(getattr(self, "collect_step_timing", False))
+            total_t0 = time.perf_counter() if collect_step_timing else 0.0
             self._last_exec_obs = obs
+            policy_t0 = time.perf_counter() if collect_step_timing else 0.0
+            try:
+                self._exec_runtime.reset_policy_state(obs)
+            except Exception:
+                pass
+            policy_reset_ms = (time.perf_counter() - policy_t0) * 1000.0 if collect_step_timing else 0.0
+            cache_t0 = time.perf_counter() if collect_step_timing else 0.0
+            self._cache_execution_runtime_state()
+            cache_state_ms = (time.perf_counter() - cache_t0) * 1000.0 if collect_step_timing else 0.0
             self._last_exec_action = None
             self._exec_action_repeat_remaining = 0
             self._last_effective_execution_action_repeat = 1
@@ -506,23 +657,48 @@ else:
                 sim_time_s = float(self.unwrapped.steps) * float(self.unwrapped.sim.get_time_step())
             except Exception:
                 sim_time_s = 0.0
-            self._last_c2_info = self._c2_manager.reset(loader, sim_time_s=sim_time_s)
+            inst_now, truth_now = self._current_execution_runtime_state()
+            c2_t0 = time.perf_counter() if collect_step_timing else 0.0
+            try:
+                self._last_c2_info = self._c2_manager.reset(
+                    loader,
+                    sim_time_s=sim_time_s,
+                    truth=truth_now,
+                    inst=inst_now,
+                    sync_to_kernel=not bool(getattr(self, "_defer_kernel_command_sync", False)),
+                )
+            except TypeError:
+                self._last_c2_info = self._c2_manager.reset(loader, sim_time_s=sim_time_s)
+            c2_reset_ms = (time.perf_counter() - c2_t0) * 1000.0 if collect_step_timing else 0.0
             self._last_leader_command = None
             self._last_leader_mode = "teacher"
             self._last_requested_bucket = "teacher"
             self._last_baseline_snapshot = self._snapshot_leader_state()
             self._sync_bridge_from_loader()
+            obs_t0 = time.perf_counter() if collect_step_timing else 0.0
             leader_obs = self._build_observation()
-            return leader_obs, {"execution_reset_info": info}
+            obs_build_ms = (time.perf_counter() - obs_t0) * 1000.0 if collect_step_timing else 0.0
+
+            execution_reset_info = dict(info or {}) if isinstance(info, dict) else {"value": info}
+            execution_reset_timing = coerce_timing_dict(execution_reset_info.get("timing"))
+            info_out = {"execution_reset_info": execution_reset_info}
+            if execution_reset_timing:
+                info_out["execution_reset_timing"] = execution_reset_timing
+            if collect_step_timing:
+                timing = dict(base_timing or {})
+                timing["policy_reset_ms"] = float(timing.get("policy_reset_ms", 0.0) + policy_reset_ms)
+                timing["cache_state_ms"] = float(timing.get("cache_state_ms", 0.0) + cache_state_ms)
+                timing["c2_reset_ms"] = float(timing.get("c2_reset_ms", 0.0) + c2_reset_ms)
+                timing["obs_build_ms"] = float(timing.get("obs_build_ms", 0.0) + obs_build_ms)
+                timing["total_ms"] = float((time.perf_counter() - total_t0) * 1000.0)
+                self.last_reset_timing = timing
+                info_out["timing"] = dict(timing)
+            else:
+                self.last_reset_timing = {}
+            return leader_obs, info_out
 
         def step(self, action):
-            self.begin_batched_leader_step(action)
-            for _ in range(self.decision_interval_steps):
-                if not self.has_pending_execution_step():
-                    break
-                exec_action = self._predict_execution_action(self._last_exec_obs)
-                self.step_execution_once(exec_action)
-            return self.finish_batched_leader_step()
+            return self.leader_window_runtime.run_step(action)
 
         def _normalize_leader_action(self, action: Any) -> np.ndarray:
             action = np.asarray(action, dtype=np.float32).reshape(-1)
@@ -534,192 +710,84 @@ else:
                 raise ValueError(f"LeaderTrainingEnv expected action shape (4,) or (6,), got {tuple(action.shape)}")
             return action
 
+        def _begin_local_leader_window(self, action: Any) -> None:
+            self._ensure_leader_window_runtime().begin(action)
+
         def begin_batched_leader_step(self, action: Any) -> None:
-            if self._pending_leader_state is not None:
-                raise RuntimeError("LeaderTrainingEnv already has a pending batched leader step")
-            action = self._normalize_leader_action(action)
-            mapping = self._decode_action(action)
-            self._last_exec_action = None
-            self._exec_action_repeat_remaining = 0
-            self._last_effective_execution_action_repeat = 1
+            self.leader_window_runtime.begin(action)
 
-            self._update_scripted_c2()
-            decision_c2_transitioned = bool(self._last_c2_info.get("transitioned", False))
-            decision_c2_transition_reason = (
-                str(self._last_c2_info.get("transition_reason", "")) if decision_c2_transitioned else ""
-            )
-            baseline = self._compute_teacher_baseline()
-            self._last_baseline_snapshot = baseline
-            mapping, guard_info = self._sanitize_action_mapping(mapping=mapping, baseline=baseline)
-            prev_mode = str(self._last_leader_mode)
-            self._apply_leader_command(mapping=mapping, baseline=baseline)
-            self._update_scripted_c2()
-            if bool(self._last_c2_info.get("transitioned", False)):
-                decision_c2_transitioned = True
-                decision_c2_transition_reason = str(self._last_c2_info.get("transition_reason", ""))
-
-            self._pending_leader_state = _LeaderDecisionState(
-                mapping=mapping,
-                guard_info=dict(guard_info or {}),
-                prev_mode=prev_mode,
-                decision_c2_transitioned=decision_c2_transitioned,
-                decision_c2_transition_reason=decision_c2_transition_reason,
-            )
+        def _has_pending_local_execution_step(self) -> bool:
+            return bool(self._ensure_leader_window_runtime().has_pending_execution_step())
 
         def has_pending_execution_step(self) -> bool:
-            state = self._pending_leader_state
-            return state is not None and not bool(state.terminated or state.truncated)
+            return bool(self.leader_window_runtime.has_pending_execution_step())
+
+        def _borrow_local_execution_observation(self) -> dict[str, Any]:
+            return self._ensure_leader_window_runtime().borrow_execution_observation()
+
+        def borrow_execution_observation(self) -> dict[str, Any]:
+            return self.leader_window_runtime.borrow_execution_observation()
 
         def current_execution_observation(self) -> dict[str, Any]:
-            if self._pending_leader_state is None:
-                raise RuntimeError("LeaderTrainingEnv has no pending leader step")
-            return dict(self._last_exec_obs or {})
+            return self.leader_window_runtime.current_execution_observation()
+
+        def _prepare_shared_execution_action_impl(self, exec_action: Any):
+            return self._ensure_leader_window_runtime().prepare_shared_execution_action(exec_action)
+
+        def prepare_shared_execution_action(self, exec_action: Any):
+            return self.leader_window_runtime.prepare_shared_execution_action(exec_action)
+
+        def _execute_local_execution_step(self, exec_action: Any) -> None:
+            self._ensure_leader_window_runtime().step_execution_once(exec_action)
 
         def step_execution_once(self, exec_action: Any) -> None:
-            state = self._pending_leader_state
-            if state is None:
-                raise RuntimeError("LeaderTrainingEnv has no pending leader step")
-            if state.terminated or state.truncated:
-                return
-            obs, reward, terminated, truncated, info = self._exec_env.step(np.asarray(exec_action, dtype=np.float32).reshape(-1))
-            self._last_exec_obs = obs
-            state.exec_reward += float(reward)
-            state.terminated = bool(terminated)
-            state.truncated = bool(truncated)
-            state.last_info = dict(info or {})
-            self._update_scripted_c2()
-            if bool(self._last_c2_info.get("transitioned", False)):
-                state.decision_c2_transitioned = True
-                state.decision_c2_transition_reason = str(self._last_c2_info.get("transition_reason", ""))
+            self.leader_window_runtime.step_execution_once(exec_action)
+
+        def _rollout_pending_execution_window_impl(self, *, max_steps: int | None = None) -> int:
+            return int(self._ensure_leader_window_runtime().rollout(max_steps=max_steps))
+
+        def rollout_pending_execution_window(self, *, max_steps: int | None = None) -> int:
+            return int(self.leader_window_runtime.rollout(max_steps=max_steps))
+
+        def _apply_execution_step_result_impl(
+            self,
+            obs,
+            reward,
+            terminated,
+            truncated,
+            info,
+            prepared_action_state: Any = None,
+        ) -> None:
+            self._ensure_leader_window_runtime().apply_execution_step_result(
+                obs,
+                reward,
+                terminated,
+                truncated,
+                info,
+                prepared_action_state=prepared_action_state,
+            )
+
+        def apply_execution_step_result(self, obs, reward, terminated, truncated, info, prepared_action_state: Any = None) -> None:
+            self.leader_window_runtime.apply_execution_step_result(
+                obs,
+                reward,
+                terminated,
+                truncated,
+                info,
+                prepared_action_state=prepared_action_state,
+            )
+
+        def _finish_local_leader_window(self):
+            return self._ensure_leader_window_runtime().finish()
 
         def finish_batched_leader_step(self):
-            state = self._pending_leader_state
-            if state is None:
-                raise RuntimeError("LeaderTrainingEnv has no pending leader step to finish")
-            loader = self.unwrapped.loader
-
-            reward_terms = {
-                "execution_reward": float(state.exec_reward),
-                "command_change_penalty": 0.0,
-                "invalid_phase_penalty": 0.0,
-                "premature_approach_penalty": 0.0,
-                "baseline_deviation_penalty": 0.0,
-                "mode_change_penalty": 0.0,
-                "c2_transition_bonus": 0.0,
-                "report_validity_bonus": 0.0,
-            }
-            total_reward = float(state.exec_reward)
-            if self.command_change_penalty != 0.0 and self._last_leader_command is not None:
-                current_cmd = self._current_command_tuple()
-                change_mag = (
-                    abs(float(current_cmd[0]) - float(self._last_leader_command[0]))
-                    + abs(_wrap_deg(float(current_cmd[1]) - float(self._last_leader_command[1]))) / 180.0
-                    + abs(float(current_cmd[2]) - float(self._last_leader_command[2])) / max(1.0, self.altitude_bias_limit_m)
-                    + abs(float(current_cmd[3]) - float(self._last_leader_command[3])) / max(1.0, self.speed_bias_limit_mps)
-                )
-                penalty = float(self.command_change_penalty) * float(change_mag)
-                total_reward -= penalty
-                reward_terms["command_change_penalty"] = -float(penalty)
-
-            if bool(state.guard_info.get("guarded", False)) and self.invalid_phase_penalty != 0.0:
-                total_reward -= float(self.invalid_phase_penalty)
-                reward_terms["invalid_phase_penalty"] = -float(self.invalid_phase_penalty)
-
-            if (
-                str(state.guard_info.get("reason", "")) == "approach_not_feasible"
-                and self.premature_approach_penalty != 0.0
-            ):
-                total_reward -= float(self.premature_approach_penalty)
-                reward_terms["premature_approach_penalty"] = -float(self.premature_approach_penalty)
-
-            if self.baseline_deviation_penalty != 0.0:
-                current_cmd = self._current_command_tuple()
-                baseline_cmd = (
-                    int(self._last_baseline_snapshot.get("command_code", 0)),
-                    float(self._last_baseline_snapshot.get("heading_deg", 0.0)),
-                    float(self._last_baseline_snapshot.get("altitude_m", 0.0)),
-                    float(self._last_baseline_snapshot.get("speed_mps", 0.0)),
-                )
-                deviation_mag = (
-                    abs(float(current_cmd[0]) - float(baseline_cmd[0]))
-                    + abs(_wrap_deg(float(current_cmd[1]) - float(baseline_cmd[1]))) / 180.0
-                    + abs(float(current_cmd[2]) - float(baseline_cmd[2])) / max(1.0, self.altitude_bias_limit_m)
-                    + abs(float(current_cmd[3]) - float(baseline_cmd[3])) / max(1.0, self.speed_bias_limit_mps)
-                )
-                penalty = float(self.baseline_deviation_penalty) * float(deviation_mag)
-                total_reward -= penalty
-                reward_terms["baseline_deviation_penalty"] = -float(penalty)
-
-            if self.mode_change_penalty != 0.0 and str(self._last_leader_mode) != state.prev_mode:
-                total_reward -= float(self.mode_change_penalty)
-                reward_terms["mode_change_penalty"] = -float(self.mode_change_penalty)
-
-            c2_info = dict(self._last_c2_info or {})
-            if state.decision_c2_transitioned:
-                c2_info["transitioned"] = True
-                c2_info["transition_reason"] = str(state.decision_c2_transition_reason)
-            if bool(c2_info.get("report_valid", False)):
-                total_reward += 0.02
-                reward_terms["report_validity_bonus"] = 0.02
-            else:
-                report = getattr(loader, "pilot_report", None)
-                if report is not None and int(getattr(report, "report_type", 0)) != 0:
-                    total_reward -= 0.05
-                    reward_terms["report_validity_bonus"] = -0.05
-
-            if bool(c2_info.get("transitioned", False)):
-                total_reward += 0.10
-                reward_terms["c2_transition_bonus"] = 0.10
-
-            self._last_leader_command = self._current_command_tuple()
-            self._last_requested_bucket = str(state.guard_info.get("requested_bucket", state.mapping.phase_bucket))
-            leader_obs = self._build_observation()
-            info_out = dict(state.last_info)
-            info_out["leader_phase_bucket"] = str(state.mapping.phase_bucket)
-            info_out["leader_requested_phase_bucket"] = str(state.guard_info.get("requested_bucket", state.mapping.phase_bucket))
-            info_out["leader_phase_guarded"] = bool(state.guard_info.get("guarded", False))
-            info_out["leader_phase_guard_reason"] = str(state.guard_info.get("reason", ""))
-            info_out["leader_bias_guarded"] = bool(state.guard_info.get("bias_guarded", False))
-            info_out["leader_bias_guard_reason"] = str(state.guard_info.get("bias_guard_reason", ""))
-            info_out["leader_terminal_feasible"] = bool(state.guard_info.get("terminal_feasible", False))
-            info_out["leader_backend"] = str(self.execution_backend)
-            info_out["leader_mode"] = str(self._last_leader_mode)
-            info_out["leader_decision_interval_steps"] = int(self.decision_interval_steps)
-            info_out["leader_execution_action_repeat"] = int(self._last_effective_execution_action_repeat)
-            info_out["leader_effective_command"] = np.asarray(self._last_leader_command, dtype=np.float32)
-            report = getattr(loader, "pilot_report", None)
-            info_out["leader_effective_report"] = np.asarray(
-                [
-                    float(int(getattr(report, "report_type", 0)) if report is not None else 0.0),
-                    float(getattr(report, "status_value", 0.0) if report is not None else 0.0),
-                ],
-                dtype=np.float32,
-            )
-            info_out["leader_c2_task_name"] = str(c2_info.get("task_name", getattr(loader, "c2_task_name", "")))
-            info_out["leader_c2_task_id"] = int(c2_info.get("task_id", getattr(loader, "c2_task_id", 0)))
-            info_out["leader_c2_transitioned"] = bool(c2_info.get("transitioned", False))
-            info_out["leader_c2_transition_reason"] = str(c2_info.get("transition_reason", ""))
-            info_out["leader_report_valid"] = bool(c2_info.get("report_valid", False))
-            info_out["leader_report_reason"] = str(c2_info.get("report_reason", ""))
-            info_out["leader_baseline_command"] = np.asarray(
-                [
-                    float(self._last_baseline_snapshot.get("command_code", 0)),
-                    float(self._last_baseline_snapshot.get("heading_deg", 0.0)),
-                    float(self._last_baseline_snapshot.get("altitude_m", 0.0)),
-                    float(self._last_baseline_snapshot.get("speed_mps", 0.0)),
-                ],
-                dtype=np.float32,
-            )
-            info_out["leader_reward_terms"] = reward_terms
-            terminated = bool(state.terminated)
-            truncated = bool(state.truncated)
-            self._pending_leader_state = None
-            return leader_obs, float(total_reward), terminated, truncated, info_out
+            return self.leader_window_runtime.finish()
 
         def _build_execution_env(self):
-            exec_cfg = _load_json_dict(self.execution_train_config)
-            env_settings = resolve_env_settings(exec_cfg, _make_args_stub())
-            wrapper_class, wrapper_kwargs = get_action_wrapper_spec(exec_cfg)
+            env_settings, wrapper_class, wrapper_kwargs = self._resolve_execution_env_spec()
+            return self._build_execution_env_from_spec(env_settings, wrapper_class, wrapper_kwargs)
+
+        def _build_execution_env_from_spec(self, env_settings, wrapper_class, wrapper_kwargs):
             if self.execution_backend == "scripted" and wrapper_kwargs is not None:
                 wrapper_kwargs = dict(wrapper_kwargs)
                 wrapper_kwargs["scripted_residual_scale"] = 0.0
@@ -732,18 +800,62 @@ else:
                 env = wrapper_class(env, **(wrapper_kwargs or {}))
             return env
 
+        def _build_execution_runtime(self):
+            env_settings, wrapper_class, wrapper_kwargs = self._resolve_execution_env_spec()
+            if self.execution_world_batch_runtime:
+                return build_single_world_batch_execution_runtime(
+                    scenario_path=self.scenario_path,
+                    env_settings=env_settings,
+                    wrapper_class=wrapper_class,
+                    wrapper_kwargs=wrapper_kwargs,
+                    worker_threads=self.execution_world_batch_threads,
+                )
+            return SingleExecutionRuntime(
+                self._build_execution_env_from_spec(env_settings, wrapper_class, wrapper_kwargs)
+            )
+
+        def _resolve_execution_env_spec(self):
+            exec_cfg = _load_json_dict(self.execution_train_config)
+            env_settings = resolve_env_settings(exec_cfg, _make_args_stub())
+            if self.execution_step_runtime_mode is not None:
+                env_settings["execution_step_runtime_mode"] = self.execution_step_runtime_mode
+            env_settings["collect_step_timing"] = bool(self.collect_step_timing)
+            wrapper_class, wrapper_kwargs = get_action_wrapper_spec(exec_cfg)
+            self._execution_env_settings = dict(env_settings)
+            self._execution_wrapper_class = wrapper_class
+            self._execution_wrapper_kwargs = None if wrapper_kwargs is None else dict(wrapper_kwargs)
+            return env_settings, wrapper_class, wrapper_kwargs
+
         def _build_execution_policy(self):
             self._configure_execution_runtime()
             if self.execution_backend == "scripted":
                 return _ScriptedExecutiveController(
-                    self._exec_env,
+                    self._exec_runtime.policy_env,
                     transition_alt_agl_m=self.scripted_transition_alt_agl_m,
                 )
             if self.execution_backend == "frozen_model":
                 if not self.execution_model_path:
                     raise ValueError("LeaderTrainingEnv execution_backend='frozen_model' requires execution_model_path")
-                return _load_policy(self.execution_model_path, algo_name=self.execution_algo)
+                model = _load_policy(
+                    self.execution_model_path,
+                    algo_name=self.execution_algo,
+                    device=self.execution_device,
+                )
+                return _FrozenExecutionPolicyAdapter(
+                    model,
+                    device=self.execution_device,
+                    use_autocast=self.execution_use_autocast,
+                )
             raise ValueError(f"Unknown execution_backend: {self.execution_backend!r}")
+
+        def close(self):
+            runtime = getattr(self, "_exec_runtime", None)
+            self._exec_runtime = None
+            self._close_execution_runtime(runtime)
+            try:
+                super().close()
+            except Exception:
+                pass
 
         def _configure_execution_runtime(self) -> None:
             if self.execution_torch_threads is not None:
@@ -761,20 +873,87 @@ else:
                 except Exception:
                     pass
 
+        def _current_leader_window_state(self):
+            runtime = getattr(self, "_leader_window_runtime", None)
+            if runtime is not None and hasattr(runtime, "decision_state"):
+                try:
+                    state = runtime.decision_state()
+                except Exception:
+                    state = None
+                if state is not None:
+                    return state
+            return getattr(self, "_pending_leader_state", None)
+
         def _predict_execution_action(self, obs: dict) -> np.ndarray:
+            state = self._current_leader_window_state()
+            collect_step_timing = bool(getattr(self, "collect_step_timing", False))
+            predict_t0 = time.perf_counter() if collect_step_timing and state is not None else 0.0
             if self._last_exec_action is not None and self._exec_action_repeat_remaining > 0:
                 self._exec_action_repeat_remaining -= 1
-                return np.asarray(self._last_exec_action, dtype=np.float32).reshape(-1)
-            resolved_repeat = max(1, int(self.execution_action_repeat))
-            if self.execution_backend == "scripted":
-                action = np.asarray(self._exec_policy.predict(obs), dtype=np.float32).reshape(-1)
+                action_out = np.asarray(self._last_exec_action, dtype=np.float32).reshape(-1)
             else:
-                action, _ = self._exec_policy.predict(obs, deterministic=True)
-                action = np.asarray(action, dtype=np.float32).reshape(-1)
-            self._last_exec_action = np.asarray(action, dtype=np.float32).reshape(-1)
-            self._last_effective_execution_action_repeat = int(resolved_repeat)
-            self._exec_action_repeat_remaining = max(0, int(resolved_repeat) - 1)
-            return np.asarray(self._last_exec_action, dtype=np.float32).reshape(-1)
+                resolved_repeat = max(1, int(self.execution_action_repeat))
+                if self.execution_backend == "scripted":
+                    action = np.asarray(self._exec_policy.predict(obs), dtype=np.float32).reshape(-1)
+                else:
+                    action, _ = self._exec_policy.predict(obs, deterministic=True)
+                    action = np.asarray(action, dtype=np.float32).reshape(-1)
+                self._last_exec_action = np.asarray(action, dtype=np.float32).reshape(-1)
+                self._last_effective_execution_action_repeat = int(resolved_repeat)
+                self._exec_action_repeat_remaining = max(0, int(resolved_repeat) - 1)
+                action_out = np.asarray(self._last_exec_action, dtype=np.float32).reshape(-1)
+            if collect_step_timing and state is not None:
+                state.timing["execution_action_select_ms"] = float(
+                    state.timing.get("execution_action_select_ms", 0.0) + (time.perf_counter() - predict_t0) * 1000.0
+                )
+            return action_out
+
+        def _runtime_last_state(self):
+            runtime = getattr(self, "_exec_runtime", None)
+            if runtime is not None and hasattr(runtime, "get_last_state"):
+                try:
+                    return runtime.get_last_state()
+                except Exception:
+                    return None, None
+            return None, None
+
+        def _capture_execution_runtime_state(self):
+            inst_now, truth_now = self._runtime_last_state()
+            if inst_now is None:
+                try:
+                    inst_now = self.unwrapped.sim.get_instrument_state(self.unwrapped.agent_id)
+                except Exception:
+                    inst_now = None
+            if truth_now is None:
+                try:
+                    truth_now = self.unwrapped.sim.get_agent_observation(self.unwrapped.agent_id)
+                except Exception:
+                    truth_now = None
+            return inst_now, truth_now
+
+        def _cache_execution_runtime_state(self, *, inst_now=None, truth_now=None):
+            if inst_now is None or truth_now is None:
+                runtime_inst, runtime_truth = self._runtime_last_state()
+                if inst_now is None:
+                    inst_now = runtime_inst
+                if truth_now is None:
+                    truth_now = runtime_truth
+            if inst_now is None or truth_now is None:
+                captured_inst, captured_truth = self._capture_execution_runtime_state()
+                if inst_now is None:
+                    inst_now = captured_inst
+                if truth_now is None:
+                    truth_now = captured_truth
+            self._last_exec_inst = inst_now
+            self._last_exec_truth = truth_now
+            return inst_now, truth_now
+
+        def _current_execution_runtime_state(self):
+            inst_now = self._last_exec_inst
+            truth_now = self._last_exec_truth
+            if inst_now is None or truth_now is None:
+                inst_now, truth_now = self._cache_execution_runtime_state()
+            return inst_now, truth_now
 
         def _snapshot_leader_state(self) -> dict[str, Any]:
             loader = self.unwrapped.loader
@@ -796,10 +975,14 @@ else:
                 leader_intent=getattr(loader, "leader_intent", None),
                 pilot_report=getattr(loader, "pilot_report", None),
             )
+            if bool(getattr(self, "_defer_kernel_command_sync", False)):
+                self._kernel_command_sync_dirty = True
+                return
             try:
                 self._bridge.sync_to_kernel(loader)
             except Exception:
                 pass
+            self._kernel_command_sync_dirty = False
 
         def _compute_teacher_baseline(self) -> dict[str, Any]:
             loader = self.unwrapped.loader
@@ -807,7 +990,14 @@ else:
                 sim_time_s = float(self.unwrapped.steps) * float(self.unwrapped.sim.get_time_step())
             except Exception:
                 sim_time_s = 0.0
-            self._teacher_manager.update(loader, sim_time_s=sim_time_s)
+            inst_now, truth_now = self._current_execution_runtime_state()
+            self._teacher_manager.update(
+                loader,
+                sim_time_s=sim_time_s,
+                truth=truth_now,
+                inst=inst_now,
+                sync_to_kernel=not bool(getattr(self, "_defer_kernel_command_sync", False)),
+            )
             baseline = self._snapshot_leader_state()
             self._sync_bridge_from_loader()
             return baseline
@@ -818,7 +1008,18 @@ else:
                 sim_time_s = float(self.unwrapped.steps) * float(self.unwrapped.sim.get_time_step())
             except Exception:
                 sim_time_s = 0.0
-            self._last_c2_info = dict(self._c2_manager.update(loader, sim_time_s=sim_time_s) or {})
+            inst_now, truth_now = self._current_execution_runtime_state()
+            try:
+                c2_info = self._c2_manager.update(
+                    loader,
+                    sim_time_s=sim_time_s,
+                    truth=truth_now,
+                    inst=inst_now,
+                    sync_to_kernel=not bool(getattr(self, "_defer_kernel_command_sync", False)),
+                )
+            except TypeError:
+                c2_info = self._c2_manager.update(loader, sim_time_s=sim_time_s)
+            self._last_c2_info = dict(c2_info or {})
             self._sync_bridge_from_loader()
             return self._last_c2_info
 
@@ -941,8 +1142,9 @@ else:
 
         def _terminal_context(self) -> dict[str, float | bool | str]:
             loader = self.unwrapped.loader
-            inst = self.unwrapped.sim.get_instrument_state(self.unwrapped.agent_id)
-            truth = self.unwrapped.sim.get_agent_observation(self.unwrapped.agent_id)
+            inst, truth = self._current_execution_runtime_state()
+            if inst is None or truth is None:
+                inst, truth = self._capture_execution_runtime_state()
             phase_name = normalize_phase_name(getattr(loader, "mission_phase_name", ""))
             ils = np.asarray(
                 loader.get_ils_observation(
@@ -1190,19 +1392,17 @@ else:
             report.phase_id = int(self._phase_enum_for_id(int(phase_id)))
             report.sender_id = int(getattr(loader, "agent_id", 0) or 0)
             report.timestamp_s = float(sim_time_s)
+            inst_now, truth_now = self._current_execution_runtime_state()
             if int(report_type) == int(getattr(ef_py.CommMsgType, "WARN_BINGO")):
-                _fuel_total_kg, fuel_margin_frac = self._fuel_margin_state(task, self.unwrapped.sim.get_instrument_state(loader.agent_id))
+                _fuel_total_kg, fuel_margin_frac = self._fuel_margin_state(task, inst_now)
                 report.status_value = float(fuel_margin_frac)
             else:
                 report.status_value = float(mapping.report_status_value)
             report.active = True
-            try:
-                truth = self.unwrapped.sim.get_agent_observation(loader.agent_id)
-                report.location_x_m = float(getattr(truth, "x", 0.0))
-                report.location_y_m = float(getattr(truth, "y", 0.0))
-                report.location_z_m = float(getattr(truth, "z", 0.0))
-            except Exception:
-                pass
+            if truth_now is not None:
+                report.location_x_m = float(getattr(truth_now, "x", 0.0))
+                report.location_y_m = float(getattr(truth_now, "y", 0.0))
+                report.location_z_m = float(getattr(truth_now, "z", 0.0))
 
             loader.mission_cmd["command_code"] = int(cmd_code)
             loader.mission_cmd["route_ref_id"] = int(route_ref_id)
@@ -1216,10 +1416,13 @@ else:
 
             self._bridge.set_state(task_order=task, leader_intent=intent, pilot_report=report)
             self._bridge.update(loader, sim_time_s=sim_time_s)
-            try:
-                loader._sync_kernel_mission_command()
-            except Exception:
-                pass
+            if bool(getattr(self, "_defer_kernel_command_sync", False)):
+                self._kernel_command_sync_dirty = True
+            else:
+                try:
+                    loader._sync_kernel_mission_command()
+                except Exception:
+                    pass
             self._sync_bridge_from_loader()
             self._last_leader_mode = str(mapping.phase_bucket)
 
@@ -1285,11 +1488,19 @@ else:
 
         def _build_observation(self) -> dict[str, np.ndarray]:
             loader = self.unwrapped.loader
-            inst = self.unwrapped.sim.get_instrument_state(self.unwrapped.agent_id)
-            truth = self.unwrapped.sim.get_agent_observation(self.unwrapped.agent_id)
-            mission_nav = np.asarray(loader.get_mission_observation("nav_v2"), dtype=np.float32).reshape(-1)
+            inst, truth = self._current_execution_runtime_state()
+            if inst is None or truth is None:
+                inst, truth = self._capture_execution_runtime_state()
+            mission_nav = np.asarray(
+                loader.get_mission_observation("nav_v2", truth=truth, inst=inst),
+                dtype=np.float32,
+            ).reshape(-1)
             ils = np.asarray(
-                loader.get_ils_observation(float(getattr(truth, "x", 0.0)), float(getattr(truth, "y", 0.0)), float(getattr(inst, "alt_baro", 0.0))),
+                loader.get_ils_observation(
+                    float(getattr(truth, "x", 0.0)),
+                    float(getattr(truth, "y", 0.0)),
+                    float(getattr(inst, "alt_baro", 0.0)),
+                ),
                 dtype=np.float32,
             ).reshape(-1)
 
@@ -1382,3 +1593,18 @@ else:
                 "terminal": np.nan_to_num(terminal, nan=0.0, posinf=0.0, neginf=0.0),
                 "link": np.nan_to_num(link, nan=0.0, posinf=0.0, neginf=0.0),
             }
+        def _close_execution_runtime(self, runtime: Any, *, active_runtime: Any | None = None) -> None:
+            if runtime is None or runtime is active_runtime:
+                return
+            if hasattr(runtime, "close"):
+                try:
+                    runtime.close()
+                    return
+                except Exception:
+                    pass
+            if isinstance(runtime, SingleExecutionRuntime):
+                try:
+                    if hasattr(runtime.env, "close"):
+                        runtime.env.close()
+                except Exception:
+                    pass
