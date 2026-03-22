@@ -184,6 +184,7 @@ def run_route_generator_contract(spec_path: str) -> tuple[bool, str]:
 
     spec = _load_spec(spec_path)
     scenario_path, should_cleanup = _materialize_scenario_path(spec)
+    extra_cleanup_paths: list[str] = []
     if "scenario_inline" in spec and isinstance(spec.get("scenario_inline"), dict):
         base_scenario = dict(spec["scenario_inline"])
     else:
