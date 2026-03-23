@@ -3,6 +3,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "components/physics/action.h"
+
 enum class CommMsgType {
     None = 0,
     // 1. Command Acknowledgment
@@ -48,7 +50,15 @@ enum class CommMsgType {
     ReportContact,
     AssignTask,
     StatusUpdate,
-    RequestSupport
+    RequestSupport,
+
+    // 7. Two-ship / formation status extensions
+    REP_JOINED,      // Joined assigned formation slot
+    REP_REJOINING,   // Rejoin maneuver in progress
+    REP_FORM_LOST,   // Lost formation reference
+    REP_UNABLE_FORM, // Unable to establish/maintain formation
+    REP_SUPPORTING,  // Supporting lead / assigned element
+    WARN_SEPARATION  // Unsafe closure / separation alert
 };
 
 struct CommPacket {
@@ -75,12 +85,25 @@ struct PilotReport {
     CommMsgType report_type = CommMsgType::None;
     uint64_t sender_id = 0;
     uint64_t task_id = 0;
+    ServiceProfile service_profile = ServiceProfile::Unspecified;
+    TaskFamily task_family = TaskFamily::Unspecified;
+    TacticalUnitType tactical_unit_type = TacticalUnitType::Unspecified;
+    uint64_t tactical_unit_id = 0;
+    uint64_t task_group_id = 0;
+    int role_code = 0;
+    CoordinationMode coordination_mode = CoordinationMode::Unspecified;
+    uint64_t element_id = 0;
     int phase_id = 0;
+    int formation_role_id = 0;
     double timestamp_s = 0.0;
     double status_value = 0.0;
     uint64_t entity_ref = 0;
     double location_x_m = 0.0;
     double location_y_m = 0.0;
     double location_z_m = 0.0;
+    double formation_error_m = 0.0;
+    double bearing_error_deg = 0.0;
+    double closure_mps = 0.0;
+    double separation_m = 0.0;
     bool active = false;
 };

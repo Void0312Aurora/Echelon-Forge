@@ -5,17 +5,29 @@
   "seed": 7,
   "max_decisions": 40,
   "randomization_overrides": {
-    "world_yaw_range": [0.0, 0.0],
-    "wind_headwind_range": [0.0, 0.0],
-    "wind_crosswind_range": [0.0, 0.0],
+    "world_yaw_range": [
+      0.0,
+      0.0
+    ],
+    "wind_headwind_range": [
+      0.0,
+      0.0
+    ],
+    "wind_crosswind_range": [
+      0.0,
+      0.0
+    ],
     "wind_tailwind_max_mps": 0.0,
-    "wind_shear_range": [0.0, 0.0]
+    "wind_shear_range": [
+      0.0,
+      0.0
+    ]
   },
   "leader_env": {
     "decision_interval_steps": 20,
     "execution_backend": "frozen_model",
     "execution_train_config": "examples/config/training/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json",
-    "execution_model_path": "experiments_tmp/20260318_p5_takeoff_to_landing_continuous_v3_retrain_v1/final_model.zip",
+    "execution_model_path": "experiments/_archive_20260322_test_results/root_level/experiments_tmp/20260318_p5_takeoff_to_landing_continuous_v3_retrain_v1/final_model.zip",
     "execution_algo": "auto",
     "scripted_transition_alt_agl_m": 140.0,
     "heading_bias_limit_deg": 35.0,
@@ -36,22 +48,44 @@
     "deterministic": true
   },
   "checks": {
-    "allowed_command_codes": [1, 2],
-    "required_command_codes": [1, 2],
+    "allowed_command_codes": [
+      1,
+      2
+    ],
+    "required_command_codes": [
+      1,
+      2
+    ],
     "phase_command_expectations": {
-      "scramble": [1],
-      "takeoff": [1],
-      "departure": [1],
-      "transit_to_station": [2],
-      "rtb": [2]
+      "scramble": [
+        1
+      ],
+      "takeoff": [
+        1
+      ],
+      "departure": [
+        1
+      ],
+      "transit_to_station": [
+        2
+      ],
+      "rtb": [
+        2
+      ]
     },
     "require_altitude_within_task_block": true,
     "require_speed_within_task_block": true,
     "active_target_heading_abs_max_deg": 140.0,
-    "heading_alignment_phases": ["transit_to_station", "rtb"],
+    "heading_alignment_phases": [
+      "transit_to_station",
+      "rtb"
+    ],
     "min_heading_alignment_samples": 1,
-    "required_c2_tasks": ["TASK_SCRAMBLE", "TASK_CAP"],
-    "min_report_valid_fraction": 0.80
+    "required_c2_tasks": [
+      "TASK_SCRAMBLE",
+      "TASK_CAP"
+    ],
+    "min_report_valid_fraction": 0.8
   },
   "cases": [
     {
@@ -73,7 +107,13 @@
           "target_speed_mps": 228.0,
           "speed_min_mps": 190.0,
           "speed_max_mps": 245.0,
-          "on_station_time_s": 240.0
+          "on_station_time_s": 240.0,
+          "service_profile": "AirForce",
+          "task_family": "Unspecified",
+          "tactical_unit_type": "Platform",
+          "command_relationship": "TACON",
+          "authority_scope": "Tactical",
+          "coordination_mode": "Independent"
         },
         "mission_command": {
           "target_heading": 63.0,
@@ -99,7 +139,13 @@
           "target_speed_mps": 190.0,
           "speed_min_mps": 155.0,
           "speed_max_mps": 212.0,
-          "on_station_time_s": 240.0
+          "on_station_time_s": 240.0,
+          "service_profile": "AirForce",
+          "task_family": "Unspecified",
+          "tactical_unit_type": "Platform",
+          "command_relationship": "TACON",
+          "authority_scope": "Tactical",
+          "coordination_mode": "Independent"
         },
         "mission_command": {
           "target_heading": 146.0,

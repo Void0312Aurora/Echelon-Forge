@@ -2,6 +2,18 @@
 
 This folder contains JSON configs consumed by [train.py](/home/void0312/CMO/train.py).
 
+## Frozen Baseline
+
+The maintained leader-layer entry points now live under [frozen](/home/void0312/CMO/examples/config/training/frozen/README.md).
+
+- Use [leader_task_only_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_frozen_v1.json) for task-only/common-core leader runs.
+- Use [leader_c2_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_frozen_v1.json) for reporting/full-chain leader runs.
+- Both configs point directly at the frozen execution artifact under `experiments/_archive_20260322_test_results/...` rather than relying on historical path remapping.
+
+## Archive
+
+Historical `p6_*/p7_*` leader-layer configs have been moved to [leader_legacy](/home/void0312/CMO/examples/config/Archive/training/leader_legacy/README.md). They are retained for provenance only and are no longer the maintained training entry points.
+
 ## Leader Performance Knobs
 
 Leader-layer configs can reduce frozen execution-policy inference cost with:
@@ -62,7 +74,7 @@ Training runtime config also supports:
 ```bash
 ./.venv/bin/python tools/diagnostics/leader_perf_probe.py \
   --scenario scenarios/takeoff/takeoff.json \
-  --train_config examples/config/training/p7_leader_layer_c2_reporting_generalization_fast_v1.json \
+  --train_config examples/config/training/frozen/leader_c2_frozen_v1.json \
   --n_envs 4 \
   --leader_steps 32 \
   --vec_backend subproc
@@ -73,7 +85,7 @@ Training runtime config also supports:
 ```bash
 ./.venv/bin/python tools/diagnostics/leader_perf_probe.py \
   --scenario scenarios/takeoff/takeoff.json \
-  --train_config examples/config/training/p7_leader_layer_c2_reporting_generalization_fast_v1.json \
+  --train_config examples/config/training/frozen/leader_c2_frozen_v1.json \
   --n_envs 4 \
   --leader_steps 32 \
   --vec_backend shared

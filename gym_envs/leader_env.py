@@ -28,6 +28,8 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from gym_envs.universal_env import UniversalEnv
 from python.env_config import VALID_EXECUTION_STEP_RUNTIME_MODES, resolve_env_settings
+from python.artifact_paths import resolve_artifact_path
+from python.rl.common_core_profile import is_patrol_task, is_recover_task, task_observation_codes
 from python.rl.leader_tasking import (
     RuleBasedLeaderPhaseManager,
     ScriptedC2TaskManager,
@@ -66,9 +68,26 @@ def _wrap_deg(angle_deg: float) -> float:
 _TASK_ORDER_FIELDS = (
     "task_id",
     "task_type",
+    "service_profile",
+    "task_family",
+    "tactical_unit_type",
     "priority",
     "issuer_id",
     "assignee_id",
+    "command_relationship",
+    "authority_scope",
+    "parent_node_id",
+    "task_group_id",
+    "supported_node_id",
+    "supporting_node_id",
+    "role_code",
+    "coordination_mode",
+    "relative_slot_code",
+    "assignee_kind",
+    "recovery_site_id",
+    "element_id",
+    "package_id",
+    "lead_aircraft_id",
     "active",
     "issue_time_s",
     "anchor_x_m",
@@ -91,10 +110,28 @@ _TASK_ORDER_FIELDS = (
     "recovery_base_id",
     "recovery_runway_id",
     "recovery_approach_type",
+    "formation_template_id",
+    "formation_contract_id",
+    "formation_role_id",
+    "wingman_slot_id",
+    "join_policy_id",
+    "rejoin_policy_id",
+    "mutual_support_mode",
+    "support_sector_id",
 )
 
 _LEADER_INTENT_FIELDS = (
     "phase_id",
+    "element_phase_id",
+    "service_profile",
+    "task_family",
+    "tactical_unit_type",
+    "tactical_unit_id",
+    "task_group_id",
+    "role_code",
+    "coordination_mode",
+    "relative_slot_code",
+    "recovery_site_id",
     "command_code",
     "route_ref_id",
     "recovery_base_id",
@@ -109,6 +146,15 @@ _LEADER_INTENT_FIELDS = (
     "form_offset_z",
     "assigned_target_id",
     "authorization_to_fire",
+    "formation_mode_id",
+    "join_required_flag",
+    "rejoin_required_flag",
+    "split_flag",
+    "support_anchor_x_m",
+    "support_anchor_y_m",
+    "support_slot_offset_x_m",
+    "support_slot_offset_y_m",
+    "wingman_command_mode",
     "approach_armed",
     "commit_to_land",
     "abort_flag",
@@ -119,13 +165,26 @@ _PILOT_REPORT_FIELDS = (
     "report_type",
     "sender_id",
     "task_id",
+    "service_profile",
+    "task_family",
+    "tactical_unit_type",
+    "tactical_unit_id",
+    "task_group_id",
+    "role_code",
+    "coordination_mode",
+    "element_id",
     "phase_id",
+    "formation_role_id",
     "timestamp_s",
     "status_value",
     "entity_ref",
     "location_x_m",
     "location_y_m",
     "location_z_m",
+    "formation_error_m",
+    "bearing_error_deg",
+    "closure_mps",
+    "separation_m",
     "active",
 )
 
@@ -188,7 +247,8 @@ def _make_args_stub() -> Any:
 
 
 def _load_policy(model_path: str, algo_name: str = "auto", device: str = "cpu"):
-    load_path = model_path[:-4] if str(model_path).endswith(".zip") else str(model_path)
+    resolved_path = resolve_artifact_path(model_path) or str(model_path)
+    load_path = resolved_path[:-4] if str(resolved_path).endswith(".zip") else str(resolved_path)
     algo_norm = str(algo_name or "auto").strip()
     if algo_norm in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
         try:
@@ -1108,17 +1168,15 @@ else:
 
             loader = self.unwrapped.loader
             c2_task_name = str(getattr(loader, "c2_task_name", "")).strip().upper()
-            if c2_task_name == ScriptedC2TaskManager.TASK_CAP:
+            task = getattr(loader, "task_order", None)
+            if is_patrol_task(task, task_name=c2_task_name):
                 try:
                     station_metrics = self._station_metrics(loader)
                 except Exception:
                     station_metrics = {"near_station": False}
                 if bool(station_metrics.get("near_station", False)):
                     return getattr(ef_py.CommMsgType, "REP_ON_STATION")
-            if c2_task_name in (
-                ScriptedC2TaskManager.TASK_RTB,
-                ScriptedC2TaskManager.TASK_RECOVER_LAND,
-            ):
+            if is_recover_task(task, task_name=c2_task_name):
                 return getattr(ef_py.CommMsgType, "REP_RTB")
             if phase_bucket in {"rtb", "approach"}:
                 return getattr(ef_py.CommMsgType, "REP_RTB")
@@ -1183,6 +1241,13 @@ else:
                 return True
             if int(baseline.get("command_code", 0)) == COMMAND_CODE_LANDING:
                 return True
+            loader = self.unwrapped.loader
+            task = getattr(loader, "task_order", None)
+            if (
+                is_recover_task(task, task_name=str(getattr(loader, "c2_task_name", "")).strip().upper(), phase_name=phase_name)
+                and not self._has_active_waypoints()
+            ):
+                return True
             if not bool(terminal_ctx.get("valid_runway_frame", False)):
                 return False
             dme_m = abs(float(terminal_ctx.get("dme_m", 0.0)))
@@ -1218,6 +1283,14 @@ else:
             target_speed = float(post.get("target_speed", loader.mission_cmd.get("target_speed", 0.0)))
             return float(target_heading), float(target_altitude), float(target_speed)
 
+        def _has_active_waypoints(self) -> bool:
+            loader = self.unwrapped.loader
+            waypoints = list(getattr(loader, "waypoints", []) or [])
+            if not waypoints:
+                return False
+            waypoint_idx = int(getattr(loader, "waypoint_idx", 0) or 0)
+            return 0 <= waypoint_idx < len(waypoints)
+
         def _sanitize_action_mapping(
             self,
             *,
@@ -1233,6 +1306,14 @@ else:
             terminal_feasible = self._terminal_feasible(baseline, terminal_ctx)
             bias_guarded = False
             bias_guard_reason = ""
+            loader = self.unwrapped.loader
+            c2_task_name = str(getattr(loader, "c2_task_name", "")).strip().upper()
+            task = getattr(loader, "task_order", None)
+            recovery_vector_state = (
+                is_recover_task(task, task_name=c2_task_name, phase_name=phase_name)
+                and not self._has_active_waypoints()
+                and not terminal_feasible
+            )
 
             critical_takeoff = (
                 phase_name in {"scramble", "takeoff", "departure"}
@@ -1245,9 +1326,15 @@ else:
             ):
                 applied_bucket = "teacher"
                 reason = "departure_low_altitude"
+            elif requested_bucket == "approach" and self._has_active_waypoints():
+                applied_bucket = "teacher"
+                reason = "approach_before_route_complete"
             elif requested_bucket == "approach" and not terminal_feasible:
                 applied_bucket = "teacher"
                 reason = "approach_not_feasible"
+            elif requested_bucket in {"route", "rtb"} and recovery_vector_state:
+                applied_bucket = "teacher"
+                reason = "recovery_vector_teacher"
             elif (
                 requested_bucket == "abort"
                 and phase_name not in {"approach_armed", "landing_final", "rollout", "abort"}
@@ -1318,6 +1405,7 @@ else:
             altitude_m = float(baseline.get("altitude_m", loader.mission_cmd.get("target_altitude", 0.0)))
             speed_mps = float(baseline.get("speed_mps", loader.mission_cmd.get("target_speed", 0.0)))
             baseline_is_landing = int(cmd_code) == COMMAND_CODE_LANDING
+            has_active_waypoints = self._has_active_waypoints()
             route_ref_id = int(getattr(intent, "route_ref_id", 0) or infer_route_ref_id(loader))
             recovery_base_id = int(getattr(intent, "recovery_base_id", 0) or infer_recovery_base_id(loader, task=task))
             recovery_runway_id = int(
@@ -1334,14 +1422,14 @@ else:
                 phase_id = int(getattr(ef_py.LeaderPhase, "Takeoff"))
             elif mapping.phase_bucket == "route":
                 if not baseline_is_landing:
-                    cmd_code = COMMAND_CODE_ROUTE if bool(getattr(loader, "waypoints", [])) else COMMAND_CODE_VECTOR
+                    cmd_code = COMMAND_CODE_ROUTE
                     phase_id = int(getattr(ef_py.LeaderPhase, "TransitToStation"))
-                    route_ref_id = int(infer_route_ref_id(loader))
+                    route_ref_id = int(infer_route_ref_id(loader)) if int(cmd_code) == COMMAND_CODE_ROUTE else 0
             elif mapping.phase_bucket == "rtb":
                 if not baseline_is_landing:
-                    cmd_code = COMMAND_CODE_ROUTE if bool(getattr(loader, "waypoints", [])) else COMMAND_CODE_VECTOR
+                    cmd_code = COMMAND_CODE_ROUTE
                     phase_id = int(getattr(ef_py.LeaderPhase, "RTB"))
-                    route_ref_id = int(infer_route_ref_id(loader))
+                    route_ref_id = int(infer_route_ref_id(loader)) if int(cmd_code) == COMMAND_CODE_ROUTE else 0
             elif mapping.phase_bucket == "approach":
                 cmd_code = COMMAND_CODE_LANDING
                 phase_id = int(getattr(ef_py.LeaderPhase, "ApproachArmed"))
@@ -1368,6 +1456,22 @@ else:
                 heading_deg = float((heading_deg + mapping.heading_bias_deg + 360.0) % 360.0)
                 altitude_m = self._clip_altitude(task, altitude_m + mapping.altitude_bias_m)
                 speed_mps = self._clip_speed(task, speed_mps + mapping.speed_bias_mps)
+
+            if (
+                int(cmd_code) == COMMAND_CODE_ROUTE
+                and not has_active_waypoints
+                and is_recover_task(
+                    task,
+                    task_name=str(getattr(loader, "c2_task_name", "")).strip().upper(),
+                    phase_name=str(getattr(loader, "mission_phase_name", "") or ""),
+                )
+            ):
+                landing_ref = self._landing_reference_command()
+                if landing_ref is not None:
+                    heading_deg = float(landing_ref[0])
+
+            if int(cmd_code) == COMMAND_CODE_ROUTE and not has_active_waypoints:
+                route_ref_id = 0
 
             intent.phase_id = self._phase_enum_for_id(int(phase_id))
             intent.command_code = int(cmd_code)
@@ -1542,12 +1646,16 @@ else:
             anchor_bearing_deg = float((math.degrees(math.atan2(anchor_dx, anchor_dy)) + 360.0) % 360.0) if anchor_dist_m > 1.0e-6 else 0.0
             anchor_bearing_rel_deg = float(_wrap_deg(anchor_bearing_deg - float(getattr(inst, "heading", 0.0))))
             fuel_total_kg, fuel_margin_frac = self._fuel_margin_state(task, inst)
+            task_primary_code, task_coordination_code, task_unit_code = task_observation_codes(
+                task,
+                fallback_phase_id=int(phase_id),
+            )
             task_vec = np.asarray(
                 [
                     float(c2_task_id),
-                    float(getattr(task, "task_type", 0) if task is not None else 0.0),
-                    float(getattr(task, "station_type", 0) if task is not None else 0.0),
-                    float(phase_id),
+                    float(task_primary_code),
+                    float(task_coordination_code),
+                    float(task_unit_code),
                     float(loader.mission_cmd.get("target_altitude", 0.0)),
                     float(loader.mission_cmd.get("target_speed", 0.0)),
                     float(anchor_dist_m),

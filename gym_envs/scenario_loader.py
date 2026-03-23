@@ -20,6 +20,7 @@ from python.scenario_compiler import (
     rotate_ils_beacon_templates,
 )
 from python.scenario_runtime import apply_world_layout_to_kernel, prepare_scenario_world_layout
+from python.rl.common_core_profile import normalize_task_order_spec
 from python.rl.leader_tasking import RuleBasedLeaderPhaseManager, build_kernel_mission_command
 from python.rl.mission_defs import is_landing_command_code
 
@@ -156,7 +157,7 @@ class ScenarioLoader:
 
     def _task_order_spec(self) -> dict:
         task_cfg = self.scenario_data.get("task_order", None)
-        return task_cfg if isinstance(task_cfg, dict) else {}
+        return normalize_task_order_spec(task_cfg if isinstance(task_cfg, dict) else {})
 
     def _normalize_mission_command_dict(self, cmd: dict | None) -> dict:
         return _normalize_runtime_mission_command(cmd, self._task_order_spec())
@@ -597,6 +598,8 @@ class ScenarioLoader:
         self._randomize_mission()
         self._randomize_task_order()
         task_cfg = self._task_order_spec()
+        if isinstance(self.scenario_data, dict):
+            self.scenario_data["task_order"] = dict(task_cfg)
         self._align_task_only_mission_shell_with_task_order()
         self.mission_cmd = _normalize_runtime_mission_command(self.mission_cmd, task_cfg)
         materialize_runtime_waypoint_cache(self.mission_cmd)
@@ -2379,7 +2382,14 @@ class ScenarioLoader:
                         else:
                             status[0] = 0.0
                     if self.waypoint_idx >= n:
-                        transitioned = self._activate_post_waypoint_transition()
+                        landing_transition_pending = bool(
+                            isinstance(self.post_waypoint_transition, dict)
+                            and self.post_waypoint_transition
+                            and is_landing_command_code(self.post_waypoint_transition.get("command_code", 4))
+                        )
+                        transitioned = None
+                        if not self._defer_landing_post_transition_until_next_update():
+                            transitioned = self._maybe_activate_post_waypoint_transition()
                         if isinstance(transitioned, dict):
                             transition_reward = float(
                                 transitioned.get("transition_reward", cfg.get("phase_transition_bonus", 600.0))
@@ -2389,6 +2399,10 @@ class ScenarioLoader:
                             if not objective_has_status:
                                 status[0] = 0.0
                                 status[1] = 0.0
+                        elif landing_transition_pending:
+                            if not objective_has_status:
+                                status[0] = 0.0
+                                status[1] = float(self.waypoint_idx)
                         elif bool(getattr(execution_step, "waypoint_episode_success", False)):
                             _add_reward_term(
                                 "waypoint_success_bonus",
@@ -3504,6 +3518,99 @@ class ScenarioLoader:
         if sync_to_kernel:
             self._sync_kernel_command_chain()
 
+    def _landing_post_transition_terminal_ready(self) -> bool:
+        if self.agent_id is None:
+            return False
+        try:
+            truth = self.sim.get_agent_observation(self.agent_id)
+        except Exception:
+            truth = None
+        try:
+            inst = self.sim.get_instrument_state(self.agent_id)
+        except Exception:
+            inst = None
+        if truth is None or inst is None:
+            return False
+
+        valid_runway_frame = False
+        along_m = 0.0
+        cross_m = 0.0
+        try:
+            valid_runway_frame, along_m, cross_m, _rw_len, _rw_wid = self.get_runway_local_frame(
+                float(getattr(truth, "x", 0.0)),
+                float(getattr(truth, "y", 0.0)),
+            )
+        except Exception:
+            valid_runway_frame = False
+        if not bool(valid_runway_frame):
+            return False
+        if float(along_m) < -1000.0:
+            return False
+        if abs(float(cross_m)) > 3500.0:
+            return False
+
+        try:
+            beacon = self._nearest_ils_beacon(float(getattr(truth, "x", 0.0)), float(getattr(truth, "y", 0.0)))
+        except Exception:
+            beacon = None
+        if beacon is None:
+            return False
+        runway_heading_err_deg = abs(
+            (float(getattr(inst, "heading", 0.0)) - float(beacon.get("heading", 0.0)) + 180.0) % 360.0 - 180.0
+        )
+        if runway_heading_err_deg > 85.0:
+            return False
+
+        try:
+            ils = self.get_ils_observation(
+                float(getattr(truth, "x", 0.0)),
+                float(getattr(truth, "y", 0.0)),
+                float(getattr(inst, "alt_baro", 0.0)),
+            )
+        except Exception:
+            return False
+        dme_m = float(ils[3]) if len(ils) >= 4 else float("inf")
+        return dme_m <= 18000.0
+
+    def _post_waypoint_transition_ready(self) -> bool:
+        if not isinstance(self.post_waypoint_transition, dict) or not self.post_waypoint_transition:
+            return False
+        next_cmd_code = int(self.post_waypoint_transition.get("command_code", 4))
+        if not is_landing_command_code(next_cmd_code):
+            return True
+
+        c2_task_name = str(getattr(self, "c2_task_name", "")).strip().upper()
+        if not c2_task_name:
+            return self._landing_post_transition_terminal_ready()
+        if bool(getattr(self, "c2_transitioned", False)):
+            return False
+        if c2_task_name != "TASK_RECOVER_LAND":
+            return False
+        if self.waypoints and int(getattr(self, "waypoint_idx", 0) or 0) >= len(self.waypoints):
+            return True
+        return self._landing_post_transition_terminal_ready()
+
+    def _maybe_activate_post_waypoint_transition(self, *, sync_to_kernel: bool = True) -> dict | None:
+        if not isinstance(self.post_waypoint_transition, dict) or not self.post_waypoint_transition:
+            return None
+        if self.waypoints and int(getattr(self, "waypoint_idx", 0) or 0) < len(self.waypoints):
+            return None
+        if not self._post_waypoint_transition_ready():
+            return None
+        return self._activate_post_waypoint_transition(sync_to_kernel=sync_to_kernel)
+
+    def _defer_landing_post_transition_until_next_update(self) -> bool:
+        if not isinstance(self.post_waypoint_transition, dict) or not self.post_waypoint_transition:
+            return False
+        next_cmd_code = int(self.post_waypoint_transition.get("command_code", 4))
+        if not is_landing_command_code(next_cmd_code):
+            return False
+        scenario_data = getattr(self, "scenario_data", {}) or {}
+        c2_cfg = scenario_data.get("c2_logic", None) if isinstance(scenario_data, dict) else None
+        if isinstance(c2_cfg, dict) and c2_cfg:
+            return True
+        return bool(str(getattr(self, "c2_task_name", "")).strip())
+
     def _activate_post_waypoint_transition(self, *, sync_to_kernel: bool = True) -> dict | None:
         if not isinstance(self.post_waypoint_transition, dict) or not self.post_waypoint_transition:
             return None
@@ -3693,6 +3800,8 @@ class ScenarioLoader:
         self._apply_waypoint_guidance_update(truth=truth, inst=inst)
 
         self._update_command_chain(sim_time, truth=truth, inst=inst, sync_to_kernel=False)
+        if not self._defer_landing_post_transition_until_next_update():
+            self._maybe_activate_post_waypoint_transition(sync_to_kernel=False)
         if sync_to_kernel:
             self._sync_kernel_mission_command()
             self._sync_kernel_command_chain()
@@ -4011,7 +4120,14 @@ class ScenarioLoader:
                         status[0] = 0.0
                     self._waypoint_prev_dist_m = None
                     if self.waypoint_idx >= n:
-                        transitioned = self._activate_post_waypoint_transition()
+                        landing_transition_pending = bool(
+                            isinstance(self.post_waypoint_transition, dict)
+                            and self.post_waypoint_transition
+                            and is_landing_command_code(self.post_waypoint_transition.get("command_code", 4))
+                        )
+                        transitioned = None
+                        if not self._defer_landing_post_transition_until_next_update():
+                            transitioned = self._maybe_activate_post_waypoint_transition()
                         if isinstance(transitioned, dict):
                             _add_reward_term(
                                 "phase_transition_bonus",
@@ -4019,6 +4135,9 @@ class ScenarioLoader:
                             )
                             status[0] = 0.0
                             status[1] = 0.0
+                        elif landing_transition_pending:
+                            status[0] = 0.0
+                            status[1] = float(self.waypoint_idx)
                         else:
                             if waypoint_runtime is not None and bool(
                                 getattr(waypoint_runtime, "waypoint_episode_success", False)

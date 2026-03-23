@@ -6,6 +6,12 @@ import math
 from typing import Any
 
 import ef_py
+from python.rl.common_core_profile import (
+    apply_leader_intent_common_core_defaults,
+    apply_pilot_report_common_core_defaults,
+    apply_task_order_common_core_defaults,
+    apply_task_order_common_core_spec,
+)
 from python.rl.mission_defs import (
     COMMAND_CODE_LANDING,
     LANDING_PHASE_NAMES,
@@ -169,6 +175,14 @@ def infer_route_ref_id(loader: Any) -> int:
     return value
 
 
+def has_active_waypoint_leg(loader: Any) -> bool:
+    waypoints = list(getattr(loader, "waypoints", []) or [])
+    if not waypoints:
+        return False
+    waypoint_idx = int(getattr(loader, "waypoint_idx", 0) or 0)
+    return 0 <= waypoint_idx < len(waypoints)
+
+
 def infer_recovery_base_id(loader: Any, task: Any | None = None) -> int:
     mission_cmd = _mission_cmd_dict(loader)
     post = _post_transition_cfg(loader)
@@ -241,6 +255,18 @@ def infer_recovery_approach_type(loader: Any, task: Any | None = None) -> Any:
     return default_value
 
 
+def _landing_reference_heading_deg(loader: Any, default_heading_deg: float) -> float:
+    post = _post_transition_cfg(loader)
+    if not isinstance(post, dict) or not post:
+        return float(default_heading_deg)
+    target_heading = float(post.get("target_heading", default_heading_deg))
+    if bool(getattr(loader, "rotate_mission_heading_with_world", False)) and abs(
+        float(getattr(loader, "world_yaw_deg", 0.0))
+    ) > 1.0e-6:
+        target_heading = (target_heading + float(getattr(loader, "world_yaw_deg", 0.0))) % 360.0
+    return float(target_heading)
+
+
 def build_kernel_mission_command(loader: Any) -> ef_py.MissionCommand:
     """
     Build the kernel-facing MissionCommand from the latest leader intent first,
@@ -264,7 +290,10 @@ def build_kernel_mission_command(loader: Any) -> ef_py.MissionCommand:
     cmd.authorization_to_fire = bool(getattr(leader_intent, "authorization_to_fire", False))
     route_ref_id = _coerce_positive_int(getattr(leader_intent, "route_ref_id", 0))
     if route_ref_id <= 0:
-        route_ref_id = _coerce_positive_int(mission_cmd.get("route_ref_id", 0)) or infer_route_ref_id(loader)
+        if has_active_waypoint_leg(loader):
+            route_ref_id = _coerce_positive_int(mission_cmd.get("route_ref_id", 0)) or infer_route_ref_id(loader)
+        else:
+            route_ref_id = 0
     recovery_base_id = _coerce_positive_int(getattr(leader_intent, "recovery_base_id", 0))
     if recovery_base_id <= 0:
         recovery_base_id = infer_recovery_base_id(loader, task=getattr(loader, "task_order", None))
@@ -355,6 +384,7 @@ def _apply_task_order_overrides(
             order_spec.get("recovery_approach_type", getattr(order, "recovery_approach_type", _recovery_approach_none())),
             getattr(order, "recovery_approach_type", _recovery_approach_none()),
         )
+    apply_task_order_common_core_spec(order, order_spec)
     return order
 
 
@@ -372,6 +402,9 @@ class RuleBasedLeaderPhaseManager:
         approach_arm_loc_abs_max: float = 0.55,
         approach_arm_gs_abs_max: float = 1.25,
         approach_arm_heading_error_deg_max: float = 45.0,
+        approach_arm_require_runway_frame: bool = True,
+        approach_arm_along_min_m: float = -1000.0,
+        approach_arm_cross_abs_max_m: float = 3500.0,
         landing_final_dme_m: float = 3500.0,
         landing_final_alt_agl_m: float = 140.0,
         rollout_alt_agl_m: float = 5.0,
@@ -383,6 +416,9 @@ class RuleBasedLeaderPhaseManager:
         self.approach_arm_loc_abs_max = float(approach_arm_loc_abs_max)
         self.approach_arm_gs_abs_max = float(approach_arm_gs_abs_max)
         self.approach_arm_heading_error_deg_max = float(approach_arm_heading_error_deg_max)
+        self.approach_arm_require_runway_frame = bool(approach_arm_require_runway_frame)
+        self.approach_arm_along_min_m = float(approach_arm_along_min_m)
+        self.approach_arm_cross_abs_max_m = float(approach_arm_cross_abs_max_m)
         self.landing_final_dme_m = float(landing_final_dme_m)
         self.landing_final_alt_agl_m = float(landing_final_alt_agl_m)
         self.rollout_alt_agl_m = float(rollout_alt_agl_m)
@@ -444,6 +480,7 @@ class RuleBasedLeaderPhaseManager:
         waypoints = list(getattr(loader, "waypoints", []) or [])
         waypoint_idx = int(getattr(loader, "waypoint_idx", 0))
         remaining_waypoints = max(0, len(waypoints) - waypoint_idx)
+        active_waypoint_leg = remaining_waypoints > 0
         cmd_code = int(getattr(loader, "mission_cmd", {}).get("command_code", 0))
         on_ground = alt_agl <= self.rollout_alt_agl_m
 
@@ -458,8 +495,13 @@ class RuleBasedLeaderPhaseManager:
             dme_m=dme_m,
             remaining_waypoints=remaining_waypoints,
         ):
-            loader._activate_post_waypoint_transition(sync_to_kernel=sync_to_kernel)
-            cmd_code = int(getattr(loader, "mission_cmd", {}).get("command_code", cmd_code))
+            transitioned = None
+            if hasattr(loader, "_maybe_activate_post_waypoint_transition"):
+                transitioned = loader._maybe_activate_post_waypoint_transition(sync_to_kernel=sync_to_kernel)
+            elif hasattr(loader, "_activate_post_waypoint_transition"):
+                transitioned = loader._activate_post_waypoint_transition(sync_to_kernel=sync_to_kernel)
+            if transitioned is not None:
+                cmd_code = int(getattr(loader, "mission_cmd", {}).get("command_code", cmd_code))
 
         phase_name = self._infer_phase_name(
             cmd_code=cmd_code,
@@ -487,22 +529,35 @@ class RuleBasedLeaderPhaseManager:
         recovery_base_id = infer_recovery_base_id(loader, task=task)
         recovery_runway_id = infer_recovery_runway_id(loader, task=task)
         recovery_approach_type = infer_recovery_approach_type(loader, task=task)
-        intent.route_ref_id = int(route_ref_id if int(intent.command_code) == 3 else 0)
+        intent.route_ref_id = int(route_ref_id if int(intent.command_code) == 3 and active_waypoint_leg else 0)
         intent.recovery_base_id = int(recovery_base_id)
         intent.recovery_runway_id = int(recovery_runway_id)
         intent.recovery_approach_type = recovery_approach_type
         intent.cmd_heading_deg = float(getattr(loader, "mission_cmd", {}).get("target_heading", 0.0))
+        if (
+            int(intent.command_code) == 3
+            and not active_waypoint_leg
+            and str(getattr(loader, "c2_task_name", "")).strip().upper() == ScriptedC2TaskManager.TASK_RECOVER_LAND
+        ):
+            intent.cmd_heading_deg = _landing_reference_heading_deg(loader, intent.cmd_heading_deg)
         intent.cmd_altitude_m = float(getattr(loader, "mission_cmd", {}).get("target_altitude", 0.0))
         intent.cmd_speed_mps = float(getattr(loader, "mission_cmd", {}).get("target_speed", 0.0))
         intent.approach_armed = phase_name in LANDING_PHASE_NAMES
         intent.commit_to_land = phase_name in {"landing_final", "rollout"}
         intent.abort_flag = False
+        apply_leader_intent_common_core_defaults(
+            intent,
+            order=task,
+            task_name=str(getattr(loader, "c2_task_name", "") or "").strip().upper() or None,
+            phase_name=phase_name,
+            default_tactical_unit_id=int(getattr(loader, "agent_id", 0) or 0),
+        )
         loader.leader_intent = intent
 
         prev_report = getattr(loader, "pilot_report", None)
         none_msg = getattr(ef_py.CommMsgType, "None")
         prev_type = getattr(prev_report, "report_type", none_msg) if prev_report is not None else none_msg
-        if phase_name in LANDING_PHASE_NAMES and prev_type != ef_py.CommMsgType.REP_RTB:
+        if (phase_name == "rtb" or phase_name in LANDING_PHASE_NAMES) and prev_type != ef_py.CommMsgType.REP_RTB:
             loader.pilot_report = self._make_report(
                 loader,
                 report_type=ef_py.CommMsgType.REP_RTB,
@@ -585,6 +640,10 @@ class RuleBasedLeaderPhaseManager:
             )
             if int(current) == int(_recovery_approach_none()):
                 order.recovery_approach_type = infer_recovery_approach_type(loader, task=order)
+        apply_task_order_common_core_defaults(
+            order,
+            task_name=str(getattr(loader, "c2_task_name", "") or "").strip().upper() or None,
+        )
         return order
 
     def _make_report(self, loader: Any, *, report_type: Any, sim_time_s: float, truth: Any = None) -> ef_py.PilotReport:
@@ -592,7 +651,8 @@ class RuleBasedLeaderPhaseManager:
         report.active = True
         report.report_type = report_type
         report.sender_id = int(getattr(loader, "agent_id", 0) or 0)
-        report.task_id = int(getattr(getattr(loader, "task_order", None), "task_id", 0))
+        task = getattr(loader, "task_order", None)
+        report.task_id = int(getattr(task, "task_id", 0))
         report.phase_id = int(self._phase_enum_for_name(getattr(loader, "mission_phase_name", "idle")))
         report.timestamp_s = float(sim_time_s)
         try:
@@ -603,6 +663,13 @@ class RuleBasedLeaderPhaseManager:
             report.location_z_m = float(getattr(truth, "z", 0.0))
         except Exception:
             pass
+        apply_pilot_report_common_core_defaults(
+            report,
+            order=task,
+            task_name=str(getattr(loader, "c2_task_name", "") or "").strip().upper() or None,
+            phase_name=str(getattr(loader, "mission_phase_name", "idle") or "idle"),
+            default_tactical_unit_id=int(getattr(loader, "agent_id", 0) or 0),
+        )
         return report
 
     def _infer_phase_name(
@@ -671,15 +738,14 @@ class RuleBasedLeaderPhaseManager:
         if not isinstance(post, dict) or not post:
             return False
         c2_task_name = str(getattr(loader, "c2_task_name", "")).strip().upper()
-        if c2_task_name and c2_task_name not in {
-            ScriptedC2TaskManager.TASK_RTB,
-            ScriptedC2TaskManager.TASK_RECOVER_LAND,
-        }:
+        if c2_task_name and c2_task_name != ScriptedC2TaskManager.TASK_RECOVER_LAND:
             return False
         if is_landing_command_code(getattr(loader, "mission_cmd", {}).get("command_code", 0)):
             return False
         if not is_landing_command_code(post.get("command_code", COMMAND_CODE_LANDING)):
             return False
+        if c2_task_name == ScriptedC2TaskManager.TASK_RECOVER_LAND and remaining_waypoints <= 0:
+            return True
         if remaining_waypoints > self.terminal_waypoint_count:
             return False
         if alt_agl_m <= self.rollout_alt_agl_m:
@@ -703,6 +769,25 @@ class RuleBasedLeaderPhaseManager:
             runway_heading = float(beacon.get("heading", 0.0))
             heading_err = abs((heading_deg - runway_heading + 180.0) % 360.0 - 180.0)
             if heading_err > self.approach_arm_heading_error_deg_max:
+                return False
+
+        valid_runway_frame = False
+        along_m = 0.0
+        cross_m = 0.0
+        try:
+            valid_runway_frame, along_m, cross_m, _rw_len, _rw_wid = loader.get_runway_local_frame(
+                float(getattr(truth, "x", 0.0)),
+                float(getattr(truth, "y", 0.0)),
+            )
+        except Exception:
+            valid_runway_frame = False
+
+        if self.approach_arm_require_runway_frame and not bool(valid_runway_frame):
+            return False
+        if bool(valid_runway_frame):
+            if float(along_m) < self.approach_arm_along_min_m:
+                return False
+            if abs(float(cross_m)) > self.approach_arm_cross_abs_max_m:
                 return False
         return True
 
@@ -738,6 +823,10 @@ class ScriptedC2TaskManager:
         recover_arm_alt_agl_max_m: float = 1800.0,
         recover_arm_loc_abs_max: float = 0.8,
         recover_arm_gs_abs_max: float = 1.5,
+        recover_arm_require_runway_frame: bool = True,
+        recover_arm_along_min_m: float = -1000.0,
+        recover_arm_cross_abs_max_m: float = 3500.0,
+        recover_arm_heading_abs_max_deg: float = 85.0,
     ):
         self.scramble_complete_alt_agl_m = float(scramble_complete_alt_agl_m)
         self.scramble_complete_ground_speed_mps = float(scramble_complete_ground_speed_mps)
@@ -749,6 +838,10 @@ class ScriptedC2TaskManager:
         self.recover_arm_alt_agl_max_m = float(recover_arm_alt_agl_max_m)
         self.recover_arm_loc_abs_max = float(recover_arm_loc_abs_max)
         self.recover_arm_gs_abs_max = float(recover_arm_gs_abs_max)
+        self.recover_arm_require_runway_frame = bool(recover_arm_require_runway_frame)
+        self.recover_arm_along_min_m = float(recover_arm_along_min_m)
+        self.recover_arm_cross_abs_max_m = float(recover_arm_cross_abs_max_m)
+        self.recover_arm_heading_abs_max_deg = float(recover_arm_heading_abs_max_deg)
         self.current_task_name = self.TASK_SCRAMBLE
         self.station_entry_time_s: float | None = None
 
@@ -828,6 +921,22 @@ class ScriptedC2TaskManager:
     @staticmethod
     def _has_route_waypoints(loader: Any) -> bool:
         return bool(list(getattr(loader, "waypoints", []) or []))
+
+    @staticmethod
+    def _landing_post_transition_pending(loader: Any) -> bool:
+        post = getattr(loader, "post_waypoint_transition", None)
+        if not isinstance(post, dict) or not post:
+            return False
+        return bool(is_landing_command_code(post.get("command_code", COMMAND_CODE_LANDING)))
+
+    def _route_exhausted_for_recovery(self, loader: Any) -> bool:
+        if not self._landing_post_transition_pending(loader):
+            return False
+        waypoints = list(getattr(loader, "waypoints", []) or [])
+        if not waypoints:
+            return False
+        waypoint_idx = int(getattr(loader, "waypoint_idx", 0) or 0)
+        return waypoint_idx >= len(waypoints)
 
     def _active_waypoint_targets(self, loader: Any) -> tuple[float, float, float | None, float | None]:
         mission_cmd = getattr(loader, "mission_cmd", {}) or {}
@@ -924,6 +1033,12 @@ class ScriptedC2TaskManager:
                     default_upper_margin=40.0,
                     floor_value=40.0,
                 )
+            apply_task_order_common_core_defaults(
+                order,
+                task_name=task_name,
+                force_task_family=True,
+                force_coordination_mode=True,
+            )
             return
 
         target_altitude_m, target_speed_mps, anchor_x_m, anchor_y_m = self._active_waypoint_targets(loader)
@@ -942,6 +1057,12 @@ class ScriptedC2TaskManager:
             order.altitude_block_max_m = max(float(order.altitude_block_min_m), float(target_altitude_m) + 500.0)
             order.speed_min_mps = max(40.0, float(target_speed_mps) - 40.0)
             order.speed_max_mps = max(float(order.speed_min_mps), float(target_speed_mps) + 40.0)
+            apply_task_order_common_core_defaults(
+                order,
+                task_name=task_name,
+                force_task_family=True,
+                force_coordination_mode=True,
+            )
             return
 
         if task_name == self.TASK_RECOVER_LAND:
@@ -949,7 +1070,20 @@ class ScriptedC2TaskManager:
             order.altitude_block_max_m = max(350.0, float(target_altitude_m) + 350.0)
             order.speed_min_mps = max(55.0, float(target_speed_mps) - 20.0)
             order.speed_max_mps = max(float(order.speed_min_mps), float(target_speed_mps) + 20.0)
+            apply_task_order_common_core_defaults(
+                order,
+                task_name=task_name,
+                force_task_family=True,
+                force_coordination_mode=True,
+            )
             return
+
+        apply_task_order_common_core_defaults(
+            order,
+            task_name=task_name,
+            force_task_family=True,
+            force_coordination_mode=True,
+        )
 
     def _fuel_margin_frac(self, loader: Any, *, inst: Any = None) -> tuple[float, float]:
         if inst is None:
@@ -1033,12 +1167,56 @@ class ScriptedC2TaskManager:
         gs_abs = abs(float(ils[2])) if len(ils) >= 3 else float("inf")
         dme_m = float(ils[3]) if len(ils) >= 4 else float("inf")
         alt_agl_m = float(getattr(inst, "alt_radar", 0.0))
+        cfg = self._task_cfg(loader)
+
+        recover_arm_dme_m = float(cfg.get("recover_arm_dme_m", self.recover_arm_dme_m))
+        recover_arm_alt_agl_max_m = float(cfg.get("recover_arm_alt_agl_max_m", self.recover_arm_alt_agl_max_m))
+        recover_arm_loc_abs_max = float(cfg.get("recover_arm_loc_abs_max", self.recover_arm_loc_abs_max))
+        recover_arm_gs_abs_max = float(cfg.get("recover_arm_gs_abs_max", self.recover_arm_gs_abs_max))
+        recover_arm_require_runway_frame = bool(
+            cfg.get("recover_arm_require_runway_frame", self.recover_arm_require_runway_frame)
+        )
+        recover_arm_along_min_m = float(cfg.get("recover_arm_along_min_m", self.recover_arm_along_min_m))
+        recover_arm_cross_abs_max_m = float(cfg.get("recover_arm_cross_abs_max_m", self.recover_arm_cross_abs_max_m))
+        recover_arm_heading_abs_max_deg = float(
+            cfg.get("recover_arm_heading_abs_max_deg", self.recover_arm_heading_abs_max_deg)
+        )
+
+        valid_runway_frame = False
+        along_m = 0.0
+        cross_m = 0.0
+        try:
+            valid_runway_frame, along_m, cross_m, _rw_len, _rw_wid = loader.get_runway_local_frame(
+                float(getattr(truth, "x", 0.0)),
+                float(getattr(truth, "y", 0.0)),
+            )
+        except Exception:
+            valid_runway_frame = False
+
+        if recover_arm_require_runway_frame and not bool(valid_runway_frame):
+            return False
+        if bool(valid_runway_frame):
+            if float(along_m) < recover_arm_along_min_m:
+                return False
+            if abs(float(cross_m)) > recover_arm_cross_abs_max_m:
+                return False
+
+        try:
+            beacon = loader._nearest_ils_beacon(float(getattr(truth, "x", 0.0)), float(getattr(truth, "y", 0.0)))
+        except Exception:
+            beacon = None
+        if beacon is None:
+            return False
+        runway_heading_err_deg = abs(
+            _wrap_deg(float(getattr(inst, "heading", 0.0)) - float(beacon.get("heading", 0.0)))
+        )
         return bool(
             ils_valid
-            and dme_m <= self.recover_arm_dme_m
-            and alt_agl_m <= self.recover_arm_alt_agl_max_m
-            and loc_abs <= self.recover_arm_loc_abs_max
-            and gs_abs <= self.recover_arm_gs_abs_max
+            and dme_m <= recover_arm_dme_m
+            and alt_agl_m <= recover_arm_alt_agl_max_m
+            and loc_abs <= recover_arm_loc_abs_max
+            and gs_abs <= recover_arm_gs_abs_max
+            and runway_heading_err_deg <= recover_arm_heading_abs_max_deg
         )
 
     def _report_assessment(self, loader: Any, *, truth: Any = None, inst: Any = None) -> tuple[bool, str]:
@@ -1111,7 +1289,11 @@ class ScriptedC2TaskManager:
                     reason = "station_time_complete"
 
         elif current == self.TASK_RTB:
-            if self._recovery_ready(loader, truth=truth, inst=inst) and report_type in (
+            if self._route_exhausted_for_recovery(loader):
+                current = self.TASK_RECOVER_LAND
+                transitioned = True
+                reason = "route_exhausted_recovery_final"
+            elif self._recovery_ready(loader, truth=truth, inst=inst) and report_type in (
                 int(getattr(ef_py.CommMsgType, "REP_RTB")),
                 int(getattr(ef_py.CommMsgType, "WARN_BINGO")),
                 int(getattr(ef_py.CommMsgType, "REP_UNABLE")),

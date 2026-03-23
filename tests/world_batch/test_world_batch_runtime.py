@@ -337,13 +337,39 @@ class WorldBatchRuntimeTests(unittest.TestCase):
 
         intent0 = ef_py.LeaderIntent()
         intent0.phase_id = ef_py.LeaderPhase.Departure
+        intent0.element_phase_id = 11
+        intent0.service_profile = ef_py.ServiceProfile.AirForce
+        intent0.task_family = ef_py.TaskFamily.Patrol
+        intent0.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
+        intent0.tactical_unit_id = 7001
+        intent0.task_group_id = 8001
+        intent0.role_code = 21
+        intent0.coordination_mode = ef_py.CoordinationMode.Follow
+        intent0.relative_slot_code = 11
+        intent0.recovery_site_id = 91
         intent0.command_code = 2
         intent0.cmd_heading_deg = 45.0
+        intent0.formation_mode_id = ef_py.FormationMode.Joining
+        intent0.join_required_flag = True
+        intent0.wingman_command_mode = ef_py.WingmanCommandMode.HoldSlot
         intent0.active = True
         intent1 = ef_py.LeaderIntent()
         intent1.phase_id = ef_py.LeaderPhase.ApproachArmed
+        intent1.element_phase_id = 23
+        intent1.service_profile = ef_py.ServiceProfile.AirForce
+        intent1.task_family = ef_py.TaskFamily.Recover
+        intent1.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
+        intent1.tactical_unit_id = 7001
+        intent1.task_group_id = 8001
+        intent1.role_code = 22
+        intent1.coordination_mode = ef_py.CoordinationMode.Recover
+        intent1.relative_slot_code = 12
+        intent1.recovery_site_id = 91
         intent1.command_code = 4
         intent1.cmd_heading_deg = 90.0
+        intent1.formation_mode_id = ef_py.FormationMode.Recover
+        intent1.rejoin_required_flag = True
+        intent1.wingman_command_mode = ef_py.WingmanCommandMode.Rejoin
         intent1.active = True
         intent_assign0 = ef_py.WorldLeaderIntentAssignment()
         intent_assign0.world_index = 0
@@ -358,10 +384,45 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         order0 = ef_py.TaskOrder()
         order0.task_type = ef_py.TaskType.CAP
         order0.task_id = 101
+        order0.service_profile = ef_py.ServiceProfile.AirForce
+        order0.task_family = ef_py.TaskFamily.Patrol
+        order0.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
+        order0.command_relationship = ef_py.CommandRelationship.TACON
+        order0.authority_scope = ef_py.AuthorityScope.Tactical
+        order0.parent_node_id = 5001
+        order0.task_group_id = 8001
+        order0.supported_node_id = 9001
+        order0.supporting_node_id = 9002
+        order0.role_code = 21
+        order0.coordination_mode = ef_py.CoordinationMode.Attached
+        order0.relative_slot_code = 11
+        order0.assignee_kind = ef_py.AssigneeKind.Element
+        order0.recovery_site_id = 91
+        order0.element_id = 7001
+        order0.lead_aircraft_id = int(eid0)
+        order0.formation_template_id = 91
+        order0.formation_role_id = ef_py.FormationRole.ElementLead
         order0.active = True
         order1 = ef_py.TaskOrder()
         order1.task_type = ef_py.TaskType.RTB
         order1.task_id = 202
+        order1.service_profile = ef_py.ServiceProfile.AirForce
+        order1.task_family = ef_py.TaskFamily.Recover
+        order1.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
+        order1.command_relationship = ef_py.CommandRelationship.TACON
+        order1.authority_scope = ef_py.AuthorityScope.Tactical
+        order1.parent_node_id = 5001
+        order1.task_group_id = 8001
+        order1.role_code = 22
+        order1.coordination_mode = ef_py.CoordinationMode.Follow
+        order1.relative_slot_code = 12
+        order1.assignee_kind = ef_py.AssigneeKind.Element
+        order1.recovery_site_id = 91
+        order1.element_id = 7001
+        order1.lead_aircraft_id = int(eid0)
+        order1.formation_template_id = 91
+        order1.formation_role_id = ef_py.FormationRole.Wingman
+        order1.wingman_slot_id = ef_py.WingmanSlot.Right
         order1.active = True
         order_assign0 = ef_py.WorldTaskOrderAssignment()
         order_assign0.world_index = 0
@@ -375,11 +436,31 @@ class WorldBatchRuntimeTests(unittest.TestCase):
 
         report0 = ef_py.PilotReport()
         report0.report_type = ef_py.CommMsgType.REP_WILCO
+        report0.service_profile = ef_py.ServiceProfile.AirForce
+        report0.task_family = ef_py.TaskFamily.Patrol
+        report0.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
+        report0.tactical_unit_id = 7001
+        report0.task_group_id = 8001
+        report0.role_code = 21
+        report0.coordination_mode = ef_py.CoordinationMode.Attached
+        report0.element_id = 7001
         report0.phase_id = int(ef_py.LeaderPhase.Departure)
+        report0.formation_role_id = int(ef_py.FormationRole.ElementLead)
+        report0.separation_m = 126.0
         report0.active = True
         report1 = ef_py.PilotReport()
-        report1.report_type = ef_py.CommMsgType.REP_ROGER
+        report1.report_type = ef_py.CommMsgType.REP_JOINED
+        report1.service_profile = ef_py.ServiceProfile.AirForce
+        report1.task_family = ef_py.TaskFamily.Recover
+        report1.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
+        report1.tactical_unit_id = 7001
+        report1.task_group_id = 8001
+        report1.role_code = 22
+        report1.coordination_mode = ef_py.CoordinationMode.Recover
+        report1.element_id = 7001
         report1.phase_id = int(ef_py.LeaderPhase.ApproachArmed)
+        report1.formation_role_id = int(ef_py.FormationRole.Wingman)
+        report1.formation_error_m = 18.0
         report1.active = True
         report_assign0 = ef_py.WorldPilotReportAssignment()
         report_assign0.world_index = 0
@@ -404,10 +485,49 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(got_orders[1].task_type, ef_py.TaskType.RTB)
         self.assertEqual(int(got_orders[0].task_id), 101)
         self.assertEqual(int(got_orders[1].task_id), 202)
+        self.assertEqual(got_orders[0].service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(got_orders[0].task_family, ef_py.TaskFamily.Patrol)
+        self.assertEqual(got_orders[0].tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(got_orders[0].command_relationship, ef_py.CommandRelationship.TACON)
+        self.assertEqual(got_orders[0].authority_scope, ef_py.AuthorityScope.Tactical)
+        self.assertEqual(int(got_orders[0].task_group_id), 8001)
+        self.assertEqual(int(got_orders[0].role_code), 21)
+        self.assertEqual(got_orders[0].coordination_mode, ef_py.CoordinationMode.Attached)
+        self.assertEqual(int(got_orders[0].relative_slot_code), 11)
+        self.assertEqual(int(got_orders[0].recovery_site_id), 91)
+        self.assertEqual(got_orders[0].assignee_kind, ef_py.AssigneeKind.Element)
+        self.assertEqual(int(got_orders[0].element_id), 7001)
+        self.assertEqual(got_orders[0].formation_role_id, ef_py.FormationRole.ElementLead)
+        self.assertEqual(got_orders[1].formation_role_id, ef_py.FormationRole.Wingman)
+        self.assertEqual(got_orders[1].wingman_slot_id, ef_py.WingmanSlot.Right)
         self.assertEqual(got_intents[0].phase_id, ef_py.LeaderPhase.Departure)
         self.assertEqual(got_intents[1].phase_id, ef_py.LeaderPhase.ApproachArmed)
+        self.assertEqual(got_intents[0].service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(got_intents[0].task_family, ef_py.TaskFamily.Patrol)
+        self.assertEqual(got_intents[0].tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(int(got_intents[0].tactical_unit_id), 7001)
+        self.assertEqual(int(got_intents[0].task_group_id), 8001)
+        self.assertEqual(int(got_intents[0].role_code), 21)
+        self.assertEqual(got_intents[0].coordination_mode, ef_py.CoordinationMode.Follow)
+        self.assertEqual(int(got_intents[0].relative_slot_code), 11)
+        self.assertEqual(int(got_intents[0].recovery_site_id), 91)
+        self.assertEqual(int(got_intents[0].element_phase_id), 11)
+        self.assertEqual(got_intents[0].formation_mode_id, ef_py.FormationMode.Joining)
+        self.assertTrue(bool(got_intents[0].join_required_flag))
+        self.assertEqual(got_intents[1].formation_mode_id, ef_py.FormationMode.Recover)
+        self.assertTrue(bool(got_intents[1].rejoin_required_flag))
         self.assertEqual(got_reports[0].report_type, ef_py.CommMsgType.REP_WILCO)
-        self.assertEqual(got_reports[1].report_type, ef_py.CommMsgType.REP_ROGER)
+        self.assertEqual(got_reports[1].report_type, ef_py.CommMsgType.REP_JOINED)
+        self.assertEqual(got_reports[0].service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(got_reports[0].task_family, ef_py.TaskFamily.Patrol)
+        self.assertEqual(got_reports[0].tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(int(got_reports[0].tactical_unit_id), 7001)
+        self.assertEqual(int(got_reports[0].task_group_id), 8001)
+        self.assertEqual(int(got_reports[0].role_code), 21)
+        self.assertEqual(got_reports[0].coordination_mode, ef_py.CoordinationMode.Attached)
+        self.assertEqual(int(got_reports[0].element_id), 7001)
+        self.assertEqual(int(got_reports[1].formation_role_id), int(ef_py.FormationRole.Wingman))
+        self.assertAlmostEqual(float(got_reports[1].formation_error_m), 18.0, places=6)
 
 
 class BatchScenarioRuntimeTests(unittest.TestCase):

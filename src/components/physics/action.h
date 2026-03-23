@@ -45,6 +45,106 @@ enum class RecoveryApproachType : int {
     TACAN = 5,
 };
 
+enum class ServiceProfile : int {
+    Unspecified = 0,
+    AirForce = 1,
+    Army = 2,
+    Navy = 3,
+    MarineCorps = 4,
+};
+
+enum class TaskFamily : int {
+    Unspecified = 0,
+    Transit = 1,
+    Patrol = 2,
+    Escort = 3,
+    Intercept = 4,
+    Attack = 5,
+    Defend = 6,
+    Recover = 7,
+    Withdraw = 8,
+};
+
+enum class TacticalUnitType : int {
+    Unspecified = 0,
+    Platform = 1,
+    TacticalUnit = 2,
+    MissionPackage = 3,
+    CommandNode = 4,
+};
+
+enum class CommandRelationship : int {
+    None = 0,
+    COCOM = 1,
+    OPCON = 2,
+    TACON = 3,
+    Support = 4,
+    ADCON = 5,
+    CoordinatingAuthority = 6,
+    DIRLAUTH = 7,
+};
+
+enum class AuthorityScope : int {
+    Unspecified = 0,
+    Strategic = 1,
+    Operational = 2,
+    Tactical = 3,
+    Execution = 4,
+};
+
+enum class AssigneeKind : int {
+    Aircraft = 0,
+    Element = 1,
+    Package = 2,
+};
+
+enum class FormationRole : int {
+    Unspecified = 0,
+    ElementLead = 1,
+    Wingman = 2,
+};
+
+enum class WingmanSlot : int {
+    Unspecified = 0,
+    Left = 1,
+    Right = 2,
+    Trail = 3,
+};
+
+enum class FormationMode : int {
+    Unspecified = 0,
+    Prejoin = 1,
+    Joining = 2,
+    Cruise = 3,
+    CAP = 4,
+    Rejoin = 5,
+    Recover = 6,
+    SplitAbort = 7,
+};
+
+enum class WingmanCommandMode : int {
+    None = 0,
+    HoldSlot = 1,
+    Rejoin = 2,
+    OffsetLeft = 3,
+    OffsetRight = 4,
+    Trail = 5,
+    Support = 6,
+    AbortForm = 7,
+};
+
+enum class CoordinationMode : int {
+    Unspecified = 0,
+    Independent = 1,
+    Attached = 2,
+    Follow = 3,
+    Support = 4,
+    Screen = 5,
+    Rejoin = 6,
+    Recover = 7,
+    Detached = 8,
+};
+
 /**
  * PilotAction
  * Implements [act.md]: The physical interface for the Digital Pilot.
@@ -137,9 +237,26 @@ struct MissionCommand {
 struct TaskOrder {
     uint64_t task_id = 0;
     TaskType task_type = TaskType::Idle;
+    ServiceProfile service_profile = ServiceProfile::Unspecified;
+    TaskFamily task_family = TaskFamily::Unspecified;
+    TacticalUnitType tactical_unit_type = TacticalUnitType::Unspecified;
     int priority = 0;
     uint64_t issuer_id = 0;
     uint64_t assignee_id = 0;
+    CommandRelationship command_relationship = CommandRelationship::None;
+    AuthorityScope authority_scope = AuthorityScope::Unspecified;
+    uint64_t parent_node_id = 0;
+    uint64_t task_group_id = 0;
+    uint64_t supported_node_id = 0;
+    uint64_t supporting_node_id = 0;
+    int role_code = 0;
+    CoordinationMode coordination_mode = CoordinationMode::Unspecified;
+    int relative_slot_code = 0;
+    AssigneeKind assignee_kind = AssigneeKind::Aircraft;
+    uint64_t recovery_site_id = 0;
+    uint64_t element_id = 0;
+    uint64_t package_id = 0;
+    uint64_t lead_aircraft_id = 0;
     bool active = false;
     double issue_time_s = 0.0;
 
@@ -165,6 +282,14 @@ struct TaskOrder {
     uint64_t recovery_base_id = 0;
     uint64_t recovery_runway_id = 0;
     RecoveryApproachType recovery_approach_type = RecoveryApproachType::None;
+    uint64_t formation_template_id = 0;
+    uint64_t formation_contract_id = 0;
+    FormationRole formation_role_id = FormationRole::Unspecified;
+    WingmanSlot wingman_slot_id = WingmanSlot::Unspecified;
+    int join_policy_id = 0;
+    int rejoin_policy_id = 0;
+    int mutual_support_mode = 0;
+    uint64_t support_sector_id = 0;
 };
 
 /**
@@ -173,6 +298,16 @@ struct TaskOrder {
  */
 struct LeaderIntent {
     LeaderPhase phase_id = LeaderPhase::Idle;
+    int element_phase_id = 0;
+    ServiceProfile service_profile = ServiceProfile::Unspecified;
+    TaskFamily task_family = TaskFamily::Unspecified;
+    TacticalUnitType tactical_unit_type = TacticalUnitType::Unspecified;
+    uint64_t tactical_unit_id = 0;
+    uint64_t task_group_id = 0;
+    int role_code = 0;
+    CoordinationMode coordination_mode = CoordinationMode::Unspecified;
+    int relative_slot_code = 0;
+    uint64_t recovery_site_id = 0;
     int command_code = 0;
     uint64_t route_ref_id = 0;
     uint64_t recovery_base_id = 0;
@@ -187,6 +322,15 @@ struct LeaderIntent {
     double form_offset_z = 0.0;
     uint64_t assigned_target_id = 0;
     bool authorization_to_fire = false;
+    FormationMode formation_mode_id = FormationMode::Unspecified;
+    bool join_required_flag = false;
+    bool rejoin_required_flag = false;
+    bool split_flag = false;
+    double support_anchor_x_m = 0.0;
+    double support_anchor_y_m = 0.0;
+    double support_slot_offset_x_m = 0.0;
+    double support_slot_offset_y_m = 0.0;
+    WingmanCommandMode wingman_command_mode = WingmanCommandMode::None;
     bool approach_armed = false;
     bool commit_to_land = false;
     bool abort_flag = false;

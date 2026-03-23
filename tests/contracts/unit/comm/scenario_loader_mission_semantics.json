@@ -35,6 +35,18 @@
     "recovery_runway_id": 7,
     "recovery_approach_type": "ILS"
   },
+  "expected_task_order": {
+    "task_type": "Idle",
+    "service_profile": "AirForce",
+    "task_family": "Unspecified",
+    "tactical_unit_type": "Platform",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Independent",
+    "recovery_site_id": 7,
+    "recovery_base_id": 55,
+    "recovery_runway_id": 7
+  },
   "expected_post_transition": {
     "recovery_base_id": 55,
     "recovery_runway_id": 7,
