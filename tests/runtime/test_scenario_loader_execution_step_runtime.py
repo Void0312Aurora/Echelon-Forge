@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import math
 import unittest
 
 import numpy as np
@@ -189,11 +190,20 @@ def _takeoff_shaping_scenario() -> dict:
 
 
 class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
-    def _run_loader_once(self, scenario_data: dict, *, seed: int, compiled: bool) -> dict:
+    def _run_loader_once(
+        self,
+        scenario_data: dict,
+        *,
+        seed: int,
+        compiled: bool,
+        flight_shaping_backend: str | None = None,
+    ) -> dict:
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
         loader = ScenarioLoader(sim)
         loader.use_compiled_execution_step_runtime = bool(compiled)
+        if flight_shaping_backend is not None:
+            loader.set_flight_shaping_backend(flight_shaping_backend)
         agent_id = loader.load_scenario_data(copy.deepcopy(scenario_data), seed=seed)
         self.assertIsNotNone(agent_id)
 
@@ -285,6 +295,44 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
             else:
                 self.assertAlmostEqual(float(left[key]), float(right[key]), places=6, msg=f"state mismatch for {key}")
 
+    def test_pending_landing_transition_retargets_heading_to_recovery_vector(self) -> None:
+        class _Truth:
+            x = -20000.0
+            y = 10000.0
+            z = 420.0
+
+        class _DummySim:
+            def get_agent_observation(self, _agent_id):
+                return _Truth()
+
+        loader = ScenarioLoader(_DummySim())
+        loader.agent_id = 1
+        loader.waypoints = []
+        loader.waypoint_idx = 4
+        loader.mission_cmd = {
+            "command_code": 3,
+            "target_heading": 298.0,
+            "target_altitude": 420.0,
+            "target_speed": 84.0,
+        }
+        loader.post_waypoint_transition = {
+            "phase_name": "landing_ils",
+            "command_code": 4,
+            "target_heading": 90.0,
+            "target_altitude": 0.0,
+            "target_speed": 82.0,
+            "landing_mode": "ils_final",
+            "approach_arm_before_threshold_m": 1000.0,
+        }
+        loader._nearest_ils_beacon = lambda _x, _y: {"thr_x": 0.0, "thr_y": 0.0, "heading": 90.0}
+        loader._post_waypoint_transition_ready = lambda: False
+
+        transitioned = loader._maybe_activate_post_waypoint_transition(sync_to_kernel=False)
+
+        expected_heading = math.degrees(math.atan2(-1000.0 - _Truth.x, 0.0 - _Truth.y)) % 360.0
+        self.assertIsNone(transitioned)
+        self.assertAlmostEqual(float(loader.mission_cmd["target_heading"]), float(expected_heading), places=6)
+
     def test_selected_paths_match_legacy_runtime(self) -> None:
         cases = (
             {
@@ -319,6 +367,44 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
                     self.assertEqual(bool(compiled["terminated"]), bool(case["terminated"]))
                 if "termination_reason" in case:
                     self.assertEqual(str(compiled["termination_reason"]), str(case["termination_reason"]))
+
+    def test_flight_shaping_backends_match_legacy_runtime(self) -> None:
+        scenario = _takeoff_shaping_scenario()
+        legacy = self._run_loader_once(
+            scenario,
+            seed=41,
+            compiled=False,
+            flight_shaping_backend="legacy",
+        )
+        compiled_backend = self._run_loader_once(
+            scenario,
+            seed=41,
+            compiled=False,
+            flight_shaping_backend="compiled",
+        )
+        gpu_backend = self._run_loader_once(
+            scenario,
+            seed=41,
+            compiled=False,
+            flight_shaping_backend="gpu_host",
+        )
+        compiled_runtime = self._run_loader_once(
+            scenario,
+            seed=41,
+            compiled=True,
+            flight_shaping_backend="compiled",
+        )
+        gpu_backend_with_compiled_runtime = self._run_loader_once(
+            scenario,
+            seed=41,
+            compiled=True,
+            flight_shaping_backend="gpu_host",
+        )
+
+        self._assert_loader_results_match(legacy, compiled_backend)
+        self._assert_loader_results_match(legacy, gpu_backend)
+        self._assert_loader_results_match(legacy, compiled_runtime)
+        self._assert_loader_results_match(legacy, gpu_backend_with_compiled_runtime)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,139 @@
+{
+  "agent_layer": "leader",
+  "algo": "AdaptiveKLPPO",
+  "policy": "SquashedMultiInputPolicy",
+  "total_timesteps": 65536,
+  "n_envs": 8,
+  "save_freq": 8192,
+  "runtime": {
+    "torch_threads": 1,
+    "torch_interop_threads": 1,
+    "leader_execution_torch_threads": 1,
+    "leader_execution_torch_interop_threads": 1
+  },
+  "leader_env": {
+    "decision_interval_steps": 20,
+    "execution_backend": "frozen_model",
+    "execution_train_config": "examples/config/training/frozen/execution/p5_continuous_retrain_v1.json",
+    "execution_model_path": "experiments/_archive_20260322_test_results/root_level/experiments_tmp/20260318_p5_takeoff_to_landing_continuous_v3_retrain_v1/final_model.zip",
+    "execution_algo": "auto",
+    "scripted_transition_alt_agl_m": 140.0,
+    "heading_bias_limit_deg": 35.0,
+    "altitude_bias_limit_m": 600.0,
+    "speed_bias_limit_mps": 30.0,
+    "command_change_penalty": 0.0004,
+    "teacher_keep_deadband": 0.30,
+    "invalid_phase_penalty": 0.20,
+    "premature_approach_penalty": 0.85,
+    "baseline_deviation_penalty": 0.00035,
+    "mode_change_penalty": 0.004,
+    "approach_gate_distance_m": 18000.0,
+    "approach_gate_cross_m": 3500.0,
+    "approach_gate_heading_error_deg": 85.0
+  },
+  "early_stop": {
+    "enabled": false
+  },
+  "curriculum": {
+    "check_freq": 8192,
+    "stages": [
+      {
+        "until_timesteps": 8192,
+        "randomization": {
+          "world_yaw_range": [0.0, 45.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 6.0],
+          "wind_crosswind_range": [-2.0, 2.0],
+          "wind_tailwind_max_mps": 1.0,
+          "wind_shear_range": [0.0, 1.5]
+        },
+        "leader_env_overrides": {
+          "teacher_keep_deadband": 0.30,
+          "invalid_phase_penalty": 0.20,
+          "premature_approach_penalty": 0.85,
+          "baseline_deviation_penalty": 0.00035,
+          "mode_change_penalty": 0.004
+        }
+      },
+      {
+        "until_timesteps": 24576,
+        "randomization": {
+          "world_yaw_range": [0.0, 180.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 10.0],
+          "wind_crosswind_range": [-4.0, 4.0],
+          "wind_tailwind_max_mps": 1.5,
+          "wind_shear_range": [0.0, 3.0]
+        },
+        "leader_env_overrides": {
+          "teacher_keep_deadband": 0.18,
+          "invalid_phase_penalty": 0.12,
+          "premature_approach_penalty": 0.60,
+          "baseline_deviation_penalty": 0.0002,
+          "mode_change_penalty": 0.002
+        }
+      },
+      {
+        "until_timesteps": 49152,
+        "randomization": {
+          "world_yaw_range": [0.0, 360.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 14.0],
+          "wind_crosswind_range": [-6.0, 6.0],
+          "wind_tailwind_max_mps": 2.5,
+          "wind_shear_range": [0.0, 5.0]
+        },
+        "leader_env_overrides": {
+          "teacher_keep_deadband": 0.10,
+          "invalid_phase_penalty": 0.08,
+          "premature_approach_penalty": 0.45,
+          "baseline_deviation_penalty": 0.00012,
+          "mode_change_penalty": 0.001
+        }
+      },
+      {
+        "until_timesteps": null,
+        "randomization": {
+          "world_yaw_range": [0.0, 360.0],
+          "rotate_mission_heading_with_world": true,
+          "wind_headwind_range": [0.0, 16.0],
+          "wind_crosswind_range": [-8.0, 8.0],
+          "wind_tailwind_max_mps": 3.0,
+          "wind_shear_range": [0.0, 6.0]
+        },
+        "leader_env_overrides": {
+          "teacher_keep_deadband": 0.06,
+          "invalid_phase_penalty": 0.05,
+          "premature_approach_penalty": 0.35,
+          "baseline_deviation_penalty": 0.0001,
+          "mode_change_penalty": 0.0
+        }
+      }
+    ]
+  },
+  "hyperparameters": {
+    "learning_rate": 5e-05,
+    "n_steps": 256,
+    "batch_size": 2048,
+    "n_epochs": 2,
+    "gamma": 0.999,
+    "gae_lambda": 0.97,
+    "clip_range": 0.1,
+    "clip_range_vf": 0.1,
+    "normalize_advantage": true,
+    "ent_coef": 0.0006,
+    "vf_coef": 0.7,
+    "max_grad_norm": 0.5,
+    "target_kl": 0.02,
+    "kl_penalty_coef": 0.0,
+    "kl_adaptive": true,
+    "device": "cuda",
+    "policy_kwargs": {
+      "net_arch": {
+        "pi": [256, 256],
+        "vf": [256, 256]
+      },
+      "log_std_init": -1.6
+    }
+  }
+}

@@ -25,6 +25,7 @@ from python.rl.leader_tasking import RuleBasedLeaderPhaseManager, build_kernel_m
 from python.rl.mission_defs import is_landing_command_code
 
 _LEGACY_EXECUTION_STEP_RUNTIME_MODES = {"legacy", "python", "off", "0", "false"}
+_LEGACY_FLIGHT_SHAPING_BACKENDS = {"legacy", "python", "off", "0", "false"}
 
 _OBJECTIVE_PROPERTY_MAP = {
     "altitude": ef_py.ConditionalObjectiveProperty.Altitude,
@@ -88,6 +89,16 @@ def execution_step_runtime_mode_enabled(mode: str | None) -> bool:
     return normalize_execution_step_runtime_mode(mode) != "legacy"
 
 
+def normalize_flight_shaping_backend(backend: str | None) -> str:
+    raw_backend = os.environ.get("CMO_FLIGHT_SHAPING_BACKEND", "auto") if backend is None else backend
+    normalized = str(raw_backend).strip().lower()
+    if normalized in _LEGACY_FLIGHT_SHAPING_BACKENDS:
+        return "legacy"
+    if normalized in {"", "auto"}:
+        return "auto"
+    return normalized
+
+
 class ScenarioLoader:
     def __init__(self, sim_kernel):
         self.sim = sim_kernel
@@ -147,10 +158,23 @@ class ScenarioLoader:
         self._cached_route_ref_id: int | None = None
         self._runtime_eval_cache: dict[str, object] = {}
         self.set_execution_step_runtime_mode(None)
+        self.set_flight_shaping_backend(None)
 
     def set_execution_step_runtime_mode(self, mode: str | None) -> None:
         self.execution_step_runtime_mode = normalize_execution_step_runtime_mode(mode)
         self.use_compiled_execution_step_runtime = execution_step_runtime_mode_enabled(self.execution_step_runtime_mode)
+
+    def set_flight_shaping_backend(self, backend: str | None) -> None:
+        normalized = normalize_flight_shaping_backend(backend)
+        if normalized not in {"auto", "legacy", "compiled", "gpu_host"}:
+            raise ValueError(f"Unknown flight_shaping_backend: {backend!r}")
+        self.flight_shaping_backend = normalized
+
+    def _flight_shaping_backend_mode(self) -> str:
+        backend = str(getattr(self, "flight_shaping_backend", "auto") or "auto").strip().lower()
+        if backend == "auto":
+            return "compiled" if bool(getattr(self, "use_compiled_execution_step_runtime", True)) else "legacy"
+        return backend
 
     def reset_runtime_eval_cache(self) -> None:
         self._runtime_eval_cache = {}
@@ -1931,6 +1955,21 @@ class ScenarioLoader:
         self.liftoff_awarded = bool(getattr(products, "next_liftoff_awarded", self.liftoff_awarded))
         self.gear_bonus_awarded = bool(getattr(products, "next_gear_bonus_awarded", self.gear_bonus_awarded))
 
+    def _compute_flight_shaping_products(self, shaping_inputs, *, use_gpu: bool):
+        if shaping_inputs is None:
+            return None
+        if use_gpu and hasattr(ef_py, "compute_flight_shaping_batch"):
+            try:
+                batch = ef_py.compute_flight_shaping_batch([shaping_inputs], True)
+                if len(batch) == 1:
+                    return batch[0]
+            except Exception:
+                pass
+        try:
+            return ef_py.compute_flight_shaping_terms(shaping_inputs)
+        except Exception:
+            return None
+
     @staticmethod
     def _add_breakdown_term(breakdown: dict, name: str, value: float) -> None:
         v = float(value)
@@ -3482,13 +3521,36 @@ class ScenarioLoader:
     def _sync_kernel_command_chain(self) -> None:
         if self.agent_id is None:
             return
+        if not self._hierarchical_command_chain_active():
+            return
         try:
             self._leader_phase_manager.sync_to_kernel(self)
         except Exception:
             pass
 
+    def _hierarchical_command_chain_active(self) -> bool:
+        task_cfg = self.scenario_data.get("task_order", None)
+        if isinstance(task_cfg, dict) and bool(task_cfg):
+            return True
+        if getattr(self, "task_order", None) is not None:
+            return True
+        if getattr(self, "leader_intent", None) is not None:
+            return True
+        if getattr(self, "pilot_report", None) is not None:
+            return True
+        if str(getattr(self, "c2_task_name", "") or "").strip():
+            return True
+        return False
+
     def _reset_command_chain(self, *, initial_truth=None, initial_inst=None, sync_to_kernel: bool = True) -> None:
         if self.agent_id is None:
+            return
+        if not self._hierarchical_command_chain_active():
+            self.task_order = None
+            self.leader_intent = None
+            self.pilot_report = None
+            if sync_to_kernel:
+                self._sync_kernel_mission_command()
             return
         try:
             sim_time_s = float(self.steps) * float(self.sim.get_time_step())
@@ -3507,6 +3569,8 @@ class ScenarioLoader:
 
     def _update_command_chain(self, sim_time: float, *, truth=None, inst=None, sync_to_kernel: bool = True) -> None:
         if self.agent_id is None:
+            return
+        if not self._hierarchical_command_chain_active():
             return
         self._leader_phase_manager.update(
             self,
@@ -3535,8 +3599,9 @@ class ScenarioLoader:
         valid_runway_frame = False
         along_m = 0.0
         cross_m = 0.0
+        runway_len_m = 0.0
         try:
-            valid_runway_frame, along_m, cross_m, _rw_len, _rw_wid = self.get_runway_local_frame(
+            valid_runway_frame, along_m, cross_m, runway_len_m, _rw_wid = self.get_runway_local_frame(
                 float(getattr(truth, "x", 0.0)),
                 float(getattr(truth, "y", 0.0)),
             )
@@ -3544,7 +3609,9 @@ class ScenarioLoader:
             valid_runway_frame = False
         if not bool(valid_runway_frame):
             return False
-        if float(along_m) < -1000.0:
+        threshold_arming_window_m = 1000.0
+        min_along_m = -0.5 * max(float(runway_len_m), 0.0) - threshold_arming_window_m
+        if float(along_m) < float(min_along_m):
             return False
         if abs(float(cross_m)) > 3500.0:
             return False
@@ -3590,12 +3657,60 @@ class ScenarioLoader:
             return True
         return self._landing_post_transition_terminal_ready()
 
+    def _apply_pending_landing_vector(self, *, sync_to_kernel: bool = True) -> bool:
+        post = self.post_waypoint_transition
+        if not isinstance(post, dict) or not post:
+            return False
+        next_cmd_code = int(post.get("command_code", 4))
+        if not is_landing_command_code(next_cmd_code):
+            return False
+        if self.waypoints and int(getattr(self, "waypoint_idx", 0) or 0) < len(self.waypoints):
+            return False
+        if not isinstance(getattr(self, "mission_cmd", None), dict):
+            return False
+        if self.agent_id is None:
+            return False
+        try:
+            truth = self.sim.get_agent_observation(self.agent_id)
+        except Exception:
+            truth = None
+        if truth is None:
+            return False
+        try:
+            beacon = self._nearest_ils_beacon(float(getattr(truth, "x", 0.0)), float(getattr(truth, "y", 0.0)))
+        except Exception:
+            beacon = None
+        if not isinstance(beacon, dict):
+            return False
+
+        runway_heading_deg = float(beacon.get("heading", 0.0)) % 360.0
+        runway_heading_rad = math.radians(runway_heading_deg)
+        fwd_x = math.sin(runway_heading_rad)
+        fwd_y = math.cos(runway_heading_rad)
+        intercept_before_threshold_m = float(post.get("approach_arm_before_threshold_m", 1000.0))
+        intercept_before_threshold_m = float(np.clip(intercept_before_threshold_m, 600.0, 2500.0))
+        intercept_x = float(beacon.get("thr_x", 0.0)) - fwd_x * intercept_before_threshold_m
+        intercept_y = float(beacon.get("thr_y", 0.0)) - fwd_y * intercept_before_threshold_m
+
+        dx = intercept_x - float(getattr(truth, "x", 0.0))
+        dy = intercept_y - float(getattr(truth, "y", 0.0))
+        if dx * dx + dy * dy <= 1.0:
+            desired_heading_deg = runway_heading_deg
+        else:
+            desired_heading_deg = math.degrees(math.atan2(dx, dy)) % 360.0
+
+        self.mission_cmd["target_heading"] = float(desired_heading_deg)
+        if sync_to_kernel:
+            self._sync_kernel_mission_command()
+        return True
+
     def _maybe_activate_post_waypoint_transition(self, *, sync_to_kernel: bool = True) -> dict | None:
         if not isinstance(self.post_waypoint_transition, dict) or not self.post_waypoint_transition:
             return None
         if self.waypoints and int(getattr(self, "waypoint_idx", 0) or 0) < len(self.waypoints):
             return None
         if not self._post_waypoint_transition_ready():
+            self._apply_pending_landing_vector(sync_to_kernel=sync_to_kernel)
             return None
         return self._activate_post_waypoint_transition(sync_to_kernel=sync_to_kernel)
 
@@ -3811,6 +3926,7 @@ class ScenarioLoader:
         safety_cfg = self._safety_reward_cfg
         approach_cfg = self._approach_reward_cfg
         compiled_runtime_enabled = self._compiled_execution_step_enabled()
+        flight_shaping_backend = self._flight_shaping_backend_mode()
         term_reason_code = ef_py.TerminationReasonCode.Running
         
         # Get Truth State for Scoring
@@ -3881,6 +3997,7 @@ class ScenarioLoader:
             compiled_runtime_enabled
             and frame_products is not None
             and bool(getattr(frame_products, "outcome_evaluated", False))
+            and flight_shaping_backend == "compiled"
         ):
             reward, terminated, status = self._consume_compiled_episode_runtime(
                 cfg=cfg,
@@ -3956,13 +4073,23 @@ class ScenarioLoader:
         # Only apply if not crashed
         if not terminated:
             waypoint_turn_relief_activation = float(step_eval.get("waypoint_turn_relief_activation", 0.0))
-            compiled_flight_shaping = None
+            shaping_inputs = step_eval.get("shaping_inputs")
+            compiled_flight_shaping = step_eval.get("flight_shaping_products_override")
             if (
-                compiled_runtime_enabled
+                compiled_flight_shaping is None
+                and flight_shaping_backend == "compiled"
+                and compiled_runtime_enabled
                 and frame_products is not None
                 and bool(getattr(frame_products, "flight_shaping_evaluated", False))
             ):
                 compiled_flight_shaping = frame_products.flight_shaping
+            elif compiled_flight_shaping is None and flight_shaping_backend in {"compiled", "gpu_host"}:
+                compiled_flight_shaping = self._compute_flight_shaping_products(
+                    shaping_inputs,
+                    use_gpu=flight_shaping_backend == "gpu_host",
+                )
+                if compiled_flight_shaping is not None and isinstance(step_eval, dict):
+                    step_eval["flight_shaping_products_override"] = compiled_flight_shaping
 
             if compiled_flight_shaping is not None:
                 self._apply_compiled_flight_shaping_terms(

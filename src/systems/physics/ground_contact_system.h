@@ -46,6 +46,19 @@ namespace {
     constexpr double kTireAlphaMaxDeg = 20.0;              // Clamp slip angle to avoid low-speed blowups
     constexpr double kTireVrefRollMps = 1.0;               // Smoothing speed for rolling resistance
     constexpr double kTireVrefBrakeMps = 0.5;              // Smoothing speed for braking force
+    constexpr double kEnvironmentScalarCanonicalQuantum = 0x1p-76;
+
+    inline double canonicalize_environment_scalar(double value) {
+        if (!std::isfinite(value) || kEnvironmentScalarCanonicalQuantum <= 0.0) {
+            return value;
+        }
+        if (std::abs(value) <= (kEnvironmentScalarCanonicalQuantum * 0.5)) {
+            return 0.0;
+        }
+        const double rounded = std::nearbyint(value / kEnvironmentScalarCanonicalQuantum) *
+            kEnvironmentScalarCanonicalQuantum;
+        return std::abs(rounded) <= (kEnvironmentScalarCanonicalQuantum * 0.5) ? 0.0 : rounded;
+    }
 }
 
 /**
@@ -75,7 +88,7 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     // Use current position (x, y)
                     auto terrain = env->get_terrain_at(transform[i].x, transform[i].y);
                     
-                    double terrain_z = terrain.elevation;
+                    double terrain_z = canonicalize_environment_scalar(terrain.elevation);
                     ground[i].terrain_elevation = terrain_z;
                     
                     double z = transform[i].z;

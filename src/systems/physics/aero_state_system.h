@@ -14,6 +14,24 @@
 #endif
 
 namespace {
+    constexpr double kAeroScalarCanonicalQuantum = 1.0e-10;
+    constexpr double kAeroAngleCanonicalQuantumDeg = 0x1p-40;
+
+    inline double canonicalize_aero_scalar(double value, double quantum) {
+        if (!std::isfinite(value) || quantum <= 0.0) {
+            return value;
+        }
+        if (std::abs(value) <= (quantum * 0.5)) {
+            return 0.0;
+        }
+        const double rounded = std::nearbyint(value / quantum) * quantum;
+        return std::abs(rounded) <= (quantum * 0.5) ? 0.0 : rounded;
+    }
+
+    inline double canonicalize_aero_angle_deg(double value) {
+        return canonicalize_aero_scalar(value, kAeroAngleCanonicalQuantumDeg);
+    }
+
     // World to Body transformation (Yaw -> Pitch -> Roll sequence)
     // Actually, usually we need World->Body, which is Inverse(Body->World).
     // Body->World (R_b2w) using Heading(Psi), Pitch(Theta), Roll(Phi).
@@ -116,6 +134,11 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     // 2. Dynamic Pressure & Mach
                     aero[i].dynamic_pressure = 0.5 * rho * v_sq;
                     aero[i].mach_number = (speed_of_sound > 1.0) ? (v_total / speed_of_sound) : 0.0;
+                    aero[i].dynamic_pressure = canonicalize_aero_scalar(
+                        aero[i].dynamic_pressure,
+                        kAeroScalarCanonicalQuantum
+                    );
+                    aero[i].mach_number = canonicalize_aero_angle_deg(aero[i].mach_number);
                     
                     // 3. Body Frame Velocity for Alpha/Beta
                     Math::Vector3 v_body = world_to_body(
@@ -153,6 +176,8 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     // Clamp for safety
                     aero[i].angle_of_attack = std::max(-90.0, std::min(90.0, aero[i].angle_of_attack));
                     aero[i].sideslip_angle = std::max(-90.0, std::min(90.0, aero[i].sideslip_angle));
+                    aero[i].angle_of_attack = canonicalize_aero_angle_deg(aero[i].angle_of_attack);
+                    aero[i].sideslip_angle = canonicalize_aero_angle_deg(aero[i].sideslip_angle);
                 }
             }
         });

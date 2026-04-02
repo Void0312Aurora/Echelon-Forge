@@ -3,6 +3,10 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+
+#include <cstdint>
+
+#include "interfaces/python/dlpack_minimal.h"
 #include "components/visual/visual_sensor.h"
 #include "core/engine/simulation_kernel.h"
 #include "core/engine/world_batch_runtime.h"
@@ -15,6 +19,24 @@
 #include "core/mission/reward_runtime.h"
 #include "core/mission/objective_runtime.h"
 #include "core/mission/termination_runtime.h"
+#include "gpu/gpu_visual_runtime.h"
+#include "gpu/gpu_execution_observation_runtime.h"
+#include "gpu/gpu_exact_world_step_contract.h"
+#include "gpu/gpu_exact_world_step_command_lane_runtime.h"
+#include "gpu/gpu_exact_world_step_front_half_runtime.h"
+#include "gpu/gpu_exact_world_step_control_aero_runtime.h"
+#include "gpu/gpu_exact_world_step_force_ground_runtime.h"
+#include "gpu/gpu_exact_world_step_aircraft_tail_runtime.h"
+#include "gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.h"
+#include "gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.h"
+#include "gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.h"
+#include "gpu/gpu_exact_world_step_missile_guidance_runtime.h"
+#include "gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.h"
+#include "gpu/gpu_exact_world_step_runtime.h"
+#include "gpu/gpu_flight_shaping_runtime.h"
+#include "gpu/gpu_interaction_broadphase_runtime.h"
+#include "gpu/gpu_world_batch_runtime.h"
+#include "models/environment/default_environment_snapshot.h"
 #include "components/systems/comm.h"
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
@@ -25,12 +47,475 @@
 #include "components/systems/navigation.h" // Added navigation.h
 #include <spdlog/spdlog.h>
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <stdexcept>
 #include <utility>
 
 namespace nb = nanobind;
 
 namespace {
+struct ManagedDLPackTensor {
+    DLManagedTensor managed{};
+    std::vector<std::int64_t> shape;
+    std::vector<std::int64_t> strides;
+};
+
+void delete_managed_dlpack_tensor(DLManagedTensor* tensor) {
+    if (tensor == nullptr) {
+        return;
+    }
+    delete static_cast<ManagedDLPackTensor*>(tensor->manager_ctx);
+}
+
+void delete_dlpack_capsule(PyObject* capsule) {
+    if (capsule == nullptr || !PyCapsule_IsValid(capsule, "dltensor")) {
+        return;
+    }
+    auto* managed = static_cast<DLManagedTensor*>(PyCapsule_GetPointer(capsule, "dltensor"));
+    if (managed != nullptr && managed->deleter != nullptr) {
+        managed->deleter(managed);
+    }
+}
+
+class GpuTensorView {
+public:
+    GpuTensorView() = default;
+
+    GpuTensorView(
+        const void* data_ptr,
+        std::vector<std::int64_t> shape,
+        int device_id,
+        std::vector<std::int64_t> strides = {}
+    )
+        : data_ptr_(data_ptr),
+          shape_(std::move(shape)),
+          strides_(std::move(strides)),
+          device_id_(device_id) {}
+
+    bool valid() const {
+        return data_ptr_ != nullptr && !shape_.empty();
+    }
+
+    std::vector<std::int64_t> shape() const {
+        return shape_;
+    }
+
+    std::vector<std::int64_t> strides() const {
+        return strides_;
+    }
+
+    int device_id() const {
+        return device_id_;
+    }
+
+    std::size_t numel() const {
+        std::size_t out = 1;
+        for (const auto dim : shape_) {
+            if (dim <= 0) {
+                return 0;
+            }
+            out *= static_cast<std::size_t>(dim);
+        }
+        return out;
+    }
+
+    nb::tuple dlpack_device() const {
+        return nb::make_tuple(static_cast<int>(kDLCUDA), int(device_id_));
+    }
+
+    nb::object dlpack(
+        nb::object stream,
+        nb::object max_version,
+        nb::object dl_device,
+        nb::object copy
+    ) const {
+        (void)stream;
+        (void)max_version;
+        if (!valid()) {
+            throw std::runtime_error("GpuTensorView is not valid");
+        }
+        if (!copy.is_none() && nb::cast<bool>(copy)) {
+            throw std::runtime_error("GpuTensorView does not support copy=True");
+        }
+        if (!dl_device.is_none()) {
+            nb::tuple requested = nb::cast<nb::tuple>(dl_device);
+            if (requested.size() >= 2) {
+                const int requested_type = nb::cast<int>(requested[0]);
+                const int requested_id = nb::cast<int>(requested[1]);
+                if (requested_type != static_cast<int>(kDLCUDA) || requested_id != device_id_) {
+                    throw std::runtime_error("GpuTensorView cannot export to a different dl_device");
+                }
+            }
+        }
+
+        auto* holder = new ManagedDLPackTensor();
+        holder->shape = shape_;
+        holder->strides = strides_;
+        holder->managed.dl_tensor.data = const_cast<void*>(data_ptr_);
+        holder->managed.dl_tensor.device = {kDLCUDA, device_id_};
+        holder->managed.dl_tensor.ndim = static_cast<int32_t>(holder->shape.size());
+        holder->managed.dl_tensor.dtype = {kDLFloat, 32, 1};
+        holder->managed.dl_tensor.shape = holder->shape.data();
+        holder->managed.dl_tensor.strides = holder->strides.empty() ? nullptr : holder->strides.data();
+        holder->managed.dl_tensor.byte_offset = 0;
+        holder->managed.manager_ctx = holder;
+        holder->managed.deleter = &delete_managed_dlpack_tensor;
+
+        PyObject* capsule = PyCapsule_New(
+            static_cast<void*>(&holder->managed),
+            "dltensor",
+            &delete_dlpack_capsule
+        );
+        if (capsule == nullptr) {
+            delete holder;
+            throw nb::python_error();
+        }
+        return nb::steal<nb::object>(capsule);
+    }
+
+private:
+    const void* data_ptr_ = nullptr;
+    std::vector<std::int64_t> shape_;
+    std::vector<std::int64_t> strides_;
+    int device_id_ = 0;
+};
+
+int current_cuda_device_id() {
+    const auto device = gpu::probe_device();
+    return device.active_device >= 0 ? device.active_device : 0;
+}
+
+nb::object maybe_gpu_tensor_view(
+    const void* data_ptr,
+    std::size_t float_count,
+    std::vector<std::int64_t> shape,
+    std::vector<std::int64_t> strides = {}
+) {
+    if (data_ptr == nullptr || shape.empty()) {
+        return nb::none();
+    }
+    std::size_t expected = 1;
+    for (const auto dim : shape) {
+        if (dim <= 0) {
+            return nb::none();
+        }
+        expected *= static_cast<std::size_t>(dim);
+    }
+    if (float_count != 0 && expected != float_count) {
+        return nb::none();
+    }
+    return nb::cast(
+        GpuTensorView(
+            data_ptr,
+            std::move(shape),
+            current_cuda_device_id(),
+            std::move(strides)
+        )
+    );
+}
+
+nb::dict exact_world_step_hidden_surface_dict(const gpu::ExactWorldStepStateV1& state) {
+    nb::dict out;
+
+    nb::dict environment_sample;
+    environment_sample["present"] = nb::bool_(state.has_environment_sample);
+    environment_sample["terrain_elevation_m"] = nb::float_(state.environment_sample.terrain_elevation_m);
+    environment_sample["wind_vx_mps"] = nb::float_(state.environment_sample.wind_vx_mps);
+    environment_sample["wind_vy_mps"] = nb::float_(state.environment_sample.wind_vy_mps);
+    environment_sample["terrain_surface_code"] = nb::int_(state.environment_sample.terrain_surface_code);
+    environment_sample["runway_heading_deg"] = nb::float_(state.environment_sample.runway_heading_deg);
+    out["environment_sample"] = std::move(environment_sample);
+
+    nb::dict angular_velocity;
+    angular_velocity["present"] = nb::bool_(state.has_angular_velocity);
+    angular_velocity["p_rad_s"] = nb::float_(state.angular_velocity.p);
+    angular_velocity["q_rad_s"] = nb::float_(state.angular_velocity.q);
+    angular_velocity["r_rad_s"] = nb::float_(state.angular_velocity.r);
+    out["angular_velocity"] = std::move(angular_velocity);
+
+    nb::dict force_accumulator;
+    force_accumulator["present"] = nb::bool_(state.has_force_accumulator);
+    force_accumulator["fx_n"] = nb::float_(state.force_accumulator.fx);
+    force_accumulator["fy_n"] = nb::float_(state.force_accumulator.fy);
+    force_accumulator["fz_n"] = nb::float_(state.force_accumulator.fz);
+    force_accumulator["torque_roll_nm"] = nb::float_(state.force_accumulator.torque_roll);
+    force_accumulator["torque_pitch_nm"] = nb::float_(state.force_accumulator.torque_pitch);
+    force_accumulator["torque_yaw_nm"] = nb::float_(state.force_accumulator.torque_yaw);
+    out["force_accumulator"] = std::move(force_accumulator);
+
+    nb::dict aero_state;
+    aero_state["present"] = nb::bool_(state.has_aero_state);
+    aero_state["dynamic_pressure_pa"] = nb::float_(state.aero_state.dynamic_pressure);
+    aero_state["angle_of_attack_deg"] = nb::float_(state.aero_state.angle_of_attack);
+    aero_state["sideslip_angle_deg"] = nb::float_(state.aero_state.sideslip_angle);
+    aero_state["mach_number"] = nb::float_(state.aero_state.mach_number);
+    aero_state["lift_coefficient"] = nb::float_(state.aero_state.lift_coefficient);
+    aero_state["drag_coefficient"] = nb::float_(state.aero_state.drag_coefficient);
+    out["aero_state"] = std::move(aero_state);
+
+    nb::dict control_law_state;
+    control_law_state["present"] = nb::bool_(state.has_control_law_state);
+    control_law_state["stick_roll_filt"] = nb::float_(state.control_law_state.stick_roll_filt);
+    control_law_state["stick_pitch_filt"] = nb::float_(state.control_law_state.stick_pitch_filt);
+    control_law_state["stick_yaw_filt"] = nb::float_(state.control_law_state.stick_yaw_filt);
+    control_law_state["stick_yaw_cmd"] = nb::float_(state.control_law_state.stick_yaw_cmd);
+    out["control_law_state"] = std::move(control_law_state);
+
+    nb::dict egi;
+    egi["present"] = nb::bool_(state.has_egi);
+    egi["lat_deg"] = nb::float_(state.egi.lat_deg);
+    egi["lon_deg"] = nb::float_(state.egi.lon_deg);
+    egi["alt_baro_m"] = nb::float_(state.egi.alt_baro_m);
+    egi["alt_radar_m"] = nb::float_(state.egi.alt_radar_m);
+    egi["vn_mps"] = nb::float_(state.egi.vn_mps);
+    egi["ve_mps"] = nb::float_(state.egi.ve_mps);
+    egi["vd_mps"] = nb::float_(state.egi.vd_mps);
+    egi["heading_deg"] = nb::float_(state.egi.heading_deg);
+    egi["pitch_deg"] = nb::float_(state.egi.pitch_deg);
+    egi["roll_deg"] = nb::float_(state.egi.roll_deg);
+    egi["wind_speed_mps"] = nb::float_(state.egi.wind_speed_mps);
+    egi["wind_dir_deg"] = nb::float_(state.egi.wind_dir_deg);
+    egi["drift_lat_m"] = nb::float_(state.egi.drift_lat_m);
+    egi["drift_lon_m"] = nb::float_(state.egi.drift_lon_m);
+    egi["drift_alt_m"] = nb::float_(state.egi.drift_alt_m);
+    egi["position_uncertainty_m"] = nb::float_(state.egi.position_uncertainty_m);
+    egi["time_since_last_gps_fix_s"] = nb::float_(state.egi.time_since_last_gps_fix);
+    egi["ins_drift_rate_mps"] = nb::float_(state.egi.ins_drift_rate_mps);
+    egi["gps_available"] = nb::bool_(state.egi.gps_available);
+    out["egi"] = std::move(egi);
+
+    return out;
+}
+
+nb::list exact_world_step_hidden_surface_list(const std::vector<gpu::ExactWorldStepStateV1>& states) {
+    nb::list out;
+    for (const auto& state : states) {
+        out.append(exact_world_step_hidden_surface_dict(state));
+    }
+    return out;
+}
+
+nb::dict exact_world_step_command_surface_dict(const gpu::ExactWorldStepStateV1& state) {
+    nb::dict out;
+    out["time_step_s"] = nb::float_(state.time_step_s);
+    out["world_time_s"] = nb::float_(state.world_time_s);
+
+    nb::dict transform;
+    transform["heading_deg"] = nb::float_(state.transform.heading);
+    transform["altitude_m"] = nb::float_(state.transform.z);
+    out["transform"] = std::move(transform);
+
+    nb::dict velocity;
+    velocity["vx_mps"] = nb::float_(state.velocity.vx);
+    velocity["vy_mps"] = nb::float_(state.velocity.vy);
+    velocity["vz_mps"] = nb::float_(state.velocity.vz);
+    out["velocity"] = std::move(velocity);
+
+    nb::dict movement_command;
+    movement_command["present"] = nb::bool_(state.has_movement_command);
+    movement_command["target_heading_deg"] = nb::float_(state.movement_command.target_heading);
+    movement_command["target_speed_mps"] = nb::float_(state.movement_command.target_speed);
+    movement_command["target_altitude_m"] = nb::float_(state.movement_command.target_altitude);
+    movement_command["use_stick_control"] = nb::bool_(state.movement_command.use_stick_control);
+    movement_command["throttle_cmd"] = nb::float_(state.movement_command.throttle_cmd);
+    movement_command["gear_handle"] = nb::bool_(state.movement_command.gear_handle);
+    movement_command["active"] = nb::bool_(state.movement_command.active);
+    out["movement_command"] = std::move(movement_command);
+
+    nb::dict action_command;
+    action_command["present"] = nb::bool_(state.has_action_command);
+    action_command["turn_rate_cmd"] = nb::float_(state.action_command.turn_rate_cmd);
+    action_command["accel_cmd"] = nb::float_(state.action_command.accel_cmd);
+    action_command["climb_rate_cmd"] = nb::float_(state.action_command.climb_rate_cmd);
+    action_command["fire_cmd"] = nb::float_(state.action_command.fire_cmd);
+    action_command["active"] = nb::bool_(state.action_command.active);
+    out["action_command"] = std::move(action_command);
+
+    nb::dict mission_command;
+    mission_command["present"] = nb::bool_(state.has_mission_command);
+    mission_command["cmd_heading_deg"] = nb::float_(state.mission_command.cmd_heading_deg);
+    mission_command["cmd_altitude_m"] = nb::float_(state.mission_command.cmd_altitude_m);
+    mission_command["cmd_speed_mps"] = nb::float_(state.mission_command.cmd_speed_mps);
+    mission_command["command_code"] = nb::int_(state.mission_command.command_code);
+    mission_command["active"] = nb::bool_(state.mission_command.active);
+    out["mission_command"] = std::move(mission_command);
+
+    nb::dict action_space_config;
+    action_space_config["present"] = nb::bool_(state.has_action_space_config);
+    action_space_config["max_turn_rate_deg_s"] = nb::float_(state.action_space_config.max_turn_rate_deg_s);
+    action_space_config["max_accel_mps2"] = nb::float_(state.action_space_config.max_accel_mps2);
+    action_space_config["max_climb_rate_mps"] = nb::float_(state.action_space_config.max_climb_rate_mps);
+    action_space_config["min_speed_mps"] = nb::float_(state.action_space_config.min_speed_mps);
+    action_space_config["max_speed_mps"] = nb::float_(state.action_space_config.max_speed_mps);
+    action_space_config["min_alt_m"] = nb::float_(state.action_space_config.min_alt_m);
+    action_space_config["max_alt_m"] = nb::float_(state.action_space_config.max_alt_m);
+    out["action_space_config"] = std::move(action_space_config);
+
+    nb::dict command_lag;
+    command_lag["present"] = nb::bool_(state.has_command_lag);
+    command_lag["heading_tau_s"] = nb::float_(state.command_lag.heading_tau_s);
+    command_lag["speed_tau_s"] = nb::float_(state.command_lag.speed_tau_s);
+    command_lag["altitude_tau_s"] = nb::float_(state.command_lag.altitude_tau_s);
+    out["command_lag"] = std::move(command_lag);
+
+    nb::dict lagged_command;
+    lagged_command["present"] = nb::bool_(state.has_lagged_command);
+    lagged_command["target_heading_deg"] = nb::float_(state.lagged_command.target_heading);
+    lagged_command["target_speed_mps"] = nb::float_(state.lagged_command.target_speed);
+    lagged_command["target_altitude_m"] = nb::float_(state.lagged_command.target_altitude);
+    lagged_command["active"] = nb::bool_(state.lagged_command.active);
+    out["lagged_command"] = std::move(lagged_command);
+
+    nb::dict command_link;
+    command_link["present"] = nb::bool_(state.has_command_link);
+    command_link["latency_s"] = nb::float_(state.command_link.latency_s);
+    command_link["drop_prob"] = nb::float_(state.command_link.drop_prob);
+    out["command_link"] = std::move(command_link);
+
+    nb::dict pending_movement_command;
+    pending_movement_command["present"] = nb::bool_(state.has_pending_movement_command);
+    pending_movement_command["deliver_time_s"] = nb::float_(state.pending_movement_command.deliver_time);
+    pending_movement_command["active"] = nb::bool_(state.pending_movement_command.active);
+    out["pending_movement_command"] = std::move(pending_movement_command);
+
+    nb::dict pending_action_command;
+    pending_action_command["present"] = nb::bool_(state.has_pending_action_command);
+    pending_action_command["deliver_time_s"] = nb::float_(state.pending_action_command.deliver_time);
+    pending_action_command["active"] = nb::bool_(state.pending_action_command.active);
+    out["pending_action_command"] = std::move(pending_action_command);
+
+    nb::dict pending_mission_command;
+    pending_mission_command["present"] = nb::bool_(state.has_pending_mission_command);
+    pending_mission_command["deliver_time_s"] = nb::float_(state.pending_mission_command.deliver_time);
+    pending_mission_command["active"] = nb::bool_(state.pending_mission_command.active);
+    out["pending_mission_command"] = std::move(pending_mission_command);
+
+    return out;
+}
+
+nb::list exact_world_step_command_surface_list(const std::vector<gpu::ExactWorldStepStateV1>& states) {
+    nb::list out;
+    for (const auto& state : states) {
+        out.append(exact_world_step_command_surface_dict(state));
+    }
+    return out;
+}
+
+nb::dict exact_world_step_combat_surface_dict(const gpu::ExactWorldStepStateV1& state) {
+    nb::dict out;
+
+    nb::dict missile;
+    missile["present"] = nb::bool_(state.has_missile);
+    missile["attacker_id"] = nb::int_(state.missile.attacker_id);
+    missile["target_id"] = nb::int_(state.missile.target_id);
+    missile["max_speed_mps"] = nb::float_(state.missile.max_speed);
+    missile["turn_rate_deg_s"] = nb::float_(state.missile.turn_rate);
+    missile["fuse_distance_m"] = nb::float_(state.missile.fuse_distance);
+    missile["damage"] = nb::float_(state.missile.damage);
+    missile["seeker_fov_deg"] = nb::float_(state.missile.seeker_fov_deg);
+    missile["seeker_lock_range_m"] = nb::float_(state.missile.seeker_lock_range);
+    missile["guidance_delay_s"] = nb::float_(state.missile.guidance_delay_s);
+    missile["guidance_update_period_s"] = nb::float_(state.missile.guidance_update_period_s);
+    missile["last_guidance_time_s"] = nb::float_(state.missile.last_guidance_time);
+    missile["launch_time_s"] = nb::float_(state.missile.launch_time);
+    missile["max_flight_time_s"] = nb::float_(state.missile.max_flight_time_s);
+    missile["nav_gain"] = nb::float_(state.missile.nav_gain);
+    missile["active"] = nb::bool_(state.missile.active);
+    missile["rng_state"] = nb::int_(state.missile.rng_state);
+    missile["proximity_min_dist_m"] = nb::float_(state.missile.proximity_min_dist_m);
+    missile["proximity_last_dist_m"] = nb::float_(state.missile.proximity_last_dist_m);
+    missile["proximity_engaged"] = nb::bool_(state.missile.proximity_engaged);
+    out["missile"] = std::move(missile);
+
+    nb::dict contacts;
+    contacts["present"] = nb::bool_(state.has_contact_list_summary);
+    contacts["count"] = nb::int_(state.contact_list_summary.count);
+    contacts["truncated"] = nb::bool_(state.contact_list_summary.truncated);
+    nb::list items;
+    const auto count = std::min<std::size_t>(
+        state.contact_list_summary.count,
+        gpu::kExactWorldStepContactSummaryCapacity
+    );
+    for (std::size_t i = 0; i < count; ++i) {
+        const auto& detection = state.contact_list_summary.contacts[i];
+        nb::dict item;
+        item["target_id"] = nb::int_(detection.target_id);
+        item["range_m"] = nb::float_(detection.range);
+        item["bearing_deg"] = nb::float_(detection.bearing);
+        item["elevation_deg"] = nb::float_(detection.elevation);
+        item["closing_speed_mps"] = nb::float_(detection.closing_speed);
+        item["signal_strength"] = nb::float_(detection.signal_strength);
+        item["timestamp_s"] = nb::float_(detection.timestamp);
+        items.append(std::move(item));
+    }
+    contacts["items"] = std::move(items);
+    out["contact_list_summary"] = std::move(contacts);
+
+    return out;
+}
+
+nb::list exact_world_step_combat_surface_list(const std::vector<gpu::ExactWorldStepStateV1>& states) {
+    nb::list out;
+    for (const auto& state : states) {
+        out.append(exact_world_step_combat_surface_dict(state));
+    }
+    return out;
+}
+
+nb::dict exact_step_stage_descriptor_dict(const ExactStepStageDescriptor& descriptor) {
+    nb::dict out;
+    out["order"] = nb::int_(descriptor.order);
+    out["name"] = nb::str(descriptor.name.c_str());
+    out["flecs_kind"] = nb::str(descriptor.flecs_kind.c_str());
+    out["domain"] = nb::str(descriptor.domain.c_str());
+    out["notes"] = nb::str(descriptor.notes.c_str());
+    out["gpu_migration_scope"] = nb::bool_(descriptor.gpu_migration_scope);
+    out["manual_trace_supported"] = nb::bool_(descriptor.manual_trace_supported);
+    return out;
+}
+
+nb::list exact_step_stage_descriptor_list(const std::vector<ExactStepStageDescriptor>& descriptors) {
+    nb::list out;
+    for (const auto& descriptor : descriptors) {
+        out.append(exact_step_stage_descriptor_dict(descriptor));
+    }
+    return out;
+}
+
+nb::list string_vector_list(const std::vector<std::string>& values) {
+    nb::list out;
+    for (const auto& value : values) {
+        out.append(nb::str(value.c_str()));
+    }
+    return out;
+}
+
+nb::dict exact_step_stage_contract_descriptor_dict(const ExactStepStageContractDescriptor& descriptor) {
+    nb::dict out;
+    out["order"] = nb::int_(descriptor.order);
+    out["name"] = nb::str(descriptor.name.c_str());
+    out["flecs_kind"] = nb::str(descriptor.flecs_kind.c_str());
+    out["domain"] = nb::str(descriptor.domain.c_str());
+    out["gpu_migration_scope"] = nb::bool_(descriptor.gpu_migration_scope);
+    out["manual_trace_supported"] = nb::bool_(descriptor.manual_trace_supported);
+    out["reads"] = string_vector_list(descriptor.reads);
+    out["writes"] = string_vector_list(descriptor.writes);
+    out["trace_surfaces"] = string_vector_list(descriptor.trace_surfaces);
+    out["depends_on_stages"] = string_vector_list(descriptor.depends_on_stages);
+    out["contract_summary"] = nb::str(descriptor.contract_summary.c_str());
+    out["exact_dependency_notes"] = nb::str(descriptor.exact_dependency_notes.c_str());
+    return out;
+}
+
+nb::list exact_step_stage_contract_descriptor_list(const std::vector<ExactStepStageContractDescriptor>& descriptors) {
+    nb::list out;
+    for (const auto& descriptor : descriptors) {
+        out.append(exact_step_stage_contract_descriptor_dict(descriptor));
+    }
+    return out;
+}
+
 const char* default_unit_name_for(UnitType type) {
     switch (type) {
         case UnitType::Aircraft:
@@ -55,6 +540,72 @@ auto visual_tensor_to_numpy(std::vector<float>&& data, size_t ndim, const size_t
         delete static_cast<std::vector<float>*>(ptr);
     });
     return nb::ndarray<nb::numpy, const float, Shape>(output->data(), ndim, shape, owner);
+}
+
+template <typename Shape>
+auto uint32_tensor_to_numpy(std::vector<std::uint32_t>&& data, size_t ndim, const size_t* shape) {
+    auto* output = new std::vector<std::uint32_t>(std::move(data));
+    nb::capsule owner(output, [](void* ptr) noexcept {
+        delete static_cast<std::vector<std::uint32_t>*>(ptr);
+    });
+    return nb::ndarray<nb::numpy, const std::uint32_t, Shape>(output->data(), ndim, shape, owner);
+}
+
+FlightShapingRuntimeProducts unpack_flight_shaping_products(const float* src) {
+    FlightShapingRuntimeProducts out{};
+    out.valid = src[0] > 0.5f;
+    out.altitude_progress = static_cast<double>(src[1]);
+    out.low_alt_descent_penalty = static_cast<double>(src[2]);
+    out.speed_progress = static_cast<double>(src[3]);
+    out.speed_regress = static_cast<double>(src[4]);
+    out.stationary_penalty = static_cast<double>(src[5]);
+    out.liftoff_bonus = static_cast<double>(src[6]);
+    out.next_liftoff_awarded = src[7] > 0.5f;
+    out.rotation_reward = static_cast<double>(src[8]);
+    out.rotation_overpitch_penalty = static_cast<double>(src[9]);
+    out.gear_up_bonus = static_cast<double>(src[10]);
+    out.next_gear_bonus_awarded = src[11] > 0.5f;
+    out.roll_stability = static_cast<double>(src[12]);
+    out.heading_error_penalty = static_cast<double>(src[13]);
+    out.heading_hold_bonus = static_cast<double>(src[14]);
+    out.altitude_error_penalty = static_cast<double>(src[15]);
+    out.altitude_hold_bonus = static_cast<double>(src[16]);
+    out.speed_error_penalty = static_cast<double>(src[17]);
+    out.speed_hold_bonus = static_cast<double>(src[18]);
+    out.roll_abs_penalty = static_cast<double>(src[19]);
+    out.pitch_abs_penalty = static_cast<double>(src[20]);
+    out.yaw_rate_abs_penalty = static_cast<double>(src[21]);
+    out.beta_abs_penalty = static_cast<double>(src[22]);
+    out.g_deviation_penalty = static_cast<double>(src[23]);
+    out.speed_reward = static_cast<double>(src[24]);
+    out.runway_centerline_m_penalty = static_cast<double>(src[25]);
+    out.runway_centerline_penalty = static_cast<double>(src[26]);
+    out.runway_centerline_barrier = static_cast<double>(src[27]);
+    out.departure_centerline_m_penalty = static_cast<double>(src[28]);
+    out.departure_centerline_reward = static_cast<double>(src[29]);
+    out.departure_track_error_penalty = static_cast<double>(src[30]);
+    out.departure_track_reward = static_cast<double>(src[31]);
+    out.alignment_reward = static_cast<double>(src[32]);
+    return out;
+}
+
+std::vector<FlightShapingRuntimeProducts> unpack_flight_shaping_products_batch(
+    const std::vector<float>& flat,
+    std::size_t batch_size
+) {
+    if (flat.size() != batch_size * static_cast<std::size_t>(gpu::kFlightShapingOutputCount)) {
+        throw std::runtime_error("unexpected flattened flight-shaping batch output size");
+    }
+    std::vector<FlightShapingRuntimeProducts> out;
+    out.reserve(batch_size);
+    for (std::size_t idx = 0; idx < batch_size; ++idx) {
+        out.push_back(
+            unpack_flight_shaping_products(
+                flat.data() + static_cast<std::ptrdiff_t>(idx * static_cast<std::size_t>(gpu::kFlightShapingOutputCount))
+            )
+        );
+    }
+    return out;
 }
 
 std::vector<float> downsample_visual_tensor(std::vector<float>&& input, int factor) {
@@ -101,6 +652,425 @@ std::vector<float> downsample_visual_tensor(std::vector<float>&& input, int fact
     }
 
     return output;
+}
+
+bool default_environment_snapshots_equal(
+    const DefaultEnvironmentSnapshot& lhs,
+    const DefaultEnvironmentSnapshot& rhs
+) {
+    if (lhs.valid != rhs.valid || lhs.flat_terrain != rhs.flat_terrain) {
+        return false;
+    }
+    if (lhs.raster.origin_x != rhs.raster.origin_x ||
+        lhs.raster.origin_y != rhs.raster.origin_y ||
+        lhs.raster.resolution_m != rhs.raster.resolution_m ||
+        lhs.raster.width != rhs.raster.width ||
+        lhs.raster.height != rhs.raster.height ||
+        lhs.raster.surface_codes != rhs.raster.surface_codes) {
+        return false;
+    }
+    if (lhs.zones.size() != rhs.zones.size()) {
+        return false;
+    }
+    for (std::size_t idx = 0; idx < lhs.zones.size(); ++idx) {
+        const auto& a = lhs.zones[idx];
+        const auto& b = rhs.zones[idx];
+        if (a.center_x != b.center_x ||
+            a.center_y != b.center_y ||
+            a.width != b.width ||
+            a.length != b.length ||
+            a.heading_deg != b.heading_deg ||
+            a.type != b.type ||
+            a.surface_code != b.surface_code) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool collect_visual_scene_for_binding(
+    SimulationKernel& kernel,
+    uint64_t entity_id,
+    int downsample,
+    gpu::VisualRenderRequest* out_request,
+    std::vector<gpu::VisibleObjectPacked>* out_objects,
+    IEnvironmentModel** out_env,
+    const std::vector<uint64_t>* candidate_ids = nullptr
+) {
+    auto e = kernel.get_world().entity(entity_id);
+    if (!e.is_valid()) {
+        return false;
+    }
+    const Transform* cam_t = e.get<Transform>();
+    const Alliance* cam_a = e.get<Alliance>();
+    if (cam_t == nullptr || out_request == nullptr || out_objects == nullptr) {
+        return false;
+    }
+    const auto* env_ref = kernel.get_world().get<EnvironmentModelRef>();
+    if (out_env != nullptr) {
+        *out_env = env_ref != nullptr ? env_ref->model : nullptr;
+    }
+
+    const int factor = std::max(1, downsample);
+    gpu::VisualRenderRequest request{};
+    request.cam_pos = {cam_t->x, cam_t->y, cam_t->z};
+    request.cam_heading_deg = cam_t->heading;
+    request.cam_pitch_deg = cam_t->pitch;
+    request.fov_h_deg = 180.0;
+    request.fov_v_deg = 90.0;
+    request.out_height = arb::ARB_HEIGHT / factor;
+    request.out_width = arb::ARB_WIDTH / factor;
+    request.include_terrain = true;
+    request.allow_gpu_terrain = true;
+    *out_request = request;
+
+    const int my_side = cam_a ? static_cast<int>(cam_a->side) : 0;
+    out_objects->clear();
+    kernel.get_world().each(
+        [&](flecs::entity other_e, const Transform& t, const Velocity& v, const Alliance& a, const KeyEntity& k) {
+            if (other_e.id() == entity_id) {
+                return;
+            }
+            if (candidate_ids != nullptr && !std::binary_search(candidate_ids->begin(), candidate_ids->end(), other_e.id())) {
+                return;
+            }
+
+            gpu::VisibleObjectPacked obj{};
+            obj.x = t.x;
+            obj.y = t.y;
+            obj.z = t.z;
+            obj.vx = v.vx;
+            obj.vy = v.vy;
+            obj.vz = v.vz;
+
+            switch (k.type) {
+                case UnitType::Aircraft: obj.bounding_radius = 10.0; obj.cls = 0; break;
+                case UnitType::Ship: obj.bounding_radius = 50.0; obj.cls = 2; break;
+                case UnitType::Missile: obj.bounding_radius = 2.0; obj.cls = 0; break;
+                case UnitType::Facility: obj.bounding_radius = 20.0; obj.cls = 1; break;
+                default: obj.bounding_radius = 5.0; obj.cls = 1; break;
+            }
+
+            const int other_side = static_cast<int>(a.side);
+            if (other_side == my_side) {
+                obj.team = 1;
+            } else if (other_side == 0) {
+                obj.team = 0;
+            } else {
+                obj.team = -1;
+            }
+            out_objects->push_back(obj);
+        }
+    );
+    return true;
+}
+
+gpu::ExecutionObservationBatchRequest build_execution_observation_batch_request(
+    const InstrumentState& inst,
+    const MissionObservationInputs& mission_inputs,
+    double ils_valid,
+    double ils_loc,
+    double ils_gs,
+    double ils_dme,
+    int max_contacts,
+    int max_rwr,
+    const AgentObservation& truth
+) {
+    gpu::ExecutionObservationBatchRequest req{};
+    req.inst.alt_baro_m = inst.alt_baro_m;
+    req.inst.alt_radar_m = inst.alt_radar_m;
+    req.inst.ias_mps = inst.ias_mps;
+    req.inst.mach = inst.mach;
+    req.inst.vvi_mps = inst.vvi_mps;
+    req.inst.pitch_deg = inst.pitch_deg;
+    req.inst.roll_deg = inst.roll_deg;
+    req.inst.heading_deg = inst.heading_deg;
+    req.inst.aoa_deg = inst.aoa_deg;
+    req.inst.beta_deg = inst.beta_deg;
+    req.inst.g_load_normal = inst.g_load_normal;
+    req.inst.g_load_axial = inst.g_load_axial;
+    req.inst.p_deg_s = inst.p_deg_s;
+    req.inst.q_deg_s = inst.q_deg_s;
+    req.inst.r_deg_s = inst.r_deg_s;
+    req.inst.engine_rpm_pct = inst.engine_rpm_pct;
+    req.inst.fuel_flow_kg_h = inst.fuel_flow_kg_h;
+    req.inst.fuel_internal_kg = inst.fuel_internal_kg;
+    req.inst.fuel_external_kg = inst.fuel_external_kg;
+    req.inst.gear_pos = inst.gear_pos;
+    req.inst.flaps_pos = inst.flaps_pos;
+    req.inst.speedbrake_pos = inst.speedbrake_pos;
+    req.inst.oat_c = inst.oat_c;
+    req.inst.cmd_heading_deg = inst.cmd_heading_deg;
+    req.inst.cmd_alt_m = inst.cmd_alt_m;
+    req.inst.cmd_speed_mps = inst.cmd_speed_mps;
+    req.inst.rwr_active = inst.rwr_active;
+    req.inst.missiles_remaining = inst.missiles_remaining;
+    req.inst.lat_deg = inst.lat_deg;
+    req.inst.lon_deg = inst.lon_deg;
+    req.inst.vn_mps = inst.vn_mps;
+    req.inst.ve_mps = inst.ve_mps;
+    req.inst.vd_mps = inst.vd_mps;
+    req.inst.ground_speed_mps = inst.ground_speed_mps;
+    req.inst.ground_track_deg = inst.ground_track_deg;
+    req.inst.wind_speed_mps = inst.wind_speed_mps;
+    req.inst.wind_dir_deg = inst.wind_dir_deg;
+    req.inst.gps_available = inst.gps_available;
+    req.inst.position_uncertainty_m = inst.position_uncertainty_m;
+
+    req.mission.mode_code = mission_inputs.mode_code;
+    req.mission.command_code = mission_inputs.command_code;
+    req.mission.target_heading_deg = mission_inputs.target_heading_deg;
+    req.mission.target_altitude_m = mission_inputs.target_altitude_m;
+    req.mission.target_speed_mps = mission_inputs.target_speed_mps;
+    if (mission_inputs.has_route_guidance && mission_inputs.route_guidance.valid) {
+        req.mission.has_route_guidance = true;
+        req.mission.route_idx = mission_inputs.route_guidance.idx;
+        req.mission.route_count = mission_inputs.route_guidance.count;
+        req.mission.route_waypoint_flyover = mission_inputs.route_guidance.waypoint_mode == "flyover";
+        req.mission.route_dist_m = mission_inputs.route_guidance.dist_m;
+        req.mission.route_reward_xtk_m = mission_inputs.route_guidance.reward_xtk_m;
+        req.mission.route_reward_dtg_m = mission_inputs.route_guidance.reward_dtg_m;
+        req.mission.route_direct_to_track_deg = mission_inputs.route_guidance.direct_to_track_deg;
+        req.mission.route_reward_desired_track_deg = mission_inputs.route_guidance.reward_desired_track_deg;
+        req.mission.route_next_turn_deg = mission_inputs.route_guidance.next_turn_deg;
+        req.mission.route_distance_to_turn_m = mission_inputs.route_guidance.distance_to_turn_m;
+        req.mission.nav_own_altitude_m = mission_inputs.nav_inputs.own_altitude_m;
+        req.mission.nav_truth_heading_deg = mission_inputs.nav_inputs.truth_heading_deg;
+        req.mission.nav_truth_speed_mps = mission_inputs.nav_inputs.truth_speed_mps;
+        req.mission.nav_inst_heading_deg = mission_inputs.nav_inputs.inst_heading_deg;
+        req.mission.nav_inst_ground_track_deg = mission_inputs.nav_inputs.inst_ground_track_deg;
+        req.mission.nav_inst_ias_mps = mission_inputs.nav_inputs.inst_ias_mps;
+        req.mission.nav_waypoint_altitude_m = mission_inputs.nav_inputs.waypoint_altitude_m;
+        req.mission.nav_cdi_full_scale_m = mission_inputs.nav_inputs.cdi_full_scale_m;
+    }
+
+    req.ils_valid = ils_valid;
+    req.ils_loc = ils_loc;
+    req.ils_gs = ils_gs;
+    req.ils_dme = ils_dme;
+    req.contact_count = std::min(max_contacts, static_cast<int>(truth.contacts.size()));
+    req.rwr_count = std::min(max_rwr, static_cast<int>(truth.rwr_warnings.size()));
+    return req;
+}
+
+struct BatchExecutionObservationOutputs {
+    std::size_t batch_size = 0;
+    std::size_t instrument_count = 0;
+    std::size_t contact_section = 0;
+    std::size_t rwr_section = 0;
+    std::size_t mission_count = 0;
+    std::size_t per_request = 0;
+    std::vector<float> inst_out;
+    std::vector<float> contacts_out;
+    std::vector<float> rwr_out;
+    std::vector<float> mission_out;
+    const void* device_ptr = nullptr;
+    std::size_t device_float_count = 0;
+};
+
+BatchExecutionObservationOutputs compute_execution_observation_batch_binding_outputs(
+    const std::vector<InstrumentState>& inst_batch,
+    const std::vector<AgentObservation>& truth_batch,
+    const std::vector<MissionObservationInputs>& mission_inputs_batch,
+    nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch,
+    int max_contacts,
+    int max_rwr,
+    bool use_gpu
+) {
+    if (inst_batch.size() != truth_batch.size() || inst_batch.size() != mission_inputs_batch.size()) {
+        throw std::invalid_argument("batch observation inputs must have matching batch size");
+    }
+    if (
+        ils_batch.ndim() != 2 ||
+        ils_batch.shape(0) != static_cast<ssize_t>(inst_batch.size()) ||
+        ils_batch.shape(1) < 4
+    ) {
+        throw std::invalid_argument("ils_batch must have shape [batch, >=4]");
+    }
+
+    BatchExecutionObservationOutputs out{};
+    out.batch_size = inst_batch.size();
+    const auto* ils_ptr = static_cast<const float*>(ils_batch.data());
+    const std::size_t ils_stride = static_cast<std::size_t>(ils_batch.shape(1));
+
+    std::vector<gpu::ExecutionObservationBatchRequest> requests;
+    std::vector<std::vector<TrackData>> contacts_batch;
+    std::vector<std::vector<RWREvent>> rwr_batch;
+    requests.reserve(out.batch_size);
+    contacts_batch.reserve(out.batch_size);
+    rwr_batch.reserve(out.batch_size);
+    for (std::size_t idx = 0; idx < out.batch_size; ++idx) {
+        const std::size_t ils_base = idx * ils_stride;
+        requests.push_back(
+            build_execution_observation_batch_request(
+                inst_batch[idx],
+                mission_inputs_batch[idx],
+                static_cast<double>(ils_ptr[ils_base + 0]),
+                static_cast<double>(ils_ptr[ils_base + 1]),
+                static_cast<double>(ils_ptr[ils_base + 2]),
+                static_cast<double>(ils_ptr[ils_base + 3]),
+                max_contacts,
+                max_rwr,
+                truth_batch[idx]
+            )
+        );
+        contacts_batch.push_back(truth_batch[idx].contacts);
+        rwr_batch.push_back(truth_batch[idx].rwr_warnings);
+    }
+
+    const int mission_mode_code = mission_inputs_batch.empty() ? 0 : mission_inputs_batch.front().mode_code;
+    out.instrument_count = gpu::kExecutionObservationInstrumentCount;
+    out.mission_count = gpu::execution_observation_mission_float_count(mission_mode_code);
+    out.contact_section = static_cast<std::size_t>(std::max(0, max_contacts)) * 5u;
+    out.rwr_section = static_cast<std::size_t>(std::max(0, max_rwr)) * 4u;
+    out.per_request = gpu::execution_observation_output_float_count(max_contacts, max_rwr, mission_mode_code);
+
+    const std::vector<float> flat = use_gpu
+        ? gpu::compute_execution_observation_experiment_batch(
+            requests,
+            contacts_batch,
+            rwr_batch,
+            max_contacts,
+            max_rwr
+        )
+        : gpu::compute_execution_observation_reference_cpu_batch(
+            requests,
+            contacts_batch,
+            rwr_batch,
+            max_contacts,
+            max_rwr
+        );
+    if (flat.size() != out.batch_size * out.per_request) {
+        throw std::runtime_error("unexpected flattened batch observation output size");
+    }
+
+    out.inst_out.assign(out.batch_size * out.instrument_count, 0.0f);
+    out.contacts_out.assign(out.batch_size * out.contact_section, 0.0f);
+    out.rwr_out.assign(out.batch_size * out.rwr_section, 0.0f);
+    out.mission_out.assign(out.batch_size * out.mission_count, 0.0f);
+    for (std::size_t idx = 0; idx < out.batch_size; ++idx) {
+        const std::size_t src_base = idx * out.per_request;
+        std::copy_n(
+            flat.begin() + static_cast<std::ptrdiff_t>(src_base),
+            static_cast<std::ptrdiff_t>(out.instrument_count),
+            out.inst_out.begin() + static_cast<std::ptrdiff_t>(idx * out.instrument_count)
+        );
+        std::copy_n(
+            flat.begin() + static_cast<std::ptrdiff_t>(src_base + out.instrument_count),
+            static_cast<std::ptrdiff_t>(out.contact_section),
+            out.contacts_out.begin() + static_cast<std::ptrdiff_t>(idx * out.contact_section)
+        );
+        std::copy_n(
+            flat.begin() + static_cast<std::ptrdiff_t>(src_base + out.instrument_count + out.contact_section),
+            static_cast<std::ptrdiff_t>(out.rwr_section),
+            out.rwr_out.begin() + static_cast<std::ptrdiff_t>(idx * out.rwr_section)
+        );
+        std::copy_n(
+            flat.begin() + static_cast<std::ptrdiff_t>(
+                src_base + out.instrument_count + out.contact_section + out.rwr_section
+            ),
+            static_cast<std::ptrdiff_t>(out.mission_count),
+            out.mission_out.begin() + static_cast<std::ptrdiff_t>(idx * out.mission_count)
+        );
+    }
+
+    if (use_gpu) {
+        out.device_ptr = gpu::last_execution_observation_output_device_ptr();
+        out.device_float_count = gpu::last_execution_observation_output_float_count();
+    }
+    return out;
+}
+
+struct BatchVisualObservationOutputs {
+    std::size_t batch_size = 0;
+    int out_h = 0;
+    int out_w = 0;
+    std::size_t frame_size = 0;
+    std::vector<float> flat;
+    const void* device_ptr = nullptr;
+    std::size_t device_float_count = 0;
+};
+
+BatchVisualObservationOutputs compute_world_batch_visual_binding_outputs(
+    WorldBatchRuntime& runtime,
+    const std::vector<WorldEntityRef>& refs,
+    int downsample,
+    bool use_gpu
+) {
+    const int factor = std::max(1, downsample);
+    const auto visual_candidate_ids = runtime.get_visual_candidate_ids_batch(refs, 25000.0, use_gpu);
+    std::vector<gpu::VisualRenderRequest> requests;
+    std::vector<std::vector<gpu::VisibleObjectPacked>> objects_batch;
+    requests.reserve(refs.size());
+    objects_batch.reserve(refs.size());
+
+    std::vector<IEnvironmentModel*> envs;
+    envs.reserve(refs.size());
+    std::vector<DefaultEnvironmentSnapshot> snapshots;
+    snapshots.reserve(refs.size());
+
+    for (std::size_t idx = 0; idx < refs.size(); ++idx) {
+        const auto& ref = refs[idx];
+        auto& world = runtime.world(static_cast<size_t>(ref.world_index));
+        gpu::VisualRenderRequest request{};
+        std::vector<gpu::VisibleObjectPacked> objects;
+        IEnvironmentModel* env = nullptr;
+        const std::vector<uint64_t>* candidates =
+            idx < visual_candidate_ids.size() ? &visual_candidate_ids[idx] : nullptr;
+        if (!collect_visual_scene_for_binding(world, ref.entity_id, factor, &request, &objects, &env, candidates)) {
+            throw std::runtime_error("failed to collect visual scene for world batch visual helper");
+        }
+        DefaultEnvironmentSnapshot snapshot{};
+        if (env != nullptr) {
+            (void)extract_default_environment_snapshot(env, &snapshot);
+        }
+        requests.push_back(request);
+        objects_batch.push_back(std::move(objects));
+        envs.push_back(env);
+        snapshots.push_back(std::move(snapshot));
+    }
+
+    BatchVisualObservationOutputs out{};
+    out.batch_size = refs.size();
+    out.out_h = requests.empty() ? (arb::ARB_HEIGHT / factor) : requests.front().out_height;
+    out.out_w = requests.empty() ? (arb::ARB_WIDTH / factor) : requests.front().out_width;
+    out.frame_size =
+        static_cast<std::size_t>(out.out_h) *
+        static_cast<std::size_t>(out.out_w) *
+        static_cast<std::size_t>(arb::ARB_CHANNELS);
+    out.flat.assign(out.frame_size * refs.size(), 0.0f);
+
+    bool can_batch = !refs.empty();
+    for (std::size_t idx = 1; idx < snapshots.size(); ++idx) {
+        if (!default_environment_snapshots_equal(snapshots[0], snapshots[idx])) {
+            can_batch = false;
+            break;
+        }
+    }
+
+    if (can_batch && !requests.empty()) {
+        auto rendered = use_gpu
+            ? gpu::render_visual_experiment_batch(requests, objects_batch, envs.front())
+            : gpu::render_visual_reference_cpu_batch(requests, objects_batch, envs.front());
+        out.flat = std::move(rendered);
+        if (use_gpu) {
+            out.device_ptr = gpu::last_visual_output_device_ptr();
+            out.device_float_count = gpu::last_visual_output_float_count();
+        }
+    } else {
+        for (std::size_t idx = 0; idx < refs.size(); ++idx) {
+            auto rendered = use_gpu
+                ? gpu::render_visual_experiment(requests[idx], objects_batch[idx], envs[idx])
+                : gpu::render_visual_reference_cpu(requests[idx], objects_batch[idx], envs[idx]);
+            std::copy(
+                rendered.begin(),
+                rendered.end(),
+                out.flat.begin() + static_cast<std::ptrdiff_t>(idx * out.frame_size)
+            );
+        }
+    }
+
+    return out;
 }
 } // namespace
 
@@ -799,6 +1769,28 @@ NB_MODULE(ef_py, m) {
         .def_ro("alignment_reward", &FlightShapingRuntimeProducts::alignment_reward);
 
     m.def("compute_flight_shaping_terms", &compute_flight_shaping_terms, nb::arg("inputs"));
+    m.def(
+        "compute_flight_shaping_batch",
+        [](const std::vector<FlightShapingRuntimeInputs>& inputs_batch, bool use_gpu) {
+            if (inputs_batch.empty()) {
+                return std::vector<FlightShapingRuntimeProducts>{};
+            }
+            if (use_gpu) {
+                return unpack_flight_shaping_products_batch(
+                    gpu::compute_flight_shaping_experiment_batch(inputs_batch),
+                    inputs_batch.size()
+                );
+            }
+            std::vector<FlightShapingRuntimeProducts> out;
+            out.reserve(inputs_batch.size());
+            for (const auto& inputs : inputs_batch) {
+                out.push_back(compute_flight_shaping_terms(inputs));
+            }
+            return out;
+        },
+        nb::arg("inputs_batch"),
+        nb::arg("use_gpu") = false
+    );
 
     nb::enum_<ConditionalObjectiveProperty>(m, "ConditionalObjectiveProperty")
         .value("Unknown", ConditionalObjectiveProperty::Unknown)
@@ -1131,6 +2123,796 @@ NB_MODULE(ef_py, m) {
         nb::arg("ils_dme"),
         nb::arg("max_contacts"),
         nb::arg("max_rwr")
+    );
+    m.def(
+        "compute_execution_observation_batch_numpy",
+        [](const std::vector<InstrumentState>& inst_batch,
+           const std::vector<AgentObservation>& truth_batch,
+           const std::vector<MissionObservationInputs>& mission_inputs_batch,
+           nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch,
+           int max_contacts,
+           int max_rwr,
+           bool use_gpu) {
+            auto outputs = compute_execution_observation_batch_binding_outputs(
+                inst_batch,
+                truth_batch,
+                mission_inputs_batch,
+                ils_batch,
+                max_contacts,
+                max_rwr,
+                use_gpu
+            );
+            size_t inst_shape[2] = {outputs.batch_size, outputs.instrument_count};
+            size_t contacts_shape[3] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(std::max(0, max_contacts)),
+                5u
+            };
+            size_t rwr_shape[3] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(std::max(0, max_rwr)),
+                4u
+            };
+            size_t mission_shape[2] = {outputs.batch_size, outputs.mission_count};
+            return nb::make_tuple(
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.inst_out), 2, inst_shape),
+                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.contacts_out), 3, contacts_shape),
+                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.rwr_out), 3, rwr_shape),
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.mission_out), 2, mission_shape)
+            );
+        },
+        nb::arg("inst_batch"),
+        nb::arg("truth_batch"),
+        nb::arg("mission_inputs_batch"),
+        nb::arg("ils_batch"),
+        nb::arg("max_contacts"),
+        nb::arg("max_rwr"),
+        nb::arg("use_gpu") = false
+    );
+    m.def(
+        "compute_execution_observation_batch_export",
+        [](const std::vector<InstrumentState>& inst_batch,
+           const std::vector<AgentObservation>& truth_batch,
+           const std::vector<MissionObservationInputs>& mission_inputs_batch,
+           nb::ndarray<nb::numpy, const float, nb::ndim<2>, nb::c_contig> ils_batch,
+           int max_contacts,
+           int max_rwr,
+           bool use_gpu) {
+            auto outputs = compute_execution_observation_batch_binding_outputs(
+                inst_batch,
+                truth_batch,
+                mission_inputs_batch,
+                ils_batch,
+                max_contacts,
+                max_rwr,
+                use_gpu
+            );
+            size_t inst_shape[2] = {outputs.batch_size, outputs.instrument_count};
+            size_t contacts_shape[3] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(std::max(0, max_contacts)),
+                5u
+            };
+            size_t rwr_shape[3] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(std::max(0, max_rwr)),
+                4u
+            };
+            size_t mission_shape[2] = {outputs.batch_size, outputs.mission_count};
+            nb::object device_view = nb::none();
+            if (use_gpu) {
+                device_view = maybe_gpu_tensor_view(
+                    outputs.device_ptr,
+                    outputs.device_float_count,
+                    {
+                        static_cast<std::int64_t>(outputs.batch_size),
+                        static_cast<std::int64_t>(outputs.per_request),
+                    }
+                );
+            }
+            return nb::make_tuple(
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.inst_out), 2, inst_shape),
+                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.contacts_out), 3, contacts_shape),
+                visual_tensor_to_numpy<nb::ndim<3>>(std::move(outputs.rwr_out), 3, rwr_shape),
+                visual_tensor_to_numpy<nb::ndim<2>>(std::move(outputs.mission_out), 2, mission_shape),
+                device_view
+            );
+        },
+        nb::arg("inst_batch"),
+        nb::arg("truth_batch"),
+        nb::arg("mission_inputs_batch"),
+        nb::arg("ils_batch"),
+        nb::arg("max_contacts"),
+        nb::arg("max_rwr"),
+        nb::arg("use_gpu") = false
+    );
+
+    nb::class_<gpu::DeviceInfo>(m, "GpuDeviceInfo")
+        .def(nb::init<>())
+        .def_ro("cuda_runtime_built", &gpu::DeviceInfo::cuda_runtime_built)
+        .def_ro("cuda_runtime_available", &gpu::DeviceInfo::cuda_runtime_available)
+        .def_ro("device_count", &gpu::DeviceInfo::device_count)
+        .def_ro("active_device", &gpu::DeviceInfo::active_device)
+        .def_ro("compute_major", &gpu::DeviceInfo::compute_major)
+        .def_ro("compute_minor", &gpu::DeviceInfo::compute_minor)
+        .def_ro("runtime_version", &gpu::DeviceInfo::runtime_version)
+        .def_ro("total_global_mem_bytes", &gpu::DeviceInfo::total_global_mem_bytes)
+        .def_ro("free_global_mem_bytes", &gpu::DeviceInfo::free_global_mem_bytes)
+        .def_ro("device_name", &gpu::DeviceInfo::device_name)
+        .def_ro("error_message", &gpu::DeviceInfo::error_message);
+
+    nb::class_<GpuTensorView>(m, "GpuTensorView")
+        .def_prop_ro("valid", &GpuTensorView::valid)
+        .def_prop_ro("shape", &GpuTensorView::shape)
+        .def_prop_ro("strides", &GpuTensorView::strides)
+        .def_prop_ro("device_id", &GpuTensorView::device_id)
+        .def_prop_ro("numel", &GpuTensorView::numel)
+        .def_prop_ro("dtype", [](const GpuTensorView&) { return std::string("float32"); })
+        .def("__dlpack_device__", &GpuTensorView::dlpack_device)
+        .def(
+            "__dlpack__",
+            &GpuTensorView::dlpack,
+            nb::arg("stream") = nb::none(),
+            nb::arg("max_version") = nb::none(),
+            nb::arg("dl_device") = nb::none(),
+            nb::arg("copy") = nb::none()
+        );
+
+    nb::class_<gpu::VisualExperimentStats>(m, "VisualExperimentStats")
+        .def(nb::init<>())
+        .def_ro("used_cuda", &gpu::VisualExperimentStats::used_cuda)
+        .def_ro("host_to_device_ms", &gpu::VisualExperimentStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::VisualExperimentStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::VisualExperimentStats::device_to_host_ms)
+        .def_ro("total_ms", &gpu::VisualExperimentStats::total_ms);
+
+    nb::class_<gpu::ExecutionObservationExperimentStats>(m, "ExecutionObservationExperimentStats")
+        .def(nb::init<>())
+        .def_ro("used_cuda", &gpu::ExecutionObservationExperimentStats::used_cuda)
+        .def_ro("host_to_device_ms", &gpu::ExecutionObservationExperimentStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::ExecutionObservationExperimentStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::ExecutionObservationExperimentStats::device_to_host_ms)
+        .def_ro("total_ms", &gpu::ExecutionObservationExperimentStats::total_ms);
+
+    nb::class_<gpu::FlightShapingExperimentStats>(m, "FlightShapingExperimentStats")
+        .def(nb::init<>())
+        .def_ro("used_cuda", &gpu::FlightShapingExperimentStats::used_cuda)
+        .def_ro("host_to_device_ms", &gpu::FlightShapingExperimentStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::FlightShapingExperimentStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::FlightShapingExperimentStats::device_to_host_ms)
+        .def_ro("total_ms", &gpu::FlightShapingExperimentStats::total_ms);
+
+    m.def("probe_gpu_device", &gpu::probe_device);
+    m.def("last_visual_experiment_stats", &gpu::last_visual_experiment_stats);
+    m.def("last_execution_observation_stats", &gpu::last_execution_observation_stats);
+    m.def("last_flight_shaping_stats", &gpu::last_flight_shaping_stats);
+
+    nb::class_<gpu::InteractionEntityPacked>(m, "InteractionEntityPacked")
+        .def(nb::init<>())
+        .def_rw("world_index", &gpu::InteractionEntityPacked::world_index)
+        .def_rw("local_index", &gpu::InteractionEntityPacked::local_index)
+        .def_rw("x", &gpu::InteractionEntityPacked::x)
+        .def_rw("y", &gpu::InteractionEntityPacked::y)
+        .def_rw("z", &gpu::InteractionEntityPacked::z)
+        .def_rw("bounding_radius_m", &gpu::InteractionEntityPacked::bounding_radius_m);
+
+    nb::class_<gpu::InteractionQueryPacked>(m, "InteractionQueryPacked")
+        .def(nb::init<>())
+        .def_rw("world_index", &gpu::InteractionQueryPacked::world_index)
+        .def_rw("x", &gpu::InteractionQueryPacked::x)
+        .def_rw("y", &gpu::InteractionQueryPacked::y)
+        .def_rw("z", &gpu::InteractionQueryPacked::z)
+        .def_rw("range_m", &gpu::InteractionQueryPacked::range_m);
+
+    nb::class_<gpu::InteractionBroadphaseConfig>(m, "InteractionBroadphaseConfig")
+        .def(nb::init<>())
+        .def_rw("cell_size_m", &gpu::InteractionBroadphaseConfig::cell_size_m)
+        .def_rw("max_entity_radius_m", &gpu::InteractionBroadphaseConfig::max_entity_radius_m)
+        .def_rw("entities_per_world", &gpu::InteractionBroadphaseConfig::entities_per_world)
+        .def_rw("hash_bucket_count", &gpu::InteractionBroadphaseConfig::hash_bucket_count)
+        .def_rw("bucket_capacity", &gpu::InteractionBroadphaseConfig::bucket_capacity);
+
+    nb::class_<gpu::InteractionBroadphaseExperimentStats>(m, "InteractionBroadphaseExperimentStats")
+        .def(nb::init<>())
+        .def_ro("used_cuda", &gpu::InteractionBroadphaseExperimentStats::used_cuda)
+        .def_ro("host_to_device_ms", &gpu::InteractionBroadphaseExperimentStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::InteractionBroadphaseExperimentStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::InteractionBroadphaseExperimentStats::device_to_host_ms)
+        .def_ro("total_ms", &gpu::InteractionBroadphaseExperimentStats::total_ms)
+        .def_ro("overflow_bucket_count", &gpu::InteractionBroadphaseExperimentStats::overflow_bucket_count)
+        .def_ro("overflow_query_count", &gpu::InteractionBroadphaseExperimentStats::overflow_query_count);
+
+    m.def("interaction_broadphase_word_count", &gpu::interaction_broadphase_word_count, nb::arg("entities_per_world"));
+    m.def("last_interaction_broadphase_stats", &gpu::last_interaction_broadphase_stats);
+    m.def(
+        "build_interaction_broadphase_batch_numpy",
+        [](const std::vector<gpu::InteractionEntityPacked>& entities,
+           const std::vector<gpu::InteractionQueryPacked>& queries,
+           const gpu::InteractionBroadphaseConfig& config,
+           bool use_gpu) {
+            const auto query_count = queries.size();
+            const auto words_per_query = gpu::interaction_broadphase_word_count(config.entities_per_world);
+            auto out = use_gpu
+                ? gpu::build_interaction_broadphase_experiment_batch(entities, queries, config)
+                : gpu::build_interaction_broadphase_reference_cpu_batch(entities, queries, config);
+            size_t shape[2] = {query_count, words_per_query};
+            return uint32_tensor_to_numpy<nb::ndim<2>>(
+                std::move(out),
+                2,
+                shape
+            );
+        },
+        nb::arg("entities"),
+        nb::arg("queries"),
+        nb::arg("config"),
+        nb::arg("use_gpu") = false
+    );
+
+    nb::class_<gpu::WorldBatchStepState>(m, "WorldBatchStepState")
+        .def(nb::init<>())
+        .def_rw("x_m", &gpu::WorldBatchStepState::x_m)
+        .def_rw("y_m", &gpu::WorldBatchStepState::y_m)
+        .def_rw("z_m", &gpu::WorldBatchStepState::z_m)
+        .def_rw("vx_mps", &gpu::WorldBatchStepState::vx_mps)
+        .def_rw("vy_mps", &gpu::WorldBatchStepState::vy_mps)
+        .def_rw("vz_mps", &gpu::WorldBatchStepState::vz_mps)
+        .def_rw("wind_vx_mps", &gpu::WorldBatchStepState::wind_vx_mps)
+        .def_rw("wind_vy_mps", &gpu::WorldBatchStepState::wind_vy_mps)
+        .def_rw("cmd_vx_mps", &gpu::WorldBatchStepState::cmd_vx_mps)
+        .def_rw("cmd_vy_mps", &gpu::WorldBatchStepState::cmd_vy_mps)
+        .def_rw("cmd_vz_mps", &gpu::WorldBatchStepState::cmd_vz_mps)
+        .def_rw("max_delta_vxy_mps_per_step", &gpu::WorldBatchStepState::max_delta_vxy_mps_per_step)
+        .def_rw("max_delta_vz_mps_per_step", &gpu::WorldBatchStepState::max_delta_vz_mps_per_step)
+        .def_rw("time_step_s", &gpu::WorldBatchStepState::time_step_s)
+        .def_rw("fuel_kg", &gpu::WorldBatchStepState::fuel_kg)
+        .def_rw("fuel_idle_burn_kgps", &gpu::WorldBatchStepState::fuel_idle_burn_kgps)
+        .def_rw("fuel_burn_per_speed_kgps_per_mps", &gpu::WorldBatchStepState::fuel_burn_per_speed_kgps_per_mps)
+        .def_rw("mission_time_s", &gpu::WorldBatchStepState::mission_time_s);
+
+    nb::class_<gpu::WorldBatchStepExperimentStats>(m, "WorldBatchStepExperimentStats")
+        .def(nb::init<>())
+        .def_ro("used_cuda", &gpu::WorldBatchStepExperimentStats::used_cuda)
+        .def_ro("used_cuda_graph", &gpu::WorldBatchStepExperimentStats::used_cuda_graph)
+        .def_ro("host_to_device_ms", &gpu::WorldBatchStepExperimentStats::host_to_device_ms)
+        .def_ro("graph_capture_ms", &gpu::WorldBatchStepExperimentStats::graph_capture_ms)
+        .def_ro("kernel_ms", &gpu::WorldBatchStepExperimentStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::WorldBatchStepExperimentStats::device_to_host_ms)
+        .def_ro("total_ms", &gpu::WorldBatchStepExperimentStats::total_ms);
+
+    m.def("last_world_batch_step_stats", &gpu::last_world_batch_step_stats);
+    m.def("step_world_batch_state_batch", &gpu::step_world_batch_experiment_batch,
+          nb::arg("initial_states"), nb::arg("steps"), nb::arg("use_cuda_graph") = false);
+    m.def("step_world_batch_state_batch_reference", &gpu::step_world_batch_reference_cpu_batch,
+          nb::arg("initial_states"), nb::arg("steps"));
+    m.def("upload_world_batch_step_states", &gpu::upload_world_batch_step_states, nb::arg("initial_states"));
+    m.def("replay_world_batch_step_device_sequence", &gpu::replay_world_batch_step_device_sequence,
+          nb::arg("steps"), nb::arg("use_cuda_graph") = false);
+    m.def("download_world_batch_step_states", &gpu::download_world_batch_step_states);
+    m.def("exact_world_step_state_v1_size_bytes", &gpu::exact_world_step_state_v1_size_bytes);
+    m.def(
+        "exact_world_step_states_v1_apply_signatures_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            return gpu::exact_world_step_state_v1_apply_signatures(states);
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "exact_world_step_state_v1_component_digests_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            nb::list out;
+            for (const auto& state : states) {
+                nb::dict digests;
+                for (const auto& [name, value] : gpu::exact_world_step_state_v1_component_digests(state)) {
+                    digests[nb::str(name.c_str())] = nb::int_(value);
+                }
+                out.append(std::move(digests));
+            }
+            return out;
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "exact_world_step_state_v1_hidden_surfaces_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            return exact_world_step_hidden_surface_list(states);
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "exact_world_step_state_v1_command_surfaces_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            return exact_world_step_command_surface_list(states);
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "exact_world_step_state_v1_combat_surfaces_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            return exact_world_step_combat_surface_list(states);
+        },
+        nb::arg("packed")
+    );
+    nb::class_<gpu::ExactWorldStepPrototypeStats>(m, "ExactWorldStepPrototypeStats")
+        .def(nb::init<>())
+        .def_ro("used_cuda", &gpu::ExactWorldStepPrototypeStats::used_cuda)
+        .def_ro("host_to_device_ms", &gpu::ExactWorldStepPrototypeStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::ExactWorldStepPrototypeStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::ExactWorldStepPrototypeStats::device_to_host_ms)
+        .def_ro("total_ms", &gpu::ExactWorldStepPrototypeStats::total_ms);
+    nb::class_<gpu::ExactWorldStepCommandLaneStats>(m, "ExactWorldStepCommandLaneStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepCommandLaneStats::state_count)
+        .def_ro("total_ms", &gpu::ExactWorldStepCommandLaneStats::total_ms);
+    nb::class_<gpu::ExactWorldStepFrontHalfStats>(m, "ExactWorldStepFrontHalfStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepFrontHalfStats::state_count)
+        .def_ro("used_cuda", &gpu::ExactWorldStepFrontHalfStats::used_cuda)
+        .def_ro("command_lane_ms", &gpu::ExactWorldStepFrontHalfStats::command_lane_ms)
+        .def_ro("host_to_device_ms", &gpu::ExactWorldStepFrontHalfStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::ExactWorldStepFrontHalfStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::ExactWorldStepFrontHalfStats::device_to_host_ms)
+        .def_ro("cpu_post_command_ms", &gpu::ExactWorldStepFrontHalfStats::cpu_post_command_ms)
+        .def_ro("total_ms", &gpu::ExactWorldStepFrontHalfStats::total_ms);
+    nb::class_<gpu::ExactWorldStepControlAeroStats>(m, "ExactWorldStepControlAeroStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepControlAeroStats::state_count)
+        .def_ro("total_ms", &gpu::ExactWorldStepControlAeroStats::total_ms);
+    nb::class_<gpu::ExactWorldStepForceGroundStats>(m, "ExactWorldStepForceGroundStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepForceGroundStats::state_count)
+        .def_ro("total_ms", &gpu::ExactWorldStepForceGroundStats::total_ms);
+    nb::class_<gpu::ExactWorldStepAircraftTailStats>(m, "ExactWorldStepAircraftTailStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepAircraftTailStats::state_count)
+        .def_ro("total_ms", &gpu::ExactWorldStepAircraftTailStats::total_ms);
+    nb::class_<gpu::ExactWorldStepAircraftTailCudaStats>(m, "ExactWorldStepAircraftTailCudaStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepAircraftTailCudaStats::state_count)
+        .def_ro("used_cuda", &gpu::ExactWorldStepAircraftTailCudaStats::used_cuda)
+        .def_ro("host_to_device_ms", &gpu::ExactWorldStepAircraftTailCudaStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::ExactWorldStepAircraftTailCudaStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::ExactWorldStepAircraftTailCudaStats::device_to_host_ms)
+        .def_ro("cpu_fallback_ms", &gpu::ExactWorldStepAircraftTailCudaStats::cpu_fallback_ms)
+        .def_ro("total_ms", &gpu::ExactWorldStepAircraftTailCudaStats::total_ms);
+    nb::class_<gpu::ExactWorldStepAircraftChainCudaStats>(m, "ExactWorldStepAircraftChainCudaStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepAircraftChainCudaStats::state_count)
+        .def_ro("used_cuda", &gpu::ExactWorldStepAircraftChainCudaStats::used_cuda)
+        .def_ro("command_lane_ms", &gpu::ExactWorldStepAircraftChainCudaStats::command_lane_ms)
+        .def_ro("host_to_device_ms", &gpu::ExactWorldStepAircraftChainCudaStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::ExactWorldStepAircraftChainCudaStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::ExactWorldStepAircraftChainCudaStats::device_to_host_ms)
+        .def_ro("cpu_post_command_ms", &gpu::ExactWorldStepAircraftChainCudaStats::cpu_post_command_ms)
+        .def_ro("total_ms", &gpu::ExactWorldStepAircraftChainCudaStats::total_ms);
+    nb::class_<gpu::ExactWorldStepFirstScopeChainCudaStats>(m, "ExactWorldStepFirstScopeChainCudaStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepFirstScopeChainCudaStats::state_count)
+        .def_ro("missile_count", &gpu::ExactWorldStepFirstScopeChainCudaStats::missile_count)
+        .def_ro("used_cuda", &gpu::ExactWorldStepFirstScopeChainCudaStats::used_cuda)
+        .def_ro("command_lane_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::command_lane_ms)
+        .def_ro("host_to_device_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::host_to_device_ms)
+        .def_ro("front_kernel_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::front_kernel_ms)
+        .def_ro("guidance_kernel_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::guidance_kernel_ms)
+        .def_ro("tail_kernel_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::tail_kernel_ms)
+        .def_ro("kernel_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::device_to_host_ms)
+        .def_ro("cpu_fallback_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::cpu_fallback_ms)
+        .def_ro("total_ms", &gpu::ExactWorldStepFirstScopeChainCudaStats::total_ms);
+    nb::class_<gpu::ExactWorldStepMissileGuidanceStats>(m, "ExactWorldStepMissileGuidanceStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepMissileGuidanceStats::state_count)
+        .def_ro("missile_count", &gpu::ExactWorldStepMissileGuidanceStats::missile_count)
+        .def_ro("total_ms", &gpu::ExactWorldStepMissileGuidanceStats::total_ms);
+    nb::class_<gpu::ExactWorldStepMissileGuidanceCudaStats>(m, "ExactWorldStepMissileGuidanceCudaStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &gpu::ExactWorldStepMissileGuidanceCudaStats::state_count)
+        .def_ro("missile_count", &gpu::ExactWorldStepMissileGuidanceCudaStats::missile_count)
+        .def_ro("used_cuda", &gpu::ExactWorldStepMissileGuidanceCudaStats::used_cuda)
+        .def_ro("host_to_device_ms", &gpu::ExactWorldStepMissileGuidanceCudaStats::host_to_device_ms)
+        .def_ro("kernel_ms", &gpu::ExactWorldStepMissileGuidanceCudaStats::kernel_ms)
+        .def_ro("device_to_host_ms", &gpu::ExactWorldStepMissileGuidanceCudaStats::device_to_host_ms)
+        .def_ro("cpu_fallback_ms", &gpu::ExactWorldStepMissileGuidanceCudaStats::cpu_fallback_ms)
+        .def_ro("total_ms", &gpu::ExactWorldStepMissileGuidanceCudaStats::total_ms);
+    nb::class_<ExactWorldStepFirstScopeChainCachedSessionStats>(m, "ExactWorldStepFirstScopeChainCachedSessionStats")
+        .def(nb::init<>())
+        .def_ro("state_count", &ExactWorldStepFirstScopeChainCachedSessionStats::state_count)
+        .def_ro("used_gpu", &ExactWorldStepFirstScopeChainCachedSessionStats::used_gpu)
+        .def_ro("prime_extract_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::prime_extract_ms)
+        .def_ro("pilot_update_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::pilot_update_ms)
+        .def_ro("mission_update_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::mission_update_ms)
+        .def_ro("step_total_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::step_total_ms)
+        .def_ro("write_back_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::write_back_ms)
+        .def_ro("chain_command_lane_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_command_lane_ms)
+        .def_ro("chain_host_to_device_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_host_to_device_ms)
+        .def_ro("chain_front_kernel_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_front_kernel_ms)
+        .def_ro("chain_guidance_kernel_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_guidance_kernel_ms)
+        .def_ro("chain_tail_kernel_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_tail_kernel_ms)
+        .def_ro("chain_kernel_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_kernel_ms)
+        .def_ro("chain_device_to_host_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_device_to_host_ms)
+        .def_ro("chain_cpu_fallback_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_cpu_fallback_ms)
+        .def_ro("chain_total_ms", &ExactWorldStepFirstScopeChainCachedSessionStats::chain_total_ms);
+    nb::enum_<WorldBatchExactStepBackend>(m, "WorldBatchExactStepBackend")
+        .value("CpuSimulationKernel", WorldBatchExactStepBackend::CpuSimulationKernel)
+        .value("ExactFirstScopeChainCachedCpu", WorldBatchExactStepBackend::ExactFirstScopeChainCachedCpu)
+        .value("ExactFirstScopeChainCachedGpu", WorldBatchExactStepBackend::ExactFirstScopeChainCachedGpu);
+    m.def("last_exact_world_step_command_lane_stats", &gpu::last_exact_world_step_command_lane_stats);
+    m.def("last_exact_world_step_front_half_stats", &gpu::last_exact_world_step_front_half_stats);
+    m.def("last_exact_world_step_control_aero_stats", &gpu::last_exact_world_step_control_aero_stats);
+    m.def("last_exact_world_step_force_ground_stats", &gpu::last_exact_world_step_force_ground_stats);
+    m.def("last_exact_world_step_aircraft_tail_stats", &gpu::last_exact_world_step_aircraft_tail_stats);
+    m.def("last_exact_world_step_aircraft_tail_cuda_stats", &gpu::last_exact_world_step_aircraft_tail_cuda_stats);
+    m.def("last_exact_world_step_aircraft_chain_cuda_stats", &gpu::last_exact_world_step_aircraft_chain_cuda_stats);
+    m.def("last_exact_world_step_first_scope_chain_cuda_stats", &gpu::last_exact_world_step_first_scope_chain_cuda_stats);
+    m.def(
+        "last_exact_world_step_first_scope_chain_cuda_output_device_ptr",
+        []() {
+            return static_cast<std::uintptr_t>(
+                reinterpret_cast<std::uintptr_t>(
+                    gpu::last_exact_world_step_first_scope_chain_cuda_output_device_ptr()
+                )
+            );
+        }
+    );
+    m.def(
+        "last_exact_world_step_first_scope_chain_cuda_output_state_count",
+        &gpu::last_exact_world_step_first_scope_chain_cuda_output_state_count
+    );
+    m.def("last_exact_world_step_missile_guidance_stats", &gpu::last_exact_world_step_missile_guidance_stats);
+    m.def("last_exact_world_step_missile_guidance_cuda_stats", &gpu::last_exact_world_step_missile_guidance_cuda_stats);
+    m.def("last_exact_world_step_prototype_stats", &gpu::last_exact_world_step_prototype_stats);
+    m.def(
+        "step_exact_world_step_command_lane_reference_cpu_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = gpu::step_exact_world_step_command_lane_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "step_exact_world_step_front_half_reference_cpu_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = gpu::step_exact_world_step_front_half_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "step_exact_world_step_front_half_packed",
+        [](const nb::bytes& packed, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = use_gpu
+                ? gpu::step_exact_world_step_front_half_batch(states)
+                : gpu::step_exact_world_step_front_half_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("use_gpu") = true
+    );
+    m.def(
+        "step_exact_world_step_front_half_until_stage_packed",
+        [](const nb::bytes& packed, const std::string& stop_stage_name) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            gpu::ExactWorldStepFrontHalfStopStage stop_stage = gpu::ExactWorldStepFrontHalfStopStage::GroundContact;
+            if (stop_stage_name == "FlightControl") {
+                stop_stage = gpu::ExactWorldStepFrontHalfStopStage::FlightControl;
+            } else if (stop_stage_name == "ClearForces") {
+                stop_stage = gpu::ExactWorldStepFrontHalfStopStage::ClearForces;
+            } else if (stop_stage_name == "ComputeAeroState") {
+                stop_stage = gpu::ExactWorldStepFrontHalfStopStage::ComputeAeroState;
+            } else if (stop_stage_name == "ComputeForces") {
+                stop_stage = gpu::ExactWorldStepFrontHalfStopStage::ComputeForces;
+            } else if (stop_stage_name == "ComputeAerodynamics") {
+                stop_stage = gpu::ExactWorldStepFrontHalfStopStage::ComputeAerodynamics;
+            } else if (stop_stage_name == "GroundContact") {
+                stop_stage = gpu::ExactWorldStepFrontHalfStopStage::GroundContact;
+            } else {
+                throw std::invalid_argument("unknown front-half stop stage: " + stop_stage_name);
+            }
+            const auto stepped = gpu::step_exact_world_step_front_half_until_stage_batch(states, stop_stage);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("stop_stage_name")
+    );
+    m.def(
+        "step_exact_world_step_control_aero_reference_cpu_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = gpu::step_exact_world_step_control_aero_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "step_exact_world_step_force_ground_reference_cpu_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = gpu::step_exact_world_step_force_ground_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "step_exact_world_step_aircraft_tail_reference_cpu_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = gpu::step_exact_world_step_aircraft_tail_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "step_exact_world_step_aircraft_tail_cuda_packed",
+        [](const nb::bytes& packed, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = use_gpu
+                ? gpu::step_exact_world_step_aircraft_tail_cuda_batch(states)
+                : gpu::step_exact_world_step_aircraft_tail_cuda_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("use_gpu") = true
+    );
+    m.def(
+        "step_exact_world_step_aircraft_tail_until_stage_packed",
+        [](const nb::bytes& packed, const std::string& stop_stage_name, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            gpu::ExactWorldStepAircraftTailStopStage stop_stage =
+                gpu::ExactWorldStepAircraftTailStopStage::MassUpdate;
+            if (stop_stage_name == "RotationalIntegrate") {
+                stop_stage = gpu::ExactWorldStepAircraftTailStopStage::RotationalIntegrate;
+            } else if (stop_stage_name == "LeapfrogIntegrate") {
+                stop_stage = gpu::ExactWorldStepAircraftTailStopStage::LeapfrogIntegrate;
+            } else if (stop_stage_name == "NavigationSystem") {
+                stop_stage = gpu::ExactWorldStepAircraftTailStopStage::NavigationSystem;
+            } else if (stop_stage_name == "UpdateInstruments") {
+                stop_stage = gpu::ExactWorldStepAircraftTailStopStage::UpdateInstruments;
+            } else if (stop_stage_name == "FuelConsumption") {
+                stop_stage = gpu::ExactWorldStepAircraftTailStopStage::FuelConsumption;
+            } else if (stop_stage_name == "MassUpdate") {
+                stop_stage = gpu::ExactWorldStepAircraftTailStopStage::MassUpdate;
+            } else {
+                throw std::invalid_argument("unknown aircraft-tail stop stage: " + stop_stage_name);
+            }
+            const auto stepped = use_gpu
+                ? gpu::step_exact_world_step_aircraft_tail_cuda_until_stage_batch(states, stop_stage)
+                : gpu::step_exact_world_step_aircraft_tail_until_stage_batch(states, stop_stage);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("stop_stage_name"),
+        nb::arg("use_gpu") = true
+    );
+    m.def(
+        "step_exact_world_step_aircraft_chain_cuda_packed",
+        [](const nb::bytes& packed, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = use_gpu
+                ? gpu::step_exact_world_step_aircraft_chain_cuda_batch(states)
+                : gpu::step_exact_world_step_aircraft_chain_cuda_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("use_gpu") = true
+    );
+    m.def(
+        "step_exact_world_step_missile_guidance_reference_cpu_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = gpu::step_exact_world_step_missile_guidance_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "step_exact_world_step_missile_guidance_cuda_packed",
+        [](const nb::bytes& packed, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = use_gpu
+                ? gpu::step_exact_world_step_missile_guidance_cuda_batch(states)
+                : gpu::step_exact_world_step_missile_guidance_cuda_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("use_gpu") = true
+    );
+    m.def(
+        "step_exact_world_step_first_scope_reference_cpu_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            states = gpu::step_exact_world_step_command_lane_reference_cpu_batch(states);
+            states = gpu::step_exact_world_step_control_aero_reference_cpu_batch(states);
+            states = gpu::step_exact_world_step_force_ground_reference_cpu_batch(states);
+            states = gpu::step_exact_world_step_missile_guidance_reference_cpu_batch(states);
+            states = gpu::step_exact_world_step_aircraft_tail_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(states);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "step_exact_world_step_first_scope_guidance_gpu_packed",
+        [](const nb::bytes& packed, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            states = gpu::step_exact_world_step_command_lane_reference_cpu_batch(states);
+            states = gpu::step_exact_world_step_control_aero_reference_cpu_batch(states);
+            states = gpu::step_exact_world_step_force_ground_reference_cpu_batch(states);
+            states = use_gpu
+                ? gpu::step_exact_world_step_missile_guidance_cuda_batch(states)
+                : gpu::step_exact_world_step_missile_guidance_cuda_reference_cpu_batch(states);
+            states = gpu::step_exact_world_step_aircraft_tail_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(states);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("use_gpu") = true
+    );
+    m.def(
+        "step_exact_world_step_first_scope_chain_cuda_packed",
+        [](const nb::bytes& packed, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = use_gpu
+                ? gpu::step_exact_world_step_first_scope_chain_cuda_batch(states)
+                : gpu::step_exact_world_step_first_scope_chain_cuda_reference_cpu_batch(states);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("use_gpu") = true
+    );
+    m.def(
+        "upload_exact_world_step_first_scope_chain_cuda_states_packed",
+        [](const nb::bytes& packed) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            return gpu::upload_exact_world_step_first_scope_chain_cuda_states(states);
+        },
+        nb::arg("packed")
+    );
+    m.def(
+        "replay_exact_world_step_first_scope_chain_cuda_device_sequence",
+        &gpu::replay_exact_world_step_first_scope_chain_cuda_device_sequence
+    );
+    m.def(
+        "download_exact_world_step_first_scope_chain_cuda_states_packed",
+        []() {
+            const auto states = gpu::download_exact_world_step_first_scope_chain_cuda_states();
+            const auto packed = gpu::pack_exact_world_step_states_v1(states);
+            return nb::bytes(packed.data(), packed.size());
+        }
+    );
+    m.def(
+        "step_exact_world_step_states_v1_prototype_packed",
+        [](const nb::bytes& packed, int steps, bool use_gpu) {
+            auto states = gpu::unpack_exact_world_step_states_v1(
+                std::string_view(packed.c_str(), packed.size())
+            );
+            const auto stepped = use_gpu
+                ? gpu::step_exact_world_step_states_v1_prototype_batch(states, steps)
+                : gpu::step_exact_world_step_states_v1_prototype_reference_cpu_batch(states, steps);
+            const auto stepped_packed = gpu::pack_exact_world_step_states_v1(stepped);
+            return nb::bytes(stepped_packed.data(), stepped_packed.size());
+        },
+        nb::arg("packed"),
+        nb::arg("steps"),
+        nb::arg("use_gpu") = true
+    );
+
+    m.def(
+        "compute_world_batch_visual_observation_batch_numpy",
+        [](WorldBatchRuntime& runtime,
+           const std::vector<WorldEntityRef>& refs,
+           int downsample,
+           bool use_gpu) {
+            auto outputs = compute_world_batch_visual_binding_outputs(runtime, refs, downsample, use_gpu);
+            size_t shape[4] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(outputs.out_h),
+                static_cast<std::size_t>(outputs.out_w),
+                static_cast<std::size_t>(arb::ARB_CHANNELS),
+            };
+            return visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape);
+        },
+        nb::arg("batch_runtime"),
+        nb::arg("refs"),
+        nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false
+    );
+    m.def(
+        "compute_world_batch_visual_observation_batch_export",
+        [](WorldBatchRuntime& runtime,
+           const std::vector<WorldEntityRef>& refs,
+           int downsample,
+           bool use_gpu) {
+            auto outputs = compute_world_batch_visual_binding_outputs(runtime, refs, downsample, use_gpu);
+            size_t shape[4] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(outputs.out_h),
+                static_cast<std::size_t>(outputs.out_w),
+                static_cast<std::size_t>(arb::ARB_CHANNELS),
+            };
+            nb::object device_view = nb::none();
+            if (use_gpu) {
+                device_view = maybe_gpu_tensor_view(
+                    outputs.device_ptr,
+                    outputs.device_float_count,
+                    {
+                        static_cast<std::int64_t>(outputs.batch_size),
+                        static_cast<std::int64_t>(outputs.out_h),
+                        static_cast<std::int64_t>(outputs.out_w),
+                        static_cast<std::int64_t>(arb::ARB_CHANNELS),
+                    }
+                );
+            }
+            return nb::make_tuple(
+                visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape),
+                device_view
+            );
+        },
+        nb::arg("batch_runtime"),
+        nb::arg("refs"),
+        nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false
     );
 
     nb::class_<RWREvent>(m, "RWREvent")
@@ -1479,8 +3261,55 @@ NB_MODULE(ef_py, m) {
         .def("reset", &SimulationKernel::reset, "Reset the simulation", nb::arg("seed") = 42)
         .def("load_database", &SimulationKernel::load_database, nb::arg("path"), "Load unit definitions from JSON directory")
         .def("step", &SimulationKernel::step, "Advance simulation by one fixed tick")
+        .def(
+            "exact_gpu_migration_stage_inventory",
+            [](const SimulationKernel& self) {
+                return exact_step_stage_descriptor_list(self.exact_gpu_migration_stage_inventory());
+            },
+            "Describe the current exact-step system inventory and which stages are in the first GPU migration scope."
+        )
+        .def(
+            "exact_gpu_migration_stage_contract_inventory",
+            [](const SimulationKernel& self) {
+                return exact_step_stage_contract_descriptor_list(self.exact_gpu_migration_stage_contract_inventory());
+            },
+            "Describe the structured read/write contracts for the current exact-step GPU migration stage scope."
+        )
+        .def(
+            "begin_exact_stage_trace_frame",
+            &SimulationKernel::begin_exact_stage_trace_frame,
+            "Begin a manual exact-stage frame for per-system trace replay."
+        )
+        .def(
+            "end_exact_stage_trace_frame",
+            &SimulationKernel::end_exact_stage_trace_frame,
+            "End a manual exact-stage frame for per-system trace replay."
+        )
+        .def(
+            "run_exact_stage_trace_stage",
+            &SimulationKernel::run_exact_stage_trace_stage,
+            nb::arg("stage_name"),
+            "Run one manual exact-stage traceable system inside an active exact-stage frame."
+        )
+        .def(
+            "run_exact_stage_direct",
+            &SimulationKernel::run_exact_stage_direct,
+            nb::arg("stage_name"),
+            "Run one exact system directly without opening a new frame."
+        )
+        .def(
+            "step_exact_stage_traceable_pipeline",
+            &SimulationKernel::step_exact_stage_traceable_pipeline,
+            "Run the current exact-step GPU-migration traceable pipeline stage-by-stage."
+        )
         .def("get_time_step", &SimulationKernel::get_time_step, "Get the fixed time step in seconds")
         .def("set_time_step", &SimulationKernel::set_time_step, "Set the fixed time step in seconds")
+        .def(
+            "restore_exact_replay_world_time",
+            &SimulationKernel::restore_exact_replay_world_time,
+            nb::arg("world_time_s"),
+            "Reset and restore the Flecs world clock for exact-stage replay."
+        )
         .def("load_unit_definitions", [](SimulationKernel& self, const std::string& path) {
             std::string error;
             bool ok = self.load_unit_definitions(path, &error);
@@ -1663,6 +3492,9 @@ NB_MODULE(ef_py, m) {
              nb::arg("entity_id"), nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"))
         .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time, "Debug: get sensor last_scan_time")
         .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size")
+        .def("set_contact_list", &SimulationKernel::set_contact_list,
+             "Override the ContactList for a unit or missile",
+             nb::arg("entity_id"), nb::arg("detections"))
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"));
 
@@ -1677,6 +3509,10 @@ NB_MODULE(ef_py, m) {
         .def("reset_batch", &WorldBatchRuntime::reset_batch, nb::arg("seeds") = std::vector<uint32_t>{})
         .def("step_batch", &WorldBatchRuntime::step_batch)
         .def("step_worlds", &WorldBatchRuntime::step_worlds, nb::arg("world_indices"))
+        .def("set_exact_world_step_backend", &WorldBatchRuntime::set_exact_world_step_backend, nb::arg("backend"))
+        .def("exact_world_step_backend", &WorldBatchRuntime::exact_world_step_backend)
+        .def("exact_world_step_backend_ready", &WorldBatchRuntime::exact_world_step_backend_ready)
+        .def("clear_exact_world_step_backend_session", &WorldBatchRuntime::clear_exact_world_step_backend_session)
         .def("load_database", &WorldBatchRuntime::load_database, nb::arg("path"))
         .def("load_unit_definitions", [](WorldBatchRuntime& self, const std::string& path) {
             std::string error;
@@ -1712,7 +3548,166 @@ NB_MODULE(ef_py, m) {
         .def("get_mission_commands_batch", &WorldBatchRuntime::get_mission_commands_batch, nb::arg("refs"))
         .def("get_task_orders_batch", &WorldBatchRuntime::get_task_orders_batch, nb::arg("refs"))
         .def("get_leader_intents_batch", &WorldBatchRuntime::get_leader_intents_batch, nb::arg("refs"))
-        .def("get_pilot_reports_batch", &WorldBatchRuntime::get_pilot_reports_batch, nb::arg("refs"));
+        .def("get_pilot_reports_batch", &WorldBatchRuntime::get_pilot_reports_batch, nb::arg("refs"))
+        .def(
+            "get_sensor_candidate_ids_batch",
+            &WorldBatchRuntime::get_sensor_candidate_ids_batch,
+            nb::arg("refs"),
+            nb::arg("use_gpu") = false
+        )
+        .def(
+            "get_visual_candidate_ids_batch",
+            &WorldBatchRuntime::get_visual_candidate_ids_batch,
+            nb::arg("refs"),
+            nb::arg("range_m") = 25000.0,
+            nb::arg("use_gpu") = false
+        )
+        .def(
+            "get_comm_candidate_ids_batch",
+            &WorldBatchRuntime::get_comm_candidate_ids_batch,
+            nb::arg("refs"),
+            nb::arg("use_gpu") = false
+        )
+        .def(
+            "extract_packed_flight_states_batch",
+            &WorldBatchRuntime::extract_packed_flight_states_batch,
+            nb::arg("refs")
+        )
+        .def(
+            "apply_packed_flight_states_batch",
+            &WorldBatchRuntime::apply_packed_flight_states_batch,
+            nb::arg("refs"),
+            nb::arg("states")
+        )
+        .def(
+            "step_packed_flight_states_experiment_batch",
+            &WorldBatchRuntime::step_packed_flight_states_experiment_batch,
+            nb::arg("refs"),
+            nb::arg("steps"),
+            nb::arg("use_cuda_graph") = false,
+            nb::arg("write_back") = false
+        )
+        .def(
+            "step_exact_world_step_first_scope_chain_experiment_batch_packed",
+            [](WorldBatchRuntime& self,
+               const std::vector<WorldEntityRef>& refs,
+               bool use_gpu,
+               bool write_back) {
+                const auto stepped = self.step_exact_world_step_first_scope_chain_experiment_batch(
+                    refs,
+                    use_gpu,
+                    write_back
+                );
+                const auto packed = gpu::pack_exact_world_step_states_v1(stepped);
+                return nb::bytes(packed.data(), packed.size());
+            },
+            nb::arg("refs"),
+            nb::arg("use_gpu") = true,
+            nb::arg("write_back") = false
+        )
+        .def(
+            "prime_exact_world_step_first_scope_chain_cached_session",
+            &WorldBatchRuntime::prime_exact_world_step_first_scope_chain_cached_session,
+            nb::arg("refs")
+        )
+        .def(
+            "set_pilot_actions_exact_world_step_first_scope_chain_cached_session",
+            &WorldBatchRuntime::set_pilot_actions_exact_world_step_first_scope_chain_cached_session,
+            nb::arg("assignments")
+        )
+        .def(
+            "set_mission_commands_exact_world_step_first_scope_chain_cached_session",
+            &WorldBatchRuntime::set_mission_commands_exact_world_step_first_scope_chain_cached_session,
+            nb::arg("assignments")
+        )
+        .def(
+            "step_exact_world_step_first_scope_chain_cached_session_packed",
+            [](WorldBatchRuntime& self, bool use_gpu, bool write_back) {
+                const auto stepped = self.step_exact_world_step_first_scope_chain_cached_session(
+                    use_gpu,
+                    write_back
+                );
+                const auto packed = gpu::pack_exact_world_step_states_v1(stepped);
+                return nb::bytes(packed.data(), packed.size());
+            },
+            nb::arg("use_gpu") = true,
+            nb::arg("write_back") = false
+        )
+        .def(
+            "apply_exact_world_step_first_scope_chain_cached_session_to_world",
+            &WorldBatchRuntime::apply_exact_world_step_first_scope_chain_cached_session_to_world
+        )
+        .def(
+            "extract_exact_world_step_first_scope_chain_cached_session_packed",
+            [](const WorldBatchRuntime& self) {
+                const auto packed = gpu::pack_exact_world_step_states_v1(
+                    self.extract_exact_world_step_first_scope_chain_cached_session()
+                );
+                return nb::bytes(packed.data(), packed.size());
+            }
+        )
+        .def(
+            "last_exact_world_step_first_scope_chain_cached_session_stats",
+            &WorldBatchRuntime::last_exact_world_step_first_scope_chain_cached_session_stats,
+            nb::rv_policy::reference_internal
+        )
+        .def(
+            "upload_exact_world_step_first_scope_chain_experiment_batch",
+            &WorldBatchRuntime::upload_exact_world_step_first_scope_chain_experiment_batch,
+            nb::arg("refs")
+        )
+        .def(
+            "replay_exact_world_step_first_scope_chain_experiment_device_sequence",
+            &WorldBatchRuntime::replay_exact_world_step_first_scope_chain_experiment_device_sequence
+        )
+        .def(
+            "download_exact_world_step_first_scope_chain_experiment_batch_packed",
+            [](WorldBatchRuntime& self, bool write_back) {
+                const auto stepped = self.download_exact_world_step_first_scope_chain_experiment_batch(write_back);
+                const auto packed = gpu::pack_exact_world_step_states_v1(stepped);
+                return nb::bytes(packed.data(), packed.size());
+            },
+            nb::arg("write_back") = false
+        )
+        .def(
+            "extract_exact_world_step_states_v1_batch_packed",
+            [](const WorldBatchRuntime& self, const std::vector<WorldEntityRef>& refs) {
+                const auto packed = gpu::pack_exact_world_step_states_v1(
+                    self.extract_exact_world_step_states_v1_batch(refs)
+                );
+                return nb::bytes(packed.data(), packed.size());
+            },
+            nb::arg("refs")
+        )
+        .def(
+            "apply_exact_world_step_states_v1_batch_packed",
+            [](WorldBatchRuntime& self, const std::vector<WorldEntityRef>& refs, const nb::bytes& packed) {
+                auto states = gpu::unpack_exact_world_step_states_v1(
+                    std::string_view(packed.c_str(), packed.size())
+                );
+                self.apply_exact_world_step_states_v1_batch(refs, states);
+            },
+            nb::arg("refs"),
+            nb::arg("packed")
+        )
+        .def(
+            "extract_exact_world_step_state_v1_apply_signatures_batch",
+            [](const WorldBatchRuntime& self, const std::vector<WorldEntityRef>& refs) {
+                return gpu::exact_world_step_state_v1_apply_signatures(
+                    self.extract_exact_world_step_states_v1_batch(refs)
+                );
+            },
+            nb::arg("refs")
+        )
+        .def(
+            "extract_exact_world_step_state_v1_hidden_surfaces_batch",
+            [](const WorldBatchRuntime& self, const std::vector<WorldEntityRef>& refs) {
+                return exact_world_step_hidden_surface_list(
+                    self.extract_exact_world_step_states_v1_batch(refs)
+                );
+            },
+            nb::arg("refs")
+        );
     
     nb::class_<UnitData>(m, "UnitData")
         .def_ro("id", &UnitData::id)
@@ -1724,12 +3719,14 @@ NB_MODULE(ef_py, m) {
         .def_ro("heading", &UnitData::heading);
 
     nb::class_<Detection>(m, "Detection")
-        .def_ro("target_id", &Detection::target_id)
-        .def_ro("range", &Detection::range)
-        .def_ro("bearing", &Detection::bearing)
-        .def_ro("elevation", &Detection::elevation)
-        .def_ro("signal_strength", &Detection::signal_strength)
-        .def_ro("timestamp", &Detection::timestamp);
+        .def(nb::init<>())
+        .def_rw("target_id", &Detection::target_id)
+        .def_rw("range", &Detection::range)
+        .def_rw("bearing", &Detection::bearing)
+        .def_rw("elevation", &Detection::elevation)
+        .def_rw("closing_speed", &Detection::closing_speed)
+        .def_rw("signal_strength", &Detection::signal_strength)
+        .def_rw("timestamp", &Detection::timestamp);
 
     nb::class_<TrackData>(m, "TrackData")
         .def_ro("id", &TrackData::id)

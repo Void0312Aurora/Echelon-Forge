@@ -4,6 +4,7 @@ project(EchelonForge VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+option(EF_ENABLE_CUDA_EXPERIMENTS "Enable experimental CUDA GPU runtime scaffolding" OFF)
 
 if (CMAKE_RANLIB)
     # Ensure static archives get a symbol index on all toolchains.
@@ -89,6 +90,141 @@ target_link_libraries(ef_app PRIVATE ef_core)
 # --- Python Module ---
 nanobind_add_module(ef_py src/interfaces/python/python_module.cpp)
 target_link_libraries(ef_py PRIVATE ef_core)
+
+# --- Experimental GPU Scaffolding ---
+set(EF_GPU_EXPERIMENT_SOURCES
+    src/gpu/gpu_exact_world_step_contract.cpp
+    src/gpu/gpu_exact_world_step_command_lane_runtime.cpp
+    src/gpu/gpu_exact_world_step_front_half_runtime.cpp
+    src/gpu/gpu_exact_world_step_control_aero_runtime.cpp
+    src/gpu/gpu_exact_world_step_force_ground_runtime.cpp
+    src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp
+    src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp
+    src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp
+    src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp
+    src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp
+    src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp
+    src/gpu/gpu_exact_world_step_runtime.cpp
+    src/gpu/gpu_visual_runtime.cpp
+    src/gpu/gpu_execution_observation_runtime.cpp
+    src/gpu/gpu_flight_shaping_runtime.cpp
+    src/gpu/gpu_interaction_broadphase_runtime.cpp
+    src/gpu/gpu_world_batch_runtime.cpp
+)
+
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    list(APPEND EF_GPU_EXPERIMENT_SOURCES
+        src/gpu/gpu_visual_runtime_cuda.cu
+        src/gpu/gpu_execution_observation_runtime_cuda.cu
+        src/gpu/gpu_flight_shaping_runtime_cuda.cu
+        src/gpu/gpu_interaction_broadphase_runtime_cuda.cu
+        src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu
+        src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu
+        src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu
+        src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu
+        src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu
+        src/gpu/gpu_exact_world_step_runtime_cuda.cu
+        src/gpu/gpu_world_batch_runtime_cuda.cu
+    )
+    set_source_files_properties(
+        src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu
+        PROPERTIES COMPILE_OPTIONS "--fmad=false"
+    )
+    set_source_files_properties(
+        src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu
+        PROPERTIES COMPILE_OPTIONS "--fmad=false"
+    )
+    set_source_files_properties(
+        src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu
+        PROPERTIES COMPILE_OPTIONS "--fmad=false"
+    )
+    set_source_files_properties(
+        src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu
+        PROPERTIES COMPILE_OPTIONS "--fmad=false"
+    )
+    set_source_files_properties(
+        src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu
+        PROPERTIES COMPILE_OPTIONS "--fmad=false"
+    )
+endif()
+
+add_library(ef_gpu_experiments STATIC ${EF_GPU_EXPERIMENT_SOURCES})
+target_include_directories(ef_gpu_experiments PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(ef_gpu_experiments PUBLIC
+    ef_core
+)
+target_compile_definitions(ef_gpu_experiments PUBLIC
+    $<$<BOOL:${EF_ENABLE_CUDA_EXPERIMENTS}>:EF_ENABLE_CUDA_EXPERIMENTS=1>
+)
+
+if (EF_ENABLE_CUDA_EXPERIMENTS)
+    target_link_libraries(ef_gpu_experiments PUBLIC CUDA::cudart)
+    set_target_properties(ef_gpu_experiments PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+    )
+endif()
+
+target_link_libraries(ef_py PRIVATE ef_gpu_experiments)
+
+add_executable(ef_gpu_visual_phase0_probe
+    src/tools/gpu_visual_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_visual_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
+
+add_executable(ef_gpu_execution_observation_phase0_probe
+    src/tools/gpu_execution_observation_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_execution_observation_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
+
+add_executable(ef_gpu_flight_shaping_phase0_probe
+    src/tools/gpu_flight_shaping_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_flight_shaping_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
+
+add_executable(ef_gpu_interaction_broadphase_phase0_probe
+    src/tools/gpu_interaction_broadphase_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_interaction_broadphase_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
+
+add_executable(ef_gpu_sensor_candidate_phase0_probe
+    src/tools/gpu_sensor_candidate_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_sensor_candidate_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
+
+add_executable(ef_gpu_comm_candidate_phase0_probe
+    src/tools/gpu_comm_candidate_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_comm_candidate_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
+
+add_executable(ef_gpu_visual_candidate_phase0_probe
+    src/tools/gpu_visual_candidate_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
+
+add_executable(ef_gpu_world_batch_phase0_probe
+    src/tools/gpu_world_batch_phase0_probe.cpp
+)
+target_link_libraries(ef_gpu_world_batch_phase0_probe PRIVATE
+    ef_gpu_experiments
+)
 
 # Install the extension module
 install(TARGETS ef_py DESTINATION .)

@@ -8,7 +8,12 @@ from gymnasium import spaces
 from torch.nn import functional as F
 
 from stable_baselines3 import PPO
-from stable_baselines3.common.utils import explained_variance
+from stable_baselines3.common.buffers import RolloutBuffer
+from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.utils import explained_variance, obs_as_tensor
+from stable_baselines3.common.vec_env import VecEnv
+
+from python.rl.device_dict_rollout_buffer import DeviceDictRolloutBuffer
 
 
 class AdaptiveKLPPO(PPO):
@@ -54,6 +59,122 @@ class AdaptiveKLPPO(PPO):
         self.boost_clip_on_low_kl = bool(boost_clip_on_low_kl)
         self._low_kl_streak = 0
         super().__init__(*args, **kwargs)
+
+    def _should_use_device_rollout_buffer(self) -> bool:
+        if getattr(self.device, "type", str(self.device)) != "cuda":
+            return False
+        if not isinstance(self.observation_space, spaces.Dict):
+            return False
+        env = getattr(self, "env", None)
+        if env is None:
+            return False
+        if not hasattr(env, "get_policy_observation_torch"):
+            return False
+        return bool(getattr(env, "policy_observation_torch_bridge", False))
+
+    def _setup_model(self) -> None:
+        if self.rollout_buffer_class is None and self._should_use_device_rollout_buffer():
+            self.rollout_buffer_class = DeviceDictRolloutBuffer
+        super()._setup_model()
+
+    def _get_policy_obs_tensor(self, env: VecEnv, obs) -> th.Tensor | dict[str, th.Tensor]:
+        if getattr(self.device, "type", str(self.device)) == "cuda":
+            getter = getattr(env, "get_policy_observation_torch", None)
+            if callable(getter):
+                try:
+                    obs_tensor = getter(device=self.device)
+                except Exception:
+                    obs_tensor = None
+                if obs_tensor is not None:
+                    return obs_tensor
+        return obs_as_tensor(obs, self.device)  # type: ignore[arg-type]
+
+    @staticmethod
+    def _is_device_rollout_buffer(rollout_buffer: RolloutBuffer) -> bool:
+        return bool(getattr(rollout_buffer, "store_on_device", False))
+
+    @staticmethod
+    def _to_numpy_flat(values) -> np.ndarray:
+        if th.is_tensor(values):
+            return values.detach().float().cpu().numpy().reshape(-1)
+        return np.asarray(values, dtype=np.float32).reshape(-1)
+
+    def collect_rollouts(
+        self,
+        env: VecEnv,
+        callback: BaseCallback,
+        rollout_buffer: RolloutBuffer,
+        n_rollout_steps: int,
+    ) -> bool:
+        assert self._last_obs is not None, "No previous observation was provided"
+        self.policy.set_training_mode(False)
+
+        n_steps = 0
+        rollout_buffer.reset()
+        if self.use_sde:
+            self.policy.reset_noise(env.num_envs)
+
+        callback.on_rollout_start()
+
+        while n_steps < n_rollout_steps:
+            if self.use_sde and self.sde_sample_freq > 0 and n_steps % self.sde_sample_freq == 0:
+                self.policy.reset_noise(env.num_envs)
+
+            with th.no_grad():
+                obs_tensor = self._get_policy_obs_tensor(env, self._last_obs)
+                actions_tensor, values, log_probs = self.policy(obs_tensor)
+            actions = actions_tensor.detach().cpu().numpy()
+
+            clipped_actions = actions
+            if isinstance(self.action_space, spaces.Box):
+                if self.policy.squash_output:
+                    clipped_actions = self.policy.unscale_action(clipped_actions)
+                else:
+                    clipped_actions = np.clip(actions, self.action_space.low, self.action_space.high)
+
+            new_obs, rewards, dones, infos = env.step(clipped_actions)
+            self.num_timesteps += env.num_envs
+
+            callback.update_locals(locals())
+            if not callback.on_step():
+                return False
+
+            self._update_info_buffer(infos, dones)
+            n_steps += 1
+
+            if isinstance(self.action_space, spaces.Discrete):
+                actions = actions.reshape(-1, 1)
+
+            for idx, done in enumerate(dones):
+                if (
+                    done
+                    and infos[idx].get("terminal_observation") is not None
+                    and infos[idx].get("TimeLimit.truncated", False)
+                ):
+                    terminal_obs = self.policy.obs_to_tensor(infos[idx]["terminal_observation"])[0]
+                    with th.no_grad():
+                        terminal_value = self.policy.predict_values(terminal_obs)[0]  # type: ignore[arg-type]
+                    rewards[idx] += self.gamma * terminal_value
+
+            rollout_buffer.add(
+                obs_tensor if self._is_device_rollout_buffer(rollout_buffer) else self._last_obs,  # type: ignore[arg-type]
+                actions_tensor if self._is_device_rollout_buffer(rollout_buffer) else actions,
+                rewards,
+                self._last_episode_starts,  # type: ignore[arg-type]
+                values,
+                log_probs,
+            )
+            self._last_obs = new_obs  # type: ignore[assignment]
+            self._last_episode_starts = dones
+
+        with th.no_grad():
+            values = self.policy.predict_values(self._get_policy_obs_tensor(env, new_obs))  # type: ignore[arg-type]
+
+        rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
+
+        callback.update_locals(locals())
+        callback.on_rollout_end()
+        return True
 
     def _apply_lr_multiplier(self) -> None:
         if self.policy is None:
@@ -199,7 +320,10 @@ class AdaptiveKLPPO(PPO):
             if not continue_training:
                 break
 
-        explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
+        explained_var = explained_variance(
+            self._to_numpy_flat(self.rollout_buffer.values),
+            self._to_numpy_flat(self.rollout_buffer.returns),
+        )
 
         mean_kl = float(np.mean(approx_kl_divs)) if len(approx_kl_divs) > 0 else None
         self._adapt_kl_controls(mean_kl)

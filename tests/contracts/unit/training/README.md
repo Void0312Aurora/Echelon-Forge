@@ -4,5 +4,6 @@ Maintained frozen-baseline acceptance specs now live under [frozen](/home/void03
 
 - Use `frozen/` for the current authoritative leader acceptance/generalization matrix.
 - Historical weak baselines and alternate task-chain variants have been moved to [tests/contracts/Archive/unit/training/leader_legacy](/home/void0312/CMO/tests/contracts/Archive/unit/training/leader_legacy/README.md).
+- Historical pre-freeze root-level leader contracts have been moved to [tests/contracts/Archive/unit/training/leader_pre_frozen](/home/void0312/CMO/tests/contracts/Archive/unit/training/leader_pre_frozen/README.md).
 
-The root-level JSON files remain available during the migration, but the frozen set is the intended entry point going forward.
+The active leader acceptance entry point is now `frozen/`. Root-level files in this directory are no longer used for leader gating.

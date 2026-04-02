@@ -1,4 +1,5 @@
 #include "core/interfaces/environment_model.h"
+#include "models/environment/default_environment_snapshot.h"
 
 #include <cmath>
 #include <vector>
@@ -291,10 +292,49 @@ public:
         // Unknown terrain types fall back to the historical profile for backward compatibility.
         flat_terrain_ = false;
     }
+
+    bool snapshot_to(DefaultEnvironmentSnapshot* out) const {
+        if (out == nullptr) {
+            return false;
+        }
+        *out = DefaultEnvironmentSnapshot{};
+        out->valid = true;
+        out->flat_terrain = flat_terrain_;
+        out->raster.origin_x = raster_layer_.origin.x;
+        out->raster.origin_y = raster_layer_.origin.y;
+        out->raster.resolution_m = raster_layer_.resolution;
+        out->raster.width = raster_layer_.width;
+        out->raster.height = raster_layer_.height;
+        out->raster.surface_codes.reserve(raster_layer_.data.size());
+        for (const auto surface : raster_layer_.data) {
+            out->raster.surface_codes.push_back(static_cast<std::uint8_t>(surface));
+        }
+        out->zones.reserve(zones_.size());
+        for (const auto& zone : zones_) {
+            DefaultEnvironmentZoneSnapshot item{};
+            item.center_x = zone.center.x;
+            item.center_y = zone.center.y;
+            item.width = zone.width;
+            item.length = zone.length;
+            item.heading_deg = zone.heading;
+            item.type = zone.type;
+            item.surface_code = static_cast<std::uint8_t>(zone.surface);
+            out->zones.push_back(item);
+        }
+        return true;
+    }
 };
 
 } // namespace
 
 std::unique_ptr<IEnvironmentModel> make_default_environment_model() {
     return std::make_unique<DefaultEnvironmentModel>();
+}
+
+bool extract_default_environment_snapshot(
+    IEnvironmentModel* env,
+    DefaultEnvironmentSnapshot* out
+) {
+    auto* model = dynamic_cast<DefaultEnvironmentModel*>(env);
+    return model != nullptr && model->snapshot_to(out);
 }

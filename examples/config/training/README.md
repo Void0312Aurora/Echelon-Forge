@@ -8,6 +8,7 @@ The maintained leader-layer entry points now live under [frozen](/home/void0312/
 
 - Use [leader_task_only_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_frozen_v1.json) for task-only/common-core leader runs.
 - Use [leader_c2_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_frozen_v1.json) for reporting/full-chain leader runs.
+- Use [leader_task_only_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_retrain_v1.json) and [leader_c2_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_retrain_v1.json) for the new post-freeze retraining line.
 - Both configs point directly at the frozen execution artifact under `experiments/_archive_20260322_test_results/...` rather than relying on historical path remapping.
 
 ## Archive
@@ -55,7 +56,8 @@ Training runtime config also supports:
 - `runtime.world_batch_vec_env`
   - Uses [world_batch_vec_env.py](/home/void0312/CMO/python/rl/world_batch_vec_env.py) for execution-layer training instead of `DummyVecEnv`/`SubprocVecEnv`.
   - This routes execution rollouts through one `ef_py.WorldBatchRuntime`, so stepping and readback use batch C++ APIs instead of per-env Python loops.
-  - Current Phase 4 guardrail: only supported for non-visual execution runs without action wrappers.
+  - The maintained post-freeze execution `p5` configs now use this path together with the world-batch visual helper and the compiled batch-observation helper.
+  - Current guardrail: exact world stepping is still CPU `SimulationKernel::step()`. The GPU-assisted production path currently accelerates visual generation and related batch helpers, not the exact ECS world step itself.
 
 - `runtime.world_batch_threads`
   - Controls `ef_py.WorldBatchRuntime.set_worker_threads()`.
@@ -105,4 +107,22 @@ Training runtime config also supports:
   --n-envs 8 \
   --steps 128 \
   --mission-obs-mode nav_v2
+```
+
+- Phase 4 maintained `p5` CUDA bridge / flight-shaping A/B benchmark:
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
+  --case p5like_visual \
+  --n-envs 8 \
+  --rollout-steps 64 \
+  --rollout-repeats 2 \
+  --flight-shaping-backend compiled
+
+./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
+  --case p5like_visual \
+  --n-envs 8 \
+  --rollout-steps 64 \
+  --rollout-repeats 2 \
+  --flight-shaping-backend gpu_host
 ```

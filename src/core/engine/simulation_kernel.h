@@ -7,6 +7,7 @@
 #include <random>
 #include <string>
 #include <map>
+#include <vector>
 #include "components/basic/common.h"
 #include "components/physics/action.h"
 #include "components/systems/sensor.h"
@@ -42,6 +43,31 @@ struct MissileTuning {
     double sensor_track_memory_s = std::numeric_limits<double>::quiet_NaN();
 };
 
+struct ExactStepStageDescriptor {
+    int order = 0;
+    std::string name;
+    std::string flecs_kind;
+    std::string domain;
+    std::string notes;
+    bool gpu_migration_scope = false;
+    bool manual_trace_supported = false;
+};
+
+struct ExactStepStageContractDescriptor {
+    int order = 0;
+    std::string name;
+    std::string flecs_kind;
+    std::string domain;
+    bool gpu_migration_scope = false;
+    bool manual_trace_supported = false;
+    std::vector<std::string> reads;
+    std::vector<std::string> writes;
+    std::vector<std::string> trace_surfaces;
+    std::vector<std::string> depends_on_stages;
+    std::string contract_summary;
+    std::string exact_dependency_notes;
+};
+
 class SimulationKernel {
 public:
     SimulationKernel();
@@ -52,6 +78,14 @@ public:
 
     // Advance the simulation by one fixed time step
     void step();
+    std::vector<ExactStepStageDescriptor> exact_gpu_migration_stage_inventory() const;
+    std::vector<ExactStepStageContractDescriptor> exact_gpu_migration_stage_contract_inventory() const;
+    void begin_exact_stage_trace_frame();
+    void end_exact_stage_trace_frame();
+    bool run_exact_stage_trace_stage(const std::string& stage_name);
+    bool run_exact_stage_direct(const std::string& stage_name);
+    void step_exact_stage_traceable_pipeline();
+    void restore_exact_replay_world_time(double world_time_s);
 
     // Spawn a basic unit (for testing/gym API)
     flecs::entity spawn_unit(Side side, const std::string& unit_name, 
@@ -113,6 +147,7 @@ public:
     std::vector<float> get_visual_observation(uint64_t entity_id); // ARB Visual Observation
     std::vector<float> get_visual_observation_downsampled(uint64_t entity_id, int factor); // ARB downsampled visual
     std::vector<Detection> get_detections(uint64_t entity_id); // Sensor Output
+    void set_contact_list(uint64_t entity_id, const std::vector<Detection>& detections);
     std::vector<double> get_unit_velocity(uint64_t entity_id); // Returns [vx, vy, vz]
     double get_unit_heading(uint64_t entity_id);   // Returns heading
     std::vector<double> get_unit_health(uint64_t entity_id); // Returns [current, max]
@@ -151,4 +186,5 @@ private:
     std::unique_ptr<IControlModel> control_model_;
     std::unique_ptr<IGuidanceModel> guidance_model_;
     MissileTuning missile_tuning_;
+    bool exact_stage_trace_frame_active_ = false;
 };

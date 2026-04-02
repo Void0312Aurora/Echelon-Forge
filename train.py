@@ -20,15 +20,19 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback
 
 # Prefer the locally built `ef_py` extension when present (avoids accidentally using a stale
-# site-packages wheel/so from the venv).
+# site-packages wheel/so from the venv). Prefer `build-gpu` over `build` so the execution
+# training mainline can pick up the CUDA-enabled runtime when it exists.
 _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-_BUILD_DIR = os.path.join(_REPO_ROOT, "build")
-if os.path.isdir(_BUILD_DIR):
-    for _name in ("ef_py", "ef_py.cpython-313-x86_64-linux-gnu.so"):
-        if os.path.exists(os.path.join(_BUILD_DIR, _name)) or any(
-            fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_BUILD_DIR)
-        ):
-            sys.path.insert(0, _BUILD_DIR)
+for _build_dir_name in ("build-gpu", "build"):
+    _BUILD_DIR = os.path.join(_REPO_ROOT, _build_dir_name)
+    if os.path.isdir(_BUILD_DIR):
+        for _name in ("ef_py", "ef_py.cpython-313-x86_64-linux-gnu.so"):
+            if os.path.exists(os.path.join(_BUILD_DIR, _name)) or any(
+                fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_BUILD_DIR)
+            ):
+                sys.path.insert(0, _BUILD_DIR)
+                break
+        if sys.path[0] == _BUILD_DIR:
             break
 
 # Add local path
@@ -45,7 +49,7 @@ from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policies import SquashedMultiInputPolicy
 from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv
 from python.rl.world_batch_vec_env import WorldBatchVecEnv
-from python.rl.wrappers import get_action_wrapper_spec
+from python.rl.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 
 
 def apply_global_seed(seed: int) -> None:
@@ -584,6 +588,8 @@ def main():
             f"include_visual={env_settings['include_visual']} "
             f"include_proprio={env_settings['include_proprio']} "
             f"mission_obs_mode={env_settings['mission_obs_mode']} "
+            f"flight_shaping_backend={env_settings.get('flight_shaping_backend', '<auto>') or 'auto'} "
+            f"step_info_mode={env_settings['step_info_mode']} "
             f"visual_downsample={env_settings['visual_downsample']} "
             f"visual_update_interval={env_settings['visual_update_interval']}"
         )
@@ -623,25 +629,32 @@ def main():
     if agent_layer == "execution":
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
         use_world_batch_vec_env = bool(runtime_cfg.get("world_batch_vec_env", False))
-        if use_world_batch_vec_env and env_settings["include_visual"]:
-            print(
-                "[WARN] runtime.world_batch_vec_env currently does not support include_visual=True. "
-                "Falling back to the standard vec env backend."
-            )
-            use_world_batch_vec_env = False
+        world_batch_action_wrapper_kwargs = None
         if use_world_batch_vec_env and wrapper_class is not None:
-            print(
-                "[WARN] runtime.world_batch_vec_env currently does not support action wrappers. "
-                "Falling back to the standard vec env backend."
-            )
-            use_world_batch_vec_env = False
+            if wrapper_class is MultiTimescaleActionWrapper:
+                world_batch_action_wrapper_kwargs = dict(wrapper_kwargs or {})
+            else:
+                print(
+                    "[WARN] runtime.world_batch_vec_env does not support the requested action wrapper. "
+                    "Falling back to the standard vec env backend."
+                )
+                use_world_batch_vec_env = False
 
         if use_world_batch_vec_env:
             world_batch_threads = runtime_cfg.get("world_batch_threads")
+            batch_visual_backend = str(runtime_cfg.get("batch_visual_backend", "auto"))
+            batch_observation_backend = str(runtime_cfg.get("batch_observation_backend", "auto"))
+            policy_observation_torch_bridge = bool(runtime_cfg.get("policy_observation_torch_bridge", True))
+            observation_return_mode = str(runtime_cfg.get("observation_return_mode", "copy"))
             vec_env = WorldBatchVecEnv(
                 scenario_path=scenario_path,
                 n_envs=n_envs,
                 worker_threads=world_batch_threads,
+                batch_observation_backend=batch_observation_backend,
+                batch_visual_backend=batch_visual_backend,
+                policy_observation_torch_bridge=policy_observation_torch_bridge,
+                observation_return_mode=observation_return_mode,
+                action_wrapper_kwargs=world_batch_action_wrapper_kwargs,
                 **env_settings,
             )
             vec_env.seed(training_seed)
@@ -650,6 +663,27 @@ def main():
                 f"configured_threads={vec_env.batch_runtime.worker_threads()} "
                 f"effective_threads={vec_env.batch_runtime.effective_worker_threads()}"
             )
+            if env_settings["include_visual"]:
+                print(
+                    "World batch visual runtime: "
+                    f"requested_backend={batch_visual_backend} "
+                    f"effective_backend={vec_env._batch_visual_backend_mode()}"
+                )
+            print(
+                "Execution reward runtime: "
+                f"requested_backend={vec_env.flight_shaping_backend} "
+                f"effective_backend={vec_env._flight_shaping_backend_mode()}"
+            )
+            print(
+                "Execution policy observation bridge: "
+                f"enabled={bool(vec_env.policy_observation_torch_bridge)}"
+            )
+            print(
+                "World batch observation return mode: "
+                f"mode={vec_env.observation_return_mode}"
+            )
+            if world_batch_action_wrapper_kwargs:
+                print("World batch action preprocessing: multi_timescale_action=enabled")
             active_batched_execution_inference = False
         else:
             # We must delay env creation for resume if we want to ensure same config?
@@ -818,6 +852,8 @@ def main():
             apply_safe_action_bias(model, env_settings["action_mode"], scenario_path)
         elif agent_layer == "leader":
             apply_leader_action_bias(model)
+
+    print(f"Rollout buffer: {type(model.rollout_buffer).__name__}")
     
     print(
         f"Starting Training for {total_timesteps} steps... "

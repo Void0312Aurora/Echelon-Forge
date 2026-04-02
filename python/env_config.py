@@ -6,6 +6,8 @@ from typing import Any
 VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4"}
 VALID_MISSION_OBS_MODES = {"basic", "nav_v1", "nav_v2"}
 VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled", "legacy"}
+VALID_STEP_INFO_MODES = {"full", "terminal", "off"}
+VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "legacy", "compiled", "gpu_host"}
 
 
 def infer_include_visual_from_train_config(train_config: dict[str, Any] | None) -> bool:
@@ -72,8 +74,23 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         if execution_step_runtime_mode == "":
             execution_step_runtime_mode = None
 
+    step_info_mode = getattr(args, "step_info_mode", None)
+    if step_info_mode is None:
+        step_info_mode = str(env_cfg.get("step_info_mode", "full"))
+    else:
+        step_info_mode = str(step_info_mode)
+
+    flight_shaping_backend = getattr(args, "flight_shaping_backend", None)
+    if flight_shaping_backend is None:
+        flight_shaping_backend = env_cfg.get("flight_shaping_backend")
+    if flight_shaping_backend is not None:
+        flight_shaping_backend = str(flight_shaping_backend).strip().lower()
+        if flight_shaping_backend == "":
+            flight_shaping_backend = None
+
     action_mode = action_mode.strip()
     mission_obs_mode = mission_obs_mode.strip().lower()
+    step_info_mode = step_info_mode.strip().lower()
     visual_downsample = max(1, int(visual_downsample))
     visual_update_interval = max(1, int(visual_update_interval))
 
@@ -85,6 +102,10 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         raise ValueError(
             f"Unknown execution_step_runtime_mode in merged env config: {execution_step_runtime_mode!r}"
         )
+    if step_info_mode not in VALID_STEP_INFO_MODES:
+        raise ValueError(f"Unknown step_info_mode in merged env config: {step_info_mode!r}")
+    if flight_shaping_backend is not None and flight_shaping_backend not in VALID_FLIGHT_SHAPING_BACKENDS:
+        raise ValueError(f"Unknown flight_shaping_backend in merged env config: {flight_shaping_backend!r}")
 
     return {
         "include_visual": bool(include_visual),
@@ -94,4 +115,6 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         "visual_downsample": visual_downsample,
         "visual_update_interval": visual_update_interval,
         "execution_step_runtime_mode": execution_step_runtime_mode,
+        "step_info_mode": step_info_mode,
+        "flight_shaping_backend": flight_shaping_backend,
     }

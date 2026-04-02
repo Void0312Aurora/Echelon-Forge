@@ -5,15 +5,23 @@ import time
 
 import numpy as np
 
-# Prefer the in-repo C++ extension (built via CMake into `./build`) when present.
+# Prefer the in-repo C++ extension when present.
 # This avoids stale site-packages wheels during active physics iteration.
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_BUILD_DIR = os.path.join(_REPO_ROOT, "build")
-if os.path.isdir(_BUILD_DIR) and glob.glob(os.path.join(_BUILD_DIR, "ef_py*.so")):
-    sys.path.insert(0, _BUILD_DIR)
+_BUILD_DIRS = [
+    os.path.join(_REPO_ROOT, "build-gpu"),
+    os.path.join(_REPO_ROOT, "build"),
+]
+for _build_dir in reversed(_BUILD_DIRS):
+    if os.path.isdir(_build_dir) and glob.glob(os.path.join(_build_dir, "ef_py*.so")):
+        sys.path.insert(0, _build_dir)
 
 import ef_py
-from gym_envs.scenario_loader import ScenarioLoader, normalize_execution_step_runtime_mode
+from gym_envs.scenario_loader import (
+    ScenarioLoader,
+    normalize_execution_step_runtime_mode,
+    normalize_flight_shaping_backend,
+)
 
 try:
     import gymnasium as gym
@@ -452,6 +460,33 @@ def build_step_info(
     return info
 
 
+def build_step_info_minimal(
+    loader,
+    *,
+    mission_status,
+    terminated: bool,
+    truncated: bool,
+):
+    info = {
+        "mission_status": np.array(mission_status, dtype=np.float32),
+        "terminated": float(bool(terminated)),
+        "truncated": float(bool(truncated)),
+    }
+    try:
+        tr = getattr(loader, "last_termination_reason", None)
+        if isinstance(tr, str) and tr:
+            info["termination_reason"] = tr
+    except Exception:
+        pass
+    try:
+        rb = getattr(loader, "last_reward_breakdown", None)
+        if isinstance(rb, dict) and rb:
+            info["reward_terms"] = {k: float(v) for k, v in rb.items()}
+    except Exception:
+        pass
+    return info
+
+
 if gym is None:
     class UniversalEnv:  # pragma: no cover
         def __init__(self, *args, **kwargs):
@@ -487,6 +522,8 @@ else:
             visual_downsample: int = 1,
             visual_update_interval: int = 1,
             execution_step_runtime_mode: str | None = None,
+            step_info_mode: str = "full",
+            flight_shaping_backend: str | None = None,
             collect_step_timing: bool = False,
         ):
             super().__init__()
@@ -503,10 +540,20 @@ else:
                 if execution_step_runtime_mode is not None
                 else None
             )
+            self.flight_shaping_backend = (
+                normalize_flight_shaping_backend(flight_shaping_backend)
+                if flight_shaping_backend is not None
+                else None
+            )
+            self.step_info_mode = str(step_info_mode).strip().lower()
             if self.execution_step_runtime_mode not in (None, "compiled", "legacy"):
                 raise ValueError(
                     f"Unknown execution_step_runtime_mode: {execution_step_runtime_mode!r}"
                 )
+            if self.flight_shaping_backend not in (None, "auto", "compiled", "legacy", "gpu_host"):
+                raise ValueError(f"Unknown flight_shaping_backend: {flight_shaping_backend!r}")
+            if self.step_info_mode not in ("full", "terminal", "off"):
+                raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
             self.collect_step_timing = bool(collect_step_timing)
             self._last_inst = None
             self._last_truth = None
@@ -526,6 +573,8 @@ else:
             self.loader = ScenarioLoader(self.sim)
             if self.execution_step_runtime_mode is not None:
                 self.loader.set_execution_step_runtime_mode(self.execution_step_runtime_mode)
+            if self.flight_shaping_backend is not None:
+                self.loader.set_flight_shaping_backend(self.flight_shaping_backend)
 
             # Action Space
             # - full: Full Digital Pilot (17 dims) for end-to-end tasks
@@ -632,13 +681,24 @@ else:
             self.sim.step()
             kernel_step_ms = (time.perf_counter() - kernel_t0) * 1000.0 if self.collect_step_timing else 0.0
 
+            state_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+            truth_now = self.sim.get_agent_observation(self.agent_id)
+            inst_now = self.sim.get_instrument_state(self.agent_id)
+            state_read_ms = (time.perf_counter() - state_t0) * 1000.0 if self.collect_step_timing else 0.0
+            self._last_truth = truth_now
+            self._last_inst = inst_now
+
             behavior_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-            self.loader.update_behaviors(self.steps * self.sim.get_time_step())
+            self.loader.update_behaviors(
+                self.steps * self.sim.get_time_step(),
+                truth=truth_now,
+                inst=inst_now,
+            )
             behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if self.collect_step_timing else 0.0
 
             # 3. Get Observation
             obs_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-            obs = self._get_obs()
+            obs = self._build_obs_from_state(inst_now, truth_now)
             obs_build_ms = (time.perf_counter() - obs_t0) * 1000.0 if self.collect_step_timing else 0.0
 
             # 4. Compute Reward & Done (Logic delegated to Loader/Config)
@@ -653,22 +713,38 @@ else:
             )
             reward_compute_ms = (time.perf_counter() - reward_t0) * 1000.0 if self.collect_step_timing else 0.0
             info_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-            info = build_step_info(
-                self.loader,
-                self.sim,
-                int(self.agent_id),
-                mission_status=mission_status,
-                terminated=terminated,
-                truncated=truncated,
-                inst_now=self._last_inst,
-                truth_now=self._last_truth,
-            )
+            if self.step_info_mode == "off":
+                info = build_step_info_minimal(
+                    self.loader,
+                    mission_status=mission_status,
+                    terminated=terminated,
+                    truncated=truncated,
+                )
+            elif self.step_info_mode == "terminal" and not bool(terminated or truncated):
+                info = build_step_info_minimal(
+                    self.loader,
+                    mission_status=mission_status,
+                    terminated=terminated,
+                    truncated=truncated,
+                )
+            else:
+                info = build_step_info(
+                    self.loader,
+                    self.sim,
+                    int(self.agent_id),
+                    mission_status=mission_status,
+                    terminated=terminated,
+                    truncated=truncated,
+                    inst_now=self._last_inst,
+                    truth_now=self._last_truth,
+                )
             if self.collect_step_timing:
                 info_build_ms = (time.perf_counter() - info_t0) * 1000.0
                 self.last_step_timing = {
                     "action_prepare_ms": float(action_prepare_ms),
                     "command_write_ms": float(command_write_ms),
                     "kernel_step_ms": float(kernel_step_ms),
+                    "state_read_ms": float(state_read_ms),
                     "behavior_update_ms": float(behavior_update_ms),
                     "obs_build_ms": float(obs_build_ms),
                     "reward_compute_ms": float(reward_compute_ms),
@@ -681,13 +757,8 @@ else:
 
             return obs, reward, terminated, truncated, info
 
-        def _get_obs(self):
-            # 1. Instruments
-            inst = self.sim.get_instrument_state(self.agent_id)
+        def _build_obs_from_state(self, inst, raw_truth):
             self._last_inst = inst
-
-            # 2. Contacts (Via Truth for now, simulating Sensor Fusion)
-            raw_truth = self.sim.get_agent_observation(self.agent_id)
             self._last_truth = raw_truth
             obs = build_universal_observation(
                 self.loader,
@@ -729,3 +800,8 @@ else:
                     self._visual_cache_step = int(self.steps)
                 obs["visual"] = np.asarray(self._visual_cache, dtype=np.float32, copy=False)
             return obs
+
+        def _get_obs(self):
+            inst = self.sim.get_instrument_state(self.agent_id)
+            raw_truth = self.sim.get_agent_observation(self.agent_id)
+            return self._build_obs_from_state(inst, raw_truth)

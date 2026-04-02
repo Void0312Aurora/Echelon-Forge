@@ -18,6 +18,15 @@
 namespace {
     inline double inst_rad_to_deg(double rad) { return rad * 180.0 / M_PI; }
 
+    inline double inst_canonicalize_ground_track_deg(double value) {
+        constexpr double kGroundTrackCanonicalQuantumDeg = 0x1p-32;
+        if (!std::isfinite(value)) return 0.0;
+        double rounded = std::nearbyint(value / kGroundTrackCanonicalQuantumDeg) *
+            kGroundTrackCanonicalQuantumDeg;
+        if (std::abs(rounded) <= (kGroundTrackCanonicalQuantumDeg * 0.5)) return 0.0;
+        return rounded;
+    }
+
     inline double inst_normalize_heading_deg(double heading_deg) {
         if (!std::isfinite(heading_deg)) return 0.0;
         double out = std::fmod(heading_deg, 360.0);
@@ -291,6 +300,7 @@ inline void register_instrument_system(flecs::world& ecs) {
                             // atan2(East, North) gives angle from North, clockwise positive
                             inst[i].ground_track_deg = std::atan2(egi->ve_mps, egi->vn_mps) * 180.0 / M_PI;
                             if (inst[i].ground_track_deg < 0) inst[i].ground_track_deg += 360.0;
+                            inst[i].ground_track_deg = inst_canonicalize_ground_track_deg(inst[i].ground_track_deg);
                         } else {
                             inst[i].ground_track_deg = inst[i].heading_deg; // Use heading when stationary
                         }
