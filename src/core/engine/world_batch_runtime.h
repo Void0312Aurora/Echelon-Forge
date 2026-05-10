@@ -6,13 +6,15 @@
 #include <string>
 #include <vector>
 
-#include "components/physics/action.h"
+#include "components/command/mission_command.h"
+#include "components/command/pilot_action.h"
+#include "components/tasking/leader_intent.h"
+#include "components/tasking/pilot_report.h"
+#include "components/tasking/task_order.h"
 #include "components/physics/instruments.h"
 #include "core/engine/simulation_kernel.h"
 #include "core/interfaces/observation.h"
-#include "gpu/gpu_exact_world_step_contract.h"
-#include "gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.h"
-#include "gpu/gpu_world_batch_runtime.h"
+#include "core/mission/execution_episode_controller.h"
 
 struct WorldEntityRef {
     uint64_t world_index = 0;
@@ -89,29 +91,11 @@ struct WorldPilotReportAssignment {
     PilotReport report{};
 };
 
-struct ExactWorldStepFirstScopeChainCachedSessionStats {
-    std::size_t state_count = 0;
-    bool used_gpu = false;
-    double prime_extract_ms = 0.0;
-    double pilot_update_ms = 0.0;
-    double mission_update_ms = 0.0;
-    double step_total_ms = 0.0;
-    double write_back_ms = 0.0;
-    double chain_command_lane_ms = 0.0;
-    double chain_host_to_device_ms = 0.0;
-    double chain_front_kernel_ms = 0.0;
-    double chain_guidance_kernel_ms = 0.0;
-    double chain_tail_kernel_ms = 0.0;
-    double chain_kernel_ms = 0.0;
-    double chain_device_to_host_ms = 0.0;
-    double chain_cpu_fallback_ms = 0.0;
-    double chain_total_ms = 0.0;
-};
-
-enum class WorldBatchExactStepBackend {
-    CpuSimulationKernel = 0,
-    ExactFirstScopeChainCachedCpu = 1,
-    ExactFirstScopeChainCachedGpu = 2,
+struct WorldExecutionEpisodeStepRequest {
+    uint64_t world_index = 0;
+    uint64_t entity_id = 0;
+    StepEvaluationBatchConfig config{};
+    StepEvaluationBatchEnvState env_state{};
 };
 
 class WorldBatchRuntime {
@@ -135,10 +119,6 @@ public:
     void reset_batch(const std::vector<uint32_t>& seeds = {});
     void step_batch();
     void step_worlds(const std::vector<uint64_t>& world_indices);
-    void set_exact_world_step_backend(WorldBatchExactStepBackend backend) noexcept { exact_step_backend_ = backend; }
-    WorldBatchExactStepBackend exact_world_step_backend() const noexcept { return exact_step_backend_; }
-    bool exact_world_step_backend_ready() const noexcept;
-    void clear_exact_world_step_backend_session() noexcept;
 
     bool load_database(const std::string& path);
     bool load_unit_definitions(const std::string& path, std::string* error = nullptr);
@@ -163,6 +143,25 @@ public:
     void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments);
     void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments);
 
+    void clear_execution_episode_controller_batch() noexcept;
+    void prime_execution_episode_controller_batch(
+        const std::vector<WorldEntityRef>& refs,
+        const std::vector<ExecutionEpisodeState>& states
+    );
+    bool execution_episode_controller_ready(size_t world_index) const noexcept;
+    std::vector<ExecutionEpisodeState> export_execution_episode_states_batch(
+        const std::vector<WorldEntityRef>& refs
+    ) const;
+    std::vector<ExecutionEpisodeRuntimeProducts> evaluate_execution_episode_batch(
+        const std::vector<WorldExecutionEpisodeStepRequest>& requests
+    ) const;
+    std::vector<ExecutionEpisodeRuntimeProducts> step_execution_episode_batch(
+        const std::vector<WorldExecutionEpisodeStepRequest>& requests
+    );
+    std::vector<ExecutionEpisodeControllerStepResult> step_execution_episode_results_batch(
+        const std::vector<WorldExecutionEpisodeStepRequest>& requests
+    );
+
     std::vector<AgentObservation> get_agent_observations_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<InstrumentState> get_instrument_states_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<MissionCommand> get_mission_commands_batch(const std::vector<WorldEntityRef>& refs) const;
@@ -184,89 +183,20 @@ public:
         bool use_gpu = false
     ) const;
 
-    std::vector<gpu::WorldBatchStepState> extract_packed_flight_states_batch(
-        const std::vector<WorldEntityRef>& refs
-    ) const;
-    void apply_packed_flight_states_batch(
-        const std::vector<WorldEntityRef>& refs,
-        const std::vector<gpu::WorldBatchStepState>& states
-    );
-    std::vector<gpu::WorldBatchStepState> step_packed_flight_states_experiment_batch(
-        const std::vector<WorldEntityRef>& refs,
-        int steps,
-        bool use_cuda_graph = false,
-        bool write_back = false
-    );
-    std::vector<gpu::ExactWorldStepStateV1> extract_exact_world_step_states_v1_batch(
-        const std::vector<WorldEntityRef>& refs
-    ) const;
-    std::vector<gpu::ExactWorldStepStateV1> step_exact_world_step_first_scope_chain_experiment_batch(
-        const std::vector<WorldEntityRef>& refs,
-        bool use_gpu = true,
-        bool write_back = false
-    );
-    void prime_exact_world_step_first_scope_chain_cached_session(
-        const std::vector<WorldEntityRef>& refs
-    );
-    void set_pilot_actions_exact_world_step_first_scope_chain_cached_session(
-        const std::vector<WorldPilotActionAssignment>& assignments
-    );
-    void set_mission_commands_exact_world_step_first_scope_chain_cached_session(
-        const std::vector<WorldMissionCommandAssignment>& assignments
-    );
-    std::vector<gpu::ExactWorldStepStateV1> step_exact_world_step_first_scope_chain_cached_session(
-        bool use_gpu = true,
-        bool write_back = false
-    );
-    const ExactWorldStepFirstScopeChainCachedSessionStats&
-    last_exact_world_step_first_scope_chain_cached_session_stats() const noexcept;
-    void apply_exact_world_step_first_scope_chain_cached_session_to_world();
-    std::vector<gpu::ExactWorldStepStateV1> extract_exact_world_step_first_scope_chain_cached_session() const;
-    bool upload_exact_world_step_first_scope_chain_experiment_batch(
-        const std::vector<WorldEntityRef>& refs
-    );
-    bool replay_exact_world_step_first_scope_chain_experiment_device_sequence();
-    std::vector<gpu::ExactWorldStepStateV1> download_exact_world_step_first_scope_chain_experiment_batch(
-        bool write_back = false
-    );
-    void apply_exact_world_step_states_v1_batch(
-        const std::vector<WorldEntityRef>& refs,
-        const std::vector<gpu::ExactWorldStepStateV1>& states
-    );
-
 private:
     size_t resolve_worker_threads(size_t task_count) const noexcept;
     static InstrumentState safe_get_instrument_state(const SimulationKernel& world, uint64_t entity_id);
     SimulationKernel& checked_world(size_t index);
     const SimulationKernel& checked_world(size_t index) const;
-    bool exact_world_step_backend_uses_first_scope_chain_cached_session() const noexcept;
-    bool exact_world_step_backend_covers_world(size_t world_index) const noexcept;
-    bool exact_world_step_backend_world_dirty(size_t world_index) const noexcept;
-    bool exact_world_step_first_scope_chain_cached_session_supports_resident_gpu_fast_path() const noexcept;
-    void invalidate_exact_world_step_first_scope_chain_cached_session_resident_gpu_fast_path() noexcept;
-    bool sync_exact_world_step_first_scope_chain_cached_session_host_from_device();
-    std::vector<gpu::ExactWorldStepStateV1> step_exact_world_step_first_scope_chain_cached_session_impl(
-        bool use_gpu,
-        bool write_back,
-        bool materialize_result
-    );
-    void mark_exact_world_step_backend_cached_worlds_dirty() noexcept;
-    void mark_exact_world_step_backend_worlds_clean(const std::vector<size_t>& world_indices) noexcept;
-    void sync_exact_world_step_backend_world_if_needed(size_t world_index);
-    void sync_exact_world_step_backend_refs_if_needed(const std::vector<WorldEntityRef>& refs);
+    ExecutionEpisodeController& checked_execution_episode_controller(size_t world_index, uint64_t entity_id);
+    const ExecutionEpisodeController& checked_execution_episode_controller(size_t world_index, uint64_t entity_id) const;
+    void validate_execution_episode_step_requests(
+        const std::vector<WorldExecutionEpisodeStepRequest>& requests
+    ) const;
 
     std::vector<std::unique_ptr<SimulationKernel>> worlds_;
+    std::vector<ExecutionEpisodeController> execution_episode_controllers_;
+    std::vector<uint64_t> execution_episode_controller_entity_ids_;
+    std::vector<bool> execution_episode_controller_active_;
     size_t worker_threads_ = 1;
-    WorldBatchExactStepBackend exact_step_backend_ = WorldBatchExactStepBackend::CpuSimulationKernel;
-    std::vector<WorldEntityRef> first_scope_chain_cached_refs_;
-    std::vector<gpu::ExactWorldStepStateV1> first_scope_chain_cached_states_;
-    std::vector<bool> first_scope_chain_cached_world_dirty_;
-    std::vector<gpu::ExactWorldStepFirstScopeChainCudaResidentPilotTimeProjection>
-        first_scope_chain_cached_resident_pilot_time_projection_scratch_;
-    bool first_scope_chain_cached_resident_gpu_uploaded_ = false;
-    bool first_scope_chain_cached_resident_pilot_projection_dirty_ = false;
-    bool first_scope_chain_cached_resident_full_projection_dirty_ = false;
-    bool first_scope_chain_cached_device_state_pending_materialize_ = false;
-    ExactWorldStepFirstScopeChainCachedSessionStats first_scope_chain_cached_session_stats_{};
-    std::vector<WorldEntityRef> first_scope_chain_experiment_refs_;
 };

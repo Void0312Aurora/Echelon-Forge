@@ -6,7 +6,7 @@
 
 #include "components/basic/common.h"
 #include "components/combat/health.h"
-#include "components/physics/action.h"
+#include "components/command/command_link.h"
 #include "components/physics/performance.h"
 #include "components/combat/scoring.h"
 #include "components/systems/sensor.h"

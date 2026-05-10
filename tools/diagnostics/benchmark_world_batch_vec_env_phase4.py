@@ -60,10 +60,15 @@ def _time_reset(vec_env, *, iters: int, seed_base: int) -> tuple[float, dict[str
     return 1000.0 * elapsed / max(1, int(iters)), _average_timing_sums(timing_sums, count=timing_count)
 
 
-def _time_steps(vec_env, action_batch, *, steps: int) -> tuple[float, dict[str, float]]:
+def _time_steps(vec_env, action_batch, *, steps: int) -> tuple[float, dict[str, float], dict[str, object]]:
     _ = vec_env.reset()
     timing_sums: dict[str, float] = {}
     timing_count = 0
+    shadow_total = 0
+    shadow_match_count = 0
+    shadow_mismatch_count = 0
+    shadow_max_reward_total_delta = 0.0
+    shadow_max_execution_step_reward_delta = 0.0
     timing_scale = 1.0 / float(max(1, int(vec_env.num_envs))) if isinstance(vec_env, WorldBatchVecEnv) else 1.0
     start = time.perf_counter()
     for step_idx in range(max(1, int(steps))):
@@ -73,10 +78,44 @@ def _time_steps(vec_env, action_batch, *, steps: int) -> tuple[float, dict[str, 
                 _merge_timing_sums(timing_sums, info.get("timing"), scale=timing_scale)
                 if isinstance(info.get("timing"), dict):
                     timing_count += 1
+                shadow_report = info.get("execution_episode_controller_shadow_compare")
+                if isinstance(shadow_report, dict):
+                    shadow_total += 1
+                    comparison = shadow_report.get("comparison")
+                    if isinstance(comparison, dict):
+                        if bool(comparison.get("overall_match", False)):
+                            shadow_match_count += 1
+                        else:
+                            shadow_mismatch_count += 1
+                        try:
+                            shadow_max_reward_total_delta = max(
+                                shadow_max_reward_total_delta,
+                                abs(float(comparison.get("reward_total_delta", 0.0))),
+                            )
+                        except Exception:
+                            pass
+                        try:
+                            shadow_max_execution_step_reward_delta = max(
+                                shadow_max_execution_step_reward_delta,
+                                abs(float(comparison.get("execution_step_reward_delta", 0.0))),
+                            )
+                        except Exception:
+                            pass
     elapsed = time.perf_counter() - start
+    shadow_stats = {}
+    if shadow_total > 0:
+        shadow_stats = {
+            "report_count": int(shadow_total),
+            "overall_match_count": int(shadow_match_count),
+            "overall_mismatch_count": int(shadow_mismatch_count),
+            "overall_match_rate": float(shadow_match_count) / float(max(1, shadow_total)),
+            "max_reward_total_abs_delta": float(shadow_max_reward_total_delta),
+            "max_execution_step_reward_abs_delta": float(shadow_max_execution_step_reward_delta),
+        }
     return (
         1000.0 * elapsed / float(max(1, int(steps)) * max(1, int(vec_env.num_envs))),
         _average_timing_sums(timing_sums, count=timing_count),
+        shadow_stats,
     )
 
 
@@ -254,6 +293,24 @@ def main() -> int:
         help="Select the flight-shaping backend inside ScenarioLoader.",
     )
     parser.add_argument(
+        "--execution-step-batch-prepare",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Enable the WorldBatchVecEnv C++ batch step-evaluation prepare path for A/B comparison.",
+    )
+    parser.add_argument(
+        "--execution-episode-controller-shadow-compare",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Enable the opt-in WorldBatchVecEnv compiled controller shadow-compare diagnostics during rollout.",
+    )
+    parser.add_argument(
+        "--execution-episode-controller-mainline",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Enable the opt-in WorldBatchVecEnv runtime-owned compiled episode-controller rollout path.",
+    )
+    parser.add_argument(
         "--sim-log-level",
         default="warn",
         help="Simulation log level for the benchmark process (for example: trace, debug, info, warn, error).",
@@ -286,20 +343,28 @@ def main() -> int:
     )
 
     dummy_vec = _build_dummy_vec_env(scenario_path=scenario_path, n_envs=int(args.n_envs), env_kwargs=env_kwargs)
-    batch_vec = WorldBatchVecEnv(
-        scenario_path=scenario_path,
-        n_envs=int(args.n_envs),
-        worker_threads=args.world_batch_threads,
-        batch_observation_backend=str(args.batch_observation_backend),
-        batch_visual_backend=str(args.batch_visual_backend),
+    batch_vec_kwargs = {
+        "scenario_path": scenario_path,
+        "n_envs": int(args.n_envs),
+        "worker_threads": args.world_batch_threads,
+        "batch_observation_backend": str(args.batch_observation_backend),
+        "batch_visual_backend": str(args.batch_visual_backend),
+        "execution_step_batch_prepare": bool(args.execution_step_batch_prepare),
+        "execution_episode_controller_shadow_compare": bool(args.execution_episode_controller_shadow_compare),
+        "execution_episode_controller_mainline": bool(args.execution_episode_controller_mainline),
         **env_kwargs,
-    )
+    }
+    batch_vec = WorldBatchVecEnv(**batch_vec_kwargs)
     gpu_device_info = _gpu_device_info_dict()
     try:
         dummy_reset_ms, dummy_reset_timing = _time_reset(dummy_vec, iters=int(args.reset_iters), seed_base=int(args.seed))
         batch_reset_ms, batch_reset_timing = _time_reset(batch_vec, iters=int(args.reset_iters), seed_base=int(args.seed))
-        dummy_step_ms, dummy_step_timing = _time_steps(dummy_vec, action_batch, steps=int(args.steps))
-        batch_step_ms, batch_step_timing = _time_steps(batch_vec, action_batch, steps=int(args.steps))
+        dummy_step_ms, dummy_step_timing, dummy_shadow_compare_stats = _time_steps(
+            dummy_vec, action_batch, steps=int(args.steps)
+        )
+        batch_step_ms, batch_step_timing, batch_shadow_compare_stats = _time_steps(
+            batch_vec, action_batch, steps=int(args.steps)
+        )
         visual_stats = _visual_stats_dict()
         flight_shaping_stats = _flight_shaping_stats_dict()
         effective_world_batch_threads = int(batch_vec.batch_runtime.effective_worker_threads())
@@ -329,6 +394,9 @@ def main() -> int:
         "effective_batch_observation_backend": effective_batch_observation_backend,
         "effective_batch_visual_backend": effective_batch_visual_backend,
         "execution_step_runtime_mode": args.execution_step_runtime_mode,
+        "execution_step_batch_prepare": bool(args.execution_step_batch_prepare),
+        "execution_episode_controller_shadow_compare": bool(args.execution_episode_controller_shadow_compare),
+        "execution_episode_controller_mainline": bool(args.execution_episode_controller_mainline),
         "flight_shaping_backend": args.flight_shaping_backend,
         "collect_step_timing": bool(args.collect_step_timing),
         "sim_log_level": str(args.sim_log_level),
@@ -345,6 +413,8 @@ def main() -> int:
         "world_batch_reset_timing_ms_per_env": batch_reset_timing,
         "dummy_step_timing_ms_per_env_step": dummy_step_timing,
         "world_batch_step_timing_ms_per_env_step": batch_step_timing,
+        "dummy_shadow_compare_stats": dummy_shadow_compare_stats,
+        "world_batch_shadow_compare_stats": batch_shadow_compare_stats,
     }
 
     print("World Batch VecEnv Phase 4 Benchmark")
@@ -359,6 +429,8 @@ def main() -> int:
     print(f"requested visual backend  : {results['requested_batch_visual_backend']}")
     print(f"effective visual backend  : {results['effective_batch_visual_backend']}")
     print(f"step runtime mode         : {results['execution_step_runtime_mode']}")
+    print(f"controller shadow compare : {results['execution_episode_controller_shadow_compare']}")
+    print(f"controller mainline       : {results['execution_episode_controller_mainline']}")
     print(f"flight shaping backend    : {results['flight_shaping_backend']}")
     print(
         "gpu device               : "
@@ -385,6 +457,11 @@ def main() -> int:
         print(
             "world batch step timing  : "
             f"{json.dumps(results['world_batch_step_timing_ms_per_env_step'], ensure_ascii=True, sort_keys=True)}"
+        )
+    if results["world_batch_shadow_compare_stats"]:
+        print(
+            "shadow compare stats     : "
+            f"{json.dumps(results['world_batch_shadow_compare_stats'], ensure_ascii=True, sort_keys=True)}"
         )
 
     if args.json_out:

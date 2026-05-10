@@ -6,7 +6,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include "components/physics/action.h"
+#include "components/command/command_link.h"
+#include "components/command/legacy_command.h"
 #include "components/basic/common.h"
 #include "components/combat/health.h"
 #include "components/physics/performance.h"

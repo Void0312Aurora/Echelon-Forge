@@ -4,7 +4,6 @@
 
 #include <flecs.h>
 
-#include "components/physics/action.h"
 #include "components/basic/common.h"
 #include "components/physics/performance.h"
 

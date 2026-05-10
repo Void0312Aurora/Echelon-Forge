@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import base64
+import copy
+import json
 import unittest
 
 import numpy as np
@@ -21,12 +22,6 @@ from python.scenario_runtime import (  # noqa: E402
     build_compiled_world_layout,
     load_compiled_scenario_batch,
     prepare_scenario_world_layout,
-)
-from tools.diagnostics.generate_exact_world_step_first_scope_chain_trace import (  # noqa: E402
-    generate_cpu_exact_world_step_first_scope_chain_trace,
-)
-from tools.diagnostics.generate_exact_world_step_missile_guidance_trace import (  # noqa: E402
-    spawn_runtime_from_guidance_trace,
 )
 
 
@@ -180,6 +175,98 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(batch.worker_threads()), 8)
         self.assertEqual(int(batch.effective_worker_threads()), 3)
 
+    def test_world_batch_runtime_step_execution_episode_results_batch_transitions_state(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+
+        ref = _entity_ref(0, 77)
+        state = ef_py.ExecutionEpisodeState()
+        state.agent_id = 77
+        state.has_mission_command = True
+        state.mission_command.command_code = 3
+        state.mission_command.cmd_heading_deg = 90.0
+        state.mission_command.cmd_altitude_m = 1200.0
+        state.mission_command.cmd_speed_mps = 180.0
+        state.mission_command.active = True
+        state.has_mission_command_json = True
+        state.mission_command_json = json.dumps(
+            {
+                "command_code": 3,
+                "route_ref_id": 77,
+                "target_altitude": 1200.0,
+                "target_heading": 90.0,
+                "target_speed": 180.0,
+                "waypoint_mode": "flyby",
+                "waypoints": [
+                    {"x": -1350.0, "y": 0.0, "z": 1200.0, "radius_m": 1200.0},
+                ],
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+        route_waypoint = ef_py.SpatialRouteWaypoint()
+        route_waypoint.x_m = -1350.0
+        route_waypoint.y_m = 0.0
+        route_waypoint.z_m = 1200.0
+        route_waypoint.radius_m = 1200.0
+        route_waypoint.altitude_m = 1200.0
+        route_waypoint.speed_mps = 180.0
+        route_waypoint.waypoint_mode = "flyby"
+        state.route_waypoints = [route_waypoint]
+        state.has_post_waypoint_transition_json = True
+        state.post_waypoint_transition_json = json.dumps(
+            {
+                "command_code": 2,
+                "phase_name": "post_route",
+                "target_altitude": 900.0,
+                "target_heading": 45.0,
+                "target_speed": 160.0,
+                "transition_reward": 123.0,
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+        batch.prime_execution_episode_controller_batch([ref], [state])
+
+        request = ef_py.WorldExecutionEpisodeStepRequest()
+        request.world_index = 0
+        request.entity_id = 77
+        request.config = ef_py.StepEvaluationBatchConfig()
+        request.env_state.steps = 1
+        request.env_state.truth_x = -1400.0
+        request.env_state.truth_y = 0.0
+        request.env_state.truth_z = 1200.0
+        request.env_state.truth_speed = 180.0
+        request.env_state.has_safety = True
+        request.env_state.safety.finite_state_valid = True
+        request.env_state.safety.health = 100.0
+        request.env_state.safety.survival_reward = 0.02
+        request.env_state.has_waypoint = True
+        request.env_state.waypoint.valid = True
+        request.env_state.waypoint.waypoint_index = 0
+        request.env_state.waypoint.waypoint_count = 1
+        request.env_state.waypoint.dist_m = 50.0
+        request.env_state.waypoint.waypoint_radius_m = 1200.0
+        request.env_state.waypoint.has_prev_dist = True
+        request.env_state.waypoint.prev_dist_m = 120.0
+        request.env_state.waypoint.progress_weight = 0.1
+        request.env_state.waypoint.distance_weight = -0.001
+        request.env_state.waypoint.reached_bonus = 20.0
+
+        results = batch.step_execution_episode_results_batch([request])
+
+        self.assertEqual(len(results), 1)
+        result = results[0]
+        self.assertTrue(bool(result.valid))
+        self.assertTrue(bool(result.structural_state_changed))
+        self.assertEqual(int(result.controller_state.mission_command.command_code), 2)
+        self.assertEqual(str(result.controller_state.mission_phase_name), "post_route")
+        self.assertEqual(len(list(result.controller_state.route_waypoints)), 0)
+        self.assertAlmostEqual(
+            float(json.loads(str(result.controller_state.last_reward_breakdown_json))["phase_transition_bonus"]),
+            123.0,
+            places=6,
+        )
+
     def test_world_batch_runtime_steps_and_reads_observations(self) -> None:
         batch = ef_py.WorldBatchRuntime(2)
         self.assertEqual(int(batch.world_count()), 2)
@@ -226,321 +313,6 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertGreaterEqual(float(obs[0].sim_time), 0.05)
         self.assertGreaterEqual(float(obs[1].sim_time), 0.05)
         self.assertNotEqual(float(obs[0].x), float(obs[1].x))
-
-    def test_world_batch_runtime_exact_step_backend_unprimed_falls_back_to_cpu_step(self) -> None:
-        batch = ef_py.WorldBatchRuntime(1)
-        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
-        batch.set_time_step(0.05)
-        batch.reset_batch([17])
-
-        entity_id = batch.world(0).spawn_unit(
-            ef_py.Side.Blue,
-            "Aircraft",
-            -1400.0,
-            0.0,
-            1200.0,
-            90.0,
-            0.0,
-            0.0,
-            180.0,
-            0.0,
-            0.0,
-        )
-        batch.set_exact_world_step_backend(ef_py.WorldBatchExactStepBackend.ExactFirstScopeChainCachedCpu)
-        self.assertEqual(
-            batch.exact_world_step_backend(),
-            ef_py.WorldBatchExactStepBackend.ExactFirstScopeChainCachedCpu,
-        )
-        self.assertFalse(bool(batch.exact_world_step_backend_ready()))
-
-        batch.step_batch()
-        ref = _entity_ref(0, entity_id)
-        obs = batch.get_agent_observations_batch([ref])
-        self.assertEqual(len(obs), 1)
-        self.assertGreaterEqual(float(obs[0].sim_time), 0.05)
-
-    def test_world_batch_runtime_step_batch_exact_cached_cpu_backend_matches_direct_cached_session(self) -> None:
-        def make_runtime() -> tuple[ef_py.WorldBatchRuntime, list[ef_py.WorldEntityRef]]:
-            runtime = ef_py.WorldBatchRuntime(1)
-            self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-            runtime.reset_batch([101])
-            runtime.set_time_step(0.05)
-            world = runtime.world(0)
-            entity_id = world.spawn_unit(
-                ef_py.Side.Blue,
-                "F-16C_Block50",
-                -400.0,
-                150.0,
-                1400.0,
-                90.0,
-                0.0,
-                0.0,
-                190.0,
-                0.0,
-                0.0,
-            )
-            ref = ef_py.WorldEntityRef()
-            ref.world_index = 0
-            ref.entity_id = int(entity_id)
-            return runtime, [ref]
-
-        runtime_backend, refs_backend = make_runtime()
-        runtime_direct, refs_direct = make_runtime()
-
-        runtime_backend.prime_exact_world_step_first_scope_chain_cached_session(refs_backend)
-        runtime_direct.prime_exact_world_step_first_scope_chain_cached_session(refs_direct)
-        runtime_backend.set_exact_world_step_backend(
-            ef_py.WorldBatchExactStepBackend.ExactFirstScopeChainCachedCpu
-        )
-        self.assertTrue(bool(runtime_backend.exact_world_step_backend_ready()))
-
-        assignment_backend = ef_py.WorldPilotActionAssignment()
-        assignment_backend.world_index = 0
-        assignment_backend.entity_id = int(refs_backend[0].entity_id)
-        assignment_backend.action.stick_roll = 0.35
-        assignment_backend.action.stick_pitch = 0.10
-        assignment_backend.action.rudder = 0.0
-        assignment_backend.action.throttle = 0.85
-        assignment_backend.action.active = True
-
-        assignment_direct = ef_py.WorldPilotActionAssignment()
-        assignment_direct.world_index = 0
-        assignment_direct.entity_id = int(refs_direct[0].entity_id)
-        assignment_direct.action.stick_roll = float(assignment_backend.action.stick_roll)
-        assignment_direct.action.stick_pitch = float(assignment_backend.action.stick_pitch)
-        assignment_direct.action.rudder = float(assignment_backend.action.rudder)
-        assignment_direct.action.throttle = float(assignment_backend.action.throttle)
-        assignment_direct.action.active = bool(assignment_backend.action.active)
-
-        runtime_backend.set_pilot_actions_batch([assignment_backend])
-        runtime_direct.set_pilot_actions_batch([assignment_direct])
-        runtime_direct.set_pilot_actions_exact_world_step_first_scope_chain_cached_session([assignment_direct])
-
-        runtime_backend.step_batch()
-        direct_packed = bytes(runtime_direct.step_exact_world_step_first_scope_chain_cached_session_packed(False, True))
-        backend_packed = bytes(runtime_backend.extract_exact_world_step_states_v1_batch_packed(refs_backend))
-        live_backend_packed = bytes(runtime_backend.extract_exact_world_step_first_scope_chain_cached_session_packed())
-
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(direct_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(backend_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(direct_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(backend_packed)],
-        )
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(backend_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(live_backend_packed)),
-        )
-        stats = runtime_backend.last_exact_world_step_first_scope_chain_cached_session_stats()
-        self.assertFalse(bool(stats.used_gpu))
-        self.assertEqual(int(stats.state_count), 1)
-        self.assertGreaterEqual(float(stats.step_total_ms), 0.0)
-
-    def test_world_batch_runtime_step_batch_exact_cached_cpu_backend_lazy_syncs_live_world_on_access(self) -> None:
-        runtime = ef_py.WorldBatchRuntime(1)
-        self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-        runtime.reset_batch([131])
-        runtime.set_time_step(0.05)
-
-        entity_id = runtime.world(0).spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            -400.0,
-            150.0,
-            1400.0,
-            90.0,
-            0.0,
-            0.0,
-            190.0,
-            0.0,
-            0.0,
-        )
-        ref = _entity_ref(0, entity_id)
-
-        runtime.prime_exact_world_step_first_scope_chain_cached_session([ref])
-        runtime.set_exact_world_step_backend(
-            ef_py.WorldBatchExactStepBackend.ExactFirstScopeChainCachedCpu
-        )
-
-        assignment = ef_py.WorldPilotActionAssignment()
-        assignment.world_index = 0
-        assignment.entity_id = int(entity_id)
-        assignment.action.stick_roll = 0.35
-        assignment.action.stick_pitch = 0.10
-        assignment.action.rudder = 0.0
-        assignment.action.throttle = 0.85
-        assignment.action.active = True
-        runtime.set_pilot_actions_batch([assignment])
-
-        runtime.step_batch()
-        stats = runtime.last_exact_world_step_first_scope_chain_cached_session_stats()
-        self.assertAlmostEqual(float(stats.write_back_ms), 0.0, places=9)
-
-        obs = runtime.world(0).get_agent_observation(int(entity_id))
-        self.assertGreaterEqual(float(obs.sim_time), 0.05)
-
-        cached_packed = bytes(runtime.extract_exact_world_step_first_scope_chain_cached_session_packed())
-        live_packed = bytes(runtime.extract_exact_world_step_states_v1_batch_packed([ref]))
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(cached_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(live_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(cached_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(live_packed)],
-        )
-
-    def test_world_batch_runtime_step_batch_exact_cached_gpu_backend_defers_materialize_until_access(self) -> None:
-        info = ef_py.probe_gpu_device()
-        if not bool(info.cuda_runtime_available):
-            self.skipTest("CUDA runtime is not available")
-
-        runtime = ef_py.WorldBatchRuntime(1)
-        self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-        runtime.reset_batch([137])
-        runtime.set_time_step(0.05)
-
-        entity_id = runtime.world(0).spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            -400.0,
-            150.0,
-            1400.0,
-            90.0,
-            0.0,
-            0.0,
-            190.0,
-            0.0,
-            0.0,
-        )
-        ref = _entity_ref(0, entity_id)
-
-        runtime.prime_exact_world_step_first_scope_chain_cached_session([ref])
-        runtime.set_exact_world_step_backend(
-            ef_py.WorldBatchExactStepBackend.ExactFirstScopeChainCachedGpu
-        )
-
-        assignment = ef_py.WorldPilotActionAssignment()
-        assignment.world_index = 0
-        assignment.entity_id = int(entity_id)
-        assignment.action.stick_roll = 0.35
-        assignment.action.stick_pitch = 0.10
-        assignment.action.rudder = 0.0
-        assignment.action.throttle = 0.85
-        assignment.action.active = True
-        runtime.set_pilot_actions_batch([assignment])
-
-        runtime.step_batch()
-        stats = runtime.last_exact_world_step_first_scope_chain_cached_session_stats()
-        self.assertTrue(bool(stats.used_gpu))
-        self.assertAlmostEqual(float(stats.write_back_ms), 0.0, places=9)
-        self.assertAlmostEqual(float(stats.chain_command_lane_ms), 0.0, places=9)
-        self.assertAlmostEqual(float(stats.chain_device_to_host_ms), 0.0, places=9)
-
-        cached_packed = bytes(runtime.extract_exact_world_step_first_scope_chain_cached_session_packed())
-        live_packed = bytes(runtime.extract_exact_world_step_states_v1_batch_packed([ref]))
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(cached_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(live_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(cached_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(live_packed)],
-        )
-
-    def test_world_batch_runtime_step_batch_exact_cached_gpu_backend_reuses_resident_no_sync_second_step(self) -> None:
-        info = ef_py.probe_gpu_device()
-        if not bool(info.cuda_runtime_available):
-            self.skipTest("CUDA runtime is not available")
-
-        runtime = ef_py.WorldBatchRuntime(1)
-        self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-        runtime.reset_batch([139])
-        runtime.set_time_step(0.05)
-
-        entity_id = runtime.world(0).spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            -400.0,
-            150.0,
-            1400.0,
-            90.0,
-            0.0,
-            0.0,
-            190.0,
-            0.0,
-            0.0,
-        )
-        ref = _entity_ref(0, entity_id)
-
-        runtime.prime_exact_world_step_first_scope_chain_cached_session([ref])
-        runtime.set_exact_world_step_backend(
-            ef_py.WorldBatchExactStepBackend.ExactFirstScopeChainCachedGpu
-        )
-
-        assignment = ef_py.WorldPilotActionAssignment()
-        assignment.world_index = 0
-        assignment.entity_id = int(entity_id)
-        assignment.action.stick_roll = 0.20
-        assignment.action.stick_pitch = 0.05
-        assignment.action.rudder = 0.0
-        assignment.action.throttle = 0.80
-        assignment.action.active = True
-        runtime.set_pilot_actions_batch([assignment])
-
-        runtime.step_batch()
-        runtime.step_batch()
-
-        stats = runtime.last_exact_world_step_first_scope_chain_cached_session_stats()
-        self.assertTrue(bool(stats.used_gpu))
-        self.assertAlmostEqual(float(stats.write_back_ms), 0.0, places=9)
-        self.assertAlmostEqual(float(stats.chain_command_lane_ms), 0.0, places=9)
-        self.assertAlmostEqual(float(stats.chain_host_to_device_ms), 0.0, places=9)
-        self.assertAlmostEqual(float(stats.chain_device_to_host_ms), 0.0, places=9)
-
-        cached_packed = bytes(runtime.extract_exact_world_step_first_scope_chain_cached_session_packed())
-        live_packed = bytes(runtime.extract_exact_world_step_states_v1_batch_packed([ref]))
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(cached_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(live_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(cached_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(live_packed)],
-        )
-
-    def test_world_batch_runtime_reset_clears_exact_step_backend_session(self) -> None:
-        runtime = ef_py.WorldBatchRuntime(1)
-        self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-        runtime.reset_batch([33])
-        runtime.set_time_step(0.05)
-        world = runtime.world(0)
-        entity_id = world.spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            -400.0,
-            150.0,
-            1400.0,
-            90.0,
-            0.0,
-            0.0,
-            190.0,
-            0.0,
-            0.0,
-        )
-        ref = _entity_ref(0, entity_id)
-        runtime.prime_exact_world_step_first_scope_chain_cached_session([ref])
-        runtime.set_exact_world_step_backend(ef_py.WorldBatchExactStepBackend.ExactFirstScopeChainCachedCpu)
-        self.assertTrue(bool(runtime.exact_world_step_backend_ready()))
-
-        runtime.clear_exact_world_step_backend_session()
-        self.assertFalse(bool(runtime.exact_world_step_backend_ready()))
-
-        runtime.prime_exact_world_step_first_scope_chain_cached_session([ref])
-        runtime.reset_batch([34])
-        self.assertFalse(bool(runtime.exact_world_step_backend_ready()))
 
     def test_world_batch_runtime_applies_world_setup_batch(self) -> None:
         batch = ef_py.WorldBatchRuntime(2)
@@ -1045,306 +817,164 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         self.assertNotIn(int(foe_far), comm_ids)
         self.assertNotIn(int(lead), comm_ids)
 
-    def test_world_batch_runtime_packed_flight_state_experiment_can_roundtrip_live_worlds(self) -> None:
-        batch = ef_py.WorldBatchRuntime(2)
-        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
-        batch.reset_batch([19, 23])
-        batch.set_time_step(0.05)
+    def test_world_batch_runtime_execution_episode_controller_batch_prime_exports_state(self) -> None:
+        runtime = ef_py.WorldBatchRuntime(2)
+        self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
+        runtime.reset_batch([181, 191])
 
-        eid0 = batch.world(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -500.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-        eid1 = batch.world(1).spawn_unit(ef_py.Side.Blue, "Aircraft", -900.0, 200.0, 1300.0, 45.0, 0.0, 0.0, 50.0, 170.0, 0.0)
+        refs: list[ef_py.WorldEntityRef] = []
+        states: list[ef_py.ExecutionEpisodeState] = []
 
-        cmd0 = ef_py.MissionCommand()
-        cmd0.command_code = 2
-        cmd0.cmd_heading_deg = 45.0
-        cmd0.cmd_altitude_m = 1500.0
-        cmd0.cmd_speed_mps = 220.0
-        cmd0.active = True
-        batch.world(0).set_mission_command(int(eid0), cmd0)
+        for world_index, seed in enumerate((181, 191)):
+            loader = ScenarioLoader(runtime.world(world_index))
+            loader.set_execution_step_runtime_mode("compiled")
+            agent_id = loader.load_scenario_data(copy.deepcopy(_inline_route_scenario()), seed=seed)
+            self.assertIsNotNone(agent_id)
 
-        cmd1 = ef_py.MissionCommand()
-        cmd1.command_code = 3
-        cmd1.cmd_heading_deg = 120.0
-        cmd1.cmd_altitude_m = 900.0
-        cmd1.cmd_speed_mps = 160.0
-        cmd1.active = True
-        batch.world(1).set_mission_command(int(eid1), cmd1)
+            loader.steps = 7 + world_index
+            loader.waypoint_idx = 1
+            loader._waypoint_prev_dist_m = 875.0 - (25.0 * world_index)
+            loader._waypoint_leg_origin_x = -1400.0 + (10.0 * world_index)
+            loader._waypoint_leg_origin_y = 15.0 * world_index
+            loader.waypoint_total_route_length_m = 4200.0 + (100.0 * world_index)
+            loader.prev_alt = 1185.0 + world_index
+            loader.prev_speed = 176.0 + world_index
+            loader.liftoff_awarded = bool(world_index % 2 == 0)
+            loader.gear_bonus_awarded = bool(world_index % 2 == 1)
+            loader.off_runway_steps = 1 + world_index
+            loader._approach_prev_dme_m = 4567.0 + world_index
+            loader._approach_prev_loc_abs = 0.12 + (0.01 * world_index)
+            loader._approach_prev_gs_abs = 0.08 + (0.01 * world_index)
 
-        refs = [_entity_ref(0, int(eid0)), _entity_ref(1, int(eid1))]
-        extracted = batch.extract_packed_flight_states_batch(refs)
-        reference = ef_py.step_world_batch_state_batch_reference(extracted, 16)
-        experiment = batch.step_packed_flight_states_experiment_batch(refs, 16, False, False)
+            refs.append(_entity_ref(world_index, int(agent_id)))
+            states.append(loader.build_execution_episode_state())
 
-        self.assertEqual(len(reference), len(experiment))
-        for ref_state, exp_state in zip(reference, experiment):
-            self.assertAlmostEqual(float(ref_state.x_m), float(exp_state.x_m), places=9)
-            self.assertAlmostEqual(float(ref_state.y_m), float(exp_state.y_m), places=9)
-            self.assertAlmostEqual(float(ref_state.z_m), float(exp_state.z_m), places=9)
-            self.assertAlmostEqual(float(ref_state.vx_mps), float(exp_state.vx_mps), places=9)
-            self.assertAlmostEqual(float(ref_state.vy_mps), float(exp_state.vy_mps), places=9)
-            self.assertAlmostEqual(float(ref_state.vz_mps), float(exp_state.vz_mps), places=9)
-            self.assertAlmostEqual(float(ref_state.fuel_kg), float(exp_state.fuel_kg), places=9)
+        runtime.prime_execution_episode_controller_batch(refs, states)
 
-        batch.step_packed_flight_states_experiment_batch(refs, 16, False, True)
-        after = batch.extract_packed_flight_states_batch(refs)
-        for ref_state, applied_state in zip(reference, after):
-            self.assertAlmostEqual(float(ref_state.x_m), float(applied_state.x_m), places=9)
-            self.assertAlmostEqual(float(ref_state.y_m), float(applied_state.y_m), places=9)
-            self.assertAlmostEqual(float(ref_state.z_m), float(applied_state.z_m), places=9)
-            self.assertAlmostEqual(float(ref_state.vx_mps), float(applied_state.vx_mps), places=9)
-            self.assertAlmostEqual(float(ref_state.vy_mps), float(applied_state.vy_mps), places=9)
-            self.assertAlmostEqual(float(ref_state.vz_mps), float(applied_state.vz_mps), places=9)
+        self.assertTrue(bool(runtime.execution_episode_controller_ready(0)))
+        self.assertTrue(bool(runtime.execution_episode_controller_ready(1)))
 
-    def test_world_batch_runtime_first_scope_chain_experiment_cpu_matches_trace(self) -> None:
-        trace = generate_cpu_exact_world_step_first_scope_chain_trace(seed=47, time_step_s=0.05)
-        runtime, refs, _ = spawn_runtime_from_guidance_trace(trace)
+        exported = runtime.export_execution_episode_states_batch(refs)
+        self.assertEqual(len(exported), len(states))
+        for actual, expected in zip(exported, states, strict=True):
+            self.assertTrue(bool(ef_py.execution_episode_states_equivalent(actual, expected)))
 
-        initial_packed = base64.b64decode(trace["initial_exact_state_packed_b64"].encode("ascii"))
-        expected_packed = base64.b64decode(trace["final_record"]["packed_exact_state_b64"].encode("ascii"))
-        runtime.apply_exact_world_step_states_v1_batch_packed(refs, initial_packed)
+        runtime.clear_execution_episode_controller_batch()
+        self.assertFalse(bool(runtime.execution_episode_controller_ready(0)))
+        self.assertFalse(bool(runtime.execution_episode_controller_ready(1)))
 
-        stepped_packed = bytes(
-            runtime.step_exact_world_step_first_scope_chain_experiment_batch_packed(refs, False, True)
-        )
-        applied_packed = bytes(runtime.extract_exact_world_step_states_v1_batch_packed(refs))
+    def test_world_batch_runtime_execution_episode_controller_batch_step_matches_loader_shadow(self) -> None:
+        runtime = ef_py.WorldBatchRuntime(2)
+        self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
+        runtime.reset_batch([211, 223])
 
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(expected_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(expected_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(stepped_packed)],
-        )
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(applied_packed)),
-        )
-        stats = ef_py.last_exact_world_step_first_scope_chain_cuda_stats()
-        self.assertFalse(bool(stats.used_cuda))
-        self.assertEqual(int(stats.state_count), 2)
-        self.assertEqual(int(stats.missile_count), 1)
+        refs: list[ef_py.WorldEntityRef] = []
+        primed_states: list[ef_py.ExecutionEpisodeState] = []
+        requests: list[ef_py.WorldExecutionEpisodeStepRequest] = []
+        expected_reports: list[dict] = []
+        loaders: list[ScenarioLoader] = []
 
-    def test_world_batch_runtime_first_scope_chain_experiment_gpu_matches_trace(self) -> None:
-        trace = generate_cpu_exact_world_step_first_scope_chain_trace(seed=53, time_step_s=0.05)
-        runtime, refs, _ = spawn_runtime_from_guidance_trace(trace)
+        for world_index, seed in enumerate((211, 223)):
+            loader = ScenarioLoader(runtime.world(world_index))
+            loader.set_execution_step_runtime_mode("compiled")
+            agent_id = loader.load_scenario_data(copy.deepcopy(_inline_route_scenario()), seed=seed)
+            self.assertIsNotNone(agent_id)
 
-        initial_packed = base64.b64decode(trace["initial_exact_state_packed_b64"].encode("ascii"))
-        expected_packed = base64.b64decode(trace["final_record"]["packed_exact_state_b64"].encode("ascii"))
-        runtime.apply_exact_world_step_states_v1_batch_packed(refs, initial_packed)
+            loader.steps = 3 + world_index
+            loader.waypoint_idx = 0
+            loader._waypoint_prev_dist_m = 950.0 - (40.0 * world_index)
+            loader._waypoint_leg_origin_x = -1400.0
+            loader._waypoint_leg_origin_y = 0.0
+            loader.waypoint_total_route_length_m = 4300.0 + (50.0 * world_index)
+            loader.prev_alt = 1180.0 + world_index
+            loader.prev_speed = 175.0 + world_index
+            loader.liftoff_awarded = True
+            loader.gear_bonus_awarded = bool(world_index % 2 == 0)
+            loader.off_runway_steps = world_index
+            loader._approach_prev_dme_m = 4300.0 + (100.0 * world_index)
+            loader._approach_prev_loc_abs = 0.10 + (0.01 * world_index)
+            loader._approach_prev_gs_abs = 0.07 + (0.01 * world_index)
 
-        stepped_packed = bytes(
-            runtime.step_exact_world_step_first_scope_chain_experiment_batch_packed(refs, True, True)
-        )
-        applied_packed = bytes(runtime.extract_exact_world_step_states_v1_batch_packed(refs))
-
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(expected_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(expected_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(stepped_packed)],
-        )
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(applied_packed)),
-        )
-        stats = ef_py.last_exact_world_step_first_scope_chain_cuda_stats()
-        self.assertTrue(bool(stats.used_cuda))
-        self.assertEqual(int(stats.state_count), 2)
-        self.assertEqual(int(stats.missile_count), 1)
-
-    def test_world_batch_runtime_first_scope_chain_experiment_runtime_resident_gpu_matches_trace(self) -> None:
-        info = ef_py.probe_gpu_device()
-        if not bool(info.cuda_runtime_available):
-            self.skipTest("CUDA runtime is not available")
-
-        trace = generate_cpu_exact_world_step_first_scope_chain_trace(seed=59, time_step_s=0.05)
-        runtime, refs, _ = spawn_runtime_from_guidance_trace(trace)
-
-        initial_packed = base64.b64decode(trace["initial_exact_state_packed_b64"].encode("ascii"))
-        expected_packed = base64.b64decode(trace["final_record"]["packed_exact_state_b64"].encode("ascii"))
-        runtime.apply_exact_world_step_states_v1_batch_packed(refs, initial_packed)
-
-        self.assertTrue(runtime.upload_exact_world_step_first_scope_chain_experiment_batch(refs))
-        self.assertTrue(runtime.replay_exact_world_step_first_scope_chain_experiment_device_sequence())
-        stepped_packed = bytes(
-            runtime.download_exact_world_step_first_scope_chain_experiment_batch_packed(True)
-        )
-        applied_packed = bytes(runtime.extract_exact_world_step_states_v1_batch_packed(refs))
-
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(expected_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(expected_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(stepped_packed)],
-        )
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(applied_packed)),
-        )
-        self.assertEqual(int(ef_py.last_exact_world_step_first_scope_chain_cuda_output_state_count()), 2)
-        self.assertGreater(int(ef_py.last_exact_world_step_first_scope_chain_cuda_output_device_ptr()), 0)
-        stats = ef_py.last_exact_world_step_first_scope_chain_cuda_stats()
-        self.assertTrue(bool(stats.used_cuda))
-        self.assertEqual(int(stats.state_count), 2)
-        self.assertEqual(int(stats.missile_count), 1)
-
-    def test_world_batch_runtime_first_scope_chain_cached_session_gpu_matches_trace(self) -> None:
-        info = ef_py.probe_gpu_device()
-        if not bool(info.cuda_runtime_available):
-            self.skipTest("CUDA runtime is not available")
-
-        trace = generate_cpu_exact_world_step_first_scope_chain_trace(seed=67, time_step_s=0.05)
-        runtime, refs, _ = spawn_runtime_from_guidance_trace(trace)
-
-        initial_packed = base64.b64decode(trace["initial_exact_state_packed_b64"].encode("ascii"))
-        expected_packed = base64.b64decode(trace["final_record"]["packed_exact_state_b64"].encode("ascii"))
-        runtime.apply_exact_world_step_states_v1_batch_packed(refs, initial_packed)
-
-        runtime.prime_exact_world_step_first_scope_chain_cached_session(refs)
-        prime_stats = runtime.last_exact_world_step_first_scope_chain_cached_session_stats()
-        self.assertEqual(int(prime_stats.state_count), 2)
-        self.assertGreaterEqual(float(prime_stats.prime_extract_ms), 0.0)
-        stepped_packed = bytes(
-            runtime.step_exact_world_step_first_scope_chain_cached_session_packed(True, True)
-        )
-        cached_packed = bytes(runtime.extract_exact_world_step_first_scope_chain_cached_session_packed())
-        applied_packed = bytes(runtime.extract_exact_world_step_states_v1_batch_packed(refs))
-
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(expected_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(expected_packed)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(stepped_packed)],
-        )
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(cached_packed)),
-        )
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_packed)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(applied_packed)),
-        )
-        stats = ef_py.last_exact_world_step_first_scope_chain_cuda_stats()
-        self.assertTrue(bool(stats.used_cuda))
-        self.assertEqual(int(stats.state_count), 2)
-        self.assertEqual(int(stats.missile_count), 1)
-        cached_stats = runtime.last_exact_world_step_first_scope_chain_cached_session_stats()
-        self.assertTrue(bool(cached_stats.used_gpu))
-        self.assertEqual(int(cached_stats.state_count), 2)
-        self.assertGreaterEqual(float(cached_stats.step_total_ms), 0.0)
-        self.assertGreaterEqual(float(cached_stats.write_back_ms), 0.0)
-
-    def test_world_batch_runtime_first_scope_chain_cached_session_gpu_two_steps_match_direct_chain(self) -> None:
-        info = ef_py.probe_gpu_device()
-        if not bool(info.cuda_runtime_available):
-            self.skipTest("CUDA runtime is not available")
-
-        trace = generate_cpu_exact_world_step_first_scope_chain_trace(seed=71, time_step_s=0.05)
-        runtime, refs, _ = spawn_runtime_from_guidance_trace(trace)
-        initial_packed = base64.b64decode(trace["initial_exact_state_packed_b64"].encode("ascii"))
-        runtime.apply_exact_world_step_states_v1_batch_packed(refs, initial_packed)
-
-        runtime.prime_exact_world_step_first_scope_chain_cached_session(refs)
-        _ = bytes(runtime.step_exact_world_step_first_scope_chain_cached_session_packed(True, False))
-        stepped_twice_packed = bytes(runtime.step_exact_world_step_first_scope_chain_cached_session_packed(True, False))
-
-        direct_once = bytes(ef_py.step_exact_world_step_first_scope_chain_cuda_packed(initial_packed, True))
-        direct_twice = bytes(ef_py.step_exact_world_step_first_scope_chain_cuda_packed(direct_once, True))
-
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(direct_twice)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(stepped_twice_packed)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(direct_twice)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(stepped_twice_packed)],
-        )
-
-    def test_world_batch_runtime_first_scope_chain_cached_session_pilot_action_updates_match_cpu(self) -> None:
-        info = ef_py.probe_gpu_device()
-        if not bool(info.cuda_runtime_available):
-            self.skipTest("CUDA runtime is not available")
-
-        def make_runtime() -> tuple[ef_py.WorldBatchRuntime, list[ef_py.WorldEntityRef]]:
-            runtime = ef_py.WorldBatchRuntime(1)
-            self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-            runtime.reset_batch([101])
-            runtime.set_time_step(0.05)
-            world = runtime.world(0)
-            entity_id = world.spawn_unit(
-                ef_py.Side.Blue,
-                "F-16C_Block50",
-                -400.0,
-                150.0,
-                1400.0,
-                90.0,
-                0.0,
-                0.0,
-                190.0,
-                0.0,
-                0.0,
+            truth = runtime.world(world_index).get_agent_observation(int(agent_id))
+            inst_obj = runtime.world(world_index).get_instrument_state(int(agent_id))
+            ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst_obj.alt_baro))
+            inst_vec, _, _ = ef_py.compute_execution_observation_runtime_numpy(
+                inst_obj,
+                truth,
+                float(ils_vec[0]),
+                float(ils_vec[1]),
+                float(ils_vec[2]),
+                float(ils_vec[3]),
+                int(loader.max_contacts),
+                int(loader.max_rwr),
             )
-            ref = ef_py.WorldEntityRef()
-            ref.world_index = 0
-            ref.entity_id = int(entity_id)
-            return runtime, [ref]
+            inst_vec = np.asarray(inst_vec, dtype=np.float32)
+            ils_vec = np.asarray(ils_vec[:4], dtype=np.float32)
+            mission_obs_mode = "nav_v2"
+            step_eval = loader._prepare_step_evaluation(
+                truth=truth,
+                inst_obj=inst_obj,
+                inst_vec=inst_vec,
+                ils_vec=ils_vec,
+                steps=int(loader.steps),
+                max_steps=loader.get_max_steps(),
+                mission_obs_mode=mission_obs_mode,
+            )
+            mission_inputs = step_eval.get("mission_observation_inputs")
+            batch_state = loader._build_step_evaluation_batch_env_state(
+                truth=truth,
+                inst_obj=inst_obj,
+                inst_vec=inst_vec,
+                ils_vec=ils_vec,
+                steps=int(loader.steps),
+                max_steps=loader.get_max_steps(),
+                mission_obs_mode=mission_obs_mode,
+                mission_observation_inputs=mission_inputs,
+            )
+            batch_state.has_episode_state = False
 
-        runtime_gpu, refs_gpu = make_runtime()
-        runtime_cpu, refs_cpu = make_runtime()
+            request = ef_py.WorldExecutionEpisodeStepRequest()
+            request.world_index = int(world_index)
+            request.entity_id = int(agent_id)
+            request.config = loader._build_execution_episode_controller_shadow_config()
+            request.env_state = batch_state
 
-        runtime_gpu.prime_exact_world_step_first_scope_chain_cached_session(refs_gpu)
-        runtime_cpu.prime_exact_world_step_first_scope_chain_cached_session(refs_cpu)
-        initial_gpu = bytes(runtime_gpu.extract_exact_world_step_first_scope_chain_cached_session_packed())
+            report = loader.compare_execution_episode_controller_shadow(
+                truth=truth,
+                inst_obj=inst_obj,
+                inst_vec=inst_vec,
+                ils_vec=ils_vec,
+                steps=int(loader.steps),
+                max_steps=loader.get_max_steps(),
+                mission_obs_mode=mission_obs_mode,
+                advance_state=True,
+            )
+            self.assertTrue(bool(report["comparison"]["overall_match"]), msg=str(report["comparison"]))
 
-        action_assignments = []
-        for stick_roll, throttle in ((0.35, 0.85), (-0.20, 0.65)):
-            assignment_gpu = ef_py.WorldPilotActionAssignment()
-            assignment_gpu.world_index = 0
-            assignment_gpu.entity_id = int(refs_gpu[0].entity_id)
-            assignment_gpu.action.stick_roll = float(stick_roll)
-            assignment_gpu.action.stick_pitch = 0.10
-            assignment_gpu.action.rudder = 0.0
-            assignment_gpu.action.throttle = float(throttle)
-            assignment_gpu.action.active = True
-            action_assignments.append(assignment_gpu)
+            refs.append(_entity_ref(world_index, int(agent_id)))
+            primed_states.append(loader.build_execution_episode_state())
+            requests.append(request)
+            expected_reports.append(report)
+            loaders.append(loader)
 
-        for assignment in action_assignments:
-            runtime_gpu.set_pilot_actions_exact_world_step_first_scope_chain_cached_session([assignment])
-            runtime_gpu.step_exact_world_step_first_scope_chain_cached_session_packed(True, False)
+        runtime.prime_execution_episode_controller_batch(refs, primed_states)
+        products = runtime.step_execution_episode_batch(requests)
+        exported_states = runtime.export_execution_episode_states_batch(refs)
 
-            assignment_cpu = ef_py.WorldPilotActionAssignment()
-            assignment_cpu.world_index = int(assignment.world_index)
-            assignment_cpu.entity_id = int(refs_cpu[0].entity_id)
-            assignment_cpu.action.stick_roll = float(assignment.action.stick_roll)
-            assignment_cpu.action.stick_pitch = float(assignment.action.stick_pitch)
-            assignment_cpu.action.rudder = float(assignment.action.rudder)
-            assignment_cpu.action.throttle = float(assignment.action.throttle)
-            assignment_cpu.action.active = bool(assignment.action.active)
-            runtime_cpu.set_pilot_actions_exact_world_step_first_scope_chain_cached_session([assignment_cpu])
-            runtime_cpu.step_exact_world_step_first_scope_chain_cached_session_packed(False, False)
-
-        final_gpu = bytes(runtime_gpu.extract_exact_world_step_first_scope_chain_cached_session_packed())
-        final_cpu = bytes(runtime_cpu.extract_exact_world_step_first_scope_chain_cached_session_packed())
-
-        self.assertNotEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(initial_gpu)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(final_gpu)),
-        )
-        self.assertEqual(
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(final_cpu)),
-            list(ef_py.exact_world_step_states_v1_apply_signatures_packed(final_gpu)),
-        )
-        self.assertEqual(
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(final_cpu)],
-            [dict(item) for item in ef_py.exact_world_step_state_v1_component_digests_packed(final_gpu)],
-        )
+        self.assertEqual(len(products), len(expected_reports))
+        self.assertEqual(len(exported_states), len(expected_reports))
+        for world_index, (loader, actual_products, report, actual_state) in enumerate(
+            zip(loaders, products, expected_reports, exported_states, strict=True)
+        ):
+            comparison = loader._compare_execution_episode_runtime_products(
+                report["shadow_frame_products"],
+                actual_products,
+            )
+            self.assertTrue(bool(comparison["overall_match"]), msg=f"world={world_index}: {comparison}")
+            self.assertTrue(
+                bool(ef_py.execution_episode_states_equivalent(actual_state, report["shadow_state"])),
+                msg=f"world={world_index}: exported runtime-owned state diverged from shadow state",
+            )
 
 
 if __name__ == "__main__":

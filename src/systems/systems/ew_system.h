@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 #include "components/basic/common.h"
 #include "components/basic/tags.h"
-#include "components/physics/action.h"
+#include "components/command/legacy_command.h"
 #include "components/systems/ew.h"
 
 inline void register_ew_system(flecs::world& ecs) {

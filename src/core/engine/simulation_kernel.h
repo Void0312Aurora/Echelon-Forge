@@ -9,7 +9,13 @@
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
-#include "components/physics/action.h"
+#include "components/command/command_link.h"
+#include "components/command/legacy_command.h"
+#include "components/command/mission_command.h"
+#include "components/command/pilot_action.h"
+#include "components/tasking/leader_intent.h"
+#include "components/tasking/pilot_report.h"
+#include "components/tasking/task_order.h"
 #include "components/systems/sensor.h"
 #include "components/systems/comm.h"
 #include "components/basic/tags.h"
@@ -172,6 +178,8 @@ public:
     void set_missile_tuning(const MissileTuning& tuning);
 
 private:
+    void register_components_and_systems();
+
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
     

@@ -52,6 +52,12 @@ FetchContent_MakeAvailable(nlohmann_json)
 # --- Core Library ---
 add_library(ef_core STATIC
     src/core/engine/simulation_kernel.cpp
+    src/core/engine/simulation_kernel_systems.cpp
+    src/core/engine/simulation_kernel_command_api.cpp
+    src/core/engine/simulation_kernel_observation_api.cpp
+    src/core/engine/simulation_kernel_visual_api.cpp
+    src/core/engine/simulation_kernel_weapon_api.cpp
+    src/core/engine/exact_stage_inventory.cpp
     src/core/engine/world_batch_runtime.cpp
     src/core/geometry/spatial_query_runtime.cpp
     src/core/mission/execution_observation_runtime.cpp
@@ -59,9 +65,13 @@ add_library(ef_core STATIC
     src/core/mission/execution_step_runtime.cpp
     src/core/mission/execution_frame_runtime.cpp
     src/core/mission/execution_episode_runtime.cpp
+    src/core/mission/execution_episode_state.cpp
+    src/core/mission/execution_episode_batch_prepare.cpp
+    src/core/mission/execution_episode_controller.cpp
     src/core/mission/reward_runtime.cpp
     src/core/mission/objective_runtime.cpp
     src/core/mission/termination_runtime.cpp
+    src/runtime/facade/runtime_facade.cpp
     src/models/weapons/default_effects_model.cpp
     src/models/systems/default_sensor_model.cpp
     src/models/environment/default_environment_model.cpp
@@ -88,28 +98,25 @@ add_executable(ef_app src/main.cpp)
 target_link_libraries(ef_app PRIVATE ef_core)
 
 # --- Python Module ---
-nanobind_add_module(ef_py src/interfaces/python/python_module.cpp)
+nanobind_add_module(ef_py
+    src/interfaces/python/python_module.cpp
+    src/interfaces/python/bindings_command.cpp
+    src/interfaces/python/bindings_core.cpp
+    src/interfaces/python/bindings_episode.cpp
+    src/interfaces/python/bindings_runtime.cpp
+    src/interfaces/python/bindings_gpu.cpp
+)
 target_link_libraries(ef_py PRIVATE ef_core)
 
 # --- Experimental GPU Scaffolding ---
-set(EF_GPU_EXPERIMENT_SOURCES
-    src/gpu/gpu_exact_world_step_contract.cpp
-    src/gpu/gpu_exact_world_step_command_lane_runtime.cpp
-    src/gpu/gpu_exact_world_step_front_half_runtime.cpp
-    src/gpu/gpu_exact_world_step_control_aero_runtime.cpp
-    src/gpu/gpu_exact_world_step_force_ground_runtime.cpp
-    src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp
-    src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp
-    src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp
-    src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp
-    src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp
-    src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp
-    src/gpu/gpu_exact_world_step_runtime.cpp
+set(EF_GPU_MAINTAINED_HELPER_SOURCES
     src/gpu/gpu_visual_runtime.cpp
     src/gpu/gpu_execution_observation_runtime.cpp
     src/gpu/gpu_flight_shaping_runtime.cpp
     src/gpu/gpu_interaction_broadphase_runtime.cpp
-    src/gpu/gpu_world_batch_runtime.cpp
+)
+set(EF_GPU_EXPERIMENT_SOURCES
+    ${EF_GPU_MAINTAINED_HELPER_SOURCES}
 )
 
 if (EF_ENABLE_CUDA_EXPERIMENTS)
@@ -120,33 +127,6 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
         src/gpu/gpu_execution_observation_runtime_cuda.cu
         src/gpu/gpu_flight_shaping_runtime_cuda.cu
         src/gpu/gpu_interaction_broadphase_runtime_cuda.cu
-        src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu
-        src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu
-        src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu
-        src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu
-        src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu
-        src/gpu/gpu_exact_world_step_runtime_cuda.cu
-        src/gpu/gpu_world_batch_runtime_cuda.cu
-    )
-    set_source_files_properties(
-        src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu
-        PROPERTIES COMPILE_OPTIONS "--fmad=false"
-    )
-    set_source_files_properties(
-        src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu
-        PROPERTIES COMPILE_OPTIONS "--fmad=false"
-    )
-    set_source_files_properties(
-        src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu
-        PROPERTIES COMPILE_OPTIONS "--fmad=false"
-    )
-    set_source_files_properties(
-        src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu
-        PROPERTIES COMPILE_OPTIONS "--fmad=false"
-    )
-    set_source_files_properties(
-        src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu
-        PROPERTIES COMPILE_OPTIONS "--fmad=false"
     )
 endif()
 
@@ -171,58 +151,51 @@ endif()
 target_link_libraries(ef_py PRIVATE ef_gpu_experiments)
 
 add_executable(ef_gpu_visual_phase0_probe
-    src/tools/gpu_visual_phase0_probe.cpp
+    src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_visual_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
 add_executable(ef_gpu_execution_observation_phase0_probe
-    src/tools/gpu_execution_observation_phase0_probe.cpp
+    src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_execution_observation_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
 add_executable(ef_gpu_flight_shaping_phase0_probe
-    src/tools/gpu_flight_shaping_phase0_probe.cpp
+    src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_flight_shaping_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
 add_executable(ef_gpu_interaction_broadphase_phase0_probe
-    src/tools/gpu_interaction_broadphase_phase0_probe.cpp
+    src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_interaction_broadphase_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
 add_executable(ef_gpu_sensor_candidate_phase0_probe
-    src/tools/gpu_sensor_candidate_phase0_probe.cpp
+    src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_sensor_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
 add_executable(ef_gpu_comm_candidate_phase0_probe
-    src/tools/gpu_comm_candidate_phase0_probe.cpp
+    src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_comm_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
 add_executable(ef_gpu_visual_candidate_phase0_probe
-    src/tools/gpu_visual_candidate_phase0_probe.cpp
+    src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp
 )
 target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE
-    ef_gpu_experiments
-)
-
-add_executable(ef_gpu_world_batch_phase0_probe
-    src/tools/gpu_world_batch_phase0_probe.cpp
-)
-target_link_libraries(ef_gpu_world_batch_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 

@@ -2,7 +2,8 @@
 #include "core/interfaces/environment_model.h"
 
 #include "components/physics/performance.h"
-#include "components/physics/action.h"
+#include "components/command/mission_command.h"
+#include "components/command/pilot_action.h"
 #include "components/physics/control_law.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"

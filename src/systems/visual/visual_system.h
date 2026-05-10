@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include "components/visual/visual_sensor.h"
 #include "components/basic/common.h"
-#include "components/physics/action.h"
 #include "core/interfaces/environment_model.h"
 
 namespace arb {

@@ -99,6 +99,20 @@ def normalize_flight_shaping_backend(backend: str | None) -> str:
     return normalized
 
 
+def _stable_json_dumps(value) -> str:
+    return json.dumps(value, ensure_ascii=True, sort_keys=True)
+
+
+def _safe_json_dict_loads(raw: str | None) -> dict | None:
+    if raw is None:
+        return None
+    try:
+        data = json.loads(str(raw))
+    except Exception:
+        return None
+    return data if isinstance(data, dict) else None
+
+
 class ScenarioLoader:
     def __init__(self, sim_kernel):
         self.sim = sim_kernel
@@ -116,6 +130,8 @@ class ScenarioLoader:
         self.waypoint_idx: int = 0
         self._waypoint_prev_dist_m: float | None = None
         self.waypoint_total_route_length_m: float = 0.0
+        self._waypoint_leg_origin_x: float = 0.0
+        self._waypoint_leg_origin_y: float = 0.0
         
         # Property Map for generic access
         self.prop_map = {
@@ -156,6 +172,11 @@ class ScenarioLoader:
         self._safety_reward_cfg = SafetyRewardConfig()
         self._lnav_runtime_cfg = LNavRuntimeConfig()
         self._cached_route_ref_id: int | None = None
+        self.prev_alt = 0.0
+        self.prev_speed = 0.0
+        self.gear_bonus_awarded = False
+        self.liftoff_awarded = False
+        self.off_runway_steps = 0
         self._runtime_eval_cache: dict[str, object] = {}
         self.set_execution_step_runtime_mode(None)
         self.set_flight_shaping_backend(None)
@@ -178,6 +199,210 @@ class ScenarioLoader:
 
     def reset_runtime_eval_cache(self) -> None:
         self._runtime_eval_cache = {}
+
+    def build_execution_episode_state(self):
+        if not hasattr(ef_py, "ExecutionEpisodeState"):
+            raise RuntimeError("ef_py.ExecutionEpisodeState is not available")
+
+        state = ef_py.ExecutionEpisodeState()
+        state.agent_id = int(self.agent_id or 0)
+        state.step_count = int(getattr(self, "steps", 0))
+
+        mission_cmd = getattr(self, "mission_cmd", None)
+        if isinstance(mission_cmd, dict):
+            state.has_mission_command_json = True
+            state.mission_command_json = _stable_json_dumps(
+                _clone_runtime_mission_command(mission_cmd)
+            )
+            try:
+                state.mission_command = build_kernel_mission_command(self)
+                state.has_mission_command = True
+            except Exception:
+                state.has_mission_command = False
+
+        route_waypoints = []
+        for wp in list(getattr(self, "waypoints", []) or []):
+            if not isinstance(wp, dict):
+                continue
+            route_wp = ef_py.SpatialRouteWaypoint()
+            route_wp.x_m = float(wp.get("x", 0.0))
+            route_wp.y_m = float(wp.get("y", 0.0))
+            route_wp.z_m = float(wp.get("z", wp.get("altitude_m", 0.0)))
+            route_wp.radius_m = float(wp.get("radius_m", 500.0))
+            route_wp.altitude_m = float(wp.get("altitude_m", route_wp.z_m))
+            route_wp.speed_mps = float(wp.get("speed_mps", 0.0))
+            route_wp.waypoint_mode = str(wp.get("waypoint_mode", "flyby"))
+            route_waypoints.append(route_wp)
+        state.route_waypoints = route_waypoints
+        state.waypoint_index = int(getattr(self, "waypoint_idx", 0) or 0)
+        state.waypoint_total_route_length_m = float(getattr(self, "waypoint_total_route_length_m", 0.0))
+        state.waypoint_leg_origin_x_m = float(getattr(self, "_waypoint_leg_origin_x", 0.0))
+        state.waypoint_leg_origin_y_m = float(getattr(self, "_waypoint_leg_origin_y", 0.0))
+        if getattr(self, "_waypoint_prev_dist_m", None) is not None:
+            state.has_waypoint_prev_dist_m = True
+            state.waypoint_prev_dist_m = float(self._waypoint_prev_dist_m)
+
+        state.prev_altitude_m = float(getattr(self, "prev_alt", 0.0))
+        state.prev_ias_mps = float(getattr(self, "prev_speed", 0.0))
+        state.liftoff_awarded = bool(getattr(self, "liftoff_awarded", False))
+        state.gear_bonus_awarded = bool(getattr(self, "gear_bonus_awarded", False))
+        state.off_runway_steps = int(getattr(self, "off_runway_steps", 0))
+
+        if getattr(self, "_approach_prev_dme_m", None) is not None:
+            state.has_approach_prev_dme_m = True
+            state.approach_prev_dme_m = float(self._approach_prev_dme_m)
+        if getattr(self, "_approach_prev_loc_abs", None) is not None:
+            state.has_approach_prev_loc_abs = True
+            state.approach_prev_loc_abs = float(self._approach_prev_loc_abs)
+        if getattr(self, "_approach_prev_gs_abs", None) is not None:
+            state.has_approach_prev_gs_abs = True
+            state.approach_prev_gs_abs = float(self._approach_prev_gs_abs)
+
+        post_waypoint_transition = getattr(self, "post_waypoint_transition", None)
+        if isinstance(post_waypoint_transition, dict) and post_waypoint_transition:
+            state.has_post_waypoint_transition_json = True
+            state.post_waypoint_transition_json = _stable_json_dumps(
+                _clone_runtime_mission_command(post_waypoint_transition)
+            )
+        state.mission_phase_name = str(getattr(self, "mission_phase_name", "idle") or "idle")
+
+        cached_route_ref_id = getattr(self, "_cached_route_ref_id", None)
+        if cached_route_ref_id is not None:
+            state.has_cached_route_ref_id = True
+            state.cached_route_ref_id = int(cached_route_ref_id)
+
+        reward_breakdown = dict(getattr(self, "last_reward_breakdown", {}) or {})
+        state.last_termination_reason = str(getattr(self, "last_termination_reason", "idle") or "idle")
+        state.last_reward_total = float(reward_breakdown.get("total", 0.0))
+        state.last_reward_breakdown_json = _stable_json_dumps(reward_breakdown)
+        return state
+
+    def apply_execution_episode_state(self, state) -> None:
+        if not hasattr(ef_py, "ExecutionEpisodeState") or not isinstance(state, ef_py.ExecutionEpisodeState):
+            raise TypeError("state must be an ef_py.ExecutionEpisodeState")
+
+        self.agent_id = int(state.agent_id) if int(state.agent_id) > 0 else None
+        self.steps = int(state.step_count)
+
+        mission_cmd = None
+        if bool(state.has_mission_command_json) and str(state.mission_command_json).strip():
+            mission_cmd = _safe_json_dict_loads(state.mission_command_json)
+        if not isinstance(mission_cmd, dict):
+            mission_cmd = {
+                "command_code": int(state.mission_command.command_code),
+                "target_heading": float(state.mission_command.cmd_heading_deg),
+                "target_altitude": float(state.mission_command.cmd_altitude_m),
+                "target_speed": float(state.mission_command.cmd_speed_mps),
+            }
+            if hasattr(state.mission_command, "route_ref_id"):
+                mission_cmd["route_ref_id"] = int(state.mission_command.route_ref_id)
+            if hasattr(state.mission_command, "recovery_base_id"):
+                mission_cmd["recovery_base_id"] = int(state.mission_command.recovery_base_id)
+            if hasattr(state.mission_command, "recovery_runway_id"):
+                mission_cmd["recovery_runway_id"] = int(state.mission_command.recovery_runway_id)
+
+        self.waypoints = []
+        for route_wp in list(state.route_waypoints):
+            self.waypoints.append(
+                {
+                    "x": float(route_wp.x_m),
+                    "y": float(route_wp.y_m),
+                    "z": float(route_wp.z_m),
+                    "radius_m": float(route_wp.radius_m),
+                    "altitude_m": float(route_wp.altitude_m),
+                    "speed_mps": float(route_wp.speed_mps),
+                    "waypoint_mode": str(route_wp.waypoint_mode),
+                }
+            )
+        if self.waypoints and not list(mission_cmd.get("waypoints", []) or []):
+            mission_cmd["waypoints"] = _clone_scenario_value(self.waypoints)
+
+        route_ref_id = int(state.cached_route_ref_id) if bool(state.has_cached_route_ref_id) else 0
+        if route_ref_id > 0:
+            mission_cmd["route_ref_id"] = int(route_ref_id)
+            cache_runtime_waypoint_cache(mission_cmd, self.waypoints, route_ref_id=route_ref_id)
+        else:
+            materialize_runtime_waypoint_cache(mission_cmd)
+
+        self.mission_cmd = mission_cmd
+        if isinstance(self.scenario_data, dict):
+            self.scenario_data["mission_command"] = self.mission_cmd
+
+        self.waypoint_idx = int(state.waypoint_index)
+        self._waypoint_prev_dist_m = (
+            float(state.waypoint_prev_dist_m) if bool(state.has_waypoint_prev_dist_m) else None
+        )
+        self.waypoint_total_route_length_m = float(state.waypoint_total_route_length_m)
+        self._waypoint_leg_origin_x = float(state.waypoint_leg_origin_x_m)
+        self._waypoint_leg_origin_y = float(state.waypoint_leg_origin_y_m)
+
+        self.prev_alt = float(state.prev_altitude_m)
+        self.prev_speed = float(state.prev_ias_mps)
+        self.liftoff_awarded = bool(state.liftoff_awarded)
+        self.gear_bonus_awarded = bool(state.gear_bonus_awarded)
+        self.off_runway_steps = int(state.off_runway_steps)
+
+        self._approach_prev_dme_m = (
+            float(state.approach_prev_dme_m) if bool(state.has_approach_prev_dme_m) else None
+        )
+        self._approach_prev_loc_abs = (
+            float(state.approach_prev_loc_abs) if bool(state.has_approach_prev_loc_abs) else None
+        )
+        self._approach_prev_gs_abs = (
+            float(state.approach_prev_gs_abs) if bool(state.has_approach_prev_gs_abs) else None
+        )
+
+        self.post_waypoint_transition = None
+        if bool(state.has_post_waypoint_transition_json) and str(state.post_waypoint_transition_json).strip():
+            self.post_waypoint_transition = _safe_json_dict_loads(state.post_waypoint_transition_json)
+        self.mission_phase_name = str(state.mission_phase_name or "idle")
+        self._cached_route_ref_id = route_ref_id if route_ref_id > 0 else None
+
+        reward_breakdown = _safe_json_dict_loads(state.last_reward_breakdown_json)
+        self.last_reward_breakdown = dict(reward_breakdown or {})
+        if "total" not in self.last_reward_breakdown:
+            self.last_reward_breakdown["total"] = float(state.last_reward_total)
+        self.last_termination_reason = str(state.last_termination_reason or "idle")
+        self._lnav_runtime_cfg = _build_lnav_runtime_config(self.mission_cmd)
+        self._cached_route_ref_id = int(self.mission_cmd.get("route_ref_id", self._cached_route_ref_id or 0)) or None
+        self._rebuild_spatial_geometry()
+
+    def apply_execution_episode_runtime_fields(self, state, *, include_navigation_state: bool = True) -> None:
+        if not hasattr(ef_py, "ExecutionEpisodeState") or not isinstance(state, ef_py.ExecutionEpisodeState):
+            raise TypeError("state must be an ef_py.ExecutionEpisodeState")
+
+        self.agent_id = int(state.agent_id) if int(state.agent_id) > 0 else None
+        self.steps = int(state.step_count)
+        self.prev_alt = float(state.prev_altitude_m)
+        self.prev_speed = float(state.prev_ias_mps)
+        self.liftoff_awarded = bool(state.liftoff_awarded)
+        self.gear_bonus_awarded = bool(state.gear_bonus_awarded)
+        self.off_runway_steps = int(state.off_runway_steps)
+        reward_breakdown = _safe_json_dict_loads(state.last_reward_breakdown_json)
+        self.last_reward_breakdown = dict(reward_breakdown or {})
+        if "total" not in self.last_reward_breakdown:
+            self.last_reward_breakdown["total"] = float(state.last_reward_total)
+        self.last_termination_reason = str(state.last_termination_reason or "idle")
+
+        if not include_navigation_state:
+            return
+
+        self.waypoint_idx = int(state.waypoint_index)
+        self._waypoint_prev_dist_m = (
+            float(state.waypoint_prev_dist_m) if bool(state.has_waypoint_prev_dist_m) else None
+        )
+        self.waypoint_total_route_length_m = float(state.waypoint_total_route_length_m)
+        self._waypoint_leg_origin_x = float(state.waypoint_leg_origin_x_m)
+        self._waypoint_leg_origin_y = float(state.waypoint_leg_origin_y_m)
+        self._approach_prev_dme_m = (
+            float(state.approach_prev_dme_m) if bool(state.has_approach_prev_dme_m) else None
+        )
+        self._approach_prev_loc_abs = (
+            float(state.approach_prev_loc_abs) if bool(state.has_approach_prev_loc_abs) else None
+        )
+        self._approach_prev_gs_abs = (
+            float(state.approach_prev_gs_abs) if bool(state.has_approach_prev_gs_abs) else None
+        )
 
     def _task_order_spec(self) -> dict:
         task_cfg = self.scenario_data.get("task_order", None)
@@ -2295,6 +2520,7 @@ class ScenarioLoader:
         truth,
         step_eval: dict,
         frame_products,
+        track_structural_state_change: bool = False,
     ):
         reward = float(getattr(frame_products, "compiled_reward_total", 0.0))
         terminated = bool(getattr(frame_products, "terminated", False))
@@ -2306,6 +2532,7 @@ class ScenarioLoader:
         ]
         rb = {}
         extra_reward = 0.0
+        structural_state_changed = False
 
         execution_step = frame_products.execution_step if bool(getattr(frame_products, "execution_step_evaluated", False)) else None
         if execution_step is None:
@@ -2317,6 +2544,8 @@ class ScenarioLoader:
             self.last_termination_reason = str(
                 ef_py.termination_reason_name(getattr(frame_products, "final_reason_code", ef_py.TerminationReasonCode.Running))
             )
+            if track_structural_state_change:
+                return reward, terminated, status, structural_state_changed
             return reward, terminated, status
 
         def _add_reward_term(name: str, value: float) -> None:
@@ -2427,9 +2656,11 @@ class ScenarioLoader:
                             and is_landing_command_code(self.post_waypoint_transition.get("command_code", 4))
                         )
                         transitioned = None
-                        if not self._defer_landing_post_transition_until_next_update():
+                        deferred_landing_transition = self._defer_landing_post_transition_until_next_update()
+                        if not deferred_landing_transition:
                             transitioned = self._maybe_activate_post_waypoint_transition()
                         if isinstance(transitioned, dict):
+                            structural_state_changed = True
                             transition_reward = float(
                                 transitioned.get("transition_reward", cfg.get("phase_transition_bonus", 600.0))
                             )
@@ -2439,6 +2670,8 @@ class ScenarioLoader:
                                 status[0] = 0.0
                                 status[1] = 0.0
                         elif landing_transition_pending:
+                            if not deferred_landing_transition:
+                                structural_state_changed = True
                             if not objective_has_status:
                                 status[0] = 0.0
                                 status[1] = float(self.waypoint_idx)
@@ -2473,7 +2706,41 @@ class ScenarioLoader:
         self.last_termination_reason = str(
             ef_py.termination_reason_name(getattr(frame_products, "final_reason_code", ef_py.TerminationReasonCode.Running))
         )
+        if track_structural_state_change:
+            return reward, terminated, status, structural_state_changed
         return reward, terminated, status
+
+    def consume_execution_episode_controller_mainline_step(
+        self,
+        *,
+        truth,
+        step_eval: dict,
+        frame_products,
+        controller_state,
+    ):
+        cfg = (
+            self._compiled_rewards_cfg
+            if isinstance(self._compiled_rewards_cfg, dict) and self._compiled_rewards_cfg
+            else self.scenario_data.get("rewards", {})
+        )
+        reward, terminated, status, structural_state_changed = self._consume_compiled_episode_runtime(
+            cfg=cfg,
+            safety_cfg=self._safety_reward_cfg,
+            truth=truth,
+            step_eval=step_eval,
+            frame_products=frame_products,
+            track_structural_state_change=True,
+        )
+        truncated = bool(step_eval.get("truncated", False))
+        mirrored_state = None
+        if hasattr(ef_py, "ExecutionEpisodeState") and isinstance(controller_state, ef_py.ExecutionEpisodeState):
+            self.apply_execution_episode_runtime_fields(
+                controller_state,
+                include_navigation_state=not structural_state_changed,
+            )
+        if structural_state_changed and hasattr(ef_py, "ExecutionEpisodeState"):
+            mirrored_state = self.build_execution_episode_state()
+        return reward, terminated, truncated, status, mirrored_state
 
     def _build_waypoint_step_state(self, cfg: dict, *, truth=None, inst=None, turn_relief_activation: float = 0.0):
         try:
@@ -2912,34 +3179,7 @@ class ScenarioLoader:
             ef_py, "ExecutionEpisodeRuntimeInputs"
         ) and hasattr(ef_py, "compute_execution_episode_runtime")
 
-    def _get_cached_step_evaluation(
-        self,
-        *,
-        truth=None,
-        inst_obj=None,
-        steps=None,
-        max_steps=None,
-        mission_obs_mode=None,
-    ):
-        cache = getattr(self, "_runtime_eval_cache", None)
-        if not isinstance(cache, dict):
-            return None
-        entry = cache.get("step_evaluation")
-        if not isinstance(entry, dict):
-            return None
-        if truth is not None and entry.get("truth_obj") is not truth:
-            return None
-        if inst_obj is not None and entry.get("inst_obj") is not inst_obj:
-            return None
-        if steps is not None and int(entry.get("steps", -1)) != int(steps):
-            return None
-        if max_steps is not None and int(entry.get("max_steps", -1)) != int(max_steps):
-            return None
-        if mission_obs_mode is not None and str(entry.get("mission_obs_mode", "")) != str(mission_obs_mode):
-            return None
-        return entry
-
-    def _prepare_step_evaluation(
+    def _build_step_evaluation_inputs(
         self,
         *,
         truth,
@@ -2949,17 +3189,8 @@ class ScenarioLoader:
         steps: int,
         max_steps: int,
         mission_obs_mode: str | None = None,
+        mission_observation_inputs=None,
     ):
-        cached = self._get_cached_step_evaluation(
-            truth=truth,
-            inst_obj=inst_obj,
-            steps=steps,
-            max_steps=max_steps,
-            mission_obs_mode=mission_obs_mode,
-        )
-        if isinstance(cached, dict):
-            return cached
-
         cfg = self._compiled_rewards_cfg if isinstance(self._compiled_rewards_cfg, dict) and self._compiled_rewards_cfg else self.scenario_data.get("rewards", {})
         safety_cfg = self._safety_reward_cfg
         approach_cfg = self._approach_reward_cfg
@@ -3022,7 +3253,14 @@ class ScenarioLoader:
             runway_frame=runway_frame,
         )
 
-        frame_products = None
+        mission_inputs = mission_observation_inputs
+        if mission_obs_mode is not None and mission_inputs is None:
+            mission_inputs = self._build_mission_observation_runtime_inputs(
+                mission_obs_mode,
+                truth=truth,
+                inst=inst_obj,
+            )
+
         safety_inputs = None
         shaping_inputs = None
         waypoint_turn_relief_activation = 0.0
@@ -3072,41 +3310,6 @@ class ScenarioLoader:
             guard_inputs.finite_state_valid = False
             guard_inputs.crash_penalty = float(safety_cfg.crash_penalty)
             safety_inputs = guard_inputs
-            if self._compiled_execution_episode_enabled():
-                runtime_inputs = ef_py.ExecutionEpisodeRuntimeInputs()
-                if mission_obs_mode is not None:
-                    runtime_inputs.has_mission_observation = True
-                    runtime_inputs.mission_observation = self._build_mission_observation_runtime_inputs(
-                        mission_obs_mode,
-                        truth=truth,
-                        inst=inst_obj,
-                    )
-                runtime_inputs.has_step_info = True
-                runtime_inputs.step_info = step_info_inputs
-                runtime_inputs.has_execution_step = True
-                exec_inputs = ef_py.ExecutionStepRuntimeInputs()
-                exec_inputs.truncated = bool(truncated)
-                exec_inputs.safety = guard_inputs
-                runtime_inputs.execution_step = exec_inputs
-                runtime_inputs.include_roll_stability = bool(float(getattr(truth, "z", 0.0)) < 100.0)
-                frame_products = ef_py.compute_execution_episode_runtime(runtime_inputs)
-            elif self._compiled_execution_frame_enabled():
-                frame_inputs = ef_py.ExecutionFrameRuntimeInputs()
-                if mission_obs_mode is not None:
-                    frame_inputs.has_mission_observation = True
-                    frame_inputs.mission_observation = self._build_mission_observation_runtime_inputs(
-                        mission_obs_mode,
-                        truth=truth,
-                        inst=inst_obj,
-                    )
-                frame_inputs.has_step_info = True
-                frame_inputs.step_info = step_info_inputs
-                frame_inputs.has_execution_step = True
-                exec_inputs = ef_py.ExecutionStepRuntimeInputs()
-                exec_inputs.truncated = bool(truncated)
-                exec_inputs.safety = guard_inputs
-                frame_inputs.execution_step = exec_inputs
-                frame_products = ef_py.compute_execution_frame_runtime(frame_inputs)
         else:
             dt = float(getattr(self.sim, "get_time_step", lambda: 0.05)())
             dt = dt if dt > 1.0e-6 else 0.05
@@ -3198,79 +3401,8 @@ class ScenarioLoader:
                 on_ground=bool(on_ground),
             )
 
-            if self._compiled_execution_episode_enabled():
-                runtime_inputs = ef_py.ExecutionEpisodeRuntimeInputs()
-                if mission_obs_mode is not None:
-                    runtime_inputs.has_mission_observation = True
-                    runtime_inputs.mission_observation = self._build_mission_observation_runtime_inputs(
-                        mission_obs_mode,
-                        truth=truth,
-                        inst=inst_obj,
-                    )
-                runtime_inputs.has_step_info = True
-                runtime_inputs.step_info = step_info_inputs
-                runtime_inputs.has_execution_step = True
-                exec_inputs = ef_py.ExecutionStepRuntimeInputs()
-                exec_inputs.truncated = bool(truncated)
-                exec_inputs.safety = safety_inputs
-                if approach_inputs is not None:
-                    exec_inputs.has_approach = True
-                    exec_inputs.approach = approach_inputs
-                if isinstance(waypoint_state, dict):
-                    exec_inputs.has_waypoint = True
-                    exec_inputs.waypoint = waypoint_state["inputs"]
-                    exec_inputs.waypoint_episode_success = bool(waypoint_state["episode_success"])
-                    exec_inputs.waypoint_episode_success_bonus = float(safety_cfg.waypoint_mission_success_bonus)
-                if self._compiled_conditional_objectives and objective_inputs is not None:
-                    exec_inputs.has_objectives = True
-                    exec_inputs.objectives = list(self._compiled_conditional_objectives)
-                    exec_inputs.objective_inputs = objective_inputs
-                    exec_inputs.objective_shaping = self._objective_shaping_cfg
-                runtime_inputs.execution_step = exec_inputs
-                runtime_inputs.has_flight_shaping = True
-                runtime_inputs.flight_shaping = shaping_inputs
-                runtime_inputs.include_roll_stability = bool(float(getattr(truth, "z", 0.0)) < 100.0)
-                frame_products = ef_py.compute_execution_episode_runtime(runtime_inputs)
-            elif self._compiled_execution_frame_enabled():
-                frame_inputs = ef_py.ExecutionFrameRuntimeInputs()
-                if mission_obs_mode is not None:
-                    frame_inputs.has_mission_observation = True
-                    frame_inputs.mission_observation = self._build_mission_observation_runtime_inputs(
-                        mission_obs_mode,
-                        truth=truth,
-                        inst=inst_obj,
-                    )
-                frame_inputs.has_step_info = True
-                frame_inputs.step_info = step_info_inputs
-                frame_inputs.has_execution_step = True
-                exec_inputs = ef_py.ExecutionStepRuntimeInputs()
-                exec_inputs.truncated = bool(truncated)
-                exec_inputs.safety = safety_inputs
-                if approach_inputs is not None:
-                    exec_inputs.has_approach = True
-                    exec_inputs.approach = approach_inputs
-                if isinstance(waypoint_state, dict):
-                    exec_inputs.has_waypoint = True
-                    exec_inputs.waypoint = waypoint_state["inputs"]
-                    exec_inputs.waypoint_episode_success = bool(waypoint_state["episode_success"])
-                    exec_inputs.waypoint_episode_success_bonus = float(safety_cfg.waypoint_mission_success_bonus)
-                if self._compiled_conditional_objectives and objective_inputs is not None:
-                    exec_inputs.has_objectives = True
-                    exec_inputs.objectives = list(self._compiled_conditional_objectives)
-                    exec_inputs.objective_inputs = objective_inputs
-                    exec_inputs.objective_shaping = self._objective_shaping_cfg
-                frame_inputs.execution_step = exec_inputs
-                frame_inputs.has_flight_shaping = True
-                frame_inputs.flight_shaping = shaping_inputs
-                frame_products = ef_py.compute_execution_frame_runtime(frame_inputs)
-
-        entry = {
-            "truth_obj": truth,
-            "inst_obj": inst_obj,
-            "steps": int(steps),
-            "max_steps": int(max_steps),
-            "mission_obs_mode": "" if mission_obs_mode is None else str(mission_obs_mode),
-            "frame_products": frame_products,
+        return {
+            "mission_observation_inputs": mission_inputs,
             "truncated": bool(truncated),
             "curr_aoa": float(curr_aoa),
             "curr_roll": float(curr_roll),
@@ -3309,9 +3441,477 @@ class ScenarioLoader:
             "ils_gs": float(ils_vec[2]) if len(ils_vec) > 2 else 0.0,
             "ils_dme": float(ils_vec[3]) if len(ils_vec) > 3 else 0.0,
         }
+
+    def _build_step_evaluation_batch_env_state(
+        self,
+        *,
+        truth,
+        inst_obj,
+        inst_vec,
+        ils_vec,
+        steps: int,
+        max_steps: int,
+        mission_obs_mode: str | None = None,
+        mission_observation_inputs=None,
+        return_prepared: bool = False,
+        prepared_entry: dict | None = None,
+    ):
+        state = ef_py.StepEvaluationBatchEnvState()
+        state.steps = int(steps)
+        state.max_steps = int(max_steps)
+        state.truncated = bool(int(steps) >= int(max_steps))
+
+        state.truth_x = float(getattr(truth, "x", 0.0))
+        state.truth_y = float(getattr(truth, "y", 0.0))
+        state.truth_z = float(getattr(truth, "z", 0.0))
+        state.truth_vx = float(getattr(truth, "vx", 0.0))
+        state.truth_vy = float(getattr(truth, "vy", 0.0))
+        state.truth_vz = float(getattr(truth, "vz", 0.0))
+        state.truth_speed = float(getattr(truth, "speed", 0.0))
+        state.truth_pitch = float(getattr(truth, "pitch", 0.0))
+        state.truth_roll = float(getattr(truth, "roll", 0.0))
+        state.truth_heading = float(getattr(truth, "heading", 0.0))
+        state.truth_health = float(getattr(truth, "health", 100.0))
+        state.inst_vec = [float(x) for x in inst_vec]
+        state.ils_vec = [float(x) for x in ils_vec]
+        state.liftoff_awarded = bool(getattr(self, "liftoff_awarded", False))
+        state.gear_bonus_awarded = bool(getattr(self, "gear_bonus_awarded", False))
+        state.prev_altitude_m = float(getattr(self, "prev_alt", 0.0))
+        state.prev_ias_mps = float(getattr(self, "prev_speed", 0.0))
+        state.defer_landing_post_transition = bool(self._defer_landing_post_transition_until_next_update())
+
+        if hasattr(ef_py, "ExecutionEpisodeState"):
+            try:
+                state.episode_state = self.build_execution_episode_state()
+                state.has_episode_state = True
+            except Exception:
+                state.has_episode_state = False
+
+        prepared = prepared_entry if isinstance(prepared_entry, dict) else None
+        if prepared is None:
+            prepared = self._build_step_evaluation_inputs(
+                truth=truth,
+                inst_obj=inst_obj,
+                inst_vec=inst_vec,
+                ils_vec=ils_vec,
+                steps=int(steps),
+                max_steps=int(max_steps),
+                mission_obs_mode=mission_obs_mode,
+                mission_observation_inputs=mission_observation_inputs,
+            )
+
+        mission_inputs = prepared.get("mission_observation_inputs")
+        if mission_inputs is not None and mission_obs_mode is not None:
+            state.has_mission_observation = True
+            state.mission_observation = mission_inputs
+
+        step_info_inputs = prepared.get("step_info_inputs")
+        if step_info_inputs is not None:
+            state.has_step_info = True
+            state.step_info = step_info_inputs
+
+        safety_inputs = prepared.get("safety_inputs")
+        if safety_inputs is not None:
+            state.has_safety = True
+            state.safety = safety_inputs
+
+        waypoint_state = prepared.get("waypoint_state")
+        if isinstance(waypoint_state, dict) and waypoint_state.get("inputs") is not None:
+            state.has_waypoint = True
+            state.waypoint = waypoint_state["inputs"]
+            state.waypoint_episode_success = bool(waypoint_state.get("episode_success", False))
+            state.waypoint_episode_success_bonus = float(self._safety_reward_cfg.waypoint_mission_success_bonus)
+
+        approach_inputs = prepared.get("approach_inputs")
+        if approach_inputs is not None:
+            state.has_approach = True
+            state.approach = approach_inputs
+
+        objective_inputs = prepared.get("objective_inputs")
+        if self._compiled_conditional_objectives and objective_inputs is not None:
+            state.has_objectives = True
+            state.objectives = list(self._compiled_conditional_objectives)
+            state.objective_inputs = objective_inputs
+            state.objective_shaping = self._objective_shaping_cfg
+
+        shaping_inputs = prepared.get("shaping_inputs")
+        if shaping_inputs is not None:
+            state.has_flight_shaping = True
+            state.flight_shaping = shaping_inputs
+            state.include_roll_stability = bool(float(getattr(truth, "z", 0.0)) < 100.0)
+
+        if bool(return_prepared):
+            return state, prepared
+        return state
+
+    def _get_cached_step_evaluation(
+        self,
+        *,
+        truth=None,
+        inst_obj=None,
+        steps=None,
+        max_steps=None,
+        mission_obs_mode=None,
+    ):
+        cache = getattr(self, "_runtime_eval_cache", None)
+        if not isinstance(cache, dict):
+            return None
+        entry = cache.get("step_evaluation")
+        if not isinstance(entry, dict):
+            return None
+        if truth is not None and entry.get("truth_obj") is not truth:
+            return None
+        if inst_obj is not None and entry.get("inst_obj") is not inst_obj:
+            return None
+        if steps is not None and int(entry.get("steps", -1)) != int(steps):
+            return None
+        if max_steps is not None and int(entry.get("max_steps", -1)) != int(max_steps):
+            return None
+        if mission_obs_mode is not None and str(entry.get("mission_obs_mode", "")) != str(mission_obs_mode):
+            return None
+        return entry
+
+    def _prepare_step_evaluation(
+        self,
+        *,
+        truth,
+        inst_obj,
+        inst_vec,
+        ils_vec,
+        steps: int,
+        max_steps: int,
+        mission_obs_mode: str | None = None,
+        defer_compiled_runtime: bool = False,
+        compact_output: bool = False,
+    ):
+        cached = self._get_cached_step_evaluation(
+            truth=truth,
+            inst_obj=inst_obj,
+            steps=steps,
+            max_steps=max_steps,
+            mission_obs_mode=mission_obs_mode,
+        )
+        if isinstance(cached, dict):
+            return cached
+
+        entry = self._build_step_evaluation_inputs(
+            truth=truth,
+            inst_obj=inst_obj,
+            inst_vec=inst_vec,
+            ils_vec=ils_vec,
+            steps=int(steps),
+            max_steps=int(max_steps),
+            mission_obs_mode=mission_obs_mode,
+        )
+        frame_products = None
+        truncated = bool(entry["truncated"])
+        mission_inputs = entry.get("mission_observation_inputs")
+        step_info_inputs = entry.get("step_info_inputs")
+        safety_inputs = entry.get("safety_inputs")
+        approach_inputs = entry.get("approach_inputs")
+        waypoint_state = entry.get("waypoint_state")
+        objective_inputs = entry.get("objective_inputs")
+        shaping_inputs = entry.get("shaping_inputs")
+        if bool(compact_output) and mission_obs_mode is None:
+            step_info_inputs = None
+
+        deferred_kind = None
+        deferred_inputs = None
+
+        if self._compiled_execution_episode_enabled():
+            runtime_inputs = ef_py.ExecutionEpisodeRuntimeInputs()
+            if mission_inputs is not None and mission_obs_mode is not None:
+                runtime_inputs.has_mission_observation = True
+                runtime_inputs.mission_observation = mission_inputs
+            if step_info_inputs is not None:
+                runtime_inputs.has_step_info = True
+                runtime_inputs.step_info = step_info_inputs
+            runtime_inputs.has_execution_step = True
+            exec_inputs = ef_py.ExecutionStepRuntimeInputs()
+            exec_inputs.truncated = bool(truncated)
+            if safety_inputs is not None:
+                exec_inputs.safety = safety_inputs
+            if approach_inputs is not None:
+                exec_inputs.has_approach = True
+                exec_inputs.approach = approach_inputs
+            if isinstance(waypoint_state, dict):
+                exec_inputs.has_waypoint = True
+                exec_inputs.waypoint = waypoint_state["inputs"]
+                exec_inputs.waypoint_episode_success = bool(waypoint_state["episode_success"])
+                exec_inputs.waypoint_episode_success_bonus = float(self._safety_reward_cfg.waypoint_mission_success_bonus)
+            if self._compiled_conditional_objectives and objective_inputs is not None:
+                exec_inputs.has_objectives = True
+                exec_inputs.objectives = list(self._compiled_conditional_objectives)
+                exec_inputs.objective_inputs = objective_inputs
+                exec_inputs.objective_shaping = self._objective_shaping_cfg
+            runtime_inputs.execution_step = exec_inputs
+            if shaping_inputs is not None:
+                runtime_inputs.has_flight_shaping = True
+                runtime_inputs.flight_shaping = shaping_inputs
+            runtime_inputs.include_roll_stability = bool(float(getattr(truth, "z", 0.0)) < 100.0)
+            if bool(defer_compiled_runtime):
+                deferred_kind = "episode"
+                deferred_inputs = runtime_inputs
+            else:
+                frame_products = ef_py.compute_execution_episode_runtime(runtime_inputs)
+        elif self._compiled_execution_frame_enabled():
+            frame_inputs = ef_py.ExecutionFrameRuntimeInputs()
+            if mission_inputs is not None and mission_obs_mode is not None:
+                frame_inputs.has_mission_observation = True
+                frame_inputs.mission_observation = mission_inputs
+            if step_info_inputs is not None:
+                frame_inputs.has_step_info = True
+                frame_inputs.step_info = step_info_inputs
+            frame_inputs.has_execution_step = True
+            exec_inputs = ef_py.ExecutionStepRuntimeInputs()
+            exec_inputs.truncated = bool(truncated)
+            if safety_inputs is not None:
+                exec_inputs.safety = safety_inputs
+            if approach_inputs is not None:
+                exec_inputs.has_approach = True
+                exec_inputs.approach = approach_inputs
+            if isinstance(waypoint_state, dict):
+                exec_inputs.has_waypoint = True
+                exec_inputs.waypoint = waypoint_state["inputs"]
+                exec_inputs.waypoint_episode_success = bool(waypoint_state["episode_success"])
+                exec_inputs.waypoint_episode_success_bonus = float(self._safety_reward_cfg.waypoint_mission_success_bonus)
+            if self._compiled_conditional_objectives and objective_inputs is not None:
+                exec_inputs.has_objectives = True
+                exec_inputs.objectives = list(self._compiled_conditional_objectives)
+                exec_inputs.objective_inputs = objective_inputs
+                exec_inputs.objective_shaping = self._objective_shaping_cfg
+            frame_inputs.execution_step = exec_inputs
+            if shaping_inputs is not None:
+                frame_inputs.has_flight_shaping = True
+                frame_inputs.flight_shaping = shaping_inputs
+            if bool(defer_compiled_runtime):
+                deferred_kind = "frame"
+                deferred_inputs = frame_inputs
+            else:
+                frame_products = ef_py.compute_execution_frame_runtime(frame_inputs)
+
+        entry = {
+            "truth_obj": truth,
+            "inst_obj": inst_obj,
+            "steps": int(steps),
+            "max_steps": int(max_steps),
+            "mission_obs_mode": "" if mission_obs_mode is None else str(mission_obs_mode),
+            "frame_products": frame_products,
+            **entry,
+        }
+        if bool(defer_compiled_runtime):
+            entry["_runtime_deferred_kind"] = deferred_kind
+            entry["_runtime_deferred_inputs"] = deferred_inputs
+        if bool(compact_output):
+            entry["_compact_output"] = True
         if isinstance(self._runtime_eval_cache, dict):
             self._runtime_eval_cache["step_evaluation"] = entry
         return entry
+
+    def _build_execution_episode_controller_shadow_config(self):
+        config = ef_py.StepEvaluationBatchConfig()
+        rewards_cfg = self.get_rewards_config()
+        config.target_altitude_m = float(
+            rewards_cfg.get("altitude_progress_target", self.mission_cmd.get("target_altitude", 0.0)) or 0.0
+        )
+        config.target_speed_mps = float(
+            rewards_cfg.get("speed_progress_target", self.mission_cmd.get("target_speed", 0.0)) or 0.0
+        )
+        config.target_heading_deg = float(self.mission_cmd.get("target_heading", 0.0) or 0.0)
+        try:
+            config.time_step_s = float(getattr(self.sim, "get_time_step", lambda: 0.05)())
+        except Exception:
+            config.time_step_s = 0.05
+        config.crash_penalty = float(getattr(self._safety_reward_cfg, "crash_penalty", -1000.0))
+        return config
+
+    @staticmethod
+    def _execution_episode_status_vector(products):
+        return np.asarray(
+            [
+                float(getattr(products, "status0", 0.0)),
+                float(getattr(products, "status1", 0.0)),
+                float(getattr(products, "status2", 0.0)),
+                float(getattr(products, "status3", 0.0)),
+            ],
+            dtype=np.float32,
+        )
+
+    @staticmethod
+    def _compare_execution_episode_runtime_products(reference, shadow, *, abs_tol: float = 1.0e-6):
+        reward_total_delta = float(
+            float(getattr(shadow, "compiled_reward_total", 0.0))
+            - float(getattr(reference, "compiled_reward_total", 0.0))
+        )
+        reward_total_match = bool(abs(reward_total_delta) <= float(abs_tol))
+
+        reference_status = ScenarioLoader._execution_episode_status_vector(reference)
+        shadow_status = ScenarioLoader._execution_episode_status_vector(shadow)
+        status_abs_diff = np.abs(reference_status - shadow_status)
+        status_match = bool(np.all(status_abs_diff <= float(abs_tol)))
+
+        reference_mission_eval = bool(getattr(reference, "mission_observation_evaluated", False))
+        shadow_mission_eval = bool(getattr(shadow, "mission_observation_evaluated", False))
+        mission_observation_match = bool(reference_mission_eval == shadow_mission_eval)
+        mission_observation_max_abs_diff = 0.0
+        if reference_mission_eval and shadow_mission_eval:
+            ref_mission = reference.mission_observation
+            shadow_mission = shadow.mission_observation
+            ref_values = np.asarray(list(getattr(ref_mission, "values", [])), dtype=np.float32)
+            shadow_values = np.asarray(list(getattr(shadow_mission, "values", [])), dtype=np.float32)
+            if ref_values.shape != shadow_values.shape:
+                mission_observation_match = False
+                mission_observation_max_abs_diff = float("inf")
+            else:
+                if ref_values.size > 0:
+                    mission_observation_max_abs_diff = float(np.max(np.abs(ref_values - shadow_values)))
+                mission_observation_match = bool(
+                    mission_observation_match
+                    and int(getattr(ref_mission, "mode_code", 0)) == int(getattr(shadow_mission, "mode_code", 0))
+                    and bool(getattr(ref_mission, "nav_valid", False)) == bool(getattr(shadow_mission, "nav_valid", False))
+                    and mission_observation_max_abs_diff <= float(abs_tol)
+                )
+
+        reference_step_info_eval = bool(getattr(reference, "step_info_evaluated", False))
+        shadow_step_info_eval = bool(getattr(shadow, "step_info_evaluated", False))
+        step_info_match = bool(reference_step_info_eval == shadow_step_info_eval)
+        step_info_max_abs_diff = 0.0
+        if reference_step_info_eval and shadow_step_info_eval:
+            ref_step_info = reference.step_info
+            shadow_step_info = shadow.step_info
+            step_info_diffs = np.asarray(
+                [
+                    abs(float(getattr(ref_step_info, "runway_cross_m", 0.0)) - float(getattr(shadow_step_info, "runway_cross_m", 0.0))),
+                    abs(float(getattr(ref_step_info, "runway_along_m", 0.0)) - float(getattr(shadow_step_info, "runway_along_m", 0.0))),
+                ],
+                dtype=np.float32,
+            )
+            if step_info_diffs.size > 0:
+                step_info_max_abs_diff = float(np.max(step_info_diffs))
+            step_info_match = bool(
+                step_info_match
+                and bool(getattr(ref_step_info, "on_ground", False)) == bool(getattr(shadow_step_info, "on_ground", False))
+                and bool(getattr(ref_step_info, "airborne", False)) == bool(getattr(shadow_step_info, "airborne", False))
+                and bool(getattr(ref_step_info, "on_runway_geom", False)) == bool(getattr(shadow_step_info, "on_runway_geom", False))
+                and step_info_max_abs_diff <= float(abs_tol)
+            )
+
+        reference_exec_eval = bool(getattr(reference, "execution_step_evaluated", False))
+        shadow_exec_eval = bool(getattr(shadow, "execution_step_evaluated", False))
+        execution_step_match = bool(reference_exec_eval == shadow_exec_eval)
+        execution_step_reward_delta = 0.0
+        if reference_exec_eval and shadow_exec_eval:
+            ref_exec = reference.execution_step
+            shadow_exec = shadow.execution_step
+            execution_step_reward_delta = float(
+                float(getattr(shadow_exec, "compiled_reward_total", 0.0))
+                - float(getattr(ref_exec, "compiled_reward_total", 0.0))
+            )
+            execution_step_match = bool(
+                execution_step_match
+                and abs(execution_step_reward_delta) <= float(abs_tol)
+                and bool(getattr(ref_exec, "terminated", False)) == bool(getattr(shadow_exec, "terminated", False))
+                and int(getattr(ref_exec, "matched_objective_index", -1)) == int(getattr(shadow_exec, "matched_objective_index", -1))
+                and bool(getattr(ref_exec, "waypoint_evaluated", False)) == bool(getattr(shadow_exec, "waypoint_evaluated", False))
+                and bool(getattr(ref_exec, "approach_evaluated", False)) == bool(getattr(shadow_exec, "approach_evaluated", False))
+                and bool(getattr(ref_exec, "objective_evaluated", False)) == bool(getattr(shadow_exec, "objective_evaluated", False))
+                and getattr(ref_exec, "reason_code", None) == getattr(shadow_exec, "reason_code", None)
+                and getattr(ref_exec, "final_reason_code", None) == getattr(shadow_exec, "final_reason_code", None)
+            )
+
+        comparison = {
+            "valid_match": bool(bool(getattr(reference, "valid", False)) == bool(getattr(shadow, "valid", False))),
+            "reward_total_match": bool(reward_total_match),
+            "reward_total_delta": float(reward_total_delta),
+            "terminated_match": bool(bool(getattr(reference, "terminated", False)) == bool(getattr(shadow, "terminated", False))),
+            "reason_code_match": bool(getattr(reference, "reason_code", None) == getattr(shadow, "reason_code", None)),
+            "final_reason_code_match": bool(
+                getattr(reference, "final_reason_code", None) == getattr(shadow, "final_reason_code", None)
+            ),
+            "status_match": bool(status_match),
+            "status_abs_diff": [float(x) for x in status_abs_diff.tolist()],
+            "mission_observation_match": bool(mission_observation_match),
+            "mission_observation_max_abs_diff": float(mission_observation_max_abs_diff),
+            "step_info_match": bool(step_info_match),
+            "step_info_max_abs_diff": float(step_info_max_abs_diff),
+            "execution_step_match": bool(execution_step_match),
+            "execution_step_reward_delta": float(execution_step_reward_delta),
+        }
+        comparison["overall_match"] = bool(
+            comparison["valid_match"]
+            and comparison["reward_total_match"]
+            and comparison["terminated_match"]
+            and comparison["reason_code_match"]
+            and comparison["final_reason_code_match"]
+            and comparison["status_match"]
+            and comparison["mission_observation_match"]
+            and comparison["step_info_match"]
+            and comparison["execution_step_match"]
+        )
+        return comparison
+
+    def compare_execution_episode_controller_shadow(
+        self,
+        *,
+        truth,
+        inst_obj,
+        inst_vec,
+        ils_vec,
+        steps: int,
+        max_steps: int,
+        mission_obs_mode: str | None = None,
+        abs_tol: float = 1.0e-6,
+        advance_state: bool = False,
+    ):
+        if not hasattr(ef_py, "ExecutionEpisodeController"):
+            raise RuntimeError("ef_py.ExecutionEpisodeController is not available")
+
+        step_eval = self._prepare_step_evaluation(
+            truth=truth,
+            inst_obj=inst_obj,
+            inst_vec=inst_vec,
+            ils_vec=ils_vec,
+            steps=int(steps),
+            max_steps=int(max_steps),
+            mission_obs_mode=mission_obs_mode,
+        )
+        reference_products = step_eval.get("frame_products")
+        if reference_products is None:
+            raise RuntimeError("step evaluation did not produce frame_products")
+
+        mission_inputs = step_eval.get("mission_observation_inputs")
+        batch_state = self._build_step_evaluation_batch_env_state(
+            truth=truth,
+            inst_obj=inst_obj,
+            inst_vec=inst_vec,
+            ils_vec=ils_vec,
+            steps=int(steps),
+            max_steps=int(max_steps),
+            mission_obs_mode=mission_obs_mode,
+            mission_observation_inputs=mission_inputs,
+        )
+        config = self._build_execution_episode_controller_shadow_config()
+        controller = ef_py.ExecutionEpisodeController()
+        if hasattr(ef_py, "ExecutionEpisodeState"):
+            controller.import_state(self.build_execution_episode_state())
+        shadow_products = controller.step(config, batch_state) if bool(advance_state) else controller.evaluate(config, batch_state)
+        shadow_state = controller.export_state()
+
+        report = {
+            "reference_frame_products": reference_products,
+            "shadow_frame_products": shadow_products,
+            "shadow_state": shadow_state,
+            "advance_state": bool(advance_state),
+            "comparison": self._compare_execution_episode_runtime_products(
+                reference_products,
+                shadow_products,
+                abs_tol=float(abs_tol),
+            ),
+        }
+        cache = getattr(self, "_runtime_eval_cache", None)
+        if isinstance(cache, dict):
+            cache["execution_episode_controller_shadow"] = report
+        return report
 
     def _turn_lead_distance_m(self, turn_angle_deg: float, speed_mps: float, bank_limit_deg: float) -> float:
         turn_abs_deg = abs(float(turn_angle_deg))
@@ -3920,6 +4520,20 @@ class ScenarioLoader:
         if sync_to_kernel:
             self._sync_kernel_mission_command()
             self._sync_kernel_command_chain()
+
+    def update_command_chain_only(self, sim_time, *, truth=None, inst=None, sync_to_kernel: bool = True):
+        self._update_command_chain(sim_time, truth=truth, inst=inst, sync_to_kernel=False)
+        if sync_to_kernel:
+            self._sync_kernel_command_chain()
+
+    def update_nonhierarchical_behaviors(self, *, truth=None, inst=None, sync_to_kernel: bool = True):
+        dt = 0.05
+        try:
+            dt = float(getattr(self.sim, "get_time_step", lambda: 0.05)())
+        except Exception:
+            dt = 0.05
+        sim_time = float(getattr(self, "steps", 0)) * float(dt)
+        self.update_behaviors(sim_time, truth=truth, inst=inst, sync_to_kernel=sync_to_kernel)
 
     def compute_full_step(self, obs, sim, steps, max_steps, *, truth=None, inst_state=None):
         cfg = self._compiled_rewards_cfg if isinstance(self._compiled_rewards_cfg, dict) and self._compiled_rewards_cfg else self.scenario_data.get("rewards", {})

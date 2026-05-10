@@ -8,7 +8,8 @@
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/performance.h"
-#include "components/physics/action.h"
+#include "components/command/legacy_command.h"
+#include "components/command/pilot_action.h"
 #include "core/interfaces/environment_model.h"
 
 #ifndef M_PI

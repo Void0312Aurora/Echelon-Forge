@@ -766,13 +766,14 @@ def _load_compiled_scenario_batch_direct(
         0.0 if ts is None else float(ts)
         for ts in time_steps
     ]
-    entity_ids = batch_runtime.apply_world_setup_batch(
-        normalized_seeds,
-        terrain_items,
-        wind_items,
-        zone_items[:zone_cursor],
-        spawn_items[:spawn_cursor],
-        time_step_items,
+    entity_ids = _apply_world_setup_request(
+        batch_runtime,
+        seeds=normalized_seeds,
+        terrain_assignments=terrain_items,
+        wind_assignments=wind_items,
+        zones=zone_items[:zone_cursor],
+        spawn_requests=spawn_items[:spawn_cursor],
+        time_steps=time_step_items,
     )
 
     applied: list[AppliedScenarioWorld] = []
@@ -1196,13 +1197,14 @@ def apply_world_layouts_to_batch(
         0.0 if layout.time_step_s is None else float(layout.time_step_s)
         for layout in layouts
     ]
-    entity_ids = batch_runtime.apply_world_setup_batch(
-        normalized_seeds,
-        terrain_assignments,
-        wind_assignments,
-        zone_defs,
-        spawn_requests,
-        time_step_items,
+    entity_ids = _apply_world_setup_request(
+        batch_runtime,
+        seeds=normalized_seeds,
+        terrain_assignments=terrain_assignments,
+        wind_assignments=wind_assignments,
+        zones=zone_defs,
+        spawn_requests=spawn_requests,
+        time_steps=time_step_items,
     )
 
     applied: list[AppliedScenarioWorld] = []
@@ -1218,3 +1220,37 @@ def apply_world_layouts_to_batch(
                 agent_id = entity_id
         applied.append(AppliedScenarioWorld(layout=layout, entities=entities, agent_id=agent_id))
     return applied
+
+
+def _apply_world_setup_request(
+    runtime,
+    *,
+    seeds: list[int],
+    terrain_assignments: list[Any],
+    wind_assignments: list[Any],
+    zones: list[Any],
+    spawn_requests: list[Any],
+    time_steps: list[float],
+) -> list[int]:
+    if hasattr(runtime, "apply_world_setup") and hasattr(ef_py, "BatchWorldSetupRequest"):
+        request = ef_py.BatchWorldSetupRequest()
+        request.seeds = [int(seed) & 0xFFFFFFFF for seed in seeds]
+        request.terrain_assignments = list(terrain_assignments)
+        request.wind_assignments = list(wind_assignments)
+        request.zones = list(zones)
+        request.spawn_requests = list(spawn_requests)
+        request.time_steps = [float(value) for value in time_steps]
+        result = runtime.apply_world_setup(request)
+        return [int(entity_id) for entity_id in list(result.entity_ids)]
+
+    return [
+        int(entity_id)
+        for entity_id in runtime.apply_world_setup_batch(
+            seeds,
+            terrain_assignments,
+            wind_assignments,
+            zones,
+            spawn_requests,
+            time_steps,
+        )
+    ]

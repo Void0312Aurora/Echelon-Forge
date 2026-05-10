@@ -5,7 +5,9 @@
 #include <algorithm>
 #include "components/basic/common.h"
 #include "components/physics/instruments.h"
-#include "components/physics/action.h"       // MissionCommand
+#include "components/command/legacy_command.h"
+#include "components/command/mission_command.h"
+#include "components/command/pilot_action.h"
 #include "components/physics/forces.h"       // AeroState, ForceAccumulator, AngularVelocity
 #include "components/physics/dynamics.h"     // Mass, Propulsion
 #include "components/physics/performance.h"  // LandingGear

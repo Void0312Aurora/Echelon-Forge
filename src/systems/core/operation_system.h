@@ -5,7 +5,7 @@
 
 #include <flecs.h>
 
-#include "components/physics/action.h"
+#include "components/command/legacy_command.h"
 #include "components/basic/common.h"
 
 inline double operation_wrap_angle_360(double angle) {

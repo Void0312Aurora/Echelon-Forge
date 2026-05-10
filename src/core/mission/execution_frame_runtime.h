@@ -3,6 +3,7 @@
 #include "core/mission/execution_step_runtime.h"
 #include "core/mission/mission_runtime.h"
 #include "core/mission/reward_runtime.h"
+#include <vector>
 
 struct ExecutionFrameRuntimeInputs {
     bool has_mission_observation = false;
@@ -35,3 +36,6 @@ struct ExecutionFrameRuntimeProducts {
 };
 
 ExecutionFrameRuntimeProducts compute_execution_frame_runtime(const ExecutionFrameRuntimeInputs& inputs);
+std::vector<ExecutionFrameRuntimeProducts> compute_execution_frame_runtime_batch(
+    const std::vector<ExecutionFrameRuntimeInputs>& inputs_batch
+);

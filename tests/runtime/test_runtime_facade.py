@@ -1,0 +1,328 @@
+from __future__ import annotations
+
+import json
+import unittest
+
+from python.testing.runtime import ensure_repo_imports
+from python.testing.runtime import resolve_repo_path
+
+
+ensure_repo_imports()
+
+import ef_py  # noqa: E402
+from python.scenario_compiler import ScenarioCompiler  # noqa: E402
+from python.scenario_runtime import BatchWorldApplyBuffer  # noqa: E402
+from python.scenario_runtime import load_compiled_scenario_batch  # noqa: E402
+
+
+def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
+    ref = ef_py.WorldEntityRef()
+    ref.world_index = int(world_index)
+    ref.entity_id = int(entity_id)
+    return ref
+
+
+def _build_route_state(entity_id: int) -> ef_py.ExecutionEpisodeState:
+    state = ef_py.ExecutionEpisodeState()
+    state.agent_id = int(entity_id)
+    state.has_mission_command = True
+    state.mission_command.command_code = 3
+    state.mission_command.cmd_heading_deg = 90.0
+    state.mission_command.cmd_altitude_m = 1200.0
+    state.mission_command.cmd_speed_mps = 180.0
+    state.mission_command.active = True
+    state.has_mission_command_json = True
+    state.mission_command_json = json.dumps(
+        {
+            "command_code": 3,
+            "route_ref_id": int(entity_id),
+            "target_altitude": 1200.0,
+            "target_heading": 90.0,
+            "target_speed": 180.0,
+            "waypoint_mode": "flyby",
+            "waypoints": [
+                {"x": -1350.0, "y": 0.0, "z": 1200.0, "radius_m": 1200.0},
+            ],
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+    route_waypoint = ef_py.SpatialRouteWaypoint()
+    route_waypoint.x_m = -1350.0
+    route_waypoint.y_m = 0.0
+    route_waypoint.z_m = 1200.0
+    route_waypoint.radius_m = 1200.0
+    route_waypoint.altitude_m = 1200.0
+    route_waypoint.speed_mps = 180.0
+    route_waypoint.waypoint_mode = "flyby"
+    state.route_waypoints = [route_waypoint]
+    state.has_post_waypoint_transition_json = True
+    state.post_waypoint_transition_json = json.dumps(
+        {
+            "command_code": 2,
+            "phase_name": "post_route",
+            "target_altitude": 900.0,
+            "target_heading": 45.0,
+            "target_speed": 160.0,
+            "transition_reward": 123.0,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+    return state
+
+
+def _build_route_request(entity_id: int) -> ef_py.WorldExecutionEpisodeStepRequest:
+    request = ef_py.WorldExecutionEpisodeStepRequest()
+    request.world_index = 0
+    request.entity_id = int(entity_id)
+    request.config = ef_py.StepEvaluationBatchConfig()
+    request.env_state.steps = 1
+    request.env_state.truth_x = -1400.0
+    request.env_state.truth_y = 0.0
+    request.env_state.truth_z = 1200.0
+    request.env_state.truth_speed = 180.0
+    request.env_state.has_safety = True
+    request.env_state.safety.finite_state_valid = True
+    request.env_state.safety.health = 100.0
+    request.env_state.safety.survival_reward = 0.02
+    request.env_state.has_waypoint = True
+    request.env_state.waypoint.valid = True
+    request.env_state.waypoint.waypoint_index = 0
+    request.env_state.waypoint.waypoint_count = 1
+    request.env_state.waypoint.dist_m = 50.0
+    request.env_state.waypoint.waypoint_radius_m = 1200.0
+    request.env_state.waypoint.has_prev_dist = True
+    request.env_state.waypoint.prev_dist_m = 120.0
+    request.env_state.waypoint.progress_weight = 0.1
+    request.env_state.waypoint.distance_weight = -0.001
+    request.env_state.waypoint.reached_bonus = 20.0
+    return request
+
+
+class RuntimeFacadeTests(unittest.TestCase):
+    def test_runtime_facade_exposes_capabilities_and_batch_config(self) -> None:
+        config = ef_py.RuntimeBatchConfig()
+        config.world_count = 3
+        config.worker_threads = 2
+
+        facade = ef_py.RuntimeFacade(config)
+        capabilities = facade.capabilities()
+        returned = facade.batch_config()
+
+        self.assertEqual(int(facade.world_count()), 3)
+        self.assertEqual(int(returned.world_count), 3)
+        self.assertEqual(int(returned.worker_threads), 2)
+        self.assertTrue(bool(capabilities.supports_batch_runtime))
+        self.assertTrue(bool(capabilities.supports_compiled_episode_controller))
+        self.assertTrue(bool(capabilities.supports_compiled_execution_step))
+
+    def test_runtime_facade_exports_typed_observation_packet(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        facade.load_database(resolve_repo_path("examples", "config", "database"))
+
+        setup_request = ef_py.BatchWorldSetupRequest()
+        setup_request.seeds = [123]
+        terrain = ef_py.WorldTerrainAssignment()
+        terrain.world_index = 0
+        terrain.terrain_type = "legacy"
+        wind = ef_py.WorldWindAssignment()
+        wind.world_index = 0
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.world_index = 0
+        spawn.side = ef_py.Side.Blue
+        spawn.type_name = "Aircraft"
+        spawn.entity_name = "Lead"
+        spawn.is_agent = True
+        spawn.x = -1400.0
+        spawn.y = 0.0
+        spawn.z = 1200.0
+        spawn.heading = 90.0
+        spawn.vy = 180.0
+        setup_request.terrain_assignments = [terrain]
+        setup_request.wind_assignments = [wind]
+        setup_request.spawn_requests = [spawn]
+        setup_request.time_steps = [0.05]
+
+        setup_result = facade.apply_world_setup(setup_request)
+        self.assertEqual(len(setup_result.entity_ids), 1)
+
+        ref = _entity_ref(0, int(setup_result.entity_ids[0]))
+        obs_request = ef_py.ObservationBatchRequest()
+        obs_request.refs = [ref]
+        obs_request.include_agent_observations = True
+        obs_request.include_instrument_states = True
+        packet = facade.export_observation_packet(obs_request)
+
+        self.assertEqual(len(packet.refs), 1)
+        self.assertEqual(len(packet.agent_observations), 1)
+        self.assertEqual(len(packet.instrument_states), 1)
+        self.assertEqual(int(packet.agent_observations[0].id), int(setup_result.entity_ids[0]))
+
+    def test_runtime_facade_step_execution_batch_returns_results_and_observations(self) -> None:
+        entity_id = 77
+        facade = ef_py.RuntimeFacade(1)
+
+        ref = _entity_ref(0, entity_id)
+        state = _build_route_state(entity_id)
+        facade.prime_execution_episode_batch([ref], [state])
+
+        exported_states = facade.export_execution_episode_states([ref])
+        self.assertEqual(len(exported_states), 1)
+        self.assertEqual(int(exported_states[0].agent_id), entity_id)
+
+        batch_request = ef_py.ExecutionBatchStepRequest()
+        batch_request.step_requests = [_build_route_request(entity_id)]
+        batch_request.include_agent_observations = False
+
+        result = facade.step_execution_batch(batch_request)
+
+        self.assertEqual(len(result.step_results), 1)
+        self.assertEqual(len(result.rewards), 1)
+        self.assertEqual(len(result.terminated), 1)
+        self.assertEqual(len(result.truncated), 1)
+        self.assertEqual(len(result.status_vectors), 1)
+        self.assertEqual(len(result.termination_reasons), 1)
+        self.assertEqual(len(result.reward_breakdown_jsons), 1)
+        self.assertEqual(len(result.step_infos), 1)
+        self.assertEqual(len(result.step_info_valid_flags), 1)
+        self.assertEqual(len(result.controller_state_changed_flags), 1)
+        self.assertEqual(len(result.observation_packet.refs), 1)
+        self.assertEqual(len(result.observation_packet.agent_observations), 0)
+
+        step_result = result.step_results[0]
+        self.assertTrue(bool(step_result.valid))
+        self.assertTrue(bool(step_result.structural_state_changed))
+        self.assertAlmostEqual(float(result.rewards[0]), float(step_result.reward_total), places=6)
+        self.assertEqual(bool(result.terminated[0]), bool(step_result.terminated))
+        self.assertEqual(bool(result.truncated[0]), bool(step_result.truncated))
+        self.assertEqual(
+            [float(value) for value in result.status_vectors[0]],
+            [
+                float(step_result.status0),
+                float(step_result.status1),
+                float(step_result.status2),
+                float(step_result.status3),
+            ],
+        )
+        self.assertEqual(
+            str(result.termination_reasons[0]),
+            str(step_result.controller_state.last_termination_reason),
+        )
+        self.assertEqual(
+            str(result.reward_breakdown_jsons[0]),
+            str(step_result.controller_state.last_reward_breakdown_json),
+        )
+        self.assertEqual(bool(result.step_info_valid_flags[0]), bool(step_result.step_info_valid))
+        self.assertEqual(
+            float(result.step_infos[0].gear_stress),
+            float(step_result.step_info.gear_stress),
+        )
+        self.assertEqual(
+            bool(result.controller_state_changed_flags[0]),
+            bool(step_result.structural_state_changed),
+        )
+        self.assertEqual(int(step_result.controller_state.mission_command.command_code), 2)
+        self.assertEqual(str(step_result.controller_state.mission_phase_name), "post_route")
+
+    def test_runtime_facade_step_execution_products_batch_advances_runtime_state(self) -> None:
+        entity_id = 91
+        facade = ef_py.RuntimeFacade(1)
+
+        ref = _entity_ref(0, entity_id)
+        state = _build_route_state(entity_id)
+        facade.prime_execution_episode_batch([ref], [state])
+
+        products = facade.step_execution_products_batch([_build_route_request(entity_id)])
+        exported_states = facade.export_execution_episode_states([ref])
+
+        self.assertEqual(len(products), 1)
+        self.assertEqual(len(exported_states), 1)
+        self.assertTrue(bool(products[0].valid))
+        self.assertGreater(float(products[0].compiled_reward_total), 0.0)
+        self.assertFalse(bool(products[0].terminated))
+        self.assertEqual(str(exported_states[0].mission_phase_name), "post_route")
+        self.assertEqual(int(exported_states[0].mission_command.command_code), 2)
+        self.assertEqual(int(exported_states[0].step_count), 1)
+        self.assertEqual(len(list(exported_states[0].route_waypoints)), 0)
+
+    def test_runtime_facade_supports_batch_world_setup_via_scenario_runtime(self) -> None:
+        scenario = {
+            "scenario_name": "runtime_facade_batch_setup",
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "legacy",
+                "wind": {
+                    "speed_mps": 4.0,
+                    "dir_from_deg": 180.0,
+                    "shear_mps_per_km": 0.0,
+                },
+                "zones": [
+                    {
+                        "name": "Runway_A",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "width": 60.0,
+                        "length": 2500.0,
+                        "heading": 90.0,
+                        "surface": "Concrete",
+                    }
+                ],
+            },
+            "mission_command": {
+                "command_code": 2,
+                "target_heading": 90.0,
+                "target_altitude": 1200.0,
+                "target_speed": 180.0,
+            },
+            "entities": [
+                {
+                    "name": "Lead",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [-1400.0, 0.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                },
+                {
+                    "name": "Wing",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": False,
+                    "pos": [-1550.0, -120.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                },
+            ],
+        }
+        compiled = ScenarioCompiler.compile_data(scenario)
+        facade = ef_py.RuntimeFacade(2)
+        self.assertTrue(facade.load_database(resolve_repo_path("examples", "config", "database")))
+
+        worlds = load_compiled_scenario_batch(
+            facade,
+            compiled,
+            seeds=[11, 17],
+            apply_buffer=BatchWorldApplyBuffer(2),
+        )
+
+        self.assertEqual(len(worlds), 2)
+        self.assertIsNotNone(worlds[0].agent_id)
+        self.assertIsNotNone(worlds[1].agent_id)
+        self.assertIn("Lead", worlds[0].entities)
+        self.assertIn("Wing", worlds[1].entities)
+
+        refs = [_entity_ref(0, int(worlds[0].agent_id)), _entity_ref(1, int(worlds[1].agent_id))]
+        obs_request = ef_py.ObservationBatchRequest()
+        obs_request.refs = refs
+        obs_request.include_agent_observations = True
+        packet = facade.export_observation_packet(obs_request)
+        obs0 = packet.agent_observations[0]
+        obs1 = packet.agent_observations[1]
+        self.assertEqual(int(obs0.id), int(worlds[0].agent_id))
+        self.assertEqual(int(obs1.id), int(worlds[1].agent_id))
+
+
+if __name__ == "__main__":
+    unittest.main()

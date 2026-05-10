@@ -6,7 +6,7 @@
 #include "components/systems/data_link.h"
 #include "components/systems/sensor.h"
 #include "components/systems/comm.h"
-#include "components/physics/action.h"
+#include "components/command/legacy_command.h"
 #include <spdlog/spdlog.h>
 
  inline void register_data_link_system(flecs::world& ecs) {

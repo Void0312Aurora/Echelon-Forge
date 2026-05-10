@@ -4,6 +4,8 @@
 #include <cmath>
 #include <iostream>
 #include "components/basic/common.h"
+#include "components/command/legacy_command.h"
+#include "components/command/pilot_action.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h" // For GroundState

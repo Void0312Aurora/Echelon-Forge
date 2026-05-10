@@ -7,7 +7,7 @@
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h" // For MassProperties (RefArea)
 #include "components/physics/performance.h" // For LandingGear
-#include "components/physics/action.h"       // For PilotAction (flaps/speedbrake)
+#include "components/command/pilot_action.h" // For PilotAction (flaps/speedbrake)
 #include "components/systems/logistics.h" // For MassProperties definition
 #include "core/interfaces/environment_model.h"
 

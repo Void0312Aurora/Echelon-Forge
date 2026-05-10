@@ -1,0 +1,31 @@
+# `src/components` 边界
+
+`components/` 只保存 ECS component、轻量值类型和稳定 DTO-like struct。这里的类型可以被 `systems/`、`core/`、`runtime/facade` 和 `interfaces/python` 读取或绑定，但不应拥有运行时编排逻辑。
+
+## 允许
+
+- 纯数据字段、默认值、轻量 enum。
+- 与 ECS storage 直接对应的状态组件。
+- 跨层传递但不执行业务流程的 command/tasking DTO。
+- 不依赖 Flecs world 的小型 helper 方法。
+
+## 禁止
+
+- system registration、tick/update、physics integration 或 mission state machine。
+- Python/nanobind 绑定 helper。
+- `SimulationKernel`、`WorldBatchRuntime`、`RuntimeFacade` 相关控制逻辑。
+- 需要读取数据库、加载场景或访问 runtime owner 的逻辑。
+
+## 子目录约定
+
+- `basic/`：基础实体标签、阵营、位置、环境数据等底层 component。
+- `combat/`：伤害、生命值、武器挂载、评分等战斗状态 component。
+- `physics/`：物理状态、动力学、力、仪表和性能状态。
+- `systems/`：通信、数据链、传感器、电子战、导航、后勤等平台系统状态 component。
+- `visual/`：视觉传感器输入输出状态。
+- `command/`：目标目录，用于 pilot action、mission command、command link 和 legacy command DTO。
+- `tasking/`：目标目录，用于 task order、leader intent、pilot report 和 C2/tasking enum。
+
+## 迁移备注
+
+当前 `physics/action.h` 同时承载 command 与 tasking 类型。新增 command/tasking 类型应进入 `components/command` 或 `components/tasking`，不要继续扩展 `components/physics/action.h`。

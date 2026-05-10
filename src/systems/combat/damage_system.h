@@ -6,7 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include "components/basic/common.h"
-#include "components/physics/action.h"
+#include "components/command/legacy_command.h"
 #include "components/combat/weapon.h"
 #include "core/interfaces/effects_model.h"
 #include <spdlog/spdlog.h>

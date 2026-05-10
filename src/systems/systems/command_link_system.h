@@ -1,7 +1,7 @@
 #pragma once
 
 #include <flecs.h>
-#include "components/physics/action.h"
+#include "components/command/command_link.h"
 
 inline void register_command_link_system(flecs::world& ecs) {
     ecs.system<MovementCommand, PendingMovementCommand, const CommandLink>("CommandLinkMovement")

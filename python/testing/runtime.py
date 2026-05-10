@@ -8,13 +8,41 @@ def repo_root() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
+def _normalize_build_path(base: str, value: str) -> str:
+    candidate = str(value or "").strip()
+    if not candidate:
+        return ""
+    if os.path.isabs(candidate):
+        return os.path.abspath(candidate)
+    return os.path.abspath(os.path.join(base, candidate))
+
+
 def build_dirs(root: str | None = None) -> list[str]:
     base = root or repo_root()
-    candidates = [
-        os.path.join(base, "build-gpu"),
-        os.path.join(base, "build"),
-    ]
-    return [path for path in candidates if os.path.isdir(path)]
+    candidates: list[str] = []
+
+    env_build = _normalize_build_path(base, os.environ.get("CMO_BUILD_DIR", ""))
+    if env_build:
+        candidates.append(env_build)
+
+    candidates.extend(
+        [
+            os.path.join(base, "build-facade-local"),
+            os.path.join(base, "build-gpu"),
+            os.path.join(base, "build"),
+        ]
+    )
+
+    out: list[str] = []
+    seen: set[str] = set()
+    for path in candidates:
+        normalized = os.path.abspath(path)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        if os.path.isdir(normalized):
+            out.append(normalized)
+    return out
 
 
 def build_dir(root: str | None = None) -> str:

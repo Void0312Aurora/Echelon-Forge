@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 #include <iostream>
 #include "components/basic/common.h"
-#include "components/physics/action.h"
+#include "components/command/legacy_command.h"
 #include "components/physics/performance.h"
 #include "core/interfaces/control_model.h"
 #include "core/interfaces/environment_model.h"

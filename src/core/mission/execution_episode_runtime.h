@@ -3,6 +3,7 @@
 #include "core/mission/execution_step_runtime.h"
 #include "core/mission/mission_runtime.h"
 #include "core/mission/reward_runtime.h"
+#include <vector>
 
 struct ExecutionEpisodeRuntimeInputs {
     bool has_mission_observation = false;
@@ -46,3 +47,6 @@ struct ExecutionEpisodeRuntimeProducts {
 };
 
 ExecutionEpisodeRuntimeProducts compute_execution_episode_runtime(const ExecutionEpisodeRuntimeInputs& inputs);
+std::vector<ExecutionEpisodeRuntimeProducts> compute_execution_episode_runtime_batch(
+    const std::vector<ExecutionEpisodeRuntimeInputs>& inputs_batch
+);

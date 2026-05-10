@@ -5,7 +5,6 @@
 #include <cmath>
 #include <spdlog/spdlog.h>
 
-#include "components/physics/action.h"
 #include "components/combat/health.h"
 #include "components/physics/performance.h"
 #include "components/combat/scoring.h"

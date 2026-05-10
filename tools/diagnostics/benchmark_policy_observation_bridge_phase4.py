@@ -37,6 +37,7 @@ class _NullCallback(BaseCallback):
 class _CaseConfig:
     name: str
     env_kwargs: dict[str, Any]
+    experimental: bool = False
 
 
 def _torch_sync() -> None:
@@ -300,9 +301,18 @@ def main() -> int:
     parser.add_argument("--rollout-repeats", type=int, default=2, help="Repeated rollout measurements.")
     parser.add_argument(
         "--case",
-        choices=["obs_gpuhost_novis", "p5like_visual", "p5like_visual_fullgpu"],
-        default="p5like_visual",
-        help="Benchmark case to run.",
+        default="p5like_visual_mainline",
+        help=(
+            "Benchmark case to run. Maintained: p5like_visual_mainline. "
+            "Experimental, opt-in only: experimental_p5like_visual_gpuhost_visual, "
+            "experimental_p5like_visual_all_gpuhost, experimental_obs_gpuhost_novis."
+        ),
+    )
+    parser.add_argument(
+        "--allow-experimental",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Allow frozen experimental helper cases. Leave off for maintained-mainline checks.",
     )
     parser.add_argument(
         "--sim-log-level",
@@ -341,8 +351,24 @@ def main() -> int:
         return 1
 
     case_map: dict[str, _CaseConfig] = {
-        "obs_gpuhost_novis": _CaseConfig(
-            name="obs_gpuhost_novis",
+        "p5like_visual_mainline": _CaseConfig(
+            name="p5like_visual_mainline",
+            env_kwargs={
+                "include_visual": True,
+                "include_proprio": False,
+                "action_mode": "full",
+                "mission_obs_mode": "nav_v2",
+                "visual_downsample": 2,
+                "visual_update_interval": 2,
+                "step_info_mode": "off",
+                "execution_step_runtime_mode": "compiled",
+                "flight_shaping_backend": "compiled",
+                "batch_observation_backend": "compiled",
+                "batch_visual_backend": "compiled",
+            },
+        ),
+        "experimental_obs_gpuhost_novis": _CaseConfig(
+            name="experimental_obs_gpuhost_novis",
             env_kwargs={
                 "include_visual": False,
                 "include_proprio": False,
@@ -354,9 +380,10 @@ def main() -> int:
                 "batch_observation_backend": "gpu_host",
                 "batch_visual_backend": "gpu_host",
             },
+            experimental=True,
         ),
-        "p5like_visual": _CaseConfig(
-            name="p5like_visual",
+        "experimental_p5like_visual_gpuhost_visual": _CaseConfig(
+            name="experimental_p5like_visual_gpuhost_visual",
             env_kwargs={
                 "include_visual": True,
                 "include_proprio": False,
@@ -370,9 +397,10 @@ def main() -> int:
                 "batch_observation_backend": "compiled",
                 "batch_visual_backend": "gpu_host",
             },
+            experimental=True,
         ),
-        "p5like_visual_fullgpu": _CaseConfig(
-            name="p5like_visual_fullgpu",
+        "experimental_p5like_visual_all_gpuhost": _CaseConfig(
+            name="experimental_p5like_visual_all_gpuhost",
             env_kwargs={
                 "include_visual": True,
                 "include_proprio": False,
@@ -386,9 +414,27 @@ def main() -> int:
                 "batch_observation_backend": "gpu_host",
                 "batch_visual_backend": "gpu_host",
             },
+            experimental=True,
         ),
     }
-    case = case_map[str(args.case)]
+    case_alias_map = {
+        "p5like_visual": "experimental_p5like_visual_gpuhost_visual",
+        "p5like_visual_fullgpu": "experimental_p5like_visual_all_gpuhost",
+        "obs_gpuhost_novis": "experimental_obs_gpuhost_novis",
+    }
+    requested_case = str(args.case).strip()
+    resolved_case = case_alias_map.get(requested_case, requested_case)
+    if resolved_case not in case_map:
+        parser.error(
+            "Unknown --case. Use p5like_visual_mainline for the maintained baseline, "
+            "or pass --allow-experimental with an explicit experimental_* case."
+        )
+    case = case_map[resolved_case]
+    if case.experimental and not bool(args.allow_experimental):
+        parser.error(
+            f"Case '{requested_case}' is frozen experimental. Re-run with --allow-experimental "
+            "if you intentionally want a non-mainline helper benchmark."
+        )
     case_env_kwargs = dict(case.env_kwargs)
     if str(args.flight_shaping_backend) != "case":
         case_env_kwargs["flight_shaping_backend"] = str(args.flight_shaping_backend)
@@ -417,7 +463,9 @@ def main() -> int:
     )
 
     result = {
+        "case_requested": requested_case,
         "case": case.name,
+        "case_status": "experimental" if case.experimental else "maintained",
         "scenario": scenario_path,
         "n_envs": int(args.n_envs),
         "forward_iters": int(args.forward_iters),
