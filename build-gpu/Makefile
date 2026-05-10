@@ -318,19 +318,6 @@ ef_gpu_visual_candidate_phase0_probe/fast:
 .PHONY : ef_gpu_visual_candidate_phase0_probe/fast
 
 #=============================================================================
-# Target rules for targets named ef_gpu_world_batch_phase0_probe
-
-# Build rule for target.
-ef_gpu_world_batch_phase0_probe: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ef_gpu_world_batch_phase0_probe
-.PHONY : ef_gpu_world_batch_phase0_probe
-
-# fast build rule for target.
-ef_gpu_world_batch_phase0_probe/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/build.make CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/build
-.PHONY : ef_gpu_world_batch_phase0_probe/fast
-
-#=============================================================================
 # Target rules for targets named flecs
 
 # Build rule for target.
@@ -705,6 +692,54 @@ src/core/geometry/spatial_query_runtime.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/geometry/spatial_query_runtime.cpp.s
 .PHONY : src/core/geometry/spatial_query_runtime.cpp.s
 
+src/core/mission/execution_episode_batch_prepare.o: src/core/mission/execution_episode_batch_prepare.cpp.o
+.PHONY : src/core/mission/execution_episode_batch_prepare.o
+
+# target to build an object file
+src/core/mission/execution_episode_batch_prepare.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_batch_prepare.cpp.o
+.PHONY : src/core/mission/execution_episode_batch_prepare.cpp.o
+
+src/core/mission/execution_episode_batch_prepare.i: src/core/mission/execution_episode_batch_prepare.cpp.i
+.PHONY : src/core/mission/execution_episode_batch_prepare.i
+
+# target to preprocess a source file
+src/core/mission/execution_episode_batch_prepare.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_batch_prepare.cpp.i
+.PHONY : src/core/mission/execution_episode_batch_prepare.cpp.i
+
+src/core/mission/execution_episode_batch_prepare.s: src/core/mission/execution_episode_batch_prepare.cpp.s
+.PHONY : src/core/mission/execution_episode_batch_prepare.s
+
+# target to generate assembly for a file
+src/core/mission/execution_episode_batch_prepare.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_batch_prepare.cpp.s
+.PHONY : src/core/mission/execution_episode_batch_prepare.cpp.s
+
+src/core/mission/execution_episode_controller.o: src/core/mission/execution_episode_controller.cpp.o
+.PHONY : src/core/mission/execution_episode_controller.o
+
+# target to build an object file
+src/core/mission/execution_episode_controller.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_controller.cpp.o
+.PHONY : src/core/mission/execution_episode_controller.cpp.o
+
+src/core/mission/execution_episode_controller.i: src/core/mission/execution_episode_controller.cpp.i
+.PHONY : src/core/mission/execution_episode_controller.i
+
+# target to preprocess a source file
+src/core/mission/execution_episode_controller.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_controller.cpp.i
+.PHONY : src/core/mission/execution_episode_controller.cpp.i
+
+src/core/mission/execution_episode_controller.s: src/core/mission/execution_episode_controller.cpp.s
+.PHONY : src/core/mission/execution_episode_controller.s
+
+# target to generate assembly for a file
+src/core/mission/execution_episode_controller.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_controller.cpp.s
+.PHONY : src/core/mission/execution_episode_controller.cpp.s
+
 src/core/mission/execution_episode_runtime.o: src/core/mission/execution_episode_runtime.cpp.o
 .PHONY : src/core/mission/execution_episode_runtime.o
 
@@ -728,6 +763,30 @@ src/core/mission/execution_episode_runtime.s: src/core/mission/execution_episode
 src/core/mission/execution_episode_runtime.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_runtime.cpp.s
 .PHONY : src/core/mission/execution_episode_runtime.cpp.s
+
+src/core/mission/execution_episode_state.o: src/core/mission/execution_episode_state.cpp.o
+.PHONY : src/core/mission/execution_episode_state.o
+
+# target to build an object file
+src/core/mission/execution_episode_state.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_state.cpp.o
+.PHONY : src/core/mission/execution_episode_state.cpp.o
+
+src/core/mission/execution_episode_state.i: src/core/mission/execution_episode_state.cpp.i
+.PHONY : src/core/mission/execution_episode_state.i
+
+# target to preprocess a source file
+src/core/mission/execution_episode_state.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_state.cpp.i
+.PHONY : src/core/mission/execution_episode_state.cpp.i
+
+src/core/mission/execution_episode_state.s: src/core/mission/execution_episode_state.cpp.s
+.PHONY : src/core/mission/execution_episode_state.s
+
+# target to generate assembly for a file
+src/core/mission/execution_episode_state.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/execution_episode_state.cpp.s
+.PHONY : src/core/mission/execution_episode_state.cpp.s
 
 src/core/mission/execution_frame_runtime.o: src/core/mission/execution_frame_runtime.cpp.o
 .PHONY : src/core/mission/execution_frame_runtime.o
@@ -896,438 +955,6 @@ src/core/mission/termination_runtime.s: src/core/mission/termination_runtime.cpp
 src/core/mission/termination_runtime.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/core/mission/termination_runtime.cpp.s
 .PHONY : src/core/mission/termination_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.o: src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.i: src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.s: src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.o: src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.o
-
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.i: src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.i
-
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.s: src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.cu.s
-
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.o: src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.i: src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.s: src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.o: src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.o
-
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.i: src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.i
-
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.s: src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.cu.s
-
-src/gpu/gpu_exact_world_step_aircraft_tail_runtime.o: src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_aircraft_tail_runtime.i: src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_aircraft_tail_runtime.s: src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_aircraft_tail_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_command_lane_runtime.o: src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_command_lane_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_command_lane_runtime.i: src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_command_lane_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_command_lane_runtime.s: src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_command_lane_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_command_lane_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_contract.o: src/gpu/gpu_exact_world_step_contract.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_contract.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_contract.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_contract.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_contract.cpp.o
-
-src/gpu/gpu_exact_world_step_contract.i: src/gpu/gpu_exact_world_step_contract.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_contract.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_contract.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_contract.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_contract.cpp.i
-
-src/gpu/gpu_exact_world_step_contract.s: src/gpu/gpu_exact_world_step_contract.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_contract.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_contract.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_contract.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_contract.cpp.s
-
-src/gpu/gpu_exact_world_step_control_aero_runtime.o: src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_control_aero_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_control_aero_runtime.i: src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_control_aero_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_control_aero_runtime.s: src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_control_aero_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_control_aero_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.o: src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.i: src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.s: src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.o: src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.o
-
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.i: src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.i
-
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.s: src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.cu.s
-
-src/gpu/gpu_exact_world_step_force_ground_runtime.o: src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_force_ground_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_force_ground_runtime.i: src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_force_ground_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_force_ground_runtime.s: src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_force_ground_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_force_ground_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_front_half_runtime.o: src/gpu/gpu_exact_world_step_front_half_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_front_half_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_front_half_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_front_half_runtime.i: src/gpu/gpu_exact_world_step_front_half_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_front_half_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_front_half_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_front_half_runtime.s: src/gpu/gpu_exact_world_step_front_half_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_front_half_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_front_half_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_front_half_runtime_cuda.o: src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime_cuda.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.o
-
-src/gpu/gpu_exact_world_step_front_half_runtime_cuda.i: src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime_cuda.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.i
-
-src/gpu/gpu_exact_world_step_front_half_runtime_cuda.s: src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime_cuda.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_front_half_runtime_cuda.cu.s
-
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.o: src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.i: src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.s: src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.o: src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.o
-
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.i: src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.i
-
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.s: src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.cu.s
-
-src/gpu/gpu_exact_world_step_missile_guidance_runtime.o: src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_missile_guidance_runtime.i: src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_missile_guidance_runtime.s: src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_missile_guidance_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_runtime.o: src/gpu/gpu_exact_world_step_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_runtime.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_runtime.cpp.o
-.PHONY : src/gpu/gpu_exact_world_step_runtime.cpp.o
-
-src/gpu/gpu_exact_world_step_runtime.i: src/gpu/gpu_exact_world_step_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_runtime.cpp.i
-.PHONY : src/gpu/gpu_exact_world_step_runtime.cpp.i
-
-src/gpu/gpu_exact_world_step_runtime.s: src/gpu/gpu_exact_world_step_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_runtime.cpp.s
-.PHONY : src/gpu/gpu_exact_world_step_runtime.cpp.s
-
-src/gpu/gpu_exact_world_step_runtime_cuda.o: src/gpu/gpu_exact_world_step_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_runtime_cuda.o
-
-# target to build an object file
-src/gpu/gpu_exact_world_step_runtime_cuda.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_exact_world_step_runtime_cuda.cu.o
-
-src/gpu/gpu_exact_world_step_runtime_cuda.i: src/gpu/gpu_exact_world_step_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_runtime_cuda.i
-
-# target to preprocess a source file
-src/gpu/gpu_exact_world_step_runtime_cuda.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_exact_world_step_runtime_cuda.cu.i
-
-src/gpu/gpu_exact_world_step_runtime_cuda.s: src/gpu/gpu_exact_world_step_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_runtime_cuda.s
-
-# target to generate assembly for a file
-src/gpu/gpu_exact_world_step_runtime_cuda.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_exact_world_step_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_exact_world_step_runtime_cuda.cu.s
 
 src/gpu/gpu_execution_observation_runtime.o: src/gpu/gpu_execution_observation_runtime.cpp.o
 .PHONY : src/gpu/gpu_execution_observation_runtime.o
@@ -1521,54 +1148,6 @@ src/gpu/gpu_visual_runtime_cuda.cu.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_visual_runtime_cuda.cu.s
 .PHONY : src/gpu/gpu_visual_runtime_cuda.cu.s
 
-src/gpu/gpu_world_batch_runtime.o: src/gpu/gpu_world_batch_runtime.cpp.o
-.PHONY : src/gpu/gpu_world_batch_runtime.o
-
-# target to build an object file
-src/gpu/gpu_world_batch_runtime.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_world_batch_runtime.cpp.o
-.PHONY : src/gpu/gpu_world_batch_runtime.cpp.o
-
-src/gpu/gpu_world_batch_runtime.i: src/gpu/gpu_world_batch_runtime.cpp.i
-.PHONY : src/gpu/gpu_world_batch_runtime.i
-
-# target to preprocess a source file
-src/gpu/gpu_world_batch_runtime.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_world_batch_runtime.cpp.i
-.PHONY : src/gpu/gpu_world_batch_runtime.cpp.i
-
-src/gpu/gpu_world_batch_runtime.s: src/gpu/gpu_world_batch_runtime.cpp.s
-.PHONY : src/gpu/gpu_world_batch_runtime.s
-
-# target to generate assembly for a file
-src/gpu/gpu_world_batch_runtime.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_world_batch_runtime.cpp.s
-.PHONY : src/gpu/gpu_world_batch_runtime.cpp.s
-
-src/gpu/gpu_world_batch_runtime_cuda.o: src/gpu/gpu_world_batch_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_world_batch_runtime_cuda.o
-
-# target to build an object file
-src/gpu/gpu_world_batch_runtime_cuda.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_world_batch_runtime_cuda.cu.o
-.PHONY : src/gpu/gpu_world_batch_runtime_cuda.cu.o
-
-src/gpu/gpu_world_batch_runtime_cuda.i: src/gpu/gpu_world_batch_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_world_batch_runtime_cuda.i
-
-# target to preprocess a source file
-src/gpu/gpu_world_batch_runtime_cuda.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_world_batch_runtime_cuda.cu.i
-.PHONY : src/gpu/gpu_world_batch_runtime_cuda.cu.i
-
-src/gpu/gpu_world_batch_runtime_cuda.s: src/gpu/gpu_world_batch_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_world_batch_runtime_cuda.s
-
-# target to generate assembly for a file
-src/gpu/gpu_world_batch_runtime_cuda.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_experiments.dir/build.make CMakeFiles/ef_gpu_experiments.dir/src/gpu/gpu_world_batch_runtime_cuda.cu.s
-.PHONY : src/gpu/gpu_world_batch_runtime_cuda.cu.s
-
 src/interfaces/python/python_module.o: src/interfaces/python/python_module.cpp.o
 .PHONY : src/interfaces/python/python_module.o
 
@@ -1737,197 +1316,173 @@ src/models/weapons/default_guidance_model.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_core.dir/build.make CMakeFiles/ef_core.dir/src/models/weapons/default_guidance_model.cpp.s
 .PHONY : src/models/weapons/default_guidance_model.cpp.s
 
-src/tools/gpu_comm_candidate_phase0_probe.o: src/tools/gpu_comm_candidate_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_comm_candidate_phase0_probe.o
+src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.o: src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.o
 
 # target to build an object file
-src/tools/gpu_comm_candidate_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/src/tools/gpu_comm_candidate_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_comm_candidate_phase0_probe.cpp.o
+src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.o
 
-src/tools/gpu_comm_candidate_phase0_probe.i: src/tools/gpu_comm_candidate_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_comm_candidate_phase0_probe.i
+src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.i: src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.i
 
 # target to preprocess a source file
-src/tools/gpu_comm_candidate_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/src/tools/gpu_comm_candidate_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_comm_candidate_phase0_probe.cpp.i
+src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.i
 
-src/tools/gpu_comm_candidate_phase0_probe.s: src/tools/gpu_comm_candidate_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_comm_candidate_phase0_probe.s
+src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.s: src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.s
 
 # target to generate assembly for a file
-src/tools/gpu_comm_candidate_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/src/tools/gpu_comm_candidate_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_comm_candidate_phase0_probe.cpp.s
+src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_comm_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp.s
 
-src/tools/gpu_execution_observation_phase0_probe.o: src/tools/gpu_execution_observation_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_execution_observation_phase0_probe.o
+src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.o: src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.o
 
 # target to build an object file
-src/tools/gpu_execution_observation_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/build.make CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/src/tools/gpu_execution_observation_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_execution_observation_phase0_probe.cpp.o
+src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/build.make CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.o
 
-src/tools/gpu_execution_observation_phase0_probe.i: src/tools/gpu_execution_observation_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_execution_observation_phase0_probe.i
+src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.i: src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.i
 
 # target to preprocess a source file
-src/tools/gpu_execution_observation_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/build.make CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/src/tools/gpu_execution_observation_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_execution_observation_phase0_probe.cpp.i
+src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/build.make CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.i
 
-src/tools/gpu_execution_observation_phase0_probe.s: src/tools/gpu_execution_observation_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_execution_observation_phase0_probe.s
+src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.s: src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.s
 
 # target to generate assembly for a file
-src/tools/gpu_execution_observation_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/build.make CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/src/tools/gpu_execution_observation_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_execution_observation_phase0_probe.cpp.s
+src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/build.make CMakeFiles/ef_gpu_execution_observation_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp.s
 
-src/tools/gpu_flight_shaping_phase0_probe.o: src/tools/gpu_flight_shaping_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_flight_shaping_phase0_probe.o
+src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.o: src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.o
 
 # target to build an object file
-src/tools/gpu_flight_shaping_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/build.make CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/src/tools/gpu_flight_shaping_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_flight_shaping_phase0_probe.cpp.o
+src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/build.make CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.o
 
-src/tools/gpu_flight_shaping_phase0_probe.i: src/tools/gpu_flight_shaping_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_flight_shaping_phase0_probe.i
+src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.i: src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.i
 
 # target to preprocess a source file
-src/tools/gpu_flight_shaping_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/build.make CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/src/tools/gpu_flight_shaping_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_flight_shaping_phase0_probe.cpp.i
+src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/build.make CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.i
 
-src/tools/gpu_flight_shaping_phase0_probe.s: src/tools/gpu_flight_shaping_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_flight_shaping_phase0_probe.s
+src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.s: src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.s
 
 # target to generate assembly for a file
-src/tools/gpu_flight_shaping_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/build.make CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/src/tools/gpu_flight_shaping_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_flight_shaping_phase0_probe.cpp.s
+src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/build.make CMakeFiles/ef_gpu_flight_shaping_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp.s
 
-src/tools/gpu_interaction_broadphase_phase0_probe.o: src/tools/gpu_interaction_broadphase_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_interaction_broadphase_phase0_probe.o
+src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.o: src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.o
 
 # target to build an object file
-src/tools/gpu_interaction_broadphase_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/build.make CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/src/tools/gpu_interaction_broadphase_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_interaction_broadphase_phase0_probe.cpp.o
+src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/build.make CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.o
 
-src/tools/gpu_interaction_broadphase_phase0_probe.i: src/tools/gpu_interaction_broadphase_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_interaction_broadphase_phase0_probe.i
+src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.i: src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.i
 
 # target to preprocess a source file
-src/tools/gpu_interaction_broadphase_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/build.make CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/src/tools/gpu_interaction_broadphase_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_interaction_broadphase_phase0_probe.cpp.i
+src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/build.make CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.i
 
-src/tools/gpu_interaction_broadphase_phase0_probe.s: src/tools/gpu_interaction_broadphase_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_interaction_broadphase_phase0_probe.s
+src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.s: src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.s
 
 # target to generate assembly for a file
-src/tools/gpu_interaction_broadphase_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/build.make CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/src/tools/gpu_interaction_broadphase_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_interaction_broadphase_phase0_probe.cpp.s
+src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/build.make CMakeFiles/ef_gpu_interaction_broadphase_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp.s
 
-src/tools/gpu_sensor_candidate_phase0_probe.o: src/tools/gpu_sensor_candidate_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_sensor_candidate_phase0_probe.o
+src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.o: src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.o
 
 # target to build an object file
-src/tools/gpu_sensor_candidate_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/src/tools/gpu_sensor_candidate_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_sensor_candidate_phase0_probe.cpp.o
+src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.o
 
-src/tools/gpu_sensor_candidate_phase0_probe.i: src/tools/gpu_sensor_candidate_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_sensor_candidate_phase0_probe.i
+src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.i: src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.i
 
 # target to preprocess a source file
-src/tools/gpu_sensor_candidate_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/src/tools/gpu_sensor_candidate_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_sensor_candidate_phase0_probe.cpp.i
+src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.i
 
-src/tools/gpu_sensor_candidate_phase0_probe.s: src/tools/gpu_sensor_candidate_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_sensor_candidate_phase0_probe.s
+src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.s: src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.s
 
 # target to generate assembly for a file
-src/tools/gpu_sensor_candidate_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/src/tools/gpu_sensor_candidate_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_sensor_candidate_phase0_probe.cpp.s
+src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_sensor_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp.s
 
-src/tools/gpu_visual_candidate_phase0_probe.o: src/tools/gpu_visual_candidate_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_visual_candidate_phase0_probe.o
+src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.o: src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.o
 
 # target to build an object file
-src/tools/gpu_visual_candidate_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/src/tools/gpu_visual_candidate_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_visual_candidate_phase0_probe.cpp.o
+src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.o
 
-src/tools/gpu_visual_candidate_phase0_probe.i: src/tools/gpu_visual_candidate_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_visual_candidate_phase0_probe.i
+src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.i: src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.i
 
 # target to preprocess a source file
-src/tools/gpu_visual_candidate_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/src/tools/gpu_visual_candidate_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_visual_candidate_phase0_probe.cpp.i
+src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.i
 
-src/tools/gpu_visual_candidate_phase0_probe.s: src/tools/gpu_visual_candidate_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_visual_candidate_phase0_probe.s
+src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.s: src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.s
 
 # target to generate assembly for a file
-src/tools/gpu_visual_candidate_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/src/tools/gpu_visual_candidate_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_visual_candidate_phase0_probe.cpp.s
+src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_candidate_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp.s
 
-src/tools/gpu_visual_phase0_probe.o: src/tools/gpu_visual_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_visual_phase0_probe.o
+src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.o: src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.o
 
 # target to build an object file
-src/tools/gpu_visual_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_phase0_probe.dir/src/tools/gpu_visual_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_visual_phase0_probe.cpp.o
+src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.o
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.o
 
-src/tools/gpu_visual_phase0_probe.i: src/tools/gpu_visual_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_visual_phase0_probe.i
-
-# target to preprocess a source file
-src/tools/gpu_visual_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_phase0_probe.dir/src/tools/gpu_visual_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_visual_phase0_probe.cpp.i
-
-src/tools/gpu_visual_phase0_probe.s: src/tools/gpu_visual_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_visual_phase0_probe.s
-
-# target to generate assembly for a file
-src/tools/gpu_visual_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_phase0_probe.dir/src/tools/gpu_visual_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_visual_phase0_probe.cpp.s
-
-src/tools/gpu_world_batch_phase0_probe.o: src/tools/gpu_world_batch_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_world_batch_phase0_probe.o
-
-# target to build an object file
-src/tools/gpu_world_batch_phase0_probe.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/build.make CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/src/tools/gpu_world_batch_phase0_probe.cpp.o
-.PHONY : src/tools/gpu_world_batch_phase0_probe.cpp.o
-
-src/tools/gpu_world_batch_phase0_probe.i: src/tools/gpu_world_batch_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_world_batch_phase0_probe.i
+src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.i: src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.i
 
 # target to preprocess a source file
-src/tools/gpu_world_batch_phase0_probe.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/build.make CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/src/tools/gpu_world_batch_phase0_probe.cpp.i
-.PHONY : src/tools/gpu_world_batch_phase0_probe.cpp.i
+src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.i
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.i
 
-src/tools/gpu_world_batch_phase0_probe.s: src/tools/gpu_world_batch_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_world_batch_phase0_probe.s
+src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.s: src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.s
 
 # target to generate assembly for a file
-src/tools/gpu_world_batch_phase0_probe.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/build.make CMakeFiles/ef_gpu_world_batch_phase0_probe.dir/src/tools/gpu_world_batch_phase0_probe.cpp.s
-.PHONY : src/tools/gpu_world_batch_phase0_probe.cpp.s
+src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ef_gpu_visual_phase0_probe.dir/build.make CMakeFiles/ef_gpu_visual_phase0_probe.dir/src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.s
+.PHONY : src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp.s
 
 # Help Target
 help:
@@ -1951,7 +1506,6 @@ help:
 	@echo "... ef_gpu_sensor_candidate_phase0_probe"
 	@echo "... ef_gpu_visual_candidate_phase0_probe"
 	@echo "... ef_gpu_visual_phase0_probe"
-	@echo "... ef_gpu_world_batch_phase0_probe"
 	@echo "... ef_py"
 	@echo "... flecs"
 	@echo "... flecs_static"
@@ -1999,9 +1553,18 @@ help:
 	@echo "... src/core/geometry/spatial_query_runtime.o"
 	@echo "... src/core/geometry/spatial_query_runtime.i"
 	@echo "... src/core/geometry/spatial_query_runtime.s"
+	@echo "... src/core/mission/execution_episode_batch_prepare.o"
+	@echo "... src/core/mission/execution_episode_batch_prepare.i"
+	@echo "... src/core/mission/execution_episode_batch_prepare.s"
+	@echo "... src/core/mission/execution_episode_controller.o"
+	@echo "... src/core/mission/execution_episode_controller.i"
+	@echo "... src/core/mission/execution_episode_controller.s"
 	@echo "... src/core/mission/execution_episode_runtime.o"
 	@echo "... src/core/mission/execution_episode_runtime.i"
 	@echo "... src/core/mission/execution_episode_runtime.s"
+	@echo "... src/core/mission/execution_episode_state.o"
+	@echo "... src/core/mission/execution_episode_state.i"
+	@echo "... src/core/mission/execution_episode_state.s"
 	@echo "... src/core/mission/execution_frame_runtime.o"
 	@echo "... src/core/mission/execution_frame_runtime.i"
 	@echo "... src/core/mission/execution_frame_runtime.s"
@@ -2023,60 +1586,6 @@ help:
 	@echo "... src/core/mission/termination_runtime.o"
 	@echo "... src/core/mission/termination_runtime.i"
 	@echo "... src/core/mission/termination_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.o"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.i"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_chain_cuda_runtime_cuda.s"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.o"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.i"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_cuda_runtime_cuda.s"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_aircraft_tail_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_command_lane_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_command_lane_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_command_lane_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_contract.o"
-	@echo "... src/gpu/gpu_exact_world_step_contract.i"
-	@echo "... src/gpu/gpu_exact_world_step_contract.s"
-	@echo "... src/gpu/gpu_exact_world_step_control_aero_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_control_aero_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_control_aero_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.o"
-	@echo "... src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.i"
-	@echo "... src/gpu/gpu_exact_world_step_first_scope_chain_cuda_runtime_cuda.s"
-	@echo "... src/gpu/gpu_exact_world_step_force_ground_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_force_ground_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_force_ground_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_front_half_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_front_half_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_front_half_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_front_half_runtime_cuda.o"
-	@echo "... src/gpu/gpu_exact_world_step_front_half_runtime_cuda.i"
-	@echo "... src/gpu/gpu_exact_world_step_front_half_runtime_cuda.s"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.o"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.i"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_cuda_runtime_cuda.s"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_missile_guidance_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_runtime.o"
-	@echo "... src/gpu/gpu_exact_world_step_runtime.i"
-	@echo "... src/gpu/gpu_exact_world_step_runtime.s"
-	@echo "... src/gpu/gpu_exact_world_step_runtime_cuda.o"
-	@echo "... src/gpu/gpu_exact_world_step_runtime_cuda.i"
-	@echo "... src/gpu/gpu_exact_world_step_runtime_cuda.s"
 	@echo "... src/gpu/gpu_execution_observation_runtime.o"
 	@echo "... src/gpu/gpu_execution_observation_runtime.i"
 	@echo "... src/gpu/gpu_execution_observation_runtime.s"
@@ -2101,12 +1610,6 @@ help:
 	@echo "... src/gpu/gpu_visual_runtime_cuda.o"
 	@echo "... src/gpu/gpu_visual_runtime_cuda.i"
 	@echo "... src/gpu/gpu_visual_runtime_cuda.s"
-	@echo "... src/gpu/gpu_world_batch_runtime.o"
-	@echo "... src/gpu/gpu_world_batch_runtime.i"
-	@echo "... src/gpu/gpu_world_batch_runtime.s"
-	@echo "... src/gpu/gpu_world_batch_runtime_cuda.o"
-	@echo "... src/gpu/gpu_world_batch_runtime_cuda.i"
-	@echo "... src/gpu/gpu_world_batch_runtime_cuda.s"
 	@echo "... src/interfaces/python/python_module.o"
 	@echo "... src/interfaces/python/python_module.i"
 	@echo "... src/interfaces/python/python_module.s"
@@ -2128,30 +1631,27 @@ help:
 	@echo "... src/models/weapons/default_guidance_model.o"
 	@echo "... src/models/weapons/default_guidance_model.i"
 	@echo "... src/models/weapons/default_guidance_model.s"
-	@echo "... src/tools/gpu_comm_candidate_phase0_probe.o"
-	@echo "... src/tools/gpu_comm_candidate_phase0_probe.i"
-	@echo "... src/tools/gpu_comm_candidate_phase0_probe.s"
-	@echo "... src/tools/gpu_execution_observation_phase0_probe.o"
-	@echo "... src/tools/gpu_execution_observation_phase0_probe.i"
-	@echo "... src/tools/gpu_execution_observation_phase0_probe.s"
-	@echo "... src/tools/gpu_flight_shaping_phase0_probe.o"
-	@echo "... src/tools/gpu_flight_shaping_phase0_probe.i"
-	@echo "... src/tools/gpu_flight_shaping_phase0_probe.s"
-	@echo "... src/tools/gpu_interaction_broadphase_phase0_probe.o"
-	@echo "... src/tools/gpu_interaction_broadphase_phase0_probe.i"
-	@echo "... src/tools/gpu_interaction_broadphase_phase0_probe.s"
-	@echo "... src/tools/gpu_sensor_candidate_phase0_probe.o"
-	@echo "... src/tools/gpu_sensor_candidate_phase0_probe.i"
-	@echo "... src/tools/gpu_sensor_candidate_phase0_probe.s"
-	@echo "... src/tools/gpu_visual_candidate_phase0_probe.o"
-	@echo "... src/tools/gpu_visual_candidate_phase0_probe.i"
-	@echo "... src/tools/gpu_visual_candidate_phase0_probe.s"
-	@echo "... src/tools/gpu_visual_phase0_probe.o"
-	@echo "... src/tools/gpu_visual_phase0_probe.i"
-	@echo "... src/tools/gpu_visual_phase0_probe.s"
-	@echo "... src/tools/gpu_world_batch_phase0_probe.o"
-	@echo "... src/tools/gpu_world_batch_phase0_probe.i"
-	@echo "... src/tools/gpu_world_batch_phase0_probe.s"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.o"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.i"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.s"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.o"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.i"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.s"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.o"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.i"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.s"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.o"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.i"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.s"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.o"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.i"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.s"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.o"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.i"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.s"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.o"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.i"
+	@echo "... src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.s"
 .PHONY : help
 
 
