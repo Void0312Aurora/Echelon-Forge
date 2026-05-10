@@ -12,6 +12,8 @@
   - Stable runners for JSON contract suites and similar maintained entrypoints.
 - `tools/maintenance/`
   - Workspace audit and cleanup helpers.
+- `tools/archive/`
+  - Archived ad hoc probes migrated out of repo root.
 
 ## Eval
 
@@ -58,6 +60,15 @@
   - Audits duplicate/temp-like workspace content.
 - [cleanup_redundancy.py](/home/void0312/CMO/tools/maintenance/cleanup_redundancy.py)
   - Dry-run or apply cleanup for cache/temp artifacts.
+
+## Archive
+
+- [README.md](/home/void0312/CMO/tools/archive/README.md)
+  - Scope note for archived root-level probes.
+- [batch_api_probe.py](/home/void0312/CMO/tools/archive/batch_api_probe.py)
+  - Quick manual probe for the C++ batch preparation API.
+- [world_batch_vec_env_benchmark.py](/home/void0312/CMO/tools/archive/world_batch_vec_env_benchmark.py)
+  - Archived vec-env throughput benchmark that predates the current diagnostics layout.
 
 ## Common Usage
 
@@ -111,3 +122,4 @@ Probe leader-layer throughput:
 - JSON-contract entrypoints should prefer `tools/runners/run_scenario_contract.py` over one-off wrappers.
 - Ad hoc probes and matrix sweeps belong under `tools/diagnostics/`.
 - Cleanup/audit helpers belong under `tools/maintenance/`.
+- Archived scratch scripts should move to `tools/archive/`, not stay at repo root.
