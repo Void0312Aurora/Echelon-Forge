@@ -11,8 +11,6 @@ import warnings
 
 import gymnasium as gym
 import numpy as np
-from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvIndices, VecEnvObs, VecEnvStepReturn
-from stable_baselines3.common.vec_env.util import dict_to_obs, obs_space_info
 
 try:
     import torch
@@ -38,6 +36,14 @@ from gym_envs.universal_env import (
     normalize_action,
 )
 from python.rl.leader_tasking import build_kernel_mission_command
+from python.rl.sb3_vec_env_compat import (
+    VecEnv,
+    VecEnvIndices,
+    VecEnvObs,
+    VecEnvStepReturn,
+    dict_to_obs,
+    obs_space_info,
+)
 from python.rl.wrappers import MultiTimescaleActionController
 from python.scenario_compiler import ScenarioCompiler
 from python.scenario_runtime import (
