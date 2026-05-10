@@ -8,7 +8,7 @@
   "leader_env": {
     "decision_interval_steps": 20,
     "execution_backend": "scripted",
-    "execution_train_config": "examples/config/training/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json",
+    "execution_train_config": "examples/config/Archive/training/pre_freeze_experiments/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json",
     "scripted_transition_alt_agl_m": 140.0,
     "heading_bias_limit_deg": 35.0,
     "altitude_bias_limit_m": 600.0,

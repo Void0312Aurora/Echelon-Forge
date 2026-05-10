@@ -14,7 +14,7 @@
   "leader_env": {
     "decision_interval_steps": 20,
     "execution_backend": "frozen_model",
-    "execution_train_config": "examples/config/training/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json",
+    "execution_train_config": "examples/config/Archive/training/pre_freeze_experiments/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json",
     "execution_model_path": "experiments/_archive_20260322_test_results/root_level/experiments_tmp/20260318_p5_takeoff_to_landing_continuous_v3_retrain_v1/final_model.zip",
     "execution_algo": "auto",
     "scripted_transition_alt_agl_m": 140.0,

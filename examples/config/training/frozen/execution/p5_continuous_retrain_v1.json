@@ -8,7 +8,7 @@
     "world_batch_vec_env": true,
     "world_batch_threads": 1,
     "batch_observation_backend": "compiled",
-    "batch_visual_backend": "gpu_host"
+    "batch_visual_backend": "compiled"
   },
   "env": {
     "include_proprio": true,

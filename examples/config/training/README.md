@@ -1,6 +1,17 @@
 # Training Config Notes
 
-This folder contains JSON configs consumed by [train.py](/home/void0312/CMO/train.py).
+This folder contains the maintained JSON configs consumed by [train.py](/home/void0312/CMO/train.py).
+
+## Maintained Surface
+
+- [default_ppo.json](/home/void0312/CMO/examples/config/training/default_ppo.json)
+  - Minimal generic fallback used by `train.py --train_config` when no config is provided.
+- [curriculum/](/home/void0312/CMO/examples/config/training/curriculum)
+  - Reusable curriculum/randomization snippets.
+- [frozen/](/home/void0312/CMO/examples/config/training/frozen/README.md)
+  - Maintained post-freeze leader and execution-layer training entry points.
+
+Avoid adding ad hoc experiment JSON files directly under this directory. New maintained runs should go under `frozen/` or a deliberately named active subdirectory with a README that explains ownership and acceptance criteria.
 
 ## Frozen Baseline
 
@@ -13,7 +24,14 @@ The maintained leader-layer entry points now live under [frozen](/home/void0312/
 
 ## Archive
 
-Historical `p6_*/p7_*` leader-layer configs have been moved to [leader_legacy](/home/void0312/CMO/examples/config/Archive/training/leader_legacy/README.md). They are retained for provenance only and are no longer the maintained training entry points.
+Historical configs are retained under [examples/config/Archive/training](/home/void0312/CMO/examples/config/Archive/training) for provenance only:
+
+- [pre_freeze_experiments](/home/void0312/CMO/examples/config/Archive/training/pre_freeze_experiments/README.md)
+  - Older root-level `p2/p3/p4/p5`, takeoff-departure, and transformer experiment configs.
+- [leader_legacy](/home/void0312/CMO/examples/config/Archive/training/leader_legacy/README.md)
+  - Historical `p6_*/p7_*` leader-layer configs.
+
+Archived configs are not maintained training entry points. If one needs to be revived, copy it into a maintained active directory and update its scenario pairing, runtime assumptions, and acceptance target.
 
 ## Leader Performance Knobs
 
@@ -56,8 +74,11 @@ Training runtime config also supports:
 - `runtime.world_batch_vec_env`
   - Uses [world_batch_vec_env.py](/home/void0312/CMO/python/rl/world_batch_vec_env.py) for execution-layer training instead of `DummyVecEnv`/`SubprocVecEnv`.
   - This routes execution rollouts through one `ef_py.WorldBatchRuntime`, so stepping and readback use batch C++ APIs instead of per-env Python loops.
-  - The maintained post-freeze execution `p5` configs now use this path together with the world-batch visual helper and the compiled batch-observation helper.
-  - Current guardrail: exact world stepping is still CPU `SimulationKernel::step()`. The GPU-assisted production path currently accelerates visual generation and related batch helpers, not the exact ECS world step itself.
+  - The maintained post-freeze execution `p5` configs now use this path with
+    `batch_observation_backend=compiled` and `batch_visual_backend=compiled`.
+  - Maintained baseline: exact world stepping remains CPU
+    `SimulationKernel::step()`. The retained `gpu_host/fullgpu` helper line is
+    now benchmark-only and no longer part of the default execution path.
 
 - `runtime.world_batch_threads`
   - Controls `ef_py.WorldBatchRuntime.set_worker_threads()`.
@@ -109,18 +130,31 @@ Training runtime config also supports:
   --mission-obs-mode nav_v2
 ```
 
-- Phase 4 maintained `p5` CUDA bridge / flight-shaping A/B benchmark:
+- Phase 4 maintained `p5` mainline bridge benchmark:
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
-  --case p5like_visual \
+  --case p5like_visual_mainline \
   --n-envs 8 \
   --rollout-steps 64 \
   --rollout-repeats 2 \
   --flight-shaping-backend compiled
 
 ./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
-  --case p5like_visual \
+  --case experimental_p5like_visual_gpuhost_visual \
+  --allow-experimental \
+  --n-envs 8 \
+  --rollout-steps 64 \
+  --rollout-repeats 2 \
+  --flight-shaping-backend compiled
+```
+
+- Phase 4 retained experimental helper A/B benchmark:
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
+  --case experimental_p5like_visual_all_gpuhost \
+  --allow-experimental \
   --n-envs 8 \
   --rollout-steps 64 \
   --rollout-repeats 2 \

@@ -874,7 +874,7 @@ def simulation_loop():
         if wrapper_kwargs is None:
             raise ValueError(
                 "scripted=takeoff_cruise_landing requires a train config with the action wrapper enabled; "
-                "pass --train_config examples/config/training/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v1.json"
+                "pass --train_config examples/config/training/frozen/execution/p5_continuous_retrain_v1.json"
             )
         wrapper_kwargs["scripted_baseline_mode"] = "takeoff_cruise_landing"
         wrapper_kwargs["scripted_residual_scale"] = 0.0

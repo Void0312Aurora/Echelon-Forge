@@ -1,7 +1,7 @@
 {
   "type": "scripted_bridge",
   "scenario": "scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
-  "wrapper_config": "examples/config/training/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v1.json",
+  "wrapper_config": "examples/config/Archive/training/pre_freeze_experiments/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v1.json",
   "seed": 7,
   "max_steps": 16000,
   "mission_obs_mode": "nav_v2",

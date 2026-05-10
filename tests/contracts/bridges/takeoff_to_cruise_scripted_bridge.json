@@ -1,7 +1,7 @@
 {
   "type": "scripted_bridge",
   "scenario": "scenarios/combined/takeoff_to_cruise_paramroute_navv2_train_v1.json",
-  "wrapper_config": "examples/config/training/p3_takeoff_to_cruise_full_visual_navv2_residual_smoke_v1.json",
+  "wrapper_config": "examples/config/training/frozen/execution/p3_takeoff_to_cruise_retrain_v1.json",
   "seed": 7,
   "max_steps": 8000,
   "mission_obs_mode": "nav_v2",
