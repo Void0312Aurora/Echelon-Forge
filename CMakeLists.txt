@@ -68,6 +68,9 @@ add_library(ef_core STATIC
     src/core/mission/execution_episode_state.cpp
     src/core/mission/execution_episode_batch_prepare.cpp
     src/core/mission/execution_episode_controller.cpp
+    src/core/mission/episode_transition_runtime.cpp
+    src/core/mission/episode_reward_breakdown.cpp
+    src/core/mission/mission_command_codec.cpp
     src/core/mission/reward_runtime.cpp
     src/core/mission/objective_runtime.cpp
     src/core/mission/termination_runtime.cpp

@@ -247,6 +247,16 @@ src/core/mission/
 - reward breakdown 汇总集中在 breakdown helper。
 - controller 只协调 state import/export、prepare/evaluate/step。
 
+执行状态：
+
+- 已完成：新增 `mission_command_codec.{h,cpp}`，集中 mission-command JSON round-trip、route waypoint materialization 和 mission target 更新。
+- 已完成：新增 `episode_transition_runtime.{h,cpp}`，集中 route guidance target 更新、post-waypoint transition 和 landing transition arm/vector 更新。
+- 已完成：新增 `episode_reward_breakdown.{h,cpp}`，集中 reward breakdown 汇总和稳定 JSON 输出。
+- 已完成：`execution_episode_controller.cpp` 收缩为 state import/export、prepare/evaluate/step 与 runtime products apply 的协调职责。
+- 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。
+- 已验证：`PYTHONPATH=build-workshop pytest -q tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/runtime/test_scenario_loader_execution_step_runtime.py tests/test_gpu_runtime_bindings.py` 通过，`45 passed`。
+- 受环境限制：`tests/world_batch/test_world_batch_vec_env.py` 当前测试环境缺少 `gymnasium`，收集阶段失败，未作为本轮验证结果。
+
 ### WP6：收紧 facade 逃逸口
 
 目标：

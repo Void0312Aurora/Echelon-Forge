@@ -16,15 +16,18 @@
 - Python/nanobind 绑定。
 - 训练配置文件解析和 UI/API 适配。
 
-## 拆分目标
+## 当前结构
 
-`execution_episode_controller.cpp` 应逐步拆成：
+`execution_episode_controller.cpp` 保留 state import/export、prepare、evaluate、step 的协调职责。内部业务 helper 已拆为：
 
 - `episode_transition_runtime.cpp`
+  - route guidance target 更新、post-waypoint transition、landing transition arm/vector 更新。
 - `episode_reward_breakdown.cpp`
+  - execution episode reward breakdown 汇总和稳定 JSON 输出。
 - `mission_command_codec.cpp`
+  - mission-command JSON round-trip、route waypoint materialization、mission command target 更新。
 
-controller 主文件保留 state import/export、prepare、evaluate、step 的协调职责。
+后续新增 mission JSON 字段、transition 规则或 reward breakdown term，应先落到上述 helper，而不是回填到 controller 主文件。
 
 ## 依赖方向
 

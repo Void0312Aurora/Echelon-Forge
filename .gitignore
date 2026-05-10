@@ -1,5 +1,7 @@
 # --- Build Directories ---
 build/
+build-*/
+build-gpu/
 bin/
 lib/
 out/
@@ -27,6 +29,8 @@ htmlcov/
 *.swo
 .clangd/
 .cache/
+.codex/
+.agents/tmp/
 .agent
 compile_commands.json
 
@@ -47,7 +51,16 @@ Thumbs.db
 *.log
 recordings/
 docs/*
+!docs/
+!docs/manual/
+!docs/manual/**
+!docs/plan/
+!docs/plan/**
+docs/plan/results/
+docs/plan/results/**
 archive/
+!tools/archive/
+!tools/archive/**
 artifacts/
 logs/
 compat_data/
