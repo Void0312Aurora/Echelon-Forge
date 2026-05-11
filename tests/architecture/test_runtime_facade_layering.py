@@ -82,6 +82,14 @@ def test_world_batch_vec_env_does_not_branch_on_facade_presence_in_main_class() 
     assert "_runtime_facade is None" not in main_class
 
 
+def test_world_batch_vec_env_main_class_does_not_cache_raw_runtime_handles() -> None:
+    source = _source()
+    main_class = source.split("class WorldBatchVecEnv", 1)[1]
+    assert "_batch_runtime" not in main_class
+    assert "_runtime_facade" not in main_class
+    assert ".compat_runtime" not in main_class
+
+
 def test_runtime_facade_escape_hatch_is_documented() -> None:
     header = (REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.h").read_text(encoding="utf-8")
     readme = (REPO_ROOT / "src" / "runtime" / "facade" / "README.md").read_text(encoding="utf-8")
@@ -89,3 +97,4 @@ def test_runtime_facade_escape_hatch_is_documented() -> None:
     assert "Maintained frontends should use facade-level request/result APIs" in header
     assert "必须把访问集中在一个显式 adapter" in readme
     assert "不得直接调用 `RuntimeFacade.runtime()`" in readme
+    assert "不应缓存 raw `WorldBatchRuntime`" in readme

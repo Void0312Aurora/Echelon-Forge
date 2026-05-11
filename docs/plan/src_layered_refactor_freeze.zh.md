@@ -1,6 +1,6 @@
 # `src/` 分层重构冻结计划
 
-状态：`2026-05-11` 冻结执行版；`WP1` 至 `WP5` 已完成，`WP6` 正在推进。
+状态：`2026-05-11` 冻结执行版；`WP1` 至 `WP6` 已完成，下一步进入 `WP7` 准备。
 文档定位：
 
 - 本文档冻结一次较大但分阶段执行的 `src/` 结构重构。
@@ -273,10 +273,12 @@ src/core/mission/
 
 执行状态：
 
-- 进行中：`RuntimeFacade::runtime()` 已保留为 compatibility / diagnostics escape hatch。
-- 进行中：`WorldBatchVecEnv` 维护中主路径通过 `_RuntimeFacadeAdapter` 访问 facade-shaped API，直接 `RuntimeFacade.runtime()` 调用只允许集中在该 adapter 内。
-- 已补充：架构测试应禁止维护中主类或新代码在 adapter 之外直接调用 `RuntimeFacade.runtime()`。
-- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/test_runtime_facade.py tests/test_cuda_import_order.py` 通过，`35 passed`。
+- 已完成：`RuntimeFacade::runtime()` 已保留为 compatibility / diagnostics escape hatch。
+- 已完成：`WorldBatchVecEnv` 维护中主路径通过 `_RuntimeFacadeAdapter` 访问 facade-shaped API，直接 `RuntimeFacade.runtime()` 调用只允许集中在该 adapter 内。
+- 已完成：`WorldBatchVecEnv` 主类不再缓存 `_batch_runtime` / `_runtime_facade` 裸句柄，ScenarioLoader 低层 world 访问、legacy visual readback 和 visual batch helper 均通过 adapter 方法集中。
+- 已完成：架构测试禁止维护中主类或新代码在 adapter 之外直接调用 `RuntimeFacade.runtime()`、直接实例化 `ef_py.WorldBatchRuntime`、缓存 raw runtime/facade 句柄或重新暴露 `.compat_runtime`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py` 通过，`5 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/test_runtime_facade.py tests/test_cuda_import_order.py` 通过，`36 passed`。
 
 ### WP7：CMake target 拆分准备
 

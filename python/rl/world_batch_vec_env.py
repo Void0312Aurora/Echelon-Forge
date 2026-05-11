@@ -166,10 +166,6 @@ class _RuntimeFacadeAdapter:
         self.facade = ef_py.RuntimeFacade(int(world_count)) if hasattr(ef_py, "RuntimeFacade") else None
         self._compat_runtime = self.facade.runtime() if self.facade is not None else ef_py.WorldBatchRuntime(int(world_count))
 
-    @property
-    def compat_runtime(self):
-        return self._compat_runtime
-
     def world_count(self) -> int:
         target = self.facade if self.facade is not None else self._compat_runtime
         return int(target.world_count())
@@ -192,6 +188,32 @@ class _RuntimeFacadeAdapter:
 
     def world(self, index: int):
         return self._compat_runtime.world(int(index))
+
+    def compute_visual_observation_batch_numpy(
+        self,
+        refs: Sequence[Any],
+        downsample: int,
+        use_gpu_host: bool,
+    ) -> Any:
+        return ef_py.compute_world_batch_visual_observation_batch_numpy(
+            self._compat_runtime,
+            list(refs),
+            int(downsample),
+            bool(use_gpu_host),
+        )
+
+    def compute_visual_observation_batch_export(
+        self,
+        refs: Sequence[Any],
+        downsample: int,
+        prefer_device_view: bool,
+    ) -> Any:
+        return ef_py.compute_world_batch_visual_observation_batch_export(
+            self._compat_runtime,
+            list(refs),
+            int(downsample),
+            bool(prefer_device_view),
+        )
 
     def apply_world_setup(self, request: Any):
         if self.facade is not None and hasattr(self.facade, "apply_world_setup"):
@@ -363,12 +385,12 @@ class _RuntimeFacadeAdapter:
 
 class WorldBatchVecEnv(VecEnv):
     """
-    Single-process execution-layer VecEnv backed by `ef_py.WorldBatchRuntime`.
+    Single-process execution-layer VecEnv backed by `ef_py.RuntimeFacade`.
 
-    This is the maintained execution-layer batch adapter for `WorldBatchRuntime`.
-    It keeps execution policy rollouts on one process and uses C++ batch
-    stepping/reads across worlds. Visual observations can optionally use the
-    batched visual helper path instead of per-world kernel readback.
+    This is the maintained execution-layer batch adapter for the runtime facade.
+    It keeps execution policy rollouts on one process and uses facade-shaped
+    C++ batch stepping/reads across worlds. Temporary low-level runtime access is
+    centralized in `_RuntimeFacadeAdapter` for compatibility-only paths.
     """
 
     def __init__(
@@ -465,8 +487,6 @@ class WorldBatchVecEnv(VecEnv):
         )
         self._compiled_scenario = ScenarioCompiler.compile_path(self.scenario_path)
         self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)
-        self._runtime_facade = self._runtime_adapter.facade
-        self._batch_runtime = self._runtime_adapter.compat_runtime
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
@@ -503,7 +523,7 @@ class WorldBatchVecEnv(VecEnv):
         self._handles = [
             _BatchWorldHandle(
                 env_idx=env_idx,
-                loader=ScenarioLoader(self._batch_runtime.world(env_idx)),
+                loader=ScenarioLoader(self._runtime_adapter.world(env_idx)),
                 scenario_path=self.scenario_path,
                 render_mode=render_mode,
                 include_visual=self.include_visual,
@@ -557,7 +577,7 @@ class WorldBatchVecEnv(VecEnv):
 
     @property
     def runtime_facade(self):
-        return self._runtime_facade
+        return self._runtime_adapter.facade
 
     def _normalize_seed(self, seed: int | None) -> int:
         if seed is None:
@@ -670,7 +690,7 @@ class WorldBatchVecEnv(VecEnv):
                 handle = self._handles[env_idx]
                 if handle.agent_id is None:
                     raise RuntimeError(f"world {env_idx} has no active agent_id")
-                world = self._batch_runtime.world(env_idx)
+                world = self._runtime_adapter.world(env_idx)
                 if self.visual_downsample > 1 and hasattr(world, "get_visual_observation_downsampled"):
                     visual_raw = world.get_visual_observation_downsampled(int(handle.agent_id), self.visual_downsample)
                     visual = np.asarray(visual_raw, dtype=np.float32)
@@ -694,15 +714,13 @@ class WorldBatchVecEnv(VecEnv):
             and self._policy_torch_bridge_enabled
             and hasattr(ef_py, "compute_world_batch_visual_observation_batch_export")
         ):
-            visuals, device_view = ef_py.compute_world_batch_visual_observation_batch_export(
-                self._batch_runtime,
+            visuals, device_view = self._runtime_adapter.compute_visual_observation_batch_export(
                 refs,
                 int(self.visual_downsample),
                 True,
             )
         else:
-            visuals = ef_py.compute_world_batch_visual_observation_batch_numpy(
-                self._batch_runtime,
+            visuals = self._runtime_adapter.compute_visual_observation_batch_numpy(
                 refs,
                 int(self.visual_downsample),
                 backend == "gpu_host",

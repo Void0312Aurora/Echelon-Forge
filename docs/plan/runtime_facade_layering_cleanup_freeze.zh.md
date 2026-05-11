@@ -18,7 +18,7 @@
 当前执行进展：
 
 - [x] `WP1` facade API 稳定度分级已在 `RuntimeFacade::runtime()` 和 Python 绑定区块中标注。
-- [x] `WP2` `WorldBatchVecEnv` 的 facade/direct runtime 分支已收敛到 `_RuntimeFacadeAdapter`。
+- [x] `WP2` `WorldBatchVecEnv` 的 facade/direct runtime 分支已收敛到 `_RuntimeFacadeAdapter`，主类不再缓存 raw runtime/facade 句柄。
 - [x] `WP3` 已新增 facade 级 `BatchWorldSetupRequest` / `BatchWorldSetupResult`，`scenario_runtime` 优先使用 typed setup request。
 - [x] `WP4` 已新增 `ObservationBatchRequest`，`WorldBatchVecEnv` 状态读回优先走 facade observation packet。
 - [x] `WP5` Python 绑定已标注 maintained facade surface 与 simulation compatibility surface。
@@ -37,8 +37,8 @@
 
 但从当前代码看，facade 仍然更接近薄包装层，而不是稳定分层边界：
 
-1. `RuntimeFacade` 仍公开 `runtime()`，维护中的 Python 前端可以继续拿到 `WorldBatchRuntime`。
-2. `WorldBatchVecEnv` 仍保留 facade 与 direct runtime 两套路由，并在多处手动选择 `_runtime_facade` 或 `_batch_runtime`。
+1. `RuntimeFacade` 仍公开 `runtime()`，但已经标注为 compatibility / diagnostics 逃逸口。
+2. `WorldBatchVecEnv` 的 facade 与 direct runtime fallback 已收敛到 `_RuntimeFacadeAdapter`，主类不再缓存 `_runtime_facade` / `_batch_runtime` 裸句柄。
 3. `RuntimeFacade` 的公开接口仍大量一比一转发底层 `WorldBatchRuntime::*_batch` 方法。
 4. `runtime_facade_types.h` 直接包含 `world_batch_runtime.h`，facade DTO 与 simulation engine 内部类型还没有真正拆开。
 5. `python_module.cpp` 同时暴露低层 probe/runtime API 与维护中的 facade API，主线前端和诊断入口的稳定度没有区分。
@@ -325,7 +325,7 @@ LD_LIBRARY_PATH=/home/void0312/Workshop/CMO/build-facade-local/_deps/flecs-build
 本轮完成时必须同时满足：
 
 1. `WorldBatchVecEnv` 维护中主路径只依赖 facade 或 facade adapter。
-2. `RuntimeFacade::runtime()` 不再被维护中前端调用。
+2. `RuntimeFacade::runtime()` 不再被维护中前端主类调用；迁移期只能集中在显式 compatibility adapter 内。
 3. world setup 与 observation readback 至少各有一个 facade 级 typed request/result 入口。
 4. 低层 `WorldBatchRuntime` Python 绑定仍可用于 diagnostics，但不再作为维护中前端的主依赖。
 5. 回归测试通过，并新增一条依赖方向检查。
