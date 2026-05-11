@@ -1,12 +1,14 @@
 # `src/` 分层重构冻结计划
 
-状态：`2026-05-10` 冻结执行版；`WP1` 至 `WP4` 已完成，后续重构从 `WP5` 继续。  
+状态：`2026-05-11` 冻结执行版；`WP1` 至 `WP5` 已完成，`WP6` 正在推进。
 文档定位：
 
 - 本文档冻结一次较大但分阶段执行的 `src/` 结构重构。
 - 本轮目标是先建立目录边界、职责文档和低风险拆分路线，而不是立即重写 runtime 语义。
 - 若本文档被采纳为执行单，代码实现只允许围绕本文列出的工作包展开。
 - 本文档不授权直接移动行为性代码；除 README 与兼容入口外，代码拆分需要按后续工作包逐项执行和验收。
+
+验证口径：本计划涉及 Python 测试时默认使用仓库虚拟环境执行，即 `./.venv/bin/python -m pytest`，并配合 `PYTHONPATH=build-workshop` 指向当前 C++/nanobind 构建产物。不要用系统 Python 解释器作为最终验收口径。
 
 ## 一、当前判断
 
@@ -184,8 +186,8 @@ src/interfaces/python/
 - 已完成：`CMakeLists.txt` 将所有 binding unit 接入 `ef_py`。
 - 已完成：`src/interfaces/python/README.md` 更新为当前分区职责说明。
 - 已验证：`cmake --build build-workshop --target ef_py -j2` 通过。
-- 已验证：`PYTHONPATH=build-workshop python` 冒烟检查 `RuntimeFacade`、`WorldBatchRuntime`、`SimulationKernel`、command/tasking 类型和 GPU helper 符号均可见。
-- 已验证：`PYTHONPATH=build-workshop pytest -q tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_gpu_runtime_bindings.py` 通过，`26 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python` 冒烟检查 `RuntimeFacade`、`WorldBatchRuntime`、`SimulationKernel`、command/tasking 类型和 GPU helper 符号均可见。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_gpu_runtime_bindings.py` 通过，`26 passed`。
 
 ### WP4：拆 `SimulationKernel` 边界文件
 
@@ -222,7 +224,7 @@ src/core/engine/
 - 已完成：`CMakeLists.txt` 将 WP4 新增 engine implementation units 接入 `ef_core`。
 - 已完成：`src/core/engine/README.md` 更新为当前职责边界。
 - 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。
-- 已验证：`PYTHONPATH=build-workshop pytest -q tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_gpu_runtime_bindings.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py` 通过，`38 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_gpu_runtime_bindings.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py` 通过，`38 passed`。
 
 ### WP5：拆 `ExecutionEpisodeController` 的 mission transition 与 breakdown
 
@@ -254,8 +256,8 @@ src/core/mission/
 - 已完成：新增 `episode_reward_breakdown.{h,cpp}`，集中 reward breakdown 汇总和稳定 JSON 输出。
 - 已完成：`execution_episode_controller.cpp` 收缩为 state import/export、prepare/evaluate/step 与 runtime products apply 的协调职责。
 - 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。
-- 已验证：`PYTHONPATH=build-workshop pytest -q tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/runtime/test_scenario_loader_execution_step_runtime.py tests/test_gpu_runtime_bindings.py` 通过，`45 passed`。
-- 受环境限制：`tests/world_batch/test_world_batch_vec_env.py` 当前测试环境缺少 `gymnasium`，收集阶段失败，未作为本轮验证结果。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/runtime/test_scenario_loader_execution_step_runtime.py tests/test_gpu_runtime_bindings.py` 通过，`45 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/runtime/test_scenario_loader_execution_step_runtime.py tests/test_gpu_runtime_bindings.py tests/test_cuda_import_order.py tests/world_batch/test_world_batch_vec_env.py` 通过，`71 passed, 8 subtests passed`。
 
 ### WP6：收紧 facade 逃逸口
 
@@ -268,6 +270,13 @@ src/core/mission/
 
 - README 和架构测试标注 `runtime()` 只允许 diagnostics / compatibility。
 - 新增主线能力时必须先设计 facade request/result。
+
+执行状态：
+
+- 进行中：`RuntimeFacade::runtime()` 已保留为 compatibility / diagnostics escape hatch。
+- 进行中：`WorldBatchVecEnv` 维护中主路径通过 `_RuntimeFacadeAdapter` 访问 facade-shaped API，直接 `RuntimeFacade.runtime()` 调用只允许集中在该 adapter 内。
+- 已补充：架构测试应禁止维护中主类或新代码在 adapter 之外直接调用 `RuntimeFacade.runtime()`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/test_runtime_facade.py tests/test_cuda_import_order.py` 通过，`35 passed`。
 
 ### WP7：CMake target 拆分准备
 

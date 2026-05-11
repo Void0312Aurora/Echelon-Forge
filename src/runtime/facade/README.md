@@ -20,4 +20,6 @@
 
 `RuntimeFacade::runtime()` 是 compatibility / diagnostics 逃逸口。它可以服务旧测试、迁移期调试和底层能力验证，但新主线代码不应依赖它。
 
+维护中的 Python 前端如果仍需要兼容低层 `WorldBatchRuntime`，必须把访问集中在一个显式 adapter 中，并在 adapter 对外提供 facade-shaped 方法。主类和业务流程不得直接调用 `RuntimeFacade.runtime()` 或根据 facade 是否存在分叉。
+
 新增长期 API 时，应优先补充 facade request/result，并在 Python 层绑定 facade，而不是直接暴露新的底层 runtime 方法。
