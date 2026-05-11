@@ -1,6 +1,6 @@
 # `src/` 分层重构冻结计划
 
-状态：`2026-05-11` 冻结执行版；`WP1` 至 `WP6` 已完成，`WP7` 正在推进。
+状态：`2026-05-11` 冻结执行版；`WP1` 至 `WP7` 已完成。
 文档定位：
 
 - 本文档冻结一次较大但分阶段执行的 `src/` 结构重构。
@@ -310,8 +310,11 @@ src/core/mission/
 - 已完成：`runtime_facade_types.h` 不再直接包含 `core/engine/world_batch_runtime.h`。
 - 已完成：`RuntimeFacade` public header 使用 `WorldBatchRuntime` 前置声明和 `std::unique_ptr`，底层 engine owner 的完整定义只在 `.cpp` 中包含。
 - 已完成：新增 architecture 检查，禁止 `runtime/contracts/*.h` 与 `runtime/facade/*_types.h` include `core/engine/*`，并确认 facade public header 不直接 include `world_batch_runtime.h`。
+- 已完成：`CMakeLists.txt` 已按未来 target 边界拆出 `EF_CORE_ENGINE_SOURCES`、`EF_CORE_MISSION_SOURCES`、`EF_RUNTIME_FACADE_SOURCES`、`EF_MODEL_DEFAULT_SOURCES`、`EF_CONTENT_SOURCES`、`EF_PYTHON_BINDING_SOURCES` 和 GPU source groups；`ef_core` / `ef_py` target 不再直接平铺源码文件。
+- 已完成：新增 CMake target readiness architecture 检查，防止 `ef_core` / `ef_py` 重新回到无边界源码平铺。
+- 已完成：`src/README.md` 补充 CMake source group 归属规则。
 - 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。
-- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_cuda_import_order.py tests/test_gpu_runtime_bindings.py` 通过，`59 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_cmake_target_readiness.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_cuda_import_order.py tests/test_gpu_runtime_bindings.py` 通过，`62 passed`。
 
 ## 五、执行顺序
 
@@ -334,6 +337,8 @@ src/core/mission/
 - 新增 GPU helper 不允许改变 canonical CPU truth path，除非另起 exact backend 冻结文档。
 
 ## 七、开放问题
+
+本计划到 `WP7` 已关闭。以下问题保留为下一批冻结计划候选，不在本计划内继续实现：
 
 - 是否将 `src/interfaces/python` 重命名为 `src/bindings/python`？
 - `components/systems` 与 `systems/systems` 是否改名为 `components/comm`、`systems/comm` 或 `components/platform`、`systems/platform`？

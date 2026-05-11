@@ -49,8 +49,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-# --- Core Library ---
-add_library(ef_core STATIC
+# --- Source Groups For Future Target Split ---
+set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel.cpp
     src/core/engine/simulation_kernel_systems.cpp
     src/core/engine/simulation_kernel_command_api.cpp
@@ -59,7 +59,13 @@ add_library(ef_core STATIC
     src/core/engine/simulation_kernel_weapon_api.cpp
     src/core/engine/exact_stage_inventory.cpp
     src/core/engine/world_batch_runtime.cpp
+)
+
+set(EF_CORE_GEOMETRY_SOURCES
     src/core/geometry/spatial_query_runtime.cpp
+)
+
+set(EF_CORE_MISSION_SOURCES
     src/core/mission/execution_observation_runtime.cpp
     src/core/mission/mission_runtime.cpp
     src/core/mission/execution_step_runtime.cpp
@@ -74,14 +80,36 @@ add_library(ef_core STATIC
     src/core/mission/reward_runtime.cpp
     src/core/mission/objective_runtime.cpp
     src/core/mission/termination_runtime.cpp
+)
+
+set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/runtime_facade.cpp
+)
+
+set(EF_MODEL_DEFAULT_SOURCES
     src/models/weapons/default_effects_model.cpp
     src/models/systems/default_sensor_model.cpp
     src/models/environment/default_environment_model.cpp
-    src/content/unit_definition_loader.cpp
     src/models/air/default_control_model.cpp
     src/models/weapons/default_guidance_model.cpp
-    # Add other core source files here if they become cpp
+)
+
+set(EF_CONTENT_SOURCES
+    src/content/unit_definition_loader.cpp
+)
+
+set(EF_CORE_SOURCES
+    ${EF_CORE_ENGINE_SOURCES}
+    ${EF_CORE_GEOMETRY_SOURCES}
+    ${EF_CORE_MISSION_SOURCES}
+    ${EF_RUNTIME_FACADE_SOURCES}
+    ${EF_MODEL_DEFAULT_SOURCES}
+    ${EF_CONTENT_SOURCES}
+)
+
+# --- Core Library ---
+add_library(ef_core STATIC
+    ${EF_CORE_SOURCES}
 )
 
 target_include_directories(ef_core PUBLIC 
@@ -100,14 +128,18 @@ target_link_libraries(ef_core PUBLIC
 add_executable(ef_app src/main.cpp)
 target_link_libraries(ef_app PRIVATE ef_core)
 
-# --- Python Module ---
-nanobind_add_module(ef_py
+set(EF_PYTHON_BINDING_SOURCES
     src/interfaces/python/python_module.cpp
     src/interfaces/python/bindings_command.cpp
     src/interfaces/python/bindings_core.cpp
     src/interfaces/python/bindings_episode.cpp
     src/interfaces/python/bindings_runtime.cpp
     src/interfaces/python/bindings_gpu.cpp
+)
+
+# --- Python Module ---
+nanobind_add_module(ef_py
+    ${EF_PYTHON_BINDING_SOURCES}
 )
 target_link_libraries(ef_py PRIVATE ef_core)
 

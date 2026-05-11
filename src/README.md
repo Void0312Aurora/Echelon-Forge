@@ -33,6 +33,22 @@ gpu
 - `gpu/`：GPU helper、packet runtime 和显式实验探针。
 - `tools/`：开发期工具和实验工具，不进入主线 runtime contract。
 
+## CMake 分组
+
+当前仍保留 `ef_core` 单 target，但 `CMakeLists.txt` 中的源码已经按未来 target 边界分组：
+
+- `EF_CORE_ENGINE_SOURCES`
+- `EF_CORE_GEOMETRY_SOURCES`
+- `EF_CORE_MISSION_SOURCES`
+- `EF_RUNTIME_FACADE_SOURCES`
+- `EF_MODEL_DEFAULT_SOURCES`
+- `EF_CONTENT_SOURCES`
+- `EF_PYTHON_BINDING_SOURCES`
+- `EF_GPU_MAINTAINED_HELPER_SOURCES`
+- `EF_GPU_EXPERIMENT_SOURCES`
+
+新增源码应先归入明确 source group；不要直接把 `src/...` 文件追加到 `add_library(ef_core)` 或 `nanobind_add_module(ef_py)`。
+
 ## 禁止事项
 
 - 不要因为 include 方便，把 command、tasking、mission、runtime 或 binding 逻辑塞进已有宽目录。

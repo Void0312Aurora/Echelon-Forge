@@ -23,7 +23,7 @@
 - [x] `WP4` 已新增 `ObservationBatchRequest`，`WorldBatchVecEnv` 状态读回优先走 facade observation packet。
 - [x] `WP5` Python 绑定已标注 maintained facade surface 与 simulation compatibility surface。
 - [x] `WP6` 已新增 `tests/architecture/test_runtime_facade_layering.py` 作为依赖方向回归检查。
-- [x] `WP7` target split readiness 已记录当前 include 阻塞、拆分顺序和进入下一批 target 拆分前的门槛。
+- [x] `WP7` target split readiness 已记录 include 阻塞、拆分顺序和进入下一批 target 拆分前的门槛；CMake 源码已按未来 target source groups 分组。
 
 ## 一、当前判断
 
@@ -236,6 +236,7 @@
 - `world_batch_runtime.h` 直接包含 `simulation_kernel.h`、`execution_episode_controller.h`、observation 和 physics action/instrument component headers。
 - `simulation_kernel.h` 直接包含 component headers、`unit_data.h`、`observation.h`，并在 `.cpp` 中聚合 physics / systems / combat / visual systems 与 default unit factory。
 - `python_module.cpp` 仍是宽绑定层，同时包含 facade、simulation runtime、mission runtime、GPU helper、models snapshot 和 component headers。
+- `CMakeLists.txt` 已用 `EF_CORE_ENGINE_SOURCES`、`EF_CORE_MISSION_SOURCES`、`EF_RUNTIME_FACADE_SOURCES`、`EF_MODEL_DEFAULT_SOURCES`、`EF_CONTENT_SOURCES`、`EF_PYTHON_BINDING_SOURCES` 和 GPU source groups 表达未来 target 边界。
 
 因此下一批不能直接把 `ef_runtime_facade` 单独抽出来。必须先降低 facade public header 对 engine public header 的依赖。
 
@@ -253,6 +254,7 @@
    - mission runtime bindings
    - diagnostics / GPU helper bindings
 5. target 拆分前必须保留当前通过的测试集合，避免拆分过程中混入语义变更。
+6. 已完成：用 architecture 检查约束 `ef_core` 和 `ef_py` 只消费分组 source variables，不再直接平铺源码。
 
 推荐 target 拆分顺序：
 
@@ -285,6 +287,7 @@
 - 将 facade-facing DTO 从 `world_batch_runtime.h` 搬入 `runtime/contracts/world_batch_contracts.h`。
 - 让 `runtime_facade_types.h` 不再包含 `world_batch_runtime.h`。
 - 新增 architecture 检查，禁止 `runtime/contracts/*.h` 和 `runtime/facade/*_types.h` include `core/engine/*`。
+- 新增 architecture 检查，禁止 `ef_core` / `ef_py` target 重新直接平铺源码文件。
 - 暂不改 CMake target，仅用 include 方向检查验证 contracts 抽离。
 
 ## 五、推荐执行顺序
@@ -333,6 +336,8 @@ LD_LIBRARY_PATH=/home/void0312/Workshop/CMO/build-facade-local/_deps/flecs-build
 6. 没有改变 maintained `p5` 的默认 execution / visual / observation backend。
 
 ## 八、后续衔接
+
+本轮 `WP1-WP7` 已收尾。后续任务需要另起冻结计划，不继续挂在本文档执行。
 
 本轮完成后，下一批任务再选择以下之一单独冻结：
 
