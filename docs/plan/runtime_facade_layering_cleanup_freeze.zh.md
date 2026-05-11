@@ -40,7 +40,7 @@
 1. `RuntimeFacade` 仍公开 `runtime()`，但已经标注为 compatibility / diagnostics 逃逸口。
 2. `WorldBatchVecEnv` 的 facade 与 direct runtime fallback 已收敛到 `_RuntimeFacadeAdapter`，主类不再缓存 `_runtime_facade` / `_batch_runtime` 裸句柄。
 3. `RuntimeFacade` 的公开接口仍大量一比一转发底层 `WorldBatchRuntime::*_batch` 方法。
-4. `runtime_facade_types.h` 直接包含 `world_batch_runtime.h`，facade DTO 与 simulation engine 内部类型还没有真正拆开。
+4. `runtime_facade_types.h` 已不再直接包含 `world_batch_runtime.h`；facade-facing world-batch DTO 已先抽入 `runtime/contracts/world_batch_contracts.h`。
 5. `python_module.cpp` 同时暴露低层 probe/runtime API 与维护中的 facade API，主线前端和诊断入口的稳定度没有区分。
 6. `ef_core` 仍是大单体 target，构建边界暂时无法约束 contracts / facade / simulation / physics 的依赖方向。
 
@@ -230,7 +230,9 @@
 当前记录：
 
 - 当前 `ef_core` 仍同时编译 engine、mission runtime、facade、content loader 和 default model sources。
-- `runtime_facade_types.h` 仍直接包含 `core/engine/world_batch_runtime.h`，因此 facade DTO 还没有从 simulation engine DTO 中拆开。
+- 已新增 `src/runtime/contracts/`，并将 `WorldEntityRef`、world setup assignments、command/tasking assignments 和 `WorldExecutionEpisodeStepRequest` 从 `world_batch_runtime.h` 抽入 `runtime/contracts/world_batch_contracts.h`。
+- `runtime_facade_types.h` 已不再直接包含 `core/engine/world_batch_runtime.h`。
+- `runtime_facade.h` 通过前置声明和 `std::unique_ptr<WorldBatchRuntime>` 隐藏底层 engine owner；完整 `world_batch_runtime.h` include 仅保留在 `runtime_facade.cpp`。
 - `world_batch_runtime.h` 直接包含 `simulation_kernel.h`、`execution_episode_controller.h`、observation 和 physics action/instrument component headers。
 - `simulation_kernel.h` 直接包含 component headers、`unit_data.h`、`observation.h`，并在 `.cpp` 中聚合 physics / systems / combat / visual systems 与 default unit factory。
 - `python_module.cpp` 仍是宽绑定层，同时包含 facade、simulation runtime、mission runtime、GPU helper、models snapshot 和 component headers。
@@ -239,12 +241,11 @@
 
 最小拆分前置条件：
 
-1. 将 facade-facing DTO 从 `WorldBatchRuntime` 头中分离出来，至少覆盖：
+1. 已完成：将 facade-facing DTO 从 `WorldBatchRuntime` 头中分离出来，覆盖：
    - `WorldEntityRef`
    - world setup assignments / spawn request
    - execution episode step request
-   - facade observation packet request/result
-2. 让 `runtime_facade_types.h` 只包含 contracts / DTO 头，不直接包含 `world_batch_runtime.h`。
+2. 已完成：让 `runtime_facade_types.h` 不直接包含 `world_batch_runtime.h`。
 3. 将 `WorldBatchRuntime` 内部依赖 `SimulationKernel` 的 API 保留在 simulation engine target 内，facade 只通过 `.cpp` 包装它。
 4. 将 `python_module.cpp` 的绑定区块至少按文件或 include group 预拆：
    - facade bindings
@@ -278,12 +279,12 @@
 - 不要先拆 physics engine target。当前 physics systems 由 `SimulationKernel` 直接注册和调度，接口边界尚未形成。
 - 不要在 target 拆分同时推进 exact GPU 或 resident-state。那会混淆构建边界问题和 backend 语义问题。
 
-下一批可冻结的最小 target 任务：
+本轮已落地的最小 target 准备：
 
-- 新建 `src/runtime/contracts/` 或 `src/core/contracts/` 目录。
-- 将 facade-facing DTO 从 `world_batch_runtime.h` 搬入 contracts 头。
+- 新建 `src/runtime/contracts/` 目录。
+- 将 facade-facing DTO 从 `world_batch_runtime.h` 搬入 `runtime/contracts/world_batch_contracts.h`。
 - 让 `runtime_facade_types.h` 不再包含 `world_batch_runtime.h`。
-- 新增 architecture 检查，禁止 `runtime/facade/*_types.h` include `core/engine/*`。
+- 新增 architecture 检查，禁止 `runtime/contracts/*.h` 和 `runtime/facade/*_types.h` include `core/engine/*`。
 - 暂不改 CMake target，仅用 include 方向检查验证 contracts 抽离。
 
 ## 五、推荐执行顺序

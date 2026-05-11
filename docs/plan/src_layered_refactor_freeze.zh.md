@@ -1,6 +1,6 @@
 # `src/` 分层重构冻结计划
 
-状态：`2026-05-11` 冻结执行版；`WP1` 至 `WP6` 已完成，下一步进入 `WP7` 准备。
+状态：`2026-05-11` 冻结执行版；`WP1` 至 `WP6` 已完成，`WP7` 正在推进。
 文档定位：
 
 - 本文档冻结一次较大但分阶段执行的 `src/` 结构重构。
@@ -302,6 +302,16 @@ src/core/mission/
 - 新 README 明确 target 边界。
 - 新文件归属不跨层反向依赖。
 - CMake 不再新增无边界的“大杂烩”源文件。
+
+执行状态：
+
+- 已完成：新增 `src/runtime/contracts/`，作为后续 `ef_contracts` target 的候选起点。
+- 已完成：将 `WorldEntityRef`、world setup assignments、command/tasking assignments 和 `WorldExecutionEpisodeStepRequest` 从 `world_batch_runtime.h` 抽入 `runtime/contracts/world_batch_contracts.h`。
+- 已完成：`runtime_facade_types.h` 不再直接包含 `core/engine/world_batch_runtime.h`。
+- 已完成：`RuntimeFacade` public header 使用 `WorldBatchRuntime` 前置声明和 `std::unique_ptr`，底层 engine owner 的完整定义只在 `.cpp` 中包含。
+- 已完成：新增 architecture 检查，禁止 `runtime/contracts/*.h` 与 `runtime/facade/*_types.h` include `core/engine/*`，并确认 facade public header 不直接 include `world_batch_runtime.h`。
+- 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_cuda_import_order.py tests/test_gpu_runtime_bindings.py` 通过，`59 passed`。
 
 ## 五、执行顺序
 

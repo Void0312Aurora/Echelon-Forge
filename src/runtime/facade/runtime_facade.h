@@ -2,15 +2,23 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "runtime/facade/runtime_facade_types.h"
 
+class WorldBatchRuntime;
+
 class RuntimeFacade {
 public:
     explicit RuntimeFacade(std::size_t world_count = 0);
     explicit RuntimeFacade(const RuntimeBatchConfig& config);
+    RuntimeFacade(RuntimeFacade&&) noexcept;
+    RuntimeFacade& operator=(RuntimeFacade&&) noexcept;
+    RuntimeFacade(const RuntimeFacade&) = delete;
+    RuntimeFacade& operator=(const RuntimeFacade&) = delete;
+    ~RuntimeFacade();
 
     void configure_batch(const RuntimeBatchConfig& config);
     RuntimeBatchConfig batch_config() const noexcept;
@@ -77,5 +85,5 @@ private:
         const ObservationBatchRequest& request
     ) const;
 
-    WorldBatchRuntime runtime_;
+    std::unique_ptr<WorldBatchRuntime> runtime_;
 };

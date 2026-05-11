@@ -17,6 +17,7 @@
 
 ## 子目录约定
 
+- `contracts/`：facade、engine、binding 可共享的稳定 DTO，不能包含 runtime owner 或 engine headers。
 - `facade/`：当前维护中的 typed runtime facade。
 
 ## 迁移备注

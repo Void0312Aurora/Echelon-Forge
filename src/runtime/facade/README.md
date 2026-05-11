@@ -8,6 +8,7 @@
 - facade request/result/capability 类型。
 - 批量 reset、setup、step、command、tasking、episode 和 observation 操作。
 - 对 `WorldBatchRuntime` 与 `ExecutionEpisodeController` 的受控包装。
+- public header 只暴露 facade / contracts 类型；底层 `WorldBatchRuntime` owner 应留在 implementation 中。
 
 ## 禁止
 
@@ -15,6 +16,7 @@
 - 内联 Python 绑定逻辑。
 - 把 `WorldBatchRuntime` 的所有低层 API 无选择复制为 facade API。
 - 新增未设计 request/result 的主线入口。
+- 在 `*_types.h` 或 facade public header 中直接 include `core/engine/*`。
 
 ## 逃逸口规则
 

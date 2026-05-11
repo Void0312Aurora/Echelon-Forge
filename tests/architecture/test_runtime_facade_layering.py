@@ -6,6 +6,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "world_batch_vec_env.py"
+RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
+RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
 
 
 def _source() -> str:
@@ -98,3 +100,25 @@ def test_runtime_facade_escape_hatch_is_documented() -> None:
     assert "必须把访问集中在一个显式 adapter" in readme
     assert "不得直接调用 `RuntimeFacade.runtime()`" in readme
     assert "不应缓存 raw `WorldBatchRuntime`" in readme
+
+
+def test_runtime_contract_headers_do_not_include_engine_headers() -> None:
+    header_paths = [
+        *RUNTIME_CONTRACTS.glob("*.h"),
+        *RUNTIME_FACADE.glob("*_types.h"),
+    ]
+    violations: list[tuple[str, int, str]] = []
+    for path in header_paths:
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            stripped = line.strip()
+            if stripped.startswith("#include") and '"core/engine/' in stripped:
+                violations.append((str(path.relative_to(REPO_ROOT)), lineno, stripped))
+
+    assert not violations, f"runtime contract/facade type headers include engine headers: {violations}"
+
+
+def test_runtime_facade_public_header_hides_engine_owner_storage() -> None:
+    header = (RUNTIME_FACADE / "runtime_facade.h").read_text(encoding="utf-8")
+    assert '#include "core/engine/world_batch_runtime.h"' not in header
+    assert "class WorldBatchRuntime;" in header
+    assert "std::unique_ptr<WorldBatchRuntime>" in header
