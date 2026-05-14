@@ -51,6 +51,10 @@ Thumbs.db
 *.log
 recordings/
 !docs/
+docs/temp/
+docs/temp/**
+docs/**/temp/
+docs/**/temp/**
 docs/plan/results/
 docs/plan/results/**
 archive/
