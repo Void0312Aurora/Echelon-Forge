@@ -50,12 +50,7 @@ Thumbs.db
 # --- Project Specific ---
 *.log
 recordings/
-docs/*
 !docs/
-!docs/manual/
-!docs/manual/**
-!docs/plan/
-!docs/plan/**
 docs/plan/results/
 docs/plan/results/**
 archive/
