@@ -17,10 +17,10 @@
 #include "core/engine/world_batch_runtime.h"
 #include "core/interfaces/observation.h"
 #include "core/interfaces/unit_data.h"
-#include "core/mission/execution_observation_runtime.h"
-#include "core/mission/execution_frame_runtime.h"
-#include "core/mission/execution_episode_runtime.h"
-#include "core/mission/mission_runtime.h"
+#include "core/mission/runtime/execution_observation_runtime.h"
+#include "core/mission/runtime/execution_frame_runtime.h"
+#include "core/mission/runtime/execution_episode_runtime.h"
+#include "core/mission/runtime/mission_runtime.h"
 #include "gpu/gpu_execution_observation_runtime.h"
 #include "gpu/gpu_flight_shaping_runtime.h"
 #include "gpu/gpu_interaction_broadphase_runtime.h"
@@ -414,6 +414,17 @@ gpu::ExecutionObservationBatchRequest build_execution_observation_batch_request(
     req.mission.target_heading_deg = mission_inputs.target_heading_deg;
     req.mission.target_altitude_m = mission_inputs.target_altitude_m;
     req.mission.target_speed_mps = mission_inputs.target_speed_mps;
+    req.mission.takeoff_procedure_code = mission_inputs.takeoff_procedure_code;
+    req.mission.takeoff_clearance_code = mission_inputs.takeoff_clearance_code;
+    req.mission.takeoff_interval_s = mission_inputs.takeoff_interval_s;
+    req.mission.runway_slot_code = mission_inputs.runway_slot_code;
+    req.mission.form_offset_x = mission_inputs.form_offset_x;
+    req.mission.form_offset_y = mission_inputs.form_offset_y;
+    req.mission.form_offset_z = mission_inputs.form_offset_z;
+    req.mission.self_role_code = mission_inputs.self_role_code;
+    req.mission.self_formation_role_code = mission_inputs.self_formation_role_code;
+    req.mission.relative_slot_code = mission_inputs.relative_slot_code;
+    req.mission.reference_relative_slot_code = mission_inputs.reference_relative_slot_code;
     if (mission_inputs.has_route_guidance && mission_inputs.route_guidance.valid) {
         req.mission.has_route_guidance = true;
         req.mission.route_idx = mission_inputs.route_guidance.idx;

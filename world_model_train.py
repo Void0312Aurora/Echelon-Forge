@@ -9,14 +9,25 @@ import torch
 
 # Prefer the locally built `ef_py` extension when present.
 _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-_BUILD_DIR = os.path.join(_REPO_ROOT, "build")
-if os.path.isdir(_BUILD_DIR):
+_BUILD_DIR_NAMES = []
+_ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
+if _ENV_BUILD_DIR:
+    _BUILD_DIR_NAMES.append(_ENV_BUILD_DIR)
+_BUILD_DIR_NAMES.extend(["build-workshop", "build-gpu", "build"])
+for _build_dir_name in _BUILD_DIR_NAMES:
+    _BUILD_DIR = _build_dir_name if os.path.isabs(_build_dir_name) else os.path.join(_REPO_ROOT, _build_dir_name)
+    if not os.path.isdir(_BUILD_DIR):
+        continue
     for _name in ("ef_py", "ef_py.cpython-313-x86_64-linux-gnu.so"):
         if os.path.exists(os.path.join(_BUILD_DIR, _name)) or any(
             fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_BUILD_DIR)
         ):
+            if _BUILD_DIR in sys.path:
+                sys.path.remove(_BUILD_DIR)
             sys.path.insert(0, _BUILD_DIR)
             break
+    if sys.path[0] == _BUILD_DIR:
+        break
 sys.path.insert(0, _REPO_ROOT)
 
 from gym_envs.universal_env import UniversalEnv  # noqa: E402

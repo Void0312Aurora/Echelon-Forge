@@ -38,6 +38,10 @@ Current maintained diagnostics:
   - Replays real `p5` route rollouts and compares coarse route-leg propagation against fine truth, reporting endpoint error and training-risk proxies by horizon.
 - [diagnose_training_matrix.py](/home/void0312/CMO/tools/diagnostics/diagnose_training_matrix.py)
   - Runs a small evaluation matrix across model/scenario pairs and extracts headline metrics from evaluator output.
+- [diagnose_cooperative_takeoff_trajectory.py](/home/void0312/CMO/tools/diagnostics/diagnose_cooperative_takeoff_trajectory.py)
+  - Replays one cooperative takeoff world, then exports a PNG + JSON with both aircraft trajectories, altitude/speed traces, and takeoff-clearance timeline.
+- [diagnose_cooperative_takeoff_to_cruise_trajectory.py](/home/void0312/CMO/tools/diagnostics/diagnose_cooperative_takeoff_to_cruise_trajectory.py)
+  - Replays one cooperative takeoff-to-cruise bridge world, then exports a PNG + JSON with both aircraft trajectories, altitude/speed traces, clearance timeline, and waypoint-progress traces.
 - [sanity_check.py](/home/void0312/CMO/tools/diagnostics/sanity_check.py)
   - Performs a low-level kernel/API sanity probe against a spawned unit.
 

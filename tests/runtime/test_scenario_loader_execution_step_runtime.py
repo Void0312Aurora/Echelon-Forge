@@ -365,6 +365,29 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
         self.assertAlmostEqual(float(loader.mission_cmd["target_altitude"]), expected_altitude, places=6)
         self.assertAlmostEqual(float(loader.mission_cmd["target_speed"]), expected_speed, places=6)
 
+    def test_update_behaviors_route_target_altitude_includes_formation_slot_offset(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        loader = ScenarioLoader(sim)
+        scenario = copy.deepcopy(_route_scenario())
+        scenario["mission_command"]["form_offset_z"] = 30.0
+        agent_id = loader.load_scenario_data(scenario, seed=11)
+        self.assertIsNotNone(agent_id)
+
+        truth = sim.get_agent_observation(int(agent_id))
+        inst = sim.get_instrument_state(int(agent_id))
+        route_result = loader._query_route_guidance_result(truth=truth, inst=inst)
+        self.assertIsNotNone(route_result)
+        assert route_result is not None
+
+        wp_idx = int(getattr(route_result, "idx", 0))
+        wp = loader.waypoints[wp_idx]
+        expected_altitude = float(wp.get("altitude_m", wp.get("z", loader.mission_cmd.get("target_altitude", 0.0)))) + 30.0
+        loader.mission_cmd["target_altitude"] = -999.0
+
+        loader.update_nonhierarchical_behaviors(truth=truth, inst=inst, sync_to_kernel=False)
+        self.assertAlmostEqual(float(loader.mission_cmd["target_altitude"]), expected_altitude, places=6)
+
     def test_prepare_step_evaluation_compact_cruise_skips_step_info(self) -> None:
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
@@ -409,6 +432,103 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
         runtime_inputs = step_eval.get("_runtime_deferred_inputs")
         self.assertIsNotNone(runtime_inputs)
         self.assertFalse(bool(getattr(runtime_inputs, "has_step_info", True)))
+
+    def test_compute_full_step_reuses_cached_step_evaluation(self) -> None:
+        sim_cached = ef_py.SimulationKernel()
+        self.assertTrue(sim_cached.load_database(resolve_repo_path("examples", "config", "database")))
+        loader_cached = ScenarioLoader(sim_cached)
+        loader_cached.use_compiled_execution_step_runtime = True
+        agent_id_cached = loader_cached.load_scenario_data(copy.deepcopy(_route_scenario()), seed=19)
+        self.assertIsNotNone(agent_id_cached)
+
+        truth_cached = sim_cached.get_agent_observation(int(agent_id_cached))
+        inst_cached = sim_cached.get_instrument_state(int(agent_id_cached))
+        obs_cached = build_universal_observation(
+            loader_cached,
+            inst_cached,
+            truth_cached,
+            mission_obs_mode="nav_v2",
+            max_contacts=10,
+            max_rwr=4,
+            include_proprio=False,
+            last_action=None,
+            action_space=None,
+            steps=1,
+            max_steps=loader_cached.get_max_steps(),
+        )
+        inst_vec_cached = np.asarray(obs_cached["instruments"], dtype=np.float32)
+        ils_vec_cached = (
+            np.asarray(inst_vec_cached[-4:], dtype=np.float32)
+            if inst_vec_cached.size >= 4
+            else np.zeros((4,), dtype=np.float32)
+        )
+
+        loader_cached.reset_runtime_eval_cache()
+        cached_step_eval = loader_cached._prepare_step_evaluation(
+            truth=truth_cached,
+            inst_obj=inst_cached,
+            inst_vec=inst_vec_cached,
+            ils_vec=ils_vec_cached,
+            steps=1,
+            max_steps=loader_cached.get_max_steps(),
+            mission_obs_mode=None,
+        )
+        self.assertIsInstance(cached_step_eval, dict)
+
+        original_prepare = loader_cached._prepare_step_evaluation
+
+        def _fail_prepare(*args, **kwargs):  # pragma: no cover - defensive
+            raise AssertionError("compute_full_step unexpectedly rebuilt step evaluation")
+
+        loader_cached._prepare_step_evaluation = _fail_prepare  # type: ignore[method-assign]
+        try:
+            reward_cached, terminated_cached, truncated_cached, status_cached = loader_cached.compute_full_step(
+                obs_cached,
+                sim_cached,
+                1,
+                loader_cached.get_max_steps(),
+                truth=truth_cached,
+                inst_state=inst_cached,
+                step_evaluation=cached_step_eval,
+            )
+        finally:
+            loader_cached._prepare_step_evaluation = original_prepare  # type: ignore[method-assign]
+
+        sim_fresh = ef_py.SimulationKernel()
+        self.assertTrue(sim_fresh.load_database(resolve_repo_path("examples", "config", "database")))
+        loader_fresh = ScenarioLoader(sim_fresh)
+        loader_fresh.use_compiled_execution_step_runtime = True
+        agent_id_fresh = loader_fresh.load_scenario_data(copy.deepcopy(_route_scenario()), seed=19)
+        self.assertIsNotNone(agent_id_fresh)
+
+        truth_fresh = sim_fresh.get_agent_observation(int(agent_id_fresh))
+        inst_fresh = sim_fresh.get_instrument_state(int(agent_id_fresh))
+        obs_fresh = build_universal_observation(
+            loader_fresh,
+            inst_fresh,
+            truth_fresh,
+            mission_obs_mode="nav_v2",
+            max_contacts=10,
+            max_rwr=4,
+            include_proprio=False,
+            last_action=None,
+            action_space=None,
+            steps=1,
+            max_steps=loader_fresh.get_max_steps(),
+        )
+        reward_fresh, terminated_fresh, truncated_fresh, status_fresh = loader_fresh.compute_full_step(
+            obs_fresh,
+            sim_fresh,
+            1,
+            loader_fresh.get_max_steps(),
+            truth=truth_fresh,
+            inst_state=inst_fresh,
+        )
+
+        self.assertAlmostEqual(float(reward_cached), float(reward_fresh), places=6)
+        self.assertEqual(bool(terminated_cached), bool(terminated_fresh))
+        self.assertEqual(bool(truncated_cached), bool(truncated_fresh))
+        self.assertEqual(list(status_cached), list(status_fresh))
 
     def test_pending_landing_transition_retargets_heading_to_recovery_vector(self) -> None:
         class _Truth:

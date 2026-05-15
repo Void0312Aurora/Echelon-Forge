@@ -175,6 +175,27 @@ void bind_command(nb::module_& m) {
         .value("Recover", CoordinationMode::Recover)
         .value("Detached", CoordinationMode::Detached);
 
+    nb::enum_<TakeoffProcedureType>(m, "TakeoffProcedureType")
+        .value("Unspecified", TakeoffProcedureType::Unspecified)
+        .value("SingleShip", TakeoffProcedureType::SingleShip)
+        .value("Interval", TakeoffProcedureType::Interval)
+        .value("Wing", TakeoffProcedureType::Wing);
+
+    nb::enum_<TakeoffClearanceState>(m, "TakeoffClearanceState")
+        .value("Unspecified", TakeoffClearanceState::Unspecified)
+        .value("HoldShort", TakeoffClearanceState::HoldShort)
+        .value("LineUpAndWait", TakeoffClearanceState::LineUpAndWait)
+        .value("ClearedForTakeoff", TakeoffClearanceState::ClearedForTakeoff)
+        .value("Rolling", TakeoffClearanceState::Rolling)
+        .value("Airborne", TakeoffClearanceState::Airborne)
+        .value("Abort", TakeoffClearanceState::Abort);
+
+    nb::enum_<RunwaySlotPosition>(m, "RunwaySlotPosition")
+        .value("Unspecified", RunwaySlotPosition::Unspecified)
+        .value("Center", RunwaySlotPosition::Center)
+        .value("Left", RunwaySlotPosition::Left)
+        .value("Right", RunwaySlotPosition::Right);
+
     nb::class_<CommPacket>(m, "CommPacket")
         .def(nb::init<>())
         .def_rw("sender_id", &CommPacket::sender_id)
@@ -252,6 +273,10 @@ void bind_command(nb::module_& m) {
         .def_rw("recovery_base_id", &MissionCommand::recovery_base_id)
         .def_rw("recovery_runway_id", &MissionCommand::recovery_runway_id)
         .def_rw("recovery_approach_type", &MissionCommand::recovery_approach_type)
+        .def_rw("takeoff_procedure_id", &MissionCommand::takeoff_procedure_id)
+        .def_rw("takeoff_clearance_id", &MissionCommand::takeoff_clearance_id)
+        .def_rw("takeoff_interval_s", &MissionCommand::takeoff_interval_s)
+        .def_rw("runway_slot_id", &MissionCommand::runway_slot_id)
         .def_rw("formation_id", &MissionCommand::formation_id)
         .def_rw("form_offset_x", &MissionCommand::form_offset_x)
         .def_rw("form_offset_y", &MissionCommand::form_offset_y)
@@ -306,6 +331,10 @@ void bind_command(nb::module_& m) {
         .def_rw("recovery_base_id", &TaskOrder::recovery_base_id)
         .def_rw("recovery_runway_id", &TaskOrder::recovery_runway_id)
         .def_rw("recovery_approach_type", &TaskOrder::recovery_approach_type)
+        .def_rw("takeoff_procedure_id", &TaskOrder::takeoff_procedure_id)
+        .def_rw("takeoff_clearance_id", &TaskOrder::takeoff_clearance_id)
+        .def_rw("takeoff_interval_s", &TaskOrder::takeoff_interval_s)
+        .def_rw("runway_slot_id", &TaskOrder::runway_slot_id)
         .def_rw("formation_template_id", &TaskOrder::formation_template_id)
         .def_rw("formation_contract_id", &TaskOrder::formation_contract_id)
         .def_rw("formation_role_id", &TaskOrder::formation_role_id)
@@ -333,6 +362,10 @@ void bind_command(nb::module_& m) {
         .def_rw("recovery_base_id", &LeaderIntent::recovery_base_id)
         .def_rw("recovery_runway_id", &LeaderIntent::recovery_runway_id)
         .def_rw("recovery_approach_type", &LeaderIntent::recovery_approach_type)
+        .def_rw("takeoff_procedure_id", &LeaderIntent::takeoff_procedure_id)
+        .def_rw("takeoff_clearance_id", &LeaderIntent::takeoff_clearance_id)
+        .def_rw("takeoff_interval_s", &LeaderIntent::takeoff_interval_s)
+        .def_rw("runway_slot_id", &LeaderIntent::runway_slot_id)
         .def_rw("cmd_heading_deg", &LeaderIntent::cmd_heading_deg)
         .def_rw("cmd_altitude_m", &LeaderIntent::cmd_altitude_m)
         .def_rw("cmd_speed_mps", &LeaderIntent::cmd_speed_mps)

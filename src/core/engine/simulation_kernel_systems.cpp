@@ -151,6 +151,7 @@ void SimulationKernel::register_components_and_systems() {
     register_navigation_system(ecs);     // Phase 5.8: Navigation/EGI (after integration, before instruments)
     register_sensor_system(ecs);         // Phase 6: Sensor
     register_data_link_system(ecs);      // Phase 6.5: Data Link Fusion (Post-Sensor)
+    register_track_manager_system(ecs);  // Phase 6.55: Build fused track picture from local sensor + data link
     register_instrument_system(ecs);     // Phase 6.6: Instruments (Read Physics & Sensor State)
     register_damage_system(ecs);         // Phase 7: Damage/Effects
     register_ew_system(ecs);             // Phase 8: EW Actions

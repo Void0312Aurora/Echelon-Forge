@@ -275,7 +275,13 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
 
     def _route_indices(self, obs: Any, latent_pi: th.Tensor) -> tuple[th.Tensor, th.Tensor]:
         mission = obs.get("mission") if isinstance(obs, dict) else None
-        route = route_from_mission_observation(mission, batch_size=int(latent_pi.shape[0]), device=latent_pi.device)
+        instruments = obs.get("instruments") if isinstance(obs, dict) else None
+        route = route_from_mission_observation(
+            mission,
+            instruments=instruments,
+            batch_size=int(latent_pi.shape[0]),
+            device=latent_pi.device,
+        )
         return route.family_index, route.subexpert_index
 
     def _update_route_stats(self, family_index: th.Tensor, subexpert_index: th.Tensor) -> None:

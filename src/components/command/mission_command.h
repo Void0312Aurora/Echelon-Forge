@@ -34,6 +34,10 @@ struct MissionCommand {
     std::uint64_t recovery_base_id;
     std::uint64_t recovery_runway_id;
     RecoveryApproachType recovery_approach_type;
+    TakeoffProcedureType takeoff_procedure_id = TakeoffProcedureType::Unspecified;
+    TakeoffClearanceState takeoff_clearance_id = TakeoffClearanceState::Unspecified;
+    double takeoff_interval_s = 0.0;
+    RunwaySlotPosition runway_slot_id = RunwaySlotPosition::Unspecified;
 
     // 3. Formation
     int formation_id;

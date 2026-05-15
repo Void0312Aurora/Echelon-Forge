@@ -138,6 +138,7 @@
         "n_heads": 4,
         "n_layers": 3,
         "use_amp": true,
+        "amp_dtype": "bf16",
         "use_checkpointing": true
       },
       "family_subexpert_counts": [3, 2, 3, 1],

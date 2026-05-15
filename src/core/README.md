@@ -25,4 +25,6 @@
 
 ## 迁移备注
 
-当前 `engine/` 与 `mission/` 存在大文件。拆分优先级应是按职责拆实现文件，并保持 public API 稳定。
+`mission/` 已按 `runtime/`、`episode/`、`episode/detail/` 拆出物理层级。后续新增 mission 代码应先归入这些子层级，并保持 `runtime/` 不反向依赖 `episode/`。
+
+`engine/` 后续拆分仍应优先按职责拆实现文件，并保持 public API 稳定。

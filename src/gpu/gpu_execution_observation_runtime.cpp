@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 #include "components/physics/instruments.h"
-#include "core/mission/execution_observation_runtime.h"
+#include "core/mission/runtime/execution_observation_runtime.h"
 
 namespace gpu::detail {
 
@@ -85,6 +85,17 @@ MissionObservationInputs to_mission_observation_inputs(const ExecutionObservatio
     inputs.target_heading_deg = src.mission.target_heading_deg;
     inputs.target_altitude_m = src.mission.target_altitude_m;
     inputs.target_speed_mps = src.mission.target_speed_mps;
+    inputs.takeoff_procedure_code = src.mission.takeoff_procedure_code;
+    inputs.takeoff_clearance_code = src.mission.takeoff_clearance_code;
+    inputs.takeoff_interval_s = src.mission.takeoff_interval_s;
+    inputs.runway_slot_code = src.mission.runway_slot_code;
+    inputs.form_offset_x = src.mission.form_offset_x;
+    inputs.form_offset_y = src.mission.form_offset_y;
+    inputs.form_offset_z = src.mission.form_offset_z;
+    inputs.self_role_code = src.mission.self_role_code;
+    inputs.self_formation_role_code = src.mission.self_formation_role_code;
+    inputs.relative_slot_code = src.mission.relative_slot_code;
+    inputs.reference_relative_slot_code = src.mission.reference_relative_slot_code;
     if (src.mission.has_route_guidance) {
         inputs.has_route_guidance = true;
         inputs.route_guidance.valid = true;
@@ -133,6 +144,12 @@ std::size_t execution_observation_mission_float_count(int mission_mode_code) {
             return static_cast<std::size_t>(kExecutionObservationMissionNavV1Count);
         case 2:
             return static_cast<std::size_t>(kExecutionObservationMissionNavV2Count);
+        case 3:
+            return static_cast<std::size_t>(kExecutionObservationMissionNavV2FormationV1Count);
+        case 4:
+            return static_cast<std::size_t>(kExecutionObservationMissionNavV2FormationRoleV1Count);
+        case 5:
+            return static_cast<std::size_t>(kExecutionObservationMissionNavV2CooperativeTakeoffV1Count);
         default:
             throw std::invalid_argument("Unknown execution observation mission mode code");
     }

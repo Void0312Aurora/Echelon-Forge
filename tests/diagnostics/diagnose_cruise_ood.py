@@ -103,7 +103,12 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=321)
     parser.add_argument("--include_visual", action="store_true")
     parser.add_argument("--include_proprio", action="store_true")
-    parser.add_argument("--mission_obs_mode", type=str, default="basic", choices=["basic", "nav_v1", "nav_v2"])
+    parser.add_argument(
+        "--mission_obs_mode",
+        type=str,
+        default="basic",
+        choices=["basic", "nav_v1", "nav_v2", "nav_v2_formation_v1"],
+    )
     parser.add_argument("--visual_downsample", type=int, default=2)
     parser.add_argument("--visual_update_interval", type=int, default=2)
     parser.add_argument(

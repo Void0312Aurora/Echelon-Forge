@@ -25,6 +25,10 @@ struct LeaderIntent {
     std::uint64_t recovery_base_id = 0;
     std::uint64_t recovery_runway_id = 0;
     RecoveryApproachType recovery_approach_type = RecoveryApproachType::None;
+    TakeoffProcedureType takeoff_procedure_id = TakeoffProcedureType::Unspecified;
+    TakeoffClearanceState takeoff_clearance_id = TakeoffClearanceState::Unspecified;
+    double takeoff_interval_s = 0.0;
+    RunwaySlotPosition runway_slot_id = RunwaySlotPosition::Unspecified;
     double cmd_heading_deg = 0.0;
     double cmd_altitude_m = 0.0;
     double cmd_speed_mps = 0.0;

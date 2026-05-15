@@ -9,7 +9,7 @@
 #include "components/tasking/leader_intent.h"
 #include "components/tasking/pilot_report.h"
 #include "components/tasking/task_order.h"
-#include "core/mission/execution_episode_batch_prepare.h"
+#include "core/mission/episode/execution_episode_batch_prepare.h"
 
 struct WorldEntityRef {
     std::uint64_t world_index = 0;

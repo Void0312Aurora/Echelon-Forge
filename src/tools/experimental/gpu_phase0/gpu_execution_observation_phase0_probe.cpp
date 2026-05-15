@@ -20,6 +20,7 @@ enum class MissionMode {
     Basic = 0,
     NavV1 = 1,
     NavV2 = 2,
+    NavV2FormationV1 = 3,
 };
 
 struct Args {
@@ -71,8 +72,12 @@ Args parse_args(int argc, char** argv) {
                 args.mission_mode = MissionMode::NavV1;
             } else if (mode == "nav_v2") {
                 args.mission_mode = MissionMode::NavV2;
+            } else if (mode == "nav_v2_formation_v1") {
+                args.mission_mode = MissionMode::NavV2FormationV1;
             } else {
-                throw std::invalid_argument("unknown value for --mission-mode, expected basic|nav_v1|nav_v2");
+                throw std::invalid_argument(
+                    "unknown value for --mission-mode, expected basic|nav_v1|nav_v2|nav_v2_formation_v1"
+                );
             }
         } else if (flag == "--help" || flag == "-h") {
             std::cout
@@ -83,7 +88,7 @@ Args parse_args(int argc, char** argv) {
                 << "  --rwr N            RWR warnings per world (default 4)\n"
                 << "  --max-contacts N   padded contact width (default 16)\n"
                 << "  --max-rwr N        padded RWR width (default 8)\n"
-                << "  --mission-mode M   basic|nav_v1|nav_v2 (default nav_v2)\n";
+                << "  --mission-mode M   basic|nav_v1|nav_v2|nav_v2_formation_v1 (default nav_v2)\n";
             std::exit(0);
         } else {
             throw std::invalid_argument("unknown flag: " + flag);
@@ -110,6 +115,8 @@ const char* mission_mode_name(MissionMode mode) {
             return "nav_v1";
         case MissionMode::NavV2:
             return "nav_v2";
+        case MissionMode::NavV2FormationV1:
+            return "nav_v2_formation_v1";
     }
     return "unknown";
 }

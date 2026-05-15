@@ -17,7 +17,7 @@
 1. `src/components/physics/action.h` 混合了 pilot action、mission command、task order、leader intent、pilot report、legacy movement/action command 和 command link。
 2. `src/core/engine/simulation_kernel.cpp` 同时承担 ECS 系统注册、spawn API、command API、weapon launch、agent observation、visual observation 和 exact-stage inventory。
 3. `src/interfaces/python/python_module.cpp` 同时承担核心类型绑定、runtime/facade 绑定、GPU helper 绑定、DLPack 视图和诊断接口。
-4. `src/core/mission/execution_episode_controller.cpp` 同时承担 episode state controller、mission-command JSON 解释、route/landing transition、reward breakdown 汇总。
+4. `src/core/mission/episode/execution_episode_controller.cpp` 已拆出 detail helper；后续风险转为 mission runtime、episode controller 与 controller detail 的目录边界是否继续清晰。
 5. `src/components/systems` 与 `src/systems/systems` 命名过宽，缺少明确业务域边界。
 6. `src/gpu` 同时承载维护中的 GPU helper 与实验探针历史，虽然 exact-step 旧线已移除，但目录职责仍需明确。
 
@@ -236,10 +236,13 @@ src/core/engine/
 
 ```text
 src/core/mission/
-  execution_episode_controller.cpp
-  episode_transition_runtime.cpp
-  episode_reward_breakdown.cpp
-  mission_command_codec.cpp
+  runtime/
+  episode/
+    execution_episode_controller.cpp
+    detail/
+      episode_transition_runtime.cpp
+      episode_reward_breakdown.cpp
+      mission_command_codec.cpp
 ```
 
 验收：
@@ -255,6 +258,7 @@ src/core/mission/
 - 已完成：新增 `episode_transition_runtime.{h,cpp}`，集中 route guidance target 更新、post-waypoint transition 和 landing transition arm/vector 更新。
 - 已完成：新增 `episode_reward_breakdown.{h,cpp}`，集中 reward breakdown 汇总和稳定 JSON 输出。
 - 已完成：`execution_episode_controller.cpp` 收缩为 state import/export、prepare/evaluate/step 与 runtime products apply 的协调职责。
+- 已完成：`src/core/mission` 物理拆为 `runtime/`、`episode/` 和 `episode/detail/`，根目录不再承载平铺 `.h/.cpp`。
 - 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。
 - 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/runtime/test_scenario_loader_execution_step_runtime.py tests/test_gpu_runtime_bindings.py` 通过，`45 passed`。
 - 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/test_execution_episode_controller.py tests/runtime/test_execution_episode_state.py tests/runtime/test_execution_episode_batch_prepare.py tests/runtime/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/runtime/test_scenario_loader_execution_step_runtime.py tests/test_gpu_runtime_bindings.py tests/test_cuda_import_order.py tests/world_batch/test_world_batch_vec_env.py` 通过，`71 passed, 8 subtests passed`。
@@ -310,7 +314,7 @@ src/core/mission/
 - 已完成：`runtime_facade_types.h` 不再直接包含 `core/engine/world_batch_runtime.h`。
 - 已完成：`RuntimeFacade` public header 使用 `WorldBatchRuntime` 前置声明和 `std::unique_ptr`，底层 engine owner 的完整定义只在 `.cpp` 中包含。
 - 已完成：新增 architecture 检查，禁止 `runtime/contracts/*.h` 与 `runtime/facade/*_types.h` include `core/engine/*`，并确认 facade public header 不直接 include `world_batch_runtime.h`。
-- 已完成：`CMakeLists.txt` 已按未来 target 边界拆出 `EF_CORE_ENGINE_SOURCES`、`EF_CORE_MISSION_SOURCES`、`EF_RUNTIME_FACADE_SOURCES`、`EF_MODEL_DEFAULT_SOURCES`、`EF_CONTENT_SOURCES`、`EF_PYTHON_BINDING_SOURCES` 和 GPU source groups；`ef_core` / `ef_py` target 不再直接平铺源码文件。
+- 已完成：`CMakeLists.txt` 已按未来 target 边界拆出 `EF_CORE_ENGINE_SOURCES`、`EF_CORE_MISSION_RUNTIME_SOURCES`、`EF_CORE_MISSION_EPISODE_SOURCES`、`EF_CORE_MISSION_EPISODE_DETAIL_SOURCES`、`EF_CORE_MISSION_SOURCES`、`EF_RUNTIME_FACADE_SOURCES`、`EF_MODEL_DEFAULT_SOURCES`、`EF_CONTENT_SOURCES`、`EF_PYTHON_BINDING_SOURCES` 和 GPU source groups；`ef_core` / `ef_py` target 不再直接平铺源码文件。
 - 已完成：新增 CMake target readiness architecture 检查，防止 `ef_core` / `ef_py` 重新回到无边界源码平铺。
 - 已完成：`src/README.md` 补充 CMake source group 归属规则。
 - 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。

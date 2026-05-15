@@ -1,7 +1,261 @@
+from __future__ import annotations
+
+from typing import Mapping
+
+import gymnasium as gym
 import torch
 import torch.nn as nn
-import gymnasium as gym
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+
+
+_TRANSFORMER_FEATURE_CLAMP = 12.0
+
+# Execution observation layout from `gym_envs/universal_env.py`.
+_INST_IDX_IAS = 0
+_INST_IDX_MACH = 1
+_INST_IDX_ALT_BARO = 2
+_INST_IDX_ALT_RADAR = 3
+_INST_IDX_VVI = 4
+_INST_IDX_AOA = 5
+_INST_IDX_BETA = 6
+_INST_IDX_PITCH = 7
+_INST_IDX_ROLL = 8
+_INST_IDX_HEADING = 9
+_INST_IDX_G_LOAD = 10
+_INST_IDX_G_LOAD_AXIAL = 11
+_INST_IDX_P = 12
+_INST_IDX_Q = 13
+_INST_IDX_R = 14
+_INST_IDX_ENGINE_RPM = 15
+_INST_IDX_FUEL_TOTAL = 16
+_INST_IDX_FUEL_FLOW = 17
+_INST_IDX_GEAR_POS = 18
+_INST_IDX_FLAPS_POS = 19
+_INST_IDX_SPEEDBRAKE_POS = 20
+_INST_IDX_CMD_HEADING = 21
+_INST_IDX_CMD_ALT = 22
+_INST_IDX_CMD_SPEED = 23
+_INST_IDX_LAT = 24
+_INST_IDX_LON = 25
+_INST_IDX_VN = 26
+_INST_IDX_VE = 27
+_INST_IDX_VD = 28
+_INST_IDX_GROUND_SPEED = 29
+_INST_IDX_GROUND_TRACK = 30
+_INST_IDX_WIND_SPEED = 31
+_INST_IDX_WIND_DIR = 32
+_INST_IDX_OAT = 33
+_INST_IDX_GPS_AVAILABLE = 34
+_INST_IDX_POSITION_UNCERTAINTY = 35
+_INST_IDX_RWR_ACTIVE = 36
+_INST_IDX_MISSILES_REMAINING = 37
+_INST_IDX_ILS_LOC_DEV = 38
+_INST_IDX_ILS_GS_DEV = 39
+_INST_IDX_ILS_VALID = 40
+_INST_IDX_ILS_DME = 41
+
+# Cooperative takeoff mission observation layout from `gym_envs/scenario_loader.py`.
+_MISSION_IDX_COMMAND_CODE = 0
+_MISSION_IDX_TARGET_HEADING = 1
+_MISSION_IDX_TARGET_ALTITUDE = 2
+_MISSION_IDX_TARGET_SPEED = 3
+_MISSION_IDX_SELECTED_STEERPOINT = 4
+_MISSION_IDX_STEERPOINT_MODE_CODE = 5
+_MISSION_IDX_DIST_M = 6
+_MISSION_IDX_BEARING_REL_DEG = 7
+_MISSION_IDX_ALTITUDE_DELTA_M = 8
+_MISSION_IDX_CDI_NORM = 9
+_MISSION_IDX_TRACK_ANGLE_ERROR_DEG = 10
+_MISSION_IDX_LEG_DISTANCE_REMAINING_M = 11
+_MISSION_IDX_NEXT_TURN_DEG = 12
+_MISSION_IDX_DISTANCE_TO_TURN_M = 13
+_MISSION_IDX_TAKEOFF_PROCEDURE_CODE = 14
+_MISSION_IDX_TAKEOFF_CLEARANCE_CODE = 15
+_MISSION_IDX_TAKEOFF_INTERVAL_S = 16
+_MISSION_IDX_RUNWAY_SLOT_CODE = 17
+_MISSION_IDX_FORM_OFFSET_X_M = 18
+_MISSION_IDX_FORM_OFFSET_Y_M = 19
+_MISSION_IDX_FORM_OFFSET_Z_M = 20
+_MISSION_IDX_SELF_ROLE_CODE = 21
+_MISSION_IDX_SELF_FORMATION_ROLE_CODE = 22
+_MISSION_IDX_RELATIVE_SLOT_CODE = 23
+_MISSION_IDX_REFERENCE_RELATIVE_SLOT_CODE = 24
+
+_CONTACT_IDX_RANGE_M = 0
+_CONTACT_IDX_AZIMUTH_DEG = 1
+_CONTACT_IDX_ELEVATION_DEG = 2
+_CONTACT_IDX_CLOSING_SPEED_MPS = 3
+_CONTACT_IDX_TIME_SINCE_UPDATE_S = 4
+
+_RWR_IDX_BEARING_DEG = 0
+_RWR_IDX_SIGNAL_STRENGTH = 1
+_RWR_IDX_IS_LOCK = 2
+_RWR_IDX_IS_LAUNCH = 3
+
+
+def _normalize_amp_dtype(value: str | None) -> str:
+    normalized = str(value or "auto").strip().lower()
+    if normalized in {"auto", "fp16", "float16", "half", "bf16", "bfloat16"}:
+        return "bf16" if normalized in {"bf16", "bfloat16"} else ("fp16" if normalized in {"fp16", "float16", "half"} else "auto")
+    return "auto"
+
+
+def _safe_scale(scale: float) -> float:
+    return max(abs(float(scale)), 1.0e-6)
+
+
+def _symlog(values: torch.Tensor, *, scale: float) -> torch.Tensor:
+    return torch.sign(values) * torch.log1p(torch.abs(values) / _safe_scale(scale))
+
+
+def _scaled(values: torch.Tensor, *, scale: float) -> torch.Tensor:
+    return values / _safe_scale(scale)
+
+
+def _wrap_degrees_unit(values: torch.Tensor) -> torch.Tensor:
+    wrapped = torch.remainder(values + 180.0, 360.0) - 180.0
+    return wrapped / 180.0
+
+
+def _sanitize_features(values: torch.Tensor) -> torch.Tensor:
+    return torch.clamp(torch.nan_to_num(values.float(), nan=0.0, posinf=0.0, neginf=0.0), -_TRANSFORMER_FEATURE_CLAMP, _TRANSFORMER_FEATURE_CLAMP)
+
+
+def _set_last_dim(tensor: torch.Tensor, index: int, transform) -> None:
+    if tensor.ndim < 1 or int(tensor.shape[-1]) <= int(index):
+        return
+    tensor[..., int(index)] = transform(tensor[..., int(index)])
+
+
+def preprocess_instrument_tensor(instruments: torch.Tensor) -> torch.Tensor:
+    out = instruments.float().clone()
+    if out.ndim != 2:
+        return _sanitize_features(out)
+
+    _set_last_dim(out, _INST_IDX_IAS, lambda x: _scaled(x, scale=200.0))
+    _set_last_dim(out, _INST_IDX_MACH, lambda x: _scaled(x, scale=2.0))
+    _set_last_dim(out, _INST_IDX_ALT_BARO, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _INST_IDX_ALT_RADAR, lambda x: _symlog(x, scale=500.0))
+    _set_last_dim(out, _INST_IDX_VVI, lambda x: _scaled(x, scale=50.0))
+    _set_last_dim(out, _INST_IDX_AOA, lambda x: _scaled(x, scale=45.0))
+    _set_last_dim(out, _INST_IDX_BETA, lambda x: _scaled(x, scale=30.0))
+    _set_last_dim(out, _INST_IDX_PITCH, _wrap_degrees_unit)
+    _set_last_dim(out, _INST_IDX_ROLL, _wrap_degrees_unit)
+    _set_last_dim(out, _INST_IDX_HEADING, _wrap_degrees_unit)
+    _set_last_dim(out, _INST_IDX_G_LOAD, lambda x: _scaled(x, scale=10.0))
+    _set_last_dim(out, _INST_IDX_G_LOAD_AXIAL, lambda x: _scaled(x, scale=10.0))
+    _set_last_dim(out, _INST_IDX_P, lambda x: _scaled(x, scale=180.0))
+    _set_last_dim(out, _INST_IDX_Q, lambda x: _scaled(x, scale=180.0))
+    _set_last_dim(out, _INST_IDX_R, lambda x: _scaled(x, scale=180.0))
+    _set_last_dim(out, _INST_IDX_ENGINE_RPM, lambda x: _scaled(x, scale=100.0))
+    _set_last_dim(out, _INST_IDX_FUEL_TOTAL, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _INST_IDX_FUEL_FLOW, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _INST_IDX_GEAR_POS, lambda x: torch.clamp(x, -1.0, 1.0))
+    _set_last_dim(out, _INST_IDX_FLAPS_POS, lambda x: torch.clamp(x, -1.0, 1.0))
+    _set_last_dim(out, _INST_IDX_SPEEDBRAKE_POS, lambda x: torch.clamp(x, -1.0, 1.0))
+    _set_last_dim(out, _INST_IDX_CMD_HEADING, _wrap_degrees_unit)
+    _set_last_dim(out, _INST_IDX_CMD_ALT, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _INST_IDX_CMD_SPEED, lambda x: _scaled(x, scale=200.0))
+    _set_last_dim(out, _INST_IDX_LAT, lambda x: _scaled(x, scale=90.0))
+    _set_last_dim(out, _INST_IDX_LON, lambda x: _scaled(x, scale=180.0))
+    _set_last_dim(out, _INST_IDX_VN, lambda x: _scaled(x, scale=250.0))
+    _set_last_dim(out, _INST_IDX_VE, lambda x: _scaled(x, scale=250.0))
+    _set_last_dim(out, _INST_IDX_VD, lambda x: _scaled(x, scale=100.0))
+    _set_last_dim(out, _INST_IDX_GROUND_SPEED, lambda x: _scaled(x, scale=250.0))
+    _set_last_dim(out, _INST_IDX_GROUND_TRACK, _wrap_degrees_unit)
+    _set_last_dim(out, _INST_IDX_WIND_SPEED, lambda x: _scaled(x, scale=100.0))
+    _set_last_dim(out, _INST_IDX_WIND_DIR, _wrap_degrees_unit)
+    _set_last_dim(out, _INST_IDX_OAT, lambda x: _scaled(x, scale=50.0))
+    _set_last_dim(out, _INST_IDX_GPS_AVAILABLE, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _INST_IDX_POSITION_UNCERTAINTY, lambda x: _symlog(x, scale=10.0))
+    _set_last_dim(out, _INST_IDX_RWR_ACTIVE, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _INST_IDX_MISSILES_REMAINING, lambda x: _scaled(x, scale=8.0))
+    _set_last_dim(out, _INST_IDX_ILS_LOC_DEV, lambda x: torch.clamp(x, -2.0, 2.0))
+    _set_last_dim(out, _INST_IDX_ILS_GS_DEV, lambda x: torch.clamp(x, -2.0, 2.0))
+    _set_last_dim(out, _INST_IDX_ILS_VALID, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _INST_IDX_ILS_DME, lambda x: _symlog(x, scale=1000.0))
+    return _sanitize_features(out)
+
+
+def preprocess_contact_tensor(contacts: torch.Tensor) -> torch.Tensor:
+    out = contacts.float().clone()
+    if out.ndim != 3:
+        return _sanitize_features(out)
+
+    _set_last_dim(out, _CONTACT_IDX_RANGE_M, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _CONTACT_IDX_AZIMUTH_DEG, _wrap_degrees_unit)
+    _set_last_dim(out, _CONTACT_IDX_ELEVATION_DEG, lambda x: _scaled(x, scale=90.0))
+    _set_last_dim(out, _CONTACT_IDX_CLOSING_SPEED_MPS, lambda x: _symlog(x, scale=50.0))
+    _set_last_dim(out, _CONTACT_IDX_TIME_SINCE_UPDATE_S, lambda x: _scaled(x, scale=10.0))
+    return _sanitize_features(out)
+
+
+def preprocess_rwr_tensor(rwr: torch.Tensor) -> torch.Tensor:
+    out = rwr.float().clone()
+    if out.ndim != 3:
+        return _sanitize_features(out)
+
+    _set_last_dim(out, _RWR_IDX_BEARING_DEG, _wrap_degrees_unit)
+    _set_last_dim(out, _RWR_IDX_SIGNAL_STRENGTH, lambda x: torch.clamp(x, -4.0, 4.0))
+    _set_last_dim(out, _RWR_IDX_IS_LOCK, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _RWR_IDX_IS_LAUNCH, lambda x: torch.clamp(x, 0.0, 1.0))
+    return _sanitize_features(out)
+
+
+def preprocess_mission_tensor(mission: torch.Tensor) -> torch.Tensor:
+    out = mission.float().clone()
+    if out.ndim != 2:
+        return _sanitize_features(out)
+
+    _set_last_dim(out, _MISSION_IDX_COMMAND_CODE, lambda x: _scaled(x, scale=4.0))
+    _set_last_dim(out, _MISSION_IDX_TARGET_HEADING, _wrap_degrees_unit)
+    _set_last_dim(out, _MISSION_IDX_TARGET_ALTITUDE, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_IDX_TARGET_SPEED, lambda x: _scaled(x, scale=200.0))
+    _set_last_dim(out, _MISSION_IDX_SELECTED_STEERPOINT, lambda x: _scaled(x, scale=8.0))
+    _set_last_dim(out, _MISSION_IDX_STEERPOINT_MODE_CODE, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _MISSION_IDX_DIST_M, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_IDX_BEARING_REL_DEG, _wrap_degrees_unit)
+    _set_last_dim(out, _MISSION_IDX_ALTITUDE_DELTA_M, lambda x: _symlog(x, scale=500.0))
+    _set_last_dim(out, _MISSION_IDX_CDI_NORM, lambda x: torch.clamp(x, -2.0, 2.0))
+    _set_last_dim(out, _MISSION_IDX_TRACK_ANGLE_ERROR_DEG, _wrap_degrees_unit)
+    _set_last_dim(out, _MISSION_IDX_LEG_DISTANCE_REMAINING_M, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_IDX_NEXT_TURN_DEG, _wrap_degrees_unit)
+    _set_last_dim(out, _MISSION_IDX_DISTANCE_TO_TURN_M, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_IDX_TAKEOFF_PROCEDURE_CODE, lambda x: _scaled(x, scale=4.0))
+    _set_last_dim(out, _MISSION_IDX_TAKEOFF_CLEARANCE_CODE, lambda x: _scaled(x, scale=2.0))
+    _set_last_dim(out, _MISSION_IDX_TAKEOFF_INTERVAL_S, lambda x: _symlog(x, scale=10.0))
+    _set_last_dim(out, _MISSION_IDX_RUNWAY_SLOT_CODE, lambda x: _scaled(x, scale=4.0))
+    _set_last_dim(out, _MISSION_IDX_FORM_OFFSET_X_M, lambda x: _symlog(x, scale=100.0))
+    _set_last_dim(out, _MISSION_IDX_FORM_OFFSET_Y_M, lambda x: _symlog(x, scale=100.0))
+    _set_last_dim(out, _MISSION_IDX_FORM_OFFSET_Z_M, lambda x: _symlog(x, scale=50.0))
+    _set_last_dim(out, _MISSION_IDX_SELF_ROLE_CODE, lambda x: _scaled(x, scale=32.0))
+    _set_last_dim(out, _MISSION_IDX_SELF_FORMATION_ROLE_CODE, lambda x: _scaled(x, scale=4.0))
+    _set_last_dim(out, _MISSION_IDX_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=16.0))
+    _set_last_dim(out, _MISSION_IDX_REFERENCE_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=16.0))
+    return _sanitize_features(out)
+
+
+def preprocess_proprio_tensor(proprio: torch.Tensor) -> torch.Tensor:
+    return _sanitize_features(proprio.float().clone())
+
+
+def preprocess_visual_tensor(visual: torch.Tensor) -> torch.Tensor:
+    return _sanitize_features(torch.clamp(visual.float().clone(), -10.0, 10.0))
+
+
+def preprocess_transformer_observations(observations: Mapping[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    processed = {
+        "instruments": preprocess_instrument_tensor(observations["instruments"]),
+        "contacts": preprocess_contact_tensor(observations["contacts"]),
+        "rwr": preprocess_rwr_tensor(observations["rwr"]),
+        "mission": preprocess_mission_tensor(observations["mission"]),
+    }
+    if "proprio" in observations:
+        processed["proprio"] = preprocess_proprio_tensor(observations["proprio"])
+    if "visual" in observations:
+        processed["visual"] = preprocess_visual_tensor(observations["visual"])
+    return processed
+
 
 class TransformerExtractor(BaseFeaturesExtractor):
     """
@@ -21,6 +275,7 @@ class TransformerExtractor(BaseFeaturesExtractor):
         n_heads: int = 4,
         n_layers: int = 2,
         use_amp: bool = False,
+        amp_dtype: str = "auto",
         use_checkpointing: bool = True,
     ):
         # We don't know the exact flattened size in advance easily without calc, 
@@ -29,6 +284,7 @@ class TransformerExtractor(BaseFeaturesExtractor):
         
         self.d_model = features_dim
         self.use_amp = bool(use_amp)
+        self.amp_dtype = _normalize_amp_dtype(amp_dtype)
         self._use_checkpointing = bool(use_checkpointing)
         
         # 1. Input Projections
@@ -78,15 +334,33 @@ class TransformerExtractor(BaseFeaturesExtractor):
         
         # Verification
         # Total tokens = 1 (Self) + 10 (Contacts) + 4 (RWR) + 1 (Mission) = 16
-        
+
+    def _autocast_enabled_for_forward(self) -> bool:
+        return bool(torch.cuda.is_available() and self.use_amp)
+
+    def _autocast_dtype(self) -> torch.dtype:
+        if self.amp_dtype == "bf16":
+            return torch.bfloat16
+        if self.amp_dtype == "fp16":
+            return torch.float16
+        if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+            return torch.bfloat16
+        return torch.float16
+
     def forward(self, observations: dict) -> torch.Tensor:
-        with torch.autocast("cuda", enabled=(torch.cuda.is_available() and self.use_amp)):
+        with torch.autocast(
+            "cuda",
+            enabled=self._autocast_enabled_for_forward(),
+            dtype=self._autocast_dtype(),
+        ):
+            processed = preprocess_transformer_observations(observations)
+
             # 1. Get Components
             # shapes: (Batch, 24), (Batch, 10, 5), (Batch, 4, 4), (Batch, 4)
-            s_inst = observations["instruments"]
-            s_contacts = observations["contacts"]
-            s_rwr = observations["rwr"]
-            s_mission = observations["mission"]
+            s_inst = processed["instruments"]
+            s_contacts = processed["contacts"]
+            s_rwr = processed["rwr"]
+            s_mission = processed["mission"]
             
             batch_size = s_inst.shape[0]
             
@@ -104,7 +378,7 @@ class TransformerExtractor(BaseFeaturesExtractor):
             emb_mission = self.embed_mission(s_mission).unsqueeze(1) + self.type_embed(self.idx_mission)
             emb_parts = [emb_inst, emb_mission]
             if self.has_proprio:
-                s_proprio = observations["proprio"]
+                s_proprio = processed["proprio"]
                 emb_proprio = self.embed_proprio(s_proprio).unsqueeze(1) + self.type_embed(self.idx_proprio)
                 emb_parts.append(emb_proprio)
             
@@ -149,12 +423,14 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
         n_layers: int = 2,
         visual_cnn_channels: int = 64,
         use_amp: bool = False,
+        amp_dtype: str = "auto",
         use_checkpointing: bool = True,
     ):
         super().__init__(observation_space, features_dim)
 
         self.d_model = int(features_dim)
         self.use_amp = bool(use_amp)
+        self.amp_dtype = _normalize_amp_dtype(amp_dtype)
         self._use_checkpointing = bool(use_checkpointing)
 
         instruments_dim = observation_space["instruments"].shape[0]
@@ -253,14 +529,31 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=int(n_layers), enable_nested_tensor=False)
         self.ln_final = nn.LayerNorm(self.d_model)
 
-    def forward(self, observations: dict) -> torch.Tensor:
-        with torch.autocast("cuda", enabled=(torch.cuda.is_available() and self.use_amp)):
-            s_inst = observations["instruments"]
-            s_contacts = observations["contacts"]
-            s_rwr = observations["rwr"]
-            s_mission = observations["mission"]
+    def _autocast_enabled_for_forward(self) -> bool:
+        return bool(torch.cuda.is_available() and self.use_amp)
 
-            visual = observations["visual"]
+    def _autocast_dtype(self) -> torch.dtype:
+        if self.amp_dtype == "bf16":
+            return torch.bfloat16
+        if self.amp_dtype == "fp16":
+            return torch.float16
+        if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+            return torch.bfloat16
+        return torch.float16
+
+    def forward(self, observations: dict) -> torch.Tensor:
+        with torch.autocast(
+            "cuda",
+            enabled=self._autocast_enabled_for_forward(),
+            dtype=self._autocast_dtype(),
+        ):
+            processed = preprocess_transformer_observations(observations)
+            s_inst = processed["instruments"]
+            s_contacts = processed["contacts"]
+            s_rwr = processed["rwr"]
+            s_mission = processed["mission"]
+
+            visual = processed["visual"]
             # Env provides (H,W,C); PyTorch conv expects (C,H,W).
             if visual.ndim != 4:
                 raise ValueError(f"Expected visual tensor with 4 dims, got shape={tuple(visual.shape)}")
@@ -273,7 +566,6 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
                     f"Unexpected visual tensor shape={tuple(visual.shape)}; expected "
                     f"(B,{self.visual_h},{self.visual_w},{self.visual_c}) or (B,{self.visual_c},{self.visual_h},{self.visual_w})."
                 )
-            visual = torch.clamp(visual, -10.0, 10.0)
 
             emb_inst = self.embed_instruments(s_inst).unsqueeze(1) + self.type_embed(self.idx_inst)
             emb_mission = self.embed_mission(s_mission).unsqueeze(1) + self.type_embed(self.idx_mission)
@@ -285,7 +577,7 @@ class TransformerVisualExtractor(BaseFeaturesExtractor):
             emb_rwr = self.embed_rwr(s_rwr) + self.type_embed(self.idx_rwr)
             emb_parts = [emb_inst, emb_mission]
             if self.has_proprio:
-                s_proprio = observations["proprio"]
+                s_proprio = processed["proprio"]
                 emb_proprio = self.embed_proprio(s_proprio).unsqueeze(1) + self.type_embed(self.idx_proprio)
                 emb_parts.append(emb_proprio)
             sequence = torch.cat([*emb_parts, emb_visual, emb_contacts, emb_rwr], dim=1)

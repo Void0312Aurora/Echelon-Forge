@@ -87,6 +87,27 @@ def _coordination_mode_recover() -> Any:
     return getattr(ef_py.CoordinationMode, "Recover")
 
 
+def _takeoff_procedure_default() -> Any:
+    namespace = getattr(ef_py, "TakeoffProcedureType", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def _takeoff_clearance_default() -> Any:
+    namespace = getattr(ef_py, "TakeoffClearanceState", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def _runway_slot_default() -> Any:
+    namespace = getattr(ef_py, "RunwaySlotPosition", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
 def _task_name_from_task_type(task_type: Any) -> str | None:
     mapping = {
         _enum_value(getattr(ef_py.TaskType, "Scramble")): "TASK_SCRAMBLE",
@@ -215,6 +236,12 @@ def normalize_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, An
         "assignee_kind": ef_py.AssigneeKind,
         "station_type": ef_py.StationType,
     }
+    if hasattr(ef_py, "TakeoffProcedureType"):
+        enum_fields["takeoff_procedure_id"] = ef_py.TakeoffProcedureType
+    if hasattr(ef_py, "TakeoffClearanceState"):
+        enum_fields["takeoff_clearance_id"] = ef_py.TakeoffClearanceState
+    if hasattr(ef_py, "RunwaySlotPosition"):
+        enum_fields["runway_slot_id"] = ef_py.RunwaySlotPosition
     for field_name, namespace in enum_fields.items():
         if field_name in normalized:
             default_value = normalized.get(field_name)
@@ -428,6 +455,8 @@ def apply_task_order_common_core_spec(order: Any, spec: dict[str, Any] | None) -
     ):
         if name in spec:
             setattr(order, name, int(spec.get(name, getattr(order, name))))
+    if "takeoff_interval_s" in spec:
+        order.takeoff_interval_s = float(spec.get("takeoff_interval_s", getattr(order, "takeoff_interval_s", 0.0)))
     return order
 
 
@@ -450,9 +479,18 @@ def apply_leader_intent_common_core_spec(intent: Any, spec: dict[str, Any] | Non
             spec.get("coordination_mode"),
             intent.coordination_mode,
         )
+    for field_name, namespace in (
+        ("takeoff_procedure_id", getattr(ef_py, "TakeoffProcedureType", None)),
+        ("takeoff_clearance_id", getattr(ef_py, "TakeoffClearanceState", None)),
+        ("runway_slot_id", getattr(ef_py, "RunwaySlotPosition", None)),
+    ):
+        if field_name in spec and namespace is not None:
+            setattr(intent, field_name, _enum_or_default(namespace, spec.get(field_name), getattr(intent, field_name)))
     for name in ("tactical_unit_id", "task_group_id", "role_code", "relative_slot_code", "recovery_site_id"):
         if name in spec:
             setattr(intent, name, int(spec.get(name, getattr(intent, name))))
+    if "takeoff_interval_s" in spec:
+        intent.takeoff_interval_s = float(spec.get("takeoff_interval_s", getattr(intent, "takeoff_interval_s", 0.0)))
     return intent
 
 
@@ -569,6 +607,27 @@ def apply_leader_intent_common_core_defaults(
 
     if int(getattr(intent, "relative_slot_code", 0)) == 0 and order is not None:
         intent.relative_slot_code = int(getattr(order, "relative_slot_code", 0))
+
+    if _is_default_enum(
+        getattr(intent, "takeoff_procedure_id", _takeoff_procedure_default()),
+        _takeoff_procedure_default(),
+    ) and order is not None:
+        intent.takeoff_procedure_id = getattr(order, "takeoff_procedure_id", _takeoff_procedure_default())
+
+    if _is_default_enum(
+        getattr(intent, "takeoff_clearance_id", _takeoff_clearance_default()),
+        _takeoff_clearance_default(),
+    ) and order is not None:
+        intent.takeoff_clearance_id = getattr(order, "takeoff_clearance_id", _takeoff_clearance_default())
+
+    if _is_default_enum(
+        getattr(intent, "runway_slot_id", _runway_slot_default()),
+        _runway_slot_default(),
+    ) and order is not None:
+        intent.runway_slot_id = getattr(order, "runway_slot_id", _runway_slot_default())
+
+    if abs(float(getattr(intent, "takeoff_interval_s", 0.0))) <= 1.0e-9 and order is not None:
+        intent.takeoff_interval_s = float(getattr(order, "takeoff_interval_s", 0.0))
 
     if _coerce_positive_int(getattr(intent, "recovery_site_id", 0)) <= 0:
         recovery_site_id = infer_recovery_site_id(order)

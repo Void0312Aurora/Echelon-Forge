@@ -84,12 +84,32 @@ def _inline_batch_scenario() -> dict:
                 "name": "Wing",
                 "type": "Aircraft",
                 "side": "Blue",
-                "is_agent": False,
+                "is_agent": True,
                 "pos": [-1550.0, -120.0, 1200.0],
                 "vel": [0.0, 180.0, 0.0],
                 "heading": 90.0,
             },
         ],
+        "cooperative_roster": {
+            "team_id": 7001,
+            "element_id": 7001,
+            "policy_route": "shared_execution",
+            "members": [
+                {
+                    "entity": "Lead",
+                    "role_code": 21,
+                    "formation_role_id": "ElementLead",
+                    "relative_slot_code": 11,
+                },
+                {
+                    "entity": "Wing",
+                    "role_code": 22,
+                    "formation_role_id": "Wingman",
+                    "relative_slot_code": 12,
+                    "reference_entity": "Lead",
+                },
+            ],
+        },
     }
 
 
@@ -313,6 +333,76 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertGreaterEqual(float(obs[0].sim_time), 0.05)
         self.assertGreaterEqual(float(obs[1].sim_time), 0.05)
         self.assertNotEqual(float(obs[0].x), float(obs[1].x))
+
+    def test_world_batch_runtime_controls_multiple_entities_within_same_world(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+        batch.set_time_step(0.05)
+        batch.reset_batch([13])
+
+        lead = batch.world(0).spawn_unit(
+            ef_py.Side.Blue,
+            "Aircraft",
+            -1400.0,
+            0.0,
+            1200.0,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            180.0,
+            0.0,
+        )
+        wing = batch.world(0).spawn_unit(
+            ef_py.Side.Blue,
+            "Aircraft",
+            -1550.0,
+            -120.0,
+            1200.0,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            180.0,
+            0.0,
+        )
+        refs = [_entity_ref(0, int(lead)), _entity_ref(0, int(wing))]
+        initial_inst = batch.get_instrument_states_batch(refs)
+
+        act0 = ef_py.PilotAction()
+        act0.stick_roll = -0.35
+        act0.throttle = 1.0
+        act0.active = True
+        act1 = ef_py.PilotAction()
+        act1.stick_roll = 0.40
+        act1.throttle = 0.25
+        act1.active = True
+
+        assign0 = ef_py.WorldPilotActionAssignment()
+        assign0.world_index = 0
+        assign0.entity_id = int(lead)
+        assign0.action = act0
+        assign1 = ef_py.WorldPilotActionAssignment()
+        assign1.world_index = 0
+        assign1.entity_id = int(wing)
+        assign1.action = act1
+        batch.set_pilot_actions_batch([assign0, assign1])
+
+        for _ in range(3):
+            batch.step_batch()
+
+        obs = batch.get_agent_observations_batch(refs)
+        inst = batch.get_instrument_states_batch(refs)
+
+        self.assertEqual(len(obs), 2)
+        self.assertEqual(len(inst), 2)
+        self.assertGreater(float(obs[0].sim_time), 0.0)
+        self.assertGreater(float(obs[1].sim_time), 0.0)
+        self.assertNotAlmostEqual(float(inst[0].throttle_pos), float(initial_inst[0].throttle_pos), places=4)
+        self.assertNotAlmostEqual(float(inst[1].throttle_pos), float(initial_inst[1].throttle_pos), places=4)
+        self.assertAlmostEqual(float(inst[0].throttle_pos), 1.0, places=6)
+        self.assertAlmostEqual(float(inst[1].throttle_pos), 0.25, places=6)
+        self.assertGreater(float(inst[0].throttle_pos), float(inst[1].throttle_pos))
 
     def test_world_batch_runtime_applies_world_setup_batch(self) -> None:
         batch = ef_py.WorldBatchRuntime(2)
@@ -623,6 +713,61 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(got_reports[1].formation_role_id), int(ef_py.FormationRole.Wingman))
         self.assertAlmostEqual(float(got_reports[1].formation_error_m), 18.0, places=6)
 
+    def test_world_batch_runtime_mission_command_roundtrip_preserves_formation_offsets(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+        batch.reset_batch([29])
+
+        lead = batch.world(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1400.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+        wing = batch.world(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1550.0, -120.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+        batch.world(0).set_command_link(int(lead), 0.0, 0.0)
+        batch.world(0).set_command_link(int(wing), 0.0, 0.0)
+        refs = [_entity_ref(0, int(lead)), _entity_ref(0, int(wing))]
+
+        cmd0 = ef_py.MissionCommand()
+        cmd0.command_code = 2
+        cmd0.cmd_heading_deg = 45.0
+        cmd0.cmd_altitude_m = 1200.0
+        cmd0.cmd_speed_mps = 180.0
+        cmd0.formation_id = 17
+        cmd0.form_offset_x = 0.0
+        cmd0.form_offset_y = 0.0
+        cmd0.form_offset_z = 0.0
+        cmd0.active = True
+
+        cmd1 = ef_py.MissionCommand()
+        cmd1.command_code = 2
+        cmd1.cmd_heading_deg = 45.0
+        cmd1.cmd_altitude_m = 1200.0
+        cmd1.cmd_speed_mps = 180.0
+        cmd1.formation_id = 17
+        cmd1.form_offset_x = 180.0
+        cmd1.form_offset_y = -90.0
+        cmd1.form_offset_z = 30.0
+        cmd1.active = True
+
+        assign0 = ef_py.WorldMissionCommandAssignment()
+        assign0.world_index = 0
+        assign0.entity_id = int(lead)
+        assign0.command = cmd0
+        assign1 = ef_py.WorldMissionCommandAssignment()
+        assign1.world_index = 0
+        assign1.entity_id = int(wing)
+        assign1.command = cmd1
+        batch.set_mission_commands_batch([assign0, assign1])
+
+        got = batch.get_mission_commands_batch(refs)
+
+        self.assertEqual(len(got), 2)
+        self.assertEqual(int(got[0].formation_id), 17)
+        self.assertEqual(int(got[1].formation_id), 17)
+        self.assertAlmostEqual(float(got[0].form_offset_x), 0.0, places=6)
+        self.assertAlmostEqual(float(got[0].form_offset_y), 0.0, places=6)
+        self.assertAlmostEqual(float(got[0].form_offset_z), 0.0, places=6)
+        self.assertAlmostEqual(float(got[1].form_offset_x), 180.0, places=6)
+        self.assertAlmostEqual(float(got[1].form_offset_y), -90.0, places=6)
+        self.assertAlmostEqual(float(got[1].form_offset_z), 30.0, places=6)
+
 
 class BatchScenarioRuntimeTests(unittest.TestCase):
     def test_load_compiled_scenario_batch_reuses_apply_buffer(self) -> None:
@@ -642,6 +787,10 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         self.assertEqual(len(apply_buffer.spawn_requests), 4)
         self.assertNotEqual(float(worlds_a[0].layout.world_yaw_deg), float(worlds_b[0].layout.world_yaw_deg))
         self.assertIsNotNone(worlds_b[0].agent_id)
+        self.assertEqual(len(worlds_b[0].active_roster), 2)
+        self.assertEqual(len(worlds_b[1].active_roster), 2)
+        self.assertEqual([int(member.world_index) for member in worlds_b[0].active_roster], [0, 0])
+        self.assertEqual([int(member.world_index) for member in worlds_b[1].active_roster], [1, 1])
         obs = batch.world(0).get_agent_observation(int(worlds_b[0].agent_id))
         self.assertEqual(int(obs.id), int(worlds_b[0].agent_id))
 

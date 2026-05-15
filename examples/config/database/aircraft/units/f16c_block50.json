@@ -32,6 +32,8 @@
     "sensor_ref": "AN/APG-68(V)9",
     "ew_suite_ref": "Generic_Gen4_EW",
     "rcs_profile_ref": "Standard_Fighter_RCS",
+    "has_data_link": true,
+    "data_link_network_id": 1,
     "hardpoints": [
         {
             "station_id": 1,

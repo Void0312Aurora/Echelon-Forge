@@ -253,6 +253,8 @@ def _clone_runtime_mission_command(cmd_cfg: Any) -> Any:
     cloned = dict(cmd_cfg)
     if "waypoints" in cmd_cfg:
         cloned["waypoints"] = _clone_scenario_value(cmd_cfg.get("waypoints", []))
+    if "_normalized_waypoints" in cmd_cfg:
+        cloned["_normalized_waypoints"] = _clone_scenario_value(cmd_cfg.get("_normalized_waypoints", []))
     if isinstance(cmd_cfg.get("post_waypoint_transition"), dict):
         cloned["post_waypoint_transition"] = _clone_runtime_mission_command(cmd_cfg["post_waypoint_transition"])
     return cloned
@@ -262,6 +264,15 @@ def _clone_runtime_task_order(task_cfg: Any) -> Any:
     if not isinstance(task_cfg, dict):
         return _clone_scenario_value(task_cfg)
     return dict(task_cfg)
+
+
+def _clone_runtime_cooperative_roster(roster_cfg: Any) -> Any:
+    if not isinstance(roster_cfg, dict):
+        return _clone_scenario_value(roster_cfg)
+    cloned = dict(roster_cfg)
+    if "members" in roster_cfg:
+        cloned["members"] = _clone_scenario_value(roster_cfg.get("members", []))
+    return cloned
 
 
 def _clone_runtime_environment_context(env_cfg: Any) -> Any:
@@ -319,6 +330,14 @@ def _clone_runtime_scenario_data(merged_scenario_data: dict[str, Any]) -> dict[s
         runtime_data["mission_command"] = _clone_runtime_mission_command(merged_scenario_data.get("mission_command"))
     if "task_order" in merged_scenario_data:
         runtime_data["task_order"] = _clone_runtime_task_order(merged_scenario_data.get("task_order"))
+    if "cooperative_roster" in merged_scenario_data:
+        runtime_data["cooperative_roster"] = _clone_runtime_cooperative_roster(
+            merged_scenario_data.get("cooperative_roster")
+        )
+    if "active_controllable_roster" in merged_scenario_data:
+        runtime_data["active_controllable_roster"] = _clone_runtime_cooperative_roster(
+            merged_scenario_data.get("active_controllable_roster")
+        )
     return runtime_data
 
 
@@ -330,6 +349,14 @@ def _clone_runtime_context_scenario_data(merged_scenario_data: dict[str, Any]) -
         runtime_data["mission_command"] = _clone_runtime_mission_command(merged_scenario_data.get("mission_command"))
     if "task_order" in merged_scenario_data:
         runtime_data["task_order"] = _clone_runtime_task_order(merged_scenario_data.get("task_order"))
+    if "cooperative_roster" in merged_scenario_data:
+        runtime_data["cooperative_roster"] = _clone_runtime_cooperative_roster(
+            merged_scenario_data.get("cooperative_roster")
+        )
+    if "active_controllable_roster" in merged_scenario_data:
+        runtime_data["active_controllable_roster"] = _clone_runtime_cooperative_roster(
+            merged_scenario_data.get("active_controllable_roster")
+        )
     if "meta" in merged_scenario_data:
         runtime_data["meta"] = _clone_scenario_value(merged_scenario_data.get("meta"))
     if "rewards" in merged_scenario_data:
@@ -354,6 +381,10 @@ def _normalize_runtime_mission_command(cmd: dict[str, Any] | None, task_cfg: dic
             "recovery_base_id": 0,
             "recovery_runway_id": 0,
             "recovery_approach_type": "None",
+            "takeoff_procedure_code": 0,
+            "takeoff_clearance_code": 0,
+            "takeoff_interval_s": 0.0,
+            "runway_slot_code": 0,
         }
 
     task_cfg = task_cfg if isinstance(task_cfg, dict) else {}
@@ -363,6 +394,10 @@ def _normalize_runtime_mission_command(cmd: dict[str, Any] | None, task_cfg: dic
     normalized["target_altitude"] = float(normalized.get("target_altitude", 0.0))
     normalized["target_speed"] = float(normalized.get("target_speed", 0.0))
     normalized["route_ref_id"] = _coerce_nonnegative_int(normalized.get("route_ref_id", 0), 0)
+    normalized["takeoff_procedure_code"] = _coerce_nonnegative_int(normalized.get("takeoff_procedure_code", 0), 0)
+    normalized["takeoff_clearance_code"] = _coerce_nonnegative_int(normalized.get("takeoff_clearance_code", 0), 0)
+    normalized["takeoff_interval_s"] = float(normalized.get("takeoff_interval_s", 0.0))
+    normalized["runway_slot_code"] = _coerce_nonnegative_int(normalized.get("runway_slot_code", 0), 0)
 
     recovery_base_id = _coerce_nonnegative_int(
         normalized.get("recovery_base_id", task_cfg.get("recovery_base_id", 0)),

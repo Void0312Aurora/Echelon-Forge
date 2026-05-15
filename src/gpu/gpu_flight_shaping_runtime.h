@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "core/mission/reward_runtime.h"
+#include "core/mission/runtime/reward_runtime.h"
 
 namespace gpu {
 

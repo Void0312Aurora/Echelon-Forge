@@ -9,7 +9,7 @@
 #include "components/physics/instruments.h"
 #include "core/engine/simulation_kernel.h"
 #include "core/interfaces/observation.h"
-#include "core/mission/execution_episode_controller.h"
+#include "core/mission/episode/execution_episode_controller.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
 class WorldBatchRuntime {

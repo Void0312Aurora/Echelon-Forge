@@ -1,4 +1,3 @@
-import glob
 import os
 import sys
 import time
@@ -8,12 +7,24 @@ import numpy as np
 # Prefer the in-repo C++ extension when present.
 # This avoids stale site-packages wheels during active physics iteration.
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_BUILD_DIRS = [
-    os.path.join(_REPO_ROOT, "build-gpu"),
-    os.path.join(_REPO_ROOT, "build"),
-]
+_BUILD_DIRS = []
+_ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
+if _ENV_BUILD_DIR:
+    _BUILD_DIRS.append(_ENV_BUILD_DIR if os.path.isabs(_ENV_BUILD_DIR) else os.path.join(_REPO_ROOT, _ENV_BUILD_DIR))
+_BUILD_DIRS.extend(
+    [
+        os.path.join(_REPO_ROOT, "build-workshop"),
+        os.path.join(_REPO_ROOT, "build-gpu"),
+        os.path.join(_REPO_ROOT, "build"),
+    ]
+)
 for _build_dir in reversed(_BUILD_DIRS):
-    if os.path.isdir(_build_dir) and glob.glob(os.path.join(_build_dir, "ef_py*.so")):
+    _build_dir = os.path.abspath(_build_dir)
+    if os.path.isdir(_build_dir) and any(
+        fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_build_dir)
+    ):
+        if _build_dir in sys.path:
+            sys.path.remove(_build_dir)
         sys.path.insert(0, _build_dir)
 
 import ef_py
@@ -85,6 +96,12 @@ def mission_observation_dim(mission_obs_mode: str) -> int:
         return 11
     if mode == "nav_v2":
         return 14
+    if mode == "nav_v2_formation_v1":
+        return 17
+    if mode == "nav_v2_formation_role_v1":
+        return 21
+    if mode == "nav_v2_cooperative_takeoff_v1":
+        return 25
     raise ValueError(f"Unknown mission_obs_mode: {mission_obs_mode}")
 
 def make_action_space(action_mode: str):

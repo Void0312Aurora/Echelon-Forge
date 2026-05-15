@@ -27,6 +27,9 @@ def test_core_source_groups_are_named_for_future_targets() -> None:
     required_groups = [
         "EF_CORE_ENGINE_SOURCES",
         "EF_CORE_GEOMETRY_SOURCES",
+        "EF_CORE_MISSION_RUNTIME_SOURCES",
+        "EF_CORE_MISSION_EPISODE_SOURCES",
+        "EF_CORE_MISSION_EPISODE_DETAIL_SOURCES",
         "EF_CORE_MISSION_SOURCES",
         "EF_RUNTIME_FACADE_SOURCES",
         "EF_MODEL_DEFAULT_SOURCES",
@@ -52,3 +55,36 @@ def test_python_module_uses_binding_source_group_instead_of_flat_file_list() -> 
     body = _command_body(source, "nanobind_add_module", "ef_py")
     assert "${EF_PYTHON_BINDING_SOURCES}" in body
     assert "src/" not in body, "nanobind_add_module(ef_py) should consume grouped binding sources only"
+
+
+def test_core_mission_root_has_no_flat_runtime_sources() -> None:
+    mission_root = REPO_ROOT / "src" / "core" / "mission"
+    flat_sources = sorted(
+        path.name
+        for path in mission_root.iterdir()
+        if path.suffix in {".cpp", ".h"}
+    )
+    assert not flat_sources, f"mission sources should live under runtime/ or episode/: {flat_sources}"
+
+
+def test_core_mission_episode_detail_does_not_escape_controller_domain() -> None:
+    allowed_roots = {
+        REPO_ROOT / "src" / "core" / "mission" / "episode",
+    }
+    search_roots = [
+        REPO_ROOT / "src",
+        REPO_ROOT / "tests",
+    ]
+    forbidden_include = "core/mission/episode/" + "detail/"
+    violations: list[tuple[str, int, str]] = []
+    for root in search_roots:
+        for path in root.rglob("*"):
+            if path.suffix not in {".cpp", ".h", ".py"}:
+                continue
+            if any(path.is_relative_to(allowed_root) for allowed_root in allowed_roots):
+                continue
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                if forbidden_include in line:
+                    violations.append((str(path.relative_to(REPO_ROOT)), lineno, line.strip()))
+
+    assert not violations, f"mission episode detail includes escaped controller domain: {violations}"

@@ -345,14 +345,10 @@
             f16Model = gltf.scene;
             f16Model.scale.set(1, 1, 1);
 
-            // Standardize Model Orientation:
-            // Source Model faces +X. 
-            // We want ALL assets to align with Three.js default forward (-Z).
-            // Rotate +90 deg around Y: +X becomes -Z.
-            // USER FEEDBACK: Was 180 deg off. So rotate -90 deg instead.
-            // Native +X -> Rot -90 -> +Z (South)? 
-            // Or Native -X -> Rot -90 -> -Z (North)?
-            // Whatever the native state, user asked for 180 flip.
+            // Standardize model forward to match the shared heading mapping below.
+            // This asset was verified in deterministic viz against heading≈90 deg / eastbound motion:
+            // -90 deg is the correct static correction for this mesh under the current ENU -> Three mapping.
+            // Using +90 deg makes the nose point west while the aircraft is actually flying east.
             f16Model.rotation.y = -Math.PI / 2;
 
             // Wrap in a group so we rotate the group, not the mesh inside (Cleaner)
@@ -360,7 +356,7 @@
             wrapper.add(f16Model);
             f16Model = wrapper;
 
-            console.log("F-16 Asset Loaded and Standardized (Adjusted for 180 flip).");
+            console.log("F-16 Asset Loaded and Standardized.");
         });
 
         // --- Socket ---

@@ -1,17 +1,17 @@
 #include "interfaces/python/binding_utils.h"
 
 #include "core/geometry/spatial_query_runtime.h"
-#include "core/mission/execution_episode_batch_prepare.h"
-#include "core/mission/execution_episode_controller.h"
-#include "core/mission/execution_episode_runtime.h"
-#include "core/mission/execution_episode_state.h"
-#include "core/mission/execution_frame_runtime.h"
-#include "core/mission/execution_observation_runtime.h"
-#include "core/mission/execution_step_runtime.h"
-#include "core/mission/mission_runtime.h"
-#include "core/mission/objective_runtime.h"
-#include "core/mission/reward_runtime.h"
-#include "core/mission/termination_runtime.h"
+#include "core/mission/episode/execution_episode_batch_prepare.h"
+#include "core/mission/episode/execution_episode_controller.h"
+#include "core/mission/runtime/execution_episode_runtime.h"
+#include "core/mission/episode/execution_episode_state.h"
+#include "core/mission/runtime/execution_frame_runtime.h"
+#include "core/mission/runtime/execution_observation_runtime.h"
+#include "core/mission/runtime/execution_step_runtime.h"
+#include "core/mission/runtime/mission_runtime.h"
+#include "core/mission/runtime/objective_runtime.h"
+#include "core/mission/runtime/reward_runtime.h"
+#include "core/mission/runtime/termination_runtime.h"
 
 void bind_episode(nb::module_& m) {
     nb::class_<SpatialRunwayDefinition>(m, "SpatialRunwayDefinition")
@@ -171,6 +171,17 @@ void bind_episode(nb::module_& m) {
         .def_rw("target_heading_deg", &MissionObservationInputs::target_heading_deg)
         .def_rw("target_altitude_m", &MissionObservationInputs::target_altitude_m)
         .def_rw("target_speed_mps", &MissionObservationInputs::target_speed_mps)
+        .def_rw("takeoff_procedure_code", &MissionObservationInputs::takeoff_procedure_code)
+        .def_rw("takeoff_clearance_code", &MissionObservationInputs::takeoff_clearance_code)
+        .def_rw("takeoff_interval_s", &MissionObservationInputs::takeoff_interval_s)
+        .def_rw("runway_slot_code", &MissionObservationInputs::runway_slot_code)
+        .def_rw("form_offset_x", &MissionObservationInputs::form_offset_x)
+        .def_rw("form_offset_y", &MissionObservationInputs::form_offset_y)
+        .def_rw("form_offset_z", &MissionObservationInputs::form_offset_z)
+        .def_rw("self_role_code", &MissionObservationInputs::self_role_code)
+        .def_rw("self_formation_role_code", &MissionObservationInputs::self_formation_role_code)
+        .def_rw("relative_slot_code", &MissionObservationInputs::relative_slot_code)
+        .def_rw("reference_relative_slot_code", &MissionObservationInputs::reference_relative_slot_code)
         .def_rw("has_route_guidance", &MissionObservationInputs::has_route_guidance)
         .def_rw("route_guidance", &MissionObservationInputs::route_guidance)
         .def_rw("nav_inputs", &MissionObservationInputs::nav_inputs);

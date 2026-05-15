@@ -70,3 +70,6 @@ experiments/
 experiments_tmp/
 scenarios/
 datasets/
+output/
+.playwright-mcp/
+docs/book/

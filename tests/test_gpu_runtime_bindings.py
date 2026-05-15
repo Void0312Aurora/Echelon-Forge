@@ -195,6 +195,116 @@ class GpuRuntimeBindingTests(unittest.TestCase):
         self.assertEqual(tuple(tensor.shape), tuple(host_flat.shape))
         self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_flat, atol=1.0e-6))
 
+    def test_execution_observation_batch_export_supports_nav_v2_formation_v1_shape(self) -> None:
+        if not hasattr(ef_py, "compute_execution_observation_batch_export"):
+            self.skipTest("execution observation export binding is not available")
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        entity_id = sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            1200.0,
+            90.0,
+            0.0,
+            0.0,
+            190.0,
+            0.0,
+            0.0,
+        )
+        inst = sim.get_instrument_state(int(entity_id))
+        truth = sim.get_agent_observation(int(entity_id))
+
+        mission_inputs = ef_py.MissionObservationInputs()
+        mission_inputs.mode_code = 3
+        mission_inputs.command_code = 2.0
+        mission_inputs.target_heading_deg = 45.0
+        mission_inputs.target_altitude_m = 1300.0
+        mission_inputs.target_speed_mps = 195.0
+        mission_inputs.form_offset_x = 250.0
+        mission_inputs.form_offset_y = -75.0
+        mission_inputs.form_offset_z = 15.0
+
+        ils_batch = np.zeros((1, 4), dtype=np.float32)
+        _, _, _, mission_out, _ = ef_py.compute_execution_observation_batch_export(
+            [inst],
+            [truth],
+            [mission_inputs],
+            ils_batch,
+            10,
+            4,
+            False,
+        )
+
+        mission_arr = np.asarray(mission_out, dtype=np.float32)
+        self.assertEqual(mission_arr.shape, (1, 17))
+        self.assertTrue(np.allclose(mission_arr[0, 4:14], 0.0, atol=1.0e-6))
+        self.assertAlmostEqual(float(mission_arr[0, 14]), 250.0, places=6)
+        self.assertAlmostEqual(float(mission_arr[0, 15]), -75.0, places=6)
+        self.assertAlmostEqual(float(mission_arr[0, 16]), 15.0, places=6)
+
+    def test_execution_observation_batch_export_supports_nav_v2_cooperative_takeoff_v1_shape(self) -> None:
+        if not hasattr(ef_py, "compute_execution_observation_batch_export"):
+            self.skipTest("execution observation export binding is not available")
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        entity_id = sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            1200.0,
+            90.0,
+            0.0,
+            0.0,
+            190.0,
+            0.0,
+            0.0,
+        )
+        inst = sim.get_instrument_state(int(entity_id))
+        truth = sim.get_agent_observation(int(entity_id))
+
+        mission_inputs = ef_py.MissionObservationInputs()
+        mission_inputs.mode_code = 5
+        mission_inputs.command_code = 1.0
+        mission_inputs.target_heading_deg = 90.0
+        mission_inputs.target_altitude_m = 500.0
+        mission_inputs.target_speed_mps = 180.0
+        mission_inputs.takeoff_procedure_code = 2.0
+        mission_inputs.takeoff_clearance_code = 3.0
+        mission_inputs.takeoff_interval_s = 5.0
+        mission_inputs.runway_slot_code = 2.0
+        mission_inputs.form_offset_x = 250.0
+        mission_inputs.form_offset_y = -75.0
+        mission_inputs.form_offset_z = 15.0
+        mission_inputs.self_role_code = 22.0
+        mission_inputs.self_formation_role_code = float(int(ef_py.FormationRole.Wingman))
+        mission_inputs.relative_slot_code = 12.0
+        mission_inputs.reference_relative_slot_code = 11.0
+
+        ils_batch = np.zeros((1, 4), dtype=np.float32)
+        _, _, _, mission_out, _ = ef_py.compute_execution_observation_batch_export(
+            [inst],
+            [truth],
+            [mission_inputs],
+            ils_batch,
+            10,
+            4,
+            False,
+        )
+
+        mission_arr = np.asarray(mission_out, dtype=np.float32)
+        self.assertEqual(mission_arr.shape, (1, 25))
+        self.assertTrue(np.allclose(mission_arr[0, 4:14], 0.0, atol=1.0e-6))
+        self.assertAlmostEqual(float(mission_arr[0, 14]), 2.0, places=6)
+        self.assertAlmostEqual(float(mission_arr[0, 15]), 3.0, places=6)
+        self.assertAlmostEqual(float(mission_arr[0, 16]), 5.0, places=6)
+        self.assertAlmostEqual(float(mission_arr[0, 17]), 2.0, places=6)
+        self.assertAlmostEqual(float(mission_arr[0, 24]), 11.0, places=6)
+
     def test_world_batch_visual_export_dlpack_matches_host(self) -> None:
         if torch is None:
             self.skipTest("torch is not available")

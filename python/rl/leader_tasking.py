@@ -45,8 +45,56 @@ def _recovery_approach_none() -> Any:
     return getattr(namespace, "None", 0)
 
 
+def _takeoff_procedure_unspecified() -> Any:
+    namespace = getattr(ef_py, "TakeoffProcedureType", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def _takeoff_clearance_unspecified() -> Any:
+    namespace = getattr(ef_py, "TakeoffClearanceState", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def _runway_slot_unspecified() -> Any:
+    namespace = getattr(ef_py, "RunwaySlotPosition", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
 def _recovery_approach_type_or_default(raw_value: Any, default_value: Any) -> Any:
     namespace = getattr(ef_py, "RecoveryApproachType", None)
+    if namespace is None:
+        if raw_value is None:
+            return default_value
+        return _coerce_nonnegative_int(raw_value)
+    return _enum_or_default(namespace, raw_value, default_value)
+
+
+def _takeoff_procedure_or_default(raw_value: Any, default_value: Any) -> Any:
+    namespace = getattr(ef_py, "TakeoffProcedureType", None)
+    if namespace is None:
+        if raw_value is None:
+            return default_value
+        return _coerce_nonnegative_int(raw_value)
+    return _enum_or_default(namespace, raw_value, default_value)
+
+
+def _takeoff_clearance_or_default(raw_value: Any, default_value: Any) -> Any:
+    namespace = getattr(ef_py, "TakeoffClearanceState", None)
+    if namespace is None:
+        if raw_value is None:
+            return default_value
+        return _coerce_nonnegative_int(raw_value)
+    return _enum_or_default(namespace, raw_value, default_value)
+
+
+def _runway_slot_or_default(raw_value: Any, default_value: Any) -> Any:
+    namespace = getattr(ef_py, "RunwaySlotPosition", None)
     if namespace is None:
         if raw_value is None:
             return default_value
@@ -282,6 +330,31 @@ def build_kernel_mission_command(loader: Any) -> ef_py.MissionCommand:
     cmd.cmd_heading_deg = float(getattr(leader_intent, "cmd_heading_deg", mission_cmd.get("target_heading", 0.0)))
     cmd.cmd_altitude_m = float(getattr(leader_intent, "cmd_altitude_m", mission_cmd.get("target_altitude", 0.0)))
     cmd.cmd_speed_mps = float(getattr(leader_intent, "cmd_speed_mps", mission_cmd.get("target_speed", 0.0)))
+    cmd.takeoff_procedure_id = _takeoff_procedure_or_default(
+        getattr(
+            leader_intent,
+            "takeoff_procedure_id",
+            mission_cmd.get("takeoff_procedure_code", None),
+        ),
+        _takeoff_procedure_unspecified(),
+    )
+    cmd.takeoff_clearance_id = _takeoff_clearance_or_default(
+        getattr(
+            leader_intent,
+            "takeoff_clearance_id",
+            mission_cmd.get("takeoff_clearance_code", None),
+        ),
+        _takeoff_clearance_unspecified(),
+    )
+    cmd.takeoff_interval_s = float(getattr(leader_intent, "takeoff_interval_s", mission_cmd.get("takeoff_interval_s", 0.0)))
+    cmd.runway_slot_id = _runway_slot_or_default(
+        getattr(
+            leader_intent,
+            "runway_slot_id",
+            mission_cmd.get("runway_slot_code", None),
+        ),
+        _runway_slot_unspecified(),
+    )
     cmd.formation_id = int(getattr(leader_intent, "formation_id", 0))
     cmd.form_offset_x = float(getattr(leader_intent, "form_offset_x", 0.0))
     cmd.form_offset_y = float(getattr(leader_intent, "form_offset_y", 0.0))
@@ -533,6 +606,19 @@ class RuleBasedLeaderPhaseManager:
         intent.recovery_base_id = int(recovery_base_id)
         intent.recovery_runway_id = int(recovery_runway_id)
         intent.recovery_approach_type = recovery_approach_type
+        intent.takeoff_procedure_id = _takeoff_procedure_or_default(
+            getattr(task, "takeoff_procedure_id", None) if task is not None else None,
+            _takeoff_procedure_unspecified(),
+        )
+        intent.takeoff_clearance_id = _takeoff_clearance_or_default(
+            getattr(task, "takeoff_clearance_id", None) if task is not None else None,
+            _takeoff_clearance_unspecified(),
+        )
+        intent.takeoff_interval_s = float(getattr(task, "takeoff_interval_s", 0.0)) if task is not None else 0.0
+        intent.runway_slot_id = _runway_slot_or_default(
+            getattr(task, "runway_slot_id", None) if task is not None else None,
+            _runway_slot_unspecified(),
+        )
         intent.cmd_heading_deg = float(getattr(loader, "mission_cmd", {}).get("target_heading", 0.0))
         if (
             int(intent.command_code) == 3

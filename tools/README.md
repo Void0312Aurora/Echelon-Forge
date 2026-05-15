@@ -35,6 +35,8 @@
   - Waypoint-navigation summary for scripted control.
 - [eval_sb3_policy.py](/home/void0312/CMO/tools/eval/eval_sb3_policy.py)
   - Generic SB3 execution-policy evaluator from a train config.
+- [eval_sb3_cooperative_policy.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3_cooperative_policy.py)
+  - Cooperative execution-policy evaluator with world/slot/shared-reset split statistics.
 - [eval_utils.py](/home/void0312/CMO/tools/eval/eval_utils.py)
   - Shared bootstrap, env construction, and stat formatting.
 - [world_model_eval_utils.py](/home/void0312/CMO/tools/eval/world_model_eval_utils.py)

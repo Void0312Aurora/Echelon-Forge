@@ -19,7 +19,11 @@ from stable_baselines3.common.distributions import (
     StateDependentNoiseDistribution,
 )
 
-from python.models.transformer import TransformerExtractor, TransformerVisualExtractor
+from python.models.transformer import (
+    TransformerExtractor,
+    TransformerVisualExtractor,
+    preprocess_transformer_observations,
+)
 from python.rl.policies import SquashedMultiInputPolicy
 
 
@@ -284,11 +288,20 @@ class NonFiniteTrainingProbe:
             if self.has_proprio:
                 tracer.check("extractor.obs.proprio", observations["proprio"])
 
-            with th.autocast("cuda", enabled=(th.cuda.is_available() and self.use_amp)):
-                s_inst = observations["instruments"]
-                s_contacts = observations["contacts"]
-                s_rwr = observations["rwr"]
-                s_mission = observations["mission"]
+            amp_enabled = bool(
+                getattr(self, "_autocast_enabled_for_forward", lambda: bool(th.cuda.is_available() and self.use_amp))()
+            )
+            amp_dtype = getattr(self, "_autocast_dtype", lambda: th.float16)()
+            with th.autocast("cuda", enabled=amp_enabled, dtype=amp_dtype):
+                processed = preprocess_transformer_observations(observations)
+                s_inst = processed["instruments"]
+                s_contacts = processed["contacts"]
+                s_rwr = processed["rwr"]
+                s_mission = processed["mission"]
+                tracer.check("extractor.proc.instruments", s_inst)
+                tracer.check("extractor.proc.contacts", s_contacts)
+                tracer.check("extractor.proc.rwr", s_rwr)
+                tracer.check("extractor.proc.mission", s_mission)
 
                 emb_inst = self.embed_instruments(s_inst).unsqueeze(1) + self.type_embed(self.idx_inst)
                 tracer.check("extractor.emb_inst", emb_inst)
@@ -301,7 +314,8 @@ class NonFiniteTrainingProbe:
 
                 emb_parts = [emb_inst, emb_mission]
                 if self.has_proprio:
-                    emb_proprio = self.embed_proprio(observations["proprio"]).unsqueeze(1) + self.type_embed(self.idx_proprio)
+                    emb_proprio = self.embed_proprio(processed["proprio"]).unsqueeze(1) + self.type_embed(self.idx_proprio)
+                    tracer.check("extractor.proc.proprio", processed["proprio"])
                     tracer.check("extractor.emb_proprio", emb_proprio)
                     emb_parts.append(emb_proprio)
 

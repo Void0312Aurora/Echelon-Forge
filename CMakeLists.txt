@@ -65,21 +65,33 @@ set(EF_CORE_GEOMETRY_SOURCES
     src/core/geometry/spatial_query_runtime.cpp
 )
 
+set(EF_CORE_MISSION_RUNTIME_SOURCES
+    src/core/mission/runtime/execution_observation_runtime.cpp
+    src/core/mission/runtime/mission_runtime.cpp
+    src/core/mission/runtime/execution_step_runtime.cpp
+    src/core/mission/runtime/execution_frame_runtime.cpp
+    src/core/mission/runtime/execution_episode_runtime.cpp
+    src/core/mission/runtime/reward_runtime.cpp
+    src/core/mission/runtime/objective_runtime.cpp
+    src/core/mission/runtime/termination_runtime.cpp
+)
+
+set(EF_CORE_MISSION_EPISODE_SOURCES
+    src/core/mission/episode/execution_episode_state.cpp
+    src/core/mission/episode/execution_episode_batch_prepare.cpp
+    src/core/mission/episode/execution_episode_controller.cpp
+)
+
+set(EF_CORE_MISSION_EPISODE_DETAIL_SOURCES
+    src/core/mission/episode/detail/episode_transition_runtime.cpp
+    src/core/mission/episode/detail/episode_reward_breakdown.cpp
+    src/core/mission/episode/detail/mission_command_codec.cpp
+)
+
 set(EF_CORE_MISSION_SOURCES
-    src/core/mission/execution_observation_runtime.cpp
-    src/core/mission/mission_runtime.cpp
-    src/core/mission/execution_step_runtime.cpp
-    src/core/mission/execution_frame_runtime.cpp
-    src/core/mission/execution_episode_runtime.cpp
-    src/core/mission/execution_episode_state.cpp
-    src/core/mission/execution_episode_batch_prepare.cpp
-    src/core/mission/execution_episode_controller.cpp
-    src/core/mission/episode_transition_runtime.cpp
-    src/core/mission/episode_reward_breakdown.cpp
-    src/core/mission/mission_command_codec.cpp
-    src/core/mission/reward_runtime.cpp
-    src/core/mission/objective_runtime.cpp
-    src/core/mission/termination_runtime.cpp
+    ${EF_CORE_MISSION_RUNTIME_SOURCES}
+    ${EF_CORE_MISSION_EPISODE_SOURCES}
+    ${EF_CORE_MISSION_EPISODE_DETAIL_SOURCES}
 )
 
 set(EF_RUNTIME_FACADE_SOURCES

@@ -179,6 +179,11 @@ class AdaptiveKLPPO(PPO):
     def _apply_lr_multiplier(self) -> None:
         if self.policy is None:
             return
+        apply_grouped_lr = getattr(self.policy, "apply_optimizer_learning_rate", None)
+        if callable(apply_grouped_lr):
+            base_lr = float(self.lr_schedule(self._current_progress_remaining))
+            apply_grouped_lr(base_lr, lr_mult=float(self._lr_mult))
+            return
         if self._lr_mult == 1.0:
             return
         for param_group in self.policy.optimizer.param_groups:
@@ -223,6 +228,10 @@ class AdaptiveKLPPO(PPO):
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
         # Switch to train mode (affects batch norm / dropout)
         self.policy.set_training_mode(True)
+
+        set_training_progress = getattr(self.policy, "set_hmoe_training_progress", None)
+        if callable(set_training_progress):
+            set_training_progress(float(self._current_progress_remaining))
 
         # Update optimizer learning rate (schedule) then apply adaptive multiplier.
         self._update_learning_rate(self.policy.optimizer)

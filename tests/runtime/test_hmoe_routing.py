@@ -22,7 +22,14 @@ class HMoERoutingTests(unittest.TestCase):
             ],
             dtype=th.float32,
         )
-        route = route_from_mission_observation(mission)
+        instruments = th.tensor(
+            [
+                [40.0, 0.0, 0.0, 5.0],
+                [70.0, 0.0, 0.0, 200.0],
+            ],
+            dtype=th.float32,
+        )
+        route = route_from_mission_observation(mission, instruments=instruments)
         self.assertEqual([FAMILY_TAKEOFF_GROUND, FAMILY_RECOVERY_LANDING], route.family_index.tolist())
         self.assertEqual([1, 0], route.subexpert_index.tolist())
 
@@ -34,7 +41,14 @@ class HMoERoutingTests(unittest.TestCase):
             ],
             dtype=th.float32,
         )
-        route = route_from_mission_observation(mission)
+        instruments = th.tensor(
+            [
+                [210.0, 0.0, 0.0, 1200.0],
+                [210.0, 0.0, 0.0, 1200.0],
+            ],
+            dtype=th.float32,
+        )
+        route = route_from_mission_observation(mission, instruments=instruments)
         self.assertEqual([FAMILY_FORMATION_COOPERATIVE, FAMILY_FORMATION_COOPERATIVE], route.family_index.tolist())
         self.assertEqual([1, 2], route.subexpert_index.tolist())
 
@@ -46,9 +60,71 @@ class HMoERoutingTests(unittest.TestCase):
             ],
             dtype=th.float32,
         )
-        route = route_from_mission_observation(mission)
+        instruments = th.tensor(
+            [
+                [210.0, 0.0, 0.0, 1200.0],
+                [210.0, 0.0, 0.0, 1200.0],
+            ],
+            dtype=th.float32,
+        )
+        route = route_from_mission_observation(mission, instruments=instruments)
         self.assertEqual([FAMILY_DEPARTURE_NAV, FAMILY_DEPARTURE_NAV], route.family_index.tolist())
         self.assertEqual([0, 1], route.subexpert_index.tolist())
+
+    def test_route_keeps_takeoff_family_for_route_command_during_low_alt_departure(self) -> None:
+        mission = th.tensor(
+            [
+                [3.0, 90.0, 600.0, 180.0, 1.0, 0.0, 1200.0, 5.0, 450.0, 0.02, 8.0, 2000.0, 0.0, 0.0, 2.0, 4.0, 6.0, 1.0, 0.0, 0.0, 0.0, 21.0, 1.0, 11.0, 0.0],
+                [3.0, 90.0, 600.0, 180.0, 1.0, 0.0, 1200.0, 5.0, 450.0, 0.02, 8.0, 2000.0, 0.0, 0.0, 3.0, 1.0, 6.0, 1.0, 180.0, -90.0, 25.0, 22.0, 2.0, 12.0, 11.0],
+            ],
+            dtype=th.float32,
+        )
+        instruments = th.tensor(
+            [
+                [85.0, 0.0, 0.0, 60.0],
+                [80.0, 0.0, 0.0, 45.0],
+            ],
+            dtype=th.float32,
+        )
+        route = route_from_mission_observation(mission, instruments=instruments)
+        self.assertEqual([FAMILY_TAKEOFF_GROUND, FAMILY_TAKEOFF_GROUND], route.family_index.tolist())
+        self.assertEqual([1, 2], route.subexpert_index.tolist())
+
+    def test_route_uses_departure_family_for_post_liftoff_route_capture(self) -> None:
+        mission = th.tensor(
+            [
+                [3.0, 90.0, 1400.0, 205.0, 1.0, 0.0, 8000.0, 20.0, 950.0, 0.55, 28.0, 12000.0, 0.0, 0.0, 2.0, 5.0, 6.0, 1.0, 180.0, -90.0, 25.0, 21.0, 1.0, 11.0, 0.0],
+                [3.0, 90.0, 1400.0, 205.0, 1.0, 0.0, 8000.0, 20.0, 950.0, 0.40, 24.0, 12000.0, 0.0, 0.0, 2.0, 5.0, 6.0, 1.0, 180.0, -90.0, 25.0, 22.0, 2.0, 12.0, 11.0],
+            ],
+            dtype=th.float32,
+        )
+        instruments = th.tensor(
+            [
+                [170.0, 0.0, 0.0, 350.0],
+                [175.0, 0.0, 0.0, 420.0],
+            ],
+            dtype=th.float32,
+        )
+        route = route_from_mission_observation(mission, instruments=instruments)
+        self.assertEqual([FAMILY_DEPARTURE_NAV, FAMILY_DEPARTURE_NAV], route.family_index.tolist())
+        self.assertEqual([1, 1], route.subexpert_index.tolist())
+
+    def test_route_detects_landing_family_from_low_altitude_descent_profile(self) -> None:
+        mission = th.tensor(
+            [
+                [3.0, 90.0, 300.0, 120.0, 1.0, 0.0, 1500.0, 5.0, -500.0, 0.10, 6.0, 3000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=th.float32,
+        )
+        instruments = th.tensor(
+            [
+                [110.0, 0.0, 0.0, 280.0],
+            ],
+            dtype=th.float32,
+        )
+        route = route_from_mission_observation(mission, instruments=instruments)
+        self.assertEqual([FAMILY_RECOVERY_LANDING], route.family_index.tolist())
+        self.assertEqual([0], route.subexpert_index.tolist())
 
 
 if __name__ == "__main__":

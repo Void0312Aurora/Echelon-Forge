@@ -29,6 +29,16 @@ class ScriptedLandingController:
         self._course_ref_deg = 0.0
         self._loc_int = 0.0
         self._prev_loc_dev: float | None = None
+        self._loc_full_scale_deg = 2.5
+
+    def _estimate_cross_track_m(self, loc_dev: float, dme_m: float) -> float:
+        loc = float(np.clip(float(loc_dev), -1.0, 1.0))
+        if np.isfinite(float(dme_m)) and float(dme_m) > 1.0:
+            ang_rad = np.deg2rad(loc * float(self._loc_full_scale_deg))
+            cross_m = float(dme_m) * float(np.tan(ang_rad))
+        else:
+            cross_m = 35.0 * loc
+        return float(np.clip(cross_m, -120.0, 120.0))
 
     def reset(self, obs: dict) -> None:
         mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
@@ -68,6 +78,8 @@ class ScriptedLandingController:
         loc_dev = float(inst[-3]) if inst.size >= 3 else 0.0
         gs_dev = float(inst[-2]) if inst.size >= 2 else 0.0
         dme_m = float(inst[-1]) if inst.size >= 1 else 0.0
+        cross_est_m = self._estimate_cross_track_m(loc_dev, dme_m) if ils_valid > 0.5 else 0.0
+        cross_term = float(np.clip(cross_est_m / 12.0, -3.0, 3.0))
         dt = self.dt if self.dt > 1.0e-6 else 0.05
         short_final_mode = bool(
             alt_agl <= 35.0
@@ -145,13 +157,23 @@ class ScriptedLandingController:
                 + (-0.08 * float(r_rate))
             )
             if centerline_hold_mode:
-                bank_limit = max(bank_limit, 13.0 if loc_abs > 0.08 else 10.0)
-                bank_cmd += (-7.5 * float(loc_dev)) + (0.42 * float(course_err)) + (0.12 * float(heading_err))
+                bank_limit = max(bank_limit, 13.0 if (loc_abs > 0.08 or abs(cross_est_m) > 10.0) else 10.5)
+                bank_cmd += (
+                    (-7.5 * float(loc_dev))
+                    + (0.42 * float(course_err))
+                    + (0.12 * float(heading_err))
+                    + (-2.4 * float(cross_term))
+                )
             if pre_rollout_mode and (not rollout_mode):
-                bank_limit = max(bank_limit, 15.0 if loc_abs > 0.10 else 11.5)
-                bank_cmd += (-10.0 * float(loc_dev)) + (0.70 * float(course_err)) + (0.18 * float(heading_err))
+                bank_limit = max(bank_limit, 15.5 if (loc_abs > 0.10 or abs(cross_est_m) > 8.0) else 12.0)
+                bank_cmd += (
+                    (-10.0 * float(loc_dev))
+                    + (0.70 * float(course_err))
+                    + (0.18 * float(heading_err))
+                    + (-4.4 * float(cross_term))
+                )
             bank_cmd = float(np.clip(bank_cmd, -bank_limit, bank_limit))
-            if (not intercept_mode) and loc_abs < 0.05 and abs(float(course_err)) < 1.5:
+            if (not intercept_mode) and loc_abs < 0.05 and abs(float(course_err)) < 1.5 and abs(cross_est_m) < 4.0:
                 bank_cmd = 0.0
         else:
             self._loc_int *= max(0.0, 1.0 - 2.0 * dt)
@@ -178,23 +200,51 @@ class ScriptedLandingController:
 
         rudder = float(np.clip(0.22 * beta + 0.06 * r_rate + 0.010 * course_err, -0.50, 0.50))
         if centerline_hold_mode and (not rollout_mode):
-            rudder = float(np.clip(rudder + (-0.95 * float(loc_dev)) + 0.026 * course_err + 0.024 * heading_err, -0.95, 0.95))
+            rudder = float(
+                np.clip(
+                    rudder
+                    + (-0.95 * float(loc_dev))
+                    + 0.026 * course_err
+                    + 0.024 * heading_err
+                    + (-0.18 * float(cross_term)),
+                    -0.95,
+                    0.95,
+                )
+            )
         if short_final_mode and (not rollout_mode):
-            rudder = float(np.clip(rudder + (-1.20 * float(loc_dev)) + 0.034 * heading_err + 0.024 * course_err, -1.0, 1.0))
+            rudder = float(
+                np.clip(
+                    rudder
+                    + (-1.20 * float(loc_dev))
+                    + 0.034 * heading_err
+                    + 0.024 * course_err
+                    + (-0.24 * float(cross_term)),
+                    -1.0,
+                    1.0,
+                )
+            )
         if rollout_mode:
             trk_err_rollout = _wrap_deg(float(ground_track) - float(self._course_ref_deg))
             yaw_err_rollout = _wrap_deg(float(heading) - float(self._course_ref_deg))
             bank_cmd_rollout = float(
-                np.clip((-20.0 * float(loc_dev)) + (-1.00 * float(trk_err_rollout)) + (-0.20 * float(yaw_err_rollout)), -14.0, 14.0)
+                np.clip(
+                    (-16.0 * float(loc_dev))
+                    + (-5.8 * float(cross_term))
+                    + (-0.90 * float(trk_err_rollout))
+                    + (-0.22 * float(yaw_err_rollout)),
+                    -16.0,
+                    16.0,
+                )
             )
-            stick_roll = float(np.clip(0.11 * (bank_cmd_rollout - roll) - 0.040 * p_rate, -0.70, 0.70))
-            pitch_hold_deg = -2.0 if ground_speed > 28.0 else (-0.8 if ground_speed > 10.0 else 0.0)
+            stick_roll = float(np.clip(0.12 * (bank_cmd_rollout - roll) - 0.040 * p_rate, -0.78, 0.78))
+            pitch_hold_deg = -2.8 if ground_speed > 35.0 else (-1.2 if ground_speed > 12.0 else 0.0)
             stick_pitch = float(np.clip(0.12 * (pitch_hold_deg - pitch) - 0.035 * q_rate, -0.70, 0.12))
             rudder = float(
                 np.clip(
-                    (-0.34 * float(trk_err_rollout))
-                    + (-0.16 * float(yaw_err_rollout))
-                    + (-3.80 * float(loc_dev))
+                    (-0.42 * float(trk_err_rollout))
+                    + (-0.20 * float(yaw_err_rollout))
+                    + (-3.40 * float(loc_dev))
+                    + (-0.55 * float(cross_term))
                     + (0.12 * float(r_rate)),
                     -1.0,
                     1.0,
@@ -219,9 +269,9 @@ class ScriptedLandingController:
         if short_final_mode:
             target_ias = min(target_ias, max(self._ias_ref, 80.0))
         if alt_agl < 25.0:
-            target_ias = min(target_ias, 76.0)
-        if pre_rollout_mode:
             target_ias = min(target_ias, 74.0)
+        if pre_rollout_mode:
+            target_ias = min(target_ias, 71.0)
         target_sink = 5.0 if alt_agl > 80.0 else (4.0 if alt_agl > 30.0 else 2.5)
         sink_excess = max((-float(vvi)) - target_sink, 0.0)
         gs_low = max(-float(gs_dev), 0.0)

@@ -55,6 +55,12 @@ __host__ __device__ inline int mission_value_count(int mode_code) {
             return gpu::kExecutionObservationMissionNavV1Count;
         case 2:
             return gpu::kExecutionObservationMissionNavV2Count;
+        case 3:
+            return gpu::kExecutionObservationMissionNavV2FormationV1Count;
+        case 4:
+            return gpu::kExecutionObservationMissionNavV2FormationRoleV1Count;
+        case 5:
+            return gpu::kExecutionObservationMissionNavV2CooperativeTakeoffV1Count;
         default:
             return gpu::kExecutionObservationMissionBasicCount;
     }
@@ -73,10 +79,38 @@ __device__ inline void pack_mission_values(
         return;
     }
 
+    const bool has_formation_tail = req.mission.mode_code == 3;
+    const bool has_formation_role_tail = req.mission.mode_code == 4;
+    const bool has_takeoff_tail = req.mission.mode_code == 5;
+    const int nav_end = (has_formation_tail || has_formation_role_tail || has_takeoff_tail) ? 14 : mission_value_count(req.mission.mode_code);
     if (!req.mission.has_route_guidance) {
-        const int mission_count = mission_value_count(req.mission.mode_code);
-        for (int idx = 4; idx < mission_count; ++idx) {
+        for (int idx = 4; idx < nav_end; ++idx) {
             dst[idx] = 0.0f;
+        }
+        if (has_formation_tail) {
+            dst[14] = sanitize_scalar(req.mission.form_offset_x);
+            dst[15] = sanitize_scalar(req.mission.form_offset_y);
+            dst[16] = sanitize_scalar(req.mission.form_offset_z);
+        } else if (has_formation_role_tail) {
+            dst[14] = sanitize_scalar(req.mission.form_offset_x);
+            dst[15] = sanitize_scalar(req.mission.form_offset_y);
+            dst[16] = sanitize_scalar(req.mission.form_offset_z);
+            dst[17] = sanitize_scalar(req.mission.self_role_code);
+            dst[18] = sanitize_scalar(req.mission.self_formation_role_code);
+            dst[19] = sanitize_scalar(req.mission.relative_slot_code);
+            dst[20] = sanitize_scalar(req.mission.reference_relative_slot_code);
+        } else if (has_takeoff_tail) {
+            dst[14] = sanitize_scalar(req.mission.takeoff_procedure_code);
+            dst[15] = sanitize_scalar(req.mission.takeoff_clearance_code);
+            dst[16] = sanitize_scalar(req.mission.takeoff_interval_s);
+            dst[17] = sanitize_scalar(req.mission.runway_slot_code);
+            dst[18] = sanitize_scalar(req.mission.form_offset_x);
+            dst[19] = sanitize_scalar(req.mission.form_offset_y);
+            dst[20] = sanitize_scalar(req.mission.form_offset_z);
+            dst[21] = sanitize_scalar(req.mission.self_role_code);
+            dst[22] = sanitize_scalar(req.mission.self_formation_role_code);
+            dst[23] = sanitize_scalar(req.mission.relative_slot_code);
+            dst[24] = sanitize_scalar(req.mission.reference_relative_slot_code);
         }
         return;
     }
@@ -126,6 +160,31 @@ __device__ inline void pack_mission_values(
     dst[11] = sanitize_scalar(req.mission.route_reward_dtg_m);
     dst[12] = sanitize_scalar(req.mission.route_next_turn_deg);
     dst[13] = sanitize_scalar(req.mission.route_distance_to_turn_m);
+    if (has_formation_tail) {
+        dst[14] = sanitize_scalar(req.mission.form_offset_x);
+        dst[15] = sanitize_scalar(req.mission.form_offset_y);
+        dst[16] = sanitize_scalar(req.mission.form_offset_z);
+    } else if (has_formation_role_tail) {
+        dst[14] = sanitize_scalar(req.mission.form_offset_x);
+        dst[15] = sanitize_scalar(req.mission.form_offset_y);
+        dst[16] = sanitize_scalar(req.mission.form_offset_z);
+        dst[17] = sanitize_scalar(req.mission.self_role_code);
+        dst[18] = sanitize_scalar(req.mission.self_formation_role_code);
+        dst[19] = sanitize_scalar(req.mission.relative_slot_code);
+        dst[20] = sanitize_scalar(req.mission.reference_relative_slot_code);
+    } else if (has_takeoff_tail) {
+        dst[14] = sanitize_scalar(req.mission.takeoff_procedure_code);
+        dst[15] = sanitize_scalar(req.mission.takeoff_clearance_code);
+        dst[16] = sanitize_scalar(req.mission.takeoff_interval_s);
+        dst[17] = sanitize_scalar(req.mission.runway_slot_code);
+        dst[18] = sanitize_scalar(req.mission.form_offset_x);
+        dst[19] = sanitize_scalar(req.mission.form_offset_y);
+        dst[20] = sanitize_scalar(req.mission.form_offset_z);
+        dst[21] = sanitize_scalar(req.mission.self_role_code);
+        dst[22] = sanitize_scalar(req.mission.self_formation_role_code);
+        dst[23] = sanitize_scalar(req.mission.relative_slot_code);
+        dst[24] = sanitize_scalar(req.mission.reference_relative_slot_code);
+    }
 }
 
 __global__ void pack_execution_observation_kernel(

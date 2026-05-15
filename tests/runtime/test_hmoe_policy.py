@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 import torch as th
 from gymnasium import spaces
 
+from python.models.transformer import TransformerExtractor, preprocess_transformer_observations
 from python.rl.nonfinite_probe import NonFiniteTrainingProbe
 from python.rl.policies import HierarchicalMoEExecutionPolicy
 from train import apply_safe_action_bias
@@ -205,6 +207,120 @@ class HMoEPolicyTests(unittest.TestCase):
         stats = policy.get_hmoe_parameter_stats()
         self.assertGreater(stats["hmoe_params/family/nonzero_frac"], 0.0)
         self.assertGreater(stats["hmoe_params/sub/nonzero_frac"], 0.0)
+
+    def test_transformer_extractor_prefers_bf16_when_supported(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(26,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0, high=1.0, shape=(21,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=1.0, shape=(17,), dtype=float),
+            }
+        )
+        extractor = TransformerExtractor(
+            observation_space,
+            features_dim=32,
+            n_heads=4,
+            n_layers=1,
+            use_amp=True,
+            use_checkpointing=False,
+        )
+
+        with mock.patch("torch.cuda.is_available", return_value=True), mock.patch(
+            "torch.cuda.is_bf16_supported", return_value=True
+        ):
+            self.assertTrue(extractor._autocast_enabled_for_forward())
+            self.assertEqual(extractor._autocast_dtype(), th.bfloat16)
+
+        extractor_fp16 = TransformerExtractor(
+            observation_space,
+            features_dim=32,
+            n_heads=4,
+            n_layers=1,
+            use_amp=True,
+            amp_dtype="fp16",
+            use_checkpointing=False,
+        )
+        self.assertEqual(extractor_fp16._autocast_dtype(), th.float16)
+
+    def test_transformer_observation_preprocessing_compresses_large_scales(self) -> None:
+        observations = {
+            "instruments": th.tensor(
+                [[
+                    180.0, 0.7, 6800.0, 240.0, -12.0, 8.0, 2.0, 5.0, -15.0, 270.0,
+                    1.2, 0.8, 12.0, -4.0, 6.0, 92.0, 4200.0, 34708.0, 1.0, 0.2,
+                    0.1, 185.0, 7200.0, 170.0, 31.2, 121.4, 110.0, 90.0, -4.0, 145.0,
+                    268.0, 12.0, 300.0, 24.0, 1.0, 35.0, 1.0, 4.0, 0.3, -0.2, 1.0, 7200.0,
+                ]],
+                dtype=th.float32,
+            ),
+            "contacts": th.tensor(
+                [[[34055.0, 190.0, 12.0, -320.0, 3.5]] * 10],
+                dtype=th.float32,
+            ),
+            "rwr": th.tensor(
+                [[[270.0, 8.0, 1.0, 0.0]] * 4],
+                dtype=th.float32,
+            ),
+            "mission": th.tensor(
+                [[
+                    3.0, 275.0, 7600.0, 175.0, 2.0, 1.0, 17423.0, -135.0, -1700.0, 0.8,
+                    28.0, 17423.0, 35.0, 9200.0, 2.0, 1.0, 30.0, 2.0, 120.0, -80.0,
+                    35.0, 21.0, 2.0, 12.0, 11.0,
+                ]],
+                dtype=th.float32,
+            ),
+            "proprio": th.tensor([[0.2] * 17], dtype=th.float32),
+        }
+
+        processed = preprocess_transformer_observations(observations)
+        self.assertTrue(th.isfinite(processed["instruments"]).all())
+        self.assertTrue(th.isfinite(processed["contacts"]).all())
+        self.assertTrue(th.isfinite(processed["rwr"]).all())
+        self.assertTrue(th.isfinite(processed["mission"]).all())
+
+        self.assertLess(float(processed["instruments"].abs().max().item()), 6.0)
+        self.assertLess(float(processed["contacts"].abs().max().item()), 6.0)
+        self.assertLess(float(processed["rwr"].abs().max().item()), 6.0)
+        self.assertLess(float(processed["mission"].abs().max().item()), 6.0)
+
+        self.assertAlmostEqual(float(processed["instruments"][0, 17].item()), float(th.log1p(th.tensor(34.708)).item()), places=5)
+        self.assertAlmostEqual(float(processed["contacts"][0, 0, 0].item()), float(th.log1p(th.tensor(34.055)).item()), places=5)
+        self.assertAlmostEqual(float(processed["mission"][0, 6].item()), float(th.log1p(th.tensor(17.423)).item()), places=5)
+        self.assertAlmostEqual(float(processed["rwr"][0, 0, 1].item()), 4.0, places=6)
+
+    def test_transformer_extractor_forward_stays_finite_on_large_observations(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0e6, high=1.0e6, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0e6, high=1.0e6, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0e6, high=1.0e6, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(25,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=1.0, shape=(17,), dtype=float),
+            }
+        )
+        extractor = TransformerExtractor(
+            observation_space,
+            features_dim=32,
+            n_heads=4,
+            n_layers=1,
+            use_amp=False,
+            use_checkpointing=False,
+        )
+        observations = {
+            "instruments": th.full((2, 42), 25000.0, dtype=th.float32),
+            "contacts": th.full((2, 10, 5), 34055.0, dtype=th.float32),
+            "rwr": th.full((2, 4, 4), 270.0, dtype=th.float32),
+            "mission": th.full((2, 25), 17423.0, dtype=th.float32),
+            "proprio": th.zeros((2, 17), dtype=th.float32),
+        }
+
+        with th.no_grad():
+            features = extractor(observations)
+
+        self.assertEqual(tuple(features.shape), (2, 32))
+        self.assertTrue(th.isfinite(features).all())
 
 
 if __name__ == "__main__":

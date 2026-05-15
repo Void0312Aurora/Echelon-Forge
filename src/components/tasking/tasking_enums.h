@@ -139,3 +139,27 @@ enum class CoordinationMode : int {
     Recover = 7,
     Detached = 8,
 };
+
+enum class TakeoffProcedureType : int {
+    Unspecified = 0,
+    SingleShip = 1,
+    Interval = 2,
+    Wing = 3,
+};
+
+enum class TakeoffClearanceState : int {
+    Unspecified = 0,
+    HoldShort = 1,
+    LineUpAndWait = 2,
+    ClearedForTakeoff = 3,
+    Rolling = 4,
+    Airborne = 5,
+    Abort = 6,
+};
+
+enum class RunwaySlotPosition : int {
+    Unspecified = 0,
+    Center = 1,
+    Left = 2,
+    Right = 3,
+};

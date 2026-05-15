@@ -1,0 +1,19 @@
+{
+  "type": "route_generator",
+  "scenario": "scenarios/cruise/cooperative_cruise_waypoints_paramroute_navv2_formation_train_v1.json",
+  "seeds": [100, 101, 102, 103, 104, 105, 106, 107],
+  "checks": {
+    "waypoint_count_range": [3, 4],
+    "waypoint_attr_ranges": {
+      "altitude_m": [900.0, 2400.0],
+      "speed_mps": [185.0, 235.0],
+      "radius_m": [900.0, 1500.0]
+    },
+    "reachability_budget_from_scenario": true,
+    "reachability_budget_tolerance_m": 1.0,
+    "turn_budget_from_scenario": true,
+    "turn_budget_tolerance_m": 1.0,
+    "turn_feasibility_from_scenario": true,
+    "turn_feasibility_tolerance_m": 1.0
+  }
+}

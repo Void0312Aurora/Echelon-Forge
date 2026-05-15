@@ -9,17 +9,19 @@ This folder contains the maintained JSON configs consumed by [train.py](/home/vo
 - [curriculum/](/home/void0312/CMO/examples/config/training/curriculum)
   - Reusable curriculum/randomization snippets.
 - [frozen/](/home/void0312/CMO/examples/config/training/frozen/README.md)
-  - Maintained post-freeze leader and execution-layer training entry points.
+  - Maintained post-freeze leader and execution-layer training entry points. These are frozen baselines, not the current forward-moving training mainline.
+- [active/](/home/void0312/CMO/examples/config/training/active/README.md)
+  - Maintained in-progress training entries that are intentionally not frozen yet, including the current P8 cooperative cruise line.
 
 Avoid adding ad hoc experiment JSON files directly under this directory. New maintained runs should go under `frozen/` or a deliberately named active subdirectory with a README that explains ownership and acceptance criteria.
 
 ## Frozen Baseline
 
-The maintained leader-layer entry points now live under [frozen](/home/void0312/CMO/examples/config/training/frozen/README.md).
+The maintained frozen baselines now live under [frozen](/home/void0312/CMO/examples/config/training/frozen/README.md).
 
 - Use [leader_task_only_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_frozen_v1.json) for task-only/common-core leader runs.
 - Use [leader_c2_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_frozen_v1.json) for reporting/full-chain leader runs.
-- Use [leader_task_only_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_retrain_v1.json) and [leader_c2_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_retrain_v1.json) for the new post-freeze retraining line.
+- Use [leader_task_only_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_retrain_v1.json) and [leader_c2_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_retrain_v1.json) for the frozen retraining line.
 - Both configs point directly at the frozen execution artifact under `experiments/_archive_20260322_test_results/...` rather than relying on historical path remapping.
 
 ## Archive
@@ -30,6 +32,15 @@ Historical configs are retained under [examples/config/Archive/training](/home/v
   - Older root-level `p2/p3/p4/p5`, takeoff-departure, and transformer experiment configs.
 - [leader_legacy](/home/void0312/CMO/examples/config/Archive/training/leader_legacy/README.md)
   - Historical `p6_*/p7_*` leader-layer configs.
+
+## Current Forward Line
+
+- [active/](/home/void0312/CMO/examples/config/training/active/README.md)
+  - Current in-progress P8 cooperative cruise training line.
+
+- Cooperative HMoE control script:
+  - [run_hmoe_cooperative_takeoff_to_cruise_control.sh](/home/void0312/Workshop/CMO/scripts/run_hmoe_cooperative_takeoff_to_cruise_control.sh)
+  - Runs the paired shared-vs-HMoE cooperative takeoff-to-cruise control line using the `*_shared_fair_v1` and `*_hmoe_fair_v1` configs.
 
 Archived configs are not maintained training entry points. If one needs to be revived, copy it into a maintained active directory and update its scenario pairing, runtime assumptions, and acceptance target.
 
@@ -91,6 +102,17 @@ Training runtime config also supports:
   - Use [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py) to compare the maintained `subproc`, `shared`, and `dummy` backends instead of relying on the old experimental flags.
 
 ## Useful Probes
+
+- Training-time non-finite probe:
+  - `train.py` supports an opt-in runtime non-finite tensor probe via
+    `--nonfinite_probe`.
+  - When enabled, the maintained PPO training path records rollout, feature,
+    latent, action-head, loss, gradient, and post-step parameter finite checks
+    and aborts on the first `NaN/Inf`, writing a JSON report.
+  - Use `--nonfinite_probe_report <path>` to override the default report
+    location inside the experiment directory.
+  - The probe is intended for unstable runs that need exact failure capture; it
+    is not the default training path.
 
 - Leader throughput:
 

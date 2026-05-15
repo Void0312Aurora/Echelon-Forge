@@ -1,19 +1,22 @@
 from __future__ import annotations
 
+import copy
 import json
 import math
 import tempfile
 import unittest
+from pathlib import Path
 
 import numpy as np
 
-from python.testing.runtime import ensure_repo_imports
+from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
 
 ensure_repo_imports()
 
 import ef_py  # noqa: E402
 
+from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from gym_envs.universal_env import UniversalEnv, build_universal_observation  # noqa: E402
 
 
@@ -163,6 +166,473 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertEqual(list(products.values[:4]), [2.0, 45.0, 800.0, 150.0])
         self.assertTrue(all(abs(float(v)) <= 1.0e-9 for v in products.values[4:]))
 
+    def test_mission_observation_nav_v2_formation_v1_appends_slot_offsets(self) -> None:
+        route_result = _build_route_result()
+        inputs = ef_py.MissionObservationInputs()
+        inputs.mode_code = 3
+        inputs.command_code = 3.0
+        inputs.target_heading_deg = 90.0
+        inputs.target_altitude_m = 1200.0
+        inputs.target_speed_mps = 210.0
+        inputs.form_offset_x = 120.0
+        inputs.form_offset_y = -45.0
+        inputs.form_offset_z = 30.0
+        inputs.has_route_guidance = True
+        inputs.route_guidance = route_result
+
+        nav_inputs = ef_py.MissionNavInputs()
+        nav_inputs.own_altitude_m = 1200.0
+        nav_inputs.truth_heading_deg = 90.0
+        nav_inputs.truth_speed_mps = 210.0
+        nav_inputs.inst_heading_deg = 90.0
+        nav_inputs.inst_ground_track_deg = 90.0
+        nav_inputs.inst_ias_mps = 210.0
+        nav_inputs.waypoint_altitude_m = 1200.0
+        nav_inputs.cdi_full_scale_m = 1000.0
+        inputs.nav_inputs = nav_inputs
+
+        products = ef_py.compute_mission_observation(inputs)
+        self.assertTrue(bool(products.valid))
+        self.assertTrue(bool(products.nav_valid))
+        self.assertEqual(int(products.mode_code), 3)
+        self.assertEqual(len(products.values), 17)
+        self.assertEqual(list(products.values[:4]), [3.0, 90.0, 1200.0, 210.0])
+        self.assertAlmostEqual(float(products.values[14]), 120.0, places=6)
+        self.assertAlmostEqual(float(products.values[15]), -45.0, places=6)
+        self.assertAlmostEqual(float(products.values[16]), 30.0, places=6)
+
+    def test_mission_observation_nav_v2_formation_v1_keeps_offsets_without_route_guidance(self) -> None:
+        inputs = ef_py.MissionObservationInputs()
+        inputs.mode_code = 3
+        inputs.command_code = 2.0
+        inputs.target_heading_deg = 45.0
+        inputs.target_altitude_m = 800.0
+        inputs.target_speed_mps = 150.0
+        inputs.form_offset_x = 300.0
+        inputs.form_offset_y = -120.0
+        inputs.form_offset_z = 20.0
+
+        products = ef_py.compute_mission_observation(inputs)
+        self.assertTrue(bool(products.valid))
+        self.assertFalse(bool(products.nav_valid))
+        self.assertEqual(len(products.values), 17)
+        self.assertEqual(list(products.values[:4]), [2.0, 45.0, 800.0, 150.0])
+        self.assertTrue(all(abs(float(v)) <= 1.0e-9 for v in products.values[4:14]))
+        self.assertAlmostEqual(float(products.values[14]), 300.0, places=6)
+        self.assertAlmostEqual(float(products.values[15]), -120.0, places=6)
+        self.assertAlmostEqual(float(products.values[16]), 20.0, places=6)
+
+    def test_mission_observation_nav_v2_formation_role_v1_appends_role_semantics(self) -> None:
+        route_result = _build_route_result()
+        inputs = ef_py.MissionObservationInputs()
+        inputs.mode_code = 4
+        inputs.command_code = 3.0
+        inputs.target_heading_deg = 90.0
+        inputs.target_altitude_m = 1200.0
+        inputs.target_speed_mps = 210.0
+        inputs.form_offset_x = 120.0
+        inputs.form_offset_y = -45.0
+        inputs.form_offset_z = 30.0
+        inputs.self_role_code = 22.0
+        inputs.self_formation_role_code = float(int(ef_py.FormationRole.Wingman))
+        inputs.relative_slot_code = 12.0
+        inputs.reference_relative_slot_code = 11.0
+        inputs.has_route_guidance = True
+        inputs.route_guidance = route_result
+
+        nav_inputs = ef_py.MissionNavInputs()
+        nav_inputs.own_altitude_m = 1200.0
+        nav_inputs.truth_heading_deg = 90.0
+        nav_inputs.truth_speed_mps = 210.0
+        nav_inputs.inst_heading_deg = 90.0
+        nav_inputs.inst_ground_track_deg = 90.0
+        nav_inputs.inst_ias_mps = 210.0
+        nav_inputs.waypoint_altitude_m = 1200.0
+        nav_inputs.cdi_full_scale_m = 1000.0
+        inputs.nav_inputs = nav_inputs
+
+        products = ef_py.compute_mission_observation(inputs)
+        self.assertTrue(bool(products.valid))
+        self.assertTrue(bool(products.nav_valid))
+        self.assertEqual(int(products.mode_code), 4)
+        self.assertEqual(len(products.values), 21)
+        self.assertAlmostEqual(float(products.values[14]), 120.0, places=6)
+        self.assertAlmostEqual(float(products.values[15]), -45.0, places=6)
+        self.assertAlmostEqual(float(products.values[16]), 30.0, places=6)
+        self.assertAlmostEqual(float(products.values[17]), 22.0, places=6)
+        self.assertAlmostEqual(float(products.values[18]), float(int(ef_py.FormationRole.Wingman)), places=6)
+        self.assertAlmostEqual(float(products.values[19]), 12.0, places=6)
+        self.assertAlmostEqual(float(products.values[20]), 11.0, places=6)
+
+    def test_mission_observation_nav_v2_cooperative_takeoff_v1_appends_takeoff_semantics(self) -> None:
+        route_result = _build_route_result()
+        inputs = ef_py.MissionObservationInputs()
+        inputs.mode_code = 5
+        inputs.command_code = 1.0
+        inputs.target_heading_deg = 90.0
+        inputs.target_altitude_m = 500.0
+        inputs.target_speed_mps = 180.0
+        inputs.takeoff_procedure_code = 2.0
+        inputs.takeoff_clearance_code = 3.0
+        inputs.takeoff_interval_s = 5.0
+        inputs.runway_slot_code = 2.0
+        inputs.form_offset_x = 120.0
+        inputs.form_offset_y = -45.0
+        inputs.form_offset_z = 30.0
+        inputs.self_role_code = 22.0
+        inputs.self_formation_role_code = float(int(ef_py.FormationRole.Wingman))
+        inputs.relative_slot_code = 12.0
+        inputs.reference_relative_slot_code = 11.0
+        inputs.has_route_guidance = True
+        inputs.route_guidance = route_result
+
+        nav_inputs = ef_py.MissionNavInputs()
+        nav_inputs.own_altitude_m = 1200.0
+        nav_inputs.truth_heading_deg = 90.0
+        nav_inputs.truth_speed_mps = 210.0
+        nav_inputs.inst_heading_deg = 90.0
+        nav_inputs.inst_ground_track_deg = 90.0
+        nav_inputs.inst_ias_mps = 210.0
+        nav_inputs.waypoint_altitude_m = 1200.0
+        nav_inputs.cdi_full_scale_m = 1000.0
+        inputs.nav_inputs = nav_inputs
+
+        products = ef_py.compute_mission_observation(inputs)
+        self.assertTrue(bool(products.valid))
+        self.assertTrue(bool(products.nav_valid))
+        self.assertEqual(int(products.mode_code), 5)
+        self.assertEqual(len(products.values), 25)
+        self.assertAlmostEqual(float(products.values[14]), 2.0, places=6)
+        self.assertAlmostEqual(float(products.values[15]), 3.0, places=6)
+        self.assertAlmostEqual(float(products.values[16]), 5.0, places=6)
+        self.assertAlmostEqual(float(products.values[17]), 2.0, places=6)
+        self.assertAlmostEqual(float(products.values[18]), 120.0, places=6)
+        self.assertAlmostEqual(float(products.values[24]), 11.0, places=6)
+
+    def test_loader_nav_v2_current_contract_still_ignores_formation_offsets(self) -> None:
+        scenario = {
+            "scenario_name": "p8_mission_observation_contract_probe",
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "legacy",
+                "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+            },
+            "mission_command": {
+                "command_code": 2,
+                "target_heading": 33.0,
+                "target_altitude": 1333.0,
+                "target_speed": 177.0,
+            },
+            "entities": [
+                {
+                    "name": "Lead",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [-1400.0, 0.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                }
+            ],
+        }
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        loader = ScenarioLoader(sim)
+        agent_id = loader.load_scenario_data(copy.deepcopy(scenario), seed=37)
+        self.assertIsNotNone(agent_id)
+
+        loader.mission_cmd["formation_id"] = 19
+        loader.mission_cmd["form_offset_x"] = 1111.0
+        loader.mission_cmd["form_offset_y"] = -2222.0
+        loader.mission_cmd["form_offset_z"] = 3333.0
+
+        truth = sim.get_agent_observation(int(agent_id))
+        inst = sim.get_instrument_state(int(agent_id))
+        inputs = loader._build_mission_observation_runtime_inputs("nav_v2", truth=truth, inst=inst)
+        products = ef_py.compute_mission_observation(inputs)
+
+        self.assertEqual(int(inputs.mode_code), 2)
+        self.assertAlmostEqual(float(inputs.command_code), 2.0, places=6)
+        self.assertAlmostEqual(float(inputs.target_heading_deg), 33.0, places=6)
+        self.assertAlmostEqual(float(inputs.target_altitude_m), 1333.0, places=6)
+        self.assertAlmostEqual(float(inputs.target_speed_mps), 177.0, places=6)
+        self.assertAlmostEqual(float(inputs.form_offset_x), 1111.0, places=6)
+        self.assertAlmostEqual(float(inputs.form_offset_y), -2222.0, places=6)
+        self.assertAlmostEqual(float(inputs.form_offset_z), 3333.0, places=6)
+        self.assertEqual(len(products.values), 14)
+        self.assertEqual(list(products.values[:4]), [2.0, 33.0, 1333.0, 177.0])
+        for marker in (1111.0, -2222.0, 3333.0):
+            self.assertFalse(
+                any(math.isclose(float(value), marker, rel_tol=0.0, abs_tol=1.0e-3) for value in products.values)
+            )
+
+    def test_loader_nav_v2_formation_v1_exposes_formation_offsets(self) -> None:
+        scenario = {
+            "scenario_name": "p8_mission_observation_formation_probe",
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "legacy",
+                "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+            },
+            "mission_command": {
+                "command_code": 2,
+                "target_heading": 33.0,
+                "target_altitude": 1333.0,
+                "target_speed": 177.0,
+            },
+            "entities": [
+                {
+                    "name": "Wing",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [-1400.0, 0.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                }
+            ],
+        }
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        loader = ScenarioLoader(sim)
+        agent_id = loader.load_scenario_data(copy.deepcopy(scenario), seed=41)
+        self.assertIsNotNone(agent_id)
+
+        loader.mission_cmd["formation_id"] = 19
+        loader.mission_cmd["form_offset_x"] = 1111.0
+        loader.mission_cmd["form_offset_y"] = -2222.0
+        loader.mission_cmd["form_offset_z"] = 3333.0
+
+        truth = sim.get_agent_observation(int(agent_id))
+        inst = sim.get_instrument_state(int(agent_id))
+        inputs = loader._build_mission_observation_runtime_inputs("nav_v2_formation_v1", truth=truth, inst=inst)
+        products = ef_py.compute_mission_observation(inputs)
+
+        self.assertEqual(int(inputs.mode_code), 3)
+        self.assertAlmostEqual(float(inputs.form_offset_x), 1111.0, places=6)
+        self.assertAlmostEqual(float(inputs.form_offset_y), -2222.0, places=6)
+        self.assertAlmostEqual(float(inputs.form_offset_z), 3333.0, places=6)
+        self.assertEqual(len(products.values), 17)
+        self.assertEqual(list(products.values[:4]), [2.0, 33.0, 1333.0, 177.0])
+        self.assertAlmostEqual(float(products.values[14]), 1111.0, places=6)
+        self.assertAlmostEqual(float(products.values[15]), -2222.0, places=6)
+        self.assertAlmostEqual(float(products.values[16]), 3333.0, places=6)
+
+    def test_loader_nav_v2_formation_role_v1_exposes_role_and_reference_semantics(self) -> None:
+        scenario = {
+            "scenario_name": "p8_mission_observation_role_probe",
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "legacy",
+                "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+            },
+            "mission_command": {
+                "command_code": 2,
+                "target_heading": 33.0,
+                "target_altitude": 1333.0,
+                "target_speed": 177.0,
+            },
+            "entities": [
+                {
+                    "name": "Lead",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [-1500.0, 0.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                },
+                {
+                    "name": "Wing",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [-1700.0, -200.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                },
+            ],
+            "cooperative_roster": {
+                "policy_route": "shared_execution",
+                "members": [
+                    {"entity": "Lead", "role_code": 21, "formation_role_id": "ElementLead", "relative_slot_code": 11},
+                    {
+                        "entity": "Wing",
+                        "role_code": 22,
+                        "formation_role_id": "Wingman",
+                        "relative_slot_code": 12,
+                        "reference_entity": "Lead",
+                    },
+                ],
+            },
+        }
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        loader = ScenarioLoader(sim)
+        agent_id = loader.load_scenario_data(copy.deepcopy(scenario), seed=43)
+        self.assertIsNotNone(agent_id)
+
+        loader.agent_id = int(loader.entities["Wing"])
+        loader.mission_cmd["form_offset_x"] = 1111.0
+        loader.mission_cmd["form_offset_y"] = -2222.0
+        loader.mission_cmd["form_offset_z"] = 3333.0
+
+        truth = sim.get_agent_observation(int(loader.agent_id))
+        inst = sim.get_instrument_state(int(loader.agent_id))
+        inputs = loader._build_mission_observation_runtime_inputs("nav_v2_formation_role_v1", truth=truth, inst=inst)
+        products = ef_py.compute_mission_observation(inputs)
+
+        self.assertEqual(int(inputs.mode_code), 4)
+        self.assertAlmostEqual(float(inputs.self_role_code), 22.0, places=6)
+        self.assertAlmostEqual(float(inputs.self_formation_role_code), float(int(ef_py.FormationRole.Wingman)), places=6)
+        self.assertAlmostEqual(float(inputs.relative_slot_code), 12.0, places=6)
+        self.assertAlmostEqual(float(inputs.reference_relative_slot_code), 11.0, places=6)
+        self.assertEqual(len(products.values), 21)
+        self.assertAlmostEqual(float(products.values[17]), 22.0, places=6)
+        self.assertAlmostEqual(float(products.values[18]), float(int(ef_py.FormationRole.Wingman)), places=6)
+        self.assertAlmostEqual(float(products.values[19]), 12.0, places=6)
+        self.assertAlmostEqual(float(products.values[20]), 11.0, places=6)
+
+    def test_loader_nav_v2_cooperative_takeoff_v1_exposes_takeoff_and_role_semantics(self) -> None:
+        scenario = {
+            "scenario_name": "p8_mission_observation_takeoff_role_probe",
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "legacy",
+                "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+            },
+            "mission_command": {
+                "command_code": 1,
+                "target_heading": 90.0,
+                "target_altitude": 500.0,
+                "target_speed": 180.0,
+                "takeoff_procedure_code": 2,
+                "takeoff_clearance_code": 3,
+                "takeoff_interval_s": 5.0,
+                "runway_slot_code": 2,
+            },
+            "entities": [
+                {
+                    "name": "Lead",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [-1500.0, 0.0, 2.1],
+                    "vel": [0.0, 0.0, 0.0],
+                    "heading": 90.0,
+                },
+                {
+                    "name": "Wing",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [-1700.0, -20.0, 2.1],
+                    "vel": [0.0, 0.0, 0.0],
+                    "heading": 90.0,
+                },
+            ],
+            "cooperative_roster": {
+                "policy_route": "shared_execution",
+                "members": [
+                    {"entity": "Lead", "role_code": 21, "formation_role_id": "ElementLead", "relative_slot_code": 11},
+                    {
+                        "entity": "Wing",
+                        "role_code": 22,
+                        "formation_role_id": "Wingman",
+                        "relative_slot_code": 12,
+                        "reference_entity": "Lead",
+                    },
+                ],
+            },
+        }
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        loader = ScenarioLoader(sim)
+        agent_id = loader.load_scenario_data(copy.deepcopy(scenario), seed=53)
+        self.assertIsNotNone(agent_id)
+
+        loader.agent_id = int(loader.entities["Wing"])
+        loader.mission_cmd["form_offset_x"] = 1111.0
+        loader.mission_cmd["form_offset_y"] = -2222.0
+        loader.mission_cmd["form_offset_z"] = 3333.0
+
+        truth = sim.get_agent_observation(int(loader.agent_id))
+        inst = sim.get_instrument_state(int(loader.agent_id))
+        inputs = loader._build_mission_observation_runtime_inputs("nav_v2_cooperative_takeoff_v1", truth=truth, inst=inst)
+        products = ef_py.compute_mission_observation(inputs)
+
+        self.assertEqual(int(inputs.mode_code), 5)
+        self.assertAlmostEqual(float(inputs.takeoff_procedure_code), 2.0, places=6)
+        self.assertAlmostEqual(float(inputs.takeoff_clearance_code), 3.0, places=6)
+        self.assertAlmostEqual(float(inputs.takeoff_interval_s), 5.0, places=6)
+        self.assertAlmostEqual(float(inputs.runway_slot_code), 2.0, places=6)
+        self.assertEqual(len(products.values), 25)
+        self.assertAlmostEqual(float(products.values[14]), 2.0, places=6)
+        self.assertAlmostEqual(float(products.values[15]), 3.0, places=6)
+        self.assertAlmostEqual(float(products.values[16]), 5.0, places=6)
+        self.assertAlmostEqual(float(products.values[17]), 2.0, places=6)
+        self.assertAlmostEqual(float(products.values[21]), 22.0, places=6)
+        self.assertAlmostEqual(float(products.values[24]), 11.0, places=6)
+
+    def test_route_guidance_uses_formation_slot_reference_geometry(self) -> None:
+        scenario = {
+            "scenario_name": "formation_route_guidance_geometry_probe",
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "legacy",
+                "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+            },
+            "mission_command": {
+                "command_code": 3,
+                "target_heading": 90.0,
+                "target_altitude": 1200.0,
+                "target_speed": 180.0,
+                "form_offset_x": 180.0,
+                "form_offset_y": -90.0,
+                "form_offset_z": 30.0,
+                "waypoint_mode": "flyby",
+                "waypoints": [
+                    {"x": 10000.0, "y": 0.0, "z": 1200.0, "altitude_m": 1200.0, "radius_m": 800.0},
+                    {"x": 20000.0, "y": 0.0, "z": 1200.0, "altitude_m": 1200.0, "radius_m": 800.0},
+                ],
+            },
+            "entities": [
+                {
+                    "name": "Wing",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [0.0, 0.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                }
+            ],
+        }
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        loader = ScenarioLoader(sim)
+        agent_id = loader.load_scenario_data(copy.deepcopy(scenario), seed=59)
+        self.assertIsNotNone(agent_id)
+
+        truth = sim.get_agent_observation(int(agent_id))
+        inst = sim.get_instrument_state(int(agent_id))
+        result = loader._query_route_guidance_result(truth=truth, inst=inst)
+        self.assertIsNotNone(result)
+        assert result is not None
+
+        self.assertAlmostEqual(float(result.xtk_m), -90.0, places=4)
+        self.assertAlmostEqual(float(result.dist_m), math.hypot(9820.0, -90.0), places=3)
+
+        nav_inputs = loader._mission_nav_inputs(truth, inst, result)
+        self.assertIsNotNone(nav_inputs)
+        assert nav_inputs is not None
+        self.assertAlmostEqual(float(nav_inputs.waypoint_altitude_m), 1230.0, places=6)
+
     def test_step_info_runtime_reports_on_runway_geometry_only_preliftoff(self) -> None:
         frame = _build_runway_frame_result()
         inputs = ef_py.StepInfoInputs()
@@ -243,6 +713,28 @@ class RewardRuntimeTests(unittest.TestCase):
         self.assertTrue(bool(reward.valid))
         self.assertAlmostEqual(float(reward.waypoint_distance), -0.24, places=6)
         self.assertAlmostEqual(float(reward.waypoint_cross_track), -0.9899494936611665, places=6)
+        self.assertFalse(bool(reward.arrived))
+
+    def test_intermediate_flyby_does_not_arrive_while_still_far_from_sequence_gate(self) -> None:
+        inputs = ef_py.WaypointRewardInputs()
+        inputs.valid = True
+        inputs.waypoint_index = 0
+        inputs.waypoint_count = 7
+        inputs.is_flyover = False
+        inputs.has_guidance = True
+        inputs.passed_fix = False
+        inputs.dist_m = 4000.0
+        inputs.xtk_m = 0.0
+        inputs.dtg_m = 4000.0
+        inputs.waypoint_radius_m = 1500.0
+        inputs.leg_len_m = 6000.0
+        inputs.lead_turn_m = 10091.058970603393
+        inputs.sequence_gate_m = 3500.0
+        inputs.has_prev_dist = False
+        inputs.route_length_m = 70000.0
+
+        reward = ef_py.compute_waypoint_reward_terms(inputs)
+        self.assertTrue(bool(reward.valid))
         self.assertFalse(bool(reward.arrived))
 
     def test_approach_reward_terms_produce_improvement_and_capture_bonus(self) -> None:
@@ -463,6 +955,116 @@ def _inline_observation_scenario() -> dict:
 
 
 class ExecutionObservationRuntimeTests(unittest.TestCase):
+    def test_agent_observation_live_tracks_expose_radar_source_and_friend_hostile_classification(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+
+        lead = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, 0.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+        sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, 4000.0, 1200.0, 180.0, 0.0, 0.0, 0.0, -180.0, 0.0)
+        sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 8000.0, 1200.0, 180.0, 0.0, 0.0, 0.0, -180.0, 0.0)
+
+        obs = None
+        for _ in range(80):
+            sim.step()
+            obs = sim.get_agent_observation(int(lead))
+            if len(getattr(obs, "contacts", [])) >= 2:
+                break
+
+        self.assertIsNotNone(obs)
+        contacts = list(getattr(obs, "contacts", []))
+        self.assertGreaterEqual(len(contacts), 2)
+        sources = {int(getattr(track, "source", 0)) for track in contacts}
+        classes = {int(getattr(track, "classification", 0)) for track in contacts}
+        self.assertTrue(sources.issubset({1, 3}))
+        self.assertTrue(any(int(getattr(track, "source", 0)) in {1, 3} for track in contacts))
+        self.assertIn(1, classes)
+        self.assertIn(2, classes)
+
+    def test_agent_observation_live_tracks_expose_datalink_source_for_shared_contact(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+
+        lead = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, 0.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+        wing = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 4000.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 180.0, 0.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 12000.0, 0.0, 1200.0, 270.0, 0.0, 0.0, -180.0, 0.0, 0.0)
+
+        lead_contact_ids = set()
+        wing_obs = None
+        for _ in range(120):
+            sim.step()
+            lead_obs = sim.get_agent_observation(int(lead))
+            wing_obs = sim.get_agent_observation(int(wing))
+            lead_contact_ids = {int(getattr(track, "id", 0)) for track in getattr(lead_obs, "contacts", [])}
+            wing_tracks = {
+                int(getattr(track, "id", 0)): track
+                for track in getattr(wing_obs, "contacts", [])
+            }
+            if int(foe) in lead_contact_ids and int(foe) in wing_tracks and int(getattr(wing_tracks[int(foe)], "source", 0)) == 3:
+                break
+
+        self.assertIn(int(foe), lead_contact_ids)
+        self.assertIsNotNone(wing_obs)
+        wing_tracks = {
+            int(getattr(track, "id", 0)): track
+            for track in getattr(wing_obs, "contacts", [])
+        }
+        self.assertIn(int(foe), wing_tracks)
+        self.assertEqual(int(getattr(wing_tracks[int(foe)], "source", 0)), 3)
+        self.assertEqual(int(getattr(wing_tracks[int(foe)], "classification", 0)), 2)
+
+    def test_execution_contact_runtime_contract_drops_source_and_classification(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        sim.reset(23)
+
+        lead = sim.spawn_unit(ef_py.Side.Blue, "Aircraft", 0.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+        truth = sim.get_agent_observation(int(lead))
+        inst = sim.get_instrument_state(int(lead))
+
+        _inst_vec, contacts, _rwr = ef_py.compute_execution_observation_runtime_numpy(
+            inst,
+            truth,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            4,
+            0,
+        )
+        contacts = np.asarray(contacts, dtype=np.float32)
+        self.assertEqual(contacts.shape, (4, 5))
+
+        source = Path(
+            resolve_repo_path("src", "core", "mission", "runtime", "execution_observation_runtime.cpp")
+        ).read_text(encoding="utf-8")
+        self.assertIn("out.contact_values[base + 0u] = sanitize_scalar(track.range);", source)
+        self.assertIn("out.contact_values[base + 1u] = sanitize_scalar(track.azimuth);", source)
+        self.assertIn("out.contact_values[base + 2u] = sanitize_scalar(track.elevation);", source)
+        self.assertIn("out.contact_values[base + 3u] = sanitize_scalar(track.closing_speed);", source)
+        self.assertIn("out.contact_values[base + 4u] = sanitize_scalar(track.time_since_update);", source)
+        self.assertNotIn("track.source", source)
+        self.assertNotIn("track.classification", source)
+
+    def test_visual_observation_team_channel_marks_friend_and_hostile(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        sim.reset(19)
+
+        lead = sim.spawn_unit(ef_py.Side.Blue, "Aircraft", 0.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+        sim.spawn_unit(ef_py.Side.Blue, "Aircraft", 2000.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+        sim.spawn_unit(ef_py.Side.Red, "Aircraft", 2000.0, 800.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+
+        for _ in range(2):
+            sim.step()
+
+        arb = np.asarray(sim.get_visual_observation(int(lead)), dtype=np.float32)
+        team = arb[..., 8]
+
+        self.assertEqual(arb.shape, (48, 96, 10))
+        self.assertGreater(int(np.count_nonzero(team)), 0)
+        self.assertIn(1.0, np.unique(team))
+        self.assertIn(-1.0, np.unique(team))
+
     def test_compiled_observation_builder_matches_legacy_observation(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"

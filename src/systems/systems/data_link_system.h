@@ -122,6 +122,30 @@
                         }
                     }
 
+                    if (has_contacts) {
+                        CommQueue* q = receiver.entity.get_mut<CommQueue>();
+                        if (q) {
+                            for (const auto& det : sender.contacts->contacts) {
+                                auto target_e = it.world().entity(det.target_id);
+                                if (!target_e.is_valid()) continue;
+                                const Transform* t_t = target_e.get<Transform>();
+                                if (!t_t) continue;
+                                q->inbox.push_back({
+                                    sender.entity.id(),
+                                    receiver.entity.id(),
+                                    CommMsgType::ReportContact,
+                                    det.target_id,
+                                    t_t->x,
+                                    t_t->y,
+                                    t_t->z,
+                                    0.0,
+                                    0,
+                                    current_time
+                                });
+                            }
+                        }
+                    }
+
                     // --- TASK 2: MESSAGING ---
                     if (sending_msg) {
                         // Check Recipient

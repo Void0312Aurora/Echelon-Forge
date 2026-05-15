@@ -26,12 +26,14 @@ class ScriptedTakeoffController:
         self._dep_trk_int = 0.0
         self._target_track_deg: float | None = None
         self._mission_track_deg: float | None = None
+        self._takeoff_clearance_code: int = 0
 
     def reset(self, obs: dict | None = None) -> None:
         self._loc_int = 0.0
         self._dep_trk_int = 0.0
         self._target_track_deg = None
         self._mission_track_deg = None
+        self._takeoff_clearance_code = 0
         if obs is not None:
             try:
                 inst = np.asarray(obs.get("instruments", []), dtype=np.float32).reshape(-1)
@@ -45,6 +47,8 @@ class ScriptedTakeoffController:
                 mission = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
                 if mission.size >= 2:
                     self._mission_track_deg = float(mission[1])
+                if mission.size >= 16:
+                    self._takeoff_clearance_code = int(round(float(mission[15])))
             except Exception:
                 self._mission_track_deg = None
 
@@ -56,6 +60,11 @@ class ScriptedTakeoffController:
         if mission.size >= 2:
             try:
                 self._mission_track_deg = float(mission[1])
+            except Exception:
+                pass
+        if mission.size >= 16:
+            try:
+                self._takeoff_clearance_code = int(round(float(mission[15])))
             except Exception:
                 pass
 
@@ -71,10 +80,12 @@ class ScriptedTakeoffController:
         a = np.zeros((int(self.action_dim),), dtype=np.float32)
 
         # Primary controls
+        clearance_code = int(self._takeoff_clearance_code)
+        cleared_for_roll = clearance_code in (0, 3, 4, 5)
         if self.action_dim == 2:
-            a[1] = 1.0  # throttle
+            a[1] = 1.0 if cleared_for_roll else 0.0
         elif self.action_dim >= 4:
-            a[3] = 1.0  # throttle
+            a[3] = 1.0 if cleared_for_roll else 0.0
 
         # Configuration (only available in the full 17-dim action space)
         if self.action_dim >= 6:
@@ -83,8 +94,9 @@ class ScriptedTakeoffController:
         if self.action_dim >= 7:
             a[6] = 0.0  # speedbrake stowed
         if self.action_dim >= 9:
-            a[7] = 0.0  # brakes off
-            a[8] = 0.0
+            brake_hold = 1.0 if not cleared_for_roll else 0.0
+            a[7] = brake_hold
+            a[8] = brake_hold
         if self.action_dim >= 5:
             # Gear: keep down on ground; retract after liftoff.
             a[4] = 1.0 if alt_radar < 20.0 else 0.0
@@ -211,6 +223,9 @@ class ScriptedTakeoffController:
 
         # Rotate/climb schedule (stick pitch)
         if self.action_dim >= 1:
+            if not cleared_for_roll:
+                a[0] = 0.0
+                return a
             # Realistic rotation: begin pitching near Vr and aim to reach a higher AoA
             # (fighters typically rotate to ~10-13 deg AoA) rather than waiting for excessive speed.
             aoa = float(inst[5]) if inst.size >= 6 else 0.0

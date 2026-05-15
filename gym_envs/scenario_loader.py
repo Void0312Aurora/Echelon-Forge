@@ -19,7 +19,13 @@ from python.scenario_compiler import (
     materialize_runtime_waypoint_cache,
     rotate_ils_beacon_templates,
 )
-from python.scenario_runtime import apply_world_layout_to_kernel, prepare_scenario_world_layout
+from python.scenario_runtime import (
+    active_roster_world_entity_refs,
+    apply_world_layout_to_kernel,
+    find_active_roster_member,
+    prepare_scenario_world_layout,
+    resolve_active_controllable_roster,
+)
 from python.rl.common_core_profile import normalize_task_order_spec
 from python.rl.leader_tasking import RuleBasedLeaderPhaseManager, build_kernel_mission_command
 from python.rl.mission_defs import is_landing_command_code
@@ -75,6 +81,20 @@ def _coerce_nonnegative_int(value, default: int = 0) -> int:
     return out if out >= 0 else int(default)
 
 
+def _formation_role_code_from_member(member) -> int:
+    if member is None:
+        return 0
+    raw = getattr(member, "formation_role_id", None)
+    if raw is None:
+        return 0
+    text = str(raw).strip()
+    if not text:
+        return 0
+    if hasattr(ef_py, "FormationRole"):
+        return int(getattr(ef_py.FormationRole, text, getattr(ef_py.FormationRole, "Unspecified", 0)))
+    return 0
+
+
 def normalize_execution_step_runtime_mode(mode: str | None) -> str:
     raw_mode = os.environ.get("CMO_EXECUTION_STEP_RUNTIME", "compiled") if mode is None else mode
     normalized = str(raw_mode).strip().lower()
@@ -118,6 +138,7 @@ class ScenarioLoader:
         self.sim = sim_kernel
         self.scenario_data = {}
         self.entities = {} # map name -> entity_id
+        self.active_roster = []
         self.agent_id = None
         self.steps = 0
         self.captured_time = 0.0
@@ -293,6 +314,10 @@ class ScenarioLoader:
                 "target_heading": float(state.mission_command.cmd_heading_deg),
                 "target_altitude": float(state.mission_command.cmd_altitude_m),
                 "target_speed": float(state.mission_command.cmd_speed_mps),
+                "takeoff_procedure_code": int(getattr(state.mission_command, "takeoff_procedure_id", 0)),
+                "takeoff_clearance_code": int(getattr(state.mission_command, "takeoff_clearance_id", 0)),
+                "takeoff_interval_s": float(getattr(state.mission_command, "takeoff_interval_s", 0.0)),
+                "runway_slot_code": int(getattr(state.mission_command, "runway_slot_id", 0)),
             }
             if hasattr(state.mission_command, "route_ref_id"):
                 mission_cmd["route_ref_id"] = int(state.mission_command.route_ref_id)
@@ -414,7 +439,8 @@ class ScenarioLoader:
     def _align_task_only_mission_shell_with_task_order(self) -> None:
         if not isinstance(self.mission_cmd, dict):
             return
-        if list(self.mission_cmd.get("waypoints", []) or []):
+        waypoints = self.mission_cmd.get("waypoints", [])
+        if isinstance(waypoints, (list, tuple)) and len(waypoints) > 0:
             return
         try:
             command_code = int(self.mission_cmd.get("command_code", 0))
@@ -589,6 +615,8 @@ class ScenarioLoader:
             base_heading = float(self.mission_cmd.get("target_heading", spawn.get("heading", 90.0) if isinstance(spawn, dict) else 90.0))
         except Exception:
             base_heading = 90.0
+        if self.rotate_mission_heading_with_world and abs(float(self.world_yaw_deg)) > 1.0e-6:
+            base_heading = (float(base_heading) + float(self.world_yaw_deg)) % 360.0
         initial_abs = cfg.get("initial_course_deg_range", None)
         if initial_abs is not None:
             course_deg = self._sample_uniform(initial_abs, base_heading) % 360.0
@@ -601,17 +629,23 @@ class ScenarioLoader:
         leg_range = cfg.get("leg_length_m_range", [leg_default, leg_default])
         first_leg_range = cfg.get("first_leg_length_m_range", leg_range)
         subsequent_leg_range = cfg.get("subsequent_leg_length_m_range", leg_range)
-        min_leg_m = max(
-            2000.0,
-            float(
-                cfg.get(
-                    "min_leg_length_m",
-                    min(
-                        float(first_leg_range[0] if isinstance(first_leg_range, (list, tuple)) and len(first_leg_range) >= 1 else leg_default),
-                        float(subsequent_leg_range[0] if isinstance(subsequent_leg_range, (list, tuple)) and len(subsequent_leg_range) >= 1 else leg_default),
-                    ),
-                )
-            ),
+        config_min_leg_m = float(
+            cfg.get(
+                "min_leg_length_m",
+                min(
+                    float(first_leg_range[0] if isinstance(first_leg_range, (list, tuple)) and len(first_leg_range) >= 1 else leg_default),
+                    float(subsequent_leg_range[0] if isinstance(subsequent_leg_range, (list, tuple)) and len(subsequent_leg_range) >= 1 else leg_default),
+                ),
+            )
+        )
+        min_leg_m = max(2000.0, config_min_leg_m)
+        first_leg_min_m = max(
+            min_leg_m,
+            _range_lo(first_leg_range, leg_default),
+        )
+        subsequent_leg_min_m = max(
+            min_leg_m,
+            _range_lo(subsequent_leg_range, leg_default),
         )
         radius_range = cfg.get("waypoint_radius_m_range", [900.0, 1400.0])
         speed_range = cfg.get("speed_mps_range", [float(self.mission_cmd.get("target_speed", 210.0)), float(self.mission_cmd.get("target_speed", 210.0))])
@@ -635,6 +669,10 @@ class ScenarioLoader:
                 )
             ),
         )
+        turn_budget_cost_scale = float(cfg.get("turn_budget_cost_scale", 0.0))
+        if turn_budget_cost_scale <= 0.0:
+            turn_budget_cost_scale = 0.75 if turn_feasibility_enabled else 0.0
+        turn_budget_cost_scale = float(np.clip(turn_budget_cost_scale, 0.0, 2.0))
         env_cfg = self.scenario_data.get("environment", {}) if isinstance(self.scenario_data.get("environment", {}), dict) else {}
         time_step_s = float(env_cfg.get("time_step", 0.05))
         max_steps = int(env_cfg.get("max_steps", self.get_max_steps()))
@@ -653,11 +691,45 @@ class ScenarioLoader:
             ),
         )
         bank_limit_deg = float(self.mission_cmd.get("lnav_bank_limit_deg", 30.0))
-        max_route_distance_m = max(min_leg_m * float(count), target_speed_mps * time_step_s * float(max_steps) * route_budget_fraction)
+        route_budget_m = target_speed_mps * time_step_s * float(max_steps) * route_budget_fraction
         if route_budget_margin_fraction > 0.0:
-            max_route_distance_m = max(min_leg_m * float(count), max_route_distance_m * (1.0 - route_budget_margin_fraction))
-        max_count = max(2, int(max_route_distance_m // min_leg_m))
+            route_budget_m *= 1.0 - route_budget_margin_fraction
+        route_budget_m = max(first_leg_min_m + subsequent_leg_min_m, float(route_budget_m))
+
+        min_turn_cost_per_turn_m = 0.0
+        if turn_budget_cost_scale > 0.0:
+            min_turn_cost_per_turn_m = self._route_turn_cost_m(
+                min_turn_abs,
+                speed_mps=turn_speed_ref_mps,
+                bank_limit_deg=bank_limit_deg,
+                cost_scale=turn_budget_cost_scale,
+            )
+
+        def _min_route_distance_for_count(route_count: int) -> float:
+            route_count = max(2, int(route_count))
+            return (
+                first_leg_min_m
+                + subsequent_leg_min_m * float(max(0, route_count - 1))
+            )
+
+        def _min_budget_for_count(route_count: int) -> float:
+            route_count = max(2, int(route_count))
+            return (
+                _min_route_distance_for_count(route_count)
+                + min_turn_cost_per_turn_m * float(max(0, route_count - 1))
+            )
+
+        max_count = max(2, int(route_budget_m // max(min_leg_m, 1.0)))
+        while max_count > 2 and _min_budget_for_count(max_count) > route_budget_m + 1.0e-6:
+            max_count -= 1
         count = min(count, max_count)
+        while count > 2 and _min_budget_for_count(count) > route_budget_m + 1.0e-6:
+            count -= 1
+
+        max_route_distance_m = max(
+            _min_route_distance_for_count(count),
+            route_budget_m - min_turn_cost_per_turn_m * float(max(0, count - 1)),
+        )
 
         try:
             alt_lo = float(min(altitude_range[0], altitude_range[1]))
@@ -672,14 +744,30 @@ class ScenarioLoader:
         waypoint_mode_cycle = [self._normalize_waypoint_mode(x) for x in waypoint_mode_cycle if str(x).strip()]
         final_waypoint_mode = self._normalize_waypoint_mode(cfg.get("final_waypoint_mode", "flyover"))
 
+        min_turn_cost_m = (
+            self._route_turn_cost_m(
+                min_turn_abs,
+                speed_mps=turn_speed_ref_mps,
+                bank_limit_deg=bank_limit_deg,
+                cost_scale=turn_budget_cost_scale,
+            )
+            if turn_budget_cost_scale > 0.0
+            else 0.0
+        )
         waypoints: list[dict] = []
         remaining_route_budget_m = float(max_route_distance_m)
         for idx in range(count):
             legs_left = max(1, count - idx)
+            current_leg_min_m = first_leg_min_m if idx == 0 else subsequent_leg_min_m
             leg_sample_cfg = first_leg_range if idx == 0 else subsequent_leg_range
-            leg_sample_m = max(min_leg_m, float(self._sample_uniform(leg_sample_cfg, leg_default)))
-            min_remaining_after_this_m = min_leg_m * float(max(0, legs_left - 1))
-            leg_cap_m = max(min_leg_m, remaining_route_budget_m - min_remaining_after_this_m)
+            leg_sample_m = max(current_leg_min_m, float(self._sample_uniform(leg_sample_cfg, leg_default)))
+            future_turns_after_this = max(0, legs_left - 1)
+            min_remaining_after_this_m = 0.0
+            if future_turns_after_this > 0:
+                min_remaining_after_this_m += subsequent_leg_min_m * float(future_turns_after_this)
+            if turn_budget_cost_scale > 0.0 and future_turns_after_this > 0:
+                min_remaining_after_this_m += min_turn_cost_m * float(future_turns_after_this)
+            leg_cap_m = max(current_leg_min_m, remaining_route_budget_m - min_remaining_after_this_m)
             leg_m = min(leg_sample_m, leg_cap_m)
             remaining_route_budget_m = max(0.0, remaining_route_budget_m - leg_m)
             h_rad = math.radians(course_deg)
@@ -710,13 +798,31 @@ class ScenarioLoader:
             if idx >= count - 1:
                 continue
 
-            next_leg_floor_m = min_leg_m
+            next_leg_floor_m = subsequent_leg_min_m
+            lower_bound_m = max(subsequent_leg_min_m, _range_lo(subsequent_leg_range, leg_default))
+            legs_remaining_after_next = max(0, count - idx - 2)
+
+            def _next_leg_floor_after_turn(turn_abs_deg: float) -> float:
+                remaining_after_turn_m = float(remaining_route_budget_m)
+                if turn_budget_cost_scale > 0.0:
+                    remaining_after_turn_m = max(
+                        0.0,
+                        remaining_after_turn_m
+                        - self._route_turn_cost_m(
+                            turn_abs_deg,
+                            speed_mps=turn_speed_ref_mps,
+                            bank_limit_deg=bank_limit_deg,
+                            cost_scale=turn_budget_cost_scale,
+                        ),
+                    )
+                min_remaining_after_next_m = subsequent_leg_min_m * float(legs_remaining_after_next)
+                if turn_budget_cost_scale > 0.0 and legs_remaining_after_next > 0:
+                    min_remaining_after_next_m += min_turn_cost_m * float(legs_remaining_after_next)
+                next_leg_cap_m = max(subsequent_leg_min_m, remaining_after_turn_m - min_remaining_after_next_m)
+                return max(subsequent_leg_min_m, min(lower_bound_m, next_leg_cap_m))
+
             if idx < (count - 1):
-                lower_bound_m = max(min_leg_m, _range_lo(subsequent_leg_range, leg_default))
-                legs_remaining_after_next = max(0, count - idx - 2)
-                min_remaining_after_next_m = min_leg_m * float(legs_remaining_after_next)
-                next_leg_cap_m = max(min_leg_m, remaining_route_budget_m - min_remaining_after_next_m)
-                next_leg_floor_m = max(min_leg_m, min(lower_bound_m, next_leg_cap_m))
+                next_leg_floor_m = _next_leg_floor_after_turn(0.0)
 
             turn_deg = float(self._sample_uniform(turn_range, 0.0))
             turn_range_abs_max = max(abs(float(turn_range[0])), abs(float(turn_range[1])))
@@ -727,20 +833,46 @@ class ScenarioLoader:
                 turn_deg = sign * min_turn_abs
             feasible_turn_abs_deg = float(max_turn_abs)
             if turn_feasibility_enabled:
-                lead_budget_m = min(float(leg_m), float(next_leg_floor_m)) * turn_leg_usage_fraction_limit - max(turn_clearance_m, radius_m)
-                if lead_budget_m <= 0.0:
-                    feasible_turn_abs_deg = 0.0
-                else:
-                    feasible_turn_abs_deg = min(
-                        float(max_turn_abs),
-                        2.0 * math.degrees(math.atan2(float(lead_budget_m), self._turn_radius_m(turn_speed_ref_mps, bank_limit_deg))),
+                turn_radius_m = self._turn_radius_m(turn_speed_ref_mps, bank_limit_deg)
+
+                def _turn_is_feasible(turn_abs_deg: float) -> bool:
+                    next_leg_floor_turn_m = _next_leg_floor_after_turn(turn_abs_deg)
+                    lead_budget_m = (
+                        min(float(leg_m), float(next_leg_floor_turn_m)) * turn_leg_usage_fraction_limit
+                        - max(turn_clearance_m, radius_m)
                     )
-                    feasible_turn_abs_deg = max(0.0, float(feasible_turn_abs_deg))
+                    if lead_budget_m <= 0.0:
+                        return False
+                    required_lead_m = turn_radius_m * math.tan(0.5 * math.radians(float(turn_abs_deg)))
+                    return bool(required_lead_m <= lead_budget_m + 1.0e-6)
+
+                if not math.isfinite(turn_radius_m) or turn_radius_m <= 0.0:
+                    feasible_turn_abs_deg = 0.0
+                elif _turn_is_feasible(float(max_turn_abs)):
+                    feasible_turn_abs_deg = float(max_turn_abs)
+                else:
+                    lo = 0.0
+                    hi = float(max_turn_abs)
+                    for _ in range(20):
+                        mid = 0.5 * (lo + hi)
+                        if _turn_is_feasible(mid):
+                            lo = mid
+                        else:
+                            hi = mid
+                    feasible_turn_abs_deg = max(0.0, float(lo))
 
             if feasible_turn_abs_deg < min_turn_abs and turn_range_abs_max >= min_turn_abs:
                 turn_deg = float(np.clip(turn_deg, -feasible_turn_abs_deg, feasible_turn_abs_deg))
             else:
                 turn_deg = float(np.clip(turn_deg, -min(max_turn_abs, feasible_turn_abs_deg), min(max_turn_abs, feasible_turn_abs_deg)))
+            if turn_budget_cost_scale > 0.0:
+                turn_cost_m = self._route_turn_cost_m(
+                    abs(turn_deg),
+                    speed_mps=turn_speed_ref_mps,
+                    bank_limit_deg=bank_limit_deg,
+                    cost_scale=turn_budget_cost_scale,
+                )
+                remaining_route_budget_m = max(0.0, remaining_route_budget_m - turn_cost_m)
             course_deg = (course_deg + turn_deg) % 360.0
         return waypoints
 
@@ -751,6 +883,23 @@ class ScenarioLoader:
             return float("inf")
         v = max(30.0, float(speed_mps))
         return (v * v) / (9.80665 * abs(tanb))
+
+    def _route_turn_cost_m(
+        self,
+        turn_abs_deg: float,
+        *,
+        speed_mps: float,
+        bank_limit_deg: float,
+        cost_scale: float,
+    ) -> float:
+        turn_abs_deg = abs(float(turn_abs_deg))
+        if turn_abs_deg <= 1.0e-6 or float(cost_scale) <= 1.0e-6:
+            return 0.0
+        turn_radius_m = self._turn_radius_m(float(speed_mps), float(bank_limit_deg))
+        if not math.isfinite(turn_radius_m) or turn_radius_m <= 0.0:
+            return 0.0
+        turn_arc_m = turn_radius_m * math.radians(turn_abs_deg)
+        return max(0.0, float(turn_arc_m) * float(cost_scale))
 
     def set_randomization_overrides(self, overrides: dict | None) -> None:
         """
@@ -782,6 +931,28 @@ class ScenarioLoader:
     def load_scenario_data(self, scenario_data: dict, seed=42, *, source_path: str | None = None):
         compiled = ScenarioCompiler.compile_data(scenario_data, source_path=source_path)
         return self.load_compiled_scenario(compiled, seed=seed)
+
+    def get_active_roster_member(
+        self,
+        *,
+        entity_id: int | None = None,
+        entity_name: str | None = None,
+        role_code: int | None = None,
+        formation_role_id: str | None = None,
+    ):
+        return find_active_roster_member(
+            getattr(self, "active_roster", None),
+            entity_id=entity_id,
+            entity_name=entity_name,
+            role_code=role_code,
+            formation_role_id=formation_role_id,
+        )
+
+    def get_active_roster_refs(self, *, world_index: int | None = None):
+        return active_roster_world_entity_refs(
+            getattr(self, "active_roster", None),
+            world_index=world_index,
+        )
 
     def _prepare_load_seed(self, seed=42) -> int:
         if seed is None:
@@ -851,6 +1022,7 @@ class ScenarioLoader:
             self.scenario_data["task_order"] = dict(task_cfg)
         self._align_task_only_mission_shell_with_task_order()
         self.mission_cmd = _normalize_runtime_mission_command(self.mission_cmd, task_cfg)
+        invalidate_runtime_waypoint_cache(self.mission_cmd)
         materialize_runtime_waypoint_cache(self.mission_cmd)
         self.scenario_data["mission_command"] = self.mission_cmd
         self._cached_route_ref_id = None
@@ -918,6 +1090,7 @@ class ScenarioLoader:
         self.world_yaw_origin_x = float(layout.world_yaw_origin_x)
         self.world_yaw_origin_y = float(layout.world_yaw_origin_y)
         self.entities = dict(prepared_world.entities)
+        self.active_roster = list(getattr(prepared_world, "active_roster", []) or [])
         self.agent_id = prepared_world.agent_id
         _ = seed
         return self._finalize_loaded_world(
@@ -943,6 +1116,7 @@ class ScenarioLoader:
         self.world_yaw_origin_y = float(world_layout.world_yaw_origin_y)
         applied_world = apply_world_layout_to_kernel(self.sim, world_layout)
         self.entities = dict(applied_world.entities)
+        self.active_roster = list(getattr(applied_world, "active_roster", []) or [])
         self.agent_id = applied_world.agent_id
         initial_truth = None
         initial_inst = None
@@ -1126,6 +1300,8 @@ class ScenarioLoader:
             float(getattr(truth, "x", 0.0)),
             float(getattr(truth, "y", 0.0)),
             float(speed_mps),
+            float(self.mission_cmd.get("form_offset_x", 0.0) or 0.0),
+            float(self.mission_cmd.get("form_offset_y", 0.0) or 0.0),
         )
         cache = getattr(self, "_runtime_eval_cache", None)
         if isinstance(cache, dict) and cache.get("route_guidance_key") == cache_key:
@@ -1134,8 +1310,13 @@ class ScenarioLoader:
 
         opts = ef_py.SpatialRouteQueryOptions()
         opts.waypoint_index = int(cache_key[1])
-        opts.own_x_m = float(getattr(truth, "x", 0.0))
-        opts.own_y_m = float(getattr(truth, "y", 0.0))
+        ref_x_m, ref_y_m = self._route_reference_xy(
+            float(getattr(truth, "x", 0.0)),
+            float(getattr(truth, "y", 0.0)),
+            int(cache_key[1]),
+        )
+        opts.own_x_m = float(ref_x_m)
+        opts.own_y_m = float(ref_y_m)
         opts.own_speed_mps = float(speed_mps)
         lnav_cfg = self._lnav_runtime_cfg
         opts.base_lookahead_m = float(lnav_cfg.lookahead_m)
@@ -1266,8 +1447,6 @@ class ScenarioLoader:
         if isinstance(route_gen, dict) and bool(route_gen.get("enabled", True)):
             generated = self._generate_route_waypoints(route_gen)
             if generated:
-                if self.rotate_mission_heading_with_world and abs(float(self.world_yaw_deg)) > 1.0e-6:
-                    self._rotate_waypoints_inplace(generated)
                 self.mission_cmd["waypoints"] = generated
                 self.mission_cmd["_waypoint_template_idx"] = -1
                 self.mission_cmd["_route_generator_used"] = True
@@ -1656,6 +1835,9 @@ class ScenarioLoader:
                 }
             )
         materialize_runtime_waypoint_cache(mc)
+        cached_waypoints = mc.get("_normalized_waypoints", None)
+        if isinstance(cached_waypoints, list):
+            self.waypoints = _clone_scenario_value(cached_waypoints)
         route_ref_id = _coerce_nonnegative_int(mc.get("route_ref_id", 0), 0)
         self._cached_route_ref_id = int(route_ref_id) if route_ref_id > 0 else None
         if self.waypoints:
@@ -1841,6 +2023,65 @@ class ScenarioLoader:
         ground_track = ScenarioLoader._instrument_scalar(inst, "ground_track", 30)
         return float(ef_py.resolve_ground_track_deg(float(fallback_heading_deg), float(ground_track)))
 
+    def _formation_slot_offsets_m(self) -> tuple[float, float, float]:
+        return (
+            float(self.mission_cmd.get("form_offset_x", 0.0) or 0.0),
+            float(self.mission_cmd.get("form_offset_y", 0.0) or 0.0),
+            float(self.mission_cmd.get("form_offset_z", 0.0) or 0.0),
+        )
+
+    def _route_leg_frame(self, waypoint_index: int) -> tuple[float, float, float, float] | None:
+        if not self.waypoints:
+            return None
+        idx = int(np.clip(int(waypoint_index), 0, max(0, len(self.waypoints) - 1)))
+        end_wp = self.waypoints[idx]
+        if idx > 0:
+            start_wp = self.waypoints[idx - 1]
+            sx = float(start_wp.get("x", 0.0))
+            sy = float(start_wp.get("y", 0.0))
+        else:
+            sx = float(getattr(self, "_waypoint_leg_origin_x", 0.0))
+            sy = float(getattr(self, "_waypoint_leg_origin_y", 0.0))
+        ex = float(end_wp.get("x", 0.0))
+        ey = float(end_wp.get("y", 0.0))
+        dx = ex - sx
+        dy = ey - sy
+        leg_len = math.hypot(dx, dy)
+        if leg_len <= 1.0e-6:
+            return None
+        forward_x = dx / leg_len
+        forward_y = dy / leg_len
+        left_x = -forward_y
+        left_y = forward_x
+        return forward_x, forward_y, left_x, left_y
+
+    def _route_reference_xy(self, own_x_m: float, own_y_m: float, waypoint_index: int) -> tuple[float, float]:
+        frame = self._route_leg_frame(int(waypoint_index))
+        if frame is None:
+            return float(own_x_m), float(own_y_m)
+        forward_x, forward_y, left_x, left_y = frame
+        form_offset_x, form_offset_y, _form_offset_z = self._formation_slot_offsets_m()
+        ref_x = float(own_x_m) + forward_x * float(form_offset_x) - left_x * float(form_offset_y)
+        ref_y = float(own_y_m) + forward_y * float(form_offset_x) - left_y * float(form_offset_y)
+        return float(ref_x), float(ref_y)
+
+    def _slot_target_altitude_for_waypoint(self, waypoint: dict | None, *, fallback_m: float | None = None) -> float:
+        default_alt = float(self.mission_cmd.get("target_altitude", 0.0) if fallback_m is None else fallback_m)
+        base_alt = default_alt
+        if isinstance(waypoint, dict):
+            base_alt = float(waypoint.get("altitude_m", waypoint.get("z", default_alt)))
+        _form_offset_x, _form_offset_y, form_offset_z = self._formation_slot_offsets_m()
+        return float(base_alt + float(form_offset_z))
+
+    def _current_route_target_altitude_m(self, *, truth=None, inst=None) -> float | None:
+        result = self._query_route_guidance_result(truth=truth, inst=inst)
+        if result is None or not bool(getattr(result, "valid", False)):
+            return None
+        idx = int(getattr(result, "idx", -1))
+        if idx < 0 or idx >= len(self.waypoints):
+            return None
+        return float(self._slot_target_altitude_for_waypoint(self.waypoints[idx]))
+
     def _mission_nav_inputs(self, truth, inst, route_result):
         if route_result is None or not bool(getattr(route_result, "valid", False)):
             return None
@@ -1860,7 +2101,7 @@ class ScenarioLoader:
             inputs.inst_heading_deg = self._instrument_scalar(inst, "heading", 9)
             inputs.inst_ground_track_deg = self._instrument_scalar(inst, "ground_track", 30)
             inputs.inst_ias_mps = self._instrument_scalar(inst, "ias", 0)
-        inputs.waypoint_altitude_m = float(wp.get("altitude_m", wp.get("z", 0.0)))
+        inputs.waypoint_altitude_m = float(self._slot_target_altitude_for_waypoint(wp))
         inputs.cdi_full_scale_m = float(self._lnav_runtime_cfg.cdi_full_scale_m)
         return inputs
 
@@ -1898,6 +2139,12 @@ class ScenarioLoader:
             return 1
         if mode_norm == "nav_v2":
             return 2
+        if mode_norm == "nav_v2_formation_v1":
+            return 3
+        if mode_norm == "nav_v2_formation_role_v1":
+            return 4
+        if mode_norm == "nav_v2_cooperative_takeoff_v1":
+            return 5
         raise ValueError(f"Unknown mission observation mode: {mode}")
 
     def _build_mission_observation_runtime_inputs(self, mode: str, *, truth=None, inst=None):
@@ -1905,8 +2152,30 @@ class ScenarioLoader:
         inputs.mode_code = int(self._mission_observation_mode_code(mode))
         inputs.command_code = float(self.mission_cmd["command_code"])
         inputs.target_heading_deg = float(self.mission_cmd["target_heading"])
-        inputs.target_altitude_m = float(self.mission_cmd["target_altitude"])
+        route_target_altitude_m = self._current_route_target_altitude_m(truth=truth, inst=inst)
+        inputs.target_altitude_m = float(
+            self.mission_cmd["target_altitude"] if route_target_altitude_m is None else route_target_altitude_m
+        )
         inputs.target_speed_mps = float(self.mission_cmd["target_speed"])
+        inputs.takeoff_procedure_code = float(self.mission_cmd.get("takeoff_procedure_code", 0.0))
+        inputs.takeoff_clearance_code = float(self.mission_cmd.get("takeoff_clearance_code", 0.0))
+        inputs.takeoff_interval_s = float(self.mission_cmd.get("takeoff_interval_s", 0.0))
+        inputs.runway_slot_code = float(self.mission_cmd.get("runway_slot_code", 0.0))
+        inputs.form_offset_x = float(self.mission_cmd.get("form_offset_x", 0.0))
+        inputs.form_offset_y = float(self.mission_cmd.get("form_offset_y", 0.0))
+        inputs.form_offset_z = float(self.mission_cmd.get("form_offset_z", 0.0))
+        if int(inputs.mode_code) in (4, 5):
+            member = find_active_roster_member(getattr(self, "active_roster", None), entity_id=self.agent_id)
+            ref_member = None
+            if member is not None and getattr(member, "reference_entity_id", None) is not None:
+                ref_member = find_active_roster_member(
+                    getattr(self, "active_roster", None),
+                    entity_id=int(member.reference_entity_id),
+                )
+            inputs.self_role_code = float(getattr(member, "role_code", 0) or 0)
+            inputs.self_formation_role_code = float(_formation_role_code_from_member(member))
+            inputs.relative_slot_code = float(getattr(member, "relative_slot_code", 0) or 0)
+            inputs.reference_relative_slot_code = float(getattr(ref_member, "relative_slot_code", 0) or 0)
 
         if int(inputs.mode_code) == 0:
             return inputs
@@ -2017,7 +2286,9 @@ class ScenarioLoader:
         inputs.curr_yaw_rate_deg_s = float(inst_vec[14]) if len(inst_vec) > 14 else 0.0
         inputs.curr_g_load = float(inst_vec[10]) if len(inst_vec) > 10 else 1.0
         inputs.step_count = int(steps)
-        inputs.target_altitude_m = float(cfg.get("altitude_progress_target", self.mission_cmd.get("target_altitude", 0.0)) or 0.0)
+        route_target_altitude_m = self._current_route_target_altitude_m(truth=truth)
+        base_target_altitude_m = self.mission_cmd.get("target_altitude", 0.0) if route_target_altitude_m is None else route_target_altitude_m
+        inputs.target_altitude_m = float(cfg.get("altitude_progress_target", base_target_altitude_m) or 0.0)
         inputs.target_speed_mps = float(cfg.get("speed_progress_target", self.mission_cmd.get("target_speed", 180.0)) or 0.0)
         inputs.heading_error_deg = float(heading_error_deg)
         inputs.ground_track_error_deg = float(ground_track_error_deg)
@@ -2062,7 +2333,8 @@ class ScenarioLoader:
         inputs.altitude_error_weight = float(cfg.get("altitude_error_weight", 0.0))
         inputs.altitude_error_min_alt_m = float(cfg.get("altitude_error_min_alt", 0.0))
         inputs.altitude_error_target_m = float(
-            cfg.get("altitude_error_target", self.mission_cmd.get("target_altitude", inputs.curr_alt_baro_m)) or inputs.curr_alt_baro_m
+            cfg.get("altitude_error_target", base_target_altitude_m if route_target_altitude_m is not None else self.mission_cmd.get("target_altitude", inputs.curr_alt_baro_m))
+            or inputs.curr_alt_baro_m
         )
         inputs.altitude_error_deadband_m = float(
             cfg.get("altitude_error_deadband_m", cfg.get("altitude_error_band_m", 0.0))
@@ -2787,6 +3059,18 @@ class ScenarioLoader:
             lead = float(gstate.get("lead_turn_m", 0.0))
             seq_gate_m = float(gstate.get("sequence_gate_m", rad))
             passed_fix = bool(gstate.get("passed_fix", False))
+        else:
+            ref_x, ref_y = self._route_reference_xy(
+                float(getattr(truth, "x", 0.0)),
+                float(getattr(truth, "y", 0.0)),
+                int(idx),
+            )
+            dist_m = float(
+                math.hypot(
+                    float(wp.get("x", 0.0)) - ref_x,
+                    float(wp.get("y", 0.0)) - ref_y,
+                )
+            )
 
         waypoint_inputs = self._build_waypoint_reward_inputs(
             cfg,
@@ -3056,7 +3340,10 @@ class ScenarioLoader:
         inputs.heading_deg = float(getattr(truth, "heading", 0.0))
         inputs.x_m = float(getattr(truth, "x", 0.0))
         inputs.y_m = float(getattr(truth, "y", 0.0))
-        inputs.target_altitude_m = float(self.mission_cmd.get("target_altitude", 0.0))
+        route_target_altitude_m = self._current_route_target_altitude_m(truth=truth)
+        inputs.target_altitude_m = float(
+            self.mission_cmd.get("target_altitude", 0.0) if route_target_altitude_m is None else route_target_altitude_m
+        )
         inputs.target_speed_mps = float(self.mission_cmd.get("target_speed", 0.0))
         inputs.target_heading_deg = float(self.mission_cmd.get("target_heading", 0.0))
         return inputs
@@ -4209,11 +4496,15 @@ class ScenarioLoader:
             valid_runway_frame = False
         if not bool(valid_runway_frame):
             return False
-        threshold_arming_window_m = 1000.0
+        post = self.post_waypoint_transition if isinstance(self.post_waypoint_transition, dict) else {}
+        threshold_arming_window_m = float(post.get("terminal_ready_threshold_window_m", 1000.0))
+        threshold_arming_window_m = float(np.clip(threshold_arming_window_m, 500.0, 6000.0))
         min_along_m = -0.5 * max(float(runway_len_m), 0.0) - threshold_arming_window_m
         if float(along_m) < float(min_along_m):
             return False
-        if abs(float(cross_m)) > 3500.0:
+        max_cross_m = float(post.get("terminal_ready_cross_m_max", 3500.0))
+        max_cross_m = float(np.clip(max_cross_m, 1000.0, 8000.0))
+        if abs(float(cross_m)) > max_cross_m:
             return False
 
         try:
@@ -4237,7 +4528,9 @@ class ScenarioLoader:
         except Exception:
             return False
         dme_m = float(ils[3]) if len(ils) >= 4 else float("inf")
-        return dme_m <= 18000.0
+        max_dme_m = float(post.get("terminal_ready_dme_m_max", 18000.0))
+        max_dme_m = float(np.clip(max_dme_m, 6000.0, 40000.0))
+        return dme_m <= max_dme_m
 
     def _post_waypoint_transition_ready(self) -> bool:
         if not isinstance(self.post_waypoint_transition, dict) or not self.post_waypoint_transition:
@@ -4287,8 +4580,8 @@ class ScenarioLoader:
         runway_heading_rad = math.radians(runway_heading_deg)
         fwd_x = math.sin(runway_heading_rad)
         fwd_y = math.cos(runway_heading_rad)
-        intercept_before_threshold_m = float(post.get("approach_arm_before_threshold_m", 1000.0))
-        intercept_before_threshold_m = float(np.clip(intercept_before_threshold_m, 600.0, 2500.0))
+        intercept_before_threshold_m = float(post.get("approach_arm_before_threshold_m", 1600.0))
+        intercept_before_threshold_m = float(np.clip(intercept_before_threshold_m, 1000.0, 5000.0))
         intercept_x = float(beacon.get("thr_x", 0.0)) - fwd_x * intercept_before_threshold_m
         intercept_y = float(beacon.get("thr_y", 0.0)) - fwd_y * intercept_before_threshold_m
 
@@ -4388,6 +4681,14 @@ class ScenarioLoader:
                      track_angle_error_deg, leg_distance_remaining_m, next_turn_deg,
                      distance_to_turn_m]
                     where steerpoint_mode_code is 0.0 for fly-by and 1.0 for fly-over.
+          - nav_v2_formation_v1: nav_v2 + assigned formation slot offsets
+                    [form_offset_x_m, form_offset_y_m, form_offset_z_m]
+          - nav_v2_formation_role_v1: nav_v2_formation_v1 + cooperative role/reference semantics
+                    [self_role_code, self_formation_role_code, relative_slot_code, reference_relative_slot_code]
+          - nav_v2_cooperative_takeoff_v1: nav_v2 + takeoff procedure / clearance / runway slot
+                    [takeoff_procedure_code, takeoff_clearance_code, takeoff_interval_s, runway_slot_code,
+                     form_offset_x_m, form_offset_y_m, form_offset_z_m,
+                     self_role_code, self_formation_role_code, relative_slot_code, reference_relative_slot_code]
         """
         mode_norm = str(mode).strip().lower()
         _ = self._mission_observation_mode_code(mode_norm)
@@ -4414,7 +4715,47 @@ class ScenarioLoader:
 
         products = self._get_waypoint_nav_products(truth=truth, inst=inst)
         if products is None:
-            return np.concatenate([base, np.zeros((7 if mode_norm == "nav_v1" else 10,), dtype=np.float32)], axis=0)
+            nav_zeros = np.zeros((7 if mode_norm == "nav_v1" else 10,), dtype=np.float32)
+            if mode_norm in ("nav_v2_formation_v1", "nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"):
+                formation = np.array(
+                    [
+                        float(self.mission_cmd.get("form_offset_x", 0.0)),
+                        float(self.mission_cmd.get("form_offset_y", 0.0)),
+                        float(self.mission_cmd.get("form_offset_z", 0.0)),
+                    ],
+                    dtype=np.float32,
+                )
+                if mode_norm in ("nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"):
+                    member = find_active_roster_member(getattr(self, "active_roster", None), entity_id=self.agent_id)
+                    ref_member = None
+                    if member is not None and getattr(member, "reference_entity_id", None) is not None:
+                        ref_member = find_active_roster_member(
+                            getattr(self, "active_roster", None),
+                            entity_id=int(member.reference_entity_id),
+                        )
+                    role = np.array(
+                        [
+                            float(getattr(member, "role_code", 0) or 0),
+                            float(_formation_role_code_from_member(member)),
+                            float(getattr(member, "relative_slot_code", 0) or 0),
+                            float(getattr(ref_member, "relative_slot_code", 0) or 0),
+                        ],
+                        dtype=np.float32,
+                    )
+                    if mode_norm == "nav_v2_cooperative_takeoff_v1":
+                        takeoff = np.array(
+                            [
+                                float(self.mission_cmd.get("takeoff_procedure_code", 0.0)),
+                                float(self.mission_cmd.get("takeoff_clearance_code", 0.0)),
+                                float(self.mission_cmd.get("takeoff_interval_s", 0.0)),
+                                float(self.mission_cmd.get("runway_slot_code", 0.0)),
+                            ],
+                            dtype=np.float32,
+                        )
+                        return np.concatenate([base, nav_zeros, takeoff, formation, role], axis=0)
+                    return np.concatenate([base, nav_zeros, formation, role], axis=0)
+                return np.concatenate([base, nav_zeros, formation], axis=0)
+            return np.concatenate([base, nav_zeros], axis=0)
 
         if mode_norm == "nav_v1":
             nav = np.array(
@@ -4446,6 +4787,45 @@ class ScenarioLoader:
             ],
             dtype=np.float32,
         )
+        if mode_norm in ("nav_v2_formation_v1", "nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"):
+            formation = np.array(
+                [
+                    float(self.mission_cmd.get("form_offset_x", 0.0)),
+                    float(self.mission_cmd.get("form_offset_y", 0.0)),
+                    float(self.mission_cmd.get("form_offset_z", 0.0)),
+                ],
+                dtype=np.float32,
+            )
+            if mode_norm in ("nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"):
+                member = find_active_roster_member(getattr(self, "active_roster", None), entity_id=self.agent_id)
+                ref_member = None
+                if member is not None and getattr(member, "reference_entity_id", None) is not None:
+                    ref_member = find_active_roster_member(
+                        getattr(self, "active_roster", None),
+                        entity_id=int(member.reference_entity_id),
+                    )
+                role = np.array(
+                    [
+                        float(getattr(member, "role_code", 0) or 0),
+                        float(_formation_role_code_from_member(member)),
+                        float(getattr(member, "relative_slot_code", 0) or 0),
+                        float(getattr(ref_member, "relative_slot_code", 0) or 0),
+                    ],
+                    dtype=np.float32,
+                )
+                if mode_norm == "nav_v2_cooperative_takeoff_v1":
+                    takeoff = np.array(
+                        [
+                            float(self.mission_cmd.get("takeoff_procedure_code", 0.0)),
+                            float(self.mission_cmd.get("takeoff_clearance_code", 0.0)),
+                            float(self.mission_cmd.get("takeoff_interval_s", 0.0)),
+                            float(self.mission_cmd.get("runway_slot_code", 0.0)),
+                        ],
+                        dtype=np.float32,
+                    )
+                    return np.concatenate([base, nav2, takeoff, formation, role], axis=0)
+                return np.concatenate([base, nav2, formation, role], axis=0)
+            return np.concatenate([base, nav2, formation], axis=0)
         return np.concatenate([base, nav2], axis=0)
 
     def _get_waypoint_nav_products(self, *, truth=None, inst=None):
@@ -4504,7 +4884,7 @@ class ScenarioLoader:
 
                         # Optional per-waypoint cruise constraints.
                         try:
-                            self.mission_cmd["target_altitude"] = float(wp.get("altitude_m", self.mission_cmd.get("target_altitude", 0.0)))
+                            self.mission_cmd["target_altitude"] = float(self._slot_target_altitude_for_waypoint(wp))
                         except Exception:
                             pass
                         try:
@@ -4535,7 +4915,7 @@ class ScenarioLoader:
         sim_time = float(getattr(self, "steps", 0)) * float(dt)
         self.update_behaviors(sim_time, truth=truth, inst=inst, sync_to_kernel=sync_to_kernel)
 
-    def compute_full_step(self, obs, sim, steps, max_steps, *, truth=None, inst_state=None):
+    def compute_full_step(self, obs, sim, steps, max_steps, *, truth=None, inst_state=None, step_evaluation=None):
         cfg = self._compiled_rewards_cfg if isinstance(self._compiled_rewards_cfg, dict) and self._compiled_rewards_cfg else self.scenario_data.get("rewards", {})
         safety_cfg = self._safety_reward_cfg
         approach_cfg = self._approach_reward_cfg
@@ -4555,15 +4935,26 @@ class ScenarioLoader:
             except Exception:
                 inst_obj = None
 
-        step_eval = self._prepare_step_evaluation(
-            truth=truth,
-            inst_obj=inst_obj,
-            inst_vec=inst,
-            ils_vec=np.asarray(inst[-4:], dtype=np.float32) if len(inst) >= 4 else np.zeros((4,), dtype=np.float32),
-            steps=int(steps),
-            max_steps=int(max_steps),
-            mission_obs_mode=None,
-        )
+        step_eval = step_evaluation if isinstance(step_evaluation, dict) else None
+        if step_eval is not None:
+            if truth is not None and step_eval.get("truth_obj") is not truth:
+                step_eval = None
+            elif inst_obj is not None and step_eval.get("inst_obj") is not inst_obj:
+                step_eval = None
+            elif int(step_eval.get("steps", -1)) != int(steps):
+                step_eval = None
+            elif int(step_eval.get("max_steps", -1)) != int(max_steps):
+                step_eval = None
+        if step_eval is None:
+            step_eval = self._prepare_step_evaluation(
+                truth=truth,
+                inst_obj=inst_obj,
+                inst_vec=inst,
+                ils_vec=np.asarray(inst[-4:], dtype=np.float32) if len(inst) >= 4 else np.zeros((4,), dtype=np.float32),
+                steps=int(steps),
+                max_steps=int(max_steps),
+                mission_obs_mode=None,
+            )
         frame_products = step_eval.get("frame_products") if isinstance(step_eval, dict) else None
         truncated = bool(step_eval.get("truncated", steps >= max_steps))
         curr_aoa = float(step_eval.get("curr_aoa", inst[5]))

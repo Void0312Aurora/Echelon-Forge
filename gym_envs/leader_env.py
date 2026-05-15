@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import glob
 import json
 import math
 import os
@@ -13,9 +12,25 @@ import numpy as np
 import torch
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_BUILD_DIR = os.path.join(_REPO_ROOT, "build")
-if os.path.isdir(_BUILD_DIR) and glob.glob(os.path.join(_BUILD_DIR, "ef_py*.so")):
-    sys.path.insert(0, _BUILD_DIR)
+_BUILD_DIRS = []
+_ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
+if _ENV_BUILD_DIR:
+    _BUILD_DIRS.append(_ENV_BUILD_DIR if os.path.isabs(_ENV_BUILD_DIR) else os.path.join(_REPO_ROOT, _ENV_BUILD_DIR))
+_BUILD_DIRS.extend(
+    [
+        os.path.join(_REPO_ROOT, "build-workshop"),
+        os.path.join(_REPO_ROOT, "build-gpu"),
+        os.path.join(_REPO_ROOT, "build"),
+    ]
+)
+for _build_dir in reversed(_BUILD_DIRS):
+    _build_dir = os.path.abspath(_build_dir)
+    if os.path.isdir(_build_dir) and any(
+        fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_build_dir)
+    ):
+        if _build_dir in sys.path:
+            sys.path.remove(_build_dir)
+        sys.path.insert(0, _build_dir)
 
 import ef_py
 

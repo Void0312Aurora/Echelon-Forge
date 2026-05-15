@@ -12,7 +12,10 @@ ensure_repo_imports()
 import ef_py  # noqa: E402
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
 from python.scenario_runtime import BatchWorldApplyBuffer  # noqa: E402
+from python.scenario_runtime import active_roster_world_entity_refs  # noqa: E402
+from python.scenario_runtime import find_active_roster_member  # noqa: E402
 from python.scenario_runtime import load_compiled_scenario_batch  # noqa: E402
+from python.scenario_runtime import resolve_active_controllable_roster  # noqa: E402
 
 
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
@@ -101,6 +104,112 @@ def _build_route_request(entity_id: int) -> ef_py.WorldExecutionEpisodeStepReque
 
 
 class RuntimeFacadeTests(unittest.TestCase):
+    def test_resolve_active_controllable_roster_returns_active_members(self) -> None:
+        scenario = {
+            "scenario_name": "roster_resolution",
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "legacy",
+                "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+                "zones": [],
+            },
+            "mission_command": {
+                "command_code": 2,
+                "target_heading": 90.0,
+                "target_altitude": 1200.0,
+                "target_speed": 180.0,
+            },
+            "entities": [
+                {"name": "Lead", "type": "Aircraft", "side": "Blue", "is_agent": True, "pos": [-1400.0, 0.0, 1200.0], "vel": [0.0, 180.0, 0.0], "heading": 90.0},
+                {"name": "Wing", "type": "Aircraft", "side": "Blue", "is_agent": True, "pos": [-1550.0, -120.0, 1200.0], "vel": [0.0, 180.0, 0.0], "heading": 90.0},
+            ],
+            "cooperative_roster": {
+                "team_id": 7001,
+                "members": [
+                    {
+                        "entity": "Lead",
+                        "role_code": 21,
+                        "formation_role_id": "ElementLead",
+                        "relative_slot_code": 11,
+                        "policy_route": "shared_execution",
+                    },
+                    {
+                        "entity": "Wing",
+                        "role_code": 22,
+                        "formation_role_id": "Wingman",
+                        "relative_slot_code": 12,
+                        "reference_entity": "Lead",
+                        "policy_route": "shared_execution",
+                    },
+                ],
+            },
+        }
+
+        compiled = ScenarioCompiler.compile_data(scenario)
+        worlds = load_compiled_scenario_batch(
+            ef_py.WorldBatchRuntime(1),
+            compiled,
+            seeds=[123],
+        )
+
+        self.assertEqual(len(worlds), 1)
+        roster = worlds[0].active_roster
+        self.assertEqual(len(roster), 2)
+        self.assertEqual({member.entity_name for member in roster}, {"Lead", "Wing"})
+        self.assertEqual(int(roster[0].team_id), 7001)
+        self.assertEqual(int(roster[0].role_code), 21)
+        self.assertEqual(int(roster[1].reference_entity_id), int(worlds[0].entities["Lead"]))
+
+    def test_resolve_active_controllable_roster_falls_back_to_agent_entities(self) -> None:
+        scenario = {
+            "scenario_name": "roster_fallback",
+            "entities": [
+                {"name": "Lead", "type": "Aircraft", "side": "Blue", "is_agent": True},
+                {"name": "Wing", "type": "Aircraft", "side": "Blue", "is_agent": True},
+                {"name": "Observer", "type": "Aircraft", "side": "Blue", "is_agent": False},
+            ],
+        }
+        entities = {"Lead": 101, "Wing": 102, "Observer": 103}
+
+        roster = resolve_active_controllable_roster(scenario, entities, world_index=7)
+
+        self.assertEqual(len(roster), 2)
+        self.assertEqual([int(member.world_index) for member in roster], [7, 7])
+        self.assertEqual({member.entity_name for member in roster}, {"Lead", "Wing"})
+        self.assertTrue(all(bool(member.is_agent) for member in roster))
+
+    def test_active_roster_helpers_find_members_and_build_refs(self) -> None:
+        scenario = {
+            "scenario_name": "roster_helpers",
+            "entities": [
+                {"name": "Lead", "type": "Aircraft", "side": "Blue", "is_agent": True},
+                {"name": "Wing", "type": "Aircraft", "side": "Blue", "is_agent": True},
+            ],
+            "cooperative_roster": {
+                "team_id": 8001,
+                "members": [
+                    {"entity": "Lead", "role_code": 21, "formation_role_id": "ElementLead"},
+                    {"entity": "Wing", "role_code": 22, "formation_role_id": "Wingman", "reference_entity": "Lead"},
+                ],
+            },
+        }
+        entities = {"Lead": 201, "Wing": 202}
+        roster = resolve_active_controllable_roster(scenario, entities, world_index=3)
+
+        wing = find_active_roster_member(roster, entity_name="Wing")
+        self.assertIsNotNone(wing)
+        self.assertEqual(int(wing.entity_id), 202)
+        self.assertEqual(int(wing.reference_entity_id), 201)
+
+        lead = find_active_roster_member(roster, role_code=21)
+        self.assertIsNotNone(lead)
+        self.assertEqual(str(lead.formation_role_id), "ElementLead")
+
+        refs = active_roster_world_entity_refs(roster)
+        self.assertEqual(len(refs), 2)
+        self.assertEqual([int(ref.world_index) for ref in refs], [3, 3])
+        self.assertEqual([int(ref.entity_id) for ref in refs], [201, 202])
+
     def test_runtime_facade_exposes_capabilities_and_batch_config(self) -> None:
         config = ef_py.RuntimeBatchConfig()
         config.world_count = 3

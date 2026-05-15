@@ -17,7 +17,9 @@
    下一批候选冻结执行计划，聚焦 facade 分层清理、主线前端解耦和依赖方向检查。
 6. [src_layered_refactor_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/src_layered_refactor_freeze.zh.md)  
    当前 `src/` 分层重构冻结执行计划，聚焦目录边界、README 护栏、大文件拆分路线和 command/tasking 归属。
-7. [cpp_exact_runtime_refactor_plan.md](/home/void0312/Workshop/CMO/docs/plan/cpp_exact_runtime_refactor_plan.md) 与 [gpu_execution_mainline_integration_checklist.md](/home/void0312/Workshop/CMO/docs/plan/gpu_execution_mainline_integration_checklist.md)  
+7. [multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)  
+   多 agent 协同训练底座与性能计划，回答“如何把单 world 多实体变成真正可训练的协同底座，以及性能风险如何前置分析”。
+8. [cpp_exact_runtime_refactor_plan.md](/home/void0312/Workshop/CMO/docs/plan/cpp_exact_runtime_refactor_plan.md) 与 [gpu_execution_mainline_integration_checklist.md](/home/void0312/Workshop/CMO/docs/plan/gpu_execution_mainline_integration_checklist.md)  
    后续专项方向文档；可作为下一轮计划依据，但在重新冻结前不应直接扩展实现范围。
 
 ## 二、文档分类

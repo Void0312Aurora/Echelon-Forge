@@ -33,18 +33,18 @@ def _load_json(path: str) -> dict[str, Any]:
     return data
 
 
-def _load_policy(model_path: str, algo: str):
+def _load_policy(model_path: str, algo: str, device: str):
     load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
     algo_name = str(algo).strip()
     if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
         try:
-            return AdaptiveKLPPO.load(load_path, device="cpu")
+            return AdaptiveKLPPO.load(load_path, device=device)
         except Exception:
             if algo_name != "auto":
                 raise
     from stable_baselines3 import PPO
 
-    return PPO.load(load_path, device="cpu")
+    return PPO.load(load_path, device=device)
 
 
 def _make_env_settings(train_config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
@@ -139,6 +139,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--max_steps", type=int, default=None)
     parser.add_argument("--stochastic", action="store_true")
+    parser.add_argument("--device", type=str, default="auto", help="Policy inference device: auto / cpu / cuda")
     parser.add_argument(
         "--include_visual",
         action=argparse.BooleanOptionalAction,
@@ -151,7 +152,12 @@ def main() -> int:
         default=None,
         help="Override env proprio flag from train config.",
     )
-    parser.add_argument("--mission_obs_mode", type=str, default=None, choices=["basic", "nav_v1", "nav_v2"])
+    parser.add_argument(
+        "--mission_obs_mode",
+        type=str,
+        default=None,
+        choices=["basic", "nav_v1", "nav_v2", "nav_v2_formation_v1", "nav_v2_formation_role_v1"],
+    )
     parser.add_argument("--visual_downsample", type=int, default=None)
     parser.add_argument("--visual_update_interval", type=int, default=None)
     parser.add_argument("--action_mode", type=str, default=None, choices=["full", "takeoff2", "takeoff4"])
@@ -159,7 +165,7 @@ def main() -> int:
     args = parser.parse_args()
 
     train_config = _load_json(os.path.abspath(args.train_config))
-    model = _load_policy(os.path.abspath(args.model), algo=str(args.algo))
+    model = _load_policy(os.path.abspath(args.model), algo=str(args.algo), device=str(args.device))
     env, env_settings = _build_env(os.path.abspath(args.scenario), train_config, args)
 
     try:

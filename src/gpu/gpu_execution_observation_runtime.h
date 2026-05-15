@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "core/interfaces/observation.h"
-#include "core/mission/mission_runtime.h"
+#include "core/mission/runtime/mission_runtime.h"
 
 namespace gpu {
 
@@ -14,6 +14,9 @@ constexpr int kExecutionObservationRwrWidth = 4;
 constexpr int kExecutionObservationMissionBasicCount = 4;
 constexpr int kExecutionObservationMissionNavV1Count = 11;
 constexpr int kExecutionObservationMissionNavV2Count = 14;
+constexpr int kExecutionObservationMissionNavV2FormationV1Count = 17;
+constexpr int kExecutionObservationMissionNavV2FormationRoleV1Count = 21;
+constexpr int kExecutionObservationMissionNavV2CooperativeTakeoffV1Count = 25;
 
 struct ExecutionObservationBatchRequest {
     struct InstrumentPacked {
@@ -63,6 +66,17 @@ struct ExecutionObservationBatchRequest {
         double target_heading_deg = 0.0;
         double target_altitude_m = 0.0;
         double target_speed_mps = 0.0;
+        double takeoff_procedure_code = 0.0;
+        double takeoff_clearance_code = 0.0;
+        double takeoff_interval_s = 0.0;
+        double runway_slot_code = 0.0;
+        double form_offset_x = 0.0;
+        double form_offset_y = 0.0;
+        double form_offset_z = 0.0;
+        double self_role_code = 0.0;
+        double self_formation_role_code = 0.0;
+        double relative_slot_code = 0.0;
+        double reference_relative_slot_code = 0.0;
         bool has_route_guidance = false;
         int route_idx = 0;
         int route_count = 0;

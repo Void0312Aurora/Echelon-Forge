@@ -100,6 +100,25 @@ def _turn_geometry(route: list[dict[str, Any]]) -> tuple[list[float], list[float
     return legs, turns
 
 
+def _turn_radius_m(speed_mps: float, bank_limit_deg: float) -> float:
+    bank_rad = math.radians(max(1.0, min(80.0, float(bank_limit_deg))))
+    tanb = math.tan(bank_rad)
+    if abs(tanb) <= 1.0e-6:
+        return float("inf")
+    speed = max(30.0, float(speed_mps))
+    return (speed * speed) / (9.80665 * abs(tanb))
+
+
+def _turn_budget_cost_m(turn_abs_deg: float, *, speed_mps: float, bank_limit_deg: float, cost_scale: float) -> float:
+    turn_abs_deg = abs(float(turn_abs_deg))
+    if turn_abs_deg <= 1.0e-6 or float(cost_scale) <= 1.0e-6:
+        return 0.0
+    radius_m = _turn_radius_m(float(speed_mps), float(bank_limit_deg))
+    if not math.isfinite(radius_m) or radius_m <= 0.0:
+        return 0.0
+    return float(radius_m) * math.radians(turn_abs_deg) * float(cost_scale)
+
+
 def _wrap_deg(angle_deg: float) -> float:
     return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
 
@@ -272,6 +291,46 @@ def run_route_generator_contract(spec_path: str) -> tuple[bool, str]:
                 tolerance_m = float(checks.get("reachability_budget_tolerance_m", 1.0))
                 if total_route > budget + tolerance_m:
                     return False, f"seed {seed}: route exceeds reachable budget: {total_route:.1f} > {budget:.1f}"
+
+            if bool(checks.get("turn_budget_from_scenario", False)):
+                route_cfg = (
+                    base_scenario.get("mission_command", {})
+                    .get("randomization", {})
+                    .get("route_generator", {})
+                )
+                mission_cfg = base_scenario.get("mission_command", {})
+                env_cfg = base_scenario.get("environment", {})
+                legs_geom, turns = _turn_geometry(route)
+                route_total = float(sum(legs_geom))
+                time_budget_s = float(env_cfg.get("time_step", 0.05)) * float(env_cfg.get("max_steps", loader.get_max_steps()))
+                base_speed_mps = float(mission_cfg.get("target_speed", 0.0))
+                speed_lo = float(route_cfg.get("speed_mps_range", [base_speed_mps, base_speed_mps])[0])
+                turn_speed_mps = max(base_speed_mps, speed_lo)
+                bank_limit_deg = float(mission_cfg.get("lnav_bank_limit_deg", 30.0))
+                cost_scale = float(route_cfg.get("turn_budget_cost_scale", 0.0))
+                if cost_scale <= 0.0 and bool(route_cfg.get("turn_feasibility_enabled", False)):
+                    cost_scale = 0.75
+                cost_scale = float(max(0.0, cost_scale))
+                turn_cost_total = float(
+                    sum(
+                        _turn_budget_cost_m(
+                            turn_abs_deg,
+                            speed_mps=turn_speed_mps,
+                            bank_limit_deg=bank_limit_deg,
+                            cost_scale=cost_scale,
+                        )
+                        for turn_abs_deg in turns
+                    )
+                )
+                budget = float(base_speed_mps) * float(time_budget_s) * float(route_cfg.get("route_budget_fraction", 0.80))
+                budget *= 1.0 - float(route_cfg.get("route_budget_margin_fraction", 0.0))
+                tolerance_m = float(checks.get("turn_budget_tolerance_m", checks.get("reachability_budget_tolerance_m", 1.0)))
+                if route_total + turn_cost_total > budget + tolerance_m:
+                    return False, (
+                        f"seed {seed}: route+turn budget exceeded: "
+                        f"{route_total + turn_cost_total:.1f} > {budget:.1f} "
+                        f"(route={route_total:.1f}, turn_cost={turn_cost_total:.1f})"
+                    )
 
             if bool(checks.get("waypoint_modes_from_scenario", False)):
                 route_cfg = (
@@ -3071,6 +3130,23 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         if abs(float(action[1]) - 1.0) > 1.0e-6:
             return False, f"takeoff2 throttle axis was modified during departure hold: {action}"
         return True, "scripted takeoff takeoff2 throttle contract passed"
+
+    if check_kind == "scripted_takeoff_clearance_hold":
+        import numpy as np
+        from python.rl.scripted_takeoff import ScriptedTakeoffController
+
+        ctrl = ScriptedTakeoffController(action_dim=4, dt=0.05)
+        obs = {
+            "instruments": np.asarray(spec["obs"]["instruments"], dtype=np.float32),
+            "mission": np.asarray(spec["obs"]["mission"], dtype=np.float32),
+        }
+        ctrl.reset(obs)
+        action = ctrl.step(obs)
+        if tuple(action.shape) != (4,):
+            return False, f"unexpected action shape {action.shape}"
+        if abs(float(action[3])) > 1.0e-6:
+            return False, f"throttle should remain idle before clearance: {action}"
+        return True, "scripted takeoff clearance hold contract passed"
 
     if check_kind == "scripted_landing_controller":
         import numpy as np
