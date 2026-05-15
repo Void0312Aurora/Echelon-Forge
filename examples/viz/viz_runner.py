@@ -6,17 +6,17 @@ import json
 import os
 import sys
 import time
+from types import SimpleNamespace
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-build_dir = os.path.join(repo_root, "build")
-
-# Prefer the locally built `ef_py` extension when present.
-if os.path.isdir(build_dir) and any(fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(build_dir)):
-    sys.path.insert(0, build_dir)
 sys.path.insert(0, repo_root)
+
+from python.testing.runtime import ensure_repo_imports
+
+ensure_repo_imports()
 
 # Import ef_py before numpy/torch-heavy libs
 import ef_py
@@ -25,6 +25,7 @@ import numpy as np
 from gym_envs.universal_env import UniversalEnv, half_to_unit
 from gym_envs.leader_env import LeaderTrainingEnv
 from python.models.transformer import TransformerExtractor
+from python.rl.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.rl.mission_defs import (
     COMMAND_NAME_TO_CODE,
     CRUISE_PHASE_NAMES,
@@ -686,6 +687,12 @@ def _is_leader_train_config(train_config: dict | None) -> bool:
     return str(train_config.get("agent_layer", "execution")).strip().lower() == "leader"
 
 
+def _is_cooperative_train_config(train_config: dict | None) -> bool:
+    if not isinstance(train_config, dict):
+        return False
+    return str(train_config.get("agent_layer", "execution")).strip().lower() == "cooperative_execution"
+
+
 def _model_looks_like_leader(model_obj) -> bool:
     obs_space = getattr(model_obj, "observation_space", None)
     try:
@@ -728,6 +735,14 @@ def _model_expects_proprio(model_obj) -> bool:
         return False
 
 
+def _model_expects_visual(model_obj) -> bool:
+    obs_space = getattr(model_obj, "observation_space", None)
+    try:
+        return bool(obs_space is not None and "visual" in obs_space.spaces)
+    except Exception:
+        return False
+
+
 def _infer_mission_obs_mode(model_obj, requested_mode: str | None) -> str:
     if requested_mode:
         return str(requested_mode).strip().lower()
@@ -742,6 +757,12 @@ def _infer_mission_obs_mode(model_obj, requested_mode: str | None) -> str:
         dim = int(mission_space.shape[0])
     except Exception:
         return "basic"
+    if dim == 21:
+        return "nav_v2_formation_role_v1"
+    if dim == 25:
+        return "nav_v2_cooperative_takeoff_v1"
+    if dim == 17:
+        return "nav_v2_formation_v1"
     if dim == 14:
         return "nav_v2"
     if dim == 11:
@@ -758,6 +779,15 @@ def _infer_visual_update_interval(train_config: dict | None, requested_interval:
     except Exception:
         value = 1
     return max(1, value)
+
+
+def _cooperative_action_wrapper_kwargs(train_config: dict | None) -> dict | None:
+    if not isinstance(train_config, dict):
+        return None
+    _wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+    if wrapper_kwargs is None:
+        return None
+    return dict(wrapper_kwargs)
 
 @socketio.on('connect')
 def handle_connect():
@@ -815,14 +845,17 @@ def simulation_loop():
 
     train_config = _load_train_config_for_viz(getattr(args, "model", None), getattr(args, "train_config", None))
     leader_mode = _is_leader_train_config(train_config)
+    cooperative_mode = _is_cooperative_train_config(train_config)
     wrapper_class = None
     wrapper_kwargs = None
+    cooperative_action_wrapper_kwargs = None
     sim_env = None
     mission_transition_log: list[dict] = []
     last_phase_name = ""
     last_c2_task = ""
     leader_exec_steps_remaining = 0
     leader_decision_pending = False
+    coop_last_infos: list[dict] = []
     scripted_mode = str(getattr(args, "scripted", "")).strip().lower()
     if scripted_mode in ("", "none", "null", "false", "0"):
         scripted_mode = ""
@@ -862,13 +895,15 @@ def simulation_loop():
         print("No model loaded. Running with random/noop actions.")
         model = None
 
-    if not leader_mode and model is not None and _model_looks_like_leader(model):
+    if not leader_mode and not cooperative_mode and model is not None and _model_looks_like_leader(model):
         leader_mode = True
 
-    if train_config is not None and not leader_mode:
+    if train_config is not None and not leader_mode and not cooperative_mode:
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
         if wrapper_kwargs is not None:
             wrapper_kwargs = dict(wrapper_kwargs)
+    elif train_config is not None and cooperative_mode:
+        cooperative_action_wrapper_kwargs = _cooperative_action_wrapper_kwargs(train_config)
 
     if scripted_mode == "takeoff_cruise_landing":
         if wrapper_kwargs is None:
@@ -879,6 +914,10 @@ def simulation_loop():
         wrapper_kwargs["scripted_baseline_mode"] = "takeoff_cruise_landing"
         wrapper_kwargs["scripted_residual_scale"] = 0.0
         wrapper_kwargs["action_rate_penalty_coef"] = 0.0
+    elif cooperative_mode and scripted_mode:
+        raise ValueError(
+            "Cooperative visualization currently does not support --scripted; use a learned checkpoint."
+        )
 
     action_mode = args.action_mode
     env_defaults = _env_defaults_from_train_config(train_config)
@@ -907,6 +946,12 @@ def simulation_loop():
         elif model is None and not include_proprio:
             include_proprio = bool(env_defaults.get("include_proprio", False))
 
+        include_visual = False
+        if model is not None:
+            include_visual = _model_expects_visual(model)
+        else:
+            include_visual = True
+
         if model is not None:
             mission_obs_mode = _infer_mission_obs_mode(model, getattr(args, "mission_obs_mode", None))
             visual_downsample = _infer_visual_downsample(model, getattr(args, "visual_downsample", None))
@@ -927,16 +972,16 @@ def simulation_loop():
         visual_downsample = 1
         visual_update_interval = 1
 
-    if not leader_mode:
+    if not leader_mode and not cooperative_mode:
         print(
             f"Initializing Universal Environment with scenario: {args.scenario} "
-            f"(action_mode={action_mode}, include_proprio={include_proprio}, mission_obs_mode={mission_obs_mode}, "
+            f"(action_mode={action_mode}, include_visual={include_visual}, include_proprio={include_proprio}, mission_obs_mode={mission_obs_mode}, "
             f"visual_downsample={visual_downsample}, visual_update_interval={visual_update_interval})"
         )
         base_env = UniversalEnv(
             args.scenario,
             action_mode=action_mode,
-            include_visual=True,
+            include_visual=include_visual,
             include_proprio=include_proprio,
             mission_obs_mode=mission_obs_mode,
             visual_downsample=visual_downsample,
@@ -962,6 +1007,41 @@ def simulation_loop():
                 action_dim=int(env.action_space.shape[0]),
                 dt=float(sim_env.sim.get_time_step()),
             )
+    elif cooperative_mode:
+        runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config, dict) else {}
+        if not isinstance(runtime_cfg, dict):
+            runtime_cfg = {}
+        print(
+            f"Initializing Cooperative Environment with scenario: {args.scenario} "
+            f"(action_mode={action_mode}, include_visual={include_visual}, include_proprio={include_proprio}, mission_obs_mode={mission_obs_mode}, "
+            f"visual_downsample={visual_downsample}, visual_update_interval={visual_update_interval})"
+        )
+        env = CooperativeWorldBatchVecEnv(
+            scenario_path=args.scenario,
+            n_envs=1,
+            include_visual=include_visual,
+            include_proprio=include_proprio,
+            action_mode=action_mode,
+            mission_obs_mode=mission_obs_mode,
+            visual_downsample=visual_downsample,
+            visual_update_interval=visual_update_interval,
+            batch_observation_backend=runtime_cfg.get("batch_observation_backend", "auto"),
+            batch_visual_backend=runtime_cfg.get("batch_visual_backend", "auto"),
+            action_wrapper_kwargs=cooperative_action_wrapper_kwargs,
+        )
+        if bool(getattr(args, "zero_randomization", False)):
+            env.set_randomization_overrides(
+                {
+                    "world_yaw_range": [0.0, 0.0],
+                    "wind_speed_range": [0.0, 0.0],
+                    "wind_dir_from_range": [0.0, 0.0],
+                    "wind_headwind_range": [0.0, 0.0],
+                    "wind_crosswind_range": [0.0, 0.0],
+                    "wind_tailwind_max_mps": 0.0,
+                    "wind_shear_range": [0.0, 0.0],
+                }
+            )
+        sim_env = None
     else:
         leader_cfg = dict(train_config.get("leader_env", {}) or {}) if isinstance(train_config, dict) else {}
         if not leader_cfg:
@@ -1016,11 +1096,61 @@ def simulation_loop():
             print("[WARN] scripted visual controllers are only supported for execution-env mode; ignoring --scripted for leader mode.")
             scripted_mode = ""
 
+    def _cooperative_slot_states() -> list:
+        if not cooperative_mode or env is None:
+            return []
+        return [slot_state for slot_state in list(getattr(env, "_slots", []) or []) if slot_state is not None]
+
+    def _refresh_cooperative_adapter() -> None:
+        nonlocal sim_env
+        if not cooperative_mode:
+            return
+        slot_states = _cooperative_slot_states()
+        if not slot_states:
+            sim_env = None
+            return
+        primary_slot = slot_states[0]
+        sim_env = SimpleNamespace(
+            loader=primary_slot.loader,
+            sim=primary_slot.loader.sim,
+            agent_id=int(primary_slot.entity_id),
+            action_mode=str(getattr(env, "action_mode", "full")),
+            _last_inst=primary_slot.last_inst,
+            _last_truth=primary_slot.last_truth,
+        )
+
+    def _reset_env_for_viz(seed_override: int | None = None):
+        nonlocal coop_last_infos
+        if cooperative_mode:
+            if seed_override is not None and hasattr(env, "seed"):
+                env.seed(int(seed_override))
+            obs_now = env.reset()
+            coop_last_infos = []
+            _refresh_cooperative_adapter()
+            return obs_now
+        if seed_override is not None:
+            obs_now, _ = env.reset(seed=int(seed_override))
+        else:
+            obs_now, _ = env.reset()
+        return obs_now
+
+    def _display_obs(obs_now: dict):
+        if not cooperative_mode or not isinstance(obs_now, dict):
+            return obs_now
+        slot_count = max(0, int(getattr(env, "num_envs", 0)))
+        if slot_count <= 0:
+            return obs_now
+        display_obs = {}
+        for key, value in obs_now.items():
+            arr = np.asarray(value)
+            if arr.ndim >= 1 and arr.shape[0] == slot_count:
+                display_obs[key] = arr[0]
+            else:
+                display_obs[key] = value
+        return display_obs
+
     print("Server ready. Waiting for start...")
-    if args.seed is not None:
-        obs, _ = env.reset(seed=int(args.seed))
-    else:
-        obs, _ = env.reset()
+    obs = _reset_env_for_viz(int(args.seed) if args.seed is not None else None)
     if isinstance(model, (_WorldModelPolicy, _ScriptedPolicy)):
         model.reset(obs)
     episode_return = 0.0
@@ -1076,7 +1206,8 @@ def simulation_loop():
         nonlocal action_mode
         global nav_data
         try:
-            mission = np.asarray(obs_now.get("mission", []), dtype=np.float32).reshape(-1)
+            obs_display = _display_obs(obs_now)
+            mission = np.asarray(obs_display.get("mission", []), dtype=np.float32).reshape(-1)
             if mission.size < 4:
                 nav_data = None
                 return
@@ -1395,6 +1526,64 @@ def simulation_loop():
                         episode_return += float(reward)
                         if terminated or truncated:
                             break
+            elif cooperative_mode:
+                for _ in range(substeps):
+                    if args.fixed_action is not None:
+                        fixed_action = np.asarray(args.fixed_action, dtype=np.float32).reshape(-1)
+                        act_dim = int(env.action_space.shape[0])
+                        slot_count = int(getattr(env, "num_envs", 1))
+                        if fixed_action.size == act_dim:
+                            action = np.repeat(fixed_action.reshape(1, -1), slot_count, axis=0)
+                        elif fixed_action.size == slot_count * act_dim:
+                            action = fixed_action.reshape(slot_count, act_dim)
+                        else:
+                            raise ValueError(
+                                f"Cooperative fixed_action expects {act_dim} or {slot_count * act_dim} values, got {fixed_action.size}"
+                            )
+                    elif model:
+                        action, _ = model.predict(obs, deterministic=True)
+                        action = np.asarray(action, dtype=np.float32)
+                        if action.ndim == 1:
+                            action = action.reshape(1, -1)
+                        expected_shape = (int(getattr(env, "num_envs", 1)), int(env.action_space.shape[0]))
+                        if action.shape != expected_shape:
+                            raise ValueError(
+                                f"Cooperative action shape mismatch: model produced {action.shape} but env expects {expected_shape}"
+                            )
+                        if sim_time < 2.0:
+                            print(f"Cooperative Action[0]: {action[0]}")
+                    else:
+                        action = np.zeros((int(getattr(env, "num_envs", 1)), int(env.action_space.shape[0])), dtype=np.float32)
+
+                    next_obs, rewards, dones, infos = env.step(action)
+                    coop_last_infos = list(infos)
+                    episode_return += float(np.mean(np.asarray(rewards, dtype=np.float32)))
+                    slot_states = _cooperative_slot_states()
+                    dt_sim = 0.05
+                    if slot_states:
+                        try:
+                            dt_sim = float(slot_states[0].loader.sim.get_time_step())
+                        except Exception:
+                            dt_sim = 0.05
+                    sim_time += float(dt_sim)
+                    try:
+                        for slot_state in slot_states:
+                            inst_step = slot_state.last_inst
+                            truth_step = slot_state.last_truth
+                            if inst_step is None or truth_step is None:
+                                continue
+                            episode_max_ias = max(episode_max_ias, float(getattr(inst_step, "ias", 0.0)))
+                            episode_max_gs = max(episode_max_gs, float(getattr(truth_step, "speed", 0.0)))
+                            episode_max_agl = max(episode_max_agl, float(getattr(inst_step, "alt_radar", 0.0)))
+                    except Exception:
+                        pass
+                    obs = next_obs
+                    _refresh_cooperative_adapter()
+                    terminated = bool(np.any(np.asarray(dones, dtype=bool)))
+                    truncated = False
+                    info = infos[0] if infos else {}
+                    if terminated:
+                        break
             else:
                 for _ in range(substeps):
                     if args.fixed_action is not None:
@@ -1433,7 +1622,7 @@ def simulation_loop():
 
             # Waypoint cruise: update markers when advancing waypoints (cheap; emits only on index change).
             try:
-                m0 = np.asarray(obs.get("mission", []), dtype=np.float32).reshape(-1)
+                m0 = np.asarray(_display_obs(obs).get("mission", []), dtype=np.float32).reshape(-1)
                 if m0.size >= 1 and int(float(m0[0])) == 3:
                     _update_nav_markers(obs)
             except Exception:
@@ -1443,7 +1632,33 @@ def simulation_loop():
             # Instead of specific hardcoded fields, we extract all entities in the loader
             
             units_data = []
+            coop_slot_state_by_entity_id = {}
+            coop_info_by_entity_id = {}
+            if cooperative_mode:
+                slot_states = _cooperative_slot_states()
+                for idx, slot_state in enumerate(slot_states):
+                    coop_slot_state_by_entity_id[int(slot_state.entity_id)] = slot_state
+                    coop_info_by_entity_id[int(slot_state.entity_id)] = (
+                        coop_last_infos[idx]
+                        if idx < len(coop_last_infos) and isinstance(coop_last_infos[idx], dict)
+                        else {}
+                    )
             
+            scenario_entities_cfg = {}
+            try:
+                loader_scenario_data = getattr(sim_env.loader, "scenario_data", None)
+                if isinstance(loader_scenario_data, dict):
+                    raw_entities_cfg = loader_scenario_data.get("entities", [])
+                    if isinstance(raw_entities_cfg, list):
+                        for ent_cfg in raw_entities_cfg:
+                            if not isinstance(ent_cfg, dict):
+                                continue
+                            ent_name = str(ent_cfg.get("name", "")).strip()
+                            if ent_name:
+                                scenario_entities_cfg[ent_name] = ent_cfg
+            except Exception:
+                scenario_entities_cfg = {}
+
             # Helper to get safe unit data
             def get_unit_data(eid, name):
                 if not sim_env.sim.is_unit_active(eid):
@@ -1468,16 +1683,29 @@ def simulation_loop():
                 # However, for Visualization, we often want "Ground Truth".
                 # Let's assume we can get basic Pos/Hdg.
                 
+                ent_cfg = scenario_entities_cfg.get(str(name), {})
+                type_name = str(ent_cfg.get("type", "")).strip()
+                type_name_upper = type_name.upper()
+                name_upper = str(name).upper()
+                is_aircraft = (
+                    "F-16" in type_name_upper
+                    or "F16" in type_name_upper
+                    or "AIRCRAFT" in type_name_upper
+                    or "F-16" in name_upper
+                    or "F16" in name_upper
+                    or "AIRCRAFT" in name_upper
+                )
+
                 return {
                     "id": eid,
                     "name": name,
                     "side": "Blue", 
-                    "type": "Aircraft" if "F16" in name or "Aircraft" in name else "Facility", 
+                    "type": "Aircraft" if is_aircraft else "Facility",
                     "x": pos[0],
                     "y": pos[1],
                     # Physics Z is CG. Visual Model Origin is approx at wheels. 
                     # Subtract gear height (~2.0m) to align visuals.
-                    "z": pos[2] - 2.0 if "Aircraft" in name or "F16" in name else pos[2],
+                    "z": pos[2] - 2.0 if is_aircraft else pos[2],
                     "heading": hdg,
                     "pitch": 0.0, # TODO: Get Pitch/Roll if possible
                     "roll": 0.0,
@@ -1490,41 +1718,52 @@ def simulation_loop():
             for name, eid in sim_env.loader.entities.items():
                 u = get_unit_data(eid, name)
                 if u:
-                    # Enrich with Agent data if it's the agent (has more info)
-                    if eid == sim_env.agent_id:
-                        raw = sim_env.sim.get_agent_observation(eid)
-                        try:
-                            inst_now = sim_env.sim.get_instrument_state(eid)
-                        except Exception:
-                            inst_now = None
+                    slot_state = coop_slot_state_by_entity_id.get(int(eid)) if cooperative_mode else None
+                    if slot_state is not None or eid == sim_env.agent_id:
+                        if slot_state is not None:
+                            raw = slot_state.last_truth if slot_state.last_truth is not None else sim_env.sim.get_agent_observation(eid)
+                            try:
+                                inst_now = slot_state.last_inst if slot_state.last_inst is not None else sim_env.sim.get_instrument_state(eid)
+                            except Exception:
+                                inst_now = None
+                            slot_info = coop_info_by_entity_id.get(int(eid), {})
+                            act_for_display = slot_state.last_action
+                        else:
+                            raw = sim_env.sim.get_agent_observation(eid)
+                            try:
+                                inst_now = sim_env.sim.get_instrument_state(eid)
+                            except Exception:
+                                inst_now = None
+                            slot_info = info if isinstance(info, dict) else {}
+                            eff_action = None
+                            if isinstance(slot_info, dict):
+                                ea = slot_info.get("effective_action")
+                                if isinstance(ea, np.ndarray):
+                                    eff_action = ea
+                                elif isinstance(ea, (list, tuple)):
+                                    try:
+                                        eff_action = np.asarray(ea, dtype=np.float32).reshape(-1)
+                                    except Exception:
+                                        eff_action = None
+                            act_for_display = eff_action if isinstance(eff_action, np.ndarray) and eff_action.ndim == 1 else action
 
-                        runway_cross_m = info.get("runway_cross_m") if isinstance(info, dict) else None
-                        on_runway_geom = info.get("on_runway_geom") if isinstance(info, dict) else None
+                        runway_cross_m = slot_info.get("runway_cross_m") if isinstance(slot_info, dict) else None
+                        on_runway_geom = slot_info.get("on_runway_geom") if isinstance(slot_info, dict) else None
 
                         rud_cmd = None
                         thr_cmd = None
                         brake_cmd = None
-                        eff_action = None
-                        if isinstance(info, dict):
-                            ea = info.get("effective_action")
-                            if isinstance(ea, np.ndarray):
-                                eff_action = ea
-                            elif isinstance(ea, (list, tuple)):
-                                try:
-                                    eff_action = np.asarray(ea, dtype=np.float32).reshape(-1)
-                                except Exception:
-                                    eff_action = None
-                        act_for_display = eff_action if isinstance(eff_action, np.ndarray) and eff_action.ndim == 1 else action
-                        if isinstance(act_for_display, np.ndarray) and act_for_display.ndim == 1:
-                            if sim_env.action_mode == "full" and act_for_display.size >= 9:
-                                rud_cmd = float(act_for_display[2])
-                                thr_cmd = float(act_for_display[3])
-                                brake_cmd = float(half_to_unit(float(max(act_for_display[7], act_for_display[8]))))
-                            elif sim_env.action_mode == "takeoff4" and act_for_display.size >= 4:
-                                rud_cmd = float(act_for_display[2])
-                                thr_cmd = float(act_for_display[3])
-                            elif sim_env.action_mode == "takeoff2" and act_for_display.size >= 2:
-                                thr_cmd = float(act_for_display[1])
+                        if isinstance(act_for_display, np.ndarray):
+                            act_flat = np.asarray(act_for_display, dtype=np.float32).reshape(-1)
+                            if sim_env.action_mode == "full" and act_flat.size >= 9:
+                                rud_cmd = float(act_flat[2])
+                                thr_cmd = float(act_flat[3])
+                                brake_cmd = float(half_to_unit(float(max(act_flat[7], act_flat[8]))))
+                            elif sim_env.action_mode == "takeoff4" and act_flat.size >= 4:
+                                rud_cmd = float(act_flat[2])
+                                thr_cmd = float(act_flat[3])
+                            elif sim_env.action_mode == "takeoff2" and act_flat.size >= 2:
+                                thr_cmd = float(act_flat[1])
 
                         wind_str = "n/a"
                         if inst_now is not None:
@@ -1544,7 +1783,7 @@ def simulation_loop():
                             print(
                                 f"Viz Frame T={sim_time:.2f} | {name} "
                                 f"Pos: ({u['x']:.2f}, {u['y']:.2f}, {u['z']:.2f}) "
-                                f"Hdg: {raw.heading:.1f} Trk: {float(getattr(inst_now, 'ground_track', 0.0)):.1f} "
+                                f"Hdg: {float(getattr(raw, 'heading', 0.0)):.1f} Trk: {float(getattr(inst_now, 'ground_track', 0.0)):.1f} "
                                 f"IAS: {float(getattr(inst_now, 'ias', 0.0)):.1f} Wind: {wind_str} "
                                 f"Cross: {cross_str} OnRw: {onrw_str} "
                                 f"EffAct(thr={thr_str}, rud={rud_str}, brk={brk_str}) "
@@ -1553,13 +1792,13 @@ def simulation_loop():
                             sys.stdout.flush()
                             episode_debug_next_t += 0.5
                         u.update({
-                            "speed": float(raw.speed),
-                            "ias": float(getattr(inst_now, "ias", float(raw.speed))) if inst_now is not None else float(raw.speed),
-                            "roll": float(raw.roll),
-                            "throttle": float(raw.throttle),
-                            "pitch": float(raw.pitch),
-                            "hp": float(raw.health),
-                            "side": "Blue" # Agent is usually Blue
+                            "speed": float(getattr(raw, "speed", 0.0)),
+                            "ias": float(getattr(inst_now, "ias", float(getattr(raw, "speed", 0.0)))) if inst_now is not None else float(getattr(raw, "speed", 0.0)),
+                            "roll": float(getattr(raw, "roll", 0.0)),
+                            "throttle": float(getattr(raw, "throttle", 0.0)),
+                            "pitch": float(getattr(raw, "pitch", 0.0)),
+                            "hp": float(getattr(raw, "health", 100.0)),
+                            "side": "Blue"
                         })
 
                     units_data.append(u)
@@ -1600,10 +1839,7 @@ def simulation_loop():
                     simulation_paused = True
                     print("Simulation paused on terminal state (--pause_on_done).")
                 else:
-                    if args.seed is not None:
-                        obs, _ = env.reset(seed=int(args.seed))
-                    else:
-                        obs, _ = env.reset()
+                    obs = _reset_env_for_viz(int(args.seed) if args.seed is not None else None)
                     leader_decision_pending = False
                     leader_exec_steps_remaining = 0
                     if isinstance(model, _WorldModelPolicy) or isinstance(model, _ScriptedPolicy):
@@ -1664,7 +1900,7 @@ def main():
         "--mission_obs_mode",
         type=str,
         default=None,
-        choices=["basic", "nav_v1", "nav_v2"],
+        choices=["basic", "nav_v1", "nav_v2", "nav_v2_formation_v1", "nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"],
         help="Mission observation format. If omitted, infer it from the model observation space when possible.",
     )
     parser.add_argument(

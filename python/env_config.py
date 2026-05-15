@@ -4,7 +4,14 @@ from typing import Any
 
 
 VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4"}
-VALID_MISSION_OBS_MODES = {"basic", "nav_v1", "nav_v2"}
+VALID_MISSION_OBS_MODES = {
+    "basic",
+    "nav_v1",
+    "nav_v2",
+    "nav_v2_formation_v1",
+    "nav_v2_formation_role_v1",
+    "nav_v2_cooperative_takeoff_v1",
+}
 VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled", "legacy"}
 VALID_STEP_INFO_MODES = {"full", "terminal", "off"}
 VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "legacy", "compiled", "gpu_host"}

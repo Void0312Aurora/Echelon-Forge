@@ -232,7 +232,7 @@ These rules are intentionally transparent and hand-auditable.
 - phase-specific action priors
 - role-specific cooperative control biases
 - procedure-specific edge behavior
-- regime-specific action residuals or expert heads
+- regime-specific residual experts layered over the shared action head
 
 ### First principle
 
@@ -252,8 +252,9 @@ Reasons:
 - harder debugging while the training line is still stabilizing
 - unnecessary duplication of low-level flight skill
 
-So the project should begin with hierarchical mixture-of-heads or hierarchical
-residual experts, not full sparse expert routing inside the full trunk.
+So the project should begin with a shared action-head baseline plus
+hierarchical residual experts, not full sparse expert routing inside the full
+trunk.
 
 ## Suggested Implementation Boundary
 
@@ -270,6 +271,10 @@ The HMoE line should stay separate from the current baseline execution model.
 - separate policy configuration path
 - separate training configs
 - separate experiment naming
+- stability controls that keep the routed residual path conservative at startup:
+  - zero-initialized expert heads
+  - lower optimizer rate for expert parameters
+  - residual warmup during early training progress
 
 Suggested implementation split:
 
@@ -284,7 +289,9 @@ Illustrative split:
 - baseline shared policy:
   - current `SquashedMultiInputPolicy` path
 - HMoE policy path:
-  - new dedicated policy module / class
+  - dedicated policy class beside the baseline path
+  - shared actor head remains the initial policy mean
+  - routed family/subexpert heads contribute residual corrections
 - semantic routing helpers:
   - standalone helper module
 - HMoE configs:
@@ -316,15 +323,15 @@ in a unified continuous-control execution stack?"
 4. optional soft router inside a family
 5. only then consider deeper sparse MoE variants
 
-## Branching Guidance
+## Engineering Placement
 
-The HMoE implementation line should live on a dedicated branch separate from
-the current baseline work.
+The HMoE implementation line should stay distinguishable from the baseline in
+configuration and experiment naming, while living in the same mainline codebase.
 
-Suggested branch intent:
+Suggested engineering intent:
 
 - keep the baseline model recognizable and runnable
-- isolate HMoE code churn
+- isolate HMoE behavior through dedicated policy/config paths
 - allow direct baseline vs HMoE comparison without ambiguity
 
 ## Status
@@ -336,5 +343,6 @@ The intended first implementation is:
 
 - shared backbone
 - explicit semantic level-1 routing
-- lightweight level-2 specialization
+- shared action-head baseline
+- lightweight residual level-2 specialization
 - baseline-compatible training and evaluation comparison

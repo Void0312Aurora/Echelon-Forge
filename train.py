@@ -20,16 +20,22 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback
 
 # Prefer the locally built `ef_py` extension when present (avoids accidentally using a stale
-# site-packages wheel/so from the venv). Prefer `build-gpu` over `build` so the execution
-# training mainline can pick up the CUDA-enabled runtime when it exists.
+# site-packages wheel/so from the venv). `CMO_BUILD_DIR` can pin a specific build tree.
 _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-for _build_dir_name in ("build-gpu", "build"):
-    _BUILD_DIR = os.path.join(_REPO_ROOT, _build_dir_name)
+_BUILD_DIR_NAMES = []
+_ENV_BUILD_DIR = os.environ.get("CMO_BUILD_DIR", "").strip()
+if _ENV_BUILD_DIR:
+    _BUILD_DIR_NAMES.append(_ENV_BUILD_DIR)
+_BUILD_DIR_NAMES.extend(["build-workshop", "build-gpu", "build"])
+for _build_dir_name in _BUILD_DIR_NAMES:
+    _BUILD_DIR = _build_dir_name if os.path.isabs(_build_dir_name) else os.path.join(_REPO_ROOT, _build_dir_name)
     if os.path.isdir(_BUILD_DIR):
         for _name in ("ef_py", "ef_py.cpython-313-x86_64-linux-gnu.so"):
             if os.path.exists(os.path.join(_BUILD_DIR, _name)) or any(
                 fname.startswith("ef_py") and fname.endswith(".so") for fname in os.listdir(_BUILD_DIR)
             ):
+                if _BUILD_DIR in sys.path:
+                    sys.path.remove(_BUILD_DIR)
                 sys.path.insert(0, _BUILD_DIR)
                 break
         if sys.path[0] == _BUILD_DIR:
@@ -46,8 +52,10 @@ from python.training_callbacks import (
 )
 from python.env_config import resolve_env_settings
 from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.policies import SquashedMultiInputPolicy
+from python.rl.nonfinite_probe import NonFiniteProbeError, NonFiniteTrainingProbe
+from python.rl.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv
+from python.rl.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.rl.world_batch_vec_env import WorldBatchVecEnv
 from python.rl.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 
@@ -152,15 +160,26 @@ def infer_full_action_safe_defaults(scenario_path: str) -> tuple[float, float, f
         agent = next((e for e in entities if isinstance(e, dict) and bool(e.get("is_agent", False))), None)
         pos = agent.get("pos", []) if isinstance(agent, dict) else []
         spawn_alt_m = float(pos[2]) if isinstance(pos, list) and len(pos) > 2 else 0.0
+        spawn_speed_mps = 0.0
+        vel = agent.get("vel", []) if isinstance(agent, dict) else []
+        if isinstance(vel, list) and len(vel) >= 3:
+            try:
+                vx = float(vel[0])
+                vy = float(vel[1])
+                vz = float(vel[2])
+                spawn_speed_mps = float(math.sqrt(vx * vx + vy * vy + vz * vz))
+            except Exception:
+                spawn_speed_mps = 0.0
         cmd_code = int(mission.get("command_code", 0)) if isinstance(mission, dict) else 0
 
         airborne_start = spawn_alt_m > 50.0
+        runway_start = (spawn_alt_m <= 10.0) and (spawn_speed_mps <= 15.0)
         if cmd_code == 4:
             throttle_default = 0.45
             gear_default = 1.0
             flaps_default = 1.0
             speedbrake_default = 0.0
-        elif airborne_start or cmd_code == 3:
+        elif airborne_start or (cmd_code == 3 and not runway_start):
             throttle_default = 0.60
             gear_default = 0.0
             flaps_default = 0.0
@@ -180,14 +199,13 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
     outputs toward realistic neutral/safe defaults.
     """
     try:
-        action_net = getattr(model.policy, "action_net", None)
-        if action_net is None or getattr(action_net, "bias", None) is None:
-            return
-        b = action_net.bias
-        if b is None:
-            return
-        squash = bool(getattr(model.policy, "squash_output", False))
-        with torch.no_grad():
+        policy = getattr(model, "policy", None)
+        action_net = getattr(policy, "action_net", None)
+        hmoe_head_bank = getattr(policy, "hmoe_head_bank", None)
+
+        def _apply_bias_vector(b):
+            if b is None:
+                return
             if action_mode == "full":
                 if int(b.shape[0]) < 17:
                     return
@@ -235,8 +253,52 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
                 b[0] = 0.0
                 b[1] = 0.0
                 b[2] = 0.0
+
+        has_standard_bias = action_net is not None and getattr(action_net, "bias", None) is not None
+        has_hmoe_bias = hmoe_head_bank is not None
+        if not has_standard_bias and not has_hmoe_bias:
+            return
+        squash = bool(getattr(policy, "squash_output", False))
+        with torch.no_grad():
+            if has_standard_bias:
+                _apply_bias_vector(action_net.bias)
+            if has_hmoe_bias:
+                for head in getattr(hmoe_head_bank, "family_heads", []):
+                    bias = getattr(head, "bias", None)
+                    if bias is not None:
+                        bias.zero_()
+                for family_subheads in getattr(hmoe_head_bank, "subexpert_heads", []):
+                    for head in family_subheads:
+                        bias = getattr(head, "bias", None)
+                        if bias is not None:
+                            bias.zero_()
     except Exception:
         return
+
+
+def maybe_initialize_hmoe_from_shared(
+    model: PPO,
+    *,
+    train_config: dict,
+    args: argparse.Namespace,
+) -> bool:
+    policy = getattr(model, "policy", None)
+    init_fn = getattr(policy, "initialize_hmoe_from_shared_action_head", None)
+    if not callable(init_fn):
+        return False
+
+    hmoe_cfg = train_config.get("hmoe", {}) if isinstance(train_config.get("hmoe", {}), dict) else {}
+    bootstrap_mode = str(hmoe_cfg.get("bootstrap_from_shared_action_head", "auto")).strip().lower()
+    if bootstrap_mode in ("", "none", "off", "false", "0", "disable", "disabled"):
+        return False
+    if args.resume_path:
+        return False
+    # When init_from is provided, honor the checkpoint weights as-is.
+    if args.init_from:
+        return False
+
+    init_fn()
+    return True
 
 
 def apply_leader_action_bias(model: PPO):
@@ -355,7 +417,7 @@ def main():
         "--mission_obs_mode",
         type=str,
         default=None,
-        choices=["basic", "nav_v1", "nav_v2"],
+        choices=["basic", "nav_v1", "nav_v2", "nav_v2_formation_v1", "nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"],
         help="Mission observation format (defaults to train_config env settings).",
     )
     parser.add_argument(
@@ -426,6 +488,24 @@ def main():
         action="store_true",
         help="Disable safe initialization bias for mixed-range actions (throttle/brakes/flaps/etc).",
     )
+    parser.add_argument(
+        "--nonfinite_probe",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Enable the opt-in training non-finite tensor probe.",
+    )
+    parser.add_argument(
+        "--nonfinite_probe_report",
+        type=str,
+        default=None,
+        help="Optional path for the non-finite probe report JSON. Defaults inside the experiment directory.",
+    )
+    parser.add_argument(
+        "--nonfinite_probe_history",
+        type=int,
+        default=None,
+        help="Optional history length for the non-finite probe event buffer.",
+    )
     
     args = parser.parse_args()
     
@@ -444,7 +524,7 @@ def main():
         train_config = json.load(f)
 
     agent_layer = str(train_config.get("agent_layer", "execution")).strip().lower() or "execution"
-    if agent_layer not in {"execution", "leader"}:
+    if agent_layer not in {"execution", "leader", "cooperative_execution"}:
         print(f"Error: unknown agent_layer {agent_layer!r} in train config")
         return
 
@@ -455,7 +535,7 @@ def main():
         LeaderTrainingEnv = None
         LeaderBatchedVecEnv = None
 
-    env_settings = resolve_env_settings(train_config, args) if agent_layer == "execution" else None
+    env_settings = resolve_env_settings(train_config, args) if agent_layer in {"execution", "cooperative_execution"} else None
 
     # 2. Setup Experiment Directory
     exp_dir = ""
@@ -593,6 +673,21 @@ def main():
             f"visual_downsample={env_settings['visual_downsample']} "
             f"visual_update_interval={env_settings['visual_update_interval']}"
         )
+    elif agent_layer == "cooperative_execution":
+        cooperative_cfg = train_config.get("cooperative_execution", {})
+        if not isinstance(cooperative_cfg, dict):
+            cooperative_cfg = {}
+        print(
+            "Cooperative env settings: "
+            f"action_mode={env_settings['action_mode']} "
+            f"include_visual={env_settings['include_visual']} "
+            f"include_proprio={env_settings['include_proprio']} "
+            f"mission_obs_mode={env_settings['mission_obs_mode']} "
+            f"step_info_mode={env_settings['step_info_mode']} "
+            f"visual_downsample={env_settings['visual_downsample']} "
+            f"visual_update_interval={env_settings['visual_update_interval']} "
+            f"policy_route={cooperative_cfg.get('policy_route', 'shared_execution')}"
+        )
     else:
         leader_cfg = train_config.get("leader_env", {}) if isinstance(train_config.get("leader_env", {}), dict) else {}
         print(
@@ -707,6 +802,44 @@ def main():
                 wrapper_class=wrapper_class,
                 wrapper_kwargs=wrapper_kwargs,
             )
+    elif agent_layer == "cooperative_execution":
+        wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+        if wrapper_class is not None and wrapper_class is not MultiTimescaleActionWrapper:
+            print(
+                "[WARN] cooperative_execution only supports the maintained multi_timescale action wrapper. "
+                "Ignoring unsupported wrapper request."
+            )
+            wrapper_kwargs = None
+        batch_visual_backend = str(runtime_cfg.get("batch_visual_backend", "auto"))
+        batch_observation_backend = str(runtime_cfg.get("batch_observation_backend", "auto"))
+        vec_env = CooperativeWorldBatchVecEnv(
+            scenario_path=scenario_path,
+            n_envs=n_envs,
+            worker_threads=runtime_cfg.get("world_batch_threads"),
+            batch_observation_backend=batch_observation_backend,
+            batch_visual_backend=batch_visual_backend,
+            action_wrapper_kwargs=wrapper_kwargs if wrapper_class is MultiTimescaleActionWrapper else None,
+            **env_settings,
+        )
+        vec_env.seed(training_seed)
+        print(
+            "Cooperative runtime: "
+            f"worlds={n_envs} "
+            f"slots_per_world={int(getattr(vec_env, 'slots_per_world', 0))} "
+            f"total_slots={int(getattr(vec_env, 'num_envs', n_envs))} "
+            f"world_batch_threads={runtime_cfg.get('world_batch_threads', '<default=1>')}"
+        )
+        print(
+            "Cooperative observation runtime: "
+            f"requested_backend={batch_observation_backend} "
+            f"effective_backend={vec_env._batch_observation_backend_mode()}"
+        )
+        if env_settings["include_visual"]:
+            print(
+                "Cooperative visual runtime: "
+                f"requested_backend={batch_visual_backend} "
+                f"effective_backend={vec_env._batch_visual_backend_mode()}"
+            )
     else:
         vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
             agent_layer=agent_layer,
@@ -765,6 +898,7 @@ def main():
             vec_env_kwargs=vec_env_kwargs,
         )
 
+    effective_n_envs = int(getattr(vec_env, "num_envs", n_envs))
     curriculum_cfg = train_config.get("curriculum", {}) if isinstance(train_config.get("curriculum", {}), dict) else {}
     algo_name = str(train_config.get("algo", "PPO"))
     algo_cls = PPO
@@ -820,7 +954,7 @@ def main():
     # SB3 CheckpointCallback counts callback invocations, not aggregate env timesteps.
     # Interpret config `save_freq` as total timesteps so multi-env runs checkpoint on the
     # expected cadence instead of being stretched by `n_envs`.
-    checkpoint_freq = max(1, int(math.ceil(float(save_freq) / float(max(1, n_envs)))))
+    checkpoint_freq = max(1, int(math.ceil(float(save_freq) / float(max(1, effective_n_envs)))))
 
     # Feature Extractor Logic
     if "policy_kwargs" in hyperparams:
@@ -840,7 +974,16 @@ def main():
         policy_cls = policy_name
         if policy_name == "SquashedMultiInputPolicy":
             policy_cls = SquashedMultiInputPolicy
+        elif policy_name == "HierarchicalMoEExecutionPolicy":
+            policy_cls = HierarchicalMoEExecutionPolicy
         model = algo_cls(policy_cls, vec_env, verbose=1, tensorboard_log=log_dir, **hyperparams)
+        hmoe_bootstrapped = maybe_initialize_hmoe_from_shared(
+            model,
+            train_config=train_config,
+            args=args,
+        )
+        if hmoe_bootstrapped:
+            print("HMoE bootstrap: initialized family heads from shared action head and reset subexpert residuals.")
         if args.init_from:
             init_path = os.path.abspath(args.init_from)
             if not os.path.exists(init_path):
@@ -848,12 +991,55 @@ def main():
                 return
             print(f"Initializing Parameters From: {init_path}")
             model.set_parameters(init_path, exact_match=False, device=hyperparams.get("device", "auto"))
-        elif agent_layer == "execution" and not args.no_init_safe_action_bias:
+        elif agent_layer in {"execution", "cooperative_execution"} and not args.no_init_safe_action_bias:
             apply_safe_action_bias(model, env_settings["action_mode"], scenario_path)
         elif agent_layer == "leader":
             apply_leader_action_bias(model)
 
     print(f"Rollout buffer: {type(model.rollout_buffer).__name__}")
+
+    diagnostics_cfg = train_config.get("diagnostics", {}) if isinstance(train_config.get("diagnostics", {}), dict) else {}
+    nonfinite_probe_enabled = diagnostics_cfg.get("nonfinite_probe")
+    if args.nonfinite_probe is not None:
+        nonfinite_probe_enabled = bool(args.nonfinite_probe)
+    nonfinite_probe_enabled = bool(nonfinite_probe_enabled)
+
+    nonfinite_probe_report = args.nonfinite_probe_report
+    if nonfinite_probe_report is None:
+        nonfinite_probe_report = diagnostics_cfg.get("nonfinite_probe_report")
+    if nonfinite_probe_report is None:
+        nonfinite_probe_report = os.path.join(exp_dir, "nonfinite_probe_report.json")
+    elif not os.path.isabs(nonfinite_probe_report):
+        nonfinite_probe_report = os.path.abspath(os.path.join(exp_dir, nonfinite_probe_report))
+
+    nonfinite_probe_history = args.nonfinite_probe_history
+    if nonfinite_probe_history is None:
+        nonfinite_probe_history = diagnostics_cfg.get("nonfinite_probe_history", 384)
+    nonfinite_probe_history = max(32, int(nonfinite_probe_history))
+
+    probe = None
+    if nonfinite_probe_enabled:
+        probe = NonFiniteTrainingProbe(
+            report_path=str(nonfinite_probe_report),
+            history_limit=int(nonfinite_probe_history),
+            run_metadata={
+                "scenario": scenario_path,
+                "train_config": train_cfg_path,
+                "exp_dir": exp_dir,
+                "run_name": run_name,
+                "agent_layer": agent_layer,
+                "resume_path": os.path.abspath(args.resume_path) if args.resume_path else None,
+                "seed": None if training_seed is None else int(training_seed),
+            },
+            enabled=True,
+        )
+        probe.install(model)
+        print(
+            "Non-finite probe: "
+            f"enabled=1 report={nonfinite_probe_report} history={int(nonfinite_probe_history)}"
+        )
+    else:
+        print("Non-finite probe: enabled=0")
     
     print(
         f"Starting Training for {total_timesteps} steps... "
@@ -866,13 +1052,16 @@ def main():
         name_prefix="model" # naming: model_50000_steps.zip
     )
     callbacks = [checkpoint_callback]
-    if args.diagnostics:
+    force_hmoe_diagnostics = bool(getattr(model, "policy", None) is not None and hasattr(model.policy, "get_hmoe_route_stats"))
+    if args.diagnostics or force_hmoe_diagnostics:
         callbacks.append(
             CMODiagnosticsCallback(
                 log_every_timesteps=int(args.diagnostics_every),
                 preterm_window_steps=int(args.diagnostics_preterm_window),
             )
         )
+        if force_hmoe_diagnostics and not args.diagnostics:
+            print("Diagnostics: auto-enabled for HMoE route/parameter observability.")
     if isinstance(curriculum_cfg, dict) and curriculum_cfg.get("stages"):
         callbacks.append(
             ScenarioCurriculumCallback(
@@ -923,6 +1112,16 @@ def main():
         model.save(save_path)
         print("Done.")
         sys.exit(0)
+    except NonFiniteProbeError as exc:
+        print("\nTraining aborted by non-finite probe.")
+        if probe is not None:
+            report_path = probe.write_error_report(model, exc)
+            print(f"Non-finite probe report written to {report_path}")
+        save_path = os.path.join(ckpt_dir, "nonfinite_probe_abort_model")
+        print(f"Saving abort checkpoint to {save_path}...")
+        model.save(save_path)
+        print("Done.")
+        raise
 
 if __name__ == "__main__":
     main()

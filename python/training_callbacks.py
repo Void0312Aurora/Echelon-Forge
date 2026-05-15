@@ -60,6 +60,26 @@ class CMODiagnosticsCallback(BaseCallback):
         self._failure_window = 0
         self._terminal_reward_window: dict[str, list[float]] = defaultdict(list)
         self._preterm_stats_window: dict[str, list[float]] = defaultdict(list)
+        self._coop_world_done_window = 0
+        self._coop_world_success_window = 0
+        self._coop_shared_reset_window = 0
+        self._coop_timeout_window = 0
+        self._coop_role_episode_counts_window: dict[str, int] = defaultdict(int)
+        self._coop_role_success_counts_window: dict[str, int] = defaultdict(int)
+        self._coop_role_shared_reset_counts_window: dict[str, int] = defaultdict(int)
+        self._coop_role_term_counts_window: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self._coop_role_reward_window: dict[str, list[float]] = defaultdict(list)
+        self._coop_role_length_window: dict[str, list[float]] = defaultdict(list)
+        self._coop_role_waypoint_index_window: dict[str, list[float]] = defaultdict(list)
+        self._coop_role_waypoint_progress_window: dict[str, list[float]] = defaultdict(list)
+        self._coop_world_min_progress_window: list[float] = []
+        self._coop_world_max_progress_window: list[float] = []
+        self._coop_world_progress_gap_window: list[float] = []
+        self._coop_world_slot_seen: dict[int, set[int]] = defaultdict(set)
+        self._coop_world_slot_success: dict[int, bool] = defaultdict(bool)
+        self._coop_world_slot_timeout: dict[int, bool] = defaultdict(bool)
+        self._coop_world_slot_progress_values: dict[int, list[float]] = defaultdict(list)
+        self._hmoe_param_stats_next_log_t = int(log_every_timesteps)
 
     def _on_training_start(self) -> None:
         n_envs = int(getattr(self.training_env, "num_envs", 1))
@@ -70,7 +90,27 @@ class CMODiagnosticsCallback(BaseCallback):
         self._failure_window = 0
         self._terminal_reward_window = defaultdict(list)
         self._preterm_stats_window = defaultdict(list)
+        self._coop_world_done_window = 0
+        self._coop_world_success_window = 0
+        self._coop_shared_reset_window = 0
+        self._coop_timeout_window = 0
+        self._coop_role_episode_counts_window = defaultdict(int)
+        self._coop_role_success_counts_window = defaultdict(int)
+        self._coop_role_shared_reset_counts_window = defaultdict(int)
+        self._coop_role_term_counts_window = defaultdict(lambda: defaultdict(int))
+        self._coop_role_reward_window = defaultdict(list)
+        self._coop_role_length_window = defaultdict(list)
+        self._coop_role_waypoint_index_window = defaultdict(list)
+        self._coop_role_waypoint_progress_window = defaultdict(list)
+        self._coop_world_min_progress_window = []
+        self._coop_world_max_progress_window = []
+        self._coop_world_progress_gap_window = []
+        self._coop_world_slot_seen = defaultdict(set)
+        self._coop_world_slot_success = defaultdict(bool)
+        self._coop_world_slot_timeout = defaultdict(bool)
+        self._coop_world_slot_progress_values = defaultdict(list)
         self._next_log_t = int(self.log_every_timesteps)
+        self._hmoe_param_stats_next_log_t = int(self.log_every_timesteps)
 
     @staticmethod
     def _normalize_reason(reason: str) -> str:
@@ -261,6 +301,116 @@ class CMODiagnosticsCallback(BaseCallback):
         if brk:
             self._preterm_stats_window["mean_brake"].append(float(np.mean(brk)))
 
+    @staticmethod
+    def _coop_role_name(info: dict) -> str | None:
+        if not isinstance(info, dict):
+            return None
+        role = str(info.get("formation_role_id", "") or "").strip()
+        entity = str(info.get("entity_name", "") or "").strip()
+        if role:
+            return role
+        if entity:
+            return entity
+        return None
+
+    def _record_cooperative_episode(self, info: dict, reason: str) -> None:
+        if not isinstance(info, dict):
+            return
+        world_index = info.get("world_index", None)
+        slot_index = info.get("slot_index", None)
+        slots_per_world = info.get("slots_per_world", None)
+        if world_index is None or slot_index is None:
+            return
+        try:
+            world_idx = int(world_index)
+            slot_idx = int(slot_index)
+            expected_slots = max(1, int(slots_per_world)) if slots_per_world is not None else 1
+        except Exception:
+            return
+
+        role_name = self._coop_role_name(info)
+        if role_name:
+            self._coop_role_episode_counts_window[role_name] += 1
+            ep = info.get("episode", {})
+            if isinstance(ep, dict):
+                try:
+                    self._coop_role_reward_window[role_name].append(float(ep.get("r", 0.0)))
+                except Exception:
+                    pass
+                try:
+                    self._coop_role_length_window[role_name].append(float(ep.get("l", 0.0)))
+                except Exception:
+                    pass
+            ms = info.get("mission_status")
+            if ms is not None:
+                try:
+                    arr = np.asarray(ms, dtype=np.float32).reshape(-1)
+                except Exception:
+                    arr = None
+                if arr is not None:
+                    if arr.size >= 2:
+                        try:
+                            self._coop_role_waypoint_index_window[role_name].append(float(arr[1]))
+                        except Exception:
+                            pass
+                    if arr.size >= 3:
+                        try:
+                            waypoint_count = float(arr[2])
+                            progress = float(arr[1]) / waypoint_count if waypoint_count > 0.5 else 0.0
+                            self._coop_role_waypoint_progress_window[role_name].append(progress)
+                        except Exception:
+                            pass
+            if bool(float(info.get("shared_world_reset", 0.0)) > 0.5):
+                self._coop_role_shared_reset_counts_window[role_name] += 1
+            if str(reason).strip():
+                self._coop_role_term_counts_window[role_name][str(reason)] += 1
+
+        success = False
+        if ms is not None:
+            try:
+                arr = np.asarray(ms, dtype=np.float32).reshape(-1)
+                if arr.size >= 4 and float(arr[3]) > 0.5:
+                    success = True
+            except Exception:
+                success = False
+            else:
+                if arr.size >= 3:
+                    try:
+                        waypoint_count = float(arr[2])
+                        progress = float(arr[1]) / waypoint_count if waypoint_count > 0.5 else 0.0
+                        self._coop_world_slot_progress_values[world_idx].append(progress)
+                    except Exception:
+                        pass
+        if role_name and success:
+            self._coop_role_success_counts_window[role_name] += 1
+
+        self._coop_world_slot_seen[world_idx].add(slot_idx)
+        world_success_flag = bool(float(info.get("world_success", 0.0)) > 0.5) if isinstance(info, dict) else False
+        self._coop_world_slot_success[world_idx] = bool(self._coop_world_slot_success[world_idx] or success)
+        self._coop_world_slot_timeout[world_idx] = bool(
+            self._coop_world_slot_timeout[world_idx] or str(reason) == "timeout"
+        )
+        if bool(float(info.get("shared_world_reset", 0.0)) > 0.5):
+            self._coop_shared_reset_window += 1
+
+        if bool(float(info.get("world_done", 0.0)) > 0.5) and len(self._coop_world_slot_seen[world_idx]) >= expected_slots:
+            self._coop_world_done_window += 1
+            if bool(world_success_flag):
+                self._coop_world_success_window += 1
+            if bool(self._coop_world_slot_timeout[world_idx]):
+                self._coop_timeout_window += 1
+            progress_vals = self._coop_world_slot_progress_values.get(world_idx, [])
+            if progress_vals:
+                min_progress = float(np.min(progress_vals))
+                max_progress = float(np.max(progress_vals))
+                self._coop_world_min_progress_window.append(min_progress)
+                self._coop_world_max_progress_window.append(max_progress)
+                self._coop_world_progress_gap_window.append(float(max_progress - min_progress))
+            self._coop_world_slot_seen.pop(world_idx, None)
+            self._coop_world_slot_success.pop(world_idx, None)
+            self._coop_world_slot_timeout.pop(world_idx, None)
+            self._coop_world_slot_progress_values.pop(world_idx, None)
+
     def _record_event_diagnostics(self) -> None:
         if self._episodes_window > 0:
             episodes = float(self._episodes_window)
@@ -279,11 +429,100 @@ class CMODiagnosticsCallback(BaseCallback):
             if vals:
                 self.logger.record(f"diag/preterm_{k}", float(np.mean(np.asarray(vals, dtype=np.float32))))
 
+        if self._coop_world_done_window > 0:
+            worlds = float(self._coop_world_done_window)
+            self.logger.record("coop_diag/world_episodes_done_window", worlds)
+            self.logger.record("coop_diag/world_success_frac_window", float(self._coop_world_success_window) / worlds)
+            self.logger.record("coop_diag/world_timeout_frac_window", float(self._coop_timeout_window) / worlds)
+            self.logger.record(
+                "coop_diag/shared_reset_per_world_mean",
+                float(self._coop_shared_reset_window) / worlds,
+            )
+            if self._coop_world_min_progress_window:
+                self.logger.record(
+                    "coop_diag/world_min_waypoint_progress_frac_mean",
+                    float(np.mean(np.asarray(self._coop_world_min_progress_window, dtype=np.float32))),
+                )
+            if self._coop_world_max_progress_window:
+                self.logger.record(
+                    "coop_diag/world_max_waypoint_progress_frac_mean",
+                    float(np.mean(np.asarray(self._coop_world_max_progress_window, dtype=np.float32))),
+                )
+            if self._coop_world_progress_gap_window:
+                self.logger.record(
+                    "coop_diag/world_waypoint_progress_gap_frac_mean",
+                    float(np.mean(np.asarray(self._coop_world_progress_gap_window, dtype=np.float32))),
+                )
+        total_role_eps = float(sum(self._coop_role_episode_counts_window.values()))
+        if total_role_eps > 0.0:
+            self.logger.record("coop_diag/slot_episodes_done_window", total_role_eps)
+        for role_name in sorted(self._coop_role_episode_counts_window.keys()):
+            episodes = float(self._coop_role_episode_counts_window[role_name])
+            if episodes <= 0.0:
+                continue
+            role_key = self._normalize_reason(role_name)
+            self.logger.record(
+                f"coop_diag/role_{role_key}_success_frac_window",
+                float(self._coop_role_success_counts_window[role_name]) / episodes,
+            )
+            self.logger.record(
+                f"coop_diag/role_{role_key}_shared_reset_frac_window",
+                float(self._coop_role_shared_reset_counts_window[role_name]) / episodes,
+            )
+            rewards = self._coop_role_reward_window.get(role_name, [])
+            if rewards:
+                self.logger.record(
+                    f"coop_diag/role_{role_key}_reward_mean",
+                    float(np.mean(np.asarray(rewards, dtype=np.float32))),
+                )
+            lengths = self._coop_role_length_window.get(role_name, [])
+            if lengths:
+                self.logger.record(
+                    f"coop_diag/role_{role_key}_episode_len_mean",
+                    float(np.mean(np.asarray(lengths, dtype=np.float32))),
+                )
+            waypoint_indices = self._coop_role_waypoint_index_window.get(role_name, [])
+            if waypoint_indices:
+                self.logger.record(
+                    f"coop_diag/role_{role_key}_waypoint_index_mean",
+                    float(np.mean(np.asarray(waypoint_indices, dtype=np.float32))),
+                )
+            waypoint_progress = self._coop_role_waypoint_progress_window.get(role_name, [])
+            if waypoint_progress:
+                self.logger.record(
+                    f"coop_diag/role_{role_key}_waypoint_progress_frac_mean",
+                    float(np.mean(np.asarray(waypoint_progress, dtype=np.float32))),
+                )
+            for reason, count in sorted(self._coop_role_term_counts_window[role_name].items()):
+                self.logger.record(
+                    f"coop_diag/role_{role_key}_term_frac_{reason}",
+                    float(count) / episodes,
+                )
+
         self._episodes_window = 0
         self._failure_window = 0
         self._term_counts_window = defaultdict(int)
         self._terminal_reward_window = defaultdict(list)
         self._preterm_stats_window = defaultdict(list)
+        self._coop_world_done_window = 0
+        self._coop_world_success_window = 0
+        self._coop_shared_reset_window = 0
+        self._coop_timeout_window = 0
+        self._coop_role_episode_counts_window = defaultdict(int)
+        self._coop_role_success_counts_window = defaultdict(int)
+        self._coop_role_shared_reset_counts_window = defaultdict(int)
+        self._coop_role_term_counts_window = defaultdict(lambda: defaultdict(int))
+        self._coop_role_reward_window = defaultdict(list)
+        self._coop_role_length_window = defaultdict(list)
+        self._coop_role_waypoint_index_window = defaultdict(list)
+        self._coop_role_waypoint_progress_window = defaultdict(list)
+        self._coop_world_min_progress_window = []
+        self._coop_world_max_progress_window = []
+        self._coop_world_progress_gap_window = []
+        self._coop_world_slot_seen = defaultdict(set)
+        self._coop_world_slot_success = defaultdict(bool)
+        self._coop_world_slot_timeout = defaultdict(bool)
+        self._coop_world_slot_progress_values = defaultdict(list)
 
     @staticmethod
     def _mean_info_values(infos: list[dict], key: str) -> float | None:
@@ -516,6 +755,7 @@ class CMODiagnosticsCallback(BaseCallback):
                 self._term_counts_window[reason] += 1
                 self._term_counts_total[reason] += 1
                 self._record_terminal_reward_terms(info_i)
+                self._record_cooperative_episode(info_i, reason)
                 if self._is_failure_reason(reason):
                     self._failure_window += 1
                     self._record_preterm_window(self._histories[i])
@@ -647,6 +887,33 @@ class CMODiagnosticsCallback(BaseCallback):
                 self.logger.record("diag/gear_stress_mean", float(np.asarray(gear_stress, dtype=np.float32).mean()))
 
             self._record_leader_diagnostics(obs, list(infos))
+
+        policy = getattr(self.model, "policy", None)
+        get_route_stats = getattr(policy, "get_hmoe_route_stats", None)
+        if callable(get_route_stats):
+            try:
+                route_stats = get_route_stats()
+            except Exception:
+                route_stats = None
+            if isinstance(route_stats, dict):
+                for key, value in route_stats.items():
+                    try:
+                        self.logger.record(str(key), float(value))
+                    except Exception:
+                        continue
+        get_param_stats = getattr(policy, "get_hmoe_parameter_stats", None)
+        if callable(get_param_stats) and int(self.num_timesteps) >= int(self._hmoe_param_stats_next_log_t):
+            try:
+                param_stats = get_param_stats()
+            except Exception:
+                param_stats = None
+            if isinstance(param_stats, dict):
+                for key, value in param_stats.items():
+                    try:
+                        self.logger.record(str(key), float(value))
+                    except Exception:
+                        continue
+            self._hmoe_param_stats_next_log_t = int(self.num_timesteps) + int(self.log_every_timesteps)
 
         self._record_event_diagnostics()
         return True

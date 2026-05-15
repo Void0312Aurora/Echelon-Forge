@@ -27,9 +27,10 @@ def build_dirs(root: str | None = None) -> list[str]:
 
     candidates.extend(
         [
-            os.path.join(base, "build-facade-local"),
+            os.path.join(base, "build-workshop"),
             os.path.join(base, "build-gpu"),
             os.path.join(base, "build"),
+            os.path.join(base, "build-facade-local"),
         ]
     )
 
@@ -55,8 +56,9 @@ def build_dir(root: str | None = None) -> str:
 def ensure_repo_imports() -> str:
     root = repo_root()
     for build in reversed(build_dirs(root)):
-        if build not in sys.path:
-            sys.path.insert(0, build)
+        if build in sys.path:
+            sys.path.remove(build)
+        sys.path.insert(0, build)
     if root not in sys.path:
         sys.path.insert(0, root)
     return root
