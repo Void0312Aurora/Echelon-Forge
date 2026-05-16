@@ -33,6 +33,29 @@ gpu
 - `gpu/`：GPU helper、packet runtime 和显式实验探针。
 - `tools/`：开发期工具和实验工具，不进入主线 runtime contract。
 
+## 推荐阅读
+
+- [components/README.md](/home/void0312/Workshop/CMO/src/components/README.md)
+- [components/command/README.md](/home/void0312/Workshop/CMO/src/components/command/README.md)
+- [components/command/common/README.md](/home/void0312/Workshop/CMO/src/components/command/common/README.md)
+- [components/command/air/README.md](/home/void0312/Workshop/CMO/src/components/command/air/README.md)
+- [components/tasking/README.md](/home/void0312/Workshop/CMO/src/components/tasking/README.md)
+- [components/tasking/common/README.md](/home/void0312/Workshop/CMO/src/components/tasking/common/README.md)
+- [components/tasking/air/README.md](/home/void0312/Workshop/CMO/src/components/tasking/air/README.md)
+- [components/tasking/naval/README.md](/home/void0312/Workshop/CMO/src/components/tasking/naval/README.md)
+- [core/README.md](/home/void0312/Workshop/CMO/src/core/README.md)
+- [core/engine/README.md](/home/void0312/Workshop/CMO/src/core/engine/README.md)
+- [core/mission/README.md](/home/void0312/Workshop/CMO/src/core/mission/README.md)
+- [core/mission/runtime/README.md](/home/void0312/Workshop/CMO/src/core/mission/runtime/README.md)
+- [core/mission/episode/README.md](/home/void0312/Workshop/CMO/src/core/mission/episode/README.md)
+- [core/mission/episode/detail/README.md](/home/void0312/Workshop/CMO/src/core/mission/episode/detail/README.md)
+- [runtime/README.md](/home/void0312/Workshop/CMO/src/runtime/README.md)
+- [runtime/contracts/README.md](/home/void0312/Workshop/CMO/src/runtime/contracts/README.md)
+- [runtime/facade/README.md](/home/void0312/Workshop/CMO/src/runtime/facade/README.md)
+- [interfaces/README.md](/home/void0312/Workshop/CMO/src/interfaces/README.md)
+- [interfaces/python/README.md](/home/void0312/Workshop/CMO/src/interfaces/python/README.md)
+- [gpu/README.md](/home/void0312/Workshop/CMO/src/gpu/README.md)
+
 ## CMake 分组
 
 当前仍保留 `ef_core` 单 target，但 `CMakeLists.txt` 中的源码已经按未来 target 边界分组：

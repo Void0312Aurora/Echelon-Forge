@@ -18,24 +18,24 @@
 
 ## 1. 当前推荐阅读顺序
 
-1. [Joint 标准总览](./joint/README.md)
-2. [Joint 指挥关系与建模基线](./joint/command_and_modeling_baseline.md)
-3. [Service 标准总览](./services/README.md)
-4. [USAF Profile](./services/air_force.md)
-5. [US Army Profile](./services/army.md)
-6. [US Navy Profile](./services/navy.md)
-7. [US Marine Corps Profile](./services/marine_corps.md)
-8. [文档对齐映射](./document_alignment_map.md)
-9. [Air 平台专用标准总览](./air/README.md)
+1. [Joint 标准总览](/home/void0312/Workshop/CMO/docs/standards/joint/README.md)
+2. [Joint 指挥关系与建模基线](/home/void0312/Workshop/CMO/docs/standards/joint/command_and_modeling_baseline.md)
+3. [Service 标准总览](/home/void0312/Workshop/CMO/docs/standards/services/README.md)
+4. [USAF Profile](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)
+5. [US Army Profile](/home/void0312/Workshop/CMO/docs/standards/services/army.md)
+6. [US Navy Profile](/home/void0312/Workshop/CMO/docs/standards/services/navy.md)
+7. [US Marine Corps Profile](/home/void0312/Workshop/CMO/docs/standards/services/marine_corps.md)
+8. [文档对齐映射](/home/void0312/Workshop/CMO/docs/standards/document_alignment_map.md)
+9. [Air 平台专用标准总览](/home/void0312/Workshop/CMO/docs/standards/air/README.md)
 
 ## 2. 与旧文档的关系
 
 以下旧文档仍保留，但已按 `ARCHIVED` 口径处理：
 
-- `docs/standards/air/com/*.md`
-- `docs/standards/air/com/two_ship/*.md`
-- `docs/architecture/*.md`
-- `docs/architecture/layers/*.md`
+- `docs/Archive/air_first_standards/com/*.md`
+- `docs/Archive/air_first_standards/com/two_ship/*.md`
+- `docs/Archive/architecture/*.md`
+- `docs/Archive/architecture/layers/*.md`
 
 这些文档仍可用于理解项目历史推演，但不再作为当前标准化建模的主依据。
 
@@ -99,5 +99,5 @@
 - `joint/*.md`：`Authoritative`
 - `services/*.md`：`Authoritative`
 - `air/obs.md`、`air/act.md`、`air/aim.md`、`air/rep.md`：`Specialization`
-- `air/com/*.md`、`air/com/two_ship/*.md`：`Archived`
-- `docs/architecture/*.md`：`Archived`
+- `docs/Archive/air_first_standards/com/*.md`、`docs/Archive/air_first_standards/com/two_ship/*.md`：`Archived`
+- `docs/Archive/architecture/*.md`：`Archived`

@@ -31,6 +31,8 @@ def _resolve_specs(group: str) -> tuple[str, list[str], str]:
         return (
             "direct",
             [
+                resolve_repo_path("tests", "contracts", "unit", "comm", "task_order_common_core_defaults.json"),
+                resolve_repo_path("tests", "contracts", "unit", "comm", "scenario_loader_common_core_semantics.json"),
                 resolve_repo_path("tests", "contracts", "unit", "comm", "task_order_and_mission_link.json"),
                 resolve_repo_path("tests", "contracts", "unit", "comm", "scenario_loader_mission_semantics.json"),
             ],

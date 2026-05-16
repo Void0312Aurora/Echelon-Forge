@@ -20,6 +20,18 @@
 - `contracts/`：facade、engine、binding 可共享的稳定 DTO，不能包含 runtime owner 或 engine headers。
 - `facade/`：当前维护中的 typed runtime facade。
 
+## 当前阅读入口
+
+- [contracts/README.md](/home/void0312/Workshop/CMO/src/runtime/contracts/README.md)
+- [facade/README.md](/home/void0312/Workshop/CMO/src/runtime/facade/README.md)
+
+## 当前文件落点
+
+- `contracts/`
+  - `world_batch_contracts.h`
+- `facade/`
+  - `runtime_facade.h`, `runtime_facade.cpp`, `runtime_facade_types.h`
+
 ## 迁移备注
 
 新增主线能力应先形成 facade request/result，再由 Python 或其他接口层绑定。不要让外部调用者继续扩大对 `WorldBatchRuntime` 或 `SimulationKernel` 的直接依赖。

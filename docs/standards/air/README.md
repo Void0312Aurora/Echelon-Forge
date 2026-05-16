@@ -10,12 +10,12 @@
 
 当前应先阅读：
 
-1. [标准化文档总览](../README.md)
-2. [USAF Profile](../services/air_force.md)
-3. [obs.md](./obs.md)
-4. [act.md](./act.md)
-5. [aim.md](./aim.md)
-6. [rep.md](./rep.md)
+1. [标准化文档总览](/home/void0312/Workshop/CMO/docs/standards/README.md)
+2. [USAF Profile](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)
+3. [obs.md](/home/void0312/Workshop/CMO/docs/standards/air/obs.md)
+4. [act.md](/home/void0312/Workshop/CMO/docs/standards/air/act.md)
+5. [aim.md](/home/void0312/Workshop/CMO/docs/standards/air/aim.md)
+6. [rep.md](/home/void0312/Workshop/CMO/docs/standards/air/rep.md)
 
 ## 1. 本目录的定位
 
@@ -34,7 +34,7 @@
 
 ## 2. 与旧 `air/com` 文档的关系
 
-`air/com/*.md` 与 `air/com/two_ship/*.md` 当前均已归档，
+`docs/Archive/air_first_standards/com/*.md` 与 `docs/Archive/air_first_standards/com/two_ship/*.md` 当前均已归档，
 原因是它们建立在旧的 air-first 标准化路线之上。
 
 如果后续还需要空战协同或双机/四机专用标准，

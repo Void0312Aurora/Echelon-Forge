@@ -163,6 +163,7 @@ public:
 
     double debug_get_last_scan_time(uint64_t entity_id);
     int debug_get_contact_count(uint64_t entity_id);
+    std::vector<double> debug_get_mass_state(uint64_t entity_id); // [mass_empty, mass_fuel, mass_stores, mass_total, props_empty, props_total]
 
     // Weapon Interface: Fire missile
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);

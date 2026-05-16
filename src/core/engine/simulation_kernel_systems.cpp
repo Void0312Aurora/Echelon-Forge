@@ -96,7 +96,6 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<RCSProfile>();
     ecs.component<Lifetime>();
     ecs.component<FuelSystem>();
-    ecs.component<MassProperties>();
     ecs.component<Loadout>();
     ecs.component<LogisticsNode>();
     ecs.component<ResupplyState>();

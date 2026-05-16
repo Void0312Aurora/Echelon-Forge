@@ -111,7 +111,58 @@
 - `CAP` 是 air profile 下 `patrol` 家族的一种
 - `wingman` 是 air profile 下 `subordinate role` 的一种
 
-## 5. 对项目架构的直接结论
+## 5. 对 upcoming module 拆分的直接约束
+
+后续 `tasking / command` 模块若继续拆分，文档口径应直接按下面三类落位：
+
+### 5.1 `common`
+
+放所有跨军种仍成立的字段、枚举和 DTO 骨架：
+
+- `service_profile`
+- `task_family`
+- `tactical_unit_type`
+- `command_relationship`
+- `authority_scope`
+- `assignee_kind`
+- `coordination_mode`
+- `parent_node_id / supported_node_id / supporting_node_id`
+- `task_group_id`
+- `role_code`
+- `relative_slot_code`
+- `recovery_site_id`
+
+这些对象在 `common` 层只表达“谁对谁下令、谁归谁协同、回收到哪个 site”，
+不表达 runway、CAP 航线、舰队 warfare station 等域专用细节。
+
+### 5.2 `air`
+
+放当前空战 runtime 仍必须保留的专用语义：
+
+- `CAP`
+- `route_cap`
+- `LeaderPhase` 中的 takeoff / departure / on-station / landing 等 phase
+- `recovery_runway_id`
+- `recovery_approach_type`
+- `takeoff_procedure`
+- `takeoff_clearance`
+- `runway_slot`
+- `wingman / element`
+- air-specific `MissionCommand.command_code` 解释
+
+### 5.3 `naval`
+
+放未来海战 tight-loop runtime 的专用语义：
+
+- `task force / task group / task unit` 的 naval profile 解释
+- `warfare_role_code`
+- `officer_in_tactical_command`
+- `screen / support / station / formation` 的舰队口径
+- 舰艇/编队回收、补给、航线与舰队战位语义
+
+`naval` 不应复用 air 的 `lead / wingman / runway / approach` 词汇作为核心模板。
+
+## 6. 对项目架构的直接结论
 
 后续项目标准化文档与代码设计应按三层组织：
 
@@ -120,3 +171,9 @@
 3. `platform/task specialization`
 
 这比“先写 air，再希望 sea/land 也能复用”更符合真实世界，也更符合工程上的关注点分离。
+
+在 upcoming module work 中，可直接采用以下文档到模块映射：
+
+1. `docs/standards/joint/*` 负责 `common` 的命名边界与禁止项。
+2. `docs/standards/services/*.md` 负责各军种 profile 对 `common` 字段的解释。
+3. `docs/standards/air/*` 与未来 `docs/standards/naval/*` 负责平台/任务专用扩展，不反向主导 `common` 命名。

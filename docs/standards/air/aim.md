@@ -2,11 +2,11 @@
 
 > Scope note (2026-03-23): 本文档是 `air specialization`，描述 air profile 下
 > `Tactical Intent / Execution Command` 的专用语义，不再作为全项目通用核心标准。
-> 当前标准化主基线请先看 [docs/standards/README.md](/home/void0312/CMO/docs/standards/README.md)、
-> [docs/standards/joint/command_and_modeling_baseline.md](/home/void0312/CMO/docs/standards/joint/command_and_modeling_baseline.md)、
-> [docs/standards/services/air_force.md](/home/void0312/CMO/docs/standards/services/air_force.md)。
+> 当前标准化主基线请先看 [docs/standards/README.md](/home/void0312/Workshop/CMO/docs/standards/README.md)、
+> [docs/standards/joint/command_and_modeling_baseline.md](/home/void0312/Workshop/CMO/docs/standards/joint/command_and_modeling_baseline.md)、
+> [docs/standards/services/air_force.md](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)。
 
-本文档定义了“长机” (Lead Aircraft) 或“指挥层”下达给“僚机/数字飞行员”的指令规范。这些指令是高度抽象的战术目标，数字飞行员（RL Agent）的任务是将这些抽象目标通过 [act.md](./act.md) 中的操作转化为飞机的物理运动。
+本文档定义了“长机” (Lead Aircraft) 或“指挥层”下达给“僚机/数字飞行员”的指令规范。这些指令是高度抽象的战术目标，数字飞行员（RL Agent）的任务是将这些抽象目标通过 [act.md](/home/void0312/Workshop/CMO/docs/standards/air/act.md) 中的操作转化为飞机的物理运动。
 
 在新的标准体系中：
 

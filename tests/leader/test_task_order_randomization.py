@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from python.rl.leader_tasking import RuleBasedLeaderPhaseManager, ScriptedC2TaskManager
+from python.testing.runtime import ensure_repo_imports
+
+ensure_repo_imports()
+
+from python.rl.tasking.leader_tasking import RuleBasedLeaderPhaseManager, ScriptedC2TaskManager
+from python.rl.tasking import leader_tasking as _leader_tasking_module
 
 
 _FAKE_COMM = SimpleNamespace(REP_WILCO=1, REP_ON_STATION=2, REP_RTB=20, WARN_BINGO=21, REP_UNABLE=22)
@@ -64,6 +70,12 @@ _FAKE_EF = SimpleNamespace(
     LeaderIntent=_FakeLeaderIntent,
     PilotReport=_FakePilotReport,
 )
+
+
+@contextmanager
+def _patched_tasking_ef():
+    with mock.patch.object(_leader_tasking_module, "ef_py", _FAKE_EF):
+        yield
 
 
 def _make_base_task_order():
@@ -207,7 +219,7 @@ class TaskOrderRandomizationTests(unittest.TestCase):
         )
 
         manager = ScriptedC2TaskManager()
-        with mock.patch("python.rl.leader_tasking.ef_py", _FAKE_EF):
+        with _patched_tasking_ef():
             manager._retask_order(loader, task_name=manager.TASK_SCRAMBLE, sim_time_s=0.0)
 
         task = loader.task_order
@@ -252,7 +264,7 @@ class TaskOrderRandomizationTests(unittest.TestCase):
         )
 
         manager = ScriptedC2TaskManager()
-        with mock.patch("python.rl.leader_tasking.ef_py", _FAKE_EF):
+        with _patched_tasking_ef():
             manager._retask_order(loader, task_name=manager.TASK_CAP, sim_time_s=0.0)
 
         task = loader.task_order
@@ -321,7 +333,7 @@ class TaskOrderRandomizationTests(unittest.TestCase):
 
         manager = ScriptedC2TaskManager()
         manager.current_task_name = manager.TASK_RTB
-        with mock.patch("python.rl.leader_tasking.ef_py", _FAKE_EF):
+        with _patched_tasking_ef():
             state = manager.update(loader, sim_time_s=42.0, truth=truth, inst=inst)
 
         self.assertEqual(manager.TASK_RECOVER_LAND, manager.current_task_name)
@@ -420,7 +432,7 @@ class TaskOrderRandomizationTests(unittest.TestCase):
         truth = loader.sim.get_agent_observation(loader.agent_id)
         inst = loader.sim.get_instrument_state(loader.agent_id)
 
-        with mock.patch("python.rl.leader_tasking.ef_py", _FAKE_EF):
+        with _patched_tasking_ef():
             manager.update(loader, sim_time_s=42.0, truth=truth, inst=inst, sync_to_kernel=False)
 
         self.assertEqual(3, int(loader.leader_intent.command_code))

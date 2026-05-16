@@ -1,12 +1,15 @@
 #include "interfaces/python/binding_utils.h"
 
+#include "components/command/common/comm_message.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
 #include "components/systems/comm.h"
+#include "components/tasking/air/air_tasking_enums.h"
+#include "components/tasking/common/core_tasking_enums.h"
 #include "components/tasking/leader_intent.h"
+#include "components/tasking/naval/naval_tasking_enums.h"
 #include "components/tasking/pilot_report.h"
 #include "components/tasking/task_order.h"
-#include "components/tasking/tasking_enums.h"
 
 void bind_command(nb::module_& m) {
     nb::enum_<CommMsgType>(m, "CommMsgType")
@@ -63,6 +66,13 @@ void bind_command(nb::module_& m) {
         .value("Racetrack", StationType::Racetrack)
         .value("RouteCAP", StationType::RouteCAP);
 
+    nb::enum_<NavalStationType>(m, "NavalStationType")
+        .value("Unspecified", NavalStationType::Unspecified)
+        .value("Screen", NavalStationType::Screen)
+        .value("Support", NavalStationType::Support)
+        .value("PatrolStation", NavalStationType::PatrolStation)
+        .value("ReplenishmentTrack", NavalStationType::ReplenishmentTrack);
+
     nb::enum_<LeaderPhase>(m, "LeaderPhase")
         .value("Idle", LeaderPhase::Idle)
         .value("Scramble", LeaderPhase::Scramble)
@@ -103,6 +113,14 @@ void bind_command(nb::module_& m) {
         .value("Defend", TaskFamily::Defend)
         .value("Recover", TaskFamily::Recover)
         .value("Withdraw", TaskFamily::Withdraw);
+
+    nb::enum_<NavalWarfareRole>(m, "NavalWarfareRole")
+        .value("Unspecified", NavalWarfareRole::Unspecified)
+        .value("ScreenCommander", NavalWarfareRole::ScreenCommander)
+        .value("SurfaceActionCommander", NavalWarfareRole::SurfaceActionCommander)
+        .value("AirDefenseCommander", NavalWarfareRole::AirDefenseCommander)
+        .value("SeaControlCommander", NavalWarfareRole::SeaControlCommander)
+        .value("LogisticsCoordinator", NavalWarfareRole::LogisticsCoordinator);
 
     nb::enum_<TacticalUnitType>(m, "TacticalUnitType")
         .value("Unspecified", TacticalUnitType::Unspecified)
@@ -220,7 +238,9 @@ void bind_command(nb::module_& m) {
         .def_rw("tactical_unit_id", &PilotReport::tactical_unit_id)
         .def_rw("task_group_id", &PilotReport::task_group_id)
         .def_rw("role_code", &PilotReport::role_code)
+        .def_rw("warfare_role_code", &PilotReport::warfare_role_code)
         .def_rw("coordination_mode", &PilotReport::coordination_mode)
+        .def_rw("officer_in_tactical_command", &PilotReport::officer_in_tactical_command)
         .def_rw("element_id", &PilotReport::element_id)
         .def_rw("phase_id", &PilotReport::phase_id)
         .def_rw("formation_role_id", &PilotReport::formation_role_id)
@@ -302,10 +322,12 @@ void bind_command(nb::module_& m) {
         .def_rw("supported_node_id", &TaskOrder::supported_node_id)
         .def_rw("supporting_node_id", &TaskOrder::supporting_node_id)
         .def_rw("role_code", &TaskOrder::role_code)
+        .def_rw("warfare_role_code", &TaskOrder::warfare_role_code)
         .def_rw("coordination_mode", &TaskOrder::coordination_mode)
         .def_rw("relative_slot_code", &TaskOrder::relative_slot_code)
         .def_rw("assignee_kind", &TaskOrder::assignee_kind)
         .def_rw("recovery_site_id", &TaskOrder::recovery_site_id)
+        .def_rw("officer_in_tactical_command", &TaskOrder::officer_in_tactical_command)
         .def_rw("element_id", &TaskOrder::element_id)
         .def_rw("package_id", &TaskOrder::package_id)
         .def_rw("lead_aircraft_id", &TaskOrder::lead_aircraft_id)
@@ -315,6 +337,7 @@ void bind_command(nb::module_& m) {
         .def_rw("anchor_y_m", &TaskOrder::anchor_y_m)
         .def_rw("anchor_z_m", &TaskOrder::anchor_z_m)
         .def_rw("station_type", &TaskOrder::station_type)
+        .def_rw("naval_station_type", &TaskOrder::naval_station_type)
         .def_rw("station_radius_m", &TaskOrder::station_radius_m)
         .def_rw("station_leg_length_m", &TaskOrder::station_leg_length_m)
         .def_rw("station_heading_deg", &TaskOrder::station_heading_deg)
@@ -354,9 +377,11 @@ void bind_command(nb::module_& m) {
         .def_rw("tactical_unit_id", &LeaderIntent::tactical_unit_id)
         .def_rw("task_group_id", &LeaderIntent::task_group_id)
         .def_rw("role_code", &LeaderIntent::role_code)
+        .def_rw("warfare_role_code", &LeaderIntent::warfare_role_code)
         .def_rw("coordination_mode", &LeaderIntent::coordination_mode)
         .def_rw("relative_slot_code", &LeaderIntent::relative_slot_code)
         .def_rw("recovery_site_id", &LeaderIntent::recovery_site_id)
+        .def_rw("officer_in_tactical_command", &LeaderIntent::officer_in_tactical_command)
         .def_rw("command_code", &LeaderIntent::command_code)
         .def_rw("route_ref_id", &LeaderIntent::route_ref_id)
         .def_rw("recovery_base_id", &LeaderIntent::recovery_base_id)

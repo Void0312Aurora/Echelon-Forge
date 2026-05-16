@@ -296,15 +296,15 @@ Phase 1 仍保留的 Python 责任主要是：
 
 ### 12.2 性能基准
 
-新增诊断脚本：
+新增诊断 benchmark family：
 
-- `tools/diagnostics/benchmark_spatial_query_phase1.py`
+- `spatial_query`
 
 执行命令：
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-./.venv/bin/python tools/diagnostics/benchmark_spatial_query_phase1.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family spatial_query -- \
   --json-out /tmp/phase1_spatial_query_benchmark.json
 ```
 

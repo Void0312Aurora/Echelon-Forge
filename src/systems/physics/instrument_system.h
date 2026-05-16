@@ -4,6 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include "components/basic/common.h"
+#include "components/command/air/control_input_resolution.h"
 #include "components/physics/instruments.h"
 #include "components/command/legacy_command.h"
 #include "components/command/mission_command.h"
@@ -30,10 +31,7 @@ namespace {
     }
 
     inline double inst_normalize_heading_deg(double heading_deg) {
-        if (!std::isfinite(heading_deg)) return 0.0;
-        double out = std::fmod(heading_deg, 360.0);
-        if (out < 0.0) out += 360.0;
-        return out;
+        return Math::normalize_heading_deg(heading_deg);
     }
 
     inline bool inst_is_runway_like_surface(IEnvironmentModel::SurfaceType surface) {
@@ -42,11 +40,7 @@ namespace {
     }
 
     inline double inst_ground_track_deg_from_velocity(const Velocity& velocity, double fallback_heading_deg) {
-        const double horiz_speed = std::hypot(velocity.vx, velocity.vy);
-        if (horiz_speed <= 1.0) {
-            return inst_normalize_heading_deg(fallback_heading_deg);
-        }
-        return inst_normalize_heading_deg(std::atan2(velocity.vx, velocity.vy) * 180.0 / M_PI);
+        return Math::ground_track_deg_from_velocity(velocity.vx, velocity.vy, fallback_heading_deg);
     }
 
     inline double inst_mission_heading_bug(
@@ -81,46 +75,8 @@ namespace {
     // Body Frame acceleration projection
     // Returns [ax, ay, az] in body frame
     inline Math::Vector3 project_forces_to_body(const Math::Vector3& f_world, const Transform& val) {
-        // Yaw(psi), Pitch(theta), Roll(phi)
-        double psi = Math::to_radians(90.0 - val.heading);
-        double theta = Math::to_radians(val.pitch);
-        double phi = Math::to_radians(val.roll);
-        
-        double c_psi = std::cos(psi);
-        double s_psi = std::sin(psi);
-        double c_theta = std::cos(theta);
-        double s_theta = std::sin(theta);
-        // double c_phi = std::cos(phi);
-        // double s_phi = std::sin(phi);
-        
-        double fx = f_world.x;
-        double fy = f_world.y;
-        double fz = f_world.z;
-        
-        // Rotate Z (Un-Yaw)
-        double x1 =  fx * c_psi + fy * s_psi;
-        double y1 = -fx * s_psi + fy * c_psi;
-        double z1 =  fz;
-
-        // Rotate Y (Un-Pitch)
-        double x2 =  x1 * c_theta + z1 * s_theta;
-        double y2 =  y1;
-        double z2 = -x1 * s_theta + z1 * c_theta;
-
-        // Rotate X (Un-Roll)
-        // We only really care about Normal (Az) and Axial (Ax) Gs for now.
-        // Az is roughly -y2 * sin(phi) + z2 * cos(phi)
-        // But wait, "Normal" G is usually "Lift". Lift is defined in wind frame, but pilot feels body frame Az.
-        // So we do full rotation.
-        double phi_rad = Math::to_radians(val.roll);
-        double c_phi = std::cos(phi_rad);
-        double s_phi = std::sin(phi_rad);
-        
-        double ax_b = x2;
-        // double ay_b =  y2 * c_phi + z2 * s_phi; 
-        double az_b = -y2 * s_phi + z2 * c_phi;
-        
-        return {ax_b, 0, az_b}; 
+        const Math::Vector3 body = Math::world_to_body(f_world, val);
+        return {body.x, 0.0, body.z};
     }
 }
 
@@ -221,17 +177,18 @@ inline void register_instrument_system(flecs::world& ecs) {
                         inst[i].gear_pos = 0.0f;
                     }
 
-                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
-                    const MovementCommand* legacy = it.entity(i).get<MovementCommand>();
+                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
+                    const MovementCommand* legacy =
+                        active_legacy_movement_command(it.entity(i).get<MovementCommand>());
 
-                    if (pilot && pilot->active) {
-                        inst[i].throttle_pos = std::clamp(pilot->throttle, 0.0, 1.0);
+                    if (pilot) {
+                        inst[i].throttle_pos = resolved_pilot_or_legacy_throttle(pilot, legacy);
                         inst[i].flaps_pos = std::clamp(pilot->flaps, 0.0f, 1.0f);
                         inst[i].speedbrake_pos = std::clamp(pilot->speedbrake, 0.0f, 1.0f);
                         inst[i].master_arm = pilot->master_arm;
                         inst[i].weapon_selected = pilot->weapon_select_id;
-                    } else if (legacy && legacy->active) {
-                        inst[i].throttle_pos = std::clamp(legacy->throttle_cmd, 0.0, 1.0);
+                    } else if (legacy) {
+                        inst[i].throttle_pos = resolved_pilot_or_legacy_throttle(pilot, legacy);
                         inst[i].flaps_pos = 0.0f;
                         inst[i].speedbrake_pos = 0.0f;
                         inst[i].master_arm = false;
@@ -290,26 +247,24 @@ inline void register_instrument_system(flecs::world& ecs) {
                     // 5. EGI / Navigation
                     const EGI* egi = it.entity(i).get<EGI>();
                     if (egi) {
-                        inst[i].lat_deg = egi->lat_deg;
-                        inst[i].lon_deg = egi->lon_deg;
-                        inst[i].vn_mps = egi->vn_mps;
-                        inst[i].ve_mps = egi->ve_mps;
-                        inst[i].vd_mps = egi->vd_mps;
-                        
-                        // Compute ground speed and track from NED velocity
-                        inst[i].ground_speed_mps = std::sqrt(egi->vn_mps * egi->vn_mps + egi->ve_mps * egi->ve_mps);
+                        const InstrumentNavigationProjection nav_projection =
+                            project_egi_to_instrument_navigation(*egi, inst[i].heading_deg);
+                        inst[i].lat_deg = nav_projection.lat_deg;
+                        inst[i].lon_deg = nav_projection.lon_deg;
+                        inst[i].vn_mps = nav_projection.vn_mps;
+                        inst[i].ve_mps = nav_projection.ve_mps;
+                        inst[i].vd_mps = nav_projection.vd_mps;
+                        inst[i].ground_speed_mps = nav_projection.ground_speed_mps;
                         if (inst[i].ground_speed_mps > 0.1) {
-                            // atan2(East, North) gives angle from North, clockwise positive
-                            inst[i].ground_track_deg = std::atan2(egi->ve_mps, egi->vn_mps) * 180.0 / M_PI;
-                            if (inst[i].ground_track_deg < 0) inst[i].ground_track_deg += 360.0;
+                            inst[i].ground_track_deg = nav_projection.ground_track_deg;
                             inst[i].ground_track_deg = inst_canonicalize_ground_track_deg(inst[i].ground_track_deg);
                         } else {
-                            inst[i].ground_track_deg = inst[i].heading_deg; // Use heading when stationary
+                            inst[i].ground_track_deg = inst_normalize_heading_deg(inst[i].heading_deg);
                         }
                         
                         // GPS status
-                        inst[i].gps_available = egi->gps_available;
-                        inst[i].position_uncertainty_m = egi->position_uncertainty_m;
+                        inst[i].gps_available = nav_projection.gps_available;
+                        inst[i].position_uncertainty_m = nav_projection.position_uncertainty_m;
                     } else {
                         // Fallback: no EGI data
                         inst[i].lat_deg = 0.0;
@@ -318,7 +273,7 @@ inline void register_instrument_system(flecs::world& ecs) {
                         inst[i].ve_mps = 0.0;
                         inst[i].vd_mps = 0.0;
                         inst[i].ground_speed_mps = 0.0;
-                        inst[i].ground_track_deg = inst[i].heading_deg;
+                        inst[i].ground_track_deg = inst_normalize_heading_deg(inst[i].heading_deg);
                         inst[i].gps_available = false;
                         inst[i].position_uncertainty_m = 1000.0; // Large uncertainty
                     }

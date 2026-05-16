@@ -9,7 +9,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.rl.multi_agent_benchmark import run_benchmark  # noqa: E402
+from python.rl.support.multi_agent_benchmark import run_benchmark  # noqa: E402
 
 
 def _cooperative_scenario() -> dict:

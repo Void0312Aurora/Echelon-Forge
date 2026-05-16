@@ -8,7 +8,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.rl.leader_tasking import build_kernel_mission_command  # noqa: E402
+from python.rl.tasking.leader_tasking import build_kernel_mission_command  # noqa: E402
 
 
 class LeaderTaskingRuntimeTests(unittest.TestCase):
@@ -54,6 +54,45 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(cmd.form_offset_x), 150.0, places=6)
         self.assertAlmostEqual(float(cmd.form_offset_y), -80.0, places=6)
         self.assertAlmostEqual(float(cmd.form_offset_z), 25.0, places=6)
+
+    def test_build_kernel_mission_command_falls_back_to_mission_cmd_fields(self) -> None:
+        loader = SimpleNamespace(
+            mission_cmd={
+                "command_code": 2,
+                "target_heading": 123.0,
+                "target_altitude": 3100.0,
+                "target_speed": 222.0,
+                "takeoff_procedure_code": 2,
+                "takeoff_clearance_code": 3,
+                "takeoff_interval_s": 4.5,
+                "runway_slot_code": 1,
+                "formation_id": 31,
+                "form_offset_x": 220.0,
+                "form_offset_y": -75.0,
+                "form_offset_z": 18.0,
+                "assigned_target_id": 4401,
+                "authorization_to_fire": True,
+            },
+            leader_intent=None,
+            task_order=None,
+            waypoints=[],
+        )
+
+        cmd = build_kernel_mission_command(loader)
+        self.assertEqual(int(cmd.command_code), 2)
+        self.assertAlmostEqual(float(cmd.cmd_heading_deg), 123.0, places=6)
+        self.assertAlmostEqual(float(cmd.cmd_altitude_m), 3100.0, places=6)
+        self.assertAlmostEqual(float(cmd.cmd_speed_mps), 222.0, places=6)
+        self.assertEqual(int(cmd.takeoff_procedure_id), 2)
+        self.assertEqual(int(cmd.takeoff_clearance_id), 3)
+        self.assertAlmostEqual(float(cmd.takeoff_interval_s), 4.5, places=6)
+        self.assertEqual(int(cmd.runway_slot_id), 1)
+        self.assertEqual(int(cmd.formation_id), 31)
+        self.assertAlmostEqual(float(cmd.form_offset_x), 220.0, places=6)
+        self.assertAlmostEqual(float(cmd.form_offset_y), -75.0, places=6)
+        self.assertAlmostEqual(float(cmd.form_offset_z), 18.0, places=6)
+        self.assertEqual(int(cmd.assigned_target_id), 4401)
+        self.assertTrue(bool(cmd.authorization_to_fire))
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ class CudaImportOrderTests(unittest.TestCase):
             [
                 sys.executable,
                 "-c",
-                "import python.rl.world_batch_vec_env as wb; print('ok', wb.WorldBatchVecEnv.__name__)",
+                "import python.rl.runtime.world_batch_vec_env as wb; print('ok', wb.WorldBatchVecEnv.__name__)",
             ],
             cwd=repo_root,
             env=env,

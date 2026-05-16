@@ -69,6 +69,24 @@ int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
     return -1;
 }
 
+std::vector<double> SimulationKernel::debug_get_mass_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) return {};
+
+    const Mass* mass = e.get<Mass>();
+    const MassProperties* props = e.get<MassProperties>();
+    if (!mass || !props) return {};
+
+    return {
+        mass->empty_mass_kg,
+        mass->fuel_mass_kg,
+        mass->stores_mass_kg,
+        mass->get_total_kg(),
+        props->empty_mass_kg,
+        props->current_total_mass_kg,
+    };
+}
+
 std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (!e.is_valid()) return {0.0, 0.0};

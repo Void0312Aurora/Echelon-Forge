@@ -25,19 +25,19 @@ import numpy as np
 from gym_envs.universal_env import UniversalEnv, half_to_unit
 from gym_envs.leader_env import LeaderTrainingEnv
 from python.models.transformer import TransformerExtractor
-from python.rl.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
-from python.rl.mission_defs import (
+from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.rl.control.mission_defs import (
     COMMAND_NAME_TO_CODE,
     CRUISE_PHASE_NAMES,
     LANDING_PHASE_NAMES,
     TAKEOFF_PHASE_NAMES,
     normalize_phase_name,
 )
-from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.scripted_landing import ScriptedLandingController
-from python.rl.scripted_stable_flight import ScriptedStableFlightController
-from python.rl.scripted_takeoff import ScriptedTakeoffController
-from python.rl.wrappers import get_action_wrapper_spec
+from python.rl.control.scripted_landing import ScriptedLandingController
+from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
+from python.rl.control.scripted_takeoff import ScriptedTakeoffController
+from python.rl.control.wrappers import get_action_wrapper_spec
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.world_model.features import (
     DEFAULT_ANGLE_DEG_INDICES,
     angle_sincos_features,

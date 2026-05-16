@@ -18,6 +18,45 @@ struct MovementCommand {
     bool active;
 };
 
+inline MovementCommand make_legacy_autopilot_movement_command(
+    double heading_deg,
+    double speed_mps,
+    double altitude_m,
+    bool active = true
+) {
+    return {
+        heading_deg,
+        speed_mps,
+        altitude_m,
+        false,
+        0.0,
+        0.0,
+        0.0,
+        true,
+        active,
+    };
+}
+
+inline MovementCommand make_legacy_stick_movement_command(
+    double stick_roll,
+    double stick_pitch,
+    double throttle_cmd,
+    bool gear_down,
+    bool active = true
+) {
+    return {
+        0.0,
+        0.0,
+        0.0,
+        true,
+        stick_roll,
+        stick_pitch,
+        throttle_cmd,
+        gear_down,
+        active,
+    };
+}
+
 struct ActionCommand {
     double turn_rate_cmd;  // Normalized [-1, 1]
     double accel_cmd;      // Normalized [-1, 1]
@@ -33,6 +72,36 @@ struct ActionCommand {
     std::uint64_t msg_arg;      // C2: Reference ID (e.g. Target)
     bool active;
 };
+
+inline ActionCommand make_action_command(
+    double turn_rate_cmd = 0.0,
+    double accel_cmd = 0.0,
+    double climb_rate_cmd = 0.0,
+    double fire_cmd = 0.0,
+    bool release_chaff = false,
+    bool release_flare = false,
+    bool jettison_tanks = false,
+    bool send_msg = false,
+    int msg_type = 0,
+    std::uint64_t msg_recipient = 0,
+    std::uint64_t msg_arg = 0,
+    bool active = false
+) {
+    return {
+        turn_rate_cmd,
+        accel_cmd,
+        climb_rate_cmd,
+        fire_cmd,
+        release_chaff,
+        release_flare,
+        jettison_tanks,
+        send_msg,
+        msg_type,
+        msg_recipient,
+        msg_arg,
+        active,
+    };
+}
 
 struct ActionSpaceConfig {
     double max_turn_rate_deg_s;
@@ -56,3 +125,12 @@ struct LaggedCommand {
     double target_altitude;
     bool active;
 };
+
+inline LaggedCommand make_lagged_command(
+    double heading_deg,
+    double speed_mps,
+    double altitude_m,
+    bool active = true
+) {
+    return {heading_deg, speed_mps, altitude_m, active};
+}

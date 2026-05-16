@@ -217,7 +217,7 @@ Phase 3 这次的目标是把最重的 mission/runtime 主链和终止组合器�
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-./.venv/bin/python tools/diagnostics/benchmark_mission_runtime_phase3.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family mission_runtime -- \
   --json-out /tmp/phase3_mission_runtime_benchmark.json
 ```
 

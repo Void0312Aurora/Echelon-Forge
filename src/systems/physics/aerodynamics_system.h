@@ -21,27 +21,7 @@ namespace {
     }
     
     inline Math::Vector3 get_body_right(double heading, double pitch, double roll) {
-        // Yaw = 90 - Heading
-        double psi = Math::to_radians(90.0 - heading);
-        double theta = Math::to_radians(pitch);
-        double phi = Math::to_radians(roll);
-        
-        double c_psi = std::cos(psi);
-        double s_psi = std::sin(psi);
-        double c_theta = std::cos(theta);
-        double s_theta = std::sin(theta);
-        double c_phi = std::cos(phi);
-        double s_phi = std::sin(phi);
-        
-        // Body Y vector (0, 1, 0) transformed to World
-        // R * [0;1;0] = 2nd column of R
-        
-        // Z-up convention
-        return {
-            -s_psi * c_phi + c_psi * s_theta * s_phi,
-             c_psi * c_phi + s_psi * s_theta * s_phi,
-             c_theta * s_phi
-        };
+        return Math::body_to_world({0.0, 1.0, 0.0}, heading, pitch, roll);
     }
 
     inline double smoothstep01(double x) {

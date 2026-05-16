@@ -16,6 +16,7 @@ std::string stable_json_dump(const nlohmann::json& value);
 double json_double_or(const nlohmann::json& value, const char* key, double fallback);
 int json_int_or(const nlohmann::json& value, const char* key, int fallback);
 std::uint64_t json_uint64_or(const nlohmann::json& value, const char* key, std::uint64_t fallback);
+bool json_bool_or(const nlohmann::json& value, const char* key, bool fallback);
 std::string json_string_or(const nlohmann::json& value, const char* key, std::string fallback);
 std::string trim_copy(std::string value);
 

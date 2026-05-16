@@ -1,0 +1,47 @@
+{
+  "type": "unit_regression",
+  "check_kind": "task_order_and_mission_link",
+  "task_order": {
+    "tasking_profile": "naval",
+    "task_name": "TASK_SCREEN",
+    "service_profile": "Navy",
+    "task_group_id": 8101,
+    "parent_node_id": 8111,
+    "task_type": "CAP",
+    "target_altitude_m": 1700.0,
+    "target_speed_mps": 210.0,
+    "station_heading_deg": 45.0
+  },
+  "leader_intent": {
+    "service_profile": "Navy",
+    "task_family": "Escort",
+    "coordination_mode": "Screen",
+    "cmd_heading_deg": 50.0,
+    "cmd_altitude_m": 1650.0,
+    "cmd_speed_mps": 205.0
+  },
+  "pilot_report": {
+    "report_type": "REP_ON_STATION",
+    "service_profile": "Navy",
+    "task_family": "Escort",
+    "coordination_mode": "Screen",
+    "phase_id": "OnStation",
+    "timestamp_s": 12.5,
+    "status_value": 1.0,
+    "location_x_m": 12010.0,
+    "location_y_m": -7990.0,
+    "location_z_m": 1690.0
+  },
+  "command_link": {
+    "latency_s": 0.2,
+    "loss_probability": 0.0
+  },
+  "mission_command": {
+    "cmd_heading_deg": 222.0,
+    "cmd_altitude_m": 1500.0,
+    "cmd_speed_mps": 190.0,
+    "command_code": 3
+  },
+  "pre_link_command_code": 0,
+  "link_settle_steps": 20
+}

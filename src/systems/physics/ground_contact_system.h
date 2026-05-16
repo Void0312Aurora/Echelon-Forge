@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include "components/basic/common.h"
+#include "components/command/air/control_input_resolution.h"
 #include "components/command/legacy_command.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/forces.h"
@@ -172,20 +173,12 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     double vx = velocity[i].vx;
                     double vy = velocity[i].vy;
                     double v_h_sq = vx*vx + vy*vy;
-                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
-                    const MovementCommand* cmd = it.entity(i).get<MovementCommand>();
-                    bool throttle_idle = false;
-                    double brake_amount = 0.0;
-                    if (pilot && pilot->active) {
-                        throttle_idle = (pilot->throttle < 0.01);
-                        brake_amount = std::clamp(pilot->brake, 0.0, 1.0);
-                        if (pilot->brake_left || pilot->brake_right) {
-                            brake_amount = std::max(brake_amount, 1.0);
-                        }
-                    } else if (cmd && cmd->active) {
-                        throttle_idle = (cmd->throttle_cmd < 0.01);
-                        if (throttle_idle) brake_amount = 1.0;
-                    }
+                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
+                    const MovementCommand* cmd = active_legacy_movement_command(it.entity(i).get<MovementCommand>());
+                    const ResolvedGroundControlInput ground_control =
+                        resolve_pilot_or_legacy_ground_control(pilot, cmd);
+                    bool throttle_idle = ground_control.throttle_idle;
+                    double brake_amount = ground_control.brake_amount;
                     
                     if (v_h_sq > 0.001) {
                          double v_h = std::sqrt(v_h_sq);

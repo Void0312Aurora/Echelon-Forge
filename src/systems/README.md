@@ -24,6 +24,30 @@
 - `systems/`：平台系统 runtime，例如 command link、data link、EW、logistics、navigation、sensor、track manager。
 - `visual/`：视觉观测 system。
 
+## 当前阅读入口
+
+- [core/README.md](/home/void0312/Workshop/CMO/src/systems/core/README.md)
+- [physics/README.md](/home/void0312/Workshop/CMO/src/systems/physics/README.md)
+- [combat/README.md](/home/void0312/Workshop/CMO/src/systems/combat/README.md)
+- [systems/README.md](/home/void0312/Workshop/CMO/src/systems/systems/README.md)
+- [visual/README.md](/home/void0312/Workshop/CMO/src/systems/visual/README.md)
+
+## 当前文件落点
+
+- `core/`
+  - `operation_system.h`
+- `physics/`
+  - `aero_state_system.h`, `aerodynamics_system.h`, `control_system.h`
+  - `force_clear_system.h`, `force_system.h`, `ground_contact_system.h`
+  - `instrument_system.h`, `leapfrog_system.h`, `movement_system.h`, `rotational_system.h`
+- `combat/`
+  - `damage_system.h`, `guidance_system.h`
+- `systems/`
+  - `command_link_system.h`, `data_link_system.h`, `ew_system.h`
+  - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `track_manager_system.h`
+- `visual/`
+  - `visual_system.h`
+
 ## 迁移备注
 
 `systems/systems` 命名过宽。新增平台系统可以暂放此目录，但应在下一轮重命名评估中收敛为更明确的业务名，例如 `systems/platform` 或 `systems/avionics`。

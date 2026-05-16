@@ -23,6 +23,27 @@
 - `systems/`：传感器等平台系统模型。
 - `weapons/`：effects 和 guidance 模型。
 
+## 当前阅读入口
+
+- [air/README.md](/home/void0312/Workshop/CMO/src/models/air/README.md)
+- [core/README.md](/home/void0312/Workshop/CMO/src/models/core/README.md)
+- [environment/README.md](/home/void0312/Workshop/CMO/src/models/environment/README.md)
+- [systems/README.md](/home/void0312/Workshop/CMO/src/models/systems/README.md)
+- [weapons/README.md](/home/void0312/Workshop/CMO/src/models/weapons/README.md)
+
+## 当前文件落点
+
+- `air/`
+  - `default_control_model.cpp`
+- `core/`
+  - `default_unit_factory.h`
+- `environment/`
+  - `default_environment_model.cpp`, `default_environment_snapshot.h`
+- `systems/`
+  - `default_sensor_model.cpp`
+- `weapons/`
+  - `default_effects_model.cpp`, `default_guidance_model.cpp`
+
 ## 迁移备注
 
 新增模型应优先检查 `core/interfaces` 是否已有 contract。没有 contract 时，先补接口边界，再引入默认实现。

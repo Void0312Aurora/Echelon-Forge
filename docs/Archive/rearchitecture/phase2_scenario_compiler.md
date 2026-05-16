@@ -76,7 +76,7 @@ Phase 2 最终分两刀完成：
 
 文件：
 
-- [benchmark_scenario_compiler_phase2.py](/home/void0312/CMO/tools/diagnostics/benchmark_scenario_compiler_phase2.py)
+- [tools/diagnostics/benchmark.py](/home/void0312/CMO/tools/diagnostics/benchmark.py)
 
 用途：
 
@@ -123,7 +123,7 @@ Phase 2 最终分两刀完成：
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-./.venv/bin/python tools/diagnostics/benchmark_scenario_compiler_phase2.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family scenario_compiler -- \
   --json-out /tmp/phase2_scenario_compiler_benchmark_default.json
 ```
 
@@ -141,7 +141,7 @@ PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-./.venv/bin/python tools/diagnostics/benchmark_scenario_compiler_phase2.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family scenario_compiler -- \
   --scenario scenarios/combined/takeoff_to_landing_continuous_train_v1.json \
   --json-out /tmp/phase2_scenario_compiler_benchmark_combined.json
 ```

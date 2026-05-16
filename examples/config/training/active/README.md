@@ -7,7 +7,7 @@ This directory holds maintained in-progress training configs that are not frozen
 - [cooperative_cruise_nav_v2_formation_v1.json](/home/void0312/Workshop/CMO/examples/config/training/active/cooperative_cruise_nav_v2_formation_v1.json)
   - Single-policy cruise baseline for the current P8 cooperative-execution line.
   - Uses `nav_v2_formation_role_v1` so the policy can receive formation and role/reference semantics from the mission command chain.
-  - Scenario pairing is `scenarios/cruise/cooperative_cruise_waypoints_paramroute_navv2_formation_train_v1.json`, with formation offsets carried in the mission command instead of adding a new policy input family.
+  - Scenario pairing is `scenarios/cruise/cooperative_cruise_waypoints_paramroute_navv2_formation_train_v1.json`, with a true cooperative roster and formation offsets carried in the mission command instead of adding a synthetic policy-only input family.
 
 ## Cooperative Takeoff Line
 

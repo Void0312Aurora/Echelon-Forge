@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include "components/basic/common.h"
+#include "components/command/air/control_input_resolution.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/performance.h"
@@ -89,9 +90,10 @@ inline void register_force_system(flecs::world& ecs) {
                 for (auto i : it) {
                     // Check if entity has an active control source
                     // Skip only if BOTH PilotAction and MovementCommand are inactive
-                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
-                    bool has_pilot = (pilot && pilot->active);
-                    bool has_legacy = command[i].active;
+                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
+                    const MovementCommand* legacy = active_legacy_movement_command(&command[i]);
+                    bool has_pilot = (pilot != nullptr);
+                    bool has_legacy = (legacy != nullptr);
                     
                     if (!has_pilot && !has_legacy) continue;
                     
@@ -118,18 +120,7 @@ inline void register_force_system(flecs::world& ecs) {
                     double nose_y = canonicalize_direction_scalar(std::sin(yaw_rad) * std::cos(pitch_rad));
                     double nose_z = canonicalize_direction_scalar(std::sin(pitch_rad));
                     
-                    double throttle_input = 0.0;
-                    
-                    // Priority 1: Pilot Action (reuse pilot from above)
-                    if (has_pilot) {
-                        throttle_input = pilot->throttle;
-                    } 
-                    // Priority 2: Legacy MovementCommand (Backwards Compatibility)
-                    else if (command[i].active) {
-                        throttle_input = command[i].throttle_cmd;
-                    }
-
-                    throttle_input = std::clamp(throttle_input, 0.0, 1.0);
+                    double throttle_input = resolved_pilot_or_legacy_throttle(pilot, legacy);
                     
                     double thrust_magnitude = 0.0;
                     bool afterburner_active = false;

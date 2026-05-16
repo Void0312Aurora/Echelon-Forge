@@ -54,16 +54,6 @@ double landing_bank_limit_deg(const MissionCommand& mission) {
     }
 }
 
-double ground_track_deg_from_velocity(const Velocity& velocity, double fallback_heading_deg) {
-    const double horiz_speed = std::hypot(velocity.vx, velocity.vy);
-    if (horiz_speed <= 1.0) {
-        return fallback_heading_deg;
-    }
-    double track_deg = std::fmod(to_degrees(std::atan2(velocity.vx, velocity.vy)), 360.0);
-    if (track_deg < 0.0) track_deg += 360.0;
-    return track_deg;
-}
-
 double landing_heading_reference_deg(
     const MissionCommand& mission,
     const Transform& transform,
@@ -147,7 +137,11 @@ public:
             const bool is_landing_command = (command_code == 4);
 
             const double current_heading_deg = transform.heading;
-            const double current_track_deg = ground_track_deg_from_velocity(velocity, current_heading_deg);
+            const double current_track_deg = Math::ground_track_deg_from_velocity(
+                velocity.vx,
+                velocity.vy,
+                current_heading_deg
+            );
             double reference_heading_deg = mission->cmd_heading_deg;
             double lateral_reference_deg = current_heading_deg;
             double bank_limit_deg = 60.0;

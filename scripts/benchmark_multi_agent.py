@@ -27,7 +27,7 @@ for build_dir_name in BUILD_DIR_NAMES:
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from python.rl.multi_agent_benchmark import main
+from python.rl.support.multi_agent_benchmark import main
 
 
 if __name__ == "__main__":

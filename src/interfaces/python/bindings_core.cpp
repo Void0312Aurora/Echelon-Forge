@@ -417,6 +417,9 @@ void bind_core(nb::module_& m) {
              nb::arg("entity_id"), nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"))
         .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time, "Debug: get sensor last_scan_time")
         .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size")
+        .def("debug_get_mass_state", &SimulationKernel::debug_get_mass_state,
+             "Debug: get [mass_empty, mass_fuel, mass_stores, mass_total, props_empty, props_total]",
+             nb::arg("entity_id"))
         .def("set_contact_list", &SimulationKernel::set_contact_list,
              "Override the ContactList for a unit or missile",
              nb::arg("entity_id"), nb::arg("detections"))

@@ -23,6 +23,34 @@
 - `geometry/`：空间查询和几何辅助 runtime。
 - `interfaces/`：模型接口和跨 core 的抽象 contract。
 
+## 当前阅读入口
+
+- [engine/README.md](/home/void0312/Workshop/CMO/src/core/engine/README.md)
+- [mission/README.md](/home/void0312/Workshop/CMO/src/core/mission/README.md)
+- [geometry/README.md](/home/void0312/Workshop/CMO/src/core/geometry/README.md)
+- [interfaces/README.md](/home/void0312/Workshop/CMO/src/core/interfaces/README.md)
+
+## 当前文件落点
+
+- `engine/`
+  - `simulation_kernel.h/.cpp`
+  - `simulation_kernel_systems.cpp`
+  - `simulation_kernel_command_api.cpp`
+  - `simulation_kernel_observation_api.cpp`
+  - `simulation_kernel_visual_api.cpp`
+  - `simulation_kernel_weapon_api.cpp`
+  - `world_batch_runtime.h/.cpp`
+  - `exact_stage_inventory.cpp`
+- `mission/`
+  - `runtime/*`：mission、objective、reward、termination、execution runtime
+  - `episode/*`：episode state、batch prepare、controller
+  - `episode/detail/*`：transition、codec、reward breakdown 私有 helper
+- `geometry/`
+  - `spatial_query_runtime.h/.cpp`
+- `interfaces/`
+  - `control_model.h`, `effects_model.h`, `environment_model.h`
+  - `guidance_model.h`, `sensor_model.h`, `observation.h`, `unit_data.h`, `unit_factory.h`
+
 ## 迁移备注
 
 `mission/` 已按 `runtime/`、`episode/`、`episode/detail/` 拆出物理层级。后续新增 mission 代码应先归入这些子层级，并保持 `runtime/` 不反向依赖 `episode/`。

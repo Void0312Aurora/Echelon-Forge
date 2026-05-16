@@ -27,7 +27,7 @@
 
 ## 2. 推荐阅读顺序
 
-1. [Joint 指挥关系与建模基线](./command_and_modeling_baseline.md)
+1. [Joint 指挥关系与建模基线](/home/void0312/Workshop/CMO/docs/standards/joint/command_and_modeling_baseline.md)
 
 ## 3. 主要官方依据
 

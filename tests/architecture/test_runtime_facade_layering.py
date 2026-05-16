@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "world_batch_vec_env.py"
+WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
 

@@ -31,6 +31,19 @@ inline double operation_lerp_tau(double current, double target, double tau_s, do
     return current + (target - current) * alpha;
 }
 
+inline MovementCommand operation_seed_movement_command(const Transform& transform, const Velocity& velocity) {
+    return make_legacy_autopilot_movement_command(
+        operation_wrap_angle_360(transform.heading),
+        operation_speed_from_velocity(velocity),
+        transform.z
+    );
+}
+
+inline LaggedCommand operation_seed_lagged_command(const Transform& transform, const Velocity& velocity) {
+    const MovementCommand seed = operation_seed_movement_command(transform, velocity);
+    return make_lagged_command(seed.target_heading, seed.target_speed, seed.target_altitude, seed.active);
+}
+
 inline void register_action_mapping_system(flecs::world& ecs) {
     ecs.system<MovementCommand, const ActionCommand, const ActionSpaceConfig, const Transform, const Velocity>("ActionMapping")
         .kind(flecs::OnUpdate)
@@ -48,10 +61,7 @@ inline void register_action_mapping_system(flecs::world& ecs) {
 
                     MovementCommand& out = cmd[i];
                     if (!out.active) {
-                        out.target_heading = operation_wrap_angle_360(tr[i].heading);
-                        out.target_speed = operation_speed_from_velocity(vel[i]);
-                        out.target_altitude = tr[i].z;
-                        out.active = true;
+                        out = operation_seed_movement_command(tr[i], vel[i]);
                     }
 
                     double turn_cmd = std::clamp(act[i].turn_rate_cmd, -1.0, 1.0);
@@ -96,10 +106,7 @@ inline void register_command_lag_system(flecs::world& ecs) {
                     }
 
                     if (!current.active) {
-                        current.target_heading = operation_wrap_angle_360(tr[i].heading);
-                        current.target_speed = operation_speed_from_velocity(vel[i]);
-                        current.target_altitude = tr[i].z;
-                        current.active = true;
+                        current = operation_seed_lagged_command(tr[i], vel[i]);
                     }
 
                     double heading_delta = operation_shortest_angle_deg(target.target_heading,

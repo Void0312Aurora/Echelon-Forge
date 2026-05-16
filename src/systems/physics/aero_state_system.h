@@ -31,51 +31,6 @@ namespace {
     inline double canonicalize_aero_angle_deg(double value) {
         return canonicalize_aero_scalar(value, kAeroAngleCanonicalQuantumDeg);
     }
-
-    // World to Body transformation (Yaw -> Pitch -> Roll sequence)
-    // Actually, usually we need World->Body, which is Inverse(Body->World).
-    // Body->World (R_b2w) using Heading(Psi), Pitch(Theta), Roll(Phi).
-    
-    inline Math::Vector3 world_to_body(const Math::Vector3& v_world, double heading, double pitch, double roll) {
-        // We need Rotation Matrix R_w2b = R_b2w^T
-        // Psi (Yaw) = 90 - Heading
-        double psi = Math::to_radians(90.0 - heading); // Math Yaw (Counter-Clockwise from X-East)
-        double theta = Math::to_radians(pitch);
-        double phi = Math::to_radians(roll);
-
-        double c_psi = std::cos(psi);
-        double s_psi = std::sin(psi);
-        double c_theta = std::cos(theta);
-        double s_theta = std::sin(theta);
-        double c_phi = std::cos(phi);
-        double s_phi = std::sin(phi);
-
-        // Standard Euler Rotation Matrix R_z(psi) * R_y(theta) * R_x(phi) is Body->World
-        // We want World->Body: R_x(-phi) * R_y(-theta) * R_z(-psi)
-        
-        // Intermediate: Rotate Z (Un-Yaw)
-        // x1 =  x*c + y*s
-        // y1 = -x*s + y*c
-        double x1 =  v_world.x * c_psi + v_world.y * s_psi;
-        double y1 = -v_world.x * s_psi + v_world.y * c_psi;
-        double z1 =  v_world.z;
-
-        // Rotate Y (Un-Pitch)
-        // x2 = x1*c + z1*s
-        // z2 = -x1*s + z1*c
-        double x2 =  x1 * c_theta + z1 * s_theta;
-        double y2 =  y1;
-        double z2 = -x1 * s_theta + z1 * c_theta;
-
-        // Rotate X (Un-Roll)
-        // y3 = y2*c + z2*s
-        // z3 = -y2*s + z2*c
-        double x_body = x2;
-        double y_body =  y2 * c_phi + z2 * s_phi;
-        double z_body = -y2 * s_phi + z2 * c_phi;
-
-        return {x_body, y_body, z_body};
-    }
 }
 
 /**
@@ -141,12 +96,7 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     aero[i].mach_number = canonicalize_aero_angle_deg(aero[i].mach_number);
                     
                     // 3. Body Frame Velocity for Alpha/Beta
-                    Math::Vector3 v_body = world_to_body(
-                        {vx, vy, vz}, 
-                        transform[i].heading, 
-                        transform[i].pitch, 
-                        transform[i].roll
-                    );
+                    Math::Vector3 v_body = Math::world_to_body({vx, vy, vz}, transform[i]);
                     
                     // u = Forward (X), v = Side (Y), w = Down (Z-down? No, Z-up system: w is Up)
                     // ...

@@ -1,0 +1,21 @@
+{
+  "type": "unit_regression",
+  "check_kind": "task_order_common_core",
+  "task_name": "TASK_CAP",
+  "task_order": {
+    "task_type": "CAP",
+    "element_id": 77,
+    "package_id": 0,
+    "assignee_kind": "Element",
+    "recovery_runway_id": 7
+  },
+  "expected_common_core": {
+    "service_profile": "AirForce",
+    "task_family": "Patrol",
+    "tactical_unit_type": "TacticalUnit",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Attached",
+    "recovery_site_id": 7
+  }
+}

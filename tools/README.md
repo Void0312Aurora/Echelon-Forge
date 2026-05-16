@@ -17,75 +17,72 @@
 
 ## Eval
 
-- [eval_centerline.py](/home/void0312/CMO/tools/eval/eval_centerline.py)
-  - Runway centerline deviation summary for world-model checkpoints.
-- [eval_centerline_scripted.py](/home/void0312/CMO/tools/eval/eval_centerline_scripted.py)
-  - Scripted takeoff centerline summary.
-- [eval_stable_flight.py](/home/void0312/CMO/tools/eval/eval_stable_flight.py)
-  - Stable-flight tracking summary for world-model checkpoints.
-- [eval_stable_flight_scripted.py](/home/void0312/CMO/tools/eval/eval_stable_flight_scripted.py)
-  - Stable-flight tracking summary for scripted control.
-- [eval_takeoff_roll.py](/home/void0312/CMO/tools/eval/eval_takeoff_roll.py)
-  - Takeoff roll, wheel-off, and liftoff summary for world-model checkpoints.
-- [eval_takeoff_roll_scripted.py](/home/void0312/CMO/tools/eval/eval_takeoff_roll_scripted.py)
-  - Takeoff roll summary for scripted control.
-- [eval_waypoint_nav.py](/home/void0312/CMO/tools/eval/eval_waypoint_nav.py)
-  - Waypoint-navigation summary for world-model checkpoints.
-- [eval_waypoint_nav_scripted.py](/home/void0312/CMO/tools/eval/eval_waypoint_nav_scripted.py)
-  - Waypoint-navigation summary for scripted control.
-- [eval_sb3_policy.py](/home/void0312/CMO/tools/eval/eval_sb3_policy.py)
-  - Generic SB3 execution-policy evaluator from a train config.
-- [eval_sb3_cooperative_policy.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3_cooperative_policy.py)
-  - Cooperative execution-policy evaluator with world/slot/shared-reset split statistics.
-- [eval_utils.py](/home/void0312/CMO/tools/eval/eval_utils.py)
+- [eval_task.py](/home/void0312/Workshop/CMO/tools/eval/eval_task.py)
+  - Unified task evaluator for `stable_flight`, `takeoff_roll`, `centerline`, and `waypoint_nav` across `world_model` and `scripted` backends.
+- [eval_sb3.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3.py)
+  - Unified SB3 evaluator for `single` and `cooperative` execution policies with mode-specific metrics.
+- [task_eval_driver.py](/home/void0312/Workshop/CMO/tools/eval/task_eval_driver.py)
+  - Shared implementation for single-agent task metrics and backend adapters.
+- [eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/eval_utils.py)
   - Shared bootstrap, env construction, and stat formatting.
-- [world_model_eval_utils.py](/home/void0312/CMO/tools/eval/world_model_eval_utils.py)
+- [world_model_eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/world_model_eval_utils.py)
   - Shared checkpoint loading and recurrent world-model rollout helpers.
-- [waypoint_eval_utils.py](/home/void0312/CMO/tools/eval/waypoint_eval_utils.py)
+- [waypoint_eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/waypoint_eval_utils.py)
   - Shared waypoint mission-status parsing and geometry metrics.
 
 ## Diagnostics
 
-- [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py)
+- [benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+  - Unified benchmark CLI for maintained diagnostics families.
+- [run_benchmark_suite.py](/home/void0312/Workshop/CMO/tools/diagnostics/run_benchmark_suite.py)
+  - Unified config-driven entrypoint for maintained benchmark suites under `tools/diagnostics/`.
+- [diagnose_cooperative_trajectory.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_cooperative_trajectory.py)
+  - Unified cooperative trajectory replay/export CLI for `takeoff` and `takeoff_to_cruise`.
+- [leader_perf_probe.py](/home/void0312/Workshop/CMO/tools/diagnostics/leader_perf_probe.py)
   - Maintained leader-layer throughput probe for `auto/subproc/shared/dummy`.
-- [README.md](/home/void0312/CMO/tools/diagnostics/README.md)
+- [README.md](/home/void0312/Workshop/CMO/tools/diagnostics/README.md)
   - Diagnostics catalog and scope notes.
 
 ## Runners
 
-- [run_scenario_contract.py](/home/void0312/CMO/tools/runners/run_scenario_contract.py)
+- [run_scenario_contract.py](/home/void0312/Workshop/CMO/tools/runners/run_scenario_contract.py)
   - Runs one or more JSON contracts from `tests/contracts/`.
 
 ## Maintenance
 
-- [redundancy_audit.py](/home/void0312/CMO/tools/maintenance/redundancy_audit.py)
+- [redundancy_audit.py](/home/void0312/Workshop/CMO/tools/maintenance/redundancy_audit.py)
   - Audits duplicate/temp-like workspace content.
-- [cleanup_redundancy.py](/home/void0312/CMO/tools/maintenance/cleanup_redundancy.py)
+- [cleanup_redundancy.py](/home/void0312/Workshop/CMO/tools/maintenance/cleanup_redundancy.py)
   - Dry-run or apply cleanup for cache/temp artifacts.
+- [isolate_repro_workspace.sh](/home/void0312/Workshop/CMO/tools/maintenance/isolate_repro_workspace.sh)
+  - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
 
 ## Archive
 
-- [README.md](/home/void0312/CMO/tools/archive/README.md)
+- [README.md](/home/void0312/Workshop/CMO/tools/archive/README.md)
   - Scope note for archived root-level probes.
-- [batch_api_probe.py](/home/void0312/CMO/tools/archive/batch_api_probe.py)
+- [batch_api_probe.py](/home/void0312/Workshop/CMO/tools/archive/batch_api_probe.py)
   - Quick manual probe for the C++ batch preparation API.
-- [world_batch_vec_env_benchmark.py](/home/void0312/CMO/tools/archive/world_batch_vec_env_benchmark.py)
+- [world_batch_vec_env_benchmark.py](/home/void0312/Workshop/CMO/tools/archive/world_batch_vec_env_benchmark.py)
   - Archived vec-env throughput benchmark that predates the current diagnostics layout.
+- [diagnose_training_matrix.py](/home/void0312/Workshop/CMO/tools/archive/diagnose_training_matrix.py)
+  - Archived helper that parses legacy `evaluate.py` text output for small model/scenario matrices.
 
 ## Common Usage
 
 Run contracts:
 
 ```bash
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tools/runners/run_scenario_contract.py --spec tests/contracts/chain/loader_command_chain_takeoff_to_landing.json
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_scenario_contract.py \
+  --spec tests/contracts/chain/loader_command_chain_takeoff_to_landing.json
 ```
 
 Run multiple contracts:
 
 ```bash
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tools/runners/run_scenario_contract.py --spec \
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_v1.json \
   tests/contracts/env/mission_obs/mission_obs_nav_v1.json
 ```
@@ -93,7 +90,10 @@ python tools/runners/run_scenario_contract.py --spec \
 Run a scripted eval:
 
 ```bash
-python tools/eval/eval_stable_flight_scripted.py \
+source tools/maintenance/cmo_env.sh
+cmo_python tools/eval/eval_task.py \
+  --task stable_flight \
+  --backend scripted \
   --scenario scenarios/stable_flight/stable_flight_stresswind_rewardbalance_v3.json \
   --episodes 10 \
   --max_steps 2000
@@ -102,14 +102,16 @@ python tools/eval/eval_stable_flight_scripted.py \
 Audit and dry-run cleanup:
 
 ```bash
-python tools/maintenance/redundancy_audit.py --roots tests tools scenarios
-python tools/maintenance/cleanup_redundancy.py --roots tests tools --include_named_tmp_dirs
+source tools/maintenance/cmo_env.sh
+cmo_python tools/maintenance/redundancy_audit.py --roots tests tools scenarios
+cmo_python tools/maintenance/cleanup_redundancy.py --roots tests tools --include_named_tmp_dirs
 ```
 
 Probe leader-layer throughput:
 
 ```bash
-./.venv/bin/python tools/diagnostics/leader_perf_probe.py \
+source tools/maintenance/cmo_env.sh
+cmo_python tools/diagnostics/leader_perf_probe.py \
   --scenario scenarios/combined/takeoff_to_cruise_paramroute_navv2_mixedmode_eval_v2.json \
   --train_config examples/config/training/p7_leader_layer_c2_reporting_generalization_fast_v1.json \
   --n_envs 4 \
@@ -117,11 +119,43 @@ Probe leader-layer throughput:
   --vec_backend shared
 ```
 
+Run a maintained benchmark suite from one config:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/diagnostics/run_benchmark_suite.py \
+  --config examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json
+```
+
+Run one maintained benchmark family:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/diagnostics/benchmark.py \
+  --family world_batch_runtime \
+  --world-count 8 --setup-iters 64 --iters 512
+```
+
+Replay one cooperative trajectory diagnostic:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
+  --task takeoff \
+  --scenario scenarios/takeoff/cooperative_interval_takeoff_departure_navv2_train_v1.json \
+  --train_config examples/config/training/active/cooperative_interval_takeoff_departure_nav_v1.json \
+  --model experiments/example/checkpoints/model.zip \
+  --output /tmp/cooperative_takeoff_trace.png
+```
+
 ## Maintenance Guidance
 
-- New maintained eval entrypoints belong under `tools/eval/`, not top-level `tools/`.
+- New maintained task eval behavior should extend `tools/eval/eval_task.py` and `tools/eval/task_eval_driver.py`, not add per-task wrapper scripts.
+- New maintained SB3 evaluation behavior should extend `tools/eval/eval_sb3.py` and `tools/eval/sb3_eval_base.py`, not reintroduce split single/cooperative wrappers.
 - Shared eval bootstrap should come from `tools.eval.eval_utils`, not copied setup blocks.
 - JSON-contract entrypoints should prefer `tools/runners/run_scenario_contract.py` over one-off wrappers.
+- Maintained diagnostics should prefer `tools/diagnostics/benchmark.py` for single benchmark families and `tools/diagnostics/run_benchmark_suite.py` for multi-job suites.
+- Cooperative trajectory diagnostics should extend `tools/diagnostics/diagnose_cooperative_trajectory.py` and `tools/diagnostics/cooperative_trajectory_base.py`, not add task-specific wrapper CLIs.
 - Ad hoc probes and matrix sweeps belong under `tools/diagnostics/`.
 - Cleanup/audit helpers belong under `tools/maintenance/`.
 - Archived scratch scripts should move to `tools/archive/`, not stay at repo root.

@@ -251,7 +251,7 @@ Phase 4 目前分三刀推进：
 文件：
 
 - [test_world_batch_runtime.py](/home/void0312/CMO/tests/world_batch/test_world_batch_runtime.py)
-- [benchmark_world_batch_phase4.py](/home/void0312/CMO/tools/diagnostics/benchmark_world_batch_phase4.py)
+- [tools/diagnostics/benchmark.py](/home/void0312/CMO/tools/diagnostics/benchmark.py)
 
 测试覆盖：
 
@@ -274,7 +274,7 @@ benchmark 覆盖：
 - [universal_env.py](/home/void0312/CMO/gym_envs/universal_env.py)
 - [train.py](/home/void0312/CMO/train.py)
 - [test_world_batch_vec_env.py](/home/void0312/CMO/tests/world_batch/test_world_batch_vec_env.py)
-- [benchmark_world_batch_vec_env_phase4.py](/home/void0312/CMO/tools/diagnostics/benchmark_world_batch_vec_env_phase4.py)
+- [tools/diagnostics/benchmark.py](/home/void0312/CMO/tools/diagnostics/benchmark.py)
 
 第三刀当前能力：
 
@@ -342,14 +342,14 @@ benchmark 覆盖：
 - [scenario_compiler.py](/home/void0312/CMO/python/scenario_compiler.py)
 - [scenario_runtime.py](/home/void0312/CMO/python/scenario_runtime.py)
 - [test_world_batch_runtime.py](/home/void0312/CMO/tests/world_batch/test_world_batch_runtime.py)
-- [benchmark_world_batch_phase4.py](/home/void0312/CMO/tools/diagnostics/benchmark_world_batch_phase4.py)
+- [tools/diagnostics/benchmark.py](/home/void0312/CMO/tools/diagnostics/benchmark.py)
 
 本次改动：
 
 - `CompiledScenarioRuntimeMetadata` 已新增 `layout_template`
 - compiler 现在会预编译 world layout 的静态部分：`time_step / terrain / wind / zones / spawns / env randomization / runway heading / wind_ref_alt_m`
 - `scenario_runtime` 已补实验性 `use_compiled_template=True` 路径，并新增与 legacy layout build 的等价性回归
-- `benchmark_world_batch_phase4.py` 已新增 `legacy layout build` vs `compiled layout build` 口径
+- `benchmark.py --family world_batch_runtime` 已新增 `legacy layout build` vs `compiled layout build` 口径
 
 当前结论：
 
@@ -396,7 +396,7 @@ PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-./.venv/bin/python tools/diagnostics/benchmark_world_batch_phase4.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family world_batch_runtime -- \
   --json-out /tmp/phase4_world_batch_benchmark.json
 ```
 
@@ -486,7 +486,7 @@ PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
 
 ```bash
 PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-./.venv/bin/python tools/diagnostics/benchmark_world_batch_vec_env_phase4.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family world_batch_vec_env -- \
   --scenario scenarios/combined/takeoff_to_landing_continuous_train_v1.json \
   --n-envs 8 \
   --steps 128 \

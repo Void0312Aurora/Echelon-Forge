@@ -4,6 +4,7 @@
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 #include "components/basic/common.h"
+#include "components/command/air/control_input_resolution.h"
 #include "components/command/legacy_command.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"
@@ -18,26 +19,12 @@ inline void register_logistics_system(flecs::world& ecs) {
                 double dt = it.delta_time();
 
                 for (auto i : it) {
-                    double throttle = 0.0; // [0, 1]
+                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
+                    const MovementCommand* legacy = active_legacy_movement_command(it.entity(i).get<MovementCommand>());
+                    double throttle = resolved_pilot_or_legacy_throttle(pilot, legacy); // [0, 1]
                     bool throttle_set = false;
 
-                    // Priority 1: Digital Pilot
-                    if (const PilotAction* pilot = it.entity(i).get<PilotAction>()) {
-                        if (pilot->active) {
-                            throttle = std::clamp(pilot->throttle, 0.0, 1.0);
-                            throttle_set = true;
-                        }
-                    }
-
-                    // Priority 2: Legacy MovementCommand
-                    if (!throttle_set) {
-                        if (const MovementCommand* legacy = it.entity(i).get<MovementCommand>()) {
-                            if (legacy->active) {
-                                throttle = std::clamp(legacy->throttle_cmd, 0.0, 1.0);
-                                throttle_set = true;
-                            }
-                        }
-                    }
+                    throttle_set = (pilot != nullptr) || (legacy != nullptr);
 
                     // Priority 3: ActionCommand (normalized [-1,1] -> [0,1])
                     if (!throttle_set) {
@@ -116,10 +103,10 @@ inline void register_logistics_system(flecs::world& ecs) {
 
                     // Keep the physics mass component consistent with the fuel system.
                     rigid_mass[i].fuel_mass_kg = fuel_kg;
-
-                    mass[i].current_total_mass_kg = mass[i].empty_mass_kg + 
-                                                    fuel_kg +
-                                                    load_mass;
+                    // Phase-1 boundary: Mass remains the runtime authority for decomposed mass terms that
+                    // physics systems consume, while MassProperties mirrors the empty/total readout surface.
+                    mass[i].empty_mass_kg = rigid_mass[i].empty_mass_kg;
+                    mass[i].current_total_mass_kg = rigid_mass[i].get_total_kg() + load_mass;
                 }
             }
         });

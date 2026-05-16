@@ -1,9 +1,9 @@
 # 飞行员汇报标准 (Pilot Reporting Standard)
 
 > Scope note (2026-03-23): 本文档是 `air specialization`，描述 air profile 下的平台与战术汇报语义。
-> 当前标准化主基线请先看 [docs/standards/README.md](/home/void0312/CMO/docs/standards/README.md)、
-> [docs/standards/joint/command_and_modeling_baseline.md](/home/void0312/CMO/docs/standards/joint/command_and_modeling_baseline.md)、
-> [docs/standards/services/air_force.md](/home/void0312/CMO/docs/standards/services/air_force.md)。
+> 当前标准化主基线请先看 [docs/standards/README.md](/home/void0312/Workshop/CMO/docs/standards/README.md)、
+> [docs/standards/joint/command_and_modeling_baseline.md](/home/void0312/Workshop/CMO/docs/standards/joint/command_and_modeling_baseline.md)、
+> [docs/standards/services/air_force.md](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)。
 
 本文档定义了“僚机/数字飞行员”向“长机/指挥层”上报信息的规范。这是双向战术链路的重要组成部分，使指挥层能够根据各机的实时状态、观测发现和任务进度调整战术。
 
@@ -47,7 +47,7 @@
 | `REP_DEFENDING` | 正在规避威胁 | `threat_type` | 告知我方正在进行防御机动 |
 
 ## 4. 任务进度报告 (Mission Progress)
-关于 [aim.md](./aim.md) 中宏指令的完成情况。
+关于 [aim.md](/home/void0312/Workshop/CMO/docs/standards/air/aim.md) 中宏指令的完成情况。
 
 | 报告代码 | 说明 | 备注 |
 | :--- | :--- | :--- |
@@ -66,6 +66,6 @@
 | `warn_missile_launch` | 侦测到敌方导弹发射 | 极高优先级提醒 |
 
 ## 6. 标准化意义
-1.  **闭环指挥**: 长机下达指令 ([aim.md](./aim.md))，僚机反馈结果 ([rep.md](./rep.md))，形成闭环。
+1.  **闭环指挥**: 长机下达指令 ([aim.md](/home/void0312/Workshop/CMO/docs/standards/air/aim.md))，僚机反馈结果 ([rep.md](/home/void0312/Workshop/CMO/docs/standards/air/rep.md))，形成闭环。
 2.  **多智能体协作 (MARL)**: 在多机训练中，这些报告是 Transformer 学习“协同”的关键输入。长机 Agent 会根据僚机的反馈来调整后续的战术分工。
 3.  **日志与分析**: 所有的汇报内容都作为 Time-stamped Log 记录，极大方便了训练后的复盘与可视化。

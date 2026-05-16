@@ -39,6 +39,12 @@ def _route_transition_scenario() -> dict:
             "target_altitude": 1200.0,
             "target_speed": 180.0,
             "route_ref_id": 77,
+            "formation_id": 19,
+            "form_offset_x": 180.0,
+            "form_offset_y": -90.0,
+            "form_offset_z": 30.0,
+            "assigned_target_id": 9001,
+            "authorization_to_fire": True,
             "waypoint_mode": "flyby",
             "waypoints": [
                 {"x": -500.0, "y": 0.0, "z": 1200.0, "radius_m": 800.0, "speed_mps": 180.0},
@@ -49,6 +55,9 @@ def _route_transition_scenario() -> dict:
                 "target_heading": 90.0,
                 "target_altitude": 0.0,
                 "target_speed": 82.0,
+                "recovery_base_id": 55,
+                "recovery_runway_id": 7,
+                "recovery_approach_type": "ILS",
                 "landing_mode": "ils_final",
                 "phase_name": "landing_final",
             },
@@ -129,6 +138,10 @@ class ExecutionEpisodeStateTests(unittest.TestCase):
         mission_cmd = json.loads(str(state.mission_command_json))
         self.assertEqual(int(mission_cmd["command_code"]), 3)
         self.assertEqual(len(list(mission_cmd.get("waypoints", []) or [])), 2)
+        self.assertEqual(int(mission_cmd["formation_id"]), 19)
+        self.assertAlmostEqual(float(mission_cmd["form_offset_x"]), 180.0, places=6)
+        self.assertEqual(int(mission_cmd["assigned_target_id"]), 9001)
+        self.assertTrue(bool(mission_cmd["authorization_to_fire"]))
 
         reward_breakdown = json.loads(str(state.last_reward_breakdown_json))
         self.assertAlmostEqual(float(reward_breakdown["total"]), 1.27, places=6)
@@ -177,4 +190,11 @@ class ExecutionEpisodeStateTests(unittest.TestCase):
         self.assertEqual(int(mirror_loader._cached_route_ref_id), 77)
         self.assertEqual(len(list(mirror_loader.waypoints)), 2)
         self.assertAlmostEqual(float(mirror_loader.last_reward_breakdown["total"]), 25.02, places=6)
-
+        self.assertEqual(int(mirror_loader.mission_cmd.get("formation_id", 0)), 19)
+        self.assertAlmostEqual(float(mirror_loader.mission_cmd.get("form_offset_x", 0.0)), 180.0, places=6)
+        self.assertEqual(int(mirror_loader.mission_cmd.get("assigned_target_id", 0)), 9001)
+        self.assertTrue(bool(mirror_loader.mission_cmd.get("authorization_to_fire", False)))
+        post = mirror_loader.post_waypoint_transition or {}
+        self.assertEqual(int(post.get("recovery_base_id", 0)), 55)
+        self.assertEqual(int(post.get("recovery_runway_id", 0)), 7)
+        self.assertEqual(str(post.get("recovery_approach_type", "")), "ILS")

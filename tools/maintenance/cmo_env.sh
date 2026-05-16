@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+_cmo_env_root() {
+  cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd
+}
+
+_cmo_detect_build_dir() {
+  local root_dir="$1"
+  local candidate
+  for candidate in \
+    "${CMO_BUILD_DIR:-}" \
+    "build-workshop" \
+    "build-gpu" \
+    "build" \
+    "build-facade-local"
+  do
+    [[ -n "${candidate}" ]] || continue
+    if [[ "${candidate}" != /* ]]; then
+      candidate="${root_dir}/${candidate}"
+    fi
+    if [[ -d "${candidate}" ]] && compgen -G "${candidate}/ef_py*.so" >/dev/null; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+    if [[ -d "${candidate}" && -e "${candidate}/ef_py" ]]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+cmo_activate_env() {
+  local root_dir
+  root_dir="$(_cmo_env_root)"
+  local venv_python="${root_dir}/.venv/bin/python"
+
+  if [[ ! -x "${venv_python}" ]]; then
+    echo "[cmo_env] missing repository virtualenv: ${venv_python}" >&2
+    echo "[cmo_env] create it with: python -m venv .venv" >&2
+    return 1
+  fi
+
+  export CMO_REPO_ROOT="${root_dir}"
+  export CMO_PYTHON="${venv_python}"
+
+  local build_dir
+  build_dir="$(_cmo_detect_build_dir "${root_dir}" || true)"
+  if [[ -n "${build_dir}" ]]; then
+    export CMO_BUILD_DIR="${build_dir}"
+    export PYTHONPATH="${build_dir}:${root_dir}${PYTHONPATH:+:${PYTHONPATH}}"
+  else
+    export PYTHONPATH="${root_dir}${PYTHONPATH:+:${PYTHONPATH}}"
+  fi
+}
+
+cmo_python() {
+  cmo_activate_env
+  "${CMO_PYTHON}" "$@"
+}
+
+cmo_env_summary() {
+  cmo_activate_env
+  cat <<EOF
+CMO_REPO_ROOT=${CMO_REPO_ROOT}
+CMO_PYTHON=${CMO_PYTHON}
+CMO_BUILD_DIR=${CMO_BUILD_DIR:-}
+PYTHONPATH=${PYTHONPATH:-}
+EOF
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  if [[ $# -eq 0 ]]; then
+    cmo_env_summary
+    exit 0
+  fi
+  cmo_python "$@"
+fi

@@ -16,16 +16,12 @@ import torch  # noqa: E402,F401
 import ef_py  # noqa: E402
 
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
-from python.rl.device_dict_rollout_buffer import DeviceDictRolloutBuffer  # noqa: E402
-from python.rl.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
-from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
-from python.rl.wrappers import MultiTimescaleActionWrapper  # noqa: E402
-from python.rl.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
-
-try:
-    from tests.support._leader_env_runtime_test_support import CounterDictEnv  # noqa: E402
-except ModuleNotFoundError:
-    from _leader_env_runtime_test_support import CounterDictEnv  # type: ignore # noqa: E402
+from python.rl.control.wrappers import MultiTimescaleActionWrapper  # noqa: E402
+from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer  # noqa: E402
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
+from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+from tests.support._leader_env_runtime_test_support import CounterDictEnv  # noqa: E402
 
 
 def _inline_vec_env_scenario() -> dict:

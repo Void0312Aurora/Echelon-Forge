@@ -1,4 +1,5 @@
 {
+  "type": "unit_regression",
   "check_kind": "scripted_takeoff_clearance_hold",
   "obs": {
     "instruments": [

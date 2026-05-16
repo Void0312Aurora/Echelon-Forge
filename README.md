@@ -40,6 +40,20 @@ Local validation is expected to run inside the repository virtual environment:
 source .venv/bin/activate
 ```
 
+The maintained workspace convention is:
+
+- repository virtual environment: `.venv`
+- repository env helper: `tools/maintenance/cmo_env.sh`
+- build selection: prefer `CMO_BUILD_DIR`, otherwise auto-detect `build-workshop`, `build-gpu`, `build`, `build-facade-local`
+
+Example:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_env_summary
+cmo_python -m pytest -q tests/runtime/test_env_config.py
+```
+
 Configure and build the local extension:
 
 ```bash
@@ -65,8 +79,8 @@ both `PYTHONPATH` and `CMO_BUILD_DIR`.
 ## Project Layout
 
 - [src/](src/README.md): C++ kernel, mission runtime, runtime facade, Python bindings, GPU helpers.
-- [python/](python): RL runtime, training helpers, scenario compiler/runtime, diagnostics support.
-- [gym_envs/](gym_envs): `UniversalEnv`, cooperative/leader environment support, scenario loader.
+- [python/](python/README.md): RL runtime, training helpers, scenario compiler/runtime, diagnostics support.
+- [gym_envs/](gym_envs/README.md): `UniversalEnv`, cooperative/leader environment support, scenario loader.
 - [scenarios/](scenarios/README.md): maintained scenario definitions grouped by task domain.
 - [examples/](examples/README.md): examples, fixtures, training configs, visualization entrypoints.
 - [tests/](tests/README.md): pytest suites, contract specs, runners, and fixtures.
@@ -99,7 +113,8 @@ See also:
 
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
-- [docs/plan/src_layered_refactor_freeze.zh.md](docs/plan/src_layered_refactor_freeze.zh.md)
+- [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
+- [docs/plan/architecture/src_layered_refactor_freeze.zh.md](docs/plan/architecture/src_layered_refactor_freeze.zh.md)
 
 ## Scenarios and Training Configs
 
@@ -139,7 +154,8 @@ Example policy evaluation:
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
-  ./.venv/bin/python tools/eval/eval_sb3_policy.py \
+  ./.venv/bin/python tools/eval/eval_sb3.py \
+  --mode single \
   --scenario scenarios/combined/takeoff_to_landing_continuous_eval_v1.json \
   --train_config examples/config/training/frozen/execution/p5_continuous_retrain_v1.json \
   --model path/to/model.zip \
@@ -173,11 +189,8 @@ Diagnostic and benchmark scripts are centered under
 
 - [docs/manual/engine_capabilities.md](docs/manual/engine_capabilities.md)
 - [docs/manual/physics_engine_inventory.md](docs/manual/physics_engine_inventory.md)
-- [docs/active_takeoff_artifacts.md](docs/active_takeoff_artifacts.md)
-- [docs/active_cruise_artifacts.md](docs/active_cruise_artifacts.md)
-- [docs/active_bridge_artifacts.md](docs/active_bridge_artifacts.md)
-- [docs/active_landing_artifacts.md](docs/active_landing_artifacts.md)
-- [docs/active_continuous_artifacts.md](docs/active_continuous_artifacts.md)
+- [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
+- [docs/reference_artifacts.md](docs/reference_artifacts.md)
 
 ## Forward Work
 
@@ -190,6 +203,7 @@ That includes the newly added HMoE design note for the execution policy:
 ## Working Conventions
 
 - prefer `.venv` for repository-local validation
+- prefer `tools/maintenance/cmo_env.sh` for maintained shell workflows
 - prefer repo-relative scenario paths
 - keep new training configs in explicit subdirectories
 - do not treat GPU helpers as canonical world-step truth without a dedicated freeze

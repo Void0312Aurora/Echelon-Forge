@@ -31,8 +31,8 @@ for _build_dir_name in _BUILD_DIR_NAMES:
 sys.path.insert(0, _REPO_ROOT)
 
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
-from python.rl.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action  # noqa: E402
-from python.rl.scripted_stable_flight import ScriptedStableFlightController  # noqa: E402
+from python.rl.control.scripted_stable_flight import ScriptedStableFlightController  # noqa: E402
+from python.rl.control.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action  # noqa: E402
 from python.world_model.dreamer import DreamerConfig, DreamerTrainer  # noqa: E402
 from python.world_model.features import (  # noqa: E402
     DEFAULT_ANGLE_DEG_INDICES,

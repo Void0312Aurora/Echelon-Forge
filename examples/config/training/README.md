@@ -78,12 +78,12 @@ The direct low-resolution render path is implemented in [simulation_kernel.cpp](
 Training runtime config also supports:
 
 - `runtime.shared_memory_vec_env`
-  - Uses [shared_memory_vec_env.py](/home/void0312/CMO/python/rl/shared_memory_vec_env.py) instead of standard `SubprocVecEnv` when `n_envs > 1`.
+  - Uses [shared_memory_vec_env.py](/home/void0312/CMO/python/rl/runtime/shared_memory_vec_env.py) instead of standard `SubprocVecEnv` when `n_envs > 1`.
   - Worker processes write observations into parent-owned shared memory.
   - Pipe traffic is reduced to reward/done/info/reset metadata, which avoids large per-step observation serialization costs.
 
 - `runtime.world_batch_vec_env`
-  - Uses [world_batch_vec_env.py](/home/void0312/CMO/python/rl/world_batch_vec_env.py) for execution-layer training instead of `DummyVecEnv`/`SubprocVecEnv`.
+  - Uses [world_batch_vec_env.py](/home/void0312/CMO/python/rl/runtime/world_batch_vec_env.py) for execution-layer training instead of `DummyVecEnv`/`SubprocVecEnv`.
   - This routes execution rollouts through one `ef_py.WorldBatchRuntime`, so stepping and readback use batch C++ APIs instead of per-env Python loops.
   - The maintained post-freeze execution `p5` configs now use this path with
     `batch_observation_backend=compiled` and `batch_visual_backend=compiled`.
@@ -139,13 +139,13 @@ Training runtime config also supports:
 - Visual downsample sweep:
 
 ```bash
-./.venv/bin/python tools/diagnostics/benchmark_visual_resolution.py --help
+./.venv/bin/python tools/diagnostics/benchmark.py --family visual_resolution --family-help
 ```
 
 - Phase 4 execution batch-runtime rollout benchmark:
 
 ```bash
-./.venv/bin/python tools/diagnostics/benchmark_world_batch_vec_env_phase4.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family world_batch_vec_env -- \
   --scenario scenarios/combined/takeoff_to_landing_continuous_train_v1.json \
   --n-envs 8 \
   --steps 128 \
@@ -155,14 +155,14 @@ Training runtime config also supports:
 - Phase 4 maintained `p5` mainline bridge benchmark:
 
 ```bash
-./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family policy_observation_bridge -- \
   --case p5like_visual_mainline \
   --n-envs 8 \
   --rollout-steps 64 \
   --rollout-repeats 2 \
   --flight-shaping-backend compiled
 
-./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family policy_observation_bridge -- \
   --case experimental_p5like_visual_gpuhost_visual \
   --allow-experimental \
   --n-envs 8 \
@@ -174,7 +174,7 @@ Training runtime config also supports:
 - Phase 4 retained experimental helper A/B benchmark:
 
 ```bash
-./.venv/bin/python tools/diagnostics/benchmark_policy_observation_bridge_phase4.py \
+./.venv/bin/python tools/diagnostics/benchmark.py --family policy_observation_bridge -- \
   --case experimental_p5like_visual_all_gpuhost \
   --allow-experimental \
   --n-envs 8 \

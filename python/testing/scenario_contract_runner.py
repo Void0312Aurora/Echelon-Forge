@@ -425,7 +425,7 @@ def run_scripted_bridge_contract(spec_path: str) -> tuple[bool, str]:
     import numpy as np
 
     from gym_envs.universal_env import UniversalEnv
-    from python.rl.wrappers import get_action_wrapper_spec
+    from python.rl.control.wrappers import get_action_wrapper_spec
 
     spec = _load_spec(spec_path)
     scenario_path = resolve_repo_path(str(spec["scenario"]))
@@ -1044,7 +1044,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
             return True, "rudder sign contract passed"
 
         if check_kind == "scripted_waypoint_coordination":
-            from python.rl.scripted_stable_flight import ScriptedStableFlightController
+            from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
 
             ctrl = ScriptedStableFlightController(action_dim=int(env.action_space.shape[0]), dt=float(env.sim.get_time_step()))
             ctrl.reset(obs)
@@ -1109,6 +1109,148 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
     spec = _load_spec(spec_path)
     check_kind = str(spec.get("check_kind", "")).strip().lower()
 
+    def _int_equal(lhs: Any, rhs: Any) -> bool:
+        try:
+            return int(lhs) == int(rhs)
+        except Exception:
+            return lhs == rhs
+
+    def _check_fields(actual: Any, expected: Any, field_names: tuple[str, ...], *, label: str) -> tuple[bool, str]:
+        for field_name in field_names:
+            actual_value = getattr(actual, field_name)
+            expected_value = getattr(expected, field_name)
+            if not _int_equal(actual_value, expected_value):
+                return False, f"stored {label} {field_name} mismatch: {actual_value} != {expected_value}"
+        return True, ""
+
+    def _recovery_approach_enum(raw_value, default_name: str = "None"):
+        import ef_py
+
+        namespace = getattr(ef_py, "RecoveryApproachType", None)
+        if namespace is None:
+            try:
+                return int(raw_value)
+            except Exception:
+                return 0
+        default_value = getattr(namespace, default_name, 0)
+        if raw_value is None:
+            return default_value
+        if isinstance(raw_value, str):
+            return getattr(namespace, raw_value, default_value)
+        try:
+            return namespace(int(raw_value))
+        except Exception:
+            pass
+        try:
+            return int(raw_value)
+        except Exception:
+            return default_value
+
+    def _common_core_field_names(kind: str) -> tuple[str, ...]:
+        if kind == "task_order":
+            return (
+                "service_profile",
+                "task_family",
+                "tactical_unit_type",
+                "command_relationship",
+                "authority_scope",
+                "parent_node_id",
+                "task_group_id",
+                "supported_node_id",
+                "supporting_node_id",
+                "role_code",
+                "coordination_mode",
+                "relative_slot_code",
+                "recovery_site_id",
+                "warfare_role_code",
+                "officer_in_tactical_command",
+            )
+        if kind == "leader_intent":
+            return (
+                "service_profile",
+                "task_family",
+                "tactical_unit_type",
+                "tactical_unit_id",
+                "task_group_id",
+                "role_code",
+                "coordination_mode",
+                "relative_slot_code",
+                "recovery_site_id",
+                "warfare_role_code",
+                "officer_in_tactical_command",
+            )
+        if kind == "pilot_report":
+            return (
+                "service_profile",
+                "task_family",
+                "tactical_unit_type",
+                "tactical_unit_id",
+                "task_group_id",
+                "role_code",
+                "coordination_mode",
+                "element_id",
+                "warfare_role_code",
+                "officer_in_tactical_command",
+            )
+        raise ValueError(f"Unknown common-core field kind: {kind}")
+
+    def _air_task_order_field_names() -> tuple[str, ...]:
+        return (
+            "task_type",
+            "station_type",
+            "recovery_base_id",
+            "recovery_runway_id",
+            "recovery_approach_type",
+        )
+
+    def _air_leader_intent_field_names() -> tuple[str, ...]:
+        return (
+            "phase_id",
+            "command_code",
+            "route_ref_id",
+            "recovery_base_id",
+            "recovery_runway_id",
+            "recovery_approach_type",
+        )
+
+    def _air_pilot_report_field_names() -> tuple[str, ...]:
+        return (
+            "report_type",
+            "task_id",
+            "phase_id",
+        )
+
+    def _task_order_enum_fields():
+        import ef_py
+
+        return {
+            "task_type": ef_py.TaskType,
+            "service_profile": ef_py.ServiceProfile,
+            "task_family": ef_py.TaskFamily,
+            "tactical_unit_type": ef_py.TacticalUnitType,
+            "command_relationship": ef_py.CommandRelationship,
+            "authority_scope": ef_py.AuthorityScope,
+            "coordination_mode": ef_py.CoordinationMode,
+            "station_type": ef_py.StationType,
+            "naval_station_type": getattr(ef_py, "NavalStationType", None),
+            "warfare_role_code": getattr(ef_py, "NavalWarfareRole", None),
+        }
+
+    def _enum_value_or_default(namespace: Any, raw_value: Any, default_name: str):
+        default_value = getattr(namespace, default_name)
+        if raw_value is None:
+            return default_value
+        if isinstance(raw_value, str):
+            return getattr(namespace, raw_value, default_value)
+        try:
+            return namespace(int(raw_value))
+        except Exception:
+            pass
+        try:
+            return int(raw_value)
+        except Exception:
+            return default_value
+
     if check_kind == "wrapper_scripted_mode_sequence":
         try:
             import gymnasium as gym
@@ -1116,7 +1258,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             raise ContractSkipped("gymnasium not installed") from exc
         import numpy as np
 
-        import python.rl.wrappers as wrappers
+        import python.rl.control.wrappers as wrappers
 
         def _deep_apply_patch(target: Any, patch: Any) -> None:
             if not isinstance(patch, dict):
@@ -1329,7 +1471,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             raise ContractSkipped("gymnasium not installed") from exc
         import numpy as np
 
-        import python.rl.wrappers as wrappers
+        import python.rl.control.wrappers as wrappers
 
         def _action_from_spec(action_spec: Any, action_dim: int, *, default: float = 0.0) -> np.ndarray:
             if action_spec is None:
@@ -1752,50 +1894,15 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
 
     if check_kind == "task_order_and_mission_link":
         import ef_py
-        from python.rl.common_core_profile import (
+        from python.rl.tasking.common_core_profile import (
             apply_leader_intent_common_core_defaults,
             apply_leader_intent_common_core_spec,
             apply_pilot_report_common_core_defaults,
             apply_pilot_report_common_core_spec,
             apply_task_order_common_core_defaults,
             apply_task_order_common_core_spec,
-            normalize_task_order_spec,
         )
-
-        def _recovery_approach_enum(raw_value, default_name: str = "None"):
-            namespace = getattr(ef_py, "RecoveryApproachType", None)
-            if namespace is None:
-                try:
-                    return int(raw_value)
-                except Exception:
-                    return 0
-            default_value = getattr(namespace, default_name, 0)
-            if raw_value is None:
-                return default_value
-            if isinstance(raw_value, str):
-                return getattr(namespace, raw_value, default_value)
-            try:
-                return namespace(int(raw_value))
-            except Exception:
-                pass
-            try:
-                return int(raw_value)
-            except Exception:
-                return default_value
-
-        def _int_equal(lhs: Any, rhs: Any) -> bool:
-            try:
-                return int(lhs) == int(rhs)
-            except Exception:
-                return lhs == rhs
-
-        def _check_fields(actual: Any, expected: Any, field_names: tuple[str, ...], *, label: str) -> tuple[bool, str]:
-            for field_name in field_names:
-                actual_value = getattr(actual, field_name)
-                expected_value = getattr(expected, field_name)
-                if not _int_equal(actual_value, expected_value):
-                    return False, f"stored {label} {field_name} mismatch: {actual_value} != {expected_value}"
-            return True, ""
+        from python.rl.tasking.bridge import normalize_task_order_spec
 
         def _spawn_aircraft(sim):
             sim.load_database(resolve_repo_path("examples", "config", "database"))
@@ -1819,14 +1926,14 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         order_spec = normalize_task_order_spec(dict(spec.get("task_order", {}) or {}))
         order = ef_py.TaskOrder()
         order.task_id = int(order_spec.get("task_id", 77))
-        order.task_type = getattr(ef_py.TaskType, str(order_spec.get("task_type", "Idle")))
+        order.task_type = _enum_value_or_default(ef_py.TaskType, order_spec.get("task_type", None), "Idle")
         order.priority = int(order_spec.get("priority", 3))
         order.issuer_id = int(order_spec.get("issuer_id", 1001))
         order.assignee_id = int(order_spec.get("assignee_id", entity_id))
         order.anchor_x_m = float(order_spec.get("anchor_x_m", 12000.0))
         order.anchor_y_m = float(order_spec.get("anchor_y_m", -8000.0))
         order.anchor_z_m = float(order_spec.get("anchor_z_m", 6500.0))
-        order.station_type = getattr(ef_py.StationType, str(order_spec.get("station_type", "Racetrack")))
+        order.station_type = _enum_value_or_default(ef_py.StationType, order_spec.get("station_type", None), "Racetrack")
         order.station_radius_m = float(order_spec.get("station_radius_m", 18000.0))
         order.station_leg_length_m = float(order_spec.get("station_leg_length_m", 30000.0))
         order.station_heading_deg = float(order_spec.get("station_heading_deg", 45.0))
@@ -1852,38 +1959,26 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             return False, f"stored station_type mismatch: {stored_order.station_type} != {order.station_type}"
         if not math.isclose(float(stored_order.target_speed_mps), float(order.target_speed_mps), rel_tol=1e-6, abs_tol=1e-6):
             return False, f"stored target_speed mismatch: {stored_order.target_speed_mps} != {order.target_speed_mps}"
-        if int(getattr(stored_order, "recovery_base_id", 0)) != int(getattr(order, "recovery_base_id", 0)):
-            return False, f"stored recovery_base_id mismatch: {stored_order.recovery_base_id} != {order.recovery_base_id}"
-        if int(getattr(stored_order, "recovery_runway_id", 0)) != int(getattr(order, "recovery_runway_id", 0)):
-            return False, f"stored recovery_runway_id mismatch: {stored_order.recovery_runway_id} != {order.recovery_runway_id}"
-        if hasattr(order, "recovery_approach_type") and int(getattr(stored_order, "recovery_approach_type", 0)) != int(getattr(order, "recovery_approach_type", 0)):
-            return False, f"stored recovery_approach_type mismatch: {stored_order.recovery_approach_type} != {order.recovery_approach_type}"
         ok, detail = _check_fields(
             stored_order,
             order,
-            (
-                "service_profile",
-                "task_family",
-                "tactical_unit_type",
-                "command_relationship",
-                "authority_scope",
-                "parent_node_id",
-                "task_group_id",
-                "supported_node_id",
-                "supporting_node_id",
-                "role_code",
-                "coordination_mode",
-                "relative_slot_code",
-                "recovery_site_id",
-            ),
+            _common_core_field_names("task_order"),
             label="task_order",
+        )
+        if not ok:
+            return False, detail
+        ok, detail = _check_fields(
+            stored_order,
+            order,
+            _air_task_order_field_names(),
+            label="task_order_air",
         )
         if not ok:
             return False, detail
 
         intent_spec = dict(spec.get("leader_intent", {}) or {})
         intent = ef_py.LeaderIntent()
-        intent.phase_id = getattr(ef_py.LeaderPhase, str(intent_spec.get("phase_id", "TransitToStation")))
+        intent.phase_id = _enum_value_or_default(ef_py.LeaderPhase, intent_spec.get("phase_id", None), "TransitToStation")
         intent.command_code = int(intent_spec.get("command_code", 3))
         if hasattr(intent, "route_ref_id"):
             intent.route_ref_id = int(intent_spec.get("route_ref_id", 0))
@@ -1912,39 +2007,29 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
             return False, f"stored command_code mismatch: {stored_intent.command_code} != {intent.command_code}"
         if not math.isclose(float(stored_intent.cmd_heading_deg), float(intent.cmd_heading_deg), rel_tol=1e-6, abs_tol=1e-6):
             return False, f"stored intent heading mismatch: {stored_intent.cmd_heading_deg} != {intent.cmd_heading_deg}"
-        if hasattr(intent, "route_ref_id") and int(getattr(stored_intent, "route_ref_id", 0)) != int(getattr(intent, "route_ref_id", 0)):
-            return False, f"stored route_ref_id mismatch: {stored_intent.route_ref_id} != {intent.route_ref_id}"
-        if hasattr(intent, "recovery_base_id") and int(getattr(stored_intent, "recovery_base_id", 0)) != int(getattr(intent, "recovery_base_id", 0)):
-            return False, f"stored intent recovery_base_id mismatch: {stored_intent.recovery_base_id} != {intent.recovery_base_id}"
-        if hasattr(intent, "recovery_runway_id") and int(getattr(stored_intent, "recovery_runway_id", 0)) != int(getattr(intent, "recovery_runway_id", 0)):
-            return False, f"stored intent recovery_runway_id mismatch: {stored_intent.recovery_runway_id} != {intent.recovery_runway_id}"
-        if hasattr(intent, "recovery_approach_type") and int(getattr(stored_intent, "recovery_approach_type", 0)) != int(getattr(intent, "recovery_approach_type", 0)):
-            return False, f"stored intent recovery_approach_type mismatch: {stored_intent.recovery_approach_type} != {intent.recovery_approach_type}"
         ok, detail = _check_fields(
             stored_intent,
             intent,
-            (
-                "service_profile",
-                "task_family",
-                "tactical_unit_type",
-                "tactical_unit_id",
-                "task_group_id",
-                "role_code",
-                "coordination_mode",
-                "relative_slot_code",
-                "recovery_site_id",
-            ),
+            _common_core_field_names("leader_intent"),
             label="leader_intent",
+        )
+        if not ok:
+            return False, detail
+        ok, detail = _check_fields(
+            stored_intent,
+            intent,
+            _air_leader_intent_field_names(),
+            label="leader_intent_air",
         )
         if not ok:
             return False, detail
 
         report_spec = dict(spec.get("pilot_report", {}) or {})
         report = ef_py.PilotReport()
-        report.report_type = getattr(ef_py.CommMsgType, str(report_spec.get("report_type", "REP_ON_STATION")))
+        report.report_type = _enum_value_or_default(ef_py.CommMsgType, report_spec.get("report_type", None), "REP_ON_STATION")
         report.sender_id = int(report_spec.get("sender_id", entity_id))
         report.task_id = int(report_spec.get("task_id", order.task_id))
-        report.phase_id = int(getattr(ef_py.LeaderPhase, str(report_spec.get("phase_id", "OnStation"))))
+        report.phase_id = int(_enum_value_or_default(ef_py.LeaderPhase, report_spec.get("phase_id", None), "OnStation"))
         report.timestamp_s = float(report_spec.get("timestamp_s", 12.5))
         report.status_value = float(report_spec.get("status_value", 1.0))
         report.location_x_m = float(report_spec.get("location_x_m", 12010.0))
@@ -1966,17 +2051,16 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         ok, detail = _check_fields(
             stored_report,
             report,
-            (
-                "service_profile",
-                "task_family",
-                "tactical_unit_type",
-                "tactical_unit_id",
-                "task_group_id",
-                "role_code",
-                "coordination_mode",
-                "element_id",
-            ),
+            _common_core_field_names("pilot_report"),
             label="pilot_report",
+        )
+        if not ok:
+            return False, detail
+        ok, detail = _check_fields(
+            stored_report,
+            report,
+            _air_pilot_report_field_names(),
+            label="pilot_report_air",
         )
         if not ok:
             return False, detail
@@ -2030,6 +2114,43 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         if hasattr(command, "recovery_approach_type") and int(getattr(after, "recovery_approach_type", 0)) != int(getattr(command, "recovery_approach_type", 0)):
             return False, f"post-link recovery_approach_type mismatch: {after.recovery_approach_type} != {command.recovery_approach_type}"
         return True, "task order / mission link contract passed"
+
+    if check_kind == "task_order_common_core":
+        import ef_py
+        from python.rl.tasking.common_core_profile import (
+            apply_task_order_common_core_defaults,
+            apply_task_order_common_core_spec,
+        )
+        from python.rl.tasking.bridge import normalize_task_order_spec
+
+        order_spec = normalize_task_order_spec(dict(spec.get("task_order", {}) or {}))
+        order = ef_py.TaskOrder()
+        apply_task_order_common_core_spec(order, order_spec)
+        apply_task_order_common_core_defaults(
+            order,
+            task_name=str(spec.get("task_name", "") or "").strip().upper() or None,
+            phase_name=str(spec.get("phase_name", "") or "").strip().lower() or None,
+            force_task_family=bool(spec.get("force_task_family", False)),
+            force_coordination_mode=bool(spec.get("force_coordination_mode", False)),
+        )
+
+        expected_common = dict(spec.get("expected_common_core", spec.get("expected_task_order", {})) or {})
+        if not expected_common:
+            expected_common = dict(order_spec)
+
+        expected = ef_py.TaskOrder()
+        apply_task_order_common_core_spec(expected, expected_common)
+        apply_task_order_common_core_defaults(
+            expected,
+            task_name=str(spec.get("task_name", "") or "").strip().upper() or None,
+            phase_name=str(spec.get("phase_name", "") or "").strip().lower() or None,
+            force_task_family=bool(spec.get("force_task_family", False)),
+            force_coordination_mode=bool(spec.get("force_coordination_mode", False)),
+        )
+        ok, detail = _check_fields(order, expected, _common_core_field_names("task_order"), label="task_order_common_core")
+        if not ok:
+            return False, detail
+        return True, "task order common-core contract passed"
 
     if check_kind == "leader_training_env":
         try:
@@ -2134,7 +2255,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
         import numpy as np
         from stable_baselines3 import PPO
         from gym_envs.leader_env import LeaderTrainingEnv
-        from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
+        from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 
         def _load_leader_policy(model_path: str, algo_name: str):
             resolved_path = resolve_artifact_path(model_path) or str(model_path)
@@ -2543,7 +2664,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
 
     if check_kind == "leader_phase_manager_approach_arm":
         import ef_py
-        from python.rl.leader_tasking import RuleBasedLeaderPhaseManager, build_kernel_mission_command
+        from python.rl.tasking.bridge import build_kernel_mission_command, make_rule_based_leader_phase_manager
 
         truth_spec = dict(spec.get("truth", {}) or {})
         inst_spec = dict(spec.get("instruments", {}) or {})
@@ -2647,7 +2768,10 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
                 return {"command_code": 4}
 
         loader = FakeLoader()
-        mgr = RuleBasedLeaderPhaseManager(terminal_waypoint_count=int(spec.get("terminal_waypoint_count", 2)))
+        mgr = make_rule_based_leader_phase_manager(
+            None,
+            terminal_waypoint_count=int(spec.get("terminal_waypoint_count", 2)),
+        )
         mgr.reset(loader, sim_time_s=float(spec.get("sim_time_s", 10.0)))
         mgr.sync_to_kernel(loader)
         mission = build_kernel_mission_command(loader)
@@ -2721,7 +2845,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
 
     if check_kind == "scripted_stable_flight_rudder_sign":
         import numpy as np
-        from python.rl.scripted_stable_flight import ScriptedStableFlightController
+        from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
 
         ctrl = ScriptedStableFlightController(
             action_dim=int(spec.get("action_dim", 17)),
@@ -2921,20 +3045,14 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
                 if got != expected:
                     return False, f"initial mission_cmd[{key!r}] mismatch: {got!r} != {expected!r}"
 
-            expected_task_order = dict(spec.get("expected_task_order", {}) or {})
-            if expected_task_order:
+            expected_task_order_common = dict(
+                spec.get("expected_task_order_common_core", spec.get("expected_task_order", {})) or {}
+            )
+            expected_task_order_air = dict(spec.get("expected_task_order_air", {}) or {})
+            if expected_task_order_common or expected_task_order_air:
                 task_order_spec = loader._task_order_spec()
-                enum_fields = {
-                    "task_type": ef_py.TaskType,
-                    "service_profile": ef_py.ServiceProfile,
-                    "task_family": ef_py.TaskFamily,
-                    "tactical_unit_type": ef_py.TacticalUnitType,
-                    "command_relationship": ef_py.CommandRelationship,
-                    "authority_scope": ef_py.AuthorityScope,
-                    "coordination_mode": ef_py.CoordinationMode,
-                    "station_type": ef_py.StationType,
-                }
-                for key, expected in expected_task_order.items():
+                enum_fields = _task_order_enum_fields()
+                for key, expected in expected_task_order_common.items():
                     got = task_order_spec.get(key, None)
                     namespace = enum_fields.get(key, None)
                     if namespace is not None and isinstance(expected, str):
@@ -2944,9 +3062,20 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
                     except Exception:
                         same = got == expected
                     if not same:
-                        return False, f"task_order[{key!r}] mismatch: {got!r} != {expected!r}"
+                        return False, f"task_order common-core[{key!r}] mismatch: {got!r} != {expected!r}"
+                for key, expected in expected_task_order_air.items():
+                    got = task_order_spec.get(key, None)
+                    namespace = enum_fields.get(key, None)
+                    if namespace is not None and isinstance(expected, str):
+                        expected = getattr(namespace, expected, expected)
+                    try:
+                        same = int(got) == int(expected)
+                    except Exception:
+                        same = got == expected
+                    if not same:
+                        return False, f"task_order air[{key!r}] mismatch: {got!r} != {expected!r}"
 
-            expected_post = dict(spec.get("expected_post_transition", {}) or {})
+            expected_post = dict(spec.get("expected_post_transition_air", spec.get("expected_post_transition", {})) or {})
             if expected_post:
                 post = getattr(loader, "post_waypoint_transition", None)
                 if not isinstance(post, dict):
@@ -2966,6 +3095,47 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
                     if got != expected:
                         return False, f"activated mission_cmd[{key!r}] mismatch: {got!r} != {expected!r}"
             return True, "scenario loader mission semantics contract passed"
+        finally:
+            if cleanup:
+                try:
+                    os.remove(scenario_path)
+                except OSError:
+                    pass
+
+    if check_kind == "scenario_loader_common_core_semantics":
+        import ef_py
+        from gym_envs.scenario_loader import ScenarioLoader
+
+        scenario_path, cleanup = _materialize_scenario_path(spec)
+        try:
+            sim = ef_py.SimulationKernel()
+            sim.load_database(resolve_repo_path("examples", "config", "database"))
+            loader = ScenarioLoader(sim)
+            randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
+            if randomization_overrides:
+                loader.set_randomization_overrides(randomization_overrides)
+            seed = int(spec.get("seed", 0))
+            agent_id = loader.load_scenario(scenario_path, seed=seed)
+            if agent_id is None:
+                return False, "scenario did not spawn an agent"
+
+            expected_task_order = dict(spec.get("expected_task_order_common_core", spec.get("expected_task_order", {})) or {})
+            if not expected_task_order:
+                return False, "scenario_loader_common_core_semantics requires expected_task_order_common_core"
+            task_order_spec = loader._task_order_spec()
+            enum_fields = _task_order_enum_fields()
+            for key, expected in expected_task_order.items():
+                got = task_order_spec.get(key, None)
+                namespace = enum_fields.get(key, None)
+                if namespace is not None and isinstance(expected, str):
+                    expected = getattr(namespace, expected, expected)
+                try:
+                    same = int(got) == int(expected)
+                except Exception:
+                    same = got == expected
+                if not same:
+                    return False, f"task_order common-core[{key!r}] mismatch: {got!r} != {expected!r}"
+            return True, "scenario loader common-core semantics contract passed"
         finally:
             if cleanup:
                 try:
@@ -3116,7 +3286,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
 
     if check_kind == "scripted_takeoff_takeoff2_throttle":
         import numpy as np
-        from python.rl.scripted_takeoff import ScriptedTakeoffController
+        from python.rl.control.scripted_takeoff import ScriptedTakeoffController
 
         ctrl = ScriptedTakeoffController(action_dim=2, dt=0.05)
         obs = {
@@ -3133,7 +3303,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
 
     if check_kind == "scripted_takeoff_clearance_hold":
         import numpy as np
-        from python.rl.scripted_takeoff import ScriptedTakeoffController
+        from python.rl.control.scripted_takeoff import ScriptedTakeoffController
 
         ctrl = ScriptedTakeoffController(action_dim=4, dt=0.05)
         obs = {
@@ -3150,7 +3320,7 @@ def run_unit_regression_contract(spec_path: str) -> tuple[bool, str]:
 
     if check_kind == "scripted_landing_controller":
         import numpy as np
-        from python.rl.scripted_landing import ScriptedLandingController
+        from python.rl.control.scripted_landing import ScriptedLandingController
 
         for idx, case in enumerate(list(spec.get("cases", []) or []), start=1):
             obs = {

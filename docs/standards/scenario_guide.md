@@ -2,7 +2,7 @@
 
 > Standards alignment note (2026-03-23): 本文档描述的是“当前仓库 JSON 场景实现口径”，
 > 不是新的联合层/军种 profile 标准本体。当前标准化建模主依据请先看
-> [docs/standards/README.md](/home/void0312/CMO/docs/standards/README.md)。
+> [docs/standards/README.md](/home/void0312/Workshop/CMO/docs/standards/README.md)。
 
 本项目采用 JSON 驱动的通用训练底座。所有的训练任务、环境设置和奖励机制均在 `.json` 文件中定义，无需修改 Python 代码。
 

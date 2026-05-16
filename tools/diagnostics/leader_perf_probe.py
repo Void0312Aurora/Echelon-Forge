@@ -18,25 +18,9 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from gym_envs.leader_env import LeaderTrainingEnv  # noqa: E402
-from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
+from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
 from python.testing.runtime import configure_sim_log_level  # noqa: E402
-
-
-def _merge_timing_sums(acc: dict[str, float], timing: dict[str, float] | None) -> None:
-    if not isinstance(timing, dict):
-        return
-    for key, value in timing.items():
-        try:
-            acc[str(key)] = float(acc.get(str(key), 0.0) + float(value))
-        except Exception:
-            pass
-
-
-def _average_timing_sums(acc: dict[str, float], *, count: int) -> dict[str, float]:
-    if count <= 0:
-        return {}
-    denom = float(count)
-    return {key: float(value) / denom for key, value in acc.items()}
+from tools.diagnostics.common import average_timing_sums, merge_timing_sums  # noqa: E402
 
 
 def _collect_reset_timings(reset_infos) -> tuple[dict[str, float], dict[str, float]]:
@@ -48,14 +32,14 @@ def _collect_reset_timings(reset_infos) -> tuple[dict[str, float], dict[str, flo
         if not isinstance(info, dict):
             continue
         if isinstance(info.get("timing"), dict):
-            _merge_timing_sums(leader_sums, info.get("timing"))
+            merge_timing_sums(leader_sums, info.get("timing"))
             leader_count += 1
         if isinstance(info.get("execution_reset_timing"), dict):
-            _merge_timing_sums(execution_sums, info.get("execution_reset_timing"))
+            merge_timing_sums(execution_sums, info.get("execution_reset_timing"))
             execution_count += 1
     return (
-        _average_timing_sums(leader_sums, count=leader_count),
-        _average_timing_sums(execution_sums, count=execution_count),
+        average_timing_sums(leader_sums, count=leader_count),
+        average_timing_sums(execution_sums, count=execution_count),
     )
 
 
@@ -70,10 +54,10 @@ def _collect_step_timings(infos) -> tuple[dict[str, float], dict[str, float], fl
         if not isinstance(info, dict):
             continue
         if isinstance(info.get("timing"), dict):
-            _merge_timing_sums(leader_sums, info.get("timing"))
+            merge_timing_sums(leader_sums, info.get("timing"))
             leader_count += 1
         if isinstance(info.get("execution_timing"), dict):
-            _merge_timing_sums(execution_sums, info.get("execution_timing"))
+            merge_timing_sums(execution_sums, info.get("execution_timing"))
             execution_count += 1
         if "leader_low_level_steps" in info:
             try:
@@ -83,8 +67,8 @@ def _collect_step_timings(infos) -> tuple[dict[str, float], dict[str, float], fl
                 pass
     avg_low_level_steps = low_level_steps / float(low_level_count) if low_level_count > 0 else 0.0
     return (
-        _average_timing_sums(leader_sums, count=leader_count),
-        _average_timing_sums(execution_sums, count=execution_count),
+        average_timing_sums(leader_sums, count=leader_count),
+        average_timing_sums(execution_sums, count=execution_count),
         float(avg_low_level_steps),
     )
 
@@ -240,10 +224,10 @@ def main():
             _ = (obs, rewards, infos)
             leader_step_timing, execution_step_timing, avg_low_level_steps = _collect_step_timings(infos)
             if leader_step_timing:
-                _merge_timing_sums(leader_step_timing_sums, leader_step_timing)
+                merge_timing_sums(leader_step_timing_sums, leader_step_timing)
                 timed_step_count += 1
             if execution_step_timing:
-                _merge_timing_sums(execution_step_timing_sums, execution_step_timing)
+                merge_timing_sums(execution_step_timing_sums, execution_step_timing)
                 timed_execution_count += 1
             if avg_low_level_steps > 0.0:
                 avg_low_level_steps_total += float(avg_low_level_steps)
@@ -254,8 +238,8 @@ def main():
         leader_steps_total = float(n_envs) * float(args.leader_steps)
         leader_fps = leader_steps_total / elapsed
         low_level_fps = leader_fps * float(decision_interval_steps)
-        leader_step_timing = _average_timing_sums(leader_step_timing_sums, count=timed_step_count)
-        execution_step_timing = _average_timing_sums(execution_step_timing_sums, count=timed_execution_count)
+        leader_step_timing = average_timing_sums(leader_step_timing_sums, count=timed_step_count)
+        execution_step_timing = average_timing_sums(execution_step_timing_sums, count=timed_execution_count)
         avg_low_level_steps = (
             avg_low_level_steps_total / float(avg_low_level_steps_count)
             if avg_low_level_steps_count > 0

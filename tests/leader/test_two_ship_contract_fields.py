@@ -10,10 +10,33 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 
-from gym_envs.leader_env import _clone_leader_intent, _clone_pilot_report, _clone_task_order  # noqa: E402
+from gym_envs.leader_env_parts import (  # noqa: E402
+    LEADER_INTENT_FIELDS,
+    PILOT_REPORT_FIELDS,
+    TASK_ORDER_FIELDS,
+    clone_leader_intent,
+    clone_pilot_report,
+    clone_task_order,
+)
 
 
 class TwoShipContractFieldTests(unittest.TestCase):
+    def test_clone_field_lists_match_bound_contract_types(self) -> None:
+        def public_data_fields(obj: object) -> set[str]:
+            return {name for name in dir(obj) if not name.startswith("_")}
+
+        self.assertSetEqual(public_data_fields(ef_py.TaskOrder()), set(TASK_ORDER_FIELDS))
+        self.assertSetEqual(public_data_fields(ef_py.LeaderIntent()), set(LEADER_INTENT_FIELDS))
+        self.assertSetEqual(public_data_fields(ef_py.PilotReport()), set(PILOT_REPORT_FIELDS))
+
+    def test_clone_field_lists_follow_bound_field_order(self) -> None:
+        def public_data_fields_in_order(obj: object) -> tuple[str, ...]:
+            return tuple(name for name in dir(obj) if not name.startswith("_"))
+
+        self.assertTupleEqual(public_data_fields_in_order(ef_py.TaskOrder()), TASK_ORDER_FIELDS)
+        self.assertTupleEqual(public_data_fields_in_order(ef_py.LeaderIntent()), LEADER_INTENT_FIELDS)
+        self.assertTupleEqual(public_data_fields_in_order(ef_py.PilotReport()), PILOT_REPORT_FIELDS)
+
     def test_clone_task_order_preserves_two_ship_fields(self) -> None:
         source = SimpleNamespace(
             task_id=41,
@@ -31,10 +54,12 @@ class TwoShipContractFieldTests(unittest.TestCase):
             supported_node_id=7001,
             supporting_node_id=8001,
             role_code=21,
+            warfare_role_code=int(ef_py.NavalWarfareRole.ScreenCommander),
             coordination_mode=ef_py.CoordinationMode.Attached,
             relative_slot_code=12,
             assignee_kind=ef_py.AssigneeKind.Element,
             recovery_site_id=88,
+            officer_in_tactical_command=7101,
             element_id=77,
             package_id=0,
             lead_aircraft_id=9001,
@@ -44,6 +69,7 @@ class TwoShipContractFieldTests(unittest.TestCase):
             anchor_y_m=12000.0,
             anchor_z_m=2000.0,
             station_type=ef_py.StationType.Racetrack,
+            naval_station_type=ef_py.NavalStationType.Screen,
             station_radius_m=15000.0,
             station_leg_length_m=28000.0,
             station_heading_deg=35.0,
@@ -57,6 +83,10 @@ class TwoShipContractFieldTests(unittest.TestCase):
             exit_condition_code=0,
             on_station_time_s=900.0,
             fuel_bingo_override_kg=1200.0,
+            runway_slot_id=int(ef_py.RunwaySlotPosition.Left),
+            takeoff_clearance_id=int(ef_py.TakeoffClearanceState.LineUpAndWait),
+            takeoff_interval_s=45.0,
+            takeoff_procedure_id=int(ef_py.TakeoffProcedureType.Wing),
             recovery_base_id=5,
             recovery_runway_id=2,
             recovery_approach_type=ef_py.RecoveryApproachType.ILS,
@@ -70,7 +100,7 @@ class TwoShipContractFieldTests(unittest.TestCase):
             support_sector_id=501,
         )
 
-        clone = _clone_task_order(source)
+        clone = clone_task_order(source)
         self.assertEqual(clone.service_profile, ef_py.ServiceProfile.AirForce)
         self.assertEqual(clone.task_family, ef_py.TaskFamily.Patrol)
         self.assertEqual(clone.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
@@ -81,12 +111,19 @@ class TwoShipContractFieldTests(unittest.TestCase):
         self.assertEqual(int(clone.supported_node_id), 7001)
         self.assertEqual(int(clone.supporting_node_id), 8001)
         self.assertEqual(int(clone.role_code), 21)
+        self.assertEqual(int(clone.warfare_role_code), int(ef_py.NavalWarfareRole.ScreenCommander))
         self.assertEqual(clone.coordination_mode, ef_py.CoordinationMode.Attached)
         self.assertEqual(int(clone.relative_slot_code), 12)
         self.assertEqual(int(clone.recovery_site_id), 88)
+        self.assertEqual(int(clone.officer_in_tactical_command), 7101)
         self.assertEqual(clone.assignee_kind, ef_py.AssigneeKind.Element)
         self.assertEqual(int(clone.element_id), 77)
         self.assertEqual(int(clone.lead_aircraft_id), 9001)
+        self.assertEqual(clone.naval_station_type, ef_py.NavalStationType.Screen)
+        self.assertEqual(clone.runway_slot_id, ef_py.RunwaySlotPosition.Left)
+        self.assertEqual(clone.takeoff_clearance_id, ef_py.TakeoffClearanceState.LineUpAndWait)
+        self.assertAlmostEqual(float(clone.takeoff_interval_s), 45.0, places=6)
+        self.assertEqual(clone.takeoff_procedure_id, ef_py.TakeoffProcedureType.Wing)
         self.assertEqual(int(clone.formation_template_id), 12)
         self.assertEqual(clone.formation_role_id, ef_py.FormationRole.Wingman)
         self.assertEqual(clone.wingman_slot_id, ef_py.WingmanSlot.Left)
@@ -103,11 +140,17 @@ class TwoShipContractFieldTests(unittest.TestCase):
             tactical_unit_id=77,
             task_group_id=6001,
             role_code=21,
+            warfare_role_code=int(ef_py.NavalWarfareRole.AirDefenseCommander),
             coordination_mode=ef_py.CoordinationMode.Follow,
             relative_slot_code=12,
             recovery_site_id=88,
+            officer_in_tactical_command=7201,
             command_code=3,
             route_ref_id=7,
+            runway_slot_id=int(ef_py.RunwaySlotPosition.Left),
+            takeoff_clearance_id=int(ef_py.TakeoffClearanceState.LineUpAndWait),
+            takeoff_interval_s=45.0,
+            takeoff_procedure_id=int(ef_py.TakeoffProcedureType.Wing),
             recovery_base_id=5,
             recovery_runway_id=2,
             recovery_approach_type=ef_py.RecoveryApproachType.ILS,
@@ -135,17 +178,23 @@ class TwoShipContractFieldTests(unittest.TestCase):
             active=True,
         )
 
-        clone = _clone_leader_intent(source)
+        clone = clone_leader_intent(source)
         self.assertEqual(clone.service_profile, ef_py.ServiceProfile.AirForce)
         self.assertEqual(clone.task_family, ef_py.TaskFamily.Patrol)
         self.assertEqual(clone.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
         self.assertEqual(int(clone.tactical_unit_id), 77)
         self.assertEqual(int(clone.task_group_id), 6001)
         self.assertEqual(int(clone.role_code), 21)
+        self.assertEqual(int(clone.warfare_role_code), int(ef_py.NavalWarfareRole.AirDefenseCommander))
         self.assertEqual(clone.coordination_mode, ef_py.CoordinationMode.Follow)
         self.assertEqual(int(clone.relative_slot_code), 12)
         self.assertEqual(int(clone.recovery_site_id), 88)
+        self.assertEqual(int(clone.officer_in_tactical_command), 7201)
         self.assertEqual(int(clone.element_phase_id), 8)
+        self.assertEqual(clone.runway_slot_id, ef_py.RunwaySlotPosition.Left)
+        self.assertEqual(clone.takeoff_clearance_id, ef_py.TakeoffClearanceState.LineUpAndWait)
+        self.assertAlmostEqual(float(clone.takeoff_interval_s), 45.0, places=6)
+        self.assertEqual(clone.takeoff_procedure_id, ef_py.TakeoffProcedureType.Wing)
         self.assertEqual(clone.formation_mode_id, ef_py.FormationMode.Cruise)
         self.assertTrue(bool(clone.join_required_flag))
         self.assertAlmostEqual(float(clone.support_anchor_x_m), 24000.0, places=6)
@@ -163,7 +212,9 @@ class TwoShipContractFieldTests(unittest.TestCase):
             tactical_unit_id=77,
             task_group_id=6001,
             role_code=22,
+            warfare_role_code=int(ef_py.NavalWarfareRole.SeaControlCommander),
             coordination_mode=ef_py.CoordinationMode.Attached,
+            officer_in_tactical_command=7301,
             element_id=77,
             phase_id=int(ef_py.LeaderPhase.OnStation),
             formation_role_id=int(ef_py.FormationRole.Wingman),
@@ -180,7 +231,7 @@ class TwoShipContractFieldTests(unittest.TestCase):
             active=True,
         )
 
-        clone = _clone_pilot_report(source)
+        clone = clone_pilot_report(source)
         self.assertEqual(clone.report_type, ef_py.CommMsgType.REP_JOINED)
         self.assertEqual(clone.service_profile, ef_py.ServiceProfile.AirForce)
         self.assertEqual(clone.task_family, ef_py.TaskFamily.Patrol)
@@ -188,7 +239,9 @@ class TwoShipContractFieldTests(unittest.TestCase):
         self.assertEqual(int(clone.tactical_unit_id), 77)
         self.assertEqual(int(clone.task_group_id), 6001)
         self.assertEqual(int(clone.role_code), 22)
+        self.assertEqual(int(clone.warfare_role_code), int(ef_py.NavalWarfareRole.SeaControlCommander))
         self.assertEqual(clone.coordination_mode, ef_py.CoordinationMode.Attached)
+        self.assertEqual(int(clone.officer_in_tactical_command), 7301)
         self.assertEqual(int(clone.element_id), 77)
         self.assertEqual(int(clone.formation_role_id), int(ef_py.FormationRole.Wingman))
         self.assertAlmostEqual(float(clone.formation_error_m), 12.0, places=6)

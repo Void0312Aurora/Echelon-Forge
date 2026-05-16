@@ -51,13 +51,13 @@ from python.training_callbacks import (
     RewardPlateauEarlyStopCallback,
 )
 from python.env_config import resolve_env_settings
-from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.nonfinite_probe import NonFiniteProbeError, NonFiniteTrainingProbe
-from python.rl.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
-from python.rl.shared_memory_vec_env import SharedMemorySubprocVecEnv
-from python.rl.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
-from python.rl.world_batch_vec_env import WorldBatchVecEnv
-from python.rl.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
+from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.support.nonfinite_probe import NonFiniteProbeError, NonFiniteTrainingProbe
+from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv
+from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 
 
 def apply_global_seed(seed: int) -> None:
@@ -530,7 +530,7 @@ def main():
 
     if agent_layer == "leader":
         from gym_envs.leader_env import LeaderTrainingEnv
-        from python.rl.leader_batched_vec_env import LeaderBatchedVecEnv
+        from python.rl.runtime.leader_batched_vec_env import LeaderBatchedVecEnv
     else:
         LeaderTrainingEnv = None
         LeaderBatchedVecEnv = None

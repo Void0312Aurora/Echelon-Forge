@@ -16,12 +16,14 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from python.testing.runtime import ensure_repo_imports
+from tools.diagnostics.common import load_json_config, write_json_output
 
 ensure_repo_imports()
 
 from gym_envs.universal_env import UniversalEnv
 from python.env_config import resolve_env_settings
-from python.rl.wrappers import get_action_wrapper_spec
+from python.mission_obs_taxonomy import mission_observation_field_names
+from python.rl.control.wrappers import get_action_wrapper_spec
 
 
 INSTRUMENT_NAMES = [
@@ -77,37 +79,6 @@ CONTACT_FIELD_NAMES = [
     "time_since_update_s",
 ]
 
-MISSION_FIELD_NAMES = {
-    "nav_v2_cooperative_takeoff_v1": [
-        "command_code",
-        "target_heading_deg",
-        "target_altitude_m",
-        "target_speed_mps",
-        "selected_steerpoint",
-        "steerpoint_mode_code",
-        "dist_m",
-        "bearing_rel_deg",
-        "altitude_delta_m",
-        "cdi_norm",
-        "track_angle_error_deg",
-        "leg_distance_remaining_m",
-        "next_turn_deg",
-        "distance_to_turn_m",
-        "takeoff_procedure_code",
-        "takeoff_clearance_code",
-        "takeoff_interval_s",
-        "runway_slot_code",
-        "form_offset_x_m",
-        "form_offset_y_m",
-        "form_offset_z_m",
-        "self_role_code",
-        "self_formation_role_code",
-        "relative_slot_code",
-        "reference_relative_slot_code",
-    ],
-}
-
-
 @dataclass
 class RunningStats:
     count: int = 0
@@ -146,14 +117,6 @@ class RunningStats:
         }
 
 
-def _load_json(path: str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, dict):
-        raise TypeError(f"expected dict JSON at {path!r}")
-    return data
-
-
 def _make_env(scenario_path: str, train_config: dict[str, Any]):
     class _Args:
         include_visual = None
@@ -172,7 +135,10 @@ def _make_env(scenario_path: str, train_config: dict[str, Any]):
 
 
 def _field_names_for_mission(mode: str, dim: int) -> list[str]:
-    names = list(MISSION_FIELD_NAMES.get(str(mode).strip().lower(), []))
+    try:
+        names = mission_observation_field_names(mode)
+    except ValueError:
+        names = []
     if len(names) < int(dim):
         names.extend([f"mission_{idx}" for idx in range(len(names), int(dim))])
     return names[: int(dim)]
@@ -188,7 +154,7 @@ def main() -> int:
     parser.add_argument("--json_out", default="")
     args = parser.parse_args()
 
-    train_config = _load_json(os.path.abspath(args.train_config))
+    train_config = load_json_config(os.path.abspath(args.train_config))
     env, env_settings = _make_env(os.path.abspath(args.scenario), train_config)
 
     instrument_stats: dict[str, RunningStats] = {}
@@ -264,12 +230,7 @@ def main() -> int:
         print("=" * 60)
         print(json.dumps(payload, indent=2, ensure_ascii=True))
 
-        if args.json_out:
-            out_path = os.path.abspath(args.json_out)
-            os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-            with open(out_path, "w", encoding="utf-8") as f:
-                json.dump(payload, f, indent=2, ensure_ascii=True)
-                f.write("\n")
+        write_json_output(str(args.json_out), payload)
         return 0
     finally:
         env.close()

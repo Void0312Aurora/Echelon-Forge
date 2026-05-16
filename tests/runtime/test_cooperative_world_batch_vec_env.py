@@ -18,9 +18,11 @@ except ModuleNotFoundError:  # pragma: no cover
     PPO = None
 
 try:
-    from python.rl.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv  # noqa: E402
+    from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv  # noqa: E402
 except ModuleNotFoundError:  # pragma: no cover
     CooperativeWorldBatchVecEnv = None
+
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index  # noqa: E402
 
 
 def _cooperative_cruise_scenario() -> dict:
@@ -308,7 +310,7 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                 vec_env.seed(7)
                 obs = vec_env.reset()
                 self.assertEqual(obs["instruments"].shape[0], 2)
-                self.assertEqual(obs["mission"].shape, (2, 17))
+                self.assertEqual(obs["mission"].shape, (2, mission_observation_dim("nav_v2_formation_v1")))
                 self.assertEqual(obs["proprio"].shape, (2, 17))
 
                 actions = np.zeros((2, 17), dtype=np.float32)
@@ -340,13 +342,45 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
             try:
                 vec_env.seed(7)
                 obs = vec_env.reset()
-                self.assertEqual(obs["mission"].shape, (2, 21))
-                self.assertAlmostEqual(float(obs["mission"][0][17]), 21.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][0][19]), 11.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][0][20]), 0.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][17]), 22.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][19]), 12.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][20]), 11.0, places=6)
+                self.assertEqual(obs["mission"].shape, (2, mission_observation_dim("nav_v2_formation_role_v1")))
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_formation_role_v1", "self_role_code")]),
+                    21.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_formation_role_v1", "relative_slot_code")]),
+                    11.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(
+                        obs["mission"][0][
+                            mission_observation_field_index("nav_v2_formation_role_v1", "reference_relative_slot_code")
+                        ]
+                    ),
+                    0.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_role_v1", "self_role_code")]),
+                    22.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_role_v1", "relative_slot_code")]),
+                    12.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(
+                        obs["mission"][1][
+                            mission_observation_field_index("nav_v2_formation_role_v1", "reference_relative_slot_code")
+                        ]
+                    ),
+                    11.0,
+                    places=6,
+                )
             finally:
                 vec_env.close()
 
@@ -369,17 +403,61 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
             try:
                 vec_env.seed(7)
                 obs = vec_env.reset()
-                self.assertEqual(obs["mission"].shape, (2, 25))
-                self.assertAlmostEqual(float(obs["mission"][0][14]), 2.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][0][15]), 3.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][0][16]), 6.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][0][17]), 1.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][14]), 2.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][15]), 1.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][16]), 6.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][17]), 1.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][21]), 22.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][24]), 11.0, places=6)
+                self.assertEqual(obs["mission"].shape, (2, mission_observation_dim("nav_v2_cooperative_takeoff_v1")))
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_procedure_code")]),
+                    2.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_clearance_code")]),
+                    3.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_interval_s")]),
+                    6.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "runway_slot_code")]),
+                    1.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_procedure_code")]),
+                    2.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_clearance_code")]),
+                    1.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_interval_s")]),
+                    6.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "runway_slot_code")]),
+                    1.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "self_role_code")]),
+                    22.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(
+                        obs["mission"][1][
+                            mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "reference_relative_slot_code")
+                        ]
+                    ),
+                    11.0,
+                    places=6,
+                )
             finally:
                 vec_env.close()
 
@@ -476,14 +554,41 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
             try:
                 vec_env.seed(7)
                 obs = vec_env.reset()
-                self.assertEqual(obs["mission"].shape, (2, 25))
-                self.assertAlmostEqual(float(obs["mission"][0][0]), 3.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][0][15]), 3.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][15]), 1.0, places=6)
-                self.assertGreater(float(obs["mission"][0][6]), 1000.0)
-                self.assertAlmostEqual(float(obs["mission"][1][18]), 180.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][19]), -90.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][21]), 22.0, places=6)
+                self.assertEqual(obs["mission"].shape, (2, mission_observation_dim("nav_v2_cooperative_takeoff_v1")))
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "command_code")]),
+                    3.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_clearance_code")]),
+                    3.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "takeoff_clearance_code")]),
+                    1.0,
+                    places=6,
+                )
+                self.assertGreater(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "dist_m")]),
+                    1000.0,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "form_offset_x_m")]),
+                    180.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "form_offset_y_m")]),
+                    -90.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "self_role_code")]),
+                    22.0,
+                    places=6,
+                )
 
                 actions = np.zeros((2, 17), dtype=np.float32)
                 obs, rewards, dones, infos = vec_env.step(actions)
@@ -605,20 +710,52 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                     }
                 )
                 obs = vec_env.reset()
-                self.assertEqual(obs["mission"].shape, (2, 17))
-                self.assertAlmostEqual(float(obs["mission"][0][14]), 0.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][14]), 220.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][15]), -110.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][16]), 40.0, places=6)
+                self.assertEqual(obs["mission"].shape, (2, mission_observation_dim("nav_v2_formation_v1")))
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_formation_v1", "form_offset_x_m")]),
+                    0.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_v1", "form_offset_x_m")]),
+                    220.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_v1", "form_offset_y_m")]),
+                    -110.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_v1", "form_offset_z_m")]),
+                    40.0,
+                    places=6,
+                )
 
                 actions = np.zeros((2, 17), dtype=np.float32)
                 obs, rewards, dones, infos = vec_env.step(actions)
                 self.assertEqual(rewards.shape, (2,))
                 self.assertTrue(np.all(np.isfinite(rewards)))
-                self.assertAlmostEqual(float(obs["mission"][0][14]), 0.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][14]), 220.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][15]), -110.0, places=6)
-                self.assertAlmostEqual(float(obs["mission"][1][16]), 40.0, places=6)
+                self.assertAlmostEqual(
+                    float(obs["mission"][0][mission_observation_field_index("nav_v2_formation_v1", "form_offset_x_m")]),
+                    0.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_v1", "form_offset_x_m")]),
+                    220.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_v1", "form_offset_y_m")]),
+                    -110.0,
+                    places=6,
+                )
+                self.assertAlmostEqual(
+                    float(obs["mission"][1][mission_observation_field_index("nav_v2_formation_v1", "form_offset_z_m")]),
+                    40.0,
+                    places=6,
+                )
                 self.assertEqual(len(infos), 2)
             finally:
                 vec_env.close()
@@ -861,12 +998,22 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                 loader1 = slot1.loader
                 wp0_slot0 = dict(loader0.waypoints[0])
                 wp0_slot1 = dict(loader1.waypoints[0])
-                cmd_wp0_slot0 = dict(loader0.mission_cmd["waypoints"][0])
-                cmd_wp0_slot1 = dict(loader1.mission_cmd["waypoints"][0])
+                cached_waypoints_slot0 = loader0.mission_cmd.get("_normalized_waypoints", None)
+                cached_waypoints_slot1 = loader1.mission_cmd.get("_normalized_waypoints", None)
+                self.assertTrue(bool(loader0.mission_cmd.get("_runtime_waypoint_cache_valid", False)))
+                self.assertTrue(bool(loader1.mission_cmd.get("_runtime_waypoint_cache_valid", False)))
+                self.assertIsInstance(cached_waypoints_slot0, list)
+                self.assertIsInstance(cached_waypoints_slot1, list)
+                assert isinstance(cached_waypoints_slot0, list)
+                assert isinstance(cached_waypoints_slot1, list)
+                cmd_wp0_slot0 = dict(cached_waypoints_slot0[0])
+                cmd_wp0_slot1 = dict(cached_waypoints_slot1[0])
 
                 for key in ("x", "y", "z", "radius_m"):
                     self.assertAlmostEqual(float(wp0_slot0[key]), float(cmd_wp0_slot0[key]), places=6)
                     self.assertAlmostEqual(float(wp0_slot1[key]), float(cmd_wp0_slot1[key]), places=6)
+                self.assertIsNot(loader0.waypoints, cached_waypoints_slot0)
+                self.assertIsNot(loader1.waypoints, cached_waypoints_slot1)
                 self.assertEqual(wp0_slot0, wp0_slot1)
             finally:
                 vec_env.close()
@@ -998,9 +1145,17 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
             obs = vec_env.reset()
 
             self.assertEqual(int(vec_env.slots_per_world), 2)
-            self.assertEqual(obs["mission"].shape, (2, 25))
-            self.assertAlmostEqual(float(obs["mission"][0][0]), 3.0, places=6)
-            self.assertAlmostEqual(float(obs["mission"][1][0]), 3.0, places=6)
+            self.assertEqual(obs["mission"].shape, (2, mission_observation_dim("nav_v2_cooperative_takeoff_v1")))
+            self.assertAlmostEqual(
+                float(obs["mission"][0][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "command_code")]),
+                3.0,
+                places=6,
+            )
+            self.assertAlmostEqual(
+                float(obs["mission"][1][mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "command_code")]),
+                3.0,
+                places=6,
+            )
 
             for slot in vec_env._slots:
                 self.assertIsNotNone(slot)

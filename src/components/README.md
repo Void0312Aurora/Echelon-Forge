@@ -26,6 +26,37 @@
 - `command/`：目标目录，用于 pilot action、mission command、command link 和 legacy command DTO。
 - `tasking/`：目标目录，用于 task order、leader intent、pilot report 和 C2/tasking enum。
 
+## 当前阅读入口
+
+- [basic/README.md](/home/void0312/Workshop/CMO/src/components/basic/README.md)
+- [combat/README.md](/home/void0312/Workshop/CMO/src/components/combat/README.md)
+- [physics/README.md](/home/void0312/Workshop/CMO/src/components/physics/README.md)
+- [systems/README.md](/home/void0312/Workshop/CMO/src/components/systems/README.md)
+- [visual/README.md](/home/void0312/Workshop/CMO/src/components/visual/README.md)
+- [command/README.md](/home/void0312/Workshop/CMO/src/components/command/README.md)
+- [tasking/README.md](/home/void0312/Workshop/CMO/src/components/tasking/README.md)
+
+## 当前文件落点
+
+- `basic/`
+  - `common.h`, `environment_data.h`, `tags.h`
+- `combat/`
+  - `damage.h`, `health.h`, `scoring.h`, `weapon.h`
+- `physics/`
+  - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
+  - `action.h` 仅保留兼容 umbrella 角色
+- `systems/`
+  - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `track_management.h`
+- `visual/`
+  - `visual_sensor.h`
+- `command/`
+  - `pilot_action.h`, `mission_command.h`, `command_link.h`, `legacy_command.h`
+  - `common/mission_command_core.h`, `common/comm_message.h`
+  - `air/mission_command_air.h`, `air/control_input_resolution.h`
+- `tasking/`
+  - `task_order.h`, `leader_intent.h`, `pilot_report.h`, `tasking_enums.h`
+  - `common/*`、`air/*`、`naval/*` 为分层后的子域入口
+
 ## 迁移备注
 
 当前 `physics/action.h` 同时承载 command 与 tasking 类型。新增 command/tasking 类型应进入 `components/command` 或 `components/tasking`，不要继续扩展 `components/physics/action.h`。

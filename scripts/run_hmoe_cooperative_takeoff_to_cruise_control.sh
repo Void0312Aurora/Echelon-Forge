@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-PY="${PY:-./.venv/bin/python}"
+source "${ROOT_DIR}/tools/maintenance/cmo_env.sh"
+cmo_activate_env
+PY="${PY:-${CMO_PYTHON}}"
 OUTPUT_BASE="${OUTPUT_BASE:-experiments}"
 TRAIN_SCENARIO="${TRAIN_SCENARIO:-scenarios/combined/cooperative_takeoff_to_cruise_paramroute_navv2_train_v1.json}"
 EVAL_SCENARIO="${EVAL_SCENARIO:-${TRAIN_SCENARIO}}"
@@ -32,36 +34,6 @@ CURRICULUM_STAGE="${CURRICULUM_STAGE:-2}"
 
 SHARED_EVAL_JSON="${SHARED_EVAL_JSON:-output/${SHARED_RUN_NAME}_eval.json}"
 HMOE_EVAL_JSON="${HMOE_EVAL_JSON:-output/${HMOE_RUN_NAME}_eval.json}"
-
-detect_build_dir() {
-  local candidate
-  for candidate in \
-    "${CMO_BUILD_DIR:-}" \
-    "build-workshop" \
-    "build-gpu" \
-    "build" \
-    "build-facade-local"
-  do
-    [[ -n "${candidate}" ]] || continue
-    if [[ -d "${candidate}" ]] && compgen -G "${candidate}/ef_py*.so" >/dev/null; then
-      printf '%s\n' "${candidate}"
-      return 0
-    fi
-    if [[ -d "${candidate}" && -e "${candidate}/ef_py" ]]; then
-      printf '%s\n' "${candidate}"
-      return 0
-    fi
-  done
-  return 1
-}
-
-BUILD_DIR="$(detect_build_dir || true)"
-if [[ -z "${BUILD_DIR}" ]]; then
-  echo "[control] warning: no build directory with ef_py detected; keeping existing PYTHONPATH" >&2
-else
-  export CMO_BUILD_DIR="${BUILD_DIR}"
-  export PYTHONPATH="${ROOT_DIR}/${BUILD_DIR}:${ROOT_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
-fi
 
 mkdir -p "$(dirname "${SHARED_EVAL_JSON}")" "$(dirname "${HMOE_EVAL_JSON}")"
 
@@ -114,7 +86,8 @@ run_eval() {
   local json_out="$5"
 
   local cmd=(
-    "${PY}" -u tools/eval/eval_sb3_cooperative_policy.py
+    "${PY}" -u tools/eval/eval_sb3.py
+    --mode cooperative
     --scenario "${scenario}"
     --train_config "${config}"
     --model "${model_path}"

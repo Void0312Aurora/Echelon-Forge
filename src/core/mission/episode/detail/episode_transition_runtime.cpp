@@ -319,6 +319,12 @@ bool activate_post_waypoint_transition(
     next_command.takeoff_clearance_id = static_cast<TakeoffClearanceState>(mission_json["takeoff_clearance_code"].get<int>());
     next_command.takeoff_interval_s = mission_json["takeoff_interval_s"].get<double>();
     next_command.runway_slot_id = static_cast<RunwaySlotPosition>(mission_json["runway_slot_code"].get<int>());
+    next_command.formation_id = json_int_or(mission_json, "formation_id", 0);
+    next_command.form_offset_x = json_double_or(mission_json, "form_offset_x", 0.0);
+    next_command.form_offset_y = json_double_or(mission_json, "form_offset_y", 0.0);
+    next_command.form_offset_z = json_double_or(mission_json, "form_offset_z", 0.0);
+    next_command.assigned_target_id = json_uint64_or(mission_json, "assigned_target_id", 0);
+    next_command.authorization_to_fire = json_bool_or(mission_json, "authorization_to_fire", false);
     next_command.active = true;
 
     state->has_mission_command = true;

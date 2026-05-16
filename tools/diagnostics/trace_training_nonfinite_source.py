@@ -45,10 +45,10 @@ from stable_baselines3.common.vec_env import VecEnv
 from train import apply_global_seed
 from python.env_config import resolve_env_settings
 from python.models.transformer import TransformerExtractor, TransformerVisualExtractor
-from python.rl.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
-from python.rl.policies import SquashedMultiInputPolicy
-from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
+from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.rl.policy_algo.policies import SquashedMultiInputPolicy
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 from python.training_callbacks import ScenarioCurriculumCallback
 
 

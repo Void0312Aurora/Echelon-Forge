@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "components/tasking/pilot_report.h"
+#include "components/command/common/comm_message.h"
 
 struct CommPacket {
     uint64_t sender_id;

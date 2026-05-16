@@ -1,0 +1,35 @@
+{
+  "type": "unit_regression",
+  "check_kind": "scenario_loader_common_core_semantics",
+  "scenario_base": "scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
+  "seed": 0,
+  "scenario_patch": {
+    "task_order": {
+      "element_id": 42,
+      "recovery_base_id": 55,
+      "recovery_runway_id": 7
+    },
+    "mission_command": {
+      "command_code": 3,
+      "target_heading": 90.0,
+      "target_altitude": 1700.0,
+      "target_speed": 210.0
+    }
+  },
+  "randomization_overrides": {
+    "world_yaw_range": [0.0, 0.0],
+    "wind_headwind_range": [0.0, 0.0],
+    "wind_crosswind_range": [0.0, 0.0],
+    "wind_tailwind_max_mps": 0.0,
+    "wind_shear_range": [0.0, 0.0]
+  },
+  "expected_task_order_common_core": {
+    "service_profile": "AirForce",
+    "task_family": "Unspecified",
+    "tactical_unit_type": "TacticalUnit",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Attached",
+    "recovery_site_id": 7
+  }
+}

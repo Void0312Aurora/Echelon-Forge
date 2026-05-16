@@ -28,8 +28,8 @@ for _build_dir_name in _BUILD_DIR_NAMES:
 sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
 from python.env_config import resolve_env_settings
-from python.rl.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.wrappers import get_action_wrapper_spec
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.control.wrappers import get_action_wrapper_spec
 
 def main():
     parser = argparse.ArgumentParser(description="Universal Evaluation for CMO")

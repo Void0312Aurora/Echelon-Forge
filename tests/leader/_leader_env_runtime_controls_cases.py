@@ -8,27 +8,15 @@ from unittest import mock
 import numpy as np
 
 from gym_envs.leader_env import LeaderTrainingEnv
-
-try:
-    from tests.support._leader_env_runtime_test_support import (
-        CountingWindowRuntime,
-        DirectPredictModel,
-        DummyFrozenPolicy,
-        FakeExecutionRuntime,
-        FakeLeaderWindowRuntime,
-        FakePreparedExecutionRuntime,
-        PendingLeaderState,
-    )
-except ModuleNotFoundError:
-    from _leader_env_runtime_test_support import (  # type: ignore
-        CountingWindowRuntime,
-        DirectPredictModel,
-        DummyFrozenPolicy,
-        FakeExecutionRuntime,
-        FakeLeaderWindowRuntime,
-        FakePreparedExecutionRuntime,
-        PendingLeaderState,
-    )
+from tests.support._leader_env_runtime_test_support import (
+    CountingWindowRuntime,
+    DirectPredictModel,
+    DummyFrozenPolicy,
+    FakeExecutionRuntime,
+    FakeLeaderWindowRuntime,
+    FakePreparedExecutionRuntime,
+    PendingLeaderState,
+)
 
 
 class LeaderEnvRuntimeControlTests(unittest.TestCase):
@@ -85,7 +73,10 @@ class LeaderEnvRuntimeControlTests(unittest.TestCase):
         env.execution_torch_threads = None
         env.execution_torch_interop_threads = None
 
-        with mock.patch("gym_envs.leader_env._load_policy", return_value=model) as load_policy:
+        with mock.patch(
+            "gym_envs.leader_env_parts.execution_runtime.policy_runtime.load_policy",
+            return_value=model,
+        ) as load_policy:
             env._exec_policy = LeaderTrainingEnv._build_execution_policy(env)
 
         env._last_exec_action = None

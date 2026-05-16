@@ -86,8 +86,8 @@ USAF 官方 `AFDP 3-0.1, Command and Control` 明确把空中力量 C2 放在 ai
 
 本 profile 下的 air/platform 细化标准当前放在：
 
-- [Air 平台专用标准总览](../air/README.md)
-- [Pilot Observation Space Standard](../air/obs.md)
-- [Pilot Action Space Standard](../air/act.md)
-- [Mission Command Standard](../air/aim.md)
-- [Pilot Reporting Standard](../air/rep.md)
+- [Air 平台专用标准总览](/home/void0312/Workshop/CMO/docs/standards/air/README.md)
+- [Pilot Observation Space Standard](/home/void0312/Workshop/CMO/docs/standards/air/obs.md)
+- [Pilot Action Space Standard](/home/void0312/Workshop/CMO/docs/standards/air/act.md)
+- [Mission Command Standard](/home/void0312/Workshop/CMO/docs/standards/air/aim.md)
+- [Pilot Reporting Standard](/home/void0312/Workshop/CMO/docs/standards/air/rep.md)

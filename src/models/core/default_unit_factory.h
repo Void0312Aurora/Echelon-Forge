@@ -392,17 +392,12 @@ public:
         }
         if (def.has_command_link) {
             e.set<CommandLink>(def.command_link);
-            e.set<PendingMovementCommand>({{0.0, 0.0, 0.0, false}, 0.0, false});
-            e.set<PendingActionCommand>({{0.0, 0.0, 0.0, 0.0, false}, 0.0, false});
-            e.set<PendingMissionCommand>({{}, 0.0, false});
+            e.set<PendingMovementCommand>(make_pending_movement_command());
+            e.set<PendingActionCommand>(make_pending_action_command());
+            e.set<PendingMissionCommand>(make_pending_mission_command());
         }
-       // ActionCommand
-    e.set<ActionCommand>({
-        0.0, 0.0, 0.0, 0.0,
-        false, false, false, // Chaff, Flare, Jettison
-        false, 0, 0, 0,      // SendMsg, Type, Recipient, Arg
-        false // Active
-    });
+        // ActionCommand
+        e.set<ActionCommand>(make_action_command());
     
     if (def.has_landing_gear) {
         e.set<LandingGear>(def.landing_gear);
@@ -416,19 +411,8 @@ public:
             double speed = std::sqrt(params.vx * params.vx +
                                      params.vy * params.vy +
                                      params.vz * params.vz);
-            e.set<MovementCommand>({
-                heading_init,
-                speed,
-                params.z,
-                false, // use_stick_control
-                0.0,   // stick_roll
-                0.0,   // stick_pitch
-                0.0,   // throttle_cmd (ignored in autopilot)
-                true,  // gear_handle (down)
-                true   // active
-            });
-            e.set<ActionCommand>({0.0, 0.0, 0.0, 0.0, false});
-            e.set<LaggedCommand>({heading_init, speed, params.z, true});
+            e.set<MovementCommand>(make_legacy_autopilot_movement_command(heading_init, speed, params.z));
+            e.set<LaggedCommand>(make_lagged_command(heading_init, speed, params.z));
             e.set<ActionSpaceConfig>({
                 def.flight_model.max_turn_rate,
                 def.flight_model.max_accel,

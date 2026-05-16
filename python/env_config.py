@@ -2,19 +2,43 @@ from __future__ import annotations
 
 from typing import Any
 
+from python.mission_obs_taxonomy import VALID_MISSION_OBS_MODES
+
 
 VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4"}
-VALID_MISSION_OBS_MODES = {
-    "basic",
-    "nav_v1",
-    "nav_v2",
-    "nav_v2_formation_v1",
-    "nav_v2_formation_role_v1",
-    "nav_v2_cooperative_takeoff_v1",
-}
 VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled", "legacy"}
 VALID_STEP_INFO_MODES = {"full", "terminal", "off"}
 VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "legacy", "compiled", "gpu_host"}
+
+
+def _merge_config_value(
+    args: Any,
+    attr_name: str,
+    env_cfg: dict[str, Any],
+    *,
+    default: Any,
+    coerce: Any,
+) -> Any:
+    value = getattr(args, attr_name, None)
+    if value is None:
+        value = env_cfg.get(attr_name, default)
+    return coerce(value)
+
+
+def _merge_optional_config_value(
+    args: Any,
+    attr_name: str,
+    env_cfg: dict[str, Any],
+    *,
+    coerce: Any,
+) -> Any:
+    value = getattr(args, attr_name, None)
+    if value is None:
+        value = env_cfg.get(attr_name)
+    if value is None:
+        return None
+    value = coerce(value)
+    return value if value != "" else None
 
 
 def infer_include_visual_from_train_config(train_config: dict[str, Any] | None) -> bool:
@@ -43,57 +67,24 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
     else:
         include_visual = bool(include_visual)
 
-    include_proprio = getattr(args, "include_proprio", None)
-    if include_proprio is None:
-        include_proprio = bool(env_cfg.get("include_proprio", False))
-    else:
-        include_proprio = bool(include_proprio)
-
-    action_mode = getattr(args, "action_mode", None)
-    if action_mode is None:
-        action_mode = str(env_cfg.get("action_mode", "full"))
-    else:
-        action_mode = str(action_mode)
-
-    mission_obs_mode = getattr(args, "mission_obs_mode", None)
-    if mission_obs_mode is None:
-        mission_obs_mode = str(env_cfg.get("mission_obs_mode", "basic"))
-    else:
-        mission_obs_mode = str(mission_obs_mode)
-
-    visual_downsample = getattr(args, "visual_downsample", None)
-    if visual_downsample is None:
-        visual_downsample = int(env_cfg.get("visual_downsample", 1))
-    else:
-        visual_downsample = int(visual_downsample)
-
-    visual_update_interval = getattr(args, "visual_update_interval", None)
-    if visual_update_interval is None:
-        visual_update_interval = int(env_cfg.get("visual_update_interval", 1))
-    else:
-        visual_update_interval = int(visual_update_interval)
-
-    execution_step_runtime_mode = getattr(args, "execution_step_runtime_mode", None)
-    if execution_step_runtime_mode is None:
-        execution_step_runtime_mode = env_cfg.get("execution_step_runtime_mode")
-    if execution_step_runtime_mode is not None:
-        execution_step_runtime_mode = str(execution_step_runtime_mode).strip().lower()
-        if execution_step_runtime_mode == "":
-            execution_step_runtime_mode = None
-
-    step_info_mode = getattr(args, "step_info_mode", None)
-    if step_info_mode is None:
-        step_info_mode = str(env_cfg.get("step_info_mode", "full"))
-    else:
-        step_info_mode = str(step_info_mode)
-
-    flight_shaping_backend = getattr(args, "flight_shaping_backend", None)
-    if flight_shaping_backend is None:
-        flight_shaping_backend = env_cfg.get("flight_shaping_backend")
-    if flight_shaping_backend is not None:
-        flight_shaping_backend = str(flight_shaping_backend).strip().lower()
-        if flight_shaping_backend == "":
-            flight_shaping_backend = None
+    include_proprio = _merge_config_value(args, "include_proprio", env_cfg, default=False, coerce=bool)
+    action_mode = _merge_config_value(args, "action_mode", env_cfg, default="full", coerce=str)
+    mission_obs_mode = _merge_config_value(args, "mission_obs_mode", env_cfg, default="basic", coerce=str)
+    visual_downsample = _merge_config_value(args, "visual_downsample", env_cfg, default=1, coerce=int)
+    visual_update_interval = _merge_config_value(args, "visual_update_interval", env_cfg, default=1, coerce=int)
+    execution_step_runtime_mode = _merge_optional_config_value(
+        args,
+        "execution_step_runtime_mode",
+        env_cfg,
+        coerce=lambda value: str(value).strip().lower(),
+    )
+    step_info_mode = _merge_config_value(args, "step_info_mode", env_cfg, default="full", coerce=str)
+    flight_shaping_backend = _merge_optional_config_value(
+        args,
+        "flight_shaping_backend",
+        env_cfg,
+        coerce=lambda value: str(value).strip().lower(),
+    )
 
     action_mode = action_mode.strip()
     mission_obs_mode = mission_obs_mode.strip().lower()

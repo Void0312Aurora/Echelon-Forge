@@ -1,0 +1,24 @@
+{
+  "type": "unit_regression",
+  "check_kind": "task_order_common_core",
+  "task_name": "TASK_SUPPORT",
+  "task_order": {
+    "tasking_profile": "naval",
+    "task_name": "TASK_SUPPORT",
+    "service_profile": "Navy",
+    "task_group_id": 7401,
+    "parent_node_id": 7411
+  },
+  "expected_common_core": {
+    "service_profile": "Navy",
+    "task_family": "Escort",
+    "tactical_unit_type": "CommandNode",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Support",
+    "task_group_id": 7401,
+    "parent_node_id": 7411,
+    "warfare_role_code": "LogisticsCoordinator",
+    "officer_in_tactical_command": 7401
+  }
+}

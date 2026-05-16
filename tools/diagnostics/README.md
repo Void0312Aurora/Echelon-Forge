@@ -12,38 +12,54 @@ they usually:
 - print human-oriented summaries instead of stable machine-checked assertions
 - help diagnose failures rather than serve as maintained core workflows
 
+Shared support code for maintained diagnostics now starts to live in:
+
+- [benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+  - Unified benchmark CLI. This is the primary single-benchmark entrypoint; prefer `--family ...`.
+- [benchmarks/](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks)
+  - Maintained benchmark family implementations. New benchmark logic should land here, not in new top-level `benchmark_*_phaseN.py` files.
+- [common.py](/home/void0312/Workshop/CMO/tools/diagnostics/common.py)
+  - Shared JSON IO, timing aggregation, and GPU runtime stats helpers for diagnostics/benchmark scripts.
+- [run_benchmark_suite.py](/home/void0312/Workshop/CMO/tools/diagnostics/run_benchmark_suite.py)
+  - Optional configuration-driven suite runner built on top of the unified benchmark CLI and `family` dispatch.
+- [cooperative_trajectory_base.py](/home/void0312/Workshop/CMO/tools/diagnostics/cooperative_trajectory_base.py)
+  - Shared cooperative trajectory env/model bootstrap, trace capture, and plotting helpers for maintained cooperative diagnostics.
+
 Current maintained diagnostics:
 
 - [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py)
   - Quick leader-layer throughput probe for the maintained `auto`, `subproc`, `shared`, and `dummy` baselines.
 - [ablate_visual_training_effect.py](/home/void0312/CMO/tools/diagnostics/ablate_visual_training_effect.py)
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
-- [benchmark_visual_resolution.py](/home/void0312/CMO/tools/diagnostics/benchmark_visual_resolution.py)
-  - Sweeps `visual_downsample` and reports visual tensor size, rollout-buffer cost, env-step throughput, and visual extractor forward latency proxies.
-- [benchmark_spatial_query_phase1.py](/home/void0312/CMO/tools/diagnostics/benchmark_spatial_query_phase1.py)
-  - Benchmarks the Phase 1 compiled spatial query path against the legacy Python geometry reference and reports `UniversalEnv` single/vector rollout throughput.
-- [benchmark_scenario_compiler_phase2.py](/home/void0312/CMO/tools/diagnostics/benchmark_scenario_compiler_phase2.py)
-  - Benchmarks Phase 2 compiler cache and runtime materializer behavior against legacy `json.load + imports merge`, and reports compiled instantiate / `load_compiled_scenario()` cost.
-- [benchmark_mission_runtime_phase3.py](/home/void0312/CMO/tools/diagnostics/benchmark_mission_runtime_phase3.py)
-  - Benchmarks Phase 3 mission-nav, command-tracking, waypoint reward, approach reward, conditional objective, and safety/termination runtime helpers against the legacy Python formulas.
-- [benchmark_world_batch_phase4.py](/home/void0312/CMO/tools/diagnostics/benchmark_world_batch_phase4.py)
-  - Benchmarks the current Phase 4 `WorldBatchRuntime` slice against legacy per-world kernel apply and step/read loops, separating `kernel apply` and `step/read` speedups.
-- [benchmark_world_batch_vec_env_phase4.py](/home/void0312/CMO/tools/diagnostics/benchmark_world_batch_vec_env_phase4.py)
-  - Benchmarks the Phase 4 execution training adapter against `DummyVecEnv + UniversalEnv`, reporting reset cost and `ms/env-step` rollout speedup on the non-visual execution path.
-- [benchmark_policy_observation_bridge_phase4.py](/home/void0312/CMO/tools/diagnostics/benchmark_policy_observation_bridge_phase4.py)
-  - Benchmarks the Phase 4 policy-observation bridge. Its default maintained
-    case now mirrors the current `p5` mainline, while older mixed/all-GPU-host
-    helper cases require an explicit experimental opt-in.
-- [benchmark_coarse_route_segments.py](/home/void0312/CMO/tools/diagnostics/benchmark_coarse_route_segments.py)
-  - Replays real `p5` route rollouts and compares coarse route-leg propagation against fine truth, reporting endpoint error and training-risk proxies by horizon.
-- [diagnose_training_matrix.py](/home/void0312/CMO/tools/diagnostics/diagnose_training_matrix.py)
-  - Runs a small evaluation matrix across model/scenario pairs and extracts headline metrics from evaluator output.
-- [diagnose_cooperative_takeoff_trajectory.py](/home/void0312/CMO/tools/diagnostics/diagnose_cooperative_takeoff_trajectory.py)
-  - Replays one cooperative takeoff world, then exports a PNG + JSON with both aircraft trajectories, altitude/speed traces, and takeoff-clearance timeline.
-- [diagnose_cooperative_takeoff_to_cruise_trajectory.py](/home/void0312/CMO/tools/diagnostics/diagnose_cooperative_takeoff_to_cruise_trajectory.py)
-  - Replays one cooperative takeoff-to-cruise bridge world, then exports a PNG + JSON with both aircraft trajectories, altitude/speed traces, clearance timeline, and waypoint-progress traces.
-- [sanity_check.py](/home/void0312/CMO/tools/diagnostics/sanity_check.py)
-  - Performs a low-level kernel/API sanity probe against a spawned unit.
+- `spatial_query`
+  - Compiled spatial-query vs legacy geometry benchmark.
+- `scenario_compiler`
+  - Scenario compiler cache / instantiate / load benchmark.
+- `mission_runtime`
+  - Mission runtime helper microbenchmark.
+- `world_batch_runtime`
+  - WorldBatchRuntime kernel-apply and step/read benchmark.
+- `world_batch_vec_env`
+  - WorldBatchVecEnv training-adapter benchmark.
+- `policy_observation_bridge`
+  - Policy-observation bridge benchmark.
+- `visual_resolution`
+  - Visual downsample sweep benchmark.
+- `coarse_route_segments`
+  - Coarse route-segment error benchmark.
+- [diagnose_cooperative_trajectory.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_cooperative_trajectory.py)
+  - Unified cooperative trajectory replay/export CLI. Use `--task takeoff` or `--task takeoff_to_cruise` to emit task-specific PNG + JSON diagnostics from one maintained entrypoint.
+- [diagnose_runway_drift_sweep.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_runway_drift_sweep.py)
+  - Parameterized takeoff ground-roll drift sweep used to quantify off-runway behavior across seeds, winds, and policy choices.
+- [diagnose_takeoff_to_landing_trajectory.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_takeoff_to_landing_trajectory.py)
+  - Single-episode trajectory exporter for the continuous takeoff-to-landing task, with PNG + JSON outputs for scripted/model comparisons.
+
+Recommended maintained entrypoint for multiple benchmarks:
+
+- [run_benchmark_suite.py](/home/void0312/Workshop/CMO/tools/diagnostics/run_benchmark_suite.py)
+  - Optional preset runner for repeatable multi-job benchmark suites.
+- [benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+  - Primary single benchmark entrypoint. Use `--family` to select the benchmark family.
 
 Frozen experimental GPU helper phase-0 probes:
 
@@ -79,6 +95,30 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
 
 Example probe runs:
 
+Run multiple maintained benchmarks from one config:
+
+```bash
+./.venv/bin/python tools/diagnostics/run_benchmark_suite.py \
+  --config examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json \
+  --json-out /tmp/runtime_phase14_mainline.json
+```
+
+Run one benchmark family through the unified CLI:
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark.py \
+  --family world_batch_vec_env \
+  --n-envs 8 --steps 128 --reset-iters 24 --mission-obs-mode nav_v2 --action-mode full
+```
+
+Show family-specific help:
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark.py \
+  --family world_batch_vec_env \
+  --family-help
+```
+
 ```bash
 ./build-gpu/ef_gpu_visual_phase0_probe --frames 512 --objects 64 --envs 16 --history-steps 2048 --terrain off
 ./build-gpu/ef_gpu_visual_phase0_probe --frames 64 --objects 64 --envs 16 --terrain gpu
@@ -89,3 +129,10 @@ Example probe runs:
 ./build-gpu/ef_gpu_comm_candidate_phase0_probe --worlds 16 --nodes 1024 --networks 2 --cell-size 10000 --bucket-count 32768 --bucket-capacity 64
 ./build-gpu/ef_gpu_visual_candidate_phase0_probe --worlds 16 --objects 1024 --cameras 64 --far-range 25000 --cell-size 5000 --bucket-count 32768 --bucket-capacity 64
 ```
+
+Maintenance note:
+
+- New maintained benchmark logic should extend `tools/diagnostics/benchmarks/` plus `benchmark_registry.py`.
+- Do not add new phase-named top-level benchmark scripts.
+- Cooperative trajectory diagnostics should extend `tools/diagnostics/diagnose_cooperative_trajectory.py` plus `cooperative_trajectory_base.py`, not reintroduce per-task wrapper scripts.
+- Longer task-specific trajectory or sweep diagnostics should live here only if they remain maintained operational tools; otherwise archive them instead of leaving them under `tests/`.

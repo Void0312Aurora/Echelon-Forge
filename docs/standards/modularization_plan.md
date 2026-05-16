@@ -2,9 +2,9 @@
 
 This document remains active, but it must now be read under the new standards tree:
 
-- [Standards Overview](./README.md)
-- [Joint Baseline](./joint/command_and_modeling_baseline.md)
-- [Service Profiles](./services/README.md)
+- [Standards Overview](/home/void0312/Workshop/CMO/docs/standards/README.md)
+- [Joint Baseline](/home/void0312/Workshop/CMO/docs/standards/joint/command_and_modeling_baseline.md)
+- [Service Profiles](/home/void0312/Workshop/CMO/docs/standards/services/README.md)
 
 This document outlines a minimal, staged plan to modularize the project for
 maintainability and swap-in/out of unit models, sensors, and combat logic.

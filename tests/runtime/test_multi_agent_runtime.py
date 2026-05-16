@@ -13,7 +13,8 @@ ensure_repo_imports()
 import ef_py  # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
-from python.rl.multi_agent_runtime import MultiAgentWorldRuntimeView  # noqa: E402
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index  # noqa: E402
+from python.rl.runtime.multi_agent_runtime import MultiAgentWorldRuntimeView  # noqa: E402
 
 
 def _cooperative_scenario() -> dict:
@@ -157,14 +158,17 @@ class MultiAgentRuntimeViewTests(unittest.TestCase):
             include_proprio=False,
         )
         obs_by_entity_id = view.build_observations()
+        formation_x = mission_observation_field_index("nav_v2_formation_v1", "form_offset_x_m")
+        formation_y = mission_observation_field_index("nav_v2_formation_v1", "form_offset_y_m")
+        formation_z = mission_observation_field_index("nav_v2_formation_v1", "form_offset_z_m")
 
         self.assertEqual(set(obs_by_entity_id.keys()), {int(lead.entity_id), int(wing.entity_id)})
-        self.assertEqual(obs_by_entity_id[int(lead.entity_id)]["mission"].shape, (17,))
-        self.assertEqual(obs_by_entity_id[int(wing.entity_id)]["mission"].shape, (17,))
-        self.assertAlmostEqual(float(obs_by_entity_id[int(lead.entity_id)]["mission"][14]), 0.0, places=6)
-        self.assertAlmostEqual(float(obs_by_entity_id[int(wing.entity_id)]["mission"][14]), 180.0, places=6)
-        self.assertAlmostEqual(float(obs_by_entity_id[int(wing.entity_id)]["mission"][15]), -90.0, places=6)
-        self.assertAlmostEqual(float(obs_by_entity_id[int(wing.entity_id)]["mission"][16]), 30.0, places=6)
+        self.assertEqual(obs_by_entity_id[int(lead.entity_id)]["mission"].shape, (mission_observation_dim("nav_v2_formation_v1"),))
+        self.assertEqual(obs_by_entity_id[int(wing.entity_id)]["mission"].shape, (mission_observation_dim("nav_v2_formation_v1"),))
+        self.assertAlmostEqual(float(obs_by_entity_id[int(lead.entity_id)]["mission"][formation_x]), 0.0, places=6)
+        self.assertAlmostEqual(float(obs_by_entity_id[int(wing.entity_id)]["mission"][formation_x]), 180.0, places=6)
+        self.assertAlmostEqual(float(obs_by_entity_id[int(wing.entity_id)]["mission"][formation_y]), -90.0, places=6)
+        self.assertAlmostEqual(float(obs_by_entity_id[int(wing.entity_id)]["mission"][formation_z]), 30.0, places=6)
 
     def test_multi_agent_runtime_view_routes_actions_per_entity(self) -> None:
         runtime = ef_py.WorldBatchRuntime(1)

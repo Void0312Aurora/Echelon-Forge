@@ -16,8 +16,8 @@ import ef_py  # noqa: F401
 import numpy as np
 
 from python.env_config import resolve_env_settings
-from python.rl.world_batch_vec_env import WorldBatchVecEnv
-from python.rl.wrappers import get_action_wrapper_spec
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
+from python.rl.control.wrappers import get_action_wrapper_spec
 
 
 _DEFAULT_TRAIN_CONFIG = "examples/config/training/frozen/execution/p5_continuous_retrain_v1.json"

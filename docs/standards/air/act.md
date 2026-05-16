@@ -1,9 +1,9 @@
 # 飞行员操作空间标准 (Pilot Action Space Standard)
 
 > Scope note (2026-03-23): 本文档是 `air specialization`，只适用于 air profile 下的平台执行动作语义。
-> 当前标准化主基线请先看 [docs/standards/README.md](/home/void0312/CMO/docs/standards/README.md)、
-> [docs/standards/services/air_force.md](/home/void0312/CMO/docs/standards/services/air_force.md)、
-> [docs/standards/air/README.md](/home/void0312/CMO/docs/standards/air/README.md)。
+> 当前标准化主基线请先看 [docs/standards/README.md](/home/void0312/Workshop/CMO/docs/standards/README.md)、
+> [docs/standards/services/air_force.md](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)、
+> [docs/standards/air/README.md](/home/void0312/Workshop/CMO/docs/standards/air/README.md)。
 
 本文档定义了“数字飞行员” (RL Agent) 对仿真环境所能施加的操作指令。这些操作严格模拟现实战斗机飞行员在座舱内通过操纵杆、油门杆和各类电磁开关所能进行的物理操作。
 

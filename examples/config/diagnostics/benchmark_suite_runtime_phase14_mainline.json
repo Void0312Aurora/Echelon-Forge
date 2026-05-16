@@ -1,0 +1,39 @@
+{
+  "name": "runtime_phase14_mainline",
+  "shared_args": [],
+  "jobs": [
+    {
+      "name": "spatial_query",
+      "family": "spatial_query",
+      "args": [
+        "--warmup", "8",
+        "--iters", "64",
+        "--env-warmup-steps", "8",
+        "--env-measure-steps", "32",
+        "--vec-envs", "4"
+      ]
+    },
+    {
+      "name": "world_batch_runtime",
+      "family": "world_batch_runtime",
+      "args": [
+        "--world-count", "8",
+        "--setup-iters", "64",
+        "--iters", "512",
+        "--sim-log-level", "warn"
+      ]
+    },
+    {
+      "name": "world_batch_vec_env",
+      "family": "world_batch_vec_env",
+      "args": [
+        "--n-envs", "8",
+        "--steps", "128",
+        "--reset-iters", "24",
+        "--mission-obs-mode", "nav_v2",
+        "--action-mode", "full",
+        "--sim-log-level", "warn"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 #pragma once
 
 struct Mass {
-    double empty_mass_kg;
+    double empty_mass_kg;   // Runtime mass authority for physics-side mass decomposition
     double fuel_mass_kg;
     double stores_mass_kg;
     double fuel_leak_rate_kg_s{0.0};

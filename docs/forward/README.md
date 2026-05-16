@@ -12,5 +12,4 @@ Files:
 - engagement_termination.md: termination rules and behavior logic roadmap.
 - rl_selfplay.md: reinforcement learning self-play roadmap.
 - c2_communication.md: command link and C2 constraints roadmap.
-- models/temp-01.md: conditional routing / MoE direction note for the shared execution model.
 - models/hierarchical_moe_execution_policy.md: design freeze for the execution-layer hierarchical MoE line.

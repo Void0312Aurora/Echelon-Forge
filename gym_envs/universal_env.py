@@ -33,6 +33,7 @@ from gym_envs.scenario_loader import (
     normalize_execution_step_runtime_mode,
     normalize_flight_shaping_backend,
 )
+from python.mission_obs_taxonomy import mission_observation_dim as shared_mission_observation_dim
 
 try:
     import gymnasium as gym
@@ -89,20 +90,7 @@ def expected_action_dim(action_mode: str) -> int:
 
 
 def mission_observation_dim(mission_obs_mode: str) -> int:
-    mode = str(mission_obs_mode).strip().lower()
-    if mode == "basic":
-        return 4
-    if mode == "nav_v1":
-        return 11
-    if mode == "nav_v2":
-        return 14
-    if mode == "nav_v2_formation_v1":
-        return 17
-    if mode == "nav_v2_formation_role_v1":
-        return 21
-    if mode == "nav_v2_cooperative_takeoff_v1":
-        return 25
-    raise ValueError(f"Unknown mission_obs_mode: {mission_obs_mode}")
+    return int(shared_mission_observation_dim(mission_obs_mode))
 
 def make_action_space(action_mode: str):
     if spaces is None:

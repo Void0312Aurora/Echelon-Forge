@@ -18,6 +18,7 @@ import ef_py  # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from gym_envs.universal_env import UniversalEnv, build_universal_observation  # noqa: E402
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index  # noqa: E402
 
 
 def _build_route_result() -> ef_py.SpatialRouteQueryResult:
@@ -77,6 +78,10 @@ def _build_runway_frame_result(*, x_m: float = 0.0, y_m: float = 0.0) -> ef_py.S
 
 
 class MissionRuntimeTests(unittest.TestCase):
+    def _assert_mission_field(self, values, mode: str, field_name: str, expected: float, *, places: int = 6) -> None:
+        idx = mission_observation_field_index(mode, field_name)
+        self.assertAlmostEqual(float(values[idx]), float(expected), places=places)
+
     def test_waypoint_nav_products_match_nav_v2_contract_geometry(self) -> None:
         route_result = _build_route_result()
         self.assertTrue(bool(route_result.valid))
@@ -143,13 +148,13 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertTrue(bool(products.valid))
         self.assertTrue(bool(products.nav_valid))
         self.assertEqual(int(products.mode_code), 2)
-        self.assertEqual(len(products.values), 14)
-        self.assertAlmostEqual(float(products.values[0]), 3.0, places=6)
-        self.assertAlmostEqual(float(products.values[4]), 1.0, places=6)
-        self.assertAlmostEqual(float(products.values[5]), 1.0, places=6)
-        self.assertAlmostEqual(float(products.values[6]), 10000.0, places=4)
-        self.assertAlmostEqual(float(products.values[9]), 0.0, places=6)
-        self.assertAlmostEqual(float(products.values[10]), 0.0, places=6)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2"))
+        self._assert_mission_field(products.values, "nav_v2", "command_code", 3.0)
+        self._assert_mission_field(products.values, "nav_v2", "selected_steerpoint", 1.0)
+        self._assert_mission_field(products.values, "nav_v2", "steerpoint_mode_code", 1.0)
+        self._assert_mission_field(products.values, "nav_v2", "dist_m", 10000.0, places=4)
+        self._assert_mission_field(products.values, "nav_v2", "cdi_norm", 0.0)
+        self._assert_mission_field(products.values, "nav_v2", "track_angle_error_deg", 0.0)
 
     def test_mission_observation_contract_returns_zero_nav_tail_without_route_guidance(self) -> None:
         inputs = ef_py.MissionObservationInputs()
@@ -162,7 +167,7 @@ class MissionRuntimeTests(unittest.TestCase):
         products = ef_py.compute_mission_observation(inputs)
         self.assertTrue(bool(products.valid))
         self.assertFalse(bool(products.nav_valid))
-        self.assertEqual(len(products.values), 11)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v1"))
         self.assertEqual(list(products.values[:4]), [2.0, 45.0, 800.0, 150.0])
         self.assertTrue(all(abs(float(v)) <= 1.0e-9 for v in products.values[4:]))
 
@@ -195,11 +200,11 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertTrue(bool(products.valid))
         self.assertTrue(bool(products.nav_valid))
         self.assertEqual(int(products.mode_code), 3)
-        self.assertEqual(len(products.values), 17)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2_formation_v1"))
         self.assertEqual(list(products.values[:4]), [3.0, 90.0, 1200.0, 210.0])
-        self.assertAlmostEqual(float(products.values[14]), 120.0, places=6)
-        self.assertAlmostEqual(float(products.values[15]), -45.0, places=6)
-        self.assertAlmostEqual(float(products.values[16]), 30.0, places=6)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_x_m", 120.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_y_m", -45.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_z_m", 30.0)
 
     def test_mission_observation_nav_v2_formation_v1_keeps_offsets_without_route_guidance(self) -> None:
         inputs = ef_py.MissionObservationInputs()
@@ -215,12 +220,12 @@ class MissionRuntimeTests(unittest.TestCase):
         products = ef_py.compute_mission_observation(inputs)
         self.assertTrue(bool(products.valid))
         self.assertFalse(bool(products.nav_valid))
-        self.assertEqual(len(products.values), 17)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2_formation_v1"))
         self.assertEqual(list(products.values[:4]), [2.0, 45.0, 800.0, 150.0])
         self.assertTrue(all(abs(float(v)) <= 1.0e-9 for v in products.values[4:14]))
-        self.assertAlmostEqual(float(products.values[14]), 300.0, places=6)
-        self.assertAlmostEqual(float(products.values[15]), -120.0, places=6)
-        self.assertAlmostEqual(float(products.values[16]), 20.0, places=6)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_x_m", 300.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_y_m", -120.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_z_m", 20.0)
 
     def test_mission_observation_nav_v2_formation_role_v1_appends_role_semantics(self) -> None:
         route_result = _build_route_result()
@@ -255,14 +260,19 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertTrue(bool(products.valid))
         self.assertTrue(bool(products.nav_valid))
         self.assertEqual(int(products.mode_code), 4)
-        self.assertEqual(len(products.values), 21)
-        self.assertAlmostEqual(float(products.values[14]), 120.0, places=6)
-        self.assertAlmostEqual(float(products.values[15]), -45.0, places=6)
-        self.assertAlmostEqual(float(products.values[16]), 30.0, places=6)
-        self.assertAlmostEqual(float(products.values[17]), 22.0, places=6)
-        self.assertAlmostEqual(float(products.values[18]), float(int(ef_py.FormationRole.Wingman)), places=6)
-        self.assertAlmostEqual(float(products.values[19]), 12.0, places=6)
-        self.assertAlmostEqual(float(products.values[20]), 11.0, places=6)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2_formation_role_v1"))
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "form_offset_x_m", 120.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "form_offset_y_m", -45.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "form_offset_z_m", 30.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "self_role_code", 22.0)
+        self._assert_mission_field(
+            products.values,
+            "nav_v2_formation_role_v1",
+            "self_formation_role_code",
+            float(int(ef_py.FormationRole.Wingman)),
+        )
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "relative_slot_code", 12.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "reference_relative_slot_code", 11.0)
 
     def test_mission_observation_nav_v2_cooperative_takeoff_v1_appends_takeoff_semantics(self) -> None:
         route_result = _build_route_result()
@@ -301,13 +311,18 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertTrue(bool(products.valid))
         self.assertTrue(bool(products.nav_valid))
         self.assertEqual(int(products.mode_code), 5)
-        self.assertEqual(len(products.values), 25)
-        self.assertAlmostEqual(float(products.values[14]), 2.0, places=6)
-        self.assertAlmostEqual(float(products.values[15]), 3.0, places=6)
-        self.assertAlmostEqual(float(products.values[16]), 5.0, places=6)
-        self.assertAlmostEqual(float(products.values[17]), 2.0, places=6)
-        self.assertAlmostEqual(float(products.values[18]), 120.0, places=6)
-        self.assertAlmostEqual(float(products.values[24]), 11.0, places=6)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2_cooperative_takeoff_v1"))
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "takeoff_procedure_code", 2.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "takeoff_clearance_code", 3.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "takeoff_interval_s", 5.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "runway_slot_code", 2.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "form_offset_x_m", 120.0)
+        self._assert_mission_field(
+            products.values,
+            "nav_v2_cooperative_takeoff_v1",
+            "reference_relative_slot_code",
+            11.0,
+        )
 
     def test_loader_nav_v2_current_contract_still_ignores_formation_offsets(self) -> None:
         scenario = {
@@ -360,7 +375,7 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(inputs.form_offset_x), 1111.0, places=6)
         self.assertAlmostEqual(float(inputs.form_offset_y), -2222.0, places=6)
         self.assertAlmostEqual(float(inputs.form_offset_z), 3333.0, places=6)
-        self.assertEqual(len(products.values), 14)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2"))
         self.assertEqual(list(products.values[:4]), [2.0, 33.0, 1333.0, 177.0])
         for marker in (1111.0, -2222.0, 3333.0):
             self.assertFalse(
@@ -414,11 +429,11 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(inputs.form_offset_x), 1111.0, places=6)
         self.assertAlmostEqual(float(inputs.form_offset_y), -2222.0, places=6)
         self.assertAlmostEqual(float(inputs.form_offset_z), 3333.0, places=6)
-        self.assertEqual(len(products.values), 17)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2_formation_v1"))
         self.assertEqual(list(products.values[:4]), [2.0, 33.0, 1333.0, 177.0])
-        self.assertAlmostEqual(float(products.values[14]), 1111.0, places=6)
-        self.assertAlmostEqual(float(products.values[15]), -2222.0, places=6)
-        self.assertAlmostEqual(float(products.values[16]), 3333.0, places=6)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_x_m", 1111.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_y_m", -2222.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_v1", "form_offset_z_m", 3333.0)
 
     def test_loader_nav_v2_formation_role_v1_exposes_role_and_reference_semantics(self) -> None:
         scenario = {
@@ -490,11 +505,16 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(inputs.self_formation_role_code), float(int(ef_py.FormationRole.Wingman)), places=6)
         self.assertAlmostEqual(float(inputs.relative_slot_code), 12.0, places=6)
         self.assertAlmostEqual(float(inputs.reference_relative_slot_code), 11.0, places=6)
-        self.assertEqual(len(products.values), 21)
-        self.assertAlmostEqual(float(products.values[17]), 22.0, places=6)
-        self.assertAlmostEqual(float(products.values[18]), float(int(ef_py.FormationRole.Wingman)), places=6)
-        self.assertAlmostEqual(float(products.values[19]), 12.0, places=6)
-        self.assertAlmostEqual(float(products.values[20]), 11.0, places=6)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2_formation_role_v1"))
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "self_role_code", 22.0)
+        self._assert_mission_field(
+            products.values,
+            "nav_v2_formation_role_v1",
+            "self_formation_role_code",
+            float(int(ef_py.FormationRole.Wingman)),
+        )
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "relative_slot_code", 12.0)
+        self._assert_mission_field(products.values, "nav_v2_formation_role_v1", "reference_relative_slot_code", 11.0)
 
     def test_loader_nav_v2_cooperative_takeoff_v1_exposes_takeoff_and_role_semantics(self) -> None:
         scenario = {
@@ -570,13 +590,18 @@ class MissionRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(inputs.takeoff_clearance_code), 3.0, places=6)
         self.assertAlmostEqual(float(inputs.takeoff_interval_s), 5.0, places=6)
         self.assertAlmostEqual(float(inputs.runway_slot_code), 2.0, places=6)
-        self.assertEqual(len(products.values), 25)
-        self.assertAlmostEqual(float(products.values[14]), 2.0, places=6)
-        self.assertAlmostEqual(float(products.values[15]), 3.0, places=6)
-        self.assertAlmostEqual(float(products.values[16]), 5.0, places=6)
-        self.assertAlmostEqual(float(products.values[17]), 2.0, places=6)
-        self.assertAlmostEqual(float(products.values[21]), 22.0, places=6)
-        self.assertAlmostEqual(float(products.values[24]), 11.0, places=6)
+        self.assertEqual(len(products.values), mission_observation_dim("nav_v2_cooperative_takeoff_v1"))
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "takeoff_procedure_code", 2.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "takeoff_clearance_code", 3.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "takeoff_interval_s", 5.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "runway_slot_code", 2.0)
+        self._assert_mission_field(products.values, "nav_v2_cooperative_takeoff_v1", "self_role_code", 22.0)
+        self._assert_mission_field(
+            products.values,
+            "nav_v2_cooperative_takeoff_v1",
+            "reference_relative_slot_code",
+            11.0,
+        )
 
     def test_route_guidance_uses_formation_slot_reference_geometry(self) -> None:
         scenario = {
@@ -955,6 +980,79 @@ def _inline_observation_scenario() -> dict:
 
 
 class ExecutionObservationRuntimeTests(unittest.TestCase):
+    def test_instrument_navigation_projection_uses_egi_outputs(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        sim.reset(41)
+
+        lead = sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Aircraft",
+            0.0,
+            0.0,
+            1200.0,
+            90.0,
+            0.0,
+            0.0,
+            30.0,
+            40.0,
+            -5.0,
+        )
+
+        for _ in range(2):
+            sim.step()
+
+        inst = sim.get_instrument_state(int(lead))
+        self.assertTrue(bool(inst.gps_available))
+        self.assertGreater(float(inst.vn), 0.0)
+        self.assertGreater(float(inst.ve), 0.0)
+        self.assertGreater(float(inst.vd), 0.0)
+        self.assertAlmostEqual(
+            float(inst.ground_speed),
+            math.hypot(float(inst.vn), float(inst.ve)),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(inst.ground_track),
+            ef_py.resolve_ground_track_deg(
+                float(inst.heading),
+                math.degrees(math.atan2(float(inst.ve), float(inst.vn))),
+            ),
+            places=6,
+        )
+        self.assertLessEqual(float(inst.position_uncertainty), 5.0)
+
+    def test_instrument_throttle_prefers_pilot_action_over_legacy_stick_command(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        sim.reset(31)
+
+        lead = sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Aircraft",
+            0.0,
+            0.0,
+            1200.0,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            180.0,
+            0.0,
+        )
+        sim.set_stick_command(int(lead), 0.1, -0.1, 0.2, True)
+
+        pilot = ef_py.PilotAction()
+        pilot.throttle = 0.75
+        pilot.active = True
+        sim.set_pilot_action(int(lead), pilot)
+
+        for _ in range(2):
+            sim.step()
+
+        inst = sim.get_instrument_state(int(lead))
+        self.assertAlmostEqual(float(inst.throttle_pos), 0.75, places=6)
+
     def test_agent_observation_live_tracks_expose_radar_source_and_friend_hostile_classification(self) -> None:
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))

@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-try:
-    from tests.leader._leader_env_runtime_controls_cases import LeaderEnvRuntimeControlTests
-except ModuleNotFoundError:
-    from _leader_env_runtime_controls_cases import LeaderEnvRuntimeControlTests  # type: ignore
+from tests.leader._leader_env_runtime_controls_cases import LeaderEnvRuntimeControlTests
 
 
 __all__ = [

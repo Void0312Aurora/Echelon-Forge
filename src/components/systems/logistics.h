@@ -18,8 +18,8 @@ struct FuelSystem {
 };
 
 struct MassProperties {
-    double empty_mass_kg;       // Airframe mass
-    double current_total_mass_kg; // Calculated every frame
+    double empty_mass_kg;       // Mirrored from Mass until a future single-authority migration
+    double current_total_mass_kg; // Mirrored total-mass readout for aero/logistics consumers
     double base_drag_index;     // Clean config drag
     double current_drag_index;  // Calculated drag
     double reference_area_m2{0.0}; // Reference area for aero drag calculations

@@ -12,6 +12,12 @@
 
 - `runtime/`
   - Runtime-contract tests for mission, execution-step, and loader parity.
+- `eval/`
+  - Maintained CLI-level evaluation regression tests.
+- `training/`
+  - Train-entry and training-callback regression tests.
+- `hmoe/`
+  - HMoE routing, policy, bootstrap, and control-config regression tests.
 - `world_batch/`
   - Batch kernel and vec-env adapter tests.
 - `scenario/`
@@ -25,17 +31,23 @@
 - `contracts/`
   - JSON specs for contract-driven regressions, grouped by category.
 - `diagnostics/`
-  - Longer exploratory/debugging scripts that are not yet suitable as stable contracts.
+  - Remaining exploratory/debugging scripts that are not yet suitable as stable contracts.
+  - This folder should not host stable regression tests; once a diagnostic becomes deterministic, migrate it back into `runtime/`, `world_batch/`, `scenario/`, `leader/`, or `contracts/`.
 - `scenarios/`
   - Reusable scenario fixtures when inline JSON is not practical, for example imported prefab dependencies.
 
 Standalone Python tests should now be the exception, not the default.
 
+Manual one-off probes should not live at the top level of `tests/`.
+If a file is primarily for human inspection rather than automated regression,
+prefer `tools/diagnostics/` for maintained diagnostics or `tools/archive/` for
+legacy/manual probes kept only for reference.
+
 When a standalone test is needed, prefer:
 
 - one focused file per runtime or adapter boundary
 - small internal support modules under `tests/` for shared fakes/builders
-- compatibility shims only when an old entrypoint still needs to exist
+- direct package imports instead of single-file compatibility shims
 
 ## Contract Types
 
@@ -51,22 +63,23 @@ When a standalone test is needed, prefer:
   - Validates pure-Python controller/config/loader/wrapper handoff logic without needing full scenario stepping.
   - Also hosts parameterized leader-task generalization checks that mutate C2 task inputs and validate emitted mission-command behavior.
 
-Contract execution lives in [scenario_contract_runner.py](/home/void0312/CMO/python/testing/scenario_contract_runner.py).
+Contract execution lives in [scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py).
 
 ## How To Run
 
 Run one contract directly:
 
 ```bash
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tools/runners/run_scenario_contract.py --spec tests/contracts/chain/loader_command_chain_takeoff_to_landing.json
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_scenario_contract.py \
+  --spec tests/contracts/chain/loader_command_chain_takeoff_to_landing.json
 ```
 
 Run multiple contracts in one call:
 
 ```bash
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tools/runners/run_scenario_contract.py --spec \
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_v1.json \
   tests/contracts/route_generator/route_generator_waypoint_modes.json
 ```
@@ -74,11 +87,10 @@ python tools/runners/run_scenario_contract.py --spec \
 Run a batch runner:
 
 ```bash
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tests/runners/test_contract_batches.py --group chain --group env
+source tools/maintenance/cmo_env.sh
+cmo_python tests/runners/test_contract_batches.py --group chain --group env
 
-PYTHONPATH=/home/void0312/CMO/build:/home/void0312/CMO \
-python tests/runners/test_contract_batches.py --group unit --group bridges --group route_generator
+cmo_python tests/runners/test_contract_batches.py --group unit --group bridges --group route_generator
 ```
 
 ## Dependency Notes
@@ -121,6 +133,7 @@ Prefer a standalone Python test only when you truly need:
   - Pure logic, controller, loader, and config regressions.
 - `tests/contracts/unit/comm/*.json`
   - Command-link, task-order, leader-intent, and leader-phase-manager regressions.
+  - Includes common-core baseline contracts plus compatibility air-specific comm/tasking contracts.
 - `tests/contracts/unit/kernel/*.json`
   - Kernel-driven flight regressions that step `SimulationKernel` directly with scripted pilot inputs.
 - `tests/contracts/unit/scenarios/*.json`
@@ -158,6 +171,7 @@ Prefer a standalone Python test only when you truly need:
   - Scripted controller logic contracts.
 - `tests/contracts/unit/comm/`
   - C2/tasking/command-link contracts for task orders, leader intent, pilot reports, and leader phase transitions.
+  - Common-core baselines now live here alongside legacy air-specific contracts while the directory is being split into common-first families.
 - `tests/contracts/unit/config/`
   - Config resolution contracts.
 - `tests/contracts/unit/env/`

@@ -36,7 +36,7 @@ longer part of the maintained `p5` execution defaults.
 ## If This Line Is Revived
 
 - treat
-  [gpu_exact_world_step_migration_plan.md](/home/void0312/CMO/docs/plan/gpu_exact_world_step_migration_plan.md)
+  [gpu_exact_world_step_migration_plan.md](/home/void0312/CMO/docs/plan/archive/gpu_exact_world_step_migration_plan.md)
   and
   [gpu_exact_world_step_rearchitecture_plan.md](/home/void0312/CMO/docs/plan/gpu_exact_world_step_rearchitecture_plan.md)
   as design provenance

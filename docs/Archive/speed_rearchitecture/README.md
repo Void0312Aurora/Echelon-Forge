@@ -30,17 +30,17 @@
 
 在当前工作树、当前机器上得到的轻量基准结果：
 
-- `benchmark_mission_runtime_phase3.py`
+- `benchmark.py --family mission_runtime`
   - nav helper: `10.99x`
   - waypoint reward: `10.33x`
   - approach reward: `15.18x`
   - objective helper: `39.62x`
   - safety helper: `19.22x`
-- `benchmark_world_batch_phase4.py --world-count 8 --world-batch-threads 1`
+- `benchmark.py --family world_batch_runtime --world-count 8 --world-batch-threads 1`
   - layout build speedup: `0.96x`
   - kernel apply speedup: `1.01x`
   - step/read speedup: `1.10x`
-- `benchmark_world_batch_vec_env_phase4.py --n-envs 8`
+- `benchmark.py --family world_batch_vec_env --n-envs 8`
   - reset speedup: `0.94x`
   - env-step speedup: `1.06x`
 - `tools/diagnostics/leader_perf_probe.py`

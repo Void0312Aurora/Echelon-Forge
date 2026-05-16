@@ -14,7 +14,7 @@ ensure_repo_imports()
 import ef_py  # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
-from python.rl.leader_tasking import infer_route_ref_id  # noqa: E402
+from python.rl.tasking.leader_tasking import infer_route_ref_id  # noqa: E402
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
 from python.scenario_compiler import _clone_runtime_mission_command  # noqa: E402
 from python.scenario_runtime import (  # noqa: E402
@@ -528,9 +528,11 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         intent0.tactical_unit_id = 7001
         intent0.task_group_id = 8001
         intent0.role_code = 21
+        intent0.warfare_role_code = int(ef_py.NavalWarfareRole.ScreenCommander)
         intent0.coordination_mode = ef_py.CoordinationMode.Follow
         intent0.relative_slot_code = 11
         intent0.recovery_site_id = 91
+        intent0.officer_in_tactical_command = 8101
         intent0.command_code = 2
         intent0.cmd_heading_deg = 45.0
         intent0.formation_mode_id = ef_py.FormationMode.Joining
@@ -546,9 +548,11 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         intent1.tactical_unit_id = 7001
         intent1.task_group_id = 8001
         intent1.role_code = 22
+        intent1.warfare_role_code = int(ef_py.NavalWarfareRole.AirDefenseCommander)
         intent1.coordination_mode = ef_py.CoordinationMode.Recover
         intent1.relative_slot_code = 12
         intent1.recovery_site_id = 91
+        intent1.officer_in_tactical_command = 8102
         intent1.command_code = 4
         intent1.cmd_heading_deg = 90.0
         intent1.formation_mode_id = ef_py.FormationMode.Recover
@@ -578,12 +582,15 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         order0.supported_node_id = 9001
         order0.supporting_node_id = 9002
         order0.role_code = 21
+        order0.warfare_role_code = int(ef_py.NavalWarfareRole.ScreenCommander)
         order0.coordination_mode = ef_py.CoordinationMode.Attached
         order0.relative_slot_code = 11
         order0.assignee_kind = ef_py.AssigneeKind.Element
         order0.recovery_site_id = 91
+        order0.officer_in_tactical_command = 8101
         order0.element_id = 7001
         order0.lead_aircraft_id = int(eid0)
+        order0.naval_station_type = ef_py.NavalStationType.Screen
         order0.formation_template_id = 91
         order0.formation_role_id = ef_py.FormationRole.ElementLead
         order0.active = True
@@ -598,12 +605,15 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         order1.parent_node_id = 5001
         order1.task_group_id = 8001
         order1.role_code = 22
+        order1.warfare_role_code = int(ef_py.NavalWarfareRole.AirDefenseCommander)
         order1.coordination_mode = ef_py.CoordinationMode.Follow
         order1.relative_slot_code = 12
         order1.assignee_kind = ef_py.AssigneeKind.Element
         order1.recovery_site_id = 91
+        order1.officer_in_tactical_command = 8102
         order1.element_id = 7001
         order1.lead_aircraft_id = int(eid0)
+        order1.naval_station_type = ef_py.NavalStationType.Support
         order1.formation_template_id = 91
         order1.formation_role_id = ef_py.FormationRole.Wingman
         order1.wingman_slot_id = ef_py.WingmanSlot.Right
@@ -626,7 +636,9 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         report0.tactical_unit_id = 7001
         report0.task_group_id = 8001
         report0.role_code = 21
+        report0.warfare_role_code = int(ef_py.NavalWarfareRole.ScreenCommander)
         report0.coordination_mode = ef_py.CoordinationMode.Attached
+        report0.officer_in_tactical_command = 8101
         report0.element_id = 7001
         report0.phase_id = int(ef_py.LeaderPhase.Departure)
         report0.formation_role_id = int(ef_py.FormationRole.ElementLead)
@@ -640,7 +652,9 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         report1.tactical_unit_id = 7001
         report1.task_group_id = 8001
         report1.role_code = 22
+        report1.warfare_role_code = int(ef_py.NavalWarfareRole.AirDefenseCommander)
         report1.coordination_mode = ef_py.CoordinationMode.Recover
+        report1.officer_in_tactical_command = 8102
         report1.element_id = 7001
         report1.phase_id = int(ef_py.LeaderPhase.ApproachArmed)
         report1.formation_role_id = int(ef_py.FormationRole.Wingman)
@@ -676,12 +690,18 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(got_orders[0].authority_scope, ef_py.AuthorityScope.Tactical)
         self.assertEqual(int(got_orders[0].task_group_id), 8001)
         self.assertEqual(int(got_orders[0].role_code), 21)
+        self.assertEqual(int(got_orders[0].warfare_role_code), int(ef_py.NavalWarfareRole.ScreenCommander))
         self.assertEqual(got_orders[0].coordination_mode, ef_py.CoordinationMode.Attached)
         self.assertEqual(int(got_orders[0].relative_slot_code), 11)
         self.assertEqual(int(got_orders[0].recovery_site_id), 91)
+        self.assertEqual(int(got_orders[0].officer_in_tactical_command), 8101)
         self.assertEqual(got_orders[0].assignee_kind, ef_py.AssigneeKind.Element)
         self.assertEqual(int(got_orders[0].element_id), 7001)
+        self.assertEqual(got_orders[0].naval_station_type, ef_py.NavalStationType.Screen)
         self.assertEqual(got_orders[0].formation_role_id, ef_py.FormationRole.ElementLead)
+        self.assertEqual(int(got_orders[1].warfare_role_code), int(ef_py.NavalWarfareRole.AirDefenseCommander))
+        self.assertEqual(int(got_orders[1].officer_in_tactical_command), 8102)
+        self.assertEqual(got_orders[1].naval_station_type, ef_py.NavalStationType.Support)
         self.assertEqual(got_orders[1].formation_role_id, ef_py.FormationRole.Wingman)
         self.assertEqual(got_orders[1].wingman_slot_id, ef_py.WingmanSlot.Right)
         self.assertEqual(got_intents[0].phase_id, ef_py.LeaderPhase.Departure)
@@ -692,12 +712,16 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(got_intents[0].tactical_unit_id), 7001)
         self.assertEqual(int(got_intents[0].task_group_id), 8001)
         self.assertEqual(int(got_intents[0].role_code), 21)
+        self.assertEqual(int(got_intents[0].warfare_role_code), int(ef_py.NavalWarfareRole.ScreenCommander))
         self.assertEqual(got_intents[0].coordination_mode, ef_py.CoordinationMode.Follow)
         self.assertEqual(int(got_intents[0].relative_slot_code), 11)
         self.assertEqual(int(got_intents[0].recovery_site_id), 91)
+        self.assertEqual(int(got_intents[0].officer_in_tactical_command), 8101)
         self.assertEqual(int(got_intents[0].element_phase_id), 11)
         self.assertEqual(got_intents[0].formation_mode_id, ef_py.FormationMode.Joining)
         self.assertTrue(bool(got_intents[0].join_required_flag))
+        self.assertEqual(int(got_intents[1].warfare_role_code), int(ef_py.NavalWarfareRole.AirDefenseCommander))
+        self.assertEqual(int(got_intents[1].officer_in_tactical_command), 8102)
         self.assertEqual(got_intents[1].formation_mode_id, ef_py.FormationMode.Recover)
         self.assertTrue(bool(got_intents[1].rejoin_required_flag))
         self.assertEqual(got_reports[0].report_type, ef_py.CommMsgType.REP_WILCO)
@@ -708,8 +732,12 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(got_reports[0].tactical_unit_id), 7001)
         self.assertEqual(int(got_reports[0].task_group_id), 8001)
         self.assertEqual(int(got_reports[0].role_code), 21)
+        self.assertEqual(int(got_reports[0].warfare_role_code), int(ef_py.NavalWarfareRole.ScreenCommander))
         self.assertEqual(got_reports[0].coordination_mode, ef_py.CoordinationMode.Attached)
+        self.assertEqual(int(got_reports[0].officer_in_tactical_command), 8101)
         self.assertEqual(int(got_reports[0].element_id), 7001)
+        self.assertEqual(int(got_reports[1].warfare_role_code), int(ef_py.NavalWarfareRole.AirDefenseCommander))
+        self.assertEqual(int(got_reports[1].officer_in_tactical_command), 8102)
         self.assertEqual(int(got_reports[1].formation_role_id), int(ef_py.FormationRole.Wingman))
         self.assertAlmostEqual(float(got_reports[1].formation_error_m), 18.0, places=6)
 

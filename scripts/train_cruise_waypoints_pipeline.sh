@@ -12,9 +12,14 @@ set -euo pipefail
 #
 # Requirements:
 #  - run from repo root
-#  - use the in-repo venv: `./.venv/bin/python`
+#  - use the repository env helper: `tools/maintenance/cmo_env.sh`
 
-PY="${PY:-./.venv/bin/python}"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT_DIR}"
+source "${ROOT_DIR}/tools/maintenance/cmo_env.sh"
+cmo_activate_env
+
+PY="${PY:-${CMO_PYTHON}}"
 PY_ARGS=(-u)
 
 SCENARIO="${SCENARIO:-scenarios/cruise/cruise_waypoints_stresswind_rewardbalance_v1.json}"
@@ -147,7 +152,9 @@ echo "[pipeline] (4/5) BC finetune actor on appended dataset..."
   --save_every 500
 
 echo "[pipeline] (5/5) evaluate waypoint success..."
-"${PY}" "${PY_ARGS[@]}" tools/eval_waypoint_nav.py \
+"${PY}" "${PY_ARGS[@]}" tools/eval/eval_task.py \
+  --task waypoint_nav \
+  --backend world_model \
   --scenario "${SCENARIO}" \
   --checkpoint "${RUN_DIR_STAGE2}/checkpoint.pt" \
   --episodes 5 \

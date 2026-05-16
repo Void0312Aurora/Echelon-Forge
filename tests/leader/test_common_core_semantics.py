@@ -10,13 +10,13 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 
-from python.rl.common_core_profile import (  # noqa: E402
+from python.rl.tasking.common_core_profile import (  # noqa: E402
     apply_task_order_common_core_defaults,
     apply_task_order_common_core_spec,
     normalize_task_order_spec,
     task_observation_codes,
 )
-from python.rl.leader_tasking import RuleBasedLeaderPhaseManager, ScriptedC2TaskManager  # noqa: E402
+from python.rl.tasking.leader_tasking import RuleBasedLeaderPhaseManager, ScriptedC2TaskManager  # noqa: E402
 
 
 class _DummySim:
@@ -36,6 +36,44 @@ class _DummySim:
 
 
 class CommonCoreSemanticTests(unittest.TestCase):
+    def test_split_dto_python_bindings_expose_common_and_air_fields(self) -> None:
+        order = ef_py.TaskOrder()
+        order.task_id = 11
+        order.service_profile = ef_py.ServiceProfile.Navy
+        order.task_family = ef_py.TaskFamily.Escort
+        order.formation_role_id = ef_py.FormationRole.Wingman
+        order.takeoff_interval_s = 7.5
+
+        self.assertEqual(int(order.task_id), 11)
+        self.assertEqual(order.service_profile, ef_py.ServiceProfile.Navy)
+        self.assertEqual(order.task_family, ef_py.TaskFamily.Escort)
+        self.assertEqual(order.formation_role_id, ef_py.FormationRole.Wingman)
+        self.assertAlmostEqual(float(order.takeoff_interval_s), 7.5, places=6)
+
+        intent = ef_py.LeaderIntent()
+        intent.phase_id = ef_py.LeaderPhase.Departure
+        intent.service_profile = ef_py.ServiceProfile.AirForce
+        intent.task_family = ef_py.TaskFamily.Patrol
+        intent.route_ref_id = 123
+
+        self.assertEqual(intent.phase_id, ef_py.LeaderPhase.Departure)
+        self.assertEqual(intent.service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(intent.task_family, ef_py.TaskFamily.Patrol)
+        self.assertEqual(int(intent.route_ref_id), 123)
+
+        report = ef_py.PilotReport()
+        report.report_type = ef_py.CommMsgType.REP_JOINED
+        report.task_id = 99
+        report.service_profile = ef_py.ServiceProfile.Navy
+        report.phase_id = int(ef_py.LeaderPhase.OnStation)
+        report.formation_error_m = 12.5
+
+        self.assertEqual(report.report_type, ef_py.CommMsgType.REP_JOINED)
+        self.assertEqual(int(report.task_id), 99)
+        self.assertEqual(report.service_profile, ef_py.ServiceProfile.Navy)
+        self.assertEqual(int(report.phase_id), int(ef_py.LeaderPhase.OnStation))
+        self.assertAlmostEqual(float(report.formation_error_m), 12.5, places=6)
+
     def test_normalize_task_order_spec_backfills_common_core(self) -> None:
         normalized = normalize_task_order_spec(
             {

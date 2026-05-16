@@ -1,0 +1,46 @@
+{
+  "type": "unit_regression",
+  "check_kind": "scenario_loader_common_core_semantics",
+  "scenario_base": "scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
+  "seed": 0,
+  "scenario_patch": {
+    "tasking_profile": "naval",
+    "task_order": {
+      "tasking_profile": "naval",
+      "task_name": "TASK_SCREEN",
+      "service_profile": "Navy",
+      "task_group_id": 7001,
+      "parent_node_id": 7101,
+      "supported_node_id": 7201,
+      "supporting_node_id": 7301,
+      "recovery_site_id": 9001
+    },
+    "mission_command": {
+      "tasking_profile": "naval",
+      "command_code": 3,
+      "target_heading": 45.0,
+      "target_altitude": 1700.0,
+      "target_speed": 210.0
+    }
+  },
+  "randomization_overrides": {
+    "world_yaw_range": [0.0, 0.0],
+    "wind_headwind_range": [0.0, 0.0],
+    "wind_crosswind_range": [0.0, 0.0],
+    "wind_tailwind_max_mps": 0.0,
+    "wind_shear_range": [0.0, 0.0]
+  },
+  "expected_task_order_common_core": {
+    "service_profile": "Navy",
+    "task_family": "Escort",
+    "tactical_unit_type": "CommandNode",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Screen",
+    "task_group_id": 7001,
+    "parent_node_id": 7101,
+    "supported_node_id": 7201,
+    "supporting_node_id": 7301,
+    "recovery_site_id": 9001
+  }
+}
