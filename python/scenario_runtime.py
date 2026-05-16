@@ -31,6 +31,37 @@ _SIDE_MAP = {
 }
 
 
+def _normalize_spawn_ammo_override(entity_cfg: dict[str, Any]) -> tuple[bool, int, int]:
+    ammo_cfg = entity_cfg.get("ammo", None)
+    if not isinstance(ammo_cfg, dict):
+        return False, 0, 0
+    try:
+        missiles_remaining = max(0, int(ammo_cfg.get("missiles_remaining", ammo_cfg.get("count", 0))))
+    except Exception:
+        missiles_remaining = 0
+    try:
+        max_missiles = int(ammo_cfg.get("max_missiles", ammo_cfg.get("capacity", missiles_remaining)))
+    except Exception:
+        max_missiles = missiles_remaining
+    max_missiles = max(missiles_remaining, max(0, max_missiles))
+    return True, missiles_remaining, max_missiles
+
+
+def _normalize_spawn_weapon_cooldown_override(entity_cfg: dict[str, Any]) -> tuple[bool, float, float]:
+    cooldown_cfg = entity_cfg.get("weapon_cooldown", None)
+    if not isinstance(cooldown_cfg, dict):
+        return False, 2.0, -1.0
+    try:
+        cooldown_s = float(cooldown_cfg.get("cooldown_s", 2.0))
+    except Exception:
+        cooldown_s = 2.0
+    try:
+        last_fire_time = float(cooldown_cfg.get("last_fire_time", -1.0))
+    except Exception:
+        last_fire_time = -1.0
+    return True, cooldown_s, last_fire_time
+
+
 @dataclass
 class ScenarioZoneLayout:
     name: str
@@ -57,6 +88,12 @@ class ScenarioSpawnLayout:
     vx: float
     vy: float
     vz: float
+    ammo_override_enabled: bool = False
+    missiles_remaining: int = 0
+    max_missiles: int = 0
+    weapon_cooldown_override_enabled: bool = False
+    weapon_cooldown_s: float = 2.0
+    weapon_last_fire_time: float = -1.0
 
 
 @dataclass
@@ -109,6 +146,12 @@ class ScenarioWorldLayout:
     wind_speed_mps: float
     wind_dir_from_deg: float
     wind_shear_mps_per_km: float
+    # False: leave ships on platform fallback maritime params.
+    # True: environment maritime fields fully override per-platform defaults.
+    maritime_configured: bool
+    sea_state: float
+    wave_heading_deg: float
+    wave_period_s: float
     zones: list[ScenarioZoneLayout]
     spawns: list[ScenarioSpawnLayout]
 
@@ -201,12 +244,18 @@ class BatchWorldApplyBuffer:
                 req.x = float(spawn.x)
                 req.y = float(spawn.y)
                 req.z = float(spawn.z)
-                req.heading = float(spawn.heading)
-                req.pitch = float(spawn.pitch)
-                req.roll = float(spawn.roll)
-                req.vx = float(spawn.vx)
-                req.vy = float(spawn.vy)
-                req.vz = float(spawn.vz)
+            req.heading = float(spawn.heading)
+            req.pitch = float(spawn.pitch)
+            req.roll = float(spawn.roll)
+            req.vx = float(spawn.vx)
+            req.vy = float(spawn.vy)
+            req.vz = float(spawn.vz)
+            req.ammo_override_enabled = bool(spawn.ammo_override_enabled)
+            req.missiles_remaining = int(spawn.missiles_remaining)
+            req.max_missiles = int(spawn.max_missiles)
+            req.weapon_cooldown_override_enabled = bool(spawn.weapon_cooldown_override_enabled)
+            req.weapon_cooldown_s = float(spawn.weapon_cooldown_s)
+            req.weapon_last_fire_time = float(spawn.weapon_last_fire_time)
 
         return terrain_items, wind_items, zone_items, spawn_items
 
@@ -1010,6 +1059,12 @@ def _load_compiled_scenario_batch_direct(
             req.vx = float(vel[0])
             req.vy = float(vel[1])
             req.vz = float(vel[2])
+            req.ammo_override_enabled = bool(template.ammo_override_enabled)
+            req.missiles_remaining = int(template.missiles_remaining)
+            req.max_missiles = int(template.max_missiles)
+            req.weapon_cooldown_override_enabled = bool(template.weapon_cooldown_override_enabled)
+            req.weapon_cooldown_s = float(template.weapon_cooldown_s)
+            req.weapon_last_fire_time = float(template.weapon_last_fire_time)
             world_spawn_meta.append((str(template.entity_name), bool(template.is_agent)))
         spawn_meta_by_world.append(world_spawn_meta)
 
@@ -1064,6 +1119,10 @@ def prepare_scenario_world_layout(
     wind_speed = 10.0
     wind_dir_from = 270.0
     wind_shear = 4.0
+    maritime_configured = False
+    sea_state = 0.0
+    wave_heading_deg = 0.0
+    wave_period_s = 8.0
     zones: list[ScenarioZoneLayout] = []
     spawns: list[ScenarioSpawnLayout] = []
 
@@ -1078,6 +1137,10 @@ def prepare_scenario_world_layout(
         wind_speed = float(compiled_template.wind_speed_mps)
         wind_dir_from = float(compiled_template.wind_dir_from_deg)
         wind_shear = float(compiled_template.wind_shear_mps_per_km)
+        maritime_configured = bool(compiled_template.maritime_configured)
+        sea_state = float(compiled_template.sea_state)
+        wave_heading_deg = float(compiled_template.wave_heading_deg)
+        wave_period_s = float(compiled_template.wave_period_s)
         runway_heading_deg_template = compiled_template.primary_runway_heading_deg
         compiled_wind_ref_alt_m = float(compiled_template.wind_ref_alt_m)
     else:
@@ -1089,6 +1152,11 @@ def prepare_scenario_world_layout(
         wind_speed = float(wind_cfg.get("speed_mps", 10.0))
         wind_dir_from = float(wind_cfg.get("dir_from_deg", 270.0))
         wind_shear = float(wind_cfg.get("shear_mps_per_km", 4.0))
+        maritime_configured = isinstance(env_cfg.get("maritime", None), dict)
+        maritime_cfg = env_cfg.get("maritime", {}) if maritime_configured else {}
+        sea_state = float(maritime_cfg.get("sea_state", 0.0))
+        wave_heading_deg = float(maritime_cfg.get("wave_heading_deg", 0.0))
+        wave_period_s = float(maritime_cfg.get("wave_period_s", 8.0))
         runway_heading_deg_template = None
         compiled_wind_ref_alt_m = None
 
@@ -1248,6 +1316,12 @@ def prepare_scenario_world_layout(
                     vx=vel[0],
                     vy=vel[1],
                     vz=vel[2],
+                    ammo_override_enabled=bool(template.ammo_override_enabled),
+                    missiles_remaining=int(template.missiles_remaining),
+                    max_missiles=int(template.max_missiles),
+                    weapon_cooldown_override_enabled=bool(template.weapon_cooldown_override_enabled),
+                    weapon_cooldown_s=float(template.weapon_cooldown_s),
+                    weapon_last_fire_time=float(template.weapon_last_fire_time),
                 )
             )
     else:
@@ -1274,6 +1348,12 @@ def prepare_scenario_world_layout(
                 if not isinstance(ent_cfg, dict):
                     continue
                 pos, vel, heading, pitch, roll = _sample_entity_spawn(rng, ent_cfg)
+                ammo_override_enabled, missiles_remaining, max_missiles = _normalize_spawn_ammo_override(ent_cfg)
+                (
+                    weapon_cooldown_override_enabled,
+                    weapon_cooldown_s,
+                    weapon_last_fire_time,
+                ) = _normalize_spawn_weapon_cooldown_override(ent_cfg)
                 spawns.append(
                     ScenarioSpawnLayout(
                         entity_name=str(ent_cfg.get("name", "")),
@@ -1289,6 +1369,12 @@ def prepare_scenario_world_layout(
                         vx=float(vel[0]),
                         vy=float(vel[1]),
                         vz=float(vel[2]),
+                        ammo_override_enabled=bool(ammo_override_enabled),
+                        missiles_remaining=int(missiles_remaining),
+                        max_missiles=int(max_missiles),
+                        weapon_cooldown_override_enabled=bool(weapon_cooldown_override_enabled),
+                        weapon_cooldown_s=float(weapon_cooldown_s),
+                        weapon_last_fire_time=float(weapon_last_fire_time),
                     )
                 )
 
@@ -1304,6 +1390,10 @@ def prepare_scenario_world_layout(
         wind_speed_mps=float(wind_speed),
         wind_dir_from_deg=float(wind_dir_from),
         wind_shear_mps_per_km=float(wind_shear),
+        maritime_configured=bool(maritime_configured),
+        sea_state=float(sea_state),
+        wave_heading_deg=float(wave_heading_deg),
+        wave_period_s=float(wave_period_s),
         zones=zones,
         spawns=spawns,
     )
@@ -1324,6 +1414,20 @@ def apply_world_layout_to_kernel(sim, layout: ScenarioWorldLayout) -> AppliedSce
                 layout.wind_dir_from_deg,
                 layout.wind_shear_mps_per_km,
             )
+        except Exception:
+            pass
+    if layout.maritime_configured and hasattr(sim, "set_maritime_state"):
+        try:
+            sim.set_maritime_state(
+                layout.sea_state,
+                layout.wave_heading_deg,
+                layout.wave_period_s,
+            )
+        except Exception:
+            pass
+    elif hasattr(sim, "clear_maritime_state"):
+        try:
+            sim.clear_maritime_state()
         except Exception:
             pass
     if hasattr(sim, "clear_zones"):
@@ -1359,6 +1463,18 @@ def apply_world_layout_to_kernel(sim, layout: ScenarioWorldLayout) -> AppliedSce
                 spawn.vz,
             )
         )
+        if bool(spawn.ammo_override_enabled) and hasattr(sim, "set_unit_ammo"):
+            sim.set_unit_ammo(
+                int(entity_id),
+                int(spawn.missiles_remaining),
+                int(spawn.max_missiles),
+            )
+        if bool(spawn.weapon_cooldown_override_enabled) and hasattr(sim, "set_weapon_cooldown"):
+            sim.set_weapon_cooldown(
+                int(entity_id),
+                float(spawn.weapon_cooldown_s),
+                float(spawn.weapon_last_fire_time),
+            )
         entities[spawn.entity_name] = entity_id
         if spawn.is_agent and agent_id is None:
             agent_id = entity_id

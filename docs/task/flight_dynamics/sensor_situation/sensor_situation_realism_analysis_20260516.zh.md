@@ -1,0 +1,175 @@
+# 传感器与态势感知现实性分析
+
+状态：`2026-05-16` 冻结分析版。
+
+关联文件：
+
+- [Sensor 组件定义](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
+- [EW 组件定义](/home/void0312/Workshop/CMO/src/components/systems/ew.h)
+- [DataLink 组件定义](/home/void0312/Workshop/CMO/src/components/systems/data_link.h)
+- [TrackManagement 组件定义](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
+- [ISensorModel 接口](/home/void0312/Workshop/CMO/src/core/interfaces/sensor_model.h)
+- [DefaultSensorModel（传感器扫描）](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [SensorSystem（扫描调度与航迹记忆）](/home/void0312/Workshop/CMO/src/systems/systems/sensor_system.h)
+- [DataLinkSystem（数据链融合与消息）](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
+- [TrackManagerSystem（航迹数据库）](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
+- [EWSystem（电子战）](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h)
+- [IEnvironmentModel 接口](/home/void0312/Workshop/CMO/src/core/interfaces/environment_model.h)
+- [DefaultEnvironmentModel（大气/LOS/天气）](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp)
+- [传感器与态势感知路线图](/home/void0312/Workshop/CMO/docs/forward/sensor_situation.md)
+- [飞行动力学现实性分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
+
+文档定位：
+
+- 本文档仅记录当前传感器、数据链、航迹管理与电子战管线的已知缺陷，
+  及其对应的真实物理/工程情况。
+- 不涵盖可接受的简化，不提供优先级排序，不给出工作计划。
+
+---
+
+## 一、当前系统管线概览
+
+当前传感器与态势感知管线按 ECS 注册顺序构成：
+
+```
+SensorSystem         → 扫描调度（scan_period 门控）、航迹记忆老化
+  └ DefaultSensorModel.scan()  → 实际探测（FOV/距离门控、概率判定、噪声、RWR 更新）
+
+DataLinkSystem       → 同网成员间共享接触、传递战术消息
+  └ 接收方自动融合未知目标到 ContactList
+
+TrackManagerSystem   → 从 ContactList + CommQueue 构建 SystemTrack 数据库
+  └ 航迹分类（敌/我/中立）、源标记（雷达/数据链）、位置估计、老化和清理
+
+EWSystem             → 箔条/热焰弹投放 + 寿命管理
+
+ClearCommInbox       → 消息 TTL 清理（0.5s 保留）
+```
+
+观测端（RL Agent 可见）通过 `InstrumentState` + `ContactList` + `TrackDatabase` + `RWR` 获取态势。
+
+---
+
+## 二、已知失真点
+
+### 2.1 检测概率模型
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **无信噪比（SNR）门限** | `default_sensor_model.cpp:205` 直接合成概率而无 SNR→Pd 映射 | 真实雷达检测概率遵循 Marcum Q 函数或 Albersheim 近似：`Pd = f(SNR, Pfa)`。检测门限由 CFAR 设定（典型 Pfa=10⁻⁶），而非 `detection_prob` 直接指定。在远距离和高噪声条件下，"信号被噪声淹没"存在一个物理陡降，当前模型无法表达 |
+| **信号强度不参与检测概率** | `signal_strength` 计算（第 244-279 行）仅用于观测输出，未回馈到 `detection_prob` | RCS/R⁴ 的雷达方程已在计算信号强度，但检测概率的 `range_factor` 用的是 `1 - (R/Rmax)^n` 经验公式而非基于 signal_strength/SNR 的物理检测模型。两条路径存在概念性重复 |
+| **检测概率为简单乘积累积** | 所有因子独立相乘 | 真实场景中距离衰减和 RCS 起伏（Swerling 模型）是相关的——远距离时目标闪烁（scintillation）引入额外的不确定性。独立假设高估了远距离弱目标的检测一致性 |
+| **无扫描间积累（M-of-N）** | 每帧独立判定 | 真实雷达 TWS 模式通常在 3 次扫描内检测到 2 次才建立航迹（2-of-3 逻辑）。当前模型中一次"掷骰子成功"立即产生 Detection，导致目标在检测边缘出现"闪烁"——隔帧时有时无。且单次检测可能是虚警，不应用于建立航迹 |
+| **无目标 RCS 起伏** | RCS 取 `RCSProfile.frontal_rcs` 的固定值 | 真实 RCS 随视角剧烈变化（10-20dB 量级），且有机动带来的随机起伏。尤其在低可观测（LO）平台上，RCS 的视角敏感性是指数级的。真实雷达检测需 Swerling 0-IV 型目标起伏模型 |
+| **`aspect_influence` 为转向-迎头对称的余弦模型** | `aspect_factor = 0.5+0.5*cos(aspect)` | 真实机载雷达对迎头目标的检测距离通常大于尾追目标（迎头多普勒优势），但侧向（beam aspect）检测通常最差（多普勒落入主瓣杂波）。当前模型 cos(0)=1（迎头/尾追最优），cos(90)=0.5（侧向最差），混淆了多普勒效应和 RCS 方向图。真实情况中 beam aspect 的检测概率应显著低于尾追 |
+| **无累积探测概率（P_cum）** | 每次扫描独立 | 在 RL 训练的几十秒时间尺度上，累积探测概率 `P_cum = 1 - Π(1-P_single)^N` 应随持续扫描趋近于 1。当前模型缺乏这一保证，可能出现"持续扫描 30 秒仍未发现近距离视野内目标"的统计异常 |
+
+### 2.2 RCS 模型
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **RCS 仅取 frontal_rcs** | `default_sensor_model.cpp:240` `rcs = rcs_prof->frontal_rcs` | `RCSProfile` 定义了 frontal/side/rear 三个值，但实际使用时仅取 frontal。`TODO` 注释确认此简化。真实目标在不同视角下的 RCS 差异可达 10-20dB——侧向探测距离可能仅为迎头的一半 |
+| **无极化效应** | 雷达方程不考虑极化 | 真实雷达在同一方向上对水平极化和垂直极化的 RCS 可相差 3-6dB |
+| **无频率依赖性** | RCS 为单一数值 | RCS 是频率的函数——同一目标在 X 波段（10 GHz）和 S 波段（3 GHz）的 RCS 可能差一个数量级（谐振区 vs 光学区） |
+| **无多散射中心/闪烁** | 单一 RCS 值 | 真实复杂目标（如战斗机）有数十个散射中心。它们在相对运动中产生干涉（speckle），导致 RCS 在 ±5-10dB 范围内快速起伏。这对制导雷达的角跟踪误差（glint）至关重要 |
+
+### 2.3 多普勒处理
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **多普勒陷波为硬阈值** | `default_sensor_model.cpp:200` `abs(v_closing) < notch → 0.1` | 真实脉冲多普勒雷达有更复杂的盲区（blind zone）结构。零多普勒陷波（主瓣杂波抑制）是其中最宽的一个，但旁瓣杂波和高 PRF 线的折叠杂波也产生额外的盲区。且真实雷达对陷波中的目标并非"概率×0.1"，而是完全不可检测 |
+| **无目标多普勒频谱展宽** | 仅使用刚体闭合速度 | 真实飞机的发动机风扇/压气机叶片（JEM，Jet Engine Modulation）、旋翼（直升机）和螺旋桨产生特征性的微多普勒展宽，是目标识别（NCTR）的关键特征 |
+| **无 PRF/波形切换** | 无概念 | 真实雷达根据目标距离/速度模糊情况在低/中/高 PRF 间切换。中 PRF 对迎头目标有最佳性能但对尾追目标有距离模糊问题。没有 PRF 切换意味着无法同时解决距离模糊和速度模糊 |
+
+### 2.4 干扰与电子战
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **仅有噪声压制干扰** | `default_sensor_model.cpp:254` `NoiseBarrage` 或 `NoiseSpot` | 缺少欺骗干扰（DRFM）——距离门拖引（RGPO）、速度门拖引（VGPO）、角度欺骗（逆单脉冲、交叉极化）是空战中最常见的干扰技术。`DeceptionDRFM` 枚举已定义但未实现 |
+| **干扰判定为二值** | 超过烧穿距离→完全不可见，否则→完全正常 | 真实烧穿是非二值过渡——随距离接近，信干比（S/J）逐步改善直到可检测，而非瞬间从 0 变为 1 |
+| **无角度欺骗/拖引** | 不存在 | DRFM 干扰可产生虚假的角度跟踪误差——在比例导航中对脱靶量有直接影响。这是空战电子对抗中最核心的技术之一 |
+| **无交叉眼（cross-eye）干扰** | 不存在 | 对角跟踪雷达（单脉冲雷达）的最高效角度欺骗技术，可使导弹角度跟踪产生系统性偏置 |
+| **无箔条云演变** | `EWSystem` 投放静态箔条实体（RCS=50, 持续 20 秒） | 真实箔条云有展开时间（0.5-2s 达到全 RCS）、随风飘散、RCS 随时间下降。且箔条对雷达的干扰机制是"产生大量虚假回波"而非"单个 RCS=50 的解耦实体"——箔条偶极子云在雷达显示器上呈现为扩展的杂波区 |
+| **热诱饵模型极简** | `EWSystem` 投放实体（无 RCS 但有 `Lifetime`，IR 传感器信号=500/R²） | 真实热诱饵有上升时间（0.1-0.5s 达到峰值红外输出），降温曲线（2-5s 后显著衰减），且需要从载机视线中分离才能有效诱偏。当前模型没有诱饵运动学和载机-诱饵-导引头三角几何的判断——这恰恰是 IRCCM（红外对抗措施拒止）的核心逻辑 |
+
+### 2.5 跟踪与航迹管理
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **无跟踪滤波器** | `TrackManager` 直接用当前接触数据覆盖航迹位置 | 真实航迹管理使用 α-β 或 Kalman 滤波器对连续扫描的测量值进行平滑和预测。缺少滤波器意味着：(a) 航迹位置直接等于最近一次探测测量值（含噪声），(b) 在两次扫描之间无法预测航迹位置，(c) 无航迹的不确定性（协方差矩阵）信息。这使航迹数据不可用于导弹中制导和火控解算 |
+| **航迹 ID = entity_id** | `track_manager_system.h:135` `track.entity_id == contact.target_id` | 真实系统需自行分配航迹号。entity_id 使航迹与实体一一对应，绕过了所有航迹关联（correlation）问题——传感器误差可能导致同一目标产生多个航迹、或两个目标被合并为一个航迹。这是多目标跟踪中最困难的工程问题 |
+| **航迹置信度为固定值** | 雷达航迹 confidence=0.5，数据链航迹 confidence=0.8 | 真实航迹置信度应反映：探测次数/质量（track quality）、最近更新时间（staleness）、传感器类型融合、数据链来源可靠性。当前固定值不随时间演化 |
+| **无航迹关联与去重** | `TrackManager` 通过 entity_id 匹配而非位置/速度门限 | 绕过了数据关联中最困难的多假设跟踪（MHT）或联合概率数据关联（JPDA）问题 |
+| **速度估计缺失** | `SystemTrack` 有 `vx, vy, vz` 字段但从未被赋值 | 航迹的速度分量永远为 0。任何依赖目标速度向量的下游决策（如碰撞航向判断、拦截矢量计算）都不可用 |
+| **无航迹启动/确认逻辑** | 首次检测即建立航迹 | 真实雷达需 2-3 次扫描的连续检测（M-of-N 逻辑）才建立"确认航迹"（confirmed track）。单次检测可能是虚警，应标记为"临时航迹"（tentative track） |
+
+### 2.6 数据链
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **共享的是原始接触而非航迹** | `DataLinkSystem` 将发送方的 `ContactList` 直接复制到接收方 | 真实数据链（Link 16）共享的是"航迹"（tracks），包含航迹号、滤波后的位置/速度、置信度、识别信息。原始雷达点迹（plots）不通过数据链传输——点迹数据量过大且含噪声，无法在有限时隙内传输 |
+| **无消息格式/协议** | 直接交换 `Detection` 结构体 | 真实 Link 16 有严格的 J-series 消息格式（J3.x 监视航迹、J12.x 任务管理等）、时隙大小限制、数据压缩（位置量化精度取决于数据链精度等级） |
+| **无报告职责（reporting responsibility）** | 所有节点向所有同网节点共享所有接触 | 真实网络中，对同一目标的报告职责分配给"质量最高"的节点（避免冗余传输）。多个节点不应重复报告同一目标——这是 Link 16 网络管理的核心功能之一 |
+| **无网络容量/时隙限制** | 无带宽约束 | 真实 Link 16 的一个时隙仅能承载有限数量的航迹报告。在密集目标环境中（如大规模空战），存在航迹报告优先级排队 |
+| **网络分配为阵营级近似** | `network_id = side` | 真实编组中一个航母战斗群可能有多个独立网络（不同的 NPG），且跨军种/跨国协同需要网关转发 |
+| **无线电地平线使用简化公式** | `3.57*(√h1+√h2)` 对标准大气 k=4/3 有效 | 真实大气折射条件下（非标准折射——超折射、亚折射）的地平线距离可变 ±15% |
+
+### 2.7 航迹分类（IFF/识别）
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **分类直接查询 entity 的 Alliance** | `track_manager_system.h:13-24` `classify_track_from_alliance()` 直接读取目标的 `Alliance.side` | 这是"上帝视角"分类——真实系统须通过 IFF 询问/应答（Mode 4/5）、非协同目标识别（NCTR——基于 JEM/RCS 特征/运动学）、以及交战规则来推断目标身份。IFF 应答可能缺失（故障/干扰/NATO Mode 5 加密不匹配）、不可靠（Mode 4 被欺骗），NCTR 需要时间和传感器积累 |
+| **无模糊识别状态** | 仅 Friend/Hostile/Neutral/Unknown | 真实 ID 矩阵包含更多状态：Assumed Friend（基于飞行计划关联但未确认）、Suspect（行为异常但未确认敌意）、Pending（IFF 询问发出未收到应答）。这些模糊状态直接影响交战规则和武器投放授权 |
+| **无 Mode 4/5 加密与时间同步** | 不存在 | 现代 IFF Mode 5 需要精确的 GPS 时间同步加密询问/应答。若应答机的时间漂移超出容差，合法友方也会被判定为 Unknown——这是真实作战中 blue-on-blue 风险的一个关键来源 |
+
+### 2.8 传感器融合
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **无多传感器融合** | 每个实体的 `Sensor` 为单一传感器 | 真实战斗机通常装备：雷达（前向）+ IRST（前向被动红外）+ RWR（全向被动）+ MAWS（导弹迫近告警）+ DAS（分布式孔径系统，如 F-35 的 EODAS）。这些传感器源应按各自的优缺点进行融合，而非仅依赖单一传感器 |
+| **TrackDatabase 按 entity_id 覆盖而非融合** | 雷达源直接覆盖数据链源（或反之，取决于先到后到） | 正确做法是：当两个传感器源提供同一目标信息时，应按各自的协方差加权融合（track-to-track fusion），而非用一个覆盖另一个 |
+| **TrackSource 仅标记为主导源** | 简单枚举 Radar/DataLink/RWR/Fused | `Fused` 枚举已定义但从未被使用——没有代码路径将多源航迹标记为 Fused |
+| **ContactList 中接触不经关联直接进出 TrackDatabase** | 传感器 scan → ContactList → TrackManager 逐 entity_id 匹配 | 缺少点迹-航迹关联（plot-to-track association）环节——这是多目标跟踪的经典问题。当前绕过此问题完全依赖于 entity_id 的"上帝视角" |
+
+### 2.9 环境对传感器的影响
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **天气衰减 MVP 为 0** | `default_environment_model.cpp:153` `get_weather_attenuation() → return 0.0` | 降水（雨/雪/冰雹）、雾、云层的雷达/红外/视觉衰减完全缺失。真实 Ka 波段雷达在中等降雨（4mm/hr）时双向衰减可达 0.4dB/km——50km 路径损失 20dB，等效于探测距离减半 |
+| **视距检查仅检查端点是否在地下** | `check_line_of_sight()` 不检查中间点 | 地球曲率遮挡未建模（雷达地平线使用了简化公式而非真实射线追踪）。山峰/建筑物等高大障碍物的遮蔽未考虑 |
+| **无大气波导效应** | 不建模 | 在特定温湿梯度下，雷达波可被大气波导捕获超地平线传播（数百公里），产生异常探测。对海面雷达尤其重要——蒸发波导可在贴近海面的高度产生超视距探测 |
+| **无海杂波/地杂波** | 不建模 | 下视/低空目标探测受强地面/海面杂波限制。舰载雷达对抗掠海反舰导弹时，海杂波是主导限制因素。脉冲多普勒雷达通过多普勒滤波分离杂波与运动目标，但低径向速度目标（侧向飞行）将落入杂波区不可检测 |
+| **无太阳耀斑对红外的影响** | 仅对视觉/IR 有简单的太阳方向检测 | 真实红外导引头在太阳进入视场的瞬间可能完全丢失目标（太阳在 IR 波段是极强的背景辐射源）。当前 `sun_factor=0.1` 仅降概率而非完全遮蔽，严重低估了太阳干扰的破坏性 |
+
+### 2.10 传感器参数的结构性问题
+
+| 失真 | 代码位置 | 真实情况 |
+|------|----------|----------|
+| **Sensor 参数为 flat struct** | `sensor.h:13-26` 所有传感器类型使用同一参数集 | 不同传感器类型需要不同的参数化。IRST 没有"多普勒陷波"但有"NEdT（噪声等效温差）"和"IFOV（瞬时视场）"。雷达有"峰值功率""天线增益""脉冲宽度""PRF"而非简单的"detection_prob"。当前 flat struct 损失了传感器类型特异性的物理参数 |
+| **range_power 可设定但需手工配置** | `range_power` 字段存在但在场景 JSON 中手动填入 | 雷达应为 4.0（R⁴ 律），IR 和视觉应为 2.0（R² 律）。该值不从 SensorType 自动推导，存在误配风险——将雷达的 range_power 误设为 2.0 将严重高估远距离探测能力 |
+| **无雷达距离方程中的天线增益和峰值功率** | 探测概率不基于 SNR | 真实雷达最大探测距离由：`R_max⁴ = (Pt·G²·λ²·σ) / ((4π)³·kT·B·F·(S/N)min)` 确定。每个参数（峰值功率 Pt、天线增益 G、波长 λ、噪声带宽 B、噪声系数 F、最小可检测 SNR）都应可配置以区分不同雷达型号的性能 |
+
+---
+
+## 三、当前不应采用的表述
+
+为避免后续语义漂移，当前以下表述应明确避免：
+
+1. 不应将当前探测模型称为"雷达仿真"——它是
+   **"几何门控 + 独立概率检测 + 高斯噪声"**，无 SNR 门限、无波形、无 PRF。
+2. 不应将当前跟踪系统称为"多目标跟踪器"——它是
+   **"entity_id 直接关联的接触记录器"**，无跟踪滤波器、无航迹关联、无 M-of-N 启动。
+3. 不应将当前数据链称为"Link 16 仿真"——它是
+   **"同阵营同网 peer-to-peer ContactList 复制"**，无消息格式、无 R2、无时隙。
+4. 不应将当前 IFF/分类称为"目标识别"——它是
+   **"直接查询 entity Alliance.side"**，无 IFF 问答、无 NCTR、无模糊状态。
+5. 不应将当前电子战称为"ECM 仿真"——它是
+   **"烧穿距离二值判定 + 静态箔条/热诱饵投放"**，无 DRFM、无角度欺骗、无诱饵运动学。
+
+更准确的表述是：
+
+- **RL 训练级传感器抽象**
+- **几何门控 + 概率检测 + 高斯噪声基线**
+- **适用于"发现-跟踪-共享态势"训练，不适用于电子战或传感器对抗**
+
+本结论冻结到下一次明确重开传感器推进前为止。

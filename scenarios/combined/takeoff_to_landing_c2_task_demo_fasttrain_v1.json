@@ -1,0 +1,363 @@
+{
+  "scenario_name": "F-16 Takeoff To Landing C2 Task Demo Fasttrain V1",
+  "description": "Training-optimized four-task C2 loop for leader-layer warm-start runs. Preserves TASK_SCRAMBLE -> TASK_CAP -> TASK_RTB -> TASK_RECOVER_LAND semantics while shortening the CAP dwell and route length so bootstrap training completes more episodes per wall-clock hour. Use the full demo scenario for formal evaluation.",
+  "meta": {
+    "initial_c2_task": "TASK_SCRAMBLE",
+    "demo_task_sequence": [
+      "TASK_SCRAMBLE",
+      "TASK_CAP",
+      "TASK_RTB",
+      "TASK_RECOVER_LAND"
+    ],
+    "demo_notes": "Fast-train bootstrap scenario aligned with the validated short full-chain contract."
+  },
+  "imports": [
+    {
+      "file": "examples/config/prefabs/airbase_large_runway45.json"
+    }
+  ],
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 10000,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 270.0,
+      "shear_mps_per_km": 0.0
+    },
+    "randomization": {
+      "world_yaw_range": [
+        0.0,
+        0.0
+      ],
+      "world_yaw_origin": [
+        0.0,
+        0.0
+      ],
+      "rotate_mission_heading_with_world": true,
+      "wind_headwind_range": [
+        0.0,
+        0.0
+      ],
+      "wind_crosswind_range": [
+        0.0,
+        0.0
+      ],
+      "wind_tailwind_max_mps": 0.0,
+      "wind_shear_range": [
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "c2_logic": {
+    "scramble_complete_alt_agl_m": 120.0,
+    "scramble_complete_ground_speed_mps": 65.0,
+    "auto_rtb_on_station_complete": true
+  },
+  "task_order": {
+    "task_id": 7102,
+    "priority": 1,
+    "issuer_id": 900,
+    "anchor_x_m": 8000.0,
+    "anchor_y_m": 0.0,
+    "anchor_z_m": 1900.0,
+    "station_type": "Orbit",
+    "station_radius_m": 14000.0,
+    "station_leg_length_m": 0.0,
+    "station_heading_deg": 60.0,
+    "target_altitude_m": 1900.0,
+    "altitude_block_min_m": 1000.0,
+    "altitude_block_max_m": 2600.0,
+    "target_speed_mps": 185.0,
+    "speed_min_mps": 120.0,
+    "speed_max_mps": 230.0,
+    "on_station_time_s": 5.0,
+    "service_profile": "AirForce",
+    "task_family": "Patrol",
+    "tactical_unit_type": "Platform",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Independent"
+  },
+  "mission_command": {
+    "command_code": 3,
+    "target_heading": 90.0,
+    "target_altitude": 1700.0,
+    "target_speed": 220.0,
+    "waypoint_mode": "flyby",
+    "waypoint_radius_m": 1000.0,
+    "nav_course_dev_full_scale_m": 1800.0,
+    "lnav_bank_limit_deg": 30.0,
+    "lnav_max_intercept_deg": 25.0,
+    "lnav_lookahead_m": 1500.0,
+    "post_waypoint_transition": {
+      "phase_name": "landing_ils",
+      "command_code": 4,
+      "target_heading": 90.0,
+      "target_altitude": 0.0,
+      "target_speed": 82.0,
+      "landing_mode": "ils_final",
+      "reference_runway": "Runway 09",
+      "threshold_crossing_height_m": 15.0,
+      "touchdown_zone_from_threshold_m": 300.0,
+      "touchdown_zone_radius_m": 120.0,
+      "rollout_reference_from_threshold_m": 900.0,
+      "decision_height_agl_m": 60.0,
+      "flare_agl_m": 18.0,
+      "transition_reward": 900.0
+    },
+    "waypoints": [
+      {
+        "x": 8000.0,
+        "y": 0.0,
+        "altitude_m": 1700.0,
+        "speed_mps": 210.0,
+        "radius_m": 1200.0,
+        "waypoint_mode": "flyby"
+      },
+      {
+        "x": 12000.0,
+        "y": 6000.0,
+        "altitude_m": 1900.0,
+        "speed_mps": 190.0,
+        "radius_m": 1200.0,
+        "waypoint_mode": "flyby"
+      },
+      {
+        "x": -12000.0,
+        "y": 0.0,
+        "altitude_m": 560.0,
+        "speed_mps": 96.0,
+        "radius_m": 550.0,
+        "waypoint_mode": "flyby"
+      },
+      {
+        "x": -8200.0,
+        "y": 0.0,
+        "altitude_m": 420.0,
+        "speed_mps": 84.0,
+        "radius_m": 260.0,
+        "waypoint_mode": "flyover"
+      }
+    ]
+  },
+  "entities": [
+    {
+      "name": "Blue_F16",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [
+        -1400.0,
+        0.0,
+        2.1
+      ],
+      "vel": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "heading": 90.0,
+      "is_agent": true
+    }
+  ],
+  "objectives": [
+    {
+      "type": "conditional",
+      "conditions": [
+        {
+          "property": "command_code",
+          "op": ">=",
+          "value": 4.0
+        },
+        {
+          "property": "on_runway_geom",
+          "op": ">=",
+          "value": 0.5
+        },
+        {
+          "property": "on_ground",
+          "op": ">=",
+          "value": 0.5
+        },
+        {
+          "property": "altitude_agl",
+          "op": "<=",
+          "value": 2.5
+        },
+        {
+          "property": "gear",
+          "op": ">=",
+          "value": 0.95
+        },
+        {
+          "property": "ground_speed",
+          "op": "<=",
+          "value": 2.0
+        },
+        {
+          "property": "runway_from_threshold_m",
+          "op": ">=",
+          "value": 90.0
+        },
+        {
+          "property": "runway_from_threshold_m",
+          "op": "<=",
+          "value": 1300.0
+        },
+        {
+          "property": "runway_cross_abs_m",
+          "op": "<=",
+          "value": 14.0
+        },
+        {
+          "property": "sink_rate_abs_mps",
+          "op": "<=",
+          "value": 3.5
+        }
+      ],
+      "reward": 2200.0
+    }
+  ],
+  "rewards": {
+    "survival": 0.02,
+    "crash_penalty": -1000.0,
+    "altitude_progress_target": 180.0,
+    "speed_progress_target": 150.0,
+    "altitude_progress_weight": 0.35,
+    "speed_progress_weight": 0.4,
+    "speed_progress_weight_negative": 0.5,
+    "liftoff_bonus": 300.0,
+    "liftoff_speed_threshold": 80.0,
+    "liftoff_alt_threshold": 5.0,
+    "rotation_reward_weight": 0.08,
+    "rotation_speed_threshold": 70.0,
+    "rotation_alt_threshold": 5.0,
+    "rotation_pitch_cap": 12.0,
+    "rotation_overpitch_penalty_weight": -0.5,
+    "gear_up_bonus": 100.0,
+    "stall_penalty": -3.0,
+    "stall_aoa_threshold": 12.0,
+    "overload_penalty": -0.5,
+    "overload_g_threshold": 6.0,
+    "roll_stability_weight": -0.35,
+    "runway_centerline_penalty_weight": -1.0,
+    "runway_centerline_safe_frac": 0.0,
+    "runway_centerline_penalty_power": 2.0,
+    "runway_centerline_penalty_min_ias": 5.0,
+    "runway_centerline_penalty_max_ias": 80.0,
+    "runway_centerline_barrier_weight": -1.0,
+    "runway_centerline_barrier_clip_frac": 0.995,
+    "runway_width_margin_m": 1.0,
+    "runway_length_margin_m": 100.0,
+    "off_runway_penalty": -3.0,
+    "off_runway_terminate_speed": 60.0,
+    "off_runway_terminate_grace_s": 0.5,
+    "off_runway_terminate_penalty": -250.0,
+    "gear_collapse_penalty": -1000.0,
+    "gear_stress_penalty": -10.0,
+    "stationary_penalty": -1.5,
+    "speed_reward_weight": 0.006,
+    "mission_alignment_min_alt": 120.0,
+    "departure_centerline_max_alt_agl_m": 180.0,
+    "departure_centerline_m_penalty_weight": -1.0,
+    "departure_centerline_m_deadband_m": 5.0,
+    "departure_centerline_m_norm_m": 18.0,
+    "departure_centerline_m_power": 2.0,
+    "departure_centerline_m_clip": 3.0,
+    "departure_centerline_reward_weight": 0.8,
+    "departure_centerline_reward_band_m": 10.0,
+    "departure_track_error_weight": -0.55,
+    "departure_track_error_deadband_deg": 6.0,
+    "departure_track_error_norm_deg": 10.0,
+    "departure_track_error_power": 2.0,
+    "departure_track_error_clip": 2.5,
+    "departure_track_reward_weight": 0.8,
+    "departure_track_reward_band_deg": 10.0,
+    "waypoint_progress_weight": 0.055,
+    "waypoint_progress_weight_flyover": 0.07,
+    "waypoint_distance_weight": -4e-05,
+    "waypoint_distance_weight_flyover": -5e-05,
+    "waypoint_distance_clip_m": 6000.0,
+    "waypoint_distance_scale_by_route": true,
+    "waypoint_distance_route_ref_m": 75000.0,
+    "waypoint_distance_route_scale_min": 0.5,
+    "waypoint_distance_route_scale_max": 1.0,
+    "waypoint_cross_track_weight": -0.35,
+    "waypoint_cross_track_weight_flyover": -0.5,
+    "waypoint_cross_track_deadband_m": 250.0,
+    "waypoint_cross_track_deadband_m_flyover": 180.0,
+    "waypoint_cross_track_norm_m": 1500.0,
+    "waypoint_cross_track_norm_m_flyover": 1200.0,
+    "waypoint_cross_track_power": 1.5,
+    "waypoint_cross_track_power_flyover": 1.75,
+    "waypoint_cross_track_clip": 2.0,
+    "waypoint_turn_relief_max": 0.75,
+    "waypoint_turn_relief_max_flyover": 0.0,
+    "waypoint_turn_heading_relief_max": 0.45,
+    "waypoint_turn_heading_relief_max_flyover": 0.0,
+    "waypoint_turn_relief_window_m": 3500.0,
+    "waypoint_turn_relief_min_turn_deg": 20.0,
+    "waypoint_turn_relief_angle_ref_deg": 85.0,
+    "waypoint_turn_relief_power": 1.25,
+    "waypoint_proximity_weight": 0.0,
+    "waypoint_proximity_weight_flyover": 0.14,
+    "waypoint_proximity_ref_m_flyover": 2600.0,
+    "waypoint_proximity_power_flyover": 2.0,
+    "waypoint_reached_bonus": 260.0,
+    "waypoint_reached_bonus_flyby": 240.0,
+    "waypoint_reached_bonus_flyover": 360.0,
+    "waypoint_mission_success_bonus": 1200.0,
+    "phase_transition_bonus": 900.0,
+    "heading_error_weight": -0.003,
+    "heading_hold_deadband_deg": 8.0,
+    "heading_hold_bonus": 0.02,
+    "altitude_error_weight": -0.07,
+    "altitude_error_deadband_m": 50.0,
+    "altitude_error_norm_m": 180.0,
+    "altitude_error_power": 2.0,
+    "altitude_error_clip": 2.0,
+    "altitude_hold_bonus": 0.04,
+    "speed_error_weight": -0.05,
+    "speed_error_deadband": 12.0,
+    "speed_error_norm": 55.0,
+    "speed_error_power": 2.0,
+    "speed_error_clip": 2.0,
+    "speed_hold_bonus": 0.03,
+    "roll_abs_weight": -0.008,
+    "roll_abs_norm_deg": 20.0,
+    "roll_abs_power": 2.0,
+    "pitch_abs_weight": -0.004,
+    "pitch_abs_norm_deg": 20.0,
+    "pitch_abs_power": 2.0,
+    "yaw_rate_abs_weight": -0.004,
+    "yaw_rate_abs_norm_deg_s": 10.0,
+    "yaw_rate_abs_power": 2.0,
+    "beta_abs_weight": -0.008,
+    "beta_abs_norm_deg": 10.0,
+    "beta_abs_power": 2.0,
+    "g_deviation_weight": -0.015,
+    "g_deviation_norm": 0.6,
+    "g_deviation_power": 2.0,
+    "approach_localizer_weight": -0.18,
+    "approach_localizer_deadband": 0.05,
+    "approach_localizer_norm": 0.5,
+    "approach_localizer_power": 2.0,
+    "approach_localizer_clip": 2.0,
+    "approach_localizer_improve_weight": 2.5,
+    "approach_glideslope_weight": -0.16,
+    "approach_glideslope_deadband": 0.05,
+    "approach_glideslope_norm": 0.5,
+    "approach_glideslope_power": 2.0,
+    "approach_glideslope_clip": 2.0,
+    "approach_glideslope_improve_weight": 2.0,
+    "approach_speed_error_weight": -0.05,
+    "approach_speed_error_deadband": 8.0,
+    "approach_speed_error_norm": 25.0,
+    "approach_speed_error_power": 2.0,
+    "approach_speed_error_clip": 2.0,
+    "touchdown_bonus": 1400.0,
+    "rollout_centerline_weight": -0.5,
+    "rollout_stop_bonus": 900.0
+  }
+}

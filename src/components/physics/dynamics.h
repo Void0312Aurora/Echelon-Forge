@@ -16,8 +16,16 @@ struct Propulsion {
     double ab_thrust_n;
     
     // State
-    double current_thrust_n;
-    bool afterburner_active;
+    double current_thrust_n = 0.0;
+    bool afterburner_active = false;
+
+    double throttle_command = 0.0;
+    double throttle_state = 0.0;
+    double dry_thrust_command_n = 0.0;
+    double dry_thrust_state_n = 0.0;
+    double ab_command = 0.0;
+    double ab_state = 0.0;
+    double current_tsfc = 0.10;
 };
 
 // Landing Gear State (for damage modeling)

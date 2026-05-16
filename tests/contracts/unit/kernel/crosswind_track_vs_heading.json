@@ -1,0 +1,121 @@
+{
+  "type": "unit_regression",
+  "check_kind": "kernel_flight_parameter_scan",
+  "controller_kind": "heading_hold_pitch",
+  "seed": 0,
+  "duration_s": 6.0,
+  "max_steps": 120,
+  "target_heading_deg": 90.0,
+  "target_pitch_deg": 0.0,
+  "heading_kp": 0.1,
+  "roll_kp": 0.04,
+  "roll_rate_kd": 0.01,
+  "pitch_kp": 0.14,
+  "pitch_kd": 0.03,
+  "max_roll_cmd": 0.7,
+  "throttle": 0.6,
+  "gear_handle": 0.0,
+  "scenario_base": "scenarios/test/test_aero.json",
+  "scenario_patch": {
+    "entities": [
+      {
+        "name": "TestJet",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [0.0, 0.0, 1000.0],
+        "vel": [180.0, 0.0, 0.0]
+        ,
+        "heading": 0.0,
+        "is_agent": true
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "crosswind_from_south",
+      "spec": {
+        "scenario_base": "scenarios/test/test_aero.json",
+        "scenario_patch": {
+          "environment": {
+            "wind": {
+              "speed_mps": 20.0,
+              "dir_from_deg": 0.0,
+              "shear_mps_per_km": 0.0
+            }
+          },
+          "entities": [
+            {
+              "name": "TestJet",
+              "type": "F-16C_Block50",
+              "side": "Blue",
+              "pos": [0.0, 0.0, 1000.0],
+              "vel": [180.0, 0.0, 0.0]
+              ,
+              "heading": 0.0,
+              "is_agent": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "crosswind_from_north",
+      "spec": {
+        "scenario_base": "scenarios/test/test_aero.json",
+        "scenario_patch": {
+          "environment": {
+            "wind": {
+              "speed_mps": 20.0,
+              "dir_from_deg": 180.0,
+              "shear_mps_per_km": 0.0
+            }
+          },
+          "entities": [
+            {
+              "name": "TestJet",
+              "type": "F-16C_Block50",
+              "side": "Blue",
+              "pos": [0.0, 0.0, 1000.0],
+              "vel": [180.0, 0.0, 0.0]
+              ,
+              "heading": 0.0,
+              "is_agent": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "case_field_checks": [
+    {
+      "case": "crosswind_from_south",
+      "field": "track_heading_delta_deg",
+      "min": 4.0
+    },
+    {
+      "case": "crosswind_from_south",
+      "field": "final_heading_error_deg",
+      "abs_max": 3.5
+    },
+    {
+      "case": "crosswind_from_north",
+      "field": "track_heading_delta_deg",
+      "max": -4.0
+    },
+    {
+      "case": "crosswind_from_north",
+      "field": "final_heading_error_deg",
+      "abs_max": 3.5
+    },
+    {
+      "case": "crosswind_from_south",
+      "field": "wind_speed_mps",
+      "min": 19.0
+    },
+    {
+      "case": "crosswind_from_north",
+      "field": "wind_speed_mps",
+      "min": 19.0
+    }
+  ]
+}

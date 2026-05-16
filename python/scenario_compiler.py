@@ -36,6 +36,12 @@ _OBJECTIVE_PROPERTY_MAP = {
     "heading": ef_py.ConditionalObjectiveProperty.Heading,
     "x": ef_py.ConditionalObjectiveProperty.X,
     "y": ef_py.ConditionalObjectiveProperty.Y,
+    "self_active": ef_py.ConditionalObjectiveProperty.SelfActive,
+    "target_active": ef_py.ConditionalObjectiveProperty.TargetActive,
+    "self_health": ef_py.ConditionalObjectiveProperty.SelfHealth,
+    "target_health": ef_py.ConditionalObjectiveProperty.TargetHealth,
+    "missiles_remaining": ef_py.ConditionalObjectiveProperty.MissilesRemaining,
+    "target_range_m": ef_py.ConditionalObjectiveProperty.TargetRangeM,
 }
 
 _OBJECTIVE_OP_MAP = {
@@ -363,6 +369,23 @@ def _clone_runtime_context_scenario_data(merged_scenario_data: dict[str, Any]) -
         runtime_data["rewards"] = _clone_scenario_value(merged_scenario_data.get("rewards"))
     if "objectives" in merged_scenario_data:
         runtime_data["objectives"] = _clone_scenario_value(merged_scenario_data.get("objectives"))
+    entities_cfg = merged_scenario_data.get("entities", [])
+    if isinstance(entities_cfg, list):
+        runtime_entities: list[dict[str, Any]] = []
+        for ent_cfg in entities_cfg:
+            if not isinstance(ent_cfg, dict):
+                continue
+            scripted_cfg = ent_cfg.get("scripted_agent", None)
+            if not isinstance(scripted_cfg, dict):
+                continue
+            runtime_ent = {
+                "name": str(ent_cfg.get("name", "")),
+                "is_agent": bool(ent_cfg.get("is_agent", False)),
+                "scripted_agent": _clone_scenario_value(scripted_cfg),
+            }
+            runtime_entities.append(runtime_ent)
+        if runtime_entities:
+            runtime_data["entities"] = runtime_entities
 
     agent_spawn = _extract_runtime_agent_spawn_context(merged_scenario_data.get("entities"))
     if agent_spawn is not None:
@@ -758,6 +781,9 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
     wind_cfg = env_cfg.get("wind", {})
     if not isinstance(wind_cfg, dict):
         wind_cfg = {}
+    maritime_cfg = env_cfg.get("maritime", {})
+    if not isinstance(maritime_cfg, dict):
+        maritime_cfg = {}
 
     zones_out: list[CompiledZoneLayoutTemplate] = []
     zone_defs = env_cfg.get("zones", [])
@@ -794,6 +820,34 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
             rand_cfg = ent_cfg.get("randomization", {})
             if not isinstance(rand_cfg, dict):
                 rand_cfg = {}
+            ammo_cfg = ent_cfg.get("ammo", None)
+            ammo_override_enabled = isinstance(ammo_cfg, dict)
+            missiles_remaining = 0
+            max_missiles = 0
+            if ammo_override_enabled:
+                missiles_remaining = _coerce_nonnegative_int(
+                    ammo_cfg.get("missiles_remaining", ammo_cfg.get("count", 0)),
+                    0,
+                )
+                max_missiles = _coerce_nonnegative_int(
+                    ammo_cfg.get("max_missiles", ammo_cfg.get("capacity", missiles_remaining)),
+                    missiles_remaining,
+                )
+                if max_missiles < missiles_remaining:
+                    max_missiles = missiles_remaining
+            cooldown_cfg = ent_cfg.get("weapon_cooldown", None)
+            weapon_cooldown_override_enabled = isinstance(cooldown_cfg, dict)
+            weapon_cooldown_s = 2.0
+            weapon_last_fire_time = -1.0
+            if weapon_cooldown_override_enabled:
+                try:
+                    weapon_cooldown_s = float(cooldown_cfg.get("cooldown_s", 2.0))
+                except Exception:
+                    weapon_cooldown_s = 2.0
+                try:
+                    weapon_last_fire_time = float(cooldown_cfg.get("last_fire_time", -1.0))
+                except Exception:
+                    weapon_last_fire_time = -1.0
             spawns_out.append(
                 CompiledSpawnLayoutTemplate(
                     entity_name=str(ent_cfg.get("name", "")),
@@ -810,6 +864,12 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
                     vy=float(vel_vals[1]),
                     vz=float(vel_vals[2]),
                     randomization=_clone_scenario_value(rand_cfg),
+                    ammo_override_enabled=bool(ammo_override_enabled),
+                    missiles_remaining=int(missiles_remaining),
+                    max_missiles=int(max_missiles),
+                    weapon_cooldown_override_enabled=bool(weapon_cooldown_override_enabled),
+                    weapon_cooldown_s=float(weapon_cooldown_s),
+                    weapon_last_fire_time=float(weapon_last_fire_time),
                 )
             )
 
@@ -819,6 +879,10 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
         wind_speed_mps=float(wind_cfg.get("speed_mps", 10.0)),
         wind_dir_from_deg=float(wind_cfg.get("dir_from_deg", 270.0)),
         wind_shear_mps_per_km=float(wind_cfg.get("shear_mps_per_km", 4.0)),
+        maritime_configured=isinstance(env_cfg.get("maritime", None), dict),
+        sea_state=float(maritime_cfg.get("sea_state", 0.0)),
+        wave_heading_deg=float(maritime_cfg.get("wave_heading_deg", 0.0)),
+        wave_period_s=float(maritime_cfg.get("wave_period_s", 8.0)),
         env_randomization=_clone_scenario_value(env_cfg.get("randomization", {}))
         if isinstance(env_cfg.get("randomization", {}), dict)
         else {},
@@ -1014,6 +1078,12 @@ class CompiledSpawnLayoutTemplate:
     vy: float
     vz: float
     randomization: dict[str, Any]
+    ammo_override_enabled: bool
+    missiles_remaining: int
+    max_missiles: int
+    weapon_cooldown_override_enabled: bool
+    weapon_cooldown_s: float
+    weapon_last_fire_time: float
 
 
 @dataclass(frozen=True)
@@ -1023,6 +1093,12 @@ class CompiledWorldLayoutTemplate:
     wind_speed_mps: float
     wind_dir_from_deg: float
     wind_shear_mps_per_km: float
+    # False means "environment maritime block absent"; True means "environment fully overrides platform defaults",
+    # even if sea_state is explicitly set to 0.
+    maritime_configured: bool
+    sea_state: float
+    wave_heading_deg: float
+    wave_period_s: float
     env_randomization: dict[str, Any]
     primary_runway_heading_deg: float | None
     wind_ref_alt_m: float
@@ -1034,6 +1110,7 @@ class CompiledWorldLayoutTemplate:
 class CompiledScenarioRuntimeMetadata:
     mission_command_template: dict[str, Any]
     rewards_config: dict[str, Any]
+    meta_config: dict[str, Any]
     normalized_route_waypoints: tuple[dict[str, Any], ...]
     normalized_waypoint_templates: tuple[tuple[dict[str, Any], ...], ...]
     waypoint_template_route_ref_ids: tuple[int, ...]
@@ -1285,6 +1362,7 @@ class ScenarioCompiler:
         runtime_metadata = CompiledScenarioRuntimeMetadata(
             mission_command_template=mission_cmd_template,
             rewards_config=_clone_scenario_value(rewards_cfg),
+            meta_config=_clone_scenario_value(merged.get("meta", {})) if isinstance(merged.get("meta", {}), dict) else {},
             normalized_route_waypoints=tuple(_clone_scenario_value(normalized_route_waypoints)),
             normalized_waypoint_templates=normalized_waypoint_templates,
             waypoint_template_route_ref_ids=_compile_waypoint_template_route_ref_ids(normalized_waypoint_templates),

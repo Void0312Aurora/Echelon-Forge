@@ -8,6 +8,12 @@ Its purpose is narrower:
 - preserve minimal provenance notes for historical lines
 - avoid pointing readers at experiment outputs that have already been cleaned from the repo workspace
 
+Retention boundary:
+
+- `scenarios/` and maintained config files remain versioned repo inputs.
+- `experiments/`, `datasets/`, and `output/` are not the canonical source of truth and may be cleaned from the active workspace.
+- When a run directory or generated dataset is removed, keep only the minimal surviving provenance pointers here or in task/report documents.
+
 ## Takeoff-To-Cruise Bridge
 
 - Maintained training config:

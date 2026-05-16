@@ -13,16 +13,23 @@
 #include "components/combat/weapon.h"
 #include "components/combat/damage.h"
 #include "components/systems/ew.h"
+#include "components/systems/sonar.h"
+#include "components/naval/embarked_air_ops.h"
+#include "components/naval/ship_platform.h"
+#include "components/naval/submarine_platform.h"
+#include "components/physics/flight_dynamics_tuning.h"
 
 
 
 // Data Structs for Modules
 struct Engine {
-    double mil_thrust_n;
-    double ab_thrust_n;
-    double sfc_mil;
-    double sfc_ab;
-    double bypass_ratio;
+    double mil_thrust_n = 0.0;
+    double ab_thrust_n = 0.0;
+    double sfc_mil = 0.0;
+    double sfc_ab = 0.0;
+    double bypass_ratio = 0.0;
+    bool has_tuning = false;
+    EngineTuning tuning;
 };
 
 struct Hardpoint {
@@ -32,16 +39,39 @@ struct Hardpoint {
 };
 
 struct Airframe {
-    double empty_mass_kg;
-    double max_fuel_kg;
-    double drag_coefficient;
-    double reference_area;
+    double empty_mass_kg = 0.0;
+    double max_fuel_kg = 0.0;
+    double drag_coefficient = 0.02;
+    double reference_area = 27.0;
     
     // Procedural Gen Data
-    double length_m;
-    double wingspan_m;
-    double height_m;
-    std::string configuration; // "Conventional", "Delta", "Flanker", "Bomber"
+    double length_m = 0.0;
+    double wingspan_m = 0.0;
+    double height_m = 0.0;
+    std::string configuration = "Conventional"; // "Conventional", "Delta", "Flanker", "Bomber"
+    bool has_tuning = false;
+    AeroTuning tuning;
+};
+
+struct NavalStoresDefinition {
+    double fuel_units_current{0.0};
+    double fuel_units_max{0.0};
+    double missile_units_current{0.0};
+    double missile_units_max{0.0};
+    double dry_cargo_units_current{0.0};
+    double dry_cargo_units_max{0.0};
+    bool can_receive_underway{false};
+    bool can_provide_underway{false};
+};
+
+struct NavalLogisticsDefinition {
+    bool underway_replenishment_enabled{false};
+    double min_separation_m{0.0};
+    double max_separation_m{0.0};
+    double max_relative_speed_mps{0.0};
+    double transfer_rate_fuel_units_per_s{0.0};
+    double transfer_rate_missile_units_per_s{0.0};
+    double transfer_rate_dry_cargo_units_per_s{0.0};
 };
 
 struct UnitDefinition {
@@ -50,6 +80,7 @@ struct UnitDefinition {
     
     // Component References (Modular)
     std::string sensor_ref;
+    std::vector<std::string> sensor_refs;
     std::string engine_ref;
     std::string ew_suite_ref;
     std::string rcs_profile_ref;
@@ -70,6 +101,8 @@ struct UnitDefinition {
     // So if "Generic_EW" is loaded, it stores RWR/Jammer configs here.
     Jammer jammer_data;
     RWR rwr_data;
+    bool has_esm_data = false;
+    ESMReceiver esm_data;
     Countermeasures cms_data;
     
     // RCS Data
@@ -77,12 +110,28 @@ struct UnitDefinition {
     
     // Platform Data
     Airframe airframe;
+    bool has_ship_platform;
+    ShipPlatform ship_platform;
+    bool has_submarine_platform = false;
+    SubmarinePlatform submarine_platform;
+    bool has_naval_stores = false;
+    NavalStoresDefinition naval_stores;
+    bool has_naval_logistics = false;
+    NavalLogisticsDefinition naval_logistics;
+    bool has_naval_weapon_system = false;
+    NavalWeaponSystem naval_weapon_system;
+    bool has_embarked_air_ops = false;
+    EmbarkedAirOps embarked_air_ops;
     HitboxConfig damage_model;
     
     // Legacy Inline Components (Backwards Compat)
     Health health;
     bool has_sensor;
     Sensor sensor;
+    MountedSensors mounted_sensors;
+    bool has_sonar = false;
+    Sonar sonar;
+    MountedSonars mounted_sonars;
 
     bool has_flight_model;
     FlightModel flight_model;
@@ -104,6 +153,8 @@ struct UnitDefinition {
 
     bool has_data_link;
     int data_link_network_id;
+    int data_link_max_reports_per_update = 16;
+    int data_link_max_messages_per_update = -1;
 };
 
 struct UnitTypeHash {

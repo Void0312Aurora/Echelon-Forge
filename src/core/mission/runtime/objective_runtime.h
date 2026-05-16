@@ -24,6 +24,12 @@ enum class ConditionalObjectiveProperty {
     Heading,
     X,
     Y,
+    SelfActive,
+    TargetActive,
+    SelfHealth,
+    TargetHealth,
+    MissilesRemaining,
+    TargetRangeM,
 };
 
 enum class ConditionalObjectiveOp {
@@ -79,6 +85,13 @@ struct ConditionalObjectiveInputs {
     double target_altitude_m = 0.0;
     double target_speed_mps = 0.0;
     double target_heading_deg = 0.0;
+    bool self_active = true;
+    bool target_active = false;
+    double self_health = 100.0;
+    double target_health = 0.0;
+    double missiles_remaining = 0.0;
+    bool has_target_range_m = false;
+    double target_range_m = 0.0;
 };
 
 struct ObjectiveShapingConfig {

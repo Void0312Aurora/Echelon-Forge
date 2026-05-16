@@ -12,6 +12,9 @@ struct MissionCommandCore {
 
     std::uint64_t route_ref_id = 0;
 
+    int roe_state = 0;
+    std::uint64_t engagement_authority_holder_id = 0;
+    std::uint64_t engagement_authority_grantor_id = 0;
     std::uint64_t assigned_target_id = 0;
     bool authorization_to_fire = false;
 

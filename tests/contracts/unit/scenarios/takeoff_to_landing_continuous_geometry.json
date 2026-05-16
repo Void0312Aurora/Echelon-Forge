@@ -1,0 +1,13 @@
+{
+  "type": "unit_regression",
+  "check_kind": "continuous_waypoint_template_geometry",
+  "scenarios": [
+    "scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
+    "scenarios/combined/takeoff_to_landing_continuous_eval_v1.json"
+  ],
+  "final_leg_alignment_max_deg": 15.0,
+  "turn_abs_max_deg": 85.0,
+  "lead_budget_leg_fraction": 0.45,
+  "lead_budget_clearance_m": 800.0,
+  "lead_budget_tolerance_m": 1.0
+}

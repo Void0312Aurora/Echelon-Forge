@@ -1,0 +1,116 @@
+{
+  "scenario_name": "DDG-51 Screens T-AKE Closing Surface Contact V1",
+  "description": "Minimal naval escort variant built around the same real public ship units as the contact-report baseline, but with the opposing surface contact closing toward the support ship while remaining outside the HVU's local radar horizon over the validated time window. This scenario is for validating that the current naval bootstrap can represent a moving surface-contact approach and measure closest-approach geometry without implying weapons employment.",
+  "tasking_profile": "naval",
+  "environment": {
+    "time_step": 0.5,
+    "max_steps": 1200,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    },
+    "maritime": {
+      "sea_state": 0.0,
+      "wave_heading_deg": 90.0,
+      "wave_period_s": 8.0
+    }
+  },
+  "mission_command": {
+    "tasking_profile": "naval",
+    "command_code": 3,
+    "target_heading": 90.0,
+    "target_altitude": 0.0,
+    "target_speed": 10.29
+  },
+  "task_order": {
+    "tasking_profile": "naval",
+    "task_name": "TASK_SCREEN",
+    "service_profile": "Navy",
+    "task_group_id": 5101,
+    "parent_node_id": 5101,
+    "supported_node_id": 5201,
+    "supporting_node_id": 5101,
+    "recovery_site_id": 5201,
+    "station_type": "Orbit",
+    "naval_station_type": "Screen",
+    "station_radius_m": 14816.0,
+    "station_heading_deg": 90.0,
+    "anchor_x_m": 0.0,
+    "anchor_y_m": 0.0,
+    "target_altitude_m": 0.0,
+    "target_speed_mps": 10.29,
+    "speed_min_mps": 8.23,
+    "speed_max_mps": 12.86
+  },
+  "entities": [
+    {
+      "name": "Blue_Screen_DDG51",
+      "type": "DDG-51_Flight_I_USS_Arleigh_Burke",
+      "side": "Blue",
+      "is_agent": true,
+      "pos": [14816.0, 0.0, 0.0],
+      "vel": [10.29, 0.0, 0.0],
+      "heading": 90.0
+    },
+    {
+      "name": "Blue_HVU_TAKE1",
+      "type": "T-AKE-1_USNS_Lewis_and_Clark",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 0.0],
+      "vel": [10.29, 0.0, 0.0],
+      "heading": 90.0
+    },
+    {
+      "name": "Red_Surface_Contact",
+      "type": "Red_Surface_Combatant_Minimal",
+      "side": "Red",
+      "pos": [40000.0, 0.0, 0.0],
+      "vel": [-10.29, 0.0, 0.0],
+      "heading": 270.0
+    }
+  ],
+  "cooperative_roster": {
+    "team_id": 5101,
+    "element_id": 5101,
+    "policy_route": "shared_execution",
+    "members": [
+      {
+        "entity": "Blue_Screen_DDG51",
+        "is_agent": true,
+        "role_code": 11,
+        "formation_role_id": "ElementLead",
+        "relative_slot_code": 11,
+        "task_order_overrides": {
+          "task_name": "TASK_SCREEN",
+          "coordination_mode": "Screen",
+          "warfare_role_code": "ScreenCommander",
+          "naval_station_type": "Screen",
+          "supported_node_id": 5201,
+          "supporting_node_id": 5101
+        }
+      },
+      {
+        "entity": "Blue_HVU_TAKE1",
+        "is_agent": false,
+        "role_code": 31,
+        "relative_slot_code": 31,
+        "reference_entity": "Blue_Screen_DDG51",
+        "task_order_overrides": {
+          "task_name": "TASK_SUPPORT",
+          "coordination_mode": "Support",
+          "warfare_role_code": "LogisticsCoordinator",
+          "naval_station_type": "Support",
+          "supported_node_id": 5201,
+          "supporting_node_id": 5101
+        }
+      }
+    ]
+  },
+  "objectives": [],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": -1000.0
+  }
+}

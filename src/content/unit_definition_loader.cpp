@@ -4,7 +4,260 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
+
 namespace {
+
+Sensor make_default_sensor_definition() {
+    Sensor sensor{};
+    sensor.max_range = 30000.0;
+    sensor.fov_deg = 120.0;
+    sensor.scan_period = 1.0;
+    sensor.last_scan_time = -1.0;
+    sensor.detection_prob = 1.0;
+    sensor.range_power = 2.0;
+    sensor.bearing_noise_std = 0.0;
+    sensor.range_noise_std = 0.0;
+    sensor.track_memory_s = 0.0;
+    sensor.aspect_influence = 0.0;
+    sensor.doppler_notch_width = 0.0;
+    sensor.reference_snr_db = 13.0;
+    sensor.reference_range_m = 30000.0;
+    sensor.reference_rcs_m2 = 5.0;
+    sensor.pfa = 1.0e-6;
+    sensor.confirm_hits_m = 2;
+    sensor.confirm_window_n = 3;
+    sensor.velocity_noise_std = 3.0;
+    sensor.alpha_beta_alpha = 0.65;
+    sensor.alpha_beta_beta = 0.12;
+    sensor.antenna_height_m = 10.0;
+    sensor.target_height_bias_m = 5.0;
+    sensor.sea_clutter_sensitivity = 0.0;
+    sensor.sea_state_loss_per_level = 0.0;
+    sensor.ducting_gain_factor = 1.0;
+    sensor.ducting_max_bonus_m = 0.0;
+    sensor.bearing_only_min_range_m = 0.0;
+    sensor.environment_domain = static_cast<int>(SensorEnvironmentDomain::Air);
+    sensor.enforce_radar_horizon = false;
+    sensor.enable_ducting = false;
+    sensor.sea_clutter_enabled = false;
+    sensor.bearing_only = false;
+    sensor.type = static_cast<int>(SensorType::Visual);
+    return sensor;
+}
+
+int parse_sensor_type_code(const std::string& type_str) {
+    if (type_str == "Visual") return static_cast<int>(SensorType::Visual);
+    if (type_str == "Infrared") return static_cast<int>(SensorType::Infrared);
+    if (type_str == "Radar") return static_cast<int>(SensorType::Radar);
+    if (type_str == "RWR") return static_cast<int>(SensorType::RWR);
+    if (type_str == "MIDS") return static_cast<int>(SensorType::MIDS);
+    if (type_str == "ESM") return static_cast<int>(SensorType::ESM);
+    if (type_str == "Sonar") return static_cast<int>(SensorType::Sonar);
+    return static_cast<int>(SensorType::Visual);
+}
+
+int parse_sensor_environment_domain_code(const std::string& domain_str) {
+    if (domain_str == "SurfaceMaritime") {
+        return static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime);
+    }
+    if (domain_str == "Littoral") {
+        return static_cast<int>(SensorEnvironmentDomain::Littoral);
+    }
+    return static_cast<int>(SensorEnvironmentDomain::Air);
+}
+
+NavalWeaponType parse_naval_weapon_type(const std::string& type_str) {
+    if (type_str == "vls_sam") return NavalWeaponType::VlsSam;
+    if (type_str == "gun_5in") return NavalWeaponType::DeckGun;
+    if (type_str == "ciws") return NavalWeaponType::Ciws;
+    return NavalWeaponType::Unknown;
+}
+
+void parse_aero_tuning_json_fields(const nlohmann::json& src, AeroTuning* out_tuning) {
+    if (!out_tuning || !src.is_object()) return;
+    AeroTuning tuning = *out_tuning;
+    tuning.enabled = src.value("enabled", true);
+    tuning.cl_alpha_per_deg = src.value("cl_alpha_per_deg", tuning.cl_alpha_per_deg);
+    tuning.cl0 = src.value("cl0", tuning.cl0);
+    tuning.cd0_clean = src.value("cd0_clean", tuning.cd0_clean);
+    tuning.induced_drag_k = src.value("induced_drag_k", tuning.induced_drag_k);
+    tuning.cm_alpha_per_rad = src.value("cm_alpha_per_rad", tuning.cm_alpha_per_rad);
+    tuning.cm_q = src.value("cm_q", tuning.cm_q);
+    tuning.alpha_stall_clean_deg = src.value("alpha_stall_clean_deg", tuning.alpha_stall_clean_deg);
+    tuning.alpha_stall_flaps_full_deg =
+        src.value("alpha_stall_flaps_full_deg", tuning.alpha_stall_flaps_full_deg);
+    tuning.alpha_peak_offset_deg = src.value("alpha_peak_offset_deg", tuning.alpha_peak_offset_deg);
+    tuning.alpha_deep_offset_deg = src.value("alpha_deep_offset_deg", tuning.alpha_deep_offset_deg);
+    tuning.cl_peak_clean = src.value("cl_peak_clean", tuning.cl_peak_clean);
+    tuning.cl_peak_flaps_full = src.value("cl_peak_flaps_full", tuning.cl_peak_flaps_full);
+    tuning.cl_deep_clean = src.value("cl_deep_clean", tuning.cl_deep_clean);
+    tuning.cl_deep_flaps_full = src.value("cl_deep_flaps_full", tuning.cl_deep_flaps_full);
+    tuning.pitch_break_onset_deg = src.value("pitch_break_onset_deg", tuning.pitch_break_onset_deg);
+    tuning.pitch_break_full_deg = src.value("pitch_break_full_deg", tuning.pitch_break_full_deg);
+    tuning.pitch_break_cm_nose_down =
+        src.value("pitch_break_cm_nose_down", tuning.pitch_break_cm_nose_down);
+    tuning.post_stall_damp_floor =
+        src.value("post_stall_damp_floor", tuning.post_stall_damp_floor);
+    tuning.aoa_rate_pitch_break_gain =
+        src.value("aoa_rate_pitch_break_gain", tuning.aoa_rate_pitch_break_gain);
+
+    auto parse_vector = [&](const char* key, std::vector<double>* out_values) {
+        if (!out_values || !src.contains(key) || !src[key].is_array()) {
+            return;
+        }
+        out_values->clear();
+        for (const auto& value : src[key]) {
+            if (!value.is_number()) continue;
+            out_values->push_back(value.get<double>());
+        }
+    };
+
+    parse_vector("mach_breakpoints", &tuning.mach_breakpoints);
+    parse_vector("cl_alpha_scale_vs_mach", &tuning.cl_alpha_scale_vs_mach);
+    parse_vector("cd0_add_vs_mach", &tuning.cd0_add_vs_mach);
+    parse_vector("induced_drag_scale_vs_mach", &tuning.induced_drag_scale_vs_mach);
+    parse_vector("cm_alpha_scale_vs_mach", &tuning.cm_alpha_scale_vs_mach);
+    parse_vector("stall_alpha_delta_deg_vs_mach", &tuning.stall_alpha_delta_deg_vs_mach);
+
+    *out_tuning = tuning;
+}
+
+void parse_engine_tuning_json_fields(const nlohmann::json& src, EngineTuning* out_tuning) {
+    if (!out_tuning || !src.is_object()) return;
+    EngineTuning tuning = *out_tuning;
+    tuning.enabled = src.value("enabled", true);
+    tuning.mil_thrust_n = src.value("mil_thrust_n", tuning.mil_thrust_n);
+    tuning.ab_thrust_n = src.value("ab_thrust_n", tuning.ab_thrust_n);
+    tuning.throttle_ab_threshold =
+        src.value("throttle_ab_threshold", tuning.throttle_ab_threshold);
+    tuning.throttle_idle_bias = src.value("throttle_idle_bias", tuning.throttle_idle_bias);
+    tuning.tau_spool_up_s = src.value("tau_spool_up_s", tuning.tau_spool_up_s);
+    tuning.tau_spool_down_s = src.value("tau_spool_down_s", tuning.tau_spool_down_s);
+    tuning.tau_ab_light_s = src.value("tau_ab_light_s", tuning.tau_ab_light_s);
+    tuning.tau_ab_extinguish_s =
+        src.value("tau_ab_extinguish_s", tuning.tau_ab_extinguish_s);
+    tuning.ram_rise_gain = src.value("ram_rise_gain", tuning.ram_rise_gain);
+    tuning.ram_rise_mach_cap = src.value("ram_rise_mach_cap", tuning.ram_rise_mach_cap);
+    tuning.ram_decay_start_mach =
+        src.value("ram_decay_start_mach", tuning.ram_decay_start_mach);
+    tuning.ram_decay_gain = src.value("ram_decay_gain", tuning.ram_decay_gain);
+    tuning.thrust_sigma_exponent =
+        src.value("thrust_sigma_exponent", tuning.thrust_sigma_exponent);
+    tuning.thrust_theta_exponent =
+        src.value("thrust_theta_exponent", tuning.thrust_theta_exponent);
+    tuning.tsfc_mil_kg_per_nh =
+        src.value("tsfc_mil_kg_per_nh", tuning.tsfc_mil_kg_per_nh);
+    tuning.tsfc_ab_kg_per_nh =
+        src.value("tsfc_ab_kg_per_nh", tuning.tsfc_ab_kg_per_nh);
+    *out_tuning = tuning;
+}
+
+void parse_sensor_json_fields(
+    const nlohmann::json& s,
+    Sensor* out_sensor,
+    const std::string& default_sensor_type = "Visual"
+) {
+    if (!out_sensor) return;
+    Sensor sensor = *out_sensor;
+    sensor.max_range = s.value("max_range", sensor.max_range);
+    sensor.fov_deg = s.value("fov_deg", sensor.fov_deg);
+    sensor.scan_period = s.value("scan_period", sensor.scan_period);
+    sensor.last_scan_time = s.value("last_scan_time", sensor.last_scan_time);
+    sensor.detection_prob = s.value("detection_prob", sensor.detection_prob);
+    sensor.range_power = s.value("range_power", sensor.range_power);
+    sensor.bearing_noise_std = s.value("bearing_noise_std", sensor.bearing_noise_std);
+    sensor.range_noise_std = s.value("range_noise_std", sensor.range_noise_std);
+    sensor.track_memory_s = s.value("track_memory_s", sensor.track_memory_s);
+    sensor.aspect_influence = s.value("aspect_influence", sensor.aspect_influence);
+    sensor.doppler_notch_width = s.value("doppler_notch_width", sensor.doppler_notch_width);
+    sensor.reference_snr_db = s.value("reference_snr_db", sensor.reference_snr_db);
+    sensor.reference_range_m = s.value("reference_range_m", sensor.reference_range_m);
+    sensor.reference_rcs_m2 = s.value("reference_rcs_m2", sensor.reference_rcs_m2);
+    sensor.pfa = s.value("pfa", sensor.pfa);
+    sensor.confirm_hits_m = s.value("confirm_hits_m", sensor.confirm_hits_m);
+    sensor.confirm_window_n = s.value("confirm_window_n", sensor.confirm_window_n);
+    sensor.velocity_noise_std = s.value("velocity_noise_std", sensor.velocity_noise_std);
+    sensor.alpha_beta_alpha = s.value("alpha_beta_alpha", sensor.alpha_beta_alpha);
+    sensor.alpha_beta_beta = s.value("alpha_beta_beta", sensor.alpha_beta_beta);
+    sensor.antenna_height_m = s.value("antenna_height_m", sensor.antenna_height_m);
+    sensor.target_height_bias_m = s.value("target_height_bias_m", sensor.target_height_bias_m);
+    sensor.sea_clutter_sensitivity = s.value("sea_clutter_sensitivity", sensor.sea_clutter_sensitivity);
+    sensor.sea_state_loss_per_level = s.value("sea_state_loss_per_level", sensor.sea_state_loss_per_level);
+    sensor.ducting_gain_factor = s.value("ducting_gain_factor", sensor.ducting_gain_factor);
+    sensor.ducting_max_bonus_m = s.value("ducting_max_bonus_m", sensor.ducting_max_bonus_m);
+    sensor.bearing_only_min_range_m = s.value("bearing_only_min_range_m", sensor.bearing_only_min_range_m);
+    sensor.enforce_radar_horizon = s.value("enforce_radar_horizon", sensor.enforce_radar_horizon);
+    sensor.enable_ducting = s.value("enable_ducting", sensor.enable_ducting);
+    sensor.sea_clutter_enabled = s.value("sea_clutter_enabled", sensor.sea_clutter_enabled);
+    sensor.bearing_only = s.value("bearing_only", sensor.bearing_only);
+
+    sensor.type = parse_sensor_type_code(s.value("type", default_sensor_type));
+    sensor.environment_domain =
+        parse_sensor_environment_domain_code(s.value("environment_domain", "Air"));
+
+    *out_sensor = sensor;
+}
+
+Sonar make_default_sonar_definition() {
+    Sonar sonar{};
+    sonar.max_range_m = 25000.0;
+    sonar.scan_period_s = 5.0;
+    sonar.last_scan_time_s = -1.0;
+    sonar.detection_threshold_db = 6.0;
+    sonar.track_memory_s = 20.0;
+    sonar.bearing_noise_std_deg = 2.5;
+    sonar.range_noise_std_m = 750.0;
+    sonar.directivity_gain_db = 3.0;
+    sonar.self_noise_per_speed_db = 1.2;
+    sonar.ambient_noise_db = 72.0;
+    sonar.source_level_reference_db = 118.0;
+    sonar.source_level_speed_factor_db = 1.6;
+    sonar.transmission_loss_alpha_db_per_km = 0.08;
+    sonar.layer_break_penalty_db = 4.0;
+    sonar.convergence_zone_bonus_m = 0.0;
+    sonar.baffle_exclusion_deg = 40.0;
+    sonar.ownship_quieting_speed_mps = 5.0;
+    sonar.active_ping_source_level_db = 210.0;
+    sonar.confirm_hits_m = 2;
+    sonar.confirm_window_n = 3;
+    sonar.mode = static_cast<int>(SonarMode::Passive);
+    sonar.passive_only = true;
+    sonar.bearing_only = false;
+    return sonar;
+}
+
+void parse_sonar_json_fields(const nlohmann::json& s, Sonar* out_sonar) {
+    if (!out_sonar || !s.is_object()) return;
+    Sonar sonar = *out_sonar;
+    sonar.max_range_m = s.value("max_range_m", sonar.max_range_m);
+    sonar.scan_period_s = s.value("scan_period_s", sonar.scan_period_s);
+    sonar.last_scan_time_s = s.value("last_scan_time_s", sonar.last_scan_time_s);
+    sonar.detection_threshold_db = s.value("detection_threshold_db", sonar.detection_threshold_db);
+    sonar.track_memory_s = s.value("track_memory_s", sonar.track_memory_s);
+    sonar.bearing_noise_std_deg = s.value("bearing_noise_std_deg", sonar.bearing_noise_std_deg);
+    sonar.range_noise_std_m = s.value("range_noise_std_m", sonar.range_noise_std_m);
+    sonar.directivity_gain_db = s.value("directivity_gain_db", sonar.directivity_gain_db);
+    sonar.self_noise_per_speed_db = s.value("self_noise_per_speed_db", sonar.self_noise_per_speed_db);
+    sonar.ambient_noise_db = s.value("ambient_noise_db", sonar.ambient_noise_db);
+    sonar.source_level_reference_db = s.value("source_level_reference_db", sonar.source_level_reference_db);
+    sonar.source_level_speed_factor_db = s.value("source_level_speed_factor_db", sonar.source_level_speed_factor_db);
+    sonar.transmission_loss_alpha_db_per_km =
+        s.value("transmission_loss_alpha_db_per_km", sonar.transmission_loss_alpha_db_per_km);
+    sonar.layer_break_penalty_db = s.value("layer_break_penalty_db", sonar.layer_break_penalty_db);
+    sonar.convergence_zone_bonus_m = s.value("convergence_zone_bonus_m", sonar.convergence_zone_bonus_m);
+    sonar.baffle_exclusion_deg = s.value("baffle_exclusion_deg", sonar.baffle_exclusion_deg);
+    sonar.ownship_quieting_speed_mps = s.value("ownship_quieting_speed_mps", sonar.ownship_quieting_speed_mps);
+    sonar.active_ping_source_level_db =
+        s.value("active_ping_source_level_db", sonar.active_ping_source_level_db);
+    sonar.confirm_hits_m = s.value("confirm_hits_m", sonar.confirm_hits_m);
+    sonar.confirm_window_n = s.value("confirm_window_n", sonar.confirm_window_n);
+    sonar.passive_only = s.value("passive_only", sonar.passive_only);
+    sonar.bearing_only = s.value("bearing_only", sonar.bearing_only);
+    const std::string mode_str = s.value("mode", sonar.passive_only ? "Passive" : "Active");
+    sonar.mode = static_cast<int>(mode_str == "Active" ? SonarMode::Active : SonarMode::Passive);
+    *out_sonar = sonar;
+}
 
 bool parse_unit_type(const std::string& value, UnitType* out_type) {
     if (!out_type) return false;
@@ -18,6 +271,7 @@ bool parse_unit_type(const std::string& value, UnitType* out_type) {
     if (value == "Engine") { *out_type = UnitType::Engine; return true; }
     if (value == "EWSuite") { *out_type = UnitType::EWSuite; return true; }
     if (value == "RCSProfile") { *out_type = UnitType::RCSProfile; return true; }
+    if (value == "Submarine") { *out_type = UnitType::Submarine; return true; }
     *out_type = UnitType::Unknown;
     return false;
 }
@@ -54,6 +308,11 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
         def.engine_data.sfc_mil = e.value("sfc_mil", 0.0);
         def.engine_data.sfc_ab = e.value("sfc_ab", 0.0);
         def.engine_data.bypass_ratio = e.value("bypass_ratio", 0.0);
+        if (e.contains("tuning") && e["tuning"].is_object()) {
+            def.engine_data.has_tuning = true;
+            def.engine_data.tuning = flight_dynamics::default_engine_tuning();
+            parse_engine_tuning_json_fields(e["tuning"], &def.engine_data.tuning);
+        }
     }
 
     if (entry.contains("hardpoints") && entry["hardpoints"].is_array()) {
@@ -84,43 +343,62 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
     }
 
     def.has_sensor = false;
-    def.sensor = {30000.0, 120.0, 1.0, -1.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0};
+    def.sensor = make_default_sensor_definition();
+    def.mounted_sensors.mounts.clear();
+    def.has_sonar = false;
+    def.sonar = make_default_sonar_definition();
+    def.mounted_sonars.mounts.clear();
     
     if (entry.contains("sensor_ref")) {
         def.sensor_ref = entry["sensor_ref"].get<std::string>();
         // Note: We don't set has_sensor=true here yet, because the sensor isn't inline.
         // The factory will handle the assembly.
+    }
+    if (entry.contains("sensor_refs") && entry["sensor_refs"].is_array()) {
+        for (const auto& sensor_ref_json : entry["sensor_refs"]) {
+            if (!sensor_ref_json.is_string()) continue;
+            def.sensor_refs.push_back(sensor_ref_json.get<std::string>());
+        }
     } else if (entry.contains("sensor")) {
         def.has_sensor = true;
         const auto& s = entry["sensor"];
-        def.sensor.max_range = s.value("max_range", def.sensor.max_range);
-        def.sensor.fov_deg = s.value("fov_deg", def.sensor.fov_deg);
-        def.sensor.scan_period = s.value("scan_period", def.sensor.scan_period);
-        def.sensor.last_scan_time = s.value("last_scan_time", def.sensor.last_scan_time);
-        def.sensor.detection_prob = s.value("detection_prob", def.sensor.detection_prob);
-        def.sensor.range_power = s.value("range_power", def.sensor.range_power);
-        def.sensor.bearing_noise_std = s.value("bearing_noise_std", def.sensor.bearing_noise_std);
-        def.sensor.range_noise_std = s.value("range_noise_std", def.sensor.range_noise_std);
-        def.sensor.track_memory_s = s.value("track_memory_s", def.sensor.track_memory_s);
-        def.sensor.aspect_influence = s.value("aspect_influence", def.sensor.aspect_influence);
-        
-
-        // Backwards compatibility for dopper_notch_width if missing in struct default
-        if (s.contains("doppler_notch_width")) {
-             def.sensor.doppler_notch_width = s.value("doppler_notch_width", 0.0);
-        } else {
-             def.sensor.doppler_notch_width = 0.0;
-        }
-
-        // Parse Sensor Type (String to auto-mapped int)
-        std::string type_str = s.value("type", "Visual");
-        if (type_str == "Visual") def.sensor.type = static_cast<int>(SensorType::Visual);
-        else if (type_str == "Infrared") def.sensor.type = static_cast<int>(SensorType::Infrared);
-        else if (type_str == "Radar") def.sensor.type = static_cast<int>(SensorType::Radar);
-        else if (type_str == "RWR") def.sensor.type = static_cast<int>(SensorType::RWR);
-        else def.sensor.type = static_cast<int>(SensorType::Visual);
+        const std::string default_sensor_type =
+            (def.type == UnitType::Aircraft || def.type == UnitType::C2Node)
+                ? "Radar"
+                : "Radar";
+        parse_sensor_json_fields(s, &def.sensor, default_sensor_type);
     } else if (entry.contains("has_sensor")) {
         def.has_sensor = entry.value("has_sensor", def.has_sensor);
+    }
+
+    if (entry.contains("mounted_sensors") && entry["mounted_sensors"].is_array()) {
+        for (const auto& mount_json : entry["mounted_sensors"]) {
+            if (!mount_json.is_object()) continue;
+            SensorMount mount{};
+            mount.label = mount_json.value("label", "");
+            mount.sensor = make_default_sensor_definition();
+            if (mount_json.contains("sensor") && mount_json["sensor"].is_object()) {
+                parse_sensor_json_fields(mount_json["sensor"], &mount.sensor, "Radar");
+            }
+            def.mounted_sensors.mounts.push_back(mount);
+        }
+    }
+
+    if (entry.contains("sonar") && entry["sonar"].is_object()) {
+        def.has_sonar = true;
+        parse_sonar_json_fields(entry["sonar"], &def.sonar);
+    }
+    if (entry.contains("mounted_sonars") && entry["mounted_sonars"].is_array()) {
+        for (const auto& mount_json : entry["mounted_sonars"]) {
+            if (!mount_json.is_object()) continue;
+            SonarMount mount{};
+            mount.label = mount_json.value("label", "");
+            mount.sonar = make_default_sonar_definition();
+            if (mount_json.contains("sonar") && mount_json["sonar"].is_object()) {
+                parse_sonar_json_fields(mount_json["sonar"], &mount.sonar);
+            }
+            def.mounted_sonars.mounts.push_back(mount);
+        }
     }
 
     def.has_flight_model = entry.value("has_flight_model", false);
@@ -173,6 +451,195 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
         def.airframe.wingspan_m = af.value("wingspan_m", 10.0);
         def.airframe.height_m = af.value("height_m", 5.0);
         def.airframe.configuration = af.value("configuration", "Conventional");
+        if (af.contains("tuning") && af["tuning"].is_object()) {
+            def.airframe.has_tuning = true;
+            def.airframe.tuning = flight_dynamics::default_aero_tuning();
+            parse_aero_tuning_json_fields(af["tuning"], &def.airframe.tuning);
+        }
+    }
+
+    def.has_ship_platform = false;
+    def.ship_platform = {};
+    if (entry.contains("ship_platform") && entry["ship_platform"].is_object()) {
+        def.has_ship_platform = true;
+        const auto& sp = entry["ship_platform"];
+        def.ship_platform.displacement_light_kg =
+            sp.value("displacement_light_kg", def.ship_platform.displacement_light_kg);
+        def.ship_platform.displacement_full_load_kg =
+            sp.value("displacement_full_load_kg", def.ship_platform.displacement_full_load_kg);
+        def.ship_platform.length_m = sp.value("length_m", def.ship_platform.length_m);
+        def.ship_platform.beam_m = sp.value("beam_m", def.ship_platform.beam_m);
+        def.ship_platform.draft_m = sp.value("draft_m", def.ship_platform.draft_m);
+        def.ship_platform.height_above_waterline_m =
+            sp.value("height_above_waterline_m", def.ship_platform.height_above_waterline_m);
+        def.ship_platform.max_speed_mps = sp.value("max_speed_mps", def.ship_platform.max_speed_mps);
+        def.ship_platform.economical_speed_mps =
+            sp.value("economical_speed_mps", def.ship_platform.economical_speed_mps);
+        def.ship_platform.range_nm = sp.value("range_nm", def.ship_platform.range_nm);
+        def.ship_platform.range_speed_mps = sp.value("range_speed_mps", def.ship_platform.range_speed_mps);
+        def.ship_platform.max_accel_mps2 =
+            sp.value("max_accel_mps2", def.ship_platform.max_accel_mps2);
+        def.ship_platform.max_decel_mps2 =
+            sp.value("max_decel_mps2", def.ship_platform.max_decel_mps2);
+        def.ship_platform.max_turn_rate_deg_s =
+            sp.value("max_turn_rate_deg_s", def.ship_platform.max_turn_rate_deg_s);
+        def.ship_platform.low_speed_turn_factor =
+            sp.value("low_speed_turn_factor", def.ship_platform.low_speed_turn_factor);
+        def.ship_platform.steerageway_speed_mps =
+            sp.value("steerageway_speed_mps", def.ship_platform.steerageway_speed_mps);
+        def.ship_platform.sea_state = sp.value("sea_state", def.ship_platform.sea_state);
+        def.ship_platform.wave_heading_deg =
+            sp.value("wave_heading_deg", def.ship_platform.wave_heading_deg);
+        def.ship_platform.wave_period_s =
+            sp.value("wave_period_s", def.ship_platform.wave_period_s);
+        def.ship_platform.max_roll_deg_sea_state_6 =
+            sp.value("max_roll_deg_sea_state_6", def.ship_platform.max_roll_deg_sea_state_6);
+        def.ship_platform.max_pitch_deg_sea_state_6 =
+            sp.value("max_pitch_deg_sea_state_6", def.ship_platform.max_pitch_deg_sea_state_6);
+        def.ship_platform.added_resistance_fraction_sea_state_6 = sp.value(
+            "added_resistance_fraction_sea_state_6",
+            def.ship_platform.added_resistance_fraction_sea_state_6
+        );
+        def.ship_platform.crew = sp.value("crew", def.ship_platform.crew);
+    }
+
+    def.has_submarine_platform = false;
+    def.submarine_platform = {};
+    if (entry.contains("submarine_platform") && entry["submarine_platform"].is_object()) {
+        def.has_submarine_platform = true;
+        const auto& sp = entry["submarine_platform"];
+        def.submarine_platform.submerged_displacement_kg =
+            sp.value("submerged_displacement_kg", def.submarine_platform.submerged_displacement_kg);
+        def.submarine_platform.length_m = sp.value("length_m", def.submarine_platform.length_m);
+        def.submarine_platform.beam_m = sp.value("beam_m", def.submarine_platform.beam_m);
+        def.submarine_platform.draft_m = sp.value("draft_m", def.submarine_platform.draft_m);
+        def.submarine_platform.max_speed_submerged_mps =
+            sp.value("max_speed_submerged_mps", def.submarine_platform.max_speed_submerged_mps);
+        def.submarine_platform.quiet_speed_mps =
+            sp.value("quiet_speed_mps", def.submarine_platform.quiet_speed_mps);
+        def.submarine_platform.max_accel_mps2 =
+            sp.value("max_accel_mps2", def.submarine_platform.max_accel_mps2);
+        def.submarine_platform.max_decel_mps2 =
+            sp.value("max_decel_mps2", def.submarine_platform.max_decel_mps2);
+        def.submarine_platform.max_turn_rate_deg_s =
+            sp.value("max_turn_rate_deg_s", def.submarine_platform.max_turn_rate_deg_s);
+        def.submarine_platform.max_depth_rate_mps =
+            sp.value("max_depth_rate_mps", def.submarine_platform.max_depth_rate_mps);
+        def.submarine_platform.nominal_patrol_depth_m =
+            sp.value("nominal_patrol_depth_m", def.submarine_platform.nominal_patrol_depth_m);
+        def.submarine_platform.max_operating_depth_m =
+            sp.value("max_operating_depth_m", def.submarine_platform.max_operating_depth_m);
+        def.submarine_platform.acoustic_stealth_bias_db =
+            sp.value("acoustic_stealth_bias_db", def.submarine_platform.acoustic_stealth_bias_db);
+        def.submarine_platform.self_noise_per_speed_db =
+            sp.value("self_noise_per_speed_db", def.submarine_platform.self_noise_per_speed_db);
+        def.submarine_platform.crew = sp.value("crew", def.submarine_platform.crew);
+    }
+
+    def.has_naval_stores = false;
+    def.naval_stores = {};
+    if (entry.contains("naval_stores") && entry["naval_stores"].is_object()) {
+        def.has_naval_stores = true;
+        const auto& stores = entry["naval_stores"];
+        def.naval_stores.fuel_units_current =
+            stores.value("fuel_units_current", def.naval_stores.fuel_units_current);
+        def.naval_stores.fuel_units_max =
+            stores.value("fuel_units_max", def.naval_stores.fuel_units_max);
+        def.naval_stores.missile_units_current =
+            stores.value("missile_units_current", def.naval_stores.missile_units_current);
+        def.naval_stores.missile_units_max =
+            stores.value("missile_units_max", def.naval_stores.missile_units_max);
+        def.naval_stores.dry_cargo_units_current =
+            stores.value("dry_cargo_units_current", def.naval_stores.dry_cargo_units_current);
+        def.naval_stores.dry_cargo_units_max =
+            stores.value("dry_cargo_units_max", def.naval_stores.dry_cargo_units_max);
+        def.naval_stores.can_receive_underway =
+            stores.value("can_receive_underway", def.naval_stores.can_receive_underway);
+        def.naval_stores.can_provide_underway =
+            stores.value("can_provide_underway", def.naval_stores.can_provide_underway);
+    }
+
+    def.has_naval_logistics = false;
+    def.naval_logistics = {};
+    if (entry.contains("naval_logistics") && entry["naval_logistics"].is_object()) {
+        def.has_naval_logistics = true;
+        const auto& logistics = entry["naval_logistics"];
+        def.naval_logistics.underway_replenishment_enabled = logistics.value(
+            "underway_replenishment_enabled",
+            def.naval_logistics.underway_replenishment_enabled
+        );
+        def.naval_logistics.min_separation_m =
+            logistics.value("min_separation_m", def.naval_logistics.min_separation_m);
+        def.naval_logistics.max_separation_m =
+            logistics.value("max_separation_m", def.naval_logistics.max_separation_m);
+        def.naval_logistics.max_relative_speed_mps = logistics.value(
+            "max_relative_speed_mps",
+            def.naval_logistics.max_relative_speed_mps
+        );
+        def.naval_logistics.transfer_rate_fuel_units_per_s = logistics.value(
+            "transfer_rate_fuel_units_per_s",
+            def.naval_logistics.transfer_rate_fuel_units_per_s
+        );
+        def.naval_logistics.transfer_rate_missile_units_per_s = logistics.value(
+            "transfer_rate_missile_units_per_s",
+            def.naval_logistics.transfer_rate_missile_units_per_s
+        );
+        def.naval_logistics.transfer_rate_dry_cargo_units_per_s = logistics.value(
+            "transfer_rate_dry_cargo_units_per_s",
+            def.naval_logistics.transfer_rate_dry_cargo_units_per_s
+        );
+    }
+
+    def.has_naval_weapon_system = false;
+    def.naval_weapon_system.mounts.clear();
+    if (entry.contains("naval_weapon_system") && entry["naval_weapon_system"].is_object()) {
+        const auto& nws = entry["naval_weapon_system"];
+        if (nws.contains("mounts") && nws["mounts"].is_array()) {
+            def.has_naval_weapon_system = true;
+            for (const auto& mount_json : nws["mounts"]) {
+                if (!mount_json.is_object()) continue;
+                NavalWeaponMountDefinition mount{};
+                mount.mount_id = mount_json.value("mount_id", "");
+                mount.weapon_type = parse_naval_weapon_type(mount_json.value("weapon_type", ""));
+                mount.ready_count = mount_json.value("ready_count", 0);
+                mount.max_ready_count = mount_json.value("max_ready_count", mount.ready_count);
+                mount.ammo_per_shot = mount_json.value("ammo_per_shot", 1);
+                mount.cooldown_s = mount_json.value("cooldown_s", 0.0);
+                mount.last_fire_time = mount_json.value("last_fire_time", -1.0);
+                mount.engagement_range_m = mount_json.value("engagement_range_m", 0.0);
+                mount.projectile_speed_mps = mount_json.value("projectile_speed_mps", 0.0);
+                mount.hit_probability = mount_json.value("hit_probability", 0.0);
+                mount.damage_per_hit = mount_json.value("damage_per_hit", 0.0);
+                mount.consumes_ready_count = mount_json.value("consumes_ready_count", true);
+                mount.can_intercept_missiles = mount_json.value("can_intercept_missiles", false);
+                mount.fire_control_channel = mount_json.value("fire_control_channel", "");
+                mount.target_domain = mount_json.value("target_domain", "");
+                mount.provenance_note = mount_json.value("provenance_note", "");
+                def.naval_weapon_system.mounts.push_back(mount);
+            }
+        }
+    }
+
+    def.has_embarked_air_ops = false;
+    def.embarked_air_ops = {};
+    if (entry.contains("embarked_air_ops") && entry["embarked_air_ops"].is_object()) {
+        def.has_embarked_air_ops = true;
+        const auto& ops = entry["embarked_air_ops"];
+        def.embarked_air_ops.helo_unit_name =
+            ops.value("helo_unit_name", def.embarked_air_ops.helo_unit_name);
+        def.embarked_air_ops.launch_altitude_m =
+            ops.value("launch_altitude_m", def.embarked_air_ops.launch_altitude_m);
+        def.embarked_air_ops.launch_offset_forward_m =
+            ops.value("launch_offset_forward_m", def.embarked_air_ops.launch_offset_forward_m);
+        def.embarked_air_ops.launch_offset_starboard_m =
+            ops.value("launch_offset_starboard_m", def.embarked_air_ops.launch_offset_starboard_m);
+        def.embarked_air_ops.recover_range_m =
+            ops.value("recover_range_m", def.embarked_air_ops.recover_range_m);
+        def.embarked_air_ops.relay_refresh_s =
+            ops.value("relay_refresh_s", def.embarked_air_ops.relay_refresh_s);
+        def.embarked_air_ops.enabled = ops.value("enabled", true);
+        def.embarked_air_ops.relay_oth_targeting =
+            ops.value("relay_oth_targeting", def.embarked_air_ops.relay_oth_targeting);
     }
 
     if (entry.contains("damage_model") && entry["damage_model"].is_object()) {
@@ -227,6 +694,50 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
 
     def.has_data_link = entry.value("has_data_link", false);
     def.data_link_network_id = entry.value("data_link_network_id", 0);
+    def.data_link_max_reports_per_update = std::max(0, entry.value("data_link_max_reports_per_update", 16));
+    def.data_link_max_messages_per_update = entry.contains("data_link_max_messages_per_update")
+        ? std::max(0, entry.value("data_link_max_messages_per_update", def.data_link_max_reports_per_update))
+        : def.data_link_max_reports_per_update;
+
+    if (entry.contains("rwr") && entry["rwr"].is_object()) {
+        const auto& rwr = entry["rwr"];
+        def.rwr_data.sensitivity_dbm = rwr.value("sensitivity_dbm", def.rwr_data.sensitivity_dbm);
+    }
+
+    if (entry.contains("jammer") && entry["jammer"].is_object()) {
+        const auto& jammer = entry["jammer"];
+        def.jammer_data.is_active = jammer.value("is_active", def.jammer_data.is_active);
+        def.jammer_data.power_watts = jammer.value("power_watts", def.jammer_data.power_watts);
+        def.jammer_data.bandwidth_mhz = jammer.value("bandwidth_mhz", def.jammer_data.bandwidth_mhz);
+        def.jammer_data.effective_angle = jammer.value("effective_angle", def.jammer_data.effective_angle);
+        const std::string jammer_type = jammer.value("type", "NoiseBarrage");
+        if (jammer_type == "NoiseSpot") {
+            def.jammer_data.type = JammingType::NoiseSpot;
+        } else if (jammer_type == "DeceptionDRFM") {
+            def.jammer_data.type = JammingType::DeceptionDRFM;
+        } else {
+            def.jammer_data.type = JammingType::NoiseBarrage;
+        }
+    }
+
+    if (entry.contains("countermeasures") && entry["countermeasures"].is_object()) {
+        const auto& cms = entry["countermeasures"];
+        def.cms_data.chaff_count = cms.value("chaff_count", def.cms_data.chaff_count);
+        def.cms_data.flare_count = cms.value("flare_count", def.cms_data.flare_count);
+        def.cms_data.release_interval = cms.value("release_interval", def.cms_data.release_interval);
+        def.cms_data.last_release_time = cms.value("last_release_time", def.cms_data.last_release_time);
+        def.cms_data.auto_mode = cms.value("auto_mode", def.cms_data.auto_mode);
+    }
+
+    if (entry.contains("esm") && entry["esm"].is_object()) {
+        const auto& esm = entry["esm"];
+        def.has_esm_data = true;
+        def.esm_data.sensitivity_dbm = esm.value("sensitivity_dbm", def.esm_data.sensitivity_dbm);
+        def.esm_data.max_detection_range_m =
+            esm.value("max_detection_range_m", def.esm_data.max_detection_range_m);
+        def.esm_data.classify_emitters =
+            esm.value("classify_emitters", def.esm_data.classify_emitters);
+    }
 
     return true;
 }
@@ -250,7 +761,7 @@ bool load_file(const std::string& path, std::vector<UnitDefinition>& out_definit
     // Case 1: Root is array (legacy units_demo.json structure inside "units" key)
     if (root.contains("units") && root["units"].is_array()) {
         for (const auto& entry : root["units"]) {
-            UnitDefinition def;
+            UnitDefinition def{};
             if (parse_unit_json(entry, def, error)) {
                 out_definitions.push_back(def);
             } else {
@@ -260,7 +771,7 @@ bool load_file(const std::string& path, std::vector<UnitDefinition>& out_definit
     } 
     // Case 2: Root IS the unit object (single file per unit)
     else if (root.contains("name") && root.contains("type")) {
-        UnitDefinition def;
+        UnitDefinition def{};
         if (parse_unit_json(root, def, error)) {
             out_definitions.push_back(def);
         } else {

@@ -1,0 +1,207 @@
+{
+    "scenario_name": "F-16 Cooperative Interval Takeoff Departure NavV2 Train V1",
+    "description": "Two-ship cooperative departure line: shared runway, shared departure program, per-slot interval takeoff clearance semantics carried through the maintained cooperative execution command chain.",
+    "imports": [
+        {
+            "file": "examples/config/prefabs/airbase_large_runway45.json"
+        }
+    ],
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 2200,
+        "terrain_type": "flat",
+        "wind": {
+            "speed_mps": 4.0,
+            "dir_from_deg": 270.0,
+            "shear_mps_per_km": 0.0
+        },
+        "randomization": {
+            "world_yaw_range": [0.0, 360.0],
+            "world_yaw_origin": [0.0, 0.0],
+            "rotate_mission_heading_with_world": true,
+            "wind_headwind_range": [0.0, 16.0],
+            "wind_crosswind_range": [-8.0, 8.0],
+            "wind_tailwind_max_mps": 2.0,
+            "wind_shear_range": [0.0, 8.0]
+        }
+    },
+    "mission_command": {
+        "command_code": 2,
+        "target_heading": 90.0,
+        "target_altitude": 220.0,
+        "target_speed": 155.0,
+        "takeoff_procedure_code": 2,
+        "takeoff_clearance_code": 3,
+        "takeoff_interval_s": 6.0,
+        "runway_slot_code": 1,
+        "formation_id": 31,
+        "form_offset_x": 180.0,
+        "form_offset_y": -90.0,
+        "form_offset_z": 25.0,
+        "randomization": {
+            "heading_range": [90.0, 90.0],
+            "altitude_range": [220.0, 220.0],
+            "speed_range": [155.0, 155.0]
+        }
+    },
+    "entities": [
+        {
+            "name": "Lead",
+            "type": "F-16C_Block50",
+            "side": "Blue",
+            "pos": [-1400.0, 0.0, 2.1],
+            "vel": [0.0, 0.0, 0.0],
+            "heading": 90.0,
+            "is_agent": true
+        },
+        {
+            "name": "Wing",
+            "type": "F-16C_Block50",
+            "side": "Blue",
+            "pos": [-1460.0, 0.0, 2.1],
+            "vel": [0.0, 0.0, 0.0],
+            "heading": 90.0,
+            "is_agent": true
+        }
+    ],
+    "cooperative_roster": {
+        "team_id": 7101,
+        "element_id": 7101,
+        "policy_route": "shared_execution",
+        "members": [
+            {
+                "entity": "Lead",
+                "role_code": 21,
+                "formation_role_id": "ElementLead",
+                "relative_slot_code": 11,
+                "policy_route": "shared_execution",
+                "mission_command_overrides": {
+                    "takeoff_procedure_code": 2,
+                    "takeoff_clearance_code": 3,
+                    "takeoff_interval_s": 6.0,
+                    "runway_slot_code": 1,
+                    "form_offset_x": 0.0,
+                    "form_offset_y": 0.0,
+                    "form_offset_z": 0.0
+                }
+            },
+            {
+                "entity": "Wing",
+                "role_code": 22,
+                "formation_role_id": "Wingman",
+                "relative_slot_code": 12,
+                "reference_entity": "Lead",
+                "policy_route": "shared_execution",
+                "mission_command_overrides": {
+                    "takeoff_procedure_code": 2,
+                    "takeoff_clearance_code": 1,
+                    "takeoff_interval_s": 6.0,
+                    "runway_slot_code": 1,
+                    "form_offset_x": 180.0,
+                    "form_offset_y": -90.0,
+                    "form_offset_z": 25.0
+                }
+            }
+        ]
+    },
+    "objectives": [
+        {
+            "type": "conditional",
+            "conditions": [
+                {
+                    "property": "altitude_agl",
+                    "op": ">=",
+                    "value": 120.0
+                },
+                {
+                    "property": "speed",
+                    "op": ">=",
+                    "value": 140.0
+                },
+                {
+                    "property": "gear",
+                    "op": "<=",
+                    "value": 0.1
+                }
+            ],
+            "reward": 1000.0
+        }
+    ],
+    "rewards": {
+        "survival": 0.0,
+        "crash_penalty": -1000.0,
+        "altitude_progress_target": 180.0,
+        "speed_progress_target": 150.0,
+        "altitude_progress_weight": 0.6,
+        "speed_progress_weight": 1.0,
+        "speed_progress_weight_negative": 1.0,
+        "liftoff_bonus": 300.0,
+        "liftoff_speed_threshold": 80.0,
+        "liftoff_alt_threshold": 5.0,
+        "rotation_reward_weight": 0.08,
+        "rotation_speed_threshold": 70.0,
+        "rotation_alt_threshold": 5.0,
+        "rotation_pitch_cap": 12.0,
+        "rotation_overpitch_penalty_weight": -0.5,
+        "gear_up_bonus": 100.0,
+        "stall_penalty": -3.0,
+        "stall_aoa_threshold": 12.0,
+        "overload_penalty": -0.5,
+        "overload_g_threshold": 6.0,
+        "roll_stability_weight": -0.5,
+        "heading_error_weight": 0.0,
+        "altitude_error_weight": -0.004,
+        "altitude_error_deadband_m": 30.0,
+        "altitude_error_norm_m": 120.0,
+        "altitude_error_power": 2.0,
+        "altitude_error_min_alt": 90.0,
+        "speed_error_weight": -0.004,
+        "speed_error_deadband": 8.0,
+        "speed_error_norm": 35.0,
+        "speed_error_power": 2.0,
+        "speed_error_min_ias": 110.0,
+        "runway_centerline_penalty_weight": -1.0,
+        "runway_centerline_safe_frac": 0.0,
+        "runway_centerline_penalty_power": 2.0,
+        "runway_centerline_penalty_min_ias": 5.0,
+        "runway_centerline_penalty_max_ias": 80.0,
+        "runway_centerline_barrier_weight": -1.0,
+        "runway_centerline_barrier_clip_frac": 0.995,
+        "runway_width_margin_m": 1.0,
+        "off_runway_penalty": -2.0,
+        "off_runway_terminate_speed": 60.0,
+        "off_runway_terminate_grace_s": 0.5,
+        "off_runway_terminate_penalty": -200.0,
+        "gear_collapse_penalty": -1000.0,
+        "gear_stress_penalty": -10.0,
+        "stationary_penalty": -2.0,
+        "speed_reward_weight": 0.008,
+        "alignment_reward_weight": 0.35,
+        "mission_alignment_min_alt": 120.0,
+        "departure_centerline_max_alt_agl_m": 150.0,
+        "departure_centerline_m_penalty_weight": -1.1,
+        "departure_centerline_m_deadband_m": 5.0,
+        "departure_centerline_m_norm_m": 18.0,
+        "departure_centerline_m_power": 2.0,
+        "departure_centerline_m_clip": 3.0,
+        "departure_centerline_reward_weight": 0.8,
+        "departure_centerline_reward_band_m": 10.0,
+        "departure_track_error_weight": -0.6,
+        "departure_track_error_deadband_deg": 6.0,
+        "departure_track_error_norm_deg": 10.0,
+        "departure_track_error_power": 2.0,
+        "departure_track_error_clip": 2.5,
+        "departure_track_reward_weight": 0.8,
+        "departure_track_reward_band_deg": 10.0,
+        "success_runway_cross_penalty_weight": -120.0,
+        "success_runway_cross_deadband_m": 30.0,
+        "success_runway_cross_norm_m": 25.0,
+        "success_runway_cross_power": 2.0,
+        "success_runway_cross_clip": 4.0,
+        "success_ground_track_error_penalty_weight": -60.0,
+        "success_ground_track_error_deadband_deg": 10.0,
+        "success_ground_track_error_norm_deg": 12.0,
+        "success_ground_track_error_power": 2.0,
+        "success_ground_track_error_clip": 3.0
+    }
+}

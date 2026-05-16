@@ -218,6 +218,7 @@ def update_behaviors(loader, sim_time, *, truth=None, inst=None, sync_to_kernel:
     loader._update_command_chain(sim_time, truth=truth, inst=inst, sync_to_kernel=False)
     if not loader._defer_landing_post_transition_until_next_update():
         loader._maybe_activate_post_waypoint_transition(sync_to_kernel=False)
+    loader.update_scripted_opponents(float(sim_time))
     if sync_to_kernel:
         loader._sync_kernel_mission_command()
         loader._sync_kernel_command_chain()

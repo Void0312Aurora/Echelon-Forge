@@ -34,6 +34,21 @@ struct RWR {
     bool is_missile_launch;             // MAWS (Missile Approach) warning
 };
 
+struct EmitterDetection {
+    uint64_t source_id = 0;
+    double bearing_deg = 0.0;
+    double signal_strength = 0.0;
+    bool is_radar_lock = false;
+    bool is_missile_guidance = false;
+};
+
+struct ESMReceiver {
+    double sensitivity_dbm = -85.0;
+    double max_detection_range_m = 250000.0;
+    bool classify_emitters = true;
+    std::vector<EmitterDetection> detections{};
+};
+
 // RCS Profile for Geometric RCS (Optional but recommended)
 struct RCSProfile {
     double frontal_rcs;

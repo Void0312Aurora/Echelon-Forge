@@ -1,0 +1,233 @@
+# 海战仿真现实性分析
+
+状态：`2026-05-16` 冻结分析版。
+
+关联文件：
+
+- [ShipMotion 系统（舰船运动学）](/home/void0312/Workshop/CMO/src/systems/naval/ship_motion_system.h)
+- [ShipPlatform 组件定义](/home/void0312/Workshop/CMO/src/components/naval/ship_platform.h)
+- [NavalTaskingEnums（海军任务枚举）](/home/void0312/Workshop/CMO/src/components/tasking/naval/naval_tasking_enums.h)
+- [TaskOrderNaval（海军任务指令）](/home/void0312/Workshop/CMO/src/components/tasking/naval/task_order_naval.h)
+- [LeaderIntentNaval（海军指挥意图）](/home/void0312/Workshop/CMO/src/components/tasking/naval/leader_intent_naval.h)
+- [PilotReportNaval（海军报告）](/home/void0312/Workshop/CMO/src/components/tasking/naval/pilot_report_naval.h)
+- [DDG-51 单位定义](/home/void0312/Workshop/CMO/examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)
+- [T-AKE-1 单位定义](/home/void0312/Workshop/CMO/examples/config/database/ships/units/take1_usns_lewis_and_clark.json)
+- [AN/SPS-67(V) 传感器定义](/home/void0312/Workshop/CMO/examples/config/database/ships/modules/sensors/an_sps_67_v_surface_search.json)
+- [辅助舰导航雷达定义](/home/void0312/Workshop/CMO/examples/config/database/ships/modules/sensors/civil_navigation_surface_radar.json)
+- [DDG-51 屏护最小场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
+- [屏护逼近变体场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
+- [海军单位参数参考](/home/void0312/Workshop/CMO/docs/standards/naval/ship_unit_references.md)
+- [海军任务最小结构](/home/void0312/Workshop/CMO/docs/standards/naval/minimal_task_structure.md)
+- [海军测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_ship_database.py)
+- [屏护场景测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
+- [传感器与态势感知分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [武器系统分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+
+文档定位：
+
+- 本文档仅记录当前海战管线的已知缺陷及其对应的真实物理/工程情况。
+- 不涵盖可接受的简化，不提供优先级排序，不给出工作计划。
+
+当前状态指引：
+
+- 本文档是冻结分析输入，不是当前执行状态看板。
+- 当前海战实际推进与回归情况请优先参见：
+  - [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
+  - [海战后续委派执行单](/home/void0312/Workshop/CMO/docs/task/naval/naval_delegated_execution_backlog_20260517.zh.md)
+  - [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
+
+---
+
+## 一、当前海战管线的处理链路
+
+```
+ShipMotionSystem        → 响应受限 2D 舰船运动学（高层航向/航速指令、一阶加减速与转向率约束、z=0）
+  └ 舰船绕过全部飞行物理管线（力、气动、地面接触、旋转积分）
+
+SensorSystem            → 共用空中传感器框架（几何门控+概率检测+高斯噪声）
+  └ 水面雷达附加雷达地平线约束（DDG-51: 46.3km, T-AKE-1: 36.3km）
+
+DataLinkSystem          → 共用 P2P 数据链（网络号按阵营分配，附加舰船天线高度 LOS 计算）
+  └ 共享航迹/报告消息仍是工程近似，远弱于真实舰队战术数据链
+
+TrackManagerSystem      → 共用航迹数据库（entity_id 关联，无滤波器，无速度估计）
+
+DamageSystem            → 共用近炸引信（无舰船专用毁伤逻辑）
+  └ 命中盒为结构占位（armor=0，system_health 无动态减损）
+
+EWSystem                → 共用箔条/热诱饵（无舰载无源/有源对抗措施）
+```
+
+海军任务层（Python 端）：
+
+```
+naval_profile.py        → TASK_SCREEN/TASK_SUPPORT 语义映射
+  └ NavalWarfareRole / NavalStationType 枚举解析
+  └ 构建 MissionCommand（无动态 screen-keeping 控制逻辑）
+```
+
+---
+
+## 二、已知失真点
+
+### 2.1 舰船运动学——无流体动力学
+
+当前 `ShipMotion` 已经不是最初的“瞬时限速 + 零回转半径”版本，而是：
+
+- 读取 `MissionCommand/MovementCommand` 的目标航向与目标航速
+- 通过 `max_accel_mps2 / max_decel_mps2` 对速度做一阶逼近
+- 通过 `max_turn_rate_deg_s` 与低速转向折减对航向做一阶逼近
+- 仍然强制 `z=0, pitch=0, roll=0`
+
+这意味着当前实现已经从“纯几何漂移”提升到“最小响应受限 2D 舰船运动学”，但它仍然没有进入真实舰船流体动力学范畴。
+
+真实舰船运动涉及：
+
+- **水动力阻力**：舰船阻力 = 摩擦阻力（∝ V² × 湿表面积）+ 兴波阻力（与 Froude 数 Fr = V/√(gL) 强相关）+ 黏压阻力。阻力曲线上存在"驼峰"（Fr ≈ 0.35-0.5 时兴波阻力达到峰值），加速度在此区间严重受限。当前模型在任意速度下速度方向可瞬时改变——这等价于无限侧推力和零水动力阻尼
+- **回转性能**：真实水面舰船有最小回转半径（战术直径），不可能像当前实现这样零回转半径即时转向。公开资料足以支持“舰船回转受限、存在稳定回转与倾侧响应”，但具体 DDG-51 战术直径数值在公开来源中不宜写死
+- **加减速惯性**：舰船从停车加速到高速、或从高速减速，都不是瞬间完成。公开专业资料支持 Arleigh Burke 级存在明显推进与操纵响应时延，但当前文档中若干“分钟级”数字不宜当成已核实硬事实。当前模型的速度缩放是逐帧生效的，无质量惯性
+- **推进系统响应**：燃气轮机从怠速到全功率需数十秒（LM2500 从慢车到全功率约 30-60 秒），且通常通过可调螺距螺旋桨（CPP）或减速齿轮箱传递推力，有机械响应延迟
+- **舵效**：舵力与航速、舵角和流场相关，低速时舵效会显著下降。当前无任何舵模型
+- **风/流对运动的影响**：真实舰船受侧风产生偏航力矩和漂移（leeway），受海流产生整体漂移。低速时风压面积（上层建筑侧面积）可主导船首指向
+
+### 2.2 海况与波浪响应完全缺失
+
+当前 `z=0, pitch=0, roll=0` 意味着海面是几何平面。
+
+真实海况：
+
+- **波浪引起的六自由度运动**：升沉（heave）、纵摇（pitch）、横摇（roll）是海浪谱的函数（如 Pierson-Moskowitz 或 JONSWAP 谱）。SS5（显著波高 2.5-4.0m）足以使舰船姿态和传感器工作条件发生可观变化，但具体横摇/纵摇幅值强依赖舰型、浪向、航速和装载，不宜在此写成硬事实
+- **波浪增阻**：船舶在波浪中航行时，会出现额外阻力与掉速。公开课程资料足以支持“高海况存在显著 added resistance”，但具体掉速百分比和节数应视为工程量级而非固定事实
+- **甲板可用性限制**：超过一定海况，飞行甲板（DDG-51 有直升机甲板）无法使用，这限制了舰载直升机作业窗口
+- **波浪对吃水的影响**：舰船在波浪中实际吃水在静水吃水 ±(波幅 × 船体响应函数) 之间变化，对浅水区（如濒海作战）有直接影响
+
+### 2.3 水面传感器共用空中雷达框架
+
+舰船对海搜索雷达与机载雷达共用同一个 `Sensor` 组件和 `DefaultSensorModel`，但两者面对的物理环境有根本差异：
+
+- **海杂波**：对海雷达的主要限制不是接收机热噪声，而是海面后向散射杂波。海杂波的雷达截面积随海况、擦地角（grazing angle）、极化方式和波长变化。在低擦地角（<5°）时，海杂波的幅度分布为长尾非高斯（K-distribution），导致虚警率显著高于热噪声基底。当前模型完全没有海杂波
+- **大气波导**：海上环境频繁出现蒸发波导（evaporation duct，高度常见于海面上数米到数十米）和表面波导（surface duct），会导致超视距探测与波导盲区。其增程幅度高度依赖气象与频段，不宜在这里写成固定能力值
+- **多径效应**：海面反射产生直接路径和海面反射路径的干涉，导致低空/海面目标的信号在特定距离上出现周期性衰减（Lloyd's mirror 效应）。对反舰导弹的掠海探测有决定性影响
+- **没有舰载 ESM**：真实战舰装备有宽带电子支援措施（ESM）系统，可被动探测、识别和定位敌方雷达辐射源。这是水面战中除雷达外最重要的态势感知来源。当前 RWR 仅用于空中平台
+- **雷达仅限对海搜索**：DDG-51 装备 SPY-1D 相控阵雷达（对空搜索/跟踪）和 SPS-67（对海搜索），两者功能互补。当前仅实现了 SPS-67 的对海搜索——SPY-1D 的体搜索、多目标跟踪、火控支援完全没有建模
+
+### 2.4 无舰载声纳/反潜战
+
+整个项目中不存在任何声纳组件、水下声学模型或潜艇实体：
+
+- **无舰壳声纳**（如 AN/SQS-53）：主动/被动声纳是公开可确认的 DDG-51 ASW 能力之一，但具体探测距离强依赖水文、目标噪声与战术态势，不宜在这里写成固定性能指标
+- **无拖曳阵列声纳**（如 AN/SQR-19 TACTAS）：拖曳阵列也是公开可确认的能力，但具体“远程”量级更适合作为工程近似，而非固定硬指标
+- **无变深声纳**（VDS）：可下放到温跃层以下以克服声速剖面弯曲的声纳
+- **无声速剖面/水文条件**：声波在海水中的传播路径强烈依赖温度/盐度/深度梯度（声速剖面）。温跃层产生声影区，汇聚区（CZ，convergence zone）在约 30-35 nmi 间隔处产生环形高探测概率带。完全不建模意味着无法区分"好水文"和"坏水文"条件
+- **无潜艇实体**：`UnitType` 枚举中没有潜艇类型，没有下潜深度/消声瓦/安静速度等概念
+- **无鱼雷/深水炸弹/反潜火箭**：反潜武器完全不存在
+
+### 2.5 舰载武器系统——元数据占位，无运行时实现
+
+DDG-51 的 JSON 定义中列举的武器系统在 `_provenance.modeling_notes` 中明确标注为 metadata only：
+
+> "Weapon inventory is recorded in metadata but not loaded into runtime ammo because current Ammo only represents generic missiles_remaining."
+
+具体而言：
+
+- **Mk 41 VLS**：DDG-51 Flight I 有 90 单元（前 29 + 后 61），可装载 Standard Missile（SM-2/SM-6 防空）、Tomahawk（对陆攻击）、VL-ASROC（反潜）等多种导弹。当前没有任何 VLS 发射逻辑——没有导弹型号区分、没有发射速率限制、没有热发射/冷发射的差异、没有 VLS 单元耗尽后的不可用状态。空战中的 `fire_missile()` API 是为机载弹药设计的，不接受 VLS 作为发射平台
+- **5 英寸/54 舰炮**：DDG-51 装备一门 Mk 45 Mod 1/2 5-inch/54 caliber 舰炮。真实射速 16-20 发/分，最大射程约 24km（常规弹药）/ 36km（增程制导弹药）。可对海、对陆、对空（有限的防空能力）。当前完全未实现——没有炮弹外弹道、没有炮塔回转/俯仰速率限制、没有弹种区分
+- **Phalanx CIWS**：Mk 15 近防武器系统，20mm 六管加特林，射速 3000-4500 发/分，有效拦截距离约 1.5km，自备 Ku 波段搜索/跟踪雷达。当前完全未实现——没有近防炮的弹道模型、没有拦截判断逻辑、没有 CIWS 自身的雷达/光电火控环
+- **Harpoon 反舰导弹**：RGM-84 Harpoon 这类主动雷达末制导反舰导弹当前未实现。公开资料足以支持“早期 DDG-51 配置中存在 Harpoon 装备族”，但不同批次/改型的具体射程值不宜在这里写死
+- **无防空导弹火控链**：Standard Missile 族的搜索、火控与末段支持链条当前均未实现。更准确的表述是：当前项目没有区分 Aegis 搜索/中段控制与末段照射/自主末制导这些交战差异，因此无法表达 SM-2 / SM-6 等不同模式
+- **无舰载电子战系统**：SLQ-32(V) 电子战套件可进行威胁告警、干扰和箔条/红外诱饵发射（Mk 36 SRBOC）。当前无舰载 ECM/ESM
+
+### 2.6 舰船毁伤模型——HP 占位符，无沉没/失能物理
+
+```cpp
+// 默认 1 HP / metric ton 全载排水量
+// DDG-51: 8,362,000 HP → 相当于 8362 吨参考值
+// T-AKE-1: 41,000,000 HP → 相当于 41000 吨参考值
+```
+
+真实舰船抗毁能力不能用标量 HP 建模。舰船毁伤的核心特征包括：
+
+- **水密完整性**：舰船不沉没不是因为"HP 未归零"，而是因为水密隔舱（watertight compartments）阻止进水蔓延。公开资料足以支持“水密完整性、损管与进水蔓延是舰艇生存力核心”，但具体隔舱数、单枚命中可穿透多少舱段等数值不宜在这里写成已核实事实
+- **进水蔓延与稳性**：进水量 → 吃水增加 → 干舷降低 → 更多舱室进水（free surface effect → 稳性下降 → 倾覆）。这是导致真实军舰沉没的典型链式反应。HP 归零→destruct 的逻辑不能表达这一渐进过程，也无法区分"缓慢沉没（可弃舰）"和"倾覆（不可控）"
+- **任务失能 ≠ 沉没**：Mission Kill（任务杀伤）可在舰船未沉没的情况下发生——雷达/作战系统被毁导致无法执行防空任务，但仍可航行和通信。Mobility Kill（机动杀伤）——推进系统或舵机被毁，舰船失去操控但仍可漂浮和作战。当前模型以 destruct 为唯一失败模式，无中间失能状态
+- **装甲值为零**：DDG-51 和 T-AKE-1 的命中盒 `armor_mm` 均为 0.0，说明当前运行时尚未建立舰艇专用穿甲、破片、进水或抗损判定。公开资料支持 DDG-51 与商规补给舰在抗损设计上有显著差异，但具体 Kevlar 吨位等数字更适合作为工程或社区资料补充，而非此处的硬事实
+- **无火灾蔓延**：导弹命中→燃油/弹药火灾→火势蔓延→温度/烟雾→人员伤亡/系统失效。这是舰船作战中最常见的毁伤模式。当前模型只有一个即时的 system_health -= 1.0
+- **无冗余系统效应**：DDG-51 有 4 台 LM2500 燃气轮机（分两组，两个机舱），单个机舱被毁后另一个机舱仍可提供约 50% 推进功率。当前 propulsion 仅有单一的 mil_thrust_n/ab_thrust_n，无法表达这种冗余
+
+### 2.7 红方使用 T-AKE-1 占位
+
+当前红方接触在运行时使用 T-AKE-1 的舰体配置（`take1_usns_lewis_and_clark.json`）作为占位：
+
+- T-AKE-1 是一艘**非武装商规补给舰**（Lewis and Clark 级），最高航速仅 20kt，无武器、无装甲、无作战系统
+- 将此舰体用于红方意味着：红方以 20kt 慢速接近蓝方编队，无任何威胁能力（本身不是战舰）；其“商船级别 RCS/传感器特征”更适合作为工程推断，而非此处已核实的一手事实
+- 没有真实潜在对手（如驱逐舰、护卫舰或潜艇）的任何建模
+- 这意味着当前"红方接触"在物理层面不具备敌舰的行为特征——它只是一个以固定速度移动的占位几何实体，带有错误的舰型标签
+
+### 2.8 海上编队与屏护控制
+
+当前场景的核心语义是 DDG-51 屏护 T-AKE-1，但：
+
+- **当前仅有最小站位保持闭环**：项目现在已经在 loader 行为层增加了基于 `reference_entity_id + station_radius_m + station_heading_deg` 的最小闭环，用于把屏护从“纯初始几何”提升为“可恢复站位”的工程近似。但它仍不是威胁响应驱动的真实编队控制，也没有扇区轮换、转弯协同或多舰队形解算
+- **无编队机动协调**：真实编队转弯时，各舰需要协调回转速率和半径以避免碰撞并维持站位。当前无任何编队层控制
+- **无多舰编队逻辑**：仅两舰（DDG-51 + T-AKE-1），无多艘屏护舰的扇形站位、无多层纵深防御（外层防空/中层反舰/内层 CIWS）、无航母战斗群的复杂编队几何
+
+### 2.9 数据链——阵营级近似，无舰队 C2 语义
+
+- **网络号 = 阵营号**：`network_id = 1` 表示蓝方，`network_id = 2` 表示红方。真实舰队数据链（Link 16 / Link 11 / Link 22）的编组更为复杂——一个航母战斗群内可能有多个独立网络（不同 NPG），且需要跨网络网关转发。同一阵营内部还区分不同任务群
+- **仅有最小共享航迹/报告近似**：当前实现已经不只是“本地传感器各看各的”，而是可以在同网平台之间共享航迹并生成报告消息；但它仍没有任务下达/接收、交战权转移、武器协同（如 CEC）或真实 Link 16/NPG 语义。更准确地说，当前实现仍远弱于真实战术数据链与舰队 C2 组织
+- **无消息优先级与时隙分配**：Link 16 的 TDMA 时隙分为多个 NPG，不同的消息类型（监视航迹、电子战数据、语音、任务管理等）占用不同的时隙资源。在密集电磁环境中，存在时隙竞争和优先级排队
+
+### 2.10 海上补给与后勤
+
+T-AKE-1 的核心使命是海上补给（Underway Replenishment, UNREP），但：
+
+- **无航行中补给（UNREP）机制**：真实 UNREP 需要并航、严密的相对位置控制和补给状态机。公开材料与经验资料支持其属于高度受限、需要专门几何与程序保障的操作，但具体间距、速度和耗时更适合作为工程近似而非此处的硬事实。当前 T-AKE-1 只是一个"在水面移动的货舱"，无任何货物传递能力
+- **无弹药/燃油/消耗品库存模型**：T-AKE-1 的补给品库存未建模——没有弹药数量、燃油体积、干货吨位、制冷货物等。DDG-51 消耗的 VLS 弹药无法从 T-AKE-1 补充（即使不考虑 UNREP 的物理可行性）
+- **无补给脆弱性约束**：航行中补给时两舰处于异常脆弱状态——不能大幅机动、两舰间距狭窄、补给时间窗可预测。这在战术上是敌方潜艇的黄金攻击时机
+
+### 2.11 无海军航空兵交互
+
+DDG-51 系列具备舰载航空协同能力，但当前所选 `DDG-51 Flight I` 配置不应被表述为“带双机库并通常搭载 2 架 MH-60R”的舰型。更准确的说法是：当前项目没有任何舰载直升机、甲板作业或航空协同运行时，但：
+
+- **无舰载直升机建模**：MH-60R 提供远程反潜搜索（吊放声纳/声纳浮标）、反舰导弹中继制导、超视距目标指示、搜救、垂直补给（VERTREP）等关键能力。当前无直升机实体、无起降/回收逻辑、无甲板状态（甲板不可用条件）
+- **无 VERTREP 逻辑**：垂直补给是 UNREP 之外的另一种补给方式——直升机在 T-AKE-1 和 DDG-51 之间运输货物，不需要两舰并排。这比 UNREP 更快且不限制编队机动
+
+---
+
+## 三、当前不应采用的表述
+
+为避免后续语义漂移，当前以下表述应明确避免：
+
+1. 不应将当前海战场景称为"海战交战仿真"——它是
+   **"最小现实海上屏护接触场景"**，无武器交战、无毁伤、无机动对抗。
+2. 不应将当前 DDG-51 称为"已实现的宙斯盾战舰"——它是
+   **"带有真实公开尺寸/排水量参数 + 占位 HP 的水面几何实体"**，
+   无 SPY-1D、无 VLS 发射链、无火控、无 CEC。
+3. 不应将当前舰船毁伤模型称为"舰艇抗毁仿真"——它是
+   **"1 HP/公吨 + armor=0 命中盒占位"**，
+   无隔舱进水、无火灾蔓延、无稳性丧失、无任务失能分级。
+4. 不应将当前屏护几何称为"完整编队护航控制"——它是
+   **"带最小站位保持闭环的屏护近似"**，仍无编队机动协调、无威胁驱动重构、无多舰队形控制。
+5. 不应将当前红方接触称为"敌舰"——它是
+   **"复用 T-AKE-1 商船舰体参数的占位实体"**，非真实敌舰模型。
+6. 不应将当前数据链共享称为"舰队战术数据链"——它是
+   **"同阵营共享航迹/报告的工程近似"**，
+   无 Link 16 NPG、无时隙、无指挥关系、无 CEC 武器协同。
+
+更准确的表述是：
+
+- **最小现实海上屏护接触基线**
+- **护航 / 发现 / 共享态势验证场景**
+- **进入武器、毁伤、编队控制建模前的海战启动样例**
+
+本结论冻结到下一次明确重开海战推进前为止。
+
+---
+
+## 四、来源注记与证据等级
+
+- `官方/半官方公开事实`：DDG-51 装备族、SQQ-89/SLQ-32/MH-60R 能力链、Flight I 航空设施边界，优先参考美海军公开 fact file、舰艇特性页和 NAVAIR/NAVSEA 公开资料。
+- `专业公开资料`：海杂波、蒸发波导、多径、声速剖面、汇聚区等机理，主要参考公开论文、课程资料和技术综述。
+- `社区/教学资料`：声纳首圈汇聚区量级、若干海况与操纵经验值，可作为工程近似补充，但不当作硬指标。
+- `工程近似而非公开定值`：DDG-51 具体战术直径、SS5 横摇/纵摇幅值、固定掉速百分比、Harpoon 特定批次射程、具体隔舱数与穿透舱段数。
+- `当前仓库建模说明`：舰船 `max_accel_mps2 / max_decel_mps2 / max_turn_rate_deg_s / low_speed_turn_factor` 是运行时校准量，不宣称为权威舰级操纵数据。

@@ -112,6 +112,8 @@ def begin_loaded_world(loader, *, scenario_data: dict) -> None:
         "target_altitude": 0.0,
         "target_speed": 0.0,
     }
+    loader.scripted_opponents = {}
+    loader.scripted_opponent_reports = {}
 
 
 def apply_compiled_runtime_metadata(loader) -> None:
@@ -120,6 +122,7 @@ def apply_compiled_runtime_metadata(loader) -> None:
         loader._compiled_conditional_objectives = loader._compile_conditional_objectives()
         loader._objective_shaping_cfg = loader._build_objective_shaping_config(loader.scenario_data.get("rewards", {}))
         loader._compiled_rewards_cfg = loader.scenario_data.get("rewards", {})
+        loader._compiled_meta_cfg = loader.scenario_data.get("meta", {}) if isinstance(loader.scenario_data.get("meta", {}), dict) else {}
         loader._waypoint_mode_reward_cfgs = {}
         loader._approach_reward_cfg = ApproachRewardConfig()
         loader._safety_reward_cfg = SafetyRewardConfig()
@@ -128,10 +131,57 @@ def apply_compiled_runtime_metadata(loader) -> None:
     loader._compiled_conditional_objectives = list(metadata.compiled_conditional_objectives)
     loader._objective_shaping_cfg = metadata.objective_shaping_cfg
     loader._compiled_rewards_cfg = dict(metadata.rewards_config)
+    loader._compiled_meta_cfg = dict(metadata.meta_config)
     loader._waypoint_mode_reward_cfgs = dict(metadata.waypoint_mode_configs)
     loader._approach_reward_cfg = metadata.approach_reward_config
     loader._safety_reward_cfg = metadata.safety_reward_config
     loader._lnav_runtime_cfg = metadata.lnav_config
+
+
+def _resolve_primary_target(loader) -> tuple[int | None, str]:
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    scenario_data = getattr(loader, "scenario_data", None)
+    entities = getattr(loader, "entities", None)
+
+    target_name = ""
+    target_id = None
+
+    if isinstance(mission_cmd, dict):
+        target_name = str(mission_cmd.get("assigned_target_name", "") or "").strip()
+        try:
+            mission_target_id = int(mission_cmd.get("assigned_target_id", 0))
+        except Exception:
+            mission_target_id = 0
+        if mission_target_id > 0:
+            target_id = mission_target_id
+
+    if target_id is None and target_name and isinstance(entities, dict):
+        resolved = entities.get(target_name)
+        if resolved is not None:
+            target_id = int(resolved)
+
+    if target_id is None and isinstance(scenario_data, dict) and isinstance(entities, dict):
+        for ent_cfg in scenario_data.get("entities", []):
+            if not isinstance(ent_cfg, dict):
+                continue
+            if bool(ent_cfg.get("is_agent", False)):
+                continue
+            ent_name = str(ent_cfg.get("name", "")).strip()
+            if not ent_name:
+                continue
+            resolved = entities.get(ent_name)
+            if resolved is None:
+                continue
+            target_name = ent_name
+            target_id = int(resolved)
+            break
+
+    if isinstance(mission_cmd, dict):
+        mission_cmd["assigned_target_id"] = int(target_id or 0)
+        if target_name:
+            mission_cmd["assigned_target_name"] = target_name
+
+    return target_id, target_name
 
 
 def mission_cmd_has_valid_runtime_waypoint_cache(mission_cmd) -> bool:
@@ -156,6 +206,10 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
     loader._approach_prev_gs_abs = None
     loader.post_waypoint_transition = None
     loader.mission_phase_name = "primary"
+    loader.primary_target_id = None
+    loader.primary_target_name = ""
+    loader.scripted_opponents = {}
+    loader.scripted_opponent_reports = {}
 
     loader._randomize_mission()
     loader._randomize_task_order()
@@ -189,6 +243,8 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
         loader.mission_cmd["target_heading"] = float(loader.mission_cmd.get("target_heading", 0.0)) % 360.0
 
     loader._parse_waypoints()
+    loader.primary_target_id, loader.primary_target_name = _resolve_primary_target(loader)
+    loader.build_scripted_opponents()
 
     if loader.agent_id is not None:
         truth = initial_truth if initial_truth is not None else loader.sim.get_agent_observation(loader.agent_id)

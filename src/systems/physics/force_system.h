@@ -8,10 +8,12 @@
 #include "components/command/air/control_input_resolution.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
+#include "components/physics/flight_dynamics_tuning.h"
 #include "components/physics/performance.h"
 #include "components/command/legacy_command.h"
 #include "components/command/pilot_action.h"
 #include "core/interfaces/environment_model.h"
+#include "systems/physics/propulsion_system.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -121,43 +123,71 @@ inline void register_force_system(flecs::world& ecs) {
                     double nose_z = canonicalize_direction_scalar(std::sin(pitch_rad));
                     
                     double throttle_input = resolved_pilot_or_legacy_throttle(pilot, legacy);
-                    
-                    double thrust_magnitude = 0.0;
-                    bool afterburner_active = false;
-                    if (throttle_input > 0.9) {
-                        thrust_magnitude = propulsion[i].ab_thrust_n;
-                        afterburner_active = true;
-                    } else {
-                        thrust_magnitude = propulsion[i].mil_thrust_n * throttle_input;
-                    }
 
                     // [REALISM UPGRADE] Atmosphere & Mach scaling
                     // Derived from War Thunder & Standard Propulsion Theory
                     // 1. Density Effect: Jet thrust drops with air density (sigma)
                     // 2. Ram Effect: Ram air pressure increases mass flow (thrust) with speed
-                    
+                    flight_dynamics::PropulsionAtmosphereInputs propulsion_inputs{};
+                    double oat_temperature_k = 288.15;
                     if (env_ref && env_ref->model) {
                          AtmosphericData atm = env_ref->model->get_atmosphere_at(transform[i].x, transform[i].y, transform[i].z);
-                         
-                         double sigma = atm.air_density / kSeaLevelDensity; // Density Ratio
-                         if (sigma < 0.01) sigma = 0.01; // Space edge case
-                         
-                         double mach = 0.0;
+                         propulsion_inputs.sigma = atm.air_density / kSeaLevelDensity;
                          if (atm.speed_of_sound > 1.0) {
-                             mach = speed / atm.speed_of_sound;
+                             propulsion_inputs.mach = speed / atm.speed_of_sound;
                          }
-                         
-                         // Simple Jet Model: T ~ sigma * (1 + 0.3 * M)
-                         // (Based on general performance curves of 4th gen fighters)
-                         double ram_factor = 1.0 + 0.3 * mach;  
-                         
-                         thrust_magnitude *= sigma * ram_factor;
+                         oat_temperature_k = atm.temperature;
+                    } else {
+                         constexpr double kG = 9.80665;
+                         constexpr double kR = 287.0;
+                         constexpr double kL = 0.0065;
+                         constexpr double kT0 = 288.15;
+                         constexpr double kP0 = 101325.0;
+                         constexpr double kGamma = 1.4;
+                         constexpr double kT11 = 216.65;
+                         constexpr double kP11 = 22632.1;
+
+                         const double h = std::max(0.0, transform[i].z);
+                         double pressure = kP0;
+                         if (h < 11000.0) {
+                             oat_temperature_k = kT0 - (kL * h);
+                             pressure = kP0 * std::pow(1.0 - (kL * h / kT0), kG / (kR * kL));
+                         } else {
+                             oat_temperature_k = kT11;
+                             pressure = kP11 * std::exp(-kG * (h - 11000.0) / (kR * kT11));
+                         }
+                         const double rho = pressure / (kR * oat_temperature_k);
+                         propulsion_inputs.sigma = rho / kSeaLevelDensity;
+                         const double speed_of_sound = std::sqrt(kGamma * kR * oat_temperature_k);
+                         if (speed_of_sound > 1.0) {
+                             propulsion_inputs.mach = speed / speed_of_sound;
+                         }
                     }
+                    propulsion_inputs.theta = oat_temperature_k / 288.15;
+
+                    const EngineTuning* attached_tuning = it.entity(i).get<EngineTuning>();
+                    EngineTuning runtime_tuning = attached_tuning ? *attached_tuning : flight_dynamics::default_engine_tuning();
+                    runtime_tuning.enabled = true;
+                    if (runtime_tuning.mil_thrust_n <= 1.0) {
+                        runtime_tuning.mil_thrust_n = propulsion[i].mil_thrust_n;
+                    }
+                    if (runtime_tuning.ab_thrust_n <= runtime_tuning.mil_thrust_n) {
+                        runtime_tuning.ab_thrust_n = std::max(propulsion[i].ab_thrust_n, runtime_tuning.mil_thrust_n);
+                    }
+
+                    flight_dynamics::advance_propulsion_state(
+                        propulsion[i],
+                        runtime_tuning,
+                        throttle_input,
+                        it.delta_time() > 0.0 ? it.delta_time() : 0.05,
+                        propulsion_inputs
+                    );
+
+                    double thrust_magnitude = propulsion[i].current_thrust_n;
                     thrust_magnitude = canonicalize_force_scalar(thrust_magnitude);
 
                     // Cache propulsion state for instruments/observation.
                     propulsion[i].current_thrust_n = thrust_magnitude;
-                    propulsion[i].afterburner_active = afterburner_active;
 
                     const double thrust_fx = canonicalize_projected_force_scalar(thrust_magnitude * nose_x);
                     const double thrust_fy = canonicalize_projected_force_scalar(thrust_magnitude * nose_y);
@@ -170,10 +200,6 @@ inline void register_force_system(flecs::world& ecs) {
                     );
                     
 
-                    
-                    // === 4. LIFT (Simplified) ===
-                    // For now, we model lift implicitly through the control model
-                    // A proper lift model will be added in Phase 2
                     
                     // Ground contact / friction is handled by GroundContactSystem.
                 }

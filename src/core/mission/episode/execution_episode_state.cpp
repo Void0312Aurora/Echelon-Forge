@@ -8,6 +8,13 @@ bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs
         lhs.cmd_speed_mps == rhs.cmd_speed_mps &&
         lhs.command_code == rhs.command_code &&
         lhs.route_ref_id == rhs.route_ref_id &&
+        lhs.reference_entity_id == rhs.reference_entity_id &&
+        lhs.station_radius_m == rhs.station_radius_m &&
+        lhs.station_bearing_deg == rhs.station_bearing_deg &&
+        lhs.embarked_helo_entity_id == rhs.embarked_helo_entity_id &&
+        lhs.launch_helo == rhs.launch_helo &&
+        lhs.recover_helo == rhs.recover_helo &&
+        lhs.relay_oth_targeting == rhs.relay_oth_targeting &&
         lhs.recovery_base_id == rhs.recovery_base_id &&
         lhs.recovery_runway_id == rhs.recovery_runway_id &&
         lhs.recovery_approach_type == rhs.recovery_approach_type &&
@@ -19,6 +26,9 @@ bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs
         lhs.form_offset_x == rhs.form_offset_x &&
         lhs.form_offset_y == rhs.form_offset_y &&
         lhs.form_offset_z == rhs.form_offset_z &&
+        lhs.roe_state == rhs.roe_state &&
+        lhs.engagement_authority_holder_id == rhs.engagement_authority_holder_id &&
+        lhs.engagement_authority_grantor_id == rhs.engagement_authority_grantor_id &&
         lhs.assigned_target_id == rhs.assigned_target_id &&
         lhs.authorization_to_fire == rhs.authorization_to_fire &&
         lhs.active == rhs.active;

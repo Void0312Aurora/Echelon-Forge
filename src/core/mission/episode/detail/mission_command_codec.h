@@ -25,6 +25,8 @@ double normalize_heading_deg(double heading_deg);
 
 RecoveryApproachType parse_recovery_approach_type(const nlohmann::json& mission_json);
 std::vector<SpatialRouteWaypoint> build_route_waypoints_from_json(const nlohmann::json& mission_json);
+void write_mission_command_fields_to_json(const MissionCommand& command, nlohmann::json* mission_json);
+MissionCommand build_mission_command_from_json(const nlohmann::json& mission_json);
 
 nlohmann::json build_state_mission_command_json(const ExecutionEpisodeState& state);
 void update_state_mission_command_heading(ExecutionEpisodeState* state, double target_heading_deg);

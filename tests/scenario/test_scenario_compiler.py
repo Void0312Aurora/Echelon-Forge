@@ -100,6 +100,27 @@ def _sample_route_template_scenario() -> dict:
     }
 
 
+def _sample_maritime_scenario(configured: bool) -> dict:
+    scenario = _sample_scenario()
+    if configured:
+        scenario["environment"]["maritime"] = {
+            "sea_state": 3.0,
+            "wave_heading_deg": 45.0,
+            "wave_period_s": 7.5,
+        }
+    return scenario
+
+
+def _sample_explicit_calm_maritime_scenario() -> dict:
+    scenario = _sample_scenario()
+    scenario["environment"]["maritime"] = {
+        "sea_state": 0.0,
+        "wave_heading_deg": 135.0,
+        "wave_period_s": 11.0,
+    }
+    return scenario
+
+
 def _make_geometry() -> ef_py.CompiledScenarioGeometry:
     geom = ef_py.CompiledScenarioGeometry()
 
@@ -239,12 +260,40 @@ class ScenarioCompilerTests(unittest.TestCase):
         self.assertIn("environment", context)
         self.assertIn("mission_command", context)
         self.assertIn("_runtime_agent_spawn", context)
-        self.assertNotIn("entities", context)
+        if "entities" in context:
+            self.assertTrue(isinstance(context["entities"], list))
+            self.assertTrue(all("scripted_agent" in ent for ent in context["entities"]))
         self.assertNotIn("zones", context["environment"])
         self.assertEqual(int(context["environment"]["max_steps"]), 10)
         self.assertAlmostEqual(float(context["environment"]["time_step"]), 0.05, places=6)
         self.assertAlmostEqual(float(context["_runtime_agent_spawn"]["pos"][0]), -4500.0, places=6)
         self.assertAlmostEqual(float(context["_runtime_agent_spawn"]["heading"]), 90.0, places=6)
+
+    def test_instantiate_runtime_context_preserves_lightweight_scripted_entity_context(self) -> None:
+        scenario = _sample_scenario()
+        scenario["entities"].append(
+            {
+                "name": "Red_F16",
+                "type": "F-16C_Block50",
+                "side": "Red",
+                "pos": [0.0, 8000.0, 1200.0],
+                "vel": [0.0, -180.0, 0.0],
+                "heading": 180.0,
+                "scripted_agent": {
+                    "name": "red_scripted_agent",
+                    "target_name": "Blue_F16",
+                    "fire_range_m": 9000.0,
+                },
+            }
+        )
+        compiled = ScenarioCompiler.compile_data(scenario)
+
+        context = compiled.instantiate_runtime_context()
+
+        self.assertIn("entities", context)
+        self.assertEqual(len(context["entities"]), 1)
+        self.assertEqual(str(context["entities"][0]["name"]), "Red_F16")
+        self.assertEqual(str(context["entities"][0]["scripted_agent"]["name"]), "red_scripted_agent")
 
     def test_loader_can_load_compiled_scenario(self) -> None:
         compiled = ScenarioCompiler.compile_path(self._scenario_path)
@@ -370,6 +419,43 @@ class SpatialQueryRuntimeTests(unittest.TestCase):
         self.assertTrue(math.isclose(route.xtk_m, 0.0, abs_tol=1.0e-6))
         self.assertGreater(route.distance_from_prev_turn_m, 0.0)
         self.assertTrue(math.isclose(route.distance_from_prev_turn_m, route.along_m, abs_tol=1.0e-6))
+
+    def test_compile_world_layout_tracks_maritime_configuration_presence(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8", delete=False) as handle:
+            json.dump(_sample_maritime_scenario(False), handle, ensure_ascii=True)
+            no_maritime_path = handle.name
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8", delete=False) as handle:
+            json.dump(_sample_maritime_scenario(True), handle, ensure_ascii=True)
+            maritime_path = handle.name
+
+        try:
+            compiled_no_maritime = ScenarioCompiler.compile_path(no_maritime_path)
+            compiled_maritime = ScenarioCompiler.compile_path(maritime_path)
+        finally:
+            os.unlink(no_maritime_path)
+            os.unlink(maritime_path)
+
+        self.assertFalse(compiled_no_maritime.runtime_metadata.layout_template.maritime_configured)
+        self.assertTrue(compiled_maritime.runtime_metadata.layout_template.maritime_configured)
+        self.assertAlmostEqual(compiled_maritime.runtime_metadata.layout_template.sea_state, 3.0, places=6)
+        self.assertAlmostEqual(compiled_maritime.runtime_metadata.layout_template.wave_heading_deg, 45.0, places=6)
+        self.assertAlmostEqual(compiled_maritime.runtime_metadata.layout_template.wave_period_s, 7.5, places=6)
+
+    def test_compile_world_layout_treats_explicit_calm_maritime_as_configured_override(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8", delete=False) as handle:
+            json.dump(_sample_explicit_calm_maritime_scenario(), handle, ensure_ascii=True)
+            maritime_path = handle.name
+
+        try:
+            compiled = ScenarioCompiler.compile_path(maritime_path)
+        finally:
+            os.unlink(maritime_path)
+
+        layout = compiled.runtime_metadata.layout_template
+        self.assertTrue(layout.maritime_configured)
+        self.assertAlmostEqual(layout.sea_state, 0.0, places=6)
+        self.assertAlmostEqual(layout.wave_heading_deg, 135.0, places=6)
+        self.assertAlmostEqual(layout.wave_period_s, 11.0, places=6)
 
 
 if __name__ == "__main__":

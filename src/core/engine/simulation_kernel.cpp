@@ -3,6 +3,7 @@
 #include "components/physics/instruments.h"
 #include "core/interfaces/environment_model.h"
 #include "core/interfaces/control_model.h"
+#include "core/interfaces/acoustic_model.h"
 #include "core/interfaces/effects_model.h"
 #include "core/interfaces/guidance_model.h"
 #include "core/interfaces/sensor_model.h"
@@ -18,14 +19,42 @@ SimulationKernel::SimulationKernel()
     : unit_factory_(std::make_unique<DefaultUnitFactory>()),
       effects_model_(make_default_effects_model()),
       sensor_model_(make_default_sensor_model()),
+      acoustic_model_(make_default_acoustic_model()),
       control_model_(make_default_control_model()),
       guidance_model_(make_default_guidance_model()),
       environment_model_(make_default_environment_model()) {
     register_components_and_systems();
+    if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
+        ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
+    }
     reset(42); // Default reset
 }
 
-SimulationKernel::~SimulationKernel() = default;
+SimulationKernel::~SimulationKernel() {
+    shutdown();
+}
+
+void SimulationKernel::shutdown() {
+    if (shutdown_complete_) {
+        return;
+    }
+    shutdown_complete_ = true;
+
+    if (exact_stage_trace_frame_active_) {
+        ecs_frame_end(ecs.c_ptr());
+        exact_stage_trace_frame_active_ = false;
+    }
+
+    ecs.delete_with<SimObject>();
+    ecs.reset();
+
+    environment_model_.reset();
+    unit_factory_.reset();
+    effects_model_.reset();
+    sensor_model_.reset();
+    control_model_.reset();
+    guidance_model_.reset();
+}
 
 void SimulationKernel::set_unit_factory(std::unique_ptr<IUnitFactory> factory) {
     if (factory) {
@@ -50,6 +79,15 @@ void SimulationKernel::set_sensor_model(std::unique_ptr<ISensorModel> model) {
         ecs.set<SensorModelRef>({sensor_model_.get()});
     } else {
         spdlog::warn("Attempted to set a null sensor model; keeping current model.");
+    }
+}
+
+void SimulationKernel::set_acoustic_model(std::unique_ptr<IAcousticModel> model) {
+    if (model) {
+        acoustic_model_ = std::move(model);
+        ecs.set<AcousticModelRef>({acoustic_model_.get()});
+    } else {
+        spdlog::warn("Attempted to set a null acoustic model; keeping current model.");
     }
 }
 
@@ -114,6 +152,13 @@ void SimulationKernel::step() {
     // We pass the fixed delta_time to progress
     // This overrides the internal clock measuring
     ecs.progress(time_step);
+    auto query = ecs.query<const MissionCommand, const NavalWeaponSystem>();
+    query.each([this](flecs::entity e, const MissionCommand& mission, const NavalWeaponSystem&) {
+        if (!mission.active) {
+            return;
+        }
+        (void)try_fire_naval_mission_weapon(static_cast<uint64_t>(e.id()));
+    });
 }
 
 bool SimulationKernel::load_database(const std::string& path) {
@@ -167,4 +212,23 @@ void SimulationKernel::set_terrain_type(const std::string& terrain_type) {
     if (environment_model_) {
         environment_model_->set_terrain_type(terrain_type);
     }
+}
+
+void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg, double wave_period_s) {
+    if (environment_model_) {
+        environment_model_->set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
+    }
+}
+
+void SimulationKernel::clear_maritime_state() {
+    if (environment_model_) {
+        environment_model_->clear_maritime_state();
+    }
+}
+
+IEnvironmentModel::MaritimeState SimulationKernel::get_maritime_state() const {
+    if (environment_model_) {
+        return environment_model_->get_maritime_state();
+    }
+    return {};
 }

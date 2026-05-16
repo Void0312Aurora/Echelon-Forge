@@ -1,0 +1,120 @@
+{
+    "scenario_name": "F-16 Cruise ParamRoute NavV2 Train",
+    "description": "Cruise training with command-aligned nav_v2 mission inputs and parameterized steerpoint route generation.",
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 7000,
+        "terrain_type": "flat",
+        "wind": {
+            "speed_mps": 8.0,
+            "dir_from_deg": 270.0,
+            "shear_mps_per_km": 0.0
+        },
+        "randomization": {
+            "world_yaw_range": [0.0, 360.0],
+            "world_yaw_origin": [0.0, 0.0],
+            "wind_speed_range": [0.0, 22.0],
+            "wind_dir_from_range": [0.0, 360.0],
+            "wind_shear_range": [0.0, 14.0]
+        }
+    },
+    "mission_command": {
+        "command_code": 3,
+        "target_heading": 90.0,
+        "target_altitude": 1400.0,
+        "target_speed": 210.0,
+        "waypoint_mode": "flyby",
+        "waypoint_radius_m": 1000.0,
+        "nav_course_dev_full_scale_m": 1800.0,
+        "lnav_bank_limit_deg": 30.0,
+        "lnav_max_intercept_deg": 25.0,
+        "lnav_lookahead_m": 1500.0,
+        "waypoints": [
+            {"x": 15000.0, "y": 2000.0, "z": 1400.0},
+            {"x": 30000.0, "y": -8000.0, "z": 1400.0},
+            {"x": 45000.0, "y": 6000.0, "z": 1400.0}
+        ],
+        "randomization": {
+            "route_generator": {
+                "enabled": true,
+                "waypoint_count_range": [3, 5],
+                "first_leg_heading_delta_deg_range": [-35.0, 35.0],
+                "leg_length_m_range": [11000.0, 21000.0],
+                "route_budget_fraction": 0.8,
+                "turn_angle_deg_range": [-95.0, 95.0],
+                "min_turn_abs_deg": 18.0,
+                "max_turn_abs_deg": 110.0,
+                "altitude_m_range": [900.0, 2400.0],
+                "altitude_step_m_range": [-350.0, 350.0],
+                "speed_mps_range": [185.0, 235.0],
+                "waypoint_radius_m_range": [900.0, 1500.0]
+            }
+        }
+    },
+    "entities": [
+        {
+            "name": "Blue_F16",
+            "type": "F-16C_Block50",
+            "side": "Blue",
+            "pos": [0.0, 0.0, 1400.0],
+            "vel": [210.0, 0.0, 0.0],
+            "heading": 90.0,
+            "is_agent": true
+        }
+    ],
+    "objectives": [],
+    "rewards": {
+        "survival": 0.05,
+        "crash_penalty": -1000.0,
+        "waypoint_progress_weight": 0.055,
+        "waypoint_distance_weight": -0.00004,
+        "waypoint_distance_clip_m": 6000.0,
+        "waypoint_distance_scale_by_route": true,
+        "waypoint_distance_route_ref_m": 55000.0,
+        "waypoint_distance_route_scale_min": 0.55,
+        "waypoint_distance_route_scale_max": 1.0,
+        "waypoint_cross_track_weight": -0.35,
+        "waypoint_cross_track_deadband_m": 250.0,
+        "waypoint_cross_track_norm_m": 1500.0,
+        "waypoint_cross_track_power": 1.5,
+        "waypoint_cross_track_clip": 2.0,
+        "waypoint_turn_relief_max": 0.7,
+        "waypoint_turn_heading_relief_max": 0.45,
+        "waypoint_turn_relief_window_m": 3500.0,
+        "waypoint_turn_relief_min_turn_deg": 20.0,
+        "waypoint_turn_relief_angle_ref_deg": 85.0,
+        "waypoint_turn_relief_power": 1.25,
+        "waypoint_reached_bonus": 260.0,
+        "waypoint_mission_success_bonus": 1200.0,
+        "altitude_error_weight": -0.07,
+        "altitude_error_deadband_m": 50.0,
+        "altitude_error_norm_m": 180.0,
+        "altitude_error_power": 2.0,
+        "altitude_error_clip": 2.0,
+        "altitude_hold_bonus": 0.04,
+        "speed_error_weight": -0.05,
+        "speed_error_deadband": 12.0,
+        "speed_error_norm": 55.0,
+        "speed_error_power": 2.0,
+        "speed_error_clip": 2.0,
+        "speed_hold_bonus": 0.03,
+        "heading_error_weight": -0.003,
+        "heading_hold_deadband_deg": 8.0,
+        "heading_hold_bonus": 0.02,
+        "roll_abs_weight": -0.008,
+        "roll_abs_norm_deg": 20.0,
+        "roll_abs_power": 2.0,
+        "pitch_abs_weight": -0.004,
+        "pitch_abs_norm_deg": 20.0,
+        "pitch_abs_power": 2.0,
+        "yaw_rate_abs_weight": -0.004,
+        "yaw_rate_abs_norm_deg_s": 10.0,
+        "yaw_rate_abs_power": 2.0,
+        "beta_abs_weight": -0.008,
+        "beta_abs_norm_deg": 10.0,
+        "beta_abs_power": 2.0,
+        "g_deviation_weight": -0.015,
+        "g_deviation_norm": 0.6,
+        "g_deviation_power": 2.0
+    }
+}

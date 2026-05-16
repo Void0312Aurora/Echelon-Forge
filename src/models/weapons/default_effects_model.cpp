@@ -98,6 +98,34 @@ bool check_hitbox(const Vec3& local_p, const Hitbox& box) {
             local_p.z >= min_z && local_p.z <= max_z);
 }
 
+bool system_name_matches(const std::string& system, const char* token) {
+    return system.find(token) != std::string::npos;
+}
+
+void clamp_platform_damage_state(PlatformDamageState* state) {
+    if (!state) return;
+    state->mission_capability = std::clamp(state->mission_capability, 0.0, 1.0);
+    state->mobility_capability = std::clamp(state->mobility_capability, 0.0, 1.0);
+    state->sensor_capability = std::clamp(state->sensor_capability, 0.0, 1.0);
+    state->survivability_margin = std::clamp(state->survivability_margin, 0.0, 1.0);
+
+    state->mission_kill = state->mission_capability <= 0.25;
+    state->mobility_kill = state->mobility_capability <= 0.25;
+    state->sensor_kill = state->sensor_capability <= 0.25;
+
+    if (state->survivability_margin <= 0.0) {
+        state->loss_state = PlatformLossState::Lost;
+    } else if (state->mobility_kill) {
+        state->loss_state = PlatformLossState::MobilityKill;
+    } else if (state->sensor_kill) {
+        state->loss_state = PlatformLossState::SensorKill;
+    } else if (state->mission_kill) {
+        state->loss_state = PlatformLossState::MissionKill;
+    } else {
+        state->loss_state = PlatformLossState::CombatCapable;
+    }
+}
+
 class DefaultEffectsModel : public IEffectsModel {
 public:
     EffectsResult on_proximity_hit(flecs::world world,
@@ -106,7 +134,6 @@ public:
                                    flecs::entity target_entity) override {
         EffectsResult result;
 
-        bool destroyed = false;
         Score* score = nullptr;
         auto attacker = world.entity(missile.attacker_id);
         if (attacker.is_valid()) {
@@ -123,7 +150,6 @@ public:
             }
             if (hp->current_hp <= 0) {
                 target_entity.destruct();
-                destroyed = true;
                 if (score) { 
                     score->total_reward += 1000.0; 
                     score->kills_confirmed++;
@@ -136,6 +162,7 @@ public:
         // --- 2. Geometric Damage Logic (New) ---
         const HitboxConfig* hitboxes = target_entity.get<HitboxConfig>();
         SystemHealth* sys_health = target_entity.get_mut<SystemHealth>();
+        PlatformDamageState* platform_damage = target_entity.get_mut<PlatformDamageState>();
         const Transform* t_tgt = target_entity.get<Transform>();
         const Transform* t_msl = missile_entity.get<Transform>();
 
@@ -150,27 +177,52 @@ public:
                     structure_hit = true;
                     spdlog::info("HITBOX >>> Box {} HIT! Protected Systems:", box.id);
                     
-                    // Simple damage Model: Impact destroys systems in the box
-                    // Ideally we subtract HP based on Armor penetration
-                     // Simple damage Model: Impact destroys systems in the box
-                    // Ideally we subtract HP based on Armor penetration
                     for (const auto& system : box.protected_systems) {
-                        sys_health->systems[system] -= 1.0; // Instant kill for now
-                        if (sys_health->systems[system] < 0) sys_health->systems[system] = 0;
+                        const double severity = std::clamp(missile.damage / 180.0, 0.15, 0.65);
+                        sys_health->systems[system] = std::max(0.0, sys_health->systems[system] - severity);
                         spdlog::info("   - {} Status: {:.2f}", system, sys_health->systems[system]);
+
+                        if (platform_damage) {
+                            platform_damage->survivability_margin -= 0.08 + 0.08 * severity;
+                            if (system_name_matches(system, "radar")) {
+                                platform_damage->sensor_capability -= 0.35 + 0.20 * severity;
+                                platform_damage->fire_severity += 0.05 + 0.05 * severity;
+                            }
+                            if (system_name_matches(system, "engineering") ||
+                                system_name_matches(system, "engine") ||
+                                system_name_matches(system, "fuel")) {
+                                platform_damage->mobility_capability -= 0.25 + 0.20 * severity;
+                                platform_damage->fire_severity += 0.08 + 0.08 * severity;
+                                platform_damage->flooding_severity += 0.04 + 0.05 * severity;
+                                platform_damage->ongoing_hull_breach += 0.03 + 0.04 * severity;
+                            }
+                            if (system_name_matches(system, "combat") ||
+                                system_name_matches(system, "command") ||
+                                system_name_matches(system, "data_link") ||
+                                system_name_matches(system, "vls") ||
+                                system_name_matches(system, "gun") ||
+                                system_name_matches(system, "radar")) {
+                                platform_damage->mission_capability -= 0.20 + 0.20 * severity;
+                                platform_damage->fire_severity += 0.04 + 0.04 * severity;
+                            }
+                            platform_damage->fire_severity = std::clamp(platform_damage->fire_severity, 0.0, 1.0);
+                            platform_damage->flooding_severity = std::clamp(platform_damage->flooding_severity, 0.0, 1.0);
+                            platform_damage->ongoing_hull_breach = std::clamp(platform_damage->ongoing_hull_breach, 0.0, 1.0);
+                        }
                         
                         // Apply Functional Consequences
-                        if (sys_health->systems[system] <= 0.0) {
-                            if (system == "radar") {
+                        if (sys_health->systems[system] <= 0.5) {
+                            if (system == "radar" || system_name_matches(system, "radar")) {
                                 if (Sensor* s = target_entity.get_mut<Sensor>()) {
-                                    s->max_range = 0.0; // Blind
-                                    spdlog::warn("   -> RADAR DESTROYED!");
+                                    s->max_range *= 0.4;
+                                    spdlog::warn("   -> RADAR DEGRADED!");
                                 }
                             }
-                            else if (system == "engine" || system == "engine_left" || system == "engine_right") {
+                            else if (system == "engineering" || system == "engine" ||
+                                     system == "engine_left" || system == "engine_right") {
                                 if (Propulsion* p = target_entity.get_mut<Propulsion>()) {
-                                    p->mil_thrust_n *= 0.5; // Lose half thrust?
-                                    p->ab_thrust_n *= 0.5;
+                                    p->mil_thrust_n *= 0.75;
+                                    p->ab_thrust_n *= 0.75;
                                     spdlog::warn("   -> ENGINE DAMAGE! Thrust reduced.");
                                 }
                             }
@@ -182,6 +234,22 @@ public:
                             }
                         }
                     }
+                }
+            }
+
+            if (platform_damage) {
+                clamp_platform_damage_state(platform_damage);
+                if (hp) {
+                    hp->mission_kill = platform_damage->mission_kill;
+                    hp->mobility_kill = platform_damage->mobility_kill;
+                    hp->sensor_kill = platform_damage->sensor_kill;
+                    if (platform_damage->loss_state == PlatformLossState::Lost) {
+                        hp->current_hp = 0.0;
+                    }
+                }
+                if (platform_damage->loss_state == PlatformLossState::Lost) {
+                    target_entity.destruct();
+                    return result;
                 }
             }
             

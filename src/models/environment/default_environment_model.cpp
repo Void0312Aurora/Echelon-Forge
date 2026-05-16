@@ -73,6 +73,7 @@ class DefaultEnvironmentModel : public IEnvironmentModel {
     double base_wind_speed_mps_ = 10.0;
     double base_wind_dir_from_deg_ = 270.0;   // Wind "from" West => blowing to East (+X)
     double wind_shear_mps_per_km_ = 4.0;      // Matches legacy (h/250 => +4 m/s per km)
+    MaritimeState maritime_state_{};
     bool flat_terrain_ = false;
 
 public:
@@ -145,9 +146,37 @@ public:
     }
 
     bool check_line_of_sight(double x1, double y1, double z1, double x2, double y2, double z2) override {
-        // Simple ground check approximation
-        if (z1 < get_terrain_elevation(x1, y1) || z2 < get_terrain_elevation(x2, y2)) return false;
-        return true; 
+        const double terrain1 = get_terrain_elevation(x1, y1);
+        const double terrain2 = get_terrain_elevation(x2, y2);
+
+        // Sea-surface LOS uses a small tolerance and sparse land sampling so
+        // z=0 maritime contacts are not spuriously blocked by near-zero legacy terrain.
+        constexpr double kSurfaceEndpointToleranceM = 2.0;
+        constexpr double kLowReliefTerrainToleranceM = 1.0;
+        constexpr double kLandObstructionThresholdM = 1.5;
+        if (maritime_state_.configured &&
+            std::abs(z1) <= kSurfaceEndpointToleranceM &&
+            std::abs(z2) <= kSurfaceEndpointToleranceM &&
+            terrain1 <= kLowReliefTerrainToleranceM &&
+            terrain2 <= kLowReliefTerrainToleranceM) {
+            constexpr int kLosSamples = 24;
+            for (int i = 1; i < kLosSamples; ++i) {
+                const double t = static_cast<double>(i) / static_cast<double>(kLosSamples);
+                const double sx = x1 + (x2 - x1) * t;
+                const double sy = y1 + (y2 - y1) * t;
+                if (get_terrain_elevation(sx, sy) > kLandObstructionThresholdM) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        constexpr double kTerrainContactToleranceM = 0.5;
+        if (z1 + kTerrainContactToleranceM < terrain1 ||
+            z2 + kTerrainContactToleranceM < terrain2) {
+            return false;
+        }
+        return true;
     }
 
     double get_weather_attenuation(double, double, double, double, double, double, int) override {
@@ -293,6 +322,22 @@ public:
         flat_terrain_ = false;
     }
 
+    void set_maritime_state(double sea_state, double wave_heading_deg, double wave_period_s) override {
+        maritime_state_.configured = true;
+        maritime_state_.sea_state = std::clamp(sea_state, 0.0, 12.0);
+        maritime_state_.wave_heading_deg = std::fmod(wave_heading_deg, 360.0);
+        if (maritime_state_.wave_heading_deg < 0.0) maritime_state_.wave_heading_deg += 360.0;
+        maritime_state_.wave_period_s = std::max(2.0, wave_period_s);
+    }
+
+    void clear_maritime_state() override {
+        maritime_state_ = MaritimeState{};
+    }
+
+    MaritimeState get_maritime_state() const override {
+        return maritime_state_;
+    }
+
     bool snapshot_to(DefaultEnvironmentSnapshot* out) const {
         if (out == nullptr) {
             return false;
@@ -300,6 +345,10 @@ public:
         *out = DefaultEnvironmentSnapshot{};
         out->valid = true;
         out->flat_terrain = flat_terrain_;
+        out->maritime_state_configured = maritime_state_.configured;
+        out->sea_state = maritime_state_.sea_state;
+        out->wave_heading_deg = maritime_state_.wave_heading_deg;
+        out->wave_period_s = maritime_state_.wave_period_s;
         out->raster.origin_x = raster_layer_.origin.x;
         out->raster.origin_y = raster_layer_.origin.y;
         out->raster.resolution_m = raster_layer_.resolution;

@@ -91,6 +91,8 @@ double default_bounding_radius_m(UnitType type) {
             return 10.0;
         case UnitType::Ship:
             return 50.0;
+        case UnitType::Submarine:
+            return 40.0;
         case UnitType::Missile:
             return 2.0;
         case UnitType::Facility:
@@ -494,6 +496,22 @@ std::vector<uint64_t> WorldBatchRuntime::spawn_units_batch(const std::vector<Wor
                 item.vy,
                 item.vz
             );
+            if (entity.is_valid()) {
+                if (item.ammo_override_enabled) {
+                    world.set_unit_ammo(
+                        entity.id(),
+                        item.missiles_remaining,
+                        item.max_missiles
+                    );
+                }
+                if (item.weapon_cooldown_override_enabled) {
+                    world.set_weapon_cooldown(
+                        entity.id(),
+                        item.weapon_cooldown_s,
+                        item.weapon_last_fire_time
+                    );
+                }
+            }
             out[item_index] = entity.id();
         }
     });
@@ -565,6 +583,22 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
                 item.vy,
                 item.vz
             );
+            if (entity.is_valid()) {
+                if (item.ammo_override_enabled) {
+                    world.set_unit_ammo(
+                        entity.id(),
+                        item.missiles_remaining,
+                        item.max_missiles
+                    );
+                }
+                if (item.weapon_cooldown_override_enabled) {
+                    world.set_weapon_cooldown(
+                        entity.id(),
+                        item.weapon_cooldown_s,
+                        item.weapon_last_fire_time
+                    );
+                }
+            }
             out[item_index] = entity.id();
         }
     });

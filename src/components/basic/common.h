@@ -53,7 +53,11 @@ namespace Math {
         double roll_deg
     ) {
         const double psi = to_radians(90.0 - heading_deg);
-        const double theta = to_radians(pitch_deg);
+        // Across the flight-control and propulsion systems, positive pitch is
+        // defined as nose-up (forward axis gains +world Z). Use the same sign
+        // convention in the shared body/world transforms so aerodynamic state,
+        // lift direction, and thrust all agree on attitude semantics.
+        const double theta = to_radians(-pitch_deg);
         const double phi = to_radians(roll_deg);
         return {
             std::cos(psi),
@@ -153,7 +157,8 @@ enum class UnitType : uint8_t {
     Sensor,
     Engine,
     EWSuite,
-    RCSProfile
+    RCSProfile,
+    Submarine
 };
 
 struct KeyEntity {

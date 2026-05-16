@@ -23,6 +23,12 @@ def _resolve_specs(group: str) -> tuple[str, list[str], str]:
         return ("direct", sorted(glob.glob(resolve_repo_path("tests", "contracts", "env", "*", "*.json"))), "no env regression contracts found")
     if group == "unit":
         return ("subprocess", sorted(glob.glob(resolve_repo_path("tests", "contracts", "unit", "**", "*.json"), recursive=True)), "no unit regression contracts found")
+    if group == "sim_kernel":
+        return (
+            "subprocess",
+            sorted(glob.glob(resolve_repo_path("tests", "contracts", "unit", "kernel", "*.json"))),
+            "no simulation kernel contracts found",
+        )
     if group == "bridges":
         return ("subprocess", sorted(glob.glob(resolve_repo_path("tests", "contracts", "bridges", "**", "*.json"), recursive=True)), "no scripted bridge contracts found")
     if group == "route_generator":
@@ -97,8 +103,14 @@ def parse_args() -> argparse.Namespace:
         "--group",
         dest="groups",
         action="append",
-        choices=["chain", "env", "unit", "bridges", "route_generator", "same_process"],
+        choices=["chain", "env", "unit", "bridges", "route_generator", "same_process", "sim_kernel"],
         help="Contract group to run. Repeat to select multiple groups. Defaults to all groups.",
+    )
+    parser.add_argument(
+        "--default-group",
+        choices=["all", "sim_kernel"],
+        default="all",
+        help="Default group set to run when --group is omitted.",
     )
     return parser.parse_args()
 
@@ -108,7 +120,12 @@ def main() -> int:
 
     ensure_repo_imports()
     args = parse_args()
-    groups = list(args.groups or ["chain", "env", "unit", "bridges", "route_generator", "same_process"])
+    if args.groups:
+        groups = list(args.groups)
+    elif args.default_group == "sim_kernel":
+        groups = ["sim_kernel"]
+    else:
+        groups = ["chain", "env", "unit", "bridges", "route_generator", "same_process"]
 
     for group in groups:
         mode, spec_paths, empty_message = _resolve_specs(group)

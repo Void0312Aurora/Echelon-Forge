@@ -306,25 +306,8 @@ bool activate_post_waypoint_transition(
         mission_json[it.key()] = it.value();
     }
 
-    MissionCommand next_command{};
-    next_command.cmd_heading_deg = mission_json["target_heading"].get<double>();
-    next_command.cmd_altitude_m = mission_json["target_altitude"].get<double>();
-    next_command.cmd_speed_mps = mission_json["target_speed"].get<double>();
+    MissionCommand next_command = build_mission_command_from_json(mission_json);
     next_command.command_code = command_code;
-    next_command.route_ref_id = command_code == 3 ? mission_json["route_ref_id"].get<std::uint64_t>() : 0;
-    next_command.recovery_base_id = mission_json["recovery_base_id"].get<std::uint64_t>();
-    next_command.recovery_runway_id = mission_json["recovery_runway_id"].get<std::uint64_t>();
-    next_command.recovery_approach_type = parse_recovery_approach_type(mission_json);
-    next_command.takeoff_procedure_id = static_cast<TakeoffProcedureType>(mission_json["takeoff_procedure_code"].get<int>());
-    next_command.takeoff_clearance_id = static_cast<TakeoffClearanceState>(mission_json["takeoff_clearance_code"].get<int>());
-    next_command.takeoff_interval_s = mission_json["takeoff_interval_s"].get<double>();
-    next_command.runway_slot_id = static_cast<RunwaySlotPosition>(mission_json["runway_slot_code"].get<int>());
-    next_command.formation_id = json_int_or(mission_json, "formation_id", 0);
-    next_command.form_offset_x = json_double_or(mission_json, "form_offset_x", 0.0);
-    next_command.form_offset_y = json_double_or(mission_json, "form_offset_y", 0.0);
-    next_command.form_offset_z = json_double_or(mission_json, "form_offset_z", 0.0);
-    next_command.assigned_target_id = json_uint64_or(mission_json, "assigned_target_id", 0);
-    next_command.authorization_to_fire = json_bool_or(mission_json, "authorization_to_fire", false);
     next_command.active = true;
 
     state->has_mission_command = true;

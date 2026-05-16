@@ -45,13 +45,47 @@ struct Loadout {
 struct LogisticsNode {
     double supply_radius_m;     // e.g. 500m for Base, 50m for Tanker
     bool infinite_supply;       
-    // Could add fuel/ammo stocks here later
+    bool underway_replenishment_enabled{false};
+    double underway_min_separation_m{0.0};
+    double underway_max_separation_m{0.0};
+    double underway_max_relative_speed_mps{0.0};
+    double transfer_rate_fuel_units_per_s{0.0};
+    double transfer_rate_missile_units_per_s{0.0};
+    double transfer_rate_dry_cargo_units_per_s{0.0};
+};
+
+struct NavalStores {
+    double fuel_units_current{0.0};
+    double fuel_units_max{0.0};
+    double missile_units_current{0.0};
+    double missile_units_max{0.0};
+    double dry_cargo_units_current{0.0};
+    double dry_cargo_units_max{0.0};
+    bool can_receive_underway{false};
+    bool can_provide_underway{false};
+};
+
+enum class ResupplyKind {
+    BaseRefuel = 0,
+    NavalUnderway = 1,
+};
+
+enum class NavalResupplyStage {
+    None = 0,
+    ApproachWindow = 1,
+    Connected = 2,
+    Transferring = 3,
+    Complete = 4,
+    Aborted = 5,
 };
 
 struct ResupplyState {
     double time_remaining_s;    // Implementation of "Turnaround Time"
     bool is_refueling;
     bool is_rearming;
+    ResupplyKind kind{ResupplyKind::BaseRefuel};
+    uint64_t partner_entity_id{0};
+    NavalResupplyStage naval_stage{NavalResupplyStage::None};
 };
 
 // Ground Contact State

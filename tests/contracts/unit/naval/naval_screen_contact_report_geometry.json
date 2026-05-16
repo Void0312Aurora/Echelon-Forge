@@ -1,0 +1,42 @@
+{
+  "type": "unit_regression",
+  "check_kind": "naval_screen_contact_report",
+  "scenario": "scenarios/naval/ddg51_take1_screen_contact_report_v1.json",
+  "seed": 20260516,
+  "screen_entity": "Blue_Screen_DDG51",
+  "hvu_entity": "Blue_HVU_TAKE1",
+  "contact_entity": "Red_Surface_Contact",
+  "max_steps": 80,
+  "report_message_type": "ReportTrack",
+  "forbid_hvu_local_source": true,
+  "checks": {
+    "initial_screen_hvu_separation_m": {
+      "min": 14000.0,
+      "max": 15500.0
+    },
+    "initial_screen_contact_range_m": {
+      "max": 46300.0
+    },
+    "initial_hvu_contact_range_m": {
+      "min": 36300.0
+    },
+    "screen_first_detection_step": {
+      "max": 80
+    },
+    "hvu_first_shared_track_step": {
+      "max": 80
+    },
+    "hvu_first_report_step": {
+      "max": 80
+    },
+    "screen_hvu_separation_m_min": {
+      "min": 14000.0
+    },
+    "screen_hvu_separation_m_max": {
+      "max": 15500.0
+    },
+    "hvu_contact_closest_approach_m": {
+      "min": 36300.0
+    }
+  }
+}

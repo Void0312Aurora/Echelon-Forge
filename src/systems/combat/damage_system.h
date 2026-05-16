@@ -7,7 +7,11 @@
 
 #include "components/basic/common.h"
 #include "components/command/legacy_command.h"
+#include "components/combat/damage.h"
+#include "components/combat/health.h"
 #include "components/combat/weapon.h"
+#include "components/naval/ship_platform.h"
+#include "components/physics/performance.h"
 #include "core/interfaces/effects_model.h"
 #include <spdlog/spdlog.h>
 
@@ -108,6 +112,67 @@ inline void register_damage_system(flecs::world& ecs) {
                         it.world(), it.entity(i), effective, target_entity);
                     it.entity(i).destruct();
                 }
+            }
+        });
+
+    ecs.system<Health, PlatformDamageState, const ShipPlatform>("NavalDamageStateUpdate")
+        .kind(flecs::OnUpdate)
+        .each([](flecs::entity e, Health& health, PlatformDamageState& damage, const ShipPlatform& ship) {
+            const double fire_decay = 0.0008;
+            const double flooding_decay = 0.0002;
+            const double breach_decay = 0.0001;
+
+            const double fire_progress = damage.fire_severity;
+            const double flooding_progress = damage.flooding_severity;
+            const double breach_progress = damage.ongoing_hull_breach;
+
+            damage.fire_severity = std::clamp(damage.fire_severity - fire_decay, 0.0, 1.0);
+            damage.flooding_severity = std::clamp(
+                damage.flooding_severity + 0.003 * breach_progress - flooding_decay,
+                0.0,
+                1.0
+            );
+            damage.ongoing_hull_breach = std::clamp(damage.ongoing_hull_breach - breach_decay, 0.0, 1.0);
+
+            damage.mission_capability -= 0.0015 * fire_progress;
+            damage.sensor_capability -= 0.0012 * fire_progress;
+            damage.mobility_capability -= 0.0018 * flooding_progress;
+            damage.survivability_margin -= 0.0022 * flooding_progress + 0.0010 * fire_progress;
+
+            damage.mission_capability = std::clamp(damage.mission_capability, 0.0, 1.0);
+            damage.mobility_capability = std::clamp(damage.mobility_capability, 0.0, 1.0);
+            damage.sensor_capability = std::clamp(damage.sensor_capability, 0.0, 1.0);
+            damage.survivability_margin = std::clamp(damage.survivability_margin, 0.0, 1.0);
+
+            damage.mission_kill = damage.mission_capability <= 0.25;
+            damage.mobility_kill = damage.mobility_capability <= 0.25;
+            damage.sensor_kill = damage.sensor_capability <= 0.25;
+
+            if (damage.survivability_margin <= 0.0 || health.current_hp <= 0.0) {
+                damage.loss_state = PlatformLossState::Lost;
+            } else if (damage.mobility_kill) {
+                damage.loss_state = PlatformLossState::MobilityKill;
+            } else if (damage.sensor_kill) {
+                damage.loss_state = PlatformLossState::SensorKill;
+            } else if (damage.mission_kill) {
+                damage.loss_state = PlatformLossState::MissionKill;
+            } else {
+                damage.loss_state = PlatformLossState::CombatCapable;
+            }
+
+            health.mission_kill = damage.mission_kill;
+            health.mobility_kill = damage.mobility_kill;
+            health.sensor_kill = damage.sensor_kill;
+
+            if (Propulsion* propulsion = e.get_mut<Propulsion>()) {
+                const double mobility_scale = std::clamp(damage.mobility_capability, 0.2, 1.0);
+                propulsion->mil_thrust_n = std::min(propulsion->mil_thrust_n, ship.max_speed_mps * 100000.0 * mobility_scale);
+                propulsion->ab_thrust_n = std::min(propulsion->ab_thrust_n, ship.max_speed_mps * 120000.0 * mobility_scale);
+            }
+
+            if (damage.loss_state == PlatformLossState::Lost) {
+                health.current_hp = 0.0;
+                e.destruct();
             }
         });
 }

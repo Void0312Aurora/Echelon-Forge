@@ -138,7 +138,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_head_lr_scale = float(max(0.0, hmoe_head_lr_scale))
         self._hmoe_residual_warmup_fraction = float(min(max(0.0, hmoe_residual_warmup_fraction), 1.0))
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
-        self._hmoe_residual_gate = 1.0
+        self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
         super().__init__(observation_space, action_space, lr_schedule, *args, **kwargs)
         if not isinstance(self.action_space, spaces.Box):
@@ -167,26 +167,23 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
 
     def initialize_hmoe_from_shared_action_head(self) -> None:
         """
-        Bootstrap routed heads from the current shared action head.
+        Bootstrap routed heads for residual-style startup.
 
         Why:
         - The first HMoE line is intentionally a residual/specialization extension of the
           shared execution policy, not a from-scratch independent expert bank.
-        - Copying the shared head into routed heads gives each expert a meaningful initial
-          policy prior while still allowing subsequent specialization.
+        - The shared action head remains the initial policy mean.
+        - Routed heads should start neutral and only learn residual corrections on top of
+          the shared mean, otherwise bootstrap would amplify the shared action prior.
         """
         shared_head = getattr(self, "action_net", None)
         if shared_head is None:
             return
-        shared_weight = getattr(shared_head, "weight", None)
-        shared_bias = getattr(shared_head, "bias", None)
-        if shared_weight is None:
-            return
         with th.no_grad():
             for family_head in self.hmoe_head_bank.family_heads:
-                family_head.weight.copy_(shared_weight)
-                if shared_bias is not None and getattr(family_head, "bias", None) is not None:
-                    family_head.bias.copy_(shared_bias)
+                family_head.weight.zero_()
+                if getattr(family_head, "bias", None) is not None:
+                    family_head.bias.zero_()
             for family_subheads in self.hmoe_head_bank.subexpert_heads:
                 for sub_head in family_subheads:
                     sub_head.weight.zero_()

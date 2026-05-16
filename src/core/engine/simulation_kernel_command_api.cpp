@@ -1,6 +1,7 @@
 #include "simulation_kernel.h"
 
 #include "components/command/command_link.h"
+#include "components/command/command_link_qos.h"
 #include "components/command/legacy_command.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
@@ -59,12 +60,98 @@ ComponentT get_component_or_default(flecs::entity entity) {
     }
     return ComponentT{};
 }
+
+inline bool entity_is_ship(flecs::entity entity) {
+    const KeyEntity* key = entity.get<KeyEntity>();
+    return key && (key->type == UnitType::Ship || key->type == UnitType::Submarine);
+}
+
+inline MissionCommand ship_mission_command_from_unit_command(
+    flecs::entity entity,
+    double heading_deg,
+    double speed_mps,
+    double altitude_m
+) {
+    MissionCommand mission{};
+
+    const MissionCommand* existing = entity.get<MissionCommand>();
+    if (existing != nullptr) {
+        mission.roe_state = existing->roe_state;
+        mission.engagement_authority_holder_id = existing->engagement_authority_holder_id;
+        mission.engagement_authority_grantor_id = existing->engagement_authority_grantor_id;
+        mission.assigned_target_id = existing->assigned_target_id;
+        mission.authorization_to_fire = existing->authorization_to_fire;
+    }
+
+    mission.cmd_heading_deg = heading_deg;
+    mission.cmd_speed_mps = speed_mps;
+    mission.cmd_altitude_m = altitude_m;
+    mission.active = true;
+    return mission;
+}
+
+template <typename PendingT, typename CommandT>
+void queue_or_refresh_pending_command(flecs::entity entity, const CommandT& value, double deliver_time) {
+    CommandT next = value;
+    next.active = true;
+
+    if (PendingT* pending = entity.get_mut<PendingT>()) {
+        pending->command = next;
+        pending->deliver_time = deliver_time;
+        pending->active = true;
+        return;
+    }
+
+    entity.set<PendingT>({next, deliver_time, true});
+}
+
+inline bool queue_pending_mission_command(
+    flecs::entity entity,
+    const MissionCommand& value,
+    double current_time,
+    double latency_s
+) {
+    PendingMissionCommand* pending = entity.get_mut<PendingMissionCommand>();
+    if (!pending) {
+        entity.set<PendingMissionCommand>(make_pending_mission_command());
+        pending = entity.get_mut<PendingMissionCommand>();
+    }
+
+    MissionCommandPendingQueue* queue = entity.get_mut<MissionCommandPendingQueue>();
+    if (!queue) {
+        entity.set<MissionCommandPendingQueue>(make_mission_command_pending_queue());
+        queue = entity.get_mut<MissionCommandPendingQueue>();
+    }
+
+    return pending && queue && enqueue_pending_mission_command(*pending, *queue, value, current_time, latency_s);
+}
 } // namespace
 
 
 void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m) {
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set command");
     if (e.is_valid()) {
+        if (entity_is_ship(e)) {
+            const MissionCommand mission =
+                ship_mission_command_from_unit_command(e, heading_deg, speed_mps, altitude_m);
+            const CommandLink* link = e.get<CommandLink>();
+            if (command_link_requires_delivery_queue(link)) {
+                const double current_time = current_world_time_seconds(ecs);
+                if (!e.has<MissionCommand>()) {
+                    e.set<MissionCommand>({});
+                }
+                uint64_t seed = static_cast<uint64_t>(current_time * 1000.0) ^
+                                (entity_id * 0xd6e8feb86659fd93ULL) ^ 0x13579bdfULL;
+                double roll = deterministic_uniform01(seed);
+                if (roll >= link->drop_prob) {
+                    (void)queue_pending_mission_command(e, mission, current_time, link->latency_s);
+                }
+            } else {
+                e.set<MissionCommand>(mission);
+            }
+            return;
+        }
+
         const CommandLink* link = e.get<CommandLink>();
         if (command_link_requires_delivery_queue(link)) {
             const double current_time = current_world_time_seconds(ecs);
@@ -72,12 +159,14 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
                             (entity_id * 0xbf58476d1ce4e5b9ULL) ^ 0x12345678ULL;
             double roll = deterministic_uniform01(seed);
             if (roll >= link->drop_prob) {
-                PendingMovementCommand pending = make_pending_movement_command(
+                if (!e.has<MovementCommand>()) {
+                    e.set<MovementCommand>(make_legacy_autopilot_movement_command(0.0, 0.0, 0.0, false));
+                }
+                queue_or_refresh_pending_command<PendingMovementCommand>(
+                    e,
                     make_legacy_autopilot_movement_command(heading_deg, speed_mps, altitude_m),
-                    current_time + link->latency_s,
-                    true
+                    current_time + link->latency_s
                 );
-                e.set<PendingMovementCommand>(pending);
             }
         } else {
             e.set<MovementCommand>(make_legacy_autopilot_movement_command(heading_deg, speed_mps, altitude_m));
@@ -136,7 +225,8 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
                             (entity_id * 0x94d049bb133111ebULL) ^ 0x87654321ULL;
             double roll = deterministic_uniform01(seed);
             if (roll >= link->drop_prob) {
-                PendingActionCommand pending = make_pending_action_command(
+                queue_or_refresh_pending_command<PendingActionCommand>(
+                    e,
                     make_action_command(
                         clamp_cmd(turn_rate_cmd),
                         clamp_cmd(accel_cmd),
@@ -151,10 +241,8 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
                         0,     // msg_arg
                         true   // active
                     ),
-                    current_time + link->latency_s,
-                    true
+                    current_time + link->latency_s
                 );
-                e.set<PendingActionCommand>(pending);
             }
         } else {
             e.set<ActionCommand>(make_action_command(
@@ -193,6 +281,9 @@ void SimulationKernel::set_command_link(uint64_t entity_id, double latency_s, do
         }
         if (!e.has<PendingMissionCommand>()) {
             e.set<PendingMissionCommand>(make_pending_mission_command());
+        }
+        if (!e.has<MissionCommandPendingQueue>()) {
+            e.set<MissionCommandPendingQueue>(make_mission_command_pending_queue());
         }
     }
 }
@@ -272,11 +363,7 @@ void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionComm
                             (entity_id * 0xd6e8feb86659fd93ULL) ^ 0x13579bdfULL;
             double roll = deterministic_uniform01(seed);
             if (roll >= link->drop_prob) {
-                MissionCommand pending_cmd = cmd;
-                pending_cmd.active = true;
-                e.set<PendingMissionCommand>(
-                    make_pending_mission_command(pending_cmd, current_time + link->latency_s, true)
-                );
+                (void)queue_pending_mission_command(e, cmd, current_time, link->latency_s);
             }
             return;
         }

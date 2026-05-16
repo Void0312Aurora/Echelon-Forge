@@ -1,0 +1,52 @@
+{
+  "scenario_name": "post_waypoint_transition_regression",
+  "imports": [{"file": "examples/config/prefabs/airbase_large_runway45.json"}],
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 20,
+    "terrain_type": "flat",
+    "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0}
+  },
+  "mission_command": {
+    "command_code": 3,
+    "target_heading": 90.0,
+    "target_altitude": 300.0,
+    "target_speed": 100.0,
+    "waypoints": [
+      {
+        "x": 0.0,
+        "y": 0.0,
+        "altitude_m": 300.0,
+        "speed_mps": 100.0,
+        "radius_m": 500.0,
+        "waypoint_mode": "flyover"
+      }
+    ],
+    "post_waypoint_transition": {
+      "phase_name": "landing_ils",
+      "command_code": 4,
+      "target_heading": 90.0,
+      "target_altitude": 0.0,
+      "target_speed": 82.0,
+      "landing_mode": "ils_final",
+      "threshold_crossing_height_m": 15.0,
+      "touchdown_zone_from_threshold_m": 300.0,
+      "touchdown_zone_radius_m": 120.0,
+      "rollout_reference_from_threshold_m": 900.0,
+      "transition_reward": 500.0
+    }
+  },
+  "entities": [
+    {
+      "name": "Blue_F16",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 300.0],
+      "vel": [90.0, 0.0, 0.0],
+      "heading": 90.0,
+      "is_agent": true
+    }
+  ],
+  "objectives": [],
+  "rewards": {"survival": 0.0, "phase_transition_bonus": 500.0}
+}

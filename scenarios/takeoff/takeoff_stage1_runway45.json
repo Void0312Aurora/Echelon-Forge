@@ -1,0 +1,143 @@
+{
+    "scenario_name": "F-16 Takeoff (Stage 1: Wheels-Off, Runway 45m)",
+    "description": "Stage 1 takeoff curriculum on a realistic 45m runway. Realism-first: no runway-heading leakage; use ILS/EGI/wind like a real pilot.",
+    "imports": [
+        {
+            "file": "examples/config/prefabs/airbase_large_runway45.json"
+        }
+    ],
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 800,
+        "terrain_type": "flat",
+        "wind": {
+            "speed_mps": 3.0,
+            "dir_from_deg": 270.0,
+            "shear_mps_per_km": 0.0
+        },
+        "randomization": {
+            "world_yaw_range": [
+                0.0,
+                360.0
+            ],
+            "world_yaw_origin": [
+                0.0,
+                0.0
+            ],
+            "wind_headwind_range": [
+                0.0,
+                12.0
+            ],
+            "wind_crosswind_range": [
+                -6.0,
+                6.0
+            ],
+            "wind_tailwind_max_mps": 0.0,
+            "wind_shear_range": [
+                0.0,
+                6.0
+            ]
+        }
+    },
+    "mission_command": {
+        "command_code": 1,
+        "target_heading": 0.0,
+        "target_altitude": 500.0,
+        "target_speed": 180.0,
+        "randomization": {
+            "heading_range": [
+                0.0,
+                0.0
+            ],
+            "altitude_range": [
+                500.0,
+                500.0
+            ],
+            "speed_range": [
+                180.0,
+                180.0
+            ]
+        }
+    },
+    "entities": [
+        {
+            "name": "Blue_F16",
+            "type": "F-16C_Block50",
+            "side": "Blue",
+            "pos": [
+                -1400.0,
+                0.0,
+                2.1
+            ],
+            "vel": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "heading": 90.0,
+            "is_agent": true
+        }
+    ],
+    "objectives": [
+        {
+            "type": "conditional",
+            "conditions": [
+                {
+                    "property": "altitude",
+                    "op": ">=",
+                    "value": 30.0
+                },
+                {
+                    "property": "speed",
+                    "op": ">=",
+                    "value": 80.0
+                }
+            ],
+            "reward": 800.0
+        }
+    ],
+    "rewards": {
+        "survival": 0.0,
+        "crash_penalty": -1000.0,
+        "altitude_progress_target": 60.0,
+        "speed_progress_target": 120.0,
+        "altitude_progress_weight": 0.6,
+        "speed_progress_weight": 1.0,
+        "speed_progress_weight_negative": 1.0,
+        "liftoff_bonus": 300.0,
+        "liftoff_speed_threshold": 80.0,
+        "liftoff_alt_threshold": 5.0,
+        "rotation_reward_weight": 0.08,
+        "rotation_speed_threshold": 70.0,
+        "rotation_alt_threshold": 5.0,
+        "rotation_pitch_cap": 12.0,
+        "rotation_overpitch_penalty_weight": -0.5,
+        "gear_up_bonus": 50.0,
+        "stall_penalty": -3.0,
+        "stall_aoa_threshold": 12.0,
+        "overload_penalty": -0.5,
+        "overload_g_threshold": 6.0,
+        "roll_stability_weight": -0.5,
+        "heading_error_weight": 0.0,
+        "altitude_error_weight": -0.001,
+        "altitude_error_min_alt": 150.0,
+        "runway_centerline_penalty_weight": -1.0,
+        "runway_centerline_safe_frac": 0.0,
+        "runway_centerline_penalty_power": 2.0,
+        "runway_centerline_penalty_min_ias": 5.0,
+        "runway_centerline_penalty_max_ias": 80.0,
+        "runway_centerline_barrier_weight": -1.0,
+        "runway_centerline_barrier_clip_frac": 0.995,
+        "runway_width_margin_m": 1.0,
+        "off_runway_penalty": -2.0,
+        "off_runway_terminate_speed": 60.0,
+        "off_runway_terminate_grace_s": 0.5,
+        "off_runway_terminate_penalty": -200.0,
+        "gear_collapse_penalty": -1000.0,
+        "gear_stress_penalty": -10.0,
+        "stationary_penalty": -2.0,
+        "speed_reward_weight": 0.01,
+        "alignment_reward_weight": 0.5,
+        "mission_alignment_min_alt": 150.0
+    }
+}

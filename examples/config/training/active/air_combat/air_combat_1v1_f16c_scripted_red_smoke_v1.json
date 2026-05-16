@@ -1,0 +1,74 @@
+{
+  "agent_layer": "execution",
+  "algo": "AdaptiveKLPPO",
+  "policy": "HierarchicalMoEExecutionPolicy",
+  "total_timesteps": 512,
+  "n_envs": 1,
+  "save_freq": 256,
+  "runtime": {
+    "torch_threads": 1
+  },
+  "env": {
+    "include_proprio": true,
+    "mission_obs_mode": "basic",
+    "step_info_mode": "terminal",
+    "execution_step_runtime_mode": "compiled",
+    "flight_shaping_backend": "compiled",
+    "action_mode": "full"
+  },
+  "early_stop": {
+    "enabled": false
+  },
+  "diagnostics": {
+    "nonfinite_probe": true,
+    "nonfinite_probe_report": "nonfinite_probe_report.json",
+    "nonfinite_probe_history": 384
+  },
+  "hmoe": {
+    "bootstrap_from_shared_action_head": "auto"
+  },
+  "hyperparameters": {
+    "learning_rate": 3e-05,
+    "n_steps": 64,
+    "batch_size": 64,
+    "n_epochs": 2,
+    "gamma": 0.999,
+    "gae_lambda": 0.97,
+    "clip_range": 0.1,
+    "clip_range_vf": 0.1,
+    "normalize_advantage": true,
+    "ent_coef": 0.0002,
+    "vf_coef": 0.7,
+    "max_grad_norm": 0.5,
+    "target_kl": 0.02,
+    "kl_penalty_coef": 0.05,
+    "kl_adaptive": true,
+    "kl_penalty_coef_min": 0.01,
+    "kl_adapt_factor": 1.25,
+    "lr_mult_max": 1.5,
+    "low_kl_boost_patience": 6,
+    "boost_lr_on_low_kl": false,
+    "device": "cuda",
+    "policy_kwargs": {
+      "features_extractor_class": "TransformerExtractor",
+      "features_extractor_kwargs": {
+        "features_dim": 192,
+        "n_heads": 4,
+        "n_layers": 3,
+        "use_amp": true,
+        "amp_dtype": "bf16",
+        "use_checkpointing": true
+      },
+      "family_subexpert_counts": [3, 2, 3, 1],
+      "hmoe_residual_scale": 0.18,
+      "hmoe_head_lr_scale": 0.15,
+      "hmoe_residual_warmup_fraction": 0.3,
+      "hmoe_residual_start_factor": 0.0,
+      "log_std_init": -1.5,
+      "net_arch": {
+        "pi": [192, 192],
+        "vf": [192, 192]
+      }
+    }
+  }
+}

@@ -6,6 +6,17 @@
 
 class IEnvironmentModel {
 public:
+    // Merge/fallback rule:
+    // - configured=false: environment contributes no maritime override and platform defaults remain active.
+    // - configured=true: environment fully overrides platform sea_state / wave_heading_deg / wave_period_s,
+    //   including the explicit "calm sea" case where sea_state == 0.
+    struct MaritimeState {
+        bool configured = false;
+        double sea_state = 0.0;
+        double wave_heading_deg = 0.0;
+        double wave_period_s = 8.0;
+    };
+
     virtual ~IEnvironmentModel() = default;
 
     // Core lookup: Get atmospheric conditions at specific position
@@ -56,6 +67,13 @@ public:
     // "flat" means zero-elevation terrain outside explicit zones.
     // "legacy"/"hill"/"gaussian_hill" preserve the historical procedural mountain.
     virtual void set_terrain_type(const std::string& /*terrain_type*/) {}
+
+    // Maritime-state configuration used by surface-ship runtime proxies.
+    // set_maritime_state() activates a full environment override; clear_maritime_state() returns control to
+    // per-platform fallback values. Partial field merge is intentionally not supported in this MVP.
+    virtual void set_maritime_state(double /*sea_state*/, double /*wave_heading_deg*/, double /*wave_period_s*/) {}
+    virtual void clear_maritime_state() {}
+    virtual MaritimeState get_maritime_state() const { return {}; }
 };
 
 struct EnvironmentModelRef {

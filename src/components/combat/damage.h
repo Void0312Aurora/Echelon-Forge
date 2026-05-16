@@ -29,3 +29,25 @@ struct SystemHealth {
     // Key: System Name (e.g., "radar", "engine", "flight_control")
     std::unordered_map<std::string, double> systems;
 };
+
+enum class PlatformLossState : int {
+    CombatCapable = 0,
+    MissionKill = 1,
+    MobilityKill = 2,
+    SensorKill = 3,
+    Lost = 4,
+};
+
+struct PlatformDamageState {
+    double mission_capability = 1.0;
+    double mobility_capability = 1.0;
+    double sensor_capability = 1.0;
+    double survivability_margin = 1.0;
+    double flooding_severity = 0.0;
+    double fire_severity = 0.0;
+    double ongoing_hull_breach = 0.0;
+    bool mission_kill = false;
+    bool mobility_kill = false;
+    bool sensor_kill = false;
+    PlatformLossState loss_state = PlatformLossState::CombatCapable;
+};

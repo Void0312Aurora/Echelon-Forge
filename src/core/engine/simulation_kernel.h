@@ -21,13 +21,14 @@
 #include "components/basic/tags.h"
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
+#include "core/interfaces/environment_model.h"
 
 class IUnitFactory;
 class IEffectsModel;
 class ISensorModel;
+class IAcousticModel;
 class IControlModel;
 class IGuidanceModel;
-class IEnvironmentModel;
 
 struct MissileTuning {
     double max_speed = std::numeric_limits<double>::quiet_NaN();
@@ -47,6 +48,30 @@ struct MissileTuning {
     double sensor_bearing_noise_std = std::numeric_limits<double>::quiet_NaN();
     double sensor_range_noise_std = std::numeric_limits<double>::quiet_NaN();
     double sensor_track_memory_s = std::numeric_limits<double>::quiet_NaN();
+    int seeker_type = -1;
+    double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
+    double seeker_gimbal_limit_deg = std::numeric_limits<double>::quiet_NaN();
+    double seeker_ifov_deg = std::numeric_limits<double>::quiet_NaN();
+    double bearing_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double elevation_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double range_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double track_break_time_s = std::numeric_limits<double>::quiet_NaN();
+    double boost_time_s = std::numeric_limits<double>::quiet_NaN();
+    double sustain_time_s = std::numeric_limits<double>::quiet_NaN();
+    double boost_thrust_n = std::numeric_limits<double>::quiet_NaN();
+    double sustain_thrust_n = std::numeric_limits<double>::quiet_NaN();
+    double reference_area_m2 = std::numeric_limits<double>::quiet_NaN();
+    double cd0_subsonic = std::numeric_limits<double>::quiet_NaN();
+    double cd0_supersonic = std::numeric_limits<double>::quiet_NaN();
+    double induced_drag_k = std::numeric_limits<double>::quiet_NaN();
+    double propellant_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double max_lateral_g = std::numeric_limits<double>::quiet_NaN();
+    double autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
+    double min_launch_range_m = std::numeric_limits<double>::quiet_NaN();
+    double max_launch_off_boresight_deg = std::numeric_limits<double>::quiet_NaN();
+    bool lobl_required = false;
+    bool midcourse_datalink_supported = false;
 };
 
 struct ExactStepStageDescriptor {
@@ -78,6 +103,10 @@ class SimulationKernel {
 public:
     SimulationKernel();
     ~SimulationKernel();
+    SimulationKernel(const SimulationKernel&) = delete;
+    SimulationKernel& operator=(const SimulationKernel&) = delete;
+    SimulationKernel(SimulationKernel&&) = delete;
+    SimulationKernel& operator=(SimulationKernel&&) = delete;
 
     // Reset the simulation to initial state with a specific random seed
     void reset(unsigned int seed);
@@ -112,6 +141,9 @@ public:
     void add_zone(const std::string& name, double x, double y, double width, double height, double heading, int surface_type);
     void set_wind(double speed_mps, double dir_from_deg, double shear_mps_per_km = 0.0);
     void set_terrain_type(const std::string& terrain_type);
+    void set_maritime_state(double sea_state, double wave_heading_deg = 0.0, double wave_period_s = 8.0);
+    void clear_maritime_state();
+    IEnvironmentModel::MaritimeState get_maritime_state() const;
     
     // Action Interface: Set command for a unit
     void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m);
@@ -157,9 +189,18 @@ public:
     std::vector<double> get_unit_velocity(uint64_t entity_id); // Returns [vx, vy, vz]
     double get_unit_heading(uint64_t entity_id);   // Returns heading
     std::vector<double> get_unit_health(uint64_t entity_id); // Returns [current, max]
+    std::vector<double> get_unit_damage_state(uint64_t entity_id); // [mission, mobility, sensor, survivability]
+    std::vector<double> debug_get_naval_weapon_counts(uint64_t entity_id); // [mounts, total_ready_vls, total_ready_gun, total_ready_ciws]
     std::vector<double> get_unit_fuel(uint64_t entity_id); // Returns [internal, max_internal, external, max_external]
+    std::vector<double> debug_get_naval_stores(uint64_t entity_id); // [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]
+    std::vector<double> debug_get_logistics_node(uint64_t entity_id); // [supply_radius, infinite, underway_enabled, min_sep, max_sep, max_rel_speed, fuel_rate, missile_rate, dry_rate]
+    std::vector<double> debug_get_resupply_state(uint64_t entity_id); // [active, kind, partner_id, stage, time_remaining, is_refueling, is_rearming]
+    std::vector<double> debug_get_data_link_state(uint64_t entity_id); // [report_budget, message_budget, reports_sent_last, messages_sent_last, reports_dropped_last, messages_dropped_last, reports_sent_total, messages_sent_total, reports_dropped_total, messages_dropped_total]
     std::vector<CommPacket> get_unit_messages(uint64_t entity_id);
     void send_message_command(uint64_t entity_id, uint64_t recipient_id, int msg_type, uint64_t msg_arg);
+    void set_unit_ammo(uint64_t entity_id, int missiles_remaining, int max_missiles);
+    void set_weapon_cooldown(uint64_t entity_id, double cooldown_s, double last_fire_time);
+    std::uint64_t debug_get_embarked_helo(uint64_t entity_id) const;
 
     double debug_get_last_scan_time(uint64_t entity_id);
     int debug_get_contact_count(uint64_t entity_id);
@@ -167,19 +208,26 @@ public:
 
     // Weapon Interface: Fire missile
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);
+    bool fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
+    flecs::entity fire_weapon_from_pilot_action(uint64_t attacker_id);
+    bool debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id, double damage, double fuse_distance);
 
     // Unit factory override (for modular swaps)
     void set_unit_factory(std::unique_ptr<IUnitFactory> factory);
     void set_effects_model(std::unique_ptr<IEffectsModel> model);
     void set_sensor_model(std::unique_ptr<ISensorModel> model);
+    void set_acoustic_model(std::unique_ptr<IAcousticModel> model);
     void set_control_model(std::unique_ptr<IControlModel> model);
     void set_guidance_model(std::unique_ptr<IGuidanceModel> model);
     void set_environment_model(std::unique_ptr<IEnvironmentModel> model);
     bool load_unit_definitions(const std::string& path, std::string* error = nullptr);
     void set_missile_tuning(const MissileTuning& tuning);
+    const MissileTuning& get_missile_tuning() const { return missile_tuning_; }
+    void shutdown();
 
 private:
     void register_components_and_systems();
+    bool try_fire_naval_mission_weapon(uint64_t attacker_id);
 
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
@@ -192,8 +240,10 @@ private:
     std::unique_ptr<IUnitFactory> unit_factory_;
     std::unique_ptr<IEffectsModel> effects_model_;
     std::unique_ptr<ISensorModel> sensor_model_;
+    std::unique_ptr<IAcousticModel> acoustic_model_;
     std::unique_ptr<IControlModel> control_model_;
     std::unique_ptr<IGuidanceModel> guidance_model_;
     MissileTuning missile_tuning_;
     bool exact_stage_trace_frame_active_ = false;
+    bool shutdown_complete_ = false;
 };

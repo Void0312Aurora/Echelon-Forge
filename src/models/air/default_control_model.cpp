@@ -31,6 +31,13 @@ double normalize_angle(double angle) {
 double to_degrees(double rad) { return rad * 180.0 / M_PI; }
 double to_radians(double deg) { return deg * M_PI / 180.0; }
 
+bool pilot_action_requests_manual_takeover(const PilotAction& pilot) {
+    constexpr double kPrimaryAxisDeadband = 0.05;
+    return std::abs(pilot.stick_roll) > kPrimaryAxisDeadband
+        || std::abs(pilot.stick_pitch) > kPrimaryAxisDeadband
+        || std::abs(pilot.rudder) > kPrimaryAxisDeadband;
+}
+
 bool is_runway_like_surface(IControlModel::IEnvironmentModel::SurfaceType surface) {
     return surface == IControlModel::IEnvironmentModel::SurfaceType::Concrete
         || surface == IControlModel::IEnvironmentModel::SurfaceType::Asphalt;
@@ -110,7 +117,8 @@ public:
         double stick_yaw = 0.0;
         bool gear_cmd_down = false;
 
-        bool has_pilot = (pilot && pilot->active);
+        const bool pilot_active = (pilot && pilot->active);
+        bool has_pilot = pilot_active && pilot_action_requests_manual_takeover(*pilot);
         bool has_mission = (mission && mission->active);
         const auto* ground_state = entity.get<GroundState>();
         const bool on_ground_hint = ground_state ? ground_state->on_ground : false;
@@ -127,7 +135,7 @@ public:
             // Treat the midpoint as "down" so an untrained policy (often near action midpoints)
             // doesn't retract the gear on the runway.
             gear_cmd_down = (pilot->gear_handle >= 0.5);
-        } 
+        }
         else if (has_mission) {
             // [B] Mission-command autopilot.
             // Interpret cmd_* according to command_code semantics rather than treating

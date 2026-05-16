@@ -1,0 +1,64 @@
+{
+    "name": "MH-60R_MVP",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 6900.0,
+        "max_fuel_kg": 1500.0,
+        "drag_coefficient": 0.05,
+        "reference_area": 40.0,
+        "length_m": 19.7,
+        "wingspan_m": 16.4,
+        "height_m": 5.2,
+        "configuration": "Conventional"
+    },
+    "health": {
+        "current_hp": 120.0,
+        "max_hp": 120.0
+    },
+    "flight_model": {
+        "max_speed": 75.0,
+        "min_speed": 20.0,
+        "max_turn_rate": 12.0,
+        "max_climb_rate": 12.0,
+        "max_accel": 3.0,
+        "max_g": 2.5,
+        "min_g": -0.5,
+        "takeoff_speed": 25.0,
+        "landing_speed": 20.0,
+        "taxi_turn_rate": 10.0
+    },
+    "mounted_sensors": [
+        {
+            "label": "helo_surface_search_radar_mvp",
+            "sensor": {
+                "type": "Radar",
+                "max_range": 65000.0,
+                "fov_deg": 300.0,
+                "scan_period": 1.0,
+                "detection_prob": 1.0,
+                "bearing_noise_std": 0.5,
+                "range_noise_std": 40.0,
+                "track_memory_s": 8.0,
+                "range_power": 1.0,
+                "aspect_influence": 0.0,
+                "reference_snr_db": 25.0,
+                "reference_range_m": 50000.0,
+                "reference_rcs_m2": 25.0,
+                "doppler_notch_width": 0.0,
+                "environment_domain": "SurfaceMaritime",
+                "enforce_radar_horizon": false,
+                "sea_clutter_enabled": false
+            }
+        }
+    ],
+    "has_data_link": true,
+    "data_link_network_id": 1,
+    "has_command_link": true,
+    "command_link": {
+        "latency_s": 0.1,
+        "drop_prob": 0.0
+    },
+    "_provenance": {
+        "modeling_note": "engineering calibration; community-derived approximation for an embarked ASW helicopter token/platform MVP, not authoritative MH-60R performance."
+    }
+}

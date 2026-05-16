@@ -40,6 +40,12 @@ This directory holds maintained in-progress training configs that are not frozen
   - Paired HMoE config for the same fair-control line.
   - Use this pair when you want a stricter shared-vs-HMoE A/B comparison than the earlier exploratory configs.
 
+## Air Combat 1v1 Line
+
+- [air_combat/README.md](/home/void0312/Workshop/CMO/examples/config/training/active/air_combat/README.md)
+  - Maintained `1v1` execution-layer HMoE entries for the current air-combat line.
+  - Keeps the first opponent frozen as a scenario-declared scripted red fighter, so we can validate the combat task contract and HMoE runtime chain before moving to self-play or `2v2`.
+
 ## Notes
 
 - This is the current forward-moving training line, not a frozen acceptance set.

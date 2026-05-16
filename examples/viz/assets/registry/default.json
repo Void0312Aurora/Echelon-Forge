@@ -1,0 +1,102 @@
+{
+  "name": "default",
+  "description": "First visualization asset registry for the unified viz app. Covers the currently validated fixed-wing and naval surface units, including the temporary Patuxent substitute used in place of a free T-AKE model.",
+  "entries": [
+    {
+      "id": "air_f16_default",
+      "label": "F-16 Generic",
+      "match": {
+        "unit_type": "Aircraft",
+        "platform_type_patterns": [
+          "F-16",
+          "F16"
+        ],
+        "name_patterns": [
+          "F-16",
+          "F16"
+        ],
+        "service_profiles": [
+          "AirForce"
+        ]
+      },
+      "visual": {
+        "asset_path": "/static/assets/f16.glb",
+        "scale": 1.0,
+        "yaw_correction_deg": -90.0,
+        "waterline_offset_m": 0.0,
+        "chase_offset": [0.0, 30.0, 80.0]
+      },
+      "render_priority": 100
+    },
+    {
+      "id": "naval_ddg51_flight_i",
+      "label": "USS Arleigh Burke (DDG-51) Visual",
+      "match": {
+        "unit_type": "Ship",
+        "platform_type_patterns": [
+          "DDG-51",
+          "ARLEIGH_BURKE"
+        ],
+        "name_patterns": [
+          "DDG"
+        ],
+        "service_profiles": [
+          "Navy"
+        ]
+      },
+      "visual": {
+        "asset_path": "/static/assets/ddg51.glb",
+        "scale": 1.0,
+        "yaw_correction_deg": 180.0,
+        "waterline_offset_m": 0.5,
+        "chase_offset": [0.0, 75.0, 240.0],
+        "fallback_hull_length_m": 160.0,
+        "fallback_hull_beam_m": 24.0,
+        "fallback_hull_height_m": 12.0,
+        "fallback_super_length_m": 56.0,
+        "fallback_super_beam_m": 16.0,
+        "fallback_super_height_m": 18.0,
+        "fallback_super_offset_x_m": -8.0,
+        "fallback_super_offset_y_m": 18.0
+      },
+      "show_in_2d_as": "ship",
+      "show_sensor_ring": true,
+      "render_priority": 10
+    },
+    {
+      "id": "naval_take1_temp_patuxent_substitute",
+      "label": "USNS Patuxent Temporary Auxiliary Visual",
+      "match": {
+        "unit_type": "Ship",
+        "platform_type_patterns": [
+          "T-AKE",
+          "TAKE",
+          "LEWIS_AND_CLARK"
+        ],
+        "service_profiles": [
+          "Navy"
+        ]
+      },
+      "visual": {
+        "asset_path": "/static/assets/naval/usns_patuxent_tao_201.glb",
+        "scale": 2.4,
+        "yaw_correction_deg": 0.0,
+        "waterline_offset_m": 0.5,
+        "chase_offset": [0.0, 95.0, 310.0],
+        "fallback_hull_length_m": 215.0,
+        "fallback_hull_beam_m": 32.0,
+        "fallback_hull_height_m": 16.0,
+        "fallback_super_length_m": 90.0,
+        "fallback_super_beam_m": 22.0,
+        "fallback_super_height_m": 28.0,
+        "fallback_super_offset_x_m": -35.0,
+        "fallback_super_offset_y_m": 28.0
+      },
+      "substitute_for": "T-AKE-1_USNS_Lewis_and_Clark",
+      "realism_note": "Temporary visualization substitute. A converted USNS Patuxent model is used because no suitable free T-AKE model is currently available in the workspace.",
+      "show_in_2d_as": "ship",
+      "show_sensor_ring": true,
+      "render_priority": 20
+    }
+  ]
+}

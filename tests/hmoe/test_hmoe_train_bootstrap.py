@@ -55,8 +55,8 @@ class HMoETrainBootstrapTests(unittest.TestCase):
 
         self.assertTrue(changed)
         for head in policy.hmoe_head_bank.family_heads:
-            self.assertTrue(th.allclose(head.weight.detach(), policy.action_net.weight.detach()))
-            self.assertTrue(th.allclose(head.bias.detach(), policy.action_net.bias.detach()))
+            self.assertTrue(th.allclose(head.weight.detach(), th.zeros_like(head.weight)))
+            self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
 
     def test_maybe_initialize_hmoe_from_shared_skips_resume(self) -> None:
         policy = self._make_policy()

@@ -8,6 +8,45 @@ from python.rl.control.mission_defs import is_landing_command_code
 from .shaping import apply_legacy_flight_shaping_terms
 
 
+def _apply_combat_terminal_override(loader, sim, truth, reward, terminated, truncated, status, rb):
+    target_id = int(getattr(loader, "primary_target_id", 0) or 0)
+    if target_id <= 0:
+        return reward, terminated, truncated, status, rb, None
+
+    self_active = bool(sim.is_unit_active(loader.agent_id)) if loader.agent_id is not None else False
+    target_active = bool(sim.is_unit_active(target_id))
+    if target_active and self_active and not bool(truncated):
+        return reward, terminated, truncated, status, rb, None
+
+    next_rb = dict(rb or {})
+    reason_override = None
+    if (not target_active) and self_active:
+        bonus = float(getattr(loader, "_compiled_meta_cfg", {}).get("combat_win_bonus", 1500.0))
+        reward += bonus
+        loader._add_breakdown_term(next_rb, "combat_win_bonus", bonus)
+        terminated = True
+        status[3] = 1.0
+        reason_override = "combat_win"
+    elif (not self_active) and target_active:
+        penalty = float(getattr(loader, "_compiled_meta_cfg", {}).get("combat_loss_penalty", -1500.0))
+        reward += penalty
+        loader._add_breakdown_term(next_rb, "combat_loss_penalty", penalty)
+        terminated = True
+        status[3] = -1.0
+        reason_override = "combat_loss"
+    elif (not self_active) and (not target_active):
+        draw_reward = float(getattr(loader, "_compiled_meta_cfg", {}).get("combat_draw_reward", 0.0))
+        reward += draw_reward
+        if draw_reward != 0.0:
+            loader._add_breakdown_term(next_rb, "combat_draw_reward", draw_reward)
+        terminated = True
+        status[3] = 0.0
+        reason_override = "combat_draw"
+    elif bool(truncated):
+        reason_override = "combat_timeout"
+    return reward, terminated, truncated, status, next_rb, reason_override
+
+
 def consume_compiled_episode_runtime(
     loader,
     *,
@@ -358,6 +397,23 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
             step_eval=step_eval,
             frame_products=frame_products,
         )
+        reward, terminated, truncated, status, rb_override, reason_override = _apply_combat_terminal_override(
+            loader,
+            sim,
+            truth,
+            reward,
+            terminated,
+            truncated,
+            status,
+            loader.last_reward_breakdown,
+        )
+        tracked_total = float(sum(rb_override.values())) if rb_override else 0.0
+        rb_override["tracked_total"] = tracked_total
+        rb_override["untracked"] = float(reward - tracked_total)
+        rb_override["total"] = float(reward)
+        loader.last_reward_breakdown = rb_override
+        if isinstance(reason_override, str) and reason_override:
+            loader.last_termination_reason = reason_override
         loader.prev_alt = truth.z
         loader.prev_speed = curr_ias
         return reward, terminated, truncated, status
@@ -725,17 +781,30 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
                 term_reason_code = ef_py.TerminationReasonCode.SuccessObjective
                 break
 
+    reward, terminated, truncated, status, rb, reason_override = _apply_combat_terminal_override(
+        loader,
+        sim,
+        truth,
+        reward,
+        terminated,
+        truncated,
+        status,
+        rb,
+    )
     tracked_total = float(sum(rb.values())) if rb else 0.0
     rb["tracked_total"] = tracked_total
     rb["untracked"] = float(reward - tracked_total)
     rb["total"] = float(reward)
     loader.last_reward_breakdown = rb
-    final_reason = ef_py.finalize_termination_reason(
-        term_reason_code,
-        bool(terminated),
-        bool(truncated),
-        float(status[3]),
-    )
-    loader.last_termination_reason = str(ef_py.termination_reason_name(final_reason))
+    if isinstance(reason_override, str) and reason_override:
+        loader.last_termination_reason = reason_override
+    else:
+        final_reason = ef_py.finalize_termination_reason(
+            term_reason_code,
+            bool(terminated),
+            bool(truncated),
+            float(status[3]),
+        )
+        loader.last_termination_reason = str(ef_py.termination_reason_name(final_reason))
 
     return reward, terminated, truncated, status

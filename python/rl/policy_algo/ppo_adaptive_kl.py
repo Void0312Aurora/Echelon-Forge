@@ -108,6 +108,9 @@ class AdaptiveKLPPO(PPO):
     ) -> bool:
         assert self._last_obs is not None, "No previous observation was provided"
         self.policy.set_training_mode(False)
+        set_training_progress = getattr(self.policy, "set_hmoe_training_progress", None)
+        if callable(set_training_progress):
+            set_training_progress(float(self._current_progress_remaining))
 
         n_steps = 0
         rollout_buffer.reset()

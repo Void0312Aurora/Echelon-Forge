@@ -1,0 +1,127 @@
+{
+  "type": "unit_regression",
+  "check_kind": "kernel_flight_parameter_scan",
+  "controller_kind": "pitch_hold",
+  "seed": 0,
+  "duration_s": 6.0,
+  "max_steps": 120,
+  "target_pitch_deg": 4.0,
+  "pitch_kp": 0.12,
+  "pitch_kd": 0.02,
+  "throttle": 0.4,
+  "gear_handle": 0.0,
+  "cases": [
+    {
+      "name": "speed_120",
+      "spec": {
+        "scenario_base": "scenarios/test/test_aero.json",
+        "scenario_patch": {
+          "entities": [
+            {
+              "name": "TestJet",
+              "type": "F-16C_Block50",
+              "side": "Blue",
+              "pos": [0.0, 0.0, 1000.0],
+              "vel": [120.0, 0.0, 0.0]
+              ,
+              "heading": 0.0,
+              "is_agent": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "speed_160",
+      "spec": {
+        "scenario_base": "scenarios/test/test_aero.json",
+        "scenario_patch": {
+          "entities": [
+            {
+              "name": "TestJet",
+              "type": "F-16C_Block50",
+              "side": "Blue",
+              "pos": [0.0, 0.0, 1000.0],
+              "vel": [160.0, 0.0, 0.0]
+              ,
+              "heading": 0.0,
+              "is_agent": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "speed_180",
+      "spec": {
+        "scenario_base": "scenarios/test/test_aero.json",
+        "scenario_patch": {
+          "entities": [
+            {
+              "name": "TestJet",
+              "type": "F-16C_Block50",
+              "side": "Blue",
+              "pos": [0.0, 0.0, 1000.0],
+              "vel": [180.0, 0.0, 0.0]
+              ,
+              "heading": 0.0,
+              "is_agent": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "speed_220",
+      "spec": {
+        "scenario_base": "scenarios/test/test_aero.json",
+        "scenario_patch": {
+          "entities": [
+            {
+              "name": "TestJet",
+              "type": "F-16C_Block50",
+              "side": "Blue",
+              "pos": [0.0, 0.0, 1000.0],
+              "vel": [220.0, 0.0, 0.0]
+              ,
+              "heading": 0.0,
+              "is_agent": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "case_field_checks": [
+    {
+      "case": "speed_120",
+      "field": "final_pitch_error_deg",
+      "abs_max": 1.2
+    },
+    {
+      "case": "speed_220",
+      "field": "final_pitch_error_deg",
+      "abs_max": 1.2
+    }
+  ],
+  "ordered_field_checks": [
+    {
+      "field": "vvi_mps",
+      "direction": "increasing",
+      "min_delta": 1.0,
+      "case_order": ["speed_120", "speed_160", "speed_180", "speed_220"]
+    },
+    {
+      "field": "alt_baro_m",
+      "direction": "increasing",
+      "min_delta": 5.0,
+      "case_order": ["speed_120", "speed_160", "speed_180", "speed_220"]
+    },
+    {
+      "field": "aoa_deg",
+      "direction": "decreasing",
+      "min_delta": 0.3,
+      "case_order": ["speed_120", "speed_160", "speed_180", "speed_220"]
+    }
+  ]
+}

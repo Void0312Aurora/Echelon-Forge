@@ -31,6 +31,37 @@ _cmo_detect_build_dir() {
   return 1
 }
 
+_cmo_has_ef_py_artifact() {
+  local build_dir="$1"
+  [[ -n "${build_dir}" ]] || return 1
+  if compgen -G "${build_dir}/ef_py*.so" >/dev/null; then
+    return 0
+  fi
+  [[ -e "${build_dir}/ef_py" ]]
+}
+
+_cmo_resolve_build_candidate() {
+  local root_dir="$1"
+  local candidate
+  for candidate in \
+    "${CMO_BUILD_DIR:-}" \
+    "build-workshop" \
+    "build-gpu" \
+    "build" \
+    "build-facade-local"
+  do
+    [[ -n "${candidate}" ]] || continue
+    if [[ "${candidate}" != /* ]]; then
+      candidate="${root_dir}/${candidate}"
+    fi
+    if [[ -d "${candidate}" ]]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+  return 1
+}
+
 cmo_activate_env() {
   local root_dir
   root_dir="$(_cmo_env_root)"
@@ -70,10 +101,73 @@ PYTHONPATH=${PYTHONPATH:-}
 EOF
 }
 
+cmo_env_validate() {
+  local root_dir
+  root_dir="$(_cmo_env_root)"
+  local venv_python="${root_dir}/.venv/bin/python"
+  local build_dir=""
+  local build_candidate=""
+
+  if [[ ! -d "${root_dir}" ]]; then
+    echo "[cmo_env] repository root is not accessible: ${root_dir}" >&2
+    return 1
+  fi
+
+  if [[ ! -x "${venv_python}" ]]; then
+    echo "[cmo_env] missing repository virtualenv: ${venv_python}" >&2
+    echo "[cmo_env] create it with: python -m venv .venv" >&2
+    return 2
+  fi
+
+  build_dir="$(_cmo_detect_build_dir "${root_dir}" || true)"
+  if [[ -n "${build_dir}" ]]; then
+    cat <<EOF
+[cmo_env] validation ok
+CMO_REPO_ROOT=${root_dir}
+CMO_PYTHON=${venv_python}
+CMO_BUILD_DIR=${build_dir}
+EOF
+    return 0
+  fi
+
+  build_candidate="$(_cmo_resolve_build_candidate "${root_dir}" || true)"
+  if [[ -z "${build_candidate}" ]]; then
+    echo "[cmo_env] missing build directory" >&2
+    echo "[cmo_env] searched: ${CMO_BUILD_DIR:-build-workshop, build-gpu, build, build-facade-local}" >&2
+    echo "[cmo_env] configure and build the project before running maintained workflows" >&2
+    return 3
+  fi
+
+  if ! _cmo_has_ef_py_artifact "${build_candidate}"; then
+    echo "[cmo_env] build directory exists but ef_py artifact is missing: ${build_candidate}" >&2
+    echo "[cmo_env] expected one of: ${build_candidate}/ef_py*.so or ${build_candidate}/ef_py" >&2
+    return 4
+  fi
+
+  echo "[cmo_env] validation failed for an unknown reason" >&2
+  return 5
+}
+
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   if [[ $# -eq 0 ]]; then
     cmo_env_summary
     exit 0
   fi
-  cmo_python "$@"
+  case "$1" in
+    validate)
+      shift
+      cmo_env_validate "$@"
+      ;;
+    summary)
+      shift
+      cmo_env_summary "$@"
+      ;;
+    python)
+      shift
+      cmo_python "$@"
+      ;;
+    *)
+      cmo_python "$@"
+      ;;
+  esac
 fi

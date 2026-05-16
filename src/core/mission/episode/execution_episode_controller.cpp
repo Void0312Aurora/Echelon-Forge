@@ -7,6 +7,7 @@
 
 #include "core/mission/episode/detail/episode_reward_breakdown.h"
 #include "core/mission/episode/detail/episode_transition_runtime.h"
+#include "core/mission/episode/detail/mission_command_codec.h"
 #include "core/mission/runtime/termination_runtime.h"
 
 namespace {
@@ -32,11 +33,26 @@ bool ExecutionEpisodeController::has_state() const noexcept {
 
 void ExecutionEpisodeController::import_state(const ExecutionEpisodeState& state) {
     state_ = state;
+    if (state_.has_mission_command) {
+        state_.has_mission_command_json = true;
+        state_.mission_command_json =
+            episode_controller_detail::stable_json_dump(
+                episode_controller_detail::build_state_mission_command_json(state_)
+            );
+    }
     has_state_ = true;
 }
 
 ExecutionEpisodeState ExecutionEpisodeController::export_state() const {
-    return state_;
+    ExecutionEpisodeState out = state_;
+    if (out.has_mission_command) {
+        out.has_mission_command_json = true;
+        out.mission_command_json =
+            episode_controller_detail::stable_json_dump(
+                episode_controller_detail::build_state_mission_command_json(out)
+            );
+    }
+    return out;
 }
 
 void ExecutionEpisodeController::apply_episode_state_overrides(

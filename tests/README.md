@@ -91,6 +91,12 @@ source tools/maintenance/cmo_env.sh
 cmo_python tests/runners/test_contract_batches.py --group chain --group env
 
 cmo_python tests/runners/test_contract_batches.py --group unit --group bridges --group route_generator
+
+cmo_python tests/runners/test_contract_batches.py --group sim_kernel
+
+cmo_python tests/runners/test_contract_batches.py --default-group sim_kernel
+
+cmo_python tools/runners/run_sim_kernel_contracts.py
 ```
 
 ## Dependency Notes
@@ -136,6 +142,7 @@ Prefer a standalone Python test only when you truly need:
   - Includes common-core baseline contracts plus compatibility air-specific comm/tasking contracts.
 - `tests/contracts/unit/kernel/*.json`
   - Kernel-driven flight regressions that step `SimulationKernel` directly with scripted pilot inputs.
+  - Also hosts simulation guardrails for repeatability, sign consistency, coarse physical plausibility, and small parameter-scan realism checks.
 - `tests/contracts/unit/scenarios/*.json`
   - Scenario-template and geometry regressions that validate static JSON content without stepping an env.
 - `tests/contracts/unit/training/*.json`
@@ -178,6 +185,7 @@ Prefer a standalone Python test only when you truly need:
   - Loader/env utility contracts that do not need full scenario stepping.
 - `tests/contracts/unit/kernel/`
   - Direct `SimulationKernel` flight regressions for takeoff, ground roll, and stable-flight control laws.
+  - Also hosts core simulation guardrails for repeatability, sign consistency, coarse physical plausibility checks, and compact realism parameter scans.
 - `tests/contracts/unit/scenarios/`
   - Static scenario/template geometry checks that validate mission JSON assumptions.
 - `tests/contracts/unit/training/`

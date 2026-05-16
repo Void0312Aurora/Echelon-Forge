@@ -1,0 +1,53 @@
+{
+  "type": "unit_regression",
+  "check_kind": "kernel_flight_repeatability",
+  "controller_kind": "takeoff_then_stable_hold",
+  "scenario": "scenarios/takeoff/takeoff.json",
+  "seed": 0,
+  "repeat_runs": 2,
+  "max_steps": 2000,
+  "rotation_speed_mps": 100.0,
+  "target_takeoff_pitch_deg": 13.0,
+  "takeoff_pitch_gain": 0.05,
+  "gear_up_alt_m": 30.0,
+  "randomization_overrides": {
+    "world_yaw_range": [0.0, 0.0],
+    "wind_speed_range": [0.0, 0.0],
+    "wind_dir_from_range": [0.0, 0.0],
+    "wind_headwind_range": [0.0, 0.0],
+    "wind_crosswind_range": [0.0, 0.0],
+    "wind_tailwind_max_mps": 0.0,
+    "wind_shear_range": [0.0, 0.0]
+  },
+  "checks": {
+    "stable_entry_alt_min": 300.0,
+    "stable_entry_speed_min": 150.0,
+    "stable_steps_min_s": 40.0,
+    "min_alt_stable_min": 150.0,
+    "max_abs_roll_max": 20.0,
+    "max_abs_pitch_max": 20.0
+  },
+  "compare_keys": [
+    "alt_baro_m",
+    "ias_mps",
+    "vvi_mps",
+    "pitch_deg",
+    "roll_deg",
+    "heading_deg",
+    "aoa_deg",
+    "q_deg_s",
+    "g_load",
+    "truth_x_m",
+    "truth_y_m",
+    "truth_z_m",
+    "truth_vx_mps",
+    "truth_vy_mps",
+    "truth_vz_mps",
+    "stable_steps",
+    "min_alt_stable_m",
+    "max_abs_roll_deg",
+    "max_abs_pitch_deg"
+  ],
+  "float_abs_tol": 1.0e-6,
+  "float_rel_tol": 1.0e-6
+}

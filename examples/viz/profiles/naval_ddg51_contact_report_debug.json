@@ -1,0 +1,21 @@
+{
+  "name": "Naval DDG-51 Contact Report Debug",
+  "description": "Minimal naval tactical visualization profile for the DDG-51 / T-AKE contact-report baseline. Keeps the tactical map as the default view and focuses the destroyer screen unit for debugging.",
+  "scenario": "scenarios/naval/ddg51_take1_screen_contact_report_v1.json",
+  "asset_registry": "examples/viz/assets/registry/default.json",
+  "session": {
+    "pause_on_done": false,
+    "action_mode": "auto",
+    "zero_randomization": false
+  },
+  "startup": {
+    "speed": 1,
+    "auto_start": false
+  },
+  "ui": {
+    "presentation_mode": "MAP",
+    "camera_mode": "CHASE",
+    "focus_unit": "Blue_Screen_DDG51",
+    "tactical_zoom": 1.0
+  }
+}

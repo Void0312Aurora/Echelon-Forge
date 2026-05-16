@@ -3,6 +3,7 @@ import math
 from typing import Any
 import ef_py
 import numpy as np
+from examples.agents import RedScriptedAgent
 from python.scenario_compiler import (
     ApproachRewardConfig,
     LNavRuntimeConfig,
@@ -212,6 +213,7 @@ class ScenarioLoader:
         self._compiled_conditional_objectives = []
         self._objective_shaping_cfg = ef_py.ObjectiveShapingConfig()
         self._compiled_rewards_cfg: dict = {}
+        self._compiled_meta_cfg: dict = {}
         self._waypoint_mode_reward_cfgs: dict[str, WaypointModeRewardConfig] = {}
         self._approach_reward_cfg = ApproachRewardConfig()
         self._safety_reward_cfg = SafetyRewardConfig()
@@ -223,6 +225,10 @@ class ScenarioLoader:
         self.liftoff_awarded = False
         self.off_runway_steps = 0
         self._runtime_eval_cache: dict[str, object] = {}
+        self.primary_target_id: int | None = None
+        self.primary_target_name: str = ""
+        self.scripted_opponents: dict[int, Any] = {}
+        self.scripted_opponent_reports: dict[int, dict[str, Any]] = {}
         self.set_execution_step_runtime_mode(None)
         self.set_flight_shaping_backend(None)
 
@@ -1053,6 +1059,79 @@ class ScenarioLoader:
 
     def get_entity_id(self, name):
         return self.entities.get(name)
+
+    def build_scripted_opponents(self) -> None:
+        self.scripted_opponents = {}
+        self.scripted_opponent_reports = {}
+        scenario_data = self.scenario_data if isinstance(self.scenario_data, dict) else {}
+        entities_cfg = scenario_data.get("entities", [])
+        if not isinstance(entities_cfg, list):
+            return
+
+        blue_id = int(self.agent_id or 0)
+        for ent_cfg in entities_cfg:
+            if not isinstance(ent_cfg, dict):
+                continue
+            scripted_cfg = ent_cfg.get("scripted_agent", None)
+            if not isinstance(scripted_cfg, dict):
+                continue
+            script_name = str(scripted_cfg.get("name", "") or scripted_cfg.get("type", "")).strip().lower()
+            if script_name not in {"red_scripted_agent", "red_scripted_baseline", "red_agent"}:
+                continue
+            entity_name = str(ent_cfg.get("name", "")).strip()
+            entity_id = self.entities.get(entity_name)
+            if entity_id is None:
+                continue
+            try:
+                target_id = int(scripted_cfg.get("target_id", 0))
+            except Exception:
+                target_id = 0
+            if target_id <= 0:
+                target_name = str(scripted_cfg.get("target_name", "")).strip()
+                if target_name:
+                    resolved = self.entities.get(target_name)
+                    if resolved is not None:
+                        target_id = int(resolved)
+            if target_id <= 0 and blue_id > 0:
+                target_id = blue_id
+
+            altitude_hold_m = scripted_cfg.get("altitude_hold_m", None)
+            agent = RedScriptedAgent(
+                self.sim,
+                int(entity_id),
+                target_id=int(target_id) if target_id > 0 else None,
+                cruise_speed_mps=float(scripted_cfg.get("cruise_speed_mps", 220.0)),
+                attack_speed_mps=float(scripted_cfg.get("attack_speed_mps", 260.0)),
+                defensive_speed_mps=float(scripted_cfg.get("defensive_speed_mps", 290.0)),
+                threat_range_m=float(scripted_cfg.get("threat_range_m", 9000.0)),
+                merge_range_m=float(scripted_cfg.get("merge_range_m", 3500.0)),
+                fire_range_m=float(scripted_cfg.get("fire_range_m", 6500.0)),
+                altitude_hold_m=None if altitude_hold_m is None else float(altitude_hold_m),
+                beam_offset_deg=float(scripted_cfg.get("beam_offset_deg", 85.0)),
+            )
+            self.scripted_opponents[int(entity_id)] = agent
+            self.scripted_opponent_reports[int(entity_id)] = {
+                "active": False,
+                "mode": "idle",
+                "target_id": int(target_id or 0),
+            }
+
+    def update_scripted_opponents(self, sim_time: float) -> None:
+        if not self.scripted_opponents:
+            return
+        for entity_id, controller in list(self.scripted_opponents.items()):
+            if controller is None:
+                continue
+            try:
+                report = controller.step(current_time=float(sim_time))
+            except Exception as exc:
+                report = {
+                    "active": False,
+                    "mode": "error",
+                    "entity_id": int(entity_id),
+                    "error": str(exc),
+                }
+            self.scripted_opponent_reports[int(entity_id)] = dict(report)
 
     def get_mission_observation(self, mode: str = "basic", *, truth=None, inst=None):
         return _get_mission_observation_impl(self, mode=mode, truth=truth, inst=inst)

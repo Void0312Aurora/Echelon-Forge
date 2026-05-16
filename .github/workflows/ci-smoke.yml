@@ -1,0 +1,56 @@
+name: ci-smoke
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build
+
+      - name: Create virtual environment
+        run: |
+          python -m venv .venv
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/python -m pip install pytest numpy
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build ef_core and ef_py
+        run: |
+          cmake --build build-workshop --target ef_core ef_py -j2
+
+      - name: Validate repo environment
+        run: |
+          bash tools/maintenance/cmo_env.sh validate
+
+      - name: Run smoke tests
+        run: |
+          source tools/maintenance/cmo_env.sh
+          cmo_python -m pytest -q \
+            tests/architecture/test_runtime_facade_layering.py \
+            tests/architecture/test_cmake_target_readiness.py \
+            tests/runtime/test_env_config.py \
+            tests/runtime/test_runtime_facade.py \
+            tests/world_batch/test_world_batch_runtime.py

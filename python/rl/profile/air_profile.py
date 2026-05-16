@@ -65,6 +65,17 @@ def _runway_slot_unspecified() -> Any:
     return runway_slot_default()
 
 
+def _resolve_int_field(
+    leader_intent: Any,
+    mission_cmd: dict[str, Any],
+    field_name: str,
+    default: int = 0,
+) -> int:
+    if leader_intent is not None and hasattr(leader_intent, field_name):
+        return _coerce_nonnegative_int(getattr(leader_intent, field_name, default))
+    return _coerce_nonnegative_int(mission_cmd.get(field_name, default))
+
+
 def _task_name_from_task_type(task_type: Any) -> str | None:
     mapping = {
         enum_value(getattr(ef_py.TaskType, "Scramble")): "TASK_SCRAMBLE",
@@ -591,6 +602,18 @@ def build_kernel_mission_command(loader: Any) -> ef_py.MissionCommand:
         cmd.form_offset_x = float(mission_cmd.get("form_offset_x", 0.0))
         cmd.form_offset_y = float(mission_cmd.get("form_offset_y", 0.0))
         cmd.form_offset_z = float(mission_cmd.get("form_offset_z", 0.0))
+
+    cmd.roe_state = _resolve_int_field(leader_intent, mission_cmd, "roe_state")
+    cmd.engagement_authority_holder_id = _resolve_int_field(
+        leader_intent,
+        mission_cmd,
+        "engagement_authority_holder_id",
+    )
+    cmd.engagement_authority_grantor_id = _resolve_int_field(
+        leader_intent,
+        mission_cmd,
+        "engagement_authority_grantor_id",
+    )
 
     leader_assigned_target_id = int(getattr(leader_intent, "assigned_target_id", 0))
     leader_authorization_to_fire = bool(getattr(leader_intent, "authorization_to_fire", False))

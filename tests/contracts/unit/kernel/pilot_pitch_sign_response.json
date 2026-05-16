@@ -1,0 +1,16 @@
+{
+  "type": "unit_regression",
+  "check_kind": "kernel_flight_regression",
+  "controller_kind": "pilot_pitch_sign_response",
+  "scenario": "scenarios/test/test_aero.json",
+  "seed": 0,
+  "response_steps": 10,
+  "stick_pitch": 0.5,
+  "throttle": 0.8,
+  "gear_handle": 0.0,
+  "checks": {
+    "pitch_min_deg": 0.0,
+    "q_min_deg_s": 0.0,
+    "aoa_min_deg": 0.0
+  }
+}

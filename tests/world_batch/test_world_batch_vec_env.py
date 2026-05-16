@@ -94,6 +94,72 @@ def _inline_vec_env_route_transition_scenario() -> dict:
     return scenario
 
 
+def _inline_air_combat_scripted_opponent_scenario() -> dict:
+    return {
+        "scenario_name": "air_combat_world_batch_scripted_opponent_inline",
+        "environment": {
+            "time_step": 0.05,
+            "max_steps": 320,
+            "terrain_type": "flat",
+            "wind": {
+                "speed_mps": 0.0,
+                "dir_from_deg": 0.0,
+                "shear_mps_per_km": 0.0,
+            },
+        },
+        "mission_command": {
+            "command_code": 0,
+            "target_heading": 0.0,
+            "target_altitude": 1200.0,
+            "target_speed": 180.0,
+            "assigned_target_name": "Red_Fighter",
+            "authorization_to_fire": True,
+        },
+        "entities": [
+            {
+                "name": "Blue_Fighter",
+                "type": "F-16C_Block50",
+                "side": "Blue",
+                "is_agent": True,
+                "pos": [0.0, 0.0, 1200.0],
+                "vel": [0.0, 180.0, 0.0],
+                "heading": 0.0,
+                "ammo": {
+                    "missiles_remaining": 4,
+                    "max_missiles": 4,
+                },
+                "weapon_cooldown": {
+                    "cooldown_s": 0.75,
+                    "last_fire_time": -1.0,
+                },
+            },
+            {
+                "name": "Red_Fighter",
+                "type": "F-16C_Block50",
+                "side": "Red",
+                "pos": [0.0, 8000.0, 1200.0],
+                "vel": [0.0, -180.0, 0.0],
+                "heading": 180.0,
+                "scripted_agent": {
+                    "name": "red_scripted_agent",
+                    "target_name": "Blue_Fighter",
+                    "fire_range_m": 9000.0,
+                    "threat_range_m": 9000.0,
+                    "merge_range_m": 3500.0,
+                },
+                "ammo": {
+                    "missiles_remaining": 4,
+                    "max_missiles": 4,
+                },
+                "weapon_cooldown": {
+                    "cooldown_s": 0.75,
+                    "last_fire_time": -1.0,
+                },
+            },
+        ],
+    }
+
+
 def _controller_runtime_state_matches_loader_state(runtime_state, loader_state) -> bool:
     def _canonicalize_json(raw: str) -> str:
         if not isinstance(raw, str) or not raw.strip():
@@ -233,6 +299,52 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertEqual(obs["mission"].shape[0], 2)
                 self.assertIsNotNone(vec_env.envs[0].agent_id)
                 self.assertIsNotNone(vec_env.envs[1].agent_id)
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_drives_scripted_red_opponent_on_default_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/air_combat_scripted_opponent.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_air_combat_scripted_opponent_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                vec_env.seed(20260516)
+                _obs = vec_env.reset()
+                loader_red_id = int(vec_env.envs[0].loader.entities["Red_Fighter"])
+                initial_missiles = int(
+                    getattr(vec_env.envs[0].loader.sim.get_agent_observation(loader_red_id), "missiles_remaining", -1)
+                )
+
+                action = np.zeros((1, 17), dtype=np.float32)
+                action[0, 0] = 0.03
+                action[0, 3] = 0.62
+                action[0, 9] = 1.0
+
+                saw_red_behavior = False
+                red_fired = False
+                for _ in range(220):
+                    _obs, _rewards, dones, _infos = vec_env.step(action)
+                    report = vec_env.envs[0].loader.scripted_opponent_reports.get(loader_red_id, {})
+                    if bool(report.get("active", False)):
+                        saw_red_behavior = True
+                    missiles_remaining = int(
+                        getattr(vec_env.envs[0].loader.sim.get_agent_observation(loader_red_id), "missiles_remaining", -1)
+                    )
+                    if missiles_remaining < initial_missiles:
+                        red_fired = True
+                        break
+                    if bool(dones[0]):
+                        break
+
+                self.assertTrue(saw_red_behavior)
+                self.assertTrue(red_fired)
             finally:
                 vec_env.close()
 

@@ -242,32 +242,86 @@ std::vector<SpatialRouteWaypoint> build_route_waypoints_from_json(const nlohmann
     return route_waypoints;
 }
 
+void write_mission_command_fields_to_json(const MissionCommand& command, nlohmann::json* mission_json) {
+    if (mission_json == nullptr) {
+        return;
+    }
+    (*mission_json)["command_code"] = command.command_code;
+    (*mission_json)["target_heading"] = command.cmd_heading_deg;
+    (*mission_json)["target_altitude"] = command.cmd_altitude_m;
+    (*mission_json)["target_speed"] = command.cmd_speed_mps;
+    (*mission_json)["route_ref_id"] = command.route_ref_id;
+    (*mission_json)["reference_entity_id"] = command.reference_entity_id;
+    (*mission_json)["station_radius_m"] = command.station_radius_m;
+    (*mission_json)["station_bearing_deg"] = command.station_bearing_deg;
+    (*mission_json)["embarked_helo_entity_id"] = command.embarked_helo_entity_id;
+    (*mission_json)["launch_helo"] = command.launch_helo;
+    (*mission_json)["recover_helo"] = command.recover_helo;
+    (*mission_json)["relay_oth_targeting"] = command.relay_oth_targeting;
+    (*mission_json)["recovery_base_id"] = command.recovery_base_id;
+    (*mission_json)["recovery_runway_id"] = command.recovery_runway_id;
+    (*mission_json)["recovery_approach_type"] = recovery_approach_type_name(command.recovery_approach_type);
+    (*mission_json)["takeoff_procedure_code"] = static_cast<int>(command.takeoff_procedure_id);
+    (*mission_json)["takeoff_clearance_code"] = static_cast<int>(command.takeoff_clearance_id);
+    (*mission_json)["takeoff_interval_s"] = command.takeoff_interval_s;
+    (*mission_json)["runway_slot_code"] = static_cast<int>(command.runway_slot_id);
+    (*mission_json)["formation_id"] = command.formation_id;
+    (*mission_json)["form_offset_x"] = command.form_offset_x;
+    (*mission_json)["form_offset_y"] = command.form_offset_y;
+    (*mission_json)["form_offset_z"] = command.form_offset_z;
+    (*mission_json)["roe_state"] = command.roe_state;
+    (*mission_json)["engagement_authority_holder_id"] = command.engagement_authority_holder_id;
+    (*mission_json)["engagement_authority_grantor_id"] = command.engagement_authority_grantor_id;
+    (*mission_json)["assigned_target_id"] = command.assigned_target_id;
+    (*mission_json)["authorization_to_fire"] = command.authorization_to_fire;
+    (*mission_json)["active"] = command.active;
+}
+
+MissionCommand build_mission_command_from_json(const nlohmann::json& mission_json) {
+    MissionCommand command{};
+    command.cmd_heading_deg = json_double_or(mission_json, "target_heading", 0.0);
+    command.cmd_altitude_m = json_double_or(mission_json, "target_altitude", 0.0);
+    command.cmd_speed_mps = json_double_or(mission_json, "target_speed", 0.0);
+    command.command_code = json_int_or(mission_json, "command_code", 0);
+    command.route_ref_id = command.command_code == 3 ? json_uint64_or(mission_json, "route_ref_id", 0) : 0;
+    command.reference_entity_id = json_uint64_or(mission_json, "reference_entity_id", 0);
+    command.station_radius_m = json_double_or(mission_json, "station_radius_m", 0.0);
+    command.station_bearing_deg = json_double_or(mission_json, "station_bearing_deg", 0.0);
+    command.embarked_helo_entity_id = json_uint64_or(mission_json, "embarked_helo_entity_id", 0);
+    command.launch_helo = json_bool_or(mission_json, "launch_helo", false);
+    command.recover_helo = json_bool_or(mission_json, "recover_helo", false);
+    command.relay_oth_targeting = json_bool_or(mission_json, "relay_oth_targeting", false);
+    command.recovery_base_id = json_uint64_or(mission_json, "recovery_base_id", 0);
+    command.recovery_runway_id = json_uint64_or(mission_json, "recovery_runway_id", 0);
+    command.recovery_approach_type = parse_recovery_approach_type(mission_json);
+    command.takeoff_procedure_id = static_cast<TakeoffProcedureType>(json_int_or(mission_json, "takeoff_procedure_code", 0));
+    command.takeoff_clearance_id = static_cast<TakeoffClearanceState>(json_int_or(mission_json, "takeoff_clearance_code", 0));
+    command.takeoff_interval_s = json_double_or(mission_json, "takeoff_interval_s", 0.0);
+    command.runway_slot_id = static_cast<RunwaySlotPosition>(json_int_or(mission_json, "runway_slot_code", 0));
+    command.formation_id = json_int_or(mission_json, "formation_id", 0);
+    command.form_offset_x = json_double_or(mission_json, "form_offset_x", 0.0);
+    command.form_offset_y = json_double_or(mission_json, "form_offset_y", 0.0);
+    command.form_offset_z = json_double_or(mission_json, "form_offset_z", 0.0);
+    command.roe_state = json_int_or(mission_json, "roe_state", 0);
+    command.engagement_authority_holder_id = json_uint64_or(mission_json, "engagement_authority_holder_id", 0);
+    command.engagement_authority_grantor_id = json_uint64_or(mission_json, "engagement_authority_grantor_id", 0);
+    command.assigned_target_id = json_uint64_or(mission_json, "assigned_target_id", 0);
+    command.authorization_to_fire = json_bool_or(mission_json, "authorization_to_fire", false);
+    command.active = json_bool_or(mission_json, "active", false);
+    return command;
+}
+
 nlohmann::json build_state_mission_command_json(const ExecutionEpisodeState& state) {
     nlohmann::json mission_json = nlohmann::json::object();
     if (state.has_mission_command_json && parse_json_object(state.mission_command_json, &mission_json)) {
+        if (state.has_mission_command) {
+            write_mission_command_fields_to_json(state.mission_command, &mission_json);
+        }
         return mission_json;
     }
 
     if (state.has_mission_command) {
-        mission_json["command_code"] = state.mission_command.command_code;
-        mission_json["target_heading"] = state.mission_command.cmd_heading_deg;
-        mission_json["target_altitude"] = state.mission_command.cmd_altitude_m;
-        mission_json["target_speed"] = state.mission_command.cmd_speed_mps;
-        mission_json["route_ref_id"] = state.mission_command.route_ref_id;
-        mission_json["recovery_base_id"] = state.mission_command.recovery_base_id;
-        mission_json["recovery_runway_id"] = state.mission_command.recovery_runway_id;
-        mission_json["recovery_approach_type"] = recovery_approach_type_name(state.mission_command.recovery_approach_type);
-        mission_json["takeoff_procedure_code"] = static_cast<int>(state.mission_command.takeoff_procedure_id);
-        mission_json["takeoff_clearance_code"] = static_cast<int>(state.mission_command.takeoff_clearance_id);
-        mission_json["takeoff_interval_s"] = state.mission_command.takeoff_interval_s;
-        mission_json["runway_slot_code"] = static_cast<int>(state.mission_command.runway_slot_id);
-        mission_json["formation_id"] = state.mission_command.formation_id;
-        mission_json["form_offset_x"] = state.mission_command.form_offset_x;
-        mission_json["form_offset_y"] = state.mission_command.form_offset_y;
-        mission_json["form_offset_z"] = state.mission_command.form_offset_z;
-        mission_json["assigned_target_id"] = state.mission_command.assigned_target_id;
-        mission_json["authorization_to_fire"] = state.mission_command.authorization_to_fire;
-        mission_json["active"] = state.mission_command.active;
+        write_mission_command_fields_to_json(state.mission_command, &mission_json);
     }
     if (state.has_post_waypoint_transition_json) {
         nlohmann::json post_transition_json;

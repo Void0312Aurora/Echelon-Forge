@@ -57,9 +57,11 @@ struct AngularVelocity {
 struct AeroState {
     double dynamic_pressure = 0.0;    // q = 0.5 * rho * V^2
     double angle_of_attack = 0.0;     // alpha (degrees)
+    double angle_of_attack_rate_dps = 0.0;
+    double previous_angle_of_attack = 0.0;
     double sideslip_angle = 0.0;      // beta (degrees)
     double mach_number = 0.0;
     double lift_coefficient = 0.0;    // Cl
     double drag_coefficient = 0.0;    // Cd
+    double stall_progress = 0.0;
 };
-

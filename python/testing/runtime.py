@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+from typing import Iterable
 
 
 def repo_root() -> str:
@@ -55,13 +56,20 @@ def build_dir(root: str | None = None) -> str:
 
 def ensure_repo_imports() -> str:
     root = repo_root()
-    for build in reversed(build_dirs(root)):
+    builds = build_dirs(root)
+    for build in reversed(builds):
         if build in sys.path:
             sys.path.remove(build)
         sys.path.insert(0, build)
     if root not in sys.path:
         sys.path.insert(0, root)
+    if builds:
+        os.environ["CMO_BUILD_DIR"] = builds[0]
     return root
+
+
+def iter_build_dirs(root: str | None = None) -> Iterable[str]:
+    return tuple(build_dirs(root))
 
 
 def configure_sim_log_level(level: str = "warn") -> str:

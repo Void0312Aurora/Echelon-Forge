@@ -150,6 +150,7 @@ class HMoEPolicyTests(unittest.TestCase):
 
     def test_residual_gate_warms_up_from_zero(self) -> None:
         policy = self._make_policy()
+        self.assertAlmostEqual(policy._hmoe_residual_gate, 0.0, places=6)
         policy.set_hmoe_training_progress(1.0)
         self.assertAlmostEqual(policy._hmoe_residual_gate, 0.0, places=6)
 
@@ -179,21 +180,21 @@ class HMoEPolicyTests(unittest.TestCase):
             for head in family_subheads:
                 self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
 
-    def test_initialize_hmoe_from_shared_action_head_bootstraps_family_heads(self) -> None:
+    def test_initialize_hmoe_from_shared_action_head_preserves_zero_residual_bootstrap(self) -> None:
         policy = self._make_policy()
         with th.no_grad():
             policy.action_net.weight.fill_(0.25)
             policy.action_net.bias.fill_(0.1)
-            policy.hmoe_head_bank.family_heads[0].weight.zero_()
-            policy.hmoe_head_bank.family_heads[0].bias.zero_()
+            policy.hmoe_head_bank.family_heads[0].weight.fill_(1.0)
+            policy.hmoe_head_bank.family_heads[0].bias.fill_(1.0)
             policy.hmoe_head_bank.subexpert_heads[0][0].weight.fill_(1.0)
             policy.hmoe_head_bank.subexpert_heads[0][0].bias.fill_(1.0)
 
         policy.initialize_hmoe_from_shared_action_head()
 
         for head in policy.hmoe_head_bank.family_heads:
-            self.assertTrue(th.allclose(head.weight.detach(), policy.action_net.weight.detach()))
-            self.assertTrue(th.allclose(head.bias.detach(), policy.action_net.bias.detach()))
+            self.assertTrue(th.allclose(head.weight.detach(), th.zeros_like(head.weight)))
+            self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
         for family_subheads in policy.hmoe_head_bank.subexpert_heads:
             for head in family_subheads:
                 self.assertTrue(th.allclose(head.weight.detach(), th.zeros_like(head.weight)))

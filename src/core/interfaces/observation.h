@@ -9,8 +9,14 @@ struct TrackData {
     double elevation; // Degrees relative to horizon
     double closing_speed; // m/s (Positive = Approaching)
     double time_since_update; // Seconds
-    int source; // 0=None, 1=Radar, 2=RWR, 3=DL, 4=Fused
+    int source; // 0=None, 1=Radar, 2=RWR/ESM, 3=DL, 4=Fused, 5=Sonar
     int classification; // 0=Unknown, 1=Friend, 2=Hostile, 3=Neutral
+    int status; // 0=Tentative, 1=Confirmed, 2=Coasted
+    double quality; // 0.0 - 1.0
+    double confidence; // 0.0 - 1.0
+    int usability; // 0=None, 1=Advisory, 2=Tactical
+    bool iff_known; // Minimal IFF / positive ID known
+    double classification_confidence; // Confidence in friend/hostile/neutral label
 };
 
 struct RWREvent {

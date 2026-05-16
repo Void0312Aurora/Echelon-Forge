@@ -333,15 +333,64 @@ def infer_recovery_approach_type(loader: Any, task: Any | None = None):
     return 0
 
 
+def infer_reference_entity_id(loader: Any) -> int:
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    if isinstance(mission_cmd, dict):
+        ref_id = coerce_positive_int(mission_cmd.get("reference_entity_id", 0))
+        if ref_id > 0:
+            return ref_id
+
+    member = None
+    try:
+        member = loader.get_active_roster_member(entity_id=loader.agent_id)
+    except Exception:
+        member = None
+    if member is None:
+        return 0
+
+    reference_entity_id = coerce_positive_int(getattr(member, "reference_entity_id", 0))
+    if reference_entity_id > 0:
+        return reference_entity_id
+
+    active_roster = list(getattr(loader, "active_roster", []) or [])
+    own_entity_id = coerce_positive_int(getattr(member, "entity_id", 0))
+    for other in active_roster:
+        other_entity_id = coerce_positive_int(getattr(other, "entity_id", 0))
+        if other_entity_id <= 0 or other_entity_id == own_entity_id:
+            continue
+        other_reference_id = coerce_positive_int(getattr(other, "reference_entity_id", 0))
+        if other_reference_id == own_entity_id:
+            return other_entity_id
+    return 0
+
+
+def infer_station_radius_m(loader: Any, task: Any | None = None) -> float:
+    if task is not None:
+        return max(0.0, float(getattr(task, "station_radius_m", 0.0) or 0.0))
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    if isinstance(mission_cmd, dict):
+        return max(0.0, float(mission_cmd.get("station_radius_m", 0.0) or 0.0))
+    return 0.0
+
+
+def infer_station_bearing_deg(loader: Any, task: Any | None = None) -> float:
+    if task is not None:
+        return float(getattr(task, "station_heading_deg", getattr(task, "target_heading_deg", 0.0)) or 0.0)
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    if isinstance(mission_cmd, dict):
+        return float(mission_cmd.get("station_bearing_deg", mission_cmd.get("target_heading", 0.0)) or 0.0)
+    return 0.0
+
+
 def build_kernel_mission_command(loader: Any):
     scenario_data = getattr(loader, "scenario_data", {}) or {}
     task_order = getattr(loader, "task_order", None)
+    mission_cmd = getattr(loader, "mission_cmd", {}) or {}
     if task_order is not None:
         heading_deg = float(getattr(task_order, "station_heading_deg", getattr(task_order, "target_heading_deg", 0.0)))
         altitude_m = float(getattr(task_order, "target_altitude_m", 0.0))
         speed_mps = float(getattr(task_order, "target_speed_mps", 0.0))
     else:
-        mission_cmd = getattr(loader, "mission_cmd", {}) or {}
         heading_deg = float(mission_cmd.get("target_heading", 0.0))
         altitude_m = float(mission_cmd.get("target_altitude", 0.0))
         speed_mps = float(mission_cmd.get("target_speed", 0.0))
@@ -352,6 +401,26 @@ def build_kernel_mission_command(loader: Any):
     cmd.cmd_heading_deg = float(heading_deg)
     cmd.cmd_altitude_m = float(altitude_m)
     cmd.cmd_speed_mps = float(speed_mps)
+    if hasattr(cmd, "reference_entity_id"):
+        cmd.reference_entity_id = infer_reference_entity_id(loader)
+    if hasattr(cmd, "station_radius_m"):
+        cmd.station_radius_m = infer_station_radius_m(loader, task=task_order)
+    if hasattr(cmd, "station_bearing_deg"):
+        cmd.station_bearing_deg = infer_station_bearing_deg(loader, task=task_order)
+    if hasattr(cmd, "roe_state"):
+        cmd.roe_state = int(mission_cmd.get("roe_state", 0))
+    if hasattr(cmd, "engagement_authority_holder_id"):
+        cmd.engagement_authority_holder_id = coerce_positive_int(
+            mission_cmd.get("engagement_authority_holder_id", 0)
+        )
+    if hasattr(cmd, "engagement_authority_grantor_id"):
+        cmd.engagement_authority_grantor_id = coerce_positive_int(
+            mission_cmd.get("engagement_authority_grantor_id", 0)
+        )
+    if hasattr(cmd, "assigned_target_id"):
+        cmd.assigned_target_id = coerce_positive_int(mission_cmd.get("assigned_target_id", 0))
+    if hasattr(cmd, "authorization_to_fire"):
+        cmd.authorization_to_fire = bool(mission_cmd.get("authorization_to_fire", False))
     if hasattr(cmd, "route_ref_id"):
         cmd.route_ref_id = 0
     if hasattr(cmd, "recovery_base_id"):
@@ -367,4 +436,41 @@ def build_kernel_mission_command(loader: Any):
             cmd.cmd_heading_deg = float(mission_cfg.get("target_heading", cmd.cmd_heading_deg))
             cmd.cmd_altitude_m = float(mission_cfg.get("target_altitude", cmd.cmd_altitude_m))
             cmd.cmd_speed_mps = float(mission_cfg.get("target_speed", cmd.cmd_speed_mps))
+            if hasattr(cmd, "reference_entity_id"):
+                cmd.reference_entity_id = coerce_positive_int(
+                    mission_cfg.get("reference_entity_id", cmd.reference_entity_id)
+                )
+            if hasattr(cmd, "station_radius_m"):
+                cmd.station_radius_m = max(0.0, float(mission_cfg.get("station_radius_m", cmd.station_radius_m)))
+            if hasattr(cmd, "station_bearing_deg"):
+                cmd.station_bearing_deg = float(
+                    mission_cfg.get(
+                        "station_bearing_deg",
+                        mission_cfg.get("target_heading", cmd.station_bearing_deg),
+                    )
+                )
+            if hasattr(cmd, "roe_state"):
+                cmd.roe_state = int(mission_cfg.get("roe_state", cmd.roe_state))
+            if hasattr(cmd, "engagement_authority_holder_id"):
+                cmd.engagement_authority_holder_id = coerce_positive_int(
+                    mission_cfg.get(
+                        "engagement_authority_holder_id",
+                        cmd.engagement_authority_holder_id,
+                    )
+                )
+            if hasattr(cmd, "engagement_authority_grantor_id"):
+                cmd.engagement_authority_grantor_id = coerce_positive_int(
+                    mission_cfg.get(
+                        "engagement_authority_grantor_id",
+                        cmd.engagement_authority_grantor_id,
+                    )
+                )
+            if hasattr(cmd, "assigned_target_id"):
+                cmd.assigned_target_id = coerce_positive_int(
+                    mission_cfg.get("assigned_target_id", cmd.assigned_target_id)
+                )
+            if hasattr(cmd, "authorization_to_fire"):
+                cmd.authorization_to_fire = bool(
+                    mission_cfg.get("authorization_to_fire", cmd.authorization_to_fire)
+                )
     return cmd

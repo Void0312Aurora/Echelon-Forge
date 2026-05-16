@@ -3,14 +3,18 @@
 #include "components/combat/health.h"
 #include "components/combat/scoring.h"
 #include "components/combat/weapon.h"
+#include "components/combat/damage.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/instruments.h"
 #include "components/physics/performance.h"
 #include "components/systems/ew.h"
+#include "components/systems/data_link.h"
 #include "components/systems/logistics.h"
 #include "components/systems/navigation.h"
 #include "components/systems/sensor.h"
+#include "components/systems/sonar.h"
 #include "components/systems/track_management.h"
+#include "components/naval/embarked_air_ops.h"
 
 #include <spdlog/spdlog.h>
 
@@ -24,6 +28,17 @@ std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
         const Transform* t = e.get<Transform>();
         if (t) {
             return {t->x, t->y, t->z};
+        }
+    }
+    return {0.0, 0.0, 0.0};
+}
+
+std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        const Velocity* v = e.get<Velocity>();
+        if (v) {
+            return {v->vx, v->vy, v->vz};
         }
     }
     return {0.0, 0.0, 0.0};
@@ -51,11 +66,33 @@ void SimulationKernel::set_contact_list(uint64_t entity_id, const std::vector<De
     }
 }
 
+void SimulationKernel::set_unit_ammo(uint64_t entity_id, int missiles_remaining, int max_missiles) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        spdlog::warn("Attempted to set ammo for invalid entity ID: {}", entity_id);
+        return;
+    }
+    const int remaining = std::max(0, missiles_remaining);
+    const int maximum = std::max(remaining, std::max(0, max_missiles));
+    e.set<Ammo>({remaining, maximum});
+}
+
+void SimulationKernel::set_weapon_cooldown(uint64_t entity_id, double cooldown_s, double last_fire_time) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        spdlog::warn("Attempted to set weapon cooldown for invalid entity ID: {}", entity_id);
+        return;
+    }
+    e.set<WeaponCooldown>({cooldown_s, last_fire_time});
+}
+
 double SimulationKernel::debug_get_last_scan_time(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
         const Sensor* s = e.get<Sensor>();
         if (s) return s->last_scan_time;
+        const Sonar* sonar = e.get<Sonar>();
+        if (sonar) return sonar->last_scan_time_s;
     }
     return std::numeric_limits<double>::quiet_NaN();
 }
@@ -97,6 +134,44 @@ std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
     return {0.0, 0.0};
 }
 
+std::vector<double> SimulationKernel::get_unit_damage_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) return {0.0, 0.0, 0.0, 0.0};
+
+    if (const PlatformDamageState* state = e.get<PlatformDamageState>()) {
+        return {
+            state->mission_capability,
+            state->mobility_capability,
+            state->sensor_capability,
+            state->survivability_margin,
+        };
+    }
+    return {1.0, 1.0, 1.0, 1.0};
+}
+
+std::vector<double> SimulationKernel::debug_get_naval_weapon_counts(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) return {};
+
+    const NavalWeaponSystem* system = e.get<NavalWeaponSystem>();
+    if (!system) return {};
+
+    double ready_vls = 0.0;
+    double ready_gun = 0.0;
+    double ready_ciws = 0.0;
+    for (const auto& mount : system->mounts) {
+        if (mount.weapon_type == NavalWeaponType::VlsSam) ready_vls += mount.ready_count;
+        else if (mount.weapon_type == NavalWeaponType::DeckGun) ready_gun += mount.ready_count;
+        else if (mount.weapon_type == NavalWeaponType::Ciws) ready_ciws += mount.ready_count;
+    }
+    return {
+        static_cast<double>(system->mounts.size()),
+        ready_vls,
+        ready_gun,
+        ready_ciws,
+    };
+}
+
 std::vector<double> SimulationKernel::get_unit_fuel(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
@@ -108,6 +183,87 @@ std::vector<double> SimulationKernel::get_unit_fuel(uint64_t entity_id) {
     return {0.0, 0.0, 0.0, 0.0}; // Error/Not Found
 }
 
+std::vector<double> SimulationKernel::debug_get_naval_stores(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const NavalStores* stores = e.get<NavalStores>()) {
+            return {
+                stores->fuel_units_current,
+                stores->fuel_units_max,
+                stores->missile_units_current,
+                stores->missile_units_max,
+                stores->dry_cargo_units_current,
+                stores->dry_cargo_units_max,
+            };
+        }
+    }
+    return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+}
+
+std::vector<double> SimulationKernel::debug_get_logistics_node(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const LogisticsNode* node = e.get<LogisticsNode>()) {
+            return {
+                node->supply_radius_m,
+                node->infinite_supply ? 1.0 : 0.0,
+                node->underway_replenishment_enabled ? 1.0 : 0.0,
+                node->underway_min_separation_m,
+                node->underway_max_separation_m,
+                node->underway_max_relative_speed_mps,
+                node->transfer_rate_fuel_units_per_s,
+                node->transfer_rate_missile_units_per_s,
+                node->transfer_rate_dry_cargo_units_per_s,
+            };
+        }
+    }
+    return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+}
+
+std::vector<double> SimulationKernel::debug_get_resupply_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const ResupplyState* state = e.get<ResupplyState>()) {
+            const bool active = (state->kind == ResupplyKind::NavalUnderway &&
+                                 state->naval_stage == NavalResupplyStage::Transferring) ||
+                                (state->kind == ResupplyKind::BaseRefuel &&
+                                 state->time_remaining_s > 0.0 &&
+                                 (state->is_refueling || state->is_rearming));
+            return {
+                active ? 1.0 : 0.0,
+                static_cast<double>(state->kind),
+                static_cast<double>(state->partner_entity_id),
+                static_cast<double>(state->naval_stage),
+                state->time_remaining_s,
+                state->is_refueling ? 1.0 : 0.0,
+                state->is_rearming ? 1.0 : 0.0,
+            };
+        }
+    }
+    return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+}
+
+std::vector<double> SimulationKernel::debug_get_data_link_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const DataLink* link = e.get<DataLink>()) {
+            return {
+                static_cast<double>(link->max_reports_per_update),
+                static_cast<double>(link->max_messages_per_update),
+                static_cast<double>(link->reports_sent_last_update),
+                static_cast<double>(link->messages_sent_last_update),
+                static_cast<double>(link->reports_dropped_last_update),
+                static_cast<double>(link->messages_dropped_last_update),
+                static_cast<double>(link->reports_sent_total),
+                static_cast<double>(link->messages_sent_total),
+                static_cast<double>(link->reports_dropped_total),
+                static_cast<double>(link->messages_dropped_total),
+            };
+        }
+    }
+    return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+}
+
 std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
@@ -116,6 +272,16 @@ std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) 
         }
     }
     return {};
+}
+
+std::uint64_t SimulationKernel::debug_get_embarked_helo(uint64_t entity_id) const {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const EmbarkedAirOps* ops = e.get<EmbarkedAirOps>()) {
+            return ops->active_helo_entity_id;
+        }
+    }
+    return 0;
 }
 
 std::vector<UnitData> SimulationKernel::get_all_units() {
@@ -181,17 +347,37 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
     
     // Tracks (Fused Picture)
     const TrackDatabase* tracks = e.get<TrackDatabase>();
-    if (tracks) {
+    if (tracks && !tracks->tracks.empty()) {
          for (const auto& trk : tracks->tracks) {
              TrackData d;
              d.id = trk.track_id;
              d.range = trk.range;
              d.azimuth = trk.azimuth;
              d.elevation = trk.elevation;
-             d.closing_speed = 0.0; // Not stored in SystemTrack yet, could be deriv
+             d.closing_speed = 0.0;
+             const double dx = trk.x - p->x;
+             const double dy = trk.y - p->y;
+             const double dz = trk.z - p->z;
+             const double dist_sq = dx * dx + dy * dy + dz * dz;
+             if (dist_sq > 1.0e-6) {
+                 const double dist = std::sqrt(dist_sq);
+                 const double rx = dx / dist;
+                 const double ry = dy / dist;
+                 const double rz = dz / dist;
+                 const double rel_vx = trk.vx - obs.vx;
+                 const double rel_vy = trk.vy - obs.vy;
+                 const double rel_vz = trk.vz - obs.vz;
+                 d.closing_speed = -(rel_vx * rx + rel_vy * ry + rel_vz * rz);
+             }
              d.time_since_update = trk.time_since_update;
              d.source = (int)trk.main_source;
              d.classification = (int)trk.classification;
+             d.status = (int)trk.status;
+             d.quality = trk.quality;
+             d.confidence = trk.confidence;
+             d.usability = (int)track_usability_for(trk);
+             d.iff_known = trk.iff_known;
+             d.classification_confidence = trk.classification_confidence;
              obs.contacts.push_back(d);
          }
     } else {
@@ -208,8 +394,22 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
                 track.azimuth = det.bearing;
                 track.elevation = det.elevation;
                 track.closing_speed = det.closing_speed;
-                track.source = 1; // Radar (Default)
+                if (det.sensor_type == static_cast<int>(SensorType::ESM) || det.range <= 0.0) {
+                    track.source = 2; // Passive / bearing-only
+                } else if (det.sensor_type == static_cast<int>(SensorType::Sonar)) {
+                    track.source = 5; // Sonar
+                } else {
+                    track.source = 1; // Radar (Default)
+                }
                 track.classification = 0; // Unknown
+                track.status = 0; // Tentative
+                const double fallback_confidence =
+                    det.detection_prob_used > 0.0 ? det.detection_prob_used : 0.25;
+                track.quality = fallback_confidence;
+                track.confidence = fallback_confidence;
+                track.usability = 0; // None
+                track.iff_known = false;
+                track.classification_confidence = 0.0;
                 
                 obs.contacts.push_back(track);
             }
@@ -273,6 +473,19 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             obs.rwr_warnings.push_back(event);
         }
     }
+
+    const ESMReceiver* esm = e.get<ESMReceiver>();
+    if (esm) {
+        for (const auto& det : esm->detections) {
+            RWREvent event{};
+            event.source_id = det.source_id;
+            event.bearing = det.bearing_deg;
+            event.signal_strength = det.signal_strength;
+            event.is_lock = det.is_radar_lock;
+            event.is_launch = det.is_missile_guidance;
+            obs.rwr_warnings.push_back(event);
+        }
+    }
     
     // Weapons check (Placeholder)
     const Ammo* ammo = e.get<Ammo>();
@@ -295,19 +508,18 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
     const LandingGear* gear = e.get<LandingGear>();
     obs.gear_state = gear ? gear->extension_state : 0.0;
 
-    // Afterburner Visualization
-    const InstrumentState* inst = e.get<InstrumentState>();
-    if (inst) {
-        // Normalize RPM. >100% usually means AB.
-        // Assume 100% = MIL, 150% = Max AB roughly for viz scaling
-        obs.throttle = inst->engine_rpm_pct / 100.0;
+    // Propulsion readout: prefer actual spool/AB state over RPM-derived heuristics.
+    const Propulsion* prop = e.get<Propulsion>();
+    if (prop) {
+        const double throttle_state = std::clamp(prop->throttle_state, 0.0, 1.0);
+        const double ab_state = std::clamp(prop->ab_state, 0.0, 1.0);
+        obs.throttle = throttle_state + (0.5 * ab_state);
     } else {
-        const Propulsion* prop = e.get<Propulsion>();
-        if (prop && prop->mil_thrust_n > 0.1) {
-             obs.throttle = prop->current_thrust_n / prop->mil_thrust_n;
-             if (prop->afterburner_active) obs.throttle = 1.5; 
+        const InstrumentState* inst = e.get<InstrumentState>();
+        if (inst) {
+            obs.throttle = std::clamp(inst->engine_rpm_pct / 100.0, 0.0, 1.5);
         } else {
-             obs.throttle = 0.0;
+            obs.throttle = 0.0;
         }
     }
     

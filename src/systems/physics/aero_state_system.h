@@ -47,6 +47,10 @@ inline void register_aero_state_system(flecs::world& ecs) {
         .kind(flecs::OnUpdate)
         .run([](flecs::iter& it) {
             const EnvironmentModelRef* env_ref = it.world().get<EnvironmentModelRef>();
+            double dt = it.delta_time();
+            if (dt <= 0.0) {
+                dt = 0.05;
+            }
             
             while (it.next()) {
                 auto aero = it.field<AeroState>(0);
@@ -71,11 +75,28 @@ inline void register_aero_state_system(flecs::world& ecs) {
                         speed_of_sound = atmo.speed_of_sound;
                         wind = atmo.wind_velocity;
                     } else {
-                        // Simple fallback atmosphere model
-                        double alt_km = std::max(0.0, transform[i].z) / 1000.0;
-                        rho = 1.225 * std::exp(-alt_km / 7.2);
-                        speed_of_sound = 340.29 - (4.0 * alt_km); // Very rough linear approx
-                        if (speed_of_sound < 295.0) speed_of_sound = 295.0;
+                        // US Standard Atmosphere 1976 first two layers.
+                        constexpr double kG = 9.80665;
+                        constexpr double kR = 287.0;
+                        constexpr double kL = 0.0065;
+                        constexpr double kT0 = 288.15;
+                        constexpr double kP0 = 101325.0;
+                        constexpr double kGamma = 1.4;
+                        constexpr double kT11 = 216.65;
+                        constexpr double kP11 = 22632.1;
+
+                        const double h = std::max(0.0, transform[i].z);
+                        double temperature = kT0;
+                        double pressure = kP0;
+                        if (h < 11000.0) {
+                            temperature = kT0 - kL * h;
+                            pressure = kP0 * std::pow(1.0 - (kL * h / kT0), kG / (kR * kL));
+                        } else {
+                            temperature = kT11;
+                            pressure = kP11 * std::exp(-kG * (h - 11000.0) / (kR * kT11));
+                        }
+                        rho = pressure / (kR * temperature);
+                        speed_of_sound = std::sqrt(kGamma * kR * temperature);
                     }
 
                     double vx = vx_gnd - wind.x;
@@ -101,6 +122,9 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     // u = Forward (X), v = Side (Y), w = Down (Z-down? No, Z-up system: w is Up)
                     // ...
                     
+                    // In this body frame, +Z points up relative to the airframe, so
+                    // positive AoA corresponds to airflow coming from below the nose
+                    // (negative body-Z component).
                     const double alpha_raw = Math::to_degrees(std::atan2(-v_body.z, v_body.x));
                     
                     // Beta = asin(v_body.y / v_total)
@@ -120,6 +144,7 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     }
                     w = std::clamp(w, 0.0, 1.0);
 
+                    const double previous_alpha = aero[i].angle_of_attack;
                     aero[i].angle_of_attack = (1.0 - w) * aero[i].angle_of_attack + w * alpha_raw;
                     aero[i].sideslip_angle = (1.0 - w) * aero[i].sideslip_angle + w * beta_raw;
                     
@@ -128,6 +153,16 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     aero[i].sideslip_angle = std::max(-90.0, std::min(90.0, aero[i].sideslip_angle));
                     aero[i].angle_of_attack = canonicalize_aero_angle_deg(aero[i].angle_of_attack);
                     aero[i].sideslip_angle = canonicalize_aero_angle_deg(aero[i].sideslip_angle);
+
+                    aero[i].previous_angle_of_attack = previous_alpha;
+                    if (w > 0.0 && dt > 1.0e-6) {
+                        aero[i].angle_of_attack_rate_dps = canonicalize_aero_scalar(
+                            (aero[i].angle_of_attack - previous_alpha) / dt,
+                            kAeroAngleCanonicalQuantumDeg
+                        );
+                    } else {
+                        aero[i].angle_of_attack_rate_dps = 0.0;
+                    }
                 }
             }
         });

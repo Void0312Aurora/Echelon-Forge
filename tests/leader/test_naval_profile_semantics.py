@@ -9,6 +9,7 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 
+from python.rl.profile.naval_profile import build_kernel_mission_command  # noqa: E402
 from python.rl.tasking.bridge import normalize_task_order_spec, resolve_tasking_profile  # noqa: E402
 from python.rl.tasking.common_core_profile import (  # noqa: E402
     apply_leader_intent_common_core_defaults,
@@ -89,6 +90,40 @@ class NavalProfileSemanticTests(unittest.TestCase):
         self.assertEqual(int(normalized["warfare_role_code"]), int(ef_py.NavalWarfareRole.LogisticsCoordinator))
         self.assertEqual(normalized["naval_station_type"], ef_py.NavalStationType.Support)
         self.assertEqual(int(normalized["officer_in_tactical_command"]), 7401)
+
+    def test_build_kernel_mission_command_populates_naval_station_fields(self) -> None:
+        task = ef_py.TaskOrder()
+        task.service_profile = ef_py.ServiceProfile.Navy
+        task.task_family = ef_py.TaskFamily.Escort
+        task.coordination_mode = ef_py.CoordinationMode.Screen
+        task.station_heading_deg = 35.0
+        task.station_radius_m = 14000.0
+        task.target_speed_mps = 12.5
+        task.target_altitude_m = 0.0
+
+        agent_member = type("_Member", (), {"entity_id": 5101, "reference_entity_id": 5201})()
+        loader = type(
+            "_Loader",
+            (),
+            {
+                "scenario_data": {},
+                "task_order": task,
+                "mission_cmd": {},
+                "agent_id": 5101,
+                "active_roster": [agent_member],
+                "get_active_roster_member": staticmethod(lambda entity_id=None, entity_name=None: agent_member),
+            },
+        )()
+
+        cmd = build_kernel_mission_command(loader)
+
+        self.assertTrue(bool(cmd.active))
+        self.assertEqual(int(cmd.command_code), 3)
+        self.assertEqual(int(cmd.reference_entity_id), 5201)
+        self.assertAlmostEqual(float(cmd.station_radius_m), 14000.0, places=6)
+        self.assertAlmostEqual(float(cmd.station_bearing_deg), 35.0, places=6)
+        self.assertAlmostEqual(float(cmd.cmd_heading_deg), 35.0, places=6)
+        self.assertAlmostEqual(float(cmd.cmd_speed_mps), 12.5, places=6)
 
 
 if __name__ == "__main__":

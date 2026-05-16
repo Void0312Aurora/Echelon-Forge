@@ -1,6 +1,10 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <tuple>
+#include <vector>
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 #include "components/basic/common.h"
@@ -12,10 +16,11 @@
 
 inline void register_logistics_system(flecs::world& ecs) {
     // 1. Fuel Consumption System
-    ecs.system<FuelSystem>("FuelConsumption")
+    ecs.system<FuelSystem, const Propulsion>("FuelConsumption")
         .run([](flecs::iter& it) {
             while (it.next()) {
                 auto fuel = it.field<FuelSystem>(0);
+                auto propulsion = it.field<const Propulsion>(1);
                 double dt = it.delta_time();
 
                 for (auto i : it) {
@@ -36,25 +41,22 @@ inline void register_logistics_system(flecs::world& ecs) {
                         }
                     }
 
-                    // Mapping Throttle to Burn Rate
-                    // Idle: 10% of Mil
-                    // Mil: 100% of Mil (Throttle=0.5 to 0.8?)
-                    // AB: Multiplier * Mil (Throttle > 0.9)
-
-                    // Simple mapping:
-                    // < 0: Idle flow (approx)
-                    // 0.0 - 0.9: Linear interpolation 
-                    // > 0.9: Afterburner
-
-                    constexpr double kAfterburnerThreshold = 0.9;
-                    if (throttle > kAfterburnerThreshold) {
-                        fuel[i].current_flow_rate = fuel[i].mil_power_flow_rate * fuel[i].ab_flow_rate_multiplier;
-                        fuel[i].afterburner_active = true;
+                    const double thrust_n = std::max(0.0, propulsion[i].current_thrust_n);
+                    const double tsfc_nh = std::max(0.0, propulsion[i].current_tsfc);
+                    if (thrust_n > 0.0 && tsfc_nh > 0.0) {
+                        fuel[i].current_flow_rate = (thrust_n * tsfc_nh) / 3600.0;
+                        fuel[i].afterburner_active = propulsion[i].afterburner_active;
                     } else {
-                        // Linear interpolation from idle -> MIL as throttle goes 0..0.9
-                        fuel[i].current_flow_rate =
-                            fuel[i].mil_power_flow_rate * (0.1 + 0.9 * (throttle / kAfterburnerThreshold));
-                        fuel[i].afterburner_active = false;
+                        constexpr double kAfterburnerThreshold = 0.9;
+                        if (throttle > kAfterburnerThreshold) {
+                            fuel[i].current_flow_rate =
+                                fuel[i].mil_power_flow_rate * fuel[i].ab_flow_rate_multiplier;
+                            fuel[i].afterburner_active = true;
+                        } else {
+                            fuel[i].current_flow_rate =
+                                fuel[i].mil_power_flow_rate * (0.1 + 0.9 * (throttle / kAfterburnerThreshold));
+                            fuel[i].afterburner_active = false;
+                        }
                     }
 
                     double fuel_consumed = fuel[i].current_flow_rate * dt;
@@ -134,66 +136,288 @@ inline void register_logistics_system(flecs::world& ecs) {
     // Note: We need access to world to query bases.
     
     // We register the system to run on Units that *might* resupply
-    ecs.system<FuelSystem, const Transform, const Velocity>("ResupplyLogic")
+    ecs.system<Transform, Velocity>("ResupplyLogic")
        .run([&](flecs::iter& it) {
-           // Pre-fetch bases to avoid query every entity
-           std::vector<std::tuple<flecs::entity, double, double, double, double>> bases;
-           auto base_q = it.world().query<const LogisticsNode, const Transform>();
-           base_q.each([&](flecs::entity e, const LogisticsNode& node, const Transform& t) {
-               bases.emplace_back(e, t.x, t.y, t.z, node.supply_radius_m);
-           });
-           
-           if (bases.empty()) return;
-
-           auto fuel = it.field<FuelSystem>(0);
-           auto pos = it.field<const Transform>(1);
-           auto vel = it.field<const Velocity>(2); // Check speed
-           
-           for (auto i : it) {
-               flecs::entity unit = it.entity(i);
-               double speed = std::sqrt(vel[i].vx*vel[i].vx + vel[i].vy*vel[i].vy + vel[i].vz*vel[i].vz);
-               
-               // Check if we are currently resupplying
-               ResupplyState* state = unit.get_mut<ResupplyState>();
-               
-               if (state) {
-                   // Continue Resupply Process
-                   state->time_remaining_s -= it.delta_time();
-                   
-                   // Refill Logic (Instant refill every frame or once?)
-                   // Continuous top-up ensures if we leave we are full-ish
-                   fuel[i].internal_fuel_kg = fuel[i].max_internal_fuel_kg;
-                   fuel[i].external_fuel_kg = fuel[i].max_external_fuel_kg; // Magic refill of empty tanks
-                   
-                   if (state->time_remaining_s <= 0) {
-                       unit.remove<ResupplyState>();
-                       spdlog::info("Unit {} resupply complete.", unit.id());
+           while (it.next()) {
+               // Pre-fetch bases to avoid query every entity
+               std::vector<std::tuple<flecs::entity, double, double, double, double>> bases;
+               auto base_q = it.world().query<const LogisticsNode, const Transform>();
+               base_q.each([&](flecs::entity e, const LogisticsNode& node, const Transform& t) {
+                   if (node.supply_radius_m > 0.0) {
+                       bases.emplace_back(e, t.x, t.y, t.z, node.supply_radius_m);
                    }
+               });
+               
+               auto pos = it.field<Transform>(0);
+               auto vel = it.field<Velocity>(1); // Check speed
+               
+               for (auto i : it) {
+                   flecs::entity unit = it.entity(i);
+                   double speed = std::sqrt(vel[i].vx*vel[i].vx + vel[i].vy*vel[i].vy + vel[i].vz*vel[i].vz);
+                   FuelSystem* fuel = unit.get_mut<FuelSystem>();
+                   ResupplyState* state = unit.get_mut<ResupplyState>();
                    
-                   // Check if moved (Abort if taxiing too fast?)
-                   if (speed > 10.0) {
-                        unit.remove<ResupplyState>(); // Break connection
-                        spdlog::info("Unit {} broke resupply connection (moving).", unit.id());
-                   }
-                   
-               } else {
-                   // Check conditions to Start Resupply
-                   // 1. Speed < 5 m/s (Stopped)
-                   // 2. Near Base
-                   if (speed < 5.0) {
-                       for (const auto& [base_ent, bx, by, bz, radius] : bases) {
-                           double dx = pos[i].x - bx;
-                           double dy = pos[i].y - by;
-                           double dist_sq = dx*dx + dy*dy; // Ignore Z for ground base? or check Alt?
-                           // Assuming Base is at Z=0 and Plane at Z=0 (Ground)
-                           
-                           if (dist_sq < radius * radius) {
-                               // Trigger Resupply
-                               unit.set<ResupplyState>({30.0, true, true}); // 30s turnaround
-                               spdlog::info("Unit {} started resupply at Base {}.", unit.id(), base_ent.id());
-                               break; // Only one base
+                   if (state) {
+                       // Continue Resupply Process
+                       state->time_remaining_s -= it.delta_time();
+                       
+                       // Refill Logic (Instant refill every frame or once?)
+                       // Continuous top-up ensures if we leave we are full-ish
+                       if (fuel) {
+                           fuel->internal_fuel_kg = fuel->max_internal_fuel_kg;
+                           fuel->external_fuel_kg = fuel->max_external_fuel_kg; // Magic refill of empty tanks
+                       }
+                       
+                       if (state->time_remaining_s <= 0) {
+                           state->time_remaining_s = 0.0;
+                           state->is_refueling = false;
+                           state->is_rearming = false;
+                           spdlog::info("Unit {} resupply complete.", unit.id());
+                       }
+                       
+                       // Check if moved (Abort if taxiing too fast?)
+                       if (speed > 10.0) {
+                            state->time_remaining_s = 0.0;
+                            state->is_refueling = false;
+                            state->is_rearming = false;
+                            spdlog::info("Unit {} broke resupply connection (moving).", unit.id());
+                       }
+                       
+                   } else {
+                       // Check conditions to Start Resupply
+                       // 1. Speed < 5 m/s (Stopped)
+                       // 2. Near Base
+                       if (fuel && speed < 5.0) {
+                           for (const auto& [base_ent, bx, by, bz, radius] : bases) {
+                               double dx = pos[i].x - bx;
+                               double dy = pos[i].y - by;
+                               double dist_sq = dx*dx + dy*dy; // Ignore Z for ground base? or check Alt?
+                               // Assuming Base is at Z=0 and Plane at Z=0 (Ground)
+                               
+                               if (dist_sq < radius * radius) {
+                                   // Trigger Resupply
+                                   unit.set<ResupplyState>({
+                                       30.0,
+                                       true,
+                                       true,
+                                       ResupplyKind::BaseRefuel,
+                                       0,
+                                       NavalResupplyStage::None
+                                   }); // 30s turnaround
+                                   spdlog::info("Unit {} started resupply at Base {}.", unit.id(), base_ent.id());
+                                   break; // Only one base
+                               }
                            }
                        }
+                   }
+               }
+           }
+       });
+
+    ecs.system<ResupplyState, NavalStores, const Transform, const Velocity>("NavalUnderwayResupply")
+       .run([&](flecs::iter& it) {
+           while (it.next()) {
+               struct UnderwayProviderSnapshot {
+                   flecs::entity entity;
+                   LogisticsNode node;
+                   double x;
+                   double y;
+                   double vx;
+                   double vy;
+                   double vz;
+                   double fuel_units_current;
+                   double missile_units_current;
+                   double dry_cargo_units_current;
+               };
+
+               std::vector<UnderwayProviderSnapshot> providers;
+               auto provider_q = it.world().query<const LogisticsNode, const Transform, const Velocity, const NavalStores>();
+               provider_q.each([&](flecs::entity e,
+                                   const LogisticsNode& node,
+                                   const Transform& t,
+                                   const Velocity& v,
+                                   const NavalStores& naval_stores) {
+                   if (!node.underway_replenishment_enabled) {
+                       return;
+                   }
+                   providers.push_back({
+                       e,
+                       node,
+                       t.x,
+                       t.y,
+                       v.vx,
+                       v.vy,
+                       v.vz,
+                       naval_stores.fuel_units_current,
+                       naval_stores.missile_units_current,
+                       naval_stores.dry_cargo_units_current,
+                   });
+               });
+
+               auto state = it.field<ResupplyState>(0);
+               auto stores = it.field<NavalStores>(1);
+               auto pos = it.field<const Transform>(2);
+               auto vel = it.field<const Velocity>(3);
+
+               auto transfer_axis = [](double* provider_current,
+                                       double provider_rate_per_s,
+                                       double* receiver_current,
+                                       double receiver_max,
+                                       double dt) -> double {
+                   if (!provider_current || !receiver_current || provider_rate_per_s <= 0.0) {
+                       return 0.0;
+                   }
+                   const double missing = std::max(0.0, receiver_max - *receiver_current);
+                   const double available = std::max(0.0, *provider_current);
+                   const double delta = std::min({provider_rate_per_s * dt, missing, available});
+                   if (delta <= 0.0) {
+                       return 0.0;
+                   }
+                   *provider_current -= delta;
+                   *receiver_current += delta;
+                   return delta;
+               };
+
+               for (auto i : it) {
+                   const bool receiver_needs_any =
+                       stores[i].fuel_units_current < stores[i].fuel_units_max - 1.0e-6 ||
+                       stores[i].missile_units_current < stores[i].missile_units_max - 1.0e-6 ||
+                       stores[i].dry_cargo_units_current < stores[i].dry_cargo_units_max - 1.0e-6;
+                   if (!receiver_needs_any) {
+                       if (state[i].kind == ResupplyKind::NavalUnderway) {
+                           state[i].kind = ResupplyKind::BaseRefuel;
+                           state[i].naval_stage = NavalResupplyStage::None;
+                           state[i].partner_entity_id = 0;
+                           state[i].time_remaining_s = 0.0;
+                           state[i].is_refueling = false;
+                           state[i].is_rearming = false;
+                       }
+                       continue;
+                   }
+
+                   if (state[i].kind == ResupplyKind::NavalUnderway && state[i].partner_entity_id != 0) {
+                       auto provider = it.world().entity(state[i].partner_entity_id);
+                       const LogisticsNode* provider_node = provider.get<LogisticsNode>();
+                       const Transform* provider_pos = provider.get<Transform>();
+                       const Velocity* provider_vel = provider.get<Velocity>();
+                       NavalStores* provider_stores = provider.get_mut<NavalStores>();
+                       if (!provider.is_valid() || !provider_node || !provider_pos || !provider_vel ||
+                           !provider_stores || !provider_node->underway_replenishment_enabled) {
+                           state[i].naval_stage = NavalResupplyStage::Aborted;
+                       } else {
+                           const double dx = pos[i].x - provider_pos->x;
+                           const double dy = pos[i].y - provider_pos->y;
+                           const double separation_m = std::sqrt(dx * dx + dy * dy);
+                           const double dvx = vel[i].vx - provider_vel->vx;
+                           const double dvy = vel[i].vy - provider_vel->vy;
+                           const double dvz = vel[i].vz - provider_vel->vz;
+                           const double rel_speed_mps = std::sqrt(dvx * dvx + dvy * dvy + dvz * dvz);
+                           if (separation_m < provider_node->underway_min_separation_m ||
+                               separation_m > provider_node->underway_max_separation_m ||
+                               rel_speed_mps > provider_node->underway_max_relative_speed_mps) {
+                               state[i].naval_stage = NavalResupplyStage::Aborted;
+                           } else {
+                               if (state[i].naval_stage == NavalResupplyStage::ApproachWindow) {
+                                   state[i].naval_stage = NavalResupplyStage::Connected;
+                               }
+                               if (state[i].naval_stage == NavalResupplyStage::Connected) {
+                                   state[i].naval_stage = NavalResupplyStage::Transferring;
+                               }
+                               if (state[i].naval_stage == NavalResupplyStage::Transferring) {
+                                   const double dt = it.delta_time();
+                                   const double transferred_fuel = transfer_axis(
+                                       &provider_stores->fuel_units_current,
+                                       provider_node->transfer_rate_fuel_units_per_s,
+                                       &stores[i].fuel_units_current,
+                                       stores[i].fuel_units_max,
+                                       dt
+                                   );
+                                   const double transferred_missiles = transfer_axis(
+                                       &provider_stores->missile_units_current,
+                                       provider_node->transfer_rate_missile_units_per_s,
+                                       &stores[i].missile_units_current,
+                                       stores[i].missile_units_max,
+                                       dt
+                                   );
+                                   const double transferred_dry = transfer_axis(
+                                       &provider_stores->dry_cargo_units_current,
+                                       provider_node->transfer_rate_dry_cargo_units_per_s,
+                                       &stores[i].dry_cargo_units_current,
+                                       stores[i].dry_cargo_units_max,
+                                       dt
+                                   );
+                                   state[i].time_remaining_s = std::max(0.0, state[i].time_remaining_s - dt);
+                                   state[i].is_refueling = transferred_fuel > 0.0;
+                                   state[i].is_rearming = (transferred_missiles > 0.0) || (transferred_dry > 0.0);
+
+                                   const bool receiver_full =
+                                       stores[i].fuel_units_current >= stores[i].fuel_units_max - 1.0e-6 &&
+                                       stores[i].missile_units_current >= stores[i].missile_units_max - 1.0e-6 &&
+                                       stores[i].dry_cargo_units_current >= stores[i].dry_cargo_units_max - 1.0e-6;
+                                   const bool provider_empty =
+                                       provider_stores->fuel_units_current <= 1.0e-6 &&
+                                       provider_stores->missile_units_current <= 1.0e-6 &&
+                                       provider_stores->dry_cargo_units_current <= 1.0e-6;
+                                   const bool no_transfer_possible =
+                                       transferred_fuel <= 0.0 && transferred_missiles <= 0.0 && transferred_dry <= 0.0;
+                                   if (receiver_full || provider_empty || no_transfer_possible ||
+                                       state[i].time_remaining_s <= 0.0) {
+                                       state[i].naval_stage = NavalResupplyStage::Complete;
+                                   }
+                               }
+                           }
+                       }
+
+                       if (state[i].naval_stage == NavalResupplyStage::Complete ||
+                           state[i].naval_stage == NavalResupplyStage::Aborted) {
+                           state[i].kind = ResupplyKind::BaseRefuel;
+                           state[i].partner_entity_id = 0;
+                           state[i].time_remaining_s = 0.0;
+                           state[i].is_refueling = false;
+                           state[i].is_rearming = false;
+                           state[i].naval_stage = NavalResupplyStage::None;
+                       }
+                       continue;
+                   }
+
+                   flecs::entity selected_provider;
+                   double best_separation = std::numeric_limits<double>::max();
+                   for (const auto& provider : providers) {
+                       if (provider.entity == it.entity(i)) {
+                           continue;
+                       }
+                       if (provider.fuel_units_current <= 1.0e-6 &&
+                           provider.missile_units_current <= 1.0e-6 &&
+                           provider.dry_cargo_units_current <= 1.0e-6) {
+                           continue;
+                       }
+                       const double dx = pos[i].x - provider.x;
+                       const double dy = pos[i].y - provider.y;
+                       const double separation_m = std::sqrt(dx * dx + dy * dy);
+                       if (separation_m < provider.node.underway_min_separation_m ||
+                           separation_m > provider.node.underway_max_separation_m) {
+                           continue;
+                       }
+                       const double dvx = vel[i].vx - provider.vx;
+                       const double dvy = vel[i].vy - provider.vy;
+                       const double dvz = vel[i].vz - provider.vz;
+                       const double rel_speed_mps = std::sqrt(dvx * dvx + dvy * dvy + dvz * dvz);
+                       if (rel_speed_mps > provider.node.underway_max_relative_speed_mps) {
+                           continue;
+                       }
+                       if (separation_m < best_separation) {
+                           best_separation = separation_m;
+                           selected_provider = provider.entity;
+                       }
+                   }
+
+                   if (selected_provider.is_valid()) {
+                       state[i].time_remaining_s = 20.0 * 60.0;
+                       state[i].is_refueling = false;
+                       state[i].is_rearming = false;
+                       state[i].kind = ResupplyKind::NavalUnderway;
+                       state[i].partner_entity_id = selected_provider.id();
+                       state[i].naval_stage = NavalResupplyStage::ApproachWindow;
                    }
                }
            }

@@ -6,6 +6,7 @@
 #include "components/basic/common.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h" // For MassProperties (RefArea)
+#include "components/physics/flight_dynamics_tuning.h"
 #include "components/physics/performance.h" // For LandingGear
 #include "components/command/pilot_action.h" // For PilotAction (flaps/speedbrake)
 #include "components/systems/logistics.h" // For MassProperties definition
@@ -24,10 +25,6 @@ namespace {
         return Math::body_to_world({0.0, 1.0, 0.0}, heading, pitch, roll);
     }
 
-    inline double smoothstep01(double x) {
-        x = std::clamp(x, 0.0, 1.0);
-        return x * x * (3.0 - 2.0 * x);
-    }
 }
 
 /**
@@ -43,6 +40,10 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
         // by registration order in SimulationKernel.
         .run([](flecs::iter& it) {
             const EnvironmentModelRef* env_ref = it.world().get<EnvironmentModelRef>();
+            double dt = it.delta_time();
+            if (dt <= 0.0) {
+                dt = 0.05;
+            }
             while (it.next()) {
                 auto forces = it.field<ForceAccumulator>(0);
                 auto aero = it.field<AeroState>(1);
@@ -55,15 +56,27 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     if (q < 0.1) continue;
                     
                     double alpha = aero[i].angle_of_attack;
+                    const double mach = std::max(0.0, aero[i].mach_number);
                     double S = props[i].reference_area_m2;
                     if (S < 1.0) S = 30.0; // Fallback
+
+                    const AeroTuning* attached_tuning = it.entity(i).get<AeroTuning>();
+                    const AeroTuning& tuning =
+                        (attached_tuning && attached_tuning->enabled)
+                            ? *attached_tuning
+                            : flight_dynamics::default_aero_tuning();
                     
                     // --- Coefficient Models ---
                     // Lift model: linear regime + flap-aware post-stall blend + deep-stall plateau.
                     // This avoids abrupt clipping and better reflects loss of lift at very high AoA.
-                    constexpr double kClAlphaPerDeg = 0.1;
-                    constexpr double kCl0 = 0.0;
-                    double Cl = kCl0 + kClAlphaPerDeg * alpha;
+                    const double cl_alpha_scale = flight_dynamics::lookup_1d(
+                        tuning.mach_breakpoints,
+                        tuning.cl_alpha_scale_vs_mach,
+                        mach,
+                        1.0
+                    );
+                    const double cl_alpha_per_deg = tuning.cl_alpha_per_deg * cl_alpha_scale;
+                    double Cl = tuning.cl0 + cl_alpha_per_deg * alpha;
                     
                     // [F1 FIX] Flaps Lift Augmentation
                     // Flaps increase camber, boosting Cl by ~0.3-0.5 at full deflection
@@ -80,20 +93,39 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     const double alpha_sign = (alpha >= 0.0) ? 1.0 : -1.0;
 
                     // Flaps increase max-lift and delay stall onset modestly.
-                    const double alpha_stall_deg = 15.0 + 6.0 * flaps_deflection;
-                    const double alpha_peak_deg = alpha_stall_deg + 8.0;
-                    const double alpha_deep_deg = alpha_peak_deg + 18.0;
+                    const double stall_alpha_delta_deg = flight_dynamics::lookup_1d(
+                        tuning.mach_breakpoints,
+                        tuning.stall_alpha_delta_deg_vs_mach,
+                        mach,
+                        0.0
+                    );
+                    const double alpha_stall_deg =
+                        flight_dynamics::lerp(
+                            tuning.alpha_stall_clean_deg,
+                            tuning.alpha_stall_flaps_full_deg,
+                            flaps_deflection
+                        ) + stall_alpha_delta_deg;
+                    const double alpha_peak_deg = alpha_stall_deg + tuning.alpha_peak_offset_deg;
+                    const double alpha_deep_deg = alpha_peak_deg + tuning.alpha_deep_offset_deg;
 
-                    const double cl_peak_mag = 1.25 + 0.45 * flaps_deflection;
-                    const double cl_deep_mag = 0.22 + 0.10 * flaps_deflection;
+                    const double cl_peak_mag = flight_dynamics::lerp(
+                        tuning.cl_peak_clean,
+                        tuning.cl_peak_flaps_full,
+                        flaps_deflection
+                    );
+                    const double cl_deep_mag = flight_dynamics::lerp(
+                        tuning.cl_deep_clean,
+                        tuning.cl_deep_flaps_full,
+                        flaps_deflection
+                    );
 
                     if (alpha_abs > alpha_stall_deg) {
                         if (alpha_abs <= alpha_peak_deg) {
-                            const double t = smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_peak_deg - alpha_stall_deg)));
+                            const double t = flight_dynamics::smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_peak_deg - alpha_stall_deg)));
                             const double cl_target = alpha_sign * cl_peak_mag;
                             Cl = (1.0 - t) * Cl + t * cl_target;
                         } else if (alpha_abs <= alpha_deep_deg) {
-                            const double t = smoothstep01((alpha_abs - alpha_peak_deg) / std::max(1e-6, (alpha_deep_deg - alpha_peak_deg)));
+                            const double t = flight_dynamics::smoothstep01((alpha_abs - alpha_peak_deg) / std::max(1e-6, (alpha_deep_deg - alpha_peak_deg)));
                             const double cl_target = alpha_sign * cl_deep_mag;
                             const double cl_peak = alpha_sign * cl_peak_mag;
                             Cl = (1.0 - t) * cl_peak + t * cl_target;
@@ -105,7 +137,13 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Drag Polar
                     // Cd0 = 0.02 + gear? (gear handled in drag previously)
                     // k = 0.1
-                    double Cd0 = 0.02; 
+                    double Cd0 = tuning.cd0_clean;
+                    Cd0 += flight_dynamics::lookup_1d(
+                        tuning.mach_breakpoints,
+                        tuning.cd0_add_vs_mach,
+                        mach,
+                        0.0
+                    );
                     // Add Stores Drag index?
                     Cd0 += props[i].current_drag_index * 0.001; // Scale factor?
 
@@ -121,7 +159,12 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Flaps also add some drag (induced + profile)
                     Cd0 += flaps_deflection * 0.02;
                     
-                    double k = 0.1;
+                    double k = tuning.induced_drag_k * flight_dynamics::lookup_1d(
+                        tuning.mach_breakpoints,
+                        tuning.induced_drag_scale_vs_mach,
+                        mach,
+                        1.0
+                    );
 
                     // Ground effect (real physics):
                     // - increases effective lift slightly
@@ -144,12 +187,21 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Post-stall drag rise: strong drag increase after stall and into deep stall.
                     double stall_drag = 0.0;
                     if (alpha_abs > alpha_stall_deg) {
-                        const double s1 = smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_peak_deg - alpha_stall_deg)));
-                        const double s2 = smoothstep01((alpha_abs - alpha_peak_deg) / std::max(1e-6, (alpha_deep_deg - alpha_peak_deg)));
+                        const double s1 = flight_dynamics::smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_peak_deg - alpha_stall_deg)));
+                        const double s2 = flight_dynamics::smoothstep01((alpha_abs - alpha_peak_deg) / std::max(1e-6, (alpha_deep_deg - alpha_peak_deg)));
                         stall_drag = 0.25 * s1 + 0.55 * s2;
                     }
 
                     double Cd = Cd0 + k_eff * Cl * Cl + stall_drag;
+
+                    double stall_progress = 0.0;
+                    if (alpha_abs > alpha_stall_deg) {
+                        stall_progress = flight_dynamics::smoothstep01(
+                            (alpha_abs - alpha_stall_deg) /
+                            std::max(1.0e-6, alpha_deep_deg - alpha_stall_deg)
+                        );
+                    }
+                    aero[i].stall_progress = stall_progress;
                     
                     // Cache coefficients for readout
                     aero[i].lift_coefficient = Cl;
@@ -219,12 +271,34 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Cm_alpha < 0 for stability (Stable: -0.5 to -1.5)
                     // Cm_q < 0 for damping (Damping: -10 to -20)
                     // Damping fades in deep stall where attached-flow derivatives lose authority.
-                    const double stall_rel = smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_deep_deg - alpha_stall_deg)));
-                    const double damp_scale = std::clamp(1.0 - 0.7 * stall_rel, 0.25, 1.0);
+                    const double stall_rel = flight_dynamics::smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_deep_deg - alpha_stall_deg)));
+                    const double damp_scale = std::clamp(
+                        1.0 - 0.7 * stall_rel,
+                        tuning.post_stall_damp_floor,
+                        1.0
+                    );
 
-                    double Cm_alpha = -0.8;
-                    double Cm_q = -12.0 * damp_scale;
+                    double Cm_alpha = tuning.cm_alpha_per_rad * flight_dynamics::lookup_1d(
+                        tuning.mach_breakpoints,
+                        tuning.cm_alpha_scale_vs_mach,
+                        mach,
+                        1.0
+                    );
+                    double Cm_q = tuning.cm_q * damp_scale;
                     double Cm = Cm_alpha * Math::to_radians(alpha) + Cm_q * q_hat;
+
+                    const double pitch_break_progress = flight_dynamics::smoothstep01(
+                        (alpha_abs - tuning.pitch_break_onset_deg) /
+                        std::max(1.0e-6, tuning.pitch_break_full_deg - tuning.pitch_break_onset_deg)
+                    );
+                    const double pitch_break_sign = (alpha >= 0.0) ? 1.0 : -1.0;
+                    const double aoa_rate_term = std::clamp(
+                        aero[i].angle_of_attack_rate_dps * tuning.aoa_rate_pitch_break_gain,
+                        -0.10,
+                        0.10
+                    );
+                    Cm += pitch_break_sign * tuning.pitch_break_cm_nose_down * pitch_break_progress;
+                    Cm += pitch_break_sign * aoa_rate_term * pitch_break_progress;
                     
                     // --- 2. Rolling Moment (Cl) ---
                     // Cl = Cl_beta * beta + Cl_p * p_hat + Cl_r * r_hat
@@ -253,6 +327,18 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     double yaw_torque   = q * S * b * Cn_mom;
                     
                     forces[i].add_torque(roll_torque, pitch_torque, yaw_torque);
+
+                    if (it.entity(i).has<StallState>()) {
+                        StallState* stall_state = it.entity(i).get_mut<StallState>();
+                        stall_state->stall_progress = stall_progress;
+                        stall_state->is_stalled = stall_progress >= 0.05;
+                        stall_state->pitch_break_active = pitch_break_progress >= 0.05;
+                        if (stall_state->is_stalled) {
+                            stall_state->time_in_stall_s += dt;
+                        } else {
+                            stall_state->time_in_stall_s = 0.0;
+                        }
+                    }
                     
 
                     

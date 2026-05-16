@@ -6,6 +6,7 @@
 
 - 给 `common + air + naval` 拆分提供明确落点
 - 给最小海战任务结构提供冻结入口，见 [minimal_task_structure.md](/home/void0312/Workshop/CMO/docs/standards/naval/minimal_task_structure.md)
+- 给第一批真实舰船单位提供来源与建模边界，见 [ship_unit_references.md](/home/void0312/Workshop/CMO/docs/standards/naval/ship_unit_references.md)
 
 ## 1. 目录职责
 
@@ -41,3 +42,8 @@
 - air-style `MissionCommand.command_code` 解释
 
 若某个对象只在空战 sortie 级场景成立，应继续留在 `docs/standards/air/`。
+
+## 4. 当前最小海战占位口径
+
+- `Red_Surface_Combatant_Minimal` 属于 `community-derived approximation`，仅用于替换先前把补给舰当作敌舰的错误占位，不代表某一具体敌方舰级的精确公开参数。
+- `ReportTrack` / 任务群级共享属于当前数据链现实收敛的工程近似，用于避免逐步洪泛广播；它不等同完整 `Link 16 / CEC` 语义。

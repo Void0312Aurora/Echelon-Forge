@@ -1,0 +1,34 @@
+{
+    "scenario_name": "Free Fall Test",
+    "description": "Stationary airborne aircraft used to sanity-check gravity-dominant vertical acceleration.",
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 200,
+        "terrain_type": "flat",
+        "wind": {
+            "speed_mps": 0.0,
+            "dir_from_deg": 0.0,
+            "shear_mps_per_km": 0.0
+        }
+    },
+    "entities": [
+        {
+            "name": "TestJet",
+            "type": "F-16C_Block50",
+            "side": "Blue",
+            "pos": [
+                0.0,
+                0.0,
+                1000.0
+            ],
+            "vel": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "heading": 0.0,
+            "is_agent": true
+        }
+    ],
+    "objectives": []
+}

@@ -142,7 +142,13 @@ void bind_runtime(nb::module_& m) {
         .def_rw("roll", &WorldSpawnRequest::roll)
         .def_rw("vx", &WorldSpawnRequest::vx)
         .def_rw("vy", &WorldSpawnRequest::vy)
-        .def_rw("vz", &WorldSpawnRequest::vz);
+        .def_rw("vz", &WorldSpawnRequest::vz)
+        .def_rw("ammo_override_enabled", &WorldSpawnRequest::ammo_override_enabled)
+        .def_rw("missiles_remaining", &WorldSpawnRequest::missiles_remaining)
+        .def_rw("max_missiles", &WorldSpawnRequest::max_missiles)
+        .def_rw("weapon_cooldown_override_enabled", &WorldSpawnRequest::weapon_cooldown_override_enabled)
+        .def_rw("weapon_cooldown_s", &WorldSpawnRequest::weapon_cooldown_s)
+        .def_rw("weapon_last_fire_time", &WorldSpawnRequest::weapon_last_fire_time);
 
     nb::class_<WorldPilotActionAssignment>(m, "WorldPilotActionAssignment")
         .def(nb::init<>())

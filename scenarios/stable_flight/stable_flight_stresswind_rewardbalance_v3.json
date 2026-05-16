@@ -1,0 +1,117 @@
+{
+    "scenario_name": "F-16 Stable Flight (Stage 1, Stress Wind, Reward Balance v3)",
+    "description": "v3: keep command tracking balanced and clip rare stall/overload spikes.",
+    "environment": {
+        "time_step": 0.05,
+        "max_steps": 4000,
+        "terrain_type": "flat",
+        "wind": {
+            "speed_mps": 8.0,
+            "dir_from_deg": 270.0,
+            "shear_mps_per_km": 0.0
+        },
+        "randomization": {
+            "rotate_mission_heading_with_world": true,
+            "world_yaw_range": [
+                0.0,
+                360.0
+            ],
+            "world_yaw_origin": [
+                0.0,
+                0.0
+            ],
+            "wind_speed_range": [
+                0.0,
+                20.0
+            ],
+            "wind_dir_from_range": [
+                0.0,
+                360.0
+            ],
+            "wind_shear_range": [
+                0.0,
+                12.0
+            ]
+        }
+    },
+    "mission_command": {
+        "command_code": 2,
+        "target_heading": 90.0,
+        "target_altitude": 1000.0,
+        "target_speed": 200.0,
+        "randomization": {
+            "heading_range": [
+                90.0,
+                90.0
+            ],
+            "altitude_range": [
+                1000.0,
+                1000.0
+            ],
+            "speed_range": [
+                200.0,
+                200.0
+            ]
+        }
+    },
+    "entities": [
+        {
+            "name": "Blue_F16",
+            "type": "F-16C_Block50",
+            "side": "Blue",
+            "pos": [
+                0.0,
+                0.0,
+                1000.0
+            ],
+            "vel": [
+                200.0,
+                0.0,
+                0.0
+            ],
+            "heading": 90.0,
+            "is_agent": true
+        }
+    ],
+    "objectives": [],
+    "rewards": {
+        "survival": 0.05,
+        "crash_penalty": -1000.0,
+        "heading_error_weight": -0.003,
+        "heading_hold_deadband_deg": 8.0,
+        "heading_hold_bonus": 0.02,
+        "altitude_error_weight": -0.08,
+        "altitude_error_deadband_m": 50.0,
+        "altitude_error_norm_m": 170.0,
+        "altitude_error_power": 2.0,
+        "altitude_error_clip": 2.0,
+        "altitude_hold_bonus": 0.05,
+        "speed_error_weight": -0.04,
+        "speed_error_deadband": 12.0,
+        "speed_error_norm": 55.0,
+        "speed_error_power": 2.0,
+        "speed_error_clip": 2.0,
+        "speed_hold_bonus": 0.04,
+        "stall_aoa_threshold": 20.0,
+        "stall_penalty": -0.5,
+        "stall_penalty_clip": 2.5,
+        "overload_g_threshold": 7.5,
+        "overload_penalty": -0.3,
+        "overload_penalty_clip": 1.5,
+        "roll_abs_weight": -0.008,
+        "roll_abs_norm_deg": 15.0,
+        "roll_abs_power": 2.0,
+        "pitch_abs_weight": -0.004,
+        "pitch_abs_norm_deg": 15.0,
+        "pitch_abs_power": 2.0,
+        "yaw_rate_abs_weight": -0.004,
+        "yaw_rate_abs_norm_deg_s": 8.0,
+        "yaw_rate_abs_power": 2.0,
+        "beta_abs_weight": -0.008,
+        "beta_abs_norm_deg": 8.0,
+        "beta_abs_power": 2.0,
+        "g_deviation_weight": -0.015,
+        "g_deviation_norm": 0.5,
+        "g_deviation_power": 2.0
+    }
+}

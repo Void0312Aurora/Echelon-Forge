@@ -50,6 +50,7 @@ bool collect_visual_scene(
         switch (k.type) {
             case UnitType::Aircraft: obj.bounding_radius = 10.0; obj.cls = 0; break;
             case UnitType::Ship: obj.bounding_radius = 50.0; obj.cls = 2; break;
+            case UnitType::Submarine: obj.bounding_radius = 40.0; obj.cls = 2; break;
             case UnitType::Missile: obj.bounding_radius = 2.0; obj.cls = 0; break;
             case UnitType::Facility: obj.bounding_radius = 20.0; obj.cls = 1; break;
             default: obj.bounding_radius = 5.0; obj.cls = 1; break;

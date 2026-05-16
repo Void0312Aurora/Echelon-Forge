@@ -1,6 +1,62 @@
 import ef_py
 
 from python.rl.tasking.bridge import build_kernel_mission_command
+from .naval_screen import apply_naval_screen_station_hold, compute_naval_screen_station_hold
+
+
+def _reset_naval_screen_station_hold_state(loader) -> None:
+    loader._naval_screen_last_reference_id = 0
+    loader._naval_screen_last_heading_deg = None
+    loader._naval_screen_last_speed_mps = None
+
+
+def _apply_dynamic_naval_screen_command_overrides(loader, cmd) -> None:
+    task = getattr(loader, "task_order", None)
+    if task is None:
+        return
+    use_direct_command = bool(getattr(loader, "_naval_screen_use_direct_command", False))
+    if hasattr(cmd, "cmd_heading_deg"):
+        dynamic_heading = getattr(task, "target_heading_deg", None)
+        if dynamic_heading is not None:
+            cmd.cmd_heading_deg = float(dynamic_heading)
+    if hasattr(cmd, "cmd_speed_mps"):
+        dynamic_speed = getattr(task, "target_speed_mps", None)
+        if dynamic_speed is not None:
+            cmd.cmd_speed_mps = float(dynamic_speed)
+    if use_direct_command:
+        if hasattr(cmd, "reference_entity_id"):
+            cmd.reference_entity_id = 0
+        if hasattr(cmd, "station_radius_m"):
+            cmd.station_radius_m = 0.0
+
+
+def _apply_naval_screen_runtime_state(loader, *, truth=None) -> None:
+    result = compute_naval_screen_station_hold(loader, truth=truth)
+    if result is None:
+        return
+    task = getattr(loader, "task_order", None)
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    if task is None or not isinstance(mission_cmd, dict):
+        return
+    loader._naval_screen_last_reference_id = int(result["reference_entity_id"])
+    loader._naval_screen_last_heading_deg = float(result["target_heading_deg"])
+    loader._naval_screen_last_speed_mps = float(result["target_speed_mps"])
+    loader._naval_screen_use_direct_command = bool(result.get("use_direct_command", 0.0))
+    for attr, value in (
+        ("anchor_x_m", float(result["desired_x"])),
+        ("anchor_y_m", float(result["desired_y"])),
+        ("anchor_z_m", 0.0),
+        ("target_heading_deg", float(result["target_heading_deg"])),
+        ("target_speed_mps", float(result["target_speed_mps"])),
+        ("target_altitude_m", 0.0),
+    ):
+        try:
+            setattr(task, attr, value)
+        except Exception:
+            pass
+    mission_cmd["target_heading"] = float(result["target_heading_deg"])
+    mission_cmd["target_speed"] = float(result["target_speed_mps"])
+    mission_cmd["target_altitude"] = 0.0
 
 
 def sync_kernel_mission_command(loader) -> None:
@@ -9,7 +65,12 @@ def sync_kernel_mission_command(loader) -> None:
     if not hasattr(loader.sim, "set_mission_command") or not hasattr(ef_py, "MissionCommand"):
         return
     try:
+        _apply_naval_screen_runtime_state(loader)
+    except Exception:
+        pass
+    try:
         cmd = build_kernel_mission_command(loader)
+        _apply_dynamic_naval_screen_command_overrides(loader, cmd)
         loader.sim.set_mission_command(loader.agent_id, cmd)
     except Exception:
         pass
@@ -42,6 +103,8 @@ def sync_kernel_command_chain(loader) -> None:
 
 
 def reset_command_chain(loader, *, initial_truth=None, initial_inst=None, sync_to_kernel: bool = True) -> None:
+    _reset_naval_screen_station_hold_state(loader)
+    loader._naval_screen_use_direct_command = False
     if loader.agent_id is None:
         return
     if not hierarchical_command_chain_active(loader):
@@ -79,7 +142,14 @@ def update_command_chain(loader, sim_time: float, *, truth=None, inst=None, sync
         inst=inst,
         sync_to_kernel=sync_to_kernel,
     )
+    _apply_naval_screen_runtime_state(loader, truth=truth)
     if sync_to_kernel:
+        try:
+            cmd = build_kernel_mission_command(loader)
+            _apply_dynamic_naval_screen_command_overrides(loader, cmd)
+            loader.sim.set_mission_command(loader.agent_id, cmd)
+        except Exception:
+            pass
         sync_kernel_command_chain(loader)
 
 

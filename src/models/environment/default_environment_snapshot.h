@@ -27,6 +27,10 @@ struct DefaultEnvironmentRasterSnapshot {
 struct DefaultEnvironmentSnapshot {
     bool valid = false;
     bool flat_terrain = false;
+    bool maritime_state_configured = false;
+    double sea_state = 0.0;
+    double wave_heading_deg = 0.0;
+    double wave_period_s = 8.0;
     DefaultEnvironmentRasterSnapshot raster;
     std::vector<DefaultEnvironmentZoneSnapshot> zones;
 };

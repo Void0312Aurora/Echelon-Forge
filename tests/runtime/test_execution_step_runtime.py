@@ -281,6 +281,27 @@ class ObjectiveRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(products.success_ground_track_error_penalty), -0.49, places=6)
         self.assertAlmostEqual(float(products.objective_bonus), 2200.0, places=6)
 
+    def test_conditional_objective_supports_combat_target_active_property(self) -> None:
+        spec = ef_py.ConditionalObjectiveSpec()
+        spec.reward_bonus = 1500.0
+
+        cond = ef_py.ConditionalObjectiveCondition()
+        cond.property_code = ef_py.ConditionalObjectiveProperty.TargetActive
+        cond.op_code = ef_py.ConditionalObjectiveOp.LessEqual
+        cond.target_kind = ef_py.ConditionalObjectiveTargetKind.Literal
+        cond.target_value = 0.0
+        spec.conditions = [cond]
+
+        inputs = ef_py.ConditionalObjectiveInputs()
+        inputs.target_active = False
+
+        products = ef_py.evaluate_conditional_objective(spec, inputs, ef_py.ObjectiveShapingConfig())
+        self.assertTrue(bool(products.valid))
+        self.assertTrue(bool(products.matched))
+        self.assertAlmostEqual(float(products.status0), 0.0, places=6)
+        self.assertEqual(int(products.status_count), 1)
+        self.assertAlmostEqual(float(products.objective_bonus), 1500.0, places=6)
+
     def test_conditional_objective_fails_closed_on_unknown_property(self) -> None:
         spec = ef_py.ConditionalObjectiveSpec()
         cond = ef_py.ConditionalObjectiveCondition()

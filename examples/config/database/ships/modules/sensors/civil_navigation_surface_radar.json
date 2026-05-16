@@ -1,0 +1,23 @@
+{
+    "name": "Civil_Navigation_Surface_Radar",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 36300.0,
+        "fov_deg": 360.0,
+        "scan_period": 3.0,
+        "detection_prob": 0.85,
+        "bearing_noise_std": 0.5,
+        "range_noise_std": 75.0,
+        "track_memory_s": 15.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 0.0
+    },
+    "_provenance": {
+        "modeling_note": "Generic navigation/surface-search radar for a MSC auxiliary. The 36.3 km range is a radar-horizon runtime value for surface targets, derived from 15 m owner antenna height and 5 m target height using 3.57*(sqrt(h1)+sqrt(h2)) km.",
+        "sources": [
+            "docs/standards/naval/ship_unit_references.md"
+        ]
+    }
+}

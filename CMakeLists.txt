@@ -57,6 +57,7 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel_observation_api.cpp
     src/core/engine/simulation_kernel_visual_api.cpp
     src/core/engine/simulation_kernel_weapon_api.cpp
+    src/core/engine/simulation_kernel_damage_debug_api.cpp
     src/core/engine/exact_stage_inventory.cpp
     src/core/engine/world_batch_runtime.cpp
 )
@@ -101,6 +102,7 @@ set(EF_RUNTIME_FACADE_SOURCES
 set(EF_MODEL_DEFAULT_SOURCES
     src/models/weapons/default_effects_model.cpp
     src/models/systems/default_sensor_model.cpp
+    src/models/systems/default_acoustic_model.cpp
     src/models/environment/default_environment_model.cpp
     src/models/air/default_control_model.cpp
     src/models/weapons/default_guidance_model.cpp

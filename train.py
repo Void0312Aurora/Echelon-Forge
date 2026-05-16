@@ -1,13 +1,8 @@
 import argparse
-import atexit
-import fcntl
 import os
 import sys
 import json
-import shutil
 import math
-import random
-from datetime import datetime
 
 import numpy as np
 import torch
@@ -50,7 +45,12 @@ from python.training_callbacks import (
     ScenarioCurriculumCallback,
     RewardPlateauEarlyStopCallback,
 )
-from python.env_config import resolve_env_settings
+from python.training import (
+    build_train_arg_parser,
+    prepare_training_bootstrap,
+    print_training_bootstrap_summary,
+    warn_execution_visual_rollout_memory,
+)
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.support.nonfinite_probe import NonFiniteProbeError, NonFiniteTrainingProbe
@@ -58,68 +58,6 @@ from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
-
-
-def apply_global_seed(seed: int) -> None:
-    seed = int(seed)
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-
-def acquire_experiment_lock(exp_dir: str):
-    """
-    Prevent concurrent training processes from writing into the same experiment directory.
-
-    This is especially important for resume flows, where a second accidental `train.py`
-    invocation can silently corrupt checkpoints/logs and saturate CPU by duplicating the
-    full simulation workload.
-    """
-    lock_path = os.path.join(exp_dir, ".train.lock")
-    os.makedirs(exp_dir, exist_ok=True)
-    lock_file = open(lock_path, "a+", encoding="utf-8")
-    try:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        lock_file.seek(0)
-        holder = lock_file.read().strip()
-        print(f"Error: experiment directory is already locked by another training process: {exp_dir}")
-        if holder:
-            print(f"Active lock info: {holder}")
-        lock_file.close()
-        return None
-
-    lock_info = {
-        "pid": os.getpid(),
-        "cwd": os.getcwd(),
-        "argv": sys.argv,
-        "acquired_at": datetime.now().isoformat(timespec="seconds"),
-    }
-    lock_file.seek(0)
-    lock_file.truncate()
-    lock_file.write(json.dumps(lock_info, ensure_ascii=True) + "\n")
-    lock_file.flush()
-
-    def _release_lock():
-        try:
-            lock_file.seek(0)
-            lock_file.truncate()
-            lock_file.flush()
-        except Exception:
-            pass
-        try:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-        except Exception:
-            pass
-        try:
-            lock_file.close()
-        except Exception:
-            pass
-
-    atexit.register(_release_lock)
-    return lock_file
 
 def get_policy_kwargs(train_config):
     # Parse policy_kwargs from JSON
@@ -397,330 +335,29 @@ def resolve_vec_env_spec(
     return (SharedMemorySubprocVecEnv if use_shared_memory_vec_env else SubprocVecEnv), {}, False
 
 def main():
-    parser = argparse.ArgumentParser(description="Universal Training Base for CMO")
-    parser.add_argument("--scenario", type=str, required=True, help="Path to JSON scenario file")
-    parser.add_argument("--train_config", type=str, default="examples/config/training/default_ppo.json", help="Path to training config JSON")
-    parser.add_argument("--test_only", action="store_true", help="Run in test mode without training")
-    parser.add_argument(
-        "--include_visual",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="Include ARB visual observation (defaults to train_config env/policy settings).",
-    )
-    parser.add_argument(
-        "--include_proprio",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="Include previous action in observations (defaults to train_config env settings).",
-    )
-    parser.add_argument(
-        "--mission_obs_mode",
-        type=str,
-        default=None,
-        choices=["basic", "nav_v1", "nav_v2", "nav_v2_formation_v1", "nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"],
-        help="Mission observation format (defaults to train_config env settings).",
-    )
-    parser.add_argument(
-        "--visual_downsample",
-        type=int,
-        default=None,
-        help="Visual downsample factor (defaults to train_config env settings).",
-    )
-    parser.add_argument(
-        "--visual_update_interval",
-        type=int,
-        default=None,
-        help="Visual refresh interval (defaults to train_config env settings).",
-    )
-    parser.add_argument(
-        "--action_mode",
-        type=str,
-        default=None,
-        choices=["full", "takeoff2", "takeoff4"],
-        help="Action space mode (defaults to train_config env settings).",
-    )
-    
-    # New Experiment Args
-    parser.add_argument("--run_name", type=str, default=None, help="Name of the run. If None, uses Timestamp.")
-    parser.add_argument("--resume_path", type=str, default=None, help="Path to .zip model to resume training from.")
-    parser.add_argument(
-        "--init_from",
-        type=str,
-        default=None,
-        help="Path to a .zip model checkpoint used only to initialize model parameters. "
-             "This preserves the new run directory, optimizer state, and hyperparameters.",
-    )
-    parser.add_argument("--output_base", type=str, default="experiments", help="Base directory for experiments.")
-    parser.add_argument("--n_envs", type=int, default=None, help="Number of parallel environments (overrides config)")
-    parser.add_argument(
-        "--torch_threads",
-        type=int,
-        default=None,
-        help="PyTorch intra-op CPU threads per process. If omitted, keep PyTorch defaults.",
-    )
-    parser.add_argument(
-        "--torch_interop_threads",
-        type=int,
-        default=None,
-        help="PyTorch inter-op CPU threads per process. If omitted, keep PyTorch defaults.",
-    )
-    parser.add_argument("--diagnostics", action="store_true", help="Log extra diagnostics scalars to TensorBoard")
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Global training seed for Python/NumPy/Torch and vec-env construction.",
-    )
-    parser.add_argument(
-        "--diagnostics_every",
-        type=int,
-        default=10000,
-        help="Diagnostics logging interval (in environment timesteps, not gradient updates)",
-    )
-    parser.add_argument(
-        "--diagnostics_preterm_window",
-        type=int,
-        default=32,
-        help="How many recent steps to aggregate for pre-termination diagnostics.",
-    )
-    parser.add_argument(
-        "--no_init_safe_action_bias",
-        action="store_true",
-        help="Disable safe initialization bias for mixed-range actions (throttle/brakes/flaps/etc).",
-    )
-    parser.add_argument(
-        "--nonfinite_probe",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="Enable the opt-in training non-finite tensor probe.",
-    )
-    parser.add_argument(
-        "--nonfinite_probe_report",
-        type=str,
-        default=None,
-        help="Optional path for the non-finite probe report JSON. Defaults inside the experiment directory.",
-    )
-    parser.add_argument(
-        "--nonfinite_probe_history",
-        type=int,
-        default=None,
-        help="Optional history length for the non-finite probe event buffer.",
-    )
-    
+    parser = build_train_arg_parser()
     args = parser.parse_args()
-    
-    # 1. Load Paths
-    scenario_path = os.path.abspath(args.scenario)
-    if not os.path.exists(scenario_path):
-        print(f"Error: Scenario file not found: {scenario_path}")
+
+    bootstrap = prepare_training_bootstrap(args)
+    if bootstrap is None:
         return
+    train_config = bootstrap.train_config
+    agent_layer = bootstrap.agent_layer
+    env_settings = bootstrap.env_settings
+    scenario_path = bootstrap.scenario_path
+    train_cfg_path = bootstrap.train_cfg_path
+    exp_dir = bootstrap.exp_dir
+    run_name = bootstrap.run_name
+    ckpt_dir = bootstrap.ckpt_dir
+    log_dir = bootstrap.log_dir
+    runtime_cfg = bootstrap.runtime_cfg
+    training_seed = bootstrap.training_seed
+    n_envs = bootstrap.n_envs
+    LeaderTrainingEnv = bootstrap.leader_env_cls
+    LeaderBatchedVecEnv = bootstrap.leader_batched_vec_env_cls
+    print_training_bootstrap_summary(bootstrap)
+    warn_execution_visual_rollout_memory(bootstrap)
 
-    train_cfg_path = os.path.abspath(args.train_config)
-    if not os.path.exists(train_cfg_path):
-        print(f"Error: Training config not found: {train_cfg_path}")
-        return
-        
-    with open(train_cfg_path, 'r') as f:
-        train_config = json.load(f)
-
-    agent_layer = str(train_config.get("agent_layer", "execution")).strip().lower() or "execution"
-    if agent_layer not in {"execution", "leader", "cooperative_execution"}:
-        print(f"Error: unknown agent_layer {agent_layer!r} in train config")
-        return
-
-    if agent_layer == "leader":
-        from gym_envs.leader_env import LeaderTrainingEnv
-        from python.rl.runtime.leader_batched_vec_env import LeaderBatchedVecEnv
-    else:
-        LeaderTrainingEnv = None
-        LeaderBatchedVecEnv = None
-
-    env_settings = resolve_env_settings(train_config, args) if agent_layer in {"execution", "cooperative_execution"} else None
-
-    # 2. Setup Experiment Directory
-    exp_dir = ""
-    run_name = ""
-    
-    if args.resume_path and args.init_from:
-        print("Error: --resume_path and --init_from are mutually exclusive.")
-        return
-
-    if args.resume_path:
-        # Resume Mode: Use existing directory structure
-        if not os.path.exists(args.resume_path):
-            print(f"Error: Cannot resume, file not found: {args.resume_path}")
-            return
-        
-        # Assume standard structure: experiments/run_name/checkpoints/model.zip or experiments/run_name/model.zip
-        # We try to deduce the experiment root
-        abs_resume = os.path.abspath(args.resume_path)
-        parent_dir = os.path.dirname(abs_resume)
-        
-        if os.path.basename(parent_dir) == "checkpoints":
-            exp_dir = os.path.dirname(parent_dir)
-        else:
-            exp_dir = parent_dir
-            
-        run_name = os.path.basename(exp_dir)
-        print(f"Resuming Experiment: {run_name} at {exp_dir}")
-        
-    else:
-        # New Run Mode
-        if args.run_name:
-            run_name = args.run_name
-        else:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            cfg_name = os.path.splitext(os.path.basename(train_cfg_path))[0]
-            run_name = f"{timestamp}_{cfg_name}"
-            
-        exp_dir = os.path.join(args.output_base, run_name)
-        
-        # Check for existing interrupted model in this run folder
-        interrupted_path = os.path.join(exp_dir, "checkpoints", "interrupted_model.zip")
-        if os.path.exists(interrupted_path):
-            print(f"Found interrupted checkpoint at {interrupted_path}")
-            print("Auto-resuming from interrupted checkpoint...")
-            args.resume_path = interrupted_path
-        else:
-            os.makedirs(exp_dir, exist_ok=True)
-            print(f"Starting New Experiment: {run_name} at {exp_dir}")
-        
-        # Backup config
-        shutil.copy(train_cfg_path, os.path.join(exp_dir, "train_config_backup.json"))
-        shutil.copy(scenario_path, os.path.join(exp_dir, "scenario_backup.json"))
-
-    # Directory Sub-structure
-    ckpt_dir = os.path.join(exp_dir, "checkpoints")
-    log_dir = os.path.join(exp_dir, "logs")
-    os.makedirs(ckpt_dir, exist_ok=True)
-    os.makedirs(log_dir, exist_ok=True)
-    exp_lock = acquire_experiment_lock(exp_dir)
-    if exp_lock is None:
-        return
-
-    runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config.get("runtime", {}), dict) else {}
-    training_seed = args.seed
-    if training_seed is None and "seed" in train_config:
-        try:
-            training_seed = int(train_config.get("seed"))
-        except Exception:
-            training_seed = None
-    if training_seed is not None:
-        apply_global_seed(int(training_seed))
-        print(f"Training seed: {int(training_seed)}")
-
-    torch_threads = args.torch_threads
-    if torch_threads is None:
-        torch_threads = runtime_cfg.get("torch_threads")
-    if torch_threads is not None:
-        torch_threads = max(1, int(torch_threads))
-        torch.set_num_threads(torch_threads)
-    else:
-        torch_threads = int(torch.get_num_threads())
-
-    torch_interop_threads = args.torch_interop_threads
-    if torch_interop_threads is None:
-        torch_interop_threads = runtime_cfg.get("torch_interop_threads")
-    if torch_interop_threads is not None:
-        torch_interop_threads = max(1, int(torch_interop_threads))
-        try:
-            torch.set_num_interop_threads(torch_interop_threads)
-        except RuntimeError:
-            pass
-    else:
-        try:
-            torch_interop_threads = int(torch.get_num_interop_threads())
-        except Exception:
-            torch_interop_threads = -1
-
-    # 3. Environment Setup
-    n_envs = args.n_envs if args.n_envs is not None else train_config.get("n_envs", 1)
-    
-    print(f"Creating {n_envs} parallel environments...")
-    print(f"Logging to {log_dir}")
-    print(f"Agent layer: {agent_layer}")
-    print(
-        "Runtime parallelism: "
-        f"torch_threads={torch_threads} "
-        f"torch_interop_threads={torch_interop_threads} "
-        f"shared_memory_vec_env={bool(runtime_cfg.get('shared_memory_vec_env', False))} "
-        f"world_batch_vec_env={bool(runtime_cfg.get('world_batch_vec_env', False))} "
-        f"world_batch_threads={runtime_cfg.get('world_batch_threads', '<default=1>')} "
-        f"OMP_NUM_THREADS={os.environ.get('OMP_NUM_THREADS', '<unset>')} "
-        f"MKL_NUM_THREADS={os.environ.get('MKL_NUM_THREADS', '<unset>')} "
-        f"OPENBLAS_NUM_THREADS={os.environ.get('OPENBLAS_NUM_THREADS', '<unset>')}"
-    )
-    if agent_layer == "leader":
-        print(
-            "Leader runtime: "
-            f"batched_execution_inference={bool(runtime_cfg.get('batched_execution_inference', False))} "
-            f"leader_world_batch_runtime={bool(runtime_cfg.get('leader_world_batch_runtime', False))} "
-            f"execution_device={str(runtime_cfg.get('execution_device', 'cpu'))} "
-            f"execution_use_autocast={bool(runtime_cfg.get('execution_use_autocast', False))} "
-            f"step_executor_workers={int(runtime_cfg.get('step_executor_workers', 0))} "
-            f"leader_execution_torch_threads={runtime_cfg.get('leader_execution_torch_threads', '<auto>')} "
-            f"leader_execution_torch_interop_threads={runtime_cfg.get('leader_execution_torch_interop_threads', '<auto>')}"
-        )
-    if agent_layer == "execution":
-        print(
-            "Effective env settings: "
-            f"action_mode={env_settings['action_mode']} "
-            f"include_visual={env_settings['include_visual']} "
-            f"include_proprio={env_settings['include_proprio']} "
-            f"mission_obs_mode={env_settings['mission_obs_mode']} "
-            f"flight_shaping_backend={env_settings.get('flight_shaping_backend', '<auto>') or 'auto'} "
-            f"step_info_mode={env_settings['step_info_mode']} "
-            f"visual_downsample={env_settings['visual_downsample']} "
-            f"visual_update_interval={env_settings['visual_update_interval']}"
-        )
-    elif agent_layer == "cooperative_execution":
-        cooperative_cfg = train_config.get("cooperative_execution", {})
-        if not isinstance(cooperative_cfg, dict):
-            cooperative_cfg = {}
-        print(
-            "Cooperative env settings: "
-            f"action_mode={env_settings['action_mode']} "
-            f"include_visual={env_settings['include_visual']} "
-            f"include_proprio={env_settings['include_proprio']} "
-            f"mission_obs_mode={env_settings['mission_obs_mode']} "
-            f"step_info_mode={env_settings['step_info_mode']} "
-            f"visual_downsample={env_settings['visual_downsample']} "
-            f"visual_update_interval={env_settings['visual_update_interval']} "
-            f"policy_route={cooperative_cfg.get('policy_route', 'shared_execution')}"
-        )
-    else:
-        leader_cfg = train_config.get("leader_env", {}) if isinstance(train_config.get("leader_env", {}), dict) else {}
-        print(
-            "Leader env settings: "
-            f"decision_interval_steps={int(leader_cfg.get('decision_interval_steps', 20))} "
-            f"execution_backend={str(leader_cfg.get('execution_backend', 'scripted'))} "
-            f"execution_action_repeat={int(leader_cfg.get('execution_action_repeat', 1))} "
-            f"execution_train_config={leader_cfg.get('execution_train_config', '<none>')} "
-            f"execution_model_path={leader_cfg.get('execution_model_path', '<none>')}"
-        )
-
-    # Rough rollout-buffer memory warning for visual observations (DictRolloutBuffer stores full obs).
-    try:
-        n_steps = int(train_config.get("hyperparameters", {}).get("n_steps", 2048))
-    except Exception:
-        n_steps = 2048
-    if agent_layer == "execution" and env_settings["include_visual"]:
-        ds = int(env_settings["visual_downsample"])
-        visual_elems = (48 // ds) * (96 // ds) * 10
-        est_bytes = int(n_envs) * int(n_steps) * int(visual_elems) * 4
-        if est_bytes >= 4 * 1024**3:
-            gib = est_bytes / (1024**3)
-            print(
-                f"[WARN] include_visual=True with visual_downsample={ds}, n_envs={n_envs}, n_steps={n_steps} "
-                f"will allocate ~{gib:.1f} GiB just for the visual rollout buffer. "
-                "Consider reducing n_envs/n_steps or increasing --visual_downsample."
-            )
-        if ds > 1:
-            print(
-                f"[INFO] visual_downsample={ds} reduces ARB render resolution, visual tensor size, and model/rollout cost. "
-                "For additional simulator wall-clock gains, also consider increasing --visual_update_interval."
-            )
-    
     if agent_layer == "execution":
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
         use_world_batch_vec_env = bool(runtime_cfg.get("world_batch_vec_env", False))

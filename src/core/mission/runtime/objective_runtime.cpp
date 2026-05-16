@@ -108,6 +108,24 @@ bool resolve_property_value(
         case ConditionalObjectiveProperty::Y:
             *out_value = inputs.y_m;
             return true;
+        case ConditionalObjectiveProperty::SelfActive:
+            *out_value = inputs.self_active ? 1.0 : 0.0;
+            return true;
+        case ConditionalObjectiveProperty::TargetActive:
+            *out_value = inputs.target_active ? 1.0 : 0.0;
+            return true;
+        case ConditionalObjectiveProperty::SelfHealth:
+            *out_value = inputs.self_health;
+            return true;
+        case ConditionalObjectiveProperty::TargetHealth:
+            *out_value = inputs.target_health;
+            return true;
+        case ConditionalObjectiveProperty::MissilesRemaining:
+            *out_value = inputs.missiles_remaining;
+            return true;
+        case ConditionalObjectiveProperty::TargetRangeM:
+            *out_value = inputs.has_target_range_m ? inputs.target_range_m : std::numeric_limits<double>::infinity();
+            return true;
         case ConditionalObjectiveProperty::Unknown:
         default:
             return false;

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import sys
+import zipfile
 from typing import Any
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -17,6 +19,7 @@ ensure_repo_imports()
 from python.env_config import resolve_env_settings
 from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 
 
 def load_json_config(path: str) -> dict[str, Any]:
@@ -27,18 +30,39 @@ def load_json_config(path: str) -> dict[str, Any]:
     return data
 
 
+def _historical_policy_class_override(model_path: str):
+    zip_path = model_path if model_path.endswith(".zip") else f"{model_path}.zip"
+    try:
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            data = json.loads(zf.read("data").decode("utf-8"))
+            serialized = data.get("policy_class", {})
+            if not isinstance(serialized, dict) or ":serialized:" not in serialized:
+                return None
+            blob = base64.b64decode(serialized[":serialized:"])
+    except Exception:
+        return None
+
+    if b"HierarchicalMoEExecutionPolicy" in blob:
+        return HierarchicalMoEExecutionPolicy
+    if b"SquashedMultiInputPolicy" in blob:
+        return SquashedMultiInputPolicy
+    return None
+
+
 def load_sb3_policy(model_path: str, *, algo: str, device: str):
     load_path = model_path[:-4] if model_path.endswith(".zip") else model_path
     algo_name = str(algo).strip()
+    policy_class = _historical_policy_class_override(model_path)
+    custom_objects = {"policy_class": policy_class} if policy_class is not None else None
     if algo_name in ("auto", "AdaptiveKLPPO", "PPOAdaptiveKL", "PPO_AdaptiveKL"):
         try:
-            return AdaptiveKLPPO.load(load_path, device=device)
+            return AdaptiveKLPPO.load(load_path, device=device, custom_objects=custom_objects)
         except Exception:
             if algo_name != "auto":
                 raise
     from stable_baselines3 import PPO
 
-    return PPO.load(load_path, device=device)
+    return PPO.load(load_path, device=device, custom_objects=custom_objects)
 
 
 def make_env_settings(train_config: dict[str, Any], args: argparse.Namespace, *, include_runtime_overrides: bool) -> dict[str, Any]:

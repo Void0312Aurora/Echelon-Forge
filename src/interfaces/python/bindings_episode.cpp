@@ -519,6 +519,12 @@ void bind_episode(nb::module_& m) {
         .value("Heading", ConditionalObjectiveProperty::Heading)
         .value("X", ConditionalObjectiveProperty::X)
         .value("Y", ConditionalObjectiveProperty::Y)
+        .value("SelfActive", ConditionalObjectiveProperty::SelfActive)
+        .value("TargetActive", ConditionalObjectiveProperty::TargetActive)
+        .value("SelfHealth", ConditionalObjectiveProperty::SelfHealth)
+        .value("TargetHealth", ConditionalObjectiveProperty::TargetHealth)
+        .value("MissilesRemaining", ConditionalObjectiveProperty::MissilesRemaining)
+        .value("TargetRangeM", ConditionalObjectiveProperty::TargetRangeM)
         .export_values();
 
     nb::enum_<ConditionalObjectiveOp>(m, "ConditionalObjectiveOp")
@@ -574,7 +580,14 @@ void bind_episode(nb::module_& m) {
         .def_rw("y_m", &ConditionalObjectiveInputs::y_m)
         .def_rw("target_altitude_m", &ConditionalObjectiveInputs::target_altitude_m)
         .def_rw("target_speed_mps", &ConditionalObjectiveInputs::target_speed_mps)
-        .def_rw("target_heading_deg", &ConditionalObjectiveInputs::target_heading_deg);
+        .def_rw("target_heading_deg", &ConditionalObjectiveInputs::target_heading_deg)
+        .def_rw("self_active", &ConditionalObjectiveInputs::self_active)
+        .def_rw("target_active", &ConditionalObjectiveInputs::target_active)
+        .def_rw("self_health", &ConditionalObjectiveInputs::self_health)
+        .def_rw("target_health", &ConditionalObjectiveInputs::target_health)
+        .def_rw("missiles_remaining", &ConditionalObjectiveInputs::missiles_remaining)
+        .def_rw("has_target_range_m", &ConditionalObjectiveInputs::has_target_range_m)
+        .def_rw("target_range_m", &ConditionalObjectiveInputs::target_range_m);
 
     nb::class_<ObjectiveShapingConfig>(m, "ObjectiveShapingConfig")
         .def(nb::init<>())

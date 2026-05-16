@@ -43,6 +43,7 @@ enum class CommMsgType {
 
     // 6. Python Binding Compatibility
     ReportContact,
+    ReportTrack = ReportContact,
     AssignTask,
     StatusUpdate,
     RequestSupport,

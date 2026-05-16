@@ -152,14 +152,12 @@ inline void register_instrument_system(flecs::world& ecs) {
                     inst[i].g_load_axial  = f_body.x / (total_mass * 9.80665);
                     
                     // 2. Propulsion
-                    double tsfc = propulsion[i].afterburner_active ? 0.25 : 0.1; // kg/N/h approx
-                    inst[i].fuel_flow_kg_h = std::abs(propulsion[i].current_thrust_n) * tsfc;
-                    
-                    if (propulsion[i].afterburner_active) {
-                        inst[i].engine_rpm_pct = 100.0 + (propulsion[i].current_thrust_n / (propulsion[i].ab_thrust_n + 1e-6)) * 10.0;
-                    } else {
-                        inst[i].engine_rpm_pct = (propulsion[i].current_thrust_n / (propulsion[i].mil_thrust_n + 1e-6)) * 100.0;
-                    }
+                    const double tsfc_nh = std::max(0.0, propulsion[i].current_tsfc);
+                    inst[i].fuel_flow_kg_h = std::abs(propulsion[i].current_thrust_n) * tsfc_nh;
+
+                    const double throttle_state = std::clamp(propulsion[i].throttle_state, 0.0, 1.0);
+                    const double ab_state = std::clamp(propulsion[i].ab_state, 0.0, 1.0);
+                    inst[i].engine_rpm_pct = (throttle_state * 100.0) + (ab_state * 10.0);
                     inst[i].engine_temp_c = 600.0 + inst[i].engine_rpm_pct * 3.0; // Mocked EGT
                     
                     if (const FuelSystem* fuel = it.entity(i).get<FuelSystem>()) {
@@ -182,19 +180,19 @@ inline void register_instrument_system(flecs::world& ecs) {
                         active_legacy_movement_command(it.entity(i).get<MovementCommand>());
 
                     if (pilot) {
-                        inst[i].throttle_pos = resolved_pilot_or_legacy_throttle(pilot, legacy);
+                        inst[i].throttle_pos = propulsion[i].throttle_command;
                         inst[i].flaps_pos = std::clamp(pilot->flaps, 0.0f, 1.0f);
                         inst[i].speedbrake_pos = std::clamp(pilot->speedbrake, 0.0f, 1.0f);
                         inst[i].master_arm = pilot->master_arm;
                         inst[i].weapon_selected = pilot->weapon_select_id;
                     } else if (legacy) {
-                        inst[i].throttle_pos = resolved_pilot_or_legacy_throttle(pilot, legacy);
+                        inst[i].throttle_pos = propulsion[i].throttle_command;
                         inst[i].flaps_pos = 0.0f;
                         inst[i].speedbrake_pos = 0.0f;
                         inst[i].master_arm = false;
                         inst[i].weapon_selected = 0;
                     } else {
-                        inst[i].throttle_pos = 0.0;
+                        inst[i].throttle_pos = propulsion[i].throttle_command;
                         inst[i].flaps_pos = 0.0f;
                         inst[i].speedbrake_pos = 0.0f;
                         inst[i].master_arm = false;

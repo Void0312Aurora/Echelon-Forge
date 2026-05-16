@@ -3,7 +3,13 @@
 #include <algorithm>
 #include <cmath>
 
+#include "components/basic/common.h"
+#include "components/physics/dynamics.h"
+#include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
+#include "core/interfaces/environment_model.h"
+#include "models/weapons/missile_guidance_math.h"
+#include "models/weapons/missile_guidance_types.h"
 
 namespace {
 
@@ -11,22 +17,366 @@ namespace {
 #define M_PI 3.14159265358979323846
 #endif
 
-double to_radians(double deg) { return deg * M_PI / 180.0; }
+using missile_guidance::Vec3;
 
-double wrap_angle_360(double angle) {
-    while (angle < 0.0) angle += 360.0;
-    while (angle >= 360.0) angle -= 360.0;
-    return angle;
+constexpr double kSeaLevelDensity = 1.225;
+constexpr double kGravity = 9.80665;
+constexpr double kBoostMinDurationS = 0.5;
+
+struct GuidanceResolvedTuning {
+    double bearing_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+    double elevation_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+    double range_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+    double track_memory_timeout_s = MissileGuidanceDefaults::kTrackMemoryTimeoutS;
+    double boost_time_s = MissileGuidanceDefaults::kBoostTimeS;
+    double sustain_time_s = MissileGuidanceDefaults::kSustainTimeS;
+    double boost_thrust_n = 0.0;
+    double sustain_thrust_n = 0.0;
+    double reference_area_m2 = MissileGuidanceDefaults::kReferenceAreaM2;
+    double cd0_subsonic = MissileGuidanceDefaults::kCd0Subsonic;
+    double cd0_supersonic = MissileGuidanceDefaults::kCd0Supersonic;
+    double induced_drag_k = MissileGuidanceDefaults::kInducedDragScale;
+    double propellant_mass_kg = 0.0;
+    double max_lateral_g = 0.0;
+    double autopilot_tau_s = MissileGuidanceDefaults::kAutopilotTauS;
+    double max_accel_response_g_per_s = MissileGuidanceDefaults::kAccelResponseGps;
+};
+
+double default_propellant_mass_kg(double total_mass_kg) {
+    const double scaled = total_mass_kg * MissileGuidanceDefaults::kPropellantMassFraction;
+    return std::clamp(
+        scaled,
+        MissileGuidanceDefaults::kMinPropellantMassKg,
+        std::max(MissileGuidanceDefaults::kMinPropellantMassKg, total_mass_kg * 0.55));
 }
 
-double normalize_angle_deg(double angle) {
-    while (angle > 180.0) angle -= 360.0;
-    while (angle < -180.0) angle += 360.0;
-    return angle;
+double default_boost_thrust_n(double total_mass_kg, double max_speed_mps, double current_speed_mps) {
+    const double delta_v = std::max(200.0, max_speed_mps - current_speed_mps);
+    const double nominal_accel = delta_v / std::max(0.5, MissileGuidanceDefaults::kBoostTimeS);
+    return std::max(15000.0, total_mass_kg * nominal_accel * 1.10);
 }
 
-double math_deg_to_nav_deg(double math_deg) {
-    return wrap_angle_360(90.0 - math_deg);
+double default_sustain_thrust_n(double boost_thrust_n) {
+    return boost_thrust_n * 0.35;
+}
+
+double fallback_max_lateral_g(const Missile& missile) {
+    return std::clamp(12.0 + 0.4 * std::max(0.0, missile.turn_rate), 12.0, 35.0);
+}
+
+double positive_or(double candidate, double fallback) {
+    return candidate > 1.0e-9 ? candidate : fallback;
+}
+
+double nonnegative_or(double candidate, double fallback) {
+    return std::isfinite(candidate) && candidate >= 0.0 ? candidate : fallback;
+}
+
+double positive_or_nan_safe(double candidate, double fallback) {
+    return std::isfinite(candidate) && candidate > 1.0e-9 ? candidate : fallback;
+}
+
+double finite_nonnegative_or(double candidate, double fallback) {
+    return std::isfinite(candidate) && candidate >= 0.0 ? candidate : fallback;
+}
+
+void ensure_mass_state_initialized(flecs::entity missile_entity, Missile& missile) {
+    if (missile_entity.has<MassProperties>()) {
+        return;
+    }
+    const Mass* mass = missile_entity.get<Mass>();
+    if (!mass) {
+        return;
+    }
+    missile_entity.set<MassProperties>({
+        mass->empty_mass_kg,
+        mass->get_total_kg(),
+        0.0,
+        0.0,
+        MissileGuidanceDefaults::kReferenceAreaM2,
+    });
+}
+
+GuidanceResolvedTuning resolve_tuning(
+    flecs::entity missile_entity,
+    const Missile& missile,
+    const Velocity& velocity
+) {
+    GuidanceResolvedTuning out{};
+
+    const Mass* mass = missile_entity.get<Mass>();
+    const MassProperties* props = missile_entity.get<MassProperties>();
+    const double total_mass_kg = mass ? std::max(1.0, mass->get_total_kg()) : 80.0;
+    const double runtime_speed_mps = std::max(
+        1.0,
+        std::max(missile.current_speed_mps, missile_guidance::norm(missile_guidance::velocity_to_vec3(velocity))));
+
+    out.track_memory_timeout_s = nonnegative_or(
+        missile.track_memory_timeout_s,
+        MissileGuidanceDefaults::kTrackMemoryTimeoutS);
+    out.boost_time_s = finite_nonnegative_or(
+        missile.boost_duration_s,
+        MissileGuidanceDefaults::kBoostTimeS);
+    out.sustain_time_s = finite_nonnegative_or(
+        missile.sustain_duration_s,
+        MissileGuidanceDefaults::kSustainTimeS);
+    if (out.boost_time_s <= 1.0e-9 && out.sustain_time_s <= 1.0e-9) {
+        const double total_burn_s = std::max(0.0, missile.burnout_time_s - missile.launch_time);
+        if (std::isfinite(total_burn_s) && total_burn_s > 0.0) {
+            out.boost_time_s = std::min(total_burn_s, MissileGuidanceDefaults::kBoostTimeS);
+            out.sustain_time_s = std::max(0.0, total_burn_s - out.boost_time_s);
+        }
+    }
+    if (out.boost_time_s <= 1.0e-9 && out.sustain_time_s <= 1.0e-9) {
+        out.boost_time_s = MissileGuidanceDefaults::kBoostTimeS;
+        out.sustain_time_s = MissileGuidanceDefaults::kSustainTimeS;
+    }
+
+    out.reference_area_m2 = props
+        ? positive_or_nan_safe(props->reference_area_m2, MissileGuidanceDefaults::kReferenceAreaM2)
+        : MissileGuidanceDefaults::kReferenceAreaM2;
+    out.propellant_mass_kg = mass
+        ? std::max(0.0, mass->fuel_mass_kg)
+        : default_propellant_mass_kg(total_mass_kg);
+    out.max_lateral_g = positive_or_nan_safe(
+        missile.guidance_max_lateral_g,
+        fallback_max_lateral_g(missile));
+    out.autopilot_tau_s = positive_or_nan_safe(
+        missile.guidance_autopilot_tau_s,
+        MissileGuidanceDefaults::kAutopilotTauS);
+    out.max_accel_response_g_per_s = positive_or_nan_safe(
+        missile.guidance_max_accel_response_g_per_s,
+        MissileGuidanceDefaults::kAccelResponseGps);
+    out.cd0_subsonic = positive_or_nan_safe(
+        missile.guidance_cd0_subsonic,
+        MissileGuidanceDefaults::kCd0Subsonic);
+    out.cd0_supersonic = positive_or_nan_safe(
+        missile.guidance_cd0_supersonic,
+        MissileGuidanceDefaults::kCd0Supersonic);
+    out.induced_drag_k = finite_nonnegative_or(
+        missile.guidance_induced_drag_k,
+        MissileGuidanceDefaults::kInducedDragScale);
+    out.bearing_filter_tau_s = finite_nonnegative_or(
+        missile.guidance_bearing_filter_tau_s,
+        MissileGuidanceDefaults::kTrackFilterTauS);
+    out.elevation_filter_tau_s = finite_nonnegative_or(
+        missile.guidance_elevation_filter_tau_s,
+        MissileGuidanceDefaults::kTrackFilterTauS);
+    out.range_filter_tau_s = finite_nonnegative_or(
+        missile.guidance_range_filter_tau_s,
+        MissileGuidanceDefaults::kTrackFilterTauS);
+    const double fallback_boost_thrust_n =
+        default_boost_thrust_n(total_mass_kg, missile.max_speed, runtime_speed_mps);
+    out.boost_thrust_n = finite_nonnegative_or(
+        missile.guidance_boost_thrust_n,
+        fallback_boost_thrust_n);
+    out.sustain_thrust_n = finite_nonnegative_or(
+        missile.guidance_sustain_thrust_n,
+        default_sustain_thrust_n(out.boost_thrust_n));
+    return out;
+}
+
+void initialize_runtime_state(
+    flecs::entity missile_entity,
+    Missile& missile,
+    const Velocity& velocity,
+    double current_time
+) {
+    if (missile.p0_runtime_initialized) {
+        return;
+    }
+
+    missile.p0_runtime_initialized = true;
+    missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
+    missile.track_memory_timeout_s = nonnegative_or(
+        missile.track_memory_timeout_s,
+        MissileGuidanceDefaults::kTrackMemoryTimeoutS);
+    missile.current_speed_mps = missile_guidance::norm(missile_guidance::velocity_to_vec3(velocity));
+    if (!std::isfinite(missile.burnout_time_s) || missile.burnout_time_s <= current_time) {
+        missile.burnout_time_s = current_time +
+            MissileGuidanceDefaults::kBoostTimeS +
+            MissileGuidanceDefaults::kSustainTimeS;
+    }
+    if (!std::isfinite(missile.boost_duration_s)) {
+        missile.boost_duration_s = MissileGuidanceDefaults::kBoostTimeS;
+    }
+    if (!std::isfinite(missile.sustain_duration_s)) {
+        missile.sustain_duration_s = MissileGuidanceDefaults::kSustainTimeS;
+    }
+    if (!std::isfinite(missile.guidance_bearing_filter_tau_s)) {
+        missile.guidance_bearing_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+    }
+    if (!std::isfinite(missile.guidance_elevation_filter_tau_s)) {
+        missile.guidance_elevation_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+    }
+    if (!std::isfinite(missile.guidance_range_filter_tau_s)) {
+        missile.guidance_range_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+    }
+    if (!std::isfinite(missile.guidance_max_lateral_g)) {
+        missile.guidance_max_lateral_g = fallback_max_lateral_g(missile);
+    }
+    if (!std::isfinite(missile.guidance_autopilot_tau_s)) {
+        missile.guidance_autopilot_tau_s = MissileGuidanceDefaults::kAutopilotTauS;
+    }
+    if (!std::isfinite(missile.guidance_max_accel_response_g_per_s)) {
+        missile.guidance_max_accel_response_g_per_s = MissileGuidanceDefaults::kAccelResponseGps;
+    }
+    if (!std::isfinite(missile.guidance_boost_thrust_n)) {
+        missile.guidance_boost_thrust_n =
+            default_boost_thrust_n(80.0, missile.max_speed, std::max(1.0, missile.current_speed_mps));
+    }
+    if (!std::isfinite(missile.guidance_sustain_thrust_n)) {
+        missile.guidance_sustain_thrust_n = default_sustain_thrust_n(missile.guidance_boost_thrust_n);
+    }
+    if (!std::isfinite(missile.guidance_cd0_subsonic)) {
+        missile.guidance_cd0_subsonic = MissileGuidanceDefaults::kCd0Subsonic;
+    }
+    if (!std::isfinite(missile.guidance_cd0_supersonic)) {
+        missile.guidance_cd0_supersonic = MissileGuidanceDefaults::kCd0Supersonic;
+    }
+    if (!std::isfinite(missile.guidance_induced_drag_k)) {
+        missile.guidance_induced_drag_k = MissileGuidanceDefaults::kInducedDragScale;
+    }
+
+    if (Mass* mass = missile_entity.get_mut<Mass>()) {
+        const double total = mass->get_total_kg();
+        if (total > 1.0 && mass->fuel_mass_kg <= 1.0e-6) {
+            const double propellant = std::min(default_propellant_mass_kg(total), std::max(0.0, mass->empty_mass_kg - 1.0));
+            if (propellant > 1.0e-6) {
+                mass->empty_mass_kg -= propellant;
+                mass->fuel_mass_kg += propellant;
+            }
+        }
+    }
+    ensure_mass_state_initialized(missile_entity, missile);
+}
+
+void update_track_from_detection(
+    Missile& missile,
+    const Detection& det,
+    double current_time,
+    double dt,
+    const GuidanceResolvedTuning& tuning
+) {
+    if (!missile.seeker_has_valid_track) {
+        missile.filtered_bearing_deg = det.bearing;
+        missile.filtered_elevation_deg = det.elevation;
+        missile.filtered_range_m = std::max(0.0, det.range);
+        missile.filtered_closing_speed_mps = det.closing_speed;
+        missile.bearing_rate_deg_s = 0.0;
+        missile.elevation_rate_deg_s = 0.0;
+    } else {
+        const double prev_bearing = missile.filtered_bearing_deg;
+        const double prev_elevation = missile.filtered_elevation_deg;
+
+        missile.filtered_bearing_deg = missile_guidance::exp_smooth_angle_deg(
+            missile.filtered_bearing_deg, det.bearing, tuning.bearing_filter_tau_s, dt);
+        missile.filtered_elevation_deg = missile_guidance::exp_smooth_angle_deg(
+            missile.filtered_elevation_deg, det.elevation, tuning.elevation_filter_tau_s, dt);
+        missile.filtered_range_m = missile_guidance::exp_smooth(
+            missile.filtered_range_m, std::max(0.0, det.range), tuning.range_filter_tau_s, dt);
+        missile.filtered_closing_speed_mps = missile_guidance::exp_smooth(
+            missile.filtered_closing_speed_mps, det.closing_speed, tuning.range_filter_tau_s, dt);
+
+        if (dt > 1.0e-6) {
+            missile.bearing_rate_deg_s =
+                missile_guidance::shortest_angle_delta_deg(prev_bearing, missile.filtered_bearing_deg) / dt;
+            missile.elevation_rate_deg_s =
+                (missile.filtered_elevation_deg - prev_elevation) / dt;
+        }
+    }
+
+    missile.seeker_has_valid_track = true;
+    missile.seeker_has_range = det.range > 1.0e-3;
+    missile.last_track_time_s = current_time;
+    missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
+}
+
+void propagate_track_memory(Missile& missile, double dt) {
+    missile.filtered_bearing_deg = missile_guidance::normalize_angle_deg(
+        missile.filtered_bearing_deg + missile.bearing_rate_deg_s * dt);
+    missile.filtered_elevation_deg =
+        std::clamp(missile.filtered_elevation_deg + missile.elevation_rate_deg_s * dt, -89.0, 89.0);
+    missile.filtered_range_m = std::max(
+        0.0,
+        missile.filtered_range_m - std::max(0.0, missile.filtered_closing_speed_mps) * dt);
+    missile.seeker_mode = static_cast<int>(MissileSeekerMode::Memory);
+}
+
+void update_mass_and_drag_state(
+    flecs::world world,
+    flecs::entity missile_entity,
+    const Transform& transform,
+    Missile& missile,
+    double current_time,
+    double dt,
+    double speed_mps,
+    double lateral_accel_mps2,
+    const GuidanceResolvedTuning& tuning,
+    double& thrust_n,
+    double& drag_n
+) {
+    const EnvironmentModelRef* env_ref = world.get<EnvironmentModelRef>();
+    double rho = kSeaLevelDensity;
+    double speed_of_sound = 340.29;
+    if (env_ref && env_ref->model) {
+        const AtmosphericData atmo = env_ref->model->get_atmosphere_at(transform.x, transform.y, transform.z);
+        rho = atmo.air_density;
+        speed_of_sound = atmo.speed_of_sound;
+    } else {
+        const double alt_km = std::max(0.0, transform.z) / 1000.0;
+        rho = kSeaLevelDensity * std::exp(-alt_km / 7.2);
+        speed_of_sound = std::max(295.0, 340.29 - (4.0 * alt_km));
+    }
+
+    Mass* mass = missile_entity.get_mut<Mass>();
+    if (!mass) {
+        thrust_n = 0.0;
+        drag_n = 0.0;
+        return;
+    }
+
+    ensure_mass_state_initialized(missile_entity, missile);
+    MassProperties* props = missile_entity.get_mut<MassProperties>();
+
+    const double total_mass = std::max(1.0, mass->get_total_kg());
+    const double mach = speed_of_sound > 1.0 ? speed_mps / speed_of_sound : 0.0;
+    const double q_bar = 0.5 * rho * speed_mps * speed_mps;
+    const double base_cd = missile_guidance::lerp(
+        tuning.cd0_subsonic,
+        tuning.cd0_supersonic,
+        std::clamp((mach - 0.8) / 0.6, 0.0, 1.0));
+    const double lateral_frac = std::clamp(
+        lateral_accel_mps2 / std::max(1.0, tuning.max_lateral_g * kGravity),
+        0.0,
+        1.0);
+    const double drag_coeff =
+        base_cd + tuning.induced_drag_k * lateral_frac * lateral_frac;
+    drag_n = q_bar * tuning.reference_area_m2 * drag_coeff;
+
+    const double boost_end_time = missile.launch_time + tuning.boost_time_s;
+    const bool propulsion_active =
+        current_time < missile.burnout_time_s && mass->fuel_mass_kg > 1.0e-6;
+    if (propulsion_active) {
+        const bool in_boost_phase = current_time < boost_end_time;
+        thrust_n = in_boost_phase ? tuning.boost_thrust_n : tuning.sustain_thrust_n;
+        if (thrust_n <= 1.0e-6) {
+            thrust_n = in_boost_phase
+                ? default_boost_thrust_n(total_mass, missile.max_speed, missile.current_speed_mps)
+                : default_sustain_thrust_n(default_boost_thrust_n(total_mass, missile.max_speed, missile.current_speed_mps));
+        }
+        const double remaining_burn_s = std::max(kBoostMinDurationS, missile.burnout_time_s - current_time + dt);
+        const double mass_flow = mass->fuel_mass_kg / remaining_burn_s;
+        mass->fuel_mass_kg = std::max(0.0, mass->fuel_mass_kg - mass_flow * dt);
+    } else {
+        thrust_n = 0.0;
+    }
+
+    if (props) {
+        props->empty_mass_kg = mass->empty_mass_kg;
+        props->current_total_mass_kg = mass->get_total_kg();
+        props->reference_area_m2 = tuning.reference_area_m2;
+    }
 }
 
 class DefaultGuidanceModel : public IGuidanceModel {
@@ -59,217 +409,174 @@ public:
             }
         }
         missile.last_guidance_time = current_time;
+        initialize_runtime_state(missile_entity, missile, velocity, current_time);
+        const GuidanceResolvedTuning tuning = resolve_tuning(missile_entity, missile, velocity);
+        missile.track_memory_timeout_s = tuning.track_memory_timeout_s;
 
-        // Use seeker track only (no access to target truth here).
         const ContactList* contacts = missile_entity.get<ContactList>();
-        if (!contacts) {
-            return;
-        }
         const Detection* best_det = nullptr;
         double max_sig = -1.0;
+        const Alliance* missile_alliance = missile_entity.get<Alliance>();
 
-        for (const auto& c : contacts->contacts) {
-            double dist = c.range;
-            if (missile.seeker_lock_range > 0.0 && dist > missile.seeker_lock_range) {
-                continue;
+        if (contacts) {
+            for (const auto& c : contacts->contacts) {
+                if (c.target_id == missile.attacker_id) {
+                    continue;
+                }
+
+                const Alliance* target_alliance = world.entity(c.target_id).get<Alliance>();
+                if (missile_alliance && target_alliance &&
+                    missile_alliance->side == target_alliance->side) {
+                    continue;
+                }
+
+                if (missile.seeker_lock_range > 0.0 && c.range > missile.seeker_lock_range) {
+                    continue;
+                }
+                if (missile.seeker_fov_deg > 0.0 &&
+                    std::abs(c.bearing) > missile.seeker_fov_deg * 0.5) {
+                    continue;
+                }
+
+                if (c.signal_strength > max_sig) {
+                    max_sig = c.signal_strength;
+                    best_det = &c;
+                }
             }
-            double rel_bearing = c.bearing;
-            if (missile.seeker_fov_deg > 0.0 &&
-                std::abs(rel_bearing) > missile.seeker_fov_deg * 0.5) {
-                continue;
-            }
-
-            // Seduction Logic: Pick strongest signal
-            if (c.signal_strength > max_sig) {
-                max_sig = c.signal_strength;
-                best_det = &c;
-            }
         }
 
-        if (!best_det) {
-            return; // No valid contacts
-        }
-
-        // Update target lock to the strongest signal (Seduction)
-        missile.target_id = best_det->target_id;
-        const Detection* det = best_det; // Alias for following code
-        
-        // Remove subsequent redundant checks if any
-        // ... code proceeds to use 'det' ...
-
-        // Proportional Navigation (PN)
-        // a_cmd = N * V_c * Omega
-        // N = Nav Gain (3-5)
-        // V_c = Closing Velocity
-        // Omega = LOS rotation rate vector
-        
-        // 1. Get positions and velocities
-        const Transform* t_pos = world.entity(missile.target_id).get<Transform>();
-        const Velocity* t_vel = world.entity(missile.target_id).get<Velocity>();
-        
-        double speed = std::sqrt(velocity.vx * velocity.vx +
-                                 velocity.vy * velocity.vy +
-                                 velocity.vz * velocity.vz);
-        
-        if (!t_pos || !t_vel) {
-            // If we can't get true state, fallback to Pure Pursuit (Sensor-only)
-            // But realistically, guidance needs estimation. 
-            // For this Sim, we assume "Perfect Seeker" for the guidance loop 
-            // once the sensor has confirmed lock (which is checked above).
-            // NOTE: The code above checked 'ContactList' but here we access Truth for PN calc 
-            // to avoid writing a full Kalman Filter estimator for this step. 
-            // In a strict sense, we should use 'det->bearing' history to estimate rate.
-            // For MVP High-Fidelity, using Truth for Guidance Law is acceptable 
-            // assuming the seeker "sees" it.
-        }
-
-        // Relative Position vector R = T - M
-        double rx = t_pos ? (t_pos->x - transform.x) : (speed * std::cos(to_radians(90 - det->bearing)) * dt); // Fallback
-        double ry = t_pos ? (t_pos->y - transform.y) : (speed * std::sin(to_radians(90 - det->bearing)) * dt);
-        double rz = t_pos ? (t_pos->z - transform.z) : 0.0;
-        
-        double r_sq = rx*rx + ry*ry + rz*rz;
-        double r_mag = std::sqrt(r_sq);
-        
-        // Relative Velocity vector V = Vt - Vm
-        double vm_x = velocity.vx;
-        double vm_y = velocity.vy;
-        double vm_z = velocity.vz;
-        
-        double vt_x = t_vel ? t_vel->vx : 0.0;
-        double vt_y = t_vel ? t_vel->vy : 0.0;
-        double vt_z = t_vel ? t_vel->vz : 0.0;
-        
-        double vr_x = vt_x - vm_x;
-        double vr_y = vt_y - vm_y;
-        double vr_z = vt_z - vm_z;
-        
-        // Closing Velocity V_c = - (V_rel . R_hat)
-        // We use the vector form of PN directly: 
-        // a_cmd = N * Omega x V_closing_vec ?? 
-        // Standard Vector PN: a = N * V_rel_mag * (Omega x R_hat) ... many variants.
-        // Robust Form: a_cmd = N * (R x (v_r x R)) / (R . R) * V_closing?
-        
-        // Let's use Zarchan's implementation simplified:
-        // Omega = (R x V_r) / (R . R)
-        // a_cmd = N * V_c * Omega (Scalar approximation) -> Direction?
-        // Vector form: accel = N * V_closing_scalar * (Omega x Unit(V_missile)) ? 
-        // Actually usually applied perpendicular to LOS.
-        
-        // Simplified 3D PN:
-        // Omega_vec = (R x V_rel) / |R|^2
-        double cx = ry*vr_z - rz*vr_y;
-        double cy = rz*vr_x - rx*vr_z;
-        double cz = rx*vr_y - ry*vr_x;
-        
-        // Closing Speed Scalar (approx missile speed + target approach)
-        // Strictly: V_c = - (R . V_rel) / |R|
-        double v_closing = -(rx*vr_x + ry*vr_y + rz*vr_z) / r_mag;
-        
-        // If opening (V_c < 0), missile missed.
-        
-        // Acceleration Command Vector
-        // a = N * v_closing * (Omega_vec x Unit(?)) 
-        // Pure PN commands accel normal to LOS rate. 
-        // Correct Vector PN: a_n = N * V_closing * (Omega x RotationAxis?)
-        // Easiest implementation: a = N * V_closing * Omega (but Omega is perp to LOS).
-        // Let's use: A_cmd = N * V_closing * Omega vector (This gives magnitude and direction normal to plane)
-        // But we need to apply it to velocity vector.
-        
-        // Let's go with computing the desired change in velocity vector directly.
-        // Desired Rate of Turn of Velocity Vector = N * Rate of Turn of LOS.
-        // gamma_dot = N * lambda_dot
-        
-        // 1. Calculate LOS vector
-        double los_x = rx / r_mag;
-        double los_y = ry / r_mag;
-        double los_z = rz / r_mag; // Unit vector
-        
-        // 2. Velocity vector
-        double v_mag = std::sqrt(vm_x*vm_x + vm_y*vm_y + vm_z*vm_z);
-        if (v_mag < 0.1) v_mag = 0.1;
-        double v_dir_x = vm_x / v_mag;
-        double v_dir_y = vm_y / v_mag;
-        double v_dir_z = vm_z / v_mag;
-        
-        // 3. Omega (LOS Rate vector) calculation 
-        // Omega = (R x V) / R^2 ... wait, V here is relative velocity V_r
-        double omega_x = cx / r_sq;
-        double omega_y = cy / r_sq;
-        double omega_z = cz / r_sq;
-        
-        // 4. Commanded Acceleration (Perpendicular to RELATIVE velocity? No, to Missile Velocity)
-        // True PN: a = N * V_closing * (Omega_vec x L_hat) ? No.
-        // Standard: Accel = N * V_c * lambda_dot
-        // Let's calculate equivalent force vector.
-        // We want to turn the missile velocity vector towards the collision point.
-        
-        // Heuristic approach matching "Rate of Turn of Velocity = N * Rate of Turn of LOS"
-        // Turn Rate Vec = N * Omega_vec.
-        // New Velocity direction is rotated by (N * Omega * dt).
-        
-        double nav_gain = missile.nav_gain > 0 ? missile.nav_gain : 3.0;
-        
-        // Rate vector (rotation axis * magnitude)
-        double rate_x = nav_gain * omega_x;
-        double rate_y = nav_gain * omega_y;
-        double rate_z = nav_gain * omega_z;
-        
-        double rate_mag = std::sqrt(rate_x*rate_x + rate_y*rate_y + rate_z*rate_z);
-        
-        // Cap turn rate (Physical limit)
-        double max_rate_rad = to_radians(missile.turn_rate);
-        if (rate_mag > max_rate_rad) {
-            double scale = max_rate_rad / rate_mag;
-            rate_x *= scale;
-            rate_y *= scale;
-            rate_z *= scale;
-            rate_mag = max_rate_rad;
-        }
-        
-        // Apply rotation to Velocity Vector
-        // V_new = V_old rotated by (rate * dt) around axis (rate/|rate|)
-        if (rate_mag > 1e-8) {
-             // Axis Angle Rotation
-             double axis_x = rate_x / rate_mag;
-             double axis_y = rate_y / rate_mag;
-             double axis_z = rate_z / rate_mag;
-             double theta = rate_mag * dt;
-             
-             double cos_t = std::cos(theta);
-             double sin_t = std::sin(theta);
-             
-             // Rodrigues' rotation formula
-             // V_rot = V cos(t) + (k x V) sin(t) + k (k . V) (1 - cos(t))
-             
-             double cross_x = axis_y*vm_z - axis_z*vm_y;
-             double cross_y = axis_z*vm_x - axis_x*vm_z;
-             double cross_z = axis_x*vm_y - axis_y*vm_x;
-             
-             double dot = axis_x*vm_x + axis_y*vm_y + axis_z*vm_z;
-             
-             double v_new_x = vm_x*cos_t + cross_x*sin_t + axis_x*dot*(1.0-cos_t);
-             double v_new_y = vm_y*cos_t + cross_y*sin_t + axis_y*dot*(1.0-cos_t);
-             double v_new_z = vm_z*cos_t + cross_z*sin_t + axis_z*dot*(1.0-cos_t);
-             
-             // Normalize to max speed (Energy bleed would go here for step 2)
-             double new_speed = missile.max_speed; // Assume sustains speed for now
-             double vn_norm = std::sqrt(v_new_x*v_new_x + v_new_y*v_new_y + v_new_z*v_new_z);
-             
-             velocity.vx = (v_new_x / vn_norm) * new_speed;
-             velocity.vy = (v_new_y / vn_norm) * new_speed;
-             velocity.vz = (v_new_z / vn_norm) * new_speed;
-             
-             // Update Heading for display
-             double final_h_math = std::atan2(velocity.vy, velocity.vx);
-             // ... transform.heading update is strictly not needed for logic but good for viz
-             // Done by MovementSystem usually.
+        if (best_det) {
+            missile.target_id = best_det->target_id;
+            update_track_from_detection(missile, *best_det, current_time, dt, tuning);
+        } else if (missile.seeker_has_valid_track &&
+                   missile.last_track_time_s >= 0.0 &&
+                   (current_time - missile.last_track_time_s) <= tuning.track_memory_timeout_s) {
+            propagate_track_memory(missile, dt);
         } else {
-             // No turn, just fly straight
-             velocity.vx = v_dir_x * missile.max_speed;
-             velocity.vy = v_dir_y * missile.max_speed;
-             velocity.vz = v_dir_z * missile.max_speed;
+            missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
+            missile.commanded_lateral_accel_mps2 = 0.0;
         }
+
+        Vec3 velocity_vec = missile_guidance::velocity_to_vec3(velocity);
+        double speed_mps = missile_guidance::norm(velocity_vec);
+        if (speed_mps < 1.0) {
+            speed_mps = std::max(1.0, missile.current_speed_mps);
+        }
+        Vec3 velocity_dir = missile_guidance::normalize(velocity_vec);
+        if (missile_guidance::norm(velocity_dir) <= 1.0e-6) {
+            velocity_dir = missile_guidance::world_los_from_relative_angles(0.0, 0.0, transform);
+        }
+
+        Vec3 commanded_accel = {0.0, 0.0, 0.0};
+        if (missile.seeker_has_valid_track &&
+            missile.seeker_mode != static_cast<int>(MissileSeekerMode::Ballistic)) {
+            const Vec3 los_world = missile_guidance::normalize(
+                missile_guidance::world_los_from_relative_angles(
+                    missile.filtered_bearing_deg,
+                    missile.filtered_elevation_deg,
+                    transform));
+            const Vec3 los_lateral = missile_guidance::project_lateral(los_world, velocity_dir);
+            const Vec3 los_lateral_dir = missile_guidance::normalize(los_lateral);
+
+            const double range_m = std::max(150.0, missile.filtered_range_m);
+            const double closing_speed_mps = std::max(0.0, missile.filtered_closing_speed_mps);
+            const double nav_gain = missile.nav_gain > 0.0 ? missile.nav_gain : 3.0;
+            const double lateral_error = std::clamp(missile_guidance::norm(los_lateral), 0.0, 1.0);
+            const double terminal_weight = std::clamp(
+                MissileGuidanceDefaults::kTerminalCaptureRangeM / range_m,
+                0.25,
+                2.5);
+
+            const double capture_mag =
+                MissileGuidanceDefaults::kCaptureGain *
+                terminal_weight *
+                (speed_mps * speed_mps / range_m) *
+                lateral_error;
+
+            const Math::Vector3 pn_body_world = Math::body_to_world(
+                {
+                    0.0,
+                    -MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                        Math::to_radians(missile.bearing_rate_deg_s),
+                    MissileGuidanceDefaults::kPnGainScale * nav_gain * closing_speed_mps *
+                        Math::to_radians(missile.elevation_rate_deg_s),
+                },
+                transform);
+            const Vec3 pn_world = {
+                pn_body_world.x,
+                pn_body_world.y,
+                pn_body_world.z,
+            };
+
+            commanded_accel = (los_lateral_dir * capture_mag) + pn_world;
+            commanded_accel = missile_guidance::project_lateral(commanded_accel, velocity_dir);
+        }
+
+        missile.commanded_lateral_accel_mps2 = missile_guidance::norm(commanded_accel);
+        const double max_lateral_accel = tuning.max_lateral_g * kGravity;
+        if (missile.commanded_lateral_accel_mps2 > max_lateral_accel) {
+            commanded_accel =
+                missile_guidance::normalize(commanded_accel) * max_lateral_accel;
+            missile.commanded_lateral_accel_mps2 = max_lateral_accel;
+        }
+
+        const double accel_step_limit =
+            tuning.max_accel_response_g_per_s * kGravity * std::max(0.0, dt);
+        const double desired_delta = std::clamp(
+            missile.commanded_lateral_accel_mps2 - missile.achieved_lateral_accel_mps2,
+            -accel_step_limit,
+            accel_step_limit);
+        const double accel_target = missile.achieved_lateral_accel_mps2 + desired_delta;
+        const double autopilot_alpha = std::clamp(
+            dt / (tuning.autopilot_tau_s + dt), 0.0, 1.0);
+        missile.achieved_lateral_accel_mps2 +=
+            autopilot_alpha * (accel_target - missile.achieved_lateral_accel_mps2);
+        missile.achieved_lateral_accel_mps2 =
+            std::clamp(missile.achieved_lateral_accel_mps2, 0.0, max_lateral_accel);
+
+        Vec3 achieved_lateral_accel = {0.0, 0.0, 0.0};
+        const double commanded_mag = missile_guidance::norm(commanded_accel);
+        if (commanded_mag > 1.0e-6 && missile.achieved_lateral_accel_mps2 > 1.0e-6) {
+            achieved_lateral_accel =
+                missile_guidance::normalize(commanded_accel) * missile.achieved_lateral_accel_mps2;
+        }
+
+        double thrust_n = 0.0;
+        double drag_n = 0.0;
+        update_mass_and_drag_state(
+            world,
+            missile_entity,
+            transform,
+            missile,
+            current_time,
+            dt,
+            speed_mps,
+            missile.achieved_lateral_accel_mps2,
+            tuning,
+            thrust_n,
+            drag_n);
+
+        velocity_dir = missile_guidance::norm(velocity_vec) > 1.0e-6
+            ? missile_guidance::normalize(velocity_vec)
+            : velocity_dir;
+        const double total_mass = [&]() {
+            const Mass* mass = missile_entity.get<Mass>();
+            return mass ? std::max(1.0, mass->get_total_kg()) : 80.0;
+        }();
+        const double tangential_accel = (thrust_n - drag_n) / total_mass;
+        Vec3 new_velocity = velocity_vec +
+            (achieved_lateral_accel + velocity_dir * tangential_accel) * dt;
+
+        const double new_speed_mag = missile_guidance::norm(new_velocity);
+        const double peak_cap = std::max(200.0, missile.max_speed * 1.05);
+        if (new_speed_mag > peak_cap) {
+            new_velocity = missile_guidance::normalize(new_velocity) * peak_cap;
+        } else if (new_speed_mag < 5.0 && speed_mps > 5.0) {
+            new_velocity = velocity_dir * 5.0;
+        }
+
+        missile_guidance::write_velocity(velocity, new_velocity);
+        missile.current_speed_mps = missile_guidance::norm(new_velocity);
     }
 };
 

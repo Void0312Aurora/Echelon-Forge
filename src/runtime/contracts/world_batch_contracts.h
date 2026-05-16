@@ -54,6 +54,12 @@ struct WorldSpawnRequest {
     double vx = 0.0;
     double vy = 0.0;
     double vz = 0.0;
+    bool ammo_override_enabled = false;
+    int missiles_remaining = 0;
+    int max_missiles = 0;
+    bool weapon_cooldown_override_enabled = false;
+    double weapon_cooldown_s = 2.0;
+    double weapon_last_fire_time = -1.0;
 };
 
 struct WorldPilotActionAssignment {

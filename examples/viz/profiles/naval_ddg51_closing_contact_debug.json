@@ -1,0 +1,21 @@
+{
+  "name": "Naval DDG-51 Closing Contact Debug",
+  "description": "Minimal naval tactical visualization profile for the closing-contact variant. Uses the same view defaults as the baseline while preserving a quick reloadable preset for contact-geometry inspection.",
+  "scenario": "scenarios/naval/ddg51_take1_screen_closing_contact_v1.json",
+  "asset_registry": "examples/viz/assets/registry/default.json",
+  "session": {
+    "pause_on_done": false,
+    "action_mode": "auto",
+    "zero_randomization": false
+  },
+  "startup": {
+    "speed": 1,
+    "auto_start": false
+  },
+  "ui": {
+    "presentation_mode": "MAP",
+    "camera_mode": "CHASE",
+    "focus_unit": "Blue_Screen_DDG51",
+    "tactical_zoom": 1.0
+  }
+}

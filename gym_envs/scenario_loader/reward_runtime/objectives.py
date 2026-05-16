@@ -3,6 +3,55 @@ import ef_py
 from ..common import OBJECTIVE_DYNAMIC_TARGET_MAP, OBJECTIVE_OP_MAP, OBJECTIVE_PROPERTY_MAP
 
 
+def _combat_target_snapshot(loader, truth):
+    target_id = int(getattr(loader, "primary_target_id", 0) or 0)
+    if target_id <= 0:
+        return {
+            "target_id": 0,
+            "target_active": False,
+            "target_health": 0.0,
+            "target_range_m": None,
+            "self_active": True,
+            "self_health": float(getattr(truth, "health", 100.0)),
+            "missiles_remaining": float(getattr(truth, "missiles_remaining", 0.0)),
+        }
+
+    sim = getattr(loader, "sim", None)
+    target_active = False
+    target_health = 0.0
+    target_range_m = None
+    if sim is not None and hasattr(sim, "is_unit_active"):
+        try:
+            target_active = bool(sim.is_unit_active(int(target_id)))
+        except Exception:
+            target_active = False
+    if sim is not None and hasattr(sim, "get_unit_health"):
+        try:
+            health = sim.get_unit_health(int(target_id))
+            if isinstance(health, list) and health:
+                target_health = float(health[0])
+        except Exception:
+            target_health = 0.0
+    for track in getattr(truth, "contacts", []) or []:
+        try:
+            if int(getattr(track, "id", 0)) != int(target_id):
+                continue
+            target_range_m = float(getattr(track, "range", 0.0))
+            break
+        except Exception:
+            continue
+
+    return {
+        "target_id": int(target_id),
+        "target_active": bool(target_active),
+        "target_health": float(target_health),
+        "target_range_m": target_range_m,
+        "self_active": True,
+        "self_health": float(getattr(truth, "health", 100.0)),
+        "missiles_remaining": float(getattr(truth, "missiles_remaining", 0.0)),
+    }
+
+
 def build_approach_reward_inputs(
     loader,
     cfg: dict,
@@ -174,4 +223,13 @@ def build_conditional_objective_inputs(
     )
     inputs.target_speed_mps = float(loader.mission_cmd.get("target_speed", 0.0))
     inputs.target_heading_deg = float(loader.mission_cmd.get("target_heading", 0.0))
+    combat_snapshot = _combat_target_snapshot(loader, truth)
+    inputs.self_active = bool(combat_snapshot["self_active"])
+    inputs.target_active = bool(combat_snapshot["target_active"])
+    inputs.self_health = float(combat_snapshot["self_health"])
+    inputs.target_health = float(combat_snapshot["target_health"])
+    inputs.missiles_remaining = float(combat_snapshot["missiles_remaining"])
+    target_range_m = combat_snapshot["target_range_m"]
+    inputs.has_target_range_m = target_range_m is not None
+    inputs.target_range_m = 0.0 if target_range_m is None else float(target_range_m)
     return inputs

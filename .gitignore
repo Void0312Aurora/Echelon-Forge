@@ -67,9 +67,9 @@ compat_data/
 ipc/
 *.zip
 checkpoint/
+# `scenarios/` is part of the maintained, versioned repo input surface.
 experiments/
 experiments_tmp/
-scenarios/
 datasets/
 output/
 .playwright-mcp/

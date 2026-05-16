@@ -29,6 +29,12 @@ OBJECTIVE_PROPERTY_MAP = {
     "heading": ef_py.ConditionalObjectiveProperty.Heading,
     "x": ef_py.ConditionalObjectiveProperty.X,
     "y": ef_py.ConditionalObjectiveProperty.Y,
+    "self_active": ef_py.ConditionalObjectiveProperty.SelfActive,
+    "target_active": ef_py.ConditionalObjectiveProperty.TargetActive,
+    "self_health": ef_py.ConditionalObjectiveProperty.SelfHealth,
+    "target_health": ef_py.ConditionalObjectiveProperty.TargetHealth,
+    "missiles_remaining": ef_py.ConditionalObjectiveProperty.MissilesRemaining,
+    "target_range_m": ef_py.ConditionalObjectiveProperty.TargetRangeM,
 }
 
 OBJECTIVE_OP_MAP = {

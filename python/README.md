@@ -31,6 +31,8 @@ src/interfaces/python -> ef_py
 
 - `rl/`
   - Python RL 主线，含 runtime、policy_algo、tasking、planning、profile、support。
+- `training/`
+  - `train.py` 主线入口复用的 CLI、bootstrap、实验目录与运行时 orchestration 支撑。
 - `testing/`
   - 测试和 contract runner 运行时支撑。
 - `world_model/`
@@ -81,6 +83,11 @@ src/interfaces/python -> ef_py
     - repo/build 路径注入与测试期导入配置。
   - `scenario_contract_runner.py`
     - JSON contract 的统一执行入口。
+- `training/`
+  - `cli.py`
+    - `train.py` 入口的 argparse 参数表。
+  - `bootstrap.py`
+    - 场景/配置校验、resume 目录约定、lock、seed、torch runtime bootstrap。
 - `world_model/`
   - `dreamer.py`, `networks.py`, `features.py`, `replay.py`, `utils.py`
     - world model 训练、网络、特征和数据集支持。
@@ -100,6 +107,8 @@ src/interfaces/python -> ef_py
   - 先看 [scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py)
 - “leader/tasking/HMoE 训练逻辑在哪里”
   - 先看 `python/rl/tasking/` 与 `python/rl/policy_algo/`
+- “train.py 为什么进入这个 run 目录、为什么自动 resume、torch 线程怎么定”
+  - 先看 `python/training/`
 - “训练日志、退化、termination 统计从哪来”
   - 先看 [training_callbacks.py](/home/void0312/Workshop/CMO/python/training_callbacks.py)
 - “contract runner 或 eval 为什么解析不到 artifact”

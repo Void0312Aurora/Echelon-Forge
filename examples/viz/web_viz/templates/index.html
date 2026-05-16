@@ -3,6 +3,7 @@
 
 <head>
     <title>Universal 3D Viz</title>
+    <link rel="icon" href="/static/favicon.ico" />
     <script src="/static/socket.io.min.js"></script>
     <script type="importmap">
         {
@@ -13,6 +14,10 @@
         }
     </script>
     <style>
+        :root {
+            --viz-top-offset: 132px;
+        }
+
         body {
             margin: 0;
             overflow: hidden;
@@ -22,14 +27,15 @@
         }
 
         #overlay {
-            position: absolute;
-            top: 20px;
+            position: fixed;
+            top: var(--viz-top-offset);
             left: 20px;
             pointer-events: none;
             background: rgba(0, 0, 0, 0.6);
             padding: 15px;
             border: 1px solid #444;
             min-width: 320px;
+            z-index: 3;
         }
 
         h3 {
@@ -56,8 +62,8 @@
         }
 
         #unit-list {
-            position: absolute;
-            top: 20px;
+            position: fixed;
+            top: var(--viz-top-offset);
             right: 20px;
             width: 200px;
             background: rgba(0, 0, 0, 0.6);
@@ -65,6 +71,7 @@
             border: 1px solid #444;
             max-height: 80vh;
             overflow-y: auto;
+            z-index: 3;
         }
 
         .unit-item {
@@ -83,23 +90,122 @@
             background: #222;
         }
 
+        .unit-meta {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #8d9eaa;
+            line-height: 1.35;
+        }
+
+        .unit-meta em {
+            color: #d4b27a;
+            font-style: normal;
+        }
+
         #controls-help {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 20px;
             font-size: 12px;
             color: #666;
             pointer-events: none;
             max-width: 340px;
+            z-index: 3;
         }
 
         #ui-controls {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             right: 20px;
             pointer-events: auto;
             display: flex;
             gap: 10px;
+            z-index: 3;
+        }
+
+        #viz-menubar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(4, 10, 15, 0.9);
+            border-bottom: 1px solid #294357;
+            padding: 12px 18px;
+            z-index: 4;
+            pointer-events: auto;
+            backdrop-filter: blur(8px);
+        }
+
+        .menu-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .menu-row--status {
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .menu-row--selectors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .menu-field {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            padding: 8px 10px;
+            background: rgba(9, 20, 30, 0.72);
+            border: 1px solid #294357;
+        }
+
+        #viz-menubar select {
+            background: #161616;
+            color: #ddd;
+            border: 1px solid #555;
+            padding: 7px 10px;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .menu-status {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            gap: 10px;
+        }
+
+        .menu-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .menu-tag {
+            font-size: 11px;
+            color: #7f99a8;
+            white-space: nowrap;
+        }
+
+        #viz-session-label {
+            color: #d7ebf4;
+            font-size: 13px;
+            display: block;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         button {
@@ -191,6 +297,48 @@
             text-align: right;
             flex: 1 1 auto;
         }
+
+        #tactical-panel {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        #tactical-panel.hidden {
+            display: none;
+        }
+
+        #tactical-header {
+            position: absolute;
+            top: calc(var(--viz-top-offset) - 16px);
+            left: 24px;
+            right: 24px;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #9cc9d8;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+
+        #tactical-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            background: #081018;
+            pointer-events: auto;
+            cursor: grab;
+        }
+
+        #tactical-canvas:active {
+            cursor: grabbing;
+        }
     </style>
 </head>
 
@@ -224,14 +372,53 @@
         <div id="unit-list-content"></div>
     </div>
 
-    <div id="controls-help">[WASD/QE] Free Camera | [Mouse Drag] Orbit | [Wheel] Zoom | [Space] Pause | Chase mode supports orbit + zoom around the focused unit</div>
+    <div id="viz-menubar">
+        <div class="menu-row menu-row--status">
+            <div class="menu-status">
+                <span class="menu-tag">SESSION</span>
+                <span id="viz-session-label">UNLOADED</span>
+            </div>
+            <div class="menu-actions">
+                <button id="btn-reload" onclick="reloadCurrentScenario()">RELOAD</button>
+                <button id="btn-stop" onclick="stopCurrentSession()">STOP</button>
+            </div>
+        </div>
+        <div class="menu-row menu-row--selectors">
+            <div class="menu-field">
+                <span class="menu-tag">PROFILE</span>
+                <select id="profile-select"></select>
+                <button id="btn-load-profile" onclick="loadSelectedProfile()">LOAD PROFILE</button>
+            </div>
+            <div class="menu-field">
+                <span class="menu-tag">SCENARIO</span>
+                <select id="scenario-select"></select>
+                <button id="btn-load" onclick="loadSelectedScenario()">LOAD</button>
+            </div>
+            <div class="menu-field">
+                <span class="menu-tag">ASSET SET</span>
+                <select id="asset-registry-select"></select>
+                <button id="btn-load-asset-registry" onclick="loadSelectedAssetRegistry()">LOAD ASSET SET</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tactical-panel">
+        <div id="tactical-header">
+            <span>TACTICAL VIEW</span>
+            <span id="tactical-scale">SCALE --</span>
+        </div>
+        <canvas id="tactical-canvas"></canvas>
+    </div>
+
+    <div id="controls-help">[Map Wheel] Zoom | [Map Drag] Pan | [WASD/QE] 3D Free Camera | [Mouse Drag] 3D Orbit | [Space] Pause / Resume</div>
 
     <div id="ui-controls">
-        <button id="btn-cam" onclick="toggleCamera()">CAM: CHASE</button>
+        <button id="btn-view" onclick="togglePresentationMode()">VIEW: MAP</button>
+        <button id="btn-cam" onclick="toggleCamera()">3D: CHASE</button>
         <button id="btn-speed-down" onclick="adjustSpeed(-1)">SLOW</button>
         <button id="btn-speed" class="pill" onclick="cycleSpeed()">SPD: 1x</button>
         <button id="btn-speed-up" onclick="adjustSpeed(1)">FAST</button>
-        <button id="btn-start" class="primary" onclick="startSim()">START</button>
+        <button id="btn-start" class="primary" onclick="runSessionAction()">START</button>
     </div>
 
     <script type="module">
@@ -252,22 +439,47 @@
         let lastFrameTs = performance.now();
         let chaseTargetPrev = null;
         let trailFrameCounter = 0;
+        let presentationMode = 'MAP';
+        let lastTacticalState = null;
+        let tacticalViewport = null;
+        const tacticalInteraction = {
+            zoom: 1.0,
+            panX: 0.0,
+            panY: 0.0,
+            dragging: false,
+            pointerId: null,
+            dragStartX: 0.0,
+            dragStartY: 0.0,
+            panStartX: 0.0,
+            panStartY: 0.0,
+        };
 
         // Input State
         const keys = { w: false, a: false, s: false, d: false, q: false, e: false, Shift: false };
-        let simPaused = false;
         const SPEED_STEPS = [1, 2, 4, 8];
+        let vizScenarioList = [];
+        let vizProfileList = [];
+        let vizAssetRegistryList = [];
+        let currentScenario = '';
+        let currentProfile = '';
+        let sessionReady = false;
+        let currentProfileUiDefaults = null;
+        let currentAssetRegistry = { name: 'default', entries: [] };
+        let sessionControlState = { loaded: false, ready: false, running: false, paused: false };
 
         // --- Init ThreeJS ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(SCENE_BG);
         scene.fog = new THREE.FogExp2(SCENE_BG, 0.00005);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 300000);
-        camera.position.set(0, 100, 200);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000000);
+        camera.position.set(0, 15000, 15000);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.domElement.style.position = 'fixed';
+        renderer.domElement.style.inset = '0';
+        renderer.domElement.style.zIndex = '0';
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -277,6 +489,96 @@
         controls.rotateSpeed = 0.9;
         controls.zoomSpeed = 1.2;
         controls.target.set(0, 0, 0);
+        controls.maxDistance = 700000;
+        controls.minDistance = 25;
+
+        const tacticalPanel = document.getElementById('tactical-panel');
+        const tacticalCanvas = document.getElementById('tactical-canvas');
+        const tacticalCtx = tacticalCanvas.getContext('2d');
+        const vizMenubar = document.getElementById('viz-menubar');
+
+        function updateLayoutOffsets() {
+            const topOffset = (vizMenubar?.offsetHeight || 116) + 16;
+            document.documentElement.style.setProperty('--viz-top-offset', `${topOffset}px`);
+        }
+
+        function updatePresentationModeUI() {
+            const mapMode = presentationMode === 'MAP';
+            tacticalPanel.classList.toggle('hidden', !mapMode);
+            renderer.domElement.style.opacity = mapMode ? '0.16' : '1.0';
+            renderer.domElement.style.pointerEvents = mapMode ? 'none' : 'auto';
+            controls.enabled = !mapMode;
+            controls.enablePan = (!mapMode && viewMode !== 'CHASE');
+            document.getElementById('btn-view').innerText = `VIEW: ${presentationMode}`;
+            document.getElementById('btn-cam').innerText = `3D: ${viewMode}`;
+        }
+
+        window.togglePresentationMode = function () {
+            presentationMode = presentationMode === 'MAP' ? '3D' : 'MAP';
+            chaseTargetPrev = null;
+            updatePresentationModeUI();
+            if (presentationMode === 'MAP' && lastTacticalState) drawTacticalView(lastTacticalState);
+        };
+
+        function resizeTacticalCanvas() {
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            tacticalCanvas.style.width = `${width}px`;
+            tacticalCanvas.style.height = `${height}px`;
+            tacticalCanvas.width = Math.round(width * dpr);
+            tacticalCanvas.height = Math.round(height * dpr);
+            tacticalCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            if (lastTacticalState) drawTacticalView(lastTacticalState);
+        }
+        updateLayoutOffsets();
+        resizeTacticalCanvas();
+
+        tacticalCanvas.addEventListener('wheel', (event) => {
+            if (presentationMode !== 'MAP') return;
+            event.preventDefault();
+            const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
+            tacticalInteraction.zoom = Math.max(0.35, Math.min(12.0, tacticalInteraction.zoom * factor));
+            if (lastTacticalState) drawTacticalView(lastTacticalState);
+        }, { passive: false });
+
+        tacticalCanvas.addEventListener('pointerdown', (event) => {
+            if (presentationMode !== 'MAP') return;
+            tacticalInteraction.dragging = true;
+            tacticalInteraction.pointerId = event.pointerId;
+            tacticalInteraction.dragStartX = event.clientX;
+            tacticalInteraction.dragStartY = event.clientY;
+            tacticalInteraction.panStartX = tacticalInteraction.panX;
+            tacticalInteraction.panStartY = tacticalInteraction.panY;
+            tacticalCanvas.setPointerCapture(event.pointerId);
+        });
+
+        tacticalCanvas.addEventListener('pointermove', (event) => {
+            if (presentationMode !== 'MAP') return;
+            if (!tacticalInteraction.dragging || tacticalInteraction.pointerId !== event.pointerId) return;
+            tacticalInteraction.panX = tacticalInteraction.panStartX + (event.clientX - tacticalInteraction.dragStartX);
+            tacticalInteraction.panY = tacticalInteraction.panStartY + (event.clientY - tacticalInteraction.dragStartY);
+            if (lastTacticalState) drawTacticalView(lastTacticalState);
+        });
+
+        function endTacticalDrag(event) {
+            if (tacticalInteraction.pointerId !== null && event && tacticalInteraction.pointerId === event.pointerId) {
+                try {
+                    tacticalCanvas.releasePointerCapture(event.pointerId);
+                } catch (err) {
+                    // Ignore pointer release races when capture was already cleared.
+                }
+            }
+            tacticalInteraction.dragging = false;
+            tacticalInteraction.pointerId = null;
+        }
+        tacticalCanvas.addEventListener('pointerup', endTacticalDrag);
+        tacticalCanvas.addEventListener('pointercancel', endTacticalDrag);
+        tacticalCanvas.addEventListener('pointerleave', (event) => {
+            if (tacticalInteraction.dragging && tacticalInteraction.pointerId === event.pointerId) {
+                endTacticalDrag(event);
+            }
+        });
 
         // --- Environment ---
         const GRID_MIN_SIZE = 150000;
@@ -313,6 +615,8 @@
         // --- Human-only NAV markers (mission / cruise points) ---
         const navGroup = new THREE.Group();
         scene.add(navGroup);
+        const mapGroup = new THREE.Group();
+        scene.add(mapGroup);
         function clearNavGroup() {
             // Dispose geometries/materials to avoid leaks during episode resets.
             while (navGroup.children.length > 0) {
@@ -321,6 +625,78 @@
                 if (obj.geometry) obj.geometry.dispose();
                 if (obj.material) obj.material.dispose();
             }
+        }
+
+        function clearMapGroup() {
+            while (mapGroup.children.length > 0) {
+                const obj = mapGroup.children[0];
+                mapGroup.remove(obj);
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) obj.material.dispose();
+                if (Array.isArray(obj.children)) {
+                    obj.children.forEach((child) => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                }
+            }
+        }
+
+        function clearUnitVisuals() {
+            units.forEach((uObj) => {
+                if (uObj.mesh) {
+                    scene.remove(uObj.mesh);
+                }
+                if (uObj.trail) {
+                    scene.remove(uObj.trail);
+                    if (uObj.trail.geometry) uObj.trail.geometry.dispose();
+                    if (uObj.trail.material) uObj.trail.material.dispose();
+                }
+            });
+            units = new Map();
+            focusedId = null;
+            chaseTargetPrev = null;
+            renderUnitList();
+        }
+
+        function removeUnitVisual(id) {
+            const uObj = units.get(id);
+            if (!uObj) return;
+            if (uObj.mesh) {
+                scene.remove(uObj.mesh);
+                disposeObjectTree(uObj.mesh);
+            }
+            if (uObj.trail) {
+                scene.remove(uObj.trail);
+                if (uObj.trail.geometry) uObj.trail.geometry.dispose();
+                if (uObj.trail.material) uObj.trail.material.dispose();
+            }
+            units.delete(id);
+            if (focusedId === id) {
+                focusedId = null;
+                chaseTargetPrev = null;
+            }
+        }
+
+        function resetVizScene() {
+            clearUnitVisuals();
+            clearNavGroup();
+            clearMapGroup();
+            lastTacticalState = null;
+            tacticalViewport = null;
+            simTime = 0;
+            document.getElementById('v-time').innerText = '0.00 s';
+            document.getElementById('v-name').innerText = '--';
+            document.getElementById('v-alt').innerText = '0.0 m';
+            document.getElementById('v-spd').innerText = '0.0 / 0.0 m/s';
+            document.getElementById('v-hdg').innerText = '000';
+            document.getElementById('v-pitch').innerText = '0.0';
+            document.getElementById('v-roll').innerText = '0.0';
+            renderMissionStatus(null);
+            tacticalCtx.clearRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
+            tacticalCtx.fillStyle = '#081018';
+            tacticalCtx.fillRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
+            document.getElementById('tactical-scale').innerText = 'SCALE --';
         }
 
         function makeHorizontalRing(radius, color, y = 0.0) {
@@ -339,41 +715,564 @@
 
         // --- Asset Loading ---
         const loader = new GLTFLoader();
-        let f16Model = null;
-        // --- Load Assets ---
-        loader.load('/static/assets/f16.glb', (gltf) => {
-            f16Model = gltf.scene;
-            f16Model.scale.set(1, 1, 1);
+        const assetModelCache = new Map();
 
-            // Standardize model forward to match the shared heading mapping below.
-            // This asset was verified in deterministic viz against heading≈90 deg / eastbound motion:
-            // -90 deg is the correct static correction for this mesh under the current ENU -> Three mapping.
-            // Using +90 deg makes the nose point west while the aircraft is actually flying east.
-            f16Model.rotation.y = -Math.PI / 2;
+        function normalizeRegistryEntry(entry) {
+            const visual = entry?.visual || {};
+            const chase = Array.isArray(visual.chase_offset) ? visual.chase_offset : [0, 30, 80];
+            return {
+                id: String(entry?.id || '').trim(),
+                label: String(entry?.label || '').trim(),
+                match: {
+                    unit_type: String(entry?.match?.unit_type || '').trim(),
+                    platform_type_patterns: Array.isArray(entry?.match?.platform_type_patterns) ? entry.match.platform_type_patterns : [],
+                    name_patterns: Array.isArray(entry?.match?.name_patterns) ? entry.match.name_patterns : [],
+                    service_profiles: Array.isArray(entry?.match?.service_profiles) ? entry.match.service_profiles : [],
+                },
+                visual: {
+                    asset_path: String(visual.asset_path || '').trim(),
+                    scale: Number(visual.scale || 1.0),
+                    yaw_correction_deg: Number(visual.yaw_correction_deg || 0.0),
+                    waterline_offset_m: Number(visual.waterline_offset_m || 0.0),
+                    chase_offset: [
+                        Number(chase[0] || 0.0),
+                        Number(chase[1] || 30.0),
+                        Number(chase[2] || 80.0),
+                    ],
+                    fallback_hull_length_m: Number(visual.fallback_hull_length_m || 160.0),
+                    fallback_hull_beam_m: Number(visual.fallback_hull_beam_m || 24.0),
+                    fallback_hull_height_m: Number(visual.fallback_hull_height_m || 12.0),
+                    fallback_super_length_m: Number(visual.fallback_super_length_m || 56.0),
+                    fallback_super_beam_m: Number(visual.fallback_super_beam_m || 16.0),
+                    fallback_super_height_m: Number(visual.fallback_super_height_m || 18.0),
+                    fallback_super_offset_x_m: Number(visual.fallback_super_offset_x_m || -8.0),
+                    fallback_super_offset_y_m: Number(visual.fallback_super_offset_y_m || 18.0),
+                },
+                realism: {
+                    substitute_for: String(entry?.realism?.substitute_for || '').trim(),
+                    realism_note: String(entry?.realism?.realism_note || '').trim(),
+                },
+                show_in_2d_as: String(entry?.show_in_2d_as || '').trim(),
+                show_sensor_ring: entry?.show_sensor_ring !== false,
+                render_priority: Number(entry?.render_priority || 100),
+            };
+        }
 
-            // Wrap in a group so we rotate the group, not the mesh inside (Cleaner)
-            const wrapper = new THREE.Group();
-            wrapper.add(f16Model);
-            f16Model = wrapper;
+        function applyAssetRegistry(registry) {
+            const entries = Array.isArray(registry?.entries) ? registry.entries.map(normalizeRegistryEntry) : [];
+            currentAssetRegistry = {
+                name: String(registry?.name || 'default').trim() || 'default',
+                description: String(registry?.description || '').trim(),
+                path: String(registry?.path || '').trim(),
+                entries,
+            };
+            assetModelCache.clear();
+            units.forEach((uObj) => {
+                uObj.assetEntry = resolveAssetEntry(uObj.data);
+                uObj.usingRegistryAsset = false;
+                maybeUpgradeUnitVisual(uObj);
+            });
+            renderUnitList();
+            if (lastTacticalState) drawTacticalView(lastTacticalState);
+        }
 
-            console.log("F-16 Asset Loaded and Standardized.");
-        });
+        function matchesPattern(pattern, text) {
+            const p = String(pattern || '').trim().toUpperCase();
+            const t = String(text || '').trim().toUpperCase();
+            return !!p && !!t && t.includes(p);
+        }
+
+        function scoreAssetEntry(entry, uData) {
+            const match = entry?.match || {};
+            const unitType = String(uData?.type || '').trim();
+            const platformType = String(uData?.platform_type || '').trim();
+            const name = String(uData?.name || '').trim();
+            const side = String(uData?.side || '').trim();
+            const serviceProfile = String(uData?.service_profile || '').trim();
+
+            if (match.unit_type && String(match.unit_type).trim() !== unitType) {
+                return null;
+            }
+
+            let score = Number(entry?.render_priority || 1000);
+            let matchedAnything = false;
+
+            const platformPatterns = Array.isArray(match.platform_type_patterns) ? match.platform_type_patterns : [];
+            const namePatterns = Array.isArray(match.name_patterns) ? match.name_patterns : [];
+            const serviceProfiles = Array.isArray(match.service_profiles) ? match.service_profiles : [];
+
+            if (platformPatterns.length > 0) {
+                const hit = platformPatterns.some((pattern) => matchesPattern(pattern, platformType));
+                if (!hit) return null;
+                matchedAnything = true;
+                score -= 100;
+            }
+
+            if (namePatterns.length > 0) {
+                const hit = namePatterns.some((pattern) => matchesPattern(pattern, name));
+                if (!hit) return null;
+                matchedAnything = true;
+                score -= 25;
+            }
+
+            if (serviceProfiles.length > 0) {
+                if (serviceProfile) {
+                    const hit = serviceProfiles.some((pattern) => matchesPattern(pattern, serviceProfile));
+                    if (!hit) return null;
+                    matchedAnything = true;
+                    score -= 10;
+                }
+            }
+
+            if (!matchedAnything && match.unit_type) {
+                score += 500;
+            }
+            return score;
+        }
+
+        function resolveAssetEntry(uData) {
+            const candidates = Array.isArray(currentAssetRegistry?.entries) ? currentAssetRegistry.entries : [];
+            let best = null;
+            let bestScore = Infinity;
+            candidates.forEach((entry) => {
+                const score = scoreAssetEntry(entry, uData);
+                if (score === null) return;
+                if (score < bestScore) {
+                    best = entry;
+                    bestScore = score;
+                }
+            });
+            return best;
+        }
+
+        function getAssetChaseOffset(entry, fallbackType) {
+            const chase = entry?.visual?.chase_offset;
+            if (Array.isArray(chase) && chase.length === 3) {
+                return new THREE.Vector3(Number(chase[0] || 0), Number(chase[1] || 30), Number(chase[2] || 80));
+            }
+            return fallbackType === 'Ship' ? new THREE.Vector3(0, 75, 240) : new THREE.Vector3(0, 30, 80);
+        }
+
+        function ensureRegistryAssetLoaded(entry) {
+            const assetPath = String(entry?.visual?.asset_path || '').trim();
+            if (!assetPath) return;
+            if (assetModelCache.has(assetPath)) return;
+            assetModelCache.set(assetPath, { status: 'loading', model: null });
+            loader.load(assetPath, (gltf) => {
+                let root = gltf.scene;
+                if (assetPath.endsWith('usns_patuxent_tao_201.glb')) {
+                    const sourceHull = root.getObjectByName('OceanSupplyShip') || root;
+                    const visibleHull = sourceHull.clone(true);
+                    const wrapper = new THREE.Group();
+                    wrapper.add(visibleHull);
+                    const scale = Number(entry?.visual?.scale || 1.0);
+                    wrapper.scale.set(scale, scale, scale);
+                    const bbox = new THREE.Box3().setFromObject(wrapper);
+                    wrapper.position.y -= bbox.min.y;
+                    root = wrapper;
+                }
+                const yawDeg = Number(entry?.visual?.yaw_correction_deg || 0.0);
+                root.rotation.y = yawDeg * (Math.PI / 180.0);
+                const wrapper = new THREE.Group();
+                wrapper.add(root);
+                assetModelCache.set(assetPath, { status: 'ready', model: wrapper });
+                console.log(`Asset Loaded: ${assetPath}`);
+            }, undefined, (error) => {
+                console.warn(`Asset Load Failed: ${assetPath}`, error);
+                assetModelCache.set(assetPath, { status: 'error', model: null });
+            });
+        }
+
+        function getRegistryModelClone(entry) {
+            if (!entry) return null;
+            ensureRegistryAssetLoaded(entry);
+            const assetPath = String(entry?.visual?.asset_path || '').trim();
+            const cached = assetModelCache.get(assetPath);
+            if (!cached || cached.status !== 'ready' || !cached.model) return null;
+            return cached.model.clone(true);
+        }
+
+        function disposeObjectTree(root) {
+            if (!root) return;
+            root.traverse?.((node) => {
+                if (node.geometry) node.geometry.dispose();
+                if (node.material) {
+                    if (Array.isArray(node.material)) node.material.forEach((mat) => mat?.dispose?.());
+                    else node.material.dispose?.();
+                }
+            });
+        }
+
+        function buildFallbackVisual(uData, assetEntry) {
+            const group = new THREE.Group();
+            if (uData.type === 'Ship') {
+                const hullLength = Number(assetEntry?.visual?.fallback_hull_length_m || 160);
+                const hullBeam = Number(assetEntry?.visual?.fallback_hull_beam_m || 24);
+                const hullHeight = Number(assetEntry?.visual?.fallback_hull_height_m || 12);
+                const hullGeo = new THREE.BoxGeometry(hullLength, hullHeight, hullBeam);
+                hullGeo.translate(0, hullHeight * 0.5, 0);
+                const hullMat = new THREE.MeshLambertMaterial({
+                    color: uData.side === 'Red' ? 0x8b3a3a : 0x6f7f8f,
+                });
+                group.add(new THREE.Mesh(hullGeo, hullMat));
+
+                const superGeo = new THREE.BoxGeometry(
+                    Number(assetEntry?.visual?.fallback_super_length_m || 56),
+                    Number(assetEntry?.visual?.fallback_super_height_m || 18),
+                    Number(assetEntry?.visual?.fallback_super_beam_m || 16)
+                );
+                superGeo.translate(
+                    Number(assetEntry?.visual?.fallback_super_offset_x_m || -8),
+                    Number(assetEntry?.visual?.fallback_super_offset_y_m || 18),
+                    0
+                );
+                const superMat = new THREE.MeshLambertMaterial({
+                    color: uData.side === 'Red' ? 0xb85c5c : 0x9ca8b5,
+                });
+                group.add(new THREE.Mesh(superGeo, superMat));
+            } else if (uData.type === 'Aircraft') {
+                const geo = new THREE.ConeGeometry(5, 18, 10);
+                geo.rotateZ(Math.PI / 2);
+                const mat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xff6666 : 0x7fc8ff });
+                group.add(new THREE.Mesh(geo, mat));
+            } else {
+                const geo = new THREE.BoxGeometry(30, 60, 30);
+                geo.translate(0, 30, 0);
+                const mat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xff0000 : 0xffaa00 });
+                group.add(new THREE.Mesh(geo, mat));
+            }
+            return group;
+        }
+
+        function buildVisualGroupForUnit(uData, assetEntry) {
+            const registryModel = getRegistryModelClone(assetEntry);
+            if (registryModel) {
+                registryModel.position.y = Number(assetEntry?.visual?.waterline_offset_m || 0.0);
+                if (!String(assetEntry?.visual?.asset_path || '').includes('usns_patuxent_tao_201.glb')) {
+                    const configuredScale = Number(assetEntry?.visual?.scale || 1.0);
+                    registryModel.scale.set(configuredScale, configuredScale, configuredScale);
+                }
+
+                const exFlame = registryModel.getObjectByName("ExternalFlame");
+                const inFlame = registryModel.getObjectByName("InternalFlame");
+                if (exFlame) exFlame.visible = false;
+                if (inFlame) inFlame.visible = false;
+                return { group: registryModel, usingRegistryAsset: true };
+            }
+            return { group: buildFallbackVisual(uData, assetEntry), usingRegistryAsset: false };
+        }
+
+        function maybeUpgradeUnitVisual(uObj) {
+            if (!uObj || uObj.usingRegistryAsset) return;
+            const assetEntry = uObj.assetEntry;
+            const assetPath = String(assetEntry?.visual?.asset_path || '').trim();
+            if (!assetPath) return;
+            const upgraded = buildVisualGroupForUnit(uObj.data, assetEntry);
+            if (!upgraded.usingRegistryAsset || !upgraded.group) return;
+
+            const prevChildren = [...uObj.mesh.children];
+            prevChildren.forEach((child) => uObj.mesh.remove(child));
+            prevChildren.forEach((child) => disposeObjectTree(child));
+            uObj.mesh.add(upgraded.group);
+            uObj.usingRegistryAsset = true;
+            renderUnitList();
+        }
 
         // --- Socket ---
         const socket = io({ transports: ['websocket'] });
 
+        function syncRunControl() {
+            const btnStart = document.getElementById('btn-start');
+            if (!sessionControlState.loaded) {
+                btnStart.disabled = true;
+                btnStart.innerText = 'START';
+                return;
+            }
+            if (!sessionControlState.ready) {
+                btnStart.disabled = true;
+                btnStart.innerText = 'LOADING';
+                return;
+            }
+            btnStart.disabled = false;
+            if (sessionControlState.paused) {
+                btnStart.innerText = 'RESUME';
+                return;
+            }
+            btnStart.innerText = sessionControlState.running ? 'PAUSE' : 'START';
+        }
+
         window.startSim = function () {
             socket.emit('start_sim');
-            document.getElementById('btn-start').disabled = true;
-            document.getElementById('btn-start').innerText = "RUNNING";
+            sessionControlState.running = true;
+            sessionControlState.paused = false;
+            syncRunControl();
         };
+
+        window.pauseSim = function () {
+            socket.emit('pause_sim');
+            sessionControlState.running = true;
+            sessionControlState.paused = true;
+            syncRunControl();
+        };
+
+        window.resumeSim = function () {
+            socket.emit('resume_sim');
+            sessionControlState.running = true;
+            sessionControlState.paused = false;
+            syncRunControl();
+        };
+
+        window.runSessionAction = function () {
+            if (!sessionControlState.loaded || !sessionControlState.ready) return;
+            if (sessionControlState.paused) {
+                resumeSim();
+                return;
+            }
+            if (sessionControlState.running) {
+                pauseSim();
+                return;
+            }
+            startSim();
+        };
+
+        function renderProfileOptions(profiles) {
+            const select = document.getElementById('profile-select');
+            select.innerHTML = '';
+            const items = Array.isArray(profiles) ? profiles : [];
+            vizProfileList = items.slice();
+            if (items.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.innerText = '-- NO PROFILES --';
+                select.appendChild(option);
+                return;
+            }
+            items.forEach((profile) => {
+                const path = String(profile?.path || '').trim();
+                const name = String(profile?.name || path || '--');
+                const option = document.createElement('option');
+                option.value = path;
+                option.innerText = name;
+                option.title = String(profile?.description || path || '');
+                select.appendChild(option);
+            });
+            const knownPaths = items.map((item) => String(item?.path || '').trim()).filter(Boolean);
+            const desired = currentProfile && knownPaths.includes(currentProfile) ? currentProfile : (knownPaths[0] || '');
+            select.value = desired;
+        }
+
+        function renderScenarioOptions(scenarios) {
+            const select = document.getElementById('scenario-select');
+            select.innerHTML = '';
+            const items = Array.isArray(scenarios) ? scenarios : [];
+            vizScenarioList = items.slice();
+            if (items.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.innerText = '-- NO SCENARIOS --';
+                select.appendChild(option);
+                return;
+            }
+            items.forEach((scenario) => {
+                const option = document.createElement('option');
+                option.value = scenario;
+                option.innerText = scenario;
+                select.appendChild(option);
+            });
+            const desired = currentScenario && items.includes(currentScenario) ? currentScenario : items[0];
+            select.value = desired;
+        }
+
+        function renderAssetRegistryOptions(registries) {
+            const select = document.getElementById('asset-registry-select');
+            select.innerHTML = '';
+            const items = Array.isArray(registries) ? registries : [];
+            vizAssetRegistryList = items.slice();
+            if (items.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.innerText = '-- NO ASSET SETS --';
+                select.appendChild(option);
+                return;
+            }
+            items.forEach((registry) => {
+                const path = String(registry?.path || '').trim();
+                const name = String(registry?.name || path || '--');
+                const option = document.createElement('option');
+                option.value = path;
+                option.innerText = name;
+                option.title = String(registry?.description || path || '');
+                select.appendChild(option);
+            });
+            const currentPath = String(currentAssetRegistry?.path || '').trim();
+            const knownPaths = items.map((item) => String(item?.path || '').trim()).filter(Boolean);
+            const desired = currentPath && knownPaths.includes(currentPath) ? currentPath : (knownPaths[0] || '');
+            select.value = desired;
+        }
+
+        function updateSessionButtonState(appStatus) {
+            const btnStart = document.getElementById('btn-start');
+            const btnReload = document.getElementById('btn-reload');
+            const btnStop = document.getElementById('btn-stop');
+            const btnLoad = document.getElementById('btn-load');
+            const btnLoadProfile = document.getElementById('btn-load-profile');
+            const btnLoadAssetRegistry = document.getElementById('btn-load-asset-registry');
+            const label = document.getElementById('viz-session-label');
+
+            const session = appStatus?.session || null;
+            const loaded = !!appStatus?.loaded && !!session;
+            sessionReady = !!session?.ready;
+            sessionControlState = {
+                loaded,
+                ready: !!session?.ready,
+                running: !!session?.running,
+                paused: !!session?.paused,
+            };
+            currentScenario = loaded ? String(session.scenario || '') : '';
+            if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'profile')) {
+                currentProfile = String(appStatus?.profile?.path || '').trim();
+                currentProfileUiDefaults = appStatus?.profile?.ui_defaults || null;
+            }
+            if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'asset_registry')) {
+                applyAssetRegistry(appStatus.asset_registry);
+            }
+
+            if (Array.isArray(appStatus?.profiles)) {
+                renderProfileOptions(appStatus.profiles);
+            }
+            if (Array.isArray(appStatus?.asset_registries)) {
+                renderAssetRegistryOptions(appStatus.asset_registries);
+            }
+
+            if (Array.isArray(appStatus?.scenarios)) {
+                renderScenarioOptions(appStatus.scenarios);
+            }
+            if (currentProfile) {
+                document.getElementById('profile-select').value = currentProfile;
+            }
+            if (currentAssetRegistry?.path) {
+                document.getElementById('asset-registry-select').value = currentAssetRegistry.path;
+            }
+            if (currentScenario && vizScenarioList.includes(currentScenario)) {
+                document.getElementById('scenario-select').value = currentScenario;
+            }
+
+            if (!loaded) {
+                resetVizScene();
+                label.innerText = currentProfile ? `UNLOADED | PROFILE ${currentProfile}` : 'UNLOADED';
+                btnReload.disabled = true;
+                btnStop.disabled = true;
+                btnLoad.disabled = vizScenarioList.length === 0;
+                btnLoadProfile.disabled = vizProfileList.length === 0;
+                btnLoadAssetRegistry.disabled = vizAssetRegistryList.length === 0;
+                syncRunControl();
+                updateLayoutOffsets();
+                return;
+            }
+
+            const state = session.paused ? 'PAUSED' : session.running ? 'RUNNING' : session.ready ? 'READY' : 'LOADING';
+            const profileSuffix = currentProfile ? ` | PROFILE ${currentProfile}` : '';
+            label.innerText = `${state} | ${currentScenario || '--'}${profileSuffix}`;
+            btnLoad.disabled = false;
+            btnReload.disabled = false;
+            btnStop.disabled = false;
+            btnLoadProfile.disabled = vizProfileList.length === 0;
+            btnLoadAssetRegistry.disabled = vizAssetRegistryList.length === 0;
+            syncRunControl();
+            updateLayoutOffsets();
+        }
+
+        window.loadSelectedProfile = function () {
+            const profile = String(document.getElementById('profile-select').value || '').trim();
+            if (!profile) return;
+            socket.emit('viz_load_profile', { profile });
+        };
+
+        window.loadSelectedScenario = function () {
+            const scenario = String(document.getElementById('scenario-select').value || '').trim();
+            if (!scenario) return;
+            socket.emit('viz_load_session', { scenario });
+        };
+
+        window.loadSelectedAssetRegistry = function () {
+            const assetRegistry = String(document.getElementById('asset-registry-select').value || '').trim();
+            if (!assetRegistry) return;
+            socket.emit('viz_load_asset_registry', { asset_registry: assetRegistry });
+        };
+
+        window.reloadCurrentScenario = function () {
+            if (currentProfile) {
+                socket.emit('viz_reload_session', { profile: currentProfile });
+                return;
+            }
+            const scenario = currentScenario || String(document.getElementById('scenario-select').value || '').trim();
+            if (!scenario) return;
+            socket.emit('viz_reload_session', { scenario });
+        };
+
+        window.stopCurrentSession = function () {
+            socket.emit('viz_stop_session');
+        };
+
+        function applyProfileUiDefaults() {
+            const ui = currentProfileUiDefaults || {};
+            const nextPresentationMode = String(ui.presentation_mode || '').toUpperCase();
+            const nextCameraMode = String(ui.camera_mode || '').toUpperCase();
+            const nextZoom = Number(ui.tactical_zoom);
+
+            if (nextPresentationMode === 'MAP' || nextPresentationMode === '3D') {
+                presentationMode = nextPresentationMode;
+            }
+            if (nextCameraMode === 'CHASE' || nextCameraMode === 'FREE') {
+                viewMode = nextCameraMode;
+            }
+            if (Number.isFinite(nextZoom) && nextZoom > 0.0) {
+                tacticalInteraction.zoom = Math.max(0.35, Math.min(12.0, nextZoom));
+                tacticalInteraction.panX = 0.0;
+                tacticalInteraction.panY = 0.0;
+            }
+            updatePresentationModeUI();
+            if (lastTacticalState) drawTacticalView(lastTacticalState);
+        }
+
+        function unitSymbolSpec(u) {
+            const entry = resolveAssetEntry(u);
+            const style = String(entry?.show_in_2d_as || '').trim().toLowerCase();
+            if (style === 'ship') {
+                return { kind: 'ship', len: 18, wing: 7 };
+            }
+            if (style === 'aircraft') {
+                return { kind: 'aircraft', len: 16, wing: 6 };
+            }
+            if (style === 'generic') {
+                return { kind: 'generic', len: 12, wing: 5 };
+            }
+            if (u.type === 'Aircraft') {
+                return { kind: 'aircraft', len: 16, wing: 6 };
+            }
+            if (u.type === 'Ship') {
+                return { kind: 'ship', len: 18, wing: 7 };
+            }
+            return { kind: 'generic', len: 12, wing: 5 };
+        }
+
+        function shouldShowSensorRingForUnit(ring) {
+            const pseudoUnit = {
+                name: ring?.name || '',
+                platform_type: ring?.platform_type || '',
+                type: 'Ship',
+                side: ring?.side || '',
+                service_profile: ring?.service_profile || '',
+            };
+            const entry = resolveAssetEntry(pseudoUnit);
+            if (!entry) return true;
+            return entry.show_sensor_ring !== false;
+        }
 
         window.toggleCamera = function () {
             viewMode = viewMode === 'CHASE' ? 'FREE' : 'CHASE';
-            controls.enabled = true;
-            controls.enablePan = (viewMode === 'FREE');
             chaseTargetPrev = null;
-            document.getElementById('btn-cam').innerText = "CAM: " + viewMode;
+            updatePresentationModeUI();
         };
 
         window.setFocus = function (id) {
@@ -388,6 +1287,256 @@
             document.getElementById('btn-speed').innerText = `SPD: ${value}x`;
         }
 
+        function drawTacticalView(state) {
+            if (presentationMode !== 'MAP' || !tacticalCtx || !state) return;
+            const unitsList = Array.isArray(state.units) ? state.units : [];
+            const tactical = state.tactical || {};
+            const rings = Array.isArray(tactical.sensor_rings) ? tactical.sensor_rings : [];
+            const tracks = Array.isArray(tactical.tracks) ? tactical.tracks : [];
+            const links = Array.isArray(tactical.datalinks) ? tactical.datalinks : [];
+
+            const width = tacticalCanvas.clientWidth || window.innerWidth;
+            const height = tacticalCanvas.clientHeight || window.innerHeight;
+            tacticalCtx.clearRect(0, 0, width, height);
+            tacticalCtx.fillStyle = '#081018';
+            tacticalCtx.fillRect(0, 0, width, height);
+
+            if (unitsList.length === 0) {
+                tacticalCtx.fillStyle = '#6f8794';
+                tacticalCtx.font = '12px monospace';
+                tacticalCtx.fillText('NO UNITS', 24, 40);
+                return;
+            }
+
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const u of unitsList) {
+                minX = Math.min(minX, Number(u.x || 0));
+                maxX = Math.max(maxX, Number(u.x || 0));
+                minY = Math.min(minY, Number(u.y || 0));
+                maxY = Math.max(maxY, Number(u.y || 0));
+            }
+            for (const r of rings) {
+                const range = Number(r.range_m || 0);
+                minX = Math.min(minX, Number(r.x || 0) - range);
+                maxX = Math.max(maxX, Number(r.x || 0) + range);
+                minY = Math.min(minY, Number(r.y || 0) - range);
+                maxY = Math.max(maxY, Number(r.y || 0) + range);
+            }
+
+            const viewportPadding = {
+                left: Math.min(420, Math.max(220, width * 0.26)),
+                right: Math.min(260, Math.max(180, width * 0.18)),
+                top: 72,
+                bottom: 110,
+            };
+            const plotWidth = Math.max(320, width - viewportPadding.left - viewportPadding.right);
+            const plotHeight = Math.max(240, height - viewportPadding.top - viewportPadding.bottom);
+            const plotLeft = viewportPadding.left;
+            const plotTop = viewportPadding.top;
+            const spanX = Math.max(1000, maxX - minX);
+            const spanY = Math.max(1000, maxY - minY);
+            const span = Math.max(spanX, spanY) * 1.12;
+            const cx = (minX + maxX) * 0.5;
+            const cy = (minY + maxY) * 0.5;
+            const baseScale = Math.min(plotWidth / span, plotHeight / span);
+            const scale = baseScale * tacticalInteraction.zoom;
+            const screenCenterX = plotLeft + plotWidth * 0.5 + tacticalInteraction.panX;
+            const screenCenterY = plotTop + plotHeight * 0.5 + tacticalInteraction.panY;
+            const toCanvas = (x, y) => ({
+                x: screenCenterX + (x - cx) * scale,
+                y: screenCenterY - (y - cy) * scale,
+            });
+            const toWorld = (sx, sy) => ({
+                x: cx + (sx - screenCenterX) / scale,
+                y: cy - (sy - screenCenterY) / scale,
+            });
+            const niceGridStepM = (targetMeters) => {
+                const bounded = Math.max(100.0, targetMeters);
+                const exp = 10 ** Math.floor(Math.log10(bounded));
+                for (const multiplier of [1, 2, 5, 10]) {
+                    const step = multiplier * exp;
+                    if (step >= bounded) return step;
+                }
+                return 10 * exp;
+            };
+
+            const plotRight = plotLeft + plotWidth;
+            const plotBottom = plotTop + plotHeight;
+            tacticalCtx.strokeStyle = '#1a3244';
+            tacticalCtx.lineWidth = 1;
+            tacticalCtx.strokeRect(plotLeft, plotTop, plotWidth, plotHeight);
+
+            tacticalCtx.save();
+            tacticalCtx.beginPath();
+            tacticalCtx.rect(plotLeft, plotTop, plotWidth, plotHeight);
+            tacticalCtx.clip();
+
+            const worldA = toWorld(plotLeft, plotBottom);
+            const worldB = toWorld(plotRight, plotTop);
+            const worldMinX = Math.min(worldA.x, worldB.x);
+            const worldMaxX = Math.max(worldA.x, worldB.x);
+            const worldMinY = Math.min(worldA.y, worldB.y);
+            const worldMaxY = Math.max(worldA.y, worldB.y);
+            const gridStepM = niceGridStepM(110.0 / scale);
+
+            tacticalCtx.strokeStyle = 'rgba(33, 76, 104, 0.78)';
+            tacticalCtx.lineWidth = 1;
+            for (
+                let gx = Math.floor(worldMinX / gridStepM) * gridStepM;
+                gx <= worldMaxX + gridStepM * 0.5;
+                gx += gridStepM
+            ) {
+                const p0 = toCanvas(gx, worldMinY);
+                const p1 = toCanvas(gx, worldMaxY);
+                tacticalCtx.beginPath();
+                tacticalCtx.moveTo(p0.x, p0.y);
+                tacticalCtx.lineTo(p1.x, p1.y);
+                tacticalCtx.stroke();
+            }
+            for (
+                let gy = Math.floor(worldMinY / gridStepM) * gridStepM;
+                gy <= worldMaxY + gridStepM * 0.5;
+                gy += gridStepM
+            ) {
+                const p0 = toCanvas(worldMinX, gy);
+                const p1 = toCanvas(worldMaxX, gy);
+                tacticalCtx.beginPath();
+                tacticalCtx.moveTo(p0.x, p0.y);
+                tacticalCtx.lineTo(p1.x, p1.y);
+                tacticalCtx.stroke();
+            }
+
+            for (const link of links) {
+                const a = toCanvas(Number(link.from_x || 0), Number(link.from_y || 0));
+                const b = toCanvas(Number(link.to_x || 0), Number(link.to_y || 0));
+                tacticalCtx.strokeStyle = 'rgba(80, 170, 255, 0.28)';
+                tacticalCtx.lineWidth = 1;
+                tacticalCtx.beginPath();
+                tacticalCtx.moveTo(a.x, a.y);
+                tacticalCtx.lineTo(b.x, b.y);
+                tacticalCtx.stroke();
+            }
+
+            for (const ring of rings) {
+                if (!shouldShowSensorRingForUnit(ring)) continue;
+                const p = toCanvas(Number(ring.x || 0), Number(ring.y || 0));
+                const rr = Math.max(2, Number(ring.range_m || 0) * scale);
+                tacticalCtx.strokeStyle = ring.side === 'Red' ? 'rgba(255, 120, 120, 0.24)' : 'rgba(90, 210, 255, 0.24)';
+                tacticalCtx.lineWidth = 1;
+                tacticalCtx.beginPath();
+                tacticalCtx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+                tacticalCtx.stroke();
+            }
+
+            for (const track of tracks) {
+                const a = toCanvas(Number(track.x0 || 0), Number(track.y0 || 0));
+                const b = toCanvas(Number(track.x1 || 0), Number(track.y1 || 0));
+                tacticalCtx.strokeStyle = Number(track.source) === 3 ? 'rgba(0, 255, 200, 0.75)' : 'rgba(255, 200, 0, 0.78)';
+                tacticalCtx.lineWidth = 1.4;
+                tacticalCtx.beginPath();
+                tacticalCtx.moveTo(a.x, a.y);
+                tacticalCtx.lineTo(b.x, b.y);
+                tacticalCtx.stroke();
+                tacticalCtx.fillStyle = Number(track.source) === 3 ? '#00ffd0' : '#ffd04d';
+                tacticalCtx.beginPath();
+                tacticalCtx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
+                tacticalCtx.fill();
+            }
+
+            for (const u of unitsList) {
+                const p = toCanvas(Number(u.x || 0), Number(u.y || 0));
+                const hdg = Number(u.heading || 0);
+                const rad = (90.0 - hdg) * Math.PI / 180.0;
+                const dirX = Math.cos(rad);
+                const dirY = -Math.sin(rad);
+                const symbol = unitSymbolSpec(u);
+                const len = symbol.len;
+                const wing = symbol.wing;
+                tacticalCtx.fillStyle = u.side === 'Red' ? '#ff6d6d' : '#73cfff';
+                tacticalCtx.beginPath();
+                if (symbol.kind === 'ship') {
+                    tacticalCtx.moveTo(p.x + dirX * len, p.y + dirY * len);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.75 + dirY * wing, p.y - dirY * len * 0.75 - dirX * wing);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.48, p.y - dirY * len * 0.48);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.75 - dirY * wing, p.y - dirY * len * 0.75 + dirX * wing);
+                } else if (symbol.kind === 'aircraft') {
+                    tacticalCtx.moveTo(p.x + dirX * len, p.y + dirY * len);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.65 + dirY * wing, p.y - dirY * len * 0.65 - dirX * wing);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.45, p.y - dirY * len * 0.45);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.65 - dirY * wing, p.y - dirY * len * 0.65 + dirX * wing);
+                } else {
+                    tacticalCtx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                }
+                tacticalCtx.closePath();
+                tacticalCtx.fill();
+            }
+            tacticalCtx.restore();
+
+            const placedLabels = [];
+            tacticalCtx.font = '11px monospace';
+            for (const [idx, u] of unitsList.entries()) {
+                const p = toCanvas(Number(u.x || 0), Number(u.y || 0));
+                const label = String(u.name || u.id);
+                const textWidth = tacticalCtx.measureText(label).width;
+                const textHeight = 11;
+                let anchorX = p.x + 10;
+                let anchorY = p.y - 10;
+                let attempts = 0;
+                while (attempts < 8) {
+                    const box = {
+                        left: anchorX - 3,
+                        top: anchorY - textHeight,
+                        right: anchorX + textWidth + 3,
+                        bottom: anchorY + 4,
+                    };
+                    const overlaps = placedLabels.some((other) => !(
+                        box.right < other.left
+                        || box.left > other.right
+                        || box.bottom < other.top
+                        || box.top > other.bottom
+                    ));
+                    if (!overlaps) {
+                        placedLabels.push(box);
+                        break;
+                    }
+                    const lane = attempts + 1;
+                    const dir = ((idx + lane) % 2 === 0) ? -1 : 1;
+                    anchorY = p.y + dir * (14 + lane * 12);
+                    anchorX = p.x + 10 + lane * 4;
+                    attempts += 1;
+                }
+
+                tacticalCtx.strokeStyle = 'rgba(185, 210, 224, 0.35)';
+                tacticalCtx.lineWidth = 1;
+                tacticalCtx.beginPath();
+                tacticalCtx.moveTo(p.x + 3, p.y - 3);
+                tacticalCtx.lineTo(anchorX - 4, anchorY - 4);
+                tacticalCtx.stroke();
+
+                tacticalCtx.fillStyle = 'rgba(5, 11, 17, 0.88)';
+                tacticalCtx.fillRect(anchorX - 4, anchorY - textHeight - 2, textWidth + 8, textHeight + 6);
+                tacticalCtx.strokeStyle = u.side === 'Red' ? 'rgba(255, 109, 109, 0.45)' : 'rgba(115, 207, 255, 0.45)';
+                tacticalCtx.strokeRect(anchorX - 4, anchorY - textHeight - 2, textWidth + 8, textHeight + 6);
+                tacticalCtx.fillStyle = '#d7e7ee';
+                tacticalCtx.fillText(label, anchorX, anchorY);
+            }
+
+            tacticalViewport = {
+                cx,
+                cy,
+                scale,
+                baseScale,
+                gridStepM,
+                plotLeft,
+                plotTop,
+                plotWidth,
+                plotHeight,
+            };
+            const kmPer100px = (100.0 / scale) / 1000.0;
+            const zoomPct = Math.round(tacticalInteraction.zoom * 100);
+            document.getElementById('tactical-scale').innerText = `100 px = ${kmPer100px.toFixed(1)} km | grid ${(gridStepM / 1000.0).toFixed(1)} km | zoom ${zoomPct}%`;
+        }
+
         window.adjustSpeed = function (dir) {
             const idx = Math.max(0, SPEED_STEPS.indexOf(simSpeed));
             const nextIdx = Math.max(0, Math.min(SPEED_STEPS.length - 1, idx + dir));
@@ -400,22 +1549,15 @@
             setSpeed(SPEED_STEPS[nextIdx]);
         };
 
-        window.togglePause = function () {
-            simPaused = !simPaused;
-            if (simPaused) {
-                socket.emit('pause_sim');
-                document.getElementById('btn-start').innerText = "PAUSED";
-            } else {
-                socket.emit('resume_sim');
-                document.getElementById('btn-start').innerText = "RUNNING";
-            }
-        };
-
         window.addEventListener('keydown', (e) => {
+            const tagName = String(e.target?.tagName || '').toUpperCase();
             const k = e.key.toLowerCase();
             if (keys.hasOwnProperty(k)) keys[k] = true;
             if (e.key === 'Shift') keys.Shift = true;
-            if (e.key === ' ') togglePause();
+            if (e.code === 'Space' && !e.repeat && !['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(tagName)) {
+                e.preventDefault();
+                runSessionAction();
+            }
         });
 
         window.addEventListener('keyup', (e) => {
@@ -432,28 +1574,9 @@
 
             // Spawn
             const group = new THREE.Group();
-
-            // Model
-            if (uData.type === 'Aircraft' && f16Model) {
-                const modelClone = f16Model.clone();
-                group.add(modelClone);
-
-                // Initialize existing flame nodes to invisible
-                const exFlame = modelClone.getObjectByName("ExternalFlame");
-                const inFlame = modelClone.getObjectByName("InternalFlame");
-                if (exFlame) exFlame.visible = false;
-                if (inFlame) inFlame.visible = false;
-            } else {
-                // Fallback geometry - Make it VISIBLE (e.g. Building/Tower)
-                // Box 30x60x30
-                const geo = new THREE.BoxGeometry(30, 60, 30);
-                // geo.rotateX(Math.PI / 2); // Box needs no rotation to stand up? 
-                // BoxGeometry creates centered at 0,0,0. Lift it up y/2.
-                geo.translate(0, 30, 0);
-
-                const mat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xff0000 : 0xffaa00 });
-                group.add(new THREE.Mesh(geo, mat));
-            }
+            const assetEntry = resolveAssetEntry(uData);
+            const visualBuild = buildVisualGroupForUnit(uData, assetEntry);
+            group.add(visualBuild.group);
 
             scene.add(group);
 
@@ -474,6 +1597,8 @@
                 trailIdx: 0,
                 trailPos: positions,
                 data: uData,
+                assetEntry: assetEntry,
+                usingRegistryAsset: !!visualBuild.usingRegistryAsset,
                 isNew: true,
                 targetPosition: new THREE.Vector3(),
                 targetQuaternion: new THREE.Quaternion(),
@@ -490,6 +1615,8 @@
 
         function updateUnit(uObj, uData) {
             uObj.data = uData;
+            uObj.assetEntry = resolveAssetEntry(uData);
+            maybeUpgradeUnitVisual(uObj);
 
             // Update Transform
             // Sim (ENU: X=East, Y=North, Z=Up) -> Three (Y-Up: X=East, Y=Up, Z=-North)
@@ -596,7 +1723,23 @@
             units.forEach(u => {
                 const div = document.createElement('div');
                 div.className = 'unit-item' + (u.id === focusedId ? ' active' : '');
-                div.innerText = `[${u.data.id}] ${u.data.name || 'Unit'}`;
+                const assetEntry = resolveAssetEntry(u.data);
+                const title = document.createElement('div');
+                title.innerText = `[${u.data.id}] ${u.data.name || 'Unit'}`;
+                div.appendChild(title);
+                if (assetEntry?.realism?.substitute_for || assetEntry?.realism?.realism_note) {
+                    const meta = document.createElement('div');
+                    meta.className = 'unit-meta';
+                    const noteParts = [];
+                    if (assetEntry.realism.substitute_for) {
+                        noteParts.push(`<em>SUBSTITUTE</em> for ${assetEntry.realism.substitute_for}`);
+                    }
+                    if (assetEntry.realism.realism_note) {
+                        noteParts.push(assetEntry.realism.realism_note);
+                    }
+                    meta.innerHTML = noteParts.join('<br>');
+                    div.appendChild(meta);
+                }
                 div.onclick = () => setFocus(u.id);
                 list.appendChild(div);
             });
@@ -677,6 +1820,7 @@
         socket.on('map_setup', (data) => {
             console.log("====== MAP SETUP DEBUG ======");
             console.log("Raw zone data received:", JSON.stringify(data.zones, null, 2));
+            clearMapGroup();
             if (data.zones) {
                 data.zones.forEach(zone => {
                     ensureGridContainsPoint(zone.x + zone.width * 0.5, -zone.y + zone.length * 0.5, 15000.0);
@@ -708,7 +1852,7 @@
 
                     console.log(`Zone '${zone.name}': sim(x=${zone.x}, y=${zone.y}, hdg=${zone.heading}) -> Three(pos=${mesh2.position.x},${mesh2.position.y},${mesh2.position.z}, rotY=${mesh2.rotation.y.toFixed(2)}rad)`);
 
-                    scene.add(mesh2);
+                    mapGroup.add(mesh2);
 
                     // Add Yellow Outline
                     const edges = new THREE.EdgesGeometry(geo2);
@@ -789,8 +1933,18 @@
                 }
             });
 
-            // Cleanup Despawned?
-            // For now keep them to avoid flickering if packet loss, or implement TTL.
+            lastTacticalState = state;
+            drawTacticalView(state);
+
+            Array.from(units.keys()).forEach((id) => {
+                if (!activeIds.has(id)) {
+                    removeUnitVisual(id);
+                }
+            });
+            if (focusedId === null && units.size > 0) {
+                focusedId = Array.from(units.keys())[0];
+            }
+            renderUnitList();
         });
 
         socket.on('speed_update', (data) => {
@@ -799,6 +1953,21 @@
             simSpeed = value;
             document.getElementById('btn-speed').innerText = `SPD: ${simSpeed}x`;
         });
+
+        socket.on('viz_app_status', (status) => {
+            updateSessionButtonState(status);
+            applyProfileUiDefaults();
+        });
+
+        socket.on('viz_session_status', (status) => {
+            updateSessionButtonState({
+                loaded: !!status?.scenario,
+                session: status,
+                scenarios: vizScenarioList,
+            });
+        });
+
+        updatePresentationModeUI();
 
         // --- Loop ---
         function animate() {
@@ -842,11 +2011,13 @@
                     controls.target.add(moveParams);
                 }
             } else if (viewMode === 'CHASE' && focusedId && units.has(focusedId)) {
-                const target = units.get(focusedId).mesh;
+                const focusedUnit = units.get(focusedId);
+                const target = focusedUnit.mesh;
                 const targetPos = target.position.clone();
                 if (chaseTargetPrev === null) {
                     chaseTargetPrev = targetPos.clone();
-                    const fallbackOffset = new THREE.Vector3(0, 30, 80).applyQuaternion(target.quaternion);
+                    const fallbackOffsetBase = getAssetChaseOffset(focusedUnit?.assetEntry, focusedUnit?.data?.type);
+                    const fallbackOffset = fallbackOffsetBase.clone().applyQuaternion(target.quaternion);
                     camera.position.copy(targetPos.clone().add(fallbackOffset));
                     controls.target.copy(targetPos);
                 } else {
@@ -866,6 +2037,8 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            updateLayoutOffsets();
+            resizeTacticalCanvas();
         });
     </script>
 </body>

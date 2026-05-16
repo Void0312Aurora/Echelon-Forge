@@ -50,8 +50,24 @@ Example:
 
 ```bash
 source tools/maintenance/cmo_env.sh
+cmo_env_validate
 cmo_env_summary
 cmo_python -m pytest -q tests/runtime/test_env_config.py
+```
+
+The current minimum smoke set used for repository validation is:
+
+```bash
+cmake -S . -B build-workshop -DCMAKE_BUILD_TYPE=Release
+cmake --build build-workshop --target ef_core ef_py -j4
+source tools/maintenance/cmo_env.sh
+cmo_env_validate
+cmo_python -m pytest -q \
+  tests/architecture/test_runtime_facade_layering.py \
+  tests/architecture/test_cmake_target_readiness.py \
+  tests/runtime/test_env_config.py \
+  tests/runtime/test_runtime_facade.py \
+  tests/world_batch/test_world_batch_runtime.py
 ```
 
 Configure and build the local extension:
@@ -61,11 +77,12 @@ cmake -S . -B build-workshop -DCMAKE_BUILD_TYPE=Release
 cmake --build build-workshop --target ef_core ef_py -j2
 ```
 
-When running Python-side tests or training, prefer the local build products:
+When running Python-side tests or training, prefer the unified repository helper:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
-  ./.venv/bin/python -m pytest -q \
+source tools/maintenance/cmo_env.sh
+cmo_env_validate
+cmo_python -m pytest -q \
   tests/architecture/test_runtime_facade_layering.py \
   tests/architecture/test_cmake_target_readiness.py \
   tests/runtime/test_runtime_facade.py \
@@ -73,8 +90,8 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
   tests/test_gpu_runtime_bindings.py
 ```
 
-If you use a different build directory, replace `build-workshop` consistently in
-both `PYTHONPATH` and `CMO_BUILD_DIR`.
+If you use a different build directory, export `CMO_BUILD_DIR=/path/to/build`
+before sourcing `tools/maintenance/cmo_env.sh`.
 
 ## Project Layout
 
@@ -137,13 +154,21 @@ Training-config entrypoints:
 Frozen configs are baseline/provenance references.
 Active configs are where current training work continues.
 
+Repository retention policy at a glance:
+
+- `scenarios/` is versioned and treated as maintained repo input.
+- `examples/config/` is versioned and keeps maintained plus frozen config entrypoints.
+- `experiments/`, `datasets/`, and `output/` are runtime or artifact workspaces and remain ignored by default.
+- Large run outputs should be preserved through reports, archived manifests, or retained diagnostics under documented artifact paths rather than by checking whole experiment directories into the main repo.
+
 ## Training
 
 Example training entry:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
-  ./.venv/bin/python train.py \
+source tools/maintenance/cmo_env.sh
+cmo_env_validate
+cmo_python train.py \
   --scenario scenarios/combined/takeoff_to_landing_c2_task_only_train_v1.json \
   --train_config examples/config/training/frozen/leader_task_only_retrain_smoke_v1.json \
   --run_name local_smoke \
@@ -153,8 +178,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 Example policy evaluation:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
-  ./.venv/bin/python tools/eval/eval_sb3.py \
+source tools/maintenance/cmo_env.sh
+cmo_env_validate
+cmo_python tools/eval/eval_sb3.py \
   --mode single \
   --scenario scenarios/combined/takeoff_to_landing_continuous_eval_v1.json \
   --train_config examples/config/training/frozen/execution/p5_continuous_retrain_v1.json \
@@ -167,16 +193,18 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 Contract runner example:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
-  ./.venv/bin/python tools/runners/run_scenario_contract.py \
+source tools/maintenance/cmo_env.sh
+cmo_env_validate
+cmo_python tools/runners/run_scenario_contract.py \
   --spec tests/contracts/chain/loader_command_chain_takeoff_to_landing.json
 ```
 
 Typical pytest groups:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
-  ./.venv/bin/python -m pytest -q \
+source tools/maintenance/cmo_env.sh
+cmo_env_validate
+cmo_python -m pytest -q \
   tests/runtime \
   tests/world_batch \
   tests/architecture

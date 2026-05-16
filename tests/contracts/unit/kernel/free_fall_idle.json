@@ -1,0 +1,15 @@
+{
+  "type": "unit_regression",
+  "check_kind": "kernel_flight_regression",
+  "controller_kind": "free_fall_idle",
+  "scenario": "scenarios/test/test_free_fall.json",
+  "seed": 0,
+  "max_steps": 20,
+  "throttle": 0.0,
+  "gear_handle": 0.0,
+  "checks": {
+    "mean_vertical_accel_range": [-10.8, -8.8],
+    "final_alt_max": 1000.0,
+    "final_vz_max": -5.0
+  }
+}

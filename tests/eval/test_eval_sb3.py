@@ -9,12 +9,36 @@ import unittest
 from pathlib import Path
 
 from python.testing.runtime import ensure_repo_imports
+from tools.eval.sb3_eval_base import load_sb3_policy
 
 
 ensure_repo_imports()
 
 
 class EvalSB3Tests(unittest.TestCase):
+    def test_load_sb3_policy_supports_historical_shared_and_hmoe_models(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        cases = [
+            (
+                repo_root / "experiments" / "coop_takeoff_to_cruise_landing_formal_20260514" / "final_model.zip",
+                "SquashedMultiInputPolicy",
+            ),
+            (
+                repo_root
+                / "experiments"
+                / "20260515_coop_takeoff_to_cruise_landing_hmoe_probe_fix_v1"
+                / "checkpoints"
+                / "model_130048_steps.zip",
+                "HierarchicalMoEExecutionPolicy",
+            ),
+        ]
+
+        for model_path, expected_policy_name in cases:
+            if not model_path.exists():
+                self.skipTest(f"historical checkpoint is not present: {model_path}")
+            model = load_sb3_policy(str(model_path), algo="auto", device="cpu")
+            self.assertEqual(type(model.policy).__name__, expected_policy_name)
+
     def test_tool_reports_slot_summary_for_cooperative_policy(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         model_path = repo_root / "experiments" / "coop_cruise_navv2_formation_role_v1_formal_20260512_gpu" / "final_model.zip"

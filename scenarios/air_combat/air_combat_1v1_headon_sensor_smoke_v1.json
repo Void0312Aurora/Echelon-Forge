@@ -1,0 +1,85 @@
+{
+  "scenario_name": "Air Combat 1v1 Head-On Sensor Smoke V1",
+  "description": "Bootstrap 1v1 air-combat fixture for WP1. This is a symmetric F-16C Block 50 head-on airborne setup used to validate hostile contact acquisition, scenario-level ammo override, maintained weapon-release bridging, and minimal execution-side kill-objective termination on the maintained execution path.",
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 800,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    }
+  },
+  "mission_command": {
+    "command_code": 0,
+    "target_heading": 0.0,
+    "target_altitude": 1200.0,
+    "target_speed": 180.0,
+    "assigned_target_name": "Red_Fighter",
+    "authorization_to_fire": true
+  },
+  "entities": [
+    {
+      "name": "Blue_Fighter",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 1200.0],
+      "vel": [0.0, 180.0, 0.0],
+      "heading": 0.0,
+      "is_agent": true,
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    },
+    {
+      "name": "Red_Fighter",
+      "type": "F-16C_Block50",
+      "side": "Red",
+      "pos": [0.0, 8000.0, 1200.0],
+      "vel": [0.0, -180.0, 0.0],
+      "heading": 180.0,
+      "scripted_agent": {
+        "name": "red_scripted_agent",
+        "target_name": "Blue_Fighter",
+        "cruise_speed_mps": 220.0,
+        "attack_speed_mps": 260.0,
+        "defensive_speed_mps": 290.0,
+        "threat_range_m": 9000.0,
+        "merge_range_m": 3500.0,
+        "fire_range_m": 9000.0,
+        "beam_offset_deg": 85.0
+      },
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    }
+  ],
+  "objectives": [
+    {
+      "type": "conditional",
+      "reward": 1500.0,
+      "conditions": [
+        {
+          "property": "target_active",
+          "op": "<=",
+          "value": 0.0
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": -1000.0
+  }
+}
