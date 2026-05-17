@@ -6,15 +6,15 @@
 
 ## 文档入口
 
-- [真实化主线收束计划](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.zh.md)
+- [真实化主线收束计划](realism_program_convergence_plan_20260517.zh.md)
   作用：先统一当前总阶段、主阻塞、维护态范围和收束顺序；它是当前最推荐的总入口。
-- [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
+- [真实化主线与关联子项目当前状态](realism_program_current_status_20260517.zh.md)
   作用：快速确认当前主线绿/红面、活跃方向和关联子项目入口。
-- [真实化任务总表（P0）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_taskboard_20260516.zh.md)
+- [真实化任务总表（P0）](realism_program_taskboard_20260516.zh.md)
   作用：保留三条主线最初收敛为 `P0` 的统一任务板；当前不应用它判断实时进度。
-- [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
+- [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.zh.md)
   作用：记录 `P0` 验收后的收尾项与 `P1` 深化真实化排期。
-- [真实化主线委派执行计划](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_delegated_execution_plan_20260517.zh.md)
+- [真实化主线委派执行计划](realism_program_delegated_execution_plan_20260517.zh.md)
   作用：保留 lane / sidecar / 委派口径；当前阅读时应配合“收束计划”一起看，不应单独当作最新总阶段判断。
 
 ## 适用范围

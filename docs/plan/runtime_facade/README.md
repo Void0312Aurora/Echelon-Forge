@@ -4,9 +4,9 @@
 
 推荐阅读顺序：
 
-1. [runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
-2. [runtime_facade_task_bootstrap_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
-3. [runtime_facade_layering_cleanup_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+1. [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+2. [runtime_facade_task_bootstrap_plan.zh.md](runtime_facade_task_bootstrap_plan.zh.md)
+3. [runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade_layering_cleanup_freeze.zh.md)
 
 使用规则：
 

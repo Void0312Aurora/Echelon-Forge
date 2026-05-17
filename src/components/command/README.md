@@ -46,6 +46,7 @@ command DTO 可以被 `systems/`、`core/engine`、`core/mission`、`runtime/fac
 - `mission_command.h`
 - `command_link.h`
 - `legacy_command.h`
+- `naval/mission_command_naval.h`
 
 WP0 文档口径：
 

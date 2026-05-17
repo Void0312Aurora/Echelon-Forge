@@ -5,8 +5,8 @@
 当前作用只有一个：
 
 - 给 `common + air + naval` 拆分提供明确落点
-- 给最小海战任务结构提供冻结入口，见 [minimal_task_structure.md](/home/void0312/Workshop/CMO/docs/standards/naval/minimal_task_structure.md)
-- 给第一批真实舰船单位提供来源与建模边界，见 [ship_unit_references.md](/home/void0312/Workshop/CMO/docs/standards/naval/ship_unit_references.md)
+- 给最小海战任务结构提供冻结入口，见 [minimal_task_structure.md](minimal_task_structure.md)
+- 给第一批真实舰船单位提供来源与建模边界，见 [ship_unit_references.md](ship_unit_references.md)
 
 ## 1. 目录职责
 

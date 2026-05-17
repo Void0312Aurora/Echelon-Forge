@@ -18,9 +18,9 @@ air-specific 的命令语义，例如航路、回收、跑道和低层控制输�
 
 ## 当前文件
 
-- [mission_command_air.h](/home/void0312/Workshop/CMO/src/components/command/air/mission_command_air.h)
+- [mission_command_air.h](mission_command_air.h)
   - 航路、回收、起降等 air 扩展字段。
-- [control_input_resolution.h](/home/void0312/Workshop/CMO/src/components/command/air/control_input_resolution.h)
+- [control_input_resolution.h](control_input_resolution.h)
   - air 低层控制输入解析 helper。
 
 ## 依赖方向

@@ -6,12 +6,12 @@ Status for this directory is `Frozen Baseline`.
 
 ## Stage Order
 
-1. [p2_takeoff_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/execution/p2_takeoff_retrain_v1.json)
-2. [p3_takeoff_to_cruise_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/execution/p3_takeoff_to_cruise_retrain_v1.json)
-3. [p4_landing_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/execution/p4_landing_retrain_v1.json)
-4. [p4b_cruise_to_landing_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/execution/p4b_cruise_to_landing_retrain_v1.json)
-5. [p5_continuous_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
-6. [p5_continuous_coldstart_retrain_v2.json](/home/void0312/CMO/examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json)
+1. [p2_takeoff_retrain_v1.json](p2_takeoff_retrain_v1.json)
+2. [p3_takeoff_to_cruise_retrain_v1.json](p3_takeoff_to_cruise_retrain_v1.json)
+3. [p4_landing_retrain_v1.json](p4_landing_retrain_v1.json)
+4. [p4b_cruise_to_landing_retrain_v1.json](p4b_cruise_to_landing_retrain_v1.json)
+5. [p5_continuous_retrain_v1.json](p5_continuous_retrain_v1.json)
+6. [p5_continuous_coldstart_retrain_v2.json](p5_continuous_coldstart_retrain_v2.json)
 
 ## Recommended Scenario Pairing
 

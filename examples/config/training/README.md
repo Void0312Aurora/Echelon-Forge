@@ -1,6 +1,6 @@
 # Training Config Notes
 
-This folder contains the maintained JSON configs consumed by [train.py](/home/void0312/CMO/train.py).
+This folder contains the maintained JSON configs consumed by [train.py](../../../train.py).
 
 Status taxonomy used by the training config entry surface:
 
@@ -17,42 +17,42 @@ Status taxonomy used by the training config entry surface:
 
 ## Maintained Surface
 
-- [default_ppo.json](/home/void0312/CMO/examples/config/training/default_ppo.json)
+- [default_ppo.json](default_ppo.json)
   - `Authoritative` minimal generic fallback used by `train.py --train_config` when no config is provided.
-- [curriculum/](/home/void0312/CMO/examples/config/training/curriculum)
+- [curriculum/](curriculum)
   - `Authoritative` reusable curriculum/randomization snippets.
-- [frozen/](/home/void0312/CMO/examples/config/training/frozen/README.md)
+- [frozen/](frozen/README.md)
   - `Frozen Baseline` maintained post-freeze leader and execution-layer training entry points. These are not the current forward-moving training mainline.
-- [active/](/home/void0312/CMO/examples/config/training/active/README.md)
+- [active/](active/README.md)
   - `Active Mainline` maintained in-progress training entries, including the current P8 cooperative cruise line.
 
 Avoid adding ad hoc experiment JSON files directly under this directory. New maintained runs should go under `frozen/` or a deliberately named active subdirectory with a README that explains ownership and acceptance criteria.
 
 ## Frozen Baseline
 
-The maintained frozen baselines now live under [frozen](/home/void0312/CMO/examples/config/training/frozen/README.md).
+The maintained frozen baselines now live under [frozen](frozen/README.md).
 
-- Use [leader_task_only_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_frozen_v1.json) for task-only/common-core leader runs.
-- Use [leader_c2_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_frozen_v1.json) for reporting/full-chain leader runs.
-- Use [leader_task_only_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_retrain_v1.json) and [leader_c2_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_c2_retrain_v1.json) for the frozen retraining line.
+- Use [leader_task_only_frozen_v1.json](frozen/leader_task_only_frozen_v1.json) for task-only/common-core leader runs.
+- Use [leader_c2_frozen_v1.json](frozen/leader_c2_frozen_v1.json) for reporting/full-chain leader runs.
+- Use [leader_task_only_retrain_v1.json](frozen/leader_task_only_retrain_v1.json) and [leader_c2_retrain_v1.json](frozen/leader_c2_retrain_v1.json) for the frozen retraining line.
 - Both configs point directly at the frozen execution artifact under `experiments/_archive_20260322_test_results/...` rather than relying on historical path remapping.
 
 ## Archive
 
-Historical configs are retained under [examples/config/Archive/training](/home/void0312/CMO/examples/config/Archive/training) for provenance only:
+Historical configs are retained under [examples/config/Archive/training](../Archive/training) for provenance only:
 
-- [pre_freeze_experiments](/home/void0312/CMO/examples/config/Archive/training/pre_freeze_experiments/README.md)
+- [pre_freeze_experiments](../Archive/training/pre_freeze_experiments/README.md)
   - Older root-level `p2/p3/p4/p5`, takeoff-departure, and transformer experiment configs.
-- [leader_legacy](/home/void0312/CMO/examples/config/Archive/training/leader_legacy/README.md)
+- [leader_legacy](../Archive/training/leader_legacy/README.md)
   - Historical `p6_*/p7_*` leader-layer configs.
 
 ## Current Forward Line
 
-- [active/](/home/void0312/CMO/examples/config/training/active/README.md)
+- [active/](active/README.md)
   - Current in-progress P8 cooperative cruise training line.
 
 - Cooperative HMoE control script:
-  - [run_hmoe_cooperative_takeoff_to_cruise_control.sh](/home/void0312/Workshop/CMO/scripts/run_hmoe_cooperative_takeoff_to_cruise_control.sh)
+  - [run_hmoe_cooperative_takeoff_to_cruise_control.sh](../../../scripts/run_hmoe_cooperative_takeoff_to_cruise_control.sh)
   - Runs the paired shared-vs-HMoE cooperative takeoff-to-cruise control line using the `*_shared_fair_v1` and `*_hmoe_fair_v1` configs.
 
 Archived configs are not maintained training entry points. If one needs to be revived, copy it into a maintained active directory and update its scenario pairing, runtime assumptions, and acceptance target.
@@ -69,7 +69,7 @@ Leader-layer configs can reduce frozen execution-policy inference cost with:
   - `2` means one prediction is reused for two low-level steps.
   - Larger values improve throughput but reduce low-level control bandwidth.
 
-This knob is implemented in [leader_env.py](/home/void0312/CMO/gym_envs/leader_env.py) and is reported by [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py).
+This knob is implemented in [leader_env.py](../../../gym_envs/leader_env.py) and is reported by [leader_perf_probe.py](../../../tools/diagnostics/leader_perf_probe.py).
 
 ## Visual Performance Knobs
 
@@ -86,19 +86,19 @@ Execution-layer configs can reduce ARB observation cost with:
   - Reuses the previous visual tensor between refreshes.
   - This reduces visual generation frequency, but it is separate from render resolution.
 
-The direct low-resolution render path is implemented in [simulation_kernel.cpp](/home/void0312/CMO/src/core/engine/simulation_kernel.cpp) and [visual_system.h](/home/void0312/CMO/src/systems/visual/visual_system.h).
+The direct low-resolution render path is implemented in [simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp) and [visual_system.h](../../../src/systems/visual/visual_system.h).
 
 ## Runtime Parallelism
 
 Training runtime config also supports:
 
 - `runtime.shared_memory_vec_env`
-  - Uses [shared_memory_vec_env.py](/home/void0312/CMO/python/rl/runtime/shared_memory_vec_env.py) instead of standard `SubprocVecEnv` when `n_envs > 1`.
+  - Uses [shared_memory_vec_env.py](../../../python/rl/runtime/shared_memory_vec_env.py) instead of standard `SubprocVecEnv` when `n_envs > 1`.
   - Worker processes write observations into parent-owned shared memory.
   - Pipe traffic is reduced to reward/done/info/reset metadata, which avoids large per-step observation serialization costs.
 
 - `runtime.world_batch_vec_env`
-  - Uses [world_batch_vec_env.py](/home/void0312/CMO/python/rl/runtime/world_batch_vec_env.py) for execution-layer training instead of `DummyVecEnv`/`SubprocVecEnv`.
+  - Uses [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py) for execution-layer training instead of `DummyVecEnv`/`SubprocVecEnv`.
   - This routes execution rollouts through one `ef_py.WorldBatchRuntime`, so stepping and readback use batch C++ APIs instead of per-env Python loops.
   - The maintained post-freeze execution `p5` configs now use this path with
     `batch_observation_backend=compiled` and `batch_visual_backend=compiled`.
@@ -114,7 +114,7 @@ Training runtime config also supports:
   - If you added more CPU, the safer first move is usually increasing `n_envs`; treat `world_batch_threads` as a measured tuning knob, not a “more is always faster” switch.
 
 - The earlier single-process batched/shared-runtime leader route is no longer the maintained baseline in this repo.
-  - Use [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py) to compare the maintained `subproc`, `shared`, and `dummy` backends instead of relying on the old experimental flags.
+  - Use [leader_perf_probe.py](../../../tools/diagnostics/leader_perf_probe.py) to compare the maintained `subproc`, `shared`, and `dummy` backends instead of relying on the old experimental flags.
 
 ## Useful Probes
 

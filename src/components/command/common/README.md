@@ -19,9 +19,9 @@
 
 ## 当前文件
 
-- [mission_command_core.h](/home/void0312/Workshop/CMO/src/components/command/common/mission_command_core.h)
+- [mission_command_core.h](mission_command_core.h)
   - `MissionCommand` 的共享 core 语义。
-- [comm_message.h](/home/void0312/Workshop/CMO/src/components/command/common/comm_message.h)
+- [comm_message.h](comm_message.h)
   - 共享通信消息类型。
 
 ## 依赖方向

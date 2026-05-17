@@ -51,10 +51,10 @@ When a standalone test is needed, prefer:
 
 ## Implementation Entry Points
 
-- Contract execution logic now lives in [python/testing/contracts/](/home/void0312/Workshop/CMO/python/testing/contracts).
-- [python/testing/scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py) is a compatibility shim that re-exports the packaged contract runner.
+- Contract execution logic now lives in [python/testing/contracts/](../python/testing/contracts).
+- [python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) is a compatibility shim that re-exports the packaged contract runner.
 - Scenario-side bootstrap logic used by tests now lives in `python/scenario/compiler/` and `python/scenario/runtime/`.
-- [python/scenario_compiler.py](/home/void0312/Workshop/CMO/python/scenario_compiler.py) and [python/scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py) remain compatibility shims for older imports and should not be treated as the primary implementation surface.
+- [python/scenario_compiler.py](../python/scenario_compiler.py) and [python/scenario_runtime.py](../python/scenario_runtime.py) remain compatibility shims for older imports and should not be treated as the primary implementation surface.
 
 ## Contract Types
 
@@ -62,15 +62,13 @@ When a standalone test is needed, prefer:
   - Validates `TaskOrder -> LeaderIntent -> PilotReport -> MissionCommand` initialization and kernel sync.
 - `route_generator`
   - Validates generated waypoint routes, geometry, reachability budget, mode cycling, and world-yaw behavior.
-- `env_regression`
-  - Validates `UniversalEnv` observation/reward/phase-transition behavior.
 - `scripted_bridge`
   - Validates wrapper-driven scripted baselines against scenario success criteria.
 - `unit_regression`
   - Validates pure-Python controller/config/loader/wrapper handoff logic without needing full scenario stepping.
   - Also hosts parameterized leader-task generalization checks that mutate C2 task inputs and validate emitted mission-command behavior.
 
-Contract execution lives in [python/testing/contracts/](/home/void0312/Workshop/CMO/python/testing/contracts), with [python/testing/scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py) retained only as a compatibility shim.
+Contract execution lives in [python/testing/contracts/](../python/testing/contracts), with [python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) retained only as a compatibility shim.
 
 ## How To Run
 
@@ -132,16 +130,10 @@ Prefer a standalone Python test only when you truly need:
 
 - `tests/contracts/route_generator/*.json`
   - Route generation and route geometry regressions.
-- `tests/contracts/env/mission_obs/*.json`
-  - Mission observation layout/content regressions.
-- `tests/contracts/env/waypoint/*.json`
-  - Waypoint reward/route shaping regressions.
-- `tests/contracts/env/landing/*.json`
-  - Landing/ILS guidance and reward regressions.
-- `tests/contracts/env/takeoff/*.json`
-  - Takeoff and departure environment regressions.
-- `tests/contracts/env/render/*.json`
-  - Render/visual-cache regressions.
+- `tests/contracts/chain/*.json`
+  - Command-chain and kernel-sync regressions that exercise maintained loader/runtime wiring.
+- `tests/contracts/bridges/*.json`
+  - Scripted wrapper bridge regressions.
 - `tests/contracts/unit/**/*.json`
   - Pure logic, controller, loader, and config regressions.
 - `tests/contracts/unit/comm/*.json`
@@ -169,18 +161,6 @@ Prefer a standalone Python test only when you truly need:
   - Scripted wrapper bridge contracts.
 - `tests/contracts/route_generator/`
   - Route generation geometry and budget contracts.
-- `tests/contracts/env/mission_obs/`
-  - Mission observation contracts.
-- `tests/contracts/env/phase/`
-  - Mission/phase transition contracts.
-- `tests/contracts/env/landing/`
-  - Landing/ILS objective, guidance, and reward contracts.
-- `tests/contracts/env/waypoint/`
-  - Waypoint shaping, tracking, and route semantics contracts.
-- `tests/contracts/env/takeoff/`
-  - Takeoff/taxi/climb environment contracts.
-- `tests/contracts/env/render/`
-  - Visual/render/cache environment contracts.
 - `tests/contracts/unit/controllers/`
   - Scripted controller logic contracts.
 - `tests/contracts/unit/comm/`
@@ -188,11 +168,11 @@ Prefer a standalone Python test only when you truly need:
   - Common-core baselines now live here alongside legacy air-specific contracts while the directory is being split into common-first families.
 - `tests/contracts/unit/config/`
   - Config resolution contracts.
-- `tests/contracts/unit/env/`
-  - Loader/env utility contracts that do not need full scenario stepping.
 - `tests/contracts/unit/kernel/`
   - Direct `SimulationKernel` flight regressions for takeoff, ground roll, and stable-flight control laws.
   - Also hosts core simulation guardrails for repeatability, sign consistency, coarse physical plausibility checks, and compact realism parameter scans.
+- `tests/contracts/unit/naval/`
+  - Naval-specific unit/runtime contracts that validate ship/domain semantics without relying on a separate env contract tree.
 - `tests/contracts/unit/scenarios/`
   - Static scenario/template geometry checks that validate mission JSON assumptions.
 - `tests/contracts/unit/training/`

@@ -6,14 +6,14 @@
 
 ## 文档入口
 
-- [海战仿真现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
+- [海战仿真现实性分析](naval_realism_analysis_20260516.zh.md)
   作用：冻结记录当前海战管线的真实性差距、参考输入和与其他方向的耦合点。
 
 ## 当前关联入口
 
-- [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
-- [海战后续委派执行单](/home/void0312/Workshop/CMO/docs/task/naval/naval_delegated_execution_backlog_20260517.zh.md)
-- [C2 指挥链与通信子项目](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/README.md)
+- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
+- [海战后续委派执行单](../../naval/naval_delegated_execution_backlog_20260517.zh.md)
+- [C2 指挥链与通信子项目](../c2_command_chain/README.md)
 
 ## 说明
 

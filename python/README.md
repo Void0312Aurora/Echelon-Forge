@@ -45,37 +45,37 @@ src/interfaces/python -> ef_py
 
 ## 当前阅读入口
 
-- [scenario/compiler/](/home/void0312/Workshop/CMO/python/scenario/compiler)
-- [scenario/runtime/](/home/void0312/Workshop/CMO/python/scenario/runtime)
-- [rl/__init__.py](/home/void0312/Workshop/CMO/python/rl/__init__.py)
-- [testing/contracts/](/home/void0312/Workshop/CMO/python/testing/contracts)
-- [testing/runtime.py](/home/void0312/Workshop/CMO/python/testing/runtime.py)
-- [world_model/dreamer.py](/home/void0312/Workshop/CMO/python/world_model/dreamer.py)
-- [models/transformer.py](/home/void0312/Workshop/CMO/python/models/transformer.py)
+- [scenario/compiler/](scenario/compiler)
+- [scenario/runtime/](scenario/runtime)
+- [rl/__init__.py](rl/__init__.py)
+- [testing/contracts/](testing/contracts)
+- [testing/runtime.py](testing/runtime.py)
+- [world_model/dreamer.py](world_model/dreamer.py)
+- [models/transformer.py](models/transformer.py)
 
 ## 兼容 shim
 
-- [scenario_compiler.py](/home/void0312/Workshop/CMO/python/scenario_compiler.py)
+- [scenario_compiler.py](scenario_compiler.py)
   - 根级兼容 shim，仅重导出 `python/scenario/compiler/`。
-- [scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py)
+- [scenario_runtime.py](scenario_runtime.py)
   - 根级兼容 shim，仅重导出 `python/scenario/runtime/`。
-- [testing/scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py)
+- [testing/scenario_contract_runner.py](testing/scenario_contract_runner.py)
   - 兼容 shim，仅重导出 `python/testing/contracts/` 的 contract 执行入口。
 
 ## 当前文件落点
 
 - 根目录
-  - [artifact_paths.py](/home/void0312/Workshop/CMO/python/artifact_paths.py)
+  - [artifact_paths.py](artifact_paths.py)
     - artifact 路径解析和 contract / eval 路径归一化。
-  - [env_config.py](/home/void0312/Workshop/CMO/python/env_config.py)
+  - [env_config.py](env_config.py)
     - 训练配置到 env 设置的解析入口。
-  - [mission_obs_taxonomy.py](/home/void0312/Workshop/CMO/python/mission_obs_taxonomy.py)
+  - [mission_obs_taxonomy.py](mission_obs_taxonomy.py)
     - mission observation 维度、字段索引、模式枚举。
-  - [scenario_compiler.py](/home/void0312/Workshop/CMO/python/scenario_compiler.py)
+  - [scenario_compiler.py](scenario_compiler.py)
     - 兼容 shim；主实现已下沉到 `python/scenario/compiler/`。
-  - [scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py)
+  - [scenario_runtime.py](scenario_runtime.py)
     - 兼容 shim；主实现已下沉到 `python/scenario/runtime/`。
-  - [training_callbacks.py](/home/void0312/Workshop/CMO/python/training_callbacks.py)
+  - [training_callbacks.py](training_callbacks.py)
     - SB3 训练诊断、curriculum 与训练期统计回调。
 - `scenario/`
   - `compiler/`
@@ -121,7 +121,7 @@ src/interfaces/python -> ef_py
 如果你遇到的是：
 
 - “训练配置为什么映射成这个 observation/action/env 设置”
-  - 先看 [env_config.py](/home/void0312/Workshop/CMO/python/env_config.py)
+  - 先看 [env_config.py](env_config.py)
 - “场景为什么被编译成这种 route / objective / roster”
   - 先看 `python/scenario/compiler/`
 - “batch runtime 怎么把 compiled scenario 应用到 kernel”
@@ -131,9 +131,9 @@ src/interfaces/python -> ef_py
 - “train.py 为什么进入这个 run 目录、为什么自动 resume、torch 线程怎么定”
   - 先看 `python/training/`
 - “训练日志、退化、termination 统计从哪来”
-  - 先看 [training_callbacks.py](/home/void0312/Workshop/CMO/python/training_callbacks.py)
+  - 先看 [training_callbacks.py](training_callbacks.py)
 - “contract runner 或 eval 为什么解析不到 artifact”
-  - 先看 [artifact_paths.py](/home/void0312/Workshop/CMO/python/artifact_paths.py) 与 `python/testing/contracts/`
+  - 先看 [artifact_paths.py](artifact_paths.py) 与 `python/testing/contracts/`
 
 ## 迁移备注
 

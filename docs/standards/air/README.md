@@ -10,12 +10,12 @@
 
 当前应先阅读：
 
-1. [标准化文档总览](/home/void0312/Workshop/CMO/docs/standards/README.md)
-2. [USAF Profile](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)
-3. [obs.md](/home/void0312/Workshop/CMO/docs/standards/air/obs.md)
-4. [act.md](/home/void0312/Workshop/CMO/docs/standards/air/act.md)
-5. [aim.md](/home/void0312/Workshop/CMO/docs/standards/air/aim.md)
-6. [rep.md](/home/void0312/Workshop/CMO/docs/standards/air/rep.md)
+1. [标准化文档总览](../README.md)
+2. [USAF Profile](../services/air_force.md)
+3. [obs.md](obs.md)
+4. [act.md](act.md)
+5. [aim.md](aim.md)
+6. [rep.md](rep.md)
 
 ## 1. 本目录的定位
 

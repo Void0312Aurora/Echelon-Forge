@@ -14,22 +14,22 @@ they usually:
 
 Shared support code for maintained diagnostics now starts to live in:
 
-- [benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+- [benchmark.py](benchmark.py)
   - Unified benchmark CLI. This is the primary single-benchmark entrypoint; prefer `--family ...`.
-- [benchmarks/](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks)
+- [benchmarks/](benchmarks)
   - Maintained benchmark family implementations. New benchmark logic should land here, not in new top-level `benchmark_*_phaseN.py` files.
-- [common.py](/home/void0312/Workshop/CMO/tools/diagnostics/common.py)
+- [common.py](common.py)
   - Shared JSON IO, timing aggregation, and GPU runtime stats helpers for diagnostics/benchmark scripts.
-- [run_benchmark_suite.py](/home/void0312/Workshop/CMO/tools/diagnostics/run_benchmark_suite.py)
+- [run_benchmark_suite.py](run_benchmark_suite.py)
   - Optional configuration-driven suite runner built on top of the unified benchmark CLI and `family` dispatch.
-- [cooperative_trajectory_base.py](/home/void0312/Workshop/CMO/tools/diagnostics/cooperative_trajectory_base.py)
+- [cooperative_trajectory_base.py](cooperative_trajectory_base.py)
   - Shared cooperative trajectory env/model bootstrap, trace capture, and plotting helpers for maintained cooperative diagnostics.
 
 Current maintained diagnostics:
 
-- [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py)
+- [leader_perf_probe.py](leader_perf_probe.py)
   - Quick leader-layer throughput probe for the maintained `auto`, `subproc`, `shared`, and `dummy` baselines.
-- [ablate_visual_training_effect.py](/home/void0312/CMO/tools/diagnostics/ablate_visual_training_effect.py)
+- [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
 - `spatial_query`
   - Compiled spatial-query vs legacy geometry benchmark.
@@ -47,35 +47,35 @@ Current maintained diagnostics:
   - Visual downsample sweep benchmark.
 - `coarse_route_segments`
   - Coarse route-segment error benchmark.
-- [diagnose_cooperative_trajectory.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_cooperative_trajectory.py)
+- [diagnose_cooperative_trajectory.py](diagnose_cooperative_trajectory.py)
   - Unified cooperative trajectory replay/export CLI. Use `--task takeoff` or `--task takeoff_to_cruise` to emit task-specific PNG + JSON diagnostics from one maintained entrypoint.
-- [diagnose_runway_drift_sweep.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_runway_drift_sweep.py)
+- [diagnose_runway_drift_sweep.py](diagnose_runway_drift_sweep.py)
   - Parameterized takeoff ground-roll drift sweep used to quantify off-runway behavior across seeds, winds, and policy choices.
-- [diagnose_takeoff_to_landing_trajectory.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_takeoff_to_landing_trajectory.py)
+- [diagnose_takeoff_to_landing_trajectory.py](diagnose_takeoff_to_landing_trajectory.py)
   - Single-episode trajectory exporter for the continuous takeoff-to-landing task, with PNG + JSON outputs for scripted/model comparisons.
 
 Recommended maintained entrypoint for multiple benchmarks:
 
-- [run_benchmark_suite.py](/home/void0312/Workshop/CMO/tools/diagnostics/run_benchmark_suite.py)
+- [run_benchmark_suite.py](run_benchmark_suite.py)
   - Optional preset runner for repeatable multi-job benchmark suites.
-- [benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+- [benchmark.py](benchmark.py)
   - Primary single benchmark entrypoint. Use `--family` to select the benchmark family.
 
 Frozen experimental GPU helper phase-0 probes:
 
-- [ef_gpu_visual_phase0_probe](/home/void0312/CMO/src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp)
+- [ef_gpu_visual_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp)
   - C++ phase-0 GPU front-end probe for the visual path.
-- [ef_gpu_execution_observation_phase0_probe](/home/void0312/CMO/src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp)
+- [ef_gpu_execution_observation_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_execution_observation_phase0_probe.cpp)
   - C++ phase-0 GPU probe for batched execution-observation packing.
-- [ef_gpu_flight_shaping_phase0_probe](/home/void0312/CMO/src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp)
+- [ef_gpu_flight_shaping_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_flight_shaping_phase0_probe.cpp)
   - C++ phase-0 GPU probe for batched `flight shaping` reward terms.
-- [ef_gpu_interaction_broadphase_phase0_probe](/home/void0312/CMO/src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp)
+- [ef_gpu_interaction_broadphase_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_interaction_broadphase_phase0_probe.cpp)
   - C++ phase-0 GPU probe for interaction broadphase.
-- [ef_gpu_sensor_candidate_phase0_probe](/home/void0312/CMO/src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp)
+- [ef_gpu_sensor_candidate_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_sensor_candidate_phase0_probe.cpp)
   - C++ phase-0 GPU probe for sensor candidate generation built on the retained broadphase helper.
-- [ef_gpu_comm_candidate_phase0_probe](/home/void0312/CMO/src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp)
+- [ef_gpu_comm_candidate_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_comm_candidate_phase0_probe.cpp)
   - C++ phase-0 GPU probe for communication candidate generation built on the retained broadphase helper.
-- [ef_gpu_visual_candidate_phase0_probe](/home/void0312/CMO/src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp)
+- [ef_gpu_visual_candidate_phase0_probe](../../src/tools/experimental/gpu_phase0/gpu_visual_candidate_phase0_probe.cpp)
   - C++ phase-0 GPU probe for visual-object candidate generation built on the retained broadphase helper.
 
 ## GPU Phase 0 Build

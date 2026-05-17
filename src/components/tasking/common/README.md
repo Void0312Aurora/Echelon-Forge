@@ -18,10 +18,10 @@
 
 ## 当前文件
 
-- [core_tasking_enums.h](/home/void0312/Workshop/CMO/src/components/tasking/common/core_tasking_enums.h)
-- [task_order_core.h](/home/void0312/Workshop/CMO/src/components/tasking/common/task_order_core.h)
-- [leader_intent_core.h](/home/void0312/Workshop/CMO/src/components/tasking/common/leader_intent_core.h)
-- [pilot_report_core.h](/home/void0312/Workshop/CMO/src/components/tasking/common/pilot_report_core.h)
+- [core_tasking_enums.h](core_tasking_enums.h)
+- [task_order_core.h](task_order_core.h)
+- [leader_intent_core.h](leader_intent_core.h)
+- [pilot_report_core.h](pilot_report_core.h)
 
 ## 依赖方向
 

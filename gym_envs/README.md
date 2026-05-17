@@ -29,11 +29,11 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 ## 子目录约定
 
-- [universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
+- [universal_env.py](universal_env.py)
   - 执行层/单机稳定 env 入口；共享 action/observation/info 实现已下沉到 `universal_env_parts/`。
-- [universal_env_parts/](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts)
+- [universal_env_parts/](universal_env_parts)
   - `UniversalEnv` 的主实现子域，维护 action、observation、space、step-info 组装逻辑。
-- [leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
+- [leader_env.py](leader_env.py)
   - 长机决策层环境，通过 execution backend 驱动底层飞行。
 - `scenario_loader/`
   - 场景加载、mission state、route/reward/shaping/transition glue。
@@ -42,42 +42,42 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 ## 当前阅读入口
 
-- [universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
-- [universal_env_parts/__init__.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/__init__.py)
-- [leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
-- [scenario_loader/__init__.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/__init__.py)
-- [leader_env_parts/__init__.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/__init__.py)
+- [universal_env.py](universal_env.py)
+- [universal_env_parts/__init__.py](universal_env_parts/__init__.py)
+- [leader_env.py](leader_env.py)
+- [scenario_loader/__init__.py](scenario_loader/__init__.py)
+- [leader_env_parts/__init__.py](leader_env_parts/__init__.py)
 
 ## 当前文件落点
 
 - 根目录
-  - [universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
+  - [universal_env.py](universal_env.py)
     - 通用训练环境稳定入口；具体 action/observation/space/info helper 主实现已迁到 `universal_env_parts/`。
-  - [leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
+  - [leader_env.py](leader_env.py)
     - 长机训练环境、execution backend 接入、decision interval 控制。
 - `universal_env_parts/`
-  - [actions.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/actions.py)
+  - [actions.py](universal_env_parts/actions.py)
     - pilot action 构建、action 归一化与基础数值变换。
-  - [observations.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/observations.py)
+  - [observations.py](universal_env_parts/observations.py)
     - 通用 observation 拼装与 visual downsample helper。
-  - [spaces.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/spaces.py)
+  - [spaces.py](universal_env_parts/spaces.py)
     - action/observation space 定义与 mission observation 维度约定。
-  - [info.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/info.py)
+  - [info.py](universal_env_parts/info.py)
     - step info 与 terminal-only info 组装。
 - `scenario_loader/`
-  - [core.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
+  - [core.py](scenario_loader/core.py)
     - `ScenarioLoader` owner 与跨子域编排。
-  - [common.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/common.py)
+  - [common.py](scenario_loader/common.py)
     - 通用常量、JSON、模式归一化与 shared helper。
-  - [loading.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/loading.py)
+  - [loading.py](scenario_loader/loading.py)
     - 场景加载、compiled scenario/runtime state 初始化。
-  - [mission_observation.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/mission_observation.py)
+  - [mission_observation.py](scenario_loader/mission_observation.py)
     - mission observation 拼装与编码。
-  - [route_generation.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/route_generation.py)
+  - [route_generation.py](scenario_loader/route_generation.py)
     - route 生成与派生辅助。
-  - [runtime_state.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/runtime_state.py)
+  - [runtime_state.py](scenario_loader/runtime_state.py)
     - loader/runtime state 数据结构与当前世界状态衔接。
-  - [step_evaluation.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/step_evaluation.py)
+  - [step_evaluation.py](scenario_loader/step_evaluation.py)
     - step 级终止、成功、奖励拆解辅助。
   - `behavior_runtime/`
     - command chain 与 post-waypoint transition。
@@ -92,17 +92,17 @@ ef_py + python/scenario/compiler + python/scenario/runtime
   - `spatial_runtime/`
     - geometry、world transform、空间辅助。
 - `leader_env_parts/`
-  - [common.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/common.py)
+  - [common.py](leader_env_parts/common.py)
     - JSON、角度处理、args stub 等共享 helper。
-  - [contracts.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/contracts.py)
+  - [contracts.py](leader_env_parts/contracts.py)
     - leader intent / pilot report / task order 的字段与 clone helper。
-  - [bridges.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/bridges.py)
+  - [bridges.py](leader_env_parts/bridges.py)
     - leader command bridge。
-  - [runtime_services.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/runtime_services.py)
+  - [runtime_services.py](leader_env_parts/runtime_services.py)
     - leader runtime services 汇总。
-  - [scripted_exec.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/scripted_exec.py)
+  - [scripted_exec.py](leader_env_parts/scripted_exec.py)
     - scripted executive controller。
-  - [policy.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/policy.py)
+  - [policy.py](leader_env_parts/policy.py)
     - 冻结 execution policy 加载与适配。
   - `decision_runtime/`
     - 命令解释、动作解码、观测构建、terminal context。
@@ -124,7 +124,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 - “为什么 leader policy 输出被解释成这个 command”
   - 先看 `leader_env_parts/decision_runtime/`
 - “为什么 leader 环境会走 frozen/scripted execution backend”
-  - 先看 `leader_env_parts/execution_runtime/` 与 [leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
+  - 先看 `leader_env_parts/execution_runtime/` 与 [leader_env.py](leader_env.py)
 
 ## 迁移备注
 

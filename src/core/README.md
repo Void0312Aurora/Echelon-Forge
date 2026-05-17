@@ -25,10 +25,10 @@
 
 ## 当前阅读入口
 
-- [engine/README.md](/home/void0312/Workshop/CMO/src/core/engine/README.md)
-- [mission/README.md](/home/void0312/Workshop/CMO/src/core/mission/README.md)
-- [geometry/README.md](/home/void0312/Workshop/CMO/src/core/geometry/README.md)
-- [interfaces/README.md](/home/void0312/Workshop/CMO/src/core/interfaces/README.md)
+- [engine/README.md](engine/README.md)
+- [mission/README.md](mission/README.md)
+- [geometry/README.md](geometry/README.md)
+- [interfaces/README.md](interfaces/README.md)
 
 ## 当前文件落点
 

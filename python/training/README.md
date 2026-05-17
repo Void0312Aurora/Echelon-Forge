@@ -13,9 +13,9 @@
 
 ## 当前文件
 
-- [cli.py](/home/void0312/Workshop/CMO/python/training/cli.py)
+- [cli.py](cli.py)
   - `train.py` 复用的 argparse 定义。
-- [bootstrap.py](/home/void0312/Workshop/CMO/python/training/bootstrap.py)
+- [bootstrap.py](bootstrap.py)
   - 路径校验、配置装载、实验目录准备、锁文件、seed / torch runtime 初始化。
 
 ## 边界

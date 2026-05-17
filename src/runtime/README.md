@@ -22,8 +22,8 @@
 
 ## 当前阅读入口
 
-- [contracts/README.md](/home/void0312/Workshop/CMO/src/runtime/contracts/README.md)
-- [facade/README.md](/home/void0312/Workshop/CMO/src/runtime/facade/README.md)
+- [contracts/README.md](contracts/README.md)
+- [facade/README.md](facade/README.md)
 
 ## 当前文件落点
 

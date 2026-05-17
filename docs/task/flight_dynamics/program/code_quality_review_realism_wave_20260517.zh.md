@@ -123,36 +123,42 @@ namespace Math { struct Vector3 { double x, y, z; }; }
 `confirm_hits_m=2`、`alpha_beta_alpha=0.65`、`alpha_beta_beta=0.12` 等。
 抽取一个 `sensor_factory_defaults.h` 或 `kDefaultSensor` 常量即可消除。
 
-### 2.5 RuntimeFacade 逃逸口已重新暴露到 Python 主线
+### 2.5 RuntimeFacade 逃逸口已收窄到 adapter / compat view
 
 项目文档明确把 `RuntimeFacade::runtime()` 定义为兼容/诊断逃逸口，并要求
-"维护中的 Python 前端必须把访问集中在一个显式 adapter 中"。但当前主线
-已经重新把这条逃逸口公开给上层使用：
+"维护中的 Python 前端必须把访问集中在一个显式 adapter 中"。当前主线
+已经完成一轮回收：raw runtime 访问不再散落在 `WorldBatchVecEnv` /
+`leader_world_batch_runtime.py` 业务流程中，而是集中到
+`python/rl/runtime/world_batch/adapter.py` 与 `RuntimeCompatibilityView`
+这类迁移期兼容面。
 
 - `src/interfaces/python/bindings_runtime.cpp:301`
-  直接把 `RuntimeFacade.runtime()` 暴露给 Python。
-- `python/rl/runtime/world_batch_vec_env.py:162-167`
-  在 `_RuntimeFacadeAdapter` 中缓存 `self.facade.runtime()` 返回的 raw
+  仍直接把 `RuntimeFacade.runtime()` 暴露给 Python，作为 compatibility /
+  diagnostics 逃逸口。
+- `python/rl/runtime/world_batch/adapter.py`
+  在 `RuntimeFacadeAdapter` 中缓存 `self.facade.runtime()` 返回的 raw
   `WorldBatchRuntime`。
-- `python/rl/runtime/world_batch_vec_env.py:576-582`
-  再把 `_runtime_adapter` 和 `facade` 公开为 `batch_runtime` /
-  `runtime_facade` 属性。
+- `python/rl/runtime/world_batch_vec_env.py`
+  仍公开 `batch_runtime` / `runtime_facade` 属性，但 `batch_runtime` 当前是
+  `RuntimeCompatibilityView`，用于兼容仍期望旧 `vec_env.batch_runtime`
+  访问面的测试和迁移代码。
 - `python/rl/runtime/leader_world_batch_runtime.py`
-  继续直接通过 `batch_runtime.world()`、`step_worlds()`、
-  `get_instrument_states_batch()` 等低层 API 驱动上层执行逻辑。
+  当前通过 `WorldBatchVecEnvAccess` 访问 `WorldBatchVecEnv` 的受控方法，
+  不再直接穿透 `batch_runtime.world()` 驱动业务流程。
 
 问题：
 
-- **收口失败。** 兼容适配器原本是为了隔离旧 API，但公开属性之后，
-  适配器本身又成了新的底层依赖源。
+- **收口尚未冻结。** 兼容适配器已经隔离了旧 API，但公开属性仍容易被
+  新调用方误认为维护接口。
 - **边界语义被稀释。** 调用方已经不再区分"长期 facade contract"和
   "迁移期 raw runtime"，未来想真正切断 `WorldBatchRuntime` 会波及
   `leader_world_batch_runtime.py`、测试和协同执行 runtime。
-- **测试正在固化这种泄漏。** `tests/world_batch/test_world_batch_vec_env.py`
-  直接断言 `vec_env.batch_runtime` / `vec_env.runtime_facade` 可用，并读取
-  controller state。这样会把临时逃逸口变成事实标准。
+- **测试仍需标注兼容语义。** `tests/world_batch/test_world_batch_vec_env.py`
+  仍会断言 `vec_env.batch_runtime` / `vec_env.runtime_facade` 可用，并读取
+  controller state；这些断言应继续明确为 compatibility view，而不是新
+  业务代码的推荐入口。
 
-这类问题不是简单的"兼容代码还没删"，而是**兼容层已经反向定义了主线接口**。
+这类问题当前不是"主线散落穿透"，而是**兼容层仍有被误用为主线接口的风险**。
 
 补充说明：
 

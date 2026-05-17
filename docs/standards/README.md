@@ -8,6 +8,7 @@
 1. `joint`：联合层共通模板
 2. `services`：军种/域 profile
 3. `air/*`：平台或任务层的空战专用补充标准
+4. `naval/*`：海战方向的早期占位与最小任务结构基线
 
 这样做的原因很直接：
 
@@ -18,15 +19,16 @@
 
 ## 1. 当前推荐阅读顺序
 
-1. [Joint 标准总览](/home/void0312/Workshop/CMO/docs/standards/joint/README.md)
-2. [Joint 指挥关系与建模基线](/home/void0312/Workshop/CMO/docs/standards/joint/command_and_modeling_baseline.md)
-3. [Service 标准总览](/home/void0312/Workshop/CMO/docs/standards/services/README.md)
-4. [USAF Profile](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)
-5. [US Army Profile](/home/void0312/Workshop/CMO/docs/standards/services/army.md)
-6. [US Navy Profile](/home/void0312/Workshop/CMO/docs/standards/services/navy.md)
-7. [US Marine Corps Profile](/home/void0312/Workshop/CMO/docs/standards/services/marine_corps.md)
-8. [文档对齐映射](/home/void0312/Workshop/CMO/docs/standards/document_alignment_map.md)
-9. [Air 平台专用标准总览](/home/void0312/Workshop/CMO/docs/standards/air/README.md)
+1. [Joint 标准总览](joint/README.md)
+2. [Joint 指挥关系与建模基线](joint/command_and_modeling_baseline.md)
+3. [Service 标准总览](services/README.md)
+4. [USAF Profile](services/air_force.md)
+5. [US Army Profile](services/army.md)
+6. [US Navy Profile](services/navy.md)
+7. [US Marine Corps Profile](services/marine_corps.md)
+8. [文档对齐映射](document_alignment_map.md)
+9. [Air 平台专用标准总览](air/README.md)
+10. [Naval 标准占位](naval/README.md)
 
 ## 2. 与旧文档的关系
 
@@ -99,5 +101,6 @@
 - `joint/*.md`：`Authoritative`
 - `services/*.md`：`Authoritative`
 - `air/obs.md`、`air/act.md`、`air/aim.md`、`air/rep.md`：`Specialization`
+- `naval/*.md`：`Specialization (early-stage)`
 - `docs/Archive/air_first_standards/com/*.md`、`docs/Archive/air_first_standards/com/two_ship/*.md`：`Archived`
 - `docs/Archive/architecture/*.md`：`Archived`

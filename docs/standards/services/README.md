@@ -4,14 +4,14 @@
 
 当前纳入：
 
-- [US Air Force](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)
-- [US Army](/home/void0312/Workshop/CMO/docs/standards/services/army.md)
-- [US Navy](/home/void0312/Workshop/CMO/docs/standards/services/navy.md)
-- [US Marine Corps](/home/void0312/Workshop/CMO/docs/standards/services/marine_corps.md)
+- [US Air Force](air_force.md)
+- [US Army](army.md)
+- [US Navy](navy.md)
+- [US Marine Corps](marine_corps.md)
 
 配套的平台专用补充标准当前仅有：
 
-- [Air 平台专用标准](/home/void0312/Workshop/CMO/docs/standards/air/README.md)
+- [Air 平台专用标准](../air/README.md)
 
 ## 1. 使用原则
 

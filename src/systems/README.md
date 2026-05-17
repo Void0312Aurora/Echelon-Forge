@@ -22,15 +22,17 @@
 - `physics/`：空气动力、控制、力、积分、地面接触、仪表等物理系统。
 - `combat/`：伤害、制导和战斗效果系统。
 - `systems/`：平台系统 runtime，例如 command link、data link、EW、logistics、navigation、sensor、track manager。
+- `naval/`：舰艇/潜艇运动与舰载航空 token-level runtime。
 - `visual/`：视觉观测 system。
 
 ## 当前阅读入口
 
-- [core/README.md](/home/void0312/Workshop/CMO/src/systems/core/README.md)
-- [physics/README.md](/home/void0312/Workshop/CMO/src/systems/physics/README.md)
-- [combat/README.md](/home/void0312/Workshop/CMO/src/systems/combat/README.md)
-- [systems/README.md](/home/void0312/Workshop/CMO/src/systems/systems/README.md)
-- [visual/README.md](/home/void0312/Workshop/CMO/src/systems/visual/README.md)
+- [core/README.md](core/README.md)
+- [physics/README.md](physics/README.md)
+- [combat/README.md](combat/README.md)
+- [systems/README.md](systems/README.md)
+- [naval/README.md](naval/README.md)
+- [visual/README.md](visual/README.md)
 
 ## 当前文件落点
 
@@ -45,6 +47,8 @@
 - `systems/`
   - `command_link_system.h`, `data_link_system.h`, `ew_system.h`
   - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `track_manager_system.h`
+- `naval/`
+  - `ship_motion_system.h`, `submarine_motion_system.h`, `embarked_air_ops_system.h`
 - `visual/`
   - `visual_system.h`
 

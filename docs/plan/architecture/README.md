@@ -4,10 +4,10 @@
 
 推荐阅读顺序：
 
-1. [system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-2. [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
-3. [src_layered_refactor_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/src_layered_refactor_freeze.zh.md)
-4. [system_layering_and_engine_encapsulation_plan.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md)
+1. [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
+2. [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+3. [src_layered_refactor_freeze.zh.md](src_layered_refactor_freeze.zh.md)
+4. [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
 
 使用规则：
 

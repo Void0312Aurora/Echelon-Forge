@@ -6,11 +6,11 @@
 
 ## 文档入口
 
-- [飞行动力学现实性分析与空战前置门槛](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
+- [飞行动力学现实性分析与空战前置门槛](flight_dynamics_realism_analysis_20260516.zh.md)
   作用：冻结记录当前失真点、空战前置门槛和分析依据。
-- [飞行动力学真实化 P0 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
+- [飞行动力学真实化 P0 实施包](flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
   作用：记录最小气动/推进/失速骨架的首轮实施范围。
-- [飞行动力学真实化 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
+- [飞行动力学真实化 P1 实施包](flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
   作用：承接数据库驱动、推进瞬态、压缩性和高 AoA 语义的后续任务。
 
 ## 当前阅读顺序

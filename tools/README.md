@@ -17,55 +17,55 @@
 
 ## Eval
 
-- [eval_task.py](/home/void0312/Workshop/CMO/tools/eval/eval_task.py)
+- [eval_task.py](eval/eval_task.py)
   - Unified task evaluator for `stable_flight`, `takeoff_roll`, `centerline`, and `waypoint_nav` across `world_model` and `scripted` backends.
-- [eval_sb3.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3.py)
+- [eval_sb3.py](eval/eval_sb3.py)
   - Unified SB3 evaluator for `single` and `cooperative` execution policies with mode-specific metrics.
-- [task_eval_driver.py](/home/void0312/Workshop/CMO/tools/eval/task_eval_driver.py)
+- [task_eval_driver.py](eval/task_eval_driver.py)
   - Shared implementation for single-agent task metrics and backend adapters.
-- [eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/eval_utils.py)
+- [eval_utils.py](eval/eval_utils.py)
   - Shared bootstrap, env construction, and stat formatting.
-- [world_model_eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/world_model_eval_utils.py)
+- [world_model_eval_utils.py](eval/world_model_eval_utils.py)
   - Shared checkpoint loading and recurrent world-model rollout helpers.
-- [waypoint_eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/waypoint_eval_utils.py)
+- [waypoint_eval_utils.py](eval/waypoint_eval_utils.py)
   - Shared waypoint mission-status parsing and geometry metrics.
 
 ## Diagnostics
 
-- [benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+- [benchmark.py](diagnostics/benchmark.py)
   - Unified benchmark CLI for maintained diagnostics families.
-- [run_benchmark_suite.py](/home/void0312/Workshop/CMO/tools/diagnostics/run_benchmark_suite.py)
+- [run_benchmark_suite.py](diagnostics/run_benchmark_suite.py)
   - Unified config-driven entrypoint for maintained benchmark suites under `tools/diagnostics/`.
-- [diagnose_cooperative_trajectory.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_cooperative_trajectory.py)
+- [diagnose_cooperative_trajectory.py](diagnostics/diagnose_cooperative_trajectory.py)
   - Unified cooperative trajectory replay/export CLI for `takeoff` and `takeoff_to_cruise`.
-- [leader_perf_probe.py](/home/void0312/Workshop/CMO/tools/diagnostics/leader_perf_probe.py)
+- [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - Maintained leader-layer throughput probe for `auto/subproc/shared/dummy`.
-- [README.md](/home/void0312/Workshop/CMO/tools/diagnostics/README.md)
+- [README.md](diagnostics/README.md)
   - Diagnostics catalog and scope notes.
 
 ## Runners
 
-- [run_scenario_contract.py](/home/void0312/Workshop/CMO/tools/runners/run_scenario_contract.py)
+- [run_scenario_contract.py](runners/run_scenario_contract.py)
   - Runs one or more JSON contracts from `tests/contracts/`.
 
 ## Maintenance
 
-- [redundancy_audit.py](/home/void0312/Workshop/CMO/tools/maintenance/redundancy_audit.py)
+- [redundancy_audit.py](maintenance/redundancy_audit.py)
   - Audits duplicate/temp-like workspace content.
-- [cleanup_redundancy.py](/home/void0312/Workshop/CMO/tools/maintenance/cleanup_redundancy.py)
+- [cleanup_redundancy.py](maintenance/cleanup_redundancy.py)
   - Dry-run or apply cleanup for cache/temp artifacts.
-- [isolate_repro_workspace.sh](/home/void0312/Workshop/CMO/tools/maintenance/isolate_repro_workspace.sh)
+- [isolate_repro_workspace.sh](maintenance/isolate_repro_workspace.sh)
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
 
 ## Archive
 
-- [README.md](/home/void0312/Workshop/CMO/tools/archive/README.md)
+- [README.md](archive/README.md)
   - Scope note for archived root-level probes.
-- [batch_api_probe.py](/home/void0312/Workshop/CMO/tools/archive/batch_api_probe.py)
+- [batch_api_probe.py](archive/batch_api_probe.py)
   - Quick manual probe for the C++ batch preparation API.
-- [world_batch_vec_env_benchmark.py](/home/void0312/Workshop/CMO/tools/archive/world_batch_vec_env_benchmark.py)
+- [world_batch_vec_env_benchmark.py](archive/world_batch_vec_env_benchmark.py)
   - Archived vec-env throughput benchmark that predates the current diagnostics layout.
-- [diagnose_training_matrix.py](/home/void0312/Workshop/CMO/tools/archive/diagnose_training_matrix.py)
+- [diagnose_training_matrix.py](archive/diagnose_training_matrix.py)
   - Archived helper that parses legacy `evaluate.py` text output for small model/scenario matrices.
 
 ## Common Usage

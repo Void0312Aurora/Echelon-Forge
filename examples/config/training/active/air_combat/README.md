@@ -5,7 +5,7 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
 ## Scope
 
 - Scenario pairing for this line is:
-  - [air_combat_1v1_headon_sensor_smoke_v1.json](/home/void0312/Workshop/CMO/scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+  - [air_combat_1v1_headon_sensor_smoke_v1.json](../../../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
   - Red opponent: scenario-declared scripted `F-16C_Block50`
@@ -13,11 +13,11 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
 
 ## Entries
 
-- [air_combat_1v1_f16c_scripted_red_smoke_v1.json](/home/void0312/Workshop/CMO/examples/config/training/active/air_combat/air_combat_1v1_f16c_scripted_red_smoke_v1.json)
+- [air_combat_1v1_f16c_scripted_red_smoke_v1.json](air_combat_1v1_f16c_scripted_red_smoke_v1.json)
   - Minimal bootstrap smoke on the standard `execution` vec-env path.
   - Uses the maintained HMoE policy surface directly, not a shared-policy fallback.
 
-- [air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json](/home/void0312/Workshop/CMO/examples/config/training/active/air_combat/air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json)
+- [air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json](air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json)
   - Matching smoke entry on the maintained default `WorldBatchVecEnv` path.
   - Use this when you want to verify the scripted-red opponent and HMoE policy also advance correctly through the batch runtime path.
 

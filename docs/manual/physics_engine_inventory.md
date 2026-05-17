@@ -158,13 +158,28 @@
 
 ### 6.2 训练环境（当前用法）
 
-- `gym_envs/f16_takeoff_env.py`：stick 控制（更“物理”），专门学起飞
-- `gym_envs/f16_cruise_waypoint_env.py`：autopilot 目标控制（更“运动学”），学巡航航路点
-- `gym_envs/f16_departure_waypoint_env.py`：同样用 autopilot 目标控制，试图打通“起飞->巡航”
-- `gym_envs/f16_landing_waypoint_env.py`：autopilot 目标控制，典型直进进近（final）到跑道接地
+当前维护入口已经收敛到通用 env 与 batch runtime，而不是早期每个任务一个
+`f16_*_env.py` 文件：
+
+- `gym_envs/universal_env.py`：执行层单机环境入口；可通过 scenario 与
+  action mode 覆盖 takeoff / cruise / landing / air-combat 等任务线。
+- `gym_envs/leader_env.py`：长机/上层决策环境入口，通过 execution backend
+  驱动底层飞行。
+- `python/rl/runtime/world_batch_vec_env.py`：维护中的 execution-layer batch
+  rollout 入口。
+- `python/rl/runtime/cooperative_world_batch_vec_env.py`：多机协同 execution
+  rollout 入口。
+
+历史备注：早期文档和实验曾使用 `gym_envs/f16_takeoff_env.py`、
+`gym_envs/f16_cruise_waypoint_env.py`、`gym_envs/f16_departure_waypoint_env.py`
+和 `gym_envs/f16_landing_waypoint_env.py` 这类专用文件名。当前仓库中这些
+不再是维护入口；如果旧报告提到它们，应按 legacy 线索理解。
 
 入口：
-- `gym_envs/*.py`
+- `gym_envs/universal_env.py`
+- `gym_envs/leader_env.py`
+- `python/rl/runtime/world_batch_vec_env.py`
+- `python/rl/runtime/cooperative_world_batch_vec_env.py`
 
 ---
 

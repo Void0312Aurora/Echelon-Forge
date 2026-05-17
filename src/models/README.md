@@ -25,11 +25,11 @@
 
 ## 当前阅读入口
 
-- [air/README.md](/home/void0312/Workshop/CMO/src/models/air/README.md)
-- [core/README.md](/home/void0312/Workshop/CMO/src/models/core/README.md)
-- [environment/README.md](/home/void0312/Workshop/CMO/src/models/environment/README.md)
-- [systems/README.md](/home/void0312/Workshop/CMO/src/models/systems/README.md)
-- [weapons/README.md](/home/void0312/Workshop/CMO/src/models/weapons/README.md)
+- [air/README.md](air/README.md)
+- [core/README.md](core/README.md)
+- [environment/README.md](environment/README.md)
+- [systems/README.md](systems/README.md)
+- [weapons/README.md](weapons/README.md)
 
 ## 当前文件落点
 

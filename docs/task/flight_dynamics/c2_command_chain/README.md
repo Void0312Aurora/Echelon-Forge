@@ -6,11 +6,11 @@
 
 ## 文档入口
 
-- [冻结分析基线](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
+- [冻结分析基线](c2_command_chain_realism_analysis_20260517.zh.md)
   作用：保留 `2026-05-17` 时点的缺陷分析与不应夸大的表述。
-- [当前进展检查点](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md)
+- [当前进展检查点](c2_command_chain_progress_checkpoint_20260517.zh.md)
   作用：记录当前这轮已经完成的实现、验证和主线能力面。
-- [待解决问题分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
+- [待解决问题分析](c2_command_chain_unresolved_issues_20260517.zh.md)
   作用：聚焦还没解决的技术缺口、当前边界和下一轮建议。
 
 ## 当前范围
@@ -32,10 +32,10 @@
 
 ## 关联文档
 
-- [海战仿真现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
-- [传感器与态势感知现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [武器系统与制导回路现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
+- [海战仿真现实性分析](../naval/naval_realism_analysis_20260516.zh.md)
+- [传感器与态势感知现实性分析](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [武器系统与制导回路现实性分析](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
 
 ## 维护规则
 

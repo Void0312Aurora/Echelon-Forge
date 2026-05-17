@@ -24,6 +24,20 @@ backlog to guide future iterations.
 - Deterministic replay with event logs and metadata snapshots.
 - Scenario batch runner for metrics and regression tests.
 
+## P2 - Engineering Hardening
+- Keep `pyproject.toml` dependency groups aligned with the maintained smoke,
+  RL, training, and world-model entrypoints; add a lockfile or environment file
+  before claiming reproducible training runs.
+- Shrink root-level training scripts into CLI/orchestration glue. `train.py`
+  already uses `python/training/`; `world_model_train.py` should get an
+  equivalent staged split before more world-model features are added.
+- Promote physics sanity checks into contract tests: takeoff distance bounds,
+  climb-rate and speed-envelope limits, fuel monotonicity, weight changes, wind
+  influence, and no free energy gain in autopilot paths.
+- Prepare a `v0.1.0-alpha` release checklist once build, smoke tests, minimal
+  training smoke, known limitations, and artifact-output policy are all
+  documented from a fresh environment.
+
 ## P3 - Extensibility
 - Multi-fidelity models (low/medium/high) selectable per scenario.
 - Asset library for unit and weapon definitions with versioned schemas.
