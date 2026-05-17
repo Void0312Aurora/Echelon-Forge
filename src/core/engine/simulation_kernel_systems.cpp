@@ -185,8 +185,8 @@ void SimulationKernel::register_components_and_systems() {
     register_navigation_system(ecs);     // Phase 5.8: Navigation/EGI (after integration, before instruments)
     register_sensor_system(ecs);         // Phase 6: Sensor
     register_sonar_system(ecs);          // Phase 6.1: Sonar / acoustic contacts
-    register_data_link_system(ecs);      // Phase 6.5: Data Link Fusion (Post-Sensor)
-    register_track_manager_system(ecs);  // Phase 6.55: Build fused track picture from local sensor + data link
+    register_track_manager_system(ecs);  // Phase 6.5: Build local/fused track picture from sensor + prior inbox
+    register_data_link_system(ecs);      // Phase 6.55: Share current track picture to peers
     register_embarked_air_ops_system(ecs); // Phase 6.57: Embarked helo token launch/recover/relay
     ecs.system<const PilotAction>("PilotWeaponRelease")
        .kind(flecs::OnUpdate)

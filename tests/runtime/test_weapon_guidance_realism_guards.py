@@ -371,6 +371,252 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertTrue(got.lobl_required)
         self.assertTrue(got.midcourse_datalink_supported)
 
+    def test_seeker_activation_range_requires_local_terminal_contact(self) -> None:
+        sim = _make_kernel()
+        tuning = sim.get_missile_tuning()
+        tuning.seeker_activation_range_m = 8000.0
+        tuning.midcourse_datalink_supported = True
+        tuning.track_break_time_s = 0.3
+        tuning.range_filter_tau_s = 0.0
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_pair(sim)
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=30000.0, bearing_deg=0.0, local_sensor_hit=True)],
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        runtime = _missile_runtime(sim, missile_id)
+        self.assertFalse(bool(runtime["terminal_seeker_active"]))
+        self.assertTrue(bool(runtime["midcourse_datalink_supported"]))
+        self.assertAlmostEqual(float(runtime["seeker_activation_range_m"]), 8000.0, delta=1.0e-6)
+
+        for step_idx in range(12):
+            t_s = step_idx * sim.get_time_step()
+            _set_contacts(
+                sim,
+                missile_id,
+                [_make_detection(red_id, range_m=25000.0, bearing_deg=12.0, local_sensor_hit=False, timestamp=t_s)],
+            )
+            sim.step()
+
+        midcourse_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(midcourse_runtime["seeker_has_valid_track"]))
+        self.assertEqual(int(midcourse_runtime["seeker_mode"]), 0)
+        self.assertFalse(bool(midcourse_runtime["terminal_seeker_active"]))
+        self.assertGreater(float(midcourse_runtime["filtered_range_m"]), 8000.0)
+
+        _set_contacts(
+            sim,
+            missile_id,
+            [_make_detection(red_id, range_m=6000.0, bearing_deg=6.0, local_sensor_hit=False, timestamp=1.0)],
+        )
+        sim.step()
+        activated_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(activated_runtime["terminal_seeker_active"]))
+        self.assertLess(float(activated_runtime["filtered_range_m"]), 8000.0)
+
+        _set_contacts(sim, missile_id, [])
+        for _ in range(30):
+            sim.step()
+
+        no_local_terminal_runtime = _missile_runtime(sim, missile_id)
+        self.assertFalse(bool(no_local_terminal_runtime["seeker_has_valid_track"]))
+        self.assertEqual(int(no_local_terminal_runtime["seeker_mode"]), 2)
+        self.assertTrue(bool(no_local_terminal_runtime["terminal_seeker_active"]))
+
+        _set_contacts(
+            sim,
+            missile_id,
+            [_make_detection(red_id, range_m=5500.0, bearing_deg=3.0, local_sensor_hit=True, timestamp=2.0)],
+        )
+        sim.step()
+        local_terminal_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(local_terminal_runtime["seeker_has_valid_track"]))
+        self.assertEqual(int(local_terminal_runtime["seeker_mode"]), 0)
+        self.assertTrue(bool(local_terminal_runtime["terminal_seeker_active"]))
+        self.assertLess(float(local_terminal_runtime["filtered_range_m"]), 8000.0)
+
+    def test_without_midcourse_datalink_nonlocal_updates_do_not_drive_track(self) -> None:
+        sim = _make_kernel()
+        tuning = sim.get_missile_tuning()
+        tuning.seeker_activation_range_m = 8000.0
+        tuning.midcourse_datalink_supported = False
+        tuning.track_break_time_s = 0.1
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_pair(sim)
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=30000.0, bearing_deg=0.0, local_sensor_hit=True)],
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        for step_idx in range(20):
+            t_s = step_idx * sim.get_time_step()
+            _set_contacts(
+                sim,
+                missile_id,
+                [_make_detection(red_id, range_m=22000.0, bearing_deg=15.0, local_sensor_hit=False, timestamp=t_s)],
+            )
+            sim.step()
+
+        runtime = _missile_runtime(sim, missile_id)
+        self.assertFalse(bool(runtime["midcourse_datalink_supported"]))
+        self.assertFalse(bool(runtime["terminal_seeker_active"]))
+        self.assertFalse(bool(runtime["seeker_has_valid_track"]))
+        self.assertEqual(int(runtime["seeker_mode"]), 2)
+
+    def test_guidance_keeps_assigned_target_even_if_stronger_nonassigned_contact_appears(self) -> None:
+        sim = _make_kernel()
+        blue_id, red_id = _spawn_pair(sim)
+        intruder_id = int(
+            sim.spawn_unit(
+                ef_py.Side.Red,
+                "Aircraft",
+                5000.0,
+                26000.0,
+                5000.0,
+                180.0,
+                0.0,
+                0.0,
+                0.0,
+                -250.0,
+                0.0,
+            )
+        )
+
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=30000.0, bearing_deg=0.0, signal_strength=1.0)],
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        for step_idx in range(6):
+            t_s = step_idx * sim.get_time_step()
+            _set_contacts(
+                sim,
+                missile_id,
+                [_make_detection(red_id, range_m=25000.0, bearing_deg=4.0, signal_strength=0.6, timestamp=t_s)],
+            )
+            sim.step()
+
+        for step_idx in range(6, 12):
+            t_s = step_idx * sim.get_time_step()
+            _set_contacts(
+                sim,
+                missile_id,
+                [_make_detection(intruder_id, range_m=18000.0, bearing_deg=20.0, signal_strength=4.0, timestamp=t_s)],
+            )
+            sim.step()
+
+        runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(runtime["seeker_has_valid_track"]))
+        self.assertEqual(int(runtime["seeker_mode"]), 1)
+
+    def test_terminal_seeker_activation_latches_after_entry(self) -> None:
+        sim = _make_kernel()
+        tuning = sim.get_missile_tuning()
+        tuning.seeker_activation_range_m = 8000.0
+        tuning.midcourse_datalink_supported = True
+        tuning.track_break_time_s = 0.5
+        tuning.range_filter_tau_s = 0.0
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_pair(sim)
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=30000.0, bearing_deg=0.0, local_sensor_hit=True)],
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        _set_contacts(
+            sim,
+            missile_id,
+            [_make_detection(red_id, range_m=6000.0, bearing_deg=2.0, local_sensor_hit=True, timestamp=0.0)],
+        )
+        sim.step()
+        activated_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(activated_runtime["terminal_seeker_active"]))
+        self.assertLess(float(activated_runtime["filtered_range_m"]), 8000.0)
+
+        _set_contacts(
+            sim,
+            missile_id,
+            [_make_detection(red_id, range_m=12000.0, bearing_deg=2.5, local_sensor_hit=False, timestamp=sim.get_time_step())],
+        )
+        sim.step()
+        post_expand_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(post_expand_runtime["terminal_seeker_active"]))
+        self.assertTrue(bool(post_expand_runtime["seeker_has_valid_track"]))
+        self.assertEqual(int(post_expand_runtime["seeker_mode"]), 1)
+        self.assertLess(float(post_expand_runtime["filtered_range_m"]), 8000.0)
+
+        _set_contacts(sim, missile_id, [])
+        for _ in range(40):
+            sim.step()
+
+        decayed_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(decayed_runtime["terminal_seeker_active"]))
+        self.assertFalse(bool(decayed_runtime["seeker_has_valid_track"]))
+        self.assertEqual(int(decayed_runtime["seeker_mode"]), 2)
+
+    def test_terminal_proximity_fuze_does_not_resolve_hit_after_terminal_track_fully_decays(self) -> None:
+        sim = _make_kernel()
+        tuning = sim.get_missile_tuning()
+        tuning.seeker_activation_range_m = 8000.0
+        tuning.midcourse_datalink_supported = True
+        tuning.track_break_time_s = 0.12
+        tuning.range_filter_tau_s = 0.0
+        tuning.max_speed = 120.0
+        tuning.boost_time_s = 0.0
+        tuning.sustain_time_s = 0.0
+        tuning.reference_area_m2 = 0.01
+        tuning.fuse_distance = 50.0
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_pair(sim)
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=9000.0, bearing_deg=0.0, local_sensor_hit=True)],
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        target_health_before = list(sim.get_unit_health(red_id))
+
+        for step_idx in range(6):
+            t_s = step_idx * sim.get_time_step()
+            _set_contacts(
+                sim,
+                missile_id,
+                [_make_detection(red_id, range_m=40.0, bearing_deg=0.0, local_sensor_hit=True, timestamp=t_s)],
+            )
+            sim.step()
+
+        activated_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(bool(activated_runtime["terminal_seeker_active"]))
+        self.assertTrue(bool(activated_runtime["seeker_has_valid_track"]))
+
+        for _ in range(20):
+            _set_contacts(sim, missile_id, [])
+            sim.step()
+            if not sim.is_unit_active(missile_id):
+                break
+
+        self.assertTrue(sim.is_unit_active(red_id))
+        self.assertEqual(list(sim.get_unit_health(red_id)), target_health_before)
+
     def test_launch_initializes_mass_and_runtime_state(self) -> None:
         sim = _make_kernel()
         tuning = sim.get_missile_tuning()

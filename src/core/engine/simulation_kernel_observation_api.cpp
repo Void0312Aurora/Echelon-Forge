@@ -60,6 +60,14 @@ void SimulationKernel::set_contact_list(uint64_t entity_id, const std::vector<De
     if (e.is_valid()) {
         ContactList contacts{};
         contacts.contacts = detections;
+        const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+        const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
+        const double injected_time = current_time + time_step;
+        for (auto& det : contacts.contacts) {
+            if (det.timestamp <= current_time + 1.0e-6) {
+                det.timestamp = injected_time;
+            }
+        }
         e.set<ContactList>(contacts);
     } else {
         spdlog::warn("Attempted to set contact list for invalid entity ID: {}", entity_id);

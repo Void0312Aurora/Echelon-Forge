@@ -14,6 +14,12 @@ from .models import (
     ScenarioZoneLayout,
 )
 from .roster import active_roster_world_entity_refs, find_active_roster_member, resolve_active_controllable_roster
+from .world_setup_compat import (
+    apply_world_setup_payload_compat,
+    apply_world_setup_request_compat,
+    build_batch_world_setup_request,
+    extract_batch_world_setup_entity_ids,
+)
 
 __all__ = [
     "AppliedScenarioRosterMember",
@@ -30,9 +36,13 @@ __all__ = [
     "apply_world_layouts_to_batch",
     "apply_world_yaw_inplace",
     "build_compiled_world_layout",
+    "build_batch_world_setup_request",
+    "extract_batch_world_setup_entity_ids",
     "find_active_roster_member",
     "load_compiled_scenario_batch",
     "prepare_scenario_world_layout",
     "resolve_active_controllable_roster",
     "rotate_xy_clockwise",
+    "apply_world_setup_request_compat",
+    "apply_world_setup_payload_compat",
 ]

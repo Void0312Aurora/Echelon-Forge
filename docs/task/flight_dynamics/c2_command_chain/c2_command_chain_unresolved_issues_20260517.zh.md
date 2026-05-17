@@ -13,6 +13,16 @@
 - 用于把“还没解决的问题”从冻结分析稿中剥离出来，并与当前代码进度对齐。
 - 只列当前仍影响下一轮实现决策的问题，不重复已经完成的收口项。
 
+## 零、对当前文档口径的补充
+
+当前更准确的阅读方式是：
+
+1. 本文档列的是“还剩的收口点”，不是“当前系统完全没有的能力”。
+2. `MissionCommand` 字段、profile、codec、runtime、world-batch roundtrip 已有一批显式测试锁定。
+3. `RuntimeFacade` 主线也已进入 adapter 守门态，因此“raw runtime 散落直穿主链”不再是当前事实。
+
+因此，如果只看旧冻结分析，会高估当前欠账；如果只看当前绿线，又会低估 compat/contract 收尾余量。
+
 ## 一、已经不再属于当前 blocker 的项
 
 下列问题虽然在冻结分析里被提出，但当前已经有最小收口，不应继续当成“完全未动”的空白：
@@ -134,8 +144,30 @@
 
 1. 不要立刻重写成一套全新 schema。
 2. 先补一份字段对照表和 roundtrip contract，找出还没被测试钉住的字段。
+3. 当前重点已从“naval 字段有没有 roundtrip”转向：
+   - common / naval / air 字段矩阵是否一致
+   - episode state / post-transition JSON 回填是否持续对齐
 
-### 2.6 文档口径仍需从“冻结分析”过渡到“当前现状”
+### 2.6 `RuntimeFacade / ScenarioLoader` compat 面仍未完全减载
+
+当前状态：
+
+1. `RuntimeFacade.runtime()` 已被文档和架构测试降级为 compatibility / diagnostics escape hatch。
+2. Python 主线的 raw runtime/world 访问已收回显式 adapter。
+3. 但 adapter 仍同时承担 facade 与 compat runtime 兜底，`ScenarioLoader` 侧也仍保留旧代理入口。
+
+为什么仍重要：
+
+1. compat 面如果继续扩张，会重新放大 `RuntimeFacade` 与 `ScenarioLoader` 的 owner/接口债务。
+2. 这类问题虽然不一定立刻打红行为测试，但会持续稀释 `MissionCommand` 与 execution runtime 的收口边界。
+
+建议下一步：
+
+1. 继续把新增需求优先做成 facade-shaped adapter 方法，而不是回流 raw runtime 访问。
+2. 继续减载 `ScenarioLoader` 的 compat facade，不要把新状态同步再塞回 `core.py`。
+3. 保持 `tests/architecture/test_runtime_facade_layering.py` 与 world-setup compat 测试为守门线。
+
+### 2.7 文档口径仍需从“冻结分析”过渡到“当前现状”
 
 当前状态：
 
@@ -166,6 +198,8 @@
    - 理由：能把任务、通信、武器链再接深一层。
 5. `MissionCommand` codec/profile contract 对账
    - 理由：这是维护债，重要但不一定要先做。
+6. `RuntimeFacade / ScenarioLoader` compat 减载收尾
+   - 理由：这已经是当前 `C2/runtime` 方向的真实剩余量之一，不再只是结构旁支。
 
 ## 四、当前是否值得再分发 subagent
 

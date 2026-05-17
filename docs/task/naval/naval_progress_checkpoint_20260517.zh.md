@@ -1,6 +1,6 @@
 # 海战推进检查点
 
-状态：`2026-05-17` 第三波主体完成、局部回归待复核版。
+状态：`2026-05-17` 第三波主体完成、与主线复核对齐版。
 
 关联文档：
 
@@ -128,9 +128,7 @@
 
 - 当前数据链仍是工程近似，不是完整舰队 C2 / Link 管理模型。
 - 当前 `UNREP` 最小闭环已打通，但仍是抽象库存状态机，不是完整补给 doctrine 或细致作业流程。
-- 额外补跑时暴露出两个 `screen-hold` 恢复用例失败，需要单独复核：
-  - `test_screen_station_hold_recovers_after_heading_disturbance`
-  - `test_screen_station_hold_settles_without_large_late_oscillation`
+- `screen-hold` 当前不再作为稳定红点保留；当前更值得关注的是海事传感器/LOS 与 `sensor/naval` 联动收口。
 
 ### 1.4 Galileo：舰载武器/毁伤
 
@@ -147,21 +145,26 @@
 
 - `DDG-51` 的 `VLS / gun / CIWS` 已能结构化加载。
 - 舰艇可基于既有航迹走最小 `VLS-SAM` 发射链，并体现库存与冷却。
-- `5in gun / CIWS` 已从纯数据库项进入最小交战闭环。
+- `5in gun / CIWS` 已从纯数据库项推进到运行时结构面，但当前交战链仍未稳定收口。
 - 舰艇命中后不再只有“满血或沉没”，而是可进入 `mission kill / mobility kill / sensor kill` 等中间态，并持续出现火灾、进水、破口驱动的能力退化。
-- `MissionCommand` 现在可以触发一条最小 naval weapon engagement pass，让 `CIWS` 至少能通过命令路径自动进入近距防御闭环，而不再只靠测试接口直调。
+- `MissionCommand -> CIWS` 的命令驱动路径已经接进主线代码，但当前工作区定向测试仍未转绿，不能描述成“已完成自动近防闭环”。
 
 验证：
 
 - `tests/runtime/test_naval_ship_database.py` 中与结构化武器、`VLS-SAM`、主炮、`CIWS`、中间毁伤态、持续毁伤传播相关的定向用例
-- 回执中给出的相关结果为 `7 passed`
+- 当前工作区抽样复核结果：
+  - `tests/runtime/test_naval_ship_database.py::NavalShipDatabaseTests::test_ddg_gun_can_fire_with_track_and_reduce_ammo`
+  - `tests/runtime/test_naval_ship_database.py::NavalShipDatabaseTests::test_naval_mission_command_can_trigger_ciws_without_direct_weapon_api`
+  - 当前结果：`2 failed`
 
 保留风险：
 
 - `VLS-SAM` 仍是抽象舰空导弹，不区分更细型号。
 - `gun / CIWS` 现在是工程近似交战器，不是完整火控/弹道/射界/跟踪通道模拟。
+- 主炮直调发射链当前未稳定通过定向回归。
+- `MissionCommand -> CIWS` 命令驱动链当前未稳定通过定向回归。
 - 持续毁伤传播已形成框架，但仍是标量 proxy，不是隔舱/泵/稳性/自由液面高保真模型。
-- 当前接入的是最小命令驱动闭环，还不是完整 naval tasking / fire-control AI。
+- 当前接入的是最小命令驱动骨架，还不是完整 naval tasking / fire-control AI。
 
 ## 二、当前能力面判断
 
@@ -175,15 +178,15 @@
    - 舰载机 token 协同已建立最小闭环。
    - 抽象后勤库存、补给窗口和最小 `UNREP` 转移闭环已建立。
 4. 交战层：
-   - 已进入“最小 `VLS-SAM` + 主炮/CIWS + `MissionCommand` 防御触发 + 中间毁伤态 + 持续毁伤传播”的可运行骨架。
+   - 已进入“最小 `VLS-SAM` + 主炮/CIWS 结构化运行时 + 中间毁伤态 + 持续毁伤传播”的可运行骨架，但主炮直调和 `MissionCommand -> CIWS` 命令链仍未稳定转绿。
 
 但仍不能把当前状态称为完整真实海战，主要缺口仍在：
 
-1. `screen-hold` 目前有两条恢复用例回归，说明编队/护航控制还没有完全稳住。
-2. 海面 LOS 仍是最小修补，不是完整海面/地形/折射统一模型。
-3. 舰载机仍是 token 协同，不是完整航空出动系统。
-4. 武器链虽已进入命令路径，但还不是完整 naval tasking / fire-control AI。
-5. 持续毁伤仍缺更真实的浮性、隔舱和稳性演化。
+1. 海面 LOS 仍是最小修补，不是完整海面/地形/折射统一模型。
+2. 舰载机仍是 token 协同，不是完整航空出动系统。
+3. 武器链虽已进入命令路径，但还不是完整 naval tasking / fire-control AI。
+4. 持续毁伤仍缺更真实的浮性、隔舱和稳性演化。
+5. 当前海战更适合作为 `sensor/C2/runtime` 的高价值验收面，而不是独立扩功能主线。
 
 ## 三、统一数据口径
 
@@ -200,19 +203,20 @@
 
 ## 四、下一轮建议
 
-### 4.1 Nietzsche
+### 4.1 当前建议
 
-建议优先复核：
+建议优先处理：
 
-1. `screen-hold` 两条恢复用例回归
-2. 确认是否与后勤状态改动耦合，还是工作树中其他并行改动带来的偏移
+1. 海军武器命令链定向修复与守门回归
+2. `DataLink / MissionCommand / naval` 共享语义的一致性补测
+3. 海事传感器 / 海面 LOS / `sensor/naval` 联动守门回归
 
 理由：
 
-- `UNREP` 目标闭环已转绿。
-- 当前最明确的新回归点反而回到了 `screen-hold` 稳定性。
+- 当前稳定复现的海军红点已经具体落在主炮直调与 `MissionCommand -> CIWS` 命令路径，而不再是泛化的 `sensor/naval` 总括。
+- `screen-hold` 当前已不再适合作为独立红点继续占用主优先级。
 
-### 4.2 Hilbert
+### 4.2 次级建议
 
 建议继续负责：
 
@@ -221,9 +225,9 @@
 
 理由：
 
-- 当前传感器与 ASW 主线已经收口，下一步更偏验证与联动，而不是继续扩大实现面。
+- 当前海战更需要配合主线收口传感器/联动风险，而不是继续扩大单一功能面。
 
-### 4.3 Galileo
+### 4.3 可后置建议
 
 建议继续负责：
 
@@ -232,9 +236,9 @@
 
 理由：
 
-- 当前 `CIWS` 的命令驱动闭环已打通，下一步更像是增量扩展而不是补空白。
+- 当前 `CIWS` 的命令驱动路径已接入代码，但定向回归仍未转绿，下一步仍属于收口而不是纯扩展。
 
-### 4.4 Wegener
+### 4.4 可后置建议
 
 建议继续负责：
 
@@ -249,10 +253,11 @@
 
 建议当前按下面的顺序处理：
 
-1. 先复核 `screen-hold` 两条失败用例，确认是否为真实回归。
-2. 再决定是否需要继续扩 `MissionCommand -> gun`、更复杂 maritime 联动场景或更细 wave runtime 断言。
+1. 先收口海军武器命令链的两个稳定红点。
+2. 再配合主线收口 `DataLink / MissionCommand / naval` 共享语义与海事传感器联动。
+3. 最后再决定是否继续扩 `MissionCommand -> gun`、更复杂 maritime 联动场景或更细 wave runtime 断言。
 
 这样处理的好处是：
 
-- 当前大部分空白已经补上，最重要的是先把新暴露的行为回归与测试稳定性厘清。
-- 在没有确认 `screen-hold` 回归来源前，继续大幅扩功能的收益已经不如先稳住现有主线。
+- 海战当前最值钱的角色是高价值验收面，而不是单独继续扩功能。
+- 先把当前已稳定复现的海军武器命令链红点清掉，再继续扩展的收益更高。

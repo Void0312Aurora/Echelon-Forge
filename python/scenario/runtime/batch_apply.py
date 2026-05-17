@@ -23,6 +23,7 @@ from .models import (
 )
 from .randomization import _apply_spawn_randomization
 from .roster import _attach_active_roster_to_applied_world
+from .world_setup_compat import apply_world_setup_payload_compat
 
 
 def _prepare_compiled_batch_world_context(
@@ -397,28 +398,15 @@ def _apply_world_setup_request(
     spawn_requests: list[Any],
     time_steps: list[float],
 ) -> list[int]:
-    if hasattr(runtime, "apply_world_setup") and hasattr(ef_py, "BatchWorldSetupRequest"):
-        request = ef_py.BatchWorldSetupRequest()
-        request.seeds = [int(seed) & 0xFFFFFFFF for seed in seeds]
-        request.terrain_assignments = list(terrain_assignments)
-        request.wind_assignments = list(wind_assignments)
-        request.zones = list(zones)
-        request.spawn_requests = list(spawn_requests)
-        request.time_steps = [float(value) for value in time_steps]
-        result = runtime.apply_world_setup(request)
-        return [int(entity_id) for entity_id in list(result.entity_ids)]
-
-    return [
-        int(entity_id)
-        for entity_id in runtime.apply_world_setup_batch(
-            seeds,
-            terrain_assignments,
-            wind_assignments,
-            zones,
-            spawn_requests,
-            time_steps,
-        )
-    ]
+    return apply_world_setup_payload_compat(
+        runtime,
+        seeds=seeds,
+        terrain_assignments=terrain_assignments,
+        wind_assignments=wind_assignments,
+        zones=zones,
+        spawn_requests=spawn_requests,
+        time_steps=time_steps,
+    )
 
 
 __all__ = [

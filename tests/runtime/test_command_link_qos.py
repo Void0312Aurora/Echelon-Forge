@@ -245,6 +245,77 @@ class MissionCommandLinkQosTests(unittest.TestCase):
         second_delivered = _step_until_command_code(kernel, entity_id, 32)
         _assert_mission_matches(second_delivered, second)
 
+    def test_high_priority_engagement_mission_replaces_low_priority_tail_when_queue_is_full(self) -> None:
+        kernel, entity_id = _spawn_aircraft_with_link(latency_s=0.2)
+
+        baseline = _mission(heading_deg=5.0, command_code=10)
+        low_1 = _mission(heading_deg=15.0, command_code=11)
+        low_2 = _mission(heading_deg=25.0, command_code=12)
+        low_3 = _mission(heading_deg=35.0, command_code=13)
+        low_4 = _mission(heading_deg=45.0, command_code=14)
+        high = _mission(
+            heading_deg=155.0,
+            command_code=88,
+            assigned_target_id=9901,
+            authorization_to_fire=True,
+        )
+
+        kernel.set_mission_command(entity_id, baseline)
+        kernel.set_mission_command(entity_id, low_1)
+        kernel.set_mission_command(entity_id, low_2)
+        kernel.set_mission_command(entity_id, low_3)
+        kernel.set_mission_command(entity_id, low_4)
+        kernel.set_mission_command(entity_id, high)
+
+        delivered_codes: list[int] = []
+        delivered_headings: list[float] = []
+        for _ in range(15):
+            kernel.step()
+            cmd = kernel.get_mission_command(entity_id)
+            if bool(cmd.active):
+                code = int(cmd.command_code)
+                if not delivered_codes or delivered_codes[-1] != code:
+                    delivered_codes.append(code)
+                    delivered_headings.append(float(cmd.cmd_heading_deg))
+
+        self.assertEqual(delivered_codes, [10, 88, 11, 12, 13])
+        self.assertEqual([round(v, 3) for v in delivered_headings], [5.0, 155.0, 15.0, 25.0, 35.0])
+        self.assertNotIn(14, delivered_codes)
+
+    def test_pending_mission_queue_debug_surface_exposes_priority_sorted_backlog(self) -> None:
+        kernel, entity_id = _spawn_aircraft_with_link(latency_s=0.2)
+
+        baseline = _mission(heading_deg=5.0, command_code=10)
+        low_1 = _mission(heading_deg=15.0, command_code=11)
+        low_2 = _mission(heading_deg=25.0, command_code=12)
+        high = _mission(
+            heading_deg=155.0,
+            command_code=88,
+            assigned_target_id=9901,
+            authorization_to_fire=True,
+        )
+
+        kernel.set_mission_command(entity_id, baseline)
+        kernel.set_mission_command(entity_id, low_1)
+        kernel.set_mission_command(entity_id, low_2)
+        kernel.set_mission_command(entity_id, high)
+
+        queue_state = kernel.debug_get_pending_mission_command_queue(entity_id)
+        pending = queue_state["pending"]
+        queued = list(queue_state["queued"])
+
+        self.assertTrue(bool(pending["active"]))
+        self.assertEqual(int(pending["command_code"]), 10)
+        self.assertEqual(int(pending["priority"]), 0)
+        self.assertEqual(int(queue_state["size"]), 3)
+
+        self.assertEqual([int(entry["command_code"]) for entry in queued], [88, 11, 12])
+        self.assertEqual([int(entry["priority"]) for entry in queued], [1, 0, 0])
+        self.assertEqual(
+            [round(float(entry["deliver_time"]), 3) for entry in queued],
+            [0.4, 0.6, 0.8],
+        )
+
     def test_dropped_mission_command_does_not_mutate_existing_roe_state(self) -> None:
         kernel = ef_py.SimulationKernel()
         kernel.reset(6201)

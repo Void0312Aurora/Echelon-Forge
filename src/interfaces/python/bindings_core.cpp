@@ -14,6 +14,7 @@
 #include "components/basic/common.h"
 #include "components/combat/weapon.h"
 #include "components/command/command_link.h"
+#include "components/command/command_link_qos.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/flight_dynamics_tuning.h"
 #include "components/physics/forces.h"
@@ -812,6 +813,51 @@ void bind_core(nb::module_& m) {
              out["jettison_tanks"] = pending->command.jettison_tanks;
              return out;
         }, "Debug: get pending action command state", nb::arg("entity_id"))
+        .def("debug_get_pending_mission_command_queue", [](SimulationKernel& self, uint64_t entity_id) {
+             nb::dict out;
+             nb::list queued;
+             auto e = self.get_world().entity(entity_id);
+             if (!e.is_valid()) {
+                 out["queued"] = queued;
+                 return out;
+             }
+             const PendingMissionCommand* pending = e.get<PendingMissionCommand>();
+             if (pending) {
+                 nb::dict pending_out;
+                 pending_out["active"] = pending->active;
+                 pending_out["deliver_time"] = pending->deliver_time;
+                 pending_out["command_code"] = pending->command.command_code;
+                 pending_out["priority"] = mission_command_queue_priority(pending->command);
+                 pending_out["target_heading"] = pending->command.cmd_heading_deg;
+                 pending_out["target_altitude"] = pending->command.cmd_altitude_m;
+                 pending_out["target_speed"] = pending->command.cmd_speed_mps;
+                 pending_out["assigned_target_id"] = pending->command.assigned_target_id;
+                 pending_out["authorization_to_fire"] = pending->command.authorization_to_fire;
+                 out["pending"] = pending_out;
+             }
+             const MissionCommandPendingQueue* queue = e.get<MissionCommandPendingQueue>();
+             if (queue) {
+                 out["size"] = queue->size;
+                 for (std::size_t i = 0; i < queue->size; ++i) {
+                     const auto& entry = queue->entries[i];
+                     nb::dict entry_out;
+                     entry_out["index"] = i;
+                     entry_out["deliver_time"] = entry.deliver_time;
+                     entry_out["command_code"] = entry.command.command_code;
+                     entry_out["priority"] = mission_command_queue_priority(entry.command);
+                     entry_out["target_heading"] = entry.command.cmd_heading_deg;
+                     entry_out["target_altitude"] = entry.command.cmd_altitude_m;
+                     entry_out["target_speed"] = entry.command.cmd_speed_mps;
+                     entry_out["assigned_target_id"] = entry.command.assigned_target_id;
+                     entry_out["authorization_to_fire"] = entry.command.authorization_to_fire;
+                     queued.append(entry_out);
+                 }
+             } else {
+                 out["size"] = 0;
+             }
+             out["queued"] = queued;
+             return out;
+        }, "Debug: get pending mission command queue state", nb::arg("entity_id"))
         .def("debug_get_embarked_helo", &SimulationKernel::debug_get_embarked_helo,
              "Debug: get embarked helo entity id for a host",
              nb::arg("entity_id"))
@@ -867,6 +913,9 @@ void bind_core(nb::module_& m) {
              out["guidance_max_lateral_g"] = missile->guidance_max_lateral_g;
              out["guidance_autopilot_tau_s"] = missile->guidance_autopilot_tau_s;
              out["guidance_max_accel_response_g_per_s"] = missile->guidance_max_accel_response_g_per_s;
+             out["seeker_activation_range_m"] = missile->seeker_activation_range_m;
+             out["midcourse_datalink_supported"] = missile->midcourse_datalink_supported;
+             out["terminal_seeker_active"] = missile->terminal_seeker_active;
              if (sensor) {
                  out["sensor_max_range_m"] = sensor->max_range;
                  out["sensor_fov_deg"] = sensor->fov_deg;

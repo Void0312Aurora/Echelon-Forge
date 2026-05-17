@@ -136,9 +136,11 @@ uint64_t select_ciws_mission_target_id(
     const MissionCommand* mission
 ) {
     if (mission && mission->assigned_target_id != 0 &&
-        find_contact_by_target_id(contacts, mission->assigned_target_id) != nullptr &&
-        entity_is_missile(world, mission->assigned_target_id)) {
-        return mission->assigned_target_id;
+        find_contact_by_target_id(contacts, mission->assigned_target_id) != nullptr) {
+        const auto assigned_target = world.entity(mission->assigned_target_id);
+        if (!assigned_target.is_valid() || entity_is_missile(world, mission->assigned_target_id)) {
+            return mission->assigned_target_id;
+        }
     }
     return select_closest_matching_contact_id(world, contacts, entity_is_missile);
 }
@@ -149,9 +151,11 @@ uint64_t select_surface_gun_mission_target_id(
     const MissionCommand* mission
 ) {
     if (mission && mission->assigned_target_id != 0 &&
-        find_contact_by_target_id(contacts, mission->assigned_target_id) != nullptr &&
-        entity_is_surface_target(world, mission->assigned_target_id)) {
-        return mission->assigned_target_id;
+        find_contact_by_target_id(contacts, mission->assigned_target_id) != nullptr) {
+        const auto assigned_target = world.entity(mission->assigned_target_id);
+        if (!assigned_target.is_valid() || entity_is_surface_target(world, mission->assigned_target_id)) {
+            return mission->assigned_target_id;
+        }
     }
     return select_closest_matching_contact_id(world, contacts, entity_is_surface_target);
 }
@@ -643,6 +647,13 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     const double range_filter_tau_s = std::max(
         0.0,
         finite_or_default(resolved_tuning.range_filter_tau_s, MissileGuidanceDefaults::kTrackFilterTauS));
+    const double seeker_activation_range_m = finite_or_default(
+        resolved_tuning.seeker_activation_range_m,
+        std::numeric_limits<double>::quiet_NaN());
+    const bool midcourse_datalink_supported = resolved_tuning.midcourse_datalink_supported;
+    const bool terminal_seeker_active = !std::isfinite(seeker_activation_range_m) ||
+        seeker_activation_range_m <= 0.0 ||
+        det.range <= seeker_activation_range_m;
     const double max_lateral_g = std::max(
         0.1,
         finite_or_default(
@@ -742,6 +753,9 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
             max_lateral_g,
             autopilot_tau_s,
             max_accel_response_g_per_s,
+            seeker_activation_range_m,
+            midcourse_datalink_supported,
+            terminal_seeker_active,
         });
 
     Sensor sensor{};
@@ -800,17 +814,15 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
 
 bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code) {
     auto attacker = ecs.entity(attacker_id);
-    auto target = ecs.entity(target_id);
-    if (!attacker.is_valid() || !target.is_valid()) {
+    if (!attacker.is_valid() || target_id == 0) {
         return false;
     }
 
     const Transform* attacker_pos = attacker.get<Transform>();
-    const Transform* target_pos = target.get<Transform>();
     const ContactList* contacts = attacker.get<ContactList>();
     NavalWeaponSystem* naval_weapons = attacker.get_mut<NavalWeaponSystem>();
     Score* score = attacker.get_mut<Score>();
-    if (!attacker_pos || !target_pos || !contacts || !naval_weapons) {
+    if (!attacker_pos || !contacts || !naval_weapons) {
         return false;
     }
 
@@ -842,6 +854,8 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
     }
 
     double hit_probability = std::clamp(mount->hit_probability, 0.05, 0.99);
+    auto target = ecs.entity(target_id);
+    const bool target_valid = target.is_valid();
     const bool target_is_missile = entity_is_missile(ecs, target_id);
     if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles && target_is_missile) {
         const double close_range_threshold_m = std::max(300.0, mount->engagement_range_m * 0.75);
@@ -857,24 +871,24 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
     const bool hit = u <= hit_probability;
 
     if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles && target_is_missile) {
-        if (hit) {
+        if (hit && target_valid) {
             target.destruct();
             if (score) {
                 score->hits_landed += 1;
                 score->kills_confirmed += 1;
             }
-            return true;
         }
-        return false;
+        return true;
     }
 
-    if (!hit) {
-        return false;
+    if (!hit || !target_valid) {
+        return true;
     }
 
     const double applied_damage = mount->damage_per_hit > 0.0 ? mount->damage_per_hit : 60.0;
     const double fuse_distance = weapon_type == NavalWeaponType::DeckGun ? 25.0 : 40.0;
-    return debug_apply_proximity_hit(attacker_id, target_id, applied_damage, fuse_distance);
+    (void)debug_apply_proximity_hit(attacker_id, target_id, applied_damage, fuse_distance);
+    return true;
 }
 
 bool SimulationKernel::try_fire_naval_mission_weapon(uint64_t attacker_id) {

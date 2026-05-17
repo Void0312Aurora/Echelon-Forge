@@ -105,7 +105,7 @@ void queue_or_refresh_pending_command(flecs::entity entity, const CommandT& valu
     entity.set<PendingT>({next, deliver_time, true});
 }
 
-inline bool queue_pending_mission_command(
+inline MissionCommandEnqueueResult queue_pending_mission_command(
     flecs::entity entity,
     const MissionCommand& value,
     double current_time,
@@ -123,7 +123,26 @@ inline bool queue_pending_mission_command(
         queue = entity.get_mut<MissionCommandPendingQueue>();
     }
 
-    return pending && queue && enqueue_pending_mission_command(*pending, *queue, value, current_time, latency_s);
+    if (!pending || !queue) {
+        return MissionCommandEnqueueResult::Dropped;
+    }
+    return enqueue_pending_mission_command(*pending, *queue, value, current_time, latency_s);
+}
+
+inline void warn_if_mission_command_queue_dropped(
+    flecs::entity entity,
+    MissionCommandEnqueueResult enqueue_result,
+    const MissionCommand& command
+) {
+    if (enqueue_result != MissionCommandEnqueueResult::Dropped) {
+        return;
+    }
+    spdlog::warn(
+        "Dropped mission command for entity {} because the pending mission queue is full; command_code={}, priority={}",
+        entity.id(),
+        command.command_code,
+        mission_command_queue_priority(command)
+    );
 }
 } // namespace
 
@@ -144,7 +163,9 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
                                 (entity_id * 0xd6e8feb86659fd93ULL) ^ 0x13579bdfULL;
                 double roll = deterministic_uniform01(seed);
                 if (roll >= link->drop_prob) {
-                    (void)queue_pending_mission_command(e, mission, current_time, link->latency_s);
+                    const auto enqueue_result =
+                        queue_pending_mission_command(e, mission, current_time, link->latency_s);
+                    warn_if_mission_command_queue_dropped(e, enqueue_result, mission);
                 }
             } else {
                 e.set<MissionCommand>(mission);
@@ -363,7 +384,9 @@ void SimulationKernel::set_mission_command(uint64_t entity_id, const MissionComm
                             (entity_id * 0xd6e8feb86659fd93ULL) ^ 0x13579bdfULL;
             double roll = deterministic_uniform01(seed);
             if (roll >= link->drop_prob) {
-                (void)queue_pending_mission_command(e, cmd, current_time, link->latency_s);
+                const auto enqueue_result =
+                    queue_pending_mission_command(e, cmd, current_time, link->latency_s);
+                warn_if_mission_command_queue_dropped(e, enqueue_result, cmd);
             }
             return;
         }

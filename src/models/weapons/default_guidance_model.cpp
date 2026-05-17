@@ -312,6 +312,27 @@ void propagate_track_memory(Missile& missile, double dt) {
     missile.seeker_mode = static_cast<int>(MissileSeekerMode::Memory);
 }
 
+bool terminal_seeker_is_active(const Missile& missile) {
+    if (missile.terminal_seeker_active) {
+        return true;
+    }
+    if (!std::isfinite(missile.seeker_activation_range_m) || missile.seeker_activation_range_m <= 0.0) {
+        return true;
+    }
+    return missile.filtered_range_m > 0.0 && missile.filtered_range_m <= missile.seeker_activation_range_m;
+}
+
+bool detection_is_usable_for_guidance(const Missile& missile, const Detection& det) {
+    if (det.local_sensor_hit) {
+        return true;
+    }
+    return missile.midcourse_datalink_supported;
+}
+
+bool detection_matches_assigned_target(const Missile& missile, const Detection& det) {
+    return missile.target_id == 0 || det.target_id == missile.target_id;
+}
+
 void update_mass_and_drag_state(
     flecs::world world,
     flecs::entity missile_entity,
@@ -419,6 +440,7 @@ public:
         initialize_runtime_state(missile_entity, missile, velocity, current_time);
         const GuidanceResolvedTuning tuning = resolve_tuning(missile_entity, missile, velocity);
         missile.track_memory_timeout_s = tuning.track_memory_timeout_s;
+        missile.terminal_seeker_active = terminal_seeker_is_active(missile);
 
         const ContactList* contacts = missile_entity.get<ContactList>();
         const Detection* best_det = nullptr;
@@ -437,11 +459,21 @@ public:
                     continue;
                 }
 
+                if (!detection_is_usable_for_guidance(missile, c)) {
+                    continue;
+                }
                 if (missile.seeker_lock_range > 0.0 && c.range > missile.seeker_lock_range) {
                     continue;
                 }
                 if (missile.seeker_fov_deg > 0.0 &&
                     std::abs(c.bearing) > missile.seeker_fov_deg * 0.5) {
+                    continue;
+                }
+                if (!c.local_sensor_hit && missile.terminal_seeker_active) {
+                    continue;
+                }
+
+                if (!detection_matches_assigned_target(missile, c)) {
                     continue;
                 }
 
@@ -455,13 +487,17 @@ public:
         if (best_det) {
             missile.target_id = best_det->target_id;
             update_track_from_detection(missile, *best_det, current_time, dt, tuning);
+            missile.terminal_seeker_active = terminal_seeker_is_active(missile);
         } else if (missile.seeker_has_valid_track &&
                    missile.last_track_time_s >= 0.0 &&
                    (current_time - missile.last_track_time_s) <= tuning.track_memory_timeout_s) {
             propagate_track_memory(missile, dt);
+            missile.terminal_seeker_active = terminal_seeker_is_active(missile);
         } else {
             missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
+            missile.seeker_has_valid_track = false;
             missile.commanded_lateral_accel_mps2 = 0.0;
+            missile.terminal_seeker_active = terminal_seeker_is_active(missile);
         }
 
         Vec3 velocity_vec = missile_guidance::velocity_to_vec3(velocity);

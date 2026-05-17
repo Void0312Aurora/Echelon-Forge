@@ -9,6 +9,9 @@ import ef_py
 from gym_envs.scenario_loader import ScenarioLoader
 
 from python.scenario_runtime import apply_world_layout_to_kernel
+from python.scenario_runtime import apply_world_setup_payload_compat
+from python.scenario_runtime import build_batch_world_setup_request
+from python.scenario_runtime import extract_batch_world_setup_entity_ids
 
 
 @dataclass
@@ -29,25 +32,23 @@ class RuntimeFacadeAdapter:
         self.facade = ef_py.RuntimeFacade(int(world_count)) if hasattr(ef_py, "RuntimeFacade") else None
         self._compat_runtime = self.facade.runtime() if self.facade is not None else ef_py.WorldBatchRuntime(int(world_count))
 
+    def _batch_target(self):
+        return self.facade if self.facade is not None else self._compat_runtime
+
     def world_count(self) -> int:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return int(target.world_count())
+        return int(self._batch_target().world_count())
 
     def set_worker_threads(self, worker_threads: int) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_worker_threads(int(worker_threads))
+        self._batch_target().set_worker_threads(int(worker_threads))
 
     def worker_threads(self) -> int:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return int(target.worker_threads())
+        return int(self._batch_target().worker_threads())
 
     def effective_worker_threads(self) -> int:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return int(target.effective_worker_threads())
+        return int(self._batch_target().effective_worker_threads())
 
     def load_database(self, path: str) -> bool:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return bool(target.load_database(path))
+        return bool(self._batch_target().load_database(path))
 
     def world(self, index: int):
         return self._compat_runtime.world(int(index))
@@ -105,17 +106,16 @@ class RuntimeFacadeAdapter:
         )
 
     def apply_world_setup(self, request: Any):
-        if self.facade is not None and hasattr(self.facade, "apply_world_setup"):
-            return self.facade.apply_world_setup(request)
-        result = ef_py.BatchWorldSetupResult() if hasattr(ef_py, "BatchWorldSetupResult") else None
-        entity_ids = self._compat_runtime.apply_world_setup_batch(
-            list(request.seeds),
-            list(request.terrain_assignments),
-            list(request.wind_assignments),
-            list(request.zones),
-            list(request.spawn_requests),
-            list(request.time_steps),
+        entity_ids = apply_world_setup_payload_compat(
+            self._batch_target(),
+            seeds=list(request.seeds),
+            terrain_assignments=list(request.terrain_assignments),
+            wind_assignments=list(request.wind_assignments),
+            zones=list(request.zones),
+            spawn_requests=list(request.spawn_requests),
+            time_steps=list(request.time_steps),
         )
+        result = ef_py.BatchWorldSetupResult() if hasattr(ef_py, "BatchWorldSetupResult") else None
         if result is None:
             return entity_ids
         result.entity_ids = list(entity_ids)
@@ -130,29 +130,26 @@ class RuntimeFacadeAdapter:
         requests: Sequence[Any],
         time_steps: Sequence[float] | None = None,
     ) -> list[int]:
-        if hasattr(ef_py, "BatchWorldSetupRequest"):
-            request = ef_py.BatchWorldSetupRequest()
-            request.seeds = [int(seed) & 0xFFFFFFFF for seed in seeds]
-            request.terrain_assignments = list(terrain_assignments)
-            request.wind_assignments = list(wind_assignments)
-            request.zones = list(zones)
-            request.spawn_requests = list(requests)
-            request.time_steps = [] if time_steps is None else [float(value) for value in time_steps]
-            result = self.apply_world_setup(request)
-            if hasattr(result, "entity_ids"):
-                return [int(entity_id) for entity_id in list(result.entity_ids)]
-            return [int(entity_id) for entity_id in list(result)]
-        return [
-            int(entity_id)
-            for entity_id in self._compat_runtime.apply_world_setup_batch(
-                list(seeds),
-                list(terrain_assignments),
-                list(wind_assignments),
-                list(zones),
-                list(requests),
-                [] if time_steps is None else list(time_steps),
-            )
-        ]
+        normalized_time_steps = [] if time_steps is None else [float(value) for value in time_steps]
+        request = build_batch_world_setup_request(
+            seeds=[int(seed) for seed in seeds],
+            terrain_assignments=list(terrain_assignments),
+            wind_assignments=list(wind_assignments),
+            zones=list(zones),
+            spawn_requests=list(requests),
+            time_steps=normalized_time_steps,
+        )
+        if request is not None:
+            return extract_batch_world_setup_entity_ids(self.apply_world_setup(request))
+        return apply_world_setup_payload_compat(
+            self._batch_target(),
+            seeds=[int(seed) for seed in seeds],
+            terrain_assignments=list(terrain_assignments),
+            wind_assignments=list(wind_assignments),
+            zones=list(zones),
+            spawn_requests=list(requests),
+            time_steps=normalized_time_steps,
+        )
 
     def export_observation_packet(self, request_or_refs: Any) -> Any:
         if self.facade is not None and hasattr(self.facade, "export_observation_packet"):
@@ -226,16 +223,13 @@ class RuntimeFacadeAdapter:
         return truth
 
     def get_mission_commands_batch(self, refs: Sequence[Any]) -> list[Any]:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return list(target.get_mission_commands_batch(list(refs)))
+        return list(self._batch_target().get_mission_commands_batch(list(refs)))
 
     def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_pilot_actions_batch(list(assignments))
+        self._batch_target().set_pilot_actions_batch(list(assignments))
 
     def step_batch(self) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.step_batch()
+        self._batch_target().step_batch()
 
     def prime_execution_episode_batch(self, refs: Sequence[Any], states: Sequence[Any]) -> None:
         if self.facade is not None:
@@ -300,20 +294,16 @@ class RuntimeFacadeAdapter:
         self._compat_runtime.step_worlds([int(index) for index in world_indices])
 
     def set_mission_commands_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_mission_commands_batch(list(assignments))
+        self._batch_target().set_mission_commands_batch(list(assignments))
 
     def set_task_orders_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_task_orders_batch(list(assignments))
+        self._batch_target().set_task_orders_batch(list(assignments))
 
     def set_leader_intents_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_leader_intents_batch(list(assignments))
+        self._batch_target().set_leader_intents_batch(list(assignments))
 
     def set_pilot_reports_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_pilot_reports_batch(list(assignments))
+        self._batch_target().set_pilot_reports_batch(list(assignments))
 
 
 __all__ = ["RuntimeFacadeAdapter"]

@@ -27,6 +27,16 @@ inline double damage_rand_uniform01(uint64_t& state) {
     state = damage_splitmix64(state);
     return (state >> 11) * (1.0 / 9007199254740992.0);
 }
+
+inline bool proximity_fuze_has_terminal_guidance_support(const Missile& missile) {
+    if (missile.seeker_has_valid_track) {
+        return true;
+    }
+    if (!missile.terminal_seeker_active) {
+        return false;
+    }
+    return missile.seeker_mode == 1;
+}
 } // namespace
 
 inline void register_damage_system(flecs::world& ecs) {
@@ -75,6 +85,11 @@ inline void register_damage_system(flecs::world& ecs) {
 
                     if (!m[i].proximity_engaged) {
                         m[i].proximity_last_dist_m = dist;
+                        continue;
+                    }
+
+                    if (!proximity_fuze_has_terminal_guidance_support(m[i])) {
+                        it.entity(i).destruct();
                         continue;
                     }
 

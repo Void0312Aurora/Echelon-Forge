@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import math
+import json
+import tempfile
 import unittest
 
 from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
@@ -27,7 +29,36 @@ def _make_detection(target_id: int, *, range_m: float, bearing_deg: float, eleva
     return det
 
 
+def _set_detection_timestamp(det: ef_py.Detection, timestamp_s: float) -> ef_py.Detection:
+    det.timestamp = float(timestamp_s)
+    return det
+
+
 class SensorSituationRealismP0Tests(unittest.TestCase):
+    def _kernel_with_overrides(self, overrides: dict[str, dict]) -> ef_py.SimulationKernel:
+        kernel = ef_py.SimulationKernel()
+        kernel.reset(8800 + len(overrides))
+        self.assertTrue(kernel.load_database(_DB_PATH))
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8", delete=False) as handle:
+            json.dump({"units": list(overrides.values())}, handle)
+            override_path = handle.name
+        self.assertTrue(kernel.load_unit_definitions(override_path))
+        return kernel
+
+    def _make_unit_override(self, base_filename: str, name: str, *, track_memory_s: float | None = None) -> dict:
+        with open(
+            resolve_repo_path("examples", "config", "database", "aircraft", "units", base_filename),
+            "r",
+            encoding="utf-8",
+        ) as handle:
+            unit = json.load(handle)
+        unit["name"] = name
+        if track_memory_s is not None:
+            sensor = dict(unit.get("sensor") or {})
+            sensor["track_memory_s"] = float(track_memory_s)
+            unit["sensor"] = sensor
+        return unit
+
     def test_sensor_runtime_defaults_expose_p0_fields(self) -> None:
         sim = ef_py.SimulationKernel()
         sim.reset(314)
@@ -224,6 +255,87 @@ class SensorSituationRealismP0Tests(unittest.TestCase):
         self.assertEqual(int(debug_track.usability), 2)
         self.assertTrue(bool(debug_track.iff_known))
 
+    def test_datalink_report_promotes_matching_tentative_track_to_confirmed(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(102)
+        self.assertTrue(sim.load_database(_DB_PATH))
+
+        sender = sim.spawn_unit(ef_py.Side.Blue, "E-3_Sentry_AWACS", 0.0, 0.0, 9000.0, 0.0, 0.0, 0.0, 0.0, 200.0, 0.0)
+        receiver = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, -30000.0, 5000.0, 0.0, 0.0, 0.0, 0.0, 250.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 90000.0, 5000.0, 180.0, 0.0, 0.0, 0.0, -250.0, 0.0)
+
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=90000.0, bearing_deg=0.0)])
+        sim.step()
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=89000.0, bearing_deg=0.0)])
+        sim.step()
+
+        sim.set_contact_list(int(receiver), [_make_detection(int(foe), range_m=120000.0, bearing_deg=0.0)])
+        sim.step()
+        tentative = sim.get_tentative_track_debug_view(int(receiver))
+        if tentative:
+            self.assertEqual(int(tentative[0].status), 0)
+            self.assertFalse(bool(tentative[0].iff_known))
+        else:
+            tracks = [t for t in sim.get_track_debug_view(int(receiver)) if int(t.id) == int(foe)]
+            self.assertEqual(len(tracks), 1)
+            self.assertEqual(int(tracks[0].status), 1)
+            self.assertEqual(int(tracks[0].source), 4)
+
+        sim.set_contact_list(int(receiver), [])
+        sim.step()
+
+        tracks = [t for t in sim.get_track_debug_view(int(receiver)) if int(t.id) == int(foe)]
+        self.assertEqual(len(tracks), 1)
+        promoted = tracks[0]
+        self.assertEqual(int(promoted.status), 1)
+        self.assertIn(int(promoted.source), (3, 4))
+        self.assertEqual(int(promoted.usability), 2)
+        self.assertTrue(bool(promoted.iff_known))
+        self.assertGreaterEqual(float(promoted.classification_confidence), 0.9)
+
+        obs_tracks = [c for c in sim.get_agent_observation(int(receiver)).contacts if int(c.id) == int(foe)]
+        self.assertEqual(len(obs_tracks), 1)
+        self.assertEqual(int(obs_tracks[0].status), 1)
+        self.assertIn(int(obs_tracks[0].source), (3, 4))
+        self.assertTrue(bool(obs_tracks[0].iff_known))
+
+    def test_fused_track_keeps_local_geometry_when_datalink_report_disagrees(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(103)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        sim.set_time_step(0.5)
+
+        sender = sim.spawn_unit(ef_py.Side.Blue, "E-3_Sentry_AWACS", 0.0, 0.0, 9000.0, 0.0, 0.0, 0.0, 0.0, 200.0, 0.0)
+        receiver = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, -30000.0, 5000.0, 0.0, 0.0, 0.0, 0.0, 250.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 80000.0, 5000.0, 180.0, 0.0, 0.0, 0.0, -250.0, 0.0)
+
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=110000.0, bearing_deg=0.0, closing_mps=0.0)])
+        sim.step()
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=109000.0, bearing_deg=0.0, closing_mps=0.0)])
+        sim.step()
+
+        det1 = _set_detection_timestamp(_make_detection(int(foe), range_m=70000.0, bearing_deg=0.0, closing_mps=0.0), 1.0)
+        sim.set_contact_list(int(receiver), [det1])
+        sim.step()
+        det2 = _set_detection_timestamp(_make_detection(int(foe), range_m=69000.0, bearing_deg=0.0, closing_mps=0.0), 2.0)
+        sim.set_contact_list(int(receiver), [det2])
+        sim.step()
+
+        tracks = [t for t in sim.get_track_debug_view(int(receiver)) if int(t.id) == int(foe)]
+        self.assertEqual(len(tracks), 1)
+        fused_track = tracks[0]
+        self.assertEqual(int(fused_track.status), 1)
+        self.assertEqual(int(fused_track.source), 4)
+        self.assertTrue(bool(fused_track.iff_known))
+        self.assertLess(float(fused_track.range), 95000.0)
+        self.assertGreater(float(fused_track.range), 45000.0)
+        self.assertLess(abs(float(fused_track.range) - 69000.0), abs(float(fused_track.range) - 109000.0))
+
+        obs_tracks = [c for c in sim.get_agent_observation(int(receiver)).contacts if int(c.id) == int(foe)]
+        self.assertEqual(len(obs_tracks), 1)
+        self.assertEqual(int(obs_tracks[0].source), 4)
+        self.assertAlmostEqual(float(obs_tracks[0].range), float(fused_track.range), delta=1.0e-6)
+
     def test_confirmed_and_coasted_tracks_expose_different_usability_semantics(self) -> None:
         sim = ef_py.SimulationKernel()
         sim.reset(222)
@@ -265,6 +377,67 @@ class SensorSituationRealismP0Tests(unittest.TestCase):
         aged_obs = sim.get_agent_observation(int(own))
         matching = [c for c in aged_obs.contacts if int(c.id) == int(foe)]
         self.assertEqual(len(matching), 0)
+
+    def test_fused_track_reverts_to_local_identity_after_datalink_support_ages_out(self) -> None:
+        sender_name = "E3_ShortMemory"
+        receiver_name = "F16_DefaultReceiver"
+        sim = self._kernel_with_overrides(
+            {
+                sender_name: self._make_unit_override("e3_sentry.json", sender_name, track_memory_s=0.0),
+                receiver_name: {
+                    **self._make_unit_override("f16c_block50.json", receiver_name),
+                    "data_link_max_reports_per_update": 0,
+                },
+            }
+        )
+        sim.set_time_step(1.0)
+
+        sender = sim.spawn_unit(ef_py.Side.Blue, sender_name, 0.0, 0.0, 9000.0, 0.0, 0.0, 0.0, 0.0, 200.0, 0.0)
+        receiver = sim.spawn_unit(ef_py.Side.Blue, receiver_name, 0.0, -30000.0, 5000.0, 0.0, 0.0, 0.0, 0.0, 250.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 75000.0, 5000.0, 180.0, 0.0, 0.0, 0.0, -250.0, 0.0)
+
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=75000.0, bearing_deg=0.0)])
+        sim.step()
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=74000.0, bearing_deg=0.0)])
+        sim.step()
+
+        for _ in range(3):
+            sim.set_contact_list(int(receiver), [_make_detection(int(foe), range_m=105000.0, bearing_deg=0.0, closing_mps=0.0)])
+            sim.step()
+
+        fused_tracks = [t for t in sim.get_track_debug_view(int(receiver)) if int(t.id) == int(foe)]
+        self.assertEqual(len(fused_tracks), 1)
+        self.assertEqual(int(fused_tracks[0].source), 1)
+        self.assertFalse(bool(fused_tracks[0].iff_known))
+        self.assertLess(float(fused_tracks[0].classification_confidence), 0.9)
+
+        sim.set_contact_list(int(sender), [])
+        sim.set_contact_list(int(receiver), [])
+        for _ in range(6):
+            sim.step()
+
+        coasted = [t for t in sim.get_track_debug_view(int(receiver)) if int(t.id) == int(foe)]
+        self.assertEqual(len(coasted), 1)
+        self.assertEqual(int(coasted[0].source), 1)
+        self.assertFalse(bool(coasted[0].iff_known))
+
+        for _ in range(4):
+            det = _set_detection_timestamp(_make_detection(int(foe), range_m=104000.0, bearing_deg=0.0, closing_mps=0.0), 20.0)
+            sim.set_contact_list(int(receiver), [det])
+            sim.step()
+
+        reverted_tracks = [t for t in sim.get_track_debug_view(int(receiver)) if int(t.id) == int(foe)]
+        self.assertEqual(len(reverted_tracks), 1)
+        reverted = reverted_tracks[0]
+        self.assertEqual(int(reverted.status), 1)
+        self.assertEqual(int(reverted.source), 1)
+        self.assertFalse(bool(reverted.iff_known))
+        self.assertLess(float(reverted.classification_confidence), 0.9)
+
+        obs_tracks = [c for c in sim.get_agent_observation(int(receiver)).contacts if int(c.id) == int(foe)]
+        self.assertEqual(len(obs_tracks), 1)
+        self.assertEqual(int(obs_tracks[0].source), 1)
+        self.assertFalse(bool(obs_tracks[0].iff_known))
 
     def test_radar_pd_trend_stronger_for_close_target_than_far_target(self) -> None:
         sim_near = ef_py.SimulationKernel()

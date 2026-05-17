@@ -69,6 +69,9 @@ struct Missile {
     double guidance_max_lateral_g = std::numeric_limits<double>::quiet_NaN();
     double guidance_autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
     double guidance_max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
+    double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
+    bool midcourse_datalink_supported = false;
+    bool terminal_seeker_active = true;
 };
 
 struct MissileSharedLaunchRuntimeState {
@@ -97,6 +100,9 @@ struct MissileSharedLaunchRuntimeState {
     double max_lateral_g = 0.0;
     double autopilot_tau_s = 0.0;
     double max_accel_response_g_per_s = 0.0;
+    double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
+    bool midcourse_datalink_supported = false;
+    bool terminal_seeker_active = true;
 };
 
 inline double clamp_missile_propellant_mass_kg(double total_mass_kg, double propellant_mass_kg) {
@@ -185,6 +191,9 @@ inline void initialize_missile_launch_runtime(
     missile.guidance_max_lateral_g = state.max_lateral_g;
     missile.guidance_autopilot_tau_s = state.autopilot_tau_s;
     missile.guidance_max_accel_response_g_per_s = state.max_accel_response_g_per_s;
+    missile.seeker_activation_range_m = state.seeker_activation_range_m;
+    missile.midcourse_datalink_supported = state.midcourse_datalink_supported;
+    missile.terminal_seeker_active = state.terminal_seeker_active;
 }
 
 struct Ammo {

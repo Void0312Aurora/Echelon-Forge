@@ -189,7 +189,7 @@ inline SystemTrack make_track_from_contact(
         track.x, track.y, track.z
     );
     refresh_track_source(track, current_time, sensor_cfg ? track_recent_local_support_window_s(sensor_cfg->scan_period) : 1.0);
-    refresh_track_identification(track);
+    refresh_track_identification(track, current_time);
     return track;
 }
 
@@ -227,7 +227,7 @@ inline SystemTrack make_track_from_report(
         track.range, track.azimuth, track.elevation
     );
     refresh_track_source(track, current_time, 1.0);
-    refresh_track_identification(track);
+    refresh_track_identification(track, current_time);
     return track;
 }
 
@@ -271,7 +271,7 @@ inline void register_track_manager_system(flecs::world& ecs) {
                         track.quality = track_quality_from_counts(track.confirm_hit_count, std::max(sensor[i].confirm_window_n, 1), track.time_since_update);
                         track.confidence = track.quality;
                         refresh_track_source(track, current_time, local_support_window_s);
-                        refresh_track_identification(track);
+                        refresh_track_identification(track, current_time);
                     }
                     for (auto& track : db.tentative_tracks) {
                         track.time_since_update += dt;
@@ -279,13 +279,15 @@ inline void register_track_manager_system(flecs::world& ecs) {
                         track.quality = track_quality_from_counts(track.confirm_hit_count, std::max(sensor[i].confirm_window_n, 1), track.time_since_update);
                         track.confidence = track.quality;
                         refresh_track_source(track, current_time, local_support_window_s);
-                        refresh_track_identification(track);
+                        refresh_track_identification(track, current_time);
                     }
 
                     double own_heading = trans[i].heading;
 
                     // 2. Process Local Sensor Contacts
                     for (const auto& contact : contacts) {
+                        const bool fresh_contact_for_new_track =
+                            contact.timestamp > (current_time - std::max(1.0e-6, dt * 0.5));
                         double meas_x = 0.0;
                         double meas_y = 0.0;
                         double meas_z = 0.0;
@@ -298,6 +300,10 @@ inline void register_track_manager_system(flecs::world& ecs) {
                         bool found = false;
                         for (auto& track : db.tracks) {
                             if (track.entity_id == contact.target_id) {
+                                if (contact.timestamp <= track.last_local_update_time + 1.0e-6) {
+                                    found = true;
+                                    break;
+                                }
                                 track.time_since_update = 0.0;
                                 track.range = contact.range;
                                 track.azimuth = contact.bearing;
@@ -313,7 +319,7 @@ inline void register_track_manager_system(flecs::world& ecs) {
                                 track.quality = track_quality_from_counts(track.confirm_hit_count, std::max(sensor[i].confirm_window_n, 1), track.time_since_update);
                                 track.confidence = track.quality;
                                 refresh_track_source(track, current_time, local_support_window_s);
-                                refresh_track_identification(track);
+                                refresh_track_identification(track, current_time);
 
                                 found = true;
                                 break;
@@ -327,6 +333,10 @@ inline void register_track_manager_system(flecs::world& ecs) {
                             auto& track = *it_tent;
                             if (track.entity_id != contact.target_id) {
                                 continue;
+                            }
+                            if (contact.timestamp <= track.last_local_update_time + 1.0e-6) {
+                                found = true;
+                                break;
                             }
 
                             track.time_since_update = 0.0;
@@ -343,7 +353,7 @@ inline void register_track_manager_system(flecs::world& ecs) {
                             track.quality = track_quality_from_counts(track.confirm_hit_count, std::max(sensor[i].confirm_window_n, 1), track.time_since_update);
                             track.confidence = track.quality;
                             refresh_track_source(track, current_time, local_support_window_s);
-                            refresh_track_identification(track);
+                            refresh_track_identification(track, current_time);
 
                             if (track.confirm_hit_count >= std::max(sensor[i].confirm_hits_m, 1)
                                 && track.confirm_window_progress <= std::max(sensor[i].confirm_window_n, 1)) {
@@ -356,6 +366,9 @@ inline void register_track_manager_system(flecs::world& ecs) {
                         }
 
                         if (!found && (db.tracks.size() + db.tentative_tracks.size()) < static_cast<size_t>(db.max_tracks)) {
+                            if (!fresh_contact_for_new_track) {
+                                continue;
+                            }
                             db.tentative_tracks.push_back(
                                 make_track_from_contact(contact, trans[i], owner_alliance, it.world(), current_time, &sensor[i])
                             );
@@ -367,25 +380,52 @@ inline void register_track_manager_system(flecs::world& ecs) {
                         for (const auto& msg : comm_queue->inbox) {
                             if (msg.type == CommMsgType::ReportTrack || msg.type == CommMsgType::ReportContact) {
                                 bool found = false;
+                                const TrackClass msg_classification =
+                                    msg.status_code >= static_cast<int>(TrackClass::Unknown)
+                                        && msg.status_code <= static_cast<int>(TrackClass::Neutral)
+                                    ? static_cast<TrackClass>(msg.status_code)
+                                    : TrackClass::Unknown;
                                 for (auto& track : db.tracks) {
                                     if (track.entity_id == msg.entity_ref || track.track_id == msg.track_ref) {
+                                        if (msg.timestamp <= track.last_datalink_update_time + 1.0e-6) {
+                                            found = true;
+                                            break;
+                                        }
                                         track.time_since_update = 0.0;
-                                        track.x = msg.location_x;
-                                        track.y = msg.location_y;
-                                        track.z = msg.location_z;
+                                        if (!track_has_local_geometry_this_update(track, current_time)) {
+                                            track.x = msg.location_x;
+                                            track.y = msg.location_y;
+                                            track.z = msg.location_z;
+                                        } else {
+                                            track.x = 0.75 * track.x + 0.25 * msg.location_x;
+                                            track.y = 0.75 * track.y + 0.25 * msg.location_y;
+                                            track.z = 0.75 * track.z + 0.25 * msg.location_z;
+                                        }
                                         if (!track_has_local_geometry_this_update(track, current_time)) {
                                             track.vx = msg.velocity_x;
                                             track.vy = msg.velocity_y;
                                             track.vz = msg.velocity_z;
+                                        } else {
+                                            track.vx = 0.75 * track.vx + 0.25 * msg.velocity_x;
+                                            track.vy = 0.75 * track.vy + 0.25 * msg.velocity_y;
+                                            track.vz = 0.75 * track.vz + 0.25 * msg.velocity_z;
                                         }
                                         const Alliance* target_alliance = it.world().entity(msg.entity_ref).get<Alliance>();
-                                        track.classification = classify_track_from_alliance(owner_alliance, target_alliance);
+                                        const TrackClass local_classification =
+                                            classify_track_from_alliance(owner_alliance, target_alliance);
+                                        if (track_has_recent_local_support(track, current_time, local_support_window_s)
+                                            && local_classification != TrackClass::Unknown) {
+                                            track.classification = local_classification;
+                                        } else if (msg_classification != TrackClass::Unknown) {
+                                            track.classification = msg_classification;
+                                        } else {
+                                            track.classification = local_classification;
+                                        }
                                         track.status = TrackStatus::Confirmed;
                                         track.last_datalink_update_time = current_time;
                                         track.quality = std::max(track.quality, msg.quality);
                                         track.confidence = std::max(track.confidence, msg.quality);
                                         track.confirm_hit_count = std::max(track.confirm_hit_count, std::max(sensor[i].confirm_hits_m, 1));
-                                        track.iff_known = true;
 
                                         cartesian_to_spherical(
                                             trans[i].x, trans[i].y, trans[i].z, own_heading,
@@ -393,17 +433,74 @@ inline void register_track_manager_system(flecs::world& ecs) {
                                             track.range, track.azimuth, track.elevation
                                         );
                                         refresh_track_source(track, current_time, local_support_window_s);
-                                        refresh_track_identification(track);
+                                        refresh_track_identification(track, current_time);
 
                                         found = true;
                                         break;
                                     }
                                 }
 
+                                if (!found) {
+                                    for (auto it_tent = db.tentative_tracks.begin(); it_tent != db.tentative_tracks.end(); ++it_tent) {
+                                        auto& track = *it_tent;
+                                        if (track.entity_id != msg.entity_ref && track.track_id != msg.track_ref) {
+                                            continue;
+                                        }
+                                        if (msg.timestamp <= track.last_datalink_update_time + 1.0e-6) {
+                                            found = true;
+                                            break;
+                                        }
+
+                                        track.time_since_update = 0.0;
+                                        if (!track_has_local_geometry_this_update(track, current_time)) {
+                                            track.x = msg.location_x;
+                                            track.y = msg.location_y;
+                                            track.z = msg.location_z;
+                                            track.vx = msg.velocity_x;
+                                            track.vy = msg.velocity_y;
+                                            track.vz = msg.velocity_z;
+                                        }
+                                        track.last_datalink_update_time = current_time;
+                                        track.quality = std::max(track.quality, std::max(0.5, msg.quality));
+                                        track.confidence = std::max(track.confidence, std::max(0.5, msg.quality));
+                                        track.confirm_hit_count = std::max(track.confirm_hit_count, std::max(sensor[i].confirm_hits_m, 1));
+                                        track.confirm_window_progress = std::max(track.confirm_window_progress, std::max(sensor[i].confirm_hits_m, 1));
+                                        const Alliance* target_alliance = it.world().entity(msg.entity_ref).get<Alliance>();
+                                        const TrackClass local_classification =
+                                            classify_track_from_alliance(owner_alliance, target_alliance);
+                                        if (track_has_recent_local_support(track, current_time, local_support_window_s)
+                                            && local_classification != TrackClass::Unknown) {
+                                            track.classification = local_classification;
+                                        } else if (msg_classification != TrackClass::Unknown) {
+                                            track.classification = msg_classification;
+                                        } else {
+                                            track.classification = local_classification;
+                                        }
+                                        track.status = TrackStatus::Confirmed;
+
+                                        cartesian_to_spherical(
+                                            trans[i].x, trans[i].y, trans[i].z, own_heading,
+                                            track.x, track.y, track.z,
+                                            track.range, track.azimuth, track.elevation
+                                        );
+                                        refresh_track_source(track, current_time, local_support_window_s);
+                                        refresh_track_identification(track, current_time);
+
+                                        db.tracks.push_back(track);
+                                        db.tentative_tracks.erase(it_tent);
+                                        found = true;
+                                        break;
+                                    }
+                                }
+
                                 if (!found && db.tracks.size() < static_cast<size_t>(db.max_tracks)) {
-                                    db.tracks.push_back(
-                                        make_track_from_report(msg, trans[i], owner_alliance, it.world(), current_time)
-                                    );
+                                    auto track = make_track_from_report(msg, trans[i], owner_alliance, it.world(), current_time);
+                                    if (msg_classification != TrackClass::Unknown) {
+                                        track.classification = msg_classification;
+                                    }
+                                    refresh_track_source(track, current_time, local_support_window_s);
+                                    refresh_track_identification(track, current_time);
+                                    db.tracks.push_back(track);
                                 }
                             }
                         }
@@ -418,7 +515,9 @@ inline void register_track_manager_system(flecs::world& ecs) {
                         std::remove_if(
                             t.begin(),
                             t.end(),
-                            [](const SystemTrack& tr) { return tr.time_since_update > 10.0; }
+                            [&](const SystemTrack& tr) {
+                                return tr.time_since_update > track_drop_timeout_s(sensor[i].track_memory_s, sensor[i].scan_period);
+                            }
                         ),
                         t.end()
                     );

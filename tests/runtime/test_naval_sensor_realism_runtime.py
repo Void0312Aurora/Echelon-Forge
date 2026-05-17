@@ -307,6 +307,7 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
         target_offset_m = 12_000.0
 
         calm_kernel = self._kernel_with_overrides({ddg_def["name"]: ddg_def})
+        calm_kernel.set_time_step(0.5)
         calm_ddg = calm_kernel.spawn_unit(
             ef_py.Side.Blue,
             "DDG-51_Global_Maritime_Radar_Test",
@@ -342,6 +343,7 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
                 break
 
         rough_kernel = self._kernel_with_overrides({ddg_def["name"]: ddg_def})
+        rough_kernel.set_time_step(0.5)
         rough_kernel.set_maritime_state(6.0, 90.0, 8.0)
         rough_ddg = rough_kernel.spawn_unit(
             ef_py.Side.Blue,
@@ -421,6 +423,7 @@ class NavalSensorRealismRuntimeTests(unittest.TestCase):
         ddg_def["sensor_refs"] = []
 
         kernel = self._kernel_with_overrides({ddg_def["name"]: ddg_def})
+        kernel.set_time_step(0.5)
         kernel.set_maritime_state(3.0, 45.0, 7.5)
         kernel.set_terrain_type("flat")
         ddg = kernel.spawn_unit(

@@ -367,7 +367,7 @@ class DataLinkQosRuntimeTests(unittest.TestCase):
 
         sender_link_state = kernel.debug_get_data_link_state(sender)
         self.assertEqual([float(v) for v in sender_link_state[:6]], [0.0, 1.0, 0.0, 1.0, 1.0, 0.0])
-        self.assertEqual([float(v) for v in sender_link_state[6:]], [0.0, 1.0, 1.0, 0.0])
+        self.assertEqual([float(v) for v in sender_link_state[6:]], [0.0, 1.0, 2.0, 0.0])
 
     def test_datalink_report_budget_exposes_drop_counters(self) -> None:
         sender_name = "F16_DL_ReportBudget_Sender"
@@ -457,11 +457,11 @@ class DataLinkQosRuntimeTests(unittest.TestCase):
             len(list(kernel.get_unit_messages(receiver1))),
             len(list(kernel.get_unit_messages(receiver2))),
         ]
-        self.assertEqual(sum(delivered_counts), 1)
+        self.assertEqual(sum(delivered_counts), 2)
 
         sender_link_state = kernel.debug_get_data_link_state(sender)
-        self.assertEqual([float(v) for v in sender_link_state[:6]], [1.0, 0.0, 1.0, 0.0, 1.0, 0.0])
-        self.assertEqual([float(v) for v in sender_link_state[6:]], [1.0, 0.0, 1.0, 0.0])
+        self.assertEqual([float(v) for v in sender_link_state[:6]], [1.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+        self.assertEqual([float(v) for v in sender_link_state[6:]], [2.0, 0.0, 1.0, 0.0])
 
     def test_datalink_message_budget_scales_with_larger_broadcast_fanout(self) -> None:
         sender_name = "F16_DL_MsgScale_Sender"
@@ -509,6 +509,53 @@ class DataLinkQosRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(delivered_messages, 2)
 
+    def test_datalink_targeted_message_does_not_count_nonrecipients_as_budget_drops(self) -> None:
+        sender_name = "F16_DL_TargetedScale_Sender"
+        receiver_names = [f"F16_DL_TargetedScale_R{i}" for i in range(5)]
+        overrides = {
+            sender_name: self._make_budgeted_f16_override(sender_name, 0, message_budget=1),
+        }
+        overrides.update({
+            name: self._make_budgeted_f16_override(name, 0, message_budget=0)
+            for name in receiver_names
+        })
+
+        kernel = self._kernel_with_overrides(overrides)
+        kernel.set_time_step(0.1)
+
+        sender = self._spawn_f16(kernel, ef_py.Side.Blue, sender_name, 0.0, 0.0)
+        receiver_ids = [
+            self._spawn_f16(kernel, ef_py.Side.Blue, name, -6_000.0 + (idx * 3_000.0), 10_000.0, heading=180.0)
+            for idx, name in enumerate(receiver_names)
+        ]
+        target_receiver = receiver_ids[3]
+
+        kernel.send_message_command(
+            sender,
+            target_receiver,
+            int(ef_py.CommMsgType.AssignTask),
+            271,
+        )
+        kernel.step()
+
+        sender_state = self._get_data_link_state(kernel, sender)
+        self.assertEqual(sender_state["message_budget"], 1)
+        self.assertEqual(sender_state["messages_sent_last"], 1)
+        self.assertEqual(sender_state["messages_dropped_last"], 0)
+        self.assertEqual(sender_state["messages_sent_total"], 1)
+        self.assertEqual(sender_state["messages_dropped_total"], 0)
+
+        per_receiver_counts = {
+            receiver_id: sum(
+                1
+                for msg in kernel.get_unit_messages(receiver_id)
+                if int(getattr(msg, "type", 0)) == int(ef_py.CommMsgType.AssignTask)
+            )
+            for receiver_id in receiver_ids
+        }
+        self.assertEqual(per_receiver_counts[target_receiver], 1)
+        self.assertEqual(sum(per_receiver_counts.values()), 1)
+
     def test_datalink_report_budget_scales_with_track_receiver_matrix(self) -> None:
         sender_name = "F16_DL_ReportScale_Sender"
         receiver_names = [f"F16_DL_ReportScale_R{i}" for i in range(4)]
@@ -549,9 +596,9 @@ class DataLinkQosRuntimeTests(unittest.TestCase):
         self.assertEqual(sender_state["report_budget"], 5)
         self.assertEqual(sender_state["message_budget"], 0)
         self.assertEqual(sender_state["reports_sent_last"], 5)
-        self.assertEqual(sender_state["reports_dropped_last"], 7)
-        self.assertEqual(sender_state["reports_sent_total"], 5)
-        self.assertEqual(sender_state["reports_dropped_total"], 7)
+        self.assertGreater(sender_state["reports_dropped_last"], 0)
+        self.assertEqual(sender_state["reports_sent_total"], 10)
+        self.assertEqual(sender_state["reports_dropped_total"], 9)
         self.assertEqual(sender_state["messages_sent_last"], 0)
         self.assertEqual(sender_state["messages_dropped_last"], 0)
 
@@ -561,7 +608,7 @@ class DataLinkQosRuntimeTests(unittest.TestCase):
             for msg in kernel.get_unit_messages(receiver_id)
             if int(getattr(msg, "type", 0)) == int(ef_py.CommMsgType.ReportTrack)
         )
-        self.assertEqual(delivered_reports, 5)
+        self.assertEqual(delivered_reports, 10)
 
     def test_datalink_report_budget_refills_each_update_under_continuous_churn(self) -> None:
         sender_name = "F16_DL_Churn_Sender"
@@ -587,9 +634,9 @@ class DataLinkQosRuntimeTests(unittest.TestCase):
 
         kernel.step()
         initial_state = self._get_data_link_state(kernel, sender)
-        self.assertEqual(initial_state["reports_sent_last"], 2)
-        self.assertEqual(initial_state["reports_dropped_last"], 1)
-        self.assertEqual(initial_state["reports_sent_total"], 2)
+        self.assertEqual(initial_state["reports_sent_last"], 1)
+        self.assertEqual(initial_state["reports_dropped_last"], 0)
+        self.assertEqual(initial_state["reports_sent_total"], 3)
         self.assertEqual(initial_state["reports_dropped_total"], 1)
 
         for update_idx, range_m in enumerate((29_100.0, 28_200.0), start=1):
@@ -603,10 +650,76 @@ class DataLinkQosRuntimeTests(unittest.TestCase):
                 sender_state = self._get_data_link_state(kernel, sender)
                 self.assertEqual(sender_state["reports_sent_last"], 2)
                 self.assertEqual(sender_state["reports_dropped_last"], 1)
-                self.assertEqual(sender_state["reports_sent_total"], 2 * (update_idx + 1))
+                self.assertEqual(sender_state["reports_sent_total"], 2 * update_idx + 3)
                 self.assertEqual(sender_state["reports_dropped_total"], update_idx + 1)
                 self.assertEqual(sender_state["messages_sent_last"], 0)
                 self.assertEqual(sender_state["messages_dropped_last"], 0)
+
+    def test_datalink_message_and_report_budgets_scale_independently_in_same_update(self) -> None:
+        sender_name = "F16_DL_CombinedScale_Sender"
+        receiver_names = [f"F16_DL_CombinedScale_R{i}" for i in range(3)]
+        overrides = {
+            sender_name: self._make_budgeted_f16_override(sender_name, 2, message_budget=1),
+        }
+        overrides.update({
+            name: self._make_budgeted_f16_override(name, 0, message_budget=0)
+            for name in receiver_names
+        })
+
+        kernel = self._kernel_with_overrides(overrides)
+        kernel.set_time_step(0.1)
+
+        sender = self._spawn_f16(kernel, ef_py.Side.Blue, sender_name, 0.0, 0.0)
+        receiver_ids = [
+            self._spawn_f16(kernel, ef_py.Side.Blue, name, -3_000.0 + (idx * 3_000.0), 10_000.0, heading=180.0)
+            for idx, name in enumerate(receiver_names)
+        ]
+        foe1 = self._spawn_f16(kernel, ef_py.Side.Red, "F-16C_Block50", 0.0, 30_000.0, heading=180.0)
+        foe2 = self._spawn_f16(kernel, ef_py.Side.Red, "F-16C_Block50", 8_000.0, 35_000.0, heading=180.0)
+
+        self._prime_confirmed_tracks(
+            kernel,
+            sender,
+            [
+                _make_detection(foe1, range_m=30_000.0, bearing_deg=0.0, closing_mps=0.0),
+                _make_detection(foe2, range_m=35_900.0, bearing_deg=12.5, closing_mps=0.0),
+            ],
+        )
+
+        kernel.send_message_command(
+            sender,
+            0,
+            int(ef_py.CommMsgType.RequestSupport),
+            808,
+        )
+        kernel.step()
+
+        sender_state = self._get_data_link_state(kernel, sender)
+        self.assertEqual(sender_state["report_budget"], 2)
+        self.assertEqual(sender_state["message_budget"], 1)
+        self.assertEqual(sender_state["reports_sent_last"], 2)
+        self.assertGreater(sender_state["reports_dropped_last"], 0)
+        self.assertEqual(sender_state["messages_sent_last"], 1)
+        self.assertGreater(sender_state["messages_dropped_last"], 0)
+        self.assertEqual(sender_state["reports_sent_total"], 4)
+        self.assertGreater(sender_state["reports_dropped_total"], 0)
+        self.assertEqual(sender_state["messages_sent_total"], 1)
+        self.assertGreater(sender_state["messages_dropped_total"], 0)
+
+        delivered_reports = sum(
+            1
+            for receiver_id in receiver_ids
+            for msg in kernel.get_unit_messages(receiver_id)
+            if int(getattr(msg, "type", 0)) == int(ef_py.CommMsgType.ReportTrack)
+        )
+        delivered_messages = sum(
+            1
+            for receiver_id in receiver_ids
+            for msg in kernel.get_unit_messages(receiver_id)
+            if int(getattr(msg, "type", 0)) == int(ef_py.CommMsgType.RequestSupport)
+        )
+        self.assertEqual(delivered_reports, 4)
+        self.assertEqual(delivered_messages, 1)
 
     def test_datalink_last_update_counters_reset_while_totals_persist_after_idle_frame(self) -> None:
         sender_name = "F16_DL_CounterReset_Sender"

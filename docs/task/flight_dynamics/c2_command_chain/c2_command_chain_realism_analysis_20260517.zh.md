@@ -47,6 +47,31 @@
   - [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
   - [空战 1v1 F-16C 基线切换与最小对战合同进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
 
+## 补记：`2026-05-17` 收口标记
+
+标记口径：
+
+- `未解决`：原论点基本仍成立。
+- `部分解决`：已有局部实现或 shared contract 收口，但核心差距仍在。
+- `已有最小收口`：最小运行时闭环已存在，不宜再按“完全缺失”表述。
+- `已解决`：该条旧论述已不再适合作为当前状态描述。
+
+本补记只用于判断这些 `C2` 论点今天是否仍可直接视为当前问题。
+
+| 条目 | 当前标记 | 说明 |
+|------|----------|------|
+| `2.1` 指挥链按域不对称——海军侧严重欠发育 | `部分解决` | 海军侧仍明显弱于空中侧，但已从“严重欠发育”推进到最小工程闭环接入主线 |
+| `2.2` `MissionCommand` 是“共享壳 + 大量空中负载” | `部分解决` | 整体仍偏 `air-shaped`，但海军专属 `station/reference` 字段已接入 |
+| `2.3` 海军命令映射绕过全部任务式指挥 | `部分解决` | 仍缺完整海军任务阶段机，但已不再只是简单航向/航速抽取 |
+| `2.4` 两条命令管道共存——`MovementCommand` 未被废弃 | `部分解决` | 双管道仍在，但 `Ship` 主 authority 已从 `MovementCommand` 收回到 `MissionCommand` |
+| `2.5` `CommandLink` 模型过于简化 | `部分解决` | 已有 `FIFO backlog + 最小 priority reorder`，但仍无 `ACK/retry/jitter/multi-hop` |
+| `2.6` 通信消息系统没有带宽/电磁对抗约束 | `部分解决` | 已不再是无限广播，`budget/drop/debug` 已接入，但仍无 `relay/jamming` |
+| `2.7` `PilotAction` 和 `MissionCommand` 的控制权竞争 | `已有最小收口` | 已有最小 `deadband` 接管语义，但仍无完整 mode-state/hysteresis |
+| `2.8` 无交战规则（ROE）状态机 | `部分解决` | 已有最小 `roe_state + authority gate`，但仍非完整 `ROE` 状态机 |
+| `2.9` 无指挥关系中的交战权转移 | `未解决` | authority transfer / revoke / inheritance 仍未落地 |
+| `2.10` `LeaderIntent ↔ MissionCommand` 之间的编解码冗余 | `部分解决` | 冗余仍在，但 roundtrip/codec 漂移已被显式守门测试部分压住 |
+| `2.11` 编队控制仅在空中侧建模——海军无编队逻辑 | `部分解决` | 海军仍无完整编队控制回路，但已具最小 `station/reference/formation` 承载 |
+
 ---
 
 ## 一、当前指挥链架构

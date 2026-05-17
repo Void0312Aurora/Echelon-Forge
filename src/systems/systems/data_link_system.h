@@ -60,11 +60,22 @@ inline bool data_link_pair_is_eligible(
     const Alliance* r_side = receiver_entity.get<Alliance>();
     return s_side && r_side && s_side->side == r_side->side;
 }
+
+inline double data_link_sender_local_support_window_s(const Sensor* sensor) {
+    if (!sensor) {
+        return 1.0;
+    }
+    return std::min(
+        track_recent_local_support_window_s(sensor->scan_period),
+        std::max(1.0, sensor->track_memory_s)
+    );
+}
+
 } // namespace
 
  inline void register_data_link_system(flecs::world& ecs) {
     // We run after SensorSystem to fuse the new contacts
-    ecs.system<const DataLink, const Transform, const ContactList, const TrackDatabase>("DataLinkFusionSystem")
+    ecs.system<const DataLink, const Transform, const ContactList, const TrackDatabase, const Sensor>("DataLinkFusionSystem")
         .kind(flecs::OnUpdate)
         .run([](flecs::iter& it) {
             // Need random access to all data links to form pairs
@@ -75,6 +86,7 @@ inline bool data_link_pair_is_eligible(
                 const Transform* trans;
                 const ContactList* contacts;
                 const TrackDatabase* track_db;
+                const Sensor* sensor;
                 double effective_height_m;
             };
             std::vector<LinkNode> nodes;
@@ -85,6 +97,7 @@ inline bool data_link_pair_is_eligible(
                  auto trans = it.field<const Transform>(1);
                  auto contacts = it.field<const ContactList>(2);
                  auto track_db = it.field<const TrackDatabase>(3);
+                 auto sensor = it.field<const Sensor>(4);
                  
                  for (auto i : it) {
                      nodes.push_back({
@@ -93,6 +106,7 @@ inline bool data_link_pair_is_eligible(
                          &trans[i],
                          &contacts[i],
                          &track_db[i],
+                         &sensor[i],
                          data_link_effective_height_m(it.entity(i), trans[i])
                      });
                  }
@@ -199,8 +213,16 @@ inline bool data_link_pair_is_eligible(
                         CommQueue* q = receiver.entity.get_mut<CommQueue>();
                         if (q) {
                             const TrackDatabase* receiver_db = receiver.track_db;
+                            const double sender_local_support_window_s =
+                                data_link_sender_local_support_window_s(sender.sensor);
                             for (const auto& trk : sender.track_db->tracks) {
                                 if (trk.status != TrackStatus::Confirmed) {
+                                    continue;
+                                }
+                                if (trk.last_datalink_update_time >= 0.0) {
+                                    continue;
+                                }
+                                if (!track_has_recent_local_support(trk, current_time, sender_local_support_window_s)) {
                                     continue;
                                 }
                                 bool should_report = true;
@@ -249,7 +271,7 @@ inline bool data_link_pair_is_eligible(
                                     trk.vz,
                                     0.0,
                                     trk.quality,
-                                    static_cast<int>(trk.main_source == TrackSource::Fused ? TrackSource::DataLink : trk.main_source),
+                                    static_cast<int>(trk.classification),
                                     current_time
                                 });
                                 --report_budget_remaining;

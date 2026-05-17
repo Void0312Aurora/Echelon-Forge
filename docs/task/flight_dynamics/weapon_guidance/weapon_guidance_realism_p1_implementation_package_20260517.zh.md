@@ -1,6 +1,6 @@
 # 武器/制导真实化 P1 实施包
 
-状态：`2026-05-17` P1 起草版。
+状态：`2026-05-17` P1 起草版；已按当前代码/测试状态做一次进度核对。
 
 关联文档：
 
@@ -40,19 +40,22 @@
 3. PN 主回路已切到“加速度指令 + 一阶 autopilot surrogate + 横向过载约束”。
 4. 守门测试 [test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py) 当前通过。
 5. 既有武器链回归 [test_air_combat_1v1_fire_missile.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py) 的关键命中用例已恢复通过。
+6. `MissileTuning` shared 字段、Python round-trip、launch runtime 初始化、导弹 runtime debug 观测面已经落地。
+7. 武器定义中的 `missile_tuning` 已可经 loader/weapon station 进入发射链路，并可被全局 tuning overlay 覆盖。
 
 但 `P0` 仍保留了几类明显的临时做法，这些正是 `P1` 的入口：
 
-1. `MissileTuning` 尚未正式扩展，P0 关键参数仍落在 guidance 私有默认常量中。
-2. 发射阶段没有正确初始化导弹干重/推进剂质量，P0 在 guidance 内做了 lazy propellant split。
-3. `MassProperties` 也仍通过 guidance lazy 初始化，不是 shared launch/runtime 的正式语义。
-4. Python / facade / observation 尚未把 P0 runtime state 正式暴露出来，测试仍依赖最小 debug 路径。
+1. `MissileTuning` 已正式扩展到 P0/P1 第一批共享字段，但仍有一部分默认回退常量保留在 guidance 私有默认值中，尚未完成更细型号化标定。
+2. 发射阶段已经初始化导弹干重/推进剂质量与 `MassProperties`，但 guidance 里仍保留兼容旧发射路径的 lazy fallback。
+3. Python / debug 已暴露主要 missile runtime state，但 observation/facade 口径仍偏 debug 风格，离正式稳定观测面还有一步。
 5. missile 姿态/航迹参考系仍有 shared 语义缺口：
    - `MissileGuidance` 运行于平移积分之前；
    - 当前平移主路径使用 `LeapfrogIntegrate`，而旧 `UpdatePosition` 已停用；
    - missile `Transform.heading` 不一定与当前速度航迹严格同步。
-6. seeker / missile / launch 参数还没有进入数据库与 loader 链路。
+6. seeker / missile / launch 参数已经部分进入数据库与 loader 链路，但 midcourse / datalink / countermeasure / fuze-damage layering 还没有形成完整型号化配置面。
 7. 全量工程构建当前仍可能被并行中的共享改动阻塞，因此 `P1` 需要把 shared API 对齐和并行集成风险一起考虑。
+
+本次核对后，建议把上面 `1/2/3/6` 视为“已部分完成但未完全收口”，不要再按“尚未开始”理解。
 
 ---
 

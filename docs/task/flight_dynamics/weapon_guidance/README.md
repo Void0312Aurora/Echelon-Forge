@@ -1,6 +1,6 @@
 # 武器与制导子项目
 
-状态：`2026-05-17` 已形成 `P0/P1` 实施包，后续数据参考也应归入本目录。
+状态：`2026-05-17` 已形成 `P0/P1` 实施包；当前代码已跑通 seeker-only guidance、最小 3DoF/PN-autopilot surrogate、shared missile tuning 与 launch/runtime 守门测试，文档中的未完成项需要以 `P1` 包里的最新核对结论为准。
 
 本子项目收纳武器链、导引头、制导回路、近炸/毁伤与其数据参考方案文档。
 

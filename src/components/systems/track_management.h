@@ -81,6 +81,7 @@ constexpr double kTrackAdvisoryConfidenceThreshold = 0.35;
 constexpr double kTrackTacticalQualityThreshold = 0.60;
 constexpr double kTrackTacticalConfidenceThreshold = 0.60;
 constexpr double kTrackRecentDataLinkSupportWindowS = 5.0;
+constexpr double kTrackDropGraceMinS = 10.0;
 
 inline bool track_source_is_local(TrackSource source) {
     return source == TrackSource::Radar
@@ -136,7 +137,16 @@ inline TrackSource resolved_track_source(
     if (has_datalink) {
         return TrackSource::DataLink;
     }
-    return track.main_source;
+    if (track_source_is_local(track.local_source)) {
+        return track.local_source;
+    }
+    if (track.last_datalink_update_time >= 0.0) {
+        return TrackSource::DataLink;
+    }
+    if (track.main_source != TrackSource::Fused) {
+        return track.main_source;
+    }
+    return TrackSource::None;
 }
 
 inline void refresh_track_source(
@@ -155,6 +165,16 @@ inline void refresh_track_source(
 
 inline bool track_source_supports_positive_iff(TrackSource source) {
     return source == TrackSource::DataLink || source == TrackSource::Fused;
+}
+
+inline bool track_has_any_recent_support(
+    const SystemTrack& track,
+    double current_time,
+    double local_support_window_s,
+    double datalink_support_window_s = kTrackRecentDataLinkSupportWindowS
+) {
+    return track_has_recent_local_support(track, current_time, local_support_window_s)
+        || track_has_recent_datalink_support(track, current_time, datalink_support_window_s);
 }
 
 inline double default_classification_confidence(
@@ -184,20 +204,30 @@ inline double default_classification_confidence(
     }
 }
 
-inline void refresh_track_identification(SystemTrack& track) {
+inline void refresh_track_identification(
+    SystemTrack& track,
+    double current_time,
+    double datalink_support_window_s = kTrackRecentDataLinkSupportWindowS
+) {
     const bool inferred_iff =
         track.classification != TrackClass::Unknown
+        && track_has_recent_datalink_support(track, current_time, datalink_support_window_s)
         && track_source_supports_positive_iff(track.main_source);
-    track.iff_known = track.iff_known || inferred_iff;
+    track.iff_known = inferred_iff;
 
     if (track.classification == TrackClass::Unknown && !track.iff_known) {
         track.classification_confidence = 0.0;
         return;
     }
 
-    track.classification_confidence = std::max(
-        track.classification_confidence,
-        default_classification_confidence(track.main_source, track.classification, track.iff_known)
+    track.classification_confidence =
+        default_classification_confidence(track.main_source, track.classification, track.iff_known);
+}
+
+inline double track_drop_timeout_s(double track_memory_s, double scan_period_s) {
+    return std::max(
+        kTrackDropGraceMinS,
+        std::max(track_memory_s * 2.0, scan_period_s * 3.0)
     );
 }
 
