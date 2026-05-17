@@ -16,6 +16,7 @@ except ModuleNotFoundError:  # pragma: no cover
 from python.rl.runtime.execution_runtime import ExecutionRuntimeAdapter, WrappedExecutionRuntimeAdapter
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
 from gym_envs.universal_env import build_pilot_action, build_step_info, normalize_action
+from python.rl.runtime.world_batch import WorldBatchVecEnvAccess
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 
 
@@ -25,19 +26,19 @@ class _SingleWorldView:
 
     @property
     def loader(self):
-        return self.runtime.world_vec._handles[0].loader
+        return self.runtime.access.loader(0)
 
     @property
     def sim(self):
-        return self.runtime.world_vec.batch_runtime.world(0)
+        return self.runtime.access.sim(0)
 
     @property
     def agent_id(self):
-        return self.runtime.world_vec._handles[0].agent_id
+        return self.runtime.access.agent_id(0)
 
     @property
     def steps(self):
-        return self.runtime.world_vec._handles[0].steps
+        return self.runtime.access.steps(0)
 
 
 class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if gym is not None else object):
@@ -47,6 +48,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         if gym is not None:
             super().__init__()
         self.world_vec = world_vec
+        self.access = WorldBatchVecEnvAccess(world_vec)
         self._unwrapped = _SingleWorldView(self)
         self.render_mode = None
 
@@ -68,27 +70,27 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         _ = options
-        return self.world_vec._reset_single_world(0, seed=seed)
+        return self.access.reset_single_world(0, seed=seed)
 
     def step(self, action):
         env_idx = 0
         collect_timing = bool(getattr(self.world_vec, "collect_step_timing", False))
         total_t0 = time.perf_counter() if collect_timing else 0.0
-        handle = self.world_vec._handles[env_idx]
+        handle = self.access.state(env_idx)
         if handle.agent_id is None:
             raise RuntimeError("world 0 is not initialized; call reset() before step().")
 
         command_sync_ms = 0.0
         sync_t0 = time.perf_counter() if collect_timing else 0.0
-        self.world_vec._sync_command_chain_batch([env_idx])
+        self.access.sync_command_chain([env_idx])
         if collect_timing:
             command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 
-        _, refs = self.world_vec._build_refs([env_idx])
+        _, refs = self.access.build_refs([env_idx])
         prepare_t0 = time.perf_counter() if collect_timing else 0.0
         inst_now = None
         if self.world_vec.action_mode != "full":
-            inst_now = self.world_vec.batch_runtime.get_instrument_states_batch(refs)[0]
+            inst_now = self.access.get_instrument_states_batch(refs)[0]
         normalized_action = normalize_action(
             action,
             action_space=self.world_vec.action_space,
@@ -106,20 +108,20 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if collect_timing else 0.0
 
         step_t0 = time.perf_counter() if collect_timing else 0.0
-        self.world_vec.batch_runtime.set_pilot_actions_batch([assignment])
-        self.world_vec.batch_runtime.step_worlds([env_idx])
+        self.access.set_pilot_actions_batch([assignment])
+        self.access.step_worlds([env_idx])
         batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
 
         read_t0 = time.perf_counter() if collect_timing else 0.0
-        truth = self.world_vec.batch_runtime.get_agent_observations_batch(refs)[0]
-        inst = self.world_vec.batch_runtime.get_instrument_states_batch(refs)[0]
+        truth = self.access.get_agent_observations_batch(refs)[0]
+        inst = self.access.get_instrument_states_batch(refs)[0]
         state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
 
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
         handle.steps += 1
         handle.last_truth = truth
         handle.last_inst = inst
-        sim_time = float(handle.steps) * float(self.world_vec.batch_runtime.world(env_idx).get_time_step())
+        sim_time = float(handle.steps) * float(self.access.world_time_step(env_idx))
         handle.loader.update_behaviors(
             sim_time,
             truth=truth,
@@ -129,18 +131,18 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if collect_timing else 0.0
 
         sync_t0 = time.perf_counter() if collect_timing else 0.0
-        self.world_vec._sync_command_chain_batch([env_idx])
+        self.access.sync_command_chain([env_idx])
         if collect_timing:
             command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 
         obs_t0 = time.perf_counter() if collect_timing else 0.0
-        obs = self.world_vec._build_observation_from_cached_state(env_idx)
+        obs = self.access.build_observation_from_cached_state(env_idx)
         obs_build_ms = (time.perf_counter() - obs_t0) * 1000.0 if collect_timing else 0.0
 
         reward_t0 = time.perf_counter() if collect_timing else 0.0
         reward, terminated, truncated, mission_status = handle.loader.compute_full_step(
             obs,
-            self.world_vec.batch_runtime.world(env_idx),
+            self.access.sim(env_idx),
             handle.steps,
             handle.max_steps,
             truth=truth,
@@ -151,7 +153,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         info_t0 = time.perf_counter() if collect_timing else 0.0
         info = build_step_info(
             handle.loader,
-            self.world_vec.batch_runtime.world(env_idx),
+            self.access.sim(env_idx),
             int(handle.agent_id),
             mission_status=mission_status,
             terminated=bool(terminated),
@@ -196,11 +198,10 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         return int(steps), timing
 
     def get_last_state(self):
-        handle = self.world_vec._handles[0]
-        return handle.last_inst, handle.last_truth
+        return self.access.last_state(0)
 
     def set_randomization_overrides(self, overrides: dict | None) -> None:
-        self.world_vec._handles[0].set_randomization_overrides(overrides)
+        self.access.set_randomization_overrides(0, overrides)
 
     def close(self) -> None:
         self.world_vec.close()

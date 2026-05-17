@@ -13,6 +13,12 @@
 #include "core/interfaces/environment_model.h"
 
 namespace {
+    constexpr double kStallStateActiveThreshold = 0.05;
+    constexpr double kStallEntryRatePerSec = 6.0;
+    constexpr double kStallRecoveryRateFreshPerSec = 3.0;
+    constexpr double kStallRecoveryRateDeepPerSec = 0.75;
+    constexpr double kStallMemoryFullSeconds = 1.5;
+
     inline Math::Vector3 vec_cross(const Math::Vector3& a, const Math::Vector3& b) {
         return {
             a.y*b.z - a.z*b.y,
@@ -133,6 +139,45 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                             Cl = alpha_sign * cl_deep_mag;
                         }
                     }
+
+                    double raw_stall_progress = 0.0;
+                    if (alpha_abs > alpha_stall_deg) {
+                        raw_stall_progress = flight_dynamics::smoothstep01(
+                            (alpha_abs - alpha_stall_deg) /
+                            std::max(1.0e-6, alpha_deep_deg - alpha_stall_deg)
+                        );
+                    }
+
+                    StallState* stall_state =
+                        it.entity(i).has<StallState>() ? it.entity(i).get_mut<StallState>() : nullptr;
+                    const double previous_effective_stall_progress =
+                        stall_state ? flight_dynamics::clamp01(stall_state->stall_progress) : raw_stall_progress;
+                    const double previous_time_in_stall_s =
+                        stall_state ? std::max(0.0, stall_state->time_in_stall_s) : 0.0;
+
+                    double effective_stall_progress = raw_stall_progress;
+                    if (stall_state) {
+                        const double stall_memory = flight_dynamics::clamp01(
+                            previous_time_in_stall_s / kStallMemoryFullSeconds
+                        );
+                        const double stall_recovery_rate = flight_dynamics::lerp(
+                            kStallRecoveryRateFreshPerSec,
+                            kStallRecoveryRateDeepPerSec,
+                            stall_memory
+                        );
+                        if (raw_stall_progress > previous_effective_stall_progress) {
+                            effective_stall_progress = std::min(
+                                raw_stall_progress,
+                                previous_effective_stall_progress + (kStallEntryRatePerSec * dt)
+                            );
+                        } else {
+                            effective_stall_progress = std::max(
+                                raw_stall_progress,
+                                previous_effective_stall_progress - (stall_recovery_rate * dt)
+                            );
+                        }
+                        effective_stall_progress = flight_dynamics::clamp01(effective_stall_progress);
+                    }
                     
                     // Drag Polar
                     // Cd0 = 0.02 + gear? (gear handled in drag previously)
@@ -185,23 +230,25 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     const double k_eff = k * (1.0 - 0.70 * ge);
 
                     // Post-stall drag rise: strong drag increase after stall and into deep stall.
-                    double stall_drag = 0.0;
-                    if (alpha_abs > alpha_stall_deg) {
-                        const double s1 = flight_dynamics::smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_peak_deg - alpha_stall_deg)));
-                        const double s2 = flight_dynamics::smoothstep01((alpha_abs - alpha_peak_deg) / std::max(1e-6, (alpha_deep_deg - alpha_peak_deg)));
-                        stall_drag = 0.25 * s1 + 0.55 * s2;
-                    }
+                    const double peak_progress = flight_dynamics::smoothstep01(
+                        (alpha_peak_deg - alpha_stall_deg) /
+                        std::max(1.0e-6, alpha_deep_deg - alpha_stall_deg)
+                    );
+                    const double stall_drag_primary = flight_dynamics::smoothstep01(
+                        effective_stall_progress / std::max(1.0e-6, peak_progress)
+                    );
+                    const double stall_drag_secondary =
+                        (effective_stall_progress > peak_progress)
+                            ? flight_dynamics::smoothstep01(
+                                  (effective_stall_progress - peak_progress) /
+                                  std::max(1.0e-6, 1.0 - peak_progress)
+                              )
+                            : 0.0;
+                    const double stall_drag = 0.25 * stall_drag_primary + 0.55 * stall_drag_secondary;
 
                     double Cd = Cd0 + k_eff * Cl * Cl + stall_drag;
 
-                    double stall_progress = 0.0;
-                    if (alpha_abs > alpha_stall_deg) {
-                        stall_progress = flight_dynamics::smoothstep01(
-                            (alpha_abs - alpha_stall_deg) /
-                            std::max(1.0e-6, alpha_deep_deg - alpha_stall_deg)
-                        );
-                    }
-                    aero[i].stall_progress = stall_progress;
+                    aero[i].stall_progress = effective_stall_progress;
                     
                     // Cache coefficients for readout
                     aero[i].lift_coefficient = Cl;
@@ -271,9 +318,8 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     // Cm_alpha < 0 for stability (Stable: -0.5 to -1.5)
                     // Cm_q < 0 for damping (Damping: -10 to -20)
                     // Damping fades in deep stall where attached-flow derivatives lose authority.
-                    const double stall_rel = flight_dynamics::smoothstep01((alpha_abs - alpha_stall_deg) / std::max(1e-6, (alpha_deep_deg - alpha_stall_deg)));
                     const double damp_scale = std::clamp(
-                        1.0 - 0.7 * stall_rel,
+                        1.0 - 0.7 * effective_stall_progress,
                         tuning.post_stall_damp_floor,
                         1.0
                     );
@@ -297,6 +343,8 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                         -0.10,
                         0.10
                     );
+                    const double effective_pitch_break_progress =
+                        std::max(pitch_break_progress, effective_stall_progress);
                     Cm += pitch_break_sign * tuning.pitch_break_cm_nose_down * pitch_break_progress;
                     Cm += pitch_break_sign * aoa_rate_term * pitch_break_progress;
                     
@@ -328,15 +376,17 @@ inline void register_aerodynamics_system(flecs::world& ecs) {
                     
                     forces[i].add_torque(roll_torque, pitch_torque, yaw_torque);
 
-                    if (it.entity(i).has<StallState>()) {
-                        StallState* stall_state = it.entity(i).get_mut<StallState>();
-                        stall_state->stall_progress = stall_progress;
-                        stall_state->is_stalled = stall_progress >= 0.05;
-                        stall_state->pitch_break_active = pitch_break_progress >= 0.05;
-                        if (stall_state->is_stalled) {
-                            stall_state->time_in_stall_s += dt;
-                        } else {
+                    if (stall_state) {
+                        stall_state->stall_progress = effective_stall_progress;
+                        stall_state->is_stalled = effective_stall_progress >= kStallStateActiveThreshold;
+                        stall_state->pitch_break_active =
+                            effective_pitch_break_progress >= kStallStateActiveThreshold;
+                        if (raw_stall_progress >= kStallStateActiveThreshold) {
+                            stall_state->time_in_stall_s = previous_time_in_stall_s + dt;
+                        } else if (effective_stall_progress < kStallStateActiveThreshold) {
                             stall_state->time_in_stall_s = 0.0;
+                        } else {
+                            stall_state->time_in_stall_s = previous_time_in_stall_s;
                         }
                     }
                     

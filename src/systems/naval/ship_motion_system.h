@@ -6,7 +6,6 @@
 #include <flecs.h>
 
 #include "components/basic/common.h"
-#include "components/command/legacy_command.h"
 #include "components/command/mission_command.h"
 #include "components/naval/ship_platform.h"
 #include "core/interfaces/environment_model.h"
@@ -124,7 +123,6 @@ inline void register_ship_motion_system(flecs::world& ecs) {
                 const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
 
                 for (auto i : it) {
-                    const MovementCommand* move_cmd = it.entity(i).get<MovementCommand>();
                     const MissionCommand* mission_cmd = it.entity(i).get<MissionCommand>();
 
                     double commanded_heading_deg = transform[i].heading;
@@ -142,10 +140,6 @@ inline void register_ship_motion_system(flecs::world& ecs) {
                             &commanded_heading_deg,
                             &commanded_speed_mps
                         );
-                        command_active = true;
-                    } else if (move_cmd && bool(move_cmd->active) && !bool(move_cmd->use_stick_control)) {
-                        commanded_heading_deg = Math::normalize_heading_deg(move_cmd->target_heading);
-                        commanded_speed_mps = std::max(0.0, move_cmd->target_speed);
                         command_active = true;
                     }
 

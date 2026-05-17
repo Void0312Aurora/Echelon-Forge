@@ -3,6 +3,9 @@
 `tools/archive/` stores ad hoc probes that were previously left at repo root
 and are kept only for manual reference.
 
+Status for this directory is `Archived`. These files are not maintained entry
+points for docs, tests, or active workflows.
+
 Archived helpers currently include:
 
 - [check_binding.py](/home/void0312/Workshop/CMO/tools/archive/check_binding.py)

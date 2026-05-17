@@ -2,6 +2,8 @@
 
 This directory contains the maintained leader-layer training entry points for the frozen common-core substrate.
 
+Status for everything linked from here is `Frozen Baseline` unless a note explicitly calls out lineage into `Archived` history.
+
 ## Baseline Configs
 
 - [leader_task_only_frozen_v1.json](/home/void0312/CMO/examples/config/training/frozen/leader_task_only_frozen_v1.json)
@@ -77,3 +79,5 @@ This directory contains the maintained leader-layer training entry points for th
   - [execution/p5_continuous_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
 - Archived historical leader configs:
   - [examples/config/Archive/training/leader_legacy](/home/void0312/CMO/examples/config/Archive/training/leader_legacy/README.md)
+
+Use this directory, not `examples/config/Archive/**`, when a maintained contract, bridge, or smoke recipe needs the frozen leader/execution baseline.

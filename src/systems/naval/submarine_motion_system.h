@@ -6,7 +6,6 @@
 #include <flecs.h>
 
 #include "components/basic/common.h"
-#include "components/command/legacy_command.h"
 #include "components/command/mission_command.h"
 #include "components/naval/submarine_platform.h"
 
@@ -21,7 +20,6 @@ inline void register_submarine_motion_system(flecs::world& ecs) {
                 const double dt = it.delta_time() > 0.0 ? it.delta_time() : 1.0 / 60.0;
 
                 for (auto i : it) {
-                    const MovementCommand* move_cmd = it.entity(i).get<MovementCommand>();
                     const MissionCommand* mission_cmd = it.entity(i).get<MissionCommand>();
 
                     double target_heading_deg = transform[i].heading;
@@ -34,15 +32,6 @@ inline void register_submarine_motion_system(flecs::world& ecs) {
                         target_speed_mps = std::max(0.0, mission_cmd->cmd_speed_mps);
                         target_depth_m = std::clamp(
                             std::max(0.0, mission_cmd->cmd_altitude_m),
-                            0.0,
-                            std::max(0.0, sub[i].max_operating_depth_m)
-                        );
-                        active = true;
-                    } else if (move_cmd && move_cmd->active && !move_cmd->use_stick_control) {
-                        target_heading_deg = Math::normalize_heading_deg(move_cmd->target_heading);
-                        target_speed_mps = std::max(0.0, move_cmd->target_speed);
-                        target_depth_m = std::clamp(
-                            std::max(0.0, move_cmd->target_altitude),
                             0.0,
                             std::max(0.0, sub[i].max_operating_depth_m)
                         );

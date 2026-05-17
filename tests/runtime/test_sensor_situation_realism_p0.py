@@ -115,13 +115,13 @@ class SensorSituationRealismP0Tests(unittest.TestCase):
         self.assertTrue(sim.load_database(_DB_PATH))
 
         sender = sim.spawn_unit(ef_py.Side.Blue, "E-3_Sentry_AWACS", 0.0, 0.0, 9000.0, 0.0, 0.0, 0.0, 0.0, 200.0, 0.0)
-        receiver = sim.spawn_unit(ef_py.Side.Blue, "DDG-51_Flight_I_USS_Arleigh_Burke", 0.0, -30000.0, 0.0, 180.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 70000.0, 4000.0, 180.0, 0.0, 0.0, 0.0, -200.0, 0.0)
+        receiver = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, -30000.0, 5000.0, 0.0, 0.0, 0.0, 0.0, 250.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 130000.0, 4000.0, 180.0, 0.0, 0.0, 0.0, -200.0, 0.0)
 
         # Build a confirmed track on the sender by injecting two hits.
-        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=70000.0, bearing_deg=0.0)])
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=130000.0, bearing_deg=0.0)])
         sim.step()
-        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=69000.0, bearing_deg=0.0)])
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=129000.0, bearing_deg=0.0)])
         sim.step()
 
         # First step publishes the report into the receiver inbox.
@@ -142,12 +142,12 @@ class SensorSituationRealismP0Tests(unittest.TestCase):
         self.assertTrue(sim.load_database(_DB_PATH))
 
         sender = sim.spawn_unit(ef_py.Side.Blue, "E-3_Sentry_AWACS", 0.0, 0.0, 9000.0, 0.0, 0.0, 0.0, 0.0, 200.0, 0.0)
-        receiver = sim.spawn_unit(ef_py.Side.Blue, "DDG-51_Flight_I_USS_Arleigh_Burke", 0.0, -30000.0, 0.0, 180.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 70000.0, 4000.0, 180.0, 0.0, 0.0, 0.0, -200.0, 0.0)
+        receiver = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, -30000.0, 5000.0, 0.0, 0.0, 0.0, 0.0, 250.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 130000.0, 4000.0, 180.0, 0.0, 0.0, 0.0, -200.0, 0.0)
 
-        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=70000.0, bearing_deg=0.0)])
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=130000.0, bearing_deg=0.0)])
         sim.step()
-        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=69000.0, bearing_deg=0.0)])
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=129000.0, bearing_deg=0.0)])
         sim.step()
 
         visible_track = None

@@ -3,7 +3,6 @@ import math
 from typing import Any
 import ef_py
 import numpy as np
-from examples.agents import RedScriptedAgent
 from python.scenario_compiler import (
     ApproachRewardConfig,
     LNavRuntimeConfig,
@@ -13,9 +12,6 @@ from python.scenario_compiler import (
 )
 from python.scenario_runtime import (
     resolve_active_controllable_roster,
-)
-from python.rl.tasking.bridge import (
-    make_rule_based_leader_phase_manager,
 )
 from .common import (
     execution_step_runtime_mode_enabled,
@@ -52,9 +48,11 @@ from .route_generation import (
     turn_radius_m as _turn_radius_m_impl,
 )
 from .runtime_state import (
+    SCENARIO_LOADER_STATE_SHELL_ATTRS as _SCENARIO_LOADER_STATE_SHELL_ATTRS,
     apply_execution_episode_runtime_fields as _apply_execution_episode_runtime_fields_impl,
     apply_execution_episode_state as _apply_execution_episode_state_impl,
     build_execution_episode_state as _build_execution_episode_state_impl,
+    make_scenario_loader_state_shell as _make_scenario_loader_state_shell_impl,
 )
 from .mission_observation import (
     build_mission_nav_products as _build_mission_nav_products_impl,
@@ -107,20 +105,32 @@ from .navigation_runtime import (
     turn_lead_distance_m as _turn_lead_distance_m_impl,
 )
 from .behavior_runtime import (
+    BEHAVIOR_PHASE_OWNER_ATTRS as _BEHAVIOR_PHASE_OWNER_ATTRS,
+    COMMAND_CHAIN_OWNER_ATTRS as _COMMAND_CHAIN_OWNER_ATTRS,
     activate_post_waypoint_transition as _activate_post_waypoint_transition_impl,
     apply_pending_landing_vector as _apply_pending_landing_vector_impl,
+    build_scripted_opponents as _build_scripted_opponents_impl,
     defer_landing_post_transition_until_next_update as _defer_landing_post_transition_until_next_update_impl,
+    ensure_behavior_phase_owner as _ensure_behavior_phase_owner_impl,
+    ensure_command_chain_owner as _ensure_command_chain_owner_impl,
     hierarchical_command_chain_active as _hierarchical_command_chain_active_impl,
     landing_post_transition_terminal_ready as _landing_post_transition_terminal_ready_impl,
+    make_behavior_phase_owner as _make_behavior_phase_owner_impl,
+    make_command_chain_owner as _make_command_chain_owner_impl,
+    make_scripted_opponent_runtime as _make_scripted_opponent_runtime_impl,
     maybe_activate_post_waypoint_transition as _maybe_activate_post_waypoint_transition_impl,
     post_waypoint_transition_ready as _post_waypoint_transition_ready_impl,
+    reset_behavior_phase_owner as _reset_behavior_phase_owner_impl,
     reset_command_chain as _reset_command_chain_impl,
+    reset_command_chain_owner as _reset_command_chain_owner_impl,
+    reset_scripted_opponents as _reset_scripted_opponents_impl,
     sync_kernel_command_chain as _sync_kernel_command_chain_impl,
     sync_kernel_mission_command as _sync_kernel_mission_command_impl,
     update_behaviors as _update_behaviors_impl,
     update_command_chain as _update_command_chain_impl,
     update_command_chain_only as _update_command_chain_only_impl,
     update_nonhierarchical_behaviors as _update_nonhierarchical_behaviors_impl,
+    update_scripted_opponents as _update_scripted_opponents_impl,
 )
 from .reward_runtime import (
     add_breakdown_term as _add_breakdown_term_impl,
@@ -159,6 +169,48 @@ from .spatial_runtime import (
 
 
 class ScenarioLoader:
+    _STATE_SHELL_ATTRS = _SCENARIO_LOADER_STATE_SHELL_ATTRS
+    _BEHAVIOR_PHASE_OWNER_ATTRS = _BEHAVIOR_PHASE_OWNER_ATTRS
+    _COMMAND_CHAIN_OWNER_ATTRS = _COMMAND_CHAIN_OWNER_ATTRS
+
+    def __getattr__(self, name):
+        if name in self._BEHAVIOR_PHASE_OWNER_ATTRS:
+            owner = self.__dict__.get("_behavior_phase_owner", None)
+            if owner is None:
+                owner = _ensure_behavior_phase_owner_impl(self)
+            return getattr(owner, name)
+        state_shell = self.__dict__.get("_state_shell", None)
+        if state_shell is not None and name in self._STATE_SHELL_ATTRS:
+            return getattr(state_shell, name)
+        if name in self._COMMAND_CHAIN_OWNER_ATTRS:
+            owner = self.__dict__.get("_command_chain_owner", None)
+            if owner is None:
+                owner = _ensure_command_chain_owner_impl(self)
+            return getattr(owner, name)
+        raise AttributeError(f"{type(self).__name__!s} object has no attribute {name!r}")
+
+    def __setattr__(self, name, value):
+        if name in self._BEHAVIOR_PHASE_OWNER_ATTRS:
+            owner = self.__dict__.get("_behavior_phase_owner", None)
+            if owner is None:
+                owner = _ensure_behavior_phase_owner_impl(self)
+            setattr(owner, name, value)
+            state_shell = self.__dict__.get("_state_shell", None)
+            if state_shell is not None and name in self._STATE_SHELL_ATTRS:
+                setattr(state_shell, name, value)
+            return
+        state_shell = self.__dict__.get("_state_shell", None)
+        if state_shell is not None and name in self._STATE_SHELL_ATTRS:
+            setattr(state_shell, name, value)
+            return
+        if name in self._COMMAND_CHAIN_OWNER_ATTRS:
+            owner = self.__dict__.get("_command_chain_owner", None)
+            if owner is None:
+                owner = _ensure_command_chain_owner_impl(self)
+            setattr(owner, name, value)
+            return
+        object.__setattr__(self, name, value)
+
     def __init__(self, sim_kernel):
         self.sim = sim_kernel
         self.scenario_data = {}
@@ -169,15 +221,7 @@ class ScenarioLoader:
         self.captured_time = 0.0
         self.max_contacts = 10
         self.max_rwr = 4
-
-        # Waypoint mission state (command_code == 3).
-        # Waypoints are part of the mission command (realistic: FMS/EGI steerpoints).
-        self.waypoints: list[dict] = []
-        self.waypoint_idx: int = 0
-        self._waypoint_prev_dist_m: float | None = None
-        self.waypoint_total_route_length_m: float = 0.0
-        self._waypoint_leg_origin_x: float = 0.0
-        self._waypoint_leg_origin_y: float = 0.0
+        self._state_shell = _make_scenario_loader_state_shell_impl()
 
         # Property Map for generic access
         self.prop_map = {
@@ -195,17 +239,8 @@ class ScenarioLoader:
         self.world_yaw_origin_y = 0.0
         self.rotate_mission_heading_with_world = False
         self.randomization_overrides = {}
-        self.last_reward_breakdown = {}
-        self.last_termination_reason = "idle"
-        self._approach_prev_dme_m = None
-        self._approach_prev_loc_abs = None
-        self._approach_prev_gs_abs = None
-        self.post_waypoint_transition: dict | None = None
-        self.mission_phase_name: str = "idle"
-        self.task_order = None
-        self.leader_intent = None
-        self.pilot_report = None
-        self._leader_phase_manager = make_rule_based_leader_phase_manager(self)
+        self._behavior_phase_owner = _make_behavior_phase_owner_impl()
+        self._command_chain_owner = _make_command_chain_owner_impl(self)
         self._spatial_geometry = None
         self._compiled_scenario = None
         self._compiled_runtime_metadata = None
@@ -218,17 +253,12 @@ class ScenarioLoader:
         self._approach_reward_cfg = ApproachRewardConfig()
         self._safety_reward_cfg = SafetyRewardConfig()
         self._lnav_runtime_cfg = LNavRuntimeConfig()
-        self._cached_route_ref_id: int | None = None
-        self.prev_alt = 0.0
-        self.prev_speed = 0.0
-        self.gear_bonus_awarded = False
-        self.liftoff_awarded = False
-        self.off_runway_steps = 0
         self._runtime_eval_cache: dict[str, object] = {}
         self.primary_target_id: int | None = None
         self.primary_target_name: str = ""
-        self.scripted_opponents: dict[int, Any] = {}
-        self.scripted_opponent_reports: dict[int, dict[str, Any]] = {}
+        self._scripted_opponent_runtime = _make_scripted_opponent_runtime_impl()
+        self.scripted_opponents: dict[int, Any] = self._scripted_opponent_runtime.controllers
+        self.scripted_opponent_reports: dict[int, dict[str, Any]] = self._scripted_opponent_runtime.reports
         self.set_execution_step_runtime_mode(None)
         self.set_flight_shaping_backend(None)
 
@@ -343,6 +373,18 @@ class ScenarioLoader:
 
     def _begin_loaded_world(self, *, scenario_data: dict) -> None:
         _begin_loaded_world_impl(self, scenario_data=scenario_data)
+
+    def _ensure_command_chain_owner(self):
+        return _ensure_command_chain_owner_impl(self)
+
+    def _reset_command_chain_owner(self):
+        return _reset_command_chain_owner_impl(self)
+
+    def _ensure_behavior_phase_owner(self):
+        return _ensure_behavior_phase_owner_impl(self)
+
+    def _reset_behavior_phase_owner(self):
+        return _reset_behavior_phase_owner_impl(self)
 
     def _apply_compiled_runtime_metadata(self) -> None:
         _apply_compiled_runtime_metadata_impl(self)
@@ -1061,77 +1103,13 @@ class ScenarioLoader:
         return self.entities.get(name)
 
     def build_scripted_opponents(self) -> None:
-        self.scripted_opponents = {}
-        self.scripted_opponent_reports = {}
-        scenario_data = self.scenario_data if isinstance(self.scenario_data, dict) else {}
-        entities_cfg = scenario_data.get("entities", [])
-        if not isinstance(entities_cfg, list):
-            return
-
-        blue_id = int(self.agent_id or 0)
-        for ent_cfg in entities_cfg:
-            if not isinstance(ent_cfg, dict):
-                continue
-            scripted_cfg = ent_cfg.get("scripted_agent", None)
-            if not isinstance(scripted_cfg, dict):
-                continue
-            script_name = str(scripted_cfg.get("name", "") or scripted_cfg.get("type", "")).strip().lower()
-            if script_name not in {"red_scripted_agent", "red_scripted_baseline", "red_agent"}:
-                continue
-            entity_name = str(ent_cfg.get("name", "")).strip()
-            entity_id = self.entities.get(entity_name)
-            if entity_id is None:
-                continue
-            try:
-                target_id = int(scripted_cfg.get("target_id", 0))
-            except Exception:
-                target_id = 0
-            if target_id <= 0:
-                target_name = str(scripted_cfg.get("target_name", "")).strip()
-                if target_name:
-                    resolved = self.entities.get(target_name)
-                    if resolved is not None:
-                        target_id = int(resolved)
-            if target_id <= 0 and blue_id > 0:
-                target_id = blue_id
-
-            altitude_hold_m = scripted_cfg.get("altitude_hold_m", None)
-            agent = RedScriptedAgent(
-                self.sim,
-                int(entity_id),
-                target_id=int(target_id) if target_id > 0 else None,
-                cruise_speed_mps=float(scripted_cfg.get("cruise_speed_mps", 220.0)),
-                attack_speed_mps=float(scripted_cfg.get("attack_speed_mps", 260.0)),
-                defensive_speed_mps=float(scripted_cfg.get("defensive_speed_mps", 290.0)),
-                threat_range_m=float(scripted_cfg.get("threat_range_m", 9000.0)),
-                merge_range_m=float(scripted_cfg.get("merge_range_m", 3500.0)),
-                fire_range_m=float(scripted_cfg.get("fire_range_m", 6500.0)),
-                altitude_hold_m=None if altitude_hold_m is None else float(altitude_hold_m),
-                beam_offset_deg=float(scripted_cfg.get("beam_offset_deg", 85.0)),
-            )
-            self.scripted_opponents[int(entity_id)] = agent
-            self.scripted_opponent_reports[int(entity_id)] = {
-                "active": False,
-                "mode": "idle",
-                "target_id": int(target_id or 0),
-            }
+        _build_scripted_opponents_impl(self)
 
     def update_scripted_opponents(self, sim_time: float) -> None:
-        if not self.scripted_opponents:
-            return
-        for entity_id, controller in list(self.scripted_opponents.items()):
-            if controller is None:
-                continue
-            try:
-                report = controller.step(current_time=float(sim_time))
-            except Exception as exc:
-                report = {
-                    "active": False,
-                    "mode": "error",
-                    "entity_id": int(entity_id),
-                    "error": str(exc),
-                }
-            self.scripted_opponent_reports[int(entity_id)] = dict(report)
+        _update_scripted_opponents_impl(self, sim_time)
+
+    def reset_scripted_opponents(self) -> None:
+        _reset_scripted_opponents_impl(self)
 
     def get_mission_observation(self, mode: str = "basic", *, truth=None, inst=None):
         return _get_mission_observation_impl(self, mode=mode, truth=truth, inst=inst)

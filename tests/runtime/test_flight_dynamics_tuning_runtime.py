@@ -124,7 +124,11 @@ def _probe_prelude(db_path: str) -> str:
     )
 
 
-def _make_tuned_database() -> tuple[str, str]:
+def _make_tuned_database(
+    *,
+    airframe_tuning: dict | None = None,
+    engine_tuning: dict | None = None,
+) -> tuple[str, str]:
     tmpdir = tempfile.mkdtemp(prefix="cmo_fd_tuning_")
     db_dir = os.path.join(tmpdir, "db")
     units_dir = os.path.join(db_dir, "aircraft", "units")
@@ -138,7 +142,7 @@ def _make_tuned_database() -> tuple[str, str]:
         engine_data = json.load(f)
 
     unit_data.setdefault("airframe", {})
-    unit_data["airframe"]["tuning"] = {
+    unit_data["airframe"]["tuning"] = airframe_tuning or {
         "enabled": True,
         "alpha_stall_clean_deg": 6.0,
         "alpha_stall_flaps_full_deg": 8.0,
@@ -150,7 +154,7 @@ def _make_tuned_database() -> tuple[str, str]:
     }
 
     engine_data.setdefault("engine", {})
-    engine_data["engine"]["tuning"] = {
+    engine_data["engine"]["tuning"] = engine_tuning or {
         "enabled": True,
         "throttle_ab_threshold": 0.55,
         "tau_spool_up_s": 0.6,
@@ -298,6 +302,101 @@ class FlightDynamicsTuningRuntimeTests(unittest.TestCase):
             default_result["max_stall_progress"] + 0.01,
         )
         self.assertGreater(tuned_result["pitch_break_seen"], default_result["pitch_break_seen"])
+
+    def test_stall_state_retains_memory_during_brief_unload_and_clears_with_sustained_recovery(self) -> None:
+        tuned_tmpdir, tuned_db_dir = _make_tuned_database(
+            airframe_tuning={
+                "enabled": True,
+                "alpha_stall_clean_deg": 4.0,
+                "alpha_stall_flaps_full_deg": 5.0,
+                "alpha_peak_offset_deg": 1.0,
+                "alpha_deep_offset_deg": 2.0,
+                "pitch_break_onset_deg": 4.2,
+                "pitch_break_full_deg": 5.5,
+                "pitch_break_cm_nose_down": -0.7,
+            }
+        )
+        self.addCleanup(shutil.rmtree, tuned_tmpdir, True)
+        result = _run_probe(
+            _probe_prelude(tuned_db_dir)
+            + dedent(
+                """
+                sim, entity_id = spawn_kernel_and_entity()
+
+                level = make_action(0.7)
+                for _ in range(60):
+                    sim.set_pilot_action(entity_id, level)
+                    sim.step()
+
+                entry = make_action(0.2, 1.0)
+                brief_recovery = make_action(0.5, -0.35)
+                sustained_recovery = make_action(0.85, -0.5)
+
+                peak_stall_progress = 0.0
+                peak_time_in_stall = 0.0
+                peak_pitch_break = 0.0
+                for _ in range(120):
+                    sim.set_pilot_action(entity_id, entry)
+                    sim.step()
+                    state = sample(sim, entity_id)
+                    debug = sim.get_flight_dynamics_debug_view(entity_id)
+                    peak_stall_progress = max(peak_stall_progress, state["stall_progress"])
+                    peak_time_in_stall = max(
+                        peak_time_in_stall,
+                        float(getattr(debug, "time_in_stall_s", 0.0)),
+                    )
+                    peak_pitch_break = max(
+                        peak_pitch_break,
+                        1.0 if bool(getattr(debug, "pitch_break_active", False)) else 0.0,
+                    )
+
+                for _ in range(6):
+                    sim.set_pilot_action(entity_id, brief_recovery)
+                    sim.step()
+                brief_state = sample(sim, entity_id)
+                brief_debug = sim.get_flight_dynamics_debug_view(entity_id)
+
+                recovery_min_stall_progress = 999.0
+                recovery_min_time_in_stall = 999.0
+                recovery_pitch_break_cleared = 0.0
+                for _ in range(240):
+                    sim.set_pilot_action(entity_id, sustained_recovery)
+                    sim.step()
+                    state = sample(sim, entity_id)
+                    debug = sim.get_flight_dynamics_debug_view(entity_id)
+                    recovery_min_stall_progress = min(recovery_min_stall_progress, state["stall_progress"])
+                    recovery_min_time_in_stall = min(
+                        recovery_min_time_in_stall,
+                        float(getattr(debug, "time_in_stall_s", 0.0)),
+                    )
+                    if not bool(getattr(debug, "pitch_break_active", False)):
+                        recovery_pitch_break_cleared = 1.0
+
+                emit_result({
+                    "peak_stall_progress": peak_stall_progress,
+                    "peak_time_in_stall": peak_time_in_stall,
+                    "peak_pitch_break": peak_pitch_break,
+                    "brief_stall_progress": brief_state["stall_progress"],
+                    "brief_pitch_break": 1.0 if bool(getattr(brief_debug, "pitch_break_active", False)) else 0.0,
+                    "brief_time_in_stall": float(getattr(brief_debug, "time_in_stall_s", 0.0)),
+                    "recovery_min_stall_progress": recovery_min_stall_progress,
+                    "recovery_min_time_in_stall": recovery_min_time_in_stall,
+                    "recovery_pitch_break_cleared": recovery_pitch_break_cleared,
+                })
+                """
+            )
+        )
+
+        self.assertGreater(result["peak_stall_progress"], 0.20)
+        self.assertGreater(result["peak_time_in_stall"], 1.0)
+        self.assertGreater(result["peak_pitch_break"], 0.0)
+        self.assertGreater(result["brief_stall_progress"], 0.10)
+        self.assertGreater(result["brief_time_in_stall"], 1.0)
+        self.assertGreater(result["brief_pitch_break"], 0.0)
+        self.assertLess(result["brief_stall_progress"], result["peak_stall_progress"] - 0.05)
+        self.assertLess(result["recovery_min_stall_progress"], 0.02)
+        self.assertLess(result["recovery_min_time_in_stall"], 0.05)
+        self.assertEqual(result["recovery_pitch_break_cleared"], 1.0)
 
 
 if __name__ == "__main__":

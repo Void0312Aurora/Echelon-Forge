@@ -2,41 +2,95 @@ from __future__ import annotations
 
 from typing import Any
 
+import ef_py
+
 from . import air_adapter as _air
 from . import naval_adapter as _naval
 
 
+def _normalized_profile_name(profile_name: Any | None) -> str | None:
+    if profile_name is None:
+        return None
+
+    service_profile = getattr(ef_py, "ServiceProfile", None)
+    if service_profile is not None:
+        if profile_name == getattr(service_profile, "Navy", object()):
+            return "naval"
+        if profile_name == getattr(service_profile, "AirForce", object()):
+            return "air"
+
+    text = str(getattr(profile_name, "name", profile_name)).strip().lower()
+    if text.startswith("serviceprofile."):
+        text = text.rsplit(".", 1)[-1]
+
+    if text in {"", "unspecified"}:
+        return None
+    if text in {"air", "airforce", "joint"}:
+        return "air"
+    if text in {"naval", "navy"}:
+        return "naval"
+    return None
+
+
+def _resolve_profile_from_candidates(*candidates: Any) -> Any:
+    for candidate in candidates:
+        normalized = _normalized_profile_name(candidate)
+        if normalized is not None:
+            return resolve_tasking_profile(candidate)
+    return resolve_tasking_profile(None)
+
+
 def resolve_tasking_profile(profile_name: str | None = None):
-    normalized = str(profile_name or "air").strip().lower()
-    if normalized in {"", "air", "airforce", "joint"}:
+    normalized = _normalized_profile_name(profile_name)
+    if normalized is None:
+        if profile_name is None or not str(getattr(profile_name, "name", profile_name)).strip():
+            return _air
+        raise ValueError(f"Unknown tasking profile: {profile_name!r}")
+    if normalized == "air":
         return _air
-    if normalized in {"naval", "navy"}:
+    if normalized == "naval":
         return _naval
     raise ValueError(f"Unknown tasking profile: {profile_name!r}")
 
 
 def tasking_profile_for_loader(loader: Any):
     scenario_data = getattr(loader, "scenario_data", {}) or {}
-    profile_name = None
+    mission_cfg = None
     if isinstance(scenario_data, dict):
-        profile_name = scenario_data.get("tasking_profile", None)
-        if profile_name is None:
-            mission_cmd = scenario_data.get("mission_command", None)
-            if isinstance(mission_cmd, dict):
-                profile_name = mission_cmd.get("tasking_profile", None)
-    return resolve_tasking_profile(profile_name)
+        mission_cfg = scenario_data.get("mission_command", None)
+
+    task_order = getattr(loader, "task_order", None)
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    explicit_profile_candidates = [
+        scenario_data.get("tasking_profile", None) if isinstance(scenario_data, dict) else None,
+        mission_cfg.get("tasking_profile", None) if isinstance(mission_cfg, dict) else None,
+        getattr(task_order, "tasking_profile", None),
+        mission_cmd.get("tasking_profile", None) if isinstance(mission_cmd, dict) else None,
+    ]
+    profile = _resolve_profile_from_candidates(*explicit_profile_candidates)
+    if profile is not _air or any(_normalized_profile_name(candidate) == "air" for candidate in explicit_profile_candidates):
+        return profile
+
+    inferred_profile_candidates = [
+        getattr(task_order, "service_profile", None),
+        mission_cmd.get("service_profile", None) if isinstance(mission_cmd, dict) else None,
+        mission_cfg.get("service_profile", None) if isinstance(mission_cfg, dict) else None,
+        scenario_data.get("service_profile", None) if isinstance(scenario_data, dict) else None,
+    ]
+    return _resolve_profile_from_candidates(*inferred_profile_candidates)
 
 
 def normalize_task_order_spec(order_spec: dict[str, Any] | None, *, loader: Any | None = None) -> dict[str, Any]:
     if loader is not None:
         profile = tasking_profile_for_loader(loader)
     else:
-        profile_name = None
         if isinstance(order_spec, dict):
-            profile_name = order_spec.get("tasking_profile", None)
-            if profile_name is None:
-                profile_name = order_spec.get("service_profile", None)
-        profile = resolve_tasking_profile(profile_name)
+            profile = _resolve_profile_from_candidates(
+                order_spec.get("tasking_profile", None),
+                order_spec.get("service_profile", None),
+            )
+        else:
+            profile = resolve_tasking_profile(None)
     return profile.normalize_task_order_spec(order_spec)
 
 

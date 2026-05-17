@@ -6,6 +6,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <optional>
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
@@ -29,6 +30,7 @@ class ISensorModel;
 class IAcousticModel;
 class IControlModel;
 class IGuidanceModel;
+struct UnitDefinition;
 
 struct MissileTuning {
     double max_speed = std::numeric_limits<double>::quiet_NaN();
@@ -226,6 +228,19 @@ public:
     void shutdown();
 
 private:
+    struct ResolvedMissileLaunchDefinition {
+        uint64_t munition_entity_id = 0;
+        std::string platform_definition_name;
+        std::string weapon_definition_name;
+        int station_id = 0;
+        const UnitDefinition* platform_definition = nullptr;
+        const UnitDefinition* weapon_definition = nullptr;
+    };
+
+    std::optional<ResolvedMissileLaunchDefinition> resolve_missile_launch_definition(
+        flecs::entity attacker,
+        const PilotAction* pilot
+    ) const;
     void register_components_and_systems();
     bool try_fire_naval_mission_weapon(uint64_t attacker_id);
 

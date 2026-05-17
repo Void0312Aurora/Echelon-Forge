@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import glob
+import importlib
+import json
 import os
 import subprocess
 import sys
@@ -139,6 +141,51 @@ def main() -> int:
         if rc != 0:
             return rc
     return 0
+
+
+def test_scenario_contract_runner_reexports_contract_entrypoints() -> None:
+    legacy = importlib.import_module("python.testing.scenario_contract_runner")
+    contracts = importlib.import_module("python.testing.contracts")
+
+    assert legacy.ContractSkipped is contracts.ContractSkipped
+    assert legacy.run_contract is contracts.run_contract
+    assert legacy.run_loader_command_chain_contract is contracts.run_loader_command_chain_contract
+    assert legacy.run_route_generator_contract is contracts.run_route_generator_contract
+    assert legacy.run_env_regression_contract is contracts.run_env_regression_contract
+    assert legacy.run_unit_regression_contract is contracts.run_unit_regression_contract
+    assert legacy.run_scripted_bridge_contract is contracts.run_scripted_bridge_contract
+
+
+def test_run_contract_legacy_entrypoint_dispatches_via_new_package(tmp_path, monkeypatch) -> None:
+    legacy = importlib.import_module("python.testing.scenario_contract_runner")
+    contracts = importlib.import_module("python.testing.contracts")
+    spec_path = tmp_path / "contract.json"
+    spec_path.write_text(json.dumps({"type": "loader_command_chain"}), encoding="utf-8")
+    calls: list[str] = []
+
+    def fake_handler(path: str) -> tuple[bool, str]:
+        calls.append(path)
+        return True, "compat dispatch passed"
+
+    monkeypatch.setitem(contracts._CONTRACT_HANDLERS, "loader_command_chain", fake_handler)
+
+    assert legacy.run_contract(str(spec_path)) == (True, "compat dispatch passed")
+    assert calls == [str(spec_path)]
+
+
+def test_run_direct_specs_uses_legacy_compat_entrypoint(monkeypatch, capsys) -> None:
+    legacy = importlib.import_module("python.testing.scenario_contract_runner")
+    calls: list[str] = []
+
+    def fake_run_contract(path: str) -> tuple[bool, str]:
+        calls.append(path)
+        return True, "batch smoke passed"
+
+    monkeypatch.setattr(legacy, "run_contract", fake_run_contract)
+
+    assert _run_direct_specs(["tests/contracts/example.json"]) == 0
+    assert calls == ["tests/contracts/example.json"]
+    assert "PASS: tests/contracts/example.json: batch smoke passed" in capsys.readouterr().out
 
 
 if __name__ == "__main__":

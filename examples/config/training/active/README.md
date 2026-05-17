@@ -2,6 +2,8 @@
 
 This directory holds maintained in-progress training configs that are not frozen yet.
 
+Status for this directory is `Active Mainline`.
+
 ## Cooperative Cruise Line
 
 - [cooperative_cruise_nav_v2_formation_v1.json](/home/void0312/Workshop/CMO/examples/config/training/active/cooperative_cruise_nav_v2_formation_v1.json)
@@ -53,3 +55,4 @@ This directory holds maintained in-progress training configs that are not frozen
 - Do not promote this config into `frozen/` until the cooperative execution path and scenario contract are stable.
 - The cooperative cruise line is an opt-in cooperative benchmark line, alongside the frozen leader/execution baselines.
 - For direct HMoE control experiments on the cooperative takeoff-to-cruise bridge, prefer the `*_shared_fair_v1` and `*_hmoe_fair_v1` pair so non-policy hyperparameters stay aligned.
+- Do not point active configs at `examples/config/Archive/**`; if an older setup is still needed for maintained use, re-express it under `frozen/` or another maintained compatibility location first.

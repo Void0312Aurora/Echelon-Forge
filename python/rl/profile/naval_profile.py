@@ -382,6 +382,19 @@ def infer_station_bearing_deg(loader: Any, task: Any | None = None) -> float:
     return 0.0
 
 
+def _formation_value_or_default(raw_value: Any) -> int:
+    try:
+        return int(raw_value)
+    except Exception:
+        return 0
+
+
+def _mission_field_or_default(mission_cmd: dict[str, Any], field_name: str, default: Any) -> Any:
+    if not isinstance(mission_cmd, dict):
+        return default
+    return mission_cmd.get(field_name, default)
+
+
 def build_kernel_mission_command(loader: Any):
     scenario_data = getattr(loader, "scenario_data", {}) or {}
     task_order = getattr(loader, "task_order", None)
@@ -429,6 +442,22 @@ def build_kernel_mission_command(loader: Any):
         cmd.recovery_runway_id = infer_recovery_runway_id(loader, task=task_order)
     if hasattr(cmd, "recovery_approach_type"):
         cmd.recovery_approach_type = infer_recovery_approach_type(loader, task=task_order)
+    if hasattr(cmd, "formation_id"):
+        cmd.formation_id = _formation_value_or_default(_mission_field_or_default(mission_cmd, "formation_id", 0))
+    if hasattr(cmd, "form_offset_x"):
+        cmd.form_offset_x = float(_mission_field_or_default(mission_cmd, "form_offset_x", 0.0) or 0.0)
+    if hasattr(cmd, "form_offset_y"):
+        cmd.form_offset_y = float(_mission_field_or_default(mission_cmd, "form_offset_y", 0.0) or 0.0)
+    if hasattr(cmd, "form_offset_z"):
+        cmd.form_offset_z = float(_mission_field_or_default(mission_cmd, "form_offset_z", 0.0) or 0.0)
+    if hasattr(cmd, "embarked_helo_entity_id"):
+        cmd.embarked_helo_entity_id = coerce_positive_int(_mission_field_or_default(mission_cmd, "embarked_helo_entity_id", 0))
+    if hasattr(cmd, "launch_helo"):
+        cmd.launch_helo = bool(_mission_field_or_default(mission_cmd, "launch_helo", False))
+    if hasattr(cmd, "recover_helo"):
+        cmd.recover_helo = bool(_mission_field_or_default(mission_cmd, "recover_helo", False))
+    if hasattr(cmd, "relay_oth_targeting"):
+        cmd.relay_oth_targeting = bool(_mission_field_or_default(mission_cmd, "relay_oth_targeting", False))
     if isinstance(scenario_data, dict):
         mission_cfg = scenario_data.get("mission_command", None)
         if isinstance(mission_cfg, dict):
@@ -472,5 +501,39 @@ def build_kernel_mission_command(loader: Any):
             if hasattr(cmd, "authorization_to_fire"):
                 cmd.authorization_to_fire = bool(
                     mission_cfg.get("authorization_to_fire", cmd.authorization_to_fire)
+                )
+            if hasattr(cmd, "recovery_base_id"):
+                cmd.recovery_base_id = coerce_positive_int(
+                    mission_cfg.get("recovery_base_id", cmd.recovery_base_id)
+                )
+            if hasattr(cmd, "recovery_runway_id"):
+                cmd.recovery_runway_id = coerce_positive_int(
+                    mission_cfg.get("recovery_runway_id", cmd.recovery_runway_id)
+                )
+            if hasattr(cmd, "recovery_approach_type") and "recovery_approach_type" in mission_cfg:
+                cmd.recovery_approach_type = enum_or_default(
+                    getattr(ef_py, "RecoveryApproachType", object()),
+                    mission_cfg.get("recovery_approach_type", cmd.recovery_approach_type),
+                    cmd.recovery_approach_type,
+                )
+            if hasattr(cmd, "formation_id"):
+                cmd.formation_id = _formation_value_or_default(mission_cfg.get("formation_id", cmd.formation_id))
+            if hasattr(cmd, "form_offset_x"):
+                cmd.form_offset_x = float(mission_cfg.get("form_offset_x", cmd.form_offset_x) or 0.0)
+            if hasattr(cmd, "form_offset_y"):
+                cmd.form_offset_y = float(mission_cfg.get("form_offset_y", cmd.form_offset_y) or 0.0)
+            if hasattr(cmd, "form_offset_z"):
+                cmd.form_offset_z = float(mission_cfg.get("form_offset_z", cmd.form_offset_z) or 0.0)
+            if hasattr(cmd, "embarked_helo_entity_id"):
+                cmd.embarked_helo_entity_id = coerce_positive_int(
+                    mission_cfg.get("embarked_helo_entity_id", cmd.embarked_helo_entity_id)
+                )
+            if hasattr(cmd, "launch_helo"):
+                cmd.launch_helo = bool(mission_cfg.get("launch_helo", cmd.launch_helo))
+            if hasattr(cmd, "recover_helo"):
+                cmd.recover_helo = bool(mission_cfg.get("recover_helo", cmd.recover_helo))
+            if hasattr(cmd, "relay_oth_targeting"):
+                cmd.relay_oth_targeting = bool(
+                    mission_cfg.get("relay_oth_targeting", cmd.relay_oth_targeting)
                 )
     return cmd

@@ -48,6 +48,7 @@ from .execution_runtime import (
     sync_bridge_from_loader,
 )
 from .policy import FrozenExecutionPolicyAdapter, load_policy
+from .runtime_facade import LeaderRuntimeFacadeMixin
 from .runtime_services import LeaderRuntimeServices, leader_runtime_services
 from .scripted_exec import ScriptedExecutiveController
 
@@ -78,6 +79,7 @@ __all__ = [
     "landing_reference_command",
     "LeaderActionMapping",
     "LeaderCommandBridge",
+    "LeaderRuntimeFacadeMixin",
     "LeaderRuntimeServices",
     "mapping_has_bias",
     "phase_enum_for_id",

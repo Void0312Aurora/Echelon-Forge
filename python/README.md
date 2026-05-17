@@ -6,7 +6,8 @@
 
 ```text
 src/interfaces/python -> ef_py
-  -> python/scenario_* + python/env_config + python/mission_obs_taxonomy
+  -> python/scenario/compiler + python/scenario/runtime
+     + python/env_config + python/mission_obs_taxonomy
     -> gym_envs/
       -> python/rl/
         -> tools/ + tests/
@@ -29,12 +30,14 @@ src/interfaces/python -> ef_py
 
 ## 子目录约定
 
+- `scenario/`
+  - 打包后的场景编译与运行时主实现，按 `compiler/` 与 `runtime/` 子域维护。
 - `rl/`
   - Python RL 主线，含 runtime、policy_algo、tasking、planning、profile、support。
 - `training/`
   - `train.py` 主线入口复用的 CLI、bootstrap、实验目录与运行时 orchestration 支撑。
 - `testing/`
-  - 测试和 contract runner 运行时支撑。
+  - 测试运行时支撑，以及 `contracts/` 下的 contract runner 主实现。
 - `world_model/`
   - Dreamer、replay、feature、network 等 world model 支撑。
 - `models/`
@@ -42,11 +45,22 @@ src/interfaces/python -> ef_py
 
 ## 当前阅读入口
 
+- [scenario/compiler/](/home/void0312/Workshop/CMO/python/scenario/compiler)
+- [scenario/runtime/](/home/void0312/Workshop/CMO/python/scenario/runtime)
 - [rl/__init__.py](/home/void0312/Workshop/CMO/python/rl/__init__.py)
+- [testing/contracts/](/home/void0312/Workshop/CMO/python/testing/contracts)
 - [testing/runtime.py](/home/void0312/Workshop/CMO/python/testing/runtime.py)
-- [testing/scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py)
 - [world_model/dreamer.py](/home/void0312/Workshop/CMO/python/world_model/dreamer.py)
 - [models/transformer.py](/home/void0312/Workshop/CMO/python/models/transformer.py)
+
+## 兼容 shim
+
+- [scenario_compiler.py](/home/void0312/Workshop/CMO/python/scenario_compiler.py)
+  - 根级兼容 shim，仅重导出 `python/scenario/compiler/`。
+- [scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py)
+  - 根级兼容 shim，仅重导出 `python/scenario/runtime/`。
+- [testing/scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py)
+  - 兼容 shim，仅重导出 `python/testing/contracts/` 的 contract 执行入口。
 
 ## 当前文件落点
 
@@ -58,11 +72,16 @@ src/interfaces/python -> ef_py
   - [mission_obs_taxonomy.py](/home/void0312/Workshop/CMO/python/mission_obs_taxonomy.py)
     - mission observation 维度、字段索引、模式枚举。
   - [scenario_compiler.py](/home/void0312/Workshop/CMO/python/scenario_compiler.py)
-    - 场景 JSON 编译、prefab 合并、route / objective / layout 预处理。
+    - 兼容 shim；主实现已下沉到 `python/scenario/compiler/`。
   - [scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py)
-    - compiled scenario 到 kernel/world-batch 的运行时落地与 roster 映射。
+    - 兼容 shim；主实现已下沉到 `python/scenario/runtime/`。
   - [training_callbacks.py](/home/void0312/Workshop/CMO/python/training_callbacks.py)
     - SB3 训练诊断、curriculum 与训练期统计回调。
+- `scenario/`
+  - `compiler/`
+    - 场景 JSON 编译、prefab 合并、route / objective / layout 预处理的主实现。
+  - `runtime/`
+    - compiled scenario 到 kernel/world-batch 的运行时落地、随机化与 roster 映射主实现。
 - `rl/`
   - `control/`
     - scripted takeoff / landing / stable-flight 控制器与 wrapper。
@@ -81,8 +100,10 @@ src/interfaces/python -> ef_py
 - `testing/`
   - `runtime.py`
     - repo/build 路径注入与测试期导入配置。
+  - `contracts/`
+    - JSON contract 执行器主实现，按 `env_regression`、`loader_command_chain`、`route_generator`、`scripted_bridge` 等子模块维护。
   - `scenario_contract_runner.py`
-    - JSON contract 的统一执行入口。
+    - 兼容 shim；主实现已迁到 `python/testing/contracts/`。
 - `training/`
   - `cli.py`
     - `train.py` 入口的 argparse 参数表。
@@ -102,9 +123,9 @@ src/interfaces/python -> ef_py
 - “训练配置为什么映射成这个 observation/action/env 设置”
   - 先看 [env_config.py](/home/void0312/Workshop/CMO/python/env_config.py)
 - “场景为什么被编译成这种 route / objective / roster”
-  - 先看 [scenario_compiler.py](/home/void0312/Workshop/CMO/python/scenario_compiler.py)
+  - 先看 `python/scenario/compiler/`
 - “batch runtime 怎么把 compiled scenario 应用到 kernel”
-  - 先看 [scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py)
+  - 先看 `python/scenario/runtime/`
 - “leader/tasking/HMoE 训练逻辑在哪里”
   - 先看 `python/rl/tasking/` 与 `python/rl/policy_algo/`
 - “train.py 为什么进入这个 run 目录、为什么自动 resume、torch 线程怎么定”
@@ -112,10 +133,11 @@ src/interfaces/python -> ef_py
 - “训练日志、退化、termination 统计从哪来”
   - 先看 [training_callbacks.py](/home/void0312/Workshop/CMO/python/training_callbacks.py)
 - “contract runner 或 eval 为什么解析不到 artifact”
-  - 先看 [artifact_paths.py](/home/void0312/Workshop/CMO/python/artifact_paths.py)
+  - 先看 [artifact_paths.py](/home/void0312/Workshop/CMO/python/artifact_paths.py) 与 `python/testing/contracts/`
 
 ## 迁移备注
 
 - `python/rl/` 已经按子域收敛，新增 RL 相关逻辑应优先进入对应子包，不要恢复扁平文件布局。
-- `scenario_compiler.py` 和 `scenario_runtime.py` 仍是根级主入口，因为它们被 `gym_envs/`、`tools/`、`tests/` 广泛复用。
+- `python/scenario/compiler/` 与 `python/scenario/runtime/` 是当前主实现入口；`scenario_compiler.py` 与 `scenario_runtime.py` 只保留为兼容 shim，供旧导入路径过渡。
+- `python/testing/contracts/` 是 contract runner 主实现入口；`python/testing/scenario_contract_runner.py` 只保留为兼容 shim。
 - 如果后续 `world_model/` 或 `testing/` 继续膨胀，应优先在各自目录内再拆子包，而不是回退到根级兼容文件。

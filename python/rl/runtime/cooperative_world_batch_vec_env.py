@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from copy import deepcopy
-from dataclasses import dataclass, field
 from typing import Any
 import os
 import time
@@ -20,13 +19,11 @@ import ef_py
 from gym_envs.scenario_loader import (
     ScenarioLoader,
     normalize_execution_step_runtime_mode,
-    normalize_flight_shaping_backend,
 )
 from gym_envs.universal_env import (
     build_step_info,
     build_step_info_minimal,
     build_universal_observation,
-    downsample_visual_mean,
     make_action_space,
     make_observation_space,
     normalize_action,
@@ -41,587 +38,36 @@ from python.rl.support.sb3_vec_env_compat import (
     dict_to_obs,
     obs_space_info,
 )
-from python.rl.runtime.world_batch_vec_env import (
-    _RuntimeFacadeAdapter,
-    _normalize_batch_observation_backend,
-    _normalize_batch_visual_backend,
+from python.rl.runtime.world_batch import (
+    CooperativeSlotState,
+    CooperativeWorldState,
+    RuntimeFacadeAdapter,
+    ScriptedCooperativeCoordinationDirector,
+    clone_small_dict,
+    compute_execution_observation_batch,
+    copy_obs,
+    count_control_slots,
+    mission_status_success_flag,
+    normalize_batch_observation_backend,
+    normalize_batch_visual_backend,
+    normalize_flight_shaping_backend,
+    observation_timing_snapshot,
+    refresh_visual_cache_batch,
 )
 from python.rl.control.wrappers import MultiTimescaleActionController
 from python.scenario_compiler import ScenarioCompiler
-from python.scenario_runtime import apply_world_layout_to_kernel, build_compiled_world_layout
+from python.scenario_runtime import build_compiled_world_layout
 
 
-def _copy_obs(obs: Any) -> Any:
-    if isinstance(obs, dict):
-        return {key: _copy_obs(value) for key, value in obs.items()}
-    if isinstance(obs, tuple):
-        return tuple(_copy_obs(value) for value in obs)
-    return np.array(obs, copy=True)
-
-
-def _count_control_slots(runtime_scenario: dict[str, Any]) -> int:
-    roster_cfg = runtime_scenario.get("active_controllable_roster", None)
-    if not isinstance(roster_cfg, dict):
-        roster_cfg = runtime_scenario.get("cooperative_roster", None)
-    if isinstance(roster_cfg, dict):
-        members = roster_cfg.get("members", None)
-        if isinstance(members, list) and members:
-            count = 0
-            for member in members:
-                if not isinstance(member, dict):
-                    continue
-                if bool(member.get("is_agent", True)):
-                    count += 1
-            if count > 0:
-                return int(count)
-
-    entities = runtime_scenario.get("entities", None)
-    if not isinstance(entities, list):
-        return 0
-    return sum(1 for entity in entities if isinstance(entity, dict) and bool(entity.get("is_agent", False)))
-
-
-@dataclass
-class _CooperativeWorldState:
-    world_index: int
-    randomization_overrides: dict[str, Any] = field(default_factory=dict)
-    leader_overrides: dict[str, Any] = field(default_factory=dict)
-    director: ScriptedCooperativeCoordinationDirector | None = None
-    routing_loader: ScenarioLoader | None = None
-    view: MultiAgentWorldRuntimeView | None = None
-    slot_indices: list[int] = field(default_factory=list)
-    director_dirty: bool = True
-
-    def set_randomization_overrides(self, overrides: dict | None) -> None:
-        if overrides is None:
-            self.randomization_overrides = {}
-            return
-        if not isinstance(overrides, dict):
-            raise TypeError(f"randomization overrides must be a dict or None, got {type(overrides)}")
-        self.randomization_overrides = dict(overrides)
-
-    def set_leader_overrides(self, overrides: dict | None) -> None:
-        if overrides is None:
-            self.leader_overrides = {}
-            self.director_dirty = True
-            return
-        if not isinstance(overrides, dict):
-            raise TypeError(f"leader overrides must be a dict or None, got {type(overrides)}")
-        self.leader_overrides = dict(overrides)
-        self.director_dirty = True
-
-
-@dataclass
-class _CooperativeSlotState:
-    slot_index: int
-    local_slot_index: int
-    world: _CooperativeWorldState
-    control_slot: MultiAgentControlSlot
-    loader: ScenarioLoader
-    max_steps: int
-    steps: int = 0
-    last_action: np.ndarray | None = None
-    last_inst: Any = None
-    last_truth: Any = None
-    last_obs: dict[str, np.ndarray] | None = None
-    episode_return: float = 0.0
-    episode_length: int = 0
-    visual_cache: np.ndarray | None = None
-    visual_cache_step: int = -1
-    action_controller: MultiTimescaleActionController | None = None
-    coop_success_latched: bool = False
-    coop_completion_reason: str = ""
-    coop_completion_mission_status: np.ndarray | None = None
-    coop_completion_info: dict[str, Any] | None = None
-    coop_completion_terminal_observation: dict[str, np.ndarray] | None = None
-
-    @property
-    def world_index(self) -> int:
-        return int(self.world.world_index)
-
-    @property
-    def entity_id(self) -> int:
-        return int(self.control_slot.entity_id)
-
-    @property
-    def entity_name(self) -> str:
-        return str(self.control_slot.entity_name)
-
-    def set_randomization_overrides(self, overrides: dict | None) -> None:
-        self.world.set_randomization_overrides(overrides)
-
-
-def _coerce_optional_float(value: Any, default: float = 0.0) -> float:
-    try:
-        return float(value)
-    except Exception:
-        return float(default)
-
-
-def _coerce_optional_int(value: Any, default: int = 0) -> int:
-    try:
-        return int(value)
-    except Exception:
-        return int(default)
-
-
-def _cooperative_roll_start_time(loader: Any) -> float:
-    raw = getattr(loader, "_coop_takeoff_roll_start_time_s", None)
-    if raw is None:
-        return -1.0
-    try:
-        return float(raw)
-    except Exception:
-        return -1.0
-
-
-def _mission_status_success_flag(mission_status: Any) -> bool:
-    try:
-        arr = np.asarray(mission_status, dtype=np.float32).reshape(-1)
-    except Exception:
-        return False
-    return bool(arr.size >= 4 and float(arr[3]) > 0.5)
-
-
-def _enum_member(namespace: Any, raw_value: Any, default_value: Any) -> Any:
-    if namespace is None:
-        return default_value
-    if raw_value is None:
-        return default_value
-    if isinstance(raw_value, str):
-        return getattr(namespace, str(raw_value).strip(), default_value)
-    try:
-        return namespace(int(raw_value))
-    except Exception:
-        pass
-    try:
-        return int(raw_value)
-    except Exception:
-        return default_value
-
-
-def _clone_small_dict(value: Any) -> dict[str, Any] | None:
-    if not isinstance(value, dict):
-        return None
-    return deepcopy(value)
-
-
-def _offset_triplet_from_spec(spec: Any, *, fallback: tuple[float, float, float]) -> tuple[float, float, float]:
-    if isinstance(spec, dict):
-        x = spec.get("form_offset_x", spec.get("offset_x", fallback[0]))
-        y = spec.get("form_offset_y", spec.get("offset_y", fallback[1]))
-        z = spec.get("form_offset_z", spec.get("offset_z", fallback[2]))
-        return (
-            _coerce_optional_float(x, fallback[0]),
-            _coerce_optional_float(y, fallback[1]),
-            _coerce_optional_float(z, fallback[2]),
-        )
-    if isinstance(spec, (list, tuple)) and len(spec) >= 3:
-        return (
-            _coerce_optional_float(spec[0], fallback[0]),
-            _coerce_optional_float(spec[1], fallback[1]),
-            _coerce_optional_float(spec[2], fallback[2]),
-        )
-    return tuple(float(v) for v in fallback)
-
-
-class ScriptedCooperativeCoordinationDirector:
-    """
-    World-level scripted coordination director for cooperative execution.
-
-    The director keeps the cooperative world on the existing command-chain contract:
-    it post-processes per-slot `mission_cmd` / `leader_intent` / `task_order` /
-    `pilot_report` state, then the vec env flushes those objects with the existing
-    batch sync path.
-    """
-
-    def reset(self, world_state: _CooperativeWorldState, slot_states: list[_CooperativeSlotState]) -> None:
-        self.update(world_state, slot_states, force=True)
-
-    def update(
-        self,
-        world_state: _CooperativeWorldState,
-        slot_states: list[_CooperativeSlotState],
-        *,
-        force: bool = False,
-    ) -> None:
-        if not isinstance(slot_states, list) or not slot_states:
-            return
-        if not force and not bool(getattr(world_state, "director_dirty", True)):
-            return
-        slot_state_by_entity_id = {int(slot_state.entity_id): slot_state for slot_state in slot_states}
-        for slot_state in slot_states:
-            self._apply_slot(world_state, slot_state, slot_state_by_entity_id=slot_state_by_entity_id)
-        world_state.director_dirty = False
-
-    def _resolve_formation_command(
-        self,
-        world_state: _CooperativeWorldState,
-        slot_state: _CooperativeSlotState,
-    ) -> tuple[int, float, float, float]:
-        overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
-        loader = slot_state.loader
-        mission_cmd = getattr(loader, "mission_cmd", None)
-        if not isinstance(mission_cmd, dict):
-            mission_cmd = {}
-
-        formation_id = _coerce_optional_int(
-            overrides.get(
-                "formation_id",
-                overrides.get("formation_template_id", mission_cmd.get("formation_id", 0)),
-            ),
-            _coerce_optional_int(mission_cmd.get("formation_id", 0), 0),
-        )
-        base_offsets = (
-            _coerce_optional_float(mission_cmd.get("form_offset_x", 0.0), 0.0),
-            _coerce_optional_float(mission_cmd.get("form_offset_y", 0.0), 0.0),
-            _coerce_optional_float(mission_cmd.get("form_offset_z", 0.0), 0.0),
-        )
-
-        if bool(overrides):
-            for key in (
-                "formation_offsets_by_entity",
-                "formation_offsets_by_role",
-                "formation_offsets_by_relative_slot_code",
-                "formation_offsets_by_entity_id",
-                "formation_offsets_by_index",
-            ):
-                mapping = overrides.get(key, None)
-                if not isinstance(mapping, dict):
-                    continue
-                candidates = [
-                    str(slot_state.control_slot.entity_name),
-                    str(slot_state.entity_id),
-                    str(slot_state.control_slot.formation_role_id or ""),
-                    str(slot_state.control_slot.relative_slot_code or ""),
-                    str(slot_state.local_slot_index),
-                ]
-                for candidate in candidates:
-                    if candidate not in mapping:
-                        continue
-                    offset_triplet = _offset_triplet_from_spec(mapping[candidate], fallback=base_offsets)
-                    return formation_id, offset_triplet[0], offset_triplet[1], offset_triplet[2]
-
-        role_name = str(slot_state.control_slot.formation_role_id or "").strip().lower()
-        reference_entity_id = slot_state.control_slot.reference_entity_id
-        is_leader = (
-            reference_entity_id is None
-            or int(reference_entity_id) <= 0
-            or int(reference_entity_id) == int(slot_state.entity_id)
-            or role_name in {"elementlead", "leader", "lead"}
-            or (slot_state.local_slot_index == 0 and role_name not in {"wingman", "trail", "support"})
-        )
-
-        if is_leader:
-            leader_offsets = _offset_triplet_from_spec(
-                {
-                    "form_offset_x": overrides.get("leader_form_offset_x", 0.0),
-                    "form_offset_y": overrides.get("leader_form_offset_y", 0.0),
-                    "form_offset_z": overrides.get("leader_form_offset_z", 0.0),
-                },
-                fallback=(0.0, 0.0, 0.0),
-            )
-            return formation_id, leader_offsets[0], leader_offsets[1], leader_offsets[2]
-
-        wingman_offsets = _offset_triplet_from_spec(
-            {
-                "form_offset_x": overrides.get(
-                    "wingman_form_offset_x",
-                    overrides.get("default_form_offset_x", base_offsets[0]),
-                ),
-                "form_offset_y": overrides.get(
-                    "wingman_form_offset_y",
-                    overrides.get("default_form_offset_y", base_offsets[1]),
-                ),
-                "form_offset_z": overrides.get(
-                    "wingman_form_offset_z",
-                    overrides.get("default_form_offset_z", base_offsets[2]),
-                ),
-            },
-            fallback=base_offsets,
-        )
-        return formation_id, wingman_offsets[0], wingman_offsets[1], wingman_offsets[2]
-
-    def _apply_role_metadata(self, slot_state: _CooperativeSlotState) -> None:
-        loader = slot_state.loader
-        control_slot = slot_state.control_slot
-        role_code = _coerce_optional_int(control_slot.role_code, 0)
-        relative_slot_code = _coerce_optional_int(control_slot.relative_slot_code, 0)
-        element_id = _coerce_optional_int(control_slot.element_id or control_slot.team_id, 0)
-        formation_role_name = str(control_slot.formation_role_id or "").strip()
-
-        task_order = getattr(loader, "task_order", None)
-        if task_order is not None:
-            if hasattr(task_order, "role_code"):
-                task_order.role_code = int(role_code)
-            if hasattr(task_order, "relative_slot_code"):
-                task_order.relative_slot_code = int(relative_slot_code)
-            if hasattr(task_order, "element_id") and element_id > 0:
-                task_order.element_id = int(element_id)
-            if hasattr(task_order, "lead_aircraft_id"):
-                task_order.lead_aircraft_id = int(
-                    control_slot.reference_entity_id if control_slot.reference_entity_id is not None else slot_state.entity_id
-                )
-            if hasattr(task_order, "formation_template_id"):
-                task_order.formation_template_id = int(
-                    getattr(task_order, "formation_template_id", 0) or getattr(loader.leader_intent, "formation_id", 0) or 0
-                )
-            if hasattr(task_order, "formation_role_id") and formation_role_name and hasattr(ef_py, "FormationRole"):
-                task_order.formation_role_id = _enum_member(
-                    ef_py.FormationRole,
-                    formation_role_name,
-                    getattr(task_order, "formation_role_id", getattr(ef_py.FormationRole, "Unspecified", 0)),
-                )
-
-        leader_intent = getattr(loader, "leader_intent", None)
-        if leader_intent is not None:
-            if hasattr(leader_intent, "role_code"):
-                leader_intent.role_code = int(role_code)
-            if hasattr(leader_intent, "relative_slot_code"):
-                leader_intent.relative_slot_code = int(relative_slot_code)
-            if hasattr(leader_intent, "tactical_unit_id") and element_id > 0:
-                leader_intent.tactical_unit_id = int(element_id)
-
-        pilot_report = getattr(loader, "pilot_report", None)
-        if pilot_report is not None:
-            if hasattr(pilot_report, "role_code"):
-                pilot_report.role_code = int(role_code)
-            if hasattr(pilot_report, "element_id") and element_id > 0:
-                pilot_report.element_id = int(element_id)
-            if hasattr(pilot_report, "coordination_mode") and hasattr(task_order, "coordination_mode"):
-                pilot_report.coordination_mode = getattr(task_order, "coordination_mode")
-            if hasattr(pilot_report, "formation_role_id") and formation_role_name and hasattr(ef_py, "FormationRole"):
-                pilot_report.formation_role_id = _enum_member(
-                    ef_py.FormationRole,
-                    formation_role_name,
-                    getattr(pilot_report, "formation_role_id", getattr(ef_py.FormationRole, "Unspecified", 0)),
-                )
-
-    def _resolve_takeoff_semantics(
-        self,
-        world_state: _CooperativeWorldState,
-        slot_state: _CooperativeSlotState,
-        *,
-        slot_state_by_entity_id: dict[int, _CooperativeSlotState] | None = None,
-    ) -> dict[str, Any]:
-        loader = slot_state.loader
-        control_slot = slot_state.control_slot
-        mission_cmd = getattr(loader, "mission_cmd", None)
-        if not isinstance(mission_cmd, dict):
-            mission_cmd = {}
-        overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
-
-        result = {
-            "takeoff_procedure_code": _coerce_optional_int(mission_cmd.get("takeoff_procedure_code", 0), 0),
-            "takeoff_clearance_code": _coerce_optional_int(mission_cmd.get("takeoff_clearance_code", 0), 0),
-            "takeoff_interval_s": _coerce_optional_float(mission_cmd.get("takeoff_interval_s", 0.0), 0.0),
-            "runway_slot_code": _coerce_optional_int(mission_cmd.get("runway_slot_code", 0), 0),
-        }
-
-        member_cmd = _clone_small_dict(getattr(control_slot, "mission_command_overrides", None)) or {}
-        for key in ("takeoff_procedure_code", "takeoff_clearance_code", "takeoff_interval_s", "runway_slot_code"):
-            if key in member_cmd:
-                result[key] = member_cmd[key]
-
-        for key in ("takeoff_procedure_code", "takeoff_interval_s"):
-            if key in overrides:
-                result[key] = overrides[key]
-
-        role_name = str(control_slot.formation_role_id or "").strip().lower()
-        entity_name = str(control_slot.entity_name or "")
-        candidate_keys = [
-            entity_name,
-            str(slot_state.entity_id),
-            str(control_slot.relative_slot_code or ""),
-            str(control_slot.roster_index),
-            str(control_slot.local_slot_index) if hasattr(control_slot, "local_slot_index") else "",
-            str(control_slot.formation_role_id or ""),
-        ]
-        for key in ("takeoff_clearance_by_entity", "takeoff_clearance_by_role", "takeoff_clearance_by_relative_slot_code"):
-            mapping = overrides.get(key, None)
-            if not isinstance(mapping, dict):
-                continue
-            for candidate in candidate_keys:
-                if candidate and candidate in mapping:
-                    result["takeoff_clearance_code"] = mapping[candidate]
-                    break
-
-        for key in ("runway_slot_by_entity", "runway_slot_by_role", "runway_slot_by_relative_slot_code"):
-            mapping = overrides.get(key, None)
-            if not isinstance(mapping, dict):
-                continue
-            for candidate in candidate_keys:
-                if candidate and candidate in mapping:
-                    result["runway_slot_code"] = mapping[candidate]
-                    break
-
-        clearance_code = _coerce_optional_int(result.get("takeoff_clearance_code", 0), 0)
-        interval_s = max(0.0, _coerce_optional_float(result.get("takeoff_interval_s", 0.0), 0.0))
-        reference_entity_id = control_slot.reference_entity_id
-        if interval_s > 0.0 and reference_entity_id is not None and int(reference_entity_id) > 0:
-            release_clearance_code = overrides.get("takeoff_release_clearance_code", None)
-            for key in (
-                "takeoff_release_clearance_by_entity",
-                "takeoff_release_clearance_by_role",
-                "takeoff_release_clearance_by_relative_slot_code",
-            ):
-                mapping = overrides.get(key, None)
-                if not isinstance(mapping, dict):
-                    continue
-                for candidate in candidate_keys:
-                    if candidate and candidate in mapping:
-                        release_clearance_code = mapping[candidate]
-                        break
-                if release_clearance_code is not None:
-                    break
-            if release_clearance_code is None:
-                release_clearance_code = 3 if clearance_code <= 2 else clearance_code
-            release_clearance_code = _coerce_optional_int(release_clearance_code, 3)
-            reference_state = None if not isinstance(slot_state_by_entity_id, dict) else slot_state_by_entity_id.get(int(reference_entity_id))
-            if reference_state is not None:
-                ref_inst = getattr(reference_state, "last_inst", None)
-                ref_loader = reference_state.loader
-                ref_started = False
-                ref_airborne = False
-                if ref_inst is not None:
-                    ref_ground_speed = float(getattr(ref_inst, "ground_speed", 0.0) or 0.0)
-                    ref_alt_agl = float(getattr(ref_inst, "alt_radar", 0.0) or 0.0)
-                    ref_started = ref_ground_speed >= 35.0
-                    ref_airborne = ref_alt_agl >= 5.0
-                ref_start_time = _cooperative_roll_start_time(ref_loader)
-                if ref_started and ref_start_time < 0.0:
-                    ref_start_time = float(reference_state.steps) * float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
-                    setattr(ref_loader, "_coop_takeoff_roll_start_time_s", ref_start_time)
-                current_time = float(slot_state.steps) * float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
-                gate_open = False
-                if ref_airborne:
-                    gate_open = True
-                elif ref_start_time >= 0.0 and current_time >= ref_start_time + interval_s:
-                    gate_open = True
-                if gate_open:
-                    result["takeoff_clearance_code"] = int(release_clearance_code)
-                elif clearance_code in (3, 4, 5):
-                    result["takeoff_clearance_code"] = 1 if role_name not in {"elementlead", "leader", "lead"} else clearance_code
-
-        return {
-            "takeoff_procedure_code": _coerce_optional_int(result.get("takeoff_procedure_code", 0), 0),
-            "takeoff_clearance_code": _coerce_optional_int(result.get("takeoff_clearance_code", 0), 0),
-            "takeoff_interval_s": max(0.0, _coerce_optional_float(result.get("takeoff_interval_s", 0.0), 0.0)),
-            "runway_slot_code": _coerce_optional_int(result.get("runway_slot_code", 0), 0),
-        }
-
-    def _apply_slot(
-        self,
-        world_state: _CooperativeWorldState,
-        slot_state: _CooperativeSlotState,
-        *,
-        slot_state_by_entity_id: dict[int, _CooperativeSlotState] | None = None,
-    ) -> None:
-        loader = slot_state.loader
-        if loader is None:
-            return
-        formation_id, form_offset_x, form_offset_y, form_offset_z = self._resolve_formation_command(world_state, slot_state)
-        takeoff_semantics = self._resolve_takeoff_semantics(
-            world_state,
-            slot_state,
-            slot_state_by_entity_id=slot_state_by_entity_id,
-        )
-        mission_cmd = getattr(loader, "mission_cmd", None)
-        if not isinstance(mission_cmd, dict):
-            mission_cmd = {}
-        mission_cmd = dict(mission_cmd)
-        mission_cmd["formation_id"] = int(formation_id)
-        mission_cmd["form_offset_x"] = float(form_offset_x)
-        mission_cmd["form_offset_y"] = float(form_offset_y)
-        mission_cmd["form_offset_z"] = float(form_offset_z)
-        mission_cmd["takeoff_procedure_code"] = int(takeoff_semantics["takeoff_procedure_code"])
-        mission_cmd["takeoff_clearance_code"] = int(takeoff_semantics["takeoff_clearance_code"])
-        mission_cmd["takeoff_interval_s"] = float(takeoff_semantics["takeoff_interval_s"])
-        mission_cmd["runway_slot_code"] = int(takeoff_semantics["runway_slot_code"])
-        loader.mission_cmd = mission_cmd
-        if isinstance(getattr(loader, "scenario_data", None), dict):
-            loader.scenario_data["mission_command"] = loader.mission_cmd
-
-        task_order = getattr(loader, "task_order", None)
-        if task_order is not None:
-            member_task = getattr(slot_state.control_slot, "task_order_overrides", None)
-            if isinstance(member_task, dict):
-                from python.rl.tasking.leader_tasking import _apply_task_order_overrides
-
-                _apply_task_order_overrides(
-                    task_order,
-                    member_task,
-                    default_assignee_id=int(slot_state.entity_id),
-                )
-            if hasattr(task_order, "takeoff_procedure_id"):
-                task_order.takeoff_procedure_id = _enum_member(
-                    getattr(ef_py, "TakeoffProcedureType", None),
-                    takeoff_semantics["takeoff_procedure_code"],
-                    getattr(task_order, "takeoff_procedure_id", 0),
-                )
-            if hasattr(task_order, "takeoff_clearance_id"):
-                task_order.takeoff_clearance_id = _enum_member(
-                    getattr(ef_py, "TakeoffClearanceState", None),
-                    takeoff_semantics["takeoff_clearance_code"],
-                    getattr(task_order, "takeoff_clearance_id", 0),
-                )
-            if hasattr(task_order, "takeoff_interval_s"):
-                task_order.takeoff_interval_s = float(takeoff_semantics["takeoff_interval_s"])
-            if hasattr(task_order, "runway_slot_id"):
-                task_order.runway_slot_id = _enum_member(
-                    getattr(ef_py, "RunwaySlotPosition", None),
-                    takeoff_semantics["runway_slot_code"],
-                    getattr(task_order, "runway_slot_id", 0),
-                )
-
-        leader_intent = getattr(loader, "leader_intent", None)
-        if leader_intent is not None:
-            if hasattr(leader_intent, "formation_id"):
-                leader_intent.formation_id = int(formation_id)
-            if hasattr(leader_intent, "form_offset_x"):
-                leader_intent.form_offset_x = float(form_offset_x)
-            if hasattr(leader_intent, "form_offset_y"):
-                leader_intent.form_offset_y = float(form_offset_y)
-            if hasattr(leader_intent, "form_offset_z"):
-                leader_intent.form_offset_z = float(form_offset_z)
-            if hasattr(leader_intent, "takeoff_procedure_id"):
-                leader_intent.takeoff_procedure_id = _enum_member(
-                    getattr(ef_py, "TakeoffProcedureType", None),
-                    takeoff_semantics["takeoff_procedure_code"],
-                    getattr(leader_intent, "takeoff_procedure_id", 0),
-                )
-            if hasattr(leader_intent, "takeoff_clearance_id"):
-                leader_intent.takeoff_clearance_id = _enum_member(
-                    getattr(ef_py, "TakeoffClearanceState", None),
-                    takeoff_semantics["takeoff_clearance_code"],
-                    getattr(leader_intent, "takeoff_clearance_id", 0),
-                )
-            if hasattr(leader_intent, "takeoff_interval_s"):
-                leader_intent.takeoff_interval_s = float(takeoff_semantics["takeoff_interval_s"])
-            if hasattr(leader_intent, "runway_slot_id"):
-                leader_intent.runway_slot_id = _enum_member(
-                    getattr(ef_py, "RunwaySlotPosition", None),
-                    takeoff_semantics["runway_slot_code"],
-                    getattr(leader_intent, "runway_slot_id", 0),
-                )
-
-        inst = getattr(slot_state, "last_inst", None)
-        if inst is not None:
-            ground_speed = float(getattr(inst, "ground_speed", 0.0) or 0.0)
-            alt_agl = float(getattr(inst, "alt_radar", 0.0) or 0.0)
-            current_time = float(slot_state.steps) * float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
-            clearance_code = int(takeoff_semantics["takeoff_clearance_code"])
-            if clearance_code in (3, 4, 5) and ground_speed >= 35.0 and _cooperative_roll_start_time(loader) < 0.0:
-                setattr(loader, "_coop_takeoff_roll_start_time_s", current_time)
-            if clearance_code == 3 and ground_speed >= 35.0:
-                mission_cmd["takeoff_clearance_code"] = 4
-            if mission_cmd.get("takeoff_clearance_code", 0) in (3, 4) and alt_agl >= 5.0:
-                mission_cmd["takeoff_clearance_code"] = 5
-            loader.mission_cmd = mission_cmd
-            if isinstance(getattr(loader, "scenario_data", None), dict):
-                loader.scenario_data["mission_command"] = loader.mission_cmd
-
-        self._apply_role_metadata(slot_state)
+_copy_obs = copy_obs
+_CooperativeWorldState = CooperativeWorldState
+_CooperativeSlotState = CooperativeSlotState
+_RuntimeFacadeAdapter = RuntimeFacadeAdapter
+_clone_small_dict = clone_small_dict
+_count_control_slots = count_control_slots
+_mission_status_success_flag = mission_status_success_flag
+_normalize_batch_observation_backend = normalize_batch_observation_backend
+_normalize_batch_visual_backend = normalize_batch_visual_backend
 
 class CooperativeWorldBatchVecEnv(VecEnv):
     """
@@ -809,7 +255,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         return int(seed) & 0xFFFFFFFF
 
     def _build_slot_loader(self, world_index: int, prepared_world, entity_id: int, seed: int) -> ScenarioLoader:
-        loader = ScenarioLoader(self._runtime_adapter.world(world_index))
+        loader = self._runtime_adapter.make_scenario_loader(int(world_index))
         loader._compiled_scenario = self._compiled_scenario
         loader._compiled_runtime_metadata = self._compiled_scenario.runtime_metadata
         loader._scenario_source_path = self.scenario_path
@@ -866,73 +312,27 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         if not self.include_visual:
             return
         target_indices = list(range(self.num_slots)) if indices is None else [int(i) for i in indices]
-        refresh_indices: list[int] = []
-        refs: list[Any] = []
-        for slot_index in target_indices:
-            slot_state = self._slots[int(slot_index)]
-            if slot_state is None:
-                continue
-            need_refresh = (
-                slot_state.visual_cache is None
-                or self.visual_update_interval <= 1
-                or slot_state.steps <= 0
-                or (int(slot_state.steps) - int(slot_state.visual_cache_step)) >= self.visual_update_interval
-            )
-            if not need_refresh:
-                continue
-            refresh_indices.append(int(slot_index))
-            ref = ef_py.WorldEntityRef()
-            ref.world_index = int(slot_state.world_index)
-            ref.entity_id = int(slot_state.entity_id)
-            refs.append(ref)
-
-        if not refresh_indices:
-            return
-
-        backend = self._batch_visual_backend_mode()
-        if backend == "legacy" or not hasattr(ef_py, "compute_world_batch_visual_observation_batch_numpy"):
-            for slot_index in refresh_indices:
-                slot_state = self._slots[int(slot_index)]
-                if slot_state is None:
-                    continue
-                world = self._runtime_adapter.world(slot_state.world_index)
-                if self.visual_downsample > 1 and hasattr(world, "get_visual_observation_downsampled"):
-                    visual_raw = world.get_visual_observation_downsampled(int(slot_state.entity_id), self.visual_downsample)
-                    visual = np.asarray(visual_raw, dtype=np.float32)
-                    if visual.ndim == 1:
-                        visual = visual.reshape(self.arb_height, self.arb_width, self.arb_channels)
-                    slot_state.visual_cache = visual
-                else:
-                    visual_raw = world.get_visual_observation(int(slot_state.entity_id))
-                    visual = np.asarray(visual_raw, dtype=np.float32)
-                    if visual.ndim == 1:
-                        visual = visual.reshape(self.arb_height_native, self.arb_width_native, self.arb_channels)
-                    slot_state.visual_cache = downsample_visual_mean(visual, self.visual_downsample)
-                slot_state.visual_cache_step = int(slot_state.steps)
-            return
-
-        visuals = self._runtime_adapter.compute_visual_observation_batch_numpy(
-            refs,
-            int(self.visual_downsample),
-            backend == "gpu_host",
+        refresh_visual_cache_batch(
+            adapter=self._runtime_adapter,
+            indexed_states=[
+                (slot_index, slot_state)
+                for slot_index in target_indices
+                for slot_state in [self._slots[int(slot_index)]]
+                if slot_state is not None
+            ],
+            visual_downsample=int(self.visual_downsample),
+            visual_update_interval=int(self.visual_update_interval),
+            arb_height=int(self.arb_height),
+            arb_width=int(self.arb_width),
+            arb_channels=int(self.arb_channels),
+            arb_height_native=int(self.arb_height_native),
+            arb_width_native=int(self.arb_width_native),
+            backend=self._batch_visual_backend_mode(),
+            allow_device_export=False,
         )
-        visuals = np.asarray(visuals, dtype=np.float32)
-        for batch_idx, slot_index in enumerate(refresh_indices):
-            slot_state = self._slots[int(slot_index)]
-            if slot_state is None:
-                continue
-            slot_state.visual_cache = np.asarray(visuals[batch_idx], dtype=np.float32)
-            slot_state.visual_cache_step = int(slot_state.steps)
 
     def _observation_timing_snapshot(self) -> dict[str, float]:
-        timing = getattr(self, "last_observation_build_timing", None)
-        if not isinstance(timing, dict):
-            return {}
-        return {
-            f"obs_{str(key)}": float(value)
-            for key, value in timing.items()
-            if isinstance(value, (int, float))
-        }
+        return observation_timing_snapshot(getattr(self, "last_observation_build_timing", None))
 
     def _prepare_step_evaluations_batch(
         self,
@@ -1059,50 +459,27 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 obs_batch.append(obs)
             return obs_batch
 
-        inst_batch: list[Any] = []
-        truth_batch: list[Any] = []
-        mission_inputs_batch: list[Any] = []
-        ils_batch = np.zeros((len(target_indices), 4), dtype=np.float32)
-        mission_input_t0 = time.perf_counter()
-        for batch_idx, slot_index in enumerate(target_indices):
-            slot_state = self._slots[int(slot_index)]
-            if slot_state is None or slot_state.last_inst is None or slot_state.last_truth is None:
-                raise RuntimeError(f"cooperative slot {slot_index} has no cached state for observation build")
-            inst = slot_state.last_inst
-            truth = slot_state.last_truth
-            if hasattr(slot_state.loader, "reset_runtime_eval_cache"):
-                try:
-                    slot_state.loader.reset_runtime_eval_cache()
-                except Exception:
-                    pass
-            inst_batch.append(inst)
-            truth_batch.append(truth)
-            mission_inputs_batch.append(
-                slot_state.loader._build_mission_observation_runtime_inputs(
-                    self.mission_obs_mode,
-                    truth=truth,
-                    inst=inst,
-                )
-            )
-            ils_vec = slot_state.loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
-            ils_batch[batch_idx, :] = np.asarray(ils_vec[:4], dtype=np.float32)
-        mission_input_build_ms = (time.perf_counter() - mission_input_t0) * 1000.0
-
-        execution_obs_t0 = time.perf_counter()
-        inst_out, contacts_out, rwr_out, mission_out = ef_py.compute_execution_observation_batch_numpy(
-            inst_batch,
-            truth_batch,
-            mission_inputs_batch,
-            ils_batch,
-            int(self.max_contacts),
-            int(self.max_rwr),
-            backend == "gpu_host",
+        obs_batch_data = compute_execution_observation_batch(
+            states=[
+                self._slots[int(slot_index)]
+                for slot_index in target_indices
+                if self._slots[int(slot_index)] is not None
+            ],
+            mission_obs_mode=self.mission_obs_mode,
+            max_contacts=int(self.max_contacts),
+            max_rwr=int(self.max_rwr),
+            backend=backend,
+            allow_device_export=False,
+            torch_bridge_enabled=False,
         )
-        execution_observation_batch_ms = (time.perf_counter() - execution_obs_t0) * 1000.0
-        inst_out = np.asarray(inst_out, dtype=np.float32)
-        contacts_out = np.asarray(contacts_out, dtype=np.float32)
-        rwr_out = np.asarray(rwr_out, dtype=np.float32)
-        mission_out = np.asarray(mission_out, dtype=np.float32)
+        inst_batch = obs_batch_data.inst_batch
+        truth_batch = obs_batch_data.truth_batch
+        mission_inputs_batch = obs_batch_data.mission_inputs_batch
+        ils_batch = obs_batch_data.ils_batch
+        inst_out = obs_batch_data.inst_out
+        contacts_out = obs_batch_data.contacts_out
+        rwr_out = obs_batch_data.rwr_out
+        mission_out = obs_batch_data.mission_out
 
         step_eval_prepare_ms = 0.0
         step_eval_batch: list[dict[str, Any]] | None = None
@@ -1122,8 +499,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 step_eval_batch = None
                 step_eval_prepare_ms = 0.0
         self.last_observation_build_timing = {
-            "mission_input_build_ms": float(mission_input_build_ms),
-            "execution_observation_batch_ms": float(execution_observation_batch_ms),
+            **dict(obs_batch_data.timing),
             "step_eval_prepare_ms": float(step_eval_prepare_ms),
         }
 
@@ -1264,7 +640,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         )
         layout_build_ms = (time.perf_counter() - layout_t0) * 1000.0 if self.collect_step_timing else 0.0
         apply_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        applied_world = apply_world_layout_to_kernel(self._runtime_adapter.world(int(world_index)), layout)
+        applied_world = self._runtime_adapter.apply_world_layout(int(world_index), layout)
         kernel_apply_ms = (time.perf_counter() - apply_t0) * 1000.0 if self.collect_step_timing else 0.0
         active_roster = list(getattr(applied_world, "active_roster", []) or [])
         if len(active_roster) != self.slots_per_world:
@@ -1516,7 +892,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     continue
                 slot_state.steps += 1
                 slot_state.loader.steps = int(slot_state.steps)
-                sim_time = float(slot_state.steps) * float(self._runtime_adapter.world(slot_state.world_index).get_time_step())
+                sim_time = float(slot_state.steps) * float(slot_state.loader.sim.get_time_step())
                 slot_state.loader.update_behaviors(
                     sim_time,
                     truth=slot_state.last_truth,
@@ -1569,7 +945,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
                     reward, terminated, truncated, mission_status = slot_state.loader.compute_full_step(
                         obs,
-                        self._runtime_adapter.world(slot_state.world_index),
+                        slot_state.loader.sim,
                         slot_state.steps,
                         slot_state.max_steps,
                         truth=slot_state.last_truth,
@@ -1588,7 +964,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     else:
                         info = build_step_info(
                             slot_state.loader,
-                            self._runtime_adapter.world(slot_state.world_index),
+                            slot_state.loader.sim,
                             int(slot_state.entity_id),
                             mission_status=mission_status,
                             terminated=bool(terminated),

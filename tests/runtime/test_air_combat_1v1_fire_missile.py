@@ -232,10 +232,24 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
 
         pilot = ef_py.PilotAction()
         pilot.active = True
+        pilot.weapon_select_id = 1
+        sim.set_pilot_action(blue_id, pilot)
+
+        missile_ids_before = _missile_ids(sim)
+        pilot = ef_py.PilotAction()
+        pilot.active = True
         pilot.master_arm = True
         pilot.fire_weapon = True
+        pilot.weapon_select_id = 1
         sim.set_pilot_action(blue_id, pilot)
         sim.step()
+
+        new_missile_ids = _missile_ids(sim) - missile_ids_before
+        self.assertEqual(len(new_missile_ids), 1)
+        missile_runtime = sim.debug_get_missile_runtime_state(next(iter(new_missile_ids)))
+        self.assertAlmostEqual(float(missile_runtime["mass_total_kg"]), 152.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(missile_runtime["max_speed_mps"]), 1372.0, delta=1.0e-6)
+        self.assertEqual(int(missile_runtime["sensor_type"]), int(ef_py.SensorType.Radar))
 
         post_fire = sim.get_agent_observation(blue_id)
         self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)

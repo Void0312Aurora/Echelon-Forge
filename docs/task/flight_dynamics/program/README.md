@@ -12,6 +12,8 @@
   作用：保留三条主线最初收敛为 `P0` 的统一任务板。
 - [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
   作用：记录 `P0` 验收后的收尾项与 `P1` 深化真实化排期。
+- [真实化主线委派执行计划](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_delegated_execution_plan_20260517.zh.md)
+  作用：汇总各方向审查结果，明确 shared integration 收口顺序、lane 划分、subagent 委派建议与阶段验收。
 
 ## 适用范围
 

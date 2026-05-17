@@ -154,6 +154,15 @@ namespace Math { struct Vector3 { double x, y, z; }; }
 
 这类问题不是简单的"兼容代码还没删"，而是**兼容层已经反向定义了主线接口**。
 
+补充说明：
+
+- 本轮主线程已经开始回收这条泄漏：
+  `world_batch_vec_env.py` 与 `leader_world_batch_runtime.py` 的部分 world/time-step
+  访问已先收回显式 adapter，且 `tests/architecture/test_runtime_facade_layering.py`
+  已补守卫。
+- 但风险并未消失。当前状态更准确的表述是：
+  **“raw runtime 逃逸口已从散落业务调用收窄到兼容接口残留，尚未完成最终冻结。”**
+
 ### 2.6 ScenarioLoader 正在形成 Python 侧 God Object
 
 `gym_envs/scenario_loader/core.py` 当前 1163 行，定义 122 个实例方法。
@@ -177,6 +186,52 @@ namespace Math { struct Vector3 { double x, y, z; }; }
   `ScenarioLoader`，后续继续加功能时仍然会回流到 `core.py`。
 
 这已经是典型的"文件分包了，但对象边界没有分开"。
+
+补充说明：
+
+- 本轮主线程已经先做了 `ScenarioLoader` 状态壳抽离，并把 execution episode state
+  的 mission/route/reward/runtime cache 同步逻辑集中到 `runtime_state.py`。
+- 此外，`scripted-opponent` 与 `command-chain` 的第一阶段 owner 抽离已经落地：
+  `build/reset/step` 生命周期与 `_leader_phase_manager`、`_naval_screen_*`
+  运行态缓存已分别下沉到 `behavior_runtime/scripted_opponents.py` 与
+  `behavior_runtime/command_chain_owner.py`。
+- 同时，`post_waypoint_transition / mission_phase_name / _approach_prev_*`
+  这组 behavior-phase 状态也已下沉到 `behavior_runtime/behavior_phase_owner.py`，
+  并通过 `runtime_state.py` 的统一镜像视图保持 execution episode state 合同不变。
+- 因此当前最突出的剩余问题，已经从“所有状态都挤在一个 owner”收窄为：
+  **compat facade 与更深协作者切面仍滞留在 `core.py`，对象边界仍未彻底拆权。**
+
+### 2.7 simulation_kernel_weapon_api.cpp 正在形成 Weapon 侧集成热点
+
+当前 `simulation_kernel_weapon_api.cpp` 不再只是“发射一个导弹”的薄 API，
+而是开始同时承担：
+
+1. mission/track 选择
+2. station-based launch definition 解析
+3. definition tuning -> runtime tuning 转换
+4. global tuning overlay
+5. launch envelope 判定
+6. munition / ammo / cooldown / VLS 消耗
+7. missile runtime state assembly
+
+本轮新增的 `launch envelope` 前置拒射本身是正确的，
+而且行为回归当前为绿；问题在于它是叠加在一个已经持续膨胀的集成点上。
+
+这意味着：
+
+- 短期内它是高收益切口，因为能最快把 weapon realism 参数变成真实行为。
+- 中期如果继续把 seeker activation、midcourse datalink、damage layering、
+  launch authorization 等都继续塞进这里，`simulation_kernel_weapon_api.cpp`
+  会演化成 Weapon 线的 God API。
+
+因此这里的建议不是回退本轮行为改动，而是尽快把后续工作拆成：
+
+1. launch definition resolution
+2. tuning resolution / overlay
+3. launch authorization / envelope policy
+4. runtime state assembly
+
+四个较清晰的协作者或 helper 层。
 
 ---
 

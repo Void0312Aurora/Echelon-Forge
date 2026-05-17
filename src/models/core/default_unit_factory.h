@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <unordered_map>
 
 #include <spdlog/spdlog.h>
@@ -31,6 +32,7 @@
 #include "components/naval/submarine_platform.h"
 #include "content/unit_definition_loader.h"
 #include "core/interfaces/unit_factory.h"
+#include "models/weapons/missile_guidance_types.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -46,52 +48,24 @@ inline double default_factory_math_deg_to_nav_deg(double math_deg) {
     return default_factory_wrap_angle_360(90.0 - math_deg);
 }
 
-inline Sensor make_factory_default_sensor(
-    double max_range,
-    double fov_deg,
-    double scan_period,
-    double detection_prob,
-    double bearing_noise_std,
-    double range_noise_std,
-    double track_memory_s,
-    double aspect_influence,
-    int sensor_type
-) {
-    Sensor sensor{};
-    sensor.max_range = max_range;
-    sensor.fov_deg = fov_deg;
-    sensor.scan_period = scan_period;
-    sensor.last_scan_time = -1.0;
-    sensor.detection_prob = detection_prob;
-    sensor.range_power = 2.0;
-    sensor.bearing_noise_std = bearing_noise_std;
-    sensor.range_noise_std = range_noise_std;
-    sensor.track_memory_s = track_memory_s;
-    sensor.aspect_influence = aspect_influence;
-    sensor.doppler_notch_width = 20.0;
-    sensor.reference_snr_db = 13.0;
-    sensor.reference_range_m = std::max(1000.0, max_range);
-    sensor.reference_rcs_m2 = 5.0;
-    sensor.pfa = 1.0e-6;
-    sensor.confirm_hits_m = 2;
-    sensor.confirm_window_n = 3;
-    sensor.velocity_noise_std = 3.0;
-    sensor.alpha_beta_alpha = 0.65;
-    sensor.alpha_beta_beta = 0.12;
-    sensor.antenna_height_m = 10.0;
-    sensor.target_height_bias_m = 5.0;
-    sensor.sea_clutter_sensitivity = 0.0;
-    sensor.sea_state_loss_per_level = 0.0;
-    sensor.ducting_gain_factor = 1.0;
-    sensor.ducting_max_bonus_m = 0.0;
-    sensor.bearing_only_min_range_m = 0.0;
-    sensor.environment_domain = static_cast<int>(SensorEnvironmentDomain::Air);
-    sensor.enforce_radar_horizon = false;
-    sensor.enable_ducting = false;
-    sensor.sea_clutter_enabled = false;
-    sensor.bearing_only = false;
-    sensor.type = sensor_type;
-    return sensor;
+inline double default_factory_finite_or(double candidate, double fallback) {
+    return std::isfinite(candidate) ? candidate : fallback;
+}
+
+inline double default_factory_positive_or(double candidate, double fallback) {
+    return (std::isfinite(candidate) && candidate > 0.0) ? candidate : fallback;
+}
+
+inline double default_factory_nonnegative_or(double candidate, double fallback) {
+    return (std::isfinite(candidate) && candidate >= 0.0) ? candidate : fallback;
+}
+
+inline double default_factory_default_missile_propellant_mass(double total_mass_kg) {
+    const double scaled = total_mass_kg * MissileGuidanceDefaults::kPropellantMassFraction;
+    return std::clamp(
+        scaled,
+        MissileGuidanceDefaults::kMinPropellantMassKg,
+        std::max(MissileGuidanceDefaults::kMinPropellantMassKg, total_mass_kg * 0.55));
 }
 
 class DefaultUnitFactory : public IUnitFactory {
@@ -102,10 +76,10 @@ public:
         aircraft.name = "Aircraft";
         aircraft.health = {100.0, 100.0, false, false, false};
         aircraft.has_sensor = true;
-        aircraft.sensor = make_factory_default_sensor(
+        aircraft.sensor = make_unit_definition_default_sensor_preset(
             30000.0, 120.0, 1.0, 0.9, 1.0, 25.0, 2.0, 0.3, static_cast<int>(SensorType::Radar));
         aircraft.has_flight_model = true;
-        aircraft.flight_model = {600.0, 50.0, 20.0, 50.0, 300.0, 9.0, 80.0, 70.0, 20.0};
+        aircraft.flight_model = {600.0, 50.0, 20.0, 50.0, 300.0, 9.0, -3.0, 80.0, 70.0, 20.0};
         aircraft.has_score = true;
         aircraft.score = {0.0, 0, 0, 0};
         aircraft.has_ammo = true;
@@ -114,6 +88,8 @@ public:
         aircraft.command_link = {0.2, 0.0};
         aircraft.has_data_link = true;
         aircraft.data_link_network_id = 0; // Dynamic assignment? Or per side? Usually side-based.
+        aircraft.airframe.has_tuning = true;
+        aircraft.airframe.tuning = flight_dynamics::default_aero_tuning();
         definitions_.emplace(aircraft.name, aircraft);
 
         UnitDefinition missile{};
@@ -121,10 +97,10 @@ public:
         missile.name = "Missile";
         missile.health = {100.0, 100.0, false, false, false};
         missile.has_sensor = true;
-        missile.sensor = make_factory_default_sensor(
+        missile.sensor = make_unit_definition_default_sensor_preset(
             30000.0, 120.0, 0.2, 0.95, 0.5, 15.0, 0.5, 0.2, static_cast<int>(SensorType::Radar));
         missile.has_flight_model = true;
-        missile.flight_model = {1200.0, 100.0, 40.0, 100.0, 600.0, 30.0, 0.0, 0.0, 0.0};
+        missile.flight_model = {1200.0, 100.0, 40.0, 100.0, 600.0, 30.0, 0.0, 0.0, 0.0, 0.0};
         missile.has_score = true;
         missile.score = {0.0, 0, 0, 0};
         missile.has_ammo = false;
@@ -133,6 +109,29 @@ public:
         missile.command_link = {0.0, 0.0};
         missile.has_data_link = true; // Missiles often have DL (Mid-course updates)
         missile.data_link_network_id = 0;
+        missile.has_missile_tuning = true;
+        missile.missile_tuning.max_speed = missile.flight_model.max_speed;
+        missile.missile_tuning.turn_rate = missile.flight_model.max_turn_rate;
+        missile.missile_tuning.seeker_fov_deg = missile.sensor.fov_deg;
+        missile.missile_tuning.seeker_lock_range = missile.sensor.max_range;
+        missile.missile_tuning.sensor_max_range = missile.sensor.max_range;
+        missile.missile_tuning.sensor_fov_deg = missile.sensor.fov_deg;
+        missile.missile_tuning.sensor_scan_period = missile.sensor.scan_period;
+        missile.missile_tuning.sensor_detection_prob = missile.sensor.detection_prob;
+        missile.missile_tuning.sensor_bearing_noise_std = missile.sensor.bearing_noise_std;
+        missile.missile_tuning.sensor_range_noise_std = missile.sensor.range_noise_std;
+        missile.missile_tuning.sensor_track_memory_s = missile.sensor.track_memory_s;
+        missile.missile_tuning.seeker_type = static_cast<int>(SensorType::Radar);
+        missile.missile_tuning.track_break_time_s = MissileGuidanceDefaults::kTrackMemoryTimeoutS;
+        missile.missile_tuning.boost_time_s = MissileGuidanceDefaults::kBoostTimeS;
+        missile.missile_tuning.sustain_time_s = MissileGuidanceDefaults::kSustainTimeS;
+        missile.missile_tuning.reference_area_m2 = MissileGuidanceDefaults::kReferenceAreaM2;
+        missile.missile_tuning.cd0_subsonic = MissileGuidanceDefaults::kCd0Subsonic;
+        missile.missile_tuning.cd0_supersonic = MissileGuidanceDefaults::kCd0Supersonic;
+        missile.missile_tuning.induced_drag_k = MissileGuidanceDefaults::kInducedDragScale;
+        missile.missile_tuning.max_lateral_g = missile.flight_model.max_g;
+        missile.missile_tuning.autopilot_tau_s = MissileGuidanceDefaults::kAutopilotTauS;
+        missile.missile_tuning.max_accel_response_g_per_s = MissileGuidanceDefaults::kAccelResponseGps;
         definitions_.emplace(missile.name, missile);
 
         UnitDefinition ship{};
@@ -140,7 +139,7 @@ public:
         ship.name = "Ship";
         ship.health = {100.0, 100.0, false, false, false};
         ship.has_sensor = true;
-        ship.sensor = make_factory_default_sensor(
+        ship.sensor = make_unit_definition_default_sensor_preset(
             30000.0, 120.0, 2.0, 0.9, 2.0, 50.0, 3.0, 0.2, static_cast<int>(SensorType::Radar));
         ship.has_flight_model = false;
         ship.has_ship_platform = false;
@@ -177,7 +176,7 @@ public:
         facility.name = "Facility";
         facility.health = {100.0, 100.0, false, false, false};
         facility.has_sensor = true;
-        facility.sensor = make_factory_default_sensor(
+        facility.sensor = make_unit_definition_default_sensor_preset(
             30000.0, 120.0, 2.0, 0.9, 2.0, 50.0, 3.0, 0.2, static_cast<int>(SensorType::Radar));
         facility.has_flight_model = false;
         facility.has_score = true;
@@ -196,10 +195,10 @@ public:
         c2node.health = {100.0, 100.0, false, false, false};
         c2node.has_sensor = true;
         // Big Radar: 400km Range, 360 scan, 5s period (slow scan)
-        c2node.sensor = make_factory_default_sensor(
+        c2node.sensor = make_unit_definition_default_sensor_preset(
             400000.0, 360.0, 5.0, 0.99, 0.5, 50.0, 10.0, 0.0, static_cast<int>(SensorType::Radar));
         c2node.has_flight_model = true; // It flies
-        c2node.flight_model = {250.0, 100.0, 5.0, 5.0, 50.0, 2.0, 70.0, 60.0, 10.0}; // Slow, low G
+        c2node.flight_model = {250.0, 100.0, 5.0, 5.0, 50.0, 2.0, -1.0, 70.0, 60.0, 10.0}; // Slow, low G
         c2node.has_score = true;
         c2node.score = {0.0,0,0,0};
         c2node.has_ammo = false;
@@ -434,7 +433,7 @@ public:
             e.set<AeroTuning>(tuning);
         }
         if (def.type == UnitType::Aircraft || def.has_flight_model) {
-            e.set<StallState>({});
+            e.set<StallState>(def.has_stall_state ? def.stall_state : StallState{});
         }
         double internal_fuel = (def.airframe.max_fuel_kg > 0) ? def.airframe.max_fuel_kg : 0.0;
         if (def.type == UnitType::Aircraft || def.has_flight_model || internal_fuel > 0.0) {
@@ -526,22 +525,25 @@ public:
         
         if (def.type != UnitType::Ship && def.type != UnitType::Submarine) {
             e.set<ForceAccumulator>({});
-            e.set<AeroState>({});
+            if (def.type != UnitType::Missile) {
+                e.set<AeroState>({});
+            }
         }
         
-        // Initialize InstrumentState with valid starting values
-        InstrumentState initial_instruments{};
-        initial_instruments.heading_deg = heading_init;
-        initial_instruments.pitch_deg = pitch_init;
-        initial_instruments.roll_deg = roll_init;
-        initial_instruments.alt_baro_m = params.z;
-        initial_instruments.alt_radar_m = params.z; // Assume flat ground for init
-        initial_instruments.ias_mps = std::sqrt(params.vx*params.vx + params.vy*params.vy + params.vz*params.vz);
-        initial_instruments.fuel_internal_kg = internal_fuel;
-        initial_instruments.fuel_external_kg = 0.0;
-        initial_instruments.gear_pos = 1.0f;
-        // ... fill others if needed
-        e.set<InstrumentState>(initial_instruments);
+        if (def.type != UnitType::Missile) {
+            // Initialize InstrumentState with valid starting values
+            InstrumentState initial_instruments{};
+            initial_instruments.heading_deg = heading_init;
+            initial_instruments.pitch_deg = pitch_init;
+            initial_instruments.roll_deg = roll_init;
+            initial_instruments.alt_baro_m = params.z;
+            initial_instruments.alt_radar_m = params.z; // Assume flat ground for init
+            initial_instruments.ias_mps = std::sqrt(params.vx*params.vx + params.vy*params.vy + params.vz*params.vz);
+            initial_instruments.fuel_internal_kg = internal_fuel;
+            initial_instruments.fuel_external_kg = 0.0;
+            initial_instruments.gear_pos = 1.0f;
+            e.set<InstrumentState>(initial_instruments);
+        }
 
         // Inertia: approximate from airframe geometry for aircraft.
         // The previous fixed inertia was far too small for fighter-sized masses, producing unrealistically
@@ -573,7 +575,166 @@ public:
             e.set<GroundState>({false, 0.0}); // Initialize Ground Contact
             e.set<GearState>({true, 0.0, false, 0.0, true}); // gear_down, stress, collapsed, stress_rate, on_runway
         }
-        
+
+        if (def.type == UnitType::Missile) {
+            const double missile_max_speed = def.has_missile_tuning
+                ? default_factory_positive_or(def.missile_tuning.max_speed, def.flight_model.max_speed)
+                : def.flight_model.max_speed;
+            const double missile_turn_rate = def.has_missile_tuning
+                ? default_factory_positive_or(def.missile_tuning.turn_rate, def.flight_model.max_turn_rate)
+                : def.flight_model.max_turn_rate;
+            const double seeker_fov_deg = def.has_missile_tuning
+                ? default_factory_positive_or(
+                    def.missile_tuning.seeker_fov_deg,
+                    default_factory_positive_or(def.missile_tuning.sensor_fov_deg, def.sensor.fov_deg))
+                : def.sensor.fov_deg;
+            const double seeker_lock_range = def.has_missile_tuning
+                ? default_factory_positive_or(
+                    def.missile_tuning.seeker_lock_range,
+                    default_factory_positive_or(def.missile_tuning.sensor_max_range, def.sensor.max_range))
+                : def.sensor.max_range;
+            const double missile_total_mass_kg = std::max(
+                1.0,
+                def.mass_kg > 0.0 ? def.mass_kg : 80.0);
+            double propellant_mass_kg = def.has_missile_tuning
+                ? default_factory_nonnegative_or(
+                    def.missile_tuning.propellant_mass_kg,
+                    default_factory_default_missile_propellant_mass(missile_total_mass_kg))
+                : default_factory_default_missile_propellant_mass(missile_total_mass_kg);
+            propellant_mass_kg = std::clamp(
+                propellant_mass_kg,
+                0.0,
+                std::max(0.0, missile_total_mass_kg - 1.0));
+            const double empty_mass_kg = std::max(1.0, missile_total_mass_kg - propellant_mass_kg);
+            const double reference_area_m2 = def.has_missile_tuning
+                ? default_factory_positive_or(
+                    def.missile_tuning.reference_area_m2,
+                    MissileGuidanceDefaults::kReferenceAreaM2)
+                : MissileGuidanceDefaults::kReferenceAreaM2;
+            const double current_speed_mps = std::sqrt(
+                params.vx * params.vx + params.vy * params.vy + params.vz * params.vz);
+            const double current_time = 0.0;
+
+            Missile missile_runtime{
+                0,
+                0,
+                missile_max_speed,
+                missile_turn_rate,
+                def.has_missile_tuning
+                    ? default_factory_positive_or(def.missile_tuning.fuse_distance, 300.0)
+                    : 300.0,
+                def.has_missile_tuning
+                    ? default_factory_positive_or(def.missile_tuning.damage, 120.0)
+                    : 120.0,
+                seeker_fov_deg,
+                seeker_lock_range,
+                def.has_missile_tuning
+                    ? default_factory_nonnegative_or(def.missile_tuning.guidance_delay_s, 0.0)
+                    : 0.0,
+                def.has_missile_tuning
+                    ? default_factory_nonnegative_or(def.missile_tuning.guidance_update_period_s, 0.0)
+                    : 0.0,
+                -1.0,
+                current_time,
+                def.has_missile_tuning
+                    ? default_factory_positive_or(def.missile_tuning.max_flight_time_s, 15.0)
+                    : 15.0,
+                def.has_missile_tuning
+                    ? default_factory_positive_or(def.missile_tuning.nav_gain, 3.0)
+                    : 3.0,
+                true
+            };
+            missile_runtime.p0_runtime_initialized = true;
+            missile_runtime.seeker_has_valid_track = false;
+            missile_runtime.seeker_has_range = false;
+            missile_runtime.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
+            missile_runtime.filtered_bearing_deg = 0.0;
+            missile_runtime.filtered_elevation_deg = 0.0;
+            missile_runtime.filtered_range_m = 0.0;
+            missile_runtime.filtered_closing_speed_mps = 0.0;
+            missile_runtime.bearing_rate_deg_s = 0.0;
+            missile_runtime.elevation_rate_deg_s = 0.0;
+            missile_runtime.last_track_time_s = -1.0;
+            missile_runtime.track_memory_timeout_s = def.has_missile_tuning
+                ? default_factory_nonnegative_or(
+                    def.missile_tuning.track_break_time_s,
+                    MissileGuidanceDefaults::kTrackMemoryTimeoutS)
+                : MissileGuidanceDefaults::kTrackMemoryTimeoutS;
+            missile_runtime.current_speed_mps = current_speed_mps;
+            missile_runtime.commanded_lateral_accel_mps2 = 0.0;
+            missile_runtime.achieved_lateral_accel_mps2 = 0.0;
+            missile_runtime.boost_duration_s = def.has_missile_tuning
+                ? default_factory_nonnegative_or(def.missile_tuning.boost_time_s, MissileGuidanceDefaults::kBoostTimeS)
+                : MissileGuidanceDefaults::kBoostTimeS;
+            missile_runtime.sustain_duration_s = def.has_missile_tuning
+                ? default_factory_nonnegative_or(def.missile_tuning.sustain_time_s, MissileGuidanceDefaults::kSustainTimeS)
+                : MissileGuidanceDefaults::kSustainTimeS;
+            missile_runtime.burnout_time_s =
+                current_time + missile_runtime.boost_duration_s + missile_runtime.sustain_duration_s;
+            missile_runtime.guidance_bearing_filter_tau_s = def.has_missile_tuning
+                ? default_factory_nonnegative_or(
+                    def.missile_tuning.bearing_filter_tau_s,
+                    MissileGuidanceDefaults::kTrackFilterTauS)
+                : MissileGuidanceDefaults::kTrackFilterTauS;
+            missile_runtime.guidance_elevation_filter_tau_s = def.has_missile_tuning
+                ? default_factory_nonnegative_or(
+                    def.missile_tuning.elevation_filter_tau_s,
+                    MissileGuidanceDefaults::kTrackFilterTauS)
+                : MissileGuidanceDefaults::kTrackFilterTauS;
+            missile_runtime.guidance_range_filter_tau_s = def.has_missile_tuning
+                ? default_factory_nonnegative_or(
+                    def.missile_tuning.range_filter_tau_s,
+                    MissileGuidanceDefaults::kTrackFilterTauS)
+                : MissileGuidanceDefaults::kTrackFilterTauS;
+            missile_runtime.guidance_boost_thrust_n = def.has_missile_tuning
+                ? def.missile_tuning.boost_thrust_n
+                : std::numeric_limits<double>::quiet_NaN();
+            missile_runtime.guidance_sustain_thrust_n = def.has_missile_tuning
+                ? def.missile_tuning.sustain_thrust_n
+                : std::numeric_limits<double>::quiet_NaN();
+            missile_runtime.guidance_cd0_subsonic = def.has_missile_tuning
+                ? def.missile_tuning.cd0_subsonic
+                : MissileGuidanceDefaults::kCd0Subsonic;
+            missile_runtime.guidance_cd0_supersonic = def.has_missile_tuning
+                ? def.missile_tuning.cd0_supersonic
+                : MissileGuidanceDefaults::kCd0Supersonic;
+            missile_runtime.guidance_induced_drag_k = def.has_missile_tuning
+                ? default_factory_nonnegative_or(
+                    def.missile_tuning.induced_drag_k,
+                    MissileGuidanceDefaults::kInducedDragScale)
+                : MissileGuidanceDefaults::kInducedDragScale;
+            missile_runtime.guidance_max_lateral_g = def.has_missile_tuning
+                ? default_factory_positive_or(
+                    def.missile_tuning.max_lateral_g,
+                    std::clamp(12.0 + 0.4 * std::max(0.0, missile_turn_rate), 12.0, 35.0))
+                : std::clamp(12.0 + 0.4 * std::max(0.0, missile_turn_rate), 12.0, 35.0);
+            missile_runtime.guidance_autopilot_tau_s = def.has_missile_tuning
+                ? default_factory_positive_or(
+                    def.missile_tuning.autopilot_tau_s,
+                    MissileGuidanceDefaults::kAutopilotTauS)
+                : MissileGuidanceDefaults::kAutopilotTauS;
+            missile_runtime.guidance_max_accel_response_g_per_s = def.has_missile_tuning
+                ? default_factory_positive_or(
+                    def.missile_tuning.max_accel_response_g_per_s,
+                    MissileGuidanceDefaults::kAccelResponseGps)
+                : MissileGuidanceDefaults::kAccelResponseGps;
+
+            e.set<Missile>(missile_runtime);
+            e.set<Mass>({empty_mass_kg, propellant_mass_kg, 0.0});
+            e.set<MassProperties>({
+                empty_mass_kg,
+                empty_mass_kg + propellant_mass_kg,
+                0.0,
+                0.0,
+                reference_area_m2,
+                0.0,
+                0.0
+            });
+            if (!e.has<ContactList>()) {
+                e.set<ContactList>({});
+            }
+        }
+
         // Initialize Loadout (Empty for now)
         e.set<Loadout>({});
 

@@ -199,6 +199,44 @@ def activate_post_waypoint_transition(loader, *, sync_to_kernel: bool = True) ->
     loader.mission_phase_name = (
         str(next_cmd.get("phase_name", next_cmd.get("landing_mode", "post_waypoint"))).strip() or "post_waypoint"
     )
+    leader_intent = getattr(loader, "leader_intent", None)
+    if leader_intent is not None:
+        try:
+            leader_intent.command_code = int(loader.mission_cmd.get("command_code", 0))
+        except Exception:
+            pass
+        try:
+            leader_intent.cmd_heading_deg = float(loader.mission_cmd.get("target_heading", 0.0))
+        except Exception:
+            pass
+        try:
+            leader_intent.cmd_altitude_m = float(loader.mission_cmd.get("target_altitude", 0.0))
+        except Exception:
+            pass
+        try:
+            leader_intent.cmd_speed_mps = float(loader.mission_cmd.get("target_speed", 0.0))
+        except Exception:
+            pass
+        if hasattr(leader_intent, "route_ref_id"):
+            try:
+                leader_intent.route_ref_id = int(loader.mission_cmd.get("route_ref_id", 0))
+            except Exception:
+                pass
+        if hasattr(leader_intent, "recovery_base_id"):
+            try:
+                leader_intent.recovery_base_id = int(loader.mission_cmd.get("recovery_base_id", 0))
+            except Exception:
+                pass
+        if hasattr(leader_intent, "recovery_runway_id"):
+            try:
+                leader_intent.recovery_runway_id = int(loader.mission_cmd.get("recovery_runway_id", 0))
+            except Exception:
+                pass
+        if hasattr(leader_intent, "authorization_to_fire"):
+            try:
+                leader_intent.authorization_to_fire = bool(loader.mission_cmd.get("authorization_to_fire", False))
+            except Exception:
+                pass
     loader.waypoints = []
     loader.waypoint_idx = 0
     loader._waypoint_prev_dist_m = None

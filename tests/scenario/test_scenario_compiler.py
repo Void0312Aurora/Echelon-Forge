@@ -13,6 +13,10 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
+from python.scenario.compiler import (  # noqa: E402
+    CompiledScenario as PackagedCompiledScenario,
+)
+from python.scenario.compiler import ScenarioCompiler as PackagedScenarioCompiler  # noqa: E402
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
 
 
@@ -195,6 +199,12 @@ class ScenarioCompilerTests(unittest.TestCase):
         inst2 = compiled1.instantiate()
         inst1["environment"]["zones"].append({"name": "mutated"})
         self.assertEqual(len(inst2["environment"]["zones"]), compiled1.zone_count)
+
+    def test_packaged_import_path_preserves_public_types(self) -> None:
+        compiled = PackagedScenarioCompiler.compile_path(self._scenario_path)
+
+        self.assertIs(ScenarioCompiler, PackagedScenarioCompiler)
+        self.assertIsInstance(compiled, PackagedCompiledScenario)
 
     def test_instantiate_isolates_nested_runtime_branches(self) -> None:
         compiled = ScenarioCompiler.compile_path(self._scenario_path)

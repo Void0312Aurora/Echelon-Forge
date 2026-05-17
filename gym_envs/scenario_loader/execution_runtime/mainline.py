@@ -47,6 +47,18 @@ def _apply_combat_terminal_override(loader, sim, truth, reward, terminated, trun
     return reward, terminated, truncated, status, next_rb, reason_override
 
 
+def _tracked_reward_total(rb: dict | None) -> float:
+    if not rb:
+        return 0.0
+    return float(
+        sum(
+            float(value)
+            for key, value in rb.items()
+            if key not in {"tracked_total", "untracked", "total"}
+        )
+    )
+
+
 def consume_compiled_episode_runtime(
     loader,
     *,
@@ -245,7 +257,7 @@ def consume_compiled_episode_runtime(
             _add_reward_term("objective_bonus", float(objective_terms.objective_bonus))
 
     reward += float(extra_reward)
-    tracked_total = float(sum(rb.values())) if rb else 0.0
+    tracked_total = _tracked_reward_total(rb)
     rb["tracked_total"] = tracked_total
     rb["untracked"] = float(reward - tracked_total)
     rb["total"] = float(reward)
@@ -407,7 +419,7 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
             status,
             loader.last_reward_breakdown,
         )
-        tracked_total = float(sum(rb_override.values())) if rb_override else 0.0
+        tracked_total = _tracked_reward_total(rb_override)
         rb_override["tracked_total"] = tracked_total
         rb_override["untracked"] = float(reward - tracked_total)
         rb_override["total"] = float(reward)
@@ -791,7 +803,7 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
         status,
         rb,
     )
-    tracked_total = float(sum(rb.values())) if rb else 0.0
+    tracked_total = _tracked_reward_total(rb)
     rb["tracked_total"] = tracked_total
     rb["untracked"] = float(reward - tracked_total)
     rb["total"] = float(reward)

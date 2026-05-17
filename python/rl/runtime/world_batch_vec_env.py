@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections import OrderedDict
 from collections.abc import Sequence
 from copy import deepcopy
-from dataclasses import dataclass, field
 from typing import Any
+import json
 import os
 import time
 import warnings
@@ -18,19 +18,16 @@ except Exception:  # pragma: no cover - training envs are expected to have torch
     torch = None
 
 import ef_py
-import json
 
 from gym_envs.scenario_loader import (
     ScenarioLoader,
     normalize_execution_step_runtime_mode,
-    normalize_flight_shaping_backend,
 )
 from gym_envs.universal_env import (
     build_pilot_action,
     build_step_info,
     build_step_info_minimal,
     build_universal_observation,
-    downsample_visual_mean,
     make_action_space,
     make_observation_space,
     normalize_action,
@@ -45,342 +42,39 @@ from python.rl.support.sb3_vec_env_compat import (
     obs_space_info,
 )
 from python.rl.control.wrappers import MultiTimescaleActionController
+from python.rl.runtime.world_batch import (
+    BatchWorldHandle,
+    ExecutionObservationBatch,
+    RuntimeCompatibilityView,
+    RuntimeFacadeAdapter,
+    compute_execution_observation_batch,
+    copy_obs,
+    normalize_batch_observation_backend,
+    normalize_batch_visual_backend,
+    normalize_flight_shaping_backend,
+    normalize_observation_return_mode,
+    observation_timing_snapshot,
+    parse_reward_terms_json,
+    refresh_visual_cache_batch,
+    step_info_products_to_info_fields,
+)
 from python.scenario_compiler import ScenarioCompiler
 from python.scenario_runtime import (
     BatchWorldApplyBuffer,
-    apply_world_layout_to_kernel,
     build_compiled_world_layout,
     load_compiled_scenario_batch,
 )
 
-
-def _copy_obs(obs: Any) -> Any:
-    if isinstance(obs, dict):
-        return {key: _copy_obs(value) for key, value in obs.items()}
-    if isinstance(obs, tuple):
-        return tuple(_copy_obs(value) for value in obs)
-    return np.array(obs, copy=True)
-
-
-def _parse_reward_terms_json(raw: Any) -> dict[str, float] | None:
-    if not isinstance(raw, str) or not raw.strip():
-        return None
-    try:
-        data = json.loads(raw)
-    except Exception:
-        return None
-    if not isinstance(data, dict):
-        return None
-    out: dict[str, float] = {}
-    for key, value in data.items():
-        try:
-            out[str(key)] = float(value)
-        except Exception:
-            continue
-    return out if out else None
-
-
-def _step_info_products_to_info_fields(step_info: Any) -> dict[str, float]:
-    fields: dict[str, float] = {}
-    try:
-        fields["on_runway"] = float(bool(getattr(step_info, "on_runway", True)))
-        fields["gear_collapsed"] = float(bool(getattr(step_info, "gear_collapsed", False)))
-        fields["gear_stress"] = float(getattr(step_info, "gear_stress", 0.0))
-        fields["on_ground"] = float(bool(getattr(step_info, "on_ground", False)))
-        if bool(getattr(step_info, "has_runway_frame", False)):
-            fields["on_runway_geom"] = float(bool(getattr(step_info, "on_runway_geom", False)))
-            fields["runway_cross_m"] = float(getattr(step_info, "runway_cross_m", 0.0))
-            fields["runway_along_m"] = float(getattr(step_info, "runway_along_m", 0.0))
-    except Exception:
-        return {}
-    return fields
-
-
-def _normalize_batch_observation_backend(value: str | None) -> str:
-    backend = "auto" if value is None else str(value).strip().lower()
-    if backend in ("", "auto"):
-        return "auto"
-    if backend in ("legacy", "compiled", "gpu_host"):
-        return backend
-    raise ValueError(f"Unknown batch_observation_backend: {value!r}")
-
-
-def _normalize_batch_visual_backend(value: str | None) -> str:
-    backend = "auto" if value is None else str(value).strip().lower()
-    if backend in ("", "auto"):
-        return "auto"
-    if backend in ("legacy", "compiled", "gpu_host"):
-        return backend
-    raise ValueError(f"Unknown batch_visual_backend: {value!r}")
-
-
-def _normalize_flight_shaping_backend(value: str | None) -> str:
-    backend = "auto" if value is None else normalize_flight_shaping_backend(value)
-    if backend in ("auto", "legacy", "compiled", "gpu_host"):
-        return backend
-    raise ValueError(f"Unknown flight_shaping_backend: {value!r}")
-
-
-def _normalize_observation_return_mode(value: str | None) -> str:
-    mode = "copy" if value is None else str(value).strip().lower()
-    if mode in ("", "copy"):
-        return "copy"
-    if mode == "view":
-        return "view"
-    raise ValueError(f"Unknown observation_return_mode: {value!r}")
-
-
-@dataclass
-class _BatchWorldHandle:
-    env_idx: int
-    loader: ScenarioLoader
-    scenario_path: str
-    render_mode: str | None
-    include_visual: bool
-    include_proprio: bool
-    action_mode: str
-    mission_obs_mode: str
-    agent_id: int | None = None
-    max_steps: int = 1000
-    steps: int = 0
-    last_action: np.ndarray | None = None
-    last_inst: Any = None
-    last_truth: Any = None
-    randomization_overrides: dict[str, Any] = field(default_factory=dict)
-    episode_return: float = 0.0
-    episode_length: int = 0
-    visual_cache: np.ndarray | None = None
-    visual_cache_step: int = -1
-    action_controller: MultiTimescaleActionController | None = None
-    execution_episode_controller_config: Any = None
-
-    def set_randomization_overrides(self, overrides: dict | None) -> None:
-        self.loader.set_randomization_overrides(overrides)
-        self.randomization_overrides = dict(getattr(self.loader, "randomization_overrides", {}) or {})
-
-
-class _RuntimeFacadeAdapter:
-    """Narrow WorldBatchVecEnv's maintained access to facade-shaped methods."""
-
-    def __init__(self, world_count: int):
-        self.facade = ef_py.RuntimeFacade(int(world_count)) if hasattr(ef_py, "RuntimeFacade") else None
-        self._compat_runtime = self.facade.runtime() if self.facade is not None else ef_py.WorldBatchRuntime(int(world_count))
-
-    def world_count(self) -> int:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return int(target.world_count())
-
-    def set_worker_threads(self, worker_threads: int) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_worker_threads(int(worker_threads))
-
-    def worker_threads(self) -> int:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return int(target.worker_threads())
-
-    def effective_worker_threads(self) -> int:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return int(target.effective_worker_threads())
-
-    def load_database(self, path: str) -> bool:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        return bool(target.load_database(path))
-
-    def world(self, index: int):
-        return self._compat_runtime.world(int(index))
-
-    def compute_visual_observation_batch_numpy(
-        self,
-        refs: Sequence[Any],
-        downsample: int,
-        use_gpu_host: bool,
-    ) -> Any:
-        return ef_py.compute_world_batch_visual_observation_batch_numpy(
-            self._compat_runtime,
-            list(refs),
-            int(downsample),
-            bool(use_gpu_host),
-        )
-
-    def compute_visual_observation_batch_export(
-        self,
-        refs: Sequence[Any],
-        downsample: int,
-        prefer_device_view: bool,
-    ) -> Any:
-        return ef_py.compute_world_batch_visual_observation_batch_export(
-            self._compat_runtime,
-            list(refs),
-            int(downsample),
-            bool(prefer_device_view),
-        )
-
-    def apply_world_setup(self, request: Any):
-        if self.facade is not None and hasattr(self.facade, "apply_world_setup"):
-            return self.facade.apply_world_setup(request)
-        result = ef_py.BatchWorldSetupResult() if hasattr(ef_py, "BatchWorldSetupResult") else None
-        entity_ids = self._compat_runtime.apply_world_setup_batch(
-            list(request.seeds),
-            list(request.terrain_assignments),
-            list(request.wind_assignments),
-            list(request.zones),
-            list(request.spawn_requests),
-            list(request.time_steps),
-        )
-        if result is None:
-            return entity_ids
-        result.entity_ids = list(entity_ids)
-        return result
-
-    def apply_world_setup_batch(
-        self,
-        seeds: Sequence[int],
-        terrain_assignments: Sequence[Any],
-        wind_assignments: Sequence[Any],
-        zones: Sequence[Any],
-        requests: Sequence[Any],
-        time_steps: Sequence[float] | None = None,
-    ) -> list[int]:
-        if hasattr(ef_py, "BatchWorldSetupRequest"):
-            request = ef_py.BatchWorldSetupRequest()
-            request.seeds = [int(seed) & 0xFFFFFFFF for seed in seeds]
-            request.terrain_assignments = list(terrain_assignments)
-            request.wind_assignments = list(wind_assignments)
-            request.zones = list(zones)
-            request.spawn_requests = list(requests)
-            request.time_steps = [] if time_steps is None else [float(value) for value in time_steps]
-            result = self.apply_world_setup(request)
-            if hasattr(result, "entity_ids"):
-                return [int(entity_id) for entity_id in list(result.entity_ids)]
-            return [int(entity_id) for entity_id in list(result)]
-        return [
-            int(entity_id)
-            for entity_id in self._compat_runtime.apply_world_setup_batch(
-                list(seeds),
-                list(terrain_assignments),
-                list(wind_assignments),
-                list(zones),
-                list(requests),
-                [] if time_steps is None else list(time_steps),
-            )
-        ]
-
-    def read_truth_and_instruments(self, refs: Sequence[Any]) -> tuple[list[Any], list[Any]]:
-        refs_list = list(refs)
-        if self.facade is not None and hasattr(ef_py, "ObservationBatchRequest"):
-            request = ef_py.ObservationBatchRequest()
-            request.refs = refs_list
-            request.include_agent_observations = True
-            request.include_instrument_states = True
-            request.include_mission_commands = False
-            request.include_task_orders = False
-            request.include_leader_intents = False
-            request.include_pilot_reports = False
-            packet = self.facade.export_observation_packet(request)
-            return list(packet.agent_observations), list(packet.instrument_states)
-        if self.facade is not None:
-            return (
-                list(self.facade.get_agent_observations_batch(refs_list)),
-                list(self.facade.get_instrument_states_batch(refs_list)),
-            )
-        return (
-            list(self._compat_runtime.get_agent_observations_batch(refs_list)),
-            list(self._compat_runtime.get_instrument_states_batch(refs_list)),
-        )
-
-    def get_instrument_states_batch(self, refs: Sequence[Any]) -> list[Any]:
-        _truth, inst = self.read_truth_and_instruments(refs)
-        return inst
-
-    def get_agent_observations_batch(self, refs: Sequence[Any]) -> list[Any]:
-        truth, _inst = self.read_truth_and_instruments(refs)
-        return truth
-
-    def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_pilot_actions_batch(list(assignments))
-
-    def step_batch(self) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.step_batch()
-
-    def prime_execution_episode_batch(self, refs: Sequence[Any], states: Sequence[Any]) -> None:
-        if self.facade is not None:
-            self.facade.prime_execution_episode_batch(list(refs), list(states))
-            return
-        self._compat_runtime.prime_execution_episode_controller_batch(list(refs), list(states))
-
-    def execution_episode_ready(self, world_index: int) -> bool:
-        if self.facade is not None:
-            return bool(self.facade.execution_episode_ready(int(world_index)))
-        return bool(self._compat_runtime.execution_episode_controller_ready(int(world_index)))
-
-    def execution_episode_controller_ready(self, world_index: int) -> bool:
-        return self.execution_episode_ready(int(world_index))
-
-    def step_execution_batch(self, request: Any) -> Any:
-        if self.facade is not None:
-            return self.facade.step_execution_batch(request)
-        result = ef_py.ExecutionBatchStepResult()
-        step_results = list(self._compat_runtime.step_execution_episode_results_batch(list(request.step_requests)))
-        result.step_results = step_results
-        result.rewards = [float(getattr(step_result, "reward_total", 0.0)) for step_result in step_results]
-        result.terminated = [bool(getattr(step_result, "terminated", False)) for step_result in step_results]
-        result.truncated = [bool(getattr(step_result, "truncated", False)) for step_result in step_results]
-        result.status_vectors = [
-            [
-                float(getattr(step_result, "status0", 0.0)),
-                float(getattr(step_result, "status1", 0.0)),
-                float(getattr(step_result, "status2", 0.0)),
-                float(getattr(step_result, "status3", 0.0)),
-            ]
-            for step_result in step_results
-        ]
-        result.termination_reasons = [
-            str(getattr(getattr(step_result, "controller_state", None), "last_termination_reason", "") or "")
-            for step_result in step_results
-        ]
-        result.reward_breakdown_jsons = [
-            str(getattr(getattr(step_result, "controller_state", None), "last_reward_breakdown_json", "") or "")
-            for step_result in step_results
-        ]
-        result.controller_state_changed_flags = [
-            bool(getattr(step_result, "structural_state_changed", False))
-            for step_result in step_results
-        ]
-        return result
-
-    def step_execution_products_batch(self, requests: Sequence[Any]) -> list[Any]:
-        if self.facade is not None:
-            return list(self.facade.step_execution_products_batch(list(requests)))
-        return list(self._compat_runtime.step_execution_episode_batch(list(requests)))
-
-    def export_execution_episode_states(self, refs: Sequence[Any]) -> list[Any]:
-        if self.facade is not None:
-            return list(self.facade.export_execution_episode_states(list(refs)))
-        return list(self._compat_runtime.export_execution_episode_states_batch(list(refs)))
-
-    def export_execution_episode_states_batch(self, refs: Sequence[Any]) -> list[Any]:
-        return self.export_execution_episode_states(refs)
-
-    def step_worlds(self, world_indices: Sequence[int]) -> None:
-        self._compat_runtime.step_worlds([int(index) for index in world_indices])
-
-    def set_mission_commands_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_mission_commands_batch(list(assignments))
-
-    def set_task_orders_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_task_orders_batch(list(assignments))
-
-    def set_leader_intents_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_leader_intents_batch(list(assignments))
-
-    def set_pilot_reports_batch(self, assignments: Sequence[Any]) -> None:
-        target = self.facade if self.facade is not None else self._compat_runtime
-        target.set_pilot_reports_batch(list(assignments))
+_copy_obs = copy_obs
+_parse_reward_terms_json = parse_reward_terms_json
+_step_info_products_to_info_fields = step_info_products_to_info_fields
+_normalize_batch_observation_backend = normalize_batch_observation_backend
+_normalize_batch_visual_backend = normalize_batch_visual_backend
+_normalize_flight_shaping_backend = normalize_flight_shaping_backend
+_normalize_observation_return_mode = normalize_observation_return_mode
+_BatchWorldHandle = BatchWorldHandle
+_RuntimeFacadeAdapter = RuntimeFacadeAdapter
+_RuntimeCompatibilityView = RuntimeCompatibilityView
 
 
 class WorldBatchVecEnv(VecEnv):
@@ -489,6 +183,7 @@ class WorldBatchVecEnv(VecEnv):
         )
         self._compiled_scenario = ScenarioCompiler.compile_path(self.scenario_path)
         self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)
+        self._runtime_compat = _RuntimeCompatibilityView(self._runtime_adapter)
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
@@ -525,7 +220,7 @@ class WorldBatchVecEnv(VecEnv):
         self._handles = [
             _BatchWorldHandle(
                 env_idx=env_idx,
-                loader=ScenarioLoader(self._runtime_adapter.world(env_idx)),
+                loader=self._runtime_adapter.make_scenario_loader(env_idx),
                 scenario_path=self.scenario_path,
                 render_mode=render_mode,
                 include_visual=self.include_visual,
@@ -550,7 +245,7 @@ class WorldBatchVecEnv(VecEnv):
                 handle.action_controller = MultiTimescaleActionController(
                     action_space=self.action_space,
                     loader_getter=lambda handle=handle: handle.loader,
-                    dt_getter=lambda handle=handle: float(handle.loader.sim.get_time_step()),
+                    dt_getter=lambda handle=handle: self._runtime_adapter.get_time_step(handle.env_idx),
                     **self._action_wrapper_kwargs,
                 )
         self.envs = list(self._handles)
@@ -575,7 +270,7 @@ class WorldBatchVecEnv(VecEnv):
 
     @property
     def batch_runtime(self):
-        return self._runtime_adapter
+        return self._runtime_compat
 
     @property
     def runtime_facade(self):
@@ -615,6 +310,15 @@ class WorldBatchVecEnv(VecEnv):
 
     def _get_instrument_states_batch(self, refs: Sequence[Any]) -> list[Any]:
         return self._runtime_adapter.get_instrument_states_batch(refs)
+
+    def _get_agent_observations_batch(self, refs: Sequence[Any]) -> list[Any]:
+        return self._runtime_adapter.get_agent_observations_batch(refs)
+
+    def _world_time_step(self, env_idx: int) -> float:
+        return self._runtime_adapter.get_time_step(int(env_idx))
+
+    def _step_runtime_worlds(self, world_indices: Sequence[int]) -> None:
+        self._runtime_adapter.step_worlds(world_indices)
 
     def _collect_observations(self, indices: Sequence[int] | None = None) -> list[dict[str, np.ndarray]]:
         target_indices, truth_list, inst_list = self._read_truth_and_inst_batch(indices)
@@ -667,72 +371,22 @@ class WorldBatchVecEnv(VecEnv):
         if not self.include_visual:
             return
         target_indices = list(range(self.num_envs)) if indices is None else [int(i) for i in indices]
-        refresh_indices = []
-        for env_idx in target_indices:
-            handle = self._handles[env_idx]
-            need_refresh = (
-                handle.visual_cache is None
-                or self.visual_update_interval <= 1
-                or handle.steps <= 0
-                or (int(handle.steps) - int(handle.visual_cache_step)) >= self.visual_update_interval
-            )
-            if need_refresh:
-                refresh_indices.append(env_idx)
-
-        if not refresh_indices:
+        full_refresh = self._is_full_batch_indices(target_indices)
+        refreshed, device_view = refresh_visual_cache_batch(
+            adapter=self._runtime_adapter,
+            indexed_states=[(env_idx, self._handles[env_idx]) for env_idx in target_indices],
+            visual_downsample=int(self.visual_downsample),
+            visual_update_interval=int(self.visual_update_interval),
+            arb_height=int(self.arb_height),
+            arb_width=int(self.arb_width),
+            arb_channels=int(self.arb_channels),
+            arb_height_native=int(self.arb_height_native),
+            arb_width_native=int(self.arb_width_native),
+            backend=self._batch_visual_backend_mode(),
+            allow_device_export=bool(full_refresh and self._policy_torch_bridge_enabled),
+        )
+        if not refreshed:
             return
-
-        full_refresh = self._is_full_batch_indices(refresh_indices)
-
-        backend = self._batch_visual_backend_mode()
-        if backend == "legacy" or not self._batch_visual_runtime_available():
-            if refresh_indices:
-                self._policy_visual_device_view = None
-            for env_idx in refresh_indices:
-                handle = self._handles[env_idx]
-                if handle.agent_id is None:
-                    raise RuntimeError(f"world {env_idx} has no active agent_id")
-                world = self._runtime_adapter.world(env_idx)
-                if self.visual_downsample > 1 and hasattr(world, "get_visual_observation_downsampled"):
-                    visual_raw = world.get_visual_observation_downsampled(int(handle.agent_id), self.visual_downsample)
-                    visual = np.asarray(visual_raw, dtype=np.float32)
-                    if visual.ndim == 1:
-                        visual = visual.reshape(self.arb_height, self.arb_width, self.arb_channels)
-                    handle.visual_cache = visual
-                else:
-                    visual_raw = world.get_visual_observation(int(handle.agent_id))
-                    visual = np.asarray(visual_raw, dtype=np.float32)
-                    if visual.ndim == 1:
-                        visual = visual.reshape(self.arb_height_native, self.arb_width_native, self.arb_channels)
-                    handle.visual_cache = downsample_visual_mean(visual, self.visual_downsample)
-                handle.visual_cache_step = int(handle.steps)
-            return
-
-        _target_indices, refs = self._build_refs(refresh_indices)
-        device_view = None
-        if (
-            backend == "gpu_host"
-            and full_refresh
-            and self._policy_torch_bridge_enabled
-            and hasattr(ef_py, "compute_world_batch_visual_observation_batch_export")
-        ):
-            visuals, device_view = self._runtime_adapter.compute_visual_observation_batch_export(
-                refs,
-                int(self.visual_downsample),
-                True,
-            )
-        else:
-            visuals = self._runtime_adapter.compute_visual_observation_batch_numpy(
-                refs,
-                int(self.visual_downsample),
-                backend == "gpu_host",
-            )
-            device_view = None
-        visuals = np.asarray(visuals, dtype=np.float32)
-        for batch_idx, env_idx in enumerate(refresh_indices):
-            handle = self._handles[env_idx]
-            handle.visual_cache = np.asarray(visuals[batch_idx], dtype=np.float32)
-            handle.visual_cache_step = int(handle.steps)
         self._policy_visual_device_view = device_view if full_refresh else None
 
     def _prepare_step_evaluations_batch(
@@ -757,7 +411,7 @@ class WorldBatchVecEnv(VecEnv):
         config.target_altitude_m = float(first_loader.mission_cmd.get("target_altitude", 0.0))
         config.target_speed_mps = float(first_loader.mission_cmd.get("target_speed", 0.0))
         config.target_heading_deg = float(first_loader.mission_cmd.get("target_heading", 0.0))
-        config.time_step_s = float(getattr(first_loader.sim, "get_time_step", lambda: 0.05)())
+        config.time_step_s = self._runtime_adapter.get_time_step(target_indices[0])
 
         # Build env states
         env_states = []
@@ -853,70 +507,26 @@ class WorldBatchVecEnv(VecEnv):
                 obs_batch.append(self._attach_visual_observation(env_idx, obs))
             return obs_batch
 
-        inst_batch = []
-        truth_batch = []
-        mission_inputs_batch = []
-        ils_batch = np.zeros((len(target_indices), 4), dtype=np.float32)
-        mission_input_t0 = time.perf_counter()
-        for batch_idx, env_idx in enumerate(target_indices):
-            handle = self._handles[env_idx]
-            if handle.last_inst is None or handle.last_truth is None:
-                raise RuntimeError(f"world {env_idx} has no cached state for observation build")
-            inst = handle.last_inst
-            truth = handle.last_truth
-            if hasattr(handle.loader, "reset_runtime_eval_cache"):
-                try:
-                    handle.loader.reset_runtime_eval_cache()
-                except Exception:
-                    pass
-            inst_batch.append(inst)
-            truth_batch.append(truth)
-            mission_inputs_batch.append(
-                handle.loader._build_mission_observation_runtime_inputs(
-                    self.mission_obs_mode,
-                    truth=truth,
-                    inst=inst,
-                )
-            )
-            ils_vec = handle.loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
-            ils_batch[batch_idx, :] = np.asarray(ils_vec[:4], dtype=np.float32)
-        mission_input_build_ms = (time.perf_counter() - mission_input_t0) * 1000.0
-
-        execution_device_view = None
-        execution_obs_t0 = time.perf_counter()
-        if (
-            backend == "gpu_host"
-            and self._is_full_batch_indices(target_indices)
-            and self._policy_torch_bridge_enabled
-            and hasattr(ef_py, "compute_execution_observation_batch_export")
-        ):
-            inst_out, contacts_out, rwr_out, mission_out, execution_device_view = (
-                ef_py.compute_execution_observation_batch_export(
-                    inst_batch,
-                    truth_batch,
-                    mission_inputs_batch,
-                    ils_batch,
-                    int(self.max_contacts),
-                    int(self.max_rwr),
-                    True,
-                )
-            )
-        else:
-            inst_out, contacts_out, rwr_out, mission_out = ef_py.compute_execution_observation_batch_numpy(
-                inst_batch,
-                truth_batch,
-                mission_inputs_batch,
-                ils_batch,
-                int(self.max_contacts),
-                int(self.max_rwr),
-                backend == "gpu_host",
-            )
-        execution_observation_batch_ms = (time.perf_counter() - execution_obs_t0) * 1000.0
-        self._policy_execution_device_view = execution_device_view if self._is_full_batch_indices(target_indices) else None
-        inst_out = np.asarray(inst_out, dtype=np.float32)
-        contacts_out = np.asarray(contacts_out, dtype=np.float32)
-        rwr_out = np.asarray(rwr_out, dtype=np.float32)
-        mission_out = np.asarray(mission_out, dtype=np.float32)
+        obs_batch_data: ExecutionObservationBatch = compute_execution_observation_batch(
+            states=[self._handles[env_idx] for env_idx in target_indices],
+            mission_obs_mode=self.mission_obs_mode,
+            max_contacts=int(self.max_contacts),
+            max_rwr=int(self.max_rwr),
+            backend=backend,
+            allow_device_export=bool(self._is_full_batch_indices(target_indices)),
+            torch_bridge_enabled=bool(self._policy_torch_bridge_enabled),
+        )
+        inst_batch = obs_batch_data.inst_batch
+        truth_batch = obs_batch_data.truth_batch
+        mission_inputs_batch = obs_batch_data.mission_inputs_batch
+        ils_batch = obs_batch_data.ils_batch
+        inst_out = obs_batch_data.inst_out
+        contacts_out = obs_batch_data.contacts_out
+        rwr_out = obs_batch_data.rwr_out
+        mission_out = obs_batch_data.mission_out
+        self._policy_execution_device_view = (
+            obs_batch_data.device_view if self._is_full_batch_indices(target_indices) else None
+        )
 
         # Try batch step evaluation preparation if available
         step_eval_batch = None
@@ -931,8 +541,7 @@ class WorldBatchVecEnv(VecEnv):
             except Exception:
                 step_eval_batch = None
         self.last_observation_build_timing = {
-            "mission_input_build_ms": float(mission_input_build_ms),
-            "execution_observation_batch_ms": float(execution_observation_batch_ms),
+            **dict(obs_batch_data.timing),
             "step_eval_prepare_ms": float(step_eval_prepare_ms),
         }
 
@@ -982,14 +591,7 @@ class WorldBatchVecEnv(VecEnv):
         return obs_batch
 
     def _observation_timing_snapshot(self) -> dict[str, float]:
-        timing = getattr(self, "last_observation_build_timing", None)
-        if not isinstance(timing, dict):
-            return {}
-        return {
-            f"obs_{str(key)}": float(value)
-            for key, value in timing.items()
-            if isinstance(value, (int, float))
-        }
+        return observation_timing_snapshot(getattr(self, "last_observation_build_timing", None))
 
     def _attach_visual_observation(self, env_idx: int, obs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         if not self.include_visual:
@@ -1633,7 +1235,7 @@ class WorldBatchVecEnv(VecEnv):
         )
         layout_build_ms = (time.perf_counter() - layout_t0) * 1000.0 if self.collect_step_timing else 0.0
         apply_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        applied_world = apply_world_layout_to_kernel(handle.loader.sim, layout)
+        applied_world = self._runtime_adapter.apply_world_layout(int(env_idx), layout)
         kernel_apply_ms = (time.perf_counter() - apply_t0) * 1000.0 if self.collect_step_timing else 0.0
         initial_truth = None
         initial_inst = None

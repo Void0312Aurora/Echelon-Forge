@@ -79,6 +79,28 @@ def _route_transition_scenario() -> dict:
 
 
 class ExecutionEpisodeStateTests(unittest.TestCase):
+    def test_scenario_loader_state_shell_keeps_execution_episode_fields_attribute_compatible(self) -> None:
+        sim = ef_py.SimulationKernel()
+        loader = ScenarioLoader(sim)
+
+        self.assertTrue(hasattr(loader, "_state_shell"))
+        self.assertIs(loader.waypoints, loader._state_shell.waypoints)
+        self.assertEqual(loader.mission_phase_name, "idle")
+        self.assertEqual(loader.last_termination_reason, "idle")
+        self.assertIsNone(loader.task_order)
+        self.assertIsNone(loader.leader_intent)
+        self.assertIsNone(loader.pilot_report)
+
+        loader.mission_phase_name = "route_primary"
+        loader._waypoint_prev_dist_m = 123.0
+        loader.last_reward_breakdown = {"total": 3.5}
+        loader.off_runway_steps = 2
+
+        self.assertEqual(loader._state_shell.mission_phase_name, "route_primary")
+        self.assertAlmostEqual(float(loader._state_shell._waypoint_prev_dist_m), 123.0, places=6)
+        self.assertEqual(loader._state_shell.last_reward_breakdown["total"], 3.5)
+        self.assertEqual(int(loader._state_shell.off_runway_steps), 2)
+
     def test_scenario_loader_exports_execution_episode_state(self) -> None:
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))

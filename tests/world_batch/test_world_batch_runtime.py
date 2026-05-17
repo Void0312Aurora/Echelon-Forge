@@ -796,6 +796,72 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(got[1].form_offset_y), -90.0, places=6)
         self.assertAlmostEqual(float(got[1].form_offset_z), 30.0, places=6)
 
+    def test_world_batch_runtime_mission_command_roundtrip_preserves_naval_extension_fields(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+        batch.reset_batch([31])
+
+        ship = batch.world(0).spawn_unit(
+            ef_py.Side.Blue,
+            "DDG-51_Flight_I_ASW_Helo_MVP",
+            -1400.0,
+            0.0,
+            0.0,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            10.29,
+            0.0,
+        )
+        batch.world(0).set_command_link(int(ship), 0.0, 0.0)
+        refs = [_entity_ref(0, int(ship))]
+
+        cmd = ef_py.MissionCommand()
+        cmd.command_code = 32
+        cmd.cmd_heading_deg = 45.0
+        cmd.cmd_altitude_m = 0.0
+        cmd.cmd_speed_mps = 12.0
+        cmd.reference_entity_id = 5201
+        cmd.station_radius_m = 16000.0
+        cmd.station_bearing_deg = 75.0
+        cmd.recovery_base_id = 9201
+        cmd.recovery_runway_id = 14
+        cmd.recovery_approach_type = ef_py.RecoveryApproachType.ILS
+        cmd.formation_id = 73
+        cmd.form_offset_x = 240.0
+        cmd.form_offset_y = -110.0
+        cmd.form_offset_z = 18.0
+        cmd.embarked_helo_entity_id = 9301
+        cmd.launch_helo = True
+        cmd.recover_helo = False
+        cmd.relay_oth_targeting = True
+        cmd.active = True
+
+        assign = ef_py.WorldMissionCommandAssignment()
+        assign.world_index = 0
+        assign.entity_id = int(ship)
+        assign.command = cmd
+        batch.set_mission_commands_batch([assign])
+
+        got = batch.get_mission_commands_batch(refs)
+
+        self.assertEqual(len(got), 1)
+        self.assertEqual(int(got[0].reference_entity_id), 5201)
+        self.assertAlmostEqual(float(got[0].station_radius_m), 16000.0, places=6)
+        self.assertAlmostEqual(float(got[0].station_bearing_deg), 75.0, places=6)
+        self.assertEqual(int(got[0].recovery_base_id), 9201)
+        self.assertEqual(int(got[0].recovery_runway_id), 14)
+        self.assertEqual(got[0].recovery_approach_type, ef_py.RecoveryApproachType.ILS)
+        self.assertEqual(int(got[0].formation_id), 73)
+        self.assertAlmostEqual(float(got[0].form_offset_x), 240.0, places=6)
+        self.assertAlmostEqual(float(got[0].form_offset_y), -110.0, places=6)
+        self.assertAlmostEqual(float(got[0].form_offset_z), 18.0, places=6)
+        self.assertEqual(int(got[0].embarked_helo_entity_id), 9301)
+        self.assertTrue(bool(got[0].launch_helo))
+        self.assertFalse(bool(got[0].recover_helo))
+        self.assertTrue(bool(got[0].relay_oth_targeting))
+
 
 class BatchScenarioRuntimeTests(unittest.TestCase):
     def test_load_compiled_scenario_batch_reuses_apply_buffer(self) -> None:

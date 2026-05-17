@@ -2,16 +2,29 @@
 
 This folder contains the maintained JSON configs consumed by [train.py](/home/void0312/CMO/train.py).
 
+Status taxonomy used by the training config entry surface:
+
+- `Authoritative`
+  - The default maintained starting point for a config family.
+- `Active Mainline`
+  - Maintained in-progress configs that define the current forward-moving training line.
+- `Frozen Baseline`
+  - Maintained stable configs preserved for reproducible post-freeze training and validation.
+- `Compatibility`
+  - Maintained bridge configs kept only to preserve a current contract or workflow shape while still avoiding direct archive dependencies.
+- `Archived`
+  - Historical configs retained only for provenance, result lookup, or lineage review.
+
 ## Maintained Surface
 
 - [default_ppo.json](/home/void0312/CMO/examples/config/training/default_ppo.json)
-  - Minimal generic fallback used by `train.py --train_config` when no config is provided.
+  - `Authoritative` minimal generic fallback used by `train.py --train_config` when no config is provided.
 - [curriculum/](/home/void0312/CMO/examples/config/training/curriculum)
-  - Reusable curriculum/randomization snippets.
+  - `Authoritative` reusable curriculum/randomization snippets.
 - [frozen/](/home/void0312/CMO/examples/config/training/frozen/README.md)
-  - Maintained post-freeze leader and execution-layer training entry points. These are frozen baselines, not the current forward-moving training mainline.
+  - `Frozen Baseline` maintained post-freeze leader and execution-layer training entry points. These are not the current forward-moving training mainline.
 - [active/](/home/void0312/CMO/examples/config/training/active/README.md)
-  - Maintained in-progress training entries that are intentionally not frozen yet, including the current P8 cooperative cruise line.
+  - `Active Mainline` maintained in-progress training entries, including the current P8 cooperative cruise line.
 
 Avoid adding ad hoc experiment JSON files directly under this directory. New maintained runs should go under `frozen/` or a deliberately named active subdirectory with a README that explains ownership and acceptance criteria.
 
@@ -43,6 +56,8 @@ Historical configs are retained under [examples/config/Archive/training](/home/v
   - Runs the paired shared-vs-HMoE cooperative takeoff-to-cruise control line using the `*_shared_fair_v1` and `*_hmoe_fair_v1` configs.
 
 Archived configs are not maintained training entry points. If one needs to be revived, copy it into a maintained active directory and update its scenario pairing, runtime assumptions, and acceptance target.
+
+Maintained docs, contracts, and bridge entry points should not point directly at `examples/config/Archive/**`. If an older behavior must stay reachable, promote or preserve a maintained `Frozen Baseline` or `Compatibility` config outside `Archive` first.
 
 ## Leader Performance Knobs
 

@@ -330,14 +330,20 @@ class NavalScreenScenarioTests(unittest.TestCase):
         disturbed_separation_m = math.dist(sim.get_unit_position(ddg_id), sim.get_unit_position(hvu_id))
         self.assertLess(disturbed_separation_m, steady_separation_m - 500.0)
 
+        direct_modes = []
         for step in range(2400):
             loader.update_behaviors(step * sim.get_time_step(), sync_to_kernel=True)
+            direct_modes.append(bool(getattr(loader, "_naval_screen_use_direct_command", False)))
             sim.step()
 
         final_sep_m = math.dist(sim.get_unit_position(ddg_id), sim.get_unit_position(hvu_id))
+        handoff_step = next((idx for idx, active in enumerate(direct_modes) if not active), None)
         self.assertGreater(final_sep_m, disturbed_separation_m + 1200.0)
         self.assertGreaterEqual(final_sep_m, 13650.0)
         self.assertLessEqual(final_sep_m, 15000.0)
+        self.assertIsNotNone(handoff_step)
+        self.assertGreater(handoff_step, 0)
+        self.assertFalse(any(direct_modes[handoff_step:]))
 
     def test_screen_station_hold_settles_without_large_late_oscillation(self) -> None:
         sim = ef_py.SimulationKernel()
@@ -365,16 +371,21 @@ class NavalScreenScenarioTests(unittest.TestCase):
             sim.step()
 
         separations = []
+        direct_modes = []
         for step in range(2400):
             loader.update_behaviors(step * sim.get_time_step(), sync_to_kernel=True)
+            direct_modes.append(bool(getattr(loader, "_naval_screen_use_direct_command", False)))
             sim.step()
             separations.append(math.dist(sim.get_unit_position(ddg_id), sim.get_unit_position(hvu_id)))
 
         self.assertGreater(len(separations), 1200)
         tail = separations[-600:]
+        handoff_step = next((idx for idx, active in enumerate(direct_modes) if not active), None)
         self.assertGreaterEqual(min(tail), 13300.0)
         self.assertLessEqual(max(tail), 15100.0)
         self.assertLess(max(tail) - min(tail), 700.0)
+        self.assertIsNotNone(handoff_step)
+        self.assertFalse(any(direct_modes[handoff_step:]))
 
 
 if __name__ == "__main__":

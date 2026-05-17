@@ -49,6 +49,13 @@ When a standalone test is needed, prefer:
 - small internal support modules under `tests/` for shared fakes/builders
 - direct package imports instead of single-file compatibility shims
 
+## Implementation Entry Points
+
+- Contract execution logic now lives in [python/testing/contracts/](/home/void0312/Workshop/CMO/python/testing/contracts).
+- [python/testing/scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py) is a compatibility shim that re-exports the packaged contract runner.
+- Scenario-side bootstrap logic used by tests now lives in `python/scenario/compiler/` and `python/scenario/runtime/`.
+- [python/scenario_compiler.py](/home/void0312/Workshop/CMO/python/scenario_compiler.py) and [python/scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py) remain compatibility shims for older imports and should not be treated as the primary implementation surface.
+
 ## Contract Types
 
 - `loader_command_chain`
@@ -63,7 +70,7 @@ When a standalone test is needed, prefer:
   - Validates pure-Python controller/config/loader/wrapper handoff logic without needing full scenario stepping.
   - Also hosts parameterized leader-task generalization checks that mutate C2 task inputs and validate emitted mission-command behavior.
 
-Contract execution lives in [scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py).
+Contract execution lives in [python/testing/contracts/](/home/void0312/Workshop/CMO/python/testing/contracts), with [python/testing/scenario_contract_runner.py](/home/void0312/Workshop/CMO/python/testing/scenario_contract_runner.py) retained only as a compatibility shim.
 
 ## How To Run
 

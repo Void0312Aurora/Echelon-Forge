@@ -17,6 +17,7 @@
 #include "components/systems/logistics.h"    // FuelSystem
 #include "components/systems/navigation.h"   // EGI
 #include "core/interfaces/environment_model.h"
+#include "systems/physics/propulsion_system.h"
 
 namespace {
     inline double inst_rad_to_deg(double rad) { return rad * 180.0 / M_PI; }
@@ -152,12 +153,14 @@ inline void register_instrument_system(flecs::world& ecs) {
                     inst[i].g_load_axial  = f_body.x / (total_mass * 9.80665);
                     
                     // 2. Propulsion
-                    const double tsfc_nh = std::max(0.0, propulsion[i].current_tsfc);
-                    inst[i].fuel_flow_kg_h = std::abs(propulsion[i].current_thrust_n) * tsfc_nh;
-
-                    const double throttle_state = std::clamp(propulsion[i].throttle_state, 0.0, 1.0);
-                    const double ab_state = std::clamp(propulsion[i].ab_state, 0.0, 1.0);
-                    inst[i].engine_rpm_pct = (throttle_state * 100.0) + (ab_state * 10.0);
+                    double fuel_flow_kg_s = 0.0;
+                    if (const FuelSystem* fuel = it.entity(i).get<FuelSystem>()) {
+                        fuel_flow_kg_s = fuel->current_flow_rate;
+                    } else {
+                        fuel_flow_kg_s = flight_dynamics::propulsion_fuel_flow_kg_per_s(propulsion[i]);
+                    }
+                    inst[i].fuel_flow_kg_h = fuel_flow_kg_s * 3600.0;
+                    inst[i].engine_rpm_pct = flight_dynamics::propulsion_engine_rpm_pct(propulsion[i]);
                     inst[i].engine_temp_c = 600.0 + inst[i].engine_rpm_pct * 3.0; // Mocked EGT
                     
                     if (const FuelSystem* fuel = it.entity(i).get<FuelSystem>()) {

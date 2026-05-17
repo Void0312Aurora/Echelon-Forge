@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import unittest
 
 from python.testing.runtime import ensure_repo_imports, resolve_repo_path
@@ -213,6 +214,22 @@ class ShipMissionCommandAuthorityTests(unittest.TestCase):
         self.assertEqual(int(mission_after.reference_entity_id), 0)
         self.assertAlmostEqual(float(mission_after.station_radius_m), 0.0, places=6)
         self.assertAlmostEqual(float(mission_after.station_bearing_deg), 0.0, places=6)
+
+        initial_heading_deg = float(kernel.get_unit_heading(int(sub_id)))
+        initial_speed_mps = math.hypot(*(float(v) for v in kernel.get_unit_velocity(int(sub_id))[:2]))
+        initial_depth_m = -float(kernel.get_unit_position(int(sub_id))[2])
+
+        for _ in range(10):
+            kernel.step()
+
+        heading_after = float(kernel.get_unit_heading(int(sub_id)))
+        speed_after_mps = math.hypot(*(float(v) for v in kernel.get_unit_velocity(int(sub_id))[:2]))
+        depth_after_m = -float(kernel.get_unit_position(int(sub_id))[2])
+
+        self.assertGreater(heading_after, initial_heading_deg + 5.0)
+        self.assertGreater(speed_after_mps, initial_speed_mps + 0.2)
+        self.assertGreater(depth_after_m, initial_depth_m + 10.0)
+        self.assertLessEqual(depth_after_m, 120.0 + 1.0e-6)
 
 
 if __name__ == "__main__":

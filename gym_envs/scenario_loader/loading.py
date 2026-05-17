@@ -19,7 +19,7 @@ from python.scenario_runtime import (
     find_active_roster_member,
     prepare_scenario_world_layout,
 )
-from python.rl.tasking.bridge import make_rule_based_leader_phase_manager, normalize_task_order_spec
+from python.rl.tasking.bridge import normalize_task_order_spec
 
 
 def get_active_roster_member(loader, *, entity_id=None, entity_name=None, role_code=None, formation_role_id=None):
@@ -100,7 +100,7 @@ def begin_loaded_world(loader, *, scenario_data: dict) -> None:
     if loader._compiled_runtime_metadata is None and isinstance(loader._compiled_scenario, CompiledScenario):
         loader._compiled_runtime_metadata = loader._compiled_scenario.runtime_metadata
     loader.scenario_data = scenario_data
-    loader._leader_phase_manager = make_rule_based_leader_phase_manager(loader)
+    loader._reset_command_chain_owner()
     loader._cached_route_ref_id = None
     mission_cmd = loader.scenario_data.get("mission_command", None)
     if not isinstance(mission_cmd, dict) and loader._compiled_runtime_metadata is not None:
@@ -112,8 +112,7 @@ def begin_loaded_world(loader, *, scenario_data: dict) -> None:
         "target_altitude": 0.0,
         "target_speed": 0.0,
     }
-    loader.scripted_opponents = {}
-    loader.scripted_opponent_reports = {}
+    loader.reset_scripted_opponents()
 
 
 def apply_compiled_runtime_metadata(loader) -> None:
@@ -194,6 +193,7 @@ def mission_cmd_has_valid_runtime_waypoint_cache(mission_cmd) -> bool:
 def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync_to_kernel: bool = True):
     loader.steps = 0
     loader.captured_time = 0.0
+    loader._reset_behavior_phase_owner()
     loader.prev_alt = 0.0
     loader.prev_speed = 0.0
     loader.gear_bonus_awarded = False
@@ -208,8 +208,7 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
     loader.mission_phase_name = "primary"
     loader.primary_target_id = None
     loader.primary_target_name = ""
-    loader.scripted_opponents = {}
-    loader.scripted_opponent_reports = {}
+    loader.reset_scripted_opponents()
 
     loader._randomize_mission()
     loader._randomize_task_order()

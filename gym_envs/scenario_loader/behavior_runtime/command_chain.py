@@ -1,13 +1,12 @@
 import ef_py
 
 from python.rl.tasking.bridge import build_kernel_mission_command
+from .command_chain_owner import ensure_command_chain_owner
 from .naval_screen import apply_naval_screen_station_hold, compute_naval_screen_station_hold
 
 
 def _reset_naval_screen_station_hold_state(loader) -> None:
-    loader._naval_screen_last_reference_id = 0
-    loader._naval_screen_last_heading_deg = None
-    loader._naval_screen_last_speed_mps = None
+    ensure_command_chain_owner(loader).reset_naval_screen_state()
 
 
 def _apply_dynamic_naval_screen_command_overrides(loader, cmd) -> None:
@@ -97,14 +96,13 @@ def sync_kernel_command_chain(loader) -> None:
     if not hierarchical_command_chain_active(loader):
         return
     try:
-        loader._leader_phase_manager.sync_to_kernel(loader)
+        ensure_command_chain_owner(loader)._leader_phase_manager.sync_to_kernel(loader)
     except Exception:
         pass
 
 
 def reset_command_chain(loader, *, initial_truth=None, initial_inst=None, sync_to_kernel: bool = True) -> None:
     _reset_naval_screen_station_hold_state(loader)
-    loader._naval_screen_use_direct_command = False
     if loader.agent_id is None:
         return
     if not hierarchical_command_chain_active(loader):
@@ -118,7 +116,7 @@ def reset_command_chain(loader, *, initial_truth=None, initial_inst=None, sync_t
         sim_time_s = float(loader.steps) * float(loader.sim.get_time_step())
     except Exception:
         sim_time_s = 0.0
-    loader._leader_phase_manager.reset(
+    ensure_command_chain_owner(loader)._leader_phase_manager.reset(
         loader,
         sim_time_s=sim_time_s,
         truth=initial_truth,
@@ -135,7 +133,7 @@ def update_command_chain(loader, sim_time: float, *, truth=None, inst=None, sync
         return
     if not hierarchical_command_chain_active(loader):
         return
-    loader._leader_phase_manager.update(
+    ensure_command_chain_owner(loader)._leader_phase_manager.update(
         loader,
         sim_time_s=float(sim_time),
         truth=truth,

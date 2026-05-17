@@ -695,6 +695,45 @@ void bind_core(nb::module_& m) {
         .def("get_leader_intent", &SimulationKernel::get_leader_intent, "Get the latest leader intent", nb::arg("entity_id"))
         .def("get_mission_command", &SimulationKernel::get_mission_command, "Get the active mission command", nb::arg("entity_id"))
         .def("get_pilot_report", &SimulationKernel::get_pilot_report, "Get the latest pilot report", nb::arg("entity_id"))
+        .def("debug_set_legacy_movement_command", [](SimulationKernel& self,
+                                                     uint64_t entity_id,
+                                                     double target_heading_deg,
+                                                     double target_speed_mps,
+                                                     double target_altitude_m,
+                                                     bool active) {
+             auto e = self.get_world().entity(entity_id);
+             if (!e.is_valid()) {
+                 throw std::invalid_argument("Invalid entity ID for debug_set_legacy_movement_command");
+             }
+             e.set<MovementCommand>(make_legacy_autopilot_movement_command(
+                 target_heading_deg,
+                 target_speed_mps,
+                 target_altitude_m,
+                 active
+             ));
+        }, "Debug: inject a legacy autopilot-style MovementCommand",
+             nb::arg("entity_id"),
+             nb::arg("target_heading_deg"),
+             nb::arg("target_speed_mps"),
+             nb::arg("target_altitude_m"),
+             nb::arg("active") = true)
+        .def("debug_get_legacy_movement_command", [](SimulationKernel& self, uint64_t entity_id) {
+             nb::dict out;
+             auto e = self.get_world().entity(entity_id);
+             if (!e.is_valid()) {
+                 return out;
+             }
+             const MovementCommand* movement = e.get<MovementCommand>();
+             if (!movement) {
+                 return out;
+             }
+             out["active"] = movement->active;
+             out["target_heading"] = movement->target_heading;
+             out["target_speed"] = movement->target_speed;
+             out["target_altitude"] = movement->target_altitude;
+             out["use_stick_control"] = movement->use_stick_control;
+             return out;
+        }, "Debug: get legacy movement command state", nb::arg("entity_id"))
         .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
         .def("get_visual_observation", [](SimulationKernel& self, uint64_t entity_id) {
              size_t shape[3] = {
@@ -783,9 +822,22 @@ void bind_core(nb::module_& m) {
                  return out;
              }
              const Missile* missile = e.get<Missile>();
+             const Sensor* sensor = e.get<Sensor>();
+             const Mass* mass = e.get<Mass>();
+             const MassProperties* mass_properties = e.get<MassProperties>();
              if (!missile) {
                  return out;
              }
+             out["max_speed_mps"] = missile->max_speed;
+             out["turn_rate_deg_s"] = missile->turn_rate;
+             out["fuse_distance_m"] = missile->fuse_distance;
+             out["damage"] = missile->damage;
+             out["seeker_fov_deg"] = missile->seeker_fov_deg;
+             out["seeker_lock_range_m"] = missile->seeker_lock_range;
+             out["guidance_delay_s"] = missile->guidance_delay_s;
+             out["guidance_update_period_s"] = missile->guidance_update_period_s;
+             out["max_flight_time_s"] = missile->max_flight_time_s;
+             out["nav_gain"] = missile->nav_gain;
              out["p0_runtime_initialized"] = missile->p0_runtime_initialized;
              out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
              out["seeker_has_range"] = missile->seeker_has_range;
@@ -802,6 +854,38 @@ void bind_core(nb::module_& m) {
              out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
              out["achieved_lateral_accel_mps2"] = missile->achieved_lateral_accel_mps2;
              out["burnout_time_s"] = missile->burnout_time_s;
+             out["boost_duration_s"] = missile->boost_duration_s;
+             out["sustain_duration_s"] = missile->sustain_duration_s;
+             out["guidance_bearing_filter_tau_s"] = missile->guidance_bearing_filter_tau_s;
+             out["guidance_elevation_filter_tau_s"] = missile->guidance_elevation_filter_tau_s;
+             out["guidance_range_filter_tau_s"] = missile->guidance_range_filter_tau_s;
+             out["guidance_boost_thrust_n"] = missile->guidance_boost_thrust_n;
+             out["guidance_sustain_thrust_n"] = missile->guidance_sustain_thrust_n;
+             out["guidance_cd0_subsonic"] = missile->guidance_cd0_subsonic;
+             out["guidance_cd0_supersonic"] = missile->guidance_cd0_supersonic;
+             out["guidance_induced_drag_k"] = missile->guidance_induced_drag_k;
+             out["guidance_max_lateral_g"] = missile->guidance_max_lateral_g;
+             out["guidance_autopilot_tau_s"] = missile->guidance_autopilot_tau_s;
+             out["guidance_max_accel_response_g_per_s"] = missile->guidance_max_accel_response_g_per_s;
+             if (sensor) {
+                 out["sensor_max_range_m"] = sensor->max_range;
+                 out["sensor_fov_deg"] = sensor->fov_deg;
+                 out["sensor_scan_period_s"] = sensor->scan_period;
+                 out["sensor_detection_prob"] = sensor->detection_prob;
+                 out["sensor_bearing_noise_std"] = sensor->bearing_noise_std;
+                 out["sensor_range_noise_std"] = sensor->range_noise_std;
+                 out["sensor_track_memory_s"] = sensor->track_memory_s;
+                 out["sensor_type"] = sensor->type;
+             }
+             if (mass) {
+                 out["mass_empty_kg"] = mass->empty_mass_kg;
+                 out["mass_fuel_kg"] = mass->fuel_mass_kg;
+                 out["mass_stores_kg"] = mass->stores_mass_kg;
+                 out["mass_total_kg"] = mass->get_total_kg();
+             }
+             if (mass_properties) {
+                 out["reference_area_m2"] = mass_properties->reference_area_m2;
+             }
              return out;
         }, "Debug: get missile runtime guidance state", nb::arg("entity_id"))
         .def("set_contact_list", &SimulationKernel::set_contact_list,

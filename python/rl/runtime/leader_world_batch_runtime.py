@@ -19,6 +19,7 @@ from python.rl.runtime.execution_runtime import (
     unwrap_nested_env,
 )
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
+from python.rl.runtime.world_batch import WorldBatchVecEnvAccess, copy_obs_batch_item
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 
 
@@ -29,19 +30,19 @@ class _LeaderExecutionWorldView:
 
     @property
     def loader(self):
-        return self.runtime_group.world_vec._handles[self.env_idx].loader
+        return self.runtime_group.access.loader(self.env_idx)
 
     @property
     def sim(self):
-        return self.runtime_group.world_vec.batch_runtime.world(self.env_idx)
+        return self.loader.sim
 
     @property
     def agent_id(self):
-        return self.runtime_group.world_vec._handles[self.env_idx].agent_id
+        return self.runtime_group.access.agent_id(self.env_idx)
 
     @property
     def steps(self):
-        return self.runtime_group.world_vec._handles[self.env_idx].steps
+        return self.runtime_group.access.steps(self.env_idx)
 
 
 class LeaderWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if gym is not None else object):
@@ -79,8 +80,7 @@ class LeaderWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         return self.runtime_group.step_indices([self.env_idx], [action])[0]
 
     def get_last_state(self):
-        handle = self.runtime_group.world_vec._handles[self.env_idx]
-        return handle.last_inst, handle.last_truth
+        return self.runtime_group.access.last_state(self.env_idx)
 
     def set_randomization_overrides(self, overrides: dict | None) -> None:
         self.runtime_group.set_randomization_overrides(self.env_idx, overrides)
@@ -88,6 +88,7 @@ class LeaderWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
 class LeaderWorldBatchExecutionRuntimeGroup:
     def __init__(self, world_vec: WorldBatchVecEnv, leader_envs: Sequence[Any] | None = None):
         self.world_vec = world_vec
+        self.access = WorldBatchVecEnvAccess(world_vec)
         self._leader_envs = [
             None if env is None else unwrap_nested_env(env)
             for env in (list(leader_envs) if leader_envs is not None else [None] * int(self.world_vec.num_envs))
@@ -256,17 +257,29 @@ class LeaderWorldBatchExecutionRuntimeGroup:
         return out
 
     def set_randomization_overrides(self, env_idx: int, overrides: dict | None) -> None:
-        self.world_vec._handles[int(env_idx)].set_randomization_overrides(overrides)
+        self.access.set_randomization_overrides(int(env_idx), overrides)
+
+    def _world_time_step(self, env_idx: int) -> float:
+        return self.access.world_time_step(int(env_idx))
+
+    def _get_instrument_states_batch(self, refs: Sequence[Any]) -> list[Any]:
+        return self.access.get_instrument_states_batch(refs)
+
+    def _get_agent_observations_batch(self, refs: Sequence[Any]) -> list[Any]:
+        return self.access.get_agent_observations_batch(refs)
+
+    def _set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
+        self.access.set_pilot_actions_batch(assignments)
+
+    def _step_runtime_worlds(self, world_indices: Sequence[int]) -> None:
+        self.access.step_worlds(world_indices)
 
     def reset_index(self, env_idx: int, *, seed: int | None = None):
-        return self.world_vec._reset_single_world(int(env_idx), seed=seed)
+        return self.access.reset_single_world(int(env_idx), seed=seed)
 
     @staticmethod
     def _copy_obs_item(obs_batch, env_idx: int):
-        out = {}
-        for key, value in obs_batch.items():
-            out[key] = np.array(value[int(env_idx)], copy=True)
-        return out
+        return copy_obs_batch_item(obs_batch, env_idx)
 
     def reset_indices(
         self,
@@ -286,21 +299,21 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             raise ValueError(f"expected {len(target_indices)} seeds, got {len(seed_items)}")
 
         if len(target_indices) == int(self.world_vec.num_envs):
-            normalized = [self.world_vec._normalize_seed(seed_items[idx]) for idx in range(len(target_indices))]
-            self.world_vec._seeds = list(normalized)
-            obs_batch = self.world_vec.reset()
+            normalized = [self.access.normalize_seed(seed_items[idx]) for idx in range(len(target_indices))]
+            self.access.seeds = list(normalized)
+            obs_batch = self.access.reset()
             per_env_scale = 1.0 / float(max(1, len(target_indices)))
             return {
                 int(env_idx): (
                     self._copy_obs_item(obs_batch, env_idx),
-                    copy_info_with_scaled_timing(self.world_vec.reset_infos[int(env_idx)], per_env_scale),
+                    copy_info_with_scaled_timing(self.access.reset_infos[int(env_idx)], per_env_scale),
                 )
                 for env_idx in target_indices
             }
 
         out = {}
         for idx, env_idx in enumerate(target_indices):
-            out[int(env_idx)] = self.world_vec._reset_single_world(int(env_idx), seed=seed_items[idx])
+            out[int(env_idx)] = self.access.reset_single_world(int(env_idx), seed=seed_items[idx])
         return out
 
     def reset_leader_envs(
@@ -341,15 +354,15 @@ class LeaderWorldBatchExecutionRuntimeGroup:
         if collect_timing:
             command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 
-        _, refs = self.world_vec._build_refs(target_indices)
+        _, refs = self.access.build_refs(target_indices)
         prepare_t0 = time.perf_counter() if collect_timing else 0.0
         inst_now_list = None
         if self.world_vec.action_mode != "full":
-            inst_now_list = self.batch_runtime.get_instrument_states_batch(refs)
+            inst_now_list = self._get_instrument_states_batch(refs)
 
         assignments = []
         for batch_idx, env_idx in enumerate(target_indices):
-            handle = self.world_vec._handles[env_idx]
+            handle = self.access.state(env_idx)
             if handle.agent_id is None:
                 raise RuntimeError(f"world {env_idx} is not initialized; call reset() before step().")
             action = normalize_action(
@@ -370,21 +383,21 @@ class LeaderWorldBatchExecutionRuntimeGroup:
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if collect_timing else 0.0
 
         step_t0 = time.perf_counter() if collect_timing else 0.0
-        self.batch_runtime.set_pilot_actions_batch(assignments)
-        self.batch_runtime.step_worlds([int(idx) for idx in target_indices])
+        self._set_pilot_actions_batch(assignments)
+        self._step_runtime_worlds([int(idx) for idx in target_indices])
         batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
 
         read_t0 = time.perf_counter() if collect_timing else 0.0
-        truth_list = self.batch_runtime.get_agent_observations_batch(refs)
-        inst_list = self.batch_runtime.get_instrument_states_batch(refs)
+        truth_list = self._get_agent_observations_batch(refs)
+        inst_list = self._get_instrument_states_batch(refs)
         state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
         for batch_idx, env_idx in enumerate(target_indices):
-            handle = self.world_vec._handles[env_idx]
+            handle = self.access.state(env_idx)
             handle.steps += 1
             handle.last_truth = truth_list[batch_idx]
             handle.last_inst = inst_list[batch_idx]
-            sim_time = float(handle.steps) * float(self.batch_runtime.world(env_idx).get_time_step())
+            sim_time = float(handle.steps) * self._world_time_step(env_idx)
             handle.loader.update_behaviors(
                 sim_time,
                 truth=handle.last_truth,
@@ -393,7 +406,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             )
         behavior_update_ms = (time.perf_counter() - behavior_t0) * 1000.0 if collect_timing else 0.0
         sync_t0 = time.perf_counter() if collect_timing else 0.0
-        self.world_vec._sync_command_chain_batch(target_indices)
+        self.access.sync_command_chain(target_indices)
         if collect_timing:
             command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 
@@ -403,17 +416,17 @@ class LeaderWorldBatchExecutionRuntimeGroup:
         info_build_ms = 0.0
         per_env_timing = {}
         if collect_timing:
-            self.world_vec.last_step_timing = {}
+            self.access.last_step_timing = {}
         for env_idx in target_indices:
-            handle = self.world_vec._handles[env_idx]
+            handle = self.access.state(env_idx)
             obs_t0 = time.perf_counter() if collect_timing else 0.0
-            obs = self.world_vec._build_observation_from_cached_state(env_idx)
+            obs = self.access.build_observation_from_cached_state(env_idx)
             if collect_timing:
                 obs_build_ms += (time.perf_counter() - obs_t0) * 1000.0
             reward_t0 = time.perf_counter() if collect_timing else 0.0
             reward, terminated, truncated, mission_status = handle.loader.compute_full_step(
                 obs,
-                self.batch_runtime.world(env_idx),
+                handle.loader.sim,
                 handle.steps,
                 handle.max_steps,
                 truth=handle.last_truth,
@@ -424,7 +437,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             info_t0 = time.perf_counter() if collect_timing else 0.0
             info = build_step_info(
                 handle.loader,
-                self.batch_runtime.world(env_idx),
+                handle.loader.sim,
                 int(handle.agent_id),
                 mission_status=mission_status,
                 terminated=bool(terminated),
@@ -453,9 +466,9 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                 key: float(value) * per_env_scale
                 for key, value in batch_timing.items()
             }
-            self.world_vec.last_step_timing = dict(batch_timing)
+            self.access.last_step_timing = dict(batch_timing)
         else:
-            self.world_vec.last_step_timing = {}
+            self.access.last_step_timing = {}
 
         if per_env_timing:
             out = [

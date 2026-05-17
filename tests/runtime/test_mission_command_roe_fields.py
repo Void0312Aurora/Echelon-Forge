@@ -133,6 +133,8 @@ class MissionCommandRoeFieldTests(unittest.TestCase):
         episode_state.mission_command.roe_state = 1
         episode_state.mission_command.engagement_authority_holder_id = 4001
         episode_state.mission_command.engagement_authority_grantor_id = 3001
+        episode_state.mission_command.assigned_target_id = 3501
+        episode_state.mission_command.authorization_to_fire = False
         episode_state.mission_command.active = True
         episode_state.has_mission_command_json = True
         episode_state.mission_command_json = json.dumps(
@@ -141,6 +143,8 @@ class MissionCommandRoeFieldTests(unittest.TestCase):
                 "roe_state": 1,
                 "engagement_authority_holder_id": 4001,
                 "engagement_authority_grantor_id": 3001,
+                "assigned_target_id": 3501,
+                "authorization_to_fire": False,
                 "target_altitude": 1200.0,
                 "target_heading": 90.0,
                 "target_speed": 180.0,
@@ -173,6 +177,8 @@ class MissionCommandRoeFieldTests(unittest.TestCase):
                 "roe_state": 2,
                 "engagement_authority_holder_id": 5001,
                 "engagement_authority_grantor_id": 4501,
+                "assigned_target_id": 5501,
+                "authorization_to_fire": True,
                 "transition_reward": 10.0,
             },
             ensure_ascii=True,
@@ -209,11 +215,15 @@ class MissionCommandRoeFieldTests(unittest.TestCase):
         self.assertEqual(int(result.controller_state.mission_command.roe_state), 2)
         self.assertEqual(int(result.controller_state.mission_command.engagement_authority_holder_id), 5001)
         self.assertEqual(int(result.controller_state.mission_command.engagement_authority_grantor_id), 4501)
+        self.assertEqual(int(result.controller_state.mission_command.assigned_target_id), 5501)
+        self.assertTrue(bool(result.controller_state.mission_command.authorization_to_fire))
 
         mission_json = json.loads(str(result.controller_state.mission_command_json))
         self.assertEqual(int(mission_json["roe_state"]), 2)
         self.assertEqual(int(mission_json["engagement_authority_holder_id"]), 5001)
         self.assertEqual(int(mission_json["engagement_authority_grantor_id"]), 4501)
+        self.assertEqual(int(mission_json["assigned_target_id"]), 5501)
+        self.assertTrue(bool(mission_json["authorization_to_fire"]))
 
 
 if __name__ == "__main__":

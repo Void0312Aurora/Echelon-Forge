@@ -84,6 +84,8 @@ def _probe_prelude() -> str:
         def sample(sim, agent_id):
             inst = sim.get_instrument_state(agent_id)
             fd = sim.get_flight_dynamics_debug_view(agent_id)
+            obs = sim.get_agent_observation(agent_id)
+            fuel = sim.get_unit_fuel(agent_id)
             return {{
                 "ias": float(getattr(inst, "ias", 0.0)),
                 "aoa": float(getattr(inst, "aoa", 0.0)),
@@ -91,14 +93,21 @@ def _probe_prelude() -> str:
                 "g": float(getattr(inst, "g_load", 0.0)),
                 "rpm": float(getattr(inst, "engine_rpm", 0.0)),
                 "fuel_flow": float(getattr(inst, "fuel_flow", 0.0)),
+                "throttle_obs": float(getattr(obs, "throttle", 0.0)),
+                "throttle_pos": float(getattr(inst, "throttle_pos", 0.0)),
                 "throttle_state": float(getattr(fd, "throttle_state", 0.0)),
                 "ab_state": float(getattr(fd, "ab_state", 0.0)),
                 "current_tsfc": float(getattr(fd, "current_tsfc", 0.0)),
+                "current_thrust_n": float(getattr(fd, "current_thrust_n", 0.0)),
                 "stall_progress": float(getattr(fd, "stall_progress", 0.0)),
                 "pitch_break_active": 1.0 if bool(getattr(fd, "pitch_break_active", False)) else 0.0,
                 "alt": float(getattr(inst, "alt_baro", 0.0)),
                 "vvi": float(getattr(inst, "vvi", 0.0)),
                 "pitch": float(getattr(inst, "pitch", 0.0)),
+                "fuel_internal": float(getattr(inst, "fuel_internal", 0.0)),
+                "fuel_external": float(getattr(inst, "fuel_external", 0.0)),
+                "fuel_internal_api": float(fuel[0]) if len(fuel) > 0 else 0.0,
+                "fuel_external_api": float(fuel[2]) if len(fuel) > 2 else 0.0,
             }}
 
         def emit_result(payload):
@@ -289,6 +298,80 @@ class FlightDynamicsP0RuntimeGuardTests(unittest.TestCase):
         self.assertGreater(result["ab_tsfc"], result["mil_tsfc"] + 0.1)
         self.assertGreater(result["ab_fuel_flow"], result["mil_fuel_flow"] + 1000.0)
         self.assertGreaterEqual(result["ab_ias"], 0.0)
+
+    def test_propulsion_debug_instrument_and_observation_stay_consistent_at_partial_throttle(self) -> None:
+        result = _run_probe(
+            _probe_prelude()
+            + dedent(
+                """
+                sim, agent_id = spawn()
+                cruise = make_action(0.7)
+
+                for _ in range(40):
+                    sim.set_pilot_action(agent_id, cruise)
+                    sim.step()
+
+                state = sample(sim, agent_id)
+                emit_result({
+                    "rpm": state["rpm"],
+                    "fuel_flow": state["fuel_flow"],
+                    "throttle_obs": state["throttle_obs"],
+                    "throttle_pos": state["throttle_pos"],
+                    "throttle_state": state["throttle_state"],
+                    "ab_state": state["ab_state"],
+                    "current_tsfc": state["current_tsfc"],
+                    "current_thrust_n": state["current_thrust_n"],
+                })
+                """
+            )
+        )
+
+        expected_obs_throttle = result["throttle_state"] + (0.5 * result["ab_state"])
+        self.assertAlmostEqual(result["throttle_pos"], 0.7, delta=0.05)
+        self.assertAlmostEqual(result["throttle_obs"], expected_obs_throttle, delta=1.0e-6)
+        self.assertAlmostEqual(result["rpm"], result["throttle_state"] * 100.0, delta=1.0)
+        self.assertGreater(result["current_thrust_n"], 0.0)
+        self.assertGreater(result["current_tsfc"], 0.0)
+        self.assertGreater(result["fuel_flow"], 0.0)
+
+    def test_fuel_inventory_decreases_monotonically_with_positive_propulsion_flow(self) -> None:
+        result = _run_probe(
+            _probe_prelude()
+            + dedent(
+                """
+                sim, agent_id = spawn()
+                cruise = make_action(0.7)
+
+                for _ in range(10):
+                    sim.set_pilot_action(agent_id, cruise)
+                    sim.step()
+                early = sample(sim, agent_id)
+
+                for _ in range(30):
+                    sim.set_pilot_action(agent_id, cruise)
+                    sim.step()
+                late = sample(sim, agent_id)
+
+                emit_result({
+                    "early_fuel_flow": early["fuel_flow"],
+                    "late_fuel_flow": late["fuel_flow"],
+                    "early_internal": early["fuel_internal"],
+                    "late_internal": late["fuel_internal"],
+                    "early_internal_api": early["fuel_internal_api"],
+                    "late_internal_api": late["fuel_internal_api"],
+                    "late_external": late["fuel_external"],
+                    "late_external_api": late["fuel_external_api"],
+                })
+                """
+            )
+        )
+
+        self.assertGreater(result["late_fuel_flow"], 0.0)
+        self.assertGreaterEqual(result["late_fuel_flow"], result["early_fuel_flow"])
+        self.assertLess(result["late_internal"], result["early_internal"])
+        self.assertAlmostEqual(result["late_internal"], result["late_internal_api"], delta=0.05)
+        self.assertAlmostEqual(result["late_external"], result["late_external_api"], delta=0.05)
+        self.assertLess(result["late_internal_api"], result["early_internal_api"])
 
     def test_flight_dynamics_debug_state_exposes_spool_and_stall_trends(self) -> None:
         result = _run_probe(

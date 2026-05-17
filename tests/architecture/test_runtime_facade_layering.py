@@ -6,12 +6,17 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
+LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
 
 
 def _source() -> str:
     return WORLD_BATCH_VEC_ENV.read_text(encoding="utf-8")
+
+
+def _leader_source() -> str:
+    return LEADER_WORLD_BATCH_RUNTIME.read_text(encoding="utf-8")
 
 
 def _class_stack(tree: ast.AST) -> dict[ast.AST, list[str]]:
@@ -90,6 +95,35 @@ def test_world_batch_vec_env_main_class_does_not_cache_raw_runtime_handles() -> 
     assert "_batch_runtime" not in main_class
     assert "_runtime_facade" not in main_class
     assert ".compat_runtime" not in main_class
+
+
+def test_leader_world_batch_runtime_does_not_reach_raw_world_handles() -> None:
+    source = _leader_source()
+    assert ".batch_runtime.world(" not in source
+    assert ".world_vec.batch_runtime.world(" not in source
+
+
+def test_leader_world_batch_runtime_keeps_batch_runtime_as_compat_only_surface() -> None:
+    source = _leader_source()
+    assert "self.batch_runtime.get_instrument_states_batch(" not in source
+    assert "self.batch_runtime.get_agent_observations_batch(" not in source
+    assert "self.batch_runtime.set_pilot_actions_batch(" not in source
+    assert "self.batch_runtime.step_worlds(" not in source
+
+
+def test_leader_world_batch_runtime_does_not_call_runtime_facade_runtime() -> None:
+    tree = ast.parse(_leader_source())
+    violations: list[tuple[int, str]] = []
+
+    class Visitor(ast.NodeVisitor):
+        def visit_Call(self, node: ast.Call) -> None:
+            func = node.func
+            if isinstance(func, ast.Attribute) and func.attr == "runtime":
+                violations.append((node.lineno, "runtime()"))
+            self.generic_visit(node)
+
+    Visitor().visit(tree)
+    assert not violations, f"leader runtime escaped facade adapter layering: {violations}"
 
 
 def test_runtime_facade_escape_hatch_is_documented() -> None:

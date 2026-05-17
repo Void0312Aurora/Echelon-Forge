@@ -302,6 +302,26 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
+    def test_world_batch_vec_env_exposes_batch_runtime_as_compatibility_view(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                self.assertIsNot(vec_env.batch_runtime, vec_env._runtime_adapter)
+                self.assertEqual(int(vec_env.batch_runtime.world_count()), int(vec_env.runtime_facade.world_count()))
+                self.assertTrue(hasattr(vec_env.batch_runtime, "export_execution_episode_states_batch"))
+                self.assertTrue(hasattr(vec_env.batch_runtime, "execution_episode_controller_ready"))
+            finally:
+                vec_env.close()
+
     def test_world_batch_vec_env_drives_scripted_red_opponent_on_default_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/air_combat_scripted_opponent.json"

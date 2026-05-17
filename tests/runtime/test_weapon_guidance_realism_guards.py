@@ -80,6 +80,7 @@ def _make_detection(
     elevation_deg: float = 0.0,
     closing_speed_mps: float = 350.0,
     signal_strength: float = 1.0,
+    local_sensor_hit: bool = True,
     timestamp: float = 0.0,
 ) -> ef_py.Detection:
     det = ef_py.Detection()
@@ -89,6 +90,7 @@ def _make_detection(
     det.elevation = float(elevation_deg)
     det.closing_speed = float(closing_speed_mps)
     det.signal_strength = float(signal_strength)
+    det.local_sensor_hit = bool(local_sensor_hit)
     det.timestamp = float(timestamp)
     return det
 
@@ -137,7 +139,186 @@ def _spawn_and_fire(
     return blue_id, red_id, missile_id
 
 
+def _spawn_and_fire_with_station(
+    sim: ef_py.SimulationKernel,
+    station_id: int,
+    *,
+    range_m: float = 30000.0,
+    bearing_deg: float = 0.0,
+    elevation_deg: float = 0.0,
+) -> tuple[int, int, int]:
+    blue_id, red_id = _spawn_pair(sim)
+    pilot = ef_py.PilotAction()
+    pilot.active = True
+    pilot.weapon_select_id = int(station_id)
+    sim.set_pilot_action(blue_id, pilot)
+    _set_contacts(
+        sim,
+        blue_id,
+        [_make_detection(red_id, range_m=range_m, bearing_deg=bearing_deg, elevation_deg=elevation_deg)],
+    )
+    missile_id = int(sim.fire_missile(blue_id, red_id))
+    if missile_id <= 0:
+        raise AssertionError(f"expected missile launch from station {station_id} to succeed")
+    return blue_id, red_id, missile_id
+
+
 class WeaponGuidanceRealismGuardTests(unittest.TestCase):
+    def test_definition_missile_tuning_flows_into_launch_runtime(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+        sim.set_time_step(1.0 / 60.0)
+
+        _, _, aim120_id = _spawn_and_fire_with_station(sim, 1, range_m=22000.0, bearing_deg=5.0)
+        aim120 = _missile_runtime(sim, aim120_id)
+        self.assertAlmostEqual(float(aim120["mass_total_kg"]), 152.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["max_speed_mps"]), 1372.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["turn_rate_deg_s"]), 30.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["guidance_max_lateral_g"]), 35.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["fuse_distance_m"]), 15.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["sensor_max_range_m"]), 16000.0, delta=1.0e-6)
+        self.assertEqual(int(aim120["sensor_type"]), int(ef_py.SensorType.Radar))
+
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+        sim.set_time_step(1.0 / 60.0)
+
+        _, _, aim9x_id = _spawn_and_fire_with_station(sim, 2, range_m=9000.0, bearing_deg=20.0)
+        aim9x = _missile_runtime(sim, aim9x_id)
+        self.assertAlmostEqual(float(aim9x["mass_total_kg"]), 85.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["max_speed_mps"]), 850.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["turn_rate_deg_s"]), 60.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["guidance_max_lateral_g"]), 60.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["fuse_distance_m"]), 8.0, delta=1.0e-6)
+        self.assertEqual(int(aim9x["sensor_type"]), int(ef_py.SensorType.Infrared))
+
+    def test_global_missile_tuning_can_override_definition_baseline(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+        sim.set_time_step(1.0 / 60.0)
+
+        tuning = ef_py.MissileTuning()
+        tuning.max_speed = 910.0
+        tuning.turn_rate = 44.0
+        tuning.fuse_distance = 21.0
+        tuning.sensor_max_range = 12345.0
+        tuning.sensor_scan_period = 0.25
+        tuning.sensor_track_memory_s = 3.0
+        tuning.seeker_type = int(ef_py.SensorType.Radar)
+        tuning.propellant_mass_kg = 33.0
+        tuning.reference_area_m2 = 0.041
+        tuning.boost_time_s = 1.7
+        tuning.sustain_time_s = 0.3
+        tuning.max_lateral_g = 47.0
+        sim.set_missile_tuning(tuning)
+
+        _, _, missile_id = _spawn_and_fire_with_station(sim, 2, range_m=9000.0, bearing_deg=15.0)
+        runtime = _missile_runtime(sim, missile_id)
+        self.assertAlmostEqual(float(runtime["mass_total_kg"]), 85.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["mass_fuel_kg"]), 33.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["reference_area_m2"]), 0.041, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["max_speed_mps"]), 910.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["turn_rate_deg_s"]), 44.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["fuse_distance_m"]), 21.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["sensor_max_range_m"]), 12345.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["sensor_scan_period_s"]), 0.25, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["sensor_track_memory_s"]), 3.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["guidance_max_lateral_g"]), 47.0, delta=1.0e-6)
+        self.assertEqual(int(runtime["sensor_type"]), int(ef_py.SensorType.Radar))
+
+    def test_min_launch_range_rejects_without_consuming_ammo_or_cooldown(self) -> None:
+        sim = _make_kernel()
+        tuning = sim.get_missile_tuning()
+        tuning.min_launch_range_m = 15000.0
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_pair(sim)
+        sim.set_weapon_cooldown(blue_id, 10.0, -1.0)
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=12000.0, bearing_deg=0.0, local_sensor_hit=True)],
+        )
+
+        blocked_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertEqual(blocked_id, 0)
+        blocked_obs = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(blocked_obs, "missiles_remaining", -1)), 4)
+        self.assertTrue(bool(getattr(blocked_obs, "can_fire", False)))
+
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=22000.0, bearing_deg=0.0, local_sensor_hit=True)],
+        )
+        fired_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(fired_id, 0)
+        post_fire = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)
+        self.assertFalse(bool(getattr(post_fire, "can_fire", True)))
+
+    def test_off_boresight_cap_rejects_without_consuming_ammo_or_cooldown(self) -> None:
+        sim = _make_kernel()
+        tuning = sim.get_missile_tuning()
+        tuning.max_launch_off_boresight_deg = 10.0
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_pair(sim)
+        sim.set_weapon_cooldown(blue_id, 10.0, -1.0)
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=22000.0, bearing_deg=25.0, local_sensor_hit=True)],
+        )
+
+        blocked_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertEqual(blocked_id, 0)
+        blocked_obs = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(blocked_obs, "missiles_remaining", -1)), 4)
+        self.assertTrue(bool(getattr(blocked_obs, "can_fire", False)))
+
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=22000.0, bearing_deg=5.0, local_sensor_hit=True)],
+        )
+        fired_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(fired_id, 0)
+        post_fire = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)
+        self.assertFalse(bool(getattr(post_fire, "can_fire", True)))
+
+    def test_lobl_requirement_rejects_nonlocal_track_without_consuming_ammo_or_cooldown(self) -> None:
+        sim = _make_kernel()
+        tuning = sim.get_missile_tuning()
+        tuning.lobl_required = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_pair(sim)
+        sim.set_weapon_cooldown(blue_id, 10.0, -1.0)
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=22000.0, bearing_deg=0.0, local_sensor_hit=False)],
+        )
+
+        blocked_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertEqual(blocked_id, 0)
+        blocked_obs = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(blocked_obs, "missiles_remaining", -1)), 4)
+        self.assertTrue(bool(getattr(blocked_obs, "can_fire", False)))
+
+        _set_contacts(
+            sim,
+            blue_id,
+            [_make_detection(red_id, range_m=22000.0, bearing_deg=0.0, local_sensor_hit=True)],
+        )
+        fired_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(fired_id, 0)
+        post_fire = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)
+        self.assertFalse(bool(getattr(post_fire, "can_fire", True)))
+
     def test_missile_tuning_roundtrip_shared_api(self) -> None:
         sim = _make_kernel()
 

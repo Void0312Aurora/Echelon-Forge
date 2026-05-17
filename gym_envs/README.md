@@ -1,12 +1,13 @@
 # `gym_envs/` 层职责
 
-`gym_envs/` 是训练环境封装层。它把 `ef_py` 暴露的 kernel/runtime、`python/scenario_*` 的场景运行时数据，以及训练侧 observation/action/reward 组织成 Gymnasium 风格接口。
+`gym_envs/` 是训练环境封装层。它把 `ef_py` 暴露的 kernel/runtime、`python/scenario/compiler/` 与 `python/scenario/runtime/` 的场景运行时数据，以及训练侧 observation/action/reward 组织成 Gymnasium 风格接口。
 
 主线关系大致为：
 
 ```text
-ef_py + python/scenario_compiler + python/scenario_runtime
+ef_py + python/scenario/compiler + python/scenario/runtime
   -> gym_envs/scenario_loader
+    -> gym_envs/universal_env_parts
     -> gym_envs/universal_env.py
     -> gym_envs/leader_env.py
       -> python/rl/runtime + tools/eval + tests
@@ -29,7 +30,9 @@ ef_py + python/scenario_compiler + python/scenario_runtime
 ## 子目录约定
 
 - [universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
-  - 执行层/单机主环境，维护通用 action/observation/reward step 主线。
+  - 执行层/单机稳定 env 入口；共享 action/observation/info 实现已下沉到 `universal_env_parts/`。
+- [universal_env_parts/](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts)
+  - `UniversalEnv` 的主实现子域，维护 action、observation、space、step-info 组装逻辑。
 - [leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
   - 长机决策层环境，通过 execution backend 驱动底层飞行。
 - `scenario_loader/`
@@ -40,6 +43,7 @@ ef_py + python/scenario_compiler + python/scenario_runtime
 ## 当前阅读入口
 
 - [universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
+- [universal_env_parts/__init__.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/__init__.py)
 - [leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
 - [scenario_loader/__init__.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/__init__.py)
 - [leader_env_parts/__init__.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/__init__.py)
@@ -48,9 +52,18 @@ ef_py + python/scenario_compiler + python/scenario_runtime
 
 - 根目录
   - [universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
-    - 通用训练环境、观测空间、action 归一化、pilot action 构建。
+    - 通用训练环境稳定入口；具体 action/observation/space/info helper 主实现已迁到 `universal_env_parts/`。
   - [leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
     - 长机训练环境、execution backend 接入、decision interval 控制。
+- `universal_env_parts/`
+  - [actions.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/actions.py)
+    - pilot action 构建、action 归一化与基础数值变换。
+  - [observations.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/observations.py)
+    - 通用 observation 拼装与 visual downsample helper。
+  - [spaces.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/spaces.py)
+    - action/observation space 定义与 mission observation 维度约定。
+  - [info.py](/home/void0312/Workshop/CMO/gym_envs/universal_env_parts/info.py)
+    - step info 与 terminal-only info 组装。
 - `scenario_loader/`
   - [core.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
     - `ScenarioLoader` owner 与跨子域编排。
@@ -105,7 +118,9 @@ ef_py + python/scenario_compiler + python/scenario_runtime
 - “为什么 step 后走到了某个 shaping/reward/termination 分支”
   - 先看 `execution_runtime/`、`reward_runtime/`、`step_evaluation.py`
 - “为什么 mission observation 布局或字段不一致”
-  - 先看 `mission_observation.py`
+  - 先看 `mission_observation.py` 与 `universal_env_parts/observations.py`
+- “为什么 action/space/info 被组织成现在这个样子”
+  - 先看 `universal_env_parts/`
 - “为什么 leader policy 输出被解释成这个 command”
   - 先看 `leader_env_parts/decision_runtime/`
 - “为什么 leader 环境会走 frozen/scripted execution backend”
@@ -114,5 +129,8 @@ ef_py + python/scenario_compiler + python/scenario_runtime
 ## 迁移备注
 
 - `scenario_loader/` 已经按运行时子域拆开，后续新增 loader 逻辑应进入相应子包，不要把 `core.py` 再次扩成总包。
+- `python/scenario_compiler.py` 与 `python/scenario_runtime.py` 对 `gym_envs/` 来说只剩兼容 shim。
+- 当前场景主实现入口是 `python/scenario/compiler/` 与 `python/scenario/runtime/`。
+- `universal_env.py` 仍保留为稳定 env 入口，但通用 helper 主实现应继续收敛到 `universal_env_parts/`。
 - `leader_env.py` 仍保留为稳定入口，但实现应继续向 `leader_env_parts/` 下沉。
 - 如果未来只保留包入口而不再保留根级单文件 env，需要先保证 `tools/`、`tests/`、训练入口的导入路径同步切换。

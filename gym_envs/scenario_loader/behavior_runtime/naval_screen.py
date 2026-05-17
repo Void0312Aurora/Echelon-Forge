@@ -85,6 +85,7 @@ def apply_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> None:
     loader._naval_screen_last_reference_id = int(result["reference_entity_id"])
     loader._naval_screen_last_heading_deg = float(result["target_heading_deg"])
     loader._naval_screen_last_speed_mps = float(result["target_speed_mps"])
+    loader._naval_screen_use_direct_command = bool(result.get("use_direct_command", 0.0))
 
     task.anchor_x_m = float(result["desired_x"])
     task.anchor_y_m = float(result["desired_y"])
@@ -176,15 +177,20 @@ def compute_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> dict
     heading_deadband_m = max(150.0, hold_deadband_m * 0.5)
     capture_radius_m = max(1800.0, station_radius_m * 0.12)
     recover_exit_radius_m = max(750.0, min(capture_radius_m * 0.55, station_radius_m * 0.08))
+    recover_handoff_radius_m = max(recover_exit_radius_m, hold_deadband_m * 3.8)
+    recover_handoff_separation_m = max(hold_deadband_m, hold_deadband_m * 3.8)
     recover_active = bool(getattr(loader, "_naval_screen_use_direct_command", False))
     use_direct_command = False
     speed_gain = 0.0015
     max_speed_bias_mps = 1.5
+    desired_station_bearing_deg = float(_bearing_deg(dx, dy, own_heading_deg))
+    can_handoff_to_station_hold = range_error_m <= recover_handoff_radius_m
     if range_error_m > capture_radius_m or (
         recover_active
         and (
-            range_error_m > recover_exit_radius_m
-            or separation_m < station_radius_m - hold_deadband_m
+            not can_handoff_to_station_hold
+            and range_error_m > recover_exit_radius_m
+            or separation_m < station_radius_m - recover_handoff_separation_m
         )
     ):
         separation_error_m = separation_m - station_radius_m
@@ -225,7 +231,7 @@ def compute_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> dict
         if range_error_m <= heading_deadband_m:
             desired_heading_deg = station_heading_deg
         else:
-            desired_heading_deg = float(_bearing_deg(dx, dy, own_heading_deg))
+            desired_heading_deg = desired_station_bearing_deg
 
         try:
             dt = float(loader.sim.get_time_step())

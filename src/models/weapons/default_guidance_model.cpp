@@ -18,6 +18,10 @@ namespace {
 #endif
 
 using missile_guidance::Vec3;
+using missile_guidance::operator+;
+using missile_guidance::operator-;
+using missile_guidance::operator*;
+using missile_guidance::operator/;
 
 constexpr double kSeaLevelDensity = 1.225;
 constexpr double kGravity = 9.80665;
@@ -80,7 +84,7 @@ double finite_nonnegative_or(double candidate, double fallback) {
     return std::isfinite(candidate) && candidate >= 0.0 ? candidate : fallback;
 }
 
-void ensure_mass_state_initialized(flecs::entity missile_entity, Missile& missile) {
+void ensure_mass_state_initialized(flecs::entity missile_entity, double reference_area_m2) {
     if (missile_entity.has<MassProperties>()) {
         return;
     }
@@ -88,13 +92,11 @@ void ensure_mass_state_initialized(flecs::entity missile_entity, Missile& missil
     if (!mass) {
         return;
     }
-    missile_entity.set<MassProperties>({
-        mass->empty_mass_kg,
-        mass->get_total_kg(),
-        0.0,
-        0.0,
-        MissileGuidanceDefaults::kReferenceAreaM2,
-    });
+    missile_entity.set<MassProperties>(make_missile_mass_properties(
+        *mass,
+        clamp_missile_reference_area_m2(
+            reference_area_m2,
+            MissileGuidanceDefaults::kReferenceAreaM2)));
 }
 
 GuidanceResolvedTuning resolve_tuning(
@@ -133,7 +135,9 @@ GuidanceResolvedTuning resolve_tuning(
     }
 
     out.reference_area_m2 = props
-        ? positive_or_nan_safe(props->reference_area_m2, MissileGuidanceDefaults::kReferenceAreaM2)
+        ? clamp_missile_reference_area_m2(
+            props->reference_area_m2,
+            MissileGuidanceDefaults::kReferenceAreaM2)
         : MissileGuidanceDefaults::kReferenceAreaM2;
     out.propellant_mass_kg = mass
         ? std::max(0.0, mass->fuel_mass_kg)
@@ -182,73 +186,78 @@ void initialize_runtime_state(
     const Velocity& velocity,
     double current_time
 ) {
-    if (missile.p0_runtime_initialized) {
+    if (missile.shared_launch_initialized && missile.p0_runtime_initialized) {
+        ensure_mass_state_initialized(
+            missile_entity,
+            MissileGuidanceDefaults::kReferenceAreaM2);
         return;
     }
 
     missile.p0_runtime_initialized = true;
-    missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
-    missile.track_memory_timeout_s = nonnegative_or(
-        missile.track_memory_timeout_s,
-        MissileGuidanceDefaults::kTrackMemoryTimeoutS);
-    missile.current_speed_mps = missile_guidance::norm(missile_guidance::velocity_to_vec3(velocity));
-    if (!std::isfinite(missile.burnout_time_s) || missile.burnout_time_s <= current_time) {
-        missile.burnout_time_s = current_time +
-            MissileGuidanceDefaults::kBoostTimeS +
-            MissileGuidanceDefaults::kSustainTimeS;
-    }
-    if (!std::isfinite(missile.boost_duration_s)) {
-        missile.boost_duration_s = MissileGuidanceDefaults::kBoostTimeS;
-    }
-    if (!std::isfinite(missile.sustain_duration_s)) {
-        missile.sustain_duration_s = MissileGuidanceDefaults::kSustainTimeS;
-    }
-    if (!std::isfinite(missile.guidance_bearing_filter_tau_s)) {
-        missile.guidance_bearing_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
-    }
-    if (!std::isfinite(missile.guidance_elevation_filter_tau_s)) {
-        missile.guidance_elevation_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
-    }
-    if (!std::isfinite(missile.guidance_range_filter_tau_s)) {
-        missile.guidance_range_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
-    }
-    if (!std::isfinite(missile.guidance_max_lateral_g)) {
-        missile.guidance_max_lateral_g = fallback_max_lateral_g(missile);
-    }
-    if (!std::isfinite(missile.guidance_autopilot_tau_s)) {
-        missile.guidance_autopilot_tau_s = MissileGuidanceDefaults::kAutopilotTauS;
-    }
-    if (!std::isfinite(missile.guidance_max_accel_response_g_per_s)) {
-        missile.guidance_max_accel_response_g_per_s = MissileGuidanceDefaults::kAccelResponseGps;
-    }
-    if (!std::isfinite(missile.guidance_boost_thrust_n)) {
-        missile.guidance_boost_thrust_n =
-            default_boost_thrust_n(80.0, missile.max_speed, std::max(1.0, missile.current_speed_mps));
-    }
-    if (!std::isfinite(missile.guidance_sustain_thrust_n)) {
-        missile.guidance_sustain_thrust_n = default_sustain_thrust_n(missile.guidance_boost_thrust_n);
-    }
-    if (!std::isfinite(missile.guidance_cd0_subsonic)) {
-        missile.guidance_cd0_subsonic = MissileGuidanceDefaults::kCd0Subsonic;
-    }
-    if (!std::isfinite(missile.guidance_cd0_supersonic)) {
-        missile.guidance_cd0_supersonic = MissileGuidanceDefaults::kCd0Supersonic;
-    }
-    if (!std::isfinite(missile.guidance_induced_drag_k)) {
-        missile.guidance_induced_drag_k = MissileGuidanceDefaults::kInducedDragScale;
+    if (!missile.shared_launch_initialized) {
+        missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
+        missile.track_memory_timeout_s = nonnegative_or(
+            missile.track_memory_timeout_s,
+            MissileGuidanceDefaults::kTrackMemoryTimeoutS);
+        missile.current_speed_mps = missile_guidance::norm(missile_guidance::velocity_to_vec3(velocity));
+        if (!std::isfinite(missile.burnout_time_s) || missile.burnout_time_s <= current_time) {
+            missile.burnout_time_s = current_time +
+                MissileGuidanceDefaults::kBoostTimeS +
+                MissileGuidanceDefaults::kSustainTimeS;
+        }
+        if (!std::isfinite(missile.boost_duration_s)) {
+            missile.boost_duration_s = MissileGuidanceDefaults::kBoostTimeS;
+        }
+        if (!std::isfinite(missile.sustain_duration_s)) {
+            missile.sustain_duration_s = MissileGuidanceDefaults::kSustainTimeS;
+        }
+        if (!std::isfinite(missile.guidance_bearing_filter_tau_s)) {
+            missile.guidance_bearing_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+        }
+        if (!std::isfinite(missile.guidance_elevation_filter_tau_s)) {
+            missile.guidance_elevation_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+        }
+        if (!std::isfinite(missile.guidance_range_filter_tau_s)) {
+            missile.guidance_range_filter_tau_s = MissileGuidanceDefaults::kTrackFilterTauS;
+        }
+        if (!std::isfinite(missile.guidance_max_lateral_g)) {
+            missile.guidance_max_lateral_g = fallback_max_lateral_g(missile);
+        }
+        if (!std::isfinite(missile.guidance_autopilot_tau_s)) {
+            missile.guidance_autopilot_tau_s = MissileGuidanceDefaults::kAutopilotTauS;
+        }
+        if (!std::isfinite(missile.guidance_max_accel_response_g_per_s)) {
+            missile.guidance_max_accel_response_g_per_s = MissileGuidanceDefaults::kAccelResponseGps;
+        }
+        if (!std::isfinite(missile.guidance_boost_thrust_n)) {
+            missile.guidance_boost_thrust_n =
+                default_boost_thrust_n(80.0, missile.max_speed, std::max(1.0, missile.current_speed_mps));
+        }
+        if (!std::isfinite(missile.guidance_sustain_thrust_n)) {
+            missile.guidance_sustain_thrust_n = default_sustain_thrust_n(missile.guidance_boost_thrust_n);
+        }
+        if (!std::isfinite(missile.guidance_cd0_subsonic)) {
+            missile.guidance_cd0_subsonic = MissileGuidanceDefaults::kCd0Subsonic;
+        }
+        if (!std::isfinite(missile.guidance_cd0_supersonic)) {
+            missile.guidance_cd0_supersonic = MissileGuidanceDefaults::kCd0Supersonic;
+        }
+        if (!std::isfinite(missile.guidance_induced_drag_k)) {
+            missile.guidance_induced_drag_k = MissileGuidanceDefaults::kInducedDragScale;
+        }
     }
 
     if (Mass* mass = missile_entity.get_mut<Mass>()) {
-        const double total = mass->get_total_kg();
-        if (total > 1.0 && mass->fuel_mass_kg <= 1.0e-6) {
-            const double propellant = std::min(default_propellant_mass_kg(total), std::max(0.0, mass->empty_mass_kg - 1.0));
-            if (propellant > 1.0e-6) {
-                mass->empty_mass_kg -= propellant;
-                mass->fuel_mass_kg += propellant;
+        if (!missile.shared_launch_initialized) {
+            const double total = mass->get_total_kg();
+            if (total > 1.0 && mass->fuel_mass_kg <= 1.0e-6) {
+                *mass = make_missile_mass_state(total, default_propellant_mass_kg(total));
             }
         }
     }
-    ensure_mass_state_initialized(missile_entity, missile);
+    ensure_mass_state_initialized(
+        missile_entity,
+        MissileGuidanceDefaults::kReferenceAreaM2);
 }
 
 void update_track_from_detection(
@@ -336,7 +345,7 @@ void update_mass_and_drag_state(
         return;
     }
 
-    ensure_mass_state_initialized(missile_entity, missile);
+    ensure_mass_state_initialized(missile_entity, tuning.reference_area_m2);
     MassProperties* props = missile_entity.get_mut<MassProperties>();
 
     const double total_mass = std::max(1.0, mass->get_total_kg());
@@ -373,9 +382,7 @@ void update_mass_and_drag_state(
     }
 
     if (props) {
-        props->empty_mass_kg = mass->empty_mass_kg;
-        props->current_total_mass_kg = mass->get_total_kg();
-        props->reference_area_m2 = tuning.reference_area_m2;
+        sync_missile_mass_properties(*mass, *props, tuning.reference_area_m2);
     }
 }
 

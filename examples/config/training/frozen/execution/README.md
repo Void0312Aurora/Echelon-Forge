@@ -2,6 +2,8 @@
 
 This directory contains the maintained post-freeze execution-layer curriculum.
 
+Status for this directory is `Frozen Baseline`.
+
 ## Stage Order
 
 1. [p2_takeoff_retrain_v1.json](/home/void0312/CMO/examples/config/training/frozen/execution/p2_takeoff_retrain_v1.json)
@@ -32,6 +34,7 @@ This directory contains the maintained post-freeze execution-layer curriculum.
 - `p2` follows the archived takeoff-departure controller-fix line, because that is the strongest surviving runway-takeoff reference in the repo.
 - `p3`, `p4`, and `p5` intentionally mirror the historical successful retrain/smoke configs with minimal drift.
 - The dedicated `p4b` bridge is still new, but its budget and curriculum now stay in-family with the historical `p5` continuous line.
+- Historical influence is lineage only: maintained bridges and contracts should consume these frozen configs directly instead of pointing back to `examples/config/Archive/**`.
 - The execution configs now set `env.step_info_mode=terminal` by default. This keeps terminal diagnostics while avoiding per-step step-info packaging on the hot path.
 - As of the validated `p5` comparison on 2026-04-18, the maintained `p5`
   configs now default to the CPU-mainline world-batch path:

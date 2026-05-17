@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -19,6 +20,88 @@
 #include "components/naval/submarine_platform.h"
 #include "components/physics/flight_dynamics_tuning.h"
 
+
+inline Sensor make_unit_definition_default_sensor() {
+    Sensor sensor{};
+    sensor.max_range = 30000.0;
+    sensor.fov_deg = 120.0;
+    sensor.scan_period = 1.0;
+    sensor.last_scan_time = -1.0;
+    sensor.detection_prob = 1.0;
+    sensor.range_power = 2.0;
+    sensor.bearing_noise_std = 0.0;
+    sensor.range_noise_std = 0.0;
+    sensor.track_memory_s = 0.0;
+    sensor.aspect_influence = 0.0;
+    sensor.doppler_notch_width = 0.0;
+    sensor.reference_snr_db = 13.0;
+    sensor.reference_range_m = 30000.0;
+    sensor.reference_rcs_m2 = 5.0;
+    sensor.pfa = 1.0e-6;
+    sensor.confirm_hits_m = 2;
+    sensor.confirm_window_n = 3;
+    sensor.velocity_noise_std = 3.0;
+    sensor.alpha_beta_alpha = 0.65;
+    sensor.alpha_beta_beta = 0.12;
+    sensor.antenna_height_m = 10.0;
+    sensor.target_height_bias_m = 5.0;
+    sensor.sea_clutter_sensitivity = 0.0;
+    sensor.sea_state_loss_per_level = 0.0;
+    sensor.ducting_gain_factor = 1.0;
+    sensor.ducting_max_bonus_m = 0.0;
+    sensor.bearing_only_min_range_m = 0.0;
+    sensor.environment_domain = static_cast<int>(SensorEnvironmentDomain::Air);
+    sensor.enforce_radar_horizon = false;
+    sensor.enable_ducting = false;
+    sensor.sea_clutter_enabled = false;
+    sensor.bearing_only = false;
+    sensor.type = static_cast<int>(SensorType::Visual);
+    return sensor;
+}
+
+struct MissileTuningDefinition {
+    double max_speed = std::numeric_limits<double>::quiet_NaN();
+    double turn_rate = std::numeric_limits<double>::quiet_NaN();
+    double fuse_distance = std::numeric_limits<double>::quiet_NaN();
+    double damage = std::numeric_limits<double>::quiet_NaN();
+    double seeker_fov_deg = std::numeric_limits<double>::quiet_NaN();
+    double seeker_lock_range = std::numeric_limits<double>::quiet_NaN();
+    double guidance_delay_s = std::numeric_limits<double>::quiet_NaN();
+    double guidance_update_period_s = std::numeric_limits<double>::quiet_NaN();
+    double max_flight_time_s = std::numeric_limits<double>::quiet_NaN();
+    double nav_gain = std::numeric_limits<double>::quiet_NaN();
+    double sensor_max_range = std::numeric_limits<double>::quiet_NaN();
+    double sensor_fov_deg = std::numeric_limits<double>::quiet_NaN();
+    double sensor_scan_period = std::numeric_limits<double>::quiet_NaN();
+    double sensor_detection_prob = std::numeric_limits<double>::quiet_NaN();
+    double sensor_bearing_noise_std = std::numeric_limits<double>::quiet_NaN();
+    double sensor_range_noise_std = std::numeric_limits<double>::quiet_NaN();
+    double sensor_track_memory_s = std::numeric_limits<double>::quiet_NaN();
+    int seeker_type = -1;
+    double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
+    double seeker_gimbal_limit_deg = std::numeric_limits<double>::quiet_NaN();
+    double seeker_ifov_deg = std::numeric_limits<double>::quiet_NaN();
+    double bearing_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double elevation_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double range_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double track_break_time_s = std::numeric_limits<double>::quiet_NaN();
+    double boost_time_s = std::numeric_limits<double>::quiet_NaN();
+    double sustain_time_s = std::numeric_limits<double>::quiet_NaN();
+    double boost_thrust_n = std::numeric_limits<double>::quiet_NaN();
+    double sustain_thrust_n = std::numeric_limits<double>::quiet_NaN();
+    double reference_area_m2 = std::numeric_limits<double>::quiet_NaN();
+    double cd0_subsonic = std::numeric_limits<double>::quiet_NaN();
+    double cd0_supersonic = std::numeric_limits<double>::quiet_NaN();
+    double induced_drag_k = std::numeric_limits<double>::quiet_NaN();
+    double propellant_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double max_lateral_g = std::numeric_limits<double>::quiet_NaN();
+    double autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
+    double min_launch_range_m = std::numeric_limits<double>::quiet_NaN();
+    double max_launch_off_boresight_deg = std::numeric_limits<double>::quiet_NaN();
+    bool lobl_required = false;
+    bool midcourse_datalink_supported = false;
+};
 
 
 // Data Structs for Modules
@@ -135,6 +218,8 @@ struct UnitDefinition {
 
     bool has_flight_model;
     FlightModel flight_model;
+    bool has_stall_state = false;
+    StallState stall_state;
 
     bool has_landing_gear;
     LandingGear landing_gear;
@@ -155,6 +240,9 @@ struct UnitDefinition {
     int data_link_network_id;
     int data_link_max_reports_per_update = 16;
     int data_link_max_messages_per_update = -1;
+
+    bool has_missile_tuning = false;
+    MissileTuningDefinition missile_tuning;
 };
 
 struct UnitTypeHash {

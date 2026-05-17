@@ -5,46 +5,9 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <cmath>
 
 namespace {
-
-Sensor make_default_sensor_definition() {
-    Sensor sensor{};
-    sensor.max_range = 30000.0;
-    sensor.fov_deg = 120.0;
-    sensor.scan_period = 1.0;
-    sensor.last_scan_time = -1.0;
-    sensor.detection_prob = 1.0;
-    sensor.range_power = 2.0;
-    sensor.bearing_noise_std = 0.0;
-    sensor.range_noise_std = 0.0;
-    sensor.track_memory_s = 0.0;
-    sensor.aspect_influence = 0.0;
-    sensor.doppler_notch_width = 0.0;
-    sensor.reference_snr_db = 13.0;
-    sensor.reference_range_m = 30000.0;
-    sensor.reference_rcs_m2 = 5.0;
-    sensor.pfa = 1.0e-6;
-    sensor.confirm_hits_m = 2;
-    sensor.confirm_window_n = 3;
-    sensor.velocity_noise_std = 3.0;
-    sensor.alpha_beta_alpha = 0.65;
-    sensor.alpha_beta_beta = 0.12;
-    sensor.antenna_height_m = 10.0;
-    sensor.target_height_bias_m = 5.0;
-    sensor.sea_clutter_sensitivity = 0.0;
-    sensor.sea_state_loss_per_level = 0.0;
-    sensor.ducting_gain_factor = 1.0;
-    sensor.ducting_max_bonus_m = 0.0;
-    sensor.bearing_only_min_range_m = 0.0;
-    sensor.environment_domain = static_cast<int>(SensorEnvironmentDomain::Air);
-    sensor.enforce_radar_horizon = false;
-    sensor.enable_ducting = false;
-    sensor.sea_clutter_enabled = false;
-    sensor.bearing_only = false;
-    sensor.type = static_cast<int>(SensorType::Visual);
-    return sensor;
-}
 
 int parse_sensor_type_code(const std::string& type_str) {
     if (type_str == "Visual") return static_cast<int>(SensorType::Visual);
@@ -153,6 +116,16 @@ void parse_engine_tuning_json_fields(const nlohmann::json& src, EngineTuning* ou
     *out_tuning = tuning;
 }
 
+void parse_stall_state_json_fields(const nlohmann::json& src, StallState* out_stall) {
+    if (!out_stall || !src.is_object()) return;
+    StallState stall = *out_stall;
+    stall.stall_progress = src.value("stall_progress", stall.stall_progress);
+    stall.time_in_stall_s = src.value("time_in_stall_s", stall.time_in_stall_s);
+    stall.is_stalled = src.value("is_stalled", stall.is_stalled);
+    stall.pitch_break_active = src.value("pitch_break_active", stall.pitch_break_active);
+    *out_stall = stall;
+}
+
 void parse_sensor_json_fields(
     const nlohmann::json& s,
     Sensor* out_sensor,
@@ -197,6 +170,72 @@ void parse_sensor_json_fields(
         parse_sensor_environment_domain_code(s.value("environment_domain", "Air"));
 
     *out_sensor = sensor;
+}
+
+void parse_missile_tuning_json_fields(
+    const nlohmann::json& src,
+    MissileTuningDefinition* out_tuning
+) {
+    if (!out_tuning || !src.is_object()) return;
+    MissileTuningDefinition tuning = *out_tuning;
+    tuning.max_speed = src.value("max_speed", tuning.max_speed);
+    tuning.turn_rate = src.value("turn_rate", tuning.turn_rate);
+    tuning.fuse_distance = src.value("fuse_distance", tuning.fuse_distance);
+    tuning.damage = src.value("damage", tuning.damage);
+    tuning.seeker_fov_deg = src.value("seeker_fov_deg", tuning.seeker_fov_deg);
+    tuning.seeker_lock_range = src.value("seeker_lock_range", tuning.seeker_lock_range);
+    tuning.guidance_delay_s = src.value("guidance_delay_s", tuning.guidance_delay_s);
+    tuning.guidance_update_period_s =
+        src.value("guidance_update_period_s", tuning.guidance_update_period_s);
+    tuning.max_flight_time_s = src.value("max_flight_time_s", tuning.max_flight_time_s);
+    tuning.nav_gain = src.value("nav_gain", tuning.nav_gain);
+    tuning.sensor_max_range = src.value("sensor_max_range", tuning.sensor_max_range);
+    tuning.sensor_fov_deg = src.value("sensor_fov_deg", tuning.sensor_fov_deg);
+    tuning.sensor_scan_period = src.value("sensor_scan_period", tuning.sensor_scan_period);
+    tuning.sensor_detection_prob =
+        src.value("sensor_detection_prob", tuning.sensor_detection_prob);
+    tuning.sensor_bearing_noise_std =
+        src.value("sensor_bearing_noise_std", tuning.sensor_bearing_noise_std);
+    tuning.sensor_range_noise_std =
+        src.value("sensor_range_noise_std", tuning.sensor_range_noise_std);
+    tuning.sensor_track_memory_s =
+        src.value("sensor_track_memory_s", tuning.sensor_track_memory_s);
+    tuning.seeker_type = src.value("seeker_type", tuning.seeker_type);
+    tuning.seeker_activation_range_m =
+        src.value("seeker_activation_range_m", tuning.seeker_activation_range_m);
+    tuning.seeker_gimbal_limit_deg =
+        src.value("seeker_gimbal_limit_deg", tuning.seeker_gimbal_limit_deg);
+    tuning.seeker_ifov_deg = src.value("seeker_ifov_deg", tuning.seeker_ifov_deg);
+    tuning.bearing_filter_tau_s =
+        src.value("bearing_filter_tau_s", tuning.bearing_filter_tau_s);
+    tuning.elevation_filter_tau_s =
+        src.value("elevation_filter_tau_s", tuning.elevation_filter_tau_s);
+    tuning.range_filter_tau_s = src.value("range_filter_tau_s", tuning.range_filter_tau_s);
+    tuning.track_break_time_s = src.value("track_break_time_s", tuning.track_break_time_s);
+    tuning.boost_time_s = src.value("boost_time_s", tuning.boost_time_s);
+    tuning.sustain_time_s = src.value("sustain_time_s", tuning.sustain_time_s);
+    tuning.boost_thrust_n = src.value("boost_thrust_n", tuning.boost_thrust_n);
+    tuning.sustain_thrust_n = src.value("sustain_thrust_n", tuning.sustain_thrust_n);
+    tuning.reference_area_m2 = src.value("reference_area_m2", tuning.reference_area_m2);
+    tuning.cd0_subsonic = src.value("cd0_subsonic", tuning.cd0_subsonic);
+    tuning.cd0_supersonic = src.value("cd0_supersonic", tuning.cd0_supersonic);
+    tuning.induced_drag_k = src.value("induced_drag_k", tuning.induced_drag_k);
+    tuning.propellant_mass_kg = src.value("propellant_mass_kg", tuning.propellant_mass_kg);
+    tuning.max_lateral_g = src.value("max_lateral_g", tuning.max_lateral_g);
+    tuning.autopilot_tau_s = src.value("autopilot_tau_s", tuning.autopilot_tau_s);
+    tuning.max_accel_response_g_per_s =
+        src.value("max_accel_response_g_per_s", tuning.max_accel_response_g_per_s);
+    tuning.min_launch_range_m = src.value("min_launch_range_m", tuning.min_launch_range_m);
+    tuning.max_launch_off_boresight_deg = src.value(
+        "max_launch_off_boresight_deg",
+        tuning.max_launch_off_boresight_deg
+    );
+    tuning.lobl_required = src.value("lobl_required", tuning.lobl_required);
+    tuning.midcourse_datalink_supported = src.value(
+        "midcourse_datalink_supported",
+        tuning.midcourse_datalink_supported
+    );
+    *out_tuning = tuning;
 }
 
 Sonar make_default_sonar_definition() {
@@ -295,6 +334,10 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
 
     def.name = entry.value("name", type_str);
     def.mass_kg = entry.value("mass_kg", 0.0);
+    def.has_stall_state = false;
+    def.stall_state = {};
+    def.has_missile_tuning = false;
+    def.missile_tuning = {};
 
 
     if (entry.contains("engine_ref")) {
@@ -313,6 +356,18 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
             def.engine_data.tuning = flight_dynamics::default_engine_tuning();
             parse_engine_tuning_json_fields(e["tuning"], &def.engine_data.tuning);
         }
+    }
+    def.engine_data.mil_thrust_n = entry.value("mil_thrust_n", def.engine_data.mil_thrust_n);
+    def.engine_data.ab_thrust_n = entry.value("ab_thrust_n", def.engine_data.ab_thrust_n);
+    def.engine_data.sfc_mil = entry.value("sfc_mil", def.engine_data.sfc_mil);
+    def.engine_data.sfc_ab = entry.value("sfc_ab", def.engine_data.sfc_ab);
+    def.engine_data.bypass_ratio = entry.value("bypass_ratio", def.engine_data.bypass_ratio);
+    if (entry.contains("engine_tuning") && entry["engine_tuning"].is_object()) {
+        def.engine_data.has_tuning = true;
+        if (!def.engine_data.tuning.enabled) {
+            def.engine_data.tuning = flight_dynamics::default_engine_tuning();
+        }
+        parse_engine_tuning_json_fields(entry["engine_tuning"], &def.engine_data.tuning);
     }
 
     if (entry.contains("hardpoints") && entry["hardpoints"].is_array()) {
@@ -343,7 +398,7 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
     }
 
     def.has_sensor = false;
-    def.sensor = make_default_sensor_definition();
+    def.sensor = make_unit_definition_default_sensor();
     def.mounted_sensors.mounts.clear();
     def.has_sonar = false;
     def.sonar = make_default_sonar_definition();
@@ -376,7 +431,7 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
             if (!mount_json.is_object()) continue;
             SensorMount mount{};
             mount.label = mount_json.value("label", "");
-            mount.sensor = make_default_sensor_definition();
+            mount.sensor = make_unit_definition_default_sensor();
             if (mount_json.contains("sensor") && mount_json["sensor"].is_object()) {
                 parse_sensor_json_fields(mount_json["sensor"], &mount.sensor, "Radar");
             }
@@ -456,6 +511,17 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
             def.airframe.tuning = flight_dynamics::default_aero_tuning();
             parse_aero_tuning_json_fields(af["tuning"], &def.airframe.tuning);
         }
+    }
+    if (entry.contains("aero_tuning") && entry["aero_tuning"].is_object()) {
+        def.airframe.has_tuning = true;
+        if (!def.airframe.tuning.enabled) {
+            def.airframe.tuning = flight_dynamics::default_aero_tuning();
+        }
+        parse_aero_tuning_json_fields(entry["aero_tuning"], &def.airframe.tuning);
+    }
+    if (entry.contains("stall_state") && entry["stall_state"].is_object()) {
+        def.has_stall_state = true;
+        parse_stall_state_json_fields(entry["stall_state"], &def.stall_state);
     }
 
     def.has_ship_platform = false;
@@ -681,6 +747,83 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
         const auto& ammo = entry["ammo"];
         def.ammo.missiles_remaining = ammo.value("missiles_remaining", def.ammo.missiles_remaining);
         def.ammo.max_missiles = ammo.value("max_missiles", def.ammo.max_missiles);
+    }
+
+    if (def.type == UnitType::Missile) {
+        def.has_missile_tuning = true;
+        auto& missile_tuning = def.missile_tuning;
+        missile_tuning.max_speed = def.flight_model.max_speed;
+        missile_tuning.turn_rate = def.flight_model.max_turn_rate;
+        missile_tuning.max_lateral_g = def.flight_model.max_g;
+
+        if (entry.contains("missile_tuning") && entry["missile_tuning"].is_object()) {
+            parse_missile_tuning_json_fields(entry["missile_tuning"], &missile_tuning);
+        }
+        if (entry.contains("guidance") && entry["guidance"].is_object()) {
+            const auto& guidance = entry["guidance"];
+            parse_missile_tuning_json_fields(guidance, &missile_tuning);
+
+            const std::string guidance_type = guidance.value("type", "");
+            if (missile_tuning.seeker_type < 0) {
+                if (guidance_type == "IR" || guidance_type == "Infrared") {
+                    missile_tuning.seeker_type = static_cast<int>(SensorType::Infrared);
+                } else if (guidance_type == "ActiveRadar" || guidance_type == "Radar") {
+                    missile_tuning.seeker_type = static_cast<int>(SensorType::Radar);
+                }
+            }
+
+            missile_tuning.seeker_lock_range =
+                guidance.value("active_seek_range", missile_tuning.seeker_lock_range);
+            missile_tuning.sensor_max_range =
+                guidance.value("sensor_max_range", missile_tuning.sensor_max_range);
+            missile_tuning.max_launch_off_boresight_deg =
+                guidance.value("off_boresight_cap", missile_tuning.max_launch_off_boresight_deg);
+            missile_tuning.min_launch_range_m =
+                guidance.value("min_launch_range_m", missile_tuning.min_launch_range_m);
+            missile_tuning.midcourse_datalink_supported = guidance.value(
+                "midcourse_datalink_supported",
+                missile_tuning.midcourse_datalink_supported
+            );
+            missile_tuning.lobl_required = guidance.value(
+                "lobl_required",
+                missile_tuning.lobl_required
+            );
+        }
+        if (entry.contains("warhead") && entry["warhead"].is_object()) {
+            const auto& warhead = entry["warhead"];
+            missile_tuning.fuse_distance =
+                warhead.value("lethal_radius", missile_tuning.fuse_distance);
+            missile_tuning.damage = warhead.value("damage", missile_tuning.damage);
+        }
+        if (entry.contains("sensor") && entry["sensor"].is_object()) {
+            Sensor missile_sensor = make_unit_definition_default_sensor();
+            const std::string default_sensor_type =
+                missile_tuning.seeker_type == static_cast<int>(SensorType::Infrared)
+                    ? "Infrared"
+                    : "Radar";
+            parse_sensor_json_fields(entry["sensor"], &missile_sensor, default_sensor_type);
+            def.has_sensor = true;
+            def.sensor = missile_sensor;
+            missile_tuning.sensor_max_range =
+                entry["sensor"].value("max_range", missile_tuning.sensor_max_range);
+            missile_tuning.sensor_fov_deg =
+                entry["sensor"].value("fov_deg", missile_tuning.sensor_fov_deg);
+            missile_tuning.sensor_scan_period =
+                entry["sensor"].value("scan_period", missile_tuning.sensor_scan_period);
+            missile_tuning.sensor_detection_prob =
+                entry["sensor"].value("detection_prob", missile_tuning.sensor_detection_prob);
+            missile_tuning.sensor_bearing_noise_std =
+                entry["sensor"].value("bearing_noise_std", missile_tuning.sensor_bearing_noise_std);
+            missile_tuning.sensor_range_noise_std =
+                entry["sensor"].value("range_noise_std", missile_tuning.sensor_range_noise_std);
+            missile_tuning.sensor_track_memory_s =
+                entry["sensor"].value("track_memory_s", missile_tuning.sensor_track_memory_s);
+            if (missile_tuning.seeker_type < 0) {
+                missile_tuning.seeker_type = def.sensor.type;
+            }
+        } else if (missile_tuning.seeker_type >= 0 || std::isfinite(missile_tuning.sensor_max_range)) {
+            def.has_sensor = true;
+        }
     }
 
     def.has_command_link = entry.value("has_command_link", false);

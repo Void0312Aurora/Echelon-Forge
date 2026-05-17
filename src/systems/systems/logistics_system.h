@@ -13,6 +13,7 @@
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
+#include "systems/physics/propulsion_system.h"
 
 inline void register_logistics_system(flecs::world& ecs) {
     // 1. Fuel Consumption System
@@ -24,40 +25,12 @@ inline void register_logistics_system(flecs::world& ecs) {
                 double dt = it.delta_time();
 
                 for (auto i : it) {
-                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
-                    const MovementCommand* legacy = active_legacy_movement_command(it.entity(i).get<MovementCommand>());
-                    double throttle = resolved_pilot_or_legacy_throttle(pilot, legacy); // [0, 1]
-                    bool throttle_set = false;
-
-                    throttle_set = (pilot != nullptr) || (legacy != nullptr);
-
-                    // Priority 3: ActionCommand (normalized [-1,1] -> [0,1])
-                    if (!throttle_set) {
-                        if (const ActionCommand* act = it.entity(i).get<ActionCommand>()) {
-                            if (act->active) {
-                                throttle = std::clamp((act->accel_cmd + 1.0) * 0.5, 0.0, 1.0);
-                                throttle_set = true;
-                            }
-                        }
-                    }
-
-                    const double thrust_n = std::max(0.0, propulsion[i].current_thrust_n);
-                    const double tsfc_nh = std::max(0.0, propulsion[i].current_tsfc);
-                    if (thrust_n > 0.0 && tsfc_nh > 0.0) {
-                        fuel[i].current_flow_rate = (thrust_n * tsfc_nh) / 3600.0;
-                        fuel[i].afterburner_active = propulsion[i].afterburner_active;
-                    } else {
-                        constexpr double kAfterburnerThreshold = 0.9;
-                        if (throttle > kAfterburnerThreshold) {
-                            fuel[i].current_flow_rate =
-                                fuel[i].mil_power_flow_rate * fuel[i].ab_flow_rate_multiplier;
-                            fuel[i].afterburner_active = true;
-                        } else {
-                            fuel[i].current_flow_rate =
-                                fuel[i].mil_power_flow_rate * (0.1 + 0.9 * (throttle / kAfterburnerThreshold));
-                            fuel[i].afterburner_active = false;
-                        }
-                    }
+                    fuel[i].current_flow_rate = flight_dynamics::propulsion_fuel_flow_kg_per_s(
+                        propulsion[i],
+                        fuel[i].mil_power_flow_rate,
+                        fuel[i].ab_flow_rate_multiplier
+                    );
+                    fuel[i].afterburner_active = propulsion[i].afterburner_active;
 
                     double fuel_consumed = fuel[i].current_flow_rate * dt;
 

@@ -1,6 +1,6 @@
 # 真实化主线与关联子项目当前状态
 
-状态：`2026-05-17` 当前工作区复核版。
+状态：`2026-05-17` 当前工作区集成复核版。
 
 关联文档：
 
@@ -61,153 +61,263 @@
 
 当前判断：
 
-- `P0` / `P1` 文档仍然有效，作为实现方向和分层规划没有失效。
-- 但当前工作区复核显示，这条线还没有完全稳定。
-- 目前最明确的红点是：
-  - [tests/runtime/test_flight_dynamics_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py) 中 `test_full_throttle_improves_specific_energy_relative_to_idle`
+- `Propulsion` 已经收口成 `Force / Logistics / Instrument / Observation` 的统一事实源。
+- `StallState` 已从“只记账”升级为参与气动行为的有记忆失速状态：
+  `effective_stall_progress` 当前已驱动 `stall_drag / damp_scale / pitch_break_active / debug stall_progress`。
+- `test_flight_dynamics_realism_guards.py`、`test_flight_dynamics_tuning_runtime.py`、
+  `test_flight_dynamics_p0_runtime_guards.py`、`test_kernel_observation_sanity.py`
+  当前在本工作区为绿。
+- 本轮重点不再是“守门测试持续发红”，而是“更深建模尚未继续推进、结构债务仍在”。
 
 含义：
 
-- 全油门相对怠速的比能改善趋势当前没有满足守门合同。
-- 说明推进、阻力或相关共享状态语义仍有回归或漂移。
+- 这条线的行为合同已经进入可继续深化的状态。
+- 下一步更值得投入的是 `Mach/compressibility / stall / FBW` 深化，以及
+  `default_unit_factory / unit_definition` 的边界收口，而不是继续救火式修基础运行时。
 
 ### 2.2 传感器/态势主线
 
 当前判断：
 
-- `SNR/Pd`、`M-of-N`、`alpha-beta`、`track/report` 语义的大方向仍然是对的。
-- 但当前工作区复核显示，`P0` 合同里仍有 3 条失败：
-  - [tests/runtime/test_sensor_situation_realism_p0.py](/home/void0312/Workshop/CMO/tests/runtime/test_sensor_situation_realism_p0.py)
-    - `test_confirmed_and_coasted_tracks_expose_different_usability_semantics`
-    - `test_datalink_report_becomes_visible_track_without_fabricating_local_contact`
-    - `test_datalink_track_report_does_not_create_local_contact`
+- `shared track != local contact`、`coasted track usability`、`local + datalink -> fused`
+  这批 `P0` 主合同在当前工作区为绿。
+- `test_sensor_situation_realism_p0.py` 当前为绿。
+- `DataLink QoS` 已补进更强的 budget/fanout/churn/counter 回归，`test_data_link_qos_runtime.py`
+  当前为绿。
 
 含义：
 
-- `coasted track` 的可见性/可用性语义还没有完全守住。
-- `datalink report` 不应伪造成本地 contact 的旧合同当前再次被打破。
-- 这会直接影响空战和海战上层对“本地探测 vs 共享航迹”的区分。
+- 本轮已经把“共享航迹可见但不伪造本地 contact”这条主语义重新锁住。
+- 需要注意的是，这里有一部分旧测试场景口径也做了收紧：
+  某些接收方平台如果本地就具备远距空情探测能力，不再适合作为
+  “只能靠 datalink 可见”的场景载体。
 
 ### 2.3 武器/制导主线
 
 当前判断：
 
-- 本轮复核里，武器/制导守门测试没有暴露新的红点。
-- 导弹 `truth cut`、最小 `3DoF`、`PN accel surrogate` 主线目前仍可视为成立。
-- 但它仍依赖飞行动力学和传感器链的共享语义稳定；一旦上游漂移，武器链的解释也会跟着变。
+- shared launch runtime 已经接入 `fire_missile()` 正式发射链。
+- `UnitDefinition / default_loadout / weapon_select_id` 到发射实体初始化的最小事实链已打通。
+- `debug_get_missile_runtime_state()` 已补齐质量、sensor、推进与 guidance 关键字段，
+  便于 runtime 验证。
+- `launch envelope` 当前已补入发射前门槛：
+  `min_launch_range_m / max_launch_off_boresight_deg / lobl_required`
+  会在 ammo/cooldown/VLS/munition 消耗之前拒射。
+
+含义：
+
+- `test_weapon_guidance_realism_guards.py` 与
+  `test_air_combat_1v1_fire_missile.py` 当前为绿。
+- 现在可以明确验证：不同挂点选择会得到不同 definition 驱动的导弹 runtime，
+  同时全局 `set_missile_tuning()` 仍能作为显式 override 覆盖 definition baseline。
+- 但也要明确一条新的结构风险：
+  weapon 线当前已经不只是“补包线拒射”，而是开始把
+  `definition-driven launch tuning`、`global tuning overlay`、`station-based launch selection`
+  一并并入 `simulation_kernel_weapon_api.cpp`；
+  行为上当前为绿，结构上则意味着 `Lane C` 后续需要继续拆分 launch resolution、
+  tuning overlay 与 runtime assembly 的职责边界。
 
 ### 2.4 海战子项目
 
 当前判断：
 
-- 海战已经从最小屏护接触样例推进到了战术原型：
-  - 海况/运动
-  - 多传感器/ESM/声纳/helo token
-  - 红方模板 / datalink / screen
-  - `UNREP`
-  - `VLS-SAM / gun / CIWS / 持续毁伤`
-- 但当前最明确的稳定性红点就在海战 `screen-hold`：
-  - [tests/runtime/test_naval_screen_scenario.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
-    - `test_screen_station_hold_recovers_after_heading_disturbance`
-    - `test_screen_station_hold_settles_without_large_late_oscillation`
-
-当前工作区实际复核结果：
-
-- [tests/runtime/test_naval_ship_database.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_ship_database.py) 中 `UNREP / abstract_naval_stores / maritime_state_environment_override / multi_sensor_and_passive_esm_suite` 定向子集为绿
-- [tests/runtime/test_naval_screen_scenario.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py) 当前是 `2 failed, 6 passed`
+- `screen-hold` 的 direct-recovery -> hold handoff 已完成最小收口。
+- `test_naval_screen_scenario.py` 当前为绿。
+- `UNREP / abstract stores / maritime override / multi-sensor+ESM` 这批海战底座仍然保持绿态。
 
 含义：
 
-- `UNREP` 这条线已经比之前稳定得多。
-- 现在真正需要优先复核的是 `screen-hold` 恢复逻辑，而不是继续把海战范围铺得更大。
+- 海战当前不再以 `screen-hold` 回归为主要阻塞点。
+- 下一步可以把海战重新放回 `C2/runtime` 高价值验收面，而不是继续把它当独立救火线。
 
 ### 2.5 空战 1v1 子项目
 
 当前判断：
 
-- `F-16C vs F-16C` 的 canonical 基线、最小导弹释放桥、红方脚本基线仍然成立。
-- 但当前工作区复核显示 1 条 fixture 语义失败：
-  - [tests/runtime/test_air_combat_1v1_fixture.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fixture.py)
-    - `test_loader_fixture_exposes_hostile_contact_and_weapon_state`
+- `fire_missile` 直连路径与 `PilotAction.fire_weapon` 桥接路径都已纳入 definition-driven
+  导弹运行时验证。
+- `ScenarioLoader` 入口上的 `air_combat_1v1_fixture` 语义对齐问题已经收口；
+  [tests/runtime/test_air_combat_1v1_fixture.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fixture.py)
+  当前为绿。
 
-失败现象：
+本次主线程确认的关键事实：
 
-- hostile track 的 `classification` 当前为 `0`，而测试预期是 `2`
+- 第 1 帧即可看到 `Red_Fighter` 的 raw contact，但它仍可能是 `Tentative / Unknown`。
+- 到第 2 帧左右会升级为 hostile confirmed track，`classification=2`。
+- 之前失败的原因不是内核把 hostile classification 丢失，而是 fixture 在“第一次看到 contact”
+  时就提前停止，随后直接拿 raw contact 去断言 hostile track 语义。
 
 含义：
 
-- 当前敌我/分类/IFF 相关语义仍存在漂移。
-- 这条问题更像传感器/态势合同漂移对空战 fixture 的投影，而不是 1v1 场景自身单独坏掉。
+- `ScenarioLoader / fixture` 当前已经与 `shared track != raw contact` 的主语义保持一致。
+- 空战 1v1 当前不再有稳定复现的行为红点，主要剩余量回到 reward / termination /
+  eval 合同深化，以及更深的建模工作。
 
 ### 2.6 C2 / 指挥链分析线
 
 当前判断：
 
-- 当前 `C2` 方向已经从单篇冻结分析扩展成独立子项目入口：
-  - [C2 指挥链与通信子项目](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/README.md)
-  - [C2 指挥链与通信推进检查点](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md)
-  - [C2 指挥链与通信待解决问题分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
-- 这意味着原 [指挥链与 C2 通信现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md) 仍然是基线，但已经不能再被当成“当前完全未动”的状态。
-- 当前已明确落地的最小收口包括：
-  - `PilotAction` 与 `MissionCommand` 的 deadband 接管边界
-  - 海军 `MissionCommand` 最小站位字段与 `Ship` authority 主写统一
-  - `ROE / engagement authority` 最小字段与 runtime gate
-  - `CommandLink` 的最小 FIFO 语义澄清
-  - `DataLink` 的消息/报告双预算与 drop 可观测性
-- 当前仍待解决的重点则转向：
-  - `CommandLink` priority / jitter / retry
-  - `DataLink` relay / jamming / tasking doctrine
-  - 更深的 naval tasking 语义
-  - `ROE / authority` 尚未进入完整任务与通信闭环
+- `bridge.py` 的 profile 路由已收口：显式 `tasking_profile` 优先，
+  缺省时允许按 `service_profile` 推断 `naval / air`。
+- `naval_profile.build_kernel_mission_command()` 已补齐一批关键字段 authoring：
+  `embarked_helo_entity_id / launch_helo / recover_helo / relay_oth_targeting /
+  recovery_* / formation_*`。
+- `MissionCommand` 的 Python builder、runtime roundtrip、world-batch roundtrip
+  都已有显式测试锁定。
+
+含义：
+
+- `test_naval_mission_command_mapping.py`、`test_mission_command_roe_fields.py`、
+  `tests/world_batch/test_world_batch_runtime.py` 中相关 roundtrip 用例当前为绿。
+- 当前 `C2` 方向的主要剩余量已经从“字段漂移”转向
+  `CommandLink priority / jitter / retry`、`relay / jamming / doctrine`、
+  以及更深的 tasking 闭环。
 
 ## 三、当前复核到的稳定性问题
 
-### 3.1 已复现失败
+### 3.1 当前无稳定复现失败
 
-1. 飞行动力学：
-   - [tests/runtime/test_flight_dynamics_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
-   - `test_full_throttle_improves_specific_energy_relative_to_idle`
-2. 传感器/态势：
-   - [tests/runtime/test_sensor_situation_realism_p0.py](/home/void0312/Workshop/CMO/tests/runtime/test_sensor_situation_realism_p0.py)
-   - `coasted track` 语义失败 1 条
-   - `datalink report 不伪造本地 contact` 语义失败 2 条
-3. 海战：
-   - [tests/runtime/test_naval_screen_scenario.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
-   - `screen-hold` 恢复/收敛失败 2 条
-4. 空战 1v1：
-   - [tests/runtime/test_air_combat_1v1_fixture.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fixture.py)
-   - hostile track `classification` 语义失败 1 条
+当前主线程没有保留新的稳定行为红点。
+
+此前 `air_combat_1v1_fixture` 的 hostile classification 失败已经确认是
+fixture 过早停在 raw contact 阶段造成的语义错位，现已按 confirmed hostile track
+口径收口。
 
 ### 3.2 当前已验证为绿色的关键面
 
-1. 海战 `UNREP / abstract stores / maritime override / multi-sensor+ESM` 定向子集通过
-2. 海战 `sensor + ASW + helo` 定向子集由 subagent 回执为绿，本轮未复现新红点
-3. 武器/制导守门线本轮没有出现新的失败
+1. 主线程已完成 `build-workshop` 重编译，`ef_core` 当前可成功构建。
+2. 主线程集成验收：
+   - `test_flight_dynamics_realism_guards.py`
+   - `test_flight_dynamics_tuning_runtime.py`
+   - `test_flight_dynamics_p0_runtime_guards.py`
+   - `test_kernel_observation_sanity.py`
+   - `test_weapon_guidance_realism_guards.py`
+   - `test_air_combat_1v1_fire_missile.py`
+   - `test_naval_screen_scenario.py`
+   - `test_sensor_situation_realism_p0.py`
+   - `test_data_link_qos_runtime.py`
+   - `test_naval_mission_command_mapping.py`
+   - `test_mission_command_roe_fields.py`
+   - `tests/world_batch/test_world_batch_runtime.py::WorldBatchRuntimeTests::test_world_batch_runtime_mission_command_roundtrip_preserves_naval_extension_fields`
+   - 当前结果：`80 passed, 2 subtests passed`
+3. 本轮新增的聚焦验收当前为绿：
+   - `tests/architecture/test_runtime_facade_layering.py`
+   - `tests/world_batch/test_world_batch_vec_env.py`
+   - `tests/runtime/test_command_link_qos.py`
+   - `tests/runtime/test_mission_command_roe_fields.py`
+   - `tests/runtime/test_flight_dynamics_tuning_runtime.py`
+   - 当前结果：`51 passed`
+4. `Weapon` 专项在显式指定新构建产物后当前为绿：
+   - `CMO_BUILD_DIR=build pytest -q tests/runtime/test_weapon_guidance_realism_guards.py tests/runtime/test_air_combat_1v1_fire_missile.py`
+   - 当前结果：`29 passed`
+5. `MissionCommand` Python/C++ 收口相关定向验证为绿：`11 passed`
+6. `DataLink QoS` 扩展守门线为绿：`8 passed, 2 subtests passed`
+7. 海战 `screen-hold` 全量场景验证为绿：`8 passed`
 
-### 3.3 低置信度噪声
+### 3.3 当前仍成立的结构性风险
+
+这些不是本轮行为红灯，但仍然是当前最重要的架构债务：
+
+1. `default_unit_factory.h` 的 God Factory 倾向
+2. `content/unit_definition.h` 的内容层污染
+3. `Weapon launch resolution + tuning overlay + runtime assembly`
+   当前开始在 `simulation_kernel_weapon_api.cpp` 汇聚
+4. `RuntimeFacade.runtime()` 兼容逃逸口仍然存在
+5. `ScenarioLoader` 仍然是 Python 侧 God Object
+6. `SimulationKernel` 公共 API 持续膨胀
+
+它们的详细分析仍以
+[code_quality_review_realism_wave_20260517.zh.md](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/code_quality_review_realism_wave_20260517.zh.md)
+为准。
+
+### 3.4 本轮已收的结构性小切口
+
+虽然大项结构债务还在，但本轮 `Lane A` 已经先收了两条低风险小切口：
+
+1. `sensor` 默认值来源去重
+   - `default_unit_factory.h` 不再自带一份独立的 sensor 默认值实现
+   - 当前改为复用 `unit_definition` / loader 侧的默认 sensor 基线，再叠加 factory preset 覆盖
+2. missile 三维向量类型去重
+   - `missile_guidance_math.h` 不再维护一份独立 `Vec3` 结构体
+   - 当前改为 `using Vec3 = Math::Vector3`
+
+含义：
+
+- 这两条改动还不足以消灭 `default_unit_factory` 与 `weapon guidance` 的大结构债务，
+  但已经把“重复默认值来源”和“平行基础类型”这两类低成本退化先止住。
+- 下一轮可以继续沿这个方向做更深拆分，而不需要回头先清这些基础噪声。
+
+### 3.5 本轮已完成的 `RuntimeFacade / ScenarioLoader` 收口
+
+除了上述两条小切口，本轮 `Lane A` 还完成了 `RuntimeFacade / ScenarioLoader`
+的一轮主线程收口：
+
+1. Python 侧 `RuntimeFacade` 访问面已先收回显式 adapter
+   - `world_batch_vec_env.py` 里更多 world/time-step/visual 访问改为走 `_RuntimeFacadeAdapter`
+   - `leader_world_batch_runtime.py` 已减少对 `batch_runtime.world(...)` 的业务级直接穿透
+   - `tests/architecture/test_runtime_facade_layering.py` 已补层级守卫，锁住这条收口方向
+2. `ScenarioLoader` 已完成第一阶段状态壳抽离
+   - mission/route/reward/termination 等运行态字段已集中到 `runtime_state.py`
+   - `core.py` 当前通过 `_state_shell` 保持旧属性访问兼容
+3. execution episode controller 与 loader state 的同步合同已补平
+   - 本轮主线程修复了 `mission_command / route cache / post-waypoint / mission phase`
+     的回写遗漏
+   - 同时补平了 `cached_route_ref_id=0` 这类“字段存在但值为零”的镜像语义
+4. `ScenarioLoader` 的 scripted-opponent owner 已完成第一阶段抽离
+   - build/reset/step 生命周期已下沉到 `behavior_runtime/scripted_opponents.py`
+   - `core.py` 当前只保留薄代理与兼容访问面
+   - `loader.scripted_opponents` / `loader.scripted_opponent_reports` 兼容读取仍保留
+5. `ScenarioLoader` 的 command-chain owner 已完成第一阶段抽离
+   - `_leader_phase_manager` 与 naval-screen 运行态缓存
+     已下沉到 `behavior_runtime/command_chain_owner.py`
+   - `command_chain.py` 当前改为经由 collaborator owner 托管生命周期与 kernel sync
+   - `ScenarioLoader` 仍保留 `_leader_phase_manager` /
+     `_naval_screen_*` 的兼容代理入口，外部注入 bridge 的旧路径未中断
+   - 定向回归已覆盖 `execution_episode_state / naval_screen / common_core / world_batch / air_combat fixture`
+6. `ScenarioLoader` 的 behavior-phase owner 已完成第一阶段抽离
+   - `post_waypoint_transition / mission_phase_name / _approach_prev_*`
+     已下沉到 `behavior_runtime/behavior_phase_owner.py`
+   - `runtime_state.py` 当前通过统一镜像视图继续维护 execution episode state 的导入/导出合同
+   - `ScenarioLoader` 仍保留旧字段名与私有方法入口，`_state_shell` 的兼容断言也继续成立
+   - 相关扩展回归当前为绿：`57 passed`
+
+额外含义：
+
+- 这说明 `RuntimeFacade.runtime()` 的风险仍在，但已经从“主线散落穿透”
+  收窄到了“兼容逃逸口仍然存在”。
+- `ScenarioLoader` 的问题也已经从“状态与编排全挤在一个 owner”
+  收窄到“compat facade 收尾与更深 owner 减载仍待继续推进，主 owner 仍偏大”。
+
+### 3.6 低置信度噪声
 
 目前只作为备注保留，不计入当前已复现失败：
 
 1. subagent 回执曾提到 `pytest` 环境下偶发 `MemoryError / nanobind` 观测读取噪声
-2. 本轮我没有在当前工作区直接复现这一条，因此先不把它上升为主稳定性问题
+2. 本轮主线程没有稳定复现这一条，因此先不把它上升为主稳定性问题
 
 ## 四、建议的后续处理顺序
 
-建议按下面顺序收问题，而不是继续把实现面铺得更大：
+建议按下面顺序继续推进，而不是重新把所有线同时铺开：
 
-1. 先修海战 `screen-hold`
-   - 这是当前最明确、最稳定可复现的行为回归
-   - 且它直接影响海战“护航/屏护是否成立”的主语义
-2. 再收传感器/态势合同漂移
-   - `coasted track`
-   - `datalink report != local contact`
-   - hostile `classification`
-3. 再回头收飞行动力学全油门比能测试
-   - 避免继续在能量语义漂移的状态上谈更深物理
-4. 最后再考虑继续扩功能
-   - 更复杂 maritime 联动
-   - 更深 naval tasking / fire-control
-   - 更完整空战训练入口
+1. 先回到 `Lane A` 的结构性收口
+   - `default_unit_factory`
+   - `unit_definition`
+   - `RuntimeFacade / ScenarioLoader`
+   - 这些问题当前不红，但已经成为下一轮继续扩功能前最该清掉的边界债务
+2. 然后再推进更深建模
+   - `flight`: Mach/compressibility / stall / FBW
+   - `sensor`: relay / jamming / 更深融合
+   - `weapon`: seeker type / fuze / damage layering
+   - `C2/naval`: deeper tasking / authority / message loop
+
+本轮之后，`Lane A` 的建议切入顺序可以进一步收窄为：
+
+1. 先完成 `RuntimeFacade` Python 主线收口的余量
+   - 不急着删 C++ binding
+   - 继续冻结 `batch_runtime` / raw runtime 只作为兼容逃逸口而非维护接口
+2. 再继续拆 `ScenarioLoader`
+   - 状态壳、scripted-opponent owner、command-chain owner、behavior-phase owner 第一阶段已完成
+   - 下一刀优先是 `core.py` 兼容入口减载与更深 behavior owner 切面，而不是重新扩 `core.py`
 
 ## 五、当前最推荐的文档入口
 

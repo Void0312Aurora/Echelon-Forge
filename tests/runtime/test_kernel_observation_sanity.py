@@ -176,6 +176,46 @@ class KernelObservationSanityTests(unittest.TestCase):
         self.assertGreater(float(inst.q), 0.0)
         self.assertGreater(float(inst.aoa), 0.0)
 
+    def test_observation_throttle_matches_propulsion_spool_and_ab_state(self) -> None:
+        kernel = ef_py.SimulationKernel()
+        kernel.reset(42)
+        self.assertTrue(kernel.load_database("examples/config/database"))
+
+        entity_id = kernel.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            1200.0,
+            heading=0.0,
+            pitch=0.0,
+            roll=0.0,
+            vx=200.0,
+            vy=0.0,
+            vz=0.0,
+        )
+
+        pilot = ef_py.PilotAction()
+        pilot.active = True
+        pilot.throttle = 1.0
+        pilot.gear_handle = 0.0
+
+        for _ in range(80):
+            kernel.set_pilot_action(entity_id, pilot)
+            kernel.step()
+
+        obs = kernel.get_agent_observation(entity_id)
+        inst = kernel.get_instrument_state(entity_id)
+        fd = kernel.get_flight_dynamics_debug_view(entity_id)
+
+        expected_obs_throttle = float(fd.throttle_state) + (0.5 * float(fd.ab_state))
+        self.assertAlmostEqual(float(obs.throttle), expected_obs_throttle, delta=1.0e-6)
+        self.assertAlmostEqual(float(inst.throttle_pos), 1.0, delta=0.05)
+        self.assertGreater(float(fd.throttle_state), 0.2)
+        self.assertGreater(float(fd.ab_state), 0.05)
+        self.assertGreater(float(inst.engine_rpm), 20.0)
+        self.assertGreater(float(inst.fuel_flow), 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

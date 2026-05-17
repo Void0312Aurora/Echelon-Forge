@@ -38,20 +38,25 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         self.assertEqual(str(loader.primary_target_name), "Red_Fighter")
 
         obs = None
+        saw_contact = False
+        hostile_track = None
         for _ in range(120):
             sim.step()
             obs = sim.get_agent_observation(agent_id)
-            if any(int(getattr(track, "id", 0)) == red_id for track in getattr(obs, "contacts", [])):
+            hostile_track = next(
+                (track for track in getattr(obs, "contacts", []) if int(getattr(track, "id", 0)) == red_id),
+                None,
+            )
+            if hostile_track is None:
+                continue
+            saw_contact = True
+            if int(getattr(hostile_track, "classification", 0)) == 2:
                 break
 
         self.assertIsNotNone(obs)
+        self.assertTrue(saw_contact)
         self.assertEqual(int(getattr(obs, "missiles_remaining", -1)), 4)
         self.assertTrue(bool(getattr(obs, "can_fire", False)))
-
-        hostile_track = next(
-            (track for track in getattr(obs, "contacts", []) if int(getattr(track, "id", 0)) == red_id),
-            None,
-        )
         self.assertIsNotNone(hostile_track)
         self.assertEqual(int(getattr(hostile_track, "classification", 0)), 2)
         self.assertIn(int(getattr(hostile_track, "source", 0)), {1, 3})
