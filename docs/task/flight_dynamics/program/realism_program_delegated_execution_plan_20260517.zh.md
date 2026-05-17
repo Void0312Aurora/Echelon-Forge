@@ -18,6 +18,15 @@
 - 明确哪些任务必须先由主线程收口，哪些任务适合交给 subagent / worker 并行推进。
 - 给下一轮实现提供统一的 `lane`、依赖矩阵和阶段验收顺序，避免再次按学科各自单飞。
 
+补充口径：
+
+1. 当前总阶段与主阻塞判断，应优先以
+   [真实化主线收束计划](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.zh.md)
+   和
+   [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
+   为准。
+2. 本文更适合作为“如何分发/收束 lane”的执行文档，而不是单独承担最新总阶段说明。
+
 ---
 
 ## 零、本轮已回收成果
@@ -93,6 +102,13 @@
 
 当前真实化主线不适合继续按“飞行动力学 / 传感器 / 武器 / 海战 / C2”五条线完全平行推进。
 
+补充阶段判断：
+
+1. 主线整体仍处于 `P1-A 集成收尾`。
+2. `flight`、`sensor`、`naval` 与 `C2` 的关键守门面已经基本收口，当前更适合转入维护态。
+3. 当前主线重点已从“修基础红点”转向“结构债减载与有限的更深建模”。
+4. 因此本计划的重点应从“继续铺更多 lane”改成“先收束、再有限并行”。
+
 原因不是这些方向不重要，而是它们已经共享三类高重叠前置面：
 
 1. `schema -> loader -> factory` 参数注入链
@@ -108,8 +124,9 @@
 因此，下一轮应采用：
 
 1. `主线程先收口 shared integration`
-2. `再按 lane 并行推进 deeper modeling`
-3. `naval` 作为高价值场景验收面并入 `C2/runtime` 收口，而不是独立扩功能主线
+2. `优先把 weapon 末段真实性和深层建模推进`
+3. `再按 lane 有限并行推进 deeper modeling`
+4. `naval` 作为高价值场景验收面并入 `C2/runtime` 维护态，而不是独立扩功能主线
 
 ---
 
@@ -284,6 +301,12 @@
 
 这条 lane 仅在 `Lane A` 冻结 schema / binding / test contract 后再正式扩。
 
+当前冻结补充：
+
+1. `flight` 当前更接近 `P1-A` 后半段，不再是主线程默认阻塞面。
+2. `sensor/naval` 当前已进入维护态。
+3. 只接受 blocker 修补、合同收口和 shared contract 相关回归。
+
 推荐拆分：
 
 1. `B1` 数据挂载链路
@@ -311,6 +334,12 @@
 ### 3.3 Lane C：Sensor + Weapon Modeling
 
 这条 lane 共享同一条 `Detection/Track/Report/Observation/Binding` 主干，因此建议放在一组 program lane 下，而不是完全拆开。
+
+当前冻结补充：
+
+1. `sensor` 当前已收口到维护态。
+2. `weapon` 仍是本轮最值得继续推进的深层方向。
+3. `Lane C` 的第一优先级是 weapon 末段真实性、truth shortcut 收紧和更深建模。
 
 #### C1 Sensor Shared Integration 后续
 
@@ -383,6 +412,12 @@
 1. [test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
 2. [test_air_combat_1v1_fire_missile.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
 
+当前冻结建议：
+
+1. `C4` 不作为本轮主线程默认下一刀。
+2. 在 `sensor/naval` 维护态边界继续收紧前，不建议再开 `midcourse / seeker type / fuze / damage`
+   的并行大展开。
+
 ### 3.4 Lane D：C2 / Runtime 收口
 
 这条 lane 的原则是：
@@ -393,11 +428,16 @@
 
 推荐顺序：
 
-1. `D1 naval screen-hold 恢复/收敛复核`
-2. `D2 MissionCommand 字段 / codec / profile 对账`
-3. `D3 DataLink QoS 压测与 budget scaling`
+1. `D1 MissionCommand 字段 / codec / profile 对账`
+2. `D2 DataLink QoS 压测与 budget scaling`
+3. `D3 sensor/naval` 共享语义与海事守门回归联动复核（维护态）
 4. `D4 CommandLink 最小 priority policy`
 5. `D5 ROE / tasking 最小消息闭环原型`
+
+补充说明：
+
+1. `screen-hold` 当前不再作为稳定红点保留。
+2. `naval` 当前更适合作为 `sensor/C2/runtime` 的高价值验收面，而不是独立扩功能入口。
 
 核心文件：
 
@@ -423,13 +463,11 @@
 
 以下任务写集相对清楚，适合继续通过 subagent/worker 分发：
 
-1. `flight` 数据挂载链路
-2. `flight` 推进状态统一事实源
-3. `flight` 气动与失速语义深化
-4. `sensor` loader/factory/database 接线
-5. `weapon` tuning / launch init / runtime state shared 化
-6. `naval screen-hold` 恢复与调稳
-7. `CommandLink` priority policy
+1. `weapon` truth shortcut / seeker reject / fuze-damage 收敛
+2. `MissionCommand` 字段/codec/profile 对账与缺口补测
+3. `DataLink` 压测、budget scaling 与计数器补测
+4. `RuntimeFacade / ScenarioLoader` compat 面减载收尾
+5. `CommandLink` priority policy
 
 ### 4.2 更适合委派给 explorer/sidecar 的任务
 
@@ -448,6 +486,7 @@
 2. 同时改 `track_manager_system.h` + `data_link_system.h` + `simulation_kernel_observation_api.cpp`
 3. 在 `shared contact/track` 合同未收稳前并行推进 relay、jamming、naval tasking doctrine
 4. 在 missile shared runtime state 未收口前并行推进 seeker type + fuze + damage 全套深化
+5. 在 `sensor/naval` 结构债务未继续收紧前，同时重新铺开 `flight` 与 `weapon` 深化
 
 ---
 
@@ -485,8 +524,9 @@
 条件：
 
 1. `Lane A` 已完成一轮 shared integration
-2. reality guards 可以稳定运行
-3. DTO / observation / binding 面不再频繁漂移
+2. `sensor/naval` 当前已收口为维护态
+3. reality guards 可以稳定运行
+4. DTO / observation / binding 面不再频繁漂移
 
 ### Phase 3：再评估更深建模
 
@@ -503,26 +543,25 @@
 
 如果下一轮继续用 subagent 分发，建议首批只开下面这些：
 
-1. `Worker Flight-A`
-   - 任务：`AeroTuning / EngineTuning / StallState` 数据挂载链路
-2. `Worker Flight-B`
-   - 任务：推进状态统一事实源
-3. `Worker Sensor-A`
-   - 任务：`Sensor` loader/factory/database 接线
-4. `Worker Weapon-A`
-   - 任务：`MissileTuning / launch init / runtime state` shared 化
-5. `Worker Naval-A`
-   - 任务：`screen-hold` 恢复与收敛调稳
-6. `Explorer C2-A`
+1. `Worker Weapon-A`
+   - 任务：weapon truth shortcut / seeker reject / fuze-damage 收敛
+2. `Worker C2-A`
+   - 任务：`MissionCommand` 字段 / codec / profile 对账与缺口补测
+3. `Worker QoS-A`
+   - 任务：`DataLink` 压测与 budget scaling 补测
+4. `Worker Runtime-A`
+   - 任务：`RuntimeFacade / ScenarioLoader` compat 面减载收尾
+5. `Explorer C2-B`
    - 任务：`MissionCommand` 字段/codec/profile 对账
-7. `Explorer QoS-A`
-   - 任务：`DataLink` 压测与 budget scaling 方案
+6. `Explorer Docs-A`
+   - 任务：现实性文档口径复核与阶段验收矩阵整理
 
 不建议首批就开的任务：
 
 1. `relay + jamming + doctrine` 同时推进
 2. `seeker type + fuze + damage` 全套并行深化
-3. `naval` 独立扩更多功能面
+3. `flight` 与 `weapon` 再次作为默认主线并行扩深
+4. `naval` 独立扩更多功能面
 
 ---
 
@@ -530,11 +569,12 @@
 
 当前最有价值的组织方式不是“再细分更多方向”，而是：
 
-1. 先承认这是一个 `shared integration` 问题
+1. 先承认这是一个 `shared integration + sensor/naval blocker` 问题
 2. 用 `Lane A` 先把共用接口、观测面和合同钉牢
-3. 再把 `flight / sensor+weapon / C2-runtime` 分成较清晰的实现 lane
-4. 用 `naval` 与 `air_combat` 作为高价值场景验收面，而不是新的扩功能入口
+3. 优先清掉 `weapon` 深层真实性与 truth shortcut
+4. 再把 `flight / C2-runtime` 放回较清晰的实现 lane
+5. 用 `naval` 与 `air_combat` 作为高价值场景验收面，而不是新的扩功能入口
 
 一句话总结：
 
-下一轮应当从“按学科并行推进”切换成“按 shared contract 先收口、按 lane 再并行实现”的组织方式。
+下一轮应当从“按学科并行推进”切换成“先冻结 shared contract、优先清掉 weapon 深层真实性、再有限并行”的组织方式。

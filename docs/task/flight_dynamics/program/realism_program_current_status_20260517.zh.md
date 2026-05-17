@@ -20,6 +20,19 @@
 - 本文档同时串起我当前负责的关联子项目文档：`naval/`、`air_combat/`、`C2 command-chain`。
 - 本文档不重复展开每份分析细节，只回答“现在该看哪些文档、当前做到哪里、还有哪些稳定性问题”。
 
+## 零、当前总阶段
+
+当前总阶段建议统一表述为：
+
+1. 主线整体仍处于 `P1-A 集成收尾`。
+2. `flight`、`sensor`、`weapon`、`naval` 与 `C2` 的关键守门面已经收口，当前更适合转入维护态。
+3. 本轮抽样复核里，`sensor / DataLink / track`、海军武器命令链与 weapon 守门面都已转绿；
+   当前不再把它们写成稳定红点，剩余重点转向 shared contract 收口与结构债减载。
+4. `C2` 已进入“最小工程闭环接入主线”，但仍不是完整 tasking / network / authority 系统。
+
+这意味着当前最重要的工作不是继续多线扩深，而是先把 shared contract
+与结构债务收束，再按需做有限的 deeper modeling。
+
 ## 一、文档整理口径
 
 ### 1.1 `flight_dynamics/` 的当前定位
@@ -67,11 +80,14 @@
 - `test_flight_dynamics_realism_guards.py`、`test_flight_dynamics_tuning_runtime.py`、
   `test_flight_dynamics_p0_runtime_guards.py`、`test_kernel_observation_sanity.py`
   当前在本工作区为绿。
+- 这条线当前更接近 `P1-A` 后半段，而不是仍停留在 `P0` 或即将进入 `P1-B`。
 - 本轮重点不再是“守门测试持续发红”，而是“更深建模尚未继续推进、结构债务仍在”。
 
 含义：
 
 - 这条线的行为合同已经进入可继续深化的状态。
+- 当前更推荐把 `flight` 转入维护态：
+  先保 shared contract 与回归绿线，不把它作为主线程默认扩写入口。
 - 下一步更值得投入的是 `Mach/compressibility / stall / FBW` 深化，以及
   `default_unit_factory / unit_definition` 的边界收口，而不是继续救火式修基础运行时。
 
@@ -81,13 +97,18 @@
 
 - `shared track != local contact`、`coasted track usability`、`local + datalink -> fused`
   这批 `P0` 主合同在当前工作区为绿。
-- `test_sensor_situation_realism_p0.py` 当前为绿。
-- `DataLink QoS` 已补进更强的 budget/fanout/churn/counter 回归，`test_data_link_qos_runtime.py`
-  当前为绿。
+- `test_sensor_situation_realism_p0.py` 与 `test_data_link_qos_runtime.py`
+  当前均为绿，说明 `track/report` 与 QoS contract 已经收口到可维持状态。
+- 海事传感器主链本轮复核也已转绿；
+  当前更需要关注的是后续更深建模与结构收口，而不是继续救火基础合同。
+- 当前更接近 `P1-A` 后半段，已可以转入维护态。
+- 旧冻结分析里关于“DataLink 直接复制 contact”的表述已不再适合作为当前状态描述；
+  `DataLink -> track/report` 的边界条件已经收紧到当前合同。
 
 含义：
 
 - 本轮已经把“共享航迹可见但不伪造本地 contact”这条主语义重新锁住。
+- 这条线当前不再是主阻塞之一，而是进入维护态验收面。
 - 需要注意的是，这里有一部分旧测试场景口径也做了收紧：
   某些接收方平台如果本地就具备远距空情探测能力，不再适合作为
   “只能靠 datalink 可见”的场景载体。
@@ -103,6 +124,9 @@
 - `launch envelope` 当前已补入发射前门槛：
   `min_launch_range_m / max_launch_off_boresight_deg / lobl_required`
   会在 ammo/cooldown/VLS/munition 消耗之前拒射。
+- `midcourse_datalink_supported`、`seeker_activation_range_m`、
+  `terminal_seeker_active` 已进入运行时，并有专门守门测试锁定中制导与末制导切换语义。
+- 当前更接近 `P1-A` 后半段，而不是仍停留在旧冻结分析所描述的 `P0` workaround 阶段。
 
 含义：
 
@@ -116,6 +140,9 @@
   一并并入 `simulation_kernel_weapon_api.cpp`；
   行为上当前为绿，结构上则意味着 `Lane C` 后续需要继续拆分 launch resolution、
   tuning overlay 与 runtime assembly 的职责边界。
+- 因此当前更推荐把 `weapon` 转入维护态：
+  先冻结 shared contract，不把 `midcourse / seeker type / damage layering`
+  作为主线程默认下一刀。
 
 ### 2.4 海战子项目
 
@@ -124,11 +151,17 @@
 - `screen-hold` 的 direct-recovery -> hold handoff 已完成最小收口。
 - `test_naval_screen_scenario.py` 当前为绿。
 - `UNREP / abstract stores / maritime override / multi-sensor+ESM` 这批海战底座仍然保持绿态。
+- `test_naval_ship_database.py` 与 `test_ship_mission_command_authority.py`
+  这组海军武器命令链/authority 定向用例本轮复核里均为绿。
+- 海战当前最重要的工作不再是 `screen-hold`，而是把海军武器命令链收口后的
+  `naval` shared semantics 纳入 `C2/runtime` 维护态。
 
 含义：
 
 - 海战当前不再以 `screen-hold` 回归为主要阻塞点。
-- 下一步可以把海战重新放回 `C2/runtime` 高价值验收面，而不是继续把它当独立救火线。
+- 当前抽样复核没有再复现海军武器命令链红点，它更适合作为维护态验收面。
+- 因此海战也不适合作为新的扩功能主线，而应作为 `C2/runtime` 高价值验收面进入维护态。
+- 下一步应把海战继续放在 `C2/runtime` 高价值验收面，但不再把它当独立救火线。
 
 ### 2.5 空战 1v1 子项目
 
@@ -164,24 +197,45 @@
   recovery_* / formation_*`。
 - `MissionCommand` 的 Python builder、runtime roundtrip、world-batch roundtrip
   都已有显式测试锁定。
+- `CommandLink` 已从“只有最小 FIFO”推进到“排队 backlog 可按最小优先级重排”，
+  backlog debug surface 也已有显式测试锁定。
+- `RuntimeFacade` 的 Python 主线访问面已收回显式 adapter，
+  `RuntimeFacade.runtime()` 当前只保留 compatibility / diagnostics 逃逸口定位。
 
 含义：
 
 - `test_naval_mission_command_mapping.py`、`test_mission_command_roe_fields.py`、
-  `tests/world_batch/test_world_batch_runtime.py` 中相关 roundtrip 用例当前为绿。
+  `tests/world_batch/test_world_batch_runtime.py`、`test_mission_command_air_fields_roundtrip.py`
+  中相关 roundtrip 用例当前为绿。
+- `tests/runtime/test_command_link_qos.py`、`tests/architecture/test_runtime_facade_layering.py`
+  与 `test_world_setup_compat.py` 当前把 queue / adapter / compat 口径锁成守门线。
 - 当前 `C2` 方向的主要剩余量已经从“字段漂移”转向
   `CommandLink priority / jitter / retry`、`relay / jamming / doctrine`、
-  以及更深的 tasking 闭环。
+  `RuntimeFacade / ScenarioLoader compat` 减载，以及更深的 tasking 闭环。
 
 ## 三、当前复核到的稳定性问题
 
-### 3.1 当前无稳定复现失败
+### 3.1 当前未复现新的稳定失败
 
-当前主线程没有保留新的稳定行为红点。
+当前主线程抽样复核里未再复现稳定失败；与本节对应的定向回归已转绿：
 
-此前 `air_combat_1v1_fixture` 的 hostile classification 失败已经确认是
-fixture 过早停在 raw contact 阶段造成的语义错位，现已按 confirmed hostile track
-口径收口。
+1. [tests/runtime/test_sensor_situation_realism_p0.py](/home/void0312/Workshop/CMO/tests/runtime/test_sensor_situation_realism_p0.py)
+2. [tests/runtime/test_data_link_qos_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_data_link_qos_runtime.py)
+3. [tests/runtime/test_naval_ship_database.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_ship_database.py)
+4. [tests/runtime/test_ship_mission_command_authority.py](/home/void0312/Workshop/CMO/tests/runtime/test_ship_mission_command_authority.py)
+5. [tests/runtime/test_mission_command_air_fields_roundtrip.py](/home/void0312/Workshop/CMO/tests/runtime/test_mission_command_air_fields_roundtrip.py)
+6. [tests/runtime/test_world_setup_compat.py](/home/void0312/Workshop/CMO/tests/runtime/test_world_setup_compat.py)
+7. [tests/runtime/test_command_link_qos.py](/home/void0312/Workshop/CMO/tests/runtime/test_command_link_qos.py)
+8. [tests/runtime/test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
+
+当前结果：本轮定向回归已转绿，未复现稳定失败。
+
+补充说明：
+
+1. 当前更合适的总口径是“关键守门面基本为绿”。
+2. 这不等于所有子方向都可以宣称完全签收。
+3. 当前主线重点已经从泛化的 `flight / weapon` 收缩成结构债减载与有限深化，
+   而不是 `flight / weapon / screen-hold` 这些此前更容易被视为首要风险的方向。
 
 ### 3.2 当前已验证为绿色的关键面
 
@@ -199,7 +253,7 @@ fixture 过早停在 raw contact 阶段造成的语义错位，现已按 confirm
    - `test_naval_mission_command_mapping.py`
    - `test_mission_command_roe_fields.py`
    - `tests/world_batch/test_world_batch_runtime.py::WorldBatchRuntimeTests::test_world_batch_runtime_mission_command_roundtrip_preserves_naval_extension_fields`
-   - 当前结果：`80 passed, 2 subtests passed`
+   - 当前结果：`82 passed`
 3. 本轮新增的聚焦验收当前为绿：
    - `tests/architecture/test_runtime_facade_layering.py`
    - `tests/world_batch/test_world_batch_vec_env.py`
@@ -213,6 +267,10 @@ fixture 过早停在 raw contact 阶段造成的语义错位，现已按 confirm
 5. `MissionCommand` Python/C++ 收口相关定向验证为绿：`11 passed`
 6. `DataLink QoS` 扩展守门线为绿：`8 passed, 2 subtests passed`
 7. 海战 `screen-hold` 全量场景验证为绿：`8 passed`
+8. `RuntimeFacade / MissionCommand` adapter 与 air/naval roundtrip 守门线当前为绿：
+   - `tests/architecture/test_runtime_facade_layering.py`
+   - `tests/runtime/test_mission_command_air_fields_roundtrip.py`
+   - `tests/runtime/test_world_setup_compat.py`
 
 ### 3.3 当前仍成立的结构性风险
 
@@ -299,12 +357,12 @@ fixture 过早停在 raw contact 阶段造成的语义错位，现已按 confirm
 
 建议按下面顺序继续推进，而不是重新把所有线同时铺开：
 
-1. 先回到 `Lane A` 的结构性收口
+1. 先回收 `Lane A` 的结构性收口
    - `default_unit_factory`
    - `unit_definition`
    - `RuntimeFacade / ScenarioLoader`
    - 这些问题当前不红，但已经成为下一轮继续扩功能前最该清掉的边界债务
-2. 然后再推进更深建模
+2. 再推进更深建模
    - `flight`: Mach/compressibility / stall / FBW
    - `sensor`: relay / jamming / 更深融合
    - `weapon`: seeker type / fuze / damage layering
@@ -324,6 +382,7 @@ fixture 过早停在 raw contact 阶段造成的语义错位，现已按 confirm
 如果下一轮要继续推进，建议优先看：
 
 1. [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
+2. [真实化主线收束计划](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.zh.md)
 2. [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
 3. [空战 1v1 F-16C 基线切换与最小对战合同进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
 4. [C2 指挥链与通信子项目](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/README.md)
@@ -333,3 +392,4 @@ fixture 过早停在 raw contact 阶段造成的语义错位，现已按 confirm
 
 - 不会把 `flight_dynamics/` 下的冻结分析误当成当前执行状态
 - 能直接看到“主线规划”和“当前稳定性现实”之间的差距
+- 能先对齐“当前总阶段、主阻塞和冻结范围”，再决定是否值得分发更多并行实现
