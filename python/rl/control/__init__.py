@@ -1,5 +1,10 @@
 """Control subdomain package for command semantics and scripted controllers."""
 
+from __future__ import annotations
+
+from importlib import import_module
+from typing import TYPE_CHECKING
+
 from .mission_defs import (
     COMMAND_CODE_IDLE,
     COMMAND_CODE_LANDING,
@@ -24,12 +29,38 @@ from .mission_defs import (
 from .scripted_landing import ScriptedLandingController
 from .scripted_stable_flight import ScriptedStableFlightController, scripted_stable_flight_action
 from .scripted_takeoff import ScriptedTakeoffController
-from .wrappers import (
-    MultiTimescaleActionController,
-    MultiTimescaleActionWrapper,
-    PreparedMultiTimescaleAction,
-    get_action_wrapper_spec,
-)
+
+if TYPE_CHECKING:
+    from .wrappers import (
+        MultiTimescaleActionController,
+        MultiTimescaleActionWrapper,
+        PreparedMultiTimescaleAction,
+        get_action_wrapper_spec,
+    )
+
+
+_LAZY_WRAPPER_EXPORTS = {
+    "MultiTimescaleActionController",
+    "MultiTimescaleActionWrapper",
+    "PreparedMultiTimescaleAction",
+    "get_action_wrapper_spec",
+}
+
+
+def __getattr__(name: str):
+    if name not in _LAZY_WRAPPER_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    try:
+        wrappers = import_module(".wrappers", __name__)
+    except ModuleNotFoundError as exc:
+        if exc.name == "gymnasium":
+            raise ModuleNotFoundError(
+                "python.rl.control wrappers require the optional dependency 'gymnasium'."
+            ) from exc
+        raise
+    value = getattr(wrappers, name)
+    globals()[name] = value
+    return value
 
 __all__ = [
     "COMMAND_CODE_IDLE",
