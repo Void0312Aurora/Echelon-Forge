@@ -11,6 +11,7 @@
 #include "content/unit_definition.h"
 #include "core/interfaces/unit_factory.h"
 #include "models/weapons/missile_guidance_types.h"
+#include "models/weapons/naval_weapon_mounts.h"
 
 #include <spdlog/spdlog.h>
 
@@ -367,55 +368,6 @@ bool missile_launch_envelope_allows(const MissileTuning& tuning, const Detection
     return true;
 }
 
-NavalWeaponMountDefinition* select_ready_vls_mount(NavalWeaponSystem* system, double current_time) {
-    if (!system) {
-        return nullptr;
-    }
-    for (auto& mount : system->mounts) {
-        if (mount.weapon_type != NavalWeaponType::VlsSam) continue;
-        if (mount.ready_count <= 0) continue;
-        if (mount.cooldown_s > 0.0 && mount.last_fire_time >= 0.0 &&
-            current_time - mount.last_fire_time < mount.cooldown_s) {
-            continue;
-        }
-        return &mount;
-    }
-    return nullptr;
-}
-
-NavalWeaponMountDefinition* select_ready_mount(
-    NavalWeaponSystem* system,
-    NavalWeaponType weapon_type,
-    double current_time
-) {
-    if (!system) {
-        return nullptr;
-    }
-    for (auto& mount : system->mounts) {
-        if (mount.weapon_type != weapon_type) continue;
-        const int ammo_per_shot = std::max(1, mount.ammo_per_shot);
-        if (mount.consumes_ready_count && mount.ready_count < ammo_per_shot) continue;
-        if (mount.cooldown_s > 0.0 && mount.last_fire_time >= 0.0 &&
-            current_time - mount.last_fire_time < mount.cooldown_s) {
-            continue;
-        }
-        return &mount;
-    }
-    return nullptr;
-}
-
-bool consume_mount_shot(NavalWeaponMountDefinition* mount, double current_time) {
-    if (!mount) return false;
-    const int ammo_per_shot = std::max(1, mount->ammo_per_shot);
-    if (mount->consumes_ready_count) {
-        if (mount->ready_count < ammo_per_shot) {
-            return false;
-        }
-        mount->ready_count = std::max(0, mount->ready_count - ammo_per_shot);
-    }
-    mount->last_fire_time = current_time;
-    return true;
-}
 } // namespace
 
 std::optional<SimulationKernel::ResolvedMissileLaunchDefinition>
@@ -545,10 +497,10 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
         return flecs::entity::null();
     }
 
-    NavalWeaponMountDefinition* vls_mount = select_ready_vls_mount(naval_weapons, current_time);
+    NavalWeaponMountDefinition* vls_mount = naval_weapon_mounts::select_ready_vls_mount(naval_weapons, current_time);
     const bool use_naval_vls = vls_mount != nullptr;
     if (use_naval_vls) {
-        if (!consume_mount_shot(vls_mount, current_time)) {
+        if (!naval_weapon_mounts::consume_mount_shot(vls_mount, current_time)) {
             return flecs::entity::null();
         }
     } else if (naval_weapons) {
@@ -841,7 +793,10 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
     const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const NavalWeaponType weapon_type = static_cast<NavalWeaponType>(weapon_type_code);
-    NavalWeaponMountDefinition* mount = select_ready_mount(naval_weapons, weapon_type, current_time);
+    NavalWeaponMountDefinition* mount = naval_weapon_mounts::select_ready_mount(
+        naval_weapons,
+        weapon_type,
+        current_time);
     if (!mount) {
         return false;
     }
@@ -849,7 +804,7 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
     if (det.range > mount->engagement_range_m && mount->engagement_range_m > 0.0) {
         return false;
     }
-    if (!consume_mount_shot(mount, current_time)) {
+    if (!naval_weapon_mounts::consume_mount_shot(mount, current_time)) {
         return false;
     }
 
