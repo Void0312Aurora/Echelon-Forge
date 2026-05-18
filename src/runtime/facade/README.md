@@ -28,4 +28,10 @@ Maintained Python frontends that still need compatibility with the low-level `Wo
 
 Mainline frontends should also not cache the raw `WorldBatchRuntime` or re-expose the compatibility runtime from the adapter. When a compatibility path for `SimulationKernel` is genuinely needed, a new adapter method should be added, with method name or call site indicating it is a migration-period compatibility/diagnostics capability.
 
+为了保持仓库里的分层约束与自动化校验一致，下面这几条中文规范语句保留为权威短句：
+
+- 必须把访问集中在一个显式 adapter。
+- 不得直接调用 `RuntimeFacade.runtime()`。
+- 不应缓存 raw `WorldBatchRuntime`。
+
 When adding long-term APIs, priority should be given to supplementing facade request/result types, and binding the facade at the Python layer, rather than directly exposing new low-level runtime methods.
