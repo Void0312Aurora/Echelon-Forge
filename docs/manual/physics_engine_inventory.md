@@ -13,19 +13,32 @@
 ### 1.1 SimulationKernel: Register Components, Systems, and Update Order
 
 - `SimulationKernel::step()` executes `ecs.progress(dt)` with a fixed timestep `dt`.
-- System registration (executed in registration order by default):  
-  `CommandLink -> ActionMapping -> CommandLag -> Control -> Guidance -> Movement -> Sensor -> DataLink -> Damage -> EW -> Logistics`
+- The actively registered flight-dynamics pipeline now follows the current
+  runtime order:
+  `CommandLink -> ActionMapping -> CommandLag -> Control -> ForceClear -> AeroState -> Propulsion -> Force -> Aerodynamics -> GroundContact -> RotationalIntegration -> Guidance -> LeapfrogIntegration -> Navigation -> Sensor -> Track/DataLink -> Instruments -> Damage -> EW -> Logistics`
+- `MovementSystem` still exists in the repository as a simple legacy
+  `Velocity -> Transform` integrator, but it is not registered in the current
+  kernel and has been replaced on the active path by the Leapfrog translation
+  integrator.
 
 Entry:
 - `src/core/engine/simulation_kernel.cpp`
 
-### 1.2 Motion Integration: MovementSystem (Velocity -> Transform)
+### 1.2 Motion Integration: Leapfrog Mainline + Legacy MovementSystem
 
-- Basic integration per frame: `Transform += Velocity * dt`.
-- Deduce `heading` from horizontal velocity `atan2(vy, vx)` (NAV: 0 = North, clockwise positive).
+- The current mainline translational integrator is
+  `LeapfrogIntegrationSystem`, which advances `Transform` and `Velocity` from
+  accumulated forces and mass using a kick-drift-kick style update.
+- This active path reduces drift relative to the old direct `Velocity * dt`
+  translation and is the integration stage actually registered by
+  `SimulationKernel`.
+- `MovementSystem` remains available as a legacy/simple integrator that applies
+  `Transform += Velocity * dt` and derives heading from horizontal velocity,
+  but it is disabled in the active kernel path.
 
 Entry:
-- `src/systems/physics/movement_system.h`
+- `src/systems/physics/leapfrog_system.h`
+- `src/systems/physics/movement_system.h` (legacy, not currently registered)
 
 ---
 

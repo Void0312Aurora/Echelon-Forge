@@ -13,4 +13,6 @@
 - rl_selfplay.md：强化学习自我对弈路线图。
 - c2_communication.md：指挥链路与C2约束路线图。
 - models/hierarchical_moe_execution_policy.md：执行层分层MoE线路的设计冻结。
-- release_alpha_checklist.md：依赖可复现性说明与 `v0.1.0-alpha` 发布检查清单。
+
+发布相关的检查清单与依赖可复现性说明，应在真正排期后与对应的任务/
+计划文档放在一起维护。

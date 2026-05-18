@@ -22,7 +22,7 @@ The most frequent operations, directly affecting the aircraft's aerodynamic surf
 
 | Action Name | Description | Value Range | Physical Meaning |
 | :--- | :--- | :--- | :--- |
-| `stick_pitch` | Elevator/horizontal stabilizer control | [-1.0, 1.0] | Pulling back is negative (pitch up), pushing forward is positive (pitch down) |
+| `stick_pitch` | Elevator/horizontal stabilizer control | [-1.0, 1.0] | Pulling back is positive (pitch up), pushing forward is negative (pitch down) |
 | `stick_roll` | Aileron control | [-1.0, 1.0] | Banking left is negative, banking right is positive |
 | `rudder_pedals` | Rudder/nose wheel steering control | [-1.0, 1.0] | Left pedal is negative, right pedal is positive |
 | `throttle_lever` | Throttle lever position | [0.0, 1.0] | 0.0-0.8 is military power, 0.8-1.0 is afterburner (AB) |
@@ -56,7 +56,7 @@ Core operations for tactical execution.
 | `weapon_select` | Weapon cycle selection | Discrete ID | Gun, short-range missile, medium-range missile |
 | `pickle_btn` | Missile launch / bomb release | Trigger | |
 | `trigger_btn` | Gun trigger | Hold | |
-| `jettison_btn` | Emergency jettison external tanks/stores | Trigger | Usually a red emergency button |
+| `jettison_emergency` | Emergency jettison external tanks/stores | Trigger | Current `PilotAction` field; usually a red emergency button |
 
 ## 5. Operational Specifications
 1.  **Continuity**: Control stick (`stick_pitch/roll`) and throttle (`throttle`) must be handled as continuous actions to simulate physical feedback.

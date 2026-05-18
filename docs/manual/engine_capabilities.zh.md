@@ -15,7 +15,10 @@
 - 关键组件包括：`Transform/Velocity/FlightModel/LandingGear/Mass/Propulsion/FuelSystem/...`
 
 ### C. 运动与控制（关键）
-- **MovementSystem**：对 `Velocity` 做积分更新位置与航向。
+- **LeapfrogIntegrationSystem**：这是当前内核实际使用的平移积分器。它基于
+  累计力与质量推进位置和速度，是 `SimulationKernel` 现役的主运动积分路径。
+- **MovementSystem**：仍保留为更简单的 legacy `Velocity -> Transform`
+  积分器，但在当前内核主链路中已禁用。
 - **ControlModel（DefaultControlModel）**：
   - 支持两类控制输入：  
     1) **autopilot 目标控制**：目标航向/速度/高度（RL 巡航/航路点任务使用）  

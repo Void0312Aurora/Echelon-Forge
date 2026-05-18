@@ -17,7 +17,12 @@ What you now have is a simulation kernel based on **ECS (flecs)**. The overall s
 - Key components include: `Transform/Velocity/FlightModel/LandingGear/Mass/Propulsion/FuelSystem/...`
 
 ### C. Motion and Control (Key)
-- **MovementSystem**: Integrates `Velocity` to update position and heading.
+- **LeapfrogIntegrationSystem**: This is the active translational integrator in
+  the current kernel. It advances position and velocity from force accumulation
+  and mass, and is the mainline motion integration path used by
+  `SimulationKernel`.
+- **MovementSystem**: Still present as a simpler legacy `Velocity ->
+  Transform` integrator, but currently disabled in the active kernel path.
 - **ControlModel (DefaultControlModel)**:
   - Supports two types of control inputs:  
     1) **Autopilot target control**: target heading / speed / altitude (used for RL cruise / waypoint missions)  

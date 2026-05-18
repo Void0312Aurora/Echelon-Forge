@@ -11,19 +11,28 @@
 ### 1.1 SimulationKernel：注册组件、系统与更新顺序
 
 - `SimulationKernel::step()` 以固定步长 `dt` 执行 `ecs.progress(dt)`。
-- 系统注册（默认按注册顺序执行）：  
-  `CommandLink -> ActionMapping -> CommandLag -> Control -> Guidance -> Movement -> Sensor -> DataLink -> Damage -> EW -> Logistics`
+- 当前实际生效的飞行动力学主链路按如下顺序注册：
+  `CommandLink -> ActionMapping -> CommandLag -> Control -> ForceClear -> AeroState -> Propulsion -> Force -> Aerodynamics -> GroundContact -> RotationalIntegration -> Guidance -> LeapfrogIntegration -> Navigation -> Sensor -> Track/DataLink -> Instruments -> Damage -> EW -> Logistics`
+- `MovementSystem` 仍然保留在仓库里，作为一个简单的 legacy
+  `Velocity -> Transform` 积分器存在；但它已经不在当前内核里注册，现役
+  主路径已由 Leapfrog 平移积分器替代。
 
 入口：
 - `src/core/engine/simulation_kernel.cpp`
 
-### 1.2 运动积分：MovementSystem（Velocity -> Transform）
+### 1.2 运动积分：Leapfrog 主线 + legacy MovementSystem
 
-- 每帧做最基本的积分：`Transform += Velocity * dt`。
-- 根据水平速度 `atan2(vy, vx)` 反推 `heading`（NAV：0=North，顺时针为正）。
+- 当前实际使用的平移积分器是 `LeapfrogIntegrationSystem`，它依据累计力与
+  质量，用 kick-drift-kick 形式同时推进 `Transform` 和 `Velocity`。
+- 这条现役路径相比旧的直接 `Velocity * dt` 平移更能抑制漂移，也是
+  `SimulationKernel` 当前真正注册的积分阶段。
+- `MovementSystem` 仍可作为 legacy/简化积分器参考：它执行
+  `Transform += Velocity * dt`，并根据水平速度反推航向；但它在当前内核主
+  路径中处于禁用状态。
 
 入口：
-- `src/systems/physics/movement_system.h`
+- `src/systems/physics/leapfrog_system.h`
+- `src/systems/physics/movement_system.h`（legacy，当前未注册）
 
 ---
 

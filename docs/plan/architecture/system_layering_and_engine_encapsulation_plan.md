@@ -202,13 +202,18 @@ This layer should not own:
 - gym wrappers
 - Python state mirrors
 
-Recommended public boundary:
+Proposed public boundary to introduce in a future refactor
+(these interfaces/DTOs are architectural targets, not repository APIs that
+exist today):
 
 - `IPhysicsBackend`
 - `PhysicsWorldState`
 - `PhysicsStepContext`
 - `PhysicsStepResult`
 - `PhysicsDebugTrace`
+
+Current repository code still routes through concrete engine/runtime
+implementations rather than this extracted physics boundary.
 
 Concrete future backends may include:
 
@@ -245,12 +250,17 @@ This layer should not own:
 - scenario authoring UI conventions
 - Python-side cache/mirror logic
 
-Recommended public boundary:
+Proposed public boundary to introduce in a future refactor
+(these interfaces are candidate contracts, not stable repository interfaces
+that exist today):
 
 - `ISimulationRuntime`
 - `IBatchSimulationRuntime`
 - `IExecutionEpisodeRuntime`
 - `ISimulationDiagnostics`
+
+At present, maintained callers still bind to concrete runtime implementations
+instead of these proposed simulation-engine interfaces.
 
 ### Layer 3: Runtime Facade
 

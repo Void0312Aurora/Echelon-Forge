@@ -189,13 +189,17 @@ flowchart TD
 - gym wrappers
 - Python state mirror
 
-建议的公共边界：
+规划中的候选公共边界（这些接口 / DTO 目前是架构目标，
+并不是仓库里今天已经存在的公开 API）：
 
 - `IPhysicsBackend`
 - `PhysicsWorldState`
 - `PhysicsStepContext`
 - `PhysicsStepResult`
 - `PhysicsDebugTrace`
+
+当前仓库代码仍然主要通过具体的 engine / runtime 实现协作，
+尚未抽出这一层独立的 physics 边界契约。
 
 未来具体后端可以包括：
 
@@ -231,12 +235,16 @@ flowchart TD
 - scenario authoring 的 UI 约定
 - Python 侧 cache / mirror 逻辑
 
-建议的公共边界：
+规划中的候选公共边界（这些接口目前是候选契约，
+并不是仓库里今天已经存在的稳定公开接口）：
 
 - `ISimulationRuntime`
 - `IBatchSimulationRuntime`
 - `IExecutionEpisodeRuntime`
 - `ISimulationDiagnostics`
+
+当前维护中的调用方仍然直接绑定具体 runtime 实现，
+尚未切换到这组拟议中的 simulation-engine 接口。
 
 ### 第 3 层：运行时门面层
 

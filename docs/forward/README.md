@@ -14,5 +14,6 @@ Files:
 - rl_selfplay.md: reinforcement learning self-play roadmap.
 - c2_communication.md: command link and C2 constraints roadmap.
 - models/hierarchical_moe_execution_policy.md: design freeze for the execution-layer hierarchical MoE line.
-- release_alpha_checklist.md: dependency reproducibility notes and the
-  `v0.1.0-alpha` release checklist.
+
+Release-specific checklists and reproducibility notes should live alongside
+the concrete task or plan docs once a release is actually scheduled.
