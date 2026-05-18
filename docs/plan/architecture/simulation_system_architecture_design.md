@@ -70,6 +70,10 @@ These rules are normative for new architecture work:
 11. The `P0-P10` table is semantic, not a forced equal-step linear executor.
     Runtime execution should be modeled as a multi-rate temporal DAG whose
     feedback crosses explicit state or event boundaries.
+12. Coupling between simulation, policy computation, and test/orchestration
+    layers must be explicit. Policy and test code may request views, actions,
+    rewards, truncation, or resets through facade contracts, but they must not
+    become hidden owners of authoritative simulation state or episode truth.
 
 ## 3. Target Layer Model
 
@@ -211,7 +215,100 @@ StateStore/EventQueue = feedback boundary
 Contracts = packet/state/event vocabulary
 ```
 
-## 6. Contract Taxonomy
+## 6. System Layer Coupling Model
+
+The `P0-P10` lifecycle and temporal DAG define the simulation layer. The whole
+system, however, has three coupled layers:
+
+| Layer | Owns | Must not own |
+|-------|------|--------------|
+| Simulation layer | Authoritative world state, state evolution, temporal DAG scheduling, event ordering, facade-visible snapshots, simulation-semantic termination, and compiled mission runtime products. | Training-loop policy state, experiment curriculum, frontend-only observation encoders, or test harness scheduling. |
+| Policy computation layer | Learned, scripted, or human-directed policy logic; observation view selection; action generation; coordination intent generation; and experimental reward shaping. | Raw ECS mutation, authoritative episode phase, physics truth, or private command injection that bypasses facade contracts. |
+| Test and orchestration layer | Scenario selection, seeds, reset requests, curriculum scheduling, max-step truncation, replay, CI smoke, and validation harnesses. | Simulation-semantic termination, hidden state mutation, or a second implementation of the runtime lifecycle. |
+
+The layers should interact through facade-shaped request/result contracts, not
+through shared assumptions about Python helper call order or C++ internal owner
+layout.
+
+```mermaid
+flowchart LR
+    ORCH["Test and orchestration layer\nscenario, seed, reset, truncation, harness"] --> FC["Runtime facade\nrequest/result contracts"]
+    POL["Policy computation layer\nobservation views, actions, reward shaping, coordination"] --> FC
+    FC --> SIM["Simulation layer\nP0-P10 semantic lifecycle\nTemporal DAG, StateStore, EventQueue"]
+    SIM --> FC
+    FC --> POL
+    FC --> ORCH
+```
+
+Cross-layer coupling is not a weakness by itself. It becomes a structural risk
+only when ownership is implicit. The target design therefore treats the policy
+layer and orchestration layer as external stage-node producers and consumers
+with their own clock domains and versioned requests.
+
+Cross-layer contracts:
+
+| Contract | Primary owner | Simulation-layer responsibility | Policy/orchestration responsibility |
+|----------|---------------|---------------------------------|-------------------------------------|
+| `ObservationViewSpec` | Policy or test layer | Expose queryable state shards, committed snapshot versions, facade packet builders, and diagnostics. | Select fields, encoding, normalization, stacking, masking, and schema version for a consumer. |
+| `ObservationPacket` | Runtime facade | Return data sampled at a declared barrier or snapshot version, with source time and schema metadata. | Consume the packet without assuming raw ECS layout or unversioned Python-side field order. |
+| `ActionIntentPacket` | Policy layer | Accept action intent through facade and translate it into command/control inputs at `P3/P4` boundaries. | Declare action source, effective time, target entity, action family, and whether it is direct control, mission command, or coordination intent. |
+| `ActionHoldPolicy` | Policy layer, enforced by facade/simulation | Apply hold-last, interpolation, expiry, or drop semantics deterministically across control-rate and physics-rate ticks. | Declare action validity duration, refresh cadence, expiry behavior, and credit-assignment latency assumptions. |
+| `CoordinationIntentPacket` | Policy layer | Admit scripted, learned, or human director output only through tasking/command facade paths, then schedule it into `P2/P3`. | Declare source type, source id, target roster, update clock, and produced tasking or leader-intent fields. |
+| `RewardSpec` / `RewardReport` | Split ownership | Provide semantic facts, compiled mission products, damage/kill reports, and versioned state snapshots. | Compose experiment reward, shaping weights, curriculum-dependent terms, and consumer-specific reward breakdowns. |
+| `TerminationSpec` / `EpisodeStatus` | Split ownership | Own simulation-semantic `terminated` reasons such as crash, kill, mission success, out-of-bounds, or fuel exhaustion. | Own experiment `truncated` reasons such as max steps, curriculum cutoff, early stopping, or benchmark wall-clock policy. |
+| `EpisodeLifecycleContract` | Simulation layer for authoritative phase; orchestration for reset requests | Own authoritative episode phase, transition result, reset application, and facade-exported mirrored status. | Request reset/truncation, mirror status for Gymnasium or test APIs, and never advance a private authoritative state machine. |
+
+Design consequences:
+
+1. Observation assembly is a policy-facing view contract. The simulation layer
+   should expose stable state snapshots and facade packet builders; the policy
+   layer may define feature subsets, encodings, and normalization. Adding a
+   policy feature should require simulation work only when the requested truth
+   state or diagnostic export does not yet exist.
+2. Reward is split into simulation facts and experiment composition.
+   Simulation-semantic rewards or mission products may be compiled, but shaping
+   weights and training-specific reward mixes should remain configurable
+   without recompiling the simulation. If Python computes reward from mirrors,
+   the mirror snapshot version and latency must be explicit.
+3. `terminated` and `truncated` are not one owner. Simulation owns semantic
+   termination; policy/test/orchestration may request truncation. Facade
+   results should report reason, source layer, and snapshot time for both.
+4. Coordination directors belong outside the simulation layer unless they are
+   explicitly promoted to a simulation model. A scripted, learned, or human
+   director may produce `TaskingPacket`, `MissionCommand`, or `LeaderIntent`
+   content only through facade-compatible assignment paths.
+5. Policy inference cadence is a first-class clock domain. A policy running at
+   10 Hz, platform control at 20 Hz, and physics at 60 Hz is legal only when
+   `ActionHoldPolicy` declares how one policy output is consumed by multiple
+   control ticks and how observation sample time aligns with reward.
+6. `P4 PlatformControl` consumes resolved command/control inputs. `P5
+   PhysicsStep` consumes physical force/torque or backend integration inputs;
+   it must not consume raw policy vectors.
+7. `ScenarioLoader` and Gymnasium wrappers are target-state adapters and
+   mirrors, not authoritative runtime owners. They can satisfy API shape such
+   as `(obs, reward, terminated, truncated, info)`, but the transition truth
+   should be recoverable from compiled episode/facade results.
+8. Hierarchical RL should model sub-episodes as explicit lifecycle annotations
+   or orchestration scopes. It should not duplicate the core episode state
+   machine in Python and C++.
+
+For scheduling, cross-layer requests are external graph inputs. Each request
+should declare:
+
+| Field | Requirement |
+|-------|-------------|
+| `source_layer` | `policy`, `orchestration`, `adapter`, `human`, or `diagnostic`. |
+| `source_id` | Stable producer id for replay and diagnostics. |
+| `input_snapshot_version` | State or observation version the producer used. |
+| `effective_time` | Simulated time or scheduling window where the request becomes visible. |
+| `valid_until` | Expiry time or condition, especially for actions and tasking intents. |
+| `merge_policy` | How conflicts are resolved when multiple producers target the same entity or field. |
+
+This keeps the simulation layer central without pretending it is isolated. The
+simulation layer remains the source of truth; the policy and orchestration
+layers become explicit, replayable producers and consumers.
+
+## 7. Contract Taxonomy
 
 The facade and adapters should converge on typed packets with clear ownership:
 
@@ -219,12 +316,18 @@ The facade and adapters should converge on typed packets with clear ownership:
 |-----------------|---------|-----------------|
 | `ScenarioSpec` / `ContentSpec` | Static scenario and content description | `content/` plus adapter schemas |
 | `WorldSetupRequest` / `WorldSetupResult` | Batch reset and entity creation | `runtime/contracts` |
+| `OrchestrationPlan` | Scenario selection, seed, reset, curriculum, truncation, and validation schedule | test/orchestration layer plus facade contracts |
 | `TaskingPacket` | Mission intent, authority, relationships, task state | `components/tasking` and `runtime/contracts` |
 | `CommandPacket` | Deliverable execution commands and link behavior | `components/command` and `runtime/contracts` |
+| `CoordinationIntentPacket` | Scripted, learned, or human coordination source output | policy layer plus facade tasking/command contracts |
+| `ActionIntentPacket` / `ActionHoldPolicy` | Policy action, validity window, hold/interpolation/expiry, and control-rate alignment | policy layer plus facade enforcement |
 | `TrackPacket` | Sensor/track/data-link output | `components` or `runtime/contracts` after ownership review |
 | `LaunchRequest` / `LaunchEvent` | Fire-control and launcher boundary | `runtime/contracts` plus weapon components |
 | `MunitionState` | Munition lifecycle state | combat/weapon components |
 | `EffectsEvent` / `DamageReport` | Hit, fuze, damage, and kill reporting | effects model plus combat components |
+| `RewardSpec` / `RewardReport` | Semantic facts, experiment shaping, and reward breakdowns | split: simulation facts in compiled runtime, shaping in policy/test config |
+| `TerminationSpec` / `EpisodeStatus` | Termination, truncation, reason source, and episode phase export | split: simulation owns semantic phase, orchestration owns truncation requests |
+| `ObservationViewSpec` | Consumer-specific observation field selection, encoding, normalization, and schema version | policy/test layer |
 | `ObservationPacket` | Frontend-facing state export | `runtime/facade` contracts |
 | `DiagnosticsTrace` | Explainability, replay, and validation trace | `core/engine` and facade contracts |
 
@@ -233,7 +336,7 @@ future shape for shared semantics. Future work should move toward narrower
 tasking, command, fire-control, and observation packets instead of extending a
 flat all-domain command object.
 
-## 7. Domain Extension Model
+## 8. Domain Extension Model
 
 Domain extensions must be stage-local and contract-driven.
 
@@ -266,7 +369,7 @@ Each extension must document:
 An extension that needs a new lifecycle stage should first update this design
 or a derived freeze plan.
 
-## 8. Backend And Performance Policy
+## 9. Backend And Performance Policy
 
 Performance work must preserve the same semantic lifecycle.
 
@@ -287,7 +390,7 @@ Performance work must preserve the same semantic lifecycle.
 The key performance rule is simple: move ownership and data residency downward
 without creating a second semantic path.
 
-## 9. Weapon And Engagement Pilot Slice
+## 10. Weapon And Engagement Pilot Slice
 
 The weapon line is the best first architecture pilot because it crosses the
 whole semantic lifecycle and exercises temporal feedback:
@@ -308,11 +411,13 @@ Initial architecture deliverables should be:
 5. observation and diagnostics export for launch, intercept, miss, and damage.
 6. clock-domain and event-queue rules for command delivery, seeker scan,
    guidance update, fuze trigger, and damage application.
+7. cross-layer policy/test contracts for observation view selection, action
+   validity windows, reward/termination reports, and episode lifecycle status.
 
 This pilot is useful only if it exercises at least two platform families, for
 example aircraft pylon launch and naval mount launch.
 
-## 10. Validation Gates
+## 11. Validation Gates
 
 New architecture work should pass these gates before becoming the maintained
 path:
@@ -329,12 +434,17 @@ path:
    lifecycle and clocked execution model.
 8. Diagnostics can explain where a command, launch, munition, effect, or damage
    report entered and left the pipeline.
+9. Cross-layer contracts state which layer owns observation schema, action
+   validity, reward composition, termination/truncation source, and episode
+   lifecycle authority.
+10. Policy/test adapters prove they can use facade-shaped APIs or documented
+    compatibility adapters without raw runtime mutation.
 
 Local Windows work may stop at build/import/smoke validation when RL training
 dependencies are unavailable, but the contracts should still be shaped for
 future batch and training use.
 
-## 11. Relationship To Existing Documents
+## 12. Relationship To Existing Documents
 
 This document does not delete the earlier plans. It repositions them:
 

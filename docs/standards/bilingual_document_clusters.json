@@ -80,8 +80,8 @@
       "chinese": "docs/plan/architecture/simulation_system_architecture_design.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-05-19",
-      "english_hash": "f8deccbd3b8b1d709b191e3755819a18f8fdeb08b85aec4372c4316e88318d07",
-      "chinese_hash": "ff5f0b096273e30e9dd325378e2eccd46c88f6e74f06326003ef8cbaf117dd7d"
+      "english_hash": "5a47460f5d233bc4bc7aea6283a50fa1161d6376776ac1981347fcffd01fdba3",
+      "chinese_hash": "02bad279ee72a02bd81249ac0843edc377925afb9d4ddbce7b2dc1d144c70fd8"
     },
     {
       "pair_id": "plan/architecture/system_layering_and_engine_encapsulation_plan",
@@ -242,8 +242,8 @@
       "chinese": "docs/standards/governance/bilingual_document_clusters.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-05-19",
-      "english_hash": "7c0f91099dac20bbcc7c1ba4f4144909c3bb99047fa6465744bb1a172d424ad0",
-      "chinese_hash": "63af8126b2f9cbb08bf7ab25522d75de68a2363d2c028940ceb9ed1c2f5d1b90"
+      "english_hash": "6eaed5aef33d9abbcbda4ffe1e419fb828a3e0c7e6e969aec8f1a9c153aaa45c",
+      "chinese_hash": "43a37a12655d66fa98d72bb60142f598198a64dafe0f303995d916d09d3c08cb"
     },
     {
       "pair_id": "standards/governance/bilingual_documentation_policy",
@@ -251,8 +251,8 @@
       "chinese": "docs/standards/governance/bilingual_documentation_policy.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-05-19",
-      "english_hash": "8255af3093cff227d8f7bd2211881cdb01b5d56cf7914a516b3bdf768a223e3c",
-      "chinese_hash": "4a73e374a64b81722603677863017a2e5e3fa79779a9428109bdf3d968d123fc"
+      "english_hash": "112d081b30cb4c23cd78d30fba1d7651f9b9e6aa4b9393a0c7de68158d108d18",
+      "chinese_hash": "1105c310b6955df959b60ee96a372e24491ab6ccf5ff3670c567eed860ecb793"
     },
     {
       "pair_id": "standards/joint/command_and_modeling_baseline",
@@ -530,8 +530,8 @@
       "chinese": "docs/task/simulation_architecture/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-05-19",
-      "english_hash": "de85e9b6efa75f120f41e5a78bb5b2bcaedaf94273bba6b0133c2f4139d2c373",
-      "chinese_hash": "02080c44521386d377d807025f441f8f60960c4858a0ab6086a3d32cd10ca57e"
+      "english_hash": "d7855a2719c053397bb7b97bc9361a92c856512e34f9cc23519d3468ded323a9",
+      "chinese_hash": "732ada9d1ca6d01a50502af91d53fa8cd7a280f45ba7a75e4ef174784c069d63"
     },
     {
       "pair_id": "task/task_archive_convergence_plan_20260518",

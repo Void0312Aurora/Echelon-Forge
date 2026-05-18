@@ -13,6 +13,8 @@ Archive rule:
 
 - `docs/Archive/` and any local `archive/` subtree under `docs/**/archive/`
   are excluded from the maintained bilingual cluster audit by default.
+- local architecture review scratch under `docs/plan/architecture/review/`
+  is also excluded from the maintained cluster audit by default.
 - Archived mirrors may still keep bilingual files for traceability, but they
   are not part of the active drift verdict.
 - The default registry scope is the strict maintained bilingual surface rather

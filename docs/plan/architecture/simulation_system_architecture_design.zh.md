@@ -44,6 +44,7 @@ Echelon Forge 应围绕一条规范化仿真生命周期和一个带时钟域的
 9. GPU 与 device-resident 路径是后端能力，不是新的公开 truth path。除非有后端对等冻结计划，否则 CPU exact 语义仍是基线。
 10. 任何领域扩展都必须声明自己参与哪些管线阶段、消费和产出哪些 packet，以及用什么验证证明它没有绕开规范生命周期。
 11. `P0-P10` 表是语义表，不是强制等步长线性执行器。真实 runtime 执行应建模为多率 temporal DAG，反馈必须跨越显式 state 或 event 边界。
+12. 仿真层、策略计算层、测试/编排层之间的耦合必须显式化。策略和测试代码可以通过 facade 契约请求 view、action、reward、truncation 或 reset，但不能成为权威仿真状态或 episode truth 的隐藏 owner。
 
 ## 三、目标层模型
 
@@ -154,7 +155,68 @@ StateStore/EventQueue = feedback boundary
 Contracts = packet/state/event vocabulary
 ```
 
-## 六、契约分类
+## 六、系统层耦合模型
+
+`P0-P10` 生命周期和 temporal DAG 定义的是仿真层。但完整系统实际有三个相互耦合的层级：
+
+| 层级 | 拥有 | 不应拥有 |
+|------|------|----------|
+| 仿真层 | 权威 world state、状态演化、temporal DAG 调度、event ordering、facade 可见 snapshot、仿真语义 termination、编译侧 mission runtime products。 | 训练循环 policy state、实验 curriculum、仅前端使用的 observation encoder，或 test harness scheduling。 |
+| 策略计算层 | learned、scripted 或 human-directed policy logic；observation view 选择；action 生成；coordination intent 生成；实验性 reward shaping。 | raw ECS mutation、权威 episode phase、physics truth，或绕开 facade contract 的私有 command injection。 |
+| 测试与编排层 | scenario 选择、seed、reset request、curriculum scheduling、max-step truncation、replay、CI smoke 与 validation harness。 | 仿真语义 termination、隐藏状态变更，或第二套 runtime lifecycle 实现。 |
+
+这些层级应通过 facade-shaped request/result contract 交互，而不是共享对 Python helper 调用顺序或 C++ 内部 owner 布局的隐式假设。
+
+```mermaid
+flowchart LR
+    ORCH["测试与编排层\nscenario、seed、reset、truncation、harness"] --> FC["Runtime facade\nrequest/result contracts"]
+    POL["策略计算层\nobservation view、action、reward shaping、coordination"] --> FC
+    FC --> SIM["仿真层\nP0-P10 语义生命周期\nTemporal DAG、StateStore、EventQueue"]
+    SIM --> FC
+    FC --> POL
+    FC --> ORCH
+```
+
+跨层耦合本身不是弱点。只有当 ownership 是隐式的，它才会变成结构性风险。因此目标设计把策略层和编排层视为外部 stage-node producer / consumer，它们有自己的 clock domain 和 versioned request。
+
+跨层契约：
+
+| 契约 | 主要 owner | 仿真层职责 | 策略/编排层职责 |
+|------|------------|------------|-----------------|
+| `ObservationViewSpec` | 策略或测试层 | 暴露可查询 state shard、已提交 snapshot version、facade packet builder 与 diagnostics。 | 选择字段、编码、归一化、stacking、masking 与 consumer schema version。 |
+| `ObservationPacket` | Runtime facade | 返回在声明 barrier 或 snapshot version 上采样的数据，并带 source time 与 schema metadata。 | 消费 packet，不假设 raw ECS layout 或未版本化 Python 字段顺序。 |
+| `ActionIntentPacket` | 策略层 | 通过 facade 接收 action intent，并在 `P3/P4` 边界翻译为 command/control input。 | 声明 action source、effective time、target entity、action family，以及它是 direct control、mission command 还是 coordination intent。 |
+| `ActionHoldPolicy` | 策略层，由 facade/仿真执行 | 在 control-rate 与 physics-rate tick 之间确定性应用 hold-last、interpolation、expiry 或 drop 语义。 | 声明 action validity duration、refresh cadence、expiry behavior 与 credit-assignment latency 假设。 |
+| `CoordinationIntentPacket` | 策略层 | 只允许 scripted、learned 或 human director output 通过 tasking/command facade 路径进入，再调度到 `P2/P3`。 | 声明 source type、source id、target roster、update clock，以及产出的 tasking 或 leader-intent 字段。 |
+| `RewardSpec` / `RewardReport` | 分裂 ownership | 提供语义事实、编译侧 mission products、damage/kill report 与 versioned state snapshot。 | 组合实验 reward、shaping weight、curriculum-dependent term 与 consumer-specific reward breakdown。 |
+| `TerminationSpec` / `EpisodeStatus` | 分裂 ownership | 拥有 crash、kill、mission success、out-of-bounds、fuel exhaustion 等仿真语义 `terminated` reason。 | 拥有 max steps、curriculum cutoff、early stopping、benchmark wall-clock policy 等实验 `truncated` reason。 |
+| `EpisodeLifecycleContract` | 仿真层拥有权威 phase；编排层拥有 reset request | 拥有权威 episode phase、transition result、reset application 与 facade-exported mirrored status。 | 请求 reset/truncation，为 Gymnasium 或测试 API mirror status，但不推进私有权威状态机。 |
+
+设计结论：
+
+1. Observation assembly 是策略可见 view contract。仿真层应暴露稳定 state snapshot 与 facade packet builder；策略层可以定义 feature subset、encoding 与 normalization。新增策略特征只有在所需 truth state 或 diagnostic export 尚不存在时，才应要求仿真层改动。
+2. Reward 拆为仿真事实与实验组合。仿真语义 reward 或 mission product 可以编译化，但 shaping weight 与训练特定 reward mix 应能在不重新编译仿真的情况下配置。如果 Python 从 mirror 计算 reward，mirror snapshot version 与 latency 必须显式化。
+3. `terminated` 与 `truncated` 不是同一个 owner。仿真拥有语义 termination；策略/测试/编排可以请求 truncation。Facade result 应同时报告两者的 reason、source layer 与 snapshot time。
+4. Coordination director 默认属于仿真层之外，除非它被明确提升为仿真模型。scripted、learned 或 human director 可以产生 `TaskingPacket`、`MissionCommand` 或 `LeaderIntent` 内容，但只能通过 facade-compatible assignment path。
+5. Policy inference cadence 是一等 clock domain。policy 10 Hz、platform control 20 Hz、physics 60 Hz 是合法的，但必须由 `ActionHoldPolicy` 声明一个 policy output 如何被多个 control tick 消费，以及 observation sample time 如何与 reward 对齐。
+6. `P4 PlatformControl` 消费 resolved command/control input。`P5 PhysicsStep` 消费物理 force/torque 或 backend integration input；它不应消费 raw policy vector。
+7. `ScenarioLoader` 与 Gymnasium wrapper 是目标 API 适配器和 mirror，不是权威 runtime owner。它们可以满足 `(obs, reward, terminated, truncated, info)` 这样的 API shape，但 transition truth 应能从 compiled episode/facade result 恢复。
+8. Hierarchical RL 应把 sub-episode 建模为显式 lifecycle annotation 或 orchestration scope，而不是在 Python 和 C++ 中复制核心 episode 状态机。
+
+在调度上，跨层请求是外部图输入。每个 request 应声明：
+
+| 字段 | 要求 |
+|------|------|
+| `source_layer` | `policy`、`orchestration`、`adapter`、`human` 或 `diagnostic`。 |
+| `source_id` | 用于 replay 与 diagnostics 的稳定 producer id。 |
+| `input_snapshot_version` | producer 使用的 state 或 observation version。 |
+| `effective_time` | 请求开始可见的仿真时间或 scheduling window。 |
+| `valid_until` | expiry time 或 condition，尤其用于 action 与 tasking intent。 |
+| `merge_policy` | 多个 producer 作用于同一 entity 或字段时的冲突解决方式。 |
+
+这能让仿真层保持中心地位，同时不假装它是孤立的。仿真层仍是 truth source；策略层和编排层则成为显式、可 replay 的 producer 与 consumer。
+
+## 七、契约分类
 
 facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 
@@ -162,18 +224,24 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 |--------|------|------------|
 | `ScenarioSpec` / `ContentSpec` | 静态 scenario 与 content 描述 | `content/` 与 adapter schema |
 | `WorldSetupRequest` / `WorldSetupResult` | batch reset 与 entity 创建 | `runtime/contracts` |
+| `OrchestrationPlan` | scenario 选择、seed、reset、curriculum、truncation 与 validation schedule | 测试/编排层与 facade contracts |
 | `TaskingPacket` | mission intent、authority、relationship、task state | `components/tasking` 与 `runtime/contracts` |
 | `CommandPacket` | 可投递执行命令与链路行为 | `components/command` 与 `runtime/contracts` |
+| `CoordinationIntentPacket` | scripted、learned 或 human coordination source output | 策略层与 facade tasking/command contracts |
+| `ActionIntentPacket` / `ActionHoldPolicy` | policy action、validity window、hold/interpolation/expiry 与 control-rate alignment | 策略层与 facade enforcement |
 | `TrackPacket` | 传感器、航迹、数据链输出 | ownership review 后进入 `components` 或 `runtime/contracts` |
 | `LaunchRequest` / `LaunchEvent` | 火控与发射器边界 | `runtime/contracts` 与 weapon components |
 | `MunitionState` | 弹药生命周期状态 | combat/weapon components |
 | `EffectsEvent` / `DamageReport` | 命中、引信、毁伤和击杀报告 | effects model 与 combat components |
+| `RewardSpec` / `RewardReport` | 语义事实、实验 shaping 与 reward breakdown | 分裂：仿真事实在 compiled runtime，shaping 在策略/测试配置 |
+| `TerminationSpec` / `EpisodeStatus` | termination、truncation、reason source 与 episode phase export | 分裂：仿真拥有语义 phase，编排拥有 truncation request |
+| `ObservationViewSpec` | 面向 consumer 的 observation 字段选择、编码、归一化与 schema version | 策略/测试层 |
 | `ObservationPacket` | 前端可见状态导出 | `runtime/facade` contracts |
 | `DiagnosticsTrace` | 可解释性、replay 与验证 trace | `core/engine` 与 facade contracts |
 
 `MissionCommand` 仍是兼容性聚合点，不是未来共享语义的理想形态。后续工作应转向更窄的 tasking、command、fire-control、observation packet，而不是继续扩展一个 flat 的全领域 command 对象。
 
-## 七、领域扩展模型
+## 八、领域扩展模型
 
 领域扩展必须局部挂接到阶段，并由契约驱动。
 
@@ -202,7 +270,7 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 
 如果某个扩展需要新增生命周期阶段，应先更新本文档或派生冻结计划。
 
-## 八、后端与性能策略
+## 九、后端与性能策略
 
 性能工作必须保持同一条语义生命周期。
 
@@ -215,7 +283,7 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 
 核心性能规则很简单：把 ownership 与 data residency 向下沉，但不要制造第二套语义路径。
 
-## 九、武器与交战试点切片
+## 十、武器与交战试点切片
 
 武器线是最适合作为第一条架构试点的方向，因为它横跨完整语义生命周期，并且会检验 temporal feedback：
 
@@ -231,10 +299,11 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 4. 后续可替代临时 HP 报告的 damage report contract，
 5. launch、intercept、miss、damage 的 observation 与 diagnostics export，
 6. command delivery、seeker scan、guidance update、fuze trigger 与 damage application 的 clock-domain / event-queue 规则。
+7. 面向 observation view selection、action validity window、reward/termination report 与 episode lifecycle status 的跨层 policy/test contract。
 
 只有当这条试点至少覆盖两个平台族时，它才真正有架构验证价值，例如航空挂架发射与舰载挂载发射。
 
-## 十、验证门槛
+## 十一、验证门槛
 
 新的架构工作在进入维护路径前应通过以下门槛：
 
@@ -246,10 +315,12 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 6. 任何后端加速都以 CPU 语义行为为参考。
 7. 跨领域 smoke test 证明领域扩展使用共享生命周期和带时钟域的执行模型。
 8. diagnostics 能解释 command、launch、munition、effect 或 damage report 在管线中的进入和离开位置。
+9. 跨层契约写清 observation schema、action validity、reward composition、termination/truncation source 与 episode lifecycle authority 分别由哪一层拥有。
+10. 策略/测试 adapter 证明自己可以使用 facade-shaped API 或已记录 compatibility adapter，而不进行 raw runtime mutation。
 
 本地 Windows 工作在缺少 RL 训练依赖时可以止步于 build/import/smoke 验证，但契约形状仍应面向未来 batch 与训练使用。
 
-## 十一、与既有文档的关系
+## 十二、与既有文档的关系
 
 本文档不删除此前计划，而是重新定位它们：
 

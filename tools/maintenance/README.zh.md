@@ -8,8 +8,8 @@
 
 - [cmo_env.sh](cmo_env.sh)
   - Linux/macOS 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR` 和 `PYTHONPATH`。
-- `cmo_env.ps1`
-  - Windows/PowerShell 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR`、`PYTHONPATH` 以及 `ef_py*.pyd` 工件。该脚本预期用于已维护的工作流，但本 README 有意避免添加链接，直到确认该文件在仓库状态中存在。
+- [cmo_env.ps1](cmo_env.ps1)
+  - Windows/PowerShell 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR`、`PYTHONPATH` 以及 `ef_py*.pyd` 工件。
 - [redundancy_audit.py](redundancy_audit.py)
   - 审计重复/临时性质的仓库内容。
 - [cleanup_redundancy.py](cleanup_redundancy.py)
@@ -74,21 +74,44 @@ Windows 范围：
 推荐的双语文档审计：
 
 ```bash
-python3 tools/maintenance/translate_docs_batch.py audit --root docs
+python3 tools/maintenance/translate_docs_batch.py audit --root docs \
+  --registry docs/standards/bilingual_document_clusters.json
 ```
 
-默认情况下，审计会跳过仅在本地存在的文档区域，这些区域通常从共享远程仓库中排除，包括：
+默认情况下，这个审计只检查“严格维护的双语表面”
+（入口/导航页、治理文档、manual、稳定计划权威层），而不是 `docs/`
+下每一份历史任务长文。
+
+如果你想有意检查更宽的共享文档树，请显式使用：
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py audit --root docs \
+  --registry docs/standards/bilingual_document_clusters.json \
+  --full-tree
+```
+
+如果在一次大范围文档整理后结果看起来很嘈杂，先刷新注册表基线：
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
+```
+
+默认情况下，审计还会跳过仅在本地存在、通常不会进入共享远端的文档区域，包括：
 
 - `docs/Archive/`
+- `docs/**/archive/`
 - `docs/temp/`
-- `docs/plan/archive/`
 - `docs/plan/results/`
+- `docs/plan/architecture/review/`
 
 要明确包含它们，请使用：
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py audit --root docs --include-local-only
 ```
+
+当前维护的 hash 比较会忽略文件开头的机器翻译草稿标记，并统一行尾风格，
+因此单纯的 Windows `CRLF` checkout 噪音本身不应让整份注册表变成漂移。
 
 针对一个活跃目录的推荐中译英回填：
 

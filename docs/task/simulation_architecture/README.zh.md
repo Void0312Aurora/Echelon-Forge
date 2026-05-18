@@ -23,7 +23,8 @@
 2. 真实执行应使用多率 temporal DAG，反馈跨越显式 state-store 或 event-queue 边界。
 3. 空军、海军、武器和未来领域应通过阶段局部的模型族与 stage-node contract 扩展该生命周期。
 4. runtime facade 与 typed request/result 契约应成为前端长期依赖面。
-5. 本机工作应聚焦 build/import/smoke、架构文档、契约设计和仿真系统组建，而不是 RL 训练。
+5. 策略计算层与测试/编排层应被建模为 facade contract 的显式 producer / consumer，而不是仿真状态的隐藏 owner。
+6. 本机工作应聚焦 build/import/smoke、架构文档、契约设计和仿真系统组建，而不是 RL 训练。
 
 ## 工作包
 
@@ -31,7 +32,7 @@
 |--------|------|------|------|
 | `WP0 Architecture Baseline` | complete | 明确语义生命周期、temporal DAG 与扩展规则 | 架构设计文档、任务子项目入口 |
 | `WP1 Pipeline Inventory` | complete | 把当前代码、system、model、test 映射到 `P0-P10` 与当前耦合热点 | [管线盘点](pipeline_inventory_wp1_20260519.zh.md) |
-| `WP2 Contract Freeze` | planned | 识别需要 facade 或 component ownership 的 packet 族与 stage-node contract | tasking/command/track/launch/damage/observation contract plan |
+| `WP2 Contract Freeze` | planned | 识别需要显式 ownership 的 packet 族、stage-node contract 与跨层 policy/orchestration contract | tasking/command/track/launch/damage/observation 加 action/reward/termination/episode contract plan |
 | `WP3 Engagement Pilot` | planned | 以武器/交战作为第一条跨领域验证切片 | launcher、munition、effects、damage、observation 任务计划 |
 | `WP4 Facade Alignment` | planned | 确保试点行为可通过 facade-shaped API 访问 | facade request/result 增补与 adapter 计划 |
 | `WP5 Validation Harness` | planned | 添加证明生命周期共享的 smoke 与架构测试 | 聚焦测试与本机 Windows smoke 命令 |
@@ -98,7 +99,13 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 7. 哪些 state shard 现在或未来 partial sync 时需要版本化，
 8. 哪些 event family 需要确定性 `(timestamp, priority, event_id)` 排序，
 9. 哪些 clock domain 可以使用默认嵌套触发，哪些需要显式 merge policy，
-10. 哪些 Python 调用需要 adapter 兼容。
+10. 哪些 Python 调用需要 adapter 兼容，
+11. 哪些 observation schema 是策略/测试拥有的 `ObservationViewSpec` 变体，哪些是仿真拥有的 state export，
+12. policy action cadence 如何通过 `ActionIntentPacket` 与 `ActionHoldPolicy` 映射到 `P3/P4/P5`，
+13. reward 如何拆分为仿真事实与实验 shaping，
+14. `terminated` 与 `truncated` reason 如何归因到仿真、策略或编排来源，
+15. 哪一侧拥有权威 episode phase，哪一侧只为 Gymnasium、batch、replay 或 CI API 做 mirror，
+16. scripted、learned 与 human coordination director 如何在不 raw ECS mutation 的情况下写入 tasking 或 command intent。
 
 预期产出是冻结文档，而不是实现。
 
@@ -126,7 +133,8 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 5. CPU exact 行为仍为参考路径，
 6. 跨领域行为使用同一生命周期，
 7. 本地 smoke test 不要求 RL 依赖，
-8. diagnostics 能解释 command、launch、munition、effect 和 damage event。
+8. diagnostics 能解释 command、launch、munition、effect 和 damage event，
+9. observation schema、action validity、reward composition、termination/truncation source 与 episode lifecycle authority 都被分配到显式层级。
 
 ## 非目标
 

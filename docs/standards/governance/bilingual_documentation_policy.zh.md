@@ -73,6 +73,7 @@ Tier C：历史、归档、临时稿与本地保留面
 - `docs/**/archive/` 下的本地 archive 镜像
 - `docs/**/temp/`、`docs/temp/`、`docs/plan/results/`
   下的临时稿、草稿和本地分析记录
+- `docs/plan/architecture/review/` 下的本地架构审查草稿
 
 Tier A 需要双语配对。Tier B 可以先维护英文主文。Tier C 默认不纳入持续维护判定。
 
@@ -192,6 +193,7 @@ Language:
 - `docs/Archive/`
 - `docs/**/archive/`
 - `docs/plan/results/`
+- `docs/plan/architecture/review/`
 
 ## 相关文档
 

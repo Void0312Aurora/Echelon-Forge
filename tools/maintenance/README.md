@@ -8,11 +8,9 @@ Current maintained helpers:
 - [cmo_env.sh](cmo_env.sh)
   - Linux/macOS repository-local environment bootstrap and validation for
     `.venv`, `CMO_BUILD_DIR`, and `PYTHONPATH`.
-- `cmo_env.ps1`
+- [cmo_env.ps1](cmo_env.ps1)
   - Windows/PowerShell repository-local environment bootstrap and validation
     for `.venv`, `CMO_BUILD_DIR`, `PYTHONPATH`, and `ef_py*.pyd` artifacts.
-    The script is expected in maintained workflows, but this README intentionally
-    avoids linking it until the tracked file is confirmed in the repo state.
 - [redundancy_audit.py](redundancy_audit.py)
   - Audits duplicate/temp-like workspace content.
 - [cleanup_redundancy.py](cleanup_redundancy.py)
@@ -138,6 +136,7 @@ ignored from the shared remote, including:
 - `docs/**/archive/`
 - `docs/temp/`
 - `docs/plan/results/`
+- `docs/plan/architecture/review/`
 
 To include them explicitly:
 

@@ -33,6 +33,8 @@
 
 主要结构风险不是行为缺失。行为已经存在。风险在于多个阶段仍在宽运行时 owner 中交汇，尤其是 `SimulationKernel`、`WorldBatchRuntime`、`ExecutionEpisodeController` 和 `simulation_kernel_weapon_api.cpp`。因此 WP2 应冻结 stage-node contract，而不只是冻结 packet 名称。
 
+第二个结构风险是跨层耦合。仿真层是项目保真度中心，但当前策略层和编排层也在组装 observation、塑造 reward、请求 action、协调多智能体 intent，并 mirror episode state。因此 WP2 不仅要冻结仿真内部契约，也要冻结触达这些契约的策略/编排契约。
+
 ## 二、阶段盘点
 
 | 阶段 | 成熟度 | 当前资产 | 证据 | 缺口 / 风险 |
@@ -127,7 +129,21 @@ WP2 应把 `P0-P10` 视作语义阶段词汇，并用 stage-node contract 定义
 3. diagnostics trace，把 launch、munition lifecycle、effects、damage 与 observation export 绑定成一条可解释链路。
 4. stage-aligned local non-RL smoke test，显式验证新的 `P0-P10` 架构词汇。
 
-## 七、WP2 Contract Freeze 输入
+## 七、跨层耦合发现
+
+当前 inventory 识别了五个系统级耦合点。WP2 应把它们当作架构契约输入，而不是偶然的 Python/C++ 实现细节。
+
+| 耦合点 | 当前证据 | WP2 含义 |
+|--------|----------|----------|
+| Observation assembly 横跨仿真与策略关注点。 | [mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py:127), [mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py:209), [runtime_facade_types.h](../../../src/runtime/facade/runtime_facade_types.h:49) | 冻结 `ObservationViewSpec`：策略/测试拥有 schema、encoding、normalization；仿真/facade 拥有可查询 snapshot 与 packet export。 |
+| Reward 与 termination 分裂在 compiled mission runtime 和 Python step assembly 之间。 | [execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp:143), [mainline.py](../../../gym_envs/scenario_loader/execution_runtime/mainline.py:309), [reward_runtime/](../../../gym_envs/scenario_loader/reward_runtime/) | 冻结 `RewardSpec`、`RewardReport`、`TerminationSpec` 与 reason-source attribution。语义 termination 应能从 compiled/facade 恢复；shaping 可以保持实验可配置。 |
+| Coordination intent 在 simulation DAG 外部产生，但写入 tasking/command DTO。 | [cooperative_director.py](../../../python/rl/runtime/world_batch/cooperative_director.py:141), [cooperative_world_batch_vec_env.py](../../../python/rl/runtime/cooperative_world_batch_vec_env.py:617), [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp:619) | 冻结 `CoordinationIntentPacket`，以及 scripted、learned、human director 的 facade assignment path。 |
+| Policy inference cadence 与 simulation cadence 不是同一时钟。 | [wrappers.py](../../../python/rl/control/wrappers.py:30), [operation_layer.md](../../forward/operation_layer.md:12), [runtime_facade.cpp](../../../src/runtime/facade/runtime_facade.cpp:195) | 冻结 `ActionIntentPacket` 与 `ActionHoldPolicy`：effective time、validity window、hold/interpolation/expiry，以及 P3/P4/P5 consumption boundary。 |
+| Episode lifecycle 在 compiled runtime 与 Gymnasium adapter 之间 mirror。 | [execution_episode_controller.h](../../../src/core/mission/episode/execution_episode_controller.h:20), [runtime_facade_types.h](../../../src/runtime/facade/runtime_facade_types.h:79), [universal_env.py](../../../gym_envs/universal_env.py:229), [core.py](../../../gym_envs/scenario_loader/core.py:1140) | 冻结 `EpisodeLifecycleContract`：compiled/facade 拥有权威 phase 与语义 termination；adapter mirror status 并请求 reset/truncation。 |
+
+这些发现不会降低仿真保真度的优先级。它们澄清了哪些外部 producer 与 consumer 必须被建模，从而让仿真层在 RL、batch evaluation 和 service deployment 扩展时继续保持权威。
+
+## 八、WP2 Contract Freeze 输入
 
 WP2 不应从字段级重写开始。它应先冻结最薄弱阶段的 packet ownership、facade exposure、stage-node read/write set 与 timing policy。
 
@@ -143,8 +159,14 @@ WP2 不应从字段级重写开始。它应先冻结最薄弱阶段的 packet ow
 8. DAG composition rule：冻结从 `read_set` 与 `write_set` 推导 edge 的规则，并标记通过 `StateStore` 或 `EventQueue` 发生的跨窗口反馈。
 9. Event ordering rule：为 launch、fuze、damage、report 与 observation event 冻结确定性 `(timestamp, priority, event_id)` 排序。
 10. Clock-domain rule：默认使用嵌套触发，独立 clock 需要显式 merge policy。
+11. `ObservationViewSpec`：冻结 field selection、encoding、normalization、schema version 与 snapshot source 分别由哪一侧拥有。
+12. `ActionIntentPacket` / `ActionHoldPolicy`：冻结 policy action 的 effective time、validity window、hold/interpolation/expiry 与 `P3/P4/P5` 边界。
+13. `RewardSpec` / `RewardReport`：冻结仿真事实与实验 shaping 的拆分，包括 Python 计算 reward 时的 mirror snapshot version 与 latency。
+14. `TerminationSpec` / `EpisodeStatus`：冻结语义 termination 与训练/测试 truncation 的边界，并要求 reason-source attribution。
+15. `EpisodeLifecycleContract`：冻结 compiled/facade 对 episode phase、transition 与 reset 的 authority，同时允许 Gymnasium/batch mirror。
+16. `CoordinationIntentPacket`：冻结 scripted、learned 与 human director 如何通过 facade-compatible path 写入 tasking 或 command intent。
 
-## 八、WP3 Engagement Pilot 输入
+## 九、WP3 Engagement Pilot 输入
 
 交战试点应在 WP2 命名 packet 边界后开始。最有价值的试点应证明：
 
@@ -155,7 +177,7 @@ WP2 不应从字段级重写开始。它应先冻结最薄弱阶段的 packet ow
 5. effects 与 damage 产出 observation/diagnostics 可见 report，
 6. 本地 smoke path 不需要 RL 依赖。
 
-## 九、当前状态
+## 十、当前状态
 
 WP1 已经具备进入 `WP2 Contract Freeze` 的证据基础。
 

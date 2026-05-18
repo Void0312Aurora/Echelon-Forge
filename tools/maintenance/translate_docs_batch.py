@@ -40,6 +40,7 @@ DEFAULT_EXCLUDE_SUBSTRINGS = (
     "docs/forward/temp/",
     "docs/temp/",
     "docs/plan/results/",
+    "docs/plan/architecture/review/",
 )
 DEFAULT_EXCLUDE_DIR_NAMES = {"Archive", "archive"}
 DEFAULT_WORKSPACE_ROOT = "/home/void0312/Workshop/CMO"

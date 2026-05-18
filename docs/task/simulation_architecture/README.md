@@ -29,7 +29,10 @@ The active design conclusion is:
    stage-local model families and stage-node contracts.
 4. Runtime facade and typed request/result contracts should become the long-term
    frontend dependency.
-5. Local work on this machine should focus on build/import/smoke, architecture
+5. Policy computation and test/orchestration should be modeled as explicit
+   producers and consumers of facade contracts, not as hidden owners of
+   simulation state.
+6. Local work on this machine should focus on build/import/smoke, architecture
    docs, contract design, and simulation assembly rather than RL training.
 
 ## Work Packages
@@ -38,7 +41,7 @@ The active design conclusion is:
 |--------------|--------|------|--------|
 | `WP0 Architecture Baseline` | complete | Make the semantic lifecycle, temporal DAG, and extension rules explicit | architecture design doc, task subproject entry |
 | `WP1 Pipeline Inventory` | complete | Map current code, systems, models, and tests onto `P0-P10` and current coupling hotspots | [pipeline inventory](pipeline_inventory_wp1_20260519.md) |
-| `WP2 Contract Freeze` | planned | Identify packet families and stage-node contracts that need facade or component ownership | tasking/command/track/launch/damage/observation contract plan |
+| `WP2 Contract Freeze` | planned | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | tasking/command/track/launch/damage/observation plus action/reward/termination/episode contract plan |
 | `WP3 Engagement Pilot` | planned | Use weapon/engagement as the first cross-domain validation slice | launcher, munition, effects, damage, observation task plan |
 | `WP4 Facade Alignment` | planned | Ensure pilot behavior is reachable through facade-shaped APIs | facade request/result additions and adapter plan |
 | `WP5 Validation Harness` | planned | Add smoke and architecture tests that prove the lifecycle is shared | focused tests and local Windows smoke commands |
@@ -113,7 +116,18 @@ WP2 should turn the inventory into a scoped contract plan. It should decide:
    ordering,
 9. which clock domains can use default nested triggering and which need an
    explicit merge policy,
-10. which Python calls need adapter compatibility.
+10. which Python calls need adapter compatibility,
+11. which observation schemas are policy/test-owned `ObservationViewSpec`
+    variants versus simulation-owned state exports,
+12. how policy action cadence maps onto `P3/P4/P5` using `ActionIntentPacket`
+    and `ActionHoldPolicy`,
+13. how reward is split between simulation facts and experiment shaping,
+14. how `terminated` and `truncated` reasons are attributed to simulation,
+    policy, or orchestration sources,
+15. which side owns authoritative episode phase and which side only mirrors it
+    for Gymnasium, batch, replay, or CI APIs,
+16. how scripted, learned, and human coordination directors inject tasking or
+    command intent without mutating raw ECS state.
 
 The expected output is a freeze document, not implementation.
 
@@ -145,7 +159,10 @@ Every implementation task derived from this subproject should satisfy:
 5. CPU exact behavior remains the reference path,
 6. cross-domain behavior uses the same lifecycle,
 7. local smoke tests run without requiring RL dependencies,
-8. diagnostics can explain command, launch, munition, effect, and damage events.
+8. diagnostics can explain command, launch, munition, effect, and damage events,
+9. observation schema, action validity, reward composition,
+   termination/truncation source, and episode lifecycle authority are assigned
+   to explicit layers.
 
 ## Non-Goals
 

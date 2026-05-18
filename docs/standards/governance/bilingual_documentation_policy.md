@@ -83,6 +83,7 @@ Tier C: history, archive, scratch, and local-only retention
 - archived material under local `docs/**/archive/` mirrors
 - temporary or scratch analysis under `docs/**/temp/`, `docs/temp/`,
   and `docs/plan/results/`
+- local architecture review scratch under `docs/plan/architecture/review/`
 
 Chinese companions are expected for Tier A. They are optional for Tier B and
 outside the default maintenance verdict for Tier C.
@@ -223,6 +224,7 @@ acceptance bar:
 - `docs/Archive/`
 - `docs/**/archive/`
 - `docs/plan/results/`
+- `docs/plan/architecture/review/`
 
 ## Related Docs
 

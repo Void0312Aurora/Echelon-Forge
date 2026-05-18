@@ -43,6 +43,13 @@ risk is that several stages still meet in broad runtime owners, especially
 `simulation_kernel_weapon_api.cpp`. WP2 should therefore freeze stage-node
 contracts, not only packet names.
 
+The second structural risk is cross-layer coupling. The simulation layer is
+the center of project fidelity, but the current policy and orchestration
+layers also assemble observations, shape rewards, request actions, coordinate
+multi-agent intent, and mirror episode state. WP2 should therefore freeze both
+simulation-internal contracts and the policy/orchestration contracts that touch
+them.
+
 ## 2. Stage Inventory
 
 | Stage | Maturity | Current assets | Evidence | Gap / risk |
@@ -149,7 +156,26 @@ Missing validation:
 4. A stage-aligned local non-RL smoke test that explicitly exercises the new
    `P0-P10` architecture vocabulary.
 
-## 7. WP2 Contract Freeze Inputs
+## 7. Cross-Layer Coupling Findings
+
+The current inventory identifies five system-level coupling points that WP2
+should treat as architecture contract inputs, not incidental Python/C++
+implementation details.
+
+| Coupling point | Current evidence | WP2 implication |
+|----------------|------------------|-----------------|
+| Observation assembly crosses simulation and policy concerns. | [mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py:127), [mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py:209), [runtime_facade_types.h](../../../src/runtime/facade/runtime_facade_types.h:49) | Freeze `ObservationViewSpec`: policy/test owns schema, encoding, and normalization; simulation/facade owns queryable snapshots and packet export. |
+| Reward and termination are split between compiled mission runtime and Python step assembly. | [execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp:143), [mainline.py](../../../gym_envs/scenario_loader/execution_runtime/mainline.py:309), [reward_runtime/](../../../gym_envs/scenario_loader/reward_runtime/) | Freeze `RewardSpec`, `RewardReport`, `TerminationSpec`, and reason-source attribution. Semantic termination should be compiled/facade-recoverable; shaping may remain experiment-configurable. |
+| Coordination intent is produced outside the simulation DAG but writes tasking/command DTOs. | [cooperative_director.py](../../../python/rl/runtime/world_batch/cooperative_director.py:141), [cooperative_world_batch_vec_env.py](../../../python/rl/runtime/cooperative_world_batch_vec_env.py:617), [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp:619) | Freeze `CoordinationIntentPacket` and facade assignment paths for scripted, learned, and human directors. |
+| Policy inference cadence and simulation cadence are not the same clock. | [wrappers.py](../../../python/rl/control/wrappers.py:30), [operation_layer.md](../../forward/operation_layer.md:12), [runtime_facade.cpp](../../../src/runtime/facade/runtime_facade.cpp:195) | Freeze `ActionIntentPacket` and `ActionHoldPolicy`: effective time, validity window, hold/interpolation/expiry, and P3/P4/P5 consumption boundary. |
+| Episode lifecycle is mirrored across compiled runtime and Gymnasium adapters. | [execution_episode_controller.h](../../../src/core/mission/episode/execution_episode_controller.h:20), [runtime_facade_types.h](../../../src/runtime/facade/runtime_facade_types.h:79), [universal_env.py](../../../gym_envs/universal_env.py:229), [core.py](../../../gym_envs/scenario_loader/core.py:1140) | Freeze `EpisodeLifecycleContract`: compiled/facade owns authoritative phase and semantic termination; adapters mirror status and request reset/truncation. |
+
+These findings do not reduce the priority of simulation fidelity. They clarify
+which external producers and consumers must be modeled so that the simulation
+layer can remain authoritative as RL, batch evaluation, and service deployment
+grow around it.
+
+## 8. WP2 Contract Freeze Inputs
 
 WP2 should not start with field-level rewrites. It should first freeze packet
 ownership, facade exposure, stage-node read/write sets, and timing policy for
@@ -179,8 +205,22 @@ Recommended WP2 topics:
    ordering for launch, fuze, damage, report, and observation events.
 10. Clock-domain rule: keep nested triggering as the default and require an
     explicit merge policy for independent clocks.
+11. `ObservationViewSpec`: freeze which side owns field selection, encoding,
+    normalization, schema version, and snapshot source.
+12. `ActionIntentPacket` / `ActionHoldPolicy`: freeze policy-action effective
+    time, validity window, hold/interpolation/expiry, and the `P3/P4/P5`
+    boundary.
+13. `RewardSpec` / `RewardReport`: freeze the split between simulation facts
+    and experiment shaping, including mirror snapshot version and latency when
+    Python computes reward.
+14. `TerminationSpec` / `EpisodeStatus`: freeze semantic termination versus
+    training/test truncation and require reason-source attribution.
+15. `EpisodeLifecycleContract`: freeze compiled/facade authority for episode
+    phase, transition, and reset while allowing Gymnasium/batch mirrors.
+16. `CoordinationIntentPacket`: freeze how scripted, learned, and human
+    directors write tasking or command intent through facade-compatible paths.
 
-## 8. WP3 Engagement Pilot Inputs
+## 9. WP3 Engagement Pilot Inputs
 
 The engagement pilot should begin only after WP2 names the packet boundaries.
 The most useful pilot should prove:
@@ -192,7 +232,7 @@ The most useful pilot should prove:
 5. effects and damage produce a report visible to observation/diagnostics,
 6. the local smoke path does not require RL dependencies.
 
-## 9. Current Status
+## 10. Current Status
 
 WP1 has enough evidence to proceed to `WP2 Contract Freeze`.
 
