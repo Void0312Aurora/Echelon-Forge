@@ -2,11 +2,11 @@
 
 文档导航：
 
-- [README.md](/home/void0312/Workshop/CMO/docs/plan/README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
-- [runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- [README.md](../README.md)
+- [system_layering_and_engine_encapsulation_plan.zh.md](../architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+- [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
+- [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+- [runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade_layering_cleanup_freeze.zh.md)
 
 状态：`2026-05-10` 冻结执行记录（第一批 `WP1-WP6` 已完成）。  
 文档定位：
@@ -15,10 +15,10 @@
 - 本文档只覆盖 `WP1-WP6` 的冻结范围、完成状态、回归结果与 benchmark 产物。
 - 后续若继续推进 facade contract deepening、device-view、resident-state、exact backend 等工作，必须新建或更新单独的冻结执行文档。
 - 下一批候选分层清理工作已收敛到
-  [runtime_facade_layering_cleanup_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)。
+  [runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade_layering_cleanup_freeze.zh.md)。
 
 本文档用于把
-[runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
+[runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
 转化为可执行的第一批任务；当前这批任务已全部完成。
 
 实现进展：
@@ -26,8 +26,8 @@
 - 已新增 `src/runtime/facade/runtime_facade_types.h`
 - 已新增 `src/runtime/facade/runtime_facade.h`
 - 已新增 `src/runtime/facade/runtime_facade.cpp`
-- 已在 [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp) 暴露 `RuntimeFacade` 与首批 facade 类型
-- 已新增 [test_runtime_facade.py](/home/void0312/Workshop/CMO/tests/runtime/test_runtime_facade.py) 作为最小回归入口
+- 已在 [python_module.cpp](../../../src/interfaces/python/python_module.cpp) 暴露 `RuntimeFacade` 与首批 facade 类型
+- 已新增 [test_runtime_facade.py](../../../tests/runtime/test_runtime_facade.py) 作为最小回归入口
 
 当前阶段说明：
 
@@ -41,10 +41,10 @@
 
 相关文档：
 
-- [system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
-- [runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- [system_layering_and_engine_encapsulation_plan.zh.md](../architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+- [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
+- [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+- [runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade_layering_cleanup_freeze.zh.md)
 
 ## 零、冻结执行边界
 
@@ -93,7 +93,7 @@
    结果：`41 passed`
 2. `WP6` `benchmark.py --family world_batch_vec_env`
    输出文件：
-   [wp6_benchmark_world_batch_vec_env_phase4.json](/home/void0312/Workshop/CMO/docs/plan/results/wp6_benchmark_world_batch_vec_env_phase4.json)
+   [wp6_benchmark_world_batch_vec_env_phase4.json](../results/wp6_benchmark_world_batch_vec_env_phase4.json)
 3. `WP6` `benchmark.py --family policy_observation_bridge`
    当前 `build-facade-local` 缺少该脚本要求的 CUDA runtime bridge 绑定，脚本按预期返回
    `CUDA runtime is not available for the bridge benchmark.`
@@ -216,7 +216,7 @@
 
 建议文件落点：
 
-- [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
+- [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 建议新增绑定对象：
 
@@ -259,10 +259,10 @@
 
 重点测试文件：
 
-- [tests/world_batch/test_world_batch_vec_env.py](/home/void0312/Workshop/CMO/tests/world_batch/test_world_batch_vec_env.py)
-- [tests/runtime/test_execution_episode_controller.py](/home/void0312/Workshop/CMO/tests/runtime/test_execution_episode_controller.py)
-- [tests/runtime/test_execution_episode_state.py](/home/void0312/Workshop/CMO/tests/runtime/test_execution_episode_state.py)
-- [tests/runtime/test_execution_episode_batch_prepare.py](/home/void0312/Workshop/CMO/tests/runtime/test_execution_episode_batch_prepare.py)
+- [tests/world_batch/test_world_batch_vec_env.py](../../../tests/world_batch/test_world_batch_vec_env.py)
+- [tests/runtime/test_execution_episode_controller.py](../../../tests/runtime/test_execution_episode_controller.py)
+- [tests/runtime/test_execution_episode_state.py](../../../tests/runtime/test_execution_episode_state.py)
+- [tests/runtime/test_execution_episode_batch_prepare.py](../../../tests/runtime/test_execution_episode_batch_prepare.py)
 
 建议新增测试方向：
 
@@ -291,7 +291,7 @@
 
 建议基准文件：
 
-- [tools/diagnostics/benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+- [tools/diagnostics/benchmark.py](../../../tools/diagnostics/benchmark.py)
 
 验收标准：
 
@@ -307,7 +307,7 @@
 
 - 已运行 `benchmark.py --family world_batch_vec_env`
   记录文件：
-  [wp6_benchmark_world_batch_vec_env_phase4.json](/home/void0312/Workshop/CMO/docs/plan/results/wp6_benchmark_world_batch_vec_env_phase4.json)
+  [wp6_benchmark_world_batch_vec_env_phase4.json](../results/wp6_benchmark_world_batch_vec_env_phase4.json)
   摘要：
   `n_envs=8`
   `dummy_reset_ms=10.051270`

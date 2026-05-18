@@ -1,18 +1,20 @@
-# `src/models/air` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/models/air/README.md. Review before treating this file as authoritative. -->
 
-`models/air` 保存航空与飞行控制相关默认模型实现。
+# `src/models/air` Boundary
 
-## 允许
+`models/air` holds default model implementations related to aviation and flight control.
 
-- control model 默认实现。
-- 与飞行控制、气动响应有关的纯计算逻辑。
+## Allowed
 
-## 禁止
+- Default implementations of control models.
+- Pure computational logic related to flight control and aerodynamic response.
 
-- ECS system registration。
-- `SimulationKernel` lifecycle。
-- Python binding 或训练配置解析。
+## Disallowed
 
-## 迁移备注
+- ECS system registration.
+- `SimulationKernel` lifecycle.
+- Python binding or training configuration parsing.
 
-若模型需要成为可替换 contract，先补 `core/interfaces`，再在本目录提供默认实现。
+## Migration Notes
+
+If a model needs to become a replaceable contract, first add to `core/interfaces`, then provide the default implementation in this directory.

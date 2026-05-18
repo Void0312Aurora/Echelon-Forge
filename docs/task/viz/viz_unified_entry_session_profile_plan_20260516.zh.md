@@ -4,13 +4,13 @@
 
 关联文件：
 
-- [当前可视化主入口](/home/void0312/Workshop/CMO/examples/viz/viz_runner.py)
-- [当前 Web 服务骨架](/home/void0312/Workshop/CMO/examples/viz/web_viz/server.py)
-- [当前前端模板](/home/void0312/Workshop/CMO/examples/viz/web_viz/templates/index.html)
-- [现有旧式配置示例 departure](/home/void0312/Workshop/CMO/examples/viz/configs/departure.json)
-- [现有旧式配置示例 landing](/home/void0312/Workshop/CMO/examples/viz/configs/landing.json)
-- [当前海战最小场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
-- [海战现实性分层清单与下一步计划](/home/void0312/Workshop/CMO/docs/task/naval/naval_realism_layering_and_next_step_plan_20260516.zh.md)
+- [当前可视化主入口](../../../examples/viz/viz_runner.py)
+- [当前 Web 服务骨架](../../../examples/viz/web_viz/server.py)
+- [当前前端模板](../../../examples/viz/web_viz/templates/index.html)
+- [现有旧式配置示例 departure](../../../examples/viz/configs/departure.json)
+- [现有旧式配置示例 landing](../../../examples/viz/configs/landing.json)
+- [当前海战最小场景](../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
+- [海战现实性分层清单与下一步计划](../naval/naval_realism_layering_and_next_step_plan_20260516.zh.md)
 
 文档定位：
 
@@ -44,7 +44,7 @@
 
 ## 二、当前结构判断
 
-根据 [viz_runner.py](/home/void0312/Workshop/CMO/examples/viz/viz_runner.py) 与 [index.html](/home/void0312/Workshop/CMO/examples/viz/web_viz/templates/index.html) 的现状，当前结构有以下特征。
+根据 [viz_runner.py](../../../examples/viz/viz_runner.py) 与 [index.html](../../../examples/viz/web_viz/templates/index.html) 的现状，当前结构有以下特征。
 
 ### 2.1 当前前端已经接近应用壳
 
@@ -350,7 +350,7 @@ examples/viz/
 
 冻结范围：
 
-- [examples/viz/viz_runner.py](/home/void0312/Workshop/CMO/examples/viz/viz_runner.py)
+- [examples/viz/viz_runner.py](../../../examples/viz/viz_runner.py)
 - 新增 `runtime/viz_session.py`
 
 当前不做：
@@ -387,10 +387,10 @@ examples/viz/
 当前进展（`2026-05-16` 已落地）：
 
 1. 已新增首个 `viz_profile` loader：
-   - [examples/viz/app/profile_loader.py](/home/void0312/Workshop/CMO/examples/viz/app/profile_loader.py)
+   - [examples/viz/app/profile_loader.py](../../../examples/viz/app/profile_loader.py)
 2. 已新增首批海战 profile：
-   - [examples/viz/profiles/naval_ddg51_contact_report_debug.json](/home/void0312/Workshop/CMO/examples/viz/profiles/naval_ddg51_contact_report_debug.json)
-   - [examples/viz/profiles/naval_ddg51_closing_contact_debug.json](/home/void0312/Workshop/CMO/examples/viz/profiles/naval_ddg51_closing_contact_debug.json)
+   - [examples/viz/profiles/naval_ddg51_contact_report_debug.json](../../../examples/viz/profiles/naval_ddg51_contact_report_debug.json)
+   - [examples/viz/profiles/naval_ddg51_closing_contact_debug.json](../../../examples/viz/profiles/naval_ddg51_closing_contact_debug.json)
 3. 统一入口现已支持：
    - CLI 预加载 `--profile`
    - HTTP `GET /api/viz/profiles`
@@ -425,9 +425,9 @@ examples/viz/
 当前进展（`2026-05-16` 已落地第一版）：
 
 1. 已新增首个资产注册表 loader：
-   - [examples/viz/app/asset_registry.py](/home/void0312/Workshop/CMO/examples/viz/app/asset_registry.py)
+   - [examples/viz/app/asset_registry.py](../../../examples/viz/app/asset_registry.py)
 2. 已新增首个 registry 数据文件：
-   - [examples/viz/assets/registry/default.json](/home/void0312/Workshop/CMO/examples/viz/assets/registry/default.json)
+   - [examples/viz/assets/registry/default.json](../../../examples/viz/assets/registry/default.json)
 3. 当前 registry 已覆盖：
    - `F-16` 基础可视化资产
    - `DDG-51` 驱逐舰资产与朝向/追踪修正
@@ -457,7 +457,7 @@ examples/viz/
 
 冻结范围：
 
-- [examples/viz/web_viz/templates/index.html](/home/void0312/Workshop/CMO/examples/viz/web_viz/templates/index.html)
+- [examples/viz/web_viz/templates/index.html](../../../examples/viz/web_viz/templates/index.html)
 - 新的清单与会话控制事件
 
 当前进展（`2026-05-16` 已落地）：

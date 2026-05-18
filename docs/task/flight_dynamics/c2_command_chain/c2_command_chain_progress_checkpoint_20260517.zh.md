@@ -4,11 +4,11 @@
 
 关联文档：
 
-- [冻结分析基线](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
-- [待解决问题分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
-- [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
-- [传感器/态势真实化 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_p1_implementation_package_20260517.zh.md)
-- [武器/制导真实化 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_p1_implementation_package_20260517.zh.md)
+- [冻结分析基线](c2_command_chain_realism_analysis_20260517.zh.md)
+- [待解决问题分析](c2_command_chain_unresolved_issues_20260517.zh.md)
+- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
+- [传感器/态势真实化 P1 实施包](../sensor_situation/sensor_situation_realism_p1_implementation_package_20260517.zh.md)
+- [武器/制导真实化 P1 实施包](../weapon_guidance/weapon_guidance_realism_p1_implementation_package_20260517.zh.md)
 
 本文档定位：
 
@@ -45,8 +45,8 @@
 
 关键文件：
 
-- [DefaultControlModel](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
-- [控制权测试](/home/void0312/Workshop/CMO/tests/runtime/test_control_authority_arbitration.py)
+- [DefaultControlModel](../../../../src/models/air/default_control_model.cpp)
+- [控制权测试](../../../../tests/runtime/test_control_authority_arbitration.py)
 
 ### 1.2 海军 `MissionCommand` 最小语义接入
 
@@ -64,14 +64,14 @@
 
 关键文件：
 
-- [MissionCommand umbrella](/home/void0312/Workshop/CMO/src/components/command/mission_command.h)
-- [MissionCommand naval fields](/home/void0312/Workshop/CMO/src/components/command/naval/mission_command_naval.h)
-- [SimulationKernel command API](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_command_api.cpp)
-- [CommandLinkSystem](/home/void0312/Workshop/CMO/src/systems/systems/command_link_system.h)
-- [海军命令映射测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_mission_command_mapping.py)
-- [舰船 authority 测试](/home/void0312/Workshop/CMO/tests/runtime/test_ship_mission_command_authority.py)
-- [mission state roundtrip 测试](/home/void0312/Workshop/CMO/tests/runtime/test_mission_command_naval_fields_roundtrip.py)
-- [air mission roundtrip 测试](/home/void0312/Workshop/CMO/tests/runtime/test_mission_command_air_fields_roundtrip.py)
+- [MissionCommand umbrella](../../../../src/components/command/mission_command.h)
+- [MissionCommand naval fields](../../../../src/components/command/naval/mission_command_naval.h)
+- [SimulationKernel command API](../../../../src/core/engine/simulation_kernel_command_api.cpp)
+- [CommandLinkSystem](../../../../src/systems/systems/command_link_system.h)
+- [海军命令映射测试](../../../../tests/runtime/test_naval_mission_command_mapping.py)
+- [舰船 authority 测试](../../../../tests/runtime/test_ship_mission_command_authority.py)
+- [mission state roundtrip 测试](../../../../tests/runtime/test_mission_command_naval_fields_roundtrip.py)
+- [air mission roundtrip 测试](../../../../tests/runtime/test_mission_command_air_fields_roundtrip.py)
 
 ### 1.3 ROE / authority 最小字段与 runtime gate
 
@@ -89,11 +89,11 @@
 
 关键文件：
 
-- [LeaderIntent core](/home/void0312/Workshop/CMO/src/components/tasking/common/leader_intent_core.h)
-- [MissionCommand core](/home/void0312/Workshop/CMO/src/components/command/common/mission_command_core.h)
-- [weapon runtime gate](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [ROE 字段测试](/home/void0312/Workshop/CMO/tests/runtime/test_mission_command_roe_fields.py)
-- [ROE runtime 测试](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_roe_runtime.py)
+- [LeaderIntent core](../../../../src/components/tasking/common/leader_intent_core.h)
+- [MissionCommand core](../../../../src/components/command/common/mission_command_core.h)
+- [weapon runtime gate](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [ROE 字段测试](../../../../tests/runtime/test_mission_command_roe_fields.py)
+- [ROE runtime 测试](../../../../tests/runtime/test_weapon_roe_runtime.py)
 
 ### 1.4 `CommandLink` 队列语义澄清与测试收口
 
@@ -112,8 +112,8 @@
 
 关键文件：
 
-- [Mission queue helper](/home/void0312/Workshop/CMO/src/components/command/command_link_qos.h)
-- [CommandLink QoS 测试](/home/void0312/Workshop/CMO/tests/runtime/test_command_link_qos.py)
+- [Mission queue helper](../../../../src/components/command/command_link_qos.h)
+- [CommandLink QoS 测试](../../../../tests/runtime/test_command_link_qos.py)
 
 ### 1.5 `DataLink` 从“无限广播”推进到“有预算、可观测拥塞”
 
@@ -136,10 +136,10 @@
 
 关键文件：
 
-- [DataLink component](/home/void0312/Workshop/CMO/src/components/systems/data_link.h)
-- [DataLinkSystem](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [debug_get_data_link_state binding](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
-- [DataLink QoS runtime 测试](/home/void0312/Workshop/CMO/tests/runtime/test_data_link_qos_runtime.py)
+- [DataLink component](../../../../src/components/systems/data_link.h)
+- [DataLinkSystem](../../../../src/systems/systems/data_link_system.h)
+- [debug_get_data_link_state binding](../../../../src/interfaces/python/bindings_core.cpp)
+- [DataLink QoS runtime 测试](../../../../tests/runtime/test_data_link_qos_runtime.py)
 
 ### 1.6 `RuntimeFacade` / world-batch adapter 收口进入守门态
 
@@ -158,11 +158,11 @@
 
 关键文件：
 
-- [RuntimeFacade README](/home/void0312/Workshop/CMO/src/runtime/facade/README.md)
-- [RuntimeFacade header](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade.h)
-- [adapter.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch/adapter.py)
-- [runtime facade layering tests](/home/void0312/Workshop/CMO/tests/architecture/test_runtime_facade_layering.py)
-- [world setup compat tests](/home/void0312/Workshop/CMO/tests/runtime/test_world_setup_compat.py)
+- [RuntimeFacade README](../../../../src/runtime/facade/README.md)
+- [RuntimeFacade header](../../../../src/runtime/facade/runtime_facade.h)
+- [adapter.py](../../../../python/rl/runtime/world_batch/adapter.py)
+- [runtime facade layering tests](../../../../tests/architecture/test_runtime_facade_layering.py)
+- [world setup compat tests](../../../../tests/runtime/test_world_setup_compat.py)
 
 ### 1.7 空战武器桥接测试补强
 
@@ -176,7 +176,7 @@
 
 关键文件：
 
-- [空战 1v1 missile tests](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
+- [空战 1v1 missile tests](../../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
 
 ## 二、当前能力面判断
 

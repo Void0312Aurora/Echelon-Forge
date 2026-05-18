@@ -4,9 +4,9 @@
 
 关联文档：
 
-- [冻结分析基线](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
-- [当前进展检查点](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md)
-- [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
+- [冻结分析基线](c2_command_chain_realism_analysis_20260517.zh.md)
+- [当前进展检查点](c2_command_chain_progress_checkpoint_20260517.zh.md)
+- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
 
 本文档定位：
 

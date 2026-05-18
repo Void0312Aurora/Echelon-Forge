@@ -4,20 +4,20 @@
 
 关联文档：
 
-- [传感器与态势感知现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [传感器/态势感知真实化核实与实现方案](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
-- [武器系统与制导回路真实化核实与落地方案](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_verification_and_plan_20260516.zh.md)
+- [传感器与态势感知现实性分析](sensor_situation_realism_analysis_20260516.zh.md)
+- [传感器/态势感知真实化核实与实现方案](sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
+- [武器系统与制导回路真实化核实与落地方案](../weapon_guidance/weapon_guidance_realism_verification_and_plan_20260516.zh.md)
 
 核心代码落点：
 
-- [Sensor 组件](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [TrackManagement 组件](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [Comm 组件](/home/void0312/Workshop/CMO/src/components/systems/comm.h)
-- [CommMsgType](/home/void0312/Workshop/CMO/src/components/command/common/comm_message.h)
-- [UnitDefinition Loader](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [DefaultSensorModel](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [TrackManagerSystem](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [DataLinkSystem](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
+- [Sensor 组件](../../../../src/components/systems/sensor.h)
+- [TrackManagement 组件](../../../../src/components/systems/track_management.h)
+- [Comm 组件](../../../../src/components/systems/comm.h)
+- [CommMsgType](../../../../src/components/command/common/comm_message.h)
+- [UnitDefinition Loader](../../../../src/content/unit_definition_loader.cpp)
+- [DefaultSensorModel](../../../../src/models/systems/default_sensor_model.cpp)
+- [TrackManagerSystem](../../../../src/systems/systems/track_manager_system.h)
+- [DataLinkSystem](../../../../src/systems/systems/data_link_system.h)
 
 文档目的：
 
@@ -79,44 +79,44 @@ P0 完成后，至少应满足：
 
 #### 1. 组件与配置
 
-- [src/components/systems/sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
+- [src/components/systems/sensor.h](../../../../src/components/systems/sensor.h)
   - 增加 SNR/Pd 和 M-of-N 所需字段
   - 扩展 `Detection`
 
-- [src/components/systems/track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
+- [src/components/systems/track_management.h](../../../../src/components/systems/track_management.h)
   - 增加 `TrackStatus` 和最小滤波/质量字段
 
-- [src/components/systems/comm.h](/home/void0312/Workshop/CMO/src/components/systems/comm.h)
+- [src/components/systems/comm.h](../../../../src/components/systems/comm.h)
   - 给 `CommPacket` 增加最小航迹报告字段
 
-- [src/components/command/common/comm_message.h](/home/void0312/Workshop/CMO/src/components/command/common/comm_message.h)
+- [src/components/command/common/comm_message.h](../../../../src/components/command/common/comm_message.h)
   - 新增 `ReportTrack`
 
-- [src/content/unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
+- [src/content/unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
   - 读取新增 `sensor` 字段
 
 #### 2. 系统逻辑
 
-- [src/models/systems/default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [src/models/systems/default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
   - 引入 `snr_db` 计算
   - 引入 `pd_from_snr()` 近似
   - 产出扩展后的 `Detection`
 
-- [src/systems/systems/track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
+- [src/systems/systems/track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
   - 实现 tentative/confirmed/coast 生命周期
   - 实现最小 `alpha-beta` 滤波
   - 实现 `ReportTrack` 接收逻辑
 
-- [src/systems/systems/data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
+- [src/systems/systems/data_link_system.h](../../../../src/systems/systems/data_link_system.h)
   - 删除“直接写 receiver ContactList”的逻辑
   - 改为只发 `ReportTrack`
 
 ### 4.2 建议一并调整的文件
 
-- [src/models/core/default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
+- [src/models/core/default_unit_factory.h](../../../../src/models/core/default_unit_factory.h)
   - 暂不改行为，但要确认 `TrackDatabase` 初始化对新增字段安全
 
-- [src/core/engine/simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
+- [src/core/engine/simulation_kernel_observation_api.cpp](../../../../src/core/engine/simulation_kernel_observation_api.cpp)
   - P0 默认不改观测 schema
   - 仅在必要时补 `closing_speed` 或过滤未确认航迹
 
@@ -142,7 +142,7 @@ P0 只加最少字段，优先不引入大而全结构。
 
 文件：
 
-- [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
+- [sensor.h](../../../../src/components/systems/sensor.h)
 
 建议新增：
 
@@ -171,7 +171,7 @@ P0 不建议现在就加：
 
 文件：
 
-- [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
+- [sensor.h](../../../../src/components/systems/sensor.h)
 
 建议新增：
 
@@ -192,7 +192,7 @@ bool local_sensor_hit;
 
 文件：
 
-- [track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
+- [track_management.h](../../../../src/components/systems/track_management.h)
 
 建议新增：
 
@@ -220,8 +220,8 @@ P0 不建议现在引入矩阵协方差；先用 `quality + time_since_update + 
 
 文件：
 
-- [comm_message.h](/home/void0312/Workshop/CMO/src/components/command/common/comm_message.h)
-- [comm.h](/home/void0312/Workshop/CMO/src/components/systems/comm.h)
+- [comm_message.h](../../../../src/components/command/common/comm_message.h)
+- [comm.h](../../../../src/components/systems/comm.h)
 
 建议：
 
@@ -366,19 +366,19 @@ P0 过渡期允许：
 
 用于替换当前 `ReportContact` 语义测试：
 
-- 对应 [test_naval_screen_scenario.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
+- 对应 [test_naval_screen_scenario.py](../../../../tests/runtime/test_naval_screen_scenario.py)
 
 ### 7.2 需要更新的现有测试
 
 以下测试在 P0 后大概率需要同步更新：
 
-- [tests/runtime/test_naval_screen_scenario.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
+- [tests/runtime/test_naval_screen_scenario.py](../../../../tests/runtime/test_naval_screen_scenario.py)
   - 原因：当前断言仍显式依赖 `ReportContact`
 
-- [tests/runtime/test_mission_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_mission_runtime.py)
+- [tests/runtime/test_mission_runtime.py](../../../../tests/runtime/test_mission_runtime.py)
   - 原因：共享态势路径仍要存在，但“共享接触”与“本地接触”的语义要重新校准
 
-- [tests/runtime/test_air_combat_1v1_fire_missile.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
+- [tests/runtime/test_air_combat_1v1_fire_missile.py](../../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
   - 原因：若发射前提改为 `confirmed track`，需要预留更多步数或更清晰的探测确认条件
 
 P0 不建议大改这些测试的结构，只调整其语义和等待条件。

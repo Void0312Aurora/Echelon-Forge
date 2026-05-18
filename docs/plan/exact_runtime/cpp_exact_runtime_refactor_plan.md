@@ -2,9 +2,9 @@
 
 Navigation:
 
-- [README.md](/home/void0312/Workshop/CMO/docs/plan/README.md)
-- [system_layering_and_engine_encapsulation_plan.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md)
-- [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
+- [README.md](../README.md)
+- [system_layering_and_engine_encapsulation_plan.md](../architecture/system_layering_and_engine_encapsulation_plan.md)
+- [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
 
 Status: Draft follow-on implementation plan on 2026-04-03.  
 Document role:
@@ -39,14 +39,14 @@ Three facts are now stable across docs, code, and diagnostics:
 
 Relevant references:
 
-- [execution_coarse_grained_route_segments.md](/home/void0312/Workshop/CMO/docs/plan/archive/execution_coarse_grained_route_segments.md)
-- [gpu_exact_world_step_rearchitecture_plan.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_exact_world_step_rearchitecture_plan.md)
-- [gpu_execution_mainline_integration_checklist.md](/home/void0312/Workshop/CMO/docs/plan/exact_runtime/gpu_execution_mainline_integration_checklist.md)
-- [system_layering_and_engine_encapsulation_plan.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md)
-- [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
-- [simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
-- [world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
+- [execution_coarse_grained_route_segments.md](../archive/execution_coarse_grained_route_segments.md)
+- [gpu_exact_world_step_rearchitecture_plan.md](../archive/gpu_exact_world_step_rearchitecture_plan.md)
+- [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
+- [system_layering_and_engine_encapsulation_plan.md](../architecture/system_layering_and_engine_encapsulation_plan.md)
+- [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
+- [simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
+- [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
 
 ## Current Diagnosis
 
@@ -55,16 +55,16 @@ Relevant references:
 The repo already has a real compiled core:
 
 - exact world step truth source:
-  [simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
+  [simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
 - multi-world owner/runtime shell:
-  [world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
+  [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - compiled execution helpers:
-  [execution_step_runtime.cpp](/home/void0312/Workshop/CMO/src/core/mission/runtime/execution_step_runtime.cpp)
-  [execution_frame_runtime.cpp](/home/void0312/Workshop/CMO/src/core/mission/runtime/execution_frame_runtime.cpp)
-  [execution_episode_runtime.cpp](/home/void0312/Workshop/CMO/src/core/mission/runtime/execution_episode_runtime.cpp)
+  [execution_step_runtime.cpp](../../../src/core/mission/runtime/execution_step_runtime.cpp)
+  [execution_frame_runtime.cpp](../../../src/core/mission/runtime/execution_frame_runtime.cpp)
+  [execution_episode_runtime.cpp](../../../src/core/mission/runtime/execution_episode_runtime.cpp)
 - exact-state contract and experimental GPU backend:
-  [exact_stage_inventory.cpp](/home/void0312/Workshop/CMO/src/core/engine/exact_stage_inventory.cpp)
-  [src/gpu/experimental](/home/void0312/Workshop/CMO/src/gpu/experimental)
+  [exact_stage_inventory.cpp](../../../src/core/engine/exact_stage_inventory.cpp)
+  [src/gpu/experimental](../../../src/gpu/experimental)
 
 This means the project is not choosing between "Python" and "C++" from
 scratch. It is choosing whether the remaining hot-path ownership should now be
@@ -88,9 +88,9 @@ The execution hot path still crosses Python too often:
 
 Relevant code:
 
-- [scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
-- [world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
-- [universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
+- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [universal_env.py](../../../gym_envs/universal_env.py)
 
 ### 3. Why the current GPU line plateaus
 
@@ -110,7 +110,7 @@ still not owned by one stable compiled contract.
 The new batch preparation helper is a good direction, but it is still not the
 mainline episode controller:
 
-- [execution_episode_batch_prepare.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_batch_prepare.cpp)
+- [execution_episode_batch_prepare.cpp](../../../src/core/mission/episode/execution_episode_batch_prepare.cpp)
 
 Today it is still simplified compared with the real Python path:
 
@@ -172,8 +172,8 @@ It should continue to expose:
 
 Relevant files:
 
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-- [simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
+- [simulation_kernel.h](../../../src/core/engine/simulation_kernel.h)
+- [simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
 
 ### B. Add a compiled `ExecutionEpisodeState`
 
@@ -240,8 +240,8 @@ This is the layer that should hide whether the underlying exact step is:
 
 Relevant files:
 
-- [world_batch_runtime.h](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.h)
-- [world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
+- [world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
+- [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 
 ### E. Exact-step backend becomes a private implementation detail
 
@@ -343,8 +343,8 @@ Deliverables:
 Primary files:
 
 - new `src/core/mission/execution_episode_state.*`
-- [scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
-- [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
+- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 Acceptance:
 
@@ -365,8 +365,8 @@ Deliverables:
 
 Primary files:
 
-- [execution_episode_batch_prepare.h](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_batch_prepare.h)
-- [execution_episode_batch_prepare.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_batch_prepare.cpp)
+- [execution_episode_batch_prepare.h](../../../src/core/mission/episode/execution_episode_batch_prepare.h)
+- [execution_episode_batch_prepare.cpp](../../../src/core/mission/episode/execution_episode_batch_prepare.cpp)
 
 Acceptance:
 
@@ -396,7 +396,7 @@ Deliverables:
 Primary files:
 
 - new `src/core/mission/execution_episode_controller.*`
-- [scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
+- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
 - new tests under `tests/runtime/`
 
 Acceptance:
@@ -430,10 +430,10 @@ Deliverables:
 
 Primary files:
 
-- [world_batch_runtime.h](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.h)
-- [world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
-- [world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
+- [world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
+- [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
+- [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 
 Acceptance:
 
@@ -457,8 +457,8 @@ Primary files:
 
 - new `src/core/engine/exact_cpu_backend.*`
 - new `src/core/engine/exact_state_store.*`
-- [simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
-- [world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
+- [simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
+- [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 
 Acceptance:
 
@@ -479,9 +479,9 @@ Deliverables:
 
 Primary files:
 
-- [src/gpu/experimental](/home/void0312/Workshop/CMO/src/gpu/experimental)
-- [src/gpu/README.md](/home/void0312/Workshop/CMO/src/gpu/README.md)
-- [exact_stage_inventory.cpp](/home/void0312/Workshop/CMO/src/core/engine/exact_stage_inventory.cpp)
+- [src/gpu/experimental](../../../src/gpu/experimental)
+- [src/gpu/README.md](../../../src/gpu/README.md)
+- [exact_stage_inventory.cpp](../../../src/core/engine/exact_stage_inventory.cpp)
 
 Acceptance:
 
@@ -646,13 +646,13 @@ This first batch should not yet:
 
 ### Existing files likely to change early
 
-- [execution_episode_batch_prepare.h](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_batch_prepare.h)
-- [execution_episode_batch_prepare.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_batch_prepare.cpp)
-- [world_batch_runtime.h](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.h)
-- [world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
-- [scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
-- [world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
+- [execution_episode_batch_prepare.h](../../../src/core/mission/episode/execution_episode_batch_prepare.h)
+- [execution_episode_batch_prepare.cpp](../../../src/core/mission/episode/execution_episode_batch_prepare.cpp)
+- [world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
+- [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
+- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 
 ## Acceptance Criteria
 

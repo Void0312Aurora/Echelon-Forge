@@ -1,28 +1,31 @@
-# Joint 指挥关系与建模基线
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/joint/command_and_modeling_baseline.zh.md. Review before treating this file as authoritative. -->
 
-本文档定义项目中所有军种共用的最小联合层模板。
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/joint/command_and_modeling_baseline.md. Review before treating this file as authoritative. -->
 
-## 1. 官方现实基础
+# Joint Command Relationship and Modeling Baseline
 
-根据 Joint Chiefs 官方资料，美军联合层的共通基础不在于“所有军种使用同一条战术指挥树”，
-而在于：
+This document defines the minimal joint-layer template shared by all services in the project.
 
-- 共通的 command relationship
-- 共通的 authority delegation
-- 共通的 reporting / status framework
+## 1. Official Reality Basis
 
-项目建模时必须先把这一层独立出来。
+According to official Joint Chiefs material, the common basis of the US joint layer lies not in "all services using the same tactical command tree", but rather in:
 
-主要官方依据：
+- Common command relationships
+- Common authority delegation
+- Common reporting / status framework
+
+The project must first isolate this layer when modeling.
+
+Primary official references:
 
 - [Joint Chiefs Service Publications](https://www.jcs.mil/Doctrine/Service-Publications/)
 - [CJCSM 3150.13C, Joint Reporting Structure](https://www.jcs.mil/Portals/36/Documents/Library/Manuals/m315013.pdf)
 
-## 2. Joint 层必须统一的对象
+## 2. Objects That Must Be Unified at the Joint Layer
 
 ### 2.1 Command Relationship
 
-项目应将下列关系作为联合层共通字段，而不是军种自定义字段：
+The project should treat the following relationships as joint-layer common fields, not service-specific fields:
 
 - `COCOM`
 - `OPCON`
@@ -32,20 +35,20 @@
 - `coordinating authority`
 - `DIRLAUTH`
 
-说明：
+Note:
 
-- 这是统一的授权语言。
-- 空军、陆军、海军的差异主要体现在“谁在什么情况下持有哪些关系”，而不是词汇本身不同。
+- This is a unified authorization language.
+- Differences between Air Force, Army, and Navy lie primarily in "who holds which relationships under what circumstances", not in the vocabulary itself.
 
 ### 2.2 Task Organization
 
-联合层只定义：
+The joint layer defines only:
 
 - `command_node`
 - `tactical_unit`
 - `platform_unit`
 
-以及：
+And:
 
 - `parent_node_id`
 - `supported_node_id`
@@ -53,49 +56,49 @@
 - `authority_scope_code`
 - `task_group_id`
 
-而不直接定义：
+It does **not** directly define:
 
 - `element`
 - `brigade`
 - `task force`
 
-这些应交由军种 profile 解释。
+These should be left to service profiles for interpretation.
 
 ### 2.3 Intent / Order / Report
 
-所有域共通的数据流建议固定为：
+The recommended common data flow across all domains is:
 
 `Commander Intent / Task Order -> Tactical Intent -> Execution Command -> Status / Report`
 
-联合层只定义通用接口，不定义域特定执行参数。
+The joint layer defines only the common interfaces, not domain-specific execution parameters.
 
-## 3. 关注点分离原则
+## 3. Separation of Concerns Principle
 
-### 3.1 Joint 层负责什么
+### 3.1 What the Joint Layer Is Responsible For
 
-- 关系与权限
-- 谁向谁下任务
-- 谁向谁汇报
-- 哪一级是 tight-loop tactical unit
+- Relationships and authorities
+- Who tasks whom
+- Who reports to whom
+- Which level is the tight-loop tactical unit
 
-### 3.2 Joint 层不负责什么
+### 3.2 What the Joint Layer Is Not Responsible For
 
-- 跑道进近
-- 航母编队站位几何
-- 陆战火力支撑楔形展开
-- 具体平台执行动作
+- Runway approach
+- Carrier formation station geometry
+- Ground combat fire support wedge deployment
+- Specific platform execution actions
 
-这些都属于 service profile 或 platform/task layer。
+These all belong to the service profile or platform/task layer.
 
-## 4. 对项目的数据模型约束
+## 4. Data Model Constraints for the Project
 
-如果后续要支持空、海、陆，核心结构体不应优先写：
+If the project is to support air, naval, and ground in the future, the core structures should **not** prioritize writing:
 
 - `wingman_slot_id`
 - `recovery_runway_id`
 - `task_cap`
 
-而应优先写：
+Instead, they should prioritize:
 
 - `task_family`
 - `service_profile`
@@ -105,19 +108,19 @@
 - `coordination_mode`
 - `recovery_site_id`
 
-说明：
+Note:
 
-- `runway` 是 air profile 的 `recovery_site`
-- `CAP` 是 air profile 下 `patrol` 家族的一种
-- `wingman` 是 air profile 下 `subordinate role` 的一种
+- `runway` is a `recovery_site` in the air profile
+- `CAP` is a type of `patrol` family under the air profile
+- `wingman` is a type of `subordinate role` under the air profile
 
-## 5. 对 upcoming module 拆分的直接约束
+## 5. Direct Constraints for Upcoming Module Splitting
 
-后续 `tasking / command` 模块若继续拆分，文档口径应直接按下面三类落位：
+If the subsequent `tasking / command` module is further split, the documentation should directly fall into the following three categories:
 
 ### 5.1 `common`
 
-放所有跨军种仍成立的字段、枚举和 DTO 骨架：
+Contains fields, enums, and DTO skeletons that remain valid across all services:
 
 - `service_profile`
 - `task_family`
@@ -132,48 +135,47 @@
 - `relative_slot_code`
 - `recovery_site_id`
 
-这些对象在 `common` 层只表达“谁对谁下令、谁归谁协同、回收到哪个 site”，
-不表达 runway、CAP 航线、舰队 warfare station 等域专用细节。
+These objects at the `common` layer only express "who commands whom, who coordinates with whom, and which site recovers to", not domain-specific details such as runways, CAP routes, or naval warfare stations.
 
 ### 5.2 `air`
 
-放当前空战 runtime 仍必须保留的专用语义：
+Contains domain-specific semantics that the current air combat runtime must retain:
 
 - `CAP`
 - `route_cap`
-- `LeaderPhase` 中的 takeoff / departure / on-station / landing 等 phase
+- phases in `LeaderPhase` such as takeoff / departure / on-station / landing
 - `recovery_runway_id`
 - `recovery_approach_type`
 - `takeoff_procedure`
 - `takeoff_clearance`
 - `runway_slot`
 - `wingman / element`
-- air-specific `MissionCommand.command_code` 解释
+- air-specific interpretation of `MissionCommand.command_code`
 
 ### 5.3 `naval`
 
-放未来海战 tight-loop runtime 的专用语义：
+Contains domain-specific semantics for future naval tight-loop runtime:
 
-- `task force / task group / task unit` 的 naval profile 解释
+- Naval profile interpretation of `task force / task group / task unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
-- `screen / support / station / formation` 的舰队口径
-- 舰艇/编队回收、补给、航线与舰队战位语义
+- fleet-level semantics of `screen / support / station / formation`
+- Ship/formation recovery, replenishment, routing, and fleet station semantics
 
-`naval` 不应复用 air 的 `lead / wingman / runway / approach` 词汇作为核心模板。
+`naval` should **not** reuse air vocabulary such as `lead / wingman / runway / approach` as core templates.
 
-## 6. 对项目架构的直接结论
+## 6. Direct Conclusions for Project Architecture
 
-后续项目标准化文档与代码设计应按三层组织：
+Future project standardization documentation and code design should be organized in three layers:
 
 1. `joint/common core`
 2. `service profile`
 3. `platform/task specialization`
 
-这比“先写 air，再希望 sea/land 也能复用”更符合真实世界，也更符合工程上的关注点分离。
+This is more aligned with real-world practices and better for engineering separation of concerns than "writing air first, then hoping sea/land can also reuse".
 
-在 upcoming module work 中，可直接采用以下文档到模块映射：
+In upcoming module work, the following documentation-to-module mapping can be directly adopted:
 
-1. `docs/standards/joint/*` 负责 `common` 的命名边界与禁止项。
-2. `docs/standards/services/*.md` 负责各军种 profile 对 `common` 字段的解释。
-3. `docs/standards/air/*` 与未来 `docs/standards/naval/*` 负责平台/任务专用扩展，不反向主导 `common` 命名。
+1. `docs/standards/joint/*` defines the naming boundaries and prohibitions for `common`.
+2. `docs/standards/services/*.md` defines how each service profile interprets `common` fields.
+3. `docs/standards/air/*` and future `docs/standards/naval/*` define platform/task-specific extensions, and should not drive `common` naming in reverse.

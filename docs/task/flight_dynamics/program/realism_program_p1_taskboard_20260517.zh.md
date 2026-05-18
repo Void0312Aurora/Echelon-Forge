@@ -4,10 +4,10 @@
 
 关联文档：
 
-- [真实化任务总表（P0）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_taskboard_20260516.zh.md)
-- [飞行动力学真实化 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
-- [传感器/态势真实化 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_p1_implementation_package_20260517.zh.md)
-- [武器/制导真实化 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_p1_implementation_package_20260517.zh.md)
+- [真实化任务总表（P0）](realism_program_taskboard_20260516.zh.md)
+- [飞行动力学真实化 P1 实施包](../flight/flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
+- [传感器/态势真实化 P1 实施包](../sensor_situation/sensor_situation_realism_p1_implementation_package_20260517.zh.md)
+- [武器/制导真实化 P1 实施包](../weapon_guidance/weapon_guidance_realism_p1_implementation_package_20260517.zh.md)
 
 文档目的：
 

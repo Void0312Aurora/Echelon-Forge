@@ -1,21 +1,21 @@
-# 海战真实性子项目
+# Naval Warfare Realism Subproject
 
-状态：`2026-05-17` 当前目录主要保存冻结分析，活跃推进入口在海战主任务目录与 C2 子项目。
+Status: `2026-05-17` The current directory primarily stores finalized analysis; active development entry points are in the main naval warfare task directory and the C2 subproject.
 
-本子项目用于保留海战真实性分析与其在 `flight_dynamics` 主线中的关联位置，避免海战相关调研继续散落在总目录。
+This subproject is used to preserve naval warfare realism analysis and its relationship to the `flight_dynamics` mainline, so that naval warfare related research no longer remains scattered across the top‑level directory.
 
-## 文档入口
+## Documentation Entry
 
-- [海战仿真现实性分析](naval_realism_analysis_20260516.zh.md)
-  作用：冻结记录当前海战管线的真实性差距、参考输入和与其他方向的耦合点。
+- [Naval Warfare Simulation Realism Analysis](naval_realism_analysis_20260516.zh.md)  
+  Purpose: Records the current realism gaps, reference inputs, and coupling points with other directions for the naval warfare pipeline.
 
-## 当前关联入口
+## Current Related Entry Points
 
-- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
-- [海战后续委派执行单](../../naval/naval_delegated_execution_backlog_20260517.zh.md)
-- [C2 指挥链与通信子项目](../c2_command_chain/README.md)
+- [Naval Warfare Progress Checkpoint](../../naval/naval_progress_checkpoint_20260517.zh.md)  
+- [Naval Warfare Follow-up Execution Sheet](../../naval/naval_delegated_execution_backlog_20260517.zh.md)  
+- [C2 Command Chain & Communications Subproject](../c2_command_chain/README.md)
 
-## 说明
+## Notes
 
-1. 本目录当前不是海战实现看板，而是海战真实性输入与冻结分析归档位。
-2. 若后续海战真实化重新成为独立主线，可在本目录继续补 `README / progress / implementation package`。
+1. This directory is currently not a naval warfare implementation board, but an archive for realism input and finalized analysis.  
+2. If naval warfare realism becomes an independent mainline again in the future, this directory can continue to hold `README / progress / implementation package`.

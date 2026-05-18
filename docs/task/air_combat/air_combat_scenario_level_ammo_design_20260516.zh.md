@@ -4,9 +4,9 @@
 
 关联文档：
 
-- [空战 1v1 冻结计划](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_freeze_plan_20260516.zh.md)
-- [空战 1v1 武器链进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_weapon_chain_progress_20260516.zh.md)
-- [空战 1v1 武器链回归测试](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
+- [空战 1v1 冻结计划](air_combat_1v1_freeze_plan_20260516.zh.md)
+- [空战 1v1 武器链进展](air_combat_1v1_weapon_chain_progress_20260516.zh.md)
+- [空战 1v1 武器链回归测试](../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
 
 ## 一、问题背景
 

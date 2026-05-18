@@ -4,19 +4,19 @@
 
 关联文件：
 
-- [Missile 组件定义](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
-- [Ammo / WeaponCooldown / Munition 组件](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
-- [HitboxConfig / SystemHealth 组件](/home/void0312/Workshop/CMO/src/components/combat/damage.h)
-- [Health / Score 组件](/home/void0312/Workshop/CMO/src/components/combat/health.h)
-- [IGuidanceModel 接口](/home/void0312/Workshop/CMO/src/core/interfaces/guidance_model.h)
-- [IEffectsModel 接口](/home/void0312/Workshop/CMO/src/core/interfaces/effects_model.h)
-- [DefaultGuidanceModel（PN 制导）](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [DefaultEffectsModel（命中效果）](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
-- [DamageSystem（近炸引信）](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
-- [SimulationKernel 武器 API（发射逻辑）](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [武器与交战规则路线图](/home/void0312/Workshop/CMO/docs/forward/weapons_engagement.md)
-- [传感器与态势感知现实性分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [飞行动力学现实性分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
+- [Missile 组件定义](../../../../src/components/combat/weapon.h)
+- [Ammo / WeaponCooldown / Munition 组件](../../../../src/components/combat/weapon.h)
+- [HitboxConfig / SystemHealth 组件](../../../../src/components/combat/damage.h)
+- [Health / Score 组件](../../../../src/components/combat/health.h)
+- [IGuidanceModel 接口](../../../../src/core/interfaces/guidance_model.h)
+- [IEffectsModel 接口](../../../../src/core/interfaces/effects_model.h)
+- [DefaultGuidanceModel（PN 制导）](../../../../src/models/weapons/default_guidance_model.cpp)
+- [DefaultEffectsModel（命中效果）](../../../../src/models/weapons/default_effects_model.cpp)
+- [DamageSystem（近炸引信）](../../../../src/systems/combat/damage_system.h)
+- [SimulationKernel 武器 API（发射逻辑）](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [武器与交战规则路线图](../../../forward/weapons_engagement.md)
+- [传感器与态势感知现实性分析（关联）](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [飞行动力学现实性分析（关联）](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
 
 文档定位：
 

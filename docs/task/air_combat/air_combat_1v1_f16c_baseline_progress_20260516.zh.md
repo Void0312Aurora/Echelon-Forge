@@ -4,9 +4,9 @@
 
 关联文档：
 
-- [空战 1v1 冻结计划](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_freeze_plan_20260516.zh.md)
-- [空战场景级 Ammo 设计与落地](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_scenario_level_ammo_design_20260516.zh.md)
-- [空战 1v1 武器链进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_weapon_chain_progress_20260516.zh.md)
+- [空战 1v1 冻结计划](air_combat_1v1_freeze_plan_20260516.zh.md)
+- [空战场景级 Ammo 设计与落地](air_combat_scenario_level_ammo_design_20260516.zh.md)
+- [空战 1v1 武器链进展](air_combat_1v1_weapon_chain_progress_20260516.zh.md)
 
 ## 一、这轮完成了什么
 
@@ -14,7 +14,7 @@
 
 当前维护场景：
 
-- [air_combat_1v1_headon_sensor_smoke_v1.json](/home/void0312/Workshop/CMO/scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+- [air_combat_1v1_headon_sensor_smoke_v1.json](../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
 
 切换方式不是去改平台数据库默认 `has_ammo`，而是继续沿用前一轮已经打通的场景级覆盖语义：
 
@@ -82,7 +82,7 @@
 当前 canonical `1v1` 场景已经支持在实体级声明红方脚本对手：
 
 1. `entities[].scripted_agent`
-2. 目前维护实现绑定到 [examples/agents/red_agent.py](/home/void0312/Workshop/CMO/examples/agents/red_agent.py)
+2. 目前维护实现绑定到 [examples/agents/red_agent.py](../../../examples/agents/red_agent.py)
 3. 运行时由 `ScenarioLoader.update_behaviors()` 驱动，因此：
    - `UniversalEnv`
    - 默认 `WorldBatchVecEnv`

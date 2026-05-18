@@ -4,17 +4,17 @@
 
 关联文档：
 
-- [武器系统与制导回路现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [武器系统与制导回路真实化核实与落地方案](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_verification_and_plan_20260516.zh.md)
+- [武器系统与制导回路现实性分析](weapon_guidance_realism_analysis_20260516.zh.md)
+- [武器系统与制导回路真实化核实与落地方案](weapon_guidance_realism_verification_and_plan_20260516.zh.md)
 
 关联代码：
 
-- [Missile 组件](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
-- [SimulationKernel 武器接口](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-- [SimulationKernel 发射实现](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [默认制导模型](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [默认传感器模型](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [武器链回归测试](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
+- [Missile 组件](../../../../src/components/combat/weapon.h)
+- [SimulationKernel 武器接口](../../../../src/core/engine/simulation_kernel.h)
+- [SimulationKernel 发射实现](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [默认制导模型](../../../../src/models/weapons/default_guidance_model.cpp)
+- [默认传感器模型](../../../../src/models/systems/default_sensor_model.cpp)
+- [武器链回归测试](../../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
 
 文档目的：
 
@@ -100,34 +100,34 @@ P0 允许保留的近似：
 
 ### 4.1 必改文件
 
-1. [src/components/combat/weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
+1. [src/components/combat/weapon.h](../../../../src/components/combat/weapon.h)
    - 扩展 `Missile` 运行时状态。
    - 如有必要，新增 seeker/guidance mode 枚举。
 
-2. [src/core/engine/simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
+2. [src/core/engine/simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
    - 扩展 `MissileTuning`。
 
-3. [src/core/engine/simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
+3. [src/core/engine/simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
    - 初始化 P0 所需字段。
    - 保持默认参数兼容现有测试。
 
-4. [src/models/weapons/default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
+4. [src/models/weapons/default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
    - P0 主改造文件。
    - 替换 truth PN、恒速归一和固定 turn-rate 主逻辑。
 
-5. [tests/runtime/test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
+5. [tests/runtime/test_weapon_guidance_realism_guards.py](../../../../tests/runtime/test_weapon_guidance_realism_guards.py)
    - 新增 P0 守门测试文件。
 
 ### 4.2 可选新增文件
 
 如果 `default_guidance_model.cpp` 体积增长过快，允许新增：
 
-1. [src/models/weapons/missile_guidance_math.h](/home/void0312/Workshop/CMO/src/models/weapons/missile_guidance_math.h)
+1. [src/models/weapons/missile_guidance_math.h](../../../../src/models/weapons/missile_guidance_math.h)
    - 向量工具
    - alpha-beta 过滤辅助
    - thrust/drag helper
 
-2. [src/models/weapons/missile_guidance_types.h](/home/void0312/Workshop/CMO/src/models/weapons/missile_guidance_types.h)
+2. [src/models/weapons/missile_guidance_types.h](../../../../src/models/weapons/missile_guidance_types.h)
    - 小型内部 struct / enum
 
 P0 不建议新增新的 ECS system；主逻辑仍应放在 `DefaultGuidanceModel`。
@@ -140,7 +140,7 @@ P0 不建议新增新的 ECS system；主逻辑仍应放在 `DefaultGuidanceMode
 
 文件：
 
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
+- [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
 
 建议新增：
 
@@ -178,7 +178,7 @@ double max_accel_response_g_per_s;
 
 文件：
 
-- [weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
+- [weapon.h](../../../../src/components/combat/weapon.h)
 
 建议新增：
 
@@ -211,7 +211,7 @@ P0 刻意不在 `Missile` 中塞太多未使用字段，避免把第二阶段内
 
 文件：
 
-- [src/components/physics/dynamics.h](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
+- [src/components/physics/dynamics.h](../../../../src/components/physics/dynamics.h)
 
 P0 不修改 `Mass` 结构，只约定导弹实体按下面方式初始化：
 
@@ -229,7 +229,7 @@ P0 不修改 `Mass` 结构，只约定导弹实体按下面方式初始化：
 
 主文件：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
 
 P0 约束：
 
@@ -264,7 +264,7 @@ P0 推荐做法：
 
 主文件：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
 
 P0 建议状态推进：
 
@@ -296,7 +296,7 @@ P0 允许的近似：
 
 主文件：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
 
 P0 推荐公式：
 
@@ -353,7 +353,7 @@ P0 的重点不是 PN 公式选哪一本教材版本，而是：
 
 ### 7.1 新增测试文件
 
-- [tests/runtime/test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
+- [tests/runtime/test_weapon_guidance_realism_guards.py](../../../../tests/runtime/test_weapon_guidance_realism_guards.py)
 
 ### 7.2 P0 必测项
 
@@ -453,16 +453,16 @@ P0 不追求“某型弹绝对真实”，只做两个类模板：
 推荐拆成 6 步：
 
 1. `扩字段`
-   - 修改 [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h) 和 [weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
+   - 修改 [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h) 和 [weapon.h](../../../../src/components/combat/weapon.h)
    - 只加入 P0 最小字段，不写逻辑。
 
 2. `补发射初始化`
-   - 修改 [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
+   - 修改 [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
    - 给新字段合理默认值和初始化。
    - 保证老测试不因未初始化而炸掉。
 
 3. `切断 truth guidance`
-   - 修改 [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
+   - 修改 [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
    - 先把 target truth 读路径删掉，换成 detection + memory state。
    - 这一步先不做复杂能量模型。
 
@@ -475,7 +475,7 @@ P0 不追求“某型弹绝对真实”，只做两个类模板：
    - 去掉 `velocity = max_speed normalized` 路径。
 
 6. `补守门测试`
-   - 新增 [test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
+   - 新增 [test_weapon_guidance_realism_guards.py](../../../../tests/runtime/test_weapon_guidance_realism_guards.py)
    - 先守住 truth cut、speed profile、mass depletion、accel saturation、track memory timeout。
 
 这个顺序的好处是：

@@ -4,10 +4,10 @@
 
 关联文档：
 
-- [P8 协同执行管线发现与计划](/home/void0312/Workshop/CMO/docs/plan/cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
-- [多 Agent 协同训练底座与性能计划](/home/void0312/Workshop/CMO/docs/plan/cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
-- [HMoE Strict Terminal Eval (2026-05-15)](/home/void0312/Workshop/CMO/docs/plan/results/hmoe_strict_terminal_eval_20260515.md)
-- [强化学习与自博弈前瞻](/home/void0312/Workshop/CMO/docs/forward/rl_selfplay.md)
+- [P8 协同执行管线发现与计划](../../plan/cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+- [多 Agent 协同训练底座与性能计划](../../plan/cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+- [HMoE Strict Terminal Eval (2026-05-15)](../../plan/results/hmoe_strict_terminal_eval_20260515.md)
+- [强化学习与自博弈前瞻](../../forward/rl_selfplay.md)
 
 文档定位：
 
@@ -21,15 +21,15 @@
 
 1. `execution` 单机执行训练主线仍然是最成熟、最稳定、覆盖面最完整的执行入口。
 2. `cooperative_execution` 已在最近一轮 HMoE 与严格 terminal eval 中证明“同一 world 多可控实体共享 world-step / reset”的训练链可用，但它当前服务的是同队协同，不是敌对对抗。
-3. 现有评估入口 [tools/eval/eval_sb3.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3.py) 只维护了 `single` 与 `cooperative` 两种口径，还没有 `versus` / `combat_1v1` 模式。
-4. 旧的 [强化学习与自博弈前瞻](/home/void0312/Workshop/CMO/docs/forward/rl_selfplay.md) 仍停留在前瞻口径；文中提到的 `examples/training/train_self_play.py` 与 `examples/training/selfplay_config.json` 在当前仓库中并不存在，不能当作现成主线入口。
+3. 现有评估入口 [tools/eval/eval_sb3.py](../../../tools/eval/eval_sb3.py) 只维护了 `single` 与 `cooperative` 两种口径，还没有 `versus` / `combat_1v1` 模式。
+4. 旧的 [强化学习与自博弈前瞻](../../forward/rl_selfplay.md) 仍停留在前瞻口径；文中提到的 `examples/training/train_self_play.py` 与 `examples/training/selfplay_config.json` 在当前仓库中并不存在，不能当作现成主线入口。
 5. 当前 `ScenarioCompiler` / `ScenarioLoader` 维护主线只会把 `objectives` 中的 `type = "conditional"` 编译进运行时；不要把旧文档中的 `capture_zone` 说明直接当成 `1v1` 可用主线能力。
 
 ## 二、与 1v1 直接相关的现状
 
 ### 2.1 训练入口现状
 
-[train.py](/home/void0312/Workshop/CMO/train.py) 当前只接受三类 `agent_layer`：
+[train.py](../../../train.py) 当前只接受三类 `agent_layer`：
 
 - `execution`
 - `leader`
@@ -37,8 +37,8 @@
 
 其中：
 
-- `execution` 走 [UniversalEnv](/home/void0312/Workshop/CMO/gym_envs/universal_env.py) 或 [WorldBatchVecEnv](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)，本质是“每个 world 一个 active `agent_id`”。
-- `cooperative_execution` 走 [CooperativeWorldBatchVecEnv](/home/void0312/Workshop/CMO/python/rl/runtime/cooperative_world_batch_vec_env.py)，本质是“同一 world 多个同队 controllable roster 成员展开为 flat slots，共享同一次 world step / reset”。
+- `execution` 走 [UniversalEnv](../../../gym_envs/universal_env.py) 或 [WorldBatchVecEnv](../../../python/rl/runtime/world_batch_vec_env.py)，本质是“每个 world 一个 active `agent_id`”。
+- `cooperative_execution` 走 [CooperativeWorldBatchVecEnv](../../../python/rl/runtime/cooperative_world_batch_vec_env.py)，本质是“同一 world 多个同队 controllable roster 成员展开为 flat slots，共享同一次 world step / reset”。
 
 当前没有：
 
@@ -50,12 +50,12 @@
 
 ### 2.2 运行时环境现状
 
-[WorldBatchVecEnv](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py) 仍是单 active agent 语义：
+[WorldBatchVecEnv](../../../python/rl/runtime/world_batch_vec_env.py) 仍是单 active agent 语义：
 
 - 每个 world 只维护一个 `handle.agent_id`
 - 观测回读、动作下发、mission/tasking 同步都按这一个实体组织
 
-[CooperativeWorldBatchVecEnv](/home/void0312/Workshop/CMO/python/rl/runtime/cooperative_world_batch_vec_env.py) 则已经具备：
+[CooperativeWorldBatchVecEnv](../../../python/rl/runtime/cooperative_world_batch_vec_env.py) 则已经具备：
 
 - active controllable roster
 - `world_index + entity_id` 粒度的 slot 展开
@@ -66,7 +66,7 @@
 
 ### 2.3 场景 / roster 现状
 
-[python/scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py) 已支持：
+[python/scenario_runtime.py](../../../python/scenario_runtime.py) 已支持：
 
 - 在同一 world 中声明多实体
 - 解析 `active_controllable_roster` / `cooperative_roster`
@@ -79,7 +79,7 @@
 
 ### 2.4 观测与动作现状
 
-[UniversalEnv](/home/void0312/Workshop/CMO/gym_envs/universal_env.py) 的 `full` 动作模式已经包含对空战有价值的基础控制语义：
+[UniversalEnv](../../../gym_envs/universal_env.py) 的 `full` 动作模式已经包含对空战有价值的基础控制语义：
 
 - 飞行操纵
 - 雷达开关与扫描
@@ -101,7 +101,7 @@
 
 - `PilotAction.master_arm / fire_weapon / fire_gun / weapon_select_id` 已经在动作接口中暴露；
 - 当前武器主线并不会直接从这些 `PilotAction` 字段触发导弹发射；
-- 仓库里真实可用的发射入口仍是底层 [SimulationKernel.fire_missile(...)](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp) API。
+- 仓库里真实可用的发射入口仍是底层 [SimulationKernel.fire_missile(...)](../../../src/interfaces/python/bindings_core.cpp) API。
 - 数据库中的不同平台对 runtime ammo 的支持也还不一致；例如当前 `F-16C_Block50` 仍是 `has_ammo: false`，而 `Su-35S_Flanker-E` 才已经带有可观测的 ammo/runtime fire state。
 
 这说明：
@@ -138,7 +138,7 @@
 
 ### 2.6 评估现状
 
-[tools/eval/eval_sb3.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3.py) 当前只支持：
+[tools/eval/eval_sb3.py](../../../tools/eval/eval_sb3.py) 当前只支持：
 
 - `single`
 - `cooperative`

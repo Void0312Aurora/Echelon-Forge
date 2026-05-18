@@ -5,7 +5,7 @@
 
 关联后续计划：
 
-- [架构评审后续冻结计划](/home/void0312/Workshop/CMO/docs/task/review/architecture_review_followup_freeze_20260516.zh.md)
+- [架构评审后续冻结计划](architecture_review_followup_freeze_20260516.zh.md)
 
 ## 1. 背景
 
@@ -32,15 +32,15 @@ interfaces/python → runtime/facade → core/engine + core/mission
     → systems → models / components / content
 ```
 
-- [src/README.md](/home/void0312/Workshop/CMO/src/README.md) 和各层级 README 明确定义了每层允许放什么、禁止放什么
-- [docs/plan/architecture/src_layered_refactor_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/src_layered_refactor_freeze.zh.md) 冻结了 WP1-WP7 的执行记录
-- [tests/architecture/test_runtime_facade_layering.py](/home/void0312/Workshop/CMO/tests/architecture/test_runtime_facade_layering.py) 和 [test_cmake_target_readiness.py](/home/void0312/Workshop/CMO/tests/architecture/test_cmake_target_readiness.py) 将架构约束变成自动验证
+- [src/README.md](../../../src/README.md) 和各层级 README 明确定义了每层允许放什么、禁止放什么
+- [docs/plan/architecture/src_layered_refactor_freeze.zh.md](../../plan/architecture/src_layered_refactor_freeze.zh.md) 冻结了 WP1-WP7 的执行记录
+- [tests/architecture/test_runtime_facade_layering.py](../../../tests/architecture/test_runtime_facade_layering.py) 和 [test_cmake_target_readiness.py](../../../tests/architecture/test_cmake_target_readiness.py) 将架构约束变成自动验证
 
 评价：研究代码库中将架构约束可测试化极为罕见，是最大亮点。
 
 ### 3.2 Facade 模式收口合理
 
-[RuntimeFacade](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade.h) 是 C++ 层唯一对外 contract，提供 typed request/result 接口：
+[RuntimeFacade](../../../src/runtime/facade/runtime_facade.h) 是 C++ 层唯一对外 contract，提供 typed request/result 接口：
 - `BatchWorldSetupRequest` / `BatchWorldSetupResult`
 - `ExecutionBatchStepRequest` / `ExecutionBatchStepResult`
 - `ObservationBatchRequest` / `ObservationBatchPacket`
@@ -70,7 +70,7 @@ Python 侧通过 `_RuntimeFacadeAdapter` 集中适配，`WorldBatchRuntime` 直�
 | `docs/standards/` | 编码和设计标准 |
 | `docs/task/` | 短生命周期任务文档 |
 
-[src_layer_map.md](/home/void0312/Workshop/CMO/docs/manual/src_layer_map.md) 提供"问题→定位指南"——按问题类型指引该去哪个目录看代码。
+[src_layer_map.md](../../manual/src_layer_map.md) 提供"问题→定位指南"——按问题类型指引该去哪个目录看代码。
 
 ### 3.6 实验管理与归档
 
@@ -103,7 +103,7 @@ Python 侧通过 `_RuntimeFacadeAdapter` 集中适配，`WorldBatchRuntime` 直�
 
 ### 4.2 🟡 CMake target 拆分尚未执行
 
-**位置**：[CMakeLists.txt](/home/void0312/Workshop/CMO/CMakeLists.txt)
+**位置**：[CMakeLists.txt](../../../CMakeLists.txt)
 
 **现象**：虽然 `CMakeLists.txt` 已定义 `EF_CORE_ENGINE_SOURCES`、`EF_CORE_MISSION_SOURCES` 等 source group，但最终全部打入单个 `ef_core` 静态库。
 
@@ -123,7 +123,7 @@ Python 侧通过 `_RuntimeFacadeAdapter` 集中适配，`WorldBatchRuntime` 直�
 
 ### 4.3 🟡 `SimulationKernel` public API 过于宽泛
 
-**位置**：[src/core/engine/simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
+**位置**：[src/core/engine/simulation_kernel.h](../../../src/core/engine/simulation_kernel.h)
 
 **现象**：头文件约 200 行、50+ public 方法，同时承担生命周期、工厂注入、环境配置、命令注入（三套接口）、观测查询、武器发射、exact-stage trace 等各类职责。
 
@@ -144,8 +144,8 @@ Python 侧通过 `_RuntimeFacadeAdapter` 集中适配，`WorldBatchRuntime` 直�
 ### 4.4 🟡 Python 入口脚本过大
 
 **位置**：
-- [train.py](/home/void0312/Workshop/CMO/train.py) — 1127 行
-- [world_model_train.py](/home/void0312/Workshop/CMO/world_model_train.py) — 约 3000+ 行
+- [train.py](../../../train.py) — 1127 行
+- [world_model_train.py](../../../world_model_train.py) — 约 3000+ 行
 
 **现象**：顶层入口脚本混合了参数解析、环境构建、训练循环、回调注册、checkpoint 管理等多种职责。
 
@@ -159,7 +159,7 @@ Python 侧通过 `_RuntimeFacadeAdapter` 集中适配，`WorldBatchRuntime` 直�
 **处理批注（`2026-05-16`）**：
 
 - 部分采纳，且判断问题本身成立。
-- [train.py](/home/void0312/Workshop/CMO/train.py) 与 [world_model_train.py](/home/void0312/Workshop/CMO/world_model_train.py) 的确已经超过“单入口脚本”应承载的复杂度。
+- [train.py](../../../train.py) 与 [world_model_train.py](../../../world_model_train.py) 的确已经超过“单入口脚本”应承载的复杂度。
 - 但具体落点不宜机械统一为 `python/rl/training/`：
   - `train.py` 更适合下沉到通用 `python/training/` 或等价主线包；
   - `world_model_train.py` 更适合在 `python/world_model/` 下形成独立训练子域。
@@ -192,7 +192,7 @@ Python 侧通过 `_RuntimeFacadeAdapter` 集中适配，`WorldBatchRuntime` 直�
 
 ### 4.6 🟢 外部依赖通过 FetchContent 即时下载
 
-**位置**：[CMakeLists.txt:20-49](/home/void0312/Workshop/CMO/CMakeLists.txt)
+**位置**：[CMakeLists.txt:20-49](../../../CMakeLists.txt)
 
 **现象**：
 ```cmake
@@ -221,7 +221,7 @@ FetchContent_Declare(nlohmann_json GIT_TAG v3.11.3)
 
 ### 4.7 🟢 `.gitignore` 排除了关键开发目录
 
-**位置**：[.gitignore](/home/void0312/Workshop/CMO/.gitignore#L56-L63)
+**位置**：[.gitignore](../../../.gitignore#L56-L63)
 
 **现象**：`scenarios/`、`datasets/`、`experiments/`、`output/` 被 gitignore 完全排除。
 
@@ -236,7 +236,7 @@ FetchContent_Declare(nlohmann_json GIT_TAG v3.11.3)
 **处理批注（`2026-05-16`）**：
 
 - 部分采纳，但其中 `scenarios/` 应优先处理。
-- 当前 [.gitignore](/home/void0312/Workshop/CMO/.gitignore) 与 [README.md](/home/void0312/Workshop/CMO/README.md) 对 `scenarios/` 的定位存在明显冲突：前者忽略，后者又把它描述为维护主线输入。
+- 当前 [.gitignore](../../../.gitignore) 与 [README.md](../../../README.md) 对 `scenarios/` 的定位存在明显冲突：前者忽略，后者又把它描述为维护主线输入。
 - 相比之下，`experiments/`、`datasets/`、`output/` 继续保持忽略更符合当前研究型工作流，不建议为了“版本完整”把大体积运行产物直接纳入主仓。
 - 因此后续任务应先澄清并处理 `scenarios/` 版本策略，再决定是否需要独立仓库或主仓收纳。
 
@@ -255,7 +255,7 @@ FetchContent_Declare(nlohmann_json GIT_TAG v3.11.3)
 **处理批注（`2026-05-16`）**：
 
 - 采纳。
-- 其中“统一管理”这一半已经部分完成：仓库已新增 [tools/maintenance/cmo_env.sh](/home/void0312/Workshop/CMO/tools/maintenance/cmo_env.sh) 作为 `.venv`、`CMO_BUILD_DIR` 与 `PYTHONPATH` 的统一入口。
+- 其中“统一管理”这一半已经部分完成：仓库已新增 [tools/maintenance/cmo_env.sh](../../../tools/maintenance/cmo_env.sh) 作为 `.venv`、`CMO_BUILD_DIR` 与 `PYTHONPATH` 的统一入口。
 - 仍待继续完成的是：
   - 补一个显式的 `cmo_env_validate` 或等价校验命令；
   - 逐步把 README / 脚本示例从散落的手写环境变量切换到统一入口。

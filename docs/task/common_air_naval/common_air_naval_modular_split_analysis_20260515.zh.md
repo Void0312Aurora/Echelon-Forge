@@ -40,11 +40,11 @@
 
 当前最核心的 C++ DTO 层虽然已按目录拆出 `tasking` 与 `command`，但其中大量结构仍把 `common core` 与 `air specialization` 混在同一份头文件中：
 
-- [src/components/tasking/tasking_enums.h](/home/void0312/Workshop/CMO/src/components/tasking/tasking_enums.h)
-- [src/components/tasking/task_order.h](/home/void0312/Workshop/CMO/src/components/tasking/task_order.h)
-- [src/components/tasking/leader_intent.h](/home/void0312/Workshop/CMO/src/components/tasking/leader_intent.h)
-- [src/components/tasking/pilot_report.h](/home/void0312/Workshop/CMO/src/components/tasking/pilot_report.h)
-- [src/components/command/mission_command.h](/home/void0312/Workshop/CMO/src/components/command/mission_command.h)
+- [src/components/tasking/tasking_enums.h](../../../src/components/tasking/tasking_enums.h)
+- [src/components/tasking/task_order.h](../../../src/components/tasking/task_order.h)
+- [src/components/tasking/leader_intent.h](../../../src/components/tasking/leader_intent.h)
+- [src/components/tasking/pilot_report.h](../../../src/components/tasking/pilot_report.h)
+- [src/components/command/mission_command.h](../../../src/components/command/mission_command.h)
 
 典型混合信号：
 
@@ -54,16 +54,16 @@
 
 ### 3.2 `MissionCommand` 是当前最高风险拆分点
 
-[src/components/command/mission_command.h](/home/void0312/Workshop/CMO/src/components/command/mission_command.h) 不只是一个被动 DTO，它已经直接进入：
+[src/components/command/mission_command.h](../../../src/components/command/mission_command.h) 不只是一个被动 DTO，它已经直接进入：
 
 - 空气动力/自动驾驶控制解释
-  - [src/models/air/default_control_model.cpp](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
+  - [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
 - 仪表与任务运行时
-  - [src/systems/physics/instrument_system.h](/home/void0312/Workshop/CMO/src/systems/physics/instrument_system.h)
-  - [src/core/mission/episode/detail/episode_transition_runtime.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/detail/episode_transition_runtime.cpp)
+  - [src/systems/physics/instrument_system.h](../../../src/systems/physics/instrument_system.h)
+  - [src/core/mission/episode/detail/episode_transition_runtime.cpp](../../../src/core/mission/episode/detail/episode_transition_runtime.cpp)
 - 批量运行时与 facade 导出
-  - [src/runtime/contracts/world_batch_contracts.h](/home/void0312/Workshop/CMO/src/runtime/contracts/world_batch_contracts.h)
-  - [src/runtime/facade/runtime_facade_types.h](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade_types.h)
+  - [src/runtime/contracts/world_batch_contracts.h](../../../src/runtime/contracts/world_batch_contracts.h)
+  - [src/runtime/facade/runtime_facade_types.h](../../../src/runtime/facade/runtime_facade_types.h)
 
 这意味着 `MissionCommand` 不能作为首刀直接重构，否则极易同时扰动：
 
@@ -77,9 +77,9 @@
 
 相比 `MissionCommand`，下列结构虽然使用面广，但当前更多承担“设置/导出/同步”的职责，行为耦合低于 `MissionCommand`：
 
-- [src/components/tasking/task_order.h](/home/void0312/Workshop/CMO/src/components/tasking/task_order.h)
-- [src/components/tasking/leader_intent.h](/home/void0312/Workshop/CMO/src/components/tasking/leader_intent.h)
-- [src/components/tasking/pilot_report.h](/home/void0312/Workshop/CMO/src/components/tasking/pilot_report.h)
+- [src/components/tasking/task_order.h](../../../src/components/tasking/task_order.h)
+- [src/components/tasking/leader_intent.h](../../../src/components/tasking/leader_intent.h)
+- [src/components/tasking/pilot_report.h](../../../src/components/tasking/pilot_report.h)
 
 它们已经进入：
 
@@ -94,10 +94,10 @@
 
 以下 Python 模块名义上带有 `common` 或承担 loader/runtime glue 职责，但实现里仍明显偏空战：
 
-- [python/rl/tasking/common_core_profile.py](/home/void0312/Workshop/CMO/python/rl/tasking/common_core_profile.py)
-- [python/rl/tasking/leader_tasking.py](/home/void0312/Workshop/CMO/python/rl/tasking/leader_tasking.py)
-- [gym_envs/scenario_loader/core.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
-- [gym_envs/leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
+- [python/rl/tasking/common_core_profile.py](../../../python/rl/tasking/common_core_profile.py)
+- [python/rl/tasking/leader_tasking.py](../../../python/rl/tasking/leader_tasking.py)
+- [gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/leader_env.py](../../../gym_envs/leader_env.py)
 
 已确认问题包括：
 
@@ -151,9 +151,9 @@
 
 当前仓库已经存在一些可用的海战入口点，但大多仍是“类型入口”，不是运行时能力入口：
 
-- [src/components/basic/common.h](/home/void0312/Workshop/CMO/src/components/basic/common.h) 中已有 `UnitType::Ship`
-- [src/components/tasking/tasking_enums.h](/home/void0312/Workshop/CMO/src/components/tasking/tasking_enums.h) 中已有 `ServiceProfile::Navy`
-- [docs/standards/services/navy.md](/home/void0312/Workshop/CMO/docs/standards/services/navy.md) 已有 US Navy profile 设计说明
+- [src/components/basic/common.h](../../../src/components/basic/common.h) 中已有 `UnitType::Ship`
+- [src/components/tasking/tasking_enums.h](../../../src/components/tasking/tasking_enums.h) 中已有 `ServiceProfile::Navy`
+- [docs/standards/services/navy.md](../../standards/services/navy.md) 已有 US Navy profile 设计说明
 
 但尚未发现成熟的 naval runtime consumer，说明海战目前更适合从：
 
@@ -270,7 +270,7 @@
 
 ### 5.3 `CommMsgType` 适合单独抽成中性通信层
 
-`CommMsgType` 当前定义在 [src/components/tasking/pilot_report.h](/home/void0312/Workshop/CMO/src/components/tasking/pilot_report.h)，但同时被 `ActionCommand`、datalink 和 track 系统使用。
+`CommMsgType` 当前定义在 [src/components/tasking/pilot_report.h](../../../src/components/tasking/pilot_report.h)，但同时被 `ActionCommand`、datalink 和 track 系统使用。
 
 因此建议后续迁移到中性位置，例如：
 
@@ -327,7 +327,7 @@ src/components/command/air/
 
 ### 7.1 绑定与 Python API 风险
 
-[src/interfaces/python/bindings_command.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_command.cpp) 当前是平坦绑定面。若直接改 struct 名、字段名或枚举导出名，会同时打断：
+[src/interfaces/python/bindings_command.cpp](../../../src/interfaces/python/bindings_command.cpp) 当前是平坦绑定面。若直接改 struct 名、字段名或枚举导出名，会同时打断：
 
 - Python runtime
 - tests
@@ -393,4 +393,4 @@ src/components/command/air/
 
 配套冻结计划见：
 
-- [Common / Air / Naval 模块拆分冻结计划](/home/void0312/Workshop/CMO/docs/task/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
+- [Common / Air / Naval 模块拆分冻结计划](common_air_naval_modular_split_plan_20260515.zh.md)

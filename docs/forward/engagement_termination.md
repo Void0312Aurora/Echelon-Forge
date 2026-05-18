@@ -1,40 +1,49 @@
-# 任务终止与行为逻辑前瞻
+# Engagement Termination and Behavior Logic Roadmap
 
-本文件记录“交战终止条件”和“行为逻辑”的规划方向，避免出现长时间
-镜像追逐或无意义机动。
+This document records the planning direction for engagement termination
+conditions and behavior logic so we avoid prolonged mirror chases or pointless
+maneuvering.
 
-## 已实现（运行时/场景层）
-- 距离阈值脱战：`disengage_range_m` + `disengage_hold_s`。
-- 能量过低脱战：`min_specific_energy_j_kg` + `energy_hold_s`。
-- 弹药耗尽终止：`ammo_depletion_ends` + 导弹在空检查。
-- 主要实现位置：`src/core/mission/termination_runtime.*`、`gym_envs/scenario_loader.py`。
+## Already Implemented (Runtime / Scenario Layer)
+- Disengagement by distance threshold: `disengage_range_m` +
+  `disengage_hold_s`.
+- Disengagement by low energy: `min_specific_energy_j_kg` + `energy_hold_s`.
+- Termination on ammunition depletion: `ammo_depletion_ends` plus in-flight
+  missile checks.
+- Main implementation locations: `src/core/mission/termination_runtime.*`,
+  `gym_envs/scenario_loader.py`.
 
-## 终止条件建议
-1) 脱战距离
-- 超出距离阈值且持续一段时间，终止或切换到返航行为。
+## Recommended Termination Conditions
+1) Disengagement range
+- If separation exceeds the threshold for a sustained period, terminate or
+  switch to return-to-base behavior.
 
-2) 弹药耗尽
-- 双方弹药均耗尽且空中无弹体，终止。
-- 若单方耗尽，可切换到防御/撤退策略。
+2) Ammunition depletion
+- If both sides are out of ammunition and no missiles remain in flight,
+  terminate.
+- If only one side is depleted, it can switch to a defensive or retreat
+  policy.
 
-3) 能量过低
-- 以比能（J/kg）或速度阈值判定。
-- 建议记录持续时间以避免瞬时抖动。
+3) Low energy
+- Evaluate with specific energy (J/kg) or a speed threshold.
+- Track the condition duration to avoid triggering on momentary noise.
 
-4) 感知丢失
-- 目标长时间失踪（无探测/跟踪），触发脱战。
+4) Loss of awareness
+- If the target is lost for an extended period (no detection / no track),
+  trigger disengagement.
 
-5) 任务目标完成
-- 达成击毁/命中/任务杀伤即终止。
+5) Mission objective complete
+- Terminate when kill, hit, or mission-kill objectives have been achieved.
 
-## 行为逻辑建议
-- “交战”与“脱战”是两个状态，具备明确切换条件。
-- 脱战后可采用：
-  - 固定航向逃逸
-  - 能量恢复（速度/高度提升）
-  - 返航/盘旋待命
+## Recommended Behavior Logic
+- "Engaged" and "disengaged" should be two explicit states with clear
+  transition conditions.
+- After disengaging, possible behaviors include:
+  - escape on a fixed heading
+  - energy recovery (build speed / altitude)
+  - return-to-base or loiter
 
-## 进一步落地建议
-- 将终止条件移入核心系统（C++）以保证一致性。
-- 在 scenario 中支持 per-side/per-entity 的终止规则。
-- 日志记录终止原因与触发时刻，便于回放分析。
+## Further Implementation Suggestions
+- Move termination conditions into core systems (C++) to ensure consistency.
+- Support per-side and per-entity termination rules in scenarios.
+- Log the termination reason and trigger time to make replay analysis easier.

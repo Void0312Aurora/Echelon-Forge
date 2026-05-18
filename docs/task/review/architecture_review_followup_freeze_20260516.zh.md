@@ -4,10 +4,10 @@
 
 关联文档：
 
-- [项目结构与架构设计审查报告](/home/void0312/Workshop/CMO/docs/task/review/architecture_review_20260516.zh.md)
-- [Code Layer Map](/home/void0312/Workshop/CMO/docs/manual/src_layer_map.md)
-- [src 分层边界](/home/void0312/Workshop/CMO/src/README.md)
-- [src 分层重构冻结记录](/home/void0312/Workshop/CMO/docs/plan/architecture/src_layered_refactor_freeze.zh.md)
+- [项目结构与架构设计审查报告](architecture_review_20260516.zh.md)
+- [Code Layer Map](../../manual/src_layer_map.md)
+- [src 分层边界](../../../src/README.md)
+- [src 分层重构冻结记录](../../plan/architecture/src_layered_refactor_freeze.zh.md)
 
 文档定位：
 
@@ -108,7 +108,7 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 - 新增 `.github/workflows/` 下的最小 CI workflow
 - 必要时允许新增极少量 CI bootstrap helper
-- 允许更新 [README.md](/home/void0312/Workshop/CMO/README.md) 中的本地复现说明
+- 允许更新 [README.md](../../../README.md) 中的本地复现说明
 
 推荐首批验证集合：
 
@@ -133,14 +133,14 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 当前执行记录：
 
-1. 已新增 [ci-smoke.yml](/home/void0312/Workshop/CMO/.github/workflows/ci-smoke.yml)。
+1. 已新增 [ci-smoke.yml](../../../.github/workflows/ci-smoke.yml)。
 2. workflow 当前覆盖：
    - `.venv` 初始化
    - `cmake -S . -B build-workshop`
    - `cmake --build build-workshop --target ef_core ef_py`
    - `bash tools/maintenance/cmo_env.sh validate`
    - 核心 smoke pytest 集合
-3. 已在 [README.md](/home/void0312/Workshop/CMO/README.md) 补充与 workflow 对应的本地复现命令。
+3. 已在 [README.md](../../../README.md) 补充与 workflow 对应的本地复现命令。
 4. 已完成本地等价 smoke 验收：
    - `source tools/maintenance/cmo_env.sh`
    - `cmo_env_validate`
@@ -151,16 +151,16 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 目标：
 
-- 在现有 [tools/maintenance/cmo_env.sh](/home/void0312/Workshop/CMO/tools/maintenance/cmo_env.sh) 基础上补显式校验能力。
+- 在现有 [tools/maintenance/cmo_env.sh](../../../tools/maintenance/cmo_env.sh) 基础上补显式校验能力。
 - 进一步收口分散的 `.venv` / `CMO_BUILD_DIR` / `PYTHONPATH` 手写示例。
 
 冻结范围：
 
-- [tools/maintenance/cmo_env.sh](/home/void0312/Workshop/CMO/tools/maintenance/cmo_env.sh)
-- [tools/maintenance/README.md](/home/void0312/Workshop/CMO/tools/maintenance/README.md)
-- [README.md](/home/void0312/Workshop/CMO/README.md)
-- [tools/README.md](/home/void0312/Workshop/CMO/tools/README.md)
-- [tests/README.md](/home/void0312/Workshop/CMO/tests/README.md)
+- [tools/maintenance/cmo_env.sh](../../../tools/maintenance/cmo_env.sh)
+- [tools/maintenance/README.md](../../../tools/maintenance/README.md)
+- [README.md](../../../README.md)
+- [tools/README.md](../../../tools/README.md)
+- [tests/README.md](../../../tests/README.md)
 
 明确不做：
 
@@ -176,14 +176,14 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 当前执行记录：
 
-1. 已为 [tools/maintenance/cmo_env.sh](/home/void0312/Workshop/CMO/tools/maintenance/cmo_env.sh) 增加显式 `validate`/`summary`/`python` 脚本模式。
+1. 已为 [tools/maintenance/cmo_env.sh](../../../tools/maintenance/cmo_env.sh) 增加显式 `validate`/`summary`/`python` 脚本模式。
 2. `validate` 现可区分以下常见失败：
    - 缺少 `.venv/bin/python`
    - 缺少可用 build 目录
    - build 目录存在但缺少 `ef_py` 产物
-3. 已将 [README.md](/home/void0312/Workshop/CMO/README.md) 中主线训练、评估、contract、pytest 示例收口到 `source tools/maintenance/cmo_env.sh` + `cmo_env_validate` + `cmo_python ...`。
-4. 已更新 [tools/maintenance/README.md](/home/void0312/Workshop/CMO/tools/maintenance/README.md) 记录统一入口与脚本模式。
-5. 已将 [.github/workflows/ci-smoke.yml](/home/void0312/Workshop/CMO/.github/workflows/ci-smoke.yml) 的环境校验步骤切换为 `bash tools/maintenance/cmo_env.sh validate`。
+3. 已将 [README.md](../../../README.md) 中主线训练、评估、contract、pytest 示例收口到 `source tools/maintenance/cmo_env.sh` + `cmo_env_validate` + `cmo_python ...`。
+4. 已更新 [tools/maintenance/README.md](../../../tools/maintenance/README.md) 记录统一入口与脚本模式。
+5. 已将 [.github/workflows/ci-smoke.yml](../../../.github/workflows/ci-smoke.yml) 的环境校验步骤切换为 `bash tools/maintenance/cmo_env.sh validate`。
 
 ### WP-C：`scenarios/` 版本策略澄清与仓库规则对齐
 
@@ -194,9 +194,9 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 冻结范围：
 
-- [.gitignore](/home/void0312/Workshop/CMO/.gitignore)
-- [README.md](/home/void0312/Workshop/CMO/README.md)
-- [scenarios/README.md](/home/void0312/Workshop/CMO/scenarios/README.md)
+- [.gitignore](../../../.gitignore)
+- [README.md](../../../README.md)
+- [scenarios/README.md](../../../scenarios/README.md)
 - 必要时允许新增一份简短的 artifact / scenario 策略说明文档
 
 默认方向：
@@ -218,29 +218,29 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 当前执行记录：
 
-1. 已更新 [.gitignore](/home/void0312/Workshop/CMO/.gitignore)，取消 `scenarios/` ignore，并保留 `experiments/`、`datasets/`、`output/` 为默认忽略的运行产物目录。
-2. 已在 [README.md](/home/void0312/Workshop/CMO/README.md) 增补仓库保留策略摘要，明确：
+1. 已更新 [.gitignore](../../../.gitignore)，取消 `scenarios/` ignore，并保留 `experiments/`、`datasets/`、`output/` 为默认忽略的运行产物目录。
+2. 已在 [README.md](../../../README.md) 增补仓库保留策略摘要，明确：
    - `scenarios/` 与 `examples/config/` 属于版本管理的主线输入
    - `experiments/`、`datasets/`、`output/` 属于运行/产物工作区
-3. 已更新 [scenarios/README.md](/home/void0312/Workshop/CMO/scenarios/README.md)，把 `scenarios/` 明确为 git 追踪的 canonical 输入面，并补充“仅服务单次实验的 scenario 不应提升为主线 scenario”的保留边界。
-4. 已更新 [docs/reference_artifacts.md](/home/void0312/Workshop/CMO/docs/reference_artifacts.md)，补充 repo input 与 artifact workspace 的边界说明，避免后续再次把运行目录误当作长期主线来源。
+3. 已更新 [scenarios/README.md](../../../scenarios/README.md)，把 `scenarios/` 明确为 git 追踪的 canonical 输入面，并补充“仅服务单次实验的 scenario 不应提升为主线 scenario”的保留边界。
+4. 已更新 [docs/reference_artifacts.md](../../reference_artifacts.md)，补充 repo input 与 artifact workspace 的边界说明，避免后续再次把运行目录误当作长期主线来源。
 
 ### WP-D：`train.py` 第一阶段入口瘦身
 
 目标：
 
-- 先对 [train.py](/home/void0312/Workshop/CMO/train.py) 做第一阶段瘦身。
+- 先对 [train.py](../../../train.py) 做第一阶段瘦身。
 - 把 CLI 解析/调度与训练主循环/环境构造的核心逻辑分离。
 
 冻结范围：
 
-- [train.py](/home/void0312/Workshop/CMO/train.py)
+- [train.py](../../../train.py)
 - 允许新增 `python/training/` 或等价主线子包
 - 允许更新训练入口相关 README 与最小 smoke 测试
 
 明确不做：
 
-1. 不在本阶段同步重写 [world_model_train.py](/home/void0312/Workshop/CMO/world_model_train.py)。
+1. 不在本阶段同步重写 [world_model_train.py](../../../world_model_train.py)。
 2. 不改变现有 `train.py` CLI 参数表面。
 3. 不借此把 `python/rl/`、`gym_envs/`、callback 全面重构一遍。
 
@@ -256,7 +256,7 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 当前执行记录：
 
-1. 已新增 [python/training/](/home/void0312/Workshop/CMO/python/training/README.md) 子域，作为 `train.py` 第一阶段入口瘦身的承接位置。
+1. 已新增 [python/training/](../../../python/training/README.md) 子域，作为 `train.py` 第一阶段入口瘦身的承接位置。
 2. 已将 `train.py` 的以下入口职责下沉到新子域：
    - CLI 参数表
    - scenario / train_config 路径校验
@@ -264,11 +264,11 @@ cmake --build build-workshop --target ef_core ef_py -j4
    - 实验目录、resume / interrupted checkpoint、backup、lock 文件处理
    - seed 与 PyTorch runtime bootstrap
    - 训练开始前的统一运行时摘要打印与 execution visual rollout memory warning
-3. [train.py](/home/void0312/Workshop/CMO/train.py) 现保留：
+3. [train.py](../../../train.py) 现保留：
    - vec-env/backend 构造
    - SB3/AdaptiveKLPPO 模型创建与 checkpoint 初始化
    - callback / probe / learn / save 主循环
-4. 已新增聚焦 bootstrap 的 smoke 测试 [tests/training/test_train_bootstrap.py](/home/void0312/Workshop/CMO/tests/training/test_train_bootstrap.py)。
+4. 已新增聚焦 bootstrap 的 smoke 测试 [tests/training/test_train_bootstrap.py](../../../tests/training/test_train_bootstrap.py)。
 5. 已验证 `train.py` CLI 表面兼容仍保持可用：
    - `cmo_python train.py --help`
    - `cmo_python -m pytest -q tests/training/test_train_bootstrap.py`

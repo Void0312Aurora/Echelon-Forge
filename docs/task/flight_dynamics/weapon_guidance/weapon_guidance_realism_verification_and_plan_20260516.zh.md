@@ -4,13 +4,13 @@
 
 关联输入：
 
-- [武器系统与制导回路现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [DefaultGuidanceModel](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [DefaultEffectsModel](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
-- [DamageSystem / ProximityFuze](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
-- [SimulationKernel 武器 API](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [DefaultSensorModel](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [EW System](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h)
+- [武器系统与制导回路现实性分析](weapon_guidance_realism_analysis_20260516.zh.md)
+- [DefaultGuidanceModel](../../../../src/models/weapons/default_guidance_model.cpp)
+- [DefaultEffectsModel](../../../../src/models/weapons/default_effects_model.cpp)
+- [DamageSystem / ProximityFuze](../../../../src/systems/combat/damage_system.h)
+- [SimulationKernel 武器 API](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [DefaultSensorModel](../../../../src/models/systems/default_sensor_model.cpp)
+- [EW System](../../../../src/systems/systems/ew_system.h)
 
 文档定位：
 
@@ -26,7 +26,7 @@
 ### A.1 已核实属实的结论
 
 1. `PN 目前并不是“加速度制导 + 自动驾驶仪”`，而是“LOS 角速率驱动的速度向量旋转”。
-   - 代码位置：[default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
+   - 代码位置：[default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
    - 具体表现：
      - `omega = (R x Vrel) / |R|^2` 后直接形成 `rate_x/y/z`。
      - 使用 Rodrigues 旋转更新速度方向。
@@ -34,7 +34,7 @@
    - 这意味着当前模型没有“法向加速度指令 -> 过载约束 -> 弹体响应”这一层。
 
 2. `导弹能量学当前基本缺失` 属实，而且比原文档说得更明确。
-   - 代码位置：[default_guidance_model.cpp:266](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp:266)
+   - 代码位置：[default_guidance_model.cpp:266](../../../../src/models/weapons/default_guidance_model.cpp:266)
    - 当前导弹不存在：
      - 助推/续航/滑翔分段
      - 阻力随速度/高度变化
@@ -43,21 +43,21 @@
    - 发射时虽然继承了载机初速，但下一次 guidance tick 就被重置为 `max_speed`。
 
 3. `导引计算仍直接使用目标真值` 属实。
-   - 代码位置：[default_guidance_model.cpp:117](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp:117)
+   - 代码位置：[default_guidance_model.cpp:117](../../../../src/models/weapons/default_guidance_model.cpp:117)
    - 当前虽然先从导弹自身 `ContactList` 里选目标，但 PN 计算阶段仍直接读取目标的 `Transform` 和 `Velocity`。
    - 因此现有实现是“传感器决定看见谁，真值决定怎么打”，并不是真正意义上的 seeker-only guidance。
 
 4. `诱饵/干扰当前只是粗糙近似` 属实。
    - 导引头侧：
-     - [default_guidance_model.cpp:93](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp:93) 仅按 `signal_strength` 选最强目标。
+     - [default_guidance_model.cpp:93](../../../../src/models/weapons/default_guidance_model.cpp:93) 仅按 `signal_strength` 选最强目标。
    - 传感器侧：
-     - [default_sensor_model.cpp:252](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp:252) 对噪声压制干扰仅做一个 burn-through 距离门限。
-     - [default_sensor_model.cpp:268](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp:268) 对热诱饵仅用 `Lifetime` 判定为“flare-like high IR source”。
+     - [default_sensor_model.cpp:252](../../../../src/models/systems/default_sensor_model.cpp:252) 对噪声压制干扰仅做一个 burn-through 距离门限。
+     - [default_sensor_model.cpp:268](../../../../src/models/systems/default_sensor_model.cpp:268) 对热诱饵仅用 `Lifetime` 判定为“flare-like high IR source”。
    - 投放侧：
-     - [ew_system.h](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h) 仅生成一个低速高 RCS 的 chaff 实体或继承速度的 flare 实体，没有时间强度曲线、角分离逻辑和 kinematic rejection。
+     - [ew_system.h](../../../../src/systems/systems/ew_system.h) 仅生成一个低速高 RCS 的 chaff 实体或继承速度的 flare 实体，没有时间强度曲线、角分离逻辑和 kinematic rejection。
 
 5. `近炸引信当前是最近点启发式，不是定向/预测式引信` 属实。
-   - 代码位置：[damage_system.h](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
+   - 代码位置：[damage_system.h](../../../../src/systems/combat/damage_system.h)
    - 当前逻辑是：
      - 跟踪距离最小值
      - 一旦开始远离，且最近距离小于 `fuse_distance`，则判为可起爆
@@ -65,16 +65,16 @@
    - 这不区分前向破片锥、相对方位、range-rate lead trigger。
 
 6. `毁伤模型当前是 HP 与几何命中盒并存的双轨模型` 属实。
-   - 代码位置：[default_effects_model.cpp:116](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp:116)
+   - 代码位置：[default_effects_model.cpp:116](../../../../src/models/weapons/default_effects_model.cpp:116)
    - HP 路径可直接摧毁实体，几何路径则会进一步做系统级毁伤。
    - 这两条路径的物理含义不统一。
 
 7. `命中盒体轴坐标变换存在姿态近似` 属实。
-   - 当前仓库其实已经有共享变换工具 [common.h](/home/void0312/Workshop/CMO/src/components/basic/common.h)，支持完整 `heading/pitch/roll` 的 `world_to_body`。
-   - [default_effects_model.cpp:32](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp:32) 仍在使用本地的简化 `world_to_body()`，且 `local_z = dz`，忽略了 pitch/roll。
+   - 当前仓库其实已经有共享变换工具 [common.h](../../../../src/components/basic/common.h)，支持完整 `heading/pitch/roll` 的 `world_to_body`。
+   - [default_effects_model.cpp:32](../../../../src/models/weapons/default_effects_model.cpp:32) 仍在使用本地的简化 `world_to_body()`，且 `local_z = dz`，忽略了 pitch/roll。
 
 8. `发射包线当前基本不存在` 属实。
-   - 代码位置：[simulation_kernel_weapon_api.cpp:79](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp:79)
+   - 代码位置：[simulation_kernel_weapon_api.cpp:79](../../../../src/core/engine/simulation_kernel_weapon_api.cpp:79)
    - 当前只要求：
      - 有接触
      - 有弹
@@ -108,20 +108,20 @@
    - 当前默认值确实夸张：
      - `seeker_fov_deg = 180`
      - `seeker_lock_range = 30000`
-   - 但这些值来自 [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp) 的默认 tuning，而不是框架硬编码成不可改。
+   - 但这些值来自 [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp) 的默认 tuning，而不是框架硬编码成不可改。
 
 ### A.3 需要补充的新结论
 
 1. `当前代码已经具备导弹真实化所需的一部分公共底座，可复用而不必重写物理内核`。
    - 可直接复用：
-     - [aero_state_system.h](/home/void0312/Workshop/CMO/src/systems/physics/aero_state_system.h) 的 `dynamic_pressure` / `Mach`
-     - [force_system.h](/home/void0312/Workshop/CMO/src/systems/physics/force_system.h) 的 atmosphere access
-     - [common.h](/home/void0312/Workshop/CMO/src/components/basic/common.h) 的 body/world 坐标变换
-     - [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp) 的 detection noise / track memory / EW hooks
+     - [aero_state_system.h](../../../../src/systems/physics/aero_state_system.h) 的 `dynamic_pressure` / `Mach`
+     - [force_system.h](../../../../src/systems/physics/force_system.h) 的 atmosphere access
+     - [common.h](../../../../src/components/basic/common.h) 的 body/world 坐标变换
+     - [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp) 的 detection noise / track memory / EW hooks
    - 所以后续不必做完整 6DoF missile body dynamics，先做 `3DoF + accel/autopilot surrogate + seeker state` 就能显著提升可信度。
 
 2. `当前 Missile 组件字段不够承载真实化参数`。
-   - 代码位置：[weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
+   - 代码位置：[weapon.h](../../../../src/components/combat/weapon.h)
    - 缺少的关键状态包括：
      - 推进段时间/推力/质量
      - 当前 seeker 模式
@@ -132,8 +132,8 @@
 
 3. `当前测试树已经有合适挂点，但还没有真实性守门测试`。
    - 已有武器链测试主要在：
-     - [test_air_combat_1v1_fire_missile.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
-     - [test_air_combat_1v1_fixture.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fixture.py)
+     - [test_air_combat_1v1_fire_missile.py](../../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
+     - [test_air_combat_1v1_fixture.py](../../../../tests/runtime/test_air_combat_1v1_fixture.py)
    - 目前主要覆盖“能否发射、能否看见、是否大致能杀伤”，还没有：
      - 能量衰减
      - PN 过载约束
@@ -161,7 +161,7 @@
 
 文件落点：
 
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
+- [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
 
 建议新增字段：
 
@@ -206,7 +206,7 @@
 
 文件落点：
 
-- [weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
+- [weapon.h](../../../../src/components/combat/weapon.h)
 
 建议新增运行时状态：
 
@@ -233,8 +233,8 @@
 
 主要修改文件：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
 
 实现方式：
 
@@ -277,7 +277,7 @@
 
 主要修改文件：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
 
 建议分两步走：
 
@@ -303,8 +303,8 @@
 
 主要修改文件：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [sensor.h](../../../../src/components/systems/sensor.h)
 
 #### 1. 先切断 guidance 对 truth position/velocity 的依赖
 
@@ -346,10 +346,10 @@
 
 主要修改文件：
 
-- [ew_system.h](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h)
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [ew.h](/home/void0312/Workshop/CMO/src/components/systems/ew.h)
+- [ew_system.h](../../../../src/systems/systems/ew_system.h)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [ew.h](../../../../src/components/systems/ew.h)
 
 #### 1. Flare 简化
 
@@ -395,7 +395,7 @@
 
 主要修改文件：
 
-- [damage_system.h](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
+- [damage_system.h](../../../../src/systems/combat/damage_system.h)
 
 建议逻辑：
 
@@ -422,21 +422,21 @@
 
 主要修改文件：
 
-- [default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
-- [damage.h](/home/void0312/Workshop/CMO/src/components/combat/damage.h)
+- [default_effects_model.cpp](../../../../src/models/weapons/default_effects_model.cpp)
+- [damage.h](../../../../src/components/combat/damage.h)
 
 建议改造：
 
 1. 降低 `Health` 的主导地位
 2. `SystemHealth` 改为连续降级
 3. functional consequence 也改为连续
-4. 命中盒坐标变换统一改用 [common.h](/home/void0312/Workshop/CMO/src/components/basic/common.h) 的 `Math::world_to_body`
+4. 命中盒坐标变换统一改用 [common.h](../../../../src/components/basic/common.h) 的 `Math::world_to_body`
 
 ### B.8 发射包线
 
 主要修改文件：
 
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
+- [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
 
 第一阶段先做 4 个硬门槛：
 

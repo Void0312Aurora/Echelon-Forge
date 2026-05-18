@@ -4,24 +4,24 @@
 
 关联文件：
 
-- [气动状态系统](/home/void0312/Workshop/CMO/src/systems/physics/aero_state_system.h)
-- [力系统（重力/推力）](/home/void0312/Workshop/CMO/src/systems/physics/force_system.h)
-- [气动系统（升力/阻力/力矩）](/home/void0312/Workshop/CMO/src/systems/physics/aerodynamics_system.h)
-- [地面接触系统](/home/void0312/Workshop/CMO/src/systems/physics/ground_contact_system.h)
-- [旋转积分系统](/home/void0312/Workshop/CMO/src/systems/physics/rotational_system.h)
-- [平移积分系统](/home/void0312/Workshop/CMO/src/systems/physics/leapfrog_system.h)
-- [飞控模型](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
-- [飞控系统入口](/home/void0312/Workshop/CMO/src/systems/physics/control_system.h)
-- [动力学组件定义](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
-- [力/力矩/惯量组件](/home/void0312/Workshop/CMO/src/components/physics/forces.h)
-- [气动参考几何组件](/home/void0312/Workshop/CMO/src/components/systems/logistics.h)（MassProperties）
-- [物理引擎升级路线图](/home/void0312/Workshop/CMO/docs/forward/physics_engine_roadmap.md)
-- [引擎能力清单](/home/void0312/Workshop/CMO/docs/manual/engine_capabilities.md)
-- [物理引擎库存](/home/void0312/Workshop/CMO/docs/manual/physics_engine_inventory.md)
-- [空战 1v1 切入分析](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
-- [空战 1v1 训练烟测进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_training_smoke_progress_20260516.zh.md)
-- [空战 1v1 深失速根因跟进](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
-- [首批真实性守门测试](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
+- [气动状态系统](../../../../src/systems/physics/aero_state_system.h)
+- [力系统（重力/推力）](../../../../src/systems/physics/force_system.h)
+- [气动系统（升力/阻力/力矩）](../../../../src/systems/physics/aerodynamics_system.h)
+- [地面接触系统](../../../../src/systems/physics/ground_contact_system.h)
+- [旋转积分系统](../../../../src/systems/physics/rotational_system.h)
+- [平移积分系统](../../../../src/systems/physics/leapfrog_system.h)
+- [飞控模型](../../../../src/models/air/default_control_model.cpp)
+- [飞控系统入口](../../../../src/systems/physics/control_system.h)
+- [动力学组件定义](../../../../src/components/physics/dynamics.h)
+- [力/力矩/惯量组件](../../../../src/components/physics/forces.h)
+- [气动参考几何组件](../../../../src/components/systems/logistics.h)（MassProperties）
+- [物理引擎升级路线图](../../../forward/physics_engine_roadmap.md)
+- [引擎能力清单](../../../manual/engine_capabilities.md)
+- [物理引擎库存](../../../manual/physics_engine_inventory.md)
+- [空战 1v1 切入分析](../../air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
+- [空战 1v1 训练烟测进展](../../air_combat/air_combat_1v1_training_smoke_progress_20260516.zh.md)
+- [空战 1v1 深失速根因跟进](../../air_combat/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
+- [首批真实性守门测试](../../../../tests/runtime/test_flight_dynamics_realism_guards.py)
 
 文档定位：
 
@@ -432,7 +432,7 @@ pitch break 的缺失尤其关键——真实飞机失速时压力中心后移�
 
 本轮新增：
 
-- [tests/runtime/test_flight_dynamics_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
+- [tests/runtime/test_flight_dynamics_realism_guards.py](../../../../tests/runtime/test_flight_dynamics_realism_guards.py)
 
 覆盖内容：
 

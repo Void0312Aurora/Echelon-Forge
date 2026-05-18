@@ -4,9 +4,9 @@
 
 关联文档：
 
-- [海战现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
-- [海战现实性分层清单与当前场景下一步计划](/home/void0312/Workshop/CMO/docs/task/naval/naval_realism_layering_and_next_step_plan_20260516.zh.md)
-- [海战后续委派执行单](/home/void0312/Workshop/CMO/docs/task/naval/naval_delegated_execution_backlog_20260517.zh.md)
+- [海战现实性分析](../flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
+- [海战现实性分层清单与当前场景下一步计划](naval_realism_layering_and_next_step_plan_20260516.zh.md)
+- [海战后续委派执行单](naval_delegated_execution_backlog_20260517.zh.md)
 
 本文档定位：
 

@@ -4,24 +4,24 @@
 
 关联文件：
 
-- [ShipMotion 系统（舰船运动学）](/home/void0312/Workshop/CMO/src/systems/naval/ship_motion_system.h)
-- [ShipPlatform 组件定义](/home/void0312/Workshop/CMO/src/components/naval/ship_platform.h)
-- [NavalTaskingEnums（海军任务枚举）](/home/void0312/Workshop/CMO/src/components/tasking/naval/naval_tasking_enums.h)
-- [TaskOrderNaval（海军任务指令）](/home/void0312/Workshop/CMO/src/components/tasking/naval/task_order_naval.h)
-- [LeaderIntentNaval（海军指挥意图）](/home/void0312/Workshop/CMO/src/components/tasking/naval/leader_intent_naval.h)
-- [PilotReportNaval（海军报告）](/home/void0312/Workshop/CMO/src/components/tasking/naval/pilot_report_naval.h)
-- [DDG-51 单位定义](/home/void0312/Workshop/CMO/examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)
-- [T-AKE-1 单位定义](/home/void0312/Workshop/CMO/examples/config/database/ships/units/take1_usns_lewis_and_clark.json)
-- [AN/SPS-67(V) 传感器定义](/home/void0312/Workshop/CMO/examples/config/database/ships/modules/sensors/an_sps_67_v_surface_search.json)
-- [辅助舰导航雷达定义](/home/void0312/Workshop/CMO/examples/config/database/ships/modules/sensors/civil_navigation_surface_radar.json)
-- [DDG-51 屏护最小场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
-- [屏护逼近变体场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
-- [海军单位参数参考](/home/void0312/Workshop/CMO/docs/standards/naval/ship_unit_references.md)
-- [海军任务最小结构](/home/void0312/Workshop/CMO/docs/standards/naval/minimal_task_structure.md)
-- [海军测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_ship_database.py)
-- [屏护场景测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
-- [传感器与态势感知分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [武器系统分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+- [ShipMotion 系统（舰船运动学）](../../../../src/systems/naval/ship_motion_system.h)
+- [ShipPlatform 组件定义](../../../../src/components/naval/ship_platform.h)
+- [NavalTaskingEnums（海军任务枚举）](../../../../src/components/tasking/naval/naval_tasking_enums.h)
+- [TaskOrderNaval（海军任务指令）](../../../../src/components/tasking/naval/task_order_naval.h)
+- [LeaderIntentNaval（海军指挥意图）](../../../../src/components/tasking/naval/leader_intent_naval.h)
+- [PilotReportNaval（海军报告）](../../../../src/components/tasking/naval/pilot_report_naval.h)
+- [DDG-51 单位定义](../../../../examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)
+- [T-AKE-1 单位定义](../../../../examples/config/database/ships/units/take1_usns_lewis_and_clark.json)
+- [AN/SPS-67(V) 传感器定义](../../../../examples/config/database/ships/modules/sensors/an_sps_67_v_surface_search.json)
+- [辅助舰导航雷达定义](../../../../examples/config/database/ships/modules/sensors/civil_navigation_surface_radar.json)
+- [DDG-51 屏护最小场景](../../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
+- [屏护逼近变体场景](../../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
+- [海军单位参数参考](../../../standards/naval/ship_unit_references.md)
+- [海军任务最小结构](../../../standards/naval/minimal_task_structure.md)
+- [海军测试](../../../../tests/runtime/test_naval_ship_database.py)
+- [屏护场景测试](../../../../tests/runtime/test_naval_screen_scenario.py)
+- [传感器与态势感知分析（关联）](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [武器系统分析（关联）](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
 
 文档定位：
 
@@ -32,9 +32,9 @@
 
 - 本文档是冻结分析输入，不是当前执行状态看板。
 - 当前海战实际推进与回归情况请优先参见：
-  - [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
-  - [海战后续委派执行单](/home/void0312/Workshop/CMO/docs/task/naval/naval_delegated_execution_backlog_20260517.zh.md)
-  - [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
+  - [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
+  - [海战后续委派执行单](../../naval/naval_delegated_execution_backlog_20260517.zh.md)
+  - [真实化主线与关联子项目当前状态](../program/realism_program_current_status_20260517.zh.md)
 
 ## 补记：`2026-05-17` 收口标记
 

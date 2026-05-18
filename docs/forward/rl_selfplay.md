@@ -1,47 +1,55 @@
-# 强化学习与自博弈前瞻
+# Reinforcement Learning and Self-Play Roadmap
 
-本文件定义强化学习与自博弈的设计路线，确保训练闭环可控、可复现。
+This document defines the design path for reinforcement learning and self-play
+so the training loop remains controllable and reproducible.
 
-## 最小训练闭环（已实现）
-- 单步观测 -> 动作 -> 环境更新 -> 奖励 -> 终止。
-- 动作空间：速率型（转向/加速/爬升/开火）。
-- 对手策略：自博弈（对称策略），或脚本追逐/随机。
+## Minimal Training Loop (Implemented)
+- Single-step observation -> action -> environment update -> reward ->
+  termination.
+- Action space: rate-based commands (turn, accelerate, climb, fire).
+- Opponent policy: self-play (symmetric policy), or scripted chase / random.
 
-## 观测设计建议
-- 相对位置/速度、相对方位、距离。
-- 自身速度/高度/航向、目标速度/高度。
-- 传感器信息：是否探测/锁定、最近一次探测距离。
+## Observation Design Suggestions
+- Relative position / velocity, relative bearing, and distance.
+- Own speed / altitude / heading, target speed / altitude.
+- Sensor information: detected / locked state and most recent detection range.
 
-## 奖励设计建议
-- 主要：击毁奖励、被击毁惩罚。
-- 过程：缩短距离、保持探测、处于有利方位。
-- 约束：高机动惩罚、能量不足惩罚。
+## Reward Design Suggestions
+- Primary: reward for kills, penalty for being killed.
+- Shaping: close distance, maintain detection, hold advantageous aspect.
+- Constraints: penalize excessive maneuvering and low-energy states.
 
-## 终止条件建议
-- 击毁/任务杀伤。
-- 脱战距离持续超过阈值。
-- 弹药耗尽且空中无弹体。
-- 能量过低持续超过阈值。
+## Recommended Termination Conditions
+- Kill / mission kill.
+- Disengagement range remains above threshold for a sustained period.
+- Ammunition depleted and no missiles remain in flight.
+- Low energy remains below threshold for a sustained period.
 
-## 自博弈策略
-- 同步更新：双方同时使用同一训练算法。
-- 历史策略池：随机挑选旧策略对抗，避免过拟合。
-- Elo/胜率评估：跟踪策略演化。
+## Self-Play Strategy
+- Synchronous updates: both sides use the same training algorithm.
+- Historical policy pool: sample older policies at random to avoid
+  overfitting.
+- Elo / win-rate evaluation: track policy evolution over time.
 
-## 基础设施建议
-- 统一日志：记录状态/动作/奖励。
-- 可复现：固定随机种子、记录配置。
-- 训练指标：胜率、平均交战时长、命中率。
+## Infrastructure Suggestions
+- Unified logging: record state, action, and reward.
+- Reproducibility: fix random seeds and record configurations.
+- Training metrics: win rate, average engagement length, hit rate.
 
-## 下一步
-- 引入策略池与评估循环。
-- 将奖励/终止条件配置化（scenario）。
-- 接入深度网络（PyTorch）与 GPU。
+## Next Steps
+- Introduce a policy pool and evaluation loop.
+- Make reward and termination conditions configurable by scenario.
+- Integrate deep networks (PyTorch) and GPU execution.
 
-## 当前实现说明
-- 策略池已实现：`examples/training/train_self_play.py` 支持历史对手采样。
-- 配置化已实现：训练超参、spawn、奖励、终止条件均来自
-  `examples/training/selfplay_config.json`。
-- 自博弈已切换到 PyTorch MLP 策略，可在配置中启用 GPU。
-- 已支持批量采样（多环境）、训练日志输出（胜率/回合长度等）以及断点保存。
-- 新增评估脚本与训练曲线脚本，用于可视化训练与战术回放。
+## Current Implementation Notes
+- The policy pool is implemented: `examples/training/train_self_play.py`
+  supports historical-opponent sampling.
+- Configuration is implemented: training hyperparameters, spawn setup, reward,
+  and termination conditions all come from
+  `examples/training/selfplay_config.json`.
+- Self-play now uses a PyTorch MLP policy and can enable GPU execution in the
+  config.
+- Batched sampling (multi-environment), training-log output (win rate, episode
+  length, etc.), and checkpoint saving are already supported.
+- New evaluation and training-curve scripts are available for visualizing
+  training progress and tactical replay.

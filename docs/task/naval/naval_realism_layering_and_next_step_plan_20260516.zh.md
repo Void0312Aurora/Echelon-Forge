@@ -4,11 +4,11 @@
 
 关联文件：
 
-- [DDG-51 屏护 T-AKE 最小场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
-- [舰船公开参数来源说明](/home/void0312/Workshop/CMO/docs/standards/naval/ship_unit_references.md)
-- [海军任务最小结构说明](/home/void0312/Workshop/CMO/docs/standards/naval/minimal_task_structure.md)
-- [海战运行时测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
-- [海战几何合同](/home/void0312/Workshop/CMO/tests/contracts/unit/naval/naval_screen_contact_report_geometry.json)
+- [DDG-51 屏护 T-AKE 最小场景](../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
+- [舰船公开参数来源说明](../../standards/naval/ship_unit_references.md)
+- [海军任务最小结构说明](../../standards/naval/minimal_task_structure.md)
+- [海战运行时测试](../../../tests/runtime/test_naval_screen_scenario.py)
+- [海战几何合同](../../../tests/contracts/unit/naval/naval_screen_contact_report_geometry.json)
 
 文档定位：
 
@@ -42,7 +42,7 @@
 
 2. **公开参数已落库**
    - 长度、型宽、吃水、排水量、最大航速、经济航速、航程、编制等字段已经进入 `ShipPlatform`。
-   - 参数换算和来源已在 [ship_unit_references.md](/home/void0312/Workshop/CMO/docs/standards/naval/ship_unit_references.md) 说明。
+   - 参数换算和来源已在 [ship_unit_references.md](../../standards/naval/ship_unit_references.md) 说明。
 
 3. **任务关系真实且克制**
    - 当前不是凭空发明“海上 dogfight”，而是从“驱逐舰屏护补给舰”这种现实里常见、语义明确的护航关系切入。

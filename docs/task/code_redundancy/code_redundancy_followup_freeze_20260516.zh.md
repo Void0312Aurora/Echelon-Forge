@@ -3,8 +3,8 @@
 状态：`2026-05-16` 冻结执行版；`2026-05-16` WP-A / WP-B / WP-C 已全部收口
 关联文档：
 
-- [代码冗余与重复逻辑审计报告](/home/void0312/Workshop/CMO/docs/task/code_redundancy/code_redundancy_duplication_audit_20260516.zh.md)
-- [Common / Air / Naval 模块拆分冻结计划](/home/void0312/Workshop/CMO/docs/task/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
+- [代码冗余与重复逻辑审计报告](code_redundancy_duplication_audit_20260516.zh.md)
+- [Common / Air / Naval 模块拆分冻结计划](../common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
 
 文档定位：
 
@@ -114,12 +114,12 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 
 冻结范围：
 
-- [src/core/engine/simulation_kernel_command_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_command_api.cpp)
-- [src/components/command/legacy_command.h](/home/void0312/Workshop/CMO/src/components/command/legacy_command.h)
-- [src/components/command/command_link.h](/home/void0312/Workshop/CMO/src/components/command/command_link.h)
+- [src/core/engine/simulation_kernel_command_api.cpp](../../../src/core/engine/simulation_kernel_command_api.cpp)
+- [src/components/command/legacy_command.h](../../../src/components/command/legacy_command.h)
+- [src/components/command/command_link.h](../../../src/components/command/command_link.h)
 - 必要时允许触及：
-  - [src/systems/core/operation_system.h](/home/void0312/Workshop/CMO/src/systems/core/operation_system.h)
-  - [src/systems/physics/control_system.h](/home/void0312/Workshop/CMO/src/systems/physics/control_system.h)
+  - [src/systems/core/operation_system.h](../../../src/systems/core/operation_system.h)
+  - [src/systems/physics/control_system.h](../../../src/systems/physics/control_system.h)
 
 明确不做：
 
@@ -155,9 +155,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 
 冻结范围：
 
-- [python/rl/control/scripted_takeoff.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_takeoff.py)
-- [python/rl/control/scripted_stable_flight.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_stable_flight.py)
-- [python/rl/control/scripted_landing.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_landing.py)
+- [python/rl/control/scripted_takeoff.py](../../../python/rl/control/scripted_takeoff.py)
+- [python/rl/control/scripted_stable_flight.py](../../../python/rl/control/scripted_stable_flight.py)
+- [python/rl/control/scripted_landing.py](../../../python/rl/control/scripted_landing.py)
 - 允许新增：
   - `python/rl/control/base_scripted_controller.py`
   - 或同目录下的轻量共享 helper 模块
@@ -180,9 +180,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 
 当前执行记录：
 
-1. 已新增 [python/rl/control/base_scripted_controller.py](/home/void0312/Workshop/CMO/python/rl/control/base_scripted_controller.py)，统一 `action_dim/dt` 保存、`obs` 数组解包、零动作构造与 `wrap_deg()`。
-2. 已将 [scripted_takeoff.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_takeoff.py)、[scripted_stable_flight.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_stable_flight.py)、[scripted_landing.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_landing.py) 切换为共享 helper，但未改动控制律主体，也未改动公开类名或构造签名。
-3. 已补齐 [tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json](/home/void0312/Workshop/CMO/tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json) 缺失的 `type: "unit_regression"` 元数据，使其能被统一 contract runner 正常分发执行。
+1. 已新增 [python/rl/control/base_scripted_controller.py](../../../python/rl/control/base_scripted_controller.py)，统一 `action_dim/dt` 保存、`obs` 数组解包、零动作构造与 `wrap_deg()`。
+2. 已将 [scripted_takeoff.py](../../../python/rl/control/scripted_takeoff.py)、[scripted_stable_flight.py](../../../python/rl/control/scripted_stable_flight.py)、[scripted_landing.py](../../../python/rl/control/scripted_landing.py) 切换为共享 helper，但未改动控制律主体，也未改动公开类名或构造签名。
+3. 已补齐 [tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json](../../../tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json) 缺失的 `type: "unit_regression"` 元数据，使其能被统一 contract runner 正常分发执行。
 4. 已完成以下聚焦验证：
    - `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/controllers/scripted_takeoff_takeoff2_throttle.json`
    - `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json`
@@ -203,11 +203,11 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 
 冻结范围：
 
-- [src/components/physics/dynamics.h](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
-- [src/components/systems/logistics.h](/home/void0312/Workshop/CMO/src/components/systems/logistics.h)
-- [src/systems/systems/logistics_system.h](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h)
-- [src/interfaces/python/bindings_command.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_command.cpp)
-- [tests/leader/test_two_ship_contract_fields.py](/home/void0312/Workshop/CMO/tests/leader/test_two_ship_contract_fields.py)
+- [src/components/physics/dynamics.h](../../../src/components/physics/dynamics.h)
+- [src/components/systems/logistics.h](../../../src/components/systems/logistics.h)
+- [src/systems/systems/logistics_system.h](../../../src/systems/systems/logistics_system.h)
+- [src/interfaces/python/bindings_command.cpp](../../../src/interfaces/python/bindings_command.cpp)
+- [tests/leader/test_two_ship_contract_fields.py](../../../tests/leader/test_two_ship_contract_fields.py)
 - 允许新增针对质量组件边界的最小回归测试
 
 明确不做：
@@ -224,18 +224,18 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 
 当前执行记录：
 
-1. 已在 [src/systems/systems/logistics_system.h](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h) 将 `MassUpdate` 收紧为“`Mass` 为运行时分解质量权威，`MassProperties` 仅镜像 `empty/total` 读数”的第一阶段边界：
+1. 已在 [src/systems/systems/logistics_system.h](../../../src/systems/systems/logistics_system.h) 将 `MassUpdate` 收紧为“`Mass` 为运行时分解质量权威，`MassProperties` 仅镜像 `empty/total` 读数”的第一阶段边界：
    - `rigid_mass.fuel_mass_kg` 继续由 `FuelSystem` 驱动；
    - `MassProperties.empty_mass_kg` 与 `current_total_mass_kg` 改为显式镜像 `Mass` 的 `empty` 与 `get_total_kg()`；
    - 因此 `MassProperties.current_total_mass_kg` 不再漏掉 `stores_mass_kg`。
 2. 已新增最小 debug 读回口：
-   - [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-   - [simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
-   - [bindings_core.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
+   - [simulation_kernel.h](../../../src/core/engine/simulation_kernel.h)
+   - [simulation_kernel_observation_api.cpp](../../../src/core/engine/simulation_kernel_observation_api.cpp)
+   - [bindings_core.cpp](../../../src/interfaces/python/bindings_core.cpp)
    用于测试期读取 `[mass_empty, mass_fuel, mass_stores, mass_total, props_empty, props_total]`，未扩展为通用组件暴露面。
 3. 已新增聚焦测试：
-   - [tests/runtime/test_mass_component_boundary.py](/home/void0312/Workshop/CMO/tests/runtime/test_mass_component_boundary.py)
-   - [tests/runtime/test_bindings_command_surface.py](/home/void0312/Workshop/CMO/tests/runtime/test_bindings_command_surface.py)
+   - [tests/runtime/test_mass_component_boundary.py](../../../tests/runtime/test_mass_component_boundary.py)
+   - [tests/runtime/test_bindings_command_surface.py](../../../tests/runtime/test_bindings_command_surface.py)
 4. 已完成以下验收：
    - `cmake --build build-workshop --target ef_py -j4`
    - `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest tests/runtime/test_mass_component_boundary.py -q`

@@ -4,23 +4,23 @@
 
 关联文档：
 
-- [武器系统与制导回路现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [武器系统与制导回路真实化核实与落地方案](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_verification_and_plan_20260516.zh.md)
-- [武器/制导真实化 P0 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_p0_implementation_package_20260516.zh.md)
-- [真实化任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_taskboard_20260516.zh.md)
+- [武器系统与制导回路现实性分析](weapon_guidance_realism_analysis_20260516.zh.md)
+- [武器系统与制导回路真实化核实与落地方案](weapon_guidance_realism_verification_and_plan_20260516.zh.md)
+- [武器/制导真实化 P0 实施包](weapon_guidance_realism_p0_implementation_package_20260516.zh.md)
+- [真实化任务总表](../program/realism_program_taskboard_20260516.zh.md)
 
 关联代码：
 
-- [Missile 组件](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
-- [SimulationKernel 配置接口](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-- [SimulationKernel 发射实现](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [默认制导模型](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [默认传感器模型](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [默认命中效果模型](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
-- [DamageSystem / ProximityFuze](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
-- [DataLinkSystem](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [TrackManagerSystem](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [Python bindings](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
+- [Missile 组件](../../../../src/components/combat/weapon.h)
+- [SimulationKernel 配置接口](../../../../src/core/engine/simulation_kernel.h)
+- [SimulationKernel 发射实现](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [默认制导模型](../../../../src/models/weapons/default_guidance_model.cpp)
+- [默认传感器模型](../../../../src/models/systems/default_sensor_model.cpp)
+- [默认命中效果模型](../../../../src/models/weapons/default_effects_model.cpp)
+- [DamageSystem / ProximityFuze](../../../../src/systems/combat/damage_system.h)
+- [DataLinkSystem](../../../../src/systems/systems/data_link_system.h)
+- [TrackManagerSystem](../../../../src/systems/systems/track_manager_system.h)
+- [Python bindings](../../../../src/interfaces/python/bindings_core.cpp)
 
 文档目的：
 
@@ -38,8 +38,8 @@
 1. guidance 已切断对 target truth `Transform/Velocity` 的直接依赖。
 2. 导弹已有最小 `boost/coast + drag + mass depletion` 趋势。
 3. PN 主回路已切到“加速度指令 + 一阶 autopilot surrogate + 横向过载约束”。
-4. 守门测试 [test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py) 当前通过。
-5. 既有武器链回归 [test_air_combat_1v1_fire_missile.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py) 的关键命中用例已恢复通过。
+4. 守门测试 [test_weapon_guidance_realism_guards.py](../../../../tests/runtime/test_weapon_guidance_realism_guards.py) 当前通过。
+5. 既有武器链回归 [test_air_combat_1v1_fire_missile.py](../../../../tests/runtime/test_air_combat_1v1_fire_missile.py) 的关键命中用例已恢复通过。
 6. `MissileTuning` shared 字段、Python round-trip、launch runtime 初始化、导弹 runtime debug 观测面已经落地。
 7. 武器定义中的 `missile_tuning` 已可经 loader/weapon station 进入发射链路，并可被全局 tuning overlay 覆盖。
 
@@ -92,9 +92,9 @@
 
 建议文件范围：
 
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [bindings_core.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
+- [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
+- [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [bindings_core.cpp](../../../../src/interfaces/python/bindings_core.cpp)
 
 建议最小字段集：
 
@@ -145,9 +145,9 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [dynamics.h](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
-- [weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
+- [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [dynamics.h](../../../../src/components/physics/dynamics.h)
+- [weapon.h](../../../../src/components/combat/weapon.h)
 
 需要收掉的 P0 workaround：
 
@@ -183,9 +183,9 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [bindings_core.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
-- [simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
-- [observation.h](/home/void0312/Workshop/CMO/src/core/interfaces/observation.h)
+- [bindings_core.cpp](../../../../src/interfaces/python/bindings_core.cpp)
+- [simulation_kernel_observation_api.cpp](../../../../src/core/engine/simulation_kernel_observation_api.cpp)
+- [observation.h](../../../../src/core/interfaces/observation.h)
 
 建议新增或补强的导出内容：
 
@@ -224,11 +224,11 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [simulation_kernel_systems.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_systems.cpp)
-- [guidance_system.h](/home/void0312/Workshop/CMO/src/systems/combat/guidance_system.h)
-- [common.h](/home/void0312/Workshop/CMO/src/components/basic/common.h)
-- [movement_system.h](/home/void0312/Workshop/CMO/src/systems/physics/movement_system.h)
-- [leapfrog_system.h](/home/void0312/Workshop/CMO/src/systems/physics/leapfrog_system.h)
+- [simulation_kernel_systems.cpp](../../../../src/core/engine/simulation_kernel_systems.cpp)
+- [guidance_system.h](../../../../src/systems/combat/guidance_system.h)
+- [common.h](../../../../src/components/basic/common.h)
+- [movement_system.h](../../../../src/systems/physics/movement_system.h)
+- [leapfrog_system.h](../../../../src/systems/physics/leapfrog_system.h)
 
 `P1` 推荐目标：
 
@@ -254,9 +254,9 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [unit_definition.h](/home/void0312/Workshop/CMO/src/content/unit_definition.h)
-- [unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
+- [unit_definition.h](../../../../src/content/unit_definition.h)
+- [unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
+- [default_unit_factory.h](../../../../src/models/core/default_unit_factory.h)
 - `examples/config/database/**`
 
 `P1` 目标不是做完整武器库，而是先跑通：
@@ -295,10 +295,10 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
+- [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
 
 #### B. midcourse / datalink / activation range
 
@@ -317,9 +317,9 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [data_link_system.h](../../../../src/systems/systems/data_link_system.h)
+- [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
 
 验收重点：
 
@@ -345,8 +345,8 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
 - `examples/config/database/**`
 
 #### D. fuze / hit / damage layering
@@ -374,8 +374,8 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [damage_system.h](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
-- [default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
+- [damage_system.h](../../../../src/systems/combat/damage_system.h)
+- [default_effects_model.cpp](../../../../src/models/weapons/default_effects_model.cpp)
 
 #### E. countermeasure interaction
 
@@ -392,9 +392,9 @@ bool midcourse_datalink_supported;
 
 建议文件范围：
 
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [ew_system.h](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [ew_system.h](../../../../src/systems/systems/ew_system.h)
 
 ---
 
@@ -426,29 +426,29 @@ bool midcourse_datalink_supported;
 
 建议主文件：
 
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
-- [dynamics.h](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
-- [simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
-- [bindings_core.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
-- [simulation_kernel_systems.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_systems.cpp)
-- [guidance_system.h](/home/void0312/Workshop/CMO/src/systems/combat/guidance_system.h)
-- [unit_definition.h](/home/void0312/Workshop/CMO/src/content/unit_definition.h)
-- [unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
+- [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
+- [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [weapon.h](../../../../src/components/combat/weapon.h)
+- [dynamics.h](../../../../src/components/physics/dynamics.h)
+- [simulation_kernel_observation_api.cpp](../../../../src/core/engine/simulation_kernel_observation_api.cpp)
+- [bindings_core.cpp](../../../../src/interfaces/python/bindings_core.cpp)
+- [simulation_kernel_systems.cpp](../../../../src/core/engine/simulation_kernel_systems.cpp)
+- [guidance_system.h](../../../../src/systems/combat/guidance_system.h)
+- [unit_definition.h](../../../../src/content/unit_definition.h)
+- [unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
+- [default_unit_factory.h](../../../../src/models/core/default_unit_factory.h)
 
 ### 4.2 `P1 深化真实化`
 
 建议主文件：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
-- [damage_system.h](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
-- [ew_system.h](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
+- [data_link_system.h](../../../../src/systems/systems/data_link_system.h)
+- [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
+- [default_effects_model.cpp](../../../../src/models/weapons/default_effects_model.cpp)
+- [damage_system.h](../../../../src/systems/combat/damage_system.h)
+- [ew_system.h](../../../../src/systems/systems/ew_system.h)
 
 ---
 

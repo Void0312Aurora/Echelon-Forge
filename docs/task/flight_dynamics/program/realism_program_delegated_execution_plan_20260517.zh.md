@@ -4,13 +4,13 @@
 
 关联文档：
 
-- [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
-- [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
-- [代码质量审查](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/code_quality_review_realism_wave_20260517.zh.md)
-- [飞行动力学 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
-- [传感器/态势 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_p1_implementation_package_20260517.zh.md)
-- [武器/制导 P1 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_p1_implementation_package_20260517.zh.md)
-- [C2 指挥链待解决问题分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
+- [真实化主线与关联子项目当前状态](realism_program_current_status_20260517.zh.md)
+- [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.zh.md)
+- [代码质量审查](code_quality_review_realism_wave_20260517.zh.md)
+- [飞行动力学 P1 实施包](../flight/flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
+- [传感器/态势 P1 实施包](../sensor_situation/sensor_situation_realism_p1_implementation_package_20260517.zh.md)
+- [武器/制导 P1 实施包](../weapon_guidance/weapon_guidance_realism_p1_implementation_package_20260517.zh.md)
+- [C2 指挥链待解决问题分析](../c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
 
 本文档定位：
 
@@ -21,9 +21,9 @@
 补充口径：
 
 1. 当前总阶段与主阻塞判断，应优先以
-   [真实化主线收束计划](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.zh.md)
+   [真实化主线收束计划](realism_program_convergence_plan_20260517.zh.md)
    和
-   [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
+   [真实化主线与关联子项目当前状态](realism_program_current_status_20260517.zh.md)
    为准。
 2. 本文更适合作为“如何分发/收束 lane”的执行文档，而不是单独承担最新总阶段说明。
 
@@ -67,7 +67,7 @@
 2. 主线程统一验收当前为：
    - `80 passed, 2 subtests passed`
 3. 计划制定时剩余的唯一行为红点
-   - [tests/runtime/test_air_combat_1v1_fixture.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fixture.py)
+   - [tests/runtime/test_air_combat_1v1_fixture.py](../../../../tests/runtime/test_air_combat_1v1_fixture.py)
    - `test_loader_fixture_exposes_hostile_contact_and_weapon_state`
 4. 上述红点已由主线程确认并收口：
    - 根因是 fixture 在第一次看到 raw contact 时就提前停止，直接把 `Tentative / Unknown`
@@ -144,9 +144,9 @@
 
 核心文件面：
 
-- [unit_definition.h](/home/void0312/Workshop/CMO/src/content/unit_definition.h)
-- [unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
+- [unit_definition.h](../../../../src/content/unit_definition.h)
+- [unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
+- [default_unit_factory.h](../../../../src/models/core/default_unit_factory.h)
 
 主线程目标：
 
@@ -164,10 +164,10 @@
 
 核心文件面：
 
-- [simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
-- [bindings_core.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
-- [bindings_command.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_command.cpp)
-- [observation.h](/home/void0312/Workshop/CMO/src/core/interfaces/observation.h)
+- [simulation_kernel_observation_api.cpp](../../../../src/core/engine/simulation_kernel_observation_api.cpp)
+- [bindings_core.cpp](../../../../src/interfaces/python/bindings_core.cpp)
+- [bindings_command.cpp](../../../../src/interfaces/python/bindings_command.cpp)
+- [observation.h](../../../../src/core/interfaces/observation.h)
 
 主线程目标：
 
@@ -291,11 +291,11 @@
 
 验收测试：
 
-1. [test_sensor_situation_realism_p0.py](/home/void0312/Workshop/CMO/tests/runtime/test_sensor_situation_realism_p0.py)
-2. [test_kernel_observation_sanity.py](/home/void0312/Workshop/CMO/tests/runtime/test_kernel_observation_sanity.py)
-3. [test_bindings_command_surface.py](/home/void0312/Workshop/CMO/tests/runtime/test_bindings_command_surface.py)
-4. [test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
-5. [test_flight_dynamics_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
+1. [test_sensor_situation_realism_p0.py](../../../../tests/runtime/test_sensor_situation_realism_p0.py)
+2. [test_kernel_observation_sanity.py](../../../../tests/runtime/test_kernel_observation_sanity.py)
+3. [test_bindings_command_surface.py](../../../../tests/runtime/test_bindings_command_surface.py)
+4. [test_weapon_guidance_realism_guards.py](../../../../tests/runtime/test_weapon_guidance_realism_guards.py)
+5. [test_flight_dynamics_realism_guards.py](../../../../tests/runtime/test_flight_dynamics_realism_guards.py)
 
 ### 3.2 Lane B：Flight Dynamics
 
@@ -317,19 +317,19 @@
 
 推荐文件边界：
 
-- [flight_dynamics_tuning.h](/home/void0312/Workshop/CMO/src/components/physics/flight_dynamics_tuning.h)
-- [propulsion_system.h](/home/void0312/Workshop/CMO/src/systems/physics/propulsion_system.h)
-- [aero_state_system.h](/home/void0312/Workshop/CMO/src/systems/physics/aero_state_system.h)
-- [aerodynamics_system.h](/home/void0312/Workshop/CMO/src/systems/physics/aerodynamics_system.h)
-- [logistics_system.h](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h)
-- [instrument_system.h](/home/void0312/Workshop/CMO/src/systems/physics/instrument_system.h)
-- [default_control_model.cpp](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
+- [flight_dynamics_tuning.h](../../../../src/components/physics/flight_dynamics_tuning.h)
+- [propulsion_system.h](../../../../src/systems/physics/propulsion_system.h)
+- [aero_state_system.h](../../../../src/systems/physics/aero_state_system.h)
+- [aerodynamics_system.h](../../../../src/systems/physics/aerodynamics_system.h)
+- [logistics_system.h](../../../../src/systems/systems/logistics_system.h)
+- [instrument_system.h](../../../../src/systems/physics/instrument_system.h)
+- [default_control_model.cpp](../../../../src/models/air/default_control_model.cpp)
 
 验收测试：
 
-1. [test_flight_dynamics_p0_runtime_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_p0_runtime_guards.py)
-2. [test_flight_dynamics_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
-3. [test_flight_dynamics_tuning_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_tuning_runtime.py)
+1. [test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/test_flight_dynamics_p0_runtime_guards.py)
+2. [test_flight_dynamics_realism_guards.py](../../../../tests/runtime/test_flight_dynamics_realism_guards.py)
+3. [test_flight_dynamics_tuning_runtime.py](../../../../tests/runtime/test_flight_dynamics_tuning_runtime.py)
 
 ### 3.3 Lane C：Sensor + Weapon Modeling
 
@@ -351,11 +351,11 @@
 
 核心文件：
 
-- [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
+- [sensor.h](../../../../src/components/systems/sensor.h)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
+- [track_management.h](../../../../src/components/systems/track_management.h)
+- [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
+- [data_link_system.h](../../../../src/systems/systems/data_link_system.h)
 
 #### C2 Sensor Deeper Modeling
 
@@ -367,8 +367,8 @@
 
 验收测试：
 
-1. [test_sensor_situation_realism_p0.py](/home/void0312/Workshop/CMO/tests/runtime/test_sensor_situation_realism_p0.py)
-2. [test_naval_sensor_realism_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_sensor_realism_runtime.py)
+1. [test_sensor_situation_realism_p0.py](../../../../tests/runtime/test_sensor_situation_realism_p0.py)
+2. [test_naval_sensor_realism_runtime.py](../../../../tests/runtime/test_naval_sensor_realism_runtime.py)
 
 #### C3 Weapon Shared Integration 后续
 
@@ -393,10 +393,10 @@
 
 核心文件：
 
-- [simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
+- [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
+- [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [default_guidance_model.cpp](../../../../src/models/weapons/default_guidance_model.cpp)
+- [default_effects_model.cpp](../../../../src/models/weapons/default_effects_model.cpp)
 
 #### C4 Weapon Deeper Modeling
 
@@ -409,8 +409,8 @@
 
 验收测试：
 
-1. [test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
-2. [test_air_combat_1v1_fire_missile.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
+1. [test_weapon_guidance_realism_guards.py](../../../../tests/runtime/test_weapon_guidance_realism_guards.py)
+2. [test_air_combat_1v1_fire_missile.py](../../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
 
 当前冻结建议：
 
@@ -441,19 +441,19 @@
 
 核心文件：
 
-- [naval_screen.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/behavior_runtime/naval_screen.py)
-- [command_chain.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/behavior_runtime/command_chain.py)
-- [mission_command.h](/home/void0312/Workshop/CMO/src/components/command/mission_command.h)
-- [command_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/command_link_system.h)
-- [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
+- [naval_screen.py](../../../../gym_envs/scenario_loader/behavior_runtime/naval_screen.py)
+- [command_chain.py](../../../../gym_envs/scenario_loader/behavior_runtime/command_chain.py)
+- [mission_command.h](../../../../src/components/command/mission_command.h)
+- [command_link_system.h](../../../../src/systems/systems/command_link_system.h)
+- [data_link_system.h](../../../../src/systems/systems/data_link_system.h)
 - Python `bridge/profile` 与 C++ `mission_command_codec`
 
 验收测试：
 
-1. [test_naval_screen_scenario.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
-2. [test_data_link_qos_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_data_link_qos_runtime.py)
-3. [test_command_link_qos.py](/home/void0312/Workshop/CMO/tests/runtime/test_command_link_qos.py)
-4. [test_weapon_roe_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_roe_runtime.py)
+1. [test_naval_screen_scenario.py](../../../../tests/runtime/test_naval_screen_scenario.py)
+2. [test_data_link_qos_runtime.py](../../../../tests/runtime/test_data_link_qos_runtime.py)
+3. [test_command_link_qos.py](../../../../tests/runtime/test_command_link_qos.py)
+4. [test_weapon_roe_runtime.py](../../../../tests/runtime/test_weapon_roe_runtime.py)
 
 ---
 

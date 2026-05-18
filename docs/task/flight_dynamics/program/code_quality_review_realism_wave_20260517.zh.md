@@ -7,14 +7,14 @@
 
 关联文档：
 
-- [真实化任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_taskboard_20260516.zh.md)
-- [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
-- [真实化主线当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
-- [飞行动力学分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
-- [传感器分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [武器分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [海军分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
-- [C2 分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
+- [真实化任务总表](realism_program_taskboard_20260516.zh.md)
+- [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.zh.md)
+- [真实化主线当前状态](realism_program_current_status_20260517.zh.md)
+- [飞行动力学分析](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
+- [传感器分析](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [武器分析](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+- [海军分析](../naval/naval_realism_analysis_20260516.zh.md)
+- [C2 分析](../c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
 
 文档定位：
 

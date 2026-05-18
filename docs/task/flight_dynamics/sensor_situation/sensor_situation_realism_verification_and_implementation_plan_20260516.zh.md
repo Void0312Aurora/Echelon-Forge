@@ -4,18 +4,18 @@
 
 关联输入：
 
-- [传感器与态势感知现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [DefaultSensorModel](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [SensorSystem](/home/void0312/Workshop/CMO/src/systems/systems/sensor_system.h)
-- [TrackManagerSystem](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [DataLinkSystem](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [EWSystem](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h)
-- [DefaultEnvironmentModel](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp)
-- [Sensor 组件](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [TrackManagement 组件](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [DataLink 组件](/home/void0312/Workshop/CMO/src/components/systems/data_link.h)
-- [Comm 组件](/home/void0312/Workshop/CMO/src/components/systems/comm.h)
-- [UnitDefinition Loader](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
+- [传感器与态势感知现实性分析](sensor_situation_realism_analysis_20260516.zh.md)
+- [DefaultSensorModel](../../../../src/models/systems/default_sensor_model.cpp)
+- [SensorSystem](../../../../src/systems/systems/sensor_system.h)
+- [TrackManagerSystem](../../../../src/systems/systems/track_manager_system.h)
+- [DataLinkSystem](../../../../src/systems/systems/data_link_system.h)
+- [EWSystem](../../../../src/systems/systems/ew_system.h)
+- [DefaultEnvironmentModel](../../../../src/models/environment/default_environment_model.cpp)
+- [Sensor 组件](../../../../src/components/systems/sensor.h)
+- [TrackManagement 组件](../../../../src/components/systems/track_management.h)
+- [DataLink 组件](../../../../src/components/systems/data_link.h)
+- [Comm 组件](../../../../src/components/systems/comm.h)
+- [UnitDefinition Loader](../../../../src/content/unit_definition_loader.cpp)
 
 文档目的：
 
@@ -44,9 +44,9 @@
 
 属实。
 
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp:127) 到 [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp:212) 的探测主链路仍然是：
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp:127) 到 [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp:212) 的探测主链路仍然是：
   `FOV/距离门控 -> range_factor -> aspect_factor -> doppler_factor -> weather/sun factor -> detection_prob`
-- `signal_strength` 在 [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp:235) 之后才计算，且只用于输出 `Detection.signal_strength`，不回馈探测成功率。
+- `signal_strength` 在 [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp:235) 之后才计算，且只用于输出 `Detection.signal_strength`，不回馈探测成功率。
 
 因此“无 SNR 门限、无 Pd(Pfa,SNR) 映射”这个判断准确。
 
@@ -54,8 +54,8 @@
 
 属实。
 
-- [SensorSystem](/home/void0312/Workshop/CMO/src/systems/systems/sensor_system.h:47) 每次扫描直接生成 `fresh_contacts`
-- [TrackManagerSystem](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h:131) 首次看到 contact 即建 track
+- [SensorSystem](../../../../src/systems/systems/sensor_system.h:47) 每次扫描直接生成 `fresh_contacts`
+- [TrackManagerSystem](../../../../src/systems/systems/track_manager_system.h:131) 首次看到 contact 即建 track
 - 没有 tentative/confirmed 状态，也没有 `m_hits / n_scans`
 
 这会直接导致边缘探测条件下的“闪烁目标”被立即视为可用航迹。
@@ -64,8 +64,8 @@
 
 属实。
 
-- [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h:135) 和 [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h:183) 都是“直接覆盖最新测量值”
-- [SystemTrack](/home/void0312/Workshop/CMO/src/components/systems/track_management.h:24) 虽然有 `vx/vy/vz`，但当前系统没有赋值路径
+- [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h:135) 和 [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h:183) 都是“直接覆盖最新测量值”
+- [SystemTrack](../../../../src/components/systems/track_management.h:24) 虽然有 `vx/vy/vz`，但当前系统没有赋值路径
 
 所以“无预测、无平滑、无速度估计、无不确定性”这个判断成立。
 
@@ -73,9 +73,9 @@
 
 属实，而且比原文描述更严重。
 
-- [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h:103) 直接把发送方 `ContactList` 融到接收方 `ContactList`
-- [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h:143) 同时又通过 `CommQueue` 发 `ReportContact`
-- 发消息时使用的是目标实体真值坐标 [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h:147)，不是发送方的测量值或滤波估计
+- [data_link_system.h](../../../../src/systems/systems/data_link_system.h:103) 直接把发送方 `ContactList` 融到接收方 `ContactList`
+- [data_link_system.h](../../../../src/systems/systems/data_link_system.h:143) 同时又通过 `CommQueue` 发 `ReportContact`
+- 发消息时使用的是目标实体真值坐标 [data_link_system.h](../../../../src/systems/systems/data_link_system.h:147)，不是发送方的测量值或滤波估计
 
 所以当前不只是“共享原始接触”，而是**共享 contact 外加真值位置抄送**。
 
@@ -83,8 +83,8 @@
 
 属实。
 
-- [classify_track_from_alliance()](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h:13) 直接读 `Alliance.side`
-- 本地探测和数据链航迹都沿用这条路径 [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h:141)、[track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h:190)
+- [classify_track_from_alliance()](../../../../src/systems/systems/track_manager_system.h:13) 直接读 `Alliance.side`
+- 本地探测和数据链航迹都沿用这条路径 [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h:141)、[track_manager_system.h](../../../../src/systems/systems/track_manager_system.h:190)
 
 这不是“简化 IFF”，而是“绕过 IFF/识别问题”。
 
@@ -92,9 +92,9 @@
 
 属实。
 
-- `check_line_of_sight()` 只检查端点是否埋地 [default_environment_model.cpp](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp:147)
-- `get_weather_attenuation()` 固定返回 `0.0` [default_environment_model.cpp](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp:153)
-- 太阳干扰只是视觉/IR 探测概率乘 `0.1` [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp:106)
+- `check_line_of_sight()` 只检查端点是否埋地 [default_environment_model.cpp](../../../../src/models/environment/default_environment_model.cpp:147)
+- `get_weather_attenuation()` 固定返回 `0.0` [default_environment_model.cpp](../../../../src/models/environment/default_environment_model.cpp:153)
+- 太阳干扰只是视觉/IR 探测概率乘 `0.1` [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp:106)
 
 因此天气、地形遮蔽、杂波、真实太阳背景目前都没有形成可用的物理限制。
 
@@ -104,8 +104,8 @@
 
 原文说“无多传感器融合”，大方向没错，但要更精确：
 
-- `TrackSource::Fused` 已存在于 [track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h:7)
-- 观测接口也已经把 `source` 和 `classification` 暴露到 agent observation [simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp:214)
+- `TrackSource::Fused` 已存在于 [track_management.h](../../../../src/components/systems/track_management.h:7)
+- 观测接口也已经把 `source` 和 `classification` 暴露到 agent observation [simulation_kernel_observation_api.cpp](../../../../src/core/engine/simulation_kernel_observation_api.cpp:214)
 
 真正缺的是：
 
@@ -120,8 +120,8 @@
 
 #### 2. “无无线电地平线”不准确，应改成“数据链地平线已做一阶近似，但传感器 LOS 没做”
 
-- 数据链链路里已经有标准近似公式 `3.57 * (sqrt(h1) + sqrt(h2))` [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h:91)
-- 但传感器 LOS 仍只有端点落地判断 [default_environment_model.cpp](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp:147)
+- 数据链链路里已经有标准近似公式 `3.57 * (sqrt(h1) + sqrt(h2))` [data_link_system.h](../../../../src/systems/systems/data_link_system.h:91)
+- 但传感器 LOS 仍只有端点落地判断 [default_environment_model.cpp](../../../../src/models/environment/default_environment_model.cpp:147)
 
 因此更准确的说法是：
 
@@ -144,7 +144,7 @@
 
 #### 4. “干扰判定为二值”需要修正为“两段式：探测前 burn-through 二值裁掉，探测后无连续退化”
 
-- 在 [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp:252) 以后，若目标带噪声压制干扰且距离大于烧穿距离，直接 `return`
+- 在 [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp:252) 以后，若目标带噪声压制干扰且距离大于烧穿距离，直接 `return`
 - 这意味着不是“先降概率再遮蔽”，而是“探测前硬截断”
 
 所以更准确的说法是：
@@ -157,18 +157,18 @@
 
 这是现有分析文档没点出来，但非常重要。
 
-- `Sensor` 注释里写雷达应接近 `R^4` [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h:19)
+- `Sensor` 注释里写雷达应接近 `R^4` [sensor.h](../../../../src/components/systems/sensor.h:19)
 - 但公开配置里不少雷达都写成了 `2.0`
-  - [an_apg_68.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/modules/sensors/an_apg_68.json:1)
-  - [irbis_e.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/modules/sensors/irbis_e.json:1)
-  - [e3_sentry.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/e3_sentry.json:1)
+  - [an_apg_68.json](../../../../examples/config/database/aircraft/modules/sensors/an_apg_68.json:1)
+  - [irbis_e.json](../../../../examples/config/database/aircraft/modules/sensors/irbis_e.json:1)
+  - [e3_sentry.json](../../../../examples/config/database/aircraft/units/e3_sentry.json:1)
 
 这会系统性高估远距离雷达表现，即便暂时不引入 SNR，也需要尽快纠正。
 
 #### 2. DataLink 配置目前没有真正使用数据库里的 `network_id`
 
-- loader 读了 `has_data_link` 和 `data_link_network_id` [unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp:250)
-- 但默认工厂里实际按阵营强制赋值 `Blue=1, Red=2` [default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h:475)
+- loader 读了 `has_data_link` 和 `data_link_network_id` [unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp:250)
+- 但默认工厂里实际按阵营强制赋值 `Blue=1, Red=2` [default_unit_factory.h](../../../../src/models/core/default_unit_factory.h:475)
 
 这意味着文档中“network_id = side”不只是近似，而是**硬编码覆盖**。
 
@@ -242,8 +242,8 @@
 
 文件：
 
-- [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
+- [sensor.h](../../../../src/components/systems/sensor.h)
+- [unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
 
 建议新增字段：
 
@@ -269,7 +269,7 @@ bool supports_iff_interrogation;
 
 文件：
 
-- [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
+- [sensor.h](../../../../src/components/systems/sensor.h)
 
 建议新增：
 
@@ -292,7 +292,7 @@ bool iff_reply_present;
 
 文件：
 
-- [track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
+- [track_management.h](../../../../src/components/systems/track_management.h)
 
 建议新增：
 
@@ -322,8 +322,8 @@ uint32_t source_mask;            // radar / ir / datalink / rwr
 
 文件：
 
-- [comm.h](/home/void0312/Workshop/CMO/src/components/systems/comm.h)
-- [comm_message.h](/home/void0312/Workshop/CMO/src/components/command/common/comm_message.h)
+- [comm.h](../../../../src/components/systems/comm.h)
+- [comm_message.h](../../../../src/components/command/common/comm_message.h)
 
 建议增加：
 
@@ -353,7 +353,7 @@ int source_code;
 
 文件：
 
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
 
 建议替换当前 `detection_prob` 生成逻辑：
 
@@ -396,8 +396,8 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 文件：
 
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [ew.h](/home/void0312/Workshop/CMO/src/components/systems/ew.h)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
+- [ew.h](../../../../src/components/systems/ew.h)
 
 建议：
 
@@ -439,7 +439,7 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 文件：
 
-- [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
+- [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
 
 建议引入两层对象：
 
@@ -474,7 +474,7 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 文件：
 
-- [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
+- [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
 
 建议针对每条 `SystemTrack` 维护：
 
@@ -517,7 +517,7 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 这是最重要的结构改动之一。
 
-当前 [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h:103) 直接把 sender contact 塞进 receiver contact，会混淆“本地探测”和“共享航迹”。
+当前 [data_link_system.h](../../../../src/systems/systems/data_link_system.h:103) 直接把 sender contact 塞进 receiver contact，会混淆“本地探测”和“共享航迹”。
 
 建议改为：
 
@@ -571,7 +571,7 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 - `src/components/systems/iff.h`
 - `src/systems/systems/iff_system.h`
 
-如果暂时不想加新 system，也可先在 [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h) 中完成：
+如果暂时不想加新 system，也可先在 [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h) 中完成：
 
 - 本地雷达 hit 后，若 owner/target 都有 IFF 组件且在 interrogation 周期到达，则更新 `iff_state`
 - `classification` 不再直接等于 `Alliance.side`
@@ -599,8 +599,8 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 文件：
 
-- [default_environment_model.cpp](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp)
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [default_environment_model.cpp](../../../../src/models/environment/default_environment_model.cpp)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
 
 优先补：
 
@@ -621,7 +621,7 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 #### 3. 天气衰减建议
 
-当前类里已有 `weather_zones_`，但未真正使用 [default_environment_model.cpp](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp:70)。
+当前类里已有 `weather_zones_`，但未真正使用 [default_environment_model.cpp](../../../../src/models/environment/default_environment_model.cpp:70)。
 
 建议：
 
@@ -834,9 +834,9 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 #### 当前项目里最需要先校的项
 
-- [an_apg_68.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/modules/sensors/an_apg_68.json)
-- [irbis_e.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/modules/sensors/irbis_e.json)
-- [e3_sentry.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/e3_sentry.json)
+- [an_apg_68.json](../../../../examples/config/database/aircraft/modules/sensors/an_apg_68.json)
+- [irbis_e.json](../../../../examples/config/database/aircraft/modules/sensors/irbis_e.json)
+- [e3_sentry.json](../../../../examples/config/database/aircraft/units/e3_sentry.json)
 
 当前这些文件最优先要修的不是“绝对最大探测距离”，而是：
 
@@ -855,7 +855,7 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 落点：
 
-- [data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
+- [data_link_system.h](../../../../src/systems/systems/data_link_system.h)
 
 原因：
 
@@ -866,8 +866,8 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 落点：
 
-- [track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
+- [track_management.h](../../../../src/components/systems/track_management.h)
+- [track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
 
 原因：
 
@@ -877,9 +877,9 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 落点：
 
-- [sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [sensor.h](../../../../src/components/systems/sensor.h)
+- [unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
+- [default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
 
 原因：
 
@@ -889,9 +889,9 @@ albersheim_margin_db = snr_db - snr_required_db(pd_ref, pfa, n_pulses)
 
 落点：
 
-- [examples/config/database/aircraft/modules/sensors/an_apg_68.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/modules/sensors/an_apg_68.json)
-- [examples/config/database/aircraft/modules/sensors/irbis_e.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/modules/sensors/irbis_e.json)
-- [examples/config/database/aircraft/units/e3_sentry.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/e3_sentry.json)
+- [examples/config/database/aircraft/modules/sensors/an_apg_68.json](../../../../examples/config/database/aircraft/modules/sensors/an_apg_68.json)
+- [examples/config/database/aircraft/modules/sensors/irbis_e.json](../../../../examples/config/database/aircraft/modules/sensors/irbis_e.json)
+- [examples/config/database/aircraft/units/e3_sentry.json](../../../../examples/config/database/aircraft/units/e3_sentry.json)
 
 原因：
 

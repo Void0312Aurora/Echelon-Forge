@@ -1,19 +1,21 @@
-# `src/tools/experimental` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/tools/experimental/README.md. Review before treating this file as authoritative. -->
 
-`tools/experimental` 保存实验性 C++ probes 和一次性工具。这里的代码不属于维护中的 runtime/tooling surface。
+# `src/tools/experimental` Boundary
 
-## 允许
+`tools/experimental` stores experimental C++ probes and one-off tools. Code here is not part of the maintained runtime/tooling surface.
 
-- phase probe。
-- parity 或性能探索工具。
-- 临时诊断入口。
+## Allowed
 
-## 禁止
+- Phase probes.
+- Parity or performance exploration tools.
+- Temporary diagnostic entry points.
 
-- 默认训练或 runtime 路径。
-- 被核心库代码依赖。
-- 无冻结计划地迁移为维护 API。
+## Prohibited
 
-## 迁移备注
+- Default training or runtime paths.
+- Dependencies from core library code.
+- Migration to a maintained API without a freezing plan.
 
-实验工具若需要长期保留，应先确定目标层级：GPU helper 进入 `gpu/`，runtime API 进入 `runtime/facade`，Python 暴露进入 `interfaces/python`。
+## Migration Notes
+
+Experimental tools that need long-term retention should first determine their target layer: GPU helpers go into `gpu/`, runtime APIs go into `runtime/facade`, Python exposure goes into `interfaces/python`.

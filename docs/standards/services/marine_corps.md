@@ -1,47 +1,51 @@
-# US Marine Corps Profile
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/marine_corps.zh.md. Review before treating this file as authoritative. -->
 
-本文档定义项目在海空地一体 expeditionary 建模时采用的 US Marine Corps profile。
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/marine_corps.md. Review before treating this file as authoritative. -->
 
-## 1. 官方现实基础
+# United States Marine Corps Overview
 
-Marine Corps 官方 `MCDP 1-0` 明确强调 Marine Corps component 与 MAGTF 组织方式。
+This document defines the United States Marine Corps profile adopted by the project for amphibious, ground, and air expeditionary modeling.
 
-公开官方依据：
+## 1. Official Real-World Basis
 
-- [MCDP 1-0 w/ CH 1-3](https://www.marines.mil/News/Publications/MCPEL/Electronic-Library-Display/Article/1323621/mcdp-1-0-w-ch-1-3/)
+The official Marine Corps `MCDP 1-0` explicitly emphasizes the Marine Corps component and MAGTF organization.
 
-该文档官方页面明确指出：
+Public official reference:
 
-- `MCDP 1-0` 关注 Marine Corps component 在 operational level 的作用
-- 以及最大的 MAGTF 如何在 tactical level 组织行动
+- [MCDP 1-0 with Changes 1-3](https://www.marines.mil/News/Publications/MCPEL/Electronic-Library-Display/Article/1323621/mcdp-1-0-w-ch-1-3/)
 
-## 2. 建模结论
+The official page for that document clearly states:
 
-USMC 不是简单的：
+- `MCDP 1-0` focuses on the role of the Marine Corps component at the operational level
+- And how the largest MAGTF organizes operations at the tactical level
 
-- Army ground profile
-- + Navy embarkation
+## 2. Modeling Conclusions
+
+The USMC is not simply:
+
+- An Army ground profile
+- + Navy shipboard operations
 - + Air Force air support
 
-它的现实组织更接近：
+Its actual organization is closer to:
 
 - `Command Element`
 - `Ground Combat Element`
 - `Aviation Combat Element`
 - `Logistics Combat Element`
 
-因此，如果项目未来扩到两栖或 expeditionary 场景，
-Marine Corps 应作为独立 service profile，而不是临时拼接。
+Therefore, if the project expands to amphibious or expeditionary scenarios in the future,
+the Marine Corps should be an independent service profile, rather than an ad-hoc composite.
 
-## 3. 对项目通用模板的影响
+## 3. Impact on Project Common Template
 
-USMC profile 说明 joint/core 层需要支持：
+The USMC profile indicates that the joint/core layer needs to support:
 
-- 多 combat element 并存
-- command element 统一调度
-- 跨 air / ground / logistics 的任务关系
+- Coexistence of multiple combat elements
+- Unified command by the command element
+- Cross-domain mission relationships (air/ground/logistics)
 
-这进一步证明：
+This further demonstrates:
 
-- 通用模板应以 `joint/common core + service profile` 架构为主
-- 而不应从空战单域结构直接向外硬推
+- The common template should be based on a `Joint/Common Core + Service Profile` architecture
+- Rather than directly pushing outward from a single-domain air combat structure

@@ -10,17 +10,17 @@ benchmark context rather than the current mainline.
 
 Related:
 
-- [gpu_execution_mainline_integration_checklist.md](/home/void0312/Workshop/CMO/docs/plan/exact_runtime/gpu_execution_mainline_integration_checklist.md)
-- [gpu_execution_runtime_research_and_design.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_execution_runtime_research_and_design.md)
-- [tools/diagnostics/benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+- [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
+- [gpu_execution_runtime_research_and_design.md](../archive/gpu_execution_runtime_research_and_design.md)
+- [tools/diagnostics/benchmark.py](../../../tools/diagnostics/benchmark.py)
 
 ## Current Baseline
 
 The earlier Phase 4 assumption is now outdated in one important way:
 
 - `AdaptiveKLPPO` already has a maintained CUDA rollout path.
-- [device_dict_rollout_buffer.py](/home/void0312/Workshop/CMO/python/rl/policy_algo/device_dict_rollout_buffer.py) already stores dict rollout tensors on device.
-- [ppo_adaptive_kl.py](/home/void0312/Workshop/CMO/python/rl/policy_algo/ppo_adaptive_kl.py) already uses the device buffer automatically when the CUDA observation bridge is active.
+- [device_dict_rollout_buffer.py](../../../python/rl/policy_algo/device_dict_rollout_buffer.py) already stores dict rollout tensors on device.
+- [ppo_adaptive_kl.py](../../../python/rl/policy_algo/ppo_adaptive_kl.py) already uses the device buffer automatically when the CUDA observation bridge is active.
 - The CUDA bridge therefore already removes the learner-side NumPy round trip for rollout minibatches.
 
 Current benchmark evidence shows the split clearly:
@@ -32,7 +32,7 @@ Current benchmark evidence shows the split clearly:
 ## Research Finding
 
 The next constrained bottleneck is the host observation return contract in
-[world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py).
+[world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py).
 
 Today the maintained adapter still does this on every `reset()` and `step()`:
 
@@ -43,7 +43,7 @@ The observation deep copy is especially suspicious because:
 
 - `WorldBatchVecEnv` is single-process and already owns `buf_obs`.
 - The maintained CUDA bridge reads directly from `buf_obs` anyway.
-- The sibling adapter [shared_memory_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/shared_memory_vec_env.py) already returns shared observation views instead of deep-copying observations.
+- The sibling adapter [shared_memory_vec_env.py](../../../python/rl/runtime/shared_memory_vec_env.py) already returns shared observation views instead of deep-copying observations.
 - Terminal observations still need explicit copies, but the ordinary step/reset return path does not obviously need them.
 
 ## Scope
@@ -72,11 +72,11 @@ Out of scope:
   Terminal observations remain copied in both modes.
 
 - [x] Thread the observation-return mode through the maintained training/runtime entry points.
-  Landed in [train.py](/home/void0312/Workshop/CMO/train.py) and
+  Landed in [train.py](../../../train.py) and
   `benchmark.py --family policy_observation_bridge`.
 
 - [x] Lock regression coverage before any default change.
-  Landed in [test_world_batch_vec_env.py](/home/void0312/Workshop/CMO/tests/world_batch/test_world_batch_vec_env.py):
+  Landed in [test_world_batch_vec_env.py](../../../tests/world_batch/test_world_batch_vec_env.py):
   `view` mode shares memory with `buf_obs`, `copy` mode detaches, and
   `terminal_observation` stays detached.
 
@@ -110,7 +110,7 @@ Out of scope:
 
 ## Benchmark Protocol
 
-Use [tools/diagnostics/benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
+Use [tools/diagnostics/benchmark.py](../../../tools/diagnostics/benchmark.py)
 with the same case and seed, changing only `observation_return_mode`.
 
 Minimum protocol:
@@ -144,7 +144,7 @@ Environment:
 - interpreter: repository `.venv`
 - GPU: NVIDIA GeForce RTX 3090
 - scenario:
-  [takeoff_to_landing_continuous_train_v1.json](/home/void0312/Workshop/CMO/scenarios/combined/takeoff_to_landing_continuous_train_v1.json)
+  [takeoff_to_landing_continuous_train_v1.json](../../../scenarios/combined/takeoff_to_landing_continuous_train_v1.json)
 
 Executed:
 

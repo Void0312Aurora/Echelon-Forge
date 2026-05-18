@@ -29,7 +29,7 @@
 
 ### 3.1 `MassProperties` 在系统注册中重复声明
 
-**位置**：[src/core/engine/simulation_kernel_systems.cpp:78 和 :99](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_systems.cpp)
+**位置**：[src/core/engine/simulation_kernel_systems.cpp:78 和 :99](../../../src/core/engine/simulation_kernel_systems.cpp)
 
 ```cpp
 ecs.component<MassProperties>();  // Line 78
@@ -48,8 +48,8 @@ ecs.component<MassProperties>();  // Line 99 — 完全相同的重复
 **复核结论**：`已完成第一批边界补强`
 
 **位置**：
-- `Mass` 定义于 [src/components/physics/dynamics.h](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
-- `MassProperties` 定义于 [src/components/systems/logistics.h](/home/void0312/Workshop/CMO/src/components/systems/logistics.h)
+- `Mass` 定义于 [src/components/physics/dynamics.h](../../../src/components/physics/dynamics.h)
+- `MassProperties` 定义于 [src/components/systems/logistics.h](../../../src/components/systems/logistics.h)
 
 | 字段 | `Mass` | `MassProperties` |
 |---|---|---|
@@ -69,7 +69,7 @@ ecs.component<MassProperties>();  // Line 99 — 完全相同的重复
 **建议**：将 `empty_mass_kg` 和 `get_total_kg()` 统一到一个权威组件（`MassProperties`），`Mass` 仅保留燃油/挂载重量子字段，或直接废除 `Mass`。
 
 **2026-05-16 WP-C 执行更新**：当前版本已完成第一批边界补强：
-- [src/systems/systems/logistics_system.h](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h) 的 `MassUpdate` 已显式以 `Mass` 为运行时分解质量权威，并同步 `MassProperties.empty_mass_kg/current_total_mass_kg`；
+- [src/systems/systems/logistics_system.h](../../../src/systems/systems/logistics_system.h) 的 `MassUpdate` 已显式以 `Mass` 为运行时分解质量权威，并同步 `MassProperties.empty_mass_kg/current_total_mass_kg`；
 - `MassProperties.current_total_mass_kg` 现改为镜像 `Mass::get_total_kg()`，从而不再漏掉 `stores_mass_kg`；
 - 新增最小 debug 读回口与直接回归测试，用于验证 `Mass` / `MassProperties` 同步关系，而未扩张为通用组件暴露面。
 
@@ -81,7 +81,7 @@ ecs.component<MassProperties>();  // Line 99 — 完全相同的重复
 
 ### 3.3 `command_link_system.h` 三系统复制粘贴
 
-**位置**：[src/systems/systems/command_link_system.h:7-68](/home/void0312/Workshop/CMO/src/systems/systems/command_link_system.h)
+**位置**：[src/systems/systems/command_link_system.h:7-68](../../../src/systems/systems/command_link_system.h)
 
 `CommandLinkMovement`、`CommandLinkAction`、`CommandLinkMission` 三个系统包含完全相同的逻辑——仅操作不同组件类型：
 
@@ -104,7 +104,7 @@ pending[i].active = false;
 
 ### 3.4 Python 侧手动维护 C++ 结构体字段镜像
 
-**位置**：[gym_envs/leader_env.py:83-177](/home/void0312/Workshop/CMO/gym_envs/leader_env.py)
+**位置**：[gym_envs/leader_env.py:83-177](../../../gym_envs/leader_env.py)
 
 ```python
 _TASK_ORDER_FIELDS = (
@@ -204,8 +204,8 @@ else if (cmd && cmd->active) { throttle = cmd->throttle_cmd; }
 **复核结论**：`部分成立`
 
 **位置**：
-- [python/rl/profile/common_core_defaults.py](/home/void0312/Workshop/CMO/python/rl/profile/common_core_defaults.py) (132 行) — 底层原语
-- [python/rl/tasking/common_core_profile.py](/home/void0312/Workshop/CMO/python/rl/tasking/common_core_profile.py) (630 行) — 包裹层
+- [python/rl/profile/common_core_defaults.py](../../../python/rl/profile/common_core_defaults.py) (132 行) — 底层原语
+- [python/rl/tasking/common_core_profile.py](../../../python/rl/tasking/common_core_profile.py) (630 行) — 包裹层
 
 几乎每个底层函数在上层都有一个 `_` 前缀版本：
 
@@ -225,7 +225,7 @@ else if (cmd && cmd->active) { throttle = cmd->throttle_cmd; }
 
 ### 4.3 `leader_env.py` 1752 行：环境逻辑与命令策略混合
 
-**位置**：[gym_envs/leader_env.py](/home/void0312/Workshop/CMO/gym_envs/leader_env.py) — 全项目最长的 Python 文件
+**位置**：[gym_envs/leader_env.py](../../../gym_envs/leader_env.py) — 全项目最长的 Python 文件
 
 该文件混合了：
 - 环境生命周期（`step/reset/close`）
@@ -245,8 +245,8 @@ else if (cmd && cmd->active) { throttle = cmd->throttle_cmd; }
 **复核结论**：`部分成立`
 
 **位置**：
-- [python/rl/profile/air_profile.py](/home/void0312/Workshop/CMO/python/rl/profile/air_profile.py) (31 个函数)
-- [python/rl/profile/naval_profile.py](/home/void0312/Workshop/CMO/python/rl/profile/naval_profile.py) (18 个函数)
+- [python/rl/profile/air_profile.py](../../../python/rl/profile/air_profile.py) (31 个函数)
+- [python/rl/profile/naval_profile.py](../../../python/rl/profile/naval_profile.py) (18 个函数)
 
 11 个函数在两模块中同名存在：
 
@@ -266,8 +266,8 @@ else if (cmd && cmd->active) { throttle = cmd->throttle_cmd; }
 
 | 文件 | 内容 | 可删除条件 |
 |---|---|---|
-| [src/components/physics/action.h](/home/void0312/Workshop/CMO/src/components/physics/action.h) | 仅含 13 个 `#include` | 所有外部引用迁移到直接导入 |
-| [src/components/tasking/tasking_enums.h](/home/void0312/Workshop/CMO/src/components/tasking/tasking_enums.h) | 仅含 2 个 `#include` | `action.h` 不再引用它 |
+| [src/components/physics/action.h](../../../src/components/physics/action.h) | 仅含 13 个 `#include` | 所有外部引用迁移到直接导入 |
+| [src/components/tasking/tasking_enums.h](../../../src/components/tasking/tasking_enums.h) | 仅含 2 个 `#include` | `action.h` 不再引用它 |
 
 ---
 
@@ -285,7 +285,7 @@ else if (cmd && cmd->active) { throttle = cmd->throttle_cmd; }
 
 ### 5.3 `scenario_loader/core.py` 超大文件 3831 行
 
-**位置**：[gym_envs/scenario_loader/core.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py) — 188KB，全项目最大单文件
+**位置**：[gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py) — 188KB，全项目最大单文件
 
 `ScenarioLoader` 类包含 129 个方法，职责横跨：
 
@@ -312,9 +312,9 @@ else if (cmd && cmd->active) { throttle = cmd->throttle_cmd; }
 **复核结论**：`已完成第一批收口`
 
 **位置**：
-- [python/rl/control/scripted_takeoff.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_takeoff.py)
-- [python/rl/control/scripted_stable_flight.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_stable_flight.py)
-- [python/rl/control/scripted_landing.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_landing.py)
+- [python/rl/control/scripted_takeoff.py](../../../python/rl/control/scripted_takeoff.py)
+- [python/rl/control/scripted_stable_flight.py](../../../python/rl/control/scripted_stable_flight.py)
+- [python/rl/control/scripted_landing.py](../../../python/rl/control/scripted_landing.py)
 
 三个类共享完全相同的接口和初始化模式：
 
@@ -343,10 +343,10 @@ class ScriptedXxxController:
 **建议**：提取 `BaseScriptedController` 抽象基类，统一 `__init__`/`reset`/`step` 模板方法和共享的仪器解码逻辑。三个子类仅实现差异化的控制律。
 
 **2026-05-16 WP-B 执行更新**：当前版本已完成最小共享骨架抽取：
-- 新增 [python/rl/control/base_scripted_controller.py](/home/void0312/Workshop/CMO/python/rl/control/base_scripted_controller.py)，统一 `action_dim/dt`、`obs -> np.ndarray` 解包、零动作构造与 `wrap_deg()`；
-- [scripted_takeoff.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_takeoff.py)、[scripted_stable_flight.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_stable_flight.py)、[scripted_landing.py](/home/void0312/Workshop/CMO/python/rl/control/scripted_landing.py) 已切换到共享 helper，但未改动控制律主体，也未改变公开类名或构造签名；
+- 新增 [python/rl/control/base_scripted_controller.py](../../../python/rl/control/base_scripted_controller.py)，统一 `action_dim/dt`、`obs -> np.ndarray` 解包、零动作构造与 `wrap_deg()`；
+- [scripted_takeoff.py](../../../python/rl/control/scripted_takeoff.py)、[scripted_stable_flight.py](../../../python/rl/control/scripted_stable_flight.py)、[scripted_landing.py](../../../python/rl/control/scripted_landing.py) 已切换到共享 helper，但未改动控制律主体，也未改变公开类名或构造签名；
 - 聚焦 contract 已回归通过：`scripted_takeoff_takeoff2_throttle`、`scripted_takeoff_clearance_hold`、`scripted_landing_controller`、`scripted_stable_flight_rudder_sign`；
-- 同时修正 [tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json](/home/void0312/Workshop/CMO/tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json) 缺失的 `type: "unit_regression"` 测试夹具元数据，使其可被统一 contract runner 正常分发。
+- 同时修正 [tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json](../../../tests/contracts/unit/controllers/scripted_takeoff_clearance_hold.json) 缺失的 `type: "unit_regression"` 测试夹具元数据，使其可被统一 contract runner 正常分发。
 
 剩余保留项：
 - 三个 controller 内部的仪器字段索引与控制律仍保持各自本地实现；
@@ -359,8 +359,8 @@ class ScriptedXxxController:
 **复核结论**：`部分成立`
 
 **位置**：
-- [python/rl/runtime/world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py) (2018 行)
-- [python/rl/runtime/cooperative_world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/cooperative_world_batch_vec_env.py) (1861 行)
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py) (2018 行)
+- [python/rl/runtime/cooperative_world_batch_vec_env.py](../../../python/rl/runtime/cooperative_world_batch_vec_env.py) (1861 行)
 
 两个文件仍共享大量函数名和导入模式，也确实保留了不少并行实现，但“完全独立双写”已不准确。`cooperative_world_batch_vec_env.py` 已显式复用 `world_batch_vec_env.py` 中的 `_RuntimeFacadeAdapter`、`_normalize_batch_observation_backend`、`_normalize_batch_visual_backend` 等基础设施。
 
@@ -383,8 +383,8 @@ class ScriptedXxxController:
 **复核结论**：`部分成立`
 
 **位置**：
-- `EGI` 定义于 [src/components/systems/navigation.h](/home/void0312/Workshop/CMO/src/components/systems/navigation.h)
-- `InstrumentState` 定义于 [src/components/physics/instruments.h](/home/void0312/Workshop/CMO/src/components/physics/instruments.h)
+- `EGI` 定义于 [src/components/systems/navigation.h](../../../src/components/systems/navigation.h)
+- `InstrumentState` 定义于 [src/components/physics/instruments.h](../../../src/components/physics/instruments.h)
 
 两个组件存在 12 个语义重叠的字段：
 
@@ -414,8 +414,8 @@ class ScriptedXxxController:
 ### 5.7 `instrument_system.h` 和 `default_control_model.cpp` 重复实现地面航迹计算
 
 **位置**：
-- [src/systems/physics/instrument_system.h:44-49](/home/void0312/Workshop/CMO/src/systems/physics/instrument_system.h) — `inst_ground_track_deg_from_velocity()`
-- [src/models/air/default_control_model.cpp:57-65](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp) — `ground_track_deg_from_velocity()`
+- [src/systems/physics/instrument_system.h:44-49](../../../src/systems/physics/instrument_system.h) — `inst_ground_track_deg_from_velocity()`
+- [src/models/air/default_control_model.cpp:57-65](../../../src/models/air/default_control_model.cpp) — `ground_track_deg_from_velocity()`
 
 两个函数做完全相同的事：从 `Velocity` 计算地速航迹，低速时回退到航向角。仅变量名不同（`horiz_speed` vs `v_h`）。
 
@@ -438,9 +438,9 @@ class ScriptedXxxController:
 
 | 文件 | 实现 |
 |---|---|
-| [src/systems/physics/aero_state_system.h:39-78](/home/void0312/Workshop/CMO/src/systems/physics/aero_state_system.h) | `world_to_body()` — 完整 3 轴旋转 |
-| [src/systems/physics/instrument_system.h:83-124](/home/void0312/Workshop/CMO/src/systems/physics/instrument_system.h) | `project_forces_to_body()` — 完整 3 轴旋转，但仅返回 ax/az |
-| [src/systems/physics/aerodynamics_system.h:26-45](/home/void0312/Workshop/CMO/src/systems/physics/aerodynamics_system.h) | `get_body_right()` — 部分旋转（仅 body Y → world） |
+| [src/systems/physics/aero_state_system.h:39-78](../../../src/systems/physics/aero_state_system.h) | `world_to_body()` — 完整 3 轴旋转 |
+| [src/systems/physics/instrument_system.h:83-124](../../../src/systems/physics/instrument_system.h) | `project_forces_to_body()` — 完整 3 轴旋转，但仅返回 ax/az |
+| [src/systems/physics/aerodynamics_system.h:26-45](../../../src/systems/physics/aerodynamics_system.h) | `get_body_right()` — 部分旋转（仅 body Y → world） |
 
 其中 `aero_state_system.h` 的 `world_to_body` 和 `instrument_system.h` 的 `project_forces_to_body` 两者都实现了相同的 ψ→θ→φ 欧拉旋转序列，属于实质性重复。`aerodynamics_system.h` 的 `get_body_right()` 只覆盖局部方向投影，不是完全同一层级；另外武器效果模型中还存在一份更简化的 `world_to_body`。
 
@@ -458,8 +458,8 @@ class ScriptedXxxController:
 **复核结论**：`暂不作为当前切入点`
 
 **位置**：
-- [src/gpu/gpu_flight_shaping_runtime.h](/home/void0312/Workshop/CMO/src/gpu/gpu_flight_shaping_runtime.h) — GPU 路径（36 行声明）
-- [src/core/mission/runtime/reward_runtime.h](/home/void0312/Workshop/CMO/src/core/mission/runtime/reward_runtime.h) — CPU 路径（286 行声明 + 实现）
+- [src/gpu/gpu_flight_shaping_runtime.h](../../../src/gpu/gpu_flight_shaping_runtime.h) — GPU 路径（36 行声明）
+- [src/core/mission/runtime/reward_runtime.h](../../../src/core/mission/runtime/reward_runtime.h) — CPU 路径（286 行声明 + 实现）
 
 GPU 路径显式声明了 `compute_flight_shaping_reference_cpu_batch()` 和 `compute_flight_shaping_experiment_batch()` 两个函数。复核实现后确认，当前 GPU 路径在 CUDA 不可用或实验路径未返回结果时，会回退到 CPU reference；这属于标准验证双轨，而不是应立即删除的冗余。
 
@@ -469,7 +469,7 @@ GPU 路径显式声明了 `compute_flight_shaping_reference_cpu_batch()` 和 `co
 
 **复核结论**：`已完成第一批测试补强`
 
-**位置**：[src/interfaces/python/bindings_command.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_command.cpp) (417 行)
+**位置**：[src/interfaces/python/bindings_command.cpp](../../../src/interfaces/python/bindings_command.cpp) (417 行)
 
 每个 C++ 结构体的每个字段都有一个对应的 `.def_rw("name", &Struct::field)` 行。Nanobind 绑定本身是合理的绑定样板；问题在于它再叠加 Python 侧的 `_TASK_ORDER_FIELDS` / `_LEADER_INTENT_FIELDS` / `_PILOT_REPORT_FIELDS` 元组后，形成了第三个手工维护面：
 
@@ -485,8 +485,8 @@ GPU 路径显式声明了 `compute_flight_shaping_reference_cpu_batch()` 和 `co
 
 **2026-05-16 WP-C 执行更新**：当前版本已补齐第一批绑定维护面回归：
 - 保留 nanobind 现有 `.def_rw(...)` 绑定模式，不引入新的自动绑定系统；
-- 在 [tests/leader/test_two_ship_contract_fields.py](/home/void0312/Workshop/CMO/tests/leader/test_two_ship_contract_fields.py) 继续覆盖 `TaskOrder / LeaderIntent / PilotReport` 的反射一致性；
-- 新增 [tests/runtime/test_bindings_command_surface.py](/home/void0312/Workshop/CMO/tests/runtime/test_bindings_command_surface.py)，直接固定 `MissionCommand / PilotAction / CommPacket` 的公开字段 surface，降低 `bindings_command.cpp` 漏绑后的静默漂移风险。
+- 在 [tests/leader/test_two_ship_contract_fields.py](../../../tests/leader/test_two_ship_contract_fields.py) 继续覆盖 `TaskOrder / LeaderIntent / PilotReport` 的反射一致性；
+- 新增 [tests/runtime/test_bindings_command_surface.py](../../../tests/runtime/test_bindings_command_surface.py)，直接固定 `MissionCommand / PilotAction / CommPacket` 的公开字段 surface，降低 `bindings_command.cpp` 漏绑后的静默漂移风险。
 
 剩余保留项：
 - `bindings_command.cpp` 仍是手工维护面；
@@ -496,7 +496,7 @@ GPU 路径显式声明了 `compute_flight_shaping_reference_cpu_batch()` 和 `co
 
 ### 5.11 `shaping.py` deadband/norm/power 模式 24 次重复
 
-**位置**：[gym_envs/scenario_loader/execution_runtime/shaping.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/execution_runtime/shaping.py) (316 行)
+**位置**：[gym_envs/scenario_loader/execution_runtime/shaping.py](../../../gym_envs/scenario_loader/execution_runtime/shaping.py) (316 行)
 
 同一个奖励项计算模式——取参数 deadband → 计算误差 → 除以 norm → 取 power → clip → 调用 `add_reward_term`——在以下场景中出现 24 次：
 
@@ -517,7 +517,7 @@ GPU 路径显式声明了 `compute_flight_shaping_reference_cpu_batch()` 和 `co
 
 **复核结论**：`成立`
 
-**位置**：[python/mission_obs_taxonomy.py](/home/void0312/Workshop/CMO/python/mission_obs_taxonomy.py) (189 行)
+**位置**：[python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py) (189 行)
 
 21 个字段名在多个观测模式列表中重复出现：
 
@@ -553,7 +553,7 @@ MISSION_OBS_FIELD_NAMES_BY_NAME = {
 
 **复核结论**：`部分成立`
 
-**位置**：[python/env_config.py:26-90](/home/void0312/Workshop/CMO/python/env_config.py)
+**位置**：[python/env_config.py:26-90](../../../python/env_config.py)
 
 `resolve_env_settings()` 中同类 merge 模式确实反复出现，但“8 次完全相同”略有简化。当前更准确地说，是 `include_proprio`、`action_mode`、`mission_obs_mode`、`visual_downsample`、`visual_update_interval`、`execution_step_runtime_mode`、`step_info_mode`、`flight_shaping_backend` 这 8 项采用同类 merge 模式，外加一个稍有特化的 `include_visual` 分支。
 
@@ -582,7 +582,7 @@ else:
 
 **复核结论**：`部分成立`
 
-**位置**：[src/core/engine/simulation_kernel_command_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_command_api.cpp) (365 行)
+**位置**：[src/core/engine/simulation_kernel_command_api.cpp](../../../src/core/engine/simulation_kernel_command_api.cpp) (365 行)
 
 文件中确实存在大量重复的 ECS entity 查找+验证模式，但“20 处”偏大。按当前实现复核，`auto e = ecs.entity(entity_id);` 在该文件中大约出现 14 次，其中显式 invalid guard / warn 约 11 处。
 ```cpp
@@ -606,8 +606,8 @@ if (!e.is_valid()) return;
 ### 5.15 `execution_runtime/mainline.py` ↔ `shadow.py` 并行验证双写
 
 **位置**：
-- [gym_envs/scenario_loader/execution_runtime/mainline.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/execution_runtime/mainline.py) (741 行, 37KB)
-- [gym_envs/scenario_loader/execution_runtime/shadow.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/execution_runtime/shadow.py) (225 行)
+- [gym_envs/scenario_loader/execution_runtime/mainline.py](../../../gym_envs/scenario_loader/execution_runtime/mainline.py) (741 行, 37KB)
+- [gym_envs/scenario_loader/execution_runtime/shadow.py](../../../gym_envs/scenario_loader/execution_runtime/shadow.py) (225 行)
 
 `shadow.py` 实现了与 `mainline.py` 相同语义的 C++ `ExecutionEpisodeController` 路径，用于验证 C++ 编译路径与 Python 解释路径产生相同结果。这是深度学习编译器领域标准的 "shadow testing" 模式，但意味着每个步骤在计算上被运行两次。
 
@@ -620,8 +620,8 @@ if (!e.is_valid()) return;
 **复核结论**：`暂不作为当前切入点`
 
 **位置**：
-- [python/training_callbacks.py](/home/void0312/Workshop/CMO/python/training_callbacks.py) (1120 行, 28 个函数)
-- [python/world_model/dreamer.py](/home/void0312/Workshop/CMO/python/world_model/dreamer.py) (1282 行, 13 个函数)
+- [python/training_callbacks.py](../../../python/training_callbacks.py) (1120 行, 28 个函数)
+- [python/world_model/dreamer.py](../../../python/world_model/dreamer.py) (1282 行, 13 个函数)
 
 这是合理的大型文件（训练逻辑和 Dreamer 模型），不是冗余问题。但 `training_callbacks.py` 包含多种回调类型（日志记录、检查点保存、课程调度、评估调度、早停），可根据回调类型拆分为 `callbacks/logging.py`、`callbacks/checkpoint.py`、`callbacks/curriculum.py` 等子模块。
 

@@ -4,8 +4,8 @@ This document is `Authoritative` for engine-level neutral conventions.
 
 It belongs to the `joint/common core` side of the standards tree:
 
-- [Standards Overview](/home/void0312/Workshop/CMO/docs/standards/README.md)
-- [Joint Baseline](/home/void0312/Workshop/CMO/docs/standards/joint/command_and_modeling_baseline.md)
+- [Standards Overview](README.md)
+- [Joint Baseline](joint/command_and_modeling_baseline.md)
 
 It does **not** define service-specific organization or platform-specific task semantics.
 
@@ -34,7 +34,7 @@ Standards alignment note:
 
 - engine/core conventions stay here
 - service profile and platform/task command semantics belong elsewhere
-- air-specific mission semantics belong under [air/README.md](/home/void0312/Workshop/CMO/docs/standards/air/README.md)
+- air-specific mission semantics belong under [air/README.md](air/README.md)
 
 ## Sensors
 - `Sensor.fov_deg` is total FOV angle. A contact is visible if

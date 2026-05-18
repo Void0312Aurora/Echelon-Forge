@@ -4,15 +4,15 @@
 
 关联文档：
 
-- [真实化任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_taskboard_20260516.zh.md)
-- [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
-- [C2 指挥链与通信子项目](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/README.md)
-- [C2 指挥链与通信推进检查点](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md)
-- [C2 指挥链与通信待解决问题分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
-- [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
-- [海战后续委派执行单](/home/void0312/Workshop/CMO/docs/task/naval/naval_delegated_execution_backlog_20260517.zh.md)
-- [空战 1v1 F-16C 基线切换与最小对战合同进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
-- [指挥链与 C2 通信现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
+- [真实化任务总表](realism_program_taskboard_20260516.zh.md)
+- [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.zh.md)
+- [C2 指挥链与通信子项目](../c2_command_chain/README.md)
+- [C2 指挥链与通信推进检查点](../c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md)
+- [C2 指挥链与通信待解决问题分析](../c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
+- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
+- [海战后续委派执行单](../../naval/naval_delegated_execution_backlog_20260517.zh.md)
+- [空战 1v1 F-16C 基线切换与最小对战合同进展](../../air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
+- [指挥链与 C2 通信现实性分析](../c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
 
 本文档定位：
 
@@ -45,10 +45,10 @@
    - 武器/制导
    - 真实化总任务板
 2. 跨域分析输入文档
-   - [海战仿真现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
-   - [指挥链与 C2 通信现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
+   - [海战仿真现实性分析](../naval/naval_realism_analysis_20260516.zh.md)
+   - [指挥链与 C2 通信现实性分析](../c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
 3. 当前活跃子项目入口
-   - [C2 指挥链与通信子项目](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/README.md)
+   - [C2 指挥链与通信子项目](../c2_command_chain/README.md)
 
 第 2 类文档保留在这里是为了历史追踪和跨域分析完整性，但当前执行状态已经不应只看冻结分析。
 
@@ -59,14 +59,14 @@
 1. 先看本文件：
    - 确认当前活跃方向和真实稳定性状态
 2. 再看 `flight_dynamics/` 下的总任务板与分包：
-   - [真实化任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_taskboard_20260516.zh.md)
-   - [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
+   - [真实化任务总表](realism_program_taskboard_20260516.zh.md)
+   - [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.zh.md)
 3. `C2` 方向不要只看冻结分析：
-   - 当前应先看 [C2 指挥链与通信子项目](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/README.md)、[推进检查点](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md) 和 [待解决问题分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
+   - 当前应先看 [C2 指挥链与通信子项目](../c2_command_chain/README.md)、[推进检查点](../c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md) 和 [待解决问题分析](../c2_command_chain/c2_command_chain_unresolved_issues_20260517.zh.md)
 4. 海战执行状态不要停留在旧分析：
-   - 当前应以 [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md) 和 [海战后续委派执行单](/home/void0312/Workshop/CMO/docs/task/naval/naval_delegated_execution_backlog_20260517.zh.md) 为准
+   - 当前应以 [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md) 和 [海战后续委派执行单](../../naval/naval_delegated_execution_backlog_20260517.zh.md) 为准
 5. 空战 1v1 运行状态不要只看冻结计划：
-   - 当前应结合 [空战 1v1 F-16C 基线切换与最小对战合同进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md) 和现行运行测试判断
+   - 当前应结合 [空战 1v1 F-16C 基线切换与最小对战合同进展](../../air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md) 和现行运行测试判断
 
 ## 二、当前进展摘要
 
@@ -170,7 +170,7 @@
 - `fire_missile` 直连路径与 `PilotAction.fire_weapon` 桥接路径都已纳入 definition-driven
   导弹运行时验证。
 - `ScenarioLoader` 入口上的 `air_combat_1v1_fixture` 语义对齐问题已经收口；
-  [tests/runtime/test_air_combat_1v1_fixture.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fixture.py)
+  [tests/runtime/test_air_combat_1v1_fixture.py](../../../../tests/runtime/test_air_combat_1v1_fixture.py)
   当前为绿。
 
 本次主线程确认的关键事实：
@@ -219,14 +219,14 @@
 
 当前主线程抽样复核里未再复现稳定失败；与本节对应的定向回归已转绿：
 
-1. [tests/runtime/test_sensor_situation_realism_p0.py](/home/void0312/Workshop/CMO/tests/runtime/test_sensor_situation_realism_p0.py)
-2. [tests/runtime/test_data_link_qos_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_data_link_qos_runtime.py)
-3. [tests/runtime/test_naval_ship_database.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_ship_database.py)
-4. [tests/runtime/test_ship_mission_command_authority.py](/home/void0312/Workshop/CMO/tests/runtime/test_ship_mission_command_authority.py)
-5. [tests/runtime/test_mission_command_air_fields_roundtrip.py](/home/void0312/Workshop/CMO/tests/runtime/test_mission_command_air_fields_roundtrip.py)
-6. [tests/runtime/test_world_setup_compat.py](/home/void0312/Workshop/CMO/tests/runtime/test_world_setup_compat.py)
-7. [tests/runtime/test_command_link_qos.py](/home/void0312/Workshop/CMO/tests/runtime/test_command_link_qos.py)
-8. [tests/runtime/test_weapon_guidance_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_weapon_guidance_realism_guards.py)
+1. [tests/runtime/test_sensor_situation_realism_p0.py](../../../../tests/runtime/test_sensor_situation_realism_p0.py)
+2. [tests/runtime/test_data_link_qos_runtime.py](../../../../tests/runtime/test_data_link_qos_runtime.py)
+3. [tests/runtime/test_naval_ship_database.py](../../../../tests/runtime/test_naval_ship_database.py)
+4. [tests/runtime/test_ship_mission_command_authority.py](../../../../tests/runtime/test_ship_mission_command_authority.py)
+5. [tests/runtime/test_mission_command_air_fields_roundtrip.py](../../../../tests/runtime/test_mission_command_air_fields_roundtrip.py)
+6. [tests/runtime/test_world_setup_compat.py](../../../../tests/runtime/test_world_setup_compat.py)
+7. [tests/runtime/test_command_link_qos.py](../../../../tests/runtime/test_command_link_qos.py)
+8. [tests/runtime/test_weapon_guidance_realism_guards.py](../../../../tests/runtime/test_weapon_guidance_realism_guards.py)
 
 当前结果：本轮定向回归已转绿，未复现稳定失败。
 
@@ -285,7 +285,7 @@
 6. `SimulationKernel` 公共 API 持续膨胀
 
 它们的详细分析仍以
-[code_quality_review_realism_wave_20260517.zh.md](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/code_quality_review_realism_wave_20260517.zh.md)
+[code_quality_review_realism_wave_20260517.zh.md](code_quality_review_realism_wave_20260517.zh.md)
 为准。
 
 ### 3.4 本轮已收的结构性小切口
@@ -381,11 +381,11 @@
 
 如果下一轮要继续推进，建议优先看：
 
-1. [真实化 P1 任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md)
-2. [真实化主线收束计划](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.zh.md)
-2. [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
-3. [空战 1v1 F-16C 基线切换与最小对战合同进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
-4. [C2 指挥链与通信子项目](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/README.md)
+1. [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.zh.md)
+2. [真实化主线收束计划](realism_program_convergence_plan_20260517.zh.md)
+2. [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
+3. [空战 1v1 F-16C 基线切换与最小对战合同进展](../../air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
+4. [C2 指挥链与通信子项目](../c2_command_chain/README.md)
 5. 本文档
 
 这样看的好处是：

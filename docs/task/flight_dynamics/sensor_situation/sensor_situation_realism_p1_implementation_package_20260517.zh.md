@@ -4,11 +4,11 @@
 
 关联文档：
 
-- [传感器与态势感知现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [传感器/态势感知真实化核实与实现方案](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
-- [传感器/态势真实化 P0 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_p0_implementation_package_20260516.zh.md)
-- [真实化任务总表](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_taskboard_20260516.zh.md)
-- [传感器/态势真实化 P0 参考说明](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_p0_reference_notes_20260516.md)
+- [传感器与态势感知现实性分析](sensor_situation_realism_analysis_20260516.zh.md)
+- [传感器/态势感知真实化核实与实现方案](sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
+- [传感器/态势真实化 P0 实施包](sensor_situation_realism_p0_implementation_package_20260516.zh.md)
+- [真实化任务总表](../program/realism_program_taskboard_20260516.zh.md)
+- [传感器/态势真实化 P0 参考说明](sensor_situation_realism_p0_reference_notes_20260516.md)
 
 文档目的：
 
@@ -89,9 +89,9 @@ P1 采取两个原则：
 
 建议文件范围：
 
-- [src/content/unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [src/models/core/default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
-- 如有需要，补 [src/content/unit_definition.h](/home/void0312/Workshop/CMO/src/content/unit_definition.h)
+- [src/content/unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
+- [src/models/core/default_unit_factory.h](../../../../src/models/core/default_unit_factory.h)
+- 如有需要，补 [src/content/unit_definition.h](../../../../src/content/unit_definition.h)
 
 建议补齐：
 
@@ -118,8 +118,8 @@ P1 不建议在这一层就把 `Pt / G / B / F / PRF` 一次性塞入 schema。
 
 建议文件范围：
 
-- [src/core/engine/simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
-- [src/core/engine/simulation_kernel.h](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.h)
+- [src/core/engine/simulation_kernel_observation_api.cpp](../../../../src/core/engine/simulation_kernel_observation_api.cpp)
+- [src/core/engine/simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h)
 
 P1 需要明确的观测口径：
 
@@ -142,8 +142,8 @@ P1 需要明确的观测口径：
 
 建议文件范围：
 
-- [src/interfaces/python/bindings_core.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp)
-- [src/interfaces/python/bindings_command.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/bindings_command.cpp)
+- [src/interfaces/python/bindings_core.cpp](../../../../src/interfaces/python/bindings_core.cpp)
+- [src/interfaces/python/bindings_command.cpp](../../../../src/interfaces/python/bindings_command.cpp)
 
 P1 需要补齐：
 
@@ -244,9 +244,9 @@ P1 要求至少做到：
 
 建议文件范围：
 
-- [src/components/systems/track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [src/systems/systems/track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [src/core/engine/simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
+- [src/components/systems/track_management.h](../../../../src/components/systems/track_management.h)
+- [src/systems/systems/track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
+- [src/core/engine/simulation_kernel_observation_api.cpp](../../../../src/core/engine/simulation_kernel_observation_api.cpp)
 
 P1 建议做：
 
@@ -264,9 +264,9 @@ P1 建议做：
 
 建议文件范围：
 
-- [src/core/interfaces/environment_model.h](/home/void0312/Workshop/CMO/src/core/interfaces/environment_model.h)
-- [src/models/environment/default_environment_model.cpp](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp)
-- [src/models/systems/default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [src/core/interfaces/environment_model.h](../../../../src/core/interfaces/environment_model.h)
+- [src/models/environment/default_environment_model.cpp](../../../../src/models/environment/default_environment_model.cpp)
+- [src/models/systems/default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
 
 P1 建议做：
 
@@ -285,9 +285,9 @@ P1 不建议做：
 
 建议文件范围：
 
-- [src/components/systems/track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [src/components/systems/sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [src/systems/systems/track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
+- [src/components/systems/track_management.h](../../../../src/components/systems/track_management.h)
+- [src/components/systems/sensor.h](../../../../src/components/systems/sensor.h)
+- [src/systems/systems/track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
 - observation / binding 对应出口
 
 P1 只建议做：
@@ -311,9 +311,9 @@ P1 不建议做：
 
 建议文件范围：
 
-- [src/components/systems/track_management.h](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [src/systems/systems/track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [src/systems/systems/data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
+- [src/components/systems/track_management.h](../../../../src/components/systems/track_management.h)
+- [src/systems/systems/track_manager_system.h](../../../../src/systems/systems/track_manager_system.h)
+- [src/systems/systems/data_link_system.h](../../../../src/systems/systems/data_link_system.h)
 
 P1 建议做：
 
@@ -334,8 +334,8 @@ P1 不建议做：
 
 建议文件范围：
 
-- [src/components/systems/sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [src/models/systems/default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
+- [src/components/systems/sensor.h](../../../../src/components/systems/sensor.h)
+- [src/models/systems/default_sensor_model.cpp](../../../../src/models/systems/default_sensor_model.cpp)
 - `examples/config/database/aircraft/modules/sensors/*.json`
 - `examples/config/database/ships/` 下相关传感器配置
 

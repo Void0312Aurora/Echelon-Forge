@@ -4,10 +4,10 @@
 
 关联文档：
 
-- [空战 1v1 切入分析](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
-- [P8 协同执行管线发现与计划](/home/void0312/Workshop/CMO/docs/plan/cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
-- [多 Agent 协同训练底座与性能计划](/home/void0312/Workshop/CMO/docs/plan/cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
-- [HMoE Strict Terminal Eval (2026-05-15)](/home/void0312/Workshop/CMO/docs/plan/results/hmoe_strict_terminal_eval_20260515.md)
+- [空战 1v1 切入分析](air_combat_1v1_entry_analysis_20260516.zh.md)
+- [P8 协同执行管线发现与计划](../../plan/cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+- [多 Agent 协同训练底座与性能计划](../../plan/cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+- [HMoE Strict Terminal Eval (2026-05-15)](../../plan/results/hmoe_strict_terminal_eval_20260515.md)
 
 文档定位：
 
@@ -127,9 +127,9 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 冻结范围：
 
-- [train.py](/home/void0312/Workshop/CMO/train.py)
-- [python/env_config.py](/home/void0312/Workshop/CMO/python/env_config.py)
-- [gym_envs/universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
+- [train.py](../../../train.py)
+- [python/env_config.py](../../../python/env_config.py)
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
 - 必要的训练 config
 
 推荐冻结方向：
@@ -159,7 +159,7 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 冻结范围：
 
-- [tools/eval/eval_sb3.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3.py) 或同域评估入口
+- [tools/eval/eval_sb3.py](../../../tools/eval/eval_sb3.py) 或同域评估入口
 - 必要的 JSON 输出 schema
 - 必要的评估文档与回归测试
 

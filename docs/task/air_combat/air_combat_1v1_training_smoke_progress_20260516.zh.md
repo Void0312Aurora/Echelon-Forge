@@ -4,17 +4,17 @@
 
 关联文档：
 
-- [空战 1v1 切入分析](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
-- [空战 1v1 冻结计划](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_freeze_plan_20260516.zh.md)
-- [空战 1v1 F-16C 基线切换与最小对战合同进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
+- [空战 1v1 切入分析](air_combat_1v1_entry_analysis_20260516.zh.md)
+- [空战 1v1 冻结计划](air_combat_1v1_freeze_plan_20260516.zh.md)
+- [空战 1v1 F-16C 基线切换与最小对战合同进展](air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
 
 ## 一、这轮入口口径
 
 这轮把 `1v1` active 训练入口收口到 HMoE 主线：
 
-- [examples/config/training/active/air_combat/README.md](/home/void0312/Workshop/CMO/examples/config/training/active/air_combat/README.md)
-- [air_combat_1v1_f16c_scripted_red_smoke_v1.json](/home/void0312/Workshop/CMO/examples/config/training/active/air_combat/air_combat_1v1_f16c_scripted_red_smoke_v1.json)
-- [air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json](/home/void0312/Workshop/CMO/examples/config/training/active/air_combat/air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json)
+- [examples/config/training/active/air_combat/README.md](../../../examples/config/training/active/air_combat/README.md)
+- [air_combat_1v1_f16c_scripted_red_smoke_v1.json](../../../examples/config/training/active/air_combat/air_combat_1v1_f16c_scripted_red_smoke_v1.json)
+- [air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json](../../../examples/config/training/active/air_combat/air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json)
 
 当前维护口径：
 
@@ -90,12 +90,12 @@ cmo_python train.py \
 
 产物位置：
 
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/final_model.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/final_model.zip)
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_256_steps.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_256_steps.zip)
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_512_steps.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_512_steps.zip)
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/final_model.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/final_model.zip)
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_256_steps.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_256_steps.zip)
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_512_steps.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_512_steps.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/final_model.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/final_model.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_256_steps.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_256_steps.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_512_steps.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_manual/checkpoints/model_512_steps.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/final_model.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/final_model.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_256_steps.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_256_steps.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_512_steps.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_manual/checkpoints/model_512_steps.zip)
 
 ## 五、从日志看到的当前信号
 
@@ -115,11 +115,11 @@ cmo_python train.py \
 
 标准路径：
 
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_diag64_manual/final_model.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_diag64_manual/final_model.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_diag64_manual/final_model.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_diag64_manual/final_model.zip)
 
 batch 路径：
 
-- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_diag64_manual/final_model.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_diag64_manual/final_model.zip)
+- [experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_diag64_manual/final_model.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_world_batch_smoke_v1_diag64_manual/final_model.zip)
 
 ### 6.1 最终训练标量
 

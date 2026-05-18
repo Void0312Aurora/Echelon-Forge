@@ -2,11 +2,11 @@
 
 文档导航：
 
-- [README.md](/home/void0312/Workshop/CMO/docs/plan/README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
-- [runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+- [README.md](../README.md)
+- [system_layering_and_engine_encapsulation_plan.zh.md](../architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+- [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
+- [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
+- [runtime_facade_task_bootstrap_plan.zh.md](runtime_facade_task_bootstrap_plan.zh.md)
 
 状态：`2026-05-10` 下一批候选冻结执行计划。  
 文档定位：
@@ -89,9 +89,9 @@
 
 主要文件：
 
-- [runtime_facade.h](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade.h)
-- [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
-- [runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
+- [runtime_facade.h](../../../src/runtime/facade/runtime_facade.h)
+- [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
+- [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
 
 验收：
 
@@ -107,7 +107,7 @@
 
 主要文件：
 
-- [world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
+- [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 
 建议实现：
 
@@ -135,11 +135,11 @@
 
 主要文件：
 
-- [runtime_facade_types.h](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade_types.h)
-- [runtime_facade.h](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade.h)
-- [runtime_facade.cpp](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade.cpp)
-- [scenario_runtime.py](/home/void0312/Workshop/CMO/python/scenario_runtime.py)
-- [world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
+- [runtime_facade_types.h](../../../src/runtime/facade/runtime_facade_types.h)
+- [runtime_facade.h](../../../src/runtime/facade/runtime_facade.h)
+- [runtime_facade.cpp](../../../src/runtime/facade/runtime_facade.cpp)
+- [scenario_runtime.py](../../../python/scenario_runtime.py)
+- [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 
 验收：
 
@@ -160,9 +160,9 @@
 
 主要文件：
 
-- [runtime_facade_types.h](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade_types.h)
-- [runtime_facade.cpp](/home/void0312/Workshop/CMO/src/runtime/facade/runtime_facade.cpp)
-- [world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
+- [runtime_facade_types.h](../../../src/runtime/facade/runtime_facade_types.h)
+- [runtime_facade.cpp](../../../src/runtime/facade/runtime_facade.cpp)
+- [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 
 验收：
 
@@ -179,7 +179,7 @@
 
 主要文件：
 
-- [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
+- [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 验收：
 
@@ -201,7 +201,7 @@
 主要文件：
 
 - 新增 `tests/architecture/test_runtime_facade_layering.py`
-- 或并入 [tests/runtime/test_runtime_facade.py](/home/void0312/Workshop/CMO/tests/runtime/test_runtime_facade.py)
+- 或并入 [tests/runtime/test_runtime_facade.py](../../../tests/runtime/test_runtime_facade.py)
 
 验收：
 

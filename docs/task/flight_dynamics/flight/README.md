@@ -1,25 +1,37 @@
-# 飞行动力学子项目
+# Flight Dynamics Subproject
 
-状态：`2026-05-17` 已形成 `P0/P1` 文档骨架，后续真实化继续在本目录推进。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-本子项目收纳飞行动力学、推进、气动参数、失速/高攻角恢复及其相关验收口径文档。
+Status: `2026-05-17` with the `P0/P1` document skeleton already formed. Further
+realism work for this slice continues under this directory.
 
-## 文档入口
+This subproject collects flight dynamics, propulsion, aerodynamic parameters,
+stall/high-AoA recovery, and their related acceptance-framing documents.
 
-- [飞行动力学现实性分析与空战前置门槛](flight_dynamics_realism_analysis_20260516.zh.md)
-  作用：冻结记录当前失真点、空战前置门槛和分析依据。
-- [飞行动力学真实化 P0 实施包](flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
-  作用：记录最小气动/推进/失速骨架的首轮实施范围。
-- [飞行动力学真实化 P1 实施包](flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
-  作用：承接数据库驱动、推进瞬态、压缩性和高 AoA 语义的后续任务。
+## Document Entry Points
 
-## 当前阅读顺序
+- [flight-dynamics realism analysis and air-combat prerequisite gates](flight_dynamics_realism_analysis_20260516.zh.md)
+  - Frozen record of current distortion points, air-combat prerequisite gates,
+    and analysis basis.
+- [flight-dynamics realism P0 implementation package](flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
+  - Records the first implementation scope for the minimal aerodynamics,
+    propulsion, and stall skeleton.
+- [flight-dynamics realism P1 implementation package](flight_dynamics_realism_p1_implementation_package_20260517.zh.md)
+  - Carries the follow-on work for database-driven behavior, propulsion
+    transients, compressibility, and high-AoA semantics.
 
-1. 先看 `analysis` 确认缺陷与验收门槛。
-2. 再看 `P0` 了解已落地骨架。
-3. 最后看 `P1` 确认当前待推进的真实化与数据化收尾。
+## Current Reading Order
 
-## 维护约定
+1. Start with `analysis` to confirm the defects and acceptance gates.
+2. Then read `P0` to understand the landed skeleton.
+3. Finish with `P1` to confirm the current realism/data closeout backlog.
 
-1. 新的飞行动力学调研、标定说明和数据来源说明优先放在本目录。
-2. 若后续拆出更细的机型或数据子项目，应继续在 `flight/` 下分层，而不是回到上层平铺。
+## Maintenance Conventions
+
+1. New flight-dynamics research, calibration notes, and data-source notes
+   should land in this directory first.
+2. If more specific aircraft-model or data subprojects are split later, keep
+   layering them under `flight/` rather than flattening them back to the parent
+   directory.

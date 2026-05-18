@@ -4,10 +4,10 @@
 
 关联文档：
 
-- [空战 1v1 切入分析](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
-- [空战 1v1 冻结计划](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_freeze_plan_20260516.zh.md)
-- [空战 1v1 传感器烟雾夹具](/home/void0312/Workshop/CMO/scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
-- [空战 1v1 武器链回归测试](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
+- [空战 1v1 切入分析](air_combat_1v1_entry_analysis_20260516.zh.md)
+- [空战 1v1 冻结计划](air_combat_1v1_freeze_plan_20260516.zh.md)
+- [空战 1v1 传感器烟雾夹具](../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+- [空战 1v1 武器链回归测试](../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
 
 ## 一、文档定位
 
@@ -32,7 +32,7 @@
 
 对应测试文件：
 
-- [test_air_combat_1v1_fire_missile.py](/home/void0312/Workshop/CMO/tests/runtime/test_air_combat_1v1_fire_missile.py)
+- [test_air_combat_1v1_fire_missile.py](../../../tests/runtime/test_air_combat_1v1_fire_missile.py)
 
 ### 2.2 本轮修掉了两个直接阻断 `1v1` 的武器链问题
 
@@ -49,15 +49,15 @@
 
 对应代码：
 
-- [default_guidance_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_guidance_model.cpp)
-- [default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
+- [default_guidance_model.cpp](../../../src/models/weapons/default_guidance_model.cpp)
+- [default_sensor_model.cpp](../../../src/models/systems/default_sensor_model.cpp)
+- [simulation_kernel_weapon_api.cpp](../../../src/core/engine/simulation_kernel_weapon_api.cpp)
 
 ### 2.3 当前 `head-on` 夹具下已经形成真实 kill chain
 
 在当前维护夹具：
 
-- [air_combat_1v1_headon_sensor_smoke_v1.json](/home/void0312/Workshop/CMO/scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+- [air_combat_1v1_headon_sensor_smoke_v1.json](../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
 
 中，修复后的 `fire_missile()` 已经可以形成：
 

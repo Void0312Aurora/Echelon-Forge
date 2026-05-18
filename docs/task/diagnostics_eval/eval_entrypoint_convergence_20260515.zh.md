@@ -56,9 +56,9 @@
 
 仓库已经有一些共享工具：
 
-- [tools/eval/eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/eval_utils.py)
-- [tools/eval/waypoint_eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/waypoint_eval_utils.py)
-- [tools/eval/world_model_eval_utils.py](/home/void0312/Workshop/CMO/tools/eval/world_model_eval_utils.py)
+- [tools/eval/eval_utils.py](../../../tools/eval/eval_utils.py)
+- [tools/eval/waypoint_eval_utils.py](../../../tools/eval/waypoint_eval_utils.py)
+- [tools/eval/world_model_eval_utils.py](../../../tools/eval/world_model_eval_utils.py)
 
 这说明问题不在于“无法抽象”，而在于“抽象只做到局部，没有推进到入口收敛”。
 
@@ -99,8 +99,8 @@
 
 实施结果：
 
-- 新增 [tools/eval/task_eval_driver.py](/home/void0312/Workshop/CMO/tools/eval/task_eval_driver.py)
-- 新增 [tools/eval/eval_task.py](/home/void0312/Workshop/CMO/tools/eval/eval_task.py)
+- 新增 [tools/eval/task_eval_driver.py](../../../tools/eval/task_eval_driver.py)
+- 新增 [tools/eval/eval_task.py](../../../tools/eval/eval_task.py)
 - 删除旧的 8 个 task eval 入口壳
 
 已完成烟测：
@@ -137,9 +137,9 @@
 
 实施结果：
 
-- 新增 [tools/eval/sb3_eval_base.py](/home/void0312/Workshop/CMO/tools/eval/sb3_eval_base.py)
+- 新增 [tools/eval/sb3_eval_base.py](../../../tools/eval/sb3_eval_base.py)
 - 阶段 2 完成时，旧双入口已切换到共享底座
-- 阶段 4 已在此基础上进一步统一为 [tools/eval/eval_sb3.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3.py)
+- 阶段 4 已在此基础上进一步统一为 [tools/eval/eval_sb3.py](../../../tools/eval/eval_sb3.py)
 
 已完成烟测：
 
@@ -172,8 +172,8 @@
 
 实施结果：
 
-- 新增 [tools/diagnostics/cooperative_trajectory_base.py](/home/void0312/Workshop/CMO/tools/diagnostics/cooperative_trajectory_base.py)
-- 新增 [tools/diagnostics/diagnose_cooperative_trajectory.py](/home/void0312/Workshop/CMO/tools/diagnostics/diagnose_cooperative_trajectory.py)
+- 新增 [tools/diagnostics/cooperative_trajectory_base.py](../../../tools/diagnostics/cooperative_trajectory_base.py)
+- 新增 [tools/diagnostics/diagnose_cooperative_trajectory.py](../../../tools/diagnostics/diagnose_cooperative_trajectory.py)
 - 删除旧的 `tools/diagnostics/diagnose_cooperative_takeoff_trajectory.py`
 - 删除旧的 `tools/diagnostics/diagnose_cooperative_takeoff_to_cruise_trajectory.py`
 
@@ -205,7 +205,7 @@
 
 实施结果：
 
-- 新增 [tools/eval/eval_sb3.py](/home/void0312/Workshop/CMO/tools/eval/eval_sb3.py)
+- 新增 [tools/eval/eval_sb3.py](../../../tools/eval/eval_sb3.py)
 - 删除旧的 `tools/eval/eval_sb3_policy.py`
 - 删除旧的 `tools/eval/eval_sb3_cooperative_policy.py`
 - 相关脚本、README、专项文档与 runtime test 已迁移到统一入口

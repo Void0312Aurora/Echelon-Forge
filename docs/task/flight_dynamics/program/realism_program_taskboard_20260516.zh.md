@@ -4,12 +4,12 @@
 
 关联文档：
 
-- [飞行动力学现实性分析、失真清单与空战前置门槛](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
-- [飞行动力学真实化 P0 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
-- [传感器/态势感知真实化核实与实现方案](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
-- [传感器/态势真实化 P0 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_p0_implementation_package_20260516.zh.md)
-- [武器系统与制导回路真实化核实与落地方案](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_verification_and_plan_20260516.zh.md)
-- [武器/制导真实化 P0 实施包](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_p0_implementation_package_20260516.zh.md)
+- [飞行动力学现实性分析、失真清单与空战前置门槛](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
+- [飞行动力学真实化 P0 实施包](../flight/flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
+- [传感器/态势感知真实化核实与实现方案](../sensor_situation/sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
+- [传感器/态势真实化 P0 实施包](../sensor_situation/sensor_situation_realism_p0_implementation_package_20260516.zh.md)
+- [武器系统与制导回路真实化核实与落地方案](../weapon_guidance/weapon_guidance_realism_verification_and_plan_20260516.zh.md)
+- [武器/制导真实化 P0 实施包](../weapon_guidance/weapon_guidance_realism_p0_implementation_package_20260516.zh.md)
 
 文档目的：
 
@@ -132,7 +132,7 @@
 
 主文档：
 
-- [flight_dynamics_realism_p0_implementation_package_20260516.zh.md](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
+- [flight_dynamics_realism_p0_implementation_package_20260516.zh.md](../flight/flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
 
 核心目标：
 
@@ -160,7 +160,7 @@
 
 主文档：
 
-- [sensor_situation_realism_p0_implementation_package_20260516.zh.md](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_p0_implementation_package_20260516.zh.md)
+- [sensor_situation_realism_p0_implementation_package_20260516.zh.md](../sensor_situation/sensor_situation_realism_p0_implementation_package_20260516.zh.md)
 
 核心目标：
 
@@ -191,7 +191,7 @@
 
 主文档：
 
-- [weapon_guidance_realism_p0_implementation_package_20260516.zh.md](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_p0_implementation_package_20260516.zh.md)
+- [weapon_guidance_realism_p0_implementation_package_20260516.zh.md](../weapon_guidance/weapon_guidance_realism_p0_implementation_package_20260516.zh.md)
 
 核心目标：
 

@@ -1,42 +1,46 @@
-# Air 平台专用标准总览
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/README.zh.md. Review before treating this file as authoritative. -->
 
-本目录定义项目在 air profile 下的**平台与任务专用标准**。
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/README.md. Review before treating this file as authoritative. -->
 
-注意：
+# Overview of Air Platform-Specific Standards
 
-- 本目录不是 joint/common core
-- 本目录也不是军种组织 profile 的主文档
-- 本目录只负责 air platform 的观测、动作、命令和报告语义
+This directory defines **platform- and mission-specific standards** for the project under the air profile.
 
-当前应先阅读：
+Note:
 
-1. [标准化文档总览](../README.md)
+- This directory is not the joint/common core
+- This directory is also not the main document for the service organization profile
+- This directory is solely responsible for the semantics of observation, action, command, and reporting for the air platform
+
+Currently, the following should be read first:
+
+1. [Standardization Documentation Overview](../README.md)
 2. [USAF Profile](../services/air_force.md)
 3. [obs.md](obs.md)
 4. [act.md](act.md)
 5. [aim.md](aim.md)
 6. [rep.md](rep.md)
 
-## 1. 本目录的定位
+## 1. Positioning of This Directory
 
-本目录处理的是：
+This directory deals with:
 
 - aircraft/platform-level observation
 - pilot action semantics
 - air-specific mission / execution command semantics
 - air-specific reporting semantics
 
-它不处理：
+It does not deal with:
 
-- joint/common command relationship
-- Army/Navy/Marine Corps 的战术组织结构
-- 全项目统一的 common core 数据模型
+- joint/common command relationships
+- tactical organizational structures of the Army/Navy/Marine Corps
+- the project-wide unified common core data model
 
-## 2. 与旧 `air/com` 文档的关系
+## 2. Relationship with the Old `air/com` Documents
 
-`docs/Archive/air_first_standards/com/*.md` 与 `docs/Archive/air_first_standards/com/two_ship/*.md` 当前均已归档，
-原因是它们建立在旧的 air-first 标准化路线之上。
+`docs/Archive/air_first_standards/com/*.md` and `docs/Archive/air_first_standards/com/two_ship/*.md` are now archived,
+because they were built on an older air-first standardization approach.
 
-如果后续还需要空战协同或双机/四机专用标准，
-应在新的 `joint/common core + USAF profile + air specialization`
-框架下重写，而不是继续扩展旧目录。
+If air combat coordination or two-ship/four-ship-specific standards are needed in the future,
+they should be rewritten under the new framework of `joint/common core + USAF profile + air specialization`,
+rather than continuing to extend the old directory.

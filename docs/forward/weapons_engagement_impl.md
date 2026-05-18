@@ -1,35 +1,39 @@
-# 武器与交战规则实现说明
+# Weapons and Engagement Rules Implementation Notes
 
-本文件记录当前代码层落地的武器/交战规则实现，以便与规划对照。
+This document records the weapons and engagement-rule behavior currently
+implemented in code so it can be compared against the roadmap.
 
-## 已实现内容
+## Implemented Items
 
-### 导弹引导延迟与更新周期
-- 通过 `Missile.guidance_delay_s` 控制导弹发射后延迟引导。
-- 通过 `Missile.guidance_update_period_s` 控制引导更新频率。
-- 相关字段：
+### Missile Guidance Delay and Update Period
+- `Missile.guidance_delay_s` controls the delay before guidance starts after
+  launch.
+- `Missile.guidance_update_period_s` controls how often guidance updates run.
+- Related fields:
   - `Missile.launch_time`
   - `Missile.last_guidance_time`
 
-### 寻标器锁定条件
-- 视场限制：`Missile.seeker_fov_deg`。
-- 锁定距离：`Missile.seeker_lock_range`。
-- 条件不满足时，导弹保持当前速度方向（惯性飞行）。
+### Seeker Lock Conditions
+- FOV limit: `Missile.seeker_fov_deg`.
+- Lock range: `Missile.seeker_lock_range`.
+- If the conditions are not met, the missile keeps its current velocity
+  direction (inertial flight).
 
-### 引导模型
-- 当前引导为 2D PN（比例导航）：
-  - 以 LOS 角速度驱动转弯率。
-  - `Missile.nav_gain` 为 PN 增益。
-  - 转弯率受 `Missile.turn_rate` 限制。
+### Guidance Model
+- Current guidance uses 2D PN (proportional navigation):
+  - LOS angular rate drives the turn rate.
+  - `Missile.nav_gain` is the PN gain.
+  - Turn rate is limited by `Missile.turn_rate`.
 
-## 代码入口
-- 导弹参数设置：`src/core/simulation_kernel.cpp`
-- 引导逻辑：`src/models/default_guidance_model.cpp`
-- 引导系统：`src/systems/guidance_system.h`
-- 数据结构：`src/components/weapon.h`
+## Code Entry Points
+- Missile parameter setup: `src/core/simulation_kernel.cpp`
+- Guidance logic: `src/models/default_guidance_model.cpp`
+- Guidance system: `src/systems/guidance_system.h`
+- Data structures: `src/components/weapon.h`
 
-## 后续计划（与前瞻文档对齐）
-- 引导过载限制（由 `max_g` 或导弹模型约束）。
-- 引导/传感器的目标跟踪延迟与失锁逻辑。
-- 命中结果分层：Hit / MissionKill / MobilityKill / SensorKill。
-- 发射包线估计与规则配置（scenario 级）。
+## Follow-Up Plan (Aligned with the Roadmap)
+- Guidance G-limit constraints (from `max_g` or missile-model limits).
+- Target-tracking delay and break-lock logic for guidance / sensors.
+- Layered hit outcomes: `Hit` / `MissionKill` / `MobilityKill` /
+  `SensorKill`.
+- Launch-envelope estimation and scenario-level rule configuration.

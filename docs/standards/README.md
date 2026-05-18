@@ -1,52 +1,57 @@
-# 标准化文档总览
+# Standards Documentation Overview
 
-本目录用于定义项目后续采用的**标准化建模基线**。
+This directory defines the standardized modeling baseline the project intends to use going forward.
 
-从 `2026-03-23` 开始，标准化文档体系不再以“空战单域先行、再尝试泛化”为主线，
-而改为：
+Language migration note:
 
-1. `joint`：联合层共通模板
-2. `services`：军种/域 profile
-3. `air/*`：平台或任务层的空战专用补充标准
-4. `naval/*`：海战方向的早期占位与最小任务结构基线
+- `docs/standards/` is being migrated to a bilingual layout in which English `.md` files are canonical and Chinese `.zh.md` files are companion documents.
+- See [bilingual_documentation_policy.md](bilingual_documentation_policy.md) for the governing rule set.
+- Until the English counterparts are fully in place, the legacy Chinese source documents may still be used as transitional input, but they are not the desired steady state.
 
-这样做的原因很直接：
+Since `2026-03-23`, the standards documentation is no longer organized around an "air-combat-first, generalize later" line. It now follows:
 
-- 美军联合层有共通的指挥授权关系
-- 但空军、陆军、海军、海军陆战队的战术组织与控制口径不同
-- 因此真正可复用的不是“一条完全统一的指挥链”，而是
+1. `joint`: shared templates for the joint layer
+2. `services`: service/domain profiles
+3. `air/*`: air-combat-specific supplemental standards for platform or mission layers
+4. `naval/*`: early placeholders and minimal mission-structure baselines for naval work
+
+The reason is straightforward:
+
+- The U.S. joint layer has shared command and authority relationships.
+- But the Air Force, Army, Navy, and Marine Corps use different tactical organizations and control vocabularies.
+- What is actually reusable is therefore not one fully unified command chain, but rather
   `joint/common core + service profile + platform/task specialization`
 
-## 1. 当前推荐阅读顺序
+## 1. Recommended Reading Order
 
-1. [Joint 标准总览](joint/README.md)
-2. [Joint 指挥关系与建模基线](joint/command_and_modeling_baseline.md)
-3. [Service 标准总览](services/README.md)
+1. [Joint Standards Overview](joint/README.md)
+2. [Joint Command Relationships and Modeling Baseline](joint/command_and_modeling_baseline.md)
+3. [Service Standards Overview](services/README.md)
 4. [USAF Profile](services/air_force.md)
 5. [US Army Profile](services/army.md)
 6. [US Navy Profile](services/navy.md)
 7. [US Marine Corps Profile](services/marine_corps.md)
-8. [文档对齐映射](document_alignment_map.md)
-9. [Air 平台专用标准总览](air/README.md)
-10. [Naval 标准占位](naval/README.md)
+8. [Document Alignment Map](document_alignment_map.md)
+9. [Air Platform Specialization Overview](air/README.md)
+10. [Naval Standards Placeholder](naval/README.md)
 
-## 2. 与旧文档的关系
+## 2. Relationship to Older Documents
 
-以下旧文档仍保留，但已按 `ARCHIVED` 口径处理：
+The following legacy documents are still retained, but are now treated as `ARCHIVED`:
 
 - `docs/Archive/air_first_standards/com/*.md`
 - `docs/Archive/air_first_standards/com/two_ship/*.md`
 - `docs/Archive/architecture/*.md`
 - `docs/Archive/architecture/layers/*.md`
 
-这些文档仍可用于理解项目历史推演，但不再作为当前标准化建模的主依据。
+They are still useful for understanding the project's historical evolution, but they are no longer the primary basis for current standardized modeling.
 
-## 3. 当前建模结论
+## 3. Current Modeling Conclusion
 
-本项目后续若以美军公开资料为现实基线，则应按下面三层建模：
+If the project continues to use publicly available U.S. military material as its real-world baseline, it should model along these three layers:
 
 - `Joint/Common Layer`
-  - command relationship
+  - command relationships
   - authority scope
   - task organization
   - commander intent / order / report
@@ -61,17 +66,17 @@
   - land platform
   - domain-specific recovery / route / sensor / weapon semantics
 
-## 4. 调研基线
+## 4. Research Baseline
 
-本轮重构只采用官方或官方托管公开资料，优先级如下：
+This refactor uses only official or officially hosted public sources. The priority order is:
 
 - Joint Chiefs of Staff
-- USAF Doctrine
-- US Army official doctrine / doctrine-related official pages
-- US Navy official doctrine / fleet / training pages
-- US Marine Corps official doctrine
+- USAF doctrine
+- U.S. Army official doctrine or doctrine-related official pages
+- U.S. Navy official doctrine, fleet, or training pages
+- U.S. Marine Corps official doctrine
 
-当前使用的关键来源：
+Current key sources:
 
 - [Joint Chiefs Service Publications](https://www.jcs.mil/Doctrine/Service-Publications/)
 - [CJCSM 3150.13C, Joint Reporting Structure](https://www.jcs.mil/Portals/36/Documents/Library/Manuals/m315013.pdf)
@@ -85,22 +90,22 @@
 - [COMPHIBRON 5 About](https://www.surfpac.navy.mil/Ships/Amphibious-Squadron-COMPHIBRON-5/About/)
 - [MCDP 1-0 w/ CH 1-3](https://www.marines.mil/News/Publications/MCPEL/Electronic-Library-Display/Article/1323621/mcdp-1-0-w-ch-1-3/)
 
-## 5. 对齐原则
+## 5. Alignment Principles
 
-从本轮开始，标准文档按以下状态管理：
+From this round forward, standards documents use the following status categories:
 
 - `Authoritative`
-  - 当前标准化建模的主依据
+  - The primary basis for current standardized modeling.
 - `Specialization`
-  - 某军种或某平台的专用补充标准
+  - A service-specific or platform-specific supplemental standard.
 - `Archived`
-  - 历史设计与旧路线，保留但不再作为主依据
+  - Historical designs and retired lines that are retained but no longer primary.
 
-当前状态划分：
+Current status mapping:
 
-- `joint/*.md`：`Authoritative`
-- `services/*.md`：`Authoritative`
-- `air/obs.md`、`air/act.md`、`air/aim.md`、`air/rep.md`：`Specialization`
-- `naval/*.md`：`Specialization (early-stage)`
-- `docs/Archive/air_first_standards/com/*.md`、`docs/Archive/air_first_standards/com/two_ship/*.md`：`Archived`
-- `docs/Archive/architecture/*.md`：`Archived`
+- `joint/*.md`: `Authoritative`
+- `services/*.md`: `Authoritative`
+- `air/obs.md`, `air/act.md`, `air/aim.md`, `air/rep.md`: `Specialization`
+- `naval/*.md`: `Specialization (early-stage)`
+- `docs/Archive/air_first_standards/com/*.md`, `docs/Archive/air_first_standards/com/two_ship/*.md`: `Archived`
+- `docs/Archive/architecture/*.md`: `Archived`

@@ -4,8 +4,8 @@
 
 关联文档：
 
-- [海战现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
-- [海战现实性分层清单与当前场景下一步计划](/home/void0312/Workshop/CMO/docs/task/naval/naval_realism_layering_and_next_step_plan_20260516.zh.md)
+- [海战现实性分析](../flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
+- [海战现实性分层清单与当前场景下一步计划](naval_realism_layering_and_next_step_plan_20260516.zh.md)
 
 本文档定位：
 
@@ -52,12 +52,12 @@
 
 主要文件：
 
-- [src/systems/naval/ship_motion_system.h](/home/void0312/Workshop/CMO/src/systems/naval/ship_motion_system.h)
-- [src/components/naval/ship_platform.h](/home/void0312/Workshop/CMO/src/components/naval/ship_platform.h)
-- [src/content/unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json](/home/void0312/Workshop/CMO/examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)
-- [examples/config/database/ships/units/take1_usns_lewis_and_clark.json](/home/void0312/Workshop/CMO/examples/config/database/ships/units/take1_usns_lewis_and_clark.json)
-- [tests/runtime/test_naval_ship_database.py](/home/void0312/Workshop/CMO/tests/runtime/test_naval_ship_database.py)
+- [src/systems/naval/ship_motion_system.h](../../../src/systems/naval/ship_motion_system.h)
+- [src/components/naval/ship_platform.h](../../../src/components/naval/ship_platform.h)
+- [src/content/unit_definition_loader.cpp](../../../src/content/unit_definition_loader.cpp)
+- [examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json](../../../examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)
+- [examples/config/database/ships/units/take1_usns_lewis_and_clark.json](../../../examples/config/database/ships/units/take1_usns_lewis_and_clark.json)
+- [tests/runtime/test_naval_ship_database.py](../../../tests/runtime/test_naval_ship_database.py)
 
 验收要点：
 
@@ -81,19 +81,19 @@
 
 主要文件：
 
-- [src/content/unit_definition.h](/home/void0312/Workshop/CMO/src/content/unit_definition.h)
-- [src/content/unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [src/models/core/default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
-- [src/components/systems/sensor.h](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [src/models/systems/default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [src/components/systems/ew.h](/home/void0312/Workshop/CMO/src/components/systems/ew.h)
-- [src/core/engine/simulation_kernel_observation_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_observation_api.cpp)
+- [src/content/unit_definition.h](../../../src/content/unit_definition.h)
+- [src/content/unit_definition_loader.cpp](../../../src/content/unit_definition_loader.cpp)
+- [src/models/core/default_unit_factory.h](../../../src/models/core/default_unit_factory.h)
+- [src/components/systems/sensor.h](../../../src/components/systems/sensor.h)
+- [src/models/systems/default_sensor_model.cpp](../../../src/models/systems/default_sensor_model.cpp)
+- [src/components/systems/ew.h](../../../src/components/systems/ew.h)
+- [src/core/engine/simulation_kernel_observation_api.cpp](../../../src/core/engine/simulation_kernel_observation_api.cpp)
 - 新增建议：
-  - [src/components/systems/sonar.h](/home/void0312/Workshop/CMO/src/components/systems/sonar.h)
-  - [src/core/interfaces/acoustic_model.h](/home/void0312/Workshop/CMO/src/core/interfaces/acoustic_model.h)
-  - [src/models/systems/default_acoustic_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_acoustic_model.cpp)
-  - [src/systems/systems/sonar_system.h](/home/void0312/Workshop/CMO/src/systems/systems/sonar_system.h)
-  - [src/components/naval/embarked_air_ops.h](/home/void0312/Workshop/CMO/src/components/naval/embarked_air_ops.h)
+  - [src/components/systems/sonar.h](../../../src/components/systems/sonar.h)
+  - [src/core/interfaces/acoustic_model.h](../../../src/core/interfaces/acoustic_model.h)
+  - [src/models/systems/default_acoustic_model.cpp](../../../src/models/systems/default_acoustic_model.cpp)
+  - [src/systems/systems/sonar_system.h](../../../src/systems/systems/sonar_system.h)
+  - [src/components/naval/embarked_air_ops.h](../../../src/components/naval/embarked_air_ops.h)
 
 验收要点：
 
@@ -117,15 +117,15 @@
 
 主要文件：
 
-- [src/components/combat/weapon.h](/home/void0312/Workshop/CMO/src/components/combat/weapon.h)
-- [src/content/unit_definition.h](/home/void0312/Workshop/CMO/src/content/unit_definition.h)
-- [src/content/unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [src/models/core/default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
-- [src/core/engine/simulation_kernel_weapon_api.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_weapon_api.cpp)
-- [src/components/combat/damage.h](/home/void0312/Workshop/CMO/src/components/combat/damage.h)
-- [src/components/combat/health.h](/home/void0312/Workshop/CMO/src/components/combat/health.h)
-- [src/models/weapons/default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
-- [src/systems/combat/damage_system.h](/home/void0312/Workshop/CMO/src/systems/combat/damage_system.h)
+- [src/components/combat/weapon.h](../../../src/components/combat/weapon.h)
+- [src/content/unit_definition.h](../../../src/content/unit_definition.h)
+- [src/content/unit_definition_loader.cpp](../../../src/content/unit_definition_loader.cpp)
+- [src/models/core/default_unit_factory.h](../../../src/models/core/default_unit_factory.h)
+- [src/core/engine/simulation_kernel_weapon_api.cpp](../../../src/core/engine/simulation_kernel_weapon_api.cpp)
+- [src/components/combat/damage.h](../../../src/components/combat/damage.h)
+- [src/components/combat/health.h](../../../src/components/combat/health.h)
+- [src/models/weapons/default_effects_model.cpp](../../../src/models/weapons/default_effects_model.cpp)
+- [src/systems/combat/damage_system.h](../../../src/systems/combat/damage_system.h)
 
 验收要点：
 
@@ -147,16 +147,16 @@
 
 主要文件：
 
-- 新增建议：[examples/config/database/ships/units/red_surface_combatant_minimal.json](/home/void0312/Workshop/CMO/examples/config/database/ships/units/red_surface_combatant_minimal.json)
-- [scenarios/naval/ddg51_take1_screen_contact_report_v1.json](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
-- [scenarios/naval/ddg51_take1_screen_closing_contact_v1.json](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
-- [gym_envs/scenario_loader/behavior_runtime/naval_screen.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/behavior_runtime/naval_screen.py)
-- [gym_envs/scenario_loader/behavior_runtime/command_chain.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/behavior_runtime/command_chain.py)
-- [src/systems/systems/data_link_system.h](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [src/systems/systems/track_manager_system.h](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [src/components/command/common/comm_message.h](/home/void0312/Workshop/CMO/src/components/command/common/comm_message.h)
-- [src/components/systems/logistics.h](/home/void0312/Workshop/CMO/src/components/systems/logistics.h)
-- [src/systems/systems/logistics_system.h](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h)
+- 新增建议：[examples/config/database/ships/units/red_surface_combatant_minimal.json](../../../examples/config/database/ships/units/red_surface_combatant_minimal.json)
+- [scenarios/naval/ddg51_take1_screen_contact_report_v1.json](../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
+- [scenarios/naval/ddg51_take1_screen_closing_contact_v1.json](../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
+- [gym_envs/scenario_loader/behavior_runtime/naval_screen.py](../../../gym_envs/scenario_loader/behavior_runtime/naval_screen.py)
+- [gym_envs/scenario_loader/behavior_runtime/command_chain.py](../../../gym_envs/scenario_loader/behavior_runtime/command_chain.py)
+- [src/systems/systems/data_link_system.h](../../../src/systems/systems/data_link_system.h)
+- [src/systems/systems/track_manager_system.h](../../../src/systems/systems/track_manager_system.h)
+- [src/components/command/common/comm_message.h](../../../src/components/command/common/comm_message.h)
+- [src/components/systems/logistics.h](../../../src/components/systems/logistics.h)
+- [src/systems/systems/logistics_system.h](../../../src/systems/systems/logistics_system.h)
 
 验收要点：
 

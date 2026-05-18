@@ -1,18 +1,20 @@
-# `src/models/systems` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/models/systems/README.md. Review before treating this file as authoritative. -->
 
-`models/systems` 保存平台系统相关模型实现，例如 sensor model 默认实现。
+# `src/models/systems` Boundary
 
-## 允许
+`models/systems` stores platform system related model implementations, e.g., the default sensor model implementation.
 
-- sensor、track、data-link 等平台系统的可替换计算模型。
-- 只依赖 `core/interfaces` 和 component 数据的纯 C++ 逻辑。
+## Allowed
 
-## 禁止
+- Replaceable computational models for platform systems such as sensor, track, data-link, etc.
+- Pure C++ logic that only depends on `core/interfaces` and component data.
 
-- Flecs system tick。
-- component 定义。
-- Python binding 或 facade。
+## Prohibited
 
-## 迁移备注
+- Flecs system tick.
+- Component definitions.
+- Python binding or facade.
 
-目录名与 `systems/systems` 相近，新增文件必须用具体业务名表达模型类型，避免泛化扩张。
+## Migration Notes
+
+The directory name is similar to `systems/systems`; new files must express the model type with specific business names to avoid generalized expansion.

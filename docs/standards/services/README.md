@@ -1,32 +1,36 @@
-# Service Profile 总览
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/README.zh.md. Review before treating this file as authoritative. -->
 
-本目录定义以美军公开资料为基线的军种 profile。
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/README.md. Review before treating this file as authoritative. -->
 
-当前纳入：
+# Service Profile Overview
+
+This directory defines service profiles based on publicly available U.S. military information.
+
+Currently included:
 
 - [US Air Force](air_force.md)
 - [US Army](army.md)
 - [US Navy](navy.md)
 - [US Marine Corps](marine_corps.md)
 
-配套的平台专用补充标准当前仅有：
+The supporting platform-specific supplementary standards currently only include:
 
-- [Air 平台专用标准](../air/README.md)
+- [Air Platform-Specific Standards](../air/README.md)
 
-## 1. 使用原则
+## 1. Usage Principles
 
-这些文档不是要把项目锁死成“军种百科”，而是为了回答三个问题：
+These documents are not intended to lock the project into a "service encyclopedia," but rather to answer three questions:
 
-1. 各军种真实的战术组织与控制口径是什么？
-2. 哪些层级适合进入 tight-loop runtime？
-3. 哪些层级应只作为 scenario / campaign / operation 元数据？
+1. What is the actual tactical organization and control scope of each service?
+2. Which levels are suitable for entering the tight-loop runtime?
+3. Which levels should only serve as scenario / campaign / operation metadata?
 
-## 2. 统一结论
+## 2. Unified Conclusion
 
-四个军种都不支持把“行政编制树”直接塞进 tight-loop RL。
+All four services do not support directly inserting the "administrative organization tree" into tight-loop RL.
 
-更合理的做法是：
+A more reasonable approach is:
 
-- 把高层军种/联合层保持为任务发布与资源分配层
-- 把 tight-loop runtime 放在真实的 tactical unit 上
-- tactical unit 的具体形态由各军种 profile 决定
+- Keep the high-level service/joint layer as the task publication and resource allocation layer
+- Place the tight-loop runtime on actual tactical units
+- The specific form of tactical units is determined by each service's profile

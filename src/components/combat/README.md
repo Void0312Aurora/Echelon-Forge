@@ -1,18 +1,20 @@
-# `src/components/combat` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/components/combat/README.md. Review before treating this file as authoritative. -->
 
-`components/combat` 保存战斗相关 ECS 状态，例如伤害、生命值、武器挂载和评分状态。
+# `src/components/combat` Boundaries
 
-## 允许
+`components/combat` holds combat-related ECS state, such as damage, health, weapon mounts, and scoring state.
 
-- health、damage、weapon、scoring 等战斗状态 component。
-- 武器系统和伤害系统需要读写的纯数据。
+## Allowed
 
-## 禁止
+- Combat state components: health, damage, weapon, scoring.
+- Pure data read and written by weapon systems and damage systems.
 
-- 制导、伤害结算或发射流程实现。
-- 物理运动状态、传感器扫描状态或任务状态。
-- Python binding 和 runtime owner。
+## Disallowed
 
-## 迁移备注
+- Guidance, damage resolution, or firing sequence implementation.
+- Physics motion state, sensor scanning state, or mission state.
+- Python bindings and runtime owner.
 
-战斗行为放在 `systems/combat` 或 `models/weapons`；这里保留可序列化、可绑定的状态数据。
+## Migration Notes
+
+Combat behavior goes into `systems/combat` or `models/weapons`; this directory retains serializable, bindable state data.

@@ -4,14 +4,14 @@
 
 关联输入：
 
-- [飞行动力学现实性分析与空战前置门槛](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
-- [AeroStateSystem](/home/void0312/Workshop/CMO/src/systems/physics/aero_state_system.h)
-- [AerodynamicsSystem](/home/void0312/Workshop/CMO/src/systems/physics/aerodynamics_system.h)
-- [ForceSystem](/home/void0312/Workshop/CMO/src/systems/physics/force_system.h)
-- [DefaultControlModel](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
-- [LogisticsSystem](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h)
-- [DefaultEnvironmentModel](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp)
-- [FlightDynamics 粗真实性守门测试](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
+- [飞行动力学现实性分析与空战前置门槛](flight_dynamics_realism_analysis_20260516.zh.md)
+- [AeroStateSystem](../../../../src/systems/physics/aero_state_system.h)
+- [AerodynamicsSystem](../../../../src/systems/physics/aerodynamics_system.h)
+- [ForceSystem](../../../../src/systems/physics/force_system.h)
+- [DefaultControlModel](../../../../src/models/air/default_control_model.cpp)
+- [LogisticsSystem](../../../../src/systems/systems/logistics_system.h)
+- [DefaultEnvironmentModel](../../../../src/models/environment/default_environment_model.cpp)
+- [FlightDynamics 粗真实性守门测试](../../../../tests/runtime/test_flight_dynamics_realism_guards.py)
 
 文档目标：
 
@@ -67,41 +67,41 @@ P0 的成功标准不是“飞得像 F-16”，而是“后续 P1/P2 可以在�
 
 建议新增：
 
-1. [src/components/physics/flight_dynamics_tuning.h](/home/void0312/Workshop/CMO/src/components/physics/flight_dynamics_tuning.h)
+1. [src/components/physics/flight_dynamics_tuning.h](../../../../src/components/physics/flight_dynamics_tuning.h)
    - 放 `AeroTuning`
    - 放 `EngineTuning`
    - 放 `StallState`
-2. [src/systems/physics/propulsion_system.h](/home/void0312/Workshop/CMO/src/systems/physics/propulsion_system.h)
+2. [src/systems/physics/propulsion_system.h](../../../../src/systems/physics/propulsion_system.h)
    - 负责 throttle -> thrust state 的推进瞬态
-3. [tests/runtime/test_flight_dynamics_p0_runtime_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_p0_runtime_guards.py)
+3. [tests/runtime/test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/test_flight_dynamics_p0_runtime_guards.py)
    - 新增 P0 骨架测试
 
 ### 3.2 需要修改的文件
 
 建议修改：
 
-1. [src/components/physics/dynamics.h](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
+1. [src/components/physics/dynamics.h](../../../../src/components/physics/dynamics.h)
    - 扩展 `Propulsion`
-2. [src/components/physics/forces.h](/home/void0312/Workshop/CMO/src/components/physics/forces.h)
+2. [src/components/physics/forces.h](../../../../src/components/physics/forces.h)
    - 扩展 `AeroState`
-3. [src/content/unit_definition.h](/home/void0312/Workshop/CMO/src/content/unit_definition.h)
+3. [src/content/unit_definition.h](../../../../src/content/unit_definition.h)
    - 为 `Airframe` / `Engine` 增加真实化可选字段
-4. [src/content/unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
+4. [src/content/unit_definition_loader.cpp](../../../../src/content/unit_definition_loader.cpp)
    - 读取 tuning 字段
-5. [src/models/core/default_unit_factory.h](/home/void0312/Workshop/CMO/src/models/core/default_unit_factory.h)
+5. [src/models/core/default_unit_factory.h](../../../../src/models/core/default_unit_factory.h)
    - 挂载 `AeroTuning` / `EngineTuning` / `StallState`
-6. [src/systems/physics/aero_state_system.h](/home/void0312/Workshop/CMO/src/systems/physics/aero_state_system.h)
+6. [src/systems/physics/aero_state_system.h](../../../../src/systems/physics/aero_state_system.h)
    - 生成 `alpha_dot`
-7. [src/systems/physics/aerodynamics_system.h](/home/void0312/Workshop/CMO/src/systems/physics/aerodynamics_system.h)
+7. [src/systems/physics/aerodynamics_system.h](../../../../src/systems/physics/aerodynamics_system.h)
    - 读取 `AeroTuning`
    - 更新 `stall_state / stall_progress`
-8. [src/systems/physics/force_system.h](/home/void0312/Workshop/CMO/src/systems/physics/force_system.h)
+8. [src/systems/physics/force_system.h](../../../../src/systems/physics/force_system.h)
    - 从“直接算推力”切到“消费 propulsion state”
-9. [src/systems/systems/logistics_system.h](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h)
+9. [src/systems/systems/logistics_system.h](../../../../src/systems/systems/logistics_system.h)
    - 油耗改读实际推力状态
-10. [src/systems/physics/instrument_system.h](/home/void0312/Workshop/CMO/src/systems/physics/instrument_system.h)
+10. [src/systems/physics/instrument_system.h](../../../../src/systems/physics/instrument_system.h)
     - 仪表改读实际发动机状态
-11. [src/core/engine/simulation_kernel_systems.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_systems.cpp)
+11. [src/core/engine/simulation_kernel_systems.cpp](../../../../src/core/engine/simulation_kernel_systems.cpp)
     - 注册 `propulsion_system`
 
 ---
@@ -112,7 +112,7 @@ P0 的成功标准不是“飞得像 F-16”，而是“后续 P1/P2 可以在�
 
 落点建议：
 
-- [src/components/physics/flight_dynamics_tuning.h](/home/void0312/Workshop/CMO/src/components/physics/flight_dynamics_tuning.h)
+- [src/components/physics/flight_dynamics_tuning.h](../../../../src/components/physics/flight_dynamics_tuning.h)
 
 P0 只放一维分段和少量标量，不上二维查表。
 
@@ -164,7 +164,7 @@ struct AeroTuning {
 
 落点建议：
 
-- [src/components/physics/flight_dynamics_tuning.h](/home/void0312/Workshop/CMO/src/components/physics/flight_dynamics_tuning.h)
+- [src/components/physics/flight_dynamics_tuning.h](../../../../src/components/physics/flight_dynamics_tuning.h)
 
 建议字段：
 
@@ -206,7 +206,7 @@ struct EngineTuning {
 
 修改落点：
 
-- [src/components/physics/dynamics.h](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
+- [src/components/physics/dynamics.h](../../../../src/components/physics/dynamics.h)
 
 建议新增字段：
 
@@ -229,8 +229,8 @@ double current_tsfc = 0.0;
 
 修改落点：
 
-- [src/components/physics/forces.h](/home/void0312/Workshop/CMO/src/components/physics/forces.h)
-- [src/components/physics/flight_dynamics_tuning.h](/home/void0312/Workshop/CMO/src/components/physics/flight_dynamics_tuning.h)
+- [src/components/physics/forces.h](../../../../src/components/physics/forces.h)
+- [src/components/physics/flight_dynamics_tuning.h](../../../../src/components/physics/flight_dynamics_tuning.h)
 
 建议新增字段：
 
@@ -262,7 +262,7 @@ double previous_angle_of_attack = 0.0;
 
 新增文件：
 
-- [src/systems/physics/propulsion_system.h](/home/void0312/Workshop/CMO/src/systems/physics/propulsion_system.h)
+- [src/systems/physics/propulsion_system.h](../../../../src/systems/physics/propulsion_system.h)
 
 职责边界：
 
@@ -346,9 +346,9 @@ Cm_total = Cm_baseline + Cm_pitch_break(alpha, stall_progress)
 
 两者都必须同步跟上 `Propulsion` 状态，否则会产生新的内部不一致：
 
-1. [logistics_system.h](/home/void0312/Workshop/CMO/src/systems/systems/logistics_system.h)
+1. [logistics_system.h](../../../../src/systems/systems/logistics_system.h)
    - 由“按 throttle 烧油”改成“按 `current_tsfc * current_thrust_n` 烧油”
-2. [instrument_system.h](/home/void0312/Workshop/CMO/src/systems/physics/instrument_system.h)
+2. [instrument_system.h](../../../../src/systems/physics/instrument_system.h)
    - `fuel_flow_kg_h`、`engine_rpm_pct` 改为读 `throttle_state / ab_state / current_tsfc`
 
 ---
@@ -451,7 +451,7 @@ P0 不新开数据目录，直接复用现有数据库结构：
 
 建议新增：
 
-- [tests/runtime/test_flight_dynamics_p0_runtime_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_p0_runtime_guards.py)
+- [tests/runtime/test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/test_flight_dynamics_p0_runtime_guards.py)
 
 覆盖以下项目：
 
@@ -473,7 +473,7 @@ P0 不新开数据目录，直接复用现有数据库结构：
 
 ### 7.2 建议扩展现有守门测试
 
-在 [test_flight_dynamics_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py) 上增加两类断言：
+在 [test_flight_dynamics_realism_guards.py](../../../../tests/runtime/test_flight_dynamics_realism_guards.py) 上增加两类断言：
 
 1. 记录 `AoA_dot` 峰值
 2. 记录 `stall_state` 是否被触发

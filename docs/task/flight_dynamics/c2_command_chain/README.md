@@ -1,44 +1,57 @@
-# C2 指挥链与通信子项目
+# C2 Command-Chain And Communications Subproject
 
-状态：`2026-05-17` 活跃推进中。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-本子项目收纳与当前 `MissionCommand / CommandLink / DataLink / ROE / naval command-chain` 推进直接相关的文档，避免把持续进展继续堆回冻结分析稿。
+Status: `2026-05-17` actively advancing.
 
-## 文档入口
+This subproject collects documents directly tied to the current
+`MissionCommand / CommandLink / DataLink / ROE / naval command-chain`
+workstream, so ongoing progress does not keep getting piled back into one
+frozen analysis draft.
 
-- [冻结分析基线](c2_command_chain_realism_analysis_20260517.zh.md)
-  作用：保留 `2026-05-17` 时点的缺陷分析与不应夸大的表述。
-- [当前进展检查点](c2_command_chain_progress_checkpoint_20260517.zh.md)
-  作用：记录当前这轮已经完成的实现、验证和主线能力面。
-- [待解决问题分析](c2_command_chain_unresolved_issues_20260517.zh.md)
-  作用：聚焦还没解决的技术缺口、当前边界和下一轮建议。
+## Document Entry Points
 
-## 当前范围
+- [frozen analysis baseline](c2_command_chain_realism_analysis_20260517.zh.md)
+  - Preserves the defect analysis and non-overstatement framing captured on
+    `2026-05-17`.
+- [current progress checkpoint](c2_command_chain_progress_checkpoint_20260517.md)
+  - Records what this round has already implemented, verified, and exposed on
+    the mainline capability surface.
+- [open-issues analysis](c2_command_chain_unresolved_issues_20260517.md)
+  - Focuses on unresolved technical gaps, current boundaries, and next-round
+    recommendations.
 
-当前子项目关注：
+## Current Scope
 
-1. `MissionCommand` 在 air / naval 两侧的最小执行语义与 authority 统一。
-2. `CommandLink` 的最小 FIFO / latency / pending queue 语义。
-3. `PilotAction` 与 `MissionCommand` 的控制权边界。
-4. `ROE / engagement authority` 的最小字段和 runtime gate。
-5. `DataLink` 的最小预算、优先级和可观测拥塞状态。
+This subproject currently focuses on:
 
-当前子项目不试图一次解决：
+1. Minimal executable semantics and authority unification for `MissionCommand`
+   across the air and naval sides.
+2. Minimal FIFO/latency/pending-queue semantics for `CommandLink`.
+3. Control-boundary handling between `PilotAction` and `MissionCommand`.
+4. Minimal `ROE / engagement authority` fields and runtime gates.
+5. Minimal `DataLink` budget, priority, and observable congestion state.
 
-1. 完整 Link 16 / NPG / relay / ACK / retransmission。
-2. 完整 naval fire-control AI / CEC / engage-on-remote。
-3. 完整海军 tasking state machine 与多舰编队 doctrine。
-4. 全量 episode/json/schema 冗余消解。
+This subproject is not trying to solve in one pass:
 
-## 关联文档
+1. Full Link 16 / NPG / relay / ACK / retransmission behavior.
+2. Full naval fire-control AI / CEC / engage-on-remote behavior.
+3. Full naval tasking state machine and multi-ship formation doctrine.
+4. Complete episode/json/schema redundancy elimination.
 
-- [海战仿真现实性分析](../naval/naval_realism_analysis_20260516.zh.md)
-- [传感器与态势感知现实性分析](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [武器系统与制导回路现实性分析](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
+## Related Documents
 
-## 维护规则
+- [naval simulation realism analysis](../naval/naval_realism_analysis_20260516.zh.md)
+- [sensor and situational-awareness realism analysis](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [weapon-system and guidance-loop realism analysis](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+- [naval progress checkpoint](../../naval/naval_progress_checkpoint_20260517.md)
 
-1. 冻结分析继续保留原文件，不在原文中改写“当时判断”。
-2. 当前实现进展统一进入 `progress checkpoint`。
-3. 仍待解决且会影响下一轮排期的内容统一进入 `unresolved issues`。
+## Maintenance Rules
+
+1. Frozen analysis stays in the original file; do not rewrite "what was true at
+   the time" inside that record.
+2. Current implementation progress goes into the `progress checkpoint`.
+3. Still-open issues that affect the next scheduling round go into
+   `unresolved issues`.

@@ -1,24 +1,24 @@
-# Naval 标准占位
+# Naval Standards Placeholder
 
-本目录预留给 upcoming `naval` 模块相关的标准文档。
+This directory is reserved for standards documentation related to the upcoming `naval` module.
 
-当前作用只有一个：
+Its current purpose is limited to:
 
-- 给 `common + air + naval` 拆分提供明确落点
-- 给最小海战任务结构提供冻结入口，见 [minimal_task_structure.md](minimal_task_structure.md)
-- 给第一批真实舰船单位提供来源与建模边界，见 [ship_unit_references.md](ship_unit_references.md)
+- Providing a clear landing point for the `common + air + naval` split.
+- Providing a freeze entry point for the minimal naval task structure, see [minimal_task_structure.md](minimal_task_structure.md).
+- Providing sources and modeling boundaries for the first batch of real warship units, see [ship_unit_references.md](ship_unit_references.md).
 
-## 1. 目录职责
+## 1. Directory Responsibilities
 
-未来放在这里的文档应只描述 naval-specific 语义，例如：
+Documents placed here in the future should only describe naval-specific semantics, for example:
 
 - `warfare_role_code`
 - `officer_in_tactical_command`
-- `task force / task group / task unit` 的 tight-loop runtime 解释
-- screen / support / station 等舰队协同语义
-- naval route / recovery / replenishment / station-keeping 规则
+- Tight-loop runtime interpretation of `task force / task group / task unit`
+- Fleet cooperation semantics such as screen / support / station
+- Naval route / recovery / replenishment / station-keeping rules
 
-## 2. 不应放在这里的内容
+## 2. Content That Should Not Be Placed Here
 
 - `command_relationship`
 - `authority_scope`
@@ -26,24 +26,24 @@
 - `service_profile`
 - `tactical_unit_type`
 - `coordination_mode`
-- 其他跨军种仍成立的 `common` 字段
+- Other `common` fields that still hold across military branches
 
-这些应继续由 `docs/standards/joint/` 与 `docs/standards/services/` 约束。
+These should continue to be governed by `docs/standards/joint/` and `docs/standards/services/`.
 
-## 3. 与 air 的关系
+## 3. Relationship with air
 
-`naval` 不是把现有 air 文档简单改名。
+`naval` is not a simple renaming of existing air documentation.
 
-后续 naval 文档应避免默认使用：
+Subsequent naval documentation should avoid default use of:
 
 - `lead / wingman`
 - `runway`
 - `CAP`
-- air-style `MissionCommand.command_code` 解释
+- air-style interpretation of `MissionCommand.command_code`
 
-若某个对象只在空战 sortie 级场景成立，应继续留在 `docs/standards/air/`。
+If an object is only valid in an air combat sortie-level scenario, it should remain in `docs/standards/air/`.
 
-## 4. 当前最小海战占位口径
+## 4. Current Minimal Naval Placeholder Stance
 
-- `Red_Surface_Combatant_Minimal` 属于 `community-derived approximation`，仅用于替换先前把补给舰当作敌舰的错误占位，不代表某一具体敌方舰级的精确公开参数。
-- `ReportTrack` / 任务群级共享属于当前数据链现实收敛的工程近似，用于避免逐步洪泛广播；它不等同完整 `Link 16 / CEC` 语义。
+- `Red_Surface_Combatant_Minimal` belongs to a `community-derived approximation`, used only to replace the previous incorrect placeholder that treated a supply ship as an enemy vessel. It does not represent precise public parameters of any specific enemy ship class.
+- `ReportTrack` / task-group-level sharing is an engineering approximation converged from current data link realities, used to avoid stepwise flooding broadcasts; it is not equivalent to the full `Link 16 / CEC` semantics.

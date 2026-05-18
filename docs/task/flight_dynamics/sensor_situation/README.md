@@ -1,23 +1,34 @@
-# 传感器与态势感知子项目
+# Sensor And Situational Awareness Subproject
 
-状态：`2026-05-17` 已完成 `P0` 骨架与 `P1` 收敛文档整理。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-本子项目收纳传感器探测、航迹管理、数据链共享、态势感知和相关参考说明文档。
+Status: `2026-05-17` with the `P0` skeleton and `P1` convergence docs already
+organized.
 
-## 文档入口
+This subproject collects sensor detection, track management, data-link sharing,
+situational-awareness, and related reference notes.
 
-- [传感器与态势感知现实性分析](sensor_situation_realism_analysis_20260516.zh.md)
-  作用：冻结当前传感器/态势链路的已知缺陷与真实性差距。
-- [传感器/态势感知真实化核实与实现方案](sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
-  作用：核实现有调研并给出贴合当前 ECS 结构的落地方案。
-- [传感器/态势真实化 P0 实施包](sensor_situation_realism_p0_implementation_package_20260516.zh.md)
-  作用：记录 `SNR/Pd`、`M-of-N`、`alpha-beta`、航迹级共享等首轮实施范围。
-- [传感器/态势真实化 P0 参考说明](sensor_situation_realism_p0_reference_notes_20260516.md)
-  作用：保存 `P0` 方法血缘、公开资料来源和使用口径。
-- [传感器/态势真实化 P1 实施包](sensor_situation_realism_p1_implementation_package_20260517.zh.md)
-  作用：承接配置暴露、观测打通、环境/IFF/融合质量等后续工作。
+## Document Entry Points
 
-## 当前阅读顺序
+- [sensor and situational-awareness realism analysis](sensor_situation_realism_analysis_20260516.zh.md)
+  - Freezes the currently known defects and realism gaps in the sensor and
+    situational-awareness chain.
+- [sensor/situational-awareness realism verification and implementation plan](sensor_situation_realism_verification_and_implementation_plan_20260516.zh.md)
+  - Verifies the current research and proposes a landing plan that fits the
+    present ECS structure.
+- [sensor/situational-awareness realism P0 implementation package](sensor_situation_realism_p0_implementation_package_20260516.zh.md)
+  - Records the first implementation scope for `SNR/Pd`, `M-of-N`,
+    `alpha-beta`, and track-level sharing.
+- [sensor/situational-awareness realism P0 reference notes](sensor_situation_realism_p0_reference_notes_20260516.md)
+  - Preserves the `P0` method lineage, public source references, and usage
+    framing.
+- [sensor/situational-awareness realism P1 implementation package](sensor_situation_realism_p1_implementation_package_20260517.zh.md)
+  - Carries the follow-on work for config exposure, observation plumbing,
+    environment/IFF, and fusion quality.
+
+## Current Reading Order
 
 1. `analysis`
 2. `verification_and_implementation_plan`

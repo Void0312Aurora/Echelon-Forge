@@ -1,17 +1,17 @@
 # Code Layer Map
 
-状态：`2026-05-18` 维护版。
-本文档回答三个问题：
+Status: maintenance edition as of `2026-05-18`.
+This document answers three questions:
 
-1. 当前主线代码从 C++ runtime 到 Python 训练入口是怎样串起来的。
-2. 各个子系统的职责边界写在哪些 README / 方案文档里。
-3. 出问题时应该先看哪个目录，而不是在整个仓库里盲搜。
+1. How the current mainline code path connects the C++ runtime to the Python training entry points.
+2. Which README files and design documents define the responsibility boundaries of each subsystem.
+3. Which directory you should inspect first when something breaks, instead of searching the whole repository blindly.
 
-如果某份历史任务记录、旧计划或归档文档与这里冲突，优先相信当前代码树中的活动 README，以及 `docs/plan/architecture/` 下仍作为主线的架构说明。
+If any historical task record, old plan, or archived document conflicts with this map, trust the active README files in the current code tree first, along with the architecture documents under `docs/plan/architecture/` that are still part of the mainline.
 
-## 1. 当前主线总览
+## 1. Current Mainline Overview
 
-当前维护中的依赖方向应理解为：
+The maintained dependency direction should be understood as:
 
 ```text
 interfaces/python
@@ -22,10 +22,10 @@ interfaces/python
 
 gpu
   -> core/runtime-visible packets
-  -> 不拥有 canonical CPU truth path
+  -> does not own the canonical CPU truth path
 ```
 
-如果按“运行链路”来理解，则更接近：
+If you think about it as an execution chain instead, it is closer to:
 
 ```text
 SimulationKernel / WorldBatchRuntime
@@ -35,42 +35,42 @@ SimulationKernel / WorldBatchRuntime
         -> training / evaluation / diagnostics / contracts
 ```
 
-这条主线的权威入口主要有三组：
+There are three primary authoritative entry points for this mainline:
 
 - [README.md](../../README.md)
-  - 项目总入口，说明主线能力、常用命令和 repo 级边界。
+  - The top-level project entry point, covering mainline capabilities, common commands, and repository-level boundaries.
 - [src/README.md](../../src/README.md)
-  - `src/` 分层边界和依赖方向。
+  - The layering boundaries and dependency directions inside `src/`.
 - [docs/plan/architecture/README.md](../plan/architecture/README.md)
-  - 当前架构主方案、分层冻结记录和性能/路线调研。
+  - The current primary architecture track, layering freeze records, and performance / roadmap research.
 
-## 2. 哪些文档是“当前权威入口”
+## 2. Which Documents Are the Current Authoritative Entry Points
 
-如果你要判断某个子系统的职责边界是否已经文档化，优先看这些层级：
+If you need to decide whether a subsystem's responsibility boundary has been documented, check these layers first:
 
-- `src/` 下各目录 README
-  - 这是当前最直接、最接近代码的边界说明。
+- README files under each `src/` directory
+  - These are the most direct boundary descriptions and the closest to the code.
 - `docs/plan/architecture/`
-  - 这是“为什么这样分层”的主方案层。
+  - This is the primary "why the layers look like this" design track.
 - `tests/README.md`
-  - 这是“哪些约束已经进入自动验证”的入口。
-- `python/README.md`、`gym_envs/README.md`、`tools/README.md`
-  - 这是 Python 运行时、环境封装和工具面的职责入口。
+  - This is the entry point for understanding which constraints are already enforced automatically.
+- `python/README.md`, `gym_envs/README.md`, `tools/README.md`
+  - These describe the responsibility boundaries for the Python runtime layer, environment wrappers, and tool surface.
 
-不应默认当作当前权威的文档：
+Documents that should not be treated as authoritative by default:
 
 - `docs/Archive/`
-  - 保留历史讨论和旧方案，不作为当前实现默认依据。
+  - Historical discussions and retired plans. Useful for history, but not a default basis for the current implementation.
 - `docs/temp/`
-  - 草稿/临时分析，不作为维护主线依据。
-- 具体任务记录中的实施包、进展报告、checkpoint
-  - 可用于追溯背景，但不应替代对应目录下 README 的边界说明。
+  - Drafts and temporary analysis. Not part of the maintained mainline.
+- Implementation packs, progress reports, and checkpoints inside task-specific records
+  - Useful for reconstructing context, but they should not replace the boundary statements in the README files of the corresponding directories.
 
-## 3. `src/` 层
+## 3. The `src/` Layer
 
-`src/` 是 C++ runtime 主线。它已经有比较完整的分层边界说明，是当前“子系统职责是否有详细文档”的 strongest evidence。
+`src/` is the mainline C++ runtime. It already has comparatively complete layering and boundary documentation, making it the strongest evidence for whether subsystem responsibilities have been documented in detail.
 
-优先阅读：
+Read these first:
 
 - [src/README.md](../../src/README.md)
 - [src/core/README.md](../../src/core/README.md)
@@ -80,13 +80,13 @@ SimulationKernel / WorldBatchRuntime
 
 ### `src/components/`
 
-职责：
+Responsibilities:
 
-- ECS component。
-- command / tasking DTO。
-- 可绑定、可持久化的轻量值类型。
+- ECS components.
+- Command / tasking DTOs.
+- Lightweight value types that are bindable and persistable.
 
-边界入口：
+Boundary entry points:
 
 - [src/components/README.md](../../src/components/README.md)
 - [src/components/command/README.md](../../src/components/command/README.md)
@@ -97,20 +97,20 @@ SimulationKernel / WorldBatchRuntime
 - [src/components/tasking/air/README.md](../../src/components/tasking/air/README.md)
 - [src/components/tasking/naval/README.md](../../src/components/tasking/naval/README.md)
 
-典型问题：
+Typical questions:
 
-- `MissionCommand`、`PilotAction`、`TaskOrder`、`LeaderIntent` 的字段定义在哪里。
-- 哪些字段属于 `common`，哪些属于 `air` / `naval`。
+- Where the fields for `MissionCommand`, `PilotAction`, `TaskOrder`, and `LeaderIntent` are defined.
+- Which fields belong to `common` versus `air` / `naval`.
 
 ### `src/systems/`
 
-职责：
+Responsibilities:
 
-- Flecs system registration。
-- 每 tick 的 ECS mutation 逻辑。
-- 物理、战斗、平台系统、视觉更新。
+- Flecs system registration.
+- Per-tick ECS mutation logic.
+- Physics, combat, platform systems, and visual updates.
 
-边界入口：
+Boundary entry points:
 
 - [src/systems/README.md](../../src/systems/README.md)
 - [src/systems/core/README.md](../../src/systems/core/README.md)
@@ -119,19 +119,19 @@ SimulationKernel / WorldBatchRuntime
 - [src/systems/systems/README.md](../../src/systems/systems/README.md)
 - [src/systems/visual/README.md](../../src/systems/visual/README.md)
 
-典型问题：
+Typical questions:
 
-- 命令怎样进入 runtime 并在每帧生效。
-- 空气动力、控制、仪表、导航、传感器、数据链怎样推进。
+- How commands enter the runtime and take effect each frame.
+- How aerodynamics, control, instruments, navigation, sensors, and data links advance over time.
 
 ### `src/models/`
 
-职责：
+Responsibilities:
 
-- 可替换的领域模型默认实现。
-- control / sensor / guidance / effects / unit factory。
+- Default implementations of replaceable domain models.
+- Control / sensor / guidance / effects / unit-factory models.
 
-边界入口：
+Boundary entry points:
 
 - [src/models/README.md](../../src/models/README.md)
 - [src/models/core/README.md](../../src/models/core/README.md)
@@ -140,33 +140,33 @@ SimulationKernel / WorldBatchRuntime
 - [src/models/systems/README.md](../../src/models/systems/README.md)
 - [src/models/weapons/README.md](../../src/models/weapons/README.md)
 
-典型问题：
+Typical questions:
 
-- 默认控制律、传感器、制导、武器效果模型在哪里。
-- 某类行为是“系统逻辑”还是“可替换模型实现”。
+- Where the default control-law, sensor, guidance, and weapon-effects models live.
+- Whether a behavior belongs to "system logic" or to a replaceable model implementation.
 
 ### `src/content/`
 
-职责：
+Responsibilities:
 
-- 内容 schema、unit definition、内容加载器。
-- 描述“有哪些静态内容”，而不是拥有 runtime 行为。
+- Content schemas, unit definitions, and content loaders.
+- Describing which static content exists, rather than owning runtime behavior.
 
-边界入口：
+Boundary entry points:
 
 - [src/content/README.md](../../src/content/README.md)
 
 ### `src/core/`
 
-职责：
+Responsibilities:
 
-- 单 world kernel。
-- batch runtime。
-- mission runtime。
-- episode controller。
-- geometry query。
+- Single-world kernel.
+- Batch runtime.
+- Mission runtime.
+- Episode controller.
+- Geometry queries.
 
-边界入口：
+Boundary entry points:
 
 - [src/core/README.md](../../src/core/README.md)
 - [src/core/engine/README.md](../../src/core/engine/README.md)
@@ -177,234 +177,234 @@ SimulationKernel / WorldBatchRuntime
 - [src/core/mission/episode/detail/README.md](../../src/core/mission/episode/detail/README.md)
 - [src/core/interfaces/README.md](../../src/core/interfaces/README.md)
 
-典型问题：
+Typical questions:
 
-- `SimulationKernel` 和 `WorldBatchRuntime` 的 owner 在哪里。
-- reward / objective / termination / episode transition 在哪里计算。
+- Where ownership of `SimulationKernel` and `WorldBatchRuntime` resides.
+- Where reward / objective / termination / episode-transition logic is computed.
 
 ### `src/runtime/`
 
-职责：
+Responsibilities:
 
-- 维护中的 C++ 应用层 contract。
-- facade request / result。
-- 面向 Python 和未来前端的 typed runtime API。
+- The maintained C++ application-layer contract.
+- Facade requests / results.
+- The typed runtime API exposed to Python and future frontends.
 
-边界入口：
+Boundary entry points:
 
 - [src/runtime/README.md](../../src/runtime/README.md)
 - [src/runtime/contracts/README.md](../../src/runtime/contracts/README.md)
 - [src/runtime/facade/README.md](../../src/runtime/facade/README.md)
 
-典型问题：
+Typical questions:
 
-- 外部长期依赖的 C++ runtime surface 应该是什么。
-- 为什么不应直接抓 `SimulationKernel` 作为上层 API。
+- What the long-term external C++ runtime surface should be.
+- Why `SimulationKernel` should not be used directly as the upper-layer API.
 
 ### `src/interfaces/`
 
-职责：
+Responsibilities:
 
-- 语言绑定和外部接口适配。
-- 轻量类型转换与错误映射。
+- Language bindings and external interface adapters.
+- Lightweight type conversion and error mapping.
 
-边界入口：
+Boundary entry points:
 
 - [src/interfaces/README.md](../../src/interfaces/README.md)
 - [src/interfaces/python/README.md](../../src/interfaces/python/README.md)
 
-典型问题：
+Typical questions:
 
-- 某个 C++ 类型如何暴露到 Python。
-- 某段逻辑应属于 binding 还是应该下沉回 `runtime/facade` / `core`。
+- How a particular C++ type is exposed to Python.
+- Whether a piece of logic belongs in bindings or should be pushed back down into `runtime/facade` / `core`.
 
 ### `src/gpu/`
 
-职责：
+Responsibilities:
 
-- GPU helper。
-- packet runtime。
-- 显式实验探针。
+- GPU helpers.
+- Packet runtime support.
+- Explicit experimental probes.
 
-边界入口：
+Boundary entry points:
 
 - [src/gpu/README.md](../../src/gpu/README.md)
 - [src/gpu/experimental/README.md](../../src/gpu/experimental/README.md)
 
-典型问题：
+Typical questions:
 
-- 哪些 GPU 路径已经进入维护面。
-- 哪些仍是 parity probe 或实验路径。
+- Which GPU paths have already entered the maintained surface.
+- Which ones are still parity probes or experimental paths.
 
 ### `src/tools/`
 
-职责：
+Responsibilities:
 
-- 开发期工具和实验工具。
-- 允许调用 runtime API 做探测，但不构成维护中的主线 contract。
+- Development-time tools and experimental tooling.
+- Allowed to call runtime APIs for probing, but not part of the maintained mainline contract.
 
-边界入口：
+Boundary entry points:
 
 - [src/tools/README.md](../../src/tools/README.md)
 - [src/tools/experimental/README.md](../../src/tools/experimental/README.md)
 - [src/tools/experimental/gpu_phase0/README.md](../../src/tools/experimental/gpu_phase0/README.md)
 
-## 4. `python/` 层
+## 4. The `python/` Layer
 
-`python/` 不是杂项脚本目录，而是 C++ runtime 上方的 Python 支撑层。
+`python/` is not a miscellaneous-scripts directory. It is the Python support layer that sits above the C++ runtime.
 
-优先阅读：
+Read these first:
 
 - [python/README.md](../../python/README.md)
 - [python/training/README.md](../../python/training/README.md)
 
-当前主线子域：
+Current mainline subdomains:
 
 - `scenario/`
-  - 场景编译和运行时主实现。
+  - Main implementation for scenario compilation and runtime.
 - `rl/`
-  - Python RL 主线，包含 runtime、tasking、policy algo、planning、profile、support。
+  - Mainline Python RL stack, including runtime, tasking, policy algorithms, planning, profile, and support.
 - `training/`
-  - `train.py` 主线入口复用的 bootstrap、CLI 和运行时支撑。
+  - Shared bootstrap, CLI, and runtime support reused by the `train.py` mainline entry point.
 - `testing/`
-  - contract runner 与测试运行时支撑。
+  - Contract runners and runtime support for tests.
 - `world_model/`
-  - world model / offline dataset 支撑。
+  - Support for world models and offline datasets.
 - `models/`
-  - Python 侧训练模型辅助。
+  - Training-model helpers on the Python side.
 
-典型问题：
+Typical questions:
 
-- 为什么某个训练入口走到 world-batch runtime。
-- leader/tasking/HMoE 的 Python glue 在哪里。
-- contract runner、artifact 路径和训练 bootstrap 为什么这样组织。
+- Why a given training entry point reaches the world-batch runtime.
+- Where the Python glue for leader / tasking / HMoE lives.
+- Why the contract-runner layout, artifact paths, and training bootstrap are organized this way.
 
-实现入口：
+Implementation entry points:
 
 - [python/scenario_compiler.py](../../python/scenario_compiler.py)
-  - 兼容 shim，主实现已下沉到 `python/scenario/compiler/`。
+  - Compatibility shim; the main implementation has moved to `python/scenario/compiler/`.
 - [python/scenario_runtime.py](../../python/scenario_runtime.py)
-  - 兼容 shim，主实现已下沉到 `python/scenario/runtime/`。
+  - Compatibility shim; the main implementation has moved to `python/scenario/runtime/`.
 - [python/testing/scenario_contract_runner.py](../../python/testing/scenario_contract_runner.py)
-  - 兼容 shim，主实现已下沉到 `python/testing/contracts/`。
+  - Compatibility shim; the main implementation has moved to `python/testing/contracts/`.
 
-## 5. `gym_envs/` 层
+## 5. The `gym_envs/` Layer
 
-`gym_envs/` 是环境封装层，负责把 C++ runtime、mission state 和训练接口接起来。
+`gym_envs/` is the environment-wrapper layer. It connects the C++ runtime, mission state, and training interfaces.
 
-优先阅读：
+Read this first:
 
 - [gym_envs/README.md](../../gym_envs/README.md)
 
-主入口：
+Primary entry points:
 
 - [gym_envs/universal_env.py](../../gym_envs/universal_env.py)
-  - 执行层 / 单机主环境。
+  - The execution-layer / single-process primary environment.
 - [gym_envs/leader_env.py](../../gym_envs/leader_env.py)
-  - 长机层环境。
+  - The leader-layer environment.
 
-关键子域：
+Key subdomains:
 
 - `scenario_loader/`
-  - 场景运行时 glue、mission observation、execution / navigation / reward / preparation / spatial runtime。
+  - Scenario-runtime glue, mission observation, and execution / navigation / reward / preparation / spatial runtime pieces.
 - `leader_env_parts/`
-  - 长机环境拆分后的 decision / execution glue。
+  - Decision and execution glue extracted from the leader environment.
 
-典型问题：
+Typical questions:
 
-- 为什么某个 env step 落到某个 reward / transition 分支。
-- 长机环境与执行环境的职责如何分开。
+- Why a given environment step lands in a particular reward or transition branch.
+- How responsibilities are separated between the leader environment and the execution environment.
 
-## 6. `tests/` 层
+## 6. The `tests/` Layer
 
-`tests/` 已经在向“reusable runners + JSON contracts”收敛。
+`tests/` is already converging toward "reusable runners + JSON contracts".
 
-优先阅读：
+Read this first:
 
 - [tests/README.md](../../tests/README.md)
 
-当前主线测试域：
+Current mainline test domains:
 
 - `architecture/`
-  - 分层守卫和 target readiness。
+  - Layering guards and target readiness.
 - `runtime/`
-  - mission / runtime / loader / facade 回归。
+  - Regressions for mission / runtime / loader / facade behavior.
 - `world_batch/`
-  - batch kernel 与 vec-env 适配。
+  - Batch-kernel and vec-env adaptation.
 - `leader/`
-  - leader / tasking / common-core / naval 语义。
+  - Leader / tasking / common-core / naval semantics.
 - `scenario/`
-  - scenario compiler 与 spatial-query 测试。
+  - Scenario compiler and spatial-query tests.
 - `training/`
-  - train entry 和 callback 回归。
+  - Regressions for training entry points and callbacks.
 - `contracts/`
-  - JSON contract 规格。
+  - JSON contract specifications.
 - `diagnostics/`
-  - 仍偏探索性，不应替代稳定 regression。
+  - Still more exploratory, and should not replace stable regression coverage.
 
-这里也是“边界是否只是写在文档里，还是已经被守住”的主要证据面。比如架构分层、runtime facade 收口和部分 contract 边界，已经通过自动测试在维持。
+This is also the main evidence surface for whether a boundary is merely documented or is actually being enforced. For example, architectural layering, runtime-facade consolidation, and parts of the contract boundary are already kept in place by automated tests.
 
-## 7. `tools/` 层
+## 7. The `tools/` Layer
 
-`tools/` 是 operator-facing 工具和 runner 面，不是核心 runtime API。
+`tools/` is the operator-facing tooling and runner surface, not the core runtime API.
 
-优先阅读：
+Read these first:
 
 - [tools/README.md](../../tools/README.md)
 - [tools/diagnostics/README.md](../../tools/diagnostics/README.md)
 - [tools/maintenance/README.md](../../tools/maintenance/README.md)
 
-当前主线分工：
+Current mainline split:
 
 - `tools/eval/`
-  - 维护中的评估入口。
+  - The maintained evaluation entry points.
 - `tools/diagnostics/`
-  - benchmark / probe / replay / operator-facing diagnostics。
+  - Benchmark / probe / replay / operator-facing diagnostics.
 - `tools/runners/`
-  - contract 和批量 runner。
+  - Contract runners and batch runners.
 - `tools/maintenance/`
-  - 环境、workspace、维护脚本。
+  - Environment, workspace, and maintenance scripts.
 
-## 8. 边界方案文档
+## 8. Boundary Design Documents
 
-如果你要看“为什么这样分层”，而不是只看目录 README，优先读：
+If you want to understand why the layers look this way, not just read directory README files, start with:
 
 1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
 2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../plan/architecture/architecture_and_performance_research_followup.zh.md)
 3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
 4. [docs/plan/architecture/src_layered_refactor_freeze.zh.md](../plan/architecture/src_layered_refactor_freeze.zh.md)
 
-这些文档回答的是：
+These documents answer:
 
-- 为什么要有 `runtime/facade`。
-- 为什么 `interfaces/python` 不能继续拥有领域逻辑。
-- 为什么 `core`、`systems`、`models`、`components` 要保持当前方向的依赖。
-- 哪些分层已经冻结成当前主线，哪些仍是后续收口工作。
+- Why `runtime/facade` needs to exist.
+- Why `interfaces/python` should no longer own domain logic.
+- Why `core`, `systems`, `models`, and `components` should keep the current dependency direction.
+- Which layering decisions are already frozen into the current mainline and which are still follow-up consolidation work.
 
-## 9. 问题定位建议
+## 9. Issue-Triage Suggestions
 
-如果你遇到的是：
+If the problem you are facing is:
 
-- “字段定义在哪”
-  - 从 `src/components/` 开始。
-- “每 tick 行为为什么这样变化”
-  - 从 `src/systems/` 和 `src/models/` 开始。
-- “mission / reward / termination 为什么这样算”
-  - 从 `src/core/mission/` 开始。
-- “为什么 Python 拿到这个观测、奖励或 phase transition”
-  - 从 `gym_envs/scenario_loader/` 开始。
-- “leader / tasking 为什么发出这个命令”
-  - 从 `python/rl/tasking/` 和 `gym_envs/leader_env_parts/` 开始。
-- “binding surface 为什么不一致”
-  - 从 `src/interfaces/python/` 和 `tests/runtime/` 开始。
-- “facade contract 为什么这样设计”
-  - 从 `src/runtime/` 和 `docs/plan/runtime_facade/` 开始。
-- “批量 rollout / world-batch 为什么慢”
-  - 从 `src/core/engine/`、`python/rl/runtime/`、`tools/diagnostics/` 开始。
+- "Where is this field defined?"
+  - Start from `src/components/`.
+- "Why does this per-tick behavior change this way?"
+  - Start from `src/systems/` and `src/models/`.
+- "Why are mission / reward / termination computed this way?"
+  - Start from `src/core/mission/`.
+- "Why did Python receive this observation, reward, or phase transition?"
+  - Start from `gym_envs/scenario_loader/`.
+- "Why did leader / tasking emit this command?"
+  - Start from `python/rl/tasking/` and `gym_envs/leader_env_parts/`.
+- "Why is the binding surface inconsistent?"
+  - Start from `src/interfaces/python/` and `tests/runtime/`.
+- "Why is the facade contract designed this way?"
+  - Start from `src/runtime/` and `docs/plan/runtime_facade/`.
+- "Why is batch rollout / world-batch slow?"
+  - Start from `src/core/engine/`, `python/rl/runtime/`, and `tools/diagnostics/`.
 
-## 10. 推荐阅读顺序
+## 10. Recommended Reading Order
 
-第一次进仓库，建议按这个顺序读：
+When entering the repository for the first time, read in this order:
 
 1. [README.md](../../README.md)
 2. [docs/README.md](../README.md)
@@ -417,7 +417,7 @@ SimulationKernel / WorldBatchRuntime
 9. [tests/README.md](../../tests/README.md)
 10. [tools/README.md](../../tools/README.md)
 
-如果主要做架构/边界工作，再继续读：
+If you are mainly working on architecture or boundary questions, continue with:
 
 1. [docs/plan/architecture/README.md](../plan/architecture/README.md)
 2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
@@ -425,12 +425,12 @@ SimulationKernel / WorldBatchRuntime
 4. [src/core/mission/README.md](../../src/core/mission/README.md)
 5. [tests/architecture/test_runtime_facade_layering.py](../../tests/architecture/test_runtime_facade_layering.py)
 
-## 11. 维护说明
+## 11. Maintenance Notes
 
-这份地图只覆盖当前维护主线。它不承诺：
+This map covers only the currently maintained mainline. It does not promise that:
 
-- 所有历史任务文档都已经同步到当前路径。
-- 所有 `docs/task/` 下的实施包都仍可直接当作操作入口。
-- `Archive/` 中的旧设计仍与今天的目录组织完全一致。
+- every historical task document has already been synchronized to the current paths
+- every implementation pack under `docs/task/` is still a valid operational entry point
+- older designs in `Archive/` still match today's directory layout exactly
 
-如果后续发现某份活动 README 已经迁移、改名或职责变化，优先更新对应目录 README，再回到本地图补导航。
+If an active README is later moved, renamed, or given a different responsibility, update that directory's README first and then return to this map to repair the navigation.

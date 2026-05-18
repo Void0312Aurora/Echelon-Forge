@@ -1,30 +1,41 @@
-# 真实化主线与任务板子项目
+# Realism Program And Taskboard Subproject
 
-状态：`2026-05-17` 活跃维护中。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-本子项目收纳 `flight_dynamics` 主线下的跨方向状态汇总、阶段任务板和当前排期入口，不重复展开各方向的具体技术细节。
+Status: `2026-05-17` actively maintained.
 
-## 文档入口
+This subproject collects cross-slice status summaries, staged taskboards, and
+current scheduling entrypoints for the `flight_dynamics` mainline, without
+repeating deep technical detail from each direction.
 
-- [真实化主线收束计划](realism_program_convergence_plan_20260517.zh.md)
-  作用：先统一当前总阶段、主阻塞、维护态范围和收束顺序；它是当前最推荐的总入口。
-- [真实化主线与关联子项目当前状态](realism_program_current_status_20260517.zh.md)
-  作用：快速确认当前主线绿/红面、活跃方向和关联子项目入口。
-- [真实化任务总表（P0）](realism_program_taskboard_20260516.zh.md)
-  作用：保留三条主线最初收敛为 `P0` 的统一任务板；当前不应用它判断实时进度。
-- [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.zh.md)
-  作用：记录 `P0` 验收后的收尾项与 `P1` 深化真实化排期。
-- [真实化主线委派执行计划](realism_program_delegated_execution_plan_20260517.zh.md)
-  作用：保留 lane / sidecar / 委派口径；当前阅读时应配合“收束计划”一起看，不应单独当作最新总阶段判断。
+## Document Entry Points
 
-## 适用范围
+- [realism mainline convergence plan](realism_program_convergence_plan_20260517.md)
+  - Unifies the current overall phase, main blockers, maintained scope, and
+    convergence order. This is the recommended top-level entrypoint.
+- [current status of the realism mainline and linked subprojects](realism_program_current_status_20260517.md)
+  - Quick check for current green/red surfaces, active directions, and linked
+    subproject entrypoints.
+- [realism master taskboard (P0)](realism_program_taskboard_20260516.zh.md)
+  - Preserves the original unified `P0` taskboard for the three main lines; do
+    not use it as the real-time progress source now.
+- [realism P1 master taskboard](realism_program_p1_taskboard_20260517.md)
+  - Records post-`P0` closeout items and the deeper realism schedule for `P1`.
+- [realism delegated execution plan](realism_program_delegated_execution_plan_20260517.zh.md)
+  - Retains lane/sidecar/delegation framing; read it alongside the convergence
+    plan rather than as the latest overall-phase source by itself.
 
-1. 跨子方向的优先级、依赖关系和阶段验收。
-2. 当前哪条线在推进、哪条线只保留冻结分析。
-3. 需要从主线程分发给各子项目的任务板入口。
+## Scope
 
-## 不放在这里的内容
+1. Cross-subproject priorities, dependencies, and stage acceptance.
+2. Which lines are actively advancing and which remain frozen analysis only.
+3. Taskboard entrypoints that need to be dispatched from the main thread into
+   each subproject.
 
-1. 单一方向的详细技术分析。
-2. 面向某个子系统的逐文件实现包。
-3. 已经转入子项目目录维护的进展检查点。
+## Not Maintained Here
+
+1. Detailed technical analysis for a single direction.
+2. File-by-file implementation packages for one subsystem.
+3. Progress checkpoints that already moved into a dedicated subproject folder.

@@ -1,20 +1,22 @@
-# `src/core/interfaces` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/core/interfaces/README.md. Review before treating this file as authoritative. -->
 
-`core/interfaces` 保存 C++ 模型接口和跨 core 的抽象 contract。它定义系统和模型之间的边界，不提供默认实现。
+# `src/core/interfaces` Boundary
 
-## 允许
+`core/interfaces` holds C++ model interfaces and abstract contracts across cores. It defines the boundary between the system and models, and does not provide default implementations.
 
-- control、sensor、environment、effects、guidance 等模型接口。
-- unit data、unit factory、observation 等跨层 contract。
-- 小型纯虚接口或稳定值类型。
+## Allowed
 
-## 禁止
+- Model interfaces such as control, sensor, environment, effects, guidance.
+- Cross-layer contracts such as unit data, unit factory, observation.
+- Small pure virtual interfaces or stable value types.
 
-- 默认模型实现。
-- ECS system registration。
-- runtime owner、facade 或 Python binding。
-- GPU backend 选择逻辑。
+## Forbidden
 
-## 迁移备注
+- Default model implementations.
+- ECS system registration.
+- Runtime owner, facade, or Python binding.
+- GPU backend selection logic.
 
-默认实现放在 `models/`。当新增模型能力需要跨系统复用时，先在本目录定义 contract，再在 `models/` 提供实现。
+## Migration Notes
+
+Default implementations are placed in `models/`. When new model capabilities need to be reused across systems, first define the contract in this directory, then provide the implementation in `models/`.

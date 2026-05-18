@@ -1,25 +1,26 @@
-# `python/training/` 层职责
+<!-- Machine-translated draft generated on 2026-05-18 from python/training/README.md. Review before treating this file as authoritative. -->
 
-`python/training/` 保存主线训练入口的 bootstrap 和 orchestration 支撑。
+# `python/training/` Layer Responsibilities
 
-它的定位不是替代 `python/rl/` 中的算法、policy 或 vec-env 逻辑，而是把
-顶层脚本里与“入口协调”强相关的职责收口起来，例如：
+`python/training/` holds the bootstrap and orchestration support for the main training entry point.
 
-- CLI 参数表与默认值
-- 训练配置和场景路径校验
-- 实验目录、resume / init-from 目录约定
-- seed 与 PyTorch runtime bootstrap
-- 训练开始前的统一运行时摘要打印
+Its positioning is not to replace the algorithm, policy, or vec-env logic in `python/rl/`, but rather to centralize responsibilities in the top-level script that are strongly related to "entry coordination", such as:
 
-## 当前文件
+- CLI argument table and default values
+- Training configuration and scenario path validation
+- Experiment directory, resume / init-from directory conventions
+- Seed and PyTorch runtime bootstrap
+- Unified runtime summary print before training starts
+
+## Current Files
 
 - [cli.py](cli.py)
-  - `train.py` 复用的 argparse 定义。
+  - `argparse` definitions reused by `train.py`.
 - [bootstrap.py](bootstrap.py)
-  - 路径校验、配置装载、实验目录准备、锁文件、seed / torch runtime 初始化。
+  - Path validation, configuration loading, experiment directory preparation, lock file, seed / torch runtime initialization.
 
-## 边界
+## Boundary
 
-- 这里可以放训练入口的参数解析、实验目录管理、运行时 bootstrap。
-- 不要把 SB3 算法、policy 结构、vec-env 细节重新搬进来。
-- `world_model_train.py` 的后续拆分不在这个子域当前阶段的范围内。
+- This is the place for training entry argument parsing, experiment directory management, and runtime bootstrap.
+- Do not re-import SB3 algorithm, policy structure, or vec-env details here.
+- The follow-up splitting of `world_model_train.py` is not within the scope of this sub-domain at the current stage.

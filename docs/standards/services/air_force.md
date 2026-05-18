@@ -1,93 +1,95 @@
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/air_force.zh.md. Review before treating this file as authoritative. -->
+
+<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/air_force.md. Review before treating this file as authoritative. -->
+
 # USAF Profile
 
-本文档定义项目在空战/空中行动建模时采用的 USAF profile。
+This document defines the USAF profile adopted by the project when modeling air combat/air operations.
 
-## 1. 官方现实基础
+## 1. Official Real-World Foundation
 
-USAF 官方 `AFDP 3-0.1, Command and Control` 明确把空中力量 C2 放在 air component commander
-框架下处理，并强调：
+The official USAF `AFDP 3-0.1, Command and Control` explicitly places air power C2 under the Air Component Commander framework, and emphasizes:
 
-- air component commander 同时可能担任 `COMAFFOR` 与 `JFACC`
-- `OPCON` 与 `TACON` 的具体委托由 JFC 决定
-- USAF 采用 `Centralized Command - Distributed Control - Decentralized Execution`
+- The Air Component Commander may also serve as `COMAFFOR` and `JFACC`
+- The specific delegation of `OPCON` and `TACON` is decided by the JFC
+- USAF adopts `Centralized Command – Distributed Control – Decentralized Execution`
 
-官方来源：
+Official source:
 
 - [AFDP 3-0.1, Command and Control](https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-0_1/AFDP3-0.1CommandandControl.pdf)
 
-## 2. 建模结论
+## 2. Modeling Conclusions
 
-### 2.1 不应进入 tight-loop runtime 的层
+### 2.1 Layers that Should Not Enter the Tight-Loop Runtime
 
-- air component commander
+- Air Component Commander
 - AOC
-- wing / MAJCOM / NAF 等行政或 theater-level 结构
+- Wing / MAJCOM / NAF and other administrative or theater-level structures
 
-这些层级适合作为：
+These layers are suitable as:
 
-- scenario authoring
-- tasking authority
-- campaign / operation metadata
+- Scenario development
+- Mission authorization
+- Campaign / operation metadata
 
-### 2.2 应进入 tight-loop runtime 的层
+### 2.2 Layers that Should Enter the Tight-Loop Runtime
 
-对于当前项目，空战 tight-loop runtime 更适合放在 sortie 级 tactical unit：
+For the current project, the air combat tight-loop runtime is better placed at the sortie-level tactical units:
 
-- `mission package`
-- `flight`
-- `element`
-- `aircraft`
+- Mission package
+- Flight
+- Element
+- Aircraft
 
-说明：
+Note:
 
-- 这是项目建模上的归纳，不是声称 AFDP 逐字规定了所有 sortie 细部结构。
-- 其依据是 USAF 官方 doctrine 对 air component commander、subordinate echelon、distributed control、
-  wing-level 及中间 echelon 授权的描述。
+- This is an inductive summary in project modeling, not a claim that AFDP verbatim prescribes all sortie-level details.
+- Its basis is the USAF official doctrine's description of the Air Component Commander, subordinate echelons, distributed control, and wing-level and intermediate echelon authorities.
 
-## 3. 对项目的直接约束
+## 3. Direct Constraints on the Project
 
-空战 profile 下可以使用：
+Under the air combat profile, the following can be used:
 
-- `patrol`
-- `intercept`
-- `escort`
-- `recover`
+- Patrol
+- Intercept
+- Escort
+- Recovery
 
-并在 air specialization 中再细分为：
+And further subdivided within air specialization into:
 
 - `CAP`
 - `BARCAP`
 - `TARCAP`
 - `RTB`
-- `landing / approach`
+- Landing / Approach
 
-也就是说：
+That is:
 
-- `CAP` 不应是 joint/core 层原生任务族
-- `CAP` 应是 air profile 对 `patrol` 的具体化
+- `CAP` should not be a native task family at the joint/core layer
+- `CAP` should be the air profile's concretization of patrol
 
-## 4. 组织层级建议
+## 4. Organizational Level Recommendations
 
-当前项目若以 USAF air tactical profile 为主，可先采用：
+If the current project primarily uses the USAF air tactical profile, the following may be adopted initially:
 
-- `package`
-- `flight`
-- `element`
-- `aircraft`
+- Mission package
+- Flight
+- Element
+- Aircraft
 
-并进一步区分：
+And further distinguish:
 
-- command/tactical role
-- execution/platform role
+- Command/tactical role
+- Execution/platform role
 
-这样既符合现实，又便于后续扩到双机、四机与多 package。
+This aligns with reality and facilitates future expansion to two-ship, four-ship, and multi-mission packages.
 
-## 5. 对应的平台专用标准
+## 5. Corresponding Platform-Specific Standards
 
-本 profile 下的 air/platform 细化标准当前放在：
+The air/platform refinement standards under this profile are currently located at:
 
-- [Air 平台专用标准总览](/home/void0312/Workshop/CMO/docs/standards/air/README.md)
-- [Pilot Observation Space Standard](/home/void0312/Workshop/CMO/docs/standards/air/obs.md)
-- [Pilot Action Space Standard](/home/void0312/Workshop/CMO/docs/standards/air/act.md)
-- [Mission Command Standard](/home/void0312/Workshop/CMO/docs/standards/air/aim.md)
-- [Pilot Reporting Standard](/home/void0312/Workshop/CMO/docs/standards/air/rep.md)
+- [Air Platform-Specific Standards Overview](../air/README.md)
+- [Pilot Observation Space Standard](../air/obs.md)
+- [Pilot Action Space Standard](../air/act.md)
+- [Mission Command Standard](../air/aim.md)
+- [Pilot Reporting Standard](../air/rep.md)

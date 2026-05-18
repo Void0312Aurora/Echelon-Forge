@@ -8,15 +8,21 @@ Current maintained helpers:
 - [cmo_env.sh](cmo_env.sh)
   - Linux/macOS repository-local environment bootstrap and validation for
     `.venv`, `CMO_BUILD_DIR`, and `PYTHONPATH`.
-- [cmo_env.ps1](cmo_env.ps1)
+- `cmo_env.ps1`
   - Windows/PowerShell repository-local environment bootstrap and validation
     for `.venv`, `CMO_BUILD_DIR`, `PYTHONPATH`, and `ef_py*.pyd` artifacts.
+    The script is expected in maintained workflows, but this README intentionally
+    avoids linking it until the tracked file is confirmed in the repo state.
 - [redundancy_audit.py](redundancy_audit.py)
   - Audits duplicate/temp-like workspace content.
 - [cleanup_redundancy.py](cleanup_redundancy.py)
   - Dry-run or apply cleanup for cache/temp artifacts.
 - [isolate_repro_workspace.sh](isolate_repro_workspace.sh)
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
+- [translate_docs_batch.py](translate_docs_batch.py)
+  - Audits English/Chinese doc pairing coverage and batch-translates Markdown peer files through an OpenAI-compatible API.
+  - Preserves Markdown link destinations by masking targets before translation and restoring them afterward.
+  - Rewrites workspace-absolute repository file links into relative Markdown targets.
 
 Maintenance guidance:
 
@@ -28,6 +34,8 @@ Maintenance guidance:
   WSL, `.venv/bin/python`, or Linux `.so` extension artifacts.
 - Historical maintenance helpers should move to `tools/archive/legacy_scripts/`
   instead of accumulating here.
+- Doc translation batches should prefer `translate_docs_batch.py` over ad hoc
+  one-off scripts so file pairing and draft-note behavior stay consistent.
 
 Recommended Linux/macOS usage:
 
@@ -77,3 +85,53 @@ Windows scope:
   management yet.
 - It intentionally runs beside `cmo_env.sh`; it should not replace the Linux
   CI workflow.
+
+Recommended bilingual doc audit:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py audit --root docs
+```
+
+By default, the audit skips local-only documentation surfaces that are commonly
+ignored from the shared remote, including:
+
+- `docs/Archive/`
+- `docs/temp/`
+- `docs/plan/archive/`
+- `docs/plan/results/`
+
+To include them explicitly:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py audit --root docs --include-local-only
+```
+
+Recommended zh-to-en backfill for one active directory:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py translate \
+  --root docs/task/flight_dynamics \
+  --pattern '*.zh.md' \
+  --source-lang zh \
+  --target-lang en \
+  --only-missing
+```
+
+Normalize repo-internal links in existing Markdown files:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py rewrite-links \
+  --files docs/task/flight_dynamics/program/*.md
+```
+
+Required API environment variables for translation:
+
+- `DOCS_TRANSLATE_BASE_URL`
+- `DOCS_TRANSLATE_MODEL`
+- `DOCS_TRANSLATE_API_KEY`
+
+Supported fallback names loaded from repo-local `.env`:
+
+- `BASE_URL`
+- `MODEL`
+- `API_KEY`

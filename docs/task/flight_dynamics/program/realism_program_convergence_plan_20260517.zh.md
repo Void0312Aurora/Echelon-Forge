@@ -4,13 +4,13 @@
 
 关联文档：
 
-- [飞行动力学现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
-- [传感器与态势感知现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [武器系统与制导回路现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [海战仿真现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/naval/naval_realism_analysis_20260516.zh.md)
-- [指挥链与 C2 通信现实性分析](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
-- [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
-- [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
+- [飞行动力学现实性分析](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
+- [传感器与态势感知现实性分析](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [武器系统与制导回路现实性分析](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+- [海战仿真现实性分析](../naval/naval_realism_analysis_20260516.zh.md)
+- [指挥链与 C2 通信现实性分析](../c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
+- [真实化主线与关联子项目当前状态](realism_program_current_status_20260517.zh.md)
+- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
 
 本文档定位：
 

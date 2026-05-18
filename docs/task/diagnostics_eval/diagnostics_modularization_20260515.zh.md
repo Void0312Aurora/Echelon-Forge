@@ -126,7 +126,7 @@
 
 实施结果：
 
-- 新增 [tools/diagnostics/common.py](/home/void0312/Workshop/CMO/tools/diagnostics/common.py)
+- 新增 [tools/diagnostics/common.py](../../../tools/diagnostics/common.py)
 - 已收敛共享能力：
   - JSON config 加载
   - JSON 输出落盘
@@ -159,14 +159,14 @@
 实施结果：
 
 - 已迁移到共享底座 / family 实现层：
-  - [tools/diagnostics/benchmarks/world_batch_vec_env.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks/world_batch_vec_env.py)
-  - [tools/diagnostics/benchmarks/policy_observation_bridge.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks/policy_observation_bridge.py)
-  - [tools/diagnostics/leader_perf_probe.py](/home/void0312/Workshop/CMO/tools/diagnostics/leader_perf_probe.py)
-  - [tools/diagnostics/benchmarks/scenario_compiler.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks/scenario_compiler.py)
-  - [tools/diagnostics/benchmarks/world_batch_runtime.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks/world_batch_runtime.py)
-  - [tools/diagnostics/benchmarks/visual_resolution.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks/visual_resolution.py)
-  - [tools/diagnostics/benchmarks/coarse_route_segments.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmarks/coarse_route_segments.py)
-  - [tools/diagnostics/analyze_cooperative_observation_scales.py](/home/void0312/Workshop/CMO/tools/diagnostics/analyze_cooperative_observation_scales.py)
+  - [tools/diagnostics/benchmarks/world_batch_vec_env.py](../../../tools/diagnostics/benchmarks/world_batch_vec_env.py)
+  - [tools/diagnostics/benchmarks/policy_observation_bridge.py](../../../tools/diagnostics/benchmarks/policy_observation_bridge.py)
+  - [tools/diagnostics/leader_perf_probe.py](../../../tools/diagnostics/leader_perf_probe.py)
+  - [tools/diagnostics/benchmarks/scenario_compiler.py](../../../tools/diagnostics/benchmarks/scenario_compiler.py)
+  - [tools/diagnostics/benchmarks/world_batch_runtime.py](../../../tools/diagnostics/benchmarks/world_batch_runtime.py)
+  - [tools/diagnostics/benchmarks/visual_resolution.py](../../../tools/diagnostics/benchmarks/visual_resolution.py)
+  - [tools/diagnostics/benchmarks/coarse_route_segments.py](../../../tools/diagnostics/benchmarks/coarse_route_segments.py)
+  - [tools/diagnostics/analyze_cooperative_observation_scales.py](../../../tools/diagnostics/analyze_cooperative_observation_scales.py)
 
 已完成烟测：
 
@@ -191,10 +191,10 @@
 
 当前进度：
 
-- [tools/diagnostics/README.md](/home/void0312/Workshop/CMO/tools/diagnostics/README.md) 已补充共享底座说明
+- [tools/diagnostics/README.md](../../../tools/diagnostics/README.md) 已补充共享底座说明
 - 已完成本轮尾部整理：
-  - `tools/diagnostics/diagnose_training_matrix.py` 已降级迁移到 [tools/archive/diagnose_training_matrix.py](/home/void0312/Workshop/CMO/tools/archive/diagnose_training_matrix.py)
-  - `tools/diagnostics/sanity_check.py` 已收敛为正式 runtime test [tests/runtime/test_kernel_observation_sanity.py](/home/void0312/Workshop/CMO/tests/runtime/test_kernel_observation_sanity.py)
+  - `tools/diagnostics/diagnose_training_matrix.py` 已降级迁移到 [tools/archive/diagnose_training_matrix.py](../../../tools/archive/diagnose_training_matrix.py)
+  - `tools/diagnostics/sanity_check.py` 已收敛为正式 runtime test [tests/runtime/test_kernel_observation_sanity.py](../../../tests/runtime/test_kernel_observation_sanity.py)
 
 后续候选项：
 
@@ -222,8 +222,8 @@
 
 实施结果：
 
-- 新增 [tools/diagnostics/run_benchmark_suite.py](/home/void0312/Workshop/CMO/tools/diagnostics/run_benchmark_suite.py)
-- 新增示例配置 [examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json](/home/void0312/Workshop/CMO/examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json)
+- 新增 [tools/diagnostics/run_benchmark_suite.py](../../../tools/diagnostics/run_benchmark_suite.py)
+- 新增示例配置 [examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json](../../../examples/config/diagnostics/benchmark_suite_runtime_phase14_mainline.json)
 - README 与工具总览已切换为优先推荐配置驱动入口
 
 已完成烟测：

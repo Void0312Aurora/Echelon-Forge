@@ -1,16 +1,26 @@
 # `architecture/`
 
-本目录存放架构主方案、性能路线调研与 `src/` 分层重构冻结记录。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-推荐阅读顺序：
+This directory holds the active architecture plan, performance follow-up
+research, and `src/` layering freeze records.
 
-1. [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
-2. [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
-3. [src_layered_refactor_freeze.zh.md](src_layered_refactor_freeze.zh.md)
-4. [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+Recommended reading order:
 
-使用规则：
+1. [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
+2. [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
+3. [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
+4. [src_layered_refactor_freeze.zh.md](src_layered_refactor_freeze.zh.md)
 
-- 中文架构主文是当前架构方向权威说明。
-- 调研文档提供论据与路线排序，不直接授权实现。
-- 冻结计划已完成部分视为执行记录；新增范围需另行冻结。
+Usage rules:
+
+- The target steady state for this directory is English canonical `.md` files
+  with optional Chinese `.zh.md` companions.
+- During migration, some long-form plan/freeze docs still exist only as
+  `.zh.md`; treat them as transitional sources until the English peer is added.
+- Research docs provide rationale and option ordering; they do not authorize
+  implementation by themselves.
+- Completed freeze records are execution records. New scope should be frozen
+  separately.

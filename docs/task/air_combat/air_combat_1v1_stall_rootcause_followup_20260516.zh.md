@@ -34,8 +34,8 @@
 
 本次已修正为 residual-neutral bootstrap：
 
-- [policies.py](/home/void0312/Workshop/CMO/python/rl/policy_algo/policies.py:141)
-- [policies.py](/home/void0312/Workshop/CMO/python/rl/policy_algo/policies.py:168)
+- [policies.py](../../../python/rl/policy_algo/policies.py:141)
+- [policies.py](../../../python/rl/policy_algo/policies.py:168)
 
 修正后：
 
@@ -56,8 +56,8 @@
 
 本次已把 warmup 前移到 rollout 开始前：
 
-- [ppo_adaptive_kl.py](/home/void0312/Workshop/CMO/python/rl/policy_algo/ppo_adaptive_kl.py:102)
-- [nonfinite_probe.py](/home/void0312/Workshop/CMO/python/rl/support/nonfinite_probe.py:437)
+- [ppo_adaptive_kl.py](../../../python/rl/policy_algo/ppo_adaptive_kl.py:102)
+- [nonfinite_probe.py](../../../python/rl/support/nonfinite_probe.py:437)
 
 这里连 `nonfinite probe` 的 monkeypatch rollout 版本也一并补了，否则真实烟测路径会绕回旧行为。
 
@@ -71,9 +71,9 @@
 
 对应测试：
 
-- [test_hmoe_policy.py](/home/void0312/Workshop/CMO/tests/hmoe/test_hmoe_policy.py:151)
-- [test_hmoe_train_bootstrap.py](/home/void0312/Workshop/CMO/tests/hmoe/test_hmoe_train_bootstrap.py:45)
-- [test_hmoe_ppo_warmup.py](/home/void0312/Workshop/CMO/tests/hmoe/test_hmoe_ppo_warmup.py:65)
+- [test_hmoe_policy.py](../../../tests/hmoe/test_hmoe_policy.py:151)
+- [test_hmoe_train_bootstrap.py](../../../tests/hmoe/test_hmoe_train_bootstrap.py:45)
+- [test_hmoe_ppo_warmup.py](../../../tests/hmoe/test_hmoe_ppo_warmup.py:65)
 
 本地结果：
 
@@ -99,7 +99,7 @@ cmo_python train.py \
 
 产物：
 
-- [final_model.zip](/home/void0312/Workshop/CMO/experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_diag64_postfix_manual/final_model.zip)
+- [final_model.zip](../../../experiments/smoke/air_combat_1v1_f16c_scripted_red_hmoe_smoke_v1_diag64_postfix_manual/final_model.zip)
 
 ### 4.1 已确认修复生效的部分
 

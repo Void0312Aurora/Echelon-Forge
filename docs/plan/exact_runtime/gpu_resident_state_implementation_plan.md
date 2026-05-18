@@ -1,84 +1,88 @@
-# GPU 设备常驻状态实施计划
+<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/exact_runtime/gpu_resident_state_implementation_plan.zh.md. Review before treating this file as authoritative. -->
 
-## 目标
+<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/exact_runtime/gpu_resident_state_implementation_plan.md. Review before treating this file as authoritative. -->
 
-消除 write_back 瓶颈（当前占 79% 时间），通过保持状态在 GPU 上，仅同步训练需要的观测字段。
+# GPU Resident State Implementation Plan
 
-## 当前瓶颈分析
+## Goal
+
+Eliminate the write_back bottleneck (currently 79% of time) by keeping state on the GPU and only synchronizing the observation fields required for training.
+
+## Current Bottleneck Analysis
 
 ```
-总时间 = GPU kernel (11.7%) + write_back (79.1%) + overhead (8.1%)
+Total time = GPU kernel (11.7%) + write_back (79.1%) + overhead (8.1%)
 ```
 
-write_back 需要：
-1. D2H 传输完整状态 (20+ 组件)
-2. 应用每个组件到 Flecs ECS 世界
-3. 每个 `entity.set<Component>()` 触发内部状态更新
+write_back requires:
+1. D2H transfer of full state (20+ components)
+2. Applying each component to the Flecs ECS world
+3. Each `entity.set<Component>()` triggers internal state updates
 
-## 实施方案
+## Implementation Plan
 
-### Phase E1: 最小观测同步
+### Phase E1: Minimal Observation Synchronization
 
-**目标**: 仅同步训练需要的字段，而非完整状态
+**Goal**: Only synchronize fields needed for training, not the full state
 
-**需要的观测字段**:
-- Transform (position, attitude)
+**Required observation fields**:
+- Transform (position, orientation)
 - Velocity
-- InstrumentState (训练奖励需要)
-- GroundState (终止条件需要)
+- InstrumentState (needed for training reward)
+- GroundState (needed for termination conditions)
 
-**实现**:
-1. 创建 `GpuResidentObservationSync` 结构
-2. 实现 `sync_observations_only()` 方法
-3. 仅同步上述字段到 CPU
+**Implementation**:
+1. Create `GpuResidentObservationSync` structure
+2. Implement `sync_observations_only()` method
+3. Only synchronize the above fields to CPU
 
-**预期收益**: write_back 时间减少 60-70%
+**Expected Benefit**: 60-70% reduction in write_back time
 
-### Phase E2: 设备常驻步进循环
+### Phase E2: Device Resident Stepping Loop
 
-**目标**: 保持状态在 GPU 上，多步执行
+**Goal**: Keep state on GPU, execute multiple steps
 
-**实现**:
-1. 修改 `step_batch()` 支持设备常驻模式
-2. 添加 `set_resident_mode(bool)` 方法
-3. 在常驻模式下：
-   - 初始上传状态到 GPU
-   - 执行 N 步 GPU 步进
-   - 仅最后同步观测字段
+**Implementation**:
+1. Modify `step_batch()` to support device resident mode
+2. Add `set_resident_mode(bool)` method
+3. In resident mode:
+   - Initially upload state to GPU
+   - Execute N GPU steps
+   - Only synchronize observation fields at the end
 
-**预期收益**: 消除每步的 H2D/D2H 开销
+**Expected Benefit**: Eliminate H2D/D2H overhead per step
 
-### Phase E3: 训练循环集成
+### Phase E3: Training Loop Integration
 
-**目标**: 修改训练循环支持设备常驻
+**Goal**: Modify training loop to support device resident mode
 
-**实现**:
-1. 添加 `WorldBatchVecEnv` 的 GPU 常驻模式
-2. 修改观测提取路径
-3. 修改奖励计算路径
+**Implementation**:
+1. Add GPU resident mode for `WorldBatchVecEnv`
+2. Modify observation extraction path
+3. Modify reward calculation path
 
-## 文件修改清单
+## File Modification List
 
-| 文件 | 修改内容 |
-|------|----------|
-| `src/gpu/gpu_resident_state.h` | 新增：设备常驻状态管理 |
-| `src/gpu/gpu_resident_state.cu` | 新增：CUDA 实现 |
-| `src/core/engine/world_batch_runtime.h` | 修改：添加常驻模式支持 |
-| `src/core/engine/world_batch_runtime.cpp` | 修改：实现常驻步进 |
-| `python/rl/world_batch_vec_env.py` | 修改：支持 GPU 常驻 |
+| File | Modification |
+|------|--------------|
+| `src/gpu/gpu_resident_state.h` | New: device resident state management |
+| `src/gpu/gpu_resident_state.cu` | New: CUDA implementation |
+| `src/core/engine/world_batch_runtime.h` | Modify: add resident mode support |
+| `src/core/engine/world_batch_runtime.cpp` | Modify: implement resident stepping |
+| `python/rl/world_batch_vec_env.py` | Modify: support GPU resident mode |
 
-## 风险
+## Risks
 
-1. **语义对等**: 需要验证观测同步不影响训练结果
-2. **内存占用**: GPU 常驻需要额外内存保持状态
-3. **复杂度**: 增加代码路径复杂度
+1. **Semantic equivalence**: Need to verify that observation synchronization does not affect training results
+2. **Memory usage**: GPU resident mode requires additional memory to hold state
+3. **Complexity**: Increases code path complexity
 
-## 时间表
+## Timeline
 
-| 阶段 | 预计时间 |
-|------|----------|
-| E1: 最小观测同步 | 1 天 |
-| E2: 设备常驻步进 | 1-2 天 |
-| E3: 训练循环集成 | 1 天 |
-| 测试验证 | 1 天 |
-| **总计** | **4-5 天** |
+| Phase | Estimated Time |
+|-------|----------------|
+| E1: Minimal observation synchronization | 1 day |
+| E2: Device resident stepping | 1-2 days |
+| E3: Training loop integration | 1 day |
+| Testing and validation | 1 day |
+| **Total** | **4-5 days** |

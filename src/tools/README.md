@@ -1,23 +1,25 @@
-# `src/tools` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/tools/README.md. Review before treating this file as authoritative. -->
 
-`tools/` 保存开发期工具、诊断工具和实验验证入口。这里的代码可以调用 runtime API 做探测，但不构成维护中的库 API 或训练主线。
+# `src/tools` Boundary
 
-## 允许
+`tools/` houses development‑time utilities, diagnostic tools, and experimental verification entry points. Code here may call runtime APIs for probing, but does not constitute a maintained library API or training mainline.
 
-- 一次性诊断工具。
-- 性能或 parity 探针入口。
-- 辅助开发的命令行程序。
+## Allowed
 
-## 禁止
+- One‑shot diagnostic tools.
+- Performance or parity probe entry points.
+- Command‑line programs that assist development.
 
-- 被 `runtime/facade`、`core/` 或 `interfaces/python` 反向依赖。
-- 定义主线 component、system、model 或 facade contract。
-- 作为默认训练或 simulation 路径的一部分。
+## Prohibited
 
-## 子目录约定
+- Reverse dependency from `runtime/facade`, `core/`, or `interfaces/python`.
+- Defining a mainline component, system, model, or facade contract.
+- Being part of a default training or simulation path.
 
-- `experimental/`：未进入维护主线的实验工具。
+## Subdirectory Conventions
 
-## 迁移备注
+- `experimental/`: Experimental tools not yet on the maintained mainline.
 
-工具代码若要进入主线，应先迁移到对应层级并补充冻结计划、测试和 README 边界说明。
+## Migration Notes
+
+If a tool is to be promoted to the mainline, it should first be moved to the corresponding layer, accompanied by a freezing plan, tests, and a README boundary explanation.

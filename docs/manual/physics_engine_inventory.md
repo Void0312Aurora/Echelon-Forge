@@ -1,181 +1,181 @@
-# 物理引擎基础清单（已实现）
+<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/physics_engine_inventory.zh.md. Review before treating this file as authoritative. -->
 
-> 目标：把仓库里**已经存在且在仿真循环中真实生效**的“物理/飞行动力学”基础按模块梳理出来，并给出对应代码入口，便于后续与 RL 训练对接、逐步替换掉奖励黑客式学习。
+<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/physics_engine_inventory.md. Review before treating this file as authoritative. -->
+
+# Physics Engine Inventory (Implemented)
+
+> Goal: Organize the **already existing and actually effective** "physics/flight dynamics" foundations in the repository by module, provide corresponding code entry points, and facilitate future integration with RL training, gradually replacing reward-hacking learning.
 
 ---
 
-## 1) 仿真循环与管线（ECS）
+## 1) Simulation Loop & Pipeline (ECS)
 
-### 1.1 SimulationKernel：注册组件、系统与更新顺序
+### 1.1 SimulationKernel: Register Components, Systems, and Update Order
 
-- `SimulationKernel::step()` 以固定步长 `dt` 执行 `ecs.progress(dt)`。
-- 系统注册（默认按注册顺序执行）：  
+- `SimulationKernel::step()` executes `ecs.progress(dt)` with a fixed timestep `dt`.
+- System registration (executed in registration order by default):  
   `CommandLink -> ActionMapping -> CommandLag -> Control -> Guidance -> Movement -> Sensor -> DataLink -> Damage -> EW -> Logistics`
 
-入口：
+Entry:
 - `src/core/engine/simulation_kernel.cpp`
 
-### 1.2 运动积分：MovementSystem（Velocity -> Transform）
+### 1.2 Motion Integration: MovementSystem (Velocity -> Transform)
 
-- 每帧做最基本的积分：`Transform += Velocity * dt`。
-- 根据水平速度 `atan2(vy, vx)` 反推 `heading`（NAV：0=North，顺时针为正）。
+- Basic integration per frame: `Transform += Velocity * dt`.
+- Deduce `heading` from horizontal velocity `atan2(vy, vx)` (NAV: 0 = North, clockwise positive).
 
-入口：
+Entry:
 - `src/systems/physics/movement_system.h`
 
 ---
 
-## 2) 物理/控制相关组件（Components）
+## 2) Physics/Control-Related Components
 
-### 2.1 基础状态
+### 2.1 Basic State
 
-- `Transform {x,y,z, heading,pitch,roll}`：局部 ENU 坐标 + 欧拉角
-- `Velocity {vx,vy,vz}`：线速度（m/s）
+- `Transform {x,y,z, heading,pitch,roll}`: local ENU coordinates + Euler angles
+- `Velocity {vx,vy,vz}`: linear velocity (m/s)
 
-入口：
+Entry:
 - `src/components/basic/common.h`
 
-### 2.2 指令链（用于把 RL / 上层指令落到控制模型）
+### 2.2 Command Chain (for mapping RL/upper-level commands to control model)
 
-- `ActionCommand`：RL 的归一化动作（`turn_rate_cmd/accel_cmd/climb_rate_cmd`）+ 武器/EW/通信触发字段
-- `ActionSpaceConfig`：把归一化动作映射到物理量的尺度与边界（`max_turn_rate/max_accel/max_climb_rate`，速度/高度上下限）
-- `MovementCommand`：
-  - 自动驾驶目标：`target_heading/target_speed/target_altitude`
-  - 直接杆舵覆盖：`use_stick_control + stick_roll/stick_pitch/throttle_cmd/gear_handle`
-  - `active`：是否生效
-- `CommandLag / LaggedCommand`：一阶滞后（避免“瞬时改变目标”）
-- `CommandLink / Pending*`：指令链延迟与丢包（用于“长机/僚机/数据链”类场景）
+- `ActionCommand`: RL normalized actions (`turn_rate_cmd/accel_cmd/climb_rate_cmd`) + weapon/EW/communication trigger fields
+- `ActionSpaceConfig`: maps normalized actions to physical scales and bounds (`max_turn_rate/max_accel/max_climb_rate`, speed/altitude limits)
+- `MovementCommand`:
+  - Autopilot targets: `target_heading/target_speed/target_altitude`
+  - Direct stick override: `use_stick_control + stick_roll/stick_pitch/throttle_cmd/gear_handle`
+  - `active`: whether it is effective
+- `CommandLag / LaggedCommand`: first-order lag (avoids "instantaneous target changes")
+- `CommandLink / Pending*`: command chain delay and packet loss (for "leader/wingman/datalink" scenarios)
 
-入口：
+Entry:
 - `src/components/physics/action.h`
 - `src/systems/core/operation_system.h`
 - `src/systems/systems/command_link_system.h`
 
-### 2.3 平台性能/包线
+### 2.3 Platform Performance/Envelope
 
-- `FlightModel`：速度包线与机动能力（`max_speed/min_speed/max_turn_rate/max_accel/max_climb_rate/max_g/min_g`）  
-  + 地面操作参数：`takeoff_speed/landing_speed/taxi_turn_rate`
-- `LandingGear`：跑道/非铺装能力、滚阻、结构极限、收放状态
+- `FlightModel`: speed envelope and maneuver capability (`max_speed/min_speed/max_turn_rate/max_accel/max_climb_rate/max_g/min_g`)  
+  + ground operation parameters: `takeoff_speed/landing_speed/taxi_turn_rate`
+- `LandingGear`: runway/off-road capability, rolling resistance, structural limits, retraction status
 
-入口：
+Entry:
 - `src/components/physics/performance.h`
 
-### 2.4 动力/质量/后勤（与能量模型强相关）
+### 2.4 Propulsion/Mass/Logistics (strongly related to energy model)
 
-- `Mass`：`empty/fuel/stores` 与 `get_total_kg()`（控制模型可读取总重）
-- `Propulsion`：`mil/AB thrust` + 状态
-- `FuelSystem`：燃油量、流量、AB 状态（由 LogisticsSystem 更新）
-- `MassProperties`：空重、当前总重、`drag_index`（目前用于存储“阻力索引”，但参考面积等仍有硬编码）
+- `Mass`: `empty/fuel/stores` and `get_total_kg()` (control model can read total weight)
+- `Propulsion`: `mil/AB thrust` + state
+- `FuelSystem`: fuel quantity, flow rate, AB status (updated by LogisticsSystem)
+- `MassProperties`: empty weight, current total weight, `drag_index` (currently used to store "drag index", but reference area etc. still hardcoded)
 
-入口：
+Entry:
 - `src/components/physics/dynamics.h`
 - `src/components/systems/logistics.h`
 - `src/systems/systems/logistics_system.h`
 
 ---
 
-## 3) 环境模型（大气/地形/地表）
+## 3) Environment Model (Atmosphere/Terrain/Surface)
 
-### 3.1 大气（密度/风）
+### 3.1 Atmosphere (Density/Wind)
 
-- `IEnvironmentModel::get_atmosphere_at(x,y,z)` 返回 `AtmosphericData`：`air_density/pressure/temperature/wind_velocity/...`
+- `IEnvironmentModel::get_atmosphere_at(x,y,z)` returns `AtmosphericData`: `air_density/pressure/temperature/wind_velocity/...`
 
-入口：
+Entry:
 - `src/core/interfaces/environment_model.h`
 - `src/components/basic/environment_data.h`
 - `src/models/environment/default_environment_model.cpp`
 
-### 3.2 地形与地表类型（跑道/滑行道/软土/水域）
+### 3.2 Terrain and Surface Types (Runway/Taxiway/Soft Ground/Water)
 
-- `IEnvironmentModel::get_terrain_at(x,y)` 返回 `TerrainCell`：`SurfaceType + friction_mult + roughness + runway_heading ...`
-- 默认实现中包含：
-  - 规则化跑道/停机坪“覆盖层”
-  - 低分辨率栅格底图（HardPacked/SoftDirt）
+- `IEnvironmentModel::get_terrain_at(x,y)` returns `TerrainCell`: `SurfaceType + friction_mult + roughness + runway_heading ...`
+- Default implementation includes:
+  - Regular runway/apron "overlay"
+  - Low-resolution grid base map (HardPacked/SoftDirt)
 
-入口：
+Entry:
 - `src/core/interfaces/environment_model.h`
 - `src/models/environment/default_environment_model.cpp`
 
 ---
 
-## 4) 控制模型（ControlModel）与“物理”落点
+## 4) Control Model (ControlModel) and "Physics" Fallback
 
-### 4.1 ControlSystem：把命令喂给 ControlModel
+### 4.1 ControlSystem: Feeds Commands to ControlModel
 
-- 优先级：`MovementCommand(use_stick_control=true)`（直接杆舵）优先于 `LaggedCommand`（自动驾驶目标）。
+- Priority: `MovementCommand(use_stick_control=true)` (direct stick) takes precedence over `LaggedCommand` (autopilot targets).
 
-入口：
+Entry:
 - `src/systems/physics/control_system.h`
 
-### 4.2 DefaultControlModel：两条动力学路径
+### 4.2 DefaultControlModel: Two Dynamics Paths
 
-> 这是当前“物理是否真的生效”的核心：同样是飞机，走哪条控制路径，决定是否会出现不符合现实的轨迹（例如几乎原地竖直爬升）。
+> This is the core of whether "physics actually takes effect": which control path an aircraft follows determines whether unrealistic trajectories appear (e.g., nearly vertical climb with almost no forward speed).
 
-1) **Stick 控制路径（更接近“动力学”）**  
-   - 读取 `Mass/Propulsion/LandingGear`，计算推力、阻力、简单重力项，更新速度矢量  
-   - 地面与空中分支均有（起飞环境 `F16TakeoffEnv` 使用这一条）
+1) **Stick Control Path (closer to "dynamics")**  
+   - Reads `Mass/Propulsion/LandingGear`, computes thrust, drag, simple gravity terms, updates velocity vector  
+   - Both ground and airborne branches exist (takeoff environment `F16TakeoffEnv` uses this path)
 
-2) **Autopilot 目标路径（RTS/点质量/运动学为主）**  
-   - 目标来自 `ActionMapping -> MovementCommand -> CommandLag`  
-   - 历史上存在“把速度几乎全部分配给 vz、vx≈0”的漏洞（已通过爬升角/垂速命令生成修复）
-   - 当前含有阻力与简化能量项，但仍需要进一步把“能量守恒/推重比/阻力”真正用于限制爬升与加速（这也是后续与训练对接的重点）
+2) **Autopilot Target Path (RTS/point-mass/kinematics oriented)**  
+   - Targets come from `ActionMapping -> MovementCommand -> CommandLag`  
+   - Historically had the vulnerability of "allocating almost all velocity to vz, vx≈0" (already fixed via climb angle/vertical speed command generation)
+   - Currently includes drag and simplified energy terms, but still needs to further use "energy conservation/thrust-to-weight ratio/drag" to genuinely limit climb and acceleration (this is also the focus for subsequent training integration)
 
-入口：
+Entry:
 - `src/models/air/default_control_model.cpp`
 
 ---
 
-## 5) 数据来源（数据库）
+## 5) Data Sources (Database)
 
-### 5.1 飞机/发动机/气动参数
+### 5.1 Aircraft/Engine/Aerodynamic Parameters
 
-- 飞机单位（质量、参考面积/阻力系数、FlightModel 包线、起落架等）：  
+- Aircraft units (mass, reference area/drag coefficient, FlightModel envelope, landing gear, etc.):  
   `examples/config/database/aircraft/units/*.json`
-- 发动机模块（推力、SFC 等）：  
+- Engine modules (thrust, SFC, etc.):  
   `examples/config/database/aircraft/modules/engines/*.json`
 
-### 5.2 工厂装配（把 JSON 变成 ECS 组件）
+### 5.2 Factory Assembly (JSON to ECS Components)
 
-- `load_unit_definitions_json()` 解析 JSON 到 `UnitDefinition`
-- `DefaultUnitFactory::spawn()` 将 `UnitDefinition` 装配成实体（写入 `FlightModel/Mass/Propulsion/FuelSystem/MassProperties/...`）
+- `load_unit_definitions_json()` parses JSON into `UnitDefinition`
+- `DefaultUnitFactory::spawn()` assembles a `UnitDefinition` into an entity (writes `FlightModel/Mass/Propulsion/FuelSystem/MassProperties/...`)
 
-入口：
+Entry:
 - `src/content/unit_definition_loader.cpp`
 - `src/models/core/default_unit_factory.h`
 
 ---
 
-## 6) Python / RL 对接入口（当前训练实际用到的 API）
+## 6) Python / RL Interface Entry Points (APIs Actually Used in Current Training)
 
-### 6.1 ef_py 接口（Gym 环境调用）
+### 6.1 ef_py Interface (Gym Environment Invocation)
 
-- `set_action(entity_id, turn, accel, climb, fire, ...)`：走 autopilot 目标链路
-- `set_stick_command(entity_id, roll, pitch, throttle, gear_down)`：走 stick 路径
-- `set_command(entity_id, heading, speed, alt)`：直接设置 MovementCommand 目标
+- `set_action(entity_id, turn, accel, climb, fire, ...)`: goes through autopilot target chain
+- `set_stick_command(entity_id, roll, pitch, throttle, gear_down)`: goes through stick path
+- `set_command(entity_id, heading, speed, alt)`: directly sets MovementCommand target
 
-入口：
+Entry:
 - `src/interfaces/python/python_module.cpp`
 
-### 6.2 训练环境（当前用法）
+### 6.2 Training Environments (Current Usage)
 
-当前维护入口已经收敛到通用 env 与 batch runtime，而不是早期每个任务一个
-`f16_*_env.py` 文件：
+The current maintained entry points have converged to a universal env and batch runtime, rather than an early per-task
+`f16_*_env.py` file:
 
-- `gym_envs/universal_env.py`：执行层单机环境入口；可通过 scenario 与
-  action mode 覆盖 takeoff / cruise / landing / air-combat 等任务线。
-- `gym_envs/leader_env.py`：长机/上层决策环境入口，通过 execution backend
-  驱动底层飞行。
-- `python/rl/runtime/world_batch_vec_env.py`：维护中的 execution-layer batch
-  rollout 入口。
-- `python/rl/runtime/cooperative_world_batch_vec_env.py`：多机协同 execution
-  rollout 入口。
+- `gym_envs/universal_env.py`: execution-layer single-aircraft environment entry; can cover takeoff / cruise / landing / air-combat etc. task lines via scenario and action mode.
+- `gym_envs/leader_env.py`: leader/high-level decision environment entry, drives lower-level flight through an execution backend.
+- `python/rl/runtime/world_batch_vec_env.py`: maintained execution-layer batch rollout entry.
+- `python/rl/runtime/cooperative_world_batch_vec_env.py`: multi-aircraft cooperative execution rollout entry.
 
-历史备注：早期文档和实验曾使用 `gym_envs/f16_takeoff_env.py`、
-`gym_envs/f16_cruise_waypoint_env.py`、`gym_envs/f16_departure_waypoint_env.py`
-和 `gym_envs/f16_landing_waypoint_env.py` 这类专用文件名。当前仓库中这些
-不再是维护入口；如果旧报告提到它们，应按 legacy 线索理解。
+Historical note: Early documentation and experiments used dedicated filenames such as `gym_envs/f16_takeoff_env.py`,
+`gym_envs/f16_cruise_waypoint_env.py`, `gym_envs/f16_departure_waypoint_env.py`
+and `gym_envs/f16_landing_waypoint_env.py`. These are no longer maintained entry
+points in the current repository; if old reports mention them, interpret them as legacy references.
 
-入口：
+Entry:
 - `gym_envs/universal_env.py`
 - `gym_envs/leader_env.py`
 - `python/rl/runtime/world_batch_vec_env.py`
@@ -183,10 +183,10 @@
 
 ---
 
-## 7) 当前缺口（对训练最关键）
+## 7) Current Gaps (Most Critical for Training)
 
-1) **Autopilot 分支仍然偏“运动学写速度”**：阻力/能量项存在，但需要与“爬升/加速分配”绑定，避免奖励诱导的非现实机动。
-2) **Stick 分支动力学非常简化**：目前没有显式升力/迎角模型，速度矢量基本跟随机头方向，会导致“俯仰=直接改变飞行轨迹”的简化现象。
-3) **后勤/燃油与推力/节流的一致性**：当前燃油消耗用 `ActionCommand.accel_cmd` 近似“油门”，与 autopilot 的 `target_speed` 逻辑存在不一致。
+1) **Autopilot branch still leans toward "kinematics writing velocity"**: Drag/energy terms exist, but need to be tied to "climb/acceleration allocation" to avoid reward-driven unrealistic maneuvers.
+2) **Stick branch dynamics are highly simplified**: Currently no explicit lift/angle-of-attack model; velocity vector roughly follows aircraft heading, leading to the simplification that "pitch = directly changes flight path".
+3) **Inconsistency between logistics/fuel and thrust/throttle**: Current fuel consumption approximates "throttle" using `ActionCommand.accel_cmd`, which is inconsistent with the autopilot's `target_speed` logic.
 
-这些缺口决定了“奖励/惩罚”很容易被钻空子；因此更推荐把物理约束（能量守恒、包线、地面接触规则）落到控制模型里，让学习只能在合理轨迹空间里探索。
+These gaps determine that "rewards/penalties" can easily be exploited; therefore it is more recommended to embed physical constraints (energy conservation, envelope, ground contact rules) into the control model, so that learning can only explore within reasonable trajectory space.
