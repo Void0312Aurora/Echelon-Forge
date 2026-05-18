@@ -104,6 +104,17 @@ cmo_python tests/runners/test_contract_batches.py --default-group sim_kernel
 cmo_python tools/runners/run_sim_kernel_contracts.py
 ```
 
+Run the maintained repository smoke suite:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+```
+
+If a smoke path is moved during a refactor, update the checked-in suite manifest
+first. CI and top-level documentation should reference the suite runner instead
+of duplicating individual test-file paths.
+
 ## Dependency Notes
 
 - `gymnasium` is optional in this workspace.

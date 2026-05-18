@@ -342,6 +342,13 @@ SimulationKernel / WorldBatchRuntime
 - `diagnostics/`
   - 仍偏探索性，不应替代稳定回归。
 
+维护中的 smoke 入口：
+
+- `tests/smoke/ci_smoke_suite.json`
+  - 仓库级 smoke manifest，供 CI 与顶层文档共同引用。
+- `tools/runners/run_pytest_suite.py`
+  - 先校验 suite 路径、再调用 pytest 的维护入口。
+
 这里也是判断“边界只是写在文档里，还是已经被守住”的主要证据面。比如架构分层、runtime facade 收口和部分契约边界，已经通过自动测试在维持。
 
 ## 7. `tools/` 层

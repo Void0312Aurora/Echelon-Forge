@@ -49,6 +49,8 @@
 
 - [run_scenario_contract.py](runners/run_scenario_contract.py)
   - 运行来自 `tests/contracts/` 的一个或多个 JSON 契约。
+- [run_pytest_suite.py](runners/run_pytest_suite.py)
+  - 运行已签入的 pytest suite manifest，例如 `tests/smoke/ci_smoke_suite.json`，并在路径过期时提前失败。
 
 ## 维护
 

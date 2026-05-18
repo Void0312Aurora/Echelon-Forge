@@ -104,6 +104,15 @@ cmo_python tests/runners/test_contract_batches.py --default-group sim_kernel
 cmo_python tools/runners/run_sim_kernel_contracts.py
 ```
 
+运行维护的仓库 smoke 套件：
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+```
+
+如果某个 smoke 路径在重构中被移动，先更新已签入的 suite manifest。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。
+
 ## 依赖说明
 
 - `gymnasium` 在此工作区中是可选的。

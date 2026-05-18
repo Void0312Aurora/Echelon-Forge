@@ -74,7 +74,7 @@ cmake --build build-local-win --target ef_core ef_py -j2
 
 .\tools\maintenance\cmo_env.ps1 validate
 .\tools\maintenance\cmo_env.ps1 summary
-.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\test_env_config.py
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\core\test_env_config.py
 ```
 
 Windows scope:

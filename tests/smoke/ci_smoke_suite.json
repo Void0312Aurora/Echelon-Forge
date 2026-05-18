@@ -1,0 +1,10 @@
+{
+  "name": "ci_smoke",
+  "paths": [
+    "tests/architecture/test_runtime_facade_layering.py",
+    "tests/architecture/test_cmake_target_readiness.py",
+    "tests/runtime/core/test_env_config.py",
+    "tests/runtime/facade/test_runtime_facade.py",
+    "tests/world_batch/test_world_batch_runtime.py"
+  ]
+}

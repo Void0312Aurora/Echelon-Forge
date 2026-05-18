@@ -48,9 +48,4 @@ jobs:
       - name: Run smoke tests
         run: |
           source tools/maintenance/cmo_env.sh
-          cmo_python -m pytest -q \
-            tests/architecture/test_runtime_facade_layering.py \
-            tests/architecture/test_cmake_target_readiness.py \
-            tests/runtime/test_env_config.py \
-            tests/runtime/test_runtime_facade.py \
-            tests/world_batch/test_world_batch_runtime.py
+          cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json

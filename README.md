@@ -85,7 +85,7 @@ Windows/PowerShell example:
 .\.venv\Scripts\python.exe -m pip install pytest numpy
 .\tools\maintenance\cmo_env.ps1 validate
 .\tools\maintenance\cmo_env.ps1 summary
-.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\test_env_config.py
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\core\test_env_config.py
 ```
 
 The current minimum smoke set used for repository validation is:
@@ -95,12 +95,7 @@ cmake -S . -B build-workshop -DCMAKE_BUILD_TYPE=Release
 cmake --build build-workshop --target ef_core ef_py -j4
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
-cmo_python -m pytest -q \
-  tests/architecture/test_runtime_facade_layering.py \
-  tests/architecture/test_cmake_target_readiness.py \
-  tests/runtime/core/test_env_config.py \
-  tests/runtime/facade/test_runtime_facade.py \
-  tests/world_batch/test_world_batch_runtime.py
+cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
 ```
 
 On Windows, use the PowerShell helper and a Windows build directory:
@@ -112,10 +107,7 @@ py -3.11 -m venv .venv
 cmake -S . -B build-local-win -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-local-win --target ef_core ef_py -j2
 .\tools\maintenance\cmo_env.ps1 validate
-.\tools\maintenance\cmo_env.ps1 python -m pytest -q `
-  tests\architecture\test_runtime_facade_layering.py `
-  tests\architecture\test_cmake_target_readiness.py `
-  tests\runtime\test_env_config.py
+.\tools\maintenance\cmo_env.ps1 python tools\runners\run_pytest_suite.py --suite tests\smoke\ci_smoke_suite.json
 ```
 
 The Windows path above is scoped to the current local development workflow:

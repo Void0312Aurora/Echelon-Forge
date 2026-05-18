@@ -342,6 +342,13 @@ Current mainline test domains:
 - `diagnostics/`
   - Still more exploratory, and should not replace stable regression coverage.
 
+Maintained smoke entry point:
+
+- `tests/smoke/ci_smoke_suite.json`
+  - The repository-level smoke manifest used by CI and top-level docs.
+- `tools/runners/run_pytest_suite.py`
+  - The maintained runner that validates suite paths before invoking pytest.
+
 This is also the main evidence surface for whether a boundary is merely documented or is actually being enforced. For example, architectural layering, runtime-facade consolidation, and parts of the contract boundary are already kept in place by automated tests.
 
 ## 7. The `tools/` Layer

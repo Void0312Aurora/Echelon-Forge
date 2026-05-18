@@ -47,6 +47,8 @@
 
 - [run_scenario_contract.py](runners/run_scenario_contract.py)
   - Runs one or more JSON contracts from `tests/contracts/`.
+- [run_pytest_suite.py](runners/run_pytest_suite.py)
+  - Runs a checked-in pytest suite manifest such as `tests/smoke/ci_smoke_suite.json` and fails early on stale path entries.
 
 ## Maintenance
 
