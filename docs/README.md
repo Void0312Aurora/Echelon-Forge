@@ -29,9 +29,13 @@ note is still an active implementation authority.
 
 - `plan/`, `task/`, `standards/`, and `manual/` are the maintained entry
   surfaces.
-- Maintained docs are moving toward English canonical `.md` files with optional
-  Chinese `.zh.md` companions; avoid treating mixed-language pages as the target
-  steady state.
+- The strict bilingual maintenance surface is intentionally narrower than the
+  whole docs tree: it focuses on entry navigation, standards/governance,
+  operator manuals, and stable plan authority.
+- High-churn task histories, dated checkpoints, and forward-looking idea docs
+  should be treated as English-canonical by default unless a narrower slice is
+  explicitly promoted into the bilingual maintained surface.
+- Avoid treating mixed-language pages as the target steady state.
 - `Archive/` preserves historical design material and retired routes. It is
   useful for provenance, but it is not the default authority for current work.
 - `temp/` is scratch space and should not be treated as a maintained source of

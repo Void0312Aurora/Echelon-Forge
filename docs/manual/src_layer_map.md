@@ -379,7 +379,7 @@ If you want to understand why the layers look this way, not just read directory 
 1. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
 2. [docs/plan/architecture/architecture_and_performance_research_followup.zh.md](../plan/architecture/architecture_and_performance_research_followup.zh.md)
 3. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.md)
-4. [docs/plan/archive/src_layered_refactor_freeze.zh.md](../plan/archive/src_layered_refactor_freeze.zh.md)
+4. [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](../plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 These documents answer:
 

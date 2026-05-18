@@ -8,6 +8,7 @@
 
 - 当前 `docs/plan/` 正在迁移到“英文 `.md` 为主、中文 `.zh.md` 为辅”的双语体系。
 - 迁移计划见 [documentation_bilingual_migration_plan_20260518.md](documentation_bilingual_migration_plan_20260518.md)。
+- 严格双语维护面聚焦在稳定计划权威层，而不是 `docs/plan/**` 下的每一份历史冻结或候选草案。
 - 在英文 peer 尚未补齐前，现有 `.zh.md` 长文仍作为过渡输入使用，但应在后续批次中补齐英文主文。
 
 ## 一、当前目录结构
@@ -35,28 +36,30 @@
 
 ## 二、推荐阅读顺序
 
-1. [architecture/system_layering_and_engine_encapsulation_plan.zh.md](architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+1. [architecture/simulation_system_architecture_design.zh.md](architecture/simulation_system_architecture_design.zh.md)
+   - 严格仿真系统基线，回答“规范生命周期是什么、领域扩展应如何接入”。
+2. [architecture/system_layering_and_engine_encapsulation_plan.zh.md](architecture/system_layering_and_engine_encapsulation_plan.zh.md)
    - 架构主方案，回答“目标分层是什么、引擎边界应如何定义”。
-2. [architecture/architecture_and_performance_research_followup.zh.md](architecture/architecture_and_performance_research_followup.zh.md)
+3. [architecture/architecture_and_performance_research_followup.zh.md](architecture/architecture_and_performance_research_followup.zh.md)
    - 路线调研与性能取舍说明，回答“为什么这样分层、后续路线怎样排序”。
-3. [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md)
+4. [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md)
    - facade 契约依据，回答“上层长期应依赖什么 C++ 应用 contract”。
-4. [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md)
-   - 已归档的清理冻结记录，仅作历史参考。
-5. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+5. [archive/runtime_facade/README.md](archive/runtime_facade/README.md)
+   - runtime_facade 已归档 bootstrap / cleanup 记录的索引入口，仅作历史参考。
+6. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
    - 协同训练底座与性能分析主文。
-6. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
    - P8 协同执行管线的设施盘点与下一步方向。
-7. `exact_runtime/` 下的专项文档
-   - 仅当任务明确进入 GPU / exact runtime 主线时再继续深入。
+8. `exact_runtime/` 下的专项文档
+   - 仅当任务明确进入 GPU / exact runtime 主线时再继续深入，并应先从 `exact_runtime/README.md` 看当前仍存在的候选草案。
 
 ## 三、历史冻结记录
 
 这些文档已经从活跃子目录移出，仅保留执行历史：
 
-- [archive/runtime_facade_task_bootstrap_plan.zh.md](archive/runtime_facade_task_bootstrap_plan.zh.md)
-- [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md)
-- [archive/src_layered_refactor_freeze.zh.md](archive/src_layered_refactor_freeze.zh.md)
+- [archive/runtime_facade/README.md](archive/runtime_facade/README.md)
+- [archive/architecture/README.md](archive/architecture/README.md)
+- [archive/exact_runtime/README.md](archive/exact_runtime/README.md)
 
 ## 四、当前权威关系
 
@@ -64,7 +67,8 @@
 
 | 文档 | 当前角色 | 使用规则 |
 |------|-----------|----------|
-| [architecture/system_layering_and_engine_encapsulation_plan.zh.md](architecture/system_layering_and_engine_encapsulation_plan.zh.md) | 架构主方案 | 架构方向权威说明；不是直接任务单 |
+| [architecture/simulation_system_architecture_design.zh.md](architecture/simulation_system_architecture_design.zh.md) | 严格仿真架构基线 | 当前规范生命周期、扩展模型与架构门槛权威；不是直接任务单 |
+| [architecture/system_layering_and_engine_encapsulation_plan.zh.md](architecture/system_layering_and_engine_encapsulation_plan.zh.md) | 架构主方案 | 分层方向背景依据；不是直接任务单 |
 | [architecture/architecture_and_performance_research_followup.zh.md](architecture/architecture_and_performance_research_followup.zh.md) | 路线调研主文 | 提供路线排序与性能判断；不直接授权实现 |
 | [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md) | facade 契约依据 | 定义接口边界与 DTO；不直接授权扩展实现 |
 | [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md) | 协同训练方向依据 | 提供设施底座、风险与路线分析 |
@@ -74,9 +78,8 @@
 
 | 文档 | 当前状态 | 说明 |
 |------|-----------|------|
-| [archive/runtime_facade_task_bootstrap_plan.zh.md](archive/runtime_facade_task_bootstrap_plan.zh.md) | 第一批 `WP1-WP6` 已完成 | 已归档执行记录，不应继续向其中追加新范围 |
-| [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md) | `WP1-WP7` 已完成 | 已归档清理冻结记录；新增拆分需新冻结 |
-| [archive/src_layered_refactor_freeze.zh.md](archive/src_layered_refactor_freeze.zh.md) | `WP1-WP7` 已完成 | 已归档 `src/` 分层记录；新增拆分需新冻结 |
+| [archive/runtime_facade/README.md](archive/runtime_facade/README.md) | runtime_facade 归档索引 | 通过归档索引进入已完成的 bootstrap 和 cleanup freeze |
+| [archive/architecture/README.md](archive/architecture/README.md) | 架构归档索引 | 通过归档索引进入已完成的 `src/` 分层冻结记录 |
 | [exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md](exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md) | 已冻结的阶段性执行计划 | 作为 GPU 主线的历史阶段记录使用 |
 
 ### C. 仍可推进的专项草案 / 清单
@@ -85,8 +88,7 @@
 |------|-----------|------|
 | [exact_runtime/cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md) | Draft follow-on implementation plan | 后续 C++ exact runtime 候选计划 |
 | [exact_runtime/gpu_execution_mainline_integration_checklist.md](exact_runtime/gpu_execution_mainline_integration_checklist.md) | Open | GPU execution 主线一致性检查清单 |
-| [exact_runtime/gpu_resident_state_implementation_plan.md](exact_runtime/gpu_resident_state_implementation_plan.md) | 实施草案 | 设备常驻状态方向草案 |
-| [exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md](exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md) | 实施计划草案 | GPU 精确步进性能/语义对等专项草案 |
+| [exact_runtime/README.md](exact_runtime/README.md) | 候选专项索引 | 通过局部 README 确认当前仍存在的 exact-runtime 草案 |
 
 ### D. 归档材料位置
 

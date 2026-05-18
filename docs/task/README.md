@@ -5,8 +5,11 @@ documents.
 
 Language note:
 
-- Active task docs are moving toward English canonical `.md` files with
-  optional Chinese `.zh.md` companions.
+- The stable task navigation surface is moving toward English canonical `.md`
+  files with optional Chinese `.zh.md` companions.
+- High-churn dated task docs under `docs/task/**` are English-canonical by
+  default unless a narrower slice is explicitly promoted into the maintained
+  bilingual surface.
 - The policy lives in
   [docs/standards/governance/bilingual_documentation_policy.md](../standards/governance/bilingual_documentation_policy.md).
 - The rollout plan lives in
@@ -14,8 +17,8 @@ Language note:
 
 Most files here are dated snapshots of a specific analysis, freeze plan,
 taskboard, checkpoint, or convergence pass. For the latest context in an area,
-start from that area's `README.md` when it exists, or from the newest `current
-status`, `taskboard`, or `progress checkpoint` document linked below.
+start from that area's `README.md` when it exists. Treat deeper dated docs as
+supporting records, not as stable root-level entrypoints.
 
 For lifecycle cleanup across this tree, see the
 [task archive and convergence plan](task_archive_convergence_plan_20260518.md).
@@ -23,28 +26,29 @@ For lifecycle cleanup across this tree, see the
 ## Area Navigation
 
 - [flight_dynamics/](flight_dynamics/README.md): realism-track task navigation.
-  Start with
-  [current program status](flight_dynamics/program/realism_program_current_status_20260517.zh.md)
-  and the
-  [P1 taskboard](flight_dynamics/program/realism_program_p1_taskboard_20260517.zh.md).
+  Start from the local README and then continue into the active subproject
+  README pages such as `flight/`, `sensor_situation/`, `weapon_guidance/`,
+  `naval/`, and `c2_command_chain/`.
 - [performance_runtime/](performance_runtime/README.md): runtime-performance
   follow-on after the current realism freeze. Start from the local README for
-  the current ladder, taskboard, and active Level-2 entry boundaries.
+  the current ladder, taskboard provenance, and active entry boundaries.
 - [viz/](viz/README.md): active visualization unified-entry workline.
-  Start from the local README, then continue into the active freeze/design
-  plan for implementation boundaries and landed `WP-V4` / `WP-V5` status.
+  Start from the local README; treat the archived freeze/design snapshot as
+  traceability material rather than a root-level stable entrypoint.
 - [naval/](naval/README.md): active naval-realism workline. Start from the
-  local README for the latest checkpoint, scenario-bound plan, and delegated
-  backlog entrypoints.
+  local README for the current interpretation of archived checkpoints and
+  backlog material.
 - [review/](review/README.md): archived architecture review workline.
 - [air_combat/](air_combat/README.md): active `1v1` air-combat workline.
   Start from the local README for the current status, then use the linked
-  archive snapshots for the entry analysis, freeze, baseline progress, weapon
-  chain, training smoke, and stall follow-up records.
+  archive snapshots only for traceability.
 - [common_air_naval/](common_air_naval/README.md): converged entry for the
-  common/air/naval split workline. The active plan stays at the subproject
-  root, while the superseded pre-implementation analysis now lives in the
-  local archive.
+  common/air/naval split workline. The local README separates the still-active
+  carry-over plan from the superseded pre-implementation analysis in archive.
+- [simulation_architecture/](simulation_architecture/README.md): active
+  simulation-system architecture workline. Start here before turning the
+  canonical pipeline design into broad weapon, naval, sensor/track, facade, or
+  backend work.
 - [code_redundancy/](code_redundancy/README.md): archived code-redundancy workline.
 - [diagnostics_eval/](diagnostics_eval/README.md): archived diagnostics/eval convergence records.
 - [python_rl/](python_rl/README.md): archived `python/rl` convergence records.

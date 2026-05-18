@@ -21,7 +21,9 @@
 
 - 一些维护入口页仍然在同一文件中中英混排
 - 一些目录仍默认把中文长文当作主阅读路径
-- `docs/task/` 下大量 dated snapshot 仍没有英文 peer
+- 之前的迁移范围把过多 `docs/task/**` 内容当成了稳定双语维护面
+- 某些入口 README 仍直接深链到 dated 的 status、taskboard、freeze
+  快照，而不是稳定的本地 README 导航
 - `docs/plan/archive/`、`docs/plan/results/` 这类本地保留目录可能在某个工作区存在，但不会同步到共享远端，因此维护导航不应把它们当成 canonical 入口
 
 ## 目标状态
@@ -29,6 +31,8 @@
 - 英文 `name.md` 成为维护主文。
 - 中文 `name.zh.md` 成为辅文。
 - 维护中的入口页不再大段中英混排。
+- 默认双语维护面应当有意保持小而稳定，并集中在权威层。
+- 高频变更的 task/history 长文可以先保持英文主文，而不要求即时双语对等。
 - 翻译按目录批处理，并配套统一工具和审校流程。
 
 ## 迁移优先级
@@ -55,39 +59,38 @@
 - `docs/plan/architecture/*.zh.md`
 - `docs/plan/runtime_facade/*.zh.md`
 - `docs/plan/cooperative/*.zh.md`
+- `docs/manual/*.md`
 - 之后按需要为 `docs/standards/` 长文补中文辅文
 
 目标：
 
 - 让 repo 级计划与架构主线可以从英文主路径直接阅读
 
-### 阶段三：活跃任务线
+### 阶段三：稳定任务导航面
 
-按目录批处理当前活跃工作线：
+保持 task 树可导航，但不把每一份 dated 工作记录都纳入严格双语 SLA：
 
-- `docs/task/flight_dynamics/`
-- `docs/task/naval/`
-- `docs/task/air_combat/`
-- `docs/task/review/`
-- `docs/task/python_rl/`
-
-目标：
-
-- 让 live engineering taskboard、checkpoint、unresolved issues 可以从英文导航进入
-
-### 阶段四：长尾
-
-补齐剩余 dated snapshot 和较低优先级文档：
-
-- `docs/task/common_air_naval/`
-- `docs/task/diagnostics_eval/`
-- `docs/task/code_redundancy/`
-- `docs/task/viz/`
-- `docs/manual/`、`docs/forward/` 中仍在使用的遗留说明
+- `docs/task/README.md`
+- `docs/task/task_archive_convergence_plan_20260518.md`
+- `docs/task/*/README.md` 下的子项目入口
+- `docs/task/flight_dynamics/*/README.md` 下更深一层的导航页
 
 目标：
 
-- 清掉 active tree 中残留的中文孤岛
+- 让贡献者从稳定 README 表面进入 task 区域，而不是从 dated 的
+  status/taskboard/freeze 文档进入
+
+### 阶段四：按需补齐活跃任务长文
+
+只有在下列条件满足时，才补齐详细 task 长文：
+
+- 该 task 文档仍是当前活跃执行权威
+- 不能由本地 README 或更新的 current-status 文档替代为稳定入口
+- 该工作线的维护者明确需要该切片的中文对等版本
+
+目标：
+
+- 保持英文主线可读，同时避免把整棵 task/history 树变成永久翻译跑步机
 
 ## 批处理执行规则
 
@@ -101,9 +104,9 @@
 目录内推荐顺序：
 
 1. README / 索引
-2. current status / progress checkpoint
-3. taskboard / plan / unresolved issues
-4. 更深层 analysis 和 implementation package
+2. authority 或 contract 主文
+3. 仍真实活跃的 current status / progress checkpoint
+4. 只有在仍然活跃时才继续下探 analysis 与 implementation package
 
 ## 每批验收门槛
 
@@ -135,11 +138,11 @@
 python3 tools/maintenance/translate_docs_batch.py audit --root docs
 ```
 
-为一个活跃目录回填缺失的英文 peer：
+为一个维护中的权威目录回填缺失的英文 peer：
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py translate \
-  --root docs/task/flight_dynamics \
+  --root docs/plan/architecture \
   --pattern '*.zh.md' \
   --source-lang zh \
   --target-lang en \
@@ -150,8 +153,8 @@ python3 tools/maintenance/translate_docs_batch.py translate \
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py translate \
-  --files docs/task/flight_dynamics/README.md \
-          docs/plan/architecture/README.md \
+  --files docs/plan/architecture/README.md \
+          docs/standards/joint/README.md \
   --source-lang en \
   --target-lang zh
 ```
@@ -159,16 +162,17 @@ python3 tools/maintenance/translate_docs_batch.py translate \
 ## 维护说明
 
 - 后续维护应默认改英文主文。
-- 中文辅文应跟随同一 scope，但不应阻塞英文主线的快速更新。
-- 如果某个方向变化很快，可以先落英文 peer，再在下一批补齐中文辅文。
+- 中文辅文应优先跟随 Tier A 权威/导航面，但不应阻塞英文主线的快速更新。
+- 如果某个方向变化很快，可以先落英文 peer；对于 Tier B task/history 长文，可以在下一批补齐中文，或不把它纳入强双语维护面。
 
 ## 整体迁移完成标准
 
-当以下条件满足时，可视为 active tree 的双语迁移基本完成：
+当以下条件满足时，可视为维护中的文档表面已基本完成迁移：
 
-- `docs/plan/`、`docs/task/`、`docs/standards/` 的维护入口已是英文主导
-- 活跃目录中的 `.zh.md` 文件都已有英文 peer
+- `docs/`、`docs/plan/`、`docs/task/`、`docs/standards/` 的维护入口已是英文主导
+- Tier A 权威表面已具备双语配对
 - 入口 README 不再大段中英混排
+- task 树默认通过稳定 README 导航，而不是通过 stale dated 深链进入
 - 翻译工具和 audit 流程进入日常文档维护
 
 ## 相关文档

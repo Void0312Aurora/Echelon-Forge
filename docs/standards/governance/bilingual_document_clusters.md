@@ -15,6 +15,9 @@ Archive rule:
   are excluded from the maintained bilingual cluster audit by default.
 - Archived mirrors may still keep bilingual files for traceability, but they
   are not part of the active drift verdict.
+- The default registry scope is the strict maintained bilingual surface rather
+  than the whole shared docs tree. Use the tool's full-tree override only when
+  deliberately auditing broader English/Chinese coverage.
 
 ## What A Cluster Records
 
@@ -33,6 +36,13 @@ Each record stores:
 
 The live sync state is computed from the registry baseline plus the current
 file hashes.
+
+Hash normalization rule:
+
+- line-ending differences such as `LF` vs `CRLF` do not count as bilingual
+  drift by themselves
+- leading machine-generated draft markers are stripped before hash comparison
+  so regenerated draft notes do not invalidate the whole registry alone
 
 ## Sync States
 

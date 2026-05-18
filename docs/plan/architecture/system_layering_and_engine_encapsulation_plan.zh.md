@@ -14,7 +14,7 @@ English version:
 [runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
 
 冻结执行记录：
-[runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
+[runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
 
 状态：`2026-05-10` 架构主方案草案。  
 文档定位：

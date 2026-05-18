@@ -35,6 +35,7 @@ HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
 INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
 URL_RE = re.compile(r"https?://\S+")
+WINDOWS_POSIX_ABS_RE = re.compile(r"^/[A-Za-z]:/")
 DEFAULT_EXCLUDE_SUBSTRINGS = (
     "docs/forward/temp/",
     "docs/temp/",
@@ -42,6 +43,8 @@ DEFAULT_EXCLUDE_SUBSTRINGS = (
 )
 DEFAULT_EXCLUDE_DIR_NAMES = {"Archive", "archive"}
 DEFAULT_WORKSPACE_ROOT = "/home/void0312/Workshop/CMO"
+STRICT_PLAN_SUBTREES = {"architecture", "runtime_facade", "cooperative"}
+STRICT_TASK_SECOND_LEVEL_READMES = {"flight_dynamics"}
 
 
 @dataclass(frozen=True)
@@ -115,6 +118,11 @@ def parse_args() -> argparse.Namespace:
         "--registry",
         default=str(DEFAULT_CLUSTER_REGISTRY),
         help="Optional bilingual cluster registry JSON to compare against.",
+    )
+    audit.add_argument(
+        "--full-tree",
+        action="store_true",
+        help="Audit the full shared docs tree instead of only the strict maintained bilingual surface.",
     )
 
     translate = subparsers.add_parser("translate", help="Translate Markdown docs into peer files.")
@@ -194,6 +202,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Show the registry path without writing changes.",
     )
+    clusters.add_argument(
+        "--full-tree",
+        action="store_true",
+        help="Build the registry from the full shared docs tree instead of only the strict maintained bilingual surface.",
+    )
 
     rewrite = subparsers.add_parser(
         "rewrite-links",
@@ -240,13 +253,61 @@ def is_local_only_doc(path: Path) -> bool:
     normalized = path.as_posix()
     if any(part in normalized for part in DEFAULT_EXCLUDE_SUBSTRINGS):
         return True
+    name_lower = path.name.lower()
+    if name_lower.startswith("temp-") or name_lower.startswith("scratch-"):
+        return True
     return any(part in DEFAULT_EXCLUDE_DIR_NAMES for part in path.parts)
 
 
-def filter_paths(paths: Iterable[Path], include_local_only: bool) -> list[Path]:
+def is_strict_bilingual_doc(path: Path, root: Path) -> bool:
+    relative = path.relative_to(root).as_posix()
+    if relative in {"README.md", "README.zh.md"}:
+        return True
+    if relative.startswith("standards/") or relative.startswith("manual/"):
+        return True
+    if relative in {
+        "plan/README.md",
+        "plan/README.zh.md",
+        "plan/documentation_bilingual_migration_plan_20260518.md",
+        "plan/documentation_bilingual_migration_plan_20260518.zh.md",
+        "task/README.md",
+        "task/README.zh.md",
+        "task/task_archive_convergence_plan_20260518.md",
+        "task/task_archive_convergence_plan_20260518.zh.md",
+    }:
+        return True
+
+    parts = relative.split("/")
+    if len(parts) >= 2 and parts[0] == "plan" and parts[1] in STRICT_PLAN_SUBTREES:
+        return True
+    if len(parts) == 3 and parts[0] == "task" and parts[2] in {"README.md", "README.zh.md"}:
+        return True
+    if (
+        len(parts) == 4
+        and parts[0] == "task"
+        and parts[1] in STRICT_TASK_SECOND_LEVEL_READMES
+        and parts[3] in {"README.md", "README.zh.md"}
+    ):
+        return True
+    return False
+
+
+def filter_paths(
+    paths: Iterable[Path],
+    include_local_only: bool,
+    *,
+    root: Path | None = None,
+    strict_bilingual_only: bool = False,
+) -> list[Path]:
     if include_local_only:
-        return sorted(paths)
-    return sorted(p for p in paths if not is_local_only_doc(p))
+        filtered = sorted(paths)
+    else:
+        filtered = sorted(p for p in paths if not is_local_only_doc(p))
+    if strict_bilingual_only:
+        if root is None:
+            raise ValueError("root is required when strict_bilingual_only=True")
+        filtered = [p for p in filtered if is_strict_bilingual_doc(p, root)]
+    return sorted(filtered)
 
 
 def classify_markdown_language(path: Path) -> str:
@@ -271,6 +332,12 @@ def strip_leading_draft_notes(text: str) -> str:
         if updated == cleaned:
             return cleaned
         cleaned = updated
+
+
+def normalize_doc_for_cluster_hash(text: str) -> str:
+    cleaned = strip_leading_draft_notes(text)
+    cleaned = cleaned.replace("\r\n", "\n").replace("\r", "\n")
+    return cleaned
 
 
 def unwrap_outer_markdown_fence(text: str) -> str:
@@ -322,8 +389,20 @@ def expected_missing_peer(path: Path, missing_lang: str) -> Path:
     raise ValueError(f"Unsupported missing language: {missing_lang}")
 
 
-def audit_tree(root: Path, show_missing: str, include_local_only: bool, registry_path: Path | None = None) -> int:
-    files = filter_paths(iter_markdown(root), include_local_only=include_local_only)
+def audit_tree(
+    root: Path,
+    show_missing: str,
+    include_local_only: bool,
+    registry_path: Path | None = None,
+    *,
+    full_tree: bool = False,
+) -> int:
+    files = filter_paths(
+        iter_markdown(root),
+        include_local_only=include_local_only,
+        root=root,
+        strict_bilingual_only=not full_tree,
+    )
     zh_companions = [p for p in files if has_lang_suffix(p, "zh")]
     en_companions = [p for p in files if has_lang_suffix(p, "en")]
     canonical_files = [p for p in files if p.name.endswith(".md") and not has_lang_suffix(p, "zh") and not has_lang_suffix(p, "en")]
@@ -360,6 +439,7 @@ def audit_tree(root: Path, show_missing: str, include_local_only: bool, registry
                 missing_zh.append(path)
 
     print(f"root: {root}")
+    print(f"scope: {'full-tree' if full_tree else 'maintained-surface'}")
     print(f"markdown_total: {len(files)}")
     print(f"english_md_total: {len(english_docs) + len(en_companions)}")
     print(f"zh_md_total: {len(chinese_docs) + len(zh_companions)}")
@@ -378,13 +458,28 @@ def audit_tree(root: Path, show_missing: str, include_local_only: bool, registry
 
     if registry_path is not None:
         print("")
-        audit_cluster_registry(root, registry_path, include_local_only=include_local_only)
+        audit_cluster_registry(
+            root,
+            registry_path,
+            include_local_only=include_local_only,
+            full_tree=full_tree,
+        )
 
     return 0
 
 
-def audit_cluster_registry(root: Path, registry_path: Path, include_local_only: bool) -> int:
-    records = build_cluster_records(root, include_local_only=include_local_only)
+def audit_cluster_registry(
+    root: Path,
+    registry_path: Path,
+    include_local_only: bool,
+    *,
+    full_tree: bool = False,
+) -> int:
+    records = build_cluster_records(
+        root,
+        include_local_only=include_local_only,
+        strict_bilingual_only=not full_tree,
+    )
     registry = load_cluster_registry(registry_path)
 
     if not registry_path.exists():
@@ -431,6 +526,7 @@ def audit_cluster_registry(root: Path, registry_path: Path, include_local_only: 
         print(f"{pair_id}\t{current_state}\t{english.as_posix()}\t{chinese.as_posix()}")
 
     print(f"registry: {registry_path}")
+    print(f"registry_scope: {'full-tree' if full_tree else 'maintained-surface'}")
     print(f"pair_count: {len(records)}")
     print(f"synced: {synced}")
     print(f"needs_en_update: {needs_en}")
@@ -444,11 +540,10 @@ def audit_cluster_registry(root: Path, registry_path: Path, include_local_only: 
 def file_sha256(path: Path) -> str:
     import hashlib
 
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(65536), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    normalized = normalize_doc_for_cluster_hash(
+        path.read_text(encoding="utf-8", errors="ignore")
+    )
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def load_cluster_registry(path: Path) -> dict[str, dict[str, str]]:
@@ -468,21 +563,41 @@ def load_cluster_registry(path: Path) -> dict[str, dict[str, str]]:
     return registry
 
 
-def build_cluster_records(root: Path, include_local_only: bool) -> list[dict[str, str]]:
-    files = filter_paths(iter_markdown(root), include_local_only=include_local_only)
+def build_cluster_records(
+    root: Path,
+    include_local_only: bool,
+    previous_registry: dict[str, dict[str, str]] | None = None,
+    *,
+    strict_bilingual_only: bool = False,
+) -> list[dict[str, str]]:
+    files = filter_paths(
+        iter_markdown(root),
+        include_local_only=include_local_only,
+        root=root,
+        strict_bilingual_only=strict_bilingual_only,
+    )
     canonical_files = [p for p in files if p.name.endswith(".md") and not has_lang_suffix(p, "zh") and not has_lang_suffix(p, "en")]
     records: list[dict[str, str]] = []
     for english in canonical_files:
         chinese = suffixed_peer(english, "zh")
         pair_id = english.relative_to(root).with_suffix("").as_posix()
+        prev = (previous_registry or {}).get(pair_id, {})
+        english_hash = file_sha256(english) if english.exists() else ""
+        chinese_hash = file_sha256(chinese) if chinese.exists() else ""
+        last_verified = str(prev.get("last_verified", "")) or date.today().isoformat()
+        if (
+            str(prev.get("english_hash", "")) != english_hash
+            or str(prev.get("chinese_hash", "")) != chinese_hash
+        ):
+            last_verified = date.today().isoformat()
         record = {
             "pair_id": pair_id,
             "english": english.as_posix(),
             "chinese": chinese.as_posix(),
             "source_of_truth": "english",
-            "last_verified": date.today().isoformat(),
-            "english_hash": file_sha256(english) if english.exists() else "",
-            "chinese_hash": file_sha256(chinese) if chinese.exists() else "",
+            "last_verified": last_verified,
+            "english_hash": english_hash,
+            "chinese_hash": chinese_hash,
         }
         if not chinese.exists():
             record["source_of_truth"] = "english"
@@ -497,13 +612,20 @@ def run_clusters(args: argparse.Namespace) -> int:
     if not root.exists():
         raise ValueError(f"Root does not exist: {root}")
     registry_path = Path(args.registry)
-    records = build_cluster_records(root, args.include_local_only)
+    previous_registry = load_cluster_registry(registry_path)
+    records = build_cluster_records(
+        root,
+        args.include_local_only,
+        previous_registry=previous_registry,
+        strict_bilingual_only=not args.full_tree,
+    )
     payload = {
         "generated_at": date.today().isoformat(),
         "root": root.as_posix(),
         "pairs": records,
     }
     print(f"cluster_registry: {registry_path}")
+    print(f"scope: {'full-tree' if args.full_tree else 'maintained-surface'}")
     print(f"pair_count: {len(records)}")
     if args.dry_run:
         return 0
@@ -646,7 +768,7 @@ def relativize_workspace_links(text: str, doc_path: Path, workspace_root: Path) 
             candidate = maybe_file
             line_suffix = f":{maybe_line}"
 
-        candidate_path = Path(candidate)
+        candidate_path = Path(candidate[1:] if WINDOWS_POSIX_ABS_RE.match(candidate) else candidate)
         try:
             resolved = candidate_path.resolve()
         except OSError:
@@ -842,7 +964,13 @@ def run_rewrite_links(args: argparse.Namespace) -> int:
 def main() -> int:
     args = parse_args()
     if args.command == "audit":
-        return audit_tree(Path(args.root), args.show_missing, args.include_local_only, Path(args.registry))
+        return audit_tree(
+            Path(args.root),
+            args.show_missing,
+            args.include_local_only,
+            Path(args.registry),
+            full_tree=args.full_tree,
+        )
     if args.command == "clusters":
         return run_clusters(args)
     if args.command == "translate":

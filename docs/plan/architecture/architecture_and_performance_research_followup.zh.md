@@ -5,7 +5,7 @@
 - [README.md](../README.md)
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
+- [runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
 
 状态：`2026-05-10` 调研论述草案。  
 文档定位：
@@ -101,7 +101,7 @@
 ### 2. 编译批处理 helper 已经能带来收益，但收益有限
 
 从
-[gpu_execution_runtime_research_and_design.md](../archive/gpu_execution_runtime_research_and_design.md)
+[gpu_execution_runtime_research_and_design.md](../archive/exact_runtime/gpu_execution_runtime_research_and_design.md)
 里已有测量看，C++ batch helper 对当前 CPU 主线是有收益的，但收益不是决定性的：
 
 - `64 envs`
@@ -139,9 +139,9 @@
 ### 4. exact GPU world-step 目前仍未成为主线候选
 
 从
-[gpu_exact_world_step_performance_and_parity_plan.md](../exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md)
+[gpu_exact_world_step_performance_and_parity_plan.md](../archive/exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md)
 与
-[gpu_exact_world_step_rearchitecture_plan.md](../archive/gpu_exact_world_step_rearchitecture_plan.md)
+[gpu_exact_world_step_rearchitecture_plan.md](../archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md)
 的内容看：
 
 - 当前 exact GPU 原型在小 world_count 下仍显著慢于 CPU
@@ -176,7 +176,7 @@
 ### 2. CUDA helper 的价值已经被 benchmark 证明
 
 根据
-[gpu_execution_runtime_research_and_design.md](../archive/gpu_execution_runtime_research_and_design.md)
+[gpu_execution_runtime_research_and_design.md](../archive/exact_runtime/gpu_execution_runtime_research_and_design.md)
 中的测量：
 
 - object-only visual 在 device-resident 路径可达 `16x` 到 `100x+` 相对 CPU 的提升

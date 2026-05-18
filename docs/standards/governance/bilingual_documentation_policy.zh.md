@@ -40,23 +40,41 @@
 
 - 如果某份维护文档当前只有 `.zh.md`，它仍可作为工作输入使用，但应在下一轮相关批次中补齐英文主文。
 
-## 哪些目录应补齐双语
+## 维护分层
 
-以下目录中的维护主文、操作入口和权威说明，应优先补齐中文辅文：
+本仓库采用“分层维护”而不是“整棵 `docs/` 树都要强双语持续维护”的模式。
 
-- `docs/plan/`
-- `docs/task/`
-- `docs/standards/`
-- `docs/manual/`
+Tier A：严格双语维护面
 
-以下场景可只保留英文主文：
+- 根导航：`docs/README.md`
+- `docs/standards/` 下的权威与治理树
+- `docs/manual/` 下的面向操作者说明
+- 稳定计划权威面：
+  - `docs/plan/README.md`
+  - `docs/plan/documentation_bilingual_migration_plan_20260518.md`
+  - `docs/plan/architecture/**`
+  - `docs/plan/runtime_facade/**`
+  - `docs/plan/cooperative/**`
+- 稳定任务导航面：
+  - `docs/task/README.md`
+  - `docs/task/task_archive_convergence_plan_20260518.md`
+  - `docs/task/*/README.md` 下的子项目导航页
+  - `docs/task/flight_dynamics/*/README.md` 下的更深层导航页
 
-- `src/`、`tools/`、`tests/`、`examples/` 下较短的 README 导航页
-- 主要面向活跃开发者的低层实现说明
+Tier B：英文主文，中文辅文可选或延后
+
+- `docs/forward/` 下的前瞻性想法与 backlog
+- `docs/plan/exact_runtime/**` 这类非权威计划分支
+- 仍处于高频变更中的 task 计划、checkpoint、freeze、analysis 长文
+
+Tier C：历史、归档、临时稿与本地保留面
+
 - `docs/Archive/` 下的历史归档材料
-- `docs/**/archive/` 下的本地归档镜像材料
+- `docs/**/archive/` 下的本地 archive 镜像
 - `docs/**/temp/`、`docs/temp/`、`docs/plan/results/`
   下的临时稿、草稿和本地分析记录
+
+Tier A 需要双语配对。Tier B 可以先维护英文主文。Tier C 默认不纳入持续维护判定。
 
 ## 写作规则
 
@@ -136,7 +154,7 @@ Language:
 - 一次只处理一个目录
 - 每批 `4-8` 个文件
 - 每批保持单一主题，例如
-  `docs/task/flight_dynamics/weapon_guidance/`
+  `docs/plan/architecture/` 或 `docs/standards/joint/`
 - 每批结束后做一次链接和路径检查
 
 这样更容易保持术语一致，也便于人工复核。
@@ -157,16 +175,17 @@ Language:
 
 ## 验收标准
 
-当一个目录满足以下条件时，可视为完成双语化：
+当一个目录或维护切片满足以下条件时，可视为达到双语维护目标：
 
-- 入口 README 优先链接英文主文
-- 该目录下的维护主文已配齐中文辅文
+- Tier A 入口 README 优先链接英文主文
+- 该切片下 Tier A 权威文档已配齐中文辅文
+- Tier B 文档即使中文延后，也已明确采用英文主文维护
 - 维护中的英文主文不再有大段中英混排
 - 机器翻译草稿已审校或被明确标记
-- 双语簇注册表在配对文档变更后已同步更新
+- Tier A 配对文档变更后，双语簇注册表已同步更新
 - 迁移后本地链接仍然有效
 
-以下临时/本地目录不纳入上述主验收口径：
+以下临时/历史/本地目录不纳入上述主验收口径：
 
 - `docs/**/temp/`
 - `docs/temp/`

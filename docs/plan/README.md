@@ -9,6 +9,7 @@ Language migration note:
 
 - The current `docs/plan/` is being migrated to a bilingual system with English `.md` as primary and Chinese `.zh.md` as secondary.
 - The migration plan can be found at [documentation_bilingual_migration_plan_20260518.md](documentation_bilingual_migration_plan_20260518.md).
+- The strict bilingual maintenance surface is the stable plan authority layer, not every historical freeze or candidate draft under `docs/plan/**`.
 - Until English peers are fully supplemented, existing `.zh.md` long texts will still be used as transitional inputs, but English main texts should be supplemented in subsequent batches.
 
 ## 1. Current Directory Structure
@@ -36,29 +37,31 @@ Notes:
 
 ## 2. Recommended Reading Order
 
-1. [architecture/system_layering_and_engine_encapsulation_plan.zh.md](architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+1. [architecture/simulation_system_architecture_design.md](architecture/simulation_system_architecture_design.md)
+   - Strict simulation-system baseline, answering "what is the canonical lifecycle and how should domain extensions attach to it".
+2. [architecture/system_layering_and_engine_encapsulation_plan.md](architecture/system_layering_and_engine_encapsulation_plan.md)
    - Architecture main plan, answering "what is the target layering and how should the engine boundary be defined".
-2. [architecture/architecture_and_performance_research_followup.zh.md](architecture/architecture_and_performance_research_followup.zh.md)
+3. [architecture/architecture_and_performance_research_followup.md](architecture/architecture_and_performance_research_followup.md)
    - Route research and performance trade-off explanation, answering "why this layering and how to prioritize subsequent routes".
-3. [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md)
+4. [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md)
    - Facade contract basis, answering "what C++ application contract should the upper layer depend on long-term".
-4. [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md)
-   - Archived cleanup freeze record; use as history only.
-5. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+5. [archive/runtime_facade/README.md](archive/runtime_facade/README.md)
+   - Archived runtime-facade cleanup and bootstrap record index; use as history only.
+6. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
    - Cooperative training foundation and performance analysis main text.
-6. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
    - P8 cooperative execution pipeline facility review and next steps.
-7. Special documents under `exact_runtime/`
-   - Only delve deeper when the task explicitly enters the GPU / exact runtime mainline.
+8. Special documents under `exact_runtime/`
+   - Only delve deeper when the task explicitly enters the GPU / exact runtime mainline, and start from `exact_runtime/README.md` rather than assuming every candidate draft still exists.
 
 ## 3. Historical Freeze Records
 
 These documents have been moved out of the active subdirectories and are kept
 for execution history only:
 
-- [archive/runtime_facade_task_bootstrap_plan.md](archive/runtime_facade_task_bootstrap_plan.md)
-- [archive/runtime_facade_layering_cleanup_freeze.md](archive/runtime_facade_layering_cleanup_freeze.md)
-- [archive/src_layered_refactor_freeze.md](archive/src_layered_refactor_freeze.md)
+- [archive/runtime_facade/README.md](archive/runtime_facade/README.md)
+- [archive/architecture/README.md](archive/architecture/README.md)
+- [archive/exact_runtime/README.md](archive/exact_runtime/README.md)
 
 ## 4. Current Authority Relationships
 
@@ -66,8 +69,9 @@ for execution history only:
 
 | Document | Current Role | Usage Rules |
 |----------|--------------|-------------|
-| [architecture/system_layering_and_engine_encapsulation_plan.zh.md](architecture/system_layering_and_engine_encapsulation_plan.zh.md) | Architecture main plan | Authoritative description of architecture direction; not a direct task list |
-| [architecture/architecture_and_performance_research_followup.zh.md](architecture/architecture_and_performance_research_followup.zh.md) | Route research main text | Provides route prioritization and performance judgment; does not directly authorize implementation |
+| [architecture/simulation_system_architecture_design.md](architecture/simulation_system_architecture_design.md) | Strict simulation architecture baseline | Current authority for the canonical lifecycle, extension model, and architecture gates; not a direct task list |
+| [architecture/system_layering_and_engine_encapsulation_plan.md](architecture/system_layering_and_engine_encapsulation_plan.md) | Architecture main plan | Authoritative background for layer direction; not a direct task list |
+| [architecture/architecture_and_performance_research_followup.md](architecture/architecture_and_performance_research_followup.md) | Route research main text | Provides route prioritization and performance judgment; does not directly authorize implementation |
 | [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md) | Facade contract basis | Defines interface boundaries and DTOs; does not directly authorize extended implementation |
 | [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md) | Cooperative training direction basis | Provides facility foundation, risks, and route analysis |
 | [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md) | Cooperative execution direction basis | Provides current cooperative execution mainline facility review and next steps |
@@ -76,9 +80,8 @@ for execution history only:
 
 | Document | Current Status | Notes |
 |----------|----------------|-------|
-| [archive/runtime_facade_task_bootstrap_plan.md](archive/runtime_facade_task_bootstrap_plan.md) | First batch `WP1-WP6` completed | Archived execution record; should not be extended with new scope |
-| [archive/runtime_facade_layering_cleanup_freeze.md](archive/runtime_facade_layering_cleanup_freeze.md) | `WP1-WP7` completed | Archived cleanup freeze record; new splits require a new freeze |
-| [archive/src_layered_refactor_freeze.md](archive/src_layered_refactor_freeze.md) | `WP1-WP7` completed | Archived `src/` layering record; new splits require a new freeze |
+| [archive/runtime_facade/README.md](archive/runtime_facade/README.md) | Archived runtime-facade record index | Use the archive index to reach completed bootstrap and cleanup freezes |
+| [archive/architecture/README.md](archive/architecture/README.md) | Archived architecture record index | Use the archive index to reach completed `src/` layering freezes |
 | [exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md](exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md) | Frozen phase-based execution plan | Used as historical phase record for GPU mainline |
 
 ### C. Still Actionable Special Drafts / Checklists
@@ -87,8 +90,7 @@ for execution history only:
 |----------|----------------|-------|
 | [exact_runtime/cpp_exact_runtime_refactor_plan.md](exact_runtime/cpp_exact_runtime_refactor_plan.md) | Draft follow-on implementation plan | Subsequent C++ exact runtime candidate plan |
 | [exact_runtime/gpu_execution_mainline_integration_checklist.md](exact_runtime/gpu_execution_mainline_integration_checklist.md) | Open | GPU execution mainline consistency checklist |
-| [exact_runtime/gpu_resident_state_implementation_plan.md](exact_runtime/gpu_resident_state_implementation_plan.md) | Implementation draft | Device resident state direction draft |
-| [exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md](exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md) | Implementation plan draft | GPU exact step performance/semantic parity special draft |
+| [exact_runtime/README.md](exact_runtime/README.md) | Candidate-plan index | Use the local README to see which exact-runtime drafts are still present |
 
 ### D. Archive Material Locations
 

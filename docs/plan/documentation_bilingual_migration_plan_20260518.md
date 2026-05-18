@@ -23,7 +23,10 @@ Current friction points:
 - some maintained indexes still mix Chinese and English in the same file
 - some directories still treat Chinese long-form plans as the primary reading
   path
-- most dated task snapshots under `docs/task/` still have no English peer
+- the earlier migration scope treated too much of `docs/task/**` as if it were
+  a stable bilingual authority surface
+- entrypoint READMEs in a few areas still deep-link into dated status,
+  taskboard, or freeze snapshots instead of stable local README navigation
 - some local-only directories such as `docs/plan/archive/` and
   `docs/plan/results/` may exist in one workspace but be ignored from the
   shared remote, so maintained navigation should not rely on them as canonical
@@ -35,6 +38,10 @@ Current friction points:
 - Chinese `name.zh.md` is the companion document.
 - Maintained entry surfaces stop mixing large Chinese and English paragraphs in
   the same file.
+- The default bilingual maintenance surface is intentionally small and
+  authority-focused.
+- High-churn task/history material can remain English-canonical without
+  immediate Chinese parity.
 - Translation batches can be executed directory-by-directory with a consistent
   tool and review loop.
 
@@ -64,6 +71,7 @@ Backfill English canonical docs for the maintained authority records:
 - `docs/plan/architecture/*.zh.md`
 - `docs/plan/runtime_facade/*.zh.md`
 - `docs/plan/cooperative/*.zh.md`
+- `docs/manual/*.md`
 - selected `docs/standards/` long-form baselines if a Chinese companion is
   later needed
 
@@ -72,34 +80,35 @@ Goal:
 - make repo-level planning and architecture authority readable from the English
   mainline
 
-### Phase 3: Active Task Lines
+### Phase 3: Stable Task Navigation
 
-Translate active working directories by folder:
+Keep the task tree navigable without putting every dated work record onto a
+strict bilingual SLA:
 
-- `docs/task/flight_dynamics/`
-- `docs/task/naval/`
-- `docs/task/air_combat/`
-- `docs/task/review/`
-- `docs/task/python_rl/`
-
-Goal:
-
-- make live engineering taskboards, checkpoints, and unresolved-issue records
-  available from the English navigation path
-
-### Phase 4: Long Tail
-
-Finish the remaining dated snapshots and lower-priority notes:
-
-- `docs/task/common_air_naval/`
-- `docs/task/diagnostics_eval/`
-- `docs/task/code_redundancy/`
-- `docs/task/viz/`
-- legacy-but-still-used notes in `docs/manual/` or `docs/forward/` as needed
+- `docs/task/README.md`
+- `docs/task/task_archive_convergence_plan_20260518.md`
+- subproject README entrypoints under `docs/task/*/README.md`
+- deeper README navigation pages under `docs/task/flight_dynamics/*/README.md`
 
 Goal:
 
-- remove the remaining Chinese-only maintenance pockets from the active tree
+- make contributors enter task areas through stable README surfaces instead of
+  through dated status/taskboard/freeze docs
+
+### Phase 4: Selective Active Task Backfill
+
+Translate detailed task docs only when they are still current enough to justify
+ongoing maintenance:
+
+- the task doc is still the active execution authority
+- no local README or newer current-status doc can replace it as the stable
+  entry surface
+- the area owner explicitly wants Chinese parity for that active slice
+
+Goal:
+
+- keep English mainline readability without turning the whole task/history tree
+  into a permanent translation treadmill
 
 ## Batch Execution Rules
 
@@ -113,9 +122,9 @@ Translation should run in batches that are easy to review:
 Recommended order inside a directory:
 
 1. README / index
-2. current status / progress checkpoint
-3. taskboard / plan / unresolved issues
-4. deeper analysis and implementation packages
+2. authority or contract doc
+3. current status / progress checkpoint when it is still genuinely active
+4. deeper analysis and implementation packages only when they remain live
 
 ## Review Gates
 
@@ -150,11 +159,11 @@ Audit the current doc tree:
 python3 tools/maintenance/translate_docs_batch.py audit --root docs
 ```
 
-Backfill missing English peers for one active slice:
+Backfill missing English peers for one maintained authority slice:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py translate \
-  --root docs/task/flight_dynamics \
+  --root docs/plan/architecture \
   --pattern '*.zh.md' \
   --source-lang zh \
   --target-lang en \
@@ -165,8 +174,8 @@ Generate Chinese companions from reviewed English docs:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py translate \
-  --files docs/task/flight_dynamics/README.md \
-          docs/plan/architecture/README.md \
+  --files docs/plan/architecture/README.md \
+          docs/standards/joint/README.md \
   --source-lang en \
   --target-lang zh
 ```
@@ -174,19 +183,21 @@ python3 tools/maintenance/translate_docs_batch.py translate \
 ## Ownership Notes
 
 - The English canonical doc is the merge target for future maintenance edits.
-- Chinese companions should track the same scope, but they should not block
-  fast documentation updates to the English mainline.
+- Chinese companions should track Tier A authority/navigation scope, but they
+  should not block fast documentation updates to the English mainline.
 - If an area is under heavy churn, it is acceptable to land the English peer
-  first and review the Chinese companion in the next batch.
+  first and review the Chinese companion in the next batch or skip it for Tier
+  B task/history material.
 
 ## Acceptance Criteria For The Overall Migration
 
-The migration can be considered complete for the active tree when:
+The migration can be considered complete for the maintained surface when:
 
-- maintained `docs/plan/`, `docs/task/`, and `docs/standards/` entrypoints are
-  English-primary
-- all maintained `.zh.md` files in active directories have English peers
+- maintained `docs/`, `docs/plan/`, `docs/task/`, and `docs/standards/`
+  entrypoints are English-primary
+- the Tier A authority surface has bilingual peers
 - mixed-language README entry surfaces are removed
+- task trees use stable README navigation instead of stale dated deep links
 - the translation tool and audit workflow are part of normal doc maintenance
 
 ## Related Docs

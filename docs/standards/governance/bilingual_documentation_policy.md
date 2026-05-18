@@ -48,24 +48,44 @@ Transitional rule during migration:
 - used as a working source, but it should be queued for an English companion in
 - the next relevant batch.
 
-## Where Bilingual Companions Are Expected
+## Maintained Surface Tiers
 
-Chinese companions are expected for maintained, operator-facing, or authority
-documents under:
+This repo follows a layered maintenance model rather than treating the entire
+`docs/` tree as one bilingual SLA surface.
 
-- `docs/plan/`
-- `docs/task/`
-- `docs/standards/`
-- `docs/manual/`
+Tier A: strict bilingual maintained surface
 
-Chinese companions are optional for:
+- root navigation: `docs/README.md`
+- authority and governance trees under `docs/standards/`
+- operator-facing manuals under `docs/manual/`
+- stable plan authority under:
+  - `docs/plan/README.md`
+  - `docs/plan/documentation_bilingual_migration_plan_20260518.md`
+  - `docs/plan/architecture/**`
+  - `docs/plan/runtime_facade/**`
+  - `docs/plan/cooperative/**`
+- stable task navigation only:
+  - `docs/task/README.md`
+  - `docs/task/task_archive_convergence_plan_20260518.md`
+  - subproject README navigation pages under `docs/task/*/README.md`
+  - deeper README navigation pages under `docs/task/flight_dynamics/*/README.md`
 
-- short README catalogs under `src/`, `tools/`, `tests/`, `examples/`
-- low-level implementation notes whose primary audience is active developers
+Tier B: English canonical, Chinese companion optional or delayed
+
+- forward-looking idea and backlog docs under `docs/forward/`
+- non-authoritative plan slices such as `docs/plan/exact_runtime/**`
+- detailed task plans, checkpoints, freeze docs, and analysis docs that remain
+  active but change quickly
+
+Tier C: history, archive, scratch, and local-only retention
+
 - archived material under `docs/Archive/`
 - archived material under local `docs/**/archive/` mirrors
 - temporary or scratch analysis under `docs/**/temp/`, `docs/temp/`,
   and `docs/plan/results/`
+
+Chinese companions are expected for Tier A. They are optional for Tier B and
+outside the default maintenance verdict for Tier C.
 
 ## Writing Rules
 
@@ -118,6 +138,12 @@ The registry is used to determine whether one language has been edited without
 its peer following along. A translated batch should refresh the touched pair
 records so the baseline stays current.
 
+Operational note:
+
+- cluster hashes intentionally ignore leading machine-generated draft markers
+  and normalize line endings so workspace checkout format alone does not
+  trigger full-tree bilingual drift noise
+
 Audit interpretation rule:
 
 - Treat audit output as baseline-relative, not as an automatic semantic drift
@@ -158,7 +184,7 @@ Recommended batch shape:
 - one directory at a time
 - `4-8` files per translation batch
 - keep one batch within a single subject area such as
-  `docs/task/flight_dynamics/weapon_guidance/`
+  `docs/plan/architecture/` or `docs/standards/joint/`
 - run a link/path sanity check after each batch
 
 This keeps terminology more consistent and makes review easier.
@@ -179,16 +205,18 @@ Tool requirements:
 
 ## Acceptance Criteria
 
-A directory can be treated as bilingual-ready when:
+A directory or maintained slice can be treated as bilingual-ready when:
 
-- maintained entrypoint docs link to English canonical files first
-- Chinese companions exist for the maintained authority docs in that slice
+- Tier A entrypoint docs link to English canonical files first
+- Chinese companions exist for the Tier A authority docs in that slice
+- Tier B docs follow English-canonical ownership even if Chinese companions lag
 - no maintained canonical doc contains large mixed-language paragraphs
 - generated drafts are either reviewed or clearly marked as drafts
-- bilingual cluster registry entries are updated when paired docs change
+- bilingual cluster registry entries are updated when Tier A paired docs change
 - local links still resolve after migration
 
-Temporary and local-only directories are excluded from this acceptance bar:
+Temporary, historical, and local-only directories are excluded from this
+acceptance bar:
 
 - `docs/**/temp/`
 - `docs/temp/`

@@ -94,6 +94,18 @@ python3 tools/maintenance/translate_docs_batch.py audit --root docs \
   --registry docs/standards/bilingual_document_clusters.json
 ```
 
+By default this audits only the strict maintained bilingual surface
+(entry/navigation pages, standards/governance, manuals, and stable plan
+authority), not every dated task/history document under `docs/`.
+
+To audit the broader shared docs tree on purpose:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py audit --root docs \
+  --registry docs/standards/bilingual_document_clusters.json \
+  --full-tree
+```
+
 If that audit looks noisy after a large doc sweep, refresh the registry first:
 
 ```bash
@@ -102,11 +114,21 @@ python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
 
 The audit compares current file hashes against the registry baseline, so a
 stale baseline can look like drift even when the repo is just catching up.
+The maintained hash now ignores leading machine-generated draft markers and
+normalizes line endings, so Windows `CRLF` checkout noise should not turn the
+entire registry into false `diverged` results by itself.
 
 Generate or refresh the bilingual cluster registry baseline:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
+```
+
+If you deliberately want a full-tree registry instead of the maintained
+surface registry:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write --full-tree
 ```
 
 By default, the audit skips local-only documentation surfaces that are commonly
@@ -123,11 +145,11 @@ To include them explicitly:
 python3 tools/maintenance/translate_docs_batch.py audit --root docs --include-local-only
 ```
 
-Recommended zh-to-en backfill for one active directory:
+Recommended zh-to-en backfill for one maintained authority directory:
 
 ```bash
 python3 tools/maintenance/translate_docs_batch.py translate \
-  --root docs/task/flight_dynamics \
+  --root docs/plan/architecture \
   --pattern '*.zh.md' \
   --source-lang zh \
   --target-lang en \
