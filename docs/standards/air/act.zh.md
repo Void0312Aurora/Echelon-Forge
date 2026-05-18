@@ -1,62 +1,137 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/act.md. Review before treating this file as authoritative. -->
+# 飞行员动作合同
 
-# 飞行员操作空间标准 (Pilot Action Space Standard)
+Language:
+- English canonical: `act.md`
+- Chinese companion: [act.zh.md](act.zh.md)
 
-> 范围说明 (2026-03-23): 本文档是 `air specialization`，只适用于 air profile 下的平台执行动作语义。
-> 当前标准化主基线请先看 [docs/standards/README.md](../README.md)、
-> [docs/standards/services/air_force.md](../services/air_force.md)、
-> [docs/standards/air/README.md](README.md)。
+状态：`2026-05-18`，当前维护中的 air action input 特化基线。
 
-本文档定义了“数字飞行员” (RL Agent) 对仿真环境所能施加的操作指令。这些操作严格模拟现实战斗机飞行员在座舱内通过操纵杆、油门杆和各类电磁开关所能进行的物理操作。
+本文档定义仓库当前维护中的 air action surface。它是一份接口合同，不是座舱控件百科。
 
-它不负责定义：
+## 范围
 
-- joint/common core 的任务组织
-- 军种层级结构
-- 海战或陆战的执行动作标准
+当前维护中的动作面分成两层：
 
-## 1. 飞行控制 (Primary Controls)
-最频繁的操作，直接影响飞机的气动面。
+1. 面向环境的 action vector
+2. 面向内核的 `PilotAction`
 
-| 操作名 | 说明 | 取值范围 | 物理意义 |
-| :--- | :--- | :--- | :--- |
-| `stick_pitch` | 升降舵/水平尾翼控制 | [-1.0, 1.0] | 向后拉为正(抬头/俯仰升), 向前推为负(低头/俯仰降) |
-| `stick_roll` | 副翼控制 | [-1.0, 1.0] | 向左压为负, 向右压为正 |
-| `rudder_pedals` | 方向舵/机轮转弯控制 | [-1.0, 1.0] | 踩左舵为负, 踩右舵为正 |
-| `throttle_lever` | 油门杆位置 | [0.0, 1.0] | 0.0-0.8为军用推力, 0.8-1.0为加力 (AB) |
+主要依据：
 
-## 2. 二级控制 (Secondary Controls)
-用于调整飞机形态和辅助飞行。
+- [gym_envs/universal_env_parts/actions.py](../../../gym_envs/universal_env_parts/actions.py)
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
+- [src/components/command/pilot_action.h](../../../src/components/command/pilot_action.h)
+- [src/components/command/air/control_input_resolution.h](../../../src/components/command/air/control_input_resolution.h)
 
-| 操作名 | 说明 | 取值范围 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `gear_handle` | 起落架手柄 | {0, 1} | 0为收, 1为放 |
-| `flaps_switch` | 襟翼开关 | {Up, Takeoff, Landing} | 挡位控制 |
-| `speedbrake_switch` | 减速板手柄 | {Retract, Extend} | 离散或连续控制 |
-| `trim_pitch` | 俯仰配平 | [-1.0, 1.0] | 调整零位压力 |
+## Action Mode
 
-## 3. 传感器与电子设备 (Sensors & Avionics)
-管理信息获取设备。
+当前维护中的环境 action mode 为：
 
-| 操作名 | 说明 | 取值范围 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `radar_power` | 雷达开关/模式 | {Off, Standby, On} | |
-| `radar_scan_elevation` | 雷达俯仰扫描中心 | 度 (deg) | |
-| `radar_scan_azimuth` | 雷达方位扫描宽度 | 度 (deg) | |
-| `target_lock_btn` | 锁定按钮 (TMS Up) | 触发式 | 用于指定跟踪目标 |
+| Mode | 维度 | 作用 |
+| :--- | ---: | :--- |
+| `full` | 17 | 完整维护中的动作面 |
+| `takeoff2` | 2 | 起飞课程用简化动作面 |
+| `takeoff4` | 4 | 带横侧向控制的起飞简化动作面 |
 
-## 4. 武器管理 (Weapon Management)
-战术执行的核心操作。
+`takeoff2` 与 `takeoff4` 是训练导向的 reduced interface，并不直接暴露完整 `PilotAction`。
 
-| 操作名 | 说明 | 取值范围 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `master_arm_switch` | 武器总开关 | {Safe, Arm} | |
-| `weapon_select` | 武器循环选择 | 离散 ID | 航炮、短程弹、中程弹 |
-| `pickle_btn` | 导弹发射/挂铁释放 | 触发式 | |
-| `trigger_btn` | 航炮扳机 | 按住式 | |
-| `jettison_emergency` | 紧急丢弃副油箱/挂载 | 触发式 | 当前 `PilotAction` 字段；通常为红色紧急按钮 |
+## `full` 模式映射
 
-## 5. 操作规范
-1.  **连续性**: 操纵杆 (`stick_pitch/roll`) 和油门 (`throttle`) 必须作为连续值 (Continuous Action) 处理，以模拟物理反馈。
-2.  **物理延迟**: 飞行员的操作通过机载飞控系统 (FBW) 到达致动器会有微小延迟及物理限制。
-3.  **安全性**: AI 不应发出超越人体极限的突变指令（例如从全开油门在 0.01 秒内变为全关），模型需包含人类操作的平滑特性。
+当前维护中的 `full` action vector 映射如下：
+
+- `0`: `stick_pitch`
+- `1`: `stick_roll`
+- `2`: `rudder`
+- `3`: `throttle`
+- `4`: `gear_handle`
+- `5`: `flaps`
+- `6`: `speedbrake`
+- `7-8`: brake 输入，最终折叠为 `brake`
+- `9`: `radar_active`
+- `10`: `radar_scan_az`
+- `11`: `radar_scan_el`
+- `12`: `tms_up`
+- `13`: `master_arm`
+- `14`: `fire_weapon`
+- `15`: `fire_gun`
+- `16`: `weapon_select_id`
+
+## 规范的 `PilotAction` 字段
+
+当前内核侧公开的 `PilotAction` 字段可分为：
+
+### 连续轴
+
+- `stick_pitch`
+- `stick_roll`
+- `rudder`
+- `throttle`
+- `gear_handle`
+- `flaps`
+- `speedbrake`
+- `brake`
+- `radar_scan_az`
+- `radar_scan_el`
+
+### 开关与触发
+
+- `brake_left`
+- `brake_right`
+- `radar_active`
+- `tms_up`
+- `master_arm`
+- `fire_weapon`
+- `fire_gun`
+- `jettison_emergency`
+- `program_chaff`
+- `program_flare`
+
+### 选择器与有效位
+
+- `weapon_select_id`
+- `active`
+
+## 解释规则
+
+- `normalize_action()` 在环境边界执行 shape 校验与 clipping。
+- `flaps`、`speedbrake`、`brake` 在进入 `PilotAction` 前会经过 helper 逻辑规范化。
+- `radar_scan_az` 与 `radar_scan_el` 在环境层是归一化输入，进入内核前再映射为角度值。
+- `weapon_select_id` 是选择器，不是连续控制轴。
+
+## Reduced Mode 的自动覆盖
+
+`takeoff2` 与 `takeoff4` 不只是“少几个字段”，它们还会自动附带覆盖逻辑：
+
+- 未暴露字段会被清零或禁用
+- reduced mode 仍然生成一个有效的 `PilotAction`
+- `gear_handle` 会根据当前 radar altitude 自动管理
+
+因此，这两个 mode 是训练便利层，而不是独立的内核动作协议。
+
+## 保护与门控规则
+
+当前动作合同还包含一些“解释层规则”，它们并不是玩家直接控制量：
+
+- `PilotAction.active` 决定该动作是否有效
+- 当 runtime 在 `PilotAction` 与 legacy movement command 之间做选择时，`PilotAction` 优先
+- `brake_left/right` 在地面控制解析层可能强制触发满刹车语义
+- 武器发射除了 `master_arm` 与 `fire_weapon` 外，仍要经过下游 command/ROE/runtime 检查
+
+## 归属边界
+
+应继续保留在 air specialization 的内容：
+
+- stick/throttle/gear/flaps/speedbrake 等飞行员动作语义
+- 直接暴露给 pilot surface 的 radar scan 控制
+- weapon select 与 trigger 的 pilot-interface 语义
+- reduced takeoff 训练动作面
+
+不应放进本文档的内容：
+
+- joint/common 的 command relationship
+- service-level 的 tasking doctrine
+- 低层 aerodynamic、propulsion、weapon model 的实现细节
+
+## 非目标
+
+本文档不标准化 `trim_pitch` 字段，不承诺显式的人类平滑模型，也不尝试充当完整 HOTAS 手册。
+如果当前 runtime 没有通过 `PilotAction` 或维护中的环境动作面公开该字段，就不应把它写成当前维护合同的一部分。

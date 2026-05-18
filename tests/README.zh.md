@@ -13,7 +13,7 @@
 ## 当前结构
 
 - `runtime/`
-  - 针对 mission、execution-step 和加载器一致性的运行时契约测试。
+  - 按能力域分组的运行时契约测试，位于 `air_combat/`、`core/`、`execution/`、`facade/`、`link/`、`mission/`、`multi_agent/`、`naval/` 和 `navigation/` 下。
 - `eval/`
   - 维护的 CLI 级别评估回归测试。
 - `training/`

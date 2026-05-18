@@ -31,7 +31,7 @@ The core issues to be resolved in this round:
 
 ## II. Current Assessment
 
-According to the supporting analysis document [Common / Air / Naval Module Split Analysis](common_air_naval_modular_split_analysis_20260515.zh.md), the current repository already has the following conditions:
+According to the supporting analysis document [Common / Air / Naval Module Split Analysis](./archive/common_air_naval_modular_split_analysis_20260515.zh.md), the current repository already has the following conditions:
 
 - The standard documentation layer can already support the modeling route of `joint/common core + service profile + specialization`;
 - Entry points such as `ServiceProfile::Navy` and `UnitType::Ship` already exist;
@@ -257,7 +257,7 @@ Current status:
 - Completed: `TaskOrder`, `LeaderIntent`, `PilotReport` split into `common/*_core.h` and `air/*_air.h`
 - Completed: Old umbrella headers continue to expose original struct names externally, and maintain flat field access through `Core + Air` compatibility shells
 - Completed: `bindings_command.cpp` compatibility export verified
-- Completed: `tests/leader/test_common_core_semantics.py`, `tests/runtime/test_runtime_facade.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance
+- Completed: `tests/leader/test_common_core_semantics.py`, `tests/runtime/facade/test_runtime_facade.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance
 
 ### WP3: Extract Air-Only Enums and Air Extension
 
@@ -310,7 +310,7 @@ Current status:
 - Completed: Added `src/components/tasking/air/air_tasking_enums.h` as air-only enum owner
 - Completed: `tasking_enums.h` degenerated to `common + air` compatibility umbrella
 - Completed: `task_order_air.h`, `leader_intent_air.h`, `mission_command.h` and `bindings_command.cpp` changed to explicitly depend on air enum owner
-- Completed: `ef_core` / `ef_py` build passes, and `tests/leader/test_common_core_semantics.py`, `tests/leader/test_two_ship_contract_fields.py`, `tests/runtime/test_runtime_facade.py`, `tests/runtime/test_mission_runtime.py`, `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passes
+- Completed: `ef_core` / `ef_py` build passes, and `tests/leader/test_common_core_semantics.py`, `tests/leader/test_two_ship_contract_fields.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/runtime/mission/test_mission_runtime.py`, `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passes
 
 ### WP4: Python Profile/Dispatch Split
 
@@ -373,7 +373,7 @@ Current status:
 - Completed: `infer_route_ref_id`, `infer_recovery_*`, `build_kernel_mission_command` in `python/rl/leader_tasking.py` are now hosted via `air_profile`, while old entry points and `ef_py` patch compatibility are maintained
 - Completed: `python/rl/tasking_air_adapter.py` clearly aggregates common-core defaults/spec from `common_core_profile` and air semantics from `air_profile`
 - Completed: `./.venv/bin/python -m py_compile` covers `common_core_profile.py`, `leader_tasking.py`, `tasking_air_adapter.py`, `tasking_bridge.py` and `python/rl/profile/*`
-- Completed: `tests/leader/test_common_core_semantics.py`, `tests/leader/test_task_order_randomization.py`, `tests/leader/test_two_ship_contract_fields.py`, `tests/runtime/test_leader_tasking_runtime.py`, `tests/runtime/test_runtime_facade.py`, `tests/runtime/test_mission_runtime.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passed (`53 passed` + `1 passed`)
+- Completed: `tests/leader/test_common_core_semantics.py`, `tests/leader/test_task_order_randomization.py`, `tests/leader/test_two_ship_contract_fields.py`, `tests/runtime/mission/test_leader_tasking_runtime.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/runtime/mission/test_mission_runtime.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passed (`53 passed` + `1 passed`)
 - Not completed: further physical migration of `RuleBasedLeaderPhaseManager` / `ScriptedC2TaskManager` and `_apply_task_order_overrides`; dispatch transformation of `multi_agent_runtime.py` and wider contract/runtime entry points
 
 ### WP5: Migrate `tests/contracts` to Common-First
@@ -459,13 +459,13 @@ Current status:
 
 - Done: Added [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py), unifying names, `mode_code`, dimensions, and field name taxonomy for mission observation modes.
 - Done: [python/env_config.py](../../../python/env_config.py), [gym_envs/universal_env.py](../../../gym_envs/universal_env.py), [gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py), [tools/eval/sb3_eval_base.py](../../../tools/eval/sb3_eval_base.py), [tools/diagnostics/analyze_cooperative_observation_scales.py](../../../tools/diagnostics/analyze_cooperative_observation_scales.py) integrate the shared taxonomy, while preserving original CLI cooperative gating and runtime behavior.
-- Done: Added [tests/runtime/test_mission_obs_taxonomy.py](../../../tests/runtime/test_mission_obs_taxonomy.py), locking the `mode_code` / dim / field layout consistency between shared taxonomy and runtime entry points.
-- Done: `mission_obs_taxonomy` added a shared helper mapping field names to indices; core mission assertions in [tests/runtime/test_mission_runtime.py](../../../tests/runtime/test_mission_runtime.py), [tests/runtime/test_cooperative_world_batch_vec_env.py](../../../tests/runtime/test_cooperative_world_batch_vec_env.py), [tests/runtime/test_multi_agent_runtime.py](../../../tests/runtime/test_multi_agent_runtime.py) have converged from magic indices to the shared taxonomy.
+- Done: Added [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py), locking the `mode_code` / dim / field layout consistency between shared taxonomy and runtime entry points.
+- Done: `mission_obs_taxonomy` added a shared helper mapping field names to indices; core mission assertions in [tests/runtime/mission/test_mission_runtime.py](../../../tests/runtime/mission/test_mission_runtime.py), [tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py](../../../tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py), [tests/runtime/multi_agent/test_multi_agent_runtime.py](../../../tests/runtime/multi_agent/test_multi_agent_runtime.py) have converged from magic indices to the shared taxonomy.
 - Done: `./.venv/bin/python -m py_compile` covers WP6 new and modified files.
-- Done: `tests/runtime/test_mission_obs_taxonomy.py`, `tests/runtime/test_mission_runtime.py`, `tests/runtime/test_multi_agent_runtime.py`, `tests/runtime/test_multi_agent_benchmark.py` focused regression passes (`34 passed`).
-- Done: `tests/runtime/test_cooperative_world_batch_vec_env.py`, `tests/runtime/test_scenario_loader_execution_step_runtime.py`, `tests/runtime/test_execution_episode_batch_prepare.py`, `tests/runtime/test_execution_episode_controller.py` extended regression passes (`37 passed, 8 subtests passed`).
-- Done: In the second batch of first regression, `tests/runtime/test_mission_obs_taxonomy.py`, `tests/runtime/test_mission_runtime.py`, `tests/runtime/test_multi_agent_runtime.py`, `tests/runtime/test_cooperative_world_batch_vec_env.py` pass (`51 passed`).
-- Done: In the second batch of associated regression, `tests/runtime/test_scenario_loader_execution_step_runtime.py`, `tests/runtime/test_execution_episode_batch_prepare.py`, `tests/runtime/test_execution_episode_controller.py`, `tests/runtime/test_multi_agent_benchmark.py` pass (`20 passed, 8 subtests passed`).
+- Done: `tests/runtime/mission/test_mission_obs_taxonomy.py`, `tests/runtime/mission/test_mission_runtime.py`, `tests/runtime/multi_agent/test_multi_agent_runtime.py`, `tests/runtime/multi_agent/test_multi_agent_benchmark.py` focused regression passes (`34 passed`).
+- Done: `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`, `tests/runtime/execution/test_scenario_loader_execution_step_runtime.py`, `tests/runtime/execution/test_execution_episode_batch_prepare.py`, `tests/runtime/execution/test_execution_episode_controller.py` extended regression passes (`37 passed, 8 subtests passed`).
+- Done: In the second batch of first regression, `tests/runtime/mission/test_mission_obs_taxonomy.py`, `tests/runtime/mission/test_mission_runtime.py`, `tests/runtime/multi_agent/test_multi_agent_runtime.py`, `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py` pass (`51 passed`).
+- Done: In the second batch of associated regression, `tests/runtime/execution/test_scenario_loader_execution_step_runtime.py`, `tests/runtime/execution/test_execution_episode_batch_prepare.py`, `tests/runtime/execution/test_execution_episode_controller.py`, `tests/runtime/multi_agent/test_multi_agent_benchmark.py` pass (`20 passed, 8 subtests passed`).
 - Done: `tests/contracts/unit/config/env_config_resolution.json` contract runs through directly.
 - Done: The `mission_obs_mode` CLI selection set in `python/rl/multi_agent_benchmark.py`, `tools/diagnostics/benchmarks/visual_resolution.py`, `tools/diagnostics/benchmarks/world_batch_vec_env.py` is uniformly integrated into the shared taxonomy.
 - Done: Within WP6 scope, the config/runtime/tests/eval/diagnostics shared convergence for mission observation taxonomy is closed.
@@ -555,10 +555,10 @@ Current status:
 - Done: Added `src/components/command/air/mission_command_air.h` carrying air-only fields: recovery, takeoff, formation offset, etc.
 - Done: `src/components/command/mission_command.h` changed to a compatibility umbrella header, continuing to expose the flat `MissionCommand` name and field access.
 - Done: `bindings_command.cpp` can continue exposing existing flat `MissionCommand` fields without changing export names; Python side remains compatible.
-- Done: Added `tests/runtime/test_mission_command_split_semantics.py`, covering binding field exposure and direct-kernel roundtrip.
+- Done: Added `tests/runtime/mission/test_mission_command_split_semantics.py`, covering binding field exposure and direct-kernel roundtrip.
 - Done: `gym_envs/scenario_loader/runtime_state.py`, `src/core/mission/episode/detail/mission_command_codec.cpp`, `src/core/mission/episode/detail/episode_transition_runtime.cpp` have completed consumer/json symmetry for `MissionCommand`; fields like `formation_*`, `assigned_target_id`, `authorization_to_fire`, `recovery_approach_type` (common/air) maintain fidelity in episode/runtime-state roundtrip.
 - Done: `python/rl/profile/air_profile.py` corrected accidental overwrite of mission-level `MissionCommand` fields by zero-valued `leader_intent`, ensuring consistency between loader mission command and kernel command construction.
-- Done: Focus regression passes: `tests/runtime/test_leader_tasking_runtime.py`, `tests/world_batch/test_world_batch_runtime.py`, `tests/runtime/test_execution_episode_state.py`, `tests/runtime/test_execution_episode_controller.py`, `tests/runtime/test_runtime_facade.py`, `tests/runtime/test_mission_runtime.py`, `tests/runtime/test_cooperative_world_batch_vec_env.py`, `tests/world_batch/test_world_batch_vec_env.py`.
+- Done: Focus regression passes: `tests/runtime/mission/test_leader_tasking_runtime.py`, `tests/world_batch/test_world_batch_runtime.py`, `tests/runtime/execution/test_execution_episode_state.py`, `tests/runtime/execution/test_execution_episode_controller.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/runtime/mission/test_mission_runtime.py`, `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`, `tests/world_batch/test_world_batch_vec_env.py`.
 - Not done: `MissionCommand` has not yet entered the `naval` execution command layering; only `common + air` structure and compatibility layer are frozen in this phase.
 
 ## VI. Phase Dependencies

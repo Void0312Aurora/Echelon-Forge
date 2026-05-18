@@ -1,35 +1,29 @@
-# 真实化主线与任务板子项目
+# Program 子目录已失效
 
 语言版本：
 
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-状态：`2026-05-17` 活跃维护中。
+状态：`2026-05-18` 已停用。
 
-本子项目收纳 `flight_dynamics` 主线下的跨方向状态汇总、阶段任务板和当前排期入口，不重复展开各方向的具体技术细节。
+本目录不再承载可信的主线状态、任务板或阶段排期。此前位于本目录下的
+`current_status / convergence_plan / p1_taskboard` 已停用，不应继续作为当前判断依据。
 
-## 文档入口
+## 当前规则
 
-- [真实化主线收束计划](realism_program_convergence_plan_20260517.md)
-  作用：先统一当前总阶段、主阻塞、维护态范围和收束顺序；它是当前最推荐的总入口。
-- [真实化主线与关联子项目当前状态](realism_program_current_status_20260517.md)
-  作用：快速确认当前主线绿/红面、活跃方向和关联子项目入口。
-- [真实化任务总表（P0）](realism_program_taskboard_20260516.zh.md)
-  作用：保留三条主线最初收敛为 `P0` 的统一任务板；当前不应用它判断实时进度。
-- [真实化 P1 任务总表](realism_program_p1_taskboard_20260517.md)
-  作用：记录 `P0` 验收后的收尾项与 `P1` 深化真实化排期。
-- [真实化主线委派执行计划](realism_program_delegated_execution_plan_20260517.zh.md)
-  作用：保留 lane / sidecar / 委派口径；当前阅读时应配合“收束计划”一起看，不应单独当作最新总阶段判断。
+1. `program/` 仅保留这个失效说明页，不再作为阅读入口。
+2. 当前可信口径应回到各分析文档中的 `2026-05-18` 收口标记。
 
-## 适用范围
+## 当前建议入口
 
-1. 跨子方向的优先级、依赖关系和阶段验收。
-2. 当前哪条线在推进、哪条线只保留冻结分析。
-3. 需要从主线程分发给各子项目的任务板入口。
+1. [flight 分析文档](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
+2. [sensor_situation 分析文档](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+3. [weapon_guidance 分析文档](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+4. [naval 分析文档](../naval/naval_realism_analysis_20260516.zh.md)
+5. [c2_command_chain 分析文档](../c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
 
-## 不放在这里的内容
+## 说明
 
-1. 单一方向的详细技术分析。
-2. 面向某个子系统的逐文件实现包。
-3. 已经转入子项目目录维护的进展检查点。
+1. 若需要追溯历史排期或过渡判断，只能把它们当作历史留痕。
+2. 不应用它们来描述“当前做到哪里”。

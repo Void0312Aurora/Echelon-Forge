@@ -1,73 +1,120 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/rep.md. Review before treating this file as authoritative. -->
+# 飞行员汇报合同
 
-# 飞行员汇报标准 (Pilot Reporting Standard)
+Language:
+- English canonical: `rep.md`
+- Chinese companion: [rep.zh.md](rep.zh.md)
 
-> 范围说明 (2026-03-23): 本文档是 `空中专精`，描述空中配置下的平台与战术汇报语义。
-> 当前标准化主基线请先看 [docs/standards/README.md](../README.md)、
-> [docs/standards/joint/command_and_modeling_baseline.md](../joint/command_and_modeling_baseline.md)、
-> [docs/standards/services/air_force.md](../services/air_force.md)。
+状态：`2026-05-18`，当前维护中的 air reporting semantics 特化基线。
 
-本文档定义了“僚机/数字飞行员”向“长机/指挥层”上报信息的规范。这是双向战术链路的重要组成部分，使指挥层能够根据各机的实时状态、观测发现和任务进度调整战术。
+本文档定义仓库当前维护中的 air reporting contract，它不是完整 brevity-code 手册。
 
-在新的标准体系中：
+## 范围
 
-- joint/common core 负责共通汇报骨架
-- 本文档只负责空中配置的具体汇报语义
-- 这里的简语/僚机/返航口径不应直接推广到海上/陆上
+当前维护中的 reporting surface 分成三层：
 
-## 1. 指令确认 (Command Acknowledgment)
-对长机指令的基本反馈。
+- `PilotReportCore`
+- `PilotReportAir`
+- 当前 leader/runtime logic 真正赋予稳定语义的 report type 子集
 
-| 报告代码 | 语义说明 | 备注 |
-| :--- | :--- | :--- |
-| `REP_WILCO` | 收到指令，将执行 (Will Comply) | 指令生效确认 |
-| `REP_ROGER` | 收到信息 (Received) | 仅确认收到信息，不代表执行 |
-| `REP_UNABLE` | 无法执行指令 | 通常伴随原因（如：燃油不足、过载过大） |
-| `REP_CANT_DO` | 虽然收到，但由于机体限制无法达成 | 例如：要求速度 2.0M 但飞机无法达到 |
+主要依据：
 
-## 2. 机体状态报告 (Status Report)
-定期或应答式的自身情况汇总。
+- [src/components/tasking/common/pilot_report_core.h](../../../src/components/tasking/common/pilot_report_core.h)
+- [src/components/tasking/air/pilot_report_air.h](../../../src/components/tasking/air/pilot_report_air.h)
+- [python/rl/tasking/leader_tasking.py](../../../python/rl/tasking/leader_tasking.py)
+- [src/runtime/contracts/world_batch_contracts.h](../../../src/runtime/contracts/world_batch_contracts.h)
 
-| 变量名 | 说明 | 数据类型 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `status_fuel` | 状态油量代码 | {Joker, Bingo, State} | Joker: 需撤出; Bingo: 必须返航; State: 具体读数 |
-| `status_ammo` | 弹药余量状态 | {Winchester, Remington, State} | Winchester: 弹药耗尽; Remington: 仅剩少量自卫 |
-| `status_damage` | 机体受损程度 | 0.0 (完好) - 1.0 (毁伤/不可控) | 基于健康/系统损毁 |
-| `status_pos` | 当前坐标上报 | {x, y, z} | 自动同步或应答同步 |
+## Core Report 字段
 
-## 3. 战术动态汇报 (Tactical/Brevity Reports)
-模拟空战术语（简语代码）的数据化表达。
+`PilotReportCore` 提供跨域共享的 report skeleton：
 
-| 报告代码 | 说明 | 对应参数 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `REP_TALLY` | 发现敌方目标 (目视) | `target_id`, `pos` | 目标确认为敌对 |
-| `REP_VISUAL` | 发现友方目标 (目视) | `target_id`, `pos` | 确认长机或其他僚机位置 |
-| `REP_BLIND` | 丢失目标目视/雷达接触 | `target_id` | 提醒编队注意 |
-| `REP_SPIKE` | 受到敌方雷达持续锁定 | `threat_type`, `azimuth` | 来自雷达告警接收机的告警 |
-| `REP_ENGAGED` | 正在交战 | `target_id` | 告知长机自己已进入格斗/攻击状态 |
-| `REP_SPLASH` | 成功击落目标 | `target_id` | 空对空确认 |
-| `REP_DEFENDING` | 正在规避威胁 | `threat_type` | 告知我方正在进行防御机动 |
+- `report_type`
+- `sender_id`
+- `task_id`
+- `service_profile`
+- `task_family`
+- `tactical_unit_type`
+- `tactical_unit_id`
+- `task_group_id`
+- `role_code`
+- `coordination_mode`
+- `timestamp_s`
+- `status_value`
+- `entity_ref`
+- `location_x_m`
+- `location_y_m`
+- `location_z_m`
+- `active`
 
-## 4. 任务进度报告 (Mission Progress)
-关于 [aim.md](aim.md) 中宏指令的完成情况。
+这些字段属于 common 的 tasking/report ownership，不属于 air 独有语义。
 
-| 报告代码 | 说明 | 备注 |
-| :--- | :--- | :--- |
-| `REP_ON_STATION` | 已到达指定区域/阵位 | 编队集合完成或巡航到达 |
-| `REP_FENCE_IN` | 准备进入战区 | 所有武器/传感器状态就绪检查完毕 |
-| `REP_FENCE_OUT` | 离开战区 | 任务完成，返回基地的阶段性反馈 |
-| `REP_RTB` | 正在返航 | 最终确认 |
+## Air Report 扩展字段
 
-## 5. 紧急情况报告 (Emergency/Warning)
-非计划中的突发状况。
+`PilotReportAir` 当前追加：
 
-| 变量名 | 说明 | 备注 |
-| :--- | :--- | :--- |
-| `warn_flameout` | 发动机熄火告警 | 燃油耗尽或损毁 |
-| `warn_bingo` | 到达返航油量线 | 强制提醒长机 |
-| `warn_missile_launch` | 侦测到敌方导弹发射 | 极高优先级提醒 |
+- `element_id`
+- `phase_id`
+- `formation_role_id`
+- `formation_error_m`
+- `bearing_error_deg`
+- `closure_mps`
+- `separation_m`
 
-## 6. 标准化意义
-1.  **闭环指挥**: 长机下达指令 ([aim.md](aim.md))，僚机反馈结果 ([rep.md](rep.md))，形成闭环。
-2.  **多智能体协作 (MARL)**: 在多机训练中，这些报告是 Transformer 学习“协同”的关键输入。长机 Agent 会根据僚机的反馈来调整后续的战术分工。
-3.  **日志与分析**: 所有的汇报内容都作为带时间戳的日志记录，极大方便了训练后的复盘与可视化。
+这些字段属于编队与空中任务执行上下文中的 air-specific reporting 信息。
+
+## 当前维护中的稳定 Report Type
+
+当前 leader/runtime 闭环明确赋予稳定语义的 report type 是：
+
+- `REP_ON_STATION`
+- `REP_RTB`
+- `WARN_BINGO`
+- `REP_UNABLE`
+- `REP_WILCO`
+
+这些 report type 才是当前 runtime logic 真正用来驱动任务推进或 leader assessment 的闭环信号。
+
+## 扩展 Report Surface
+
+更大的 DTO 与 enum surface 仍然可以承载更多 report code，测试里也可能会存储或 roundtrip
+额外的 air report type，例如编队相关状态。
+
+但如果当前 runtime logic 还没有赋予它们稳定的闭环语义，就应把它们视作 extension surface，
+而不是把它们写成当前已经实现的主合同。
+
+换句话说，本文档不应把大段战术简语目录写成“仓库已经全部消费”的既成事实。
+
+## 汇报生成规则
+
+当前维护中的 pilot-report contract 至少应稳定保留：
+
+- 有效的 `report_type`
+- sender/task identity
+- timestamp
+- location
+- active 状态
+
+若编队上下文重要，还可以填充：
+
+- formation role
+- formation error
+- bearing error
+- closure
+- separation
+
+## 归属边界
+
+应继续保留在 common core 的内容：
+
+- 通用 report identity 与 metadata
+- 跨域共享的 tasking/report skeleton
+
+应继续保留在 air specialization 的内容：
+
+- formation-specific error 与 closure 数据
+- 与空中任务执行绑定的 phase / element 上下文
+- 建立在共享 report type 之上的 air-specific 解释
+
+## 非目标
+
+本文档不试图标准化完整 brevity-code 手册，不穷举所有空战口令，也不预写未来 leader-agent 的全部汇报启发式。
+它只描述当前代码与测试能够真实 roundtrip 或解释的维护合同。

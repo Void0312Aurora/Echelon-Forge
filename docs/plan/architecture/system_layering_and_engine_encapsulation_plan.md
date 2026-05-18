@@ -14,7 +14,7 @@ Facade contract:
 [runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
 
 Frozen execution record:
-[runtime_facade_task_bootstrap_plan.zh.md](../runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+[runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
 
 Status: Architecture draft on 2026-05-10.  
 Document role:

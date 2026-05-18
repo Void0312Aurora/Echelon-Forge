@@ -47,12 +47,17 @@ from python.rl.runtime.world_batch import (
     compute_execution_observation_batch,
     copy_obs,
     count_control_slots,
+    leader_intent_snapshot,
+    mission_command_snapshot,
     mission_status_success_flag,
     normalize_batch_observation_backend,
     normalize_batch_visual_backend,
     normalize_flight_shaping_backend,
     observation_timing_snapshot,
+    pilot_report_snapshot,
     refresh_visual_cache_batch,
+    snapshot_changed,
+    task_order_snapshot,
 )
 from python.rl.control.wrappers import MultiTimescaleActionController
 from python.scenario_compiler import ScenarioCompiler
@@ -68,6 +73,10 @@ _count_control_slots = count_control_slots
 _mission_status_success_flag = mission_status_success_flag
 _normalize_batch_observation_backend = normalize_batch_observation_backend
 _normalize_batch_visual_backend = normalize_batch_visual_backend
+
+
+def _float32_view(value: Any) -> np.ndarray:
+    return np.asarray(value, dtype=np.float32)
 
 class CooperativeWorldBatchVecEnv(VecEnv):
     """
@@ -239,6 +248,15 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             ref.entity_id = int(slot_state.entity_id)
             refs.append(ref)
         return refs
+
+    def _read_slot_state_batch(
+        self,
+        slot_indices: list[int],
+    ) -> tuple[list[int], list[Any], list[Any]]:
+        target_slot_indices = [int(slot_index) for slot_index in slot_indices]
+        refs = self._slot_refs(target_slot_indices)
+        truth_list, inst_list = self._runtime_adapter.read_truth_and_instruments(refs)
+        return target_slot_indices, truth_list, inst_list
 
     def seed(self, seed: int | None = None) -> list[int]:
         base_seed = int(seed) if seed is not None else int(np.random.randint(0, 2**31 - 1))
@@ -508,8 +526,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state = self._slots[int(slot_index)]
             if slot_state is None:
                 continue
-            inst_vec = np.asarray(inst_out[batch_idx], dtype=np.float32)
-            miss_vec = np.asarray(mission_out[batch_idx], dtype=np.float32)
+            inst_vec = _float32_view(inst_out[batch_idx])
+            miss_vec = _float32_view(mission_out[batch_idx])
             if step_eval_batch is not None and batch_idx < len(step_eval_batch):
                 step_eval = step_eval_batch[batch_idx]
             else:
@@ -518,7 +536,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                         truth=truth_batch[batch_idx],
                         inst_obj=inst_batch[batch_idx],
                         inst_vec=inst_vec,
-                        ils_vec=np.asarray(ils_batch[batch_idx], dtype=np.float32),
+                        ils_vec=_float32_view(ils_batch[batch_idx]),
                         steps=int(slot_state.steps),
                         max_steps=int(slot_state.max_steps),
                         mission_obs_mode=self.mission_obs_mode,
@@ -528,18 +546,18 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             if isinstance(step_eval, dict):
                 frame_products = step_eval.get("frame_products")
                 if frame_products is not None and bool(getattr(frame_products, "mission_observation_evaluated", False)):
-                    miss_vec = np.asarray(frame_products.mission_observation.values, dtype=np.float32)
+                    miss_vec = _float32_view(frame_products.mission_observation.values)
             obs = {
                 "instruments": inst_vec,
-                "contacts": np.asarray(contacts_out[batch_idx], dtype=np.float32).reshape(int(self.max_contacts), 5),
-                "rwr": np.asarray(rwr_out[batch_idx], dtype=np.float32).reshape(int(self.max_rwr), 4),
+                "contacts": _float32_view(contacts_out[batch_idx]).reshape(int(self.max_contacts), 5),
+                "rwr": _float32_view(rwr_out[batch_idx]).reshape(int(self.max_rwr), 4),
                 "mission": miss_vec,
             }
             if self.include_proprio:
                 if slot_state.last_action is None:
                     proprio = np.zeros((int(self.action_space.shape[0]),), dtype=np.float32)
                 else:
-                    proprio = np.asarray(slot_state.last_action, dtype=np.float32).reshape(-1)
+                    proprio = _float32_view(slot_state.last_action).reshape(-1)
                 obs["proprio"] = proprio
             if self.include_visual:
                 obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
@@ -592,32 +610,46 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     continue
                 loader = slot_state.loader
 
-                mission_assign = ef_py.WorldMissionCommandAssignment()
-                mission_assign.world_index = int(world_index)
-                mission_assign.entity_id = int(slot_state.entity_id)
-                mission_assign.command = build_kernel_mission_command(loader)
-                mission_assignments.append(mission_assign)
+                mission_command = build_kernel_mission_command(loader)
+                mission_snapshot = mission_command_snapshot(mission_command)
+                previous_mission_snapshot = world.last_mission_command_snapshots.get(int(slot_state.entity_id), None)
+                if snapshot_changed(previous_mission_snapshot, mission_snapshot):
+                    mission_assign = ef_py.WorldMissionCommandAssignment()
+                    mission_assign.world_index = int(world_index)
+                    mission_assign.entity_id = int(slot_state.entity_id)
+                    mission_assign.command = mission_command
+                    mission_assignments.append(mission_assign)
+                    world.last_mission_command_snapshots[int(slot_state.entity_id)] = mission_snapshot
 
-                if getattr(loader, "task_order", None) is not None:
+                task_snapshot = task_order_snapshot(getattr(loader, "task_order", None))
+                previous_task_snapshot = world.last_task_order_snapshots.get(int(slot_state.entity_id), None)
+                if task_snapshot is not None and snapshot_changed(previous_task_snapshot, task_snapshot):
                     task_assign = ef_py.WorldTaskOrderAssignment()
                     task_assign.world_index = int(world_index)
                     task_assign.entity_id = int(slot_state.entity_id)
                     task_assign.order = loader.task_order
                     task_assignments.append(task_assign)
+                    world.last_task_order_snapshots[int(slot_state.entity_id)] = task_snapshot
 
-                if getattr(loader, "leader_intent", None) is not None:
+                intent_snapshot = leader_intent_snapshot(getattr(loader, "leader_intent", None))
+                previous_intent_snapshot = world.last_leader_intent_snapshots.get(int(slot_state.entity_id), None)
+                if intent_snapshot is not None and snapshot_changed(previous_intent_snapshot, intent_snapshot):
                     intent_assign = ef_py.WorldLeaderIntentAssignment()
                     intent_assign.world_index = int(world_index)
                     intent_assign.entity_id = int(slot_state.entity_id)
                     intent_assign.intent = loader.leader_intent
                     intent_assignments.append(intent_assign)
+                    world.last_leader_intent_snapshots[int(slot_state.entity_id)] = intent_snapshot
 
-                if getattr(loader, "pilot_report", None) is not None:
+                report_snapshot = pilot_report_snapshot(getattr(loader, "pilot_report", None))
+                previous_report_snapshot = world.last_pilot_report_snapshots.get(int(slot_state.entity_id), None)
+                if report_snapshot is not None and snapshot_changed(previous_report_snapshot, report_snapshot):
                     report_assign = ef_py.WorldPilotReportAssignment()
                     report_assign.world_index = int(world_index)
                     report_assign.entity_id = int(slot_state.entity_id)
                     report_assign.report = loader.pilot_report
                     report_assignments.append(report_assign)
+                    world.last_pilot_report_snapshots[int(slot_state.entity_id)] = report_snapshot
 
         if mission_assignments:
             self._runtime_adapter.set_mission_commands_batch(mission_assignments)
@@ -627,6 +659,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             self._runtime_adapter.set_leader_intents_batch(intent_assignments)
         if report_assignments:
             self._runtime_adapter.set_pilot_reports_batch(report_assignments)
+        for world_index in target_world_indices:
+            self._worlds[int(world_index)].command_chain_dirty = False
 
     def _reset_world(self, world_index: int, seed: int | None) -> list[dict[str, np.ndarray]]:
         total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
@@ -708,9 +742,13 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             max_rwr=self.max_rwr,
         )
         world.director_dirty = True
-        refs = self._slot_refs(list(world.slot_indices))
-        truth_list, inst_list = self._runtime_adapter.read_truth_and_instruments(refs)
-        for local_slot_index, slot_index in enumerate(world.slot_indices):
+        world.command_chain_dirty = True
+        world.last_mission_command_snapshots.clear()
+        world.last_task_order_snapshots.clear()
+        world.last_leader_intent_snapshots.clear()
+        world.last_pilot_report_snapshots.clear()
+        slot_indices, truth_list, inst_list = self._read_slot_state_batch(list(world.slot_indices))
+        for local_slot_index, slot_index in enumerate(slot_indices):
             slot_state = self._slots[slot_index]
             if slot_state is None:
                 continue
@@ -836,8 +874,14 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             raise RuntimeError("step_async() must be called before step_wait().")
 
         total_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        dirty_world_indices = [
+            int(world.world_index)
+            for world in self._worlds
+            if bool(world.command_chain_dirty)
+        ]
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-        self._sync_command_chain_batch()
+        if dirty_world_indices:
+            self._sync_command_chain_batch(dirty_world_indices)
         command_sync_ms = (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
 
         prepared_by_slot: dict[int, Any] = {}
@@ -871,20 +915,25 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         # command chain back to the kernel for the next world step.
         state_read_ms = 0.0
         behavior_update_ms = 0.0
+        active_slot_indices = [
+            int(slot_index)
+            for world in self._worlds
+            if world.view is not None
+            for slot_index in world.slot_indices
+        ]
+        read_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        slot_indices, truth_list, inst_list = self._read_slot_state_batch(active_slot_indices)
+        for local_slot_index, slot_index in enumerate(slot_indices):
+            slot_state = self._slots[slot_index]
+            if slot_state is None:
+                continue
+            slot_state.last_truth = truth_list[local_slot_index] if local_slot_index < len(truth_list) else None
+            slot_state.last_inst = inst_list[local_slot_index] if local_slot_index < len(inst_list) else None
+        if self.collect_step_timing:
+            state_read_ms = (time.perf_counter() - read_t0) * 1000.0
         for world in self._worlds:
             if world.view is None:
                 continue
-            read_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-            refs = self._slot_refs(list(world.slot_indices))
-            truth_list, inst_list = self._runtime_adapter.read_truth_and_instruments(refs)
-            for local_slot_index, slot_index in enumerate(world.slot_indices):
-                slot_state = self._slots[slot_index]
-                if slot_state is None:
-                    continue
-                slot_state.last_truth = truth_list[local_slot_index] if local_slot_index < len(truth_list) else None
-                slot_state.last_inst = inst_list[local_slot_index] if local_slot_index < len(inst_list) else None
-            if self.collect_step_timing:
-                state_read_ms += (time.perf_counter() - read_t0) * 1000.0
             behavior_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             for slot_index in world.slot_indices:
                 slot_state = self._slots[slot_index]
@@ -901,6 +950,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 )
             if world.director is not None:
                 world.director.update(world, self._world_slot_states(world), force=True)
+            world.command_chain_dirty = True
             if self.collect_step_timing:
                 behavior_update_ms += (time.perf_counter() - behavior_t0) * 1000.0
         sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0

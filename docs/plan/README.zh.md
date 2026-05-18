@@ -15,9 +15,9 @@
 `docs/plan/` 当前包含四条维护中的主线子目录，以及两个保留型辅助目录：
 
 - [architecture/README.md](architecture/README.md)
-  - 架构主方案、性能调研、`src/` 分层重构边界。
+  - 架构主方案、性能调研，以及已归档的 `src/` 分层记录。
 - [runtime_facade/README.md](runtime_facade/README.md)
-  - runtime facade 契约、已完成执行记录、后续清理冻结计划。
+  - runtime facade 契约与仍在推进的清理后续；已完成执行记录已移至 `archive/`。
 - [cooperative/README.md](cooperative/README.md)
   - 协同训练与协同执行管线主线文档。
 - [exact_runtime/README.md](exact_runtime/README.md)
@@ -41,18 +41,24 @@
    - 路线调研与性能取舍说明，回答“为什么这样分层、后续路线怎样排序”。
 3. [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md)
    - facade 契约依据，回答“上层长期应依赖什么 C++ 应用 contract”。
-4. [runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
-   - 当前仍可继续使用的候选冻结执行计划，聚焦 facade 分层清理与解耦。
-5. [architecture/src_layered_refactor_freeze.zh.md](architecture/src_layered_refactor_freeze.zh.md)
-   - `src/` 分层重构边界和已完成工作记录。
-6. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+4. [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md)
+   - 已归档的清理冻结记录，仅作历史参考。
+5. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
    - 协同训练底座与性能分析主文。
-7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+6. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
    - P8 协同执行管线的设施盘点与下一步方向。
-8. `exact_runtime/` 下的专项文档
+7. `exact_runtime/` 下的专项文档
    - 仅当任务明确进入 GPU / exact runtime 主线时再继续深入。
 
-## 三、当前权威关系
+## 三、历史冻结记录
+
+这些文档已经从活跃子目录移出，仅保留执行历史：
+
+- [archive/runtime_facade_task_bootstrap_plan.zh.md](archive/runtime_facade_task_bootstrap_plan.zh.md)
+- [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md)
+- [archive/src_layered_refactor_freeze.zh.md](archive/src_layered_refactor_freeze.zh.md)
+
+## 四、当前权威关系
 
 ### A. 方向与契约依据
 
@@ -64,12 +70,13 @@
 | [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md) | 协同训练方向依据 | 提供设施底座、风险与路线分析 |
 | [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md) | 协同执行方向依据 | 提供当前协同执行主线的设施盘点与下一步方向 |
 
-### B. 已完成或阶段性冻结记录
+### B. 已归档或阶段性冻结记录
 
 | 文档 | 当前状态 | 说明 |
 |------|-----------|------|
-| [runtime_facade/runtime_facade_task_bootstrap_plan.zh.md](runtime_facade/runtime_facade_task_bootstrap_plan.zh.md) | 第一批 `WP1-WP6` 已完成 | 现为执行记录，不应继续向其中追加新范围 |
-| [architecture/src_layered_refactor_freeze.zh.md](architecture/src_layered_refactor_freeze.zh.md) | `WP1-WP7` 已完成 | 已完成工作视为记录；新增拆分需新冻结 |
+| [archive/runtime_facade_task_bootstrap_plan.zh.md](archive/runtime_facade_task_bootstrap_plan.zh.md) | 第一批 `WP1-WP6` 已完成 | 已归档执行记录，不应继续向其中追加新范围 |
+| [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md) | `WP1-WP7` 已完成 | 已归档清理冻结记录；新增拆分需新冻结 |
+| [archive/src_layered_refactor_freeze.zh.md](archive/src_layered_refactor_freeze.zh.md) | `WP1-WP7` 已完成 | 已归档 `src/` 分层记录；新增拆分需新冻结 |
 | [exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md](exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md) | 已冻结的阶段性执行计划 | 作为 GPU 主线的历史阶段记录使用 |
 
 ### C. 仍可推进的专项草案 / 清单

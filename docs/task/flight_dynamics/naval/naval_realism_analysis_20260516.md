@@ -20,8 +20,8 @@ Associated files:
 - [Screen Approach Variant Scenario](../../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
 - [Naval Unit Parameters Reference](../../../standards/naval/ship_unit_references.md)
 - [Naval Mission Minimum Structure](../../../standards/naval/minimal_task_structure.md)
-- [Naval Tests](../../../../tests/runtime/test_naval_ship_database.py)
-- [Screen Scenario Tests](../../../../tests/runtime/test_naval_screen_scenario.py)
+- [Naval Tests](../../../../tests/runtime/naval/test_naval_ship_database.py)
+- [Screen Scenario Tests](../../../../tests/runtime/naval/test_naval_screen_scenario.py)
 - [Sensor and Situational Awareness Analysis (Related)](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
 - [Weapon System Analysis (Related)](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
 
@@ -33,12 +33,9 @@ Document positioning:
 Current status guidance:
 
 - This document is a frozen analysis input, not a current execution status board.
-- For the actual progress and regression of the current naval warfare, please refer primarily to:
-  - [Naval Warfare Progress Checkpoint](../../naval/naval_progress_checkpoint_20260517.zh.md)
-  - [Naval Warfare Subsequent Delegation Execution Sheet](../../naval/naval_delegated_execution_backlog_20260517.zh.md)
-  - [Realism Mainline and Related Subprojects Current Status](../program/realism_program_current_status_20260517.zh.md)
+- For current naval-state judgment, refer only to the `2026-05-18` closure marker in this analysis.
 
-## Postscript: `2026-05-17` Conclusion Mark
+## Postscript: `2026-05-18` Conclusion Mark
 
 Marking criteria:
 
@@ -56,7 +53,7 @@ This postscript only answers "whether these naval warfare points are still valid
 | `2.2` Sea State and Wave Response Completely Missing | `Minimum conclusion exists` | `sea_state / roll / pitch / added resistance` now have minimal proxies |
 | `2.3` Surface Sensors Share Air Radar Framework | `Partially resolved` | Still reuses shared framework, but has added specialized fields for naval radar, ESM MVP, and surface LOS patching |
 | `2.4` No Shipboard Sonar / Anti-Submarine Warfare | `Minimum conclusion exists` | Minimal ASW closed loop with Submarine + Sonar + helo relay now exists |
-| `2.5` Shipboard Weapon Systems – Metadata Placeholder, No Runtime Implementation | `Partially resolved` | VLS / gun / CIWS have entered structured runtime, but main gun direct fire and MissionCommand -> CIWS are still not green |
+| `2.5` Shipboard Weapon Systems – Metadata Placeholder, No Runtime Implementation | `Resolved` | `VLS / gun / CIWS` now have structured runtime surfaces, and the directed main-gun / `MissionCommand -> CIWS` paths are green; the remaining gap is fire-control fidelity rather than absence of runtime implementation |
 | `2.6` Ship Damage Model – HP Placeholder, No Sinking/Disablement Physics | `Partially resolved` | Has mission/mobility/sensor kill and continuous damage propagation, but still lacks high-fidelity models for buoyancy/compartmentation/stability |
 | `2.7` Red Force Uses T-AKE-1 Placeholder | `Resolved` | The red force placeholder ship issue has been replaced and is no longer a valid description of the current state |
 | `2.8` Maritime Formation and Screen Control | `Partially resolved` | Minimal screen-hold and station recovery closed loop exists, but still not complete formation maneuver/multi-ship coordination |

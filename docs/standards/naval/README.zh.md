@@ -1,26 +1,80 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/naval/README.md. Review before treating this file as authoritative. -->
+# Naval 标准
 
-# Naval 标准占位
+本目录收纳专门的 `naval` specialization 标准文档。
 
-本目录预留给即将推出的 `naval` 模块相关的标准文档。
+这里已经不是占位目录，而是当前海军任务计划的标准入口。目标是把 `common`、`services/navy` 与 `naval` 清楚分层，避免空军优先的语义继续泄漏到海上运行时。
 
-当前作用只有一个：
+## 1. 分层模型
 
-- 给 `common + air + naval` 拆分提供明确落点
-- 给最小海战任务结构提供冻结入口，见 [minimal_task_structure.md](minimal_task_structure.md)
-- 给第一批真实舰船单位提供来源与建模边界，见 [ship_unit_references.md](ship_unit_references.md)
+### `common`
 
-## 1. 目录职责
+共享层保持跨军种合同稳定。
 
-未来放在这里的文档应只描述 naval-specific 语义，例如：
+它负责这些字段形状：
 
+- `service_profile`
+- `task_family`
+- `task_group_id`
+- `command_relationship`
+- `authority_scope`
+- `coordination_mode`
+- `supported_node_id / supporting_node_id`
+- `recovery_site_id`
+- `tactical_unit_type`
+
+这些都是军种无关的形状，不是海军执行语义。
+
+### `services/navy`
+
+Navy service profile 负责说明共享合同在海战语境下应如何阅读。
+
+它负责这些语义：
+
+- `task_group` 与 `task_unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
-- `task force / task group / task unit` 的 tight-loop runtime 解释
-- screen / support / station 等舰队协同语义
-- naval route / recovery / replenishment / station-keeping 规则
+- Navy 在任务封装与权限分配中需要的共享锚点
 
-## 2. 不应放在这里的内容
+### `naval`
+
+`naval` specialization 负责 tight-loop 海上语义：
+
+- `screen`
+- `support`
+- `station`
+- `recover`
+- 舰艇与编队控制语义
+- 海上回收与驻站保持行为
+
+## 2. 最小语义合同
+
+当前被视为一等术语的最小海军语义集是：
+
+- `task_group`
+- `task_unit`
+- `warfare_role_code`
+- `officer_in_tactical_command`
+- `screen`
+- `support`
+- `station`
+- `recover`
+
+这些术语足以支撑当前任务计划，而不必过早套用空战 sortie 语言。
+
+## 3. 这里应该写什么
+
+放在这里的文档应描述 naval-specific 语义，例如：
+
+- task-group 与 task-unit 的所有权
+- warfare role 的分配
+- station 保持与 recovery 行为
+- 编队中的 screen / support 关系
+- 海上任务中的指挥权
+- naval execution 与 reporting specialization
+
+## 4. 这里不应该写什么
+
+以下内容应继续留在 `common` 或 `services/navy`：
 
 - `command_relationship`
 - `authority_scope`
@@ -28,24 +82,30 @@
 - `service_profile`
 - `tactical_unit_type`
 - `coordination_mode`
-- 其他跨军种仍成立的 `common` 字段
+- 其他跨军种合同字段
 
-这些应继续由 `docs/standards/joint/` 与 `docs/standards/services/` 约束。
+这里不应重复争论共享 schema，而应专门化它。
 
-## 3. 与 air 的关系
+## 5. 与 air 的关系
 
-`naval` 不是把现有 air 文档简单改名。
+`naval` 不是 air 文档改名。
 
 后续 naval 文档应避免默认使用：
 
 - `lead / wingman`
 - `runway`
 - `CAP`
-- air-style `MissionCommand.command_code` 解释
+- 对 `MissionCommand.command_code` 的 air-style 读法
 
-若某个对象只在空战 sortie 级场景成立，应继续留在 `docs/standards/air/`。
+如果某个概念只适用于空战 sortie 级运行时，就应保留在 `docs/standards/air/`。
 
-## 4. 当前最小海战占位口径
+## 6. 当前最小海军语义
 
-- `Red_Surface_Combatant_Minimal` 属于 `community-derived approximation`，仅用于替换先前把补给舰当作敌舰的错误占位，不代表某一具体敌方舰级的精确公开参数。
-- `ReportTrack` / 任务群级共享属于当前数据链现实收敛的工程近似，用于避免逐步洪泛广播；它不等同完整 `Link 16 / CEC` 语义。
+当前 runtime bridge 需要的最小海军语义是：
+
+- `task_group / task_unit` 作为战术组织边界
+- `officer_in_tactical_command` 作为权威所有者
+- `warfare_role_code` 作为角色标签
+- `screen / support / station / recover` 作为最小作战词汇
+
+这些术语足以支撑当前海军任务计划，而不会假装完整舰队 doctrine 已经建模完成。

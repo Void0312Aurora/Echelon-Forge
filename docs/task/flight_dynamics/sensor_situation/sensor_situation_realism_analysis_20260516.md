@@ -26,7 +26,7 @@ Document positioning:
 - This document only records the known deficiencies of the current sensor, data link, track management, and electronic warfare pipeline, along with their corresponding real physical/engineering conditions.
 - It does not cover acceptable simplifications, does not provide prioritization, and does not provide a work plan.
 
-## Postscript: `2026-05-17` Freeze Mark
+## Postscript: `2026-05-18` Freeze Mark
 
 Caliber markers:
 
@@ -39,14 +39,14 @@ This postscript is only used to indicate whether these points today should still
 
 | Item | Current Marker | Description |
 |------|----------------|-------------|
-| `2.1` Detection Probability Model | `Partially resolved` | `Tentative/Confirmed` and minimal confirmation semantics exist, but `SNR→Pd`, correlated noise, and more realistic `M-of-N` are not yet complete |
+| `2.1` Detection Probability Model | `Partially resolved` | Basic `SNR→Pd` plumbing plus `Tentative/Confirmed` confirmation semantics exist, but correlated noise and more realistic `M-of-N` behavior are still not complete |
 | `2.2` RCS Model | `Unresolved` | Aspect angle, frequency, polarization, and glint still do not form a current mainline closure |
 | `2.3` Doppler Processing | `Unresolved` | `PRF / waveform / micro-Doppler` has not yet entered runtime contracts |
-| `2.4` Jamming and Electronic Warfare | `Unresolved` | Currently still no `DRFM / cross-eye / more realistic decoy kinematics` closure |
-| `2.5` Tracking and Track Management | `Partially resolved` | `track/report` semantics have replaced raw contact replication, but `velocity / quality / full lifecycle` still needs continued closure |
-| `2.6` Data Link | `Partially resolved` | Switched to `track/report + QoS budget`, but still not a full `Link 16 / NPG / relay` model |
-| `2.7` Track Classification (IFF/Identification) | `Unresolved` | Minimal `IFF` state machine not yet closed; the old "god's-eye-view classification" problem still essentially holds |
-| `2.8` Sensor Fusion | `Partially resolved` | `local + datalink -> fused` already has a minimal contract, but multi-source weighted fusion and full deduplication are not yet complete |
+| `2.4` Jamming and Electronic Warfare | `Minimally closed` | Noise barrage/spot burn-through plus `chaff / flare` lifetime loops exist, but `DRFM / cross-eye / more realistic decoy kinematics` are still not closed |
+| `2.5` Tracking and Track Management | `Minimally closed` | `Tentative / Confirmed / Coasted`, velocity estimation, and aging/drop behavior exist, but full lifecycle fidelity and richer quality semantics still need closure |
+| `2.6` Data Link | `Minimally closed` | `track/report + QoS budget` and receiver-side track consumption are wired in, but this is still not a full `Link 16 / NPG / relay` model |
+| `2.7` Track Classification (IFF/Identification) | `Minimally closed` | A minimal `IFF` state machine and datalink-assisted identification path now exist, but the old "god's-eye-view classification" problem is not fully severed |
+| `2.8` Sensor Fusion | `Minimally closed` | `local + datalink -> fused` now forms a real minimal contract, but multi-source weighted fusion and full deduplication are still incomplete |
 | `2.9` Environmental Effects on Sensors | `Partially resolved` | Maritime `LOS / sea-state / ducting` already has minimal access, but weather, clutter, and complete refraction are still missing |
 | `2.10` Structural Issues in Sensor Parameters | `Unresolved` | The `flat struct` and type-specific parameter system have not yet been truly separated |
 

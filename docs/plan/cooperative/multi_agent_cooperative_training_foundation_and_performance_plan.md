@@ -172,8 +172,8 @@ Current progress:
 - A formal cooperative cruise scenario has been added:
   - `scenarios/cruise/cooperative_cruise_waypoints_paramroute_navv2_formation_train_v1.json`
 - Benchmark smoke tests have been added and validated:
-  - `tests/runtime/test_multi_agent_benchmark.py`
-  - `tests/runtime/test_cooperative_world_batch_vec_env.py`
+  - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
+  - `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`
 - The current cooperative smoke baseline can already emit per-step JSON metrics, including:
   - `per_agent_step_time_ms`
   - `action_prepare_ms`
@@ -216,8 +216,8 @@ Current progress:
   - The `agent_layer = "cooperative_execution"` branch in `train.py` now receives and prints the cooperative observation / visual backend.
   - `python/rl/support/multi_agent_benchmark.py` now supports reading the cooperative runtime backend from training configuration and echoing the effective backend in benchmark notes.
 - Validation added or updated:
-  - `tests/runtime/test_cooperative_world_batch_vec_env.py`
-  - `tests/runtime/test_multi_agent_benchmark.py`
+  - `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`
+  - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
   - `tests/training/test_train_entry_cooperative.py`
 - The `step-eval` entry in `ScenarioLoader.compute_full_step(...)` has been changed to optionally consume cached data, and the cooperative VecEnv now directly reuses the prepared `step_evaluation`, avoiding redundant rebuilds on the reward hot path.
 - Regression tests have been added to confirm that when the cache hits, `step-eval` is no longer rebuilt and reward / termination / status remain consistent with the baseline.

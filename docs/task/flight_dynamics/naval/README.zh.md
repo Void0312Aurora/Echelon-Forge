@@ -2,9 +2,9 @@
 
 # 海战真实性子项目
 
-状态：`2026-05-17` 当前目录主要保存冻结分析，活跃推进入口在海战主任务目录与 C2 子项目。
+状态：`2026-05-17` 当前目录主要保存分析，可信口径以本目录分析中的收口标记为准，不再依赖 `program/` 或 `archive/`。
 
-本子项目用于保留海战真实性分析与其在 `flight_dynamics` 主线中的关联位置，避免海战相关调研继续散落在总目录。
+本子项目用于保留海战真实性分析与其在 `flight_dynamics` 主线中的关联位置。
 
 ## 文档入口
 
@@ -13,11 +13,10 @@
 
 ## 当前关联入口
 
-- [海战推进检查点](../../naval/naval_progress_checkpoint_20260517.zh.md)
-- [海战后续委派执行单](../../naval/naval_delegated_execution_backlog_20260517.zh.md)
-- [C2 指挥链与通信子项目](../c2_command_chain/README.md)
+- [海战仿真现实性分析](naval_realism_analysis_20260516.zh.md)
+- [C2 指挥链与通信现实性分析](../c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md)
 
 ## 说明
 
-1. 本目录当前不是海战实现看板，而是海战真实性输入与冻结分析归档位。
-2. 若后续海战真实化重新成为独立主线，可在本目录继续补 `README / progress / implementation package`。
+1. 本目录当前不是实现看板，而是海战分析入口。
+2. 当前状态只看本目录分析文档中的收口标记。

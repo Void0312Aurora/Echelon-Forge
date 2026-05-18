@@ -16,9 +16,9 @@ Language migration note:
 `docs/plan/` currently contains four active mainline subdirectories and two retained auxiliary directories:
 
 - [architecture/README.md](architecture/README.md)
-  - Architecture main plan, performance research, `src/` layering refactoring boundaries.
+  - Architecture main plan, performance research, and archived `src/` layering records.
 - [runtime_facade/README.md](runtime_facade/README.md)
-  - Runtime facade contract, completed execution records, subsequent cleanup freeze plan.
+  - Runtime facade contract and active cleanup follow-up; completed execution records now live in `archive/`.
 - [cooperative/README.md](cooperative/README.md)
   - Cooperative training and cooperative execution pipeline mainline documents.
 - [exact_runtime/README.md](exact_runtime/README.md)
@@ -42,18 +42,25 @@ Notes:
    - Route research and performance trade-off explanation, answering "why this layering and how to prioritize subsequent routes".
 3. [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md)
    - Facade contract basis, answering "what C++ application contract should the upper layer depend on long-term".
-4. [runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
-   - Candidate freeze execution plan that can still be used, focusing on facade layering cleanup and decoupling.
-5. [architecture/src_layered_refactor_freeze.zh.md](architecture/src_layered_refactor_freeze.zh.md)
-   - `src/` layering refactoring boundaries and completed work records.
-6. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+4. [archive/runtime_facade_layering_cleanup_freeze.zh.md](archive/runtime_facade_layering_cleanup_freeze.zh.md)
+   - Archived cleanup freeze record; use as history only.
+5. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
    - Cooperative training foundation and performance analysis main text.
-7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+6. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
    - P8 cooperative execution pipeline facility review and next steps.
-8. Special documents under `exact_runtime/`
+7. Special documents under `exact_runtime/`
    - Only delve deeper when the task explicitly enters the GPU / exact runtime mainline.
 
-## 3. Current Authority Relationships
+## 3. Historical Freeze Records
+
+These documents have been moved out of the active subdirectories and are kept
+for execution history only:
+
+- [archive/runtime_facade_task_bootstrap_plan.md](archive/runtime_facade_task_bootstrap_plan.md)
+- [archive/runtime_facade_layering_cleanup_freeze.md](archive/runtime_facade_layering_cleanup_freeze.md)
+- [archive/src_layered_refactor_freeze.md](archive/src_layered_refactor_freeze.md)
+
+## 4. Current Authority Relationships
 
 ### A. Direction and Contract Basis
 
@@ -65,12 +72,13 @@ Notes:
 | [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md) | Cooperative training direction basis | Provides facility foundation, risks, and route analysis |
 | [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md) | Cooperative execution direction basis | Provides current cooperative execution mainline facility review and next steps |
 
-### B. Completed or Phase-Based Freeze Records
+### B. Archived or Phase-Based Freeze Records
 
 | Document | Current Status | Notes |
 |----------|----------------|-------|
-| [runtime_facade/runtime_facade_task_bootstrap_plan.zh.md](runtime_facade/runtime_facade_task_bootstrap_plan.zh.md) | First batch `WP1-WP6` completed | Now an execution record; should not be extended with new scope |
-| [architecture/src_layered_refactor_freeze.zh.md](architecture/src_layered_refactor_freeze.zh.md) | `WP1-WP7` completed | Completed work treated as record; new splits require a new freeze |
+| [archive/runtime_facade_task_bootstrap_plan.md](archive/runtime_facade_task_bootstrap_plan.md) | First batch `WP1-WP6` completed | Archived execution record; should not be extended with new scope |
+| [archive/runtime_facade_layering_cleanup_freeze.md](archive/runtime_facade_layering_cleanup_freeze.md) | `WP1-WP7` completed | Archived cleanup freeze record; new splits require a new freeze |
+| [archive/src_layered_refactor_freeze.md](archive/src_layered_refactor_freeze.md) | `WP1-WP7` completed | Archived `src/` layering record; new splits require a new freeze |
 | [exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md](exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md) | Frozen phase-based execution plan | Used as historical phase record for GPU mainline |
 
 ### C. Still Actionable Special Drafts / Checklists

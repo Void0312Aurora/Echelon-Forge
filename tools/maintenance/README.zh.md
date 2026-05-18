@@ -37,7 +37,7 @@ cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-workshop --target ef_core ef_py -j2
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
-cmo_python -m pytest -q tests/runtime/test_env_config.py
+cmo_python -m pytest -q tests/runtime/core/test_env_config.py
 ```
 
 这与 CI 烟雾边界测试一致：安装小的烟雾依赖集，用 CMake 构建 `ef_core` / `ef_py`，然后使用 `cmo_env.sh` 暴露本地扩展。除非目标特别在于测试 scikit-build 可编辑安装行为，否则不要用 `pip install -e .` 替换此快速循环。
@@ -47,7 +47,7 @@ cmo_python -m pytest -q tests/runtime/test_env_config.py
 ```bash
 bash tools/maintenance/cmo_env.sh summary
 bash tools/maintenance/cmo_env.sh validate
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/test_env_config.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/core/test_env_config.py
 ```
 
 推荐的 Windows/PowerShell 用法：

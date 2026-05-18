@@ -1,181 +1,141 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/joint/command_and_modeling_baseline.md. Review before treating this file as authoritative. -->
+# Joint 指挥与建模基线
 
-# Joint 指挥关系与建模基线
+本文档定义项目中 joint/common core 的边界，用来统一指挥关系、authority scope、intent / order / report，以及可跨空海陆复用的最小数据模型。
 
-本文档定义项目中所有军种共用的最小联合层模板。
+## 1. Joint 层在这里意味着什么
 
-## 1. 官方现实基础
+这里的 joint 层不是“所有军种共享同一棵完整战术树”，而是一个共享合同，用来回答四个问题：
 
-根据 Joint Chiefs 官方资料，美军联合层的共通基础不在于“所有军种使用同一条战术指挥树”，
-而在于：
+- 谁可以指挥谁
+- 谁可以委托、继承或转移 authority
+- 哪些内容属于命令、汇报或数据链转发
+- 哪些内容应留在 common core，哪些内容应交给 service profile
 
-- 共通的 command relationship
-- 共通的 authority delegation
-- 共通的 reporting / status framework
+因此 joint 层必须小而稳。它不应被写成空军专用词汇，也不应被写成海军或地面专用词汇。
 
-项目建模时必须先把这一层独立出来。
+## 2. 共通的指挥关系词汇
 
-主要官方依据：
-
-- [Joint Chiefs Service Publications](https://www.jcs.mil/Doctrine/Service-Publications/)
-- [CJCSM 3150.13C, Joint Reporting Structure](https://www.jcs.mil/Portals/36/Documents/Library/Manuals/m315013.pdf)
-
-## 2. Joint 层必须统一的对象
-
-### 2.1 Command Relationship
-
-项目应将下列关系作为联合层共通字段，而不是军种自定义字段：
+以下关系在本项目中属于 joint/common core 概念：
 
 - `COCOM`
 - `OPCON`
 - `TACON`
-- `support`
 - `ADCON`
+- `support`
 - `coordinating authority`
 - `DIRLAUTH`
 
-说明：
+这些词不是军种专用词。具体哪一种关系生效、谁持有、何时转移，由 service profile 决定。
 
-- 这是统一的授权语言。
-- 空军、陆军、海军的差异主要体现在“谁在什么情况下持有哪些关系”，而不是词汇本身不同。
+当前运行时和测试已经把带 authority 的字段视为稳定合同，包括：
 
-### 2.2 Task Organization
+- `roe_state`
+- `engagement_authority_holder_id`
+- `engagement_authority_grantor_id`
+- `assigned_target_id`
+- `authorization_to_fire`
 
-联合层只定义：
+## 3. Authority Scope
 
-- `command_node`
-- `tactical_unit`
-- `platform_unit`
+authority scope 解决的是“谁能影响什么，以及影响到哪里”为止。
 
-以及：
+在 common core 里，authority scope 应该通过少量显式字段和关系表达，而不是写死成某一种军种行为。当前运行时的合同已经体现了这一点：
 
-- `parent_node_id`
-- `supported_node_id`
-- `supporting_node_id`
-- `authority_scope_code`
-- `task_group_id`
+- `TaskOrder` 和 `LeaderIntent` 承载共享任务意图
+- `MissionCommand` 承载可执行命令及其 authority 状态
+- `CommandLink` 承载投递时序与顺序
+- `DataLink` 承载共享航迹和汇报交换
 
-而不直接定义：
+authority 模型要保持显式，不要把它藏进平台运动参数里。
 
-- `element`
-- `brigade`
-- `task force`
+## 4. Intent / Order / Report
 
-这些应交由军种 profile 解释。
+最小共通链路是：
 
-### 2.3 Intent / Order / Report
+`Intent -> Order -> Execution Command -> Report`
 
-所有域共通的数据流建议固定为：
+在这个仓库里，对应的实际分层是：
 
-`Commander Intent / Task Order -> Tactical Intent -> Execution Command -> Status / Report`
+- `TaskOrder` 表达任务式下达
+- `LeaderIntent` 表达领导者的战术决策
+- `MissionCommand` 表达运行时可消费的执行命令
+- `PilotReport` 及相关报告结构表达状态回传
 
-联合层只定义通用接口，不定义域特定执行参数。
+这个链路已经反映在任务编排和 mission runtime 测试中。common 层需要保留这条链路的形状，但不能强迫所有军种使用同一种执行方式。
 
-## 3. 关注点分离原则
+## 5. 指挥关系与任务组织的边界
 
-### 3.1 Joint 层负责什么
+joint 层应该保留组织骨架，而不是军种 doctrine 细节。
 
-- 关系与权限
-- 谁向谁下任务
-- 谁向谁汇报
-- 哪一级是 tight-loop tactical unit
-
-### 3.2 Joint 层不负责什么
-
-- 跑道进近
-- 航母编队站位几何
-- 陆战火力支撑楔形展开
-- 具体平台执行动作
-
-这些都属于 service profile 或 platform/task layer。
-
-## 4. 对项目的数据模型约束
-
-如果后续要支持空、海、陆，核心结构体不应优先写：
-
-- `wingman_slot_id`
-- `recovery_runway_id`
-- `task_cap`
-
-而应优先写：
+建议保留在 common core 的字段有：
 
 - `task_family`
 - `service_profile`
-- `tactical_unit_type`
-- `role_code`
-- `relative_slot_code`
-- `coordination_mode`
-- `recovery_site_id`
-
-说明：
-
-- `runway` 是 air profile 的 `recovery_site`
-- `CAP` 是 air profile 下 `patrol` 家族的一种
-- `wingman` 是 air profile 下 `subordinate role` 的一种
-
-## 5. 对 upcoming module 拆分的直接约束
-
-后续 `tasking / command` 模块若继续拆分，文档口径应直接按下面三类落位：
-
-### 5.1 `common`
-
-放所有跨军种仍成立的字段、枚举和 DTO 骨架：
-
-- `service_profile`
-- `task_family`
 - `tactical_unit_type`
 - `command_relationship`
 - `authority_scope`
 - `assignee_kind`
 - `coordination_mode`
-- `parent_node_id / supported_node_id / supporting_node_id`
+- `parent_node_id`
+- `supported_node_id`
+- `supporting_node_id`
 - `task_group_id`
 - `role_code`
 - `relative_slot_code`
 - `recovery_site_id`
 
-这些对象在 `common` 层只表达“谁对谁下令、谁归谁协同、回收到哪个 site”，
-不表达 runway、CAP 航线、舰队 warfare station 等域专用细节。
+应交给 service profile 的内容包括：
 
-### 5.2 `air`
+- 空军专用的 `runway`、`takeoff`、`landing`、`CAP` 和编队语义
+- 海军专用的 `station`、`screen`、`formation`、参考单元和舰载直升机语义
+- 未来地面专用的机动与支援语义
 
-放当前空战 runtime 仍必须保留的专用语义：
+common 层可以描述一个单元被 support 或 supporting，但不应写死它在空、海、陆中的执行方式。
 
-- `CAP`
-- `route_cap`
-- `LeaderPhase` 中的 takeoff / departure / on-station / landing 等 phase
+## 6. Common Core 不应优先写什么
+
+设计共享结构时，不要让 common core 被某个军种的执行语言反向塑形。
+
+不应把这些当成首要抽象：
+
+- `wingman_slot_id`
 - `recovery_runway_id`
-- `recovery_approach_type`
-- `takeoff_procedure`
+- `task_cap`
 - `takeoff_clearance`
-- `runway_slot`
-- `wingman / element`
-- air-specific `MissionCommand.command_code` 解释
+- 只用 `station_radius_m` 作为站位模型
 
-### 5.3 `naval`
+应优先采用所有 service profile 都能解释的抽象：
 
-放未来海战 tight-loop runtime 的专用语义：
+- `task_family`
+- `service_profile`
+- `tactical_unit_type`
+- `relative_slot_code`
+- `coordination_mode`
+- `authority_scope`
+- `recovery_site_id`
 
-- `task force / task group / task unit` 的 naval profile 解释
-- `warfare_role_code`
-- `officer_in_tactical_command`
-- `screen / support / station / formation` 的舰队口径
-- 舰艇/编队回收、补给、航线与舰队战位语义
+## 7. Common Core 与 Service Profile 的边界
 
-`naval` 不应复用 air 的 `lead / wingman / runway / approach` 词汇作为核心模板。
+边界很简单：
 
-## 6. 对项目架构的直接结论
+- common core 定义跨军种仍成立的名词和 authority 关系
+- service profile 定义这些名词在特定任务域中的解释方式
+- platform/task specialization 定义具体几何、时序和控制细节
 
-后续项目标准化文档与代码设计应按三层组织：
+因此 `docs/standards/joint/*` 应负责命名边界和禁止项，而军种与平台文档应负责具体执行词汇。
+
+## 8. 实现含义
+
+当前代码和测试已经明确朝这个方向收敛：
+
+- `MissionCommand` 是运行时命令承载体
+- `CommandLink` 是投递与排序层
+- `DataLink` 是共享航迹 / 汇报层
+- `ROE` 和交战 authority 是执行命令合同的一部分，不是附属项
+
+后续模块拆分的基线应当是：
 
 1. `joint/common core`
 2. `service profile`
 3. `platform/task specialization`
 
-这比“先写 air，再希望 sea/land 也能复用”更符合真实世界，也更符合工程上的关注点分离。
-
-在 upcoming module work 中，可直接采用以下文档到模块映射：
-
-1. `docs/standards/joint/*` 负责 `common` 的命名边界与禁止项。
-2. `docs/standards/services/*.md` 负责各军种 profile 对 `common` 字段的解释。
-3. `docs/standards/air/*` 与未来 `docs/standards/naval/*` 负责平台/任务专用扩展，不反向主导 `common` 命名。

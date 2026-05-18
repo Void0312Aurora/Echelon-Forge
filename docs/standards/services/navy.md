@@ -1,136 +1,111 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/navy.zh.md. Review before treating this file as authoritative. -->
-
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/navy.md. Review before treating this file as authoritative. -->
-
 # US Navy Profile
 
-This document defines the US Navy profile used when the project models naval warfare / maritime operations.
+This document defines the Navy service profile used when the project models naval warfare and maritime operations.
 
-## 1. Official Real-world Basis
+It is no longer a placeholder. Its job is to describe how the Navy maps onto the shared `common` contract and how the dedicated `naval` specialization should read that contract.
 
-Public Navy materials indicate that naval tactical organization is more “mission-tailored” than the Army, and that `Task Force` and `Composite Warfare Commander (CWC)` systems are widely employed for tactical control.
+## 1. Real-World Basis
 
-Current publicly available official sources:
+Public Navy materials show that naval tactical organization is mission-tailored and commonly expressed through `Task Force`, `Task Group`, `Task Unit`, and `Composite Warfare Commander (CWC)` constructs.
+
+Current public references:
 
 - [U.S. 7th Fleet, CTF 71 establishment](https://www.c7f.navy.mil/Media/News/Display/Article/2641477/ctf-71-establishment-enhances-readiness-in-7th-fleet/)
 - [TTGP Warfare Commanders Conference I](https://www.ttgp.navy.mil/OFRP-Syllabus/Warfare-Commanders-Conference-I/)
 - [NAVIFOR, IW Has a Seat at the Table](https://www.navifor.usff.navy.mil/Press-Room/News-Stories/Article/2395110/iw-has-a-seat-at-the-table/)
 - [COMPHIBRON 5 About](https://www.surfpac.navy.mil/Ships/Amphibious-Squadron-COMPHIBRON-5/About/)
 
-These official pages confirm the following:
+These sources support three conclusions:
 
-- `Task Force` is an actual mission-organized unit.
-- Capabilities such as sea combat / amphibious / information warfare are organized around the `CWC table` and warfare commanders.
-- `Officer in Tactical Command` and `Composite Warfare Commander` are real-world roles in fleet / formation scenarios.
+- `Task Force / Task Group / Task Unit` are real mission-organized naval levels.
+- Naval control is centered on warfare commander roles rather than air-style `lead / wingman` pairs.
+- `Officer in Tactical Command` is a real command-authority concept in fleet and formation contexts.
 
-## 2. Modeling Conclusions
+## 2. Layer Boundaries
 
-### 2.1 Layers That Should Not Enter the Tight-Loop Runtime
+### 2.1 `common`
 
-- numbered fleet
-- major theater maritime component
-
-These are better suited as:
-
-- operation-level command nodes
-- scenario tasking and force packaging nodes
-
-### 2.2 Layers That Are More Suitable for the Tight-Loop Runtime
-
-The naval tight-loop runtime is more appropriately placed at:
-
-- tactical groupings at the `task group / task unit` level
-- role coordination at the `warfare commander` level
-- `single ship / ship section`
-
-Explanation:
-
-- The key in the Navy profile is not to separate into “elements” like the Air Force, but rather `task organization + warfare commander role`.
-
-## 3. Impact on Project Common Templates
-
-If the project later expands into naval warfare, the joint/core layer must be able to express:
-
-- `task_group_id`
-- `warfare_role_code`
-- `supported/supporting relation`
-- `officer_in_tactical_command`
-
-and must not presuppose core coordination objects such as:
-
-- `lead / wingman`
-
-Those are only suitable for air sortie-level formations, not for fleet / formation control.
-
-## 4. Direct Constraints for Upcoming Naval Module
-
-If the current `tasking / command` is further split into `common + air + naval`, the Navy profile should be positioned as follows:
-
-### 4.1 Objects That Should Remain in `common`
+`common` should keep the cross-service skeleton that all services can share:
 
 - `service_profile`
 - `task_family`
-- `tactical_unit_type`
+- `task_group_id`
 - `command_relationship`
 - `authority_scope`
 - `coordination_mode`
-- `task_group_id`
 - `supported_node_id / supporting_node_id`
 - `recovery_site_id`
+- `tactical_unit_type`
 
-These fields remain valid in the Navy, but their meaning should be interpreted by the Navy profile, not changed to air terminology.
+For Navy, these fields keep their shared shape, but their meaning is interpreted through naval organization rather than air sortie terminology.
 
-### 4.2 Objects That Should Go into `naval`
+### 2.2 `services/navy`
 
+`services/navy` explains the Navy-specific reading of the shared skeleton:
+
+- `task_group` / `task_unit` hierarchy
+- `officer_in_tactical_command`
+- `warfare_role_code`
+- which common anchors the Navy actually relies on in runtime planning and task packaging
+
+This layer should define ownership and meaning, not execution mechanics.
+
+### 2.3 `naval`
+
+`naval` is the dedicated specialization for tight-loop maritime runtime semantics:
+
+- `screen / support / station / recover`
+- ship and formation tasking behavior
+- station keeping, recovery, and maritime role geometry
+- naval execution and reporting specialization
+
+This layer should not re-declare shared contract fields unless it is clarifying their naval interpretation.
+
+## 3. Minimal Semantic Set
+
+The Navy profile should absorb the following minimal semantics as first-class terms:
+
+- `task_group`
+- `task_unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
-- interpretation of naval `task force / task group / task unit` organizational hierarchy
-- fleet semantics of formation / station / screen / support
-- dedicated tasking semantics for ship sections, surface action groups, amphibious groups, etc.
+- `screen`
+- `support`
+- `station`
+- `recover`
 
-### 4.3 Objects That Should Not Be Directly Copied from Air into Naval Core
+These are the smallest useful terms for the current naval task plan and runtime bridge.
 
-- `lead / wingman`
-- `element lead`
-- `runway`
-- `approach type`
-- `takeoff clearance`
-- air sortie phase–driven `LeaderPhase`
+### 3.1 Meaning of the minimal terms
 
-If the Navy also needs “who follows whom, who holds which station”, those should be modeled as naval role / station / warfare commander semantics, rather than generalizing air two-aircraft formation terms into a common template.
+- `task_group`: the primary naval mission grouping.
+- `task_unit`: the subordinate tactical unit inside the group.
+- `warfare_role_code`: the active warfare role assigned to the unit or commander.
+- `officer_in_tactical_command`: the authority node that owns tactical control.
+- `screen`: protective positioning around a higher-value force.
+- `support`: escort, sustainment, or enabling relation.
+- `station`: a relative position that must be held or restored.
+- `recover`: return-to-control or recovery semantics, including ship/aircraft recovery context where applicable.
 
-## 5. Recommendations for Documentation and Code Collaboration
+## 4. Planning Implications
 
-For upcoming module work, the Navy side recommends proceeding in the following order:
+For current task planning, the Navy profile should guide the order of implementation as follows:
 
-1. First, fix joint fields and DTO skeletons in `common`.
-2. Then, have the Navy profile clarify which organizational levels and role calibers these fields correspond to in the naval runtime.
-3. Finally, add tight-loop station / screen / support / recovery semantics in the dedicated `naval` documentation.
+1. Keep the common contract stable.
+2. Bind Navy task planning to `task_group / task_unit` and `officer_in_tactical_command`.
+3. Add `screen / support / station / recover` as the minimal naval control vocabulary.
+4. Only then extend deeper ship-specific or formation-specific behavior.
 
-This avoids prematurely writing air-first formation and recovery assumptions into the `common` layer.
+This avoids forcing air-first assumptions into the naval runtime.
 
-## 6. Ownership Implications for Runtime/Standards Bridge
+## 5. Ownership and Bridge Responsibilities
 
-This profile requires the bridge document to:
+`services/navy` is responsible for stating:
 
-- `services/navy.md` is responsible for explaining which common attachment points the Navy profile wants the core to retain.
-- It is not responsible for defining specific execution command fields for naval platforms.
-- It should not directly treat existing air `route / landing / wingman` semantics as the default template for the Navy.
+- which common fields the Navy profile depends on
+- which semantic layer interprets them
+- which naval roles and task levels own tactical control
 
-For documentation placement regarding future module boundaries, it can be preliminarily understood as follows:
+It is not responsible for defining platform-specific command execution, sensor behavior, or weapon logic.
 
-- `joint/common core`:
-  - `task_group_id`
-  - `supported/supporting relation`
-  - `recovery_site_id`
-  - `coordination_mode`
-- `services/navy`:
-  - `officer_in_tactical_command`
-  - `warfare_role_code`
-  - tactical ownership at `task group / task unit` level
-- Future `naval/` dedicated layer:
-  - ship / formation mission semantics
-  - shipboard recovery, replenishment, station-keeping, maritime formation geometry
-  - naval execution command / reporting specialization
-
-Therefore, the primary work for the runtime/standards bridge in the Navy direction should be to leave the core skeleton in the joint layer, hang the naval organization and control calibers in the profile layer, and not continue expanding air-specific command vocabulary into a “universal core”.
+The dedicated `naval` layer should own those runtime semantics once the common skeleton is in place.

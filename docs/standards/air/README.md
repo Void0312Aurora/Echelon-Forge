@@ -1,46 +1,91 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/README.zh.md. Review before treating this file as authoritative. -->
+# Air Platform Specialization Overview
 
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/README.md. Review before treating this file as authoritative. -->
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-# Overview of Air Platform-Specific Standards
+Status: `2026-05-18` specialization entrypoint for maintained air interfaces.
 
-This directory defines **platform- and mission-specific standards** for the project under the air profile.
+This directory defines the maintained air-specific standards for the current
+repository. Its purpose is not to describe every cockpit concept that a real
+pilot might use. Its purpose is to describe the air-specialization contracts
+that the current runtime, tests, and tasking bridge actually rely on.
 
-Note:
+## Scope
 
-- This directory is not the joint/common core
-- This directory is also not the main document for the service organization profile
-- This directory is solely responsible for the semantics of observation, action, command, and reporting for the air platform
+This directory owns four interface slices:
 
-Currently, the following should be read first:
+- mission/task observation semantics exposed to air agents
+- pilot action semantics exposed by the environment and `PilotAction`
+- air-specialized command/tasking semantics layered on top of common core
+- air-specific pilot reporting extensions
 
-1. [Standardization Documentation Overview](../README.md)
-2. [USAF Profile](../services/air_force.md)
-3. [obs.md](obs.md)
-4. [act.md](act.md)
-5. [aim.md](aim.md)
-6. [rep.md](rep.md)
-
-## 1. Positioning of This Directory
-
-This directory deals with:
-
-- aircraft/platform-level observation
-- pilot action semantics
-- air-specific mission / execution command semantics
-- air-specific reporting semantics
-
-It does not deal with:
+It does not own:
 
 - joint/common command relationships
-- tactical organizational structures of the Army/Navy/Marine Corps
-- the project-wide unified common core data model
+- service-level organization doctrine
+- low-level physics or reward implementation details
 
-## 2. Relationship with the Old `air/com` Documents
+Those belong in:
 
-`docs/Archive/air_first_standards/com/*.md` and `docs/Archive/air_first_standards/com/two_ship/*.md` are now archived,
-because they were built on an older air-first standardization approach.
+- [Standards Documentation Overview](../README.md)
+- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [USAF Profile](../services/air_force.md)
+- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 
-If air combat coordination or two-ship/four-ship-specific standards are needed in the future,
-they should be rewritten under the new framework of `joint/common core + USAF profile + air specialization`,
-rather than continuing to extend the old directory.
+## How To Read This Directory
+
+Read these files in order:
+
+1. [Pilot Observation Contract](obs.md)
+2. [Pilot Action Contract](act.md)
+3. [Air Mission Command and Tasking Contract](aim.md)
+4. [Pilot Reporting Contract](rep.md)
+
+Together they define the maintained air interface between:
+
+- tasking/leader logic
+- mission command and mission observation runtime
+- pilot action input
+- pilot report output
+
+## Current Code Alignment
+
+The maintained air-specialization contract is split across several layers in the
+code base:
+
+- air tasking extensions:
+  [src/components/tasking/air/README.md](../../../src/components/tasking/air/README.md)
+- shared command core plus air command extension:
+  [src/components/command/common/README.md](../../../src/components/command/common/README.md)
+- action surface:
+  [src/components/command/pilot_action.h](../../../src/components/command/pilot_action.h)
+- mission observation taxonomy:
+  [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
+- scenario-loader mission observation assembly:
+  [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
+
+That layering matters:
+
+- `TaskOrderAir`, `LeaderIntentAir`, and `PilotReportAir` are tasking-side air
+  extensions.
+- `MissionCommand` and `PilotAction` are command/action-side runtime carriers.
+- mission observation is a mode-based vector contract, not a free-form list of
+  pilot sensations.
+
+## Standardization Rules
+
+- Keep common-core terms in `joint/` and `services/`.
+- Keep air terms such as runway, takeoff, approach, formation, slot, and
+  recovery in this directory.
+- Document the current implemented contract first; note future extensions
+  separately if needed.
+- Do not describe the action or observation surface as broader than the current
+  runtime/test contract.
+
+## Related Documents
+
+- [Scenario Configuration Guide](../bridge/scenario_guide.md)
+- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
+- [USAF Profile](../services/air_force.md)

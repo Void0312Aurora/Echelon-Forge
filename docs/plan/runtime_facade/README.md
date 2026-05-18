@@ -4,16 +4,16 @@
 
 # `runtime_facade/`
 
-This directory contains contracts, execution records, and follow-up cleanup plans for the runtime facade mainline.
+This directory contains contracts and follow-up cleanup plans for the runtime facade mainline. The execution records have been moved to `../archive/`.
 
 Recommended reading order:
 
 1. [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
-2. [runtime_facade_task_bootstrap_plan.zh.md](runtime_facade_task_bootstrap_plan.zh.md)
-3. [runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade_layering_cleanup_freeze.zh.md)
+2. [archive/runtime_facade_task_bootstrap_plan.md](../archive/runtime_facade_task_bootstrap_plan.md)
+3. [archive/runtime_facade_layering_cleanup_freeze.md](../archive/runtime_facade_layering_cleanup_freeze.md)
 
 Usage rules:
 
 - Contract documents define boundaries, but are not automatically effective execution freezes.
-- `task_bootstrap` now contains the execution records for the first batch of `WP1-WP6`.
+- The first batch of `WP1-WP6` execution records now lives in `../archive/`.
 - If subsequent implementation continues along the runtime facade mainline, it should be scoped by a new freeze task list.

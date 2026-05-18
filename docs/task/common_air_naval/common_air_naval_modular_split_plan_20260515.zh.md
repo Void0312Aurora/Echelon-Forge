@@ -33,7 +33,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop \
 
 ## II. 当前评估
 
-根据支持分析文档 [Common / Air / Naval Module Split Analysis](common_air_naval_modular_split_analysis_20260515.zh.md)，当前仓库已具备以下条件：
+根据支持分析文档 [Common / Air / Naval Module Split Analysis](./archive/common_air_naval_modular_split_analysis_20260515.zh.md)，当前仓库已具备以下条件：
 
 - 标准文档层已能支持 `联合/通用核心 + 服务 profile + 特化` 的建模路线；
 - 入口点如 `ServiceProfile::Navy` 和 `UnitType::Ship` 已存在；
@@ -259,7 +259,7 @@ src/components/tasking/air/
 - 已完成：`TaskOrder`、`LeaderIntent`、`PilotReport` 拆分为 `common/*_core.h` 和 `air/*_air.h`
 - 已完成：旧伞状头文件继续通过 `Core + Air` 兼容壳对外暴露原结构体名称，并维护平坦字段访问
 - 已完成：`bindings_command.cpp` 兼容性导出已验证
-- 已完成：`tests/leader/test_common_core_semantics.py`、`tests/runtime/test_runtime_facade.py` 及 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
+- 已完成：`tests/leader/test_common_core_semantics.py`、`tests/runtime/facade/test_runtime_facade.py` 及 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
 
 ### WP3：提取仅空中枚举与空中扩展
 
@@ -312,7 +312,7 @@ src/components/tasking/air/
 - 已完成：添加 `src/components/tasking/air/air_tasking_enums.h` 作为仅空中枚举所有者
 - 已完成：`tasking_enums.h` 降级为 `通用 + 空中` 兼容伞状头文件
 - 已完成：`task_order_air.h`、`leader_intent_air.h`、`mission_command.h` 及 `bindings_command.cpp` 已改为显式依赖空中枚举所有者
-- 已完成：`ef_core` / `ef_py` 构建通过，并通过 `tests/leader/test_common_core_semantics.py`、`tests/leader/test_two_ship_contract_fields.py`、`tests/runtime/test_runtime_facade.py`、`tests/runtime/test_mission_runtime.py`、`tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
+- 已完成：`ef_core` / `ef_py` 构建通过，并通过 `tests/leader/test_common_core_semantics.py`、`tests/leader/test_two_ship_contract_fields.py`、`tests/runtime/facade/test_runtime_facade.py`、`tests/runtime/mission/test_mission_runtime.py`、`tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
 
 ### WP4：Python Profile/分发拆分
 
@@ -375,7 +375,7 @@ gym_envs/leader_semantics_adapter.py
 -   已完成：`python/rl/leader_tasking.py` 中的 `infer_route_ref_id`、`infer_recovery_*`、`build_kernel_mission_command` 现通过 `air_profile` 托管，同时维护旧的入口点和 `ef_py` 补丁兼容性
 -   已完成：`python/rl/tasking_air_adapter.py` 清晰地从 `common_core_profile` 聚合通用核心默认值/规格，并从 `air_profile` 聚合空中语义
 -   已完成：`./.venv/bin/python -m py_compile` 覆盖了 `common_core_profile.py`、`leader_tasking.py`、`tasking_air_adapter.py`、`tasking_bridge.py` 和 `python/rl/profile/*`
--   已完成：`tests/leader/test_common_core_semantics.py`、`tests/leader/test_task_order_randomization.py`、`tests/leader/test_two_ship_contract_fields.py`、`tests/runtime/test_leader_tasking_runtime.py`、`tests/runtime/test_runtime_facade.py`、`tests/runtime/test_mission_runtime.py` 和 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 重点验收通过（`53 passed` + `1 passed`）
+-   已完成：`tests/leader/test_common_core_semantics.py`、`tests/leader/test_task_order_randomization.py`、`tests/leader/test_two_ship_contract_fields.py`、`tests/runtime/mission/test_leader_tasking_runtime.py`、`tests/runtime/facade/test_runtime_facade.py`、`tests/runtime/mission/test_mission_runtime.py` 和 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 重点验收通过（`53 passed` + `1 passed`）
 -   未完成：进一步物理迁移 `RuleBasedLeaderPhaseManager` / `ScriptedC2TaskManager` 和 `_apply_task_order_overrides`；`multi_agent_runtime.py` 以及更广泛的合约/运行时入口点的分发转换
 
 ### 工作包5：将 `tests/contracts` 迁移至通用优先
@@ -461,13 +461,13 @@ gym_envs/leader_semantics_adapter.py
 
 -   已完成：添加了 [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)，统一了任务观察模式的名称、`mode_code`、维度和字段名分类。
 -   已完成：[python/env_config.py](../../../python/env_config.py)、[gym_envs/universal_env.py](../../../gym_envs/universal_env.py)、[gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py)、[tools/eval/sb3_eval_base.py](../../../tools/eval/sb3_eval_base.py)、[tools/diagnostics/analyze_cooperative_observation_scales.py](../../../tools/diagnostics/analyze_cooperative_observation_scales.py) 集成了共享分类，同时保留了原始的 CLI 协同门控和运行时行为。
--   已完成：添加了 [tests/runtime/test_mission_obs_taxonomy.py](../../../tests/runtime/test_mission_obs_taxonomy.py)，锁定了共享分类与运行时入口点之间的 `mode_code` / 维度 / 字段布局一致性。
--   已完成：`mission_obs_taxonomy` 添加了一个共享助手，将字段名映射到索引；[tests/runtime/test_mission_runtime.py](../../../tests/runtime/test_mission_runtime.py)、[tests/runtime/test_cooperative_world_batch_vec_env.py](../../../tests/runtime/test_cooperative_world_batch_vec_env.py)、[tests/runtime/test_multi_agent_runtime.py](../../../tests/runtime/test_multi_agent_runtime.py) 中的核心任务断言已从魔法索引收敛到共享分类。
+-   已完成：添加了 [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)，锁定了共享分类与运行时入口点之间的 `mode_code` / 维度 / 字段布局一致性。
+-   已完成：`mission_obs_taxonomy` 添加了一个共享助手，将字段名映射到索引；[tests/runtime/mission/test_mission_runtime.py](../../../tests/runtime/mission/test_mission_runtime.py)、[tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py](../../../tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py)、[tests/runtime/multi_agent/test_multi_agent_runtime.py](../../../tests/runtime/multi_agent/test_multi_agent_runtime.py) 中的核心任务断言已从魔法索引收敛到共享分类。
 -   已完成：`./.venv/bin/python -m py_compile` 覆盖了 WP6 的新文件和修改文件。
--   已完成：`tests/runtime/test_mission_obs_taxonomy.py`、`tests/runtime/test_mission_runtime.py`、`tests/runtime/test_multi_agent_runtime.py`、`tests/runtime/test_multi_agent_benchmark.py` 重点回归通过（`34 passed`）。
--   已完成：`tests/runtime/test_cooperative_world_batch_vec_env.py`、`tests/runtime/test_scenario_loader_execution_step_runtime.py`、`tests/runtime/test_execution_episode_batch_prepare.py`、`tests/runtime/test_execution_episode_controller.py` 扩展回归通过（`37 passed, 8 subtests passed`）。
--   已完成：在第二批首次回归中，`tests/runtime/test_mission_obs_taxonomy.py`、`tests/runtime/test_mission_runtime.py`、`tests/runtime/test_multi_agent_runtime.py`、`tests/runtime/test_cooperative_world_batch_vec_env.py` 通过（`51 passed`）。
--   已完成：在第二批关联回归中，`tests/runtime/test_scenario_loader_execution_step_runtime.py`、`tests/runtime/test_execution_episode_batch_prepare.py`、`tests/runtime/test_execution_episode_controller.py`、`tests/runtime/test_multi_agent_benchmark.py` 通过（`20 passed, 8 subtests passed`）。
+-   已完成：`tests/runtime/mission/test_mission_obs_taxonomy.py`、`tests/runtime/mission/test_mission_runtime.py`、`tests/runtime/multi_agent/test_multi_agent_runtime.py`、`tests/runtime/multi_agent/test_multi_agent_benchmark.py` 重点回归通过（`34 passed`）。
+-   已完成：`tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`、`tests/runtime/execution/test_scenario_loader_execution_step_runtime.py`、`tests/runtime/execution/test_execution_episode_batch_prepare.py`、`tests/runtime/execution/test_execution_episode_controller.py` 扩展回归通过（`37 passed, 8 subtests passed`）。
+-   已完成：在第二批首次回归中，`tests/runtime/mission/test_mission_obs_taxonomy.py`、`tests/runtime/mission/test_mission_runtime.py`、`tests/runtime/multi_agent/test_multi_agent_runtime.py`、`tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py` 通过（`51 passed`）。
+-   已完成：在第二批关联回归中，`tests/runtime/execution/test_scenario_loader_execution_step_runtime.py`、`tests/runtime/execution/test_execution_episode_batch_prepare.py`、`tests/runtime/execution/test_execution_episode_controller.py`、`tests/runtime/multi_agent/test_multi_agent_benchmark.py` 通过（`20 passed, 8 subtests passed`）。
 -   已完成：`tests/contracts/unit/config/env_config_resolution.json` 合约直接运行通过。
 -   已完成：`python/rl/multi_agent_benchmark.py`、`tools/diagnostics/benchmarks/visual_resolution.py`、`tools/diagnostics/benchmarks/world_batch_vec_env.py` 中的 `mission_obs_mode` CLI 选择集已统一集成到共享分类中。
 -   已完成：在 WP6 范围内，针对任务观察分类的配置/运行时/测试/评估/诊断共享收敛已完成。
@@ -557,10 +557,10 @@ gym_envs/leader_semantics_adapter.py
 - 完成：添加了 `src/components/command/air/mission_command_air.h`，包含仅限空中的字段：recovery、takeoff、formation offset 等。
 - 完成：`src/components/command/mission_command.h` 改为兼容性雨伞头文件，继续暴露扁平的 `MissionCommand` 名称和字段访问。
 - 完成：`bindings_command.cpp` 可以继续暴露现有的扁平 `MissionCommand` 字段，而不改变导出名称；Python 端保持兼容。
-- 完成：添加了 `tests/runtime/test_mission_command_split_semantics.py`，涵盖绑定字段暴露和直接内核往返。
+- 完成：添加了 `tests/runtime/mission/test_mission_command_split_semantics.py`，涵盖绑定字段暴露和直接内核往返。
 - 完成：`gym_envs/scenario_loader/runtime_state.py`、`src/core/mission/episode/detail/mission_command_codec.cpp`、`src/core/mission/episode/detail/episode_transition_runtime.cpp` 完成了 `MissionCommand` 的消费者/JSON 对称性；诸如 `formation_*`、`assigned_target_id`、`authorization_to_fire`、`recovery_approach_type` (公共/空中) 等字段在回合/运行时往返中保持保真度。
 - 完成：`python/rl/profile/air_profile.py` 纠正了任务级 `MissionCommand` 字段被零值 `leader_intent` 意外覆盖的问题，确保加载器任务命令与内核命令构建之间的一致性。
-- 完成：重点回归测试通过：`tests/runtime/test_leader_tasking_runtime.py`、`tests/world_batch/test_world_batch_runtime.py`、`tests/runtime/test_execution_episode_state.py`、`tests/runtime/test_execution_episode_controller.py`、`tests/runtime/test_runtime_facade.py`、`tests/runtime/test_mission_runtime.py`、`tests/runtime/test_cooperative_world_batch_vec_env.py`、`tests/world_batch/test_world_batch_vec_env.py`。
+- 完成：重点回归测试通过：`tests/runtime/mission/test_leader_tasking_runtime.py`、`tests/world_batch/test_world_batch_runtime.py`、`tests/runtime/execution/test_execution_episode_state.py`、`tests/runtime/execution/test_execution_episode_controller.py`、`tests/runtime/facade/test_runtime_facade.py`、`tests/runtime/mission/test_mission_runtime.py`、`tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`、`tests/world_batch/test_world_batch_vec_env.py`。
 - 未完成：`MissionCommand` 尚未进入 `naval` 执行命令分层；此阶段仅冻结 `common + air` 结构和兼容层。
 
 ## VI. 阶段依赖关系

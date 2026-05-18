@@ -16,7 +16,7 @@ note is still an active implementation authority.
   - Focused task documents, implementation packages, and progress checkpoints.
 - [standards/README.md](standards/README.md)
   - Joint/service/platform modeling baselines and specialization notes.
-- [standards/bilingual_documentation_policy.md](standards/bilingual_documentation_policy.md)
+- [standards/bilingual_documentation_policy.md](standards/governance/bilingual_documentation_policy.md)
   - Canonical language, file-pairing, and batch translation policy.
 - [manual/](manual)
   - Code layer maps, engine capability notes, physics inventory, and operator-facing manuals.

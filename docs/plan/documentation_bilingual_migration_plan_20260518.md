@@ -191,6 +191,6 @@ The migration can be considered complete for the active tree when:
 
 ## Related Docs
 
-- [docs/standards/bilingual_documentation_policy.md](../standards/bilingual_documentation_policy.md)
+- [docs/standards/governance/bilingual_documentation_policy.md](../standards/governance/bilingual_documentation_policy.md)
 - [docs/task/flight_dynamics/README.md](../task/flight_dynamics/README.md)
 - [docs/plan/architecture/README.md](architecture/README.md)

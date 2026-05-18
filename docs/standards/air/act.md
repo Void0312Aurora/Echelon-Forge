@@ -1,64 +1,149 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/act.zh.md. Review before treating this file as authoritative. -->
+# Pilot Action Contract
 
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/act.md. Review before treating this file as authoritative. -->
+Language:
+- English canonical: `act.md`
+- Chinese companion: [act.zh.md](act.zh.md)
 
-# Pilot Action Space Standard
+Status: `2026-05-18` specialization baseline for maintained air action input.
 
-> Scope note (2026-03-23): This document is an `air specialization` and applies only to platform execution action semantics under the air profile.
-> Please first refer to [docs/standards/README.md](../README.md),
-> [docs/standards/services/air_force.md](../services/air_force.md),
-> [docs/standards/air/README.md](README.md) for the current standardized main baseline.
+This document defines the maintained air action surface for the current
+repository. It is an interface contract, not a cockpit encyclopedia.
 
-This document defines the operational commands that a "digital pilot" (RL Agent) can apply to the simulation environment. These operations strictly simulate the physical actions a real fighter pilot can perform in the cockpit via the control stick, throttle lever, and various electromagnetic switches.
+## Scope
 
-It does not define:
+The maintained action surface has two layers:
 
-- Task organization of joint/common core
-- Service hierarchical structure
-- Execution action standards for naval or ground warfare
+1. environment-facing action vectors
+2. kernel-facing `PilotAction`
 
-## 1. Primary Controls
-The most frequent operations, directly affecting the aircraft's aerodynamic surfaces.
+Primary references:
 
-| Action Name | Description | Value Range | Physical Meaning |
-| :--- | :--- | :--- | :--- |
-| `stick_pitch` | Elevator/horizontal stabilizer control | [-1.0, 1.0] | Pulling back is positive (pitch up), pushing forward is negative (pitch down) |
-| `stick_roll` | Aileron control | [-1.0, 1.0] | Banking left is negative, banking right is positive |
-| `rudder_pedals` | Rudder/nose wheel steering control | [-1.0, 1.0] | Left pedal is negative, right pedal is positive |
-| `throttle_lever` | Throttle lever position | [0.0, 1.0] | 0.0-0.8 is military power, 0.8-1.0 is afterburner (AB) |
+- [gym_envs/universal_env_parts/actions.py](../../../gym_envs/universal_env_parts/actions.py)
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
+- [src/components/command/pilot_action.h](../../../src/components/command/pilot_action.h)
+- [src/components/command/air/control_input_resolution.h](../../../src/components/command/air/control_input_resolution.h)
 
-## 2. Secondary Controls
-Used to adjust aircraft configuration and assist flight.
+## Action Modes
 
-| Action Name | Description | Value Range | Remarks |
-| :--- | :--- | :--- | :--- |
-| `gear_handle` | Landing gear handle | {0, 1} | 0 is retract, 1 is extend |
-| `flaps_switch` | Flaps switch | {Up, Takeoff, Landing} | Selector control |
-| `speedbrake_switch` | Speed brake handle | {Retract, Extend} | Discrete or continuous control |
-| `trim_pitch` | Pitch trim | [-1.0, 1.0] | Adjusts neutral stick pressure |
+The maintained environment modes are:
 
-## 3. Sensors & Avionics
-Manages information acquisition equipment.
+| Mode | Dim | Purpose |
+| :--- | ---: | :--- |
+| `full` | 17 | full maintained action surface |
+| `takeoff2` | 2 | reduced takeoff curriculum surface |
+| `takeoff4` | 4 | reduced takeoff surface with lateral controls |
 
-| Action Name | Description | Value Range | Remarks |
-| :--- | :--- | :--- | :--- |
-| `radar_power` | Radar power/mode | {Off, Standby, On} | |
-| `radar_scan_elevation` | Radar elevation scan center | degrees (deg) | |
-| `radar_scan_azimuth` | Radar azimuth scan width | degrees (deg) | |
-| `target_lock_btn` | Lock button (TMS Up) | Trigger | Used to designate a tracked target |
+`takeoff2` and `takeoff4` are training-oriented reduced interfaces. They do not
+expose the full `PilotAction` surface directly.
 
-## 4. Weapon Management
-Core operations for tactical execution.
+## `full` Mode Mapping
 
-| Action Name | Description | Value Range | Remarks |
-| :--- | :--- | :--- | :--- |
-| `master_arm_switch` | Master arm switch | {Safe, Arm} | |
-| `weapon_select` | Weapon cycle selection | Discrete ID | Gun, short-range missile, medium-range missile |
-| `pickle_btn` | Missile launch / bomb release | Trigger | |
-| `trigger_btn` | Gun trigger | Hold | |
-| `jettison_emergency` | Emergency jettison external tanks/stores | Trigger | Current `PilotAction` field; usually a red emergency button |
+The maintained `full` action vector maps as follows:
 
-## 5. Operational Specifications
-1.  **Continuity**: Control stick (`stick_pitch/roll`) and throttle (`throttle`) must be handled as continuous actions to simulate physical feedback.
-2.  **Physical Latency**: There will be slight delays and physical constraints from pilot input through the on-board flight control system (FBW) to the actuators.
-3.  **Safety**: The AI should not issue abrupt commands beyond human physical limits (e.g., going from full throttle to idle in 0.01 seconds); the model must incorporate smooth characteristics of human operation.
+- `0`: `stick_pitch`
+- `1`: `stick_roll`
+- `2`: `rudder`
+- `3`: `throttle`
+- `4`: `gear_handle`
+- `5`: `flaps`
+- `6`: `speedbrake`
+- `7-8`: brake inputs folded into `brake`
+- `9`: `radar_active`
+- `10`: `radar_scan_az`
+- `11`: `radar_scan_el`
+- `12`: `tms_up`
+- `13`: `master_arm`
+- `14`: `fire_weapon`
+- `15`: `fire_gun`
+- `16`: `weapon_select_id`
+
+## Canonical `PilotAction` Fields
+
+The kernel-facing `PilotAction` fields currently exposed are grouped as:
+
+### Continuous Axes
+
+- `stick_pitch`
+- `stick_roll`
+- `rudder`
+- `throttle`
+- `gear_handle`
+- `flaps`
+- `speedbrake`
+- `brake`
+- `radar_scan_az`
+- `radar_scan_el`
+
+### Switches And Triggers
+
+- `brake_left`
+- `brake_right`
+- `radar_active`
+- `tms_up`
+- `master_arm`
+- `fire_weapon`
+- `fire_gun`
+- `jettison_emergency`
+- `program_chaff`
+- `program_flare`
+
+### Selectors And Validity
+
+- `weapon_select_id`
+- `active`
+
+## Interpretation Rules
+
+- `normalize_action()` enforces shape and clipping at the environment boundary.
+- `flaps`, `speedbrake`, and `brake` are normalized through helper logic before
+  entering `PilotAction`.
+- `radar_scan_az` and `radar_scan_el` are environment-normalized inputs mapped
+  into angle values for the kernel-facing action.
+- `weapon_select_id` is a selector, not a continuous control axis.
+
+## Reduced-Mode Overrides
+
+`takeoff2` and `takeoff4` do not just expose fewer fields; they also apply
+automatic overrides:
+
+- unspecified fields are zeroed or disabled
+- the reduced modes still emit a valid `PilotAction`
+- `gear_handle` is automatically managed based on current radar altitude
+
+These modes are therefore training convenience surfaces layered on top of the
+same runtime action carrier.
+
+## Protection And Gate Rules
+
+The maintained action contract includes several interpretation rules that are
+not raw player controls:
+
+- `PilotAction.active` gates whether the action is treated as valid
+- `PilotAction` takes precedence over legacy movement-command fallbacks where
+  the runtime resolves between them
+- left/right brake flags may force full brake behavior on the ground-control
+  side
+- weapon release still depends on downstream command/ROE/runtime checks in
+  addition to `master_arm` and `fire_weapon`
+
+## Ownership Boundary
+
+Keep in air specialization:
+
+- stick/throttle/gear/flaps/speedbrake semantics
+- radar scan controls exposed directly to the pilot surface
+- weapon-selection and trigger semantics at the pilot interface
+- reduced takeoff curriculum action modes
+
+Keep out of this document:
+
+- joint/common command relationships
+- service-level tasking doctrine
+- low-level aerodynamic, propulsion, or weapon model implementation details
+
+## Non-Goals
+
+This document does not standardize a `trim_pitch` field, an explicit human
+smoothness model, or a full avionics HOTAS manual. If the runtime does not
+currently expose a field through `PilotAction` or the maintained environment
+surface, it should not be presented here as part of the maintained contract.

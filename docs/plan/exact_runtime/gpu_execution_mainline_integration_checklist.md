@@ -199,7 +199,7 @@ Primary files:
 - [src/gpu/gpu_flight_shaping_runtime_cuda.cu](../../../src/gpu/gpu_flight_shaping_runtime_cuda.cu)
 - [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 - [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
-- [tests/runtime/test_mission_runtime.py](../../../tests/runtime/test_mission_runtime.py)
+- [tests/runtime/mission/test_mission_runtime.py](../../../tests/runtime/mission/test_mission_runtime.py)
 
 Acceptance:
 

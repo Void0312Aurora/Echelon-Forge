@@ -354,13 +354,13 @@ Acceptance:
 
 Current progress:
 
-- Supplemented `tests/runtime/test_leader_tasking_runtime.py::test_build_kernel_mission_command_maps_formation_offsets`, confirming that the `LeaderIntent -> MissionCommand` mapping already includes `formation_id / form_offset_x/y/z`.
+- Supplemented `tests/runtime/mission/test_leader_tasking_runtime.py::test_build_kernel_mission_command_maps_formation_offsets`, confirming that the `LeaderIntent -> MissionCommand` mapping already includes `formation_id / form_offset_x/y/z`.
 - Supplemented `tests/world_batch/test_world_batch_runtime.py::test_world_batch_runtime_mission_command_roundtrip_preserves_formation_offsets`, confirming that when using the existing command-link method, the kernel mission command roundtrip preserves formation offsets.
-- Supplemented `tests/runtime/test_mission_runtime.py::test_loader_mission_observation_current_contract_ignores_formation_offsets`, confirming that the current `MissionObservationInputs` / `compute_mission_observation` still only exposes command/heading/altitude/speed/nav tail, has not yet exposed formation offsets to the execution policy.
+- Supplemented `tests/runtime/mission/test_mission_runtime.py::test_loader_mission_observation_current_contract_ignores_formation_offsets`, confirming that the current `MissionObservationInputs` / `compute_mission_observation` still only exposes command/heading/altitude/speed/nav tail, has not yet exposed formation offsets to the execution policy.
 
 Additional notes:
 
-- Running `tests/runtime/test_mission_runtime.py` as a whole file under the current `.venv` is blocked by `gymnasium` dependency triggered by existing `UniversalEnv` tests; the targeted contract test added for P8-A2 itself passes.
+- Running `tests/runtime/mission/test_mission_runtime.py` as a whole file under the current `.venv` is blocked by `gymnasium` dependency triggered by existing `UniversalEnv` tests; the targeted contract test added for P8-A2 itself passes.
 - This phase still does not modify the default `mission_obs_mode` and old observation shapes.
 
 ### P8-A3: Minimal Extension of Cooperative Mission Observation

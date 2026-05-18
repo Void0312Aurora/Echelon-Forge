@@ -6,6 +6,13 @@ from .common import (
     parse_reward_terms_json,
     step_info_products_to_info_fields,
 )
+from .command_chain_cache import (
+    leader_intent_snapshot,
+    mission_command_snapshot,
+    pilot_report_snapshot,
+    snapshot_changed,
+    task_order_snapshot,
+)
 from .cooperative_director import (
     ScriptedCooperativeCoordinationDirector,
     clone_small_dict,
@@ -41,13 +48,18 @@ __all__ = [
     "copy_obs",
     "copy_obs_batch_item",
     "count_control_slots",
+    "leader_intent_snapshot",
     "mission_status_success_flag",
+    "mission_command_snapshot",
     "normalize_batch_observation_backend",
     "normalize_batch_visual_backend",
     "normalize_flight_shaping_backend",
     "normalize_observation_return_mode",
     "observation_timing_snapshot",
     "parse_reward_terms_json",
+    "pilot_report_snapshot",
     "refresh_visual_cache_batch",
+    "snapshot_changed",
     "step_info_products_to_info_fields",
+    "task_order_snapshot",
 ]

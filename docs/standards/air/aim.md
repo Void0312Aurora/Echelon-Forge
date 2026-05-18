@@ -1,112 +1,161 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/aim.zh.md. Review before treating this file as authoritative. -->
+# Air Mission Command and Tasking Contract
 
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/aim.md. Review before treating this file as authoritative. -->
+Language:
+- English canonical: `aim.md`
+- Chinese companion: [aim.zh.md](aim.zh.md)
 
-# Lead Aircraft / Mission Command Standard
+Status: `2026-05-18` specialization baseline for maintained air tasking and executable command semantics.
 
-> Scope note (2026-03-23): This document is the `air specialization`, describing the dedicated semantics of `Tactical Intent / Execution Command` under the air profile. It is no longer a project-wide common core standard.
-> For the current standardized main baseline, please first see [docs/standards/README.md](../README.md),
-> [docs/standards/joint/command_and_modeling_baseline.md](../joint/command_and_modeling_baseline.md),
-> [docs/standards/services/air_force.md](../services/air_force.md).
+This document defines the maintained air-side contract for:
 
-This document defines the command specification issued by the "Lead Aircraft" or "command layer" to the "wingman/digital pilot". These commands are highly abstract tactical objectives. The task of the digital pilot (RL Agent) is to translate these abstract objectives into physical aircraft motion through the operations in [act.md](act.md).
+- `TaskOrderAir`
+- `LeaderIntentAir`
+- air-specialized fields carried by `MissionCommand`
 
-Under the new standard system:
+It replaces earlier descriptions that treated air mission command as a generic
+project-wide command standard.
 
-- The joint/common core only defines the common skeleton of `intent / order / report`
-- This document only defines how these objects are concretized under the air profile
-- `CAP`, `runway approach`, `wingman formation` are all air-specific semantics
+## Scope
 
-## 1. Core Vectoring
+Primary references:
 
-The most direct parameterized commands, used to define the desired flight state.
+- [src/components/tasking/air/task_order_air.h](../../../src/components/tasking/air/task_order_air.h)
+- [src/components/tasking/air/leader_intent_air.h](../../../src/components/tasking/air/leader_intent_air.h)
+- [src/components/command/common/mission_command_core.h](../../../src/components/command/common/mission_command_core.h)
+- [src/components/command/air/mission_command_air.h](../../../src/components/command/air/mission_command_air.h)
+- [gym_envs/scenario_loader/runtime_state.py](../../../gym_envs/scenario_loader/runtime_state.py)
+- [tests/runtime/mission/test_mission_command_air_fields_roundtrip.py](../../../tests/runtime/mission/test_mission_command_air_fields_roundtrip.py)
 
-| Variable | Description | Physical Unit | Notes |
-| :--- | :--- | :--- | :--- |
-| `cmd_heading` | Target heading | Degrees (deg) | 0-360, magnetic or true heading |
-| `cmd_alt` | Target altitude | Meters (m) | Typically MSL (Mean Sea Level) |
-| `cmd_speed` | Target speed | Currently implemented as meters per second (m/s) | In real-world abstraction could correspond to IAS / TAS / Mach, but current in-repo flight-task training uniformly uses m/s |
-| `cmd_vvi` | Target vertical speed | m/s | Optional, for precise control of climb/descent profile |
+## Layer Split
 
-## 2. Procedural / Macro Commands
+The maintained split is:
 
-Defines the current mission phase, implying a comprehensive behavior pattern.
+- common core:
+  - `TaskOrderCore`
+  - `LeaderIntentCore`
+  - `MissionCommandCore`
+- air specialization:
+  - `TaskOrderAir`
+  - `LeaderIntentAir`
+  - `MissionCommandAir`
 
-| Command Code | Semantic Description | Typical Parameter Configuration |
-| :--- | :--- | :--- |
-| `CODE_IDLE` | Ground static / awaiting instructions | Speed=0, Alt=Ground |
-| `CODE_TAKEOFF` | Takeoff command | Heading=Rwy, Speed=V2, Alt=Initial |
-| `CODE_CRUISE` | Heading-altitude-speed vector guidance | Heading/Alt/Speed |
-| `CODE_ROUTE_NAV` | Route / waypoint navigation | Steerpoint Sequence, LNAV |
-| `CODE_LAND` | Landing command | Heading=Rwy, Alt=GlideSlope, Speed=Vref |
-| `CODE_ORBIT` | Holding orbit | ReferenceCoord, Radius |
-| `CODE_RTB` | Return to base | HomeBaseID |
+The type names may still be composed together in code, but ownership stays
+layered.
 
-> Current in-repo implementation note: The numeric convention actually used in current single-aircraft flight training is
-> `0=Idle`, `1=Takeoff`, `2=Vector/Cruise`, `3=Waypoint/LNAV Route Navigation`, `4=Landing/Final`.
-> Among these, `command_code=3` means "execute route navigation according to steerpoint sequence",
-> `command_code=4` means "runway-aligned approach/landing task".
-> The longitudinal path for the landing task is not directly issued via privileged runway geometry, but is provided through
-> `ILS`-style products (`loc_dev / gs_dev / dme`) in the observations.
+## Common-Core Command Fields Used By Air
 
-## 3. Formation Controls
+Air runtime still depends on the shared `MissionCommandCore` fields:
 
-In multi-aircraft coordination, defines the relative spatial relationship with the lead aircraft.
+- `command_code`
+- `cmd_heading_deg`
+- `cmd_altitude_m`
+- `cmd_speed_mps`
+- `route_ref_id`
+- `roe_state`
+- `engagement_authority_holder_id`
+- `engagement_authority_grantor_id`
+- `assigned_target_id`
+- `authorization_to_fire`
+- `active`
 
-| Variable | Description | Physical Unit | Notes |
-| :--- | :--- | :--- | :--- |
-| `form_pos_id` | Formation position ID | Integer | Line abreast, echelon, wedge, etc. |
-| `form_offset_x` | Forward/backward offset relative to lead | Meters (m) | |
-| `form_offset_y` | Left/right offset relative to lead | Meters (m) | |
-| `form_offset_z` | Vertical offset relative to lead | Meters (m) | |
+These fields are not air-only. Air uses them, but does not own them.
 
-## 4. Tactical Intent
+## Air-Specialized `MissionCommand` Fields
 
-Defines the priorities for air combat behavior.
+The maintained air extension fields are:
 
-| Variable | Description | Value Range | Notes |
-| :--- | :--- | :--- | :--- |
-| `tac_target_id` | Specified assigned target ID | Entity ID | Tells the AI "that is your target" |
-| `tac_engagement` | Engagement authorization | {HOLD, COVER, ENGAGE} | Whether weapon release is allowed |
-| `tac_jettison` | Forced jettison command | Triggered | For high-G or fuel emergency situations |
+- `recovery_base_id`
+- `recovery_runway_id`
+- `recovery_approach_type`
+- `takeoff_procedure_id`
+- `takeoff_clearance_id`
+- `takeoff_interval_s`
+- `runway_slot_id`
+- `formation_id`
+- `form_offset_x`
+- `form_offset_y`
+- `form_offset_z`
 
-## 5. Case Studies
+These fields are air-specific execution/tasking semantics. They must not be
+promoted into common core just because they currently appear in a shared runtime
+carrier.
 
-### Scenario A: Takeoff
+## Air Tasking Fields
 
-When the command layer issues `CODE_TAKEOFF`, the command stream will consist of the following data:
-*   `cmd_heading`: Current runway heading (e.g., 090).
-*   `cmd_alt`: Initial liftoff altitude (e.g., 1000m).
-*   `cmd_speed`: Scheduled climb speed (e.g., 250kts).
-*   **AI Task**: After observing these commands, maintain 090 heading during ground roll via stick and throttle, rotate at rotation speed, retract landing gear, and reach the target state.
+`TaskOrderAir` currently carries the upstream air tasking surface, including:
 
-### Scenario B: Cruise
+- package/element/lead identifiers
+- station anchor and station geometry
+- altitude/speed block and target values
+- recovery configuration
+- takeoff procedure and runway slot
+- formation template/contract/role linkage
+- support-sector and mutual-support metadata
 
-When the command layer issues `CODE_CRUISE`:
-*   `cmd_heading`: Cruise route bearing.
-*   `cmd_alt`: Cruise level altitude (e.g., 8000m).
-*   `cmd_speed`: Cruise economical Mach number (e.g., 0.7M).
-*   **AI Task**: Smoothly climb to the specified altitude, adjust throttle to maintain Mach number.
+This is tasking-side air organization semantics, not the final executable
+command object.
 
-### Scenario C: Route Navigation
+## Air Leader-Intent Fields
 
-When the command layer issues `CODE_ROUTE_NAV`:
-*   `cmd_heading`: The desired ground track bug for the current active leg, not the "instantaneous bearing to fly directly to a point".
-*   `cmd_alt`: Target altitude for the current active waypoint or leg.
-*   `cmd_speed`: Target speed for the current active waypoint or leg.
-*   `Additional navigation products`: Steerpoint number, distance to active waypoint, relative bearing, CDI/XTK, next turn angle / turn distance.
-*   **AI Task**: Complete route tracking, turn anticipation, and segment altitude/speed constraints using LNAV/EGI-style navigation products.
+`LeaderIntentAir` currently carries the leader-side air decision surface,
+including:
 
-### Scenario D: Landing / Final
+- `phase_id`
+- `element_phase_id`
+- `route_ref_id`
+- recovery and approach fields
+- takeoff procedure/clearance/interval/runway slot
+- formation mode and offsets
+- join/rejoin/split flags
+- support anchor and slot offsets
+- approach-arm, commit-to-land, and abort flags
 
-When the command layer issues `CODE_LAND`:
-*   `cmd_heading`: Runway final approach heading.
-*   `cmd_alt`: Runway reference altitude / landing reference altitude.
-*   `cmd_speed`: Approach reference speed.
-*   `Additional instrument products`: `ILS` localizer deviation, glideslope deviation, DME.
-*   **AI Task**: Capture localizer and glideslope, stabilize speed and attitude, touch down and decelerate within the runway.
+This is the air leader's intermediate decision surface before final mapping into
+`MissionCommand`.
 
-## 6. Standardization Significance
+## Maintained `command_code` Semantics
 
-1.  **Decouple decision-making from execution**: The lead layer only cares about "where to go / what to do", the pilot layer (RL) only cares about "how to fly".
-2.  **Transformer training advantage**: The AI performs Cross-Attention between the `cmd_*` sequence and its own `alt/speed` sequence, enabling it to learn the implicit physical logic of "tracking" and "achieving" command objectives more quickly.
+The currently maintained numeric command contract used by runtime/tests is:
+
+- `0`: idle / hold
+- `1`: takeoff
+- `2`: vector / cruise / direct command-following
+- `3`: waypoint or LNAV-style route navigation
+- `4`: landing / final approach
+
+This is the maintained implementation contract. Broader macro-command catalogs
+should not be documented here as if they were already stable runtime behavior.
+
+## Roundtrip Requirements
+
+The maintained air command contract must survive:
+
+- JSON mission-command backfill/export
+- execution-episode state import/export
+- post-waypoint transition handoff
+- mission-observation assembly for takeoff/formation modes
+
+That is why fields such as `recovery_*`, `takeoff_*`, `runway_slot_*`, and
+`formation_*` are tested for roundtrip preservation.
+
+## Ownership Boundary
+
+Keep in common core:
+
+- command carrier shape
+- authority and ROE fields
+- neutral target-heading/altitude/speed references
+
+Keep in air specialization:
+
+- runway and recovery
+- takeoff procedure and runway slot
+- formation offsets and air formation identifiers
+- approach/landing-specific leader intent
+
+## Non-Goals
+
+This document does not attempt to standardize a complete air-task doctrine
+catalog, a full CAP/BARCAP/TARCAP taxonomy, or every future leader behavior.
+It only describes the maintained contract the current runtime and tests already
+treat as stable.

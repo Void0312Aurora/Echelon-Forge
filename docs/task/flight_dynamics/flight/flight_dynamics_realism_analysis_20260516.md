@@ -23,7 +23,7 @@ Related files:
 - [Air Combat 1v1 Cut-in Analysis](../../air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
 - [Air Combat 1v1 Training Smoke Test Progress](../../air_combat/air_combat_1v1_training_smoke_progress_20260516.zh.md)
 - [Air Combat 1v1 Deep Stall Root Cause Follow-up](../../air_combat/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
-- [First Batch of Realism Gate Keeping Tests](../../../../tests/runtime/test_flight_dynamics_realism_guards.py)
+- [First Batch of Realism Gate Keeping Tests](../../../../tests/runtime/air_combat/test_flight_dynamics_realism_guards.py)
 
 Document positioning:
 
@@ -31,7 +31,7 @@ Document positioning:
 - It does not cover acceptable simplifications, does not provide prioritization, and does not give a work plan.
 - Sections 10 to 12 additionally record the impact analysis and acceptance threshold of flight dynamics as a prerequisite for air combat.
 
-## Postscript: `2026-05-17` Closure Markers
+## Postscript: `2026-05-18` Closure Markers
 
 Closure criteria:
 
@@ -47,12 +47,12 @@ This postscript only answers "Are these arguments still valid today?", not rewri
 | `2.1` Lift Model | `Partially solved` | Minimal `Mach/stall` schedule entry and gate-keeping exist, but negative angle-of-attack asymmetry, `beta` coupling, and aircraft-type curves are still not closed |
 | `2.2` Drag Model | `Partially solved` | Minimal `Mach/cd0/induced drag` scheduling exists, but wave drag decomposition, external store interference, and more credible ground effect are still missing |
 | `2.3` Moment Model | `Partially solved` | `stall_progress / pitch_break surrogate / alpha_dot` have entered runtime, but control surface derivatives and full stability derivative scheduling are still missing |
-| `2.4` Stall/Post-Stall Dynamics | `Partially solved` | Minimal `pitch break / recovery trend` exists, but `hysteresis / wing rock / post-stall` are still not closed |
+| `2.4` Stall/Post-Stall Dynamics | `Minimal closure achieved` | `StallState`, stall-memory behavior, `pitch break`, and recovery trend have entered runtime, but `wing rock / deeper post-stall` fidelity is still not closed |
 | `2.5` Thrust and Propulsion System | `Minimal closure achieved` | `spool / AB / TSFC / shared propulsion fact` are connected, but it is still not an aircraft-level engine model |
 | `2.6` Inertia and Mass | `Unsolved` | `Ixz`, post-release inertia recalculation, and fuel distribution effects on inertia are still not integrated |
 | `2.7` Integrator Accuracy | `Unsolved` | No evidence of closure for rotational integration and `Velocity-Verlet` upgrade |
-| `2.8` Atmosphere and Environment | `Partially solved` | The atmosphere input skeleton is unified, but high-altitude speed of sound, turbulence, and wind shear are still missing |
-| `2.9` FBW Flight Control System | `Unsolved` | `g-command / gain scheduling / G-limiter / control allocation` have not entered the current main line |
+| `2.8` Atmosphere and Environment | `Minimal closure achieved` | Standard-atmosphere density/temperature, temperature-derived speed of sound, and altitude-dependent wind shear are wired in, but turbulence and richer weather effects are still missing |
+| `2.9` FBW Flight Control System | `Partially solved` | Rate-command control, `q_bar` scheduling, `AoA` limiting, and `beta` damping exist, but `g-command / control allocation / full FBW` closure is still missing |
 | `2.10` Stale Code/Documentation Desync | `Solved` | This stale description no longer represents the current implementation and should be considered historical residue |
 | Section 5 Main Risks for Air Combat | `Partially solved` | Thrust transients and high-AoA recovery have minimal closure, but compressibility and `RSS/FBW` remain main risks |
 | Section 6 Realism Gate Keeping | `Minimal closure achieved` | `coarse realism guards` have been committed, but cannot replace high-fidelity acceptance |
@@ -425,7 +425,7 @@ Significance:
 
 New addition in this round:
 
-- [tests/runtime/test_flight_dynamics_realism_guards.py](../../../../tests/runtime/test_flight_dynamics_realism_guards.py)
+- [tests/runtime/air_combat/test_flight_dynamics_realism_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_realism_guards.py)
 
 Coverage:
 
@@ -438,7 +438,7 @@ Run command:
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
-cmo_python -m pytest -q tests/runtime/test_flight_dynamics_realism_guards.py
+cmo_python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
 ```
 
 Note:

@@ -641,7 +641,7 @@ This first batch should not yet:
 - `src/core/mission/execution_episode_state.cpp`
 - `src/core/mission/execution_episode_controller.h`
 - `src/core/mission/execution_episode_controller.cpp`
-- `tests/runtime/test_execution_episode_controller_parity.py`
+- `tests/runtime/execution/test_execution_episode_controller_parity.py`
 - `tools/diagnostics/compare_execution_episode_controller_parity.py`
 
 ### Existing files likely to change early

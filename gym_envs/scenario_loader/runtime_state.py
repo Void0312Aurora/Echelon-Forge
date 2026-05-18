@@ -457,7 +457,13 @@ def apply_execution_episode_state(loader, state) -> None:
     loader._rebuild_spatial_geometry()
 
 
-def apply_execution_episode_runtime_fields(loader, state, *, include_navigation_state: bool = True) -> None:
+def apply_execution_episode_runtime_fields(
+    loader,
+    state,
+    *,
+    include_navigation_state: bool = True,
+    include_navigation_structure: bool = True,
+) -> None:
     import ef_py
 
     if not hasattr(ef_py, "ExecutionEpisodeState") or not isinstance(state, ef_py.ExecutionEpisodeState):
@@ -478,6 +484,25 @@ def apply_execution_episode_runtime_fields(loader, state, *, include_navigation_
     loader_state.last_termination_reason = str(state.last_termination_reason or "idle")
 
     if not include_navigation_state:
+        return
+
+    if not include_navigation_structure:
+        loader_state.waypoint_idx = int(state.waypoint_index)
+        loader_state._waypoint_prev_dist_m = (
+            float(state.waypoint_prev_dist_m) if bool(state.has_waypoint_prev_dist_m) else None
+        )
+        loader_state.waypoint_total_route_length_m = float(state.waypoint_total_route_length_m)
+        loader_state._waypoint_leg_origin_x = float(state.waypoint_leg_origin_x_m)
+        loader_state._waypoint_leg_origin_y = float(state.waypoint_leg_origin_y_m)
+        loader_state._approach_prev_dme_m = (
+            float(state.approach_prev_dme_m) if bool(state.has_approach_prev_dme_m) else None
+        )
+        loader_state._approach_prev_loc_abs = (
+            float(state.approach_prev_loc_abs) if bool(state.has_approach_prev_loc_abs) else None
+        )
+        loader_state._approach_prev_gs_abs = (
+            float(state.approach_prev_gs_abs) if bool(state.has_approach_prev_gs_abs) else None
+        )
         return
 
     mission_cmd = None

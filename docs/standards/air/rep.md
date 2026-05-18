@@ -1,75 +1,128 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/rep.zh.md. Review before treating this file as authoritative. -->
+# Pilot Reporting Contract
 
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/rep.md. Review before treating this file as authoritative. -->
+Language:
+- English canonical: `rep.md`
+- Chinese companion: [rep.zh.md](rep.zh.md)
 
-# Pilot Reporting Standard
+Status: `2026-05-18` specialization baseline for maintained air reporting semantics.
 
-> Scope note (2026-03-23): This document is the `Air Specialization`, describing platform and tactical reporting semantics in an air configuration.
-> For the current standardized master baseline, first see [docs/standards/README.md](../README.md),
-> [docs/standards/joint/command_and_modeling_baseline.md](../joint/command_and_modeling_baseline.md),
-> [docs/standards/services/air_force.md](../services/air_force.md).
+This document defines the maintained air reporting contract for the current
+repository. It does not serve as a full brevity-code handbook.
 
-This document defines the specification for "wingman/digital pilot" reporting information to the "lead/command layer". This is a key component of the bidirectional tactical link, enabling the command layer to adjust tactics based on each aircraft's real-time status, observations, and mission progress.
+## Scope
 
-In the new standard system:
+The maintained reporting surface is split into:
 
-- joint/common core handles the common reporting skeleton
-- This document only addresses the specific reporting semantics for air configuration
-- The brevity/wingman/return-to-base expressions here should not be directly generalized to maritime/land domains
+- `PilotReportCore`
+- `PilotReportAir`
+- the subset of report types that current leader/runtime logic actually treats
+  as stable
 
-## 1. Command Acknowledgment
-Basic feedback to commands from the lead.
+Primary references:
 
-| Report Code | Semantic Description | Remarks |
-| :--- | :--- | :--- |
-| `REP_WILCO` | Will comply with the instruction | Command acceptance confirmation |
-| `REP_ROGER` | Received (Received) | Only acknowledges receipt, does not imply execution |
-| `REP_UNABLE` | Cannot execute the instruction | Usually accompanied by a reason (e.g., low fuel, excessive load factor) |
-| `REP_CANT_DO` | Received but cannot achieve due to airframe limitations | E.g., requested speed of 2.0M but aircraft cannot reach it |
+- [src/components/tasking/common/pilot_report_core.h](../../../src/components/tasking/common/pilot_report_core.h)
+- [src/components/tasking/air/pilot_report_air.h](../../../src/components/tasking/air/pilot_report_air.h)
+- [python/rl/tasking/leader_tasking.py](../../../python/rl/tasking/leader_tasking.py)
+- [src/runtime/contracts/world_batch_contracts.h](../../../src/runtime/contracts/world_batch_contracts.h)
 
-## 2. Status Report
-Periodic or responsive summary of own aircraft status.
+## Core Report Fields
 
-| Variable | Description | Data Type | Remarks |
-| :--- | :--- | :--- | :--- |
-| `status_fuel` | Fuel status code | {Joker, Bingo, State} | Joker: Needs withdrawal; Bingo: Must return to base; State: Specific reading |
-| `status_ammo` | Ammunition remaining status | {Winchester, Remington, State} | Winchester: Ammo expended; Remington: Only limited self-defense remaining |
-| `status_damage` | Airframe damage level | 0.0 (undamaged) - 1.0 (destroyed/uncontrollable) | Based on health/system damage |
-| `status_pos` | Current position report | {x, y, z} | Auto-sync or response sync |
+`PilotReportCore` provides the cross-domain report skeleton:
 
-## 3. Tactical/Brevity Reports
-Data-driven representation of air combat brevity codes.
+- `report_type`
+- `sender_id`
+- `task_id`
+- `service_profile`
+- `task_family`
+- `tactical_unit_type`
+- `tactical_unit_id`
+- `task_group_id`
+- `role_code`
+- `coordination_mode`
+- `timestamp_s`
+- `status_value`
+- `entity_ref`
+- `location_x_m`
+- `location_y_m`
+- `location_z_m`
+- `active`
 
-| Report Code | Description | Corresponding Parameters | Remarks |
-| :--- | :--- | :--- | :--- |
-| `REP_TALLY` | Visual contact with enemy target | `target_id`, `pos` | Target confirmed as hostile |
-| `REP_VISUAL` | Visual contact with friendly target | `target_id`, `pos` | Confirms position of lead or other wingman |
-| `REP_BLIND` | Lost visual/radar contact with target | `target_id` | Alerts the formation |
-| `REP_SPIKE` | Continuous radar lock by enemy | `threat_type`, `azimuth` | Alert from Radar Warning Receiver |
-| `REP_ENGAGED` | Currently engaged in combat | `target_id` | Informs lead that own aircraft has entered dogfight/attack state |
-| `REP_SPLASH` | Successfully shot down target | `target_id` | Air-to-air kill confirmation |
-| `REP_DEFENDING` | Evading a threat | `threat_type` | Informs own side that defensive maneuvers are underway |
+These fields belong to common tasking/report ownership, not air ownership.
 
-## 4. Mission Progress
-Completion status of macro instructions from [aim.md](aim.md).
+## Air Report Extension Fields
 
-| Report Code | Description | Remarks |
-| :--- | :--- | :--- |
-| `REP_ON_STATION` | Arrived at designated area/station | Formation assembly complete or patrol arrival |
-| `REP_FENCE_IN` | Preparing to enter combat zone | All weapons/sensors status ready check complete |
-| `REP_FENCE_OUT` | Leaving combat zone | Phased feedback for mission completion, returning to base |
-| `REP_RTB` | Returning to base | Final confirmation |
+`PilotReportAir` currently adds:
 
-## 5. Emergency/Warning
-Unplanned contingencies.
+- `element_id`
+- `phase_id`
+- `formation_role_id`
+- `formation_error_m`
+- `bearing_error_deg`
+- `closure_mps`
+- `separation_m`
 
-| Variable | Description | Remarks |
-| :--- | :--- | :--- |
-| `warn_flameout` | Engine flameout warning | Fuel exhausted or damage |
-| `warn_bingo` | Reached bingo fuel level | Mandatory reminder to lead |
-| `warn_missile_launch` | Enemy missile launch detected | Highest priority alert |
+These are air-specific reporting fields for formation and air-task execution
+context.
 
-## 6. Standardization Significance
-1.  **Closed-loop Command**: Lead issues instructions ([aim.md](aim.md)), wingman provides feedback ([rep.md](rep.md)), forming a closed loop.
-2.  **Multi-Agent Collaboration (MARL)**: In multi-aircraft training, these reports serve as key inputs for Transformers to learn "coordination". The lead Agent adjusts subsequent tactical task allocation based on wingman feedback.
-3.  **Logging & Analysis**: All report content is recorded as timestamped logs, greatly facilitating post-training debriefing and visualization.
+## Maintained Stable Report Types
+
+The current leader/runtime loop treats the following report types as stable and
+meaningful:
+
+- `REP_ON_STATION`
+- `REP_RTB`
+- `WARN_BINGO`
+- `REP_UNABLE`
+- `REP_WILCO`
+
+These are the report types that current runtime logic actually interprets for
+task progression or leader assessment.
+
+## Extended Report Surface
+
+The wider DTO and enum surface can carry more report codes, and tests may store
+or roundtrip additional air report types such as formation-related status.
+
+However, those broader codes should be documented as extension surface unless
+current runtime logic gives them stable closed-loop semantics.
+
+That means this document should not present a large tactical brevity catalog as
+if the repository already consumes all of it.
+
+## Report Generation Rules
+
+The maintained pilot-report contract should preserve:
+
+- a valid `report_type`
+- sender/task identity
+- timestamp
+- location
+- active state
+
+When formation context matters, air extension fields may also be populated with:
+
+- formation role
+- formation error
+- bearing error
+- closure
+- separation
+
+## Ownership Boundary
+
+Keep in common core:
+
+- generic report identity and metadata
+- cross-domain tasking/report skeleton
+
+Keep in air specialization:
+
+- formation-specific error and closure data
+- phase and element context tied to air-task execution
+- air-specific meanings layered on top of shared report types
+
+## Non-Goals
+
+This document does not standardize a complete brevity-code manual, every
+possible air-combat callout, or every future leader-agent reporting heuristic.
+It documents the maintained reporting contract that current code and tests can
+actually roundtrip or interpret.

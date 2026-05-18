@@ -1,24 +1,80 @@
-# Naval Standards Placeholder
+# Naval Standards
 
-This directory is reserved for standards documentation related to the upcoming `naval` module.
+This directory contains the authoritative standards for the dedicated `naval` specialization.
 
-Its current purpose is limited to:
+It is the standard landing point for the current naval task plan, not a placeholder. The goal is to separate `common`, `services/navy`, and `naval` cleanly enough that the current runtime and planning work can continue without air-first assumptions leaking into maritime semantics.
 
-- Providing a clear landing point for the `common + air + naval` split.
-- Providing a freeze entry point for the minimal naval task structure, see [minimal_task_structure.md](minimal_task_structure.md).
-- Providing sources and modeling boundaries for the first batch of real warship units, see [ship_unit_references.md](ship_unit_references.md).
+## 1. Layer Model
 
-## 1. Directory Responsibilities
+### `common`
 
-Documents placed here in the future should only describe naval-specific semantics, for example:
+The shared layer keeps the cross-service contract stable.
 
+It owns fields such as:
+
+- `service_profile`
+- `task_family`
+- `task_group_id`
+- `command_relationship`
+- `authority_scope`
+- `coordination_mode`
+- `supported_node_id / supporting_node_id`
+- `recovery_site_id`
+- `tactical_unit_type`
+
+These are service-neutral shapes. They are not naval execution semantics.
+
+### `services/navy`
+
+The Navy service profile explains how the shared contract should be read for naval warfare.
+
+It owns the interpretation of:
+
+- `task_group` and `task_unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
-- Tight-loop runtime interpretation of `task force / task group / task unit`
-- Fleet cooperation semantics such as screen / support / station
-- Naval route / recovery / replenishment / station-keeping rules
+- shared anchors that the Navy profile needs for task packaging and authority assignment
 
-## 2. Content That Should Not Be Placed Here
+### `naval`
+
+The `naval` specialization owns the tight-loop maritime semantics:
+
+- `screen`
+- `support`
+- `station`
+- `recover`
+- ship and formation control semantics
+- maritime recovery and station-keeping behavior
+
+## 2. Minimal Semantic Contract
+
+The minimal naval semantic set now treated as first-class is:
+
+- `task_group`
+- `task_unit`
+- `warfare_role_code`
+- `officer_in_tactical_command`
+- `screen`
+- `support`
+- `station`
+- `recover`
+
+These are the smallest terms needed to make the current task plan meaningful without overfitting to air sortie language.
+
+## 3. What Belongs Here
+
+Documents in this directory should describe naval-specific semantics, such as:
+
+- task-group and task-unit ownership
+- warfare role allocation
+- station holding and recovery behavior
+- screen/support relations in a naval formation
+- command authority in maritime tasking
+- naval execution and reporting specialization
+
+## 4. What Does Not Belong Here
+
+The following should remain in `common` or `services/navy`:
 
 - `command_relationship`
 - `authority_scope`
@@ -26,24 +82,30 @@ Documents placed here in the future should only describe naval-specific semantic
 - `service_profile`
 - `tactical_unit_type`
 - `coordination_mode`
-- Other `common` fields that still hold across military branches
+- other cross-service contract fields
 
-These should continue to be governed by `docs/standards/joint/` and `docs/standards/services/`.
+This directory should not re-litigate the shared schema. It should specialize it.
 
-## 3. Relationship with air
+## 5. Relationship with Air
 
-`naval` is not a simple renaming of existing air documentation.
+`naval` is not a rename of air documentation.
 
-Subsequent naval documentation should avoid default use of:
+Naval documentation should avoid default air concepts such as:
 
 - `lead / wingman`
 - `runway`
 - `CAP`
-- air-style interpretation of `MissionCommand.command_code`
+- air-style reading of `MissionCommand.command_code`
 
-If an object is only valid in an air combat sortie-level scenario, it should remain in `docs/standards/air/`.
+If a concept is only valid for air sortie-level runtime, it should stay in `docs/standards/air/`.
 
-## 4. Current Minimal Naval Placeholder Stance
+## 6. Current Minimal Naval Meaning
 
-- `Red_Surface_Combatant_Minimal` belongs to a `community-derived approximation`, used only to replace the previous incorrect placeholder that treated a supply ship as an enemy vessel. It does not represent precise public parameters of any specific enemy ship class.
-- `ReportTrack` / task-group-level sharing is an engineering approximation converged from current data link realities, used to avoid stepwise flooding broadcasts; it is not equivalent to the full `Link 16 / CEC` semantics.
+The current minimal naval semantics now expected by the runtime bridge are:
+
+- `task_group / task_unit` as the tactical organization boundary
+- `officer_in_tactical_command` as the authority owner
+- `warfare_role_code` as the role label
+- `screen / support / station / recover` as the minimal operational vocabulary
+
+These terms are enough to support the present naval task plan without pretending the full fleet doctrine is already modeled.

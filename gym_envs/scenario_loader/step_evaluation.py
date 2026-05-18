@@ -327,6 +327,7 @@ def build_step_evaluation_batch_env_state(
     max_steps: int,
     mission_obs_mode: str | None = None,
     mission_observation_inputs=None,
+    include_episode_state: bool = True,
     return_prepared: bool = False,
     prepared_entry: dict | None = None,
 ):
@@ -354,7 +355,7 @@ def build_step_evaluation_batch_env_state(
     state.prev_ias_mps = float(getattr(loader, "prev_speed", 0.0))
     state.defer_landing_post_transition = bool(loader._defer_landing_post_transition_until_next_update())
 
-    if hasattr(ef_py, "ExecutionEpisodeState"):
+    if include_episode_state and hasattr(ef_py, "ExecutionEpisodeState"):
         try:
             state.episode_state = loader.build_execution_episode_state()
             state.has_episode_state = True

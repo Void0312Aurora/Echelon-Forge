@@ -23,6 +23,7 @@ Current maintained helpers:
   - Audits English/Chinese doc pairing coverage and batch-translates Markdown peer files through an OpenAI-compatible API.
   - Preserves Markdown link destinations by masking targets before translation and restoring them afterward.
   - Rewrites workspace-absolute repository file links into relative Markdown targets.
+  - Generates and audits a bilingual cluster registry so paired docs can be checked for drift after one-sided edits.
 
 Maintenance guidance:
 
@@ -45,7 +46,7 @@ cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-workshop --target ef_core ef_py -j2
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
-cmo_python -m pytest -q tests/runtime/test_env_config.py
+cmo_python -m pytest -q tests/runtime/core/test_env_config.py
 ```
 
 This mirrors the CI smoke boundary: install the small smoke dependency set,
@@ -58,7 +59,7 @@ Direct script-mode entrypoints are also supported:
 ```bash
 bash tools/maintenance/cmo_env.sh summary
 bash tools/maintenance/cmo_env.sh validate
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/test_env_config.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/core/test_env_config.py
 ```
 
 Recommended Windows/PowerShell usage:
@@ -89,15 +90,31 @@ Windows scope:
 Recommended bilingual doc audit:
 
 ```bash
-python3 tools/maintenance/translate_docs_batch.py audit --root docs
+python3 tools/maintenance/translate_docs_batch.py audit --root docs \
+  --registry docs/standards/bilingual_document_clusters.json
+```
+
+If that audit looks noisy after a large doc sweep, refresh the registry first:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
+```
+
+The audit compares current file hashes against the registry baseline, so a
+stale baseline can look like drift even when the repo is just catching up.
+
+Generate or refresh the bilingual cluster registry baseline:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
 ```
 
 By default, the audit skips local-only documentation surfaces that are commonly
 ignored from the shared remote, including:
 
 - `docs/Archive/`
+- `docs/**/archive/`
 - `docs/temp/`
-- `docs/plan/archive/`
 - `docs/plan/results/`
 
 To include them explicitly:

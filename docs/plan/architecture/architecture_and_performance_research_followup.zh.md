@@ -5,7 +5,7 @@
 - [README.md](../README.md)
 - [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 - [runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](../runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+- [runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
 
 状态：`2026-05-10` 调研论述草案。  
 文档定位：

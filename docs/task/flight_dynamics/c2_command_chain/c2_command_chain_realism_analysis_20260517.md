@@ -44,12 +44,9 @@ Document Positioning:
 Current Status Guidance:
 
 - This document is a frozen analysis input, not a current execution status board.
-- For execution status and regression risks directly related to this analysis, please refer primarily to:
-  - [Realism Mainline and Related Subproject Current Status](../program/realism_program_current_status_20260517.zh.md)
-  - [Naval Warfare Advancement Checkpoint](../../naval/naval_progress_checkpoint_20260517.zh.md)
-  - [Air Combat 1v1 F-16C Baseline Switch and Minimal Dogfight Contract Progress](../../air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
+- For execution status and regression risks directly related to this analysis, refer only to the `2026-05-18` closure marker in this analysis.
 
-## Addendum: `2026-05-17` Closure Mark
+## Addendum: `2026-05-18` Closure Mark
 
 Mark Criteria:
 
@@ -64,7 +61,7 @@ This addendum is only used to determine whether these `C2` arguments can still b
 |------|--------------|-------------|
 | `2.1` Chain of command asymmetry by domain—naval side severely underdeveloped | `Partially Resolved` | Naval side is still significantly weaker than the air side, but has progressed from "severely underdeveloped" to a minimal engineering closure integrated into the mainline. |
 | `2.2` `MissionCommand` is a "shared shell + heavy air load" | `Partially Resolved` | Overall still `air-shaped`, but naval-specific `station/reference` fields have been integrated. |
-| `2.3` Naval command mapping bypasses all mission command | `Partially Resolved` | Still lacks a complete naval mission phase machine, but is no longer just a simple heading/speed extraction. |
+| `2.3` Naval command mapping bypasses all mission command | `Resolved` | Naval command mapping now carries `MissionCommand` semantics and runtime station/reference handling; the remaining gap is richer naval mission-phase semantics rather than total mission-command bypass. |
 | `2.4` Two command pipelines coexist—`MovementCommand` not deprecated | `Partially Resolved` | Dual pipeline still exists, but `Ship`'s main authority has been reclaimed from `MovementCommand` to `MissionCommand`. |
 | `2.5` `CommandLink` model is too simplified | `Partially Resolved` | `FIFO backlog + minimal priority reorder` exists, but still no `ACK/retry/jitter/multi-hop`. |
 | `2.6` Communication message system has no bandwidth/electronic warfare constraints | `Partially Resolved` | No longer infinite broadcast; `budget/drop/debug` has been integrated, but still no `relay/jamming`. |

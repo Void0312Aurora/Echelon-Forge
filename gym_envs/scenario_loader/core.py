@@ -287,11 +287,18 @@ class ScenarioLoader:
     def apply_execution_episode_state(self, state) -> None:
         _apply_execution_episode_state_impl(self, state)
 
-    def apply_execution_episode_runtime_fields(self, state, *, include_navigation_state: bool = True) -> None:
+    def apply_execution_episode_runtime_fields(
+        self,
+        state,
+        *,
+        include_navigation_state: bool = True,
+        include_navigation_structure: bool = True,
+    ) -> None:
         _apply_execution_episode_runtime_fields_impl(
             self,
             state,
             include_navigation_state=include_navigation_state,
+            include_navigation_structure=include_navigation_structure,
         )
 
     def _task_order_spec(self) -> dict:
@@ -898,6 +905,7 @@ class ScenarioLoader:
         max_steps: int,
         mission_obs_mode: str | None = None,
         mission_observation_inputs=None,
+        include_episode_state: bool = True,
         return_prepared: bool = False,
         prepared_entry: dict | None = None,
     ):
@@ -911,6 +919,7 @@ class ScenarioLoader:
             max_steps=max_steps,
             mission_obs_mode=mission_obs_mode,
             mission_observation_inputs=mission_observation_inputs,
+            include_episode_state=include_episode_state,
             return_prepared=return_prepared,
             prepared_entry=prepared_entry,
         )

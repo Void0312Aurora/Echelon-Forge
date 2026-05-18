@@ -16,7 +16,7 @@
   - 聚焦的任务文档、实现包和进度检查点。
 - [standards/README.md](standards/README.md)
   - 联合/服务/平台建模基线及专业说明。
-- [standards/bilingual_documentation_policy.md](standards/bilingual_documentation_policy.md)
+- [standards/bilingual_documentation_policy.md](standards/governance/bilingual_documentation_policy.md)
   - 规范语言、文件配对及批量翻译策略。
 - [manual/](manual)
   - 代码层映射、引擎能力说明、物理清单及面向操作员的手册。

@@ -25,7 +25,7 @@ Document Positioning:
 - This document only records known deficiencies and their corresponding real physical/engineering situations.
 - Does not cover acceptable simplifications, does not provide prioritization, does not give a work plan.
 
-## Postscript: `2026-05-17` Closure Markers
+## Postscript: `2026-05-18` Closure Markers
 
 Marker Caliber:
 
@@ -41,7 +41,7 @@ This postscript is solely for answering whether these arguments can still be dir
 | Section 1: Current Weapon Pipeline | `Partially Resolved` | Should be re-read as `seeker-only guidance + minimal 3DoF/PN-autopilot surrogate + shared missile tuning`, no longer the old single-layer chain |
 | `2.1` Velocity vector rotation replaces acceleration command | `Minimal Closure Achieved` | Minimal surrogate with bounded lateral acceleration and response lag exists, but still not full body dynamics |
 | `2.2` No missile autopilot stage | `Minimal Closure Achieved` | Minimal inner loop semantics like `autopilot_tau` are wired in, but still not a complete autopilot/body dynamics |
-| `2.3` LOS rate calculation uses real target position | `Unresolved` | Truth-based target state dependency has not been truly severed |
+| `2.3` LOS rate calculation uses real target position | `Resolved` | Guidance now consumes detection/track state and filtered track memory rather than directly depending on raw target truth position/velocity |
 | `2.4` Decoy logic is a rough seduction approximation | `Unresolved` | Still lacks centroid, kinematic discrimination, and more realistic decoy timing |
 | `2.5` Navigation gain is a fixed constant | `Partially Resolved` | `nav_gain` is now in shared tuning, but still not real variable gain guidance |
 | `2.6` Sign inconsistencies in coordinate systems | `Partially Resolved` | Current sign caliber has a gating line, but this is more of a structural/validation debt rather than a main behavior red flag |
@@ -56,13 +56,13 @@ This postscript is solely for answering whether these arguments can still be dir
 | `5.2` Hit probability model quality-evasion coupling is unreasonable | `Unresolved` | Hit probability contract still not refactored |
 | `5.3` Fuze delay and fragment propagation time missing | `Unresolved` | Fuze timing still not in current mainline |
 | `6.1` HP deduction and geometric damage dual track inconsistency | `Unresolved` | `HP` path and subsystem path still not unified |
-| `6.2` Part damage is binary instant kill | `Unresolved` | Continuous degradation subsystem damage still not wired |
+| `6.2` Part damage is binary instant kill | `Minimal Closure Achieved` | `PlatformDamageState` and post-hit degradation now provide a minimal continuous damage path, even though richer subsystem fidelity is still missing |
 | `6.3` Coordinate transformation has uncertainty | `Partially Resolved` | More like validation debt, no evidence it is a main behavior red flag |
 | `6.4` No warhead type differentiation | `Unresolved` | Warhead family still not in runtime |
 | `7.1` No launch envelope check | `Minimal Closure Achieved` | `min range / off-boresight / LOBL` form a minimal fire denial contract |
 | `7.2` No rapid fire/multi-target launch limits | `Partially Resolved` | `ammo/cooldown` is in place, but more realistic salvo/multi-target constraints are missing |
 | `8.1` No midcourse datalink | `Minimal Closure Achieved` | `midcourse_datalink_supported / seeker_activation_range_m` are wired |
-| `8.2` Launch altitude/speed has zero effect on `Pk` | `Partially Resolved` | Dynamics are no longer completely irrelevant, but more realistic envelope/`Pk` modeling is still missing |
+| `8.2` Launch altitude/speed has zero effect on `Pk` | `Resolved` | Launch altitude/speed no longer have zero effect on missile behavior because atmosphere, drag, thrust, and mass depletion now change the flight profile, even though broader envelope/`Pk` realism remains incomplete |
 
 ---
 

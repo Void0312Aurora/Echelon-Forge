@@ -34,6 +34,10 @@ class BatchWorldHandle:
     visual_cache_step: int = -1
     action_controller: MultiTimescaleActionController | None = None
     execution_episode_controller_config: Any = None
+    last_mission_command_snapshot: Any = None
+    last_task_order_snapshot: Any = None
+    last_leader_intent_snapshot: Any = None
+    last_pilot_report_snapshot: Any = None
 
     @property
     def world_index(self) -> int:
@@ -60,6 +64,11 @@ class CooperativeWorldState:
     view: MultiAgentWorldRuntimeView | None = None
     slot_indices: list[int] = field(default_factory=list)
     director_dirty: bool = True
+    command_chain_dirty: bool = True
+    last_mission_command_snapshots: dict[int, Any] = field(default_factory=dict)
+    last_task_order_snapshots: dict[int, Any] = field(default_factory=dict)
+    last_leader_intent_snapshots: dict[int, Any] = field(default_factory=dict)
+    last_pilot_report_snapshots: dict[int, Any] = field(default_factory=dict)
 
     def set_randomization_overrides(self, overrides: dict | None) -> None:
         if overrides is None:

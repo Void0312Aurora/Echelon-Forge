@@ -1,140 +1,111 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/services/navy.md. Review before treating this file as authoritative. -->
-
 # US Navy Profile
 
-本文档定义项目在海战/海上行动建模时采用的 US Navy profile。
+本文档定义项目在海战与海上行动建模时使用的 Navy service profile。
 
-## 1. 官方现实基础
+它不再是早期占位文档。它的职责是说明 Navy 如何映射到共享的 `common` 合同，以及专门的 `naval` specialization 应如何读取这些字段。
 
-Navy 公开资料显示，海军战术组织比陆军更“任务编组化”，并且在战术控制上广泛采用
-`Task Force` 与 `Composite Warfare Commander (CWC)` 体系。
+## 1. 现实基础
 
-当前公开官方依据：
+Navy 公开资料显示，海军战术组织是任务编组化的，通常会以 `Task Force`、`Task Group`、`Task Unit` 和 `Composite Warfare Commander (CWC)` 体系来表达。
+
+当前公开依据：
 
 - [U.S. 7th Fleet, CTF 71 establishment](https://www.c7f.navy.mil/Media/News/Display/Article/2641477/ctf-71-establishment-enhances-readiness-in-7th-fleet/)
 - [TTGP Warfare Commanders Conference I](https://www.ttgp.navy.mil/OFRP-Syllabus/Warfare-Commanders-Conference-I/)
 - [NAVIFOR, IW Has a Seat at the Table](https://www.navifor.usff.navy.mil/Press-Room/News-Stories/Article/2395110/iw-has-a-seat-at-the-table/)
 - [COMPHIBRON 5 About](https://www.surfpac.navy.mil/Ships/Amphibious-Squadron-COMPHIBRON-5/About/)
 
-从这些官方页面可以确认：
+这些来源支持三个结论：
 
-- `Task Force` 是实际任务组织单元
-- sea combat / amphibious / information warfare 等能力会围绕 `CWC table`
-  与 warfare commanders 组织
-- `Officer in Tactical Command` 与 `Composite Warfare Commander` 在舰队/编队场景中是现实存在的角色
+- `Task Force / Task Group / Task Unit` 都是现实存在的海军任务组织层级。
+- 海军控制以 warfare commander 角色为中心，而不是空军式 `lead / wingman` 配对。
+- `Officer in Tactical Command` 是舰队与编队场景中的现实指挥权概念。
 
-## 2. 建模结论
+## 2. 层级边界
 
-### 2.1 不应进入 tight-loop runtime 的层
+### 2.1 `common`
 
-- numbered fleet
-- major theater maritime component
-
-这些更适合作为：
-
-- operation-level command nodes
-- scenario tasking and force packaging nodes
-
-### 2.2 更适合进入 tight-loop runtime 的层
-
-海战 tight-loop runtime 更适合放在：
-
-- `task group / task unit` 级 tactical grouping
-- `warfare commander` 级角色协同
-- `single ship / ship section`
-
-说明：
-
-- Navy profile 的关键不是“像空军一样分 element”，而是
-  `task organization + warfare commander role`
-
-## 3. 对项目通用模板的影响
-
-如果项目后续扩海战，joint/core 层必须能表达：
-
-- `task_group_id`
-- `warfare_role_code`
-- `supported/supporting relation`
-- `officer_in_tactical_command`
-
-而不能把核心协同对象预设成：
-
-- `lead / wingman`
-
-那只适合空战 sortie 级编组，不适合舰队/编队控制。
-
-## 4. 对 upcoming naval module 的直接约束
-
-若后续把当前 `tasking / command` 继续拆为 `common + air + naval`，Navy profile 应按下面方式落位：
-
-### 4.1 应继续留在 `common` 的对象
+`common` 应保留所有军种可共享的骨架：
 
 - `service_profile`
 - `task_family`
-- `tactical_unit_type`
+- `task_group_id`
 - `command_relationship`
 - `authority_scope`
 - `coordination_mode`
-- `task_group_id`
 - `supported_node_id / supporting_node_id`
 - `recovery_site_id`
+- `tactical_unit_type`
 
-这些字段在 Navy 里仍然成立，但含义应由 Navy profile 解释，而不是改成 air 词汇。
+对 Navy 来说，这些字段仍保持共享形状，但其含义由海军组织口径解释，而不是空战术语解释。
 
-### 4.2 应进入 `naval` 的对象
+### 2.2 `services/navy`
 
+`services/navy` 负责说明 Navy 对共享骨架的专属读法：
+
+- `task_group` / `task_unit` 层级
+- `officer_in_tactical_command`
+- `warfare_role_code`
+- Navy 在 runtime planning 和任务封装中真正依赖的 common 锚点
+
+这一层应该定义所有权与语义，不应定义执行细节。
+
+### 2.3 `naval`
+
+`naval` 是 tight-loop 海上运行时语义的专层：
+
+- `screen / support / station / recover`
+- 舰艇与编队任务行为
+- 驻站、回收与海上角色几何
+- naval execution 与 reporting specialization
+
+这一层不应重新声明共享合同字段，除非是在澄清它们的海军含义。
+
+## 3. 最小语义集
+
+Navy profile 应吸收以下最小语义作为一等术语：
+
+- `task_group`
+- `task_unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
-- naval `task force / task group / task unit` 组织层级解释
-- formation / station / screen / support 的舰队语义
-- 舰艇 section、surface action group、amphibious group 等专用 tasking 语义
+- `screen`
+- `support`
+- `station`
+- `recover`
 
-### 4.3 不应从 air 直接照搬到 naval core 的对象
+这些就是当前海军任务计划与运行时桥接所需的最小有效术语。
 
-- `lead / wingman`
-- `element lead`
-- `runway`
-- `approach type`
-- `takeoff clearance`
-- air sortie phase 驱动的 `LeaderPhase`
+### 3.1 术语含义
 
-如果 naval 也需要“谁跟谁走、谁守哪个站位”，应优先建模为 naval role / station / warfare commander 语义，
-而不是把 air 两机编队词汇泛化成通用模板。
+- `task_group`：主要海军任务编组。
+- `task_unit`：编组内的下级战术单元。
+- `warfare_role_code`：单位或指挥官承担的战斗职能。
+- `officer_in_tactical_command`：拥有战术指挥权的责任节点。
+- `screen`：围绕高价值编队进行保护性位置部署。
+- `support`：护航、保障或支援关系。
+- `station`：需要保持或恢复的相对站位。
+- `recover`：回收或返回控制语义，包括舰载航空器回收等场景。
 
-## 5. 对文档与代码协同的建议
+## 4. 对当前任务计划的含义
 
-为 upcoming module work，Navy 侧建议按下面顺序推进：
+对当前任务计划来说，Navy profile 的推进顺序应是：
 
-1. 先在 `common` 固定 joint 字段和 DTO 骨架。
-2. 再由 Navy profile 明确这些字段在 naval runtime 中对应的组织层级与角色口径。
-3. 最后才在 `naval` 专用文档里增加 tight-loop station / screen / support / recovery 语义。
+1. 保持 common 合同稳定。
+2. 用 `task_group / task_unit` 与 `officer_in_tactical_command` 绑定 Navy 的任务规划。
+3. 把 `screen / support / station / recover` 作为最小海军控制词汇接入。
+4. 再往下扩展更深的舰艇或编队行为。
 
-这样可以避免在 `common` 层过早写入 air-first 的编队与回收假设。
+这样可以避免把空军优先的假设写入 naval runtime。
 
-## 6. 对 runtime/standards bridge 的 ownership 含义
+## 5. 所有权与桥接职责
 
-本 profile 对 bridge 文档的要求是：
+`services/navy` 负责说明：
 
-- `services/navy.md` 负责说明 Navy profile 希望 core 保留哪些共通挂点
-- 它不负责定义 naval platform 的具体执行命令字段
-- 它也不应把 air 已有的 `route / landing / wingman` 语义直接当成 Navy 的默认模板
+- Navy 依赖哪些 common 字段
+- 这些字段由哪一层解释
+- 哪些海军角色与任务层级拥有战术控制权
 
-对未来模块边界的文档落点，可先按下面理解：
+它不负责定义平台级执行命令、传感器行为或武器逻辑。
 
-- `joint/common core`：
-  - `task_group_id`
-  - `supported/supporting relation`
-  - `recovery_site_id`
-  - `coordination_mode`
-- `services/navy`：
-  - `officer_in_tactical_command`
-  - `warfare_role_code`
-  - `task group / task unit` 级 tactical ownership
-- 未来 `naval/` 专用层：
-  - 舰艇/编队任务语义
-  - 舰面回收、补给、站位、海上编队几何
-  - naval execution command / reporting specialization
-
-因此，runtime/standards bridge 在 Navy 方向上的首要工作，
-应是把 core 骨架留给联合层，把海军组织与控制口径挂到 profile 层，
-而不是把 air-specific command 词汇继续扩写成“通用 core”。
+专门的 `naval` 层应在 common 骨架就位后承担这些运行时语义。

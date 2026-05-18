@@ -1,31 +1,23 @@
-# C2 Command-Chain And Communications Subproject
+# C2 Command-Chain And Communications Analysis
 
 Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-05-17` actively advancing.
+Status: `2026-05-17` analysis baseline retained; the current framing comes from the analysis closure marker, not `program/` or `archive/`.
 
-This subproject collects documents directly tied to the current
+This subtree keeps the frozen analysis baseline for the
 `MissionCommand / CommandLink / DataLink / ROE / naval command-chain`
-workstream, so ongoing progress does not keep getting piled back into one
-frozen analysis draft.
+workstream.
 
 ## Document Entry Points
 
 - [frozen analysis baseline](c2_command_chain_realism_analysis_20260517.zh.md)
   - Preserves the defect analysis and non-overstatement framing captured on
     `2026-05-17`.
-- [current progress checkpoint](c2_command_chain_progress_checkpoint_20260517.md)
-  - Records what this round has already implemented, verified, and exposed on
-    the mainline capability surface.
-- [open-issues analysis](c2_command_chain_unresolved_issues_20260517.md)
-  - Focuses on unresolved technical gaps, current boundaries, and next-round
-    recommendations.
+## Analysis Scope
 
-## Current Scope
-
-This subproject currently focuses on:
+This analysis currently focuses on:
 
 1. Minimal executable semantics and authority unification for `MissionCommand`
    across the air and naval sides.
@@ -34,7 +26,7 @@ This subproject currently focuses on:
 4. Minimal `ROE / engagement authority` fields and runtime gates.
 5. Minimal `DataLink` budget, priority, and observable congestion state.
 
-This subproject is not trying to solve in one pass:
+This analysis is not trying to solve in one pass:
 
 1. Full Link 16 / NPG / relay / ACK / retransmission behavior.
 2. Full naval fire-control AI / CEC / engage-on-remote behavior.
@@ -46,12 +38,11 @@ This subproject is not trying to solve in one pass:
 - [naval simulation realism analysis](../naval/naval_realism_analysis_20260516.zh.md)
 - [sensor and situational-awareness realism analysis](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
 - [weapon-system and guidance-loop realism analysis](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
-- [naval progress checkpoint](../../naval/naval_progress_checkpoint_20260517.md)
 
 ## Maintenance Rules
 
 1. Frozen analysis stays in the original file; do not rewrite "what was true at
    the time" inside that record.
-2. Current implementation progress goes into the `progress checkpoint`.
-3. Still-open issues that affect the next scheduling round go into
-   `unresolved issues`.
+2. Current state only comes from the closure marker in this analysis.
+3. If a new status snapshot is needed later, create a fresh document instead of
+   rewriting this frozen analysis.

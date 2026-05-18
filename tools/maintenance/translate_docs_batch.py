@@ -23,6 +23,7 @@ FALLBACK_BASE_URL_ENVS = ("BASE_URL",)
 FALLBACK_MODEL_ENVS = ("MODEL",)
 FALLBACK_API_KEY_ENVS = ("API_KEY",)
 DEFAULT_ENDPOINT = "/chat/completions"
+DEFAULT_CLUSTER_REGISTRY = Path("docs/standards/bilingual_document_clusters.json")
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 LANGUAGE_CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 LANGUAGE_LATIN_RE = re.compile(r"[A-Za-z]")
@@ -35,12 +36,11 @@ FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
 INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
 URL_RE = re.compile(r"https?://\S+")
 DEFAULT_EXCLUDE_SUBSTRINGS = (
-    "docs/Archive/",
     "docs/forward/temp/",
     "docs/temp/",
-    "docs/plan/archive/",
     "docs/plan/results/",
 )
+DEFAULT_EXCLUDE_DIR_NAMES = {"Archive", "archive"}
 DEFAULT_WORKSPACE_ROOT = "/home/void0312/Workshop/CMO"
 
 
@@ -111,6 +111,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Include local-only or typically ignored documentation directories in the audit.",
     )
+    audit.add_argument(
+        "--registry",
+        default=str(DEFAULT_CLUSTER_REGISTRY),
+        help="Optional bilingual cluster registry JSON to compare against.",
+    )
 
     translate = subparsers.add_parser("translate", help="Translate Markdown docs into peer files.")
     translate.add_argument("--files", nargs="+", help="Explicit source files to translate.")
@@ -164,6 +169,32 @@ def parse_args() -> argparse.Namespace:
     )
     translate.set_defaults(add_draft_note=True)
 
+    clusters = subparsers.add_parser(
+        "clusters",
+        help="Generate or audit the bilingual cluster registry JSON.",
+    )
+    clusters.add_argument("--root", default="docs", help="Root directory to scan.")
+    clusters.add_argument(
+        "--include-local-only",
+        action="store_true",
+        help="Include local-only or typically ignored documentation directories.",
+    )
+    clusters.add_argument(
+        "--registry",
+        default=str(DEFAULT_CLUSTER_REGISTRY),
+        help="Registry JSON path to read or write.",
+    )
+    clusters.add_argument(
+        "--write",
+        action="store_true",
+        help="Write the registry file after recomputing pairs.",
+    )
+    clusters.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show the registry path without writing changes.",
+    )
+
     rewrite = subparsers.add_parser(
         "rewrite-links",
         help="Rewrite workspace-absolute Markdown links into repo-relative links.",
@@ -207,7 +238,9 @@ def iter_markdown(root: Path) -> Iterable[Path]:
 
 def is_local_only_doc(path: Path) -> bool:
     normalized = path.as_posix()
-    return any(part in normalized for part in DEFAULT_EXCLUDE_SUBSTRINGS)
+    if any(part in normalized for part in DEFAULT_EXCLUDE_SUBSTRINGS):
+        return True
+    return any(part in DEFAULT_EXCLUDE_DIR_NAMES for part in path.parts)
 
 
 def filter_paths(paths: Iterable[Path], include_local_only: bool) -> list[Path]:
@@ -289,7 +322,7 @@ def expected_missing_peer(path: Path, missing_lang: str) -> Path:
     raise ValueError(f"Unsupported missing language: {missing_lang}")
 
 
-def audit_tree(root: Path, show_missing: str, include_local_only: bool) -> int:
+def audit_tree(root: Path, show_missing: str, include_local_only: bool, registry_path: Path | None = None) -> int:
     files = filter_paths(iter_markdown(root), include_local_only=include_local_only)
     zh_companions = [p for p in files if has_lang_suffix(p, "zh")]
     en_companions = [p for p in files if has_lang_suffix(p, "en")]
@@ -343,6 +376,140 @@ def audit_tree(root: Path, show_missing: str, include_local_only: bool) -> int:
         for path in missing_zh:
             print(f"{path} -> {expected_missing_peer(path, 'zh')}")
 
+    if registry_path is not None:
+        print("")
+        audit_cluster_registry(root, registry_path, include_local_only=include_local_only)
+
+    return 0
+
+
+def audit_cluster_registry(root: Path, registry_path: Path, include_local_only: bool) -> int:
+    records = build_cluster_records(root, include_local_only=include_local_only)
+    registry = load_cluster_registry(registry_path)
+
+    if not registry_path.exists():
+        print(f"registry: {registry_path} (missing, run `clusters --write` first)")
+        return 0
+
+    synced = 0
+    needs_en = 0
+    needs_zh = 0
+    diverged = 0
+    missing_en = 0
+    missing_zh = 0
+
+    for record in records:
+        pair_id = record["pair_id"]
+        english = Path(record["english"])
+        chinese = Path(record["chinese"])
+        current_state = "synced"
+        if not english.exists():
+            current_state = "missing-en"
+            missing_en += 1
+        elif not chinese.exists():
+            current_state = "missing-zh"
+            missing_zh += 1
+        else:
+            prev = registry.get(pair_id)
+            if prev:
+                english_changed = prev.get("english_hash") != record["english_hash"]
+                chinese_changed = prev.get("chinese_hash") != record["chinese_hash"]
+                if english_changed and chinese_changed:
+                    current_state = "diverged"
+                    diverged += 1
+                elif english_changed:
+                    current_state = "needs-zh-update"
+                    needs_zh += 1
+                elif chinese_changed:
+                    current_state = "needs-en-update"
+                    needs_en += 1
+                else:
+                    synced += 1
+            else:
+                current_state = "unregistered"
+
+        print(f"{pair_id}\t{current_state}\t{english.as_posix()}\t{chinese.as_posix()}")
+
+    print(f"registry: {registry_path}")
+    print(f"pair_count: {len(records)}")
+    print(f"synced: {synced}")
+    print(f"needs_en_update: {needs_en}")
+    print(f"needs_zh_update: {needs_zh}")
+    print(f"diverged: {diverged}")
+    print(f"missing_en: {missing_en}")
+    print(f"missing_zh: {missing_zh}")
+    return 0
+
+
+def file_sha256(path: Path) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_cluster_registry(path: Path) -> dict[str, dict[str, str]]:
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    entries = data.get("pairs", []) if isinstance(data, dict) else []
+    registry: dict[str, dict[str, str]] = {}
+    for entry in entries:
+        if isinstance(entry, dict) and entry.get("pair_id"):
+            registry[str(entry["pair_id"])] = {
+                "source_of_truth": str(entry.get("source_of_truth", "english")),
+                "last_verified": str(entry.get("last_verified", "")),
+                "english_hash": str(entry.get("english_hash", "")),
+                "chinese_hash": str(entry.get("chinese_hash", "")),
+            }
+    return registry
+
+
+def build_cluster_records(root: Path, include_local_only: bool) -> list[dict[str, str]]:
+    files = filter_paths(iter_markdown(root), include_local_only=include_local_only)
+    canonical_files = [p for p in files if p.name.endswith(".md") and not has_lang_suffix(p, "zh") and not has_lang_suffix(p, "en")]
+    records: list[dict[str, str]] = []
+    for english in canonical_files:
+        chinese = suffixed_peer(english, "zh")
+        pair_id = english.relative_to(root).with_suffix("").as_posix()
+        record = {
+            "pair_id": pair_id,
+            "english": english.as_posix(),
+            "chinese": chinese.as_posix(),
+            "source_of_truth": "english",
+            "last_verified": date.today().isoformat(),
+            "english_hash": file_sha256(english) if english.exists() else "",
+            "chinese_hash": file_sha256(chinese) if chinese.exists() else "",
+        }
+        if not chinese.exists():
+            record["source_of_truth"] = "english"
+        elif not english.exists():
+            record["source_of_truth"] = "chinese"
+        records.append(record)
+    return records
+
+
+def run_clusters(args: argparse.Namespace) -> int:
+    root = Path(args.root)
+    if not root.exists():
+        raise ValueError(f"Root does not exist: {root}")
+    registry_path = Path(args.registry)
+    records = build_cluster_records(root, args.include_local_only)
+    payload = {
+        "generated_at": date.today().isoformat(),
+        "root": root.as_posix(),
+        "pairs": records,
+    }
+    print(f"cluster_registry: {registry_path}")
+    print(f"pair_count: {len(records)}")
+    if args.dry_run:
+        return 0
+    if args.write:
+        registry_path.parent.mkdir(parents=True, exist_ok=True)
+        registry_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
@@ -675,7 +842,9 @@ def run_rewrite_links(args: argparse.Namespace) -> int:
 def main() -> int:
     args = parse_args()
     if args.command == "audit":
-        return audit_tree(Path(args.root), args.show_missing, args.include_local_only)
+        return audit_tree(Path(args.root), args.show_missing, args.include_local_only, Path(args.registry))
+    if args.command == "clusters":
+        return run_clusters(args)
     if args.command == "translate":
         return run_translate(args)
     if args.command == "rewrite-links":

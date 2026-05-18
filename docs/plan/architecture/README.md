@@ -5,14 +5,14 @@ Language:
 - Chinese companion: [README.zh.md](README.zh.md)
 
 This directory holds the active architecture plan, performance follow-up
-research, and `src/` layering freeze records.
+research, and archived `src/` layering records.
 
 Recommended reading order:
 
 1. [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
 2. [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 3. [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
-4. [src_layered_refactor_freeze.zh.md](src_layered_refactor_freeze.zh.md)
+4. [archive/src_layered_refactor_freeze.zh.md](../archive/src_layered_refactor_freeze.zh.md)
 
 Usage rules:
 

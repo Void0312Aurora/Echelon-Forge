@@ -5,14 +5,14 @@
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-本目录存放架构主方案、性能路线调研与 `src/` 分层重构冻结记录。
+本目录存放架构主方案、性能路线调研与已归档的 `src/` 分层记录。
 
 推荐阅读顺序：
 
 1. [system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
 2. [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 3. [architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
-4. [src_layered_refactor_freeze.zh.md](src_layered_refactor_freeze.zh.md)
+4. [archive/src_layered_refactor_freeze.zh.md](../archive/src_layered_refactor_freeze.zh.md)
 
 使用规则：
 

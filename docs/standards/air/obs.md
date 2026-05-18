@@ -1,75 +1,151 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/obs.zh.md. Review before treating this file as authoritative. -->
+# Pilot Observation Contract
 
-<!-- Machine-translated draft generated on 2026-05-18 from docs/standards/air/obs.md. Review before treating this file as authoritative. -->
+Language:
+- English canonical: `obs.md`
+- Chinese companion: [obs.zh.md](obs.zh.md)
 
-# Pilot Observation Space Standard
+Status: `2026-05-18` specialization baseline for maintained air mission observation.
 
-> Scope note (2026-03-23): This document is the `air specialization` and applies only to platform observation semantics under the air profile. For the current main standardization baseline, please first refer to [docs/standards/README.md](../README.md), [docs/standards/services/air_force.md](../services/air_force.md), [docs/standards/air/README.md](README.md).
+This document defines the maintained air observation contract exposed through
+the mission-observation surface. It does not attempt to describe every raw
+instrument, radar page, or pilot sensation in the full environment.
 
-This document defines the observation data that a "digital pilot" (RL Agent) can obtain in a simulation environment. This data strictly simulates the raw information that a real fighter pilot obtains through instruments, head-up display (HUD), and senses.
+## Scope
 
-It does not define:
+The maintained contract here is the mode-based `mission_observation` vector used
+by the current runtime and tests.
 
-- command relationships of the joint/common core
-- platform observations of Army/Navy/Marine Corps
-- a unified data model skeleton for the entire project
+Primary references:
 
-## 1. Flight Dynamics
-The pilot's direct perception of the aircraft's motion state.
+- [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
+- [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
+- [src/core/mission/runtime/mission_runtime.h](../../../src/core/mission/runtime/mission_runtime.h)
+- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
 
-| Variable name | Description | Physical unit | Real-world counterpart |
-| :--- | :--- | :--- | :--- |
-| `alt_baro` | Barometric altitude (mean sea level) | meter (m) | Barometric altimeter |
-| `alt_radar` | Radar altitude (actual height above ground) | meter (m) | Radar altimeter |
-| `ias` | Indicated airspeed | knots (kts) / meters per second (m/s) | Airspeed indicator |
-| `mach` | Mach number | Mach | Mach meter |
-| `vvi` | Vertical velocity indicator | meters per second (m/s) | Variometer / VSI |
-| `pitch` | Pitch angle | degrees (deg) | Attitude Director Indicator (ADI) |
-| `roll` | Roll angle | degrees (deg) | Attitude Director Indicator (ADI) |
-| `heading` | Magnetic heading / True heading | degrees (deg) | Horizontal Situation Indicator (HSI) |
-| `aoa` | Angle of Attack | degrees (deg) | AoA indicator |
-| `beta` | Sideslip angle | degrees (deg) | Slip ball / sideslip indicator |
-| `g_load` | Normal load factor | g | Accelerometer |
-| `p, q, r` | Angular rates (roll, pitch, yaw rates) | degrees per second (deg/s) | Rate gyros |
+This document does not define:
 
-## 2. Propulsion & Systems
-Monitor engine operating status and its impact on the airframe.
+- the full raw environment observation dictionary
+- generic sensor contacts or RWR pages
+- a joint/common-core observation ontology
 
-| Variable name | Description | Physical unit | Notes |
-| :--- | :--- | :--- | :--- |
-| `engine_rpm_pct` | Core speed percentage | % | N1 / N2 |
-| `engine_temp` | Exhaust gas temperature / Turbine inlet temperature | degrees Celsius (℃) | EGT / FTIT |
-| `fuel_internal` | Internal fuel weight | kilogram (kg) | Fuel gauge |
-| `fuel_external` | External fuel weight | kilogram (kg) | Fuel gauge |
-| `fuel_flow` | Instantaneous fuel flow | kilograms per hour (kg/h) | Flow meter |
-| `throttle_pos` | Current throttle lever actual position | 0.0 - 1.0 | Feedback feel |
+## Mode-Based Contract
 
-## 3. Configuration
-Current state of the airframe's mechanical structure.
+The maintained mission-observation modes are:
 
-| Variable name | Description | State values | Notes |
-| :--- | :--- | :--- | :--- |
-| `gear_pos` | Landing gear status | 0.0 (retracted) - 1.0 (extended) | Includes transition state |
-| `flaps_pos` | Flaps angle | degrees (deg) / position | |
-| `speedbrake_pos` | Speedbrake deployment | 0.0 - 1.0 | |
-| `master_arm` | Master arm switch | ON / OFF | |
+| Mode | Dim | Purpose |
+| :--- | ---: | :--- |
+| `basic` | 4 | command-following baseline |
+| `nav_v1` | 11 | early waypoint navigation contract |
+| `nav_v2` | 14 | maintained route/LNAV contract |
+| `nav_v2_formation_v1` | 17 | `nav_v2` plus formation offsets |
+| `nav_v2_formation_role_v1` | 21 | formation offsets plus role/slot fields |
+| `nav_v2_cooperative_takeoff_v1` | 25 | route, takeoff, formation, and role fields |
 
-## 4. Environment & Navigation
-Mission objectives issued by the lead aircraft/command layer and external dynamics.
+Field order is part of the contract.
 
-| Variable name | Description | Physical unit | Notes |
-| :--- | :--- | :--- | :--- |
-| `target_heading` | Commanded target heading | degrees (deg) | Lead aircraft command content |
-| `target_alt` | Commanded target altitude | meters (m) | Lead aircraft command content |
-| `target_speed` | Commanded target speed | m/s | Lead aircraft command content |
-| `oat` | Outside air temperature | degrees Celsius (℃) | Static temperature and pressure |
-| `wind_vec` | Estimated wind vector | m/s | Pilot perception compensation |
+## Shared Core Fields
 
-## 5. Tactical & Sensors
-Battlefield situation acquired through electronic devices.
+All modes begin with the same four fields:
 
-| Variable name | Description | Physical unit | Notes |
-| :--- | :--- | :--- | :--- |
-| `rwr_state` | Radar warning receiver status | Quadrant, type, intensity | Warning tone and display |
-| `radar_contacts` | List of friendly and hostile targets detected by radar | Bearing, range, Doppler velocity | Raw observations |
-| `missile_count` | Number of remaining available missiles | Integer | Count by type |
+1. `command_code`
+2. `target_heading_deg`
+3. `target_altitude_m`
+4. `target_speed_mps`
+
+These are the maintained command-following anchors for the air runtime.
+
+## Navigation Fields
+
+`nav_v1` adds:
+
+- `active_wp_idx`
+- `total_wps`
+- `dist_m`
+- `xtk_m`
+- `dtg_m`
+- `direct_bearing_deg`
+- `desired_leg_track_deg`
+
+`nav_v2` replaces that with the maintained LNAV-style set:
+
+- `selected_steerpoint`
+- `steerpoint_mode_code`
+- `dist_m`
+- `bearing_rel_deg`
+- `altitude_delta_m`
+- `cdi_norm`
+- `track_angle_error_deg`
+- `leg_distance_remaining_m`
+- `next_turn_deg`
+- `distance_to_turn_m`
+
+The authoritative index labels for these fields are defined by
+[python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py).
+
+## Formation Fields
+
+`nav_v2_formation_v1` adds:
+
+- `form_offset_x_m`
+- `form_offset_y_m`
+- `form_offset_z_m`
+
+These are air-specialization fields. They do not belong in common core.
+
+`nav_v2_formation_role_v1` adds:
+
+- `self_role_code`
+- `self_formation_role_code`
+- `relative_slot_code`
+- `reference_relative_slot_code`
+
+These fields bridge common/service role semantics into the air formation surface.
+
+## Cooperative Takeoff Fields
+
+`nav_v2_cooperative_takeoff_v1` adds the air takeoff/tasking fields:
+
+- `takeoff_procedure_code`
+- `takeoff_clearance_code`
+- `takeoff_interval_s`
+- `runway_slot_code`
+
+plus the same formation/role fields listed above.
+
+This mode is the maintained air contract for cooperative takeoff guidance, not a
+generic cross-domain takeoff schema.
+
+## Runtime Rules
+
+- Mode length stays fixed even when route guidance is unavailable.
+- When route guidance is unavailable, the navigation portion is zero-filled.
+- Field visibility is mode-dependent.
+- Formation and takeoff fields are not assumed to exist outside the modes that
+  declare them.
+
+## Ownership Boundary
+
+Keep in common core:
+
+- abstract command-following anchors
+- role/slot semantics that survive across services
+
+Keep in air specialization:
+
+- runway- and takeoff-specific fields
+- route/LNAV/ILS semantics
+- formation offsets and air role details
+
+## Non-Goals
+
+This document does not standardize:
+
+- `oat`
+- `wind_vec`
+- `rwr_state`
+- `radar_contacts`
+- `missile_count`
+
+Those may exist elsewhere in the wider environment or future observation
+surfaces, but they are not part of the maintained air mission-observation
+contract defined here.

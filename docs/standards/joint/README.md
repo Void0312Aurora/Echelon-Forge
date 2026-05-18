@@ -27,7 +27,8 @@ Therefore, generic templates in the project should prioritize:
 
 ## 2. Recommended Reading Order
 
-1. [Joint Command Relationships and Modeling Baseline](command_and_modeling_baseline.md)
+1. [Joint Command and Modeling Baseline](command_and_modeling_baseline.md)
+2. [Joint Command-Link and Reporting Baseline](command_link_and_reporting_baseline.md)
 
 ## 3. Key Official References
 
