@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from gym_envs/README.md. Review before treating this file as authoritative. -->
-
 # `gym_envs/` 层职责
 
 `gym_envs/` 是训练环境封装层。它把 `ef_py` 暴露的 kernel/runtime、`python/scenario/compiler/` 与 `python/scenario/runtime/` 的场景运行时数据，以及训练侧 observation/action/reward 组织成 Gymnasium 风格接口。

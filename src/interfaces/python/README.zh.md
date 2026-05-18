@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/interfaces/python/README.md. Review before treating this file as authoritative. -->
-
 # `src/interfaces/python` 边界
 
 `interfaces/python` 是 nanobind 暴露层。它把 `runtime/facade`、必要的 `core` 兼容 API 和数据类型暴露给 Python；不应在这里实现领域行为。

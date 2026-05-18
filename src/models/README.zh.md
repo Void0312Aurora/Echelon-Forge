@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/models/README.md. Review before treating this file as authoritative. -->
-
 # `src/models` 边界
 
 `models/` 保存可替换的领域模型实现。它为 `systems/` 和 `core/engine` 提供 control、environment、sensor、effects、guidance、unit factory 等能力。

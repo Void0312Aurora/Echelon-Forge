@@ -1,15 +1,13 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/core/mission/README.md. Review before treating this file as authoritative. -->
-
 # `src/core/mission` 边界
 
-`core/mission` 负责 mission、objective、reward、termination、execution episode 和训练主线需要的任务运行时。这里解释 tasking/command 数据并产出 runtime products，但不定义低层 component，也不做 Python 绑定。
+`core/mission` 负责训练主线所需的任务运行时，包括 mission、objective、reward、termination 和 execution episode。这里解释 tasking/command 数据并产出运行时产物，但不定义底层 component，也不做 Python 绑定。
 
 ## 允许
 
 - mission runtime、objective runtime、reward runtime、termination runtime。
-- `ExecutionEpisodeController` 及其 state import/export。
-- mission command codec、episode transition、reward breakdown helper。
-- 面向 `WorldBatchRuntime` 或 `RuntimeFacade` 的纯 C++ episode products。
+- `ExecutionEpisodeController` 及其状态导入/导出。
+- mission command codec、episode transition、reward breakdown 辅助逻辑。
+- 面向 `WorldBatchRuntime` 或 `RuntimeFacade` 的纯 C++ episode 产物。
 
 ## 禁止
 
@@ -29,9 +27,9 @@ mission/
 
 - `runtime/`：纯 mission/runtime kernels 和 runtime products，包括 mission、objective、reward、termination、observation、step、frame、episode runtime。这里不拥有 episode controller state，也不解释 Python 或 facade contract。
 - `episode/`：episode state、batch prepare 和 `ExecutionEpisodeController`。这里负责把 scenario/env state 编排成 runtime inputs，并把 runtime products 应用回 episode state。
-- `episode/detail/`：只服务 episode controller 的内部 helper，包括 mission-command codec、post-waypoint/landing transition、reward breakdown JSON。外部代码不应直接 include 这里的头，除非是在拆 controller 期间补充同一 detail 域能力。
+- `episode/detail/`：只服务 episode controller 的内部辅助逻辑，包括 mission-command codec、post-waypoint/landing transition、reward breakdown JSON。外部代码不应直接 include 这里的头，除非是在拆 controller 期间补充同一 detail 域能力。
 
-后续新增 mission JSON 字段、transition 规则或 reward breakdown term，应先落到 `episode/detail/` 中对应 helper，而不是回填到 controller 主文件。新增纯 reward/objective/termination 计算，应落到 `runtime/`；新增 episode state import/export 或 batch prepare contract，应落到 `episode/`。
+后续新增 mission JSON 字段、transition 规则或 reward breakdown term，应先落到 `episode/detail/` 中对应辅助逻辑，而不是回填到 controller 主文件。新增纯 reward/objective/termination 计算，应落到 `runtime/`；新增 episode state import/export 或 batch prepare contract，应落到 `episode/`。
 
 ## 依赖方向
 

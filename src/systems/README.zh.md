@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/systems/README.md. Review before treating this file as authoritative. -->
-
 # `src/systems` 边界
 
 `systems/` 保存 ECS system registration 和每 tick mutation 逻辑。这里的代码消费 `components/` 与 `models/`，并由 `core/engine` 注册和调度。

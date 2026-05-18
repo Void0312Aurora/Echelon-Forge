@@ -1,29 +1,27 @@
-# `src/components/tasking/air` 边界
+# `src/components/tasking/air` Boundary
 
-`components/tasking/air` 保存当前空中任务组织的 tasking 扩展。这里承载编队、
-起降、回收、CAP/航路等明显属于 air 任务面的字段，而不是跨军种共享语义。
+`components/tasking/air` stores tasking extensions for the current air mission-organization surface. It carries fields that clearly belong to the air tasking surface, such as formation, takeoff/landing, recovery, and CAP/route semantics, rather than semantics shared across services.
 
-## 允许
+## Allowed
 
-- `TaskOrderAir`、`LeaderIntentAir`、`PilotReportAir` 这类 air 扩展字段。
-- air-specific tasking enum。
-- 编队、站位、跑道、回收、approach 相关的纯 DTO 字段。
+- Air extension fields such as `TaskOrderAir`, `LeaderIntentAir`, and `PilotReportAir`.
+- Air-specific tasking enums.
+- Pure DTO fields related to formations, stationing, runways, recovery, and approach.
 
-## 禁止
+## Forbidden
 
-- 联合层共享枚举和 core 字段；这些进入 `common/`。
-- `MissionCommand`、`PilotAction`、`CommandLink` 等 command 对象。
-- episode transition、mission runtime、env glue 或控制律逻辑。
-- Python binding 和 facade 适配。
+- Shared joint-layer enums and core fields; those go into `common/`.
+- Command-side objects such as `MissionCommand`, `PilotAction`, and `CommandLink`.
+- Episode transitions, mission runtime logic, environment glue, or control-law logic.
+- Python bindings and facade adaptation.
 
-## 当前文件
+## Current Files
 
 - [air_tasking_enums.h](air_tasking_enums.h)
 - [task_order_air.h](task_order_air.h)
 - [leader_intent_air.h](leader_intent_air.h)
 - [pilot_report_air.h](pilot_report_air.h)
 
-## 依赖方向
+## Dependency Direction
 
-本目录可以依赖 `components/tasking/common`。它不应依赖 `core/mission`、
-`systems/` 或 `interfaces/python`。
+This directory may depend on `components/tasking/common`. It must not depend on `core/mission`, `systems/`, or `interfaces/python`.

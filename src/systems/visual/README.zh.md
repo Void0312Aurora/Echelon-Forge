@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/systems/visual/README.md. Review before treating this file as authoritative. -->
-
 # `src/systems/visual` 边界
 
 `systems/visual` 保存视觉观测 system 的 ECS 调度和每 tick 更新逻辑。

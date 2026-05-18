@@ -1,29 +1,27 @@
-# `src/components/tasking/common` 边界
+# `src/components/tasking/common` Boundary
 
-`components/tasking/common` 保存跨军种共享的 tasking/C2 基础结构。这里定义
-联合层或通用任务组织语义，不直接携带 air 或 naval 的平台专用字段。
+`components/tasking/common` stores the shared tasking/C2 foundation used across services. It defines joint-layer or generic mission-organization semantics without directly carrying platform-specific air or naval fields.
 
-## 允许
+## Allowed
 
-- `ServiceProfile`、`TaskFamily`、`CoordinationMode` 等共通枚举。
-- `TaskOrderCore`、`LeaderIntentCore`、`PilotReportCore` 这类共享字段壳。
-- 可被 `air/`、`naval/` 继续扩展的通用任务/意图/回报字段。
+- Shared enums such as `ServiceProfile`, `TaskFamily`, and `CoordinationMode`.
+- Shared field shells such as `TaskOrderCore`, `LeaderIntentCore`, and `PilotReportCore`.
+- Generic task/intent/report fields that `air/` and `naval/` can extend further.
 
-## 禁止
+## Forbidden
 
-- runway、approach、wingman、element、station pattern 等 air-specific 字段。
-- future naval station/warfare commander 这类 naval-specific 字段。
-- `MissionCommand`、`PilotAction`、`CommandLink` 等 command 层对象。
-- mission transition、JSON codec、reward/termination 逻辑。
+- Air-specific fields such as runway, approach, wingman, element, and station-pattern semantics.
+- Future naval-specific fields such as naval stations or warfare-command roles.
+- Command-layer objects such as `MissionCommand`, `PilotAction`, and `CommandLink`.
+- Mission transitions, JSON codecs, or reward/termination logic.
 
-## 当前文件
+## Current Files
 
 - [core_tasking_enums.h](core_tasking_enums.h)
 - [task_order_core.h](task_order_core.h)
 - [leader_intent_core.h](leader_intent_core.h)
 - [pilot_report_core.h](pilot_report_core.h)
 
-## 依赖方向
+## Dependency Direction
 
-本目录应保持为数据层。`air/` 与 `naval/` 只能向下复用这里的 core 定义；
-这里不应反向依赖具体军种子域。
+This directory should remain a data layer. `air/` and `naval/` may only reuse the core definitions here downstream; this directory must not depend back on concrete service subdomains.

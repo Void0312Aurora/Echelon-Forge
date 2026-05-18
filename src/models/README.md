@@ -1,29 +1,29 @@
-# `src/models` 边界
+# `src/models` Boundary
 
-`models/` 保存可替换的领域模型实现。它为 `systems/` 和 `core/engine` 提供 control、environment、sensor、effects、guidance、unit factory 等能力。
+`models/` stores replaceable domain-model implementations. It provides capabilities such as control, environment, sensors, effects, guidance, and unit factories to `systems/` and `core/engine`.
 
-## 允许
+## Allowed
 
-- 默认模型实现。
-- 可替换模型的纯 C++ 计算逻辑。
-- 只依赖 component 数据和 `core/interfaces` contract 的 helper。
+- Default model implementations.
+- Pure C++ computational logic for replaceable models.
+- Helpers that depend only on component data and contracts from `core/interfaces`.
 
-## 禁止
+## Forbidden
 
-- ECS system registration。
-- runtime owner、batch owner 或 facade。
-- Python binding。
-- 训练配置或 scenario 编排。
+- ECS system registration.
+- Runtime owners, batch owners, or facades.
+- Python bindings.
+- Training configuration or scenario orchestration.
 
-## 子目录约定
+## Subdirectory Conventions
 
-- `air/`：飞行控制等航空模型。
-- `core/`：unit factory 等基础模型实现。
-- `environment/`：环境模型和 snapshot。
-- `systems/`：传感器等平台系统模型。
-- `weapons/`：effects 和 guidance 模型。
+- `air/`: Aviation models such as flight control.
+- `core/`: Foundational model implementations such as unit factories.
+- `environment/`: Environment models and snapshots.
+- `systems/`: Platform-system models such as sensors.
+- `weapons/`: Effects and guidance models.
 
-## 当前阅读入口
+## Current Entry Points for Reading
 
 - [air/README.md](air/README.md)
 - [core/README.md](core/README.md)
@@ -31,7 +31,7 @@
 - [systems/README.md](systems/README.md)
 - [weapons/README.md](weapons/README.md)
 
-## 当前文件落点
+## Current File Locations
 
 - `air/`
   - `default_control_model.cpp`
@@ -44,6 +44,6 @@
 - `weapons/`
   - `default_effects_model.cpp`, `default_guidance_model.cpp`
 
-## 迁移备注
+## Migration Notes
 
-新增模型应优先检查 `core/interfaces` 是否已有 contract。没有 contract 时，先补接口边界，再引入默认实现。
+Before adding a new model, first check whether `core/interfaces` already defines the contract. If it does not, add the interface boundary before introducing the default implementation.

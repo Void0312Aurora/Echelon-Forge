@@ -1,33 +1,33 @@
-# `src/components` 边界
+# `src/components` Boundary
 
-`components/` 只保存 ECS component、轻量值类型和稳定 DTO-like struct。这里的类型可以被 `systems/`、`core/`、`runtime/facade` 和 `interfaces/python` 读取或绑定，但不应拥有运行时编排逻辑。
+`components/` stores only ECS components, lightweight value types, and stable DTO-like structs. Types here may be read or bound by `systems/`, `core/`, `runtime/facade`, and `interfaces/python`, but they must not own runtime orchestration logic.
 
-## 允许
+## Allowed
 
-- 纯数据字段、默认值、轻量 enum。
-- 与 ECS storage 直接对应的状态组件。
-- 跨层传递但不执行业务流程的 command/tasking DTO。
-- 不依赖 Flecs world 的小型 helper 方法。
+- Plain data fields, default values, and lightweight enums.
+- State components that map directly to ECS storage.
+- Command/tasking DTOs that move across layers without executing business workflows.
+- Small helper methods that do not depend on a Flecs world.
 
-## 禁止
+## Forbidden
 
-- system registration、tick/update、physics integration 或 mission state machine。
-- Python/nanobind 绑定 helper。
-- `SimulationKernel`、`WorldBatchRuntime`、`RuntimeFacade` 相关控制逻辑。
-- 需要读取数据库、加载场景或访问 runtime owner 的逻辑。
+- System registration, tick/update logic, physics integration, or mission state machines.
+- Python/nanobind binding helpers.
+- Control logic related to `SimulationKernel`, `WorldBatchRuntime`, or `RuntimeFacade`.
+- Logic that needs to read databases, load scenarios, or access a runtime owner.
 
-## 子目录约定
+## Subdirectory Conventions
 
-- `basic/`：基础实体标签、阵营、位置、环境数据等底层 component。
-- `combat/`：伤害、生命值、武器挂载、评分等战斗状态 component。
-- `physics/`：物理状态、动力学、力、仪表和性能状态。
-- `systems/`：通信、数据链、传感器、电子战、导航、后勤等平台系统状态 component。
-- `visual/`：视觉传感器输入输出状态。
-- `naval/`：舰艇、潜艇和舰载航空运作的 naval platform 状态 component。
-- `command/`：目标目录，用于 pilot action、mission command、command link 和 legacy command DTO。
-- `tasking/`：目标目录，用于 task order、leader intent、pilot report 和 C2/tasking enum。
+- `basic/`: foundational components such as entity tags, factions, positions, and environment data.
+- `combat/`: combat-state components such as damage, health, weapon mounts, and scoring.
+- `physics/`: physical state, dynamics, forces, instruments, and performance state.
+- `systems/`: platform-system state components for communications, data links, sensors, electronic warfare, navigation, logistics, and similar areas.
+- `visual/`: visual-sensor input and output state.
+- `naval/`: naval platform state components for ships, submarines, and embarked air operations.
+- `command/`: target directory for pilot actions, mission commands, command links, and legacy command DTOs.
+- `tasking/`: target directory for task orders, leader intent, pilot reports, and C2/tasking enums.
 
-## 当前阅读入口
+## Current Entry Points
 
 - [basic/README.md](basic/README.md)
 - [combat/README.md](combat/README.md)
@@ -38,7 +38,7 @@
 - [command/README.md](command/README.md)
 - [tasking/README.md](tasking/README.md)
 
-## 当前文件落点
+## Current File Layout
 
 - `basic/`
   - `common.h`, `environment_data.h`, `tags.h`
@@ -46,7 +46,7 @@
   - `damage.h`, `health.h`, `scoring.h`, `weapon.h`
 - `physics/`
   - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
-  - `action.h` 仅保留兼容 umbrella 角色
+  - `action.h` remains only as a compatibility umbrella
 - `systems/`
   - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `track_management.h`
 - `visual/`
@@ -60,8 +60,8 @@
   - `naval/mission_command_naval.h`
 - `tasking/`
   - `task_order.h`, `leader_intent.h`, `pilot_report.h`, `tasking_enums.h`
-  - `common/*`、`air/*`、`naval/*` 为分层后的子域入口
+  - `common/*`, `air/*`, and `naval/*` are the entry points for the split subdomains
 
-## 迁移备注
+## Migration Notes
 
-当前 `physics/action.h` 同时承载 command 与 tasking 类型。新增 command/tasking 类型应进入 `components/command` 或 `components/tasking`，不要继续扩展 `components/physics/action.h`。
+`physics/action.h` currently carries both command and tasking types. New command/tasking types should go into `components/command` or `components/tasking`; do not keep expanding `components/physics/action.h`.

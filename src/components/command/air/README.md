@@ -1,29 +1,27 @@
-# `src/components/command/air` 边界
+# `src/components/command/air` Boundary
 
-`components/command/air` 保存当前航空执行面的 command 扩展。这里承载的是
-air-specific 的命令语义，例如航路、回收、跑道和低层控制输入解析。
+`components/command/air` stores command extensions for the current air execution surface. It carries air-specific command semantics such as routes, recovery, runway handling, and low-level control input resolution.
 
-## 允许
+## Allowed
 
-- `MissionCommandAir` 这类航空执行面扩展字段。
-- 当前 air runtime 复用的 command 解释辅助类型。
-- `PilotAction -> legacy command` 解析中确实属于 air surface 的轻量 helper。
+- Air-execution-surface extension fields such as `MissionCommandAir`.
+- Command interpretation helper types reused by the current air runtime.
+- Lightweight helpers in `PilotAction -> legacy command` parsing that truly belong to the air surface.
 
-## 禁止
+## Forbidden
 
-- 跨域共享 command core；这些进入 `common/`。
-- `TaskOrder`、`LeaderIntent`、`PilotReport` 等 tasking DTO。
-- 控制律、物理积分、mission transition 或 reward 逻辑。
-- Python binding、facade request/result。
+- Cross-domain shared command core; those go into `common/`.
+- Tasking DTOs such as `TaskOrder`, `LeaderIntent`, and `PilotReport`.
+- Control-law logic, physics integration, mission transitions, or reward logic.
+- Python bindings or facade request/result types.
 
-## 当前文件
+## Current Files
 
 - [mission_command_air.h](mission_command_air.h)
-  - 航路、回收、起降等 air 扩展字段。
+  - Air extension fields for routes, recovery, takeoff/landing, and similar semantics.
 - [control_input_resolution.h](control_input_resolution.h)
-  - air 低层控制输入解析 helper。
+  - Helpers for resolving low-level air control inputs.
 
-## 依赖方向
+## Dependency Direction
 
-本目录可以依赖 `components/command/common`。它不应依赖 `systems/`、
-`core/mission` 或 `interfaces/python`。
+This directory may depend on `components/command/common`. It must not depend on `systems/`, `core/mission`, or `interfaces/python`.

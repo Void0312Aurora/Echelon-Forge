@@ -1,23 +1,23 @@
-# `src/core/mission/episode` 边界
+# `src/core/mission/episode` Boundary
 
-`mission/episode` 负责 execution episode 的状态、批量输入准备和 controller 编排。它把 scenario/env state 转换为 `mission/runtime` inputs，并把 runtime products 应用回 episode state。
+`mission/episode` owns execution-episode state, batched input preparation, and controller orchestration. It transforms scenario/env state into `mission/runtime` inputs and applies runtime products back onto episode state.
 
-## 允许
+## Allowed
 
-- `ExecutionEpisodeState` import/export 和状态字段演进。
-- `StepEvaluationBatchConfig`、`StepEvaluationBatchEnvState` 与 batch prepare contract。
-- `ExecutionEpisodeController` 的 prepare、evaluate、step 协调逻辑。
+- `ExecutionEpisodeState` import/export and evolution of its state fields.
+- `StepEvaluationBatchConfig`, `StepEvaluationBatchEnvState`, and batch-prepare contracts.
+- The prepare/evaluate/step coordination logic of `ExecutionEpisodeController`.
 
-## 禁止
+## Forbidden
 
-- 直接实现 reward/objective/termination 数值公式；这些应位于 `mission/runtime`。
-- Python/nanobind 绑定和 facade 适配。
-- 将 controller 内部 JSON codec、transition 和 breakdown helper 暴露为跨层公共 API。
+- Direct implementation of reward/objective/termination formulas; those belong in `mission/runtime`.
+- Python/nanobind bindings and facade adaptation.
+- Exposing the controller's internal JSON codecs, transitions, and breakdown helpers as public APIs across layers.
 
-## 子目录
+## Subdirectories
 
-- `detail/`：controller 私有 helper。外部代码一般不应 include 这里的头。
+- `detail/`: private helpers for the controller. External code generally should not include headers from here.
 
-## 依赖方向
+## Dependency Direction
 
-本目录可以依赖 `mission/runtime`。它不应依赖 `runtime/facade`、`interfaces/python` 或 `gpu`。
+This directory may depend on `mission/runtime`. It should not depend on `runtime/facade`, `interfaces/python`, or `gpu`.

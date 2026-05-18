@@ -1,5 +1,9 @@
 # Echelon Forge
 
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
+
 Echelon Forge is a simulation and reinforcement-learning workbench for
 air-combat and flight-task research.
 

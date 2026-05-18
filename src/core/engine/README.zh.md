@@ -1,26 +1,24 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/core/engine/README.md. Review before treating this file as authoritative. -->
-
 # `src/core/engine` 边界
 
-`core/engine` 负责单 world simulation kernel 和 batch world owner。它是 CPU exact world-step 语义的主线位置，也是下层 ECS systems 的调度者。
+`core/engine` 负责单世界仿真内核和批量世界所有者。它是 CPU 精确世界步进语义的主线位置，也是下层 ECS 系统的调度者。
 
 ## 允许
 
-- `SimulationKernel` lifecycle、reset、step、spawn 和 query API。
-- `WorldBatchRuntime` 多 world ownership、批量 reset/step、批量 command/observation 操作。
+- `SimulationKernel` 的生命周期、reset、step、spawn 和 query API。
+- `WorldBatchRuntime` 的多世界持有、批量 reset/step、批量 command/observation 操作。
 - ECS component 和 system registration 的编排。
 - 与 `content/` 和 `models/` 的组合逻辑。
 
 ## 禁止
 
-- Python binding。
-- mission-command JSON codec、episode transition、reward breakdown。
+- Python 绑定。
+- mission-command JSON 编解码、episode 转移、reward breakdown。
 - GPU kernel 实现。
 - facade request/result 类型定义。
 
 ## 当前结构
 
-`SimulationKernel` public API 保持在 `simulation_kernel.h`。实现按职责拆分：
+`SimulationKernel` 的 public API 保持在 `simulation_kernel.h`。实现按职责拆分：
 
 - `simulation_kernel_systems.cpp`
   ECS component registration 和系统注册顺序。
@@ -31,13 +29,13 @@
 - `simulation_kernel_visual_api.cpp`
   ARB visual scene collection 和 visual tensor rendering API。
 - `simulation_kernel_weapon_api.cpp`
-  missile launch API 和 launch-time missile/sensor tuning。
+  missile launch API 和发射时 missile/sensor 调优。
 - `exact_stage_inventory.cpp`
-  exact-stage inventory、contract inventory 和 manual trace frame helpers。
+  exact-stage inventory、contract inventory 和 manual trace frame 辅助逻辑。
 - `simulation_kernel.cpp`
   constructor/destructor、model injection、reset/step、unit spawn、database/environment configuration。
 
-`SimulationKernel` public API 可以保持不变；拆分重点是降低实现文件的职责密度。
+`SimulationKernel` 的 public API 可以保持不变；拆分重点是降低实现文件的职责密度。
 
 ## 依赖方向
 

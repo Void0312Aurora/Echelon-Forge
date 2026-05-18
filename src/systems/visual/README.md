@@ -1,19 +1,19 @@
-# `src/systems/visual` 边界
+# `src/systems/visual` Boundary
 
-`systems/visual` 保存视觉观测 system 的 ECS 调度和每 tick 更新逻辑。
+`systems/visual` contains the ECS scheduling and per-tick update logic for visual observation systems.
 
-## 允许
+## Allowed
 
-- visual sensor system。
-- 对视觉 component 和空间查询结果的组合更新。
+- Visual sensor systems.
+- Combined updates to visual components and spatial query results.
 
-## 禁止
+## Forbidden
 
-- visual component 定义。
-- GPU CUDA kernel。
-- Python image/DLPack binding。
-- mission episode 或 facade 逻辑。
+- Visual component definitions.
+- GPU CUDA kernels.
+- Python image/DLPack bindings.
+- Mission episode or facade logic.
 
-## 迁移备注
+## Migration Notes
 
-GPU 加速 helper 放在 `gpu/`；Python 视图导出放在 `interfaces/python`；本目录只负责 ECS system 行为。
+GPU acceleration helpers belong in `gpu/`; Python view export belongs in `interfaces/python`; this directory is only responsible for ECS system behavior.

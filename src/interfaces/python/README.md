@@ -1,40 +1,40 @@
-# `src/interfaces/python` 边界
+# `src/interfaces/python` Boundary
 
-`interfaces/python` 是 nanobind 暴露层。它把 `runtime/facade`、必要的 `core` 兼容 API 和数据类型暴露给 Python；不应在这里实现领域行为。
+`interfaces/python` is the nanobind exposure layer. It exposes `runtime/facade`, required compatibility APIs from `core`, and the relevant data types to Python. It should not implement domain behavior here.
 
-## 允许
+## Allowed
 
-- `NB_MODULE` 聚合和 binding function。
-- C++ enum、struct、class 的 Python 暴露。
-- Python 参数到 C++ request/result 的轻量转换。
-- DLPack 等绑定层视图适配。
+- `NB_MODULE` aggregation and binding functions.
+- Python exposure of C++ enums, structs, and classes.
+- Lightweight conversion from Python arguments into C++ requests/results.
+- Binding-layer view adapters such as DLPack.
 
-## 禁止
+## Forbidden
 
-- 任务 JSON 解释、episode transition、reward breakdown。
-- 物理、传感器、武器、控制律实现。
-- 新增绕过 `RuntimeFacade` 的长期主线 API。
-- 训练配置治理或 scenario 目录治理。
+- Task JSON interpretation, episode transitions, or reward breakdown.
+- Physics, sensors, weapons, or control-law implementations.
+- New long-lived mainline APIs that bypass `RuntimeFacade`.
+- Training configuration governance or scenario directory governance.
 
-## 当前结构
+## Current Structure
 
-`python_module.cpp` 只保留 `NB_MODULE`、`set_log_level` 和分区 binding 注册调用。各绑定单元按职责维护：
+`python_module.cpp` keeps only `NB_MODULE`, `set_log_level`, and the calls that register partitioned bindings. Each binding unit is maintained by responsibility:
 
 - `bindings_core.cpp`
-  低层兼容类型、`SimulationKernel` 和历史诊断入口。
+  Low-level compatibility types, `SimulationKernel`, and legacy diagnostics entry points.
 - `bindings_command.cpp`
-  command/tasking enum、`PilotAction`、`MissionCommand`、`TaskOrder`、`LeaderIntent`、`PilotReport`、`CommPacket`。
+  Command/tasking enums plus `PilotAction`, `MissionCommand`, `TaskOrder`, `LeaderIntent`, `PilotReport`, and `CommPacket`.
 - `bindings_episode.cpp`
-  mission/runtime/reward/termination/episode controller 相关数据结构和纯运行时函数。
+  Mission/runtime/reward/termination/episode-controller data structures and pure runtime functions.
 - `bindings_runtime.cpp`
-  `WorldBatchRuntime`、`RuntimeFacade` 和 facade request/result 类型。
+  `WorldBatchRuntime`, `RuntimeFacade`, and facade request/result types.
 - `bindings_gpu.cpp`
-  GPU helper、batch observation/visual helper、DLPack / `GpuTensorView` 适配。
+  GPU helpers, batch observation/visual helpers, and DLPack / `GpuTensorView` adapters.
 - `binding_utils.h`
-  nanobind 公共 include、分区注册声明和 numpy owner helper。
+  Shared nanobind includes, partition registration declarations, and numpy owner helpers.
 
-新增绑定时优先放入对应分区；只有跨分区通用的 nanobind 小工具才放入 `binding_utils.h`。
+When adding new bindings, place them in the matching partition first. Only cross-partition nanobind utilities should go into `binding_utils.h`.
 
-## 迁移备注
+## Migration Notes
 
-保留低层 `SimulationKernel`、`WorldBatchRuntime` 绑定可以服务兼容期；新增主线能力应优先绑定 `RuntimeFacade`。
+Keeping low-level bindings for `SimulationKernel` and `WorldBatchRuntime` is acceptable for the compatibility period. New mainline capabilities should prefer binding `RuntimeFacade`.

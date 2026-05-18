@@ -1,19 +1,19 @@
-# `src/core/mission/runtime` 边界
+# `src/core/mission/runtime` Boundary
 
-`mission/runtime` 承载 mission、objective、reward、termination 和 execution runtime 的纯计算入口。这里产出 runtime products，供 episode controller、GPU helper、Python binding 和 facade 底层实现复用。
+`mission/runtime` hosts the pure computation entry points for mission, objective, reward, termination, and execution runtime. It produces runtime products that are reused by the episode controller, GPU helpers, Python bindings, and the underlying facade implementation.
 
-## 允许
+## Allowed
 
-- mission observation、step、frame、episode runtime inputs/products。
-- objective、reward、termination 的 deterministic evaluation。
-- 只依赖 component DTO、geometry runtime 和局部数值 helper 的纯 C++ 计算。
+- Mission observation, step, frame, and episode runtime inputs/products.
+- Deterministic evaluation of objective, reward, and termination.
+- Pure C++ computation that depends only on component DTOs, geometry runtime, and local numerical helpers.
 
-## 禁止
+## Forbidden
 
-- `ExecutionEpisodeController` state import/export。
-- mission-command JSON round-trip、route transition、reward breakdown JSON。
-- Python/nanobind 绑定和 facade request/result 适配。
+- `ExecutionEpisodeController` state import/export.
+- Mission-command JSON round-tripping, route transitions, and reward breakdown JSON.
+- Python/nanobind bindings and facade request/result adaptation.
 
-## 依赖方向
+## Dependency Direction
 
-本目录可以被 `mission/episode`、`runtime/facade` 底层实现、`interfaces/python` binding 和 `gpu` helper include。它不应 include `mission/episode` 或 `runtime/facade`。
+This directory may be included by `mission/episode`, the underlying implementation of `runtime/facade`, `interfaces/python` bindings, and GPU helpers. It should not include `mission/episode` or `runtime/facade`.

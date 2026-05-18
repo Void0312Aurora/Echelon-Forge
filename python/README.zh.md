@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from python/README.md. Review before treating this file as authoritative. -->
-
 # `python/` 层职责
 
 `python/` 不是杂项脚本目录，而是 C++ runtime 之上的 Python 支撑层。它承担场景编译与落地、训练回调、RL runtime 适配、world model 支持，以及测试运行时辅助。
