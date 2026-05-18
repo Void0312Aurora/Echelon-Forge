@@ -1,106 +1,155 @@
-# 标准化文档总览
+# Standards Documentation Overview
 
-本目录用于定义项目后续采用的**标准化建模基线**。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-从 `2026-03-23` 开始，标准化文档体系不再以“空战单域先行、再尝试泛化”为主线，
-而改为：
+Status: `2026-05-18` authoritative for the maintained standards tree.
 
-1. `joint`：联合层共通模板
-2. `services`：军种/域 profile
-3. `air/*`：平台或任务层的空战专用补充标准
-4. `naval/*`：海战方向的早期占位与最小任务结构基线
+This directory defines the standardized modeling baseline the project intends to
+use going forward. Its job is not to restate every active implementation task.
+Its job is to tell contributors which concepts belong to the joint/common core,
+which belong to service profiles, which belong to platform or mission
+specializations, and how the current code/runtime should align with that split.
 
-这样做的原因很直接：
+## Purpose
 
-- 美军联合层有共通的指挥授权关系
-- 但空军、陆军、海军、海军陆战队的战术组织与控制口径不同
-- 因此真正可复用的不是“一条完全统一的指挥链”，而是
-  `joint/common core + service profile + platform/task specialization`
+The maintained standards tree exists to keep three things from drifting apart:
 
-## 1. 当前推荐阅读顺序
+- real-world public doctrine and reference material
+- the repository's current runtime and test contracts
+- active task planning under `docs/task/`
 
-1. [Joint 标准总览](joint/README.md)
-2. [Joint 指挥关系与建模基线](joint/command_and_modeling_baseline.md)
-3. [Service 标准总览](services/README.md)
-4. [USAF Profile](services/air_force.md)
-5. [US Army Profile](services/army.md)
-6. [US Navy Profile](services/navy.md)
-7. [US Marine Corps Profile](services/marine_corps.md)
-8. [文档对齐映射](document_alignment_map.md)
-9. [Air 平台专用标准总览](air/README.md)
-10. [Naval 标准占位](naval/README.md)
+The standards tree is therefore the ownership map. Task plans may describe
+current implementation waves, but they should not redefine which layer owns
+`authority_scope`, `task_group_id`, `runway_slot_code`, or `warfare_role_code`.
 
-## 2. 与旧文档的关系
+## Tree Structure
 
-以下旧文档仍保留，但已按 `ARCHIVED` 口径处理：
+Since `2026-03-23`, the standards documentation is no longer organized around
+an "air first, generalize later" line. It now follows:
 
-- `docs/Archive/air_first_standards/com/*.md`
-- `docs/Archive/air_first_standards/com/two_ship/*.md`
-- `docs/Archive/architecture/*.md`
-- `docs/Archive/architecture/layers/*.md`
+1. `joint/`
+2. `services/`
+3. `air/`
+4. `naval/`
 
-这些文档仍可用于理解项目历史推演，但不再作为当前标准化建模的主依据。
+This reflects a deliberate modeling split:
 
-## 3. 当前建模结论
+- `joint/` defines common relationships, authority, tasking, reporting, and
+  workflow seams that remain valid across services.
+- `services/` explains how those common objects map onto the Air Force, Army,
+  Navy, and Marine Corps.
+- `air/` defines air-platform specialization such as sortie phases, runway
+  recovery, takeoff procedures, and air-specific mission observation semantics.
+- `naval/` defines naval specialization such as task-group semantics, station,
+  screen, support, recovery, and maritime command-role extensions.
 
-本项目后续若以美军公开资料为现实基线，则应按下面三层建模：
+## Recommended Reading Order
 
-- `Joint/Common Layer`
-  - command relationship
-  - authority scope
-  - task organization
-  - commander intent / order / report
-- `Service Profile Layer`
-  - USAF
-  - Army
-  - Navy
-  - Marine Corps
-- `Platform/Task Layer`
-  - air vehicle
-  - naval platform
-  - land platform
-  - domain-specific recovery / route / sensor / weapon semantics
+For new work, read in this order:
 
-## 4. 调研基线
+1. [Joint Standards Overview](joint/README.md)
+2. [Joint Command and Modeling Baseline](joint/command_and_modeling_baseline.md)
+3. [Joint Command-Link and Reporting Baseline](joint/command_link_and_reporting_baseline.md)
+4. [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
+5. [Service Profile Overview](services/README.md)
+6. [USAF Profile](services/air_force.md)
+7. [US Navy Profile](services/navy.md)
+8. [Document Alignment Map](overview/document_alignment_map.md)
+9. [Scenario Configuration Guide](bridge/scenario_guide.md)
+10. [Air Platform Specialization Overview](air/README.md)
+11. [Naval Standards Overview](naval/README.md)
 
-本轮重构只采用官方或官方托管公开资料，优先级如下：
+## Relationship to Active Task Plans
 
-- Joint Chiefs of Staff
-- USAF Doctrine
-- US Army official doctrine / doctrine-related official pages
-- US Navy official doctrine / fleet / training pages
-- US Marine Corps official doctrine
+The current task tree under `docs/task/flight_dynamics/` is organized around
+implementation workstreams such as `flight`, `sensor_situation`,
+`weapon_guidance`, `naval`, and `c2_command_chain`.
 
-当前使用的关键来源：
+That task-tree layout is useful for execution, but it is not the ownership map
+for the standardized model. In particular:
 
-- [Joint Chiefs Service Publications](https://www.jcs.mil/Doctrine/Service-Publications/)
+- `flight`, `sensor`, and `weapon` are mostly implementation realism domains.
+- `c2_command_chain` contains many concepts that belong in `joint/`.
+- `naval` contains concepts split across `services/navy.md` and `naval/`.
+- the standards tree should absorb the stable shared contracts from those task
+  documents instead of mirroring their folder layout.
+
+If a task document and a standards document appear to disagree on ownership, the
+standards tree wins for naming and layering.
+
+## Research Baseline
+
+This standards slice uses only official or officially hosted public material as
+its real-world baseline, plus repository-internal code/tests for current
+contract alignment.
+
+Current key external references include:
+
+- [Joint Chiefs doctrine publications](https://www.jcs.mil/Doctrine/Service-Publications/)
 - [CJCSM 3150.13C, Joint Reporting Structure](https://www.jcs.mil/Portals/36/Documents/Library/Manuals/m315013.pdf)
 - [AFDP 3-0.1, Command and Control](https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-0_1/AFDP3-0.1CommandandControl.pdf)
-- [Army MCCoE](https://usacac.army.mil/Organizations/Centers-of-Excellence-CoE/MCCoE)
-- [Army doctrinal references page](https://www.ikn.army.mil/apps/IKNHostedWebsites/Home/LoadPublishedPage?PageUID=30c204aa-de54-471a-8252-2df7d9f5a5cc)
-- [Army force structure reference](https://www.army.mil/core/support/best-practices/ap/ap_stylebook_quick_reference.html)
 - [U.S. 7th Fleet, CTF 71 establishment](https://www.c7f.navy.mil/Media/News/Display/Article/2641477/ctf-71-establishment-enhances-readiness-in-7th-fleet/)
 - [TTGP Warfare Commanders Conference I](https://www.ttgp.navy.mil/OFRP-Syllabus/Warfare-Commanders-Conference-I/)
 - [NAVIFOR, IW Has a Seat at the Table](https://www.navifor.usff.navy.mil/Press-Room/News-Stories/Article/2395110/iw-has-a-seat-at-the-table/)
-- [COMPHIBRON 5 About](https://www.surfpac.navy.mil/Ships/Amphibious-Squadron-COMPHIBRON-5/About/)
-- [MCDP 1-0 w/ CH 1-3](https://www.marines.mil/News/Publications/MCPEL/Electronic-Library-Display/Article/1323621/mcdp-1-0-w-ch-1-3/)
+- [MCDP 1-0](https://www.marines.mil/News/Publications/MCPEL/Electronic-Library-Display/Article/1323621/mcdp-1-0-w-ch-1-3/)
 
-## 5. 对齐原则
+Current key repository references include:
 
-从本轮开始，标准文档按以下状态管理：
+- [docs/task/flight_dynamics/README.md](../task/flight_dynamics/README.md)
+- [docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/program/realism_program_convergence_plan_20260517.md)
+- [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
+- [src/core/mission/README.md](../../src/core/mission/README.md)
+- [tests/runtime/README.md](../../tests/runtime/README.md)
+
+## Status Categories
+
+The maintained standards tree uses three status categories:
 
 - `Authoritative`
-  - 当前标准化建模的主依据
+  - current primary standard for maintained work
 - `Specialization`
-  - 某军种或某平台的专用补充标准
+  - platform- or domain-specific supplement
 - `Archived`
-  - 历史设计与旧路线，保留但不再作为主依据
+  - historical path retained for reference only
 
-当前状态划分：
+Current status mapping:
 
-- `joint/*.md`：`Authoritative`
-- `services/*.md`：`Authoritative`
-- `air/obs.md`、`air/act.md`、`air/aim.md`、`air/rep.md`：`Specialization`
-- `naval/*.md`：`Specialization (early-stage)`
-- `docs/Archive/air_first_standards/com/*.md`、`docs/Archive/air_first_standards/com/two_ship/*.md`：`Archived`
-- `docs/Archive/architecture/*.md`：`Archived`
+- `joint/*.md`: `Authoritative`
+- `services/*.md`: `Authoritative`
+- `runtime_workflow_and_contract_baseline.md`: `Authoritative`
+- `scenario_guide.md`: `Authoritative bridge`
+- `air/*.md`: `Specialization`
+- `naval/*.md`: `Specialization`
+- `docs/Archive/**`: `Archived`
+- `docs/task/flight_dynamics/archive/**`: task-history archive, not an active standard source
+
+Additional maintained supplements:
+
+- [naval/ship_unit_references.md](naval/ship_unit_references.md)
+  - reference-baseline supplement for first-batch naval units and public-source
+    traceability
+- [modularization_plan.md](planning/modularization_plan.md)
+  - active planning supplement for future codebase structure, not a current
+    runtime contract
+
+## Maintained Rules
+
+- English `.md` files are canonical. Chinese `.zh.md` files are companions.
+- Maintained canonical docs should not keep machine-translation draft markers.
+- New shared contracts should land in `joint/` or the `bridge/` workflow
+  documents before
+  they are repeated in task plans.
+- Service-specific or platform-specific terms must not be promoted into the
+  common core just because the current implementation started in one domain.
+
+## Related Documents
+
+- [Bilingual Documentation Policy](governance/bilingual_documentation_policy.md)
+- [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
+- [Document Alignment Map](overview/document_alignment_map.md)
+- [Simulation Conventions](foundation/conventions.md)
+- [Scenario Configuration Guide](bridge/scenario_guide.md)
+- [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
+- [Modularization Plan](planning/modularization_plan.md)

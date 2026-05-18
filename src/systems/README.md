@@ -1,31 +1,31 @@
-# `src/systems` 边界
+# `src/systems` Boundary
 
-`systems/` 保存 ECS system registration 和每 tick mutation 逻辑。这里的代码消费 `components/` 与 `models/`，并由 `core/engine` 注册和调度。
+`systems/` contains ECS system registration and per-tick mutation logic. Code here consumes `components/` and `models/`, and is registered and scheduled by `core/engine`.
 
-## 允许
+## Allowed
 
-- Flecs system/query 注册函数。
-- 每 tick 对 ECS component 的更新逻辑。
-- 调用 `models/` 中的可替换模型实现。
-- 使用 `core/interfaces` 中的模型接口。
+- Flecs system/query registration functions.
+- Per-tick update logic for ECS components.
+- Calls into swappable model implementations in `models/`.
+- Use of model interfaces from `core/interfaces`.
 
-## 禁止
+## Forbidden
 
-- 定义新的 ECS component 或 command/tasking DTO。
-- 拥有 world lifecycle、batch runtime、episode controller 或 facade。
-- Python binding 或外部 API 适配。
-- 读取训练配置、场景文件或直接管理多 world。
+- Defining new ECS components or command/tasking DTOs.
+- Owning world lifecycle, batch runtime, episode controllers, or facades.
+- Python bindings or external API adapters.
+- Reading training configs, scenario files, or directly managing multiple worlds.
 
-## 子目录约定
+## Subdirectory Conventions
 
-- `core/`：通用 operation / lifecycle system。
-- `physics/`：空气动力、控制、力、积分、地面接触、仪表等物理系统。
-- `combat/`：伤害、制导和战斗效果系统。
-- `systems/`：平台系统 runtime，例如 command link、data link、EW、logistics、navigation、sensor、track manager。
-- `naval/`：舰艇/潜艇运动与舰载航空 token-level runtime。
-- `visual/`：视觉观测 system。
+- `core/`: common operation/lifecycle systems.
+- `physics/`: physics systems for aerodynamics, control, forces, integration, ground contact, instruments, and related logic.
+- `combat/`: damage, guidance, and combat effect systems.
+- `systems/`: platform-system runtime such as command link, data link, EW, logistics, navigation, sensor, and track manager.
+- `naval/`: ship/submarine motion and embarked aviation token-level runtime.
+- `visual/`: visual observation systems.
 
-## 当前阅读入口
+## Current Entry Points
 
 - [core/README.md](core/README.md)
 - [physics/README.md](physics/README.md)
@@ -34,7 +34,7 @@
 - [naval/README.md](naval/README.md)
 - [visual/README.md](visual/README.md)
 
-## 当前文件落点
+## Current File Locations
 
 - `core/`
   - `operation_system.h`
@@ -52,6 +52,6 @@
 - `visual/`
   - `visual_system.h`
 
-## 迁移备注
+## Migration Notes
 
-`systems/systems` 命名过宽。新增平台系统可以暂放此目录，但应在下一轮重命名评估中收敛为更明确的业务名，例如 `systems/platform` 或 `systems/avionics`。
+`systems/systems` is too broad a name. New platform systems can stay there temporarily, but the next round of renaming should converge on a clearer domain name such as `systems/platform` or `systems/avionics`.

@@ -4,39 +4,37 @@
 
 关联文件：
 
-- [ShipMotion 系统（舰船运动学）](/home/void0312/Workshop/CMO/src/systems/naval/ship_motion_system.h)
-- [ShipPlatform 组件定义](/home/void0312/Workshop/CMO/src/components/naval/ship_platform.h)
-- [NavalTaskingEnums（海军任务枚举）](/home/void0312/Workshop/CMO/src/components/tasking/naval/naval_tasking_enums.h)
-- [TaskOrderNaval（海军任务指令）](/home/void0312/Workshop/CMO/src/components/tasking/naval/task_order_naval.h)
-- [LeaderIntentNaval（海军指挥意图）](/home/void0312/Workshop/CMO/src/components/tasking/naval/leader_intent_naval.h)
-- [PilotReportNaval（海军报告）](/home/void0312/Workshop/CMO/src/components/tasking/naval/pilot_report_naval.h)
-- [DDG-51 单位定义](/home/void0312/Workshop/CMO/examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)
-- [T-AKE-1 单位定义](/home/void0312/Workshop/CMO/examples/config/database/ships/units/take1_usns_lewis_and_clark.json)
-- [AN/SPS-67(V) 传感器定义](/home/void0312/Workshop/CMO/examples/config/database/ships/modules/sensors/an_sps_67_v_surface_search.json)
-- [辅助舰导航雷达定义](/home/void0312/Workshop/CMO/examples/config/database/ships/modules/sensors/civil_navigation_surface_radar.json)
-- [DDG-51 屏护最小场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
-- [屏护逼近变体场景](/home/void0312/Workshop/CMO/scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
-- [海军单位参数参考](/home/void0312/Workshop/CMO/docs/standards/naval/ship_unit_references.md)
-- [海军任务最小结构](/home/void0312/Workshop/CMO/docs/standards/naval/minimal_task_structure.md)
-- [海军测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_ship_database.py)
-- [屏护场景测试](/home/void0312/Workshop/CMO/tests/runtime/test_naval_screen_scenario.py)
-- [传感器与态势感知分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
-- [武器系统分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
+- [ShipMotion 系统（舰船运动学）](../../../../src/systems/naval/ship_motion_system.h)
+- [ShipPlatform 组件定义](../../../../src/components/naval/ship_platform.h)
+- [NavalTaskingEnums（海军任务枚举）](../../../../src/components/tasking/naval/naval_tasking_enums.h)
+- [TaskOrderNaval（海军任务指令）](../../../../src/components/tasking/naval/task_order_naval.h)
+- [LeaderIntentNaval（海军指挥意图）](../../../../src/components/tasking/naval/leader_intent_naval.h)
+- [PilotReportNaval（海军报告）](../../../../src/components/tasking/naval/pilot_report_naval.h)
+- [DDG-51 单位定义](../../../../examples/config/database/ships/units/ddg51_flight_i_uss_arleigh_burke.json)
+- [T-AKE-1 单位定义](../../../../examples/config/database/ships/units/take1_usns_lewis_and_clark.json)
+- [AN/SPS-67(V) 传感器定义](../../../../examples/config/database/ships/modules/sensors/an_sps_67_v_surface_search.json)
+- [辅助舰导航雷达定义](../../../../examples/config/database/ships/modules/sensors/civil_navigation_surface_radar.json)
+- [DDG-51 屏护最小场景](../../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
+- [屏护逼近变体场景](../../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
+- [海军单位参数参考](../../../standards/naval/ship_unit_references.md)
+- [海军任务最小结构](../../../standards/naval/minimal_task_structure.md)
+- [海军测试](../../../../tests/runtime/naval/test_naval_ship_database.py)
+- [屏护场景测试](../../../../tests/runtime/naval/test_naval_screen_scenario.py)
+- [传感器与态势感知分析（关联）](../sensor_situation/sensor_situation_realism_analysis_20260516.zh.md)
+- [武器系统分析（关联）](../weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md)
 
 文档定位：
 
 - 本文档仅记录当前海战管线的已知缺陷及其对应的真实物理/工程情况。
 - 不涵盖可接受的简化，不提供优先级排序，不给出工作计划。
+- 当前判断以本分析中的 `2026-05-18` 收口标记为准，不再引用 `program/` 或 `archive/` 作为当前状态来源。
 
 当前状态指引：
 
 - 本文档是冻结分析输入，不是当前执行状态看板。
-- 当前海战实际推进与回归情况请优先参见：
-  - [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
-  - [海战后续委派执行单](/home/void0312/Workshop/CMO/docs/task/naval/naval_delegated_execution_backlog_20260517.zh.md)
-  - [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
+- 当前海战状态判断请只参见本分析中的 `2026-05-18` 收口标记。
 
-## 补记：`2026-05-17` 收口标记
+## 补记：`2026-05-18` 收口标记
 
 标记口径：
 
@@ -54,7 +52,7 @@
 | `2.2` 海况与波浪响应完全缺失 | `已有最小收口` | `sea_state / roll / pitch / added resistance` 已有最小代理 |
 | `2.3` 水面传感器共用空中雷达框架 | `部分解决` | 仍复用共用框架，但已补海上雷达特化字段、`ESM` MVP 与海面 `LOS` 修补 |
 | `2.4` 无舰载声纳/反潜战 | `已有最小收口` | 已进入 `Submarine + Sonar + helo relay` 的最小 `ASW` 闭环 |
-| `2.5` 舰载武器系统——元数据占位，无运行时实现 | `部分解决` | `VLS / gun / CIWS` 已进入结构化运行时，但主炮直调与 `MissionCommand -> CIWS` 仍未转绿 |
+| `2.5` 舰载武器系统——元数据占位，无运行时实现 | `已解决` | `VLS / gun / CIWS` 已具结构化运行时表面，主炮直调与 `MissionCommand -> CIWS` 定向路径也已转绿；当前剩余差距在 fire-control fidelity，而不是“无运行时实现” |
 | `2.6` 舰船毁伤模型——HP 占位符，无沉没/失能物理 | `部分解决` | 已有 `mission/mobility/sensor kill` 与持续毁伤传播，但仍无浮性/隔舱/稳性高保真模型 |
 | `2.7` 红方使用 `T-AKE-1` 占位 | `已解决` | 红方占位舰问题已被替换，不再是当前状态描述 |
 | `2.8` 海上编队与屏护控制 | `部分解决` | 已有最小 `screen-hold` 与站位恢复闭环，但仍非完整编队机动/多舰协同 |

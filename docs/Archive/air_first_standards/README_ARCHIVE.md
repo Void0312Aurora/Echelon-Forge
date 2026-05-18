@@ -11,6 +11,6 @@
 当前主依据请改看：
 
 - [docs/standards/README.md](/home/void0312/Workshop/CMO/docs/standards/README.md)
-- [docs/standards/document_alignment_map.md](/home/void0312/Workshop/CMO/docs/standards/document_alignment_map.md)
+- [docs/standards/overview/document_alignment_map.md](/home/void0312/Workshop/CMO/docs/standards/overview/document_alignment_map.md)
 
 若需要引用本目录中的旧文档，应明确标注为“归档历史材料”。

@@ -57,6 +57,30 @@ def build_mission_nav_products(loader, route_result, truth, inst):
     }
 
 
+def cached_waypoint_nav_products(loader, *, truth=None, inst=None):
+    cache = getattr(loader, "_runtime_eval_cache", None)
+    route_key_ready = isinstance(cache, dict) and "route_guidance_key" in cache
+    route_key = cache.get("route_guidance_key") if route_key_ready else None
+    if route_key_ready and cache.get("waypoint_nav_products_key") == route_key:
+        cached_products = cache.get("waypoint_nav_products")
+        return cached_products if cached_products is not None else None
+
+    route_result = loader._query_route_guidance_result(truth=truth, inst=inst)
+    route_key_ready = isinstance(cache, dict) and "route_guidance_key" in cache
+    route_key = cache.get("route_guidance_key") if route_key_ready else None
+    if route_result is None:
+        if route_key_ready:
+            cache["waypoint_nav_products_key"] = route_key
+            cache["waypoint_nav_products"] = None
+        return None
+
+    products = build_mission_nav_products(loader, route_result, truth, inst)
+    if route_key_ready:
+        cache["waypoint_nav_products_key"] = route_key
+        cache["waypoint_nav_products"] = products
+    return products
+
+
 def mission_observation_mode_code(mode: str) -> int:
     return int(mission_obs_mode_code(mode))
 
@@ -137,10 +161,7 @@ def get_waypoint_nav_products(loader, *, truth=None, inst=None):
             inst = loader.sim.get_instrument_state(loader.agent_id)
         except Exception:
             inst = None
-    route_result = loader._query_route_guidance_result(truth=truth, inst=inst)
-    if route_result is None:
-        return None
-    return build_mission_nav_products(loader, route_result, truth, inst)
+    return cached_waypoint_nav_products(loader, truth=truth, inst=inst)
 
 
 def _role_vector(loader):

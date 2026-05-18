@@ -4,32 +4,32 @@
 
 关联文件：
 
-- [气动状态系统](/home/void0312/Workshop/CMO/src/systems/physics/aero_state_system.h)
-- [力系统（重力/推力）](/home/void0312/Workshop/CMO/src/systems/physics/force_system.h)
-- [气动系统（升力/阻力/力矩）](/home/void0312/Workshop/CMO/src/systems/physics/aerodynamics_system.h)
-- [地面接触系统](/home/void0312/Workshop/CMO/src/systems/physics/ground_contact_system.h)
-- [旋转积分系统](/home/void0312/Workshop/CMO/src/systems/physics/rotational_system.h)
-- [平移积分系统](/home/void0312/Workshop/CMO/src/systems/physics/leapfrog_system.h)
-- [飞控模型](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
-- [飞控系统入口](/home/void0312/Workshop/CMO/src/systems/physics/control_system.h)
-- [动力学组件定义](/home/void0312/Workshop/CMO/src/components/physics/dynamics.h)
-- [力/力矩/惯量组件](/home/void0312/Workshop/CMO/src/components/physics/forces.h)
-- [气动参考几何组件](/home/void0312/Workshop/CMO/src/components/systems/logistics.h)（MassProperties）
-- [物理引擎升级路线图](/home/void0312/Workshop/CMO/docs/forward/physics_engine_roadmap.md)
-- [引擎能力清单](/home/void0312/Workshop/CMO/docs/manual/engine_capabilities.md)
-- [物理引擎库存](/home/void0312/Workshop/CMO/docs/manual/physics_engine_inventory.md)
-- [空战 1v1 切入分析](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
-- [空战 1v1 训练烟测进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_training_smoke_progress_20260516.zh.md)
-- [空战 1v1 深失速根因跟进](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
-- [首批真实性守门测试](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
+- [气动状态系统](../../../../src/systems/physics/aero_state_system.h)
+- [力系统（重力/推力）](../../../../src/systems/physics/force_system.h)
+- [气动系统（升力/阻力/力矩）](../../../../src/systems/physics/aerodynamics_system.h)
+- [地面接触系统](../../../../src/systems/physics/ground_contact_system.h)
+- [旋转积分系统](../../../../src/systems/physics/rotational_system.h)
+- [平移积分系统](../../../../src/systems/physics/leapfrog_system.h)
+- [飞控模型](../../../../src/models/air/default_control_model.cpp)
+- [飞控系统入口](../../../../src/systems/physics/control_system.h)
+- [动力学组件定义](../../../../src/components/physics/dynamics.h)
+- [力/力矩/惯量组件](../../../../src/components/physics/forces.h)
+- [气动参考几何组件](../../../../src/components/systems/logistics.h)（MassProperties）
+- [物理引擎升级路线图](../../../forward/physics_engine_roadmap.md)
+- [引擎能力清单](../../../manual/engine_capabilities.md)
+- [物理引擎库存](../../../manual/physics_engine_inventory.md)
+- [空战 1v1 切入分析](../../air_combat/air_combat_1v1_entry_analysis_20260516.zh.md)
+- [空战 1v1 训练烟测进展](../../air_combat/air_combat_1v1_training_smoke_progress_20260516.zh.md)
+- [空战 1v1 深失速根因跟进](../../air_combat/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
+- [首批真实性守门测试](../../../../tests/runtime/air_combat/test_flight_dynamics_realism_guards.py)
 
 文档定位：
 
 - 本文档仅记录当前飞行动力学管线的已知缺陷及其对应的真实物理/工程情况。
 - 不涵盖可接受的简化，不提供优先级排序，不给出工作计划。
-- 第十节到第十二节额外记录了飞行动力学作为空战前置条件的影响分析和验收门槛。
+- 当前判断以本分析中的 `2026-05-18` 收口标记为准，不再引用 `program/` 或 `archive/` 作为当前状态来源。
 
-## 补记：`2026-05-17` 收口标记
+## 补记：`2026-05-18` 收口标记
 
 标记口径：
 
@@ -45,12 +45,12 @@
 | `2.1` 升力模型 | `部分解决` | 已有最小 `Mach/stall` 调度入口与守门，但负迎角不对称、`beta` 耦合和机型级曲线仍未收口 |
 | `2.2` 阻力模型 | `部分解决` | 已有最小 `Mach/cd0/induced drag` 调度，但波阻分解、外挂干扰和更可信地面效应仍缺 |
 | `2.3` 力矩模型 | `部分解决` | `stall_progress / pitch_break surrogate / alpha_dot` 已进入运行时，但控制面导数与完整稳定性导数调度仍缺 |
-| `2.4` 失速/过失速动力学 | `部分解决` | 已有最小 `pitch break / recovery trend`，但 `hysteresis / wing rock / post-stall` 仍未收口 |
+| `2.4` 失速/过失速动力学 | `已有最小收口` | `StallState`、失速记忆、`pitch break` 与恢复趋势已进入运行时，但 `wing rock / 更深 post-stall` 保真度仍未收口 |
 | `2.5` 推力与推进系统 | `已有最小收口` | `spool / AB / TSFC / shared propulsion fact` 已接通，但仍非机型级发动机模型 |
 | `2.6` 惯量与质量 | `未解决` | `Ixz`、投放后惯量重算和燃油分布对惯量的影响仍未接入 |
 | `2.7` 积分器精度 | `未解决` | 旋转积分与 `Velocity-Verlet` 升级暂无收口证据 |
-| `2.8` 大气与环境 | `部分解决` | atmosphere 输入骨架已统一，但高空声速、湍流和风切变仍缺 |
-| `2.9` FBW 飞控系统 | `未解决` | `g-command / gain scheduling / G-limiter / control allocation` 仍未进入当前主线 |
+| `2.8` 大气与环境 | `已有最小收口` | 标准大气密度/温度、由温度导出的声速与按高度变化的风切变已接入，但湍流与更丰富天气效应仍缺 |
+| `2.9` FBW 飞控系统 | `部分解决` | 已有 rate-command control、`q_bar` 调度、`AoA` 限幅和 `beta` damping，但 `g-command / control allocation / 完整 FBW` 仍未收口 |
 | `2.10` 陈旧代码/文档不同步 | `已解决` | 该陈旧口径已不再代表当前实现，应视为历史残留 |
 | 第五节空战主风险 | `部分解决` | 推进瞬态与高攻角恢复已有最小收口，但压缩性和 `RSS/FBW` 仍是主风险 |
 | 第六节真实性守门 | `已有最小收口` | `coarse realism guards` 已入库，但不能代替高保真验收 |
@@ -432,7 +432,7 @@ pitch break 的缺失尤其关键——真实飞机失速时压力中心后移�
 
 本轮新增：
 
-- [tests/runtime/test_flight_dynamics_realism_guards.py](/home/void0312/Workshop/CMO/tests/runtime/test_flight_dynamics_realism_guards.py)
+- [tests/runtime/air_combat/test_flight_dynamics_realism_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_realism_guards.py)
 
 覆盖内容：
 
@@ -445,7 +445,7 @@ pitch break 的缺失尤其关键——真实飞机失速时压力中心后移�
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
-cmo_python -m pytest -q tests/runtime/test_flight_dynamics_realism_guards.py
+cmo_python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
 ```
 
 注意：

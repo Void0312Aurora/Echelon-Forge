@@ -1,35 +1,57 @@
-# 武器与交战规则实现说明
+# Weapons and Engagement Rules Implementation Notes
 
-本文件记录当前代码层落地的武器/交战规则实现，以便与规划对照。
+This document records the weapons and engagement-rule behavior currently
+implemented in code so it can be compared against the roadmap.
 
-## 已实现内容
+## Implemented Items
 
-### 导弹引导延迟与更新周期
-- 通过 `Missile.guidance_delay_s` 控制导弹发射后延迟引导。
-- 通过 `Missile.guidance_update_period_s` 控制引导更新频率。
-- 相关字段：
-  - `Missile.launch_time`
-  - `Missile.last_guidance_time`
+### Launch Setup and Runtime Tuning
+- `SimulationKernel::fire_missile(...)` resolves the selected munition and
+  builds launch-time missile state in
+  `src/core/engine/simulation_kernel_weapon_api.cpp`.
+- Launch-time setup currently fills:
+  - `Missile.guidance_delay_s` and `Missile.guidance_update_period_s`
+  - `Missile.max_flight_time_s` and `Missile.nav_gain`
+  - seeker limits such as `Missile.seeker_fov_deg` and
+    `Missile.seeker_lock_range`
+  - track-memory, seeker-activation, and optional midcourse-datalink fields
+  - boost/sustain, drag, and autopilot-related tuning fields
 
-### 寻标器锁定条件
-- 视场限制：`Missile.seeker_fov_deg`。
-- 锁定距离：`Missile.seeker_lock_range`。
-- 条件不满足时，导弹保持当前速度方向（惯性飞行）。
+### Seeker Screening and Track Memory
+- Guidance starts only after `Missile.guidance_delay_s` and can be rate-limited
+  by `Missile.guidance_update_period_s`.
+- Candidate detections are filtered by alliance, assigned target, seeker FOV,
+  seeker lock range, and whether terminal guidance has a local sensor hit.
+- If direct detections disappear, the missile can continue on filtered track
+  memory for `Missile.track_memory_timeout_s`; if no valid track remains, it
+  falls back to ballistic flight.
+- `Missile.midcourse_datalink_supported` allows non-local detections to feed
+  guidance before terminal seeker handoff.
 
-### 引导模型
-- 当前引导为 2D PN（比例导航）：
-  - 以 LOS 角速度驱动转弯率。
-  - `Missile.nav_gain` 为 PN 增益。
-  - 转弯率受 `Missile.turn_rate` 限制。
+### Guidance and Flight Dynamics
+- The current guidance model lives in
+  `src/models/weapons/default_guidance_model.cpp`.
+- Guidance blends a capture term with PN-style commands derived from filtered
+  LOS bearing/elevation rates.
+- Lateral acceleration is limited by `Missile.guidance_max_lateral_g` and
+  shaped by autopilot response terms, rather than by a simple
+  `Missile.turn_rate` clamp.
+- `Missile.turn_rate` still exists as a tuning input and is used as a fallback
+  when deriving the lateral-G limit if that value is otherwise unset.
+- The runtime also updates boost/sustain thrust, drag, fuel burn, and
+  `Missile.max_flight_time_s` self-destruct behavior.
 
-## 代码入口
-- 导弹参数设置：`src/core/simulation_kernel.cpp`
-- 引导逻辑：`src/models/default_guidance_model.cpp`
-- 引导系统：`src/systems/guidance_system.h`
-- 数据结构：`src/components/weapon.h`
+## Code Entry Points
+- Missile launch and tuning: `src/core/engine/simulation_kernel_weapon_api.cpp`
+- Guidance model: `src/models/weapons/default_guidance_model.cpp`
+- Guidance system registration: `src/systems/combat/guidance_system.h`
+- Missile data structures and runtime state: `src/components/combat/weapon.h`
 
-## 后续计划（与前瞻文档对齐）
-- 引导过载限制（由 `max_g` 或导弹模型约束）。
-- 引导/传感器的目标跟踪延迟与失锁逻辑。
-- 命中结果分层：Hit / MissionKill / MobilityKill / SensorKill。
-- 发射包线估计与规则配置（scenario 级）。
+## Follow-Up Plan (Aligned with the Roadmap)
+- Refine launch-envelope estimation and scenario-level rule configuration.
+- Expand seeker break-lock / countermeasure behavior beyond the current
+  track-memory model.
+- Layered hit outcomes: `Hit` / `MissionKill` / `MobilityKill` /
+  `SensorKill`.
+- Evaluate whether additional guidance models or higher-fidelity terminal
+  logic are needed.

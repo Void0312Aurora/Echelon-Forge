@@ -49,14 +49,19 @@ from python.rl.runtime.world_batch import (
     RuntimeFacadeAdapter,
     compute_execution_observation_batch,
     copy_obs,
+    leader_intent_snapshot,
+    mission_command_snapshot,
     normalize_batch_observation_backend,
     normalize_batch_visual_backend,
     normalize_flight_shaping_backend,
     normalize_observation_return_mode,
     observation_timing_snapshot,
     parse_reward_terms_json,
+    pilot_report_snapshot,
     refresh_visual_cache_batch,
+    snapshot_changed,
     step_info_products_to_info_fields,
+    task_order_snapshot,
 )
 from python.scenario_compiler import ScenarioCompiler
 from python.scenario_runtime import (
@@ -75,6 +80,10 @@ _normalize_observation_return_mode = normalize_observation_return_mode
 _BatchWorldHandle = BatchWorldHandle
 _RuntimeFacadeAdapter = RuntimeFacadeAdapter
 _RuntimeCompatibilityView = RuntimeCompatibilityView
+
+
+def _float32_view(value: Any) -> np.ndarray:
+    return np.asarray(value, dtype=np.float32)
 
 
 class WorldBatchVecEnv(VecEnv):
@@ -548,10 +557,10 @@ class WorldBatchVecEnv(VecEnv):
         obs_batch = []
         for batch_idx, env_idx in enumerate(target_indices):
             handle = self._handles[env_idx]
-            inst_vec = np.asarray(inst_out[batch_idx], dtype=np.float32)
-            contacts = np.asarray(contacts_out[batch_idx], dtype=np.float32).reshape(int(self.max_contacts), 5)
-            rwr = np.asarray(rwr_out[batch_idx], dtype=np.float32).reshape(int(self.max_rwr), 4)
-            miss_vec = np.asarray(mission_out[batch_idx], dtype=np.float32)
+            inst_vec = _float32_view(inst_out[batch_idx])
+            contacts = _float32_view(contacts_out[batch_idx]).reshape(int(self.max_contacts), 5)
+            rwr = _float32_view(rwr_out[batch_idx]).reshape(int(self.max_rwr), 4)
+            miss_vec = _float32_view(mission_out[batch_idx])
 
             # Use batch result if available, otherwise fall back to per-env
             step_eval = None
@@ -563,7 +572,7 @@ class WorldBatchVecEnv(VecEnv):
                         truth=truth_batch[batch_idx],
                         inst_obj=inst_batch[batch_idx],
                         inst_vec=inst_vec,
-                        ils_vec=np.asarray(ils_batch[batch_idx], dtype=np.float32),
+                        ils_vec=_float32_view(ils_batch[batch_idx]),
                         steps=int(handle.steps),
                         max_steps=int(handle.max_steps),
                         mission_obs_mode=self.mission_obs_mode,
@@ -573,7 +582,7 @@ class WorldBatchVecEnv(VecEnv):
             if isinstance(step_eval, dict):
                 frame_products = step_eval.get("frame_products")
                 if frame_products is not None and bool(getattr(frame_products, "mission_observation_evaluated", False)):
-                    miss_vec = np.asarray(frame_products.mission_observation.values, dtype=np.float32)
+                    miss_vec = _float32_view(frame_products.mission_observation.values)
 
             obs = {
                 "instruments": inst_vec,
@@ -585,7 +594,7 @@ class WorldBatchVecEnv(VecEnv):
                 if handle.last_action is None:
                     proprio = np.zeros((int(self.action_space.shape[0]),), dtype=np.float32)
                 else:
-                    proprio = np.asarray(handle.last_action, dtype=np.float32).reshape(-1)
+                    proprio = _float32_view(handle.last_action).reshape(-1)
                 obs["proprio"] = proprio
             obs_batch.append(self._attach_visual_observation(env_idx, obs))
         return obs_batch
@@ -596,8 +605,9 @@ class WorldBatchVecEnv(VecEnv):
     def _attach_visual_observation(self, env_idx: int, obs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         if not self.include_visual:
             return obs
-        self._refresh_visual_batch([env_idx])
         handle = self._handles[env_idx]
+        if handle.visual_cache is None:
+            self._refresh_visual_batch([env_idx])
         obs["visual"] = np.asarray(handle.visual_cache, dtype=np.float32, copy=False)
         return obs
 
@@ -884,6 +894,7 @@ class WorldBatchVecEnv(VecEnv):
                 max_steps=int(handle.max_steps),
                 mission_obs_mode=None,
                 mission_observation_inputs=None,
+                include_episode_state=False,
                 return_prepared=True,
                 prepared_entry=cached_step_eval if isinstance(cached_step_eval, dict) else None,
             )
@@ -954,6 +965,7 @@ class WorldBatchVecEnv(VecEnv):
                 handle.loader.apply_execution_episode_runtime_fields(
                     controller_state,
                     include_navigation_state=True,
+                    include_navigation_structure=False,
                 )
             if timing_enabled:
                 mirror_ms += (time.perf_counter() - mirror_t0) * 1000.0
@@ -1131,32 +1143,42 @@ class WorldBatchVecEnv(VecEnv):
             if handle.agent_id is None:
                 continue
 
-            mission_assign = ef_py.WorldMissionCommandAssignment()
-            mission_assign.world_index = int(env_idx)
-            mission_assign.entity_id = int(handle.agent_id)
-            mission_assign.command = build_kernel_mission_command(handle.loader)
-            mission_assignments.append(mission_assign)
+            mission_command = build_kernel_mission_command(handle.loader)
+            mission_snapshot = mission_command_snapshot(mission_command)
+            if snapshot_changed(handle.last_mission_command_snapshot, mission_snapshot):
+                mission_assign = ef_py.WorldMissionCommandAssignment()
+                mission_assign.world_index = int(env_idx)
+                mission_assign.entity_id = int(handle.agent_id)
+                mission_assign.command = mission_command
+                mission_assignments.append(mission_assign)
+                handle.last_mission_command_snapshot = mission_snapshot
 
-            if getattr(handle.loader, "task_order", None) is not None:
+            task_snapshot = task_order_snapshot(getattr(handle.loader, "task_order", None))
+            if task_snapshot is not None and snapshot_changed(handle.last_task_order_snapshot, task_snapshot):
                 task_assign = ef_py.WorldTaskOrderAssignment()
                 task_assign.world_index = int(env_idx)
                 task_assign.entity_id = int(handle.agent_id)
                 task_assign.order = handle.loader.task_order
                 task_assignments.append(task_assign)
+                handle.last_task_order_snapshot = task_snapshot
 
-            if getattr(handle.loader, "leader_intent", None) is not None:
+            intent_snapshot = leader_intent_snapshot(getattr(handle.loader, "leader_intent", None))
+            if intent_snapshot is not None and snapshot_changed(handle.last_leader_intent_snapshot, intent_snapshot):
                 intent_assign = ef_py.WorldLeaderIntentAssignment()
                 intent_assign.world_index = int(env_idx)
                 intent_assign.entity_id = int(handle.agent_id)
                 intent_assign.intent = handle.loader.leader_intent
                 intent_assignments.append(intent_assign)
+                handle.last_leader_intent_snapshot = intent_snapshot
 
-            if getattr(handle.loader, "pilot_report", None) is not None:
+            report_snapshot = pilot_report_snapshot(getattr(handle.loader, "pilot_report", None))
+            if report_snapshot is not None and snapshot_changed(handle.last_pilot_report_snapshot, report_snapshot):
                 report_assign = ef_py.WorldPilotReportAssignment()
                 report_assign.world_index = int(env_idx)
                 report_assign.entity_id = int(handle.agent_id)
                 report_assign.report = handle.loader.pilot_report
                 report_assignments.append(report_assign)
+                handle.last_pilot_report_snapshot = report_snapshot
 
         if mission_assignments:
             self._runtime_adapter.set_mission_commands_batch(mission_assignments)
@@ -1204,6 +1226,10 @@ class WorldBatchVecEnv(VecEnv):
         handle.max_steps = int(handle.loader.get_max_steps())
         handle.steps = 0
         handle.loader.steps = 0
+        handle.last_mission_command_snapshot = None
+        handle.last_task_order_snapshot = None
+        handle.last_leader_intent_snapshot = None
+        handle.last_pilot_report_snapshot = None
         handle.last_action = None
         handle.last_inst = initial_inst
         handle.last_truth = initial_truth
@@ -1392,6 +1418,8 @@ class WorldBatchVecEnv(VecEnv):
                 truncated = bool(mainline_result["truncated"])
                 mission_status = list(mainline_result["mission_status"])
             else:
+                cache = getattr(handle.loader, "_runtime_eval_cache", None)
+                cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
                 reward, terminated, truncated, mission_status = handle.loader.compute_full_step(
                     obs,
                     handle.loader.sim,
@@ -1399,11 +1427,25 @@ class WorldBatchVecEnv(VecEnv):
                     handle.max_steps,
                     truth=handle.last_truth,
                     inst_state=handle.last_inst,
+                    step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
                 )
-            if not (
+            include_full_step_info = not (
                 self.step_info_mode == "off"
                 or (self.step_info_mode == "terminal" and not bool(terminated or truncated))
-            ):
+            )
+            mainline_step_info_fields: dict[str, float] | None = None
+            if mainline_result is not None:
+                step_info_fields = mainline_result.get("step_info_fields")
+                if isinstance(step_info_fields, dict) and step_info_fields:
+                    mainline_step_info_fields = {}
+                    for key, value in step_info_fields.items():
+                        try:
+                            mainline_step_info_fields[str(key)] = float(value)
+                        except Exception:
+                            continue
+                    if not mainline_step_info_fields:
+                        mainline_step_info_fields = None
+            if include_full_step_info and mainline_step_info_fields is None:
                 info = build_step_info(
                     handle.loader,
                     handle.loader.sim,
@@ -1421,6 +1463,8 @@ class WorldBatchVecEnv(VecEnv):
                     terminated=terminated,
                     truncated=truncated,
                 )
+                if include_full_step_info and mainline_step_info_fields is not None:
+                    info.update(mainline_step_info_fields)
             if mainline_result is not None:
                 termination_reason = str(mainline_result.get("termination_reason", "") or "")
                 if termination_reason:
@@ -1428,9 +1472,6 @@ class WorldBatchVecEnv(VecEnv):
                 reward_terms = mainline_result.get("reward_terms")
                 if isinstance(reward_terms, dict) and reward_terms:
                     info["reward_terms"] = {str(key): float(value) for key, value in reward_terms.items()}
-                step_info_fields = mainline_result.get("step_info_fields")
-                if isinstance(step_info_fields, dict) and step_info_fields:
-                    info.update({str(key): float(value) for key, value in step_info_fields.items()})
             prepared = prepared_actions[env_idx]
             if prepared is not None and handle.action_controller is not None:
                 obs, reward, info = handle.action_controller.finalize_step_result(obs, reward, info, prepared)

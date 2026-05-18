@@ -1,5 +1,9 @@
 # Echelon Forge
 
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
+
 Echelon Forge is a simulation and reinforcement-learning workbench for
 air-combat and flight-task research.
 
@@ -72,7 +76,7 @@ python -m pip install pytest numpy
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
 cmo_env_summary
-cmo_python -m pytest -q tests/runtime/test_env_config.py
+cmo_python -m pytest -q tests/runtime/core/test_env_config.py
 ```
 
 Windows/PowerShell example:
@@ -94,8 +98,8 @@ cmo_env_validate
 cmo_python -m pytest -q \
   tests/architecture/test_runtime_facade_layering.py \
   tests/architecture/test_cmake_target_readiness.py \
-  tests/runtime/test_env_config.py \
-  tests/runtime/test_runtime_facade.py \
+  tests/runtime/core/test_env_config.py \
+  tests/runtime/facade/test_runtime_facade.py \
   tests/world_batch/test_world_batch_runtime.py
 ```
 
@@ -156,7 +160,7 @@ cmo_env_validate
 cmo_python -m pytest -q \
   tests/architecture/test_runtime_facade_layering.py \
   tests/architecture/test_cmake_target_readiness.py \
-  tests/runtime/test_runtime_facade.py \
+  tests/runtime/facade/test_runtime_facade.py \
   tests/world_batch/test_world_batch_runtime.py \
   tests/test_gpu_runtime_bindings.py
 ```
@@ -204,7 +208,7 @@ See also:
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
 - [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
-- [docs/plan/architecture/src_layered_refactor_freeze.zh.md](docs/plan/architecture/src_layered_refactor_freeze.zh.md)
+- [docs/plan/archive/src_layered_refactor_freeze.zh.md](docs/plan/archive/src_layered_refactor_freeze.zh.md)
 
 ## Scenarios and Training Configs
 

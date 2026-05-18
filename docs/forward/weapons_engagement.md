@@ -1,63 +1,78 @@
-# 武器与交战规则前瞻
+# Weapons and Engagement Rules Roadmap
 
-本文件记录导弹与交战规则的规划目标，作为后续迭代参考。
+This document records the planning goals for missiles and engagement rules as a
+reference for later iterations.
 
-## 当前简化模型
-- 导弹为固定速度、固定转弯率的追踪引导。
-- 命中判定基于距离阈值与伤害值。
-- 目标状态仅用 HP 表示。
+## Current Simplified Model
+- Missiles use pursuit guidance with fixed speed and fixed turn rate.
+- Hit detection is based on a distance threshold and damage value.
+- Target state is represented only by HP.
 
-## 需要补齐的核心能力
+## Core Capabilities Still Needed
 
-### 发射包线
-- 依据射程、能量与目标相对运动建立发射条件。
-- 基本条件：距离、视轴角、目标角速度、导弹剩余能量。
-- 包线模式：简单几何门限 -> 能量门限 -> 机动门限。
+### Launch Envelope
+- Establish launch conditions from range, energy, and target-relative motion.
+- Basic conditions: distance, line-of-sight angle, target angular rate, and
+  remaining missile energy.
+- Envelope progression: simple geometric threshold -> energy threshold ->
+  maneuver threshold.
 
-### 寻标器约束
-- 视场（FOV）限制与离轴角限制（boresight）。
-- 锁定距离/锁定时间（lock range / lock-on time）。
-- 失锁条件：目标离轴角超限、遮蔽、信噪比不足。
+### Seeker Constraints
+- Field-of-view (FOV) limit and boresight off-axis limit.
+- Lock range / lock-on time.
+- Break-lock conditions: excessive off-axis angle, obscuration, insufficient
+  signal-to-noise ratio.
 
-### 引导延迟与响应
-- 引导滞后：指令到控制响应的延迟（处理/执行链路）。
-- 目标数据延迟：传感器测量到导引的延时（track age）。
-- 导引更新周期：与 seeker 扫描周期同步。
+### Guidance Delay and Response
+- Guidance lag: delay from command to control response in the processing /
+  execution chain.
+- Target-data delay: latency from sensor measurement to missile guidance (track
+  age).
+- Guidance update period: synchronized with seeker scan timing.
 
-### 引导模型升级
-- 简易追踪 -> 比例导航（PN）或修正比例导航（APN）。
-- 引导指令与机动能力耦合（最大过载/转弯率约束）。
-- 末段制导（终端段加权或切换逻辑）。
+### Guidance Model Upgrades
+- Simple pursuit -> proportional navigation (PN) or augmented proportional
+  navigation (APN).
+- Couple guidance commands to maneuver capability limits (max G / turn-rate
+  constraints).
+- Terminal guidance logic (late-stage weighting or mode switching).
 
-### 命中与效果分层
-- 命中结果层级：
-  - Hit（命中）
-  - Kill（击毁）
-  - MissionKill（任务杀伤）
-  - MobilityKill（机动杀伤）
-  - SensorKill（传感器损坏）
-- 失效层级：
-  - 失锁（Seeker Lost）
-  - 燃尽（Burnout）
-  - 机动超限（Over-G）
-  - 自毁（Self-Destruct）
+### Hit and Effect Layers
+- Hit result levels:
+  - `Hit`
+  - `Kill`
+  - `MissionKill`
+  - `MobilityKill`
+  - `SensorKill`
+- Failure levels:
+  - `Seeker Lost`
+  - `Burnout`
+  - `Over-G`
+  - `Self-Destruct`
 
-## 建议的数据结构
-- MissileModel: 推进、阻力、最大过载、燃烧时间、引导延迟。
-- SeekerModel: FOV、锁定距离、锁定时间、扫描周期、信噪比门限。
-- EngagementRules: 发射包线参数、命中判定策略、失效判定策略。
+## Suggested Data Structures
+- `MissileModel`: propulsion, drag, max G, burn time, guidance delay.
+- `SeekerModel`: FOV, lock range, lock-on time, scan period, SNR threshold.
+- `EngagementRules`: launch-envelope parameters, hit-decision policy, and
+  failure-decision policy.
 
-## 日志与评估
-- 记录每次发射：发射条件、锁定时刻、失锁原因、命中结果。
-- 统计指标：发射成功率、锁定保持时间、命中概率、任务杀伤率。
+## Logging and Evaluation
+- Record each launch: launch conditions, lock time, break-lock reason, and hit
+  result.
+- Metrics: launch success rate, lock retention time, probability of hit, and
+  mission-kill rate.
 
-## 逐步落地计划
-1) 先引入引导延迟与 seeker FOV/锁定距离检查。 (已实现)
-2) 加入 PN 引导与过载限制。 (已实现 PN，过载限制待接入)
-3) 引入命中结果分层并更新效果模型。
-4) 建立发射包线估计，支持 scenario 中的规则配置。
+## Stepwise Rollout Plan
+1) First add guidance delay and seeker FOV / lock-range checks. (Implemented)
+2) Add PN guidance and G-limit constraints. (PN implemented; G-limits still to
+   be integrated)
+3) Add layered hit outcomes and update the effects model.
+4) Build launch-envelope estimation and support rule configuration in
+   scenarios.
 
-## 当前实现摘要
-- 引导延迟与更新周期：导弹在 `guidance_delay_s` 后启动，引导按 `guidance_update_period_s` 更新。
-- Seeker 约束：FOV 与 `seeker_lock_range` 作为锁定条件。
-- 引导模型：2D PN（比例导航），由 `nav_gain` 控制。
+## Current Implementation Summary
+- Guidance delay and update period: missiles begin guidance after
+  `guidance_delay_s`, and guidance updates run on
+  `guidance_update_period_s`.
+- Seeker constraints: FOV and `seeker_lock_range` act as lock conditions.
+- Guidance model: 2D PN (proportional navigation) controlled by `nav_gain`.

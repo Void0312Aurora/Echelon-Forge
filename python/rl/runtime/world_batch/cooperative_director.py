@@ -105,6 +105,39 @@ def _offset_triplet_from_spec(spec: Any, *, fallback: tuple[float, float, float]
     return tuple(float(v) for v in fallback)
 
 
+_MISSING = object()
+
+
+def _mapping_value_changed(mapping: dict[str, Any], key: str, value: Any) -> bool:
+    current = mapping.get(key, _MISSING)
+    if current is _MISSING:
+        return True
+    return current != value
+
+
+def _assign_mapping_value(mapping: dict[str, Any], key: str, value: Any) -> bool:
+    if not _mapping_value_changed(mapping, key, value):
+        return False
+    mapping[key] = value
+    return True
+
+
+def _assign_attr_if_present(obj: Any, attr: str, value: Any) -> bool:
+    if obj is None or not hasattr(obj, attr):
+        return False
+    try:
+        current = getattr(obj, attr)
+    except Exception:
+        current = _MISSING
+    if current is not _MISSING and current == value:
+        return False
+    try:
+        setattr(obj, attr, value)
+    except Exception:
+        return False
+    return True
+
+
 class ScriptedCooperativeCoordinationDirector:
     """
     World-level scripted coordination director for cooperative execution.
@@ -129,17 +162,26 @@ class ScriptedCooperativeCoordinationDirector:
             return
         if not force and not bool(getattr(world_state, "director_dirty", True)):
             return
+        overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
         slot_state_by_entity_id = {int(slot_state.entity_id): slot_state for slot_state in slot_states}
         for slot_state in slot_states:
-            self._apply_slot(world_state, slot_state, slot_state_by_entity_id=slot_state_by_entity_id)
+            self._apply_slot(
+                world_state,
+                slot_state,
+                slot_state_by_entity_id=slot_state_by_entity_id,
+                overrides=overrides,
+            )
         world_state.director_dirty = False
 
     def _resolve_formation_command(
         self,
         world_state: CooperativeWorldState,
         slot_state: CooperativeSlotState,
+        *,
+        overrides: dict[str, Any] | None = None,
     ) -> tuple[int, float, float, float]:
-        overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
+        if overrides is None:
+            overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
         loader = slot_state.loader
         mission_cmd = getattr(loader, "mission_cmd", None)
         if not isinstance(mission_cmd, dict):
@@ -229,52 +271,72 @@ class ScriptedCooperativeCoordinationDirector:
         relative_slot_code = _coerce_optional_int(control_slot.relative_slot_code, 0)
         element_id = _coerce_optional_int(control_slot.element_id or control_slot.team_id, 0)
         formation_role_name = str(control_slot.formation_role_id or "").strip()
+        leader_intent = getattr(loader, "leader_intent", None)
 
         task_order = getattr(loader, "task_order", None)
         if task_order is not None:
             if hasattr(task_order, "role_code"):
-                task_order.role_code = int(role_code)
+                _assign_attr_if_present(task_order, "role_code", int(role_code))
             if hasattr(task_order, "relative_slot_code"):
-                task_order.relative_slot_code = int(relative_slot_code)
+                _assign_attr_if_present(task_order, "relative_slot_code", int(relative_slot_code))
             if hasattr(task_order, "element_id") and element_id > 0:
-                task_order.element_id = int(element_id)
+                _assign_attr_if_present(task_order, "element_id", int(element_id))
             if hasattr(task_order, "lead_aircraft_id"):
-                task_order.lead_aircraft_id = int(
-                    control_slot.reference_entity_id if control_slot.reference_entity_id is not None else slot_state.entity_id
+                _assign_attr_if_present(
+                    task_order,
+                    "lead_aircraft_id",
+                    int(
+                        control_slot.reference_entity_id
+                        if control_slot.reference_entity_id is not None
+                        else slot_state.entity_id
+                    ),
                 )
             if hasattr(task_order, "formation_template_id"):
-                task_order.formation_template_id = int(
-                    getattr(task_order, "formation_template_id", 0) or getattr(loader.leader_intent, "formation_id", 0) or 0
+                _assign_attr_if_present(
+                    task_order,
+                    "formation_template_id",
+                    int(
+                        getattr(task_order, "formation_template_id", 0)
+                        or getattr(leader_intent, "formation_id", 0)
+                        or 0
+                    ),
                 )
             if hasattr(task_order, "formation_role_id") and formation_role_name and hasattr(ef_py, "FormationRole"):
-                task_order.formation_role_id = _enum_member(
-                    ef_py.FormationRole,
-                    formation_role_name,
-                    getattr(task_order, "formation_role_id", getattr(ef_py.FormationRole, "Unspecified", 0)),
+                _assign_attr_if_present(
+                    task_order,
+                    "formation_role_id",
+                    _enum_member(
+                        ef_py.FormationRole,
+                        formation_role_name,
+                        getattr(task_order, "formation_role_id", getattr(ef_py.FormationRole, "Unspecified", 0)),
+                    ),
                 )
 
-        leader_intent = getattr(loader, "leader_intent", None)
         if leader_intent is not None:
             if hasattr(leader_intent, "role_code"):
-                leader_intent.role_code = int(role_code)
+                _assign_attr_if_present(leader_intent, "role_code", int(role_code))
             if hasattr(leader_intent, "relative_slot_code"):
-                leader_intent.relative_slot_code = int(relative_slot_code)
+                _assign_attr_if_present(leader_intent, "relative_slot_code", int(relative_slot_code))
             if hasattr(leader_intent, "tactical_unit_id") and element_id > 0:
-                leader_intent.tactical_unit_id = int(element_id)
+                _assign_attr_if_present(leader_intent, "tactical_unit_id", int(element_id))
 
         pilot_report = getattr(loader, "pilot_report", None)
         if pilot_report is not None:
             if hasattr(pilot_report, "role_code"):
-                pilot_report.role_code = int(role_code)
+                _assign_attr_if_present(pilot_report, "role_code", int(role_code))
             if hasattr(pilot_report, "element_id") and element_id > 0:
-                pilot_report.element_id = int(element_id)
+                _assign_attr_if_present(pilot_report, "element_id", int(element_id))
             if hasattr(pilot_report, "coordination_mode") and hasattr(task_order, "coordination_mode"):
-                pilot_report.coordination_mode = getattr(task_order, "coordination_mode")
+                _assign_attr_if_present(pilot_report, "coordination_mode", getattr(task_order, "coordination_mode"))
             if hasattr(pilot_report, "formation_role_id") and formation_role_name and hasattr(ef_py, "FormationRole"):
-                pilot_report.formation_role_id = _enum_member(
-                    ef_py.FormationRole,
-                    formation_role_name,
-                    getattr(pilot_report, "formation_role_id", getattr(ef_py.FormationRole, "Unspecified", 0)),
+                _assign_attr_if_present(
+                    pilot_report,
+                    "formation_role_id",
+                    _enum_member(
+                        ef_py.FormationRole,
+                        formation_role_name,
+                        getattr(pilot_report, "formation_role_id", getattr(ef_py.FormationRole, "Unspecified", 0)),
+                    ),
                 )
 
     def _resolve_takeoff_semantics(
@@ -283,13 +345,15 @@ class ScriptedCooperativeCoordinationDirector:
         slot_state: CooperativeSlotState,
         *,
         slot_state_by_entity_id: dict[int, CooperativeSlotState] | None = None,
+        overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         loader = slot_state.loader
         control_slot = slot_state.control_slot
         mission_cmd = getattr(loader, "mission_cmd", None)
         if not isinstance(mission_cmd, dict):
             mission_cmd = {}
-        overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
+        if overrides is None:
+            overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
 
         result = {
             "takeoff_procedure_code": _coerce_optional_int(mission_cmd.get("takeoff_procedure_code", 0), 0),
@@ -396,31 +460,56 @@ class ScriptedCooperativeCoordinationDirector:
         slot_state: CooperativeSlotState,
         *,
         slot_state_by_entity_id: dict[int, CooperativeSlotState] | None = None,
+        overrides: dict[str, Any] | None = None,
     ) -> None:
         loader = slot_state.loader
         if loader is None:
             return
-        formation_id, form_offset_x, form_offset_y, form_offset_z = self._resolve_formation_command(world_state, slot_state)
+        if overrides is None:
+            overrides = dict(getattr(world_state, "leader_overrides", {}) or {})
+        formation_id, form_offset_x, form_offset_y, form_offset_z = self._resolve_formation_command(
+            world_state,
+            slot_state,
+            overrides=overrides,
+        )
         takeoff_semantics = self._resolve_takeoff_semantics(
             world_state,
             slot_state,
             slot_state_by_entity_id=slot_state_by_entity_id,
+            overrides=overrides,
         )
         mission_cmd = getattr(loader, "mission_cmd", None)
         if not isinstance(mission_cmd, dict):
             mission_cmd = {}
-        mission_cmd = dict(mission_cmd)
-        mission_cmd["formation_id"] = int(formation_id)
-        mission_cmd["form_offset_x"] = float(form_offset_x)
-        mission_cmd["form_offset_y"] = float(form_offset_y)
-        mission_cmd["form_offset_z"] = float(form_offset_z)
-        mission_cmd["takeoff_procedure_code"] = int(takeoff_semantics["takeoff_procedure_code"])
-        mission_cmd["takeoff_clearance_code"] = int(takeoff_semantics["takeoff_clearance_code"])
-        mission_cmd["takeoff_interval_s"] = float(takeoff_semantics["takeoff_interval_s"])
-        mission_cmd["runway_slot_code"] = int(takeoff_semantics["runway_slot_code"])
-        loader.mission_cmd = mission_cmd
-        if isinstance(getattr(loader, "scenario_data", None), dict):
-            loader.scenario_data["mission_command"] = loader.mission_cmd
+            loader.mission_cmd = mission_cmd
+        mission_changed = False
+        mission_changed |= _assign_mapping_value(mission_cmd, "formation_id", int(formation_id))
+        mission_changed |= _assign_mapping_value(mission_cmd, "form_offset_x", float(form_offset_x))
+        mission_changed |= _assign_mapping_value(mission_cmd, "form_offset_y", float(form_offset_y))
+        mission_changed |= _assign_mapping_value(mission_cmd, "form_offset_z", float(form_offset_z))
+        mission_changed |= _assign_mapping_value(
+            mission_cmd,
+            "takeoff_procedure_code",
+            int(takeoff_semantics["takeoff_procedure_code"]),
+        )
+        mission_changed |= _assign_mapping_value(
+            mission_cmd,
+            "takeoff_clearance_code",
+            int(takeoff_semantics["takeoff_clearance_code"]),
+        )
+        mission_changed |= _assign_mapping_value(
+            mission_cmd,
+            "takeoff_interval_s",
+            float(takeoff_semantics["takeoff_interval_s"]),
+        )
+        mission_changed |= _assign_mapping_value(
+            mission_cmd,
+            "runway_slot_code",
+            int(takeoff_semantics["runway_slot_code"]),
+        )
+        scenario_data = getattr(loader, "scenario_data", None)
+        if mission_changed and isinstance(scenario_data, dict):
+            scenario_data["mission_command"] = mission_cmd
 
         task_order = getattr(loader, "task_order", None)
         if task_order is not None:
@@ -434,55 +523,83 @@ class ScriptedCooperativeCoordinationDirector:
                     default_assignee_id=int(slot_state.entity_id),
                 )
             if hasattr(task_order, "takeoff_procedure_id"):
-                task_order.takeoff_procedure_id = _enum_member(
+                _assign_attr_if_present(
+                    task_order,
+                    "takeoff_procedure_id",
+                    _enum_member(
                     getattr(ef_py, "TakeoffProcedureType", None),
                     takeoff_semantics["takeoff_procedure_code"],
                     getattr(task_order, "takeoff_procedure_id", 0),
                 )
+                )
             if hasattr(task_order, "takeoff_clearance_id"):
-                task_order.takeoff_clearance_id = _enum_member(
+                _assign_attr_if_present(
+                    task_order,
+                    "takeoff_clearance_id",
+                    _enum_member(
                     getattr(ef_py, "TakeoffClearanceState", None),
                     takeoff_semantics["takeoff_clearance_code"],
                     getattr(task_order, "takeoff_clearance_id", 0),
                 )
+                )
             if hasattr(task_order, "takeoff_interval_s"):
-                task_order.takeoff_interval_s = float(takeoff_semantics["takeoff_interval_s"])
+                _assign_attr_if_present(task_order, "takeoff_interval_s", float(takeoff_semantics["takeoff_interval_s"]))
             if hasattr(task_order, "runway_slot_id"):
-                task_order.runway_slot_id = _enum_member(
+                _assign_attr_if_present(
+                    task_order,
+                    "runway_slot_id",
+                    _enum_member(
                     getattr(ef_py, "RunwaySlotPosition", None),
                     takeoff_semantics["runway_slot_code"],
                     getattr(task_order, "runway_slot_id", 0),
+                )
                 )
 
         leader_intent = getattr(loader, "leader_intent", None)
         if leader_intent is not None:
             if hasattr(leader_intent, "formation_id"):
-                leader_intent.formation_id = int(formation_id)
+                _assign_attr_if_present(leader_intent, "formation_id", int(formation_id))
             if hasattr(leader_intent, "form_offset_x"):
-                leader_intent.form_offset_x = float(form_offset_x)
+                _assign_attr_if_present(leader_intent, "form_offset_x", float(form_offset_x))
             if hasattr(leader_intent, "form_offset_y"):
-                leader_intent.form_offset_y = float(form_offset_y)
+                _assign_attr_if_present(leader_intent, "form_offset_y", float(form_offset_y))
             if hasattr(leader_intent, "form_offset_z"):
-                leader_intent.form_offset_z = float(form_offset_z)
+                _assign_attr_if_present(leader_intent, "form_offset_z", float(form_offset_z))
             if hasattr(leader_intent, "takeoff_procedure_id"):
-                leader_intent.takeoff_procedure_id = _enum_member(
+                _assign_attr_if_present(
+                    leader_intent,
+                    "takeoff_procedure_id",
+                    _enum_member(
                     getattr(ef_py, "TakeoffProcedureType", None),
                     takeoff_semantics["takeoff_procedure_code"],
                     getattr(leader_intent, "takeoff_procedure_id", 0),
                 )
+                )
             if hasattr(leader_intent, "takeoff_clearance_id"):
-                leader_intent.takeoff_clearance_id = _enum_member(
+                _assign_attr_if_present(
+                    leader_intent,
+                    "takeoff_clearance_id",
+                    _enum_member(
                     getattr(ef_py, "TakeoffClearanceState", None),
                     takeoff_semantics["takeoff_clearance_code"],
                     getattr(leader_intent, "takeoff_clearance_id", 0),
                 )
+                )
             if hasattr(leader_intent, "takeoff_interval_s"):
-                leader_intent.takeoff_interval_s = float(takeoff_semantics["takeoff_interval_s"])
+                _assign_attr_if_present(
+                    leader_intent,
+                    "takeoff_interval_s",
+                    float(takeoff_semantics["takeoff_interval_s"]),
+                )
             if hasattr(leader_intent, "runway_slot_id"):
-                leader_intent.runway_slot_id = _enum_member(
+                _assign_attr_if_present(
+                    leader_intent,
+                    "runway_slot_id",
+                    _enum_member(
                     getattr(ef_py, "RunwaySlotPosition", None),
                     takeoff_semantics["runway_slot_code"],
                     getattr(leader_intent, "runway_slot_id", 0),
+                )
                 )
 
         inst = getattr(slot_state, "last_inst", None)
@@ -494,12 +611,11 @@ class ScriptedCooperativeCoordinationDirector:
             if clearance_code in (3, 4, 5) and ground_speed >= 35.0 and _cooperative_roll_start_time(loader) < 0.0:
                 setattr(loader, "_coop_takeoff_roll_start_time_s", current_time)
             if clearance_code == 3 and ground_speed >= 35.0:
-                mission_cmd["takeoff_clearance_code"] = 4
+                mission_changed |= _assign_mapping_value(mission_cmd, "takeoff_clearance_code", 4)
             if mission_cmd.get("takeoff_clearance_code", 0) in (3, 4) and alt_agl >= 5.0:
-                mission_cmd["takeoff_clearance_code"] = 5
-            loader.mission_cmd = mission_cmd
-            if isinstance(getattr(loader, "scenario_data", None), dict):
-                loader.scenario_data["mission_command"] = loader.mission_cmd
+                mission_changed |= _assign_mapping_value(mission_cmd, "takeoff_clearance_code", 5)
+            if mission_changed and isinstance(scenario_data, dict):
+                scenario_data["mission_command"] = mission_cmd
 
         self._apply_role_metadata(slot_state)
 

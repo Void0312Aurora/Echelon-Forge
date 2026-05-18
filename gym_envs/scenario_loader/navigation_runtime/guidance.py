@@ -218,12 +218,24 @@ def turn_lead_distance_m(loader, turn_angle_deg: float, speed_mps: float, bank_l
 
 
 def compute_waypoint_guidance_state(loader, truth=None, inst=None):
+    cache = getattr(loader, "_runtime_eval_cache", None)
+    route_key_ready = isinstance(cache, dict) and "route_guidance_key" in cache
+    route_key = cache.get("route_guidance_key") if route_key_ready else None
+    if route_key_ready and cache.get("waypoint_guidance_state_key") == route_key:
+        cached_state = cache.get("waypoint_guidance_state")
+        return cached_state if cached_state is not None else None
+
     result = query_route_guidance_result(loader, truth=truth, inst=inst)
+    route_key_ready = isinstance(cache, dict) and "route_guidance_key" in cache
+    route_key = cache.get("route_guidance_key") if route_key_ready else None
     if result is None:
+        if route_key_ready:
+            cache["waypoint_guidance_state_key"] = route_key
+            cache["waypoint_guidance_state"] = None
         return None
 
     wp = loader.waypoints[int(result.idx)]
-    return {
+    state = {
         "idx": int(result.idx),
         "count": int(result.count),
         "wp": wp,
@@ -259,6 +271,10 @@ def compute_waypoint_guidance_state(loader, truth=None, inst=None):
         "final_leg": bool(result.final_leg),
         "passed_fix": bool(result.passed_fix),
     }
+    if route_key_ready:
+        cache["waypoint_guidance_state_key"] = route_key
+        cache["waypoint_guidance_state"] = state
+    return state
 
 
 def active_waypoint_arrival_products(loader):

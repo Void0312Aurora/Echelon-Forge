@@ -1,19 +1,21 @@
-# `src/tools/experimental/gpu_phase0` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/tools/experimental/gpu_phase0/README.md. Review before treating this file as authoritative. -->
 
-`gpu_phase0` 保存早期 GPU phase-0 探针，用于验证候选列表、视觉、通信、飞行 shaping 等 GPU helper 的可行性。
+# `src/tools/experimental/gpu_phase0` Boundaries
 
-## 允许
+`gpu_phase0` holds early GPU phase-0 probes used to verify the feasibility of GPU helpers such as candidate lists, vision, communication, flight shaping, etc.
 
-- 独立 probe executable。
-- 与 GPU helper parity 或性能相关的临时验证。
-- 只读或受控调用 runtime packet API 的实验代码。
+## Allowed
 
-## 禁止
+- Standalone probe executables.
+- Temporary validation related to GPU helper parity or performance.
+- Experimental code that makes read-only or controlled calls to the runtime packet API.
 
-- 默认 runtime backend。
-- 被 Python binding、facade 或 core runtime 依赖。
-- 在未冻结的情况下改变 CPU truth path。
+## Prohibited
 
-## 迁移备注
+- Default runtime backend.
+- Being depended upon by Python bindings, facade, or core runtime.
+- Altering the CPU truth path without freezing.
 
-可维护的 GPU helper 应迁移到 `src/gpu` 主目录；过期探针应归档或删除，而不是继续扩展 phase-0 目录。
+## Migration Notes
+
+Maintainable GPU helpers should be migrated to the `src/gpu` main directory; expired probes should be archived or deleted, rather than continuing to extend the phase-0 directory.

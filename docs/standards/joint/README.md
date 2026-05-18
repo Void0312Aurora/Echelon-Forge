@@ -1,40 +1,41 @@
-# Joint 标准总览
+# Joint Standards Overview
 
-本目录定义项目在空、海、陆建模时共用的联合层模板。
+This directory defines the common joint layer templates used when modeling air, sea, and land operations in the project.
 
-核心原则：
+Core principles:
 
-- `joint` 层只定义共通的授权关系、任务组织和汇报接口
-- 不在 `joint` 层直接写 `wingman`、`runway`、`destroyer screen`、`platoon wedge`
-- 具体军种语义下沉到 `service profile`
+- The `joint` layer defines only common authority relationships, task organization, and reporting interfaces.
+- Do not write `wingman`, `runway`, `destroyer screen`, or `platoon wedge` directly in the `joint` layer.
+- Specific service semantics are deferred to the `service profile`.
 
-## 1. 为什么必须先做 Joint 层
+## 1. Why the Joint Layer Must Come First
 
-根据 Joint Chiefs 和各军种官方资料，美军并不存在一条完全统一的战术指挥链。
+According to official documents from the Joint Chiefs and each service, the U.S. military does not operate under a completely unified tactical chain of command.
 
-真实结构更接近：
+The actual structure is closer to:
 
-- 联合层统一授权关系
-- 军种层定义战术组织
-- 平台层定义执行与物理行为
+- The joint layer unifies authority relationships.
+- The service layer defines tactical organization.
+- The platform layer defines execution and physical behavior.
 
-因此，项目中的通用模板应优先承载：
+Therefore, generic templates in the project should prioritize:
 
 - `command relationship`
 - `authority scope`
 - `task organization`
 - `intent / order / report`
 
-## 2. 推荐阅读顺序
+## 2. Recommended Reading Order
 
-1. [Joint 指挥关系与建模基线](command_and_modeling_baseline.md)
+1. [Joint Command and Modeling Baseline](command_and_modeling_baseline.md)
+2. [Joint Command-Link and Reporting Baseline](command_link_and_reporting_baseline.md)
 
-## 3. 主要官方依据
+## 3. Key Official References
 
 - [Joint Chiefs Service Publications](https://www.jcs.mil/Doctrine/Service-Publications/)
 - [CJCSM 3150.13C, Joint Reporting Structure](https://www.jcs.mil/Portals/36/Documents/Library/Manuals/m315013.pdf)
 
-说明：
+Note:
 
-- 上述资料用于确认联合层共通关系与联合报告结构。
-- 军种战术组织差异则分别在 `services/` 下处理。
+- The above references are used to confirm common joint relationships and the joint reporting structure.
+- Differences in service tactical organization are handled under `services/` respectively.

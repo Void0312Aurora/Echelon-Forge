@@ -1,19 +1,19 @@
-# `src/core/mission/episode/detail` 边界
+# `src/core/mission/episode/detail` Boundary
 
-`mission/episode/detail` 存放 `ExecutionEpisodeController` 的内部业务 helper。这里的头用于拆分实现文件和单域复用，不是稳定跨层 API。
+`mission/episode/detail` contains the internal business helpers for `ExecutionEpisodeController`. Headers here exist to split implementation files and support reuse within a single domain; they are not stable APIs across layers.
 
-## 允许
+## Allowed
 
-- mission-command JSON round-trip 和 route waypoint materialization。
-- post-waypoint、landing transition 和 controller pre-step behavior update。
-- reward breakdown 汇总与稳定 JSON 输出。
+- Mission-command JSON round-tripping and route waypoint materialization.
+- Post-waypoint transitions, landing transitions, and controller pre-step behavior updates.
+- Reward breakdown aggregation and stable JSON output.
 
-## 禁止
+## Forbidden
 
-- 被 `interfaces/python`、`runtime/facade`、`gpu` 或 `core/engine` 直接 include。
-- 定义新的 public episode contract；公共 contract 应放在 `mission/episode`。
-- 实现纯 reward/objective/termination 公式；这些应放在 `mission/runtime`。
+- Being included directly by `interfaces/python`, `runtime/facade`, `gpu`, or `core/engine`.
+- Defining new public episode contracts; public contracts belong in `mission/episode`.
+- Implementing pure reward/objective/termination formulas; those belong in `mission/runtime`.
 
-## 依赖方向
+## Dependency Direction
 
-本目录可以依赖 `mission/episode` 与 `mission/runtime`。新增 helper 时应保持 `episode_controller_detail` 命名空间，避免误当公共 API 使用。
+This directory may depend on `mission/episode` and `mission/runtime`. New helpers should stay under the `episode_controller_detail` namespace so they are not mistaken for public APIs.

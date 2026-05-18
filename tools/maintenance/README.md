@@ -8,15 +8,22 @@ Current maintained helpers:
 - [cmo_env.sh](cmo_env.sh)
   - Linux/macOS repository-local environment bootstrap and validation for
     `.venv`, `CMO_BUILD_DIR`, and `PYTHONPATH`.
-- [cmo_env.ps1](cmo_env.ps1)
+- `cmo_env.ps1`
   - Windows/PowerShell repository-local environment bootstrap and validation
     for `.venv`, `CMO_BUILD_DIR`, `PYTHONPATH`, and `ef_py*.pyd` artifacts.
+    The script is expected in maintained workflows, but this README intentionally
+    avoids linking it until the tracked file is confirmed in the repo state.
 - [redundancy_audit.py](redundancy_audit.py)
   - Audits duplicate/temp-like workspace content.
 - [cleanup_redundancy.py](cleanup_redundancy.py)
   - Dry-run or apply cleanup for cache/temp artifacts.
 - [isolate_repro_workspace.sh](isolate_repro_workspace.sh)
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
+- [translate_docs_batch.py](translate_docs_batch.py)
+  - Audits English/Chinese doc pairing coverage and batch-translates Markdown peer files through an OpenAI-compatible API.
+  - Preserves Markdown link destinations by masking targets before translation and restoring them afterward.
+  - Rewrites workspace-absolute repository file links into relative Markdown targets.
+  - Generates and audits a bilingual cluster registry so paired docs can be checked for drift after one-sided edits.
 
 Maintenance guidance:
 
@@ -28,6 +35,8 @@ Maintenance guidance:
   WSL, `.venv/bin/python`, or Linux `.so` extension artifacts.
 - Historical maintenance helpers should move to `tools/archive/legacy_scripts/`
   instead of accumulating here.
+- Doc translation batches should prefer `translate_docs_batch.py` over ad hoc
+  one-off scripts so file pairing and draft-note behavior stay consistent.
 
 Recommended Linux/macOS usage:
 
@@ -37,7 +46,7 @@ cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-workshop --target ef_core ef_py -j2
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
-cmo_python -m pytest -q tests/runtime/test_env_config.py
+cmo_python -m pytest -q tests/runtime/core/test_env_config.py
 ```
 
 This mirrors the CI smoke boundary: install the small smoke dependency set,
@@ -50,7 +59,7 @@ Direct script-mode entrypoints are also supported:
 ```bash
 bash tools/maintenance/cmo_env.sh summary
 bash tools/maintenance/cmo_env.sh validate
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/test_env_config.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/core/test_env_config.py
 ```
 
 Recommended Windows/PowerShell usage:
@@ -77,3 +86,69 @@ Windows scope:
   management yet.
 - It intentionally runs beside `cmo_env.sh`; it should not replace the Linux
   CI workflow.
+
+Recommended bilingual doc audit:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py audit --root docs \
+  --registry docs/standards/bilingual_document_clusters.json
+```
+
+If that audit looks noisy after a large doc sweep, refresh the registry first:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
+```
+
+The audit compares current file hashes against the registry baseline, so a
+stale baseline can look like drift even when the repo is just catching up.
+
+Generate or refresh the bilingual cluster registry baseline:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write
+```
+
+By default, the audit skips local-only documentation surfaces that are commonly
+ignored from the shared remote, including:
+
+- `docs/Archive/`
+- `docs/**/archive/`
+- `docs/temp/`
+- `docs/plan/results/`
+
+To include them explicitly:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py audit --root docs --include-local-only
+```
+
+Recommended zh-to-en backfill for one active directory:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py translate \
+  --root docs/task/flight_dynamics \
+  --pattern '*.zh.md' \
+  --source-lang zh \
+  --target-lang en \
+  --only-missing
+```
+
+Normalize repo-internal links in existing Markdown files:
+
+```bash
+python3 tools/maintenance/translate_docs_batch.py rewrite-links \
+  --files docs/task/flight_dynamics/program/*.md
+```
+
+Required API environment variables for translation:
+
+- `DOCS_TRANSLATE_BASE_URL`
+- `DOCS_TRANSLATE_MODEL`
+- `DOCS_TRANSLATE_API_KEY`
+
+Supported fallback names loaded from repo-local `.env`:
+
+- `BASE_URL`
+- `MODEL`
+- `API_KEY`

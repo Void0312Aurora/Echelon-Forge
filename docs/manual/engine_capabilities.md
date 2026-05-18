@@ -1,42 +1,51 @@
-# 当前引擎能力说明（更新版）
+<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/engine_capabilities.zh.md. Review before treating this file as authoritative. -->
 
-你现在拥有的是一个基于 **ECS（flecs）** 的仿真内核，整体仍属于 MVP 级别，但已经包含了“可用于训练”的物理/控制/传感器等基础模块。下面描述以“当前仓库实现”为准。
+<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/engine_capabilities.md. Review before treating this file as authoritative. -->
 
-## 1) 核心能力（现在能做什么）
+# Current Engine Capabilities (Updated)
 
-### A. 固定步长仿真循环 + 可复现性
-- 固定 `dt` 推进世界（默认 60Hz），支持 reset seed 复现实验。
-- 系统管线有明确顺序：指令链/动作映射/滞后/控制/运动积分/传感器/伤害/EW/后勤等。
+What you now have is a simulation kernel based on **ECS (flecs)**. The overall state is still MVP-level, but it already includes basic modules such as physics/control/sensors that are "usable for training." The description below is based on the "current repository implementation."
 
-### B. 单位装配（数据库 -> 组件）
-- 支持从 `examples/config/database` 的 JSON 装配单位（飞机/导弹/平台模块等）。
-- 关键组件包括：`Transform/Velocity/FlightModel/LandingGear/Mass/Propulsion/FuelSystem/...`
+## 1) Core Capabilities (What It Can Do Now)
 
-### C. 运动与控制（关键）
-- **MovementSystem**：对 `Velocity` 做积分更新位置与航向。
-- **ControlModel（DefaultControlModel）**：
-  - 支持两类控制输入：  
-    1) **autopilot 目标控制**：目标航向/速度/高度（RL 巡航/航路点任务使用）  
-    2) **stick 直接控制**：roll/pitch/throttle/gear（RL 起飞任务使用）
-  - 含地面逻辑：跑道/滑行道速度限制、非铺装/水面判断、滚阻/制动等（用于 crash 判定与地面运动）
+### A. Fixed-Step Simulation Loop + Reproducibility
+- Advances the world with a fixed `dt` (default 60Hz), supports reset seed for reproducible experiments.
+- The system pipeline has a clear order: command chain / action mapping / lag / control / motion integration / sensors / damage / EW / logistics, etc.
 
-### D. 环境（基础版）
-- 大气：温度/气压/密度/风（ISA 简化）
-- 地形/地表：跑道/滑行道/软土/水域等 SurfaceType，提供摩擦与跑道航向信息
+### B. Unit Assembly (Database -> Components)
+- Supports assembling units (aircraft/missiles/platform modules, etc.) from JSON in `examples/config/database`.
+- Key components include: `Transform/Velocity/FlightModel/LandingGear/Mass/Propulsion/FuelSystem/...`
 
-### E. 感知/交战（基础版）
-- 传感器系统：扫描与 track 记忆、接入 `SensorModel`
-- 武器/制导/伤害/EW/数据链：存在基础系统与组件，适合后续扩展战术层训练
+### C. Motion and Control (Key)
+- **LeapfrogIntegrationSystem**: This is the active translational integrator in
+  the current kernel. It advances position and velocity from force accumulation
+  and mass, and is the mainline motion integration path used by
+  `SimulationKernel`.
+- **MovementSystem**: Still present as a simpler legacy `Velocity ->
+  Transform` integrator, but currently disabled in the active kernel path.
+- **ControlModel (DefaultControlModel)**:
+  - Supports two types of control inputs:  
+    1) **Autopilot target control**: target heading / speed / altitude (used for RL cruise / waypoint missions)  
+    2) **Stick direct control**: roll/pitch/throttle/gear (used for RL takeoff missions)
+  - Includes ground logic: runway / taxiway speed limits, unpaved / water detection, rolling resistance / braking, etc. (used for crash detection and ground motion)
 
-## 2) 关键局限（对“训练学歪”最敏感的部分）
+### D. Environment (Basic Version)
+- Atmosphere: temperature / pressure / density / wind (simplified ISA)
+- Terrain / surface: SurfaceType such as runway / taxiway / soft earth / water, providing friction and runway heading information
 
-- **飞行动力学仍然是简化点质量/包线模型**：没有完整 6DoF、升力/迎角/稳定性导数等；部分路径属于“运动学写速度”，需要用能量守恒/推阻比等约束来缩小可探索空间。
-- **后勤与节流一致性仍需加强**：燃油消耗目前用动作近似“油门”，与 autopilot 的目标速度控制并不完全一致。
-- **环境/地形仍是程序化简化**：适合 RL 初期训练，但距离真实机场/地形仍有差距。
+### E. Perception / Engagement (Basic Version)
+- Sensor system: scanning and track memory, accesses `SensorModel`
+- Weapons / guidance / damage / EW / data link: basic systems and components exist, suitable for subsequent expansion of tactical layer training
 
-## 3) 与 RL 的接口（现成）
+## 2) Key Limitations (The Most Sensitive Part for "Training Going Astray")
 
-- `ef_py.SimulationKernel.set_action(...)`：归一化 autopilot 动作（turn/accel/climb）
-- `ef_py.SimulationKernel.set_stick_command(...)`：直接杆舵（roll/pitch/throttle/gear）
+- **Flight dynamics are still a simplified point-mass/envelope model**: no full 6DoF, lift/angle of attack/stability derivatives, etc.; some paths are "kinematically written as speed," requiring constraints like energy conservation / thrust-drag ratio to reduce the exploration space.
+- **Logistics and throttle consistency still need to be strengthened**: fuel consumption currently approximates "throttle" via actions, and is not fully consistent with the autopilot's target speed control.
+- **Environment/terrain is still procedurally simplified**: suitable for early RL training, but still far from real airports/terrain.
 
-更详细的“物理引擎基础清单”见：`docs/manual/physics_engine_inventory.md`。
+## 3) Interface with RL (Ready-Made)
+
+- `ef_py.SimulationKernel.set_action(...)`: normalized autopilot actions (turn/accel/climb)
+- `ef_py.SimulationKernel.set_stick_command(...)`: direct stick commands (roll/pitch/throttle/gear)
+
+For a more detailed "physics engine inventory", see: `docs/manual/physics_engine_inventory.md`.

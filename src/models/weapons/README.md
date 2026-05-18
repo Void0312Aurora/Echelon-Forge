@@ -1,19 +1,21 @@
-# `src/models/weapons` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/models/weapons/README.md. Review before treating this file as authoritative. -->
 
-`models/weapons` 保存武器效果、制导和命中相关默认模型实现。
+# `src/models/weapons` Boundary
 
-## 允许
+`models/weapons` holds default model implementations for weapon effects, guidance, and hit detection.
 
-- effects model。
-- guidance model。
-- 纯计算的武器行为模型。
+## Allowed
 
-## 禁止
+- effects model
+- guidance model
+- Purely computational weapon behavior models
 
-- ECS system registration。
-- combat component 定义。
-- Python binding 或 mission episode 编排。
+## Forbidden
 
-## 迁移备注
+- ECS system registration
+- combat component definition
+- Python binding or mission episode orchestration
 
-系统调度放在 `systems/combat`，状态放在 `components/combat`，模型实现放在本目录。
+## Migration Notes
+
+System scheduling is placed in `systems/combat`, state is placed in `components/combat`, and model implementations are placed in this directory.

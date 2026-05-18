@@ -1,32 +1,92 @@
-# Service Profile 总览
+# Service Profile Overview
 
-本目录定义以美军公开资料为基线的军种 profile。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-当前纳入：
+Status: `2026-05-18` authoritative for service-profile placement.
+
+This directory defines service profiles based on publicly available U.S.
+military information. A service profile is not a platform guide and not a full
+order of battle. It exists to answer which organizational levels, role codes,
+and control relationships should be represented in the project runtime versus
+retained as higher-level scenario metadata.
+
+## Included Profiles
 
 - [US Air Force](air_force.md)
 - [US Army](army.md)
 - [US Navy](navy.md)
 - [US Marine Corps](marine_corps.md)
 
-配套的平台专用补充标准当前仅有：
+Current specialization directories that build on service profiles:
 
-- [Air 平台专用标准](../air/README.md)
+- [Air Platform Specialization](../air/README.md)
+- [Naval Specialization](../naval/README.md)
 
-## 1. 使用原则
+## What A Service Profile Owns
 
-这些文档不是要把项目锁死成“军种百科”，而是为了回答三个问题：
+A service profile explains:
 
-1. 各军种真实的战术组织与控制口径是什么？
-2. 哪些层级适合进入 tight-loop runtime？
-3. 哪些层级应只作为 scenario / campaign / operation 元数据？
+- which tactical echelons are meaningful runtime units
+- which roles belong in mission/tasking metadata rather than control surfaces
+- how `joint/common core` fields should be interpreted in that service
+- which concepts must remain service-specific before they can be specialized at
+  the platform or mission layer
 
-## 2. 统一结论
+Examples:
 
-四个军种都不支持把“行政编制树”直接塞进 tight-loop RL。
+- `task_package`, `flight`, and `element` are Air Force profile concepts before
+  they become air-platform execution semantics.
+- `task group`, `task unit`, `warfare_role_code`, and
+  `officer_in_tactical_command` are Navy profile concepts before they become
+  ship/station-level naval semantics.
 
-更合理的做法是：
+## What A Service Profile Does Not Own
 
-- 把高层军种/联合层保持为任务发布与资源分配层
-- 把 tight-loop runtime 放在真实的 tactical unit 上
-- tactical unit 的具体形态由各军种 profile 决定
+Service profiles do not define:
+
+- engine-neutral coordinate or unit conventions
+- low-level runtime DTO memory layouts
+- platform-specific sensor pages, runway procedures, or ship station geometry
+- active task planning details under `docs/task/`
+
+Those belong in:
+
+- [conventions.md](../foundation/conventions.md)
+- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
+- [air/](../air/README.md)
+- [naval/](../naval/README.md)
+
+## Unified Conclusion
+
+All four services reject the idea of directly shoving an administrative
+organization tree into the tight-loop RL/runtime layer.
+
+The maintained repository baseline is:
+
+- keep joint/service upper layers as tasking, authority, and force-packaging
+  metadata
+- place tight-loop runtime on real tactical units
+- let each service profile define what counts as the tactical unit boundary
+
+## Relationship to Current Runtime Work
+
+The current code base already contains a mixed bridge:
+
+- air-first mission semantics in `mission_command`, route, takeoff, runway, and
+  formation contracts
+- emerging naval semantics in `task_group_id`, ship mission commands, and
+  command-authority tests
+- joint/common seams in `MissionCommand`, `CommandLink`, `DataLink`, and report
+  flow
+
+Service profiles are the layer that should normalize those seams before a term
+is promoted into common core or sunk into specialization.
+
+## Related Documents
+
+- [Joint Standards Overview](../joint/README.md)
+- [Document Alignment Map](../overview/document_alignment_map.md)
+- [Scenario Configuration Guide](../bridge/scenario_guide.md)
+- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)

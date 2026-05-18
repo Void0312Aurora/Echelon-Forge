@@ -1,36 +1,36 @@
-# `src/core` 边界
+# `src/core` Boundary
 
-`core/` 是 C++ runtime 内核层，负责单 world simulation、batch runtime、mission/episode runtime、几何查询和模型接口。它可以编排下层 `systems/`、`models/`、`components/` 和 `content/`，但不承载 Python 绑定或应用层 facade contract。
+`core/` is the C++ runtime kernel layer. It owns single-world simulation, batch runtime, mission/episode runtime, geometry queries, and model interfaces. It may orchestrate the lower-level `systems/`, `models/`, `components/`, and `content/` layers, but it does not carry Python bindings or application-layer facade contracts.
 
-## 允许
+## Allowed
 
-- `SimulationKernel` 和 `WorldBatchRuntime` 这类 runtime owner。
-- mission、objective、reward、termination、episode controller。
-- 几何查询与核心模型接口。
-- 面向 facade 的稳定 C++ API 实现底座。
+- Runtime owners such as `SimulationKernel` and `WorldBatchRuntime`.
+- Mission, objective, reward, termination, and episode controller logic.
+- Geometry queries and core model interfaces.
+- The stable C++ implementation foundation behind facade-facing APIs.
 
-## 禁止
+## Forbidden
 
-- nanobind/Python 暴露代码。
-- 前端专用 API 命名和语言绑定兼容逻辑。
-- GPU 实验主线替换 CPU truth path。
-- 把 component 或 model 实现直接定义在 core。
+- nanobind/Python exposure code.
+- Frontend-specific API naming and language-binding compatibility logic.
+- Replacing the CPU truth path with the GPU experimental mainline.
+- Defining component or model implementations directly inside `core`.
 
-## 子目录约定
+## Subdirectory Conventions
 
-- `engine/`：单 world kernel 与 batch runtime owner。
-- `mission/`：mission/episode/objective/reward/termination runtime。
-- `geometry/`：空间查询和几何辅助 runtime。
-- `interfaces/`：模型接口和跨 core 的抽象 contract。
+- `engine/`: single-world kernel and batch runtime owners.
+- `mission/`: mission/episode/objective/reward/termination runtime.
+- `geometry/`: spatial query and geometry helper runtime.
+- `interfaces/`: model interfaces and abstraction contracts shared across `core`.
 
-## 当前阅读入口
+## Reading Entry Points
 
 - [engine/README.md](engine/README.md)
 - [mission/README.md](mission/README.md)
 - [geometry/README.md](geometry/README.md)
 - [interfaces/README.md](interfaces/README.md)
 
-## 当前文件落点
+## Current File Layout
 
 - `engine/`
   - `simulation_kernel.h/.cpp`
@@ -42,17 +42,17 @@
   - `world_batch_runtime.h/.cpp`
   - `exact_stage_inventory.cpp`
 - `mission/`
-  - `runtime/*`：mission、objective、reward、termination、execution runtime
-  - `episode/*`：episode state、batch prepare、controller
-  - `episode/detail/*`：transition、codec、reward breakdown 私有 helper
+  - `runtime/*`: mission, objective, reward, termination, and execution runtime
+  - `episode/*`: episode state, batch preparation, controller
+  - `episode/detail/*`: private helpers for transitions, codecs, and reward breakdown
 - `geometry/`
   - `spatial_query_runtime.h/.cpp`
 - `interfaces/`
   - `control_model.h`, `effects_model.h`, `environment_model.h`
   - `guidance_model.h`, `sensor_model.h`, `observation.h`, `unit_data.h`, `unit_factory.h`
 
-## 迁移备注
+## Migration Notes
 
-`mission/` 已按 `runtime/`、`episode/`、`episode/detail/` 拆出物理层级。后续新增 mission 代码应先归入这些子层级，并保持 `runtime/` 不反向依赖 `episode/`。
+`mission/` has already been split into the physical layers `runtime/`, `episode/`, and `episode/detail/`. New mission code should go into one of these sublayers first, while keeping `runtime/` from depending back on `episode/`.
 
-`engine/` 后续拆分仍应优先按职责拆实现文件，并保持 public API 稳定。
+Future `engine/` splits should continue to break implementation files apart by responsibility while keeping the public API stable.

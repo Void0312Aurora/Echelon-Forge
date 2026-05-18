@@ -2,11 +2,11 @@
 
 文档导航：
 
-- [README.md](/home/void0312/Workshop/CMO/docs/plan/README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- [README.md](../README.md)
+- [system_layering_and_engine_encapsulation_plan.zh.md](../architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+- [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
+- [runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
+- [runtime_facade_layering_cleanup_freeze.zh.md](../archive/runtime_facade_layering_cleanup_freeze.zh.md)
 
 状态：`2026-05-10` 接口契约草案。  
 文档定位：
@@ -21,10 +21,10 @@
 
 相关文档：
 
-- [system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-- [architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
-- [cpp_exact_runtime_refactor_plan.md](/home/void0312/Workshop/CMO/docs/plan/exact_runtime/cpp_exact_runtime_refactor_plan.md)
-- [runtime_facade_layering_cleanup_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)
+- [system_layering_and_engine_encapsulation_plan.zh.md](../architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+- [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
+- [cpp_exact_runtime_refactor_plan.md](../exact_runtime/cpp_exact_runtime_refactor_plan.md)
+- [runtime_facade_layering_cleanup_freeze.zh.md](../archive/runtime_facade_layering_cleanup_freeze.zh.md)
 
 ## 一、文档目的
 
@@ -502,7 +502,7 @@ facade 设计必须从一开始就考虑：
 
 ## 十、与现有 `WorldBatchRuntime` 的映射关系
 
-现有 [world_batch_runtime.h](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.h)
+现有 [world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
 已经具备很多基础能力，适合作为 facade 的底座。
 
 ### 当前已经有的底座能力
@@ -602,11 +602,11 @@ facade 设计必须明确支持三种观测返回形态：
 ## 十三、第一批实施建议（设计分解，非执行冻结）
 
 说明：本节用于拆解接口落地顺序。实际第一批执行范围以后续冻结文档
-[runtime_facade_task_bootstrap_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+[runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
 为准。
 
 更新说明：第一批 `WP1-WP6` 已完成；下一批候选分层清理范围已收敛到
-[runtime_facade_layering_cleanup_freeze.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_layering_cleanup_freeze.zh.md)。
+[runtime_facade_layering_cleanup_freeze.zh.md](../archive/runtime_facade_layering_cleanup_freeze.zh.md)。
 
 建议把实施拆成四个最小工作包。
 

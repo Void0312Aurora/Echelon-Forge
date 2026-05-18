@@ -1,18 +1,20 @@
-# `src/models/core` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/models/core/README.md. Review before treating this file as authoritative. -->
 
-`models/core` 保存基础模型实现，例如 unit factory 默认实现。
+# `src/models/core` Boundaries
 
-## 允许
+`models/core` holds base model implementations, such as the default unit factory implementation.
 
-- 默认 unit factory。
-- 对 `content/` unit definition 的转换和实例化辅助。
+## Allowed
 
-## 禁止
+- Default unit factory.
+- Conversion and instantiation helpers for `content/` unit definitions.
 
-- world lifecycle ownership。
-- ECS system registration。
-- Python binding 或 facade。
+## Forbidden
 
-## 迁移备注
+- World lifecycle ownership.
+- ECS system registration.
+- Python binding or facade.
 
-实例化流程的 owner 仍应在 `core/engine`；本目录只提供模型实现和工厂策略。
+## Migration Notes
+
+The owner of the instantiation process should still be in `core/engine`; this directory only provides model implementations and factory strategies.

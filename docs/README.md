@@ -10,10 +10,14 @@ note is still an active implementation authority.
 
 - [plan/README.md](plan/README.md)
   - Architecture/program plans, frozen execution scopes, and plan-governance notes.
+- [plan/documentation_bilingual_migration_plan_20260518.md](plan/documentation_bilingual_migration_plan_20260518.md)
+  - English-primary bilingual rollout plan for the active docs tree.
 - [task/README.md](task/README.md)
   - Focused task documents, implementation packages, and progress checkpoints.
 - [standards/README.md](standards/README.md)
   - Joint/service/platform modeling baselines and specialization notes.
+- [standards/bilingual_documentation_policy.md](standards/governance/bilingual_documentation_policy.md)
+  - Canonical language, file-pairing, and batch translation policy.
 - [manual/](manual)
   - Code layer maps, engine capability notes, physics inventory, and operator-facing manuals.
 - [forward/README.md](forward/README.md)
@@ -25,6 +29,9 @@ note is still an active implementation authority.
 
 - `plan/`, `task/`, `standards/`, and `manual/` are the maintained entry
   surfaces.
+- Maintained docs are moving toward English canonical `.md` files with optional
+  Chinese `.zh.md` companions; avoid treating mixed-language pages as the target
+  steady state.
 - `Archive/` preserves historical design material and retired routes. It is
   useful for provenance, but it is not the default authority for current work.
 - `temp/` is scratch space and should not be treated as a maintained source of

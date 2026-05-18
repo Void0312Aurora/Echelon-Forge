@@ -4,6 +4,11 @@ import json
 import os
 from typing import Any
 
+from python.testing.runtime import ensure_repo_imports
+
+
+ensure_repo_imports()
+
 import ef_py
 
 

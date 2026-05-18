@@ -8,13 +8,13 @@ It is a GPU integration tracking checklist, not the general architecture
 authority and not a substitute for a separately frozen task boundary when scope
 needs to change.
 The exact-step migration line is now split into
-[gpu_exact_world_step_rearchitecture_plan.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_exact_world_step_rearchitecture_plan.md),
+[gpu_exact_world_step_rearchitecture_plan.md](../archive/gpu_exact_world_step_rearchitecture_plan.md),
 which freezes the new "CPU truth source -> exact GPU backend" re-architecture.
 
 ## Scope
 
 This checklist is intentionally narrower than the research/design document in
-[gpu_execution_runtime_research_and_design.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_execution_runtime_research_and_design.md).
+[gpu_execution_runtime_research_and_design.md](../archive/gpu_execution_runtime_research_and_design.md).
 It only tracks work needed to integrate GPU-assisted execution into:
 
 - execution-layer `train.py` rollouts for the maintained post-freeze `p5` path
@@ -29,21 +29,21 @@ themselves.
 
 For this repo, "mainline" means all of the following are true:
 
-- the path is reachable from [train.py](/home/void0312/Workshop/CMO/train.py) without
+- the path is reachable from [train.py](../../../train.py) without
   patching local code for each run
 - the maintained execution configs can select it directly
 - the path has a stable Python binding contract, not only a probe binary
 - CPU fallback behavior remains correct on non-CUDA builds
 
 The current maintained execution `p5` configs live under
-[examples/config/training/frozen/execution](/home/void0312/Workshop/CMO/examples/config/training/frozen/execution).
+[examples/config/training/frozen/execution](../../../examples/config/training/frozen/execution).
 
 ## Current Snapshot
 
 ### Already Integrated At A Maintained Boundary
 
 - [x] Optional CUDA build scaffolding exists in
-  [CMakeLists.txt](/home/void0312/Workshop/CMO/CMakeLists.txt).
+  [CMakeLists.txt](../../../CMakeLists.txt).
 - [x] `train.py` prefers `build-gpu` when a CUDA-enabled `ef_py` module exists.
 - [x] `WorldBatchVecEnv` can batch visual generation across worlds through
   `ef_py.compute_world_batch_visual_observation_batch_numpy(...)`.
@@ -68,7 +68,7 @@ The current maintained execution `p5` configs live under
 ### Not Yet Mainline-Complete
 
 - [ ] Single-world
-  [UniversalEnv](/home/void0312/Workshop/CMO/gym_envs/universal_env.py) does not use the
+  [UniversalEnv](../../../gym_envs/universal_env.py) does not use the
   world-batch GPU helper path.
 - [ ] Python training still carries host-side rollout storage / VecEnv
   compatibility overhead even though the maintained CUDA path now has
@@ -76,7 +76,7 @@ The current maintained execution `p5` configs live under
 - [ ] GPU flight-shaping kernels are now integrated behind an explicit backend
   flag, but they are not yet promoted as the maintained default reward path.
 - [ ] Mission / reward / termination evaluation remains CPU-side in
-  [ScenarioLoader](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py).
+  [ScenarioLoader](../../../gym_envs/scenario_loader/core.py).
 - [ ] Live sensor and comm systems do not consume GPU broadphase or GPU narrow
   phase in the hot path.
 - [ ] The maintained default `WorldBatchRuntime.step_batch()` path still
@@ -93,11 +93,11 @@ will keep carrying multiple incompatible ideas of what "current `p5`" means.
 
 - [x] Active continuous artifact docs now separate the maintained execution
   config from the historical artifact-provenance config in
-  [reference_artifacts.md](/home/void0312/Workshop/CMO/docs/reference_artifacts.md).
+  [reference_artifacts.md](../../reference_artifacts.md).
 - [x] The maintained post-freeze execution docs point to
-  [frozen/execution/p5_continuous_retrain_v1.json](/home/void0312/Workshop/CMO/examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
+  [frozen/execution/p5_continuous_retrain_v1.json](../../../examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
   and
-  [frozen/execution/p5_continuous_coldstart_retrain_v2.json](/home/void0312/Workshop/CMO/examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json).
+  [frozen/execution/p5_continuous_coldstart_retrain_v2.json](../../../examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json).
 - [x] Frozen leader configs now reference the maintained post-freeze execution
   `p5` config lineage instead of the historical top-level `p5` config.
 
@@ -124,12 +124,12 @@ Acceptance for this cleanup:
 
 Primary files:
 
-- [docs/reference_artifacts.md](/home/void0312/Workshop/CMO/docs/reference_artifacts.md)
-- [examples/config/training/frozen/execution/README.md](/home/void0312/Workshop/CMO/examples/config/training/frozen/execution/README.md)
-- [examples/config/training/frozen/execution/p5_continuous_retrain_v1.json](/home/void0312/Workshop/CMO/examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
-- [examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json](/home/void0312/Workshop/CMO/examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json)
-- [examples/config/training/frozen/leader_c2_frozen_v1.json](/home/void0312/Workshop/CMO/examples/config/training/frozen/leader_c2_frozen_v1.json)
-- [examples/config/training/frozen/leader_task_only_frozen_v1.json](/home/void0312/Workshop/CMO/examples/config/training/frozen/leader_task_only_frozen_v1.json)
+- [docs/reference_artifacts.md](../../reference_artifacts.md)
+- [examples/config/training/frozen/execution/README.md](../../../examples/config/training/frozen/execution/README.md)
+- [examples/config/training/frozen/execution/p5_continuous_retrain_v1.json](../../../examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
+- [examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json](../../../examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json)
+- [examples/config/training/frozen/leader_c2_frozen_v1.json](../../../examples/config/training/frozen/leader_c2_frozen_v1.json)
+- [examples/config/training/frozen/leader_task_only_frozen_v1.json](../../../examples/config/training/frozen/leader_task_only_frozen_v1.json)
 
 ### 2. Stabilize The Current GPU-Assisted CPU-Step Lane
 
@@ -154,10 +154,10 @@ Checklist:
 
 Primary files:
 
-- [train.py](/home/void0312/Workshop/CMO/train.py)
-- [python/rl/runtime/world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
-- [tools/diagnostics/benchmark.py](/home/void0312/Workshop/CMO/tools/diagnostics/benchmark.py)
-- [tests/world_batch/test_world_batch_vec_env.py](/home/void0312/Workshop/CMO/tests/world_batch/test_world_batch_vec_env.py)
+- [train.py](../../../train.py)
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [tools/diagnostics/benchmark.py](../../../tools/diagnostics/benchmark.py)
+- [tests/world_batch/test_world_batch_vec_env.py](../../../tests/world_batch/test_world_batch_vec_env.py)
 
 Acceptance:
 
@@ -186,7 +186,7 @@ Checklist:
 
 - [x] Add a maintained Python binding for batched GPU flight-shaping evaluation.
 - [x] Thread that helper into the reward path in
-  [ScenarioLoader](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py), behind an
+  [ScenarioLoader](../../../gym_envs/scenario_loader/core.py), behind an
   explicit backend flag.
 - [x] Keep exact CPU reward semantics as the fallback and contract reference.
 - [ ] Measure real end-to-end `p5` step improvement before promoting any new
@@ -194,12 +194,12 @@ Checklist:
 
 Primary files:
 
-- [src/gpu/gpu_flight_shaping_runtime.h](/home/void0312/Workshop/CMO/src/gpu/gpu_flight_shaping_runtime.h)
-- [src/gpu/gpu_flight_shaping_runtime.cpp](/home/void0312/Workshop/CMO/src/gpu/gpu_flight_shaping_runtime.cpp)
-- [src/gpu/gpu_flight_shaping_runtime_cuda.cu](/home/void0312/Workshop/CMO/src/gpu/gpu_flight_shaping_runtime_cuda.cu)
-- [src/interfaces/python/python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
-- [gym_envs/scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
-- [tests/runtime/test_mission_runtime.py](/home/void0312/Workshop/CMO/tests/runtime/test_mission_runtime.py)
+- [src/gpu/gpu_flight_shaping_runtime.h](../../../src/gpu/gpu_flight_shaping_runtime.h)
+- [src/gpu/gpu_flight_shaping_runtime.cpp](../../../src/gpu/gpu_flight_shaping_runtime.cpp)
+- [src/gpu/gpu_flight_shaping_runtime_cuda.cu](../../../src/gpu/gpu_flight_shaping_runtime_cuda.cu)
+- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)
+- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [tests/runtime/mission/test_mission_runtime.py](../../../tests/runtime/mission/test_mission_runtime.py)
 
 Acceptance:
 
@@ -225,11 +225,11 @@ Checklist:
 
 Primary files:
 
-- [src/interfaces/python/python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
-- [src/gpu/gpu_visual_runtime.h](/home/void0312/Workshop/CMO/src/gpu/gpu_visual_runtime.h)
-- [src/gpu/gpu_execution_observation_runtime.h](/home/void0312/Workshop/CMO/src/gpu/gpu_execution_observation_runtime.h)
-- [python/models/transformer.py](/home/void0312/Workshop/CMO/python/models/transformer.py)
-- [train.py](/home/void0312/Workshop/CMO/train.py)
+- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)
+- [src/gpu/gpu_visual_runtime.h](../../../src/gpu/gpu_visual_runtime.h)
+- [src/gpu/gpu_execution_observation_runtime.h](../../../src/gpu/gpu_execution_observation_runtime.h)
+- [python/models/transformer.py](../../../python/models/transformer.py)
+- [train.py](../../../train.py)
 
 Acceptance:
 
@@ -251,7 +251,7 @@ Notes:
   and supports a `--flight-shaping-backend` override for maintained `p5`-like
   A/B measurement.
 - The next frozen follow-on for this phase is
-  [gpu_execution_phase4_rollout_hot_path_freeze.md](/home/void0312/Workshop/CMO/docs/plan/exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md),
+  [gpu_execution_phase4_rollout_hot_path_freeze.md](gpu_execution_phase4_rollout_hot_path_freeze.md),
   which isolates `WorldBatchVecEnv` host-copy semantics before any further
   default changes.
 - Initial Phase 4C results from that freeze show `observation_return_mode=view`
@@ -286,10 +286,10 @@ Checklist:
 
 Primary files:
 
-- [src/core/engine/world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [src/gpu/gpu_interaction_broadphase_runtime.h](/home/void0312/Workshop/CMO/src/gpu/gpu_interaction_broadphase_runtime.h)
-- [src/models/systems/default_sensor_model.cpp](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [tests/test_gpu_runtime_bindings.py](/home/void0312/Workshop/CMO/tests/test_gpu_runtime_bindings.py)
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [src/gpu/gpu_interaction_broadphase_runtime.h](../../../src/gpu/gpu_interaction_broadphase_runtime.h)
+- [src/models/systems/default_sensor_model.cpp](../../../src/models/systems/default_sensor_model.cpp)
+- [tests/test_gpu_runtime_bindings.py](../../../tests/test_gpu_runtime_bindings.py)
 
 Acceptance:
 
@@ -303,7 +303,7 @@ not yet a drop-in replacement for exact `SimulationKernel::step()`.
 
 Active exact-migration follow-on:
 
-- [gpu_exact_world_step_migration_plan.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_exact_world_step_migration_plan.md)
+- [gpu_exact_world_step_migration_plan.md](../archive/gpu_exact_world_step_migration_plan.md)
 - Current status as of `2026-03-27`: the new re-architecture line has now
   reached exact cached-session parity for deterministic single-world,
   `world_count=4`, and `world_count=16` first-scope aircraft fixtures on the
@@ -373,12 +373,12 @@ Checklist:
 
 Primary files:
 
-- [src/core/engine/world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [src/core/engine/simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
-- [src/core/engine/world_batch_runtime.h](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.h)
-- [src/gpu/README.md](/home/void0312/Workshop/CMO/src/gpu/README.md)
-- [src/gpu/experimental/README.md](/home/void0312/Workshop/CMO/src/gpu/experimental/README.md)
-- [tests/test_gpu_runtime_bindings.py](/home/void0312/Workshop/CMO/tests/test_gpu_runtime_bindings.py)
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
+- [src/core/engine/world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
+- [src/gpu/README.md](../../../src/gpu/README.md)
+- [src/gpu/experimental/README.md](../../../src/gpu/experimental/README.md)
+- [tests/test_gpu_runtime_bindings.py](../../../tests/test_gpu_runtime_bindings.py)
 
 Acceptance:
 

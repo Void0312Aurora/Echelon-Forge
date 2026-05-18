@@ -171,8 +171,8 @@ C2 / TaskOrder
 - 已新增正式 cooperative 巡航场景：
   - `scenarios/cruise/cooperative_cruise_waypoints_paramroute_navv2_formation_train_v1.json`
 - 已补 benchmark smoke test，并验证：
-  - `tests/runtime/test_multi_agent_benchmark.py`
-  - `tests/runtime/test_cooperative_world_batch_vec_env.py`
+  - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
+  - `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`
 - 当前 cooperative smoke 基线已经能输出每步 JSON 指标，包括：
   - `per_agent_step_time_ms`
   - `action_prepare_ms`
@@ -215,8 +215,8 @@ WP5 当前判断：
   - `train.py` 的 `agent_layer = "cooperative_execution"` 分支已接收并打印 cooperative observation / visual backend。
   - `python/rl/support/multi_agent_benchmark.py` 已支持从训练配置读取 cooperative runtime backend，并在 benchmark notes 中回显 effective backend。
 - 已新增 / 更新验证：
-  - `tests/runtime/test_cooperative_world_batch_vec_env.py`
-  - `tests/runtime/test_multi_agent_benchmark.py`
+  - `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`
+  - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
   - `tests/training/test_train_entry_cooperative.py`
 - 已将 `ScenarioLoader.compute_full_step(...)` 的 step-eval 入口改为可选缓存消费，并在 cooperative vec env 里直接复用已准备的 `step_evaluation`，避免 reward 热路径重复重建。
 - 已补回归测试，确认缓存命中时不再重新构建 step-eval，且 reward / termination / status 与基线一致。

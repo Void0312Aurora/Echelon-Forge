@@ -1,20 +1,22 @@
-# `src/core/geometry` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/core/geometry/README.md. Review before treating this file as authoritative. -->
 
-`core/geometry` 保存空间查询和几何辅助 runtime。它服务 simulation、sensor、visual 或 mission 查询，但不拥有 world lifecycle。
+# `src/core/geometry` Boundaries
 
-## 允许
+`core/geometry` holds the runtime for spatial queries and geometry assistance. It serves simulation, sensor, visual, or mission queries, but does not own the world lifecycle.
 
-- spatial query runtime。
-- 几何查询、距离/视线/邻近关系等辅助计算。
-- 可被 `core/engine` 或 `systems/` 调用的纯 C++ 查询服务。
+## Allowed
 
-## 禁止
+- Spatial query runtime.
+- Geometry query, auxiliary computations such as distance/line-of-sight/proximity relationships.
+- Pure C++ query services callable by `core/engine` or `systems/`.
 
-- ECS system registration。
-- mission episode 状态机。
-- Python binding 或 facade。
-- GPU kernel 实现。
+## Prohibited
 
-## 迁移备注
+- ECS system registration.
+- Mission episode state machine.
+- Python binding or facade.
+- GPU kernel implementation.
 
-若查询开始依赖具体 world owner 生命周期，应把 ownership 保持在 `core/engine`，本目录只保留查询服务实现。
+## Migration Notes
+
+If a query begins to depend on the lifecycle of a specific world owner, ownership should be kept in `core/engine`, and this directory should only retain the query service implementation.

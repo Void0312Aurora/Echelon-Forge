@@ -56,6 +56,8 @@
   - Dry-run or apply cleanup for cache/temp artifacts.
 - [isolate_repro_workspace.sh](maintenance/isolate_repro_workspace.sh)
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
+- [translate_docs_batch.py](maintenance/translate_docs_batch.py)
+  - Audits bilingual coverage and batch-translates Markdown doc peers with an OpenAI-compatible API.
 
 ## Archive
 

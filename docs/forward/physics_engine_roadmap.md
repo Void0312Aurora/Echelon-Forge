@@ -23,13 +23,13 @@ This document outlines the roadmap for upgrading the Echelon Forge physics engin
 
 ## Theoretical Framework
 
-### 混合架构 (Hybrid Approach)
+### Hybrid Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Physics Engine v2.0                  │
 ├─────────────────────────────────────────────────────────┤
-│  Layer 1: 辛积分器 (Symplectic Integrator)              │
+│  Layer 1: Symplectic Integrator                         │
 │  ├─ Leapfrog/Störmer-Verlet for (q, p)                 │
 │  └─ Guarantees bounded energy error                     │
 ├─────────────────────────────────────────────────────────┤
@@ -47,19 +47,19 @@ This document outlines the roadmap for upgrading the Echelon Forge physics engin
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 为什么选择辛积分器
+### Why Choose a Symplectic Integrator
 
-| 积分方法 | 能量误差 | 长期稳定性 |
-|----------|----------|------------|
-| Euler | O(dt) 累积 | ❌ 发散 |
-| RK4 | O(dt⁴) 累积 | ⚠️ 缓慢发散 |
-| **Leapfrog** | O(dt²) **有界振荡** | ✅ 稳定 |
+| Integration Method | Energy Error | Long-Term Stability |
+|--------------------|--------------|---------------------|
+| Euler | O(dt) accumulating | ❌ diverges |
+| RK4 | O(dt^4) accumulating | ⚠️ slow divergence |
+| **Leapfrog** | O(dt^2) **bounded oscillation** | ✅ stable |
 
 ```cpp
-// Leapfrog Algorithm (辛积分, 2阶精度)
-p_half = p + F(q) * dt/2;        // 动量半步
-q_new  = q + (p_half/m) * dt;    // 位置全步
-p_new  = p_half + F(q_new) * dt/2; // 动量半步
+// Leapfrog algorithm (symplectic, second-order accurate)
+p_half = p + F(q) * dt/2;          // half-step momentum
+q_new  = q + (p_half/m) * dt;      // full-step position
+p_new  = p_half + F(q_new) * dt/2; // half-step momentum
 ```
 
 ---

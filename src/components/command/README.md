@@ -1,46 +1,48 @@
-# `src/components/command` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/components/command/README.md. Review before treating this file as authoritative. -->
 
-`components/command` 是飞行员动作、任务命令、命令链路和 legacy 控制命令的归属目录。旧 `components/physics/action.h` 仍保留为 compatibility umbrella include。
+# `src/components/command` Boundary
 
-和 tasking 一样，command 侧后续拆分方向应明确为 `common + air + naval`，而不是 `air + ship`。`common` 承载跨域命令传输与共享执行意图，`air` 承载当前航空执行面，`naval` 以后承载舰艇/海上执行面。
+`components/command` is the home directory for pilot actions, mission commands, command links, and legacy control commands. The old `components/physics/action.h` is retained as a compatibility umbrella include.
 
-## 允许
+Similar to tasking, the subsequent split direction on the command side should be clearly defined as `common + air + naval`, rather than `air + ship`. `common` carries cross-domain command transport and shared execution intent, `air` carries the current aviation execution surface, and `naval` will later carry the ship/maritime execution surface.
 
-- `PilotAction` 及其 action-space 配置。
-- `MissionCommand` 这类由上层任务或训练环境下发的执行命令 DTO。
-- `MovementCommand`、`ActionCommand` 等 legacy command surface。
-- `CommandLink`、`CommandLag`、pending command 这类命令链路状态。
+## Allowed
 
-## 禁止
+- `PilotAction` and its action-space configuration.
+- `MissionCommand`, the execution command DTO issued by upper-layer tasks or training environments.
+- `MovementCommand`, `ActionCommand`, and other legacy command surfaces.
+- `CommandLink`, `CommandLag`, pending commands, and other command link states.
 
-- `TaskOrder`、`LeaderIntent`、`PilotReport` 等 C2/tasking 状态；这些进入 `components/tasking`。
-- 物理积分、控制律执行、传感器扫描或武器制导逻辑。
-- JSON codec、episode transition、reward breakdown；这些属于 `core/mission`。
-- Python binding 代码。
+## Not Allowed
 
-## 拆分方向
+- `TaskOrder`, `LeaderIntent`, `PilotReport`, and other C2/tasking states; these go into `components/tasking`.
+- Physics integration, control law execution, sensor scanning, or weapon guidance logic.
+- JSON codec, episode transition, reward breakdown; these belong in `core/mission`.
+- Python binding code.
 
-- `common command` 放跨域共享执行语义：例如 command transport、latency/drop、pending delivery，以及可复用于多个域的基础命令向量。
-- `air command` 放当前明显航空化的执行面：`PilotAction`、现有 legacy flight control surface，以及带 route/recovery/takeoff/runway/formation 语义的 command 扩展。
-- `naval command` 以后单独建模舰艇/海上执行面，不应把 air 的 heading/altitude/runway/recovery 组合直接泛化成 “ship command”。
+## Split Direction
 
-## `MissionCommand` 备注
+- `common command` holds cross-domain shared execution semantics: for example, command transport, latency/drop, pending delivery, and basic command vectors reusable across multiple domains.
+- `air command` holds the currently aviation-specific execution surface: `PilotAction`, existing legacy flight control surfaces, and command extensions with route/recovery/takeoff/runway/formation semantics.
+- `naval command` will later model the ship/maritime execution surface separately; do not directly generalize air’s heading/altitude/runway/recovery combinations into a “ship command”.
 
-`MissionCommand` 已完成 `common + air` 的第一阶段兼容拆分，但它仍然是 command 侧的高风险 consumer 汇聚点：
+## Notes on `MissionCommand`
 
-- 代码结构上，`mission_command.h` 现在只是兼容 umbrella，对外继续暴露 flat `MissionCommand`，底层已拆为 `common/mission_command_core.h` 与 `air/mission_command_air.h`。
-- 语义上，它依然深度耦合 air 执行面，并直接连到命令投递、mission episode 状态、mission runtime JSON codec、仪表/观测和 air control model。
-- 因此后续工作应优先保持现有 flat 兼容层和 consumer 对称性，而不是在这一层贸然推进嵌套对象化或 naval execution split。
+`MissionCommand` has completed the first stage of compatible splitting into `common + air`, but it remains a high-risk consumer convergence point on the command side:
 
-在代码层面，`CommandLink` 比 `MissionCommand` 更接近真正的共享核心；`MissionCommand` 目前仍更像“共享壳 + 大量 air 负载”。
+- In terms of code structure, `mission_command.h` is now only a compatibility umbrella, externally exposing the flat `MissionCommand`, while the underlying layers have been split into `common/mission_command_core.h` and `air/mission_command_air.h`.
+- Semantically, it remains deeply coupled with the air execution surface and directly connects to command delivery, mission episode state, mission runtime JSON codec, instrumentation/observation, and the air control model.
+- Therefore, subsequent work should prioritize maintaining the existing flat compatibility layer and consumer symmetry, rather than aggressively pushing toward nested objectification or naval execution split at this layer.
 
-## 依赖方向
+At the code level, `CommandLink` is closer to a truly shared core than `MissionCommand`; `MissionCommand` currently still looks more like a “shared shell + a lot of air payload”.
 
-command DTO 可以被 `systems/`、`core/engine`、`core/mission`、`runtime/facade` 和 `interfaces/python` 消费。它不反向依赖这些层。
+## Dependency Direction
 
-## 迁移备注
+Command DTOs can be consumed by `systems/`, `core/engine`, `core/mission`, `runtime/facade`, and `interfaces/python`. They do not depend on these layers in reverse.
 
-已落地：
+## Migration Notes
+
+Already implemented:
 
 - `pilot_action.h`
 - `mission_command.h`
@@ -48,10 +50,10 @@ command DTO 可以被 `systems/`、`core/engine`、`core/mission`、`runtime/fac
 - `legacy_command.h`
 - `naval/mission_command_naval.h`
 
-WP0 文档口径：
+WP0 document scope:
 
-- 优先把真正共享的 command transport / base intent 识别出来。
-- air 特有语义已从共享层中剥离到 `MissionCommandAir`，但当前仍保持 flat 兼容外壳。
-- naval 单独建模，不使用 “air + ship” 二分法。
+- Prioritize identifying truly shared command transport / base intent.
+- Air-specific semantics have been separated from the shared layer into `MissionCommandAir`, but a flat compatibility shell is still maintained.
+- Naval is modeled separately, without using the “air + ship” dichotomy.
 
-新代码应 include 具体头文件，不应继续依赖 `components/physics/action.h`。
+New code should include specific header files and should no longer depend on `components/physics/action.h`.

@@ -1,18 +1,20 @@
-# `src/models/environment` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/models/environment/README.md. Review before treating this file as authoritative. -->
 
-`models/environment` 保存环境模型默认实现和环境 snapshot。
+# `src/models/environment` Boundary
 
-## 允许
+`models/environment` stores default implementations of environment models and environment snapshots.
 
-- wind、terrain、environment snapshot 等模型实现。
-- 环境查询所需的纯计算辅助。
+## Allowed
 
-## 禁止
+- Model implementations such as wind, terrain, environment snapshot, etc.
+- Pure computation helpers required for environment queries.
 
-- ECS system registration。
-- runtime owner 或 batch runtime。
-- Python binding。
+## Prohibited
 
-## 迁移备注
+- ECS system registration.
+- Runtime owner or batch runtime.
+- Python binding.
 
-环境状态 component 属于 `components/basic` 或更明确目录；环境计算模型属于本目录。
+## Migration Notes
+
+Environment state components belong to `components/basic` or a more specific directory; environment computation models belong to this directory.

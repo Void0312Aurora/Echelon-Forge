@@ -4,50 +4,48 @@
 
 关联文件：
 
-- [TaskOrder 组件](/home/void0312/Workshop/CMO/src/components/tasking/task_order.h)
-- [TaskOrderCore (通用)](/home/void0312/Workshop/CMO/src/components/tasking/common/task_order_core.h)
-- [TaskOrderAir (47 字段)](/home/void0312/Workshop/CMO/src/components/tasking/air/task_order_air.h)
-- [TaskOrderNaval (3 字段)](/home/void0312/Workshop/CMO/src/components/tasking/naval/task_order_naval.h)
-- [LeaderIntent 组件](/home/void0312/Workshop/CMO/src/components/tasking/leader_intent.h)
-- [LeaderIntentAir (33 字段)](/home/void0312/Workshop/CMO/src/components/tasking/air/leader_intent_air.h)
-- [LeaderIntentNaval (2 字段)](/home/void0312/Workshop/CMO/src/components/tasking/naval/leader_intent_naval.h)
-- [PilotReport 组件](/home/void0312/Workshop/CMO/src/components/tasking/pilot_report.h)
-- [MissionCommand 组件](/home/void0312/Workshop/CMO/src/components/command/mission_command.h)
-- [MissionCommandAir (12 字段)](/home/void0312/Workshop/CMO/src/components/command/air/mission_command_air.h)
-- [Command 组件 README（边界声明）](/home/void0312/Workshop/CMO/src/components/command/README.md)
-- [PilotAction 组件](/home/void0312/Workshop/CMO/src/components/command/pilot_action.h)
-- [MovementCommand / ActionCommand / CommandLag](/home/void0312/Workshop/CMO/src/components/command/legacy_command.h)
-- [CommandLink / PendingCommand](/home/void0312/Workshop/CMO/src/components/command/command_link.h)
-- [CommandLinkSystem（投递调度）](/home/void0312/Workshop/CMO/src/systems/systems/command_link_system.h)
-- [CommMessage / CommQueue / CommPacket](/home/void0312/Workshop/CMO/src/components/command/common/comm_message.h)
-- [DataLinkSystem（航迹共享 + 消息分发）](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [MissionCommandCodec（JSON 编解码）](/home/void0312/Workshop/CMO/src/core/mission/episode/detail/mission_command_codec.h)
-- [ExecutionEpisodeController](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_controller.h)
-- [DefaultControlModel（命令消费端）](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
-- [SimulationKernel 命令 API](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel_command_api.cpp)
-- [LeaderTasking（Python C2 任务管理器）](/home/void0312/Workshop/CMO/python/rl/tasking/leader_tasking.py)
-- [LeaderCommandBridge](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/bridges.py)
-- [LeaderEnv commands.py](/home/void0312/Workshop/CMO/gym_envs/leader_env_parts/decision_runtime/commands.py)
-- [AirProfile（空中命令构建）](/home/void0312/Workshop/CMO/python/rl/profile/air_profile.py)
-- [NavalProfile（海军命令构建）](/home/void0312/Workshop/CMO/python/rl/profile/naval_profile.py)
-- [C2 通信前瞻文档](/home/void0312/Workshop/CMO/docs/forward/c2_communication.md)
-- [海军任务最小结构](/home/void0312/Workshop/CMO/docs/standards/naval/minimal_task_structure.md)
+- [TaskOrder 组件](../../../../src/components/tasking/task_order.h)
+- [TaskOrderCore (通用)](../../../../src/components/tasking/common/task_order_core.h)
+- [TaskOrderAir (47 字段)](../../../../src/components/tasking/air/task_order_air.h)
+- [TaskOrderNaval (3 字段)](../../../../src/components/tasking/naval/task_order_naval.h)
+- [LeaderIntent 组件](../../../../src/components/tasking/leader_intent.h)
+- [LeaderIntentAir (33 字段)](../../../../src/components/tasking/air/leader_intent_air.h)
+- [LeaderIntentNaval (2 字段)](../../../../src/components/tasking/naval/leader_intent_naval.h)
+- [PilotReport 组件](../../../../src/components/tasking/pilot_report.h)
+- [MissionCommand 组件](../../../../src/components/command/mission_command.h)
+- [MissionCommandAir (12 字段)](../../../../src/components/command/air/mission_command_air.h)
+- [Command 组件 README（边界声明）](../../../../src/components/command/README.md)
+- [PilotAction 组件](../../../../src/components/command/pilot_action.h)
+- [MovementCommand / ActionCommand / CommandLag](../../../../src/components/command/legacy_command.h)
+- [CommandLink / PendingCommand](../../../../src/components/command/command_link.h)
+- [CommandLinkSystem（投递调度）](../../../../src/systems/systems/command_link_system.h)
+- [CommMessage / CommQueue / CommPacket](../../../../src/components/command/common/comm_message.h)
+- [DataLinkSystem（航迹共享 + 消息分发）](../../../../src/systems/systems/data_link_system.h)
+- [MissionCommandCodec（JSON 编解码）](../../../../src/core/mission/episode/detail/mission_command_codec.h)
+- [ExecutionEpisodeController](../../../../src/core/mission/episode/execution_episode_controller.h)
+- [DefaultControlModel（命令消费端）](../../../../src/models/air/default_control_model.cpp)
+- [SimulationKernel 命令 API](../../../../src/core/engine/simulation_kernel_command_api.cpp)
+- [LeaderTasking（Python C2 任务管理器）](../../../../python/rl/tasking/leader_tasking.py)
+- [LeaderCommandBridge](../../../../gym_envs/leader_env_parts/bridges.py)
+- [LeaderEnv commands.py](../../../../gym_envs/leader_env_parts/decision_runtime/commands.py)
+- [AirProfile（空中命令构建）](../../../../python/rl/profile/air_profile.py)
+- [NavalProfile（海军命令构建）](../../../../python/rl/profile/naval_profile.py)
+- [C2 通信前瞻文档](../../../forward/c2_communication.md)
+- [海军任务最小结构](../../../standards/naval/minimal_task_structure.md)
 
 文档定位：
 
 - 本文档仅记录当前指挥链与 C2 通信管线的已知缺陷及其对应的真实军事指挥与控制情况。
 - 不涵盖可接受的简化，不提供优先级排序，不给出工作计划。
 - 空中与海军指挥链在本项目中确实具有不同的结构和成熟度，本文档分别论述并在最后进行跨域对比。
+- 当前判断以本分析中的 `2026-05-18` 收口标记为准，不再引用 `program/` 或 `archive/` 作为当前状态来源。
 
 当前状态指引：
 
 - 本文档是冻结分析输入，不是当前执行状态看板。
-- 当前与本分析直接相关的执行状态和回归风险，请优先参见：
-  - [真实化主线与关联子项目当前状态](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/program/realism_program_current_status_20260517.zh.md)
-  - [海战推进检查点](/home/void0312/Workshop/CMO/docs/task/naval/naval_progress_checkpoint_20260517.zh.md)
-  - [空战 1v1 F-16C 基线切换与最小对战合同进展](/home/void0312/Workshop/CMO/docs/task/air_combat/air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
+- 当前与本分析直接相关的状态判断，请只参见本分析中的 `2026-05-18` 收口标记。
 
-## 补记：`2026-05-17` 收口标记
+## 补记：`2026-05-18` 收口标记
 
 标记口径：
 
@@ -62,7 +60,7 @@
 |------|----------|------|
 | `2.1` 指挥链按域不对称——海军侧严重欠发育 | `部分解决` | 海军侧仍明显弱于空中侧，但已从“严重欠发育”推进到最小工程闭环接入主线 |
 | `2.2` `MissionCommand` 是“共享壳 + 大量空中负载” | `部分解决` | 整体仍偏 `air-shaped`，但海军专属 `station/reference` 字段已接入 |
-| `2.3` 海军命令映射绕过全部任务式指挥 | `部分解决` | 仍缺完整海军任务阶段机，但已不再只是简单航向/航速抽取 |
+| `2.3` 海军命令映射绕过全部任务式指挥 | `已解决` | 海军命令映射现已承载 `MissionCommand` 语义与运行时 `station/reference` 处理；当前剩余差距在更丰富的海军任务阶段语义，而不是“完全绕过任务式指挥” |
 | `2.4` 两条命令管道共存——`MovementCommand` 未被废弃 | `部分解决` | 双管道仍在，但 `Ship` 主 authority 已从 `MovementCommand` 收回到 `MissionCommand` |
 | `2.5` `CommandLink` 模型过于简化 | `部分解决` | 已有 `FIFO backlog + 最小 priority reorder`，但仍无 `ACK/retry/jitter/multi-hop` |
 | `2.6` 通信消息系统没有带宽/电磁对抗约束 | `部分解决` | 已不再是无限广播，`budget/drop/debug` 已接入，但仍无 `relay/jamming` |

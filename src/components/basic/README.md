@@ -1,19 +1,21 @@
-# `src/components/basic` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/components/basic/README.md. Review before treating this file as authoritative. -->
 
-`components/basic` 保存最底层、跨域共享的 ECS component 和标签。
+# `src/components/basic` Boundaries
 
-## 允许
+`components/basic` stores the lowest-level, cross-domain shared ECS components and tags.
 
-- identity、side、position、lifecycle tag 等基础状态。
-- 环境数据中必须随实体存储的轻量 component。
-- 被多个系统共同读取的稳定基础字段。
+## Allowed
 
-## 禁止
+- Basic state such as identity, side, position, lifecycle tag, etc.
+- Lightweight components from environmental data that must be stored with the entity.
+- Stable foundational fields that are commonly read by multiple systems.
 
-- 物理、战斗、传感器或任务专用状态。
-- command/tasking DTO。
-- runtime、system 或 binding 逻辑。
+## Prohibited
 
-## 迁移备注
+- Physics, combat, sensor, or task-specific state.
+- Command/tasking DTOs.
+- Runtime, system, or binding logic.
 
-新增字段如果只服务单一业务域，应放到对应业务目录，而不是放进 `basic` 形成隐性全局杂物层。
+## Migration Notes
+
+If a new field only serves a single business domain, it should be placed in the corresponding business directory instead of being put into `basic` to form an implicit global clutter layer.

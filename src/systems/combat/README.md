@@ -1,19 +1,21 @@
-# `src/systems/combat` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/systems/combat/README.md. Review before treating this file as authoritative. -->
 
-`systems/combat` 保存战斗系统 tick 逻辑，包括伤害处理和制导系统调度。
+# `src/systems/combat` Boundary
 
-## 允许
+`systems/combat` stores the combat system tick logic, including damage handling and guidance system scheduling.
 
-- damage system。
-- guidance system。
-- 对 `components/combat` 和 `models/weapons` 的组合调用。
+## Allowed
 
-## 禁止
+- damage system
+- guidance system
+- Combined calls to `components/combat` and `models/weapons`
 
-- combat component 定义。
-- mission reward/termination 规则。
-- Python binding 或 facade。
+## Prohibited
 
-## 迁移备注
+- combat component definitions
+- mission reward/termination rules
+- Python bindings or facades
 
-奖励和任务结果属于 `core/mission`；本目录只处理 world 内战斗状态推进。
+## Migration Notes
+
+Rewards and mission results belong to `core/mission`; this directory only handles the progression of combat state within the world.

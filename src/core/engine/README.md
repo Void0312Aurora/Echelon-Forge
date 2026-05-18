@@ -1,42 +1,42 @@
-# `src/core/engine` 边界
+# `src/core/engine` Boundary
 
-`core/engine` 负责单 world simulation kernel 和 batch world owner。它是 CPU exact world-step 语义的主线位置，也是下层 ECS systems 的调度者。
+`core/engine` owns the single-world simulation kernel and the batch world owner. It is the mainline home of CPU exact world-step semantics and the scheduler for the lower-level ECS systems.
 
-## 允许
+## Allowed
 
-- `SimulationKernel` lifecycle、reset、step、spawn 和 query API。
-- `WorldBatchRuntime` 多 world ownership、批量 reset/step、批量 command/observation 操作。
-- ECS component 和 system registration 的编排。
-- 与 `content/` 和 `models/` 的组合逻辑。
+- `SimulationKernel` lifecycle, reset, step, spawn, and query APIs.
+- `WorldBatchRuntime` multi-world ownership, batched reset/step, and batched command/observation operations.
+- Orchestration of ECS component and system registration.
+- Composition logic with `content/` and `models/`.
 
-## 禁止
+## Forbidden
 
-- Python binding。
-- mission-command JSON codec、episode transition、reward breakdown。
-- GPU kernel 实现。
-- facade request/result 类型定义。
+- Python bindings.
+- Mission-command JSON codecs, episode transitions, and reward breakdown logic.
+- GPU kernel implementations.
+- Facade request/result type definitions.
 
-## 当前结构
+## Current Structure
 
-`SimulationKernel` public API 保持在 `simulation_kernel.h`。实现按职责拆分：
+The `SimulationKernel` public API stays in `simulation_kernel.h`. The implementation is split by responsibility:
 
 - `simulation_kernel_systems.cpp`
-  ECS component registration 和系统注册顺序。
+  ECS component registration and system registration order.
 - `simulation_kernel_command_api.cpp`
-  legacy movement/action command、command link、digital pilot/tasking setters/getters、message command。
+  Legacy movement/action commands, command links, digital pilot/tasking setters/getters, and message commands.
 - `simulation_kernel_observation_api.cpp`
-  unit/agent observation、detections、health/fuel/messages 和 observation diagnostics。
+  Unit/agent observation, detections, health/fuel/messages, and observation diagnostics.
 - `simulation_kernel_visual_api.cpp`
-  ARB visual scene collection 和 visual tensor rendering API。
+  ARB visual scene collection and visual tensor rendering APIs.
 - `simulation_kernel_weapon_api.cpp`
-  missile launch API 和 launch-time missile/sensor tuning。
+  Missile launch APIs and launch-time missile/sensor tuning.
 - `exact_stage_inventory.cpp`
-  exact-stage inventory、contract inventory 和 manual trace frame helpers。
+  Exact-stage inventory, contract inventory, and manual trace frame helpers.
 - `simulation_kernel.cpp`
-  constructor/destructor、model injection、reset/step、unit spawn、database/environment configuration。
+  Constructor/destructor, model injection, reset/step, unit spawning, and database/environment configuration.
 
-`SimulationKernel` public API 可以保持不变；拆分重点是降低实现文件的职责密度。
+`SimulationKernel` can keep its public API unchanged; the split is mainly about reducing responsibility density inside each implementation file.
 
-## 依赖方向
+## Dependency Direction
 
-本层可以依赖 `systems/`、`models/`、`components/`、`content/` 和 `core/interfaces`。它不依赖 `runtime/facade` 或 `interfaces/python`。
+This layer may depend on `systems/`, `models/`, `components/`, `content/`, and `core/interfaces`. It does not depend on `runtime/facade` or `interfaces/python`.

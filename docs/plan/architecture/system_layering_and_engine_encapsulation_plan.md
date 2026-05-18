@@ -2,19 +2,19 @@
 
 Navigation:
 
-- [README.md](/home/void0312/Workshop/CMO/docs/plan/README.md)
+- [README.md](../README.md)
 
 中文版：
-[system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+[system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 
 Further research:
-[architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
+[architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
 
 Facade contract:
-[runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
+[runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
 
 Frozen execution record:
-[runtime_facade_task_bootstrap_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+[runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
 
 Status: Architecture draft on 2026-05-10.  
 Document role:
@@ -65,9 +65,9 @@ Today the Python runtime path still mixes:
 
 Primary hotspots:
 
-- [gym_envs/scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
-- [python/rl/world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
-- [gym_envs/universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
+- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
 
 That means the current "frontend" does not only consume backend services. It
 still partially is the runtime backend.
@@ -91,10 +91,10 @@ engine layers:
 
 Primary files:
 
-- [src/core/engine/simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
-- [src/core/engine/world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [src/core/mission/execution_episode_controller.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_controller.cpp)
-- [src/models/air/default_control_model.cpp](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)
+- [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
 
 ### 3. Public API is too low-level
 
@@ -104,7 +104,7 @@ frontends.
 
 Primary file:
 
-- [src/interfaces/python/python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
+- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 ### 4. Build boundaries do not enforce architectural boundaries
 
@@ -118,7 +118,7 @@ The current CMake layout compiles a single `ef_core` library containing:
 
 Primary file:
 
-- [CMakeLists.txt](/home/void0312/Workshop/CMO/CMakeLists.txt)
+- [CMakeLists.txt](../../../CMakeLists.txt)
 
 That means include graphs and target links are not yet helping enforce
 architecture.
@@ -202,13 +202,18 @@ This layer should not own:
 - gym wrappers
 - Python state mirrors
 
-Recommended public boundary:
+Proposed public boundary to introduce in a future refactor
+(these interfaces/DTOs are architectural targets, not repository APIs that
+exist today):
 
 - `IPhysicsBackend`
 - `PhysicsWorldState`
 - `PhysicsStepContext`
 - `PhysicsStepResult`
 - `PhysicsDebugTrace`
+
+Current repository code still routes through concrete engine/runtime
+implementations rather than this extracted physics boundary.
 
 Concrete future backends may include:
 
@@ -245,12 +250,17 @@ This layer should not own:
 - scenario authoring UI conventions
 - Python-side cache/mirror logic
 
-Recommended public boundary:
+Proposed public boundary to introduce in a future refactor
+(these interfaces are candidate contracts, not stable repository interfaces
+that exist today):
 
 - `ISimulationRuntime`
 - `IBatchSimulationRuntime`
 - `IExecutionEpisodeRuntime`
 - `ISimulationDiagnostics`
+
+At present, maintained callers still bind to concrete runtime implementations
+instead of these proposed simulation-engine interfaces.
 
 ### Layer 3: Runtime Facade
 
@@ -484,31 +494,31 @@ The important point is not the exact names. The important point is that:
 
 ### Current code that should move toward frontend or adapter ownership
 
-- [gym_envs/scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
   Current mixed role: scenario parsing, runtime state mirror, reward bridge,
   command sync helper.
-- [python/rl/world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
+- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
   Current mixed role: frontend wrapper plus runtime orchestration details.
 
 ### Current code that should become simulation engine ownership
 
-- [src/core/engine/simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
-- [src/core/engine/world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [src/core/mission/execution_episode_controller.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_controller.cpp)
-- [src/core/mission/execution_episode_state.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_state.cpp)
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)
+- [src/core/mission/execution_episode_state.cpp](../../../src/core/mission/episode/execution_episode_state.cpp)
 
 ### Current code that should become physics engine ownership
 
 - `src/systems/physics/*`
 - `src/components/physics/*`
 - control-to-force and integration path in
-  [src/models/air/default_control_model.cpp](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
+  [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
 - environment query contracts in
-  [src/core/interfaces/environment_model.h](/home/void0312/Workshop/CMO/src/core/interfaces/environment_model.h)
+  [src/core/interfaces/environment_model.h](../../../src/core/interfaces/environment_model.h)
 
 ### Current code that should remain adapter ownership
 
-- [src/interfaces/python/python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
+- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 But only as an adapter layer, not as the place where architecture is defined.
 

@@ -16,6 +16,7 @@ import torch  # noqa: E402,F401
 import ef_py  # noqa: E402
 
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
+import python.rl.runtime.world_batch_vec_env as vec_env_module  # noqa: E402
 from python.rl.control.wrappers import MultiTimescaleActionWrapper  # noqa: E402
 from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer  # noqa: E402
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
@@ -302,6 +303,113 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
+    def test_world_batch_vec_env_skips_stable_command_chain_exports(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                vec_env.seed(7)
+
+                mission_calls: list[int] = []
+                task_calls: list[int] = []
+                intent_calls: list[int] = []
+                report_calls: list[int] = []
+
+                original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
+                original_set_task = vec_env._runtime_adapter.set_task_orders_batch
+                original_set_intent = vec_env._runtime_adapter.set_leader_intents_batch
+                original_set_report = vec_env._runtime_adapter.set_pilot_reports_batch
+
+                def _track_mission(assignments):
+                    materialized = list(assignments)
+                    mission_calls.append(len(materialized))
+                    return original_set_mission(materialized)
+
+                def _track_task(assignments):
+                    materialized = list(assignments)
+                    task_calls.append(len(materialized))
+                    return original_set_task(materialized)
+
+                def _track_intent(assignments):
+                    materialized = list(assignments)
+                    intent_calls.append(len(materialized))
+                    return original_set_intent(materialized)
+
+                def _track_report(assignments):
+                    materialized = list(assignments)
+                    report_calls.append(len(materialized))
+                    return original_set_report(materialized)
+
+                vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_task_orders_batch = _track_task  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_leader_intents_batch = _track_intent  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_pilot_reports_batch = _track_report  # type: ignore[method-assign]
+
+                vec_env.reset()
+                first_counts = (
+                    sum(mission_calls),
+                    sum(task_calls),
+                    sum(intent_calls),
+                    sum(report_calls),
+                )
+                self.assertGreater(first_counts[0], 0)
+                self.assertGreater(first_counts[1], 0)
+                self.assertGreater(first_counts[2], 0)
+                self.assertGreater(first_counts[3], 0)
+
+                vec_env._sync_command_chain_batch([0])
+                second_counts = (
+                    sum(mission_calls),
+                    sum(task_calls),
+                    sum(intent_calls),
+                    sum(report_calls),
+                )
+                self.assertEqual(first_counts, second_counts)
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_reset_rearms_command_chain_exports(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                vec_env.seed(7)
+
+                mission_calls: list[int] = []
+                original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
+
+                def _track_mission(assignments):
+                    materialized = list(assignments)
+                    mission_calls.append(len(materialized))
+                    return original_set_mission(materialized)
+
+                vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
+
+                vec_env.reset()
+                first_total = sum(mission_calls)
+                self.assertGreater(first_total, 0)
+
+                vec_env.reset()
+                self.assertGreater(sum(mission_calls), first_total)
+            finally:
+                vec_env.close()
+
     def test_world_batch_vec_env_exposes_batch_runtime_as_compatibility_view(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
@@ -393,6 +501,36 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
+    def test_world_batch_vec_env_attaches_visual_without_redundant_refresh(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=2,
+                include_visual=True,
+                include_proprio=False,
+                visual_downsample=2,
+                visual_update_interval=2,
+            )
+            try:
+                refresh_calls: list[list[int]] = []
+                original_refresh = vec_env._refresh_visual_batch
+
+                def _tracked_refresh(indices=None):
+                    target = list(range(vec_env.num_envs)) if indices is None else [int(i) for i in indices]
+                    refresh_calls.append(target)
+                    return original_refresh(indices)
+
+                vec_env._refresh_visual_batch = _tracked_refresh  # type: ignore[method-assign]
+                obs = vec_env.reset()
+                self.assertEqual(obs["visual"].shape, (2, 24, 48, 10))
+                self.assertEqual(refresh_calls, [[0, 1]])
+            finally:
+                vec_env.close()
+
     def test_world_batch_vec_env_supports_per_env_randomization_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_data = _inline_vec_env_scenario()
@@ -470,6 +608,31 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 legacy_env.close()
                 compiled_env.close()
+
+    def test_world_batch_vec_env_compiled_observation_arrays_are_float32(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["meta"]["max_steps"] = 2
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=2,
+                include_visual=False,
+                include_proprio=True,
+                batch_observation_backend="compiled",
+            )
+            try:
+                obs = vec_env.reset()
+                for key in ("instruments", "contacts", "rwr", "mission", "proprio"):
+                    self.assertEqual(obs[key].dtype, np.float32)
+                obs, _rewards, _dones, _infos = vec_env.step(np.zeros((2, 17), dtype=np.float32))
+                for key in ("instruments", "contacts", "rwr", "mission", "proprio"):
+                    self.assertEqual(obs[key].dtype, np.float32)
+            finally:
+                vec_env.close()
 
     def test_world_batch_vec_env_compiled_batch_visual_matches_legacy(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1011,6 +1174,215 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertEqual(float(infos[0]["on_runway_geom"]), 0.0)
                 self.assertAlmostEqual(float(infos[0]["runway_cross_m"]), 123.0, places=6)
                 self.assertAlmostEqual(float(infos[0]["runway_along_m"]), 456.0, places=6)
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_mainline_full_step_info_reuses_facade_fields_without_python_rebuild(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_route_transition_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_route_transition_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+                execution_episode_controller_mainline=True,
+                step_info_mode="full",
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+                original = vec_env._step_execution_episode_controller_mainline_requests
+
+                def _wrapped(requests):
+                    result = original(requests)
+                    step_result = result.step_results[0]
+                    result.rewards = [float(getattr(step_result, "reward_total", 0.0))]
+                    result.terminated = [bool(step_result.terminated)]
+                    result.truncated = [bool(step_result.truncated)]
+                    result.status_vectors = [[1.0, 2.0, 3.0, 4.0]]
+                    result.termination_reasons = ["facade_contract_reason"]
+                    result.reward_breakdown_jsons = ['{"facade_bonus": 1.0, "total": 1.0}']
+                    step_info_inputs = ef_py.StepInfoInputs()
+                    step_info_inputs.on_runway = False
+                    step_info_inputs.gear_collapsed = True
+                    step_info_inputs.gear_stress = 9.5
+                    step_info_inputs.alt_agl_m = 0.0
+                    step_info_inputs.on_ground_alt_threshold_m = 2.5
+                    step_info_inputs.airborne_alt_threshold_m = 5.0
+                    step_info_inputs.has_runway_frame = True
+                    step_info_inputs.runway_frame.valid = True
+                    step_info_inputs.runway_frame.cross_m = 321.0
+                    step_info_inputs.runway_frame.along_m = 654.0
+                    step_info_inputs.runway_frame.length_m = 2000.0
+                    step_info_inputs.runway_frame.width_m = 50.0
+                    step_info_inputs.runway_width_margin_m = 2.0
+                    step_info_inputs.runway_length_margin_m = 0.0
+                    step_info = ef_py.compute_step_info_runtime(step_info_inputs)
+                    result.step_infos = [step_info]
+                    result.step_info_valid_flags = [True]
+                    result.controller_state_changed_flags = [bool(step_result.structural_state_changed)]
+                    return result
+
+                vec_env._step_execution_episode_controller_mainline_requests = _wrapped
+                original_build_step_info = vec_env_module.build_step_info
+
+                def _unexpected_build_step_info(*_args, **_kwargs):
+                    raise AssertionError("mainline full step info should reuse facade step_info_fields")
+
+                vec_env_module.build_step_info = _unexpected_build_step_info
+                try:
+                    _obs, _rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+                finally:
+                    vec_env_module.build_step_info = original_build_step_info
+
+                self.assertFalse(bool(dones[0]))
+                self.assertEqual(float(infos[0]["on_runway"]), 0.0)
+                self.assertEqual(float(infos[0]["gear_collapsed"]), 1.0)
+                self.assertAlmostEqual(float(infos[0]["gear_stress"]), 9.5, places=6)
+                self.assertEqual(float(infos[0]["on_ground"]), 1.0)
+                self.assertEqual(float(infos[0]["on_runway_geom"]), 0.0)
+                self.assertAlmostEqual(float(infos[0]["runway_cross_m"]), 321.0, places=6)
+                self.assertAlmostEqual(float(infos[0]["runway_along_m"]), 654.0, places=6)
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_mainline_request_build_skips_unused_episode_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_route_transition_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_route_transition_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+                execution_episode_controller_mainline=True,
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+
+                loader = vec_env.envs[0].loader
+                original_build_execution_episode_state = loader.build_execution_episode_state
+                original_mainline_requests = vec_env._step_execution_episode_controller_mainline_requests
+                observed: dict[str, int] = {}
+
+                def _unexpected_build_execution_episode_state():
+                    raise AssertionError("mainline request build should skip unused episode_state materialization")
+
+                def _wrapped_mainline_requests(requests):
+                    request_list = list(requests)
+                    observed["request_count"] = len(request_list)
+                    self.assertEqual(len(request_list), 1)
+                    self.assertFalse(bool(request_list[0].env_state.has_episode_state))
+                    return original_mainline_requests(request_list)
+
+                loader.build_execution_episode_state = _unexpected_build_execution_episode_state
+                vec_env._step_execution_episode_controller_mainline_requests = _wrapped_mainline_requests
+                try:
+                    _obs, rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+                finally:
+                    loader.build_execution_episode_state = original_build_execution_episode_state
+                    vec_env._step_execution_episode_controller_mainline_requests = original_mainline_requests
+
+                self.assertEqual(int(observed.get("request_count", 0)), 1)
+                self.assertFalse(bool(dones[0]))
+                self.assertIsInstance(infos[0], dict)
+                self.assertTrue(np.isfinite(float(rewards[0])))
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_mainline_steady_state_uses_light_runtime_field_sync(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["meta"]["max_steps"] = 4
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+                execution_episode_controller_mainline=True,
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+
+                loader = vec_env.envs[0].loader
+                original_apply_runtime_fields = loader.apply_execution_episode_runtime_fields
+                observed: list[tuple[bool, bool]] = []
+
+                def _wrapped_apply_runtime_fields(
+                    state,
+                    *,
+                    include_navigation_state=True,
+                    include_navigation_structure=True,
+                ):
+                    observed.append((bool(include_navigation_state), bool(include_navigation_structure)))
+                    return original_apply_runtime_fields(
+                        state,
+                        include_navigation_state=include_navigation_state,
+                        include_navigation_structure=include_navigation_structure,
+                    )
+
+                loader.apply_execution_episode_runtime_fields = _wrapped_apply_runtime_fields
+                try:
+                    _obs, _rewards, dones, _infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+                finally:
+                    loader.apply_execution_episode_runtime_fields = original_apply_runtime_fields
+
+                self.assertFalse(bool(dones[0]))
+                self.assertEqual(observed, [(True, False)])
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_reuses_cached_step_evaluation_for_reward_tail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["meta"]["max_steps"] = 2
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                execution_step_batch_prepare=True,
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+                original_compute_full_step = vec_env.envs[0].loader.compute_full_step
+                captured: dict[str, object] = {}
+
+                def _wrapped_compute_full_step(*args, **kwargs):
+                    captured["step_evaluation"] = kwargs.get("step_evaluation")
+                    return original_compute_full_step(*args, **kwargs)
+
+                vec_env.envs[0].loader.compute_full_step = _wrapped_compute_full_step
+                _obs, _rewards, _dones, _infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+
+                self.assertIsInstance(captured.get("step_evaluation"), dict)
+                self.assertIs(
+                    captured["step_evaluation"],
+                    vec_env.envs[0].loader._runtime_eval_cache.get("step_evaluation"),
+                )
             finally:
                 vec_env.close()
 

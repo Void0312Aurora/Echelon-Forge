@@ -1,33 +1,48 @@
 # Flight Dynamics Tasks
 
-本目录是 `flight_dynamics` 真实性主线的导航入口。各子目录下的 dated
-文档是针对某一轮分析、实施包、任务板或检查点的工作快照；需要了解当前上下文时，优先从子项目
-`README.md` 或最新的状态 / 任务板 / 检查点文档开始，而不是把单篇分析文档当作全局现状。
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
 
-## 子项目导航
+This directory is the navigation entrypoint for the `flight_dynamics` realism
+workstream. To determine current state, use the `2026-05-18` closure markers in
+the analysis docs, not `program/` or `archive/`.
 
-- [program 子项目](./program/README.md): 主线状态、总任务板、阶段排期入口。
-- [flight 子项目](./flight/README.md): 飞行动力学、推进、失速 / 高 AoA 相关分析与实施包。
-- [sensor_situation 子项目](./sensor_situation/README.md): 传感器、航迹、数据链态势感知方向文档。
-- [weapon_guidance 子项目](./weapon_guidance/README.md): 武器链、导引头、制导与近炸 / 毁伤真实化文档。
-- [naval 子项目](./naval/README.md): 海战真实性冻结分析与主线关联说明。
-- [c2_command_chain 子项目](./c2_command_chain/README.md): `MissionCommand / CommandLink / DataLink / ROE / naval command-chain` 推进线。
+## Subproject Navigation
 
-## 推荐起点
+- [flight](./flight/README.md): flight dynamics, propulsion, stall, and high-AoA analysis.
+- [sensor_situation](./sensor_situation/README.md): sensor, track, and data-link situational-awareness analysis.
+- [weapon_guidance](./weapon_guidance/README.md): weapon chain, seeker, guidance, fuze, and damage analysis.
+- [naval](./naval/README.md): naval realism analysis.
+- [c2_command_chain](./c2_command_chain/README.md): `MissionCommand / CommandLink / DataLink / ROE / naval command-chain` frozen analysis baseline.
+- [program](./program/README.md): deprecated mainline-status snapshot entry, kept only for history.
 
-- [真实化主线与关联子项目当前状态](./program/realism_program_current_status_20260517.zh.md):
-  program 主线当前状态总览。
-- [真实化 P1 任务总表](./program/realism_program_p1_taskboard_20260517.zh.md):
-  当前拆分后的 `P1` 任务板。
-- [C2 指挥链与通信推进检查点](./c2_command_chain/c2_command_chain_progress_checkpoint_20260517.zh.md):
-  C2 / 数据链方向最新检查点。
-- [海战推进检查点](../naval/naval_progress_checkpoint_20260517.zh.md): 位于
-  `docs/task/naval/` 的跨目录海战推进检查点，和本主线仍然联动。
+## Cross-Directory Linked Entry Points
 
-## 文档组织约定
+- [air_combat task track](../air_combat/README.md):
+  current `1v1` workline entry.
+- [performance_runtime task track](../performance_runtime/README.md):
+  current runtime-performance planning entry.
 
-1. 每个子方向使用一个子项目文件夹，并由该目录下的 `README.md` 作为本地导航入口。
-2. `*_analysis_*` 文档保留冻结分析口径，不应单独视为最新实现状态。
-3. `*_implementation_package_*`、`*_taskboard_*`、`current_status`、`progress checkpoint`
-   和 `unresolved issues` 文档分别承载实施范围、排期或最新跟踪状态。
-4. 新方向若继续拆分，应先建新子文件夹和入口页，再补充分析或实施文档。
+## Recommended Starting Points
+
+- [flight analysis](./flight/flight_dynamics_realism_analysis_20260516.zh.md):
+  current flight-dynamics framing via the closure marker.
+- [sensor analysis](./sensor_situation/sensor_situation_realism_analysis_20260516.zh.md):
+  current sensor/data-link framing via the closure marker.
+- [weapon analysis](./weapon_guidance/weapon_guidance_realism_analysis_20260516.zh.md):
+  current weapon-chain framing via the closure marker.
+- [naval analysis](./naval/naval_realism_analysis_20260516.zh.md):
+  current naval framing via the closure marker.
+- [C2 analysis](./c2_command_chain/c2_command_chain_realism_analysis_20260517.zh.md):
+  current C2 framing via the closure marker.
+
+## Document Organization Rules
+
+1. Each direction gets its own subproject folder, and that folder's `README.md`
+   is the local navigation entrypoint.
+2. `*_analysis_*` docs are authoritative for current state when their closure
+   marker says so.
+3. `program/` is deprecated and `archive/` is history only.
+4. When a new direction is split out further, create the subfolder and local
+   README first, then add analysis or implementation docs under it.

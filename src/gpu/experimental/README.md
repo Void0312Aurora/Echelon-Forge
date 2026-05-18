@@ -1,19 +1,21 @@
-# `src/gpu/experimental` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/gpu/experimental/README.md. Review before treating this file as authoritative. -->
 
-`gpu/experimental` 保存尚未进入维护主线的 GPU 探针、验证代码和临时实验。这里的代码不能被默认为 production truth path。
+# `src/gpu/experimental` Boundary
 
-## 允许
+`gpu/experimental` holds GPU probes, verification code, and temporary experiments that have not yet entered the mainline. Code here cannot be assumed as the production truth path.
 
-- 性能探针。
-- parity prototype。
-- 未冻结的 GPU backend 实验。
+## Allowed
 
-## 禁止
+- Performance probes.
+- Parity prototypes.
+- Unfrozen GPU backend experiments.
 
-- 默认 runtime backend。
-- 被 facade 或训练主线无条件依赖。
-- 没有说明的行为替换。
+## Forbidden
 
-## 迁移备注
+- Default runtime backend.
+- Unconditional dependency by the facade or training mainline.
+- Behavioral substitution without explanation.
 
-实验代码进入 `gpu/` 主目录前，必须有冻结计划、parity 边界和维护 API。
+## Migration Notes
+
+Before experimental code enters the `gpu/` main directory, it must have a freeze plan, parity boundary, and maintenance API.

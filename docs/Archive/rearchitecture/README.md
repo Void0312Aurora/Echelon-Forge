@@ -198,7 +198,7 @@ Python 环境层最终只保留：
 
 对应文档：
 
-- [phase1_spatial_query.md](./phase1_spatial_query.md)
+- [phase1_spatial_query.md](phase1_spatial_query.md)
 
 状态：
 
@@ -213,7 +213,7 @@ Python 环境层最终只保留：
 
 对应文档：
 
-- [phase2_scenario_compiler.md](./phase2_scenario_compiler.md)
+- [phase2_scenario_compiler.md](phase2_scenario_compiler.md)
 
 状态：
 
@@ -229,7 +229,7 @@ Python 环境层最终只保留：
 
 对应文档：
 
-- [phase3_mission_runtime.md](./phase3_mission_runtime.md)
+- [phase3_mission_runtime.md](phase3_mission_runtime.md)
 
 状态：
 
@@ -245,7 +245,7 @@ Python 环境层最终只保留：
 
 对应文档：
 
-- [phase4_world_batch_runtime.md](./phase4_world_batch_runtime.md)
+- [phase4_world_batch_runtime.md](phase4_world_batch_runtime.md)
 
 状态：
 
@@ -277,7 +277,7 @@ Python 环境层最终只保留：
 
 对应文档：
 
-- [phase5_multirate_runtime.md](./phase5_multirate_runtime.md)
+- [phase5_multirate_runtime.md](phase5_multirate_runtime.md)
 
 状态：
 
@@ -299,7 +299,7 @@ Python 环境层最终只保留：
 
 对应文档：
 
-- [phase6_thin_adapter.md](./phase6_thin_adapter.md)
+- [phase6_thin_adapter.md](phase6_thin_adapter.md)
 
 状态：
 

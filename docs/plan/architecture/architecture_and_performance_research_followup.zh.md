@@ -2,10 +2,10 @@
 
 文档导航：
 
-- [README.md](/home/void0312/Workshop/CMO/docs/plan/README.md)
-- [system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
-- [runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
-- [runtime_facade_task_bootstrap_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+- [README.md](../README.md)
+- [system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
+- [runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
+- [runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
 
 状态：`2026-05-10` 调研论述草案。  
 文档定位：
@@ -15,7 +15,7 @@
 - 本文档产出的建议应下沉为契约方案、专项计划或新的冻结任务单。
 
 本文档是
-[system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+[system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 的后续深化版本，重点回答以下问题：
 
 1. 当前架构真实边界和文档描述之间是否一致。
@@ -42,13 +42,13 @@
 
 核心文件体量如下：
 
-- [gym_envs/scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)：`5009` 行
-- [python/rl/world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)：`1660` 行
-- [gym_envs/universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)：`807` 行
-- [src/interfaces/python/python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)：`2958` 行
-- [src/core/engine/simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)：`1598` 行
-- [src/core/engine/world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)：`892` 行
-- [src/core/mission/execution_episode_controller.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_controller.cpp)：`1207` 行
+- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)：`5009` 行
+- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)：`1660` 行
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)：`807` 行
+- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)：`2958` 行
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)：`1598` 行
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)：`892` 行
+- [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)：`1207` 行
 
 这说明：
 
@@ -59,8 +59,8 @@
 
 旧架构文档虽然已经标注为 archived，但对真实代码热点的判断仍基本准确：
 
-- [docs/Archive/architecture/layers/execution_layer.md](/home/void0312/Workshop/CMO/docs/Archive/architecture/layers/execution_layer.md)
-- [docs/Archive/architecture/layers/operation_physics_layer.md](/home/void0312/Workshop/CMO/docs/Archive/architecture/layers/operation_physics_layer.md)
+- [docs/Archive/architecture/layers/execution_layer.md](../../Archive/architecture/layers/execution_layer.md)
+- [docs/Archive/architecture/layers/operation_physics_layer.md](../../Archive/architecture/layers/operation_physics_layer.md)
 
 它们指出的结构风险今天仍然成立：
 
@@ -89,7 +89,7 @@
 
 ### 1. 当前最稳定的性能结论：Python 热路径仍然是主瓶颈之一
 
-[cpp_exact_runtime_refactor_plan.md](/home/void0312/Workshop/CMO/docs/plan/exact_runtime/cpp_exact_runtime_refactor_plan.md)
+[cpp_exact_runtime_refactor_plan.md](../exact_runtime/cpp_exact_runtime_refactor_plan.md)
 已经明确指出：
 
 - `ScenarioLoader` 仍拥有大量 episode state
@@ -101,7 +101,7 @@
 ### 2. 编译批处理 helper 已经能带来收益，但收益有限
 
 从
-[gpu_execution_runtime_research_and_design.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_execution_runtime_research_and_design.md)
+[gpu_execution_runtime_research_and_design.md](../archive/gpu_execution_runtime_research_and_design.md)
 里已有测量看，C++ batch helper 对当前 CPU 主线是有收益的，但收益不是决定性的：
 
 - `64 envs`
@@ -119,7 +119,7 @@
 
 ### 3. rollout 热路径瓶颈已经被进一步定位
 
-[gpu_execution_phase4_rollout_hot_path_freeze.md](/home/void0312/Workshop/CMO/docs/plan/exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md)
+[gpu_execution_phase4_rollout_hot_path_freeze.md](../exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md)
 进一步确认了：
 
 - learner 侧 device-resident minibatch 已经有收益
@@ -139,9 +139,9 @@
 ### 4. exact GPU world-step 目前仍未成为主线候选
 
 从
-[gpu_exact_world_step_performance_and_parity_plan.md](/home/void0312/Workshop/CMO/docs/plan/exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md)
+[gpu_exact_world_step_performance_and_parity_plan.md](../exact_runtime/gpu_exact_world_step_performance_and_parity_plan.md)
 与
-[gpu_exact_world_step_rearchitecture_plan.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_exact_world_step_rearchitecture_plan.md)
+[gpu_exact_world_step_rearchitecture_plan.md](../archive/gpu_exact_world_step_rearchitecture_plan.md)
 的内容看：
 
 - 当前 exact GPU 原型在小 world_count 下仍显著慢于 CPU
@@ -159,24 +159,24 @@
 
 当前仓库中已有 GPU helper 代码：
 
-- [src/gpu/gpu_execution_observation_runtime.cpp](/home/void0312/Workshop/CMO/src/gpu/gpu_execution_observation_runtime.cpp)
-- [src/gpu/gpu_flight_shaping_runtime.cpp](/home/void0312/Workshop/CMO/src/gpu/gpu_flight_shaping_runtime.cpp)
-- [src/gpu/gpu_interaction_broadphase_runtime.cpp](/home/void0312/Workshop/CMO/src/gpu/gpu_interaction_broadphase_runtime.cpp)
-- [src/gpu/gpu_visual_runtime.cpp](/home/void0312/Workshop/CMO/src/gpu/gpu_visual_runtime.cpp)
+- [src/gpu/gpu_execution_observation_runtime.cpp](../../../src/gpu/gpu_execution_observation_runtime.cpp)
+- [src/gpu/gpu_flight_shaping_runtime.cpp](../../../src/gpu/gpu_flight_shaping_runtime.cpp)
+- [src/gpu/gpu_interaction_broadphase_runtime.cpp](../../../src/gpu/gpu_interaction_broadphase_runtime.cpp)
+- [src/gpu/gpu_visual_runtime.cpp](../../../src/gpu/gpu_visual_runtime.cpp)
 - 对应 `.cu` 实现
 
 还有 probe 工具：
 
-- [src/tools/experimental/gpu_phase0](/home/void0312/Workshop/CMO/src/tools/experimental/gpu_phase0)
+- [src/tools/experimental/gpu_phase0](../../../src/tools/experimental/gpu_phase0)
 
 并且构建脚手架已存在：
 
-- [CMakeLists.txt](/home/void0312/Workshop/CMO/CMakeLists.txt)
+- [CMakeLists.txt](../../../CMakeLists.txt)
 
 ### 2. CUDA helper 的价值已经被 benchmark 证明
 
 根据
-[gpu_execution_runtime_research_and_design.md](/home/void0312/Workshop/CMO/docs/plan/archive/gpu_execution_runtime_research_and_design.md)
+[gpu_execution_runtime_research_and_design.md](../archive/gpu_execution_runtime_research_and_design.md)
 中的测量：
 
 - object-only visual 在 device-resident 路径可达 `16x` 到 `100x+` 相对 CPU 的提升
@@ -313,7 +313,7 @@ Rust 当前建议作为：
 ### 2. 最关键的新增分层要求
 
 在已有
-[system_layering_and_engine_encapsulation_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
+[system_layering_and_engine_encapsulation_plan.zh.md](system_layering_and_engine_encapsulation_plan.zh.md)
 基础上，建议补充三个性能导向要求：
 
 #### A. facade 层必须天然支持 batch 和 zero-copy

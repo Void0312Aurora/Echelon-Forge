@@ -1,18 +1,20 @@
-# `src/systems/core` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/systems/core/README.md. Review before treating this file as authoritative. -->
 
-`systems/core` 保存通用 ECS operation system。它应只包含跨域、每 tick 都可能需要的基础 world mutation。
+# `src/systems/core` Boundaries
 
-## 允许
+`systems/core` holds general ECS operation systems. It should only contain cross-domain, per-tick basic world mutations.
 
-- operation/lifecycle 相关 system。
-- 通用状态清理、激活状态推进等基础逻辑。
+## Allowed
 
-## 禁止
+- Systems related to operation/lifecycle.
+- Basic logic such as general state cleanup and active state progression.
 
-- 物理、战斗、平台系统或视觉专用逻辑。
-- component 定义。
-- runtime owner 或 Python binding。
+## Disallowed
 
-## 迁移备注
+- Physics, combat, platform systems, or visual-specific logic.
+- Component definitions.
+- Runtime owner or Python binding.
 
-如果逻辑只服务某个业务域，应放入对应 `systems/<domain>` 目录，不要扩大 `systems/core`。
+## Migration Notes
+
+If logic only serves a specific business domain, it should be placed in the corresponding `systems/<domain>` directory, and should not expand `systems/core`.

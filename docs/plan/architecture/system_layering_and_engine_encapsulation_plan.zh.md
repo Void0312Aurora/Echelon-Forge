@@ -2,19 +2,19 @@
 
 文档导航：
 
-- [README.md](/home/void0312/Workshop/CMO/docs/plan/README.md)
+- [README.md](../README.md)
 
 English version:
-[system_layering_and_engine_encapsulation_plan.md](/home/void0312/Workshop/CMO/docs/plan/architecture/system_layering_and_engine_encapsulation_plan.md)
+[system_layering_and_engine_encapsulation_plan.md](system_layering_and_engine_encapsulation_plan.md)
 
 后续调研：
-[architecture_and_performance_research_followup.zh.md](/home/void0312/Workshop/CMO/docs/plan/architecture/architecture_and_performance_research_followup.zh.md)
+[architecture_and_performance_research_followup.zh.md](architecture_and_performance_research_followup.zh.md)
 
 接口契约：
-[runtime_facade_contract_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md)
+[runtime_facade_contract_plan.zh.md](../runtime_facade/runtime_facade_contract_plan.zh.md)
 
 冻结执行记录：
-[runtime_facade_task_bootstrap_plan.zh.md](/home/void0312/Workshop/CMO/docs/plan/runtime_facade/runtime_facade_task_bootstrap_plan.zh.md)
+[runtime_facade_task_bootstrap_plan.zh.md](../archive/runtime_facade_task_bootstrap_plan.zh.md)
 
 状态：`2026-05-10` 架构主方案草案。  
 文档定位：
@@ -58,9 +58,9 @@ English version:
 
 主要热点文件：
 
-- [gym_envs/scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
-- [python/rl/world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
-- [gym_envs/universal_env.py](/home/void0312/Workshop/CMO/gym_envs/universal_env.py)
+- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
 
 这意味着当前所谓“前端”并不只是消费后端服务，它在相当程度上仍然兼任了运行时后端的一部分。
 
@@ -81,10 +81,10 @@ English version:
 
 主要文件：
 
-- [src/core/engine/simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
-- [src/core/engine/world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [src/core/mission/execution_episode_controller.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_controller.cpp)
-- [src/models/air/default_control_model.cpp](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)
+- [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
 
 ### 3. 公共 API 过于底层
 
@@ -93,7 +93,7 @@ English version:
 
 主要文件：
 
-- [src/interfaces/python/python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
+- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 ### 4. 构建边界没有帮助约束架构边界
 
@@ -107,7 +107,7 @@ English version:
 
 主要文件：
 
-- [CMakeLists.txt](/home/void0312/Workshop/CMO/CMakeLists.txt)
+- [CMakeLists.txt](../../../CMakeLists.txt)
 
 这意味着现在的 include 图和 target link 关系还没有帮助项目真正约束架构。
 
@@ -189,13 +189,17 @@ flowchart TD
 - gym wrappers
 - Python state mirror
 
-建议的公共边界：
+规划中的候选公共边界（这些接口 / DTO 目前是架构目标，
+并不是仓库里今天已经存在的公开 API）：
 
 - `IPhysicsBackend`
 - `PhysicsWorldState`
 - `PhysicsStepContext`
 - `PhysicsStepResult`
 - `PhysicsDebugTrace`
+
+当前仓库代码仍然主要通过具体的 engine / runtime 实现协作，
+尚未抽出这一层独立的 physics 边界契约。
 
 未来具体后端可以包括：
 
@@ -231,12 +235,16 @@ flowchart TD
 - scenario authoring 的 UI 约定
 - Python 侧 cache / mirror 逻辑
 
-建议的公共边界：
+规划中的候选公共边界（这些接口目前是候选契约，
+并不是仓库里今天已经存在的稳定公开接口）：
 
 - `ISimulationRuntime`
 - `IBatchSimulationRuntime`
 - `IExecutionEpisodeRuntime`
 - `ISimulationDiagnostics`
+
+当前维护中的调用方仍然直接绑定具体 runtime 实现，
+尚未切换到这组拟议中的 simulation-engine 接口。
 
 ### 第 3 层：运行时门面层
 
@@ -461,30 +469,30 @@ python/
 
 ### 当前应向前端或适配层归位的代码
 
-- [gym_envs/scenario_loader.py](/home/void0312/Workshop/CMO/gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
   当前混合职责：scenario parsing、runtime state mirror、reward bridge、command sync helper。
-- [python/rl/world_batch_vec_env.py](/home/void0312/Workshop/CMO/python/rl/runtime/world_batch_vec_env.py)
+- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
   当前混合职责：frontend wrapper 加 runtime orchestration 细节。
 
 ### 当前应归位为仿真引擎所有权的代码
 
-- [src/core/engine/simulation_kernel.cpp](/home/void0312/Workshop/CMO/src/core/engine/simulation_kernel.cpp)
-- [src/core/engine/world_batch_runtime.cpp](/home/void0312/Workshop/CMO/src/core/engine/world_batch_runtime.cpp)
-- [src/core/mission/execution_episode_controller.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_controller.cpp)
-- [src/core/mission/execution_episode_state.cpp](/home/void0312/Workshop/CMO/src/core/mission/episode/execution_episode_state.cpp)
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
+- [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)
+- [src/core/mission/execution_episode_state.cpp](../../../src/core/mission/episode/execution_episode_state.cpp)
 
 ### 当前应归位为物理引擎所有权的代码
 
 - `src/systems/physics/*`
 - `src/components/physics/*`
-- [src/models/air/default_control_model.cpp](/home/void0312/Workshop/CMO/src/models/air/default_control_model.cpp)
+- [src/models/air/default_control_model.cpp](../../../src/models/air/default_control_model.cpp)
   中从 control 到 force、再到 integration 的路径
-- [src/core/interfaces/environment_model.h](/home/void0312/Workshop/CMO/src/core/interfaces/environment_model.h)
+- [src/core/interfaces/environment_model.h](../../../src/core/interfaces/environment_model.h)
   中的 environment query 契约
 
 ### 当前应保留为适配层所有权的代码
 
-- [src/interfaces/python/python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp)
+- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 但它只能作为适配层，不应继续成为架构定义本体所在的位置。
 

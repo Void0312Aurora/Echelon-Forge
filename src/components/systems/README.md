@@ -1,18 +1,20 @@
-# `src/components/systems` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/components/systems/README.md. Review before treating this file as authoritative. -->
 
-`components/systems` 保存平台系统状态 component，包括通信、数据链、电子战、导航、后勤、传感器和航迹管理。
+# `src/components/systems` Boundaries
 
-## 允许
+`components/systems` holds platform system state components, including communications, data links, electronic warfare, navigation, logistics, sensors, and track management.
 
-- data link、command link、sensor、EW、navigation、logistics、track management 状态。
-- 对应 `systems/systems` tick 逻辑需要读写的数据。
+## Allowed
 
-## 禁止
+- data link, command link, sensor, EW, navigation, logistics, track management state.
+- data that the corresponding `systems/systems` tick logic needs to read and write.
 
-- 平台系统的 update/tick/scan/track fusion 行为。
-- mission/tasking DTO。
-- Python binding、facade 或 batch runtime 逻辑。
+## Not Allowed
 
-## 迁移备注
+- Platform system update/tick/scan/track fusion behavior.
+- mission/tasking DTOs.
+- Python bindings, facades, or batch runtime logic.
 
-目录名较宽，但当前代表“平台系统 component”。若后续 `systems/systems` 重命名，本目录也应一并评估是否改名为 `components/platform`。
+## Migration Note
+
+The directory name is broad, but currently represents "platform system components." If `systems/systems` is renamed later, this directory should also be evaluated for renaming to `components/platform`.

@@ -1,20 +1,22 @@
-# `src/content` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/content/README.md. Review before treating this file as authoritative. -->
 
-`content/` 保存内容 schema、unit definition 和加载器。它描述“有哪些单位和静态配置”，不拥有 runtime 行为。
+# `src/content` Boundary
 
-## 允许
+`content/` stores content schemas, unit definitions, and loaders. It describes "what units and static configurations exist" and does not own runtime behavior.
 
-- unit definition 类型。
-- JSON 或其他内容格式的加载器。
-- 静态内容校验和转换。
+## Allowed
 
-## 禁止
+- Unit definition types.
+- Loaders for JSON or other content formats.
+- Static content validation and transformation.
 
-- simulation step、mission episode、reward 或 termination 逻辑。
-- Python binding。
-- 训练配置治理。
-- 直接管理 ECS world lifecycle。
+## Prohibited
 
-## 依赖方向
+- Simulation step, mission episode, reward, or termination logic.
+- Python binding.
+- Training configuration governance.
+- Direct management of ECS world lifecycle.
 
-`core/engine` 和 `models/core` 可以消费 `content/`。`content/` 不依赖 `core/engine`、`runtime/facade` 或 `interfaces/python`。
+## Dependency Direction
+
+`core/engine` and `models/core` may consume `content/`. `content/` does not depend on `core/engine`, `runtime/facade`, or `interfaces/python`.

@@ -1,15 +1,19 @@
+<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/runtime_facade/README.zh.md. Review before treating this file as authoritative. -->
+
+<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/runtime_facade/README.md. Review before treating this file as authoritative. -->
+
 # `runtime_facade/`
 
-本目录存放 runtime facade 主线的契约、执行记录与后续清理计划。
+This directory contains contracts and follow-up cleanup plans for the runtime facade mainline. The execution records have been moved to `../archive/`.
 
-推荐阅读顺序：
+Recommended reading order:
 
 1. [runtime_facade_contract_plan.zh.md](runtime_facade_contract_plan.zh.md)
-2. [runtime_facade_task_bootstrap_plan.zh.md](runtime_facade_task_bootstrap_plan.zh.md)
-3. [runtime_facade_layering_cleanup_freeze.zh.md](runtime_facade_layering_cleanup_freeze.zh.md)
+2. [archive/runtime_facade_task_bootstrap_plan.md](../archive/runtime_facade_task_bootstrap_plan.md)
+3. [archive/runtime_facade_layering_cleanup_freeze.md](../archive/runtime_facade_layering_cleanup_freeze.md)
 
-使用规则：
+Usage rules:
 
-- 契约文档定义边界，但不是自动生效的执行冻结单。
-- `task_bootstrap` 现为第一批 `WP1-WP6` 执行记录。
-- 后续实现若继续沿 runtime facade 主线推进，应以新的冻结任务单收口范围。
+- Contract documents define boundaries, but are not automatically effective execution freezes.
+- The first batch of `WP1-WP6` execution records now lives in `../archive/`.
+- If subsequent implementation continues along the runtime facade mainline, it should be scoped by a new freeze task list.

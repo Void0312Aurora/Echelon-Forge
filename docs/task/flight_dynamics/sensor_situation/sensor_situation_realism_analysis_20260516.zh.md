@@ -4,28 +4,29 @@
 
 关联文件：
 
-- [Sensor 组件定义](/home/void0312/Workshop/CMO/src/components/systems/sensor.h)
-- [EW 组件定义](/home/void0312/Workshop/CMO/src/components/systems/ew.h)
-- [DataLink 组件定义](/home/void0312/Workshop/CMO/src/components/systems/data_link.h)
-- [TrackManagement 组件定义](/home/void0312/Workshop/CMO/src/components/systems/track_management.h)
-- [ISensorModel 接口](/home/void0312/Workshop/CMO/src/core/interfaces/sensor_model.h)
-- [DefaultSensorModel（传感器扫描）](/home/void0312/Workshop/CMO/src/models/systems/default_sensor_model.cpp)
-- [SensorSystem（扫描调度与航迹记忆）](/home/void0312/Workshop/CMO/src/systems/systems/sensor_system.h)
-- [DataLinkSystem（数据链融合与消息）](/home/void0312/Workshop/CMO/src/systems/systems/data_link_system.h)
-- [TrackManagerSystem（航迹数据库）](/home/void0312/Workshop/CMO/src/systems/systems/track_manager_system.h)
-- [EWSystem（电子战）](/home/void0312/Workshop/CMO/src/systems/systems/ew_system.h)
-- [IEnvironmentModel 接口](/home/void0312/Workshop/CMO/src/core/interfaces/environment_model.h)
-- [DefaultEnvironmentModel（大气/LOS/天气）](/home/void0312/Workshop/CMO/src/models/environment/default_environment_model.cpp)
-- [传感器与态势感知路线图](/home/void0312/Workshop/CMO/docs/forward/sensor_situation.md)
-- [飞行动力学现实性分析（关联）](/home/void0312/Workshop/CMO/docs/task/flight_dynamics/flight/flight_dynamics_realism_analysis_20260516.zh.md)
+- [Sensor 组件定义](../../../../src/components/systems/sensor.h)
+- [EW 组件定义](../../../../src/components/systems/ew.h)
+- [DataLink 组件定义](../../../../src/components/systems/data_link.h)
+- [TrackManagement 组件定义](../../../../src/components/systems/track_management.h)
+- [ISensorModel 接口](../../../../src/core/interfaces/sensor_model.h)
+- [DefaultSensorModel（传感器扫描）](../../../../src/models/systems/default_sensor_model.cpp)
+- [SensorSystem（扫描调度与航迹记忆）](../../../../src/systems/systems/sensor_system.h)
+- [DataLinkSystem（数据链融合与消息）](../../../../src/systems/systems/data_link_system.h)
+- [TrackManagerSystem（航迹数据库）](../../../../src/systems/systems/track_manager_system.h)
+- [EWSystem（电子战）](../../../../src/systems/systems/ew_system.h)
+- [IEnvironmentModel 接口](../../../../src/core/interfaces/environment_model.h)
+- [DefaultEnvironmentModel（大气/LOS/天气）](../../../../src/models/environment/default_environment_model.cpp)
+- [传感器与态势感知路线图](../../../forward/sensor_situation.md)
+- [飞行动力学现实性分析（关联）](../flight/flight_dynamics_realism_analysis_20260516.zh.md)
 
 文档定位：
 
 - 本文档仅记录当前传感器、数据链、航迹管理与电子战管线的已知缺陷，
   及其对应的真实物理/工程情况。
 - 不涵盖可接受的简化，不提供优先级排序，不给出工作计划。
+- 当前判断以本分析中的 `2026-05-18` 收口标记为准，不再引用 `program/` 或 `archive/` 作为当前状态来源。
 
-## 补记：`2026-05-17` 收口标记
+## 补记：`2026-05-18` 收口标记
 
 标记口径：
 
@@ -38,14 +39,14 @@
 
 | 条目 | 当前标记 | 说明 |
 |------|----------|------|
-| `2.1` 检测概率模型 | `部分解决` | 已有 `Tentative/Confirmed` 与最小确认语义，但 `SNR→Pd`、相关噪声与更真实 `M-of-N` 仍未完成 |
+| `2.1` 检测概率模型 | `部分解决` | 已有基础 `SNR→Pd` 管线与 `Tentative/Confirmed` 最小确认语义，但相关噪声与更真实 `M-of-N` 仍未完成 |
 | `2.2` RCS 模型 | `未解决` | 视角、频率、极化和闪烁仍未形成当前主线闭环 |
 | `2.3` 多普勒处理 | `未解决` | `PRF / waveform / micro-Doppler` 仍未进入运行时合同 |
-| `2.4` 干扰与电子战 | `未解决` | 当前仍没有 `DRFM / cross-eye / 更真实诱饵运动学` 收口 |
-| `2.5` 跟踪与航迹管理 | `部分解决` | `track/report` 语义已替代 raw contact 复制，但 `velocity / quality / full lifecycle` 仍需继续收口 |
-| `2.6` 数据链 | `部分解决` | 已切到 `track/report + QoS budget`，但仍不是完整 `Link 16 / NPG / relay` 模型 |
-| `2.7` 航迹分类（IFF/识别） | `未解决` | 最小 `IFF` 状态机尚未收口，旧“上帝视角分类”问题仍基本成立 |
-| `2.8` 传感器融合 | `部分解决` | `local + datalink -> fused` 已有最小合同，但多源加权融合与完整去重仍未完成 |
+| `2.4` 干扰与电子战 | `已有最小收口` | 已有 noise barrage/spot burn-through 与 `chaff / flare` 生命周期闭环，但 `DRFM / cross-eye / 更真实诱饵运动学` 仍未收口 |
+| `2.5` 跟踪与航迹管理 | `已有最小收口` | 已有 `Tentative / Confirmed / Coasted`、速度估计与 aging/drop 行为，但完整 lifecycle 保真度与更丰富 quality 语义仍需继续收口 |
+| `2.6` 数据链 | `已有最小收口` | `track/report + QoS budget` 与接收侧航迹消费已接通，但仍不是完整 `Link 16 / NPG / relay` 模型 |
+| `2.7` 航迹分类（IFF/识别） | `已有最小收口` | 最小 `IFF` 状态机与 datalink 辅助识别路径已存在，但旧“上帝视角分类”问题仍未被彻底切断 |
+| `2.8` 传感器融合 | `已有最小收口` | `local + datalink -> fused` 已形成真实最小合同，但多源加权融合与完整去重仍未完成 |
 | `2.9` 环境对传感器的影响 | `部分解决` | 海事 `LOS / sea-state / ducting` 已有最小接入，但天气、杂波和完整折射仍缺 |
 | `2.10` 传感器参数的结构性问题 | `未解决` | `flat struct` 与类型特异参数体系仍未真正拆开 |
 

@@ -1,20 +1,20 @@
-# `src/runtime/contracts` 边界
+# `src/runtime/contracts` Boundary
 
-`runtime/contracts` 保存 runtime/facade 与 lower-level runtime owner 之间共享的稳定 DTO。这里的类型可以被 facade、engine、Python bindings 和测试共同引用，但不能拥有 world state、ECS registry 或系统调度逻辑。
+`runtime/contracts` stores the stable DTOs shared between `runtime/facade` and lower-level runtime owners. Types here may be referenced by the facade, engine, Python bindings, and tests, but they must not own world state, ECS registries, or system scheduling logic.
 
-## 允许
+## Allowed
 
-- `WorldEntityRef` 这类轻量引用。
-- batch setup / command / tasking / episode step request DTO。
-- 只由 value types、component DTO 和 mission runtime DTO 组成的 request/result 类型。
+- Lightweight references such as `WorldEntityRef`.
+- DTOs for batch setup, commands, tasking, and episode-step requests.
+- Request/result types composed only of value types, component DTOs, and mission runtime DTOs.
 
-## 禁止
+## Forbidden
 
-- `SimulationKernel`、`WorldBatchRuntime` 或其他 owner class。
-- Flecs system 注册、step 调度、GPU helper 实现。
-- Python/nanobind 绑定逻辑。
-- 为了方便 include 而引入 `core/engine/*`。
+- `SimulationKernel`, `WorldBatchRuntime`, or other owner classes.
+- Flecs system registration, step scheduling, or GPU helper implementations.
+- Python/nanobind binding logic.
+- Pulling in `core/engine/*` just for include convenience.
 
-## 迁移备注
+## Migration Notes
 
-本目录是后续 `ef_contracts` target 的候选起点。新增 facade-facing 类型应优先放在这里，再由 facade 或 engine implementation 消费。
+This directory is the likely starting point for a future `ef_contracts` target. New facade-facing types should be placed here first and then consumed by the facade or engine implementation.

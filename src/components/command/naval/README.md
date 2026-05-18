@@ -1,28 +1,27 @@
-# `src/components/command/naval` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/components/command/naval/README.md. Review before treating this file as authoritative. -->
 
-`components/command/naval` 保存舰艇/海上执行面的 command 扩展。这里承载
-的是 naval-specific 的执行意图，例如舰载机发收舰、编队站位和 OTH relay
-控制，而不是跨域共享 command core。
+# `src/components/command/naval` Boundary
 
-## 允许
+`components/command/naval` holds command extensions for naval/maritime execution surfaces. It hosts naval-specific execution intents, such as carrier aircraft launch/recovery, formation station-keeping, and OTH relay control, rather than cross-domain shared command core.
 
-- `MissionCommandNaval` 这类 naval 扩展字段。
-- 仅服务舰艇/海上执行面的 command code 常量与轻量 helper。
-- 可被 `systems/naval` 和 `core/mission` 消费的 naval execution DTO。
+## Allowed
 
-## 禁止
+- `MissionCommandNaval` and similar naval extension fields.
+- Command code constants and lightweight helpers that serve only the naval/maritime execution surface.
+- Naval execution DTOs consumable by `systems/naval` and `core/mission`.
 
-- 跨域共享 command transport/core；这些进入 `common/`。
-- `TaskOrder`、`LeaderIntent`、`PilotReport` 等 tasking DTO。
-- 舰艇运动、舰载机调度、数据链时序等 tick 逻辑；这些属于 `systems/naval` 或 `systems/systems`。
-- Python binding、facade request/result 或 env glue。
+## Prohibited
 
-## 当前文件
+- Cross-domain shared command transport/core; those go into `common/`.
+- Tasking DTOs such as `TaskOrder`, `LeaderIntent`, `PilotReport`.
+- Tick logic for vessel movement, carrier aircraft scheduling, data link timing, etc.; those belong to `systems/naval` or `systems/systems`.
+- Python bindings, facade request/result, or environment glue.
+
+## Current Files
 
 - [mission_command_naval.h](mission_command_naval.h)
-  - 舰载机发收舰、OTH relay、站位半径/方位等 naval 扩展字段与 command code。
+  - Naval extension fields and command codes for carrier aircraft launch/recovery, OTH relay, station radius/azimuth, etc.
 
-## 依赖方向
+## Dependency Direction
 
-本目录可以依赖 `components/command/common`。它不应依赖 `systems/`、
-`core/mission`、`runtime/facade` 或 `interfaces/python` 的实现细节。
+This directory may depend on `components/command/common`. It must not depend on implementation details of `systems/`, `core/mission`, `runtime/facade`, or `interfaces/python`.

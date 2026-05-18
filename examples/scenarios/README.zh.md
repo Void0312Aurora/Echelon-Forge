@@ -1,0 +1,9 @@
+<!-- Machine-translated draft generated on 2026-05-18 from examples/scenarios/README.md. Review before treating this file as authoritative. -->
+
+# 示例场景夹具
+
+此目录用于仅作示例的小型场景夹具。
+
+规范训练、评估、诊断和合约场景当前位于仓库级别的 [scenarios](../../scenarios/README.md) 目录中。请继续使用仓库相对路径 `scenarios/...` 来引用维护的配置、测试和工具。
+
+在添加路径兼容性并更新所有维护的引用之前，请勿将规范场景移至此目录。安全的迁移应首先让加载器、合约运行器和工具同时接受 `scenarios/...` 和 `examples/scenarios/...`，然后有计划地更新引用。

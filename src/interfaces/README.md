@@ -1,25 +1,27 @@
-# `src/interfaces` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/interfaces/README.md. Review before treating this file as authoritative. -->
 
-`interfaces/` 保存外部语言、工具或集成边界。它负责把维护中的 C++ API 暴露出去，不拥有 simulation、mission 或 model 领域逻辑。
+# `src/interfaces` Boundary
 
-## 允许
+`interfaces/` holds external language, tooling, or integration boundaries. It is responsible for exposing the maintained C++ API and does not own simulation, mission, or model domain logic.
 
-- 语言绑定。
-- 外部 ABI/API 适配。
-- 轻量类型转换和错误映射。
-- 只为绑定服务的小型 helper。
+## Allowed
 
-## 禁止
+- Language bindings.
+- External ABI/API adaptation.
+- Lightweight type conversion and error mapping.
+- Small helpers that serve only the bindings.
 
-- mission-command JSON 业务解释。
-- reward、termination、episode transition 或 physics 行为。
-- 直接实现 runtime capability。
-- 把训练配置或场景语义塞入绑定层。
+## Disallowed
 
-## 子目录约定
+- Mission-command JSON business interpretation.
+- Reward, termination, episode transition, or physics behavior.
+- Direct implementation of runtime capability.
+- Injecting training configuration or scenario semantics into the binding layer.
 
-- `python/`：nanobind Python module 和 Python 相关适配。
+## Subdirectory conventions
 
-## 迁移备注
+- `python/`: nanobind Python module and Python‑related adaptations.
 
-后续可评估把 `interfaces/python` 重命名为 `bindings/python`。在重命名前，新增绑定仍放在 `interfaces/python`，但必须保持“只绑定、不拥有领域逻辑”。
+## Migration notes
+
+It may be considered later to rename `interfaces/python` to `bindings/python`. Before the rename, new bindings should still be placed under `interfaces/python`, but must adhere to the "binding only, no domain logic" principle.

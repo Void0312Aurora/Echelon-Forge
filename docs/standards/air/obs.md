@@ -1,74 +1,151 @@
-# 飞行员观测空间标准 (Pilot Observation Space Standard)
+# Pilot Observation Contract
 
-> Scope note (2026-03-23): 本文档是 `air specialization`，只适用于 air profile 下的平台观测语义。
-> 当前标准化主基线请先看 [docs/standards/README.md](/home/void0312/Workshop/CMO/docs/standards/README.md)、
-> [docs/standards/services/air_force.md](/home/void0312/Workshop/CMO/docs/standards/services/air_force.md)、
-> [docs/standards/air/README.md](/home/void0312/Workshop/CMO/docs/standards/air/README.md)。
+Language:
+- English canonical: `obs.md`
+- Chinese companion: [obs.zh.md](obs.zh.md)
 
-本文档定义了“数字飞行员” (RL Agent) 在仿真环境中所能获取的观测数据。这些数据严格模拟现实战斗机飞行员通过仪表、平显 (HUD) 及感官所获取的原始信息。
+Status: `2026-05-18` specialization baseline for maintained air mission observation.
 
-它不负责定义：
+This document defines the maintained air observation contract exposed through
+the mission-observation surface. It does not attempt to describe every raw
+instrument, radar page, or pilot sensation in the full environment.
 
-- joint/common core 的指挥关系
-- Army/Navy/Marine Corps 的平台观测
-- 全项目统一的数据模型骨架
+## Scope
 
-## 1. 飞行状态 (Flight Dynamics)
-飞行员对飞机运动状态的直接感知。
+The maintained contract here is the mode-based `mission_observation` vector used
+by the current runtime and tests.
 
-| 变量名 | 说明 | 物理单位 | 现实对应 |
-| :--- | :--- | :--- | :--- |
-| `alt_baro` | 气压高度（平均海平面高度） | 米 (m) | 气压高度计 |
-| `alt_radar` | 雷达高度（实际离地高度） | 米 (m) | 雷达高度计 |
-| `ias` | 指示空速 (Indicated Airspeed) | 节 (kts) / 米每秒 (m/s) | 空速表 |
-| `mach` | 马赫数 | Mach | 马赫数表 |
-| `vvi` | 垂直速率 (Vertical Velocity Indicator) | 米每秒 (m/s) | 升降速度表 |
-| `pitch` | 俯仰角 | 度 (deg) | 姿态指引仪 (ADI) |
-| `roll` | 滚转角 | 度 (deg) | 姿态指引仪 (ADI) |
-| `heading` | 磁航向 / 真实航向 | 度 (deg) | 水平状态指示仪 (HSI) |
-| `aoa` | 攻角 (Angle of Attack) | 度 (deg) | AoA 指示器 |
-| `beta` | 侧滑角 (Sideslip Angle) | 度 (deg) | 侧滑球 / 侧滑仪 |
-| `g_load` | 法向过载 | G | 加速度计 |
-| `p, q, r` | 角速度（滚转、俯仰、偏航速率） | 度每秒 (deg/s) | 速率陀螺 |
+Primary references:
 
-## 2. 动力系统 (Propulsion & Systems)
-监控发动机的工作状态及其对机体的影响。
+- [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
+- [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
+- [src/core/mission/runtime/mission_runtime.h](../../../src/core/mission/runtime/mission_runtime.h)
+- [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
 
-| 变量名 | 说明 | 物理单位 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `engine_rpm_pct` | 核心转速百分比 | % | N1 / N2 |
-| `engine_temp` | 排气温度 / 涡轮前温度 | 摄氏度 (℃) | EGT / FTIT |
-| `fuel_internal` | 内部机身燃料重量 | 公斤 (kg) | 燃油表 |
-| `fuel_external` | 外部副油箱燃料重量 | 公斤 (kg) | 燃油表 |
-| `fuel_flow` | 瞬时燃油流量 | 公斤每小时 (kg/h) | 流量计 |
-| `throttle_pos` | 当前油门杆实际位置 | 0.0 - 1.0 | 反馈手感 |
+This document does not define:
 
-## 3. 飞机配置 (Configuration)
-机体机械结构的当前状态。
+- the full raw environment observation dictionary
+- generic sensor contacts or RWR pages
+- a joint/common-core observation ontology
 
-| 变量名 | 说明 | 状态值 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `gear_pos` | 起落架状态 | 0.0 (收起) - 1.0 (放下) | 包含转换态 |
-| `flaps_pos` | 襟翼角度 | 度 (deg) / 挡位 | |
-| `speedbrake_pos` | 减速板开度 | 0.0 - 1.0 | |
-| `master_arm` | 武器总开关 | ON / OFF | |
+## Mode-Based Contract
 
-## 4. 环境与指令 (Environment & Navigation)
-长机/指挥层下达的任务目标及外界动态。
+The maintained mission-observation modes are:
 
-| 变量名 | 说明 | 物理单位 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `target_heading` | 指令目标航向 | 度 (deg) | 长机指令内容 |
-| `target_alt` | 指令目标高度 | 米 (m) | 长机指令内容 |
-| `target_speed` | 指令目标速度 | m/s | 长机指令内容 |
-| `oat` | 外界大气温度 | 摄氏度 (℃) | 静态温压 |
-| `wind_vec` | 估计风速向量 | m/s | 飞行员感知补偿 |
+| Mode | Dim | Purpose |
+| :--- | ---: | :--- |
+| `basic` | 4 | command-following baseline |
+| `nav_v1` | 11 | early waypoint navigation contract |
+| `nav_v2` | 14 | maintained route/LNAV contract |
+| `nav_v2_formation_v1` | 17 | `nav_v2` plus formation offsets |
+| `nav_v2_formation_role_v1` | 21 | formation offsets plus role/slot fields |
+| `nav_v2_cooperative_takeoff_v1` | 25 | route, takeoff, formation, and role fields |
 
-## 5. 战术与传感器 (Tactical & Sensors)
-通过电子设备获取的战场态势。
+Field order is part of the contract.
 
-| 变量名 | 说明 | 物理单位 | 备注 |
-| :--- | :--- | :--- | :--- |
-| `rwr_state` | 雷达告警接收机状态 | 象限、类型、强度 | 告警音及显示器 |
-| `radar_contacts` | 雷达发现的敌我目标列表 | 方位、距离、多普勒速度 | 原始观测 |
-| `missile_count` | 剩余可用导弹数量 | 整数 | 各型号计数 |
+## Shared Core Fields
+
+All modes begin with the same four fields:
+
+1. `command_code`
+2. `target_heading_deg`
+3. `target_altitude_m`
+4. `target_speed_mps`
+
+These are the maintained command-following anchors for the air runtime.
+
+## Navigation Fields
+
+`nav_v1` adds:
+
+- `active_wp_idx`
+- `total_wps`
+- `dist_m`
+- `xtk_m`
+- `dtg_m`
+- `direct_bearing_deg`
+- `desired_leg_track_deg`
+
+`nav_v2` replaces that with the maintained LNAV-style set:
+
+- `selected_steerpoint`
+- `steerpoint_mode_code`
+- `dist_m`
+- `bearing_rel_deg`
+- `altitude_delta_m`
+- `cdi_norm`
+- `track_angle_error_deg`
+- `leg_distance_remaining_m`
+- `next_turn_deg`
+- `distance_to_turn_m`
+
+The authoritative index labels for these fields are defined by
+[python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py).
+
+## Formation Fields
+
+`nav_v2_formation_v1` adds:
+
+- `form_offset_x_m`
+- `form_offset_y_m`
+- `form_offset_z_m`
+
+These are air-specialization fields. They do not belong in common core.
+
+`nav_v2_formation_role_v1` adds:
+
+- `self_role_code`
+- `self_formation_role_code`
+- `relative_slot_code`
+- `reference_relative_slot_code`
+
+These fields bridge common/service role semantics into the air formation surface.
+
+## Cooperative Takeoff Fields
+
+`nav_v2_cooperative_takeoff_v1` adds the air takeoff/tasking fields:
+
+- `takeoff_procedure_code`
+- `takeoff_clearance_code`
+- `takeoff_interval_s`
+- `runway_slot_code`
+
+plus the same formation/role fields listed above.
+
+This mode is the maintained air contract for cooperative takeoff guidance, not a
+generic cross-domain takeoff schema.
+
+## Runtime Rules
+
+- Mode length stays fixed even when route guidance is unavailable.
+- When route guidance is unavailable, the navigation portion is zero-filled.
+- Field visibility is mode-dependent.
+- Formation and takeoff fields are not assumed to exist outside the modes that
+  declare them.
+
+## Ownership Boundary
+
+Keep in common core:
+
+- abstract command-following anchors
+- role/slot semantics that survive across services
+
+Keep in air specialization:
+
+- runway- and takeoff-specific fields
+- route/LNAV/ILS semantics
+- formation offsets and air role details
+
+## Non-Goals
+
+This document does not standardize:
+
+- `oat`
+- `wind_vec`
+- `rwr_state`
+- `radar_contacts`
+- `missile_count`
+
+Those may exist elsewhere in the wider environment or future observation
+surfaces, but they are not part of the maintained air mission-observation
+contract defined here.

@@ -11,7 +11,7 @@
 ## Current Structure
 
 - `runtime/`
-  - Runtime-contract tests for mission, execution-step, and loader parity.
+  - Runtime-contract tests grouped by capability domain under `air_combat/`, `core/`, `execution/`, `facade/`, `link/`, `mission/`, `multi_agent/`, `naval/`, and `navigation/`.
 - `eval/`
   - Maintained CLI-level evaluation regression tests.
 - `training/`

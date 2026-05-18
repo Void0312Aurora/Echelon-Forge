@@ -1,0 +1,39 @@
+<!-- Machine-translated draft generated on 2026-05-18 from examples/config/training/active/air_combat/README.md. Review before treating this file as authoritative. -->
+
+# 空战 1v1 训练条目
+
+此目录存放正在维护的 `1v1` 空战执行配置。
+
+## 范围
+
+- 该路线的场景配对为：
+  - [air_combat_1v1_headon_sensor_smoke_v1.json](../../../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+- 当前基线为：
+  - 蓝方学习者：`F-16C_Block50`
+  - 红方对手：场景声明的脚本化 `F-16C_Block50`
+  - 策略架构：`HierarchicalMoEExecutionPolicy`
+
+## 条目
+
+- [air_combat_1v1_f16c_scripted_red_smoke_v1.json](air_combat_1v1_f16c_scripted_red_smoke_v1.json)
+  - 在标准 `execution` vec-env 路径上的最小引导烟雾测试。
+  - 直接使用维护中的 HMoE 策略表面，而非共享策略回退。
+
+- [air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json](air_combat_1v1_f16c_scripted_red_world_batch_smoke_v1.json)
+  - 在维护中的默认 `WorldBatchVecEnv` 路径上的对应烟雾测试条目。
+  - 当你希望验证脚本化红方对手和 HMoE 策略也能在批处理运行时路径上正确推进时，请使用此项。
+
+## 设计说明
+
+- 这些烟雾测试条目有意设为非可视化。
+  - 目标是首先验证作战任务契约和运行时链路，而非可视吞吐量。
+- 这些烟雾测试条目直接使用当前 HMoE 主线架构。
+  - `1v1` 并不将独立的共享策略活动条目作为其主要维护路径。
+- 当前 `1v1` 烟雾测试仍使用 `mission_obs_mode=basic`。
+  - 因此 HMoE 策略处于活跃状态，但暴露给策略的维护路线语义仍然最小化。
+  - 在当前烟雾日志中，这意味着路由停留在导航族/子专家上，这对于链路验证是可接受的，但尚未形成完全差异化的作战路由配置。
+- 这些烟雾测试条目有意不启用维护中的脚本化残差动作封装。
+  - 当前稳定飞行残差预设锁定了几个在空战中有用的开关维度，包括武器相关控制。
+  - 在首次 `1v1` 烟雾测试中，我们希望学习者保留原始的 `full` 动作表面。
+- 这些条目尚未成为验收/冻结基线。
+  - 仅在 `1v1` 奖励/终止/评估行为足够稳定（可跨运行比较）之后才进行提升。

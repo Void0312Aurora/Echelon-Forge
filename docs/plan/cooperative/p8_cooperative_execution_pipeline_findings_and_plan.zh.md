@@ -354,13 +354,13 @@ range, azimuth, elevation, closing_speed, time_since_update
 
 当前进展：
 
-- 已补 `tests/runtime/test_leader_tasking_runtime.py::test_build_kernel_mission_command_maps_formation_offsets`，确认 `LeaderIntent -> MissionCommand` 映射已包含 `formation_id / form_offset_x/y/z`。
+- 已补 `tests/runtime/mission/test_leader_tasking_runtime.py::test_build_kernel_mission_command_maps_formation_offsets`，确认 `LeaderIntent -> MissionCommand` 映射已包含 `formation_id / form_offset_x/y/z`。
 - 已补 `tests/world_batch/test_world_batch_runtime.py::test_world_batch_runtime_mission_command_roundtrip_preserves_formation_offsets`，确认沿既有 command-link 使用方式时，kernel mission command roundtrip 可保留编队 offset。
-- 已补 `tests/runtime/test_mission_runtime.py::test_loader_mission_observation_current_contract_ignores_formation_offsets`，确认当前 `MissionObservationInputs` / `compute_mission_observation` 仍只暴露 command/heading/altitude/speed/nav tail，尚未把编队 offset 暴露给执行策略。
+- 已补 `tests/runtime/mission/test_mission_runtime.py::test_loader_mission_observation_current_contract_ignores_formation_offsets`，确认当前 `MissionObservationInputs` / `compute_mission_observation` 仍只暴露 command/heading/altitude/speed/nav tail，尚未把编队 offset 暴露给执行策略。
 
 补充说明：
 
-- 当前 `.venv` 下整文件运行 `tests/runtime/test_mission_runtime.py` 会被已有 `UniversalEnv` 测试触发的 `gymnasium` 依赖拦住；P8-A2 新增的定向合同测试本身已通过。
+- 当前 `.venv` 下整文件运行 `tests/runtime/mission/test_mission_runtime.py` 会被已有 `UniversalEnv` 测试触发的 `gymnasium` 依赖拦住；P8-A2 新增的定向合同测试本身已通过。
 - 这一阶段仍未修改默认 `mission_obs_mode` 和旧 observation shape。
 
 ### P8-A3：cooperative mission observation 最小扩展
@@ -424,9 +424,9 @@ range, azimuth, elevation, closing_speed, time_since_update
 
 当前进展：
 
-- 已补 `tests/runtime/test_mission_runtime.py::test_execution_contact_runtime_contract_drops_source_and_classification`。
+- 已补 `tests/runtime/mission/test_mission_runtime.py::test_execution_contact_runtime_contract_drops_source_and_classification`。
 - 已确认当前 execution contact token 仍为固定 `5` 列，导出字段只有 `range / azimuth / elevation / closing_speed / time_since_update`；`TrackData.source / classification` 仍不进入执行层 contact token。
-- 已补 `tests/runtime/test_mission_runtime.py::test_visual_observation_team_channel_marks_friend_and_hostile`，确认 visual ARB `CH_TEAM` 通道已能输出 `-1 / 0 / +1` 的敌我标记。
+- 已补 `tests/runtime/mission/test_mission_runtime.py::test_visual_observation_team_channel_marks_friend_and_hostile`，确认 visual ARB `CH_TEAM` 通道已能输出 `-1 / 0 / +1` 的敌我标记。
 - 已把 `TrackManagerSystem` 正式接入主 pipeline，并用现有 `Alliance` + `TrackSource` 逻辑填充 `TrackData.source / classification`。
 - 已把 `DataLinkFusionSystem` 的既有共享内容落成 `ReportContact` 消息，让 wingman 可以通过现有消息/track 链路接到 lead 的共享 track。
 - 已补 `examples/config/database/aircraft/units/f16c_block50.json` 的 `has_data_link / data_link_network_id`，使真实数据库蓝机具备可用数据链配置。

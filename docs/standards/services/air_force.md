@@ -1,93 +1,183 @@
-# USAF Profile
+# US Air Force Profile
 
-本文档定义项目在空战/空中行动建模时采用的 USAF profile。
+Language:
+- English canonical: `air_force.md`
+- Chinese companion: [air_force.zh.md](air_force.zh.md)
 
-## 1. 官方现实基础
+Status: `2026-05-18` authoritative for USAF service-profile placement.
 
-USAF 官方 `AFDP 3-0.1, Command and Control` 明确把空中力量 C2 放在 air component commander
-框架下处理，并强调：
+This document defines how the repository interprets U.S. Air Force organizational
+concepts before they are mapped into common-core tasking or the maintained
+`air/` specialization.
 
-- air component commander 同时可能担任 `COMAFFOR` 与 `JFACC`
-- `OPCON` 与 `TACON` 的具体委托由 JFC 决定
-- USAF 采用 `Centralized Command - Distributed Control - Decentralized Execution`
+It is not a full doctrine digest. Its job is to answer:
 
-官方来源：
+- which USAF layers belong in scenario and mission-packaging metadata
+- which tactical layers are meaningful runtime units
+- which terms stay at service-profile level and which must be expressed through
+  the maintained air command, observation, action, and reporting contracts
 
-- [AFDP 3-0.1, Command and Control](https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-0_1/AFDP3-0.1CommandandControl.pdf)
+## Real-World Basis
 
-## 2. 建模结论
+Current public USAF doctrine still treats command and control as a mission-command
+problem built around authority delegation rather than around a single monolithic
+operations center interface.
 
-### 2.1 不应进入 tight-loop runtime 的层
+Official references:
 
-- air component commander
-- AOC
-- wing / MAJCOM / NAF 等行政或 theater-level 结构
+- [AFDP 3-0.1, Command and Control](https://www.doctrine.af.mil/Operational-Level-Doctrine/AFDP-3-01-Command-and-Control/)
+- [AFDP 3-0.1 PDF](https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-0_1/AFDP3-0.1CommandandControl.pdf)
 
-这些层级适合作为：
+The current official AFDP 3-0.1 page shows `Last Published: 22 Jan 2025`. The
+publication and synopsis emphasize:
+
+- command and control as a commander-centered function
+- explicit delegation of authority
+- `Centralized Command - Distributed Control - Decentralized Execution`
+- organizations such as AFFOR staff, AOC staff, wings, and TACS as parts of
+  the broader C2 system rather than as the only runtime surface
+
+These sources are enough for this repository's standards work: they justify
+keeping high-level air-component structures above the tight-loop runtime while
+preserving tactical sortie organization below them.
+
+## Layer Boundaries
+
+### `joint/common core`
+
+The common layer should keep only the cross-service skeleton:
+
+- `service_profile`
+- `task_family`
+- `tactical_unit_type`
+- `authority_scope`
+- `command_relationship`
+- `coordination_mode`
+- `task_group_id`
+- `role_code`
+- `relative_slot_code`
+- `recovery_site_id`
+
+These fields stay neutral. They do not become USAF-specific just because the
+current repository is air-heavy.
+
+### `services/air_force`
+
+The Air Force service profile owns the USAF reading of that shared skeleton:
+
+- `mission package` or similar task packaging above individual aircraft
+- `flight` and `element` as tactical grouping concepts
+- role distinctions between package lead, element lead, wingman, and platform
+- the point where an organizational layer stops being metadata and starts being
+  a runtime tactical unit
+
+This layer defines interpretation and ownership. It does not define runway
+geometry, action vectors, or mission-observation array layouts.
+
+### `air`
+
+The dedicated `air/` specialization owns the maintained air execution contract:
+
+- `TaskOrderAir`, `LeaderIntentAir`, and `PilotReportAir`
+- `MissionCommand` air extensions and maintained `command_code` behavior
+- `route_ref_id`
+- `takeoff_*`, `formation_*`, and `recovery_*` fields
+- mission-observation modes
+- `PilotAction` mapping and report taxonomy
+
+If a term only becomes meaningful once it touches runway, formation, recovery,
+or pilot-control surfaces, it belongs in `air/`, not here.
+
+## Runtime Boundary
+
+### Layers that should remain scenario or campaign metadata
+
+The following concepts are real and important, but should stay above the
+tight-loop runtime in the current repository:
+
+- COMAFFOR / JFACC-level authority framing
+- AOC planning and air-tasking-cycle orchestration
+- MAJCOM, NAF, wing, and similar administrative or theater-management layers
+- theater-level force presentation and allocation decisions
+
+These layers belong in:
 
 - scenario authoring
-- tasking authority
-- campaign / operation metadata
+- force packaging
+- mission authorization
+- higher-level operation metadata
 
-### 2.2 应进入 tight-loop runtime 的层
+### Layers that can meaningfully enter the tactical runtime
 
-对于当前项目，空战 tight-loop runtime 更适合放在 sortie 级 tactical unit：
+The current repository should keep the executable air boundary on real tactical
+units, interpreted through the USAF profile:
 
-- `mission package`
-- `flight`
-- `element`
-- `aircraft`
+- mission package
+- flight
+- element
+- aircraft / platform
 
-说明：
+In code terms, that usually means the common core can carry generalized runtime
+anchors such as `MissionPackage`, `TacticalUnit`, and `Platform`, while the
+Air Force profile explains how those anchors correspond to sortie-level units.
 
-- 这是项目建模上的归纳，不是声称 AFDP 逐字规定了所有 sortie 细部结构。
-- 其依据是 USAF 官方 doctrine 对 air component commander、subordinate echelon、distributed control、
-  wing-level 及中间 echelon 授权的描述。
+## Direct Constraints On Standards Design
 
-## 3. 对项目的直接约束
+The Air Force profile imposes several guardrails on the rest of the standards
+tree.
 
-空战 profile 下可以使用：
+### Keep common core free of air-only task language
 
-- `patrol`
-- `intercept`
-- `escort`
-- `recover`
-
-并在 air specialization 中再细分为：
+Do not make these common-core nouns:
 
 - `CAP`
 - `BARCAP`
 - `TARCAP`
-- `RTB`
-- `landing / approach`
+- `runway slot`
+- `takeoff clearance`
+- `element lead`
 
-也就是说：
+Those are Air Force profile or `air/` specialization concepts.
 
-- `CAP` 不应是 joint/core 层原生任务族
-- `CAP` 应是 air profile 对 `patrol` 的具体化
+### Use shared fields for the skeleton, not for the full air vocabulary
 
-## 4. 组织层级建议
+The shared fields should carry the portable part of the organization:
 
-当前项目若以 USAF air tactical profile 为主，可先采用：
+- who the unit belongs to
+- what tactical unit it is
+- what support or coordination relation it holds
+- which recovery site or task group anchors it references
 
-- `package`
-- `flight`
-- `element`
-- `aircraft`
+The air-specific meaning of those fields is layered on top by the USAF profile
+and `air/` documents.
 
-并进一步区分：
+### Route, formation, takeoff, and recovery remain below this layer
 
-- command/tactical role
-- execution/platform role
+Even when current runtime objects expose fields such as `route_ref_id`,
+`takeoff_procedure_id`, `takeoff_clearance_id`, `formation_id`, or recovery
+identifiers, those fields are not service-profile ownership. They are maintained
+air-specialization contracts.
 
-这样既符合现实，又便于后续扩到双机、四机与多 package。
+## Relationship To Current Repository Contracts
 
-## 5. 对应的平台专用标准
+The maintained repository already reflects an air-first tactical bridge:
 
-本 profile 下的 air/platform 细化标准当前放在：
+- common tasking fields flow through `TaskOrder`, `LeaderIntent`, and
+  `PilotReport`
+- executable commands flow through `MissionCommand`
+- sortie-level observation and action contracts are defined in `air/obs.md` and
+  `air/act.md`
 
-- [Air 平台专用标准总览](/home/void0312/Workshop/CMO/docs/standards/air/README.md)
-- [Pilot Observation Space Standard](/home/void0312/Workshop/CMO/docs/standards/air/obs.md)
-- [Pilot Action Space Standard](/home/void0312/Workshop/CMO/docs/standards/air/act.md)
-- [Mission Command Standard](/home/void0312/Workshop/CMO/docs/standards/air/aim.md)
-- [Pilot Reporting Standard](/home/void0312/Workshop/CMO/docs/standards/air/rep.md)
+This document therefore acts as a guardrail:
+
+- keep upper USAF organization as metadata
+- keep tactical grouping semantics at service-profile level
+- let the maintained `air/` documents own execution details
+
+## Related Documents
+
+- [Service Profile Overview](README.md)
+- [Air Platform Specialization](../air/README.md)
+- [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
+- [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
+- [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)

@@ -1,18 +1,20 @@
-# `src/components/visual` 边界
+<!-- Machine-translated draft generated on 2026-05-18 from src/components/visual/README.md. Review before treating this file as authoritative. -->
 
-`components/visual` 保存视觉观测相关 ECS 状态和数据缓存。
+# `src/components/visual` Boundary
 
-## 允许
+`components/visual` stores ECS state and data caches related to visual observation.
 
-- visual sensor state。
-- visual observation system 需要读写的轻量数据。
+## Allowed
 
-## 禁止
+- Visual sensor state.
+- Lightweight data that visual observation systems need to read and write.
 
-- 渲染器、图像编码、Python 视图绑定或 GPU kernel。
-- 传感器扫描行为本身。
-- mission/runtime 编排。
+## Prohibited
 
-## 迁移备注
+- Renderer, image encoding, Python view binding, or GPU kernel.
+- Sensor scanning behavior itself.
+- Mission/runtime orchestration.
 
-视觉系统行为放在 `systems/visual`，GPU 视觉 helper 放在 `gpu/`，本目录只保留 component 数据。
+## Migration Notes
+
+Visual system behavior is placed in `systems/visual`, GPU visual helpers are placed in `gpu/`. This directory only retains component data.

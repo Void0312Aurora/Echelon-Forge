@@ -1,22 +1,22 @@
-# `src/core/mission` 边界
+# `src/core/mission` Boundary
 
-`core/mission` 负责 mission、objective、reward、termination、execution episode 和训练主线需要的任务运行时。这里解释 tasking/command 数据并产出 runtime products，但不定义低层 component，也不做 Python 绑定。
+`core/mission` owns the task runtime needed by the training mainline: mission, objective, reward, termination, and execution episodes. It interprets tasking/command data and produces runtime products, but it does not define low-level components or provide Python bindings.
 
-## 允许
+## Allowed
 
-- mission runtime、objective runtime、reward runtime、termination runtime。
-- `ExecutionEpisodeController` 及其 state import/export。
-- mission command codec、episode transition、reward breakdown helper。
-- 面向 `WorldBatchRuntime` 或 `RuntimeFacade` 的纯 C++ episode products。
+- Mission runtime, objective runtime, reward runtime, and termination runtime.
+- `ExecutionEpisodeController` and its state import/export.
+- Mission command codecs, episode transitions, and reward breakdown helpers.
+- Pure C++ episode products for `WorldBatchRuntime` or `RuntimeFacade`.
 
-## 禁止
+## Forbidden
 
-- ECS system tick 逻辑。
-- 物理积分、传感器扫描、武器制导实现。
-- Python/nanobind 绑定。
-- 训练配置文件解析和 UI/API 适配。
+- ECS system tick logic.
+- Implementations of physics integration, sensor scanning, or weapon guidance.
+- Python/nanobind bindings.
+- Training config parsing and UI/API adaptation.
 
-## 当前结构
+## Current Structure
 
 ```text
 mission/
@@ -25,14 +25,14 @@ mission/
     detail/
 ```
 
-- `runtime/`：纯 mission/runtime kernels 和 runtime products，包括 mission、objective、reward、termination、observation、step、frame、episode runtime。这里不拥有 episode controller state，也不解释 Python 或 facade contract。
-- `episode/`：episode state、batch prepare 和 `ExecutionEpisodeController`。这里负责把 scenario/env state 编排成 runtime inputs，并把 runtime products 应用回 episode state。
-- `episode/detail/`：只服务 episode controller 的内部 helper，包括 mission-command codec、post-waypoint/landing transition、reward breakdown JSON。外部代码不应直接 include 这里的头，除非是在拆 controller 期间补充同一 detail 域能力。
+- `runtime/`: pure mission/runtime kernels and runtime products, including mission, objective, reward, termination, observation, step, frame, and episode runtime. This layer does not own episode controller state and does not interpret Python or facade contracts.
+- `episode/`: episode state, batch preparation, and `ExecutionEpisodeController`. This layer assembles scenario/env state into runtime inputs and applies runtime products back onto episode state.
+- `episode/detail/`: internal helpers used only by the episode controller, including mission-command codecs, post-waypoint/landing transitions, and reward breakdown JSON. External code should not include headers from here directly unless it is extending the same detail-domain split during controller refactoring.
 
-后续新增 mission JSON 字段、transition 规则或 reward breakdown term，应先落到 `episode/detail/` 中对应 helper，而不是回填到 controller 主文件。新增纯 reward/objective/termination 计算，应落到 `runtime/`；新增 episode state import/export 或 batch prepare contract，应落到 `episode/`。
+When adding new mission JSON fields, transition rules, or reward breakdown terms in the future, place them first in the corresponding helper under `episode/detail/` instead of stuffing them back into the controller main file. New pure reward/objective/termination computation should live in `runtime/`; new episode state import/export or batch-prepare contracts should live in `episode/`.
 
-## 依赖方向
+## Dependency Direction
 
-本层可以消费 `components/command`、`components/tasking`、`core/engine` 的公开 API 和 mission 相关 DTO。它不应依赖 `runtime/facade` 或 `interfaces/python`。
+This layer may consume `components/command`, `components/tasking`, the public API of `core/engine`, and mission-related DTOs. It should not depend on `runtime/facade` or `interfaces/python`.
 
-`episode/` 可以依赖 `runtime/`。`runtime/` 不应依赖 `episode/`。`episode/detail/` 可以依赖 `episode/` 和 `runtime/`，但不应成为跨层公开入口。
+`episode/` may depend on `runtime/`. `runtime/` should not depend on `episode/`. `episode/detail/` may depend on `episode/` and `runtime/`, but should not become a public cross-layer entry point.

@@ -1,24 +1,80 @@
-# Naval 标准占位
+# Naval Standards
 
-本目录预留给 upcoming `naval` 模块相关的标准文档。
+This directory contains the authoritative standards for the dedicated `naval` specialization.
 
-当前作用只有一个：
+It is the standard landing point for the current naval task plan, not a placeholder. The goal is to separate `common`, `services/navy`, and `naval` cleanly enough that the current runtime and planning work can continue without air-first assumptions leaking into maritime semantics.
 
-- 给 `common + air + naval` 拆分提供明确落点
-- 给最小海战任务结构提供冻结入口，见 [minimal_task_structure.md](minimal_task_structure.md)
-- 给第一批真实舰船单位提供来源与建模边界，见 [ship_unit_references.md](ship_unit_references.md)
+## 1. Layer Model
 
-## 1. 目录职责
+### `common`
 
-未来放在这里的文档应只描述 naval-specific 语义，例如：
+The shared layer keeps the cross-service contract stable.
 
+It owns fields such as:
+
+- `service_profile`
+- `task_family`
+- `task_group_id`
+- `command_relationship`
+- `authority_scope`
+- `coordination_mode`
+- `supported_node_id / supporting_node_id`
+- `recovery_site_id`
+- `tactical_unit_type`
+
+These are service-neutral shapes. They are not naval execution semantics.
+
+### `services/navy`
+
+The Navy service profile explains how the shared contract should be read for naval warfare.
+
+It owns the interpretation of:
+
+- `task_group` and `task_unit`
 - `warfare_role_code`
 - `officer_in_tactical_command`
-- `task force / task group / task unit` 的 tight-loop runtime 解释
-- screen / support / station 等舰队协同语义
-- naval route / recovery / replenishment / station-keeping 规则
+- shared anchors that the Navy profile needs for task packaging and authority assignment
 
-## 2. 不应放在这里的内容
+### `naval`
+
+The `naval` specialization owns the tight-loop maritime semantics:
+
+- `screen`
+- `support`
+- `station`
+- `recover`
+- ship and formation control semantics
+- maritime recovery and station-keeping behavior
+
+## 2. Minimal Semantic Contract
+
+The minimal naval semantic set now treated as first-class is:
+
+- `task_group`
+- `task_unit`
+- `warfare_role_code`
+- `officer_in_tactical_command`
+- `screen`
+- `support`
+- `station`
+- `recover`
+
+These are the smallest terms needed to make the current task plan meaningful without overfitting to air sortie language.
+
+## 3. What Belongs Here
+
+Documents in this directory should describe naval-specific semantics, such as:
+
+- task-group and task-unit ownership
+- warfare role allocation
+- station holding and recovery behavior
+- screen/support relations in a naval formation
+- command authority in maritime tasking
+- naval execution and reporting specialization
+
+## 4. What Does Not Belong Here
+
+The following should remain in `common` or `services/navy`:
 
 - `command_relationship`
 - `authority_scope`
@@ -26,24 +82,30 @@
 - `service_profile`
 - `tactical_unit_type`
 - `coordination_mode`
-- 其他跨军种仍成立的 `common` 字段
+- other cross-service contract fields
 
-这些应继续由 `docs/standards/joint/` 与 `docs/standards/services/` 约束。
+This directory should not re-litigate the shared schema. It should specialize it.
 
-## 3. 与 air 的关系
+## 5. Relationship with Air
 
-`naval` 不是把现有 air 文档简单改名。
+`naval` is not a rename of air documentation.
 
-后续 naval 文档应避免默认使用：
+Naval documentation should avoid default air concepts such as:
 
 - `lead / wingman`
 - `runway`
 - `CAP`
-- air-style `MissionCommand.command_code` 解释
+- air-style reading of `MissionCommand.command_code`
 
-若某个对象只在空战 sortie 级场景成立，应继续留在 `docs/standards/air/`。
+If a concept is only valid for air sortie-level runtime, it should stay in `docs/standards/air/`.
 
-## 4. 当前最小海战占位口径
+## 6. Current Minimal Naval Meaning
 
-- `Red_Surface_Combatant_Minimal` 属于 `community-derived approximation`，仅用于替换先前把补给舰当作敌舰的错误占位，不代表某一具体敌方舰级的精确公开参数。
-- `ReportTrack` / 任务群级共享属于当前数据链现实收敛的工程近似，用于避免逐步洪泛广播；它不等同完整 `Link 16 / CEC` 语义。
+The current minimal naval semantics now expected by the runtime bridge are:
+
+- `task_group / task_unit` as the tactical organization boundary
+- `officer_in_tactical_command` as the authority owner
+- `warfare_role_code` as the role label
+- `screen / support / station / recover` as the minimal operational vocabulary
+
+These terms are enough to support the present naval task plan without pretending the full fleet doctrine is already modeled.
