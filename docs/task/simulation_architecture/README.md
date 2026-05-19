@@ -22,29 +22,66 @@ Architecture authority:
 
 The active design conclusion is:
 
-1. The project should follow one canonical semantic lifecycle.
-2. Real execution should use a multi-rate temporal DAG, with feedback crossing
-   explicit state-store or event-queue boundaries.
-3. Air, naval, weapon, and future domains should extend that lifecycle through
-   stage-local model families and stage-node contracts.
-4. Runtime facade and typed request/result contracts should become the long-term
+1. The project should be treated as a SCAL system: semantic, causal, agentic,
+   and learning-facing, with `WP0-WP5` building the verified runtime kernel,
+   `WP6` closing backend profile policy for acceleration and resident-state
+   work, and `WP7` materializing that policy into registry, projection,
+   evidence, and multi-fidelity entry tasks.
+2. The project should follow one canonical semantic lifecycle.
+3. Real execution should use a causal-temporal execution model. The temporal
+   DAG is the scheduling projection, with feedback crossing explicit
+   state-store or event-queue boundaries.
+4. Air, naval, weapon, and future domains should extend that lifecycle through
+   stage-local model families, capability bundles, and stage-node contracts.
+5. Runtime facade and typed request/result contracts should become the long-term
    frontend dependency.
-5. Policy computation and test/orchestration should be modeled as explicit
+6. Policy computation and test/orchestration should be modeled as explicit
    producers and consumers of facade contracts, not as hidden owners of
    simulation state.
-6. Local work on this machine should focus on build/import/smoke, architecture
+7. Information-state boundaries must distinguish `World Truth`,
+   `ObservationPacket`, and `DecisionBelief`.
+8. Local work on this machine should focus on build/import/smoke, architecture
    docs, contract design, and simulation assembly rather than RL training.
+9. Backend acceleration and resident-state work should be routed through
+   explicit backend profiles and parity budgets behind contracts, not through
+   a second semantic path.
+10. Backend capability implementation should start from the accepted WP6
+    registry and parity records, then add machine-checkable materialization and
+    evidence gates before any exact GPU, resident-state, shadow, or
+    multi-fidelity capability can become maintained.
 
 ## Work Packages
 
 | Work package | Status | Goal | Output |
 |--------------|--------|------|--------|
-| `WP0 Architecture Baseline` | complete | Make the semantic lifecycle, temporal DAG, and extension rules explicit | architecture design doc, task subproject entry |
+| `WP0 Architecture Baseline` | complete | Make the SCAL framing, semantic lifecycle, causal-temporal execution projection, and extension rules explicit | architecture design doc, task subproject entry |
 | `WP1 Pipeline Inventory` | complete | Map current code, systems, models, and tests onto `P0-P10` and current coupling hotspots | [pipeline inventory](pipeline_inventory_wp1_20260519.md) |
-| `WP2 Contract Freeze` | active | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | [contract freeze](contract_freeze_wp2_20260519.md) |
-| `WP3 Engagement Pilot` | active | Use weapon/engagement as the first cross-domain validation slice | [engagement pilot task family](engagement_pilot_wp3_20260519.md) |
-| `WP4 Facade Alignment` | planned | Ensure pilot behavior is reachable through facade-shaped APIs | facade request/result additions and adapter plan |
-| `WP5 Validation Harness` | planned | Add smoke and architecture tests that prove the lifecycle is shared | focused tests and local Windows smoke commands |
+| `WP2 Contract Freeze` | complete | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | [contract freeze](contract_freeze_wp2_20260519.md) |
+| `WP2.5 Scheduler Semantics Freeze` | complete | Freeze event ordering, state versioning, barrier visibility, clock-domain merge policy, replay contract, and stage-node manifest schema | [scheduler semantics freeze](scheduler_semantics_wp25_20260519.md), [acceptance review](../review/wp25_scheduler_semantics_acceptance_review_20260519.md) |
+| `WP3 Engagement Pilot` | complete | Use weapon/engagement as the first cross-domain validation slice | [engagement pilot task family](engagement_pilot_wp3_20260519.md) |
+| `WP4 Facade Alignment` | complete | Ensure pilot behavior is reachable through facade-shaped APIs without raw runtime access | [facade alignment task family](facade_alignment_wp4_20260519.md), [final acceptance](../review/wp4_facade_alignment_acceptance_review_20260519.md) |
+| `WP5 Validation Harness` | complete | Add smoke, architecture, trace, boundary, information-leakage, and replay/evidence tests that prove the shared lifecycle and graph boundaries | [validation harness task family](validation_harness_wp5_20260519.md), [final acceptance](../review/wp5_validation_harness_acceptance_review_20260519.md) |
+| `WP6 Backend Profile Policy` | complete | Freeze backend profile taxonomy, parity budgets, resident-state boundaries, and backend capability exposure rules | [backend profile policy](backend_profile_policy_wp6_20260519.md), [profile registry](wp6_backend_profile_registry_20260519.md), [parity budget registry](wp6_parity_budget_registry_20260519.md), [resident-state boundary rules](wp6_resident_state_boundary_rules_20260519.md), [acceptance review](../review/wp6_backend_profile_policy_acceptance_review_20260519.md) |
+| `WP7 Backend Capability Materialization` | complete / accepted | Materialize accepted WP6 policy into machine-checkable registry, runtime capability projection, promotion evidence gates, and multi-fidelity entry conditions without promoting candidates | [backend capability materialization](backend_capability_materialization_wp7_20260519.md), [registry materialization](wp7_registry_materialization_cluster_20260519.md), [runtime capability projection](wp7_runtime_capability_projection_cluster_20260519.md), [promotion evidence gates](wp7_promotion_evidence_gates_cluster_20260519.md), [multi-fidelity entry conditions](wp7_multifidelity_entry_conditions_cluster_20260519.md), [acceptance review](../review/wp7_backend_capability_materialization_acceptance_review_20260519.md) |
+
+### WP2.5 Workstream Map
+
+WP2.5 is a freeze document, but the follow-on work is split into bounded
+streams:
+
+- `WP2.5-F StageNodeManifest Schema` first:
+  [manifest/event cluster](wp25_manifest_event_cluster_20260519.md).
+- `WP2.5-A Event Ordering and ID Rules`, `WP2.5-B State Shard Versioning`, and
+  `WP2.5-C Barrier Visibility` in parallel after the manifest vocabulary is
+  stable:
+  [state/barrier cluster](wp25_state_barrier_cluster_20260519.md).
+- `WP2.5-D Clock-Domain Merge` after those semantic rules are stable.
+- `WP2.5-E Deterministic Replay Contract` after the scheduler semantics are
+  frozen:
+  [clock/replay cluster](wp25_clock_replay_cluster_20260519.md).
+- `WP2.5-G Integration and Index Sync` last, as the serial publication pass.
+
+`WP2.5-D` and `WP2.5-E` are the highest-reasoning streams.
 
 ## WP0 Scope
 
@@ -179,6 +216,192 @@ launch adapters, munition/damage export, diagnostics trace, and a
 stage-aligned non-RL smoke harness. Air and naval workers may run in parallel
 only when they do not edit the same shared kernel file.
 
+## WP4 Facade Alignment
+
+Output:
+
+- [WP4 facade alignment task family](facade_alignment_wp4_20260519.md)
+
+WP4 turns the accepted engagement pilot into the maintained frontend shape. It
+should reference WP2.5 for scheduler semantics and Temp-02 for the
+information/agency boundary:
+
+- `ObservationPacket` is what the agent is allowed to see.
+- `DecisionBelief` is what the agent thinks is true after inference, memory,
+  doctrine, or learned state.
+- `AgentRole` is role plus authority plus information-state source plus
+  decision-model reference plus action interface.
+
+WP4 should not create new simulation semantics. It should make existing
+behavior reachable through facade-shaped APIs or documented compatibility
+adapters.
+
+WP4 dispatch clusters:
+
+- `WP4-A Surface Inventory` first:
+  [surface inventory cluster](wp4_surface_inventory_cluster_20260519.md).
+- `WP4-B/C Engagement, Step, And Lifecycle Alignment` after the initial surface
+  vocabulary is stable:
+  [engagement/step cluster](wp4_engagement_step_cluster_20260519.md).
+- `WP4-D/E Policy, AgentRole, And Python Mirror` after action, coordination,
+  observation, belief, and agent-role names are stable:
+  [policy/binding cluster](wp4_policy_binding_cluster_20260519.md).
+- `WP4-F Integration And Docs` remains serial in the main thread or a dedicated
+  integration worker after the clusters return.
+
+`WP4-A`, `WP4-C`, and `WP4-D` are the highest-reasoning streams because they
+touch cross-layer semantics, belief boundaries, or adapter ownership.
+
+WP4 first-wave outputs are accepted as discovery inputs:
+
+- [WP4 first-wave acceptance review](../review/wp4_first_wave_acceptance_review_20260519.md)
+- [WP4-A surface inventory draft](wp4_surface_inventory_wp4a_20260519.md)
+- [WP4-B/C engagement-step alignment notes](wp4_engagement_step_alignment_notes_20260519.md)
+- [WP4-D/E policy-binding alignment notes](wp4_policy_binding_alignment_notes_20260519.md)
+
+WP4 second-wave clusters:
+
+- `WP4-G Facade Evidence Gates`:
+  [facade evidence cluster](wp4_facade_evidence_cluster_20260519.md).
+- `WP4-H Information And Agent Shim`:
+  [agent shim cluster](wp4_agent_shim_cluster_20260519.md).
+- `WP4-I Compatibility Guard And Integration`:
+  [compat guard cluster](wp4_compat_guard_cluster_20260519.md).
+
+WP4 second-wave and integration outputs:
+
+- [WP4 second-wave acceptance review](../review/wp4_second_wave_acceptance_review_20260519.md)
+- [WP4-I compatibility guard notes](wp4_compat_guard_notes_20260519.md)
+- [WP4-F integration handoff](wp4_integration_handoff_20260519.md)
+- [WP4 final acceptance review](../review/wp4_facade_alignment_acceptance_review_20260519.md)
+
+## WP5 Validation Harness
+
+Output:
+
+- [WP5 validation harness task family](validation_harness_wp5_20260519.md)
+
+WP5 converts the architecture and facade work into maintained evidence. The
+harness should cover five validation tiers:
+
+- design conformance,
+- trace conformance,
+- boundary conformance,
+- information/belief leakage,
+- replay/evidence conformance.
+
+WP5 starts from the accepted WP4 facade labels. It should not start from raw
+runtime inspection; the point is to prove that facade-shaped artifacts,
+diagnostics, and replay metadata are enough to validate the shared architecture.
+
+WP5 first-wave clusters:
+
+- `WP5-A Harness Inventory`:
+  [harness inventory cluster](wp5_harness_inventory_cluster_20260519.md).
+- `WP5-B Design And Boundary Gates`:
+  [design/boundary cluster](wp5_design_boundary_cluster_20260519.md).
+- `WP5-C Trace And Replay Gates`:
+  [trace/replay cluster](wp5_trace_replay_cluster_20260519.md).
+
+`WP5-C` is the highest-reasoning first-wave stream because trace ancestry and
+replay metadata tests can become brittle if they assume runtime metadata that
+WP4 explicitly deferred.
+
+WP5 first-wave outputs are accepted:
+
+- [WP5 first-wave acceptance review](../review/wp5_first_wave_acceptance_review_20260519.md)
+- [WP5-A harness inventory notes](wp5_harness_inventory_notes_20260519.md)
+- [WP5-B design/boundary notes](wp5_design_boundary_notes_20260519.md)
+- [WP5-C trace/replay gates notes](wp5_trace_replay_gates_notes_20260519.md)
+
+WP5 second-wave clusters:
+
+- `WP5-D Information And Belief Gates`:
+  [information/belief cluster](wp5_information_belief_cluster_20260519.md).
+- `WP5-E Smoke Promotion And Docs`:
+  [smoke promotion cluster](wp5_smoke_promotion_cluster_20260519.md).
+
+WP5 second-wave and final outputs are accepted:
+
+- [WP5-D information/belief acceptance review](../review/wp5_information_belief_acceptance_review_20260519.md)
+- [WP5-D information/belief notes](wp5_information_belief_notes_20260519.md)
+- [WP5-E smoke promotion notes](wp5_smoke_promotion_notes_20260519.md)
+- [WP5 validation harness acceptance review](../review/wp5_validation_harness_acceptance_review_20260519.md)
+
+## WP6 Backend Profile Policy
+
+Output:
+
+- [WP6 backend profile policy](backend_profile_policy_wp6_20260519.md)
+- [WP6-A backend profile taxonomy cluster](wp6_backend_profile_taxonomy_cluster_20260519.md)
+- [WP6-A backend profile registry](wp6_backend_profile_registry_20260519.md)
+- [WP6-B parity budget cluster](wp6_parity_budget_cluster_20260519.md)
+- [WP6-B parity budget registry](wp6_parity_budget_registry_20260519.md)
+- [WP6-C + WP6-D integration and index sync](wp6_integration_and_index_sync_20260519.md)
+- [WP6-C1 resident-state boundary rules](wp6_resident_state_boundary_rules_20260519.md)
+- [WP6 backend profile policy acceptance review](../review/wp6_backend_profile_policy_acceptance_review_20260519.md)
+
+WP6 closes the backend profile and parity-budget gap behind contracts. It
+names the profile vocabulary, budget records, resident-state boundaries, and
+capability projection rules that accelerated, resident-state, approximate, and
+diagnostics-only paths must obey before those paths can be treated as
+maintained.
+
+WP6 workstream map:
+
+- `WP6-A Backend Profile Taxonomy`:
+  [taxonomy cluster](wp6_backend_profile_taxonomy_cluster_20260519.md) and
+  [profile registry](wp6_backend_profile_registry_20260519.md).
+- `WP6-B Parity Budget And Comparison Rules`:
+  [parity budget cluster](wp6_parity_budget_cluster_20260519.md) and
+  [parity budget registry](wp6_parity_budget_registry_20260519.md).
+- `WP6-C Resident-State And Backend Capability Alignment`:
+  [resident-state boundary rules](wp6_resident_state_boundary_rules_20260519.md)
+  plus capability-projection guards in
+  [runtime facade layering tests](../../../tests/architecture/test_runtime_facade_layering.py),
+  [runtime facade tests](../../../tests/runtime/facade/test_runtime_facade.py),
+  and [GPU runtime binding tests](../../../tests/test_gpu_runtime_bindings.py).
+- `WP6-D Integration And Index Sync`:
+  [integration and index sync](wp6_integration_and_index_sync_20260519.md) and
+  [acceptance review](../review/wp6_backend_profile_policy_acceptance_review_20260519.md).
+
+## WP7 Backend Capability Materialization
+
+Output:
+
+- [WP7 backend capability materialization](backend_capability_materialization_wp7_20260519.md)
+- [WP7-A registry materialization cluster](wp7_registry_materialization_cluster_20260519.md)
+- [WP7-A registry materialization notes](wp7_registry_materialization_notes_20260519.md)
+- [WP7-B runtime capability projection cluster](wp7_runtime_capability_projection_cluster_20260519.md)
+- [WP7-B runtime capability projection notes](wp7_runtime_capability_projection_notes_20260519.md)
+- [WP7-C promotion evidence gates cluster](wp7_promotion_evidence_gates_cluster_20260519.md)
+- [WP7-C promotion evidence gates notes](wp7_promotion_evidence_gates_notes_20260519.md)
+- [WP7-D multi-fidelity entry conditions cluster](wp7_multifidelity_entry_conditions_cluster_20260519.md)
+- [WP7-D multi-fidelity entry conditions notes](wp7_multifidelity_entry_conditions_notes_20260519.md)
+- [WP7-E integration and index sync cluster](wp7_integration_and_index_sync_cluster_20260519.md)
+- [WP7 backend capability materialization acceptance review](../review/wp7_backend_capability_materialization_acceptance_review_20260519.md)
+
+WP7 is the accepted post-WP6 documentation and implementation-preparation line.
+It turns accepted backend profile policy into materialized registry, runtime
+projection, promotion evidence, and multi-fidelity entry conditions. This
+acceptance does not promote exact GPU, resident-state, device observation,
+shadow, or adaptive fidelity support; current support remains false until a
+future promotion review updates the registry, parity budget, projection adapter,
+and validation evidence together.
+
+WP7 workstream map:
+
+- `WP7-A Registry Materialization` starts first and owns the machine-checkable
+  registry/schema shape.
+- `WP7-D Multi-Fidelity Entry Conditions` may run beside WP7-A as long as it
+  cites WP6/WP7-A profile vocabulary rather than inventing support claims.
+- `WP7-B Runtime Capability Projection` waits for WP7-A and keeps projection
+  conservative.
+- `WP7-C Promotion Evidence Gates` consumes WP7-A/D and maps candidate
+  promotion to WP5 validation tiers.
+- `WP7-E Integration And Index Sync` is serial and should run after A-D
+  stabilize.
+
 ## Acceptance Gates
 
 Every implementation task derived from this subproject should satisfy:
@@ -194,6 +417,15 @@ Every implementation task derived from this subproject should satisfy:
 9. observation schema, action validity, reward composition,
    termination/truncation source, and episode lifecycle authority are assigned
    to explicit layers.
+10. maintained decision paths consume `ObservationPacket` or declared
+    `DecisionBelief`, not `World Truth`.
+11. backend capability claims cite a maintained backend profile and parity
+    budget; `RuntimeCapabilities` must not infer exact GPU, resident-state, or
+    shadow support from helper/probe presence alone.
+12. WP7 capability materialization keeps exact GPU, resident-state, device
+    observation, shadow, and multi-fidelity support false unless a maintained
+    profile revision, parity budget, ownership/sync policy, and validation gate
+    explicitly promote the claim.
 
 ## Non-Goals
 

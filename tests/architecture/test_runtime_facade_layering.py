@@ -9,6 +9,7 @@ WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec
 LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
+CORE_SRC = REPO_ROOT / "src" / "core"
 
 
 def _source() -> str:
@@ -156,3 +157,57 @@ def test_runtime_facade_public_header_hides_engine_owner_storage() -> None:
     assert '#include "core/engine/world_batch_runtime.h"' not in header
     assert "class WorldBatchRuntime;" in header
     assert "std::unique_ptr<WorldBatchRuntime>" in header
+
+
+def test_runtime_facade_does_not_include_or_call_gpu_helpers() -> None:
+    gpu_markers = (
+        '#include "gpu/',
+        "#include <gpu/",
+        "gpu::",
+        "probe_gpu_device",
+        "probe_device(",
+        "last_visual_experiment_stats",
+        "last_execution_observation_stats",
+        "last_flight_shaping_stats",
+        "device_resident",
+        "last_visual_output_device_ptr",
+        "last_execution_observation_output_device_ptr",
+        "last_flight_shaping_output_device_ptr",
+    )
+    violations: list[tuple[str, str]] = []
+    for path in sorted(RUNTIME_FACADE.glob("*")):
+        if path.suffix not in {".h", ".cpp"}:
+            continue
+        source = path.read_text(encoding="utf-8")
+        for marker in gpu_markers:
+            if marker in source:
+                violations.append((str(path.relative_to(REPO_ROOT)), marker))
+
+    assert not violations, f"RuntimeFacade must not depend on GPU helper/probe implementation: {violations}"
+
+
+def test_core_runtime_does_not_probe_gpu_for_facade_capability_projection() -> None:
+    forbidden_markers = (
+        "RuntimeCapabilities",
+        "supports_exact_gpu_backend",
+        "supports_resident_state",
+        "supports_shadow_compare",
+        "probe_gpu_device",
+        "gpu::probe_device",
+        "last_visual_experiment_stats",
+        "last_execution_observation_stats",
+        "last_flight_shaping_stats",
+        "last_visual_output_device_ptr",
+        "last_execution_observation_output_device_ptr",
+        "last_flight_shaping_output_device_ptr",
+    )
+    violations: list[tuple[str, str]] = []
+    for path in sorted(CORE_SRC.rglob("*")):
+        if path.suffix not in {".h", ".cpp", ".cc", ".cxx"}:
+            continue
+        source = path.read_text(encoding="utf-8")
+        for marker in forbidden_markers:
+            if marker in source:
+                violations.append((str(path.relative_to(REPO_ROOT)), marker))
+
+    assert not violations, f"core runtime must not project maintained GPU/resident/shadow capabilities: {violations}"

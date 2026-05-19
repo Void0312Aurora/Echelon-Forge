@@ -36,6 +36,10 @@ def test_weapon_launch_adapter_is_header_only_contract_converter() -> None:
     assert "namespace engagement_adapter" in header
     assert "inline LaunchRequest make_launch_request" in header
     assert "inline LaunchEvent make_launch_event" in header
+    assert "inline MunitionLifecyclePacket make_munition_lifecycle_packet" in header
+    assert "inline EffectsEvent make_effects_event" in header
+    assert "inline DamageReport make_damage_report" in header
+    assert "inline DiagnosticsTrace make_diagnostics_trace" in header
 
 
 def test_weapon_launch_adapter_does_not_depend_on_engine_owners_or_live_fire_calls() -> None:
@@ -89,6 +93,91 @@ def test_weapon_launch_adapter_snapshots_cover_launch_contract_fields() -> None:
             "cooldown_delta_s",
             "spawned_munition_entity_id",
             "event_time_s",
+        ),
+    )
+
+
+def test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_contract_fields() -> None:
+    header = _text(ADAPTER_HEADER)
+
+    lifecycle_snapshot = _struct_body(header, "MunitionLifecycleSnapshot")
+    effects_snapshot = _struct_body(header, "EffectsEventSnapshot")
+    damage_snapshot = _struct_body(header, "DamageReportSnapshot")
+    diagnostics_snapshot = _struct_body(header, "DiagnosticsTraceSnapshot")
+
+    _assert_fields_present(
+        lifecycle_snapshot,
+        (
+            "world_index",
+            "packet_id",
+            "munition_entity_id",
+            "attacker_entity_id",
+            "target_entity_id",
+            "has_target_entity",
+            "target_track_id",
+            "has_target_track",
+            "launch_event_id",
+            "active",
+            "seeker_mode",
+            "guidance_cadence_s",
+            "track_memory_state",
+            "fuel_remaining_fraction",
+            "burnout",
+            "max_flight_time_s",
+            "fuze_state",
+            "source_time_s",
+        ),
+    )
+    _assert_fields_present(
+        effects_snapshot,
+        (
+            "world_index",
+            "event_id",
+            "munition_entity_id",
+            "target_entity_id",
+            "trigger_type",
+            "outcome_state",
+            "detonation_time_s",
+            "nearest_approach_time_s",
+            "quality",
+            "confidence",
+            "effect_family",
+        ),
+    )
+    _assert_fields_present(
+        damage_snapshot,
+        (
+            "world_index",
+            "report_id",
+            "target_entity_id",
+            "source_event_id",
+            "hp_delta",
+            "system_health_delta",
+            "platform_damage_state_delta",
+            "mission_kill",
+            "mobility_kill",
+            "sensor_kill",
+            "survivability_kill",
+            "loss_state_from",
+            "loss_state_to",
+            "destroyed",
+            "report_time_s",
+        ),
+    )
+    _assert_fields_present(
+        diagnostics_snapshot,
+        (
+            "world_index",
+            "trace_id",
+            "parent_trace_id",
+            "chain_id",
+            "track_id",
+            "launch_request_id",
+            "launch_event_id",
+            "munition_entity_id",
+            "effects_event_id",
+            "damage_report_id",
+            "observation_packet_version",
         ),
     )
 

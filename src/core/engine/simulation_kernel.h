@@ -2,6 +2,7 @@
 
 #include <flecs.h>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <random>
@@ -23,6 +24,7 @@
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
 #include "core/interfaces/environment_model.h"
+#include "runtime/contracts/engagement_contracts.h"
 
 class IUnitFactory;
 class IEffectsModel;
@@ -99,6 +101,13 @@ struct ExactStepStageContractDescriptor {
     std::vector<std::string> depends_on_stages;
     std::string contract_summary;
     std::string exact_dependency_notes;
+};
+
+struct RecentEngagementEvents {
+    std::vector<LaunchEvent> launch_events;
+    std::vector<EffectsEvent> effects_events;
+    std::vector<DamageReport> damage_reports;
+    std::vector<DiagnosticsTrace> diagnostics_traces;
 };
 
 class SimulationKernel {
@@ -213,6 +222,7 @@ public:
     bool fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
     flecs::entity fire_weapon_from_pilot_action(uint64_t attacker_id);
     bool debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id, double damage, double fuse_distance);
+    RecentEngagementEvents export_recent_engagement_events() const;
 
     // Unit factory override (for modular swaps)
     void set_unit_factory(std::unique_ptr<IUnitFactory> factory);
@@ -244,6 +254,48 @@ private:
     void register_components_and_systems();
     bool try_fire_naval_mission_weapon(uint64_t attacker_id);
 
+    struct EngagementDamageStateSnapshot {
+        bool entity_active = false;
+        bool has_health = false;
+        double hp = 0.0;
+        double max_hp = 0.0;
+        bool mission_kill = false;
+        bool mobility_kill = false;
+        bool sensor_kill = false;
+        bool has_platform_damage = false;
+        double mission_capability = 1.0;
+        double mobility_capability = 1.0;
+        double sensor_capability = 1.0;
+        double survivability_margin = 1.0;
+        std::string loss_state = "unknown";
+    };
+
+    EngagementDamageStateSnapshot capture_engagement_damage_state(uint64_t target_id) const;
+    std::uint64_t record_legacy_launch_event(
+        uint64_t shooter_id,
+        uint64_t target_id,
+        uint64_t spawned_munition_id,
+        const std::string& selected_launcher,
+        const std::string& selected_munition,
+        int ammo_delta,
+        double cooldown_delta_s,
+        double event_time_s
+    );
+    std::uint64_t record_effects_damage_event(
+        uint64_t munition_entity_id,
+        uint64_t target_id,
+        const EngagementDamageStateSnapshot& before,
+        const EngagementDamageStateSnapshot& after,
+        const std::string& trigger_type,
+        const std::string& outcome_state,
+        double event_time_s,
+        double nearest_approach_time_s,
+        double quality,
+        double confidence,
+        const std::string& effect_family
+    );
+    void clear_recent_engagement_events();
+
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
     
@@ -259,6 +311,12 @@ private:
     std::unique_ptr<IControlModel> control_model_;
     std::unique_ptr<IGuidanceModel> guidance_model_;
     MissileTuning missile_tuning_;
+    RecentEngagementEvents recent_engagement_events_;
+    std::uint64_t next_engagement_event_id_ = 1;
+    std::uint64_t pending_effects_launch_event_id_ = 0;
+    double recent_engagement_event_epoch_time_s_ = 0.0;
+    std::int64_t recent_engagement_event_epoch_frame_ = 0;
+    static constexpr std::size_t kMaxRecentEngagementEvents = 64;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;
 };

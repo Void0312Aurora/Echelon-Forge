@@ -1,6 +1,6 @@
 # WP3 Engagement Pilot Task Family
 
-Status: `2026-05-19` active implementation pilot.
+Status: `2026-05-19` implementation pilot complete; acceptance completed.
 
 Language:
 
@@ -15,9 +15,9 @@ Inputs:
 - Read-only branch evidence for air launch, naval launch, facade/contracts,
   Python binding style, and validation harness placement.
 
-WP3 turns the frozen engagement contracts into the first cross-domain
-implementation pilot. The pilot should prove that air pylon launch and naval
-mount or VLS launch share one semantic lifecycle, without forcing them into one
+WP3 turned the frozen engagement contracts into the first cross-domain
+implementation pilot. The pilot proves that air pylon launch and naval mount
+or VLS launch can share one semantic lifecycle, without forcing them into one
 private implementation path.
 
 Current implementation note:
@@ -25,25 +25,27 @@ Current implementation note:
 - `src/runtime/contracts/engagement_contracts.h` owns the stable DTO vocabulary
   for the pilot.
 - `src/core/engine/weapon_launch_adapter.h` is the shared header-only conversion
-  seam from legacy launch observations into `LaunchRequest` and `LaunchEvent`.
+  seam from legacy engagement observations into `LaunchRequest`, `LaunchEvent`,
+  `MunitionLifecyclePacket`, `EffectsEvent`, `DamageReport`, and
+  `DiagnosticsTrace`.
 - Air and naval workers should consume that seam or mirror its field semantics
   in tests, but should not edit `simulation_kernel_weapon_api.cpp` in parallel.
-- `RuntimeFacade::export_engagement_event_packet()` is still an explicit packet
-  shell; live launch behavior should not be wired through the facade until the
-  air and naval event shapes converge.
+- `RuntimeFacade::export_engagement_event_packet()` now exports live
+  observation-derived `TrackPacket` snapshots plus recent launch/effects/damage
+  events captured by the simulation kernel. It still must not trigger weapon or
+  damage behavior.
 - `tests/runtime/engagement/` now contains adapter-level validation for air
-  launch acceptance/rejection, naval gun launch, munition lifecycle mirroring,
-  synthetic effects, and damage reports. These tests prove contract vocabulary,
-  not final event-bus ownership.
+  launch acceptance/rejection, naval gun and VLS launch, facade engagement
+  export, recent live event capture, munition lifecycle mirroring, synthetic
+  effects, damage reports, and diagnostics traces.
 
 ## 1. Pilot Thesis
 
-Air and naval engagement behavior already exists. The gap is not missing
-weapons. The gap is that launch, munition lifecycle, effects, damage, and
-observation are not yet exposed through a narrow typed contract chain.
+Air and naval engagement behavior already existed before WP3. The pilot closed
+the architecture gap by exposing launch, munition lifecycle, effects, damage,
+diagnostics, and observation through a narrow typed contract chain.
 
-WP3 should therefore build a contract adapter and cross-domain validation
-slice:
+WP3 built this contract adapter and cross-domain validation slice:
 
 ```text
 TrackPacket
@@ -80,14 +82,14 @@ The pilot is successful when the same contract vocabulary can explain:
 | Branch | Goal | Primary write scope | Parallelism | Suggested agent budget | Exit artifact |
 |--------|------|---------------------|-------------|------------------------|---------------|
 | `WP3-A Contract DTO Scaffold` | Add the stable engagement DTO surface. | `src/runtime/contracts/engagement_contracts.h`; include plumbing only if needed. | Can start first; unblocks most other branches. | Medium worker; high only if field semantics change. | Header-only DTOs plus architecture/header hygiene tests. |
-| `WP3-B Facade Packet Shell` | Add facade-shaped request/result or packet containers without raw runtime exposure. | `src/runtime/facade/runtime_facade_types.h`, `runtime_facade.h`, `runtime_facade.cpp`. | Starts after `WP3-A`; independent from Python binding. | Medium worker. | Facade types and stub/export path documented by tests. |
-| `WP3-C Python Binding Surface` | Expose DTOs and facade packets to `ef_py` using existing nanobind style. | `src/interfaces/python/bindings_runtime.cpp`; binding tests. | Starts after `WP3-A`; can run beside `WP3-B` if method signatures are stable. | Lightweight or medium worker. | Field-surface binding tests. |
+| `WP3-B Facade Packet Shell` | Add facade-shaped request/result or packet containers without raw runtime exposure. | `src/runtime/facade/runtime_facade_types.h`, `runtime_facade.h`, `runtime_facade.cpp`. | Starts after `WP3-A`; independent from Python binding. | Medium worker. | Facade export now returns live track snapshots and recent captured events without firing weapons. |
+| `WP3-C Python Binding Surface` | Expose DTOs and facade packets to `ef_py` using existing nanobind style. | `src/interfaces/python/bindings_runtime.cpp`; binding tests. | Starts after `WP3-A`; can run beside `WP3-B` if method signatures are stable. | Lightweight or medium worker. | Field-surface bindings plus `RecentEngagementEvents` getter exposure. |
 | `WP3-D Air Launch Adapter` | Map air pylon/hardpoint launch behavior to `LaunchRequest` and `LaunchEvent`. | Air-specific adapter code and air engagement tests, consuming or mirroring `weapon_launch_adapter.h`. Avoid sharing write ownership of `simulation_kernel_weapon_api.cpp` with `WP3-E`. | Parallel only if it stays test/adapter-local; serialize if editing shared kernel launch code. | Medium worker. | Complete at test-adapter level: air launch accepted/rejected events with station, ammo, cooldown, spawned munition. |
-| `WP3-E Naval Launch Adapter` | Map naval mount/VLS launch behavior to the same `LaunchRequest` and `LaunchEvent`. | Naval-specific adapter code and naval engagement tests, consuming or mirroring `weapon_launch_adapter.h`. Avoid sharing write ownership of `simulation_kernel_weapon_api.cpp` with `WP3-D`. | Parallel only if it stays test/adapter-local; serialize if editing shared kernel launch code. | Medium worker. | Complete at test-adapter level for DDG gun launch; VLS remains follow-up. |
-| `WP3-F Munition And Damage Export` | Expose minimal lifecycle, effects, and damage reports without leaking full components. | `src/runtime/contracts/engagement_contracts.h` if DTO additions remain; otherwise export/adapters and tests. | Starts after `WP3-A`; can run beside launch adapters if write scopes are separate. | Medium worker. | Started at test-adapter level: `MunitionLifecyclePacket`, `EffectsEvent`, and `DamageReport` mirror existing runtime/debug observations. |
-| `WP3-G Diagnostics Trace` | Connect track, launch, lifecycle, effects, damage, and observation by ids. | Diagnostics/export code and trace tests. | Starts after events/reports exist. | Medium worker; high if trace ownership crosses facade and engine. | Minimal trace index, not a full logging framework. |
-| `WP3-H Cross-Domain Smoke` | Add a stage-aligned local non-RL smoke path. | `tests/runtime/engagement/`, `tests/smoke/ci_smoke_suite.json` if promoted. | Starts once air/naval contract events are observable. | Lightweight worker for tests; medium if fixtures need adaptation. | One local smoke proving air and naval share lifecycle vocabulary. |
-| `WP3-I Integration And Cleanup` | Resolve shared-file conflicts and update task docs/status. | Shared files touched by multiple branches, docs under `docs/task/simulation_architecture`. | Serial integration branch. | High reasoning integration worker or main thread. | Green focused tests and updated work-package status. |
+| `WP3-E Naval Launch Adapter` | Map naval mount/VLS launch behavior to the same `LaunchRequest` and `LaunchEvent`. | Naval-specific adapter code and naval engagement tests, consuming or mirroring `weapon_launch_adapter.h`. Avoid sharing write ownership of `simulation_kernel_weapon_api.cpp` with `WP3-D`. | Parallel only if it stays test/adapter-local; serialize if editing shared kernel launch code. | Medium worker. | Complete at test-adapter level for DDG gun and VLS accepted/rejected launch shapes. |
+| `WP3-F Munition And Damage Export` | Expose minimal lifecycle, effects, and damage reports without leaking full components. | `src/runtime/contracts/engagement_contracts.h` if DTO additions remain; otherwise export/adapters and tests. | Starts after `WP3-A`; can run beside launch adapters if write scopes are separate. | Medium worker. | Header-only snapshot converters and recent live effects/damage capture are in place; terminal missile damage capture is deferred to WP4/WP5 and is outside WP3 acceptance. |
+| `WP3-G Diagnostics Trace` | Connect track, launch, lifecycle, effects, damage, and observation by ids. | Diagnostics/export code and trace tests. | Starts after events/reports exist. | Medium worker; high if trace ownership crosses facade and engine. | Contract and live recent-event trace coverage exist; not a full logging framework. |
+| `WP3-H Cross-Domain Smoke` | Add a stage-aligned local non-RL smoke path. | `tests/runtime/engagement/`, `tests/smoke/ci_smoke_suite.json` if promoted. | Starts once air/naval contract events are observable. | Lightweight worker for tests; medium if fixtures need adaptation. | Engagement tests are promoted into the smoke suite. |
+| `WP3-I Integration And Cleanup` | Resolve shared-file conflicts and update task docs/status. | Shared files touched by multiple branches, docs under `docs/task/simulation_architecture`. | Serial integration branch. | High reasoning integration worker or main thread. | Green focused tests, smoke promotion, and updated work-package status. |
 
 ## 4. Dependency Graph
 
@@ -213,25 +215,30 @@ Second wave implementation status:
 
 1. `WP3-D` validates legacy air `fire_missile()` accepted and rejected outcomes
    as `LaunchRequest` and `LaunchEvent`.
-2. `WP3-E` validates legacy DDG Mk 45 `fire_naval_weapon()` as the same launch
-   event shape; VLS coverage remains a follow-up.
-3. `WP3-F` has begun with test-level lifecycle, effects, and damage DTO
-   construction from existing observations.
+2. `WP3-E` validates legacy DDG Mk 45 `fire_naval_weapon()` and naval VLS
+   `fire_missile()` accepted/rejected outcomes as the same launch event shape.
+3. `WP3-F` has promoted lifecycle, effects, damage, and diagnostics trace DTO
+   construction into the shared header-only adapter seam.
+4. `WP3-B/C/G/H` now expose live facade engagement snapshots, Python
+   `RecentEngagementEvents`, recent launch/effects/damage capture, diagnostics
+   traces, and smoke coverage.
 
-Recommended third worker wave:
+Third worker wave status:
 
-1. `WP3-F Munition And Damage Export`.
-2. `WP3-G Diagnostics Trace`.
-3. `WP3-I Integration And Cleanup`.
+1. `WP3-F Munition And Damage Export` has a maintained conversion seam and
+   recent effects/damage capture for debug and naval direct-fire paths.
+2. `WP3-G Diagnostics Trace` has contract-level and recent live-event trace
+   coverage.
+3. `WP3-I Integration And Cleanup` should now focus on final validation and
+   handoff to facade hardening.
 
-Immediate follow-up:
+WP4/WP5 follow-up, outside WP3 acceptance:
 
-1. Add VLS-specific naval launch coverage so `fire_missile()` and
-   `fire_naval_weapon()` are both represented for naval platforms.
-2. Promote lifecycle/effects/damage construction from test-local adapter logic
-   into a maintained conversion/export seam.
-3. Add `DiagnosticsTrace` ids that connect track, launch request/event,
-   munition lifecycle, effects, damage, and observation version.
+1. Capture true missile terminal effects/damage from the maintained guidance
+   and effects systems, not only legacy launch, naval direct-fire, and debug
+   proximity-hit paths.
+2. Decide whether recent-event storage should remain a bounded compatibility
+   buffer or move behind a formal event queue owner in `WP4/WP5`.
 
 ## 10. Exit Criteria
 
@@ -240,7 +247,7 @@ WP3 exits when:
 1. The cross-domain engagement lifecycle can be exercised locally without RL.
 2. Air and naval launch paths share one typed contract vocabulary.
 3. Facade-shaped access is available or a compatibility adapter is explicitly
-   documented for each remaining gap.
+   documented for each acceptance-relevant gap.
 4. Diagnostics can explain the chain from track to observation.
 5. Follow-on WP4/WP5 work is reduced to facade hardening and maintained smoke
    promotion, not architecture rediscovery.

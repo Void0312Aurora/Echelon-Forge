@@ -421,6 +421,13 @@ void bind_core(nb::module_& m) {
         .def_ro("throttle", &AgentObservation::throttle)
         .def_ro("total_reward", &AgentObservation::total_reward);
 
+    nb::class_<RecentEngagementEvents>(m, "RecentEngagementEvents")
+        .def(nb::init<>())
+        .def_rw("launch_events", &RecentEngagementEvents::launch_events)
+        .def_rw("effects_events", &RecentEngagementEvents::effects_events)
+        .def_rw("damage_reports", &RecentEngagementEvents::damage_reports)
+        .def_rw("diagnostics_traces", &RecentEngagementEvents::diagnostics_traces);
+
     nb::class_<SimulationKernel>(m, "SimulationKernel")
         .def(nb::init<>())
         .def("get_instrument_state", [](SimulationKernel& self, uint64_t entity_id) {
@@ -560,6 +567,8 @@ void bind_core(nb::module_& m) {
         .def("debug_apply_proximity_hit", &SimulationKernel::debug_apply_proximity_hit,
              "Testing helper: apply one synthetic proximity hit to a target",
              nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("damage"), nb::arg("fuse_distance"))
+        .def("export_recent_engagement_events", &SimulationKernel::export_recent_engagement_events,
+             "Export recently captured engagement events")
         
         // Helper to get unit position (state observation)
         .def("get_unit_position", [](SimulationKernel& self, uint64_t entity_id) {

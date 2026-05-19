@@ -20,6 +20,20 @@ from python.scenario_runtime import load_compiled_scenario_batch  # noqa: E402
 from python.scenario_runtime import resolve_active_controllable_roster  # noqa: E402
 
 
+_RUNTIME_CAPABILITY_EXPECTATIONS = {
+    "supports_batch_runtime": True,
+    "supports_compiled_episode_controller": True,
+    "supports_compiled_execution_step": True,
+    "supports_gpu_visual": False,
+    "supports_gpu_observation": False,
+    "supports_gpu_flight_shaping": False,
+    "supports_device_observation_view": False,
+    "supports_resident_state": False,
+    "supports_exact_gpu_backend": False,
+    "supports_shadow_compare": False,
+}
+
+
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     ref = ef_py.WorldEntityRef()
     ref.world_index = int(world_index)
@@ -172,7 +186,7 @@ class RuntimeFacadeTests(unittest.TestCase):
         ]:
             self.assertIn(field, packet_body)
 
-    def test_runtime_facade_exports_empty_engagement_packet_without_runtime_escape(self) -> None:
+    def test_runtime_facade_exports_read_only_engagement_snapshot_without_weapon_escape(self) -> None:
         facade_header = _repo_text("src", "runtime", "facade", "runtime_facade.h")
         facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
 
@@ -189,19 +203,26 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertIn("EngagementEventPacket packet{}", body)
         self.assertIn("packet.refs = request.refs", body)
         self.assertIn("packet.trace_ids = request.trace_ids", body)
+        self.assertTrue(
+            "get_agent_observations_batch" in body or "build_observation_packet" in body,
+            "engagement export should read live AgentObservation contacts via the facade/runtime observation path",
+        )
+        self.assertIn("include_track_packets", body)
+        self.assertIn("include_diagnostics_traces", body)
+        self.assertIn("packet.track_packets.push_back", body)
+        self.assertIn("packet.diagnostics_traces.push_back", body)
         self.assertIn("return packet", body)
-        self.assertNotIn("runtime_", body)
         self.assertNotIn(".runtime(", body)
         self.assertNotIn("fire_missile", body)
+        self.assertNotIn("fire_naval_weapon", body)
         for field in [
-            "track_packets",
             "launch_requests",
             "launch_events",
             "munition_lifecycle_packets",
             "effects_events",
             "damage_reports",
-            "diagnostics_traces",
         ]:
+            self.assertNotIn(f"packet.{field}.push_back", body)
             self.assertNotIn(f"packet.{field} =", body)
 
     def test_resolve_active_controllable_roster_returns_active_members(self) -> None:
@@ -322,9 +343,17 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertEqual(int(facade.world_count()), 3)
         self.assertEqual(int(returned.world_count), 3)
         self.assertEqual(int(returned.worker_threads), 2)
-        self.assertTrue(bool(capabilities.supports_batch_runtime))
-        self.assertTrue(bool(capabilities.supports_compiled_episode_controller))
-        self.assertTrue(bool(capabilities.supports_compiled_execution_step))
+        for field, expected in _RUNTIME_CAPABILITY_EXPECTATIONS.items():
+            self.assertTrue(hasattr(capabilities, field), msg=f"missing RuntimeCapabilities.{field}")
+            self.assertIs(
+                bool(getattr(capabilities, field)),
+                expected,
+                msg=f"unexpected RuntimeCapabilities.{field}",
+            )
+
+        self.assertFalse(bool(capabilities.supports_resident_state))
+        self.assertFalse(bool(capabilities.supports_exact_gpu_backend))
+        self.assertFalse(bool(capabilities.supports_shadow_compare))
 
     def test_runtime_facade_exports_typed_observation_packet(self) -> None:
         facade = ef_py.RuntimeFacade(1)

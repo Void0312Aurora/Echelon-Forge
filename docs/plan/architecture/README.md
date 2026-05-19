@@ -8,6 +8,32 @@ This directory holds the strict simulation-system architecture baseline, the
 active architecture plan, performance follow-up research, and archived `src/`
 layering records.
 
+Current architecture stance:
+
+- Echelon Forge is framed as a semantic-causal simulation compiler and learning
+  platform.
+- The maintained runtime kernel is organized by the SCAL faces: semantic,
+  causal, agentic, and learning-facing architecture.
+- The temporal DAG is an execution projection inside a broader
+  graph-of-graphs model covering semantic, causal, information, agency,
+  evidence, and future learning graphs.
+- Backend acceleration, resident-state, and shadow-style work must cite the
+  accepted WP6 backend profile registries and parity budgets before becoming
+  maintained capabilities; see the
+  [resident-state boundary rules](../../task/simulation_architecture/wp6_resident_state_boundary_rules_20260519.md)
+  and [WP6 acceptance review](../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.md).
+- The post-WP6 implementation-preparation line is
+  [WP7 backend capability materialization](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.md),
+  which covers machine-checkable registry materialization, conservative runtime
+  capability projection, promotion evidence gates, and multi-fidelity entry
+  conditions without promoting candidate capabilities; its
+  [acceptance review](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.md)
+  accepts documentation and implementation readiness only, while current exact
+  GPU, resident-state, shadow, device observation, and multi-fidelity support
+  remain false.
+- The active task line for turning this into implementation work is
+  [docs/task/simulation_architecture/](../../task/simulation_architecture/README.md).
+
 Recommended reading order:
 
 1. [simulation_system_architecture_design.md](simulation_system_architecture_design.md)

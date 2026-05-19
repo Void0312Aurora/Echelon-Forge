@@ -140,7 +140,13 @@ cmake --build build-local-win --target ef_core ef_py -j2
 
 该试点必须至少覆盖航空挂架发射与舰载挂载发射，且不得创建彼此独立的私有生命周期栈。
 
-`WP4 Facade Alignment` 应新增或适配 request/result API，使该试点不经 raw runtime access 即可访问。
+`WP2.5 Scheduler Semantics Freeze` [任务族](scheduler_semantics_wp25_20260519.zh.md)
+应先冻结 event ordering、state versioning、barrier visibility、
+clock-domain merge policy、replay contract 与 stage-node manifest，再开始
+facade hardening。
+
+`WP4 Facade Alignment` [任务族](facade_alignment_wp4_20260519.zh.md) 应新增或适配
+request/result API，使该试点不经 raw runtime access 即可访问。
 
 `WP5 Validation Harness` 应把上面的 gates 固化为维护中的测试与本机 Windows smoke 命令。
 

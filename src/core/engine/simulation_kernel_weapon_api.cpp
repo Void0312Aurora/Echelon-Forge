@@ -243,6 +243,20 @@ bool has_explicit_global_missile_tuning(const MissileTuning& tuning) {
         tuning.midcourse_datalink_supported;
 }
 
+std::string naval_weapon_type_name(NavalWeaponType weapon_type) {
+    switch (weapon_type) {
+        case NavalWeaponType::VlsSam:
+            return "naval:vls_sam";
+        case NavalWeaponType::DeckGun:
+            return "naval:deck_gun";
+        case NavalWeaponType::Ciws:
+            return "naval:ciws";
+        case NavalWeaponType::Unknown:
+            break;
+    }
+    return "naval:unknown";
+}
+
 MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition& src) {
     MissileTuning out{};
     out.max_speed = src.max_speed;
@@ -759,9 +773,85 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
         .set<Sensor>(sensor)
         .set<ContactList>({})
         .add<SimObject>(); // Tag for cleanup
+
+    const int ammo_delta = use_naval_vls && vls_mount
+        ? -std::max(1, vls_mount->ammo_per_shot)
+        : (ammo ? -1 : 0);
+    const double cooldown_delta_s = use_naval_vls && vls_mount
+        ? vls_mount->cooldown_s
+        : (cooldown ? cooldown->cooldown_s : 0.0);
+    const std::string selected_launcher = use_naval_vls && vls_mount
+        ? vls_mount->mount_id
+        : "legacy:air_missile";
+    const std::string selected_munition = resolved_launch_definition.has_value() &&
+            !resolved_launch_definition->weapon_definition_name.empty()
+        ? resolved_launch_definition->weapon_definition_name
+        : (use_naval_vls ? "naval:vls_sam" : "legacy:missile");
+    (void)record_legacy_launch_event(
+        attacker_id,
+        target_id,
+        static_cast<uint64_t>(m.id()),
+        selected_launcher,
+        selected_munition,
+        ammo_delta,
+        cooldown_delta_s,
+        current_time);
         
     spdlog::info("FOX 2! Missile {} fired by {} at {}", m.id(), attacker_id, target_id);
     return m;
+}
+
+std::uint64_t SimulationKernel::record_legacy_launch_event(
+    uint64_t shooter_id,
+    uint64_t,
+    uint64_t spawned_munition_id,
+    const std::string& selected_launcher,
+    const std::string& selected_munition,
+    int ammo_delta,
+    double cooldown_delta_s,
+    double event_time_s
+) {
+    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+    const std::int64_t frame_count = info ? info->frame_count_total : 0;
+    if (event_time_s < recent_engagement_event_epoch_time_s_ ||
+        frame_count < recent_engagement_event_epoch_frame_) {
+        clear_recent_engagement_events();
+    }
+    recent_engagement_event_epoch_time_s_ = event_time_s;
+    recent_engagement_event_epoch_frame_ = frame_count;
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    LaunchEvent event{};
+    event.event_id = event_id;
+    event.request_id = event_id;
+    event.accepted = true;
+    event.selected_launcher = selected_launcher;
+    event.selected_munition = selected_munition;
+    event.ammo_delta = ammo_delta;
+    event.cooldown_delta_s = cooldown_delta_s;
+    event.spawned_munition = EngagementEntityRef{
+        .world_index = 0,
+        .entity_id = spawned_munition_id,
+    };
+    event.has_spawned_munition = spawned_munition_id != 0;
+    event.event_time_s = event_time_s;
+    recent_engagement_events_.launch_events.push_back(event);
+    while (recent_engagement_events_.launch_events.size() > kMaxRecentEngagementEvents) {
+        recent_engagement_events_.launch_events.erase(recent_engagement_events_.launch_events.begin());
+    }
+
+    DiagnosticsTrace trace{};
+    trace.trace_id = next_engagement_event_id_++;
+    trace.chain_id = event_id;
+    trace.launch_request_id = event.request_id;
+    trace.launch_event_id = event_id;
+    trace.munition = event.spawned_munition;
+    recent_engagement_events_.diagnostics_traces.push_back(trace);
+    while (recent_engagement_events_.diagnostics_traces.size() > kMaxRecentEngagementEvents) {
+        recent_engagement_events_.diagnostics_traces.erase(recent_engagement_events_.diagnostics_traces.begin());
+    }
+    (void)shooter_id;
+    return event_id;
 }
 
 bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code) {
@@ -808,6 +898,16 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
         return false;
     }
 
+    const std::uint64_t launch_event_id = record_legacy_launch_event(
+        attacker_id,
+        target_id,
+        0,
+        mount->mount_id.empty() ? naval_weapon_type_name(weapon_type) : mount->mount_id,
+        naval_weapon_type_name(weapon_type),
+        -std::max(1, mount->ammo_per_shot),
+        mount->cooldown_s,
+        current_time);
+
     double hit_probability = std::clamp(mount->hit_probability, 0.05, 0.99);
     auto target = ecs.entity(target_id);
     const bool target_valid = target.is_valid();
@@ -827,7 +927,22 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
 
     if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles && target_is_missile) {
         if (hit && target_valid) {
+            const EngagementDamageStateSnapshot before = capture_engagement_damage_state(target_id);
             target.destruct();
+            const EngagementDamageStateSnapshot after = capture_engagement_damage_state(target_id);
+            pending_effects_launch_event_id_ = launch_event_id;
+            (void)record_effects_damage_event(
+                0,
+                target_id,
+                before,
+                after,
+                "naval_ciws_intercept",
+                "hit",
+                current_time,
+                current_time,
+                hit_probability,
+                1.0,
+                "kinetic_intercept");
             if (score) {
                 score->hits_landed += 1;
                 score->kills_confirmed += 1;
@@ -842,6 +957,7 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
 
     const double applied_damage = mount->damage_per_hit > 0.0 ? mount->damage_per_hit : 60.0;
     const double fuse_distance = weapon_type == NavalWeaponType::DeckGun ? 25.0 : 40.0;
+    pending_effects_launch_event_id_ = launch_event_id;
     (void)debug_apply_proximity_hit(attacker_id, target_id, applied_damage, fuse_distance);
     return true;
 }

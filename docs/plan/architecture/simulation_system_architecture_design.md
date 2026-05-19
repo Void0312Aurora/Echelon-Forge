@@ -21,25 +21,101 @@ task plan with acceptance criteria.
 
 ## 1. Design Thesis
 
-Echelon Forge should be organized around one canonical simulation lifecycle and
-a clocked execution graph, not around vertical service branches such as
-`air stack`, `naval stack`, or `weapon stack`.
+Echelon Forge is a semantic-causal simulation compiler and learning platform.
+Its long-term job is to compile task semantics, domain models, agent
+structures, fidelity requirements, and experiment goals into executable,
+explainable, replayable, and comparable simulation experiments.
 
-Domain-specific behavior should enter the lifecycle through explicit model
-families and stage contracts:
+The near-term `WP0-WP5` work is the verified runtime kernel that this compiler
+will target, and `WP6` closes the backend profile policy needed for accelerated
+and resident-state work. The runtime is still organized around one canonical
+simulation lifecycle and a clocked execution graph, but the graph is an
+execution projection, not the system ontology.
 
-- platform families
-- tasking and doctrine families
-- sensor, track, and data-link families
-- launcher and mount families
-- munition, seeker, guidance, fuze, effects, and damage families
-- backend families for CPU, GPU, reduced-fidelity, or external FDM execution
+The architecture is organized around four SCAL faces:
 
-The project ceiling is set by how stable these contracts and scheduling rules
-are. A local weapon, naval, or air feature may be useful, but it should not
-create a private end-to-end runtime path.
+| Face | Question | Architecture responsibility |
+|------|----------|-----------------------------|
+| Semantic | What exists in the world? | Domain ontology, scenario and mission semantics, capability graph, content compilation, and typed contract vocabulary. |
+| Causal | What causes what? | Causal dependencies, event ordering, state-transition semantics, temporal execution graph, replay, and future counterfactual hooks. |
+| Agentic | Who knows, decides, and acts? | Agent roles, authority scopes, information-state architecture, decision models, action interfaces, doctrine, and command hierarchy. |
+| Learning | How does the system improve? | Evaluation, curriculum, capability profiling, scenario generation, world-model interfaces, and learning evidence. |
 
-## 2. Architecture Laws
+Domain-specific behavior should enter this architecture through explicit model
+families, capability contracts, and stage contracts, not through vertical
+service branches such as `air stack`, `naval stack`, or `weapon stack`.
+
+The project ceiling is set by how well the semantic, causal, agentic, and
+learning faces cohere. A local weapon, naval, or air feature may be useful, but
+it should not create a private end-to-end runtime path.
+
+## 2. Graph-of-Graphs Architecture
+
+The maintained execution DAG is only one projection of a larger graph system.
+New architecture work should state which graph it affects and how that graph
+connects to facade-visible evidence.
+
+| Graph | Primary owner | Produces | Relationship to execution |
+|-------|---------------|----------|---------------------------|
+| Semantic Graph | `content/`, adapters, contract schemas | Entities, capabilities, tasks, constraints, roles, events, and static mission/domain meaning. | `P0 ContentCompile` lowers semantic content into runtime setup packets and stage-node manifests. |
+| Causal Graph | simulation contracts and stage-node definitions | Cause/effect dependencies between state changes, events, barriers, and reports. | Determines legal read/write dependencies; the temporal DAG schedules a causal slice. |
+| Temporal Execution Graph | scheduler/runtime engine | The per-window acyclic stage-node schedule with clock domains and barriers. | Executes the currently visible causal slice; feedback crosses versioned state or timestamped events. |
+| Information Graph | sensor, track, data-link, facade, and policy contracts | Visibility, latency, loss, fusion, deception, observation, and belief provenance. | Controls what later fire-control, agent, and reward consumers may know. |
+| Agency Graph | policy/orchestration layer plus command/tasking contracts | Agents, roles, authority scopes, decision models, action interfaces, and coordination relationships. | Injects explicit action or coordination requests through facade-compatible graph inputs. |
+| Evidence Graph | diagnostics, replay, validation harness | Trace ids, packet ancestry, snapshot versions, event order, and validation verdicts. | Explains why a run is trustworthy and how it can be replayed or compared. |
+| Learning Graph | future learning architecture | Curriculum, experiments, capability profiles, scenario generation, policy/world-model updates. | Deferred beyond `WP5`; consumes evidence rather than mutating runtime truth directly. |
+
+The design rule is:
+
+```text
+Semantic Graph defines what can exist.
+Causal Graph defines why state may change.
+Temporal Execution Graph defines when work runs.
+Information Graph defines who can know what.
+Agency Graph defines who can decide and act.
+Evidence Graph defines why a result is credible.
+Learning Graph defines how experiments improve future behavior.
+```
+
+## 3. Information State Architecture
+
+Information state is first-class architecture, not an observation helper. A
+policy, scripted director, human operator, or validation harness must be able to
+name whether it consumed truth, sensed data, tracks, shared tactical picture,
+agent observation, or derived belief.
+
+| Layer | Meaning | Typical owner | Maintained export rule |
+|-------|---------|---------------|------------------------|
+| World Truth | Authoritative physical and semantic state in the simulation world. | `core/engine`, physics backend, scheduled systems. | Never consumed directly by maintained policy paths except diagnostics-only tests. |
+| Sensed State | Raw or modeled detections produced under sensor, environment, EW, and visibility constraints. | sensor models and `P6 SenseTrackLink`. | Export with source time, sensor id, confidence, latency/drop metadata where available. |
+| Track State | Fused tracks, contact state, and track quality over time. | track managers, data fusion systems. | Export as `TrackPacket`-equivalent data, with source snapshot/version provenance. |
+| Shared Tactical Picture | Information distributed through data-link or command networks. | data-link, command, and coordination systems. | Export only after link latency, loss, permission, and roster constraints are applied. |
+| Agent Observation | Consumer-shaped observation packet sampled at a declared barrier. | `runtime/facade` plus `ObservationViewSpec`. | Expose only fields allowed by the view spec, schema version, and snapshot source. |
+| Decision Belief | The agent's inferred internal belief about the world. | policy layer, scripted doctrine, human/AI decision adapter. | Must declare observation inputs, inference source, source versions, and whether it is maintained or diagnostics-only. |
+
+`ObservationPacket` is what an agent is allowed to see. `DecisionBelief` is what
+the agent thinks is true after inference, memory, doctrine, or learned state is
+applied. This distinction prevents "god's-eye-view" policies from becoming the
+maintained behavior by accident.
+
+Transformations between layers must be explicit:
+
+1. `World Truth -> Sensed State` applies sensor, environment, emission, EW,
+   geometry, latency, and noise rules.
+2. `Sensed State -> Track State` applies association, filtering, fusion, track
+   aging, and confidence rules.
+3. `Track State -> Shared Tactical Picture` applies communication topology,
+   link latency/loss, permissions, and roster rules.
+4. `Shared Tactical Picture -> Agent Observation` applies
+   `ObservationViewSpec` field selection, encoding, masking, normalization,
+   schema version, and snapshot timing.
+5. `Agent Observation -> Decision Belief` applies the agent's decision model,
+   memory, doctrine, estimator, or learned latent state.
+6. `Decision Belief -> ActionIntentPacket` is a policy/agent output and must
+   re-enter the simulation only through facade-compatible action, tasking, or
+   coordination contracts.
+
+## 4. Architecture Laws
 
 These rules are normative for new architecture work:
 
@@ -68,14 +144,24 @@ These rules are normative for new architecture work:
     what packets it consumes and produces, and which validation proves it did
     not bypass the canonical lifecycle.
 11. The `P0-P10` table is semantic, not a forced equal-step linear executor.
-    Runtime execution should be modeled as a multi-rate temporal DAG whose
-    feedback crosses explicit state or event boundaries.
+    Runtime execution should be modeled as a causal-temporal graph whose
+    execution projection is a multi-rate temporal DAG. Feedback crosses explicit
+    state or event boundaries.
 12. Coupling between simulation, policy computation, and test/orchestration
     layers must be explicit. Policy and test code may request views, actions,
     rewards, truncation, or resets through facade contracts, but they must not
     become hidden owners of authoritative simulation state or episode truth.
+13. DAG is projection, not ontology. New work must state whether it changes the
+    semantic, causal, temporal, information, agency, evidence, or learning
+    graph.
+14. Maintained decision paths consume `ObservationPacket` and, when needed,
+    `DecisionBelief`. They must not consume `World Truth` unless the path is
+    marked diagnostics-only.
+15. Platform definitions should converge toward capability composition.
+    `spawn_unit(type_name)` may remain a convenience path, but the architecture
+    target is `spawn_platform({capabilities...})`.
 
-## 3. Target Layer Model
+## 5. Target Layer Model
 
 ```mermaid
 flowchart TD
@@ -97,7 +183,7 @@ The model refines the earlier
 plan. The important addition is that domain behavior is a set of model families
 attached to the shared lifecycle, not separate runtime stacks.
 
-## 4. Canonical Semantic Lifecycle
+## 6. Canonical Semantic Lifecycle
 
 Every maintained scenario step should be explainable through these semantic
 stages. Some scenarios can skip stages with empty packets, but they should not
@@ -105,8 +191,8 @@ invent a parallel lifecycle.
 
 This table does not require all stages to execute once per outer step, nor does
 it require identical `dt`. It defines ownership, packet vocabulary, and
-explainability order. The actual runtime schedule is defined by the temporal
-DAG in the next section.
+explainability order. The actual runtime schedule is defined by the
+causal-temporal execution model in the next section.
 
 | Stage | Owner | Inputs | Outputs | Must not own |
 |-------|-------|--------|---------|--------------|
@@ -126,10 +212,12 @@ The stage names are architecture vocabulary. The repository may continue to use
 existing function and file names while it migrates, but new docs and tests
 should map local behavior back to this table.
 
-## 5. Temporal DAG Execution Model
+## 7. Causal-Temporal Execution Model
 
-The execution model is a temporal directed acyclic graph for each scheduling
-window, with feedback carried through versioned state and timestamped events.
+The execution model is causal-temporal architecture: a causal graph defines
+legal dependencies, and a temporal directed acyclic graph schedules the visible
+slice for each scheduling window. Feedback is carried through versioned state
+and timestamped events.
 
 In a single scheduling window:
 
@@ -182,6 +270,13 @@ declared schedule slots. Independent clock domains are allowed only when a
 freeze plan specifies their deterministic merge policy and event ordering at
 barriers.
 
+The active freeze plan for these scheduler semantics is
+[WP2.5 Scheduler Semantics Freeze](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md).
+It freezes event family priority, state-shard versioning, barrier visibility,
+clock-domain merge policy, deterministic replay inputs, and the
+`StageNodeManifest` schema before facade hardening or validation harness work
+depends on those rules.
+
 Every maintained stage node should declare:
 
 | Field | Requirement |
@@ -210,19 +305,20 @@ The design rule is:
 
 ```text
 P0-P10 = semantic lifecycle
-Temporal DAG = execution scheduler
+Causal Graph = dependency and correctness model
+Temporal DAG = execution projection and scheduler
 StateStore/EventQueue = feedback boundary
 Contracts = packet/state/event vocabulary
 ```
 
-## 6. System Layer Coupling Model
+## 8. System Layer Coupling Model
 
-The `P0-P10` lifecycle and temporal DAG define the simulation layer. The whole
-system, however, has three coupled layers:
+The `P0-P10` lifecycle and causal-temporal execution model define the
+simulation layer. The whole system, however, has three coupled layers:
 
 | Layer | Owns | Must not own |
 |-------|------|--------------|
-| Simulation layer | Authoritative world state, state evolution, temporal DAG scheduling, event ordering, facade-visible snapshots, simulation-semantic termination, and compiled mission runtime products. | Training-loop policy state, experiment curriculum, frontend-only observation encoders, or test harness scheduling. |
+| Simulation layer | Authoritative world state, state evolution, causal-temporal scheduling, event ordering, facade-visible snapshots, simulation-semantic termination, and compiled mission runtime products. | Training-loop policy state, experiment curriculum, frontend-only observation encoders, or test harness scheduling. |
 | Policy computation layer | Learned, scripted, or human-directed policy logic; observation view selection; action generation; coordination intent generation; and experimental reward shaping. | Raw ECS mutation, authoritative episode phase, physics truth, or private command injection that bypasses facade contracts. |
 | Test and orchestration layer | Scenario selection, seeds, reset requests, curriculum scheduling, max-step truncation, replay, CI smoke, and validation harnesses. | Simulation-semantic termination, hidden state mutation, or a second implementation of the runtime lifecycle. |
 
@@ -234,7 +330,7 @@ layout.
 flowchart LR
     ORCH["Test and orchestration layer\nscenario, seed, reset, truncation, harness"] --> FC["Runtime facade\nrequest/result contracts"]
     POL["Policy computation layer\nobservation views, actions, reward shaping, coordination"] --> FC
-    FC --> SIM["Simulation layer\nP0-P10 semantic lifecycle\nTemporal DAG, StateStore, EventQueue"]
+    FC --> SIM["Simulation layer\nP0-P10 semantic lifecycle\nCausal-temporal graph, StateStore, EventQueue"]
     SIM --> FC
     FC --> POL
     FC --> ORCH
@@ -251,6 +347,8 @@ Cross-layer contracts:
 |----------|---------------|---------------------------------|-------------------------------------|
 | `ObservationViewSpec` | Policy or test layer | Expose queryable state shards, committed snapshot versions, facade packet builders, and diagnostics. | Select fields, encoding, normalization, stacking, masking, required/optional fields, and schema version for a consumer. |
 | `ObservationPacket` | Runtime facade | Return data sampled at a declared barrier or snapshot version, with source time and schema metadata. | Consume the packet without assuming raw ECS layout or unversioned Python-side field order. |
+| `DecisionBelief` | Policy, doctrine, human/AI decision adapter | Provide observation provenance, snapshot versions, and diagnostics boundaries for belief-producing inputs. | Declare inference source, memory/estimator identity, consumed observation versions, confidence/uncertainty shape, and whether the belief is maintained or diagnostics-only. |
+| `AgentRole` | Policy/orchestration layer plus tasking authority contracts | Enforce authority scope, allowed action interfaces, and facade-compatible injection points. | Declare role, authority scope, information-state source, decision model reference, and action interface. |
 | `ActionIntentPacket` | Policy layer | Accept action intent through facade and translate it into command/control inputs at `P3/P4` boundaries. | Declare action source, effective time, target entity, action family, `merge_policy`, and whether it is direct control, mission command, or coordination intent. |
 | `ActionHoldPolicy` | Policy layer, enforced by facade/simulation | Apply hold-last, interpolation, expiry, or drop semantics deterministically across control-rate and physics-rate ticks. | Declare action validity duration, refresh cadence, expiry behavior, and credit-assignment latency assumptions. |
 | `CoordinationIntentPacket` | Policy layer | Admit scripted, learned, or human director output only through tasking/command facade paths, then schedule it into `P2/P3`. | Declare source type, source id, target roster, update clock, `merge_policy`, and produced tasking or leader-intent fields. |
@@ -265,6 +363,8 @@ Contract detail rules:
 | `RewardSpec` fact boundary | A quantity is a simulation fact if and only if it depends only on authoritative simulation state plus static mission/content data, and does not depend on training configuration such as weights, curriculum phase, RL algorithm, or benchmark policy. Everything else is a shaping term or experiment composition. | Crash state is a fact. Cross-track distance from a mission route is a fact. Cross-track distance squared times weight `0.5` is shaping. Curriculum phase 1-3 doubling a route reward is shaping. |
 | `ObservationViewSpec` version format | Use `<major>.<minor>` schema versions. Minor changes are compatible additions or layout changes that preserve field semantics. Major changes are incompatible deletions or semantic/encoding changes. | `v1.0 -> v1.1` may add optional `radar_altitude`; old consumers ignore it. `v1.1 -> v2.0` may remove `legacy_heading_raw` or change `heading` from `[0,360)` degrees to `[-pi, pi)` radians; old consumers must reject it. |
 | `ObservationViewSpec` fields | Every view spec declares `schema_version`, `required_fields`, and `optional_fields`. Checkpoint loading must reject major-version mismatches and report incompatible required fields. Minor-version differences may load when unknown optional fields can be ignored and missing optional fields can be default-filled. | A policy checkpoint trained on `1.x` may load against `1.2` if all required fields exist. A checkpoint trained on `1.x` must not silently load against `2.0`. |
+| `DecisionBelief` boundary | A belief is maintained only when it is derived from declared `ObservationPacket` inputs or declared memory/estimator state. It is diagnostics-only when it uses truth state, raw ECS, privileged traces, or hidden scenario metadata. | A Kalman-filtered target estimate from tracks may be maintained. A policy latent state built from observations may be maintained. A hand-authored oracle target vector from `World Truth` is diagnostics-only. |
+| `AgentRole` five-part schema | Every maintained agent role declares `role`, `authority_scope`, `information_state_source`, `decision_model_ref`, and `action_interface`. | `blue_flight_lead` may read shared tactical picture, use a scripted doctrine or RL policy decision model, and emit `CoordinationIntentPacket`. `autopilot_controller` may read platform observation and emit direct `ActionIntentPacket`. |
 
 `merge_policy` is a required cross-layer request field for
 `ActionIntentPacket` and `CoordinationIntentPacket`. Legal values are:
@@ -281,9 +381,10 @@ Design consequences:
 
 1. Observation assembly is a policy-facing view contract. The simulation layer
    should expose stable state snapshots and facade packet builders; the policy
-   layer may define feature subsets, encodings, and normalization. Adding a
-   policy feature should require simulation work only when the requested truth
-   state or diagnostic export does not yet exist.
+   layer may define feature subsets, encodings, normalization, and
+   `DecisionBelief` construction. Adding a policy feature should require
+   simulation work only when the requested maintained observation, track,
+   report, or diagnostic export does not yet exist.
 2. Reward is split into simulation facts and experiment composition.
    Simulation-semantic rewards or mission products may be compiled, but shaping
    weights and training-specific reward mixes should remain configurable
@@ -318,6 +419,11 @@ Design consequences:
    PlatformControl`; it is visible to `P2 TaskingIntent` only if `P2` has not
    already run in that window. Next-window behavior must be requested by
    setting `effective_time` to a later scheduling window.
+10. RL policy is not the agent. A learned policy, scripted doctrine, LLM
+    planner, MCTS searcher, human operator, or rule-based controller is a
+    replaceable decision model attached to an `AgentRole`. The maintained agent
+    boundary is role plus authority plus information state plus decision model
+    plus action interface.
 
 For scheduling, cross-layer requests are external graph inputs. Each request
 should declare:
@@ -369,7 +475,7 @@ present, no `temp-04` style review should be opened for the same framework.
 New findings should be routed as direct `B` patches, `C` task plans, or `D`
 layer-specific architecture documents.
 
-## 7. Contract Taxonomy
+## 9. Contract Taxonomy
 
 The facade and adapters should converge on typed packets with clear ownership:
 
@@ -378,8 +484,10 @@ The facade and adapters should converge on typed packets with clear ownership:
 | `ScenarioSpec` / `ContentSpec` | Static scenario and content description | `content/` plus adapter schemas |
 | `WorldSetupRequest` / `WorldSetupResult` | Batch reset and entity creation | `runtime/contracts` |
 | `OrchestrationPlan` | Scenario selection, seed, reset, curriculum, truncation, and validation schedule | test/orchestration layer plus facade contracts |
+| `Capability` / `CapabilityBundle` | Typed platform capability composition for mobility, sensing, communication, launching, survivability, command, and doctrine profile | `content/`, model families, and `runtime/contracts` |
 | `TaskingPacket` | Mission intent, authority, relationships, task state | `components/tasking` and `runtime/contracts` |
 | `CommandPacket` | Deliverable execution commands and link behavior | `components/command` and `runtime/contracts` |
+| `AgentRole` | Role, authority scope, information-state source, decision-model reference, and action interface | policy/orchestration layer plus tasking authority contracts |
 | `CoordinationIntentPacket` | Scripted, learned, or human coordination source output | policy layer plus facade tasking/command contracts |
 | `ActionIntentPacket` / `ActionHoldPolicy` | Policy action, validity window, hold/interpolation/expiry, and control-rate alignment | policy layer plus facade enforcement |
 | `TrackPacket` | Sensor/track/data-link output | `components` or `runtime/contracts` after ownership review |
@@ -390,6 +498,7 @@ The facade and adapters should converge on typed packets with clear ownership:
 | `TerminationSpec` / `EpisodeStatus` | Termination, truncation, reason source, and episode phase export | split: simulation owns semantic phase, orchestration owns truncation requests |
 | `ObservationViewSpec` | Consumer-specific observation field selection, encoding, normalization, and schema version | policy/test layer |
 | `ObservationPacket` | Frontend-facing state export | `runtime/facade` contracts |
+| `DecisionBelief` | Agent-internal inferred state derived from observation, memory, estimator, or decision-model latent state | policy layer, doctrine adapter, or human/AI decision adapter |
 | `DiagnosticsTrace` | Explainability, replay, and validation trace | `core/engine` and facade contracts |
 
 `MissionCommand` remains a compatibility aggregation point, not the preferred
@@ -397,9 +506,28 @@ future shape for shared semantics. Future work should move toward narrower
 tasking, command, fire-control, and observation packets instead of extending a
 flat all-domain command object.
 
-## 8. Domain Extension Model
+## 10. Domain Extension Model
 
 Domain extensions must be stage-local and contract-driven.
+
+Platform definitions should converge from entity-centric templates to
+capability composition:
+
+```text
+Platform =
+    mobility_capability
+  + sensor_capability
+  + communication_capability
+  + launcher_capability
+  + survivability_capability
+  + command_capability
+  + doctrine_profile
+```
+
+`spawn_unit(type_name)` may remain a convenience shortcut for compatibility,
+but it should expand internally to a typed `CapabilityBundle`. The architecture
+target is `spawn_platform({capabilities...})`, where a new domain contributes
+capability implementations rather than a new end-to-end runtime path.
 
 Allowed extension families:
 
@@ -424,13 +552,15 @@ Each extension must document:
 4. stage-node read/write sets,
 5. clock domain and latency policy,
 6. facade visibility,
-7. parity or regression tests,
-8. compatibility behavior for existing Python callers.
+7. capability interfaces implemented or required,
+8. information-state layer touched, if any,
+9. parity or regression tests,
+10. compatibility behavior for existing Python callers.
 
 An extension that needs a new lifecycle stage should first update this design
 or a derived freeze plan.
 
-## 9. Backend And Performance Policy
+## 11. Backend And Performance Policy
 
 Performance work must preserve the same semantic lifecycle.
 
@@ -438,20 +568,38 @@ Performance work must preserve the same semantic lifecycle.
 - CUDA helpers should attach through facade/backend packets, especially for
   visual, observation, broadphase, flight shaping, and future resident-state
   paths.
+- Backend profile taxonomy, parity budgets, resident-state boundaries, and
+  capability projection rules are governed by
+  [WP6 backend profile policy](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.md)
+  and its registries.
+- The implementation-preparation line after WP6 is
+  [WP7 backend capability materialization](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.md),
+  which materializes registry, projection, promotion-evidence, and
+  multi-fidelity entry tasks without promoting candidate backend capabilities;
+  its
+  [acceptance review](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.md)
+  accepts the documentation and implementation-preparation plan only.
 - Device-resident state is allowed only behind contracts that can describe
   host-owned state, backend-owned state, partial sync, and observation-only
   sync.
 - Device-resident nodes must declare when host-visible state is synchronized
   and whether observations are snapshots, partial views, or explicit exports.
-- Exact GPU world-step work is not a maintained replacement until parity,
-  ownership, and sync rules are frozen.
+- Exact GPU world-step, resident-state, and shadow-style work are not
+  maintained replacements until a profile registry entry, profile-owned parity
+  budget, ownership/sync rules, and validation gates promote them.
+- `RuntimeCapabilities` is a projection of maintained profile metadata and
+  probeable deployment facts; helper or probe availability alone cannot claim
+  exact GPU, resident-state, shadow, device observation, or multi-fidelity
+  support. Current WP7 acceptance keeps those support claims false until a
+  future promotion review updates the registry, parity budget, projection
+  adapter, and validation evidence together.
 - Rust remains a possible future service or serialization boundary, not a
   near-term replacement for the C++ simulation backend.
 
 The key performance rule is simple: move ownership and data residency downward
 without creating a second semantic path.
 
-## 10. Weapon And Engagement Pilot Slice
+## 12. Weapon And Engagement Pilot Slice
 
 The weapon line is the best first architecture pilot because it crosses the
 whole semantic lifecycle and exercises temporal feedback:
@@ -478,7 +626,7 @@ Initial architecture deliverables should be:
 This pilot is useful only if it exercises at least two platform families, for
 example aircraft pylon launch and naval mount launch.
 
-## 11. Validation Gates
+## 13. Validation Gates
 
 New architecture work should pass these gates before becoming the maintained
 path:
@@ -500,12 +648,16 @@ path:
    lifecycle authority.
 10. Policy/test adapters prove they can use facade-shaped APIs or documented
     compatibility adapters without raw runtime mutation.
+11. Maintained decision paths prove they consume `ObservationPacket` or
+    `DecisionBelief`, not `World Truth`.
+12. Validation can distinguish design conformance, trace conformance, boundary
+    conformance, information/belief leakage, and replay/evidence conformance.
 
 Local Windows work may stop at build/import/smoke validation when RL training
 dependencies are unavailable, but the contracts should still be shaped for
 future batch and training use.
 
-## 12. Relationship To Existing Documents
+## 14. Relationship To Existing Documents
 
 This document does not delete the earlier plans. It repositions them:
 
@@ -519,6 +671,32 @@ This document does not delete the earlier plans. It repositions them:
   remains the historical task line for the `common / air / naval` split.
 - [../../task/simulation_architecture/README.md](../../task/simulation_architecture/README.md)
   is the execution subproject for turning this architecture into scoped work.
+- [../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md)
+  is the `WP2.5` scheduler semantics freeze inserted between contract freeze
+  and facade alignment.
+- [../../task/simulation_architecture/facade_alignment_wp4_20260519.md](../../task/simulation_architecture/facade_alignment_wp4_20260519.md)
+  is the `WP4` facade alignment task family that applies the information-state
+  and agent-boundary additions to maintained frontend surfaces.
+- [../../task/simulation_architecture/validation_harness_wp5_20260519.md](../../task/simulation_architecture/validation_harness_wp5_20260519.md)
+  is the `WP5` validation harness task family for design, trace, boundary,
+  information/belief leakage, and replay/evidence conformance.
+- [../../task/simulation_architecture/backend_profile_policy_wp6_20260519.md](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.md)
+  is the `WP6` backend profile policy for backend taxonomy, parity budgets,
+  resident-state boundaries, and capability projection.
+- [../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.md](../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.md)
+  records the accepted WP6 publication line.
+- [../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.md](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.md)
+  is the planned `WP7` materialization line for machine-checkable registry,
+  runtime capability projection, promotion evidence gates, and multi-fidelity
+  entry conditions after WP6.
+- [../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.md](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.md)
+  accepts WP7 as a documentation and implementation-preparation line, not as
+  promotion of exact GPU, resident-state, shadow, device observation, or
+  multi-fidelity support.
+- [../../task/review/temp-02_review_20260519.md](../../task/review/temp-02_review_20260519.md)
+  is the source review that elevated this baseline from lifecycle plus DAG to
+  SCAL, graph-of-graphs, information-state architecture, and simulation
+  compiler positioning.
 
 Future architecture task sheets should cite this document first, then cite the
 older documents only for rationale or evidence.

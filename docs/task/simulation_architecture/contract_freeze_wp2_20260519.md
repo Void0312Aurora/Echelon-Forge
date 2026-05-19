@@ -1,6 +1,6 @@
 # WP2 Contract Freeze
 
-Status: `2026-05-19` active freeze draft.
+Status: `2026-05-19` contract freeze complete.
 
 Language:
 
@@ -167,8 +167,14 @@ freeze:
 The pilot must cover at least aircraft pylon launch and naval mount launch
 without creating separate private lifecycle stacks.
 
-`WP4 Facade Alignment` should add or adapt request/result APIs so the pilot is
-reachable without raw runtime access.
+`WP2.5 Scheduler Semantics Freeze` [task family](scheduler_semantics_wp25_20260519.md)
+should freeze event ordering, state versioning, barrier visibility, clock-domain
+merge policy, replay contract, and stage-node manifests before facade
+hardened alignment begins.
+
+`WP4 Facade Alignment` [task family](facade_alignment_wp4_20260519.md) should
+add or adapt request/result APIs so the pilot is reachable without raw runtime
+access.
 
 `WP5 Validation Harness` should turn the gates above into maintained tests and
 local Windows smoke commands.

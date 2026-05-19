@@ -19,6 +19,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cmath>
+#include <algorithm>
 #include <limits>
 #include <vector>
 
@@ -31,6 +32,36 @@ std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
         }
     }
     return {0.0, 0.0, 0.0};
+}
+
+RecentEngagementEvents SimulationKernel::export_recent_engagement_events() const {
+    RecentEngagementEvents out = recent_engagement_events_;
+
+    std::sort(
+        out.launch_events.begin(),
+        out.launch_events.end(),
+        [](const LaunchEvent& lhs, const LaunchEvent& rhs) {
+            return lhs.event_id < rhs.event_id;
+        });
+    std::sort(
+        out.effects_events.begin(),
+        out.effects_events.end(),
+        [](const EffectsEvent& lhs, const EffectsEvent& rhs) {
+            return lhs.event_id < rhs.event_id;
+        });
+    std::sort(
+        out.damage_reports.begin(),
+        out.damage_reports.end(),
+        [](const DamageReport& lhs, const DamageReport& rhs) {
+            return lhs.report_id < rhs.report_id;
+        });
+    std::sort(
+        out.diagnostics_traces.begin(),
+        out.diagnostics_traces.end(),
+        [](const DiagnosticsTrace& lhs, const DiagnosticsTrace& rhs) {
+            return lhs.trace_id < rhs.trace_id;
+        });
+    return out;
 }
 
 std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {

@@ -16,20 +16,75 @@
 
 ## 一、设计主张
 
-Echelon Forge 应围绕一条规范化仿真生命周期和一个带时钟域的执行图组织，而不是围绕 `air stack`、`naval stack`、`weapon stack` 这类纵向军种或功能烟囱组织。
+Echelon Forge 是一个语义-因果仿真编译器与学习平台。它的长期目标，是把任务语义、领域模型、智能体结构、保真度要求与实验目标，编译为可执行、可解释、可回放、可比较的仿真实验。
 
-领域特定行为应通过明确的模型族和阶段契约进入生命周期：
+近期 `WP0-WP5` 工作是这个编译器要面向的经验证运行时内核，`WP6`
+收口后端加速与 resident-state 工作所需的 backend profile policy。运行时仍然围绕一条规范化仿真生命周期和一个带时钟域的执行图组织，但执行图只是投影，不是系统本体。
 
-- 平台族
-- 任务与条令族
-- 传感器、航迹和数据链族
-- 发射器与挂载族
-- 弹药、导引头、制导、引信、效果和毁伤族
-- CPU、GPU、降阶保真度或外部 FDM 后端族
+架构围绕四个 SCAL 面组织：
 
-项目上限取决于这些契约和调度规则是否稳定。局部武器、海军或空军功能可以很有价值，但不应创建私有的端到端运行时路径。
+| 面 | 回答的问题 | 架构职责 |
+|----|------------|----------|
+| Semantic 语义 | 世界中存在什么？ | 领域本体、scenario 与 mission 语义、能力图、content compilation 与 typed contract 词汇。 |
+| Causal 因果 | 什么导致什么？ | 因果依赖、event ordering、状态转移语义、temporal execution graph、replay 与未来反事实 hook。 |
+| Agentic 智能体 | 谁知道、决策并行动？ | agent role、authority scope、information-state architecture、decision model、action interface、doctrine 与 command hierarchy。 |
+| Learning 学习 | 系统如何改进？ | evaluation、curriculum、capability profiling、scenario generation、world-model interface 与 learning evidence。 |
 
-## 二、架构规则
+领域特定行为应通过明确的模型族、能力契约和阶段契约进入架构，而不是通过 `air stack`、`naval stack`、`weapon stack` 这类纵向军种或功能烟囱进入。
+
+项目上限取决于语义、因果、智能体与学习四个面能否相互闭合。局部武器、海军或空军功能可以很有价值，但不应创建私有的端到端运行时路径。
+
+## 二、图之图架构
+
+维护中的执行 DAG 只是更大图系统中的一个投影。新的架构工作应说明自己影响哪张图，以及这张图如何连接到 facade 可见证据。
+
+| 图 | 主要 owner | 产出 | 与执行的关系 |
+|----|------------|------|--------------|
+| 语义图 | `content/`、adapter、contract schema | entity、capability、task、constraint、role、event 与静态 mission/domain meaning。 | `P0 ContentCompile` 把语义内容下沉为 runtime setup packet 与 stage-node manifest。 |
+| 因果图 | 仿真契约与 stage-node 定义 | state change、event、barrier 与 report 之间的 cause/effect dependency。 | 决定合法 read/write dependency；temporal DAG 调度一个因果切片。 |
+| 时序执行图 | scheduler/runtime engine | 带 clock domain 与 barrier 的 per-window acyclic stage-node schedule。 | 执行当前可见的因果切片；反馈跨越 versioned state 或 timestamped event。 |
+| 信息图 | sensor、track、data-link、facade 与 policy contract | visibility、latency、loss、fusion、deception、observation 与 belief provenance。 | 控制后续 fire-control、agent 与 reward consumer 可以知道什么。 |
+| 智能体图 | policy/orchestration 层与 command/tasking contract | agent、role、authority scope、decision model、action interface 与 coordination relationship。 | 通过 facade-compatible graph input 注入显式 action 或 coordination request。 |
+| 证据图 | diagnostics、replay、validation harness | trace id、packet ancestry、snapshot version、event order 与 validation verdict。 | 解释一次运行为何可信，以及它如何被 replay 或比较。 |
+| 学习图 | 未来 learning architecture | curriculum、experiment、capability profile、scenario generation、policy/world-model update。 | `WP5` 后推迟；消费证据，不直接改变 runtime truth。 |
+
+设计规则是：
+
+```text
+Semantic Graph 定义什么可以存在。
+Causal Graph 定义状态为什么可以变化。
+Temporal Execution Graph 定义何时执行工作。
+Information Graph 定义谁能知道什么。
+Agency Graph 定义谁能决策和行动。
+Evidence Graph 定义结果为什么可信。
+Learning Graph 定义实验如何改进未来行为。
+```
+
+## 三、信息状态架构
+
+信息状态是一等架构概念，不是 observation helper。policy、scripted director、human operator 或 validation harness 必须能说明自己消费的是 truth、sensed data、track、shared tactical picture、agent observation，还是 derived belief。
+
+| 层级 | 含义 | 典型 owner | 维护中导出规则 |
+|------|------|------------|----------------|
+| World Truth | 仿真 world 中的权威物理与语义状态。 | `core/engine`、physics backend、scheduled systems。 | 除 diagnostics-only test 外，不被维护中的 policy path 直接消费。 |
+| Sensed State | 在 sensor、environment、EW 与 visibility 约束下产生的原始或建模探测。 | sensor model 与 `P6 SenseTrackLink`。 | 尽可能导出 source time、sensor id、confidence、latency/drop metadata。 |
+| Track State | 融合后的航迹、contact state 与 track quality。 | track manager、data fusion system。 | 以 `TrackPacket` 等价数据导出，并带 source snapshot/version provenance。 |
+| Shared Tactical Picture | 通过 data-link 或 command network 分发的信息。 | data-link、command 与 coordination system。 | 只有在 link latency、loss、permission 与 roster 约束应用后才能导出。 |
+| Agent Observation | 在声明 barrier 上采样的 consumer-shaped observation packet。 | `runtime/facade` 与 `ObservationViewSpec`。 | 只暴露 view spec、schema version 与 snapshot source 允许的字段。 |
+| Decision Belief | agent 对世界的推断性内部信念。 | policy layer、scripted doctrine、human/AI decision adapter。 | 必须声明 observation input、inference source、source version，以及 maintained/diagnostics-only 标记。 |
+
+`ObservationPacket` 是智能体被允许看见的内容。`DecisionBelief` 是智能体在 inference、memory、doctrine 或 learned state 作用后认为真实的内容。区分两者可以防止“上帝视角”策略意外成为维护中行为。
+
+层间转换必须显式化：
+
+1. `World Truth -> Sensed State` 应用 sensor、environment、emission、EW、geometry、latency 与 noise 规则。
+2. `Sensed State -> Track State` 应用 association、filtering、fusion、track aging 与 confidence 规则。
+3. `Track State -> Shared Tactical Picture` 应用 communication topology、link latency/loss、permission 与 roster 规则。
+4. `Shared Tactical Picture -> Agent Observation` 应用 `ObservationViewSpec` 字段选择、编码、masking、归一化、schema version 与 snapshot timing。
+5. `Agent Observation -> Decision Belief` 应用 agent 的 decision model、memory、doctrine、estimator 或 learned latent state。
+6. `Decision Belief -> ActionIntentPacket` 是 policy/agent 输出，必须只通过 facade-compatible action、tasking 或 coordination contract 回到仿真。
+
+## 四、架构规则
 
 以下规则对新的架构工作具有规范性：
 
@@ -43,10 +98,13 @@ Echelon Forge 应围绕一条规范化仿真生命周期和一个带时钟域的
 8. `interfaces/` 与 Python adapter 只做格式转换，不拥有仿真语义。
 9. GPU 与 device-resident 路径是后端能力，不是新的公开 truth path。除非有后端对等冻结计划，否则 CPU exact 语义仍是基线。
 10. 任何领域扩展都必须声明自己参与哪些管线阶段、消费和产出哪些 packet，以及用什么验证证明它没有绕开规范生命周期。
-11. `P0-P10` 表是语义表，不是强制等步长线性执行器。真实 runtime 执行应建模为多率 temporal DAG，反馈必须跨越显式 state 或 event 边界。
+11. `P0-P10` 表是语义表，不是强制等步长线性执行器。真实 runtime 执行应建模为因果-时序图，其执行投影是多率 temporal DAG。反馈必须跨越显式 state 或 event 边界。
 12. 仿真层、策略计算层、测试/编排层之间的耦合必须显式化。策略和测试代码可以通过 facade 契约请求 view、action、reward、truncation 或 reset，但不能成为权威仿真状态或 episode truth 的隐藏 owner。
+13. DAG 是投影，不是本体。新工作必须说明自己改变的是 semantic、causal、temporal、information、agency、evidence，还是 learning graph。
+14. 维护中的决策路径消费 `ObservationPacket`，必要时消费 `DecisionBelief`。除非路径被标记为 diagnostics-only，否则不得消费 `World Truth`。
+15. 平台定义应收敛到 capability composition。`spawn_unit(type_name)` 可以继续作为便利路径，但架构目标是 `spawn_platform({capabilities...})`。
 
-## 三、目标层模型
+## 五、目标层模型
 
 ```mermaid
 flowchart TD
@@ -67,11 +125,11 @@ flowchart TD
 `frontend adapters -> runtime facade -> simulation engine -> physics engine -> model backends`
 方案。关键补充是：领域行为是一组挂接到共享生命周期的模型族，而不是彼此隔离的运行时栈。
 
-## 四、规范化语义生命周期
+## 六、规范化语义生命周期
 
 每个维护中的 scenario step 都应能用以下语义阶段解释。部分场景可以用空 packet 跳过某些阶段，但不应发明平行生命周期。
 
-这张表不要求所有阶段在每个外层 step 中都执行一次，也不要求相同 `dt`。它定义的是所有权、packet 词汇和可解释顺序。真实 runtime schedule 由下一节的 temporal DAG 定义。
+这张表不要求所有阶段在每个外层 step 中都执行一次，也不要求相同 `dt`。它定义的是所有权、packet 词汇和可解释顺序。真实 runtime schedule 由下一节的因果-时序执行模型定义。
 
 | 阶段 | 所有者 | 输入 | 输出 | 不应拥有 |
 |------|--------|------|------|----------|
@@ -89,9 +147,9 @@ flowchart TD
 
 阶段名是架构词汇。仓库迁移期间可以继续使用现有函数和文件名，但新增文档和测试应把本地行为映射回这张表。
 
-## 五、Temporal DAG 执行模型
+## 七、因果-时序执行模型
 
-执行模型是在每个调度窗口内保持无环的 temporal DAG，反馈通过 versioned state 和 timestamped event 传递。
+执行模型是因果-时序架构：因果图定义合法依赖，temporal DAG 调度每个调度窗口内当前可见的切片。反馈通过 versioned state 和 timestamped event 传递。
 
 单个调度窗口内：
 
@@ -122,6 +180,12 @@ Event 按 `(timestamp, priority, event_id)` 确定性排序。`timestamp` 决定
 
 Clock domain 默认使用嵌套触发。base tick 拥有外层确定性 schedule，低频 node 按声明的倍数或 schedule slot 运行。独立 clock domain 只有在冻结计划明确 deterministic merge policy 和 barrier 处 event ordering 时才允许进入维护路径。
 
+这些调度语义的当前冻结计划是
+[WP2.5 调度语义冻结](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.zh.md)。
+它在 facade hardening 或 validation harness 依赖这些规则前，冻结 event
+family priority、state-shard versioning、barrier visibility、clock-domain
+merge policy、deterministic replay 输入与 `StageNodeManifest` schema。
+
 每个维护中的 stage node 都应声明：
 
 | 字段 | 要求 |
@@ -150,18 +214,19 @@ Clock domain 默认使用嵌套触发。base tick 拥有外层确定性 schedule
 
 ```text
 P0-P10 = semantic lifecycle
-Temporal DAG = execution scheduler
+Causal Graph = dependency and correctness model
+Temporal DAG = execution projection and scheduler
 StateStore/EventQueue = feedback boundary
 Contracts = packet/state/event vocabulary
 ```
 
-## 六、系统层耦合模型
+## 八、系统层耦合模型
 
-`P0-P10` 生命周期和 temporal DAG 定义的是仿真层。但完整系统实际有三个相互耦合的层级：
+`P0-P10` 生命周期和因果-时序执行模型定义的是仿真层。但完整系统实际有三个相互耦合的层级：
 
 | 层级 | 拥有 | 不应拥有 |
 |------|------|----------|
-| 仿真层 | 权威 world state、状态演化、temporal DAG 调度、event ordering、facade 可见 snapshot、仿真语义 termination、编译侧 mission runtime products。 | 训练循环 policy state、实验 curriculum、仅前端使用的 observation encoder，或 test harness scheduling。 |
+| 仿真层 | 权威 world state、状态演化、因果-时序调度、event ordering、facade 可见 snapshot、仿真语义 termination、编译侧 mission runtime products。 | 训练循环 policy state、实验 curriculum、仅前端使用的 observation encoder，或 test harness scheduling。 |
 | 策略计算层 | learned、scripted 或 human-directed policy logic；observation view 选择；action 生成；coordination intent 生成；实验性 reward shaping。 | raw ECS mutation、权威 episode phase、physics truth，或绕开 facade contract 的私有 command injection。 |
 | 测试与编排层 | scenario 选择、seed、reset request、curriculum scheduling、max-step truncation、replay、CI smoke 与 validation harness。 | 仿真语义 termination、隐藏状态变更，或第二套 runtime lifecycle 实现。 |
 
@@ -171,7 +236,7 @@ Contracts = packet/state/event vocabulary
 flowchart LR
     ORCH["测试与编排层\nscenario、seed、reset、truncation、harness"] --> FC["Runtime facade\nrequest/result contracts"]
     POL["策略计算层\nobservation view、action、reward shaping、coordination"] --> FC
-    FC --> SIM["仿真层\nP0-P10 语义生命周期\nTemporal DAG、StateStore、EventQueue"]
+    FC --> SIM["仿真层\nP0-P10 语义生命周期\n因果-时序图、StateStore、EventQueue"]
     SIM --> FC
     FC --> POL
     FC --> ORCH
@@ -185,6 +250,8 @@ flowchart LR
 |------|------------|------------|-----------------|
 | `ObservationViewSpec` | 策略或测试层 | 暴露可查询 state shard、已提交 snapshot version、facade packet builder 与 diagnostics。 | 选择字段、编码、归一化、stacking、masking、required/optional fields 与 consumer schema version。 |
 | `ObservationPacket` | Runtime facade | 返回在声明 barrier 或 snapshot version 上采样的数据，并带 source time 与 schema metadata。 | 消费 packet，不假设 raw ECS layout 或未版本化 Python 字段顺序。 |
+| `DecisionBelief` | policy、doctrine、human/AI decision adapter | 为 belief-producing input 提供 observation provenance、snapshot version 与 diagnostics boundary。 | 声明 inference source、memory/estimator identity、consumed observation version、confidence/uncertainty shape，以及 maintained/diagnostics-only 标记。 |
+| `AgentRole` | 策略/编排层与 tasking authority contract | 执行 authority scope、允许的 action interface 与 facade-compatible injection point。 | 声明 role、authority scope、information-state source、decision model reference 与 action interface。 |
 | `ActionIntentPacket` | 策略层 | 通过 facade 接收 action intent，并在 `P3/P4` 边界翻译为 command/control input。 | 声明 action source、effective time、target entity、action family、`merge_policy`，以及它是 direct control、mission command 还是 coordination intent。 |
 | `ActionHoldPolicy` | 策略层，由 facade/仿真执行 | 在 control-rate 与 physics-rate tick 之间确定性应用 hold-last、interpolation、expiry 或 drop 语义。 | 声明 action validity duration、refresh cadence、expiry behavior 与 credit-assignment latency 假设。 |
 | `CoordinationIntentPacket` | 策略层 | 只允许 scripted、learned 或 human director output 通过 tasking/command facade 路径进入，再调度到 `P2/P3`。 | 声明 source type、source id、target roster、update clock、`merge_policy`，以及产出的 tasking 或 leader-intent 字段。 |
@@ -199,6 +266,8 @@ flowchart LR
 | `RewardSpec` fact 边界 | 一个量当且仅当只依赖权威仿真状态加静态 mission/content data，且不依赖训练配置（权重、curriculum phase、RL 算法或 benchmark policy）时，才是 simulation fact。否则它是 shaping term 或 experiment composition。 | 坠毁状态是 fact。相对任务航线的横向偏差是 fact。横向偏差平方乘以权重 `0.5` 是 shaping。curriculum 1-3 阶段把航线奖励加倍是 shaping。 |
 | `ObservationViewSpec` 版本格式 | 使用 `<major>.<minor>` schema version。minor 变化表示兼容新增或不改变字段语义的布局变化。major 变化表示不兼容删除、语义变化或编码变化。 | `v1.0 -> v1.1` 可以新增可选 `radar_altitude`，旧 consumer 忽略即可。`v1.1 -> v2.0` 可以删除 `legacy_heading_raw`，或把 `heading` 从 `[0,360)` 度改成 `[-pi, pi)` 弧度；旧 consumer 必须拒绝加载。 |
 | `ObservationViewSpec` 字段 | 每个 view spec 声明 `schema_version`、`required_fields` 与 `optional_fields`。Checkpoint 加载时，major version 不匹配必须拒绝并报告不兼容 required field；minor 差异在未知 optional field 可忽略、缺失 optional field 可默认填充时允许加载。 | 在 `1.x` 上训练的 policy checkpoint 可以在 `1.2` 上加载，只要 required field 都存在；它不能静默加载到 `2.0`。 |
+| `DecisionBelief` 边界 | belief 只有在来自声明过的 `ObservationPacket` input 或声明过的 memory/estimator state 时才是 maintained。若使用 truth state、raw ECS、privileged trace 或隐藏 scenario metadata，则只能是 diagnostics-only。 | 来自 track 的 Kalman-filtered target estimate 可以是 maintained。基于 observation 的 policy latent state 可以是 maintained。手写 oracle target vector 来自 `World Truth` 时只能是 diagnostics-only。 |
+| `AgentRole` 五元素 schema | 每个维护中的 agent role 都声明 `role`、`authority_scope`、`information_state_source`、`decision_model_ref` 与 `action_interface`。 | `blue_flight_lead` 可以读取 shared tactical picture，使用 scripted doctrine 或 RL policy decision model，并产出 `CoordinationIntentPacket`。`autopilot_controller` 可以读取 platform observation 并产出 direct `ActionIntentPacket`。 |
 
 `merge_policy` 是 `ActionIntentPacket` 与 `CoordinationIntentPacket` 的必填 cross-layer request 字段。合法值为：
 
@@ -212,7 +281,7 @@ flowchart LR
 
 设计结论：
 
-1. Observation assembly 是策略可见 view contract。仿真层应暴露稳定 state snapshot 与 facade packet builder；策略层可以定义 feature subset、encoding 与 normalization。新增策略特征只有在所需 truth state 或 diagnostic export 尚不存在时，才应要求仿真层改动。
+1. Observation assembly 是策略可见 view contract。仿真层应暴露稳定 state snapshot 与 facade packet builder；策略层可以定义 feature subset、encoding、normalization 与 `DecisionBelief` construction。新增策略特征只有在所需 maintained observation、track、report 或 diagnostic export 尚不存在时，才应要求仿真层改动。
 2. Reward 拆为仿真事实与实验组合。仿真语义 reward 或 mission product 可以编译化，但 shaping weight 与训练特定 reward mix 应能在不重新编译仿真的情况下配置。如果 Python 从 mirror 计算 reward，mirror snapshot version 与 latency 必须显式化。
 3. `terminated` 与 `truncated` 不是同一个 owner。仿真拥有语义 termination；策略/测试/编排可以请求 truncation。Facade result 应同时报告两者的 reason、source layer 与 snapshot time。
 4. Coordination director 默认属于仿真层之外，除非它被明确提升为仿真模型。scripted、learned 或 human director 可以产生 `TaskingPacket`、`MissionCommand` 或 `LeaderIntent` 内容，但只能通过 facade-compatible assignment path。
@@ -221,6 +290,7 @@ flowchart LR
 7. `ScenarioLoader` 与 Gymnasium wrapper 是目标 API 适配器和 mirror，不是权威 runtime owner。它们可以满足 `(obs, reward, terminated, truncated, info)` 这样的 API shape，但 transition truth 应能从 compiled episode/facade result 恢复。
 8. Hierarchical RL 应把 sub-episode 建模为显式 lifecycle annotation 或 orchestration scope，而不是在 Python 和 C++ 中复制核心 episode 状态机。
 9. 外部 graph input 在调度窗口 barrier 之前注入。窗口开始时，facade 收集已到达的 cross-layer request，将其翻译为 state write 或 event enqueue，然后再执行 DAG。窗口内 node 读取注入后的 state/event。step `N` 发出的 policy action 对同窗口 `P3 CommandDelivery` 与 `P4 PlatformControl` 可见；只有当 `P2 TaskingIntent` 在该窗口尚未运行时，它才对 `P2` 可见。若需要 next-window 语义，应把 `effective_time` 设置到后续调度窗口。
+10. RL policy 不是 agent。learned policy、scripted doctrine、LLM planner、MCTS searcher、human operator 或 rule-based controller 都是挂接到 `AgentRole` 上的可替换 decision model。维护中的 agent 边界是 role + authority + information state + decision model + action interface。
 
 在调度上，跨层请求是外部图输入。每个 request 应声明：
 
@@ -266,7 +336,7 @@ Window N + 1 at time t + dt
 
 本架构基线的停止规则是：上述 `B` 层规则写入后，不应再为同一框架开启 `temp-04` 式 review。新发现应按直接 `B` patch、`C` task plan 或 `D` layer-specific architecture document 分流。
 
-## 七、契约分类
+## 九、契约分类
 
 facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 
@@ -275,8 +345,10 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 | `ScenarioSpec` / `ContentSpec` | 静态 scenario 与 content 描述 | `content/` 与 adapter schema |
 | `WorldSetupRequest` / `WorldSetupResult` | batch reset 与 entity 创建 | `runtime/contracts` |
 | `OrchestrationPlan` | scenario 选择、seed、reset、curriculum、truncation 与 validation schedule | 测试/编排层与 facade contracts |
+| `Capability` / `CapabilityBundle` | mobility、sensing、communication、launching、survivability、command 与 doctrine profile 的 typed platform capability composition | `content/`、model family 与 `runtime/contracts` |
 | `TaskingPacket` | mission intent、authority、relationship、task state | `components/tasking` 与 `runtime/contracts` |
 | `CommandPacket` | 可投递执行命令与链路行为 | `components/command` 与 `runtime/contracts` |
+| `AgentRole` | role、authority scope、information-state source、decision-model reference 与 action interface | 策略/编排层与 tasking authority contract |
 | `CoordinationIntentPacket` | scripted、learned 或 human coordination source output | 策略层与 facade tasking/command contracts |
 | `ActionIntentPacket` / `ActionHoldPolicy` | policy action、validity window、hold/interpolation/expiry 与 control-rate alignment | 策略层与 facade enforcement |
 | `TrackPacket` | 传感器、航迹、数据链输出 | ownership review 后进入 `components` 或 `runtime/contracts` |
@@ -287,13 +359,29 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 | `TerminationSpec` / `EpisodeStatus` | termination、truncation、reason source 与 episode phase export | 分裂：仿真拥有语义 phase，编排拥有 truncation request |
 | `ObservationViewSpec` | 面向 consumer 的 observation 字段选择、编码、归一化与 schema version | 策略/测试层 |
 | `ObservationPacket` | 前端可见状态导出 | `runtime/facade` contracts |
+| `DecisionBelief` | 由 observation、memory、estimator 或 decision-model latent state 派生的 agent 内部推断状态 | 策略层、doctrine adapter 或 human/AI decision adapter |
 | `DiagnosticsTrace` | 可解释性、replay 与验证 trace | `core/engine` 与 facade contracts |
 
 `MissionCommand` 仍是兼容性聚合点，不是未来共享语义的理想形态。后续工作应转向更窄的 tasking、command、fire-control、observation packet，而不是继续扩展一个 flat 的全领域 command 对象。
 
-## 八、领域扩展模型
+## 十、领域扩展模型
 
 领域扩展必须局部挂接到阶段，并由契约驱动。
+
+平台定义应从 entity-centric template 收敛到 capability composition：
+
+```text
+Platform =
+    mobility_capability
+  + sensor_capability
+  + communication_capability
+  + launcher_capability
+  + survivability_capability
+  + command_capability
+  + doctrine_profile
+```
+
+`spawn_unit(type_name)` 可以继续作为兼容性便利入口，但内部应展开为 typed `CapabilityBundle`。架构目标是 `spawn_platform({capabilities...})`，也就是新领域添加 capability implementation，而不是添加新的端到端 runtime path。
 
 允许的扩展族：
 
@@ -315,25 +403,44 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 4. stage-node read/write set，
 5. clock domain 与 latency policy，
 6. facade 可见性，
-7. 对等或回归测试，
-8. 对现有 Python 调用方的兼容行为。
+7. 实现或要求的 capability interface，
+8. 若涉及信息状态，则说明触及的信息状态层，
+9. 对等或回归测试，
+10. 对现有 Python 调用方的兼容行为。
 
 如果某个扩展需要新增生命周期阶段，应先更新本文档或派生冻结计划。
 
-## 九、后端与性能策略
+## 十一、后端与性能策略
 
 性能工作必须保持同一条语义生命周期。
 
 - CPU exact execution 是维护行为的语义基线。
 - CUDA helper 应通过 facade/backend packet 接入，尤其是 visual、observation、broadphase、flight shaping 和未来 resident-state 路径。
+- Backend profile taxonomy、parity budget、resident-state 边界与 capability
+  projection 规则由
+  [WP6 后端配置文件策略](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.zh.md)
+  及其 registry 约束。
+- WP6 之后的实现准备线是
+  [WP7 后端能力物化](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.zh.md)，
+  它物化 registry、projection、promotion-evidence 与 multi-fidelity entry
+  任务，但不晋级候选后端能力；其
+  [验收审查](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
+  只验收文档与实现准备计划。
 - device-resident state 只能放在能够描述 host-owned state、backend-owned state、partial sync 与 observation-only sync 的契约之后。
 - device-resident node 必须声明 host-visible state 何时同步，以及 observation 是 snapshot、partial view 还是 explicit export。
-- exact GPU world-step 在 parity、ownership 与 sync 规则冻结前，不是维护中的替代路径。
+- exact GPU world-step、resident-state 与 shadow 风格工作在 profile registry
+  entry、profile-owned parity budget、ownership/sync 规则和 validation gate
+  将其提升前，都不是维护中的替代路径。
+- `RuntimeCapabilities` 是维护中 profile metadata 与可探测部署事实的投影；
+  仅凭 helper 或 probe 存在不能声明 exact GPU、resident-state、shadow、device
+  observation 或 multi-fidelity support。当前 WP7 验收让这些 support claim
+  保持 false，直到未来 promotion review 同时更新 registry、parity budget、
+  projection adapter 与 validation evidence。
 - Rust 仍是未来 service 或 serialization 边界候选，不是近期 C++ 仿真后端替代方案。
 
 核心性能规则很简单：把 ownership 与 data residency 向下沉，但不要制造第二套语义路径。
 
-## 十、武器与交战试点切片
+## 十二、武器与交战试点切片
 
 武器线是最适合作为第一条架构试点的方向，因为它横跨完整语义生命周期，并且会检验 temporal feedback：
 
@@ -353,7 +460,7 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 
 只有当这条试点至少覆盖两个平台族时，它才真正有架构验证价值，例如航空挂架发射与舰载挂载发射。
 
-## 十一、验证门槛
+## 十三、验证门槛
 
 新的架构工作在进入维护路径前应通过以下门槛：
 
@@ -367,10 +474,12 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
 8. diagnostics 能解释 command、launch、munition、effect 或 damage report 在管线中的进入和离开位置。
 9. 跨层契约写清 observation schema、action validity、reward composition、termination/truncation source 与 episode lifecycle authority 分别由哪一层拥有。
 10. 策略/测试 adapter 证明自己可以使用 facade-shaped API 或已记录 compatibility adapter，而不进行 raw runtime mutation。
+11. 维护中的决策路径证明自己消费 `ObservationPacket` 或 `DecisionBelief`，而不是 `World Truth`。
+12. 验证能区分 design conformance、trace conformance、boundary conformance、information/belief leakage 与 replay/evidence conformance。
 
 本地 Windows 工作在缺少 RL 训练依赖时可以止步于 build/import/smoke 验证，但契约形状仍应面向未来 batch 与训练使用。
 
-## 十二、与既有文档的关系
+## 十四、与既有文档的关系
 
 本文档不删除此前计划，而是重新定位它们：
 
@@ -384,5 +493,25 @@ facade 与 adapter 应逐步收敛到所有权清晰的 typed packet：
   仍作为 `common / air / naval` 拆分的历史任务线。
 - [../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/README.zh.md)
   是把本文档转化为分阶段工作的执行子项目。
+- [../../task/simulation_architecture/scheduler_semantics_wp25_20260519.zh.md](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.zh.md)
+  是插入在 contract freeze 与 facade alignment 之间的 `WP2.5` 调度语义冻结。
+- [../../task/simulation_architecture/facade_alignment_wp4_20260519.zh.md](../../task/simulation_architecture/facade_alignment_wp4_20260519.zh.md)
+  是把信息状态和 agent 边界补充应用到维护中前端 surface 的 `WP4` facade 对齐任务族。
+- [../../task/simulation_architecture/validation_harness_wp5_20260519.zh.md](../../task/simulation_architecture/validation_harness_wp5_20260519.zh.md)
+  是覆盖 design、trace、boundary、information/belief leakage 与 replay/evidence conformance 的 `WP5` 验证套件任务族。
+- [../../task/simulation_architecture/backend_profile_policy_wp6_20260519.zh.md](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.zh.md)
+  是 `WP6` 后端配置文件策略，覆盖 backend taxonomy、parity budget、
+  resident-state 边界与 capability projection。
+- [../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md](../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)
+  记录已验收的 WP6 发布线。
+- [../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.zh.md](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.zh.md)
+  是 WP6 之后计划中的 `WP7` materialization 线，覆盖可机器检查 registry、
+  runtime capability projection、promotion evidence gates 与 multi-fidelity
+  entry conditions。
+- [../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
+  将 WP7 作为文档与实现准备线验收，不代表 exact GPU、resident-state、
+  shadow、device observation 或 multi-fidelity support 晋级。
+- [../../task/review/temp-02_review_20260519.zh.md](../../task/review/temp-02_review_20260519.zh.md)
+  是将本基线从 lifecycle + DAG 提升到 SCAL、图之图、信息状态架构和仿真编译器定位的来源评审。
 
 后续架构任务单应优先引用本文档，再引用旧文档作为论据或证据来源。

@@ -2,6 +2,8 @@
 
 #include "core/engine/world_batch_runtime.h"
 
+#include <algorithm>
+
 namespace {
 
 std::vector<WorldEntityRef> refs_from_step_requests(
@@ -16,6 +18,170 @@ std::vector<WorldEntityRef> refs_from_step_requests(
         });
     }
     return refs;
+}
+
+std::vector<WorldEntityRef> world_refs_from_engagement_refs(
+    const std::vector<EngagementEntityRef>& refs
+) {
+    std::vector<WorldEntityRef> out;
+    out.reserve(refs.size());
+    for (const auto& ref : refs) {
+        out.push_back(WorldEntityRef{
+            .world_index = ref.world_index,
+            .entity_id = ref.entity_id,
+        });
+    }
+    return out;
+}
+
+std::string track_source_name(int source) {
+    switch (source) {
+        case 1:
+            return "radar";
+        case 2:
+            return "rwr_esm";
+        case 3:
+            return "data_link";
+        case 4:
+            return "fused";
+        case 5:
+            return "sonar";
+        case 0:
+        default:
+            return "none";
+    }
+}
+
+std::string track_classification_name(int classification) {
+    switch (classification) {
+        case 1:
+            return "friendly";
+        case 2:
+            return "hostile";
+        case 3:
+            return "neutral";
+        case 0:
+        default:
+            return "unknown";
+    }
+}
+
+std::string track_status_name(int status) {
+    switch (status) {
+        case 1:
+            return "confirmed";
+        case 2:
+            return "coasted";
+        case 0:
+        default:
+            return "tentative";
+    }
+}
+
+TrackPacket track_packet_from_observation_contact(
+    const EngagementEntityRef& observer,
+    const TrackData& contact,
+    double source_time_s,
+    std::uint64_t snapshot_version
+) {
+    return TrackPacket{
+        .track_id = contact.id,
+        .correlated_entity = EngagementEntityRef{
+            .world_index = observer.world_index,
+            .entity_id = contact.id,
+        },
+        .has_correlated_entity = contact.id != 0,
+        .correlation_policy = contact.id != 0 ? "entity_id" : "unresolved",
+        .source = track_source_name(contact.source),
+        .classification = track_classification_name(contact.classification),
+        .status = track_status_name(contact.status),
+        .quality = contact.quality,
+        .confidence = contact.confidence,
+        .usable = contact.usability > 0,
+        .iff = contact.iff_known ? "known" : "unknown",
+        .source_time_s = source_time_s,
+        .update_age_s = contact.time_since_update,
+        .snapshot_version = snapshot_version,
+    };
+}
+
+DiagnosticsTrace diagnostics_trace_from_track_packet(
+    std::uint64_t trace_id,
+    const TrackPacket& track,
+    std::uint64_t observation_packet_version
+) {
+    return DiagnosticsTrace{
+        .trace_id = trace_id,
+        .parent_trace_id = 0,
+        .chain_id = trace_id,
+        .track_id = track.track_id,
+        .observation_packet_version = observation_packet_version,
+    };
+}
+
+bool contains_world_index(const std::vector<std::uint64_t>& world_indices, std::uint64_t world_index) {
+    return std::find(world_indices.begin(), world_indices.end(), world_index) != world_indices.end();
+}
+
+void assign_world_index(EngagementEntityRef& ref, std::uint64_t world_index) {
+    if (ref.entity_id != 0) {
+        ref.world_index = world_index;
+    }
+}
+
+RecentEngagementEvents with_world_index(
+    RecentEngagementEvents recent,
+    std::uint64_t world_index
+) {
+    for (auto& event : recent.launch_events) {
+        assign_world_index(event.spawned_munition, world_index);
+    }
+    for (auto& event : recent.effects_events) {
+        assign_world_index(event.munition, world_index);
+        assign_world_index(event.target, world_index);
+    }
+    for (auto& report : recent.damage_reports) {
+        assign_world_index(report.target, world_index);
+    }
+    for (auto& trace : recent.diagnostics_traces) {
+        assign_world_index(trace.munition, world_index);
+    }
+    return recent;
+}
+
+void append_recent_engagement_events(
+    EngagementEventPacket& packet,
+    const RecentEngagementEvents& recent,
+    const EngagementBatchRequest& request
+) {
+    if (request.include_launch_events) {
+        packet.launch_events.insert(
+            packet.launch_events.end(),
+            recent.launch_events.begin(),
+            recent.launch_events.end()
+        );
+    }
+    if (request.include_effects_events) {
+        packet.effects_events.insert(
+            packet.effects_events.end(),
+            recent.effects_events.begin(),
+            recent.effects_events.end()
+        );
+    }
+    if (request.include_damage_reports) {
+        packet.damage_reports.insert(
+            packet.damage_reports.end(),
+            recent.damage_reports.begin(),
+            recent.damage_reports.end()
+        );
+    }
+    if (request.include_diagnostics_traces) {
+        packet.diagnostics_traces.insert(
+            packet.diagnostics_traces.end(),
+            recent.diagnostics_traces.begin(),
+            recent.diagnostics_traces.end()
+        );
+    }
 }
 
 ObservationBatchRequest observation_request_from_step_request(
@@ -61,7 +227,18 @@ RuntimeBatchConfig RuntimeFacade::batch_config() const noexcept {
 }
 
 RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {
-    return RuntimeCapabilities{};
+    return RuntimeCapabilities{
+        .supports_batch_runtime = runtime_ != nullptr,
+        .supports_compiled_episode_controller = true,
+        .supports_compiled_execution_step = true,
+        .supports_gpu_visual = false,
+        .supports_gpu_observation = false,
+        .supports_gpu_flight_shaping = false,
+        .supports_device_observation_view = false,
+        .supports_resident_state = false,
+        .supports_exact_gpu_backend = false,
+        .supports_shadow_compare = false,
+    };
 }
 
 std::size_t RuntimeFacade::world_count() const noexcept {
@@ -270,6 +447,64 @@ EngagementEventPacket RuntimeFacade::export_engagement_event_packet(
     EngagementEventPacket packet{};
     packet.refs = request.refs;
     packet.trace_ids = request.trace_ids;
+
+    std::vector<std::uint64_t> exported_world_indices;
+    for (const auto& ref : request.refs) {
+        if (contains_world_index(exported_world_indices, ref.world_index)) {
+            continue;
+        }
+        exported_world_indices.push_back(ref.world_index);
+        append_recent_engagement_events(
+            packet,
+            with_world_index(
+                runtime_->world(static_cast<std::size_t>(ref.world_index)).export_recent_engagement_events(),
+                ref.world_index
+            ),
+            request
+        );
+    }
+
+    const bool needs_observations =
+        request.include_track_packets || request.include_diagnostics_traces;
+    if (!needs_observations || request.refs.empty()) {
+        return packet;
+    }
+
+    const auto observations = runtime_->get_agent_observations_batch(
+        world_refs_from_engagement_refs(request.refs)
+    );
+
+    std::uint64_t next_snapshot_version = 1;
+    for (std::size_t ref_index = 0; ref_index < request.refs.size(); ++ref_index) {
+        const auto& ref = request.refs[ref_index];
+        const auto& observation = observations[ref_index];
+        const std::uint64_t snapshot_version = next_snapshot_version++;
+        for (const auto& contact : observation.contacts) {
+            if (request.include_track_packets) {
+                packet.track_packets.push_back(track_packet_from_observation_contact(
+                    ref,
+                    contact,
+                    observation.sim_time,
+                    snapshot_version
+                ));
+            }
+            if (request.include_diagnostics_traces && !request.trace_ids.empty()) {
+                const auto trace_id = request.trace_ids[
+                    packet.diagnostics_traces.size() % request.trace_ids.size()
+                ];
+                packet.diagnostics_traces.push_back(diagnostics_trace_from_track_packet(
+                    trace_id,
+                    track_packet_from_observation_contact(
+                        ref,
+                        contact,
+                        observation.sim_time,
+                        snapshot_version
+                    ),
+                    snapshot_version
+                ));
+            }
+        }
+    }
     return packet;
 }
 

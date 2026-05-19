@@ -17,6 +17,57 @@ except Exception:  # pragma: no cover - torch is expected in the maintained runt
 import ef_py  # noqa: E402
 
 
+_RUNTIME_CAPABILITY_FIELDS = (
+    "supports_batch_runtime",
+    "supports_compiled_episode_controller",
+    "supports_compiled_execution_step",
+    "supports_gpu_visual",
+    "supports_gpu_observation",
+    "supports_gpu_flight_shaping",
+    "supports_device_observation_view",
+    "supports_resident_state",
+    "supports_exact_gpu_backend",
+    "supports_shadow_compare",
+)
+
+_RUNTIME_CAPABILITY_DEFAULTS = {
+    "supports_batch_runtime": False,
+    "supports_compiled_episode_controller": False,
+    "supports_compiled_execution_step": False,
+    "supports_gpu_visual": False,
+    "supports_gpu_observation": False,
+    "supports_gpu_flight_shaping": False,
+    "supports_device_observation_view": False,
+    "supports_resident_state": False,
+    "supports_exact_gpu_backend": False,
+    "supports_shadow_compare": False,
+}
+
+_RUNTIME_FACADE_CAPABILITY_EXPECTATIONS = {
+    "supports_batch_runtime": True,
+    "supports_compiled_episode_controller": True,
+    "supports_compiled_execution_step": True,
+    "supports_gpu_visual": False,
+    "supports_gpu_observation": False,
+    "supports_gpu_flight_shaping": False,
+    "supports_device_observation_view": False,
+    "supports_resident_state": False,
+    "supports_exact_gpu_backend": False,
+    "supports_shadow_compare": False,
+}
+
+_GPU_HELPER_BINDINGS = (
+    "probe_gpu_device",
+    "last_visual_experiment_stats",
+    "last_execution_observation_stats",
+    "last_flight_shaping_stats",
+    "compute_flight_shaping_batch",
+    "compute_execution_observation_batch_export",
+    "compute_world_batch_visual_observation_batch_numpy",
+    "compute_world_batch_visual_observation_batch_export",
+)
+
+
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     ref = ef_py.WorldEntityRef()
     ref.world_index = int(world_index)
@@ -25,6 +76,50 @@ def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
 
 
 class GpuRuntimeBindingTests(unittest.TestCase):
+    def test_runtime_capabilities_binding_exposes_all_fields(self) -> None:
+        capabilities = ef_py.RuntimeCapabilities()
+
+        for field, expected in _RUNTIME_CAPABILITY_DEFAULTS.items():
+            self.assertTrue(hasattr(capabilities, field), msg=f"missing RuntimeCapabilities.{field}")
+            self.assertIsInstance(getattr(capabilities, field), bool)
+            self.assertIs(
+                bool(getattr(capabilities, field)),
+                expected,
+                msg=f"unexpected default RuntimeCapabilities.{field}",
+            )
+
+            original = bool(getattr(capabilities, field))
+            setattr(capabilities, field, not original)
+            self.assertIs(bool(getattr(capabilities, field)), not original)
+            setattr(capabilities, field, original)
+
+    def test_runtime_facade_capabilities_project_backend_semantics(self) -> None:
+        capabilities = ef_py.RuntimeFacade(1).capabilities()
+
+        for helper in _GPU_HELPER_BINDINGS:
+            self.assertTrue(hasattr(ef_py, helper), msg=f"missing GPU helper/probe binding {helper}")
+
+        for field, expected in _RUNTIME_FACADE_CAPABILITY_EXPECTATIONS.items():
+            self.assertTrue(hasattr(capabilities, field), msg=f"missing RuntimeCapabilities.{field}")
+            self.assertIs(
+                bool(getattr(capabilities, field)),
+                expected,
+                msg=f"unexpected RuntimeCapabilities.{field}",
+            )
+
+        info = ef_py.probe_gpu_device()
+        self.assertIsInstance(bool(info.cuda_runtime_available), bool)
+        for field in (
+            "supports_device_observation_view",
+            "supports_resident_state",
+            "supports_exact_gpu_backend",
+            "supports_shadow_compare",
+        ):
+            self.assertFalse(
+                bool(getattr(capabilities, field)),
+                msg=f"{field} must not be inferred from GPU probe/helper binding availability",
+            )
+
     def test_visual_runtime_probe_bindings_are_available(self) -> None:
         info = ef_py.probe_gpu_device()
         self.assertTrue(hasattr(info, "cuda_runtime_built"))

@@ -13,12 +13,12 @@
 #include "runtime/contracts/world_batch_contracts.h"
 
 struct RuntimeCapabilities {
-    bool supports_batch_runtime = true;
-    bool supports_compiled_episode_controller = true;
-    bool supports_compiled_execution_step = true;
-    bool supports_gpu_visual = true;
-    bool supports_gpu_observation = true;
-    bool supports_gpu_flight_shaping = true;
+    bool supports_batch_runtime = false;
+    bool supports_compiled_episode_controller = false;
+    bool supports_compiled_execution_step = false;
+    bool supports_gpu_visual = false;
+    bool supports_gpu_observation = false;
+    bool supports_gpu_flight_shaping = false;
     bool supports_device_observation_view = false;
     bool supports_resident_state = false;
     bool supports_exact_gpu_backend = false;

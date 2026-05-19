@@ -131,6 +131,8 @@ void SimulationKernel::set_missile_tuning(const MissileTuning& tuning) {
 }
 
 void SimulationKernel::reset(unsigned int seed) {
+    clear_recent_engagement_events();
+
     // Delete all simulation entities (tagged with SimObject)
     // This is safer than delete_with<Transform> as it won't affect
     // potential non-simulation entities (e.g., UI, config singletons)

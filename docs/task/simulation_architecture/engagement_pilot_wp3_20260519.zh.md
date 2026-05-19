@@ -73,7 +73,7 @@ TrackPacket
 | `WP3-B Facade Packet Shell` | 新增 facade-shaped request/result 或 packet container，不暴露 raw runtime。 | `src/runtime/facade/runtime_facade_types.h`、`runtime_facade.h`、`runtime_facade.cpp`。 | 在 `WP3-A` 后开始；与 Python binding 独立。 | 中等 worker。 | Facade type 与由测试记录的 stub/export 路径。 |
 | `WP3-C Python Binding Surface` | 按现有 nanobind 风格向 `ef_py` 暴露 DTO 与 facade packet。 | `src/interfaces/python/bindings_runtime.cpp`；binding tests。 | 在 `WP3-A` 后开始；如果方法签名稳定，可与 `WP3-B` 并行。 | 轻量或中等 worker。 | 字段面 binding 测试。 |
 | `WP3-D Air Launch Adapter` | 把航空挂架/hardpoint 发射映射到 `LaunchRequest` 与 `LaunchEvent`。 | 航空侧 adapter code 与 air engagement tests，消费或镜像 `weapon_launch_adapter.h`。避免与 `WP3-E` 同时写 `simulation_kernel_weapon_api.cpp`。 | 如果停留在测试/adapter-local 可并行；若编辑共享 kernel launch code 则应串行。 | 中等 worker。 | 测试 adapter 层完成：带 station、ammo、cooldown、spawned munition 的 air launch accepted/rejected events。 |
-| `WP3-E Naval Launch Adapter` | 把舰载 mount/VLS 发射映射到同一套 `LaunchRequest` 与 `LaunchEvent`。 | 舰载侧 adapter code 与 naval engagement tests，消费或镜像 `weapon_launch_adapter.h`。避免与 `WP3-D` 同时写 `simulation_kernel_weapon_api.cpp`。 | 如果停留在测试/adapter-local 可并行；若编辑共享 kernel launch code 则应串行。 | 中等 worker。 | DDG 舰炮 launch 的测试 adapter 层完成；VLS 仍是后续项。 |
+| `WP3-E Naval Launch Adapter` | 把舰载 mount/VLS 发射映射到同一套 `LaunchRequest` 与 `LaunchEvent`。 | 舰载侧 adapter code 与 naval engagement tests，消费或镜像 `weapon_launch_adapter.h`。避免与 `WP3-D` 同时写 `simulation_kernel_weapon_api.cpp`。 | 如果停留在测试/adapter-local 可并行；若编辑共享 kernel launch code 则应串行。 | 中等 worker。 | DDG 舰炮与 VLS launch 的测试 adapter 层完成。 |
 | `WP3-F Munition And Damage Export` | 外露最小 lifecycle、effects 与 damage report，不泄漏完整 component。 | 如果 DTO 仍需补充则写 `src/runtime/contracts/engagement_contracts.h`；否则写 export/adapter 与测试。 | 在 `WP3-A` 后开始；若写入范围分离，可与 launch adapter 并行。 | 中等 worker。 | 测试 adapter 层已启动：`MunitionLifecyclePacket`、`EffectsEvent` 与 `DamageReport` 可镜像现有 runtime/debug observation。 |
 | `WP3-G Diagnostics Trace` | 用 id 串联 track、launch、lifecycle、effects、damage 与 observation。 | Diagnostics/export code 与 trace tests。 | 等 event/report 可观察后开始。 | 中等 worker；若 trace ownership 横跨 facade 与 engine，则使用高预算。 | 最小 trace index，而不是完整日志系统。 |
 | `WP3-H Cross-Domain Smoke` | 新增 stage-aligned local non-RL smoke。 | `tests/runtime/engagement/`，若晋升 smoke 再改 `tests/smoke/ci_smoke_suite.json`。 | 等 air/naval contract event 可观察后开始。 | 测试为轻量 worker；fixture 适配为中等 worker。 | 一个本地 smoke，证明航空与舰载共享生命周期词汇。 |
@@ -184,7 +184,7 @@ cmake --build build-local-win --target ef_core ef_py -j2
 1. `WP3-D` 已把旧航空 `fire_missile()` 的 accepted 与 rejected 结果验证为
    `LaunchRequest` 和 `LaunchEvent`。
 2. `WP3-E` 已把旧 DDG Mk 45 `fire_naval_weapon()` 验证为同一 launch event shape；
-   VLS 覆盖仍是后续项。
+   VLS 覆盖已纳入同一 launch event shape。
 3. `WP3-F` 已从现有 observation 开始构造测试级 lifecycle、effects 与 damage DTO。
 
 建议第三波 worker：
@@ -193,7 +193,7 @@ cmake --build build-local-win --target ef_core ef_py -j2
 2. `WP3-G Diagnostics Trace`。
 3. `WP3-I Integration And Cleanup`。
 
-紧邻后续：
+WP3 验收范围外的后续：
 
 1. 增补 VLS-specific naval launch 覆盖，使舰载平台上的 `fire_missile()` 与
    `fire_naval_weapon()` 都被表示。
@@ -208,6 +208,6 @@ WP3 退出条件：
 
 1. 跨领域 engagement lifecycle 可在本地不依赖 RL 地执行。
 2. 航空与舰载发射路径共享一套 typed contract vocabulary。
-3. Facade-shaped access 已可用，或每个剩余缺口都有显式 compatibility adapter 记录。
+3. Facade-shaped access 已可用，或每个验收相关缺口都有显式 compatibility adapter 记录。
 4. Diagnostics 能解释从 track 到 observation 的链条。
 5. 后续 WP4/WP5 工作被收敛为 facade hardening 与 maintained smoke promotion，而不是重新发现架构。

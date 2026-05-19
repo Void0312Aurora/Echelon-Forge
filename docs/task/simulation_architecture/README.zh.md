@@ -19,23 +19,51 @@
 
 当前活跃设计结论是：
 
-1. 项目应遵循一条规范化语义生命周期。
-2. 真实执行应使用多率 temporal DAG，反馈跨越显式 state-store 或 event-queue 边界。
-3. 空军、海军、武器和未来领域应通过阶段局部的模型族与 stage-node contract 扩展该生命周期。
-4. runtime facade 与 typed request/result 契约应成为前端长期依赖面。
-5. 策略计算层与测试/编排层应被建模为 facade contract 的显式 producer / consumer，而不是仿真状态的隐藏 owner。
-6. 本机工作应聚焦 build/import/smoke、架构文档、契约设计和仿真系统组建，而不是 RL 训练。
+1. 项目应被视为 SCAL 系统：semantic、causal、agentic 与 learning-facing，
+   `WP0-WP5` 构建经验证运行时内核，`WP6` 收口后端加速与 resident-state
+   工作所需的 backend profile policy，`WP7` 把该 policy 物化为 registry、
+   projection、evidence 与 multi-fidelity entry 任务。
+2. 项目应遵循一条规范化语义生命周期。
+3. 真实执行应使用因果-时序执行模型。temporal DAG 是调度投影，反馈跨越显式 state-store 或 event-queue 边界。
+4. 空军、海军、武器和未来领域应通过阶段局部的模型族、capability bundle 与 stage-node contract 扩展该生命周期。
+5. runtime facade 与 typed request/result 契约应成为前端长期依赖面。
+6. 策略计算层与测试/编排层应被建模为 facade contract 的显式 producer / consumer，而不是仿真状态的隐藏 owner。
+7. 信息状态边界必须区分 `World Truth`、`ObservationPacket` 与 `DecisionBelief`。
+8. 本机工作应聚焦 build/import/smoke、架构文档、契约设计和仿真系统组建，而不是 RL 训练。
+9. 后端加速与 resident-state 工作应通过契约后的显式 backend profiles 和 parity budgets 来收口，而不是走第二条语义路径。
+10. backend capability implementation 应从已验收的 WP6 registry 与 parity
+    记录出发，先补可机器检查的 materialization 与 evidence gate，再让任何
+    exact GPU、resident-state、shadow 或 multi-fidelity capability 进入维护态。
 
 ## 工作包
 
 | 工作包 | 状态 | 目标 | 产出 |
 |--------|------|------|------|
-| `WP0 Architecture Baseline` | complete | 明确语义生命周期、temporal DAG 与扩展规则 | 架构设计文档、任务子项目入口 |
+| `WP0 Architecture Baseline` | complete | 明确 SCAL 定位、语义生命周期、因果-时序执行投影与扩展规则 | 架构设计文档、任务子项目入口 |
 | `WP1 Pipeline Inventory` | complete | 把当前代码、system、model、test 映射到 `P0-P10` 与当前耦合热点 | [管线盘点](pipeline_inventory_wp1_20260519.zh.md) |
-| `WP2 Contract Freeze` | active | 识别需要显式 ownership 的 packet 族、stage-node contract 与跨层 policy/orchestration contract | [契约冻结](contract_freeze_wp2_20260519.zh.md) |
-| `WP3 Engagement Pilot` | active | 以武器/交战作为第一条跨领域验证切片 | [交战试点任务族](engagement_pilot_wp3_20260519.zh.md) |
-| `WP4 Facade Alignment` | planned | 确保试点行为可通过 facade-shaped API 访问 | facade request/result 增补与 adapter 计划 |
-| `WP5 Validation Harness` | planned | 添加证明生命周期共享的 smoke 与架构测试 | 聚焦测试与本机 Windows smoke 命令 |
+| `WP2 Contract Freeze` | complete | 识别需要显式 ownership 的 packet 族、stage-node contract 与跨层 policy/orchestration contract | [契约冻结](contract_freeze_wp2_20260519.zh.md) |
+| `WP2.5 Scheduler Semantics Freeze` | complete | 冻结 event ordering、state versioning、barrier visibility、clock-domain merge policy、replay contract 与 stage-node manifest schema | [调度语义冻结](scheduler_semantics_wp25_20260519.zh.md)、[验收审查](../review/wp25_scheduler_semantics_acceptance_review_20260519.zh.md) |
+| `WP3 Engagement Pilot` | complete | 以武器/交战作为第一条跨领域验证切片 | [交战试点任务族](engagement_pilot_wp3_20260519.zh.md) |
+| `WP4 Facade Alignment` | complete | 确保试点行为可通过 facade-shaped API 访问，并避免 raw runtime access | [facade 对齐任务族](facade_alignment_wp4_20260519.zh.md)、[最终验收](../review/wp4_facade_alignment_acceptance_review_20260519.zh.md) |
+| `WP5 Validation Harness` | complete | 添加证明共享生命周期和图边界的 smoke、architecture、trace、boundary、information-leakage 与 replay/evidence 测试 | [验证套件任务族](validation_harness_wp5_20260519.zh.md)、[最终验收](../review/wp5_validation_harness_acceptance_review_20260519.zh.md) |
+| `WP6 Backend Profile Policy` | complete | 冻结 backend profile taxonomy、parity budgets、resident-state 边界与 backend capability 暴露规则 | [后端配置文件策略](backend_profile_policy_wp6_20260519.zh.md)、[profile 注册表](wp6_backend_profile_registry_20260519.zh.md)、[parity budget 注册表](wp6_parity_budget_registry_20260519.zh.md)、[resident-state 边界规则](wp6_resident_state_boundary_rules_20260519.zh.md)、[验收审查](../review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md) |
+| `WP7 Backend Capability Materialization` | complete / accepted | 把已验收的 WP6 policy 物化为可机器检查 registry、runtime capability projection、promotion evidence gates 与 multi-fidelity entry conditions，但不晋级候选能力 | [后端能力物化](backend_capability_materialization_wp7_20260519.zh.md)、[registry materialization](wp7_registry_materialization_cluster_20260519.zh.md)、[runtime capability projection](wp7_runtime_capability_projection_cluster_20260519.zh.md)、[promotion evidence gates](wp7_promotion_evidence_gates_cluster_20260519.zh.md)、[multi-fidelity entry conditions](wp7_multifidelity_entry_conditions_cluster_20260519.zh.md)、[验收审查](../review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md) |
+
+### WP2.5 工作流地图
+
+WP2.5 虽然是冻结文档，但后续工作已经拆成有边界的流：
+
+- 先做 `WP2.5-F StageNodeManifest Schema`：
+  [manifest/event 任务簇](wp25_manifest_event_cluster_20260519.zh.md)。
+- 在 manifest 词汇稳定后，并行推进 `WP2.5-A Event Ordering and ID Rules`、
+  `WP2.5-B State Shard Versioning`、`WP2.5-C Barrier Visibility`：
+  [state/barrier 任务簇](wp25_state_barrier_cluster_20260519.zh.md)。
+- 语义规则稳定后，再做 `WP2.5-D Clock-Domain Merge`。
+- 调度语义完全冻结后，再做 `WP2.5-E Deterministic Replay Contract`：
+  [clock/replay 任务簇](wp25_clock_replay_cluster_20260519.zh.md)。
+- 最后做 `WP2.5-G Integration and Index Sync`，作为串行发布步骤。
+
+`WP2.5-D` 和 `WP2.5-E` 是思考预算最高的两个工作流。
 
 ## WP0 范围
 
@@ -142,6 +170,171 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 
 第一波实现应拆分为 contract DTO scaffold、facade packet shell、Python binding exposure、air launch adapter、naval launch adapter、munition/damage export、diagnostics trace 和 stage-aligned non-RL smoke harness。Air 与 naval worker 只有在不编辑同一个共享 kernel 文件时才适合并行。
 
+## WP4 Facade 对齐
+
+产出：
+
+- [WP4 facade 对齐任务族](facade_alignment_wp4_20260519.zh.md)
+
+WP4 把已验收的交战试点转成维护中的前端形态。它应引用 WP2.5 的调度语义，并引用 Temp-02 的 information/agency 边界：
+
+- `ObservationPacket` 是智能体被允许看见的内容。
+- `DecisionBelief` 是智能体在 inference、memory、doctrine 或 learned state 作用后认为真实的内容。
+- `AgentRole` 是 role + authority + information-state source + decision-model reference + action interface。
+
+WP4 不应创建新的仿真语义。它应让现有行为通过 facade-shaped API 或已记录 compatibility adapter 到达。
+
+WP4 分发任务簇：
+
+- 先做 `WP4-A Surface Inventory`：
+  [surface inventory 任务簇](wp4_surface_inventory_cluster_20260519.zh.md)。
+- 初始 surface 词汇稳定后，再做 `WP4-B/C Engagement, Step, And Lifecycle Alignment`：
+  [engagement/step 任务簇](wp4_engagement_step_cluster_20260519.zh.md)。
+- action、coordination、observation、belief 与 agent-role 名称稳定后，再做 `WP4-D/E Policy, AgentRole, And Python Mirror`：
+  [policy/binding 任务簇](wp4_policy_binding_cluster_20260519.zh.md)。
+- `WP4-F Integration And Docs` 保持串行，由主线程或专门 integration worker 在任务簇返回后处理。
+
+`WP4-A`、`WP4-C` 与 `WP4-D` 是思考预算最高的工作流，因为它们触及跨层语义、belief 边界或 adapter ownership。
+
+WP4 第一波产物已作为 discovery 输入验收：
+
+- [WP4 第一波验收审查](../review/wp4_first_wave_acceptance_review_20260519.zh.md)
+- [WP4-A surface inventory 初稿](wp4_surface_inventory_wp4a_20260519.zh.md)
+- [WP4-B/C engagement-step 对齐笔记](wp4_engagement_step_alignment_notes_20260519.md)
+- [WP4-D/E policy-binding 对齐笔记](wp4_policy_binding_alignment_notes_20260519.zh.md)
+
+WP4 第二波任务簇：
+
+- `WP4-G Facade Evidence Gates`：
+  [facade evidence 任务簇](wp4_facade_evidence_cluster_20260519.zh.md)。
+- `WP4-H Information And Agent Shim`：
+  [agent shim 任务簇](wp4_agent_shim_cluster_20260519.zh.md)。
+- `WP4-I Compatibility Guard And Integration`：
+  [compat guard 任务簇](wp4_compat_guard_cluster_20260519.zh.md)。
+
+WP4 第二波与集成产物：
+
+- [WP4 第二波验收审查](../review/wp4_second_wave_acceptance_review_20260519.zh.md)
+- [WP4-I compatibility guard 笔记](wp4_compat_guard_notes_20260519.zh.md)
+- [WP4-F 集成交接](wp4_integration_handoff_20260519.zh.md)
+- [WP4 最终验收审查](../review/wp4_facade_alignment_acceptance_review_20260519.zh.md)
+
+## WP5 验证套件
+
+产出：
+
+- [WP5 验证套件任务族](validation_harness_wp5_20260519.zh.md)
+
+WP5 把架构与 facade 工作转化为维护中的证据。验证套件应覆盖五个验证层级：
+
+- design conformance，
+- trace conformance，
+- boundary conformance，
+- information/belief leakage，
+- replay/evidence conformance。
+
+WP5 从已验收的 WP4 facade label 启动。它不应从 raw runtime inspection 出发；重点是证明 facade-shaped artifact、diagnostics 与 replay metadata 足以验证共享架构。
+
+WP5 第一波任务簇：
+
+- `WP5-A Harness Inventory`：
+  [harness inventory 任务簇](wp5_harness_inventory_cluster_20260519.zh.md)。
+- `WP5-B Design And Boundary Gates`：
+  [design/boundary 任务簇](wp5_design_boundary_cluster_20260519.zh.md)。
+- `WP5-C Trace And Replay Gates`：
+  [trace/replay 任务簇](wp5_trace_replay_cluster_20260519.zh.md)。
+
+`WP5-C` 是第一波中推理预算最高的流，因为 trace ancestry 与 replay metadata
+测试如果假设了 WP4 明确推迟的 runtime metadata，就会变得脆弱。
+
+WP5 第一波产物已验收：
+
+- [WP5 第一波验收审查](../review/wp5_first_wave_acceptance_review_20260519.zh.md)
+- [WP5-A harness inventory 笔记](wp5_harness_inventory_notes_20260519.zh.md)
+- [WP5-B design/boundary 笔记](wp5_design_boundary_notes_20260519.zh.md)
+- [WP5-C trace/replay gates 笔记](wp5_trace_replay_gates_notes_20260519.zh.md)
+
+WP5 第二波任务簇：
+
+- `WP5-D Information And Belief Gates`：
+  [information/belief 任务簇](wp5_information_belief_cluster_20260519.zh.md)。
+- `WP5-E Smoke Promotion And Docs`：
+  [smoke promotion 任务簇](wp5_smoke_promotion_cluster_20260519.zh.md)。
+
+WP5 第二波与最终产物已验收：
+
+- [WP5-D information/belief 验收审查](../review/wp5_information_belief_acceptance_review_20260519.zh.md)
+- [WP5-D information/belief 笔记](wp5_information_belief_notes_20260519.zh.md)
+- [WP5-E smoke promotion 笔记](wp5_smoke_promotion_notes_20260519.zh.md)
+- [WP5 validation harness 验收审查](../review/wp5_validation_harness_acceptance_review_20260519.zh.md)
+
+## WP6 后端配置文件策略
+
+产出：
+
+- [WP6 后端配置文件策略](backend_profile_policy_wp6_20260519.zh.md)
+- [WP6-A 后端配置文件分类分发单](wp6_backend_profile_taxonomy_cluster_20260519.zh.md)
+- [WP6-A 后端配置文件注册表](wp6_backend_profile_registry_20260519.zh.md)
+- [WP6-B parity budget 分发单](wp6_parity_budget_cluster_20260519.zh.md)
+- [WP6-B parity budget 注册表](wp6_parity_budget_registry_20260519.zh.md)
+- [WP6-C + WP6-D 集成交接](wp6_integration_and_index_sync_20260519.zh.md)
+- [WP6-C1 resident-state 边界规则](wp6_resident_state_boundary_rules_20260519.zh.md)
+- [WP6 后端配置文件策略验收审查](../review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)
+
+WP6 用契约把 backend profile 与 parity budget 的空档收口。它冻结 profile
+词汇、budget 记录、resident-state 边界与 capability projection 规则，让
+accelerated、resident-state、approximate 与 diagnostics-only 路径在进入维护态前有明确约束。
+
+WP6 工作流地图：
+
+- `WP6-A Backend Profile Taxonomy`：
+  [taxonomy 分发单](wp6_backend_profile_taxonomy_cluster_20260519.zh.md) 与
+  [profile 注册表](wp6_backend_profile_registry_20260519.zh.md)。
+- `WP6-B Parity Budget And Comparison Rules`：
+  [parity budget 分发单](wp6_parity_budget_cluster_20260519.zh.md) 与
+  [parity budget 注册表](wp6_parity_budget_registry_20260519.zh.md)。
+- `WP6-C Resident-State And Backend Capability Alignment`：
+  [resident-state 边界规则](wp6_resident_state_boundary_rules_20260519.zh.md)，以及
+  [runtime facade layering 测试](../../../tests/architecture/test_runtime_facade_layering.py)、
+  [runtime facade 测试](../../../tests/runtime/facade/test_runtime_facade.py) 和
+  [GPU runtime binding 测试](../../../tests/test_gpu_runtime_bindings.py) 中的 capability-projection guard。
+- `WP6-D Integration And Index Sync`：
+  [集成交接](wp6_integration_and_index_sync_20260519.zh.md) 与
+  [验收审查](../review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)。
+
+## WP7 后端能力物化
+
+产出：
+
+- [WP7 后端能力物化](backend_capability_materialization_wp7_20260519.zh.md)
+- [WP7-A registry materialization 任务簇](wp7_registry_materialization_cluster_20260519.zh.md)
+- [WP7-A registry materialization 笔记](wp7_registry_materialization_notes_20260519.zh.md)
+- [WP7-B runtime capability projection 任务簇](wp7_runtime_capability_projection_cluster_20260519.zh.md)
+- [WP7-B runtime capability projection 笔记](wp7_runtime_capability_projection_notes_20260519.zh.md)
+- [WP7-C promotion evidence gates 任务簇](wp7_promotion_evidence_gates_cluster_20260519.zh.md)
+- [WP7-C promotion evidence gates 笔记](wp7_promotion_evidence_gates_notes_20260519.zh.md)
+- [WP7-D multi-fidelity entry conditions 任务簇](wp7_multifidelity_entry_conditions_cluster_20260519.zh.md)
+- [WP7-D multi-fidelity entry conditions 笔记](wp7_multifidelity_entry_conditions_notes_20260519.zh.md)
+- [WP7-E integration and index sync 任务簇](wp7_integration_and_index_sync_cluster_20260519.zh.md)
+- [WP7 后端能力物化验收审查](../review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
+
+WP7 是 WP6 之后已验收的文档与实现准备线。它把已验收的 backend profile policy
+转成 materialized registry、runtime projection、promotion evidence 与
+multi-fidelity entry conditions。本次验收不晋级 exact GPU、resident-state、
+device observation、shadow 或 adaptive fidelity support；当前 support 仍为
+false，直到未来 promotion review 同时更新 registry、parity budget、projection
+adapter 与 validation evidence。
+
+WP7 工作流地图：
+
+- `WP7-A Registry Materialization` 先启动，负责可机器检查 registry/schema shape。
+- `WP7-D Multi-Fidelity Entry Conditions` 可以与 WP7-A 并行，但必须引用
+  WP6/WP7-A profile 词汇，不能发明 support claim。
+- `WP7-B Runtime Capability Projection` 等 WP7-A 稳定后启动，并保持 projection 保守。
+- `WP7-C Promotion Evidence Gates` 消费 WP7-A/D，并把 candidate promotion 映射到
+  WP5 validation tiers。
+- `WP7-E Integration And Index Sync` 串行执行，应在 A-D 稳定后启动。
+
 ## 验收门槛
 
 从本子项目派生的每项实现任务都应满足：
@@ -155,6 +348,13 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 7. 本地 smoke test 不要求 RL 依赖，
 8. diagnostics 能解释 command、launch、munition、effect 和 damage event，
 9. observation schema、action validity、reward composition、termination/truncation source 与 episode lifecycle authority 都被分配到显式层级。
+10. 维护中的决策路径消费 `ObservationPacket` 或声明过的 `DecisionBelief`，而不是 `World Truth`。
+11. backend capability 声明必须引用维护中的 backend profile 与 parity budget；
+    `RuntimeCapabilities` 不能仅凭 helper/probe 存在就推断 exact GPU、resident-state
+    或 shadow support。
+12. WP7 capability materialization 让 exact GPU、resident-state、device observation、
+    shadow 与 multi-fidelity support 保持 false，除非维护中 profile revision、
+    parity budget、ownership/sync policy 与 validation gate 明确晋级该 claim。
 
 ## 非目标
 
