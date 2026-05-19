@@ -1,0 +1,142 @@
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+ENGAGEMENT_HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "engagement_contracts.h"
+
+
+def _header_text() -> str:
+    return ENGAGEMENT_HEADER.read_text(encoding="utf-8")
+
+
+def _struct_body(header: str, struct_name: str) -> str:
+    pattern = rf"\bstruct\s+{re.escape(struct_name)}\b[^{{;]*\{{(?P<body>.*?)\n\}};"
+    match = re.search(pattern, header, flags=re.DOTALL)
+    assert match is not None, f"{struct_name} is missing from {ENGAGEMENT_HEADER}"
+    return match.group("body")
+
+
+def _assert_fields_present(body: str, fields: tuple[str, ...]) -> None:
+    missing = [
+        field
+        for field in fields
+        if re.search(rf"\b{re.escape(field)}\b", body) is None
+    ]
+    assert not missing, f"missing fields: {', '.join(missing)}"
+
+
+def test_engagement_contract_header_exists_at_stable_runtime_contract_path() -> None:
+    assert ENGAGEMENT_HEADER.is_file()
+
+
+def test_engagement_contract_header_does_not_include_core_or_engine_layers() -> None:
+    header = _header_text()
+    include_lines = re.findall(r"^\s*#\s*include\s+[<\"]([^>\"]+)[>\"]", header, flags=re.MULTILINE)
+
+    forbidden = [
+        include_path
+        for include_path in include_lines
+        if "core/" in include_path or "engine/" in include_path
+    ]
+
+    assert forbidden == []
+
+
+def test_engagement_contract_header_exposes_cross_domain_launch_surface() -> None:
+    header = _header_text()
+
+    launch_request = _struct_body(header, "LaunchRequest")
+    launch_event = _struct_body(header, "LaunchEvent")
+
+    _assert_fields_present(
+        launch_request,
+        (
+            "request_id",
+            "shooter",
+            "target_entity",
+            "target_track_id",
+            "station_id",
+            "mount_id",
+            "requested_munition_family",
+            "authority",
+            "requested_time_s",
+            "merge_policy",
+        ),
+    )
+    _assert_fields_present(
+        launch_event,
+        (
+            "event_id",
+            "request_id",
+            "accepted",
+            "rejection_reason",
+            "selected_launcher",
+            "selected_munition",
+            "ammo_delta",
+            "cooldown_delta_s",
+            "spawned_munition",
+            "event_time_s",
+        ),
+    )
+
+
+def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface() -> None:
+    header = _header_text()
+
+    lifecycle_packet = _struct_body(header, "MunitionLifecyclePacket")
+    effects_event = _struct_body(header, "EffectsEvent")
+    damage_report = _struct_body(header, "DamageReport")
+
+    _assert_fields_present(
+        lifecycle_packet,
+        (
+            "packet_id",
+            "munition",
+            "attacker",
+            "target_entity",
+            "target_track_id",
+            "launch_event_id",
+            "active",
+            "seeker_mode",
+            "guidance_cadence_s",
+            "track_memory_state",
+            "fuel_remaining_fraction",
+            "burnout",
+            "max_flight_time_s",
+            "fuze_state",
+            "source_time_s",
+        ),
+    )
+    _assert_fields_present(
+        effects_event,
+        (
+            "event_id",
+            "munition",
+            "target",
+            "trigger_type",
+            "outcome_state",
+            "detonation_time_s",
+            "nearest_approach_time_s",
+            "effect_family",
+        ),
+    )
+    _assert_fields_present(
+        damage_report,
+        (
+            "report_id",
+            "target",
+            "source_event_id",
+            "hp_delta",
+            "system_health_delta",
+            "platform_damage_state_delta",
+            "mission_kill",
+            "mobility_kill",
+            "sensor_kill",
+            "survivability_kill",
+            "destroyed",
+            "report_time_s",
+        ),
+    )

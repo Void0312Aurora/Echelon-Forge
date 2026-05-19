@@ -206,19 +206,27 @@ Recommended WP2 topics:
 10. Clock-domain rule: keep nested triggering as the default and require an
     explicit merge policy for independent clocks.
 11. `ObservationViewSpec`: freeze which side owns field selection, encoding,
-    normalization, schema version, and snapshot source.
+    normalization, schema version, required/optional fields, compatibility
+    checks, and snapshot source.
 12. `ActionIntentPacket` / `ActionHoldPolicy`: freeze policy-action effective
     time, validity window, hold/interpolation/expiry, and the `P3/P4/P5`
     boundary.
 13. `RewardSpec` / `RewardReport`: freeze the split between simulation facts
-    and experiment shaping, including mirror snapshot version and latency when
-    Python computes reward.
+    and experiment shaping using the architecture fact/shaping criterion,
+    including mirror snapshot version and latency when Python computes reward.
 14. `TerminationSpec` / `EpisodeStatus`: freeze semantic termination versus
     training/test truncation and require reason-source attribution.
 15. `EpisodeLifecycleContract`: freeze compiled/facade authority for episode
     phase, transition, and reset while allowing Gymnasium/batch mirrors.
 16. `CoordinationIntentPacket`: freeze how scripted, learned, and human
     directors write tasking or command intent through facade-compatible paths.
+17. Cross-layer `merge_policy`: choose one of `last_write_wins`,
+    `priority_override`, `reject_on_conflict`, `merge_by_field`, or
+    `append_only` for each producer path.
+18. External-input injection: decide whether each action/coordination path uses
+    same-window injection or a later `effective_time`.
+19. Observation compatibility: label schema changes as minor-compatible or
+    major-incompatible and define checkpoint-loading behavior.
 
 ## 9. WP3 Engagement Pilot Inputs
 
@@ -235,6 +243,11 @@ The most useful pilot should prove:
 ## 10. Current Status
 
 WP1 has enough evidence to proceed to `WP2 Contract Freeze`.
+
+The architecture framework itself is now closed. Future findings should be
+routed by layer: direct architecture patch for `B` contract semantics, task
+plan for `C` implementation alignment, and separate layer-specific architecture
+document for `D` internal design blanks.
 
 The current implementation is best described as:
 

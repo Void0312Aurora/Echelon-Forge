@@ -41,8 +41,8 @@ The active design conclusion is:
 |--------------|--------|------|--------|
 | `WP0 Architecture Baseline` | complete | Make the semantic lifecycle, temporal DAG, and extension rules explicit | architecture design doc, task subproject entry |
 | `WP1 Pipeline Inventory` | complete | Map current code, systems, models, and tests onto `P0-P10` and current coupling hotspots | [pipeline inventory](pipeline_inventory_wp1_20260519.md) |
-| `WP2 Contract Freeze` | planned | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | tasking/command/track/launch/damage/observation plus action/reward/termination/episode contract plan |
-| `WP3 Engagement Pilot` | planned | Use weapon/engagement as the first cross-domain validation slice | launcher, munition, effects, damage, observation task plan |
+| `WP2 Contract Freeze` | active | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | [contract freeze](contract_freeze_wp2_20260519.md) |
+| `WP3 Engagement Pilot` | active | Use weapon/engagement as the first cross-domain validation slice | [engagement pilot task family](engagement_pilot_wp3_20260519.md) |
 | `WP4 Facade Alignment` | planned | Ensure pilot behavior is reachable through facade-shaped APIs | facade request/result additions and adapter plan |
 | `WP5 Validation Harness` | planned | Add smoke and architecture tests that prove the lifecycle is shared | focused tests and local Windows smoke commands |
 
@@ -102,6 +102,10 @@ Input:
 
 - [WP1 pipeline inventory](pipeline_inventory_wp1_20260519.md)
 
+Output:
+
+- [WP2 contract freeze](contract_freeze_wp2_20260519.md)
+
 WP2 should turn the inventory into a scoped contract plan. It should decide:
 
 1. which packet families already exist,
@@ -121,17 +125,38 @@ WP2 should turn the inventory into a scoped contract plan. It should decide:
     variants versus simulation-owned state exports,
 12. how policy action cadence maps onto `P3/P4/P5` using `ActionIntentPacket`
     and `ActionHoldPolicy`,
-13. how reward is split between simulation facts and experiment shaping,
+13. how reward is split between simulation facts and experiment shaping using
+    the fact/shaping criterion from the architecture baseline,
 14. how `terminated` and `truncated` reasons are attributed to simulation,
     policy, or orchestration sources,
 15. which side owns authoritative episode phase and which side only mirrors it
     for Gymnasium, batch, replay, or CI APIs,
 16. how scripted, learned, and human coordination directors inject tasking or
-    command intent without mutating raw ECS state.
+    command intent without mutating raw ECS state,
+17. which `merge_policy` each cross-layer producer uses,
+18. which scheduling-window injection semantics each action or coordination
+    path expects,
+19. which observation schema changes are minor-compatible versus
+    major-incompatible.
 
 The expected output is a freeze document, not implementation.
 
+Architecture closure note:
+
+- The architecture framework is closed at the simulation/policy/orchestration
+  layer boundary.
+- Remaining `B`-level contract semantic details should patch the architecture
+  baseline directly.
+- `C`-level implementation alignment should be tracked as task plans.
+- `D`-level internal design blanks, such as policy-layer internals or
+  orchestration-layer internals, should become separate architecture docs and
+  should not reopen the simulation-layer framework.
+
 ## WP3 Engagement Pilot
+
+Output:
+
+- [WP3 engagement pilot task family](engagement_pilot_wp3_20260519.md)
 
 The first implementation pilot should be the engagement lifecycle because it
 crosses the largest number of architecture boundaries and naturally uses
@@ -147,6 +172,12 @@ The pilot must involve at least two platform families, such as:
 The pilot should avoid creating separate `air weapon` and `naval weapon`
 runtime paths. Differences should appear in launcher, munition, seeker,
 guidance, fuze, effects, doctrine families, and clock-domain policies.
+
+The first implementation wave should be split into contract DTO scaffolding,
+facade packet shells, Python binding exposure, air launch adapters, naval
+launch adapters, munition/damage export, diagnostics trace, and a
+stage-aligned non-RL smoke harness. Air and naval workers may run in parallel
+only when they do not edit the same shared kernel file.
 
 ## Acceptance Gates
 

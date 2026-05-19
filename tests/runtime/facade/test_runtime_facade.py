@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
+from pathlib import Path
 
 from python.testing.runtime import ensure_repo_imports
 from python.testing.runtime import resolve_repo_path
@@ -103,7 +105,105 @@ def _build_route_request(entity_id: int) -> ef_py.WorldExecutionEpisodeStepReque
     return request
 
 
+def _repo_text(*parts: str) -> str:
+    return Path(resolve_repo_path(*parts)).read_text(encoding="utf-8")
+
+
+def _method_body(source: str, signature: str) -> str:
+    start = source.index(signature)
+    body_start = source.index("{", start)
+    depth = 0
+    for index in range(body_start, len(source)):
+        char = source[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return source[body_start:index + 1]
+    raise AssertionError(f"could not find method body for {signature}")
+
+
 class RuntimeFacadeTests(unittest.TestCase):
+    def test_runtime_facade_declares_engagement_packet_shell_types(self) -> None:
+        header = _repo_text("src", "runtime", "facade", "runtime_facade_types.h")
+
+        self.assertIn('#include "runtime/contracts/engagement_contracts.h"', header)
+        self.assertIn("struct EngagementBatchRequest", header)
+        self.assertIn("struct EngagementEventPacket", header)
+
+        request_block = re.search(
+            r"struct EngagementBatchRequest \{(?P<body>.*?)\};",
+            header,
+            flags=re.S,
+        )
+        self.assertIsNotNone(request_block)
+        request_body = request_block.group("body")
+        self.assertIn("std::vector<EngagementEntityRef> refs", request_body)
+        self.assertIn("std::vector<std::uint64_t> trace_ids", request_body)
+        for flag in [
+            "include_track_packets",
+            "include_launch_requests",
+            "include_launch_events",
+            "include_munition_lifecycle_packets",
+            "include_effects_events",
+            "include_damage_reports",
+            "include_diagnostics_traces",
+        ]:
+            self.assertIn(flag, request_body)
+
+        packet_block = re.search(
+            r"struct EngagementEventPacket \{(?P<body>.*?)\};",
+            header,
+            flags=re.S,
+        )
+        self.assertIsNotNone(packet_block)
+        packet_body = packet_block.group("body")
+        for field in [
+            "std::vector<EngagementEntityRef> refs",
+            "std::vector<std::uint64_t> trace_ids",
+            "std::vector<TrackPacket> track_packets",
+            "std::vector<LaunchRequest> launch_requests",
+            "std::vector<LaunchEvent> launch_events",
+            "std::vector<MunitionLifecyclePacket> munition_lifecycle_packets",
+            "std::vector<EffectsEvent> effects_events",
+            "std::vector<DamageReport> damage_reports",
+            "std::vector<DiagnosticsTrace> diagnostics_traces",
+        ]:
+            self.assertIn(field, packet_body)
+
+    def test_runtime_facade_exports_empty_engagement_packet_without_runtime_escape(self) -> None:
+        facade_header = _repo_text("src", "runtime", "facade", "runtime_facade.h")
+        facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
+
+        self.assertIn(
+            "EngagementEventPacket export_engagement_event_packet("
+            "const EngagementBatchRequest& request) const;",
+            facade_header,
+        )
+
+        body = _method_body(
+            facade_source,
+            "EngagementEventPacket RuntimeFacade::export_engagement_event_packet",
+        )
+        self.assertIn("EngagementEventPacket packet{}", body)
+        self.assertIn("packet.refs = request.refs", body)
+        self.assertIn("packet.trace_ids = request.trace_ids", body)
+        self.assertIn("return packet", body)
+        self.assertNotIn("runtime_", body)
+        self.assertNotIn(".runtime(", body)
+        self.assertNotIn("fire_missile", body)
+        for field in [
+            "track_packets",
+            "launch_requests",
+            "launch_events",
+            "munition_lifecycle_packets",
+            "effects_events",
+            "damage_reports",
+            "diagnostics_traces",
+        ]:
+            self.assertNotIn(f"packet.{field} =", body)
+
     def test_resolve_active_controllable_roster_returns_active_members(self) -> None:
         scenario = {
             "scenario_name": "roster_resolution",

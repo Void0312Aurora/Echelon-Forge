@@ -264,6 +264,15 @@ ObservationBatchPacket RuntimeFacade::export_observation_packet(const Observatio
     return build_observation_packet(request);
 }
 
+EngagementEventPacket RuntimeFacade::export_engagement_event_packet(
+    const EngagementBatchRequest& request
+) const {
+    EngagementEventPacket packet{};
+    packet.refs = request.refs;
+    packet.trace_ids = request.trace_ids;
+    return packet;
+}
+
 ObservationBatchPacket RuntimeFacade::build_observation_packet(
     const ObservationBatchRequest& request
 ) const {

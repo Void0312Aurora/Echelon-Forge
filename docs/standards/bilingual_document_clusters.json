@@ -80,8 +80,8 @@
       "chinese": "docs/plan/architecture/simulation_system_architecture_design.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-05-19",
-      "english_hash": "5a47460f5d233bc4bc7aea6283a50fa1161d6376776ac1981347fcffd01fdba3",
-      "chinese_hash": "02bad279ee72a02bd81249ac0843edc377925afb9d4ddbce7b2dc1d144c70fd8"
+      "english_hash": "f857f2ed5ada1c8257f07e7e01b28f4e26093543dc8182ff6be5bdfbc5f92c17",
+      "chinese_hash": "e7494a5f5c27df5450a0a270715dba8fd140017f4d4a6739dc8f3d63ca774e65"
     },
     {
       "pair_id": "plan/architecture/system_layering_and_engine_encapsulation_plan",
@@ -530,7 +530,7 @@
       "chinese": "docs/task/simulation_architecture/README.zh.md",
       "source_of_truth": "english",
       "last_verified": "2026-05-19",
-      "english_hash": "d7855a2719c053397bb7b97bc9361a92c856512e34f9cc23519d3468ded323a9",
+      "english_hash": "a37cd73021b86afaf9d8f9d0798b32a7faef6e60b3ae889101f6d24f05adf59b",
       "chinese_hash": "732ada9d1ca6d01a50502af91d53fa8cd7a280f45ba7a75e4ef174784c069d63"
     },
     {

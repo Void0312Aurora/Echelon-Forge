@@ -7,6 +7,7 @@
 - `core/`
 - `execution/`
 - `facade/`
+- `engagement/`
 - `link/`
 - `mission/`
 - `multi_agent/`
@@ -20,6 +21,7 @@ Common entry points:
 
 ```bash
 cmo_python -m pytest -q tests/runtime/core/test_env_config.py
+cmo_python -m pytest -q tests/runtime/engagement
 cmo_python -m pytest -q tests/runtime/facade/test_runtime_facade.py
 ```
 

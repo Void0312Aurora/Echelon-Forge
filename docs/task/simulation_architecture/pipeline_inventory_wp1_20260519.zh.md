@@ -159,12 +159,15 @@ WP2 不应从字段级重写开始。它应先冻结最薄弱阶段的 packet ow
 8. DAG composition rule：冻结从 `read_set` 与 `write_set` 推导 edge 的规则，并标记通过 `StateStore` 或 `EventQueue` 发生的跨窗口反馈。
 9. Event ordering rule：为 launch、fuze、damage、report 与 observation event 冻结确定性 `(timestamp, priority, event_id)` 排序。
 10. Clock-domain rule：默认使用嵌套触发，独立 clock 需要显式 merge policy。
-11. `ObservationViewSpec`：冻结 field selection、encoding、normalization、schema version 与 snapshot source 分别由哪一侧拥有。
+11. `ObservationViewSpec`：冻结 field selection、encoding、normalization、schema version、required/optional fields、compatibility check 与 snapshot source 分别由哪一侧拥有。
 12. `ActionIntentPacket` / `ActionHoldPolicy`：冻结 policy action 的 effective time、validity window、hold/interpolation/expiry 与 `P3/P4/P5` 边界。
-13. `RewardSpec` / `RewardReport`：冻结仿真事实与实验 shaping 的拆分，包括 Python 计算 reward 时的 mirror snapshot version 与 latency。
+13. `RewardSpec` / `RewardReport`：依据架构 fact/shaping 判据冻结仿真事实与实验 shaping 的拆分，包括 Python 计算 reward 时的 mirror snapshot version 与 latency。
 14. `TerminationSpec` / `EpisodeStatus`：冻结语义 termination 与训练/测试 truncation 的边界，并要求 reason-source attribution。
 15. `EpisodeLifecycleContract`：冻结 compiled/facade 对 episode phase、transition 与 reset 的 authority，同时允许 Gymnasium/batch mirror。
 16. `CoordinationIntentPacket`：冻结 scripted、learned 与 human director 如何通过 facade-compatible path 写入 tasking 或 command intent。
+17. Cross-layer `merge_policy`：为每条 producer path 选择 `last_write_wins`、`priority_override`、`reject_on_conflict`、`merge_by_field` 或 `append_only`。
+18. 外部 input injection：决定每条 action/coordination path 使用 same-window injection 还是更晚的 `effective_time`。
+19. Observation compatibility：把 schema 变更标记为 minor-compatible 或 major-incompatible，并定义 checkpoint-loading 行为。
 
 ## 九、WP3 Engagement Pilot 输入
 
@@ -180,6 +183,8 @@ WP2 不应从字段级重写开始。它应先冻结最薄弱阶段的 packet ow
 ## 十、当前状态
 
 WP1 已经具备进入 `WP2 Contract Freeze` 的证据基础。
+
+架构框架本身现在已经闭合。后续发现应按层级分流：`B` 层契约语义直接 patch 架构文档，`C` 层实现对齐进入 task plan，`D` 层内部设计空白新建对应层的独立架构文档。
 
 当前实现最适合描述为：
 

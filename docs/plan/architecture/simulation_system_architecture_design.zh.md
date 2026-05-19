@@ -183,14 +183,32 @@ flowchart LR
 
 | 契约 | 主要 owner | 仿真层职责 | 策略/编排层职责 |
 |------|------------|------------|-----------------|
-| `ObservationViewSpec` | 策略或测试层 | 暴露可查询 state shard、已提交 snapshot version、facade packet builder 与 diagnostics。 | 选择字段、编码、归一化、stacking、masking 与 consumer schema version。 |
+| `ObservationViewSpec` | 策略或测试层 | 暴露可查询 state shard、已提交 snapshot version、facade packet builder 与 diagnostics。 | 选择字段、编码、归一化、stacking、masking、required/optional fields 与 consumer schema version。 |
 | `ObservationPacket` | Runtime facade | 返回在声明 barrier 或 snapshot version 上采样的数据，并带 source time 与 schema metadata。 | 消费 packet，不假设 raw ECS layout 或未版本化 Python 字段顺序。 |
-| `ActionIntentPacket` | 策略层 | 通过 facade 接收 action intent，并在 `P3/P4` 边界翻译为 command/control input。 | 声明 action source、effective time、target entity、action family，以及它是 direct control、mission command 还是 coordination intent。 |
+| `ActionIntentPacket` | 策略层 | 通过 facade 接收 action intent，并在 `P3/P4` 边界翻译为 command/control input。 | 声明 action source、effective time、target entity、action family、`merge_policy`，以及它是 direct control、mission command 还是 coordination intent。 |
 | `ActionHoldPolicy` | 策略层，由 facade/仿真执行 | 在 control-rate 与 physics-rate tick 之间确定性应用 hold-last、interpolation、expiry 或 drop 语义。 | 声明 action validity duration、refresh cadence、expiry behavior 与 credit-assignment latency 假设。 |
-| `CoordinationIntentPacket` | 策略层 | 只允许 scripted、learned 或 human director output 通过 tasking/command facade 路径进入，再调度到 `P2/P3`。 | 声明 source type、source id、target roster、update clock，以及产出的 tasking 或 leader-intent 字段。 |
+| `CoordinationIntentPacket` | 策略层 | 只允许 scripted、learned 或 human director output 通过 tasking/command facade 路径进入，再调度到 `P2/P3`。 | 声明 source type、source id、target roster、update clock、`merge_policy`，以及产出的 tasking 或 leader-intent 字段。 |
 | `RewardSpec` / `RewardReport` | 分裂 ownership | 提供语义事实、编译侧 mission products、damage/kill report 与 versioned state snapshot。 | 组合实验 reward、shaping weight、curriculum-dependent term 与 consumer-specific reward breakdown。 |
 | `TerminationSpec` / `EpisodeStatus` | 分裂 ownership | 拥有 crash、kill、mission success、out-of-bounds、fuel exhaustion 等仿真语义 `terminated` reason。 | 拥有 max steps、curriculum cutoff、early stopping、benchmark wall-clock policy 等实验 `truncated` reason。 |
 | `EpisodeLifecycleContract` | 仿真层拥有权威 phase；编排层拥有 reset request | 拥有权威 episode phase、transition result、reset application 与 facade-exported mirrored status。 | 请求 reset/truncation，为 Gymnasium 或测试 API mirror status，但不推进私有权威状态机。 |
+
+契约细节规则：
+
+| 领域 | 规则 | 示例 |
+|------|------|------|
+| `RewardSpec` fact 边界 | 一个量当且仅当只依赖权威仿真状态加静态 mission/content data，且不依赖训练配置（权重、curriculum phase、RL 算法或 benchmark policy）时，才是 simulation fact。否则它是 shaping term 或 experiment composition。 | 坠毁状态是 fact。相对任务航线的横向偏差是 fact。横向偏差平方乘以权重 `0.5` 是 shaping。curriculum 1-3 阶段把航线奖励加倍是 shaping。 |
+| `ObservationViewSpec` 版本格式 | 使用 `<major>.<minor>` schema version。minor 变化表示兼容新增或不改变字段语义的布局变化。major 变化表示不兼容删除、语义变化或编码变化。 | `v1.0 -> v1.1` 可以新增可选 `radar_altitude`，旧 consumer 忽略即可。`v1.1 -> v2.0` 可以删除 `legacy_heading_raw`，或把 `heading` 从 `[0,360)` 度改成 `[-pi, pi)` 弧度；旧 consumer 必须拒绝加载。 |
+| `ObservationViewSpec` 字段 | 每个 view spec 声明 `schema_version`、`required_fields` 与 `optional_fields`。Checkpoint 加载时，major version 不匹配必须拒绝并报告不兼容 required field；minor 差异在未知 optional field 可忽略、缺失 optional field 可默认填充时允许加载。 | 在 `1.x` 上训练的 policy checkpoint 可以在 `1.2` 上加载，只要 required field 都存在；它不能静默加载到 `2.0`。 |
+
+`merge_policy` 是 `ActionIntentPacket` 与 `CoordinationIntentPacket` 的必填 cross-layer request 字段。合法值为：
+
+| 值 | 语义 | 典型用途 |
+|----|------|----------|
+| `last_write_wins` | 按 `effective_time` 排序，最后写入生效；同时间戳按 source priority。 | 单 producer 或保证无冲突的场景。默认值。 |
+| `priority_override` | source priority 覆盖低优先级 producer：`human` > `policy` > `scripted` > `diagnostic`。 | 安全关键 human override 或监督式 AI 操作。 |
+| `reject_on_conflict` | 同窗口对同一 entity/field 的多个写入被拒绝，并作为错误暴露。 | 确定性 validation 与 contract test。 |
+| `merge_by_field` | 同一 entity 的不同字段可以合并；同一字段冲突回退到 `last_write_wins`。 | 多角色协调，例如一个 producer 写 formation metadata，另一个写本机 control intent。 |
+| `append_only` | 写入追加到队列，下游节点按确定性队列顺序消费。 | 由 `P3 CommandDelivery` 消费的有序 task 或 command 序列。 |
 
 设计结论：
 
@@ -202,6 +220,7 @@ flowchart LR
 6. `P4 PlatformControl` 消费 resolved command/control input。`P5 PhysicsStep` 消费物理 force/torque 或 backend integration input；它不应消费 raw policy vector。
 7. `ScenarioLoader` 与 Gymnasium wrapper 是目标 API 适配器和 mirror，不是权威 runtime owner。它们可以满足 `(obs, reward, terminated, truncated, info)` 这样的 API shape，但 transition truth 应能从 compiled episode/facade result 恢复。
 8. Hierarchical RL 应把 sub-episode 建模为显式 lifecycle annotation 或 orchestration scope，而不是在 Python 和 C++ 中复制核心 episode 状态机。
+9. 外部 graph input 在调度窗口 barrier 之前注入。窗口开始时，facade 收集已到达的 cross-layer request，将其翻译为 state write 或 event enqueue，然后再执行 DAG。窗口内 node 读取注入后的 state/event。step `N` 发出的 policy action 对同窗口 `P3 CommandDelivery` 与 `P4 PlatformControl` 可见；只有当 `P2 TaskingIntent` 在该窗口尚未运行时，它才对 `P2` 可见。若需要 next-window 语义，应把 `effective_time` 设置到后续调度窗口。
 
 在调度上，跨层请求是外部图输入。每个 request 应声明：
 
@@ -212,9 +231,40 @@ flowchart LR
 | `input_snapshot_version` | producer 使用的 state 或 observation version。 |
 | `effective_time` | 请求开始可见的仿真时间或 scheduling window。 |
 | `valid_until` | expiry time 或 condition，尤其用于 action 与 tasking intent。 |
-| `merge_policy` | 多个 producer 作用于同一 entity 或字段时的冲突解决方式。 |
+| `merge_policy` | `last_write_wins`、`priority_override`、`reject_on_conflict`、`merge_by_field` 或 `append_only`。 |
+
+policy 10 Hz、platform control 20 Hz、physics 60 Hz 的时序例子：
+
+```text
+Window N at time t, dt = 0.1s
+  1. Facade 收集 cross-layer requests:
+     - policy action A_N with effective_time = t
+  2. 外部 input 注入:
+     - A_N 被翻译为 P3 read_set 可见的 state/event input
+  3. DAG 执行:
+     - P3 消费 A_N，产出 delivered command
+     - P4 消费 delivered command，产出 force/torque intent
+     - P5 在 60 Hz substep 中消费 force/torque 并更新 truth state
+     - P10 导出 observation snapshot_version = t + dt
+  4. Facade 把 observation 返回给策略层
+
+Window N + 1 at time t + dt
+  - policy 基于 Window N observation 产生 A_N+1
+  - 除非 effective_time 请求延迟，否则 A_N+1 在本窗口注入
+```
 
 这能让仿真层保持中心地位，同时不假装它是孤立的。仿真层仍是 truth source；策略层和编排层则成为显式、可 replay 的 producer 与 consumer。
+
+架构闭合规则：
+
+| 问题层级 | 定义 | 闭合规则 | 闭合后的分流 |
+|----------|------|----------|--------------|
+| `A` 架构框架级 | 系统形状：层、层间关系、owns/must-not-own 与跨层通道。 | 本文档已闭合：仿真/策略/编排三层已命名，facade + contract 是通道，Architecture Law #12 声明层间耦合必须显式。 | 除非新层无法作为 facade-connected extension 建模，否则不重新打开。 |
+| `B` 契约语义级 | 某个 contract 字段、边界判据、枚举或时序规则未定义。 | 相关 contract 有规则或枚举，并附至少一个不依赖当前实现偶然性的具体例子时闭合。 | 直接 patch 本文档；除非两轮直接修补仍无法闭合，否则不再创建临时 review。 |
+| `C` 实现对齐级 | 架构已定义，但当前代码尚未迁移。 | 由 scoped task plan、migration phase、architecture test 或 implementation PR 闭合。 | 进入 task 文档跟踪；只有实现无法在现有契约下推进时，才升级为 `B`。 |
+| `D` 内部设计空白级 | 某个已命名层存在，但该层内部架构尚未设计。 | 由该层自己的架构文档闭合，并引用本文档作为跨层权威来源。 | 新建 policy-layer、orchestration-layer、scenario-system 或 diagnostics 架构文档；不要重开仿真层框架。 |
+
+本架构基线的停止规则是：上述 `B` 层规则写入后，不应再为同一框架开启 `temp-04` 式 review。新发现应按直接 `B` patch、`C` task plan 或 `D` layer-specific architecture document 分流。
 
 ## 七、契约分类
 

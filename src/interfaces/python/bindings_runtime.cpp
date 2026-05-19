@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include "core/engine/world_batch_runtime.h"
+#include "runtime/contracts/engagement_contracts.h"
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime(nb::module_& m) {
@@ -39,6 +40,120 @@ void bind_runtime(nb::module_& m) {
         .def(nb::init<>())
         .def_rw("seeds", &BatchResetRequest::seeds);
 
+    nb::class_<EngagementEntityRef>(m, "EngagementEntityRef")
+        .def(nb::init<>())
+        .def_rw("world_index", &EngagementEntityRef::world_index)
+        .def_rw("entity_id", &EngagementEntityRef::entity_id);
+
+    nb::class_<TrackPacket>(m, "TrackPacket")
+        .def(nb::init<>())
+        .def_rw("track_id", &TrackPacket::track_id)
+        .def_rw("correlated_entity", &TrackPacket::correlated_entity)
+        .def_rw("has_correlated_entity", &TrackPacket::has_correlated_entity)
+        .def_rw("correlation_policy", &TrackPacket::correlation_policy)
+        .def_rw("source", &TrackPacket::source)
+        .def_rw("classification", &TrackPacket::classification)
+        .def_rw("status", &TrackPacket::status)
+        .def_rw("quality", &TrackPacket::quality)
+        .def_rw("confidence", &TrackPacket::confidence)
+        .def_rw("usable", &TrackPacket::usable)
+        .def_rw("iff", &TrackPacket::iff)
+        .def_rw("source_time_s", &TrackPacket::source_time_s)
+        .def_rw("update_age_s", &TrackPacket::update_age_s)
+        .def_rw("snapshot_version", &TrackPacket::snapshot_version);
+
+    nb::class_<LaunchRequest>(m, "LaunchRequest")
+        .def(nb::init<>())
+        .def_rw("request_id", &LaunchRequest::request_id)
+        .def_rw("shooter", &LaunchRequest::shooter)
+        .def_rw("target_entity", &LaunchRequest::target_entity)
+        .def_rw("has_target_entity", &LaunchRequest::has_target_entity)
+        .def_rw("target_track_id", &LaunchRequest::target_track_id)
+        .def_rw("has_target_track", &LaunchRequest::has_target_track)
+        .def_rw("station_id", &LaunchRequest::station_id)
+        .def_rw("mount_id", &LaunchRequest::mount_id)
+        .def_rw("requested_munition_family", &LaunchRequest::requested_munition_family)
+        .def_rw("authority", &LaunchRequest::authority)
+        .def_rw("requested_time_s", &LaunchRequest::requested_time_s)
+        .def_rw("merge_policy", &LaunchRequest::merge_policy);
+
+    nb::class_<LaunchEvent>(m, "LaunchEvent")
+        .def(nb::init<>())
+        .def_rw("event_id", &LaunchEvent::event_id)
+        .def_rw("request_id", &LaunchEvent::request_id)
+        .def_rw("accepted", &LaunchEvent::accepted)
+        .def_rw("rejection_reason", &LaunchEvent::rejection_reason)
+        .def_rw("selected_launcher", &LaunchEvent::selected_launcher)
+        .def_rw("selected_munition", &LaunchEvent::selected_munition)
+        .def_rw("ammo_delta", &LaunchEvent::ammo_delta)
+        .def_rw("cooldown_delta_s", &LaunchEvent::cooldown_delta_s)
+        .def_rw("spawned_munition", &LaunchEvent::spawned_munition)
+        .def_rw("has_spawned_munition", &LaunchEvent::has_spawned_munition)
+        .def_rw("event_time_s", &LaunchEvent::event_time_s);
+
+    nb::class_<MunitionLifecyclePacket>(m, "MunitionLifecyclePacket")
+        .def(nb::init<>())
+        .def_rw("packet_id", &MunitionLifecyclePacket::packet_id)
+        .def_rw("munition", &MunitionLifecyclePacket::munition)
+        .def_rw("attacker", &MunitionLifecyclePacket::attacker)
+        .def_rw("target_entity", &MunitionLifecyclePacket::target_entity)
+        .def_rw("has_target_entity", &MunitionLifecyclePacket::has_target_entity)
+        .def_rw("target_track_id", &MunitionLifecyclePacket::target_track_id)
+        .def_rw("has_target_track", &MunitionLifecyclePacket::has_target_track)
+        .def_rw("launch_event_id", &MunitionLifecyclePacket::launch_event_id)
+        .def_rw("active", &MunitionLifecyclePacket::active)
+        .def_rw("seeker_mode", &MunitionLifecyclePacket::seeker_mode)
+        .def_rw("guidance_cadence_s", &MunitionLifecyclePacket::guidance_cadence_s)
+        .def_rw("track_memory_state", &MunitionLifecyclePacket::track_memory_state)
+        .def_rw("fuel_remaining_fraction", &MunitionLifecyclePacket::fuel_remaining_fraction)
+        .def_rw("burnout", &MunitionLifecyclePacket::burnout)
+        .def_rw("max_flight_time_s", &MunitionLifecyclePacket::max_flight_time_s)
+        .def_rw("fuze_state", &MunitionLifecyclePacket::fuze_state)
+        .def_rw("source_time_s", &MunitionLifecyclePacket::source_time_s);
+
+    nb::class_<EffectsEvent>(m, "EffectsEvent")
+        .def(nb::init<>())
+        .def_rw("event_id", &EffectsEvent::event_id)
+        .def_rw("munition", &EffectsEvent::munition)
+        .def_rw("target", &EffectsEvent::target)
+        .def_rw("trigger_type", &EffectsEvent::trigger_type)
+        .def_rw("outcome_state", &EffectsEvent::outcome_state)
+        .def_rw("detonation_time_s", &EffectsEvent::detonation_time_s)
+        .def_rw("nearest_approach_time_s", &EffectsEvent::nearest_approach_time_s)
+        .def_rw("quality", &EffectsEvent::quality)
+        .def_rw("confidence", &EffectsEvent::confidence)
+        .def_rw("effect_family", &EffectsEvent::effect_family);
+
+    nb::class_<DamageReport>(m, "DamageReport")
+        .def(nb::init<>())
+        .def_rw("report_id", &DamageReport::report_id)
+        .def_rw("target", &DamageReport::target)
+        .def_rw("source_event_id", &DamageReport::source_event_id)
+        .def_rw("hp_delta", &DamageReport::hp_delta)
+        .def_rw("system_health_delta", &DamageReport::system_health_delta)
+        .def_rw("platform_damage_state_delta", &DamageReport::platform_damage_state_delta)
+        .def_rw("mission_kill", &DamageReport::mission_kill)
+        .def_rw("mobility_kill", &DamageReport::mobility_kill)
+        .def_rw("sensor_kill", &DamageReport::sensor_kill)
+        .def_rw("survivability_kill", &DamageReport::survivability_kill)
+        .def_rw("loss_state_from", &DamageReport::loss_state_from)
+        .def_rw("loss_state_to", &DamageReport::loss_state_to)
+        .def_rw("destroyed", &DamageReport::destroyed)
+        .def_rw("report_time_s", &DamageReport::report_time_s);
+
+    nb::class_<DiagnosticsTrace>(m, "DiagnosticsTrace")
+        .def(nb::init<>())
+        .def_rw("trace_id", &DiagnosticsTrace::trace_id)
+        .def_rw("parent_trace_id", &DiagnosticsTrace::parent_trace_id)
+        .def_rw("chain_id", &DiagnosticsTrace::chain_id)
+        .def_rw("track_id", &DiagnosticsTrace::track_id)
+        .def_rw("launch_request_id", &DiagnosticsTrace::launch_request_id)
+        .def_rw("launch_event_id", &DiagnosticsTrace::launch_event_id)
+        .def_rw("munition", &DiagnosticsTrace::munition)
+        .def_rw("effects_event_id", &DiagnosticsTrace::effects_event_id)
+        .def_rw("damage_report_id", &DiagnosticsTrace::damage_report_id)
+        .def_rw("observation_packet_version", &DiagnosticsTrace::observation_packet_version);
+
     nb::class_<BatchWorldSetupRequest>(m, "BatchWorldSetupRequest")
         .def(nb::init<>())
         .def_rw("seeds", &BatchWorldSetupRequest::seeds)
@@ -62,6 +177,21 @@ void bind_runtime(nb::module_& m) {
         .def_rw("include_leader_intents", &ObservationBatchRequest::include_leader_intents)
         .def_rw("include_pilot_reports", &ObservationBatchRequest::include_pilot_reports);
 
+    nb::class_<EngagementBatchRequest>(m, "EngagementBatchRequest")
+        .def(nb::init<>())
+        .def_rw("refs", &EngagementBatchRequest::refs)
+        .def_rw("trace_ids", &EngagementBatchRequest::trace_ids)
+        .def_rw("include_track_packets", &EngagementBatchRequest::include_track_packets)
+        .def_rw("include_launch_requests", &EngagementBatchRequest::include_launch_requests)
+        .def_rw("include_launch_events", &EngagementBatchRequest::include_launch_events)
+        .def_rw(
+            "include_munition_lifecycle_packets",
+            &EngagementBatchRequest::include_munition_lifecycle_packets
+        )
+        .def_rw("include_effects_events", &EngagementBatchRequest::include_effects_events)
+        .def_rw("include_damage_reports", &EngagementBatchRequest::include_damage_reports)
+        .def_rw("include_diagnostics_traces", &EngagementBatchRequest::include_diagnostics_traces);
+
     nb::class_<ExecutionBatchStepRequest>(m, "ExecutionBatchStepRequest")
         .def(nb::init<>())
         .def_rw("step_requests", &ExecutionBatchStepRequest::step_requests)
@@ -81,6 +211,21 @@ void bind_runtime(nb::module_& m) {
         .def_rw("task_orders", &ObservationBatchPacket::task_orders)
         .def_rw("leader_intents", &ObservationBatchPacket::leader_intents)
         .def_rw("pilot_reports", &ObservationBatchPacket::pilot_reports);
+
+    nb::class_<EngagementEventPacket>(m, "EngagementEventPacket")
+        .def(nb::init<>())
+        .def_rw("refs", &EngagementEventPacket::refs)
+        .def_rw("trace_ids", &EngagementEventPacket::trace_ids)
+        .def_rw("track_packets", &EngagementEventPacket::track_packets)
+        .def_rw("launch_requests", &EngagementEventPacket::launch_requests)
+        .def_rw("launch_events", &EngagementEventPacket::launch_events)
+        .def_rw(
+            "munition_lifecycle_packets",
+            &EngagementEventPacket::munition_lifecycle_packets
+        )
+        .def_rw("effects_events", &EngagementEventPacket::effects_events)
+        .def_rw("damage_reports", &EngagementEventPacket::damage_reports)
+        .def_rw("diagnostics_traces", &EngagementEventPacket::diagnostics_traces);
 
     nb::class_<ExecutionBatchStepResult>(m, "ExecutionBatchStepResult")
         .def(nb::init<>())
@@ -372,6 +517,11 @@ void bind_runtime(nb::module_& m) {
             [](const RuntimeFacade& self, const ObservationBatchRequest& request) {
                 return self.export_observation_packet(request);
             },
+            nb::arg("request")
+        )
+        .def(
+            "export_engagement_event_packet",
+            &RuntimeFacade::export_engagement_event_packet,
             nb::arg("request")
         );
 }

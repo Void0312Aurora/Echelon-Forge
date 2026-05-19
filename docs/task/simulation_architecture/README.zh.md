@@ -32,8 +32,8 @@
 |--------|------|------|------|
 | `WP0 Architecture Baseline` | complete | 明确语义生命周期、temporal DAG 与扩展规则 | 架构设计文档、任务子项目入口 |
 | `WP1 Pipeline Inventory` | complete | 把当前代码、system、model、test 映射到 `P0-P10` 与当前耦合热点 | [管线盘点](pipeline_inventory_wp1_20260519.zh.md) |
-| `WP2 Contract Freeze` | planned | 识别需要显式 ownership 的 packet 族、stage-node contract 与跨层 policy/orchestration contract | tasking/command/track/launch/damage/observation 加 action/reward/termination/episode contract plan |
-| `WP3 Engagement Pilot` | planned | 以武器/交战作为第一条跨领域验证切片 | launcher、munition、effects、damage、observation 任务计划 |
+| `WP2 Contract Freeze` | active | 识别需要显式 ownership 的 packet 族、stage-node contract 与跨层 policy/orchestration contract | [契约冻结](contract_freeze_wp2_20260519.zh.md) |
+| `WP3 Engagement Pilot` | active | 以武器/交战作为第一条跨领域验证切片 | [交战试点任务族](engagement_pilot_wp3_20260519.zh.md) |
 | `WP4 Facade Alignment` | planned | 确保试点行为可通过 facade-shaped API 访问 | facade request/result 增补与 adapter 计划 |
 | `WP5 Validation Harness` | planned | 添加证明生命周期共享的 smoke 与架构测试 | 聚焦测试与本机 Windows smoke 命令 |
 
@@ -88,6 +88,10 @@ WP1 不应实现新代码，除非需要少量文档或测试 fixture 才能完�
 
 - [WP1 管线盘点](pipeline_inventory_wp1_20260519.zh.md)
 
+产出：
+
+- [WP2 契约冻结](contract_freeze_wp2_20260519.zh.md)
+
 WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 
 1. 哪些 packet 族已经存在，
@@ -102,14 +106,28 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 10. 哪些 Python 调用需要 adapter 兼容，
 11. 哪些 observation schema 是策略/测试拥有的 `ObservationViewSpec` 变体，哪些是仿真拥有的 state export，
 12. policy action cadence 如何通过 `ActionIntentPacket` 与 `ActionHoldPolicy` 映射到 `P3/P4/P5`，
-13. reward 如何拆分为仿真事实与实验 shaping，
+13. reward 如何依据架构基线中的 fact/shaping 判据拆分为仿真事实与实验 shaping，
 14. `terminated` 与 `truncated` reason 如何归因到仿真、策略或编排来源，
 15. 哪一侧拥有权威 episode phase，哪一侧只为 Gymnasium、batch、replay 或 CI API 做 mirror，
-16. scripted、learned 与 human coordination director 如何在不 raw ECS mutation 的情况下写入 tasking 或 command intent。
+16. scripted、learned 与 human coordination director 如何在不 raw ECS mutation 的情况下写入 tasking 或 command intent，
+17. 每个 cross-layer producer 使用哪种 `merge_policy`，
+18. 每条 action 或 coordination 路径期待哪种 scheduling-window injection 语义，
+19. 哪些 observation schema 变更属于 minor-compatible，哪些属于 major-incompatible。
 
 预期产出是冻结文档，而不是实现。
 
+架构闭合备注：
+
+- 仿真/策略/编排层边界上的架构框架已经闭合。
+- 剩余 `B` 层契约语义细节应直接 patch 架构基线。
+- `C` 层实现对齐应进入 task plan 跟踪。
+- `D` 层内部设计空白，例如策略层内部或编排层内部架构，应新建独立架构文档，不应重开仿真层框架。
+
 ## WP3 Engagement Pilot
+
+产出：
+
+- [WP3 交战试点任务族](engagement_pilot_wp3_20260519.zh.md)
 
 第一条实现试点应选择交战生命周期，因为它横跨最多架构边界，并且天然涉及多个 clock domain：
 
@@ -121,6 +139,8 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 - 舰载挂载发射。
 
 试点应避免创建独立的 `air weapon` 和 `naval weapon` 运行时路径。差异应出现在 launcher、munition、seeker、guidance、fuze、effects、doctrine 族和 clock-domain policy 中。
+
+第一波实现应拆分为 contract DTO scaffold、facade packet shell、Python binding exposure、air launch adapter、naval launch adapter、munition/damage export、diagnostics trace 和 stage-aligned non-RL smoke harness。Air 与 naval worker 只有在不编辑同一个共享 kernel 文件时才适合并行。
 
 ## 验收门槛
 

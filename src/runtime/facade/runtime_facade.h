@@ -79,6 +79,7 @@ public:
     std::vector<PilotReport> get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const;
     ObservationBatchPacket export_observation_packet(const std::vector<WorldEntityRef>& refs) const;
     ObservationBatchPacket export_observation_packet(const ObservationBatchRequest& request) const;
+    EngagementEventPacket export_engagement_event_packet(const EngagementBatchRequest& request) const;
 
 private:
     ObservationBatchPacket build_observation_packet(

@@ -9,6 +9,7 @@
 #include "components/physics/instruments.h"
 #include "core/interfaces/observation.h"
 #include "core/mission/episode/execution_episode_controller.h"
+#include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
 struct RuntimeCapabilities {
@@ -56,6 +57,18 @@ struct ObservationBatchRequest {
     bool include_pilot_reports = false;
 };
 
+struct EngagementBatchRequest {
+    std::vector<EngagementEntityRef> refs;
+    std::vector<std::uint64_t> trace_ids;
+    bool include_track_packets = true;
+    bool include_launch_requests = true;
+    bool include_launch_events = true;
+    bool include_munition_lifecycle_packets = true;
+    bool include_effects_events = true;
+    bool include_damage_reports = true;
+    bool include_diagnostics_traces = true;
+};
+
 struct ExecutionBatchStepRequest {
     std::vector<WorldExecutionEpisodeStepRequest> step_requests;
     bool include_agent_observations = true;
@@ -74,6 +87,18 @@ struct ObservationBatchPacket {
     std::vector<TaskOrder> task_orders;
     std::vector<LeaderIntent> leader_intents;
     std::vector<PilotReport> pilot_reports;
+};
+
+struct EngagementEventPacket {
+    std::vector<EngagementEntityRef> refs;
+    std::vector<std::uint64_t> trace_ids;
+    std::vector<TrackPacket> track_packets;
+    std::vector<LaunchRequest> launch_requests;
+    std::vector<LaunchEvent> launch_events;
+    std::vector<MunitionLifecyclePacket> munition_lifecycle_packets;
+    std::vector<EffectsEvent> effects_events;
+    std::vector<DamageReport> damage_reports;
+    std::vector<DiagnosticsTrace> diagnostics_traces;
 };
 
 struct ExecutionBatchStepResult {

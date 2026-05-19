@@ -249,14 +249,33 @@ Cross-layer contracts:
 
 | Contract | Primary owner | Simulation-layer responsibility | Policy/orchestration responsibility |
 |----------|---------------|---------------------------------|-------------------------------------|
-| `ObservationViewSpec` | Policy or test layer | Expose queryable state shards, committed snapshot versions, facade packet builders, and diagnostics. | Select fields, encoding, normalization, stacking, masking, and schema version for a consumer. |
+| `ObservationViewSpec` | Policy or test layer | Expose queryable state shards, committed snapshot versions, facade packet builders, and diagnostics. | Select fields, encoding, normalization, stacking, masking, required/optional fields, and schema version for a consumer. |
 | `ObservationPacket` | Runtime facade | Return data sampled at a declared barrier or snapshot version, with source time and schema metadata. | Consume the packet without assuming raw ECS layout or unversioned Python-side field order. |
-| `ActionIntentPacket` | Policy layer | Accept action intent through facade and translate it into command/control inputs at `P3/P4` boundaries. | Declare action source, effective time, target entity, action family, and whether it is direct control, mission command, or coordination intent. |
+| `ActionIntentPacket` | Policy layer | Accept action intent through facade and translate it into command/control inputs at `P3/P4` boundaries. | Declare action source, effective time, target entity, action family, `merge_policy`, and whether it is direct control, mission command, or coordination intent. |
 | `ActionHoldPolicy` | Policy layer, enforced by facade/simulation | Apply hold-last, interpolation, expiry, or drop semantics deterministically across control-rate and physics-rate ticks. | Declare action validity duration, refresh cadence, expiry behavior, and credit-assignment latency assumptions. |
-| `CoordinationIntentPacket` | Policy layer | Admit scripted, learned, or human director output only through tasking/command facade paths, then schedule it into `P2/P3`. | Declare source type, source id, target roster, update clock, and produced tasking or leader-intent fields. |
+| `CoordinationIntentPacket` | Policy layer | Admit scripted, learned, or human director output only through tasking/command facade paths, then schedule it into `P2/P3`. | Declare source type, source id, target roster, update clock, `merge_policy`, and produced tasking or leader-intent fields. |
 | `RewardSpec` / `RewardReport` | Split ownership | Provide semantic facts, compiled mission products, damage/kill reports, and versioned state snapshots. | Compose experiment reward, shaping weights, curriculum-dependent terms, and consumer-specific reward breakdowns. |
 | `TerminationSpec` / `EpisodeStatus` | Split ownership | Own simulation-semantic `terminated` reasons such as crash, kill, mission success, out-of-bounds, or fuel exhaustion. | Own experiment `truncated` reasons such as max steps, curriculum cutoff, early stopping, or benchmark wall-clock policy. |
 | `EpisodeLifecycleContract` | Simulation layer for authoritative phase; orchestration for reset requests | Own authoritative episode phase, transition result, reset application, and facade-exported mirrored status. | Request reset/truncation, mirror status for Gymnasium or test APIs, and never advance a private authoritative state machine. |
+
+Contract detail rules:
+
+| Area | Rule | Examples |
+|------|------|----------|
+| `RewardSpec` fact boundary | A quantity is a simulation fact if and only if it depends only on authoritative simulation state plus static mission/content data, and does not depend on training configuration such as weights, curriculum phase, RL algorithm, or benchmark policy. Everything else is a shaping term or experiment composition. | Crash state is a fact. Cross-track distance from a mission route is a fact. Cross-track distance squared times weight `0.5` is shaping. Curriculum phase 1-3 doubling a route reward is shaping. |
+| `ObservationViewSpec` version format | Use `<major>.<minor>` schema versions. Minor changes are compatible additions or layout changes that preserve field semantics. Major changes are incompatible deletions or semantic/encoding changes. | `v1.0 -> v1.1` may add optional `radar_altitude`; old consumers ignore it. `v1.1 -> v2.0` may remove `legacy_heading_raw` or change `heading` from `[0,360)` degrees to `[-pi, pi)` radians; old consumers must reject it. |
+| `ObservationViewSpec` fields | Every view spec declares `schema_version`, `required_fields`, and `optional_fields`. Checkpoint loading must reject major-version mismatches and report incompatible required fields. Minor-version differences may load when unknown optional fields can be ignored and missing optional fields can be default-filled. | A policy checkpoint trained on `1.x` may load against `1.2` if all required fields exist. A checkpoint trained on `1.x` must not silently load against `2.0`. |
+
+`merge_policy` is a required cross-layer request field for
+`ActionIntentPacket` and `CoordinationIntentPacket`. Legal values are:
+
+| Value | Semantics | Typical use |
+|-------|-----------|-------------|
+| `last_write_wins` | Sort by `effective_time`; the latest write wins. Same-timestamp ties use source priority. | Single-producer or conflict-free scenes. This is the default. |
+| `priority_override` | Source priority overrides lower-priority producers: `human` > `policy` > `scripted` > `diagnostic`. | Safety-critical human override or supervised AI operation. |
+| `reject_on_conflict` | Multiple same-window writes to the same entity/field are rejected and surfaced as an error. | Deterministic validation and contract tests. |
+| `merge_by_field` | Different fields on the same entity may merge; same-field conflicts fall back to `last_write_wins`. | Multi-role coordination where one producer writes formation metadata and another writes local control intent. |
+| `append_only` | Writes append to a queue and are consumed downstream in deterministic queue order. | Ordered task or command sequences consumed by `P3 CommandDelivery`. |
 
 Design consequences:
 
@@ -291,6 +310,14 @@ Design consequences:
 8. Hierarchical RL should model sub-episodes as explicit lifecycle annotations
    or orchestration scopes. It should not duplicate the core episode state
    machine in Python and C++.
+9. External graph inputs are injected before the scheduling-window barrier.
+   At the start of a window, the facade collects arrived cross-layer requests,
+   translates them into state writes or event enqueues, and then runs the DAG.
+   Window nodes read the injected state/events. A policy action emitted for
+   step `N` is visible to same-window `P3 CommandDelivery` and `P4
+   PlatformControl`; it is visible to `P2 TaskingIntent` only if `P2` has not
+   already run in that window. Next-window behavior must be requested by
+   setting `effective_time` to a later scheduling window.
 
 For scheduling, cross-layer requests are external graph inputs. Each request
 should declare:
@@ -302,11 +329,45 @@ should declare:
 | `input_snapshot_version` | State or observation version the producer used. |
 | `effective_time` | Simulated time or scheduling window where the request becomes visible. |
 | `valid_until` | Expiry time or condition, especially for actions and tasking intents. |
-| `merge_policy` | How conflicts are resolved when multiple producers target the same entity or field. |
+| `merge_policy` | One of `last_write_wins`, `priority_override`, `reject_on_conflict`, `merge_by_field`, or `append_only`. |
+
+Example timing for policy 10 Hz, platform control 20 Hz, and physics 60 Hz:
+
+```text
+Window N at time t, dt = 0.1s
+  1. Facade collects cross-layer requests:
+     - policy action A_N with effective_time = t
+  2. External input injection:
+     - A_N is translated into state/event input visible to P3 read_set
+  3. DAG execution:
+     - P3 consumes A_N and emits delivered command
+     - P4 consumes delivered command and emits force/torque intent
+     - P5 consumes force/torque over 60 Hz substeps and updates truth state
+     - P10 exports observation snapshot_version = t + dt
+  4. Facade returns the observation to the policy layer
+
+Window N + 1 at time t + dt
+  - policy uses Window N observation to emit A_N+1
+  - A_N+1 is injected for this window unless effective_time requests a delay
+```
 
 This keeps the simulation layer central without pretending it is isolated. The
 simulation layer remains the source of truth; the policy and orchestration
 layers become explicit, replayable producers and consumers.
+
+Architecture closure rules:
+
+| Layer of issue | Definition | Closure rule | Routing after closure |
+|----------------|------------|--------------|-----------------------|
+| `A` architecture framework | System shape: layers, layer relations, owns/must-not-own, and cross-layer channel. | Closed by this document: the simulation/policy/orchestration layers are named, facade + contracts are the channel, and Architecture Law #12 makes coupling explicit. | Do not reopen unless a new layer cannot be modeled as a facade-connected extension. |
+| `B` contract semantics | A contract field, boundary criterion, enum, or timing rule is underspecified. | Closed when the relevant contract has a rule or enum plus at least one concrete example that does not depend on current implementation accidents. | Patch this document directly; do not create another temporary review unless two direct patches fail to close it. |
+| `C` implementation alignment | Architecture is defined but current code has not migrated to it. | Closed by a scoped task plan, migration phase, architecture test, or implementation PR. | Track under task docs. Escalate to `B` only if implementation cannot proceed without refining a contract. |
+| `D` internal design blank | A named layer exists but its internal architecture is not yet designed. | Closed by that layer's own architecture document, using this document as the cross-layer authority. | Create a separate document such as policy-layer, orchestration-layer, scenario-system, or diagnostics architecture. Do not reopen the simulation-layer framework. |
+
+The stop rule for this architecture baseline is: after the `B` rules above are
+present, no `temp-04` style review should be opened for the same framework.
+New findings should be routed as direct `B` patches, `C` task plans, or `D`
+layer-specific architecture documents.
 
 ## 7. Contract Taxonomy
 

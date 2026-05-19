@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import unittest
 import numpy as np
 
@@ -21,6 +22,7 @@ _SCENARIO_PATH = resolve_repo_path(
     "air_combat_1v1_headon_sensor_smoke_v1.json",
 )
 _DB_PATH = resolve_repo_path("examples", "config", "database")
+_HAS_GYMNASIUM = importlib.util.find_spec("gymnasium") is not None
 
 
 def _load_fixture(seed: int = 20260516) -> tuple[ef_py.SimulationKernel, ScenarioLoader, int, int]:
@@ -340,6 +342,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
             500.0,
         )
 
+    @unittest.skipUnless(_HAS_GYMNASIUM, "UniversalEnv requires optional gymnasium dependency")
     def test_universal_env_full_action_surface_can_trigger_weapon_release(self) -> None:
         env = UniversalEnv(
             _SCENARIO_PATH,
@@ -372,6 +375,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
         finally:
             env.close()
 
+    @unittest.skipUnless(_HAS_GYMNASIUM, "UniversalEnv requires optional gymnasium dependency")
     def test_universal_env_advances_red_scripted_opponent(self) -> None:
         env = UniversalEnv(
             _SCENARIO_PATH,
