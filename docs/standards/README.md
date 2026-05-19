@@ -98,7 +98,7 @@ Current key external references include:
 Current key repository references include:
 
 - [docs/task/flight_dynamics/README.md](../task/flight_dynamics/README.md)
-- [docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/program/realism_program_convergence_plan_20260517.md)
+- [docs/task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md)
 - [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
 - [src/core/mission/README.md](../../src/core/mission/README.md)
 - [tests/runtime/README.md](../../tests/runtime/README.md)
@@ -143,11 +143,14 @@ Additional maintained supplements:
   they are repeated in task plans.
 - Service-specific or platform-specific terms must not be promoted into the
   common core just because the current implementation started in one domain.
+- When work is split across subagents or workers, follow
+  [Subagent Usage Policy](governance/subagent_usage_policy.md).
 
 ## Related Documents
 
 - [Bilingual Documentation Policy](governance/bilingual_documentation_policy.md)
 - [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
+- [Subagent Usage Policy](governance/subagent_usage_policy.md)
 - [Document Alignment Map](overview/document_alignment_map.md)
 - [Simulation Conventions](foundation/conventions.md)
 - [Scenario Configuration Guide](bridge/scenario_guide.md)

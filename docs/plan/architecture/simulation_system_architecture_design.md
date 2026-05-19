@@ -674,18 +674,18 @@ This document does not delete the earlier plans. It repositions them:
 - [../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md)
   is the `WP2.5` scheduler semantics freeze inserted between contract freeze
   and facade alignment.
-- [../../task/simulation_architecture/facade_alignment_wp4_20260519.md](../../task/simulation_architecture/facade_alignment_wp4_20260519.md)
+- [../../task/simulation_architecture/wp4_facade_alignment/facade_alignment_wp4_20260519.md](../../task/simulation_architecture/wp4_facade_alignment/facade_alignment_wp4_20260519.md)
   is the `WP4` facade alignment task family that applies the information-state
   and agent-boundary additions to maintained frontend surfaces.
-- [../../task/simulation_architecture/validation_harness_wp5_20260519.md](../../task/simulation_architecture/validation_harness_wp5_20260519.md)
+- [../../task/simulation_architecture/wp5_validation_harness/validation_harness_wp5_20260519.md](../../task/simulation_architecture/wp5_validation_harness/validation_harness_wp5_20260519.md)
   is the `WP5` validation harness task family for design, trace, boundary,
   information/belief leakage, and replay/evidence conformance.
-- [../../task/simulation_architecture/backend_profile_policy_wp6_20260519.md](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.md)
+- [../../task/simulation_architecture/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md](../../task/simulation_architecture/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md)
   is the `WP6` backend profile policy for backend taxonomy, parity budgets,
   resident-state boundaries, and capability projection.
 - [../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.md](../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.md)
   records the accepted WP6 publication line.
-- [../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.md](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.md)
+- [../../task/simulation_architecture/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md](../../task/simulation_architecture/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md)
   is the planned `WP7` materialization line for machine-checkable registry,
   runtime capability projection, promotion evidence gates, and multi-fidelity
   entry conditions after WP6.
@@ -693,6 +693,11 @@ This document does not delete the earlier plans. It repositions them:
   accepts WP7 as a documentation and implementation-preparation line, not as
   promotion of exact GPU, resident-state, shadow, device observation, or
   multi-fidelity support.
+- [../../task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md](../../task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md)
+  is the separate follow-on task family for the SCAL learning face. It should
+  stay outside the simulation/policy/orchestration closure and focus on
+  curriculum, evaluation, capability profiling, scenario generation, world-
+  model interfaces, and learning evidence.
 - [../../task/review/temp-02_review_20260519.md](../../task/review/temp-02_review_20260519.md)
   is the source review that elevated this baseline from lifecycle plus DAG to
   SCAL, graph-of-graphs, information-state architecture, and simulation

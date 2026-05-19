@@ -191,19 +191,43 @@ class RuntimeFacadeAdapter:
             pilot_reports=[],
         )
 
-    def read_truth_and_instruments(self, refs: Sequence[Any]) -> tuple[list[Any], list[Any]]:
+    def export_observation_packet_for_refs(
+        self,
+        refs: Sequence[Any],
+        *,
+        include_agent_observations: bool = True,
+        include_instrument_states: bool = True,
+        include_mission_commands: bool = False,
+        include_task_orders: bool = False,
+        include_leader_intents: bool = False,
+        include_pilot_reports: bool = False,
+    ) -> Any:
         refs_list = list(refs)
-        if self.facade is not None and hasattr(ef_py, "ObservationBatchRequest"):
+        if hasattr(ef_py, "ObservationBatchRequest"):
             request = ef_py.ObservationBatchRequest()
             request.refs = refs_list
-            request.include_agent_observations = True
-            request.include_instrument_states = True
-            request.include_mission_commands = False
-            request.include_task_orders = False
-            request.include_leader_intents = False
-            request.include_pilot_reports = False
-            packet = self.facade.export_observation_packet(request)
+            request.include_agent_observations = bool(include_agent_observations)
+            request.include_instrument_states = bool(include_instrument_states)
+            request.include_mission_commands = bool(include_mission_commands)
+            request.include_task_orders = bool(include_task_orders)
+            request.include_leader_intents = bool(include_leader_intents)
+            request.include_pilot_reports = bool(include_pilot_reports)
+            return self.export_observation_packet(request)
+        return self.export_observation_packet(refs_list)
+
+    def read_truth_and_instruments(self, refs: Sequence[Any]) -> tuple[list[Any], list[Any]]:
+        packet = self.export_observation_packet_for_refs(
+            refs,
+            include_agent_observations=True,
+            include_instrument_states=True,
+            include_mission_commands=False,
+            include_task_orders=False,
+            include_leader_intents=False,
+            include_pilot_reports=False,
+        )
+        if hasattr(packet, "agent_observations") and hasattr(packet, "instrument_states"):
             return list(packet.agent_observations), list(packet.instrument_states)
+        refs_list = list(refs)
         if self.facade is not None:
             return (
                 list(self.facade.get_agent_observations_batch(refs_list)),
@@ -212,6 +236,27 @@ class RuntimeFacadeAdapter:
         return (
             list(self._compat_runtime.get_agent_observations_batch(refs_list)),
             list(self._compat_runtime.get_instrument_states_batch(refs_list)),
+        )
+
+    def read_observation_packet(
+        self,
+        refs: Sequence[Any],
+        *,
+        include_agent_observations: bool = True,
+        include_instrument_states: bool = True,
+        include_mission_commands: bool = False,
+        include_task_orders: bool = False,
+        include_leader_intents: bool = False,
+        include_pilot_reports: bool = False,
+    ) -> Any:
+        return self.export_observation_packet_for_refs(
+            refs,
+            include_agent_observations=include_agent_observations,
+            include_instrument_states=include_instrument_states,
+            include_mission_commands=include_mission_commands,
+            include_task_orders=include_task_orders,
+            include_leader_intents=include_leader_intents,
+            include_pilot_reports=include_pilot_reports,
         )
 
     def get_instrument_states_batch(self, refs: Sequence[Any]) -> list[Any]:

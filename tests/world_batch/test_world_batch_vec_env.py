@@ -287,6 +287,23 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 include_proprio=False,
             )
             try:
+                packet_requests: list[object] = []
+                original_read_observation_packet = vec_env._runtime_adapter.read_observation_packet
+
+                def _track_read_observation_packet(refs, **kwargs):
+                    packet_requests.append(kwargs)
+                    return original_read_observation_packet(refs, **kwargs)
+
+                def _unexpected_get_agent_observations_batch(_refs):
+                    raise AssertionError("maintained vec-env observation reads should use export_observation_packet()")
+
+                def _unexpected_get_instrument_states_batch(_refs):
+                    raise AssertionError("maintained vec-env observation reads should use export_observation_packet()")
+
+                vec_env._runtime_adapter.read_observation_packet = _track_read_observation_packet  # type: ignore[method-assign]
+                vec_env._runtime_adapter.get_agent_observations_batch = _unexpected_get_agent_observations_batch  # type: ignore[method-assign]
+                vec_env._runtime_adapter.get_instrument_states_batch = _unexpected_get_instrument_states_batch  # type: ignore[method-assign]
+
                 self.assertTrue(hasattr(vec_env, "runtime_facade"))
                 self.assertIsNotNone(vec_env.runtime_facade)
                 self.assertEqual(int(vec_env.runtime_facade.world_count()), 2)
@@ -294,12 +311,23 @@ class WorldBatchVecEnvTests(unittest.TestCase):
 
                 vec_env.seed(123)
                 obs = vec_env.reset()
+                _obs, _rewards, _dones, _infos = vec_env.step(np.zeros((2, 17), dtype=np.float32))
 
                 self.assertEqual(obs["instruments"].shape, (2, 42))
                 self.assertEqual(obs["contacts"].shape[0], 2)
                 self.assertEqual(obs["mission"].shape[0], 2)
                 self.assertIsNotNone(vec_env.envs[0].agent_id)
                 self.assertIsNotNone(vec_env.envs[1].agent_id)
+                self.assertGreaterEqual(len(packet_requests), 2)
+                self.assertTrue(
+                    all(bool(request.get("include_agent_observations", False)) for request in packet_requests)
+                )
+                self.assertTrue(
+                    all(bool(request.get("include_instrument_states", False)) for request in packet_requests)
+                )
+                self.assertTrue(
+                    all(not bool(request.get("include_mission_commands", False)) for request in packet_requests)
+                )
             finally:
                 vec_env.close()
 
@@ -1346,6 +1374,88 @@ class WorldBatchVecEnvTests(unittest.TestCase):
 
                 self.assertFalse(bool(dones[0]))
                 self.assertEqual(observed, [(True, False)])
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_mainline_step_prefers_batch_step_observation_packet(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["meta"]["max_steps"] = 4
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+                execution_episode_controller_mainline=True,
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+
+                original_step_execution_batch = vec_env._runtime_adapter.step_execution_batch
+                original_read_observation_packet = vec_env._runtime_adapter.read_observation_packet
+                observed: dict[str, object] = {}
+
+                def _wrapped_read_observation_packet(refs, **kwargs):
+                    observed["read_observation_packet_calls"] = int(observed.get("read_observation_packet_calls", 0)) + 1
+                    packet = original_read_observation_packet(refs, **kwargs)
+                    if "pre_step_truth" not in observed:
+                        observed["pre_step_truth"] = packet.agent_observations[0]
+                        observed["pre_step_inst"] = packet.instrument_states[0]
+                    return packet
+
+                def _wrapped_step_execution_batch(batch_request):
+                    observed["step_execution_batch_calls"] = int(observed.get("step_execution_batch_calls", 0)) + 1
+                    observed["step_request_count"] = len(list(getattr(batch_request, "step_requests", []) or []))
+                    observed["include_agent_observations"] = bool(
+                        getattr(batch_request, "include_agent_observations", False)
+                    )
+                    observed["include_instrument_states"] = bool(
+                        getattr(batch_request, "include_instrument_states", False)
+                    )
+                    result = original_step_execution_batch(batch_request)
+                    ref = ef_py.WorldEntityRef()
+                    ref.world_index = 0
+                    ref.entity_id = int(vec_env.envs[0].agent_id)
+                    result.observation_packet = original_read_observation_packet(
+                        [ref],
+                        include_agent_observations=True,
+                        include_instrument_states=True,
+                        include_mission_commands=False,
+                        include_task_orders=False,
+                        include_leader_intents=False,
+                        include_pilot_reports=False,
+                    )
+                    observed["mainline_truth"] = result.observation_packet.agent_observations[0]
+                    observed["mainline_inst"] = result.observation_packet.instrument_states[0]
+                    return result
+
+                vec_env._runtime_adapter.read_observation_packet = _wrapped_read_observation_packet  # type: ignore[method-assign]
+                vec_env._runtime_adapter.step_execution_batch = _wrapped_step_execution_batch  # type: ignore[method-assign]
+                try:
+                    _obs, rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+                finally:
+                    vec_env._runtime_adapter.read_observation_packet = original_read_observation_packet  # type: ignore[method-assign]
+                    vec_env._runtime_adapter.step_execution_batch = original_step_execution_batch  # type: ignore[method-assign]
+
+                self.assertEqual(int(observed.get("step_execution_batch_calls", 0)), 1)
+                self.assertEqual(int(observed.get("step_request_count", 0)), 1)
+                self.assertTrue(bool(observed.get("include_agent_observations", False)))
+                self.assertTrue(bool(observed.get("include_instrument_states", False)))
+                self.assertEqual(int(observed.get("read_observation_packet_calls", 0)), 1)
+                self.assertIs(vec_env.envs[0].last_truth, observed.get("mainline_truth"))
+                self.assertIs(vec_env.envs[0].last_inst, observed.get("mainline_inst"))
+                self.assertIsNot(vec_env.envs[0].last_truth, observed.get("pre_step_truth"))
+                self.assertIsNot(vec_env.envs[0].last_inst, observed.get("pre_step_inst"))
+                self.assertFalse(bool(dones[0]))
+                self.assertIsInstance(infos[0], dict)
+                self.assertTrue(np.isfinite(float(rewards[0])))
             finally:
                 vec_env.close()
 

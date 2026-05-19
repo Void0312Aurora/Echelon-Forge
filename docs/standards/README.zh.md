@@ -1,8 +1,9 @@
 # 标准化文档总览
 
-Language:
-- English canonical: `README.md`
-- Chinese companion: [README.zh.md](README.zh.md)
+语言版本：
+
+- 英文主文：[README.md](README.md)
+- 中文辅文：`README.zh.md`
 
 状态：`2026-05-18`，当前维护中的标准树权威入口。
 
@@ -94,7 +95,7 @@ Language:
 当前关键仓库内依据包括：
 
 - [docs/task/flight_dynamics/README.md](../task/flight_dynamics/README.md)
-- [docs/task/flight_dynamics/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/program/realism_program_convergence_plan_20260517.md)
+- [docs/task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md)
 - [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
 - [src/core/mission/README.md](../../src/core/mission/README.md)
 - [tests/runtime/README.md](../../tests/runtime/README.md)
@@ -134,13 +135,16 @@ Language:
 - 维护中的英文主文不应继续保留机器翻译草稿标记。
 - 新的共享合同应先落在 `joint/` 或 `bridge/` 下的 workflow bridge 文档，再扩散到任务计划。
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
+- 当工作被拆分给多个 subagent 或 worker 时，应遵循
+  [Subagent 使用规范](governance/subagent_usage_policy.zh.md)。
 
 ## 相关文档
 
-- [双语文档政策](governance/bilingual_documentation_policy.md)
-- [双语文档簇](governance/bilingual_document_clusters.md)
-- [文档对齐映射](overview/document_alignment_map.md)
-- [仿真约定](foundation/conventions.md)
-- [场景配置指南](bridge/scenario_guide.md)
-- [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.md)
-- [模块化规划](planning/modularization_plan.md)
+- [双语文档政策](governance/bilingual_documentation_policy.zh.md)
+- [双语文档簇](governance/bilingual_document_clusters.zh.md)
+- [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
+- [文档对齐映射](overview/document_alignment_map.zh.md)
+- [仿真约定](foundation/conventions.zh.md)
+- [场景配置指南](bridge/scenario_guide.zh.md)
+- [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.zh.md)
+- [模块化规划](planning/modularization_plan.zh.md)

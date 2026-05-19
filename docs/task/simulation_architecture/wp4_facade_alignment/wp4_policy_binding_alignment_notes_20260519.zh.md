@@ -182,6 +182,11 @@ bindings 同时仍暴露 compatibility surfaces：
 6. `WP4-E1 Binding mirror after WP4-A`：只绑定稳定 DTO 名称并加 field-presence
    tests；`WorldBatchRuntime` 与 `RuntimeFacade.runtime()` 继续文档化为
    compatibility-only。
+7. `WP7.5 训练路径 facade 桥接`：在维护中的 facade request / observation surface
+   稳定后，把 `WorldBatchVecEnv` 主线 batch stepping 与维护中的 observation read
+   从 `_compat_runtime` 迁到 `RuntimeFacade.step_execution_batch()` 加
+   `RuntimeFacade.export_observation_packet()`；该桥接工作应放在已验收 `WP4`
+   之外单独推进。
 
 ## 9. 开放问题
 

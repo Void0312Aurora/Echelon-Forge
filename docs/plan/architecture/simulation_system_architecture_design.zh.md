@@ -19,7 +19,8 @@
 Echelon Forge 是一个语义-因果仿真编译器与学习平台。它的长期目标，是把任务语义、领域模型、智能体结构、保真度要求与实验目标，编译为可执行、可解释、可回放、可比较的仿真实验。
 
 近期 `WP0-WP5` 工作是这个编译器要面向的经验证运行时内核，`WP6`
-收口后端加速与 resident-state 工作所需的 backend profile policy。运行时仍然围绕一条规范化仿真生命周期和一个带时钟域的执行图组织，但执行图只是投影，不是系统本体。
+收口后端加速与 resident-state 工作所需的 backend profile policy，`WP8`
+则作为独立的 learning-face 任务族承接学习侧闭环。运行时仍然围绕一条规范化仿真生命周期和一个带时钟域的执行图组织，但执行图只是投影，不是系统本体。
 
 架构围绕四个 SCAL 面组织：
 
@@ -181,7 +182,7 @@ Event 按 `(timestamp, priority, event_id)` 确定性排序。`timestamp` 决定
 Clock domain 默认使用嵌套触发。base tick 拥有外层确定性 schedule，低频 node 按声明的倍数或 schedule slot 运行。独立 clock domain 只有在冻结计划明确 deterministic merge policy 和 barrier 处 event ordering 时才允许进入维护路径。
 
 这些调度语义的当前冻结计划是
-[WP2.5 调度语义冻结](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.zh.md)。
+[WP2.5 调度语义冻结](../../task/simulation_architecture/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md)。
 它在 facade hardening 或 validation harness 依赖这些规则前，冻结 event
 family priority、state-shard versioning、barrier visibility、clock-domain
 merge policy、deterministic replay 输入与 `StageNodeManifest` schema。
@@ -418,10 +419,10 @@ Platform =
 - CUDA helper 应通过 facade/backend packet 接入，尤其是 visual、observation、broadphase、flight shaping 和未来 resident-state 路径。
 - Backend profile taxonomy、parity budget、resident-state 边界与 capability
   projection 规则由
-  [WP6 后端配置文件策略](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.zh.md)
+  [WP6 后端配置文件策略](../../task/simulation_architecture/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)
   及其 registry 约束。
 - WP6 之后的实现准备线是
-  [WP7 后端能力物化](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.zh.md)，
+  [WP7 后端能力物化](../../task/simulation_architecture/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)，
   它物化 registry、projection、promotion-evidence 与 multi-fidelity entry
   任务，但不晋级候选后端能力；其
   [验收审查](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
@@ -493,24 +494,27 @@ Platform =
   仍作为 `common / air / naval` 拆分的历史任务线。
 - [../../task/simulation_architecture/README.zh.md](../../task/simulation_architecture/README.zh.md)
   是把本文档转化为分阶段工作的执行子项目。
-- [../../task/simulation_architecture/scheduler_semantics_wp25_20260519.zh.md](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.zh.md)
+- [../../task/simulation_architecture/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md](../../task/simulation_architecture/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md)
   是插入在 contract freeze 与 facade alignment 之间的 `WP2.5` 调度语义冻结。
-- [../../task/simulation_architecture/facade_alignment_wp4_20260519.zh.md](../../task/simulation_architecture/facade_alignment_wp4_20260519.zh.md)
+- [../../task/simulation_architecture/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md](../../task/simulation_architecture/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md)
   是把信息状态和 agent 边界补充应用到维护中前端 surface 的 `WP4` facade 对齐任务族。
-- [../../task/simulation_architecture/validation_harness_wp5_20260519.zh.md](../../task/simulation_architecture/validation_harness_wp5_20260519.zh.md)
+- [../../task/simulation_architecture/wp5_validation_harness/validation_harness_wp5_20260519.zh.md](../../task/simulation_architecture/wp5_validation_harness/validation_harness_wp5_20260519.zh.md)
   是覆盖 design、trace、boundary、information/belief leakage 与 replay/evidence conformance 的 `WP5` 验证套件任务族。
-- [../../task/simulation_architecture/backend_profile_policy_wp6_20260519.zh.md](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.zh.md)
+- [../../task/simulation_architecture/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md](../../task/simulation_architecture/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)
   是 `WP6` 后端配置文件策略，覆盖 backend taxonomy、parity budget、
   resident-state 边界与 capability projection。
 - [../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md](../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)
   记录已验收的 WP6 发布线。
-- [../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.zh.md](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.zh.md)
+- [../../task/simulation_architecture/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md](../../task/simulation_architecture/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)
   是 WP6 之后计划中的 `WP7` materialization 线，覆盖可机器检查 registry、
   runtime capability projection、promotion evidence gates 与 multi-fidelity
   entry conditions。
 - [../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
   将 WP7 作为文档与实现准备线验收，不代表 exact GPU、resident-state、
   shadow、device observation 或 multi-fidelity support 晋级。
+- [../../task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.zh.md](../../task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.zh.md)
+  是独立的 `learning-face` 任务族，承接学习侧闭环、证据消费与能力演化
+  的架构对齐，不重开仿真框架闭合。
 - [../../task/review/temp-02_review_20260519.zh.md](../../task/review/temp-02_review_20260519.zh.md)
   是将本基线从 lifecycle + DAG 提升到 SCAL、图之图、信息状态架构和仿真编译器定位的来源评审。
 

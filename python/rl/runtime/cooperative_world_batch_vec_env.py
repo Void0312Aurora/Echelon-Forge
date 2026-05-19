@@ -255,7 +255,17 @@ class CooperativeWorldBatchVecEnv(VecEnv):
     ) -> tuple[list[int], list[Any], list[Any]]:
         target_slot_indices = [int(slot_index) for slot_index in slot_indices]
         refs = self._slot_refs(target_slot_indices)
-        truth_list, inst_list = self._runtime_adapter.read_truth_and_instruments(refs)
+        packet = self._runtime_adapter.read_observation_packet(
+            refs,
+            include_agent_observations=True,
+            include_instrument_states=True,
+            include_mission_commands=False,
+            include_task_orders=False,
+            include_leader_intents=False,
+            include_pilot_reports=False,
+        )
+        truth_list = list(getattr(packet, "agent_observations", []) or [])
+        inst_list = list(getattr(packet, "instrument_states", []) or [])
         return target_slot_indices, truth_list, inst_list
 
     def seed(self, seed: int | None = None) -> list[int]:

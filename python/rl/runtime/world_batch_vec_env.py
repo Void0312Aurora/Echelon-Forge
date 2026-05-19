@@ -308,14 +308,36 @@ class WorldBatchVecEnv(VecEnv):
         indices: Sequence[int] | None = None,
     ) -> tuple[list[int], list[Any], list[Any]]:
         target_indices, refs = self._build_refs(indices)
-        truth_list, inst_list = self._read_truth_and_inst_by_refs(refs)
+        packet = self._runtime_adapter.read_observation_packet(
+            refs,
+            include_agent_observations=True,
+            include_instrument_states=True,
+            include_mission_commands=False,
+            include_task_orders=False,
+            include_leader_intents=False,
+            include_pilot_reports=False,
+        )
+        truth_list = list(getattr(packet, "agent_observations", []) or [])
+        inst_list = list(getattr(packet, "instrument_states", []) or [])
         return target_indices, truth_list, inst_list
 
     def _read_truth_and_inst_by_refs(
         self,
         refs: Sequence[Any],
     ) -> tuple[list[Any], list[Any]]:
-        return self._runtime_adapter.read_truth_and_instruments(refs)
+        packet = self._runtime_adapter.read_observation_packet(
+            refs,
+            include_agent_observations=True,
+            include_instrument_states=True,
+            include_mission_commands=False,
+            include_task_orders=False,
+            include_leader_intents=False,
+            include_pilot_reports=False,
+        )
+        return (
+            list(getattr(packet, "agent_observations", []) or []),
+            list(getattr(packet, "instrument_states", []) or []),
+        )
 
     def _get_instrument_states_batch(self, refs: Sequence[Any]) -> list[Any]:
         return self._runtime_adapter.get_instrument_states_batch(refs)
@@ -717,13 +739,47 @@ class WorldBatchVecEnv(VecEnv):
     def _step_execution_episode_controller_mainline_requests(self, requests: Sequence[Any]) -> Any:
         batch_request = ef_py.ExecutionBatchStepRequest()
         batch_request.step_requests = list(requests)
-        batch_request.include_agent_observations = False
-        batch_request.include_instrument_states = False
+        batch_request.include_agent_observations = True
+        batch_request.include_instrument_states = True
         batch_request.include_mission_commands = False
         batch_request.include_task_orders = False
         batch_request.include_leader_intents = False
         batch_request.include_pilot_reports = False
         return self._runtime_adapter.step_execution_batch(batch_request)
+
+    def _consume_execution_episode_controller_mainline_observation_packet(
+        self,
+        step_batch_result: Any,
+        result_env_indices: Sequence[int],
+    ) -> bool:
+        packet = getattr(step_batch_result, "observation_packet", None)
+        if packet is None:
+            return False
+        refs = list(getattr(packet, "refs", []) or [])
+        truth_list = list(getattr(packet, "agent_observations", []) or [])
+        inst_list = list(getattr(packet, "instrument_states", []) or [])
+        if (
+            len(refs) != len(result_env_indices)
+            or len(truth_list) != len(result_env_indices)
+            or len(inst_list) != len(result_env_indices)
+        ):
+            return False
+        for batch_idx, env_idx in enumerate(result_env_indices):
+            handle = self._handles[int(env_idx)]
+            agent_id = getattr(handle, "agent_id", None)
+            ref = refs[batch_idx]
+            try:
+                ref_world_index = int(getattr(ref, "world_index"))
+                ref_entity_id = int(getattr(ref, "entity_id"))
+            except Exception:
+                return False
+            if agent_id is None or ref_world_index != int(env_idx) or ref_entity_id != int(agent_id):
+                return False
+        for batch_idx, env_idx in enumerate(result_env_indices):
+            handle = self._handles[int(env_idx)]
+            handle.last_truth = truth_list[batch_idx]
+            handle.last_inst = inst_list[batch_idx]
+        return True
 
     def _step_execution_episode_controller_shadow_requests(self, requests: Sequence[Any]) -> list[Any]:
         return self._runtime_adapter.step_execution_products_batch(requests)
@@ -933,6 +989,10 @@ class WorldBatchVecEnv(VecEnv):
         runtime_step_t0 = time.perf_counter() if timing_enabled else 0.0
         step_batch_result = self._step_execution_episode_controller_mainline_requests(requests)
         runtime_step_ms = (time.perf_counter() - runtime_step_t0) * 1000.0 if timing_enabled else 0.0
+        self._consume_execution_episode_controller_mainline_observation_packet(
+            step_batch_result,
+            [env_idx for env_idx, _step_eval in request_metadata],
+        )
         step_results_batch = list(getattr(step_batch_result, "step_results", []))
         rewards_batch = list(getattr(step_batch_result, "rewards", []))
         terminated_batch = list(getattr(step_batch_result, "terminated", []))

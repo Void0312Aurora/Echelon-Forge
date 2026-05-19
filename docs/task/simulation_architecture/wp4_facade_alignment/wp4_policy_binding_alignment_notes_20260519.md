@@ -190,6 +190,12 @@ Do not bind these until WP4-A stabilizes names and fields:
 6. `WP4-E1 Binding mirror after WP4-A`: bind only stable DTO names and add
    field-presence tests; keep `WorldBatchRuntime` and `RuntimeFacade.runtime()`
    documented as compatibility-only.
+7. `WP7.5 Training Path Facade Bridge`: once the maintained facade request and
+   observation surfaces are stable, migrate `WorldBatchVecEnv` mainline batch
+   stepping and maintained observation reads away from `_compat_runtime` toward
+   `RuntimeFacade.step_execution_batch()` plus
+   `RuntimeFacade.export_observation_packet()`; keep that bridge work outside
+   accepted `WP4` scope.
 
 ## 9. Open Questions
 
