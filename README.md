@@ -149,6 +149,7 @@ repository helper:
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
+cmo_env_validate_rl  # Only needed before RL-capable runtime tests.
 cmo_python -m pytest -q \
   tests/architecture/test_runtime_facade_layering.py \
   tests/architecture/test_cmake_target_readiness.py \

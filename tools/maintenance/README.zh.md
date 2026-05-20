@@ -47,8 +47,13 @@ cmo_python -m pytest -q tests/runtime/core/test_env_config.py
 ```bash
 bash tools/maintenance/cmo_env.sh summary
 bash tools/maintenance/cmo_env.sh validate
+bash tools/maintenance/cmo_env.sh validate-rl
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/core/test_env_config.py
 ```
+
+`validate` 有意只检查烟雾/运行时工作流需要的仓库虚拟环境与本地
+`ef_py` 构建产物。运行会导入 RL 栈的回归测试前，请使用 `validate-rl`；它会导入
+`ef_py`、`gymnasium`、`stable_baselines3` 和 `torch`，并报告被选中的模块位置。
 
 推荐的 Windows/PowerShell 用法：
 
@@ -61,6 +66,7 @@ cmake -S . -B build-local-win -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-local-win --target ef_core ef_py -j2
 
 .\tools\maintenance\cmo_env.ps1 validate
+.\tools\maintenance\cmo_env.ps1 validate-rl
 .\tools\maintenance\cmo_env.ps1 summary
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\core\test_env_config.py
 ```
@@ -68,7 +74,9 @@ cmake --build build-local-win --target ef_core ef_py -j2
 Windows 范围：
 
 - PowerShell 辅助工具旨在用于本地开发烟雾测试、结构测试和聚焦的运行时回归测试。
-- 它不定义本地工作站的 RL 训练能力。当前记录的工作流暂不涵盖训练设置或运行管理。
+- 它不定义本地工作站的 RL 训练能力；默认 `validate` 只检查构建/运行时烟雾前提。
+  当某个聚焦回归会导入 RL 栈时，请在安装 `.[rl]` 或等价直接依赖后运行
+  `validate-rl`。
 - 它有意与 `cmo_env.sh` 并存运行，不应替代 Linux CI 工作流。
 
 推荐的双语文档审计：

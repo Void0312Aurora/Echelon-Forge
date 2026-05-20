@@ -1,6 +1,6 @@
 # WP7.5 训练路径 facade 桥接验收审查
 
-状态：`2026-05-20` 已收紧验收规则；尚未授予验收通过。
+状态：`2026-05-20` 已验收通过。
 
 语言版本：
 
@@ -69,15 +69,17 @@
 
 | Gate | 判定 | 本审查已观察到的证据 | 命令 / 阻塞点 |
 |------|------|----------------------|---------------|
-| `WP7.5-A Step Execution Mainline` | `blocked` | 维护中的 mainline 代码已通过 `RuntimeFacade.step_execution_batch()` 路由 batch step 请求，且聚焦回归测试已改为在 `tests/world_batch/test_world_batch_vec_env.py` 上记录外层 batch request 标志。静态检查显示维护主线会消费 `ExecutionBatchStepResult.observation_packet`。 | `python -m pytest tests/world_batch/test_world_batch_vec_env.py -k mainline_step_prefers_batch_step_observation_packet -q` 在本机被阻塞：普通 shell 无法导入 `ef_py`，而 `.\tools\maintenance\cmo_env.ps1 python -m pytest ...` 又被 `ModuleNotFoundError: No module named 'torch'` 阻塞。 |
-| `WP7.5-B Observation Packet Mainline` | `blocked` | 静态检查显示 `python/rl/runtime/world_batch/adapter.py`、`python/rl/runtime/world_batch_vec_env.py` 与 `python/rl/runtime/cooperative_world_batch_vec_env.py` 的维护中 observation read 已走 `ObservationBatchRequest` / `ObservationBatchPacket`；维护中 vec-env 回归测试也会拒绝 direct observation getter。 | `python -m pytest tests/world_batch/test_world_batch_vec_env.py -k reset_uses_runtime_facade_compatibly -q` 被同一环境分裂阻塞：普通 shell 缺 `ef_py`，maintenance shell 缺 `torch`。 |
-| `WP7.5-C Compatibility Escape Hatch Reduction` | `fail` | `python/rl/runtime/world_batch/adapter.py` 中仍存在 `self._compat_runtime = self.facade.runtime()` 这一维护中 adapter seam 根部；本审查也尚未把所有剩余可接受 escape hatch 按 compatibility-only / diagnostics-only 逐项列全。 | 已使用静态审计命令：`rg -n "\\.runtime\\(\\)|RuntimeFacade\\.runtime|WorldBatchRuntime" python/rl/runtime tests/architecture tests/runtime`。必需的 allowlist 仍不完整。 |
+| `WP7.5-A Step Execution Mainline` | `pass` | 维护中的 mainline 代码已通过 `RuntimeFacade.step_execution_batch()` 路由 batch step 请求，且聚焦回归测试已改为在 `tests/world_batch/test_world_batch_vec_env.py` 上记录外层 batch request 标志。静态检查显示维护主线会消费 `ExecutionBatchStepResult.observation_packet`。 | 已在本机通过：`python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "mainline_step_prefers_batch_step_observation_packet or reset_uses_runtime_facade_compatibly"` 和 `python -m pytest tests/world_batch/test_world_batch_vec_env.py -q`。此前的 blocked 结果属于另一台设备，原因是缺少 RL 依赖（`torch`、`gymnasium`、`stable-baselines3`）或那台设备上的 `ef_py` 构建产物。 |
+| `WP7.5-B Observation Packet Mainline` | `pass` | 静态检查显示 `python/rl/runtime/world_batch/adapter.py`、`python/rl/runtime/world_batch_vec_env.py` 与 `python/rl/runtime/cooperative_world_batch_vec_env.py` 的维护中 observation read 已走 `ObservationBatchRequest` / `ObservationBatchPacket`；维护中 vec-env 回归测试也会拒绝 direct observation getter。 | 已在本机通过：`python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "mainline_step_prefers_batch_step_observation_packet or reset_uses_runtime_facade_compatibly"` 和 `python -m pytest tests/world_batch/test_world_batch_vec_env.py -q`。另一台 blocked 设备应先通过 `cmake --build build-workshop --target ef_core ef_py -j4` 恢复 `ef_py`，并安装 `.[rl]` extra 或等价直接依赖后再复测。 |
+| `WP7.5-C Compatibility Escape Hatch Reduction` | `pass` | 剩余维护中 seam 已被显式列为 `compatibility-only`：`python/rl/runtime/world_batch/adapter.py` 的 `RuntimeFacadeAdapter.__init__` 中，`self.facade.runtime()` 或 fallback `ef_py.WorldBatchRuntime(...)` 创建集中 compatibility adapter 根部。`tests/runtime/facade/test_runtime_facade.py` 中的 raw `WorldBatchRuntime` 构造属于 `compatibility-only` fixture 覆盖。engagement 测试中用 `facade.runtime().world(...)` 构造 live evidence fixture 的用法属于 `diagnostics-only`、`test-only`，不是维护中训练输入。 | 已使用静态审计命令：`rg -n "RuntimeFacade\\.runtime\\(|\\.runtime\\(\\)|WorldBatchRuntime" python/rl/runtime tests/architecture tests/runtime tests/world_batch --glob "*.py"`。guard 证据已通过：`python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp5_design_boundary_gates.py`。 |
 | `WP7.5-D Validation And Integration Sync` | `pass` | `WP7.5` 必需产物现已齐全，regression guard 已落到任务文档与测试文件里，且 `WP8` 明确通过引用 `WP7.5` 获得 maintained training-path bridge，而不是重写迁移。 | 当前工作树已完成文档存在性与交叉引用检查；该 gate 不再受额外运行时阻塞。 |
 
-整体结论：`blocked`。
+整体结论：`pass`。
 
 原因：
 
 - 验收标准已经显式化，review 产物也已齐全。
-- `WP7.5-A/B` 的运行验证仍被环境分裂阻塞。
-- `WP7.5-C` 在剩余 escape-hatch allowlist 补齐前仍为 `fail`。
+- `WP7.5-A/B` 的运行验证已在本机通过；剩余环境分裂仅限另一台设备，应通过安装
+  已声明的 `.[rl]` 依赖集并在那台设备上构建 `ef_py` 来处理。
+- `WP7.5-C` 已具备显式 allowlist 与 guard 覆盖，且没有把任何剩余 escape hatch
+  抬升为维护中的 policy、training 或 learning API。

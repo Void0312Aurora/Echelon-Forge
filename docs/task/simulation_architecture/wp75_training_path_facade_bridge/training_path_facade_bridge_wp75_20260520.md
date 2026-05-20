@@ -1,6 +1,6 @@
 # WP7.5 Training Path Facade Bridge
 
-Status: `2026-05-20` planned bridge line between accepted `WP7` backend
+Status: `2026-05-20` accepted bridge line between accepted `WP7` backend
 capability materialization and planned `WP8` SCAL learning-face work.
 
 Language:
@@ -103,10 +103,10 @@ contracts that the simulation architecture now treats as maintained, and gives
 
 | Work package | Status | Goal | Output |
 |--------------|--------|------|--------|
-| `WP7.5-A Step Execution Mainline` | planned | Make maintained batch training steps consume `RuntimeFacade.step_execution_batch()` instead of raw runtime episode stepping. | step-execution migration slice |
-| `WP7.5-B Observation Packet Mainline` | planned | Make maintained training observation reads consume `ObservationBatchRequest` / `ObservationBatchPacket` and tighten packet provenance. | observation-bridge slice |
-| `WP7.5-C Compatibility Escape Hatch Reduction` | planned | Reduce `RuntimeFacade.runtime()` use to explicit compatibility or diagnostics seams and document what remains allowed. | compat-reduction slice |
-| `WP7.5-D Validation And Integration Sync` | planned | Add regression gates and sync README, review, and `WP8` references once A-C stabilize. | validation/index slice |
+| `WP7.5-A Step Execution Mainline` | complete / accepted | Make maintained batch training steps consume `RuntimeFacade.step_execution_batch()` instead of raw runtime episode stepping. | step-execution migration slice |
+| `WP7.5-B Observation Packet Mainline` | complete / accepted | Make maintained training observation reads consume `ObservationBatchRequest` / `ObservationBatchPacket` and tighten packet provenance. | observation-bridge slice |
+| `WP7.5-C Compatibility Escape Hatch Reduction` | complete / accepted | Reduce `RuntimeFacade.runtime()` use to explicit compatibility or diagnostics seams and document what remains allowed. | compat-reduction slice |
+| `WP7.5-D Validation And Integration Sync` | complete / accepted | Add regression gates and sync README, review, and `WP8` references once A-C stabilize. | validation/index slice |
 
 ## 4. Dependency Map
 
@@ -162,6 +162,30 @@ Artifact rule:
   evidence for the gate it claims to cover, the acceptance result is `fail`.
 - A chat message, commit description, or PR summary does not replace the
   required acceptance review artifact.
+
+## 6.1 Compatibility Escape-Hatch Allowlist
+
+After the maintained training mainline moves to facade-shaped step execution
+and observation packet reads, the allowed `WP7.5` escape hatch is:
+
+| Location | Classification | Allowed purpose | Must not become |
+|----------|----------------|-----------------|-----------------|
+| `python/rl/runtime/world_batch/adapter.py`, `RuntimeFacadeAdapter.__init__`, `self.facade.runtime()` / `ef_py.WorldBatchRuntime(...)` fallback | `compatibility-only` | Centralized adapter root for legacy setup, scenario-loader, visual/debug helper, and fallback world-handle operations while callers consume facade-shaped adapter methods. | A maintained policy, training, or learning API; a second batch-step mainline; or a direct observation source outside the adapter. |
+
+Allowlist interpretation:
+
+- Downstream `_compat_runtime` use inside the same adapter is covered only by
+  this root seam and must remain internal to compatibility/fallback behavior.
+- Maintained batch stepping must continue through `RuntimeFacade.step_execution_batch()`
+  or the adapter request/result flow that wraps it.
+- Maintained observation reads must continue through `ObservationBatchRequest`
+  / `ObservationBatchPacket` or the packet returned by
+  `ExecutionBatchStepResult`.
+- Test-only raw `WorldBatchRuntime` construction and `facade.runtime().world(...)`
+  calls used to seed diagnostics fixtures are diagnostics-only test setup, not
+  maintained training-path allowlist entries.
+- Architecture-test references to `RuntimeFacade.runtime()` or
+  `WorldBatchRuntime` are guard logic, not runtime usage.
 
 ## 7. Strict Gate Rules
 

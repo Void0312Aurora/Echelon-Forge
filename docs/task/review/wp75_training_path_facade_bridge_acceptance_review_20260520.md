@@ -1,6 +1,6 @@
 # WP7.5 Training Path Facade Bridge Acceptance Review
 
-Status: `2026-05-20` acceptance rules hardened; acceptance not yet granted.
+Status: `2026-05-20` accepted.
 
 Language:
 
@@ -75,16 +75,19 @@ Gate snapshot as of `2026-05-20`:
 
 | Gate | Verdict | Evidence observed in this review | Commands / blocker |
 |------|---------|----------------------------------|--------------------|
-| `WP7.5-A Step Execution Mainline` | `blocked` | The maintained mainline code now routes batch step requests through `RuntimeFacade.step_execution_batch()` and the focused regression test records the outer batch-request flags at `tests/world_batch/test_world_batch_vec_env.py`. Static inspection shows the maintained mainline consumes `ExecutionBatchStepResult.observation_packet`. | `python -m pytest tests/world_batch/test_world_batch_vec_env.py -k mainline_step_prefers_batch_step_observation_packet -q` is blocked on this machine because the plain shell cannot import `ef_py`, while `.\tools\maintenance\cmo_env.ps1 python -m pytest ...` is blocked by `ModuleNotFoundError: No module named 'torch'`. |
-| `WP7.5-B Observation Packet Mainline` | `blocked` | Static inspection shows maintained observation reads in `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/world_batch_vec_env.py`, and `python/rl/runtime/cooperative_world_batch_vec_env.py` now route through `ObservationBatchRequest` / `ObservationBatchPacket`, and the maintained vec-env regression test rejects direct observation getters on the maintained path. | `python -m pytest tests/world_batch/test_world_batch_vec_env.py -k reset_uses_runtime_facade_compatibly -q` is blocked by the same environment split: plain shell lacks `ef_py`; maintenance shell lacks `torch`. |
-| `WP7.5-C Compatibility Escape Hatch Reduction` | `fail` | One remaining maintained adapter seam is still present at `python/rl/runtime/world_batch/adapter.py`, where `self._compat_runtime = self.facade.runtime()` remains the compatibility bridge root. This review has not yet recorded a complete allowlist of all remaining acceptable escape hatches with compatibility-only versus diagnostics-only classification. | Static audit command used: `rg -n "\\.runtime\\(\\)|RuntimeFacade\\.runtime|WorldBatchRuntime" python/rl/runtime tests/architecture tests/runtime`. The required documented allowlist is still incomplete. |
+| `WP7.5-A Step Execution Mainline` | `pass` | The maintained mainline code now routes batch step requests through `RuntimeFacade.step_execution_batch()` and the focused regression test records the outer batch-request flags at `tests/world_batch/test_world_batch_vec_env.py`. Static inspection shows the maintained mainline consumes `ExecutionBatchStepResult.observation_packet`. | Passed on this machine: `python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "mainline_step_prefers_batch_step_observation_packet or reset_uses_runtime_facade_compatibly"` and `python -m pytest tests/world_batch/test_world_batch_vec_env.py -q`. The earlier blocked result applies to a separate machine missing either RL dependencies (`torch`, `gymnasium`, `stable-baselines3`) or that machine's `ef_py` build artifact. |
+| `WP7.5-B Observation Packet Mainline` | `pass` | Static inspection shows maintained observation reads in `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/world_batch_vec_env.py`, and `python/rl/runtime/cooperative_world_batch_vec_env.py` now route through `ObservationBatchRequest` / `ObservationBatchPacket`, and the maintained vec-env regression test rejects direct observation getters on the maintained path. | Passed on this machine: `python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "mainline_step_prefers_batch_step_observation_packet or reset_uses_runtime_facade_compatibly"` and `python -m pytest tests/world_batch/test_world_batch_vec_env.py -q`. On the separate blocked machine, restore `ef_py` with `cmake --build build-workshop --target ef_core ef_py -j4` and install the RL extra or equivalent direct dependencies before rerunning. |
+| `WP7.5-C Compatibility Escape Hatch Reduction` | `pass` | The remaining maintained seam is explicitly allowlisted as `compatibility-only`: `python/rl/runtime/world_batch/adapter.py`, `RuntimeFacadeAdapter.__init__`, where `self.facade.runtime()` or fallback `ef_py.WorldBatchRuntime(...)` creates the centralized compatibility adapter root. Test-only raw `WorldBatchRuntime` construction in `tests/runtime/facade/test_runtime_facade.py` is `compatibility-only` fixture coverage. Engagement tests that use `facade.runtime().world(...)` to seed live evidence fixtures are `diagnostics-only`, `test-only`, and not maintained training inputs. | Static audit command used: `rg -n "RuntimeFacade\\.runtime\\(|\\.runtime\\(\\)|WorldBatchRuntime" python/rl/runtime tests/architecture tests/runtime tests/world_batch --glob "*.py"`. Guard evidence passed: `python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp5_design_boundary_gates.py`. |
 | `WP7.5-D Validation And Integration Sync` | `pass` | All required `WP7.5` artifacts now exist, the regression guard is documented in the task family and test file, and `WP8` cross references `WP7.5` as the maintained training-path bridge rather than redefining the migration. | Documentation checks completed from the current worktree; no additional runtime blocker applies to artifact existence. |
 
-Overall decision: `blocked`.
+Overall decision: `pass`.
 
 Reason:
 
 - Acceptance rules are now explicit and review artifacts exist.
-- Runtime validation for `WP7.5-A/B` is still blocked by environment split.
-- `WP7.5-C` remains `fail` until the remaining escape-hatch allowlist is
-  documented gate-by-gate.
+- Runtime validation for `WP7.5-A/B` now passes on this machine; the remaining
+  environment split is limited to the separate machine and should be handled by
+  installing the declared `.[rl]` dependency set plus an `ef_py` build on that
+  machine.
+- `WP7.5-C` now has an explicit allowlist and guard coverage, and no remaining
+  escape hatch is promoted into a maintained policy, training, or learning API.

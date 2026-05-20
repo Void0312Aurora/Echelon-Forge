@@ -7,3 +7,34 @@ name = "cmo"
 version = "0.2.0"
 description = "CMO Simulation Engine"
 requires-python = ">=3.8"
+
+[project.optional-dependencies]
+test = [
+  "numpy",
+  "pytest",
+]
+rl = [
+  "gymnasium",
+  "numpy",
+  "stable-baselines3",
+  "torch",
+]
+train = [
+  "gymnasium",
+  "numpy",
+  "stable-baselines3",
+  "tensorboard",
+  "torch",
+]
+world-model = [
+  "numpy",
+  "torch",
+]
+dev = [
+  "gymnasium",
+  "numpy",
+  "pytest",
+  "stable-baselines3",
+  "tensorboard",
+  "torch",
+]

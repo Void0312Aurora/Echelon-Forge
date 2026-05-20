@@ -148,6 +148,44 @@ EOF
   return 5
 }
 
+cmo_env_validate_rl() {
+  cmo_activate_env
+  "${CMO_PYTHON}" - <<'PY'
+import importlib
+import sys
+
+required = ("ef_py", "gymnasium", "stable_baselines3", "torch")
+failed = False
+
+for name in required:
+    try:
+        module = importlib.import_module(name)
+    except Exception as exc:
+        failed = True
+        print(f"[cmo_env] import failed: {name}: {exc}", file=sys.stderr)
+        continue
+    version = getattr(module, "__version__", None)
+    location = getattr(module, "__file__", None)
+    detail = []
+    if version:
+        detail.append(f"version={version}")
+    if location:
+        detail.append(f"file={location}")
+    suffix = f" ({', '.join(detail)})" if detail else ""
+    print(f"[cmo_env] import ok: {name}{suffix}")
+
+if failed:
+    print(
+        "[cmo_env] RL validation failed; install the `.[rl]` extra or the "
+        "equivalent direct dependencies, and rebuild ef_py if that import failed.",
+        file=sys.stderr,
+    )
+    sys.exit(6)
+
+print("[cmo_env] RL validation ok")
+PY
+}
+
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   if [[ $# -eq 0 ]]; then
     cmo_env_summary
@@ -157,6 +195,10 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     validate)
       shift
       cmo_env_validate "$@"
+      ;;
+    validate-rl)
+      shift
+      cmo_env_validate_rl "$@"
       ;;
     summary)
       shift

@@ -1,6 +1,6 @@
 # WP7.5 训练路径 facade 桥接
 
-状态：`2026-05-20` 计划中的桥接线，位于已验收的 `WP7` 后端能力物化与计划中的
+状态：`2026-05-20` 已验收的桥接线，位于已验收的 `WP7` 后端能力物化与计划中的
 `WP8` SCAL 学习面之间。
 
 语言：
@@ -95,10 +95,10 @@
 
 | 工作包 | 状态 | 目标 | 产出 |
 |--------|------|------|------|
-| `WP7.5-A Step Execution Mainline` | planned | 让维护中的 batch 训练 step 消费 `RuntimeFacade.step_execution_batch()`，而不是 raw runtime episode stepping。 | step execution 迁移子切片 |
-| `WP7.5-B Observation Packet Mainline` | planned | 让维护中的训练 observation 读取消费 `ObservationBatchRequest` / `ObservationBatchPacket`，并补 observation packet provenance。 | observation bridge 子切片 |
-| `WP7.5-C Compatibility Escape Hatch Reduction` | planned | 把 `RuntimeFacade.runtime()` 收窄到显式 compatibility / diagnostics seam，并记录剩余允许路径。 | compat 收窄子切片 |
-| `WP7.5-D Validation And Integration Sync` | planned | 在 A-C 稳定后新增 regression gate，并同步 README、review 与 `WP8` 引用。 | 验证 / 索引同步子切片 |
+| `WP7.5-A Step Execution Mainline` | complete / accepted | 让维护中的 batch 训练 step 消费 `RuntimeFacade.step_execution_batch()`，而不是 raw runtime episode stepping。 | step execution 迁移子切片 |
+| `WP7.5-B Observation Packet Mainline` | complete / accepted | 让维护中的训练 observation 读取消费 `ObservationBatchRequest` / `ObservationBatchPacket`，并补 observation packet provenance。 | observation bridge 子切片 |
+| `WP7.5-C Compatibility Escape Hatch Reduction` | complete / accepted | 把 `RuntimeFacade.runtime()` 收窄到显式 compatibility / diagnostics seam，并记录剩余允许路径。 | compat 收窄子切片 |
+| `WP7.5-D Validation And Integration Sync` | complete / accepted | 在 A-C 稳定后新增 regression gate，并同步 README、review 与 `WP8` 引用。 | 验证 / 索引同步子切片 |
 
 ## 4. 依赖图
 
@@ -150,6 +150,29 @@ flowchart TD
 - 产物存在但没有覆盖其声称负责的 gate 判定和 required evidence，也必须为
   `fail`。
 - 聊天消息、commit 描述或 PR 摘要不能替代必需的 acceptance review 文档。
+
+## 6.1 Compatibility Escape-Hatch Allowlist
+
+维护中的训练主线迁到 facade-shaped step execution 与 observation packet
+读取后，`WP7.5` 允许保留的 escape hatch 如下：
+
+| 位置 | 分类 | 允许用途 | 不得变成 |
+|------|------|----------|----------|
+| `python/rl/runtime/world_batch/adapter.py`，`RuntimeFacadeAdapter.__init__` 中的 `self.facade.runtime()` / `ef_py.WorldBatchRuntime(...)` fallback | `compatibility-only` | 作为集中 adapter 根部，承接 legacy setup、scenario-loader、visual/debug helper 与 fallback world-handle 操作，同时调用方只消费 facade-shaped adapter methods。 | 维护中的 policy、training 或 learning API；第二条 batch-step 主线；或 adapter 外部的 direct observation source。 |
+
+allowlist 解释：
+
+- 同一 adapter 内部的下游 `_compat_runtime` 使用只由这一根 seam 覆盖，并且必须保持在
+  compatibility / fallback 行为内部。
+- 维护中的 batch stepping 必须继续通过 `RuntimeFacade.step_execution_batch()`，或通过
+  包装它的 adapter request/result 流。
+- 维护中的 observation read 必须继续通过 `ObservationBatchRequest` /
+  `ObservationBatchPacket`，或通过 `ExecutionBatchStepResult` 返回的 packet。
+- 测试中为了构造 diagnostics fixture 而使用的 raw `WorldBatchRuntime` 构造和
+  `facade.runtime().world(...)` 调用属于 diagnostics-only test setup，不是维护中
+  training-path allowlist 条目。
+- architecture test 中提到 `RuntimeFacade.runtime()` 或 `WorldBatchRuntime` 是 guard
+  逻辑，不是运行时使用。
 
 ## 7. 严格 gate 规则
 

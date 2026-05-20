@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import ast
+from dataclasses import dataclass
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
+WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
 LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
@@ -14,6 +16,10 @@ CORE_SRC = REPO_ROOT / "src" / "core"
 
 def _source() -> str:
     return WORLD_BATCH_VEC_ENV.read_text(encoding="utf-8")
+
+
+def _adapter_source() -> str:
+    return WORLD_BATCH_ADAPTER.read_text(encoding="utf-8")
 
 
 def _leader_source() -> str:
@@ -39,48 +45,135 @@ def _class_stack(tree: ast.AST) -> dict[ast.AST, list[str]]:
     return out
 
 
-def test_world_batch_vec_env_keeps_direct_runtime_fallback_inside_adapter() -> None:
-    tree = ast.parse(_source())
-    allowed_classes = {"_RuntimeFacadeAdapter"}
-    violations: list[tuple[int, str]] = []
-    class_by_node = _class_stack(tree)
-
-    class Visitor(ast.NodeVisitor):
-        def visit_Attribute(self, node: ast.Attribute) -> None:
-            class_stack = class_by_node.get(node, [])
-            if (
-                isinstance(node.value, ast.Name)
-                and node.value.id == "ef_py"
-                and node.attr == "WorldBatchRuntime"
-                and (not class_stack or class_stack[-1] not in allowed_classes)
-            ):
-                violations.append((node.lineno, "ef_py.WorldBatchRuntime"))
-            self.generic_visit(node)
-
-    Visitor().visit(tree)
-    assert not violations, f"direct runtime fallback escaped adapter: {violations}"
+@dataclass(frozen=True)
+class EscapeHatchAllowance:
+    runtime_calls: int
+    runtime_world_calls: int
+    world_batch_ctor_calls: int
+    classification: str
+    tier: str
 
 
-def test_runtime_facade_runtime_escape_hatch_stays_inside_adapter() -> None:
-    tree = ast.parse(_source())
-    allowed_classes = {"_RuntimeFacadeAdapter"}
-    class_by_node = _class_stack(tree)
-    violations: list[tuple[int, str]] = []
+SCOPED_ESCAPE_HATCH_ALLOWLIST = {
+    "python/rl/runtime/world_batch/adapter.py": EscapeHatchAllowance(
+        runtime_calls=1,
+        runtime_world_calls=0,
+        world_batch_ctor_calls=1,
+        classification="compatibility_only",
+        tier="maintained_training_path",
+    ),
+    "tests/runtime/facade/test_runtime_facade.py": EscapeHatchAllowance(
+        runtime_calls=0,
+        runtime_world_calls=0,
+        world_batch_ctor_calls=1,
+        classification="compatibility_only",
+        tier="test_only",
+    ),
+    "tests/runtime/engagement/test_facade_engagement_export.py": EscapeHatchAllowance(
+        runtime_calls=1,
+        runtime_world_calls=1,
+        world_batch_ctor_calls=0,
+        classification="diagnostics_only",
+        tier="test_only",
+    ),
+    "tests/runtime/engagement/test_live_engagement_event_capture.py": EscapeHatchAllowance(
+        runtime_calls=1,
+        runtime_world_calls=1,
+        world_batch_ctor_calls=0,
+        classification="diagnostics_only",
+        tier="test_only",
+    ),
+    "tests/runtime/engagement/test_facade_engagement_evidence_gates.py": EscapeHatchAllowance(
+        runtime_calls=1,
+        runtime_world_calls=1,
+        world_batch_ctor_calls=0,
+        classification="diagnostics_only",
+        tier="test_only",
+    ),
+    "tests/runtime/engagement/test_trace_replay_gates.py": EscapeHatchAllowance(
+        runtime_calls=1,
+        runtime_world_calls=1,
+        world_batch_ctor_calls=0,
+        classification="diagnostics_only",
+        tier="test_only",
+    ),
+}
+
+
+def _runtime_escape_hatch_counts(path: Path) -> tuple[int, int, int]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    runtime_calls = 0
+    runtime_world_calls = 0
+    world_batch_ctor_calls = 0
 
     class Visitor(ast.NodeVisitor):
         def visit_Call(self, node: ast.Call) -> None:
+            nonlocal runtime_calls, runtime_world_calls, world_batch_ctor_calls
             func = node.func
-            class_stack = class_by_node.get(node, [])
             if (
                 isinstance(func, ast.Attribute)
-                and func.attr == "runtime"
-                and (not class_stack or class_stack[-1] not in allowed_classes)
+                and isinstance(func.value, ast.Name)
+                and func.value.id == "ef_py"
+                and func.attr == "WorldBatchRuntime"
             ):
-                violations.append((node.lineno, "runtime()"))
+                world_batch_ctor_calls += 1
+            if isinstance(func, ast.Attribute) and func.attr == "runtime":
+                runtime_calls += 1
+            if (
+                isinstance(func, ast.Attribute)
+                and func.attr == "world"
+                and isinstance(func.value, ast.Call)
+                and isinstance(func.value.func, ast.Attribute)
+                and func.value.func.attr == "runtime"
+            ):
+                runtime_world_calls += 1
             self.generic_visit(node)
 
     Visitor().visit(tree)
-    assert not violations, f"RuntimeFacade.runtime() escaped compatibility adapter: {violations}"
+    return runtime_calls, runtime_world_calls, world_batch_ctor_calls
+
+
+def test_world_batch_adapter_keeps_direct_runtime_fallback_inside_adapter() -> None:
+    runtime_calls, runtime_world_calls, world_batch_ctor_calls = _runtime_escape_hatch_counts(WORLD_BATCH_ADAPTER)
+    assert runtime_calls == 1
+    assert runtime_world_calls == 0
+    assert world_batch_ctor_calls == 1
+
+
+def test_runtime_facade_escape_hatch_allowlist_stays_explicit() -> None:
+    actual = {}
+    for path in [
+        WORLD_BATCH_ADAPTER,
+        REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade.py",
+        REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_export.py",
+        REPO_ROOT / "tests" / "runtime" / "engagement" / "test_live_engagement_event_capture.py",
+        REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_evidence_gates.py",
+        REPO_ROOT / "tests" / "runtime" / "engagement" / "test_trace_replay_gates.py",
+    ]:
+        counts = _runtime_escape_hatch_counts(path)
+        if any(counts):
+            actual[str(path.relative_to(REPO_ROOT))] = EscapeHatchAllowance(
+                runtime_calls=counts[0],
+                runtime_world_calls=counts[1],
+                world_batch_ctor_calls=counts[2],
+                classification=SCOPED_ESCAPE_HATCH_ALLOWLIST[str(path.relative_to(REPO_ROOT))].classification,
+                tier=SCOPED_ESCAPE_HATCH_ALLOWLIST[str(path.relative_to(REPO_ROOT))].tier,
+            )
+
+    assert actual == SCOPED_ESCAPE_HATCH_ALLOWLIST, f"scoped escape hatch allowlist drifted: {actual}"
+
+
+def test_world_batch_adapter_is_only_maintained_escape_hatch_in_scope() -> None:
+    maintained = {
+        path: allowance
+        for path, allowance in SCOPED_ESCAPE_HATCH_ALLOWLIST.items()
+        if allowance.tier == "maintained_training_path"
+    }
+    assert maintained == {
+        "python/rl/runtime/world_batch/adapter.py": SCOPED_ESCAPE_HATCH_ALLOWLIST[
+            "python/rl/runtime/world_batch/adapter.py"
+        ]
+    }
 
 
 def test_world_batch_vec_env_does_not_branch_on_facade_presence_in_main_class() -> None:

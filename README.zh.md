@@ -129,6 +129,7 @@ cmake --build build-workshop --target ef_core ef_py -j2
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
+cmo_env_validate_rl  # 仅在运行会导入 RL 栈的回归测试前需要。
 cmo_python -m pytest -q \
   tests/architecture/test_runtime_facade_layering.py \
   tests/architecture/test_cmake_target_readiness.py \

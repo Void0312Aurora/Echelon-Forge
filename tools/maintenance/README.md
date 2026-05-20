@@ -57,8 +57,14 @@ Direct script-mode entrypoints are also supported:
 ```bash
 bash tools/maintenance/cmo_env.sh summary
 bash tools/maintenance/cmo_env.sh validate
+bash tools/maintenance/cmo_env.sh validate-rl
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/core/test_env_config.py
 ```
+
+`validate` intentionally checks only the repository virtual environment and
+local `ef_py` build artifact needed by smoke/runtime workflows. Use
+`validate-rl` before RL-capable runtime tests; it imports `ef_py`, `gymnasium`,
+`stable_baselines3`, and `torch` and reports the selected module locations.
 
 Recommended Windows/PowerShell usage:
 
@@ -71,6 +77,7 @@ cmake -S . -B build-local-win -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build-local-win --target ef_core ef_py -j2
 
 .\tools\maintenance\cmo_env.ps1 validate
+.\tools\maintenance\cmo_env.ps1 validate-rl
 .\tools\maintenance\cmo_env.ps1 summary
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\core\test_env_config.py
 ```
@@ -80,8 +87,9 @@ Windows scope:
 - The PowerShell helper is intended for local development smoke tests,
   structural tests, and focused runtime regressions.
 - It does not define the local workstation's RL training capability. The
-  current documented workflow simply does not cover training setup or run
-  management yet.
+  default `validate` command checks build/runtime smoke prerequisites only.
+  Run `validate-rl` after installing `.[rl]` or equivalent direct dependencies
+  when a focused regression imports the RL stack.
 - It intentionally runs beside `cmo_env.sh`; it should not replace the Linux
   CI workflow.
 
