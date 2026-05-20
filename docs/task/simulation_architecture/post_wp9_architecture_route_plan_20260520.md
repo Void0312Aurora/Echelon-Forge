@@ -1,8 +1,8 @@
 # Post-WP9 Architecture Route Plan
 
 Status: `2026-05-21` route-selection plan; Phase 1 is accepted as `WP10`,
-Phase 2 is accepted as `WP11`, Phase 3 is accepted as `WP12`, and Phase 4 is
-accepted as `WP13`.
+Phase 2 is accepted as `WP11`, Phase 3 is accepted as `WP12`, Phase 4 is
+accepted as `WP13`, and Phase 5 is opened as planned / dispatch-ready `WP14`.
 
 Language:
 
@@ -16,6 +16,7 @@ Inputs:
 - [Consolidated remaining work and forward roadmap](../review/consolidated_remaining_work_and_roadmap_20260520.md)
 - [Post-WP9 gap analysis](../review/post_wp9_gap_analysis_20260520.md)
 - [WP9 contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md)
+- [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md)
 - [WP closure lane policy](../../standards/governance/wp_closure_lane_policy.md)
 
 ## 1. Purpose
@@ -27,10 +28,11 @@ should choose an implementation route that turns accepted architecture rules
 into runtime facts.
 
 This document fixes the route order, anchors Phase 1 as `WP10`, Phase 2 as
-`WP11`, anchors Phase 3 as `WP12`, and accepts Phase 4 as `WP13`. It does not
-assign WP numbers to all later phases. It defines which direction must come
-first, which directions should wait, and what kind of evidence counts as real
-architectural progress.
+`WP11`, anchors Phase 3 as `WP12`, accepts Phase 4 as `WP13`, and opens Phase 5
+as planned / dispatch-ready `WP14`. It does not assign WP numbers beyond the
+currently opened phase. It defines which direction must come first, which
+directions should wait, and what kind of evidence counts as real architectural
+progress.
 
 ## 2. Route Decision
 
@@ -68,15 +70,14 @@ This order is intentional:
 | 2 | Facade vertical slice | One maintained chain, preferably engagement/observation first, proves `manifest -> event order -> diagnostics trace -> facade export -> tests`, while adding `ActionHoldPolicy` and information-state provenance labels needed for later policy cadence proof. | track 1 seed, GAP-1/GAP-4 | broad scheduler rewrite |
 | 3 | Information and agency enforcement | Law 14 read-side guards, `AgentRole` authority validation, information-transformation evidence, and authorized intent injection become test-backed. | WP10, WP11, GAP-5/GAP-6/GAP-7 | full Agency Graph runtime |
 | 4 | Backend/fidelity expansion | `RuntimeCapabilities` and model-provider/fidelity profiles become queryable, rejectable, and test-backed. | WP6, WP7, tracks 1-3 | maintained causal/evidence boundary |
-| 5 | Capability composition | A bounded path from type-name spawning toward `spawn_platform({capabilities...})` without breaking compatibility. | WP2, WP9, tracks 1-4, `Capability` / `CapabilityBundle` DTOs | stable setup/content contract |
+| 5 | Capability composition | A bounded path from type-name spawning toward typed `Capability` / `CapabilityBundle` composition through resolved spawn plans and additive setup DTOs without breaking compatibility. | WP2, WP9, tracks 1-4, `Capability` / `CapabilityBundle` DTOs | stable setup/content contract |
 | 6 | Counterfactual and experiment generation | Branchable worldline, deterministic replay envelope, scenario/adversary generation, and capability profiling evidence. | WP8, tracks 1-5 | snapshot/restore and replay proof |
 
 ### 3.1 Post-WP9 Phase Breakdown
 
-The route is divided into no more than six implementation phases. Phases 1-4
-are now assigned to `WP10`, `WP11`, `WP12`, and `WP13`. Later phase names
-remain sequencing anchors, not opened task folders
-until the previous gates are mergeable.
+The route is divided into no more than six implementation phases. Phases 1-5
+are now assigned to `WP10` through `WP14`. Phase 6 remains a sequencing anchor,
+not an opened task folder, until its prerequisites are mergeable.
 
 | Phase | Working label | Scope | Candidate WP ownership | Opens when | Must not claim yet |
 |-------|---------------|-------|------------------------|------------|--------------------|
@@ -84,7 +85,7 @@ until the previous gates are mergeable.
 | 2 | Facade vertical slice and provenance | Add `ActionHoldPolicy`, information-state provenance labels, and one facade/binding-visible chain over the Phase 1 runtime seam. | `WP11` | Phase 1 registry, barriers, and event/snapshot evidence are accepted. | Broad facade rewrite, policy/control/physics cadence support beyond the demonstrated slice. |
 | 3 | Information and agency enforcement | Turn deferred `GAP-5`, `GAP-6`, and `GAP-7` into enforceable read-side, role/authority, and transformation-surfacing gates. | `WP12` | Provenance labels, consumer pre-gates, and facade slice are stable. | Full Agency Graph runtime or backend/fidelity promotion. |
 | 4 | Backend/fidelity expansion | Make `RuntimeCapabilities`, model-provider profiles, fidelity profiles, and parity budgets queryable, rejectable, and evidence-backed behind the causal boundary. | `WP13` | Phase 1-3 evidence boundaries are stable enough to compare backends. | Exact GPU, resident-state, shadow, or multi-fidelity promotion without gates. |
-| 5 | Capability composition | Move bounded setup/content paths toward typed `Capability` / `CapabilityBundle` composition while preserving type-name compatibility. | Later WP | Runtime/facade/backend contracts can name stable capability effects and evidence. | Big-bang spawn rewrite. |
+| 5 | Capability composition | Move bounded setup/content paths toward typed `Capability` / `CapabilityBundle` composition while preserving type-name compatibility. | `WP14` | Runtime/facade/backend contracts can name stable capability effects and evidence. | Big-bang spawn rewrite, mandatory public `spawn_platform`, or scenario-schema replacement. |
 | 6 | Counterfactual and experiment generation | Add branchable worldlines, deterministic replay envelopes, scenario/adversary generation, and experiment evidence ancestry. | Later WP | Snapshot/restore, replay, capability evidence, and facade provenance are stable. | Worldline branching before deterministic replay and snapshot boundaries exist. |
 
 ## 4. Gap Analysis Incorporation
@@ -210,6 +211,27 @@ Phase 4 backend/fidelity seed:
 This backend/fidelity seed is now accepted as
 [WP13 backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md).
 
+Phase 5 capability-composition seed:
+
+- define platform-semantic `Capability`, `CapabilityBundle`, capability-family
+  vocabulary, and resolved-plan evidence without reusing backend
+  `RuntimeCapabilities`,
+- introduce the internal compatibility chain:
+  `type_name -> CapabilityBundle template -> ResolvedPlatformSpawnPlan ->
+  materialization evidence`,
+- route existing spawn paths through resolution before materialization while
+  preserving `spawn_unit(type_name)` and `WorldSpawnRequest.type_name`,
+- add additive facade/setup DTO vocabulary for future typed platform spawn
+  requests without making it mandatory,
+- bind capability families to existing ECS/component materialization evidence
+  and unsupported-effect reasons without adding new tactical behavior,
+- keep public `spawn_platform({capabilities...})` promotion, scenario-schema
+  migration, backend/fidelity promotion, and broad spawn rewrites out of scope
+  until their own gates exist.
+
+This capability-composition seed is now opened, not accepted, as
+[WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md).
+
 ## 6. Non-Goals For The First Implementation WP
 
 - Do not rewrite the whole scheduler.
@@ -218,6 +240,8 @@ This backend/fidelity seed is now accepted as
 - Do not promote exact GPU, resident-state, or multi-fidelity execution to
   maintained status.
 - Do not migrate all platform spawning to capability composition.
+- Do not make typed capability spawning mandatory before the WP14 compatibility
+  bridge and additive facade/setup DTO gates pass.
 - Do not claim Law 14 read-side enforcement or Agency Graph runtime enforcement
   in the first causal slice.
 - Do not start counterfactual/worldline branching before deterministic replay
@@ -255,7 +279,7 @@ Use the following split:
 - Explorers may inspect candidate implementation seams before task dispatch, but
   should not substitute for runtime materialization.
 
-For the first implementation WP, the highest-reasoning work is the causal
-boundary design: deciding where `StageNodeManifest`, the scheduling-window loop,
-input injection, same-window edge validation, barrier visibility, and diagnostics
-ancestry attach without creating a second scheduler.
+For `WP14`, the highest-reasoning work is the compatibility-preserving
+composition seam: deciding where capability contracts, content/factory lowering,
+spawn resolution, facade setup DTOs, and materialization evidence attach without
+creating a second spawn lifecycle or forcing callers off type-name compatibility.

@@ -65,13 +65,14 @@ The active design conclusion is:
     causal runtime foundation first, facade vertical slice second, then
     information/agency enforcement, backend/fidelity, capability composition,
     and counterfactual/experiment generation. Phases 1-4 are now accepted as
-    `WP10`, `WP11`, `WP12`, and `WP13`.
+    `WP10`, `WP11`, `WP12`, and `WP13`; Phase 5 is opened as planned /
+    dispatch-ready `WP14`.
 15. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
 16. Commit messages for implementation closure should use capability/result
-    language and avoid internal work-package labels such as `WP13`.
+    language and avoid internal work-package labels such as `WP13` or `WP14`.
 
 ## Work Packages
 
@@ -94,6 +95,49 @@ The active design conclusion is:
 | `WP11 Facade Vertical Slice And Provenance` | complete / accepted | Implement Phase 2 of the post-WP9 route: `ActionHoldPolicy`, information-state provenance labels, a WP10-seam facade/binding proof, consumer boundary pre-gates, and integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.md), [ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.md), [information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.md), [vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.md), [consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.md), [integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md) |
 | `WP12 Information And Agency Enforcement` | complete / accepted | Implement Phase 3 of the post-WP9 route: Law 14 read-side enforcement, `AgentRole` authority validation, information-transformation evidence, authorized intent injection, and integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md), [Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md), [agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md), [information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md), [intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md), [integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp12_information_agency_enforcement_acceptance_review_20260520.md) |
 | `WP13 Backend Fidelity Expansion` | complete / accepted | Implement Phase 4 of the post-WP9 route: make runtime capabilities, backend profiles, parity budgets, and fidelity profile requests queryable, rejectable, and evidence-backed without promoting unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md), [capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md), [backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md), [parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md), [fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md), [facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md), [integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md) |
+| `WP14 Capability Composition` | planned / dispatch-ready | Open Phase 5 of the post-WP9 route: move existing type-name setup toward typed `Capability` / `CapabilityBundle` composition through compatibility-preserving resolved spawn plans, additive facade/setup DTOs, and strict implementation gates without a big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md), [capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md), [content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md), [spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md), [additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md), [capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md), [compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md) |
+
+## WP14 Capability Composition
+
+Output:
+
+- [WP14 Capability Composition](wp14_capability_composition/capability_composition_wp14_20260521.md)
+- [WP14-A Capability Bundle Contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md)
+- [WP14-B Content Definition Lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md)
+- [WP14-C Spawn Resolution Bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md)
+- [WP14-D Additive Facade Setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md)
+- [WP14-E Capability Effects Materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md)
+- [WP14-F Compatibility Validation And Acceptance Handoff](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md)
+
+WP14 opens Phase 5 of the post-WP9 route. It consumes WP2/WP9 contract
+vocabulary and WP10-WP13 runtime, facade, agency, and backend evidence, then
+turns implicit platform composition into bounded, testable implementation
+streams. The first slice preserves `spawn_unit(type_name)` and
+`WorldSpawnRequest.type_name` compatibility while introducing
+`type_name -> CapabilityBundle template -> ResolvedPlatformSpawnPlan` resolution
+before materialization.
+
+WP14 workstream map:
+
+- `WP14-A Capability Bundle Contract` defines platform-semantic `Capability`,
+  `CapabilityBundle`, capability-family vocabulary, and resolved-plan evidence
+  without colliding with backend `RuntimeCapabilities`.
+- `WP14-B Content Definition Lowering` maps existing content/factory evidence
+  into deterministic capability templates and resolved spawn plans.
+- `WP14-C Spawn Resolution Bridge` routes existing spawn paths through
+  resolution before materialization while preserving public compatibility.
+- `WP14-D Additive Facade Setup DTO` prepares future typed platform spawn
+  requests as additive setup vocabulary, not a mandatory replacement.
+- `WP14-E Capability Effects Materialization` binds capability families to
+  existing ECS/component materialization evidence and unsupported-effect
+  reasons without adding new tactical behavior.
+- `WP14-F Compatibility Validation And Acceptance Handoff` is the serial
+  validation, residual, acceptance-review, README/route, and bilingual closure
+  lane after A-E are mergeable.
+
+`WP14-A` through `WP14-F` are planned / dispatch-ready, not accepted. Acceptance
+requires implementation evidence, exact validation outcomes, named residuals,
+and English/Chinese acceptance reviews.
 
 ## WP13 Backend Fidelity Expansion
 

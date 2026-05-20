@@ -1,7 +1,8 @@
 # Post-WP9 Architecture Route Plan
 
 状态：`2026-05-21` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
-`WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已作为 `WP13` 验收。
+`WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已作为 `WP13` 验收，
+Phase 5 已开启为 planned / dispatch-ready `WP14`。
 
 语言版本：
 
@@ -15,6 +16,7 @@
 - [剩余工作整合与后续路线图](../review/consolidated_remaining_work_and_roadmap_20260520.zh.md)
 - [Post-WP9 gap analysis](../review/post_wp9_gap_analysis_20260520.zh.md)
 - [WP9 contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md)
+- [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)
 - [WP closure lane policy](../../standards/governance/wp_closure_lane_policy.zh.md)
 
 ## 1. 目的
@@ -25,8 +27,9 @@ backend-profile policy、learning-face vocabulary，以及延后的 DTO/infrastr
 把已验收架构规则变成 runtime facts。
 
 本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，把
-Phase 3 锚定为 `WP12`，并将 Phase 4 验收为 `WP13`。它不会给所有后续阶段硬编码 WP
-编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
+Phase 3 锚定为 `WP12`，将 Phase 4 验收为 `WP13`，并把 Phase 5 开启为
+planned / dispatch-ready `WP14`。它不会给当前已开启阶段之后的方向预先分配
+WP 编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
 
 ## 2. 路线决策
 
@@ -61,14 +64,13 @@ causal runtime foundation
 | 2 | Facade vertical slice | 一条维护中链路，优先 engagement/observation，证明 `manifest -> event order -> diagnostics trace -> facade export -> tests`，同时补后续 policy cadence 需要的 `ActionHoldPolicy` 与 information-state provenance labels。 | track 1 seed、GAP-1/GAP-4 | 大范围 scheduler rewrite |
 | 3 | Information and agency enforcement | Law 14 read-side guards、`AgentRole` authority validation、information-transformation evidence 与 authorized intent injection 变成有测试支撑的边界。 | WP10、WP11、GAP-5/GAP-6/GAP-7 | 完整 Agency Graph runtime |
 | 4 | Backend/fidelity expansion | `RuntimeCapabilities` 与 model-provider/fidelity profiles 变成可查询、可拒绝、可测试。 | WP6、WP7、tracks 1-3 | maintained causal/evidence boundary |
-| 5 | Capability composition | 从 type-name spawning 走向 `spawn_platform({capabilities...})` 的有边界兼容路径。 | WP2、WP9、tracks 1-4、`Capability` / `CapabilityBundle` DTOs | 稳定 setup/content contract |
+| 5 | Capability composition | 通过 resolved spawn plans 与 additive setup DTOs，让 type-name spawning 走向 typed `Capability` / `CapabilityBundle` composition，同时不破坏兼容。 | WP2、WP9、tracks 1-4、`Capability` / `CapabilityBundle` DTOs | 稳定 setup/content contract |
 | 6 | Counterfactual and experiment generation | 可分支 worldline、deterministic replay envelope、scenario/adversary generation 与 capability profiling evidence。 | WP8、tracks 1-5 | snapshot/restore 与 replay proof |
 
 ### 3.1 Post-WP9 阶段粗分
 
-路线被划分为不超过六个实现阶段。Phase 1-4 现已分配给 `WP10`、`WP11`、
-`WP12` 与 `WP13`。后续阶段名仍只是顺序锚点，在前置 gate
-达到 mergeable 之前不创建已开启任务文件夹。
+路线被划分为不超过六个实现阶段。Phase 1-5 现已分配给 `WP10` 到 `WP14`。
+Phase 6 仍只是顺序锚点，在前置 gate 达到 mergeable 之前不创建已开启任务文件夹。
 
 | Phase | 工作标签 | 范围 | 候选 WP 归属 | 开启条件 | 暂不声明 |
 |-------|----------|------|--------------|----------|----------|
@@ -76,7 +78,7 @@ causal runtime foundation
 | 2 | Facade vertical slice and provenance | 添加 `ActionHoldPolicy`、information-state provenance labels，并在 Phase 1 runtime seam 上证明一条 facade/binding-visible chain。 | `WP11` | Phase 1 registry、barriers 与 event/snapshot evidence 已验收。 | broad facade rewrite，以及超出 demonstrated slice 的 policy/control/physics cadence support。 |
 | 3 | Information and agency enforcement | 把延期的 `GAP-5`、`GAP-6` 与 `GAP-7` 转成可执行的 read-side、role/authority 与 transformation-surfacing gates。 | `WP12` | provenance labels、consumer pre-gates 与 facade slice 稳定。 | 完整 Agency Graph runtime 或 backend/fidelity promotion。 |
 | 4 | Backend/fidelity expansion | 在 causal boundary 后，让 `RuntimeCapabilities`、model-provider profiles、fidelity profiles 与 parity budgets 变成可查询、可拒绝、可证据化。 | `WP13` | Phase 1-3 的 evidence boundary 足够稳定，可用于比较 backend。 | 无 gate 晋升 exact GPU、resident-state、shadow 或 multi-fidelity。 |
-| 5 | Capability composition | 在保持 type-name compatibility 的同时，把有边界 setup/content path 推向 typed `Capability` / `CapabilityBundle` composition。 | 后续 WP | runtime/facade/backend contracts 能命名稳定 capability effects 与 evidence。 | big-bang spawn rewrite。 |
+| 5 | Capability composition | 在保持 type-name compatibility 的同时，把有边界 setup/content path 推向 typed `Capability` / `CapabilityBundle` composition。 | `WP14` | runtime/facade/backend contracts 能命名稳定 capability effects 与 evidence。 | big-bang spawn rewrite、强制 public `spawn_platform` 或 scenario-schema replacement。 |
 | 6 | Counterfactual and experiment generation | 添加 branchable worldlines、deterministic replay envelopes、scenario/adversary generation 与 experiment evidence ancestry。 | 后续 WP | snapshot/restore、replay、capability evidence 与 facade provenance 稳定。 | 在 deterministic replay 与 snapshot boundaries 存在前进行 worldline branching。 |
 
 ## 4. Gap Analysis Incorporation
@@ -194,12 +196,34 @@ Phase 4 backend/fidelity seed：
 该 backend/fidelity seed 现已验收为
 [WP13 backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)。
 
+Phase 5 capability-composition seed：
+
+- 定义 platform-semantic `Capability`、`CapabilityBundle`、capability-family
+  vocabulary 与 resolved-plan evidence，同时不复用 backend `RuntimeCapabilities`；
+- 引入内部兼容链路：
+  `type_name -> CapabilityBundle template -> ResolvedPlatformSpawnPlan ->
+  materialization evidence`；
+- 让既有 spawn 路径在 materialization 前先走 resolution，同时保持
+  `spawn_unit(type_name)` 与 `WorldSpawnRequest.type_name`；
+- 为未来 typed platform spawn requests 添加 additive facade/setup DTO vocabulary，
+  但不让它成为强制入口；
+- 把 capability families 绑定到现有 ECS/component materialization evidence 与
+  unsupported-effect reasons，同时不添加新战术行为；
+- 在各自 gate 存在前，保持 public `spawn_platform({capabilities...})` 晋级、
+  scenario-schema migration、backend/fidelity promotion 与 broad spawn rewrites
+  不在范围内。
+
+该 capability-composition seed 现已开启但尚未验收为
+[WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)。
+
 ## 6. 第一个实现型 WP 的非目标
 
 - 不重写整个 scheduler。
 - 在 window-loop skeleton 证明前，不声明严格 clock-domain enforcement。
 - 不把 exact GPU、resident-state 或 multi-fidelity execution 晋升为 maintained。
 - 不把所有 platform spawning 迁到 capability composition。
+- WP14 compatibility bridge 与 additive facade/setup DTO gates 通过前，不让 typed
+  capability spawning 成为强制入口。
 - 第一个 causal slice 不声明 Law 14 read-side enforcement 或 Agency Graph runtime enforcement。
 - 在 deterministic replay 和 snapshot 边界存在前，不启动 counterfactual/worldline branching。
 - 不让文档 closure 阻塞实现 `Mergeable` 状态；README、acceptance、archive 与
@@ -230,6 +254,7 @@ documentation-only output 仍可能有价值，但应归类为 planning 或 clos
 - closure subagent 在 stream 到达 `Mergeable` 后负责 README/review/index/archive/bilingual 同步。
 - explorer 可以在派发任务前检查候选 implementation seam，但不能替代 runtime materialization。
 
-第一个实现型 WP 中思考预算最高的是 causal boundary design：决定
-`StageNodeManifest`、scheduling-window loop、input injection、same-window edge
-validation、barrier visibility 与 diagnostics ancestry 附着在哪里，同时避免创造第二套 scheduler。
+对于 `WP14`，思考预算最高的是 compatibility-preserving composition seam：决定
+capability contracts、content/factory lowering、spawn resolution、facade setup DTOs
+与 materialization evidence 附着在哪里，同时避免创造第二套 spawn lifecycle 或强迫 callers
+离开 type-name compatibility。
