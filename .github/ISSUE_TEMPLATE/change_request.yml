@@ -1,0 +1,51 @@
+name: Scoped change request
+description: Propose a focused change and request scope confirmation before implementation.
+title: "[Request]: "
+labels:
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form before investing in a non-trivial change.
+
+        Broad unsolicited redesigns are unlikely to be accepted in the current
+        owner-maintained workflow.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: What change are you asking for?
+      placeholder: Add a narrow validation helper for runtime facade smoke checks
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why this is needed
+      description: Describe the problem or gap first.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed scope
+      description: Keep the proposed scope concrete and limited.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks or tradeoffs
+      description: Note compatibility, layering, documentation, or maintenance concerns.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmation
+      options:
+        - label: I understand this repository is currently maintained in a conservative single-owner workflow.
+          required: true
+        - label: I am requesting scope confirmation before preparing a pull request.
+          required: true

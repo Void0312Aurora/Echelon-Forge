@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a reproducible defect in a maintained code or workflow path.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for concrete defects.
+
+        This repository is maintained conservatively by a single owner. Please
+        keep reports scoped, reproducible, and tied to a maintained path.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence describing the observed problem.
+      placeholder: Smoke suite fails while importing ef_py from build-workshop
+    validations:
+      required: true
+  - type: textarea
+    id: location
+    attributes:
+      label: Affected area
+      description: Point to the file, test, command, scenario, or workflow.
+      placeholder: tests/runtime/test_agent_shim.py or tools/maintenance/cmo_env.sh validate
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction
+      description: Provide the smallest reproduction you have.
+      placeholder: |
+        1. source .venv/bin/activate
+        2. source tools/maintenance/cmo_env.sh
+        3. cmo_python -m pytest -q tests/runtime/test_agent_shim.py
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include platform, Python version, build directory, and any relevant flags.
+      placeholder: Ubuntu 24.04, Python 3.11, build-workshop, Release
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmation
+      options:
+        - label: I checked the README and existing docs before opening this report.
+          required: true
+        - label: I am not including secrets or sensitive security details in this public issue.
+          required: true

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Contribution policy
+    url: https://github.com/Void0312Aurora/Echelon-Forge/blob/main/CONTRIBUTING.md
+    about: Read the repository's conservative owner-maintained contribution policy.
+  - name: Security policy
+    url: https://github.com/Void0312Aurora/Echelon-Forge/blob/main/SECURITY.md
+    about: Read how to report vulnerabilities without exposing details publicly.
