@@ -30,6 +30,23 @@ _RUNTIME_CAPABILITY_FIELDS = (
     "supports_shadow_compare",
 )
 
+_RUNTIME_CAPABILITY_METADATA_FIELDS = (
+    "maintained_baseline_backend_profile_id",
+    "maintained_baseline_parity_budget_ref",
+    "maintained_baseline_profile_status",
+    "device_observation_view_candidate_profile_id",
+    "device_observation_view_rejection_reason",
+    "exact_gpu_backend_candidate_profile_id",
+    "exact_gpu_backend_rejection_reason",
+    "resident_state_candidate_profile_id",
+    "resident_state_candidate_parity_budget_ref",
+    "resident_state_rejection_reason",
+    "shadow_compare_candidate_profile_id",
+    "shadow_compare_candidate_parity_budget_ref",
+    "shadow_compare_rejection_reason",
+    "multi_fidelity_rejection_reason",
+)
+
 _RUNTIME_CAPABILITY_DEFAULTS = {
     "supports_batch_runtime": False,
     "supports_compiled_episode_controller": False,
@@ -43,6 +60,23 @@ _RUNTIME_CAPABILITY_DEFAULTS = {
     "supports_shadow_compare": False,
 }
 
+_RUNTIME_CAPABILITY_METADATA_DEFAULTS = {
+    "maintained_baseline_backend_profile_id": "",
+    "maintained_baseline_parity_budget_ref": "",
+    "maintained_baseline_profile_status": "",
+    "device_observation_view_candidate_profile_id": "",
+    "device_observation_view_rejection_reason": "",
+    "exact_gpu_backend_candidate_profile_id": "",
+    "exact_gpu_backend_rejection_reason": "",
+    "resident_state_candidate_profile_id": "",
+    "resident_state_candidate_parity_budget_ref": "",
+    "resident_state_rejection_reason": "",
+    "shadow_compare_candidate_profile_id": "",
+    "shadow_compare_candidate_parity_budget_ref": "",
+    "shadow_compare_rejection_reason": "",
+    "multi_fidelity_rejection_reason": "",
+}
+
 _RUNTIME_FACADE_CAPABILITY_EXPECTATIONS = {
     "supports_batch_runtime": True,
     "supports_compiled_episode_controller": True,
@@ -54,6 +88,35 @@ _RUNTIME_FACADE_CAPABILITY_EXPECTATIONS = {
     "supports_resident_state": False,
     "supports_exact_gpu_backend": False,
     "supports_shadow_compare": False,
+}
+
+_RUNTIME_FACADE_CAPABILITY_METADATA_EXPECTATIONS = {
+    "maintained_baseline_backend_profile_id": "cpu_exact.reference",
+    "maintained_baseline_parity_budget_ref": "parity_budget.cpu_exact.reference.v1",
+    "maintained_baseline_profile_status": "maintained_exact_baseline",
+    "device_observation_view_candidate_profile_id": "gpu_helpers.diagnostics_only",
+    "device_observation_view_rejection_reason": (
+        "gpu_helpers_diagnostics_only_is_not_a_maintained_device_observation_view_profile"
+    ),
+    "exact_gpu_backend_candidate_profile_id": "gpu_exact.unmaintained_candidate",
+    "exact_gpu_backend_rejection_reason": "gpu_exact.unmaintained_candidate_is_not_maintained",
+    "resident_state_candidate_profile_id": "resident_state.unmaintained_candidate",
+    "resident_state_candidate_parity_budget_ref": (
+        "parity_budget.resident_state.unmaintained_candidate.v1"
+    ),
+    "resident_state_rejection_reason": (
+        "resident_state.unmaintained_candidate_is_not_maintained"
+    ),
+    "shadow_compare_candidate_profile_id": "shadow_compare.unmaintained_candidate",
+    "shadow_compare_candidate_parity_budget_ref": (
+        "parity_budget.shadow_compare.unmaintained_candidate.v1"
+    ),
+    "shadow_compare_rejection_reason": (
+        "shadow_compare.unmaintained_candidate_is_not_maintained"
+    ),
+    "multi_fidelity_rejection_reason": (
+        "multi_fidelity_profiles_require_a_maintained_registry_revision_and_acceptance_gate"
+    ),
 }
 
 _GPU_HELPER_BINDINGS = (
@@ -93,6 +156,21 @@ class GpuRuntimeBindingTests(unittest.TestCase):
             self.assertIs(bool(getattr(capabilities, field)), not original)
             setattr(capabilities, field, original)
 
+        self.assertEqual(len(_RUNTIME_CAPABILITY_FIELDS), len(_RUNTIME_CAPABILITY_DEFAULTS))
+
+        for field, expected in _RUNTIME_CAPABILITY_METADATA_DEFAULTS.items():
+            self.assertTrue(hasattr(capabilities, field), msg=f"missing RuntimeCapabilities.{field}")
+            self.assertEqual(getattr(capabilities, field), expected)
+
+            setattr(capabilities, field, field)
+            self.assertEqual(getattr(capabilities, field), field)
+            setattr(capabilities, field, expected)
+
+        self.assertEqual(
+            len(_RUNTIME_CAPABILITY_METADATA_FIELDS),
+            len(_RUNTIME_CAPABILITY_METADATA_DEFAULTS),
+        )
+
     def test_runtime_facade_capabilities_project_backend_semantics(self) -> None:
         capabilities = ef_py.RuntimeFacade(1).capabilities()
 
@@ -103,6 +181,14 @@ class GpuRuntimeBindingTests(unittest.TestCase):
             self.assertTrue(hasattr(capabilities, field), msg=f"missing RuntimeCapabilities.{field}")
             self.assertIs(
                 bool(getattr(capabilities, field)),
+                expected,
+                msg=f"unexpected RuntimeCapabilities.{field}",
+            )
+
+        for field, expected in _RUNTIME_FACADE_CAPABILITY_METADATA_EXPECTATIONS.items():
+            self.assertTrue(hasattr(capabilities, field), msg=f"missing RuntimeCapabilities.{field}")
+            self.assertEqual(
+                getattr(capabilities, field),
                 expected,
                 msg=f"unexpected RuntimeCapabilities.{field}",
             )

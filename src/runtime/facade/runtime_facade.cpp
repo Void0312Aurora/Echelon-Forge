@@ -100,6 +100,34 @@ inline constexpr std::uint64_t kWp10ExportBarrierSequence = 1;
 inline constexpr std::string_view kWp11ObservationPacketIdPrefix = "obs:";
 inline constexpr std::string_view kWp11EngagementPacketIdPrefix = "eng:";
 inline constexpr std::string_view kWp11DiagnosticsPacketIdPrefix = "diag:";
+inline constexpr std::string_view kMaintainedBaselineBackendProfileId =
+    "cpu_exact.reference";
+inline constexpr std::string_view kMaintainedBaselineParityBudgetRef =
+    "parity_budget.cpu_exact.reference.v1";
+inline constexpr std::string_view kMaintainedBaselineProfileStatus =
+    "maintained_exact_baseline";
+inline constexpr std::string_view kDeviceObservationViewCandidateProfileId =
+    "gpu_helpers.diagnostics_only";
+inline constexpr std::string_view kDeviceObservationViewRejectionReason =
+    "gpu_helpers_diagnostics_only_is_not_a_maintained_device_observation_view_profile";
+inline constexpr std::string_view kExactGpuBackendCandidateProfileId =
+    "gpu_exact.unmaintained_candidate";
+inline constexpr std::string_view kExactGpuBackendRejectionReason =
+    "gpu_exact.unmaintained_candidate_is_not_maintained";
+inline constexpr std::string_view kResidentStateCandidateProfileId =
+    "resident_state.unmaintained_candidate";
+inline constexpr std::string_view kResidentStateCandidateParityBudgetRef =
+    "parity_budget.resident_state.unmaintained_candidate.v1";
+inline constexpr std::string_view kResidentStateRejectionReason =
+    "resident_state.unmaintained_candidate_is_not_maintained";
+inline constexpr std::string_view kShadowCompareCandidateProfileId =
+    "shadow_compare.unmaintained_candidate";
+inline constexpr std::string_view kShadowCompareCandidateParityBudgetRef =
+    "parity_budget.shadow_compare.unmaintained_candidate.v1";
+inline constexpr std::string_view kShadowCompareRejectionReason =
+    "shadow_compare.unmaintained_candidate_is_not_maintained";
+inline constexpr std::string_view kMultiFidelityRejectionReason =
+    "multi_fidelity_profiles_require_a_maintained_registry_revision_and_acceptance_gate";
 
 int launch_event_priority(const LaunchEvent&) {
     return 10;
@@ -780,6 +808,34 @@ RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {
         .supports_resident_state = false,
         .supports_exact_gpu_backend = false,
         .supports_shadow_compare = false,
+        .maintained_baseline_backend_profile_id =
+            std::string(kMaintainedBaselineBackendProfileId),
+        .maintained_baseline_parity_budget_ref =
+            std::string(kMaintainedBaselineParityBudgetRef),
+        .maintained_baseline_profile_status =
+            std::string(kMaintainedBaselineProfileStatus),
+        .device_observation_view_candidate_profile_id =
+            std::string(kDeviceObservationViewCandidateProfileId),
+        .device_observation_view_rejection_reason =
+            std::string(kDeviceObservationViewRejectionReason),
+        .exact_gpu_backend_candidate_profile_id =
+            std::string(kExactGpuBackendCandidateProfileId),
+        .exact_gpu_backend_rejection_reason =
+            std::string(kExactGpuBackendRejectionReason),
+        .resident_state_candidate_profile_id =
+            std::string(kResidentStateCandidateProfileId),
+        .resident_state_candidate_parity_budget_ref =
+            std::string(kResidentStateCandidateParityBudgetRef),
+        .resident_state_rejection_reason =
+            std::string(kResidentStateRejectionReason),
+        .shadow_compare_candidate_profile_id =
+            std::string(kShadowCompareCandidateProfileId),
+        .shadow_compare_candidate_parity_budget_ref =
+            std::string(kShadowCompareCandidateParityBudgetRef),
+        .shadow_compare_rejection_reason =
+            std::string(kShadowCompareRejectionReason),
+        .multi_fidelity_rejection_reason =
+            std::string(kMultiFidelityRejectionReason),
     };
 }
 

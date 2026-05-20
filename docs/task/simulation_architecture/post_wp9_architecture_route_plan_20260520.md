@@ -1,7 +1,8 @@
 # Post-WP9 Architecture Route Plan
 
 Status: `2026-05-20` route-selection plan; Phase 1 is accepted as `WP10`,
-Phase 2 is accepted as `WP11`, and Phase 3 is accepted as `WP12`.
+Phase 2 is accepted as `WP11`, Phase 3 is accepted as `WP12`, and Phase 4 is
+opened as `WP13`.
 
 Language:
 
@@ -26,9 +27,10 @@ should choose an implementation route that turns accepted architecture rules
 into runtime facts.
 
 This document fixes the route order, anchors Phase 1 as `WP10`, Phase 2 as
-`WP11`, and anchors Phase 3 as `WP12`. It does not assign WP numbers to all
-later phases. It defines which direction must come first, which directions
-should wait, and what kind of evidence counts as real architectural progress.
+`WP11`, anchors Phase 3 as `WP12`, and opens Phase 4 as `WP13`. It does not
+assign WP numbers to all later phases. It defines which direction must come
+first, which directions should wait, and what kind of evidence counts as real
+architectural progress.
 
 ## 2. Route Decision
 
@@ -72,15 +74,16 @@ This order is intentional:
 ### 3.1 Post-WP9 Phase Breakdown
 
 The route is divided into no more than six implementation phases. Phases 1-3
-are now assigned to `WP10`, `WP11`, and `WP12`; later phase names are sequencing
-anchors, not opened task folders until the previous gates are mergeable.
+are now assigned to `WP10`, `WP11`, and `WP12`; Phase 4 is now opened as
+`WP13`. Later phase names remain sequencing anchors, not opened task folders
+until the previous gates are mergeable.
 
 | Phase | Working label | Scope | Candidate WP ownership | Opens when | Must not claim yet |
 |-------|---------------|-------|------------------------|------------|--------------------|
 | 1 | Causal runtime foundation | Materialize the first code-owned `StageNodeManifest` registry, minimal scheduling-window loop, cross-layer request injection, same-window edge validation, and event/snapshot evidence for the engagement/observation slice. | `WP10` | WP9 closure and post-WP9 route are accepted. | Full multi-rate scheduling, strict clock-domain enforcement, Law 14 read-side enforcement. |
 | 2 | Facade vertical slice and provenance | Add `ActionHoldPolicy`, information-state provenance labels, and one facade/binding-visible chain over the Phase 1 runtime seam. | `WP11` | Phase 1 registry, barriers, and event/snapshot evidence are accepted. | Broad facade rewrite, policy/control/physics cadence support beyond the demonstrated slice. |
 | 3 | Information and agency enforcement | Turn deferred `GAP-5`, `GAP-6`, and `GAP-7` into enforceable read-side, role/authority, and transformation-surfacing gates. | `WP12` | Provenance labels, consumer pre-gates, and facade slice are stable. | Full Agency Graph runtime or backend/fidelity promotion. |
-| 4 | Backend/fidelity expansion | Make `RuntimeCapabilities`, model-provider profiles, fidelity profiles, and parity budgets queryable, rejectable, and evidence-backed behind the causal boundary. | Later WP | Phase 1-3 evidence boundaries are stable enough to compare backends. | Exact GPU, resident-state, shadow, or multi-fidelity promotion without gates. |
+| 4 | Backend/fidelity expansion | Make `RuntimeCapabilities`, model-provider profiles, fidelity profiles, and parity budgets queryable, rejectable, and evidence-backed behind the causal boundary. | `WP13` | Phase 1-3 evidence boundaries are stable enough to compare backends. | Exact GPU, resident-state, shadow, or multi-fidelity promotion without gates. |
 | 5 | Capability composition | Move bounded setup/content paths toward typed `Capability` / `CapabilityBundle` composition while preserving type-name compatibility. | Later WP | Runtime/facade/backend contracts can name stable capability effects and evidence. | Big-bang spawn rewrite. |
 | 6 | Counterfactual and experiment generation | Add branchable worldlines, deterministic replay envelopes, scenario/adversary generation, and experiment evidence ancestry. | Later WP | Snapshot/restore, replay, capability evidence, and facade provenance are stable. | Worldline branching before deterministic replay and snapshot boundaries exist. |
 
@@ -189,6 +192,23 @@ Phase 3 enforcement seed:
 
 This enforcement seed is now accepted as
 [WP12 information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md).
+
+Phase 4 backend/fidelity seed:
+
+- make `RuntimeCapabilities` expose conservative query metadata and stable
+  rejection reasons without inferring support from GPU helper/probe availability,
+- materialize code-owned backend profile records and parity budget evidence
+  gates from the accepted WP6/WP7 registries,
+- admit fidelity profile labels as requests bound to profile ids, budget refs,
+  model-family scope, validation gate, and facade evidence,
+- prove query and rejection behavior through maintained facade and Python
+  binding surfaces,
+- keep exact GPU, resident-state, shadow, adaptive fidelity, learned
+  `ModelProvider`, and maintained multi-fidelity support out of scope until
+  their own gates exist.
+
+This backend/fidelity seed is now opened as
+[WP13 backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md).
 
 ## 6. Non-Goals For The First Implementation WP
 

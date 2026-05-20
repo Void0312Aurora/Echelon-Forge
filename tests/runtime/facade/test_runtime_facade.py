@@ -33,6 +33,35 @@ _RUNTIME_CAPABILITY_EXPECTATIONS = {
     "supports_shadow_compare": False,
 }
 
+_RUNTIME_CAPABILITY_METADATA_EXPECTATIONS = {
+    "maintained_baseline_backend_profile_id": "cpu_exact.reference",
+    "maintained_baseline_parity_budget_ref": "parity_budget.cpu_exact.reference.v1",
+    "maintained_baseline_profile_status": "maintained_exact_baseline",
+    "device_observation_view_candidate_profile_id": "gpu_helpers.diagnostics_only",
+    "device_observation_view_rejection_reason": (
+        "gpu_helpers_diagnostics_only_is_not_a_maintained_device_observation_view_profile"
+    ),
+    "exact_gpu_backend_candidate_profile_id": "gpu_exact.unmaintained_candidate",
+    "exact_gpu_backend_rejection_reason": "gpu_exact.unmaintained_candidate_is_not_maintained",
+    "resident_state_candidate_profile_id": "resident_state.unmaintained_candidate",
+    "resident_state_candidate_parity_budget_ref": (
+        "parity_budget.resident_state.unmaintained_candidate.v1"
+    ),
+    "resident_state_rejection_reason": (
+        "resident_state.unmaintained_candidate_is_not_maintained"
+    ),
+    "shadow_compare_candidate_profile_id": "shadow_compare.unmaintained_candidate",
+    "shadow_compare_candidate_parity_budget_ref": (
+        "parity_budget.shadow_compare.unmaintained_candidate.v1"
+    ),
+    "shadow_compare_rejection_reason": (
+        "shadow_compare.unmaintained_candidate_is_not_maintained"
+    ),
+    "multi_fidelity_rejection_reason": (
+        "multi_fidelity_profiles_require_a_maintained_registry_revision_and_acceptance_gate"
+    ),
+}
+
 
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     ref = ef_py.WorldEntityRef()
@@ -394,9 +423,29 @@ class RuntimeFacadeTests(unittest.TestCase):
                 msg=f"unexpected RuntimeCapabilities.{field}",
             )
 
+        for field, expected in _RUNTIME_CAPABILITY_METADATA_EXPECTATIONS.items():
+            self.assertTrue(hasattr(capabilities, field), msg=f"missing RuntimeCapabilities.{field}")
+            self.assertEqual(
+                getattr(capabilities, field),
+                expected,
+                msg=f"unexpected RuntimeCapabilities.{field}",
+            )
+
         self.assertFalse(bool(capabilities.supports_resident_state))
         self.assertFalse(bool(capabilities.supports_exact_gpu_backend))
         self.assertFalse(bool(capabilities.supports_shadow_compare))
+
+    def test_runtime_capability_surface_declares_stable_backend_metadata_fields(self) -> None:
+        header = _repo_text("src", "runtime", "facade", "runtime_facade_types.h")
+        binding_source = _repo_text("src", "interfaces", "python", "bindings_runtime.cpp")
+        facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
+
+        for field in _RUNTIME_CAPABILITY_METADATA_EXPECTATIONS:
+            self.assertIn(field, header)
+            self.assertIn(f'"{field}"', binding_source)
+
+        for value in _RUNTIME_CAPABILITY_METADATA_EXPECTATIONS.values():
+            self.assertIn(value, facade_source)
 
     def test_runtime_facade_exports_typed_observation_packet(self) -> None:
         facade = ef_py.RuntimeFacade(1)

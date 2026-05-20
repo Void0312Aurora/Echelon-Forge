@@ -1,7 +1,7 @@
 # Post-WP9 Architecture Route Plan
 
 状态：`2026-05-20` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
-`WP11` 验收，Phase 3 已作为 `WP12` 验收。
+`WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已开启为 `WP13`。
 
 语言版本：
 
@@ -24,8 +24,9 @@ backend-profile policy、learning-face vocabulary，以及延后的 DTO/infrastr
 项目。下一阶段不应再形成一个 documentation-only wave，而应选择一条实现路线，
 把已验收架构规则变成 runtime facts。
 
-本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，并把
-Phase 3 锚定为 `WP12`。它不会给所有后续阶段硬编码 WP 编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
+本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，把
+Phase 3 锚定为 `WP12`，并开启 Phase 4 为 `WP13`。它不会给所有后续阶段硬编码 WP
+编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
 
 ## 2. 路线决策
 
@@ -66,14 +67,15 @@ causal runtime foundation
 ### 3.1 Post-WP9 阶段粗分
 
 路线被划分为不超过六个实现阶段。Phase 1-3 现已分配给 `WP10`、`WP11` 与
-`WP12`；后续阶段名只是顺序锚点，在前置 gate 达到 mergeable 之前不创建已开启任务文件夹。
+`WP12`；Phase 4 现已开启为 `WP13`。后续阶段名仍只是顺序锚点，在前置 gate
+达到 mergeable 之前不创建已开启任务文件夹。
 
 | Phase | 工作标签 | 范围 | 候选 WP 归属 | 开启条件 | 暂不声明 |
 |-------|----------|------|--------------|----------|----------|
 | 1 | Causal runtime foundation | 为 engagement/observation slice 物化第一组 code-owned `StageNodeManifest` registry、最小 scheduling-window loop、cross-layer request injection、same-window edge validation 与 event/snapshot evidence。 | `WP10` | WP9 closure 与 post-WP9 route 已验收。 | 完整 multi-rate scheduling、严格 clock-domain enforcement、Law 14 read-side enforcement。 |
 | 2 | Facade vertical slice and provenance | 添加 `ActionHoldPolicy`、information-state provenance labels，并在 Phase 1 runtime seam 上证明一条 facade/binding-visible chain。 | `WP11` | Phase 1 registry、barriers 与 event/snapshot evidence 已验收。 | broad facade rewrite，以及超出 demonstrated slice 的 policy/control/physics cadence support。 |
 | 3 | Information and agency enforcement | 把延期的 `GAP-5`、`GAP-6` 与 `GAP-7` 转成可执行的 read-side、role/authority 与 transformation-surfacing gates。 | `WP12` | provenance labels、consumer pre-gates 与 facade slice 稳定。 | 完整 Agency Graph runtime 或 backend/fidelity promotion。 |
-| 4 | Backend/fidelity expansion | 在 causal boundary 后，让 `RuntimeCapabilities`、model-provider profiles、fidelity profiles 与 parity budgets 变成可查询、可拒绝、可证据化。 | 后续 WP | Phase 1-3 的 evidence boundary 足够稳定，可用于比较 backend。 | 无 gate 晋升 exact GPU、resident-state、shadow 或 multi-fidelity。 |
+| 4 | Backend/fidelity expansion | 在 causal boundary 后，让 `RuntimeCapabilities`、model-provider profiles、fidelity profiles 与 parity budgets 变成可查询、可拒绝、可证据化。 | `WP13` | Phase 1-3 的 evidence boundary 足够稳定，可用于比较 backend。 | 无 gate 晋升 exact GPU、resident-state、shadow 或 multi-fidelity。 |
 | 5 | Capability composition | 在保持 type-name compatibility 的同时，把有边界 setup/content path 推向 typed `Capability` / `CapabilityBundle` composition。 | 后续 WP | runtime/facade/backend contracts 能命名稳定 capability effects 与 evidence。 | big-bang spawn rewrite。 |
 | 6 | Counterfactual and experiment generation | 添加 branchable worldlines、deterministic replay envelopes、scenario/adversary generation 与 experiment evidence ancestry。 | 后续 WP | snapshot/restore、replay、capability evidence 与 facade provenance 稳定。 | 在 deterministic replay 与 snapshot boundaries 存在前进行 worldline branching。 |
 
@@ -176,6 +178,21 @@ Phase 3 enforcement seed：
 
 该 enforcement seed 现已验收为
 [WP12 information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)。
+
+Phase 4 backend/fidelity seed：
+
+- 让 `RuntimeCapabilities` 暴露保守 query metadata 与稳定 rejection reasons，而不从
+  GPU helper/probe availability 推断 support，
+- 从已验收 WP6/WP7 registries 物化 code-owned backend profile records 与 parity
+  budget evidence gates，
+- 把 fidelity profile labels 作为绑定 profile ids、budget refs、model-family scope、
+  validation gate 与 facade evidence 的 requests 来 admission，
+- 通过 maintained facade 与 Python binding surfaces 证明 query 与 rejection 行为，
+- 在各自 gate 存在前，保持 exact GPU、resident-state、shadow、adaptive fidelity、
+  learned `ModelProvider` 与 maintained multi-fidelity support 不在范围内。
+
+该 backend/fidelity seed 现已开启为
+[WP13 backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)。
 
 ## 6. 第一个实现型 WP 的非目标
 

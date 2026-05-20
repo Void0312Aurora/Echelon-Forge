@@ -25,6 +25,20 @@ struct RuntimeCapabilities {
     bool supports_resident_state = false;
     bool supports_exact_gpu_backend = false;
     bool supports_shadow_compare = false;
+    std::string maintained_baseline_backend_profile_id;
+    std::string maintained_baseline_parity_budget_ref;
+    std::string maintained_baseline_profile_status;
+    std::string device_observation_view_candidate_profile_id;
+    std::string device_observation_view_rejection_reason;
+    std::string exact_gpu_backend_candidate_profile_id;
+    std::string exact_gpu_backend_rejection_reason;
+    std::string resident_state_candidate_profile_id;
+    std::string resident_state_candidate_parity_budget_ref;
+    std::string resident_state_rejection_reason;
+    std::string shadow_compare_candidate_profile_id;
+    std::string shadow_compare_candidate_parity_budget_ref;
+    std::string shadow_compare_rejection_reason;
+    std::string multi_fidelity_rejection_reason;
 };
 
 struct RuntimeBatchConfig {
