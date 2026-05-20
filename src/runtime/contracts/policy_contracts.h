@@ -29,6 +29,22 @@ struct DecisionModelRef {
     std::string id = "caller_supplied";
 };
 
+inline constexpr std::string_view kActionInterfacePilotActionAssignmentCompat =
+    "PilotActionAssignmentCompat";
+inline constexpr std::string_view kActionInterfaceCommandChainAssignmentCompat =
+    "CommandChainAssignmentCompat";
+inline constexpr std::string_view kActionInterfacePayloadPilotAction = "pilot_action";
+inline constexpr std::string_view kActionInterfacePayloadMissionCommand = "mission_command";
+inline constexpr std::string_view kActionInterfacePayloadCoordinationIntent =
+    "coordination_intent";
+
+inline constexpr std::string_view kAgentAuthorityScopePlatformControl =
+    "platform_control";
+inline constexpr std::string_view kAgentAuthorityScopeMissionCommand =
+    "mission_command";
+inline constexpr std::string_view kAgentAuthorityScopeFormationCoordination =
+    "formation_coordination";
+
 inline constexpr std::string_view kActionHoldModeHoldLast = "hold_last";
 inline constexpr std::string_view kActionHoldModeInterpolate = "interpolate";
 inline constexpr std::string_view kActionHoldModeExpire = "expire";
@@ -155,6 +171,25 @@ struct ActionHoldPolicy {
         status == kPolicyMaintainedStatusDiagnosticsOnly;
 }
 
+[[nodiscard]] inline bool is_known_agent_action_interface_kind(std::string_view kind) {
+    return kind == kActionInterfacePilotActionAssignmentCompat ||
+        kind == kActionInterfaceCommandChainAssignmentCompat;
+}
+
+[[nodiscard]] inline bool is_known_agent_action_interface_payload_type(
+    std::string_view payload_type
+) {
+    return payload_type == kActionInterfacePayloadPilotAction ||
+        payload_type == kActionInterfacePayloadMissionCommand ||
+        payload_type == kActionInterfacePayloadCoordinationIntent;
+}
+
+[[nodiscard]] inline bool is_known_agent_authority_scope(std::string_view scope) {
+    return scope == kAgentAuthorityScopePlatformControl ||
+        scope == kAgentAuthorityScopeMissionCommand ||
+        scope == kAgentAuthorityScopeFormationCoordination;
+}
+
 struct InformationStateSource {
     std::string information_state_layer = std::string(kPolicyInformationStateAgentObservation);
     std::string source_label = std::string(kPolicySourceLabelAgentObservationCompat);
@@ -177,12 +212,55 @@ struct InformationStateSource {
     return source;
 }
 
+[[nodiscard]] inline bool information_state_source_label_matches_layer_and_status(
+    const InformationStateSource& source
+) {
+    if (source.source_label == kPolicySourceLabelFacadeObservationPacket) {
+        return source.information_state_layer == kPolicyInformationStateAgentObservation &&
+            source.maintained_status == kPolicyMaintainedStatusMaintained;
+    }
+
+    if (source.source_label == kPolicySourceLabelAgentObservationCompat) {
+        return source.information_state_layer == kPolicyInformationStateAgentObservation &&
+            source.maintained_status == kPolicyMaintainedStatusCompatibilityAdapter;
+    }
+
+    if (source.source_label == kPolicySourceLabelSensedStatePacket) {
+        return source.information_state_layer == kPolicyInformationStateSensedState &&
+            source.maintained_status == kPolicyMaintainedStatusMaintained;
+    }
+
+    if (source.source_label == kPolicySourceLabelTrackStatePacket) {
+        return source.information_state_layer == kPolicyInformationStateTrackState &&
+            source.maintained_status == kPolicyMaintainedStatusMaintained;
+    }
+
+    if (source.source_label == kPolicySourceLabelSharedTacticalPictureCompat) {
+        return source.information_state_layer ==
+                kPolicyInformationStateSharedTacticalPicture &&
+            source.maintained_status == kPolicyMaintainedStatusCompatibilityAdapter;
+    }
+
+    if (source.source_label == kPolicySourceLabelWorldTruthDiagnostics) {
+        return source.information_state_layer == kPolicyInformationStateWorldTruth &&
+            source.maintained_status == kPolicyMaintainedStatusDiagnosticsOnly;
+    }
+
+    if (source.source_label == kPolicySourceLabelObservationDerivedBelief) {
+        return source.information_state_layer == kPolicyInformationStateDecisionBelief &&
+            is_known_policy_maintained_status(source.maintained_status);
+    }
+
+    return false;
+}
+
 [[nodiscard]] inline bool information_state_source_has_valid_label(
     const InformationStateSource& source
 ) {
     return is_known_policy_information_state_layer(source.information_state_layer) &&
         !source.source_label.empty() &&
-        is_known_policy_maintained_status(source.maintained_status);
+        is_known_policy_maintained_status(source.maintained_status) &&
+        information_state_source_label_matches_layer_and_status(source);
 }
 
 struct ConfidenceShape {
@@ -246,12 +324,190 @@ struct AgentRole {
     ActionInterfaceDescriptor action_interface{};
 };
 
+struct AgentRoleAuthorizationResult {
+    bool authorized = false;
+    std::string reason;
+};
+
+[[nodiscard]] inline bool action_interface_descriptor_has_valid_shape(
+    const ActionInterfaceDescriptor& action_interface
+) {
+    return is_known_agent_action_interface_kind(action_interface.kind) &&
+        is_known_agent_action_interface_payload_type(action_interface.payload_type);
+}
+
+[[nodiscard]] inline bool agent_authority_scope_has_required_shape(
+    const AgentAuthorityScope& authority_scope
+) {
+    if (!is_known_agent_authority_scope(authority_scope.scope)) {
+        return false;
+    }
+
+    if (!authority_scope.has_world_index) {
+        return false;
+    }
+
+    if (authority_scope.scope == kAgentAuthorityScopePlatformControl ||
+        authority_scope.scope == kAgentAuthorityScopeMissionCommand) {
+        return !authority_scope.entity_ids.empty();
+    }
+
+    if (authority_scope.scope == kAgentAuthorityScopeFormationCoordination) {
+        return !authority_scope.roster_id.empty() || !authority_scope.entity_ids.empty();
+    }
+
+    return false;
+}
+
+[[nodiscard]] inline bool maintained_information_state_source_is_authorized_for_agent_role(
+    const InformationStateSource& source
+) {
+    if (!information_state_source_has_valid_label(source)) {
+        return false;
+    }
+
+    if (source.maintained_status != kPolicyMaintainedStatusMaintained) {
+        return false;
+    }
+
+    return source.information_state_layer == kPolicyInformationStateAgentObservation ||
+        source.information_state_layer == kPolicyInformationStateDecisionBelief;
+}
+
+[[nodiscard]] inline bool decision_model_ref_has_required_shape(
+    const DecisionModelRef& decision_model_ref
+) {
+    return !decision_model_ref.kind.empty() && !decision_model_ref.id.empty();
+}
+
+[[nodiscard]] inline bool agent_role_has_maintained_authority_shape(
+    const AgentRole& role
+) {
+    return !role.role.role_id.empty() &&
+        !role.role.role_type.empty() &&
+        role.role.role_type != "unspecified" &&
+        agent_authority_scope_has_required_shape(role.authority_scope) &&
+        maintained_information_state_source_is_authorized_for_agent_role(
+            role.information_state_source
+        ) &&
+        decision_model_ref_has_required_shape(role.decision_model_ref) &&
+        action_interface_descriptor_has_valid_shape(role.action_interface);
+}
+
+[[nodiscard]] inline bool agent_role_action_interface_matches_authority_scope(
+    const AgentRole& role
+) {
+    if (role.authority_scope.scope == kAgentAuthorityScopePlatformControl) {
+        return role.action_interface.kind == kActionInterfacePilotActionAssignmentCompat &&
+            role.action_interface.payload_type == kActionInterfacePayloadPilotAction;
+    }
+
+    if (role.authority_scope.scope == kAgentAuthorityScopeMissionCommand) {
+        return role.action_interface.kind == kActionInterfaceCommandChainAssignmentCompat &&
+            role.action_interface.payload_type == kActionInterfacePayloadMissionCommand;
+    }
+
+    if (role.authority_scope.scope == kAgentAuthorityScopeFormationCoordination) {
+        return role.action_interface.kind == kActionInterfaceCommandChainAssignmentCompat &&
+            role.action_interface.payload_type == kActionInterfacePayloadCoordinationIntent;
+    }
+
+    return false;
+}
+
+[[nodiscard]] inline bool action_intent_packet_matches_action_interface(
+    const ActionIntentPacket& intent,
+    const ActionInterfaceDescriptor& action_interface
+) {
+    if (intent.action_interface.kind != action_interface.kind ||
+        intent.action_interface.payload_type != action_interface.payload_type) {
+        return false;
+    }
+
+    if (action_interface.payload_type == kActionInterfacePayloadPilotAction) {
+        return intent.has_pilot_action && !intent.has_mission_command;
+    }
+
+    if (action_interface.payload_type == kActionInterfacePayloadMissionCommand) {
+        return intent.has_mission_command && !intent.has_pilot_action;
+    }
+
+    return false;
+}
+
+[[nodiscard]] inline bool coordination_intent_packet_matches_action_interface(
+    const CoordinationIntentPacket& intent,
+    const ActionInterfaceDescriptor& action_interface
+) {
+    if (action_interface.kind != kActionInterfaceCommandChainAssignmentCompat ||
+        action_interface.payload_type != kActionInterfacePayloadCoordinationIntent) {
+        return false;
+    }
+
+    if (intent.source_id.empty()) {
+        return false;
+    }
+
+    return !intent.produced_tasking_refs.empty() || !intent.produced_leader_intent_refs.empty();
+}
+
+[[nodiscard]] inline AgentRoleAuthorizationResult authorize_maintained_action_intent(
+    const AgentRole& role,
+    const ActionIntentPacket& intent
+) {
+    if (!agent_role_has_maintained_authority_shape(role)) {
+        return {
+            false,
+            "WP12-B maintained AgentRole authority slice requires role, authority scope, "
+            "maintained information source, decision model ref, and action interface. "
+            "This is not full Agency Graph runtime dispatch."
+        };
+    }
+
+    if (!agent_role_action_interface_matches_authority_scope(role)) {
+        return {false, "AgentRole authority scope and action interface are incompatible"};
+    }
+
+    if (!action_intent_packet_matches_action_interface(intent, role.action_interface)) {
+        return {false, "ActionIntentPacket payload does not match AgentRole action interface"};
+    }
+
+    return {true, ""};
+}
+
+[[nodiscard]] inline AgentRoleAuthorizationResult authorize_maintained_coordination_intent(
+    const AgentRole& role,
+    const CoordinationIntentPacket& intent
+) {
+    if (!agent_role_has_maintained_authority_shape(role)) {
+        return {
+            false,
+            "WP12-B maintained AgentRole authority slice requires role, authority scope, "
+            "maintained information source, decision model ref, and action interface. "
+            "This is not full Agency Graph runtime dispatch."
+        };
+    }
+
+    if (!agent_role_action_interface_matches_authority_scope(role)) {
+        return {false, "AgentRole authority scope and action interface are incompatible"};
+    }
+
+    if (!coordination_intent_packet_matches_action_interface(intent, role.action_interface)) {
+        return {
+            false,
+            "CoordinationIntentPacket payload does not match AgentRole action interface"
+        };
+    }
+
+    return {true, ""};
+}
+
 struct DecisionBelief {
     std::string belief_id;
     std::string information_state_layer = std::string(kPolicyInformationStateDecisionBelief);
     InformationStateSource source_information_state = make_information_state_source(
         kPolicyInformationStateAgentObservation,
-        kPolicySourceLabelObservationDerivedBelief,
+        kPolicySourceLabelAgentObservationCompat,
         kPolicyMaintainedStatusCompatibilityAdapter
     );
     std::vector<std::string> source_observation_versions;

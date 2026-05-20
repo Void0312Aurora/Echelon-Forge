@@ -64,8 +64,8 @@ The active design conclusion is:
     [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.md):
     causal runtime foundation first, facade vertical slice second, then
     information/agency enforcement, backend/fidelity, capability composition,
-    and counterfactual/experiment generation. Phase 1 is now opened as
-    `WP10`.
+    and counterfactual/experiment generation. Phases 1-3 are now accepted as
+    `WP10`, `WP11`, and `WP12`.
 15. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
@@ -90,6 +90,43 @@ The active design conclusion is:
 | `Post-WP9 Architecture Route` | route selected | Establish the implementation order and anchor Phase 1 as WP10: causal runtime foundation, facade vertical slice, information/agency enforcement, backend/fidelity, capability composition, counterfactual/experiment generation | [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.md) |
 | `WP10 Causal Runtime Foundation` | complete / accepted | Implement Phase 1 of the post-WP9 route: manifest registry seed, minimal scheduling-window loop, request injection, same-window validation, event/snapshot evidence, and integration handoff | [causal runtime foundation](wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.md), [manifest registry](wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.md), [window loop / injection](wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.md), [same-window validation](wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.md), [event/snapshot evidence](wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.md), [integration handoff](wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp10_causal_runtime_foundation_acceptance_review_20260520.md) |
 | `WP11 Facade Vertical Slice And Provenance` | complete / accepted | Implement Phase 2 of the post-WP9 route: `ActionHoldPolicy`, information-state provenance labels, a WP10-seam facade/binding proof, consumer boundary pre-gates, and integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.md), [ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.md), [information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.md), [vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.md), [consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.md), [integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md) |
+| `WP12 Information And Agency Enforcement` | complete / accepted | Implement Phase 3 of the post-WP9 route: Law 14 read-side enforcement, `AgentRole` authority validation, information-transformation evidence, authorized intent injection, and integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md), [Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md), [agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md), [information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md), [intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md), [integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp12_information_agency_enforcement_acceptance_review_20260520.md) |
+
+## WP12 Information And Agency Enforcement
+
+Output:
+
+- [WP12 Information And Agency Enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md)
+- [WP12-A Law 14 Read-Side Enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md)
+- [WP12-B Agency Role Authority Boundary](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md)
+- [WP12-C Information Transformation Surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md)
+- [WP12-D Intent Injection Authority Guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md)
+- [WP12-E Integration And Acceptance Handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md)
+
+WP12 accepts Phase 3 of the post-WP9 route. It consumes WP10 causal evidence and
+WP11 provenance/pre-gates, then turns `GAP-5`, `GAP-6`, and `GAP-7` into
+test-backed read-side, role/authority, and information-transformation gates.
+
+WP12 workstream map:
+
+- `WP12-A Law 14 Read-Side Enforcement` promotes maintained consumer pre-gates
+  into focused packet/belief read-side enforcement while preserving explicit
+  diagnostics-only truth paths.
+- `WP12-B Agency Role Authority Boundary` validates `AgentRole` authority scope,
+  information source, decision-model reference, and action interface before
+  maintained outputs are authorized.
+- `WP12-C Information Transformation Surface` makes the selected information
+  transformation chain machine-checkable without rewriting every producer.
+- `WP12-D Intent Injection Authority Guard` integrates A-C so maintained
+  `DecisionBelief -> ActionIntentPacket` / `CoordinationIntentPacket` paths use
+  provenance, authority metadata, timing metadata, and facade-compatible
+  injection.
+- `WP12-E Integration And Acceptance Handoff` is the serial validation,
+  residual, acceptance-review, README/index, and bilingual closure lane.
+
+`WP12-B`, `WP12-C`, and `WP12-D` are the highest-reasoning streams. `WP12-A`,
+`WP12-B`, and `WP12-C` may start in parallel with disjoint write scopes; `WP12-D`
+should wait for their validator/vocabulary surfaces; `WP12-E` runs last.
 
 ### WP2.5 Workstream Map
 

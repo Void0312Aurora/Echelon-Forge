@@ -5,6 +5,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 POLICY_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts" / "policy_contracts.h"
+INFORMATION_TRANSFORM_CONTRACTS = (
+    REPO_ROOT / "src" / "runtime" / "contracts" / "information_transform_contracts.h"
+)
 FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
 AGENT_SHIM = REPO_ROOT / "python" / "rl" / "runtime" / "agent_shim.py"
 
@@ -47,6 +50,16 @@ def test_policy_contracts_publish_wp11_information_state_vocabulary() -> None:
         "kPolicyMaintainedStatusDiagnosticsOnly",
     ):
         assert token in policy_header
+
+
+def test_wp12_information_transformation_surface_reuses_policy_vocabulary_without_redefining_it() -> None:
+    transform_header = INFORMATION_TRANSFORM_CONTRACTS.read_text(encoding="utf-8")
+
+    assert '#include "runtime/contracts/policy_contracts.h"' in transform_header
+    assert "kCanonicalInformationTransformations" in transform_header
+    assert "validate_decision_belief_transformation" in transform_header
+    assert "validate_decision_belief_to_action_intent_transformation" in transform_header
+    assert "World Truth -> Sensed State" not in transform_header
 
 
 def test_observation_packet_remains_facade_side_data_product() -> None:

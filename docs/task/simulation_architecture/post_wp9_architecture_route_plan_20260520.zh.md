@@ -1,6 +1,7 @@
 # Post-WP9 Architecture Route Plan
 
-状态：`2026-05-20` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 现已开启为 `WP11`。
+状态：`2026-05-20` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
+`WP11` 验收，Phase 3 已作为 `WP12` 验收。
 
 语言版本：
 
@@ -23,8 +24,8 @@ backend-profile policy、learning-face vocabulary，以及延后的 DTO/infrastr
 项目。下一阶段不应再形成一个 documentation-only wave，而应选择一条实现路线，
 把已验收架构规则变成 runtime facts。
 
-本文固定路线顺序，把 Phase 1 锚定为 `WP10`，并把 Phase 2 开启为 `WP11`。它不会给所有后续阶段硬编码 WP
-编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
+本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，并把
+Phase 3 锚定为 `WP12`。它不会给所有后续阶段硬编码 WP 编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
 
 ## 2. 路线决策
 
@@ -33,6 +34,7 @@ post-WP9 路线是：
 ```text
 causal runtime foundation
   -> facade vertical slice
+  -> information and agency enforcement
   -> backend/fidelity expansion
   -> capability composition
   -> counterfactual and experiment generation
@@ -43,10 +45,11 @@ causal runtime foundation
 1. runtime causality 必须先变成可机器检查的事实，否则 backend、fidelity、
    counterfactual 或 experiment-generation 工作都不可信。
 2. 窄的 facade-visible vertical slice 应先证明地基，而不是一次性重写全部 scheduler。
-3. backend 与 fidelity 工作必须留在 profile/capability contracts 后面，不能变成第二条语义路径。
-4. capability composition 是语义升级，应在 runtime 能暴露稳定 state/event/evidence
+3. information 与 agency 规则必须先变成可执行边界，否则 backend/fidelity 对比不能被信任为 maintained decision evidence。
+4. backend 与 fidelity 工作必须留在 profile/capability contracts 后面，不能变成第二条语义路径。
+5. capability composition 是语义升级，应在 runtime 能暴露稳定 state/event/evidence
    边界后再推进。
-5. counterfactual 与 experiment generation 需要 deterministic replay、snapshot/restore
+6. counterfactual 与 experiment generation 需要 deterministic replay、snapshot/restore
    和 evidence ancestry，因此应成为较后的消费者。
 
 ## 3. 有序架构轨道
@@ -55,20 +58,21 @@ causal runtime foundation
 |------|------|----------------|------|--------|
 | 1 | Causal runtime foundation | 机器可读 `StageNodeManifest` registry，以及最小 scheduling-window loop：收集 facade requests、注入 graph inputs、运行 manifest 派生的无环窗口、通过 barriers commit、导出有序 evidence。 | WP2.5、WP5、WP9、GAP-2/GAP-3 | 完整 multi-rate scheduler |
 | 2 | Facade vertical slice | 一条维护中链路，优先 engagement/observation，证明 `manifest -> event order -> diagnostics trace -> facade export -> tests`，同时补后续 policy cadence 需要的 `ActionHoldPolicy` 与 information-state provenance labels。 | track 1 seed、GAP-1/GAP-4 | 大范围 scheduler rewrite |
-| 3 | Backend/fidelity expansion | `RuntimeCapabilities` 与 model-provider/fidelity profiles 变成可查询、可拒绝、可测试。 | WP6、WP7、tracks 1-2 | maintained causal/evidence boundary |
-| 4 | Capability composition | 从 type-name spawning 走向 `spawn_platform({capabilities...})` 的有边界兼容路径。 | WP2、WP9、tracks 1-3、`Capability` / `CapabilityBundle` DTOs | 稳定 setup/content contract |
-| 5 | Counterfactual and experiment generation | 可分支 worldline、deterministic replay envelope、scenario/adversary generation 与 capability profiling evidence。 | WP8、tracks 1-4 | snapshot/restore 与 replay proof |
+| 3 | Information and agency enforcement | Law 14 read-side guards、`AgentRole` authority validation、information-transformation evidence 与 authorized intent injection 变成有测试支撑的边界。 | WP10、WP11、GAP-5/GAP-6/GAP-7 | 完整 Agency Graph runtime |
+| 4 | Backend/fidelity expansion | `RuntimeCapabilities` 与 model-provider/fidelity profiles 变成可查询、可拒绝、可测试。 | WP6、WP7、tracks 1-3 | maintained causal/evidence boundary |
+| 5 | Capability composition | 从 type-name spawning 走向 `spawn_platform({capabilities...})` 的有边界兼容路径。 | WP2、WP9、tracks 1-4、`Capability` / `CapabilityBundle` DTOs | 稳定 setup/content contract |
+| 6 | Counterfactual and experiment generation | 可分支 worldline、deterministic replay envelope、scenario/adversary generation 与 capability profiling evidence。 | WP8、tracks 1-5 | snapshot/restore 与 replay proof |
 
 ### 3.1 Post-WP9 阶段粗分
 
-路线被划分为不超过六个实现阶段。只有 Phase 1 分配给 `WP10`；后续阶段名只是顺序锚点，
-在前置 gate 达到 mergeable 之前不创建已开启任务文件夹。
+路线被划分为不超过六个实现阶段。Phase 1-3 现已分配给 `WP10`、`WP11` 与
+`WP12`；后续阶段名只是顺序锚点，在前置 gate 达到 mergeable 之前不创建已开启任务文件夹。
 
 | Phase | 工作标签 | 范围 | 候选 WP 归属 | 开启条件 | 暂不声明 |
 |-------|----------|------|--------------|----------|----------|
 | 1 | Causal runtime foundation | 为 engagement/observation slice 物化第一组 code-owned `StageNodeManifest` registry、最小 scheduling-window loop、cross-layer request injection、same-window edge validation 与 event/snapshot evidence。 | `WP10` | WP9 closure 与 post-WP9 route 已验收。 | 完整 multi-rate scheduling、严格 clock-domain enforcement、Law 14 read-side enforcement。 |
 | 2 | Facade vertical slice and provenance | 添加 `ActionHoldPolicy`、information-state provenance labels，并在 Phase 1 runtime seam 上证明一条 facade/binding-visible chain。 | `WP11` | Phase 1 registry、barriers 与 event/snapshot evidence 已验收。 | broad facade rewrite，以及超出 demonstrated slice 的 policy/control/physics cadence support。 |
-| 3 | Information and agency enforcement | 把延期的 `GAP-5`、`GAP-6` 与 `GAP-7` 转成可执行的 read-side、role/authority 与 transformation-surfacing gates。 | 后续 WP | provenance labels 与 facade slice 稳定。 | 在 causal/facade evidence 存在前实现 Agency Graph runtime。 |
+| 3 | Information and agency enforcement | 把延期的 `GAP-5`、`GAP-6` 与 `GAP-7` 转成可执行的 read-side、role/authority 与 transformation-surfacing gates。 | `WP12` | provenance labels、consumer pre-gates 与 facade slice 稳定。 | 完整 Agency Graph runtime 或 backend/fidelity promotion。 |
 | 4 | Backend/fidelity expansion | 在 causal boundary 后，让 `RuntimeCapabilities`、model-provider profiles、fidelity profiles 与 parity budgets 变成可查询、可拒绝、可证据化。 | 后续 WP | Phase 1-3 的 evidence boundary 足够稳定，可用于比较 backend。 | 无 gate 晋升 exact GPU、resident-state、shadow 或 multi-fidelity。 |
 | 5 | Capability composition | 在保持 type-name compatibility 的同时，把有边界 setup/content path 推向 typed `Capability` / `CapabilityBundle` composition。 | 后续 WP | runtime/facade/backend contracts 能命名稳定 capability effects 与 evidence。 | big-bang spawn rewrite。 |
 | 6 | Counterfactual and experiment generation | 添加 branchable worldlines、deterministic replay envelopes、scenario/adversary generation 与 experiment evidence ancestry。 | 后续 WP | snapshot/restore、replay、capability evidence 与 facade provenance 稳定。 | 在 deterministic replay 与 snapshot boundaries 存在前进行 worldline branching。 |
@@ -87,11 +91,14 @@ post-WP9 gap analysis 认可五轨顺序，但收紧 Track 1 与 Track 2。以�
 | `GAP-8 Same-window edge derivation` | 加入 Track 1，作为 schedule-construction validation，而不是每 tick runtime discovery。 |
 | `GAP-9 Clock-domain enforcement` | 严格 enforcement 延后到 window-loop skeleton 可工作之后；第一个 Track 1 slice 中 manifest 的 advisory clock-domain declaration 可接受。 |
 
-Deferred gates：
+Phase 3 gates 已作为 `WP12` 验收：
 
-- `GAP-5` Architecture Law 14 read-side enforcement 等 provenance labels 先存在。
-- `GAP-6` Agency Graph runtime enforcement 等 causal foundation 和 facade slice 稳定。
-- `GAP-7` 五条 information-state transformation rules 等 provenance labels 成为稳定词汇后再机器化。
+- `GAP-5` Architecture Law 14 read-side enforcement 现在以 WP11 provenance
+  labels 与 consumer pre-gates 作为起始边界。
+- `GAP-6` Agency Graph runtime enforcement 从 role/authority boundary
+  validation 开始，而不是完整 Agency Graph dispatch。
+- `GAP-7` 五条 information-state transformation rules 现在为 selected slice
+  转成可机器检查的 vocabulary/evidence。
 
 ### 4.1 缺口驱动的工作内容
 
@@ -155,6 +162,20 @@ Track 2 follow-on seed：
 
 该 follow-on seed 现已开启为
 [WP11 facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.zh.md)。
+
+Phase 3 enforcement seed：
+
+- 把 WP11 consumer pre-gates 晋升为 focused Law 14 read-side enforcement，
+- 在 maintained outputs 被授权前，校验 `AgentRole` authority、information source、
+  decision-model reference 与 action interface，
+- 为 selected packet/belief chain 暴露 information transformation evidence，
+- 通过 facade-compatible injection 守护 `DecisionBelief -> ActionIntentPacket` /
+  `CoordinationIntentPacket` 路径，
+- 保持完整 Agency Graph runtime、backend/fidelity、capability composition 与
+  counterfactual work 不在范围内。
+
+该 enforcement seed 现已验收为
+[WP12 information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)。
 
 ## 6. 第一个实现型 WP 的非目标
 

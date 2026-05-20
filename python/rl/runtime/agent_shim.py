@@ -33,6 +33,12 @@ OBS_FACADE_OBSERVATION_PACKET = "facade_observation_packet"
 OBS_AGENT_OBSERVATION_COMPAT = "agent_observation_compat"
 OBS_RAW_WORLD_TRUTH = "raw_world_truth"
 OBS_DIAGNOSTICS_ORACLE = "diagnostics_oracle"
+OBS_DECISION_BELIEF_PACKET = "decision_belief_packet"
+
+LAW14_MAINTAINED_READ_LABEL_ALLOWLIST = (
+    OBS_FACADE_OBSERVATION_PACKET,
+    OBS_DECISION_BELIEF_PACKET,
+)
 
 OBSERVATION_PROVENANCE_LABELS = MappingProxyType(
     {
@@ -55,6 +61,11 @@ OBSERVATION_PROVENANCE_LABELS = MappingProxyType(
             "information_state_layer": "DecisionBelief",
             "source_surface": "teacher, oracle, debug, or privileged helper",
             "maintained_status": DIAGNOSTICS_ONLY,
+        },
+        OBS_DECISION_BELIEF_PACKET: {
+            "information_state_layer": "DecisionBelief",
+            "source_surface": "DecisionBelief",
+            "maintained_status": MAINTAINED,
         },
     }
 )
@@ -178,6 +189,13 @@ def _validate_maintained_consumer_source(
         )
     if not information_state_source.label.strip():
         raise ValueError("maintained consumer fixtures require a non-empty provenance label")
+    if information_state_source.label not in LAW14_MAINTAINED_READ_LABEL_ALLOWLIST:
+        raise ValueError(
+            "maintained consumer fixtures may only use the Law 14 ObservationPacket/DecisionBelief read-side allowlist"
+        )
+    expected_surface = OBSERVATION_PROVENANCE_LABELS[information_state_source.label]["source_surface"]
+    if information_state_source.source_surface != expected_surface:
+        raise ValueError("maintained consumer fixtures must not relabel privileged or raw surfaces as maintained")
 
 
 @dataclass(frozen=True)
@@ -553,6 +571,26 @@ class DecisionBeliefCompat:
             "uses_raw_ecs": self.uses_raw_ecs,
         }
 
+    def as_consumable_provenance(
+        self,
+        *,
+        source_layer: str = "policy",
+    ) -> ObservationProvenance:
+        if self.maintained_status != MAINTAINED:
+            raise ValueError("only maintained DecisionBelief inputs may be promoted to maintained read-side provenance")
+        return ObservationProvenance(
+            label=OBS_DECISION_BELIEF_PACKET,
+            information_state_layer="DecisionBelief",
+            source_surface="DecisionBelief",
+            maintained_status=MAINTAINED,
+            source_layer=source_layer,
+            consumed_snapshot_version=self.source_observation_versions[-1]
+            if self.source_observation_versions
+            else None,
+            observation_packet_id=self.belief_id,
+            diagnostics_note=self.diagnostics_reason,
+        )
+
 
 __all__ = [
     "ALLOWED_MAINTAINED_STATUSES",
@@ -566,9 +604,11 @@ __all__ = [
     "MERGE_PRIORITY_OVERRIDE",
     "MERGE_REJECT_ON_CONFLICT",
     "OBS_AGENT_OBSERVATION_COMPAT",
+    "OBS_DECISION_BELIEF_PACKET",
     "OBS_DIAGNOSTICS_ORACLE",
     "OBS_FACADE_OBSERVATION_PACKET",
     "OBS_RAW_WORLD_TRUTH",
+    "LAW14_MAINTAINED_READ_LABEL_ALLOWLIST",
     "OBSERVATION_PROVENANCE_LABELS",
     "ActionIntentCompat",
     "AgentRole",

@@ -15,6 +15,15 @@ def public_fields(instance: object) -> tuple[str, ...]:
 
 
 class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
+    def test_agent_role_authority_result_binding_exposes_fail_closed_contract(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.AgentRoleAuthorizationResult()),
+            (
+                "authorized",
+                "reason",
+            ),
+        )
+
     def test_action_hold_policy_binding_stays_contract_visible_prerequisite_only(self) -> None:
         policy = ef_py.ActionHoldPolicy()
 
@@ -210,6 +219,69 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         self.assertFalse(bool(report.compatible))
         self.assertFalse(bool(report.major_compatible))
         self.assertTrue(bool(report.required_fields_satisfied))
+
+    def test_agent_role_authority_helpers_preserve_role_fields_and_authorize_focused_action_slice(self) -> None:
+        role = ef_py.AgentRole()
+        role.role.role_id = "agent:2:17"
+        role.role.role_type = "autopilot_controller"
+        role.authority_scope.scope = "platform_control"
+        role.authority_scope.world_index = 2
+        role.authority_scope.has_world_index = True
+        role.authority_scope.entity_ids = [17]
+        role.information_state_source.information_state_layer = "AgentObservation"
+        role.information_state_source.source_label = "facade_observation_packet"
+        role.information_state_source.maintained_status = "maintained"
+        role.decision_model_ref.kind = "policy"
+        role.decision_model_ref.id = "blue-policy-v1"
+        role.action_interface.kind = "PilotActionAssignmentCompat"
+        role.action_interface.payload_type = "pilot_action"
+
+        action = ef_py.ActionIntentPacket()
+        action.source_id = "policy:blue:17"
+        action.action_family = "direct_control"
+        action.action_interface.kind = "PilotActionAssignmentCompat"
+        action.action_interface.payload_type = "pilot_action"
+        action.has_pilot_action = True
+        action.has_mission_command = False
+
+        self.assertTrue(bool(ef_py.agent_role_has_maintained_authority_shape(role)))
+        self.assertTrue(bool(ef_py.agent_role_action_interface_matches_authority_scope(role)))
+
+        result = ef_py.authorize_maintained_action_intent(role, action)
+
+        self.assertTrue(bool(result.authorized))
+        self.assertEqual(result.reason, "")
+        self.assertEqual(role.role.role_id, "agent:2:17")
+        self.assertEqual(role.authority_scope.scope, "platform_control")
+        self.assertEqual(role.information_state_source.source_label, "facade_observation_packet")
+
+    def test_agent_role_authority_helpers_fail_closed_for_diagnostics_source_and_interface_mismatch(self) -> None:
+        role = ef_py.AgentRole()
+        role.role.role_id = "director:blue"
+        role.role.role_type = "flight_lead"
+        role.authority_scope.scope = "formation_coordination"
+        role.authority_scope.world_index = 0
+        role.authority_scope.has_world_index = True
+        role.authority_scope.roster_id = "blue-section"
+        role.information_state_source.information_state_layer = "WorldTruth"
+        role.information_state_source.source_label = "world_truth_diagnostics"
+        role.information_state_source.maintained_status = "diagnostics_only"
+        role.decision_model_ref.kind = "scripted_director"
+        role.decision_model_ref.id = "director-v1"
+        role.action_interface.kind = "PilotActionAssignmentCompat"
+        role.action_interface.payload_type = "pilot_action"
+
+        coordination = ef_py.CoordinationIntentPacket()
+        coordination.source_id = "director:blue"
+        produced = ef_py.ProducedIntentRef()
+        produced.kind = "leader_intent"
+        produced.reference_id = "leader:17"
+        coordination.produced_leader_intent_refs = [produced]
+
+        self.assertFalse(bool(ef_py.agent_role_has_maintained_authority_shape(role)))
+        result = ef_py.authorize_maintained_coordination_intent(role, coordination)
+        self.assertFalse(bool(result.authorized))
+        self.assertIn("not full Agency Graph runtime dispatch", result.reason)
 
 
 if __name__ == "__main__":

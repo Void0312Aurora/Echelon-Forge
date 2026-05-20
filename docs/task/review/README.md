@@ -17,6 +17,7 @@ Status: active review record.
 - [WP9 Contract And Infrastructure Closure Acceptance Review 2026-05-20](wp9_contract_infrastructure_closure_acceptance_review_20260520.md) ([中文](wp9_contract_infrastructure_closure_acceptance_review_20260520.zh.md))
 - [WP10 Causal Runtime Foundation Acceptance Review 2026-05-20](wp10_causal_runtime_foundation_acceptance_review_20260520.md) ([中文](wp10_causal_runtime_foundation_acceptance_review_20260520.zh.md))
 - [WP11 Facade Vertical Slice And Provenance Acceptance Review 2026-05-20](wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md) ([中文](wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md))
+- [WP12 Information And Agency Enforcement Acceptance Review 2026-05-20](wp12_information_agency_enforcement_acceptance_review_20260520.md) ([中文](wp12_information_agency_enforcement_acceptance_review_20260520.zh.md))
 
 ## Archive
 

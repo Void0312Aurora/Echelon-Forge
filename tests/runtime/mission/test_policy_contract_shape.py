@@ -133,6 +133,47 @@ def test_agent_role_and_decision_belief_contracts_expose_required_fields() -> No
     assert "decision_belief_requires_diagnostics_only" in header_text
 
 
+def test_agent_role_authority_slice_exposes_fail_closed_vocabulary_and_validators() -> None:
+    header = _header_text()
+    authority_result = _struct_body(header, "AgentRoleAuthorizationResult")
+
+    _assert_fields_present(
+        authority_result,
+        (
+            "authorized",
+            "reason",
+        ),
+    )
+
+    for token in (
+        "kActionInterfacePilotActionAssignmentCompat",
+        "kActionInterfaceCommandChainAssignmentCompat",
+        "kActionInterfacePayloadPilotAction",
+        "kActionInterfacePayloadMissionCommand",
+        "kActionInterfacePayloadCoordinationIntent",
+        "kAgentAuthorityScopePlatformControl",
+        "kAgentAuthorityScopeMissionCommand",
+        "kAgentAuthorityScopeFormationCoordination",
+        "information_state_source_label_matches_layer_and_status",
+        "agent_role_has_maintained_authority_shape",
+        "agent_role_action_interface_matches_authority_scope",
+        "authorize_maintained_action_intent",
+        "authorize_maintained_coordination_intent",
+        "This is not full Agency Graph runtime dispatch.",
+    ):
+        assert token in header
+
+
+def test_agent_role_authority_slice_documents_maintained_only_observation_or_belief_sources() -> None:
+    header = _header_text()
+
+    assert "maintained_information_state_source_is_authorized_for_agent_role" in header
+    assert 'source.maintained_status != kPolicyMaintainedStatusMaintained' in header
+    assert 'source.information_state_layer == kPolicyInformationStateAgentObservation' in header
+    assert 'source.information_state_layer == kPolicyInformationStateDecisionBelief' in header
+    assert 'source.source_label == kPolicySourceLabelWorldTruthDiagnostics' in header
+
+
 def test_action_hold_policy_defaults_are_conservative_and_declarative() -> None:
     header = _header_text()
     action_hold_policy = _struct_body(header, "ActionHoldPolicy")

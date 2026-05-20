@@ -278,6 +278,11 @@ void bind_runtime(nb::module_& m) {
         .def_rw("decision_model_ref", &AgentRole::decision_model_ref)
         .def_rw("action_interface", &AgentRole::action_interface);
 
+    nb::class_<AgentRoleAuthorizationResult>(m, "AgentRoleAuthorizationResult")
+        .def(nb::init<>())
+        .def_rw("authorized", &AgentRoleAuthorizationResult::authorized)
+        .def_rw("reason", &AgentRoleAuthorizationResult::reason);
+
     nb::class_<DecisionBelief>(m, "DecisionBelief")
         .def(nb::init<>())
         .def_rw("belief_id", &DecisionBelief::belief_id)
@@ -403,6 +408,28 @@ void bind_runtime(nb::module_& m) {
         "information_state_source_has_valid_label",
         &information_state_source_has_valid_label,
         nb::arg("source")
+    );
+    m.def(
+        "agent_role_has_maintained_authority_shape",
+        &agent_role_has_maintained_authority_shape,
+        nb::arg("role")
+    );
+    m.def(
+        "agent_role_action_interface_matches_authority_scope",
+        &agent_role_action_interface_matches_authority_scope,
+        nb::arg("role")
+    );
+    m.def(
+        "authorize_maintained_action_intent",
+        &authorize_maintained_action_intent,
+        nb::arg("role"),
+        nb::arg("intent")
+    );
+    m.def(
+        "authorize_maintained_coordination_intent",
+        &authorize_maintained_coordination_intent,
+        nb::arg("role"),
+        nb::arg("intent")
     );
     m.def(
         "decision_belief_requires_diagnostics_only",

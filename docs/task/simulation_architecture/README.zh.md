@@ -47,7 +47,8 @@
     [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.zh.md)：
     先做 causal runtime foundation，再做 facade vertical slice，随后推进
     information/agency enforcement、backend/fidelity、capability composition 与
-    counterfactual/experiment generation。Phase 1 现已开启为 `WP10`。
+    counterfactual/experiment generation。Phase 1-3 现已验收为 `WP10`、`WP11`
+    与 `WP12`。
 15. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
@@ -72,6 +73,42 @@
 | `Post-WP9 Architecture Route` | route selected | 确定实现顺序并把 Phase 1 锚定为 WP10：causal runtime foundation、facade vertical slice、information/agency enforcement、backend/fidelity、capability composition、counterfactual/experiment generation | [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.zh.md) |
 | `WP10 Causal Runtime Foundation` | complete / accepted | 实现 post-WP9 路线 Phase 1：manifest registry seed、minimal scheduling-window loop、request injection、same-window validation、event/snapshot evidence 与 integration handoff | [causal runtime foundation](wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.zh.md)、[manifest registry](wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.zh.md)、[window loop / injection](wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.zh.md)、[same-window validation](wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.zh.md)、[event/snapshot evidence](wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.zh.md)、[integration handoff](wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp10_causal_runtime_foundation_acceptance_review_20260520.zh.md) |
 | `WP11 Facade Vertical Slice And Provenance` | complete / accepted | 实现 post-WP9 路线 Phase 2：`ActionHoldPolicy`、information-state provenance labels、基于 WP10 seam 的 facade/binding proof、consumer boundary pre-gates 与 integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.zh.md)、[ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.zh.md)、[information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.zh.md)、[vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.zh.md)、[consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.zh.md)、[integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md) |
+| `WP12 Information And Agency Enforcement` | complete / accepted | 实现 post-WP9 路线 Phase 3：Law 14 read-side enforcement、`AgentRole` authority validation、information-transformation evidence、authorized intent injection 与 integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)、[Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)、[agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)、[information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)、[intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)、[integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp12_information_agency_enforcement_acceptance_review_20260520.zh.md) |
+
+## WP12 Information And Agency Enforcement
+
+产出：
+
+- [WP12 Information And Agency Enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)
+- [WP12-A Law 14 Read-Side Enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)
+- [WP12-B Agency Role Authority Boundary](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)
+- [WP12-C Information Transformation Surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)
+- [WP12-D Intent Injection Authority Guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)
+- [WP12-E Integration And Acceptance Handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)
+
+WP12 验收 post-WP9 路线的 Phase 3。它消费 WP10 causal evidence 与 WP11
+provenance/pre-gates，并把 `GAP-5`、`GAP-6` 与 `GAP-7` 转成有测试支撑的
+read-side、role/authority 与 information-transformation gates。
+
+WP12 工作流地图：
+
+- `WP12-A Law 14 Read-Side Enforcement` 把 maintained consumer pre-gates 晋升为
+  focused packet/belief read-side enforcement，同时保留显式 diagnostics-only
+  truth paths。
+- `WP12-B Agency Role Authority Boundary` 在 maintained outputs 被授权前校验
+  `AgentRole` authority scope、information source、decision-model reference 与
+  action interface。
+- `WP12-C Information Transformation Surface` 让 selected information
+  transformation chain 可机器检查，而不重写所有 producer。
+- `WP12-D Intent Injection Authority Guard` 整合 A-C，使 maintained
+  `DecisionBelief -> ActionIntentPacket` / `CoordinationIntentPacket` 路径使用
+  provenance、authority metadata、timing metadata 与 facade-compatible injection。
+- `WP12-E Integration And Acceptance Handoff` 是串行 validation、residual、
+  acceptance-review、README/index 与 bilingual closure lane。
+
+`WP12-B`、`WP12-C` 与 `WP12-D` 是思考预算最高的 streams。`WP12-A`、`WP12-B`
+与 `WP12-C` 可在写入范围分离时并行启动；`WP12-D` 应等待它们的
+validator/vocabulary surfaces；`WP12-E` 最后执行。
 
 ### WP2.5 工作流地图
 

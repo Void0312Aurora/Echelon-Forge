@@ -5,15 +5,18 @@ import pytest
 from python.rl.runtime.agent_shim import (
     COMPATIBILITY_ADAPTER,
     DIAGNOSTICS_ONLY,
+    LAW14_MAINTAINED_READ_LABEL_ALLOWLIST,
     MAINTAINED,
     MERGE_REJECT_ON_CONFLICT,
     OBS_AGENT_OBSERVATION_COMPAT,
+    OBS_DECISION_BELIEF_PACKET,
     OBS_DIAGNOSTICS_ORACLE,
     OBS_FACADE_OBSERVATION_PACKET,
     OBS_RAW_WORLD_TRUTH,
     ActionIntentCompat,
     CoordinationIntentCompat,
     DecisionBeliefCompat,
+    ObservationProvenance,
     observation_provenance,
     roster_slot_role,
     single_agent_role,
@@ -26,15 +29,27 @@ def test_observation_provenance_labels_classify_boundaries():
         consumed_snapshot_version="global:7",
         observation_packet_id="obs:7",
     )
+    maintained_belief = observation_provenance(
+        OBS_DECISION_BELIEF_PACKET,
+        consumed_snapshot_version="belief:7",
+        observation_packet_id="db:7",
+    )
     compat = observation_provenance(OBS_AGENT_OBSERVATION_COMPAT)
     raw_truth = observation_provenance(OBS_RAW_WORLD_TRUTH)
 
     assert maintained.maintained_status == MAINTAINED
     assert maintained.is_maintained
     assert maintained.consumed_snapshot_version == "global:7"
+    assert maintained_belief.maintained_status == MAINTAINED
+    assert maintained_belief.information_state_layer == "DecisionBelief"
+    assert maintained_belief.source_surface == "DecisionBelief"
     assert compat.maintained_status == COMPATIBILITY_ADAPTER
     assert raw_truth.maintained_status == DIAGNOSTICS_ONLY
     assert raw_truth.is_diagnostics_only
+    assert LAW14_MAINTAINED_READ_LABEL_ALLOWLIST == (
+        OBS_FACADE_OBSERVATION_PACKET,
+        OBS_DECISION_BELIEF_PACKET,
+    )
 
 
 def test_observation_provenance_keeps_truth_and_oracle_out_of_maintained_input():
@@ -97,6 +112,35 @@ def test_maintained_agent_role_uses_facade_observation_packet_metadata():
     assert schema["decision_model_ref"] == {"kind": "policy", "id": "blue-policy-v1"}
 
 
+def test_maintained_agent_role_accepts_labeled_decision_belief_input():
+    belief = DecisionBeliefCompat(
+        belief_id="belief:track-kf:7",
+        source_observation_versions=("global:11", "track:7"),
+        memory_or_estimator_ref="estimator:kalman-track",
+        confidence_kind="interval",
+        confidence=0.91,
+        lower_bound=0.75,
+        upper_bound=0.98,
+        maintained_status=MAINTAINED,
+    )
+    role = single_agent_role(
+        world_index=4,
+        agent_id=12,
+        information_state_source=belief.as_consumable_provenance(source_layer="policy"),
+        decision_model_kind="policy",
+        decision_model_id="blue-policy-v1",
+        maintained_status=MAINTAINED,
+    )
+
+    schema = role.as_dict()
+
+    assert schema["maintained_status"] == MAINTAINED
+    assert schema["information_state_source"]["label"] == OBS_DECISION_BELIEF_PACKET
+    assert schema["information_state_source"]["information_state_layer"] == "DecisionBelief"
+    assert schema["information_state_source"]["observation_packet_id"] == "belief:track-kf:7"
+    assert schema["information_state_source"]["consumed_snapshot_version"] == "track:7"
+
+
 def test_maintained_agent_role_rejects_compatibility_adapter_and_truth_inputs():
     with pytest.raises(
         ValueError,
@@ -126,6 +170,38 @@ def test_maintained_agent_role_rejects_compatibility_adapter_and_truth_inputs():
             information_state_source=observation_provenance(
                 OBS_RAW_WORLD_TRUTH,
                 diagnostics_note="debug-only truth fixture",
+            ),
+            maintained_status=MAINTAINED,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="maintained consumer fixtures may only use the Law 14 ObservationPacket/DecisionBelief read-side allowlist",
+    ):
+        single_agent_role(
+            agent_id=10,
+            information_state_source=ObservationProvenance(
+                label="manual_maintained_source",
+                information_state_layer="DecisionBelief",
+                source_surface="DecisionBelief",
+                maintained_status=MAINTAINED,
+                source_layer="policy",
+            ),
+            maintained_status=MAINTAINED,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="maintained consumer fixtures must not relabel privileged or raw surfaces as maintained",
+    ):
+        single_agent_role(
+            agent_id=10,
+            information_state_source=ObservationProvenance(
+                label=OBS_FACADE_OBSERVATION_PACKET,
+                information_state_layer="AgentObservation",
+                source_surface="teacher, oracle, debug, or privileged helper",
+                maintained_status=MAINTAINED,
+                source_layer="policy",
             ),
             maintained_status=MAINTAINED,
         )
@@ -170,6 +246,23 @@ def test_diagnostics_agent_role_does_not_promote_oracle_belief_to_policy_input()
     assert schema["information_state_source"]["maintained_status"] == DIAGNOSTICS_ONLY
     assert schema["information_state_source"]["diagnostics_note"] == "post-hoc reward audit"
     assert schema["decision_model_ref"]["kind"] == "oracle_audit"
+
+
+def test_diagnostics_or_compat_sources_are_not_promoted_to_maintained_belief_provenance():
+    diagnostics_belief = DecisionBeliefCompat(
+        belief_id="belief:oracle:1",
+        source_observation_versions=("truth:raw",),
+        memory_or_estimator_ref="oracle:teacher",
+        maintained_status=DIAGNOSTICS_ONLY,
+        diagnostics_reason="post-hoc oracle audit",
+        uses_truth_state=True,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="only maintained DecisionBelief inputs may be promoted to maintained read-side provenance",
+    ):
+        diagnostics_belief.as_consumable_provenance()
 
 
 def test_agent_role_exposes_five_elements_without_runtime_dependency():
