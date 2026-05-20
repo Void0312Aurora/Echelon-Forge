@@ -1,6 +1,6 @@
 # WP13 Backend Fidelity Expansion
 
-状态：`2026-05-20` planned / dispatch-ready implementation phase。
+状态：`2026-05-21` accepted / implementation mergeable。
 
 语言版本：
 
@@ -95,12 +95,12 @@ RuntimeFacade.capabilities()
 
 | 工作包 | 状态 | 路线项 | 目标 | 产出 |
 |--------|------|--------|------|------|
-| `WP13-A Runtime Capability Query And Rejection Surface` | planned | Phase 4 capability query | 让 `RuntimeCapabilities` 暴露保守 profile/evidence metadata 和显式 unsupported-request reason，同时不从 GPU/helper 推断支持。 | [capability query 任务切片](wp13_runtime_capability_query_cluster_20260520.zh.md) |
-| `WP13-B Backend Profile Registry Runtime Gate` | planned | WP6/WP7 registry materialization | 添加 code-owned backend profile records 与 validation helpers，强制 maintained/candidate/diagnostics 边界。 | [backend profile registry gate 任务切片](wp13_backend_profile_registry_gate_cluster_20260520.zh.md) |
-| `WP13-C Parity Budget Evidence Gate` | planned | profile-owned budget evidence | 添加 queryable parity budget records 与 validators，在 capability promotion 前拒绝缺失或非 maintained budget。 | [parity budget evidence 任务切片](wp13_parity_budget_evidence_gate_cluster_20260520.zh.md) |
-| `WP13-D Fidelity Profile Request Gate` | planned | fidelity request admission | 把 fidelity request admission 实现为 fail-closed request grammar，而不是 multi-fidelity support。 | [fidelity request gate 任务切片](wp13_fidelity_profile_request_gate_cluster_20260520.zh.md) |
-| `WP13-E Facade And Binding Proof` | planned | facade-visible evidence | 通过 maintained facade 与 Python binding surface 证明 query/rejection/evidence 行为，不新增 raw backend path。 | [facade proof 任务切片](wp13_facade_binding_proof_cluster_20260520.zh.md) |
-| `WP13-F Integration And Acceptance Handoff` | planned | closure lane | 在 A-E mergeable 后同步 shared validators、validation commands、residuals、acceptance review、route/README 与 bilingual closure。 | [integration handoff 任务切片](wp13_integration_acceptance_cluster_20260520.zh.md) |
+| `WP13-A Runtime Capability Query And Rejection Surface` | complete / accepted | Phase 4 capability query | 让 `RuntimeCapabilities` 暴露保守 profile/evidence metadata 和显式 unsupported-request reason，同时不从 GPU/helper 推断支持。 | [capability query 任务切片](wp13_runtime_capability_query_cluster_20260520.zh.md) |
+| `WP13-B Backend Profile Registry Runtime Gate` | complete / accepted | WP6/WP7 registry materialization | 添加 code-owned backend profile records 与 validation helpers，强制 maintained/candidate/diagnostics 边界。 | [backend profile registry gate 任务切片](wp13_backend_profile_registry_gate_cluster_20260520.zh.md) |
+| `WP13-C Parity Budget Evidence Gate` | complete / accepted | profile-owned budget evidence | 添加 queryable parity budget records 与 validators，在 capability promotion 前拒绝缺失或非 maintained budget。 | [parity budget evidence 任务切片](wp13_parity_budget_evidence_gate_cluster_20260520.zh.md) |
+| `WP13-D Fidelity Profile Request Gate` | complete / accepted | fidelity request admission | 把 fidelity request admission 实现为 fail-closed request grammar，而不是 multi-fidelity support。 | [fidelity request gate 任务切片](wp13_fidelity_profile_request_gate_cluster_20260520.zh.md) |
+| `WP13-E Facade And Binding Proof` | complete / accepted | facade-visible evidence | 通过 maintained facade 与 Python binding surface 证明 query/rejection/evidence 行为，不新增 raw backend path。 | [facade proof 任务切片](wp13_facade_binding_proof_cluster_20260520.zh.md) |
+| `WP13-F Integration And Acceptance Handoff` | complete / accepted | closure lane | 在 A-E mergeable 后同步 shared validators、validation commands、residuals、acceptance review、route/README 与 bilingual closure。 | [integration handoff 任务切片](wp13_integration_acceptance_cluster_20260520.zh.md) |
 
 ## 4. 依赖图
 
@@ -213,3 +213,9 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP13
 - Learned `ModelProvider` runtime interfaces。
 - Backend selection 或 performance-based automatic promotion。
 - Causal/facade boundary 之外的第二条 semantic lifecycle。
+
+## 10. 验收审查
+
+WP13 已由
+[WP13 backend fidelity expansion 验收审查](../../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md)
+验收。

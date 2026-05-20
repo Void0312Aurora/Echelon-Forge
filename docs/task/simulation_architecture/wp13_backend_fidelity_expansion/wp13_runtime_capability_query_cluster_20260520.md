@@ -1,6 +1,6 @@
 # WP13-A Runtime Capability Query And Rejection Surface
 
-Status: `2026-05-20` planned / first-wave dispatch candidate.
+Status: `2026-05-21` complete / accepted.
 
 Language:
 

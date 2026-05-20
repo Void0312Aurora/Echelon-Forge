@@ -35,6 +35,39 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             policy.credit_assignment_attribution_note,
         )
 
+    def test_fidelity_profile_request_binding_admits_only_cpu_exact_baseline(self) -> None:
+        request = ef_py.make_exact_evaluation_cpu_reference_fidelity_request()
+
+        self.assertEqual(request.request_label, "exact_evaluation")
+        self.assertEqual(request.backend_profile_id, "cpu_exact.reference")
+        self.assertEqual(request.parity_budget_ref, "parity_budget.cpu_exact.reference.v1")
+        self.assertTrue(list(request.model_family_scope))
+        self.assertTrue(list(request.facade_evidence_refs))
+
+        result = ef_py.admit_fidelity_profile_request(request)
+
+        self.assertTrue(bool(result.admitted))
+        self.assertTrue(bool(result.baseline_exact_evaluation))
+        self.assertEqual(result.rejection_reason, "")
+        self.assertEqual(result.backend_profile_id, "cpu_exact.reference")
+        self.assertIn("RuntimeFacade.capabilities", list(result.evidence_refs))
+
+        request.request_label = "fast_training"
+        rejected = ef_py.admit_fidelity_profile_request(request)
+
+        self.assertFalse(bool(rejected.admitted))
+        self.assertEqual(rejected.rejection_reason, "fidelity_profile_label_not_maintained")
+
+        request = ef_py.make_exact_evaluation_cpu_reference_fidelity_request()
+        request.requests_adaptive_scheduling = True
+        rejected = ef_py.admit_fidelity_profile_request(request)
+
+        self.assertFalse(bool(rejected.admitted))
+        self.assertEqual(
+            rejected.rejection_reason,
+            "adaptive_fidelity_scheduling_not_implemented",
+        )
+
     def test_reward_term_public_fields_match_expected_binding_surface(self) -> None:
         self.assertTupleEqual(
             public_fields(ef_py.RewardTerm()),

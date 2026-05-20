@@ -1,6 +1,6 @@
 # WP13-E Facade And Binding Proof
 
-状态：`2026-05-20` planned / second-wave integration candidate。
+状态：`2026-05-21` complete / accepted。
 
 语言版本：
 

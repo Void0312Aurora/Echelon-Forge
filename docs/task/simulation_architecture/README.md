@@ -64,8 +64,8 @@ The active design conclusion is:
     [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.md):
     causal runtime foundation first, facade vertical slice second, then
     information/agency enforcement, backend/fidelity, capability composition,
-    and counterfactual/experiment generation. Phases 1-3 are now accepted as
-    `WP10`, `WP11`, and `WP12`; Phase 4 is now opened as `WP13`.
+    and counterfactual/experiment generation. Phases 1-4 are now accepted as
+    `WP10`, `WP11`, `WP12`, and `WP13`.
 15. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
@@ -93,7 +93,7 @@ The active design conclusion is:
 | `WP10 Causal Runtime Foundation` | complete / accepted | Implement Phase 1 of the post-WP9 route: manifest registry seed, minimal scheduling-window loop, request injection, same-window validation, event/snapshot evidence, and integration handoff | [causal runtime foundation](wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.md), [manifest registry](wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.md), [window loop / injection](wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.md), [same-window validation](wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.md), [event/snapshot evidence](wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.md), [integration handoff](wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp10_causal_runtime_foundation_acceptance_review_20260520.md) |
 | `WP11 Facade Vertical Slice And Provenance` | complete / accepted | Implement Phase 2 of the post-WP9 route: `ActionHoldPolicy`, information-state provenance labels, a WP10-seam facade/binding proof, consumer boundary pre-gates, and integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.md), [ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.md), [information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.md), [vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.md), [consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.md), [integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md) |
 | `WP12 Information And Agency Enforcement` | complete / accepted | Implement Phase 3 of the post-WP9 route: Law 14 read-side enforcement, `AgentRole` authority validation, information-transformation evidence, authorized intent injection, and integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md), [Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md), [agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md), [information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md), [intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md), [integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp12_information_agency_enforcement_acceptance_review_20260520.md) |
-| `WP13 Backend Fidelity Expansion` | planned / dispatch-ready | Implement Phase 4 of the post-WP9 route: make runtime capabilities, backend profiles, parity budgets, and fidelity profile requests queryable, rejectable, and evidence-backed without promoting unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md), [capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md), [backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md), [parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md), [fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md), [facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md), [integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md) |
+| `WP13 Backend Fidelity Expansion` | complete / accepted | Implement Phase 4 of the post-WP9 route: make runtime capabilities, backend profiles, parity budgets, and fidelity profile requests queryable, rejectable, and evidence-backed without promoting unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md), [capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md), [backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md), [parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md), [fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md), [facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md), [integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md) |
 
 ## WP13 Backend Fidelity Expansion
 
@@ -106,8 +106,9 @@ Output:
 - [WP13-D Fidelity Profile Request Gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md)
 - [WP13-E Facade And Binding Proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md)
 - [WP13-F Integration And Acceptance Handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md)
+- [WP13 acceptance review](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md)
 
-WP13 opens Phase 4 of the post-WP9 route. It consumes WP6/WP7 backend profile
+WP13 accepts Phase 4 of the post-WP9 route. It consumes WP6/WP7 backend profile
 policy/materialization and WP10-WP12 causal, provenance, and agency evidence,
 then turns backend/fidelity support into queryable, rejectable, test-backed
 runtime facts without promoting exact GPU, resident-state, shadow, or
@@ -131,9 +132,10 @@ WP13 workstream map:
 - `WP13-F Integration And Acceptance Handoff` is the serial validation,
   residual, acceptance-review, README/index, and bilingual closure lane.
 
-`WP13-A`, `WP13-B`, and `WP13-C` are the first parallel wave when write scopes
-stay disjoint. `WP13-D` waits for B/C vocabulary; `WP13-E` waits for A/D
-surfaces; `WP13-F` runs last. The highest-reasoning streams are A, B, and D.
+`WP13-A` through `WP13-F` are accepted. The accepted baseline admits only CPU
+exact reference fidelity requests and keeps exact GPU, resident-state, shadow,
+adaptive fidelity, learned provider runtime, and maintained multi-fidelity
+support out of scope.
 
 Commit messages for this phase should use capability/result language, not
 internal work-package labels.

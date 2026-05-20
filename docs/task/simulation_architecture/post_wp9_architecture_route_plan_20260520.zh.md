@@ -1,7 +1,7 @@
 # Post-WP9 Architecture Route Plan
 
-状态：`2026-05-20` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
-`WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已开启为 `WP13`。
+状态：`2026-05-21` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
+`WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已作为 `WP13` 验收。
 
 语言版本：
 
@@ -25,7 +25,7 @@ backend-profile policy、learning-face vocabulary，以及延后的 DTO/infrastr
 把已验收架构规则变成 runtime facts。
 
 本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，把
-Phase 3 锚定为 `WP12`，并开启 Phase 4 为 `WP13`。它不会给所有后续阶段硬编码 WP
+Phase 3 锚定为 `WP12`，并将 Phase 4 验收为 `WP13`。它不会给所有后续阶段硬编码 WP
 编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
 
 ## 2. 路线决策
@@ -66,8 +66,8 @@ causal runtime foundation
 
 ### 3.1 Post-WP9 阶段粗分
 
-路线被划分为不超过六个实现阶段。Phase 1-3 现已分配给 `WP10`、`WP11` 与
-`WP12`；Phase 4 现已开启为 `WP13`。后续阶段名仍只是顺序锚点，在前置 gate
+路线被划分为不超过六个实现阶段。Phase 1-4 现已分配给 `WP10`、`WP11`、
+`WP12` 与 `WP13`。后续阶段名仍只是顺序锚点，在前置 gate
 达到 mergeable 之前不创建已开启任务文件夹。
 
 | Phase | 工作标签 | 范围 | 候选 WP 归属 | 开启条件 | 暂不声明 |
@@ -191,7 +191,7 @@ Phase 4 backend/fidelity seed：
 - 在各自 gate 存在前，保持 exact GPU、resident-state、shadow、adaptive fidelity、
   learned `ModelProvider` 与 maintained multi-fidelity support 不在范围内。
 
-该 backend/fidelity seed 现已开启为
+该 backend/fidelity seed 现已验收为
 [WP13 backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)。
 
 ## 6. 第一个实现型 WP 的非目标

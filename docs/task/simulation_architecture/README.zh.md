@@ -47,8 +47,8 @@
     [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.zh.md)：
     先做 causal runtime foundation，再做 facade vertical slice，随后推进
     information/agency enforcement、backend/fidelity、capability composition 与
-    counterfactual/experiment generation。Phase 1-3 现已验收为 `WP10`、`WP11`
-    与 `WP12`；Phase 4 现已开启为 `WP13`。
+    counterfactual/experiment generation。Phase 1-4 现已验收为 `WP10`、`WP11`、
+    `WP12` 与 `WP13`。
 15. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
@@ -76,7 +76,7 @@
 | `WP10 Causal Runtime Foundation` | complete / accepted | 实现 post-WP9 路线 Phase 1：manifest registry seed、minimal scheduling-window loop、request injection、same-window validation、event/snapshot evidence 与 integration handoff | [causal runtime foundation](wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.zh.md)、[manifest registry](wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.zh.md)、[window loop / injection](wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.zh.md)、[same-window validation](wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.zh.md)、[event/snapshot evidence](wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.zh.md)、[integration handoff](wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp10_causal_runtime_foundation_acceptance_review_20260520.zh.md) |
 | `WP11 Facade Vertical Slice And Provenance` | complete / accepted | 实现 post-WP9 路线 Phase 2：`ActionHoldPolicy`、information-state provenance labels、基于 WP10 seam 的 facade/binding proof、consumer boundary pre-gates 与 integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.zh.md)、[ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.zh.md)、[information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.zh.md)、[vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.zh.md)、[consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.zh.md)、[integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md) |
 | `WP12 Information And Agency Enforcement` | complete / accepted | 实现 post-WP9 路线 Phase 3：Law 14 read-side enforcement、`AgentRole` authority validation、information-transformation evidence、authorized intent injection 与 integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)、[Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)、[agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)、[information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)、[intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)、[integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp12_information_agency_enforcement_acceptance_review_20260520.zh.md) |
-| `WP13 Backend Fidelity Expansion` | planned / dispatch-ready | 实现 post-WP9 路线 Phase 4：让 runtime capabilities、backend profiles、parity budgets 与 fidelity profile requests 可查询、可拒绝、可证据化，同时不晋级 unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)、[capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)、[backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)、[parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)、[fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)、[facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)、[integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md) |
+| `WP13 Backend Fidelity Expansion` | complete / accepted | 实现 post-WP9 路线 Phase 4：让 runtime capabilities、backend profiles、parity budgets 与 fidelity profile requests 可查询、可拒绝、可证据化，同时不晋级 unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)、[capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)、[backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)、[parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)、[fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)、[facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)、[integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) |
 
 ## WP13 Backend Fidelity Expansion
 
@@ -89,8 +89,9 @@
 - [WP13-D Fidelity Profile Request Gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)
 - [WP13-E Facade And Binding Proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)
 - [WP13-F Integration And Acceptance Handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)
+- [WP13 验收审查](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md)
 
-WP13 开启 post-WP9 路线 Phase 4。它消费 WP6/WP7 backend profile
+WP13 验收 post-WP9 路线 Phase 4。它消费 WP6/WP7 backend profile
 policy/materialization，以及 WP10-WP12 causal、provenance 与 agency evidence，
 把 backend/fidelity support 转成可查询、可拒绝、有测试支撑的 runtime facts，同时不晋级
 exact GPU、resident-state、shadow 或 multi-fidelity support。
@@ -110,9 +111,9 @@ WP13 工作流地图：
 - `WP13-F Integration And Acceptance Handoff` 是串行 validation、residual、
   acceptance-review、README/index 与 bilingual closure lane。
 
-当写入范围保持分离时，`WP13-A`、`WP13-B` 与 `WP13-C` 是第一轮并行波次。
-`WP13-D` 等待 B/C vocabulary；`WP13-E` 等待 A/D surfaces；`WP13-F` 最后执行。
-思考预算最高的 streams 是 A、B 与 D。
+`WP13-A` 到 `WP13-F` 均已验收。已接受 baseline 只 admission CPU exact
+reference fidelity requests，并保持 exact GPU、resident-state、shadow、adaptive
+fidelity、learned provider runtime 与 maintained multi-fidelity support 不在范围内。
 
 本阶段 commit message 应使用 capability/result language，而不是 internal
 work-package labels。

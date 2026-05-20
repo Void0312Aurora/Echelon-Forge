@@ -1,6 +1,6 @@
 # WP13-D Fidelity Profile Request Gate
 
-Status: `2026-05-20` planned / second-wave dispatch candidate.
+Status: `2026-05-21` complete / accepted.
 
 Language:
 

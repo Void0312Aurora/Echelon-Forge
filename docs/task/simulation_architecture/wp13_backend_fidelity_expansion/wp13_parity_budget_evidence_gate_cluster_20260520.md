@@ -1,6 +1,6 @@
 # WP13-C Parity Budget Evidence Gate
 
-Status: `2026-05-20` planned / first-wave dispatch candidate.
+Status: `2026-05-21` complete / accepted.
 
 Language:
 

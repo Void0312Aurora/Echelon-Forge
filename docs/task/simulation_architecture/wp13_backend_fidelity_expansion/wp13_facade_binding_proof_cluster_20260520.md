@@ -1,6 +1,6 @@
 # WP13-E Facade And Binding Proof
 
-Status: `2026-05-20` planned / second-wave integration candidate.
+Status: `2026-05-21` complete / accepted.
 
 Language:
 

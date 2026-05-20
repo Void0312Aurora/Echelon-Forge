@@ -1,8 +1,8 @@
 # Post-WP9 Architecture Route Plan
 
-Status: `2026-05-20` route-selection plan; Phase 1 is accepted as `WP10`,
+Status: `2026-05-21` route-selection plan; Phase 1 is accepted as `WP10`,
 Phase 2 is accepted as `WP11`, Phase 3 is accepted as `WP12`, and Phase 4 is
-opened as `WP13`.
+accepted as `WP13`.
 
 Language:
 
@@ -27,7 +27,7 @@ should choose an implementation route that turns accepted architecture rules
 into runtime facts.
 
 This document fixes the route order, anchors Phase 1 as `WP10`, Phase 2 as
-`WP11`, anchors Phase 3 as `WP12`, and opens Phase 4 as `WP13`. It does not
+`WP11`, anchors Phase 3 as `WP12`, and accepts Phase 4 as `WP13`. It does not
 assign WP numbers to all later phases. It defines which direction must come
 first, which directions should wait, and what kind of evidence counts as real
 architectural progress.
@@ -73,9 +73,9 @@ This order is intentional:
 
 ### 3.1 Post-WP9 Phase Breakdown
 
-The route is divided into no more than six implementation phases. Phases 1-3
-are now assigned to `WP10`, `WP11`, and `WP12`; Phase 4 is now opened as
-`WP13`. Later phase names remain sequencing anchors, not opened task folders
+The route is divided into no more than six implementation phases. Phases 1-4
+are now assigned to `WP10`, `WP11`, `WP12`, and `WP13`. Later phase names
+remain sequencing anchors, not opened task folders
 until the previous gates are mergeable.
 
 | Phase | Working label | Scope | Candidate WP ownership | Opens when | Must not claim yet |
@@ -207,7 +207,7 @@ Phase 4 backend/fidelity seed:
   `ModelProvider`, and maintained multi-fidelity support out of scope until
   their own gates exist.
 
-This backend/fidelity seed is now opened as
+This backend/fidelity seed is now accepted as
 [WP13 backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md).
 
 ## 6. Non-Goals For The First Implementation WP

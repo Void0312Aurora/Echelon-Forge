@@ -1,6 +1,6 @@
 # WP13-A Runtime Capability Query And Rejection Surface
 
-状态：`2026-05-20` planned / first-wave dispatch candidate。
+状态：`2026-05-21` complete / accepted。
 
 语言版本：
 

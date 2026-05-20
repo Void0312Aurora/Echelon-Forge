@@ -1,6 +1,6 @@
 # WP13-F Integration And Acceptance Handoff
 
-状态：`2026-05-20` planned / serial closure lane。
+状态：`2026-05-21` complete / accepted。
 
 语言版本：
 
@@ -62,13 +62,14 @@ streams、记录精确 validation outcomes、发布 residual register，并准�
 
 预期最终 validation set：
 
-```bash
+```powershell
 git diff --check
-cmake --build build-workshop -j4
-CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_runtime_facade_layering.py
-python3 tools/maintenance/wp_doc_closure_audit.py --wp WP13
+cmake --build build-local-win -j4
+python -m pytest -q tests\architecture\test_wp13_backend_profile_contracts.py tests\architecture\test_wp13_parity_budget_contracts.py tests\architecture\test_wp13_fidelity_profile_contracts.py
+python -m pytest -q tests\architecture\test_runtime_facade_layering.py
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py tests\test_gpu_runtime_bindings.py
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py tests\runtime\bindings\test_bindings_policy_surface.py
+python tools\maintenance\wp_doc_closure_audit.py --wp WP13
 ```
 
 若命令被环境阻塞，应记录 blocker 和最窄替代证据。不得在未运行测试且无理由时标记 gate accepted。

@@ -1,6 +1,6 @@
 # WP13 Backend Fidelity Expansion
 
-Status: `2026-05-20` planned / dispatch-ready implementation phase.
+Status: `2026-05-21` accepted / implementation mergeable.
 
 Language:
 
@@ -102,12 +102,12 @@ RuntimeFacade.capabilities()
 
 | Work package | Status | Route item | Goal | Output |
 |--------------|--------|------------|------|--------|
-| `WP13-A Runtime Capability Query And Rejection Surface` | planned | Phase 4 capability query | Make `RuntimeCapabilities` expose conservative profile/evidence metadata and explicit unsupported-request reasons without GPU/helper inference. | [capability query task slice](wp13_runtime_capability_query_cluster_20260520.md) |
-| `WP13-B Backend Profile Registry Runtime Gate` | planned | WP6/WP7 registry materialization | Add code-owned backend profile records and validation helpers that enforce maintained/candidate/diagnostics boundaries. | [backend profile registry gate task slice](wp13_backend_profile_registry_gate_cluster_20260520.md) |
-| `WP13-C Parity Budget Evidence Gate` | planned | profile-owned budget evidence | Add queryable parity budget records and validators that reject missing or non-maintained budgets before capability promotion. | [parity budget evidence task slice](wp13_parity_budget_evidence_gate_cluster_20260520.md) |
-| `WP13-D Fidelity Profile Request Gate` | planned | fidelity request admission | Define and implement fidelity request admission as fail-closed request grammar, not multi-fidelity support. | [fidelity request gate task slice](wp13_fidelity_profile_request_gate_cluster_20260520.md) |
-| `WP13-E Facade And Binding Proof` | planned | facade-visible evidence | Prove query/rejection/evidence behavior through maintained facade and Python binding surfaces without raw backend paths. | [facade proof task slice](wp13_facade_binding_proof_cluster_20260520.md) |
-| `WP13-F Integration And Acceptance Handoff` | planned | closure lane | Reconcile shared validators, validation commands, residuals, acceptance review, route/README sync, and bilingual closure after A-E are mergeable. | [integration handoff task slice](wp13_integration_acceptance_cluster_20260520.md) |
+| `WP13-A Runtime Capability Query And Rejection Surface` | complete / accepted | Phase 4 capability query | Make `RuntimeCapabilities` expose conservative profile/evidence metadata and explicit unsupported-request reasons without GPU/helper inference. | [capability query task slice](wp13_runtime_capability_query_cluster_20260520.md) |
+| `WP13-B Backend Profile Registry Runtime Gate` | complete / accepted | WP6/WP7 registry materialization | Add code-owned backend profile records and validation helpers that enforce maintained/candidate/diagnostics boundaries. | [backend profile registry gate task slice](wp13_backend_profile_registry_gate_cluster_20260520.md) |
+| `WP13-C Parity Budget Evidence Gate` | complete / accepted | profile-owned budget evidence | Add queryable parity budget records and validators that reject missing or non-maintained budgets before capability promotion. | [parity budget evidence task slice](wp13_parity_budget_evidence_gate_cluster_20260520.md) |
+| `WP13-D Fidelity Profile Request Gate` | complete / accepted | fidelity request admission | Define and implement fidelity request admission as fail-closed request grammar, not multi-fidelity support. | [fidelity request gate task slice](wp13_fidelity_profile_request_gate_cluster_20260520.md) |
+| `WP13-E Facade And Binding Proof` | complete / accepted | facade-visible evidence | Prove query/rejection/evidence behavior through maintained facade and Python binding surfaces without raw backend paths. | [facade proof task slice](wp13_facade_binding_proof_cluster_20260520.md) |
+| `WP13-F Integration And Acceptance Handoff` | complete / accepted | closure lane | Reconcile shared validators, validation commands, residuals, acceptance review, route/README sync, and bilingual closure after A-E are mergeable. | [integration handoff task slice](wp13_integration_acceptance_cluster_20260520.md) |
 
 ## 4. Dependency Map
 
@@ -225,3 +225,8 @@ or `blocked`.
 - Learned `ModelProvider` runtime interfaces.
 - Backend selection or performance-based automatic promotion.
 - A second semantic lifecycle outside the causal/facade boundary.
+
+## 10. Acceptance Review
+
+WP13 is accepted by
+[WP13 backend fidelity expansion acceptance review](../../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md).

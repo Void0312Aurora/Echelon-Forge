@@ -18,6 +18,7 @@
 - [WP10 Causal Runtime Foundation 验收审查 2026-05-20](wp10_causal_runtime_foundation_acceptance_review_20260520.zh.md) ([English](wp10_causal_runtime_foundation_acceptance_review_20260520.md))
 - [WP11 Facade Vertical Slice And Provenance 验收审查 2026-05-20](wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md) ([English](wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md))
 - [WP12 Information And Agency Enforcement 验收审查 2026-05-20](wp12_information_agency_enforcement_acceptance_review_20260520.zh.md) ([English](wp12_information_agency_enforcement_acceptance_review_20260520.md))
+- [WP13 Backend Fidelity Expansion 验收审查 2026-05-20](wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) ([English](wp13_backend_fidelity_expansion_acceptance_review_20260520.md))
 
 ## 归档
 

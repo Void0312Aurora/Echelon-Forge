@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import tempfile
 import textwrap
 from pathlib import Path
 
@@ -10,7 +11,7 @@ HEADER = REPO_ROOT / "src" / "runtime" / "contracts" / "parity_budget_contracts.
 
 
 def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
-    binary = "/tmp/wp13_parity_budget_contracts_test_bin"
+    binary = Path(tempfile.gettempdir()) / "wp13_parity_budget_contracts_test_bin"
     compile_result = subprocess.run(
         [
             "g++",
@@ -21,7 +22,7 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
             "c++",
             "-",
             "-o",
-            binary,
+            str(binary),
         ],
         input=source,
         text=True,
@@ -31,7 +32,7 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
     )
     assert compile_result.returncode == 0, compile_result.stderr
     return subprocess.run(
-        [binary],
+        [str(binary)],
         text=True,
         capture_output=True,
         check=False,

@@ -1,6 +1,6 @@
 # WP13-D Fidelity Profile Request Gate
 
-状态：`2026-05-20` planned / second-wave dispatch candidate。
+状态：`2026-05-21` complete / accepted。
 
 语言版本：
 

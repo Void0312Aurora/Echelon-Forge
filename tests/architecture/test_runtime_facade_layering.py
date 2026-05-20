@@ -152,12 +152,13 @@ def test_runtime_facade_escape_hatch_allowlist_stays_explicit() -> None:
     ]:
         counts = _runtime_escape_hatch_counts(path)
         if any(counts):
-            actual[str(path.relative_to(REPO_ROOT))] = EscapeHatchAllowance(
+            allowlist_key = path.relative_to(REPO_ROOT).as_posix()
+            actual[allowlist_key] = EscapeHatchAllowance(
                 runtime_calls=counts[0],
                 runtime_world_calls=counts[1],
                 world_batch_ctor_calls=counts[2],
-                classification=SCOPED_ESCAPE_HATCH_ALLOWLIST[str(path.relative_to(REPO_ROOT))].classification,
-                tier=SCOPED_ESCAPE_HATCH_ALLOWLIST[str(path.relative_to(REPO_ROOT))].tier,
+                classification=SCOPED_ESCAPE_HATCH_ALLOWLIST[allowlist_key].classification,
+                tier=SCOPED_ESCAPE_HATCH_ALLOWLIST[allowlist_key].tier,
             )
 
     assert actual == SCOPED_ESCAPE_HATCH_ALLOWLIST, f"scoped escape hatch allowlist drifted: {actual}"
