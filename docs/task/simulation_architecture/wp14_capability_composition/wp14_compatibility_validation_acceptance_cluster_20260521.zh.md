@@ -1,6 +1,7 @@
 # WP14-F Compatibility Validation And Acceptance Handoff
 
-状态：`2026-05-21` planned / serial closure lane。
+状态：`2026-05-21` planned / serial closure lane。此时不要创建 acceptance
+review；WP14 first slice 仍 open/planned。
 
 语言版本：
 
@@ -25,6 +26,11 @@
 outcomes，发布 residuals，并准备 acceptance review。
 
 它不应阻塞 A-E 达到 `Mergeable`，而是在 implementation evidence 已存在后运行。
+
+并行规则：
+
+- 这个 lane 是串行的，只能由主线程负责。
+- 不要让 subagents 在同一规范性表格上与 A-E 实现 worker 同时写 acceptance text。
 
 ## 2. 范围
 
@@ -75,6 +81,14 @@ python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or w
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\test_gpu_runtime_bindings.py -k "runtime_capabilities"
 python tools\maintenance\wp_doc_closure_audit.py --wp WP14
 ```
+
+此 lane 的最低 acceptance gates：
+
+- A-E implementation gates 已经 mergeable；
+- `git diff --check` 与上面的 validation commands 都有精确 outcome；
+- README、route 与 review indices 已同步；
+- `spawn_unit(type_name)` 与 `WorldSpawnRequest.type_name` 的 compatibility 被明确写出；
+- 在 A-E 真正 mergeable 前不写 acceptance review。
 
 若命令被环境阻塞，应记录 blocker 和最窄替代证据。不得在未运行测试且无理由时标记 gate
 accepted。

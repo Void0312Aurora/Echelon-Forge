@@ -10,6 +10,7 @@
 #include "core/engine/world_batch_runtime.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/fidelity_profile_contracts.h"
+#include "runtime/contracts/platform_capability_contracts.h"
 #include "runtime/contracts/policy_contracts.h"
 #include "runtime/facade/runtime_facade.h"
 
@@ -173,6 +174,187 @@ void bind_runtime(nb::module_& m) {
             "evidence_refs",
             &runtime::fidelity::FidelityProfileAdmissionResult::evidence_refs
         );
+
+    nb::class_<runtime::platform_capabilities::Capability>(m, "PlatformCapability")
+        .def(nb::init<>())
+        .def_rw(
+            "capability_id",
+            &runtime::platform_capabilities::Capability::capability_id
+        )
+        .def_rw("family", &runtime::platform_capabilities::Capability::family)
+        .def_rw(
+            "capability_type",
+            &runtime::platform_capabilities::Capability::capability_type
+        )
+        .def_rw(
+            "implementation_ref",
+            &runtime::platform_capabilities::Capability::implementation_ref
+        )
+        .def_rw(
+            "requires_capability_ids",
+            &runtime::platform_capabilities::Capability::requires_capability_ids
+        )
+        .def_rw(
+            "evidence_refs",
+            &runtime::platform_capabilities::Capability::evidence_refs
+        )
+        .def_rw("required", &runtime::platform_capabilities::Capability::required)
+        .def_rw("supported", &runtime::platform_capabilities::Capability::supported)
+        .def_rw(
+            "unsupported_reason",
+            &runtime::platform_capabilities::Capability::unsupported_reason
+        );
+
+    nb::class_<runtime::platform_capabilities::CapabilityBundle>(
+        m,
+        "CapabilityBundle"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "bundle_id",
+            &runtime::platform_capabilities::CapabilityBundle::bundle_id
+        )
+        .def_rw(
+            "source_type_name",
+            &runtime::platform_capabilities::CapabilityBundle::source_type_name
+        )
+        .def_rw(
+            "capabilities",
+            &runtime::platform_capabilities::CapabilityBundle::capabilities
+        )
+        .def_rw(
+            "template_evidence_ref",
+            &runtime::platform_capabilities::CapabilityBundle::template_evidence_ref
+        )
+        .def_rw(
+            "evidence_refs",
+            &runtime::platform_capabilities::CapabilityBundle::evidence_refs
+        )
+        .def_rw(
+            "compatibility_path_preserved",
+            &runtime::platform_capabilities::CapabilityBundle::compatibility_path_preserved
+        )
+        .def_rw(
+            "diagnostics_reason",
+            &runtime::platform_capabilities::CapabilityBundle::diagnostics_reason
+        );
+
+    nb::class_<runtime::platform_capabilities::ResolvedPlatformSpawnPlan>(
+        m,
+        "ResolvedPlatformSpawnPlan"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "plan_id",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::plan_id
+        )
+        .def_rw(
+            "source_request_kind",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::source_request_kind
+        )
+        .def_rw(
+            "source_type_name",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::source_type_name
+        )
+        .def_rw(
+            "capability_bundle_id",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::capability_bundle_id
+        )
+        .def_rw(
+            "resolved_platform_definition_ref",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolved_platform_definition_ref
+        )
+        .def_rw(
+            "materialization_strategy",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::materialization_strategy
+        )
+        .def_rw(
+            "template_evidence_ref",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::template_evidence_ref
+        )
+        .def_rw(
+            "resolution_evidence_ref",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolution_evidence_ref
+        )
+        .def_rw(
+            "materialization_evidence_ref",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::materialization_evidence_ref
+        )
+        .def_rw(
+            "evidence_refs",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::evidence_refs
+        )
+        .def_rw(
+            "resolved_capabilities",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolved_capabilities
+        )
+        .def_rw(
+            "rejected_capability_ids",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejected_capability_ids
+        )
+        .def_rw(
+            "compatibility_path_preserved",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::compatibility_path_preserved
+        )
+        .def_rw(
+            "admitted",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::admitted
+        )
+        .def_rw(
+            "rejection_reason",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejection_reason
+        )
+        .def_rw(
+            "diagnostics_reason",
+            &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::diagnostics_reason
+        );
+
+    nb::class_<TypedPlatformSpawnRequest>(m, "TypedPlatformSpawnRequest")
+        .def(nb::init<>())
+        .def_rw("world_index", &TypedPlatformSpawnRequest::world_index)
+        .def_rw("side", &TypedPlatformSpawnRequest::side)
+        .def_rw("request_id", &TypedPlatformSpawnRequest::request_id)
+        .def_rw("source_type_name", &TypedPlatformSpawnRequest::source_type_name)
+        .def_rw("entity_name", &TypedPlatformSpawnRequest::entity_name)
+        .def_rw("is_agent", &TypedPlatformSpawnRequest::is_agent)
+        .def_rw("x", &TypedPlatformSpawnRequest::x)
+        .def_rw("y", &TypedPlatformSpawnRequest::y)
+        .def_rw("z", &TypedPlatformSpawnRequest::z)
+        .def_rw("heading", &TypedPlatformSpawnRequest::heading)
+        .def_rw("pitch", &TypedPlatformSpawnRequest::pitch)
+        .def_rw("roll", &TypedPlatformSpawnRequest::roll)
+        .def_rw("vx", &TypedPlatformSpawnRequest::vx)
+        .def_rw("vy", &TypedPlatformSpawnRequest::vy)
+        .def_rw("vz", &TypedPlatformSpawnRequest::vz)
+        .def_rw(
+            "capability_bundle",
+            &TypedPlatformSpawnRequest::capability_bundle
+        )
+        .def_rw(
+            "resolved_spawn_plan",
+            &TypedPlatformSpawnRequest::resolved_spawn_plan
+        )
+        .def_rw(
+            "facade_evidence_refs",
+            &TypedPlatformSpawnRequest::facade_evidence_refs
+        )
+        .def_rw(
+            "compatibility_path_preserved",
+            &TypedPlatformSpawnRequest::compatibility_path_preserved
+        );
+
+    nb::class_<TypedPlatformSpawnValidationResult>(
+        m,
+        "TypedPlatformSpawnValidationResult"
+    )
+        .def(nb::init<>())
+        .def_rw("valid", &TypedPlatformSpawnValidationResult::valid)
+        .def_rw("fail_closed", &TypedPlatformSpawnValidationResult::fail_closed)
+        .def_rw(
+            "rejection_reason",
+            &TypedPlatformSpawnValidationResult::rejection_reason
+        )
+        .def_rw("errors", &TypedPlatformSpawnValidationResult::errors);
 
     nb::class_<BatchResetRequest>(m, "BatchResetRequest")
         .def(nb::init<>())
@@ -440,6 +622,10 @@ void bind_runtime(nb::module_& m) {
         .def_rw("wind_assignments", &BatchWorldSetupRequest::wind_assignments)
         .def_rw("zones", &BatchWorldSetupRequest::zones)
         .def_rw("spawn_requests", &BatchWorldSetupRequest::spawn_requests)
+        .def_rw(
+            "typed_platform_spawn_requests",
+            &BatchWorldSetupRequest::typed_platform_spawn_requests
+        )
         .def_rw("time_steps", &BatchWorldSetupRequest::time_steps);
 
     nb::class_<BatchWorldSetupResult>(m, "BatchWorldSetupResult")
@@ -548,6 +734,11 @@ void bind_runtime(nb::module_& m) {
     m.def(
         "admit_fidelity_profile_request",
         &runtime::fidelity::admit_fidelity_profile_request,
+        nb::arg("request")
+    );
+    m.def(
+        "validate_typed_platform_spawn_request",
+        &validate_typed_platform_spawn_request,
         nb::arg("request")
     );
     m.def(

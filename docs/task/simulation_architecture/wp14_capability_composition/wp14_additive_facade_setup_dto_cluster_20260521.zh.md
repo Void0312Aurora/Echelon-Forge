@@ -1,6 +1,7 @@
 # WP14-D Additive Facade Setup DTO
 
-状态：`2026-05-21` planned / additive surface candidate。
+状态：`2026-05-21` planned / additive surface candidate。此切片保持 open/planned，
+直到 typed DTOs 真正 additive 且不会被误当成 accepted public spawn replacement。
 
 语言版本：
 
@@ -54,6 +55,12 @@ surface 铺路。它不替换当前 `WorldSpawnRequest.type_name` 或 batch setu
 - 暴露 validation/rejection，而不是 direct unchecked materialization；
 - 保留 `type_name` path 作为维护中的兼容路径。
 
+并行规则：
+
+- 这个切片要与 B/C writer scope 保持 disjoint。
+- subagents 可以负责 DTO shape 或 bindings，但主线程保留 F 中的串行
+  integration/gate 责任。
+
 ## 4. Gate 规则
 
 | Boundary | Required behavior |
@@ -81,6 +88,15 @@ cmake --build build-local-win -j4
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup"
 python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 ```
+
+此切片的最低 acceptance gates：
+
+- `git diff --check` 通过；
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py` 通过；
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_wp14_additive_platform_spawn_bindings.py` 通过；
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup"` 通过；
+- `python -m pytest -q tests\architecture\test_runtime_facade_layering.py` 通过；
+- `WorldSpawnRequest.type_name` 仍保留，且没有强制 public `spawn_platform`。
 
 ## 6. 交接契约
 

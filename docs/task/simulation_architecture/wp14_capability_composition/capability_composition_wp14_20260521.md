@@ -1,6 +1,6 @@
 # WP14 Capability Composition
 
-Status: `2026-05-21` planned / dispatch-ready implementation phase.
+Status: `2026-05-21` complete / accepted implementation phase.
 
 Language:
 
@@ -99,12 +99,12 @@ Capability / CapabilityBundle contracts
 
 | Work package | Status | Route item | Goal | Output |
 |--------------|--------|------------|------|--------|
-| `WP14-A Capability Bundle Contract` | planned | missing DTO closure | Define platform-semantic `Capability`, `CapabilityBundle`, capability-family vocabulary, and resolved-plan evidence without colliding with backend `RuntimeCapabilities`. | [capability bundle contract task slice](wp14_capability_bundle_contract_cluster_20260521.md) |
-| `WP14-B Content Definition Lowering` | planned | type-name lowering | Define and implement `type_name -> capability bundle template -> resolved spawn plan` lowering from existing content and factory semantics. | [content definition lowering task slice](wp14_content_definition_lowering_cluster_20260521.md) |
-| `WP14-C Spawn Resolution Bridge` | planned | compatibility-preserving spawn bridge | Route kernel, world-batch, and facade setup through resolved spawn plans while keeping `spawn_unit(type_name)` and `WorldSpawnRequest.type_name` compatible. | [spawn resolution bridge task slice](wp14_spawn_resolution_bridge_cluster_20260521.md) |
-| `WP14-D Additive Facade Setup DTO` | planned | future spawn_platform surface | Add facade/setup DTO vocabulary for typed platform spawn requests as an additive path, not a replacement for current setup APIs. | [additive facade setup DTO task slice](wp14_additive_facade_setup_dto_cluster_20260521.md) |
-| `WP14-E Capability Effects Materialization` | planned | component/effect binding | Bind capability families to ECS/component materialization, evidence names, and fail-closed unsupported effects without changing platform behavior models. | [capability effects materialization task slice](wp14_capability_effects_materialization_cluster_20260521.md) |
-| `WP14-F Compatibility Validation And Acceptance Handoff` | planned | closure lane | Freeze compatibility, validation commands, residuals, acceptance review, README/route sync, and bilingual closure after A-E are mergeable. | [compatibility validation and acceptance task slice](wp14_compatibility_validation_acceptance_cluster_20260521.md) |
+| `WP14-A Capability Bundle Contract` | accepted | missing DTO closure | Define platform-semantic `Capability`, `CapabilityBundle`, capability-family vocabulary, and resolved-plan evidence without colliding with backend `RuntimeCapabilities`. | [capability bundle contract task slice](wp14_capability_bundle_contract_cluster_20260521.md) |
+| `WP14-B Content Definition Lowering` | accepted | type-name lowering | Define and implement `type_name -> capability bundle template -> resolved spawn plan` lowering from existing content and factory semantics. | [content definition lowering task slice](wp14_content_definition_lowering_cluster_20260521.md) |
+| `WP14-C Spawn Resolution Bridge` | accepted | compatibility-preserving spawn bridge | Route kernel, world-batch, and facade setup through resolved spawn plans while keeping `spawn_unit(type_name)` and `WorldSpawnRequest.type_name` compatible. | [spawn resolution bridge task slice](wp14_spawn_resolution_bridge_cluster_20260521.md) |
+| `WP14-D Additive Facade Setup DTO` | accepted | future spawn_platform surface | Add facade/setup DTO vocabulary for typed platform spawn requests as an additive path, not a replacement for current setup APIs. | [additive facade setup DTO task slice](wp14_additive_facade_setup_dto_cluster_20260521.md) |
+| `WP14-E Capability Effects Materialization` | accepted | component/effect binding | Bind capability families to ECS/component materialization, evidence names, and fail-closed unsupported effects without changing platform behavior models. | [capability effects materialization task slice](wp14_capability_effects_materialization_cluster_20260521.md) |
+| `WP14-F Compatibility Validation And Acceptance Handoff` | accepted | closure lane | Freeze compatibility, validation commands, residuals, acceptance review, README/route sync, and bilingual closure after A-E are mergeable. | [compatibility validation and acceptance task slice](wp14_compatibility_validation_acceptance_cluster_20260521.md) |
 
 ## 4. Dependency Map
 
@@ -127,7 +127,8 @@ Parallel rule:
 
 - `WP14-A` starts first because B-E must share the same capability vocabulary.
 - `WP14-B` and `WP14-C` are the highest-risk serial seam and should not be
-  split across writers touching the same factory/kernel paths.
+  split across writers touching the same factory/kernel paths; the main thread
+  owns integration/gate, while subagents own only disjoint scopes.
 - `WP14-D` may start after A if it stays additive and does not force kernel
   adoption before C.
 - `WP14-E` waits for B/C semantics; it may then run beside D if file scopes stay
@@ -144,7 +145,7 @@ Parallel rule:
 | `WP14-C` | Kernel/world-batch/facade bridge that resolves before materialization while preserving compatibility. | Own `SimulationKernel`, `WorldBatchRuntime`, and facade setup integration tests. Coordinate with B; do not migrate all call sites. | Complex compatibility bridge: `gpt-5.4`, xhigh. |
 | `WP14-D` | Additive facade/setup DTOs for future typed platform spawn. | Own runtime contracts/facade DTOs and Python binding exposure. Stay additive; no forced API replacement. | Medium-complex surface: `gpt-5.4`, high. |
 | `WP14-E` | Capability family effects, ECS/component materialization evidence, and unsupported-effect rejection. | Own factory/effects materialization tests after B/C. Do not introduce new tactical behavior or new platform families. | Complex materialization seam: `gpt-5.4`, xhigh. |
-| `WP14-F` | Compatibility regression, residual register, acceptance review, README/route sync, bilingual closure. | Serial owner after A-E are mergeable. | Light closure: mini model with high, or `gpt-5.4` medium if code conflicts remain. |
+| `WP14-F` | Compatibility regression, residual register, acceptance review, README/route sync, bilingual closure. | Serial owner after A-E are mergeable; do not parallelize with implementation workers on the same normative table. | Light closure: mini model with high, or `gpt-5.4` medium if code conflicts remain. |
 
 Worker rule:
 
@@ -197,6 +198,11 @@ Artifact rule:
 | `WP14-E Capability Effects Materialization` | Tests binding capability families to component/factory materialization evidence and unsupported-effect reasons. | Pass only if capability effects describe existing materialization behavior without adding tactical behavior. | Fail if WP14 changes weapon/sensor/mission behavior under the guise of composition. |
 | `WP14-F Compatibility Validation And Acceptance Handoff` | A-E status, exact validation commands, residual register, acceptance-review draft, route/README sync, and bilingual closure. | Pass only after implementation gates are mergeable and residuals are recorded honestly. | Fail if closure text claims full spawn-platform migration, backend/fidelity promotion, or scenario-schema replacement. |
 
+`WP14-F` is accepted by the final acceptance review after A-E became mergeable.
+Future work must not use this acceptance to claim full public spawn-platform
+migration, scenario-schema replacement, backend/fidelity promotion, or new
+tactical behavior.
+
 ## 8. Validation Commands
 
 Expected focused validation set:
@@ -212,6 +218,15 @@ python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or w
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\test_gpu_runtime_bindings.py -k "runtime_capabilities"
 python tools\maintenance\wp_doc_closure_audit.py --wp WP14
 ```
+
+Implementation gate minimums by slice:
+
+- `WP14-A`: `git diff --check`; `python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py`; `python -m pytest -q tests\architecture\test_runtime_facade_layering.py`.
+- `WP14-B`: `git diff --check`; `python -m pytest -q tests\architecture\test_wp14_content_definition_lowering.py`; `python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py`; `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"`.
+- `WP14-C`: `git diff --check`; `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"`; `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or observation_packet"`; `python -m pytest -q tests\architecture\test_runtime_facade_layering.py`.
+- `WP14-D`: `git diff --check`; `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py`; `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_wp14_additive_platform_spawn_bindings.py`; `python -m pytest -q tests\architecture\test_runtime_facade_layering.py`.
+- `WP14-E`: `git diff --check`; `python -m pytest -q tests\architecture\test_wp14_capability_effects_materialization.py`; `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py`; `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn"`.
+- `WP14-F`: `git diff --check`; `cmake --build build-local-win -j4`; `python -m pytest -q tests\architecture\test_wp14_*.py`; `python -m pytest -q tests\architecture\test_runtime_facade_layering.py`; `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"`; `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or capabilities or observation_packet"`; `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py`; `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\test_gpu_runtime_bindings.py -k "runtime_capabilities"`; `python tools\maintenance\wp_doc_closure_audit.py --wp WP14`.
 
 Worker-specific tests should be narrower and named in each cluster handoff.
 The final acceptance review should report exact commands as `passed`, `failed`,

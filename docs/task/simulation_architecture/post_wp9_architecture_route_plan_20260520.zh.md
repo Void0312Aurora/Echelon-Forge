@@ -2,7 +2,7 @@
 
 状态：`2026-05-21` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
 `WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已作为 `WP13` 验收，
-Phase 5 已开启为 planned / dispatch-ready `WP14`。
+Phase 5 已作为 `WP14` 验收。
 
 语言版本：
 
@@ -27,8 +27,8 @@ backend-profile policy、learning-face vocabulary，以及延后的 DTO/infrastr
 把已验收架构规则变成 runtime facts。
 
 本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，把
-Phase 3 锚定为 `WP12`，将 Phase 4 验收为 `WP13`，并把 Phase 5 开启为
-planned / dispatch-ready `WP14`。它不会给当前已开启阶段之后的方向预先分配
+Phase 3 锚定为 `WP12`，将 Phase 4 验收为 `WP13`，并将 Phase 5 验收为
+`WP14`。它不会给当前已开启阶段之后的方向预先分配
 WP 编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
 
 ## 2. 路线决策
@@ -213,7 +213,7 @@ Phase 5 capability-composition seed：
   scenario-schema migration、backend/fidelity promotion 与 broad spawn rewrites
   不在范围内。
 
-该 capability-composition seed 现已开启但尚未验收为
+该 capability-composition seed 现已验收为
 [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)。
 
 ## 6. 第一个实现型 WP 的非目标
@@ -222,8 +222,8 @@ Phase 5 capability-composition seed：
 - 在 window-loop skeleton 证明前，不声明严格 clock-domain enforcement。
 - 不把 exact GPU、resident-state 或 multi-fidelity execution 晋升为 maintained。
 - 不把所有 platform spawning 迁到 capability composition。
-- WP14 compatibility bridge 与 additive facade/setup DTO gates 通过前，不让 typed
-  capability spawning 成为强制入口。
+- 不让 typed capability spawning 超出已验收 WP14 compatibility bridge 与 additive
+  facade/setup DTO vocabulary，成为强制入口。
 - 第一个 causal slice 不声明 Law 14 read-side enforcement 或 Agency Graph runtime enforcement。
 - 在 deterministic replay 和 snapshot 边界存在前，不启动 counterfactual/worldline branching。
 - 不让文档 closure 阻塞实现 `Mergeable` 状态；README、acceptance、archive 与

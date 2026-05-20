@@ -1,6 +1,8 @@
 # WP14-C Spawn Resolution Bridge
 
-状态：`2026-05-21` planned / second-wave implementation candidate。
+状态：`2026-05-21` planned / second-wave implementation candidate。此切片
+必须等待 B 提供 resolution evidence，且在 first slice 仍 open/planned 时
+不应被标记为 accepted。
 
 语言版本：
 
@@ -56,6 +58,12 @@ resolved-plan evidence 可检查。
 - 成功时保持旧行为，resolver 失败时添加显式 rejection/evidence；
 - 避免对 tests 或 scenarios 做大范围 search-and-replace。
 
+并行规则：
+
+- `WP14-C` 只能在 B 的语义稳定到足以被引用后启动。
+- 它不能与 `WP14-B` 在同一 factory/kernel seam 上共享 writer。
+- 主线程的 integration/gate 仍然是 `WP14-F` 中的串行责任。
+
 ## 4. Gate 规则
 
 | Boundary | Required behavior |
@@ -81,7 +89,17 @@ git diff --check
 cmake --build build-local-win -j4
 python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or observation_packet"
+python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 ```
+
+此切片的最低 acceptance gates：
+
+- `git diff --check` 通过；
+- `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"` 通过；
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or observation_packet"` 通过；
+- `python -m pytest -q tests\architecture\test_runtime_facade_layering.py` 通过；
+- bridge 需要能展示可检查的 resolution evidence，且不要求 broad caller migration；
+- `WorldSpawnRequest.type_name` 仍是 maintained compatibility surface。
 
 ## 6. 交接契约
 

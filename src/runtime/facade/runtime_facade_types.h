@@ -56,6 +56,7 @@ struct BatchWorldSetupRequest {
     std::vector<WorldWindAssignment> wind_assignments;
     std::vector<WorldZoneDefinition> zones;
     std::vector<WorldSpawnRequest> spawn_requests;
+    std::vector<TypedPlatformSpawnRequest> typed_platform_spawn_requests;
     std::vector<double> time_steps;
 };
 

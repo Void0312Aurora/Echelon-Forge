@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cctype>
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <unordered_map>
+#include <string_view>
 
 #include <spdlog/spdlog.h>
 
@@ -19,6 +21,7 @@
 #include "components/physics/forces.h"
 #include "components/combat/damage.h"
 #include "components/combat/weapon.h"
+#include "components/physics/instruments.h"
 #include "components/systems/data_link.h"
 #include "components/systems/logistics.h"
 #include "components/systems/comm.h"
@@ -32,6 +35,7 @@
 #include "components/naval/submarine_platform.h"
 #include "content/unit_definition_loader.h"
 #include "core/interfaces/unit_factory.h"
+#include "runtime/contracts/platform_capability_contracts.h"
 #include "models/weapons/missile_guidance_types.h"
 
 #ifndef M_PI
@@ -68,8 +72,114 @@ inline double default_factory_default_missile_propellant_mass(double total_mass_
         std::max(MissileGuidanceDefaults::kMinPropellantMassKg, total_mass_kg * 0.55));
 }
 
+namespace default_unit_factory_detail {
+
+inline std::string make_platform_token(std::string_view value) {
+    std::string token;
+    token.reserve(value.size());
+
+    bool last_was_underscore = false;
+    for (unsigned char ch : value) {
+        if (std::isalnum(ch) != 0) {
+            token.push_back(static_cast<char>(std::tolower(ch)));
+            last_was_underscore = false;
+            continue;
+        }
+        if (!last_was_underscore) {
+            token.push_back('_');
+            last_was_underscore = true;
+        }
+    }
+
+    while (!token.empty() && token.front() == '_') {
+        token.erase(token.begin());
+    }
+    while (!token.empty() && token.back() == '_') {
+        token.pop_back();
+    }
+    if (token.empty()) {
+        return "unnamed";
+    }
+    return token;
+}
+
+inline std::string make_bundle_id(std::string_view type_name) {
+    return "platform.bundle." + make_platform_token(type_name);
+}
+
+inline std::string make_plan_id(std::string_view type_name) {
+    return "platform.plan." + make_platform_token(type_name);
+}
+
+inline std::string make_capability_id(
+    std::string_view type_name,
+    std::string_view capability_type
+) {
+    return "platform.capability." + make_platform_token(type_name) + "." +
+        make_platform_token(capability_type);
+}
+
+inline std::string make_evidence_ref(
+    std::string_view type_name,
+    std::string_view evidence_type
+) {
+    return "platform.evidence." + make_platform_token(type_name) + "." +
+        make_platform_token(evidence_type);
+}
+
+inline std::string make_definition_ref(std::string_view type_name) {
+    return "platform.definition." + make_platform_token(type_name);
+}
+
+inline void append_unique(std::vector<std::string>& values, std::string value) {
+    if (std::find(values.begin(), values.end(), value) == values.end()) {
+        values.push_back(std::move(value));
+    }
+}
+
+inline runtime::platform_capabilities::Capability make_capability(
+    std::string_view type_name,
+    std::string_view family,
+    std::string_view capability_type,
+    std::vector<std::string> evidence_refs,
+    bool required = true,
+    bool supported = true,
+    std::string unsupported_reason = {}
+) {
+    runtime::platform_capabilities::Capability capability{};
+    capability.capability_id = make_capability_id(type_name, capability_type);
+    capability.family = std::string(family);
+    capability.capability_type = std::string(capability_type);
+    capability.implementation_ref = make_definition_ref(type_name);
+    capability.evidence_refs = std::move(evidence_refs);
+    capability.required = required;
+    capability.supported = supported;
+    capability.unsupported_reason = std::move(unsupported_reason);
+    return capability;
+}
+
+inline void append_capability(
+    runtime::platform_capabilities::CapabilityBundle& bundle,
+    runtime::platform_capabilities::Capability capability
+) {
+    for (const auto& evidence : capability.evidence_refs) {
+        append_unique(bundle.evidence_refs, evidence);
+    }
+    append_unique(bundle.evidence_refs, bundle.template_evidence_ref);
+    bundle.capabilities.push_back(std::move(capability));
+}
+
+} // namespace default_unit_factory_detail
+
 class DefaultUnitFactory : public IUnitFactory {
 public:
+    using Capability = runtime::platform_capabilities::Capability;
+    using CapabilityBundle = runtime::platform_capabilities::CapabilityBundle;
+    using PlatformCapabilityValidationResult =
+        runtime::platform_capabilities::PlatformCapabilityValidationResult;
+    using ResolvedPlatformSpawnPlan =
+        runtime::platform_capabilities::ResolvedPlatformSpawnPlan;
+
     explicit DefaultUnitFactory(const std::string& config_path = std::string()) {
         UnitDefinition aircraft{};
         aircraft.type = UnitType::Aircraft;
@@ -216,6 +326,327 @@ public:
         }
     }
 
+    [[nodiscard]] CapabilityBundle build_platform_capability_bundle_template(
+        std::string_view type_name,
+        const UnitDefinition& def
+    ) const {
+        using namespace runtime::platform_capabilities;
+        using namespace default_unit_factory_detail;
+
+        CapabilityBundle bundle{};
+        bundle.bundle_id = make_bundle_id(type_name);
+        bundle.source_type_name = std::string(type_name);
+        bundle.template_evidence_ref = make_evidence_ref(type_name, "bundle_template");
+        bundle.compatibility_path_preserved = true;
+        bundle.diagnostics_reason = "type_name_to_capability_bundle_template";
+        bundle.evidence_refs = {
+            bundle.template_evidence_ref,
+            make_evidence_ref(type_name, "definition_snapshot"),
+        };
+
+        const auto add_sensing_capability = [&](std::string_view capability_type,
+                                                std::vector<std::string> evidence_refs) {
+            append_capability(bundle, make_capability(
+                type_name,
+                kCapabilityFamilySensing,
+                capability_type,
+                std::move(evidence_refs)));
+        };
+        const auto add_mobility_capability = [&](std::string_view capability_type,
+                                                 std::vector<std::string> evidence_refs) {
+            append_capability(bundle, make_capability(
+                type_name,
+                kCapabilityFamilyMobility,
+                capability_type,
+                std::move(evidence_refs)));
+        };
+        const auto add_communication_capability = [
+        ](CapabilityBundle& bundle_ref,
+          std::string_view type_name_ref,
+          std::string_view capability_type,
+          std::vector<std::string> evidence_refs) {
+            append_capability(bundle_ref, make_capability(
+                type_name_ref,
+                kCapabilityFamilyCommunication,
+                capability_type,
+                std::move(evidence_refs)));
+        };
+        const auto add_command_capability = [
+        ](CapabilityBundle& bundle_ref,
+          std::string_view type_name_ref,
+          std::string_view capability_type,
+          std::vector<std::string> evidence_refs) {
+            append_capability(bundle_ref, make_capability(
+                type_name_ref,
+                kCapabilityFamilyCommand,
+                capability_type,
+                std::move(evidence_refs)));
+        };
+        const auto add_launching_capability = [&](std::string_view capability_type,
+                                                  std::vector<std::string> evidence_refs) {
+            append_capability(bundle, make_capability(
+                type_name,
+                kCapabilityFamilyLaunching,
+                capability_type,
+                std::move(evidence_refs)));
+        };
+        const auto add_survivability_capability = [&](std::string_view capability_type,
+                                                      std::vector<std::string> evidence_refs) {
+            append_capability(bundle, make_capability(
+                type_name,
+                kCapabilityFamilySurvivability,
+                capability_type,
+                std::move(evidence_refs)));
+        };
+        const auto add_doctrine_capability = [&](std::string_view capability_type,
+                                                 std::vector<std::string> evidence_refs) {
+            append_capability(bundle, make_capability(
+                type_name,
+                kCapabilityFamilyDoctrine,
+                capability_type,
+                std::move(evidence_refs)));
+        };
+
+        if (!def.sensor_refs.empty()) {
+            add_sensing_capability(
+                "sensor_refs",
+                {
+                    make_evidence_ref(type_name, "sensor_refs"),
+                    make_evidence_ref(type_name, "sensor_ref"),
+                });
+        }
+        if (!def.sensor_ref.empty()) {
+            add_sensing_capability(
+                "sensor_ref",
+                {
+                    make_evidence_ref(type_name, "sensor_ref"),
+                });
+        }
+        if (def.has_sensor) {
+            add_sensing_capability(
+                "inline_sensor",
+                {
+                    make_evidence_ref(type_name, "sensor_inline"),
+                    make_evidence_ref(type_name, "sensor"),
+                });
+        }
+        if (!def.mounted_sensors.mounts.empty()) {
+            add_sensing_capability(
+                "mounted_sensors",
+                {
+                    make_evidence_ref(type_name, "mounted_sensors"),
+                });
+        }
+        if (def.has_sonar) {
+            add_sensing_capability(
+                "sonar",
+                {
+                    make_evidence_ref(type_name, "sonar"),
+                });
+        }
+        if (!def.mounted_sonars.mounts.empty()) {
+            add_sensing_capability(
+                "mounted_sonars",
+                {
+                    make_evidence_ref(type_name, "mounted_sonars"),
+                });
+        }
+
+        if (def.has_ship_platform) {
+            add_mobility_capability(
+                "ship_platform_mobility",
+                {
+                    make_evidence_ref(type_name, "ship_platform"),
+                    make_evidence_ref(type_name, "mobility"),
+                });
+            add_survivability_capability(
+                "ship_platform_survivability",
+                {
+                    make_evidence_ref(type_name, "ship_platform"),
+                    make_evidence_ref(type_name, "survivability"),
+                });
+        }
+        if (def.has_submarine_platform) {
+            add_mobility_capability(
+                "submarine_platform_mobility",
+                {
+                    make_evidence_ref(type_name, "submarine_platform"),
+                    make_evidence_ref(type_name, "mobility"),
+                });
+            add_survivability_capability(
+                "submarine_platform_survivability",
+                {
+                    make_evidence_ref(type_name, "submarine_platform"),
+                    make_evidence_ref(type_name, "survivability"),
+                });
+        }
+        if (def.airframe.empty_mass_kg > 0.0 || def.has_flight_model || def.type == UnitType::Aircraft) {
+            add_mobility_capability(
+                "airframe",
+                {
+                    make_evidence_ref(type_name, "airframe"),
+                    make_evidence_ref(type_name, "flight_model"),
+                });
+        }
+        if (def.has_landing_gear) {
+            add_mobility_capability(
+                "landing_gear",
+                {
+                    make_evidence_ref(type_name, "landing_gear"),
+                });
+        }
+        if (def.has_naval_stores) {
+            add_survivability_capability(
+                "naval_stores",
+                {
+                    make_evidence_ref(type_name, "naval_stores"),
+                });
+        }
+        if (def.has_naval_weapon_system) {
+            add_launching_capability(
+                "naval_weapon_system",
+                {
+                    make_evidence_ref(type_name, "naval_weapon_system"),
+                });
+        }
+        if (!def.default_loadout.empty()) {
+            add_launching_capability(
+                "default_loadout",
+                {
+                    make_evidence_ref(type_name, "default_loadout"),
+                });
+        }
+        if (def.has_command_link) {
+            add_command_capability(
+                bundle,
+                type_name,
+                "command_link",
+                {
+                    make_evidence_ref(type_name, "command_link"),
+                });
+        }
+        if (def.has_data_link) {
+            add_communication_capability(
+                bundle,
+                type_name,
+                "data_link",
+                {
+                    make_evidence_ref(type_name, "data_link"),
+                    make_evidence_ref(type_name, "data_link_network_id"),
+                });
+        }
+        if (def.has_embarked_air_ops) {
+            add_doctrine_capability(
+                "embarked_air_ops",
+                {
+                    make_evidence_ref(type_name, "embarked_air_ops"),
+                });
+        }
+        if (def.has_ship_platform || def.has_submarine_platform || def.has_naval_weapon_system) {
+            add_doctrine_capability(
+                "naval_platform_doctrine",
+                {
+                    make_evidence_ref(type_name, "naval_platform_doctrine"),
+                    make_evidence_ref(type_name, "naval_weapon_system"),
+                });
+        }
+        if (def.damage_model.hitboxes.empty() == false || def.health.current_hp > 0.0) {
+            add_survivability_capability(
+                "health_and_damage_model",
+                {
+                    make_evidence_ref(type_name, "health"),
+                    make_evidence_ref(type_name, "damage_model"),
+                });
+        }
+
+        return bundle;
+    }
+
+    [[nodiscard]] PlatformCapabilityValidationResult validate_platform_capability_bundle_template(
+        std::string_view type_name,
+        const UnitDefinition& def
+    ) const {
+        return runtime::platform_capabilities::validate_capability_bundle(
+            build_platform_capability_bundle_template(type_name, def));
+    }
+
+    [[nodiscard]] ResolvedPlatformSpawnPlan resolve_platform_spawn_plan(
+        std::string_view type_name,
+        const UnitDefinition& def
+    ) const {
+        using namespace runtime::platform_capabilities;
+        using namespace default_unit_factory_detail;
+
+        const CapabilityBundle bundle = build_platform_capability_bundle_template(type_name, def);
+        const PlatformCapabilityValidationResult bundle_validation =
+            runtime::platform_capabilities::validate_capability_bundle(bundle);
+
+        ResolvedPlatformSpawnPlan plan{};
+        plan.plan_id = make_plan_id(type_name);
+        plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+        plan.source_type_name = std::string(type_name);
+        plan.capability_bundle_id = bundle.bundle_id;
+        plan.resolved_platform_definition_ref = make_definition_ref(type_name);
+        plan.materialization_strategy =
+            std::string(kPlatformMaterializationStrategyFactoryCompatibility);
+        plan.template_evidence_ref = bundle.template_evidence_ref;
+        plan.resolution_evidence_ref = make_evidence_ref(type_name, "plan_resolution");
+        plan.materialization_evidence_ref = make_evidence_ref(type_name, "factory_materialization");
+        plan.evidence_refs = bundle.evidence_refs;
+        append_unique(plan.evidence_refs, plan.resolution_evidence_ref);
+        append_unique(plan.evidence_refs, plan.materialization_evidence_ref);
+        plan.resolved_capabilities = bundle.capabilities;
+        plan.compatibility_path_preserved = true;
+        plan.admitted = bundle_validation.valid;
+        if (!bundle_validation.valid) {
+            plan.rejection_reason = bundle_validation.rejection_reason;
+            plan.diagnostics_reason = bundle_validation.rejection_reason;
+            return plan;
+        }
+
+        plan.diagnostics_reason = "type_name_to_resolved_platform_spawn_plan";
+        return plan;
+    }
+
+    [[nodiscard]] PlatformCapabilityValidationResult validate_resolved_platform_spawn_plan(
+        std::string_view type_name,
+        const UnitDefinition& def
+    ) const {
+        return runtime::platform_capabilities::validate_resolved_platform_spawn_plan(
+            resolve_platform_spawn_plan(type_name, def));
+    }
+
+    [[nodiscard]] ResolvedPlatformSpawnPlan resolve_platform_spawn_plan_for_type_name(
+        std::string_view type_name
+    ) const {
+        using namespace runtime::platform_capabilities;
+        using namespace default_unit_factory_detail;
+
+        const std::string lookup_name(type_name);
+        auto it = definitions_.find(lookup_name);
+        if (it != definitions_.end()) {
+            return resolve_platform_spawn_plan(type_name, it->second);
+        }
+
+        ResolvedPlatformSpawnPlan plan{};
+        plan.plan_id = make_plan_id(type_name);
+        plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+        plan.source_type_name = lookup_name;
+        plan.capability_bundle_id = make_bundle_id(type_name);
+        plan.compatibility_path_preserved = true;
+        plan.admitted = false;
+        plan.rejection_reason = "resolved_platform_spawn_plan_type_name_not_found";
+        plan.diagnostics_reason = plan.rejection_reason;
+        return plan;
+    }
+
+    [[nodiscard]] PlatformCapabilityValidationResult validate_resolved_platform_spawn_plan_for_type_name(
+        std::string_view type_name
+    ) const {
+        return runtime::platform_capabilities::validate_resolved_platform_spawn_plan(
+            resolve_platform_spawn_plan_for_type_name(type_name));
+    }
+
     const UnitDefinition* get_definition(const std::string& name) const override {
         auto it = definitions_.find(name);
         if (it == definitions_.end()) return nullptr;
@@ -231,6 +662,8 @@ public:
             return flecs::entity::null();
         }
         const UnitDefinition& def = it->second;
+        [[maybe_unused]] const auto resolved_spawn_plan =
+            resolve_platform_spawn_plan_for_type_name(unit_name);
         double heading_init = params.heading;
         double pitch_init = params.pitch;
         double roll_init = params.roll;

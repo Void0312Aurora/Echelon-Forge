@@ -47,8 +47,9 @@
     [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.zh.md)：
     先做 causal runtime foundation，再做 facade vertical slice，随后推进
     information/agency enforcement、backend/fidelity、capability composition 与
-    counterfactual/experiment generation。Phase 1-4 现已验收为 `WP10`、`WP11`、
-    `WP12` 与 `WP13`；Phase 5 已开启为 planned / dispatch-ready `WP14`。
+    counterfactual/experiment generation。Phase 1-5 现已验收为 `WP10`、`WP11`、
+    `WP12`、`WP13` 与 `WP14`；counterfactual/experiment generation 仍是下一条尚未
+    开启的路线消费者。
 15. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
@@ -77,7 +78,7 @@
 | `WP11 Facade Vertical Slice And Provenance` | complete / accepted | 实现 post-WP9 路线 Phase 2：`ActionHoldPolicy`、information-state provenance labels、基于 WP10 seam 的 facade/binding proof、consumer boundary pre-gates 与 integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.zh.md)、[ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.zh.md)、[information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.zh.md)、[vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.zh.md)、[consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.zh.md)、[integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md) |
 | `WP12 Information And Agency Enforcement` | complete / accepted | 实现 post-WP9 路线 Phase 3：Law 14 read-side enforcement、`AgentRole` authority validation、information-transformation evidence、authorized intent injection 与 integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)、[Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)、[agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)、[information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)、[intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)、[integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp12_information_agency_enforcement_acceptance_review_20260520.zh.md) |
 | `WP13 Backend Fidelity Expansion` | complete / accepted | 实现 post-WP9 路线 Phase 4：让 runtime capabilities、backend profiles、parity budgets 与 fidelity profile requests 可查询、可拒绝、可证据化，同时不晋级 unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)、[capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)、[backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)、[parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)、[fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)、[facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)、[integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) |
-| `WP14 Capability Composition` | planned / dispatch-ready | 开启 post-WP9 路线 Phase 5：在保持 type-name 兼容的前提下，通过 resolved spawn plans、additive facade/setup DTO 与严格实现 gate，把现有 setup 推向 typed `Capability` / `CapabilityBundle` composition，避免 big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)、[capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)、[content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)、[spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)、[additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)、[capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)、[compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md) |
+| `WP14 Capability Composition` | complete / accepted | 实现 post-WP9 路线 Phase 5：在保持 type-name 兼容的前提下，通过 resolved spawn plans、additive facade/setup DTO 与严格实现 gate，把现有 setup 推向 typed `Capability` / `CapabilityBundle` composition，避免 big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)、[capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)、[content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)、[spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)、[additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)、[capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)、[compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp14_capability_composition_acceptance_review_20260521.zh.md) |
 
 ## WP14 Capability Composition
 
@@ -90,8 +91,9 @@
 - [WP14-D Additive Facade Setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)
 - [WP14-E Capability Effects Materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)
 - [WP14-F Compatibility Validation And Acceptance Handoff](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)
+- [WP14 验收审查](../review/wp14_capability_composition_acceptance_review_20260521.zh.md)
 
-WP14 开启 post-WP9 路线 Phase 5。它消费 WP2/WP9 contract vocabulary，以及
+WP14 验收 post-WP9 路线 Phase 5。它消费 WP2/WP9 contract vocabulary，以及
 WP10-WP13 runtime、facade、agency 与 backend evidence，把隐式 platform
 composition 转成有边界、可测试的实现流。第一切片保持 `spawn_unit(type_name)` 与
 `WorldSpawnRequest.type_name` 兼容，同时在 materialization 前引入
@@ -113,8 +115,10 @@ WP14 工作流地图：
 - `WP14-F Compatibility Validation And Acceptance Handoff` 是 A-E mergeable 后的
   串行 validation、residual、acceptance-review、README/route 与 bilingual closure lane。
 
-`WP14-A` 到 `WP14-F` 处于 planned / dispatch-ready，尚未 accepted。验收需要
-implementation evidence、精确 validation outcomes、命名 residuals，以及中英文验收审查。
+`WP14-A` 到 `WP14-F` 均已验收。已验收边界是 compatibility bridge：type-name
+setup 仍为维护中路径，typed platform spawn DTOs 是 additive，public
+`spawn_platform({capabilities...})`、scenario-schema migration、backend/fidelity
+promotion 与 broad spawn rewrites 仍属于未来 gated work。
 
 ## WP13 Backend Fidelity Expansion
 

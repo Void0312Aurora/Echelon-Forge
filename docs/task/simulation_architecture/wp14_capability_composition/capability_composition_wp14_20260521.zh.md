@@ -1,6 +1,6 @@
 # WP14 Capability Composition
 
-状态：`2026-05-21` planned / dispatch-ready implementation phase。
+状态：`2026-05-21` complete / accepted implementation phase。
 
 语言版本：
 
@@ -93,12 +93,12 @@ Capability / CapabilityBundle contracts
 
 | 工作包 | 状态 | 路线项 | 目标 | 产出 |
 |--------|------|--------|------|------|
-| `WP14-A Capability Bundle Contract` | planned | missing DTO closure | 定义 platform-semantic `Capability`、`CapabilityBundle`、capability-family vocabulary 与 resolved-plan evidence，并与 backend `RuntimeCapabilities` 分域。 | [capability bundle contract 任务切片](wp14_capability_bundle_contract_cluster_20260521.zh.md) |
-| `WP14-B Content Definition Lowering` | planned | type-name lowering | 从现有 content 与 factory semantics 定义并实现 `type_name -> capability bundle template -> resolved spawn plan` lowering。 | [content definition lowering 任务切片](wp14_content_definition_lowering_cluster_20260521.zh.md) |
-| `WP14-C Spawn Resolution Bridge` | planned | compatibility-preserving spawn bridge | 让 kernel、world-batch 与 facade setup 通过 resolved spawn plans，同时保持 `spawn_unit(type_name)` 与 `WorldSpawnRequest.type_name` 兼容。 | [spawn resolution bridge 任务切片](wp14_spawn_resolution_bridge_cluster_20260521.zh.md) |
-| `WP14-D Additive Facade Setup DTO` | planned | future spawn_platform surface | 为 typed platform spawn requests 添加 facade/setup DTO vocabulary，作为 additive path，而不是替换当前 setup APIs。 | [additive facade setup DTO 任务切片](wp14_additive_facade_setup_dto_cluster_20260521.zh.md) |
-| `WP14-E Capability Effects Materialization` | planned | component/effect binding | 把 capability families 绑定到 ECS/component materialization、evidence names 与 unsupported-effect rejection，同时不改变平台行为模型。 | [capability effects materialization 任务切片](wp14_capability_effects_materialization_cluster_20260521.zh.md) |
-| `WP14-F Compatibility Validation And Acceptance Handoff` | planned | closure lane | A-E mergeable 后冻结 compatibility、validation commands、residuals、acceptance review、README/route sync 与 bilingual closure。 | [compatibility validation and acceptance 任务切片](wp14_compatibility_validation_acceptance_cluster_20260521.zh.md) |
+| `WP14-A Capability Bundle Contract` | accepted | missing DTO closure | 定义 platform-semantic `Capability`、`CapabilityBundle`、capability-family vocabulary 与 resolved-plan evidence，并与 backend `RuntimeCapabilities` 分域。 | [capability bundle contract 任务切片](wp14_capability_bundle_contract_cluster_20260521.zh.md) |
+| `WP14-B Content Definition Lowering` | accepted | type-name lowering | 从现有 content 与 factory semantics 定义并实现 `type_name -> capability bundle template -> resolved spawn plan` lowering。 | [content definition lowering 任务切片](wp14_content_definition_lowering_cluster_20260521.zh.md) |
+| `WP14-C Spawn Resolution Bridge` | accepted | compatibility-preserving spawn bridge | 让 kernel、world-batch 与 facade setup 通过 resolved spawn plans，同时保持 `spawn_unit(type_name)` 与 `WorldSpawnRequest.type_name` 兼容。 | [spawn resolution bridge 任务切片](wp14_spawn_resolution_bridge_cluster_20260521.zh.md) |
+| `WP14-D Additive Facade Setup DTO` | accepted | future spawn_platform surface | 为 typed platform spawn requests 添加 facade/setup DTO vocabulary，作为 additive path，而不是替换当前 setup APIs。 | [additive facade setup DTO 任务切片](wp14_additive_facade_setup_dto_cluster_20260521.zh.md) |
+| `WP14-E Capability Effects Materialization` | accepted | component/effect binding | 把 capability families 绑定到 ECS/component materialization、evidence names 与 unsupported-effect rejection，同时不改变平台行为模型。 | [capability effects materialization 任务切片](wp14_capability_effects_materialization_cluster_20260521.zh.md) |
+| `WP14-F Compatibility Validation And Acceptance Handoff` | accepted | closure lane | A-E mergeable 后冻结 compatibility、validation commands、residuals、acceptance review、README/route sync 与 bilingual closure。 | [compatibility validation and acceptance 任务切片](wp14_compatibility_validation_acceptance_cluster_20260521.zh.md) |
 
 ## 4. 依赖图
 
@@ -121,7 +121,8 @@ flowchart TD
 
 - `WP14-A` 先启动，因为 B-E 必须共享同一套 capability vocabulary。
 - `WP14-B` 与 `WP14-C` 是风险最高的串行 seam，不应由多个 writer 同时编辑相同
-  factory/kernel 路径。
+  factory/kernel 路径；主线程只负责 integration/gate，subagent 只负责彼此
+  disjoint 的 ownership。
 - `WP14-D` 可在 A 后启动，但必须保持 additive，不能在 C 前强制 kernel 采用。
 - `WP14-E` 等待 B/C 语义稳定；随后若写入范围分离，可与 D 并行。
 - `WP14-F` 是串行 integration，不应让 README、review、archive 或 bilingual chores
@@ -187,6 +188,10 @@ Artifact 规则：
 | `WP14-E Capability Effects Materialization` | Tests 把 capability families 绑定到 component/factory materialization evidence 与 unsupported-effect reasons。 | 只有 capability effects 描述现有 materialization behavior 且不增加战术行为时通过。 | 若 WP14 借 composition 改变 weapon/sensor/mission behavior，则失败。 |
 | `WP14-F Compatibility Validation And Acceptance Handoff` | A-E 状态、精确 validation commands、residual register、acceptance-review draft、route/README sync 与 bilingual closure。 | 只有 implementation gates mergeable 且 residuals 被诚实记录后通过。 | 若 closure 文本声称 full spawn-platform migration、backend/fidelity promotion 或 scenario-schema replacement，则失败。 |
 
+`WP14-F` 已在 A-E 达到 mergeable 后由最终验收审查接受。未来工作不得借本次验收声明
+full public spawn-platform migration、scenario-schema replacement、backend/fidelity
+promotion 或新战术行为。
+
 ## 8. 验证命令
 
 预期 focused validation set：
@@ -202,6 +207,15 @@ python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or w
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\test_gpu_runtime_bindings.py -k "runtime_capabilities"
 python tools\maintenance\wp_doc_closure_audit.py --wp WP14
 ```
+
+各 slice 的实现门槛最低应包括：
+
+- `WP14-A`：`git diff --check`；`python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py`；`python -m pytest -q tests\architecture\test_runtime_facade_layering.py`。
+- `WP14-B`：`git diff --check`；`python -m pytest -q tests\architecture\test_wp14_content_definition_lowering.py`；`python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py`；`python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"`。
+- `WP14-C`：`git diff --check`；`python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"`；`.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or observation_packet"`；`python -m pytest -q tests\architecture\test_runtime_facade_layering.py`。
+- `WP14-D`：`git diff --check`；`.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py`；`.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_wp14_additive_platform_spawn_bindings.py`；`python -m pytest -q tests\architecture\test_runtime_facade_layering.py`。
+- `WP14-E`：`git diff --check`；`python -m pytest -q tests\architecture\test_wp14_capability_effects_materialization.py`；`.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py`；`python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn"`。
+- `WP14-F`：`git diff --check`；`cmake --build build-local-win -j4`；`python -m pytest -q tests\architecture\test_wp14_*.py`；`python -m pytest -q tests\architecture\test_runtime_facade_layering.py`；`python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"`；`.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or capabilities or observation_packet"`；`.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py`；`.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\test_gpu_runtime_bindings.py -k "runtime_capabilities"`；`python tools\maintenance\wp_doc_closure_audit.py --wp WP14`。
 
 每个 worker 应在 handoff 中列出更窄的实际测试目标。最终验收审查必须把精确命令记录为
 `passed`、`failed` 或 `blocked`。

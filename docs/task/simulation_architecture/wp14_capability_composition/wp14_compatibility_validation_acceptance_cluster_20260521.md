@@ -1,6 +1,7 @@
 # WP14-F Compatibility Validation And Acceptance Handoff
 
-Status: `2026-05-21` planned / serial closure lane.
+Status: `2026-05-21` planned / serial closure lane. Do not create an
+acceptance review yet; WP14 first slice is still open/planned.
 
 Language:
 
@@ -28,6 +29,12 @@ review.
 
 It should not block A-E from reaching `Mergeable`. It runs after implementation
 evidence exists.
+
+Parallel rule:
+
+- This lane is serial and owned by the main integration thread.
+- Do not let subagents write acceptance text concurrently with A-E
+  implementation workers on the same normative table.
 
 ## 2. Scope
 
@@ -80,6 +87,16 @@ python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or w
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\test_gpu_runtime_bindings.py -k "runtime_capabilities"
 python tools\maintenance\wp_doc_closure_audit.py --wp WP14
 ```
+
+Minimum acceptance gates for this lane:
+
+- all A-E implementation gates are already mergeable;
+- `git diff --check` and the listed validation commands are recorded with exact
+  outcomes;
+- README, route, and review indices are synchronized;
+- `spawn_unit(type_name)` and `WorldSpawnRequest.type_name` compatibility is
+  stated explicitly;
+- no acceptance review is drafted until A-E are genuinely mergeable.
 
 If a command is blocked by environment, record the blocker and the narrowest
 substitute evidence. Do not mark the gate accepted on unrun tests without a

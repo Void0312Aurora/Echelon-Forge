@@ -32,6 +32,41 @@ def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     return ref
 
 
+def _spawn_request(
+    *,
+    world_index: int,
+    type_name: str,
+    entity_name: str,
+    x: float,
+    y: float,
+    z: float = 1200.0,
+    heading: float = 90.0,
+    vy: float = 180.0,
+    missiles_remaining: int = 2,
+    max_missiles: int = 6,
+    weapon_cooldown_s: float = 10.0,
+    weapon_last_fire_time: float = 0.0,
+) -> ef_py.WorldSpawnRequest:
+    request = ef_py.WorldSpawnRequest()
+    request.world_index = int(world_index)
+    request.side = ef_py.Side.Blue
+    request.type_name = type_name
+    request.entity_name = entity_name
+    request.is_agent = True
+    request.x = float(x)
+    request.y = float(y)
+    request.z = float(z)
+    request.heading = float(heading)
+    request.vy = float(vy)
+    request.ammo_override_enabled = True
+    request.missiles_remaining = int(missiles_remaining)
+    request.max_missiles = int(max_missiles)
+    request.weapon_cooldown_override_enabled = True
+    request.weapon_cooldown_s = float(weapon_cooldown_s)
+    request.weapon_last_fire_time = float(weapon_last_fire_time)
+    return request
+
+
 def _inline_batch_scenario() -> dict:
     return {
         "scenario_name": "phase4_batch_runtime_inline",
@@ -483,6 +518,70 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(batch.world(0).get_time_step()), 0.05, places=6)
         self.assertAlmostEqual(float(batch.world(1).get_time_step()), 0.08, places=6)
         self.assertNotEqual(float(obs[0].x), float(obs[1].x))
+
+    def test_spawn_units_batch_preserves_type_name_and_spawn_overrides(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+        batch.reset_batch([23])
+
+        spawn = _spawn_request(
+            world_index=0,
+            type_name="F-16C_Block50",
+            entity_name="SpawnBatchLead",
+            x=-1200.0,
+            y=50.0,
+            missiles_remaining=2,
+            max_missiles=8,
+            weapon_cooldown_s=10.0,
+            weapon_last_fire_time=0.0,
+        )
+
+        entity_ids = batch.spawn_units_batch([spawn])
+
+        self.assertEqual(len(entity_ids), 1)
+        self.assertGreater(int(entity_ids[0]), 0)
+        obs = batch.world(0).get_agent_observation(int(entity_ids[0]))
+        self.assertEqual(int(obs.id), int(entity_ids[0]))
+        self.assertEqual(int(getattr(obs, "missiles_remaining", -1)), 2)
+        self.assertFalse(bool(getattr(obs, "can_fire", True)))
+
+    def test_apply_world_setup_batch_preserves_type_name_and_spawn_overrides(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+
+        terrain = ef_py.WorldTerrainAssignment()
+        terrain.world_index = 0
+        terrain.terrain_type = "legacy"
+        wind = ef_py.WorldWindAssignment()
+        wind.world_index = 0
+        spawn = _spawn_request(
+            world_index=0,
+            type_name="Aircraft",
+            entity_name="SetupBatchLead",
+            x=-1400.0,
+            y=0.0,
+            missiles_remaining=1,
+            max_missiles=4,
+            weapon_cooldown_s=5.0,
+            weapon_last_fire_time=0.0,
+        )
+
+        entity_ids = batch.apply_world_setup_batch(
+            [29],
+            [terrain],
+            [wind],
+            [],
+            [spawn],
+            [0.05],
+        )
+
+        self.assertEqual(len(entity_ids), 1)
+        self.assertGreater(int(entity_ids[0]), 0)
+        self.assertAlmostEqual(float(batch.world(0).get_time_step()), 0.05, places=6)
+        obs = batch.get_agent_observations_batch([_entity_ref(0, int(entity_ids[0]))])[0]
+        self.assertEqual(int(obs.id), int(entity_ids[0]))
+        self.assertEqual(int(getattr(obs, "missiles_remaining", -1)), 1)
+        self.assertFalse(bool(getattr(obs, "can_fire", True)))
 
     def test_world_batch_runtime_command_chain_roundtrip(self) -> None:
         batch = ef_py.WorldBatchRuntime(2)

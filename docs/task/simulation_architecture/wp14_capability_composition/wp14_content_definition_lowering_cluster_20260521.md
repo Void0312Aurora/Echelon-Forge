@@ -1,6 +1,8 @@
 # WP14-B Content Definition Lowering
 
-Status: `2026-05-21` planned / first-wave implementation candidate.
+Status: `2026-05-21` planned / first-wave implementation candidate. This slice
+remains open/planned until B has implementation evidence; do not create an
+acceptance review for WP14.
 
 Language:
 
@@ -59,6 +61,14 @@ Preferred approach:
 - do not require JSON migration in the first slice;
 - preserve factory materialization behavior exactly.
 
+Parallel rule:
+
+- This slice may run beside `WP14-A` only if it does not edit shared contract
+  names out from under A.
+- It may not run in parallel with `WP14-C` on the same factory/kernel seam.
+- Main-thread integration/gate ownership stays with `WP14-F`; subagents own
+  only disjoint files or helper blocks.
+
 ## 4. Gate Rules
 
 | Boundary | Required behavior |
@@ -84,8 +94,18 @@ Suggested commands:
 git diff --check
 cmake --build build-local-win -j4
 python -m pytest -q tests\architecture\test_wp14_content_definition_lowering.py
+python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py
 python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"
 ```
+
+Minimum acceptance gates for this slice:
+
+- `git diff --check` passes with no new diff errors;
+- `python -m pytest -q tests\architecture\test_wp14_content_definition_lowering.py` passes;
+- `python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py` passes;
+- `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"` passes;
+- any supported `rg` audit used to justify new evidence coverage is recorded in the handoff;
+- `spawn_unit(type_name)` behavior remains unchanged for existing callers.
 
 ## 6. Handoff Contract
 

@@ -1,6 +1,8 @@
 # WP14-B Content Definition Lowering
 
-状态：`2026-05-21` planned / first-wave implementation candidate。
+状态：`2026-05-21` planned / first-wave implementation candidate。此切片仍
+保持 open/planned，直到 B 有 implementation evidence；不要为 WP14 创建
+acceptance review。
 
 语言版本：
 
@@ -55,6 +57,14 @@ bundle template 和 resolved platform spawn plan。它让现有 factory 的隐�
 - 第一切片不要求 JSON migration；
 - 保持 factory materialization behavior 完全一致。
 
+并行规则：
+
+- 此切片可以与 `WP14-A` 并行，但前提是不会反向改动 A 正在定义的 shared contract
+  名称。
+- 它不能与 `WP14-C` 在同一 factory/kernel seam 上并行。
+- 主线程的 integration/gate 责任在 `WP14-F`；subagent 只负责彼此 disjoint 的文件
+  或 helper block。
+
 ## 4. Gate 规则
 
 | Boundary | Required behavior |
@@ -79,8 +89,18 @@ bundle template 和 resolved platform spawn plan。它让现有 factory 的隐�
 git diff --check
 cmake --build build-local-win -j4
 python -m pytest -q tests\architecture\test_wp14_content_definition_lowering.py
+python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py
 python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"
 ```
+
+此切片的最低 acceptance gates：
+
+- `git diff --check` 无新增 diff 错误；
+- `python -m pytest -q tests\architecture\test_wp14_content_definition_lowering.py` 通过；
+- `python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py` 通过；
+- `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"` 通过；
+- 用于证明新 evidence coverage 的任何 `rg` audit 都要写入 handoff；
+- 既有 `spawn_unit(type_name)` 行为不变。
 
 ## 6. 交接契约
 

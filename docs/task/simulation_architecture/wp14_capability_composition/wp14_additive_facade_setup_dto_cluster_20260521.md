@@ -1,6 +1,8 @@
 # WP14-D Additive Facade Setup DTO
 
-Status: `2026-05-21` planned / additive surface candidate.
+Status: `2026-05-21` planned / additive surface candidate. This slice must
+stay open/planned until typed DTOs are additive and not mistaken for accepted
+public spawn replacement.
 
 Language:
 
@@ -58,6 +60,12 @@ Preferred approach:
 - expose validation/rejection rather than direct unchecked materialization;
 - preserve the `type_name` path as the maintained compatibility path.
 
+Parallel rule:
+
+- Keep this slice disjoint from B/C writer scopes.
+- Subagents may own DTO shape or bindings, but the main thread keeps the
+  integration/gate lane serial in F.
+
 ## 4. Gate Rules
 
 | Boundary | Required behavior |
@@ -85,6 +93,15 @@ cmake --build build-local-win -j4
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup"
 python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 ```
+
+Minimum acceptance gates for this slice:
+
+- `git diff --check` passes;
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py` passes;
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_wp14_additive_platform_spawn_bindings.py` passes;
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup"` passes;
+- `python -m pytest -q tests\architecture\test_runtime_facade_layering.py` passes;
+- `WorldSpawnRequest.type_name` stays in place and no mandatory public `spawn_platform` is introduced.
 
 ## 6. Handoff Contract
 

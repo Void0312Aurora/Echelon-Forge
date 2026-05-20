@@ -1,6 +1,8 @@
 # WP14-C Spawn Resolution Bridge
 
-Status: `2026-05-21` planned / second-wave implementation candidate.
+Status: `2026-05-21` planned / second-wave implementation candidate. This slice
+must wait for B to provide resolution evidence and should not be marked
+accepted while the first slice remains open/planned.
 
 Language:
 
@@ -58,6 +60,12 @@ Preferred approach:
   resolver failure;
 - avoid broad search-and-replace over tests or scenarios.
 
+Parallel rule:
+
+- `WP14-C` may only start after B semantics are stable enough to cite.
+- It must not share a writer with `WP14-B` on the same factory/kernel seam.
+- Main-thread integration/gate remains serial in `WP14-F`.
+
 ## 4. Gate Rules
 
 | Boundary | Required behavior |
@@ -84,7 +92,17 @@ git diff --check
 cmake --build build-local-win -j4
 python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or observation_packet"
+python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 ```
+
+Minimum acceptance gates for this slice:
+
+- `git diff --check` passes;
+- `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"` passes;
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or observation_packet"` passes;
+- `python -m pytest -q tests\architecture\test_runtime_facade_layering.py` passes;
+- the bridge can demonstrate inspectable resolution evidence without broad caller migration;
+- `WorldSpawnRequest.type_name` remains maintained compatibility surface.
 
 ## 6. Handoff Contract
 

@@ -2,7 +2,7 @@
 
 Status: `2026-05-21` route-selection plan; Phase 1 is accepted as `WP10`,
 Phase 2 is accepted as `WP11`, Phase 3 is accepted as `WP12`, Phase 4 is
-accepted as `WP13`, and Phase 5 is opened as planned / dispatch-ready `WP14`.
+accepted as `WP13`, and Phase 5 is accepted as `WP14`.
 
 Language:
 
@@ -28,8 +28,8 @@ should choose an implementation route that turns accepted architecture rules
 into runtime facts.
 
 This document fixes the route order, anchors Phase 1 as `WP10`, Phase 2 as
-`WP11`, anchors Phase 3 as `WP12`, accepts Phase 4 as `WP13`, and opens Phase 5
-as planned / dispatch-ready `WP14`. It does not assign WP numbers beyond the
+`WP11`, anchors Phase 3 as `WP12`, accepts Phase 4 as `WP13`, and accepts Phase
+5 as `WP14`. It does not assign WP numbers beyond the
 currently opened phase. It defines which direction must come first, which
 directions should wait, and what kind of evidence counts as real architectural
 progress.
@@ -229,7 +229,7 @@ Phase 5 capability-composition seed:
   migration, backend/fidelity promotion, and broad spawn rewrites out of scope
   until their own gates exist.
 
-This capability-composition seed is now opened, not accepted, as
+This capability-composition seed is now accepted as
 [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md).
 
 ## 6. Non-Goals For The First Implementation WP
@@ -240,8 +240,8 @@ This capability-composition seed is now opened, not accepted, as
 - Do not promote exact GPU, resident-state, or multi-fidelity execution to
   maintained status.
 - Do not migrate all platform spawning to capability composition.
-- Do not make typed capability spawning mandatory before the WP14 compatibility
-  bridge and additive facade/setup DTO gates pass.
+- Do not make typed capability spawning mandatory beyond the accepted WP14
+  compatibility bridge and additive facade/setup DTO vocabulary.
 - Do not claim Law 14 read-side enforcement or Agency Graph runtime enforcement
   in the first causal slice.
 - Do not start counterfactual/worldline branching before deterministic replay

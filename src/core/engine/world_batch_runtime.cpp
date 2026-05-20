@@ -180,6 +180,41 @@ std::vector<std::vector<uint64_t>> run_interaction_broadphase_candidate_ids(
     return decode_broadphase_candidate_ids(words, queries, ids_by_world, config.entities_per_world);
 }
 
+uint64_t spawn_from_request(SimulationKernel& world, const WorldSpawnRequest& request) {
+    const auto entity = world.spawn_unit(
+        request.side,
+        request.type_name,
+        request.x,
+        request.y,
+        request.z,
+        request.heading,
+        request.pitch,
+        request.roll,
+        request.vx,
+        request.vy,
+        request.vz
+    );
+    if (!entity.is_valid()) {
+        return entity.id();
+    }
+
+    if (request.ammo_override_enabled) {
+        world.set_unit_ammo(
+            entity.id(),
+            request.missiles_remaining,
+            request.max_missiles
+        );
+    }
+    if (request.weapon_cooldown_override_enabled) {
+        world.set_weapon_cooldown(
+            entity.id(),
+            request.weapon_cooldown_s,
+            request.weapon_last_fire_time
+        );
+    }
+    return entity.id();
+}
+
 }  // namespace
 
 WorldBatchRuntime::WorldBatchRuntime(size_t world_count) {
@@ -482,37 +517,7 @@ std::vector<uint64_t> WorldBatchRuntime::spawn_units_batch(const std::vector<Wor
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
         for (const size_t item_index : grouped[world_index]) {
-            const auto& item = requests[item_index];
-            const auto entity = world.spawn_unit(
-                item.side,
-                item.type_name,
-                item.x,
-                item.y,
-                item.z,
-                item.heading,
-                item.pitch,
-                item.roll,
-                item.vx,
-                item.vy,
-                item.vz
-            );
-            if (entity.is_valid()) {
-                if (item.ammo_override_enabled) {
-                    world.set_unit_ammo(
-                        entity.id(),
-                        item.missiles_remaining,
-                        item.max_missiles
-                    );
-                }
-                if (item.weapon_cooldown_override_enabled) {
-                    world.set_weapon_cooldown(
-                        entity.id(),
-                        item.weapon_cooldown_s,
-                        item.weapon_last_fire_time
-                    );
-                }
-            }
-            out[item_index] = entity.id();
+            out[item_index] = spawn_from_request(world, requests[item_index]);
         }
     });
     return out;
@@ -569,37 +574,7 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
         world.reset(seed);
 
         for (const size_t item_index : spawn_grouped[world_index]) {
-            const auto& item = requests[item_index];
-            const auto entity = world.spawn_unit(
-                item.side,
-                item.type_name,
-                item.x,
-                item.y,
-                item.z,
-                item.heading,
-                item.pitch,
-                item.roll,
-                item.vx,
-                item.vy,
-                item.vz
-            );
-            if (entity.is_valid()) {
-                if (item.ammo_override_enabled) {
-                    world.set_unit_ammo(
-                        entity.id(),
-                        item.missiles_remaining,
-                        item.max_missiles
-                    );
-                }
-                if (item.weapon_cooldown_override_enabled) {
-                    world.set_weapon_cooldown(
-                        entity.id(),
-                        item.weapon_cooldown_s,
-                        item.weapon_last_fire_time
-                    );
-                }
-            }
-            out[item_index] = entity.id();
+            out[item_index] = spawn_from_request(world, requests[item_index]);
         }
     });
     return out;

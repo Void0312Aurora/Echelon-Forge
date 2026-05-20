@@ -1,6 +1,7 @@
 # WP14-E Capability Effects Materialization
 
-Status: `2026-05-21` planned / second-wave materialization candidate.
+Status: `2026-05-21` planned / second-wave materialization candidate. This
+slice remains open/planned while B/C/D are not yet mergeable.
 
 Language:
 
@@ -55,6 +56,12 @@ Preferred approach:
 - reject unsupported effect families rather than silently ignoring them;
 - preserve existing platform fixtures.
 
+Parallel rule:
+
+- `WP14-E` may run beside `WP14-D` only when write scopes stay disjoint.
+- It should wait for B/C semantics to stabilize before claiming coverage.
+- Main-thread integration/gate stays in `WP14-F`.
+
 ## 4. Gate Rules
 
 | Boundary | Required behavior |
@@ -83,6 +90,15 @@ python -m pytest -q tests\architecture\test_wp14_capability_effects_materializat
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py
 python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn"
 ```
+
+Minimum acceptance gates for this slice:
+
+- `git diff --check` passes;
+- `python -m pytest -q tests\architecture\test_wp14_capability_effects_materialization.py` passes;
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py` passes;
+- `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn"` passes;
+- the evidence stays on existing component/factory behavior only;
+- no new tactical behavior, platform family, or backend semantics is introduced.
 
 ## 6. Handoff Contract
 

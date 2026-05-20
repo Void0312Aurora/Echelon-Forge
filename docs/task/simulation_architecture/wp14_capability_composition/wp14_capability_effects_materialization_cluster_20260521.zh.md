@@ -1,6 +1,7 @@
 # WP14-E Capability Effects Materialization
 
-状态：`2026-05-21` planned / second-wave materialization candidate。
+状态：`2026-05-21` planned / second-wave materialization candidate。此切片在
+B/C/D 尚未 mergeable 时保持 open/planned。
 
 语言版本：
 
@@ -52,6 +53,12 @@
 - 对 unsupported effect families fail closed，而不是静默忽略；
 - 保持既有 platform fixtures。
 
+并行规则：
+
+- `WP14-E` 只有在写入范围互不重叠时才可以与 `WP14-D` 并行。
+- 它应该等到 B/C semantics 稳定后再声称 coverage。
+- 主线程的 integration/gate 仍由 `WP14-F` 串行负责。
+
 ## 4. Gate 规则
 
 | Boundary | Required behavior |
@@ -79,6 +86,15 @@ python -m pytest -q tests\architecture\test_wp14_capability_effects_materializat
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py
 python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn"
 ```
+
+此切片的最低 acceptance gates：
+
+- `git diff --check` 通过；
+- `python -m pytest -q tests\architecture\test_wp14_capability_effects_materialization.py` 通过；
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py` 通过；
+- `python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn"` 通过；
+- 证据只停留在现有 component/factory behavior 上；
+- 不引入新的战术行为、平台族或 backend 语义。
 
 ## 6. 交接契约
 
