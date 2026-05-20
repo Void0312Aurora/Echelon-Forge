@@ -1,6 +1,6 @@
 # WP8 SCAL 学习面
 
-状态：`2026-05-20` 的 SCAL 学习面后续任务族规划。
+状态：`2026-05-20` 的 SCAL 学习面后续任务族，已完成 / 已验收。
 
 语言版本：
 
@@ -16,6 +16,9 @@
 - [WP5 验证套件](../wp5_validation_harness/validation_harness_wp5_20260519.zh.md)
 - [WP7 后端能力物化](../wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)
 - [WP7.5 训练路径 facade 桥接](../wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.zh.md)
+- [WP8-A 课程与场景生成](wp8_curriculum_scenario_generation_cluster_20260520.zh.md)
+- [WP8-B evaluation 与 capability profiling](wp8_evaluation_capability_profiling_cluster_20260520.zh.md)
+- [WP8-C world-model 接口与学习证据](wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md)
 - [WP8 验收审查](../../review/wp8_learning_face_acceptance_review_20260520.zh.md)
 
 命名说明：
@@ -61,10 +64,10 @@ WP8 不可以：
 
 | 工作包 | 状态 | 目标 | 产出 |
 |--------|------|------|------|
-| `WP8-A Curriculum And Scenario Generation` | planned | 定义场景选择、seed policy、curriculum phase 与 generation request 如何版本化。 | 课程 / 场景生成子切片 |
-| `WP8-B Evaluation And Capability Profiling` | planned | 定义 benchmark protocol、profile schema、score 归因与能力证据。 | 评估 / 能力画像子切片 |
-| `WP8-C World-Model Interface And Learning Evidence` | planned | 定义学习如何消费 facade-shaped observation，并记录证据而不成为真值源。 | world-model / 证据子切片 |
-| `WP8-D Integration And Index Sync` | planned | 更新任务/评审索引、交叉引用与中英对齐。 | 集成 / 索引同步子切片 |
+| `WP8-A Curriculum And Scenario Generation` | complete / accepted | 定义场景选择、seed policy、curriculum phase 与 generation request 如何版本化。 | [课程 / 场景生成子切片](wp8_curriculum_scenario_generation_cluster_20260520.zh.md) |
+| `WP8-B Evaluation And Capability Profiling` | complete / accepted | 定义 benchmark protocol、profile schema、score 归因与能力证据。 | [评估 / 能力画像子切片](wp8_evaluation_capability_profiling_cluster_20260520.zh.md) |
+| `WP8-C World-Model Interface And Learning Evidence` | complete / accepted | 定义学习如何消费 facade-shaped observation，并记录证据而不成为真值源。 | [world-model / 证据子切片](wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md) |
+| `WP8-D Integration And Index Sync` | complete / accepted | 更新任务/评审索引、交叉引用与中英对齐。 | [验收审查](../../review/wp8_learning_face_acceptance_review_20260520.zh.md) |
 
 ## 4. 依赖图
 
@@ -109,6 +112,12 @@ flowchart TD
 |------|----------|------|
 | `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md` | required | 英文 Learning-face 任务族主文与 gate 规则。 |
 | `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.zh.md` | required | 中文规范辅文。 |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md` | required | 英文 WP8-A 课程 / 场景生成契约与 gate 证据面。 |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md` | required | 中文 WP8-A 辅文。 |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md` | required | 英文 WP8-B benchmark / profile / evidence 契约与 gate 证据面。 |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md` | required | 中文 WP8-B 辅文。 |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md` | required | 英文 WP8-C world-model / evidence boundary 契约与 gate 证据面。 |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md` | required | 中文 WP8-C 辅文。 |
 | `docs/task/review/wp8_learning_face_acceptance_review_20260520.md` | required | 英文验收决定记录，必须逐 gate 写明证据与最终判定。 |
 | `docs/task/review/wp8_learning_face_acceptance_review_20260520.zh.md` | required | 中文验收决定记录。 |
 

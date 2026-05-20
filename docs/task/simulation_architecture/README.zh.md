@@ -59,7 +59,7 @@
 | `WP6 Backend Profile Policy` | complete | 冻结 backend profile taxonomy、parity budgets、resident-state 边界与 backend capability 暴露规则 | [后端配置文件策略](wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)、[profile 注册表](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md)、[parity budget 注册表](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)、[resident-state 边界规则](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)、[验收审查](../review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md) |
 | `WP7 Backend Capability Materialization` | complete / accepted | 把已验收的 WP6 policy 物化为可机器检查 registry、runtime capability projection、promotion evidence gates 与 multi-fidelity entry conditions，但不晋级候选能力 | [后端能力物化](wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)、[registry materialization](wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.zh.md)、[runtime capability projection](wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.zh.md)、[promotion evidence gates](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.zh.md)、[multi-fidelity entry conditions](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.zh.md)、[验收审查](../review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md) |
 | `WP7.5 训练路径 facade 桥接` | complete / accepted | 在 `WP8` 依赖之前，把维护中的 batch 训练路径从 `RuntimeFacade.runtime()` 与 raw `WorldBatchRuntime` stepping 迁到 facade-shaped execution / observation API | [训练路径 facade 桥接](wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.zh.md)、[验收审查](../review/wp75_training_path_facade_bridge_acceptance_review_20260520.zh.md) |
-| `WP8 SCAL Learning Face` | planned | 把课程、评估、能力画像、场景生成与学习证据收敛为显式架构和任务词汇，但不重新打开仿真闭合 | [学习面任务族](wp8_learning_face/learning_face_wp8_20260520.zh.md) |
+| `WP8 SCAL Learning Face` | complete / accepted | 把课程、评估、能力画像、场景生成与学习证据收敛为显式架构和任务词汇，但不重新打开仿真闭合 | [学习面任务族](wp8_learning_face/learning_face_wp8_20260520.zh.md)、[验收审查](../review/wp8_learning_face_acceptance_review_20260520.zh.md) |
 
 ### WP2.5 工作流地图
 
@@ -111,8 +111,12 @@ vocabulary 之间缺失的桥。它不替代 `WP8`；它负责把维护中的训
 产出：
 
 - [WP8 SCAL Learning Face 任务族](wp8_learning_face/learning_face_wp8_20260520.zh.md)
+- [WP8-A 课程与场景生成任务簇](wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md)
+- [WP8-B evaluation 与 capability profiling 任务簇](wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md)
+- [WP8-C world-model 接口与学习证据任务簇](wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md)
+- [WP8 学习面验收审查](../review/wp8_learning_face_acceptance_review_20260520.zh.md)
 
-WP8 为延后的 SCAL learning face 提供有边界的任务族。它不引入第二条运行时生命周期，而是把课程、评估、能力画像、场景生成与学习证据转成显式的实验与规划契约，并保持它们与权威仿真层分离。
+WP8 为延后的 SCAL learning face 提供已验收的有边界任务族。它不引入第二条运行时生命周期，而是把课程、评估、能力画像、场景生成与学习证据转成显式的实验与规划契约，并保持它们与权威仿真层分离。
 
 WP8 工作流地图：
 

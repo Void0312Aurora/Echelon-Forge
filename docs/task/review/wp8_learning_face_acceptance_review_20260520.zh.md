@@ -1,6 +1,6 @@
 # WP8 学习面验收审查
 
-状态：`2026-05-20` 已收紧验收规则；尚未授予验收通过。
+状态：`2026-05-20` 已验收的 documentation-only Learning-face 任务族。
 
 语言版本：
 
@@ -10,6 +10,9 @@
 审查输入：
 
 - [WP8 SCAL 学习面](../simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.zh.md)
+- [WP8-A 课程与场景生成](../simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md)
+- [WP8-B Evaluation 与 Capability Profiling](../simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md)
+- [WP8-C World-Model 接口与学习证据](../simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md)
 - [WP7.5 训练路径 facade 桥接](../simulation_architecture/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.zh.md)
 
 ## 1. 必需验收产物
@@ -18,6 +21,12 @@
 
 - `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md`
 - `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.zh.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md`
 - `docs/task/review/wp8_learning_face_acceptance_review_20260520.md`
 - `docs/task/review/wp8_learning_face_acceptance_review_20260520.zh.md`
 
@@ -69,14 +78,18 @@
 
 | Gate | 判定 | 本审查已观察到的证据 | 命令 / 阻塞点 |
 |------|------|----------------------|---------------|
-| `WP8-A Curriculum And Scenario Generation` | `fail` | 当前任务文档只定义了该流与 gate 规则，但本审查尚未记录除规划文档之外的具体 curriculum / scenario-generation request 字段或已核对 artifact。 | 尚未记录 gate 级验证命令或已核对 artifact。 |
-| `WP8-B Evaluation And Capability Profiling` | `fail` | 当前任务文档只定义了 benchmark / profile scope 与 gate 规则，但本审查尚未记录已核对的 benchmark / profile artifact、score attribution 证据或 profile 验证命令。 | 尚未记录 gate 级验证命令或已核对 artifact。 |
-| `WP8-C World-Model Interface And Learning Evidence` | `fail` | 当前任务文档只定义了 `ObservationPacket` / `DecisionBelief` / `World Truth` 的目标边界，但本审查尚未记录已核对的 evidence-boundary artifact 或 provenance 验证命令。 | 尚未记录 gate 级验证命令或已核对 artifact。 |
-| `WP8-D Integration And Index Sync` | `pass` | 必需产物现已齐全，`WP8` 明确把 `WP7.5` 作为 maintained training-path bridge 引用，中英双文也已作为本次验收包的一部分建立。 | 当前工作树已完成文档存在性与交叉引用检查；该 gate 不受额外运行时阻塞。 |
+| `WP8-A Curriculum And Scenario Generation` | `pass` | 已检查 `wp8_curriculum_scenario_generation_cluster_20260520.md` 与 `.zh.md`。契约列出 `request_id`、`request_version`、`contract_version`、`scenario_set_id`、`scenario_family_id`、`selection_policy_id`、`selection_constraints`、`seed_policy_id`、`seed_mode`、`seed_source`、`seed_scope`、`curriculum_phase_id`、`phase_order`、`entry_condition`、`exit_condition`、`generation_request_version`、`requested_output_shape`、`input_refs`、`result_id`、`result_version`、`status`、`generated_scenario_set_id` 与 `result_refs`。该切片明确 generation request 是显式请求，不是隐藏仿真 authority。 | `git diff --check` 通过。`rg -n "WP8-A|curriculum|scenario selection|scenario-set|seed policy|curriculum phase|generation request|request/result|version" docs/task/simulation_architecture/wp8_learning_face docs/task/simulation_architecture/wp75_training_path_facade_bridge docs/task/review` 通过。 |
+| `WP8-B Evaluation And Capability Profiling` | `pass` | 已检查 `wp8_evaluation_capability_profiling_cluster_20260520.md` 与 `.zh.md`。契约定义 benchmark protocol 字段，区分 metadata、profile claims 与 hidden support claims，分解 score attribution，并声明 helper/probe presence 最多解释 observability 或 deployment state，不能证明 support。 | `git diff --check` 通过。`rg -n "WP8-B|benchmark protocol|profile schema|score attribution|capability evidence|hidden support|helper|probe|support claim|WP7.5" docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520*.md docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520*.md docs/task/simulation_architecture/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520*.md` 通过。 |
+| `WP8-C World-Model Interface And Learning Evidence` | `pass` | 已检查 `wp8_world_model_interface_and_learning_evidence_cluster_20260520.md` 与 `.zh.md`。契约保持 `ObservationPacket`、`DecisionBelief`、`World Truth` 与 `LearningEvidenceBundle` 分离，要求 observation / belief / replay / diagnostics ancestry，并声明 evidence bundle 不修改状态，也不能绕过相关 `WP8-B` gate 变成 support claim。 | `git diff --check` 通过。`rg -n "WP8-C|world-model|World Truth|ObservationPacket|DecisionBelief|learning evidence|provenance|replay|diagnostics ancestry|WP7.5" docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520*.md docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520*.md docs/task/simulation_architecture/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520*.md docs/task/review` 通过。 |
+| `WP8-D Integration And Index Sync` | `pass` | 必需产物已齐全，`WP8` 明确把 `WP7.5` 作为 maintained training-path bridge 引用，WP8 任务族已链接 A/B/C 子切片，`docs/task/simulation_architecture/README.md` 与 `.zh.md` 已列出已验收 WP8 输出，本 review 双文也已记录 gate 级证据。 | `git diff --check` 通过。`rg -n "WP8|Learning face|curriculum|evaluation|capability profiling|scenario generation|world-model|learning evidence" docs/plan/architecture docs/task/simulation_architecture docs/task/review` 通过。 |
 
-整体结论：`fail`。
+整体结论：`pass`。
 
 原因：
 
-- 验收标准已经显式化，review 产物也已齐全。
-- `WP8-A/B/C` 仍缺少必需的已核对 artifact 与 gate 级证据，因此当前不能报告为已验收。
+- `WP8-A/B/C` 已具备已检查的双语任务切片，且写明显式 contract 字段与
+  doc-only 验证证据。
+- `WP8-D` 发布 / 索引同步已完成，并且 `WP8` 继续把 maintained training-path
+  bridge 指向 `WP7.5`。
+- WP8 保持 documentation-only；本次验收不要求本机 RL 训练、benchmark run 或
+  world-model 实现。

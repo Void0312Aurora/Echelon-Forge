@@ -1,6 +1,6 @@
 # WP8 Learning Face Acceptance Review
 
-Status: `2026-05-20` acceptance rules hardened; acceptance not yet granted.
+Status: `2026-05-20` accepted documentation-only Learning-face task family.
 
 Language:
 
@@ -11,6 +11,9 @@ Language:
 Reviewed inputs:
 
 - [WP8 SCAL Learning Face](../simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md)
+- [WP8-A Curriculum And Scenario Generation](../simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md)
+- [WP8-B Evaluation And Capability Profiling](../simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md)
+- [WP8-C World-Model Interface And Learning Evidence](../simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md)
 - [WP7.5 Training Path Facade Bridge](../simulation_architecture/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md)
 
 ## 1. Required Acceptance Artifacts
@@ -20,6 +23,12 @@ stay aligned:
 
 - `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md`
 - `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.zh.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md`
+- `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md`
 - `docs/task/review/wp8_learning_face_acceptance_review_20260520.md`
 - `docs/task/review/wp8_learning_face_acceptance_review_20260520.zh.md`
 
@@ -75,15 +84,18 @@ Gate snapshot as of `2026-05-20`:
 
 | Gate | Verdict | Evidence observed in this review | Commands / blocker |
 |------|---------|----------------------------------|--------------------|
-| `WP8-A Curriculum And Scenario Generation` | `fail` | The task family defines the stream and gate rules, but this review does not yet record concrete curriculum/scenario-generation request fields or a checked artifact beyond the planning document itself. | No gate-specific validation command or checked artifact has been recorded yet. |
-| `WP8-B Evaluation And Capability Profiling` | `fail` | The task family defines benchmark/profile scope and gate rules, but this review does not yet record a checked benchmark/profile artifact, score-attribution evidence, or profile-verification command. | No gate-specific validation command or checked artifact has been recorded yet. |
-| `WP8-C World-Model Interface And Learning Evidence` | `fail` | The task family defines the intended `ObservationPacket` / `DecisionBelief` / `World Truth` separation, but this review does not yet record a checked evidence-boundary artifact or provenance verification command. | No gate-specific validation command or checked artifact has been recorded yet. |
-| `WP8-D Integration And Index Sync` | `pass` | Required artifacts now exist, `WP8` cites `WP7.5` as the maintained training-path bridge, and the bilingual pair has been created as part of this packet. | Documentation checks completed from the current worktree; no runtime blocker applies to artifact existence. |
+| `WP8-A Curriculum And Scenario Generation` | `pass` | Checked `wp8_curriculum_scenario_generation_cluster_20260520.md` and `.zh.md`. The contract lists `request_id`, `request_version`, `contract_version`, `scenario_set_id`, `scenario_family_id`, `selection_policy_id`, `selection_constraints`, `seed_policy_id`, `seed_mode`, `seed_source`, `seed_scope`, `curriculum_phase_id`, `phase_order`, `entry_condition`, `exit_condition`, `generation_request_version`, `requested_output_shape`, `input_refs`, `result_id`, `result_version`, `status`, `generated_scenario_set_id`, and `result_refs`. The slice states that generation requests are explicit requests, not hidden simulation authority. | `git diff --check` passed. `rg -n "WP8-A|curriculum|scenario selection|scenario-set|seed policy|curriculum phase|generation request|request/result|version" docs/task/simulation_architecture/wp8_learning_face docs/task/simulation_architecture/wp75_training_path_facade_bridge docs/task/review` passed. |
+| `WP8-B Evaluation And Capability Profiling` | `pass` | Checked `wp8_evaluation_capability_profiling_cluster_20260520.md` and `.zh.md`. The contract defines benchmark protocol fields, separates metadata from profile claims and hidden support claims, decomposes score attribution, and states that helper/probe presence may explain observability or deployment state but must not prove support. | `git diff --check` passed. `rg -n "WP8-B|benchmark protocol|profile schema|score attribution|capability evidence|hidden support|helper|probe|support claim|WP7.5" docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520*.md docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520*.md docs/task/simulation_architecture/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520*.md` passed. |
+| `WP8-C World-Model Interface And Learning Evidence` | `pass` | Checked `wp8_world_model_interface_and_learning_evidence_cluster_20260520.md` and `.zh.md`. The contract keeps `ObservationPacket`, `DecisionBelief`, `World Truth`, and `LearningEvidenceBundle` separate, requires observation/belief/replay/diagnostics ancestry, and states that evidence bundles do not mutate state or become support claims without the relevant `WP8-B` gate. | `git diff --check` passed. `rg -n "WP8-C|world-model|World Truth|ObservationPacket|DecisionBelief|learning evidence|provenance|replay|diagnostics ancestry|WP7.5" docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520*.md docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520*.md docs/task/simulation_architecture/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520*.md docs/task/review` passed. |
+| `WP8-D Integration And Index Sync` | `pass` | Required artifacts exist, `WP8` cites `WP7.5` as the maintained training-path bridge, the WP8 task family links A/B/C task slices, `docs/task/simulation_architecture/README.md` and `.zh.md` list the accepted WP8 outputs, and this review pair records gate-level evidence. | `git diff --check` passed. `rg -n "WP8|Learning face|curriculum|evaluation|capability profiling|scenario generation|world-model|learning evidence" docs/plan/architecture docs/task/simulation_architecture docs/task/review` passed. |
 
-Overall decision: `fail`.
+Overall decision: `pass`.
 
 Reason:
 
-- Acceptance rules are now explicit and review artifacts exist.
-- `WP8-A/B/C` still lack the required checked artifacts and gate-specific
-  evidence, so the line cannot be reported as accepted.
+- `WP8-A/B/C` now have checked bilingual task slices with explicit contract
+  fields and doc-only validation evidence.
+- `WP8-D` publication/index sync is complete, and `WP8` continues to cite
+  `WP7.5` for the maintained training-path bridge.
+- WP8 remains documentation-only; no local RL training, benchmark run, or
+  world-model implementation was required for this acceptance.

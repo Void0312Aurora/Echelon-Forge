@@ -1,6 +1,7 @@
 # WP8 SCAL Learning Face
 
-Status: `2026-05-20` planned follow-on task family for the SCAL learning face.
+Status: `2026-05-20` complete / accepted follow-on task family for the SCAL
+learning face.
 
 Language:
 
@@ -17,6 +18,9 @@ Inputs:
 - [WP5 validation harness](../wp5_validation_harness/validation_harness_wp5_20260519.md)
 - [WP7 backend capability materialization](../wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md)
 - [WP7.5 training path facade bridge](../wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md)
+- [WP8-A curriculum and scenario generation](wp8_curriculum_scenario_generation_cluster_20260520.md)
+- [WP8-B evaluation and capability profiling](wp8_evaluation_capability_profiling_cluster_20260520.md)
+- [WP8-C world-model interface and learning evidence](wp8_world_model_interface_and_learning_evidence_cluster_20260520.md)
 - [WP8 acceptance review](../../review/wp8_learning_face_acceptance_review_20260520.md)
 
 Naming note:
@@ -69,10 +73,10 @@ WP8 cannot:
 
 | Work package | Status | Goal | Output |
 |--------------|--------|------|--------|
-| `WP8-A Curriculum And Scenario Generation` | planned | Define how scenario selection, seed policy, curriculum phases, and generation requests are versioned. | curriculum / scenario generation task slice |
-| `WP8-B Evaluation And Capability Profiling` | planned | Define benchmark protocol, profile schema, score attribution, and capability evidence. | evaluation / capability profiling task slice |
-| `WP8-C World-Model Interface And Learning Evidence` | planned | Define how learning consumes facade-shaped observations and records evidence without becoming a truth source. | world-model / evidence task slice |
-| `WP8-D Integration And Index Sync` | planned | Update task/review indexes, cross references, and bilingual alignment. | integration / index sync task slice |
+| `WP8-A Curriculum And Scenario Generation` | complete / accepted | Define how scenario selection, seed policy, curriculum phases, and generation requests are versioned. | [curriculum / scenario generation task slice](wp8_curriculum_scenario_generation_cluster_20260520.md) |
+| `WP8-B Evaluation And Capability Profiling` | complete / accepted | Define benchmark protocol, profile schema, score attribution, and capability evidence. | [evaluation / capability profiling task slice](wp8_evaluation_capability_profiling_cluster_20260520.md) |
+| `WP8-C World-Model Interface And Learning Evidence` | complete / accepted | Define how learning consumes facade-shaped observations and records evidence without becoming a truth source. | [world-model / evidence task slice](wp8_world_model_interface_and_learning_evidence_cluster_20260520.md) |
+| `WP8-D Integration And Index Sync` | complete / accepted | Update task/review indexes, cross references, and bilingual alignment. | [acceptance review](../../review/wp8_learning_face_acceptance_review_20260520.md) |
 
 ## 4. Dependency Map
 
@@ -122,6 +126,12 @@ all required artifacts below.
 |----------|-----------------|---------|
 | `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md` | required | Normative English definition of the Learning-face task family and gate rules. |
 | `docs/task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.zh.md` | required | Chinese companion for the same normative rules. |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md` | required | English WP8-A curriculum/scenario-generation contract and gate evidence surface. |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md` | required | Chinese WP8-A companion. |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md` | required | English WP8-B benchmark/profile/evidence contract and gate evidence surface. |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md` | required | Chinese WP8-B companion. |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md` | required | English WP8-C world-model/evidence boundary contract and gate evidence surface. |
+| `docs/task/simulation_architecture/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md` | required | Chinese WP8-C companion. |
 | `docs/task/review/wp8_learning_face_acceptance_review_20260520.md` | required | English acceptance decision record with gate-by-gate evidence and final verdict. |
 | `docs/task/review/wp8_learning_face_acceptance_review_20260520.zh.md` | required | Chinese acceptance decision record. |
 

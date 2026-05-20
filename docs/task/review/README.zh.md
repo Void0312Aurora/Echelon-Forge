@@ -16,8 +16,11 @@
 - [WP5 验证套件验收审查 2026-05-19](wp5_validation_harness_acceptance_review_20260519.zh.md) ([English](wp5_validation_harness_acceptance_review_20260519.md))
 - [WP6 后端配置文件策略验收审查 2026-05-19](wp6_backend_profile_policy_acceptance_review_20260519.zh.md) ([English](wp6_backend_profile_policy_acceptance_review_20260519.md))
 - [WP7 后端能力物化验收审查 2026-05-19](wp7_backend_capability_materialization_acceptance_review_20260519.zh.md) ([English](wp7_backend_capability_materialization_acceptance_review_20260519.md))
+- [WP7.5 训练路径 facade 桥接验收审查 2026-05-20](wp75_training_path_facade_bridge_acceptance_review_20260520.zh.md) ([English](wp75_training_path_facade_bridge_acceptance_review_20260520.md))
+- [WP8 学习面验收审查 2026-05-20](wp8_learning_face_acceptance_review_20260520.zh.md) ([English](wp8_learning_face_acceptance_review_20260520.md))
 - [Temp-01 架构计划批评](temp-01.zh.md) ([English](temp-01.md))
 - [Temp-02 SCAL 架构愿景审查 2026-05-19](temp-02_review_20260519.zh.md) ([English](temp-02_review_20260519.md))
+- [剩余工作整合与后续路线图 2026-05-20](consolidated_remaining_work_and_roadmap_20260520.zh.md) ([English](consolidated_remaining_work_and_roadmap_20260520.md))
 
 ## 归档
 
