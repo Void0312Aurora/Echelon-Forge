@@ -119,6 +119,22 @@ class ObservationProvenance:
             "diagnostics_note": self.diagnostics_note,
         }
 
+    def as_information_state_source(self) -> dict[str, Any]:
+        packet_ids = []
+        if self.observation_packet_id is not None:
+            packet_ids.append(self.observation_packet_id)
+        versions = []
+        if self.consumed_snapshot_version is not None:
+            versions.append(self.consumed_snapshot_version)
+        return {
+            "information_state_layer": self.information_state_layer,
+            "source_label": self.label,
+            "maintained_status": self.maintained_status,
+            "observation_packet_ids": packet_ids,
+            "source_observation_versions": versions,
+            "diagnostics_reason": self.diagnostics_note,
+        }
+
 
 def observation_provenance(
     label: str,
@@ -145,6 +161,25 @@ def observation_provenance(
     )
 
 
+def _validate_maintained_consumer_source(
+    information_state_source: ObservationProvenance,
+    *,
+    consumer_status: str,
+) -> None:
+    if consumer_status != MAINTAINED:
+        return
+    if information_state_source.maintained_status != MAINTAINED:
+        raise ValueError(
+            "maintained consumer fixtures must use provenance-labeled ObservationPacket/DecisionBelief inputs"
+        )
+    if information_state_source.information_state_layer not in {"AgentObservation", "DecisionBelief"}:
+        raise ValueError(
+            "maintained consumer fixtures may only consume AgentObservation or DecisionBelief provenance"
+        )
+    if not information_state_source.label.strip():
+        raise ValueError("maintained consumer fixtures require a non-empty provenance label")
+
+
 @dataclass(frozen=True)
 class AgentRole:
     """Passive Python-side sketch of the WP4 AgentRole five-element boundary."""
@@ -166,6 +201,10 @@ class AgentRole:
         object.__setattr__(self, "action_interface", str(self.action_interface))
         object.__setattr__(self, "maintained_status", _normalize_status(self.maintained_status))
         object.__setattr__(self, "metadata", _copy_mapping(self.metadata))
+        _validate_maintained_consumer_source(
+            self.information_state_source,
+            consumer_status=self.maintained_status,
+        )
 
     def five_elements(self) -> dict[str, Any]:
         return {
@@ -184,6 +223,30 @@ class AgentRole:
         out["maintained_status"] = self.maintained_status
         out["metadata"] = dict(self.metadata)
         return out
+
+    def as_contract(self) -> dict[str, Any]:
+        authority_scope = dict(self.authority_scope)
+        world_index = authority_scope.get("world_index")
+        return {
+            "role": {
+                "role_id": self.role_id,
+                "role_type": self.role_type,
+            },
+            "authority_scope": {
+                "scope": str(authority_scope.get("scope", "unspecified")),
+                "world_index": 0 if world_index is None else int(world_index),
+                "has_world_index": world_index is not None,
+                "entity_ids": [int(value) for value in authority_scope.get("entity_ids", ())],
+                "roster_id": str(authority_scope.get("roster_id", "")),
+                "command_family": str(authority_scope.get("command_family", "")),
+            },
+            "information_state_source": self.information_state_source.as_information_state_source(),
+            "decision_model_ref": dict(self.decision_model_ref),
+            "action_interface": {
+                "kind": self.action_interface,
+                "payload_type": str(self.metadata.get("payload_type", "compatibility_payload")),
+            },
+        }
 
 
 def single_agent_role(
@@ -317,6 +380,26 @@ class ActionIntentCompat:
             "diagnostics_note": self.diagnostics_note,
         }
 
+    def as_contract(self) -> dict[str, Any]:
+        contract = {
+            "source_id": self.source_id,
+            "effective_time_s": 0.0 if self.effective_time is None else float(self.effective_time),
+            "valid_until_s": 0.0 if self.valid_until is None else float(self.valid_until),
+            "target": {
+                "world_index": 0 if self.target_world_index is None else int(self.target_world_index),
+                "entity_id": 0 if self.target_entity_id is None else int(self.target_entity_id),
+            },
+            "action_family": self.action_family,
+            "merge_policy": self.merge_policy,
+            "action_interface": {
+                "kind": self.payload_kind,
+                "payload_type": "pilot_action" if "PilotAction" in self.payload_kind else "mission_command",
+            },
+            "has_pilot_action": "PilotAction" in self.payload_kind,
+            "has_mission_command": "MissionCommand" in self.payload_kind,
+        }
+        return contract
+
 
 @dataclass(frozen=True)
 class CoordinationIntentCompat:
@@ -378,6 +461,98 @@ class CoordinationIntentCompat:
             "diagnostics_note": self.diagnostics_note,
         }
 
+    def as_contract(self) -> dict[str, Any]:
+        authority_scope = dict(self.role.authority_scope)
+        world_index = self.roster_scope.get("world_index", authority_scope.get("world_index"))
+        produced_tasking_refs = []
+        if self.task_order is not None or self.mission_command is not None:
+            produced_tasking_refs.append(
+                {
+                    "kind": "tasking",
+                    "reference_id": self.source_id,
+                    "target": {
+                        "world_index": 0 if world_index is None else int(world_index),
+                        "entity_id": 0,
+                    },
+                }
+            )
+        produced_leader_intent_refs = []
+        if self.leader_intent is not None:
+            produced_leader_intent_refs.append(
+                {
+                    "kind": "leader_intent",
+                    "reference_id": self.source_id,
+                    "target": {
+                        "world_index": 0 if world_index is None else int(world_index),
+                        "entity_id": 0,
+                    },
+                }
+            )
+        return {
+            "source_type": self.source_layer,
+            "source_id": self.source_id,
+            "target_roster": {
+                "world_index": 0 if world_index is None else int(world_index),
+                "has_world_index": world_index is not None,
+                "roster_id": str(self.roster_scope.get("roster_id", "")),
+                "entity_ids": [int(value) for value in self.roster_scope.get("entity_ids", ())],
+                "role_ids": [str(value) for value in self.roster_scope.get("role_ids", ())],
+            },
+            "update_clock": self.update_clock,
+            "merge_policy": self.merge_policy,
+            "produced_tasking_refs": produced_tasking_refs,
+            "produced_leader_intent_refs": produced_leader_intent_refs,
+        }
+
+
+@dataclass(frozen=True)
+class DecisionBeliefCompat:
+    """Passive Python-side sketch of the DecisionBelief contract boundary."""
+
+    belief_id: str
+    source_observation_versions: tuple[str, ...] = ()
+    memory_or_estimator_ref: str = ""
+    confidence_kind: str = "unspecified"
+    confidence: float = 0.0
+    lower_bound: float = 0.0
+    upper_bound: float = 0.0
+    maintained_status: str = COMPATIBILITY_ADAPTER
+    diagnostics_reason: str = ""
+    uses_truth_state: bool = False
+    uses_raw_ecs: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "belief_id", str(self.belief_id))
+        object.__setattr__(
+            self,
+            "source_observation_versions",
+            tuple(str(value) for value in self.source_observation_versions),
+        )
+        object.__setattr__(self, "memory_or_estimator_ref", str(self.memory_or_estimator_ref))
+        object.__setattr__(self, "confidence_kind", str(self.confidence_kind))
+        object.__setattr__(self, "maintained_status", _normalize_status(self.maintained_status))
+        object.__setattr__(self, "diagnostics_reason", str(self.diagnostics_reason))
+
+        if (self.uses_truth_state or self.uses_raw_ecs) and self.maintained_status != DIAGNOSTICS_ONLY:
+            raise ValueError("truth/raw ECS belief inputs must remain diagnostics_only")
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "belief_id": self.belief_id,
+            "source_observation_versions": self.source_observation_versions,
+            "memory_or_estimator_ref": self.memory_or_estimator_ref,
+            "confidence_shape": {
+                "kind": self.confidence_kind,
+                "confidence": self.confidence,
+                "lower_bound": self.lower_bound,
+                "upper_bound": self.upper_bound,
+            },
+            "maintained_status": self.maintained_status,
+            "diagnostics_reason": self.diagnostics_reason,
+            "uses_truth_state": self.uses_truth_state,
+            "uses_raw_ecs": self.uses_raw_ecs,
+        }
+
 
 __all__ = [
     "ALLOWED_MAINTAINED_STATUSES",
@@ -398,6 +573,7 @@ __all__ = [
     "ActionIntentCompat",
     "AgentRole",
     "CoordinationIntentCompat",
+    "DecisionBeliefCompat",
     "ObservationProvenance",
     "observation_provenance",
     "roster_slot_role",

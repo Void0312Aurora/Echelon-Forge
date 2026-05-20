@@ -30,6 +30,14 @@ execution, resident state, and shadow-style capability claims remain false
 unless a maintained profile explicitly declares the corresponding ownership,
 sync, parity, and validation gates.
 
+Projection trigger rule:
+
+- Richer `RuntimeCapabilities` projection MUST NOT start until at least one
+  non-reference backend profile is itself maintained.
+- Helper/probe availability or candidate registry rows are insufficient.
+- Until that trigger is satisfied, only the current CPU-backed facade/runtime
+  truths may project `true`.
+
 Naming note:
 
 - Some follow-up notes and reviews refer to backend profiles as `WP7`.

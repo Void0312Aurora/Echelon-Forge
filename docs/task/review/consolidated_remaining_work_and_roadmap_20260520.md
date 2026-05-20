@@ -1,20 +1,20 @@
 # Consolidated Remaining Work And Forward Roadmap
 
-Status: `2026-05-20` roadmap review.
+Status: `2026-05-20` roadmap review; WP9 accepted.
 Scope: All deferred, follow-up, and planned-but-unassigned architecture work identified
 across WP0-WP8 review documents.
 
 Inputs:
 
-- [WP3 acceptance review](wp3_engagement_pilot_acceptance_review_20260519.md)
-- [WP4 first-wave / second-wave / final acceptance reviews](wp4_facade_alignment_acceptance_review_20260519.md)
-- [WP5 first-wave / information-belief / final acceptance reviews](wp5_validation_harness_acceptance_review_20260519.md)
-- [WP6 acceptance review](wp6_backend_profile_policy_acceptance_review_20260519.md)
-- [WP7.5 acceptance review](wp75_training_path_facade_bridge_acceptance_review_20260520.md)
-- [WP8 acceptance review](wp8_learning_face_acceptance_review_20260520.md)
+- [WP3 acceptance review](archive/wp-acceptance/wp3_engagement_pilot_acceptance_review_20260519.md)
+- [WP4 first-wave / second-wave / final acceptance reviews](archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md)
+- [WP5 first-wave / information-belief / final acceptance reviews](archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md)
+- [WP6 acceptance review](archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md)
+- [WP7.5 acceptance review](archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.md)
+- [WP8 acceptance review](archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md)
 - [architecture plan review](architecture_plan_review_20260519.md)
 - [temp-02 SCAL review](temp-02_review_20260519.md)
-- [WP4 facade alignment plan review](wp4_facade_alignment_plan_review_20260519.md)
+- [WP4 facade alignment plan review](archive/wp-superseded/wp4_facade_alignment_plan_review_20260519.md)
 
 ## 1. Purpose
 
@@ -27,6 +27,16 @@ package (`WP9 Contract And Infrastructure Closure`), then lays out the remaining
 architectural roadmap beyond it.
 
 ## 2. Consolidated WP9 — Contract And Infrastructure Closure
+
+Acceptance:
+
+- [WP9 acceptance review](wp9_contract_infrastructure_closure_acceptance_review_20260520.md)
+
+Residual:
+
+- `INF-6` real missile terminal effects capture remains a tracked follow-up
+  because the current damage system lacks a narrow maintained recorder seam.
+  This residual is recorded in WP3 and the WP9 acceptance review.
 
 All items below are extracted verbatim from the "Residual Risks" or "Deferred
 Follow-Up" sections of WP3-WP7.5 acceptance reviews. None requires new
@@ -105,7 +115,7 @@ WP8 is documentation-only. It does not require RL training or new code.
                    SCAL Learning    Contract & Infra     Architectural
                        Face           Closure             Expansion
                    ─────────────   ─────────────────    ─────────────
-State:             accepted        this document         unscheduled
+State:             accepted        accepted              unscheduled
 
 Delivers:          Curriculum      Typed DTOs (8)       Scheduler impl
                    Evaluation      Naming fixes          Multi-Fidelity
@@ -130,8 +140,10 @@ closure based on project needs at that time.
 
 ## 5. Immediate Next Actions
 
-1. **Dispatch WP9-A/B/C/D in parallel** — all four sub-packages are independent. DTO promotion (A/B) requires C++ changes. Infrastructure closure (C) is mostly doc patches. Guard enforcement (D) is test/doc work.
-2. **After WP9 closure**, evaluate which post-WP9 direction to prioritize based on project needs at that time.
+1. **Evaluate post-WP9 priority** — choose one of the unscheduled WP10+
+   directions based on project needs.
+2. **Keep `INF-6` visible** — do not treat terminal effects capture as silently
+   closed until a later owner adds the maintained recorder seam.
 
 ## 6. Closure Note
 

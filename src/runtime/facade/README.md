@@ -9,6 +9,7 @@
 - `RuntimeFacade`.
 - Facade request/result/capability types.
 - Bulk reset, setup, step, command, tasking, episode, and observation operations.
+- Dedicated diagnostics-trace query/export operations.
 - Controlled wrapping of `WorldBatchRuntime` and `ExecutionEpisodeController`.
 - Public header only exposes facade/contracts types; the underlying `WorldBatchRuntime` owner should remain in the implementation.
 
@@ -35,3 +36,21 @@ Mainline frontends should also not cache the raw `WorldBatchRuntime` or re-expos
 - 不应缓存 raw `WorldBatchRuntime`。
 
 When adding long-term APIs, priority should be given to supplementing facade request/result types, and binding the facade at the Python layer, rather than directly exposing new low-level runtime methods.
+
+## Diagnostics Surface
+
+`DiagnosticsTrace` is a maintained facade surface in its own right. It may
+share kernel evidence with engagement export, but the facade must expose a
+dedicated diagnostics query path instead of requiring consumers to piggyback on
+`export_engagement_event_packet()` just to read traces.
+
+## Split Threshold
+
+Use this counting rule for `RuntimeFacade` governance:
+
+- Count maintained public request/result methods only.
+- Exclude constructors, accessors, and compatibility-only escape hatches such
+  as `runtime()`.
+- When the maintained count approaches roughly 40 methods, plan the next split
+  around Session, Setup, Execution, Observation, Diagnostics, Engagement, and
+  Capability groups before expanding the mainline surface further.

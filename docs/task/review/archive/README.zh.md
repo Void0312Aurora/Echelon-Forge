@@ -1,9 +1,8 @@
 # 审查归档
 
-架构审查历史快照索引。
+历史、被取代及已完成的架构审查快照。
 
-## 索引
-
-- [architecture_review_20260516.zh.md](./architecture_review_20260516.zh.md)
-- [architecture_review_followup_freeze_20260516.zh.md](./architecture_review_followup_freeze_20260516.zh.md)
-
+- [pre-wp/](./pre-wp/README.zh.md) — 初始架构审查（2026-05-16）
+- [temp/](./temp/README.zh.md) — 原始外部架构批评（temp-01、temp-02）
+- [wp-acceptance/](./wp-acceptance/README.zh.md) — 已完成的 WP2.5-WP8 最终验收审查
+- [wp-superseded/](./wp-superseded/README.zh.md) — 被取代的波次/计划审查

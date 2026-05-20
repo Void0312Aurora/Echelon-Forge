@@ -174,6 +174,14 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertIsNotNone(packet_block)
         packet_body = packet_block.group("body")
         for field in [
+            "std::uint64_t snapshot_version",
+            "std::string barrier_id",
+            "std::uint64_t barrier_sequence",
+            "std::string barrier_detail",
+            "double source_time_s",
+            "std::string producer_node_id",
+            "InformationStateSource packet_provenance",
+            "InformationStateSource diagnostics_provenance",
             "std::vector<EngagementEntityRef> refs",
             "std::vector<std::uint64_t> trace_ids",
             "std::vector<TrackPacket> track_packets",
@@ -186,12 +194,26 @@ class RuntimeFacadeTests(unittest.TestCase):
         ]:
             self.assertIn(field, packet_body)
 
+        observation_block = re.search(
+            r"struct ObservationBatchPacket \{(?P<body>.*?)\};",
+            header,
+            flags=re.S,
+        )
+        self.assertIsNotNone(observation_block)
+        observation_body = observation_block.group("body")
+        self.assertIn("InformationStateSource provenance", observation_body)
+
     def test_runtime_facade_exports_read_only_engagement_snapshot_without_weapon_escape(self) -> None:
         facade_header = _repo_text("src", "runtime", "facade", "runtime_facade.h")
         facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
 
         self.assertIn(
             "EngagementEventPacket export_engagement_event_packet("
+            "const EngagementBatchRequest& request) const;",
+            facade_header,
+        )
+        self.assertIn(
+            "std::vector<DiagnosticsTrace> export_diagnostics_traces("
             "const EngagementBatchRequest& request) const;",
             facade_header,
         )
@@ -203,6 +225,10 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertIn("EngagementEventPacket packet{}", body)
         self.assertIn("packet.refs = request.refs", body)
         self.assertIn("packet.trace_ids = request.trace_ids", body)
+        self.assertIn("stable_sort_engagement_packet(&packet)", body)
+        self.assertIn("apply_export_packet_metadata(", body)
+        self.assertIn("finalize_recent_event_metadata(&packet)", body)
+        self.assertIn("finalize_diagnostics_ancestry(&packet)", body)
         self.assertTrue(
             "get_agent_observations_batch" in body or "build_observation_packet" in body,
             "engagement export should read live AgentObservation contacts via the facade/runtime observation path",
@@ -224,6 +250,23 @@ class RuntimeFacadeTests(unittest.TestCase):
         ]:
             self.assertNotIn(f"packet.{field}.push_back", body)
             self.assertNotIn(f"packet.{field} =", body)
+
+    def test_runtime_facade_exports_dedicated_diagnostics_trace_surface(self) -> None:
+        facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
+
+        body = _method_body(
+            facade_source,
+            "std::vector<DiagnosticsTrace> RuntimeFacade::export_diagnostics_traces",
+        )
+        self.assertIn("std::vector<DiagnosticsTrace> traces", body)
+        self.assertIn("append_recent_diagnostics_traces", body)
+        self.assertIn("request.include_track_packets || request.include_diagnostics_traces", body)
+        self.assertIn("runtime_->get_agent_observations_batch", body)
+        self.assertIn("diagnostics_trace_from_track_packet", body)
+        self.assertIn("stable_sort_diagnostics_traces(&traces)", body)
+        self.assertNotIn("EngagementEventPacket packet{}", body)
+        self.assertNotIn("fire_missile", body)
+        self.assertNotIn("fire_naval_weapon", body)
 
     def test_resolve_active_controllable_roster_returns_active_members(self) -> None:
         scenario = {

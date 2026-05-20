@@ -264,6 +264,15 @@
       "chinese_hash": "c03dc1eb82f6993f0f42abb213da8aa226877364d1d8438307dc447c2e646899"
     },
     {
+      "pair_id": "standards/governance/wp_closure_lane_policy",
+      "english": "docs/standards/governance/wp_closure_lane_policy.md",
+      "chinese": "docs/standards/governance/wp_closure_lane_policy.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-05-20",
+      "english_hash": "0f9bf1613fa09059ff42283aaaf5bf0a3d43fe5d16a89e017b41a37f4d47eb07",
+      "chinese_hash": "0dff2b4286b8a459f78eb0471cc09cbe66a19e7fafa7c0e65ada95ae56e82eba"
+    },
+    {
       "pair_id": "standards/joint/command_and_modeling_baseline",
       "english": "docs/standards/joint/command_and_modeling_baseline.md",
       "chinese": "docs/standards/joint/command_and_modeling_baseline.zh.md",

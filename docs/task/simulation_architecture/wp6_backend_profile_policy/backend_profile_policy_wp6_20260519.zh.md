@@ -24,6 +24,13 @@ WP6 是后端配置文件策略工作包。它负责把已维护的 CPU exact �
 镜像已声明的 backend/profile 元数据和可探测的部署事实，但不创造新的语义声明。
 exact GPU 执行、resident state 与 shadow 风格的 capability 声明默认保持 false，除非维护中的 profile 显式声明了对应的 ownership、sync、parity 与 validation gate。
 
+Projection trigger 规则：
+
+- 在至少一个 non-reference backend profile 本身进入 maintained 之前，
+  richer `RuntimeCapabilities` projection MUST NOT 启动。
+- 仅有 helper/probe 可用性，或 candidate registry row，均不足以触发。
+- 在该 trigger 满足前，只有当前 CPU-backed facade/runtime truth 可以投影为 `true`。
+
 命名说明：
 
 - 有些后续笔记和审查把后端配置文件线标成 `WP7`。

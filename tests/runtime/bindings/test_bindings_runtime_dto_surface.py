@@ -1,0 +1,216 @@
+from __future__ import annotations
+
+import unittest
+
+from python.testing.runtime import ensure_repo_imports
+
+
+ensure_repo_imports()
+
+import ef_py  # noqa: E402
+
+
+def public_fields(instance: object) -> tuple[str, ...]:
+    return tuple(name for name in dir(instance) if not name.startswith("_"))
+
+
+class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
+    def test_action_hold_policy_binding_stays_contract_visible_prerequisite_only(self) -> None:
+        policy = ef_py.ActionHoldPolicy()
+
+        self.assertEqual(policy.hold_mode, "drop")
+        self.assertEqual(policy.interpolation_mode, "none")
+        self.assertIn("runtime_cadence_not_implemented", policy.diagnostics_reason)
+        self.assertIn(
+            "runtime_cadence_not_implemented",
+            policy.credit_assignment_attribution_note,
+        )
+
+    def test_reward_term_public_fields_match_expected_binding_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.RewardTerm()),
+            (
+                "name",
+                "term_owner",
+                "value",
+            ),
+        )
+
+    def test_reward_report_public_fields_match_expected_binding_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.RewardReport()),
+            (
+                "fact_snapshot_version",
+                "fact_terms",
+                "shaping_terms",
+                "term_owner",
+            ),
+        )
+
+    def test_termination_spec_public_fields_match_expected_binding_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.TerminationSpec()),
+            (
+                "reason",
+                "reason_source",
+                "snapshot_version",
+            ),
+        )
+
+    def test_observation_view_spec_public_fields_match_expected_binding_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.ObservationViewSpec()),
+            (
+                "allow_minor_version_drift",
+                "allow_missing_optional_fields",
+                "allow_unknown_optional_fields",
+                "optional_fields",
+                "reject_major_mismatch",
+                "required_fields",
+                "schema_version",
+            ),
+        )
+
+    def test_observation_view_compatibility_report_public_fields_match_expected_binding_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.ObservationViewCompatibilityReport()),
+            (
+                "compatible",
+                "major_compatible",
+                "missing_optional_fields",
+                "missing_required_fields",
+                "optional_field_drift_allowed",
+                "required_fields_satisfied",
+                "unknown_optional_fields",
+            ),
+        )
+
+    def test_observation_batch_packet_public_fields_include_metadata(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.ObservationBatchPacket()),
+            (
+                "agent_observations",
+                "barrier_id",
+                "instrument_states",
+                "leader_intents",
+                "mission_commands",
+                "pilot_reports",
+                "provenance",
+                "refs",
+                "snapshot_version",
+                "source_time_s",
+                "task_orders",
+            ),
+        )
+
+    def test_engagement_event_packet_public_fields_include_provenance(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.EngagementEventPacket()),
+            (
+                "barrier_detail",
+                "barrier_id",
+                "barrier_sequence",
+                "damage_reports",
+                "diagnostics_provenance",
+                "diagnostics_traces",
+                "effects_events",
+                "launch_events",
+                "launch_requests",
+                "munition_lifecycle_packets",
+                "packet_provenance",
+                "producer_node_id",
+                "refs",
+                "snapshot_version",
+                "source_time_s",
+                "trace_ids",
+                "track_packets",
+            ),
+        )
+
+    def test_execution_batch_step_result_public_fields_include_typed_reward_and_termination_reports(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.ExecutionBatchStepResult()),
+            (
+                "controller_state_changed_flags",
+                "observation_packet",
+                "reward_breakdown_jsons",
+                "reward_reports",
+                "rewards",
+                "status_vectors",
+                "step_info_valid_flags",
+                "step_infos",
+                "step_results",
+                "terminated",
+                "termination_reasons",
+                "termination_specs",
+                "truncated",
+            ),
+        )
+
+    def test_packet_provenance_nested_fields_round_trip(self) -> None:
+        observation_packet = ef_py.ObservationBatchPacket()
+        observation_packet.snapshot_version = 12
+        observation_packet.provenance.information_state_layer = "AgentObservation"
+        observation_packet.provenance.source_label = "facade_observation_packet"
+        observation_packet.provenance.maintained_status = "maintained"
+        observation_packet.provenance.observation_packet_ids = ["obs:12"]
+        observation_packet.provenance.source_observation_versions = ["global:12"]
+
+        engagement_packet = ef_py.EngagementEventPacket()
+        engagement_packet.snapshot_version = 7
+        engagement_packet.packet_provenance.information_state_layer = "TrackState"
+        engagement_packet.packet_provenance.source_label = "track_state_packet"
+        engagement_packet.packet_provenance.maintained_status = "maintained"
+        engagement_packet.diagnostics_provenance.information_state_layer = "DecisionBelief"
+        engagement_packet.diagnostics_provenance.source_label = "world_truth_diagnostics"
+        engagement_packet.diagnostics_provenance.maintained_status = "diagnostics_only"
+
+        self.assertEqual(observation_packet.provenance.source_label, "facade_observation_packet")
+        self.assertEqual(
+            list(observation_packet.provenance.source_observation_versions),
+            ["global:12"],
+        )
+        self.assertEqual(engagement_packet.packet_provenance.information_state_layer, "TrackState")
+        self.assertEqual(
+            engagement_packet.diagnostics_provenance.maintained_status,
+            "diagnostics_only",
+        )
+
+    def test_observation_view_compatibility_helper_allows_minor_optional_drift(self) -> None:
+        checkpoint = ef_py.ObservationViewSpec()
+        checkpoint.schema_version = "1.1"
+        checkpoint.required_fields = ["pose", "health"]
+        checkpoint.optional_fields = ["legacy_heading_raw"]
+
+        provider = ef_py.ObservationViewSpec()
+        provider.schema_version = "1.2"
+        provider.required_fields = ["pose", "health"]
+        provider.optional_fields = ["radar_altitude"]
+
+        report = ef_py.evaluate_observation_view_checkpoint_compatibility(checkpoint, provider)
+
+        self.assertTrue(bool(report.compatible))
+        self.assertTrue(bool(report.major_compatible))
+        self.assertTrue(bool(report.required_fields_satisfied))
+        self.assertTrue(bool(report.optional_field_drift_allowed))
+        self.assertEqual(list(report.unknown_optional_fields), ["radar_altitude"])
+        self.assertEqual(list(report.missing_optional_fields), ["legacy_heading_raw"])
+
+    def test_observation_view_compatibility_helper_rejects_major_mismatch(self) -> None:
+        checkpoint = ef_py.ObservationViewSpec()
+        checkpoint.schema_version = "1.4"
+        checkpoint.required_fields = ["pose"]
+
+        provider = ef_py.ObservationViewSpec()
+        provider.schema_version = "2.0"
+        provider.required_fields = ["pose"]
+
+        report = ef_py.evaluate_observation_view_checkpoint_compatibility(checkpoint, provider)
+
+        self.assertFalse(bool(report.compatible))
+        self.assertFalse(bool(report.major_compatible))
+        self.assertTrue(bool(report.required_fields_satisfied))
+
+
+if __name__ == "__main__":
+    unittest.main()

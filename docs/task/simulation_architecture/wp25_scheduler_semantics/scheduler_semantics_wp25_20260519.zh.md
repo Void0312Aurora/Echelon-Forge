@@ -173,6 +173,12 @@ lower-rate domains run as declared nested triggers inside that window.
 | Sensor/track scans | 产出带 source time 与 shard version 的 snapshot；consumer 不得假设与 physics tick 等频。 |
 | 独立 backend 或 resident-state clock | 在 backend profile 声明 sync barrier、event export order 与 parity budget 前，不进入维护路径。 |
 
+用于这些 clock-domain merge 语义的调度侧字段名固定为
+`clock_merge_policy`。该名称保留给 `ClockDomain` 与
+`StageNodeManifest` 治理使用，避免与 `ActionIntentPacket`、
+`CoordinationIntentPacket` 等跨层 request 契约使用的 `merge_policy`
+字段冲突。
+
 Merge policy 值：
 
 | 值 | 含义 |
@@ -183,6 +189,16 @@ Merge policy 值：
 | `enqueue_event` | Producer output 变为 timestamped event。 |
 | `defer_to_next_window` | Producer output 到下一 window 才可见。 |
 | `reject_on_ambiguous_order` | 若无法证明确定性顺序，scheduler 或 adapter 拒绝输入。 |
+
+Registry 覆盖说明：
+
+- 规范示例 registry 必须覆盖 `P0 ContentCompile`、
+  `P1 WorldSetup`、`P2 TaskingIntent`、`P3 CommandDelivery`、
+  `P4 PlatformControl`、`P5 PhysicsStep`、`P6 SenseTrackLink`、
+  `P7 FireControlLaunch`、`P8 MunitionLifecycle`、
+  `P9 EffectsDamage` 与 `P10 ObservationExport`。
+- 每个阶段的标准示例维护在
+  [wp25_manifest_event_cluster_20260519.zh.md](wp25_manifest_event_cluster_20260519.zh.md)。
 
 ## 7. Deterministic Replay Contract
 

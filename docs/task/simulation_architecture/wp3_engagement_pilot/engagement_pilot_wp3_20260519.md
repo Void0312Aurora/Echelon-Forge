@@ -34,6 +34,9 @@ Current implementation note:
   observation-derived `TrackPacket` snapshots plus recent launch/effects/damage
   events captured by the simulation kernel. It still must not trigger weapon or
   damage behavior.
+- `RuntimeFacade` now also exposes a dedicated
+  `export_diagnostics_traces(...)` facade path so `DiagnosticsTrace` no longer
+  exists only as engagement-export piggyback evidence.
 - `tests/runtime/engagement/` now contains adapter-level validation for air
   launch acceptance/rejection, naval gun and VLS launch, facade engagement
   export, recent live event capture, munition lifecycle mirroring, synthetic
@@ -232,13 +235,21 @@ Third worker wave status:
 3. `WP3-I Integration And Cleanup` should now focus on final validation and
    handoff to facade hardening.
 
-WP4/WP5 follow-up, outside WP3 acceptance:
+WP9 infrastructure closure note:
 
-1. Capture true missile terminal effects/damage from the maintained guidance
-   and effects systems, not only legacy launch, naval direct-fire, and debug
-   proximity-hit paths.
-2. Decide whether recent-event storage should remain a bounded compatibility
-   buffer or move behind a formal event queue owner in `WP4/WP5`.
+1. `INF-6` remains blocked for a later owner. Real missile terminal hit
+   resolution already runs in maintained guidance/effects systems, but current
+   recent-event DTO capture still enters through naval direct-fire and
+   debug/synthetic proximity-hit recorder paths. `damage_system.h` currently has
+   no narrow kernel recorder seam, so WP9 preserves this as an explicit
+   handoff instead of adding a wide shared-world callback under parallel
+   ownership.
+2. `INF-7` is now treated as an explicit compatibility wrapper instead of an
+   undocumented stopgap. The bounded `RecentEngagementEvents` buffers remain in
+   place, but they share one monotonic `next_engagement_event_id_` allocator
+   and export sorted views by event/report/trace id so facade/replay consumers
+   can treat them as event-queue-aligned recent windows rather than insertion
+   order accidents.
 
 ## 10. Exit Criteria
 

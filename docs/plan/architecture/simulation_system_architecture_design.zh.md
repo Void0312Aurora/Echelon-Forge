@@ -126,6 +126,15 @@ flowchart TD
 `frontend adapters -> runtime facade -> simulation engine -> physics engine -> model backends`
 方案。关键补充是：领域行为是一组挂接到共享生命周期的模型族，而不是彼此隔离的运行时栈。
 
+RuntimeFacade 治理规则：
+
+- 只统计维护中的 public request/result 方法；不统计 constructor、accessor
+  与 compatibility-only escape hatch。
+- 当维护中的方法数量接近约 40 个时，应先记录并规划拆分为 Session、Setup、
+  Execution、Observation、Diagnostics、Engagement 与 Capability groups，
+  再继续扩张主线 surface。
+- 这些 group 名称是治理分组，不是强制冻结的类名。
+
 ## 六、规范化语义生命周期
 
 每个维护中的 scenario step 都应能用以下语义阶段解释。部分场景可以用空 packet 跳过某些阶段，但不应发明平行生命周期。
@@ -178,6 +187,10 @@ State[t] + EventQueue[t]
 State versioning 先从粗粒度开始，但必须保留分片空间。早期 CPU-only smoke 与 diagnostics 可以接受单一全局 state version；但任何 resident-state 或 partial-sync 后端都必须支持 domain-sharded versions，例如 physics state、tasking state、track state、damage state 与 observation export state。因此 stage node 应尽量声明自己读取或写入的 state shard。
 
 Event 按 `(timestamp, priority, event_id)` 确定性排序。`timestamp` 决定仿真时间，`priority` 由 event family 固定，`event_id` 由 producing node 和本地 sequence 确定性生成。维护中的仿真行为不应只依赖插入顺序作为同时间戳 tie-breaker，因为并行 stage node 和 CPU/GPU 混合 producer 会让 replay 变脆弱。
+
+调度侧用于 clock-domain merge 语义的字段名固定为 `clock_merge_policy`。
+`merge_policy` 只保留给 `ActionIntentPacket` 与
+`CoordinationIntentPacket` 这样的跨层 request 契约。
 
 Clock domain 默认使用嵌套触发。base tick 拥有外层确定性 schedule，低频 node 按声明的倍数或 schedule slot 运行。独立 clock domain 只有在冻结计划明确 deterministic merge policy 和 barrier 处 event ordering 时才允许进入维护路径。
 
@@ -434,9 +447,10 @@ Platform =
   将其提升前，都不是维护中的替代路径。
 - `RuntimeCapabilities` 是维护中 profile metadata 与可探测部署事实的投影；
   仅凭 helper 或 probe 存在不能声明 exact GPU、resident-state、shadow、device
-  observation 或 multi-fidelity support。当前 WP7 验收让这些 support claim
-  保持 false，直到未来 promotion review 同时更新 registry、parity budget、
-  projection adapter 与 validation evidence。
+  observation 或 multi-fidelity support。更丰富的 projection 只有在至少一个
+  non-reference backend profile 本身进入 maintained，并且 registry、
+  parity budget、projection adapter 与 validation evidence 一并通过后才能启动。
+  因此当前 WP7 验收仍让这些 support claim 保持 false。
 - Rust 仍是未来 service 或 serialization 边界候选，不是近期 C++ 仿真后端替代方案。
 
 核心性能规则很简单：把 ownership 与 data residency 向下沉，但不要制造第二套语义路径。

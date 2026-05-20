@@ -2,20 +2,20 @@
 
 # 剩余工作与前瞻路线图（综合版）
 
-状态：`2026-05-20` 路线图审查  
+状态：`2026-05-20` 路线图审查；WP9 已验收。
 范围：WP0–WP8 审查文档中识别的所有延期、后续及已规划但未分配架构工作。
 
 输入：
 
-- [WP3 验收审查](wp3_engagement_pilot_acceptance_review_20260519.md)
-- [WP4 第一波 / 第二波 / 最终验收审查](wp4_facade_alignment_acceptance_review_20260519.md)
-- [WP5 第一波 / 信息-信念 / 最终验收审查](wp5_validation_harness_acceptance_review_20260519.md)
-- [WP6 验收审查](wp6_backend_profile_policy_acceptance_review_20260519.md)
-- [WP7.5 验收审查](wp75_training_path_facade_bridge_acceptance_review_20260520.md)
-- [WP8 验收审查](wp8_learning_face_acceptance_review_20260520.md)
+- [WP3 验收审查](archive/wp-acceptance/wp3_engagement_pilot_acceptance_review_20260519.md)
+- [WP4 第一波 / 第二波 / 最终验收审查](archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md)
+- [WP5 第一波 / 信息-信念 / 最终验收审查](archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md)
+- [WP6 验收审查](archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md)
+- [WP7.5 验收审查](archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.md)
+- [WP8 验收审查](archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md)
 - [架构计划审查](architecture_plan_review_20260519.md)
 - [temp-02 SCAL 审查](temp-02_review_20260519.md)
-- [WP4 外观对齐计划审查](wp4_facade_alignment_plan_review_20260519.md)
+- [WP4 外观对齐计划审查](archive/wp-superseded/wp4_facade_alignment_plan_review_20260519.md)
 
 ## 1. 目的
 
@@ -24,6 +24,16 @@ WP0 至 WP8 已验收。在所有验收审查中，积累了一组一致的延�
 本文档将这些延期项合并为一个压缩工作包（`WP9 合同与基础设施收尾`），然后阐述其后的剩余架构路线图。
 
 ## 2. 合并的 WP9——合同与基础设施收尾
+
+验收：
+
+- [WP9 验收审查](wp9_contract_infrastructure_closure_acceptance_review_20260520.zh.md)
+
+残余：
+
+- `INF-6` real missile terminal effects capture 仍是已跟踪 follow-up，因为当前
+  damage system 缺少窄的 maintained recorder seam。该残余已记录在 WP3 与
+  WP9 验收审查中。
 
 以下所有项均直接提取自 WP3–WP7.5 验收审查的“残余风险”或“延期后续”部分。无需新的架构发现。每项都有已知的解决方案和明确的责任文档。
 
@@ -100,7 +110,7 @@ WP8 仅包含文档，无需 RL 训练或新代码。
                    SCAL 学习面      合同与基础设施         架构扩展
                        Face           Closure             Expansion
                    ─────────────   ─────────────────    ─────────────
-状态：             已验收          本文档                未排期
+状态：             已验收          已验收                未排期
 
 交付：             课程            类型化 DTO（8 个）      调度器实现
                    评估            命名修复                多保真度
@@ -123,8 +133,9 @@ WP8 仅包含文档，无需 RL 训练或新代码。
 
 ## 5. 立即后续行动
 
-1. **并行分发 WP9-A/B/C/D**——所有四个子包相互独立。DTO 提升（A/B）需要 C++ 变更。基础设施收尾（C）主要是文档补丁。守卫强制（D）为测试/文档工作。
-2. **在 WP9 完成后**，根据当时项目需求评估哪个 WP9 后的方向应优先处理。
+1. **评估 WP9 后优先级**——根据项目需求从未排期的 WP10+ 方向中选择下一项。
+2. **保持 `INF-6` 可见**——在后续 owner 添加 maintained recorder seam 之前，
+   不把 terminal effects capture 静默视为已关闭。
 
 ## 6. 结束说明
 

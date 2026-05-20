@@ -118,6 +118,12 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
         trace.effects_event_id = effects.event_id
         trace.damage_report_id = damage.report_id
         trace.observation_packet_version = track.snapshot_version
+        trace.source_snapshot_version = track.snapshot_version
+        trace.barrier_id = "export"
+        trace.barrier_detail = "maintained_facade_export"
+        trace.source_time_s = track.source_time_s
+        trace.source_node_id = "p7.fire_control_launch.v1"
+        trace.export_node_id = "p10.observation_export.v1"
 
         packet = ef_py.EngagementEventPacket()
         packet.refs = [shooter, target, munition]
@@ -149,6 +155,10 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
         self.assertEqual(packet.diagnostics_traces[0].effects_event_id, packet.effects_events[0].event_id)
         self.assertEqual(packet.diagnostics_traces[0].damage_report_id, packet.damage_reports[0].report_id)
         self.assertEqual(packet.diagnostics_traces[0].observation_packet_version, packet.track_packets[0].snapshot_version)
+        self.assertEqual(packet.diagnostics_traces[0].source_snapshot_version, packet.track_packets[0].snapshot_version)
+        self.assertEqual(packet.diagnostics_traces[0].barrier_id, "export")
+        self.assertEqual(packet.diagnostics_traces[0].source_node_id, "p7.fire_control_launch.v1")
+        self.assertEqual(packet.diagnostics_traces[0].export_node_id, "p10.observation_export.v1")
 
 
 if __name__ == "__main__":

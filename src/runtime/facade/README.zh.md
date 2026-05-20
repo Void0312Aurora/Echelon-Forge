@@ -7,6 +7,7 @@
 - `RuntimeFacade`。
 - facade request/result/capability 类型。
 - 批量 reset、setup、step、command、tasking、episode 和 observation 操作。
+- 专用 diagnostics-trace query/export 操作。
 - 对 `WorldBatchRuntime` 与 `ExecutionEpisodeController` 的受控包装。
 - public header 只暴露 facade / contracts 类型；底层 `WorldBatchRuntime` owner 应留在 implementation 中。
 
@@ -27,3 +28,20 @@
 主线前端也不应缓存 raw `WorldBatchRuntime` 或从 adapter 重新暴露 compatibility runtime。确实需要 `SimulationKernel` 的兼容路径时，应新增 adapter 方法，并在方法名或调用点说明它是迁移期 compatibility / diagnostics 能力。
 
 新增长期 API 时，应优先补充 facade request/result，并在 Python 层绑定 facade，而不是直接暴露新的底层 runtime 方法。
+
+## Diagnostics Surface
+
+`DiagnosticsTrace` 本身就是维护中的 facade surface。它可以与 engagement
+export 共享 kernel evidence，但 facade 必须提供独立的 diagnostics query path，
+不能要求使用者为了读取 trace 只能 piggyback 到
+`export_engagement_event_packet()`。
+
+## Split Threshold
+
+`RuntimeFacade` 的治理计数规则如下：
+
+- 只统计维护中的 public request/result 方法。
+- 不统计 constructor、accessor，以及像 `runtime()` 这样的
+  compatibility-only escape hatch。
+- 当维护中的方法数接近约 40 个时，应先围绕 Session、Setup、Execution、
+  Observation、Diagnostics、Engagement 与 Capability groups 规划拆分，再继续扩张主线 surface。

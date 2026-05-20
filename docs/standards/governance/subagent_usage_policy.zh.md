@@ -48,6 +48,11 @@ Language:
 - main thread 负责最终 scope 决策、验收，以及任何发布或合并动作。
 - 最终的 integration worker 负责跨文件冲突处理与 task status 更新。
 - 状态文档和 README 索引必须与最终权威位置保持同步。
+- WP implementation stream 可以停在 `Mergeable`；专门的 closure lane 负责
+  acceptance review、README/index、archive 和必需双语同步，然后 WP 才标为
+  `Closed`。
+- 当被委派任务包含 simulation-architecture WP 发布或验收收尾时，使用
+  [WP Closure Lane Policy](wp_closure_lane_policy.zh.md)。
 
 ## 链接规则
 

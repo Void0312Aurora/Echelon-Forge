@@ -225,6 +225,171 @@ Family-specific diagnostics 可以增加必需字段，但不得移除上述通�
 
 ## 9. 标准 Manifest 示例
 
+下面的示例 registry 是 `P0-P10` 的规范起始覆盖。每条示例都刻意保持紧凑，
+但仍必须使用已经冻结的 `StageNodeManifest` 词汇，这样后续 scheduler、facade、
+replay 与 validation 工作都能引用同一套 registry 形状。
+
+维护中的 `P0 ContentCompile` 示例：
+
+```yaml
+node_id: p0.content_compile.v1
+semantic_stage: [P0 ContentCompile]
+owner_module: content/ and scenario compiler adapters
+input_packets: [ScenarioDefinition, BackendProfileRequest]
+output_packets: [WorldSetupPacket, ContentIdSet]
+read_state_shards: [setup]
+write_state_shards: [setup]
+read_snapshot_policy: pre_window
+write_commit_policy: window_commit
+clock_domain: setup_only
+latency_policy: same_window_setup
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [window_commit]
+event_families_emitted: [setup_and_reset]
+diagnostic_trace_obligations: [content_id_set, setup_commit_id]
+facade_visibility: maintained_facade_surface
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P1 WorldSetup` 示例：
+
+```yaml
+node_id: p1.world_setup.v1
+semantic_stage: [P1 WorldSetup]
+owner_module: src/runtime/facade/runtime_facade.cpp
+input_packets: [WorldSetupPacket, BatchResetRequest]
+output_packets: [WorldBatchPacket, EntityRefPacket]
+read_state_shards: [setup]
+write_state_shards: [setup]
+read_snapshot_policy: post_injection
+write_commit_policy: window_commit
+clock_domain: reset_or_setup_request
+latency_policy: same_window_after_request_barrier
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [input_injection, window_commit]
+event_families_emitted: [setup_and_reset]
+diagnostic_trace_obligations: [setup_commit_id, world_id]
+facade_visibility: maintained_facade_surface
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P2 TaskingIntent` 示例：
+
+```yaml
+node_id: p2.tasking_intent.v1
+semantic_stage: [P2 TaskingIntent]
+owner_module: components/tasking and core/mission
+input_packets: [TaskOrder, LeaderIntent]
+output_packets: [TaskingStatePacket, AuthorityStatePacket]
+read_state_shards: [tasking, command]
+write_state_shards: [tasking]
+read_snapshot_policy: post_injection
+write_commit_policy: window_commit
+clock_domain: tasking_update_slot
+latency_policy: same_window_after_request_barrier
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [input_injection, window_commit]
+event_families_emitted: [tasking_and_command_delivery]
+diagnostic_trace_obligations: [source_id, input_snapshot_version]
+facade_visibility: maintained_facade_surface
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P3 CommandDelivery` 示例：
+
+```yaml
+node_id: p3.command_delivery.v1
+semantic_stage: [P3 CommandDelivery]
+owner_module: command-link systems
+input_packets: [MissionCommand, CoordinationIntentPacket]
+output_packets: [DeliveredCommandPacket, CommandDeliveryReport]
+read_state_shards: [tasking, command]
+write_state_shards: [command]
+read_snapshot_policy: post_injection
+write_commit_policy: window_commit
+clock_domain: command_link_tick
+latency_policy: link_latency_controlled
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [input_injection, window_commit]
+event_families_emitted: [tasking_and_command_delivery]
+diagnostic_trace_obligations: [source_id, command_report_id]
+facade_visibility: internal
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P4 PlatformControl` 示例：
+
+```yaml
+node_id: p4.platform_control.v1
+semantic_stage: [P4 PlatformControl]
+owner_module: control models and platform systems
+input_packets: [DeliveredCommandPacket, ActionIntentPacket]
+output_packets: [ControlInputPacket, ActionValidityReport]
+read_state_shards: [command, control, physics]
+write_state_shards: [control]
+read_snapshot_policy: committed
+write_commit_policy: stage_publish
+clock_domain: control_rate_slot
+latency_policy: same_window_after_request_barrier
+sync_policy: host_owned
+allowed_same_window_edges: [p5.physics_step.v1]
+required_barriers: [input_injection, stage_publish, window_commit]
+event_families_emitted: [platform_control_handoff]
+diagnostic_trace_obligations: [source_id, control_validity_report_id]
+facade_visibility: internal
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P5 PhysicsStep` 示例：
+
+```yaml
+node_id: p5.physics_step.v1
+semantic_stage: [P5 PhysicsStep]
+owner_module: physics systems and backends
+input_packets: [ControlInputPacket, EnvironmentPacket]
+output_packets: [TruthStatePacket, PhysicsTracePacket]
+read_state_shards: [control, physics]
+write_state_shards: [physics]
+read_snapshot_policy: same_window
+write_commit_policy: window_commit
+clock_domain: physics.fixed_tick
+latency_policy: same_window_after_control_publish
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [stage_publish, window_commit]
+event_families_emitted: [physics_contact_candidates]
+diagnostic_trace_obligations: [source_shard_versions, resulting_snapshot_version]
+facade_visibility: internal
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P6 SenseTrackLink` 示例：
+
+```yaml
+node_id: p6.sense_track_link.v1
+semantic_stage: [P6 SenseTrackLink]
+owner_module: sensor, EW, track, and data-link systems
+input_packets: [TruthStatePacket, LinkStatePacket]
+output_packets: [TrackPacket, DetectionPacket, SharedTrackReport]
+read_state_shards: [physics, track, command]
+write_state_shards: [track]
+read_snapshot_policy: committed
+write_commit_policy: window_commit
+clock_domain: sensor.scan_slot
+latency_policy: next_window_after_scan
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [window_commit]
+event_families_emitted: [sensing_track_and_link_updates]
+diagnostic_trace_obligations: [source_time, source_shard_versions, track_snapshot_version]
+facade_visibility: maintained_facade_export
+compatibility_adapter_allowed: false
+```
+
 维护中的 `P7 FireControlLaunch` 示例：
 
 ```yaml
@@ -252,14 +417,60 @@ compatibility_adapter_allowed:
   legacy_fire_missile: compatibility_diagnostics_only
 ```
 
-维护中的非 engagement `P10 ObservationExport` 示例：
+维护中的 `P8 MunitionLifecycle` 示例：
+
+```yaml
+node_id: p8.munition_lifecycle.v1
+semantic_stage: [P8 MunitionLifecycle]
+owner_module: guidance, seeker, and fuze systems
+input_packets: [LaunchEvent, TrackPacket]
+output_packets: [MunitionLifecyclePacket, DiagnosticsTrace]
+read_state_shards: [engagement, track, physics]
+write_state_shards: [engagement]
+read_snapshot_policy: committed
+write_commit_policy: window_commit
+clock_domain: munition_guidance_slot
+latency_policy: same_window_after_launch
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [window_commit]
+event_families_emitted: [munition_lifecycle]
+diagnostic_trace_obligations: [launch_event_id, munition_id, source_shard_versions]
+facade_visibility: maintained_facade_export
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P9 EffectsDamage` 示例：
+
+```yaml
+node_id: p9.effects_damage.v1
+semantic_stage: [P9 EffectsDamage]
+owner_module: effects models and damage systems
+input_packets: [MunitionLifecyclePacket, EffectsTriggerCandidate]
+output_packets: [EffectsEvent, DamageReport, DiagnosticsTrace]
+read_state_shards: [engagement, damage, physics]
+write_state_shards: [damage]
+read_snapshot_policy: committed
+write_commit_policy: window_commit
+clock_domain: event_driven_effects_resolution
+latency_policy: delayed_event
+sync_policy: host_owned
+allowed_same_window_edges: []
+required_barriers: [window_commit]
+event_families_emitted: [effects_and_damage]
+diagnostic_trace_obligations: [launch_event_id, effects_event_id, damage_report_id]
+facade_visibility: maintained_facade_export
+compatibility_adapter_allowed: false
+```
+
+维护中的 `P10 ObservationExport` 示例：
 
 ```yaml
 node_id: p10.observation_export.v1
 semantic_stage: [P10 ObservationExport]
 owner_module: src/core/engine/simulation_observation_api.cpp
 input_packets: [CommittedSnapshot, DiagnosticsTrace]
-output_packets: [ObservationPacket, FacadeExportPacket]
+output_packets: [ObservationPacket, DiagnosticsTraceBatchPacket]
 read_state_shards: [setup, tasking, command, control, physics, track, engagement, damage, observation]
 write_state_shards: [observation]
 read_snapshot_policy: committed

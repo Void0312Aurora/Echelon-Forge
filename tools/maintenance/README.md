@@ -22,6 +22,11 @@ Current maintained helpers:
   - Preserves Markdown link destinations by masking targets before translation and restoring them afterward.
   - Rewrites workspace-absolute repository file links into relative Markdown targets.
   - Generates and audits a bilingual cluster registry so paired docs can be checked for drift after one-sided edits.
+- [wp_doc_closure_audit.py](wp_doc_closure_audit.py)
+  - Audits simulation-architecture WP task/review closure, including required
+    companions, acceptance review links, and WP-scoped Markdown link health.
+  - Emits a read-only checklist for a closure subagent instead of rewriting
+    README or review indexes on the main implementation path.
 
 Maintenance guidance:
 
@@ -169,6 +174,16 @@ Normalize repo-internal links in existing Markdown files:
 python3 tools/maintenance/translate_docs_batch.py rewrite-links \
   --files docs/task/flight_dynamics/program/*.md
 ```
+
+Audit a WP closure package before assigning or accepting a closure lane:
+
+```bash
+python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9
+python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
+```
+
+Use `--strict` when error-level closure gaps should fail the command. Warnings
+are intended to be closure-subagent work items rather than main-lane blockers.
 
 Required API environment variables for translation:
 

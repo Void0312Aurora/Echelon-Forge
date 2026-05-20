@@ -57,7 +57,16 @@ The active design conclusion is:
     focused on curriculum, evaluation, capability profiling, scenario
     generation, and learning evidence; it should not reopen the simulation
     closure or assume local RL training availability.
-13. When this subproject is split across subagents or workers, follow the
+13. Deferred contract and infrastructure closure should be routed through
+    `WP9`, which promotes accepted DTO vocabulary and closes small residual
+    infrastructure/guard items without reopening `WP0-WP8`.
+14. Post-WP9 work should follow the
+    [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.md):
+    causal runtime foundation first, facade vertical slice second, then
+    information/agency enforcement, backend/fidelity, capability composition,
+    and counterfactual/experiment generation. Phase 1 is now opened as
+    `WP10`.
+15. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
@@ -69,14 +78,18 @@ The active design conclusion is:
 | `WP0 Architecture Baseline` | complete | Make the SCAL framing, semantic lifecycle, causal-temporal execution projection, and extension rules explicit | architecture design doc, task subproject entry |
 | `WP1 Pipeline Inventory` | complete | Map current code, systems, models, and tests onto `P0-P10` and current coupling hotspots | [pipeline inventory](wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.md) |
 | `WP2 Contract Freeze` | complete | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | [contract freeze](wp2_contract_freeze/contract_freeze_wp2_20260519.md) |
-| `WP2.5 Scheduler Semantics Freeze` | complete | Freeze event ordering, state versioning, barrier visibility, clock-domain merge policy, replay contract, and stage-node manifest schema | [scheduler semantics freeze](wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md), [acceptance review](../review/wp25_scheduler_semantics_acceptance_review_20260519.md) |
+| `WP2.5 Scheduler Semantics Freeze` | complete | Freeze event ordering, state versioning, barrier visibility, clock-domain merge policy, replay contract, and stage-node manifest schema | [scheduler semantics freeze](wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp25_scheduler_semantics_acceptance_review_20260519.md) |
 | `WP3 Engagement Pilot` | complete | Use weapon/engagement as the first cross-domain validation slice | [engagement pilot task family](wp3_engagement_pilot/engagement_pilot_wp3_20260519.md) |
-| `WP4 Facade Alignment` | complete | Ensure pilot behavior is reachable through facade-shaped APIs without raw runtime access | [facade alignment task family](wp4_facade_alignment/facade_alignment_wp4_20260519.md), [final acceptance](../review/wp4_facade_alignment_acceptance_review_20260519.md) |
-| `WP5 Validation Harness` | complete | Add smoke, architecture, trace, boundary, information-leakage, and replay/evidence tests that prove the shared lifecycle and graph boundaries | [validation harness task family](wp5_validation_harness/validation_harness_wp5_20260519.md), [final acceptance](../review/wp5_validation_harness_acceptance_review_20260519.md) |
-| `WP6 Backend Profile Policy` | complete | Freeze backend profile taxonomy, parity budgets, resident-state boundaries, and backend capability exposure rules | [backend profile policy](wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md), [profile registry](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md), [parity budget registry](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md), [resident-state boundary rules](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md), [acceptance review](../review/wp6_backend_profile_policy_acceptance_review_20260519.md) |
-| `WP7 Backend Capability Materialization` | complete / accepted | Materialize accepted WP6 policy into machine-checkable registry, runtime capability projection, promotion evidence gates, and multi-fidelity entry conditions without promoting candidates | [backend capability materialization](wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md), [registry materialization](wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.md), [runtime capability projection](wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.md), [promotion evidence gates](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.md), [multi-fidelity entry conditions](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md), [acceptance review](../review/wp7_backend_capability_materialization_acceptance_review_20260519.md) |
-| `WP7.5 Training Path Facade Bridge` | complete / accepted | Migrate maintained batch training paths from `RuntimeFacade.runtime()` and raw `WorldBatchRuntime` stepping to facade-shaped execution and observation APIs before `WP8` depends on them | [training path facade bridge](wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md), [acceptance review](../review/wp75_training_path_facade_bridge_acceptance_review_20260520.md) |
-| `WP8 SCAL Learning Face` | complete / accepted | Define curriculum, evaluation, capability profiling, scenario generation, and learning evidence as explicit architecture and task vocabulary without reopening the simulation closure | [learning face task family](wp8_learning_face/learning_face_wp8_20260520.md), [acceptance review](../review/wp8_learning_face_acceptance_review_20260520.md) |
+| `WP4 Facade Alignment` | complete | Ensure pilot behavior is reachable through facade-shaped APIs without raw runtime access | [facade alignment task family](wp4_facade_alignment/facade_alignment_wp4_20260519.md), [final acceptance](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md) |
+| `WP5 Validation Harness` | complete | Add smoke, architecture, trace, boundary, information-leakage, and replay/evidence tests that prove the shared lifecycle and graph boundaries | [validation harness task family](wp5_validation_harness/validation_harness_wp5_20260519.md), [final acceptance](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md) |
+| `WP6 Backend Profile Policy` | complete | Freeze backend profile taxonomy, parity budgets, resident-state boundaries, and backend capability exposure rules | [backend profile policy](wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md), [profile registry](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md), [parity budget registry](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md), [resident-state boundary rules](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md) |
+| `WP7 Backend Capability Materialization` | complete / accepted | Materialize accepted WP6 policy into machine-checkable registry, runtime capability projection, promotion evidence gates, and multi-fidelity entry conditions without promoting candidates | [backend capability materialization](wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md), [registry materialization](wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.md), [runtime capability projection](wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.md), [promotion evidence gates](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.md), [multi-fidelity entry conditions](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md) |
+| `WP7.5 Training Path Facade Bridge` | complete / accepted | Migrate maintained batch training paths from `RuntimeFacade.runtime()` and raw `WorldBatchRuntime` stepping to facade-shaped execution and observation APIs before `WP8` depends on them | [training path facade bridge](wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.md) |
+| `WP8 SCAL Learning Face` | complete / accepted | Define curriculum, evaluation, capability profiling, scenario generation, and learning evidence as explicit architecture and task vocabulary without reopening the simulation closure | [learning face task family](wp8_learning_face/learning_face_wp8_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md) |
+| `WP9 Contract And Infrastructure Closure` | complete / accepted | Promote deferred DTO contracts, close small infrastructure residuals, add guard allowlists, and publish final index/acceptance evidence | [contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md), [DTO batch 1](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.md), [DTO batch 2](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.md), [infrastructure closure](wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.md), [guard enforcement](wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.md), [integration sync](wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md), [acceptance review](../review/wp9_contract_infrastructure_closure_acceptance_review_20260520.md) |
+| `Post-WP9 Architecture Route` | route selected | Establish the implementation order and anchor Phase 1 as WP10: causal runtime foundation, facade vertical slice, information/agency enforcement, backend/fidelity, capability composition, counterfactual/experiment generation | [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.md) |
+| `WP10 Causal Runtime Foundation` | complete / accepted | Implement Phase 1 of the post-WP9 route: manifest registry seed, minimal scheduling-window loop, request injection, same-window validation, event/snapshot evidence, and integration handoff | [causal runtime foundation](wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.md), [manifest registry](wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.md), [window loop / injection](wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.md), [same-window validation](wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.md), [event/snapshot evidence](wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.md), [integration handoff](wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp10_causal_runtime_foundation_acceptance_review_20260520.md) |
+| `WP11 Facade Vertical Slice And Provenance` | complete / accepted | Implement Phase 2 of the post-WP9 route: `ActionHoldPolicy`, information-state provenance labels, a WP10-seam facade/binding proof, consumer boundary pre-gates, and integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.md), [ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.md), [information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.md), [vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.md), [consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.md), [integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md) |
 
 ### WP2.5 Workstream Map
 
@@ -137,7 +150,7 @@ Output:
 - [WP8-A curriculum and scenario generation cluster](wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md)
 - [WP8-B evaluation and capability profiling cluster](wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md)
 - [WP8-C world-model interface and learning evidence cluster](wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md)
-- [WP8 learning face acceptance review](../review/wp8_learning_face_acceptance_review_20260520.md)
+- [WP8 learning face acceptance review](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md)
 
 WP8 gives the deferred SCAL learning face an accepted bounded task family. It does not
 add a second runtime lifecycle. It turns curriculum, evaluation, capability
@@ -159,6 +172,45 @@ WP8 workstream map:
 
 `WP8-B` and `WP8-C` are the highest-reasoning streams because they have to
 keep learning outputs comparable without drifting into hidden truth ownership.
+
+## WP9 Contract And Infrastructure Closure
+
+Output:
+
+- [WP9 Contract And Infrastructure Closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md)
+- [WP9-A DTO Promotion Batch 1](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.md)
+- [WP9-B DTO Promotion Batch 2](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.md)
+- [WP9-C Infrastructure Closure](wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.md)
+- [WP9-D Guard Enforcement](wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.md)
+- [WP9-E Integration And Index Sync](wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md)
+- [WP9 acceptance review](../review/wp9_contract_infrastructure_closure_acceptance_review_20260520.md)
+
+WP9 compresses the deferred items from accepted `WP3-WP8` reviews into one
+closure package. It promotes typed DTO surfaces, patches small infrastructure
+gaps, adds explicit guard allowlists, and keeps the post-WP9 roadmap separate
+from the accepted closure.
+
+WP9 is accepted with one tracked residual: `INF-6` real missile terminal
+effects capture remains a later owner task because the current damage system
+lacks a narrow maintained recorder seam. The residual is documented in the WP3
+task family and WP9 acceptance review.
+
+WP9 workstream map:
+
+- `WP9-A DTO Promotion Batch 1` promotes `RewardReport`, `TerminationSpec`,
+  `ObservationBatchPacket` metadata, and `ObservationViewSpec`.
+- `WP9-B DTO Promotion Batch 2` promotes `ActionIntentPacket`,
+  `CoordinationIntentPacket`, `AgentRole`, and `DecisionBelief`.
+- `WP9-C Infrastructure Closure` closes naming, diagnostics, capability
+  trigger, manifest registry, facade split, and WP3 event residual items.
+- `WP9-D Guard Enforcement` adds the documented guard allowlist and binding
+  smoke promotion.
+- `WP9-E Integration And Index Sync` is the serial publication and acceptance
+  pass.
+
+`WP9-A`, `WP9-B`, `WP9-D`, and `WP9-E` are accepted. `WP9-C` is accepted with
+the `INF-6` residual explicitly tracked; all other WP9 infrastructure items are
+closed.
 
 ## WP0 Scope
 
@@ -214,11 +266,11 @@ to complete the inventory.
 
 Input:
 
-- [WP1 pipeline inventory](pipeline_inventory_wp1_20260519.md)
+- [WP1 pipeline inventory](wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.md)
 
 Output:
 
-- [WP2 contract freeze](contract_freeze_wp2_20260519.md)
+- [WP2 contract freeze](wp2_contract_freeze/contract_freeze_wp2_20260519.md)
 
 WP2 should turn the inventory into a scoped contract plan. It should decide:
 
@@ -331,7 +383,7 @@ touch cross-layer semantics, belief boundaries, or adapter ownership.
 
 WP4 first-wave outputs are accepted as discovery inputs:
 
-- [WP4 first-wave acceptance review](../review/wp4_first_wave_acceptance_review_20260519.md)
+- [WP4 first-wave acceptance review](../review/archive/wp-superseded/wp4_first_wave_acceptance_review_20260519.md)
 - [WP4-A surface inventory draft](wp4_facade_alignment/wp4_surface_inventory_wp4a_20260519.md)
 - [WP4-B/C engagement-step alignment notes](wp4_facade_alignment/wp4_engagement_step_alignment_notes_20260519.md)
 - [WP4-D/E policy-binding alignment notes](wp4_facade_alignment/wp4_policy_binding_alignment_notes_20260519.md)
@@ -347,10 +399,10 @@ WP4 second-wave clusters:
 
 WP4 second-wave and integration outputs:
 
-- [WP4 second-wave acceptance review](../review/wp4_second_wave_acceptance_review_20260519.md)
+- [WP4 second-wave acceptance review](../review/archive/wp-superseded/wp4_second_wave_acceptance_review_20260519.md)
 - [WP4-I compatibility guard notes](wp4_facade_alignment/wp4_compat_guard_notes_20260519.md)
 - [WP4-F integration handoff](wp4_facade_alignment/wp4_integration_handoff_20260519.md)
-- [WP4 final acceptance review](../review/wp4_facade_alignment_acceptance_review_20260519.md)
+- [WP4 final acceptance review](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md)
 
 ## WP5 Validation Harness
 
@@ -386,7 +438,7 @@ WP4 explicitly deferred.
 
 WP5 first-wave outputs are accepted:
 
-- [WP5 first-wave acceptance review](../review/wp5_first_wave_acceptance_review_20260519.md)
+- [WP5 first-wave acceptance review](../review/archive/wp-superseded/wp5_first_wave_acceptance_review_20260519.md)
 - [WP5-A harness inventory notes](wp5_validation_harness/wp5_harness_inventory_notes_20260519.md)
 - [WP5-B design/boundary notes](wp5_validation_harness/wp5_design_boundary_notes_20260519.md)
 - [WP5-C trace/replay gates notes](wp5_validation_harness/wp5_trace_replay_gates_notes_20260519.md)
@@ -400,10 +452,10 @@ WP5 second-wave clusters:
 
 WP5 second-wave and final outputs are accepted:
 
-- [WP5-D information/belief acceptance review](../review/wp5_information_belief_acceptance_review_20260519.md)
+- [WP5-D information/belief acceptance review](../review/archive/wp-superseded/wp5_information_belief_acceptance_review_20260519.md)
 - [WP5-D information/belief notes](wp5_validation_harness/wp5_information_belief_notes_20260519.md)
 - [WP5-E smoke promotion notes](wp5_validation_harness/wp5_smoke_promotion_notes_20260519.md)
-- [WP5 validation harness acceptance review](../review/wp5_validation_harness_acceptance_review_20260519.md)
+- [WP5 validation harness acceptance review](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md)
 
 ## WP6 Backend Profile Policy
 
@@ -416,7 +468,7 @@ Output:
 - [WP6-B parity budget registry](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md)
 - [WP6-C + WP6-D integration and index sync](wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md)
 - [WP6-C1 resident-state boundary rules](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md)
-- [WP6 backend profile policy acceptance review](../review/wp6_backend_profile_policy_acceptance_review_20260519.md)
+- [WP6 backend profile policy acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md)
 
 WP6 closes the backend profile and parity-budget gap behind contracts. It
 names the profile vocabulary, budget records, resident-state boundaries, and
@@ -440,7 +492,7 @@ WP6 workstream map:
   and [GPU runtime binding tests](../../../tests/test_gpu_runtime_bindings.py).
 - `WP6-D Integration And Index Sync`:
   [integration and index sync](wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md) and
-  [acceptance review](../review/wp6_backend_profile_policy_acceptance_review_20260519.md).
+  [acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md).
 
 ## WP7 Backend Capability Materialization
 
@@ -456,7 +508,7 @@ Output:
 - [WP7-D multi-fidelity entry conditions cluster](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md)
 - [WP7-D multi-fidelity entry conditions notes](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_notes_20260519.md)
 - [WP7-E integration and index sync cluster](wp7_backend_capability_materialization/wp7_integration_and_index_sync_cluster_20260519.md)
-- [WP7 backend capability materialization acceptance review](../review/wp7_backend_capability_materialization_acceptance_review_20260519.md)
+- [WP7 backend capability materialization acceptance review](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md)
 
 WP7 is the accepted post-WP6 documentation and implementation-preparation line.
 It turns accepted backend profile policy into materialized registry, runtime

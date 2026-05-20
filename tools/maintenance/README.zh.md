@@ -20,6 +20,11 @@
   - 审计中英文文档配对覆盖率，并通过兼容 OpenAI 的 API 批量翻译 Markdown 对等文件。
   - 通过在翻译前屏蔽 Markdown 链接目标并在翻译后恢复它们，来保持 Markdown 链接目标不变。
   - 将仓库工作空间绝对路径的文件链接重写为相对 Markdown 目标。
+- [wp_doc_closure_audit.py](wp_doc_closure_audit.py)
+  - 审计 simulation-architecture WP task/review closure，包括必需伴生文件、
+    acceptance review 链接和 WP 作用域内 Markdown 链接健康度。
+  - 输出只读清单供 closure subagent 使用，而不是让主实现路径手工重写
+    README 或 review index。
 
 维护指南：
 
@@ -138,6 +143,16 @@ python3 tools/maintenance/translate_docs_batch.py translate \
 python3 tools/maintenance/translate_docs_batch.py rewrite-links \
   --files docs/task/flight_dynamics/program/*.md
 ```
+
+分配或验收 closure lane 前，审计一个 WP closure package：
+
+```bash
+python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9
+python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
+```
+
+当 error-level closure gap 应导致命令失败时使用 `--strict`。warning 应被视为
+closure subagent 的工作项，而不是主实现流 blocker。
 
 翻译所需的 API 环境变量：
 

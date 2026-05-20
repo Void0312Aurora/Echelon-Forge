@@ -58,6 +58,13 @@ Capability support is declared by accepted profile metadata and validation
 evidence, not inferred from helper/probe availability.
 ```
 
+Trigger note:
+
+- Richer projection MUST stay dormant until at least one non-reference backend
+  profile is itself maintained.
+- Registry materialization, helper/probe bindings, and diagnostics exports
+  alone do not satisfy that trigger.
+
 ## 2. Scope Boundary
 
 WP7 is allowed to:

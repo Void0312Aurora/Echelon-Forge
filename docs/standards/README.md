@@ -145,12 +145,16 @@ Additional maintained supplements:
   common core just because the current implementation started in one domain.
 - When work is split across subagents or workers, follow
   [Subagent Usage Policy](governance/subagent_usage_policy.md).
+- When a simulation-architecture WP is implementation-complete but still needs
+  publication cleanup, use
+  [WP Closure Lane Policy](governance/wp_closure_lane_policy.md).
 
 ## Related Documents
 
 - [Bilingual Documentation Policy](governance/bilingual_documentation_policy.md)
 - [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
 - [Subagent Usage Policy](governance/subagent_usage_policy.md)
+- [WP Closure Lane Policy](governance/wp_closure_lane_policy.md)
 - [Document Alignment Map](overview/document_alignment_map.md)
 - [Simulation Conventions](foundation/conventions.md)
 - [Scenario Configuration Guide](bridge/scenario_guide.md)

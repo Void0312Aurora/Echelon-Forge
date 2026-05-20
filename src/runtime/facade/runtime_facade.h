@@ -80,6 +80,8 @@ public:
     ObservationBatchPacket export_observation_packet(const std::vector<WorldEntityRef>& refs) const;
     ObservationBatchPacket export_observation_packet(const ObservationBatchRequest& request) const;
     EngagementEventPacket export_engagement_event_packet(const EngagementBatchRequest& request) const;
+    std::vector<DiagnosticsTrace> export_diagnostics_traces(const EngagementBatchRequest& request) const;
+    RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);
 
 private:
     ObservationBatchPacket build_observation_packet(

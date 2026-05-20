@@ -183,6 +183,15 @@ The model refines the earlier
 plan. The important addition is that domain behavior is a set of model families
 attached to the shared lifecycle, not separate runtime stacks.
 
+RuntimeFacade governance rule:
+
+- Count maintained public request/result methods only. Exclude constructors,
+  accessors, and compatibility-only escape hatches.
+- Once the maintained count approaches roughly 40 methods, document and plan a
+  split into Session, Setup, Execution, Observation, Diagnostics, Engagement,
+  and Capability groups before adding more mainline surface area.
+- These group names are governance buckets, not a forced class-name freeze.
+
 ## 6. Canonical Semantic Lifecycle
 
 Every maintained scenario step should be explainable through these semantic
@@ -263,6 +272,10 @@ Events are ordered deterministically by `(timestamp, priority, event_id)`.
 sequence. Insert order must not be the only tie-breaker for maintained
 simulation behavior because parallel stage nodes and mixed CPU/GPU producers
 would make replay fragile.
+
+The scheduler-side field name for clock-domain merge semantics is
+`clock_merge_policy`. Reserve `merge_policy` for cross-layer request contracts
+such as `ActionIntentPacket` and `CoordinationIntentPacket`.
 
 Clock domains use nested triggering by default. The base tick owns the outer
 deterministic schedule, and lower-rate nodes run on declared multiples or
@@ -590,9 +603,10 @@ Performance work must preserve the same semantic lifecycle.
 - `RuntimeCapabilities` is a projection of maintained profile metadata and
   probeable deployment facts; helper or probe availability alone cannot claim
   exact GPU, resident-state, shadow, device observation, or multi-fidelity
-  support. Current WP7 acceptance keeps those support claims false until a
-  future promotion review updates the registry, parity budget, projection
-  adapter, and validation evidence together.
+  support. Richer projection must not start until at least one non-reference
+  backend profile is itself maintained and has accepted registry, parity
+  budget, projection-adapter, and validation evidence. Current WP7 acceptance
+  therefore keeps those support claims false.
 - Rust remains a possible future service or serialization boundary, not a
   near-term replacement for the C++ simulation backend.
 

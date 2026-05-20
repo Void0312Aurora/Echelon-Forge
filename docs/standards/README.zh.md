@@ -137,12 +137,15 @@
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
 - 当工作被拆分给多个 subagent 或 worker 时，应遵循
   [Subagent 使用规范](governance/subagent_usage_policy.zh.md)。
+- 当 simulation-architecture WP 已完成实现但仍需要发布收口时，使用
+  [WP Closure Lane Policy](governance/wp_closure_lane_policy.zh.md)。
 
 ## 相关文档
 
 - [双语文档政策](governance/bilingual_documentation_policy.zh.md)
 - [双语文档簇](governance/bilingual_document_clusters.zh.md)
 - [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
+- [WP Closure Lane Policy](governance/wp_closure_lane_policy.zh.md)
 - [文档对齐映射](overview/document_alignment_map.zh.md)
 - [仿真约定](foundation/conventions.zh.md)
 - [场景配置指南](bridge/scenario_guide.zh.md)

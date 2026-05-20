@@ -25,6 +25,9 @@ WP3 把已经冻结的交战契约推进为第一条跨领域实现试点。该�
   `simulation_kernel_weapon_api.cpp`。
 - `RuntimeFacade::export_engagement_event_packet()` 目前仍是显式 packet shell；
   在航空与舰载 event shape 收敛前，不应把 live launch 行为接入 facade。
+- `RuntimeFacade` 现在也提供专用的 `export_diagnostics_traces(...)`
+  facade 路径，因此 `DiagnosticsTrace` 不再只是 engagement export 中的
+  piggyback evidence。
 - `tests/runtime/engagement/` 现在包含航空 launch accepted/rejected、舰炮 launch、
   munition lifecycle 镜像、合成 effects 与 damage report 的 adapter-level 验证。
   这些测试证明的是契约词汇，而不是最终 event-bus ownership。
@@ -193,14 +196,19 @@ cmake --build build-local-win --target ef_core ef_py -j2
 2. `WP3-G Diagnostics Trace`。
 3. `WP3-I Integration And Cleanup`。
 
-WP3 验收范围外的后续：
+WP9 基础设施闭合说明：
 
-1. 增补 VLS-specific naval launch 覆盖，使舰载平台上的 `fire_missile()` 与
-   `fire_naval_weapon()` 都被表示。
-2. 把 lifecycle/effects/damage 构造从 test-local adapter logic 提升到维护中的
-   conversion/export seam。
-3. 增加 `DiagnosticsTrace` id 串联 track、launch request/event、munition lifecycle、
-   effects、damage 与 observation version。
+1. `INF-6` 仍保留为 blocked handoff。真实导弹 terminal hit resolution 已经在
+   维护中的 guidance/effects system 中执行，但当前 recent-event DTO capture
+   仍主要通过 naval direct-fire 与 debug/synthetic proximity-hit recorder
+   进入。`damage_system.h` 目前没有窄的 kernel recorder seam，因此 WP9
+   选择把它保留为显式交接，而不是在并行 ownership 下引入更宽的 shared-world
+   callback。
+2. `INF-7` 现已被明确为 compatibility wrapper，而不是未记录的临时方案。
+   有界的 `RecentEngagementEvents` buffer 继续保留，但它们共享一个单调递增的
+   `next_engagement_event_id_` 分配器，并在导出时按 event/report/trace id 排序，
+   使 facade/replay consumer 可以把它视为与 event queue 对齐的 recent window，
+   而不是依赖插入顺序的偶然结果。
 
 ## 十、退出标准
 

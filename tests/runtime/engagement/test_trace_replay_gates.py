@@ -158,25 +158,50 @@ def test_current_trace_ancestry_is_linkable_with_replay_sortable_ids() -> None:
     assert all(float(track.source_time_s) >= 0.0 for track in packet.track_packets)
 
 
-def test_current_trace_replay_gates_do_not_assume_future_metadata_surfaces() -> None:
+def test_current_trace_replay_gates_observation_packet_metadata_stays_explicit_and_separate() -> None:
     engagement_packet = ef_py.EngagementEventPacket()
     observation_packet = ef_py.ObservationBatchPacket()
     diagnostics_trace = ef_py.DiagnosticsTrace()
     facade = ef_py.RuntimeFacade(1)
 
-    for field in ("snapshot_version", "barrier_id", "source_time_s", "event_sequence"):
-        assert not hasattr(engagement_packet, field)
-        assert not hasattr(observation_packet, field)
+    for field in (
+        "snapshot_version",
+        "barrier_id",
+        "barrier_sequence",
+        "barrier_detail",
+        "source_time_s",
+        "producer_node_id",
+    ):
+        assert hasattr(engagement_packet, field)
 
-    assert hasattr(diagnostics_trace, "observation_packet_version")
     for field in ("snapshot_version", "barrier_id", "source_time_s"):
-        assert not hasattr(diagnostics_trace, field)
+        assert hasattr(observation_packet, field)
+
+    for field in (
+        "observation_packet_version",
+        "source_snapshot_version",
+        "barrier_id",
+        "barrier_detail",
+        "source_time_s",
+        "source_node_id",
+        "export_node_id",
+    ):
+        assert hasattr(diagnostics_trace, field)
+
+    assert observation_packet.barrier_id == "export"
+    assert int(observation_packet.snapshot_version) == 0
+    assert float(observation_packet.source_time_s) == 0.0
+    assert engagement_packet.barrier_id == "export"
+    assert int(engagement_packet.barrier_sequence) == 0
+    assert engagement_packet.barrier_detail == "maintained_facade_export"
+    assert diagnostics_trace.barrier_id == "export"
 
     assert hasattr(engagement_packet, "diagnostics_traces")
     for method in (
         "export_diagnostics_packet",
         "export_diagnostics_trace_packet",
-        "export_diagnostics_traces",
         "get_diagnostics_traces",
     ):
         assert not hasattr(facade, method)
+
+    assert hasattr(facade, "export_diagnostics_traces")

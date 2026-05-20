@@ -62,6 +62,11 @@ Project principle:
   status updates.
 - Status docs and README indexes must be synchronized with the final
   authoritative location.
+- WP implementation streams may stop at `Mergeable`; the dedicated closure lane
+  owns acceptance review, README/index, archive, and required bilingual sync
+  before a WP is marked `Closed`.
+- Use [WP Closure Lane Policy](wp_closure_lane_policy.md) when a delegated task
+  includes simulation-architecture WP publication or acceptance cleanup.
 
 ## Linking Rule
 

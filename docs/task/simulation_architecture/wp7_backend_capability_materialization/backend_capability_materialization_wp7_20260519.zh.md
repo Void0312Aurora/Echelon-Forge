@@ -49,6 +49,13 @@ WP7 继承 WP6 的核心规则：
 不能从 helper/probe 是否存在推断出来。
 ```
 
+Trigger 说明：
+
+- richer projection 必须保持休眠，直到至少一个 non-reference backend profile
+  本身进入 maintained。
+- registry materialization、helper/probe binding 与 diagnostics export
+  单独都不足以满足这个 trigger。
+
 ## 2. 范围边界
 
 WP7 可以：

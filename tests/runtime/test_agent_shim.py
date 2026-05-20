@@ -13,6 +13,7 @@ from python.rl.runtime.agent_shim import (
     OBS_RAW_WORLD_TRUTH,
     ActionIntentCompat,
     CoordinationIntentCompat,
+    DecisionBeliefCompat,
     observation_provenance,
     roster_slot_role,
     single_agent_role,
@@ -96,6 +97,58 @@ def test_maintained_agent_role_uses_facade_observation_packet_metadata():
     assert schema["decision_model_ref"] == {"kind": "policy", "id": "blue-policy-v1"}
 
 
+def test_maintained_agent_role_rejects_compatibility_adapter_and_truth_inputs():
+    with pytest.raises(
+        ValueError,
+        match="maintained consumer fixtures must use provenance-labeled ObservationPacket/DecisionBelief inputs",
+    ):
+        single_agent_role(
+            agent_id=10,
+            maintained_status=MAINTAINED,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="maintained consumer fixtures must use provenance-labeled ObservationPacket/DecisionBelief inputs",
+    ):
+        single_agent_role(
+            agent_id=10,
+            information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+            maintained_status=MAINTAINED,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="maintained consumer fixtures must use provenance-labeled ObservationPacket/DecisionBelief inputs",
+    ):
+        single_agent_role(
+            agent_id=10,
+            information_state_source=observation_provenance(
+                OBS_RAW_WORLD_TRUTH,
+                diagnostics_note="debug-only truth fixture",
+            ),
+            maintained_status=MAINTAINED,
+        )
+
+
+def test_diagnostics_only_agent_role_keeps_truth_fixture_explicitly_allowed():
+    role = single_agent_role(
+        agent_id=10,
+        information_state_source=observation_provenance(
+            OBS_RAW_WORLD_TRUTH,
+            diagnostics_note="debug-only truth fixture",
+        ),
+        maintained_status=DIAGNOSTICS_ONLY,
+    )
+
+    schema = role.as_dict()
+
+    assert schema["maintained_status"] == DIAGNOSTICS_ONLY
+    assert schema["information_state_source"]["maintained_status"] == DIAGNOSTICS_ONLY
+    assert schema["information_state_source"]["information_state_layer"] == "WorldTruth"
+    assert schema["information_state_source"]["diagnostics_note"] == "debug-only truth fixture"
+
+
 def test_diagnostics_agent_role_does_not_promote_oracle_belief_to_policy_input():
     oracle_source = observation_provenance(
         OBS_DIAGNOSTICS_ORACLE,
@@ -140,6 +193,12 @@ def test_agent_role_exposes_five_elements_without_runtime_dependency():
     assert schema["decision_model_ref"]["kind"] == "scripted_controller"
     assert schema["action_interface"] == "PilotActionAssignmentCompat"
 
+    contract = role.as_contract()
+    assert contract["role"]["role_id"] == "agent:2:42"
+    assert contract["authority_scope"]["has_world_index"] is True
+    assert contract["information_state_source"]["source_label"] == OBS_AGENT_OBSERVATION_COMPAT
+    assert contract["action_interface"]["kind"] == "PilotActionAssignmentCompat"
+
 
 def test_roster_slot_role_keeps_role_metadata():
     role = roster_slot_role(
@@ -177,6 +236,11 @@ def test_action_intent_wrapper_does_not_mutate_assignment():
     assert intent.target_entity_id == 11
     assert intent.merge_policy == MERGE_REJECT_ON_CONFLICT
     assert intent.as_dict()["input_snapshot_version"] == "global:9"
+    contract = intent.as_contract()
+    assert contract["source_id"] == role.role_id
+    assert contract["target"] == {"world_index": 0, "entity_id": 11}
+    assert contract["action_interface"]["kind"] == "PilotActionAssignmentCompat"
+    assert contract["has_pilot_action"] is True
 
 
 def test_coordination_intent_records_payload_fields():
@@ -200,6 +264,11 @@ def test_coordination_intent_records_payload_fields():
     assert intent.payload_fields() == ("mission_command", "leader_intent")
     assert intent.as_dict()["roster_scope"] == {"team_id": 1}
     assert intent.as_dict()["update_clock"] == "leader_step"
+    contract = intent.as_contract()
+    assert contract["source_type"] == "policy"
+    assert contract["target_roster"]["world_index"] == 0
+    assert contract["produced_tasking_refs"][0]["kind"] == "tasking"
+    assert contract["produced_leader_intent_refs"][0]["kind"] == "leader_intent"
 
 
 def test_action_and_coordination_intents_preserve_policy_boundary_metadata():
@@ -260,4 +329,54 @@ def test_invalid_status_and_merge_policy_are_rejected():
             role=single_agent_role(agent_id=1),
             payload=object(),
             merge_policy="random_order",
+        )
+
+
+def test_decision_belief_contract_allows_maintained_observation_derived_belief():
+    belief = DecisionBeliefCompat(
+        belief_id="belief:track-kf:7",
+        source_observation_versions=("global:11", "track:7"),
+        memory_or_estimator_ref="estimator:kalman-track",
+        confidence_kind="interval",
+        confidence=0.91,
+        lower_bound=0.75,
+        upper_bound=0.98,
+        maintained_status=MAINTAINED,
+    )
+
+    schema = belief.as_dict()
+
+    assert schema["belief_id"] == "belief:track-kf:7"
+    assert schema["source_observation_versions"] == ("global:11", "track:7")
+    assert schema["memory_or_estimator_ref"] == "estimator:kalman-track"
+    assert schema["confidence_shape"]["kind"] == "interval"
+    assert schema["maintained_status"] == MAINTAINED
+    assert schema["uses_truth_state"] is False
+
+
+def test_decision_belief_truth_and_raw_ecs_inputs_are_diagnostics_only():
+    belief = DecisionBeliefCompat(
+        belief_id="belief:oracle:1",
+        source_observation_versions=("truth:raw",),
+        memory_or_estimator_ref="oracle:teacher",
+        maintained_status=DIAGNOSTICS_ONLY,
+        diagnostics_reason="post-hoc oracle audit",
+        uses_truth_state=True,
+        uses_raw_ecs=True,
+    )
+
+    schema = belief.as_dict()
+
+    assert schema["maintained_status"] == DIAGNOSTICS_ONLY
+    assert schema["diagnostics_reason"] == "post-hoc oracle audit"
+    assert schema["uses_truth_state"] is True
+    assert schema["uses_raw_ecs"] is True
+
+    with pytest.raises(ValueError):
+        DecisionBeliefCompat(
+            belief_id="belief:bad",
+            source_observation_versions=("truth:raw",),
+            memory_or_estimator_ref="oracle:teacher",
+            maintained_status=MAINTAINED,
+            uses_truth_state=True,
         )

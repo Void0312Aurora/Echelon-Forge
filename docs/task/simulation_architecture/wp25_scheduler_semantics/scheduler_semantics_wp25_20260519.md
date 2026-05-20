@@ -192,7 +192,13 @@ Typical merge behavior:
 | Sensor/track scans | Produce snapshots with source time and shard versions; consumers must not assume physics tick equality. |
 | Independent backend or resident-state clock | Not maintained until a backend profile declares sync barriers, event export order, and parity budget. |
 
-Merge policy values:
+Clock merge policy values:
+
+The scheduler-side field name for these clock-domain merge semantics is
+`clock_merge_policy`. This name is reserved for `ClockDomain` and
+`StageNodeManifest` governance so it does not collide with the cross-layer
+request field `merge_policy` used by `ActionIntentPacket` and
+`CoordinationIntentPacket`.
 
 | Value | Meaning |
 |-------|---------|
@@ -202,6 +208,16 @@ Merge policy values:
 | `enqueue_event` | Producer output becomes a timestamped event. |
 | `defer_to_next_window` | Producer output is not visible until the next window. |
 | `reject_on_ambiguous_order` | Scheduler or adapter rejects the input if deterministic order cannot be proven. |
+
+Registry coverage note:
+
+- The normative example registry must cover `P0 ContentCompile`,
+  `P1 WorldSetup`, `P2 TaskingIntent`, `P3 CommandDelivery`,
+  `P4 PlatformControl`, `P5 PhysicsStep`, `P6 SenseTrackLink`,
+  `P7 FireControlLaunch`, `P8 MunitionLifecycle`, `P9 EffectsDamage`, and
+  `P10 ObservationExport`.
+- The canonical per-stage examples are maintained in
+  [wp25_manifest_event_cluster_20260519.md](wp25_manifest_event_cluster_20260519.md).
 
 ## 7. Deterministic Replay Contract
 

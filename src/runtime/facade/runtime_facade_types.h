@@ -10,6 +10,8 @@
 #include "core/interfaces/observation.h"
 #include "core/mission/episode/execution_episode_controller.h"
 #include "runtime/contracts/engagement_contracts.h"
+#include "runtime/contracts/policy_contracts.h"
+#include "runtime/contracts/runtime_dto_contracts.h"
 #include "runtime/contracts/world_batch_contracts.h"
 
 struct RuntimeCapabilities {
@@ -80,6 +82,14 @@ struct ExecutionBatchStepRequest {
 };
 
 struct ObservationBatchPacket {
+    std::uint64_t snapshot_version = 0;
+    std::string barrier_id = "export";
+    double source_time_s = 0.0;
+    InformationStateSource provenance = make_information_state_source(
+        kPolicyInformationStateAgentObservation,
+        kPolicySourceLabelFacadeObservationPacket,
+        kPolicyMaintainedStatusMaintained
+    );
     std::vector<WorldEntityRef> refs;
     std::vector<AgentObservation> agent_observations;
     std::vector<InstrumentState> instrument_states;
@@ -90,6 +100,22 @@ struct ObservationBatchPacket {
 };
 
 struct EngagementEventPacket {
+    std::uint64_t snapshot_version = 0;
+    std::string barrier_id = "export";
+    std::uint64_t barrier_sequence = 0;
+    std::string barrier_detail = "maintained_facade_export";
+    double source_time_s = 0.0;
+    std::string producer_node_id;
+    InformationStateSource packet_provenance = make_information_state_source(
+        kPolicyInformationStateTrackState,
+        kPolicySourceLabelTrackStatePacket,
+        kPolicyMaintainedStatusMaintained
+    );
+    InformationStateSource diagnostics_provenance = make_information_state_source(
+        kPolicyInformationStateDecisionBelief,
+        kPolicySourceLabelWorldTruthDiagnostics,
+        kPolicyMaintainedStatusDiagnosticsOnly
+    );
     std::vector<EngagementEntityRef> refs;
     std::vector<std::uint64_t> trace_ids;
     std::vector<TrackPacket> track_packets;
@@ -108,9 +134,75 @@ struct ExecutionBatchStepResult {
     std::vector<bool> truncated;
     std::vector<std::array<double, 4>> status_vectors;
     std::vector<std::string> termination_reasons;
+    std::vector<TerminationSpec> termination_specs;
     std::vector<std::string> reward_breakdown_jsons;
+    std::vector<RewardReport> reward_reports;
     std::vector<StepInfoProducts> step_infos;
     std::vector<bool> step_info_valid_flags;
     std::vector<bool> controller_state_changed_flags;
     ObservationBatchPacket observation_packet;
+};
+
+struct RuntimeWindowActionRequest {
+    ActionIntentPacket action_intent{};
+    std::string source_layer = "facade";
+    std::string input_snapshot_version;
+};
+
+struct RuntimeWindowInputRecord {
+    RuntimeWindowActionRequest request{};
+    std::string reason;
+};
+
+struct RuntimeWindowSchedulingContext {
+    std::string window_id;
+    std::uint64_t world_id = 0;
+    double source_time_s = 0.0;
+    std::uint64_t barrier_sequence = 0;
+    std::string current_barrier_id;
+    std::vector<RuntimeWindowInputRecord> accepted_inputs;
+    std::vector<RuntimeWindowInputRecord> deferred_inputs;
+    std::vector<RuntimeWindowInputRecord> rejected_inputs;
+    std::vector<RuntimeWindowInputRecord> expired_inputs;
+};
+
+struct RuntimeWindowBarrierRecord {
+    std::uint64_t sequence = 0;
+    std::string barrier_id;
+    std::string node_id;
+};
+
+struct RuntimeWindowVisibilityRecord {
+    std::string barrier_id;
+    std::size_t visible_input_count = 0;
+};
+
+struct RuntimeWindowNodeExecutionRecord {
+    std::string node_id;
+    std::string read_snapshot_policy;
+    std::string write_commit_policy;
+    std::size_t visible_input_count = 0;
+};
+
+struct RuntimeWindowRequest {
+    std::string window_id;
+    std::uint64_t world_id = 0;
+    double source_time_s = 0.0;
+    std::vector<RuntimeWindowActionRequest> action_requests;
+    ObservationBatchRequest observation_request;
+    EngagementBatchRequest engagement_request;
+    bool export_observation = true;
+    bool export_engagement = true;
+    bool export_diagnostics = true;
+};
+
+struct RuntimeWindowResult {
+    RuntimeWindowSchedulingContext context;
+    std::vector<RuntimeWindowBarrierRecord> barrier_trace;
+    std::vector<RuntimeWindowVisibilityRecord> visibility_trace;
+    std::vector<RuntimeWindowNodeExecutionRecord> executed_nodes;
+    std::vector<RuntimeWindowInputRecord> injected_inputs;
+    ObservationBatchPacket observation_packet;
+    EngagementEventPacket engagement_packet;
+    std::vector<DiagnosticsTrace> diagnostics_traces;
 };

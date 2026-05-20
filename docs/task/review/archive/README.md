@@ -1,9 +1,8 @@
 # Review Archive
 
-Historical architecture-review snapshots.
+Historical, superseded, and completed architecture-review snapshots.
 
-## Index
-
-- [architecture_review_20260516.md](./architecture_review_20260516.md)
-- [architecture_review_followup_freeze_20260516.md](./architecture_review_followup_freeze_20260516.md)
-
+- [pre-wp/](./pre-wp/README.md) — Initial architecture reviews (2026-05-16)
+- [temp/](./temp/README.md) — Original external architecture critiques (temp-01, temp-02)
+- [wp-acceptance/](./wp-acceptance/README.md) — Completed WP2.5-WP8 final acceptance reviews
+- [wp-superseded/](./wp-superseded/README.md) — Superseded wave/plan reviews

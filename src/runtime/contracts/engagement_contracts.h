@@ -52,6 +52,7 @@ struct LaunchEvent {
     EngagementEntityRef spawned_munition{};
     bool has_spawned_munition = false;
     double event_time_s = 0.0;
+    std::string producer_node_id;
 };
 
 struct MunitionLifecyclePacket {
@@ -85,6 +86,7 @@ struct EffectsEvent {
     double quality = 0.0;
     double confidence = 0.0;
     std::string effect_family = "unknown";
+    std::string producer_node_id;
 };
 
 struct DamageReport {
@@ -102,6 +104,7 @@ struct DamageReport {
     std::string loss_state_to = "unknown";
     bool destroyed = false;
     double report_time_s = 0.0;
+    std::string producer_node_id;
 };
 
 struct DiagnosticsTrace {
@@ -115,4 +118,10 @@ struct DiagnosticsTrace {
     std::uint64_t effects_event_id = 0;
     std::uint64_t damage_report_id = 0;
     std::uint64_t observation_packet_version = 0;
+    std::uint64_t source_snapshot_version = 0;
+    std::string barrier_id = "export";
+    std::string barrier_detail = "maintained_facade_export";
+    double source_time_s = 0.0;
+    std::string source_node_id;
+    std::string export_node_id;
 };

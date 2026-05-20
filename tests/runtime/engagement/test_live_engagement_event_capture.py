@@ -37,6 +37,8 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
     assert "fire_missile" not in getter_body.group("body")
     assert "fire_naval_weapon" not in getter_body.group("body")
     assert "debug_apply_proximity_hit" not in getter_body.group("body")
+    assert "lhs.event_id < rhs.event_id" in getter_body.group("body")
+    assert "lhs.trace_id < rhs.trace_id" in getter_body.group("body")
 
 
 def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> None:
@@ -52,6 +54,27 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
     assert "DiagnosticsTrace trace{}" in damage_api
     assert "pending_effects_launch_event_id_ = launch_event_id" in weapon_api
     assert "capture_engagement_damage_state(target_id)" in damage_api
+
+
+def test_recent_event_storage_uses_shared_monotonic_ids_and_queue_aligned_sorted_exports() -> None:
+    header = _read("src/core/engine/simulation_kernel.h")
+    observation_api = _read("src/core/engine/simulation_kernel_observation_api.cpp")
+    weapon_api = _read("src/core/engine/simulation_kernel_weapon_api.cpp")
+    damage_api = _read("src/core/engine/simulation_kernel_damage_debug_api.cpp")
+
+    assert "std::uint64_t next_engagement_event_id_ = 1;" in header
+    assert "static constexpr std::size_t kMaxRecentEngagementEvents = 64;" in header
+    assert "const std::uint64_t event_id = next_engagement_event_id_++;" in weapon_api
+    assert "trace.trace_id = next_engagement_event_id_++;" in weapon_api
+    assert "const std::uint64_t effects_event_id = next_engagement_event_id_++;" in damage_api
+    assert "const std::uint64_t damage_report_id = next_engagement_event_id_++;" in damage_api
+    assert "const std::uint64_t trace_id = next_engagement_event_id_++;" in damage_api
+    for comparator in (
+        "lhs.event_id < rhs.event_id",
+        "lhs.report_id < rhs.report_id",
+        "lhs.trace_id < rhs.trace_id",
+    ):
+        assert comparator in observation_api
 
 
 def _engagement_ref(world_index: int, entity_id: int) -> ef_py.EngagementEntityRef:
@@ -244,3 +267,59 @@ def test_facade_exports_recent_live_engagement_events() -> None:
         int(trace.launch_event_id) == int(packet.launch_events[0].event_id)
         for trace in packet.diagnostics_traces
     )
+
+
+def test_facade_dedicated_diagnostics_surface_exports_recent_and_observation_trace_rows() -> None:
+    facade = ef_py.RuntimeFacade(1)
+    if not facade.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+
+    world = facade.runtime().world(0)
+    blue_id = int(
+        world.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            5000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            250.0,
+            0.0,
+        )
+    )
+    red_id = int(
+        world.spawn_unit(
+            ef_py.Side.Red,
+            "Aircraft",
+            0.0,
+            30000.0,
+            5000.0,
+            180.0,
+            0.0,
+            0.0,
+            0.0,
+            -250.0,
+            0.0,
+        )
+    )
+    world.set_unit_ammo(blue_id, 4, 4)
+    world.set_weapon_cooldown(blue_id, 0.0, -1.0)
+    world.set_contact_list(blue_id, [_make_detection(red_id)])
+
+    missile_id = int(world.fire_missile(blue_id, red_id))
+    assert missile_id > 0
+
+    request = ef_py.EngagementBatchRequest()
+    request.refs = [_engagement_ref(0, blue_id)]
+    request.trace_ids = [95001, 95002]
+    request.include_track_packets = False
+    request.include_diagnostics_traces = True
+    traces = facade.export_diagnostics_traces(request)
+
+    assert len(traces) >= 2
+    assert any(int(trace.launch_event_id) > 0 for trace in traces)
+    assert any(int(trace.track_id) == red_id for trace in traces)
+    assert any(int(trace.munition.entity_id) == missile_id for trace in traces)

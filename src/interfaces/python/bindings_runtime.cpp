@@ -9,6 +9,7 @@
 
 #include "core/engine/world_batch_runtime.h"
 #include "runtime/contracts/engagement_contracts.h"
+#include "runtime/contracts/policy_contracts.h"
 #include "runtime/facade/runtime_facade.h"
 
 void bind_runtime(nb::module_& m) {
@@ -89,7 +90,8 @@ void bind_runtime(nb::module_& m) {
         .def_rw("cooldown_delta_s", &LaunchEvent::cooldown_delta_s)
         .def_rw("spawned_munition", &LaunchEvent::spawned_munition)
         .def_rw("has_spawned_munition", &LaunchEvent::has_spawned_munition)
-        .def_rw("event_time_s", &LaunchEvent::event_time_s);
+        .def_rw("event_time_s", &LaunchEvent::event_time_s)
+        .def_rw("producer_node_id", &LaunchEvent::producer_node_id);
 
     nb::class_<MunitionLifecyclePacket>(m, "MunitionLifecyclePacket")
         .def(nb::init<>())
@@ -122,7 +124,8 @@ void bind_runtime(nb::module_& m) {
         .def_rw("nearest_approach_time_s", &EffectsEvent::nearest_approach_time_s)
         .def_rw("quality", &EffectsEvent::quality)
         .def_rw("confidence", &EffectsEvent::confidence)
-        .def_rw("effect_family", &EffectsEvent::effect_family);
+        .def_rw("effect_family", &EffectsEvent::effect_family)
+        .def_rw("producer_node_id", &EffectsEvent::producer_node_id);
 
     nb::class_<DamageReport>(m, "DamageReport")
         .def(nb::init<>())
@@ -139,7 +142,8 @@ void bind_runtime(nb::module_& m) {
         .def_rw("loss_state_from", &DamageReport::loss_state_from)
         .def_rw("loss_state_to", &DamageReport::loss_state_to)
         .def_rw("destroyed", &DamageReport::destroyed)
-        .def_rw("report_time_s", &DamageReport::report_time_s);
+        .def_rw("report_time_s", &DamageReport::report_time_s)
+        .def_rw("producer_node_id", &DamageReport::producer_node_id);
 
     nb::class_<DiagnosticsTrace>(m, "DiagnosticsTrace")
         .def(nb::init<>())
@@ -152,7 +156,140 @@ void bind_runtime(nb::module_& m) {
         .def_rw("munition", &DiagnosticsTrace::munition)
         .def_rw("effects_event_id", &DiagnosticsTrace::effects_event_id)
         .def_rw("damage_report_id", &DiagnosticsTrace::damage_report_id)
-        .def_rw("observation_packet_version", &DiagnosticsTrace::observation_packet_version);
+        .def_rw("observation_packet_version", &DiagnosticsTrace::observation_packet_version)
+        .def_rw("source_snapshot_version", &DiagnosticsTrace::source_snapshot_version)
+        .def_rw("barrier_id", &DiagnosticsTrace::barrier_id)
+        .def_rw("barrier_detail", &DiagnosticsTrace::barrier_detail)
+        .def_rw("source_time_s", &DiagnosticsTrace::source_time_s)
+        .def_rw("source_node_id", &DiagnosticsTrace::source_node_id)
+        .def_rw("export_node_id", &DiagnosticsTrace::export_node_id);
+
+    nb::class_<IntentTargetRef>(m, "IntentTargetRef")
+        .def(nb::init<>())
+        .def_rw("world_index", &IntentTargetRef::world_index)
+        .def_rw("entity_id", &IntentTargetRef::entity_id);
+
+    nb::class_<ProducedIntentRef>(m, "ProducedIntentRef")
+        .def(nb::init<>())
+        .def_rw("kind", &ProducedIntentRef::kind)
+        .def_rw("reference_id", &ProducedIntentRef::reference_id)
+        .def_rw("target", &ProducedIntentRef::target);
+
+    nb::class_<ActionInterfaceDescriptor>(m, "ActionInterfaceDescriptor")
+        .def(nb::init<>())
+        .def_rw("kind", &ActionInterfaceDescriptor::kind)
+        .def_rw("payload_type", &ActionInterfaceDescriptor::payload_type);
+
+    nb::class_<DecisionModelRef>(m, "DecisionModelRef")
+        .def(nb::init<>())
+        .def_rw("kind", &DecisionModelRef::kind)
+        .def_rw("id", &DecisionModelRef::id);
+
+    nb::class_<ActionHoldPolicy>(m, "ActionHoldPolicy")
+        .def(nb::init<>())
+        .def_rw("policy_id", &ActionHoldPolicy::policy_id)
+        .def_rw("action_family", &ActionHoldPolicy::action_family)
+        .def_rw("hold_mode", &ActionHoldPolicy::hold_mode)
+        .def_rw("validity_duration_s", &ActionHoldPolicy::validity_duration_s)
+        .def_rw("refresh_cadence_s", &ActionHoldPolicy::refresh_cadence_s)
+        .def_rw("target_control_cadence_s", &ActionHoldPolicy::target_control_cadence_s)
+        .def_rw("expiry_behavior", &ActionHoldPolicy::expiry_behavior)
+        .def_rw("interpolation_mode", &ActionHoldPolicy::interpolation_mode)
+        .def_rw(
+            "credit_assignment_latency_s",
+            &ActionHoldPolicy::credit_assignment_latency_s
+        )
+        .def_rw(
+            "credit_assignment_attribution_note",
+            &ActionHoldPolicy::credit_assignment_attribution_note
+        )
+        .def_rw("diagnostics_reason", &ActionHoldPolicy::diagnostics_reason);
+
+    nb::class_<InformationStateSource>(m, "InformationStateSource")
+        .def(nb::init<>())
+        .def_rw("information_state_layer", &InformationStateSource::information_state_layer)
+        .def_rw("source_label", &InformationStateSource::source_label)
+        .def_rw("maintained_status", &InformationStateSource::maintained_status)
+        .def_rw("observation_packet_ids", &InformationStateSource::observation_packet_ids)
+        .def_rw("source_observation_versions", &InformationStateSource::source_observation_versions)
+        .def_rw("diagnostics_reason", &InformationStateSource::diagnostics_reason);
+
+    nb::class_<ConfidenceShape>(m, "ConfidenceShape")
+        .def(nb::init<>())
+        .def_rw("kind", &ConfidenceShape::kind)
+        .def_rw("confidence", &ConfidenceShape::confidence)
+        .def_rw("lower_bound", &ConfidenceShape::lower_bound)
+        .def_rw("upper_bound", &ConfidenceShape::upper_bound);
+
+    nb::class_<RoleDescriptor>(m, "RoleDescriptor")
+        .def(nb::init<>())
+        .def_rw("role_id", &RoleDescriptor::role_id)
+        .def_rw("role_type", &RoleDescriptor::role_type);
+
+    nb::class_<AgentAuthorityScope>(m, "AgentAuthorityScope")
+        .def(nb::init<>())
+        .def_rw("scope", &AgentAuthorityScope::scope)
+        .def_rw("world_index", &AgentAuthorityScope::world_index)
+        .def_rw("has_world_index", &AgentAuthorityScope::has_world_index)
+        .def_rw("entity_ids", &AgentAuthorityScope::entity_ids)
+        .def_rw("roster_id", &AgentAuthorityScope::roster_id)
+        .def_rw("command_family", &AgentAuthorityScope::command_family);
+
+    nb::class_<ActionIntentPacket>(m, "ActionIntentPacket")
+        .def(nb::init<>())
+        .def_rw("source_id", &ActionIntentPacket::source_id)
+        .def_rw("effective_time_s", &ActionIntentPacket::effective_time_s)
+        .def_rw("valid_until_s", &ActionIntentPacket::valid_until_s)
+        .def_rw("target", &ActionIntentPacket::target)
+        .def_rw("action_family", &ActionIntentPacket::action_family)
+        .def_rw("merge_policy", &ActionIntentPacket::merge_policy)
+        .def_rw("action_interface", &ActionIntentPacket::action_interface)
+        .def_rw("has_pilot_action", &ActionIntentPacket::has_pilot_action)
+        .def_rw("pilot_action", &ActionIntentPacket::pilot_action)
+        .def_rw("has_mission_command", &ActionIntentPacket::has_mission_command)
+        .def_rw("mission_command", &ActionIntentPacket::mission_command);
+
+    nb::class_<CoordinationTargetRoster>(m, "CoordinationTargetRoster")
+        .def(nb::init<>())
+        .def_rw("world_index", &CoordinationTargetRoster::world_index)
+        .def_rw("has_world_index", &CoordinationTargetRoster::has_world_index)
+        .def_rw("roster_id", &CoordinationTargetRoster::roster_id)
+        .def_rw("entity_ids", &CoordinationTargetRoster::entity_ids)
+        .def_rw("role_ids", &CoordinationTargetRoster::role_ids);
+
+    nb::class_<CoordinationIntentPacket>(m, "CoordinationIntentPacket")
+        .def(nb::init<>())
+        .def_rw("source_type", &CoordinationIntentPacket::source_type)
+        .def_rw("source_id", &CoordinationIntentPacket::source_id)
+        .def_rw("target_roster", &CoordinationIntentPacket::target_roster)
+        .def_rw("update_clock", &CoordinationIntentPacket::update_clock)
+        .def_rw("merge_policy", &CoordinationIntentPacket::merge_policy)
+        .def_rw("produced_tasking_refs", &CoordinationIntentPacket::produced_tasking_refs)
+        .def_rw(
+            "produced_leader_intent_refs",
+            &CoordinationIntentPacket::produced_leader_intent_refs
+        );
+
+    nb::class_<AgentRole>(m, "AgentRole")
+        .def(nb::init<>())
+        .def_rw("role", &AgentRole::role)
+        .def_rw("authority_scope", &AgentRole::authority_scope)
+        .def_rw("information_state_source", &AgentRole::information_state_source)
+        .def_rw("decision_model_ref", &AgentRole::decision_model_ref)
+        .def_rw("action_interface", &AgentRole::action_interface);
+
+    nb::class_<DecisionBelief>(m, "DecisionBelief")
+        .def(nb::init<>())
+        .def_rw("belief_id", &DecisionBelief::belief_id)
+        .def_rw("information_state_layer", &DecisionBelief::information_state_layer)
+        .def_rw("source_information_state", &DecisionBelief::source_information_state)
+        .def_rw("source_observation_versions", &DecisionBelief::source_observation_versions)
+        .def_rw("memory_or_estimator_ref", &DecisionBelief::memory_or_estimator_ref)
+        .def_rw("confidence_shape", &DecisionBelief::confidence_shape)
+        .def_rw("maintained_status", &DecisionBelief::maintained_status)
+        .def_rw("diagnostics_reason", &DecisionBelief::diagnostics_reason)
+        .def_rw("uses_truth_state", &DecisionBelief::uses_truth_state)
+        .def_rw("uses_raw_ecs", &DecisionBelief::uses_raw_ecs);
 
     nb::class_<BatchWorldSetupRequest>(m, "BatchWorldSetupRequest")
         .def(nb::init<>())
@@ -202,8 +339,88 @@ void bind_runtime(nb::module_& m) {
         .def_rw("include_leader_intents", &ExecutionBatchStepRequest::include_leader_intents)
         .def_rw("include_pilot_reports", &ExecutionBatchStepRequest::include_pilot_reports);
 
+    nb::class_<RewardTerm>(m, "RewardTerm")
+        .def(nb::init<>())
+        .def_rw("name", &RewardTerm::name)
+        .def_rw("value", &RewardTerm::value)
+        .def_rw("term_owner", &RewardTerm::term_owner);
+
+    nb::class_<RewardReport>(m, "RewardReport")
+        .def(nb::init<>())
+        .def_rw("fact_terms", &RewardReport::fact_terms)
+        .def_rw("shaping_terms", &RewardReport::shaping_terms)
+        .def_rw("fact_snapshot_version", &RewardReport::fact_snapshot_version)
+        .def_rw("term_owner", &RewardReport::term_owner);
+
+    nb::class_<TerminationSpec>(m, "TerminationSpec")
+        .def(nb::init<>())
+        .def_rw("reason", &TerminationSpec::reason)
+        .def_rw("reason_source", &TerminationSpec::reason_source)
+        .def_rw("snapshot_version", &TerminationSpec::snapshot_version);
+
+    nb::class_<ObservationViewSpec>(m, "ObservationViewSpec")
+        .def(nb::init<>())
+        .def_rw("schema_version", &ObservationViewSpec::schema_version)
+        .def_rw("required_fields", &ObservationViewSpec::required_fields)
+        .def_rw("optional_fields", &ObservationViewSpec::optional_fields)
+        .def_rw("reject_major_mismatch", &ObservationViewSpec::reject_major_mismatch)
+        .def_rw("allow_minor_version_drift", &ObservationViewSpec::allow_minor_version_drift)
+        .def_rw("allow_unknown_optional_fields", &ObservationViewSpec::allow_unknown_optional_fields)
+        .def_rw("allow_missing_optional_fields", &ObservationViewSpec::allow_missing_optional_fields);
+
+    nb::class_<ObservationViewCompatibilityReport>(m, "ObservationViewCompatibilityReport")
+        .def(nb::init<>())
+        .def_rw("compatible", &ObservationViewCompatibilityReport::compatible)
+        .def_rw("major_compatible", &ObservationViewCompatibilityReport::major_compatible)
+        .def_rw(
+            "required_fields_satisfied",
+            &ObservationViewCompatibilityReport::required_fields_satisfied
+        )
+        .def_rw(
+            "optional_field_drift_allowed",
+            &ObservationViewCompatibilityReport::optional_field_drift_allowed
+        )
+        .def_rw(
+            "missing_required_fields",
+            &ObservationViewCompatibilityReport::missing_required_fields
+        )
+        .def_rw(
+            "unknown_optional_fields",
+            &ObservationViewCompatibilityReport::unknown_optional_fields
+        )
+        .def_rw(
+            "missing_optional_fields",
+            &ObservationViewCompatibilityReport::missing_optional_fields
+        );
+
+    m.def(
+        "evaluate_observation_view_checkpoint_compatibility",
+        &evaluate_observation_view_checkpoint_compatibility,
+        nb::arg("checkpoint"),
+        nb::arg("provider")
+    );
+    m.def(
+        "information_state_source_has_valid_label",
+        &information_state_source_has_valid_label,
+        nb::arg("source")
+    );
+    m.def(
+        "decision_belief_requires_diagnostics_only",
+        &decision_belief_requires_diagnostics_only,
+        nb::arg("belief")
+    );
+    m.def(
+        "decision_belief_has_valid_provenance",
+        &decision_belief_has_valid_provenance,
+        nb::arg("belief")
+    );
+
     nb::class_<ObservationBatchPacket>(m, "ObservationBatchPacket")
         .def(nb::init<>())
+        .def_rw("snapshot_version", &ObservationBatchPacket::snapshot_version)
+        .def_rw("barrier_id", &ObservationBatchPacket::barrier_id)
+        .def_rw("source_time_s", &ObservationBatchPacket::source_time_s)
+        .def_rw("provenance", &ObservationBatchPacket::provenance)
         .def_rw("refs", &ObservationBatchPacket::refs)
         .def_rw("agent_observations", &ObservationBatchPacket::agent_observations)
         .def_rw("instrument_states", &ObservationBatchPacket::instrument_states)
@@ -214,6 +431,14 @@ void bind_runtime(nb::module_& m) {
 
     nb::class_<EngagementEventPacket>(m, "EngagementEventPacket")
         .def(nb::init<>())
+        .def_rw("snapshot_version", &EngagementEventPacket::snapshot_version)
+        .def_rw("barrier_id", &EngagementEventPacket::barrier_id)
+        .def_rw("barrier_sequence", &EngagementEventPacket::barrier_sequence)
+        .def_rw("barrier_detail", &EngagementEventPacket::barrier_detail)
+        .def_rw("source_time_s", &EngagementEventPacket::source_time_s)
+        .def_rw("producer_node_id", &EngagementEventPacket::producer_node_id)
+        .def_rw("packet_provenance", &EngagementEventPacket::packet_provenance)
+        .def_rw("diagnostics_provenance", &EngagementEventPacket::diagnostics_provenance)
         .def_rw("refs", &EngagementEventPacket::refs)
         .def_rw("trace_ids", &EngagementEventPacket::trace_ids)
         .def_rw("track_packets", &EngagementEventPacket::track_packets)
@@ -235,7 +460,9 @@ void bind_runtime(nb::module_& m) {
         .def_rw("truncated", &ExecutionBatchStepResult::truncated)
         .def_rw("status_vectors", &ExecutionBatchStepResult::status_vectors)
         .def_rw("termination_reasons", &ExecutionBatchStepResult::termination_reasons)
+        .def_rw("termination_specs", &ExecutionBatchStepResult::termination_specs)
         .def_rw("reward_breakdown_jsons", &ExecutionBatchStepResult::reward_breakdown_jsons)
+        .def_rw("reward_reports", &ExecutionBatchStepResult::reward_reports)
         .def_rw("step_infos", &ExecutionBatchStepResult::step_infos)
         .def_rw("step_info_valid_flags", &ExecutionBatchStepResult::step_info_valid_flags)
         .def_rw(
@@ -522,6 +749,11 @@ void bind_runtime(nb::module_& m) {
         .def(
             "export_engagement_event_packet",
             &RuntimeFacade::export_engagement_event_packet,
+            nb::arg("request")
+        )
+        .def(
+            "export_diagnostics_traces",
+            &RuntimeFacade::export_diagnostics_traces,
             nb::arg("request")
         );
 }

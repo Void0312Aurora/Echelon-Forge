@@ -10,6 +10,9 @@ ensure_repo_imports()
 import ef_py  # noqa: E402
 
 
+_DB_PATH = resolve_repo_path("examples", "config", "database")
+
+
 def _world_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     ref = ef_py.WorldEntityRef()
     ref.world_index = int(world_index)
@@ -51,7 +54,7 @@ def _spawn_request(
 
 def _make_tracked_facade_fixture() -> tuple[ef_py.RuntimeFacade, int, int]:
     facade = ef_py.RuntimeFacade(1)
-    if not facade.load_database(resolve_repo_path("examples", "config", "database")):
+    if not facade.load_database(_DB_PATH):
         raise AssertionError("failed to load runtime database")
 
     setup = ef_py.BatchWorldSetupRequest()
@@ -100,7 +103,154 @@ def _make_tracked_facade_fixture() -> tuple[ef_py.RuntimeFacade, int, int]:
     raise AssertionError("expected facade observation helper to expose a target contact")
 
 
+def _make_detection(target_id: int, *, range_m: float = 30000.0) -> ef_py.Detection:
+    detection = ef_py.Detection()
+    detection.target_id = int(target_id)
+    detection.range = float(range_m)
+    detection.bearing = 0.0
+    detection.elevation = 0.0
+    detection.closing_speed = 500.0
+    detection.signal_strength = 1.0
+    detection.detection_prob_used = 0.9
+    detection.sensor_type = int(ef_py.SensorType.Radar)
+    detection.local_sensor_hit = True
+    detection.timestamp = 0.0
+    return detection
+
+
+def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int, int]:
+    facade = ef_py.RuntimeFacade(1)
+    if not facade.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+
+    world = facade.runtime().world(0)
+    shooter_id = int(
+        world.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            5000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            250.0,
+            0.0,
+        )
+    )
+    target_id = int(
+        world.spawn_unit(
+            ef_py.Side.Red,
+            "DDG-51_Flight_I_USS_Arleigh_Burke",
+            0.0,
+            30000.0,
+            0.0,
+            180.0,
+            0.0,
+            0.0,
+            0.0,
+            -250.0,
+            0.0,
+        )
+    )
+
+    world.set_unit_ammo(shooter_id, 4, 4)
+    world.set_weapon_cooldown(shooter_id, 0.0, -1.0)
+    world.set_contact_list(shooter_id, [_make_detection(target_id)])
+
+    missile_id = int(world.fire_missile(shooter_id, target_id))
+    if missile_id <= 0:
+        raise AssertionError("expected legacy missile launch to succeed")
+    if not bool(world.debug_apply_proximity_hit(shooter_id, target_id, 120.0, 80.0)):
+        raise AssertionError("expected debug proximity damage event to be recorded")
+
+    request = ef_py.EngagementBatchRequest()
+    request.refs = [_engagement_ref(0, shooter_id)]
+    request.include_track_packets = True
+    request.include_diagnostics_traces = True
+    return facade.export_engagement_event_packet(request), shooter_id, target_id, missile_id
+
+
 class FacadeEngagementExportTests(unittest.TestCase):
+    def test_launch_damage_export_proves_wp10_nodes_barriers_and_wp11_provenance_chain(self) -> None:
+        packet, _, target_id, missile_id = _make_launch_damage_packet()
+
+        self.assertGreaterEqual(int(packet.snapshot_version), 1)
+        self.assertEqual(packet.barrier_id, "export")
+        self.assertEqual(int(packet.barrier_sequence), 1)
+        self.assertEqual(packet.barrier_detail, "maintained_facade_export")
+        self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
+        self.assertGreaterEqual(float(packet.source_time_s), 0.0)
+
+        self.assertEqual(packet.packet_provenance.information_state_layer, "TrackState")
+        self.assertEqual(packet.packet_provenance.source_label, "track_state_packet")
+        self.assertEqual(packet.packet_provenance.maintained_status, "maintained")
+        self.assertEqual(
+            list(packet.packet_provenance.observation_packet_ids),
+            [f"eng:{int(packet.snapshot_version)}"],
+        )
+        self.assertEqual(
+            list(packet.packet_provenance.source_observation_versions),
+            [f"track:{int(packet.snapshot_version)}"],
+        )
+        self.assertEqual(
+            packet.diagnostics_provenance.information_state_layer,
+            "DecisionBelief",
+        )
+        self.assertEqual(
+            packet.diagnostics_provenance.source_label,
+            "world_truth_diagnostics",
+        )
+        self.assertEqual(
+            packet.diagnostics_provenance.maintained_status,
+            "diagnostics_only",
+        )
+        self.assertEqual(
+            list(packet.diagnostics_provenance.observation_packet_ids),
+            [f"diag:{int(packet.snapshot_version)}"],
+        )
+        self.assertEqual(
+            list(packet.diagnostics_provenance.source_observation_versions),
+            [f"diag:{int(packet.snapshot_version)}"],
+        )
+        self.assertEqual(
+            packet.diagnostics_provenance.diagnostics_reason,
+            "diagnostics_trace_surface_not_maintained_decision_path",
+        )
+
+        launch = next(
+            event for event in packet.launch_events if event.producer_node_id == "p7.fire_control_launch.v1"
+        )
+        effects = next(
+            event for event in packet.effects_events if event.producer_node_id == "p9.effects_damage.v1"
+        )
+        report = next(
+            item for item in packet.damage_reports if item.producer_node_id == "p9.effects_damage.v1"
+        )
+        self.assertEqual(int(launch.spawned_munition.entity_id), missile_id)
+        self.assertEqual(int(effects.target.entity_id), target_id)
+        self.assertEqual(int(report.target.entity_id), target_id)
+        self.assertEqual(int(report.source_event_id), int(effects.event_id))
+
+        launch_trace = next(
+            trace for trace in packet.diagnostics_traces if int(trace.launch_event_id) == int(launch.event_id)
+        )
+        damage_trace = next(
+            trace for trace in packet.diagnostics_traces if int(trace.damage_report_id) == int(report.report_id)
+        )
+
+        for trace, expected_source_node in [
+            (launch_trace, "p7.fire_control_launch.v1"),
+            (damage_trace, "p9.effects_damage.v1"),
+        ]:
+            self.assertEqual(trace.source_node_id, expected_source_node)
+            self.assertEqual(trace.export_node_id, "p10.observation_export.v1")
+            self.assertEqual(trace.barrier_id, "export")
+            self.assertEqual(trace.barrier_detail, "maintained_facade_export")
+            self.assertEqual(int(trace.source_snapshot_version), int(packet.snapshot_version))
+            self.assertGreaterEqual(float(trace.source_time_s), 0.0)
+
     def test_live_snapshot_export_preserves_refs_and_trace_ids_and_does_not_fire_weapons(self) -> None:
         facade, blue_id, red_id = _make_tracked_facade_fixture()
         before = facade.get_agent_observations_batch([_world_ref(0, blue_id)])[0]
@@ -118,6 +268,11 @@ class FacadeEngagementExportTests(unittest.TestCase):
 
         self.assertEqual([(int(ref.world_index), int(ref.entity_id)) for ref in packet.refs], [(0, blue_id)])
         self.assertEqual([int(trace_id) for trace_id in packet.trace_ids], [91001])
+        self.assertGreaterEqual(int(packet.snapshot_version), 1)
+        self.assertEqual(packet.barrier_id, "export")
+        self.assertEqual(int(packet.barrier_sequence), 1)
+        self.assertEqual(packet.barrier_detail, "maintained_facade_export")
+        self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
         self.assertEqual(int(getattr(after, "missiles_remaining", -1)), missiles_before)
         self.assertEqual(list(packet.launch_requests), [])
         self.assertEqual(list(packet.launch_events), [])
@@ -139,6 +294,12 @@ class FacadeEngagementExportTests(unittest.TestCase):
         trace = next(trace for trace in packet.diagnostics_traces if int(trace.track_id) == red_id)
         self.assertEqual(int(trace.trace_id), 91001)
         self.assertGreaterEqual(int(trace.observation_packet_version), 1)
+        self.assertGreaterEqual(int(trace.source_snapshot_version), 1)
+        self.assertEqual(trace.barrier_id, "export")
+        self.assertEqual(trace.barrier_detail, "maintained_facade_export")
+        self.assertEqual(trace.source_node_id, "p10.observation_export.v1")
+        self.assertEqual(trace.export_node_id, "p10.observation_export.v1")
+        self.assertGreaterEqual(float(trace.source_time_s), 0.0)
         self.assertEqual(int(trace.launch_request_id), 0)
         self.assertEqual(int(trace.launch_event_id), 0)
         self.assertEqual(int(trace.effects_event_id), 0)
@@ -169,6 +330,28 @@ class FacadeEngagementExportTests(unittest.TestCase):
         self.assertEqual(list(packet.effects_events), [])
         self.assertEqual(list(packet.damage_reports), [])
         self.assertEqual(list(packet.diagnostics_traces), [])
+        self.assertEqual(packet.barrier_id, "export")
+        self.assertEqual(packet.producer_node_id, "p10.observation_export.v1")
+
+    def test_dedicated_diagnostics_export_surface_does_not_require_engagement_packet(self) -> None:
+        facade, blue_id, red_id = _make_tracked_facade_fixture()
+
+        request = ef_py.EngagementBatchRequest()
+        request.refs = [_engagement_ref(0, blue_id)]
+        request.trace_ids = [93001, 93002]
+        request.include_track_packets = False
+        request.include_diagnostics_traces = True
+
+        traces = facade.export_diagnostics_traces(request)
+
+        self.assertGreaterEqual(len(traces), 1)
+        self.assertTrue(any(int(trace.track_id) == red_id for trace in traces))
+        self.assertTrue(all(int(trace.trace_id) in {93001, 93002} for trace in traces))
+        self.assertTrue(all(int(trace.observation_packet_version) >= 1 for trace in traces))
+        self.assertTrue(all(int(trace.source_snapshot_version) >= 1 for trace in traces))
+        self.assertTrue(all(trace.barrier_id == "export" for trace in traces))
+        self.assertTrue(all(trace.export_node_id == "p10.observation_export.v1" for trace in traces))
+        self.assertTrue(all(int(trace.launch_request_id) == 0 for trace in traces if int(trace.track_id) == red_id))
 
     def test_recent_live_events_are_retagged_with_requested_world_index(self) -> None:
         facade = ef_py.RuntimeFacade(2)
@@ -229,11 +412,37 @@ class FacadeEngagementExportTests(unittest.TestCase):
         packet = facade.export_engagement_event_packet(request)
 
         self.assertEqual(len(packet.launch_events), 1)
+        self.assertEqual(packet.launch_events[0].producer_node_id, "p7.fire_control_launch.v1")
         self.assertEqual(int(packet.launch_events[0].spawned_munition.world_index), 1)
         self.assertEqual(int(packet.launch_events[0].spawned_munition.entity_id), missile_id)
         self.assertTrue(
             any(int(trace.munition.world_index) == 1 for trace in packet.diagnostics_traces)
         )
+
+    def test_exported_engagement_packet_uses_stable_time_priority_id_ordering(self) -> None:
+        packet, _, _, _ = _make_launch_damage_packet()
+
+        launch_keys = [
+            (float(event.event_time_s), int(event.event_id))
+            for event in packet.launch_events
+        ]
+        effects_keys = [
+            (float(event.detonation_time_s), int(event.event_id))
+            for event in packet.effects_events
+        ]
+        damage_keys = [
+            (float(report.report_time_s), int(report.report_id))
+            for report in packet.damage_reports
+        ]
+        trace_keys = [
+            (float(trace.source_time_s), int(trace.trace_id))
+            for trace in packet.diagnostics_traces
+        ]
+
+        self.assertEqual(launch_keys, sorted(launch_keys))
+        self.assertEqual(effects_keys, sorted(effects_keys))
+        self.assertEqual(damage_keys, sorted(damage_keys))
+        self.assertEqual(trace_keys, sorted(trace_keys))
 
 
 if __name__ == "__main__":

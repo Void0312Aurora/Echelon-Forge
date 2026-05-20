@@ -50,6 +50,12 @@ def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explic
     assert packet_block is not None
     packet_body = packet_block.group("body")
     for slot in [
+        "snapshot_version",
+        "barrier_id",
+        "barrier_sequence",
+        "barrier_detail",
+        "source_time_s",
+        "producer_node_id",
         "refs",
         "trace_ids",
         "track_packets",
@@ -73,12 +79,16 @@ def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explic
 
     assert "packet.refs = request.refs" in export_body
     assert "packet.trace_ids = request.trace_ids" in export_body
+    assert "apply_export_packet_metadata" in export_body
+    assert "stable_sort_engagement_packet" in export_body
     assert "packet.track_packets.push_back" in export_body
     assert "packet.diagnostics_traces.push_back" in export_body
 
-    for populated_recent_slot in ["launch_events", "effects_events", "damage_reports", "diagnostics_traces"]:
+    for populated_recent_slot in ["launch_events", "effects_events", "damage_reports"]:
         assert f"request.include_{populated_recent_slot}" in append_body
         assert f"packet.{populated_recent_slot}.insert" in append_body
+    assert "request.include_diagnostics_traces" in append_body
+    assert "append_recent_diagnostics_traces(packet.diagnostics_traces, recent)" in append_body
 
     for deferred_slot in ["launch_requests", "munition_lifecycle_packets"]:
         assert f"packet.{deferred_slot}.push_back" not in export_body
@@ -104,6 +114,9 @@ def test_engagement_diagnostics_inside_export_are_piggyback_evidence_not_full_lo
     assert ".chain_id = trace_id" in diagnostics_body
     assert ".track_id = track.track_id" in diagnostics_body
     assert ".observation_packet_version = observation_packet_version" in diagnostics_body
+    assert ".source_snapshot_version = track.snapshot_version" in diagnostics_body
+    assert '.barrier_id = std::string(kWp10ExportBarrierId)' in diagnostics_body
+    assert '.source_node_id = std::string(kWp10ObservationExportNodeId)' in diagnostics_body
     for non_track_link in ["launch_request_id", "launch_event_id", "effects_event_id", "damage_report_id"]:
         assert non_track_link not in diagnostics_body
 
@@ -164,3 +177,7 @@ def test_recent_effects_damage_and_trace_refs_are_retagged_for_requested_world_i
     assert int(packet.damage_reports[0].target.world_index) == 1
     assert int(packet.damage_reports[0].target.entity_id) == target_id
     assert int(packet.diagnostics_traces[0].munition.world_index) == 1
+    assert packet.effects_events[0].producer_node_id == "p9.effects_damage.v1"
+    assert packet.damage_reports[0].producer_node_id == "p9.effects_damage.v1"
+    assert packet.diagnostics_traces[0].source_node_id == "p9.effects_damage.v1"
+    assert packet.diagnostics_traces[0].export_node_id == "p10.observation_export.v1"
