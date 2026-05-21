@@ -1,0 +1,19 @@
+{
+  "type": "unit_regression",
+  "check_kind": "task_order_common_core",
+  "task_name": "TASK_OCCUPY",
+  "task_order": {
+    "tasking_profile": "land",
+    "parent_node_id": 8111
+  },
+  "expected_common_core": {
+    "service_profile": "Army",
+    "task_family": "Defend",
+    "tactical_unit_type": "TacticalUnit",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Independent",
+    "parent_node_id": 8111,
+    "officer_in_tactical_command": 8111
+  }
+}

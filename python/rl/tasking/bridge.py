@@ -5,6 +5,7 @@ from typing import Any
 import ef_py
 
 from . import air_adapter as _air
+from . import ground_adapter as _ground
 from . import naval_adapter as _naval
 
 
@@ -16,6 +17,8 @@ def _normalized_profile_name(profile_name: Any | None) -> str | None:
     if service_profile is not None:
         if profile_name == getattr(service_profile, "Navy", object()):
             return "naval"
+        if profile_name == getattr(service_profile, "Army", object()):
+            return "ground"
         if profile_name == getattr(service_profile, "AirForce", object()):
             return "air"
 
@@ -27,6 +30,8 @@ def _normalized_profile_name(profile_name: Any | None) -> str | None:
         return None
     if text in {"air", "airforce", "joint"}:
         return "air"
+    if text in {"army", "ground", "land"}:
+        return "ground"
     if text in {"naval", "navy"}:
         return "naval"
     return None
@@ -48,6 +53,8 @@ def resolve_tasking_profile(profile_name: str | None = None):
         raise ValueError(f"Unknown tasking profile: {profile_name!r}")
     if normalized == "air":
         return _air
+    if normalized == "ground":
+        return _ground
     if normalized == "naval":
         return _naval
     raise ValueError(f"Unknown tasking profile: {profile_name!r}")

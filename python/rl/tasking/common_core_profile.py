@@ -4,6 +4,7 @@ from typing import Any
 
 import ef_py
 from python.rl.profile import air_profile as _air_profile
+from python.rl.profile import ground_profile as _ground_profile
 from python.rl.profile import naval_profile as _naval_profile
 from python.rl.profile import common_core_defaults as _common_defaults
 from python.rl.profile.common_core_base import (
@@ -16,52 +17,71 @@ from python.rl.profile.common_core_base import (
 
 def _sync_profile_modules() -> None:
     _air_profile.ef_py = ef_py
+    _ground_profile.ef_py = ef_py
     _naval_profile.ef_py = ef_py
     _common_defaults.ef_py = ef_py
 
 
+def _normalized_profile_name(raw: Any | None) -> str | None:
+    if raw is None:
+        return None
+
+    service_profile = getattr(ef_py, "ServiceProfile", None)
+    if service_profile is not None:
+        if raw == getattr(service_profile, "Navy", object()):
+            return "naval"
+        if raw == getattr(service_profile, "Army", object()):
+            return "ground"
+        if raw == getattr(service_profile, "AirForce", object()):
+            return "air"
+
+    text = str(getattr(raw, "name", raw)).strip().lower()
+    if text.startswith("serviceprofile."):
+        text = text.rsplit(".", 1)[-1]
+
+    if text in {"", "unspecified"}:
+        return None
+    if text in {"army", "ground", "land"}:
+        return "ground"
+    if text in {"naval", "navy"}:
+        return "naval"
+    if text in {"air", "airforce", "joint"}:
+        return "air"
+    return None
+
+
 def _profile_name_from_context(order: Any | None = None, *, loader: Any | None = None, spec: dict[str, Any] | None = None) -> str:
-    candidates: list[Any] = []
+    explicit_candidates: list[Any] = []
+    inferred_candidates: list[Any] = []
     if spec is not None:
-        candidates.extend([spec.get("tasking_profile", None), spec.get("service_profile", None)])
+        explicit_candidates.append(spec.get("tasking_profile", None))
+        inferred_candidates.append(spec.get("service_profile", None))
     if order is not None:
-        candidates.extend(
-            [
-                getattr(order, "tasking_profile", None),
-                getattr(order, "service_profile", None),
-            ]
-        )
+        explicit_candidates.append(getattr(order, "tasking_profile", None))
+        inferred_candidates.append(getattr(order, "service_profile", None))
     if loader is not None:
         scenario_data = getattr(loader, "scenario_data", {}) or {}
         if isinstance(scenario_data, dict):
-            candidates.extend(
-                [
-                    scenario_data.get("tasking_profile", None),
-                    scenario_data.get("service_profile", None),
-                ]
-            )
+            explicit_candidates.append(scenario_data.get("tasking_profile", None))
+            inferred_candidates.append(scenario_data.get("service_profile", None))
             mission_cmd = scenario_data.get("mission_command", None)
             if isinstance(mission_cmd, dict):
-                candidates.extend(
-                    [
-                        mission_cmd.get("tasking_profile", None),
-                        mission_cmd.get("service_profile", None),
-                    ]
-                )
-    for raw in candidates:
-        if raw is None:
-            continue
-        if raw == getattr(ef_py.ServiceProfile, "Navy", object()):
-            return "naval"
-        text = str(getattr(raw, "name", raw)).strip().lower()
-        if text in {"naval", "navy"}:
-            return "naval"
+                explicit_candidates.append(mission_cmd.get("tasking_profile", None))
+                inferred_candidates.append(mission_cmd.get("service_profile", None))
+    for candidates in (explicit_candidates, inferred_candidates):
+        for raw in candidates:
+            normalized = _normalized_profile_name(raw)
+            if normalized is not None:
+                return normalized
     return "air"
 
 
 def _profile_module_for_context(order: Any | None = None, *, loader: Any | None = None, spec: dict[str, Any] | None = None):
     _sync_profile_modules()
-    if _profile_name_from_context(order, loader=loader, spec=spec) == "naval":
+    profile_name = _profile_name_from_context(order, loader=loader, spec=spec)
+    if profile_name == "ground":
+        return _ground_profile
+    if profile_name == "naval":
         return _naval_profile
     return _air_profile
 
@@ -72,6 +92,20 @@ def _infer_tactical_unit_type_for_profile(order: Any | None = None, *, loader: A
     if callable(infer_fn):
         return infer_fn(order)
     return _common_defaults.infer_tactical_unit_type(order)
+
+
+def _infer_task_family_for_profile(
+    profile: Any,
+    *,
+    task_name: str | None = None,
+    task_type: Any = None,
+    phase_name: str | None = None,
+) -> Any:
+    for infer_name in ("infer_ground_task_family", "infer_naval_task_family", "infer_air_task_family"):
+        infer_fn = getattr(profile, infer_name, None)
+        if callable(infer_fn):
+            return infer_fn(task_name=task_name, task_type=task_type, phase_name=phase_name)
+    return _task_family_default()
 
 
 def _service_profile_default() -> Any:
@@ -212,6 +246,10 @@ def infer_coordination_mode(
 
 def infer_tactical_unit_id(order: Any | None, *, tactical_unit_type: Any = None, default_id: int = 0) -> int:
     _sync_profile_modules()
+    profile = _profile_module_for_context(order)
+    infer_fn = getattr(profile, "infer_tactical_unit_id", None)
+    if callable(infer_fn):
+        return infer_fn(order, tactical_unit_type=tactical_unit_type, default_id=default_id)
     return _common_defaults.infer_tactical_unit_id(
         order,
         tactical_unit_type=tactical_unit_type,
@@ -366,15 +404,18 @@ def apply_task_order_common_core_defaults(
 ) -> Any:
     if order is None:
         return order
+    profile_name = _profile_name_from_context(order, spec=None)
     if _is_default_enum(getattr(order, "service_profile", _service_profile_default()), getattr(ef_py.ServiceProfile, "Unspecified")):
-        profile_name = _profile_name_from_context(order, spec=None)
-        order.service_profile = getattr(ef_py.ServiceProfile, "Navy") if profile_name == "naval" else _service_profile_default()
+        if profile_name == "naval":
+            order.service_profile = getattr(ef_py.ServiceProfile, "Navy")
+        elif profile_name == "ground":
+            order.service_profile = getattr(ef_py.ServiceProfile, "Army")
+        else:
+            order.service_profile = _service_profile_default()
 
     profile = _profile_module_for_context(order)
-    infer_task_family = getattr(profile, "infer_naval_task_family", None)
-    if infer_task_family is None:
-        infer_task_family = getattr(profile, "infer_air_task_family")
-    inferred_task_family = infer_task_family(
+    inferred_task_family = _infer_task_family_for_profile(
+        profile,
         task_name=task_name,
         task_type=getattr(order, "task_type", None),
         phase_name=phase_name,
@@ -389,7 +430,15 @@ def apply_task_order_common_core_defaults(
         order.tactical_unit_type = _infer_tactical_unit_type_for_profile(order)
 
     if _is_default_enum(getattr(order, "command_relationship", _command_relationship_default()), getattr(ef_py.CommandRelationship, "None")):
-        order.command_relationship = _command_relationship_default()
+        infer_command_relationship = getattr(profile, "infer_command_relationship", None)
+        if callable(infer_command_relationship):
+            order.command_relationship = infer_command_relationship(
+                task_name=task_name,
+                task_family=getattr(order, "task_family", _task_family_default()),
+                phase_name=phase_name,
+            )
+        else:
+            order.command_relationship = _command_relationship_default()
 
     if _is_default_enum(getattr(order, "authority_scope", _authority_scope_default()), getattr(ef_py.AuthorityScope, "Unspecified")):
         order.authority_scope = _authority_scope_default()
@@ -428,9 +477,14 @@ def apply_task_order_common_core_defaults(
             )
 
     if hasattr(order, "officer_in_tactical_command") and _coerce_positive_int(getattr(order, "officer_in_tactical_command", 0)) <= 0:
-        otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
-        if otc_id <= 0:
+        if profile_name == "ground":
             otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
+            if otc_id <= 0:
+                otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
+        else:
+            otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
+            if otc_id <= 0:
+                otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
         if otc_id > 0:
             order.officer_in_tactical_command = int(otc_id)
     return order
@@ -446,19 +500,27 @@ def apply_leader_intent_common_core_defaults(
 ) -> Any:
     if intent is None:
         return intent
+    profile_name = _profile_name_from_context(order if order is not None else intent)
     if _is_default_enum(getattr(intent, "service_profile", _service_profile_default()), getattr(ef_py.ServiceProfile, "Unspecified")):
         if order is not None:
             intent.service_profile = getattr(order, "service_profile", _service_profile_default())
         else:
-            intent.service_profile = getattr(ef_py.ServiceProfile, "Navy") if _profile_name_from_context(intent) == "naval" else _service_profile_default()
+            if profile_name == "naval":
+                intent.service_profile = getattr(ef_py.ServiceProfile, "Navy")
+            elif profile_name == "ground":
+                intent.service_profile = getattr(ef_py.ServiceProfile, "Army")
+            else:
+                intent.service_profile = _service_profile_default()
 
     order_task_family = getattr(order, "task_family", _task_family_default()) if order is not None else _task_family_default()
     if _is_default_enum(getattr(intent, "task_family", _task_family_default()), _task_family_default()):
         profile = _profile_module_for_context(order if order is not None else intent)
-        infer_task_family = getattr(profile, "infer_naval_task_family", None)
-        if infer_task_family is None:
-            infer_task_family = getattr(profile, "infer_air_task_family")
-        inferred_task_family = infer_task_family(task_name=task_name, task_type=None, phase_name=phase_name)
+        inferred_task_family = _infer_task_family_for_profile(
+            profile,
+            task_name=task_name,
+            task_type=None,
+            phase_name=phase_name,
+        )
         if not _is_default_enum(inferred_task_family, _task_family_default()):
             intent.task_family = inferred_task_family
         elif not _is_default_enum(order_task_family, _task_family_default()):
@@ -489,9 +551,14 @@ def apply_leader_intent_common_core_defaults(
     if hasattr(intent, "officer_in_tactical_command") and _coerce_positive_int(getattr(intent, "officer_in_tactical_command", 0)) <= 0 and order is not None:
         otc_id = _coerce_positive_int(getattr(order, "officer_in_tactical_command", 0))
         if otc_id <= 0:
-            otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
-        if otc_id <= 0:
-            otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
+            if profile_name == "ground":
+                otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
+                if otc_id <= 0:
+                    otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
+            else:
+                otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
+                if otc_id <= 0:
+                    otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
         if otc_id > 0:
             intent.officer_in_tactical_command = int(otc_id)
 
@@ -555,19 +622,27 @@ def apply_pilot_report_common_core_defaults(
 ) -> Any:
     if report is None:
         return report
+    profile_name = _profile_name_from_context(order if order is not None else report)
     if _is_default_enum(getattr(report, "service_profile", _service_profile_default()), getattr(ef_py.ServiceProfile, "Unspecified")):
         if order is not None:
             report.service_profile = getattr(order, "service_profile", _service_profile_default())
         else:
-            report.service_profile = getattr(ef_py.ServiceProfile, "Navy") if _profile_name_from_context(report) == "naval" else _service_profile_default()
+            if profile_name == "naval":
+                report.service_profile = getattr(ef_py.ServiceProfile, "Navy")
+            elif profile_name == "ground":
+                report.service_profile = getattr(ef_py.ServiceProfile, "Army")
+            else:
+                report.service_profile = _service_profile_default()
 
     order_task_family = getattr(order, "task_family", _task_family_default()) if order is not None else _task_family_default()
     if _is_default_enum(getattr(report, "task_family", _task_family_default()), _task_family_default()):
         profile = _profile_module_for_context(order if order is not None else report)
-        infer_task_family = getattr(profile, "infer_naval_task_family", None)
-        if infer_task_family is None:
-            infer_task_family = getattr(profile, "infer_air_task_family")
-        inferred_task_family = infer_task_family(task_name=task_name, task_type=None, phase_name=phase_name)
+        inferred_task_family = _infer_task_family_for_profile(
+            profile,
+            task_name=task_name,
+            task_type=None,
+            phase_name=phase_name,
+        )
         if not _is_default_enum(inferred_task_family, _task_family_default()):
             report.task_family = inferred_task_family
         elif not _is_default_enum(order_task_family, _task_family_default()):
@@ -609,9 +684,14 @@ def apply_pilot_report_common_core_defaults(
     if hasattr(report, "officer_in_tactical_command") and _coerce_positive_int(getattr(report, "officer_in_tactical_command", 0)) <= 0 and order is not None:
         otc_id = _coerce_positive_int(getattr(order, "officer_in_tactical_command", 0))
         if otc_id <= 0:
-            otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
-        if otc_id <= 0:
-            otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
+            if profile_name == "ground":
+                otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
+                if otc_id <= 0:
+                    otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
+            else:
+                otc_id = _coerce_positive_int(getattr(order, "task_group_id", 0))
+                if otc_id <= 0:
+                    otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
         if otc_id > 0:
             report.officer_in_tactical_command = int(otc_id)
 

@@ -1,0 +1,276 @@
+<!-- Machine-translated draft generated on 2026-05-21 from docs/task/ground/ground_subagent_dispatch_queue_20260521.md. Review before treating this file as authoritative. -->
+
+# 地面子代理调度队列
+
+状态：`2026-05-21` G0 已接受；G1-A 预检通过，G1-B 窄范围
+Python 配置文件实现已由主线程接受；G2 已发布，用于并行夹具和合约测试种子工作。
+
+启动子代理时使用此队列。主线程拥有集成和最终验收。
+
+详细的 G0 工作包位于
+[g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md](g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md)。
+
+规则：
+
+- 遵循[子代理使用策略](../../standards/governance/subagent_usage_policy.md)。
+- 保持写入范围不相交。
+- 不要将同一规范表分给多个并发作者。
+- 标准和层级以标准树为准。
+- 工作者不得撤销无关编辑或其他工作者所做的编辑。
+- 如果下一个切片不合理，工作者可以在 `preflight-only` 处停止。
+- G1 实现仅针对 G1-B 的仅 Python 配置文件切片被接受。C++ DTO 外壳、绑定、运行时行为和场景加载器仍被保留。
+
+## 阶段图
+
+```mermaid
+flowchart TD
+    G0["G0 边界冻结"] --> G1["G1 合约骨架"]
+    G1 --> G2["G2 内容与测试种子"]
+    G1 --> G3["G3 执行表面设计"]
+    G2 --> G3
+    G3 --> G4["G4 运行时切片"]
+```
+
+并行规则：
+
+- `G0` 是标准权威，首先启动。
+- `G1` 仅在 G0 标准和任务索引达成一致后启动。G1-A 返回 `implementation-ready`；G1-B 已接受。
+- `G2` 在 G1 配置文件/默认决策之后发布。`G2-A` 夹具工作和 `G2-B` 合约测试工作可以并行运行，因为它们的写入范围不相交。`G2-C` 保持串行，由主线程拥有。
+- `G3` 可以在 G1 和 G2 返回足够证据以选择第一个现实切片后开始设计。
+- `G4` 被保留，直到 G3 选择一个运行时候选和写入范围。
+
+## 第一波
+
+| 流 | 代理类型 | 模型/推理 | 任务 | 写入范围 |
+|--------|------------|-------------------|------|-------------|
+| `G0-A` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧地面标准概述。 | 仅 `docs/standards/ground/README*.md`。无代码。 |
+| `G0-B` | 工作者 | `gpt-5.4-mini`，极高 | 审计/收紧最小地面任务词汇。 | 仅 `docs/standards/ground/minimal_task_structure*.md`。无代码。 |
+| `G0-C` | 工作者/集成工作者 | `gpt-5.4-mini`，极高 | 在 G0-A/G0-B 之后集成 G0 导航、调度文档和双语注册表。 | 标准索引、`docs/task/ground/**`、注册表。无代码。 |
+| `G1-A` | 工作者 | `gpt-5.4`，高 | 预检配置文件解析器、地面配置文件外壳、起始默认值和聚焦测试范围。实现需要后续批准。 | 首先读取/源清单和聚焦预检说明；仅在后续批准后进行代码编辑。 |
+| `G1-B` | 工作者 | `gpt-5.4`，高 | 实现仅 Python 配置文件的地面解析器/配置文件/适配器切片以及来自 G1-A 的聚焦测试。 | `python/rl/tasking/bridge.py`、`python/rl/tasking/common_core_profile.py`、`python/rl/tasking/ground_adapter.py`、`python/rl/profile/ground_profile.py`、仅聚焦 `tests/leader`。无 C++/运行时/绑定。 |
+| `G2-A` | 工作者 | `gpt-5.4`，高 | 在 G1 之后添加第一个地面夹具根和能力说明。 | 仅 `examples/config/database/ground/**`。 |
+| `G2-B` | 工作者 | `gpt-5.4`，高 | 在 G1 之后添加地面合约规范和聚焦的合约运行器覆盖。 | 仅 `tests/contracts/unit/ground/**` 和一个聚焦的 `tests/leader` 或 `tests/runners` 测试。 |
+| `G2-C` | 主线程集成 | 当前主线程 | 集成 G2 工作者结果、验证、状态文档和 G3 剩余物。 | 仅 `docs/task/ground/g2_content_test_seed/**`、此调度队列、验证。 |
+| `G3-A` | 工作者 | `gpt-5.4`，极高 | 设计第一个执行表面并选择一个 G4 候选。 | 仅 `docs/task/ground/g3_execution_surface_design/**`，除非明确需要标准后续。 |
+
+## 保留流
+
+| 流 | 释放条件 |
+|--------|-------------------|
+| `G4-A` | 仅在 G3 选择单个运行时切片、写入范围和聚焦测试计划后释放。 |
+| `G4-B` | 在 G4-A 返回可合并或阻塞证据后的可选关闭/集成流。 |
+
+## 调度详情
+
+### `G0-A 标准概述审计`
+
+任务：
+
+- 审计/收紧 `docs/standards/ground/README*.md`。
+- 确认层级模型、G0 默认值、阶段覆盖、能力路径、代理和信息状态规则。
+- 以 `blocked` 停止，而不是更改冻结的默认值。
+
+返回：
+
+- 标准概述决策
+- 接触的文件
+- 审计命令
+- G1 阻塞项：已接受的 G0-A 返回未报告任何阻塞项
+
+### `G0-B 最小任务词汇审计`
+
+任务：
+
+- 审计/收紧 `docs/standards/ground/minimal_task_structure*.md`。
+- 确认 `TASK_MOVE`、`TASK_OCCUPY` 和 `TASK_SUPPORT` 作为唯一的起始任务形状。
+- 将移动动力学、感知、火力、后勤、地形、观测和伤害保持推迟。
+
+返回：
+
+- 冻结的任务词汇决策
+- 接触的文件
+- 审计命令
+- G1 阻塞项：已接受的 G0-B 返回未报告任何阻塞项
+
+### `G0-C 导航与注册表集成`
+
+任务：
+
+- 在 G0-A 和 G0-B 返回后开始。
+- 同步标准索引、任务导航、G0 集群文档和双语注册表。
+- 建议 G1 是 `preflight-only`、`implementation-ready` 还是 `blocked`。
+
+返回：
+
+- 集成文件
+- 注册表/审计结果
+- G1 发布建议：`preflight-only`
+- 剩余阻塞项：G0 标准中未知；实现范围仍需 G1 预检证据
+
+G0-D 接受状态：
+
+- 在 G0-A、G0-B 和 G0-C 返回 `pass` 后，G0 由主线程接受。
+- G1 发布为 `preflight-only`。
+- G1 实现保持未发布状态，直到预检证据确认解析器/配置文件写入范围和 DTO 外壳决策。
+
+已知的 G1 阻塞项：
+
+- 来自已接受的 G0-A 标准概述返回：无
+- 来自已接受的 G0-B 最小任务词汇返回：无
+- 来自 G0-C 导航/注册表集成：无
+- 实现保持未发布状态，直到 G1 预检证据确认解析器/配置文件写入范围和 DTO 外壳决策
+
+### `G1-A 配置文件与 DTO 骨架`
+
+任务：
+
+- 预检 `army` / `ground` / `land` 配置文件识别。
+- 预检一个窄范围地面配置文件外壳和默认映射器。
+- 决定在请求实现发布之前是否需要 C++ DTO 外壳。
+- 识别聚焦测试。
+
+写入范围注意事项：
+
+- 不要编辑运行时移动、传感器、武器、伤害或外观行为。
+- 不要重做空军/海军默认值，除了兼容性保留解析器钩子。
+
+返回：
+
+- 已接受的别名
+- 默认映射表
+- 运行的测试
+- 夹具和执行设计的剩余物
+
+预检结果：
+
+- 对于窄范围仅 Python 配置文件切片：`implementation-ready`
+- DTO 外壳：`G1 中不需要`
+- 窄切片无 G1 阻塞项
+
+### `G1-B Python 配置文件实现`
+
+任务：
+
+- 添加 `army` / `ground` / `land` 配置文件识别，并将所有别名规范化为 `ground`。
+- 添加一个窄范围 `ground_adapter` 和 `ground_profile`。
+- 仅使用公共核心字段实现 `TASK_MOVE`、`TASK_OCCUPY` 和 `TASK_SUPPORT` 的起始默认值。
+- 添加聚焦的 `tests/leader` 覆盖。
+
+写入范围注意事项：
+
+- 不要编辑 C++ DTO 头文件、Python 绑定、运行时移动、传感器、武器、伤害、外观行为、场景加载器或 G2/G3/G4 文档。
+- 不要更改空军/海军语义，除非是兼容性保留的解析器钩子。
+
+返回：
+
+- 已实现的别名
+- 任务默认映射表
+- 运行的测试
+- G2/G3 的剩余物
+
+已接受的结果：
+
+- `army`、`ground`、`land` 和 `ServiceProfile.Army` 规范化为 `ground`。
+- `ground_adapter` 和 `ground_profile` 已存在。
+- `TASK_MOVE`、`TASK_OCCUPY` 和 `TASK_SUPPORT` 仅通过公共核心字段默认。
+- 未添加 C++ DTO 外壳、绑定、运行时行为或场景加载器行为。
+- 主线程验证通过：
+  `python -m pytest -q tests/leader/test_ground_profile_semantics.py tests/leader/test_common_core_semantics.py tests/leader/test_naval_profile_semantics.py tests/runtime/mission/test_naval_mission_command_mapping.py`
+  和 `python -m pytest -q tests/leader`。
+
+### `G2-A 地面夹具种子`
+
+任务：
+
+- 在 G1 稳定配置文件后，添加第一个源代码控制的地面夹具根。
+- 使用以排为中心的起始夹具，并保留能力组合方向。
+- 在夹具附近包含一个本地能力说明，解释这是内容/合约种子，而不是公共运行时生成路径。
+
+写入范围注意事项：
+
+- 仅拥有 `examples/config/database/ground/**`。
+- 不要编辑测试、任务文档、运行时代码、公共绑定、场景加载器、C++ DTO 外壳或其他领域夹具根。
+- 不要启动场景目录。
+- 不要做出地形、移动或武器声明。
+
+返回：
+
+- 夹具路径
+- JSON 有效性检查或其他运行的命令
+- 能力剩余物
+- G3 输入证据
+
+### `G2-B 地面合约种子`
+
+任务：
+
+- 添加地面合约规范，通过 G1 地面配置文件和公共核心字段练习 `TASK_MOVE`、`TASK_OCCUPY` 和 `TASK_SUPPORT`。
+- 仅添加证明新合约规范可运行所需的最小聚焦测试工具覆盖。
+
+写入范围注意事项：
+
+- 仅拥有 `tests/contracts/unit/ground/**` 加上一个聚焦的 `tests/leader` 或 `tests/runners` 测试（如果需要）。
+- 不要编辑 `examples/config/database/ground/**` 下的夹具。
+- 不要编辑任务文档、运行时代码、公共绑定、场景加载器、C++ DTO 外壳或空军/海军语义。
+
+返回：
+
+- 合约路径
+- 运行的测试
+- 公共核心证据
+- G3 输入证据
+
+### `G2-C 主线程集成`
+
+任务：
+
+- 在 `G2-A` 和 `G2-B` 返回后开始。
+- 审查工作者接触的文件和验证证据。
+- 同步 G2 README、G2 集群和此调度队列。
+- 记录 G3 的阻塞项或发布证据。
+
+返回：
+
+- 已接受或已拒绝的工作者切片
+- 最终验证命令
+- G3 执行表面设计的剩余物
+
+### `G3-A 执行表面预检`
+
+任务：
+
+- 选择一个 G4 候选。
+- 定义阶段和数据包映射。
+- 命名观察/报告和环境假设。
+- 生成测试计划和实现写入范围。
+
+写入范围注意事项：
+
+- 不要实现运行时行为。
+- 不要扩展到完整的地形、机动性或火力。
+
+返回：
+
+- 选定的 G4 候选
+- 写入范围
+- 测试计划
+- 剩余映射
+
+## 必需的工作者返回包
+
+```md
+流：
+状态：pass | fail | blocked | preflight-only
+接触的文件：
+运行的命令：
+证据：
+剩余物：
+集成说明：
+关闭影响：
+```
+
+工作者提醒：
+
+- 你在代码库中并不孤单；不要撤销无关的编辑。
+- 保持写入范围不相交。
+- 如果遇到命名的阻塞项，请停止，而不是扩大阶段。

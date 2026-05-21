@@ -5,7 +5,7 @@
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-状态：`2026-05-18`，当前维护中的标准树权威入口。
+状态：`2026-05-21`，当前维护中的标准树权威入口。
 
 本目录用于定义项目后续采用的标准化建模基线。它的职责不是重复每一份活跃任务文档，而是回答：
 
@@ -35,6 +35,7 @@
 2. `services/`
 3. `air/`
 4. `naval/`
+5. `ground/`
 
 这对应一套明确的分层：
 
@@ -44,6 +45,13 @@
   air mission observation。
 - `naval/` 负责海军专用语义，例如 task-group、station、screen、support、recover、
   maritime command-role extension。
+- `ground/` 负责地面域专用语义，例如以 platoon 为中心的 tasking、
+  move/occupy/support 语义、terrain-masked information 假设，以及 land
+  command/support extension。
+
+第三域导航必须同时经过这两层：`services/army.md` 负责 Army 军种画像解释，
+`ground/` 负责维护中的 ground 特化语义。`army` 与 `land` 作为别名会规范化为
+维护名 `ground`，不会形成一条单独的 `army runtime stack`。
 
 ## 推荐阅读顺序
 
@@ -55,22 +63,28 @@
 4. [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.md)
 5. [军种画像总览](services/README.md)
 6. [美国空军画像](services/air_force.md)
-7. [美国海军画像](services/navy.md)
-8. [文档对齐映射](overview/document_alignment_map.md)
-9. [场景配置指南](bridge/scenario_guide.md)
-10. [空中平台特化总览](air/README.md)
-11. [海军标准总览](naval/README.md)
+7. [美国陆军画像](services/army.md)
+8. [美国海军画像](services/navy.md)
+9. [文档对齐映射](overview/document_alignment_map.md)
+10. [场景配置指南](bridge/scenario_guide.md)
+11. [空中平台特化总览](air/README.md)
+12. [海军标准总览](naval/README.md)
+13. [Ground 标准总览](ground/README.zh.md)
 
 ## 与活跃任务树的关系
 
-`docs/task/flight_dynamics/` 当前仍按 `flight`、`sensor_situation`、
-`weapon_guidance`、`naval`、`c2_command_chain` 这类实现工作流分组。
+`docs/task/` 当前包含 `flight_dynamics/flight`、`flight_dynamics/sensor_situation`、
+`flight_dynamics/weapon_guidance`、`flight_dynamics/naval`、
+`flight_dynamics/c2_command_chain` 等实现工作流，以及较新的 `ground/` 第三域
+bootstrap。
 
 这种组织方式对执行有用，但它不是标准所有权地图。特别是：
 
 - `flight / sensor / weapon` 主要是实现真实性方向
 - `c2_command_chain` 里有大量概念实际上属于 `joint/`
 - `naval` 里有一部分概念应落在 `services/navy.md`，另一部分才应落在 `naval/`
+- `ground` 里有一部分概念应落在 `services/army.md`，另一部分才应落在 `ground/`；
+  `army` 与 `land` 别名应通过这套分层归口，而不是形成新的 runtime stack
 - 标准树应吸收这些任务文档里已经稳定下来的共享合同，而不是照搬其目录结构
 
 若任务文档和标准文档在“概念归属”上冲突，以标准树为准。
@@ -119,6 +133,7 @@
 - `scenario_guide.md`：`Authoritative bridge`
 - `air/*.md`：`Specialization`
 - `naval/*.md`：`Specialization`
+- `ground/*.md`：`Specialization`
 - `docs/Archive/**`：`Archived`
 - `docs/task/flight_dynamics/archive/**`：任务历史归档，不是活跃标准来源
 
@@ -126,6 +141,8 @@
 
 - [naval/ship_unit_references.md](naval/ship_unit_references.md)
   - 第一批海军单位与公开来源可追溯性的参考基准补充页
+- [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
+  - 第一批 ground tasking 语汇与架构约束的 G0 基线
 - [modularization_plan.md](planning/modularization_plan.md)
   - 面向未来代码结构的活跃规划补充页，不是当前 runtime 合同
 

@@ -1,0 +1,75 @@
+{
+    "name": "Ground_Platoon_Starter",
+    "type": "GroundUnitSeed",
+    "specialization": "ground",
+    "service_profile": "Army",
+    "tasking_profile": "ground",
+    "tactical_unit_type": "TacticalUnit",
+    "echelon": "platoon",
+    "starter_tasks": [
+        "TASK_MOVE",
+        "TASK_OCCUPY",
+        "TASK_SUPPORT"
+    ],
+    "command_structure": {
+        "default_command_role": "ground_platoon_commander",
+        "subordinate_roles": [
+            {
+                "role": "ground_squad_leader",
+                "count": 3
+            }
+        ],
+        "higher_headquarters_role": "ground_company_commander",
+        "parent_node_id_semantics": "command-owner fallback",
+        "support_relationship_fields": [
+            "supported_node_id",
+            "supporting_node_id"
+        ]
+    },
+    "tasking_contract_seed": {
+        "starter_task_defaults": {
+            "TASK_MOVE": {
+                "coordination_mode": "Independent"
+            },
+            "TASK_OCCUPY": {
+                "coordination_mode": "Independent"
+            },
+            "TASK_SUPPORT": {
+                "coordination_mode": "Support"
+            }
+        },
+        "tight_loop_owner": "platoon",
+        "common_core_anchor_fields": [
+            "service_profile",
+            "task_family",
+            "tactical_unit_type",
+            "command_relationship",
+            "authority_scope",
+            "coordination_mode",
+            "parent_node_id",
+            "supported_node_id",
+            "supporting_node_id",
+            "task_group_id"
+        ]
+    },
+    "construction_intent": {
+        "status": "planning_seed_only",
+        "canonical_direction": "capability_bundle_public_platform",
+        "platform_family": "dismounted_unit",
+        "doctrine_family": "land_tactics"
+    },
+    "_deferred_runtime_claims": [
+        "movement dynamics",
+        "terrain traversal or masking behavior",
+        "sensing or track production behavior",
+        "fires, weapons, or launcher behavior",
+        "damage, suppression, or combat effects"
+    ],
+    "_provenance": {
+        "modeling_notes": [
+            "This is the first source-controlled ground fixture root for contract and planning use.",
+            "It captures platoon-centered tasking semantics only and does not define a maintained ground runtime schema.",
+            "Future construction should lower through capability bundles and an additive public platform surface rather than a private ground runtime path."
+        ]
+    }
+}

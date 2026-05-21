@@ -4,7 +4,7 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-05-18` authoritative for the maintained standards tree.
+Status: `2026-05-21` authoritative for the maintained standards tree.
 
 This directory defines the standardized modeling baseline the project intends to
 use going forward. Its job is not to restate every active implementation task.
@@ -33,6 +33,7 @@ an "air first, generalize later" line. It now follows:
 2. `services/`
 3. `air/`
 4. `naval/`
+5. `ground/`
 
 This reflects a deliberate modeling split:
 
@@ -44,6 +45,15 @@ This reflects a deliberate modeling split:
   recovery, takeoff procedures, and air-specific mission observation semantics.
 - `naval/` defines naval specialization such as task-group semantics, station,
   screen, support, recovery, and maritime command-role extensions.
+- `ground/` defines ground specialization such as platoon-centered tasking,
+  move/occupy/support semantics, terrain-masked information assumptions, and
+  land command/support extensions.
+
+Third-domain navigation must route through both layers: `services/army.md`
+owns Army service-profile interpretation, while `ground/` owns maintained
+ground specialization semantics. The aliases `army` and `land` normalize to
+the maintained `ground` specialization and do not create a separate `army`
+runtime stack.
 
 ## Recommended Reading Order
 
@@ -55,17 +65,21 @@ For new work, read in this order:
 4. [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
 5. [Service Profile Overview](services/README.md)
 6. [USAF Profile](services/air_force.md)
-7. [US Navy Profile](services/navy.md)
-8. [Document Alignment Map](overview/document_alignment_map.md)
-9. [Scenario Configuration Guide](bridge/scenario_guide.md)
-10. [Air Platform Specialization Overview](air/README.md)
-11. [Naval Standards Overview](naval/README.md)
+7. [US Army Profile](services/army.md)
+8. [US Navy Profile](services/navy.md)
+9. [Document Alignment Map](overview/document_alignment_map.md)
+10. [Scenario Configuration Guide](bridge/scenario_guide.md)
+11. [Air Platform Specialization Overview](air/README.md)
+12. [Naval Standards Overview](naval/README.md)
+13. [Ground Standards Overview](ground/README.md)
 
 ## Relationship to Active Task Plans
 
-The current task tree under `docs/task/flight_dynamics/` is organized around
-implementation workstreams such as `flight`, `sensor_situation`,
-`weapon_guidance`, `naval`, and `c2_command_chain`.
+The current task tree under `docs/task/` includes implementation workstreams
+such as `flight_dynamics/flight`, `flight_dynamics/sensor_situation`,
+`flight_dynamics/weapon_guidance`, `flight_dynamics/naval`, and
+`flight_dynamics/c2_command_chain`, plus the newer `ground/` third-domain
+bootstrap.
 
 That task-tree layout is useful for execution, but it is not the ownership map
 for the standardized model. In particular:
@@ -73,6 +87,9 @@ for the standardized model. In particular:
 - `flight`, `sensor`, and `weapon` are mostly implementation realism domains.
 - `c2_command_chain` contains many concepts that belong in `joint/`.
 - `naval` contains concepts split across `services/navy.md` and `naval/`.
+- `ground` contains concepts split across `services/army.md` and `ground/`;
+  the `army` and `land` aliases route through that split rather than through a
+  new runtime stack.
 - the standards tree should absorb the stable shared contracts from those task
   documents instead of mirroring their folder layout.
 
@@ -122,6 +139,7 @@ Current status mapping:
 - `scenario_guide.md`: `Authoritative bridge`
 - `air/*.md`: `Specialization`
 - `naval/*.md`: `Specialization`
+- `ground/*.md`: `Specialization`
 - `docs/Archive/**`: `Archived`
 - `docs/task/flight_dynamics/archive/**`: task-history archive, not an active standard source
 
@@ -130,6 +148,9 @@ Additional maintained supplements:
 - [naval/ship_unit_references.md](naval/ship_unit_references.md)
   - reference-baseline supplement for first-batch naval units and public-source
     traceability
+- [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
+  - G0 baseline for the first ground tasking vocabulary and architecture
+    constraints
 - [modularization_plan.md](planning/modularization_plan.md)
   - active planning supplement for future codebase structure, not a current
     runtime contract
