@@ -727,9 +727,35 @@ void bind_runtime(nb::module_& m) {
         )
         .def_rw("time_steps", &BatchWorldSetupRequest::time_steps);
 
+    nb::class_<TypedPlatformSpawnResult>(m, "TypedPlatformSpawnResult")
+        .def(nb::init<>())
+        .def_rw("request_index", &TypedPlatformSpawnResult::request_index)
+        .def_rw("world_index", &TypedPlatformSpawnResult::world_index)
+        .def_rw("entity_id", &TypedPlatformSpawnResult::entity_id)
+        .def_rw("admitted", &TypedPlatformSpawnResult::admitted)
+        .def_rw("materialized", &TypedPlatformSpawnResult::materialized)
+        .def_rw("fail_closed", &TypedPlatformSpawnResult::fail_closed)
+        .def_rw("request_id", &TypedPlatformSpawnResult::request_id)
+        .def_rw("source_type_name", &TypedPlatformSpawnResult::source_type_name)
+        .def_rw("plan_id", &TypedPlatformSpawnResult::plan_id)
+        .def_rw(
+            "capability_bundle_id",
+            &TypedPlatformSpawnResult::capability_bundle_id
+        )
+        .def_rw(
+            "rejection_reason",
+            &TypedPlatformSpawnResult::rejection_reason
+        )
+        .def_rw("errors", &TypedPlatformSpawnResult::errors)
+        .def_rw("evidence_refs", &TypedPlatformSpawnResult::evidence_refs);
+
     nb::class_<BatchWorldSetupResult>(m, "BatchWorldSetupResult")
         .def(nb::init<>())
-        .def_rw("entity_ids", &BatchWorldSetupResult::entity_ids);
+        .def_rw("entity_ids", &BatchWorldSetupResult::entity_ids)
+        .def_rw(
+            "typed_platform_spawn_results",
+            &BatchWorldSetupResult::typed_platform_spawn_results
+        );
 
     nb::class_<RuntimeCounterfactualBranchRequest>(
         m,

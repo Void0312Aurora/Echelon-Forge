@@ -202,6 +202,35 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             ["device_resident_consumer", "host_readback"],
         )
 
+    def test_typed_platform_spawn_result_public_fields_match_expected_binding_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.TypedPlatformSpawnResult()),
+            (
+                "admitted",
+                "capability_bundle_id",
+                "entity_id",
+                "errors",
+                "evidence_refs",
+                "fail_closed",
+                "materialized",
+                "plan_id",
+                "rejection_reason",
+                "request_id",
+                "request_index",
+                "source_type_name",
+                "world_index",
+            ),
+        )
+
+    def test_batch_world_setup_result_public_fields_preserve_legacy_and_typed_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.BatchWorldSetupResult()),
+            (
+                "entity_ids",
+                "typed_platform_spawn_results",
+            ),
+        )
+
     def test_engagement_event_packet_public_fields_include_provenance(self) -> None:
         self.assertTupleEqual(
             public_fields(ef_py.EngagementEventPacket()),

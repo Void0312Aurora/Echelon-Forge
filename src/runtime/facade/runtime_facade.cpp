@@ -205,6 +205,240 @@ bool runtime_string_blank(const std::string& value) {
     });
 }
 
+void append_runtime_evidence_ref(
+    std::vector<std::string>& evidence_refs,
+    const std::string& ref
+) {
+    if (runtime_string_blank(ref)) {
+        return;
+    }
+    if (std::find(evidence_refs.begin(), evidence_refs.end(), ref) !=
+        evidence_refs.end()) {
+        return;
+    }
+    evidence_refs.push_back(ref);
+}
+
+WorldSpawnRequest legacy_spawn_request_from_typed_request(
+    const TypedPlatformSpawnRequest& request
+) {
+    WorldSpawnRequest legacy{};
+    legacy.world_index = request.world_index;
+    legacy.side = request.side;
+    legacy.type_name = request.source_type_name;
+    legacy.entity_name = request.entity_name;
+    legacy.is_agent = request.is_agent;
+    legacy.x = request.x;
+    legacy.y = request.y;
+    legacy.z = request.z;
+    legacy.heading = request.heading;
+    legacy.pitch = request.pitch;
+    legacy.roll = request.roll;
+    legacy.vx = request.vx;
+    legacy.vy = request.vy;
+    legacy.vz = request.vz;
+    return legacy;
+}
+
+std::uint64_t spawn_legacy_request_through_compatibility_path(
+    SimulationKernel& world,
+    const WorldSpawnRequest& request
+) {
+    const auto entity = world.spawn_unit(
+        request.side,
+        request.type_name,
+        request.x,
+        request.y,
+        request.z,
+        request.heading,
+        request.pitch,
+        request.roll,
+        request.vx,
+        request.vy,
+        request.vz
+    );
+    if (!entity.is_valid()) {
+        return entity.id();
+    }
+
+    if (request.ammo_override_enabled) {
+        world.set_unit_ammo(
+            entity.id(),
+            request.missiles_remaining,
+            request.max_missiles
+        );
+    }
+    if (request.weapon_cooldown_override_enabled) {
+        world.set_weapon_cooldown(
+            entity.id(),
+            request.weapon_cooldown_s,
+            request.weapon_last_fire_time
+        );
+    }
+    return entity.id();
+}
+
+TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
+    WorldBatchRuntime& runtime,
+    std::uint64_t request_index,
+    const TypedPlatformSpawnRequest& request
+) {
+    TypedPlatformSpawnAdmission admission =
+        make_typed_platform_spawn_admission(request_index, request);
+    const TypedPlatformSpawnValidationResult validation =
+        validate_typed_platform_spawn_request(request);
+
+    if (!validation.valid) {
+        admission.reject(
+            validation.rejection_reason.empty()
+                ? std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+                : validation.rejection_reason
+        );
+        admission.errors = validation.errors;
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.validation_failed"
+        );
+        return make_typed_platform_spawn_result(admission);
+    }
+
+    if (!valid_runtime_world_index(runtime, request.world_index)) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionWorldIndexOutOfRange)
+        );
+        admission.add_error("typed platform spawn world_index is outside the configured runtime batch");
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.world_index_guard"
+        );
+        return make_typed_platform_spawn_result(admission);
+    }
+
+    if (!request.resolved_spawn_plan.admitted) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        if (!request.resolved_spawn_plan.rejection_reason.empty()) {
+            admission.add_error(
+                "resolved_spawn_plan rejected bridge admission: " +
+                request.resolved_spawn_plan.rejection_reason
+            );
+        }
+        if (!request.resolved_spawn_plan.diagnostics_reason.empty()) {
+            admission.add_error(
+                "resolved_spawn_plan diagnostics: " +
+                request.resolved_spawn_plan.diagnostics_reason
+            );
+        }
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.plan_admission_guard"
+        );
+        return make_typed_platform_spawn_result(admission);
+    }
+
+    if (!request.compatibility_path_preserved ||
+        !request.capability_bundle.compatibility_path_preserved ||
+        !request.resolved_spawn_plan.compatibility_path_preserved) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionCompatibilityPathRequired)
+        );
+        admission.add_error(
+            "typed platform setup must preserve compatibility_path_preserved across request, bundle, and plan"
+        );
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.compatibility_path_guard"
+        );
+        return make_typed_platform_spawn_result(admission);
+    }
+
+    if (request.capability_bundle.source_type_name != request.source_type_name) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        admission.add_error(
+            "capability_bundle.source_type_name must match request.source_type_name"
+        );
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.bundle_identity_guard"
+        );
+        return make_typed_platform_spawn_result(admission);
+    }
+
+    if (request.resolved_spawn_plan.source_type_name != request.source_type_name) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        admission.add_error(
+            "resolved_spawn_plan.source_type_name must match request.source_type_name"
+        );
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.source_type_name_guard"
+        );
+        return make_typed_platform_spawn_result(admission);
+    }
+
+    if (request.resolved_spawn_plan.capability_bundle_id !=
+        request.capability_bundle.bundle_id) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        admission.add_error(
+            "resolved_spawn_plan.capability_bundle_id must match capability_bundle.bundle_id"
+        );
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.plan_identity_guard"
+        );
+        return make_typed_platform_spawn_result(admission);
+    }
+
+    admission.admitted = true;
+    append_runtime_evidence_ref(
+        admission.evidence_refs,
+        "RuntimeFacade.apply_world_setup.typed_platform_spawn_bridge"
+    );
+    append_runtime_evidence_ref(
+        admission.evidence_refs,
+        "RuntimeFacade.apply_world_setup.compatibility_type_name_materialization"
+    );
+
+    TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+    WorldSpawnRequest legacy_request = legacy_spawn_request_from_typed_request(request);
+    legacy_request.type_name = request.resolved_spawn_plan.source_type_name;
+    auto& world = runtime.world(static_cast<std::size_t>(request.world_index));
+    const std::uint64_t entity_id =
+        spawn_legacy_request_through_compatibility_path(world, legacy_request);
+    if (entity_id == 0U) {
+        result.admitted = true;
+        result.materialized = false;
+        result.fail_closed = true;
+        result.rejection_reason =
+            std::string(kTypedPlatformSpawnRejectionMaterializationFailed);
+        result.add_error(
+            "compatibility path materialization returned null entity for source_type_name=" +
+            request.resolved_spawn_plan.source_type_name
+        );
+        append_runtime_evidence_ref(
+            result.evidence_refs,
+            "RuntimeFacade.apply_world_setup.materialization_failed"
+        );
+        return result;
+    }
+
+    result.admitted = true;
+    result.materialized = true;
+    result.entity_id = entity_id;
+    append_runtime_evidence_ref(
+        result.evidence_refs,
+        "RuntimeFacade.apply_world_setup.materialized"
+    );
+    return result;
+}
+
 BatchWorldSetupRequest single_world_counterfactual_setup(
     BatchWorldSetupRequest setup,
     std::uint32_t seed
@@ -1337,6 +1571,20 @@ BatchWorldSetupResult RuntimeFacade::apply_world_setup(const BatchWorldSetupRequ
         request.spawn_requests,
         request.time_steps
     );
+    result.typed_platform_spawn_results.reserve(
+        request.typed_platform_spawn_requests.size()
+    );
+    for (std::size_t request_index = 0;
+         request_index < request.typed_platform_spawn_requests.size();
+         ++request_index) {
+        result.typed_platform_spawn_results.push_back(
+            materialize_typed_platform_spawn_request(
+                *runtime_,
+                static_cast<std::uint64_t>(request_index),
+                request.typed_platform_spawn_requests[request_index]
+            )
+        );
+    }
     return result;
 }
 

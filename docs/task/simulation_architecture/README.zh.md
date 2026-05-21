@@ -61,8 +61,8 @@
 17. WP17 验收后，剩余主线冻结为四个阶段：`WP18` runtime ownership 与 C++ hot-path
     consolidation，`WP19` CUDA / resident-state mainline alignment，`WP20`
     public capability-platform composition，以及 `WP21` full counterfactual /
-    experiment runtime。`WP18` 与 `WP19` 已验收；除非出现新的架构级事实，
-    否则新工作应落入剩余冻结阶段之一。
+    experiment runtime。`WP18`、`WP19` 与 `WP20` 已验收；除非出现新的架构级事实，
+    否则新工作应落入剩余冻结的 `WP21` 阶段。
 18. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
@@ -97,6 +97,38 @@
 | `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | 物化 Stage 3 最后一组 selected runtime slices：facade-shaped batch reads、可运行 cadence evidence、reference CPU fidelity admission、capability-gated spawn，以及 explicit-setup selected-entity counterfactual branch/compare，同时保留 legacy compatibility 与 full-worldline residuals | [stage3 runtime materialization and cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)、[fact ledger](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)、[business migration](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)、[multi-rate runtime](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)、[fidelity provider runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)、[capability spawn runtime](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)、[counterfactual runtime closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)、[dispatch queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)、[验收审查](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md) |
 | `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | 在 WP17 后收紧 runtime ownership，把维护中的 execution truths 与高频 Python paths 推向 C++/facade-owned surfaces，同时让 compatibility APIs 保持有边界 | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)、[ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)、[execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)、[ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)、[facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)、[C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)、[integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) |
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | 对齐现有 CUDA helpers、device-resident output contracts、diagnostics boundaries 与 resident-state sync/shard vocabulary，同时默认不晋级 exact GPU 或 maintained resident-state support | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)、[fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)、[device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)、[GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)、[resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)、[first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)、[integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) |
+| `WP20 Public Capability-Platform Composition` | complete / accepted | 通过 validation-first admission/result contracts 与 compatibility-preserving materialization 公开 typed capability-platform setup path，同时保持 type-name spawning 与 scenario schema 稳定 | [public capability-platform composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)、[fact ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)、[public typed spawn contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)、[runtime setup consume bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)、[facade/binding surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)、[compatibility/schema guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)、[integration handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md) |
+
+## WP20 Public Capability-Platform Composition
+
+产出：
+
+- [WP20 Public Capability-Platform Composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)
+- [WP20-A Public Capability Fact Ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)
+- [WP20-B Public Typed Platform Spawn Contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)
+- [WP20-C Runtime Setup Consume Bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)
+- [WP20-D Facade And Binding Public Surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)
+- [WP20-E Compatibility And Schema Guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)
+- [WP20-F Integration And Handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)
+- [WP20 Subagent Dispatch Queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)
+- [WP20 验收审查](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md)
+
+WP20 是已验收的第三个冻结 post-WP17 阶段。它消费 WP14 的 capability composition
+vocabulary 与 WP17 的 internal resolved-plan spawn path，通过 validation-first
+admission/result evidence 公开 typed platform setup。它必须保留
+`spawn_unit(type_name)`、`WorldSpawnRequest.type_name`、legacy scenario setup
+以及 backend `RuntimeCapabilities` 分离。
+
+WP20 当前地图：
+
+- `WP20-A Public Capability Fact Ledger` 在实现前冻结 source-backed facts。
+- `WP20-B Public Typed Platform Spawn Contract` 拥有 admission/result DTO shape
+  与 ordering rules。
+- `WP20-E Compatibility And Schema Guard` 把 WP14 additive-only guards 更新为
+  WP20 validation-first publicization guards。
+- `WP20-C Runtime Setup Consume Bridge` 已返回并通过 focused validation。
+- `WP20-D Facade And Binding Public Surface` 已返回并通过 focused validation。
+- `WP20-F Integration And Handoff` 已关闭为串行 closure lane。
 
 ## WP19 CUDA And Resident-State Mainline Alignment
 

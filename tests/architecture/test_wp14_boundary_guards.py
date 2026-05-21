@@ -137,17 +137,19 @@ def test_wp14_boundary_guard_examples_and_scenario_python_schema_stay_on_legacy_
         )
 
 
-def test_wp14_boundary_guard_typed_platform_spawn_requests_are_additive_not_auto_materialized() -> None:
+def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation_first() -> None:
     facade_header = _text(RUNTIME_FACADE_HEADER)
     facade_source = _text(RUNTIME_FACADE_SOURCE)
     world_batch_header = _text(WORLD_BATCH_HEADER)
     world_batch_source = _text(WORLD_BATCH_SOURCE)
+    facade_types = _text(RUNTIME_FACADE_TYPES)
 
     assert "std::vector<uint64_t> apply_world_setup_batch(" in facade_header
     assert "const std::vector<WorldSpawnRequest>& requests," in facade_header
-    assert "typed_platform_spawn_requests" not in facade_header, (
-        "RuntimeFacade public apply_world_setup_batch surface must remain on WorldSpawnRequest "
-        "for the first WP14 slice"
+    assert "std::vector<WorldSpawnRequest> spawn_requests;" in facade_types
+    assert "std::vector<TypedPlatformSpawnRequest> typed_platform_spawn_requests;" in facade_types, (
+        "WP20 validation-first publicization must remain additive on BatchWorldSetupRequest "
+        "instead of replacing legacy spawn_requests"
     )
 
     apply_world_setup_block = facade_source[
@@ -155,21 +157,26 @@ def test_wp14_boundary_guard_typed_platform_spawn_requests_are_additive_not_auto
         facade_source.index("void RuntimeFacade::set_pilot_actions_batch(")
     ]
     assert "request.spawn_requests" in apply_world_setup_block
-    assert "typed_platform_spawn_requests" not in apply_world_setup_block, (
-        "RuntimeFacade::apply_world_setup must not automatically materialize "
-        "typed_platform_spawn_requests without an explicit gate"
-    )
-    assert "ResolvedPlatformSpawnPlan" not in apply_world_setup_block
-    assert "CapabilityBundle" not in apply_world_setup_block
+    if "typed_platform_spawn_requests" in apply_world_setup_block:
+        for required in (
+            "validate_typed_platform_spawn_request",
+            "facade_evidence_refs",
+            "compatibility_path_preserved",
+        ):
+            assert required in facade_source, (
+                "RuntimeFacade::apply_world_setup may only publicize typed platform spawns "
+                "through an explicit validation-first evidence gate; "
+                f"missing {required!r}"
+            )
 
     assert "spawn_units_batch(const std::vector<WorldSpawnRequest>& requests)" in world_batch_source
     assert "TypedPlatformSpawnRequest" not in world_batch_header, (
-        "WorldBatchRuntime public mainline API must not materialize typed platform requests "
-        "in the first WP14 slice"
+        "WorldBatchRuntime public mainline API must stay on legacy WorldSpawnRequest input; "
+        "typed platform publicization belongs in facade validation, not backend behavior"
     )
     assert "typed_platform_spawn_requests" not in world_batch_source, (
-        "WorldBatchRuntime implementation must not auto-materialize typed platform requests "
-        "in the first WP14 slice"
+        "WorldBatchRuntime implementation must not grow typed platform materialization or "
+        "new tactical behavior in the WP20 compatibility/schema guard slice"
     )
 
 
@@ -178,9 +185,11 @@ def test_wp14_boundary_guard_additive_dto_validation_stays_fail_closed_without_r
 
     for token in (
         "validate_typed_platform_spawn_request",
+        "typed_platform_spawn_requires_typed_platform_request_kind",
         "typed_platform_spawn_requires_resolved_spawn_plan",
         "typed_platform_spawn_requires_type_name_compatibility_path",
         "typed_platform_spawn_resolved_plan_invalid",
+        "typed_platform_spawn_evidence_required",
     ):
         assert token in world_batch_contracts
 
@@ -188,6 +197,17 @@ def test_wp14_boundary_guard_additive_dto_validation_stays_fail_closed_without_r
         world_batch_contracts.index("validate_typed_platform_spawn_request("):
         world_batch_contracts.index("struct WorldPilotActionAssignment")
     ]
+    for required in (
+        "source_type_name",
+        "capability_bundle",
+        "resolved_spawn_plan",
+        "facade_evidence_refs",
+        "compatibility_path_preserved",
+    ):
+        assert required in validate_block, (
+            "Typed platform spawn validation must remain declarative and preserve the WP20 "
+            f"compatibility/evidence path; missing {required!r}"
+        )
     for forbidden in (
         "spawn_unit(",
         "spawn_units_batch(",

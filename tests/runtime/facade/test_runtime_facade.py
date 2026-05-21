@@ -75,6 +75,34 @@ def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     return ref
 
 
+def _public_observations_for_entity_range(
+    facade: ef_py.RuntimeFacade,
+    world_index: int,
+    start_entity_id: int,
+    end_entity_id: int,
+) -> list[ef_py.AgentObservation]:
+    refs = [
+        _entity_ref(world_index, entity_id)
+        for entity_id in range(int(start_entity_id), int(end_entity_id))
+    ]
+    return list(facade.get_agent_observations_batch(refs))
+
+
+def _has_public_observation_at(
+    observations: list[ef_py.AgentObservation],
+    *,
+    x: float,
+    y: float,
+    z: float,
+) -> bool:
+    return any(
+        abs(float(observation.x) - x) < 1e-6
+        and abs(float(observation.y) - y) < 1e-6
+        and abs(float(observation.z) - z) < 1e-6
+        for observation in observations
+    )
+
+
 def _build_route_state(entity_id: int) -> ef_py.ExecutionEpisodeState:
     state = ef_py.ExecutionEpisodeState()
     state.agent_id = int(entity_id)
@@ -191,6 +219,71 @@ def _build_reference_fidelity_request() -> ef_py.RuntimeFidelityRequest:
         "RuntimeFacade.admit_fidelity_request",
         "RuntimeFacade.run_counterfactual_branch",
     ]
+    return request
+
+
+def _make_typed_platform_spawn_request(
+    *,
+    world_index: int = 0,
+    request_id: str = "typed-spawn:lead",
+    source_type_name: str = "Aircraft",
+    entity_name: str = "TypedLead",
+) -> ef_py.TypedPlatformSpawnRequest:
+    request = ef_py.TypedPlatformSpawnRequest()
+    request.world_index = int(world_index)
+    request.side = ef_py.Side.Blue
+    request.request_id = request_id
+    request.source_type_name = source_type_name
+    request.entity_name = entity_name
+    request.is_agent = True
+    request.x = -1450.0
+    request.y = 25.0
+    request.z = 1200.0
+    request.heading = 90.0
+    request.vy = 180.0
+
+    mobility = ef_py.PlatformCapability()
+    mobility.capability_id = f"mobility:{source_type_name}"
+    mobility.family = "mobility"
+    mobility.capability_type = "fixed_wing_flight"
+    mobility.implementation_ref = "DefaultUnitFactory"
+    mobility.evidence_refs = [f"capability:{source_type_name}:mobility"]
+
+    bundle = ef_py.CapabilityBundle()
+    bundle.bundle_id = f"bundle:{source_type_name}"
+    bundle.source_type_name = source_type_name
+    bundle.capabilities = [mobility]
+    bundle.template_evidence_ref = f"template:{source_type_name}"
+    bundle.evidence_refs = [
+        f"bundle:{source_type_name}:evidence",
+        f"shared:{source_type_name}:evidence",
+    ]
+    bundle.compatibility_path_preserved = True
+    request.capability_bundle = bundle
+
+    plan = ef_py.ResolvedPlatformSpawnPlan()
+    plan.plan_id = f"plan:{request_id}"
+    plan.source_request_kind = "typed_platform_request"
+    plan.source_type_name = source_type_name
+    plan.capability_bundle_id = bundle.bundle_id
+    plan.resolved_platform_definition_ref = f"definition:{source_type_name}"
+    plan.materialization_strategy = "resolved_spawn_plan_bridge"
+    plan.template_evidence_ref = bundle.template_evidence_ref
+    plan.resolution_evidence_ref = f"resolution:{request_id}"
+    plan.materialization_evidence_ref = f"materialization:{request_id}"
+    plan.evidence_refs = [
+        f"plan:{request_id}:evidence",
+        f"shared:{source_type_name}:evidence",
+    ]
+    plan.resolved_capabilities = [mobility]
+    plan.compatibility_path_preserved = True
+    plan.admitted = True
+    request.resolved_spawn_plan = plan
+    request.facade_evidence_refs = [
+        "BatchWorldSetupRequest.typed_platform_spawn_requests",
+        f"facade:{request_id}",
+    ]
+    request.compatibility_path_preserved = True
     return request
 
 
@@ -681,6 +774,180 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertEqual(len(packet.agent_observations), 1)
         self.assertEqual(len(packet.instrument_states), 1)
         self.assertEqual(int(packet.agent_observations[0].id), int(setup_result.entity_ids[0]))
+
+    def test_runtime_facade_typed_platform_setup_materializes_through_legacy_compatibility_path(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        self.assertTrue(
+            facade.load_database(resolve_repo_path("examples", "config", "database"))
+        )
+
+        setup_request = ef_py.BatchWorldSetupRequest()
+        setup_request.seeds = [123]
+        terrain = ef_py.WorldTerrainAssignment()
+        terrain.world_index = 0
+        terrain.terrain_type = "legacy"
+        wind = ef_py.WorldWindAssignment()
+        wind.world_index = 0
+        legacy_spawn = ef_py.WorldSpawnRequest()
+        legacy_spawn.world_index = 0
+        legacy_spawn.side = ef_py.Side.Blue
+        legacy_spawn.type_name = "Aircraft"
+        legacy_spawn.entity_name = "LegacyLead"
+        legacy_spawn.is_agent = True
+        legacy_spawn.x = -1400.0
+        legacy_spawn.y = 0.0
+        legacy_spawn.z = 1200.0
+        legacy_spawn.heading = 90.0
+        legacy_spawn.vy = 180.0
+        setup_request.terrain_assignments = [terrain]
+        setup_request.wind_assignments = [wind]
+        setup_request.spawn_requests = [legacy_spawn]
+        setup_request.typed_platform_spawn_requests = [
+            _make_typed_platform_spawn_request()
+        ]
+        setup_request.time_steps = [0.05]
+
+        setup_result = facade.apply_world_setup(setup_request)
+
+        self.assertEqual(len(setup_result.entity_ids), 1)
+        self.assertEqual(len(setup_result.typed_platform_spawn_results), 1)
+
+        typed_result = setup_result.typed_platform_spawn_results[0]
+        self.assertEqual(int(typed_result.request_index), 0)
+        self.assertEqual(int(typed_result.world_index), 0)
+        self.assertGreater(int(typed_result.entity_id), 0)
+        self.assertTrue(bool(typed_result.admitted))
+        self.assertTrue(bool(typed_result.materialized))
+        self.assertFalse(bool(typed_result.fail_closed))
+        self.assertEqual(typed_result.request_id, "typed-spawn:lead")
+        self.assertEqual(typed_result.source_type_name, "Aircraft")
+        self.assertEqual(typed_result.plan_id, "plan:typed-spawn:lead")
+        self.assertEqual(typed_result.capability_bundle_id, "bundle:Aircraft")
+        self.assertEqual(typed_result.rejection_reason, "")
+        self.assertEqual(list(typed_result.errors), [])
+        self.assertIn(
+            "BatchWorldSetupRequest.typed_platform_spawn_requests",
+            list(typed_result.evidence_refs),
+        )
+        self.assertIn("plan:typed-spawn:lead:evidence", list(typed_result.evidence_refs))
+        self.assertNotEqual(int(typed_result.entity_id), int(setup_result.entity_ids[0]))
+
+        observations = _public_observations_for_entity_range(
+            facade,
+            0,
+            int(setup_result.entity_ids[0]),
+            int(setup_result.entity_ids[0]) + 4,
+        )
+        self.assertTrue(
+            _has_public_observation_at(
+                observations,
+                x=-1400.0,
+                y=0.0,
+                z=1200.0,
+            )
+        )
+        self.assertTrue(
+            _has_public_observation_at(
+                observations,
+                x=-1450.0,
+                y=25.0,
+                z=1200.0,
+            )
+        )
+
+    def test_runtime_facade_typed_platform_setup_fail_closed_does_not_spawn_on_validation_or_world_guard(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        self.assertTrue(
+            facade.load_database(resolve_repo_path("examples", "config", "database"))
+        )
+
+        setup_request = ef_py.BatchWorldSetupRequest()
+        setup_request.seeds = [123]
+        terrain = ef_py.WorldTerrainAssignment()
+        terrain.world_index = 0
+        terrain.terrain_type = "legacy"
+        wind = ef_py.WorldWindAssignment()
+        wind.world_index = 0
+        setup_request.terrain_assignments = [terrain]
+        setup_request.wind_assignments = [wind]
+
+        invalid_request = _make_typed_platform_spawn_request(
+            request_id="typed-spawn:invalid",
+            entity_name="InvalidTypedLead",
+        )
+        invalid_request.request_id = ""
+
+        out_of_range_request = _make_typed_platform_spawn_request(
+            world_index=7,
+            request_id="typed-spawn:oob",
+            entity_name="OutOfRangeTypedLead",
+        )
+
+        setup_request.typed_platform_spawn_requests = [
+            invalid_request,
+            out_of_range_request,
+        ]
+        setup_request.time_steps = [0.05]
+
+        setup_result = facade.apply_world_setup(setup_request)
+
+        self.assertEqual(len(setup_result.entity_ids), 0)
+        self.assertEqual(len(setup_result.typed_platform_spawn_results), 2)
+
+        validation_failure = setup_result.typed_platform_spawn_results[0]
+        self.assertEqual(int(validation_failure.request_index), 0)
+        self.assertEqual(int(validation_failure.world_index), 0)
+        self.assertEqual(int(validation_failure.entity_id), 0)
+        self.assertFalse(bool(validation_failure.admitted))
+        self.assertFalse(bool(validation_failure.materialized))
+        self.assertTrue(bool(validation_failure.fail_closed))
+        self.assertEqual(validation_failure.request_id, "")
+        self.assertEqual(validation_failure.source_type_name, "Aircraft")
+        self.assertEqual(validation_failure.plan_id, "plan:typed-spawn:invalid")
+        self.assertEqual(validation_failure.capability_bundle_id, "bundle:Aircraft")
+        self.assertEqual(
+            validation_failure.rejection_reason,
+            "typed_platform_spawn_request_id_required",
+        )
+        self.assertIn("request_id is required", list(validation_failure.errors))
+        self.assertIn(
+            "BatchWorldSetupRequest.typed_platform_spawn_requests",
+            list(validation_failure.evidence_refs),
+        )
+
+        world_guard_failure = setup_result.typed_platform_spawn_results[1]
+        self.assertEqual(int(world_guard_failure.request_index), 1)
+        self.assertEqual(int(world_guard_failure.world_index), 7)
+        self.assertEqual(int(world_guard_failure.entity_id), 0)
+        self.assertFalse(bool(world_guard_failure.admitted))
+        self.assertFalse(bool(world_guard_failure.materialized))
+        self.assertTrue(bool(world_guard_failure.fail_closed))
+        self.assertEqual(world_guard_failure.request_id, "typed-spawn:oob")
+        self.assertEqual(world_guard_failure.source_type_name, "Aircraft")
+        self.assertEqual(world_guard_failure.plan_id, "plan:typed-spawn:oob")
+        self.assertEqual(world_guard_failure.capability_bundle_id, "bundle:Aircraft")
+        self.assertEqual(
+            world_guard_failure.rejection_reason,
+            "typed_platform_spawn_world_index_out_of_range",
+        )
+        self.assertIn(
+            "typed platform spawn world_index is outside the configured runtime batch",
+            list(world_guard_failure.errors),
+        )
+        self.assertIn(
+            "BatchWorldSetupRequest.typed_platform_spawn_requests",
+            list(world_guard_failure.evidence_refs),
+        )
+
+        observations = _public_observations_for_entity_range(facade, 0, 1, 8)
+        self.assertFalse(
+            _has_public_observation_at(
+                observations,
+                x=-1450.0,
+                y=25.0,
+                z=1200.0,
+            )
+        )
 
     def test_runtime_facade_step_execution_batch_returns_results_and_observations(self) -> None:
         entity_id = 77

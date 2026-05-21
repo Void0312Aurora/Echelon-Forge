@@ -4,7 +4,7 @@ Language:
 - English canonical: [subagent_usage_policy.md](subagent_usage_policy.md)
 - Chinese companion: `subagent_usage_policy.zh.md`
 
-状态：`2026-05-20`，适用于维护中文档与实现任务中的分布式工作。
+状态：`2026-05-21`，适用于维护中文档与实现任务中的分布式工作。
 
 在分发实施 worker 时使用这些规则。
 
@@ -41,6 +41,33 @@ Language:
 - 如果两个子任务可能碰到同一段行范围或同一套 canonical 术语，就改为串行。
 - 优先使用能完成该有边界任务的最小 worker。
 - 更大的 worker 留给跨文件、架构关键或发布敏感的工作。
+
+## 模型与思考预算规则
+
+当工具支持模型选择与 reasoning budget 时，subagent 派发必须记录两者。
+
+默认复杂度阶梯：
+
+- 轻量、局部或 diagnostics-only 任务应使用 `gpt-5.4-mini`，reasoning 为
+  `xhigh`。这包括文档审计、source fact ledger、聚焦验证、状态同步，以及不拥有
+  复杂代码的 closure-lane chores。
+- 中等实现或集成任务应使用 `gpt-5.4`，reasoning 至少为 `medium`。如果任务触及
+  public APIs、bindings、architecture guards、compatibility behavior，或多个紧密相关
+  的文件族，应使用 `high`。
+- 复杂重构、架构关键 seam、public contracts、scheduler semantics、runtime
+  materialization、capability/spawn/fidelity paths，以及 counterfactual 或 replay
+  semantics，应使用 `gpt-5.4`，reasoning 为 `high` 或 `xhigh`。如果错误设计会导致
+  后续返工或扩大架构边界，应使用 `xhigh`。
+- 如果任务复杂度难以判定，应选择更强的模型/预算，或把立即阻塞的工作留在主线程。
+
+最低规则：
+
+- 非平凡 implementation、refactor、public-surface 或 architecture 工作不得低于
+  `medium` reasoning。
+- 不要把复杂跨文件设计或高风险代码所有权交给 mini-model worker，即使 reasoning 为
+  `xhigh`。
+- dispatch queue 与 worker packet 应包含 `Model / reasoning` 列或等价字段。任何偏离
+  本规范的派发都必须在 dispatch packet 中显式说明。
 
 ## 交接与集成
 

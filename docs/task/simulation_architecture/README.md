@@ -81,9 +81,9 @@ The active design conclusion is:
 17. After WP17 acceptance, the remaining mainline is frozen as four stages:
     `WP18` runtime ownership and C++ hot-path consolidation, `WP19` CUDA /
     resident-state mainline alignment, `WP20` public capability-platform
-    composition, and `WP21` full counterfactual / experiment runtime. `WP18`
-    and `WP19` are accepted; new work should fit one of the remaining frozen
-    stages unless a new architecture-level fact forces a route update.
+    composition, and `WP21` full counterfactual / experiment runtime. `WP18`,
+    `WP19`, and `WP20` are accepted; new work should fit the remaining frozen
+    `WP21` stage unless a new architecture-level fact forces a route update.
 18. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
@@ -118,6 +118,42 @@ The active design conclusion is:
 | `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | Materialize the final Stage 3 selected runtime slices: facade-shaped batch reads, runnable cadence evidence, reference CPU fidelity admission, capability-gated spawn, and explicit-setup selected-entity counterfactual branch/compare while preserving legacy compatibility and full-worldline residuals | [stage3 runtime materialization and cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.md), [fact ledger](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md), [business migration](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md), [multi-rate runtime](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md), [fidelity provider runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md), [capability spawn runtime](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md), [counterfactual runtime closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md), [dispatch queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md) |
 | `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | Consolidate runtime ownership after WP17 by moving maintained execution truths and high-frequency Python paths toward C++/facade-owned surfaces while keeping compatibility APIs bounded | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md), [ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.md), [execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.md), [ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.md), [facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.md), [C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.md), [integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.md), [dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md) |
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | Align existing CUDA helpers, device-resident output contracts, diagnostics boundaries, and resident-state sync/shard vocabulary without promoting exact GPU or maintained resident-state support by default | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md), [fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md), [device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md), [GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md), [resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md), [first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md), [integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md), [dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) |
+| `WP20 Public Capability-Platform Composition` | complete / accepted | Publicize the typed capability-platform setup path through validation-first admission/result contracts and compatibility-preserving materialization while keeping type-name spawning and scenario schema stable | [public capability-platform composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md), [fact ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md), [public typed spawn contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md), [runtime setup consume bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md), [facade/binding surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md), [compatibility/schema guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md), [integration handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md), [dispatch queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.md) |
+
+## WP20 Public Capability-Platform Composition
+
+Output:
+
+- [WP20 Public Capability-Platform Composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md)
+- [WP20-A Public Capability Fact Ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md)
+- [WP20-B Public Typed Platform Spawn Contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md)
+- [WP20-C Runtime Setup Consume Bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md)
+- [WP20-D Facade And Binding Public Surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md)
+- [WP20-E Compatibility And Schema Guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md)
+- [WP20-F Integration And Handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md)
+- [WP20 Subagent Dispatch Queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md)
+- [WP20 Acceptance Review](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.md)
+
+WP20 is the accepted third frozen post-WP17 stage. It consumes WP14's capability
+composition vocabulary and WP17's internal resolved-plan spawn path, then
+publicizes typed platform setup through validation-first admission/result
+evidence. It must preserve `spawn_unit(type_name)`,
+`WorldSpawnRequest.type_name`, legacy scenario setup, and backend
+`RuntimeCapabilities` separation.
+
+WP20 current map:
+
+- `WP20-A Public Capability Fact Ledger` freezes source-backed facts before
+  implementation.
+- `WP20-B Public Typed Platform Spawn Contract` owns admission/result DTO shape
+  and ordering rules.
+- `WP20-E Compatibility And Schema Guard` updates WP14 additive-only guards into
+  WP20 validation-first publicization guards.
+- `WP20-C Runtime Setup Consume Bridge` has returned and passed focused
+  validation.
+- `WP20-D Facade And Binding Public Surface` has returned and passed focused
+  validation.
+- `WP20-F Integration And Handoff` has closed as the serial closure lane.
 
 ## WP19 CUDA And Resident-State Mainline Alignment
 

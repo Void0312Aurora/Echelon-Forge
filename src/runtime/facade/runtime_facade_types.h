@@ -121,6 +121,7 @@ struct BatchWorldSetupRequest {
 
 struct BatchWorldSetupResult {
     std::vector<std::uint64_t> entity_ids;
+    std::vector<TypedPlatformSpawnResult> typed_platform_spawn_results;
 };
 
 struct RuntimeCounterfactualBranchRequest {
