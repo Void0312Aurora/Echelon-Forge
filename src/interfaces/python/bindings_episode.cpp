@@ -1,6 +1,7 @@
 #include "interfaces/python/binding_utils.h"
 
 #include "core/geometry/spatial_query_runtime.h"
+#include "core/mission/episode/detail/episode_reward_breakdown.h"
 #include "core/mission/episode/execution_episode_batch_prepare.h"
 #include "core/mission/episode/execution_episode_controller.h"
 #include "core/mission/runtime/execution_episode_runtime.h"
@@ -815,6 +816,16 @@ void bind_episode(nb::module_& m) {
         &compute_execution_episode_runtime_batch,
         nb::arg("inputs_batch"),
         nb::call_guard<nb::gil_scoped_release>()
+    );
+    m.def(
+        "build_episode_reward_breakdown_json",
+        &episode_controller_detail::build_episode_reward_breakdown_json,
+        nb::arg("runtime_inputs"),
+        nb::arg("products"),
+        nb::arg("reward_total"),
+        nb::arg("waypoint_arrived"),
+        nb::arg("had_post_waypoint_transition_before"),
+        nb::arg("phase_transition_bonus")
     );
 
     nb::class_<ExecutionEpisodeState>(m, "ExecutionEpisodeState")

@@ -108,8 +108,10 @@ def test_execution_batch_step_result_semantic_shape_is_facade_visible() -> None:
     request.include_instrument_states = True
 
     result = facade.step_execution_batch(request)
+    exported_state = facade.export_execution_episode_states([_world_ref(0, entity_id)])[0]
 
     assert len(result.step_results) == 1
+    assert len(result.execution_episode_states) == 1
     assert len(result.rewards) == 1
     assert len(result.terminated) == 1
     assert len(result.truncated) == 1
@@ -144,6 +146,12 @@ def test_execution_batch_step_result_semantic_shape_is_facade_visible() -> None:
     assert result.termination_reasons[0] == "running"
     assert not bool(result.terminated[0])
     assert not bool(result.truncated[0])
+    assert bool(
+        ef_py.execution_episode_states_equivalent(
+            result.execution_episode_states[0],
+            exported_state,
+        )
+    )
     assert step_result.controller_state.mission_phase_name == "post_route"
     assert step_result.controller_state.step_count == 1
 

@@ -17,6 +17,29 @@ class NavalShipDatabaseTests(unittest.TestCase):
     _OPEN_WATER_X = 1_000_000.0
     _OPEN_WATER_Y = 1_000_000.0
 
+    def test_wp17_naval_spawn_uses_type_name_resolution_chain_materialization(self) -> None:
+        kernel = ef_py.SimulationKernel()
+        kernel.reset(499)
+        self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))
+
+        ddg = kernel.spawn_unit(
+            ef_py.Side.Blue,
+            "DDG-51_Flight_I_USS_Arleigh_Burke",
+            self._OPEN_WATER_X,
+            self._OPEN_WATER_Y,
+            0.0,
+            heading=90.0,
+            pitch=0.0,
+            roll=0.0,
+            vx=0.0,
+            vy=10.29,
+            vz=0.0,
+        )
+
+        self.assertGreater(int(ddg), 0)
+        self.assertEqual(kernel.get_unit_type(int(ddg)), int(ef_py.UnitType.Ship))
+        self.assertTrue(hasattr(ef_py, "ResolvedPlatformSpawnPlan"))
+
     def _load_database_with_ship_overrides(self, overrides: dict[str, dict]) -> ef_py.SimulationKernel:
         kernel = ef_py.SimulationKernel()
         kernel.reset(5100 + len(overrides))

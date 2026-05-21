@@ -82,6 +82,11 @@ def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_dom
             action.clock_domain_metadata.has_source_time = true;
             action.clock_domain_metadata.source_time_s = 3.0;
             action.clock_domain_metadata.source_snapshot_version = "obs:3";
+            action.cadence_control.enabled = true;
+            action.cadence_control.hold_policy.hold_mode = "hold_last";
+            action.cadence_control.hold_policy.validity_duration_s = 0.1;
+            action.cadence_control.has_expiry_time = true;
+            action.cadence_control.expiry_time_s = 3.1;
             request.action_requests.push_back(action);
 
             RuntimeWindowResult result = execute_runtime_window(
@@ -107,6 +112,26 @@ def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_dom
                 }
             );
 
+            if (kWp10ClockDomainAdvisoryOnly != true) {
+                std::cerr << "global advisory flag should stay unchanged\n";
+                return 1;
+            }
+            const auto selected =
+                enumerate_wp17_selected_slice_strict_clock_domain_manifests();
+            if (selected.size() != 3) {
+                std::cerr << "selected-slice strict helper drifted\n";
+                return 1;
+            }
+            if (result.cadence_config.window_duration_s != 0.1 ||
+                result.cadence_config.domains.size() != 4) {
+                std::cerr << "selected-slice cadence config drifted\n";
+                return 1;
+            }
+            if (result.cadence_trace.size() != 10) {
+                std::cerr << "selected-slice cadence trace should expose 1/2/6/1 ticks\n";
+                return 1;
+            }
+
             if (result.executed_nodes.size() != 3) {
                 std::cerr << "selected maintained slice should produce exactly three node records\n";
                 return 1;
@@ -131,6 +156,28 @@ def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_dom
                     std::cerr << "selected-slice node did not execute: " << expected << "\n";
                     return 1;
                 }
+            }
+            std::size_t policy_ticks = 0;
+            std::size_t control_ticks = 0;
+            std::size_t physics_ticks = 0;
+            std::size_t export_ticks = 0;
+            bool saw_hold = false;
+            for (const auto& record : result.cadence_trace) {
+                if (record.domain == "policy") {
+                    ++policy_ticks;
+                } else if (record.domain == "control") {
+                    ++control_ticks;
+                    saw_hold = saw_hold || record.held;
+                } else if (record.domain == "physics") {
+                    ++physics_ticks;
+                } else if (record.domain == "export") {
+                    ++export_ticks;
+                }
+            }
+            if (policy_ticks != 1 || control_ticks != 2 ||
+                physics_ticks != 6 || export_ticks != 1 || !saw_hold) {
+                std::cerr << "cadence trace counts/hold evidence drifted\n";
+                return 1;
             }
 
             const auto* compatibility =

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+from typing import Any
 import unittest
 
 import numpy as np
@@ -69,6 +70,21 @@ def _inline_vec_env_scenario() -> dict:
             }
         ],
     }
+
+
+def _legacy_step_result_state_with_poisoned_report_fields(source_state) -> ef_py.ExecutionEpisodeState:
+    state = ef_py.ExecutionEpisodeState()
+    state.agent_id = int(getattr(source_state, "agent_id", 0))
+    state.step_count = int(getattr(source_state, "step_count", 0)) + 100
+    state.prev_altitude_m = float(getattr(source_state, "prev_altitude_m", 0.0)) + 250.0
+    state.last_termination_reason = "legacy_step_result_reason"
+    state.last_reward_total = 91.25
+    state.last_reward_breakdown_json = json.dumps(
+        {"legacy_total": 91.25, "total": 91.25},
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+    return state
 
 
 def _inline_vec_env_route_transition_scenario() -> dict:
@@ -892,7 +908,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     ref = ef_py.WorldEntityRef()
                     ref.world_index = 0
                     ref.entity_id = int(vec_env.envs[0].agent_id)
-                    controller_state = vec_env.batch_runtime.export_execution_episode_states_batch([ref])[0]
+                    controller_state = vec_env.export_execution_episode_states([ref])[0]
                     loader_state = vec_env.envs[0].loader.build_execution_episode_state()
                     self.assertTrue(ef_py.execution_episode_states_equivalent(controller_state, loader_state))
                     self.assertEqual(int(controller_state.step_count), 0)
@@ -990,7 +1006,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 ref = ef_py.WorldEntityRef()
                 ref.world_index = 0
                 ref.entity_id = int(mainline_env.envs[0].agent_id)
-                runtime_state = mainline_env.batch_runtime.export_execution_episode_states_batch([ref])[0]
+                runtime_state = mainline_env.export_execution_episode_states([ref])[0]
                 loader_state = mainline_env.envs[0].loader.build_execution_episode_state()
                 self.assertTrue(
                     _controller_runtime_state_matches_loader_state(runtime_state, loader_state)
@@ -1022,11 +1038,11 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 for _step_idx in range(2):
                     _obs, _rewards, dones, _infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
                     self.assertTrue(bool(dones[0]))
-                    self.assertTrue(bool(vec_env.batch_runtime.execution_episode_controller_ready(0)))
+                    self.assertTrue(bool(vec_env.execution_episode_ready(0)))
                     ref = ef_py.WorldEntityRef()
                     ref.world_index = 0
                     ref.entity_id = int(vec_env.envs[0].agent_id)
-                    runtime_state = vec_env.batch_runtime.export_execution_episode_states_batch([ref])[0]
+                    runtime_state = vec_env.export_execution_episode_states([ref])[0]
                     loader_state = vec_env.envs[0].loader.build_execution_episode_state()
                     self.assertEqual(int(runtime_state.step_count), 0)
                     self.assertTrue(
@@ -1087,7 +1103,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 ref = ef_py.WorldEntityRef()
                 ref.world_index = 0
                 ref.entity_id = int(mainline_env.envs[0].agent_id)
-                runtime_state = mainline_env.batch_runtime.export_execution_episode_states_batch([ref])[0]
+                runtime_state = mainline_env.export_execution_episode_states([ref])[0]
                 loader_state = mainline_env.envs[0].loader.build_execution_episode_state()
                 self.assertTrue(
                     _controller_runtime_state_matches_loader_state(runtime_state, loader_state)
@@ -1456,6 +1472,154 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertFalse(bool(dones[0]))
                 self.assertIsInstance(infos[0], dict)
                 self.assertTrue(np.isfinite(float(rewards[0])))
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_mainline_prefers_facade_execution_episode_state_export(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_route_transition_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_route_transition_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+                execution_episode_controller_mainline=True,
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+
+                original = vec_env._step_execution_episode_controller_mainline_requests
+                observed: dict[str, Any] = {}
+
+                def _wrapped(requests):
+                    result = original(requests)
+                    exported_state = result.execution_episode_states[0]
+                    observed["exported_step_count"] = int(exported_state.step_count)
+                    observed["compat_step_count"] = int(exported_state.step_count) + 100
+                    compat_state = _legacy_step_result_state_with_poisoned_report_fields(exported_state)
+                    compat_state.last_termination_reason = "compatibility_fallback_should_not_win"
+                    result.step_results[0].controller_state = compat_state
+                    return result
+
+                vec_env._step_execution_episode_controller_mainline_requests = _wrapped
+                try:
+                    _obs, _rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+                finally:
+                    vec_env._step_execution_episode_controller_mainline_requests = original
+
+                self.assertFalse(bool(dones[0]))
+                exported_state = vec_env.export_execution_episode_state(0)
+                loader_state = vec_env.envs[0].loader.build_execution_episode_state()
+                self.assertTrue(
+                    _controller_runtime_state_matches_loader_state(exported_state, loader_state)
+                )
+                self.assertEqual(int(loader_state.step_count), int(observed["exported_step_count"]))
+                self.assertEqual(int(exported_state.step_count), int(observed["exported_step_count"]))
+                self.assertEqual(int(observed["compat_step_count"]), int(observed["exported_step_count"]) + 100)
+                self.assertNotEqual(int(loader_state.step_count), int(observed["compat_step_count"]))
+                self.assertNotEqual(
+                    str(infos[0].get("termination_reason")),
+                    "compatibility_fallback_should_not_win",
+                )
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_mainline_prefers_facade_batch_fields_over_legacy_step_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_route_transition_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_route_transition_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+                execution_episode_controller_mainline=True,
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+
+                original = vec_env._step_execution_episode_controller_mainline_requests
+                original_apply_state = vec_env.envs[0].loader.apply_execution_episode_state
+                original_apply_runtime_fields = vec_env.envs[0].loader.apply_execution_episode_runtime_fields
+                observed: dict[str, Any] = {}
+
+                def _wrapped_apply_state(state):
+                    observed["apply_state_calls"] = int(observed.get("apply_state_calls", 0)) + 1
+                    return original_apply_state(state)
+
+                def _wrapped_apply_runtime_fields(state, **kwargs):
+                    observed["apply_runtime_fields_calls"] = int(
+                        observed.get("apply_runtime_fields_calls", 0)
+                    ) + 1
+                    return original_apply_runtime_fields(state, **kwargs)
+
+                def _wrapped(requests):
+                    result = original(requests)
+                    step_result = result.step_results[0]
+                    step_result.reward_total = 91.25
+                    step_result.terminated = False
+                    step_result.truncated = True
+                    step_result.status0 = -1.0
+                    step_result.status1 = -2.0
+                    step_result.status2 = -3.0
+                    step_result.status3 = -4.0
+                    step_result.structural_state_changed = False
+                    step_result.controller_state = _legacy_step_result_state_with_poisoned_report_fields(
+                        result.execution_episode_states[0]
+                    )
+
+                    result.rewards = [-17.75]
+                    result.terminated = [True]
+                    result.truncated = [False]
+                    result.status_vectors = [[6.0, 7.0, 8.0, 9.0]]
+                    result.termination_reasons = ["facade_owned_reason"]
+                    result.reward_breakdown_jsons = [
+                        json.dumps(
+                            {"facade_total": -17.75, "total": -17.75},
+                            ensure_ascii=True,
+                            sort_keys=True,
+                        )
+                    ]
+                    result.controller_state_changed_flags = [True]
+                    return result
+
+                vec_env.envs[0].loader.apply_execution_episode_state = _wrapped_apply_state
+                vec_env.envs[0].loader.apply_execution_episode_runtime_fields = _wrapped_apply_runtime_fields
+                vec_env._step_execution_episode_controller_mainline_requests = _wrapped
+                try:
+                    _obs, rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+                finally:
+                    vec_env._step_execution_episode_controller_mainline_requests = original
+                    vec_env.envs[0].loader.apply_execution_episode_state = original_apply_state
+                    vec_env.envs[0].loader.apply_execution_episode_runtime_fields = original_apply_runtime_fields
+
+                self.assertTrue(bool(dones[0]))
+                self.assertAlmostEqual(float(rewards[0]), -17.75, places=6)
+                self.assertFalse(bool(infos[0]["TimeLimit.truncated"]))
+                self.assertTrue(
+                    np.allclose(
+                        np.asarray(infos[0]["mission_status"], dtype=np.float32),
+                        np.asarray([6.0, 7.0, 8.0, 9.0], dtype=np.float32),
+                        atol=1.0e-6,
+                    )
+                )
+                self.assertEqual(str(infos[0]["termination_reason"]), "facade_owned_reason")
+                self.assertAlmostEqual(float(infos[0]["reward_terms"]["facade_total"]), -17.75, places=6)
+                self.assertAlmostEqual(float(infos[0]["reward_terms"]["total"]), -17.75, places=6)
+                self.assertNotIn("legacy_total", infos[0]["reward_terms"])
+                self.assertEqual(int(observed.get("apply_state_calls", 0)), 1)
+                self.assertEqual(int(observed.get("apply_runtime_fields_calls", 0)), 0)
             finally:
                 vec_env.close()
 

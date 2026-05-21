@@ -174,6 +174,7 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             public_fields(ef_py.ExecutionBatchStepResult()),
             (
                 "controller_state_changed_flags",
+                "execution_episode_states",
                 "observation_packet",
                 "reward_breakdown_jsons",
                 "reward_reports",
@@ -194,6 +195,7 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             public_fields(ef_py.RuntimeWindowActionRequest()),
             (
                 "action_intent",
+                "cadence_control",
                 "input_snapshot_version",
                 "source_layer",
             ),
@@ -202,6 +204,7 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             public_fields(ef_py.RuntimeWindowRequest()),
             (
                 "action_requests",
+                "cadence_config",
                 "engagement_request",
                 "export_diagnostics",
                 "export_engagement",
@@ -216,6 +219,8 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             public_fields(ef_py.RuntimeWindowResult()),
             (
                 "barrier_trace",
+                "cadence_config",
+                "cadence_trace",
                 "context",
                 "diagnostics_traces",
                 "engagement_packet",

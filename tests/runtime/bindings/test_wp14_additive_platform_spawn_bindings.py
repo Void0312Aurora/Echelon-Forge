@@ -132,3 +132,18 @@ def test_wp14_typed_platform_spawn_request_fails_closed_for_missing_fields() -> 
     assert not bool(result.valid)
     assert bool(result.fail_closed)
     assert result.rejection_reason == "typed_platform_spawn_evidence_required"
+
+
+def test_wp14_legacy_world_spawn_request_type_name_path_remains_python_mainline_surface() -> None:
+    legacy_spawn = ef_py.WorldSpawnRequest()
+    legacy_spawn.world_index = 0
+    legacy_spawn.side = ef_py.Side.Blue
+    legacy_spawn.type_name = "DDG-51_Flight_I_USS_Arleigh_Burke"
+    legacy_spawn.entity_name = "Burke"
+    legacy_spawn.z = 0.0
+    legacy_spawn.heading = 90.0
+    legacy_spawn.vx = 10.29
+
+    assert legacy_spawn.type_name == "DDG-51_Flight_I_USS_Arleigh_Burke"
+    assert not hasattr(legacy_spawn, "source_type_name")
+    assert not hasattr(legacy_spawn, "resolved_spawn_plan")

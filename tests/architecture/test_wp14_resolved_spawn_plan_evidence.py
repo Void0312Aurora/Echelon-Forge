@@ -45,10 +45,15 @@ def test_wp14_spawn_path_uses_observable_type_name_plan_resolution_entrypoint() 
 
     assert "resolve_platform_spawn_plan_for_type_name" in header
     spawn_anchor = header.index("flecs::entity spawn(flecs::world& ecs,")
-    definition_anchor = header.index("const UnitDefinition& def = it->second;", spawn_anchor)
-    evidence_anchor = header.index("resolve_platform_spawn_plan_for_type_name(unit_name)", definition_anchor)
+    evidence_anchor = header.index("resolve_platform_spawn_plan_for_type_name(unit_name)", spawn_anchor)
+    validate_anchor = header.index(
+        "validate_resolved_platform_spawn_plan(",
+        evidence_anchor,
+    )
+    gate_anchor = header.index("if (!plan_validation.valid || !resolved_spawn_plan.admitted)", validate_anchor)
+    definition_anchor = header.index("const UnitDefinition& def = it->second;", gate_anchor)
     materialization_anchor = header.index("auto e = ecs.entity()", definition_anchor)
-    assert definition_anchor < evidence_anchor < materialization_anchor
+    assert evidence_anchor < validate_anchor < gate_anchor < definition_anchor < materialization_anchor
     assert "spawn_platform" not in header
 
 
@@ -138,6 +143,56 @@ def test_wp14_resolved_spawn_plan_evidence_is_queryable_from_type_name_compat_pa
                 missing.rejection_reason !=
                     "resolved_platform_spawn_plan_type_name_not_found") {
                 std::cerr << "missing type_name rejection evidence drifted\n";
+                return 1;
+            }
+
+            return 0;
+        }
+        """
+    )
+    result = _compile_and_run(source)
+    assert result.returncode == 0, result.stderr + result.stdout
+
+
+def test_wp14_resolved_spawn_plan_air_and_naval_type_names_share_materialization_chain() -> None:
+    source = textwrap.dedent(
+        r"""
+        #include <iostream>
+        #include <string>
+        #include "models/core/default_unit_factory.h"
+
+        int main() {
+            namespace platform = runtime::platform_capabilities;
+            DefaultUnitFactory factory;
+
+            const auto air =
+                factory.resolve_platform_spawn_plan_for_type_name("F-16C_Block50");
+            const auto naval =
+                factory.resolve_platform_spawn_plan_for_type_name("DDG-51_Flight_I_USS_Arleigh_Burke");
+
+            const auto same_chain = [&](const auto& plan, const char* type_name) {
+                if (!plan.admitted) {
+                    std::cerr << type_name << " plan was not admitted\n";
+                    return false;
+                }
+                if (plan.source_request_kind !=
+                        std::string(platform::kPlatformSpawnRequestKindTypeNameCompatibility) ||
+                    !plan.compatibility_path_preserved ||
+                    plan.materialization_strategy !=
+                        std::string(platform::kPlatformMaterializationStrategyFactoryCompatibility)) {
+                    std::cerr << type_name << " drifted off the type_name compatibility chain\n";
+                    return false;
+                }
+                if (plan.resolution_evidence_ref.empty() ||
+                    plan.materialization_evidence_ref.empty()) {
+                    std::cerr << type_name << " is missing plan-level evidence refs\n";
+                    return false;
+                }
+                return true;
+            };
+
+            if (!same_chain(air, "F-16C_Block50") ||
+                !same_chain(naval, "DDG-51_Flight_I_USS_Arleigh_Burke")) {
                 return 1;
             }
 

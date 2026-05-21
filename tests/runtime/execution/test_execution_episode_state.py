@@ -12,6 +12,16 @@ ensure_repo_imports()
 import ef_py  # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
+from gym_envs.scenario_loader.runtime_state import (  # noqa: E402
+    SCENARIO_LOADER_STATE_SHELL_ATTRS,
+    SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE,
+    SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS,
+    SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+    SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER,
+    SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+    ScenarioLoaderStateShell,
+    classify_scenario_loader_state_shell_attr,
+)
 
 
 def _route_transition_scenario() -> dict:
@@ -79,6 +89,32 @@ def _route_transition_scenario() -> dict:
 
 
 class ExecutionEpisodeStateTests(unittest.TestCase):
+    def test_scenario_loader_state_shell_attrs_have_full_responsibility_classification(self) -> None:
+        shell_field_names = {field_name for field_name in ScenarioLoaderStateShell.__dataclass_fields__}
+        self.assertEqual(shell_field_names, set(SCENARIO_LOADER_STATE_SHELL_ATTRS))
+        self.assertEqual(set(SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS), set(SCENARIO_LOADER_STATE_SHELL_ATTRS))
+
+    def test_scenario_loader_state_shell_classification_pins_guard_buckets(self) -> None:
+        self.assertEqual(
+            classify_scenario_loader_state_shell_attr("waypoints"),
+            SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER,
+        )
+        self.assertEqual(
+            classify_scenario_loader_state_shell_attr("waypoint_idx"),
+            SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        )
+        self.assertEqual(
+            classify_scenario_loader_state_shell_attr("mission_phase_name"),
+            SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+        )
+        self.assertEqual(
+            classify_scenario_loader_state_shell_attr("leader_intent"),
+            SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE,
+        )
+
+        with self.assertRaises(KeyError):
+            classify_scenario_loader_state_shell_attr("nonexistent_state_shell_attr")
+
     def test_scenario_loader_state_shell_keeps_execution_episode_fields_attribute_compatible(self) -> None:
         sim = ef_py.SimulationKernel()
         loader = ScenarioLoader(sim)

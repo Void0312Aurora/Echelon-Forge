@@ -1,13 +1,25 @@
 from __future__ import annotations
 
 import ast
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from pathlib import Path
+
+from gym_envs.scenario_loader.runtime_state import (
+    SCENARIO_LOADER_STATE_SHELL_ATTRS,
+    SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE,
+    SCENARIO_LOADER_STATE_SHELL_CLASSIFICATION_BUCKETS,
+    SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS,
+    SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+    SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER,
+    SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+    ScenarioLoaderStateShell,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
 WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
+WORLD_BATCH_RUNTIME_ACCESS = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "runtime_access.py"
 LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
@@ -24,6 +36,37 @@ def _adapter_source() -> str:
 
 def _leader_source() -> str:
     return LEADER_WORLD_BATCH_RUNTIME.read_text(encoding="utf-8")
+
+
+def _runtime_access_source() -> str:
+    return WORLD_BATCH_RUNTIME_ACCESS.read_text(encoding="utf-8")
+
+
+def _maintained_execution_episode_compat_read_allowlist() -> set[str]:
+    return {
+        "python/rl/runtime/world_batch/adapter.py",
+        "python/rl/runtime/world_batch/compat.py",
+        "tests/world_batch/test_world_batch_vec_env.py",
+    }
+
+
+def _iter_maintained_python_paths() -> list[Path]:
+    return [
+        *REPO_ROOT.joinpath("python", "rl", "runtime").rglob("*.py"),
+        *(
+            path
+            for path in REPO_ROOT.joinpath("tests").rglob("*.py")
+            if "tests/architecture/" not in path.relative_to(REPO_ROOT).as_posix()
+        ),
+    ]
+
+
+def _iter_maintained_facade_guard_paths() -> list[Path]:
+    return [
+        *REPO_ROOT.joinpath("python", "rl", "runtime").rglob("*.py"),
+        *REPO_ROOT.joinpath("tests", "runtime").rglob("*.py"),
+        REPO_ROOT / "tests" / "world_batch" / "test_world_batch_vec_env.py",
+    ]
 
 
 def _class_stack(tree: ast.AST) -> dict[ast.AST, list[str]]:
@@ -43,6 +86,20 @@ def _class_stack(tree: ast.AST) -> dict[ast.AST, list[str]]:
 
     Visitor().visit(tree)
     return out
+
+
+def _compat_batch_runtime_consumer_allowlist() -> set[str]:
+    return {
+        "tests/world_batch/test_world_batch_vec_env.py",
+    }
+
+
+def _runtime_escape_hatch_path_allowlist() -> set[str]:
+    return {
+        path
+        for path, allowance in SCOPED_ESCAPE_HATCH_ALLOWLIST.items()
+        if allowance.runtime_calls or allowance.runtime_world_calls
+    }
 
 
 @dataclass(frozen=True)
@@ -100,6 +157,48 @@ SCOPED_ESCAPE_HATCH_ALLOWLIST = {
 }
 
 
+EXPECTED_SCENARIO_LOADER_STATE_SHELL_CLASSIFICATION_BY_BUCKET = {
+    SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER: frozenset(
+        {
+            "_cached_route_ref_id",
+            "waypoints",
+        }
+    ),
+    SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY: frozenset(
+        {
+            "_waypoint_leg_origin_x",
+            "_waypoint_leg_origin_y",
+            "_waypoint_prev_dist_m",
+            "gear_bonus_awarded",
+            "last_reward_breakdown",
+            "last_termination_reason",
+            "liftoff_awarded",
+            "off_runway_steps",
+            "prev_alt",
+            "prev_speed",
+            "waypoint_idx",
+            "waypoint_total_route_length_m",
+        }
+    ),
+    SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR: frozenset(
+        {
+            "_approach_prev_dme_m",
+            "_approach_prev_gs_abs",
+            "_approach_prev_loc_abs",
+            "mission_phase_name",
+            "post_waypoint_transition",
+        }
+    ),
+    SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE: frozenset(
+        {
+            "leader_intent",
+            "pilot_report",
+            "task_order",
+        }
+    ),
+}
+
+
 def _runtime_escape_hatch_counts(path: Path) -> tuple[int, int, int]:
     tree = ast.parse(path.read_text(encoding="utf-8"))
     runtime_calls = 0
@@ -131,6 +230,25 @@ def _runtime_escape_hatch_counts(path: Path) -> tuple[int, int, int]:
 
     Visitor().visit(tree)
     return runtime_calls, runtime_world_calls, world_batch_ctor_calls
+
+
+def test_scenario_loader_state_shell_classification_is_architecture_contract() -> None:
+    shell_fields = frozenset(field_def.name for field_def in fields(ScenarioLoaderStateShell))
+    expected_buckets = frozenset(EXPECTED_SCENARIO_LOADER_STATE_SHELL_CLASSIFICATION_BY_BUCKET)
+
+    assert shell_fields == SCENARIO_LOADER_STATE_SHELL_ATTRS
+    assert frozenset(SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS) == shell_fields
+    assert SCENARIO_LOADER_STATE_SHELL_CLASSIFICATION_BUCKETS == expected_buckets
+
+    actual_by_bucket = {
+        bucket: frozenset(
+            attr
+            for attr, classification in SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS.items()
+            if classification == bucket
+        )
+        for bucket in expected_buckets
+    }
+    assert actual_by_bucket == EXPECTED_SCENARIO_LOADER_STATE_SHELL_CLASSIFICATION_BY_BUCKET
 
 
 def test_world_batch_adapter_keeps_direct_runtime_fallback_inside_adapter() -> None:
@@ -192,6 +310,15 @@ def test_world_batch_vec_env_main_class_does_not_cache_raw_runtime_handles() -> 
     assert ".compat_runtime" not in main_class
 
 
+def test_world_batch_vec_env_access_stays_thin_forwarder_without_raw_runtime_ownership() -> None:
+    source = _runtime_access_source()
+    assert ".batch_runtime." not in source
+    assert ".runtime()" not in source
+    assert ".world(" not in source
+    assert "WorldBatchRuntime" not in source
+    assert "RuntimeFacade" not in source
+
+
 def test_leader_world_batch_runtime_does_not_reach_raw_world_handles() -> None:
     source = _leader_source()
     assert ".batch_runtime.world(" not in source
@@ -204,6 +331,66 @@ def test_leader_world_batch_runtime_keeps_batch_runtime_as_compat_only_surface()
     assert "self.batch_runtime.get_agent_observations_batch(" not in source
     assert "self.batch_runtime.set_pilot_actions_batch(" not in source
     assert "self.batch_runtime.step_worlds(" not in source
+
+
+def test_maintained_paths_do_not_add_new_execution_episode_batch_runtime_reads() -> None:
+    forbidden_markers = (
+        ".batch_runtime.export_execution_episode_states_batch(",
+        ".batch_runtime.execution_episode_controller_ready(",
+    )
+    violations: list[tuple[str, int, str]] = []
+    allowlist = _maintained_execution_episode_compat_read_allowlist()
+
+    for path in _iter_maintained_python_paths():
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if rel in allowlist:
+            continue
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            stripped = line.strip()
+            if any(marker in stripped for marker in forbidden_markers):
+                violations.append((rel, lineno, stripped))
+
+    assert not violations, (
+        "maintained paths must use vec-env/runtime facade execution-episode helpers instead of "
+        f"compat batch_runtime reads: {violations}"
+    )
+
+
+def test_maintained_paths_do_not_add_new_batch_runtime_consumers_outside_compatibility_tests() -> None:
+    violations: list[tuple[str, int, str]] = []
+    allowlist = _compat_batch_runtime_consumer_allowlist()
+
+    for path in _iter_maintained_facade_guard_paths():
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if rel in allowlist:
+            continue
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            stripped = line.strip()
+            if ".batch_runtime." in stripped:
+                violations.append((rel, lineno, stripped))
+
+    assert not violations, (
+        "maintained facade-layer paths must keep vec_env.batch_runtime consumers inside explicit "
+        f"compatibility tests only: {violations}"
+    )
+
+
+def test_maintained_paths_do_not_add_new_runtime_facade_runtime_consumers() -> None:
+    allowlist = _runtime_escape_hatch_path_allowlist()
+    violations: list[tuple[str, int, int]] = []
+
+    for path in _iter_maintained_facade_guard_paths():
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        runtime_calls, runtime_world_calls, _ = _runtime_escape_hatch_counts(path)
+        if rel in allowlist:
+            continue
+        if runtime_calls or runtime_world_calls:
+            violations.append((rel, runtime_calls, runtime_world_calls))
+
+    assert not violations, (
+        "maintained facade-layer paths must keep RuntimeFacade.runtime() escape hatches inside the "
+        f"explicit compatibility/diagnostics allowlist only: {violations}"
+    )
 
 
 def test_leader_world_batch_runtime_does_not_call_runtime_facade_runtime() -> None:

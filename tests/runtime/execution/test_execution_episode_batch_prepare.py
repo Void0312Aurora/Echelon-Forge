@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import unittest
 
 import numpy as np
@@ -127,6 +128,40 @@ def _assert_episode_products_close(
         )
 
 
+def _assert_reward_breakdowns_close(
+    testcase: unittest.TestCase,
+    lhs_inputs,
+    lhs_products,
+    rhs_inputs,
+    rhs_products,
+    *,
+    places: int = 6,
+) -> None:
+    lhs_breakdown = json.loads(
+        ef_py.build_episode_reward_breakdown_json(
+            lhs_inputs,
+            lhs_products,
+            float(lhs_products.compiled_reward_total),
+            False,
+            False,
+            0.0,
+        )
+    )
+    rhs_breakdown = json.loads(
+        ef_py.build_episode_reward_breakdown_json(
+            rhs_inputs,
+            rhs_products,
+            float(rhs_products.compiled_reward_total),
+            False,
+            False,
+            0.0,
+        )
+    )
+    testcase.assertEqual(set(lhs_breakdown.keys()), set(rhs_breakdown.keys()))
+    for key in lhs_breakdown:
+        testcase.assertAlmostEqual(float(lhs_breakdown[key]), float(rhs_breakdown[key]), places=places, msg=key)
+
+
 def _runtime_batch_prepare_scenario() -> dict:
     return {
         "scenario_name": "execution_episode_batch_prepare_parity",
@@ -195,7 +230,7 @@ def _runtime_batch_prepare_scenario() -> dict:
 
 
 class ExecutionEpisodeBatchPrepareTests(unittest.TestCase):
-    def test_batch_prepare_rich_state_matches_direct_runtime_inputs(self) -> None:
+    def test_batch_prepare_reward_termination_breakdown_matches_direct_runtime_inputs(self) -> None:
         config = ef_py.StepEvaluationBatchConfig()
         state = ef_py.StepEvaluationBatchEnvState()
         state.truncated = True
@@ -295,6 +330,7 @@ class ExecutionEpisodeBatchPrepareTests(unittest.TestCase):
         actual = ef_py.compute_execution_episode_runtime(actual_inputs)
 
         _assert_episode_products_close(self, expected, actual)
+        _assert_reward_breakdowns_close(self, expected_inputs, expected, actual_inputs, actual)
 
     def test_batch_prepare_matches_scenario_loader_step_evaluation(self) -> None:
         sim = ef_py.SimulationKernel()

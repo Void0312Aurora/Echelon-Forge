@@ -13,6 +13,30 @@ import ef_py  # noqa: E402
 _DB_PATH = resolve_repo_path("examples", "config", "database")
 
 
+def test_wp17_air_spawn_uses_type_name_resolution_chain_materialization() -> None:
+    sim = ef_py.SimulationKernel()
+    assert sim.load_database(_DB_PATH)
+    entity_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            1200.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            180.0,
+            0.0,
+        )
+    )
+
+    assert entity_id > 0
+    assert sim.get_unit_type(entity_id) == int(ef_py.UnitType.Aircraft)
+    assert hasattr(ef_py, "ResolvedPlatformSpawnPlan")
+
+
 def _make_air_combat_fixture() -> tuple[ef_py.SimulationKernel, int, int]:
     sim = ef_py.SimulationKernel()
     if not sim.load_database(_DB_PATH):

@@ -119,6 +119,20 @@ _RUNTIME_FACADE_CAPABILITY_METADATA_EXPECTATIONS = {
     ),
 }
 
+_RUNTIME_FIDELITY_BINDING_FIELDS = (
+    "admitted",
+    "backend_profile_id",
+    "baseline_exact_evaluation",
+    "errors",
+    "evidence_refs",
+    "parity_budget_ref",
+    "rejection_reason",
+    "request_label",
+    "requested_provider_family",
+    "selected_provider_family",
+    "selected_stage_node_id",
+)
+
 _GPU_HELPER_BINDINGS = (
     "probe_gpu_device",
     "last_visual_experiment_stats",
@@ -205,6 +219,46 @@ class GpuRuntimeBindingTests(unittest.TestCase):
                 bool(getattr(capabilities, field)),
                 msg=f"{field} must not be inferred from GPU probe/helper binding availability",
             )
+
+    def test_runtime_facade_fidelity_binding_projects_provider_admission_surface(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        request = ef_py.RuntimeFidelityRequest()
+        request.request_label = "exact_evaluation"
+        request.backend_profile_id = "cpu_exact.reference"
+        request.parity_budget_ref = "parity_budget.cpu_exact.reference.v1"
+        request.provider_family = "reference_cpu"
+        request.model_family_scope = ["P0-P10 semantic lifecycle"]
+        request.validation_gate = "WP17-D binding admission"
+        request.facade_evidence_refs = ["RuntimeFacade.capabilities"]
+
+        admission = facade.admit_fidelity_request(request)
+
+        for field in _RUNTIME_FIDELITY_BINDING_FIELDS:
+            self.assertTrue(hasattr(admission, field), msg=f"missing RuntimeFidelityAdmission.{field}")
+        self.assertTrue(bool(admission.admitted))
+        self.assertEqual(admission.selected_provider_family, "reference_cpu")
+        self.assertEqual(admission.selected_stage_node_id, "p10.observation_export.v1")
+
+    def test_runtime_facade_fidelity_binding_rejects_gpu_claim_without_fallback(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        request = ef_py.RuntimeFidelityRequest()
+        request.request_label = "exact_evaluation"
+        request.backend_profile_id = "cpu_exact.reference"
+        request.parity_budget_ref = "parity_budget.cpu_exact.reference.v1"
+        request.provider_family = "gpu"
+        request.model_family_scope = ["P0-P10 semantic lifecycle"]
+        request.validation_gate = "WP17-D binding fail-closed"
+        request.facade_evidence_refs = ["RuntimeFacade.admit_fidelity_request"]
+
+        admission = facade.admit_fidelity_request(request)
+
+        self.assertFalse(bool(admission.admitted))
+        self.assertEqual(
+            admission.rejection_reason,
+            "exact_gpu_fidelity_requires_maintained_backend_profile",
+        )
+        self.assertEqual(admission.selected_provider_family, "none")
+        self.assertEqual(admission.selected_stage_node_id, "")
 
     def test_visual_runtime_probe_bindings_are_available(self) -> None:
         info = ef_py.probe_gpu_device()

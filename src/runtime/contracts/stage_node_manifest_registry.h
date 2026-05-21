@@ -61,6 +61,8 @@ struct StageNodeManifestValidationResult {
     }
 };
 
+inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_seed();
+
 inline bool is_blank(std::string_view value) {
     return std::all_of(value.begin(), value.end(), [](unsigned char c) {
         return std::isspace(c) != 0;
@@ -99,6 +101,25 @@ inline bool is_maintained_scheduler_truth(const StageNodeManifest& manifest) {
     return manifest.facade_visibility != kFacadeVisibilityCompatibilityAdapter &&
         manifest.facade_visibility != kFacadeVisibilityDiagnosticsOnly &&
         manifest.write_commit_policy != kWriteCommitPolicyDiagnosticOnly;
+}
+
+inline bool is_wp17_selected_slice_strict_clock_domain_node(
+    const StageNodeManifest& manifest
+) {
+    return manifest.node_id == "p7.fire_control_launch.v1" ||
+        manifest.node_id == "p9.effects_damage.v1" ||
+        manifest.node_id == "p10.observation_export.v1";
+}
+
+inline std::vector<const StageNodeManifest*>
+enumerate_wp17_selected_slice_strict_clock_domain_manifests() {
+    std::vector<const StageNodeManifest*> manifests;
+    for (const auto& manifest : wp10_stage_node_manifest_registry_seed()) {
+        if (is_wp17_selected_slice_strict_clock_domain_node(manifest)) {
+            manifests.push_back(&manifest);
+        }
+    }
+    return manifests;
 }
 
 inline StageNodeManifestValidationResult validate_stage_node_manifest(

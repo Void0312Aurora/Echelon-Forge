@@ -62,6 +62,11 @@ _RUNTIME_CAPABILITY_METADATA_EXPECTATIONS = {
     ),
 }
 
+_RUNTIME_FIDELITY_PROVIDER_FAMILY_EXPECTATIONS = {
+    "none": "none",
+    "reference_cpu": "reference_cpu",
+}
+
 
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     ref = ef_py.WorldEntityRef()
@@ -148,6 +153,63 @@ def _build_route_request(entity_id: int) -> ef_py.WorldExecutionEpisodeStepReque
     return request
 
 
+def _build_single_aircraft_setup(seed: int = 123) -> ef_py.BatchWorldSetupRequest:
+    setup_request = ef_py.BatchWorldSetupRequest()
+    setup_request.seeds = [int(seed)]
+    terrain = ef_py.WorldTerrainAssignment()
+    terrain.world_index = 0
+    terrain.terrain_type = "legacy"
+    wind = ef_py.WorldWindAssignment()
+    wind.world_index = 0
+    spawn = ef_py.WorldSpawnRequest()
+    spawn.world_index = 0
+    spawn.side = ef_py.Side.Blue
+    spawn.type_name = "Aircraft"
+    spawn.entity_name = "CounterfactualLead"
+    spawn.is_agent = True
+    spawn.x = -1400.0
+    spawn.y = 0.0
+    spawn.z = 1200.0
+    spawn.heading = 90.0
+    spawn.vy = 180.0
+    setup_request.terrain_assignments = [terrain]
+    setup_request.wind_assignments = [wind]
+    setup_request.spawn_requests = [spawn]
+    setup_request.time_steps = [0.05]
+    return setup_request
+
+
+def _build_reference_fidelity_request() -> ef_py.RuntimeFidelityRequest:
+    request = ef_py.RuntimeFidelityRequest()
+    request.request_label = "exact_evaluation"
+    request.backend_profile_id = "cpu_exact.reference"
+    request.parity_budget_ref = "parity_budget.cpu_exact.reference.v1"
+    request.provider_family = "reference_cpu"
+    request.model_family_scope = ["P0-P10 semantic lifecycle", "counterfactual_selected_slice"]
+    request.validation_gate = "WP17-F selected counterfactual runtime slice"
+    request.facade_evidence_refs = [
+        "RuntimeFacade.admit_fidelity_request",
+        "RuntimeFacade.run_counterfactual_branch",
+    ]
+    return request
+
+
+def _build_counterfactual_branch_request() -> ef_py.RuntimeCounterfactualBranchRequest:
+    request = ef_py.RuntimeCounterfactualBranchRequest()
+    request.baseline_setup = _build_single_aircraft_setup()
+    request.entity_ref = _entity_ref(0, 0)
+    request.fidelity_request = _build_reference_fidelity_request()
+    request.deterministic_seed = 123
+    request.replay_envelope_id = "replay:wp17f:0001"
+    request.branch_point_id = "branch_point:wp17f:0001"
+    request.branch_worldline_id = "worldline:wp17f:branch"
+    request.mutation_dx = 25.0
+    request.mutation_dvy = 5.0
+    request.mutation_dheading = 15.0
+    request.evidence_refs = ["cadence:wp17c:selected_slice"]
+    return request
+
+
 def _repo_text(*parts: str) -> str:
     return Path(resolve_repo_path(*parts)).read_text(encoding="utf-8")
 
@@ -168,6 +230,62 @@ def _method_body(source: str, signature: str) -> str:
 
 
 class RuntimeFacadeTests(unittest.TestCase):
+    def test_runtime_facade_fidelity_admission_admits_reference_baseline(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        request = ef_py.RuntimeFidelityRequest()
+        request.request_label = "exact_evaluation"
+        request.backend_profile_id = "cpu_exact.reference"
+        request.parity_budget_ref = "parity_budget.cpu_exact.reference.v1"
+        request.provider_family = "reference_cpu"
+        request.model_family_scope = [
+            "P0-P10 semantic lifecycle",
+            "observation_packet",
+            "diagnostics_trace",
+        ]
+        request.validation_gate = (
+            "WP17-D facade-owned exact-evaluation baseline admission"
+        )
+        request.facade_evidence_refs = [
+            "RuntimeFacade.capabilities",
+            "RuntimeFacade.admit_fidelity_request",
+        ]
+
+        admission = facade.admit_fidelity_request(request)
+
+        self.assertTrue(bool(admission.admitted))
+        self.assertTrue(bool(admission.baseline_exact_evaluation))
+        self.assertEqual(admission.requested_provider_family, "reference_cpu")
+        self.assertEqual(admission.selected_provider_family, "reference_cpu")
+        self.assertEqual(admission.selected_stage_node_id, "p10.observation_export.v1")
+        self.assertEqual(admission.rejection_reason, "")
+        self.assertIn("RuntimeFacade.capabilities", list(admission.evidence_refs))
+
+    def test_runtime_facade_fidelity_admission_rejects_unmaintained_provider_families(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+
+        for provider_family, rejection in (
+            ("gpu", "exact_gpu_fidelity_requires_maintained_backend_profile"),
+            ("accelerated_exact", "exact_gpu_fidelity_requires_maintained_backend_profile"),
+            ("resident_state", "resident_state_fidelity_requires_maintained_backend_profile"),
+            ("shadow", "shadow_fidelity_requires_maintained_backend_profile"),
+        ):
+            request = ef_py.RuntimeFidelityRequest()
+            request.request_label = "exact_evaluation"
+            request.backend_profile_id = "cpu_exact.reference"
+            request.parity_budget_ref = "parity_budget.cpu_exact.reference.v1"
+            request.provider_family = provider_family
+            request.model_family_scope = ["P0-P10 semantic lifecycle"]
+            request.validation_gate = "WP17-D unsupported-provider fail-closed"
+            request.facade_evidence_refs = ["RuntimeFacade.admit_fidelity_request"]
+
+            admission = facade.admit_fidelity_request(request)
+
+            self.assertFalse(bool(admission.admitted), msg=provider_family)
+            self.assertEqual(admission.requested_provider_family, provider_family)
+            self.assertEqual(admission.selected_provider_family, "none")
+            self.assertEqual(admission.selected_stage_node_id, "")
+            self.assertEqual(admission.rejection_reason, rejection)
+
     def test_runtime_facade_declares_engagement_packet_shell_types(self) -> None:
         header = _repo_text("src", "runtime", "facade", "runtime_facade_types.h")
 
@@ -435,6 +553,31 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertFalse(bool(capabilities.supports_exact_gpu_backend))
         self.assertFalse(bool(capabilities.supports_shadow_compare))
 
+    def test_runtime_facade_fidelity_surface_declares_provider_selection_metadata(self) -> None:
+        header = _repo_text("src", "runtime", "facade", "runtime_facade_types.h")
+        facade_header = _repo_text("src", "runtime", "facade", "runtime_facade.h")
+        binding_source = _repo_text("src", "interfaces", "python", "bindings_runtime.cpp")
+        facade_source = _repo_text("src", "runtime", "facade", "runtime_facade.cpp")
+
+        for token in (
+            "struct RuntimeFidelityRequest",
+            "std::string provider_family = \"none\"",
+            "struct RuntimeFidelityAdmission",
+            "std::string requested_provider_family = \"none\"",
+            "std::string selected_provider_family = \"none\"",
+            "std::string selected_stage_node_id",
+        ):
+            self.assertIn(token, header)
+
+        self.assertIn("RuntimeFidelityAdmission admit_fidelity_request(", facade_header)
+        self.assertIn('"RuntimeFidelityRequest"', binding_source)
+        self.assertIn('"RuntimeFidelityAdmission"', binding_source)
+        self.assertIn('"admit_fidelity_request"', binding_source)
+
+        for provider_family in _RUNTIME_FIDELITY_PROVIDER_FAMILY_EXPECTATIONS.values():
+            self.assertIn(provider_family, facade_source)
+        self.assertIn("p10.observation_export.v1", facade_source)
+
     def test_runtime_capability_surface_declares_stable_backend_metadata_fields(self) -> None:
         header = _repo_text("src", "runtime", "facade", "runtime_facade_types.h")
         binding_source = _repo_text("src", "interfaces", "python", "bindings_runtime.cpp")
@@ -446,6 +589,56 @@ class RuntimeFacadeTests(unittest.TestCase):
 
         for value in _RUNTIME_CAPABILITY_METADATA_EXPECTATIONS.values():
             self.assertIn(value, facade_source)
+
+    def test_runtime_facade_counterfactual_branch_reports_selected_slice_delta(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        request = _build_counterfactual_branch_request()
+
+        result = facade.run_counterfactual_branch(request)
+
+        self.assertTrue(bool(result.admitted))
+        self.assertEqual(result.rejection_reason, "")
+        self.assertTrue(bool(result.fidelity_admission.admitted))
+        self.assertEqual(result.fidelity_admission.selected_provider_family, "reference_cpu")
+        self.assertEqual(result.fidelity_admission.selected_stage_node_id, "p10.observation_export.v1")
+        self.assertEqual(result.parent_snapshot.barrier_id, "counterfactual_selected_slice")
+        self.assertEqual(result.branch_snapshot.barrier_id, "counterfactual_selected_slice")
+        self.assertEqual(result.parent_snapshot.cadence_reason, request.cadence_reason)
+        self.assertEqual(result.branch_snapshot.provider_family, "reference_cpu")
+        self.assertTrue(bool(result.comparison.comparable))
+        self.assertAlmostEqual(float(result.comparison.dx), 25.0, places=6)
+        self.assertAlmostEqual(float(result.comparison.dvy), 5.0, places=6)
+        self.assertAlmostEqual(float(result.comparison.dheading), 15.0, places=6)
+        self.assertIn("RuntimeFacade.run_counterfactual_branch", list(result.evidence_refs))
+        self.assertIn("branch_point_id=branch_point:wp17f:0001", list(result.comparison.evidence_refs))
+
+    def test_runtime_facade_counterfactual_branch_rejects_raw_authoritative_mutation(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        request = _build_counterfactual_branch_request()
+        request.allow_raw_authoritative_state_mutation = True
+
+        result = facade.run_counterfactual_branch(request)
+
+        self.assertFalse(bool(result.admitted))
+        self.assertEqual(
+            result.rejection_reason,
+            "counterfactual_raw_authoritative_state_mutation_forbidden",
+        )
+
+    def test_runtime_facade_counterfactual_branch_rejects_unmaintained_fidelity(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        request = _build_counterfactual_branch_request()
+        request.fidelity_request.provider_family = "resident_state"
+
+        result = facade.run_counterfactual_branch(request)
+
+        self.assertFalse(bool(result.admitted))
+        self.assertEqual(result.rejection_reason, "counterfactual_fidelity_request_not_admitted")
+        self.assertFalse(bool(result.fidelity_admission.admitted))
+        self.assertEqual(
+            result.fidelity_admission.rejection_reason,
+            "resident_state_fidelity_requires_maintained_backend_profile",
+        )
 
     def test_runtime_facade_exports_typed_observation_packet(self) -> None:
         facade = ef_py.RuntimeFacade(1)
@@ -506,8 +699,10 @@ class RuntimeFacadeTests(unittest.TestCase):
         batch_request.include_agent_observations = False
 
         result = facade.step_execution_batch(batch_request)
+        post_step_exported_state = facade.export_execution_episode_states([ref])[0]
 
         self.assertEqual(len(result.step_results), 1)
+        self.assertEqual(len(result.execution_episode_states), 1)
         self.assertEqual(len(result.rewards), 1)
         self.assertEqual(len(result.terminated), 1)
         self.assertEqual(len(result.truncated), 1)
@@ -521,6 +716,7 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertEqual(len(result.observation_packet.agent_observations), 0)
 
         step_result = result.step_results[0]
+        execution_episode_state = result.execution_episode_states[0]
         self.assertTrue(bool(step_result.valid))
         self.assertTrue(bool(step_result.structural_state_changed))
         self.assertAlmostEqual(float(result.rewards[0]), float(step_result.reward_total), places=6)
@@ -552,6 +748,11 @@ class RuntimeFacadeTests(unittest.TestCase):
             bool(result.controller_state_changed_flags[0]),
             bool(step_result.structural_state_changed),
         )
+        self.assertTrue(
+            bool(ef_py.execution_episode_states_equivalent(execution_episode_state, post_step_exported_state))
+        )
+        self.assertEqual(int(execution_episode_state.mission_command.command_code), 2)
+        self.assertEqual(str(execution_episode_state.mission_phase_name), "post_route")
         self.assertEqual(int(step_result.controller_state.mission_command.command_code), 2)
         self.assertEqual(str(step_result.controller_state.mission_phase_name), "post_route")
 

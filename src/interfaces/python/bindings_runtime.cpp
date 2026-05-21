@@ -95,6 +95,80 @@ void bind_runtime(nb::module_& m) {
         .def_rw("world_count", &RuntimeBatchConfig::world_count)
         .def_rw("worker_threads", &RuntimeBatchConfig::worker_threads);
 
+    nb::class_<RuntimeFidelityRequest>(m, "RuntimeFidelityRequest")
+        .def(nb::init<>())
+        .def_rw("request_label", &RuntimeFidelityRequest::request_label)
+        .def_rw("backend_profile_id", &RuntimeFidelityRequest::backend_profile_id)
+        .def_rw("parity_budget_ref", &RuntimeFidelityRequest::parity_budget_ref)
+        .def_rw("provider_family", &RuntimeFidelityRequest::provider_family)
+        .def_rw("model_family_scope", &RuntimeFidelityRequest::model_family_scope)
+        .def_rw("validation_gate", &RuntimeFidelityRequest::validation_gate)
+        .def_rw("facade_evidence_refs", &RuntimeFidelityRequest::facade_evidence_refs);
+
+    nb::class_<RuntimeFidelityAdmission>(m, "RuntimeFidelityAdmission")
+        .def(nb::init<>())
+        .def_rw("admitted", &RuntimeFidelityAdmission::admitted)
+        .def_rw(
+            "baseline_exact_evaluation",
+            &RuntimeFidelityAdmission::baseline_exact_evaluation
+        )
+        .def_rw("request_label", &RuntimeFidelityAdmission::request_label)
+        .def_rw("backend_profile_id", &RuntimeFidelityAdmission::backend_profile_id)
+        .def_rw("parity_budget_ref", &RuntimeFidelityAdmission::parity_budget_ref)
+        .def_rw(
+            "requested_provider_family",
+            &RuntimeFidelityAdmission::requested_provider_family
+        )
+        .def_rw(
+            "selected_provider_family",
+            &RuntimeFidelityAdmission::selected_provider_family
+        )
+        .def_rw(
+            "selected_stage_node_id",
+            &RuntimeFidelityAdmission::selected_stage_node_id
+        )
+        .def_rw("rejection_reason", &RuntimeFidelityAdmission::rejection_reason)
+        .def_rw("errors", &RuntimeFidelityAdmission::errors)
+        .def_rw("evidence_refs", &RuntimeFidelityAdmission::evidence_refs);
+
+    nb::class_<RuntimeCounterfactualSnapshot>(m, "RuntimeCounterfactualSnapshot")
+        .def(nb::init<>())
+        .def_rw("world_index", &RuntimeCounterfactualSnapshot::world_index)
+        .def_rw("entity_id", &RuntimeCounterfactualSnapshot::entity_id)
+        .def_rw("x", &RuntimeCounterfactualSnapshot::x)
+        .def_rw("y", &RuntimeCounterfactualSnapshot::y)
+        .def_rw("z", &RuntimeCounterfactualSnapshot::z)
+        .def_rw("vx", &RuntimeCounterfactualSnapshot::vx)
+        .def_rw("vy", &RuntimeCounterfactualSnapshot::vy)
+        .def_rw("vz", &RuntimeCounterfactualSnapshot::vz)
+        .def_rw("heading", &RuntimeCounterfactualSnapshot::heading)
+        .def_rw("pitch", &RuntimeCounterfactualSnapshot::pitch)
+        .def_rw("roll", &RuntimeCounterfactualSnapshot::roll)
+        .def_rw("snapshot_version", &RuntimeCounterfactualSnapshot::snapshot_version)
+        .def_rw("barrier_id", &RuntimeCounterfactualSnapshot::barrier_id)
+        .def_rw("fidelity_profile_id", &RuntimeCounterfactualSnapshot::fidelity_profile_id)
+        .def_rw("provider_family", &RuntimeCounterfactualSnapshot::provider_family)
+        .def_rw(
+            "selected_stage_node_id",
+            &RuntimeCounterfactualSnapshot::selected_stage_node_id
+        )
+        .def_rw("cadence_reason", &RuntimeCounterfactualSnapshot::cadence_reason)
+        .def_rw("evidence_refs", &RuntimeCounterfactualSnapshot::evidence_refs);
+
+    nb::class_<RuntimeWorldlineComparison>(m, "RuntimeWorldlineComparison")
+        .def(nb::init<>())
+        .def_rw("comparable", &RuntimeWorldlineComparison::comparable)
+        .def_rw("comparison_id", &RuntimeWorldlineComparison::comparison_id)
+        .def_rw("barrier_id", &RuntimeWorldlineComparison::barrier_id)
+        .def_rw("dx", &RuntimeWorldlineComparison::dx)
+        .def_rw("dy", &RuntimeWorldlineComparison::dy)
+        .def_rw("dz", &RuntimeWorldlineComparison::dz)
+        .def_rw("dvx", &RuntimeWorldlineComparison::dvx)
+        .def_rw("dvy", &RuntimeWorldlineComparison::dvy)
+        .def_rw("dvz", &RuntimeWorldlineComparison::dvz)
+        .def_rw("dheading", &RuntimeWorldlineComparison::dheading)
+        .def_rw("evidence_refs", &RuntimeWorldlineComparison::evidence_refs);
+
     nb::class_<runtime::fidelity::FidelityProfileRequest>(m, "FidelityProfileRequest")
         .def(nb::init<>())
         .def_rw("request_label", &runtime::fidelity::FidelityProfileRequest::request_label)
@@ -615,6 +689,11 @@ void bind_runtime(nb::module_& m) {
         .def_rw("uses_truth_state", &DecisionBelief::uses_truth_state)
         .def_rw("uses_raw_ecs", &DecisionBelief::uses_raw_ecs);
 
+    nb::class_<WorldEntityRef>(m, "WorldEntityRef")
+        .def(nb::init<>())
+        .def_rw("world_index", &WorldEntityRef::world_index)
+        .def_rw("entity_id", &WorldEntityRef::entity_id);
+
     nb::class_<BatchWorldSetupRequest>(m, "BatchWorldSetupRequest")
         .def(nb::init<>())
         .def_rw("seeds", &BatchWorldSetupRequest::seeds)
@@ -631,6 +710,45 @@ void bind_runtime(nb::module_& m) {
     nb::class_<BatchWorldSetupResult>(m, "BatchWorldSetupResult")
         .def(nb::init<>())
         .def_rw("entity_ids", &BatchWorldSetupResult::entity_ids);
+
+    nb::class_<RuntimeCounterfactualBranchRequest>(
+        m,
+        "RuntimeCounterfactualBranchRequest"
+    )
+        .def(nb::init<>())
+        .def_rw("baseline_setup", &RuntimeCounterfactualBranchRequest::baseline_setup)
+        .def_rw("entity_ref", &RuntimeCounterfactualBranchRequest::entity_ref)
+        .def_rw("fidelity_request", &RuntimeCounterfactualBranchRequest::fidelity_request)
+        .def_rw("deterministic_seed", &RuntimeCounterfactualBranchRequest::deterministic_seed)
+        .def_rw("replay_envelope_id", &RuntimeCounterfactualBranchRequest::replay_envelope_id)
+        .def_rw("branch_point_id", &RuntimeCounterfactualBranchRequest::branch_point_id)
+        .def_rw("branch_worldline_id", &RuntimeCounterfactualBranchRequest::branch_worldline_id)
+        .def_rw("cadence_reason", &RuntimeCounterfactualBranchRequest::cadence_reason)
+        .def_rw("mutation_dx", &RuntimeCounterfactualBranchRequest::mutation_dx)
+        .def_rw("mutation_dy", &RuntimeCounterfactualBranchRequest::mutation_dy)
+        .def_rw("mutation_dz", &RuntimeCounterfactualBranchRequest::mutation_dz)
+        .def_rw("mutation_dvx", &RuntimeCounterfactualBranchRequest::mutation_dvx)
+        .def_rw("mutation_dvy", &RuntimeCounterfactualBranchRequest::mutation_dvy)
+        .def_rw("mutation_dvz", &RuntimeCounterfactualBranchRequest::mutation_dvz)
+        .def_rw("mutation_dheading", &RuntimeCounterfactualBranchRequest::mutation_dheading)
+        .def_rw(
+            "allow_raw_authoritative_state_mutation",
+            &RuntimeCounterfactualBranchRequest::allow_raw_authoritative_state_mutation
+        )
+        .def_rw("evidence_refs", &RuntimeCounterfactualBranchRequest::evidence_refs);
+
+    nb::class_<RuntimeCounterfactualBranchResult>(
+        m,
+        "RuntimeCounterfactualBranchResult"
+    )
+        .def(nb::init<>())
+        .def_rw("admitted", &RuntimeCounterfactualBranchResult::admitted)
+        .def_rw("rejection_reason", &RuntimeCounterfactualBranchResult::rejection_reason)
+        .def_rw("fidelity_admission", &RuntimeCounterfactualBranchResult::fidelity_admission)
+        .def_rw("parent_snapshot", &RuntimeCounterfactualBranchResult::parent_snapshot)
+        .def_rw("branch_snapshot", &RuntimeCounterfactualBranchResult::branch_snapshot)
+        .def_rw("comparison", &RuntimeCounterfactualBranchResult::comparison)
+        .def_rw("evidence_refs", &RuntimeCounterfactualBranchResult::evidence_refs);
 
     nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")
         .def(nb::init<>())
@@ -819,6 +937,10 @@ void bind_runtime(nb::module_& m) {
     nb::class_<ExecutionBatchStepResult>(m, "ExecutionBatchStepResult")
         .def(nb::init<>())
         .def_rw("step_results", &ExecutionBatchStepResult::step_results)
+        .def_rw(
+            "execution_episode_states",
+            &ExecutionBatchStepResult::execution_episode_states
+        )
         .def_rw("rewards", &ExecutionBatchStepResult::rewards)
         .def_rw("terminated", &ExecutionBatchStepResult::terminated)
         .def_rw("truncated", &ExecutionBatchStepResult::truncated)
@@ -838,6 +960,7 @@ void bind_runtime(nb::module_& m) {
     nb::class_<RuntimeWindowActionRequest>(m, "RuntimeWindowActionRequest")
         .def(nb::init<>())
         .def_rw("action_intent", &RuntimeWindowActionRequest::action_intent)
+        .def_rw("cadence_control", &RuntimeWindowActionRequest::cadence_control)
         .def_rw("source_layer", &RuntimeWindowActionRequest::source_layer)
         .def_rw("input_snapshot_version", &RuntimeWindowActionRequest::input_snapshot_version);
 
@@ -871,10 +994,78 @@ void bind_runtime(nb::module_& m) {
 
     nb::class_<RuntimeWindowNodeExecutionRecord>(m, "RuntimeWindowNodeExecutionRecord")
         .def(nb::init<>())
+        .def_rw("barrier_order", &RuntimeWindowNodeExecutionRecord::barrier_order)
+        .def_rw("clock_domain", &RuntimeWindowNodeExecutionRecord::clock_domain)
+        .def_rw("clock_merge_policy", &RuntimeWindowNodeExecutionRecord::clock_merge_policy)
+        .def_rw("decision_barrier_id", &RuntimeWindowNodeExecutionRecord::decision_barrier_id)
+        .def_rw("decision_reason", &RuntimeWindowNodeExecutionRecord::decision_reason)
+        .def_rw("execution_state", &RuntimeWindowNodeExecutionRecord::execution_state)
         .def_rw("node_id", &RuntimeWindowNodeExecutionRecord::node_id)
         .def_rw("read_snapshot_policy", &RuntimeWindowNodeExecutionRecord::read_snapshot_policy)
+        .def_rw("source_snapshot_version", &RuntimeWindowNodeExecutionRecord::source_snapshot_version)
+        .def_rw("source_time_s", &RuntimeWindowNodeExecutionRecord::source_time_s)
+        .def_rw("target_window_id", &RuntimeWindowNodeExecutionRecord::target_window_id)
+        .def_rw("trigger_source", &RuntimeWindowNodeExecutionRecord::trigger_source)
         .def_rw("write_commit_policy", &RuntimeWindowNodeExecutionRecord::write_commit_policy)
         .def_rw("visible_input_count", &RuntimeWindowNodeExecutionRecord::visible_input_count);
+
+    nb::class_<RuntimeWindowActionRequest::CadenceControl>(
+        m,
+        "RuntimeWindowCadenceControl"
+    )
+        .def(nb::init<>())
+        .def_rw("enabled", &RuntimeWindowActionRequest::CadenceControl::enabled)
+        .def_rw(
+            "expiry_time_s",
+            &RuntimeWindowActionRequest::CadenceControl::expiry_time_s
+        )
+        .def_rw(
+            "has_expiry_time",
+            &RuntimeWindowActionRequest::CadenceControl::has_expiry_time
+        )
+        .def_rw(
+            "hold_policy",
+            &RuntimeWindowActionRequest::CadenceControl::hold_policy
+        )
+        .def_rw(
+            "source_cadence_domain",
+            &RuntimeWindowActionRequest::CadenceControl::source_cadence_domain
+        )
+        .def_rw(
+            "source_tick",
+            &RuntimeWindowActionRequest::CadenceControl::source_tick
+        );
+
+    nb::class_<RuntimeWindowCadence>(m, "RuntimeWindowCadence")
+        .def(nb::init<>())
+        .def_rw("barrier_id", &RuntimeWindowCadence::barrier_id)
+        .def_rw("domain", &RuntimeWindowCadence::domain)
+        .def_rw("interval_s", &RuntimeWindowCadence::interval_s)
+        .def_rw("merge_policy", &RuntimeWindowCadence::merge_policy)
+        .def_rw("tick_count", &RuntimeWindowCadence::tick_count);
+
+    nb::class_<RuntimeWindowCadenceConfig>(m, "RuntimeWindowCadenceConfig")
+        .def(nb::init<>())
+        .def_rw("domains", &RuntimeWindowCadenceConfig::domains)
+        .def_rw("window_duration_s", &RuntimeWindowCadenceConfig::window_duration_s);
+
+    nb::class_<RuntimeWindowCadenceTraceRecord>(m, "RuntimeWindowCadenceTraceRecord")
+        .def(nb::init<>())
+        .def_rw("barrier_id", &RuntimeWindowCadenceTraceRecord::barrier_id)
+        .def_rw("cadence_merge_policy", &RuntimeWindowCadenceTraceRecord::cadence_merge_policy)
+        .def_rw("clock_domain", &RuntimeWindowCadenceTraceRecord::clock_domain)
+        .def_rw("clock_merge_policy", &RuntimeWindowCadenceTraceRecord::clock_merge_policy)
+        .def_rw("decision", &RuntimeWindowCadenceTraceRecord::decision)
+        .def_rw("decision_reason", &RuntimeWindowCadenceTraceRecord::decision_reason)
+        .def_rw("deferred", &RuntimeWindowCadenceTraceRecord::deferred)
+        .def_rw("diagnostics_only", &RuntimeWindowCadenceTraceRecord::diagnostics_only)
+        .def_rw("domain", &RuntimeWindowCadenceTraceRecord::domain)
+        .def_rw("expired", &RuntimeWindowCadenceTraceRecord::expired)
+        .def_rw("held", &RuntimeWindowCadenceTraceRecord::held)
+        .def_rw("node_id", &RuntimeWindowCadenceTraceRecord::node_id)
+        .def_rw("relation", &RuntimeWindowCadenceTraceRecord::relation)
+        .def_rw("source", &RuntimeWindowCadenceTraceRecord::source)
+        .def_rw("tick", &RuntimeWindowCadenceTraceRecord::tick);
 
     nb::class_<RuntimeWindowRequest>(m, "RuntimeWindowRequest")
         .def(nb::init<>())
@@ -882,6 +1073,7 @@ void bind_runtime(nb::module_& m) {
         .def_rw("world_id", &RuntimeWindowRequest::world_id)
         .def_rw("source_time_s", &RuntimeWindowRequest::source_time_s)
         .def_rw("action_requests", &RuntimeWindowRequest::action_requests)
+        .def_rw("cadence_config", &RuntimeWindowRequest::cadence_config)
         .def_rw("observation_request", &RuntimeWindowRequest::observation_request)
         .def_rw("engagement_request", &RuntimeWindowRequest::engagement_request)
         .def_rw("export_observation", &RuntimeWindowRequest::export_observation)
@@ -892,17 +1084,14 @@ void bind_runtime(nb::module_& m) {
         .def(nb::init<>())
         .def_rw("context", &RuntimeWindowResult::context)
         .def_rw("barrier_trace", &RuntimeWindowResult::barrier_trace)
+        .def_rw("cadence_config", &RuntimeWindowResult::cadence_config)
+        .def_rw("cadence_trace", &RuntimeWindowResult::cadence_trace)
         .def_rw("visibility_trace", &RuntimeWindowResult::visibility_trace)
         .def_rw("executed_nodes", &RuntimeWindowResult::executed_nodes)
         .def_rw("injected_inputs", &RuntimeWindowResult::injected_inputs)
         .def_rw("observation_packet", &RuntimeWindowResult::observation_packet)
         .def_rw("engagement_packet", &RuntimeWindowResult::engagement_packet)
         .def_rw("diagnostics_traces", &RuntimeWindowResult::diagnostics_traces);
-
-    nb::class_<WorldEntityRef>(m, "WorldEntityRef")
-        .def(nb::init<>())
-        .def_rw("world_index", &WorldEntityRef::world_index)
-        .def_rw("entity_id", &WorldEntityRef::entity_id);
 
     nb::class_<WorldTerrainAssignment>(m, "WorldTerrainAssignment")
         .def(nb::init<>())
@@ -1093,6 +1282,24 @@ void bind_runtime(nb::module_& m) {
         .def("configure_batch", &RuntimeFacade::configure_batch, nb::arg("config"))
         .def("batch_config", &RuntimeFacade::batch_config)
         .def("capabilities", &RuntimeFacade::capabilities)
+        .def(
+            "admit_fidelity_request",
+            &RuntimeFacade::admit_fidelity_request,
+            nb::arg("request")
+        )
+        .def(
+            "snapshot_counterfactual_entity",
+            &RuntimeFacade::snapshot_counterfactual_entity,
+            nb::arg("ref"),
+            nb::arg("fidelity_admission"),
+            nb::arg("cadence_reason"),
+            nb::arg("evidence_refs")
+        )
+        .def(
+            "run_counterfactual_branch",
+            &RuntimeFacade::run_counterfactual_branch,
+            nb::arg("request")
+        )
         .def("world_count", &RuntimeFacade::world_count)
         .def("resize", &RuntimeFacade::resize, nb::arg("world_count"))
         .def("set_worker_threads", &RuntimeFacade::set_worker_threads, nb::arg("worker_threads"))

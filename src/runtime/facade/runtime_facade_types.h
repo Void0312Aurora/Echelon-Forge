@@ -46,6 +46,65 @@ struct RuntimeBatchConfig {
     std::size_t worker_threads = 1;
 };
 
+struct RuntimeFidelityRequest {
+    std::string request_label;
+    std::string backend_profile_id;
+    std::string parity_budget_ref;
+    std::string provider_family = "none";
+    std::vector<std::string> model_family_scope;
+    std::string validation_gate;
+    std::vector<std::string> facade_evidence_refs;
+};
+
+struct RuntimeFidelityAdmission {
+    bool admitted = false;
+    bool baseline_exact_evaluation = false;
+    std::string request_label;
+    std::string backend_profile_id;
+    std::string parity_budget_ref;
+    std::string requested_provider_family = "none";
+    std::string selected_provider_family = "none";
+    std::string selected_stage_node_id;
+    std::string rejection_reason;
+    std::vector<std::string> errors;
+    std::vector<std::string> evidence_refs;
+};
+
+struct RuntimeCounterfactualSnapshot {
+    std::uint64_t world_index = 0;
+    std::uint64_t entity_id = 0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    double vx = 0.0;
+    double vy = 0.0;
+    double vz = 0.0;
+    double heading = 0.0;
+    double pitch = 0.0;
+    double roll = 0.0;
+    std::uint64_t snapshot_version = 0;
+    std::string barrier_id = "counterfactual_selected_slice";
+    std::string fidelity_profile_id;
+    std::string provider_family;
+    std::string selected_stage_node_id;
+    std::string cadence_reason;
+    std::vector<std::string> evidence_refs;
+};
+
+struct RuntimeWorldlineComparison {
+    bool comparable = false;
+    std::string comparison_id;
+    std::string barrier_id = "counterfactual_selected_slice";
+    double dx = 0.0;
+    double dy = 0.0;
+    double dz = 0.0;
+    double dvx = 0.0;
+    double dvy = 0.0;
+    double dvz = 0.0;
+    double dheading = 0.0;
+    std::vector<std::string> evidence_refs;
+};
+
 struct BatchResetRequest {
     std::vector<std::uint32_t> seeds;
 };
@@ -62,6 +121,37 @@ struct BatchWorldSetupRequest {
 
 struct BatchWorldSetupResult {
     std::vector<std::uint64_t> entity_ids;
+};
+
+struct RuntimeCounterfactualBranchRequest {
+    BatchWorldSetupRequest baseline_setup;
+    WorldEntityRef entity_ref;
+    RuntimeFidelityRequest fidelity_request;
+    std::uint64_t deterministic_seed = 0;
+    std::string replay_envelope_id;
+    std::string branch_point_id;
+    std::string branch_worldline_id;
+    std::string cadence_reason =
+        "selected_slice_cadence_trace_runtime_window_wp17c";
+    double mutation_dx = 0.0;
+    double mutation_dy = 0.0;
+    double mutation_dz = 0.0;
+    double mutation_dvx = 0.0;
+    double mutation_dvy = 0.0;
+    double mutation_dvz = 0.0;
+    double mutation_dheading = 0.0;
+    bool allow_raw_authoritative_state_mutation = false;
+    std::vector<std::string> evidence_refs;
+};
+
+struct RuntimeCounterfactualBranchResult {
+    bool admitted = false;
+    std::string rejection_reason;
+    RuntimeFidelityAdmission fidelity_admission;
+    RuntimeCounterfactualSnapshot parent_snapshot;
+    RuntimeCounterfactualSnapshot branch_snapshot;
+    RuntimeWorldlineComparison comparison;
+    std::vector<std::string> evidence_refs;
 };
 
 struct ObservationBatchRequest {
@@ -144,6 +234,7 @@ struct EngagementEventPacket {
 
 struct ExecutionBatchStepResult {
     std::vector<ExecutionEpisodeControllerStepResult> step_results;
+    std::vector<ExecutionEpisodeState> execution_episode_states;
     std::vector<double> rewards;
     std::vector<bool> terminated;
     std::vector<bool> truncated;
@@ -159,6 +250,15 @@ struct ExecutionBatchStepResult {
 };
 
 struct RuntimeWindowActionRequest {
+    struct CadenceControl {
+        ActionHoldPolicy hold_policy{};
+        bool enabled = false;
+        bool has_expiry_time = false;
+        double expiry_time_s = 0.0;
+        std::string source_cadence_domain = "control";
+        std::uint32_t source_tick = 0;
+    };
+
     ActionIntentPacket action_intent{};
     std::string source_layer = "facade";
     std::string input_snapshot_version;
@@ -174,6 +274,7 @@ struct RuntimeWindowActionRequest {
         bool diagnostics_only = false;
         std::string diagnostics_reason;
     } clock_domain_metadata{};
+    CadenceControl cadence_control{};
 };
 
 struct RuntimeWindowInputRecord {
@@ -221,6 +322,37 @@ struct RuntimeWindowNodeExecutionRecord {
     std::vector<std::string> barrier_order;
 };
 
+struct RuntimeWindowCadence {
+    std::string domain = "control";
+    std::uint32_t tick_count = 1;
+    double interval_s = 0.0;
+    std::string merge_policy = "nested_slot";
+    std::string barrier_id;
+};
+
+struct RuntimeWindowCadenceConfig {
+    double window_duration_s = 0.0;
+    std::vector<RuntimeWindowCadence> domains;
+};
+
+struct RuntimeWindowCadenceTraceRecord {
+    std::string domain;
+    std::uint32_t tick = 0;
+    std::string node_id;
+    std::string decision = "skipped";
+    std::string decision_reason;
+    std::string source;
+    std::string barrier_id;
+    std::string clock_domain;
+    std::string clock_merge_policy;
+    std::string cadence_merge_policy;
+    std::string relation;
+    bool held = false;
+    bool expired = false;
+    bool deferred = false;
+    bool diagnostics_only = false;
+};
+
 struct RuntimeWindowRequest {
     std::string window_id;
     std::uint64_t world_id = 0;
@@ -228,6 +360,7 @@ struct RuntimeWindowRequest {
     std::vector<RuntimeWindowActionRequest> action_requests;
     ObservationBatchRequest observation_request;
     EngagementBatchRequest engagement_request;
+    RuntimeWindowCadenceConfig cadence_config;
     bool export_observation = true;
     bool export_engagement = true;
     bool export_diagnostics = true;
@@ -238,6 +371,8 @@ struct RuntimeWindowResult {
     std::vector<RuntimeWindowBarrierRecord> barrier_trace;
     std::vector<RuntimeWindowVisibilityRecord> visibility_trace;
     std::vector<RuntimeWindowNodeExecutionRecord> executed_nodes;
+    RuntimeWindowCadenceConfig cadence_config;
+    std::vector<RuntimeWindowCadenceTraceRecord> cadence_trace;
     std::vector<RuntimeWindowInputRecord> injected_inputs;
     ObservationBatchPacket observation_packet;
     EngagementEventPacket engagement_packet;

@@ -99,6 +99,27 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                         "p10.observation_export.v1",
                     ],
                 )
+                self.assertAlmostEqual(
+                    float(getattr(evidence.window_result.cadence_config, "window_duration_s", 0.0)),
+                    0.1,
+                    places=6,
+                )
+                cadence_domains = [
+                    str(getattr(record, "domain", "") or "")
+                    for record in list(getattr(evidence.window_result, "cadence_trace", []))
+                ]
+                self.assertEqual(cadence_domains.count("policy"), 1)
+                self.assertEqual(cadence_domains.count("control"), 2)
+                self.assertEqual(cadence_domains.count("physics"), 6)
+                self.assertEqual(cadence_domains.count("export"), 1)
+                self.assertTrue(
+                    any(
+                        bool(getattr(record, "held", False))
+                        or str(getattr(record, "decision", "") or "") in {"held", "expired"}
+                        for record in list(getattr(evidence.window_result, "cadence_trace", []))
+                        if str(getattr(record, "domain", "") or "") == "control"
+                    )
+                )
                 self.assertEqual(str(evidence.observation_packet.barrier_id), "export")
                 self.assertEqual(
                     str(evidence.observation_packet.provenance.source_label),
@@ -132,7 +153,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     info["runtime_window_evidence"]["cadence_reason"],
-                    "runtime_cadence_not_implemented_wp16b_dependency",
+                    "selected_slice_cadence_trace_runtime_window_wp17c",
                 )
             finally:
                 runtime.close()

@@ -1,4 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
+from types import MappingProxyType
 from typing import Any
 
 from python.scenario_compiler import (
@@ -40,6 +41,47 @@ SCENARIO_LOADER_STATE_SHELL_ATTRS = frozenset(
     }
 )
 
+SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER = "scenario_content_adapter_state"
+SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY = "runtime_mirror_only"
+SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR = "transitional_behavior_mirror"
+SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE = "blocked_owner_candidate"
+
+SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS = MappingProxyType(
+    {
+        "waypoints": SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER,
+        "waypoint_idx": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "_waypoint_prev_dist_m": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "waypoint_total_route_length_m": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "_waypoint_leg_origin_x": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "_waypoint_leg_origin_y": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "_approach_prev_dme_m": SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+        "_approach_prev_loc_abs": SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+        "_approach_prev_gs_abs": SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+        "post_waypoint_transition": SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+        "mission_phase_name": SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+        "task_order": SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE,
+        "leader_intent": SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE,
+        "pilot_report": SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE,
+        "_cached_route_ref_id": SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER,
+        "prev_alt": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "prev_speed": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "gear_bonus_awarded": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "liftoff_awarded": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "off_runway_steps": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "last_reward_breakdown": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        "last_termination_reason": SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+    }
+)
+
+SCENARIO_LOADER_STATE_SHELL_CLASSIFICATION_BUCKETS = frozenset(
+    {
+        SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER,
+        SCENARIO_LOADER_STATE_SHELL_RUNTIME_MIRROR_ONLY,
+        SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
+        SCENARIO_LOADER_STATE_SHELL_BLOCKED_OWNER_CANDIDATE,
+    }
+)
+
 
 @dataclass(slots=True)
 class ScenarioLoaderStateShell:
@@ -65,6 +107,49 @@ class ScenarioLoaderStateShell:
     off_runway_steps: int = 0
     last_reward_breakdown: dict[str, Any] = field(default_factory=dict)
     last_termination_reason: str = "idle"
+
+
+def classify_scenario_loader_state_shell_attr(name: str) -> str:
+    try:
+        return str(SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS[name])
+    except KeyError as exc:
+        raise KeyError(f"ScenarioLoader state-shell attr {name!r} is not classified") from exc
+
+
+def _validate_scenario_loader_state_shell_contract() -> None:
+    shell_dataclass_attrs = frozenset(field_def.name for field_def in fields(ScenarioLoaderStateShell))
+    if shell_dataclass_attrs != SCENARIO_LOADER_STATE_SHELL_ATTRS:
+        missing = sorted(SCENARIO_LOADER_STATE_SHELL_ATTRS - shell_dataclass_attrs)
+        extra = sorted(shell_dataclass_attrs - SCENARIO_LOADER_STATE_SHELL_ATTRS)
+        raise RuntimeError(
+            "ScenarioLoaderStateShell dataclass fields and "
+            f"SCENARIO_LOADER_STATE_SHELL_ATTRS diverged; missing={missing}, extra={extra}"
+        )
+
+    classified_attrs = frozenset(SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS)
+    if classified_attrs != SCENARIO_LOADER_STATE_SHELL_ATTRS:
+        missing = sorted(SCENARIO_LOADER_STATE_SHELL_ATTRS - classified_attrs)
+        extra = sorted(classified_attrs - SCENARIO_LOADER_STATE_SHELL_ATTRS)
+        raise RuntimeError(
+            "ScenarioLoader state-shell classification is incomplete; "
+            f"missing={missing}, extra={extra}"
+        )
+
+    invalid_buckets = sorted(
+        {
+            classification
+            for classification in SCENARIO_LOADER_STATE_SHELL_CLASSIFICATIONS.values()
+            if classification not in SCENARIO_LOADER_STATE_SHELL_CLASSIFICATION_BUCKETS
+        }
+    )
+    if invalid_buckets:
+        raise RuntimeError(
+            "ScenarioLoader state-shell classification uses unknown buckets; "
+            f"invalid={invalid_buckets}"
+        )
+
+
+_validate_scenario_loader_state_shell_contract()
 
 
 def make_scenario_loader_state_shell() -> ScenarioLoaderStateShell:

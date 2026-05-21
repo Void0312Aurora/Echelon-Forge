@@ -1,11 +1,16 @@
 #include "runtime/facade/runtime_facade.h"
 #include "runtime/facade/runtime_window_coordinator.h"
 
+#include "components/basic/common.h"
 #include "core/engine/world_batch_runtime.h"
+#include "runtime/contracts/fidelity_profile_contracts.h"
 #include "runtime/contracts/stage_node_manifest_registry.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <stdexcept>
+#include <string>
 
 namespace {
 
@@ -128,6 +133,246 @@ inline constexpr std::string_view kShadowCompareRejectionReason =
     "shadow_compare.unmaintained_candidate_is_not_maintained";
 inline constexpr std::string_view kMultiFidelityRejectionReason =
     "multi_fidelity_profiles_require_a_maintained_registry_revision_and_acceptance_gate";
+inline constexpr std::string_view kRuntimeFidelityProviderFamilyNone = "none";
+inline constexpr std::string_view kRuntimeFidelityProviderFamilyReferenceCpu =
+    "reference_cpu";
+inline constexpr std::string_view kRuntimeCounterfactualSelectedSliceBarrierId =
+    "counterfactual_selected_slice";
+inline constexpr std::uint64_t kRuntimeCounterfactualSelectedSliceSnapshotVersion =
+    1;
+inline constexpr std::string_view kRuntimeCounterfactualRawMutationRejection =
+    "counterfactual_raw_authoritative_state_mutation_forbidden";
+inline constexpr std::string_view kRuntimeCounterfactualMissingReplayEnvelope =
+    "counterfactual_replay_envelope_id_required";
+inline constexpr std::string_view kRuntimeCounterfactualMissingBranchPoint =
+    "counterfactual_branch_point_id_required";
+inline constexpr std::string_view kRuntimeCounterfactualUnsupportedFidelity =
+    "counterfactual_fidelity_request_not_admitted";
+inline constexpr std::string_view kRuntimeCounterfactualInvalidWorld =
+    "counterfactual_world_index_out_of_range";
+inline constexpr std::string_view kRuntimeCounterfactualInvalidEntity =
+    "counterfactual_entity_missing_transform_or_velocity";
+inline constexpr std::string_view kRuntimeCounterfactualSetupMissingEntity =
+    "counterfactual_baseline_setup_entity_missing";
+
+runtime::fidelity::FidelityProfileRequest fidelity_contract_request_from_facade(
+    const RuntimeFidelityRequest& request
+) {
+    return runtime::fidelity::FidelityProfileRequest{
+        .request_label = request.request_label,
+        .backend_profile_id = request.backend_profile_id,
+        .parity_budget_ref = request.parity_budget_ref,
+        .model_family_scope = request.model_family_scope,
+        .validation_gate = request.validation_gate,
+        .facade_evidence_refs = request.facade_evidence_refs,
+        .requests_adaptive_scheduling = false,
+        .requests_learned_model_provider = false,
+        .requests_approximate_execution = false,
+        .requests_exact_gpu_backend =
+            request.provider_family != kRuntimeFidelityProviderFamilyNone &&
+            request.provider_family != kRuntimeFidelityProviderFamilyReferenceCpu &&
+            request.provider_family != "resident" &&
+            request.provider_family != "resident_state" &&
+            request.provider_family != "shadow",
+        .requests_resident_state =
+            request.provider_family == "resident" ||
+            request.provider_family == "resident_state",
+        .requests_shadow_compare =
+            request.provider_family == "shadow",
+    };
+}
+
+RuntimeFidelityAdmission runtime_fidelity_admission_from_contract(
+    const RuntimeFidelityRequest& request,
+    const runtime::fidelity::FidelityProfileAdmissionResult& contract_result
+) {
+    RuntimeFidelityAdmission admission{};
+    admission.admitted = contract_result.admitted;
+    admission.baseline_exact_evaluation = contract_result.baseline_exact_evaluation;
+    admission.request_label = contract_result.request_label;
+    admission.backend_profile_id = contract_result.backend_profile_id;
+    admission.parity_budget_ref = contract_result.parity_budget_ref;
+    admission.requested_provider_family = request.provider_family;
+    admission.rejection_reason = contract_result.rejection_reason;
+    admission.errors = contract_result.errors;
+    admission.evidence_refs = contract_result.evidence_refs;
+    return admission;
+}
+
+bool runtime_string_blank(const std::string& value) {
+    return value.empty() || std::all_of(value.begin(), value.end(), [](unsigned char c) {
+        return std::isspace(c) != 0;
+    });
+}
+
+BatchWorldSetupRequest single_world_counterfactual_setup(
+    BatchWorldSetupRequest setup,
+    std::uint32_t seed
+) {
+    if (seed != 0U) {
+        setup.seeds = {seed};
+    } else if (setup.seeds.empty()) {
+        setup.seeds = {0U};
+    } else {
+        setup.seeds = {setup.seeds.front()};
+    }
+    for (auto& assignment : setup.terrain_assignments) {
+        assignment.world_index = 0;
+    }
+    for (auto& assignment : setup.wind_assignments) {
+        assignment.world_index = 0;
+    }
+    for (auto& zone : setup.zones) {
+        zone.world_index = 0;
+    }
+    for (auto& spawn : setup.spawn_requests) {
+        spawn.world_index = 0;
+    }
+    for (auto& spawn : setup.typed_platform_spawn_requests) {
+        spawn.world_index = 0;
+    }
+    if (setup.time_steps.size() > 1U) {
+        setup.time_steps = {setup.time_steps.front()};
+    }
+    return setup;
+}
+
+std::uint64_t counterfactual_spawned_entity_id(
+    const BatchWorldSetupResult& setup_result,
+    const WorldEntityRef& requested_ref
+) {
+    if (requested_ref.entity_id != 0U) {
+        return requested_ref.entity_id;
+    }
+    if (!setup_result.entity_ids.empty()) {
+        return setup_result.entity_ids.front();
+    }
+    return 0U;
+}
+
+RuntimeCounterfactualSnapshot counterfactual_snapshot_from_runtime(
+    WorldBatchRuntime& runtime,
+    const WorldEntityRef& ref,
+    const RuntimeFidelityAdmission& fidelity_admission,
+    const std::string& cadence_reason,
+    std::vector<std::string> evidence_refs
+) {
+    if (!valid_runtime_world_index(runtime, ref.world_index)) {
+        throw std::out_of_range(std::string(kRuntimeCounterfactualInvalidWorld));
+    }
+
+    auto& world = runtime.world(static_cast<std::size_t>(ref.world_index));
+    const auto position = world.get_unit_position(ref.entity_id);
+    const auto velocity = world.get_unit_velocity(ref.entity_id);
+    const auto observation = world.get_agent_observation(ref.entity_id);
+
+    if (position.size() < 3U || velocity.size() < 3U) {
+        throw std::runtime_error(std::string(kRuntimeCounterfactualInvalidEntity));
+    }
+
+    evidence_refs.push_back("RuntimeFacade.snapshot_counterfactual_entity");
+    evidence_refs.push_back("RuntimeFacade.admit_fidelity_request");
+    if (!fidelity_admission.selected_stage_node_id.empty()) {
+        evidence_refs.push_back(
+            "selected_stage_node_id=" + fidelity_admission.selected_stage_node_id
+        );
+    }
+    if (!cadence_reason.empty()) {
+        evidence_refs.push_back("cadence_reason=" + cadence_reason);
+    }
+
+    return RuntimeCounterfactualSnapshot{
+        .world_index = ref.world_index,
+        .entity_id = ref.entity_id,
+        .x = position[0],
+        .y = position[1],
+        .z = position[2],
+        .vx = velocity[0],
+        .vy = velocity[1],
+        .vz = velocity[2],
+        .heading = observation.heading,
+        .pitch = observation.pitch,
+        .roll = observation.roll,
+        .snapshot_version = kRuntimeCounterfactualSelectedSliceSnapshotVersion,
+        .barrier_id = std::string(kRuntimeCounterfactualSelectedSliceBarrierId),
+        .fidelity_profile_id = fidelity_admission.backend_profile_id,
+        .provider_family = fidelity_admission.selected_provider_family,
+        .selected_stage_node_id = fidelity_admission.selected_stage_node_id,
+        .cadence_reason = cadence_reason,
+        .evidence_refs = std::move(evidence_refs),
+    };
+}
+
+bool apply_counterfactual_delta(
+    RuntimeFacade* facade,
+    const WorldEntityRef& ref,
+    const RuntimeCounterfactualBranchRequest& request,
+    std::string* rejection_reason
+) {
+    if (facade == nullptr || !valid_runtime_world_index(facade->runtime(), ref.world_index)) {
+        if (rejection_reason != nullptr) {
+            *rejection_reason = std::string(kRuntimeCounterfactualInvalidWorld);
+        }
+        return false;
+    }
+
+    auto& world = facade->runtime().world(static_cast<std::size_t>(ref.world_index));
+    auto entity = world.get_world().entity(ref.entity_id);
+    const Transform* transform = entity.get<Transform>();
+    const Velocity* velocity = entity.get<Velocity>();
+    if (transform == nullptr || velocity == nullptr) {
+        if (rejection_reason != nullptr) {
+            *rejection_reason = std::string(kRuntimeCounterfactualInvalidEntity);
+        }
+        return false;
+    }
+
+    entity.set<Transform>(Transform{
+        .x = transform->x + request.mutation_dx,
+        .y = transform->y + request.mutation_dy,
+        .z = transform->z + request.mutation_dz,
+        .heading = Math::normalize_heading_deg(
+            transform->heading + request.mutation_dheading
+        ),
+        .pitch = transform->pitch,
+        .roll = transform->roll,
+    });
+    entity.set<Velocity>(Velocity{
+        .vx = velocity->vx + request.mutation_dvx,
+        .vy = velocity->vy + request.mutation_dvy,
+        .vz = velocity->vz + request.mutation_dvz,
+    });
+    return true;
+}
+
+RuntimeWorldlineComparison compare_counterfactual_snapshots(
+    const RuntimeCounterfactualSnapshot& parent,
+    const RuntimeCounterfactualSnapshot& branch,
+    const RuntimeCounterfactualBranchRequest& request
+) {
+    RuntimeWorldlineComparison comparison{};
+    comparison.comparable = parent.entity_id != 0U &&
+        parent.entity_id == branch.entity_id &&
+        parent.world_index == branch.world_index;
+    comparison.comparison_id = request.branch_point_id.empty()
+        ? "counterfactual:selected_slice"
+        : "counterfactual:selected_slice:" + request.branch_point_id;
+    comparison.barrier_id = std::string(kRuntimeCounterfactualSelectedSliceBarrierId);
+    comparison.dx = branch.x - parent.x;
+    comparison.dy = branch.y - parent.y;
+    comparison.dz = branch.z - parent.z;
+    comparison.dvx = branch.vx - parent.vx;
+    comparison.dvy = branch.vy - parent.vy;
+    comparison.dvz = branch.vz - parent.vz;
+    comparison.dheading = branch.heading - parent.heading;
+    comparison.evidence_refs = {
+        "RuntimeFacade.run_counterfactual_branch",
+        "RuntimeFacade.compare_counterfactual_snapshots",
+        "replay_envelope_id=" + request.replay_envelope_id,
+        "branch_point_id=" + request.branch_point_id,
+    };
+    return comparison;
+}
 
 int launch_event_priority(const LaunchEvent&) {
     return 10;
@@ -839,6 +1084,191 @@ RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {
     };
 }
 
+RuntimeFidelityAdmission RuntimeFacade::admit_fidelity_request(
+    const RuntimeFidelityRequest& request
+) const {
+    RuntimeFidelityRequest normalized = request;
+    if (normalized.provider_family.empty()) {
+        normalized.provider_family =
+            std::string(kRuntimeFidelityProviderFamilyNone);
+    }
+
+    const runtime::fidelity::FidelityProfileAdmissionResult contract_result =
+        runtime::fidelity::admit_fidelity_profile_request(
+            fidelity_contract_request_from_facade(normalized)
+        );
+    RuntimeFidelityAdmission admission =
+        runtime_fidelity_admission_from_contract(normalized, contract_result);
+
+    if (!contract_result.admitted) {
+        return admission;
+    }
+
+    if (normalized.provider_family ==
+        kRuntimeFidelityProviderFamilyNone) {
+        admission.selected_provider_family =
+            std::string(kRuntimeFidelityProviderFamilyNone);
+        if (find_stage_node_manifest(kWp10ObservationExportNodeId) != nullptr) {
+            admission.selected_stage_node_id =
+                std::string(kWp10ObservationExportNodeId);
+        }
+        return admission;
+    }
+
+    if (normalized.provider_family ==
+        kRuntimeFidelityProviderFamilyReferenceCpu) {
+        admission.selected_provider_family =
+            std::string(kRuntimeFidelityProviderFamilyReferenceCpu);
+        if (find_stage_node_manifest(kWp10ObservationExportNodeId) != nullptr) {
+            admission.selected_stage_node_id =
+                std::string(kWp10ObservationExportNodeId);
+        }
+        return admission;
+    }
+
+    admission.admitted = false;
+    admission.baseline_exact_evaluation = false;
+    admission.selected_provider_family =
+        std::string(kRuntimeFidelityProviderFamilyNone);
+    admission.selected_stage_node_id.clear();
+    if (normalized.provider_family == "resident" ||
+        normalized.provider_family == "resident_state") {
+        admission.rejection_reason =
+            std::string(runtime::fidelity::kFidelityProfileRejectionResidentState);
+    } else if (normalized.provider_family == "shadow") {
+        admission.rejection_reason =
+            std::string(runtime::fidelity::kFidelityProfileRejectionShadowCompare);
+    } else {
+        admission.rejection_reason =
+            std::string(runtime::fidelity::kFidelityProfileRejectionExactGpu);
+    }
+    if (admission.errors.empty()) {
+        admission.errors.push_back(
+            "requested provider_family is not maintained by the facade-owned baseline"
+        );
+    }
+    return admission;
+}
+
+RuntimeCounterfactualSnapshot RuntimeFacade::snapshot_counterfactual_entity(
+    const WorldEntityRef& ref,
+    const RuntimeFidelityAdmission& fidelity_admission,
+    const std::string& cadence_reason,
+    const std::vector<std::string>& evidence_refs
+) const {
+    return counterfactual_snapshot_from_runtime(
+        *runtime_,
+        ref,
+        fidelity_admission,
+        cadence_reason,
+        evidence_refs
+    );
+}
+
+RuntimeCounterfactualBranchResult RuntimeFacade::run_counterfactual_branch(
+    const RuntimeCounterfactualBranchRequest& request
+) const {
+    RuntimeCounterfactualBranchResult result{};
+    result.evidence_refs = request.evidence_refs;
+    result.evidence_refs.push_back("RuntimeFacade.run_counterfactual_branch");
+
+    if (request.allow_raw_authoritative_state_mutation) {
+        result.rejection_reason =
+            std::string(kRuntimeCounterfactualRawMutationRejection);
+        return result;
+    }
+    if (runtime_string_blank(request.replay_envelope_id)) {
+        result.rejection_reason =
+            std::string(kRuntimeCounterfactualMissingReplayEnvelope);
+        return result;
+    }
+    if (runtime_string_blank(request.branch_point_id)) {
+        result.rejection_reason =
+            std::string(kRuntimeCounterfactualMissingBranchPoint);
+        return result;
+    }
+
+    result.fidelity_admission = admit_fidelity_request(request.fidelity_request);
+    if (!result.fidelity_admission.admitted) {
+        result.rejection_reason =
+            std::string(kRuntimeCounterfactualUnsupportedFidelity);
+        if (!result.fidelity_admission.rejection_reason.empty()) {
+            result.evidence_refs.push_back(
+                "fidelity_rejection=" + result.fidelity_admission.rejection_reason
+            );
+        }
+        return result;
+    }
+
+    const std::uint32_t seed =
+        request.deterministic_seed == 0U
+            ? 0U
+            : static_cast<std::uint32_t>(
+                request.deterministic_seed & 0xffffffffULL
+            );
+    BatchWorldSetupRequest setup =
+        single_world_counterfactual_setup(request.baseline_setup, seed);
+
+    RuntimeFacade parent(1);
+    RuntimeFacade branch(1);
+    const BatchWorldSetupResult parent_setup = parent.apply_world_setup(setup);
+    const BatchWorldSetupResult branch_setup = branch.apply_world_setup(setup);
+
+    WorldEntityRef selected_ref{
+        .world_index = 0,
+        .entity_id = counterfactual_spawned_entity_id(
+            parent_setup,
+            request.entity_ref
+        ),
+    };
+    if (selected_ref.entity_id == 0U || branch_setup.entity_ids.empty()) {
+        result.rejection_reason =
+            std::string(kRuntimeCounterfactualSetupMissingEntity);
+        return result;
+    }
+
+    std::string mutation_rejection;
+    if (!apply_counterfactual_delta(&branch, selected_ref, request, &mutation_rejection)) {
+        result.rejection_reason = mutation_rejection;
+        return result;
+    }
+
+    std::vector<std::string> snapshot_evidence = result.evidence_refs;
+    snapshot_evidence.push_back("replay_envelope_id=" + request.replay_envelope_id);
+    snapshot_evidence.push_back("branch_point_id=" + request.branch_point_id);
+    if (!request.branch_worldline_id.empty()) {
+        snapshot_evidence.push_back("branch_worldline_id=" + request.branch_worldline_id);
+    }
+
+    result.parent_snapshot = parent.snapshot_counterfactual_entity(
+        selected_ref,
+        result.fidelity_admission,
+        request.cadence_reason,
+        snapshot_evidence
+    );
+    result.branch_snapshot = branch.snapshot_counterfactual_entity(
+        selected_ref,
+        result.fidelity_admission,
+        request.cadence_reason,
+        snapshot_evidence
+    );
+    result.comparison = compare_counterfactual_snapshots(
+        result.parent_snapshot,
+        result.branch_snapshot,
+        request
+    );
+    result.admitted = result.comparison.comparable;
+    if (!result.admitted) {
+        result.rejection_reason = "counterfactual_worldline_comparison_not_comparable";
+    }
+    result.evidence_refs.insert(
+        result.evidence_refs.end(),
+        result.comparison.evidence_refs.begin(),
+        result.comparison.evidence_refs.end()
+    );
+    return result;
+}
+
 std::size_t RuntimeFacade::world_count() const noexcept {
     return runtime_->world_count();
 }
@@ -970,6 +1400,8 @@ std::vector<ExecutionEpisodeRuntimeProducts> RuntimeFacade::step_execution_produ
 ExecutionBatchStepResult RuntimeFacade::step_execution_batch(const ExecutionBatchStepRequest& request) {
     ExecutionBatchStepResult result{};
     result.step_results = runtime_->step_execution_episode_results_batch(request.step_requests);
+    result.execution_episode_states =
+        runtime_->export_execution_episode_states_batch(refs_from_step_requests(request.step_requests));
     result.rewards.reserve(result.step_results.size());
     result.terminated.reserve(result.step_results.size());
     result.truncated.reserve(result.step_results.size());

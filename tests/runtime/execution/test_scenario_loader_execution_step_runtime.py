@@ -688,6 +688,62 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
         self._assert_loader_results_match(legacy, compiled_runtime)
         self._assert_loader_results_match(legacy, gpu_backend_with_compiled_runtime)
 
+    def test_compiled_episode_runtime_prefers_cxx_reward_metadata(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        loader = ScenarioLoader(sim)
+        loader.use_compiled_execution_step_runtime = True
+        agent_id = loader.load_scenario_data(copy.deepcopy(_takeoff_shaping_scenario()), seed=61)
+        self.assertIsNotNone(agent_id)
+
+        truth = sim.get_agent_observation(int(agent_id))
+        inst = sim.get_instrument_state(int(agent_id))
+        obs = build_universal_observation(
+            loader,
+            inst,
+            truth,
+            mission_obs_mode="nav_v2",
+            max_contacts=10,
+            max_rwr=4,
+            include_proprio=False,
+            last_action=None,
+            action_space=None,
+            steps=1,
+            max_steps=loader.get_max_steps(),
+        )
+
+        original = loader._apply_compiled_flight_shaping_terms
+
+        def _unexpected_apply(*_args, **_kwargs):
+            raise AssertionError("compiled default path should consume C++ reward breakdown metadata")
+
+        loader._apply_compiled_flight_shaping_terms = _unexpected_apply
+        try:
+            reward, terminated, truncated, status = loader.compute_full_step(
+                obs,
+                sim,
+                1,
+                loader.get_max_steps(),
+                truth=truth,
+                inst_state=inst,
+            )
+        finally:
+            loader._apply_compiled_flight_shaping_terms = original
+
+        self.assertFalse(bool(terminated))
+        self.assertFalse(bool(truncated))
+        self.assertEqual(len(status), 4)
+        self.assertIn("speed_reward", loader.last_reward_breakdown)
+        self.assertAlmostEqual(float(loader.last_reward_breakdown["total"]), float(reward), places=6)
+        self.assertEqual(
+            str(loader.last_termination_reason),
+            str(
+                ef_py.termination_reason_name(
+                    loader._get_cached_step_evaluation()["frame_products"].final_reason_code
+                )
+            ),
+        )
+
     def test_execution_episode_controller_shadow_matches_compiled_step_evaluation(self) -> None:
         cases = (
             ("objective", _objective_scenario(), 51),

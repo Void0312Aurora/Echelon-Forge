@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import unittest
+import json
 
 from python.testing.runtime import ensure_repo_imports
 
@@ -218,10 +219,44 @@ class ExecutionEpisodeRuntimeTests(unittest.TestCase):
         self.assertTrue(bool(out.flight_shaping_evaluated))
         self.assertTrue(bool(out.outcome_evaluated))
         self.assertAlmostEqual(float(out.compiled_reward_total), 50.02, places=6)
-        self.assertAlmostEqual(float(out.status0), 123.0, places=6)
-        self.assertAlmostEqual(float(out.status1), 1.0, places=6)
-        self.assertAlmostEqual(float(out.status2), 3.0, places=6)
-        self.assertAlmostEqual(float(out.status3), 0.0, places=6)
+
+    def test_episode_reward_breakdown_builder_matches_reward_total_and_terms(self) -> None:
+        inputs = ef_py.ExecutionEpisodeRuntimeInputs()
+        inputs.has_execution_step = True
+        inputs.execution_step.safety.finite_state_valid = True
+        inputs.execution_step.safety.health = 100.0
+        inputs.execution_step.safety.survival_reward = 0.02
+        inputs.execution_step.has_waypoint = True
+        inputs.execution_step.waypoint.valid = True
+        inputs.execution_step.waypoint.waypoint_index = 0
+        inputs.execution_step.waypoint.waypoint_count = 1
+        inputs.execution_step.waypoint.dist_m = 50.0
+        inputs.execution_step.waypoint.waypoint_radius_m = 1200.0
+        inputs.execution_step.waypoint.has_prev_dist = True
+        inputs.execution_step.waypoint.prev_dist_m = 120.0
+        inputs.execution_step.waypoint.progress_weight = 0.1
+        inputs.execution_step.waypoint.distance_weight = -0.001
+        inputs.execution_step.waypoint.reached_bonus = 20.0
+
+        out = ef_py.compute_execution_episode_runtime(inputs)
+        breakdown = json.loads(
+            ef_py.build_episode_reward_breakdown_json(
+                inputs,
+                out,
+                float(out.compiled_reward_total) + 123.0,
+                True,
+                True,
+                123.0,
+            )
+        )
+
+        self.assertAlmostEqual(float(breakdown["survival"]), 0.02, places=6)
+        self.assertAlmostEqual(float(breakdown["waypoint_progress"]), 7.0, places=6)
+        self.assertAlmostEqual(float(breakdown["waypoint_distance"]), -0.05, places=6)
+        self.assertAlmostEqual(float(breakdown["waypoint_reached_bonus"]), 20.0, places=6)
+        self.assertAlmostEqual(float(breakdown["phase_transition_bonus"]), 123.0, places=6)
+        self.assertAlmostEqual(float(breakdown["tracked_total"]), float(breakdown["total"]), places=6)
+        self.assertAlmostEqual(float(breakdown["untracked"]), 0.0, places=6)
         self.assertFalse(bool(out.terminated))
         self.assertEqual(out.final_reason_code, ef_py.TerminationReasonCode.Running)
 

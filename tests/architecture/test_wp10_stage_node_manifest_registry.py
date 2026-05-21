@@ -277,6 +277,44 @@ def test_compatibility_and_diagnostics_nodes_are_not_maintained_scheduler_truth(
     assert result.returncode == 0, result.stderr + result.stdout
 
 
+def test_wp17_selected_slice_strict_helper_does_not_change_wp10_maintained_count() -> None:
+    source = textwrap.dedent(
+        r"""
+        #include <iostream>
+        #include <vector>
+        #include "runtime/contracts/stage_node_manifest_registry.h"
+
+        int main() {
+            using namespace runtime::scheduler;
+            const auto maintained = enumerate_wp10_maintained_stage_node_manifests();
+            const auto selected = enumerate_wp17_selected_slice_strict_clock_domain_manifests();
+
+            if (maintained.size() != 3) {
+                std::cerr << "wp10 maintained count drifted\n";
+                return 1;
+            }
+            if (selected.size() != 3) {
+                std::cerr << "wp17 selected-slice strict helper should expose exactly three nodes\n";
+                return 1;
+            }
+            for (const auto* manifest : selected) {
+                if (manifest == nullptr) {
+                    std::cerr << "null selected-slice manifest\n";
+                    return 1;
+                }
+                if (!is_wp17_selected_slice_strict_clock_domain_node(*manifest)) {
+                    std::cerr << "helper returned a non-selected node\n";
+                    return 1;
+                }
+            }
+            return 0;
+        }
+        """
+    )
+    result = _compile_and_run(source)
+    assert result.returncode == 0, result.stderr + result.stdout
+
+
 def test_event_emitting_nodes_declare_event_family_and_diagnostics_obligations() -> None:
     source = textwrap.dedent(
         r"""

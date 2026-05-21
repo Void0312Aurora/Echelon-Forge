@@ -4,6 +4,7 @@ import ef_py
 import numpy as np
 
 from python.rl.control.mission_defs import is_landing_command_code
+from gym_envs.scenario_loader.common import safe_json_dict_loads
 
 from .shaping import apply_legacy_flight_shaping_terms
 
@@ -59,6 +60,35 @@ def _tracked_reward_total(rb: dict | None) -> float:
     )
 
 
+def _compute_compiled_reward_breakdown(
+    loader,
+    *,
+    frame_products,
+    reward_total: float,
+    waypoint_arrived: bool,
+    had_post_waypoint_transition_before: bool,
+    phase_transition_bonus: float,
+):
+    step_eval = loader._get_cached_step_evaluation()
+    if not isinstance(step_eval, dict):
+        return None
+    runtime_inputs = step_eval.get("episode_runtime_inputs")
+    if runtime_inputs is None:
+        return None
+    try:
+        reward_breakdown_json = ef_py.build_episode_reward_breakdown_json(
+            runtime_inputs,
+            frame_products,
+            float(reward_total),
+            bool(waypoint_arrived),
+            bool(had_post_waypoint_transition_before),
+            float(phase_transition_bonus),
+        )
+    except Exception:
+        return None
+    return safe_json_dict_loads(str(reward_breakdown_json))
+
+
 def consume_compiled_episode_runtime(
     loader,
     *,
@@ -77,14 +107,18 @@ def consume_compiled_episode_runtime(
         float(getattr(frame_products, "status2", 0.0)),
         float(getattr(frame_products, "status3", 0.0)),
     ]
-    rb = {}
+    rb = None
     extra_reward = 0.0
     structural_state_changed = False
+    waypoint_arrived = False
+    phase_transition_bonus = 0.0
+    had_post_waypoint_transition_before = bool(getattr(loader, "post_waypoint_transition", None))
 
     execution_step = (
         frame_products.execution_step if bool(getattr(frame_products, "execution_step_evaluated", False)) else None
     )
     if execution_step is None:
+        rb = {}
         tracked_total = 0.0
         rb["tracked_total"] = tracked_total
         rb["untracked"] = float(reward - tracked_total)
@@ -99,164 +133,112 @@ def consume_compiled_episode_runtime(
             return reward, terminated, status, structural_state_changed
         return reward, terminated, status
 
+    rb = _compute_compiled_reward_breakdown(
+        loader,
+        frame_products=frame_products,
+        reward_total=reward,
+        waypoint_arrived=False,
+        had_post_waypoint_transition_before=had_post_waypoint_transition_before,
+        phase_transition_bonus=0.0,
+    )
+    if not isinstance(rb, dict):
+        rb = {}
+
     def _add_reward_term(name: str, value: float) -> None:
         loader._add_breakdown_term(rb, name, value)
 
     safety_terms = execution_step.safety
-    if float(getattr(safety_terms, "crash_penalty", 0.0)) != 0.0:
-        _add_reward_term("crash_penalty", float(safety_terms.crash_penalty))
-        nan_guard_marker = float(getattr(safety_terms, "nan_guard_marker", 0.0))
-        if nan_guard_marker != 0.0:
-            _add_reward_term("nan_guard", nan_guard_marker)
-    else:
-        _add_reward_term("survival", float(getattr(safety_terms, "survival", 0.0)))
-        if bool(getattr(frame_products, "flight_shaping_evaluated", False)):
-            loader._apply_compiled_flight_shaping_terms(
-                frame_products.flight_shaping,
-                _add_reward_term,
-                include_roll_stability=bool(float(getattr(truth, "z", 0.0)) < 100.0),
-            )
-        if float(getattr(safety_terms, "stall_penalty", 0.0)) != 0.0:
-            _add_reward_term("stall_penalty", float(safety_terms.stall_penalty))
-        if float(getattr(safety_terms, "overload_penalty", 0.0)) != 0.0:
-            _add_reward_term("overload_penalty", float(safety_terms.overload_penalty))
-        if float(getattr(safety_terms, "failfast_penalty", 0.0)) != 0.0:
-            _add_reward_term("failfast_penalty", float(safety_terms.failfast_penalty))
-        if float(getattr(safety_terms, "gear_collapse_penalty", 0.0)) != 0.0:
-            _add_reward_term("gear_collapse_penalty", float(safety_terms.gear_collapse_penalty))
-        if float(getattr(safety_terms, "off_runway_penalty", 0.0)) != 0.0:
-            _add_reward_term("off_runway_penalty", float(safety_terms.off_runway_penalty))
-        if float(getattr(safety_terms, "gear_stress_penalty", 0.0)) != 0.0:
-            _add_reward_term("gear_stress_penalty", float(safety_terms.gear_stress_penalty))
-        if float(getattr(safety_terms, "off_runway_terminate_penalty", 0.0)) != 0.0:
-            _add_reward_term("off_runway_terminate_penalty", float(safety_terms.off_runway_terminate_penalty))
+    if bool(getattr(frame_products, "flight_shaping_evaluated", False)):
+        loader.liftoff_awarded = bool(
+            getattr(frame_products.flight_shaping, "next_liftoff_awarded", loader.liftoff_awarded)
+        )
+        loader.gear_bonus_awarded = bool(
+            getattr(frame_products.flight_shaping, "next_gear_bonus_awarded", loader.gear_bonus_awarded)
+        )
 
-        approach_inputs = step_eval.get("approach_inputs")
-        if approach_inputs is not None and bool(getattr(execution_step, "approach_evaluated", False)):
-            approach_terms = execution_step.approach
-            if float(getattr(approach_terms, "approach_localizer", 0.0)) != 0.0:
-                _add_reward_term("approach_localizer", float(approach_terms.approach_localizer))
-            if approach_inputs.localizer_improve_weight != 0.0 and approach_inputs.has_prev_loc:
-                _add_reward_term("approach_localizer_improve", float(approach_terms.approach_localizer_improve))
-            if float(getattr(approach_terms, "approach_glideslope", 0.0)) != 0.0:
-                _add_reward_term("approach_glideslope", float(approach_terms.approach_glideslope))
-            if approach_inputs.glideslope_improve_weight != 0.0 and approach_inputs.has_prev_gs:
-                _add_reward_term("approach_glideslope_improve", float(approach_terms.approach_glideslope_improve))
-            if approach_inputs.dme_progress_weight != 0.0 and approach_inputs.has_prev_dme and math.isfinite(
-                float(approach_inputs.ils_dme_m)
-            ):
-                _add_reward_term("approach_dme_progress", float(approach_terms.approach_dme_progress))
-            if float(getattr(approach_terms, "approach_capture_bonus", 0.0)) != 0.0:
-                _add_reward_term("approach_capture_bonus", float(approach_terms.approach_capture_bonus))
-            if float(getattr(approach_terms, "landing_sink_rate_penalty", 0.0)) != 0.0:
-                _add_reward_term("landing_sink_rate_penalty", float(approach_terms.landing_sink_rate_penalty))
+    if bool(getattr(execution_step, "approach_evaluated", False)):
+        approach_terms = execution_step.approach
+        if bool(getattr(approach_terms, "clear_history", False)):
+            loader._approach_prev_dme_m = None
+            loader._approach_prev_loc_abs = None
+            loader._approach_prev_gs_abs = None
+        elif bool(getattr(approach_terms, "next_prev_valid", False)):
+            loader._approach_prev_dme_m = float(approach_terms.next_prev_dme_m)
+            loader._approach_prev_loc_abs = float(approach_terms.next_prev_loc_abs)
+            loader._approach_prev_gs_abs = float(approach_terms.next_prev_gs_abs)
 
-            if bool(getattr(approach_terms, "clear_history", False)):
-                loader._approach_prev_dme_m = None
-                loader._approach_prev_loc_abs = None
-                loader._approach_prev_gs_abs = None
-            elif bool(getattr(approach_terms, "next_prev_valid", False)):
-                loader._approach_prev_dme_m = float(approach_terms.next_prev_dme_m)
-                loader._approach_prev_loc_abs = float(approach_terms.next_prev_loc_abs)
-                loader._approach_prev_gs_abs = float(approach_terms.next_prev_gs_abs)
+    objective_has_status = bool(getattr(execution_step, "objective_evaluated", False)) and int(
+        getattr(execution_step, "objective_status_count", 0)
+    ) > 0
+    waypoint_state = step_eval.get("waypoint_state")
+    if isinstance(waypoint_state, dict) and bool(getattr(execution_step, "waypoint_evaluated", False)):
+        idx = int(waypoint_state["idx"])
+        n = int(waypoint_state["count"])
+        if not objective_has_status:
+            status[0] = float(waypoint_state["dist_m"])
+            status[1] = float(idx)
+            status[2] = float(n)
 
-        objective_has_status = bool(getattr(execution_step, "objective_evaluated", False)) and int(
-            getattr(execution_step, "objective_status_count", 0)
-        ) > 0
-        waypoint_state = step_eval.get("waypoint_state")
-        if isinstance(waypoint_state, dict) and bool(getattr(execution_step, "waypoint_evaluated", False)):
-            idx = int(waypoint_state["idx"])
-            n = int(waypoint_state["count"])
+        waypoint_terms = execution_step.waypoint
+        loader._waypoint_prev_dist_m = (
+            float(waypoint_terms.next_prev_dist_m)
+            if bool(getattr(waypoint_terms, "next_prev_dist_valid", False))
+            else None
+        )
+        waypoint_arrived = bool(getattr(waypoint_terms, "arrived", False))
+        if waypoint_arrived:
+            loader.waypoint_idx = idx + 1
+            loader._waypoint_prev_dist_m = None
             if not objective_has_status:
-                status[0] = float(waypoint_state["dist_m"])
-                status[1] = float(idx)
-                status[2] = float(n)
-
-            waypoint_inputs = waypoint_state["inputs"]
-            waypoint_terms = execution_step.waypoint
-            if waypoint_inputs.progress_weight != 0.0 and waypoint_inputs.has_prev_dist:
-                _add_reward_term("waypoint_progress", float(waypoint_terms.waypoint_progress))
-            if waypoint_inputs.distance_weight != 0.0:
-                _add_reward_term("waypoint_distance", float(waypoint_terms.waypoint_distance))
-            if float(getattr(waypoint_terms, "waypoint_cross_track", 0.0)) != 0.0:
-                _add_reward_term("waypoint_cross_track", float(waypoint_terms.waypoint_cross_track))
-            if float(getattr(waypoint_terms, "waypoint_proximity", 0.0)) != 0.0:
-                _add_reward_term("waypoint_proximity", float(waypoint_terms.waypoint_proximity))
-
-            loader._waypoint_prev_dist_m = (
-                float(waypoint_terms.next_prev_dist_m)
-                if bool(getattr(waypoint_terms, "next_prev_dist_valid", False))
-                else None
-            )
-            arrived = bool(getattr(waypoint_terms, "arrived", False))
-            if arrived:
-                _add_reward_term("waypoint_reached_bonus", float(waypoint_terms.waypoint_reached_bonus))
-                loader.waypoint_idx = idx + 1
-                loader._waypoint_prev_dist_m = None
-                if not objective_has_status:
-                    status[1] = float(loader.waypoint_idx)
-                    if loader.waypoint_idx < n:
-                        next_wp = loader.waypoints[loader.waypoint_idx]
-                        next_dx = float(next_wp.get("x", 0.0)) - float(getattr(truth, "x", 0.0))
-                        next_dy = float(next_wp.get("y", 0.0)) - float(getattr(truth, "y", 0.0))
-                        status[0] = float(math.hypot(next_dx, next_dy))
-                    else:
-                        status[0] = 0.0
-                if loader.waypoint_idx >= n:
-                    landing_transition_pending = bool(
-                        isinstance(loader.post_waypoint_transition, dict)
-                        and loader.post_waypoint_transition
-                        and is_landing_command_code(loader.post_waypoint_transition.get("command_code", 4))
+                status[1] = float(loader.waypoint_idx)
+                if loader.waypoint_idx < n:
+                    next_wp = loader.waypoints[loader.waypoint_idx]
+                    next_dx = float(next_wp.get("x", 0.0)) - float(getattr(truth, "x", 0.0))
+                    next_dy = float(next_wp.get("y", 0.0)) - float(getattr(truth, "y", 0.0))
+                    status[0] = float(math.hypot(next_dx, next_dy))
+                else:
+                    status[0] = 0.0
+            if loader.waypoint_idx >= n:
+                landing_transition_pending = bool(
+                    isinstance(loader.post_waypoint_transition, dict)
+                    and loader.post_waypoint_transition
+                    and is_landing_command_code(loader.post_waypoint_transition.get("command_code", 4))
+                )
+                transitioned = None
+                deferred_landing_transition = loader._defer_landing_post_transition_until_next_update()
+                if not deferred_landing_transition:
+                    transitioned = loader._maybe_activate_post_waypoint_transition()
+                if isinstance(transitioned, dict):
+                    structural_state_changed = True
+                    phase_transition_bonus = float(
+                        transitioned.get("transition_reward", cfg.get("phase_transition_bonus", 600.0))
                     )
-                    transitioned = None
-                    deferred_landing_transition = loader._defer_landing_post_transition_until_next_update()
+                    extra_reward += phase_transition_bonus
+                    if not objective_has_status:
+                        status[0] = 0.0
+                        status[1] = 0.0
+                elif landing_transition_pending:
                     if not deferred_landing_transition:
-                        transitioned = loader._maybe_activate_post_waypoint_transition()
-                    if isinstance(transitioned, dict):
                         structural_state_changed = True
-                        transition_reward = float(
-                            transitioned.get("transition_reward", cfg.get("phase_transition_bonus", 600.0))
-                        )
-                        _add_reward_term("phase_transition_bonus", transition_reward)
-                        extra_reward += transition_reward
-                        if not objective_has_status:
-                            status[0] = 0.0
-                            status[1] = 0.0
-                    elif landing_transition_pending:
-                        if not deferred_landing_transition:
-                            structural_state_changed = True
-                        if not objective_has_status:
-                            status[0] = 0.0
-                            status[1] = float(loader.waypoint_idx)
-                    elif bool(getattr(execution_step, "waypoint_episode_success", False)):
-                        _add_reward_term(
-                            "waypoint_success_bonus",
-                            float(
-                                getattr(
-                                    execution_step,
-                                    "waypoint_episode_success_bonus",
-                                    safety_cfg.waypoint_mission_success_bonus,
-                                )
-                            ),
-                        )
-
-        if bool(getattr(execution_step, "objective_evaluated", False)) and int(
-            getattr(execution_step, "matched_objective_index", -1)
-        ) >= 0:
-            objective_terms = execution_step.objective
-            if float(getattr(objective_terms, "success_runway_cross_penalty", 0.0)) != 0.0:
-                _add_reward_term(
-                    "success_runway_cross_penalty",
-                    float(objective_terms.success_runway_cross_penalty),
-                )
-            if float(getattr(objective_terms, "success_ground_track_error_penalty", 0.0)) != 0.0:
-                _add_reward_term(
-                    "success_ground_track_error_penalty",
-                    float(objective_terms.success_ground_track_error_penalty),
-                )
-            _add_reward_term("objective_bonus", float(objective_terms.objective_bonus))
+                    if not objective_has_status:
+                        status[0] = 0.0
+                        status[1] = float(loader.waypoint_idx)
 
     reward += float(extra_reward)
+    if waypoint_arrived or phase_transition_bonus != 0.0:
+        rebuilt = _compute_compiled_reward_breakdown(
+            loader,
+            frame_products=frame_products,
+            reward_total=reward,
+            waypoint_arrived=waypoint_arrived,
+            had_post_waypoint_transition_before=had_post_waypoint_transition_before,
+            phase_transition_bonus=phase_transition_bonus,
+        )
+        if isinstance(rebuilt, dict):
+            rb = rebuilt
+        else:
+            _add_reward_term("phase_transition_bonus", phase_transition_bonus)
+
     tracked_total = _tracked_reward_total(rb)
     rb["tracked_total"] = tracked_total
     rb["untracked"] = float(reward - tracked_total)

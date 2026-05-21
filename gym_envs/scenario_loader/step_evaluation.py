@@ -483,6 +483,7 @@ def prepare_step_evaluation(
         mission_obs_mode=mission_obs_mode,
     )
     frame_products = None
+    episode_runtime_inputs = None
     truncated = bool(entry["truncated"])
     mission_inputs = entry.get("mission_observation_inputs")
     step_info_inputs = entry.get("step_info_inputs")
@@ -528,6 +529,7 @@ def prepare_step_evaluation(
             runtime_inputs.has_flight_shaping = True
             runtime_inputs.flight_shaping = shaping_inputs
         runtime_inputs.include_roll_stability = bool(float(getattr(truth, "z", 0.0)) < 100.0)
+        episode_runtime_inputs = runtime_inputs
         if bool(defer_compiled_runtime):
             deferred_kind = "episode"
             deferred_inputs = runtime_inputs
@@ -576,6 +578,7 @@ def prepare_step_evaluation(
         "max_steps": int(max_steps),
         "mission_obs_mode": "" if mission_obs_mode is None else str(mission_obs_mode),
         "frame_products": frame_products,
+        "episode_runtime_inputs": episode_runtime_inputs,
         **entry,
     }
     if bool(defer_compiled_runtime):

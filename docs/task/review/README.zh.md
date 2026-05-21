@@ -11,6 +11,7 @@
 
 - [剩余工作整合与后续路线图 2026-05-20](consolidated_remaining_work_and_roadmap_20260520.zh.md) ([English](consolidated_remaining_work_and_roadmap_20260520.md))
 - [Post-WP9 架构路线规划 — 缺口分析 2026-05-20](post_wp9_gap_analysis_20260520.zh.md) ([English](post_wp9_gap_analysis_20260520.md))
+- [Stage 3 Platform Expansion Mainline Plan 2026-05-21](stage3_platform_expansion_mainline_plan_20260521.md)
 
 ## 活跃验收
 
@@ -22,6 +23,8 @@
 - [WP14 Capability Composition 验收审查 2026-05-21](wp14_capability_composition_acceptance_review_20260521.zh.md) ([English](wp14_capability_composition_acceptance_review_20260521.md))
 - [WP15 Counterfactual Experiment Generation 验收审查 2026-05-21](wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md) ([English](wp15_counterfactual_experiment_generation_acceptance_review_20260521.md))
 - [WP16 Runtime Spine Consolidation 验收审查 2026-05-21](wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md) ([English](wp16_runtime_spine_consolidation_acceptance_review_20260521.md))
+- [WP17 Stage 3 Runtime Materialization And Cleanup 验收审查 2026-05-21](wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md) ([English](wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md))
+- [WP18 Runtime Ownership And C++ Hot Path Consolidation 验收审查 2026-05-21](wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) ([English](wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md))
 
 ## 归档
 

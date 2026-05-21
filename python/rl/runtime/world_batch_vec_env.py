@@ -289,6 +289,16 @@ class WorldBatchVecEnv(VecEnv):
     def last_runtime_window_evidence(self):
         return self._runtime_adapter.last_window_evidence
 
+    def execution_episode_ready(self, world_index: int) -> bool:
+        return bool(self._runtime_adapter.execution_episode_ready(int(world_index)))
+
+    def export_execution_episode_states(self, refs: Sequence[Any]) -> list[Any]:
+        return self._runtime_adapter.export_execution_episode_states(refs)
+
+    def export_execution_episode_state(self, env_idx: int) -> Any:
+        _target_indices, refs = self._build_refs([int(env_idx)])
+        return self.export_execution_episode_states(refs)[0]
+
     def _normalize_seed(self, seed: int | None) -> int:
         if seed is None:
             seed = int(np.random.randint(0, np.iinfo(np.uint32).max, dtype=np.uint32))
@@ -725,7 +735,7 @@ class WorldBatchVecEnv(VecEnv):
         return runtime_digest != loader_digest
 
     def _execution_episode_controller_runtime_ready(self, env_idx: int) -> bool:
-        return bool(self._runtime_adapter.execution_episode_ready(env_idx))
+        return self.execution_episode_ready(env_idx)
 
     def _set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
         self._runtime_adapter.set_pilot_actions_batch(assignments)
@@ -789,7 +799,7 @@ class WorldBatchVecEnv(VecEnv):
         return self._runtime_adapter.step_execution_products_batch(requests)
 
     def _export_execution_episode_controller_states(self, refs: Sequence[Any]) -> list[Any]:
-        return self._runtime_adapter.export_execution_episode_states(refs)
+        return self.export_execution_episode_states(refs)
 
     def _sync_execution_episode_controller_runtime_state(self, env_idx: int) -> None:
         if not (self.execution_episode_controller_shadow_compare or self.execution_episode_controller_mainline):
@@ -998,6 +1008,9 @@ class WorldBatchVecEnv(VecEnv):
             [env_idx for env_idx, _step_eval in request_metadata],
         )
         step_results_batch = list(getattr(step_batch_result, "step_results", []))
+        execution_episode_states_batch = list(
+            getattr(step_batch_result, "execution_episode_states", [])
+        )
         rewards_batch = list(getattr(step_batch_result, "rewards", []))
         terminated_batch = list(getattr(step_batch_result, "terminated", []))
         truncated_batch = list(getattr(step_batch_result, "truncated", []))
@@ -1017,7 +1030,11 @@ class WorldBatchVecEnv(VecEnv):
         )):
             handle = self._handles[env_idx]
             mirror_t0 = time.perf_counter() if timing_enabled else 0.0
-            controller_state = step_result.controller_state
+            controller_state = (
+                execution_episode_states_batch[result_idx]
+                if result_idx < len(execution_episode_states_batch)
+                else step_result.controller_state
+            )
             structural_state_changed = (
                 bool(controller_state_changed_flags[result_idx])
                 if result_idx < len(controller_state_changed_flags)

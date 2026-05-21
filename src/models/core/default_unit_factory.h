@@ -656,14 +656,32 @@ public:
     flecs::entity spawn(flecs::world& ecs,
                         const std::string& unit_name,
                         const SpawnParams& params) override {
-        auto it = definitions_.find(unit_name);
-        if (it == definitions_.end()) {
-            spdlog::error("Unknown unit name: {}", unit_name);
+        const auto resolved_spawn_plan =
+            resolve_platform_spawn_plan_for_type_name(unit_name);
+        const auto plan_validation =
+            runtime::platform_capabilities::validate_resolved_platform_spawn_plan(
+                resolved_spawn_plan);
+        if (!plan_validation.valid || !resolved_spawn_plan.admitted) {
+            const std::string rejection_reason =
+                !plan_validation.valid
+                    ? plan_validation.rejection_reason
+                    : resolved_spawn_plan.rejection_reason;
+            spdlog::error(
+                "Spawn gate rejected type_name {} via resolved platform spawn plan: {}",
+                unit_name,
+                rejection_reason.empty() ? "unspecified_rejection" : rejection_reason);
             return flecs::entity::null();
         }
+
+        auto it = definitions_.find(unit_name);
+        if (it == definitions_.end()) {
+            spdlog::error(
+                "Spawn gate admitted type_name {} but definition lookup failed during materialization",
+                unit_name);
+            return flecs::entity::null();
+        }
+
         const UnitDefinition& def = it->second;
-        [[maybe_unused]] const auto resolved_spawn_plan =
-            resolve_platform_spawn_plan_for_type_name(unit_name);
         double heading_init = params.heading;
         double pitch_init = params.pitch;
         double roll_init = params.roll;

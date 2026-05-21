@@ -159,6 +159,11 @@ class RuntimeFacadeAdapter:
             action_request.action_intent.merge_policy = "last_write_wins"
             action_request.action_intent.action_interface.kind = "PilotActionAssignmentCompat"
             action_request.action_intent.action_interface.payload_type = "pilot_action"
+            action_request.cadence_control.enabled = True
+            action_request.cadence_control.hold_policy.hold_mode = "hold_last"
+            action_request.cadence_control.hold_policy.validity_duration_s = 0.1
+            action_request.cadence_control.source_cadence_domain = "control"
+            action_request.cadence_control.source_tick = 0
             if pilot_action is not None:
                 action_request.action_intent.has_pilot_action = True
                 action_request.action_intent.pilot_action = pilot_action
@@ -170,7 +175,7 @@ class RuntimeFacadeAdapter:
         result = self.facade.run_wp10_window(request)
         return self._store_window_evidence(
             result,
-            cadence_reason="runtime_cadence_not_implemented_wp16b_dependency",
+            cadence_reason="selected_slice_cadence_trace_runtime_window_wp17c",
             uses_compat_fallback=False,
         )
 
@@ -436,7 +441,16 @@ class RuntimeFacadeAdapter:
             return self.facade.step_execution_batch(request)
         result = ef_py.ExecutionBatchStepResult()
         step_results = list(self._compat_runtime.step_execution_episode_results_batch(list(request.step_requests)))
+        refs = []
+        for step_request in list(getattr(request, "step_requests", []) or []):
+            ref = ef_py.WorldEntityRef()
+            ref.world_index = int(getattr(step_request, "world_index", 0))
+            ref.entity_id = int(getattr(step_request, "entity_id", 0))
+            refs.append(ref)
         result.step_results = step_results
+        result.execution_episode_states = list(
+            self._compat_runtime.export_execution_episode_states_batch(refs)
+        )
         result.rewards = [float(getattr(step_result, "reward_total", 0.0)) for step_result in step_results]
         result.terminated = [bool(getattr(step_result, "terminated", False)) for step_result in step_results]
         result.truncated = [bool(getattr(step_result, "truncated", False)) for step_result in step_results]

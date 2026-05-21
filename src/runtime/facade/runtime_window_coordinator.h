@@ -21,6 +21,10 @@ inline constexpr std::string_view kRuntimeWindowBarrierStagePublish =
 inline constexpr std::string_view kRuntimeWindowBarrierWindowCommit =
     "window_commit";
 inline constexpr std::string_view kRuntimeWindowBarrierExport = "export";
+inline constexpr std::string_view kRuntimeWindowCadenceDomainPolicy = "policy";
+inline constexpr std::string_view kRuntimeWindowCadenceDomainControl = "control";
+inline constexpr std::string_view kRuntimeWindowCadenceDomainPhysics = "physics";
+inline constexpr std::string_view kRuntimeWindowCadenceDomainExport = "export";
 
 struct RuntimeWindowCoordinatorCallbacks {
     std::function<void(const std::vector<WorldPilotActionAssignment>&)>
@@ -168,7 +172,208 @@ inline std::string runtime_window_input_clock_merge_policy(
     if (!runtime_window_is_blank(request.clock_domain_metadata.clock_merge_policy)) {
         return request.clock_domain_metadata.clock_merge_policy;
     }
+    if (request.cadence_control.enabled) {
+        const ActionHoldPolicy hold_policy =
+            normalize_action_hold_policy(request.cadence_control.hold_policy);
+        if (hold_policy.hold_mode == kActionHoldModeHoldLast) {
+            return "hold_last";
+        }
+        if (hold_policy.hold_mode == kActionHoldModeInterpolate) {
+            return "interpolate";
+        }
+    }
     return std::string(fallback_policy);
+}
+
+inline RuntimeWindowCadence runtime_window_make_cadence(
+    std::string_view domain,
+    std::uint32_t tick_count,
+    double interval_s,
+    std::string_view merge_policy,
+    std::string_view barrier_id
+) {
+    return RuntimeWindowCadence{
+        .domain = std::string(domain),
+        .tick_count = tick_count,
+        .interval_s = interval_s,
+        .merge_policy = std::string(merge_policy),
+        .barrier_id = std::string(barrier_id),
+    };
+}
+
+inline RuntimeWindowCadenceConfig
+runtime_window_default_wp17_selected_slice_cadence_config() {
+    RuntimeWindowCadenceConfig config{};
+    config.window_duration_s = 0.1;
+    config.domains = {
+        runtime_window_make_cadence(
+            kRuntimeWindowCadenceDomainPolicy,
+            1U,
+            0.1,
+            "nested_slot",
+            kRuntimeWindowBarrierInputInjection
+        ),
+        runtime_window_make_cadence(
+            kRuntimeWindowCadenceDomainControl,
+            2U,
+            0.05,
+            "hold_last",
+            kRuntimeWindowBarrierInputInjection
+        ),
+        runtime_window_make_cadence(
+            kRuntimeWindowCadenceDomainPhysics,
+            6U,
+            1.0 / 60.0,
+            "enqueue_event",
+            kRuntimeWindowBarrierWindowCommit
+        ),
+        runtime_window_make_cadence(
+            kRuntimeWindowCadenceDomainExport,
+            1U,
+            0.1,
+            "nested_slot",
+            kRuntimeWindowBarrierExport
+        ),
+    };
+    return config;
+}
+
+inline std::size_t runtime_window_find_cadence_domain_index(
+    const RuntimeWindowCadenceConfig& config,
+    std::string_view domain
+) {
+    const auto it = std::find_if(
+        config.domains.begin(),
+        config.domains.end(),
+        [domain](const RuntimeWindowCadence& cadence) {
+            return cadence.domain == domain;
+        }
+    );
+    if (it == config.domains.end()) {
+        return config.domains.size();
+    }
+    return static_cast<std::size_t>(
+        std::distance(config.domains.begin(), it)
+    );
+}
+
+inline const RuntimeWindowCadence* runtime_window_find_cadence_domain(
+    const RuntimeWindowCadenceConfig& config,
+    std::string_view domain
+) {
+    const std::size_t index =
+        runtime_window_find_cadence_domain_index(config, domain);
+    if (index >= config.domains.size()) {
+        return nullptr;
+    }
+    return &config.domains[index];
+}
+
+inline void runtime_window_append_default_cadence_domain_if_missing(
+    RuntimeWindowCadenceConfig* config,
+    const RuntimeWindowCadence& default_cadence
+) {
+    if (config == nullptr) {
+        return;
+    }
+    if (runtime_window_find_cadence_domain_index(*config, default_cadence.domain) >=
+        config->domains.size()) {
+        config->domains.push_back(default_cadence);
+    }
+}
+
+inline RuntimeWindowCadenceConfig normalize_runtime_window_cadence_config(
+    const RuntimeWindowRequest& request
+) {
+    RuntimeWindowCadenceConfig config = request.cadence_config;
+    const RuntimeWindowCadenceConfig defaults =
+        runtime_window_default_wp17_selected_slice_cadence_config();
+
+    if (!runtime_window_has_finite_time(config.window_duration_s) ||
+        config.window_duration_s <= 0.0) {
+        config.window_duration_s = defaults.window_duration_s;
+    }
+
+    if (config.domains.empty()) {
+        return defaults;
+    }
+
+    runtime_window_append_default_cadence_domain_if_missing(
+        &config,
+        defaults.domains[0]
+    );
+    runtime_window_append_default_cadence_domain_if_missing(
+        &config,
+        defaults.domains[1]
+    );
+    runtime_window_append_default_cadence_domain_if_missing(
+        &config,
+        defaults.domains[2]
+    );
+    runtime_window_append_default_cadence_domain_if_missing(
+        &config,
+        defaults.domains[3]
+    );
+
+    for (auto& cadence : config.domains) {
+        const RuntimeWindowCadence* default_cadence =
+            runtime_window_find_cadence_domain(defaults, cadence.domain);
+        if (cadence.tick_count == 0U) {
+            cadence.tick_count =
+                default_cadence != nullptr ? default_cadence->tick_count : 1U;
+        }
+        if (!runtime_window_has_finite_time(cadence.interval_s) ||
+            cadence.interval_s <= 0.0) {
+            cadence.interval_s = config.window_duration_s /
+                static_cast<double>(cadence.tick_count);
+        }
+        if (runtime_window_is_blank(cadence.merge_policy) &&
+            default_cadence != nullptr) {
+            cadence.merge_policy = default_cadence->merge_policy;
+        }
+        if (runtime_window_is_blank(cadence.barrier_id) &&
+            default_cadence != nullptr) {
+            cadence.barrier_id = default_cadence->barrier_id;
+        }
+    }
+    return config;
+}
+
+inline ActionHoldPolicy runtime_window_normalized_hold_policy(
+    const RuntimeWindowActionRequest& request
+) {
+    return normalize_action_hold_policy(request.cadence_control.hold_policy);
+}
+
+inline double runtime_window_resolve_hold_expiry_time_s(
+    const RuntimeWindowActionRequest& request,
+    double fallback_source_time_s
+) {
+    if (request.cadence_control.has_expiry_time &&
+        runtime_window_has_finite_time(request.cadence_control.expiry_time_s)) {
+        return request.cadence_control.expiry_time_s;
+    }
+    if (request.action_intent.valid_until_s != 0.0 &&
+        runtime_window_has_finite_time(request.action_intent.valid_until_s)) {
+        return request.action_intent.valid_until_s;
+    }
+    const ActionHoldPolicy hold_policy =
+        runtime_window_normalized_hold_policy(request);
+    if (hold_policy.validity_duration_s > 0.0) {
+        return runtime_window_input_source_time_s(request, fallback_source_time_s) +
+            hold_policy.validity_duration_s;
+    }
+    return 0.0;
+}
+
+inline bool runtime_window_hold_candidate_expired_at_tick(
+    const RuntimeWindowActionRequest& request,
+    double fallback_source_time_s,
+    double tick_time_s
+) {
+    const double expiry_time_s =
+        runtime_window_resolve_hold_expiry_time_s(request, fallback_source_time_s);
+    return expiry_time_s != 0.0 && expiry_time_s < tick_time_s;
 }
 
 inline bool runtime_window_has_requested_export(
@@ -496,9 +701,441 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_base_node_execution_recor
     };
 }
 
+inline void runtime_window_append_cadence_trace(
+    std::vector<RuntimeWindowCadenceTraceRecord>* cadence_trace,
+    RuntimeWindowCadenceTraceRecord record
+) {
+    if (cadence_trace == nullptr) {
+        return;
+    }
+    cadence_trace->push_back(std::move(record));
+}
+
+inline int runtime_window_cadence_decision_priority(std::string_view decision) {
+    if (decision == "triggered") {
+        return 6;
+    }
+    if (decision == "held") {
+        return 5;
+    }
+    if (decision == "interpolated") {
+        return 4;
+    }
+    if (decision == "rejected") {
+        return 3;
+    }
+    if (decision == "expired") {
+        return 2;
+    }
+    if (decision == "deferred") {
+        return 1;
+    }
+    return 0;
+}
+
+inline const RuntimeWindowCadenceTraceRecord* runtime_window_preferred_cadence_trace_record(
+    const std::vector<RuntimeWindowCadenceTraceRecord>& cadence_trace,
+    std::string_view domain,
+    std::string_view node_id
+) {
+    const RuntimeWindowCadenceTraceRecord* selected = nullptr;
+    int selected_priority = -1;
+    for (const auto& trace : cadence_trace) {
+        if (trace.domain != domain || trace.node_id != node_id) {
+            continue;
+        }
+        const int priority =
+            runtime_window_cadence_decision_priority(trace.decision);
+        if (selected == nullptr || priority > selected_priority ||
+            (priority == selected_priority && trace.tick >= selected->tick)) {
+            selected = &trace;
+            selected_priority = priority;
+        }
+    }
+    return selected;
+}
+
+inline const RuntimeWindowActionRequest* runtime_window_pick_primary_trigger_request(
+    const RuntimeWindowSchedulingContext& context
+) {
+    if (!context.accepted_inputs.empty()) {
+        return &context.accepted_inputs.front().request;
+    }
+    if (!context.rejected_inputs.empty()) {
+        return &context.rejected_inputs.front().request;
+    }
+    if (!context.deferred_inputs.empty()) {
+        return &context.deferred_inputs.front().request;
+    }
+    if (!context.expired_inputs.empty()) {
+        return &context.expired_inputs.front().request;
+    }
+    return nullptr;
+}
+
+inline void runtime_window_append_policy_cadence_trace(
+    const RuntimeWindowSchedulingContext& context,
+    const RuntimeWindowCadenceConfig& cadence_config,
+    std::vector<RuntimeWindowCadenceTraceRecord>* cadence_trace
+) {
+    const RuntimeWindowCadence* policy =
+        runtime_window_find_cadence_domain(
+            cadence_config,
+            kRuntimeWindowCadenceDomainPolicy
+        );
+    if (policy == nullptr) {
+        return;
+    }
+
+    RuntimeWindowCadenceTraceRecord record{};
+    record.domain = policy->domain;
+    record.tick = 0U;
+    record.node_id = "policy.selected_slice";
+    record.barrier_id = policy->barrier_id;
+    record.cadence_merge_policy = policy->merge_policy;
+    record.clock_domain = "outer_window";
+    record.clock_merge_policy = "nested_slot";
+    record.relation = "selected_slice_strict";
+
+    if (!context.accepted_inputs.empty()) {
+        const auto& request = context.accepted_inputs.front().request;
+        record.decision = "triggered";
+        record.decision_reason = "policy boundary accepted the selected-slice trigger";
+        record.source = request.action_intent.source_id;
+        record.clock_domain = request.clock_domain_metadata.source_clock_domain;
+        record.clock_merge_policy =
+            runtime_window_input_clock_merge_policy(request, "nested_slot");
+        record.relation = request.clock_domain_metadata.relation;
+    } else if (!context.rejected_inputs.empty()) {
+        const auto& request = context.rejected_inputs.front().request;
+        record.decision = "rejected";
+        record.decision_reason =
+            "policy boundary rejected the selected-slice trigger";
+        record.source = request.action_intent.source_id;
+        record.clock_domain = request.clock_domain_metadata.source_clock_domain;
+        record.clock_merge_policy =
+            runtime_window_input_clock_merge_policy(
+                request,
+                "reject_on_ambiguous_order"
+            );
+        record.relation = request.clock_domain_metadata.relation;
+    } else if (!context.deferred_inputs.empty()) {
+        const auto& request = context.deferred_inputs.front().request;
+        record.decision = "deferred";
+        record.decision_reason =
+            "policy boundary deferred the selected-slice trigger into another window";
+        record.source = request.action_intent.source_id;
+        record.clock_domain = request.clock_domain_metadata.source_clock_domain;
+        record.clock_merge_policy =
+            runtime_window_input_clock_merge_policy(request, "defer_to_next_window");
+        record.relation = request.clock_domain_metadata.relation;
+        record.deferred = true;
+    } else if (!context.expired_inputs.empty()) {
+        const auto& request = context.expired_inputs.front().request;
+        record.decision = "expired";
+        record.decision_reason =
+            "policy boundary expired the selected-slice trigger before the current window";
+        record.source = request.action_intent.source_id;
+        record.clock_domain = request.clock_domain_metadata.source_clock_domain;
+        record.clock_merge_policy =
+            runtime_window_input_clock_merge_policy(request, "drop");
+        record.relation = request.clock_domain_metadata.relation;
+        record.expired = true;
+    } else {
+        record.decision = "skipped";
+        record.decision_reason =
+            "policy boundary had no visible trigger in the current selected slice";
+        record.source = "none";
+    }
+
+    runtime_window_append_cadence_trace(cadence_trace, std::move(record));
+}
+
+inline void runtime_window_append_control_cadence_trace(
+    const RuntimeWindowSchedulingContext& context,
+    const RuntimeWindowCadenceConfig& cadence_config,
+    std::vector<RuntimeWindowCadenceTraceRecord>* cadence_trace
+) {
+    const RuntimeWindowCadence* control =
+        runtime_window_find_cadence_domain(
+            cadence_config,
+            kRuntimeWindowCadenceDomainControl
+        );
+    if (control == nullptr) {
+        return;
+    }
+
+    const RuntimeWindowActionRequest* primary_request =
+        runtime_window_pick_primary_trigger_request(context);
+    ActionHoldPolicy hold_policy{};
+    if (primary_request != nullptr && primary_request->cadence_control.enabled) {
+        hold_policy = runtime_window_normalized_hold_policy(*primary_request);
+    }
+
+    for (std::uint32_t tick = 0; tick < control->tick_count; ++tick) {
+        RuntimeWindowCadenceTraceRecord record{};
+        record.domain = control->domain;
+        record.tick = tick;
+        record.node_id = "p7.fire_control_launch.v1";
+        record.barrier_id = control->barrier_id;
+        record.cadence_merge_policy = control->merge_policy;
+        record.clock_domain = "event_driven_or_fire_control_cadence";
+        record.clock_merge_policy = "nested_slot";
+        record.relation = "selected_slice_strict";
+
+        const double tick_time_s =
+            context.source_time_s +
+            static_cast<double>(tick) * control->interval_s;
+
+        if (primary_request == nullptr) {
+            record.decision = "skipped";
+            record.decision_reason =
+                "control cadence had no trigger or hold candidate";
+            record.source = "none";
+            runtime_window_append_cadence_trace(cadence_trace, std::move(record));
+            continue;
+        }
+
+        record.source = primary_request->action_intent.source_id;
+        if (!runtime_window_is_blank(
+                primary_request->clock_domain_metadata.source_clock_domain)) {
+            record.clock_domain =
+                primary_request->clock_domain_metadata.source_clock_domain;
+        }
+        record.relation = primary_request->clock_domain_metadata.relation;
+
+        if (!context.accepted_inputs.empty()) {
+            record.clock_merge_policy =
+                runtime_window_input_clock_merge_policy(
+                    *primary_request,
+                    control->merge_policy
+                );
+            if (tick == 0U) {
+                record.decision = "triggered";
+                record.decision_reason =
+                    "control cadence consumed the accepted policy trigger";
+            } else if (hold_policy.hold_mode == kActionHoldModeHoldLast) {
+                if (runtime_window_hold_candidate_expired_at_tick(
+                        *primary_request,
+                        context.source_time_s,
+                        tick_time_s)) {
+                    record.decision = "expired";
+                    record.decision_reason =
+                        "control cadence hold_last evidence expired before this tick";
+                    record.expired = true;
+                } else {
+                    record.decision = "held";
+                    record.decision_reason =
+                        "control cadence reused hold_last evidence between policy ticks";
+                    record.held = true;
+                }
+            } else if (hold_policy.hold_mode == kActionHoldModeInterpolate) {
+                if (runtime_window_hold_candidate_expired_at_tick(
+                        *primary_request,
+                        context.source_time_s,
+                        tick_time_s)) {
+                    record.decision = "expired";
+                    record.decision_reason =
+                        "control cadence interpolation evidence expired before this tick";
+                    record.expired = true;
+                } else {
+                    record.decision = "interpolated";
+                    record.decision_reason =
+                        "control cadence produced diagnostics-only interpolation evidence";
+                    record.diagnostics_only = true;
+                }
+            } else {
+                record.clock_merge_policy = "nested_slot";
+                record.decision = "skipped";
+                record.decision_reason =
+                    "control cadence had no maintained hold policy for the second tick";
+            }
+        } else if (!context.rejected_inputs.empty()) {
+            record.clock_merge_policy = "reject_on_ambiguous_order";
+            record.decision = "rejected";
+            record.decision_reason =
+                "control cadence failed closed because the policy trigger was rejected";
+        } else if (!context.deferred_inputs.empty()) {
+            record.clock_merge_policy = "defer_to_next_window";
+            record.decision = "deferred";
+            record.decision_reason =
+                "control cadence deferred because the policy trigger belongs to another window";
+            record.deferred = true;
+        } else if (!context.expired_inputs.empty()) {
+            record.clock_merge_policy = "drop";
+            record.decision = "expired";
+            record.decision_reason =
+                "control cadence could not consume the trigger because it had expired";
+            record.expired = true;
+        } else {
+            record.clock_merge_policy = "nested_slot";
+            record.decision = "skipped";
+            record.decision_reason =
+                "control cadence had no visible trigger";
+        }
+
+        runtime_window_append_cadence_trace(cadence_trace, std::move(record));
+    }
+}
+
+inline void runtime_window_append_physics_cadence_trace(
+    const RuntimeWindowSchedulingContext& context,
+    const RuntimeWindowCadenceConfig& cadence_config,
+    std::vector<RuntimeWindowCadenceTraceRecord>* cadence_trace
+) {
+    const RuntimeWindowCadence* physics =
+        runtime_window_find_cadence_domain(
+            cadence_config,
+            kRuntimeWindowCadenceDomainPhysics
+        );
+    if (physics == nullptr) {
+        return;
+    }
+
+    const bool upstream_ready = !context.accepted_inputs.empty();
+    const bool upstream_rejected = !context.rejected_inputs.empty();
+    const bool upstream_deferred = !context.deferred_inputs.empty();
+    const bool upstream_expired = !context.expired_inputs.empty();
+
+    for (std::uint32_t tick = 0; tick < physics->tick_count; ++tick) {
+        RuntimeWindowCadenceTraceRecord record{};
+        record.domain = physics->domain;
+        record.tick = tick;
+        record.node_id = "p9.effects_damage.v1";
+        record.barrier_id = physics->barrier_id;
+        record.clock_domain = "event_driven_effects_resolution";
+        record.clock_merge_policy = "enqueue_event";
+        record.cadence_merge_policy = physics->merge_policy;
+        record.relation = "selected_slice_strict";
+
+        if (upstream_ready) {
+            record.decision = "triggered";
+            record.decision_reason =
+                "physics cadence advanced inside the selected 100ms window";
+            record.source = "p7.fire_control_launch.v1";
+        } else if (upstream_rejected) {
+            record.decision = "rejected";
+            record.decision_reason =
+                "physics cadence failed closed with the rejected upstream trigger";
+            record.source = "p7.fire_control_launch.v1";
+        } else if (upstream_deferred) {
+            record.decision = "deferred";
+            record.decision_reason =
+                "physics cadence deferred because the upstream trigger is in another window";
+            record.source = "p7.fire_control_launch.v1";
+            record.deferred = true;
+        } else if (upstream_expired) {
+            record.decision = "expired";
+            record.decision_reason =
+                "physics cadence dropped because the upstream trigger had already expired";
+            record.source = "p7.fire_control_launch.v1";
+            record.expired = true;
+        } else {
+            record.decision = "skipped";
+            record.decision_reason =
+                "physics cadence had no upstream launch/effects trigger";
+            record.source = "none";
+        }
+
+        runtime_window_append_cadence_trace(cadence_trace, std::move(record));
+    }
+}
+
+inline void runtime_window_append_export_cadence_trace(
+    const RuntimeWindowRequest& request,
+    const RuntimeWindowCadenceConfig& cadence_config,
+    const RuntimeWindowCoordinatorCallbacks& callbacks,
+    std::vector<RuntimeWindowCadenceTraceRecord>* cadence_trace
+) {
+    const RuntimeWindowCadence* export_cadence =
+        runtime_window_find_cadence_domain(
+            cadence_config,
+            kRuntimeWindowCadenceDomainExport
+        );
+    if (export_cadence == nullptr) {
+        return;
+    }
+
+    RuntimeWindowCadenceTraceRecord record{};
+    record.domain = export_cadence->domain;
+    record.tick = 0U;
+    record.node_id = "p10.observation_export.v1";
+    record.barrier_id = export_cadence->barrier_id;
+    record.clock_domain = "window_export";
+    record.clock_merge_policy = "nested_slot";
+    record.cadence_merge_policy = export_cadence->merge_policy;
+    record.relation = "selected_slice_strict";
+    record.source = "export";
+
+    if (!runtime_window_has_requested_export(request)) {
+        record.decision = "skipped";
+        record.decision_reason =
+            "export cadence skipped because no facade export was requested";
+        runtime_window_append_cadence_trace(cadence_trace, std::move(record));
+        return;
+    }
+
+    std::vector<std::string> missing_callbacks;
+    if (request.export_observation && !callbacks.export_observation_packet) {
+        missing_callbacks.push_back("observation");
+    }
+    if (request.export_engagement && !callbacks.export_engagement_event_packet) {
+        missing_callbacks.push_back("engagement");
+    }
+    if (request.export_diagnostics && !callbacks.export_diagnostics_traces) {
+        missing_callbacks.push_back("diagnostics");
+    }
+    if (!missing_callbacks.empty()) {
+        record.decision = "rejected";
+        record.decision_reason =
+            "export cadence rejected because one or more export callbacks are missing";
+        runtime_window_append_cadence_trace(cadence_trace, std::move(record));
+        return;
+    }
+
+    record.decision = "triggered";
+    record.decision_reason =
+        "export cadence emitted the selected-slice facade packets";
+    runtime_window_append_cadence_trace(cadence_trace, std::move(record));
+}
+
+inline std::vector<RuntimeWindowCadenceTraceRecord>
+build_runtime_window_cadence_trace(
+    const RuntimeWindowRequest& request,
+    const RuntimeWindowSchedulingContext& context,
+    const RuntimeWindowCadenceConfig& cadence_config,
+    const RuntimeWindowCoordinatorCallbacks& callbacks
+) {
+    std::vector<RuntimeWindowCadenceTraceRecord> cadence_trace;
+    cadence_trace.reserve(16U);
+    runtime_window_append_policy_cadence_trace(
+        context,
+        cadence_config,
+        &cadence_trace
+    );
+    runtime_window_append_control_cadence_trace(
+        context,
+        cadence_config,
+        &cadence_trace
+    );
+    runtime_window_append_physics_cadence_trace(
+        context,
+        cadence_config,
+        &cadence_trace
+    );
+    runtime_window_append_export_cadence_trace(
+        request,
+        cadence_config,
+        callbacks,
+        &cadence_trace
+    );
+    return cadence_trace;
+}
+
 inline RuntimeWindowNodeExecutionRecord runtime_window_fire_control_launch_record(
     const runtime::scheduler::StageNodeManifest& manifest,
-    const RuntimeWindowSchedulingContext& context
+    const RuntimeWindowSchedulingContext& context,
+    const std::vector<RuntimeWindowCadenceTraceRecord>& cadence_trace
 ) {
     RuntimeWindowNodeExecutionRecord record =
         runtime_window_base_node_execution_record(
@@ -509,6 +1146,58 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_fire_control_launch_recor
     record.target_window_id = context.window_id;
     record.barrier_order =
         runtime_window_partial_barrier_order({kRuntimeWindowBarrierInputInjection});
+
+    const RuntimeWindowCadenceTraceRecord* control_it =
+        runtime_window_preferred_cadence_trace_record(
+            cadence_trace,
+            kRuntimeWindowCadenceDomainControl,
+            "p7.fire_control_launch.v1"
+        );
+    if (control_it != nullptr) {
+        record.execution_state =
+            control_it->decision == "triggered" ? "executed" :
+            control_it->decision == "held" ? "held" :
+            control_it->decision == "interpolated" ? "diagnostics_only" :
+            control_it->decision;
+        record.decision_reason = control_it->decision_reason;
+        if (control_it->source.empty() || control_it->source == "none") {
+            record.trigger_source = "input_injection:none";
+        } else if (control_it->decision == "rejected") {
+            record.trigger_source =
+                "input_injection_rejected:" + control_it->source;
+        } else if (control_it->decision == "deferred") {
+            record.trigger_source =
+                "input_injection_deferred:" + control_it->source;
+        } else if (control_it->decision == "expired") {
+            record.trigger_source =
+                "input_injection_expired:" + control_it->source;
+        } else {
+            record.trigger_source = "input_injection:" + control_it->source;
+        }
+        record.clock_merge_policy =
+            control_it->clock_merge_policy.empty() ? "nested_slot" :
+            control_it->clock_merge_policy;
+        const RuntimeWindowActionRequest* primary_request =
+            runtime_window_pick_primary_trigger_request(context);
+        if (primary_request != nullptr) {
+            record.source_snapshot_version =
+                runtime_window_input_source_snapshot_version(*primary_request);
+            record.source_time_s =
+                runtime_window_input_source_time_s(
+                    *primary_request,
+                    context.source_time_s
+                );
+            record.target_window_id =
+                runtime_window_input_target_window_id(*primary_request, context);
+            record.barrier_order = runtime_window_input_barrier_order(
+                *primary_request,
+                {kRuntimeWindowBarrierInputInjection}
+            );
+        } else {
+            record.source_time_s = context.source_time_s;
+        }
+        return record;
+    }
 
     if (!context.accepted_inputs.empty()) {
         const auto& trigger = context.accepted_inputs.front().request;
@@ -559,17 +1248,21 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_fire_control_launch_recor
     }
 
     if (!context.deferred_inputs.empty() || !context.expired_inputs.empty()) {
+        const bool expired = context.deferred_inputs.empty() &&
+            !context.expired_inputs.empty();
         const auto& deferred = !context.deferred_inputs.empty()
             ? context.deferred_inputs.front().request
             : context.expired_inputs.front().request;
-        record.execution_state = "deferred";
-        record.decision_reason =
-            "maintained fire-control cadence did not fire in the current window";
+        record.execution_state = expired ? "expired" : "deferred";
+        record.decision_reason = expired
+            ? "maintained fire-control cadence expired before the current window"
+            : "maintained fire-control cadence did not fire in the current window";
         record.trigger_source =
-            "input_injection_deferred:" + deferred.action_intent.source_id;
+            std::string(expired ? "input_injection_expired:" : "input_injection_deferred:") +
+            deferred.action_intent.source_id;
         record.clock_merge_policy = runtime_window_input_clock_merge_policy(
             deferred,
-            "defer_to_next_window"
+            expired ? "drop" : "defer_to_next_window"
         );
         record.source_snapshot_version =
             runtime_window_input_source_snapshot_version(deferred);
@@ -595,7 +1288,8 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_fire_control_launch_recor
 inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
     const runtime::scheduler::StageNodeManifest& manifest,
     const RuntimeWindowSchedulingContext& context,
-    const RuntimeWindowNodeExecutionRecord& fire_control_record
+    const RuntimeWindowNodeExecutionRecord& fire_control_record,
+    const std::vector<RuntimeWindowCadenceTraceRecord>& cadence_trace
 ) {
     RuntimeWindowNodeExecutionRecord record =
         runtime_window_base_node_execution_record(manifest, 0U);
@@ -606,6 +1300,41 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
         kRuntimeWindowBarrierWindowCommit,
     });
     record.source_time_s = context.source_time_s;
+
+    const RuntimeWindowCadenceTraceRecord* physics_it =
+        runtime_window_preferred_cadence_trace_record(
+            cadence_trace,
+            kRuntimeWindowCadenceDomainPhysics,
+            "p9.effects_damage.v1"
+        );
+    if (physics_it != nullptr) {
+        record.execution_state =
+            physics_it->decision == "triggered" ? "executed" :
+            physics_it->decision;
+        record.decision_reason = physics_it->decision_reason;
+        if (physics_it->source == "none") {
+            record.trigger_source = "window_commit:none";
+        } else if (physics_it->decision == "rejected") {
+            record.trigger_source =
+                physics_it->source + ":rejected_upstream_trigger";
+        } else if (physics_it->decision == "deferred") {
+            record.trigger_source =
+                physics_it->source + ":deferred_upstream_trigger";
+        } else if (physics_it->decision == "expired") {
+            record.trigger_source =
+                physics_it->source + ":expired_upstream_trigger";
+        } else {
+            record.trigger_source =
+                physics_it->source + ":fire_control_and_launch";
+        }
+        record.clock_merge_policy =
+            physics_it->clock_merge_policy.empty() ? "enqueue_event" :
+            physics_it->clock_merge_policy;
+        record.source_snapshot_version =
+            fire_control_record.source_snapshot_version;
+        record.source_time_s = fire_control_record.source_time_s;
+        return record;
+    }
 
     if (fire_control_record.execution_state == "executed") {
         record.execution_state = "executed";
@@ -646,6 +1375,19 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_effects_damage_record(
         return record;
     }
 
+    if (fire_control_record.execution_state == "expired") {
+        record.execution_state = "expired";
+        record.decision_reason =
+            "maintained effects/damage cadence expired with the upstream fire-control trigger";
+        record.trigger_source =
+            "p7.fire_control_launch.v1:expired_upstream_trigger";
+        record.clock_merge_policy = "drop";
+        record.source_snapshot_version =
+            fire_control_record.source_snapshot_version;
+        record.source_time_s = fire_control_record.source_time_s;
+        return record;
+    }
+
     record.decision_reason =
         "maintained effects/damage cadence had no launch/effects trigger in the current window";
     record.trigger_source = "window_commit:none";
@@ -657,7 +1399,8 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_observation_export_record
     const runtime::scheduler::StageNodeManifest& manifest,
     const RuntimeWindowRequest& request,
     const RuntimeWindowSchedulingContext& context,
-    const RuntimeWindowCoordinatorCallbacks& callbacks
+    const RuntimeWindowCoordinatorCallbacks& callbacks,
+    const std::vector<RuntimeWindowCadenceTraceRecord>& cadence_trace
 ) {
     RuntimeWindowNodeExecutionRecord record =
         runtime_window_base_node_execution_record(manifest, 0U);
@@ -669,6 +1412,25 @@ inline RuntimeWindowNodeExecutionRecord runtime_window_observation_export_record
         );
     record.clock_merge_policy = "nested_slot";
     record.source_time_s = context.source_time_s;
+
+    const RuntimeWindowCadenceTraceRecord* export_it =
+        runtime_window_preferred_cadence_trace_record(
+            cadence_trace,
+            kRuntimeWindowCadenceDomainExport,
+            "p10.observation_export.v1"
+        );
+    if (export_it != nullptr) {
+        record.execution_state =
+            export_it->decision == "triggered" ? "executed" :
+            export_it->decision;
+        record.decision_reason = export_it->decision_reason;
+        record.trigger_source = export_it->source == "export"
+            ? "export:maintained_facade_export"
+            : "export:none";
+        record.clock_merge_policy =
+            export_it->clock_merge_policy.empty() ? "nested_slot" :
+            export_it->clock_merge_policy;
+    }
 
     if (!runtime_window_has_requested_export(request)) {
         record.decision_reason =
@@ -723,6 +1485,13 @@ inline RuntimeWindowResult execute_runtime_window(
 ) {
     RuntimeWindowResult result{};
     result.context = classify_runtime_window_inputs(request);
+    result.cadence_config = normalize_runtime_window_cadence_config(request);
+    result.cadence_trace = build_runtime_window_cadence_trace(
+        request,
+        result.context,
+        result.cadence_config,
+        callbacks
+    );
     result.visibility_trace.push_back(RuntimeWindowVisibilityRecord{
         .barrier_id = "collect",
         .visible_input_count = 0,
@@ -770,7 +1539,7 @@ inline RuntimeWindowResult execute_runtime_window(
     }
 
     const auto manifests =
-        runtime::scheduler::enumerate_wp10_maintained_stage_node_manifests();
+        runtime::scheduler::enumerate_wp17_selected_slice_strict_clock_domain_manifests();
     result.executed_nodes.reserve(manifests.size());
 
     const auto* fire_control_manifest =
@@ -778,7 +1547,8 @@ inline RuntimeWindowResult execute_runtime_window(
     if (fire_control_manifest != nullptr) {
         result.executed_nodes.push_back(runtime_window_fire_control_launch_record(
             *fire_control_manifest,
-            result.context
+            result.context,
+            result.cadence_trace
         ));
     }
 
@@ -788,7 +1558,8 @@ inline RuntimeWindowResult execute_runtime_window(
         result.executed_nodes.push_back(runtime_window_effects_damage_record(
             *effects_damage_manifest,
             result.context,
-            result.executed_nodes.front()
+            result.executed_nodes.front(),
+            result.cadence_trace
         ));
     }
 
@@ -833,7 +1604,8 @@ inline RuntimeWindowResult execute_runtime_window(
             *export_manifest,
             request,
             result.context,
-            callbacks
+            callbacks,
+            result.cadence_trace
         );
         export_record_present = true;
     }

@@ -53,11 +53,20 @@
     Consolidation`：把 `WP10-WP15` 已验收边界转成 maintained default runtime
     path，关闭 remaining bypasses，并把 `GAP-9` clock-domain enforcement 从延后
     的 advisory 状态推进到 selected runtime-spine slice。
-16. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
+16. WP16 之后，Stage 3 最后重构阶段开启为 `WP17 Stage 3 Runtime
+    Materialization And Cleanup`：按当前代码事实校正 Stage 3 计划，把维护中的业务路径
+    从 compatibility-only runtime access 迁出，并把 multi-rate、
+    fidelity-provider、capability-spawn 与 counterfactual runtime materialization
+    拆成有边界的实现流。
+17. WP17 验收后，剩余主线冻结为四个阶段：`WP18` runtime ownership 与 C++ hot-path
+    consolidation，`WP19` CUDA / resident-state mainline alignment，`WP20`
+    public capability-platform composition，以及 `WP21` full counterfactual /
+    experiment runtime。除非出现新的架构级事实，否则新工作应落入这四个阶段之一。
+18. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
     拆写同一张规范性表格。
-17. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
+19. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
     或 `WP14` 这类 internal work-package labels。
 
 ## 工作包
@@ -84,6 +93,67 @@
 | `WP14 Capability Composition` | complete / accepted | 实现 post-WP9 路线 Phase 5：在保持 type-name 兼容的前提下，通过 resolved spawn plans、additive facade/setup DTO 与严格实现 gate，把现有 setup 推向 typed `Capability` / `CapabilityBundle` composition，避免 big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)、[capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)、[content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)、[spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)、[additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)、[capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)、[compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp14_capability_composition_acceptance_review_20260521.zh.md) |
 | `WP15 Counterfactual Experiment Generation` | complete / accepted | 实现 post-WP9 路线 Phase 6：添加 replay envelopes、branch point 与 worldline metadata、counterfactual admission、scenario/adversary generation request surfaces 与 experiment evidence ancestry，同时不声明 full snapshot/restore 或 maintained rollout execution | [counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)、[replay envelope and branch point](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)、[worldline branch metadata](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)、[counterfactual admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)、[scenario/adversary generation](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)、[experiment evidence bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)、[integration handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md) |
 | `WP16 Runtime Spine Consolidation` | complete / accepted | 完成 post-WP15 架构优化阶段：盘点 bypasses、定义 maintained runtime spine、执行第一条严格 `GAP-9` clock-domain cadence slice、迁移 facade/batch consumers、分类 legacy paths，并通过 generated closure summaries 降低文档同步拖拽，同时保留记录下来的 residuals | [runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)、[runtime spine inventory](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)、[clock-domain enforcement](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)、[facade/batch migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)、[legacy compatibility](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)、[documentation automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)、[integration handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md) |
+| `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | 物化 Stage 3 最后一组 selected runtime slices：facade-shaped batch reads、可运行 cadence evidence、reference CPU fidelity admission、capability-gated spawn，以及 explicit-setup selected-entity counterfactual branch/compare，同时保留 legacy compatibility 与 full-worldline residuals | [stage3 runtime materialization and cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)、[fact ledger](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)、[business migration](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)、[multi-rate runtime](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)、[fidelity provider runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)、[capability spawn runtime](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)、[counterfactual runtime closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)、[dispatch queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)、[验收审查](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md) |
+| `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | 在 WP17 后收紧 runtime ownership，把维护中的 execution truths 与高频 Python paths 推向 C++/facade-owned surfaces，同时让 compatibility APIs 保持有边界 | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)、[ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)、[execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)、[ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)、[facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)、[C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)、[integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) |
+
+## WP18 Runtime Ownership And C++ Hot Path Consolidation
+
+产出：
+
+- [WP18 Runtime Ownership And C++ Hot Path Consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)
+- [WP18-A Ownership Fact Ledger And Hot-Path Map](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)
+- [WP18-B Execution Episode Ownership Sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)
+- [WP18-C ScenarioLoader Adapter Split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)
+- [WP18-D Facade Contract Hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)
+- [WP18-E C++ Hot Path Migration Matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)
+- [WP18-F Integration And Handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)
+- [WP18 Subagent Dispatch Queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)
+- [WP18 验收审查](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md)
+
+WP18 是 WP17 后已验收的第一个冻结阶段。它聚焦 runtime ownership 与 C++
+hot-path consolidation；CUDA/resident-state alignment、public
+capability-platform composition 与 full counterfactual runtime 继续路由到
+WP19、WP20 与 WP21，而不在 WP18 内声明完成。
+
+WP18 工作流地图：
+
+- `WP18-A Ownership Fact Ledger And Hot-Path Map` 在实现前冻结当前 source/test facts。
+- `WP18-B Execution Episode Ownership Sink` 将一个 maintained execution-episode slice
+  推到 C++/facade-owned evidence 后面。
+- `WP18-C ScenarioLoader Adapter Split` 区分 scenario/content adaptation、runtime
+  ownership 与 frontend helper responsibilities。
+- `WP18-D Facade Contract Hardening` 防止 maintained callers 回退到 raw
+  runtime/world-handle reads。
+- `WP18-E C++ Hot Path Migration Matrix` 排序 reward/termination、route/approach、
+  request build/consume 等 hot paths，并在安全时实现一条 bounded first slice。
+- `WP18-F Integration And Handoff` 是实现流回收后的串行 closure。
+
+## WP17 Stage 3 Runtime Materialization And Cleanup
+
+产出：
+
+- [WP17 Stage 3 Runtime Materialization And Cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)
+- [WP17-A Fact Ledger And Boundary Freeze](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)
+- [WP17-B Facade Business Migration And Compatibility Cleanup](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)
+- [WP17-C Multi-Rate Runtime Example](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)
+- [WP17-D Fidelity Provider Runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)
+- [WP17-E Capability Spawn Runtime Promotion](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)
+- [WP17-F Counterfactual Runtime Slice And Closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)
+- [WP17 Subagent Dispatch Queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)
+- [WP17 验收审查](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md)
+
+WP17 是已验收的 Stage 3 最后 runtime-materialization 与 cleanup 任务族。它按当前代码事实
+把剩余 runtime work 拆成有边界的 selected-slice streams，并在 full-worldline 或
+full-provider support 尚不存在的地方诚实保留 residuals。
+
+WP17 工作流地图：
+
+- `WP17-A Fact Ledger And Boundary Freeze` 在 runtime edits 前锁定当前代码事实和 residual boundary。
+- `WP17-B Facade Business Migration And Compatibility Cleanup` 把维护中的 training/batch reads 迁到 facade-shaped env/adapter 方法，并把直接 `batch_runtime` reads 守成 compatibility-only。
+- `WP17-C Multi-Rate Runtime Example` 已物化 selected architecture §8 cadence slice，并提供 hold/expiry/barrier evidence。
+- `WP17-D Fidelity Provider Runtime` 已加入 facade-owned reference CPU fidelity admission 和 fail-closed provider rejection。
+- `WP17-E Capability Spawn Runtime Promotion` 在保留 type-name 兼容的同时晋级内部 capability resolution chain。
+- `WP17-F Counterfactual Runtime Slice And Closure` 已实现 explicit-setup selected-entity branch/compare；arbitrary live-world clone 与 full counterfactual orchestration 仍是 residual。
 
 ## WP16 Runtime Spine Consolidation
 
@@ -677,6 +747,10 @@ WP7 工作流地图：
     parity budget、ownership/sync policy 与 validation gate 明确晋级该 claim。
 13. WP8 learning-face 输出必须保持课程、评估、能力画像、场景生成与学习证据显式且可回放，
     不能把它们转成第二条仿真真值路径。
+14. WP17 runtime-materialization 工作必须引用当前代码事实，保持 compatibility-only
+    runtime access 有边界，并且不得在对应 selected-slice evidence 出现前声明
+    global multi-rate、fidelity-provider、capability-spawn 或 counterfactual runtime
+    closure。
 
 ## 非目标
 

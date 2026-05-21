@@ -135,7 +135,38 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
             request.window_id = "window:test:7";
             request.world_id = 7;
             request.source_time_s = 10.0;
-            request.action_requests.push_back(make_request(
+            request.cadence_config.window_duration_s = 0.1;
+            request.cadence_config.domains = {
+                RuntimeWindowCadence{
+                    .domain = "policy",
+                    .tick_count = 1,
+                    .interval_s = 0.1,
+                    .merge_policy = "nested_slot",
+                    .barrier_id = "input_injection",
+                },
+                RuntimeWindowCadence{
+                    .domain = "control",
+                    .tick_count = 2,
+                    .interval_s = 0.05,
+                    .merge_policy = "hold_last",
+                    .barrier_id = "input_injection",
+                },
+                RuntimeWindowCadence{
+                    .domain = "physics",
+                    .tick_count = 6,
+                    .interval_s = 1.0 / 60.0,
+                    .merge_policy = "enqueue_event",
+                    .barrier_id = "window_commit",
+                },
+                RuntimeWindowCadence{
+                    .domain = "export",
+                    .tick_count = 1,
+                    .interval_s = 0.1,
+                    .merge_policy = "nested_slot",
+                    .barrier_id = "export",
+                },
+            };
+            auto accepted = make_request(
                 7,
                 101,
                 "policy:accepted",
@@ -145,7 +176,13 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                 10.5,
                 "last_write_wins",
                 true
-            ));
+            );
+            accepted.cadence_control.enabled = true;
+            accepted.cadence_control.hold_policy.hold_mode = "hold_last";
+            accepted.cadence_control.hold_policy.validity_duration_s = 0.1;
+            accepted.cadence_control.has_expiry_time = true;
+            accepted.cadence_control.expiry_time_s = 10.04;
+            request.action_requests.push_back(accepted);
             request.action_requests.push_back(make_request(
                 7,
                 102,
@@ -321,6 +358,12 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                 std::cerr << "accepted input was not injected\n";
                 return 1;
             }
+            if (result.cadence_config.window_duration_s != 0.1 ||
+                result.cadence_config.domains.size() != 4 ||
+                result.cadence_trace.size() != 10) {
+                std::cerr << "cadence config/trace drifted\n";
+                return 1;
+            }
             if (result.visibility_trace.size() < 2 ||
                 result.visibility_trace[0].visible_input_count != 0 ||
                 result.visibility_trace[1].barrier_id != "input_injection" ||
@@ -375,10 +418,37 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                 std::cerr << "manifest read visibility drifted\n";
                 return 1;
             }
+            std::size_t policy_ticks = 0;
+            std::size_t control_ticks = 0;
+            std::size_t physics_ticks = 0;
+            std::size_t export_ticks = 0;
+            bool saw_control_trigger = false;
+            bool saw_control_expired = false;
+            for (const auto& trace : result.cadence_trace) {
+                if (trace.domain == "policy") {
+                    ++policy_ticks;
+                } else if (trace.domain == "control") {
+                    ++control_ticks;
+                    saw_control_trigger =
+                        saw_control_trigger || trace.decision == "triggered";
+                    saw_control_expired =
+                        saw_control_expired || trace.decision == "expired";
+                } else if (trace.domain == "physics") {
+                    ++physics_ticks;
+                } else if (trace.domain == "export") {
+                    ++export_ticks;
+                }
+            }
+            if (policy_ticks != 1 || control_ticks != 2 ||
+                physics_ticks != 6 || export_ticks != 1 ||
+                !saw_control_trigger || !saw_control_expired) {
+                std::cerr << "cadence trace counts or expiry evidence drifted\n";
+                return 1;
+            }
             if (p7->execution_state != "executed" ||
                 p7->trigger_source != "input_injection:policy:accepted" ||
                 p7->decision_barrier_id != "input_injection" ||
-                p7->clock_merge_policy != "nested_slot" ||
+                p7->clock_merge_policy != "hold_last" ||
                 p7->source_snapshot_version != "obs:10" ||
                 p7->target_window_id != "window:test:7" ||
                 p7->barrier_order.size() != 1 ||
@@ -700,6 +770,114 @@ def test_runtime_window_coordinator_rejects_same_window_conflicts_to_avoid_hidde
             if (result.visibility_trace.size() < 2 ||
                 result.visibility_trace[1].visible_input_count != 0) {
                 std::cerr << "conflicting requests leaked into injection visibility\n";
+                return 1;
+            }
+            return 0;
+        }
+        """
+    )
+    result = _compile_and_run(source)
+    assert result.returncode == 0, result.stderr + result.stdout
+
+
+def test_runtime_window_coordinator_records_hold_last_and_interpolate_evidence_without_claiming_maintained_interpolation() -> None:
+    source = textwrap.dedent(
+        r"""
+        #include <algorithm>
+        #include <iostream>
+        #include "runtime/facade/runtime_window_coordinator.h"
+
+        RuntimeWindowActionRequest make_request(
+            const std::string& source_id,
+            const std::string& hold_mode,
+            double expiry_time_s
+        ) {
+            RuntimeWindowActionRequest action{};
+            action.source_layer = "policy";
+            action.input_snapshot_version = "obs:20";
+            action.action_intent.source_id = source_id;
+            action.action_intent.effective_time_s = 20.0;
+            action.action_intent.valid_until_s = 20.2;
+            action.action_intent.target.world_index = 20;
+            action.action_intent.target.entity_id = 401;
+            action.action_intent.action_family = "direct_control";
+            action.action_intent.merge_policy = "last_write_wins";
+            action.action_intent.has_pilot_action = true;
+            action.action_intent.pilot_action.throttle = 0.65;
+            action.cadence_control.enabled = true;
+            action.cadence_control.hold_policy.hold_mode = hold_mode;
+            action.cadence_control.hold_policy.validity_duration_s = 0.1;
+            action.cadence_control.has_expiry_time = true;
+            action.cadence_control.expiry_time_s = expiry_time_s;
+            return action;
+        }
+
+        int main() {
+            RuntimeWindowRequest hold_request{};
+            hold_request.window_id = "window:test:hold";
+            hold_request.world_id = 20;
+            hold_request.source_time_s = 20.0;
+            hold_request.export_observation = false;
+            hold_request.export_engagement = false;
+            hold_request.export_diagnostics = false;
+            hold_request.action_requests.push_back(
+                make_request("policy:hold", "hold_last", 20.2)
+            );
+
+            RuntimeWindowResult hold_result = execute_runtime_window(
+                hold_request,
+                RuntimeWindowCoordinatorCallbacks{}
+            );
+
+            bool saw_hold = false;
+            for (const auto& trace : hold_result.cadence_trace) {
+                if (trace.domain == "control" && trace.decision == "held" && trace.held) {
+                    saw_hold = true;
+                }
+            }
+            if (!saw_hold) {
+                std::cerr << "missing hold_last cadence evidence\n";
+                return 1;
+            }
+
+            RuntimeWindowRequest interpolate_request{};
+            interpolate_request.window_id = "window:test:interpolate";
+            interpolate_request.world_id = 20;
+            interpolate_request.source_time_s = 20.0;
+            interpolate_request.export_observation = false;
+            interpolate_request.export_engagement = false;
+            interpolate_request.export_diagnostics = false;
+            interpolate_request.action_requests.push_back(
+                make_request("policy:interpolate", "interpolate", 20.2)
+            );
+
+            RuntimeWindowResult interpolate_result = execute_runtime_window(
+                interpolate_request,
+                RuntimeWindowCoordinatorCallbacks{}
+            );
+
+            bool saw_interpolation = false;
+            for (const auto& trace : interpolate_result.cadence_trace) {
+                if (trace.domain == "control" &&
+                    trace.decision == "interpolated" &&
+                    trace.diagnostics_only) {
+                    saw_interpolation = true;
+                }
+            }
+            if (!saw_interpolation) {
+                std::cerr << "missing interpolation diagnostics evidence\n";
+                return 1;
+            }
+            const auto p7 = std::find_if(
+                interpolate_result.executed_nodes.begin(),
+                interpolate_result.executed_nodes.end(),
+                [](const RuntimeWindowNodeExecutionRecord& record) {
+                    return record.node_id == "p7.fire_control_launch.v1";
+                }
+            );
+            if (p7 == interpolate_result.executed_nodes.end() ||
+                p7->execution_state != "executed") {
+                std::cerr << "interpolation should not replace maintained first control tick\n";
                 return 1;
             }
             return 0;

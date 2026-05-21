@@ -23,6 +23,18 @@ public:
     void configure_batch(const RuntimeBatchConfig& config);
     RuntimeBatchConfig batch_config() const noexcept;
     RuntimeCapabilities capabilities() const noexcept;
+    RuntimeFidelityAdmission admit_fidelity_request(
+        const RuntimeFidelityRequest& request
+    ) const;
+    RuntimeCounterfactualSnapshot snapshot_counterfactual_entity(
+        const WorldEntityRef& ref,
+        const RuntimeFidelityAdmission& fidelity_admission,
+        const std::string& cadence_reason,
+        const std::vector<std::string>& evidence_refs
+    ) const;
+    RuntimeCounterfactualBranchResult run_counterfactual_branch(
+        const RuntimeCounterfactualBranchRequest& request
+    ) const;
 
     std::size_t world_count() const noexcept;
     void resize(std::size_t world_count);
