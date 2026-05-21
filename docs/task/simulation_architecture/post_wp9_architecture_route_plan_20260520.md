@@ -2,7 +2,8 @@
 
 Status: `2026-05-21` route-selection plan; Phase 1 is accepted as `WP10`,
 Phase 2 is accepted as `WP11`, Phase 3 is accepted as `WP12`, Phase 4 is
-accepted as `WP13`, and Phase 5 is accepted as `WP14`.
+accepted as `WP13`, Phase 5 is accepted as `WP14`, and Phase 6 is accepted as
+`WP15`.
 
 Language:
 
@@ -17,6 +18,7 @@ Inputs:
 - [Post-WP9 gap analysis](../review/post_wp9_gap_analysis_20260520.md)
 - [WP9 contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md)
 - [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md)
+- [WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md)
 - [WP closure lane policy](../../standards/governance/wp_closure_lane_policy.md)
 
 ## 1. Purpose
@@ -28,11 +30,10 @@ should choose an implementation route that turns accepted architecture rules
 into runtime facts.
 
 This document fixes the route order, anchors Phase 1 as `WP10`, Phase 2 as
-`WP11`, anchors Phase 3 as `WP12`, accepts Phase 4 as `WP13`, and accepts Phase
-5 as `WP14`. It does not assign WP numbers beyond the
-currently opened phase. It defines which direction must come first, which
-directions should wait, and what kind of evidence counts as real architectural
-progress.
+`WP11`, anchors Phase 3 as `WP12`, accepts Phase 4 as `WP13`, Phase 5 as
+`WP14`, and Phase 6 as `WP15`. It defines which direction must come first,
+which directions should wait, and what kind of evidence counts as real
+architectural progress.
 
 ## 2. Route Decision
 
@@ -75,9 +76,8 @@ This order is intentional:
 
 ### 3.1 Post-WP9 Phase Breakdown
 
-The route is divided into no more than six implementation phases. Phases 1-5
-are now assigned to `WP10` through `WP14`. Phase 6 remains a sequencing anchor,
-not an opened task folder, until its prerequisites are mergeable.
+The route is divided into no more than six implementation phases. Phases 1-6
+are now assigned to `WP10` through `WP15` and accepted.
 
 | Phase | Working label | Scope | Candidate WP ownership | Opens when | Must not claim yet |
 |-------|---------------|-------|------------------------|------------|--------------------|
@@ -86,7 +86,7 @@ not an opened task folder, until its prerequisites are mergeable.
 | 3 | Information and agency enforcement | Turn deferred `GAP-5`, `GAP-6`, and `GAP-7` into enforceable read-side, role/authority, and transformation-surfacing gates. | `WP12` | Provenance labels, consumer pre-gates, and facade slice are stable. | Full Agency Graph runtime or backend/fidelity promotion. |
 | 4 | Backend/fidelity expansion | Make `RuntimeCapabilities`, model-provider profiles, fidelity profiles, and parity budgets queryable, rejectable, and evidence-backed behind the causal boundary. | `WP13` | Phase 1-3 evidence boundaries are stable enough to compare backends. | Exact GPU, resident-state, shadow, or multi-fidelity promotion without gates. |
 | 5 | Capability composition | Move bounded setup/content paths toward typed `Capability` / `CapabilityBundle` composition while preserving type-name compatibility. | `WP14` | Runtime/facade/backend contracts can name stable capability effects and evidence. | Big-bang spawn rewrite, mandatory public `spawn_platform`, or scenario-schema replacement. |
-| 6 | Counterfactual and experiment generation | Add branchable worldlines, deterministic replay envelopes, scenario/adversary generation, and experiment evidence ancestry. | Later WP | Snapshot/restore, replay, capability evidence, and facade provenance are stable. | Worldline branching before deterministic replay and snapshot boundaries exist. |
+| 6 | Counterfactual and experiment generation | Add branchable worldlines, deterministic replay envelopes, scenario/adversary generation, and experiment evidence ancestry. | `WP15` | WP10-WP14 causal, facade, agency, backend/fidelity, and capability evidence are accepted; first slice stays evidence/admission-first. | Full snapshot/restore, maintained counterfactual rollout, broad generator runtime, or worldline mutation before replay and snapshot boundaries exist. |
 
 ## 4. Gap Analysis Incorporation
 
@@ -232,6 +232,25 @@ Phase 5 capability-composition seed:
 This capability-composition seed is now accepted as
 [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md).
 
+Phase 6 counterfactual/experiment-generation seed:
+
+- define deterministic `ReplayEnvelope` and `BranchPoint` vocabulary with seed,
+  snapshot, barrier, event-order, and facade provenance evidence,
+- define worldline parent/child metadata, mutation intent, and unsupported
+  restore boundaries without claiming executable restore,
+- gate counterfactual requests behind replay, branch, authority,
+  backend/fidelity, and capability evidence,
+- add deterministic scenario/adversary generation request surfaces with
+  seed/version/source discipline and non-mutation guards,
+- link experiment runs, comparisons, generated inputs, backend/fidelity refs,
+  capability bundles, and WP8 capability profile observations without
+  score-to-truth or score-to-support promotion,
+- keep full snapshot/restore, broad experiment orchestration, maintained
+  rollout execution, and raw generated-state mutation out of scope.
+
+This counterfactual/experiment-generation seed is now accepted as
+[WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md).
+
 ## 6. Non-Goals For The First Implementation WP
 
 - Do not rewrite the whole scheduler.
@@ -242,6 +261,9 @@ This capability-composition seed is now accepted as
 - Do not migrate all platform spawning to capability composition.
 - Do not make typed capability spawning mandatory beyond the accepted WP14
   compatibility bridge and additive facade/setup DTO vocabulary.
+- Do not treat replay envelopes, worldline metadata, generated scenarios, or
+  experiment evidence as support/truth claims without the WP15 gates and later
+  restore/runtime proofs.
 - Do not claim Law 14 read-side enforcement or Agency Graph runtime enforcement
   in the first causal slice.
 - Do not start counterfactual/worldline branching before deterministic replay
@@ -283,3 +305,9 @@ For `WP14`, the highest-reasoning work is the compatibility-preserving
 composition seam: deciding where capability contracts, content/factory lowering,
 spawn resolution, facade setup DTOs, and materialization evidence attach without
 creating a second spawn lifecycle or forcing callers off type-name compatibility.
+
+For `WP15`, the highest-reasoning work is the replay/admission/evidence seam:
+deciding how replay envelopes, branch points, worldline metadata,
+counterfactual admission, generated inputs, backend/fidelity refs, capability
+refs, and experiment evidence attach without implying unsupported
+snapshot/restore or turning scores into truth/support claims.

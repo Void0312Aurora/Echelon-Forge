@@ -2,7 +2,7 @@
 
 状态：`2026-05-21` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
 `WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已作为 `WP13` 验收，
-Phase 5 已作为 `WP14` 验收。
+Phase 5 已作为 `WP14` 验收，Phase 6 已作为 `WP15` 验收。
 
 语言版本：
 
@@ -17,6 +17,7 @@ Phase 5 已作为 `WP14` 验收。
 - [Post-WP9 gap analysis](../review/post_wp9_gap_analysis_20260520.zh.md)
 - [WP9 contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md)
 - [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)
+- [WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)
 - [WP closure lane policy](../../standards/governance/wp_closure_lane_policy.zh.md)
 
 ## 1. 目的
@@ -28,8 +29,7 @@ backend-profile policy、learning-face vocabulary，以及延后的 DTO/infrastr
 
 本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，把
 Phase 3 锚定为 `WP12`，将 Phase 4 验收为 `WP13`，并将 Phase 5 验收为
-`WP14`。它不会给当前已开启阶段之后的方向预先分配
-WP 编号；它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
+`WP14`，以及将 Phase 6 验收为 `WP15`。它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
 
 ## 2. 路线决策
 
@@ -69,8 +69,7 @@ causal runtime foundation
 
 ### 3.1 Post-WP9 阶段粗分
 
-路线被划分为不超过六个实现阶段。Phase 1-5 现已分配给 `WP10` 到 `WP14`。
-Phase 6 仍只是顺序锚点，在前置 gate 达到 mergeable 之前不创建已开启任务文件夹。
+路线被划分为不超过六个实现阶段。Phase 1-6 现已分配给 `WP10` 到 `WP15` 并验收。
 
 | Phase | 工作标签 | 范围 | 候选 WP 归属 | 开启条件 | 暂不声明 |
 |-------|----------|------|--------------|----------|----------|
@@ -79,7 +78,7 @@ Phase 6 仍只是顺序锚点，在前置 gate 达到 mergeable 之前不创建�
 | 3 | Information and agency enforcement | 把延期的 `GAP-5`、`GAP-6` 与 `GAP-7` 转成可执行的 read-side、role/authority 与 transformation-surfacing gates。 | `WP12` | provenance labels、consumer pre-gates 与 facade slice 稳定。 | 完整 Agency Graph runtime 或 backend/fidelity promotion。 |
 | 4 | Backend/fidelity expansion | 在 causal boundary 后，让 `RuntimeCapabilities`、model-provider profiles、fidelity profiles 与 parity budgets 变成可查询、可拒绝、可证据化。 | `WP13` | Phase 1-3 的 evidence boundary 足够稳定，可用于比较 backend。 | 无 gate 晋升 exact GPU、resident-state、shadow 或 multi-fidelity。 |
 | 5 | Capability composition | 在保持 type-name compatibility 的同时，把有边界 setup/content path 推向 typed `Capability` / `CapabilityBundle` composition。 | `WP14` | runtime/facade/backend contracts 能命名稳定 capability effects 与 evidence。 | big-bang spawn rewrite、强制 public `spawn_platform` 或 scenario-schema replacement。 |
-| 6 | Counterfactual and experiment generation | 添加 branchable worldlines、deterministic replay envelopes、scenario/adversary generation 与 experiment evidence ancestry。 | 后续 WP | snapshot/restore、replay、capability evidence 与 facade provenance 稳定。 | 在 deterministic replay 与 snapshot boundaries 存在前进行 worldline branching。 |
+| 6 | Counterfactual and experiment generation | 添加 branchable worldlines、deterministic replay envelopes、scenario/adversary generation 与 experiment evidence ancestry。 | `WP15` | WP10-WP14 causal、facade、agency、backend/fidelity 与 capability evidence 已验收；第一切片保持 evidence/admission-first。 | full snapshot/restore、maintained counterfactual rollout、broad generator runtime，或在 replay 与 snapshot boundaries 存在前修改 worldline。 |
 
 ## 4. Gap Analysis Incorporation
 
@@ -216,6 +215,25 @@ Phase 5 capability-composition seed：
 该 capability-composition seed 现已验收为
 [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)。
 
+Phase 6 counterfactual/experiment-generation seed：
+
+- 定义 deterministic `ReplayEnvelope` 与 `BranchPoint` vocabulary，并携带 seed、
+  snapshot、barrier、event-order 与 facade provenance evidence；
+- 定义 worldline parent/child metadata、mutation intent 与 unsupported restore
+  boundaries，但不声明 executable restore；
+- 让 counterfactual requests 在 replay、branch、authority、backend/fidelity 与
+  capability evidence 之后才 admission；
+- 添加 deterministic scenario/adversary generation request surfaces，并保持
+  seed/version/source discipline 与 non-mutation guards；
+- 连接 experiment runs、comparisons、generated inputs、backend/fidelity refs、
+  capability bundles 与 WP8 capability profile observations，同时不做 score-to-truth
+  或 score-to-support promotion；
+- 保持 full snapshot/restore、broad experiment orchestration、maintained rollout
+  execution 与 raw generated-state mutation 不在范围内。
+
+该 counterfactual/experiment-generation seed 现已验收为
+[WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)。
+
 ## 6. 第一个实现型 WP 的非目标
 
 - 不重写整个 scheduler。
@@ -224,6 +242,9 @@ Phase 5 capability-composition seed：
 - 不把所有 platform spawning 迁到 capability composition。
 - 不让 typed capability spawning 超出已验收 WP14 compatibility bridge 与 additive
   facade/setup DTO vocabulary，成为强制入口。
+- 不把 replay envelopes、worldline metadata、generated scenarios 或 experiment
+  evidence 当作 support/truth claims，除非 WP15 gates 与后续 restore/runtime proofs
+  支持该声明。
 - 第一个 causal slice 不声明 Law 14 read-side enforcement 或 Agency Graph runtime enforcement。
 - 在 deterministic replay 和 snapshot 边界存在前，不启动 counterfactual/worldline branching。
 - 不让文档 closure 阻塞实现 `Mergeable` 状态；README、acceptance、archive 与
@@ -258,3 +279,8 @@ documentation-only output 仍可能有价值，但应归类为 planning 或 clos
 capability contracts、content/factory lowering、spawn resolution、facade setup DTOs
 与 materialization evidence 附着在哪里，同时避免创造第二套 spawn lifecycle 或强迫 callers
 离开 type-name compatibility。
+
+对于 `WP15`，思考预算最高的是 replay/admission/evidence seam：决定 replay envelopes、
+branch points、worldline metadata、counterfactual admission、generated inputs、
+backend/fidelity refs、capability refs 与 experiment evidence 如何附着，同时避免暗示
+unsupported snapshot/restore，或把 scores 变成 truth/support claims。

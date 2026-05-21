@@ -48,8 +48,7 @@
     先做 causal runtime foundation，再做 facade vertical slice，随后推进
     information/agency enforcement、backend/fidelity、capability composition 与
     counterfactual/experiment generation。Phase 1-5 现已验收为 `WP10`、`WP11`、
-    `WP12`、`WP13` 与 `WP14`；counterfactual/experiment generation 仍是下一条尚未
-    开启的路线消费者。
+    `WP12`、`WP13` 与 `WP14`；Phase 6 现已验收为 `WP15`。
 15. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
@@ -79,6 +78,45 @@
 | `WP12 Information And Agency Enforcement` | complete / accepted | 实现 post-WP9 路线 Phase 3：Law 14 read-side enforcement、`AgentRole` authority validation、information-transformation evidence、authorized intent injection 与 integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)、[Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)、[agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)、[information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)、[intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)、[integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp12_information_agency_enforcement_acceptance_review_20260520.zh.md) |
 | `WP13 Backend Fidelity Expansion` | complete / accepted | 实现 post-WP9 路线 Phase 4：让 runtime capabilities、backend profiles、parity budgets 与 fidelity profile requests 可查询、可拒绝、可证据化，同时不晋级 unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)、[capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)、[backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)、[parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)、[fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)、[facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)、[integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) |
 | `WP14 Capability Composition` | complete / accepted | 实现 post-WP9 路线 Phase 5：在保持 type-name 兼容的前提下，通过 resolved spawn plans、additive facade/setup DTO 与严格实现 gate，把现有 setup 推向 typed `Capability` / `CapabilityBundle` composition，避免 big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)、[capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)、[content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)、[spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)、[additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)、[capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)、[compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp14_capability_composition_acceptance_review_20260521.zh.md) |
+| `WP15 Counterfactual Experiment Generation` | complete / accepted | 实现 post-WP9 路线 Phase 6：添加 replay envelopes、branch point 与 worldline metadata、counterfactual admission、scenario/adversary generation request surfaces 与 experiment evidence ancestry，同时不声明 full snapshot/restore 或 maintained rollout execution | [counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)、[replay envelope and branch point](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)、[worldline branch metadata](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)、[counterfactual admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)、[scenario/adversary generation](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)、[experiment evidence bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)、[integration handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md) |
+
+## WP15 Counterfactual Experiment Generation
+
+产出：
+
+- [WP15 Counterfactual Experiment Generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)
+- [WP15-A Replay Envelope And Branch Point Contract](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)
+- [WP15-B Worldline Branch Metadata Gate](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)
+- [WP15-C Counterfactual Request Admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)
+- [WP15-D Scenario And Adversary Generation Request Surface](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)
+- [WP15-E Experiment Evidence And Capability Profiling Bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)
+- [WP15-F Integration And Acceptance Handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)
+
+WP15 验收 post-WP9 路线 Phase 6。它消费 WP8 learning-face vocabulary，以及已验收
+WP10-WP14 的 causal、facade、agency、backend/fidelity 与 capability evidence。第一目标
+不是 full counterfactual rollout，而是先建立 evidence boundary：让 replay envelopes、
+branch points、worldline metadata、generation requests 与 experiment evidence ancestry
+在任何 branch 修改 authoritative runtime state 前都可机器检查。
+
+WP15 工作流地图：
+
+- `WP15-A Replay Envelope And Branch Point Contract` 定义 deterministic replay
+  envelope 与 branch point vocabulary，并携带 seed、snapshot、barrier、event-order 与
+  facade provenance evidence。
+- `WP15-B Worldline Branch Metadata Gate` 命名 parent/child worldline metadata、
+  mutation intent、provenance 与 unsupported-restore boundaries。
+- `WP15-C Counterfactual Request Admission` 在 replay、branch、authority、
+  backend/fidelity 与 capability evidence 后接受或拒绝 counterfactual requests。
+- `WP15-D Scenario And Adversary Generation Request Surface` 为 scenario/adversary
+  inputs 添加 deterministic generation request schemas 与 non-mutation guards。
+- `WP15-E Experiment Evidence And Capability Profiling Bridge` 连接 experiment runs、
+  comparisons、generated inputs、capability profiles、backend profiles 与 capability
+  evidence，同时不做 score-to-truth promotion。
+- `WP15-F Integration And Acceptance Handoff` 是串行 validation、residual、
+  acceptance-review、README/route 与 bilingual closure lane。
+
+`WP15-A` 到 `WP15-E` 第一切片已经验收。`WP15-F` 已完成 closure lane，负责
+validation、residuals、acceptance review、README/route sync 与 bilingual handoff。
 
 ## WP14 Capability Composition
 

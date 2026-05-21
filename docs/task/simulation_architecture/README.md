@@ -65,8 +65,8 @@ The active design conclusion is:
     causal runtime foundation first, facade vertical slice second, then
     information/agency enforcement, backend/fidelity, capability composition,
     and counterfactual/experiment generation. Phases 1-5 are now accepted as
-    `WP10`, `WP11`, `WP12`, `WP13`, and `WP14`; counterfactual/experiment
-    generation remains the next unopened route consumer.
+    `WP10`, `WP11`, `WP12`, `WP13`, and `WP14`; Phase 6 is now accepted as
+    `WP15`.
 15. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
@@ -96,6 +96,49 @@ The active design conclusion is:
 | `WP12 Information And Agency Enforcement` | complete / accepted | Implement Phase 3 of the post-WP9 route: Law 14 read-side enforcement, `AgentRole` authority validation, information-transformation evidence, authorized intent injection, and integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md), [Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md), [agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md), [information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md), [intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md), [integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp12_information_agency_enforcement_acceptance_review_20260520.md) |
 | `WP13 Backend Fidelity Expansion` | complete / accepted | Implement Phase 4 of the post-WP9 route: make runtime capabilities, backend profiles, parity budgets, and fidelity profile requests queryable, rejectable, and evidence-backed without promoting unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md), [capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md), [backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md), [parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md), [fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md), [facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md), [integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md) |
 | `WP14 Capability Composition` | complete / accepted | Implement Phase 5 of the post-WP9 route: move existing type-name setup toward typed `Capability` / `CapabilityBundle` composition through compatibility-preserving resolved spawn plans, additive facade/setup DTOs, and strict implementation gates without a big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md), [capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md), [content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md), [spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md), [additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md), [capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md), [compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md), [acceptance review](../review/wp14_capability_composition_acceptance_review_20260521.md) |
+| `WP15 Counterfactual Experiment Generation` | complete / accepted | Implement Phase 6 of the post-WP9 route: add replay envelopes, branch point and worldline metadata, counterfactual admission, scenario/adversary generation request surfaces, and experiment evidence ancestry without claiming full snapshot/restore or maintained rollout execution | [counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md), [replay envelope and branch point](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.md), [worldline branch metadata](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.md), [counterfactual admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.md), [scenario/adversary generation](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.md), [experiment evidence bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.md), [integration handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.md), [acceptance review](../review/wp15_counterfactual_experiment_generation_acceptance_review_20260521.md) |
+
+## WP15 Counterfactual Experiment Generation
+
+Output:
+
+- [WP15 Counterfactual Experiment Generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md)
+- [WP15-A Replay Envelope And Branch Point Contract](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.md)
+- [WP15-B Worldline Branch Metadata Gate](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.md)
+- [WP15-C Counterfactual Request Admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.md)
+- [WP15-D Scenario And Adversary Generation Request Surface](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.md)
+- [WP15-E Experiment Evidence And Capability Profiling Bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.md)
+- [WP15-F Integration And Acceptance Handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.md)
+
+WP15 accepts Phase 6 of the post-WP9 route. It consumes WP8 learning-face
+vocabulary and the accepted WP10-WP14 causal, facade, agency, backend/fidelity,
+and capability evidence. The first target is not full counterfactual rollout;
+it is the evidence boundary that makes replay envelopes, branch points,
+worldline metadata, generation requests, and experiment evidence ancestry
+machine-checkable before any branch can mutate authoritative runtime state.
+
+WP15 workstream map:
+
+- `WP15-A Replay Envelope And Branch Point Contract` defines deterministic
+  replay envelope and branch point vocabulary with seed, snapshot, barrier,
+  event-order, and facade provenance evidence.
+- `WP15-B Worldline Branch Metadata Gate` names parent/child worldline metadata,
+  mutation intent, provenance, and unsupported-restore boundaries.
+- `WP15-C Counterfactual Request Admission` admits or rejects counterfactual
+  requests behind replay, branch, authority, backend/fidelity, and capability
+  evidence.
+- `WP15-D Scenario And Adversary Generation Request Surface` adds deterministic
+  generation request schemas and non-mutation guards for scenario/adversary
+  inputs.
+- `WP15-E Experiment Evidence And Capability Profiling Bridge` links experiment
+  runs, comparisons, generated inputs, capability profiles, backend profiles,
+  and capability evidence without score-to-truth promotion.
+- `WP15-F Integration And Acceptance Handoff` is the serial validation,
+  residual, acceptance-review, README/route, and bilingual closure lane.
+
+`WP15-A` through `WP15-E` first slices are accepted. `WP15-F` completed the
+closure lane for validation, residuals, acceptance review, README/route sync,
+and bilingual handoff.
 
 ## WP14 Capability Composition
 
