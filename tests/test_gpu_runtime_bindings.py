@@ -144,6 +144,38 @@ _GPU_HELPER_BINDINGS = (
     "compute_world_batch_visual_observation_batch_export",
 )
 
+_NON_PROMOTABLE_GPU_SUPPORT_FIELDS = (
+    "supports_gpu_visual",
+    "supports_gpu_observation",
+    "supports_gpu_flight_shaping",
+    "supports_device_observation_view",
+    "supports_resident_state",
+    "supports_exact_gpu_backend",
+    "supports_shadow_compare",
+)
+
+_GPU_PROBE_FACT_FIELDS = (
+    "cuda_runtime_built",
+    "cuda_runtime_available",
+    "device_count",
+    "active_device",
+    "compute_major",
+    "compute_minor",
+    "runtime_version",
+    "total_global_mem_bytes",
+    "free_global_mem_bytes",
+    "device_name",
+    "error_message",
+)
+
+_GPU_DIAGNOSTIC_STAT_FIELDS = (
+    "used_cuda",
+    "host_to_device_ms",
+    "kernel_ms",
+    "device_to_host_ms",
+    "total_ms",
+)
+
 
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     ref = ef_py.WorldEntityRef()
@@ -153,6 +185,34 @@ def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
 
 
 class GpuRuntimeBindingTests(unittest.TestCase):
+    def _assert_gpu_helper_signals_do_not_promote_capabilities(
+        self,
+        capabilities: ef_py.RuntimeCapabilities,
+    ) -> None:
+        for field in _NON_PROMOTABLE_GPU_SUPPORT_FIELDS:
+            self.assertFalse(
+                bool(getattr(capabilities, field)),
+                msg=f"{field} must remain false until a maintained backend profile promotes it",
+            )
+        self.assertEqual(
+            capabilities.device_observation_view_candidate_profile_id,
+            _RUNTIME_FACADE_CAPABILITY_METADATA_EXPECTATIONS[
+                "device_observation_view_candidate_profile_id"
+            ],
+        )
+        self.assertEqual(
+            capabilities.device_observation_view_rejection_reason,
+            _RUNTIME_FACADE_CAPABILITY_METADATA_EXPECTATIONS[
+                "device_observation_view_rejection_reason"
+            ],
+        )
+        self.assertEqual(
+            capabilities.multi_fidelity_rejection_reason,
+            _RUNTIME_FACADE_CAPABILITY_METADATA_EXPECTATIONS[
+                "multi_fidelity_rejection_reason"
+            ],
+        )
+
     def test_runtime_capabilities_binding_exposes_all_fields(self) -> None:
         capabilities = ef_py.RuntimeCapabilities()
 
@@ -209,16 +269,43 @@ class GpuRuntimeBindingTests(unittest.TestCase):
 
         info = ef_py.probe_gpu_device()
         self.assertIsInstance(bool(info.cuda_runtime_available), bool)
+        self._assert_gpu_helper_signals_do_not_promote_capabilities(capabilities)
+
+    def test_gpu_probe_and_helper_stats_remain_diagnostics_only_for_capabilities(self) -> None:
+        info = ef_py.probe_gpu_device()
+        for field in _GPU_PROBE_FACT_FIELDS:
+            self.assertTrue(hasattr(info, field), msg=f"missing GpuDeviceInfo.{field}")
+
         for field in (
             "supports_device_observation_view",
             "supports_resident_state",
             "supports_exact_gpu_backend",
             "supports_shadow_compare",
+            "multi_fidelity_rejection_reason",
         ):
             self.assertFalse(
-                bool(getattr(capabilities, field)),
-                msg=f"{field} must not be inferred from GPU probe/helper binding availability",
+                hasattr(info, field),
+                msg=f"GpuDeviceInfo.{field} would blur diagnostics facts with capability projection",
             )
+
+        for stats in (
+            ef_py.last_visual_experiment_stats(),
+            ef_py.last_execution_observation_stats(),
+            ef_py.last_flight_shaping_stats(),
+        ):
+            for field in _GPU_DIAGNOSTIC_STAT_FIELDS:
+                self.assertTrue(
+                    hasattr(stats, field),
+                    msg=f"missing GPU diagnostics stats field {field}",
+                )
+            self.assertFalse(
+                hasattr(stats, "supports_exact_gpu_backend"),
+                msg="GPU helper stats must not masquerade as maintained support evidence",
+            )
+
+        self._assert_gpu_helper_signals_do_not_promote_capabilities(
+            ef_py.RuntimeFacade(1).capabilities()
+        )
 
     def test_runtime_facade_fidelity_binding_projects_provider_admission_surface(self) -> None:
         facade = ef_py.RuntimeFacade(1)
@@ -414,6 +501,9 @@ class GpuRuntimeBindingTests(unittest.TestCase):
         info = ef_py.probe_gpu_device()
         if not bool(info.cuda_runtime_available):
             self.assertIsNone(device_view)
+            self._assert_gpu_helper_signals_do_not_promote_capabilities(
+                ef_py.RuntimeFacade(1).capabilities()
+            )
             return
 
         self.assertIsNotNone(device_view)
@@ -429,6 +519,9 @@ class GpuRuntimeBindingTests(unittest.TestCase):
         )
         self.assertEqual(tuple(tensor.shape), tuple(host_flat.shape))
         self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_flat, atol=1.0e-6))
+        self._assert_gpu_helper_signals_do_not_promote_capabilities(
+            ef_py.RuntimeFacade(1).capabilities()
+        )
 
     def test_execution_observation_batch_export_supports_nav_v2_formation_v1_shape(self) -> None:
         if not hasattr(ef_py, "compute_execution_observation_batch_export"):
@@ -581,6 +674,9 @@ class GpuRuntimeBindingTests(unittest.TestCase):
         info = ef_py.probe_gpu_device()
         if not bool(info.cuda_runtime_available):
             self.assertIsNone(device_view)
+            self._assert_gpu_helper_signals_do_not_promote_capabilities(
+                ef_py.RuntimeFacade(1).capabilities()
+            )
             return
 
         self.assertIsNotNone(device_view)
@@ -588,6 +684,9 @@ class GpuRuntimeBindingTests(unittest.TestCase):
         host_visual = np.asarray(visual_out, dtype=np.float32)
         self.assertEqual(tuple(tensor.shape), tuple(host_visual.shape))
         self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_visual, atol=1.0e-6))
+        self._assert_gpu_helper_signals_do_not_promote_capabilities(
+            ef_py.RuntimeFacade(1).capabilities()
+        )
 
 
 if __name__ == "__main__":

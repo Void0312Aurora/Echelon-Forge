@@ -145,6 +145,63 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             ),
         )
 
+    def test_device_resident_output_descriptor_public_fields_match_additive_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.DeviceResidentOutputDescriptor()),
+            (
+                "consumer_constraints",
+                "diagnostics_label",
+                "dtype",
+                "element_count",
+                "host_visible_availability",
+                "output_shape",
+                "source_snapshot",
+                "sync_or_export_barrier",
+            ),
+        )
+
+    def test_device_resident_output_descriptor_defaults_stay_fail_closed(self) -> None:
+        descriptor = ef_py.DeviceResidentOutputDescriptor()
+
+        self.assertEqual(list(descriptor.output_shape), [])
+        self.assertEqual(descriptor.dtype, "")
+        self.assertEqual(descriptor.element_count, 0)
+        self.assertEqual(descriptor.source_snapshot, 0)
+        self.assertEqual(descriptor.sync_or_export_barrier, "")
+        self.assertEqual(descriptor.host_visible_availability, "unavailable")
+        self.assertEqual(descriptor.diagnostics_label, "diagnostics_only")
+        self.assertEqual(list(descriptor.consumer_constraints), [])
+
+    def test_device_resident_output_descriptor_fields_are_assignable(self) -> None:
+        descriptor = ef_py.DeviceResidentOutputDescriptor()
+
+        descriptor.output_shape = [4, 8, 16]
+        descriptor.dtype = "float32"
+        descriptor.element_count = 512
+        descriptor.source_snapshot = 42
+        descriptor.sync_or_export_barrier = "export"
+        descriptor.host_visible_availability = "explicit_readback_required"
+        descriptor.diagnostics_label = "export_only_candidate"
+        descriptor.consumer_constraints = [
+            "device_resident_consumer",
+            "host_readback",
+        ]
+
+        self.assertEqual(list(descriptor.output_shape), [4, 8, 16])
+        self.assertEqual(descriptor.dtype, "float32")
+        self.assertEqual(descriptor.element_count, 512)
+        self.assertEqual(descriptor.source_snapshot, 42)
+        self.assertEqual(descriptor.sync_or_export_barrier, "export")
+        self.assertEqual(
+            descriptor.host_visible_availability,
+            "explicit_readback_required",
+        )
+        self.assertEqual(descriptor.diagnostics_label, "export_only_candidate")
+        self.assertEqual(
+            list(descriptor.consumer_constraints),
+            ["device_resident_consumer", "host_readback"],
+        )
+
     def test_engagement_event_packet_public_fields_include_provenance(self) -> None:
         self.assertTupleEqual(
             public_fields(ef_py.EngagementEventPacket()),

@@ -61,7 +61,8 @@
 17. WP17 验收后，剩余主线冻结为四个阶段：`WP18` runtime ownership 与 C++ hot-path
     consolidation，`WP19` CUDA / resident-state mainline alignment，`WP20`
     public capability-platform composition，以及 `WP21` full counterfactual /
-    experiment runtime。除非出现新的架构级事实，否则新工作应落入这四个阶段之一。
+    experiment runtime。`WP18` 与 `WP19` 已验收；除非出现新的架构级事实，
+    否则新工作应落入剩余冻结阶段之一。
 18. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
@@ -95,6 +96,39 @@
 | `WP16 Runtime Spine Consolidation` | complete / accepted | 完成 post-WP15 架构优化阶段：盘点 bypasses、定义 maintained runtime spine、执行第一条严格 `GAP-9` clock-domain cadence slice、迁移 facade/batch consumers、分类 legacy paths，并通过 generated closure summaries 降低文档同步拖拽，同时保留记录下来的 residuals | [runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)、[runtime spine inventory](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)、[clock-domain enforcement](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)、[facade/batch migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)、[legacy compatibility](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)、[documentation automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)、[integration handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md) |
 | `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | 物化 Stage 3 最后一组 selected runtime slices：facade-shaped batch reads、可运行 cadence evidence、reference CPU fidelity admission、capability-gated spawn，以及 explicit-setup selected-entity counterfactual branch/compare，同时保留 legacy compatibility 与 full-worldline residuals | [stage3 runtime materialization and cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)、[fact ledger](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)、[business migration](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)、[multi-rate runtime](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)、[fidelity provider runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)、[capability spawn runtime](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)、[counterfactual runtime closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)、[dispatch queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)、[验收审查](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md) |
 | `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | 在 WP17 后收紧 runtime ownership，把维护中的 execution truths 与高频 Python paths 推向 C++/facade-owned surfaces，同时让 compatibility APIs 保持有边界 | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)、[ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)、[execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)、[ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)、[facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)、[C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)、[integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) |
+| `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | 对齐现有 CUDA helpers、device-resident output contracts、diagnostics boundaries 与 resident-state sync/shard vocabulary，同时默认不晋级 exact GPU 或 maintained resident-state support | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)、[fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)、[device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)、[GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)、[resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)、[first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)、[integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) |
+
+## WP19 CUDA And Resident-State Mainline Alignment
+
+产出：
+
+- [WP19 CUDA And Resident-State Mainline Alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)
+- [WP19-A CUDA / Resident-State Fact Ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)
+- [WP19-B Device-Resident Output Contract Pre-Gate](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)
+- [WP19-C GPU Helper Diagnostics Boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)
+- [WP19-D Resident-State Sync And Shard Contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)
+- [WP19-E First CUDA Alignment Slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)
+- [WP19-F Integration And Handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)
+- [WP19 Subagent Dispatch Queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)
+- [WP19 验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md)
+
+WP19 是已验收的第二个冻结 post-WP17 阶段。它消费已验收的 WP18 runtime-ownership
+边界，把现有 CUDA helpers、device-resident output metadata 与 resident-state sync
+vocabulary 对齐到 maintained facade/backend profile model。它默认不晋级 exact GPU
+world-step 或 maintained resident-state support。
+
+WP19 工作流地图：
+
+- `WP19-A CUDA / Resident-State Fact Ledger` 在实现前冻结当前 source/test facts。
+- `WP19-B Device-Resident Output Contract Pre-Gate` 定义 fail-closed output metadata
+  与 DTO placement。
+- `WP19-C GPU Helper Diagnostics Boundary` 防止 helper/probe availability 意外成为
+  maintained capability evidence。
+- `WP19-D Resident-State Sync And Shard Contract` 将 state ownership、shard、sync、
+  stale-read 与 export rules 映射到 runtime evidence。
+- `WP19-E First CUDA Alignment Slice` 等 A-D 识别出安全 bounded helper/output path 后释放。
+- `WP19-F Integration And Handoff` 是 evidence streams 返回后的串行 closure。
+- [WP19 验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md)
 
 ## WP18 Runtime Ownership And C++ Hot Path Consolidation
 

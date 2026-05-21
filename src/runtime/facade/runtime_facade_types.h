@@ -186,6 +186,17 @@ struct ExecutionBatchStepRequest {
     bool include_pilot_reports = false;
 };
 
+struct DeviceResidentOutputDescriptor {
+    std::vector<std::uint64_t> output_shape;
+    std::string dtype;
+    std::size_t element_count = 0;
+    std::uint64_t source_snapshot = 0;
+    std::string sync_or_export_barrier;
+    std::string host_visible_availability = "unavailable";
+    std::string diagnostics_label = "diagnostics_only";
+    std::vector<std::string> consumer_constraints;
+};
+
 struct ObservationBatchPacket {
     std::uint64_t snapshot_version = 0;
     std::string barrier_id = "export";

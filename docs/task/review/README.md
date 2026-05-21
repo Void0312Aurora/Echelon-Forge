@@ -25,6 +25,7 @@ Status: active review record.
 - [WP16 Runtime Spine Consolidation Acceptance Review 2026-05-21](wp16_runtime_spine_consolidation_acceptance_review_20260521.md) ([中文](wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md))
 - [WP17 Stage 3 Runtime Materialization And Cleanup Acceptance Review 2026-05-21](wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md) ([中文](wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md))
 - [WP18 Runtime Ownership And C++ Hot Path Consolidation Acceptance Review 2026-05-21](wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md) ([中文](wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md))
+- [WP19 CUDA And Resident-State Mainline Alignment Acceptance Review 2026-05-21](wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) ([中文](wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md))
 
 ## Archive
 

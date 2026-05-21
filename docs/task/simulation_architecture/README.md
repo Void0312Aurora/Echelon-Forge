@@ -81,9 +81,9 @@ The active design conclusion is:
 17. After WP17 acceptance, the remaining mainline is frozen as four stages:
     `WP18` runtime ownership and C++ hot-path consolidation, `WP19` CUDA /
     resident-state mainline alignment, `WP20` public capability-platform
-    composition, and `WP21` full counterfactual / experiment runtime. New work
-    should fit one of these stages unless a new architecture-level fact forces a
-    route update.
+    composition, and `WP21` full counterfactual / experiment runtime. `WP18`
+    and `WP19` are accepted; new work should fit one of the remaining frozen
+    stages unless a new architecture-level fact forces a route update.
 18. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
@@ -117,6 +117,43 @@ The active design conclusion is:
 | `WP16 Runtime Spine Consolidation` | complete / accepted | Complete the post-WP15 architecture optimization phase: inventory bypasses, define the maintained runtime spine, enforce the first strict `GAP-9` clock-domain cadence slice, migrate facade/batch consumers, classify legacy paths, and reduce documentation-sync drag through generated closure summaries while preserving the recorded residuals | [runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md), [runtime spine inventory](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md), [clock-domain enforcement](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md), [facade/batch migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md), [legacy compatibility](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md), [documentation automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md), [integration handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md), [acceptance review](../review/wp16_runtime_spine_consolidation_acceptance_review_20260521.md) |
 | `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | Materialize the final Stage 3 selected runtime slices: facade-shaped batch reads, runnable cadence evidence, reference CPU fidelity admission, capability-gated spawn, and explicit-setup selected-entity counterfactual branch/compare while preserving legacy compatibility and full-worldline residuals | [stage3 runtime materialization and cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.md), [fact ledger](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md), [business migration](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md), [multi-rate runtime](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md), [fidelity provider runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md), [capability spawn runtime](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md), [counterfactual runtime closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md), [dispatch queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md) |
 | `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | Consolidate runtime ownership after WP17 by moving maintained execution truths and high-frequency Python paths toward C++/facade-owned surfaces while keeping compatibility APIs bounded | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md), [ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.md), [execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.md), [ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.md), [facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.md), [C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.md), [integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.md), [dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md) |
+| `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | Align existing CUDA helpers, device-resident output contracts, diagnostics boundaries, and resident-state sync/shard vocabulary without promoting exact GPU or maintained resident-state support by default | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md), [fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md), [device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md), [GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md), [resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md), [first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md), [integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md), [dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) |
+
+## WP19 CUDA And Resident-State Mainline Alignment
+
+Output:
+
+- [WP19 CUDA And Resident-State Mainline Alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md)
+- [WP19-A CUDA / Resident-State Fact Ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md)
+- [WP19-B Device-Resident Output Contract Pre-Gate](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md)
+- [WP19-C GPU Helper Diagnostics Boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md)
+- [WP19-D Resident-State Sync And Shard Contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md)
+- [WP19-E First CUDA Alignment Slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md)
+- [WP19-F Integration And Handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md)
+- [WP19 Subagent Dispatch Queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md)
+- [WP19 Acceptance Review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md)
+
+WP19 is the accepted second frozen post-WP17 stage. It consumes the accepted
+WP18 runtime-ownership boundary and aligns existing CUDA helpers,
+device-resident output metadata, and resident-state sync vocabulary with the
+maintained facade/backend profile model. It does not promote exact GPU
+world-step or maintained resident-state support by default.
+
+WP19 workstream map:
+
+- `WP19-A CUDA / Resident-State Fact Ledger` freezes current source/test facts
+  before implementation.
+- `WP19-B Device-Resident Output Contract Pre-Gate` defines fail-closed output
+  metadata and DTO placement.
+- `WP19-C GPU Helper Diagnostics Boundary` prevents helper/probe availability
+  from becoming accidental maintained capability evidence.
+- `WP19-D Resident-State Sync And Shard Contract` maps state ownership, shard,
+  sync, stale-read, and export rules to runtime evidence.
+- `WP19-E First CUDA Alignment Slice` is held until A-D identify one safe
+  bounded helper/output path.
+- `WP19-F Integration And Handoff` remains serial closure after evidence streams
+  return.
+- [WP19 Acceptance Review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md)
 
 ## WP18 Runtime Ownership And C++ Hot Path Consolidation
 

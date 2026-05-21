@@ -67,6 +67,31 @@ def _spawn_request(
     return request
 
 
+def _assert_gpu_helper_capabilities_remain_fail_closed(testcase: unittest.TestCase) -> None:
+    capabilities = ef_py.RuntimeFacade(1).capabilities()
+    for field in (
+        "supports_gpu_visual",
+        "supports_gpu_observation",
+        "supports_gpu_flight_shaping",
+        "supports_device_observation_view",
+        "supports_resident_state",
+        "supports_exact_gpu_backend",
+        "supports_shadow_compare",
+    ):
+        testcase.assertFalse(
+            bool(getattr(capabilities, field)),
+            msg=f"{field} must remain false after helper-backed candidate queries",
+        )
+    testcase.assertEqual(
+        str(capabilities.device_observation_view_candidate_profile_id),
+        "gpu_helpers.diagnostics_only",
+    )
+    testcase.assertEqual(
+        str(capabilities.device_observation_view_rejection_reason),
+        "gpu_helpers_diagnostics_only_is_not_a_maintained_device_observation_view_profile",
+    )
+
+
 def _inline_batch_scenario() -> dict:
     return {
         "scenario_name": "phase4_batch_runtime_inline",
@@ -1139,25 +1164,24 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         foe_far = batch.world(0).spawn_unit(ef_py.Side.Red, "Aircraft", 60000.0, 0.0, 1200.0, 180.0, 0.0, 0.0, 0.0, 180.0, 0.0)
 
         refs = [_entity_ref(0, int(lead))]
+        expected_sensor_and_visual = [int(friend), int(foe_close)]
+        expected_comm = [int(friend)]
 
-        sensor_ids = {int(v) for v in batch.get_sensor_candidate_ids_batch(refs, True)[0]}
-        visual_ids = {int(v) for v in batch.get_visual_candidate_ids_batch(refs, 25000.0, True)[0]}
-        comm_ids = {int(v) for v in batch.get_comm_candidate_ids_batch(refs, True)[0]}
+        for use_gpu in (False, True):
+            sensor_ids = [int(v) for v in batch.get_sensor_candidate_ids_batch(refs, use_gpu)[0]]
+            visual_ids = [int(v) for v in batch.get_visual_candidate_ids_batch(refs, 25000.0, use_gpu)[0]]
+            comm_ids = [int(v) for v in batch.get_comm_candidate_ids_batch(refs, use_gpu)[0]]
 
-        self.assertIn(int(friend), sensor_ids)
-        self.assertIn(int(foe_close), sensor_ids)
-        self.assertNotIn(int(foe_far), sensor_ids)
-        self.assertNotIn(int(lead), sensor_ids)
+            for ids in (sensor_ids, visual_ids, comm_ids):
+                self.assertEqual(ids, sorted(ids))
+                self.assertNotIn(int(lead), ids)
+                self.assertNotIn(int(foe_far), ids)
 
-        self.assertIn(int(friend), visual_ids)
-        self.assertIn(int(foe_close), visual_ids)
-        self.assertNotIn(int(foe_far), visual_ids)
-        self.assertNotIn(int(lead), visual_ids)
+            self.assertEqual(sensor_ids, expected_sensor_and_visual)
+            self.assertEqual(visual_ids, expected_sensor_and_visual)
+            self.assertEqual(comm_ids, expected_comm)
 
-        self.assertIn(int(friend), comm_ids)
-        self.assertNotIn(int(foe_close), comm_ids)
-        self.assertNotIn(int(foe_far), comm_ids)
-        self.assertNotIn(int(lead), comm_ids)
+        _assert_gpu_helper_capabilities_remain_fail_closed(self)
 
     def test_world_batch_runtime_execution_episode_controller_batch_prime_exports_state(self) -> None:
         runtime = ef_py.WorldBatchRuntime(2)

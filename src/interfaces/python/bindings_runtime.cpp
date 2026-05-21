@@ -169,6 +169,26 @@ void bind_runtime(nb::module_& m) {
         .def_rw("dheading", &RuntimeWorldlineComparison::dheading)
         .def_rw("evidence_refs", &RuntimeWorldlineComparison::evidence_refs);
 
+    nb::class_<DeviceResidentOutputDescriptor>(m, "DeviceResidentOutputDescriptor")
+        .def(nb::init<>())
+        .def_rw("output_shape", &DeviceResidentOutputDescriptor::output_shape)
+        .def_rw("dtype", &DeviceResidentOutputDescriptor::dtype)
+        .def_rw("element_count", &DeviceResidentOutputDescriptor::element_count)
+        .def_rw("source_snapshot", &DeviceResidentOutputDescriptor::source_snapshot)
+        .def_rw(
+            "sync_or_export_barrier",
+            &DeviceResidentOutputDescriptor::sync_or_export_barrier
+        )
+        .def_rw(
+            "host_visible_availability",
+            &DeviceResidentOutputDescriptor::host_visible_availability
+        )
+        .def_rw("diagnostics_label", &DeviceResidentOutputDescriptor::diagnostics_label)
+        .def_rw(
+            "consumer_constraints",
+            &DeviceResidentOutputDescriptor::consumer_constraints
+        );
+
     nb::class_<runtime::fidelity::FidelityProfileRequest>(m, "FidelityProfileRequest")
         .def(nb::init<>())
         .def_rw("request_label", &runtime::fidelity::FidelityProfileRequest::request_label)

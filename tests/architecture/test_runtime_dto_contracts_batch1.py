@@ -93,3 +93,79 @@ def test_observation_batch_packet_and_step_result_surface_promote_batch1_dtos() 
 
     for field in ("termination_specs", "reward_reports"):
         assert field in step_result
+
+
+def test_device_resident_output_descriptor_stays_additive_export_only_surface() -> None:
+    header = _text(FACADE_TYPES)
+    descriptor = _struct_body(header, "DeviceResidentOutputDescriptor")
+    capabilities = _struct_body(header, "RuntimeCapabilities")
+
+    for required in (
+        "output_shape",
+        "dtype",
+        "element_count",
+        "source_snapshot",
+        "sync_or_export_barrier",
+        "host_visible_availability",
+        "diagnostics_label",
+        "consumer_constraints",
+    ):
+        assert required in descriptor
+
+    assert "DeviceResidentOutputDescriptor" not in capabilities
+    for forbidden in (
+        "output_shape",
+        "dtype",
+        "element_count",
+        "source_snapshot",
+        "sync_or_export_barrier",
+        "host_visible_availability",
+        "diagnostics_label",
+        "consumer_constraints",
+    ):
+        assert forbidden not in capabilities, (
+            "RuntimeCapabilities must stay a support projection, not a "
+            f"device-output transport schema; found {forbidden!r}"
+        )
+
+
+def test_host_visible_packets_do_not_inline_device_resident_descriptor_fields() -> None:
+    header = _text(FACADE_TYPES)
+    observation_packet = _struct_body(header, "ObservationBatchPacket")
+    engagement_packet = _struct_body(header, "EngagementEventPacket")
+
+    for required in (
+        "snapshot_version",
+        "barrier_id",
+        "InformationStateSource provenance",
+    ):
+        assert required in observation_packet
+
+    for required in (
+        "snapshot_version",
+        "barrier_id",
+        "barrier_sequence",
+        "InformationStateSource packet_provenance",
+        "InformationStateSource diagnostics_provenance",
+    ):
+        assert required in engagement_packet
+
+    for forbidden in (
+        "device_ptr",
+        "device_pointer",
+        "device_buffer",
+        "device_address",
+        "output_shape",
+        "dtype",
+        "element_count",
+        "host_visible_availability",
+        "consumer_constraints",
+    ):
+        assert forbidden not in observation_packet, (
+            "ObservationBatchPacket must remain a host-visible export envelope; "
+            f"found device-resident descriptor token {forbidden!r}"
+        )
+        assert forbidden not in engagement_packet, (
+            "EngagementEventPacket must remain a host-visible export envelope; "
+            f"found device-resident descriptor token {forbidden!r}"
+        )
