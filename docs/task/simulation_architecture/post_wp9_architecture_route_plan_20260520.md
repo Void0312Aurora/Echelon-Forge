@@ -3,7 +3,9 @@
 Status: `2026-05-21` route-selection plan; Phase 1 is accepted as `WP10`,
 Phase 2 is accepted as `WP11`, Phase 3 is accepted as `WP12`, Phase 4 is
 accepted as `WP13`, Phase 5 is accepted as `WP14`, and Phase 6 is accepted as
-`WP15`.
+`WP15`. The post-WP15 follow-on is opened as `WP16 Runtime Spine
+Consolidation`, and WP16 is now accepted as the selected-slice runtime-spine
+consolidation increment.
 
 Language:
 
@@ -19,6 +21,7 @@ Inputs:
 - [WP9 contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md)
 - [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md)
 - [WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md)
+- [WP16 runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md)
 - [WP closure lane policy](../../standards/governance/wp_closure_lane_policy.md)
 
 ## 1. Purpose
@@ -31,9 +34,15 @@ into runtime facts.
 
 This document fixes the route order, anchors Phase 1 as `WP10`, Phase 2 as
 `WP11`, anchors Phase 3 as `WP12`, accepts Phase 4 as `WP13`, Phase 5 as
-`WP14`, and Phase 6 as `WP15`. It defines which direction must come first,
-which directions should wait, and what kind of evidence counts as real
-architectural progress.
+`WP14`, and Phase 6 as `WP15`. Those phases are now complete. The next
+architecture-optimization action is opened as `WP16 Runtime Spine
+Consolidation`: turn the accepted boundaries into the maintained default path,
+promote `GAP-9` clock-domain enforcement into a selected runtime-spine slice,
+and reduce documentation synchronization drag through generated closure
+summaries. WP16 is now accepted as the selected-slice runtime-spine
+consolidation increment, with the residual register preserved in the acceptance
+review. It defines which direction must come first, which directions should
+wait, and what kind of evidence counts as real architectural progress.
 
 ## 2. Route Decision
 
@@ -251,11 +260,48 @@ Phase 6 counterfactual/experiment-generation seed:
 This counterfactual/experiment-generation seed is now accepted as
 [WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md).
 
+## 5.1 Post-WP15 Runtime Spine Consolidation
+
+The post-WP9 route is complete. The next phase should not extend the vocabulary
+sideways. It should make the accepted boundaries the default runtime path.
+
+This follow-on phase is now opened as
+[WP16 runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md).
+
+WP16 route:
+
+- inventory runtime/facade/batch/scenario/training/experiment paths that still
+  bypass the accepted WP10-WP15 boundaries;
+- define the maintained runtime spine:
+  `setup/admission -> input injection -> clock-domain trigger/skip -> manifest
+  execution -> barrier/event evidence -> facade export -> consumer`;
+- promote `GAP-9` from deferred advisory status to a strict selected-slice
+  cadence gate: non-triggered maintained nodes must skip, defer, or reject with
+  visible evidence;
+- migrate selected facade, world-batch, training, scenario, and experiment
+  consumers toward the spine without breaking compatibility first;
+- classify legacy paths as preserved, wrapped, deprecated, removed, or
+  diagnostics-only with tests and replacement evidence;
+- add machine-readable status or generated closure-summary hints so documentation
+  synchronization does not block implementation `Mergeable` status.
+
+WP16 remains bounded:
+
+- it does not claim global scheduler rewrite or full multi-rate runtime support;
+- it does not remove public legacy APIs before compatibility gates and
+  replacement evidence exist;
+- it does not promote independent clock domains without deterministic
+  `clock_merge_policy`, source-time, snapshot, target-window, and barrier-order
+  evidence;
+- it does not let generated documentation replace human acceptance decisions.
+- it does not claim a maintained independent-domain merge success path.
+
 ## 6. Non-Goals For The First Implementation WP
 
 - Do not rewrite the whole scheduler.
 - Do not claim strict clock-domain enforcement until the window-loop skeleton is
-  proven.
+  proven. After WP10-WP15 acceptance, this condition is satisfied only for the
+  selected WP16 runtime-spine slice, not globally.
 - Do not promote exact GPU, resident-state, or multi-fidelity execution to
   maintained status.
 - Do not migrate all platform spawning to capability composition.
@@ -311,3 +357,8 @@ deciding how replay envelopes, branch points, worldline metadata,
 counterfactual admission, generated inputs, backend/fidelity refs, capability
 refs, and experiment evidence attach without implying unsupported
 snapshot/restore or turning scores into truth/support claims.
+
+For `WP16`, the highest-reasoning work is the scheduler/default-path seam:
+deciding how strict clock-domain trigger/skip behavior, facade/batch migration,
+legacy compatibility, and generated closure automation attach without a global
+scheduler rewrite or accidental API break.

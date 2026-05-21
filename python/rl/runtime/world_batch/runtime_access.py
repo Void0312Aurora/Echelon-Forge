@@ -111,5 +111,21 @@ class WorldBatchVecEnvAccess:
     def reset(self):
         return self._world_vec.reset()
 
+    @property
+    def last_runtime_window_evidence(self):
+        return getattr(self._world_vec._runtime_adapter, "last_window_evidence", None)
+
+    def clear_runtime_window_evidence(self) -> None:
+        clear = getattr(self._world_vec._runtime_adapter, "clear_last_window_evidence", None)
+        if callable(clear):
+            clear()
+
+    def supports_runtime_window_api(self) -> bool:
+        supports = getattr(self._world_vec._runtime_adapter, "supports_runtime_window_api", None)
+        return bool(supports()) if callable(supports) else False
+
+    def run_maintained_window(self, **kwargs):
+        return self._world_vec._runtime_adapter.run_maintained_window(**kwargs)
+
 
 __all__ = ["WorldBatchVecEnvAccess"]

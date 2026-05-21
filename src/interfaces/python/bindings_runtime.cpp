@@ -835,6 +835,70 @@ void bind_runtime(nb::module_& m) {
         )
         .def_rw("observation_packet", &ExecutionBatchStepResult::observation_packet);
 
+    nb::class_<RuntimeWindowActionRequest>(m, "RuntimeWindowActionRequest")
+        .def(nb::init<>())
+        .def_rw("action_intent", &RuntimeWindowActionRequest::action_intent)
+        .def_rw("source_layer", &RuntimeWindowActionRequest::source_layer)
+        .def_rw("input_snapshot_version", &RuntimeWindowActionRequest::input_snapshot_version);
+
+    nb::class_<RuntimeWindowInputRecord>(m, "RuntimeWindowInputRecord")
+        .def(nb::init<>())
+        .def_rw("request", &RuntimeWindowInputRecord::request)
+        .def_rw("reason", &RuntimeWindowInputRecord::reason);
+
+    nb::class_<RuntimeWindowSchedulingContext>(m, "RuntimeWindowSchedulingContext")
+        .def(nb::init<>())
+        .def_rw("window_id", &RuntimeWindowSchedulingContext::window_id)
+        .def_rw("world_id", &RuntimeWindowSchedulingContext::world_id)
+        .def_rw("source_time_s", &RuntimeWindowSchedulingContext::source_time_s)
+        .def_rw("barrier_sequence", &RuntimeWindowSchedulingContext::barrier_sequence)
+        .def_rw("current_barrier_id", &RuntimeWindowSchedulingContext::current_barrier_id)
+        .def_rw("accepted_inputs", &RuntimeWindowSchedulingContext::accepted_inputs)
+        .def_rw("deferred_inputs", &RuntimeWindowSchedulingContext::deferred_inputs)
+        .def_rw("rejected_inputs", &RuntimeWindowSchedulingContext::rejected_inputs)
+        .def_rw("expired_inputs", &RuntimeWindowSchedulingContext::expired_inputs);
+
+    nb::class_<RuntimeWindowBarrierRecord>(m, "RuntimeWindowBarrierRecord")
+        .def(nb::init<>())
+        .def_rw("sequence", &RuntimeWindowBarrierRecord::sequence)
+        .def_rw("barrier_id", &RuntimeWindowBarrierRecord::barrier_id)
+        .def_rw("node_id", &RuntimeWindowBarrierRecord::node_id);
+
+    nb::class_<RuntimeWindowVisibilityRecord>(m, "RuntimeWindowVisibilityRecord")
+        .def(nb::init<>())
+        .def_rw("barrier_id", &RuntimeWindowVisibilityRecord::barrier_id)
+        .def_rw("visible_input_count", &RuntimeWindowVisibilityRecord::visible_input_count);
+
+    nb::class_<RuntimeWindowNodeExecutionRecord>(m, "RuntimeWindowNodeExecutionRecord")
+        .def(nb::init<>())
+        .def_rw("node_id", &RuntimeWindowNodeExecutionRecord::node_id)
+        .def_rw("read_snapshot_policy", &RuntimeWindowNodeExecutionRecord::read_snapshot_policy)
+        .def_rw("write_commit_policy", &RuntimeWindowNodeExecutionRecord::write_commit_policy)
+        .def_rw("visible_input_count", &RuntimeWindowNodeExecutionRecord::visible_input_count);
+
+    nb::class_<RuntimeWindowRequest>(m, "RuntimeWindowRequest")
+        .def(nb::init<>())
+        .def_rw("window_id", &RuntimeWindowRequest::window_id)
+        .def_rw("world_id", &RuntimeWindowRequest::world_id)
+        .def_rw("source_time_s", &RuntimeWindowRequest::source_time_s)
+        .def_rw("action_requests", &RuntimeWindowRequest::action_requests)
+        .def_rw("observation_request", &RuntimeWindowRequest::observation_request)
+        .def_rw("engagement_request", &RuntimeWindowRequest::engagement_request)
+        .def_rw("export_observation", &RuntimeWindowRequest::export_observation)
+        .def_rw("export_engagement", &RuntimeWindowRequest::export_engagement)
+        .def_rw("export_diagnostics", &RuntimeWindowRequest::export_diagnostics);
+
+    nb::class_<RuntimeWindowResult>(m, "RuntimeWindowResult")
+        .def(nb::init<>())
+        .def_rw("context", &RuntimeWindowResult::context)
+        .def_rw("barrier_trace", &RuntimeWindowResult::barrier_trace)
+        .def_rw("visibility_trace", &RuntimeWindowResult::visibility_trace)
+        .def_rw("executed_nodes", &RuntimeWindowResult::executed_nodes)
+        .def_rw("injected_inputs", &RuntimeWindowResult::injected_inputs)
+        .def_rw("observation_packet", &RuntimeWindowResult::observation_packet)
+        .def_rw("engagement_packet", &RuntimeWindowResult::engagement_packet)
+        .def_rw("diagnostics_traces", &RuntimeWindowResult::diagnostics_traces);
+
     nb::class_<WorldEntityRef>(m, "WorldEntityRef")
         .def(nb::init<>())
         .def_rw("world_index", &WorldEntityRef::world_index)
@@ -1118,6 +1182,11 @@ void bind_runtime(nb::module_& m) {
         .def(
             "export_diagnostics_traces",
             &RuntimeFacade::export_diagnostics_traces,
+            nb::arg("request")
+        )
+        .def(
+            "run_wp10_window",
+            &RuntimeFacade::run_wp10_window,
             nb::arg("request")
         );
 }

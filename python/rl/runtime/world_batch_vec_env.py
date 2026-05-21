@@ -285,6 +285,10 @@ class WorldBatchVecEnv(VecEnv):
     def runtime_facade(self):
         return self._runtime_adapter.facade
 
+    @property
+    def last_runtime_window_evidence(self):
+        return self._runtime_adapter.last_window_evidence
+
     def _normalize_seed(self, seed: int | None) -> int:
         if seed is None:
             seed = int(np.random.randint(0, np.iinfo(np.uint32).max, dtype=np.uint32))

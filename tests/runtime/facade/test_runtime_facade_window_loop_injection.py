@@ -375,6 +375,38 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                 std::cerr << "manifest read visibility drifted\n";
                 return 1;
             }
+            if (p7->execution_state != "executed" ||
+                p7->trigger_source != "input_injection:policy:accepted" ||
+                p7->decision_barrier_id != "input_injection" ||
+                p7->clock_merge_policy != "nested_slot" ||
+                p7->source_snapshot_version != "obs:10" ||
+                p7->target_window_id != "window:test:7" ||
+                p7->barrier_order.size() != 1 ||
+                p7->barrier_order[0] != "input_injection") {
+                std::cerr << "fire-control execution evidence drifted\n";
+                return 1;
+            }
+            if (p9->execution_state != "executed" ||
+                p9->trigger_source != "p7.fire_control_launch.v1:fire_control_and_launch" ||
+                p9->decision_barrier_id != "window_commit" ||
+                p9->clock_merge_policy != "enqueue_event" ||
+                p9->barrier_order.size() != 2 ||
+                p9->barrier_order[0] != "input_injection" ||
+                p9->barrier_order[1] != "window_commit") {
+                std::cerr << "effects/damage execution evidence drifted\n";
+                return 1;
+            }
+            if (p10->execution_state != "executed" ||
+                p10->trigger_source != "export:maintained_facade_export" ||
+                p10->decision_barrier_id != "export" ||
+                p10->clock_merge_policy != "nested_slot" ||
+                p10->source_snapshot_version != "observation_packet:11" ||
+                p10->barrier_order.size() != 2 ||
+                p10->barrier_order[0] != "window_commit" ||
+                p10->barrier_order[1] != "export") {
+                std::cerr << "observation/export execution evidence drifted\n";
+                return 1;
+            }
 
             const std::vector<std::string> expected_order = {
                 "pilot_apply",
@@ -419,6 +451,194 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                 result.diagnostics_traces.size() != 1 ||
                 result.context.current_barrier_id != "export") {
                 std::cerr << "export products drifted\n";
+                return 1;
+            }
+            return 0;
+        }
+        """
+    )
+    result = _compile_and_run(source)
+    assert result.returncode == 0, result.stderr + result.stdout
+
+
+def test_runtime_window_coordinator_skips_and_rejects_nodes_with_clock_domain_evidence() -> None:
+    source = textwrap.dedent(
+        r"""
+        #include <algorithm>
+        #include <iostream>
+        #include <string>
+        #include <vector>
+        #include "runtime/facade/runtime_window_coordinator.h"
+
+        int main() {
+            RuntimeWindowRequest request{};
+            request.window_id = "window:test:skip";
+            request.world_id = 11;
+            request.source_time_s = 5.0;
+            request.export_observation = false;
+            request.export_engagement = false;
+            request.export_diagnostics = false;
+
+            std::vector<std::string> callback_order;
+            RuntimeWindowResult result = execute_runtime_window(
+                request,
+                RuntimeWindowCoordinatorCallbacks{
+                    .step_window = [&callback_order]() {
+                        callback_order.push_back("step");
+                    },
+                }
+            );
+
+            if (callback_order.size() != 1 || callback_order[0] != "step") {
+                std::cerr << "window stepping should still occur once\n";
+                return 1;
+            }
+            const auto p7 = std::find_if(
+                result.executed_nodes.begin(),
+                result.executed_nodes.end(),
+                [](const RuntimeWindowNodeExecutionRecord& record) {
+                    return record.node_id == "p7.fire_control_launch.v1";
+                }
+            );
+            const auto p9 = std::find_if(
+                result.executed_nodes.begin(),
+                result.executed_nodes.end(),
+                [](const RuntimeWindowNodeExecutionRecord& record) {
+                    return record.node_id == "p9.effects_damage.v1";
+                }
+            );
+            const auto p10 = std::find_if(
+                result.executed_nodes.begin(),
+                result.executed_nodes.end(),
+                [](const RuntimeWindowNodeExecutionRecord& record) {
+                    return record.node_id == "p10.observation_export.v1";
+                }
+            );
+            if (p7 == result.executed_nodes.end() ||
+                p9 == result.executed_nodes.end() ||
+                p10 == result.executed_nodes.end()) {
+                std::cerr << "maintained nodes missing from evidence\n";
+                return 1;
+            }
+            if (p7->execution_state != "skipped" ||
+                p7->trigger_source != "input_injection:none" ||
+                p7->decision_barrier_id != "input_injection") {
+                std::cerr << "fire-control skip evidence drifted\n";
+                return 1;
+            }
+            if (p9->execution_state != "skipped" ||
+                p9->trigger_source != "window_commit:none" ||
+                p9->decision_barrier_id != "window_commit") {
+                std::cerr << "effects/damage skip evidence drifted\n";
+                return 1;
+            }
+            if (p10->execution_state != "skipped" ||
+                p10->trigger_source != "export:none" ||
+                p10->decision_barrier_id != "export") {
+                std::cerr << "export skip evidence drifted\n";
+                return 1;
+            }
+            if (!result.observation_packet.refs.empty() ||
+                !result.engagement_packet.refs.empty() ||
+                !result.diagnostics_traces.empty()) {
+                std::cerr << "skipped export should not leak packets\n";
+                return 1;
+            }
+            return 0;
+        }
+        """
+    )
+    result = _compile_and_run(source)
+    assert result.returncode == 0, result.stderr + result.stdout
+
+
+def test_runtime_window_coordinator_rejects_independent_domain_without_deterministic_merge_metadata() -> None:
+    source = textwrap.dedent(
+        r"""
+        #include <algorithm>
+        #include <iostream>
+        #include "runtime/facade/runtime_window_coordinator.h"
+
+        int main() {
+            RuntimeWindowRequest request{};
+            request.window_id = "window:test:independent";
+            request.world_id = 19;
+            request.source_time_s = 7.0;
+            request.export_observation = false;
+            request.export_engagement = false;
+            request.export_diagnostics = false;
+
+            RuntimeWindowActionRequest action{};
+            action.source_layer = "sensor";
+            action.input_snapshot_version = "obs:7";
+            action.action_intent.source_id = "sensor:independent";
+            action.action_intent.effective_time_s = 7.0;
+            action.action_intent.valid_until_s = 7.5;
+            action.action_intent.target.world_index = 19;
+            action.action_intent.target.entity_id = 301;
+            action.action_intent.action_family = "direct_control";
+            action.action_intent.merge_policy = "last_write_wins";
+            action.action_intent.has_pilot_action = true;
+            action.action_intent.pilot_action.throttle = 0.9;
+            action.clock_domain_metadata.source_clock_domain = "sensor.scan_slot";
+            action.clock_domain_metadata.relation = "independent";
+            action.clock_domain_metadata.has_source_time = true;
+            action.clock_domain_metadata.source_time_s = 7.0;
+            request.action_requests.push_back(action);
+
+            bool pilot_apply_called = false;
+            RuntimeWindowResult result = execute_runtime_window(
+                request,
+                RuntimeWindowCoordinatorCallbacks{
+                    .apply_pilot_actions =
+                        [&pilot_apply_called](const std::vector<WorldPilotActionAssignment>&) {
+                            pilot_apply_called = true;
+                        },
+                }
+            );
+
+            if (pilot_apply_called) {
+                std::cerr << "independent domain without merge metadata should fail closed\n";
+                return 1;
+            }
+            if (!result.context.accepted_inputs.empty() ||
+                result.context.rejected_inputs.size() != 1 ||
+                !result.context.deferred_inputs.empty()) {
+                std::cerr << "independent domain input classification drifted\n";
+                return 1;
+            }
+            if (result.context.rejected_inputs[0].reason.find("clock_merge_policy") ==
+                std::string::npos) {
+                std::cerr << "missing merge metadata rejection reason\n";
+                return 1;
+            }
+            const auto p7 = std::find_if(
+                result.executed_nodes.begin(),
+                result.executed_nodes.end(),
+                [](const RuntimeWindowNodeExecutionRecord& record) {
+                    return record.node_id == "p7.fire_control_launch.v1";
+                }
+            );
+            const auto p9 = std::find_if(
+                result.executed_nodes.begin(),
+                result.executed_nodes.end(),
+                [](const RuntimeWindowNodeExecutionRecord& record) {
+                    return record.node_id == "p9.effects_damage.v1";
+                }
+            );
+            if (p7 == result.executed_nodes.end() || p9 == result.executed_nodes.end()) {
+                std::cerr << "missing maintained node evidence\n";
+                return 1;
+            }
+            if (p7->execution_state != "rejected" ||
+                p7->clock_merge_policy != "reject_on_ambiguous_order" ||
+                p7->trigger_source != "input_injection_rejected:sensor:independent") {
+                std::cerr << "upstream rejection evidence drifted\n";
+                return 1;
+            }
+            if (p9->execution_state != "rejected" ||
+                p9->trigger_source != "p7.fire_control_launch.v1:rejected_upstream_trigger") {
+                std::cerr << "downstream rejection evidence drifted\n";
                 return 1;
             }
             return 0;

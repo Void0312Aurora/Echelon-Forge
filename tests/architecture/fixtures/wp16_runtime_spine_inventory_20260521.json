@@ -1,0 +1,355 @@
+{
+  "inventory_version": "wp16.runtime_spine_inventory.v1",
+  "allowed_classifications": [
+    "maintained_spine",
+    "compatibility_wrapper",
+    "diagnostics_only",
+    "deprecated_candidate",
+    "blocked",
+    "unknown_requires_owner"
+  ],
+  "selected_spine_slice": {
+    "window_api": [
+      "RuntimeFacade::run_wp10_window",
+      "RuntimeFacade::export_observation_packet",
+      "RuntimeFacade::export_engagement_event_packet",
+      "RuntimeFacade::export_diagnostics_traces"
+    ],
+    "node_ids": [
+      "p7.fire_control_launch.v1",
+      "p9.effects_damage.v1",
+      "p10.observation_export.v1"
+    ],
+    "excluded_node_ids": [
+      "p7.launch_request_adapter_compat.v1",
+      "p10.observation_trace_diagnostics.v1"
+    ],
+    "barrier_ids": [
+      "input_injection",
+      "window_commit",
+      "export"
+    ],
+    "reserved_barrier_ids": [
+      "stage_publish"
+    ],
+    "consumer_paths": [
+      "python/rl/runtime/world_batch_vec_env.py",
+      "python/rl/runtime/leader_world_batch_runtime.py",
+      "python/rl/runtime/single_world_batch_runtime.py",
+      "python/scenario/compiler/generation_request.py"
+    ],
+    "test_paths": [
+      "tests/runtime/facade/test_runtime_facade_window_loop_injection.py",
+      "tests/runtime/bindings/test_bindings_engagement_surface.py",
+      "tests/architecture/test_wp10_stage_node_manifest_registry.py"
+    ]
+  },
+  "entries": [
+    {
+      "path": "src/runtime/facade/runtime_window_coordinator.h",
+      "classification": "maintained_spine",
+      "owner": "WP16-B",
+      "next_gate": "WP16-B Clock-Domain Enforcement And Merge Trace",
+      "reason": "Selected runtime-window seam already classifies inputs, records barriers, and executes the maintained manifest slice.",
+      "evidence_markers": [
+        "classify_runtime_window_inputs(",
+        "execute_runtime_window(",
+        "kRuntimeWindowBarrierInputInjection",
+        "kRuntimeWindowBarrierWindowCommit",
+        "kRuntimeWindowBarrierExport",
+        "enumerate_wp10_maintained_stage_node_manifests()"
+      ]
+    },
+    {
+      "path": "src/runtime/contracts/stage_node_manifest_registry.h",
+      "classification": "maintained_spine",
+      "owner": "WP16-B",
+      "next_gate": "WP16-B Clock-Domain Enforcement And Merge Trace",
+      "reason": "Authoritative registry already separates maintained scheduler truth from compatibility and diagnostics nodes.",
+      "evidence_markers": [
+        "p7.fire_control_launch.v1",
+        "p9.effects_damage.v1",
+        "p10.observation_export.v1",
+        "p7.launch_request_adapter_compat.v1",
+        "p10.observation_trace_diagnostics.v1",
+        "enumerate_wp10_maintained_stage_node_manifests()"
+      ]
+    },
+    {
+      "path": "tests/runtime/facade/test_runtime_facade_window_loop_injection.py",
+      "classification": "maintained_spine",
+      "owner": "WP16-B",
+      "next_gate": "WP16-B Clock-Domain Enforcement And Merge Trace",
+      "reason": "Focused test already proves admission, barrier ordering, and selected node/export clues on the maintained slice.",
+      "evidence_markers": [
+        "test_runtime_facade_exposes_wp10_window_loop_api",
+        "test_runtime_window_coordinator_classifies_requests_and_records_visibility",
+        "p10.observation_export.v1",
+        "\"export\""
+      ]
+    },
+    {
+      "path": "tests/runtime/bindings/test_bindings_engagement_surface.py",
+      "classification": "maintained_spine",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Binding coverage already anchors maintained export fields and dedicated diagnostics export on the facade surface.",
+      "evidence_markers": [
+        "export_diagnostics_traces",
+        "diagnostics_provenance",
+        "world_truth_diagnostics",
+        "\"diagnostics_only\""
+      ]
+    },
+    {
+      "path": "src/runtime/facade/runtime_facade.h",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Public facade still carries the selected window/export APIs alongside the migration-period runtime escape hatch.",
+      "evidence_markers": [
+        "RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);",
+        "WorldBatchRuntime& runtime() noexcept;",
+        "Compatibility escape hatch for diagnostics and legacy adapters only."
+      ]
+    },
+    {
+      "path": "src/runtime/facade/runtime_facade.cpp",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Implementation contains the maintained export chain, but still mixes it with broad compatibility helpers and diagnostics shaping.",
+      "evidence_markers": [
+        "RuntimeWindowResult RuntimeFacade::run_wp10_window",
+        "return execute_runtime_window(",
+        "p10.observation_export.v1",
+        "diagnostics_trace_surface_not_maintained_decision_path"
+      ]
+    },
+    {
+      "path": "python/rl/runtime/world_batch/adapter.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Centralized adapter still falls back to RuntimeFacade.runtime() or raw WorldBatchRuntime when facade coverage is incomplete.",
+      "evidence_markers": [
+        "self._compat_runtime = self.facade.runtime()",
+        "ef_py.WorldBatchRuntime",
+        "export_observation_packet",
+        "step_worlds"
+      ]
+    },
+    {
+      "path": "python/rl/runtime/world_batch_vec_env.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Maintained training entrypoint reads facade-shaped packets, but stepping still routes through compatibility batch methods instead of the selected window API.",
+      "evidence_markers": [
+        "self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)",
+        "def batch_runtime(self):",
+        "self._runtime_compat",
+        "read_observation_packet"
+      ]
+    },
+    {
+      "path": "python/rl/runtime/world_batch/runtime_access.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Thin access wrapper still forwards private vec-env step/read helpers without explicit runtime-window admission evidence.",
+      "evidence_markers": [
+        "class WorldBatchVecEnvAccess:",
+        "self._world_vec._step_runtime_worlds(world_indices)",
+        "self._world_vec._set_pilot_actions_batch(assignments)"
+      ]
+    },
+    {
+      "path": "python/rl/runtime/world_batch/compat.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-D",
+      "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
+      "reason": "Compatibility view deliberately keeps batch_runtime-style calls alive while maintained replacements are still migrating.",
+      "evidence_markers": [
+        "class RuntimeCompatibilityView:",
+        "Compatibility-only view for callers that still expect `vec_env.batch_runtime`.",
+        "def step_worlds"
+      ]
+    },
+    {
+      "path": "python/rl/runtime/leader_world_batch_runtime.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Leader execution runtime avoids raw world handles, but still batches step/read flows through compatibility world-batch access.",
+      "evidence_markers": [
+        "WorldBatchVecEnvAccess",
+        "def batch_runtime(self):",
+        "return self.world_vec.batch_runtime",
+        "leader_window_runtime"
+      ]
+    },
+    {
+      "path": "python/rl/runtime/single_world_batch_runtime.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Single-world execution wrapper directly stages actions, steps worlds, and reads truth/instruments outside the selected runtime-window seam.",
+      "evidence_markers": [
+        "self.access.set_pilot_actions_batch([assignment])",
+        "self.access.step_worlds([env_idx])",
+        "self.access.get_agent_observations_batch(refs)"
+      ]
+    },
+    {
+      "path": "python/rl/runtime/leader_window_runtime.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Leader decision window orchestration is still Python-local and not yet delegated to a facade-owned runtime window contract.",
+      "evidence_markers": [
+        "class LeaderWindowRuntimeAdapter:",
+        "Compatibility boundary for one leader decision window.",
+        "class LocalLeaderWindowRuntime"
+      ]
+    },
+    {
+      "path": "src/runtime/contracts/platform_capability_contracts.h",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-D",
+      "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
+      "reason": "Spawn materialization still preserves compatibility request kinds and compatibility materialization strategies.",
+      "evidence_markers": [
+        "kPlatformSpawnRequestKindTypeNameCompatibility",
+        "kPlatformMaterializationStrategyFactoryCompatibility",
+        "compatibility_path_preserved = true",
+        "resolved_spawn_plan_requires_type_name_compatibility_path"
+      ]
+    },
+    {
+      "path": "src/core/engine/world_batch_runtime.h",
+      "classification": "deprecated_candidate",
+      "owner": "WP16-D",
+      "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
+      "reason": "Public raw owner exposes world(), spawn/setup, direct step, and direct observation methods that bypass runtime-window and facade evidence.",
+      "evidence_markers": [
+        "SimulationKernel& world(size_t index);",
+        "void step_batch();",
+        "std::vector<uint64_t> spawn_units_batch",
+        "std::vector<AgentObservation> get_agent_observations_batch"
+      ]
+    },
+    {
+      "path": "src/core/engine/world_batch_runtime.cpp",
+      "classification": "deprecated_candidate",
+      "owner": "WP16-D",
+      "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
+      "reason": "Underlying implementation remains necessary, but direct caller ownership should shrink behind explicit compatibility gates.",
+      "evidence_markers": [
+        "SimulationKernel& WorldBatchRuntime::world(size_t index)",
+        "uint64_t spawn_from_request(",
+        "void WorldBatchRuntime::reset_batch",
+        "void WorldBatchRuntime::step_batch"
+      ]
+    },
+    {
+      "path": "tests/world_batch/test_world_batch_runtime.py",
+      "classification": "deprecated_candidate",
+      "owner": "WP16-D",
+      "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
+      "reason": "Focused test still treats raw WorldBatchRuntime as a first-class caller surface and therefore documents the bypass that later deprecation work must bound.",
+      "evidence_markers": [
+        "batch = ef_py.WorldBatchRuntime(3)",
+        "test_world_batch_runtime_worker_thread_controls",
+        "step_execution_episode_results_batch"
+      ]
+    },
+    {
+      "path": "tests/world_batch/test_world_batch_vec_env.py",
+      "classification": "compatibility_wrapper",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Current vec-env tests prove behavior through the compatibility batch view instead of the selected runtime-window evidence seam.",
+      "evidence_markers": [
+        "WorldBatchVecEnv(",
+        "vec_env.batch_runtime.worker_threads()",
+        "test_world_batch_vec_env_steps_and_auto_resets"
+      ]
+    },
+    {
+      "path": "tests/runtime/engagement/test_facade_engagement_export.py",
+      "classification": "diagnostics_only",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Assertions are useful, but the fixture still synthesizes launch/damage through RuntimeFacade.runtime().world() escape hatches.",
+      "evidence_markers": [
+        "world = facade.runtime().world(0)",
+        "p10.observation_export.v1",
+        "\"diagnostics_only\"",
+        "diagnostics_trace_surface_not_maintained_decision_path"
+      ]
+    },
+    {
+      "path": "tests/runtime/engagement/test_diagnostics_trace_contract.py",
+      "classification": "diagnostics_only",
+      "owner": "WP16-D",
+      "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
+      "reason": "Synthetic trace-chain contract check is diagnostics shaping, not maintained runtime-spine execution.",
+      "evidence_markers": [
+        "trace.barrier_id = \"export\"",
+        "trace.source_node_id = \"p7.fire_control_launch.v1\"",
+        "trace.export_node_id = \"p10.observation_export.v1\""
+      ]
+    },
+    {
+      "path": "tests/diagnostics/test_diagnostics_import_order.py",
+      "classification": "diagnostics_only",
+      "owner": "WP16-D",
+      "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
+      "reason": "Import-order coverage protects diagnostics tooling only and does not prove maintained runtime-spine behavior.",
+      "evidence_markers": [
+        "tools.diagnostics.common",
+        "test_common_import_prefers_repo_build_ef_py",
+        "WorldBatchRuntime"
+      ]
+    },
+    {
+      "path": "python/scenario/compiler/generation_request.py",
+      "classification": "blocked",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Scenario generation request validation fail-closes correctly, but it still has no maintained runtime-spine packet/barrier binding to the selected slice.",
+      "evidence_markers": [
+        "SCENARIO_GENERATION_REQUEST_CONTRACT_VERSION = \"wp15.scenario_generation_request.v1\"",
+        "replay_envelope_ref",
+        "branch_point_ref",
+        "authoritative_state_mutation_allowed: bool = False"
+      ]
+    },
+    {
+      "path": "src/runtime/contracts/counterfactual_replay_contracts.h",
+      "classification": "blocked",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Counterfactual admission is still metadata-only and explicitly restore-unsupported, so it cannot yet claim maintained runtime-spine execution.",
+      "evidence_markers": [
+        "kReplayRestoreSupportBoundaryUnsupported",
+        "kWorldlineBranchSupportStateMetadataOnly",
+        "kCounterfactualRequestRejectionRestoreUnsupportedBoundary",
+        "kScenarioGenerationArtifactKindRequestMetadata"
+      ]
+    },
+    {
+      "path": "tests/training/test_cooperative_diagnostics_callback.py",
+      "classification": "unknown_requires_owner",
+      "owner": "WP16-C",
+      "next_gate": "WP16-C Facade And Batch Path Spine Migration",
+      "reason": "Training diagnostics metrics are real consumers, but this path does not yet name packet ids, barrier ids, or replay/trace refs strongly enough to classify safely.",
+      "evidence_markers": [
+        "CMODiagnosticsCallback",
+        "coop_diag/world_episodes_done_window",
+        "hmoe/sub/nav/route"
+      ]
+    }
+  ]
+}

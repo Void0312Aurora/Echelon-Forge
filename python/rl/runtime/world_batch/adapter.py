@@ -25,15 +25,154 @@ class _ObservationPacketCompat:
     pilot_reports: list[Any]
 
 
+@dataclass
+class RuntimeWindowEvidence:
+    """Consumer-facing view of the selected facade window evidence slice."""
+
+    window_result: Any
+    barrier_trace: list[Any]
+    visibility_trace: list[Any]
+    executed_nodes: list[Any]
+    injected_inputs: list[Any]
+    observation_packet: Any
+    engagement_packet: Any
+    diagnostics_traces: list[Any]
+    cadence_reason: str
+    uses_compat_fallback: bool = False
+
+
 class RuntimeFacadeAdapter:
     """Centralized compatibility adapter for facade-shaped runtime access."""
 
     def __init__(self, world_count: int):
         self.facade = ef_py.RuntimeFacade(int(world_count)) if hasattr(ef_py, "RuntimeFacade") else None
         self._compat_runtime = self.facade.runtime() if self.facade is not None else ef_py.WorldBatchRuntime(int(world_count))
+        self._last_window_evidence: RuntimeWindowEvidence | None = None
 
     def _batch_target(self):
         return self.facade if self.facade is not None else self._compat_runtime
+
+    @property
+    def last_window_evidence(self) -> RuntimeWindowEvidence | None:
+        return self._last_window_evidence
+
+    def clear_last_window_evidence(self) -> None:
+        self._last_window_evidence = None
+
+    def supports_runtime_window_api(self) -> bool:
+        return bool(
+            self.facade is not None
+            and hasattr(self.facade, "run_wp10_window")
+            and hasattr(ef_py, "RuntimeWindowRequest")
+            and hasattr(ef_py, "RuntimeWindowActionRequest")
+        )
+
+    def _store_window_evidence(
+        self,
+        result: Any,
+        *,
+        cadence_reason: str,
+        uses_compat_fallback: bool,
+    ) -> RuntimeWindowEvidence:
+        evidence = RuntimeWindowEvidence(
+            window_result=result,
+            barrier_trace=list(getattr(result, "barrier_trace", []) or []),
+            visibility_trace=list(getattr(result, "visibility_trace", []) or []),
+            executed_nodes=list(getattr(result, "executed_nodes", []) or []),
+            injected_inputs=list(getattr(result, "injected_inputs", []) or []),
+            observation_packet=getattr(result, "observation_packet", None),
+            engagement_packet=getattr(result, "engagement_packet", None),
+            diagnostics_traces=list(getattr(result, "diagnostics_traces", []) or []),
+            cadence_reason=str(cadence_reason),
+            uses_compat_fallback=bool(uses_compat_fallback),
+        )
+        self._last_window_evidence = evidence
+        return evidence
+
+    def run_maintained_window(
+        self,
+        *,
+        world_index: int,
+        entity_id: int,
+        pilot_action: Any | None = None,
+        mission_command: Any | None = None,
+        source_time_s: float | None = None,
+        window_id: str | None = None,
+        input_snapshot_version: str | None = None,
+        source_layer: str = "training_policy",
+        include_engagement: bool = True,
+        include_diagnostics: bool = True,
+    ) -> RuntimeWindowEvidence | None:
+        if not self.supports_runtime_window_api():
+            self._last_window_evidence = None
+            return None
+
+        request = ef_py.RuntimeWindowRequest()
+        request.window_id = (
+            str(window_id)
+            if window_id is not None and str(window_id).strip()
+            else f"window:facade_batch:{int(world_index)}:{int(entity_id)}"
+        )
+        request.world_id = int(world_index)
+        request.source_time_s = float(0.0 if source_time_s is None else source_time_s)
+
+        observation_request = ef_py.ObservationBatchRequest()
+        observation_ref = ef_py.WorldEntityRef()
+        observation_ref.world_index = int(world_index)
+        observation_ref.entity_id = int(entity_id)
+        observation_request.refs = [observation_ref]
+        observation_request.include_agent_observations = True
+        observation_request.include_instrument_states = True
+        observation_request.include_mission_commands = False
+        observation_request.include_task_orders = False
+        observation_request.include_leader_intents = False
+        observation_request.include_pilot_reports = False
+        request.observation_request = observation_request
+
+        engagement_request = ef_py.EngagementBatchRequest()
+        engagement_ref = ef_py.EngagementEntityRef()
+        engagement_ref.world_index = int(world_index)
+        engagement_ref.entity_id = int(entity_id)
+        engagement_request.refs = [engagement_ref]
+        engagement_request.trace_ids = [1]
+        request.engagement_request = engagement_request
+        request.export_observation = True
+        request.export_engagement = bool(include_engagement)
+        request.export_diagnostics = bool(include_diagnostics)
+
+        if pilot_action is not None or mission_command is not None:
+            action_request = ef_py.RuntimeWindowActionRequest()
+            action_request.source_layer = str(source_layer)
+            action_request.input_snapshot_version = str(
+                input_snapshot_version
+                if input_snapshot_version is not None and str(input_snapshot_version).strip()
+                else f"obs:{int(world_index)}:{int(entity_id)}"
+            )
+            action_request.action_intent.source_id = (
+                f"{action_request.source_layer}:{int(world_index)}:{int(entity_id)}"
+            )
+            action_request.action_intent.effective_time_s = request.source_time_s
+            action_request.action_intent.valid_until_s = request.source_time_s + 1.0
+            action_request.action_intent.target.world_index = int(world_index)
+            action_request.action_intent.target.entity_id = int(entity_id)
+            action_request.action_intent.action_family = "direct_control"
+            action_request.action_intent.merge_policy = "last_write_wins"
+            action_request.action_intent.action_interface.kind = "PilotActionAssignmentCompat"
+            action_request.action_intent.action_interface.payload_type = "pilot_action"
+            if pilot_action is not None:
+                action_request.action_intent.has_pilot_action = True
+                action_request.action_intent.pilot_action = pilot_action
+            if mission_command is not None:
+                action_request.action_intent.has_mission_command = True
+                action_request.action_intent.mission_command = mission_command
+            request.action_requests = [action_request]
+
+        result = self.facade.run_wp10_window(request)
+        return self._store_window_evidence(
+            result,
+            cadence_reason="runtime_cadence_not_implemented_wp16b_dependency",
+            uses_compat_fallback=False,
+        )
 
     def world_count(self) -> int:
         return int(self._batch_target().world_count())
@@ -271,9 +410,11 @@ class RuntimeFacadeAdapter:
         return list(self._batch_target().get_mission_commands_batch(list(refs)))
 
     def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
+        self._last_window_evidence = None
         self._batch_target().set_pilot_actions_batch(list(assignments))
 
     def step_batch(self) -> None:
+        self._last_window_evidence = None
         self._batch_target().step_batch()
 
     def prime_execution_episode_batch(self, refs: Sequence[Any], states: Sequence[Any]) -> None:
@@ -336,6 +477,7 @@ class RuntimeFacadeAdapter:
         return self.export_execution_episode_states(refs)
 
     def step_worlds(self, world_indices: Sequence[int]) -> None:
+        self._last_window_evidence = None
         self._compat_runtime.step_worlds([int(index) for index in world_indices])
 
     def set_mission_commands_batch(self, assignments: Sequence[Any]) -> None:

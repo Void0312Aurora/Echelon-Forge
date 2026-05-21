@@ -67,11 +67,16 @@ The active design conclusion is:
     and counterfactual/experiment generation. Phases 1-5 are now accepted as
     `WP10`, `WP11`, `WP12`, `WP13`, and `WP14`; Phase 6 is now accepted as
     `WP15`.
-15. When this subproject is split across subagents or workers, follow the
+15. After the post-WP9 route, the next architecture-optimization phase is
+    `WP16 Runtime Spine Consolidation`: turn the accepted boundaries from
+    `WP10-WP15` into the maintained default runtime path, close remaining
+    bypasses, and promote `GAP-9` clock-domain enforcement from deferred
+    advisory status into the selected runtime-spine slice.
+16. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
-16. Commit messages for implementation closure should use capability/result
+17. Commit messages for implementation closure should use capability/result
     language and avoid internal work-package labels such as `WP13` or `WP14`.
 
 ## Work Packages
@@ -97,6 +102,60 @@ The active design conclusion is:
 | `WP13 Backend Fidelity Expansion` | complete / accepted | Implement Phase 4 of the post-WP9 route: make runtime capabilities, backend profiles, parity budgets, and fidelity profile requests queryable, rejectable, and evidence-backed without promoting unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md), [capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md), [backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md), [parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md), [fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md), [facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md), [integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md) |
 | `WP14 Capability Composition` | complete / accepted | Implement Phase 5 of the post-WP9 route: move existing type-name setup toward typed `Capability` / `CapabilityBundle` composition through compatibility-preserving resolved spawn plans, additive facade/setup DTOs, and strict implementation gates without a big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md), [capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md), [content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md), [spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md), [additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md), [capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md), [compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md), [acceptance review](../review/wp14_capability_composition_acceptance_review_20260521.md) |
 | `WP15 Counterfactual Experiment Generation` | complete / accepted | Implement Phase 6 of the post-WP9 route: add replay envelopes, branch point and worldline metadata, counterfactual admission, scenario/adversary generation request surfaces, and experiment evidence ancestry without claiming full snapshot/restore or maintained rollout execution | [counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md), [replay envelope and branch point](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.md), [worldline branch metadata](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.md), [counterfactual admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.md), [scenario/adversary generation](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.md), [experiment evidence bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.md), [integration handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.md), [acceptance review](../review/wp15_counterfactual_experiment_generation_acceptance_review_20260521.md) |
+| `WP16 Runtime Spine Consolidation` | complete / accepted | Complete the post-WP15 architecture optimization phase: inventory bypasses, define the maintained runtime spine, enforce the first strict `GAP-9` clock-domain cadence slice, migrate facade/batch consumers, classify legacy paths, and reduce documentation-sync drag through generated closure summaries while preserving the recorded residuals | [runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md), [runtime spine inventory](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md), [clock-domain enforcement](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md), [facade/batch migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md), [legacy compatibility](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md), [documentation automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md), [integration handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md), [acceptance review](../review/wp16_runtime_spine_consolidation_acceptance_review_20260521.md) |
+
+## WP16 Runtime Spine Consolidation
+
+Output:
+
+- [WP16 Runtime Spine Consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md)
+- [WP16-A Runtime Spine Inventory And Bypass Map](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md)
+- [WP16-B Clock-Domain Enforcement And Merge Trace](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md)
+- [WP16-C Facade And Batch Path Spine Migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md)
+- [WP16-D Legacy Path Deprecation And Compatibility Gates](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md)
+- [WP16-E Generated Documentation And Closure Automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md)
+- [WP16-F Integration And Acceptance Handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md)
+
+WP16 opens the architecture-optimization phase after the post-WP9 route is
+complete. It consumes WP10-WP15 boundaries and turns them into a maintained
+runtime spine. WP16 is accepted as the selected-slice runtime-spine
+consolidation increment, and the residual register is preserved in the WP16
+acceptance review:
+
+```text
+setup/admission request
+  -> scheduling-window input injection
+  -> clock-domain trigger and skip decision
+  -> manifest-derived node execution
+  -> barrier and event evidence
+  -> observation/facade export
+  -> training, scenario, and experiment consumer
+```
+
+WP16 workstream map:
+
+- `WP16-A Runtime Spine Inventory And Bypass Map` inventories maintained,
+  compatibility, diagnostics-only, deprecated, blocked, and unknown runtime
+  paths before code migration starts.
+- `WP16-B Clock-Domain Enforcement And Merge Trace` promotes `GAP-9` into the
+  selected runtime-spine slice so non-triggered clock domains skip, defer, or
+  reject with evidence instead of executing silently.
+- `WP16-C Facade And Batch Path Spine Migration` routes maintained facade,
+  batch, training, scenario, and experiment consumers toward the accepted
+  runtime-window evidence spine.
+- `WP16-D Legacy Path Deprecation And Compatibility Gates` classifies raw
+  runtime, direct state, legacy spawn, diagnostics, and compatibility paths with
+  guard tests and replacement evidence.
+- `WP16-E Generated Documentation And Closure Automation` reduces manual
+  README/review/index synchronization by adding machine-readable status and
+  generated closure-summary hints without replacing acceptance authority.
+- `WP16-F Integration And Acceptance Handoff` is the serial validation,
+  residual, acceptance-review, README/route, and bilingual closure lane after
+  A-E become mergeable.
+
+WP16 is complete / accepted. The implementation boundary remains narrow:
+global scheduler rewrite, full multi-rate support, public legacy API deletion,
+and maintained independent-domain merge success are still out of scope.
 
 ## WP15 Counterfactual Experiment Generation
 

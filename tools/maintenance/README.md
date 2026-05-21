@@ -25,8 +25,9 @@ Current maintained helpers:
 - [wp_doc_closure_audit.py](wp_doc_closure_audit.py)
   - Audits simulation-architecture WP task/review closure, including required
     companions, acceptance review links, and WP-scoped Markdown link health.
-  - Emits a read-only checklist for a closure subagent instead of rewriting
-    README or review indexes on the main implementation path.
+  - Emits a read-only checklist or a generated closure summary for a closure
+    subagent instead of rewriting README or review indexes on the main
+    implementation path.
 
 Maintenance guidance:
 

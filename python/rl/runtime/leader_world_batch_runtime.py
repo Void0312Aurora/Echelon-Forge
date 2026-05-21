@@ -205,6 +205,10 @@ class LeaderWorldBatchExecutionRuntimeGroup:
     def batch_runtime(self):
         return self.world_vec.batch_runtime
 
+    @property
+    def last_runtime_window_evidence(self):
+        return self.access.last_runtime_window_evidence
+
     def max_decision_interval_steps(self, env_indices: Sequence[int] | None = None) -> int:
         if env_indices is None:
             target_indices = self.leader_env_indices()

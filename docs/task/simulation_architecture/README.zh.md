@@ -49,11 +49,15 @@
     information/agency enforcement、backend/fidelity、capability composition 与
     counterfactual/experiment generation。Phase 1-5 现已验收为 `WP10`、`WP11`、
     `WP12`、`WP13` 与 `WP14`；Phase 6 现已验收为 `WP15`。
-15. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
+15. post-WP9 路线完成后，下一步架构优化阶段是 `WP16 Runtime Spine
+    Consolidation`：把 `WP10-WP15` 已验收边界转成 maintained default runtime
+    path，关闭 remaining bypasses，并把 `GAP-9` clock-domain enforcement 从延后
+    的 advisory 状态推进到 selected runtime-spine slice。
+16. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
     拆写同一张规范性表格。
-16. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
+17. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
     或 `WP14` 这类 internal work-package labels。
 
 ## 工作包
@@ -79,6 +83,56 @@
 | `WP13 Backend Fidelity Expansion` | complete / accepted | 实现 post-WP9 路线 Phase 4：让 runtime capabilities、backend profiles、parity budgets 与 fidelity profile requests 可查询、可拒绝、可证据化，同时不晋级 unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)、[capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)、[backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)、[parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)、[fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)、[facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)、[integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) |
 | `WP14 Capability Composition` | complete / accepted | 实现 post-WP9 路线 Phase 5：在保持 type-name 兼容的前提下，通过 resolved spawn plans、additive facade/setup DTO 与严格实现 gate，把现有 setup 推向 typed `Capability` / `CapabilityBundle` composition，避免 big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)、[capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)、[content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)、[spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)、[additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)、[capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)、[compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp14_capability_composition_acceptance_review_20260521.zh.md) |
 | `WP15 Counterfactual Experiment Generation` | complete / accepted | 实现 post-WP9 路线 Phase 6：添加 replay envelopes、branch point 与 worldline metadata、counterfactual admission、scenario/adversary generation request surfaces 与 experiment evidence ancestry，同时不声明 full snapshot/restore 或 maintained rollout execution | [counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)、[replay envelope and branch point](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)、[worldline branch metadata](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)、[counterfactual admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)、[scenario/adversary generation](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)、[experiment evidence bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)、[integration handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md) |
+| `WP16 Runtime Spine Consolidation` | complete / accepted | 完成 post-WP15 架构优化阶段：盘点 bypasses、定义 maintained runtime spine、执行第一条严格 `GAP-9` clock-domain cadence slice、迁移 facade/batch consumers、分类 legacy paths，并通过 generated closure summaries 降低文档同步拖拽，同时保留记录下来的 residuals | [runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)、[runtime spine inventory](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)、[clock-domain enforcement](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)、[facade/batch migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)、[legacy compatibility](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)、[documentation automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)、[integration handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md) |
+
+## WP16 Runtime Spine Consolidation
+
+产出：
+
+- [WP16 Runtime Spine Consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)
+- [WP16-A Runtime Spine Inventory And Bypass Map](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)
+- [WP16-B Clock-Domain Enforcement And Merge Trace](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)
+- [WP16-C Facade And Batch Path Spine Migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)
+- [WP16-D Legacy Path Deprecation And Compatibility Gates](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)
+- [WP16-E Generated Documentation And Closure Automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)
+- [WP16-F Integration And Acceptance Handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)
+
+WP16 在 post-WP9 路线完成后开启 architecture-optimization phase。它消费
+WP10-WP15 边界，并把它们转成 maintained runtime spine。WP16 现已作为
+selected-slice runtime-spine consolidation 增量验收，residual register 记录在
+WP16 验收审查中：
+
+```text
+setup/admission request
+  -> scheduling-window input injection
+  -> clock-domain trigger and skip decision
+  -> manifest-derived node execution
+  -> barrier and event evidence
+  -> observation/facade export
+  -> training, scenario, and experiment consumer
+```
+
+WP16 工作流地图：
+
+- `WP16-A Runtime Spine Inventory And Bypass Map` 在代码迁移前盘点 maintained、
+  compatibility、diagnostics-only、deprecated、blocked 与 unknown runtime paths。
+- `WP16-B Clock-Domain Enforcement And Merge Trace` 把 `GAP-9` 推进到 selected
+  runtime-spine slice，使未触发 clock domain 以 evidence 形式 skip、defer 或 reject，
+  而不是静默执行。
+- `WP16-C Facade And Batch Path Spine Migration` 将 maintained facade、batch、
+  training、scenario 与 experiment consumers 迁向已验收 runtime-window evidence spine。
+- `WP16-D Legacy Path Deprecation And Compatibility Gates` 用 guard tests 与
+  replacement evidence 分类 raw runtime、direct state、legacy spawn、diagnostics 与
+  compatibility paths。
+- `WP16-E Generated Documentation And Closure Automation` 通过 machine-readable status
+  与 generated closure-summary hints 减少 README/review/index 手工同步，同时不替代
+  acceptance authority。
+- `WP16-F Integration And Acceptance Handoff` 是 A-E mergeable 后的串行 validation、
+  residual、acceptance-review、README/route 与 bilingual closure lane。
+
+WP16 已完成并验收。实现边界保持收窄：global scheduler rewrite、full
+multi-rate support、public legacy API 删除，以及 maintained independent-domain
+merge success 仍在范围外。
 
 ## WP15 Counterfactual Experiment Generation
 

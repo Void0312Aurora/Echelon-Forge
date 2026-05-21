@@ -2,7 +2,9 @@
 
 状态：`2026-05-21` 路线选择规划；Phase 1 已作为 `WP10` 验收，Phase 2 已作为
 `WP11` 验收，Phase 3 已作为 `WP12` 验收，Phase 4 已作为 `WP13` 验收，
-Phase 5 已作为 `WP14` 验收，Phase 6 已作为 `WP15` 验收。
+Phase 5 已作为 `WP14` 验收，Phase 6 已作为 `WP15` 验收。post-WP15 follow-on
+已开启为 `WP16 Runtime Spine Consolidation`，且 WP16 已作为 selected-slice
+runtime-spine consolidation 增量验收。
 
 语言版本：
 
@@ -18,6 +20,7 @@ Phase 5 已作为 `WP14` 验收，Phase 6 已作为 `WP15` 验收。
 - [WP9 contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md)
 - [WP14 capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)
 - [WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)
+- [WP16 runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)
 - [WP closure lane policy](../../standards/governance/wp_closure_lane_policy.zh.md)
 
 ## 1. 目的
@@ -29,7 +32,10 @@ backend-profile policy、learning-face vocabulary，以及延后的 DTO/infrastr
 
 本文固定路线顺序，把 Phase 1 锚定为 `WP10`，Phase 2 锚定为 `WP11`，把
 Phase 3 锚定为 `WP12`，将 Phase 4 验收为 `WP13`，并将 Phase 5 验收为
-`WP14`，以及将 Phase 6 验收为 `WP15`。它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
+`WP14`，以及将 Phase 6 验收为 `WP15`。这些阶段现已完成。下一步
+architecture-optimization action 已开启为 `WP16 Runtime Spine Consolidation`：
+把已验收边界变成 maintained default path，将 `GAP-9` clock-domain enforcement
+推进到 selected runtime-spine slice，并通过 generated closure summaries 降低文档同步拖拽。WP16 已作为 selected-slice runtime-spine consolidation 增量验收，residual register 记录在验收审查中。它定义哪个方向必须先做、哪些方向应等待，以及什么证据才算真正的架构推进。
 
 ## 2. 路线决策
 
@@ -234,10 +240,42 @@ Phase 6 counterfactual/experiment-generation seed：
 该 counterfactual/experiment-generation seed 现已验收为
 [WP15 counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)。
 
+## 5.1 Post-WP15 Runtime Spine Consolidation
+
+post-WP9 路线已经完成。下一阶段不应横向扩展另一批词汇，而应把已验收边界变成默认运行路径。
+
+该 follow-on phase 现已开启为
+[WP16 runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)。
+
+WP16 路线：
+
+- 盘点仍绕过 WP10-WP15 已验收边界的 runtime/facade/batch/scenario/training/experiment paths；
+- 定义 maintained runtime spine：
+  `setup/admission -> input injection -> clock-domain trigger/skip -> manifest
+  execution -> barrier/event evidence -> facade export -> consumer`；
+- 将 `GAP-9` 从 deferred advisory status 推进为 strict selected-slice cadence gate：
+  未触发的 maintained nodes 必须以 visible evidence 形式 skip、defer 或 reject；
+- 在不先破坏兼容性的前提下，把 selected facade、world-batch、training、scenario 与
+  experiment consumers 迁向 spine；
+- 用 tests 与 replacement evidence 将 legacy paths 分类为 preserved、wrapped、
+  deprecated、removed 或 diagnostics-only；
+- 添加 machine-readable status 或 generated closure-summary hints，使文档同步不再阻塞
+  implementation `Mergeable` 状态。
+
+WP16 保持有边界：
+
+- 不声明 global scheduler rewrite 或 full multi-rate runtime support；
+- 在 compatibility gates 与 replacement evidence 存在前，不移除 public legacy APIs；
+- 在缺少 deterministic `clock_merge_policy`、source-time、snapshot、target-window 与
+  barrier-order evidence 前，不晋升 independent clock domains；
+- 不让 generated documentation 替代人工 acceptance decisions。
+- 不声明 maintained independent-domain merge success path。
+
 ## 6. 第一个实现型 WP 的非目标
 
 - 不重写整个 scheduler。
-- 在 window-loop skeleton 证明前，不声明严格 clock-domain enforcement。
+- 在 window-loop skeleton 证明前，不声明严格 clock-domain enforcement。WP10-WP15 验收后，
+  该条件仅对 selected WP16 runtime-spine slice 满足，不代表全局满足。
 - 不把 exact GPU、resident-state 或 multi-fidelity execution 晋升为 maintained。
 - 不把所有 platform spawning 迁到 capability composition。
 - 不让 typed capability spawning 超出已验收 WP14 compatibility bridge 与 additive
@@ -284,3 +322,8 @@ capability contracts、content/factory lowering、spawn resolution、facade setu
 branch points、worldline metadata、counterfactual admission、generated inputs、
 backend/fidelity refs、capability refs 与 experiment evidence 如何附着，同时避免暗示
 unsupported snapshot/restore，或把 scores 变成 truth/support claims。
+
+对于 `WP16`，思考预算最高的是 scheduler/default-path seam：决定 strict
+clock-domain trigger/skip behavior、facade/batch migration、legacy compatibility
+与 generated closure automation 如何附着，同时避免 global scheduler rewrite 或意外
+API break。

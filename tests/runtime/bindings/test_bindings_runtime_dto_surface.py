@@ -189,6 +189,43 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             ),
         )
 
+    def test_runtime_window_request_and_result_public_fields_cover_wp16_spine_evidence(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.RuntimeWindowActionRequest()),
+            (
+                "action_intent",
+                "input_snapshot_version",
+                "source_layer",
+            ),
+        )
+        self.assertTupleEqual(
+            public_fields(ef_py.RuntimeWindowRequest()),
+            (
+                "action_requests",
+                "engagement_request",
+                "export_diagnostics",
+                "export_engagement",
+                "export_observation",
+                "observation_request",
+                "source_time_s",
+                "window_id",
+                "world_id",
+            ),
+        )
+        self.assertTupleEqual(
+            public_fields(ef_py.RuntimeWindowResult()),
+            (
+                "barrier_trace",
+                "context",
+                "diagnostics_traces",
+                "engagement_packet",
+                "executed_nodes",
+                "injected_inputs",
+                "observation_packet",
+                "visibility_trace",
+            ),
+        )
+
     def test_packet_provenance_nested_fields_round_trip(self) -> None:
         observation_packet = ef_py.ObservationBatchPacket()
         observation_packet.snapshot_version = 12

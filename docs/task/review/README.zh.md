@@ -21,6 +21,7 @@
 - [WP13 Backend Fidelity Expansion 验收审查 2026-05-20](wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) ([English](wp13_backend_fidelity_expansion_acceptance_review_20260520.md))
 - [WP14 Capability Composition 验收审查 2026-05-21](wp14_capability_composition_acceptance_review_20260521.zh.md) ([English](wp14_capability_composition_acceptance_review_20260521.md))
 - [WP15 Counterfactual Experiment Generation 验收审查 2026-05-21](wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md) ([English](wp15_counterfactual_experiment_generation_acceptance_review_20260521.md))
+- [WP16 Runtime Spine Consolidation 验收审查 2026-05-21](wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md) ([English](wp16_runtime_spine_consolidation_acceptance_review_20260521.md))
 
 ## 归档
 

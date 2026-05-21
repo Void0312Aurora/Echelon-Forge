@@ -21,6 +21,7 @@ Status: active review record.
 - [WP13 Backend Fidelity Expansion Acceptance Review 2026-05-20](wp13_backend_fidelity_expansion_acceptance_review_20260520.md) ([中文](wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md))
 - [WP14 Capability Composition Acceptance Review 2026-05-21](wp14_capability_composition_acceptance_review_20260521.md) ([中文](wp14_capability_composition_acceptance_review_20260521.zh.md))
 - [WP15 Counterfactual Experiment Generation Acceptance Review 2026-05-21](wp15_counterfactual_experiment_generation_acceptance_review_20260521.md) ([中文](wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md))
+- [WP16 Runtime Spine Consolidation Acceptance Review 2026-05-21](wp16_runtime_spine_consolidation_acceptance_review_20260521.md) ([中文](wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md))
 
 ## Archive
 

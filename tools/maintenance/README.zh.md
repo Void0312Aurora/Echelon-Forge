@@ -23,8 +23,8 @@
 - [wp_doc_closure_audit.py](wp_doc_closure_audit.py)
   - 审计 simulation-architecture WP task/review closure，包括必需伴生文件、
     acceptance review 链接和 WP 作用域内 Markdown 链接健康度。
-  - 输出只读清单供 closure subagent 使用，而不是让主实现路径手工重写
-    README 或 review index。
+  - 输出只读清单或生成 closure 摘要供 closure subagent 使用，而不是让主
+    实现路径手工重写 README 或 review index。
 
 维护指南：
 

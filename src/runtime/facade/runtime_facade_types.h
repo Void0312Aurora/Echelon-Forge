@@ -162,6 +162,18 @@ struct RuntimeWindowActionRequest {
     ActionIntentPacket action_intent{};
     std::string source_layer = "facade";
     std::string input_snapshot_version;
+    struct ClockDomainMetadata {
+        std::string source_clock_domain = "outer_window";
+        std::string relation = "nested";
+        std::string clock_merge_policy;
+        double source_time_s = 0.0;
+        bool has_source_time = false;
+        std::string source_snapshot_version;
+        std::string target_window_id;
+        std::vector<std::string> barrier_order;
+        bool diagnostics_only = false;
+        std::string diagnostics_reason;
+    } clock_domain_metadata{};
 };
 
 struct RuntimeWindowInputRecord {
@@ -194,9 +206,19 @@ struct RuntimeWindowVisibilityRecord {
 
 struct RuntimeWindowNodeExecutionRecord {
     std::string node_id;
+    std::string clock_domain;
     std::string read_snapshot_policy;
     std::string write_commit_policy;
     std::size_t visible_input_count = 0;
+    std::string execution_state = "skipped";
+    std::string decision_reason;
+    std::string trigger_source;
+    std::string decision_barrier_id;
+    std::string clock_merge_policy;
+    std::string source_snapshot_version;
+    double source_time_s = 0.0;
+    std::string target_window_id;
+    std::vector<std::string> barrier_order;
 };
 
 struct RuntimeWindowRequest {

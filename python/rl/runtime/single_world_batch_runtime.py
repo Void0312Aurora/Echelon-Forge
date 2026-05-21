@@ -68,6 +68,10 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
     def unwrapped(self):
         return self._unwrapped
 
+    @property
+    def last_runtime_window_evidence(self):
+        return self.access.last_runtime_window_evidence
+
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         _ = options
         return self.access.reset_single_world(0, seed=seed)
@@ -108,14 +112,43 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if collect_timing else 0.0
 
         step_t0 = time.perf_counter() if collect_timing else 0.0
-        self.access.set_pilot_actions_batch([assignment])
-        self.access.step_worlds([env_idx])
-        batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
+        source_time_s = float(getattr(handle.last_truth, "sim_time", 0.0) or 0.0)
+        window_evidence = None
+        if self.access.supports_runtime_window_api():
+            window_evidence = self.access.run_maintained_window(
+                world_index=int(env_idx),
+                entity_id=int(handle.agent_id),
+                pilot_action=assignment.action,
+                source_time_s=source_time_s,
+                window_id=f"single_world:{int(env_idx)}:{int(handle.steps)}",
+                input_snapshot_version=f"obs:{int(env_idx)}:{int(handle.steps)}",
+                source_layer="training_policy",
+                include_engagement=True,
+                include_diagnostics=True,
+            )
+        if window_evidence is None:
+            self.access.set_pilot_actions_batch([assignment])
+            self.access.step_worlds([env_idx])
+            batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
 
-        read_t0 = time.perf_counter() if collect_timing else 0.0
-        truth = self.access.get_agent_observations_batch(refs)[0]
-        inst = self.access.get_instrument_states_batch(refs)[0]
-        state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
+            read_t0 = time.perf_counter() if collect_timing else 0.0
+            truth = self.access.get_agent_observations_batch(refs)[0]
+            inst = self.access.get_instrument_states_batch(refs)[0]
+            state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
+        else:
+            batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
+            read_t0 = time.perf_counter() if collect_timing else 0.0
+            observation_packet = window_evidence.observation_packet
+            truth_list = list(getattr(observation_packet, "agent_observations", []) or [])
+            inst_list = list(getattr(observation_packet, "instrument_states", []) or [])
+            if not truth_list or not inst_list:
+                raise RuntimeError(
+                    "RuntimeFacade.run_wp10_window() did not return the maintained observation packet payload "
+                    "required by single-world training consumers"
+                )
+            truth = truth_list[0]
+            inst = inst_list[0]
+            state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
 
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
         handle.steps += 1
@@ -161,6 +194,59 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
             inst_now=inst,
             truth_now=truth,
         )
+        if window_evidence is not None:
+            engagement_barrier_id = ""
+            if window_evidence.engagement_packet is not None:
+                engagement_barrier_id = str(
+                    getattr(window_evidence.engagement_packet, "barrier_id", "") or ""
+                )
+            info["runtime_window_evidence"] = {
+                "barrier_ids": [
+                    str(getattr(record, "barrier_id", "") or "")
+                    for record in list(window_evidence.barrier_trace)
+                ],
+                "event_barrier_id": engagement_barrier_id,
+                "observation_barrier_id": str(
+                    getattr(window_evidence.observation_packet, "barrier_id", "") or ""
+                ),
+                "observation_provenance": str(
+                    getattr(
+                        getattr(window_evidence.observation_packet, "provenance", None),
+                        "source_label",
+                        "",
+                    )
+                    or ""
+                ),
+                "engagement_provenance": str(
+                    getattr(
+                        getattr(window_evidence.engagement_packet, "packet_provenance", None),
+                        "source_label",
+                        "",
+                    )
+                    or ""
+                ),
+                "diagnostics_provenance": str(
+                    getattr(
+                        getattr(window_evidence.engagement_packet, "diagnostics_provenance", None),
+                        "source_label",
+                        "",
+                    )
+                    or ""
+                ),
+                "cadence_reason": str(window_evidence.cadence_reason),
+                "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
+            }
+        else:
+            info["runtime_window_evidence"] = {
+                "barrier_ids": [],
+                "event_barrier_id": "",
+                "observation_barrier_id": "",
+                "observation_provenance": "",
+                "engagement_provenance": "",
+                "diagnostics_provenance": "",
+                "cadence_reason": "compatibility_fallback_world_batch_step_worlds_wp16c",
+                "uses_compat_fallback": True,
+            }
         if collect_timing:
             info["timing"] = {
                 "action_prepare_ms": float(action_prepare_ms),
