@@ -1,7 +1,7 @@
 # Ground Domain Bootstrap Plan
 
-Status: `2026-05-22` planning baseline; G0, G1, G2, and G3 accepted by
-main-thread integration. G4 is released for one bounded runtime slice.
+Status: `2026-05-22` sealed baseline for G0-G4; G5 is open for the first
+minimal MVP scenario shell.
 
 Inputs:
 
@@ -75,10 +75,15 @@ The repository does not yet have:
 | `G2 Content And Test Seed` | first fixtures and compatibility proof | one or two content fixtures, scenario/task specs, roundtrip/mapping tests, contract-shape tests | no broad scenario catalog |
 | `G3 Execution Surface Design` | bounded execution semantics | first ground command/task/observation design note, stage coverage, capability map | no full physics or combat implementation |
 | `G4 Runtime Slice` | first maintained behavior slice | one selected end-to-end ground behavior through shared lifecycle | no parallel ground-only pipeline |
+| `G5 MVP Scenario` | first canonical ground scenario shell | one maintained `scenarios/ground/` smoke fixture proving loader plus tasking status chain | no real ground platform schema, movement, terrain, sensing, fires, or combat claims |
 
 The critical design rule is that `G1-G4` should reuse the existing
 `common + specialization + profile bridge` pattern rather than inventing a new
 tasking/mission/runtime chain.
+
+G5 extends that rule to scenario content: the first ground MVP scenario must
+reuse the shared `ScenarioLoader` and accepted G4 tasking lifecycle instead of
+creating a private ground scenario loader or runtime path.
 
 ### 4.1 Phase Subprojects And Task Clusters
 
@@ -91,7 +96,8 @@ reviewed, and closed without widening the whole ground bootstrap lane.
 | `G1 Contract Skeleton` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
 | `G2 Content And Test Seed` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
 | `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | accepted |
-| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | released for bounded tasking-only lifecycle proof |
+| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
+| `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | open for tasking smoke scenario |
 
 The active assignment queue is
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).

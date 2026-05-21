@@ -20,6 +20,8 @@
   - 早期的 `1v1` 空战引导夹具和受维护的作战任务冒烟场景。
 - `scenarios/naval/`
   - 受维护的海军引导夹具，专注于舰船生成、护航几何、接触管理和未来的水面作战回归覆盖。
+- `scenarios/ground/`
+  - 受维护的 ground 启动夹具；在真实 ground platform/runtime 行为存在前，聚焦 tasking-chain smoke 覆盖。
 - `scenarios/landing/`
   - 着陆特定任务，如 ILS 进近和滑跑评估。
 - `scenarios/combined/`
@@ -73,6 +75,9 @@
     - 规范对称 `F-16C_Block50 vs F-16C_Block50` `1v1` 引导夹具，具有场景级弹药覆盖和最小击杀目标终止条件。
 - `naval/`
   - `ddg51_take1_screen_contact_report_v1.json`
+- `ground/`
+  - `ground_platoon_tasking_smoke_v1.json`
+    - 最小 Army/ground tasking smoke fixture。它使用当前 runtime 可接收的 `Aircraft` spawn shell，只验证共享 loader 与 `TaskOrder -> LeaderIntent -> PilotReport` status chain。
 - `landing/`
   - `landing_ils_final_train_v1.json`
   - `landing_ils_final_eval_v1.json`

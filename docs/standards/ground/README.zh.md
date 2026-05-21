@@ -4,7 +4,7 @@ Language:
 - 英文主文：`README.md`
 - 中文辅文：[README.zh.md](README.zh.md)
 
-状态：`2026-05-21` G0 特化基线。
+状态：`2026-05-22` G0-G4 封存特化基线，并补充 G5 MVP 场景边界。
 
 本目录收纳专门的 `ground` specialization 标准文档。
 
@@ -133,6 +133,16 @@ type-name dispatch 路径。
 
 `spawn_unit(type_name)` 只能继续作为兼容 wrapper，不应成为 ground 的长期
 canonical 构造路径。
+
+G5 MVP 场景边界：
+
+- 场景可以使用当前 runtime 可加载的兼容 spawn type，仅用于验证共享
+  loader/tasking plumbing
+- 场景必须说明该 spawn type 不是 maintained ground platform schema
+- ground 语义所有权必须来自 `tasking_profile`、Army service profile 字段与
+  common-core tasking 字段
+- 兼容 spawn 的使用不得被引用为 ground movement、terrain、sensing、fires、
+  effects、damage、observation export 或 formal command delivery 的证据
 
 ## 6. Agency 与 Information State
 

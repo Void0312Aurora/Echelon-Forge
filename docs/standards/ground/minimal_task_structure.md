@@ -169,3 +169,10 @@ This document does not define:
 
 It exists to freeze the minimum useful contract, not to describe the whole land
 warfare model.
+
+## MVP Scenario Use
+
+The first maintained MVP scenario uses `TASK_OCCUPY` because it can validate
+the ground tasking status chain without implying maintained movement runtime.
+This does not promote occupation geometry, terrain effects, or hold behavior to
+runtime-supported semantics.

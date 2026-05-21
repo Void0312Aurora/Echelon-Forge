@@ -1,10 +1,7 @@
 # Ground Subagent Dispatch Queue
 
-Status: `2026-05-22` G0 accepted; G1-A preflight and G1-B narrow
-Python-profile implementation accepted by main thread; G2 accepted by
-main-thread integration. G3 is released as parallel design preflight with
-main-thread integration ownership. G3-D is now accepted and G4 is released for
-one bounded tasking-only lifecycle-proof slice.
+Status: `2026-05-22` G0-G4 sealed as the accepted ground baseline. G5 is open
+for the first minimal MVP scenario shell.
 
 Use this queue when launching subagents. The main thread owns integration and
 final acceptance.
@@ -35,6 +32,7 @@ flowchart TD
     G1 --> G3["G3 Execution Surface Design"]
     G2 --> G3
     G3 --> G4["G4 Runtime Slice"]
+    G4 --> G5["G5 MVP Scenario"]
 ```
 
 Parallel rule:
@@ -46,9 +44,10 @@ Parallel rule:
 - `G3` may begin design using G1/G2 evidence through parallel preflight
   diagnostics with disjoint scopes. `G3-D` is accepted after integrating
   G3-A/B/C.
-- `G4` is released only for the selected tasking-only lifecycle proof and
+- `G4` is accepted and sealed for the selected tasking-only lifecycle proof.
+- `G5` is released only for the first canonical scenario smoke fixture and
   remains held for command delivery, observation export, movement, terrain,
-  sensing, fires, and broad `MissionCommand` scope.
+  sensing, fires, effects, damage, and broad `MissionCommand` scope.
 
 ## First Wave
 
@@ -66,13 +65,16 @@ Parallel rule:
 | `G3-B` | explorer | `gpt-5.4`, high | Preflight the first reporting surface and the environment dependency / deferral map. | Read-only diagnostics over G1/G2/G3 docs and standards. No direct edits. Dispatched `2026-05-22`. |
 | `G3-C` | explorer | `gpt-5.4`, high | Preflight the G4 write scope, compatibility guards, and focused test plan. | Read-only diagnostics over G1/G2/G3/G4 docs and focused tests. No direct edits. Dispatched `2026-05-22`. |
 | `G3-D` | main-thread integration | current main thread | Integrate G3-A/B/C into the authoritative G3 packet and decide whether G4 can be released. | `docs/task/ground/g3_execution_surface_design/**`, `docs/task/ground/README*.md`, and queue sync only. |
+| `G5-A` | main-thread integration | current main thread | Add the minimal canonical MVP scenario and focused loader/tasking smoke test. | `scenarios/ground/**`, `tests/runtime/ground/**`, G5 docs, and navigation sync only. |
+| `G5-B` | explorer | `gpt-5.4-mini`, high | Audit G0-G4 seal state and G5 documentation requirements. | Read-only diagnostics. Returned `2026-05-22`. |
+| `G5-C` | explorer | `gpt-5.4-mini`, high | Audit ScenarioLoader and tasking-shell constraints for the MVP scenario. | Read-only diagnostics. Returned `2026-05-22`. |
 
 ## Held Streams
 
 | Stream | Release condition |
 |--------|-------------------|
-| `G4-A` | Released after accepted G3-D selected one bounded tasking-only lifecycle-proof slice, write scope, and focused test plan. |
-| `G4-B` | Optional closure/integration stream after G4-A returns mergeable or blocked evidence. |
+| `G6-A` | Requires accepted G5 evidence plus a new scoped plan for real ground platform schema or next runtime behavior. |
+| `P3/P10 ground work` | Requires a separate accepted work package; G5 does not release formal command delivery or observation export. |
 
 ## Dispatch Details
 

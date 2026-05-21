@@ -2,10 +2,8 @@
 
 # 地面子代理调度队列
 
-状态：`2026-05-22` G0 已接受；G1-A 预检通过，G1-B 窄范围
-Python 配置文件实现已由主线程接受；G2 已由主线程集成接受。G3 现已释放为并行设计预检，
-但仍由主线程拥有集成权。G3-D 现已验收，G4 已释放为一个有边界的
-tasking-only lifecycle-proof 切片。
+状态：`2026-05-22` G0-G4 已封存为 accepted ground baseline。G5 已开启，
+用于第一版最小 MVP 场景壳。
 
 启动子代理时使用此队列。主线程拥有集成和最终验收。
 
@@ -31,6 +29,7 @@ flowchart TD
     G1 --> G3["G3 执行表面设计"]
     G2 --> G3
     G3 --> G4["G4 运行时切片"]
+    G4 --> G5["G5 MVP 场景"]
 ```
 
 并行规则：
@@ -40,9 +39,10 @@ flowchart TD
 - `G2` 在 `G2-A`、`G2-B` 和主线程 `G2-C` 集成后被接受。
 - `G3` 可以使用 G1/G2 证据，通过写入范围不相交的并行 preflight diagnostics
   开始设计。`G3-D` 已在整合 G3-A/B/C 后被接受。
-- `G4` 仅针对已选定的 tasking-only lifecycle proof 释放；command delivery、
-  observation export、movement、terrain、sensing、fires 和宽泛
-  `MissionCommand` 范围仍保持保留。
+- `G4` 已验收并封存为选定的 tasking-only lifecycle proof。
+- `G5` 仅针对第一版规范场景 smoke fixture 释放；command delivery、
+  observation export、movement、terrain、sensing、fires、effects、damage 和
+  宽泛 `MissionCommand` 范围仍保持保留。
 
 ## 第一波
 
@@ -60,13 +60,16 @@ flowchart TD
 | `G3-B` | explorer | `gpt-5.4`，high | 预检第一个 reporting surface 及 environment dependency / deferral map。 | 对 G1/G2/G3 文档与 standards 做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
 | `G3-C` | explorer | `gpt-5.4`，high | 预检 G4 的 write scope、compatibility guards 与 focused test plan。 | 对 G1/G2/G3/G4 文档与 focused tests 做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
 | `G3-D` | 主线程集成 | 当前主线程 | 整合 G3-A/B/C，形成 authoritative G3 packet，并记录已验收的 G4 写入范围。 | 仅 `docs/task/ground/g3_execution_surface_design/**`、`docs/task/ground/README*.md` 与 queue sync。 |
+| `G5-A` | 主线程集成 | 当前主线程 | 添加最小规范 MVP 场景与 focused loader/tasking smoke test。 | 仅 `scenarios/ground/**`、`tests/runtime/ground/**`、G5 docs 与导航同步。 |
+| `G5-B` | explorer | `gpt-5.4-mini`，high | 审计 G0-G4 封存状态与 G5 文档验收要求。 | 只读 diagnostics。已于 `2026-05-22` 返回。 |
+| `G5-C` | explorer | `gpt-5.4-mini`，high | 审计 ScenarioLoader 与 tasking-shell 对 MVP 场景的约束。 | 只读 diagnostics。已于 `2026-05-22` 返回。 |
 
 ## 保留流
 
 | 流 | 释放条件 |
 |--------|-------------------|
-| `G4-A` | 已在 G3-D 验收后释放；G3 选定了一个有边界的 tasking-only lifecycle-proof 切片、写入范围和聚焦测试计划。 |
-| `G4-B` | 在 G4-A 返回可合并或阻塞证据后的可选关闭/集成流。 |
+| `G6-A` | 需要已验收的 G5 证据，以及针对真实 ground platform schema 或下一条 runtime behavior 的新 scoped plan。 |
+| `P3/P10 ground work` | 需要单独 accepted work package；G5 不释放 formal command delivery 或 observation export。 |
 
 ## 调度详情
 

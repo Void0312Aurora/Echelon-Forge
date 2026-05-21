@@ -18,6 +18,8 @@ Maintained configs, tools, and tests should continue to reference canonical scen
   - Early `1v1` air-combat bootstrap fixtures and maintained combat-task smoke scenarios.
 - `scenarios/naval/`
   - Maintained naval bootstrap fixtures focused on ship spawning, escort geometry, contact management, and future surface-warfare regression coverage.
+- `scenarios/ground/`
+  - Maintained ground bootstrap fixtures focused on tasking-chain smoke coverage before real ground platform/runtime behavior exists.
 - `scenarios/landing/`
   - Landing-specific tasks such as ILS final and rollout evaluation.
 - `scenarios/combined/`
@@ -71,6 +73,9 @@ Maintained configs, tools, and tests should continue to reference canonical scen
     - Canonical symmetric `F-16C_Block50 vs F-16C_Block50` `1v1` bootstrap fixture with scenario-level ammo overrides and minimal kill-objective termination.
 - `naval/`
   - `ddg51_take1_screen_contact_report_v1.json`
+- `ground/`
+  - `ground_platoon_tasking_smoke_v1.json`
+    - Minimal Army/ground tasking smoke fixture. It uses the current runtime-compatible `Aircraft` spawn shell and validates only the shared loader plus `TaskOrder -> LeaderIntent -> PilotReport` status chain.
 - `landing/`
   - `landing_ils_final_train_v1.json`
   - `landing_ils_final_eval_v1.json`

@@ -1,7 +1,7 @@
 # Ground
 
-状态：已于 `2026-05-21` 建立活跃规划入口；G0、G1、G2 与 G3 均已由主线程验收。
-G4 已释放为一个有边界的运行时切片。
+状态：已于 `2026-05-21` 建立活跃规划入口；G0-G4 已封存为 accepted ground
+baseline。G5 已开启，用于第一版最小 MVP 场景壳。
 
 语言：
 
@@ -19,7 +19,7 @@ G4 已释放为一个有边界的运行时切片。
   tight-loop 战术单元、`move / occupy / support` 作为第一任务族默认值。
 - `army` 与 `land` 是可接受别名，并会规范化为 `ground`；导航通过
   `services/army` 加 `ground/`，而不是新的 `army` runtime stack。
-- 当前工作线已拆成 G0-G4 阶段，便于 subagent 接收边界清楚、互不重叠的任务。
+- 当前工作线已拆成 G0-G5 阶段，便于 subagent 接收边界清楚、互不重叠的任务。
 - G0 已由 main-thread G0-D 验收。
 - G1 已验收一个窄范围 Python-profile-only 切片：`army`、`ground`、`land`
   与 `ServiceProfile.Army` 均规范化为 `ground`；C++ DTO 壳、绑定、
@@ -30,8 +30,10 @@ G4 已释放为一个有边界的运行时切片。
 - G3 已验收一个安全的 G4 候选：
   `tasking-only lifecycle proof through normalized ground TaskOrder ->
   LeaderIntent -> PilotReport status shell`。
-- G4 现在只为该有界切片释放；command delivery、observation/export、
-  movement、sensing、terrain、fires 与 broad facade work 仍保持 held。
+- G4 已验收该有界切片，并封存为 tasking lifecycle baseline。
+- G5 开启 `scenarios/ground/` 下第一版规范 MVP 场景；command delivery、
+  observation/export、movement、sensing、terrain、fires 与 broad facade work
+  仍保持 held。
 
 ## 推荐阅读顺序
 
@@ -49,6 +51,8 @@ G4 已释放为一个有边界的运行时切片。
   [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
 - G4：
   [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
+- G5：
+  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
 - Review：
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - 架构基线：
@@ -62,9 +66,20 @@ G4 已释放为一个有边界的运行时切片。
 - `common / air / naval` 拆分承接线：
   [../common_air_naval/README.zh.md](../common_air_naval/README.zh.md)
 
+## 已封存基线
+
+G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
+
+- `ground` / `army` / `land` profile 识别与 starter common-core defaults
+- 非 runtime ground content seed 与 focused ground unit contracts
+- 已选定的 execution-surface 决策：tasking-only lifecycle proof
+- 经由 normalized `TaskOrder -> LeaderIntent -> PilotReport` 的 maintained
+  runtime bridge
+
 ## 当前继续推进重点
 
-- 仅按已验收的 tasking-only lifecycle-proof 切片推进 G4
-- 在第一条 G4 切片验证完成前，继续保持 command delivery、observation/export、
-  movement、sensing、terrain 与 fires 为 held
+- 构建 G5 MVP 场景壳，作为第一版规范 `scenarios/ground/` fixture
+- 场景只验证 tasking status-chain，不扩张为 ground combat/runtime 证明
+- command delivery、observation/export、movement、sensing、terrain、fires、
+  effects、damage 与 broad `MissionCommand` growth 继续 held
 - 所有委派工作都通过 subagent queue 分发

@@ -4,7 +4,8 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-05-21` G0 specialization baseline.
+Status: `2026-05-22` G0-G4 sealed specialization baseline with G5 MVP
+scenario boundary added.
 
 This directory contains the authoritative standards for the dedicated `ground`
 specialization.
@@ -143,6 +144,18 @@ First-wave capability-family declarations:
 
 `spawn_unit(type_name)` may remain only as a compatibility wrapper. It must not
 become the long-term canonical ground construction path.
+
+G5 MVP scenario boundary:
+
+- a scenario may use a currently runtime-loadable compatibility spawn type only
+  to exercise shared loader/tasking plumbing
+- the scenario must document that the spawn type is not a maintained ground
+  platform schema
+- ground semantic ownership must come from `tasking_profile`, Army service
+  profile fields, and common-core tasking fields
+- compatibility spawn usage must not be cited as evidence for ground movement,
+  terrain, sensing, fires, effects, damage, observation export, or formal
+  command delivery
 
 ## 6. Agency And Information State
 

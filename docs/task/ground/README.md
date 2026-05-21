@@ -1,7 +1,7 @@
 # Ground
 
-Status: active planning entry opened on `2026-05-21`; G0, G1, G2, and G3
-accepted by the main thread. G4 is released for one bounded runtime slice.
+Status: active planning entry opened on `2026-05-21`; G0-G4 are sealed as the
+accepted ground baseline. G5 is open for the first minimal MVP scenario shell.
 
 Language:
 
@@ -22,7 +22,7 @@ simulation lifecycle without creating a new vertical runtime path.
   task family default.
 - `army` and `land` are accepted aliases that normalize to `ground`; navigation
   routes through `services/army` plus `ground/`, not a new `army` runtime stack.
-- The workline is split into G0-G4 phases so subagents can take bounded,
+- The workline is split into G0-G5 phases so subagents can take bounded,
   non-overlapping tasks.
 - G0 is accepted by main-thread G0-D.
 - G1 accepted a narrow Python-profile-only slice: `army`, `ground`, `land`, and
@@ -34,9 +34,11 @@ simulation lifecycle without creating a new vertical runtime path.
 - G3 accepted one safe G4 candidate:
   `tasking-only lifecycle proof through normalized ground TaskOrder ->
   LeaderIntent -> PilotReport status shell`.
-- G4 is now released only for that bounded slice; command delivery,
-  observation/export, movement, sensing, terrain, fires, and broad facade work
-  remain held.
+- G4 accepted that bounded slice and is now sealed as the tasking lifecycle
+  baseline.
+- G5 opens the first canonical MVP scenario under `scenarios/ground/` and keeps
+  command delivery, observation/export, movement, sensing, terrain, fires, and
+  broad facade work held.
 
 ## Recommended Reading Order
 
@@ -54,6 +56,8 @@ simulation lifecycle without creating a new vertical runtime path.
   [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
 - G4:
   [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
+- G5:
+  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
 - Review:
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - Architecture baseline:
@@ -67,9 +71,22 @@ simulation lifecycle without creating a new vertical runtime path.
 - Common/air/naval split carry-over:
   [../common_air_naval/README.md](../common_air_naval/README.md)
 
+## Sealed Baseline
+
+G0-G4 are now sealed as the accepted baseline for ground tasking:
+
+- `ground` / `army` / `land` profile recognition and starter common-core
+  defaults
+- non-runtime ground content seed and focused ground unit contracts
+- selected execution-surface decision: tasking-only lifecycle proof
+- maintained runtime bridge through normalized `TaskOrder -> LeaderIntent ->
+  PilotReport`
+
 ## Current Follow-On Focus
 
-- implement G4 only as the accepted tasking-only lifecycle-proof slice
-- keep command delivery, observation/export, movement, sensing, terrain, and
-  fires held while the first G4 slice is validated
+- build the G5 MVP scenario shell as the first canonical `scenarios/ground/`
+  fixture
+- keep the scenario scoped to tasking status-chain validation only
+- keep command delivery, observation/export, movement, sensing, terrain, fires,
+  effects, damage, and broad `MissionCommand` growth held
 - use the subagent queue for all delegated work

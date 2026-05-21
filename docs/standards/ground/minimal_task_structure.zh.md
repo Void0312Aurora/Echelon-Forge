@@ -144,3 +144,10 @@ G0 起始 tasking 不得要求维护以下实现：
 - damage 或 effects behavior
 
 它存在的目的是冻结最小有用合同，而不是描述完整 land warfare model。
+
+## MVP 场景使用
+
+第一版 maintained MVP 场景使用 `TASK_OCCUPY`，因为它可以验证 ground tasking
+status chain，同时不暗示 movement runtime 已维护。
+这不会把 occupation geometry、terrain effects 或 hold behavior 提升为
+runtime-supported semantics。
