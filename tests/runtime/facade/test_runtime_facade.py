@@ -295,7 +295,9 @@ def _build_counterfactual_branch_request() -> ef_py.RuntimeCounterfactualBranchR
     request.deterministic_seed = 123
     request.replay_envelope_id = "replay:wp17f:0001"
     request.branch_point_id = "branch_point:wp17f:0001"
+    request.parent_worldline_id = "worldline:wp17f:baseline"
     request.branch_worldline_id = "worldline:wp17f:branch"
+    request.restore_barrier_id = "counterfactual_selected_slice"
     request.mutation_dx = 25.0
     request.mutation_dvy = 5.0
     request.mutation_dheading = 15.0
@@ -694,14 +696,35 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertTrue(bool(result.fidelity_admission.admitted))
         self.assertEqual(result.fidelity_admission.selected_provider_family, "reference_cpu")
         self.assertEqual(result.fidelity_admission.selected_stage_node_id, "p10.observation_export.v1")
+        self.assertEqual(result.parent_snapshot.worldline_id, request.parent_worldline_id)
+        self.assertEqual(result.parent_snapshot.parent_worldline_id, request.parent_worldline_id)
+        self.assertEqual(result.parent_snapshot.deterministic_seed, request.deterministic_seed)
+        self.assertEqual(result.branch_snapshot.worldline_id, request.branch_worldline_id)
+        self.assertEqual(result.branch_snapshot.parent_worldline_id, request.parent_worldline_id)
         self.assertEqual(result.parent_snapshot.barrier_id, "counterfactual_selected_slice")
         self.assertEqual(result.branch_snapshot.barrier_id, "counterfactual_selected_slice")
         self.assertEqual(result.parent_snapshot.cadence_reason, request.cadence_reason)
         self.assertEqual(result.branch_snapshot.provider_family, "reference_cpu")
         self.assertTrue(bool(result.comparison.comparable))
+        self.assertEqual(result.comparison.parent_worldline_id, request.parent_worldline_id)
+        self.assertEqual(result.comparison.branch_worldline_id, request.branch_worldline_id)
         self.assertAlmostEqual(float(result.comparison.dx), 25.0, places=6)
         self.assertAlmostEqual(float(result.comparison.dvy), 5.0, places=6)
         self.assertAlmostEqual(float(result.comparison.dheading), 15.0, places=6)
+        self.assertTrue(bool(result.restore_result.restored))
+        self.assertEqual(result.restore_result.rejection_reason, "")
+        self.assertEqual(
+            result.restore_result.restored_snapshot.worldline_id,
+            request.branch_worldline_id,
+        )
+        self.assertEqual(
+            result.restore_result.restored_snapshot.parent_worldline_id,
+            request.parent_worldline_id,
+        )
+        self.assertEqual(
+            int(result.restore_result.restored_snapshot.entity_id),
+            int(result.branch_snapshot.entity_id),
+        )
         self.assertIn("RuntimeFacade.run_counterfactual_branch", list(result.evidence_refs))
         self.assertIn("branch_point_id=branch_point:wp17f:0001", list(result.comparison.evidence_refs))
 
@@ -716,6 +739,221 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertEqual(
             result.rejection_reason,
             "counterfactual_raw_authoritative_state_mutation_forbidden",
+        )
+
+    def test_runtime_facade_counterfactual_restore_rejects_unsupported_claims(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        branch_result = facade.run_counterfactual_branch(_build_counterfactual_branch_request())
+        self.assertTrue(bool(branch_result.admitted))
+
+        def build_request() -> ef_py.RuntimeCounterfactualRestoreRequest:
+            request = ef_py.RuntimeCounterfactualRestoreRequest()
+            request.snapshot = branch_result.parent_snapshot
+            request.expected_worldline_id = branch_result.parent_snapshot.worldline_id
+            request.target_worldline_id = branch_result.branch_snapshot.worldline_id
+            request.target_deterministic_seed = int(branch_result.branch_snapshot.deterministic_seed)
+            request.target_entity_ref = _entity_ref(
+                int(branch_result.branch_snapshot.world_index),
+                int(branch_result.branch_snapshot.entity_id),
+            )
+            request.restore_barrier_id = branch_result.parent_snapshot.barrier_id
+            request.evidence_refs = ["test:restore"]
+            return request
+
+        raw = build_request()
+        raw.allow_raw_authoritative_state_mutation = True
+        self.assertEqual(
+            facade.restore_counterfactual_snapshot(raw).rejection_reason,
+            "counterfactual_restore_raw_authoritative_state_mutation_forbidden",
+        )
+
+        full_clone = build_request()
+        full_clone.request_full_clone = True
+        self.assertEqual(
+            facade.restore_counterfactual_snapshot(full_clone).rejection_reason,
+            "counterfactual_restore_full_clone_not_supported",
+        )
+
+        resident = build_request()
+        resident.request_resident_state_restore = True
+        self.assertEqual(
+            facade.restore_counterfactual_snapshot(resident).rejection_reason,
+            "counterfactual_restore_resident_state_not_supported",
+        )
+
+        exact_gpu = build_request()
+        exact_gpu.request_exact_gpu_restore = True
+        self.assertEqual(
+            facade.restore_counterfactual_snapshot(exact_gpu).rejection_reason,
+            "counterfactual_restore_exact_gpu_not_supported",
+        )
+
+    def test_runtime_facade_counterfactual_restore_rejects_unregistered_or_mismatched_worldline(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        branch_result = facade.run_counterfactual_branch(_build_counterfactual_branch_request())
+        self.assertTrue(bool(branch_result.admitted))
+
+        request = ef_py.RuntimeCounterfactualRestoreRequest()
+        request.snapshot = branch_result.parent_snapshot
+        request.expected_worldline_id = "worldline:wrong"
+        request.target_worldline_id = branch_result.branch_snapshot.worldline_id
+        request.target_entity_ref = _entity_ref(
+            int(branch_result.branch_snapshot.world_index),
+            int(branch_result.branch_snapshot.entity_id),
+        )
+        request.restore_barrier_id = branch_result.parent_snapshot.barrier_id
+        mismatch = facade.restore_counterfactual_snapshot(request)
+        self.assertFalse(bool(mismatch.restored))
+        self.assertEqual(mismatch.rejection_reason, "counterfactual_worldline_id_mismatch")
+
+        request = ef_py.RuntimeCounterfactualRestoreRequest()
+        request.snapshot = branch_result.parent_snapshot
+        request.snapshot.worldline_id = "worldline:not-registered"
+        request.expected_worldline_id = "worldline:not-registered"
+        request.target_worldline_id = "worldline:not-registered"
+        request.target_entity_ref = _entity_ref(
+            int(branch_result.branch_snapshot.world_index),
+            int(branch_result.branch_snapshot.entity_id),
+        )
+        request.restore_barrier_id = branch_result.parent_snapshot.barrier_id
+        unregistered = facade.restore_counterfactual_snapshot(request)
+        self.assertFalse(bool(unregistered.restored))
+        self.assertEqual(
+            unregistered.rejection_reason,
+            "counterfactual_worldline_id_not_registered",
+        )
+
+    def test_runtime_facade_counterfactual_restore_can_seed_branch_worldline_from_parent_snapshot(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        branch_result = facade.run_counterfactual_branch(_build_counterfactual_branch_request())
+        self.assertTrue(bool(branch_result.admitted))
+
+        setup_result = facade.apply_world_setup(_build_single_aircraft_setup(seed=456))
+        self.assertEqual(len(setup_result.entity_ids), 1)
+
+        request = ef_py.RuntimeCounterfactualRestoreRequest()
+        request.snapshot = branch_result.parent_snapshot
+        request.expected_worldline_id = branch_result.parent_snapshot.worldline_id
+        request.target_worldline_id = "worldline:wp17f:branch:restored"
+        request.target_deterministic_seed = 456
+        request.target_entity_ref = _entity_ref(
+            0,
+            int(setup_result.entity_ids[0]),
+        )
+        request.restore_barrier_id = branch_result.parent_snapshot.barrier_id
+        request.evidence_refs = ["test:branch-restore"]
+
+        restored = facade.restore_counterfactual_snapshot(request)
+
+        self.assertTrue(bool(restored.restored))
+        self.assertEqual(restored.rejection_reason, "")
+        self.assertEqual(
+            restored.restored_snapshot.worldline_id,
+            "worldline:wp17f:branch:restored",
+        )
+        self.assertEqual(
+            restored.restored_snapshot.parent_worldline_id,
+            branch_result.parent_snapshot.worldline_id,
+        )
+        self.assertEqual(int(restored.restored_snapshot.deterministic_seed), 456)
+        self.assertEqual(
+            int(restored.restored_snapshot.entity_id),
+            int(setup_result.entity_ids[0]),
+        )
+
+    def test_runtime_facade_counterfactual_experiment_collects_evidence_without_truth_promotion(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        request = ef_py.RuntimeExperimentRequest()
+        request.branch_request = _build_counterfactual_branch_request()
+        request.experiment_run_id = "experiment_run:wp21:e"
+        request.comparison_id = "comparison:wp21:e"
+        request.setup_ref = "scenario:baseline:wp21:e"
+        request.generation_ref = "scenario-gen:runtime:wp21:e"
+        request.generated_input_ref = "scenario-gen:req:wp21:e"
+        request.generated_input_baseline_scenario_ref = "scenario:baseline:wp21:e"
+        request.capability_refs = ["capability_bundle:runtime_facade.wp21"]
+        request.generated_input_evidence_refs = ["evidence:generation:wp21:e"]
+        request.evidence_refs = ["evidence:experiment:wp21:e"]
+
+        parent_step = ef_py.RuntimeExperimentStepRequest()
+        parent_step.state = _build_route_state(1)
+        parent_step.request = _build_route_request(1)
+        parent_step.observation_ref = "profile_obs:parent:wp21:e"
+        parent_step.profile_ref = "profile:parent:wp21:e"
+        parent_step.claim_scope = "comparative"
+        parent_step.evidence_refs = ["evidence:parent-step:wp21:e"]
+        branch_step = ef_py.RuntimeExperimentStepRequest()
+        branch_step.state = _build_route_state(1)
+        branch_step.request = _build_route_request(1)
+        branch_step.observation_ref = "profile_obs:branch:wp21:e"
+        branch_step.profile_ref = "profile:branch:wp21:e"
+        branch_step.claim_scope = "comparative"
+        branch_step.evidence_refs = ["evidence:branch-step:wp21:e"]
+        request.parent_step_requests = [parent_step]
+        request.branch_step_requests = [branch_step]
+        request.trace_ids = [9001]
+
+        result = facade.run_counterfactual_experiment(request)
+
+        self.assertTrue(bool(result.admitted), result.rejection_reason)
+        self.assertEqual(result.rejection_reason, "")
+        self.assertTrue(bool(result.branch_result.admitted))
+        self.assertTrue(bool(result.ancestry.evidence_bridge_valid))
+        self.assertFalse(bool(result.ancestry.evidence_bridge_fail_closed))
+        self.assertEqual(result.ancestry.replay_envelope_ref, "replay:wp17f:0001")
+        self.assertEqual(result.ancestry.branch_point_ref, "branch_point:wp17f:0001")
+        self.assertEqual(result.ancestry.generated_input_ref, "scenario-gen:req:wp21:e")
+        self.assertEqual(result.ancestry.backend_profile_ref, "cpu_exact.reference")
+        self.assertEqual(result.ancestry.fidelity_profile_ref, "exact_evaluation")
+        self.assertIn(
+            "capability_bundle:runtime_facade.wp21",
+            list(result.ancestry.capability_refs),
+        )
+        self.assertIn(
+            "profile_obs:parent:wp21:e",
+            list(result.ancestry.profile_observation_refs),
+        )
+        self.assertIn(
+            "profile_obs:branch:wp21:e",
+            list(result.ancestry.profile_observation_refs),
+        )
+        self.assertTrue(list(result.parent_step_result.rewards))
+        self.assertTrue(list(result.branch_step_result.rewards))
+        self.assertTrue(list(result.parent_observation_packet.agent_observations))
+        self.assertTrue(list(result.branch_observation_packet.agent_observations))
+        self.assertIn(
+            "claim_boundary=non_truth_claim_observation_only",
+            list(result.ancestry.evidence_refs),
+        )
+        self.assertIn(
+            "promotion_state=not_promoted",
+            list(result.ancestry.evidence_refs),
+        )
+
+    def test_runtime_facade_counterfactual_experiment_rejects_truth_and_support_promotion(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        truth_claim = ef_py.RuntimeExperimentRequest()
+        truth_claim.branch_request = _build_counterfactual_branch_request()
+        truth_claim.truth_claim = True
+
+        truth_result = facade.run_counterfactual_experiment(truth_claim)
+
+        self.assertFalse(bool(truth_result.admitted))
+        self.assertEqual(
+            truth_result.rejection_reason,
+            "counterfactual_experiment_truth_claim_forbidden",
+        )
+
+        promoted = ef_py.RuntimeExperimentRequest()
+        promoted.branch_request = _build_counterfactual_branch_request()
+        promoted.promoted_to_support = True
+
+        promoted_result = facade.run_counterfactual_experiment(promoted)
+
+        self.assertFalse(bool(promoted_result.admitted))
+        self.assertEqual(
+            promoted_result.rejection_reason,
+            "counterfactual_experiment_support_promotion_forbidden",
         )
 
     def test_runtime_facade_counterfactual_branch_rejects_unmaintained_fidelity(self) -> None:

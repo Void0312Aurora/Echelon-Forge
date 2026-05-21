@@ -19,6 +19,9 @@ inline constexpr std::string_view kDeterministicReplayEventOrderSortKey =
     "timestamp_priority_event_id";
 inline constexpr std::string_view kReplayRestoreSupportBoundaryUnsupported =
     "restore_unsupported_until_snapshot_restore_proof";
+inline constexpr std::string_view
+    kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly =
+        "host_owned_facade_state_only";
 
 inline constexpr std::string_view kReplayEnvelopeRejectionMissingEnvelopeId =
     "replay_envelope_id_required";
@@ -44,6 +47,9 @@ inline constexpr std::string_view kReplayEnvelopeRejectionRestoreUnsupportedBoun
     "snapshot_restore_unsupported_for_wp15a";
 inline constexpr std::string_view kReplayEnvelopeRejectionRestoreClaimUnsupported =
     "snapshot_restore_claim_not_supported_for_wp15a";
+inline constexpr std::string_view
+    kReplayEnvelopeRejectionRestoreBoundaryInvalid =
+        "snapshot_restore_boundary_not_supported_for_wp21b";
 
 inline constexpr std::string_view kBranchPointRejectionMissingBranchPointId =
     "branch_point_id_required";
@@ -130,6 +136,9 @@ inline constexpr std::string_view
 inline constexpr std::string_view
     kWorldlineBranchRejectionRestoreClaimUnsupported =
         "worldline_branch_restore_claim_not_supported_for_wp15b";
+inline constexpr std::string_view
+    kWorldlineBranchRejectionRestoreBoundaryInvalid =
+        "worldline_branch_restore_boundary_not_supported_for_wp21b";
 
 inline constexpr std::string_view kCounterfactualAdmissionStateAdmitted =
     "admitted";
@@ -731,6 +740,13 @@ struct ExperimentEvidenceBridgeValidationResult {
         support_state == kWorldlineBranchSupportStateRestoreUnsupported;
 }
 
+[[nodiscard]] inline bool is_supported_snapshot_restore_boundary(
+    std::string_view boundary
+) {
+    return boundary == kReplayRestoreSupportBoundaryUnsupported ||
+        boundary == kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly;
+}
+
 [[nodiscard]] inline bool is_known_worldline_branch_mutation_intent(
     std::string_view mutation_intent
 ) {
@@ -935,14 +951,25 @@ inline void absorb_replay_validation(
         result.reject(std::string(kReplayEnvelopeRejectionMissingSourceTime));
         result.add_error("source_time_s is required and must be finite");
     }
-    if (envelope.snapshot_restore_supported) {
-        result.reject(std::string(kReplayEnvelopeRejectionRestoreClaimUnsupported));
-        result.add_error("snapshot_restore_supported must remain false in WP15-A");
+    if (!is_supported_snapshot_restore_boundary(envelope.restore_support_boundary)) {
+        result.reject(std::string(kReplayEnvelopeRejectionRestoreBoundaryInvalid));
+        result.add_error(
+            "restore_support_boundary must be restore_unsupported_until_snapshot_restore_proof or host_owned_facade_state_only"
+        );
     }
-    if (envelope.restore_support_boundary != kReplayRestoreSupportBoundaryUnsupported) {
+    if (envelope.snapshot_restore_supported) {
+        if (envelope.restore_support_boundary !=
+            kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly) {
+            result.reject(std::string(kReplayEnvelopeRejectionRestoreClaimUnsupported));
+            result.add_error(
+                "snapshot_restore_supported requires host_owned_facade_state_only boundary"
+            );
+        }
+    } else if (envelope.restore_support_boundary !=
+               kReplayRestoreSupportBoundaryUnsupported) {
         result.reject(std::string(kReplayEnvelopeRejectionRestoreClaimUnsupported));
         result.add_error(
-            "restore_support_boundary must remain restore_unsupported_until_snapshot_restore_proof"
+            "snapshot_restore_supported=false requires restore_unsupported_until_snapshot_restore_proof"
         );
     }
 
@@ -1133,14 +1160,25 @@ ordered_experiment_bridge_evidence_refs(
         result.reject(std::string(kReplayEnvelopeRejectionMissingFacadeProvenanceRef));
         result.add_error("facade_packet_ref is required");
     }
-    if (branch_point.snapshot_restore_supported) {
-        result.reject(std::string(kReplayEnvelopeRejectionRestoreClaimUnsupported));
-        result.add_error("branch_point.snapshot_restore_supported must remain false");
+    if (!is_supported_snapshot_restore_boundary(branch_point.restore_support_boundary)) {
+        result.reject(std::string(kReplayEnvelopeRejectionRestoreBoundaryInvalid));
+        result.add_error(
+            "branch_point.restore_support_boundary must be restore_unsupported_until_snapshot_restore_proof or host_owned_facade_state_only"
+        );
     }
-    if (branch_point.restore_support_boundary != kReplayRestoreSupportBoundaryUnsupported) {
+    if (branch_point.snapshot_restore_supported) {
+        if (branch_point.restore_support_boundary !=
+            kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly) {
+            result.reject(std::string(kReplayEnvelopeRejectionRestoreClaimUnsupported));
+            result.add_error(
+                "branch_point.snapshot_restore_supported requires host_owned_facade_state_only boundary"
+            );
+        }
+    } else if (branch_point.restore_support_boundary !=
+               kReplayRestoreSupportBoundaryUnsupported) {
         result.reject(std::string(kReplayEnvelopeRejectionRestoreClaimUnsupported));
         result.add_error(
-            "branch_point.restore_support_boundary must remain restore_unsupported_until_snapshot_restore_proof"
+            "branch_point.snapshot_restore_supported=false requires restore_unsupported_until_snapshot_restore_proof"
         );
     }
     return result;
@@ -1182,6 +1220,13 @@ validate_replay_envelope_for_snapshot_restore(const ReplayEnvelope& envelope) {
     const ReplayContractValidationResult validation = validate_replay_envelope(envelope);
     if (!validation.valid) {
         result.rejection_reason = validation.rejection_reason;
+        return result;
+    }
+
+    if (envelope.snapshot_restore_supported &&
+        envelope.restore_support_boundary ==
+            kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly) {
+        result.supported = true;
         return result;
     }
 
@@ -1291,19 +1336,29 @@ validate_replay_envelope_for_snapshot_restore(const ReplayEnvelope& envelope) {
             "support_state must be metadata_only, admitted, rejected, or restore_unsupported"
         );
     }
-    if (metadata.snapshot_restore_supported) {
-        result.reject(
-            std::string(kWorldlineBranchRejectionRestoreClaimUnsupported)
+    if (!is_supported_snapshot_restore_boundary(metadata.restore_support_boundary)) {
+        result.reject(std::string(kWorldlineBranchRejectionRestoreBoundaryInvalid));
+        result.add_error(
+            "restore_support_boundary must be restore_unsupported_until_snapshot_restore_proof or host_owned_facade_state_only"
         );
-        result.add_error("snapshot_restore_supported must remain false in WP15-B");
     }
-    if (metadata.restore_support_boundary !=
-        kReplayRestoreSupportBoundaryUnsupported) {
+    if (metadata.snapshot_restore_supported) {
+        if (metadata.restore_support_boundary !=
+            kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly) {
+            result.reject(
+                std::string(kWorldlineBranchRejectionRestoreClaimUnsupported)
+            );
+            result.add_error(
+                "snapshot_restore_supported requires host_owned_facade_state_only boundary"
+            );
+        }
+    } else if (metadata.restore_support_boundary !=
+               kReplayRestoreSupportBoundaryUnsupported) {
         result.reject(
             std::string(kWorldlineBranchRejectionRestoreClaimUnsupported)
         );
         result.add_error(
-            "restore_support_boundary must remain restore_unsupported_until_snapshot_restore_proof"
+            "snapshot_restore_supported=false requires restore_unsupported_until_snapshot_restore_proof"
         );
     }
 
@@ -1360,6 +1415,14 @@ validate_worldline_branch_metadata_for_snapshot_restore(
     if (!validation.valid) {
         result.support_state = std::string(kWorldlineBranchSupportStateRejected);
         result.rejection_reason = validation.rejection_reason;
+        return result;
+    }
+
+    if (metadata.snapshot_restore_supported &&
+        metadata.restore_support_boundary ==
+            kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly) {
+        result.supported = true;
+        result.support_state = std::string(kWorldlineBranchSupportStateAdmitted);
         return result;
     }
 

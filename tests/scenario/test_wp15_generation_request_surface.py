@@ -349,7 +349,7 @@ def test_wp15_generation_request_artifact_stays_metadata_only_and_does_not_mutat
     fd, scenario_path = tempfile.mkstemp(
         prefix="wp15_generation_surface_",
         suffix=".json",
-        dir="/tmp",
+        dir=tempfile.gettempdir(),
     )
     os.close(fd)
     try:

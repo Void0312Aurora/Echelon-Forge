@@ -9,6 +9,7 @@
 #include "components/physics/instruments.h"
 #include "core/interfaces/observation.h"
 #include "core/mission/episode/execution_episode_controller.h"
+#include "runtime/contracts/counterfactual_replay_contracts.h"
 #include "runtime/contracts/engagement_contracts.h"
 #include "runtime/contracts/policy_contracts.h"
 #include "runtime/contracts/runtime_dto_contracts.h"
@@ -71,6 +72,9 @@ struct RuntimeFidelityAdmission {
 };
 
 struct RuntimeCounterfactualSnapshot {
+    std::string worldline_id;
+    std::string parent_worldline_id;
+    std::uint64_t deterministic_seed = 0;
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
     double x = 0.0;
@@ -94,6 +98,8 @@ struct RuntimeCounterfactualSnapshot {
 struct RuntimeWorldlineComparison {
     bool comparable = false;
     std::string comparison_id;
+    std::string parent_worldline_id;
+    std::string branch_worldline_id;
     std::string barrier_id = "counterfactual_selected_slice";
     double dx = 0.0;
     double dy = 0.0;
@@ -132,6 +138,8 @@ struct RuntimeCounterfactualBranchRequest {
     std::string replay_envelope_id;
     std::string branch_point_id;
     std::string branch_worldline_id;
+    std::string parent_worldline_id;
+    std::string restore_barrier_id = "counterfactual_selected_slice";
     std::string cadence_reason =
         "selected_slice_cadence_trace_runtime_window_wp17c";
     double mutation_dx = 0.0;
@@ -145,6 +153,27 @@ struct RuntimeCounterfactualBranchRequest {
     std::vector<std::string> evidence_refs;
 };
 
+struct RuntimeCounterfactualRestoreRequest {
+    RuntimeCounterfactualSnapshot snapshot;
+    std::string expected_worldline_id;
+    std::string target_worldline_id;
+    std::uint64_t target_deterministic_seed = 0;
+    WorldEntityRef target_entity_ref;
+    std::string restore_barrier_id = "counterfactual_selected_slice";
+    bool allow_raw_authoritative_state_mutation = false;
+    bool request_full_clone = false;
+    bool request_resident_state_restore = false;
+    bool request_exact_gpu_restore = false;
+    std::vector<std::string> evidence_refs;
+};
+
+struct RuntimeCounterfactualRestoreResult {
+    bool restored = false;
+    std::string rejection_reason;
+    RuntimeCounterfactualSnapshot restored_snapshot;
+    std::vector<std::string> evidence_refs;
+};
+
 struct RuntimeCounterfactualBranchResult {
     bool admitted = false;
     std::string rejection_reason;
@@ -152,6 +181,50 @@ struct RuntimeCounterfactualBranchResult {
     RuntimeCounterfactualSnapshot parent_snapshot;
     RuntimeCounterfactualSnapshot branch_snapshot;
     RuntimeWorldlineComparison comparison;
+    RuntimeCounterfactualRestoreResult restore_result;
+    std::vector<std::string> evidence_refs;
+};
+
+struct RuntimeExperimentStepRequest {
+    ExecutionEpisodeState state;
+    WorldExecutionEpisodeStepRequest request;
+    std::string observation_ref;
+    std::string profile_ref;
+    std::string claim_scope =
+        std::string(
+            runtime::counterfactual::kExperimentProfileClaimScopeDescriptive
+        );
+    std::vector<std::string> evidence_refs;
+};
+
+struct RuntimeExperimentRequest {
+    RuntimeCounterfactualBranchRequest branch_request;
+    std::vector<RuntimeExperimentStepRequest> parent_step_requests;
+    std::vector<RuntimeExperimentStepRequest> branch_step_requests;
+    std::vector<std::uint64_t> trace_ids;
+    std::string experiment_run_id;
+    std::string comparison_id;
+    std::string setup_ref;
+    std::string generation_ref;
+    std::string generated_input_ref;
+    std::string generated_input_kind =
+        std::string(
+            runtime::counterfactual::kScenarioGenerationKindScenarioVariation
+        );
+    std::string generated_input_source =
+        std::string(
+            runtime::counterfactual::kScenarioGenerationSourceCounterfactualBranch
+        );
+    std::string generated_input_generator_version =
+        "RuntimeFacade.run_counterfactual_experiment.wp21";
+    std::string generated_input_baseline_scenario_ref;
+    std::vector<std::string> generated_input_evidence_refs;
+    std::vector<std::string> capability_refs;
+    bool include_observations = true;
+    bool include_diagnostics_traces = true;
+    bool include_generated_input_ref = true;
+    bool truth_claim = false;
+    bool promoted_to_support = false;
     std::vector<std::string> evidence_refs;
 };
 
@@ -259,6 +332,39 @@ struct ExecutionBatchStepResult {
     std::vector<bool> step_info_valid_flags;
     std::vector<bool> controller_state_changed_flags;
     ObservationBatchPacket observation_packet;
+};
+
+struct RuntimeExperimentAncestry {
+    bool evidence_bridge_valid = false;
+    bool evidence_bridge_fail_closed = false;
+    std::string evidence_bridge_rejection_reason;
+    std::vector<std::string> evidence_bridge_errors;
+    std::string counterfactual_request_ref;
+    std::string counterfactual_admission_ref;
+    std::string setup_ref;
+    std::string generation_ref;
+    std::string replay_envelope_ref;
+    std::string branch_point_ref;
+    std::string generated_input_ref;
+    std::string backend_profile_ref;
+    std::string fidelity_profile_ref;
+    std::vector<std::string> capability_refs;
+    std::vector<std::string> profile_observation_refs;
+    std::vector<std::string> evidence_refs;
+};
+
+struct RuntimeExperimentResult {
+    bool admitted = false;
+    std::string rejection_reason;
+    RuntimeCounterfactualBranchResult branch_result;
+    ObservationBatchPacket parent_observation_packet;
+    ObservationBatchPacket branch_observation_packet;
+    ExecutionBatchStepResult parent_step_result;
+    ExecutionBatchStepResult branch_step_result;
+    std::vector<DiagnosticsTrace> parent_diagnostics_traces;
+    std::vector<DiagnosticsTrace> branch_diagnostics_traces;
+    RuntimeExperimentAncestry ancestry;
+    std::vector<std::string> evidence_refs;
 };
 
 struct RuntimeWindowActionRequest {

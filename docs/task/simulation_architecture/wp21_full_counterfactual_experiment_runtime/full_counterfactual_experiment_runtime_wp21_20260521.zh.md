@@ -1,6 +1,6 @@
 # WP21 Full Counterfactual Experiment Runtime
 
-状态：`2026-05-21` planned / final refactor stage。
+状态：`2026-05-22` complete / accepted。
 
 Language:
 
@@ -16,6 +16,7 @@ Language:
 - [WP18 runtime ownership and C++ hot-path consolidation](../wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)
 - [WP19 CUDA and resident-state mainline alignment](../wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)
 - [WP20 public capability-platform composition](../wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)
+- [WP21 验收审查](../../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md)
 - [Simulation system architecture design](../../../plan/architecture/simulation_system_architecture_design.md)
 - [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)
 - [WP Closure Lane Policy](../../../standards/governance/wp_closure_lane_policy.zh.md)
@@ -82,12 +83,12 @@ WP21 不可以：
 
 | 工作包 | 状态 | 关注点 | 目标 | 产出 |
 |--------|------|--------|------|------|
-| `WP21-A Fact Ledger And Residual Freeze` | planned | final facts and entry gate | 冻结 source/test facts、剩余 residuals 与 final-stage non-goals。 | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md) |
-| `WP21-B Snapshot Restore And Worldline Boundary` | planned | snapshot/restore runtime | 将 selected slice 扩展为 bounded、facade-owned snapshot/restore 与 worldline boundary。 | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md) |
-| `WP21-C Counterfactual Rollout And Causal Difference` | planned | branch execution | 执行 parent/branch worldlines，并在无 raw mutation 的前提下产生 causal-difference evidence。 | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md) |
-| `WP21-D Scenario Intervention Generation Runtime` | planned | deterministic generated inputs | 将 WP15 generation request surface 转为 deterministic parameter-variation generator。 | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.zh.md) |
-| `WP21-E Experiment Facade And Evidence Collection` | planned | experiment orchestration | 暴露 maintained experiment run surface，收集 observations、terminations、traces 与 evidence ancestry。 | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.zh.md) |
-| `WP21-F Final Cleanup And Acceptance Handoff` | planned | route closure | 集成 A-E，关闭或加闸 legacy residuals，运行验证，同步索引并准备最终验收。 | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.zh.md) |
+| `WP21-A Fact Ledger And Residual Freeze` | complete / accepted | final facts and entry gate | 冻结 source/test facts、剩余 residuals 与 final-stage non-goals。 | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md) |
+| `WP21-B Snapshot Restore And Worldline Boundary` | complete / accepted | snapshot/restore runtime | 将 selected slice 扩展为 bounded、facade-owned snapshot/restore 与 worldline boundary。 | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md) |
+| `WP21-C Counterfactual Rollout And Causal Difference` | complete / accepted | branch execution | 执行 parent/branch worldlines，并在无 raw mutation 的前提下产生 causal-difference evidence。 | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md) |
+| `WP21-D Scenario Intervention Generation Runtime` | complete / accepted | deterministic generated inputs | 将 WP15 generation request surface 转为 deterministic parameter-variation generator。 | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.zh.md) |
+| `WP21-E Experiment Facade And Evidence Collection` | complete / accepted | experiment orchestration | 暴露 maintained experiment run surface，收集 observations、terminations、traces 与 evidence ancestry。 | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.zh.md) |
+| `WP21-F Final Cleanup And Acceptance Handoff` | complete / accepted | route closure | 集成 A-E，关闭或加闸 legacy residuals，运行验证，同步索引并准备最终验收。 | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.zh.md) |
 
 ## 5. 依赖图
 

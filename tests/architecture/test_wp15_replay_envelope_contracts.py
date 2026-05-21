@@ -67,6 +67,7 @@ def test_wp15_replay_contract_header_declares_required_surface_and_restore_bound
         "validate_replay_envelope_for_snapshot_restore",
         "snapshot_restore_supported = false",
         "restore_unsupported_until_snapshot_restore_proof",
+        "host_owned_facade_state_only",
     ):
         assert symbol in text
 
@@ -209,7 +210,7 @@ def test_wp15_branch_point_identity_is_stable_and_tied_to_replay_boundary_refs()
     assert result.returncode == 0, result.stderr + result.stdout
 
 
-def test_wp15_restore_support_is_explicitly_unsupported_even_for_valid_envelope() -> None:
+def test_wp15_restore_support_is_bounded_to_host_owned_facade_state_only() -> None:
     source = textwrap.dedent(
         r"""
         #include <iostream>
@@ -237,16 +238,25 @@ def test_wp15_restore_support_is_explicitly_unsupported_even_for_valid_envelope(
             if (support.supported ||
                 support.rejection_reason !=
                     kReplayEnvelopeRejectionRestoreUnsupportedBoundary) {
-                std::cerr << "restore boundary drifted\n";
+                std::cerr << "default restore boundary drifted\n";
                 return 1;
             }
 
             envelope.snapshot_restore_supported = true;
+            envelope.restore_support_boundary =
+                std::string(kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly);
+            const auto admitted = validate_replay_envelope_for_snapshot_restore(envelope);
+            if (!admitted.supported || !admitted.rejection_reason.empty()) {
+                std::cerr << "bounded restore support not admitted\n";
+                return 1;
+            }
+
+            envelope.restore_support_boundary = "gpu_resident_clone";
             const auto invalid = validate_replay_envelope(envelope);
             if (invalid.valid ||
                 invalid.rejection_reason !=
-                    kReplayEnvelopeRejectionRestoreClaimUnsupported) {
-                std::cerr << "restore support claim did not fail closed\n";
+                    kReplayEnvelopeRejectionRestoreBoundaryInvalid) {
+                std::cerr << "unsupported restore boundary did not fail closed\n";
                 return 1;
             }
 

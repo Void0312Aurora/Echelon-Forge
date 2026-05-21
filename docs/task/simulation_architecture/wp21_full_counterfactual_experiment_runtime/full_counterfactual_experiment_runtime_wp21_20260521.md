@@ -1,6 +1,6 @@
 # WP21 Full Counterfactual Experiment Runtime
 
-Status: `2026-05-21` planned / final refactor stage.
+Status: `2026-05-22` complete / accepted.
 
 Language:
 
@@ -16,6 +16,7 @@ Inputs:
 - [WP18 runtime ownership and C++ hot-path consolidation](../wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md)
 - [WP19 CUDA and resident-state mainline alignment](../wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md)
 - [WP20 public capability-platform composition](../wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md)
+- [WP21 acceptance review](../../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
 - [Simulation system architecture design](../../../plan/architecture/simulation_system_architecture_design.md)
 - [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
 - [WP Closure Lane Policy](../../../standards/governance/wp_closure_lane_policy.md)
@@ -92,12 +93,12 @@ WP21 cannot:
 
 | Work package | Status | Main concern | Goal | Output |
 |--------------|--------|--------------|------|--------|
-| `WP21-A Fact Ledger And Residual Freeze` | planned | final facts and entry gate | Freeze source/test facts, remaining residuals, and final-stage non-goals before implementation. | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.md) |
-| `WP21-B Snapshot Restore And Worldline Boundary` | planned | snapshot/restore runtime | Broaden the selected slice into a bounded, facade-owned snapshot/restore and worldline boundary. | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.md) |
-| `WP21-C Counterfactual Rollout And Causal Difference` | planned | branch execution | Execute parent/branch worldlines and produce causal-difference evidence without raw mutation. | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.md) |
-| `WP21-D Scenario Intervention Generation Runtime` | planned | deterministic generated inputs | Turn the WP15 generation request surface into a deterministic parameter-variation generator. | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.md) |
-| `WP21-E Experiment Facade And Evidence Collection` | planned | experiment orchestration | Expose a maintained experiment run surface that collects observations, terminations, traces, and evidence ancestry. | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.md) |
-| `WP21-F Final Cleanup And Acceptance Handoff` | planned | route closure | Integrate A-E, close or guard legacy residuals, run validation, sync indexes, and prepare final acceptance. | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.md) |
+| `WP21-A Fact Ledger And Residual Freeze` | complete / accepted | final facts and entry gate | Freeze source/test facts, remaining residuals, and final-stage non-goals before implementation. | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.md) |
+| `WP21-B Snapshot Restore And Worldline Boundary` | complete / accepted | snapshot/restore runtime | Broaden the selected slice into a bounded, facade-owned snapshot/restore and worldline boundary. | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.md) |
+| `WP21-C Counterfactual Rollout And Causal Difference` | complete / accepted | branch execution | Execute parent/branch worldlines and produce causal-difference evidence without raw mutation. | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.md) |
+| `WP21-D Scenario Intervention Generation Runtime` | complete / accepted | deterministic generated inputs | Turn the WP15 generation request surface into a deterministic parameter-variation generator. | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.md) |
+| `WP21-E Experiment Facade And Evidence Collection` | complete / accepted | experiment orchestration | Expose a maintained experiment run surface that collects observations, terminations, traces, and evidence ancestry. | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.md) |
+| `WP21-F Final Cleanup And Acceptance Handoff` | complete / accepted | route closure | Integrate A-E, close or guard legacy residuals, run validation, sync indexes, and prepare final acceptance. | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.md) |
 
 ## 5. Dependency Map
 

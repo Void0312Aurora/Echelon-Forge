@@ -58,6 +58,7 @@ def test_wp15_worldline_branch_metadata_header_declares_required_surface() -> No
         "ordered_worldline_branch_evidence_refs",
         "kWorldlineBranchSupportStateMetadataOnly",
         "kWorldlineBranchSupportStateRestoreUnsupported",
+        "kWorldlineBranchSupportStateAdmitted",
         "kWorldlineBranchMutationIntentMetadataOnly",
         "kWorldlineBranchRejectionRawStateMutationForbidden",
         "kWorldlineBranchRejectionMissingEvidenceRefs",
@@ -67,7 +68,7 @@ def test_wp15_worldline_branch_metadata_header_declares_required_surface() -> No
     assert "generation_request.py" not in text
 
 
-def test_wp15_valid_worldline_branch_metadata_fixture_is_metadata_only_and_restore_blocked() -> None:
+def test_wp15_valid_worldline_branch_metadata_fixture_is_bounded_restore_capable() -> None:
     source = textwrap.dedent(
         r"""
         #include <iostream>
@@ -138,6 +139,9 @@ def test_wp15_valid_worldline_branch_metadata_fixture_is_metadata_only_and_resto
             };
             metadata.support_state =
                 std::string(kWorldlineBranchSupportStateMetadataOnly);
+            metadata.snapshot_restore_supported = true;
+            metadata.restore_support_boundary =
+                std::string(kReplayRestoreSupportBoundaryHostOwnedFacadeStateOnly);
             return metadata;
         }
 
@@ -186,12 +190,10 @@ def test_wp15_valid_worldline_branch_metadata_fixture_is_metadata_only_and_resto
                     branch_point,
                     envelope
                 );
-            if (support.supported ||
-                support.support_state !=
-                    kWorldlineBranchSupportStateRestoreUnsupported ||
-                support.rejection_reason !=
-                    kWorldlineBranchRejectionRestoreUnsupportedBoundary) {
-                std::cerr << "restore boundary drifted for metadata-only branch\n";
+            if (!support.supported ||
+                support.support_state != kWorldlineBranchSupportStateAdmitted ||
+                !support.rejection_reason.empty()) {
+                std::cerr << "bounded restore support drifted for metadata-only branch\n";
                 return 1;
             }
 
@@ -331,6 +333,18 @@ def test_wp15_worldline_branch_metadata_rejects_raw_state_mutation_and_invalid_s
                 source_result.rejection_reason !=
                     kWorldlineBranchRejectionInvalidSourceLabel) {
                 std::cerr << "invalid source label was not rejected\n";
+                return 1;
+            }
+
+            WorldlineBranchMetadata invalid_boundary = make_metadata();
+            invalid_boundary.snapshot_restore_supported = true;
+            invalid_boundary.restore_support_boundary = "resident_state_clone";
+            const auto boundary_result =
+                validate_worldline_branch_metadata(invalid_boundary);
+            if (boundary_result.valid ||
+                boundary_result.rejection_reason !=
+                    kWorldlineBranchRejectionRestoreBoundaryInvalid) {
+                std::cerr << "unsupported restore boundary was not rejected\n";
                 return 1;
             }
 

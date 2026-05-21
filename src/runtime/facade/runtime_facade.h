@@ -31,10 +31,16 @@ public:
         const RuntimeFidelityAdmission& fidelity_admission,
         const std::string& cadence_reason,
         const std::vector<std::string>& evidence_refs
-    ) const;
+    );
+    RuntimeCounterfactualRestoreResult restore_counterfactual_snapshot(
+        const RuntimeCounterfactualRestoreRequest& request
+    );
     RuntimeCounterfactualBranchResult run_counterfactual_branch(
         const RuntimeCounterfactualBranchRequest& request
-    ) const;
+    );
+    RuntimeExperimentResult run_counterfactual_experiment(
+        const RuntimeExperimentRequest& request
+    );
 
     std::size_t world_count() const noexcept;
     void resize(std::size_t world_count);
@@ -99,6 +105,11 @@ private:
     ObservationBatchPacket build_observation_packet(
         const ObservationBatchRequest& request
     ) const;
+    void register_counterfactual_worldline_snapshot(
+        const RuntimeCounterfactualSnapshot& snapshot
+    );
 
+    struct CounterfactualWorldlineRegistry;
     std::unique_ptr<WorldBatchRuntime> runtime_;
+    std::unique_ptr<CounterfactualWorldlineRegistry> counterfactual_worldlines_;
 };

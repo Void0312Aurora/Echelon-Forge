@@ -82,8 +82,9 @@ The active design conclusion is:
     `WP18` runtime ownership and C++ hot-path consolidation, `WP19` CUDA /
     resident-state mainline alignment, `WP20` public capability-platform
     composition, and `WP21` full counterfactual / experiment runtime. `WP18`,
-    `WP19`, and `WP20` are accepted, and `WP21` is now open as the final
-    refactor stage unless a new architecture-level fact forces a route update.
+    `WP19`, `WP20`, and `WP21` are accepted; the frozen post-WP17 refactor
+    route is closed unless a new architecture-level fact opens a new scoped
+    route.
 18. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
@@ -119,7 +120,7 @@ The active design conclusion is:
 | `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | Consolidate runtime ownership after WP17 by moving maintained execution truths and high-frequency Python paths toward C++/facade-owned surfaces while keeping compatibility APIs bounded | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md), [ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.md), [execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.md), [ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.md), [facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.md), [C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.md), [integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.md), [dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md) |
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | Align existing CUDA helpers, device-resident output contracts, diagnostics boundaries, and resident-state sync/shard vocabulary without promoting exact GPU or maintained resident-state support by default | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md), [fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md), [device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md), [GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md), [resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md), [first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md), [integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md), [dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) |
 | `WP20 Public Capability-Platform Composition` | complete / accepted | Publicize the typed capability-platform setup path through validation-first admission/result contracts and compatibility-preserving materialization while keeping type-name spawning and scenario schema stable | [public capability-platform composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md), [fact ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md), [public typed spawn contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md), [runtime setup consume bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md), [facade/binding surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md), [compatibility/schema guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md), [integration handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md), [dispatch queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.md) |
-| `WP21 Full Counterfactual Experiment Runtime` | planned / final stage open | Close the final refactor-route gap by turning accepted counterfactual contracts and selected runtime slices into maintained facade-owned experiment execution, scenario generation, evidence collection, and legacy cleanup | [full counterfactual experiment runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md), [fact ledger](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md), [snapshot/restore boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md), [counterfactual rollout](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md), [scenario generation runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md), [experiment facade/evidence](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md), [final cleanup](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md), [dispatch queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md) |
+| `WP21 Full Counterfactual Experiment Runtime` | complete / accepted | Close the final refactor-route gap by turning accepted counterfactual contracts and selected runtime slices into maintained facade-owned experiment execution, scenario generation, evidence collection, and legacy cleanup | [full counterfactual experiment runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md), [fact ledger](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md), [snapshot/restore boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md), [counterfactual rollout](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md), [scenario generation runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md), [experiment facade/evidence](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md), [final cleanup](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md), [dispatch queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) |
 
 ## WP21 Full Counterfactual Experiment Runtime
 
@@ -133,15 +134,16 @@ Output:
 - [WP21-E Experiment Facade And Evidence Collection](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md)
 - [WP21-F Final Cleanup And Acceptance Handoff](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md)
 - [WP21 Subagent Dispatch Queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md)
+- [WP21 Acceptance Review](../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
 
-WP21 is the final planned refactor stage. It consumes WP15 contracts, WP17's
+WP21 is the accepted final planned refactor stage. It consumes WP15 contracts, WP17's
 selected runtime branch/compare slice, WP18 ownership residuals, WP19
 host-visible state boundaries, and WP20 typed setup evidence. It must close the
 counterfactual / experiment runtime gap without promoting exact GPU,
 resident-state support, experiment truth claims, or forced scenario schema
 migration.
 
-WP21 current map:
+WP21 accepted map:
 
 - `WP21-A Fact Ledger And Residual Freeze` starts first and freezes source facts.
 - `WP21-B Snapshot Restore And Worldline Boundary` owns bounded host-owned
@@ -152,8 +154,8 @@ WP21 current map:
   parent/branch rollout.
 - `WP21-E Experiment Facade And Evidence Collection` waits for C/D and owns the
   public orchestration/evidence surface.
-- `WP21-F Final Cleanup And Acceptance Handoff` is the serial closure lane for
-  the final route verdict.
+- `WP21-F Final Cleanup And Acceptance Handoff` closed the serial route verdict
+  through the acceptance review.
 
 ## WP20 Public Capability-Platform Composition
 

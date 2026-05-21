@@ -133,6 +133,15 @@ void bind_runtime(nb::module_& m) {
 
     nb::class_<RuntimeCounterfactualSnapshot>(m, "RuntimeCounterfactualSnapshot")
         .def(nb::init<>())
+        .def_rw("worldline_id", &RuntimeCounterfactualSnapshot::worldline_id)
+        .def_rw(
+            "parent_worldline_id",
+            &RuntimeCounterfactualSnapshot::parent_worldline_id
+        )
+        .def_rw(
+            "deterministic_seed",
+            &RuntimeCounterfactualSnapshot::deterministic_seed
+        )
         .def_rw("world_index", &RuntimeCounterfactualSnapshot::world_index)
         .def_rw("entity_id", &RuntimeCounterfactualSnapshot::entity_id)
         .def_rw("x", &RuntimeCounterfactualSnapshot::x)
@@ -159,6 +168,14 @@ void bind_runtime(nb::module_& m) {
         .def(nb::init<>())
         .def_rw("comparable", &RuntimeWorldlineComparison::comparable)
         .def_rw("comparison_id", &RuntimeWorldlineComparison::comparison_id)
+        .def_rw(
+            "parent_worldline_id",
+            &RuntimeWorldlineComparison::parent_worldline_id
+        )
+        .def_rw(
+            "branch_worldline_id",
+            &RuntimeWorldlineComparison::branch_worldline_id
+        )
         .def_rw("barrier_id", &RuntimeWorldlineComparison::barrier_id)
         .def_rw("dx", &RuntimeWorldlineComparison::dx)
         .def_rw("dy", &RuntimeWorldlineComparison::dy)
@@ -769,6 +786,8 @@ void bind_runtime(nb::module_& m) {
         .def_rw("replay_envelope_id", &RuntimeCounterfactualBranchRequest::replay_envelope_id)
         .def_rw("branch_point_id", &RuntimeCounterfactualBranchRequest::branch_point_id)
         .def_rw("branch_worldline_id", &RuntimeCounterfactualBranchRequest::branch_worldline_id)
+        .def_rw("parent_worldline_id", &RuntimeCounterfactualBranchRequest::parent_worldline_id)
+        .def_rw("restore_barrier_id", &RuntimeCounterfactualBranchRequest::restore_barrier_id)
         .def_rw("cadence_reason", &RuntimeCounterfactualBranchRequest::cadence_reason)
         .def_rw("mutation_dx", &RuntimeCounterfactualBranchRequest::mutation_dx)
         .def_rw("mutation_dy", &RuntimeCounterfactualBranchRequest::mutation_dy)
@@ -783,6 +802,66 @@ void bind_runtime(nb::module_& m) {
         )
         .def_rw("evidence_refs", &RuntimeCounterfactualBranchRequest::evidence_refs);
 
+    nb::class_<RuntimeCounterfactualRestoreRequest>(
+        m,
+        "RuntimeCounterfactualRestoreRequest"
+    )
+        .def(nb::init<>())
+        .def_rw("snapshot", &RuntimeCounterfactualRestoreRequest::snapshot)
+        .def_rw(
+            "expected_worldline_id",
+            &RuntimeCounterfactualRestoreRequest::expected_worldline_id
+        )
+        .def_rw(
+            "target_worldline_id",
+            &RuntimeCounterfactualRestoreRequest::target_worldline_id
+        )
+        .def_rw(
+            "target_deterministic_seed",
+            &RuntimeCounterfactualRestoreRequest::target_deterministic_seed
+        )
+        .def_rw(
+            "target_entity_ref",
+            &RuntimeCounterfactualRestoreRequest::target_entity_ref
+        )
+        .def_rw(
+            "restore_barrier_id",
+            &RuntimeCounterfactualRestoreRequest::restore_barrier_id
+        )
+        .def_rw(
+            "allow_raw_authoritative_state_mutation",
+            &RuntimeCounterfactualRestoreRequest::allow_raw_authoritative_state_mutation
+        )
+        .def_rw(
+            "request_full_clone",
+            &RuntimeCounterfactualRestoreRequest::request_full_clone
+        )
+        .def_rw(
+            "request_resident_state_restore",
+            &RuntimeCounterfactualRestoreRequest::request_resident_state_restore
+        )
+        .def_rw(
+            "request_exact_gpu_restore",
+            &RuntimeCounterfactualRestoreRequest::request_exact_gpu_restore
+        )
+        .def_rw("evidence_refs", &RuntimeCounterfactualRestoreRequest::evidence_refs);
+
+    nb::class_<RuntimeCounterfactualRestoreResult>(
+        m,
+        "RuntimeCounterfactualRestoreResult"
+    )
+        .def(nb::init<>())
+        .def_rw("restored", &RuntimeCounterfactualRestoreResult::restored)
+        .def_rw(
+            "rejection_reason",
+            &RuntimeCounterfactualRestoreResult::rejection_reason
+        )
+        .def_rw(
+            "restored_snapshot",
+            &RuntimeCounterfactualRestoreResult::restored_snapshot
+        )
+        .def_rw("evidence_refs", &RuntimeCounterfactualRestoreResult::evidence_refs);
+
     nb::class_<RuntimeCounterfactualBranchResult>(
         m,
         "RuntimeCounterfactualBranchResult"
@@ -794,7 +873,65 @@ void bind_runtime(nb::module_& m) {
         .def_rw("parent_snapshot", &RuntimeCounterfactualBranchResult::parent_snapshot)
         .def_rw("branch_snapshot", &RuntimeCounterfactualBranchResult::branch_snapshot)
         .def_rw("comparison", &RuntimeCounterfactualBranchResult::comparison)
+        .def_rw("restore_result", &RuntimeCounterfactualBranchResult::restore_result)
         .def_rw("evidence_refs", &RuntimeCounterfactualBranchResult::evidence_refs);
+
+    nb::class_<RuntimeExperimentStepRequest>(m, "RuntimeExperimentStepRequest")
+        .def(nb::init<>())
+        .def_rw("state", &RuntimeExperimentStepRequest::state)
+        .def_rw("request", &RuntimeExperimentStepRequest::request)
+        .def_rw("observation_ref", &RuntimeExperimentStepRequest::observation_ref)
+        .def_rw("profile_ref", &RuntimeExperimentStepRequest::profile_ref)
+        .def_rw("claim_scope", &RuntimeExperimentStepRequest::claim_scope)
+        .def_rw("evidence_refs", &RuntimeExperimentStepRequest::evidence_refs);
+
+    nb::class_<RuntimeExperimentRequest>(m, "RuntimeExperimentRequest")
+        .def(nb::init<>())
+        .def_rw("branch_request", &RuntimeExperimentRequest::branch_request)
+        .def_rw(
+            "parent_step_requests",
+            &RuntimeExperimentRequest::parent_step_requests
+        )
+        .def_rw(
+            "branch_step_requests",
+            &RuntimeExperimentRequest::branch_step_requests
+        )
+        .def_rw("trace_ids", &RuntimeExperimentRequest::trace_ids)
+        .def_rw("experiment_run_id", &RuntimeExperimentRequest::experiment_run_id)
+        .def_rw("comparison_id", &RuntimeExperimentRequest::comparison_id)
+        .def_rw("setup_ref", &RuntimeExperimentRequest::setup_ref)
+        .def_rw("generation_ref", &RuntimeExperimentRequest::generation_ref)
+        .def_rw("generated_input_ref", &RuntimeExperimentRequest::generated_input_ref)
+        .def_rw("generated_input_kind", &RuntimeExperimentRequest::generated_input_kind)
+        .def_rw(
+            "generated_input_source",
+            &RuntimeExperimentRequest::generated_input_source
+        )
+        .def_rw(
+            "generated_input_generator_version",
+            &RuntimeExperimentRequest::generated_input_generator_version
+        )
+        .def_rw(
+            "generated_input_baseline_scenario_ref",
+            &RuntimeExperimentRequest::generated_input_baseline_scenario_ref
+        )
+        .def_rw(
+            "generated_input_evidence_refs",
+            &RuntimeExperimentRequest::generated_input_evidence_refs
+        )
+        .def_rw("capability_refs", &RuntimeExperimentRequest::capability_refs)
+        .def_rw("include_observations", &RuntimeExperimentRequest::include_observations)
+        .def_rw(
+            "include_diagnostics_traces",
+            &RuntimeExperimentRequest::include_diagnostics_traces
+        )
+        .def_rw(
+            "include_generated_input_ref",
+            &RuntimeExperimentRequest::include_generated_input_ref
+        )
+        .def_rw("truth_claim", &RuntimeExperimentRequest::truth_claim)
+        .def_rw("promoted_to_support", &RuntimeExperimentRequest::promoted_to_support)
+        .def_rw("evidence_refs", &RuntimeExperimentRequest::evidence_refs);
 
     nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")
         .def(nb::init<>())
@@ -1002,6 +1139,81 @@ void bind_runtime(nb::module_& m) {
             &ExecutionBatchStepResult::controller_state_changed_flags
         )
         .def_rw("observation_packet", &ExecutionBatchStepResult::observation_packet);
+
+    nb::class_<RuntimeExperimentAncestry>(m, "RuntimeExperimentAncestry")
+        .def(nb::init<>())
+        .def_rw(
+            "evidence_bridge_valid",
+            &RuntimeExperimentAncestry::evidence_bridge_valid
+        )
+        .def_rw(
+            "evidence_bridge_fail_closed",
+            &RuntimeExperimentAncestry::evidence_bridge_fail_closed
+        )
+        .def_rw(
+            "evidence_bridge_rejection_reason",
+            &RuntimeExperimentAncestry::evidence_bridge_rejection_reason
+        )
+        .def_rw(
+            "evidence_bridge_errors",
+            &RuntimeExperimentAncestry::evidence_bridge_errors
+        )
+        .def_rw(
+            "counterfactual_request_ref",
+            &RuntimeExperimentAncestry::counterfactual_request_ref
+        )
+        .def_rw(
+            "counterfactual_admission_ref",
+            &RuntimeExperimentAncestry::counterfactual_admission_ref
+        )
+        .def_rw("setup_ref", &RuntimeExperimentAncestry::setup_ref)
+        .def_rw("generation_ref", &RuntimeExperimentAncestry::generation_ref)
+        .def_rw(
+            "replay_envelope_ref",
+            &RuntimeExperimentAncestry::replay_envelope_ref
+        )
+        .def_rw("branch_point_ref", &RuntimeExperimentAncestry::branch_point_ref)
+        .def_rw(
+            "generated_input_ref",
+            &RuntimeExperimentAncestry::generated_input_ref
+        )
+        .def_rw("backend_profile_ref", &RuntimeExperimentAncestry::backend_profile_ref)
+        .def_rw(
+            "fidelity_profile_ref",
+            &RuntimeExperimentAncestry::fidelity_profile_ref
+        )
+        .def_rw("capability_refs", &RuntimeExperimentAncestry::capability_refs)
+        .def_rw(
+            "profile_observation_refs",
+            &RuntimeExperimentAncestry::profile_observation_refs
+        )
+        .def_rw("evidence_refs", &RuntimeExperimentAncestry::evidence_refs);
+
+    nb::class_<RuntimeExperimentResult>(m, "RuntimeExperimentResult")
+        .def(nb::init<>())
+        .def_rw("admitted", &RuntimeExperimentResult::admitted)
+        .def_rw("rejection_reason", &RuntimeExperimentResult::rejection_reason)
+        .def_rw("branch_result", &RuntimeExperimentResult::branch_result)
+        .def_rw(
+            "parent_observation_packet",
+            &RuntimeExperimentResult::parent_observation_packet
+        )
+        .def_rw(
+            "branch_observation_packet",
+            &RuntimeExperimentResult::branch_observation_packet
+        )
+        .def_rw("parent_step_result", &RuntimeExperimentResult::parent_step_result)
+        .def_rw("branch_step_result", &RuntimeExperimentResult::branch_step_result)
+        .def_rw(
+            "parent_diagnostics_traces",
+            &RuntimeExperimentResult::parent_diagnostics_traces
+        )
+        .def_rw(
+            "branch_diagnostics_traces",
+            &RuntimeExperimentResult::branch_diagnostics_traces
+        )
+        .def_rw("ancestry", &RuntimeExperimentResult::ancestry)
+        .def_rw("evidence_refs", &RuntimeExperimentResult::evidence_refs);
 
     nb::class_<RuntimeWindowActionRequest>(m, "RuntimeWindowActionRequest")
         .def(nb::init<>())
@@ -1342,8 +1554,18 @@ void bind_runtime(nb::module_& m) {
             nb::arg("evidence_refs")
         )
         .def(
+            "restore_counterfactual_snapshot",
+            &RuntimeFacade::restore_counterfactual_snapshot,
+            nb::arg("request")
+        )
+        .def(
             "run_counterfactual_branch",
             &RuntimeFacade::run_counterfactual_branch,
+            nb::arg("request")
+        )
+        .def(
+            "run_counterfactual_experiment",
+            &RuntimeFacade::run_counterfactual_experiment,
             nb::arg("request")
         )
         .def("world_count", &RuntimeFacade::world_count)
