@@ -61,8 +61,8 @@
 17. WP17 验收后，剩余主线冻结为四个阶段：`WP18` runtime ownership 与 C++ hot-path
     consolidation，`WP19` CUDA / resident-state mainline alignment，`WP20`
     public capability-platform composition，以及 `WP21` full counterfactual /
-    experiment runtime。`WP18`、`WP19` 与 `WP20` 已验收；除非出现新的架构级事实，
-    否则新工作应落入剩余冻结的 `WP21` 阶段。
+    experiment runtime。`WP18`、`WP19` 与 `WP20` 已验收，`WP21` 已作为最终
+    refactor stage 打开；除非出现新的架构级事实，否则新工作应落入该阶段。
 18. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
@@ -98,6 +98,40 @@
 | `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | 在 WP17 后收紧 runtime ownership，把维护中的 execution truths 与高频 Python paths 推向 C++/facade-owned surfaces，同时让 compatibility APIs 保持有边界 | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)、[ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)、[execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)、[ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)、[facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)、[C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)、[integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) |
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | 对齐现有 CUDA helpers、device-resident output contracts、diagnostics boundaries 与 resident-state sync/shard vocabulary，同时默认不晋级 exact GPU 或 maintained resident-state support | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)、[fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)、[device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)、[GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)、[resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)、[first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)、[integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) |
 | `WP20 Public Capability-Platform Composition` | complete / accepted | 通过 validation-first admission/result contracts 与 compatibility-preserving materialization 公开 typed capability-platform setup path，同时保持 type-name spawning 与 scenario schema 稳定 | [public capability-platform composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)、[fact ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)、[public typed spawn contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)、[runtime setup consume bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)、[facade/binding surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)、[compatibility/schema guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)、[integration handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md) |
+| `WP21 Full Counterfactual Experiment Runtime` | planned / final stage open | 将已验收 counterfactual contracts 与 selected runtime slices 转为 maintained facade-owned experiment execution、scenario generation、evidence collection 与 legacy cleanup，关闭最终 refactor-route gap | [full counterfactual experiment runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)、[fact ledger](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)、[snapshot/restore boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)、[counterfactual rollout](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)、[scenario generation runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)、[experiment facade/evidence](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)、[final cleanup](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)、[dispatch queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md) |
+
+## WP21 Full Counterfactual Experiment Runtime
+
+产出：
+
+- [WP21 Full Counterfactual Experiment Runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)
+- [WP21-A Fact Ledger And Residual Freeze](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)
+- [WP21-B Snapshot Restore And Worldline Boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)
+- [WP21-C Counterfactual Rollout And Causal Difference](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)
+- [WP21-D Scenario Intervention Generation Runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)
+- [WP21-E Experiment Facade And Evidence Collection](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)
+- [WP21-F Final Cleanup And Acceptance Handoff](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)
+- [WP21 Subagent Dispatch Queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)
+
+WP21 是最后一个计划中的 refactor stage。它消费 WP15 contracts、WP17 的 selected
+runtime branch/compare slice、WP18 ownership residuals、WP19 host-visible state
+boundaries 与 WP20 typed setup evidence。它必须关闭 counterfactual / experiment
+runtime gap，但不得晋级 exact GPU、resident-state support、experiment truth claims
+或强制 scenario schema migration。
+
+WP21 当前地图：
+
+- `WP21-A Fact Ledger And Residual Freeze` 先启动并冻结 source facts。
+- `WP21-B Snapshot Restore And Worldline Boundary` 拥有 bounded host-owned
+  snapshot/restore 与 worldline identity。
+- `WP21-D Scenario Intervention Generation Runtime` 可在 A 后与 B 并行，并拥有
+  deterministic generated artifacts 与 loader boundary guards。
+- `WP21-C Counterfactual Rollout And Causal Difference` 等待 B，并拥有
+  parent/branch rollout。
+- `WP21-E Experiment Facade And Evidence Collection` 等待 C/D，并拥有 public
+  orchestration/evidence surface。
+- `WP21-F Final Cleanup And Acceptance Handoff` 是最终 route verdict 的串行
+  closure lane。
 
 ## WP20 Public Capability-Platform Composition
 
