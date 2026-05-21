@@ -1,0 +1,25 @@
+{
+  "type": "unit_regression",
+  "check_kind": "task_order_common_core",
+  "task_name": "TASK_MOVE",
+  "task_order": {
+    "tasking_profile": "ground",
+    "task_group_id": 8001,
+    "parent_node_id": 8101,
+    "supported_node_id": 8201,
+    "supporting_node_id": 8301
+  },
+  "expected_common_core": {
+    "service_profile": "Army",
+    "task_family": "Transit",
+    "tactical_unit_type": "TacticalUnit",
+    "command_relationship": "TACON",
+    "authority_scope": "Tactical",
+    "coordination_mode": "Independent",
+    "task_group_id": 8001,
+    "parent_node_id": 8101,
+    "supported_node_id": 8201,
+    "supporting_node_id": 8301,
+    "officer_in_tactical_command": 8101
+  }
+}

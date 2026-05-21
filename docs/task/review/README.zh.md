@@ -27,6 +27,7 @@
 - [WP18 Runtime Ownership And C++ Hot Path Consolidation 验收审查 2026-05-21](wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) ([English](wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md))
 - [WP19 CUDA 与 Resident-State 主线对齐 验收审查 2026-05-21](wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) ([English](wp19_cuda_resident_state_alignment_acceptance_review_20260521.md))
 - [WP20 Public Capability-Platform Composition 验收审查 2026-05-21](wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md) ([English](wp20_public_capability_platform_composition_acceptance_review_20260521.md))
+- [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.zh.md) ([English](ground_domain_bootstrap_plan_review_20260521.md))
 
 ## 归档
 

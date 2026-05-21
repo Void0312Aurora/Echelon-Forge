@@ -4,7 +4,7 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-状态：`2026-05-18`，文档归属与分层权威说明。
+状态：`2026-05-21`，文档归属与分层权威说明。
 
 本文档用于明确：
 
@@ -92,6 +92,28 @@ Language:
 
 它们不负责跨军种授权关系或 generic tasking DTO 边界。
 
+### Ground 特化
+
+当前维护中的 ground 特化入口：
+
+- [Ground 标准总览](../ground/README.zh.md)
+- [Ground 最小任务结构](../ground/minimal_task_structure.zh.md)
+
+它们负责：
+
+- 以 platoon 为中心的起步 tasking 默认值
+- `TASK_MOVE`、`TASK_OCCUPY` 与 `TASK_SUPPORT` 的 ground 语义
+- ground agency role 默认值
+- terrain-masked sensing 与 radio-range-constrained shared-picture 假设
+- 第一波 ground platform 的 capability-composition 预期
+
+它们不负责跨军种 authority 定义、Army service-profile 解释，也不负责完整的
+terrain/mobility/fires/runtime 行为。
+
+路由规则：`services/army.md` 负责 Army profile 解释，`ground/` 负责维护中的
+ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，不得被写成
+单独的 `army runtime stack`。
+
 ## 活跃规划补充页
 
 以下文档当前作为活跃规划补充页维护，而不是当前 runtime 合同：
@@ -170,6 +192,23 @@ Language:
 `joint/common core` 可以保留 `task_group_id` 或 `coordination_mode`
 这类挂点，但它们在海上场景中的语义由 Navy profile 和 naval specialization 解释。
 
+## ground-specific concepts 的归属规则
+
+以下概念属于 Army profile 或 ground specialization，而不是 common core：
+
+- `platoon` 作为第一 tight-loop ground tasking 边界
+- `move`、`occupy` 与 land `support` 任务语义
+- `ground_squad_leader`
+- `ground_platoon_commander`
+- `ground_company_commander`
+- terrain-masked sensing
+- radio-range-constrained shared tactical picture
+- ground mobility、direct-fire、indirect-fire、sustainment 与 land reporting extension
+
+`joint/common core` 可以保留 `tactical_unit_type`、`parent_node_id`、
+`supported_node_id`、`supporting_node_id` 与 `coordination_mode` 这类挂点，
+但这些挂点在陆上场景中的语义由 Army profile 和 ground specialization 解释。
+
 ## 将当前 flight_dynamics 工作流映射回标准树
 
 `docs/task/flight_dynamics/` 当前应被视为执行视图，而不是标准归属图。
@@ -181,6 +220,9 @@ Language:
   - 涉及 ship authority/report 时，次级对齐到 `services/navy.md` 和 `naval/`
 - `naval/`
   - 对齐到 `services/navy.md` 与 `naval/`
+- `ground/` 或未来 land-domain task work
+  - 对齐到 `services/army.md` 的军种画像解释，以及 `ground/` 的特化语义
+  - 不得新增一条单独的 `army runtime stack`
 - `sensor_situation/`
   - 当前主要对齐到 workflow bridge，以及后续共享的 `track / IFF / report` 标准
 - `weapon_guidance/`
@@ -196,6 +238,6 @@ Language:
 
 1. 跨军种共通关系放 `joint/`
 2. 军种组织与控制口径放 `services/`
-3. 平台或任务特化放 `air/` 或 `naval/`
+3. 平台或任务特化放 `air/`、`naval/` 或 `ground/`
 4. 场景/runtime bridge 说明放在 `bridge/`
 5. 过时路线放入 `docs/Archive/` 或对应任务归档树

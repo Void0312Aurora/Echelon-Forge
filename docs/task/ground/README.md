@@ -1,0 +1,70 @@
+# Ground
+
+Status: active planning entry opened on `2026-05-21`; G0, G1, and G2 accepted
+by the main thread. G3 is ready for design preflight.
+
+Language:
+
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
+
+This subproject is the planning entry for the repository's third domain
+bootstrap: a future ground specialization that should extend the shared
+simulation lifecycle without creating a new vertical runtime path.
+
+## Current Status
+
+- `services/army` already exists as the authoritative service-profile boundary.
+- The task tree now maintains a dedicated ground execution-specialization lane;
+  runtime execution remains deferred.
+- G0 now freezes `ground` as the maintained specialization name, `platoon` as
+  the first tight-loop tactical unit, and `move / occupy / support` as the first
+  task family default.
+- `army` and `land` are accepted aliases that normalize to `ground`; navigation
+  routes through `services/army` plus `ground/`, not a new `army` runtime stack.
+- The workline is split into G0-G4 phases so subagents can take bounded,
+  non-overlapping tasks.
+- G0 is accepted by main-thread G0-D.
+- G1 accepted a narrow Python-profile-only slice: `army`, `ground`, `land`, and
+  `ServiceProfile.Army` normalize to `ground`; C++ DTO shells, bindings,
+  runtime behavior, and scenario loaders remain held.
+- G2 accepted the first ground content/test seed: a non-auto-loaded
+  `ground_platoon_starter.seed` under `examples/config/database/ground/units/`
+  and three runnable `tests/contracts/unit/ground/` common-core contracts.
+
+## Recommended Reading Order
+
+- Primary plan:
+  [ground_domain_bootstrap_plan_20260521.md](ground_domain_bootstrap_plan_20260521.md)
+- Subagent dispatch:
+  [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)
+- G0:
+  [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
+- G1:
+  [g1_contract_skeleton/README.md](g1_contract_skeleton/README.md)
+- G2:
+  [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
+- G3:
+  [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
+- G4:
+  [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
+- Review:
+  [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
+- Architecture baseline:
+  [../../plan/architecture/simulation_system_architecture_design.md](../../plan/architecture/simulation_system_architecture_design.md)
+- Army service profile:
+  [../../standards/services/army.md](../../standards/services/army.md)
+- Ground standards overview:
+  [../../standards/ground/README.md](../../standards/ground/README.md)
+- Ground minimal task structure:
+  [../../standards/ground/minimal_task_structure.md](../../standards/ground/minimal_task_structure.md)
+- Common/air/naval split carry-over:
+  [../common_air_naval/README.md](../common_air_naval/README.md)
+
+## Current Follow-On Focus
+
+- run G3 as execution-surface design only, using G1/G2 evidence to choose one
+  safe G4 candidate
+- keep G4 held until G3 selects a bounded runtime slice, write scope, and test
+  plan
+- use the subagent queue for all delegated work

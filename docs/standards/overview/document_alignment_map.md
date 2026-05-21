@@ -4,7 +4,7 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-Status: `2026-05-18` authoritative for document ownership and layering.
+Status: `2026-05-21` authoritative for document ownership and layering.
 
 This document clarifies which standards documents are primary, which are
 specialized supplements, and how active task/workflow documents map back to the
@@ -92,6 +92,29 @@ They own:
 
 They do not own cross-service authority or generic tasking DTO boundaries.
 
+### Ground Specialization
+
+The maintained ground specialization entrypoints are:
+
+- [Ground Standards Overview](../ground/README.md)
+- [Ground Minimal Task Structure](../ground/minimal_task_structure.md)
+
+They own:
+
+- platoon-centered starter tasking defaults
+- `TASK_MOVE`, `TASK_OCCUPY`, and `TASK_SUPPORT` ground semantics
+- ground agency role defaults
+- terrain-masked sensing and radio-range-constrained shared-picture assumptions
+- capability-composition expectations for first-wave ground platforms
+
+They do not own cross-service authority definitions, Army service-profile
+interpretation, or full terrain/mobility/fires/runtime behavior.
+
+Routing rule: `services/army.md` owns Army profile interpretation; `ground/`
+owns maintained ground specialization. The accepted aliases `army` and `land`
+normalize to `ground` and must not be documented as a separate `army` runtime
+stack.
+
 ## Active Planning Supplements
 
 The following document is maintained as an active planning supplement, not as a
@@ -177,6 +200,26 @@ the common core:
 `coordination_mode`, but the Navy profile and naval specialization own the
 meaning of those hooks in maritime scenarios.
 
+## Ownership Rules For Ground-Specific Concepts
+
+The following concepts belong to the Army profile or ground specialization, not
+the common core:
+
+- `platoon` as the first tight-loop ground tasking boundary
+- `move`, `occupy`, and land `support` task semantics
+- `ground_squad_leader`
+- `ground_platoon_commander`
+- `ground_company_commander`
+- terrain-masked sensing
+- radio-range-constrained shared tactical picture
+- ground mobility, direct-fire, indirect-fire, sustainment, and land reporting
+  extensions
+
+`joint/common core` may carry hooks such as `tactical_unit_type`,
+`parent_node_id`, `supported_node_id`, `supporting_node_id`, and
+`coordination_mode`, but the Army profile and ground specialization own the
+land-specific meaning of those hooks.
+
 ## Mapping Active Flight-Dynamics Work Back To Standards
 
 The active task tree under `docs/task/flight_dynamics/` should be read as an
@@ -190,6 +233,10 @@ Map those workstreams back as follows:
     semantics appear
 - `naval/`
   - aligns to `services/navy.md` and `naval/`
+- `ground/` or future land-domain task work
+  - aligns to `services/army.md` for service-profile interpretation and
+    `ground/` for specialization
+  - must not introduce a separate `army` runtime stack
 - `sensor_situation/`
   - currently aligns to the workflow bridge and future shared standards that
     govern `track`, `IFF`, and `report` contracts
@@ -207,6 +254,6 @@ When adding a new maintained standards document:
 
 1. Put cross-service relationships in `joint/`.
 2. Put service organization/control interpretation in `services/`.
-3. Put platform or mission specialization in `air/` or `naval/`.
+3. Put platform or mission specialization in `air/`, `naval/`, or `ground/`.
 4. Put scenario/runtime bridge documentation in `bridge/`.
 5. Put superseded work in `docs/Archive/` or the relevant task archive tree.

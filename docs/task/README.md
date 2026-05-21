@@ -45,6 +45,9 @@ For lifecycle cleanup across this tree, see the
 - [common_air_naval/](common_air_naval/README.md): converged entry for the
   common/air/naval split workline. The local README separates the still-active
   carry-over plan from the superseded pre-implementation analysis in archive.
+- [ground/](ground/README.md): planning entry for the future ground-domain
+  bootstrap. Start here to align naming, scope, and cross-cutting additions
+  before any dedicated ground implementation begins.
 - [simulation_architecture/](simulation_architecture/README.md): active
   simulation-system architecture workline. Start here before turning the
   canonical pipeline design into broad weapon, naval, sensor/track, facade, or
