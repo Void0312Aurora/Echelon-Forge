@@ -1,7 +1,7 @@
 # Ground
 
-Status: active planning entry opened on `2026-05-21`; G0, G1, and G2 accepted
-by the main thread. G3 is ready for design preflight.
+Status: active planning entry opened on `2026-05-21`; G0, G1, G2, and G3
+accepted by the main thread. G4 is released for one bounded runtime slice.
 
 Language:
 
@@ -31,6 +31,12 @@ simulation lifecycle without creating a new vertical runtime path.
 - G2 accepted the first ground content/test seed: a non-auto-loaded
   `ground_platoon_starter.seed` under `examples/config/database/ground/units/`
   and three runnable `tests/contracts/unit/ground/` common-core contracts.
+- G3 accepted one safe G4 candidate:
+  `tasking-only lifecycle proof through normalized ground TaskOrder ->
+  LeaderIntent -> PilotReport status shell`.
+- G4 is now released only for that bounded slice; command delivery,
+  observation/export, movement, sensing, terrain, fires, and broad facade work
+  remain held.
 
 ## Recommended Reading Order
 
@@ -63,8 +69,7 @@ simulation lifecycle without creating a new vertical runtime path.
 
 ## Current Follow-On Focus
 
-- run G3 as execution-surface design only, using G1/G2 evidence to choose one
-  safe G4 candidate
-- keep G4 held until G3 selects a bounded runtime slice, write scope, and test
-  plan
+- implement G4 only as the accepted tasking-only lifecycle-proof slice
+- keep command delivery, observation/export, movement, sensing, terrain, and
+  fires held while the first G4 slice is validated
 - use the subagent queue for all delegated work

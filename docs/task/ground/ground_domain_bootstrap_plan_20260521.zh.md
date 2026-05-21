@@ -1,7 +1,7 @@
 # Ground 域启动计划
 
-状态：`2026-05-21` 规划基线；G0、G1 与 G2 已由主线程集成验收。G3 已具备
-执行面设计预检条件。
+状态：`2026-05-22` 规划基线；G0、G1、G2 与 G3 已由主线程集成验收。G4 已释放为
+一个有边界的运行时切片。
 
 输入：
 
@@ -80,8 +80,8 @@ tasking/mission/runtime 链路。
 | `G0 边界冻结` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
 | `G1 合同骨架` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
 | `G2 内容与测试种子` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
-| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_preflight_cluster_20260521.md) | ready for design preflight |
-| `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | held；等待 G3 选择切片 |
+| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_preflight_cluster_20260521.md) | accepted |
+| `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已释放为有边界的 tasking-only lifecycle proof |
 
 当前分发队列是
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)。

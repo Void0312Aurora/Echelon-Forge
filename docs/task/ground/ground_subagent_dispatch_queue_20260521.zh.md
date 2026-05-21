@@ -2,8 +2,10 @@
 
 # 地面子代理调度队列
 
-状态：`2026-05-21` G0 已接受；G1-A 预检通过，G1-B 窄范围
-Python 配置文件实现已由主线程接受；G2 已发布，用于并行夹具和合约测试种子工作。
+状态：`2026-05-22` G0 已接受；G1-A 预检通过，G1-B 窄范围
+Python 配置文件实现已由主线程接受；G2 已由主线程集成接受。G3 现已释放为并行设计预检，
+但仍由主线程拥有集成权。G3-D 现已验收，G4 已释放为一个有边界的
+tasking-only lifecycle-proof 切片。
 
 启动子代理时使用此队列。主线程拥有集成和最终验收。
 
@@ -35,9 +37,12 @@ flowchart TD
 
 - `G0` 是标准权威，首先启动。
 - `G1` 仅在 G0 标准和任务索引达成一致后启动。G1-A 返回 `implementation-ready`；G1-B 已接受。
-- `G2` 在 G1 配置文件/默认决策之后发布。`G2-A` 夹具工作和 `G2-B` 合约测试工作可以并行运行，因为它们的写入范围不相交。`G2-C` 保持串行，由主线程拥有。
-- `G3` 可以在 G1 和 G2 返回足够证据以选择第一个现实切片后开始设计。
-- `G4` 被保留，直到 G3 选择一个运行时候选和写入范围。
+- `G2` 在 `G2-A`、`G2-B` 和主线程 `G2-C` 集成后被接受。
+- `G3` 可以使用 G1/G2 证据，通过写入范围不相交的并行 preflight diagnostics
+  开始设计。`G3-D` 已在整合 G3-A/B/C 后被接受。
+- `G4` 仅针对已选定的 tasking-only lifecycle proof 释放；command delivery、
+  observation export、movement、terrain、sensing、fires 和宽泛
+  `MissionCommand` 范围仍保持保留。
 
 ## 第一波
 
@@ -51,13 +56,16 @@ flowchart TD
 | `G2-A` | 工作者 | `gpt-5.4`，高 | 在 G1 之后添加第一个地面夹具根和能力说明。 | 仅 `examples/config/database/ground/**`。 |
 | `G2-B` | 工作者 | `gpt-5.4`，高 | 在 G1 之后添加地面合约规范和聚焦的合约运行器覆盖。 | 仅 `tests/contracts/unit/ground/**` 和一个聚焦的 `tests/leader` 或 `tests/runners` 测试。 |
 | `G2-C` | 主线程集成 | 当前主线程 | 集成 G2 工作者结果、验证、状态文档和 G3 剩余物。 | 仅 `docs/task/ground/g2_content_test_seed/**`、此调度队列、验证。 |
-| `G3-A` | 工作者 | `gpt-5.4`，极高 | 设计第一个执行表面并选择一个 G4 候选。 | 仅 `docs/task/ground/g3_execution_surface_design/**`，除非明确需要标准后续。 |
+| `G3-A` | explorer | `gpt-5.4`，high | 预检第一个 G4 切片候选及其 stage/packet map。 | 对 G1/G2/G3 文档与现有 ground profile 证据做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
+| `G3-B` | explorer | `gpt-5.4`，high | 预检第一个 reporting surface 及 environment dependency / deferral map。 | 对 G1/G2/G3 文档与 standards 做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
+| `G3-C` | explorer | `gpt-5.4`，high | 预检 G4 的 write scope、compatibility guards 与 focused test plan。 | 对 G1/G2/G3/G4 文档与 focused tests 做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
+| `G3-D` | 主线程集成 | 当前主线程 | 整合 G3-A/B/C，形成 authoritative G3 packet，并记录已验收的 G4 写入范围。 | 仅 `docs/task/ground/g3_execution_surface_design/**`、`docs/task/ground/README*.md` 与 queue sync。 |
 
 ## 保留流
 
 | 流 | 释放条件 |
 |--------|-------------------|
-| `G4-A` | 仅在 G3 选择单个运行时切片、写入范围和聚焦测试计划后释放。 |
+| `G4-A` | 已在 G3-D 验收后释放；G3 选定了一个有边界的 tasking-only lifecycle-proof 切片、写入范围和聚焦测试计划。 |
 | `G4-B` | 在 G4-A 返回可合并或阻塞证据后的可选关闭/集成流。 |
 
 ## 调度详情
@@ -235,26 +243,112 @@ G0-D 接受状态：
 - 最终验证命令
 - G3 执行表面设计的剩余物
 
-### `G3-A 执行表面预检`
+已接受的结果：
+
+- 主线程审查后接受 `G2-A` 和 `G2-B`
+- 验证 ground seed JSON 形状、ground contracts、ground profile test，以及
+  database loading 未出现 ground unknown-type warning
+- 释放并行 `G3-A`/`G3-B`/`G3-C` 设计预检；`G4` 在主线程 `G3-D`
+  集成前保持保留
+
+### `G3-A 候选与 Stage/Packet Map`
 
 任务：
 
-- 选择一个 G4 候选。
-- 定义阶段和数据包映射。
-- 命名观察/报告和环境假设。
-- 生成测试计划和实现写入范围。
+- 比较可信的第一切片形态，并选择一个有边界的 G4 候选。
+- 冻结超出已接受 G1/G2 范围之外的准确 stage 参与方式。
+- 冻结所选候选的 consumed、produced 和 deferred packet family。
 
 写入范围注意事项：
 
-- 不要实现运行时行为。
-- 不要扩展到完整的地形、机动性或火力。
+- 仅做只读 diagnostics。
+- 不要直接编辑运行时行为或 canonical G3 表。
 
 返回：
 
 - 选定的 G4 候选
-- 写入范围
-- 测试计划
-- 剩余映射
+- stage map
+- packet map
+- 阻塞候选选择的剩余物
+
+### `G3-B 观察/报告与环境边界`
+
+任务：
+
+- 推荐第一个不会泄漏 world-truth 的 reporting surface。
+- 将 terrain、line-of-sight、radio 和 mobility 假设分类为 implemented、
+  placeholder 或 deferred。
+- 确认哪些内容必须留在 G4 之外，以保持第一切片可信。
+
+写入范围注意事项：
+
+- 仅做只读 diagnostics。
+- 不要扩展到 movement、fires、sensing 或 observation runtime claims。
+
+返回：
+
+- reporting-surface recommendation
+- environment dependency map
+- deferral map
+- 会迫使 standards follow-up 的剩余物
+
+### `G3-C G4 释放包络与测试计划`
+
+任务：
+
+- 为所选切片类型定义一个有边界的 G4 写入范围。
+- 命名 G4 能够宣称 maintained behavior 之前需要的 focused tests 和
+  compatibility guards。
+- 定义候选的 no-private-ground-path proof 期望。
+
+写入范围注意事项：
+
+- 仅做只读 diagnostics。
+- 不要释放 G4，也不要编辑实现代码。
+
+返回：
+
+- G4 write scope
+- focused test plan
+- compatibility/no-private-path guard expectations
+- 必须记录给 G4 的剩余物
+
+### `G3-D 主线程集成`
+
+已完成任务：
+
+- 在 G3-A、G3-B 和 G3-C 返回后开始。
+- 将三个有边界的预检返回整合进 canonical G3 packet。
+- 同步 G3 README 和此队列。
+- 仅针对一个 bounded lifecycle-proof write scope 释放 G4。
+
+返回：
+
+- final G3 decision
+- selected G4 candidate
+- write scope
+- focused test plan
+- residual map
+
+已接受的结果：
+
+- 选定的 G4 候选：
+  `tasking-only lifecycle proof through normalized ground TaskOrder ->
+  LeaderIntent -> PilotReport status shell`
+- 产出的 reporting surface：
+  `PilotReport` only
+- 保留的 packet/runtime surfaces：
+  `CommandPacket`、`ObservationPacket`、`TrackPacket`、formal `P3`、formal
+  `P10`、movement、sensing、terrain、fires 和 broad `MissionCommand`
+- 已释放的 G4 写入范围：
+  shared-entry-point lifecycle proof，加上让 ground loaders 通过 maintained
+  `tasking_profile` bridge 解析所需的最窄 runtime plumbing
+- 已接受的 baseline tests：
+  `tests/leader/test_ground_profile_semantics.py`、
+  `tests/leader/test_common_core_semantics.py`、
+  `tests/leader/test_naval_profile_semantics.py`、
+  `tests/runtime/mission/test_leader_tasking_runtime.py`、
+  `tests/contracts/unit/ground/`
 
 ## 必需的工作者返回包
 

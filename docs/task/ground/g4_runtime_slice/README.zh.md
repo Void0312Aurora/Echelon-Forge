@@ -2,12 +2,13 @@
 
 # G4 运行时切片
 
-状态：`2026-05-21` 计划中 / 等待 G3 选定切片。
+状态：`2026-05-22` 已实现并验证一个由 G3 选定的有边界 tasking-only
+lifecycle-proof 切片。
 
 语言：
 
 - 英文正本：`README.md`
-- 中文配套：暂不需要；这是一个高变动任务切片。
+- 中文配套：本文件。
 
 输入：
 
@@ -23,6 +24,7 @@
 ## 输出
 
 - [G4 选定的运行时切片集群](g4_selected_runtime_slice_cluster_20260521.md)
+- [G4 子代理调度包](g4_subagent_dispatch_packets_20260522.md)
 
 ## 范围
 
@@ -43,3 +45,26 @@
 ## 门控条件
 
 当通过维护的共享入口点执行一个地面行为，并且测试证明空中/海军兼容性得到保持时，G4 即可合并。
+
+已释放切片：
+
+- `tasking-only lifecycle proof through normalized ground TaskOrder ->
+  LeaderIntent -> PilotReport status shell`
+
+继续 held：
+
+- formal `CommandPacket`
+- formal `ObservationPacket`
+- formal `TrackPacket`
+- formal `P3`
+- formal `P10`
+- movement、sensing、terrain、fires、effects、DTO/binding expansion 与 broad
+  `MissionCommand` growth
+
+验证结果：
+
+- Runtime batch command-chain sync 现在导入
+  `python.rl.tasking.bridge.build_kernel_mission_command`。
+- Focused G4 bridge test 已通过。
+- Ground/common-core/naval/leader 兼容性测试已通过。
+- Ground unit contracts 已通过 contract runner。

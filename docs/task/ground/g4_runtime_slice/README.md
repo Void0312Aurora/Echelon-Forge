@@ -1,6 +1,7 @@
 # G4 Runtime Slice
 
-Status: `2026-05-21` planned / held until G3 selects a slice.
+Status: `2026-05-22` implemented and validated for one bounded tasking-only
+lifecycle-proof slice selected by G3.
 
 Language:
 
@@ -22,6 +23,7 @@ simulation lifecycle.
 ## Output
 
 - [G4 selected runtime slice cluster](g4_selected_runtime_slice_cluster_20260521.md)
+- [G4 subagent dispatch packets](g4_subagent_dispatch_packets_20260522.md)
 
 ## Scope
 
@@ -43,3 +45,26 @@ Out of scope:
 
 G4 is mergeable when one ground behavior is exercised through maintained shared
 entry points and tests prove air/naval compatibility is preserved.
+
+Released slice:
+
+- `tasking-only lifecycle proof through normalized ground TaskOrder ->
+  LeaderIntent -> PilotReport status shell`
+
+Still held:
+
+- formal `CommandPacket`
+- formal `ObservationPacket`
+- formal `TrackPacket`
+- formal `P3`
+- formal `P10`
+- movement, sensing, terrain, fires, effects, DTO/binding expansion, and broad
+  `MissionCommand` growth
+
+Validation result:
+
+- Runtime batch command-chain sync now imports
+  `python.rl.tasking.bridge.build_kernel_mission_command`.
+- Focused G4 bridge test passed.
+- Ground/common-core/naval/leader compatibility tests passed.
+- Ground unit contracts passed through the contract runner.

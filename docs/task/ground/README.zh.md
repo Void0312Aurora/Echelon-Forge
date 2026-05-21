@@ -1,7 +1,7 @@
 # Ground
 
-状态：已于 `2026-05-21` 建立活跃规划入口；G0、G1 与 G2 均已由主线程验收。
-G3 已具备设计预检条件。
+状态：已于 `2026-05-21` 建立活跃规划入口；G0、G1、G2 与 G3 均已由主线程验收。
+G4 已释放为一个有边界的运行时切片。
 
 语言：
 
@@ -27,6 +27,11 @@ G3 已具备设计预检条件。
 - G2 已验收第一批 ground 内容/测试种子：`examples/config/database/ground/units/`
   下的非自动加载 `ground_platoon_starter.seed`，以及三个可运行的
   `tests/contracts/unit/ground/` common-core 合同。
+- G3 已验收一个安全的 G4 候选：
+  `tasking-only lifecycle proof through normalized ground TaskOrder ->
+  LeaderIntent -> PilotReport status shell`。
+- G4 现在只为该有界切片释放；command delivery、observation/export、
+  movement、sensing、terrain、fires 与 broad facade work 仍保持 held。
 
 ## 推荐阅读顺序
 
@@ -59,6 +64,7 @@ G3 已具备设计预检条件。
 
 ## 当前继续推进重点
 
-- 按 execution-surface design only 方式运行 G3，用 G1/G2 证据选择一个安全的 G4 候选
-- G4 继续 held，直到 G3 选出有界 runtime 切片、写入范围和测试计划
+- 仅按已验收的 tasking-only lifecycle-proof 切片推进 G4
+- 在第一条 G4 切片验证完成前，继续保持 command delivery、observation/export、
+  movement、sensing、terrain 与 fires 为 held
 - 所有委派工作都通过 subagent queue 分发

@@ -32,7 +32,7 @@ from gym_envs.universal_env import (
     make_observation_space,
     normalize_action,
 )
-from python.rl.tasking.leader_tasking import build_kernel_mission_command
+from python.rl.tasking.bridge import build_kernel_mission_command
 from python.rl.support.sb3_vec_env_compat import (
     VecEnv,
     VecEnvIndices,

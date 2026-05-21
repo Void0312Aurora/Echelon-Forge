@@ -1,8 +1,10 @@
 # Ground Subagent Dispatch Queue
 
-Status: `2026-05-21` G0 accepted; G1-A preflight and G1-B narrow
+Status: `2026-05-22` G0 accepted; G1-A preflight and G1-B narrow
 Python-profile implementation accepted by main thread; G2 accepted by
-main-thread integration. G3 is ready for design preflight.
+main-thread integration. G3 is released as parallel design preflight with
+main-thread integration ownership. G3-D is now accepted and G4 is released for
+one bounded tasking-only lifecycle-proof slice.
 
 Use this queue when launching subagents. The main thread owns integration and
 final acceptance.
@@ -41,8 +43,12 @@ Parallel rule:
 - `G1` starts only after G0 standards and task indexes agree. G1-A returned
   `implementation-ready`; G1-B is accepted.
 - `G2` is accepted after `G2-A`, `G2-B`, and main-thread `G2-C` integration.
-- `G3` may begin design using G1/G2 evidence to choose a realistic first slice.
-- `G4` is held until G3 selects one runtime candidate and write scope.
+- `G3` may begin design using G1/G2 evidence through parallel preflight
+  diagnostics with disjoint scopes. `G3-D` is accepted after integrating
+  G3-A/B/C.
+- `G4` is released only for the selected tasking-only lifecycle proof and
+  remains held for command delivery, observation export, movement, terrain,
+  sensing, fires, and broad `MissionCommand` scope.
 
 ## First Wave
 
@@ -56,13 +62,16 @@ Parallel rule:
 | `G2-A` | worker | `gpt-5.4`, high | Accepted: add first ground fixture root and capability note after G1. | `examples/config/database/ground/**` only. |
 | `G2-B` | worker | `gpt-5.4`, high | Accepted: add ground contract specs and focused contract-runner coverage after G1. | `tests/contracts/unit/ground/**` and one focused `tests/leader` or `tests/runners` test only. |
 | `G2-C` | main-thread integration | current main thread | Accepted: integrate G2 worker results, validation, status docs, and G3 residuals. | `docs/task/ground/g2_content_test_seed/**`, this dispatch queue, validation only. |
-| `G3-A` | worker | `gpt-5.4`, xhigh | Design the first execution surface and select one G4 candidate. | `docs/task/ground/g3_execution_surface_design/**` only unless standards follow-up is explicitly needed. |
+| `G3-A` | explorer | `gpt-5.4`, high | Preflight candidate selection plus stage/packet map for the first G4 slice. | Read-only diagnostics over G1/G2/G3 docs and current ground profile evidence. No direct edits. Dispatched `2026-05-22`. |
+| `G3-B` | explorer | `gpt-5.4`, high | Preflight the first reporting surface and the environment dependency / deferral map. | Read-only diagnostics over G1/G2/G3 docs and standards. No direct edits. Dispatched `2026-05-22`. |
+| `G3-C` | explorer | `gpt-5.4`, high | Preflight the G4 write scope, compatibility guards, and focused test plan. | Read-only diagnostics over G1/G2/G3/G4 docs and focused tests. No direct edits. Dispatched `2026-05-22`. |
+| `G3-D` | main-thread integration | current main thread | Integrate G3-A/B/C into the authoritative G3 packet and decide whether G4 can be released. | `docs/task/ground/g3_execution_surface_design/**`, `docs/task/ground/README*.md`, and queue sync only. |
 
 ## Held Streams
 
 | Stream | Release condition |
 |--------|-------------------|
-| `G4-A` | Release only after G3 selects a single runtime slice, write scope, and focused test plan. |
+| `G4-A` | Released after accepted G3-D selected one bounded tasking-only lifecycle-proof slice, write scope, and focused test plan. |
 | `G4-B` | Optional closure/integration stream after G4-A returns mergeable or blocked evidence. |
 
 ## Dispatch Details
@@ -285,28 +294,108 @@ Accepted result:
 - accepted `G2-A` and `G2-B` after main-thread review
 - validated the ground seed JSON shape, ground contracts, ground profile test,
   and database loading without a ground unknown-type warning
-- released `G3-A` for design preflight only; `G4` remains held
+- released parallel `G3-A`/`G3-B`/`G3-C` design preflight; `G4` remained held
+  until main-thread `G3-D` integration
 
-### `G3-A Execution Surface Preflight`
+### `G3-A Candidate And Stage/Packet Map`
 
 Task:
 
-- Choose one G4 candidate.
-- Define stage and packet maps.
-- Name observation/reporting and environment assumptions.
-- Produce test plan and implementation write scope.
+- Compare the credible first-slice shapes and choose one bounded G4 candidate.
+- Freeze the exact stage participation beyond accepted G1/G2 scope.
+- Freeze consumed, produced, and deferred packet families for the chosen
+  candidate.
 
 Write-scope caution:
 
-- Do not implement runtime behavior.
-- Do not broaden into full terrain, mobility, or fires.
+- Read-only diagnostics only.
+- Do not edit runtime behavior or canonical G3 tables directly.
 
 Return:
 
 - selected G4 candidate
+- stage map
+- packet map
+- residuals that block candidate selection
+
+### `G3-B Observation/Reporting And Environment Boundary`
+
+Task:
+
+- Recommend the first reporting surface that avoids world-truth leakage.
+- Classify terrain, line-of-sight, radio, and mobility assumptions as
+  implemented, placeholder, or deferred.
+- Confirm what must stay out of G4 so the first slice remains credible.
+
+Write-scope caution:
+
+- Read-only diagnostics only.
+- Do not broaden into movement, fires, sensing, or observation runtime claims.
+
+Return:
+
+- reporting-surface recommendation
+- environment dependency map
+- deferral map
+- residuals that would force standards follow-up
+
+### `G3-C G4 Release Envelope And Test Plan`
+
+Task:
+
+- Define one bounded G4 write scope for the selected class of slice.
+- Name the focused tests and compatibility guards required before G4 can claim
+  maintained behavior.
+- Define the no-private-ground-path proof expectation for the candidate.
+
+Write-scope caution:
+
+- Read-only diagnostics only.
+- Do not release G4 or edit implementation code.
+
+Return:
+
+- G4 write scope
+- focused test plan
+- compatibility/no-private-path guard expectations
+- residuals that must stay recorded for G4
+
+### `G3-D Main-Thread Integration`
+
+Completed task:
+
+- Started after G3-A, G3-B, and G3-C returned.
+- Integrated the three bounded preflight returns into the canonical G3 packet.
+- Synced the G3 README and this queue.
+- Released G4 only for one bounded lifecycle-proof write scope.
+
+Return:
+
+- final G3 decision
+- selected G4 candidate
 - write scope
-- test plan
+- focused test plan
 - residual map
+
+Accepted result:
+
+- selected G4 candidate:
+  `tasking-only lifecycle proof through normalized ground TaskOrder ->
+  LeaderIntent -> PilotReport status shell`
+- produced report surface:
+  `PilotReport` only
+- held packet/runtime surfaces:
+  `CommandPacket`, `ObservationPacket`, `TrackPacket`, formal `P3`, formal
+  `P10`, movement, sensing, terrain, fires, and broad `MissionCommand`
+- released G4 write scope:
+  shared-entry-point lifecycle proof plus the narrowest runtime plumbing needed
+  so ground loaders resolve through the maintained `tasking_profile` bridge
+- accepted baseline tests:
+  `tests/leader/test_ground_profile_semantics.py`,
+  `tests/leader/test_common_core_semantics.py`,
+  `tests/leader/test_naval_profile_semantics.py`,
+  `tests/runtime/mission/test_leader_tasking_runtime.py`,
+  and `tests/contracts/unit/ground/`
 
 ## Required Worker Return Packet
 

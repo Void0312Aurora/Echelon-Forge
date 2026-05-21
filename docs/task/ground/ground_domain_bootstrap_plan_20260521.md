@@ -1,7 +1,7 @@
 # Ground Domain Bootstrap Plan
 
-Status: `2026-05-21` planning baseline; G0, G1, and G2 accepted by main-thread
-integration. G3 is ready for execution-surface design preflight.
+Status: `2026-05-22` planning baseline; G0, G1, G2, and G3 accepted by
+main-thread integration. G4 is released for one bounded runtime slice.
 
 Inputs:
 
@@ -90,8 +90,8 @@ reviewed, and closed without widening the whole ground bootstrap lane.
 | `G0 Boundary Freeze` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
 | `G1 Contract Skeleton` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
 | `G2 Content And Test Seed` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
-| `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | ready for design preflight |
-| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | held until G3 selects a slice |
+| `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | accepted |
+| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | released for bounded tasking-only lifecycle proof |
 
 The active assignment queue is
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).
