@@ -84,6 +84,23 @@ Recommended defaults:
 - Exceeding three rounds for one cluster is a planning failure signal and must
   be called out explicitly before further dispatch.
 
+## Documentation Budget Discipline
+
+Planning documents are work products with cost. A recovery, remediation, or
+cleanup WP must set an explicit documentation budget before it creates sidecar
+plans, bilingual companions, dispatch queues, ledgers, or acceptance files.
+
+Hard rules:
+
+- Do not create extra task-cluster, salvage-ledger, dispatch, or acceptance
+  documents merely to restate the same plan in a new structure.
+- If a recovery WP claims to reduce process drag, its document count must shrink
+  or be explicitly justified.
+- If the plan cannot fit in the declared planning surface, stop for
+  re-baseline instead of adding more documents.
+- Closure lanes may add required acceptance/index artifacts only after the
+  implementation stream is mergeable or explicitly blocked.
+
 ## Model And Reasoning Budget Rules
 
 Subagent dispatch must record both model choice and reasoning budget when the
@@ -170,8 +187,9 @@ Acceptance rules:
 
 - `pass` is scoped to the assigned cluster slice only.
 - `partial` records evidence but never unlocks downstream closure.
-- `blocked` must name the blocker, owner, replacement path, and failing or
-  missing guard.
+- `blocked` must name the blocker, owner, replacement path, failing or missing
+  guard, and forced review trigger. It is not a pass state, but it is an
+  acceptable honest stop state when continuing would create churn.
 - The main thread must locally verify important worker claims before accepting
   them as integration evidence.
 - A WP or phase cannot be marked complete while named compatibility, legacy,

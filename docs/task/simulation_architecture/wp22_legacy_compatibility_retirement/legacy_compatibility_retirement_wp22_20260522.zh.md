@@ -1,6 +1,12 @@
 # WP22 旧兼容层强制退场与架构硬化
 
-状态：`2026-05-22` WP21 owner-rejected；WP22 remediation active。最新几轮
+状态：`2026-05-23` frozen / owner-rejected；已由
+[`WP23 Legacy Retirement Recovery And Reset`](../wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md)
+取代。本文档只保留历史 provenance。其 queues、"next dispatch" sections、
+partial packets 与 quarantine evidence 不得用于启动新工作，除非先重写为 WP23
+cluster，并通过 WP23 delete-or-block gate。
+
+冻结前历史状态：`2026-05-22` WP21 owner-rejected；WP22 remediation active。最新几轮
 implementation wave 已对其限定 packet 完成本地验收：production `loader.sim`
 使用已清零，`RTE-007` setup/type/schema ownership 通过 terrain/setup 聚焦验证，
 `A-001` maintained typed setup promotion 已落地，runtime legacy-mode 与

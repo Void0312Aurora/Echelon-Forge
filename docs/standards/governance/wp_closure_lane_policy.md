@@ -16,6 +16,10 @@ records.
 
 - `Mergeable`: code, focused tests, English canonical task notes, and named
   residuals are complete enough for the implementation stream to continue.
+- `Blocked`: the stream has reached its declared round or risk budget and
+  cannot safely delete, migrate, or complete a surface without a replacement,
+  owner decision, or public API change. `Blocked` must include owner, reason,
+  replacement condition, validation gap, and forced review trigger.
 - `Closed`: the mergeable stream has also completed acceptance review,
   README/index synchronization, required bilingual companions, archive decisions,
   and traceable residual ownership.
@@ -23,6 +27,10 @@ records.
 Documentation closure must not reopen implementation scope. If closure discovers
 a technical gap, it records a blocked residual or sends the item back to a new
 implementation stream rather than silently rewriting the verdict.
+
+`Blocked` is a valid close-out record, not an acceptance result. It should be
+preferred over repeated partial waves when the remaining work is unsafe or
+underspecified.
 
 ## Main Implementation Lane
 
@@ -37,6 +45,10 @@ The main lane owns:
 The main lane should avoid editing README indexes, review indexes, archive
 trees, and broad bilingual surfaces during active implementation unless those
 edits are required to unblock the current code or test change.
+
+The main lane should also keep an explicit documentation budget. Creating more
+planning files is not neutral: if the budget is exceeded, the stream should stop
+for re-baseline instead of producing another queue or ledger.
 
 ## Closure Lane
 

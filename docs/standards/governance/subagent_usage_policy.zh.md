@@ -66,6 +66,21 @@ Language:
 - implementation 任务簇最多允许两轮，超过后必须重新划分。
 - 同一任务簇超过三轮是规划失败信号，继续派发前必须显式说明。
 
+## 文档预算纪律
+
+计划文档本身也是有成本的工作产物。任何 recovery、remediation 或 cleanup WP 在创建
+sidecar plans、双语 companion、dispatch queue、ledger 或 acceptance files 前，必须先
+声明明确的文档预算。
+
+硬规则：
+
+- 不得仅为了用新结构重述同一计划而创建额外 task-cluster、salvage-ledger、dispatch
+  或 acceptance 文档。
+- 如果某个 recovery WP 宣称要减少流程拖拽，它的文档数量必须下降，或给出显式理由。
+- 如果计划无法装入已声明的 planning surface，应停止并 re-baseline，而不是继续加文档。
+- closure lane 只有在 implementation stream 达到 mergeable 或显式 blocked 后，才可补
+  必需 acceptance/index artifacts。
+
 ## 模型与思考预算规则
 
 当工具支持模型选择与 reasoning budget 时，subagent 派发必须记录两者。
@@ -137,7 +152,9 @@ integration notes:
 
 - `pass` 只对被分配的任务簇切片有效。
 - `partial` 只能记录证据，永远不能解锁下游 closure。
-- `blocked` 必须说明 blocker、owner、replacement path，以及失败或缺失的 guard。
+- `blocked` 必须说明 blocker、owner、replacement path、失败或缺失的 guard，以及
+  forced review trigger。它不是 pass state，但当继续推进只会制造 churn 时，它是可接受的
+  诚实停止状态。
 - main thread 必须本地复验重要 worker claim，才能把它作为 integration evidence。
 - 只要仍存在未归属的 compatibility、legacy、diagnostics 或 public escape-hatch
   residual，就不能把 WP 或阶段标记为完成。

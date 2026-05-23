@@ -14,11 +14,18 @@
 
 - `Mergeable`：代码、focused tests、英文 canonical 任务记录和命名残余项已足够完整，
   实现流可以继续推进。
+- `Blocked`：该流已经达到声明的轮次或风险预算，且在缺少 replacement、owner decision
+  或 public API change 的情况下，无法安全删除、迁移或完成某个 surface。`Blocked`
+  必须包含 owner、reason、replacement condition、validation gap 与 forced review
+  trigger。
 - `Closed`：在 `Mergeable` 基础上，已完成验收审查、README/index 同步、
   必需双语伴生文档、归档判断和残余项 owner 追踪。
 
 文档 closure 不应重新打开实现范围。若 closure 发现技术缺口，应记录 blocked residual，
 或把它送回新的实现流，而不是靠改写 verdict 抹平问题。
+
+`Blocked` 是有效 close-out record，但不是 acceptance result。当剩余工作不安全或定义不清时，
+它应优先于反复追加 partial waves。
 
 ## 主实现流
 
@@ -32,6 +39,9 @@
 
 主实现流应避免在活跃实现期间编辑 README 索引、review 索引、archive tree
 和大范围双语表面，除非这些改动确实阻塞当前代码或测试变更。
+
+主实现流还应保持明确的文档预算。创建更多 planning files 不是中性的；如果超出预算，
+该流应停止并 re-baseline，而不是继续产出 queue 或 ledger。
 
 ## Closure Lane
 

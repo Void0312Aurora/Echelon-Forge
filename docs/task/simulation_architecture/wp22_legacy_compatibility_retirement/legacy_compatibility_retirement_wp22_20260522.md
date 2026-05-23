@@ -1,6 +1,13 @@
 # WP22 Legacy Compatibility Retirement And Architecture Hardening
 
-Status: `2026-05-22` WP21 owner-rejected; WP22 remediation active. The latest
+Status: frozen / owner-rejected on `2026-05-23`; superseded by
+[`WP23 Legacy Retirement Recovery And Reset`](../wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md).
+This document is historical provenance only. Its queues, "next dispatch"
+sections, partial packets, and quarantine evidence must not be used to launch
+new work unless rewritten into a WP23 cluster and accepted by the WP23
+delete-or-block gate.
+
+Historical pre-freeze status: `2026-05-22` WP21 owner-rejected; WP22 remediation active. The latest
 implementation waves were locally accepted for their scoped packets:
 production `loader.sim` usage is now cleared, `RTE-007` setup/type/schema
 ownership passed focused terrain/setup validation, `A-001` maintained typed

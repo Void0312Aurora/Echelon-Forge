@@ -1,6 +1,12 @@
 # WP22 Subagent Dispatch Queue
 
-Status: `2026-05-22` WP21 owner-rejected; WP22 remediation active. The fifth
+Status: frozen / historical only on `2026-05-23`; superseded by
+[`WP23 Legacy Retirement Recovery And Reset`](../wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md).
+No item in this queue is dispatchable. Any future work must be rewritten into a
+WP23 cluster, pass the WP23 delete-or-block gate, and receive a new bounded
+dispatch packet.
+
+Historical pre-freeze status: `2026-05-22` WP21 owner-rejected; WP22 remediation active. The fifth
 wave plus main-thread A-001 follow-up produced scoped passes for maintained
 typed setup, maintained facade raw-drilling removal, default-factory seed
 quarantine, naval helper-system ordering, and validation-family split. The
@@ -28,8 +34,19 @@ consumer-migration patch, not closure.
 `WP22 overall` remains open: no acceptance or final closure work is eligible
 until the remaining compatibility/diagnostics escape hatches,
 DTO/default-factory replacement work, and structural/binding debt return
-complete evidence. R3 must be re-scoped before more implementation or closure
+complete evidence. `R3` has now been re-scoped into a finite replacement
+cluster; only the three sub-slices in the remaining-task doc are dispatchable,
+and public escape-hatch deletion is still blocked. The latest recovered packets
+accepted R0/R1-1 command-link pending transport narrowing, R2 `MissionCommand`
+owner-slice migration, R1-3 exact-stage contract ledger demotion, R3-1
+scenario-loader construction, R3-2 world layout/time-step access, and R3-3
+visual/candidate helper centralization as scoped passes. R3 has no further
+finite implementation dispatch here, while public escape-hatch deletion remains
+blocked. R2 requires formal re-scope before any further implementation
 dispatch.
+That formal R2 re-scope is docs-only and narrows the residual target list to
+`TaskOrder`, `LeaderIntent`, `PilotReport`, and world-batch assignment shells;
+it does not authorize implementation, `WP22-F`, `R4`, or closure.
 
 Language:
 
@@ -79,7 +96,8 @@ Inputs:
 |--------|-----------------------------|-----------------|
 | `TaskOrder import unlock` | `gpt-5.4-mini`, high | Validate the import-time `ef_py.TaskOrder` path in `command_chain_cache` and keep it as a validation-only C/F guard-lane follow-up. |
 | `RTE-003/RTE-007 next slice` | `gpt-5.4`, xhigh | Keep the raw-sim compatibility seam and terrain-default retirement coordinated across C/F and D ownership; preserve the quarantine and setup ownership fences. |
-| `R3 adapter raw-world replacement re-scope` | `gpt-5.4-mini`, xhigh | Docs and queue sync only; no code changes. | Re-scope the finite replacement cluster before any more implementation or closure dispatch; keep public escape hatches compatibility-only until replacement APIs exist. |
+| `R2 formal re-scope` | `gpt-5.4-mini`, xhigh | WP22 R2 / remaining-task / queue docs only. No code changes. | Convert the accepted `MissionCommand` slice into a finite residual list for `TaskOrder`, `LeaderIntent`, `PilotReport`, and world-batch assignment shells; preserve the explicit hard-stop conditions and keep `WP22-F`, `R4`, and closure out of scope. |
+| `R3 adapter raw-world replacement re-scope` | `gpt-5.4-mini`, xhigh | Docs and queue sync only; no code changes. | Re-scope the finite replacement cluster so future implementation can target exactly `R3-1` scenario-loader construction, `R3-2` world layout/time-step access, or `R3-3` visual compatibility export/candidate helpers; keep `RuntimeFacade::runtime()`, `WorldBatchRuntime::world()`, `vec_env.batch_runtime`, and diagnostics bindings quarantine-only. |
 | `WP22-E/D residual gates` | `gpt-5.4-mini`, xhigh | Tighten the remaining residual gates across structural decomposition and command DTO retirement without converting open work into completion evidence. |
 | `Documentation fourth sync` | `gpt-5.4-mini`, xhigh | Re-align the ledger, queue, and companion docs to the current pass/block state after the next slice lands. |
 
@@ -258,7 +276,7 @@ shells, runtime escape hatches, and broader structural debt open.
 |--------|--------|---------------|--------------------|-------------------|
 | `Bohr` | `Operation-system legacy mirror quarantine` | `pass`: `operation_system.h` no longer owns local legacy mirror seed/refresh helpers and now uses bridge-owned control-state seed and mirror refresh helpers. `MovementCommand` / `LaggedCommand` remain compatibility mirrors in system signatures. | Main-thread recheck: architecture default-factory/WP9/structural suite `23 passed`; mission runtime suite `6 passed`; `cmake --build build-workshop --target ef_py -j4` passed; `git diff --check` clean. | `operation_system.h` still direct-includes `legacy_command.h` because system signatures retain `ActionCommand`, `MovementCommand`, and `LaggedCommand` mirrors. |
 | `Schrodinger` | `Default-factory projection readiness fact check` | `blocked / read-only`: `can_delete_projection = no`; default-factory still projects `MovementCommand` / `LaggedCommand` mirrors and remaining consumers still require them. | Worker packet: default-factory/WP9 command-focused guard `7 passed, 5 deselected`; `git diff --check` clean; touched files `none`. | Projection deletion is blocked by bridge fallback, operation mirrors, command-link delivery, and still-live MovementCommand readers. |
-| `Epicurus` | `Command-link pending transport narrowing` | `pending` | no packet yet | Must return a complete packet before pending transport can be accepted or recorded as partial/blocked. |
+| `Epicurus` | `Command-link pending transport narrowing` | `blocked / no packet` | no packet yet | Must return a complete packet before pending transport can be accepted or recorded as partial/blocked. |
 
 These packets still do not authorize `WP22-F`. Operation helper ownership is
 narrower, but command-link pending transport and default-factory mirror
@@ -273,6 +291,169 @@ projection remain active blockers.
 
 These packets still do not authorize `WP22-F`. `WP22 overall` remains open, and
 the latest results only narrow the remaining mirror/consumer surfaces.
+
+## Fifteenth-Wave Finite Cluster Results
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Banach` | `Command-link pending transport narrowing` | `pass`: delayed movement delivery is typed-state-owned, `PendingMovementCommand.command` is diagnostics shell only, and `PendingActionCommand.typed_air_control_bridge` carries a typed overlay projection while action transport remains quarantined. | Main-thread recheck: `ef_py` build passed; command/pending architecture suite `17 passed, 13 deselected`; DTO shell guard `7 passed`; runtime/facade/world-batch/GPU focused suites `98 passed, 64 deselected`; `git diff --check` clean. | `ActionCommand`, pending action transport, legacy mirrors, default-factory projection, and diagnostics bindings remain live compatibility surfaces. |
+| `Franklin` | `MissionCommand owner-slice migration` | `pass` for the limited `MissionCommand` mission-episode consumer slice: shared-core maintained reads now use explicit owner-slice helpers instead of flat aggregate shell reads. | Main-thread recheck included DTO shell guard `7 passed`, `ef_py` build pass, and diff-check clean. | `TaskOrder`, `LeaderIntent`, `PilotReport`, world-batch assignment shells, and broader aggregate DTO retirement remain open; R2 must be formally re-scoped before more implementation. |
+| `Planck` | `R3 finite re-scope` | `pass`: R3 is constrained to `R3-1`, `R3-2`, and `R3-3`; public escape-hatch deletion remains blocked. | Main-thread recheck: docs inspected and later synchronized; diff-check clean. | Not implementation evidence by itself; only constrains the next R3 slices. |
+| `Wegener` | `Exact-stage contract demotion/alignment` | `pass` for R1-3: exact-stage inventory now reads as a guarded contract ledger, not maintained implementation truth. | Main-thread recheck: command/exact-stage architecture suite `17 passed, 13 deselected`; diff-check clean. | `R1-B` remains blocked; ledger demotion does not authorize default-factory projection deletion. |
+| `Heisenberg` | `Scenario-loader construction` | `pass` for R3-1: adapter scenario-loader construction uses a named runtime-world-layout request/result seam and does not add maintained raw-world construction call sites. | Main-thread recheck: world setup/world-batch/facade suites `81 passed, 29 deselected`; diff-check clean. | `adapter.py::world()` and `get_time_step()` raw compat fallback remain R3-2. |
+| `Descartes` | `Visual compatibility export/candidate helpers` | `pass` for R3-3: facade-owned visual candidate assembly and GPU wrappers now keep facade-owned and compatibility-runtime paths explicit. | Main-thread recheck: visual/GPU/facade focused suites `17 passed, 35 deselected`; `ef_py` build pass; diff-check clean. | Public `RuntimeFacade::runtime()`, `WorldBatchRuntime::world()`, `vec_env.batch_runtime`, diagnostics bindings, and R3-2 remain blockers. |
+
+These packets are accepted only as scoped passes. `WP22-F`, public escape-hatch
+deletion, and default-factory projection deletion remain not eligible.
+
+## Sixteenth-Wave R3-2 Result
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Popper` | `R3-2 World layout/time-step access` | `pass` for R3-2: `RuntimeFacadeAdapter::world()` returns a controlled proxy for layout/time-step reads, `get_time_step()` prefers facade/runtime helper access, and adapter-owned layout snapshots prevent new maintained raw-world layout/time-step call sites. | Main-thread recheck: `ef_py` build passed; runtime facade layering `10 passed, 28 deselected`; world setup/world-batch `52 passed, 4 deselected`; facade/multi-agent runtime `33 passed, 24 deselected`; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | `RuntimeFacade::runtime()`, `WorldBatchRuntime::world()`, public `batch_runtime` / `vec_env.batch_runtime`, explicit `legacy` mode, diagnostics bindings, and raw-world compatibility forwarding remain quarantine-only. This is not deletion-ready or closure evidence. |
+
+`R3-1`, `R3-2`, and `R3-3` are now scoped passes. Do not dispatch more R3
+implementation work from this cluster; the next finite work is R2 owner-slice
+implementation under the re-scoped target list.
+
+## Next Finite Dispatch
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 TaskOrder owner-slice implementation` | `gpt-5.4`, xhigh | `src/components/tasking/task_order.h`, existing TaskOrder owner-slice headers if needed, `tests/architecture/test_wp22_dto_domain_shell_guard.py`, and focused tasking/mission tests. Do not edit runtime facade, command-link, public escape-hatch, or R3 files. | Move maintained TaskOrder evidence toward explicit owner-slice directives/guards without inventing new DTO shapes or widening the compatibility shell. Return `partial` or `blocked` if maintained flat-shell truth remains. |
+| `R2 read-only maintained-consumer fact check` | `gpt-5.4-mini`, xhigh | read-only source inspection; touched files `none`. | Identify exact maintained call sites for `LeaderIntent`, `PilotReport`, and world-batch assignment shells that still consume flat aggregate truth. Return source anchors and the smallest next implementation slice; do not edit files or authorize closure. |
+
+## Seventeenth-Wave R2 Partial/Blocked Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Volta` | `R2 TaskOrder owner-slice implementation` | `partial`: `TaskOrder` shared-core evidence now has `TaskOrderSharedCoreOwnerSlice`, `TaskOrderSharedCoreDirective`, `kTaskOrderSharedCoreOwnedSurface`, and `task_order_shared_core_directive(...)`; no DTO shape was added and the compatibility shell was not widened. | Main-thread recheck: DTO shell guard `8 passed`; focused mission/tasking runtime `9 passed, 35 deselected`; `ef_py` build passed; `git diff --check` clean. | `TaskOrder` flat aggregate shell, world-batch assignment shell, kernel/facade batch APIs, Python bindings, and maintained Python/runtime callers still move whole `TaskOrder`; this is guard/evidence narrowing, not retirement. |
+| `Noether` | `R2 maintained-consumer fact check` | `blocked / read-only`: no files touched; source anchors show maintained Python command-chain paths still snapshot and assign whole `LeaderIntent` / `PilotReport` shells. | Main-thread accepted as blocker evidence after diff-check and local validation. | `world_batch_vec_env.py`, `cooperative_world_batch_vec_env.py`, and `command_chain_cache.py` are the smallest next non-conflicting implementation slice. `cooperative_director.py`, core batch/facade APIs, and bindings remain broader blockers. |
+
+These packets do not complete R2 and do not authorize `WP22-F`, R4, DTO shell
+retirement, or public escape-hatch deletion.
+
+## Next Finite Dispatch After R2 Evidence
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 Python command-chain owner-slice sync` | `gpt-5.4`, xhigh | `python/rl/runtime/world_batch/command_chain_cache.py`, `python/rl/runtime/world_batch_vec_env.py`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, and focused tests for world-batch command-chain sync. Do not edit C++ tasking headers, DTO guard, runtime facade, command-link, R3 files, or docs beyond result recording. | Replace whole-shell snapshot/assignment semantics for `LeaderIntent` / `PilotReport` with explicit owner-slice projection helpers where feasible. Keep assignment wrappers transport-only. Return `partial` or `blocked` if bound Python APIs lack owner-slice fields or still require whole-shell transport. |
+
+## Eighteenth-Wave R2 Partial Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Herschel` | `R2 Python command-chain owner-slice sync` | `partial`: Python command-chain snapshots now use explicit named `LeaderIntent` / `PilotReport` owner-slice projection buckets, and world-batch assignment writes are routed through named compatibility transport projection helpers. | Main-thread recheck: `py_compile` passed for the touched runtime files; focused world-batch/cooperative command-chain tests `24 passed, 52 deselected`; focused mission/tasking tests `9 passed, 35 deselected`; `ef_py` build passed; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | Whole `LeaderIntent` / `PilotReport` shells remain live as transport payloads. Python bindings still expose the flat shells but not `LeaderIntentCore` / `LeaderIntentAir` / `LeaderIntentNaval`, `PilotReportCore` / `PilotReportAir` / `PilotReportNaval`, or bound owner-slice helper functions. `TaskOrder` Python whole-shell paths also remain open. |
+
+This packet does not complete R2 and does not authorize `WP22-F`, R4, DTO shell
+retirement, or public escape-hatch deletion.
+
+## Next Finite Dispatch After Command-Chain Partial
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 Python binding owner-slice exposure` | `gpt-5.4`, xhigh | `src/interfaces/python/bindings_command.cpp`, focused binding/DTO guard tests, and only the minimal Python tests needed to prove owner-slice visibility. Do not edit runtime facade, command-link, R3 files, public escape hatches, or world-batch runtime APIs. | Expose existing `LeaderIntent` / `PilotReport` owner-slice types and projection helpers to Python without inventing new DTO shapes or widening compatibility shells. Return `partial` or `blocked` if nanobind cannot safely expose the base-slice references or if maintained callers still need whole-shell transport after helper exposure. |
+
+## Nineteenth-Wave R2 Partial Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Lovelace` | `R2 Python binding owner-slice exposure` | `partial`: Python now exposes `LeaderIntentCore` / `LeaderIntentAir` / `LeaderIntentNaval`, `PilotReportCore` / `PilotReportAir` / `PilotReportNaval`, and the `leader_intent_*` / `pilot_report_*` projection helpers through `nb::inst_reference(...)` live owner-slice views. No new DTO shape was added and the flat shells were not widened. | Main-thread recheck: `ef_py` build passed; binding command surface `4 passed`; DTO shell guard `9 passed`; focused world-batch command-chain snapshot tests `2 passed, 46 deselected`; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | `LeaderIntent` / `PilotReport` flat shells and `WorldLeaderIntentAssignment` / `WorldPilotReportAssignment` remain live compatibility transport. The Python command-chain snapshot code still uses hand-maintained field lists instead of the newly bound owner-slice helpers, and `TaskOrder` Python whole-shell paths remain open. |
+
+This packet removes the binding-visibility blocker but does not complete R2 and
+does not authorize `WP22-F`, R4, DTO shell retirement, or public escape-hatch
+deletion.
+
+## Next Finite Dispatch After Binding Visibility
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 Python command-chain bound owner-slice consumption` | `gpt-5.4`, xhigh | `python/rl/runtime/world_batch/command_chain_cache.py`, focused world-batch/cooperative command-chain tests, and minimal binding-surface assertions if needed. Do not edit C++ bindings, DTO headers, runtime facade, command-link, public escape hatches, R3 files, or docs beyond result recording. | Replace hand-maintained `LeaderIntent` / `PilotReport` owner-slice field snapshots with snapshots taken from the newly bound `ef_py.leader_intent_*` and `ef_py.pilot_report_*` owner-slice helpers where feasible. Keep assignment wrappers transport-only. Return `partial` if whole-shell transport remains live after snapshot consumption, and return `blocked` if helper consumption is unsafe or requires widening a shell. |
+
+## Twentieth-Wave R2 Partial Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Peirce` | `R2 Python command-chain bound owner-slice consumption` | `partial`: `LeaderIntent` / `PilotReport` command-chain snapshots now consume the bound `ef_py.leader_intent_*` and `ef_py.pilot_report_*` owner-slice helper views instead of local hand-maintained field tuples. Projection names remain stable and assignment wrappers stay transport-only. | Main-thread recheck: `py_compile` passed for `command_chain_cache.py`; focused world-batch/cooperative command-chain tests `24 passed, 52 deselected`; binding command surface `4 passed`; focused mission/tasking runtime `9 passed, 35 deselected`; `ef_py` build passed; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | Whole-shell transport is still live through `WorldLeaderIntentAssignment` / `WorldPilotReportAssignment`, batch/facade APIs, and maintained runtime/tasking construction paths. `TaskOrder` Python owner-slice visibility/consumption also remains open. This is helper-consumption evidence, not DTO shell retirement. |
+
+This packet does not complete R2 and does not authorize `WP22-F`, R4, DTO shell
+retirement, or public escape-hatch deletion.
+
+## Next Parallel Dispatch After R2-C
+
+The next wave is parallel only where write scopes are disjoint. Do not run two
+writers against the same binding/command-chain files.
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 TaskOrder Python owner-slice exposure` | `gpt-5.4`, xhigh | `src/interfaces/python/bindings_command.cpp`, `tests/runtime/bindings/test_bindings_command_surface.py`, `tests/architecture/test_wp22_dto_domain_shell_guard.py`, and minimal TaskOrder command-chain tests if needed. Do not edit Python command-chain runtime files in parallel with another writer. | Expose existing `TaskOrderCore` / `TaskOrderAir` / `TaskOrderNaval` owner slices and `task_order_*` projection helpers to Python without inventing DTO shapes or widening the compatibility shell. Return `partial` if whole-shell TaskOrder transport remains live. |
+| `R2 residual whole-shell fact check` | `gpt-5.4-mini`, xhigh | read-only; touched files `none` | Verify the remaining source-backed whole-shell paths for `TaskOrder`, `LeaderIntent`, `PilotReport`, and assignment wrappers after Peirce. Return exact file/line anchors, which ones are compatibility-only versus maintained truth, and the smallest non-overlapping implementation slices. |
+| `WP22 readiness/documentation gate check` | `gpt-5.4-mini`, xhigh | docs/read-only preferred; if editing docs, only WP22 queue/remaining-task docs | Check whether the current queue still contains stale “next” rows that have already been consumed and summarize the exact closure blockers. Do not claim `WP22-F` eligible; produce either a docs-only sync patch or a no-edit report. |
+
+## Twenty-First-Wave R2 Partial/Fact Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Feynman` | `R2 TaskOrder Python owner-slice exposure` | `partial`: Python now exposes `TaskOrderCore`, `TaskOrderAir`, `TaskOrderNaval`, live `task_order_shared_core` / `task_order_air_owner_slice` / `task_order_naval_owner_slice` views, and value-returning `task_order_*_directive` helpers. No new DTO shape was added and the `TaskOrder` compatibility shell was not widened. | Main-thread recheck: `ef_py` build passed; binding command surface `4 passed`; DTO shell guard `9 passed`; focused mission/tasking runtime `9 passed, 35 deselected`; focused world-batch/cooperative command-chain tests `24 passed, 52 deselected`; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | `TaskOrder` whole-shell command-chain snapshot and `WorldTaskOrderAssignment.order` transport remain live. This is binding visibility evidence only, not TaskOrder shell retirement. |
+| `Kierkegaard` | `R2 residual whole-shell fact check` | `partial / read-only`: no files touched; confirmed Peirce is consistent with the docs and identified the remaining `TaskOrder` snapshot/transport path plus live `LeaderIntent` / `PilotReport` transport/facade/public binding paths. | Main-thread accepted after local validation and `git diff --check` clean. | The next non-overlapping implementation slice is `TaskOrder` command-chain consumption in Python runtime files. Broader batch/facade/public binding transport retirement remains out of scope and still blocks R2/WP22 closure. |
+| `Nash` | `R2 TaskOrder command-chain bound owner-slice consumption` | `partial`: `task_order_snapshot(...)` now consumes the bound `task_order_shared_core`, `task_order_air_owner_slice`, and `task_order_naval_owner_slice` helper views instead of whole-shell `_bound_fields("TaskOrder")` reflection. Projection names are stable and no compatibility shell was widened. | Main-thread recheck: `py_compile` passed for `command_chain_cache.py`; focused world-batch/cooperative command-chain tests `25 passed, 52 deselected`; binding command surface `4 passed`; DTO shell guard `9 passed`; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | `WorldTaskOrderAssignment.order` remains live transport, vec-env/cooperative assignment writes still carry whole task-order shells, and broader batch/facade/public binding transport remains open. |
+| `Beauvoir` | `WP22 readiness/documentation gate check` | `preflight-only`: no files touched; queue/remaining-task docs contain no stale claim that promotes `partial` evidence to `pass`, `WP22-F`, R4, DTO shell retirement, or public escape-hatch deletion. | Main-thread recheck accepted after local validation and `git diff --check` clean; `wp_doc_closure_audit.py --wp WP22` still reports only missing acceptance review. | WP22 closure remains blocked by R2 whole-shell transport, public compatibility escape hatches, default-factory projection, and structural/binding debt. |
+
+These packets do not complete R2 and do not authorize `WP22-F`, R4, DTO shell
+retirement, or public escape-hatch deletion.
+
+## Next Parallel Dispatch After R2-F
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 assignment transport owner-slice feasibility fact check` | `gpt-5.4-mini`, xhigh | read-only; touched files `none` | Verify whether `WorldTaskOrderAssignment.order`, `WorldLeaderIntentAssignment.intent`, and `WorldPilotReportAssignment.report` can be replaced or narrowed with existing owner-slice helpers without inventing new DTO shapes. Return exact file/line anchors for Python vec-env writes, C++ batch/facade setters/getters, and Python public bindings; classify each as compatibility-only transport, maintained truth, or deletion-blocking public API. |
+| `R2 Python assignment write narrowing` | `gpt-5.4`, xhigh | `python/rl/runtime/world_batch/command_chain_cache.py`, `python/rl/runtime/world_batch_vec_env.py`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, and focused world-batch/cooperative tests. Do not edit C++ contracts, C++ runtime facade, Python bindings, command-link, R3 files, or docs beyond result recording. | If existing assignment wrappers must remain transport-only, centralize all `TaskOrder`, `LeaderIntent`, and `PilotReport` assignment writes behind named compatibility projection helpers and remove direct vec-env whole-shell writes where feasible. Return `partial` if the underlying assignment payload fields still require whole shells. |
+
+## Twenty-Second-Wave R2 Partial/Preflight Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Cicero` | `R2 Python assignment write narrowing` | `partial`: Python vec-env and cooperative assignment writes now route `TaskOrder`, `LeaderIntent`, and `PilotReport` through named compatibility transport helpers. `project_world_task_order_assignment_transport(...)` was added next to the existing intent/report helpers, and focused tests assert the helper path for all three families. | Main-thread recheck: Python `py_compile` passed for the touched runtime files; focused world-batch/cooperative command-chain tests `25 passed, 52 deselected`; binding command surface `4 passed`; focused architecture guards `27 passed, 20 deselected`; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | The helper functions still assign whole-shell payload fields `.order`, `.intent`, and `.report`. This removes inline vec-env writes but does not retire `WorldTaskOrderAssignment`, `WorldLeaderIntentAssignment`, `WorldPilotReportAssignment`, batch/facade APIs, or public bindings. |
+| `Hilbert` | `R2 assignment transport owner-slice feasibility fact check` | `preflight-only`: no files touched; confirmed the remaining deletion blockers are the shell-shaped assignment fields in `world_batch_contracts.h`, batch runtime setters/getters, runtime facade setters/getters, Python runtime bindings, and the public Python adapter shim. The read-side owner-slice helpers do not by themselves create a deletable write-side public API. | Main-thread accepted after the same local validation and `git diff --check` clean. Hilbert's parallel observation that `TaskOrder` lacked a write-side projector is superseded by Cicero's helper addition, but the deeper blocker remains: the helper still transports the full shell because the public contract shape has not changed. | Actual shell retirement requires a contract/API replacement or narrowing pass. `TaskOrder`, `LeaderIntent`, and `PilotReport` must be handled as separate serial slices because each touches `world_batch_contracts.h`, `world_batch_runtime.{h,cpp}`, `runtime_facade.{h,cpp}`, `bindings_runtime.cpp`, Python adapters, and focused tests. |
+
+These packets do not complete R2 and do not authorize `WP22-F`, R4, DTO shell
+retirement, or public escape-hatch deletion.
+
+## Next Serial Dispatch After Assignment Write Narrowing
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 TaskOrder public contract replacement feasibility/implementation` | `gpt-5.4`, xhigh | `src/runtime/contracts/world_batch_contracts.h`, `src/core/engine/world_batch_runtime.{h,cpp}`, `src/runtime/facade/runtime_facade.{h,cpp}`, `src/interfaces/python/bindings_runtime.cpp`, `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/world_batch/command_chain_cache.py`, `python/rl/runtime/world_batch_vec_env.py`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, focused world-batch/runtime-facade/binding/DTO guard tests. Do not edit `LeaderIntent` / `PilotReport` contract shapes in this slice except to keep shared compilation intact. | Start with `TaskOrder` only. Determine whether an existing owner-slice-compatible assignment/setter/getter shape can replace or narrow `WorldTaskOrderAssignment.order` without inventing uncontrolled DTO truth. If feasible, implement the smallest compatible TaskOrder public contract replacement and keep legacy shell transport explicitly quarantined. If a new public DTO/setter shape is required beyond existing owner slices, stop as `blocked` or `partial` with exact anchors and guard failures instead of widening the shell. |
+
+## Twenty-Third-Wave R2 TaskOrder Contract Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Boyle` | `R2 TaskOrder public contract replacement feasibility/implementation` | `partial`: feasibility is `no` for direct replacement using only existing owner slices. The current public seams still hard-code whole `TaskOrder` shell transport, so Boyle limited the change to quarantine tightening: adapter-owned `set_task_order(...)` now routes through `project_world_task_order_assignment_transport(...)`, and `WorldBatchRuntime::set_task_orders_batch(...)` consumes assignments through `world_batch_assignment_compatibility_shell(item)` instead of reaching into `.order` directly. | Main-thread recheck: `ef_py` build passed; focused world-batch/runtime tests `30 passed, 72 deselected`; binding command surface `4 passed`; focused architecture guards `18 passed, 29 deselected`; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | Real TaskOrder shell retirement is blocked until the project defines an owned maintained batch write/read contract that composes existing `TaskOrderCore` / `TaskOrderAir` / `TaskOrderNaval` slices, or separate maintained batch slice surfaces. Existing owner-slice projections alone are not a public assignment/read API. |
+
+This packet does not complete R2 and does not authorize `WP22-F`, R4, DTO shell
+retirement, or public escape-hatch deletion.
+
+## Next Serial Dispatch After TaskOrder Feasibility
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 TaskOrder maintained batch contract definition` | `gpt-5.4`, xhigh | Prefer design + guard-first edits in `src/runtime/contracts/world_batch_contracts.h`, `tests/architecture/test_wp22_dto_domain_shell_guard.py`, `tests/architecture/test_runtime_facade_layering.py`, and minimal runtime/facade/binding declarations only if needed to prove compilation. Avoid touching `LeaderIntent` / `PilotReport` shapes. | Define the controlled TaskOrder maintained batch write/read contract shape that will eventually replace or narrow `WorldTaskOrderAssignment.order`. It must be composed from existing `TaskOrderCore` / `TaskOrderAir` / `TaskOrderNaval` owner slices or separate explicit slice surfaces, not a second uncontrolled aggregate DTO. Add guard coverage that forbids treating `WorldTaskOrderAssignment.order` as maintained truth. If the safest result is design-only or blocked, return that with exact anchors; do not widen compatibility shells. |
+
+## Twenty-Fourth-Wave R2 TaskOrder Maintained Contract Evidence
+
+| Worker | Stream | Scoped result | Local verification | Remaining blocker |
+|--------|--------|---------------|--------------------|-------------------|
+| `Hubble` | `R2 TaskOrder maintained batch contract definition` | `partial`: defined a controlled `TaskOrderMaintainedBatchContract` composed from existing owner-slice directive surfaces (`TaskOrderSharedCoreDirective`, `TaskOrderAir::RecoveryDirective`, `TaskOrderAir::TakeoffDirective`, and `TaskOrderNaval::CommandAuthorityDirective`) plus `WorldTaskOrderMaintainedAssignment` and projection/accessor helpers. `WorldTaskOrderAssignment::kMaintainedBatchTruth` is now `false`, so `.order` is explicitly compatibility transport only. | Main-thread recheck: `ef_py` build passed; focused architecture guards `20 passed, 29 deselected`; binding command surface `4 passed`; `git diff --check` clean; WP22 closure audit still has only the expected missing-acceptance warning. | The maintained contract is defined but not wired into runtime/facade/binding/Python write/read APIs. Whole-shell public surfaces remain in `WorldBatchRuntime`, `RuntimeFacade`, `ObservationBatchPacket`, runtime bindings, and `project_world_task_order_assignment_transport(...)`. |
+
+This packet does not complete R2 and does not authorize `WP22-F`, R4, DTO shell
+retirement, or public escape-hatch deletion.
+
+## Next Serial Dispatch After Maintained Contract Definition
+
+| Stream | Suggested model / reasoning | Write scope | Dispatch packet |
+|--------|-----------------------------|-------------|-----------------|
+| `R2 TaskOrder maintained runtime/facade/binding API wiring` | `gpt-5.4`, xhigh | `src/core/engine/world_batch_runtime.{h,cpp}`, `src/runtime/facade/runtime_facade.{h,cpp}`, `src/interfaces/python/bindings_runtime.cpp`, `python/rl/runtime/world_batch/command_chain_cache.py`, `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/world_batch_vec_env.py`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, focused tests in `tests/world_batch`, `tests/runtime/bindings`, and architecture guards. Do not edit `LeaderIntent` / `PilotReport` public contract shapes. | Add maintained TaskOrder batch write/read APIs around `WorldTaskOrderMaintainedAssignment` / `TaskOrderMaintainedBatchContract`, preserving old whole-shell APIs as explicit compatibility-only surfaces. Move Python TaskOrder assignment helpers/callers to the maintained path where feasible. Return `partial` if legacy whole-shell getters or `ObservationBatchPacket.task_orders` must remain live after the maintained path exists. Do not delete or widen compatibility shells in this slice. |
 
 The first attempted dispatch used default model routing and was immediately
 shut down before being consumed. Those closed threads are transport cleanup

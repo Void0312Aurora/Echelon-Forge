@@ -1,6 +1,11 @@
 # WP22 Subagent 派发队列
 
-状态：`2026-05-22` WP21 owner-rejected；WP22 remediation active。第五轮加主线程
+状态：`2026-05-23` frozen / historical only；已由
+[`WP23 Legacy Retirement Recovery And Reset`](../wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md)
+取代。本 queue 中任何条目都不得直接派发。所有未来工作必须重写为 WP23 cluster，
+通过 WP23 delete-or-block gate，并获得新的有边界 dispatch packet。
+
+冻结前历史状态：`2026-05-22` WP21 owner-rejected；WP22 remediation active。第五轮加主线程
 A-001 follow-up 已对 maintained typed setup、maintained facade raw-drilling removal、
 default-factory seed quarantine、naval helper-system ordering 与 validation-family
 split 给出 scoped pass。最新 implementation round 又增加了 direct GPU visual-binding
@@ -24,8 +29,10 @@ Dalton 是可本地编译/过 focused gate 的 `partial` consumer-migration patc
 closure。
 `WP22 overall` 仍然开放：在剩余 compatibility/diagnostics escape hatches、
 DTO/default-factory replacement 与 structural/binding debt 返回完整证据前，acceptance
-或最终 closure 工作都不 eligible。R3 必须先重新划分，再允许任何进一步 implementation
-或 closure 派发。
+或最终 closure 工作都不 eligible。`R3` 已经重划为有限 replacement cluster；只有剩余任务簇文档里的三个子切片可派发，public escape-hatch deletion 仍被阻断。最新回收的 packets 已将 R0/R1-1 command-link pending transport narrowing、R2 `MissionCommand` owner-slice migration、R1-3 exact-stage contract ledger demotion、R3-1 scenario-loader construction、R3-2 world layout/time-step access、R3-3 visual/candidate helper centralization 验收为 scoped pass。R3 在这里已没有继续 implementation 派发，public escape-hatch deletion 仍被阻断。R2 在任何后续 implementation 前必须先正式重切边界。
+这次正式重切是 docs-only；R2 的残余目标只剩 `TaskOrder`、`LeaderIntent`、
+`PilotReport` 与 world-batch assignment shells，不授权 implementation、
+`WP22-F`、`R4` 或 closure。
 
 语言：
 
@@ -74,7 +81,8 @@ DTO/default-factory replacement 与 structural/binding debt 返回完整证据�
 |--------|---------------------|--------|
 | `TaskOrder import unlock` | `gpt-5.4-mini`, high | 验证 `command_chain_cache` 里的 import-time `ef_py.TaskOrder` 路径，并将其保持为 validation-only 的 C/F guard lane follow-up。 |
 | `RTE-003/RTE-007 next slice` | `gpt-5.4`, xhigh | 继续让 raw-sim compatibility seam 与 terrain-default retirement 在 C/F 与 D ownership 之间协调推进；保留 quarantine 与 setup ownership fences。 |
-| `R3 adapter raw-world replacement re-scope` | `gpt-5.4-mini`, xhigh | 仅 docs 与 queue 同步；不改代码。 | 在任何进一步 implementation 或 closure 派发前，先重划有限 replacement 任务簇；公开 escape hatches 在 replacement APIs 存在前保持 compatibility-only。 |
+| `R2 formal re-scope` | `gpt-5.4-mini`, xhigh | 仅 WP22 R2 / remaining-task / queue docs。不改代码。 | 把已接受的 `MissionCommand` 切片重切为有限 residual list：`TaskOrder`、`LeaderIntent`、`PilotReport` 与 world-batch assignment shells；保留硬停条件，并保持 `WP22-F`、`R4` 与 closure 在 scope 外。 |
+| `R3 adapter raw-world replacement re-scope` | `gpt-5.4-mini`, xhigh | 仅 docs 与 queue 同步；不改代码。 | 把有限 replacement 任务簇重划成仅能派发 `R3-1` scenario-loader construction、`R3-2` world layout/time-step access、`R3-3` visual compatibility export/candidate helpers；`RuntimeFacade::runtime()`、`WorldBatchRuntime::world()`、`vec_env.batch_runtime` 与 diagnostics bindings 继续 quarantine-only。 |
 | `WP22-E/D residual gates` | `gpt-5.4-mini`, xhigh | 收紧 structural decomposition 与 command DTO retirement 的剩余 residual gate，避免把开放工作写成完成证据。 |
 | `Documentation fourth sync` | `gpt-5.4-mini`, xhigh | 在下一切片完成后，重新对齐账本、队列与双语文档到当前 pass/block 状态。 |
 
@@ -255,10 +263,162 @@ hatches 与更广义 structural debt 仍开放。
 |--------|--------|----------|----------|--------------|
 | `Bohr` | `Operation-system legacy mirror quarantine` | `pass`：`operation_system.h` 不再持有本地 legacy mirror seed/refresh helpers，改用 bridge-owned control-state seed 与 mirror refresh helpers。`MovementCommand` / `LaggedCommand` 仍作为 compatibility mirrors 留在 system signatures 中。 | 主线程复验：architecture default-factory/WP9/structural suite `23 passed`；mission runtime suite `6 passed`；`cmake --build build-workshop --target ef_py -j4` 通过；`git diff --check` clean。 | `operation_system.h` 仍 direct include `legacy_command.h`，因为 system signatures 保留 `ActionCommand`、`MovementCommand` 与 `LaggedCommand` mirrors。 |
 | `Schrodinger` | `Default-factory projection readiness fact check` | `blocked / read-only`：`can_delete_projection = no`；default-factory 仍投影 `MovementCommand` / `LaggedCommand` mirrors，且剩余 consumers 仍需要它们。 | worker packet：default-factory/WP9 command-focused guard `7 passed, 5 deselected`；`git diff --check` clean；`touched files: none`。 | projection deletion 受 bridge fallback、operation mirrors、command-link delivery 与仍 live 的 MovementCommand readers 阻塞。 |
-| `Epicurus` | `Command-link pending transport narrowing` | `pending` | 尚无 packet | pending transport 要等完整 packet 后才能验收或记录为 partial/blocked。 |
+| `Epicurus` | `Command-link pending transport narrowing` | `blocked / 无 packet` | 尚无 packet | pending transport 要等完整 packet 后才能验收或记录为 partial/blocked。 |
 
 这些 packet 仍不授权 `WP22-F`。operation helper ownership 已收窄，但
 command-link pending transport 与 default-factory mirror projection 仍是 active blockers。
+
+## 第十五轮有限任务簇结果
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Banach` | `Command-link pending transport narrowing` | `pass`：delayed movement delivery 由 typed state 拥有，`PendingMovementCommand.command` 只是 diagnostics shell，`PendingActionCommand.typed_air_control_bridge` 承载 typed overlay projection，action transport 仍保持 quarantine。 | 主线程复验：`ef_py` 构建通过；command/pending architecture suite `17 passed, 13 deselected`；DTO shell guard `7 passed`；runtime/facade/world-batch/GPU focused suites `98 passed, 64 deselected`；`git diff --check` clean。 | `ActionCommand`、pending action transport、legacy mirrors、default-factory projection 与 diagnostics bindings 仍是 live compatibility surfaces。 |
+| `Franklin` | `MissionCommand owner-slice migration` | limited `MissionCommand` mission-episode consumer slice `pass`：shared-core maintained reads 现在使用显式 owner-slice helpers，不再 flat aggregate shell 直读。 | 主线程复验包括 DTO shell guard `7 passed`、`ef_py` build pass 与 diff-check clean。 | `TaskOrder`、`LeaderIntent`、`PilotReport`、world-batch assignment shells 与更广义 aggregate DTO retirement 仍开放；R2 后续 implementation 前必须正式重切边界。 |
+| `Planck` | `R3 finite re-scope` | `pass`：R3 被限制为 `R3-1`、`R3-2`、`R3-3`；public escape-hatch deletion 仍阻塞。 | 主线程检查 docs 并随后同步；diff-check clean。 | 本身不是 implementation evidence；只限定后续 R3 切片。 |
+| `Wegener` | `Exact-stage contract demotion/alignment` | R1-3 `pass`：exact-stage inventory 现在是 guarded contract ledger，不是 maintained implementation truth。 | 主线程复验：command/exact-stage architecture suite `17 passed, 13 deselected`；diff-check clean。 | `R1-B` 仍被阻塞；ledger demotion 不授权 default-factory projection deletion。 |
+| `Heisenberg` | `Scenario-loader construction` | R3-1 `pass`：adapter scenario-loader construction 使用命名 runtime-world-layout request/result seam，未新增 maintained raw-world construction call site。 | 主线程复验：world setup/world-batch/facade suites `81 passed, 29 deselected`；diff-check clean。 | `adapter.py::world()` 与 `get_time_step()` raw compat fallback 仍归 R3-2。 |
+| `Descartes` | `Visual compatibility export/candidate helpers` | R3-3 `pass`：facade-owned visual candidate assembly 与 GPU wrappers 现在显式分离 facade-owned 和 compatibility-runtime paths。 | 主线程复验：visual/GPU/facade focused suites `17 passed, 35 deselected`；`ef_py` build pass；diff-check clean。 | 公开 `RuntimeFacade::runtime()`、`WorldBatchRuntime::world()`、`vec_env.batch_runtime`、diagnostics bindings 与 R3-2 仍是 blockers。 |
+
+这些 packet 仅作为 scoped pass 接受。`WP22-F`、public escape-hatch deletion 与 default-factory projection deletion 仍不 eligible。
+
+## 第十六轮 R3-2 结果
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Popper` | `R3-2 World layout/time-step access` | R3-2 `pass`：`RuntimeFacadeAdapter::world()` 现在返回受控 proxy 用于 layout/time-step read，`get_time_step()` 优先走 facade/runtime helper，adapter-owned layout snapshot 避免新增 maintained raw-world layout/time-step call site。 | 主线程复验：`ef_py` 构建通过；runtime facade layering `10 passed, 28 deselected`；world setup/world-batch `52 passed, 4 deselected`；facade/multi-agent runtime `33 passed, 24 deselected`；`git diff --check` clean；WP22 closure audit 仅保留预期的 missing-acceptance warning。 | `RuntimeFacade::runtime()`、`WorldBatchRuntime::world()`、公开 `batch_runtime` / `vec_env.batch_runtime`、显式 `legacy` mode、diagnostics bindings 与 raw-world compatibility forwarding 仍是 quarantine-only。这不是 deletion-ready 或 closure evidence。 |
+
+`R3-1`、`R3-2`、`R3-3` 现在都是 scoped pass。不要从该 cluster 继续派发 R3
+implementation；下一批有限工作切换到 R2 owner-slice implementation。
+
+## 下一批有限派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 TaskOrder owner-slice implementation` | `gpt-5.4`, xhigh | `src/components/tasking/task_order.h`、必要时现有 TaskOrder owner-slice headers、`tests/architecture/test_wp22_dto_domain_shell_guard.py` 与 focused tasking/mission tests。不要编辑 runtime facade、command-link、public escape-hatch 或 R3 文件。 | 将 maintained TaskOrder evidence 推向显式 owner-slice directives/guards，不发明新 DTO shape，不扩宽 compatibility shell。如果 maintained flat-shell truth 仍存在，返回 `partial` 或 `blocked`。 |
+| `R2 read-only maintained-consumer fact check` | `gpt-5.4-mini`, xhigh | 只读源码检查；touched files 必须是 `none`。 | 找出 `LeaderIntent`、`PilotReport` 与 world-batch assignment shells 仍消费 flat aggregate truth 的精确 maintained call sites。返回源码锚点和最小下一 implementation slice；不改文件、不授权 closure。 |
+
+## 第十七轮 R2 partial/blocked evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Volta` | `R2 TaskOrder owner-slice implementation` | `partial`：`TaskOrder` shared-core evidence 现在有 `TaskOrderSharedCoreOwnerSlice`、`TaskOrderSharedCoreDirective`、`kTaskOrderSharedCoreOwnedSurface` 与 `task_order_shared_core_directive(...)`；没有新增 DTO shape，也没有扩宽 compatibility shell。 | 主线程复验：DTO shell guard `8 passed`；focused mission/tasking runtime `9 passed, 35 deselected`；`ef_py` 构建通过；`git diff --check` clean。 | `TaskOrder` flat aggregate shell、world-batch assignment shell、kernel/facade batch APIs、Python bindings 与 maintained Python/runtime callers 仍整包移动 `TaskOrder`；这只是 guard/evidence narrowing，不是 retirement。 |
+| `Noether` | `R2 maintained-consumer fact check` | `blocked / read-only`：未改文件；源码锚点显示 maintained Python command-chain paths 仍 snapshot/assign 整包 `LeaderIntent` / `PilotReport` shell。 | 主线程在 diff-check 和本地验证后接受为 blocker evidence。 | `world_batch_vec_env.py`、`cooperative_world_batch_vec_env.py` 与 `command_chain_cache.py` 是最小下一步不冲突 implementation slice。`cooperative_director.py`、core batch/facade APIs 与 bindings 仍是更广义 blocker。 |
+
+这些 packet 不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## R2 evidence 后的下一批有限派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 Python command-chain owner-slice sync` | `gpt-5.4`, xhigh | `python/rl/runtime/world_batch/command_chain_cache.py`、`python/rl/runtime/world_batch_vec_env.py`、`python/rl/runtime/cooperative_world_batch_vec_env.py` 与 focused world-batch command-chain sync tests。不要编辑 C++ tasking headers、DTO guard、runtime facade、command-link、R3 文件，除记录结果外不要改 docs。 | 尽可能把 `LeaderIntent` / `PilotReport` 的 whole-shell snapshot/assignment 语义替换为显式 owner-slice projection helpers。assignment wrappers 保持 transport-only。如果 Python bound APIs 缺少 owner-slice fields 或仍需要 whole-shell transport，就返回 `partial` 或 `blocked`。 |
+
+## 第十八轮 R2 partial evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Herschel` | `R2 Python command-chain owner-slice sync` | `partial`：Python command-chain snapshots 现在使用显式命名的 `LeaderIntent` / `PilotReport` owner-slice projection buckets，world-batch assignment writes 也收口到命名 compatibility transport projection helpers。 | 主线程复验：相关 runtime 文件 `py_compile` 通过；focused world-batch/cooperative command-chain tests `24 passed, 52 deselected`；focused mission/tasking tests `9 passed, 35 deselected`；`ef_py` 构建通过；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | 整包 `LeaderIntent` / `PilotReport` shell 仍作为 transport payload live。Python bindings 仍只暴露 flat shell，未暴露 `LeaderIntentCore` / `LeaderIntentAir` / `LeaderIntentNaval`、`PilotReportCore` / `PilotReportAir` / `PilotReportNaval` 或 bound owner-slice helper functions。`TaskOrder` Python whole-shell path 也仍开放。 |
+
+这个 packet 不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## command-chain partial 后的下一批有限派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 Python binding owner-slice exposure` | `gpt-5.4`, xhigh | `src/interfaces/python/bindings_command.cpp`、focused binding/DTO guard tests，以及证明 owner-slice visibility 所需的最小 Python tests。不要编辑 runtime facade、command-link、R3 文件、public escape hatches 或 world-batch runtime APIs。 | 将现有 `LeaderIntent` / `PilotReport` owner-slice types 与 projection helpers 暴露到 Python；不能发明新 DTO shape，不能扩宽 compatibility shells。如果 nanobind 无法安全暴露 base-slice references，或 helper 暴露后 maintained callers 仍需要 whole-shell transport，就返回 `partial` 或 `blocked`。 |
+
+## 第十九轮 R2 partial evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Lovelace` | `R2 Python binding owner-slice exposure` | `partial`：Python 现在暴露 `LeaderIntentCore` / `LeaderIntentAir` / `LeaderIntentNaval`、`PilotReportCore` / `PilotReportAir` / `PilotReportNaval`，以及经 `nb::inst_reference(...)` 返回 live owner-slice view 的 `leader_intent_*` / `pilot_report_*` projection helpers。没有新增 DTO shape，也没有扩宽 flat shell。 | 主线程复验：`ef_py` build 通过；binding command surface `4 passed`；DTO shell guard `9 passed`；focused world-batch command-chain snapshot tests `2 passed, 46 deselected`；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | `LeaderIntent` / `PilotReport` flat shells 与 `WorldLeaderIntentAssignment` / `WorldPilotReportAssignment` 仍是 live compatibility transport。Python command-chain snapshot code 仍使用手工维护字段列表，而不是新绑定的 owner-slice helpers；`TaskOrder` Python whole-shell path 也仍开放。 |
+
+这个 packet 解除 binding visibility blocker，但不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## binding visibility 后的下一批有限派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 Python command-chain bound owner-slice consumption` | `gpt-5.4`, xhigh | `python/rl/runtime/world_batch/command_chain_cache.py`、focused world-batch/cooperative command-chain tests，以及必要时最小 binding-surface assertions。不要编辑 C++ bindings、DTO headers、runtime facade、command-link、public escape hatches、R3 文件，除记录结果外不要改 docs。 | 尽可能把 `LeaderIntent` / `PilotReport` owner-slice snapshot 从手工维护字段列表改为消费新绑定的 `ef_py.leader_intent_*` 与 `ef_py.pilot_report_*` owner-slice helpers。assignment wrappers 保持 transport-only。如果 snapshot consumption 后 whole-shell transport 仍 live，则返回 `partial`；如果 helper consumption 不安全或需要扩宽 shell，则返回 `blocked`。 |
+
+## 第二十轮 R2 partial evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Peirce` | `R2 Python command-chain bound owner-slice consumption` | `partial`：`LeaderIntent` / `PilotReport` command-chain snapshots 现在消费 bound `ef_py.leader_intent_*` 与 `ef_py.pilot_report_*` owner-slice helper views，而不是本地手工维护字段 tuple。projection names 保持稳定，assignment wrappers 仍 transport-only。 | 主线程复验：`command_chain_cache.py` 的 `py_compile` 通过；focused world-batch/cooperative command-chain tests `24 passed, 52 deselected`；binding command surface `4 passed`；focused mission/tasking runtime `9 passed, 35 deselected`；`ef_py` build 通过；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | Whole-shell transport 仍通过 `WorldLeaderIntentAssignment` / `WorldPilotReportAssignment`、batch/facade APIs 与 maintained runtime/tasking construction paths live。`TaskOrder` Python owner-slice visibility/consumption 也仍开放。这是 helper-consumption evidence，不是 DTO shell retirement。 |
+
+这个 packet 不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## R2-C 后的下一批并行派发
+
+下一轮只在写入范围互不重叠时并行；不要让两个 writer 同时写 binding/command-chain
+同一片文件。
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 TaskOrder Python owner-slice exposure` | `gpt-5.4`, xhigh | `src/interfaces/python/bindings_command.cpp`、`tests/runtime/bindings/test_bindings_command_surface.py`、`tests/architecture/test_wp22_dto_domain_shell_guard.py`，必要时最小 TaskOrder command-chain tests。不要和另一 writer 并行编辑 Python command-chain runtime files。 | 将现有 `TaskOrderCore` / `TaskOrderAir` / `TaskOrderNaval` owner slices 与 `task_order_*` projection helpers 暴露到 Python；不能发明 DTO shape，不能扩宽 compatibility shell。如果 whole-shell TaskOrder transport 仍 live，则返回 `partial`。 |
+| `R2 residual whole-shell fact check` | `gpt-5.4-mini`, xhigh | 只读；touched files 必须是 `none` | 核验 Peirce 后 `TaskOrder`、`LeaderIntent`、`PilotReport` 与 assignment wrappers 的剩余 whole-shell paths。返回精确 file/line anchors，区分 compatibility-only 与 maintained truth，并给出最小不冲突 implementation slices。 |
+| `WP22 readiness/documentation gate check` | `gpt-5.4-mini`, xhigh | 优先 docs/read-only；如需编辑，只能编辑 WP22 queue/remaining-task docs | 检查当前 queue 是否还残留已消费的 stale “next” rows，并汇总精确 closure blockers。不能宣称 `WP22-F` eligible；返回 docs-only sync patch 或 no-edit report。 |
+
+## 第二十一轮 R2 partial/fact evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Feynman` | `R2 TaskOrder Python owner-slice exposure` | `partial`：Python 现在暴露 `TaskOrderCore`、`TaskOrderAir`、`TaskOrderNaval`，live `task_order_shared_core` / `task_order_air_owner_slice` / `task_order_naval_owner_slice` views，以及 value-returning `task_order_*_directive` helpers。没有新增 DTO shape，也没有扩宽 `TaskOrder` compatibility shell。 | 主线程复验：`ef_py` build 通过；binding command surface `4 passed`；DTO shell guard `9 passed`；focused mission/tasking runtime `9 passed, 35 deselected`；focused world-batch/cooperative command-chain tests `24 passed, 52 deselected`；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | `TaskOrder` whole-shell command-chain snapshot 与 `WorldTaskOrderAssignment.order` transport 仍 live。这只是 binding visibility evidence，不是 TaskOrder shell retirement。 |
+| `Kierkegaard` | `R2 residual whole-shell fact check` | `partial / read-only`：未改文件；确认 Peirce 与文档一致，并定位剩余 `TaskOrder` snapshot/transport path，以及 live `LeaderIntent` / `PilotReport` transport/facade/public binding paths。 | 主线程在本地复验和 `git diff --check` clean 后接受。 | 下一步非重叠 implementation slice 是 Python runtime files 中的 `TaskOrder` command-chain consumption。更广义 batch/facade/public binding transport retirement 仍在 scope 外，并继续阻塞 R2/WP22 closure。 |
+| `Nash` | `R2 TaskOrder command-chain bound owner-slice consumption` | `partial`：`task_order_snapshot(...)` 现在消费 bound `task_order_shared_core`、`task_order_air_owner_slice` 与 `task_order_naval_owner_slice` helper views，不再通过 whole-shell `_bound_fields("TaskOrder")` reflection 取快照。projection names 保持稳定，也没有扩宽 compatibility shell。 | 主线程复验：`command_chain_cache.py` 的 `py_compile` 通过；focused world-batch/cooperative command-chain tests `25 passed, 52 deselected`；binding command surface `4 passed`；DTO shell guard `9 passed`；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | `WorldTaskOrderAssignment.order` 仍是 live transport，vec-env/cooperative assignment writes 仍携带 whole task-order shell，更广义 batch/facade/public binding transport 仍开放。 |
+| `Beauvoir` | `WP22 readiness/documentation gate check` | `preflight-only`：未改文件；queue/remaining-task docs 中没有把 `partial` evidence 提升为 `pass`、`WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion 的 stale claim。 | 主线程在本地验证和 `git diff --check` clean 后接受；`wp_doc_closure_audit.py --wp WP22` 仍只报告 missing acceptance review。 | WP22 closure 继续被 R2 whole-shell transport、public compatibility escape hatches、default-factory projection 与 structural/binding debt 阻塞。 |
+
+这些 packet 不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## R2-F 后的下一批并行派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 assignment transport owner-slice feasibility fact check` | `gpt-5.4-mini`, xhigh | 只读；touched files 必须是 `none` | 核验 `WorldTaskOrderAssignment.order`、`WorldLeaderIntentAssignment.intent` 与 `WorldPilotReportAssignment.report` 是否能用现有 owner-slice helpers 替换或收窄，且不发明新 DTO shape。返回 Python vec-env writes、C++ batch/facade setters/getters、Python public bindings 的精确 file/line anchors，并区分 compatibility-only transport、maintained truth 与 deletion-blocking public API。 |
+| `R2 Python assignment write narrowing` | `gpt-5.4`, xhigh | `python/rl/runtime/world_batch/command_chain_cache.py`、`python/rl/runtime/world_batch_vec_env.py`、`python/rl/runtime/cooperative_world_batch_vec_env.py` 与 focused world-batch/cooperative tests。不要编辑 C++ contracts、C++ runtime facade、Python bindings、command-link、R3 文件，除记录结果外不要改 docs。 | 如果现有 assignment wrappers 必须保持 transport-only，就把所有 `TaskOrder`、`LeaderIntent` 与 `PilotReport` assignment writes 收口到命名 compatibility projection helpers，尽可能移除 vec-env 里的 direct whole-shell writes。如果底层 assignment payload fields 仍要求 whole shells，则返回 `partial`。 |
+
+## 第二十二轮 R2 partial/preflight evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Cicero` | `R2 Python assignment write narrowing` | `partial`：Python vec-env 与 cooperative assignment writes 现在都通过命名 compatibility transport helpers 写入 `TaskOrder`、`LeaderIntent` 与 `PilotReport`。`project_world_task_order_assignment_transport(...)` 已补到现有 intent/report helper 旁边，focused tests 也覆盖三类 helper path。 | 主线程复验：相关 runtime 文件 `py_compile` 通过；focused world-batch/cooperative command-chain tests `25 passed, 52 deselected`；binding command surface `4 passed`；focused architecture guards `27 passed, 20 deselected`；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | helper functions 仍写入 whole-shell payload 字段 `.order`、`.intent` 与 `.report`。这只移除了 vec-env inline writes，并未退场 `WorldTaskOrderAssignment`、`WorldLeaderIntentAssignment`、`WorldPilotReportAssignment`、batch/facade APIs 或 public bindings。 |
+| `Hilbert` | `R2 assignment transport owner-slice feasibility fact check` | `preflight-only`：未改文件；确认剩余 deletion blockers 是 `world_batch_contracts.h` 里的 shell-shaped assignment fields、batch runtime setters/getters、runtime facade setters/getters、Python runtime bindings 与 public Python adapter shim。read-side owner-slice helpers 本身不足以形成可删除的 write-side public API。 | 主线程在同一组本地验证与 `git diff --check` clean 后接受。Hilbert 并行观察到 `TaskOrder` 缺少 write-side projector，这一点已被 Cicero 的 helper addition 覆盖；但更深层 blocker 仍存在：helper 仍因 public contract shape 未改变而传输 whole shell。 | 实际 shell retirement 需要 contract/API replacement 或 narrowing pass。`TaskOrder`、`LeaderIntent`、`PilotReport` 必须拆成串行切片处理，因为每个 family 都会触碰 `world_batch_contracts.h`、`world_batch_runtime.{h,cpp}`、`runtime_facade.{h,cpp}`、`bindings_runtime.cpp`、Python adapters 与 focused tests。 |
+
+这些 packet 不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## assignment write narrowing 后的下一批串行派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 TaskOrder public contract replacement feasibility/implementation` | `gpt-5.4`, xhigh | `src/runtime/contracts/world_batch_contracts.h`、`src/core/engine/world_batch_runtime.{h,cpp}`、`src/runtime/facade/runtime_facade.{h,cpp}`、`src/interfaces/python/bindings_runtime.cpp`、`python/rl/runtime/world_batch/adapter.py`、`python/rl/runtime/world_batch/command_chain_cache.py`、`python/rl/runtime/world_batch_vec_env.py`、`python/rl/runtime/cooperative_world_batch_vec_env.py`、focused world-batch/runtime-facade/binding/DTO guard tests。除保持 shared compilation 外，不要在本切片编辑 `LeaderIntent` / `PilotReport` contract shapes。 | 先只处理 `TaskOrder`。判断是否存在 owner-slice-compatible assignment/setter/getter shape，能替换或收窄 `WorldTaskOrderAssignment.order`，且不发明 uncontrolled DTO truth。如果可行，实现最小兼容的 TaskOrder public contract replacement，并让 legacy shell transport 保持显式 quarantine。如果需要超出现有 owner slices 的新 public DTO/setter shape，必须停为 `blocked` 或 `partial`，给出精确 anchors 与 guard failures，不得扩宽 shell。 |
+
+## 第二十三轮 R2 TaskOrder contract evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Boyle` | `R2 TaskOrder public contract replacement feasibility/implementation` | `partial`：feasibility 是 `no`，仅靠现有 owner slices 不能直接替代公共 batch assignment/read shape。当前 public seams 仍硬编码 whole `TaskOrder` shell transport，因此 Boyle 只做 quarantine tightening：adapter-owned `set_task_order(...)` 现在通过 `project_world_task_order_assignment_transport(...)`，`WorldBatchRuntime::set_task_orders_batch(...)` 通过 `world_batch_assignment_compatibility_shell(item)` 消费 assignment，不再直接取 `.order`。 | 主线程复验：`ef_py` build 通过；focused world-batch/runtime tests `30 passed, 72 deselected`；binding command surface `4 passed`；focused architecture guards `18 passed, 29 deselected`；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | 真正的 TaskOrder shell retirement 仍被阻塞，直到项目定义出 owned maintained batch write/read contract：它需要组合现有 `TaskOrderCore` / `TaskOrderAir` / `TaskOrderNaval` slices，或提供显式的 maintained batch slice surfaces。现有 owner-slice projections 本身不是公共 assignment/read API。 |
+
+这个 packet 不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## TaskOrder feasibility 后的下一批串行派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 TaskOrder maintained batch contract definition` | `gpt-5.4`, xhigh | 优先 design + guard-first edits：`src/runtime/contracts/world_batch_contracts.h`、`tests/architecture/test_wp22_dto_domain_shell_guard.py`、`tests/architecture/test_runtime_facade_layering.py`，仅在证明编译需要时添加最小 runtime/facade/binding declarations。避免编辑 `LeaderIntent` / `PilotReport` shapes。 | 定义受控的 TaskOrder maintained batch write/read contract shape，为后续替代或收窄 `WorldTaskOrderAssignment.order` 铺路。该 shape 必须组合现有 `TaskOrderCore` / `TaskOrderAir` / `TaskOrderNaval` owner slices，或拆成显式 slice surfaces，不能成为第二个 uncontrolled aggregate DTO。补充 guard，禁止把 `WorldTaskOrderAssignment.order` 当作 maintained truth。如果最安全结果是 design-only 或 blocked，就带精确 anchors 返回；不得扩宽 compatibility shells。 |
+
+## 第二十四轮 R2 TaskOrder maintained contract evidence
+
+| Worker | Stream | Scoped result | 本地验证 | 剩余 blocker |
+|--------|--------|---------------|----------|--------------|
+| `Hubble` | `R2 TaskOrder maintained batch contract definition` | `partial`：定义了受控的 `TaskOrderMaintainedBatchContract`，由现有 owner-slice directive surfaces 组合而成：`TaskOrderSharedCoreDirective`、`TaskOrderAir::RecoveryDirective`、`TaskOrderAir::TakeoffDirective` 与 `TaskOrderNaval::CommandAuthorityDirective`；同时新增 `WorldTaskOrderMaintainedAssignment` 与 projection/accessor helpers。`WorldTaskOrderAssignment::kMaintainedBatchTruth` 现在是 `false`，因此 `.order` 被明确标记为 compatibility transport only。 | 主线程复验：`ef_py` build 通过；focused architecture guards `20 passed, 29 deselected`；binding command surface `4 passed`；`git diff --check` clean；WP22 closure audit 仍只有预期 missing-acceptance warning。 | maintained contract 已定义，但尚未接入 runtime/facade/binding/Python write/read APIs。whole-shell public surfaces 仍存在于 `WorldBatchRuntime`、`RuntimeFacade`、`ObservationBatchPacket`、runtime bindings 与 `project_world_task_order_assignment_transport(...)`。 |
+
+这个 packet 不完成 R2，也不授权 `WP22-F`、R4、DTO shell retirement 或 public escape-hatch deletion。
+
+## maintained contract definition 后的下一批串行派发
+
+| Stream | 建议模型 / 推理预算 | 写入范围 | 派发包 |
+|--------|---------------------|----------|--------|
+| `R2 TaskOrder maintained runtime/facade/binding API wiring` | `gpt-5.4`, xhigh | `src/core/engine/world_batch_runtime.{h,cpp}`、`src/runtime/facade/runtime_facade.{h,cpp}`、`src/interfaces/python/bindings_runtime.cpp`、`python/rl/runtime/world_batch/command_chain_cache.py`、`python/rl/runtime/world_batch/adapter.py`、`python/rl/runtime/world_batch_vec_env.py`、`python/rl/runtime/cooperative_world_batch_vec_env.py`、`tests/world_batch`、`tests/runtime/bindings` 与 architecture guards 中的 focused tests。不要编辑 `LeaderIntent` / `PilotReport` public contract shapes。 | 围绕 `WorldTaskOrderMaintainedAssignment` / `TaskOrderMaintainedBatchContract` 增加 maintained TaskOrder batch write/read APIs，同时保留旧 whole-shell APIs 为显式 compatibility-only surfaces。尽可能把 Python TaskOrder assignment helpers/callers 移到 maintained path。如果 maintained path 存在后 legacy whole-shell getters 或 `ObservationBatchPacket.task_orders` 仍必须 live，则返回 `partial`。本切片不得删除或扩宽 compatibility shells。 |
 
 第一次尝试派发曾使用 default model routing，并已在被消费前关闭。那些 closed
 threads 只是 transport cleanup，不是 completion evidence。
