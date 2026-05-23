@@ -747,6 +747,55 @@ class GpuRuntimeBindingTests(unittest.TestCase):
         self.assertEqual(tuple(tensor.shape), tuple(host_visual.shape))
         self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_visual, atol=1.0e-6))
 
+    def test_runtime_facade_visual_candidate_helper_stays_available_for_visual_exports(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        self.assertTrue(facade.load_database(resolve_repo_path("examples", "config", "database")))
+
+        spawns = []
+        for side, x in (
+            (ef_py.Side.Blue, 0.0),
+            (ef_py.Side.Blue, 0.0),
+            (ef_py.Side.Red, 2000.0),
+            (ef_py.Side.Red, 60000.0),
+        ):
+            spawn = ef_py.WorldSpawnRequest()
+            spawn.world_index = 0
+            spawn.side = side
+            spawn.type_name = "Aircraft"
+            spawn.x = float(x)
+            spawn.y = 0.0 if float(x) != 0.0 else float(len(spawns) * 1200.0)
+            spawn.z = 1200.0
+            spawn.heading = 90.0
+            spawn.pitch = 0.0
+            spawn.roll = 0.0
+            spawn.vx = 180.0
+            spawn.vy = 0.0
+            spawn.vz = 0.0
+            spawns.append(spawn)
+
+        entity_ids = [int(v) for v in facade.apply_world_setup_batch([17], [], [], [], spawns, [])]
+        refs = [_entity_ref(0, entity_ids[0])]
+        expected_visual_ids = sorted([entity_ids[1], entity_ids[2]])
+
+        for use_gpu in (False, True):
+            visual_ids = [
+                int(v) for v in facade.get_visual_candidate_ids_batch(refs, 25000.0, use_gpu)[0]
+            ]
+            self.assertEqual(visual_ids, expected_visual_ids)
+
+        visuals = ef_py.compute_world_batch_visual_observation_batch_numpy(
+            facade,
+            refs,
+            2,
+            False,
+        )
+        visual_arr = np.asarray(visuals, dtype=np.float32)
+        self.assertEqual(int(visual_arr.shape[0]), 1)
+        self.assertGreater(int(visual_arr.shape[1]), 0)
+        self.assertGreater(int(visual_arr.shape[2]), 0)
+        self.assertGreater(int(visual_arr.shape[3]), 0)
+        self._assert_gpu_helper_signals_do_not_promote_capabilities(facade.capabilities())
+
 
 if __name__ == "__main__":
     unittest.main()
