@@ -735,13 +735,20 @@ void WorldBatchRuntime::set_mission_commands_batch(const std::vector<WorldMissio
     });
 }
 
-void WorldBatchRuntime::set_task_orders_batch(const std::vector<WorldTaskOrderAssignment>& assignments) {
+void WorldBatchRuntime::set_task_orders_maintained_batch(
+    const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
+) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_task_order(item.entity_id, item.order);
+            world.set_task_order(
+                item.entity_id,
+                task_order_compatibility_shell_from_maintained_batch_contract(
+                    item.task_order
+                )
+            );
         }
     });
 }
@@ -806,11 +813,16 @@ std::vector<MissionCommand> WorldBatchRuntime::get_mission_commands_batch(const 
     return out;
 }
 
-std::vector<TaskOrder> WorldBatchRuntime::get_task_orders_batch(const std::vector<WorldEntityRef>& refs) const {
-    std::vector<TaskOrder> out(refs.size());
+std::vector<TaskOrderMaintainedBatchContract>
+WorldBatchRuntime::get_task_orders_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    std::vector<TaskOrderMaintainedBatchContract> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
-        out[i] = checked_world(static_cast<size_t>(ref.world_index)).get_task_order(ref.entity_id);
+        out[i] = task_order_maintained_batch_contract(
+            checked_world(static_cast<size_t>(ref.world_index)).get_task_order(ref.entity_id)
+        );
     });
     return out;
 }
@@ -1034,18 +1046,17 @@ std::vector<std::vector<uint64_t>> WorldBatchRuntime::get_comm_candidate_ids_bat
 }
 
 std::vector<WorldBatchVisualBindingCompatibilityScene>
-WorldBatchRuntime::collect_visual_binding_compatibility_scenes_batch(
+WorldBatchRuntime::collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
     const std::vector<WorldEntityRef>& refs,
     int downsample,
-    bool use_gpu
+    const std::vector<std::vector<uint64_t>>& candidate_ids_batch
 ) const {
-    const auto visual_candidate_ids = get_visual_candidate_ids_batch(refs, 25000.0, use_gpu);
     std::vector<WorldBatchVisualBindingCompatibilityScene> out(refs.size());
     for (std::size_t idx = 0; idx < refs.size(); ++idx) {
         const auto& ref = refs[idx];
         const std::vector<uint64_t>* candidates =
-            idx < visual_candidate_ids.size() ? &visual_candidate_ids[idx] : nullptr;
-        if (!world_batch_visual_binding_compatibility::collect_scene(
+            idx < candidate_ids_batch.size() ? &candidate_ids_batch[idx] : nullptr;
+        if (!world_batch_visual_binding_compatibility::collect_scene_from_candidate_ids(
                 checked_world(static_cast<size_t>(ref.world_index)),
                 ref.entity_id,
                 downsample,
@@ -1058,4 +1069,18 @@ WorldBatchRuntime::collect_visual_binding_compatibility_scenes_batch(
         }
     }
     return out;
+}
+
+std::vector<WorldBatchVisualBindingCompatibilityScene>
+WorldBatchRuntime::collect_visual_binding_compatibility_scenes_batch(
+    const std::vector<WorldEntityRef>& refs,
+    int downsample,
+    bool use_gpu
+) const {
+    const auto visual_candidate_ids = get_visual_candidate_ids_batch(refs, 25000.0, use_gpu);
+    return collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
+        refs,
+        downsample,
+        visual_candidate_ids
+    );
 }

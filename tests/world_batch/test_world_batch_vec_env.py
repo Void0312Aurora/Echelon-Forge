@@ -17,6 +17,13 @@ import torch  # noqa: E402,F401
 import ef_py  # noqa: E402
 
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
+from python.rl.runtime.world_batch import command_chain_cache  # noqa: E402
+from python.rl.runtime.world_batch.command_chain_cache import (  # noqa: E402
+    project_world_leader_intent_assignment_transport,
+    project_world_pilot_report_assignment_transport,
+    project_world_task_order_maintained_assignment,
+)
+import python.rl.runtime.world_batch.adapter as world_batch_adapter_module  # noqa: E402
 import python.rl.runtime.world_batch.compat as world_batch_compat  # noqa: E402
 import python.rl.runtime.world_batch_vec_env as vec_env_module  # noqa: E402
 from python.rl.control.wrappers import MultiTimescaleActionWrapper  # noqa: E402
@@ -250,6 +257,157 @@ def _controller_runtime_state_matches_loader_state(runtime_state, loader_state) 
 
 
 class WorldBatchVecEnvTests(unittest.TestCase):
+    def test_command_chain_cache_leader_intent_snapshot_uses_named_owner_slice_projections(self) -> None:
+        intent = ef_py.LeaderIntent()
+        intent.command_code = 3
+        intent.cmd_heading_deg = 91.0
+        intent.cmd_altitude_m = 1250.0
+        intent.cmd_speed_mps = 210.0
+        intent.phase_id = ef_py.LeaderPhase.Reposition
+        intent.formation_id = 17
+        intent.form_offset_x = 120.0
+        intent.recovery_base_id = 88
+        intent.warfare_role_code = 5
+        intent.officer_in_tactical_command = 7001
+
+        snapshot = command_chain_cache.leader_intent_snapshot(intent)
+
+        self.assertIsNotNone(snapshot)
+        assert snapshot is not None
+        projection_names = tuple(name for name, _fields in snapshot)
+        self.assertEqual(
+            projection_names,
+            (
+                "leader_intent_shared_core",
+                "leader_intent_air_owner_slice",
+                "leader_intent_naval_owner_slice",
+            ),
+        )
+        projection_map = {name: dict(fields) for name, fields in snapshot}
+        self.assertEqual(projection_map["leader_intent_shared_core"]["command_code"], 3)
+        self.assertEqual(projection_map["leader_intent_shared_core"]["cmd_heading_deg"], 91.0)
+        self.assertEqual(projection_map["leader_intent_air_owner_slice"]["phase_id"], ef_py.LeaderPhase.Reposition)
+        self.assertEqual(projection_map["leader_intent_air_owner_slice"]["formation_id"], 17)
+        self.assertEqual(projection_map["leader_intent_air_owner_slice"]["recovery_base_id"], 88)
+        self.assertEqual(projection_map["leader_intent_naval_owner_slice"]["warfare_role_code"], 5)
+        self.assertEqual(projection_map["leader_intent_naval_owner_slice"]["officer_in_tactical_command"], 7001)
+        self.assertEqual(
+            tuple(projection_map["leader_intent_shared_core"].keys()),
+            tuple(name for name in dir(ef_py.leader_intent_shared_core(intent)) if not name.startswith("_")),
+        )
+        self.assertEqual(
+            tuple(projection_map["leader_intent_air_owner_slice"].keys()),
+            tuple(name for name in dir(ef_py.leader_intent_air_owner_slice(intent)) if not name.startswith("_")),
+        )
+        self.assertEqual(
+            tuple(projection_map["leader_intent_naval_owner_slice"].keys()),
+            tuple(name for name in dir(ef_py.leader_intent_naval_owner_slice(intent)) if not name.startswith("_")),
+        )
+
+    def test_command_chain_cache_pilot_report_snapshot_uses_named_owner_slice_projections(self) -> None:
+        report = ef_py.PilotReport()
+        report.report_type = ef_py.CommMsgType.ACK_CANT_DO
+        report.sender_id = 101
+        report.status_value = 2.5
+        report.element_id = 55
+        report.phase_id = 8
+        report.formation_role_id = 3
+        report.formation_error_m = 12.0
+        report.warfare_role_code = 9
+        report.officer_in_tactical_command = 9002
+
+        snapshot = command_chain_cache.pilot_report_snapshot(report)
+
+        self.assertIsNotNone(snapshot)
+        assert snapshot is not None
+        projection_names = tuple(name for name, _fields in snapshot)
+        self.assertEqual(
+            projection_names,
+            (
+                "pilot_report_shared_core",
+                "pilot_report_air_owner_slice",
+                "pilot_report_naval_owner_slice",
+            ),
+        )
+        projection_map = {name: dict(fields) for name, fields in snapshot}
+        self.assertEqual(
+            projection_map["pilot_report_shared_core"]["report_type"],
+            ef_py.CommMsgType.ACK_CANT_DO,
+        )
+        self.assertEqual(projection_map["pilot_report_shared_core"]["sender_id"], 101)
+        self.assertEqual(projection_map["pilot_report_air_owner_slice"]["element_id"], 55)
+        self.assertEqual(projection_map["pilot_report_air_owner_slice"]["phase_id"], 8)
+        self.assertEqual(projection_map["pilot_report_air_owner_slice"]["formation_role_id"], 3)
+        self.assertEqual(projection_map["pilot_report_naval_owner_slice"]["warfare_role_code"], 9)
+        self.assertEqual(projection_map["pilot_report_naval_owner_slice"]["officer_in_tactical_command"], 9002)
+        self.assertEqual(
+            tuple(projection_map["pilot_report_shared_core"].keys()),
+            tuple(name for name in dir(ef_py.pilot_report_shared_core(report)) if not name.startswith("_")),
+        )
+        self.assertEqual(
+            tuple(projection_map["pilot_report_air_owner_slice"].keys()),
+            tuple(name for name in dir(ef_py.pilot_report_air_owner_slice(report)) if not name.startswith("_")),
+        )
+        self.assertEqual(
+            tuple(projection_map["pilot_report_naval_owner_slice"].keys()),
+            tuple(name for name in dir(ef_py.pilot_report_naval_owner_slice(report)) if not name.startswith("_")),
+        )
+
+    def test_command_chain_cache_task_order_snapshot_uses_named_owner_slice_projections(self) -> None:
+        order = ef_py.TaskOrder()
+        order.task_id = 8
+        order.active = True
+        order.priority = 6
+        order.issue_time_s = 12.5
+        order.element_id = 13
+        order.package_id = 21
+        order.recovery_base_id = 22
+        order.recovery_runway_id = 23
+        order.recovery_approach_type = ef_py.RecoveryApproachType.ILS
+        order.takeoff_procedure_id = ef_py.TakeoffProcedureType.Interval
+        order.takeoff_clearance_id = ef_py.TakeoffClearanceState.ClearedForTakeoff
+        order.takeoff_interval_s = 17.5
+        order.runway_slot_id = ef_py.RunwaySlotPosition.Right
+        order.warfare_role_code = 4
+        order.officer_in_tactical_command = 8004
+
+        snapshot = command_chain_cache.task_order_snapshot(order)
+
+        self.assertIsNotNone(snapshot)
+        assert snapshot is not None
+        projection_names = tuple(name for name, _fields in snapshot)
+        self.assertEqual(
+            projection_names,
+            (
+                "task_order_shared_core",
+                "task_order_air_owner_slice",
+                "task_order_naval_owner_slice",
+            ),
+        )
+        projection_map = {name: dict(fields) for name, fields in snapshot}
+        self.assertEqual(projection_map["task_order_shared_core"]["task_id"], 8)
+        self.assertEqual(projection_map["task_order_shared_core"]["active"], True)
+        self.assertEqual(projection_map["task_order_shared_core"]["priority"], 6)
+        self.assertEqual(projection_map["task_order_shared_core"]["issue_time_s"], 12.5)
+        self.assertEqual(projection_map["task_order_air_owner_slice"]["element_id"], 13)
+        self.assertEqual(projection_map["task_order_air_owner_slice"]["package_id"], 21)
+        self.assertEqual(projection_map["task_order_air_owner_slice"]["recovery_base_id"], 22)
+        self.assertEqual(projection_map["task_order_air_owner_slice"]["takeoff_interval_s"], 17.5)
+        self.assertEqual(projection_map["task_order_naval_owner_slice"]["warfare_role_code"], 4)
+        self.assertEqual(projection_map["task_order_naval_owner_slice"]["officer_in_tactical_command"], 8004)
+        self.assertEqual(
+            tuple(projection_map["task_order_shared_core"].keys()),
+            tuple(name for name in dir(ef_py.task_order_shared_core(order)) if not name.startswith("_")),
+        )
+        self.assertEqual(
+            tuple(projection_map["task_order_air_owner_slice"].keys()),
+            tuple(name for name in dir(ef_py.task_order_air_owner_slice(order)) if not name.startswith("_")),
+        )
+        self.assertEqual(
+            tuple(projection_map["task_order_naval_owner_slice"].keys()),
+            tuple(name for name in dir(ef_py.task_order_naval_owner_slice(order)) if not name.startswith("_")),
+        )
+
     def test_world_batch_vec_env_applies_worker_thread_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
@@ -355,6 +513,10 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertTrue(
                     all(not bool(request.get("include_mission_commands", False)) for request in packet_requests)
                 )
+                self.assertTrue(all("include_task_orders" not in request for request in packet_requests))
+                self.assertTrue(
+                    all(not bool(request.get("include_task_order_contracts", False)) for request in packet_requests)
+                )
             finally:
                 vec_env.close()
 
@@ -379,9 +541,13 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 report_calls: list[int] = []
 
                 original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
-                original_set_task = vec_env._runtime_adapter.set_task_orders_batch
+                original_set_task = vec_env._runtime_adapter.set_task_orders_maintained_batch
                 original_set_intent = vec_env._runtime_adapter.set_leader_intents_batch
                 original_set_report = vec_env._runtime_adapter.set_pilot_reports_batch
+                original_project_task = vec_env_module.project_world_task_order_maintained_assignment
+                original_project_intent = vec_env_module.project_world_leader_intent_assignment_transport
+                original_project_report = vec_env_module.project_world_pilot_report_assignment_transport
+                projection_calls: list[tuple[str, int, int]] = []
 
                 def _track_mission(assignments):
                     materialized = list(assignments)
@@ -390,6 +556,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
 
                 def _track_task(assignments):
                     materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "task_order") for assignment in materialized))
                     task_calls.append(len(materialized))
                     return original_set_task(materialized)
 
@@ -403,31 +570,71 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     report_calls.append(len(materialized))
                     return original_set_report(materialized)
 
+                def _track_project_intent(assignment, *, world_index, entity_id, compatibility_intent_shell):
+                    projection_calls.append(("intent", int(world_index), int(entity_id)))
+                    return original_project_intent(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_intent_shell=compatibility_intent_shell,
+                    )
+
+                def _track_project_report(assignment, *, world_index, entity_id, compatibility_report_shell):
+                    projection_calls.append(("report", int(world_index), int(entity_id)))
+                    return original_project_report(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_report_shell=compatibility_report_shell,
+                    )
+
+                def _track_project_task(assignment, *, world_index, entity_id, compatibility_task_order_shell):
+                    projection_calls.append(("task", int(world_index), int(entity_id)))
+                    return original_project_task(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_task_order_shell=compatibility_task_order_shell,
+                    )
+
                 vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
-                vec_env._runtime_adapter.set_task_orders_batch = _track_task  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_task_orders_maintained_batch = _track_task  # type: ignore[method-assign]
                 vec_env._runtime_adapter.set_leader_intents_batch = _track_intent  # type: ignore[method-assign]
                 vec_env._runtime_adapter.set_pilot_reports_batch = _track_report  # type: ignore[method-assign]
+                vec_env_module.project_world_task_order_maintained_assignment = _track_project_task  # type: ignore[assignment]
+                vec_env_module.project_world_leader_intent_assignment_transport = _track_project_intent  # type: ignore[assignment]
+                vec_env_module.project_world_pilot_report_assignment_transport = _track_project_report  # type: ignore[assignment]
 
-                vec_env.reset()
-                first_counts = (
-                    sum(mission_calls),
-                    sum(task_calls),
-                    sum(intent_calls),
-                    sum(report_calls),
-                )
-                self.assertGreater(first_counts[0], 0)
-                self.assertGreater(first_counts[1], 0)
-                self.assertGreater(first_counts[2], 0)
-                self.assertGreater(first_counts[3], 0)
+                try:
+                    vec_env.reset()
+                    first_counts = (
+                        sum(mission_calls),
+                        sum(task_calls),
+                        sum(intent_calls),
+                        sum(report_calls),
+                    )
+                    self.assertGreater(first_counts[0], 0)
+                    self.assertGreater(first_counts[1], 0)
+                    self.assertGreater(first_counts[2], 0)
+                    self.assertGreater(first_counts[3], 0)
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
+                    self.assertTrue(any(kind == "task" for kind, _world_index, _entity_id in projection_calls))
+                    self.assertTrue(any(kind == "intent" for kind, _world_index, _entity_id in projection_calls))
+                    self.assertTrue(any(kind == "report" for kind, _world_index, _entity_id in projection_calls))
 
-                vec_env._sync_command_chain_batch([0])
-                second_counts = (
-                    sum(mission_calls),
-                    sum(task_calls),
-                    sum(intent_calls),
-                    sum(report_calls),
-                )
-                self.assertEqual(first_counts, second_counts)
+                    vec_env._sync_command_chain_batch([0])
+                    second_counts = (
+                        sum(mission_calls),
+                        sum(task_calls),
+                        sum(intent_calls),
+                        sum(report_calls),
+                    )
+                    self.assertEqual(first_counts, second_counts)
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
+                finally:
+                    vec_env_module.project_world_task_order_maintained_assignment = original_project_task  # type: ignore[assignment]
+                    vec_env_module.project_world_leader_intent_assignment_transport = original_project_intent  # type: ignore[assignment]
+                    vec_env_module.project_world_pilot_report_assignment_transport = original_project_report  # type: ignore[assignment]
             finally:
                 vec_env.close()
 
@@ -532,24 +739,33 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                         adapter.set_mission_commands_batch([assignment])
 
                     def set_task_order(self, entity_id, order):
-                        assignment = ef_py.WorldTaskOrderAssignment()
-                        assignment.world_index = int(env_idx)
-                        assignment.entity_id = int(entity_id)
-                        assignment.order = order
-                        adapter.set_task_orders_batch([assignment])
+                        assignment = ef_py.WorldTaskOrderMaintainedAssignment()
+                        project_world_task_order_maintained_assignment(
+                            assignment,
+                            world_index=int(env_idx),
+                            entity_id=int(entity_id),
+                            compatibility_task_order_shell=order,
+                        )
+                        adapter.set_task_orders_maintained_batch([assignment])
 
                     def set_leader_intent(self, entity_id, intent):
                         assignment = ef_py.WorldLeaderIntentAssignment()
-                        assignment.world_index = int(env_idx)
-                        assignment.entity_id = int(entity_id)
-                        assignment.intent = intent
+                        project_world_leader_intent_assignment_transport(
+                            assignment,
+                            world_index=int(env_idx),
+                            entity_id=int(entity_id),
+                            compatibility_intent_shell=intent,
+                        )
                         adapter.set_leader_intents_batch([assignment])
 
                     def set_pilot_report(self, entity_id, report):
                         assignment = ef_py.WorldPilotReportAssignment()
-                        assignment.world_index = int(env_idx)
-                        assignment.entity_id = int(entity_id)
-                        assignment.report = report
+                        project_world_pilot_report_assignment_transport(
+                            assignment,
+                            world_index=int(env_idx),
+                            entity_id=int(entity_id),
+                            compatibility_report_shell=report,
+                        )
                         adapter.set_pilot_reports_batch([assignment])
 
                     def __getattr__(self, name):
@@ -575,6 +791,133 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     vec_env.close()
             finally:
                 vec_env_module._RuntimeFacadeAdapter._scenario_loader_runtime = original_factory
+
+    def test_world_batch_adapter_loader_runtime_task_order_write_routes_through_maintained_helper(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+        original_project_task = world_batch_adapter_module.project_world_task_order_maintained_assignment
+        project_calls: list[tuple[int, int, Any]] = []
+        assignment_batches: list[list[Any]] = []
+
+        def _track_project_task(assignment, *, world_index, entity_id, compatibility_task_order_shell):
+            project_calls.append((int(world_index), int(entity_id), compatibility_task_order_shell))
+            return original_project_task(
+                assignment,
+                world_index=world_index,
+                entity_id=entity_id,
+                compatibility_task_order_shell=compatibility_task_order_shell,
+            )
+
+        def _track_set_task_orders_batch(assignments):
+            materialized = list(assignments)
+            assignment_batches.append(materialized)
+
+        world_batch_adapter_module.project_world_task_order_maintained_assignment = _track_project_task  # type: ignore[assignment]
+        adapter.set_task_orders_maintained_batch = _track_set_task_orders_batch  # type: ignore[method-assign]
+        try:
+            proxy = adapter._scenario_loader_runtime(0)
+            order = ef_py.TaskOrder()
+            order.task_id = 23
+
+            proxy.set_task_order(91, order)
+
+            self.assertFalse(hasattr(adapter, "set_task_orders_batch"))
+            self.assertEqual(project_calls, [(0, 91, order)])
+            self.assertEqual(len(assignment_batches), 1)
+            self.assertEqual(len(assignment_batches[0]), 1)
+            assignment = assignment_batches[0][0]
+            self.assertEqual(int(assignment.world_index), 0)
+            self.assertEqual(int(assignment.entity_id), 91)
+            self.assertEqual(int(assignment.task_order.shared_core.task_id), 23)
+        finally:
+            world_batch_adapter_module.project_world_task_order_maintained_assignment = original_project_task  # type: ignore[assignment]
+
+    def test_world_batch_adapter_legacy_task_order_batch_writer_is_removed(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+        compat_adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
+
+        self.assertFalse(hasattr(adapter, "set_task_orders_batch"))
+        self.assertFalse(hasattr(adapter, "set_task_orders_batch_compatibility"))
+        self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch"))
+        self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch_compatibility"))
+
+    def test_world_batch_adapter_loader_runtime_task_order_write_requires_maintained_binding(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+        proxy = adapter._scenario_loader_runtime(0)
+        original_ef_py = world_batch_adapter_module.ef_py
+
+        class _NoMaintainedTaskOrderBindings:
+            pass
+
+        world_batch_adapter_module.ef_py = _NoMaintainedTaskOrderBindings()  # type: ignore[assignment]
+        try:
+            with self.assertRaisesRegex(RuntimeError, "requires maintained TaskOrder batch bindings"):
+                proxy.set_task_order(91, object())
+        finally:
+            world_batch_adapter_module.ef_py = original_ef_py  # type: ignore[assignment]
+
+    def test_world_batch_adapter_task_order_reverse_projection_is_removed(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+
+        class _LegacyOnlyTarget:
+            def __init__(self) -> None:
+                self.legacy_batches: list[list[Any]] = []
+
+            def set_task_orders_batch(self, assignments):
+                self.legacy_batches.append(list(assignments))
+
+        target = _LegacyOnlyTarget()
+        adapter.facade = target  # type: ignore[assignment]
+        assignment = ef_py.WorldTaskOrderMaintainedAssignment()
+        order = ef_py.TaskOrder()
+        order.task_id = 31
+        project_world_task_order_maintained_assignment(
+            assignment,
+            world_index=0,
+            entity_id=91,
+            compatibility_task_order_shell=order,
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "requires maintained TaskOrder batch bindings"):
+            adapter.set_task_orders_maintained_batch([assignment])
+
+        self.assertEqual(target.legacy_batches, [])
+
+    def test_world_batch_adapter_task_order_reverse_projection_stays_removed_with_compatibility_opt_in(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
+
+        class _LegacyOnlyTarget:
+            def __init__(self) -> None:
+                self.legacy_batches: list[list[Any]] = []
+
+            def set_task_orders_batch(self, assignments):
+                self.legacy_batches.append(list(assignments))
+
+        target = _LegacyOnlyTarget()
+        adapter.facade = target  # type: ignore[assignment]
+        assignment = ef_py.WorldTaskOrderMaintainedAssignment()
+        order = ef_py.TaskOrder()
+        order.task_id = 37
+        order.task_type = ef_py.TaskType.CAP
+        order.element_id = 7001
+        order.package_id = 7002
+        order.lead_aircraft_id = 7003
+        order.station_type = ef_py.StationType.Racetrack
+        order.target_altitude_m = 6100.0
+        order.target_speed_mps = 205.0
+        order.formation_role_id = ef_py.FormationRole.Wingman
+        order.wingman_slot_id = ef_py.WingmanSlot.Left
+        order.naval_station_type = ef_py.NavalStationType.Screen
+        project_world_task_order_maintained_assignment(
+            assignment,
+            world_index=0,
+            entity_id=91,
+            compatibility_task_order_shell=order,
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "requires maintained TaskOrder batch bindings"):
+            adapter.set_task_orders_maintained_batch([assignment])
+
+        self.assertEqual(target.legacy_batches, [])
 
     def test_world_batch_vec_env_reset_layout_and_time_step_do_not_require_raw_world_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -607,6 +950,79 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertIsNotNone(obs)
                 self.assertIsInstance(vec_env.reset_infos, list)
                 self.assertAlmostEqual(float(vec_env._runtime_adapter.get_time_step(0)), 0.05, places=6)
+            finally:
+                vec_env._runtime_adapter._compat_world = original_compat_world  # type: ignore[method-assign]
+                vec_env.close()
+
+    def test_world_batch_vec_env_layout_materialization_routes_through_named_request_helper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_maritime_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            original_apply = vec_env._runtime_adapter._apply_runtime_world_layout_request
+            seen_requests: list[tuple[int, bool, float, float]] = []
+
+            def _recording_apply(request):
+                seen_requests.append(
+                    (
+                        int(request.world_index),
+                        bool(request.maritime_configured),
+                        float(request.wave_heading_deg),
+                        float(request.wave_period_s),
+                    )
+                )
+                return original_apply(request)
+
+            vec_env._runtime_adapter._apply_runtime_world_layout_request = _recording_apply  # type: ignore[method-assign]
+            try:
+                layout = vec_env_module.build_compiled_world_layout(vec_env._compiled_scenario, seed=37)
+                applied_world = vec_env._runtime_adapter.apply_world_layout(0, layout)
+                self.assertIsNotNone(applied_world.agent_id)
+                self.assertEqual(seen_requests, [(0, True, 135.0, 11.0)])
+            finally:
+                vec_env._runtime_adapter._apply_runtime_world_layout_request = original_apply  # type: ignore[method-assign]
+                vec_env.close()
+
+    def test_world_batch_adapter_world_proxy_reads_layout_and_time_step_without_raw_world_time_step(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_maritime_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            original_compat_world = vec_env._runtime_adapter._compat_world
+
+            def _poisoned_compat_world(index):
+                world = original_compat_world(index)
+
+                class _ProxyPoisonWorld:
+                    def __getattr__(self, name):
+                        if name == "get_time_step":
+                            raise AssertionError("world proxy time-step read should not require raw world.get_time_step()")
+                        return getattr(world, name)
+
+                return _ProxyPoisonWorld()
+
+            vec_env._runtime_adapter._compat_world = _poisoned_compat_world  # type: ignore[method-assign]
+            try:
+                layout = vec_env_module.build_compiled_world_layout(vec_env._compiled_scenario, seed=41)
+                vec_env._runtime_adapter.apply_world_layout(0, layout)
+                world_proxy = vec_env._runtime_adapter.world(0)
+                proxy_layout = world_proxy.get_layout()
+                self.assertEqual(proxy_layout.terrain_type, "legacy")
+                self.assertAlmostEqual(float(world_proxy.get_time_step()), 0.05, places=6)
             finally:
                 vec_env._runtime_adapter._compat_world = original_compat_world  # type: ignore[method-assign]
                 vec_env.close()
@@ -1629,6 +2045,10 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     observed["include_instrument_states"] = bool(
                         getattr(batch_request, "include_instrument_states", False)
                     )
+                    observed["has_include_task_orders"] = hasattr(batch_request, "include_task_orders")
+                    observed["include_task_order_contracts"] = bool(
+                        getattr(batch_request, "include_task_order_contracts", False)
+                    )
                     result = original_step_execution_batch(batch_request)
                     ref = ef_py.WorldEntityRef()
                     ref.world_index = 0
@@ -1638,7 +2058,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                         include_agent_observations=True,
                         include_instrument_states=True,
                         include_mission_commands=False,
-                        include_task_orders=False,
                         include_leader_intents=False,
                         include_pilot_reports=False,
                     )
@@ -1658,6 +2077,8 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertEqual(int(observed.get("step_request_count", 0)), 1)
                 self.assertTrue(bool(observed.get("include_agent_observations", False)))
                 self.assertTrue(bool(observed.get("include_instrument_states", False)))
+                self.assertFalse(bool(observed.get("has_include_task_orders", True)))
+                self.assertFalse(bool(observed.get("include_task_order_contracts", False)))
                 self.assertEqual(int(observed.get("read_observation_packet_calls", 0)), 1)
                 self.assertIs(vec_env.envs[0].last_truth, observed.get("mainline_truth"))
                 self.assertIs(vec_env.envs[0].last_inst, observed.get("mainline_inst"))

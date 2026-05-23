@@ -13,21 +13,38 @@ struct TaskOrder : TaskOrderCore, TaskOrderAir, TaskOrderNaval {};
 // Flat umbrella retained only as a compatibility/transport shell.
 // Shared-core and domain slices remain the maintained owner surfaces.
 using TaskOrderCompatibilityTransportShell = TaskOrder;
+using TaskOrderSharedCoreOwnerSlice = TaskOrderCore;
+using TaskOrderSharedCoreDirective = TaskOrderCore;
 inline constexpr bool kTaskOrderCompatibilityTransportShell = true;
+inline constexpr bool kTaskOrderSharedCoreOwnedSurface = true;
 
 static_assert(
     kTaskOrderAirOwnedDomainSlice && kTaskOrderNavalOwnedDomainSlice,
     "TaskOrder compatibility shells must project to explicit owner slices."
 );
+static_assert(
+    kTaskOrderSharedCoreOwnedSurface,
+    "TaskOrder shared core must stay an explicit maintained owner surface."
+);
 
-[[nodiscard]] inline const TaskOrderCore&
+[[nodiscard]] inline const TaskOrderSharedCoreOwnerSlice&
 task_order_shared_core(const TaskOrderCompatibilityTransportShell& order) noexcept {
     return order;
 }
 
-[[nodiscard]] inline TaskOrderCore&
+[[nodiscard]] inline TaskOrderSharedCoreOwnerSlice&
 task_order_shared_core(TaskOrderCompatibilityTransportShell& order) noexcept {
     return order;
+}
+
+[[nodiscard]] inline TaskOrderSharedCoreDirective
+task_order_shared_core_directive(const TaskOrderSharedCoreOwnerSlice& core) noexcept {
+    return core;
+}
+
+[[nodiscard]] inline TaskOrderSharedCoreDirective
+task_order_shared_core_directive(const TaskOrderCompatibilityTransportShell& order) noexcept {
+    return task_order_shared_core_directive(task_order_shared_core(order));
 }
 
 [[nodiscard]] inline const TaskOrderAir&

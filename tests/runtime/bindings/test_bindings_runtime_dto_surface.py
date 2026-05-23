@@ -293,6 +293,40 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             ),
         )
 
+    def test_observation_request_task_order_export_uses_maintained_contract_gate_only(self) -> None:
+        request = ef_py.ObservationBatchRequest()
+        step_request = ef_py.ExecutionBatchStepRequest()
+
+        self.assertFalse(hasattr(request, "include_task_orders"))
+        self.assertFalse(bool(request.include_task_order_contracts))
+        self.assertFalse(hasattr(step_request, "include_task_orders"))
+        self.assertFalse(bool(step_request.include_task_order_contracts))
+
+        request.include_task_order_contracts = True
+        step_request.include_task_order_contracts = True
+        self.assertTrue(bool(request.include_task_order_contracts))
+        self.assertTrue(bool(step_request.include_task_order_contracts))
+
+    def test_task_order_whole_shell_batch_bindings_are_removed(self) -> None:
+        runtime = ef_py.WorldBatchRuntime(1)
+        facade = ef_py.RuntimeFacade(1)
+
+        self.assertTrue(hasattr(runtime, "set_task_orders_maintained_batch"))
+        self.assertTrue(hasattr(runtime, "get_task_orders_maintained_batch"))
+        self.assertTrue(hasattr(facade, "set_task_orders_maintained_batch"))
+        self.assertTrue(hasattr(facade, "get_task_orders_maintained_batch"))
+
+        self.assertFalse(hasattr(runtime, "set_task_orders_batch"))
+        self.assertFalse(hasattr(runtime, "get_task_orders_batch"))
+        self.assertFalse(hasattr(facade, "set_task_orders_batch"))
+        self.assertFalse(hasattr(facade, "get_task_orders_batch"))
+        self.assertFalse(hasattr(runtime, "set_task_orders_compatibility_batch"))
+        self.assertFalse(hasattr(runtime, "get_task_orders_compatibility_batch"))
+        self.assertFalse(hasattr(facade, "set_task_orders_compatibility_batch"))
+        self.assertFalse(hasattr(facade, "get_task_orders_compatibility_batch"))
+        self.assertFalse(hasattr(ef_py, "WorldTaskOrderAssignment"))
+        self.assertFalse(hasattr(ef_py, "WorldTaskOrderCompatibilityAssignment"))
+
     def test_observation_batch_packet_public_fields_include_metadata(self) -> None:
         self.assertTupleEqual(
             public_fields(ef_py.ObservationBatchPacket()),
@@ -307,9 +341,52 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
                 "refs",
                 "snapshot_version",
                 "source_time_s",
-                "task_orders",
+                "task_order_contracts",
             ),
         )
+
+    def test_observation_batch_packet_exposes_maintained_task_order_contracts(self) -> None:
+        packet = ef_py.ObservationBatchPacket()
+        contract = ef_py.TaskOrderMaintainedBatchContract()
+        contract.shared_core.task_id = 91
+        contract.air_tasking_identity.task_type = ef_py.TaskType.CAP
+        contract.air_stationing.target_speed_mps = 205.0
+        contract.air_recovery.recovery_base_id = 7
+        contract.air_formation.wingman_slot_id = ef_py.WingmanSlot.Left
+        contract.naval_stationing.naval_station_type = ef_py.NavalStationType.Screen
+
+        packet.task_order_contracts = [contract]
+
+        self.assertEqual(len(packet.task_order_contracts), 1)
+        self.assertIsInstance(packet.task_order_contracts[0], ef_py.TaskOrderMaintainedBatchContract)
+        self.assertEqual(int(packet.task_order_contracts[0].shared_core.task_id), 91)
+        self.assertEqual(
+            packet.task_order_contracts[0].air_tasking_identity.task_type,
+            ef_py.TaskType.CAP,
+        )
+        self.assertAlmostEqual(
+            float(packet.task_order_contracts[0].air_stationing.target_speed_mps),
+            205.0,
+        )
+        self.assertEqual(int(packet.task_order_contracts[0].air_recovery.recovery_base_id), 7)
+        self.assertEqual(
+            packet.task_order_contracts[0].air_formation.wingman_slot_id,
+            ef_py.WingmanSlot.Left,
+        )
+        self.assertEqual(
+            packet.task_order_contracts[0].naval_stationing.naval_station_type,
+            ef_py.NavalStationType.Screen,
+        )
+
+    def test_observation_batch_packet_task_orders_whole_shell_export_is_removed(self) -> None:
+        packet = ef_py.ObservationBatchPacket()
+        maintained_contract = ef_py.TaskOrderMaintainedBatchContract()
+        maintained_contract.shared_core.task_id = 91
+
+        packet.task_order_contracts = [maintained_contract]
+
+        self.assertIsInstance(packet.task_order_contracts[0], ef_py.TaskOrderMaintainedBatchContract)
+        self.assertFalse(hasattr(packet, "task_orders"))
 
     def test_device_resident_output_descriptor_public_fields_match_additive_surface(self) -> None:
         self.assertTupleEqual(
@@ -383,6 +460,7 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
                 "rejection_reason",
                 "request_id",
                 "request_index",
+                "setup_surface",
                 "source_type_name",
                 "world_index",
             ),

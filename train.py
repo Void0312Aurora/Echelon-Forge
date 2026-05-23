@@ -269,6 +269,13 @@ def apply_leader_action_bias(model: PPO):
         return
 
 
+def _world_batch_worker_thread_summary(vec_env) -> tuple[int, int]:
+    runtime_facade = getattr(vec_env, "runtime_facade", None)
+    if runtime_facade is None:
+        raise RuntimeError("World batch worker-thread logging requires a runtime_facade accessor.")
+    return int(runtime_facade.worker_threads()), int(runtime_facade.effective_worker_threads())
+
+
 def resolve_vec_env_spec(
     *,
     agent_layer: str,
@@ -390,10 +397,11 @@ def main():
                 **env_settings,
             )
             vec_env.seed(training_seed)
+            configured_threads, effective_threads = _world_batch_worker_thread_summary(vec_env)
             print(
                 "World batch runtime: "
-                f"configured_threads={vec_env.batch_runtime.worker_threads()} "
-                f"effective_threads={vec_env.batch_runtime.effective_worker_threads()}"
+                f"configured_threads={configured_threads} "
+                f"effective_threads={effective_threads}"
             )
             if env_settings["include_visual"]:
                 print(

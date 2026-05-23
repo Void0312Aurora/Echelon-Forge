@@ -83,6 +83,9 @@ public:
         const std::vector<WorldEntityRef>& refs,
         bool use_gpu = false
     ) const;
+    // Maintained facade-owned wrapper. Candidate-id assembly stays at the
+    // facade boundary while raw scene assembly remains in a named compatibility
+    // helper beneath the runtime quarantine surface.
     std::vector<WorldBatchVisualBindingCompatibilityScene>
     collect_visual_binding_compatibility_scenes_batch(
         const std::vector<WorldEntityRef>& refs,
@@ -91,7 +94,12 @@ public:
     ) const;
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
-    void set_task_orders_batch(const std::vector<WorldTaskOrderAssignment>& assignments);
+    void set_task_orders_maintained_batch(
+        const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
+    );
+    std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch(
+        const std::vector<WorldEntityRef>& refs
+    ) const;
     void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments);
     void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments);
     void step_batch();
@@ -115,7 +123,6 @@ public:
     std::vector<AgentObservation> get_agent_observations_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<InstrumentState> get_instrument_states_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<MissionCommand> get_mission_commands_batch(const std::vector<WorldEntityRef>& refs) const;
-    std::vector<TaskOrder> get_task_orders_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<LeaderIntent> get_leader_intents_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<PilotReport> get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const;
     ObservationBatchPacket export_observation_packet(const std::vector<WorldEntityRef>& refs) const;
@@ -136,6 +143,12 @@ private:
     );
     RecentEngagementEvents export_recent_engagement_events_for_world(
         std::size_t world_index
+    ) const;
+    std::vector<WorldBatchVisualBindingCompatibilityScene>
+    collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
+        const std::vector<WorldEntityRef>& refs,
+        const std::vector<std::vector<std::uint64_t>>& candidate_ids_batch,
+        int downsample
     ) const;
     ObservationBatchPacket build_observation_packet(
         const ObservationBatchRequest& request

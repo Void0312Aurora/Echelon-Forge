@@ -22,6 +22,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     CooperativeWorldBatchVecEnv = None
 
+import python.rl.runtime.cooperative_world_batch_vec_env as cooperative_vec_env_module  # noqa: E402
+from python.rl.runtime.multi_agent_runtime import MultiAgentWorldRuntimeView  # noqa: E402
 from python.rl.runtime.world_batch import RuntimeCompatibilityView  # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index  # noqa: E402
 
@@ -291,6 +293,85 @@ def _cooperative_takeoff_to_cruise_scenario() -> dict:
 
 
 class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
+    def test_multi_agent_runtime_view_task_order_export_uses_maintained_contracts_only(self) -> None:
+        class _Loader:
+            active_roster = []
+
+        class _ObservationPacket:
+            def __init__(self, refs, task_order_contracts):
+                self.refs = list(refs)
+                self.task_order_contracts = list(task_order_contracts)
+
+        class _Runtime:
+            def __init__(self) -> None:
+                self.requests: list[object] = []
+
+            def export_observation_packet(self, request):
+                self.requests.append(request)
+                contract = cooperative_vec_env_module.ef_py.TaskOrderMaintainedBatchContract()
+                contract.shared_core.task_id = 451
+                return _ObservationPacket(request.refs, [contract])
+
+        runtime = _Runtime()
+        view = MultiAgentWorldRuntimeView(
+            runtime=runtime,
+            loader=_Loader(),
+            world_index=0,
+            action_space=None,
+            action_mode="full",
+            mission_obs_mode="basic",
+            include_proprio=False,
+        )
+        ref = cooperative_vec_env_module.ef_py.WorldEntityRef()
+        ref.world_index = 0
+        ref.entity_id = 91
+        view.refs = lambda: [ref]  # type: ignore[method-assign]
+
+        packet = view.export_packet(
+            include_agent_observations=False,
+            include_instrument_states=False,
+            include_mission_commands=False,
+            include_task_order_contracts=True,
+        )
+
+        self.assertEqual(len(runtime.requests), 1)
+        request = runtime.requests[0]
+        self.assertTrue(bool(request.include_task_order_contracts))
+        self.assertFalse(hasattr(request, "include_task_orders"))
+        self.assertEqual(len(packet.task_order_contracts), 1)
+        self.assertEqual(int(packet.task_order_contracts[0].shared_core.task_id), 451)
+        self.assertFalse(hasattr(packet, "task_orders"))
+
+    def test_multi_agent_runtime_view_default_observation_export_does_not_request_task_orders(self) -> None:
+        class _Loader:
+            active_roster = []
+
+        class _Runtime:
+            def __init__(self) -> None:
+                self.requests: list[object] = []
+
+            def export_observation_packet(self, request):
+                self.requests.append(request)
+                return cooperative_vec_env_module.ef_py.ObservationBatchPacket()
+
+        runtime = _Runtime()
+        view = MultiAgentWorldRuntimeView(
+            runtime=runtime,
+            loader=_Loader(),
+            world_index=0,
+            action_space=None,
+            action_mode="full",
+            mission_obs_mode="basic",
+            include_proprio=False,
+        )
+
+        view.export_packet()
+
+        self.assertEqual(len(runtime.requests), 1)
+        request = runtime.requests[0]
+        self.assertFalse(bool(request.include_task_order_contracts))
+        self.assertFalse(hasattr(request, "include_task_orders"))
+
     def test_cooperative_world_batch_vec_env_batch_runtime_requires_explicit_compatibility_opt_in(self) -> None:
         if CooperativeWorldBatchVecEnv is None:
             self.skipTest("gymnasium is not available in the active interpreter")
@@ -1254,17 +1335,23 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                 report_calls: list[int] = []
 
                 original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
-                original_set_task = vec_env._runtime_adapter.set_task_orders_batch
+                original_set_task = vec_env._runtime_adapter.set_task_orders_maintained_batch
                 original_set_intent = vec_env._runtime_adapter.set_leader_intents_batch
                 original_set_report = vec_env._runtime_adapter.set_pilot_reports_batch
+                original_project_task = cooperative_vec_env_module.project_world_task_order_maintained_assignment
+                original_project_intent = cooperative_vec_env_module.project_world_leader_intent_assignment_transport
+                original_project_report = cooperative_vec_env_module.project_world_pilot_report_assignment_transport
+                projection_calls: list[tuple[str, int, int]] = []
 
                 def _track_mission(assignments):
                     mission_calls.append(len(list(assignments)))
                     return original_set_mission(assignments)
 
                 def _track_task(assignments):
-                    task_calls.append(len(list(assignments)))
-                    return original_set_task(assignments)
+                    materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "task_order") for assignment in materialized))
+                    task_calls.append(len(materialized))
+                    return original_set_task(materialized)
 
                 def _track_intent(assignments):
                     intent_calls.append(len(list(assignments)))
@@ -1274,33 +1361,73 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                     report_calls.append(len(list(assignments)))
                     return original_set_report(assignments)
 
+                def _track_project_intent(assignment, *, world_index, entity_id, compatibility_intent_shell):
+                    projection_calls.append(("intent", int(world_index), int(entity_id)))
+                    return original_project_intent(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_intent_shell=compatibility_intent_shell,
+                    )
+
+                def _track_project_report(assignment, *, world_index, entity_id, compatibility_report_shell):
+                    projection_calls.append(("report", int(world_index), int(entity_id)))
+                    return original_project_report(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_report_shell=compatibility_report_shell,
+                    )
+
+                def _track_project_task(assignment, *, world_index, entity_id, compatibility_task_order_shell):
+                    projection_calls.append(("task", int(world_index), int(entity_id)))
+                    return original_project_task(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_task_order_shell=compatibility_task_order_shell,
+                    )
+
                 vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
-                vec_env._runtime_adapter.set_task_orders_batch = _track_task  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_task_orders_maintained_batch = _track_task  # type: ignore[method-assign]
                 vec_env._runtime_adapter.set_leader_intents_batch = _track_intent  # type: ignore[method-assign]
                 vec_env._runtime_adapter.set_pilot_reports_batch = _track_report  # type: ignore[method-assign]
+                cooperative_vec_env_module.project_world_task_order_maintained_assignment = _track_project_task  # type: ignore[assignment]
+                cooperative_vec_env_module.project_world_leader_intent_assignment_transport = _track_project_intent  # type: ignore[assignment]
+                cooperative_vec_env_module.project_world_pilot_report_assignment_transport = _track_project_report  # type: ignore[assignment]
 
-                world.command_chain_dirty = True
-                vec_env._sync_command_chain_batch([0])
-                first_counts = (
-                    sum(mission_calls),
-                    sum(task_calls),
-                    sum(intent_calls),
-                    sum(report_calls),
-                )
-                self.assertGreater(first_counts[0], 0)
-                self.assertGreater(first_counts[1], 0)
-                self.assertGreater(first_counts[2], 0)
-                self.assertGreater(first_counts[3], 0)
+                try:
+                    world.command_chain_dirty = True
+                    vec_env._sync_command_chain_batch([0])
+                    first_counts = (
+                        sum(mission_calls),
+                        sum(task_calls),
+                        sum(intent_calls),
+                        sum(report_calls),
+                    )
+                    self.assertGreater(first_counts[0], 0)
+                    self.assertGreater(first_counts[1], 0)
+                    self.assertGreater(first_counts[2], 0)
+                    self.assertGreater(first_counts[3], 0)
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
+                    self.assertTrue(any(kind == "task" for kind, _world_index, _entity_id in projection_calls))
+                    self.assertTrue(any(kind == "intent" for kind, _world_index, _entity_id in projection_calls))
+                    self.assertTrue(any(kind == "report" for kind, _world_index, _entity_id in projection_calls))
 
-                world.command_chain_dirty = True
-                vec_env._sync_command_chain_batch([0])
-                second_counts = (
-                    sum(mission_calls),
-                    sum(task_calls),
-                    sum(intent_calls),
-                    sum(report_calls),
-                )
-                self.assertEqual(first_counts, second_counts)
+                    world.command_chain_dirty = True
+                    vec_env._sync_command_chain_batch([0])
+                    second_counts = (
+                        sum(mission_calls),
+                        sum(task_calls),
+                        sum(intent_calls),
+                        sum(report_calls),
+                    )
+                    self.assertEqual(first_counts, second_counts)
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
+                finally:
+                    cooperative_vec_env_module.project_world_task_order_maintained_assignment = original_project_task  # type: ignore[assignment]
+                    cooperative_vec_env_module.project_world_leader_intent_assignment_transport = original_project_intent  # type: ignore[assignment]
+                    cooperative_vec_env_module.project_world_pilot_report_assignment_transport = original_project_report  # type: ignore[assignment]
             finally:
                 vec_env.close()
 

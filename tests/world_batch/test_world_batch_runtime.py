@@ -795,15 +795,15 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         order1.formation_role_id = ef_py.FormationRole.Wingman
         order1.wingman_slot_id = ef_py.WingmanSlot.Right
         order1.active = True
-        order_assign0 = ef_py.WorldTaskOrderAssignment()
+        order_assign0 = ef_py.WorldTaskOrderMaintainedAssignment()
         order_assign0.world_index = 0
         order_assign0.entity_id = int(eid0)
-        order_assign0.order = order0
-        order_assign1 = ef_py.WorldTaskOrderAssignment()
+        order_assign0.task_order = ef_py.task_order_maintained_batch_contract(order0)
+        order_assign1 = ef_py.WorldTaskOrderMaintainedAssignment()
         order_assign1.world_index = 1
         order_assign1.entity_id = int(eid1)
-        order_assign1.order = order1
-        batch.set_task_orders_batch([order_assign0, order_assign1])
+        order_assign1.task_order = ef_py.task_order_maintained_batch_contract(order1)
+        batch.set_task_orders_maintained_batch([order_assign0, order_assign1])
 
         report0 = ef_py.PilotReport()
         report0.report_type = ef_py.CommMsgType.REP_WILCO
@@ -848,7 +848,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         batch.set_pilot_reports_batch([report_assign0, report_assign1])
 
         got_cmds = batch.get_mission_commands_batch(refs)
-        got_orders = batch.get_task_orders_batch(refs)
+        got_orders = batch.get_task_orders_maintained_batch(refs)
         got_intents = batch.get_leader_intents_batch(refs)
         got_reports = batch.get_pilot_reports_batch(refs)
 
@@ -856,31 +856,42 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(got_cmds[1].command_code), 4)
         self.assertAlmostEqual(float(got_cmds[0].cmd_heading_deg), 45.0, places=6)
         self.assertAlmostEqual(float(got_cmds[1].cmd_speed_mps), 95.0, places=6)
-        self.assertEqual(got_orders[0].task_type, ef_py.TaskType.CAP)
-        self.assertEqual(got_orders[1].task_type, ef_py.TaskType.RTB)
-        self.assertEqual(int(got_orders[0].task_id), 101)
-        self.assertEqual(int(got_orders[1].task_id), 202)
-        self.assertEqual(got_orders[0].service_profile, ef_py.ServiceProfile.AirForce)
-        self.assertEqual(got_orders[0].task_family, ef_py.TaskFamily.Patrol)
-        self.assertEqual(got_orders[0].tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
-        self.assertEqual(got_orders[0].command_relationship, ef_py.CommandRelationship.TACON)
-        self.assertEqual(got_orders[0].authority_scope, ef_py.AuthorityScope.Tactical)
-        self.assertEqual(int(got_orders[0].task_group_id), 8001)
-        self.assertEqual(int(got_orders[0].role_code), 21)
-        self.assertEqual(int(got_orders[0].warfare_role_code), int(ef_py.NavalWarfareRole.ScreenCommander))
-        self.assertEqual(got_orders[0].coordination_mode, ef_py.CoordinationMode.Attached)
-        self.assertEqual(int(got_orders[0].relative_slot_code), 11)
-        self.assertEqual(int(got_orders[0].recovery_site_id), 91)
-        self.assertEqual(int(got_orders[0].officer_in_tactical_command), 8101)
-        self.assertEqual(got_orders[0].assignee_kind, ef_py.AssigneeKind.Element)
-        self.assertEqual(int(got_orders[0].element_id), 7001)
-        self.assertEqual(got_orders[0].naval_station_type, ef_py.NavalStationType.Screen)
-        self.assertEqual(got_orders[0].formation_role_id, ef_py.FormationRole.ElementLead)
-        self.assertEqual(int(got_orders[1].warfare_role_code), int(ef_py.NavalWarfareRole.AirDefenseCommander))
-        self.assertEqual(int(got_orders[1].officer_in_tactical_command), 8102)
-        self.assertEqual(got_orders[1].naval_station_type, ef_py.NavalStationType.Support)
-        self.assertEqual(got_orders[1].formation_role_id, ef_py.FormationRole.Wingman)
-        self.assertEqual(got_orders[1].wingman_slot_id, ef_py.WingmanSlot.Right)
+        got_order0_identity = ef_py.task_order_maintained_air_tasking_identity(got_orders[0])
+        got_order0_formation = ef_py.task_order_maintained_air_formation(got_orders[0])
+        got_order0_stationing = ef_py.task_order_maintained_naval_stationing(got_orders[0])
+        got_order1_formation = ef_py.task_order_maintained_air_formation(got_orders[1])
+        got_order1_stationing = ef_py.task_order_maintained_naval_stationing(got_orders[1])
+        self.assertEqual(got_order0_identity.task_type, ef_py.TaskType.CAP)
+        self.assertEqual(ef_py.task_order_maintained_air_tasking_identity(got_orders[1]).task_type, ef_py.TaskType.RTB)
+        self.assertEqual(int(got_orders[0].shared_core.task_id), 101)
+        self.assertEqual(int(got_orders[1].shared_core.task_id), 202)
+        self.assertEqual(got_orders[0].shared_core.service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(got_orders[0].shared_core.task_family, ef_py.TaskFamily.Patrol)
+        self.assertEqual(got_orders[0].shared_core.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(got_orders[0].shared_core.command_relationship, ef_py.CommandRelationship.TACON)
+        self.assertEqual(got_orders[0].shared_core.authority_scope, ef_py.AuthorityScope.Tactical)
+        self.assertEqual(int(got_orders[0].shared_core.task_group_id), 8001)
+        self.assertEqual(int(got_orders[0].shared_core.role_code), 21)
+        self.assertEqual(
+            int(got_orders[0].naval_command_authority.warfare_role_code),
+            int(ef_py.NavalWarfareRole.ScreenCommander),
+        )
+        self.assertEqual(got_orders[0].shared_core.coordination_mode, ef_py.CoordinationMode.Attached)
+        self.assertEqual(int(got_orders[0].shared_core.relative_slot_code), 11)
+        self.assertEqual(int(got_orders[0].shared_core.recovery_site_id), 91)
+        self.assertEqual(int(got_orders[0].naval_command_authority.officer_in_tactical_command), 8101)
+        self.assertEqual(got_orders[0].shared_core.assignee_kind, ef_py.AssigneeKind.Element)
+        self.assertEqual(int(got_order0_identity.element_id), 7001)
+        self.assertEqual(got_order0_stationing.naval_station_type, ef_py.NavalStationType.Screen)
+        self.assertEqual(got_order0_formation.formation_role_id, ef_py.FormationRole.ElementLead)
+        self.assertEqual(
+            int(got_orders[1].naval_command_authority.warfare_role_code),
+            int(ef_py.NavalWarfareRole.AirDefenseCommander),
+        )
+        self.assertEqual(int(got_orders[1].naval_command_authority.officer_in_tactical_command), 8102)
+        self.assertEqual(got_order1_stationing.naval_station_type, ef_py.NavalStationType.Support)
+        self.assertEqual(got_order1_formation.formation_role_id, ef_py.FormationRole.Wingman)
+        self.assertEqual(got_order1_formation.wingman_slot_id, ef_py.WingmanSlot.Right)
         self.assertEqual(got_intents[0].phase_id, ef_py.LeaderPhase.Departure)
         self.assertEqual(got_intents[1].phase_id, ef_py.LeaderPhase.ApproachArmed)
         self.assertEqual(got_intents[0].service_profile, ef_py.ServiceProfile.AirForce)
@@ -917,6 +928,198 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(got_reports[1].officer_in_tactical_command), 8102)
         self.assertEqual(int(got_reports[1].formation_role_id), int(ef_py.FormationRole.Wingman))
         self.assertAlmostEqual(float(got_reports[1].formation_error_m), 18.0, places=6)
+
+    def test_world_batch_runtime_task_order_maintained_batch_roundtrip(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+        batch.reset_batch([19])
+
+        entity_id = batch.world(0).spawn_unit(
+            ef_py.Side.Blue,
+            "Aircraft",
+            -1200.0,
+            50.0,
+            1300.0,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            180.0,
+            0.0,
+        )
+        ref = _entity_ref(0, int(entity_id))
+
+        assignment = ef_py.WorldTaskOrderMaintainedAssignment()
+        assignment.world_index = 0
+        assignment.entity_id = int(entity_id)
+        assignment.task_order.shared_core.task_id = 333
+        assignment.task_order.shared_core.service_profile = ef_py.ServiceProfile.AirForce
+        assignment.task_order.shared_core.task_family = ef_py.TaskFamily.Recover
+        assignment.task_order.shared_core.tactical_unit_type = ef_py.TacticalUnitType.TacticalUnit
+        assignment.task_order.shared_core.priority = 7
+        assignment.task_order.shared_core.issuer_id = 7000
+        assignment.task_order.shared_core.assignee_id = int(entity_id)
+        assignment.task_order.shared_core.command_relationship = ef_py.CommandRelationship.TACON
+        assignment.task_order.shared_core.authority_scope = ef_py.AuthorityScope.Tactical
+        assignment.task_order.shared_core.parent_node_id = 7100
+        assignment.task_order.shared_core.task_group_id = 7200
+        assignment.task_order.shared_core.supported_node_id = 7300
+        assignment.task_order.shared_core.supporting_node_id = 7400
+        assignment.task_order.shared_core.role_code = 21
+        assignment.task_order.shared_core.coordination_mode = ef_py.CoordinationMode.Attached
+        assignment.task_order.shared_core.relative_slot_code = 11
+        assignment.task_order.shared_core.assignee_kind = ef_py.AssigneeKind.Element
+        assignment.task_order.shared_core.recovery_site_id = 81
+        assignment.task_order.shared_core.active = True
+        assignment.task_order.shared_core.issue_time_s = 42.5
+        air_identity = ef_py.task_order_maintained_air_tasking_identity(
+            assignment.task_order
+        )
+        air_identity.task_type = ef_py.TaskType.CAPMission
+        air_identity.element_id = 7001
+        air_identity.package_id = 7002
+        air_identity.lead_aircraft_id = int(entity_id)
+        air_stationing = ef_py.task_order_maintained_air_stationing(
+            assignment.task_order
+        )
+        air_stationing.anchor_x_m = 1400.0
+        air_stationing.anchor_y_m = -250.0
+        air_stationing.anchor_z_m = 6100.0
+        air_stationing.station_type = ef_py.StationType.Racetrack
+        air_stationing.station_radius_m = 18000.0
+        air_stationing.station_leg_length_m = 31000.0
+        air_stationing.station_heading_deg = 270.0
+        air_stationing.altitude_block_min_m = 5600.0
+        air_stationing.altitude_block_max_m = 6600.0
+        air_stationing.target_altitude_m = 6100.0
+        air_stationing.speed_min_mps = 170.0
+        air_stationing.speed_max_mps = 230.0
+        air_stationing.target_speed_mps = 205.0
+        air_stationing.entry_condition_code = 3
+        air_stationing.exit_condition_code = 4
+        air_stationing.on_station_time_s = 900.0
+        air_stationing.fuel_bingo_override_kg = 1200.0
+        assignment.task_order.air_recovery.recovery_base_id = 81
+        assignment.task_order.air_recovery.recovery_runway_id = 82
+        assignment.task_order.air_recovery.recovery_approach_type = ef_py.RecoveryApproachType.ILS
+        assignment.task_order.air_takeoff.takeoff_procedure_id = ef_py.TakeoffProcedureType.Interval
+        assignment.task_order.air_takeoff.takeoff_clearance_id = ef_py.TakeoffClearanceState.ClearedForTakeoff
+        assignment.task_order.air_takeoff.takeoff_interval_s = 14.0
+        assignment.task_order.air_takeoff.runway_slot_id = ef_py.RunwaySlotPosition.Right
+        air_formation = ef_py.task_order_maintained_air_formation(
+            assignment.task_order
+        )
+        air_formation.formation_template_id = 91
+        air_formation.formation_contract_id = 92
+        air_formation.formation_role_id = ef_py.FormationRole.Wingman
+        air_formation.wingman_slot_id = ef_py.WingmanSlot.Left
+        air_formation.join_policy_id = 5
+        air_formation.rejoin_policy_id = 6
+        air_formation.mutual_support_mode = 7
+        air_formation.support_sector_id = 501
+        assignment.task_order.naval_command_authority.warfare_role_code = 12
+        assignment.task_order.naval_command_authority.officer_in_tactical_command = 9012
+        ef_py.task_order_maintained_naval_stationing(
+            assignment.task_order
+        ).naval_station_type = ef_py.NavalStationType.Screen
+
+        batch.set_task_orders_maintained_batch([assignment])
+
+        maintained = batch.get_task_orders_maintained_batch([ref])
+
+        self.assertEqual(len(maintained), 1)
+        self.assertEqual(int(maintained[0].shared_core.task_id), 333)
+        self.assertEqual(maintained[0].shared_core.service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(maintained[0].shared_core.task_family, ef_py.TaskFamily.Recover)
+        self.assertEqual(maintained[0].shared_core.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(int(maintained[0].shared_core.priority), 7)
+        self.assertEqual(int(maintained[0].shared_core.issuer_id), 7000)
+        self.assertEqual(int(maintained[0].shared_core.assignee_id), int(entity_id))
+        self.assertEqual(maintained[0].shared_core.command_relationship, ef_py.CommandRelationship.TACON)
+        self.assertEqual(maintained[0].shared_core.authority_scope, ef_py.AuthorityScope.Tactical)
+        self.assertEqual(int(maintained[0].shared_core.parent_node_id), 7100)
+        self.assertEqual(int(maintained[0].shared_core.task_group_id), 7200)
+        self.assertEqual(int(maintained[0].shared_core.supported_node_id), 7300)
+        self.assertEqual(int(maintained[0].shared_core.supporting_node_id), 7400)
+        self.assertEqual(int(maintained[0].shared_core.role_code), 21)
+        self.assertEqual(maintained[0].shared_core.coordination_mode, ef_py.CoordinationMode.Attached)
+        self.assertEqual(int(maintained[0].shared_core.relative_slot_code), 11)
+        self.assertEqual(maintained[0].shared_core.assignee_kind, ef_py.AssigneeKind.Element)
+        self.assertEqual(int(maintained[0].shared_core.recovery_site_id), 81)
+        self.assertTrue(bool(maintained[0].shared_core.active))
+        self.assertAlmostEqual(float(maintained[0].shared_core.issue_time_s), 42.5, places=6)
+        maintained_identity = ef_py.task_order_maintained_air_tasking_identity(
+            maintained[0]
+        )
+        maintained_stationing = ef_py.task_order_maintained_air_stationing(
+            maintained[0]
+        )
+        maintained_formation = ef_py.task_order_maintained_air_formation(
+            maintained[0]
+        )
+        maintained_naval_stationing = ef_py.task_order_maintained_naval_stationing(
+            maintained[0]
+        )
+        self.assertEqual(maintained_identity.task_type, ef_py.TaskType.CAPMission)
+        self.assertEqual(int(maintained_identity.element_id), 7001)
+        self.assertEqual(int(maintained_identity.package_id), 7002)
+        self.assertEqual(int(maintained_identity.lead_aircraft_id), int(entity_id))
+        self.assertAlmostEqual(float(maintained_stationing.anchor_x_m), 1400.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.anchor_y_m), -250.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.anchor_z_m), 6100.0, places=6)
+        self.assertEqual(maintained_stationing.station_type, ef_py.StationType.Racetrack)
+        self.assertAlmostEqual(float(maintained_stationing.station_radius_m), 18000.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.station_leg_length_m), 31000.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.station_heading_deg), 270.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.altitude_block_min_m), 5600.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.altitude_block_max_m), 6600.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.target_altitude_m), 6100.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.speed_min_mps), 170.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.speed_max_mps), 230.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.target_speed_mps), 205.0, places=6)
+        self.assertEqual(int(maintained_stationing.entry_condition_code), 3)
+        self.assertEqual(int(maintained_stationing.exit_condition_code), 4)
+        self.assertAlmostEqual(float(maintained_stationing.on_station_time_s), 900.0, places=6)
+        self.assertAlmostEqual(float(maintained_stationing.fuel_bingo_override_kg), 1200.0, places=6)
+        self.assertEqual(int(maintained[0].air_recovery.recovery_base_id), 81)
+        self.assertEqual(int(maintained[0].air_recovery.recovery_runway_id), 82)
+        self.assertEqual(
+            maintained[0].air_recovery.recovery_approach_type,
+            ef_py.RecoveryApproachType.ILS,
+        )
+        self.assertEqual(
+            maintained[0].air_takeoff.takeoff_procedure_id,
+            ef_py.TakeoffProcedureType.Interval,
+        )
+        self.assertEqual(
+            maintained[0].air_takeoff.takeoff_clearance_id,
+            ef_py.TakeoffClearanceState.ClearedForTakeoff,
+        )
+        self.assertAlmostEqual(float(maintained[0].air_takeoff.takeoff_interval_s), 14.0, places=6)
+        self.assertEqual(
+            maintained[0].air_takeoff.runway_slot_id,
+            ef_py.RunwaySlotPosition.Right,
+        )
+        self.assertEqual(int(maintained_formation.formation_template_id), 91)
+        self.assertEqual(int(maintained_formation.formation_contract_id), 92)
+        self.assertEqual(
+            maintained_formation.formation_role_id,
+            ef_py.FormationRole.Wingman,
+        )
+        self.assertEqual(maintained_formation.wingman_slot_id, ef_py.WingmanSlot.Left)
+        self.assertEqual(int(maintained_formation.join_policy_id), 5)
+        self.assertEqual(int(maintained_formation.rejoin_policy_id), 6)
+        self.assertEqual(int(maintained_formation.mutual_support_mode), 7)
+        self.assertEqual(int(maintained_formation.support_sector_id), 501)
+        self.assertEqual(int(maintained[0].naval_command_authority.warfare_role_code), 12)
+        self.assertEqual(
+            int(maintained[0].naval_command_authority.officer_in_tactical_command),
+            9012,
+        )
+        self.assertEqual(
+            maintained_naval_stationing.naval_station_type,
+            ef_py.NavalStationType.Screen,
+        )
 
     def test_world_batch_runtime_mission_command_roundtrip_preserves_formation_offsets(self) -> None:
         batch = ef_py.WorldBatchRuntime(1)

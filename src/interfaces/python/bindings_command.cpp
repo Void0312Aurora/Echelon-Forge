@@ -10,6 +10,7 @@
 #include "components/tasking/naval/naval_tasking_enums.h"
 #include "components/tasking/pilot_report.h"
 #include "components/tasking/task_order.h"
+#include "runtime/contracts/world_batch_contracts.h"
 
 void bind_command(nb::module_& m) {
     nb::enum_<CommMsgType>(m, "CommMsgType")
@@ -228,6 +229,44 @@ void bind_command(nb::module_& m) {
         .def_rw("status_code", &CommPacket::status_code)
         .def_rw("timestamp", &CommPacket::timestamp);
 
+    nb::class_<PilotReportCore>(m, "PilotReportCore")
+        .def(nb::init<>())
+        .def_rw("report_type", &PilotReportCore::report_type)
+        .def_rw("sender_id", &PilotReportCore::sender_id)
+        .def_rw("task_id", &PilotReportCore::task_id)
+        .def_rw("service_profile", &PilotReportCore::service_profile)
+        .def_rw("task_family", &PilotReportCore::task_family)
+        .def_rw("tactical_unit_type", &PilotReportCore::tactical_unit_type)
+        .def_rw("tactical_unit_id", &PilotReportCore::tactical_unit_id)
+        .def_rw("task_group_id", &PilotReportCore::task_group_id)
+        .def_rw("role_code", &PilotReportCore::role_code)
+        .def_rw("coordination_mode", &PilotReportCore::coordination_mode)
+        .def_rw("timestamp_s", &PilotReportCore::timestamp_s)
+        .def_rw("status_value", &PilotReportCore::status_value)
+        .def_rw("entity_ref", &PilotReportCore::entity_ref)
+        .def_rw("location_x_m", &PilotReportCore::location_x_m)
+        .def_rw("location_y_m", &PilotReportCore::location_y_m)
+        .def_rw("location_z_m", &PilotReportCore::location_z_m)
+        .def_rw("active", &PilotReportCore::active);
+
+    nb::class_<PilotReportAir>(m, "PilotReportAir")
+        .def(nb::init<>())
+        .def_rw("element_id", &PilotReportAir::element_id)
+        .def_rw("phase_id", &PilotReportAir::phase_id)
+        .def_rw("formation_role_id", &PilotReportAir::formation_role_id)
+        .def_rw("formation_error_m", &PilotReportAir::formation_error_m)
+        .def_rw("bearing_error_deg", &PilotReportAir::bearing_error_deg)
+        .def_rw("closure_mps", &PilotReportAir::closure_mps)
+        .def_rw("separation_m", &PilotReportAir::separation_m);
+
+    nb::class_<PilotReportNaval>(m, "PilotReportNaval")
+        .def(nb::init<>())
+        .def_rw("warfare_role_code", &PilotReportNaval::warfare_role_code)
+        .def_rw(
+            "officer_in_tactical_command",
+            &PilotReportNaval::officer_in_tactical_command
+        );
+
     nb::class_<PilotReport>(m, "PilotReport")
         .def(nb::init<>())
         .def_rw("report_type", &PilotReport::report_type)
@@ -256,6 +295,43 @@ void bind_command(nb::module_& m) {
         .def_rw("closure_mps", &PilotReport::closure_mps)
         .def_rw("separation_m", &PilotReport::separation_m)
         .def_rw("active", &PilotReport::active);
+
+    m.def(
+        "pilot_report_shared_core",
+        [](nb::handle report_obj) {
+            auto& report = nb::cast<PilotReport&>(report_obj);
+            return nb::inst_reference(
+                nb::type<PilotReportCore>(),
+                &pilot_report_shared_core(report),
+                report_obj
+            );
+        },
+        nb::arg("report")
+    );
+    m.def(
+        "pilot_report_air_owner_slice",
+        [](nb::handle report_obj) {
+            auto& report = nb::cast<PilotReport&>(report_obj);
+            return nb::inst_reference(
+                nb::type<PilotReportAir>(),
+                &pilot_report_air_owner_slice(report),
+                report_obj
+            );
+        },
+        nb::arg("report")
+    );
+    m.def(
+        "pilot_report_naval_owner_slice",
+        [](nb::handle report_obj) {
+            auto& report = nb::cast<PilotReport&>(report_obj);
+            return nb::inst_reference(
+                nb::type<PilotReportNaval>(),
+                &pilot_report_naval_owner_slice(report),
+                report_obj
+            );
+        },
+        nb::arg("report")
+    );
 
     // Bind PilotAction
     nb::class_<PilotAction>(m, "PilotAction")
@@ -315,6 +391,230 @@ void bind_command(nb::module_& m) {
         .def_rw("assigned_target_id", &MissionCommand::assigned_target_id)
         .def_rw("authorization_to_fire", &MissionCommand::authorization_to_fire)
         .def_rw("active", &MissionCommand::active);
+
+    nb::class_<TaskOrderCore>(m, "TaskOrderCore")
+        .def(nb::init<>())
+        .def_rw("task_id", &TaskOrderCore::task_id)
+        .def_rw("service_profile", &TaskOrderCore::service_profile)
+        .def_rw("task_family", &TaskOrderCore::task_family)
+        .def_rw("tactical_unit_type", &TaskOrderCore::tactical_unit_type)
+        .def_rw("priority", &TaskOrderCore::priority)
+        .def_rw("issuer_id", &TaskOrderCore::issuer_id)
+        .def_rw("assignee_id", &TaskOrderCore::assignee_id)
+        .def_rw("command_relationship", &TaskOrderCore::command_relationship)
+        .def_rw("authority_scope", &TaskOrderCore::authority_scope)
+        .def_rw("parent_node_id", &TaskOrderCore::parent_node_id)
+        .def_rw("task_group_id", &TaskOrderCore::task_group_id)
+        .def_rw("supported_node_id", &TaskOrderCore::supported_node_id)
+        .def_rw("supporting_node_id", &TaskOrderCore::supporting_node_id)
+        .def_rw("role_code", &TaskOrderCore::role_code)
+        .def_rw("coordination_mode", &TaskOrderCore::coordination_mode)
+        .def_rw("relative_slot_code", &TaskOrderCore::relative_slot_code)
+        .def_rw("assignee_kind", &TaskOrderCore::assignee_kind)
+        .def_rw("recovery_site_id", &TaskOrderCore::recovery_site_id)
+        .def_rw("active", &TaskOrderCore::active)
+        .def_rw("issue_time_s", &TaskOrderCore::issue_time_s);
+
+    nb::class_<TaskOrderAir::RecoveryDirective>(m, "TaskOrderAirRecoveryDirective")
+        .def(nb::init<>())
+        .def_rw("recovery_base_id", &TaskOrderAir::RecoveryDirective::recovery_base_id)
+        .def_rw(
+            "recovery_runway_id",
+            &TaskOrderAir::RecoveryDirective::recovery_runway_id
+        )
+        .def_rw(
+            "recovery_approach_type",
+            &TaskOrderAir::RecoveryDirective::recovery_approach_type
+        );
+
+    nb::class_<TaskOrderAir::TakeoffDirective>(m, "TaskOrderAirTakeoffDirective")
+        .def(nb::init<>())
+        .def_rw(
+            "takeoff_procedure_id",
+            &TaskOrderAir::TakeoffDirective::takeoff_procedure_id
+        )
+        .def_rw(
+            "takeoff_clearance_id",
+            &TaskOrderAir::TakeoffDirective::takeoff_clearance_id
+        )
+        .def_rw(
+            "takeoff_interval_s",
+            &TaskOrderAir::TakeoffDirective::takeoff_interval_s
+        )
+        .def_rw("runway_slot_id", &TaskOrderAir::TakeoffDirective::runway_slot_id);
+
+    nb::class_<TaskOrderAirTaskingIdentityDirective>(
+        m,
+        "TaskOrderAirTaskingIdentityDirective"
+    )
+        .def(nb::init<>())
+        .def_rw("task_type", &TaskOrderAirTaskingIdentityDirective::task_type)
+        .def_rw("element_id", &TaskOrderAirTaskingIdentityDirective::element_id)
+        .def_rw("package_id", &TaskOrderAirTaskingIdentityDirective::package_id)
+        .def_rw(
+            "lead_aircraft_id",
+            &TaskOrderAirTaskingIdentityDirective::lead_aircraft_id
+        );
+
+    nb::class_<TaskOrderAirStationingDirective>(
+        m,
+        "TaskOrderAirStationingDirective"
+    )
+        .def(nb::init<>())
+        .def_rw("anchor_x_m", &TaskOrderAirStationingDirective::anchor_x_m)
+        .def_rw("anchor_y_m", &TaskOrderAirStationingDirective::anchor_y_m)
+        .def_rw("anchor_z_m", &TaskOrderAirStationingDirective::anchor_z_m)
+        .def_rw("station_type", &TaskOrderAirStationingDirective::station_type)
+        .def_rw(
+            "station_radius_m",
+            &TaskOrderAirStationingDirective::station_radius_m
+        )
+        .def_rw(
+            "station_leg_length_m",
+            &TaskOrderAirStationingDirective::station_leg_length_m
+        )
+        .def_rw(
+            "station_heading_deg",
+            &TaskOrderAirStationingDirective::station_heading_deg
+        )
+        .def_rw(
+            "altitude_block_min_m",
+            &TaskOrderAirStationingDirective::altitude_block_min_m
+        )
+        .def_rw(
+            "altitude_block_max_m",
+            &TaskOrderAirStationingDirective::altitude_block_max_m
+        )
+        .def_rw(
+            "target_altitude_m",
+            &TaskOrderAirStationingDirective::target_altitude_m
+        )
+        .def_rw("speed_min_mps", &TaskOrderAirStationingDirective::speed_min_mps)
+        .def_rw("speed_max_mps", &TaskOrderAirStationingDirective::speed_max_mps)
+        .def_rw(
+            "target_speed_mps",
+            &TaskOrderAirStationingDirective::target_speed_mps
+        )
+        .def_rw(
+            "entry_condition_code",
+            &TaskOrderAirStationingDirective::entry_condition_code
+        )
+        .def_rw(
+            "exit_condition_code",
+            &TaskOrderAirStationingDirective::exit_condition_code
+        )
+        .def_rw(
+            "on_station_time_s",
+            &TaskOrderAirStationingDirective::on_station_time_s
+        )
+        .def_rw(
+            "fuel_bingo_override_kg",
+            &TaskOrderAirStationingDirective::fuel_bingo_override_kg
+        );
+
+    nb::class_<TaskOrderAirFormationDirective>(
+        m,
+        "TaskOrderAirFormationDirective"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "formation_template_id",
+            &TaskOrderAirFormationDirective::formation_template_id
+        )
+        .def_rw(
+            "formation_contract_id",
+            &TaskOrderAirFormationDirective::formation_contract_id
+        )
+        .def_rw(
+            "formation_role_id",
+            &TaskOrderAirFormationDirective::formation_role_id
+        )
+        .def_rw("wingman_slot_id", &TaskOrderAirFormationDirective::wingman_slot_id)
+        .def_rw("join_policy_id", &TaskOrderAirFormationDirective::join_policy_id)
+        .def_rw(
+            "rejoin_policy_id",
+            &TaskOrderAirFormationDirective::rejoin_policy_id
+        )
+        .def_rw(
+            "mutual_support_mode",
+            &TaskOrderAirFormationDirective::mutual_support_mode
+        )
+        .def_rw(
+            "support_sector_id",
+            &TaskOrderAirFormationDirective::support_sector_id
+        );
+
+    nb::class_<TaskOrderAir>(m, "TaskOrderAir")
+        .def(nb::init<>())
+        .def_rw("task_type", &TaskOrderAir::task_type)
+        .def_rw("element_id", &TaskOrderAir::element_id)
+        .def_rw("package_id", &TaskOrderAir::package_id)
+        .def_rw("lead_aircraft_id", &TaskOrderAir::lead_aircraft_id)
+        .def_rw("anchor_x_m", &TaskOrderAir::anchor_x_m)
+        .def_rw("anchor_y_m", &TaskOrderAir::anchor_y_m)
+        .def_rw("anchor_z_m", &TaskOrderAir::anchor_z_m)
+        .def_rw("station_type", &TaskOrderAir::station_type)
+        .def_rw("station_radius_m", &TaskOrderAir::station_radius_m)
+        .def_rw("station_leg_length_m", &TaskOrderAir::station_leg_length_m)
+        .def_rw("station_heading_deg", &TaskOrderAir::station_heading_deg)
+        .def_rw("altitude_block_min_m", &TaskOrderAir::altitude_block_min_m)
+        .def_rw("altitude_block_max_m", &TaskOrderAir::altitude_block_max_m)
+        .def_rw("target_altitude_m", &TaskOrderAir::target_altitude_m)
+        .def_rw("speed_min_mps", &TaskOrderAir::speed_min_mps)
+        .def_rw("speed_max_mps", &TaskOrderAir::speed_max_mps)
+        .def_rw("target_speed_mps", &TaskOrderAir::target_speed_mps)
+        .def_rw("entry_condition_code", &TaskOrderAir::entry_condition_code)
+        .def_rw("exit_condition_code", &TaskOrderAir::exit_condition_code)
+        .def_rw("on_station_time_s", &TaskOrderAir::on_station_time_s)
+        .def_rw("fuel_bingo_override_kg", &TaskOrderAir::fuel_bingo_override_kg)
+        .def_rw("recovery_base_id", &TaskOrderAir::recovery_base_id)
+        .def_rw("recovery_runway_id", &TaskOrderAir::recovery_runway_id)
+        .def_rw("recovery_approach_type", &TaskOrderAir::recovery_approach_type)
+        .def_rw("takeoff_procedure_id", &TaskOrderAir::takeoff_procedure_id)
+        .def_rw("takeoff_clearance_id", &TaskOrderAir::takeoff_clearance_id)
+        .def_rw("takeoff_interval_s", &TaskOrderAir::takeoff_interval_s)
+        .def_rw("runway_slot_id", &TaskOrderAir::runway_slot_id)
+        .def_rw("formation_template_id", &TaskOrderAir::formation_template_id)
+        .def_rw("formation_contract_id", &TaskOrderAir::formation_contract_id)
+        .def_rw("formation_role_id", &TaskOrderAir::formation_role_id)
+        .def_rw("wingman_slot_id", &TaskOrderAir::wingman_slot_id)
+        .def_rw("join_policy_id", &TaskOrderAir::join_policy_id)
+        .def_rw("rejoin_policy_id", &TaskOrderAir::rejoin_policy_id)
+        .def_rw("mutual_support_mode", &TaskOrderAir::mutual_support_mode)
+        .def_rw("support_sector_id", &TaskOrderAir::support_sector_id);
+
+    nb::class_<TaskOrderNaval::CommandAuthorityDirective>(
+        m,
+        "TaskOrderNavalCommandAuthorityDirective"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "warfare_role_code",
+            &TaskOrderNaval::CommandAuthorityDirective::warfare_role_code
+        )
+        .def_rw(
+            "officer_in_tactical_command",
+            &TaskOrderNaval::CommandAuthorityDirective::officer_in_tactical_command
+        );
+
+    nb::class_<TaskOrderNaval>(m, "TaskOrderNaval")
+        .def(nb::init<>())
+        .def_rw("warfare_role_code", &TaskOrderNaval::warfare_role_code)
+        .def_rw(
+            "officer_in_tactical_command",
+            &TaskOrderNaval::officer_in_tactical_command
+        )
+        .def_rw("naval_station_type", &TaskOrderNaval::naval_station_type);
+
+    nb::class_<TaskOrderNavalStationingDirective>(
+        m,
+        "TaskOrderNavalStationingDirective"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "naval_station_type",
+            &TaskOrderNavalStationingDirective::naval_station_type
+        );
 
     nb::class_<TaskOrder>(m, "TaskOrder")
         .def(nb::init<>())
@@ -378,6 +678,244 @@ void bind_command(nb::module_& m) {
         .def_rw("mutual_support_mode", &TaskOrder::mutual_support_mode)
         .def_rw("support_sector_id", &TaskOrder::support_sector_id);
 
+    m.def(
+        "task_order_shared_core",
+        [](nb::handle order_obj) {
+            auto& order = nb::cast<TaskOrder&>(order_obj);
+            return nb::inst_reference(
+                nb::type<TaskOrderCore>(),
+                &task_order_shared_core(order),
+                order_obj
+            );
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_shared_core_directive",
+        [](const TaskOrder& order) { return task_order_shared_core_directive(order); },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_air_owner_slice",
+        [](nb::handle order_obj) {
+            auto& order = nb::cast<TaskOrder&>(order_obj);
+            return nb::inst_reference(
+                nb::type<TaskOrderAir>(),
+                &task_order_air_owner_slice(order),
+                order_obj
+            );
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_naval_owner_slice",
+        [](nb::handle order_obj) {
+            auto& order = nb::cast<TaskOrder&>(order_obj);
+            return nb::inst_reference(
+                nb::type<TaskOrderNaval>(),
+                &task_order_naval_owner_slice(order),
+                order_obj
+            );
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_air_recovery_directive",
+        [](const TaskOrder& order) { return task_order_air_recovery_directive(order); },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_air_tasking_identity_directive",
+        [](const TaskOrder& order) {
+            return task_order_air_tasking_identity_directive(order);
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_air_stationing_directive",
+        [](const TaskOrder& order) {
+            return task_order_air_stationing_directive(order);
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_air_takeoff_directive",
+        [](const TaskOrder& order) { return task_order_air_takeoff_directive(order); },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_air_formation_directive",
+        [](const TaskOrder& order) {
+            return task_order_air_formation_directive(order);
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_naval_command_authority",
+        [](const TaskOrder& order) { return task_order_naval_command_authority(order); },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_naval_stationing_directive",
+        [](const TaskOrder& order) {
+            return task_order_naval_stationing_directive(order);
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_maintained_batch_contract",
+        [](const TaskOrder& order) {
+            return task_order_maintained_batch_contract(order);
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_compatibility_shell_from_maintained_batch_contract",
+        [](nb::handle contract_obj) {
+            const auto& contract =
+                nb::cast<const TaskOrderMaintainedBatchContract&>(contract_obj);
+            return task_order_compatibility_shell_from_maintained_batch_contract(
+                contract
+            );
+        },
+        nb::arg("contract")
+    );
+    m.def(
+        "apply_task_order_maintained_batch_contract_to_compatibility_shell",
+        [](nb::handle order_obj, nb::handle contract_obj) {
+            auto& order = nb::cast<TaskOrder&>(order_obj);
+            const auto& contract =
+                nb::cast<const TaskOrderMaintainedBatchContract&>(contract_obj);
+            apply_task_order_maintained_batch_contract_to_compatibility_shell(
+                order,
+                contract
+            );
+        },
+        nb::arg("order"),
+        nb::arg("contract")
+    );
+    m.def(
+        "task_order_maintained_air_tasking_identity",
+        [](nb::handle contract_obj) {
+            auto& contract = nb::cast<TaskOrderMaintainedBatchContract&>(
+                contract_obj
+            );
+            return nb::inst_reference(
+                nb::type<TaskOrderAirTaskingIdentityDirective>(),
+                &contract.air_tasking_identity,
+                contract_obj
+            );
+        },
+        nb::arg("contract")
+    );
+    m.def(
+        "task_order_maintained_air_stationing",
+        [](nb::handle contract_obj) {
+            auto& contract = nb::cast<TaskOrderMaintainedBatchContract&>(
+                contract_obj
+            );
+            return nb::inst_reference(
+                nb::type<TaskOrderAirStationingDirective>(),
+                &contract.air_stationing,
+                contract_obj
+            );
+        },
+        nb::arg("contract")
+    );
+    m.def(
+        "task_order_maintained_air_formation",
+        [](nb::handle contract_obj) {
+            auto& contract = nb::cast<TaskOrderMaintainedBatchContract&>(
+                contract_obj
+            );
+            return nb::inst_reference(
+                nb::type<TaskOrderAirFormationDirective>(),
+                &contract.air_formation,
+                contract_obj
+            );
+        },
+        nb::arg("contract")
+    );
+    m.def(
+        "task_order_maintained_naval_stationing",
+        [](nb::handle contract_obj) {
+            auto& contract = nb::cast<TaskOrderMaintainedBatchContract&>(
+                contract_obj
+            );
+            return nb::inst_reference(
+                nb::type<TaskOrderNavalStationingDirective>(),
+                &contract.naval_stationing,
+                contract_obj
+            );
+        },
+        nb::arg("contract")
+    );
+
+    nb::class_<LeaderIntentCore>(m, "LeaderIntentCore")
+        .def(nb::init<>())
+        .def_rw("service_profile", &LeaderIntentCore::service_profile)
+        .def_rw("task_family", &LeaderIntentCore::task_family)
+        .def_rw("tactical_unit_type", &LeaderIntentCore::tactical_unit_type)
+        .def_rw("tactical_unit_id", &LeaderIntentCore::tactical_unit_id)
+        .def_rw("task_group_id", &LeaderIntentCore::task_group_id)
+        .def_rw("role_code", &LeaderIntentCore::role_code)
+        .def_rw("coordination_mode", &LeaderIntentCore::coordination_mode)
+        .def_rw("relative_slot_code", &LeaderIntentCore::relative_slot_code)
+        .def_rw("recovery_site_id", &LeaderIntentCore::recovery_site_id)
+        .def_rw("command_code", &LeaderIntentCore::command_code)
+        .def_rw("cmd_heading_deg", &LeaderIntentCore::cmd_heading_deg)
+        .def_rw("cmd_altitude_m", &LeaderIntentCore::cmd_altitude_m)
+        .def_rw("cmd_speed_mps", &LeaderIntentCore::cmd_speed_mps)
+        .def_rw("roe_state", &LeaderIntentCore::roe_state)
+        .def_rw(
+            "engagement_authority_holder_id",
+            &LeaderIntentCore::engagement_authority_holder_id
+        )
+        .def_rw(
+            "engagement_authority_grantor_id",
+            &LeaderIntentCore::engagement_authority_grantor_id
+        )
+        .def_rw("assigned_target_id", &LeaderIntentCore::assigned_target_id)
+        .def_rw("authorization_to_fire", &LeaderIntentCore::authorization_to_fire)
+        .def_rw("active", &LeaderIntentCore::active);
+
+    nb::class_<LeaderIntentAir>(m, "LeaderIntentAir")
+        .def(nb::init<>())
+        .def_rw("phase_id", &LeaderIntentAir::phase_id)
+        .def_rw("element_phase_id", &LeaderIntentAir::element_phase_id)
+        .def_rw("route_ref_id", &LeaderIntentAir::route_ref_id)
+        .def_rw("recovery_base_id", &LeaderIntentAir::recovery_base_id)
+        .def_rw("recovery_runway_id", &LeaderIntentAir::recovery_runway_id)
+        .def_rw("recovery_approach_type", &LeaderIntentAir::recovery_approach_type)
+        .def_rw("takeoff_procedure_id", &LeaderIntentAir::takeoff_procedure_id)
+        .def_rw("takeoff_clearance_id", &LeaderIntentAir::takeoff_clearance_id)
+        .def_rw("takeoff_interval_s", &LeaderIntentAir::takeoff_interval_s)
+        .def_rw("runway_slot_id", &LeaderIntentAir::runway_slot_id)
+        .def_rw("formation_id", &LeaderIntentAir::formation_id)
+        .def_rw("form_offset_x", &LeaderIntentAir::form_offset_x)
+        .def_rw("form_offset_y", &LeaderIntentAir::form_offset_y)
+        .def_rw("form_offset_z", &LeaderIntentAir::form_offset_z)
+        .def_rw("formation_mode_id", &LeaderIntentAir::formation_mode_id)
+        .def_rw("join_required_flag", &LeaderIntentAir::join_required_flag)
+        .def_rw("rejoin_required_flag", &LeaderIntentAir::rejoin_required_flag)
+        .def_rw("split_flag", &LeaderIntentAir::split_flag)
+        .def_rw("support_anchor_x_m", &LeaderIntentAir::support_anchor_x_m)
+        .def_rw("support_anchor_y_m", &LeaderIntentAir::support_anchor_y_m)
+        .def_rw("support_slot_offset_x_m", &LeaderIntentAir::support_slot_offset_x_m)
+        .def_rw("support_slot_offset_y_m", &LeaderIntentAir::support_slot_offset_y_m)
+        .def_rw("wingman_command_mode", &LeaderIntentAir::wingman_command_mode)
+        .def_rw("approach_armed", &LeaderIntentAir::approach_armed)
+        .def_rw("commit_to_land", &LeaderIntentAir::commit_to_land)
+        .def_rw("abort_flag", &LeaderIntentAir::abort_flag);
+
+    nb::class_<LeaderIntentNaval>(m, "LeaderIntentNaval")
+        .def(nb::init<>())
+        .def_rw("warfare_role_code", &LeaderIntentNaval::warfare_role_code)
+        .def_rw(
+            "officer_in_tactical_command",
+            &LeaderIntentNaval::officer_in_tactical_command
+        );
+
     nb::class_<LeaderIntent>(m, "LeaderIntent")
         .def(nb::init<>())
         .def_rw("phase_id", &LeaderIntent::phase_id)
@@ -427,4 +965,41 @@ void bind_command(nb::module_& m) {
         .def_rw("commit_to_land", &LeaderIntent::commit_to_land)
         .def_rw("abort_flag", &LeaderIntent::abort_flag)
         .def_rw("active", &LeaderIntent::active);
+
+    m.def(
+        "leader_intent_shared_core",
+        [](nb::handle intent_obj) {
+            auto& intent = nb::cast<LeaderIntent&>(intent_obj);
+            return nb::inst_reference(
+                nb::type<LeaderIntentCore>(),
+                &leader_intent_shared_core(intent),
+                intent_obj
+            );
+        },
+        nb::arg("intent")
+    );
+    m.def(
+        "leader_intent_air_owner_slice",
+        [](nb::handle intent_obj) {
+            auto& intent = nb::cast<LeaderIntent&>(intent_obj);
+            return nb::inst_reference(
+                nb::type<LeaderIntentAir>(),
+                &leader_intent_air_owner_slice(intent),
+                intent_obj
+            );
+        },
+        nb::arg("intent")
+    );
+    m.def(
+        "leader_intent_naval_owner_slice",
+        [](nb::handle intent_obj) {
+            auto& intent = nb::cast<LeaderIntent&>(intent_obj);
+            return nb::inst_reference(
+                nb::type<LeaderIntentNaval>(),
+                &leader_intent_naval_owner_slice(intent),
+                intent_obj
+            );
+        },
+        nb::arg("intent")
+    );
 }

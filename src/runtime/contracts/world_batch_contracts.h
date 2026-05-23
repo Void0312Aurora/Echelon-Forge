@@ -560,18 +560,325 @@ struct WorldMissionCommandAssignment {
     shell_type command{};
 };
 
-struct WorldTaskOrderAssignment {
-    using shell_type = TaskOrderCompatibilityTransportShell;
-    static constexpr bool kCompatibilityTransportShell =
-        kTaskOrderCompatibilityTransportShell;
+struct TaskOrderAirTaskingIdentityDirective {
+    TaskType task_type = TaskType::Idle;
+    std::uint64_t element_id = 0;
+    std::uint64_t package_id = 0;
+    std::uint64_t lead_aircraft_id = 0;
+
+    bool operator==(const TaskOrderAirTaskingIdentityDirective&) const = default;
+};
+
+struct TaskOrderAirStationingDirective {
+    double anchor_x_m = 0.0;
+    double anchor_y_m = 0.0;
+    double anchor_z_m = 0.0;
+    StationType station_type = StationType::Orbit;
+    double station_radius_m = 0.0;
+    double station_leg_length_m = 0.0;
+    double station_heading_deg = 0.0;
+    double altitude_block_min_m = 0.0;
+    double altitude_block_max_m = 0.0;
+    double target_altitude_m = 0.0;
+    double speed_min_mps = 0.0;
+    double speed_max_mps = 0.0;
+    double target_speed_mps = 0.0;
+    int entry_condition_code = 0;
+    int exit_condition_code = 0;
+    double on_station_time_s = 0.0;
+    double fuel_bingo_override_kg = 0.0;
+
+    bool operator==(const TaskOrderAirStationingDirective&) const = default;
+};
+
+struct TaskOrderAirFormationDirective {
+    std::uint64_t formation_template_id = 0;
+    std::uint64_t formation_contract_id = 0;
+    FormationRole formation_role_id = FormationRole::Unspecified;
+    WingmanSlot wingman_slot_id = WingmanSlot::Unspecified;
+    int join_policy_id = 0;
+    int rejoin_policy_id = 0;
+    int mutual_support_mode = 0;
+    std::uint64_t support_sector_id = 0;
+
+    bool operator==(const TaskOrderAirFormationDirective&) const = default;
+};
+
+struct TaskOrderNavalStationingDirective {
+    NavalStationType naval_station_type = NavalStationType::Unspecified;
+
+    bool operator==(const TaskOrderNavalStationingDirective&) const = default;
+};
+
+[[nodiscard]] inline TaskOrderAirTaskingIdentityDirective
+task_order_air_tasking_identity_directive(
+    const TaskOrderAirOwnerSlice& air
+) noexcept {
+    return {
+        .task_type = air.task_type,
+        .element_id = air.element_id,
+        .package_id = air.package_id,
+        .lead_aircraft_id = air.lead_aircraft_id,
+    };
+}
+
+[[nodiscard]] inline TaskOrderAirTaskingIdentityDirective
+task_order_air_tasking_identity_directive(
+    const TaskOrderCompatibilityTransportShell& order
+) noexcept {
+    return task_order_air_tasking_identity_directive(
+        task_order_air_owner_slice(order)
+    );
+}
+
+[[nodiscard]] inline TaskOrderAirStationingDirective
+task_order_air_stationing_directive(
+    const TaskOrderAirOwnerSlice& air
+) noexcept {
+    return {
+        .anchor_x_m = air.anchor_x_m,
+        .anchor_y_m = air.anchor_y_m,
+        .anchor_z_m = air.anchor_z_m,
+        .station_type = air.station_type,
+        .station_radius_m = air.station_radius_m,
+        .station_leg_length_m = air.station_leg_length_m,
+        .station_heading_deg = air.station_heading_deg,
+        .altitude_block_min_m = air.altitude_block_min_m,
+        .altitude_block_max_m = air.altitude_block_max_m,
+        .target_altitude_m = air.target_altitude_m,
+        .speed_min_mps = air.speed_min_mps,
+        .speed_max_mps = air.speed_max_mps,
+        .target_speed_mps = air.target_speed_mps,
+        .entry_condition_code = air.entry_condition_code,
+        .exit_condition_code = air.exit_condition_code,
+        .on_station_time_s = air.on_station_time_s,
+        .fuel_bingo_override_kg = air.fuel_bingo_override_kg,
+    };
+}
+
+[[nodiscard]] inline TaskOrderAirStationingDirective
+task_order_air_stationing_directive(
+    const TaskOrderCompatibilityTransportShell& order
+) noexcept {
+    return task_order_air_stationing_directive(task_order_air_owner_slice(order));
+}
+
+[[nodiscard]] inline TaskOrderAirFormationDirective
+task_order_air_formation_directive(
+    const TaskOrderAirOwnerSlice& air
+) noexcept {
+    return {
+        .formation_template_id = air.formation_template_id,
+        .formation_contract_id = air.formation_contract_id,
+        .formation_role_id = air.formation_role_id,
+        .wingman_slot_id = air.wingman_slot_id,
+        .join_policy_id = air.join_policy_id,
+        .rejoin_policy_id = air.rejoin_policy_id,
+        .mutual_support_mode = air.mutual_support_mode,
+        .support_sector_id = air.support_sector_id,
+    };
+}
+
+[[nodiscard]] inline TaskOrderAirFormationDirective
+task_order_air_formation_directive(
+    const TaskOrderCompatibilityTransportShell& order
+) noexcept {
+    return task_order_air_formation_directive(task_order_air_owner_slice(order));
+}
+
+[[nodiscard]] inline TaskOrderNavalStationingDirective
+task_order_naval_stationing_directive(
+    const TaskOrderNavalOwnerSlice& naval
+) noexcept {
+    return {
+        .naval_station_type = naval.naval_station_type,
+    };
+}
+
+[[nodiscard]] inline TaskOrderNavalStationingDirective
+task_order_naval_stationing_directive(
+    const TaskOrderCompatibilityTransportShell& order
+) noexcept {
+    return task_order_naval_stationing_directive(
+        task_order_naval_owner_slice(order)
+    );
+}
+
+inline void apply_task_order_air_tasking_identity_directive(
+    TaskOrderAirOwnerSlice& air,
+    const TaskOrderAirTaskingIdentityDirective& directive
+) noexcept {
+    air.task_type = directive.task_type;
+    air.element_id = directive.element_id;
+    air.package_id = directive.package_id;
+    air.lead_aircraft_id = directive.lead_aircraft_id;
+}
+
+inline void apply_task_order_air_stationing_directive(
+    TaskOrderAirOwnerSlice& air,
+    const TaskOrderAirStationingDirective& directive
+) noexcept {
+    air.anchor_x_m = directive.anchor_x_m;
+    air.anchor_y_m = directive.anchor_y_m;
+    air.anchor_z_m = directive.anchor_z_m;
+    air.station_type = directive.station_type;
+    air.station_radius_m = directive.station_radius_m;
+    air.station_leg_length_m = directive.station_leg_length_m;
+    air.station_heading_deg = directive.station_heading_deg;
+    air.altitude_block_min_m = directive.altitude_block_min_m;
+    air.altitude_block_max_m = directive.altitude_block_max_m;
+    air.target_altitude_m = directive.target_altitude_m;
+    air.speed_min_mps = directive.speed_min_mps;
+    air.speed_max_mps = directive.speed_max_mps;
+    air.target_speed_mps = directive.target_speed_mps;
+    air.entry_condition_code = directive.entry_condition_code;
+    air.exit_condition_code = directive.exit_condition_code;
+    air.on_station_time_s = directive.on_station_time_s;
+    air.fuel_bingo_override_kg = directive.fuel_bingo_override_kg;
+}
+
+inline void apply_task_order_air_recovery_directive(
+    TaskOrderAirOwnerSlice& air,
+    const TaskOrderAir::RecoveryDirective& directive
+) noexcept {
+    air.recovery_base_id = directive.recovery_base_id;
+    air.recovery_runway_id = directive.recovery_runway_id;
+    air.recovery_approach_type = directive.recovery_approach_type;
+}
+
+inline void apply_task_order_air_takeoff_directive(
+    TaskOrderAirOwnerSlice& air,
+    const TaskOrderAir::TakeoffDirective& directive
+) noexcept {
+    air.takeoff_procedure_id = directive.takeoff_procedure_id;
+    air.takeoff_clearance_id = directive.takeoff_clearance_id;
+    air.takeoff_interval_s = directive.takeoff_interval_s;
+    air.runway_slot_id = directive.runway_slot_id;
+}
+
+inline void apply_task_order_air_formation_directive(
+    TaskOrderAirOwnerSlice& air,
+    const TaskOrderAirFormationDirective& directive
+) noexcept {
+    air.formation_template_id = directive.formation_template_id;
+    air.formation_contract_id = directive.formation_contract_id;
+    air.formation_role_id = directive.formation_role_id;
+    air.wingman_slot_id = directive.wingman_slot_id;
+    air.join_policy_id = directive.join_policy_id;
+    air.rejoin_policy_id = directive.rejoin_policy_id;
+    air.mutual_support_mode = directive.mutual_support_mode;
+    air.support_sector_id = directive.support_sector_id;
+}
+
+inline void apply_task_order_naval_command_authority_directive(
+    TaskOrderNavalOwnerSlice& naval,
+    const TaskOrderNaval::CommandAuthorityDirective& directive
+) noexcept {
+    naval.warfare_role_code = directive.warfare_role_code;
+    naval.officer_in_tactical_command = directive.officer_in_tactical_command;
+}
+
+inline void apply_task_order_naval_stationing_directive(
+    TaskOrderNavalOwnerSlice& naval,
+    const TaskOrderNavalStationingDirective& directive
+) noexcept {
+    naval.naval_station_type = directive.naval_station_type;
+}
+
+struct TaskOrderMaintainedBatchContract {
+    using shared_core_owner_slice = TaskOrderSharedCoreOwnerSlice;
+    using air_owner_slice = TaskOrderAirOwnerSlice;
+    using naval_owner_slice = TaskOrderNavalOwnerSlice;
+    using shared_core_type = TaskOrderSharedCoreDirective;
+    using air_tasking_identity_type = TaskOrderAirTaskingIdentityDirective;
+    using air_stationing_type = TaskOrderAirStationingDirective;
+    using air_recovery_type = TaskOrderAir::RecoveryDirective;
+    using air_takeoff_type = TaskOrderAir::TakeoffDirective;
+    using air_formation_type = TaskOrderAirFormationDirective;
+    using naval_command_authority_type = TaskOrderNaval::CommandAuthorityDirective;
+    using naval_stationing_type = TaskOrderNavalStationingDirective;
+    static constexpr bool kMaintainedBatchTruth = true;
+
+    shared_core_type shared_core{};
+    air_tasking_identity_type air_tasking_identity{};
+    air_stationing_type air_stationing{};
+    air_recovery_type air_recovery{};
+    air_takeoff_type air_takeoff{};
+    air_formation_type air_formation{};
+    naval_command_authority_type naval_command_authority{};
+    naval_stationing_type naval_stationing{};
+
     static_assert(
-        kCompatibilityTransportShell,
-        "WorldTaskOrderAssignment transports only the TaskOrder compatibility shell."
+        kMaintainedBatchTruth,
+        "TaskOrderMaintainedBatchContract is the controlled TaskOrder maintained batch read/write shape."
+    );
+};
+
+[[nodiscard]] inline TaskOrderMaintainedBatchContract
+task_order_maintained_batch_contract(
+    const TaskOrderCompatibilityTransportShell& order
+) noexcept {
+    return {
+        .shared_core = task_order_shared_core_directive(order),
+        .air_tasking_identity = task_order_air_tasking_identity_directive(order),
+        .air_stationing = task_order_air_stationing_directive(order),
+        .air_recovery = task_order_air_recovery_directive(order),
+        .air_takeoff = task_order_air_takeoff_directive(order),
+        .air_formation = task_order_air_formation_directive(order),
+        .naval_command_authority = task_order_naval_command_authority(order),
+        .naval_stationing = task_order_naval_stationing_directive(order),
+    };
+}
+
+inline void apply_task_order_maintained_batch_contract_to_compatibility_shell(
+    TaskOrderCompatibilityTransportShell& order,
+    const TaskOrderMaintainedBatchContract& contract
+) noexcept {
+    task_order_shared_core(order) = contract.shared_core;
+    auto& air = task_order_air_owner_slice(order);
+    apply_task_order_air_tasking_identity_directive(
+        air,
+        contract.air_tasking_identity
+    );
+    apply_task_order_air_stationing_directive(air, contract.air_stationing);
+    apply_task_order_air_recovery_directive(air, contract.air_recovery);
+    apply_task_order_air_takeoff_directive(air, contract.air_takeoff);
+    apply_task_order_air_formation_directive(air, contract.air_formation);
+    auto& naval = task_order_naval_owner_slice(order);
+    apply_task_order_naval_command_authority_directive(
+        naval,
+        contract.naval_command_authority
+    );
+    apply_task_order_naval_stationing_directive(
+        naval,
+        contract.naval_stationing
+    );
+}
+
+[[nodiscard]] inline TaskOrderCompatibilityTransportShell
+task_order_compatibility_shell_from_maintained_batch_contract(
+    const TaskOrderMaintainedBatchContract& contract
+) noexcept {
+    TaskOrderCompatibilityTransportShell compatibility_shell{};
+    apply_task_order_maintained_batch_contract_to_compatibility_shell(
+        compatibility_shell,
+        contract
+    );
+    return compatibility_shell;
+}
+
+struct WorldTaskOrderMaintainedAssignment {
+    using contract_type = TaskOrderMaintainedBatchContract;
+    static constexpr bool kMaintainedBatchTruth =
+        contract_type::kMaintainedBatchTruth;
+    static_assert(
+        kMaintainedBatchTruth,
+        "WorldTaskOrderMaintainedAssignment transports only the controlled TaskOrder maintained batch contract."
     );
 
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
-    shell_type order{};
+    contract_type task_order{};
 };
 
 struct WorldLeaderIntentAssignment {
@@ -616,16 +923,31 @@ world_batch_assignment_compatibility_shell(
     return assignment.command;
 }
 
-[[nodiscard]] inline const TaskOrderCompatibilityTransportShell&
-world_batch_assignment_compatibility_shell(
-    const WorldTaskOrderAssignment& assignment
+[[nodiscard]] inline const TaskOrderMaintainedBatchContract&
+world_task_order_maintained_batch_contract(
+    const WorldTaskOrderMaintainedAssignment& assignment
 ) noexcept {
-    return assignment.order;
+    return assignment.task_order;
 }
 
-[[nodiscard]] inline TaskOrderCompatibilityTransportShell&
-world_batch_assignment_compatibility_shell(WorldTaskOrderAssignment& assignment) noexcept {
-    return assignment.order;
+[[nodiscard]] inline TaskOrderMaintainedBatchContract&
+world_task_order_maintained_batch_contract(
+    WorldTaskOrderMaintainedAssignment& assignment
+) noexcept {
+    return assignment.task_order;
+}
+
+[[nodiscard]] inline WorldTaskOrderMaintainedAssignment
+project_world_task_order_maintained_batch_assignment(
+    std::uint64_t world_index,
+    std::uint64_t entity_id,
+    const TaskOrderCompatibilityTransportShell& order
+) noexcept {
+    return {
+        .world_index = world_index,
+        .entity_id = entity_id,
+        .task_order = task_order_maintained_batch_contract(order),
+    };
 }
 
 [[nodiscard]] inline const LeaderIntentCompatibilityTransportShell&

@@ -13,23 +13,71 @@ struct MissionCommand : MissionCommandCore, MissionCommandAir, MissionCommandNav
 // Flat umbrella retained only as a compatibility/transport shell.
 // Shared-core and domain slices remain the maintained owner surfaces.
 using MissionCommandCompatibilityTransportShell = MissionCommand;
+using MissionCommandSharedCoreOwnerSlice = MissionCommandCore;
 inline constexpr bool kMissionCommandCompatibilityTransportShell = true;
+inline constexpr bool kMissionCommandSharedCoreOwnedSurface = true;
 
 static_assert(
     kMissionCommandAirOwnedDomainSlice && kMissionCommandNavalOwnedDomainSlice,
     "MissionCommand compatibility shells must project to explicit owner slices."
 );
+static_assert(
+    kMissionCommandSharedCoreOwnedSurface,
+    "MissionCommand shared core must stay an explicit maintained owner surface."
+);
 
-[[nodiscard]] inline const MissionCommandCore&
+struct MissionCommandSharedCoreDirective {
+    double cmd_heading_deg = 0.0;
+    double cmd_altitude_m = 0.0;
+    double cmd_speed_mps = 0.0;
+    int command_code = 0;
+    std::uint64_t route_ref_id = 0;
+    int roe_state = 0;
+    std::uint64_t engagement_authority_holder_id = 0;
+    std::uint64_t engagement_authority_grantor_id = 0;
+    std::uint64_t assigned_target_id = 0;
+    bool authorization_to_fire = false;
+    bool active = false;
+
+    bool operator==(const MissionCommandSharedCoreDirective&) const = default;
+};
+
+[[nodiscard]] inline const MissionCommandSharedCoreOwnerSlice&
 mission_command_shared_core(
     const MissionCommandCompatibilityTransportShell& command
 ) noexcept {
     return command;
 }
 
-[[nodiscard]] inline MissionCommandCore&
+[[nodiscard]] inline MissionCommandSharedCoreOwnerSlice&
 mission_command_shared_core(MissionCommandCompatibilityTransportShell& command) noexcept {
     return command;
+}
+
+[[nodiscard]] inline MissionCommandSharedCoreDirective
+mission_command_shared_core_directive(
+    const MissionCommandSharedCoreOwnerSlice& core
+) noexcept {
+    return {
+        .cmd_heading_deg = core.cmd_heading_deg,
+        .cmd_altitude_m = core.cmd_altitude_m,
+        .cmd_speed_mps = core.cmd_speed_mps,
+        .command_code = core.command_code,
+        .route_ref_id = core.route_ref_id,
+        .roe_state = core.roe_state,
+        .engagement_authority_holder_id = core.engagement_authority_holder_id,
+        .engagement_authority_grantor_id = core.engagement_authority_grantor_id,
+        .assigned_target_id = core.assigned_target_id,
+        .authorization_to_fire = core.authorization_to_fire,
+        .active = core.active,
+    };
+}
+
+[[nodiscard]] inline MissionCommandSharedCoreDirective
+mission_command_shared_core_directive(
+    const MissionCommandCompatibilityTransportShell& command
+) noexcept {
+    return mission_command_shared_core_directive(mission_command_shared_core(command));
 }
 
 [[nodiscard]] inline const MissionCommandAir&

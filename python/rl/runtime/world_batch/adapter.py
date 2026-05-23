@@ -8,14 +8,26 @@ import ef_py
 
 from gym_envs.scenario_loader import ScenarioLoader
 
-from python.scenario_runtime import apply_world_setup_payload_compat
-from python.scenario_runtime import build_batch_world_setup_request
-from python.scenario_runtime import extract_batch_world_setup_entity_ids
-from python.scenario_runtime import resolve_active_controllable_roster
-from python.scenario_runtime import AppliedScenarioWorld
-from python.scenario_runtime import BatchWorldApplyBuffer
+from python.scenario.runtime import AppliedScenarioWorld
+from python.scenario.runtime import BatchWorldApplyBuffer
+from python.scenario.runtime import resolve_active_controllable_roster
+from python.scenario.runtime.world_setup_compat import apply_runtime_world_layout_request_compat
+from python.scenario.runtime.world_setup_compat import apply_world_setup_payload_compat
+from python.scenario.runtime.world_setup_compat import build_batch_world_setup_request
+from python.scenario.runtime.world_setup_compat import build_runtime_world_layout_request
+from python.scenario.runtime.world_setup_compat import extract_batch_world_setup_entity_ids
+from python.scenario.runtime.world_setup_compat import read_runtime_world_time_step_compat
 
 from .compat import normalize_runtime_compatibility_enabled
+from .command_chain_cache import project_world_task_order_maintained_assignment
+
+
+def _maintained_task_order_write_required_message(surface: str) -> str:
+    return (
+        f"{surface} requires maintained TaskOrder batch bindings; "
+        "legacy TaskOrder whole-shell and raw world.set_task_order fallback are disabled "
+        "for Python business paths."
+    )
 
 
 @dataclass
@@ -24,7 +36,6 @@ class _ObservationPacketCompat:
     agent_observations: list[Any]
     instrument_states: list[Any]
     mission_commands: list[Any]
-    task_orders: list[Any]
     leader_intents: list[Any]
     pilot_reports: list[Any]
 
@@ -43,6 +54,36 @@ class RuntimeWindowEvidence:
     diagnostics_traces: list[Any]
     cadence_reason: str
     uses_compat_fallback: bool = False
+
+
+@dataclass
+class _WorldLayoutSnapshot:
+    world_index: int
+    applied_world: AppliedScenarioWorld | None = None
+    time_step_s: float | None = None
+
+
+class _WorldAccessProxy:
+    """Compatibility-facing world proxy that prefers adapter-owned read seams."""
+
+    def __init__(self, adapter: "RuntimeFacadeAdapter", world_index: int):
+        self._adapter = adapter
+        self._world_index = int(world_index)
+
+    def _fallback_world(self) -> Any:
+        return self._adapter._compat_world(self._world_index)
+
+    def get_time_step(self) -> float:
+        return self._adapter.get_time_step(self._world_index)
+
+    def get_layout(self) -> Any:
+        layout = self._adapter.get_world_layout(self._world_index)
+        if layout is None:
+            raise AttributeError(f"world {self._world_index} has no adapter-owned layout snapshot")
+        return layout
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._fallback_world(), name)
 
 
 class _ScenarioLoaderRuntimeProxy:
@@ -81,14 +122,24 @@ class _ScenarioLoaderRuntimeProxy:
         self._fallback_world().set_mission_command(int(entity_id), command)
 
     def set_task_order(self, entity_id: int, order: Any) -> None:
-        if hasattr(ef_py, "WorldTaskOrderAssignment"):
-            assignment = ef_py.WorldTaskOrderAssignment()
-            assignment.world_index = int(self._world_index)
-            assignment.entity_id = int(entity_id)
-            assignment.order = order
-            self._adapter.set_task_orders_batch([assignment])
-            return
-        self._fallback_world().set_task_order(int(entity_id), order)
+        try:
+            assignment = ef_py.WorldTaskOrderMaintainedAssignment()
+        except AttributeError as exc:
+            raise RuntimeError(
+                _maintained_task_order_write_required_message("ScenarioLoader.set_task_order")
+            ) from exc
+        try:
+            project_world_task_order_maintained_assignment(
+                assignment,
+                world_index=int(self._world_index),
+                entity_id=int(entity_id),
+                compatibility_task_order_shell=order,
+            )
+        except (AttributeError, RuntimeError) as exc:
+            raise RuntimeError(
+                _maintained_task_order_write_required_message("ScenarioLoader.set_task_order")
+            ) from exc
+        self._adapter.set_task_orders_maintained_batch([assignment])
 
     def set_leader_intent(self, entity_id: int, intent: Any) -> None:
         if hasattr(ef_py, "WorldLeaderIntentAssignment"):
@@ -123,6 +174,7 @@ class RuntimeFacadeAdapter:
         self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
         self._compat_runtime = None
         self._last_window_evidence: RuntimeWindowEvidence | None = None
+        self._world_layout_snapshots: dict[int, _WorldLayoutSnapshot] = {}
 
     def _batch_target(self):
         return self.facade if self.facade is not None else self._compat_runtime_handle()
@@ -217,7 +269,6 @@ class RuntimeFacadeAdapter:
         observation_request.include_agent_observations = True
         observation_request.include_instrument_states = True
         observation_request.include_mission_commands = False
-        observation_request.include_task_orders = False
         observation_request.include_leader_intents = False
         observation_request.include_pilot_reports = False
         request.observation_request = observation_request
@@ -288,54 +339,36 @@ class RuntimeFacadeAdapter:
         return bool(self._batch_target().load_database(path))
 
     def world(self, index: int):
-        return self._compat_world(int(index))
+        return _WorldAccessProxy(self, int(index))
 
-    def apply_world_layout(self, world_index: int, layout: Any):
+    def _build_runtime_world_layout_request(self, world_index: int, layout: Any):
         apply_buffer = BatchWorldApplyBuffer(1)
         _terrain_assignments, _wind_assignments, zone_defs, spawn_requests = apply_buffer.prepare([layout])
         for zone_def in list(zone_defs):
             zone_def.world_index = int(world_index)
         for spawn_request in list(spawn_requests):
             spawn_request.world_index = int(world_index)
-        request = ef_py.RuntimeWorldLayoutRequest()
-        request.world_index = int(world_index)
-        request.seed = int(layout.seed) & 0xFFFFFFFF
-        request.terrain_type = str(layout.terrain_type)
-        request.wind_speed_mps = float(layout.wind_speed_mps)
-        request.wind_dir_from_deg = float(layout.wind_dir_from_deg)
-        request.wind_shear_mps_per_km = float(layout.wind_shear_mps_per_km)
-        request.maritime_configured = bool(getattr(layout, "maritime_configured", False))
-        request.sea_state = float(getattr(layout, "sea_state", 0.0))
-        request.wave_heading_deg = float(getattr(layout, "wave_heading_deg", 0.0))
-        request.wave_period_s = float(getattr(layout, "wave_period_s", 8.0))
-        request.zones = list(zone_defs)
-        request.spawn_requests = list(spawn_requests)
-        request.time_steps = [] if layout.time_step_s is None else [float(layout.time_step_s)]
-
-        result = (
-            self.facade.apply_world_layout(request)
-            if self.facade is not None and hasattr(self.facade, "apply_world_layout")
-            else None
+        return build_runtime_world_layout_request(
+            world_index=int(world_index),
+            seed=int(layout.seed),
+            terrain_type=str(layout.terrain_type),
+            wind_speed_mps=float(layout.wind_speed_mps),
+            wind_dir_from_deg=float(layout.wind_dir_from_deg),
+            wind_shear_mps_per_km=float(layout.wind_shear_mps_per_km),
+            maritime_configured=bool(getattr(layout, "maritime_configured", False)),
+            sea_state=float(getattr(layout, "sea_state", 0.0)),
+            wave_heading_deg=float(getattr(layout, "wave_heading_deg", 0.0)),
+            wave_period_s=float(getattr(layout, "wave_period_s", 8.0)),
+            zones=list(zone_defs),
+            spawn_requests=list(spawn_requests),
+            time_steps=[] if layout.time_step_s is None else [float(layout.time_step_s)],
         )
-        if result is None:
-            entity_ids = self._compat_runtime_handle().apply_world_layout(
-                int(request.world_index),
-                int(request.seed),
-                str(request.terrain_type),
-                float(request.wind_speed_mps),
-                float(request.wind_dir_from_deg),
-                float(request.wind_shear_mps_per_km),
-                bool(request.maritime_configured),
-                float(request.sea_state),
-                float(request.wave_heading_deg),
-                float(request.wave_period_s),
-                list(request.zones),
-                list(request.spawn_requests),
-                list(request.time_steps),
-            )
-        else:
-            entity_ids = list(getattr(result, "entity_ids", []) or [])
 
+    def _apply_runtime_world_layout_request(self, request: Any) -> Any:
+        batch_target = self.facade if self.facade is not None else self._compat_runtime_handle()
+        return apply_runtime_world_layout_request_compat(batch_target, request)
+
+    def _materialize_applied_world(self, world_index: int, layout: Any, entity_ids: Sequence[Any]) -> AppliedScenarioWorld:
         entities: dict[str, int] = {}
         agent_id: int | None = None
         for spawn, entity_id in zip(list(layout.spawns), list(entity_ids), strict=False):
@@ -349,18 +382,43 @@ class RuntimeFacadeAdapter:
             entities,
             world_index=int(world_index),
         )
+        self._world_layout_snapshots[int(world_index)] = _WorldLayoutSnapshot(
+            world_index=int(world_index),
+            applied_world=applied_world,
+            time_step_s=None if getattr(layout, "time_step_s", None) is None else float(layout.time_step_s),
+        )
         return applied_world
+
+    def apply_world_layout(self, world_index: int, layout: Any):
+        request = self._build_runtime_world_layout_request(int(world_index), layout)
+        result = self._apply_runtime_world_layout_request(request)
+        return self._materialize_applied_world(
+            int(world_index),
+            layout,
+            list(getattr(result, "entity_ids", []) or []),
+        )
 
     def make_scenario_loader(self, index: int) -> ScenarioLoader:
         return ScenarioLoader(self._scenario_loader_runtime(int(index)))
 
     def get_time_step(self, world_index: int) -> float:
+        snapshot = self._world_layout_snapshots.get(int(world_index))
         if self.facade is not None and hasattr(self.facade, "world_time_step"):
             return float(self.facade.world_time_step(int(world_index)))
         compat_runtime = self._compat_runtime_handle()
-        if hasattr(compat_runtime, "world_time_step"):
-            return float(compat_runtime.world_time_step(int(world_index)))
-        return float(self._compat_world(int(world_index)).get_time_step())
+        return float(
+            read_runtime_world_time_step_compat(
+                compat_runtime,
+                int(world_index),
+                fallback_time_step_s=None if snapshot is None else snapshot.time_step_s,
+            )
+        )
+
+    def get_world_layout(self, world_index: int) -> Any | None:
+        snapshot = self._world_layout_snapshots.get(int(world_index))
+        if snapshot is None or snapshot.applied_world is None:
+            return None
+        return snapshot.applied_world.layout
 
     def get_visual_observation(self, world_index: int, entity_id: int) -> Any:
         return self._compat_world(int(world_index)).get_visual_observation(int(entity_id))
@@ -516,7 +574,6 @@ class RuntimeFacadeAdapter:
                 if include_mission_commands
                 else []
             ),
-            task_orders=[],
             leader_intents=[],
             pilot_reports=[],
         )
@@ -528,7 +585,6 @@ class RuntimeFacadeAdapter:
         include_agent_observations: bool = True,
         include_instrument_states: bool = True,
         include_mission_commands: bool = False,
-        include_task_orders: bool = False,
         include_leader_intents: bool = False,
         include_pilot_reports: bool = False,
     ) -> Any:
@@ -539,7 +595,6 @@ class RuntimeFacadeAdapter:
             request.include_agent_observations = bool(include_agent_observations)
             request.include_instrument_states = bool(include_instrument_states)
             request.include_mission_commands = bool(include_mission_commands)
-            request.include_task_orders = bool(include_task_orders)
             request.include_leader_intents = bool(include_leader_intents)
             request.include_pilot_reports = bool(include_pilot_reports)
             return self.export_observation_packet(request)
@@ -551,7 +606,6 @@ class RuntimeFacadeAdapter:
             include_agent_observations=True,
             include_instrument_states=True,
             include_mission_commands=False,
-            include_task_orders=False,
             include_leader_intents=False,
             include_pilot_reports=False,
         )
@@ -576,7 +630,6 @@ class RuntimeFacadeAdapter:
         include_agent_observations: bool = True,
         include_instrument_states: bool = True,
         include_mission_commands: bool = False,
-        include_task_orders: bool = False,
         include_leader_intents: bool = False,
         include_pilot_reports: bool = False,
     ) -> Any:
@@ -585,7 +638,6 @@ class RuntimeFacadeAdapter:
             include_agent_observations=include_agent_observations,
             include_instrument_states=include_instrument_states,
             include_mission_commands=include_mission_commands,
-            include_task_orders=include_task_orders,
             include_leader_intents=include_leader_intents,
             include_pilot_reports=include_pilot_reports,
         )
@@ -618,6 +670,12 @@ class RuntimeFacadeAdapter:
 
     def get_mission_commands_batch(self, refs: Sequence[Any]) -> list[Any]:
         return list(self._batch_target().get_mission_commands_batch(list(refs)))
+
+    def get_task_orders_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
+        batch_target = self._batch_target()
+        if hasattr(batch_target, "get_task_orders_maintained_batch"):
+            return list(batch_target.get_task_orders_maintained_batch(list(refs)))
+        return []
 
     def set_pilot_actions_batch(self, assignments: Sequence[Any]) -> None:
         self._last_window_evidence = None
@@ -703,8 +761,17 @@ class RuntimeFacadeAdapter:
     def set_mission_commands_batch(self, assignments: Sequence[Any]) -> None:
         self._batch_target().set_mission_commands_batch(list(assignments))
 
-    def set_task_orders_batch(self, assignments: Sequence[Any]) -> None:
-        self._batch_target().set_task_orders_batch(list(assignments))
+    def set_task_orders_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        batch_target = self._batch_target()
+        materialized_assignments = list(assignments)
+        if hasattr(batch_target, "set_task_orders_maintained_batch"):
+            batch_target.set_task_orders_maintained_batch(materialized_assignments)
+            return
+        raise RuntimeError(
+            _maintained_task_order_write_required_message(
+                "RuntimeFacadeAdapter.set_task_orders_maintained_batch"
+            )
+        )
 
     def set_leader_intents_batch(self, assignments: Sequence[Any]) -> None:
         self._batch_target().set_leader_intents_batch(list(assignments))

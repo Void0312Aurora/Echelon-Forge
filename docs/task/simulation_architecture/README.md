@@ -136,6 +136,19 @@ The active design conclusion is:
 | `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | Claimed closure attempted to turn accepted counterfactual contracts and selected runtime slices into maintained facade-owned experiment execution, scenario generation, evidence collection, and legacy cleanup, but owner rejected the closure because compatibility layers and incomplete subagent work remained. | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md), [fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md), [snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md), [counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md), [scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md), [experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md), [final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md), [dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md), [disputed acceptance record](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) |
 | `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen; superseded by WP23 | Attempted to force-retire post-WP21 compatibility layers, but the owner stopped the stream after uncontrolled follow-up waves and partial/quarantine evidence drift. Its queue is historical only and must not be dispatched. | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
 | `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | Froze WP22, classified current dirty work, forced delete-or-block decisions, recorded TaskOrder and public API exits as blocked, skipped implementation because no deletion-ready surface was identified, and closed as controlled blocked recovery. | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md) |
+| `WP24 TaskOrder Maintained Business Migration` | active / deletion close-out | Replacement-backed TaskOrder business migration after WP23: maintained contract/export/Python business paths are integrated, and the old public TaskOrder whole-shell compatibility surfaces are removed in the cleanup close-out. | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md), [integration assessment and cleanup close-out](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.md) |
+
+## WP24 TaskOrder Maintained Business Migration
+
+Output:
+
+- [WP24 TaskOrder Maintained Business Migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md)
+
+WP24 is the active replacement-backed implementation package opened after WP23
+closed as `blocked`. It is not another recovery wave. The maintained
+contract/export/Python business migration is integrated, and the cleanup
+close-out removes the old public TaskOrder whole-shell compatibility surfaces
+instead of accepting them as residuals.
 
 ## WP23 Legacy Retirement Recovery And Reset
 

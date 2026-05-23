@@ -1509,7 +1509,7 @@ ObservationBatchRequest observation_request_from_step_request(
         .include_agent_observations = request.include_agent_observations,
         .include_instrument_states = request.include_instrument_states,
         .include_mission_commands = request.include_mission_commands,
-        .include_task_orders = request.include_task_orders,
+        .include_task_order_contracts = request.include_task_order_contracts,
         .include_leader_intents = request.include_leader_intents,
         .include_pilot_reports = request.include_pilot_reports,
     };
@@ -2613,10 +2613,28 @@ RuntimeFacade::collect_visual_binding_compatibility_scenes_batch(
     int downsample,
     bool use_gpu
 ) const {
-    return runtime_->collect_visual_binding_compatibility_scenes_batch(
+    const auto visual_candidate_ids = get_visual_candidate_ids_batch(
+        refs,
+        25000.0,
+        use_gpu
+    );
+    return collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
+        refs,
+        visual_candidate_ids,
+        downsample
+    );
+}
+
+std::vector<WorldBatchVisualBindingCompatibilityScene>
+RuntimeFacade::collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
+    const std::vector<WorldEntityRef>& refs,
+    const std::vector<std::vector<std::uint64_t>>& candidate_ids_batch,
+    int downsample
+) const {
+    return runtime_->collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
         refs,
         downsample,
-        use_gpu
+        candidate_ids_batch
     );
 }
 
@@ -2628,8 +2646,10 @@ void RuntimeFacade::set_mission_commands_batch(const std::vector<WorldMissionCom
     runtime_->set_mission_commands_batch(assignments);
 }
 
-void RuntimeFacade::set_task_orders_batch(const std::vector<WorldTaskOrderAssignment>& assignments) {
-    runtime_->set_task_orders_batch(assignments);
+void RuntimeFacade::set_task_orders_maintained_batch(
+    const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
+) {
+    runtime_->set_task_orders_maintained_batch(assignments);
 }
 
 void RuntimeFacade::set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments) {
@@ -2733,8 +2753,11 @@ std::vector<MissionCommand> RuntimeFacade::get_mission_commands_batch(const std:
     return runtime_->get_mission_commands_batch(refs);
 }
 
-std::vector<TaskOrder> RuntimeFacade::get_task_orders_batch(const std::vector<WorldEntityRef>& refs) const {
-    return runtime_->get_task_orders_batch(refs);
+std::vector<TaskOrderMaintainedBatchContract>
+RuntimeFacade::get_task_orders_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    return runtime_->get_task_orders_maintained_batch(refs);
 }
 
 std::vector<LeaderIntent> RuntimeFacade::get_leader_intents_batch(const std::vector<WorldEntityRef>& refs) const {
@@ -2751,7 +2774,7 @@ ObservationBatchPacket RuntimeFacade::export_observation_packet(const std::vecto
         .include_agent_observations = true,
         .include_instrument_states = true,
         .include_mission_commands = true,
-        .include_task_orders = true,
+        .include_task_order_contracts = true,
         .include_leader_intents = true,
         .include_pilot_reports = true,
     });
@@ -2995,8 +3018,8 @@ ObservationBatchPacket RuntimeFacade::build_observation_packet(
     if (request.include_mission_commands) {
         packet.mission_commands = runtime_->get_mission_commands_batch(request.refs);
     }
-    if (request.include_task_orders) {
-        packet.task_orders = runtime_->get_task_orders_batch(request.refs);
+    if (request.include_task_order_contracts) {
+        packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);
     }
     if (request.include_leader_intents) {
         packet.leader_intents = runtime_->get_leader_intents_batch(request.refs);

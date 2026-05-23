@@ -11,6 +11,7 @@ from python.scenario_compiler import (
     TERRAIN_TYPE_SOURCE_EXPLICIT,
     _normalize_terrain_type_value,
 )
+from .models import RuntimeWorldLayoutRequestCompat, RuntimeWorldLayoutResultCompat
 
 
 def normalize_world_setup_terrain_assignments(
@@ -83,6 +84,95 @@ def extract_batch_world_setup_entity_ids(result: Any) -> list[int]:
     return [int(entity_id) for entity_id in list(entity_ids)]
 
 
+def build_runtime_world_layout_request(
+    *,
+    world_index: int,
+    seed: int,
+    terrain_type: str,
+    wind_speed_mps: float,
+    wind_dir_from_deg: float,
+    wind_shear_mps_per_km: float,
+    maritime_configured: bool,
+    sea_state: float,
+    wave_heading_deg: float,
+    wave_period_s: float,
+    zones: list[Any],
+    spawn_requests: list[Any],
+    time_steps: list[float],
+):
+    if hasattr(ef_py, "RuntimeWorldLayoutRequest"):
+        request = ef_py.RuntimeWorldLayoutRequest()
+    else:
+        request = RuntimeWorldLayoutRequestCompat()
+    request.world_index = int(world_index)
+    request.seed = int(seed) & 0xFFFFFFFF
+    request.terrain_type = str(terrain_type)
+    request.wind_speed_mps = float(wind_speed_mps)
+    request.wind_dir_from_deg = float(wind_dir_from_deg)
+    request.wind_shear_mps_per_km = float(wind_shear_mps_per_km)
+    request.maritime_configured = bool(maritime_configured)
+    request.sea_state = float(sea_state)
+    request.wave_heading_deg = float(wave_heading_deg)
+    request.wave_period_s = float(wave_period_s)
+    request.zones = list(zones)
+    request.spawn_requests = list(spawn_requests)
+    request.time_steps = [float(value) for value in list(time_steps)]
+    return request
+
+
+def extract_runtime_world_layout_entity_ids(result: Any) -> list[int]:
+    entity_ids = getattr(result, "entity_ids", result)
+    return [int(entity_id) for entity_id in list(entity_ids)]
+
+
+def read_runtime_world_time_step_compat(
+    runtime: Any,
+    world_index: int,
+    *,
+    fallback_time_step_s: float | None = None,
+) -> float:
+    if hasattr(runtime, "world_time_step"):
+        return float(runtime.world_time_step(int(world_index)))
+    if fallback_time_step_s is not None:
+        return float(fallback_time_step_s)
+    world_getter = getattr(runtime, "world", None)
+    if callable(world_getter):
+        return float(world_getter(int(world_index)).get_time_step())
+    raise AttributeError("runtime does not expose world_time_step or a callable world getter")
+
+
+def apply_runtime_world_layout_request_compat(runtime: Any, request: Any) -> Any:
+    if not hasattr(runtime, "world") and hasattr(runtime, "apply_world_layout"):
+        result = runtime.apply_world_layout(request)
+        if hasattr(result, "entity_ids") and hasattr(result, "world_index"):
+            return result
+        compat_result = RuntimeWorldLayoutResultCompat()
+        compat_result.world_index = int(getattr(request, "world_index", 0))
+        compat_result.entity_ids = extract_runtime_world_layout_entity_ids(result)
+        return compat_result
+    compat_result = RuntimeWorldLayoutResultCompat()
+    compat_result.world_index = int(getattr(request, "world_index", 0))
+    compat_result.entity_ids = [
+        int(entity_id)
+        for entity_id in runtime.apply_world_layout(
+            int(request.world_index),
+            int(request.seed),
+            str(request.terrain_type),
+            float(request.wind_speed_mps),
+            float(request.wind_dir_from_deg),
+            float(request.wind_shear_mps_per_km),
+            bool(request.maritime_configured),
+            float(request.sea_state),
+            float(request.wave_heading_deg),
+            float(request.wave_period_s),
+            list(request.zones),
+            list(request.spawn_requests),
+            list(request.time_steps),
+        )
+    ]
+    return compat_result
+
+
 def apply_world_setup_request_compat(runtime: Any, request: Any) -> list[int]:
     if hasattr(runtime, "apply_world_setup"):
         return extract_batch_world_setup_entity_ids(runtime.apply_world_setup(request))
@@ -141,9 +231,13 @@ def apply_world_setup_payload_compat(
 
 
 __all__ = [
+    "apply_runtime_world_layout_request_compat",
     "apply_world_setup_payload_compat",
     "apply_world_setup_request_compat",
     "build_batch_world_setup_request",
+    "build_runtime_world_layout_request",
+    "extract_runtime_world_layout_entity_ids",
     "extract_batch_world_setup_entity_ids",
     "normalize_world_setup_terrain_assignments",
+    "read_runtime_world_time_step_compat",
 ]

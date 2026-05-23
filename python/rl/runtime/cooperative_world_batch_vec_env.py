@@ -28,6 +28,11 @@ from gym_envs.universal_env import (
     normalize_action,
 )
 from python.rl.tasking.bridge import build_kernel_mission_command
+from python.rl.runtime.world_batch.command_chain_cache import (
+    project_world_leader_intent_assignment_transport,
+    project_world_pilot_report_assignment_transport,
+    project_world_task_order_maintained_assignment,
+)
 from python.rl.runtime.multi_agent_runtime import MultiAgentControlSlot, MultiAgentWorldRuntimeView
 from python.rl.support.sb3_vec_env_compat import (
     VecEnv,
@@ -289,7 +294,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             include_agent_observations=True,
             include_instrument_states=True,
             include_mission_commands=False,
-            include_task_orders=False,
             include_leader_intents=False,
             include_pilot_reports=False,
         )
@@ -663,10 +667,13 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 task_snapshot = task_order_snapshot(getattr(loader, "task_order", None))
                 previous_task_snapshot = world.last_task_order_snapshots.get(int(slot_state.entity_id), None)
                 if task_snapshot is not None and snapshot_changed(previous_task_snapshot, task_snapshot):
-                    task_assign = ef_py.WorldTaskOrderAssignment()
-                    task_assign.world_index = int(world_index)
-                    task_assign.entity_id = int(slot_state.entity_id)
-                    task_assign.order = loader.task_order
+                    task_assign = ef_py.WorldTaskOrderMaintainedAssignment()
+                    project_world_task_order_maintained_assignment(
+                        task_assign,
+                        world_index=int(world_index),
+                        entity_id=int(slot_state.entity_id),
+                        compatibility_task_order_shell=loader.task_order,
+                    )
                     task_assignments.append(task_assign)
                     world.last_task_order_snapshots[int(slot_state.entity_id)] = task_snapshot
 
@@ -674,9 +681,12 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 previous_intent_snapshot = world.last_leader_intent_snapshots.get(int(slot_state.entity_id), None)
                 if intent_snapshot is not None and snapshot_changed(previous_intent_snapshot, intent_snapshot):
                     intent_assign = ef_py.WorldLeaderIntentAssignment()
-                    intent_assign.world_index = int(world_index)
-                    intent_assign.entity_id = int(slot_state.entity_id)
-                    intent_assign.intent = loader.leader_intent
+                    project_world_leader_intent_assignment_transport(
+                        intent_assign,
+                        world_index=int(world_index),
+                        entity_id=int(slot_state.entity_id),
+                        compatibility_intent_shell=loader.leader_intent,
+                    )
                     intent_assignments.append(intent_assign)
                     world.last_leader_intent_snapshots[int(slot_state.entity_id)] = intent_snapshot
 
@@ -684,16 +694,19 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 previous_report_snapshot = world.last_pilot_report_snapshots.get(int(slot_state.entity_id), None)
                 if report_snapshot is not None and snapshot_changed(previous_report_snapshot, report_snapshot):
                     report_assign = ef_py.WorldPilotReportAssignment()
-                    report_assign.world_index = int(world_index)
-                    report_assign.entity_id = int(slot_state.entity_id)
-                    report_assign.report = loader.pilot_report
+                    project_world_pilot_report_assignment_transport(
+                        report_assign,
+                        world_index=int(world_index),
+                        entity_id=int(slot_state.entity_id),
+                        compatibility_report_shell=loader.pilot_report,
+                    )
                     report_assignments.append(report_assign)
                     world.last_pilot_report_snapshots[int(slot_state.entity_id)] = report_snapshot
 
         if mission_assignments:
             self._runtime_adapter.set_mission_commands_batch(mission_assignments)
         if task_assignments:
-            self._runtime_adapter.set_task_orders_batch(task_assignments)
+            self._runtime_adapter.set_task_orders_maintained_batch(task_assignments)
         if intent_assignments:
             self._runtime_adapter.set_leader_intents_batch(intent_assignments)
         if report_assignments:

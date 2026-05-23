@@ -3,6 +3,8 @@
 namespace {
 
 bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs) {
+    const auto lhs_core = mission_command_shared_core_directive(lhs);
+    const auto rhs_core = mission_command_shared_core_directive(rhs);
     const auto lhs_recovery = mission_command_air_recovery_directive(lhs);
     const auto rhs_recovery = mission_command_air_recovery_directive(rhs);
     const auto lhs_takeoff = mission_command_air_takeoff_directive(lhs);
@@ -14,22 +16,22 @@ bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs
     const auto lhs_embarked_helo = mission_command_naval_embarked_helo_directive(lhs);
     const auto rhs_embarked_helo = mission_command_naval_embarked_helo_directive(rhs);
 
-    return lhs.cmd_heading_deg == rhs.cmd_heading_deg &&
-        lhs.cmd_altitude_m == rhs.cmd_altitude_m &&
-        lhs.cmd_speed_mps == rhs.cmd_speed_mps &&
-        lhs.command_code == rhs.command_code &&
-        lhs.route_ref_id == rhs.route_ref_id &&
+    return lhs_core.cmd_heading_deg == rhs_core.cmd_heading_deg &&
+        lhs_core.cmd_altitude_m == rhs_core.cmd_altitude_m &&
+        lhs_core.cmd_speed_mps == rhs_core.cmd_speed_mps &&
+        lhs_core.command_code == rhs_core.command_code &&
+        lhs_core.route_ref_id == rhs_core.route_ref_id &&
         lhs_stationing == rhs_stationing &&
         lhs_embarked_helo == rhs_embarked_helo &&
         lhs_recovery == rhs_recovery &&
         lhs_takeoff == rhs_takeoff &&
         lhs_formation == rhs_formation &&
-        lhs.roe_state == rhs.roe_state &&
-        lhs.engagement_authority_holder_id == rhs.engagement_authority_holder_id &&
-        lhs.engagement_authority_grantor_id == rhs.engagement_authority_grantor_id &&
-        lhs.assigned_target_id == rhs.assigned_target_id &&
-        lhs.authorization_to_fire == rhs.authorization_to_fire &&
-        lhs.active == rhs.active;
+        lhs_core.roe_state == rhs_core.roe_state &&
+        lhs_core.engagement_authority_holder_id == rhs_core.engagement_authority_holder_id &&
+        lhs_core.engagement_authority_grantor_id == rhs_core.engagement_authority_grantor_id &&
+        lhs_core.assigned_target_id == rhs_core.assigned_target_id &&
+        lhs_core.authorization_to_fire == rhs_core.authorization_to_fire &&
+        lhs_core.active == rhs_core.active;
 }
 
 bool spatial_route_waypoints_equal(const SpatialRouteWaypoint& lhs, const SpatialRouteWaypoint& rhs) {

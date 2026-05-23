@@ -254,7 +254,7 @@ struct ObservationBatchRequest {
     bool include_agent_observations = true;
     bool include_instrument_states = false;
     bool include_mission_commands = false;
-    bool include_task_orders = false;
+    bool include_task_order_contracts = false;
     bool include_leader_intents = false;
     bool include_pilot_reports = false;
 };
@@ -276,7 +276,7 @@ struct ExecutionBatchStepRequest {
     bool include_agent_observations = true;
     bool include_instrument_states = false;
     bool include_mission_commands = false;
-    bool include_task_orders = false;
+    bool include_task_order_contracts = false;
     bool include_leader_intents = false;
     bool include_pilot_reports = false;
 };
@@ -305,7 +305,7 @@ struct ObservationBatchPacket {
     std::vector<AgentObservation> agent_observations;
     std::vector<InstrumentState> instrument_states;
     std::vector<MissionCommand> mission_commands;
-    std::vector<TaskOrder> task_orders;
+    std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;
     std::vector<LeaderIntent> leader_intents;
     std::vector<PilotReport> pilot_reports;
 };

@@ -961,7 +961,10 @@ void bind_runtime(nb::module_& m) {
         .def_rw("include_agent_observations", &ObservationBatchRequest::include_agent_observations)
         .def_rw("include_instrument_states", &ObservationBatchRequest::include_instrument_states)
         .def_rw("include_mission_commands", &ObservationBatchRequest::include_mission_commands)
-        .def_rw("include_task_orders", &ObservationBatchRequest::include_task_orders)
+        .def_rw(
+            "include_task_order_contracts",
+            &ObservationBatchRequest::include_task_order_contracts
+        )
         .def_rw("include_leader_intents", &ObservationBatchRequest::include_leader_intents)
         .def_rw("include_pilot_reports", &ObservationBatchRequest::include_pilot_reports);
 
@@ -986,7 +989,10 @@ void bind_runtime(nb::module_& m) {
         .def_rw("include_agent_observations", &ExecutionBatchStepRequest::include_agent_observations)
         .def_rw("include_instrument_states", &ExecutionBatchStepRequest::include_instrument_states)
         .def_rw("include_mission_commands", &ExecutionBatchStepRequest::include_mission_commands)
-        .def_rw("include_task_orders", &ExecutionBatchStepRequest::include_task_orders)
+        .def_rw(
+            "include_task_order_contracts",
+            &ExecutionBatchStepRequest::include_task_order_contracts
+        )
         .def_rw("include_leader_intents", &ExecutionBatchStepRequest::include_leader_intents)
         .def_rw("include_pilot_reports", &ExecutionBatchStepRequest::include_pilot_reports);
 
@@ -1112,7 +1118,7 @@ void bind_runtime(nb::module_& m) {
         .def_rw("agent_observations", &ObservationBatchPacket::agent_observations)
         .def_rw("instrument_states", &ObservationBatchPacket::instrument_states)
         .def_rw("mission_commands", &ObservationBatchPacket::mission_commands)
-        .def_rw("task_orders", &ObservationBatchPacket::task_orders)
+        .def_rw("task_order_contracts", &ObservationBatchPacket::task_order_contracts)
         .def_rw("leader_intents", &ObservationBatchPacket::leader_intents)
         .def_rw("pilot_reports", &ObservationBatchPacket::pilot_reports);
 
@@ -1161,6 +1167,26 @@ void bind_runtime(nb::module_& m) {
             &ExecutionBatchStepResult::controller_state_changed_flags
         )
         .def_rw("observation_packet", &ExecutionBatchStepResult::observation_packet);
+
+    nb::class_<TaskOrderMaintainedBatchContract>(m, "TaskOrderMaintainedBatchContract")
+        .def(nb::init<>())
+        .def_rw("shared_core", &TaskOrderMaintainedBatchContract::shared_core)
+        .def_rw(
+            "air_tasking_identity",
+            &TaskOrderMaintainedBatchContract::air_tasking_identity
+        )
+        .def_rw("air_stationing", &TaskOrderMaintainedBatchContract::air_stationing)
+        .def_rw("air_recovery", &TaskOrderMaintainedBatchContract::air_recovery)
+        .def_rw("air_takeoff", &TaskOrderMaintainedBatchContract::air_takeoff)
+        .def_rw("air_formation", &TaskOrderMaintainedBatchContract::air_formation)
+        .def_rw(
+            "naval_command_authority",
+            &TaskOrderMaintainedBatchContract::naval_command_authority
+        )
+        .def_rw(
+            "naval_stationing",
+            &TaskOrderMaintainedBatchContract::naval_stationing
+        );
 
     nb::class_<RuntimeExperimentAncestry>(m, "RuntimeExperimentAncestry")
         .def(nb::init<>())
@@ -1431,11 +1457,14 @@ void bind_runtime(nb::module_& m) {
         .def_rw("entity_id", &WorldMissionCommandAssignment::entity_id)
         .def_rw("command", &WorldMissionCommandAssignment::command);
 
-    nb::class_<WorldTaskOrderAssignment>(m, "WorldTaskOrderAssignment")
+    nb::class_<WorldTaskOrderMaintainedAssignment>(
+        m,
+        "WorldTaskOrderMaintainedAssignment"
+    )
         .def(nb::init<>())
-        .def_rw("world_index", &WorldTaskOrderAssignment::world_index)
-        .def_rw("entity_id", &WorldTaskOrderAssignment::entity_id)
-        .def_rw("order", &WorldTaskOrderAssignment::order);
+        .def_rw("world_index", &WorldTaskOrderMaintainedAssignment::world_index)
+        .def_rw("entity_id", &WorldTaskOrderMaintainedAssignment::entity_id)
+        .def_rw("task_order", &WorldTaskOrderMaintainedAssignment::task_order);
 
     nb::class_<WorldLeaderIntentAssignment>(m, "WorldLeaderIntentAssignment")
         .def(nb::init<>())
@@ -1512,7 +1541,11 @@ void bind_runtime(nb::module_& m) {
         .def("world_time_step", &WorldBatchRuntime::world_time_step, nb::arg("world_index"))
         .def("set_pilot_actions_batch", &WorldBatchRuntime::set_pilot_actions_batch, nb::arg("assignments"))
         .def("set_mission_commands_batch", &WorldBatchRuntime::set_mission_commands_batch, nb::arg("assignments"))
-        .def("set_task_orders_batch", &WorldBatchRuntime::set_task_orders_batch, nb::arg("assignments"))
+        .def(
+            "set_task_orders_maintained_batch",
+            &WorldBatchRuntime::set_task_orders_maintained_batch,
+            nb::arg("assignments")
+        )
         .def("set_leader_intents_batch", &WorldBatchRuntime::set_leader_intents_batch, nb::arg("assignments"))
         .def("set_pilot_reports_batch", &WorldBatchRuntime::set_pilot_reports_batch, nb::arg("assignments"))
         .def("clear_execution_episode_controller_batch", &WorldBatchRuntime::clear_execution_episode_controller_batch)
@@ -1550,7 +1583,11 @@ void bind_runtime(nb::module_& m) {
         .def("get_agent_observations_batch", &WorldBatchRuntime::get_agent_observations_batch, nb::arg("refs"))
         .def("get_instrument_states_batch", &WorldBatchRuntime::get_instrument_states_batch, nb::arg("refs"))
         .def("get_mission_commands_batch", &WorldBatchRuntime::get_mission_commands_batch, nb::arg("refs"))
-        .def("get_task_orders_batch", &WorldBatchRuntime::get_task_orders_batch, nb::arg("refs"))
+        .def(
+            "get_task_orders_maintained_batch",
+            &WorldBatchRuntime::get_task_orders_maintained_batch,
+            nb::arg("refs")
+        )
         .def("get_leader_intents_batch", &WorldBatchRuntime::get_leader_intents_batch, nb::arg("refs"))
         .def("get_pilot_reports_batch", &WorldBatchRuntime::get_pilot_reports_batch, nb::arg("refs"))
         .def(
@@ -1659,7 +1696,11 @@ void bind_runtime(nb::module_& m) {
         )
         .def("set_pilot_actions_batch", &RuntimeFacade::set_pilot_actions_batch, nb::arg("assignments"))
         .def("set_mission_commands_batch", &RuntimeFacade::set_mission_commands_batch, nb::arg("assignments"))
-        .def("set_task_orders_batch", &RuntimeFacade::set_task_orders_batch, nb::arg("assignments"))
+        .def(
+            "set_task_orders_maintained_batch",
+            &RuntimeFacade::set_task_orders_maintained_batch,
+            nb::arg("assignments")
+        )
         .def("set_leader_intents_batch", &RuntimeFacade::set_leader_intents_batch, nb::arg("assignments"))
         .def("set_pilot_reports_batch", &RuntimeFacade::set_pilot_reports_batch, nb::arg("assignments"))
         .def("clear_execution_episode_batch", &RuntimeFacade::clear_execution_episode_batch)
@@ -1693,7 +1734,11 @@ void bind_runtime(nb::module_& m) {
         .def("get_agent_observations_batch", &RuntimeFacade::get_agent_observations_batch, nb::arg("refs"))
         .def("get_instrument_states_batch", &RuntimeFacade::get_instrument_states_batch, nb::arg("refs"))
         .def("get_mission_commands_batch", &RuntimeFacade::get_mission_commands_batch, nb::arg("refs"))
-        .def("get_task_orders_batch", &RuntimeFacade::get_task_orders_batch, nb::arg("refs"))
+        .def(
+            "get_task_orders_maintained_batch",
+            &RuntimeFacade::get_task_orders_maintained_batch,
+            nb::arg("refs")
+        )
         .def("get_leader_intents_batch", &RuntimeFacade::get_leader_intents_batch, nb::arg("refs"))
         .def("get_pilot_reports_batch", &RuntimeFacade::get_pilot_reports_batch, nb::arg("refs"))
         .def(

@@ -107,7 +107,8 @@ class GroundRuntimeSourceBridgeTests(unittest.TestCase):
             self.assertIn("from python.rl.tasking.bridge import build_kernel_mission_command", text)
             self.assertNotIn("from python.rl.tasking.leader_tasking import build_kernel_mission_command", text)
             self.assertIn("mission_command = build_kernel_mission_command(", text)
-            self.assertIn("set_task_orders_batch", text)
+            self.assertIn("set_task_orders_maintained_batch", text)
+            self.assertNotIn("set_task_orders_batch", text)
             self.assertIn("set_leader_intents_batch", text)
             self.assertIn("set_pilot_reports_batch", text)
 

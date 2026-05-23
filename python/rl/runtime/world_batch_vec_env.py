@@ -32,6 +32,11 @@ from gym_envs.universal_env import (
     normalize_action,
 )
 from python.rl.tasking.bridge import build_kernel_mission_command
+from python.rl.runtime.world_batch.command_chain_cache import (
+    project_world_leader_intent_assignment_transport,
+    project_world_pilot_report_assignment_transport,
+    project_world_task_order_maintained_assignment,
+)
 from python.rl.support.sb3_vec_env_compat import (
     VecEnv,
     VecEnvIndices,
@@ -345,7 +350,6 @@ class WorldBatchVecEnv(VecEnv):
             include_agent_observations=True,
             include_instrument_states=True,
             include_mission_commands=False,
-            include_task_orders=False,
             include_leader_intents=False,
             include_pilot_reports=False,
         )
@@ -362,7 +366,6 @@ class WorldBatchVecEnv(VecEnv):
             include_agent_observations=True,
             include_instrument_states=True,
             include_mission_commands=False,
-            include_task_orders=False,
             include_leader_intents=False,
             include_pilot_reports=False,
         )
@@ -774,7 +777,6 @@ class WorldBatchVecEnv(VecEnv):
         batch_request.include_agent_observations = True
         batch_request.include_instrument_states = True
         batch_request.include_mission_commands = False
-        batch_request.include_task_orders = False
         batch_request.include_leader_intents = False
         batch_request.include_pilot_reports = False
         return self._runtime_adapter.step_execution_batch(batch_request)
@@ -1254,35 +1256,44 @@ class WorldBatchVecEnv(VecEnv):
 
             task_snapshot = task_order_snapshot(getattr(handle.loader, "task_order", None))
             if task_snapshot is not None and snapshot_changed(handle.last_task_order_snapshot, task_snapshot):
-                task_assign = ef_py.WorldTaskOrderAssignment()
-                task_assign.world_index = int(env_idx)
-                task_assign.entity_id = int(handle.agent_id)
-                task_assign.order = handle.loader.task_order
+                task_assign = ef_py.WorldTaskOrderMaintainedAssignment()
+                project_world_task_order_maintained_assignment(
+                    task_assign,
+                    world_index=int(env_idx),
+                    entity_id=int(handle.agent_id),
+                    compatibility_task_order_shell=handle.loader.task_order,
+                )
                 task_assignments.append(task_assign)
                 handle.last_task_order_snapshot = task_snapshot
 
             intent_snapshot = leader_intent_snapshot(getattr(handle.loader, "leader_intent", None))
             if intent_snapshot is not None and snapshot_changed(handle.last_leader_intent_snapshot, intent_snapshot):
                 intent_assign = ef_py.WorldLeaderIntentAssignment()
-                intent_assign.world_index = int(env_idx)
-                intent_assign.entity_id = int(handle.agent_id)
-                intent_assign.intent = handle.loader.leader_intent
+                project_world_leader_intent_assignment_transport(
+                    intent_assign,
+                    world_index=int(env_idx),
+                    entity_id=int(handle.agent_id),
+                    compatibility_intent_shell=handle.loader.leader_intent,
+                )
                 intent_assignments.append(intent_assign)
                 handle.last_leader_intent_snapshot = intent_snapshot
 
             report_snapshot = pilot_report_snapshot(getattr(handle.loader, "pilot_report", None))
             if report_snapshot is not None and snapshot_changed(handle.last_pilot_report_snapshot, report_snapshot):
                 report_assign = ef_py.WorldPilotReportAssignment()
-                report_assign.world_index = int(env_idx)
-                report_assign.entity_id = int(handle.agent_id)
-                report_assign.report = handle.loader.pilot_report
+                project_world_pilot_report_assignment_transport(
+                    report_assign,
+                    world_index=int(env_idx),
+                    entity_id=int(handle.agent_id),
+                    compatibility_report_shell=handle.loader.pilot_report,
+                )
                 report_assignments.append(report_assign)
                 handle.last_pilot_report_snapshot = report_snapshot
 
         if mission_assignments:
             self._runtime_adapter.set_mission_commands_batch(mission_assignments)
         if task_assignments:
-            self._runtime_adapter.set_task_orders_batch(task_assignments)
+            self._runtime_adapter.set_task_orders_maintained_batch(task_assignments)
         if intent_assignments:
             self._runtime_adapter.set_leader_intents_batch(intent_assignments)
         if report_assignments:

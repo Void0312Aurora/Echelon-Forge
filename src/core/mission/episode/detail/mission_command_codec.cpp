@@ -246,17 +246,18 @@ void write_mission_command_fields_to_json(const MissionCommand& command, nlohman
     if (mission_json == nullptr) {
         return;
     }
+    const auto core = mission_command_shared_core_directive(command);
     const auto recovery = mission_command_air_recovery_directive(command);
     const auto takeoff = mission_command_air_takeoff_directive(command);
     const auto formation = mission_command_air_formation_directive(command);
     const auto stationing = mission_command_naval_stationing_directive(command);
     const auto embarked_helo = mission_command_naval_embarked_helo_directive(command);
 
-    (*mission_json)["command_code"] = command.command_code;
-    (*mission_json)["target_heading"] = command.cmd_heading_deg;
-    (*mission_json)["target_altitude"] = command.cmd_altitude_m;
-    (*mission_json)["target_speed"] = command.cmd_speed_mps;
-    (*mission_json)["route_ref_id"] = command.route_ref_id;
+    (*mission_json)["command_code"] = core.command_code;
+    (*mission_json)["target_heading"] = core.cmd_heading_deg;
+    (*mission_json)["target_altitude"] = core.cmd_altitude_m;
+    (*mission_json)["target_speed"] = core.cmd_speed_mps;
+    (*mission_json)["route_ref_id"] = core.route_ref_id;
     (*mission_json)["reference_entity_id"] = stationing.reference_entity_id;
     (*mission_json)["station_radius_m"] = stationing.station_radius_m;
     (*mission_json)["station_bearing_deg"] = stationing.station_bearing_deg;
@@ -275,21 +276,23 @@ void write_mission_command_fields_to_json(const MissionCommand& command, nlohman
     (*mission_json)["form_offset_x"] = formation.form_offset_x;
     (*mission_json)["form_offset_y"] = formation.form_offset_y;
     (*mission_json)["form_offset_z"] = formation.form_offset_z;
-    (*mission_json)["roe_state"] = command.roe_state;
-    (*mission_json)["engagement_authority_holder_id"] = command.engagement_authority_holder_id;
-    (*mission_json)["engagement_authority_grantor_id"] = command.engagement_authority_grantor_id;
-    (*mission_json)["assigned_target_id"] = command.assigned_target_id;
-    (*mission_json)["authorization_to_fire"] = command.authorization_to_fire;
-    (*mission_json)["active"] = command.active;
+    (*mission_json)["roe_state"] = core.roe_state;
+    (*mission_json)["engagement_authority_holder_id"] = core.engagement_authority_holder_id;
+    (*mission_json)["engagement_authority_grantor_id"] = core.engagement_authority_grantor_id;
+    (*mission_json)["assigned_target_id"] = core.assigned_target_id;
+    (*mission_json)["authorization_to_fire"] = core.authorization_to_fire;
+    (*mission_json)["active"] = core.active;
 }
 
 MissionCommand build_mission_command_from_json(const nlohmann::json& mission_json) {
     MissionCommand command{};
-    command.cmd_heading_deg = json_double_or(mission_json, "target_heading", 0.0);
-    command.cmd_altitude_m = json_double_or(mission_json, "target_altitude", 0.0);
-    command.cmd_speed_mps = json_double_or(mission_json, "target_speed", 0.0);
-    command.command_code = json_int_or(mission_json, "command_code", 0);
-    command.route_ref_id = command.command_code == 3 ? json_uint64_or(mission_json, "route_ref_id", 0) : 0;
+    auto& core = mission_command_shared_core(command);
+    core.cmd_heading_deg = json_double_or(mission_json, "target_heading", 0.0);
+    core.cmd_altitude_m = json_double_or(mission_json, "target_altitude", 0.0);
+    core.cmd_speed_mps = json_double_or(mission_json, "target_speed", 0.0);
+    core.command_code = json_int_or(mission_json, "command_code", 0);
+    core.route_ref_id =
+        core.command_code == 3 ? json_uint64_or(mission_json, "route_ref_id", 0) : 0;
     command.reference_entity_id = json_uint64_or(mission_json, "reference_entity_id", 0);
     command.station_radius_m = json_double_or(mission_json, "station_radius_m", 0.0);
     command.station_bearing_deg = json_double_or(mission_json, "station_bearing_deg", 0.0);
@@ -308,12 +311,14 @@ MissionCommand build_mission_command_from_json(const nlohmann::json& mission_jso
     command.form_offset_x = json_double_or(mission_json, "form_offset_x", 0.0);
     command.form_offset_y = json_double_or(mission_json, "form_offset_y", 0.0);
     command.form_offset_z = json_double_or(mission_json, "form_offset_z", 0.0);
-    command.roe_state = json_int_or(mission_json, "roe_state", 0);
-    command.engagement_authority_holder_id = json_uint64_or(mission_json, "engagement_authority_holder_id", 0);
-    command.engagement_authority_grantor_id = json_uint64_or(mission_json, "engagement_authority_grantor_id", 0);
-    command.assigned_target_id = json_uint64_or(mission_json, "assigned_target_id", 0);
-    command.authorization_to_fire = json_bool_or(mission_json, "authorization_to_fire", false);
-    command.active = json_bool_or(mission_json, "active", false);
+    core.roe_state = json_int_or(mission_json, "roe_state", 0);
+    core.engagement_authority_holder_id =
+        json_uint64_or(mission_json, "engagement_authority_holder_id", 0);
+    core.engagement_authority_grantor_id =
+        json_uint64_or(mission_json, "engagement_authority_grantor_id", 0);
+    core.assigned_target_id = json_uint64_or(mission_json, "assigned_target_id", 0);
+    core.authorization_to_fire = json_bool_or(mission_json, "authorization_to_fire", false);
+    core.active = json_bool_or(mission_json, "active", false);
     return command;
 }
 
@@ -346,7 +351,7 @@ void update_state_mission_command_heading(
         return;
     }
     if (state->has_mission_command) {
-        state->mission_command.cmd_heading_deg = target_heading_deg;
+        mission_command_shared_core(state->mission_command).cmd_heading_deg = target_heading_deg;
     }
 
     nlohmann::json mission_json = build_state_mission_command_json(*state);
@@ -368,16 +373,17 @@ bool update_state_mission_command_targets(
     const double normalized_heading_deg = normalize_heading_deg(target_heading_deg);
     bool changed = false;
     if (state->has_mission_command) {
-        if (std::abs(std::remainder(state->mission_command.cmd_heading_deg - normalized_heading_deg, 360.0)) > 1.0e-9) {
-            state->mission_command.cmd_heading_deg = normalized_heading_deg;
+        auto& core = mission_command_shared_core(state->mission_command);
+        if (std::abs(std::remainder(core.cmd_heading_deg - normalized_heading_deg, 360.0)) > 1.0e-9) {
+            core.cmd_heading_deg = normalized_heading_deg;
             changed = true;
         }
-        if (std::abs(state->mission_command.cmd_altitude_m - target_altitude_m) > 1.0e-9) {
-            state->mission_command.cmd_altitude_m = target_altitude_m;
+        if (std::abs(core.cmd_altitude_m - target_altitude_m) > 1.0e-9) {
+            core.cmd_altitude_m = target_altitude_m;
             changed = true;
         }
-        if (std::abs(state->mission_command.cmd_speed_mps - target_speed_mps) > 1.0e-9) {
-            state->mission_command.cmd_speed_mps = target_speed_mps;
+        if (std::abs(core.cmd_speed_mps - target_speed_mps) > 1.0e-9) {
+            core.cmd_speed_mps = target_speed_mps;
             changed = true;
         }
     } else {

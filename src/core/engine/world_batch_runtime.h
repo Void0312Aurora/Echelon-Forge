@@ -106,7 +106,12 @@ public:
 
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
-    void set_task_orders_batch(const std::vector<WorldTaskOrderAssignment>& assignments);
+    void set_task_orders_maintained_batch(
+        const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
+    );
+    std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch(
+        const std::vector<WorldEntityRef>& refs
+    ) const;
     void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments);
     void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments);
 
@@ -132,7 +137,6 @@ public:
     std::vector<AgentObservation> get_agent_observations_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<InstrumentState> get_instrument_states_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<MissionCommand> get_mission_commands_batch(const std::vector<WorldEntityRef>& refs) const;
-    std::vector<TaskOrder> get_task_orders_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<LeaderIntent> get_leader_intents_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<PilotReport> get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const;
 
@@ -149,6 +153,15 @@ public:
         const std::vector<WorldEntityRef>& refs,
         bool use_gpu = false
     ) const;
+    std::vector<WorldBatchVisualBindingCompatibilityScene>
+    collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(
+        const std::vector<WorldEntityRef>& refs,
+        int downsample,
+        const std::vector<std::vector<uint64_t>>& candidate_ids_batch
+    ) const;
+    // Compatibility/diagnostics escape hatch only. Maintained facade code should
+    // own candidate-id assembly and route scene collection through the named
+    // helper above instead of adding new raw-world call sites.
     std::vector<WorldBatchVisualBindingCompatibilityScene>
     collect_visual_binding_compatibility_scenes_batch(
         const std::vector<WorldEntityRef>& refs,

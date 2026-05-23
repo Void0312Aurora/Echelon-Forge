@@ -112,6 +112,18 @@
 | `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | claimed closure 试图将已验收 counterfactual contracts 与 selected runtime slices 转为 maintained facade-owned experiment execution、scenario generation、evidence collection 与 legacy cleanup，但 owner 因 compatibility layers 与未闭合 subagent work 仍残留而否决该收口。 | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)、[fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)、[snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)、[counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)、[scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)、[experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)、[final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)、[dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)、[已争议验收记录](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md) |
 | `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen；由 WP23 取代 | 曾试图强制退场 post-WP21 compatibility layers，但 owner 因 uncontrolled follow-up waves 与 partial/quarantine evidence drift 终止该流。其 queue 只作历史记录，不得再派发。 | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.zh.md)、[dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
 | `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | 冻结 WP22，分类当前 dirty work，强制 delete-or-block decisions，将 TaskOrder 与 public API exits 记录为 blocked；因没有 deletion-ready surface 而跳过 implementation，并以受控 blocked recovery 收口。 | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md) |
+| `WP24 TaskOrder Maintained Business Migration` | active / deletion close-out | WP23 后的 replacement-backed TaskOrder 业务迁移：maintained contract/export/Python business paths 已集成，本轮 cleanup close-out 删除旧 public TaskOrder whole-shell compatibility surfaces。 | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)、[集成评估与清理收口](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md) |
+
+## WP24 TaskOrder Maintained Business Migration
+
+产出：
+
+- [WP24 TaskOrder Maintained Business Migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)
+
+WP24 是 WP23 以 `blocked` 关闭后打开的 active replacement-backed implementation
+package，不是另一轮 recovery wave。maintained contract/export/Python business
+migration 已集成；本轮 cleanup close-out 删除旧 public TaskOrder whole-shell
+compatibility surfaces，而不是把它们作为 residual 接受。
 
 ## WP23 Legacy Retirement Recovery And Reset
 
