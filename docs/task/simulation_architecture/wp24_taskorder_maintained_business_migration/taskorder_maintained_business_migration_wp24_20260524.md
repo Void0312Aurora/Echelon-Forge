@@ -11,8 +11,10 @@ move maintained TaskOrder business traffic onto `TaskOrderMaintainedBatchContrac
 and remove the old public whole-shell TaskOrder path from runtime/facade/Python
 business surfaces.
 
-Latest integration record:
-[WP24 Integration Assessment And Next Dispatch](wp24_integration_assessment_and_next_dispatch_20260524.md).
+Latest integration records:
+
+- [WP24 Integration Assessment And Next Dispatch](wp24_integration_assessment_and_next_dispatch_20260524.md)
+- [WP24 Facade Boundary Closure Task Package](wp24_facade_boundary_closure_task_package_20260524.md)
 
 ## 1. Maintained Target
 
@@ -50,13 +52,19 @@ business transport.
 
 ## 3. Closure Standard
 
-WP24 can close after focused validation proves:
+WP24 can close only after the TaskOrder deletion patch and the facade boundary
+closure package both pass focused validation. The TaskOrder-specific closure
+standard proves:
 
 - maintained runtime/facade TaskOrder write/read roundtrips preserve the business
   fields used by command-chain paths;
 - observation export still supports maintained `task_order_contracts`;
 - Python normal business paths do not expose or call the removed legacy writer;
 - architecture guards fail if the deleted public surfaces reappear.
+
+The boundary closure package adds mandatory follow-up acceptance for pure
+observation packets, facade-owned scenario setup, maintained command-chain
+contracts, and explicit maintained provenance at Python call sites.
 
 Focused validation for this deletion patch:
 

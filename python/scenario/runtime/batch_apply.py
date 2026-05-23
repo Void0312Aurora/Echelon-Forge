@@ -23,7 +23,10 @@ from .models import (
 )
 from .randomization import _apply_spawn_randomization
 from .roster import _attach_active_roster_to_applied_world
-from .world_setup_compat import apply_world_setup_payload_compat
+from .world_setup_compat import (
+    apply_world_setup_payload_compatibility_quarantine,
+    apply_world_setup_payload_maintained,
+)
 
 
 def _prepare_compiled_batch_world_context(
@@ -146,19 +149,20 @@ def _prepare_compiled_batch_world_context(
 
 
 def _load_compiled_scenario_batch_direct(
-    batch_runtime,
+    facade_setup_target,
     compiled_scenario: CompiledScenario,
     *,
     normalized_seeds: list[int],
     randomization_overrides: dict[str, Any] | None = None,
     apply_buffer: BatchWorldApplyBuffer | None = None,
+    compatibility_quarantine: bool = False,
 ) -> list[AppliedScenarioWorld]:
     runtime_metadata = getattr(compiled_scenario, "runtime_metadata", None)
     if runtime_metadata is None:
         raise ValueError("compiled_scenario.runtime_metadata is required for direct batch materialization")
 
     compiled_template = runtime_metadata.layout_template
-    world_count = int(batch_runtime.world_count())
+    world_count = int(facade_setup_target.world_count())
     if apply_buffer is None:
         apply_buffer = BatchWorldApplyBuffer(world_count)
 
@@ -265,13 +269,14 @@ def _load_compiled_scenario_batch_direct(
         for ts in time_steps
     ]
     entity_ids = _apply_world_setup_request(
-        batch_runtime,
+        facade_setup_target,
         seeds=normalized_seeds,
         terrain_assignments=terrain_items,
         wind_assignments=wind_items,
         zones=zone_items[:zone_cursor],
         spawn_requests=spawn_items[:spawn_cursor],
         time_steps=time_step_items,
+        compatibility_quarantine=compatibility_quarantine,
     )
 
     applied: list[AppliedScenarioWorld] = []
@@ -294,18 +299,19 @@ def _load_compiled_scenario_batch_direct(
     return applied
 
 
-def load_compiled_scenario_batch(
-    batch_runtime,
+def _load_compiled_scenario_for_setup_target(
+    facade_setup_target,
     compiled_scenario: CompiledScenario,
     *,
     seeds: list[int] | tuple[int, ...] | np.ndarray,
     randomization_overrides: dict[str, Any] | None = None,
     apply_buffer: BatchWorldApplyBuffer | None = None,
+    compatibility_quarantine: bool = False,
 ) -> list[AppliedScenarioWorld]:
     if not isinstance(compiled_scenario, CompiledScenario):
         raise TypeError("compiled_scenario must be a CompiledScenario")
 
-    world_count = int(batch_runtime.world_count())
+    world_count = int(facade_setup_target.world_count())
     if world_count <= 0:
         return []
 
@@ -319,11 +325,12 @@ def load_compiled_scenario_batch(
     runtime_metadata = getattr(compiled_scenario, "runtime_metadata", None)
     if runtime_metadata is not None:
         return _load_compiled_scenario_batch_direct(
-            batch_runtime,
+            facade_setup_target,
             compiled_scenario,
             normalized_seeds=normalized_seeds,
             randomization_overrides=randomization_overrides,
             apply_buffer=apply_buffer,
+            compatibility_quarantine=compatibility_quarantine,
         )
 
     layouts: list[ScenarioWorldLayout] = []
@@ -336,16 +343,40 @@ def load_compiled_scenario_batch(
             )
         )
 
-    return apply_world_layouts_to_batch(batch_runtime, layouts, apply_buffer=apply_buffer)
+    return _apply_world_layouts_to_setup_target(
+        facade_setup_target,
+        layouts,
+        apply_buffer=apply_buffer,
+        compatibility_quarantine=compatibility_quarantine,
+    )
 
 
-def apply_world_layouts_to_batch(
-    batch_runtime,
+def load_compiled_scenario_for_setup_target(
+    facade_setup_target,
+    compiled_scenario: CompiledScenario,
+    *,
+    seeds: list[int] | tuple[int, ...] | np.ndarray,
+    randomization_overrides: dict[str, Any] | None = None,
+    apply_buffer: BatchWorldApplyBuffer | None = None,
+) -> list[AppliedScenarioWorld]:
+    return _load_compiled_scenario_for_setup_target(
+        facade_setup_target,
+        compiled_scenario,
+        seeds=seeds,
+        randomization_overrides=randomization_overrides,
+        apply_buffer=apply_buffer,
+        compatibility_quarantine=False,
+    )
+
+
+def _apply_world_layouts_to_setup_target(
+    facade_setup_target,
     layouts: list[ScenarioWorldLayout],
     *,
     apply_buffer: BatchWorldApplyBuffer | None = None,
+    compatibility_quarantine: bool = False,
 ) -> list[AppliedScenarioWorld]:
-    world_count = int(batch_runtime.world_count())
+    world_count = int(facade_setup_target.world_count())
     if len(layouts) != world_count:
         raise ValueError(f"expected {world_count} layouts, got {len(layouts)}")
 
@@ -359,13 +390,14 @@ def apply_world_layouts_to_batch(
         for layout in layouts
     ]
     entity_ids = _apply_world_setup_request(
-        batch_runtime,
+        facade_setup_target,
         seeds=normalized_seeds,
         terrain_assignments=terrain_assignments,
         wind_assignments=wind_assignments,
         zones=zone_defs,
         spawn_requests=spawn_requests,
         time_steps=time_step_items,
+        compatibility_quarantine=compatibility_quarantine,
     )
 
     applied: list[AppliedScenarioWorld] = []
@@ -388,8 +420,22 @@ def apply_world_layouts_to_batch(
     return applied
 
 
+def apply_world_layouts_to_setup_target(
+    facade_setup_target,
+    layouts: list[ScenarioWorldLayout],
+    *,
+    apply_buffer: BatchWorldApplyBuffer | None = None,
+) -> list[AppliedScenarioWorld]:
+    return _apply_world_layouts_to_setup_target(
+        facade_setup_target,
+        layouts,
+        apply_buffer=apply_buffer,
+        compatibility_quarantine=False,
+    )
+
+
 def _apply_world_setup_request(
-    runtime,
+    facade_setup_target,
     *,
     seeds: list[int],
     terrain_assignments: list[Any],
@@ -397,9 +443,20 @@ def _apply_world_setup_request(
     zones: list[Any],
     spawn_requests: list[Any],
     time_steps: list[float],
+    compatibility_quarantine: bool = False,
 ) -> list[int]:
-    return apply_world_setup_payload_compat(
-        runtime,
+    if compatibility_quarantine:
+        return apply_world_setup_payload_compatibility_quarantine(
+            facade_setup_target,
+            seeds=seeds,
+            terrain_assignments=terrain_assignments,
+            wind_assignments=wind_assignments,
+            zones=zones,
+            spawn_requests=spawn_requests,
+            time_steps=time_steps,
+        )
+    return apply_world_setup_payload_maintained(
+        facade_setup_target,
         seeds=seeds,
         terrain_assignments=terrain_assignments,
         wind_assignments=wind_assignments,
@@ -409,7 +466,49 @@ def _apply_world_setup_request(
     )
 
 
+def apply_world_layouts_to_batch_compatibility_quarantine(
+    batch_runtime,
+    layouts: list[ScenarioWorldLayout],
+    *,
+    apply_buffer: BatchWorldApplyBuffer | None = None,
+) -> list[AppliedScenarioWorld]:
+    return _apply_world_layouts_to_setup_target(
+        batch_runtime,
+        layouts,
+        apply_buffer=apply_buffer,
+        compatibility_quarantine=True,
+    )
+
+
+def load_compiled_scenario_batch_compatibility_quarantine(
+    batch_runtime,
+    compiled_scenario: CompiledScenario,
+    *,
+    seeds: list[int] | tuple[int, ...] | np.ndarray,
+    randomization_overrides: dict[str, Any] | None = None,
+    apply_buffer: BatchWorldApplyBuffer | None = None,
+) -> list[AppliedScenarioWorld]:
+    return _load_compiled_scenario_for_setup_target(
+        batch_runtime,
+        compiled_scenario,
+        seeds=seeds,
+        randomization_overrides=randomization_overrides,
+        apply_buffer=apply_buffer,
+        compatibility_quarantine=True,
+    )
+
+
+# Backward import aliases retain maintained setup-target semantics and do not
+# enable raw runtime fallback.
+apply_world_layouts_to_batch = apply_world_layouts_to_setup_target
+load_compiled_scenario_batch = load_compiled_scenario_for_setup_target
+
+
 __all__ = [
+    "apply_world_layouts_to_setup_target",
     "apply_world_layouts_to_batch",
+    "apply_world_layouts_to_batch_compatibility_quarantine",
+    "load_compiled_scenario_for_setup_target",
     "load_compiled_scenario_batch",
+    "load_compiled_scenario_batch_compatibility_quarantine",
 ]

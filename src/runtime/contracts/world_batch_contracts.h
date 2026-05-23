@@ -560,6 +560,116 @@ struct WorldMissionCommandAssignment {
     shell_type command{};
 };
 
+struct MissionCommandMaintainedBatchContract {
+    using shared_core_owner_slice = MissionCommandSharedCoreOwnerSlice;
+    using air_owner_slice = MissionCommandAirOwnerSlice;
+    using naval_owner_slice = MissionCommandNavalOwnerSlice;
+    using shared_core_type = MissionCommandSharedCoreDirective;
+    using air_recovery_type = MissionCommandAir::RecoveryDirective;
+    using air_takeoff_type = MissionCommandAir::TakeoffDirective;
+    using air_formation_type = MissionCommandAir::FormationDirective;
+    using naval_stationing_type = MissionCommandNaval::StationingDirective;
+    using naval_embarked_helo_type = MissionCommandNaval::EmbarkedHeloDirective;
+    static constexpr bool kMaintainedBatchTruth = true;
+
+    shared_core_type shared_core{};
+    air_recovery_type air_recovery{};
+    air_takeoff_type air_takeoff{};
+    air_formation_type air_formation{};
+    naval_stationing_type naval_stationing{};
+    naval_embarked_helo_type naval_embarked_helo{};
+
+    static_assert(
+        kMaintainedBatchTruth,
+        "MissionCommandMaintainedBatchContract is the controlled MissionCommand maintained batch read/write shape."
+    );
+};
+
+[[nodiscard]] inline MissionCommandMaintainedBatchContract
+mission_command_maintained_batch_contract(
+    const MissionCommandCompatibilityTransportShell& command
+) noexcept {
+    return {
+        .shared_core = mission_command_shared_core_directive(command),
+        .air_recovery = mission_command_air_recovery_directive(command),
+        .air_takeoff = mission_command_air_takeoff_directive(command),
+        .air_formation = mission_command_air_formation_directive(command),
+        .naval_stationing = mission_command_naval_stationing_directive(command),
+        .naval_embarked_helo = mission_command_naval_embarked_helo_directive(command),
+    };
+}
+
+inline void apply_mission_command_maintained_batch_contract_to_compatibility_shell(
+    MissionCommandCompatibilityTransportShell& command,
+    const MissionCommandMaintainedBatchContract& contract
+) noexcept {
+    auto& core = mission_command_shared_core(command);
+    core.cmd_heading_deg = contract.shared_core.cmd_heading_deg;
+    core.cmd_altitude_m = contract.shared_core.cmd_altitude_m;
+    core.cmd_speed_mps = contract.shared_core.cmd_speed_mps;
+    core.command_code = contract.shared_core.command_code;
+    core.route_ref_id = contract.shared_core.route_ref_id;
+    core.roe_state = contract.shared_core.roe_state;
+    core.engagement_authority_holder_id =
+        contract.shared_core.engagement_authority_holder_id;
+    core.engagement_authority_grantor_id =
+        contract.shared_core.engagement_authority_grantor_id;
+    core.assigned_target_id = contract.shared_core.assigned_target_id;
+    core.authorization_to_fire =
+        contract.shared_core.authorization_to_fire;
+    core.active = contract.shared_core.active;
+
+    auto& air = mission_command_air_owner_slice(command);
+    air.recovery_base_id = contract.air_recovery.recovery_base_id;
+    air.recovery_runway_id = contract.air_recovery.recovery_runway_id;
+    air.recovery_approach_type = contract.air_recovery.recovery_approach_type;
+    air.takeoff_procedure_id = contract.air_takeoff.takeoff_procedure_id;
+    air.takeoff_clearance_id = contract.air_takeoff.takeoff_clearance_id;
+    air.takeoff_interval_s = contract.air_takeoff.takeoff_interval_s;
+    air.runway_slot_id = contract.air_takeoff.runway_slot_id;
+    air.formation_id = contract.air_formation.formation_id;
+    air.form_offset_x = contract.air_formation.form_offset_x;
+    air.form_offset_y = contract.air_formation.form_offset_y;
+    air.form_offset_z = contract.air_formation.form_offset_z;
+
+    auto& naval = mission_command_naval_owner_slice(command);
+    naval.reference_entity_id = contract.naval_stationing.reference_entity_id;
+    naval.station_radius_m = contract.naval_stationing.station_radius_m;
+    naval.station_bearing_deg = contract.naval_stationing.station_bearing_deg;
+    naval.embarked_helo_entity_id =
+        contract.naval_embarked_helo.embarked_helo_entity_id;
+    naval.launch_helo = contract.naval_embarked_helo.launch_helo;
+    naval.recover_helo = contract.naval_embarked_helo.recover_helo;
+    naval.relay_oth_targeting =
+        contract.naval_embarked_helo.relay_oth_targeting;
+}
+
+[[nodiscard]] inline MissionCommandCompatibilityTransportShell
+mission_command_compatibility_shell_from_maintained_batch_contract(
+    const MissionCommandMaintainedBatchContract& contract
+) noexcept {
+    MissionCommandCompatibilityTransportShell compatibility_shell{};
+    apply_mission_command_maintained_batch_contract_to_compatibility_shell(
+        compatibility_shell,
+        contract
+    );
+    return compatibility_shell;
+}
+
+struct WorldMissionCommandMaintainedAssignment {
+    using contract_type = MissionCommandMaintainedBatchContract;
+    static constexpr bool kMaintainedBatchTruth =
+        contract_type::kMaintainedBatchTruth;
+    static_assert(
+        kMaintainedBatchTruth,
+        "WorldMissionCommandMaintainedAssignment transports only the controlled MissionCommand maintained batch contract."
+    );
+
+    std::uint64_t world_index = 0;
+    std::uint64_t entity_id = 0;
+    contract_type mission_command{};
+};
+
 struct TaskOrderAirTaskingIdentityDirective {
     TaskType task_type = TaskType::Idle;
     std::uint64_t element_id = 0;
@@ -895,6 +1005,93 @@ struct WorldLeaderIntentAssignment {
     shell_type intent{};
 };
 
+struct LeaderIntentMaintainedBatchContract {
+    using shared_core_owner_slice = LeaderIntentCore;
+    using air_owner_slice = LeaderIntentAirOwnerSlice;
+    using naval_owner_slice = LeaderIntentNavalOwnerSlice;
+    using shared_core_type = LeaderIntentCore;
+    using air_recovery_type = LeaderIntentAir::RecoveryDirective;
+    using air_takeoff_type = LeaderIntentAir::TakeoffDirective;
+    using air_formation_type = LeaderIntentAir::FormationDirective;
+    using naval_command_authority_type = LeaderIntentNaval::CommandAuthorityDirective;
+    static constexpr bool kMaintainedBatchTruth = true;
+
+    shared_core_type shared_core{};
+    air_recovery_type air_recovery{};
+    air_takeoff_type air_takeoff{};
+    air_formation_type air_formation{};
+    naval_command_authority_type naval_command_authority{};
+
+    static_assert(
+        kMaintainedBatchTruth,
+        "LeaderIntentMaintainedBatchContract is the controlled LeaderIntent maintained batch read/write shape."
+    );
+};
+
+[[nodiscard]] inline LeaderIntentMaintainedBatchContract
+leader_intent_maintained_batch_contract(
+    const LeaderIntentCompatibilityTransportShell& intent
+) noexcept {
+    return {
+        .shared_core = leader_intent_shared_core(intent),
+        .air_recovery = leader_intent_air_recovery_directive(intent),
+        .air_takeoff = leader_intent_air_takeoff_directive(intent),
+        .air_formation = leader_intent_air_formation_directive(intent),
+        .naval_command_authority = leader_intent_naval_command_authority(intent),
+    };
+}
+
+inline void apply_leader_intent_maintained_batch_contract_to_compatibility_shell(
+    LeaderIntentCompatibilityTransportShell& intent,
+    const LeaderIntentMaintainedBatchContract& contract
+) noexcept {
+    leader_intent_shared_core(intent) = contract.shared_core;
+    auto& air = leader_intent_air_owner_slice(intent);
+    air.recovery_base_id = contract.air_recovery.recovery_base_id;
+    air.recovery_runway_id = contract.air_recovery.recovery_runway_id;
+    air.recovery_approach_type = contract.air_recovery.recovery_approach_type;
+    air.takeoff_procedure_id = contract.air_takeoff.takeoff_procedure_id;
+    air.takeoff_clearance_id = contract.air_takeoff.takeoff_clearance_id;
+    air.takeoff_interval_s = contract.air_takeoff.takeoff_interval_s;
+    air.runway_slot_id = contract.air_takeoff.runway_slot_id;
+    air.formation_id = contract.air_formation.formation_id;
+    air.form_offset_x = contract.air_formation.form_offset_x;
+    air.form_offset_y = contract.air_formation.form_offset_y;
+    air.form_offset_z = contract.air_formation.form_offset_z;
+
+    auto& naval = leader_intent_naval_owner_slice(intent);
+    naval.warfare_role_code =
+        contract.naval_command_authority.warfare_role_code;
+    naval.officer_in_tactical_command =
+        contract.naval_command_authority.officer_in_tactical_command;
+}
+
+[[nodiscard]] inline LeaderIntentCompatibilityTransportShell
+leader_intent_compatibility_shell_from_maintained_batch_contract(
+    const LeaderIntentMaintainedBatchContract& contract
+) noexcept {
+    LeaderIntentCompatibilityTransportShell compatibility_shell{};
+    apply_leader_intent_maintained_batch_contract_to_compatibility_shell(
+        compatibility_shell,
+        contract
+    );
+    return compatibility_shell;
+}
+
+struct WorldLeaderIntentMaintainedAssignment {
+    using contract_type = LeaderIntentMaintainedBatchContract;
+    static constexpr bool kMaintainedBatchTruth =
+        contract_type::kMaintainedBatchTruth;
+    static_assert(
+        kMaintainedBatchTruth,
+        "WorldLeaderIntentMaintainedAssignment transports only the controlled LeaderIntent maintained batch contract."
+    );
+
+    std::uint64_t world_index = 0;
+    std::uint64_t entity_id = 0;
+    contract_type leader_intent{};
+};
+
 struct WorldPilotReportAssignment {
     using shell_type = PilotReportCompatibilityTransportShell;
     static constexpr bool kCompatibilityTransportShell =
@@ -909,6 +1106,75 @@ struct WorldPilotReportAssignment {
     shell_type report{};
 };
 
+struct PilotReportMaintainedBatchContract {
+    using shared_core_owner_slice = PilotReportCore;
+    using air_owner_slice = PilotReportAirOwnerSlice;
+    using naval_owner_slice = PilotReportNavalOwnerSlice;
+    using shared_core_type = PilotReportCore;
+    using air_owner_slice_type = PilotReportAirOwnerSlice;
+    using naval_command_authority_type = PilotReportNaval::CommandAuthorityDirective;
+    static constexpr bool kMaintainedBatchTruth = true;
+
+    shared_core_type shared_core{};
+    air_owner_slice_type air{};
+    naval_command_authority_type naval_command_authority{};
+
+    static_assert(
+        kMaintainedBatchTruth,
+        "PilotReportMaintainedBatchContract is the controlled PilotReport maintained batch read/write shape."
+    );
+};
+
+[[nodiscard]] inline PilotReportMaintainedBatchContract
+pilot_report_maintained_batch_contract(
+    const PilotReportCompatibilityTransportShell& report
+) noexcept {
+    return {
+        .shared_core = pilot_report_shared_core(report),
+        .air = pilot_report_air_owner_slice(report),
+        .naval_command_authority = pilot_report_naval_command_authority(report),
+    };
+}
+
+inline void apply_pilot_report_maintained_batch_contract_to_compatibility_shell(
+    PilotReportCompatibilityTransportShell& report,
+    const PilotReportMaintainedBatchContract& contract
+) noexcept {
+    pilot_report_shared_core(report) = contract.shared_core;
+    pilot_report_air_owner_slice(report) = contract.air;
+    auto& naval = pilot_report_naval_owner_slice(report);
+    naval.warfare_role_code =
+        contract.naval_command_authority.warfare_role_code;
+    naval.officer_in_tactical_command =
+        contract.naval_command_authority.officer_in_tactical_command;
+}
+
+[[nodiscard]] inline PilotReportCompatibilityTransportShell
+pilot_report_compatibility_shell_from_maintained_batch_contract(
+    const PilotReportMaintainedBatchContract& contract
+) noexcept {
+    PilotReportCompatibilityTransportShell compatibility_shell{};
+    apply_pilot_report_maintained_batch_contract_to_compatibility_shell(
+        compatibility_shell,
+        contract
+    );
+    return compatibility_shell;
+}
+
+struct WorldPilotReportMaintainedAssignment {
+    using contract_type = PilotReportMaintainedBatchContract;
+    static constexpr bool kMaintainedBatchTruth =
+        contract_type::kMaintainedBatchTruth;
+    static_assert(
+        kMaintainedBatchTruth,
+        "WorldPilotReportMaintainedAssignment transports only the controlled PilotReport maintained batch contract."
+    );
+
+    std::uint64_t world_index = 0;
+    std::uint64_t entity_id = 0;
+    contract_type pilot_report{};
+};
+
 [[nodiscard]] inline const MissionCommandCompatibilityTransportShell&
 world_batch_assignment_compatibility_shell(
     const WorldMissionCommandAssignment& assignment
@@ -921,6 +1187,20 @@ world_batch_assignment_compatibility_shell(
     WorldMissionCommandAssignment& assignment
 ) noexcept {
     return assignment.command;
+}
+
+[[nodiscard]] inline const MissionCommandMaintainedBatchContract&
+world_mission_command_maintained_batch_contract(
+    const WorldMissionCommandMaintainedAssignment& assignment
+) noexcept {
+    return assignment.mission_command;
+}
+
+[[nodiscard]] inline MissionCommandMaintainedBatchContract&
+world_mission_command_maintained_batch_contract(
+    WorldMissionCommandMaintainedAssignment& assignment
+) noexcept {
+    return assignment.mission_command;
 }
 
 [[nodiscard]] inline const TaskOrderMaintainedBatchContract&
@@ -964,6 +1244,20 @@ world_batch_assignment_compatibility_shell(
     return assignment.intent;
 }
 
+[[nodiscard]] inline const LeaderIntentMaintainedBatchContract&
+world_leader_intent_maintained_batch_contract(
+    const WorldLeaderIntentMaintainedAssignment& assignment
+) noexcept {
+    return assignment.leader_intent;
+}
+
+[[nodiscard]] inline LeaderIntentMaintainedBatchContract&
+world_leader_intent_maintained_batch_contract(
+    WorldLeaderIntentMaintainedAssignment& assignment
+) noexcept {
+    return assignment.leader_intent;
+}
+
 [[nodiscard]] inline const PilotReportCompatibilityTransportShell&
 world_batch_assignment_compatibility_shell(
     const WorldPilotReportAssignment& assignment
@@ -976,6 +1270,20 @@ world_batch_assignment_compatibility_shell(
     WorldPilotReportAssignment& assignment
 ) noexcept {
     return assignment.report;
+}
+
+[[nodiscard]] inline const PilotReportMaintainedBatchContract&
+world_pilot_report_maintained_batch_contract(
+    const WorldPilotReportMaintainedAssignment& assignment
+) noexcept {
+    return assignment.pilot_report;
+}
+
+[[nodiscard]] inline PilotReportMaintainedBatchContract&
+world_pilot_report_maintained_batch_contract(
+    WorldPilotReportMaintainedAssignment& assignment
+) noexcept {
+    return assignment.pilot_report;
 }
 
 struct WorldExecutionEpisodeStepRequest {

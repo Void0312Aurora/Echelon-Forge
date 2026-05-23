@@ -23,6 +23,10 @@ WP24-A 到 WP24-H 已建立 maintained TaskOrder business path：
 此前的 quarantine 决策已被本轮清理取代。本 close-out patch 删除 remaining public
 TaskOrder whole-shell compatibility surfaces，不再把它们作为 residual 接受。
 
+在本 assessment 之后，并行 subagent 核验确认 TaskOrder public whole-shell
+surface 之外仍存在 facade / information-boundary 泄漏。整改任务包记录在
+[WP24 Facade Boundary Closure Task Package](wp24_facade_boundary_closure_task_package_20260524.zh.md)。
+
 ## 2. 清理结果
 
 已删除 surfaces：

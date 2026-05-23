@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import tempfile
+import textwrap
 import unittest
+import uuid
+from pathlib import Path
 
 import numpy as np
 
@@ -26,8 +31,48 @@ from python.scenario_runtime import (  # noqa: E402
     BatchWorldApplyBuffer,
     build_compiled_world_layout,
     load_compiled_scenario_batch,
+    load_compiled_scenario_batch_compatibility_quarantine,
     prepare_scenario_world_layout,
 )
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _compile_and_run_cpp_source(source: str) -> subprocess.CompletedProcess[str]:
+    binary = Path(tempfile.gettempdir()) / f"wp24_k_world_batch_runtime_{uuid.uuid4().hex}"
+    compile_result = subprocess.run(
+        [
+            "g++",
+            "-std=c++20",
+            "-I",
+            str(REPO_ROOT / "src"),
+            "-x",
+            "c++",
+            "-",
+            "-o",
+            str(binary),
+        ],
+        input=source,
+        text=True,
+        capture_output=True,
+        check=False,
+        cwd=REPO_ROOT,
+    )
+    if compile_result.returncode != 0:
+        return compile_result
+    result = subprocess.run(
+        [str(binary)],
+        text=True,
+        capture_output=True,
+        check=False,
+        cwd=REPO_ROOT,
+    )
+    try:
+        binary.unlink(missing_ok=True)
+    except OSError:
+        pass
+    return result
 
 
 def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
@@ -929,6 +974,173 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(got_reports[1].formation_role_id), int(ef_py.FormationRole.Wingman))
         self.assertAlmostEqual(float(got_reports[1].formation_error_m), 18.0, places=6)
 
+    def test_world_batch_runtime_command_chain_maintained_contract_support_declared(self) -> None:
+        header = (REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.h").read_text(encoding="utf-8")
+        impl = (REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.cpp").read_text(encoding="utf-8")
+
+        for token in (
+            "void set_mission_commands_maintained_batch(",
+            "std::vector<MissionCommandMaintainedBatchContract>",
+            "get_mission_commands_maintained_batch(",
+            "void set_leader_intents_maintained_batch(",
+            "std::vector<LeaderIntentMaintainedBatchContract>",
+            "get_leader_intents_maintained_batch(",
+            "void set_pilot_reports_maintained_batch(",
+            "std::vector<PilotReportMaintainedBatchContract>",
+            "get_pilot_reports_maintained_batch(",
+        ):
+            self.assertIn(token, header)
+
+        for token in (
+            "mission_command_compatibility_shell_from_maintained_batch_contract(",
+            "leader_intent_compatibility_shell_from_maintained_batch_contract(",
+            "pilot_report_compatibility_shell_from_maintained_batch_contract(",
+            "mission_command_maintained_batch_contract(",
+            "leader_intent_maintained_batch_contract(",
+            "pilot_report_maintained_batch_contract(",
+        ):
+            self.assertIn(token, impl)
+
+    def test_world_batch_command_chain_maintained_contracts_compile_and_preserve_slices(self) -> None:
+        source = textwrap.dedent(
+            r"""
+            #include <type_traits>
+            #include "runtime/contracts/world_batch_contracts.h"
+
+            int main() {
+                static_assert(MissionCommandMaintainedBatchContract::kMaintainedBatchTruth);
+                static_assert(LeaderIntentMaintainedBatchContract::kMaintainedBatchTruth);
+                static_assert(PilotReportMaintainedBatchContract::kMaintainedBatchTruth);
+                static_assert(WorldMissionCommandMaintainedAssignment::kMaintainedBatchTruth);
+                static_assert(WorldLeaderIntentMaintainedAssignment::kMaintainedBatchTruth);
+                static_assert(WorldPilotReportMaintainedAssignment::kMaintainedBatchTruth);
+
+                static_assert(WorldMissionCommandAssignment::kCompatibilityTransportShell);
+                static_assert(WorldLeaderIntentAssignment::kCompatibilityTransportShell);
+                static_assert(WorldPilotReportAssignment::kCompatibilityTransportShell);
+
+                static_assert(std::is_same_v<
+                    decltype(world_mission_command_maintained_batch_contract(
+                        std::declval<WorldMissionCommandMaintainedAssignment&>())),
+                    MissionCommandMaintainedBatchContract&>);
+                static_assert(std::is_same_v<
+                    decltype(world_leader_intent_maintained_batch_contract(
+                        std::declval<WorldLeaderIntentMaintainedAssignment&>())),
+                    LeaderIntentMaintainedBatchContract&>);
+                static_assert(std::is_same_v<
+                    decltype(world_pilot_report_maintained_batch_contract(
+                        std::declval<WorldPilotReportMaintainedAssignment&>())),
+                    PilotReportMaintainedBatchContract&>);
+
+                MissionCommand command{};
+                command.command_code = 31;
+                command.cmd_heading_deg = 45.0;
+                command.cmd_altitude_m = 1200.0;
+                command.cmd_speed_mps = 180.0;
+                command.route_ref_id = 7101;
+                command.authorization_to_fire = true;
+                command.active = true;
+                command.recovery_base_id = 81;
+                command.recovery_runway_id = 82;
+                command.recovery_approach_type = RecoveryApproachType::ILS;
+                command.takeoff_procedure_id = TakeoffProcedureType::Interval;
+                command.takeoff_clearance_id = TakeoffClearanceState::ClearedForTakeoff;
+                command.takeoff_interval_s = 12.5;
+                command.runway_slot_id = RunwaySlotPosition::Right;
+                command.formation_id = 17;
+                command.form_offset_x = 180.0;
+                command.form_offset_y = -90.0;
+                command.form_offset_z = 30.0;
+                command.reference_entity_id = 9101;
+                command.station_radius_m = 16000.0;
+                command.station_bearing_deg = 75.0;
+                command.embarked_helo_entity_id = 9201;
+                command.launch_helo = true;
+                command.recover_helo = false;
+                command.relay_oth_targeting = true;
+
+                const auto command_contract =
+                    mission_command_maintained_batch_contract(command);
+                const auto command_shell =
+                    mission_command_compatibility_shell_from_maintained_batch_contract(
+                        command_contract);
+
+                LeaderIntent intent{};
+                intent.command_code = 4;
+                intent.cmd_heading_deg = 90.0;
+                intent.cmd_altitude_m = 600.0;
+                intent.cmd_speed_mps = 95.0;
+                intent.task_group_id = 8001;
+                intent.role_code = 22;
+                intent.active = true;
+                intent.recovery_base_id = 91;
+                intent.recovery_runway_id = 92;
+                intent.recovery_approach_type = RecoveryApproachType::Overhead;
+                intent.takeoff_procedure_id = TakeoffProcedureType::SingleShip;
+                intent.takeoff_clearance_id = TakeoffClearanceState::LineUpAndWait;
+                intent.takeoff_interval_s = 13.5;
+                intent.runway_slot_id = RunwaySlotPosition::Left;
+                intent.formation_id = 34;
+                intent.form_offset_x = 4.25;
+                intent.form_offset_y = 5.5;
+                intent.form_offset_z = 6.75;
+                intent.warfare_role_code = 35;
+                intent.officer_in_tactical_command = 36;
+
+                const auto intent_contract =
+                    leader_intent_maintained_batch_contract(intent);
+                const auto intent_shell =
+                    leader_intent_compatibility_shell_from_maintained_batch_contract(
+                        intent_contract);
+
+                PilotReport report{};
+                report.report_type = CommMsgType::REP_WILCO;
+                report.sender_id = 101;
+                report.task_id = 202;
+                report.role_code = 21;
+                report.active = true;
+                report.element_id = 7001;
+                report.phase_id = 8;
+                report.formation_role_id = 3;
+                report.separation_m = 126.0;
+                report.warfare_role_code = 41;
+                report.officer_in_tactical_command = 42;
+
+                const auto report_contract =
+                    pilot_report_maintained_batch_contract(report);
+                const auto report_shell =
+                    pilot_report_compatibility_shell_from_maintained_batch_contract(
+                        report_contract);
+
+                return !(
+                    command_shell.command_code == command.command_code &&
+                    command_shell.cmd_heading_deg == command.cmd_heading_deg &&
+                    command_shell.route_ref_id == command.route_ref_id &&
+                    command_shell.recovery_base_id == command.recovery_base_id &&
+                    command_shell.takeoff_interval_s == command.takeoff_interval_s &&
+                    command_shell.formation_id == command.formation_id &&
+                    command_shell.reference_entity_id == command.reference_entity_id &&
+                    command_shell.embarked_helo_entity_id == command.embarked_helo_entity_id &&
+                    command_shell.launch_helo == command.launch_helo &&
+                    intent_shell.command_code == intent.command_code &&
+                    intent_shell.task_group_id == intent.task_group_id &&
+                    intent_shell.recovery_base_id == intent.recovery_base_id &&
+                    intent_shell.takeoff_interval_s == intent.takeoff_interval_s &&
+                    intent_shell.formation_id == intent.formation_id &&
+                    intent_shell.warfare_role_code == intent.warfare_role_code &&
+                    report_shell.report_type == report.report_type &&
+                    report_shell.sender_id == report.sender_id &&
+                    report_shell.element_id == report.element_id &&
+                    report_shell.separation_m == report.separation_m &&
+                    report_shell.warfare_role_code == report.warfare_role_code);
+            }
+            """
+        )
+
+        result = _compile_and_run_cpp_source(source)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_world_batch_runtime_task_order_maintained_batch_roundtrip(self) -> None:
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
@@ -1250,8 +1462,18 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
         apply_buffer = BatchWorldApplyBuffer(2)
 
-        worlds_a = load_compiled_scenario_batch(batch, compiled, seeds=[11, 17], apply_buffer=apply_buffer)
-        worlds_b = load_compiled_scenario_batch(batch, compiled, seeds=[21, 27], apply_buffer=apply_buffer)
+        worlds_a = load_compiled_scenario_batch_compatibility_quarantine(
+            batch,
+            compiled,
+            seeds=[11, 17],
+            apply_buffer=apply_buffer,
+        )
+        worlds_b = load_compiled_scenario_batch_compatibility_quarantine(
+            batch,
+            compiled,
+            seeds=[21, 27],
+            apply_buffer=apply_buffer,
+        )
 
         self.assertEqual(len(worlds_a), 2)
         self.assertEqual(len(worlds_b), 2)
@@ -1273,7 +1495,10 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         batch = ef_py.WorldBatchRuntime(2)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
 
-        worlds = load_compiled_scenario_batch(batch, compiled, seeds=[11, 17])
+        with self.assertRaisesRegex(RuntimeError, "maintained facade setup target"):
+            load_compiled_scenario_batch(batch, compiled, seeds=[11, 17])
+
+        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[11, 17])
         self.assertEqual(len(worlds), 2)
         self.assertIsNotNone(worlds[0].agent_id)
         self.assertIsNotNone(worlds[1].agent_id)
@@ -1303,7 +1528,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
 
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
-        worlds = load_compiled_scenario_batch(batch, compiled, seeds=[23])
+        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[23])
         self.assertEqual(len(worlds), 1)
         batch_obs = batch.world(0).get_agent_observation(int(worlds[0].agent_id))
 
@@ -1409,7 +1634,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
 
-        worlds = load_compiled_scenario_batch(batch, compiled, seeds=[41])
+        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[41])
         loader = ScenarioLoader(batch.world(0))
         loader._compiled_scenario = compiled
         loader._compiled_runtime_metadata = compiled.runtime_metadata
@@ -1432,7 +1657,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
 
-        worlds = load_compiled_scenario_batch(batch, compiled, seeds=[53])
+        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[53])
         loader = ScenarioLoader(batch.world(0))
         loader._compiled_scenario = compiled
         loader._compiled_runtime_metadata = compiled.runtime_metadata

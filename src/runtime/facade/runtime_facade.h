@@ -94,6 +94,9 @@ public:
     ) const;
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
+    void set_mission_commands_maintained_batch(
+        const std::vector<WorldMissionCommandMaintainedAssignment>& assignments
+    );
     void set_task_orders_maintained_batch(
         const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
     );
@@ -101,7 +104,13 @@ public:
         const std::vector<WorldEntityRef>& refs
     ) const;
     void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments);
+    void set_leader_intents_maintained_batch(
+        const std::vector<WorldLeaderIntentMaintainedAssignment>& assignments
+    );
     void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments);
+    void set_pilot_reports_maintained_batch(
+        const std::vector<WorldPilotReportMaintainedAssignment>& assignments
+    );
     void step_batch();
     void clear_execution_episode_batch() noexcept;
     void prime_execution_episode_batch(
@@ -123,10 +132,17 @@ public:
     std::vector<AgentObservation> get_agent_observations_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<InstrumentState> get_instrument_states_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<MissionCommand> get_mission_commands_batch(const std::vector<WorldEntityRef>& refs) const;
+    std::vector<MissionCommandMaintainedBatchContract>
+    get_mission_commands_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<LeaderIntent> get_leader_intents_batch(const std::vector<WorldEntityRef>& refs) const;
+    std::vector<LeaderIntentMaintainedBatchContract>
+    get_leader_intents_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<PilotReport> get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const;
+    std::vector<PilotReportMaintainedBatchContract>
+    get_pilot_reports_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
     ObservationBatchPacket export_observation_packet(const std::vector<WorldEntityRef>& refs) const;
     ObservationBatchPacket export_observation_packet(const ObservationBatchRequest& request) const;
+    TaskingBatchPacket export_tasking_packet(const TaskingBatchRequest& request) const;
     EngagementEventPacket export_engagement_event_packet(const EngagementBatchRequest& request) const;
     std::vector<DiagnosticsTrace> export_diagnostics_traces(const EngagementBatchRequest& request) const;
     RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);
@@ -153,6 +169,7 @@ private:
     ObservationBatchPacket build_observation_packet(
         const ObservationBatchRequest& request
     ) const;
+    TaskingBatchPacket build_tasking_packet(const TaskingBatchRequest& request) const;
     void register_counterfactual_worldline_snapshot(
         const RuntimeCounterfactualSnapshot& snapshot
     );

@@ -24,6 +24,17 @@ def test_wp12a_law14_read_side_allowlist_stays_focused() -> None:
     assert "must not relabel privileged or raw surfaces as maintained" in shim_source
 
 
+def test_wp24l_maintained_intent_entry_points_validate_role_provenance() -> None:
+    shim_source = AGENT_SHIM.read_text(encoding="utf-8")
+
+    assert "_validate_maintained_entry_point_role" in shim_source
+    assert "maintained business entry points require roles with explicit maintained " in shim_source
+    assert "ObservationPacket/DecisionBelief provenance" in shim_source
+    assert "if self.maintained_status == MAINTAINED:" in shim_source
+    assert "entry_point=\"ActionIntentCompat\"" in shim_source
+    assert "entry_point=\"CoordinationIntentCompat\"" in shim_source
+
+
 def test_wp12a_does_not_add_new_raw_runtime_escape_hatch() -> None:
     layering_source = RUNTIME_FACADE_LAYERING.read_text(encoding="utf-8")
 

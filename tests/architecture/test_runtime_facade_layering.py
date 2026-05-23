@@ -34,6 +34,8 @@ GPU_BINDINGS = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_gpu.cpp"
 WORLD_BATCH_RUNTIME_H = REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.h"
 WORLD_BATCH_RUNTIME_CPP = REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.cpp"
 CORE_SRC = REPO_ROOT / "src" / "core"
+SCENARIO_RUNTIME = REPO_ROOT / "python" / "scenario" / "runtime"
+UNIVERSAL_ENV = REPO_ROOT / "gym_envs" / "universal_env.py"
 
 
 def _source() -> str:
@@ -403,7 +405,9 @@ def test_world_batch_adapter_keeps_runtime_escape_hatch_lazy_and_explicit() -> N
     assert "self.world(int(world_index)).get_visual_observation(" not in source
     assert 'hasattr(self.world(int(world_index)), "get_visual_observation_downsampled")' not in source
     assert "return build_runtime_world_layout_request(" in source
-    assert "return apply_runtime_world_layout_request_compat(batch_target, request)" in source
+    assert "return apply_runtime_world_layout_request_maintained(self.facade, request)" in source
+    assert "apply_runtime_world_layout_request_compatibility_quarantine(" in source
+    assert 'runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_layout")' in source
     assert "result = self._apply_runtime_world_layout_request(request)" in source
     assert "self.facade.world_time_step(int(world_index))" in source
     assert "batch_target = self.facade if self.facade is not None else self._compat_runtime_handle()" in source
@@ -415,10 +419,92 @@ def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
     seam_source = (REPO_ROOT / "python" / "scenario" / "runtime" / "world_setup_compat.py").read_text(encoding="utf-8")
 
     assert "def build_runtime_world_layout_request(" in seam_source
+    assert "def apply_runtime_world_layout_request_maintained(setup_target: Any, request: Any) -> Any:" in seam_source
+    assert "def apply_runtime_world_layout_request_compatibility_quarantine(runtime: Any, request: Any) -> Any:" in seam_source
     assert "def apply_runtime_world_layout_request_compat(runtime: Any, request: Any) -> Any:" in seam_source
+    assert "def apply_world_setup_request_maintained(setup_target: Any, request: Any) -> list[int]:" in seam_source
+    assert "def apply_world_setup_payload_maintained(" in seam_source
+    assert "def apply_world_setup_payload_compatibility_quarantine(" in seam_source
     assert "def read_runtime_world_time_step_compat(" in seam_source
     assert "RuntimeWorldLayoutRequestCompat" in seam_source
     assert "RuntimeWorldLayoutResultCompat" in seam_source
+
+
+def test_wp24_scenario_setup_default_path_uses_maintained_facade_target() -> None:
+    batch_apply = (SCENARIO_RUNTIME / "batch_apply.py").read_text(encoding="utf-8")
+    adapter = _adapter_source()
+
+    assert "def load_compiled_scenario_for_setup_target(" in batch_apply
+    assert "def apply_world_layouts_to_setup_target(" in batch_apply
+    assert "facade_setup_target" in batch_apply
+    assert "apply_world_setup_payload_maintained(" in batch_apply
+    assert "apply_world_setup_payload_compat(" not in batch_apply
+    assert "load_compiled_scenario_batch = load_compiled_scenario_for_setup_target" in batch_apply
+
+    assert "apply_world_setup_request_maintained(self.facade, request)" in adapter
+    assert "apply_world_setup_request_compatibility_quarantine(" in adapter
+    assert 'runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_setup")' in adapter
+    assert 'runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_setup_batch")' in adapter
+
+
+def test_wp24_scenario_raw_setup_fallbacks_are_quarantined_by_name() -> None:
+    setup_source = (SCENARIO_RUNTIME / "world_setup_compat.py").read_text(encoding="utf-8")
+    tree = ast.parse(setup_source)
+    offenders: list[tuple[str, int, str]] = []
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        for child in ast.walk(node):
+            if not (
+                isinstance(child, ast.Call)
+                and isinstance(child.func, ast.Attribute)
+                and child.func.attr in {"apply_world_setup_batch", "apply_world_layout"}
+            ):
+                continue
+            if child.func.attr == "apply_world_layout" and node.name == "apply_runtime_world_layout_request_maintained":
+                continue
+            if "compatibility_quarantine" not in node.name:
+                offenders.append((node.name, int(getattr(child, "lineno", 0) or 0), child.func.attr))
+
+    assert not offenders, f"raw setup fallback calls must stay inside compatibility_quarantine helpers: {offenders}"
+
+
+def test_wp24_scenario_runtime_does_not_construct_raw_runtime_on_production_path() -> None:
+    violations: list[tuple[str, int, str]] = []
+    forbidden_markers = ("ef_py.SimulationKernel(", "ef_py.WorldBatchRuntime(")
+
+    for path in SCENARIO_RUNTIME.rglob("*.py"):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            stripped = line.strip()
+            for marker in forbidden_markers:
+                if marker in stripped:
+                    violations.append((rel, lineno, stripped))
+
+    assert not violations, (
+        "scenario runtime setup must use maintained facade/adapter setup targets instead of "
+        f"constructing raw runtime objects: {violations}"
+    )
+
+
+def test_wp24_universal_env_raw_kernel_path_is_explicit_compatibility_quarantine() -> None:
+    universal_env = UNIVERSAL_ENV.read_text(encoding="utf-8")
+    train_source = (REPO_ROOT / "train.py").read_text(encoding="utf-8")
+
+    assert "runtime_compatibility_enabled: bool = False" in universal_env
+    assert "self.runtime_compatibility_enabled = _normalize_runtime_compatibility_enabled(" in universal_env
+    assert "if not self.runtime_compatibility_enabled:" in universal_env
+    assert "_raw_universal_env_compatibility_required_message()" in universal_env
+    assert universal_env.index("if not self.runtime_compatibility_enabled:") < universal_env.index(
+        "self.sim = ef_py.SimulationKernel()"
+    )
+    assert "ef_py.WorldBatchRuntime(" not in universal_env
+    assert "WorldBatchVecEnv/RuntimeFacadeAdapter" in universal_env
+
+    assert "The standard UniversalEnv execution path owns a raw SimulationKernel" in train_source
+    assert "runtime.world_batch_vec_env=true" in train_source
+    assert "env.runtime_compatibility_enabled=true" in train_source
 
 
 def test_runtime_facade_escape_hatch_allowlist_stays_explicit() -> None:
@@ -988,6 +1074,15 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
 
     assert "void set_task_orders_maintained_batch(" in runtime_header
     assert "std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch(" in runtime_header
+    assert "void set_mission_commands_maintained_batch(" in runtime_header
+    assert "std::vector<MissionCommandMaintainedBatchContract>" in runtime_header
+    assert "get_mission_commands_maintained_batch(" in runtime_header
+    assert "void set_leader_intents_maintained_batch(" in runtime_header
+    assert "std::vector<LeaderIntentMaintainedBatchContract>" in runtime_header
+    assert "get_leader_intents_maintained_batch(" in runtime_header
+    assert "void set_pilot_reports_maintained_batch(" in runtime_header
+    assert "std::vector<PilotReportMaintainedBatchContract>" in runtime_header
+    assert "get_pilot_reports_maintained_batch(" in runtime_header
     assert "void set_task_orders_batch(" not in runtime_header
     assert "std::vector<TaskOrder> get_task_orders_batch(" not in runtime_header
     assert "void set_task_orders_compatibility_batch(" not in runtime_header
@@ -995,35 +1090,75 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
 
     assert "void set_task_orders_maintained_batch(" in facade_header
     assert "std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch(" in facade_header
+    assert "void set_mission_commands_maintained_batch(" in facade_header
+    assert "get_mission_commands_maintained_batch(" in facade_header
+    assert "void set_leader_intents_maintained_batch(" in facade_header
+    assert "get_leader_intents_maintained_batch(" in facade_header
+    assert "void set_pilot_reports_maintained_batch(" in facade_header
+    assert "get_pilot_reports_maintained_batch(" in facade_header
     assert "void set_task_orders_batch(" not in facade_header
     assert "std::vector<TaskOrder> get_task_orders_batch(" not in facade_header
     assert "void set_task_orders_compatibility_batch(" not in facade_header
     assert "std::vector<TaskOrder> get_task_orders_compatibility_batch(" not in facade_header
 
-    observation_request_section = facade_types.split("struct ObservationBatchRequest", 1)[1].split("struct EngagementBatchRequest", 1)[0]
+    observation_request_section = facade_types.split("struct ObservationBatchRequest", 1)[1].split("struct TaskingBatchRequest", 1)[0]
+    tasking_request_section = facade_types.split("struct TaskingBatchRequest", 1)[1].split("struct EngagementBatchRequest", 1)[0]
     execution_request_section = facade_types.split("struct ExecutionBatchStepRequest", 1)[1].split("struct DeviceResidentOutputDescriptor", 1)[0]
     assert "bool include_task_orders = false;" not in observation_request_section
-    assert "bool include_task_order_contracts = false;" in observation_request_section
+    assert "bool include_task_order_contracts = false;" not in observation_request_section
+    assert "bool include_mission_commands = false;" not in observation_request_section
+    assert "bool include_leader_intents = false;" not in observation_request_section
+    assert "bool include_pilot_reports = false;" not in observation_request_section
+    assert "bool include_task_order_contracts = false;" in tasking_request_section
     assert "bool include_task_orders = false;" not in execution_request_section
     assert "bool include_task_order_contracts = false;" in execution_request_section
 
     observation_packet_section = facade_types.split("struct ObservationBatchPacket", 1)[1].split("struct EngagementEventPacket", 1)[0]
-    assert "std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;" in observation_packet_section
+    tasking_packet_section = facade_types.split("struct TaskingBatchPacket", 1)[1].split("struct ExecutionBatchStepResult", 1)[0]
+    assert "std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;" not in observation_packet_section
+    assert "std::vector<MissionCommand> mission_commands;" not in observation_packet_section
+    assert "std::vector<LeaderIntent> leader_intents;" not in observation_packet_section
+    assert "std::vector<PilotReport> pilot_reports;" not in observation_packet_section
     assert "std::vector<TaskOrder> task_orders;" not in observation_packet_section
+    assert "std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;" in tasking_packet_section
+    assert "std::vector<MissionCommandMaintainedBatchContract> mission_command_contracts;" in tasking_packet_section
+    assert "std::vector<LeaderIntentMaintainedBatchContract> leader_intent_contracts;" in tasking_packet_section
+    assert "std::vector<PilotReportMaintainedBatchContract> pilot_report_contracts;" in tasking_packet_section
+    assert "std::vector<MissionCommand> mission_commands;" not in tasking_packet_section
+    assert "std::vector<LeaderIntent> leader_intents;" not in tasking_packet_section
+    assert "std::vector<PilotReport> pilot_reports;" not in tasking_packet_section
+    assert '"facade_tasking_packet"' in tasking_packet_section
+    assert "kPolicySourceLabelFacadeObservationPacket" not in tasking_packet_section
 
-    observation_request_helper_section = facade_cpp.split("ObservationBatchRequest observation_request_from_step_request", 1)[1].split("std::uint64_t next_snapshot_version", 1)[0]
-    assert ".include_task_order_contracts = request.include_task_order_contracts," in observation_request_helper_section
+    observation_request_helper_section = facade_cpp.split("ObservationBatchRequest observation_request_from_step_request", 1)[1].split("TaskingBatchRequest tasking_request_from_step_request", 1)[0]
+    assert ".include_task_order_contracts = request.include_task_order_contracts," not in observation_request_helper_section
+    assert "TaskingBatchRequest tasking_request_from_step_request" in facade_cpp
+    tasking_request_helper_section = facade_cpp.split("TaskingBatchRequest tasking_request_from_step_request", 1)[1].split("std::uint64_t next_snapshot_version", 1)[0]
+    assert ".include_task_order_contracts = request.include_task_order_contracts," in tasking_request_helper_section
 
     export_vector_overload_section = facade_cpp.split("ObservationBatchPacket RuntimeFacade::export_observation_packet(const std::vector<WorldEntityRef>& refs) const", 1)[1].split("ObservationBatchPacket RuntimeFacade::export_observation_packet(const ObservationBatchRequest& request) const", 1)[0]
     assert ".include_task_orders = true," not in export_vector_overload_section
-    assert ".include_task_order_contracts = true," in export_vector_overload_section
+    assert ".include_task_order_contracts = true," not in export_vector_overload_section
 
-    build_observation_packet_section = facade_cpp.split("ObservationBatchPacket RuntimeFacade::build_observation_packet", 1)[1]
-    assert "if (request.include_task_order_contracts)" in build_observation_packet_section
-    assert "packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);" in build_observation_packet_section
+    build_observation_packet_section = facade_cpp.split("ObservationBatchPacket RuntimeFacade::build_observation_packet", 1)[1].split("TaskingBatchPacket RuntimeFacade::build_tasking_packet", 1)[0]
+    assert "if (request.include_task_order_contracts)" not in build_observation_packet_section
+    assert "packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);" not in build_observation_packet_section
+    assert "packet.mission_commands = runtime_->get_mission_commands_batch(request.refs);" not in build_observation_packet_section
     assert "if (request.include_task_orders)" not in build_observation_packet_section
     assert "runtime_->get_task_orders_batch(" not in build_observation_packet_section
     assert "runtime_->get_task_orders_compatibility_batch(request.refs);" not in build_observation_packet_section
+    build_tasking_packet_section = facade_cpp.split("TaskingBatchPacket RuntimeFacade::build_tasking_packet", 1)[1]
+    assert "if (request.include_task_order_contracts)" in build_tasking_packet_section
+    assert "packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);" in build_tasking_packet_section
+    assert "packet.mission_command_contracts =" in build_tasking_packet_section
+    assert "runtime_->get_mission_commands_maintained_batch(request.refs);" in build_tasking_packet_section
+    assert "packet.leader_intent_contracts =" in build_tasking_packet_section
+    assert "runtime_->get_leader_intents_maintained_batch(request.refs);" in build_tasking_packet_section
+    assert "packet.pilot_report_contracts =" in build_tasking_packet_section
+    assert "runtime_->get_pilot_reports_maintained_batch(request.refs);" in build_tasking_packet_section
+    assert "packet.mission_commands = runtime_->get_mission_commands_batch(request.refs);" not in build_tasking_packet_section
+    assert "packet.leader_intents = runtime_->get_leader_intents_batch(request.refs);" not in build_tasking_packet_section
+    assert "packet.pilot_reports = runtime_->get_pilot_reports_batch(request.refs);" not in build_tasking_packet_section
 
     assert '.def_rw("order", &WorldTaskOrderAssignment::order);' not in bindings_runtime
     assert '"set_task_orders_batch"' not in bindings_runtime
@@ -1032,14 +1167,41 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
     assert '"get_task_orders_compatibility_batch"' not in bindings_runtime
     assert '"WorldTaskOrderAssignment"' not in bindings_runtime
     assert '"WorldTaskOrderCompatibilityAssignment"' not in bindings_runtime
-    assert '"include_task_order_contracts"' in bindings_runtime
-    assert '"task_order_contracts"' in bindings_runtime
+    observation_request_binding_section = bindings_runtime.split('nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")', 1)[1].split('nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")', 1)[0]
+    tasking_request_binding_section = bindings_runtime.split('nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")', 1)[1].split('nb::class_<EngagementBatchRequest>(m, "EngagementBatchRequest")', 1)[0]
+    observation_packet_binding_section = bindings_runtime.split('nb::class_<ObservationBatchPacket>(m, "ObservationBatchPacket")', 1)[1].split('nb::class_<TaskingBatchPacket>(m, "TaskingBatchPacket")', 1)[0]
+    tasking_packet_binding_section = bindings_runtime.split('nb::class_<TaskingBatchPacket>(m, "TaskingBatchPacket")', 1)[1].split('nb::class_<EngagementEventPacket>(m, "EngagementEventPacket")', 1)[0]
+    assert '"include_task_order_contracts"' not in observation_request_binding_section
+    assert '"include_task_order_contracts"' in tasking_request_binding_section
+    assert '"task_order_contracts"' not in observation_packet_binding_section
+    assert '"task_order_contracts"' in tasking_packet_binding_section
+    assert '"mission_command_contracts"' in tasking_packet_binding_section
+    assert '"leader_intent_contracts"' in tasking_packet_binding_section
+    assert '"pilot_report_contracts"' in tasking_packet_binding_section
+    assert '"mission_commands"' not in tasking_packet_binding_section
+    assert '"leader_intents"' not in tasking_packet_binding_section
+    assert '"pilot_reports"' not in tasking_packet_binding_section
     assert '"include_task_orders"' not in bindings_runtime
     assert '"task_orders"' not in bindings_runtime
+    assert '"TaskingBatchRequest"' in bindings_runtime
+    assert '"TaskingBatchPacket"' in bindings_runtime
+    assert '"export_tasking_packet"' in bindings_runtime
     assert 'nb::class_<TaskOrderMaintainedBatchContract>(m, "TaskOrderMaintainedBatchContract")' in bindings_runtime
+    assert 'nb::class_<MissionCommandMaintainedBatchContract>(' in bindings_runtime
+    assert 'nb::class_<LeaderIntentMaintainedBatchContract>(' in bindings_runtime
+    assert 'nb::class_<PilotReportMaintainedBatchContract>(' in bindings_runtime
+    assert 'nb::class_<WorldMissionCommandMaintainedAssignment>(' in bindings_runtime
     assert 'nb::class_<WorldTaskOrderMaintainedAssignment>(' in bindings_runtime
+    assert 'nb::class_<WorldLeaderIntentMaintainedAssignment>(' in bindings_runtime
+    assert 'nb::class_<WorldPilotReportMaintainedAssignment>(' in bindings_runtime
+    assert '"set_mission_commands_maintained_batch"' in bindings_runtime
+    assert '"get_mission_commands_maintained_batch"' in bindings_runtime
     assert '"set_task_orders_maintained_batch"' in bindings_runtime
     assert '"get_task_orders_maintained_batch"' in bindings_runtime
+    assert '"set_leader_intents_maintained_batch"' in bindings_runtime
+    assert '"get_leader_intents_maintained_batch"' in bindings_runtime
+    assert '"set_pilot_reports_maintained_batch"' in bindings_runtime
+    assert '"get_pilot_reports_maintained_batch"' in bindings_runtime
 
 
 def test_wp24_python_maintained_observation_consumers_do_not_read_compatibility_task_orders() -> None:
@@ -1055,7 +1217,8 @@ def test_wp24_python_maintained_observation_consumers_do_not_read_compatibility_
 
     assert "include_task_order_contracts: bool = False" in multi_agent_runtime
     assert "request.include_task_orders = False" not in multi_agent_runtime
-    assert "request.include_task_order_contracts = bool(include_task_order_contracts)" in multi_agent_runtime
+    assert "ef_py.TaskingBatchRequest" in multi_agent_runtime
+    assert "return self.runtime.export_tasking_packet(request)" in multi_agent_runtime
     assert ".task_orders" not in multi_agent_runtime
 
     for source in (world_batch_vec_env, cooperative_vec_env):

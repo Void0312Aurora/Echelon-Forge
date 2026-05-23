@@ -11,14 +11,18 @@ from gym_envs.scenario_loader import ScenarioLoader
 from python.scenario.runtime import AppliedScenarioWorld
 from python.scenario.runtime import BatchWorldApplyBuffer
 from python.scenario.runtime import resolve_active_controllable_roster
-from python.scenario.runtime.world_setup_compat import apply_runtime_world_layout_request_compat
-from python.scenario.runtime.world_setup_compat import apply_world_setup_payload_compat
+from python.scenario.runtime.world_setup_compat import apply_runtime_world_layout_request_compatibility_quarantine
+from python.scenario.runtime.world_setup_compat import apply_runtime_world_layout_request_maintained
+from python.scenario.runtime.world_setup_compat import apply_world_setup_payload_compatibility_quarantine
+from python.scenario.runtime.world_setup_compat import apply_world_setup_request_compatibility_quarantine
+from python.scenario.runtime.world_setup_compat import apply_world_setup_request_maintained
 from python.scenario.runtime.world_setup_compat import build_batch_world_setup_request
 from python.scenario.runtime.world_setup_compat import build_runtime_world_layout_request
 from python.scenario.runtime.world_setup_compat import extract_batch_world_setup_entity_ids
 from python.scenario.runtime.world_setup_compat import read_runtime_world_time_step_compat
 
 from .compat import normalize_runtime_compatibility_enabled
+from .compat import runtime_compatibility_required_message
 from .command_chain_cache import project_world_task_order_maintained_assignment
 
 
@@ -177,7 +181,11 @@ class RuntimeFacadeAdapter:
         self._world_layout_snapshots: dict[int, _WorldLayoutSnapshot] = {}
 
     def _batch_target(self):
-        return self.facade if self.facade is not None else self._compat_runtime_handle()
+        if self.facade is not None:
+            return self.facade
+        if not self.runtime_compatibility_enabled:
+            raise RuntimeError(runtime_compatibility_required_message("RuntimeFacadeAdapter._batch_target"))
+        return self._compat_runtime_handle()
 
     def _compat_runtime_handle(self):
         if self._compat_runtime is not None:
@@ -185,6 +193,8 @@ class RuntimeFacadeAdapter:
         if self.facade is not None:
             self._compat_runtime = self.facade.runtime()
             return self._compat_runtime
+        if not self.runtime_compatibility_enabled:
+            raise RuntimeError(runtime_compatibility_required_message("RuntimeFacadeAdapter._compat_runtime_handle"))
         self._compat_runtime = ef_py.WorldBatchRuntime(self._world_count)
         return self._compat_runtime
 
@@ -324,7 +334,9 @@ class RuntimeFacadeAdapter:
         )
 
     def world_count(self) -> int:
-        return int(self._batch_target().world_count())
+        if self.facade is not None:
+            return int(self.facade.world_count())
+        return int(self._world_count)
 
     def set_worker_threads(self, worker_threads: int) -> None:
         self._batch_target().set_worker_threads(int(worker_threads))
@@ -365,8 +377,16 @@ class RuntimeFacadeAdapter:
         )
 
     def _apply_runtime_world_layout_request(self, request: Any) -> Any:
-        batch_target = self.facade if self.facade is not None else self._compat_runtime_handle()
-        return apply_runtime_world_layout_request_compat(batch_target, request)
+        if self.facade is not None:
+            return apply_runtime_world_layout_request_maintained(self.facade, request)
+        if self.runtime_compatibility_enabled:
+            return apply_runtime_world_layout_request_compatibility_quarantine(
+                self._compat_runtime_handle(),
+                request,
+            )
+        raise RuntimeError(
+            runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_layout")
+        )
 
     def _materialize_applied_world(self, world_index: int, layout: Any, entity_ids: Sequence[Any]) -> AppliedScenarioWorld:
         entities: dict[str, int] = {}
@@ -494,15 +514,17 @@ class RuntimeFacadeAdapter:
         return list(self._batch_target().get_comm_candidate_ids_batch(list(refs), bool(use_gpu)))
 
     def apply_world_setup(self, request: Any):
-        entity_ids = apply_world_setup_payload_compat(
-            self._batch_target(),
-            seeds=list(request.seeds),
-            terrain_assignments=list(request.terrain_assignments),
-            wind_assignments=list(request.wind_assignments),
-            zones=list(request.zones),
-            spawn_requests=list(request.spawn_requests),
-            time_steps=list(request.time_steps),
-        )
+        if self.facade is not None:
+            entity_ids = apply_world_setup_request_maintained(self.facade, request)
+        elif self.runtime_compatibility_enabled:
+            entity_ids = apply_world_setup_request_compatibility_quarantine(
+                self._compat_runtime_handle(),
+                request,
+            )
+        else:
+            raise RuntimeError(
+                runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_setup")
+            )
         result = ef_py.BatchWorldSetupResult() if hasattr(ef_py, "BatchWorldSetupResult") else None
         if result is None:
             return entity_ids
@@ -529,8 +551,12 @@ class RuntimeFacadeAdapter:
         )
         if request is not None:
             return extract_batch_world_setup_entity_ids(self.apply_world_setup(request))
-        return apply_world_setup_payload_compat(
-            self._batch_target(),
+        if not self.runtime_compatibility_enabled:
+            raise RuntimeError(
+                runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_setup_batch")
+            )
+        return apply_world_setup_payload_compatibility_quarantine(
+            self._compat_runtime_handle(),
             seeds=[int(seed) for seed in seeds],
             terrain_assignments=list(terrain_assignments),
             wind_assignments=list(wind_assignments),
@@ -594,9 +620,12 @@ class RuntimeFacadeAdapter:
             request.refs = refs_list
             request.include_agent_observations = bool(include_agent_observations)
             request.include_instrument_states = bool(include_instrument_states)
-            request.include_mission_commands = bool(include_mission_commands)
-            request.include_leader_intents = bool(include_leader_intents)
-            request.include_pilot_reports = bool(include_pilot_reports)
+            if hasattr(request, "include_mission_commands"):
+                request.include_mission_commands = bool(include_mission_commands)
+            if hasattr(request, "include_leader_intents"):
+                request.include_leader_intents = bool(include_leader_intents)
+            if hasattr(request, "include_pilot_reports"):
+                request.include_pilot_reports = bool(include_pilot_reports)
             return self.export_observation_packet(request)
         return self.export_observation_packet(refs_list)
 

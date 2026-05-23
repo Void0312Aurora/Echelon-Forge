@@ -11,7 +11,9 @@ continuation wave。WP24 的目标是把 maintained TaskOrder 业务流量迁到
 public whole-shell TaskOrder path。
 
 最新集成记录：
-[WP24 集成验收评估与下一轮分发](wp24_integration_assessment_and_next_dispatch_20260524.zh.md)。
+
+- [WP24 集成验收评估与下一轮分发](wp24_integration_assessment_and_next_dispatch_20260524.zh.md)
+- [WP24 Facade Boundary Closure Task Package](wp24_facade_boundary_closure_task_package_20260524.zh.md)
 
 ## 1. Maintained Target
 
@@ -47,13 +49,18 @@ TaskOrder whole-shell 类型仍可作为 ECS storage 与 command-layer projectio
 
 ## 3. 收口标准
 
-WP24 可以在 focused validation 证明以下事实后关闭：
+WP24 只有在 TaskOrder deletion patch 与 facade boundary closure package 都通过
+focused validation 后才能关闭。TaskOrder-specific closure standard 证明：
 
 - maintained runtime/facade TaskOrder write/read roundtrip 保留 command-chain paths
   使用的业务字段；
 - observation export 仍支持 maintained `task_order_contracts`；
 - Python normal business paths 不暴露也不调用已删除的 legacy writer；
 - architecture guards 会在已删除 public surfaces 重新出现时失败。
+
+Boundary closure package 额外要求 pure observation packet、facade-owned
+scenario setup、maintained command-chain contracts，以及 Python call site 显式
+maintained provenance。
 
 本 deletion patch 的 focused validation：
 

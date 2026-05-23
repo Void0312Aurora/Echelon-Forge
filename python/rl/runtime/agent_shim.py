@@ -198,6 +198,18 @@ def _validate_maintained_consumer_source(
         raise ValueError("maintained consumer fixtures must not relabel privileged or raw surfaces as maintained")
 
 
+def _validate_maintained_entry_point_role(role: "AgentRole", *, entry_point: str) -> None:
+    if role.maintained_status != MAINTAINED:
+        raise ValueError(
+            f"{entry_point} maintained business entry points require roles with explicit maintained "
+            "ObservationPacket/DecisionBelief provenance"
+        )
+    _validate_maintained_consumer_source(
+        role.information_state_source,
+        consumer_status=MAINTAINED,
+    )
+
+
 @dataclass(frozen=True)
 class AgentRole:
     """Passive Python-side sketch of the WP4 AgentRole five-element boundary."""
@@ -302,6 +314,7 @@ def roster_slot_role(
     formation_role_id: str | None = None,
     policy_route: str | None = None,
     information_state_source: ObservationProvenance | None = None,
+    maintained_status: str = COMPATIBILITY_ADAPTER,
 ) -> AgentRole:
     role_type = "roster_slot"
     if formation_role_id:
@@ -323,7 +336,7 @@ def roster_slot_role(
             "id": str(policy_route or "caller_supplied"),
         },
         action_interface="PilotActionAssignmentCompat",
-        maintained_status=COMPATIBILITY_ADAPTER,
+        maintained_status=maintained_status,
     )
 
 
@@ -354,6 +367,11 @@ class ActionIntentCompat:
         object.__setattr__(self, "payload_kind", str(self.payload_kind))
         object.__setattr__(self, "maintained_status", _normalize_status(self.maintained_status))
         object.__setattr__(self, "diagnostics_note", str(self.diagnostics_note))
+        if self.maintained_status == MAINTAINED:
+            _validate_maintained_entry_point_role(
+                self.role,
+                entry_point="ActionIntentCompat",
+            )
 
     @classmethod
     def from_pilot_assignment(
@@ -449,6 +467,11 @@ class CoordinationIntentCompat:
         object.__setattr__(self, "payload_kind", str(self.payload_kind))
         object.__setattr__(self, "maintained_status", _normalize_status(self.maintained_status))
         object.__setattr__(self, "diagnostics_note", str(self.diagnostics_note))
+        if self.maintained_status == MAINTAINED:
+            _validate_maintained_entry_point_role(
+                self.role,
+                entry_point="CoordinationIntentCompat",
+            )
 
     def payload_fields(self) -> tuple[str, ...]:
         fields = []

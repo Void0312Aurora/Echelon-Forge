@@ -1327,6 +1327,25 @@ void apply_observation_packet_provenance(ObservationBatchPacket* packet) {
     packet->provenance.diagnostics_reason.clear();
 }
 
+void apply_tasking_packet_provenance(TaskingBatchPacket* packet) {
+    if (packet == nullptr) {
+        return;
+    }
+    packet->provenance.information_state_layer =
+        std::string(kPolicyInformationStateDecisionBelief);
+    packet->provenance.source_label = "facade_tasking_packet";
+    packet->provenance.maintained_status =
+        std::string(kPolicyMaintainedStatusCompatibilityAdapter);
+    packet->provenance.observation_packet_ids = {
+        "tasking:" + std::to_string(packet->snapshot_version)
+    };
+    packet->provenance.source_observation_versions = {
+        "tasking:" + std::to_string(packet->snapshot_version)
+    };
+    packet->provenance.diagnostics_reason =
+        "command_tasking_read_export_split_from_observation_packet";
+}
+
 TrackPacket track_packet_from_observation_contact(
     const EngagementEntityRef& observer,
     const TrackData& contact,
@@ -1508,6 +1527,14 @@ ObservationBatchRequest observation_request_from_step_request(
         .refs = refs_from_step_requests(request.step_requests),
         .include_agent_observations = request.include_agent_observations,
         .include_instrument_states = request.include_instrument_states,
+    };
+}
+
+TaskingBatchRequest tasking_request_from_step_request(
+    const ExecutionBatchStepRequest& request
+) {
+    return TaskingBatchRequest{
+        .refs = refs_from_step_requests(request.step_requests),
         .include_mission_commands = request.include_mission_commands,
         .include_task_order_contracts = request.include_task_order_contracts,
         .include_leader_intents = request.include_leader_intents,
@@ -2646,6 +2673,12 @@ void RuntimeFacade::set_mission_commands_batch(const std::vector<WorldMissionCom
     runtime_->set_mission_commands_batch(assignments);
 }
 
+void RuntimeFacade::set_mission_commands_maintained_batch(
+    const std::vector<WorldMissionCommandMaintainedAssignment>& assignments
+) {
+    runtime_->set_mission_commands_maintained_batch(assignments);
+}
+
 void RuntimeFacade::set_task_orders_maintained_batch(
     const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
 ) {
@@ -2656,8 +2689,20 @@ void RuntimeFacade::set_leader_intents_batch(const std::vector<WorldLeaderIntent
     runtime_->set_leader_intents_batch(assignments);
 }
 
+void RuntimeFacade::set_leader_intents_maintained_batch(
+    const std::vector<WorldLeaderIntentMaintainedAssignment>& assignments
+) {
+    runtime_->set_leader_intents_maintained_batch(assignments);
+}
+
 void RuntimeFacade::set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments) {
     runtime_->set_pilot_reports_batch(assignments);
+}
+
+void RuntimeFacade::set_pilot_reports_maintained_batch(
+    const std::vector<WorldPilotReportMaintainedAssignment>& assignments
+) {
+    runtime_->set_pilot_reports_maintained_batch(assignments);
 }
 
 void RuntimeFacade::step_batch() {
@@ -2738,6 +2783,7 @@ ExecutionBatchStepResult RuntimeFacade::step_execution_batch(const ExecutionBatc
         result.controller_state_changed_flags.push_back(step_result.structural_state_changed);
     }
     result.observation_packet = build_observation_packet(observation_request_from_step_request(request));
+    result.tasking_packet = build_tasking_packet(tasking_request_from_step_request(request));
     return result;
 }
 
@@ -2753,6 +2799,13 @@ std::vector<MissionCommand> RuntimeFacade::get_mission_commands_batch(const std:
     return runtime_->get_mission_commands_batch(refs);
 }
 
+std::vector<MissionCommandMaintainedBatchContract>
+RuntimeFacade::get_mission_commands_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    return runtime_->get_mission_commands_maintained_batch(refs);
+}
+
 std::vector<TaskOrderMaintainedBatchContract>
 RuntimeFacade::get_task_orders_maintained_batch(
     const std::vector<WorldEntityRef>& refs
@@ -2764,8 +2817,22 @@ std::vector<LeaderIntent> RuntimeFacade::get_leader_intents_batch(const std::vec
     return runtime_->get_leader_intents_batch(refs);
 }
 
+std::vector<LeaderIntentMaintainedBatchContract>
+RuntimeFacade::get_leader_intents_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    return runtime_->get_leader_intents_maintained_batch(refs);
+}
+
 std::vector<PilotReport> RuntimeFacade::get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const {
     return runtime_->get_pilot_reports_batch(refs);
+}
+
+std::vector<PilotReportMaintainedBatchContract>
+RuntimeFacade::get_pilot_reports_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    return runtime_->get_pilot_reports_maintained_batch(refs);
 }
 
 ObservationBatchPacket RuntimeFacade::export_observation_packet(const std::vector<WorldEntityRef>& refs) const {
@@ -2773,15 +2840,15 @@ ObservationBatchPacket RuntimeFacade::export_observation_packet(const std::vecto
         .refs = refs,
         .include_agent_observations = true,
         .include_instrument_states = true,
-        .include_mission_commands = true,
-        .include_task_order_contracts = true,
-        .include_leader_intents = true,
-        .include_pilot_reports = true,
     });
 }
 
 ObservationBatchPacket RuntimeFacade::export_observation_packet(const ObservationBatchRequest& request) const {
     return build_observation_packet(request);
+}
+
+TaskingBatchPacket RuntimeFacade::export_tasking_packet(const TaskingBatchRequest& request) const {
+    return build_tasking_packet(request);
 }
 
 std::vector<DiagnosticsTrace> RuntimeFacade::export_diagnostics_traces(
@@ -3015,20 +3082,41 @@ ObservationBatchPacket RuntimeFacade::build_observation_packet(
     if (request.include_instrument_states) {
         packet.instrument_states = runtime_->get_instrument_states_batch(request.refs);
     }
+    packet.snapshot_version = next_snapshot_version(packet.refs.size() - 1);
+    packet.source_time_s = resolve_observation_source_time(packet.agent_observations, packet.refs.size());
+    apply_observation_packet_provenance(&packet);
+    return packet;
+}
+
+TaskingBatchPacket RuntimeFacade::build_tasking_packet(
+    const TaskingBatchRequest& request
+) const {
+    TaskingBatchPacket packet{};
+    packet.refs = request.refs;
+    packet.barrier_id = "tasking_export";
+
+    if (request.refs.empty()) {
+        apply_tasking_packet_provenance(&packet);
+        return packet;
+    }
+
     if (request.include_mission_commands) {
-        packet.mission_commands = runtime_->get_mission_commands_batch(request.refs);
+        packet.mission_command_contracts =
+            runtime_->get_mission_commands_maintained_batch(request.refs);
     }
     if (request.include_task_order_contracts) {
         packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);
     }
     if (request.include_leader_intents) {
-        packet.leader_intents = runtime_->get_leader_intents_batch(request.refs);
+        packet.leader_intent_contracts =
+            runtime_->get_leader_intents_maintained_batch(request.refs);
     }
     if (request.include_pilot_reports) {
-        packet.pilot_reports = runtime_->get_pilot_reports_batch(request.refs);
+        packet.pilot_report_contracts =
+            runtime_->get_pilot_reports_maintained_batch(request.refs);
     }
     packet.snapshot_version = next_snapshot_version(packet.refs.size() - 1);
-    packet.source_time_s = resolve_observation_source_time(packet.agent_observations, packet.refs.size());
-    apply_observation_packet_provenance(&packet);
+    packet.source_time_s = packet.refs.empty() ? 0.0 : static_cast<double>(packet.refs.size() - 1);
+    apply_tasking_packet_provenance(&packet);
     return packet;
 }

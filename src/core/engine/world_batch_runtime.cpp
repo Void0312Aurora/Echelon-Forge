@@ -735,6 +735,24 @@ void WorldBatchRuntime::set_mission_commands_batch(const std::vector<WorldMissio
     });
 }
 
+void WorldBatchRuntime::set_mission_commands_maintained_batch(
+    const std::vector<WorldMissionCommandMaintainedAssignment>& assignments
+) {
+    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
+    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+        auto& world = checked_world(world_index);
+        for (const size_t item_index : grouped[world_index]) {
+            const auto& item = assignments[item_index];
+            world.set_mission_command(
+                item.entity_id,
+                mission_command_compatibility_shell_from_maintained_batch_contract(
+                    item.mission_command
+                )
+            );
+        }
+    });
+}
+
 void WorldBatchRuntime::set_task_orders_maintained_batch(
     const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
 ) {
@@ -764,6 +782,24 @@ void WorldBatchRuntime::set_leader_intents_batch(const std::vector<WorldLeaderIn
     });
 }
 
+void WorldBatchRuntime::set_leader_intents_maintained_batch(
+    const std::vector<WorldLeaderIntentMaintainedAssignment>& assignments
+) {
+    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
+    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+        auto& world = checked_world(world_index);
+        for (const size_t item_index : grouped[world_index]) {
+            const auto& item = assignments[item_index];
+            world.set_leader_intent(
+                item.entity_id,
+                leader_intent_compatibility_shell_from_maintained_batch_contract(
+                    item.leader_intent
+                )
+            );
+        }
+    });
+}
+
 void WorldBatchRuntime::set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
@@ -771,6 +807,24 @@ void WorldBatchRuntime::set_pilot_reports_batch(const std::vector<WorldPilotRepo
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
             world.set_pilot_report(item.entity_id, item.report);
+        }
+    });
+}
+
+void WorldBatchRuntime::set_pilot_reports_maintained_batch(
+    const std::vector<WorldPilotReportMaintainedAssignment>& assignments
+) {
+    const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
+    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+        auto& world = checked_world(world_index);
+        for (const size_t item_index : grouped[world_index]) {
+            const auto& item = assignments[item_index];
+            world.set_pilot_report(
+                item.entity_id,
+                pilot_report_compatibility_shell_from_maintained_batch_contract(
+                    item.pilot_report
+                )
+            );
         }
     });
 }
@@ -813,6 +867,20 @@ std::vector<MissionCommand> WorldBatchRuntime::get_mission_commands_batch(const 
     return out;
 }
 
+std::vector<MissionCommandMaintainedBatchContract>
+WorldBatchRuntime::get_mission_commands_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    std::vector<MissionCommandMaintainedBatchContract> out(refs.size());
+    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+        const auto& ref = refs[i];
+        out[i] = mission_command_maintained_batch_contract(
+            checked_world(static_cast<size_t>(ref.world_index)).get_mission_command(ref.entity_id)
+        );
+    });
+    return out;
+}
+
 std::vector<TaskOrderMaintainedBatchContract>
 WorldBatchRuntime::get_task_orders_maintained_batch(
     const std::vector<WorldEntityRef>& refs
@@ -836,11 +904,39 @@ std::vector<LeaderIntent> WorldBatchRuntime::get_leader_intents_batch(const std:
     return out;
 }
 
+std::vector<LeaderIntentMaintainedBatchContract>
+WorldBatchRuntime::get_leader_intents_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    std::vector<LeaderIntentMaintainedBatchContract> out(refs.size());
+    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+        const auto& ref = refs[i];
+        out[i] = leader_intent_maintained_batch_contract(
+            checked_world(static_cast<size_t>(ref.world_index)).get_leader_intent(ref.entity_id)
+        );
+    });
+    return out;
+}
+
 std::vector<PilotReport> WorldBatchRuntime::get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const {
     std::vector<PilotReport> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
         out[i] = checked_world(static_cast<size_t>(ref.world_index)).get_pilot_report(ref.entity_id);
+    });
+    return out;
+}
+
+std::vector<PilotReportMaintainedBatchContract>
+WorldBatchRuntime::get_pilot_reports_maintained_batch(
+    const std::vector<WorldEntityRef>& refs
+) const {
+    std::vector<PilotReportMaintainedBatchContract> out(refs.size());
+    parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
+        const auto& ref = refs[i];
+        out[i] = pilot_report_maintained_batch_contract(
+            checked_world(static_cast<size_t>(ref.world_index)).get_pilot_report(ref.entity_id)
+        );
     });
     return out;
 }

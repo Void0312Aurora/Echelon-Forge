@@ -207,6 +207,114 @@ def test_maintained_agent_role_rejects_compatibility_adapter_and_truth_inputs():
         )
 
 
+def test_maintained_intent_entry_points_reject_default_role_provenance():
+    default_single_role = single_agent_role(agent_id=10)
+    default_roster_role = roster_slot_role(world_index=0, entity_id=10, roster_index=2)
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "ActionIntentCompat maintained business entry points require roles with explicit maintained "
+            "ObservationPacket/DecisionBelief provenance"
+        ),
+    ):
+        ActionIntentCompat(
+            role=default_single_role,
+            payload=SimpleNamespace(throttle=0.8),
+            maintained_status=MAINTAINED,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "CoordinationIntentCompat maintained business entry points require roles with explicit maintained "
+            "ObservationPacket/DecisionBelief provenance"
+        ),
+    ):
+        CoordinationIntentCompat(
+            role=default_roster_role,
+            task_order=SimpleNamespace(task_id="hold-station"),
+            maintained_status=MAINTAINED,
+        )
+
+
+def test_maintained_intent_entry_points_accept_explicit_maintained_role_provenance():
+    role = single_agent_role(
+        world_index=0,
+        agent_id=31,
+        information_state_source=observation_provenance(
+            OBS_FACADE_OBSERVATION_PACKET,
+            consumed_snapshot_version="global:21",
+            observation_packet_id="obs:21",
+        ),
+        maintained_status=MAINTAINED,
+    )
+
+    action = ActionIntentCompat(
+        role=role,
+        payload=SimpleNamespace(throttle=0.8),
+        target_entity_id=31,
+        target_world_index=0,
+        maintained_status=MAINTAINED,
+    )
+    coordination = CoordinationIntentCompat(
+        role=role,
+        task_order=SimpleNamespace(task_id="hold-station"),
+        roster_scope={"world_index": 0},
+        maintained_status=MAINTAINED,
+    )
+
+    assert action.as_dict()["maintained_status"] == MAINTAINED
+    assert coordination.as_dict()["maintained_status"] == MAINTAINED
+
+
+def test_maintained_intent_entry_points_reject_relabelled_raw_or_compat_role_provenance():
+    compat_relabelled = single_agent_role(
+        agent_id=10,
+        information_state_source=ObservationProvenance(
+            label=OBS_FACADE_OBSERVATION_PACKET,
+            information_state_layer="AgentObservation",
+            source_surface="get_agent_observation or get_agent_observations_batch",
+            maintained_status=MAINTAINED,
+        ),
+        maintained_status=COMPATIBILITY_ADAPTER,
+    )
+    raw_relabelled = roster_slot_role(
+        world_index=0,
+        entity_id=10,
+        roster_index=2,
+        information_state_source=ObservationProvenance(
+            label=OBS_FACADE_OBSERVATION_PACKET,
+            information_state_layer="AgentObservation",
+            source_surface="raw runtime or SimulationKernel",
+            maintained_status=MAINTAINED,
+        ),
+        maintained_status=COMPATIBILITY_ADAPTER,
+    )
+    object.__setattr__(compat_relabelled, "maintained_status", MAINTAINED)
+    object.__setattr__(raw_relabelled, "maintained_status", MAINTAINED)
+
+    with pytest.raises(
+        ValueError,
+        match="maintained consumer fixtures must not relabel privileged or raw surfaces as maintained",
+    ):
+        ActionIntentCompat(
+            role=compat_relabelled,
+            payload=SimpleNamespace(throttle=0.8),
+            maintained_status=MAINTAINED,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="maintained consumer fixtures must not relabel privileged or raw surfaces as maintained",
+    ):
+        CoordinationIntentCompat(
+            role=raw_relabelled,
+            task_order=SimpleNamespace(task_id="hold-station"),
+            maintained_status=MAINTAINED,
+        )
+
+
 def test_diagnostics_only_agent_role_keeps_truth_fixture_explicitly_allowed():
     role = single_agent_role(
         agent_id=10,

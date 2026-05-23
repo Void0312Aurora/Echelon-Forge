@@ -253,6 +253,10 @@ struct ObservationBatchRequest {
     std::vector<WorldEntityRef> refs;
     bool include_agent_observations = true;
     bool include_instrument_states = false;
+};
+
+struct TaskingBatchRequest {
+    std::vector<WorldEntityRef> refs;
     bool include_mission_commands = false;
     bool include_task_order_contracts = false;
     bool include_leader_intents = false;
@@ -304,10 +308,6 @@ struct ObservationBatchPacket {
     std::vector<WorldEntityRef> refs;
     std::vector<AgentObservation> agent_observations;
     std::vector<InstrumentState> instrument_states;
-    std::vector<MissionCommand> mission_commands;
-    std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;
-    std::vector<LeaderIntent> leader_intents;
-    std::vector<PilotReport> pilot_reports;
 };
 
 struct EngagementEventPacket {
@@ -338,6 +338,22 @@ struct EngagementEventPacket {
     std::vector<DiagnosticsTrace> diagnostics_traces;
 };
 
+struct TaskingBatchPacket {
+    std::uint64_t snapshot_version = 0;
+    std::string barrier_id = "tasking_export";
+    double source_time_s = 0.0;
+    InformationStateSource provenance = make_information_state_source(
+        kPolicyInformationStateDecisionBelief,
+        "facade_tasking_packet",
+        kPolicyMaintainedStatusCompatibilityAdapter
+    );
+    std::vector<WorldEntityRef> refs;
+    std::vector<MissionCommandMaintainedBatchContract> mission_command_contracts;
+    std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;
+    std::vector<LeaderIntentMaintainedBatchContract> leader_intent_contracts;
+    std::vector<PilotReportMaintainedBatchContract> pilot_report_contracts;
+};
+
 struct ExecutionBatchStepResult {
     std::vector<ExecutionEpisodeControllerStepResult> step_results;
     std::vector<ExecutionEpisodeState> execution_episode_states;
@@ -353,6 +369,7 @@ struct ExecutionBatchStepResult {
     std::vector<bool> step_info_valid_flags;
     std::vector<bool> controller_state_changed_flags;
     ObservationBatchPacket observation_packet;
+    TaskingBatchPacket tasking_packet;
 };
 
 struct RuntimeExperimentAncestry {

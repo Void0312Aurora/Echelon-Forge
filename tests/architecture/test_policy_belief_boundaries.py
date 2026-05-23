@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 
@@ -10,6 +11,48 @@ INFORMATION_TRANSFORM_CONTRACTS = (
 )
 FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
 AGENT_SHIM = REPO_ROOT / "python" / "rl" / "runtime" / "agent_shim.py"
+
+
+def _runtime_python_sources() -> list[Path]:
+    return sorted(
+        path
+        for path in REPO_ROOT.joinpath("python", "rl", "runtime").rglob("*.py")
+        if path != AGENT_SHIM
+    )
+
+
+def _call_name(node: ast.Call) -> str:
+    if isinstance(node.func, ast.Name):
+        return node.func.id
+    if isinstance(node.func, ast.Attribute):
+        return node.func.attr
+    return ""
+
+
+def _keyword_names(node: ast.Call) -> set[str]:
+    return {str(keyword.arg) for keyword in node.keywords if keyword.arg is not None}
+
+
+def _is_maintained_keyword(keyword: ast.keyword) -> bool:
+    if keyword.arg != "maintained_status":
+        return False
+    value = keyword.value
+    return (
+        (isinstance(value, ast.Name) and value.id == "MAINTAINED")
+        or (isinstance(value, ast.Constant) and value.value == "maintained")
+    )
+
+
+def _is_maintained_call(node: ast.Call) -> bool:
+    return any(_is_maintained_keyword(keyword) for keyword in node.keywords)
+
+
+def _is_default_role_call(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Call)
+        and _call_name(node) in {"single_agent_role", "roster_slot_role"}
+        and "information_state_source" not in _keyword_names(node)
+    )
 
 
 def test_decision_belief_contract_stays_separate_from_observation_packet_types() -> None:
@@ -84,3 +127,48 @@ def test_wp11d_maintained_consumer_pregate_requires_labeled_packet_or_belief_inp
         shim_source
     )
     assert "consumer_status != MAINTAINED" in shim_source
+
+
+def test_wp24l_maintained_role_helpers_require_explicit_provenance_at_call_sites() -> None:
+    violations: list[tuple[str, int, str]] = []
+
+    for path in _runtime_python_sources():
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            name = _call_name(node)
+            if name not in {"single_agent_role", "roster_slot_role"}:
+                continue
+            if not _is_maintained_call(node):
+                continue
+            if "information_state_source" not in _keyword_names(node):
+                violations.append((path.relative_to(REPO_ROOT).as_posix(), node.lineno, name))
+
+    assert not violations, (
+        "maintained role helper call sites must pass explicit ObservationPacket/DecisionBelief provenance: "
+        f"{violations}"
+    )
+
+
+def test_wp24l_maintained_intents_do_not_inline_default_role_helpers() -> None:
+    violations: list[tuple[str, int, str]] = []
+
+    for path in _runtime_python_sources():
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            name = _call_name(node)
+            if name not in {"ActionIntentCompat", "CoordinationIntentCompat"}:
+                continue
+            if not _is_maintained_call(node):
+                continue
+            for keyword in node.keywords:
+                if keyword.arg == "role" and _is_default_role_call(keyword.value):
+                    violations.append((path.relative_to(REPO_ROOT).as_posix(), node.lineno, name))
+
+    assert not violations, (
+        "maintained intent call sites must not rely on default single_agent_role()/roster_slot_role() "
+        f"compatibility provenance: {violations}"
+    )

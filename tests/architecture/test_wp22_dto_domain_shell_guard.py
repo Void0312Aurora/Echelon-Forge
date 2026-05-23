@@ -267,6 +267,72 @@ def test_wp22_world_batch_assignments_keep_aggregate_dtos_as_named_transport_she
     assert "using shell_type = TaskOrderCompatibilityTransportShell;" not in text
     assert "WorldLeaderIntentAssignment transports only the LeaderIntent compatibility shell." in text
     assert "WorldPilotReportAssignment transports only the PilotReport compatibility shell." in text
+    for forbidden in (
+        "struct WorldMissionCommandAssignment {\n    using contract_type",
+        "struct WorldLeaderIntentAssignment {\n    using contract_type",
+        "struct WorldPilotReportAssignment {\n    using contract_type",
+        "WorldMissionCommandAssignment::kMaintainedBatchTruth",
+        "WorldLeaderIntentAssignment::kMaintainedBatchTruth",
+        "WorldPilotReportAssignment::kMaintainedBatchTruth",
+    ):
+        assert forbidden not in text
+
+
+def test_wp24_command_chain_maintained_contracts_are_slice_based_and_shell_assignments_stay_quarantined() -> None:
+    text = _text(WORLD_BATCH_CONTRACTS_HEADER)
+
+    for token in (
+        "struct MissionCommandMaintainedBatchContract {",
+        "using shared_core_owner_slice = MissionCommandSharedCoreOwnerSlice;",
+        "using air_owner_slice = MissionCommandAirOwnerSlice;",
+        "using naval_owner_slice = MissionCommandNavalOwnerSlice;",
+        "using shared_core_type = MissionCommandSharedCoreDirective;",
+        "using air_recovery_type = MissionCommandAir::RecoveryDirective;",
+        "using air_takeoff_type = MissionCommandAir::TakeoffDirective;",
+        "using air_formation_type = MissionCommandAir::FormationDirective;",
+        "using naval_stationing_type = MissionCommandNaval::StationingDirective;",
+        "using naval_embarked_helo_type = MissionCommandNaval::EmbarkedHeloDirective;",
+        "MissionCommandMaintainedBatchContract is the controlled MissionCommand maintained batch read/write shape.",
+        "mission_command_maintained_batch_contract(",
+        "mission_command_compatibility_shell_from_maintained_batch_contract(",
+        "struct WorldMissionCommandMaintainedAssignment {",
+        "WorldMissionCommandMaintainedAssignment transports only the controlled MissionCommand maintained batch contract.",
+        "world_mission_command_maintained_batch_contract(",
+        "struct LeaderIntentMaintainedBatchContract {",
+        "using shared_core_owner_slice = LeaderIntentCore;",
+        "using air_owner_slice = LeaderIntentAirOwnerSlice;",
+        "using naval_owner_slice = LeaderIntentNavalOwnerSlice;",
+        "LeaderIntentMaintainedBatchContract is the controlled LeaderIntent maintained batch read/write shape.",
+        "leader_intent_maintained_batch_contract(",
+        "leader_intent_compatibility_shell_from_maintained_batch_contract(",
+        "struct WorldLeaderIntentMaintainedAssignment {",
+        "WorldLeaderIntentMaintainedAssignment transports only the controlled LeaderIntent maintained batch contract.",
+        "world_leader_intent_maintained_batch_contract(",
+        "struct PilotReportMaintainedBatchContract {",
+        "using shared_core_owner_slice = PilotReportCore;",
+        "using air_owner_slice = PilotReportAirOwnerSlice;",
+        "using naval_owner_slice = PilotReportNavalOwnerSlice;",
+        "PilotReportMaintainedBatchContract is the controlled PilotReport maintained batch read/write shape.",
+        "pilot_report_maintained_batch_contract(",
+        "pilot_report_compatibility_shell_from_maintained_batch_contract(",
+        "struct WorldPilotReportMaintainedAssignment {",
+        "WorldPilotReportMaintainedAssignment transports only the controlled PilotReport maintained batch contract.",
+        "world_pilot_report_maintained_batch_contract(",
+    ):
+        assert token in text
+
+    for forbidden in (
+        "MissionCommandCompatibilityTransportShell mission_command{};",
+        "MissionCommandCompatibilityTransportShell command{};",
+        "LeaderIntentCompatibilityTransportShell leader_intent{};",
+        "LeaderIntentCompatibilityTransportShell intent{};",
+        "PilotReportCompatibilityTransportShell pilot_report{};",
+        "PilotReportCompatibilityTransportShell report{};",
+        "struct MissionCommandMaintainedBatchContract :",
+        "struct LeaderIntentMaintainedBatchContract :",
+        "struct PilotReportMaintainedBatchContract :",
+    ):
+        assert forbidden not in text
 
 
 def test_wp22_task_order_maintained_batch_contract_stays_controlled_and_slice_based() -> None:
@@ -665,37 +731,61 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             const auto report_authority = pilot_report_naval_command_authority(report);
 
             WorldMissionCommandAssignment mission_assignment{};
+            WorldMissionCommandMaintainedAssignment maintained_mission_assignment{};
             WorldTaskOrderMaintainedAssignment maintained_task_assignment{};
             WorldLeaderIntentAssignment leader_assignment{};
+            WorldLeaderIntentMaintainedAssignment maintained_leader_assignment{};
             WorldPilotReportAssignment pilot_assignment{};
+            WorldPilotReportMaintainedAssignment maintained_pilot_assignment{};
 
             static_assert(WorldMissionCommandAssignment::kCompatibilityTransportShell);
+            static_assert(WorldMissionCommandMaintainedAssignment::kMaintainedBatchTruth);
             static_assert(WorldTaskOrderMaintainedAssignment::kMaintainedBatchTruth);
             static_assert(WorldLeaderIntentAssignment::kCompatibilityTransportShell);
+            static_assert(WorldLeaderIntentMaintainedAssignment::kMaintainedBatchTruth);
             static_assert(WorldPilotReportAssignment::kCompatibilityTransportShell);
+            static_assert(WorldPilotReportMaintainedAssignment::kMaintainedBatchTruth);
+            static_assert(MissionCommandMaintainedBatchContract::kMaintainedBatchTruth);
             static_assert(TaskOrderMaintainedBatchContract::kMaintainedBatchTruth);
+            static_assert(LeaderIntentMaintainedBatchContract::kMaintainedBatchTruth);
+            static_assert(PilotReportMaintainedBatchContract::kMaintainedBatchTruth);
 
             static_assert(std::is_same_v<
                           decltype(world_batch_assignment_compatibility_shell(mission_assignment)),
                           MissionCommandCompatibilityTransportShell&>);
             static_assert(std::is_same_v<
+                          decltype(world_mission_command_maintained_batch_contract(maintained_mission_assignment)),
+                          MissionCommandMaintainedBatchContract&>);
+            static_assert(std::is_same_v<
                           decltype(world_batch_assignment_compatibility_shell(leader_assignment)),
                           LeaderIntentCompatibilityTransportShell&>);
             static_assert(std::is_same_v<
+                          decltype(world_leader_intent_maintained_batch_contract(maintained_leader_assignment)),
+                          LeaderIntentMaintainedBatchContract&>);
+            static_assert(std::is_same_v<
                           decltype(world_batch_assignment_compatibility_shell(pilot_assignment)),
                           PilotReportCompatibilityTransportShell&>);
+            static_assert(std::is_same_v<
+                          decltype(world_pilot_report_maintained_batch_contract(maintained_pilot_assignment)),
+                          PilotReportMaintainedBatchContract&>);
             static_assert(std::is_same_v<
                           decltype(world_task_order_maintained_batch_contract(maintained_task_assignment)),
                           TaskOrderMaintainedBatchContract&>);
 
             return (&world_batch_assignment_compatibility_shell(mission_assignment) ==
                         &mission_assignment.command &&
+                    &world_mission_command_maintained_batch_contract(maintained_mission_assignment) ==
+                        &maintained_mission_assignment.mission_command &&
                     &world_task_order_maintained_batch_contract(maintained_task_assignment) ==
                         &maintained_task_assignment.task_order &&
                     &world_batch_assignment_compatibility_shell(leader_assignment) ==
                         &leader_assignment.intent &&
+                    &world_leader_intent_maintained_batch_contract(maintained_leader_assignment) ==
+                        &maintained_leader_assignment.leader_intent &&
                     &world_batch_assignment_compatibility_shell(pilot_assignment) ==
                         &pilot_assignment.report &&
+                    &world_pilot_report_maintained_batch_contract(maintained_pilot_assignment) ==
+                        &maintained_pilot_assignment.pilot_report &&
                     command_core.cmd_heading_deg == command.cmd_heading_deg &&
                     command_core.cmd_altitude_m == command.cmd_altitude_m &&
                     command_core.cmd_speed_mps == command.cmd_speed_mps &&

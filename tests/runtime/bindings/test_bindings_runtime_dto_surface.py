@@ -293,28 +293,46 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             ),
         )
 
-    def test_observation_request_task_order_export_uses_maintained_contract_gate_only(self) -> None:
+    def test_tasking_request_task_order_export_uses_maintained_contract_gate_only(self) -> None:
         request = ef_py.ObservationBatchRequest()
+        tasking_request = ef_py.TaskingBatchRequest()
         step_request = ef_py.ExecutionBatchStepRequest()
 
         self.assertFalse(hasattr(request, "include_task_orders"))
-        self.assertFalse(bool(request.include_task_order_contracts))
+        self.assertFalse(hasattr(request, "include_task_order_contracts"))
+        self.assertFalse(hasattr(request, "include_mission_commands"))
+        self.assertFalse(hasattr(request, "include_leader_intents"))
+        self.assertFalse(hasattr(request, "include_pilot_reports"))
+        self.assertFalse(hasattr(tasking_request, "include_task_orders"))
+        self.assertFalse(bool(tasking_request.include_task_order_contracts))
         self.assertFalse(hasattr(step_request, "include_task_orders"))
         self.assertFalse(bool(step_request.include_task_order_contracts))
 
-        request.include_task_order_contracts = True
+        tasking_request.include_task_order_contracts = True
         step_request.include_task_order_contracts = True
-        self.assertTrue(bool(request.include_task_order_contracts))
+        self.assertTrue(bool(tasking_request.include_task_order_contracts))
         self.assertTrue(bool(step_request.include_task_order_contracts))
 
     def test_task_order_whole_shell_batch_bindings_are_removed(self) -> None:
         runtime = ef_py.WorldBatchRuntime(1)
         facade = ef_py.RuntimeFacade(1)
 
+        self.assertTrue(hasattr(runtime, "set_mission_commands_maintained_batch"))
+        self.assertTrue(hasattr(runtime, "get_mission_commands_maintained_batch"))
         self.assertTrue(hasattr(runtime, "set_task_orders_maintained_batch"))
         self.assertTrue(hasattr(runtime, "get_task_orders_maintained_batch"))
+        self.assertTrue(hasattr(runtime, "set_leader_intents_maintained_batch"))
+        self.assertTrue(hasattr(runtime, "get_leader_intents_maintained_batch"))
+        self.assertTrue(hasattr(runtime, "set_pilot_reports_maintained_batch"))
+        self.assertTrue(hasattr(runtime, "get_pilot_reports_maintained_batch"))
+        self.assertTrue(hasattr(facade, "set_mission_commands_maintained_batch"))
+        self.assertTrue(hasattr(facade, "get_mission_commands_maintained_batch"))
         self.assertTrue(hasattr(facade, "set_task_orders_maintained_batch"))
         self.assertTrue(hasattr(facade, "get_task_orders_maintained_batch"))
+        self.assertTrue(hasattr(facade, "set_leader_intents_maintained_batch"))
+        self.assertTrue(hasattr(facade, "get_leader_intents_maintained_batch"))
+        self.assertTrue(hasattr(facade, "set_pilot_reports_maintained_batch"))
+        self.assertTrue(hasattr(facade, "get_pilot_reports_maintained_batch"))
 
         self.assertFalse(hasattr(runtime, "set_task_orders_batch"))
         self.assertFalse(hasattr(runtime, "get_task_orders_batch"))
@@ -334,9 +352,21 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
                 "agent_observations",
                 "barrier_id",
                 "instrument_states",
-                "leader_intents",
-                "mission_commands",
-                "pilot_reports",
+                "provenance",
+                "refs",
+                "snapshot_version",
+                "source_time_s",
+            ),
+        )
+
+    def test_tasking_batch_packet_exposes_command_and_tasking_payloads(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.TaskingBatchPacket()),
+            (
+                "barrier_id",
+                "leader_intent_contracts",
+                "mission_command_contracts",
+                "pilot_report_contracts",
                 "provenance",
                 "refs",
                 "snapshot_version",
@@ -345,8 +375,68 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             ),
         )
 
-    def test_observation_batch_packet_exposes_maintained_task_order_contracts(self) -> None:
-        packet = ef_py.ObservationBatchPacket()
+    def test_tasking_batch_packet_exposes_maintained_command_chain_contracts(self) -> None:
+        packet = ef_py.TaskingBatchPacket()
+        command_contract = ef_py.MissionCommandMaintainedBatchContract()
+        leader_contract = ef_py.LeaderIntentMaintainedBatchContract()
+        report_contract = ef_py.PilotReportMaintainedBatchContract()
+
+        command_contract.shared_core.command_code = 31
+        command_contract.air_recovery.recovery_base_id = 71
+        command_contract.air_takeoff.takeoff_interval_s = 12.5
+        command_contract.air_formation.formation_id = 17
+        command_contract.naval_stationing.reference_entity_id = 9101
+        command_contract.naval_embarked_helo.launch_helo = True
+        leader_contract.shared_core.task_group_id = 8001
+        leader_contract.air_formation.formation_id = 34
+        leader_contract.naval_command_authority.warfare_role_code = 35
+        report_contract.shared_core.sender_id = 101
+        report_contract.air.element_id = 7001
+        report_contract.naval_command_authority.officer_in_tactical_command = 42
+
+        packet.mission_command_contracts = [command_contract]
+        packet.leader_intent_contracts = [leader_contract]
+        packet.pilot_report_contracts = [report_contract]
+
+        self.assertIsInstance(
+            packet.mission_command_contracts[0],
+            ef_py.MissionCommandMaintainedBatchContract,
+        )
+        self.assertEqual(int(packet.mission_command_contracts[0].shared_core.command_code), 31)
+        self.assertEqual(int(packet.mission_command_contracts[0].air_recovery.recovery_base_id), 71)
+        self.assertAlmostEqual(
+            float(packet.mission_command_contracts[0].air_takeoff.takeoff_interval_s),
+            12.5,
+        )
+        self.assertEqual(int(packet.mission_command_contracts[0].air_formation.formation_id), 17)
+        self.assertEqual(
+            int(packet.mission_command_contracts[0].naval_stationing.reference_entity_id),
+            9101,
+        )
+        self.assertTrue(bool(packet.mission_command_contracts[0].naval_embarked_helo.launch_helo))
+        self.assertIsInstance(
+            packet.leader_intent_contracts[0],
+            ef_py.LeaderIntentMaintainedBatchContract,
+        )
+        self.assertEqual(int(packet.leader_intent_contracts[0].shared_core.task_group_id), 8001)
+        self.assertEqual(int(packet.leader_intent_contracts[0].air_formation.formation_id), 34)
+        self.assertEqual(
+            int(packet.leader_intent_contracts[0].naval_command_authority.warfare_role_code),
+            35,
+        )
+        self.assertIsInstance(
+            packet.pilot_report_contracts[0],
+            ef_py.PilotReportMaintainedBatchContract,
+        )
+        self.assertEqual(int(packet.pilot_report_contracts[0].shared_core.sender_id), 101)
+        self.assertEqual(int(packet.pilot_report_contracts[0].air.element_id), 7001)
+        self.assertEqual(
+            int(packet.pilot_report_contracts[0].naval_command_authority.officer_in_tactical_command),
+            42,
+        )
+
+    def test_tasking_batch_packet_exposes_maintained_task_order_contracts(self) -> None:
+        packet = ef_py.TaskingBatchPacket()
         contract = ef_py.TaskOrderMaintainedBatchContract()
         contract.shared_core.task_id = 91
         contract.air_tasking_identity.task_type = ef_py.TaskType.CAP
@@ -379,14 +469,20 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         )
 
     def test_observation_batch_packet_task_orders_whole_shell_export_is_removed(self) -> None:
-        packet = ef_py.ObservationBatchPacket()
+        observation_packet = ef_py.ObservationBatchPacket()
+        tasking_packet = ef_py.TaskingBatchPacket()
         maintained_contract = ef_py.TaskOrderMaintainedBatchContract()
         maintained_contract.shared_core.task_id = 91
 
-        packet.task_order_contracts = [maintained_contract]
+        tasking_packet.task_order_contracts = [maintained_contract]
 
-        self.assertIsInstance(packet.task_order_contracts[0], ef_py.TaskOrderMaintainedBatchContract)
-        self.assertFalse(hasattr(packet, "task_orders"))
+        self.assertIsInstance(tasking_packet.task_order_contracts[0], ef_py.TaskOrderMaintainedBatchContract)
+        self.assertFalse(hasattr(observation_packet, "task_order_contracts"))
+        self.assertFalse(hasattr(observation_packet, "task_orders"))
+        self.assertFalse(hasattr(tasking_packet, "task_orders"))
+        self.assertFalse(hasattr(tasking_packet, "mission_commands"))
+        self.assertFalse(hasattr(tasking_packet, "leader_intents"))
+        self.assertFalse(hasattr(tasking_packet, "pilot_reports"))
 
     def test_device_resident_output_descriptor_public_fields_match_additive_surface(self) -> None:
         self.assertTupleEqual(
@@ -513,6 +609,7 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
                 "step_info_valid_flags",
                 "step_infos",
                 "step_results",
+                "tasking_packet",
                 "terminated",
                 "termination_reasons",
                 "termination_specs",

@@ -25,6 +25,11 @@ The earlier quarantine decision is superseded. This close-out patch deletes the
 remaining public TaskOrder whole-shell compatibility surfaces instead of
 accepting them as residuals.
 
+After this assessment, a parallel subagent verification wave confirmed additional
+facade/information-boundary leaks outside the retired TaskOrder public whole-shell
+surface. The corrective package is tracked in
+[WP24 Facade Boundary Closure Task Package](wp24_facade_boundary_closure_task_package_20260524.md).
+
 ## 2. Cleanup Result
 
 Deleted surfaces:

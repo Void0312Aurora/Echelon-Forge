@@ -106,6 +106,11 @@ public:
 
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
+    void set_mission_commands_maintained_batch(
+        const std::vector<WorldMissionCommandMaintainedAssignment>& assignments
+    );
+    std::vector<MissionCommandMaintainedBatchContract>
+    get_mission_commands_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
     void set_task_orders_maintained_batch(
         const std::vector<WorldTaskOrderMaintainedAssignment>& assignments
     );
@@ -113,7 +118,17 @@ public:
         const std::vector<WorldEntityRef>& refs
     ) const;
     void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments);
+    void set_leader_intents_maintained_batch(
+        const std::vector<WorldLeaderIntentMaintainedAssignment>& assignments
+    );
+    std::vector<LeaderIntentMaintainedBatchContract>
+    get_leader_intents_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
     void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments);
+    void set_pilot_reports_maintained_batch(
+        const std::vector<WorldPilotReportMaintainedAssignment>& assignments
+    );
+    std::vector<PilotReportMaintainedBatchContract>
+    get_pilot_reports_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
 
     void clear_execution_episode_controller_batch() noexcept;
     void prime_execution_episode_controller_batch(

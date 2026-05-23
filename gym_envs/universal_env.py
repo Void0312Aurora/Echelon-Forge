@@ -27,6 +27,30 @@ from gym_envs.universal_env_parts import (
 
 _configure_sim_log_level = configure_sim_log_level
 
+_RUNTIME_COMPAT_TRUE = {"1", "true", "on", "yes", "compat", "compatibility", "diagnostics", "debug"}
+_RUNTIME_COMPAT_FALSE = {"", "0", "false", "off", "no", "none", "mainline", "compiled"}
+
+
+def _normalize_runtime_compatibility_enabled(value):
+    if isinstance(value, bool):
+        return bool(value)
+    if value is None:
+        return False
+    normalized = str(value).strip().lower()
+    if normalized in _RUNTIME_COMPAT_TRUE:
+        return True
+    if normalized in _RUNTIME_COMPAT_FALSE:
+        return False
+    return bool(value)
+
+
+def _raw_universal_env_compatibility_required_message():
+    return (
+        "UniversalEnv's raw ef_py.SimulationKernel path is a quarantined compatibility "
+        "escape hatch; use WorldBatchVecEnv/RuntimeFacadeAdapter for production setup or "
+        "pass runtime_compatibility_enabled=True to opt in explicitly."
+    )
+
 
 if gym is None:
     class UniversalEnv:  # pragma: no cover
@@ -65,9 +89,15 @@ else:
             execution_step_runtime_mode: str | None = None,
             step_info_mode: str = "full",
             flight_shaping_backend: str | None = None,
+            runtime_compatibility_enabled: bool = False,
             collect_step_timing: bool = False,
         ):
             super().__init__()
+            self.runtime_compatibility_enabled = _normalize_runtime_compatibility_enabled(
+                runtime_compatibility_enabled
+            )
+            if not self.runtime_compatibility_enabled:
+                raise RuntimeError(_raw_universal_env_compatibility_required_message())
             self.render_mode = render_mode
             self.scenario_path = scenario_path
             self.include_visual = bool(include_visual)

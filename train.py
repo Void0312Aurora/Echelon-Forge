@@ -428,6 +428,13 @@ def main():
         else:
             # We must delay env creation for resume if we want to ensure same config?
             # For now we assume user provides correct params for resumption.
+            if not bool(env_settings.get("runtime_compatibility_enabled", False)):
+                raise RuntimeError(
+                    "The standard UniversalEnv execution path owns a raw SimulationKernel and is "
+                    "compatibility-only; set runtime.world_batch_vec_env=true for the maintained "
+                    "production setup path, or set env.runtime_compatibility_enabled=true to opt in "
+                    "to the quarantined legacy path explicitly."
+                )
             vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
                 agent_layer=agent_layer,
                 n_envs=n_envs,

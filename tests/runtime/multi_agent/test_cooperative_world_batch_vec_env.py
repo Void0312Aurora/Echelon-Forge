@@ -297,7 +297,7 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
         class _Loader:
             active_roster = []
 
-        class _ObservationPacket:
+        class _TaskingPacket:
             def __init__(self, refs, task_order_contracts):
                 self.refs = list(refs)
                 self.task_order_contracts = list(task_order_contracts)
@@ -306,11 +306,11 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
             def __init__(self) -> None:
                 self.requests: list[object] = []
 
-            def export_observation_packet(self, request):
+            def export_tasking_packet(self, request):
                 self.requests.append(request)
                 contract = cooperative_vec_env_module.ef_py.TaskOrderMaintainedBatchContract()
                 contract.shared_core.task_id = 451
-                return _ObservationPacket(request.refs, [contract])
+                return _TaskingPacket(request.refs, [contract])
 
         runtime = _Runtime()
         view = MultiAgentWorldRuntimeView(
@@ -327,9 +327,7 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
         ref.entity_id = 91
         view.refs = lambda: [ref]  # type: ignore[method-assign]
 
-        packet = view.export_packet(
-            include_agent_observations=False,
-            include_instrument_states=False,
+        packet = view.export_tasking_packet(
             include_mission_commands=False,
             include_task_order_contracts=True,
         )
@@ -369,7 +367,10 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
 
         self.assertEqual(len(runtime.requests), 1)
         request = runtime.requests[0]
-        self.assertFalse(bool(request.include_task_order_contracts))
+        self.assertFalse(hasattr(request, "include_task_order_contracts"))
+        self.assertFalse(hasattr(request, "include_mission_commands"))
+        self.assertFalse(hasattr(request, "include_leader_intents"))
+        self.assertFalse(hasattr(request, "include_pilot_reports"))
         self.assertFalse(hasattr(request, "include_task_orders"))
 
     def test_cooperative_world_batch_vec_env_batch_runtime_requires_explicit_compatibility_opt_in(self) -> None:

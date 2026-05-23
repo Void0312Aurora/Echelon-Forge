@@ -38,6 +38,12 @@ class _ObservationPacketCompat:
     mission_commands: list[Any]
 
 
+@dataclass
+class _TaskingPacketCompat:
+    refs: list[Any]
+    mission_command_contracts: list[Any]
+
+
 def _slot_from_member(member: AppliedScenarioRosterMember, *, roster_index: int, world_index: int) -> MultiAgentControlSlot:
     return MultiAgentControlSlot(
         world_index=int(world_index),
@@ -65,6 +71,30 @@ def build_control_slots_from_loader(loader, *, world_index: int) -> list[MultiAg
     for roster_index, member in enumerate(roster):
         slots.append(_slot_from_member(member, roster_index=roster_index, world_index=world_index))
     return slots
+
+
+def _mission_command_view(command: Any) -> dict[str, Any]:
+    shared_core = getattr(command, "shared_core", command)
+    air_recovery = getattr(command, "air_recovery", command)
+    air_takeoff = getattr(command, "air_takeoff", command)
+    air_formation = getattr(command, "air_formation", command)
+    return {
+        "command_code": int(getattr(shared_core, "command_code", 0)),
+        "target_heading": float(getattr(shared_core, "cmd_heading_deg", 0.0)),
+        "target_altitude": float(getattr(shared_core, "cmd_altitude_m", 0.0)),
+        "target_speed": float(getattr(shared_core, "cmd_speed_mps", 0.0)),
+        "route_ref_id": int(getattr(shared_core, "route_ref_id", 0)),
+        "recovery_base_id": int(getattr(air_recovery, "recovery_base_id", 0)),
+        "recovery_runway_id": int(getattr(air_recovery, "recovery_runway_id", 0)),
+        "takeoff_procedure_code": int(getattr(air_takeoff, "takeoff_procedure_id", 0)),
+        "takeoff_clearance_code": int(getattr(air_takeoff, "takeoff_clearance_id", 0)),
+        "takeoff_interval_s": float(getattr(air_takeoff, "takeoff_interval_s", 0.0)),
+        "runway_slot_code": int(getattr(air_takeoff, "runway_slot_id", 0)),
+        "formation_id": int(getattr(air_formation, "formation_id", 0)),
+        "form_offset_x": float(getattr(air_formation, "form_offset_x", 0.0)),
+        "form_offset_y": float(getattr(air_formation, "form_offset_y", 0.0)),
+        "form_offset_z": float(getattr(air_formation, "form_offset_z", 0.0)),
+    }
 
 
 class MultiAgentWorldRuntimeView:
@@ -110,7 +140,7 @@ class MultiAgentWorldRuntimeView:
         *,
         include_agent_observations: bool = True,
         include_instrument_states: bool = True,
-        include_mission_commands: bool = True,
+        include_mission_commands: bool = False,
         include_task_order_contracts: bool = False,
     ) -> Any:
         refs = self.refs()
@@ -119,11 +149,6 @@ class MultiAgentWorldRuntimeView:
             request.refs = list(refs)
             request.include_agent_observations = bool(include_agent_observations)
             request.include_instrument_states = bool(include_instrument_states)
-            request.include_mission_commands = bool(include_mission_commands)
-            if hasattr(request, "include_task_order_contracts"):
-                request.include_task_order_contracts = bool(include_task_order_contracts)
-            request.include_leader_intents = False
-            request.include_pilot_reports = False
             if hasattr(self.runtime, "export_observation_packet"):
                 return self.runtime.export_observation_packet(request)
         if hasattr(self.runtime, "export_observation_packet"):
@@ -142,7 +167,27 @@ class MultiAgentWorldRuntimeView:
                 if bool(include_instrument_states)
                 else []
             ),
-            mission_commands=(
+            mission_commands=[],
+        )
+
+    def export_tasking_packet(
+        self,
+        *,
+        include_mission_commands: bool = True,
+        include_task_order_contracts: bool = False,
+    ) -> Any:
+        refs = self.refs()
+        if hasattr(ef_py, "TaskingBatchRequest") and hasattr(self.runtime, "export_tasking_packet"):
+            request = ef_py.TaskingBatchRequest()
+            request.refs = list(refs)
+            request.include_mission_commands = bool(include_mission_commands)
+            request.include_task_order_contracts = bool(include_task_order_contracts)
+            request.include_leader_intents = False
+            request.include_pilot_reports = False
+            return self.runtime.export_tasking_packet(request)
+        return _TaskingPacketCompat(
+            refs=list(refs),
+            mission_command_contracts=(
                 list(self.runtime.get_mission_commands_batch(list(refs)))
                 if bool(include_mission_commands) and hasattr(self.runtime, "get_mission_commands_batch")
                 else []
@@ -157,12 +202,14 @@ class MultiAgentWorldRuntimeView:
         packet = self.export_packet(
             include_agent_observations=True,
             include_instrument_states=True,
-            include_mission_commands=True,
         )
+        tasking_packet = self.export_tasking_packet(include_mission_commands=True)
         refs = list(getattr(packet, "refs", []) or [])
         truth_list = list(getattr(packet, "agent_observations", []) or [])
         inst_list = list(getattr(packet, "instrument_states", []) or [])
-        mission_list = list(getattr(packet, "mission_commands", []) or [])
+        mission_list = list(getattr(tasking_packet, "mission_command_contracts", []) or [])
+        if not mission_list:
+            mission_list = list(getattr(tasking_packet, "mission_commands", []) or [])
 
         obs_by_entity_id: dict[int, dict[str, np.ndarray]] = {}
         for idx, ref in enumerate(refs):
@@ -175,23 +222,7 @@ class MultiAgentWorldRuntimeView:
 
             original_mission_cmd = getattr(self.loader, "mission_cmd", None)
             if mission_cmd is not None:
-                self.loader.mission_cmd = {
-                    "command_code": int(getattr(mission_cmd, "command_code", 0)),
-                    "target_heading": float(getattr(mission_cmd, "cmd_heading_deg", 0.0)),
-                    "target_altitude": float(getattr(mission_cmd, "cmd_altitude_m", 0.0)),
-                    "target_speed": float(getattr(mission_cmd, "cmd_speed_mps", 0.0)),
-                    "route_ref_id": int(getattr(mission_cmd, "route_ref_id", 0)),
-                    "recovery_base_id": int(getattr(mission_cmd, "recovery_base_id", 0)),
-                    "recovery_runway_id": int(getattr(mission_cmd, "recovery_runway_id", 0)),
-                    "takeoff_procedure_code": int(getattr(mission_cmd, "takeoff_procedure_id", 0)),
-                    "takeoff_clearance_code": int(getattr(mission_cmd, "takeoff_clearance_id", 0)),
-                    "takeoff_interval_s": float(getattr(mission_cmd, "takeoff_interval_s", 0.0)),
-                    "runway_slot_code": int(getattr(mission_cmd, "runway_slot_id", 0)),
-                    "formation_id": int(getattr(mission_cmd, "formation_id", 0)),
-                    "form_offset_x": float(getattr(mission_cmd, "form_offset_x", 0.0)),
-                    "form_offset_y": float(getattr(mission_cmd, "form_offset_y", 0.0)),
-                    "form_offset_z": float(getattr(mission_cmd, "form_offset_z", 0.0)),
-                }
+                self.loader.mission_cmd = _mission_command_view(mission_cmd)
             try:
                 obs_by_entity_id[entity_id] = build_universal_observation(
                     self.loader,
