@@ -9,8 +9,10 @@ import numpy as np
 from python.scenario_compiler import (
     CompiledScenario,
     CompiledWorldLayoutTemplate,
+    DEFAULT_TERRAIN_TYPE,
     _clone_runtime_mission_command,
     materialize_runtime_waypoint_cache,
+    resolve_environment_terrain_config,
 )
 
 from .geometry import _primary_runway_heading_deg, apply_world_yaw_inplace, rotate_xy_clockwise
@@ -44,7 +46,8 @@ def prepare_scenario_world_layout(
     world_yaw_origin_x = 0.0
     world_yaw_origin_y = 0.0
     time_step_s: float | None = None
-    terrain_type = "legacy"
+    terrain_type = DEFAULT_TERRAIN_TYPE
+    terrain_type_source = "default_mainline"
     wind_speed = 10.0
     wind_dir_from = 270.0
     wind_shear = 4.0
@@ -63,6 +66,7 @@ def prepare_scenario_world_layout(
         env_rand = dict(compiled_template.env_randomization)
         time_step_s = compiled_template.time_step_s
         terrain_type = str(compiled_template.terrain_type)
+        terrain_type_source = str(compiled_template.terrain_type_source)
         wind_speed = float(compiled_template.wind_speed_mps)
         wind_dir_from = float(compiled_template.wind_dir_from_deg)
         wind_shear = float(compiled_template.wind_shear_mps_per_km)
@@ -76,7 +80,10 @@ def prepare_scenario_world_layout(
         env_rand = env_cfg.get("randomization", {}) if isinstance(env_cfg.get("randomization", {}), dict) else {}
         if "time_step" in env_cfg:
             time_step_s = float(env_cfg["time_step"])
-        terrain_type = str(env_cfg.get("terrain_type", "legacy")).strip() or "legacy"
+        terrain_type, terrain_type_source = resolve_environment_terrain_config(
+            env_cfg,
+            default=DEFAULT_TERRAIN_TYPE,
+        )
         wind_cfg = env_cfg.get("wind", {}) if isinstance(env_cfg.get("wind", {}), dict) else {}
         wind_speed = float(wind_cfg.get("speed_mps", 10.0))
         wind_dir_from = float(wind_cfg.get("dir_from_deg", 270.0))
@@ -316,6 +323,7 @@ def prepare_scenario_world_layout(
         world_yaw_origin_y=float(world_yaw_origin_y),
         time_step_s=time_step_s,
         terrain_type=terrain_type,
+        terrain_type_source=terrain_type_source,
         wind_speed_mps=float(wind_speed),
         wind_dir_from_deg=float(wind_dir_from),
         wind_shear_mps_per_km=float(wind_shear),

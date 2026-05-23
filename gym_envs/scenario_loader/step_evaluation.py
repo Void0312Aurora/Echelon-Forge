@@ -3,6 +3,7 @@ import math
 import ef_py
 
 from python.rl.control.mission_defs import is_landing_command_code
+from python.rl.tasking.bridge import resolve_loader_time_step
 
 from .mission_observation import build_mission_observation_runtime_inputs
 
@@ -10,7 +11,7 @@ from .mission_observation import build_mission_observation_runtime_inputs
 def build_step_info_runtime_inputs(loader, *, inst_now=None, truth_now=None, runway_frame=None):
     inputs = ef_py.StepInfoInputs()
     if inst_now is None:
-        inst_now = loader.sim.get_instrument_state(loader.agent_id)
+        inst_now = loader.get_policy_instrument_state(loader.agent_id)
     inputs.on_runway = bool(getattr(inst_now, "on_runway", True))
     inputs.gear_collapsed = bool(getattr(inst_now, "gear_collapsed", False))
     inputs.gear_stress = float(getattr(inst_now, "gear_stress", 0.0))
@@ -25,7 +26,7 @@ def build_step_info_runtime_inputs(loader, *, inst_now=None, truth_now=None, run
     inputs.runway_length_margin_m = float(cfg.get("runway_length_margin_m", 0.0))
 
     if runway_frame is None and truth_now is None:
-        truth_now = loader.sim.get_agent_observation(loader.agent_id)
+        truth_now = loader.get_policy_agent_observation(loader.agent_id)
     if runway_frame is None and loader._spatial_geometry is not None and truth_now is not None:
         runway_frame = loader._query_runway_frame_result(float(truth_now.x), float(truth_now.y))
     if runway_frame is not None and bool(getattr(runway_frame, "valid", False)):
@@ -184,7 +185,7 @@ def build_step_evaluation_inputs(
         guard_inputs.crash_penalty = float(safety_cfg.crash_penalty)
         safety_inputs = guard_inputs
     else:
-        dt = float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
+        dt = float(resolve_loader_time_step(loader, default=0.05))
         dt = dt if dt > 1.0e-6 else 0.05
         aoa_valid = math.isfinite(float(curr_aoa)) and (abs(float(curr_aoa)) < 89.0) and (curr_ias > 10.0)
         safety_inputs = loader._build_safety_runtime_inputs(

@@ -21,7 +21,6 @@ from gym_envs.scenario_loader import (
     normalize_execution_step_runtime_mode,
 )
 from gym_envs.universal_env import (
-    build_step_info,
     build_step_info_minimal,
     build_universal_observation,
     make_action_space,
@@ -39,8 +38,11 @@ from python.rl.support.sb3_vec_env_compat import (
     obs_space_info,
 )
 from python.rl.runtime.world_batch import (
+    build_loader_step_info,
+    compute_loader_step_outcome,
     CooperativeSlotState,
     CooperativeWorldState,
+    RuntimeCompatibilityView,
     RuntimeFacadeAdapter,
     ScriptedCooperativeCoordinationDirector,
     clone_small_dict,
@@ -53,13 +55,16 @@ from python.rl.runtime.world_batch import (
     normalize_batch_observation_backend,
     normalize_batch_visual_backend,
     normalize_flight_shaping_backend,
+    normalize_runtime_compatibility_enabled,
     observation_timing_snapshot,
     pilot_report_snapshot,
     refresh_visual_cache_batch,
+    runtime_compatibility_required_message,
     snapshot_changed,
     task_order_snapshot,
 )
 from python.rl.control.wrappers import MultiTimescaleActionController
+from python.rl.tasking.bridge import resolve_loader_time_step
 from python.scenario_compiler import ScenarioCompiler
 from python.scenario_runtime import build_compiled_world_layout
 
@@ -67,16 +72,27 @@ from python.scenario_runtime import build_compiled_world_layout
 _copy_obs = copy_obs
 _CooperativeWorldState = CooperativeWorldState
 _CooperativeSlotState = CooperativeSlotState
+_RuntimeCompatibilityView = RuntimeCompatibilityView
 _RuntimeFacadeAdapter = RuntimeFacadeAdapter
 _clone_small_dict = clone_small_dict
 _count_control_slots = count_control_slots
 _mission_status_success_flag = mission_status_success_flag
 _normalize_batch_observation_backend = normalize_batch_observation_backend
 _normalize_batch_visual_backend = normalize_batch_visual_backend
+_build_loader_step_info = build_loader_step_info
+_compute_loader_step_outcome = compute_loader_step_outcome
 
 
 def _float32_view(value: Any) -> np.ndarray:
     return np.asarray(value, dtype=np.float32)
+
+
+class _CooperativeRuntimeCompatibilityView(RuntimeCompatibilityView):
+    """Narrow compatibility view for cooperative batch runtime callers."""
+
+    def __getattr__(self, name: str) -> Any:
+        raise AttributeError(name)
+
 
 class CooperativeWorldBatchVecEnv(VecEnv):
     """
@@ -103,6 +119,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         step_info_mode: str = "full",
         execution_step_runtime_mode: str | None = None,
         flight_shaping_backend: str | None = None,
+        runtime_compatibility_enabled: bool = False,
         collect_step_timing: bool = False,
         database_path: str | None = None,
         worker_threads: int | None = None,
@@ -127,6 +144,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.batch_observation_backend = _normalize_batch_observation_backend(batch_observation_backend)
         self.batch_visual_backend = _normalize_batch_visual_backend(batch_visual_backend)
         self.step_info_mode = str(step_info_mode).strip().lower()
+        self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
         self.execution_step_runtime_mode = (
             normalize_execution_step_runtime_mode(execution_step_runtime_mode)
             if execution_step_runtime_mode is not None
@@ -135,6 +153,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.flight_shaping_backend = _normalize_flight_shaping_backend(flight_shaping_backend)
         self.collect_step_timing = bool(collect_step_timing)
         self._action_wrapper_kwargs = dict(action_wrapper_kwargs or {})
+        if self.execution_step_runtime_mode == "legacy" and not self.runtime_compatibility_enabled:
+            raise RuntimeError(
+                "execution_step_runtime_mode='legacy' is quarantined; pass "
+                "runtime_compatibility_enabled=True to opt in explicitly."
+            )
         if self.step_info_mode not in ("full", "terminal", "off"):
             raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
 
@@ -154,7 +177,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 os.path.join(os.path.dirname(__file__), "..", "..", "..", "examples", "config", "database")
             )
         )
-        self._runtime_adapter = _RuntimeFacadeAdapter(self.world_count)
+        self._runtime_adapter = _RuntimeFacadeAdapter(
+            self.world_count,
+            runtime_compatibility_enabled=self.runtime_compatibility_enabled,
+        )
+        self._runtime_compat = _CooperativeRuntimeCompatibilityView(self._runtime_adapter)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
             self._runtime_adapter.set_worker_threads(int(self._worker_threads))
@@ -213,7 +240,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
 
     @property
     def batch_runtime(self):
-        return self._runtime_adapter
+        if not self.runtime_compatibility_enabled:
+            raise RuntimeError(runtime_compatibility_required_message("vec_env.batch_runtime"))
+        return self._runtime_compat
 
     @property
     def runtime_facade(self):
@@ -331,7 +360,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state.action_controller = MultiTimescaleActionController(
                 action_space=self.action_space,
                 loader_getter=lambda loader=loader: loader,
-                dt_getter=lambda loader=loader: float(loader.sim.get_time_step()),
+                dt_getter=lambda loader=loader: float(resolve_loader_time_step(loader)),
                 **self._action_wrapper_kwargs,
             )
         return slot_state
@@ -387,7 +416,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 float(slot_state.loader.mission_cmd.get("target_altitude", 0.0)),
                 float(slot_state.loader.mission_cmd.get("target_speed", 0.0)),
                 float(slot_state.loader.mission_cmd.get("target_heading", 0.0)),
-                float(getattr(slot_state.loader.sim, "get_time_step", lambda: 0.05)()),
+                float(resolve_loader_time_step(slot_state.loader)),
             )
 
         ref_cfg = _config_tuple(first_slot)
@@ -951,7 +980,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     continue
                 slot_state.steps += 1
                 slot_state.loader.steps = int(slot_state.steps)
-                sim_time = float(slot_state.steps) * float(slot_state.loader.sim.get_time_step())
+                sim_time = float(slot_state.steps) * float(
+                    resolve_loader_time_step(slot_state.loader)
+                )
                 slot_state.loader.update_behaviors(
                     sim_time,
                     truth=slot_state.last_truth,
@@ -1003,11 +1034,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 else:
                     cache = getattr(slot_state.loader, "_runtime_eval_cache", None)
                     cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
-                    reward, terminated, truncated, mission_status = slot_state.loader.compute_full_step(
-                        obs,
-                        slot_state.loader.sim,
-                        slot_state.steps,
-                        slot_state.max_steps,
+                    reward, terminated, truncated, mission_status = _compute_loader_step_outcome(
+                        slot_state.loader,
+                        obs=obs,
+                        steps=slot_state.steps,
+                        max_steps=slot_state.max_steps,
                         truth=slot_state.last_truth,
                         inst_state=slot_state.last_inst,
                         step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
@@ -1022,10 +1053,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                             truncated=bool(truncated),
                         )
                     else:
-                        info = build_step_info(
+                        info = _build_loader_step_info(
                             slot_state.loader,
-                            slot_state.loader.sim,
-                            int(slot_state.entity_id),
+                            entity_id=int(slot_state.entity_id),
                             mission_status=mission_status,
                             terminated=bool(terminated),
                             truncated=bool(truncated),

@@ -1,5 +1,6 @@
 import json
 import os
+from collections.abc import Iterator, Mapping
 
 import ef_py
 
@@ -7,50 +8,95 @@ import ef_py
 LEGACY_EXECUTION_STEP_RUNTIME_MODES = {"legacy", "python", "off", "0", "false"}
 LEGACY_FLIGHT_SHAPING_BACKENDS = {"legacy", "python", "off", "0", "false"}
 
-OBJECTIVE_PROPERTY_MAP = {
-    "altitude": ef_py.ConditionalObjectiveProperty.Altitude,
-    "altitude_agl": ef_py.ConditionalObjectiveProperty.AltitudeAGL,
-    "speed": ef_py.ConditionalObjectiveProperty.Speed,
-    "ground_speed": ef_py.ConditionalObjectiveProperty.GroundSpeed,
-    "gear": ef_py.ConditionalObjectiveProperty.Gear,
-    "heading_error_deg": ef_py.ConditionalObjectiveProperty.HeadingErrorDeg,
-    "command_code": ef_py.ConditionalObjectiveProperty.CommandCode,
-    "ground_track_error_deg": ef_py.ConditionalObjectiveProperty.GroundTrackErrorDeg,
-    "runway_cross_abs_m": ef_py.ConditionalObjectiveProperty.RunwayCrossAbsM,
-    "runway_from_threshold_m": ef_py.ConditionalObjectiveProperty.RunwayFromThresholdM,
-    "on_runway_geom": ef_py.ConditionalObjectiveProperty.OnRunwayGeom,
-    "on_runway": ef_py.ConditionalObjectiveProperty.OnRunway,
-    "on_ground": ef_py.ConditionalObjectiveProperty.OnGround,
-    "sink_rate_abs_mps": ef_py.ConditionalObjectiveProperty.SinkRateAbsMps,
-    "vertical_speed_abs_mps": ef_py.ConditionalObjectiveProperty.SinkRateAbsMps,
-    "ils_localizer_abs": ef_py.ConditionalObjectiveProperty.IlsLocalizerAbs,
-    "ils_glideslope_abs": ef_py.ConditionalObjectiveProperty.IlsGlideslopeAbs,
-    "dme_m": ef_py.ConditionalObjectiveProperty.DmeM,
-    "heading": ef_py.ConditionalObjectiveProperty.Heading,
-    "x": ef_py.ConditionalObjectiveProperty.X,
-    "y": ef_py.ConditionalObjectiveProperty.Y,
-    "self_active": ef_py.ConditionalObjectiveProperty.SelfActive,
-    "target_active": ef_py.ConditionalObjectiveProperty.TargetActive,
-    "self_health": ef_py.ConditionalObjectiveProperty.SelfHealth,
-    "target_health": ef_py.ConditionalObjectiveProperty.TargetHealth,
-    "missiles_remaining": ef_py.ConditionalObjectiveProperty.MissilesRemaining,
-    "target_range_m": ef_py.ConditionalObjectiveProperty.TargetRangeM,
-}
+class _LazyEfEnumMap(Mapping[str, object]):
+    def __init__(self, enum_owner_name: str, entries: dict[str, object]):
+        self._enum_owner_name = str(enum_owner_name)
+        self._entries = dict(entries)
 
-OBJECTIVE_OP_MAP = {
-    ">=": ef_py.ConditionalObjectiveOp.GreaterEqual,
-    ">": ef_py.ConditionalObjectiveOp.GreaterThan,
-    "<=": ef_py.ConditionalObjectiveOp.LessEqual,
-    "<": ef_py.ConditionalObjectiveOp.LessThan,
-}
+    def _enum_owner(self) -> object:
+        owner = getattr(ef_py, self._enum_owner_name, None)
+        if owner is None:
+            raise AttributeError(
+                f"ef_py is missing {self._enum_owner_name}; "
+                "objective runtime surfaces require the maintained build binding"
+            )
+        return owner
 
-OBJECTIVE_DYNAMIC_TARGET_MAP = {
-    "CMD_ALT": (ef_py.ConditionalObjectiveTargetKind.CommandAltitude, 0.95),
-    "CMD_ALTITUDE": (ef_py.ConditionalObjectiveTargetKind.CommandAltitude, 0.95),
-    "CMD_SPEED": (ef_py.ConditionalObjectiveTargetKind.CommandSpeed, 0.90),
-    "CMD_HDG": (ef_py.ConditionalObjectiveTargetKind.CommandHeading, 1.0),
-    "CMD_HEADING": (ef_py.ConditionalObjectiveTargetKind.CommandHeading, 1.0),
-}
+    def _resolve_value(self, raw: object) -> object:
+        if isinstance(raw, tuple):
+            return tuple(self._resolve_value(item) for item in raw)
+        if isinstance(raw, str):
+            return getattr(self._enum_owner(), raw)
+        return raw
+
+    def __getitem__(self, key: str) -> object:
+        return self._resolve_value(self._entries[key])
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._entries)
+
+    def __len__(self) -> int:
+        return len(self._entries)
+
+    def get(self, key: str, default: object = None) -> object:
+        if key not in self._entries:
+            return default
+        return self[key]
+
+
+OBJECTIVE_PROPERTY_MAP = _LazyEfEnumMap(
+    "ConditionalObjectiveProperty",
+    {
+        "altitude": "Altitude",
+        "altitude_agl": "AltitudeAGL",
+        "speed": "Speed",
+        "ground_speed": "GroundSpeed",
+        "gear": "Gear",
+        "heading_error_deg": "HeadingErrorDeg",
+        "command_code": "CommandCode",
+        "ground_track_error_deg": "GroundTrackErrorDeg",
+        "runway_cross_abs_m": "RunwayCrossAbsM",
+        "runway_from_threshold_m": "RunwayFromThresholdM",
+        "on_runway_geom": "OnRunwayGeom",
+        "on_runway": "OnRunway",
+        "on_ground": "OnGround",
+        "sink_rate_abs_mps": "SinkRateAbsMps",
+        "vertical_speed_abs_mps": "SinkRateAbsMps",
+        "ils_localizer_abs": "IlsLocalizerAbs",
+        "ils_glideslope_abs": "IlsGlideslopeAbs",
+        "dme_m": "DmeM",
+        "heading": "Heading",
+        "x": "X",
+        "y": "Y",
+        "self_active": "SelfActive",
+        "target_active": "TargetActive",
+        "self_health": "SelfHealth",
+        "target_health": "TargetHealth",
+        "missiles_remaining": "MissilesRemaining",
+        "target_range_m": "TargetRangeM",
+    },
+)
+
+OBJECTIVE_OP_MAP = _LazyEfEnumMap(
+    "ConditionalObjectiveOp",
+    {
+        ">=": "GreaterEqual",
+        ">": "GreaterThan",
+        "<=": "LessEqual",
+        "<": "LessThan",
+    },
+)
+
+OBJECTIVE_DYNAMIC_TARGET_MAP = _LazyEfEnumMap(
+    "ConditionalObjectiveTargetKind",
+    {
+        "CMD_ALT": ("CommandAltitude", 0.95),
+        "CMD_ALTITUDE": ("CommandAltitude", 0.95),
+        "CMD_SPEED": ("CommandSpeed", 0.90),
+        "CMD_HDG": ("CommandHeading", 1.0),
+        "CMD_HEADING": ("CommandHeading", 1.0),
+    },
+)
 
 
 def coerce_nonnegative_int(value, default: int = 0) -> int:
@@ -76,8 +122,9 @@ def formation_role_code_from_member(member) -> int:
 
 
 def normalize_execution_step_runtime_mode(mode: str | None) -> str:
-    raw_mode = os.environ.get("CMO_EXECUTION_STEP_RUNTIME", "compiled") if mode is None else mode
-    normalized = str(raw_mode).strip().lower()
+    if mode is None:
+        return "compiled"
+    normalized = str(mode).strip().lower()
     if normalized in LEGACY_EXECUTION_STEP_RUNTIME_MODES:
         return "legacy"
     if normalized in {"", "compiled", "on", "1", "true"}:

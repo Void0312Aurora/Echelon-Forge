@@ -13,6 +13,8 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 
+import python.rl.runtime.leader_world_batch_runtime as leader_runtime_module  # noqa: E402
+import python.rl.runtime.single_world_batch_runtime as single_runtime_module  # noqa: E402
 from python.rl.runtime.single_world_batch_runtime import (  # noqa: E402
     build_single_world_batch_execution_runtime,
 )
@@ -158,6 +160,30 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
             finally:
                 runtime.close()
 
+    def test_single_world_runtime_rejects_compatibility_fallback_without_explicit_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/single_world_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+            runtime = build_single_world_batch_execution_runtime(
+                scenario_path=scenario_path,
+                env_settings={
+                    "include_visual": False,
+                    "include_proprio": False,
+                },
+            )
+            try:
+                original_supports = runtime.access.supports_runtime_window_api
+                runtime.access.supports_runtime_window_api = lambda: False  # type: ignore[method-assign]
+                _obs, _reset_info = runtime.reset(seed=9)
+                action = np.zeros((17,), dtype=np.float32)
+                with self.assertRaisesRegex(RuntimeError, "compatibility fallback is quarantined"):
+                    runtime.step(action)
+                runtime.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
+            finally:
+                runtime.close()
+
     def test_single_world_runtime_reports_explicit_compatibility_fallback_when_window_api_is_unavailable(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/single_world_scenario.json"
@@ -169,6 +195,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                 env_settings={
                     "include_visual": False,
                     "include_proprio": False,
+                    "runtime_compatibility_enabled": True,
                 },
             )
             try:
@@ -188,6 +215,214 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                 runtime.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
             finally:
                 runtime.close()
+
+    def test_single_world_runtime_uses_named_compat_reward_and_info_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/single_world_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+            runtime = build_single_world_batch_execution_runtime(
+                scenario_path=scenario_path,
+                env_settings={
+                    "include_visual": False,
+                    "include_proprio": False,
+                },
+            )
+            try:
+                _obs, _reset_info = runtime.reset(seed=11)
+                original_compute = single_runtime_module.compute_loader_step_outcome
+                original_build = single_runtime_module.build_loader_step_info
+                observed: dict[str, object] = {}
+
+                def _wrapped_compute(loader, **kwargs):
+                    observed["compute_loader"] = loader
+                    return original_compute(loader, **kwargs)
+
+                def _wrapped_build(loader, **kwargs):
+                    observed["build_loader"] = loader
+                    observed["entity_id"] = kwargs.get("entity_id")
+                    return original_build(loader, **kwargs)
+
+                single_runtime_module.compute_loader_step_outcome = _wrapped_compute
+                single_runtime_module.build_loader_step_info = _wrapped_build
+                try:
+                    _next_obs, reward, _terminated, _truncated, info = runtime.step(np.zeros((17,), dtype=np.float32))
+                finally:
+                    single_runtime_module.compute_loader_step_outcome = original_compute
+                    single_runtime_module.build_loader_step_info = original_build
+
+                self.assertIs(observed.get("compute_loader"), runtime.unwrapped.loader)
+                self.assertIs(observed.get("build_loader"), runtime.unwrapped.loader)
+                self.assertEqual(int(observed.get("entity_id", -1)), int(runtime.unwrapped.agent_id))
+                self.assertTrue(np.isfinite(float(reward)))
+                self.assertIn("runtime_window_evidence", info)
+            finally:
+                runtime.close()
+
+    def test_leader_group_uses_named_compat_reward_and_info_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/single_world_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+            from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+            from python.rl.runtime.leader_world_batch_runtime import (  # noqa: E402
+                LeaderWorldBatchExecutionRuntimeGroup,
+            )
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                vec_env.seed(5)
+                _ = vec_env.reset()
+                group = LeaderWorldBatchExecutionRuntimeGroup(vec_env)
+                original_compute = leader_runtime_module.compute_loader_step_outcome
+                original_build = leader_runtime_module.build_loader_step_info
+                observed: dict[str, object] = {}
+
+                def _wrapped_compute(loader, **kwargs):
+                    observed["compute_loader"] = loader
+                    return original_compute(loader, **kwargs)
+
+                def _wrapped_build(loader, **kwargs):
+                    observed["build_loader"] = loader
+                    observed["entity_id"] = kwargs.get("entity_id")
+                    return original_build(loader, **kwargs)
+
+                leader_runtime_module.compute_loader_step_outcome = _wrapped_compute
+                leader_runtime_module.build_loader_step_info = _wrapped_build
+                try:
+                    results = group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
+                finally:
+                    leader_runtime_module.compute_loader_step_outcome = original_compute
+                    leader_runtime_module.build_loader_step_info = original_build
+
+                self.assertEqual(len(results), 1)
+                self.assertIs(observed.get("compute_loader"), vec_env.envs[0].loader)
+                self.assertIs(observed.get("build_loader"), vec_env.envs[0].loader)
+                self.assertEqual(int(observed.get("entity_id", -1)), int(vec_env.envs[0].agent_id))
+                self.assertTrue(np.isfinite(float(results[0][1])))
+            finally:
+                vec_env.close()
+
+    def test_leader_group_step_uses_runtime_window_evidence_when_facade_api_available(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/single_world_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+            from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+            from python.rl.runtime.leader_world_batch_runtime import (  # noqa: E402
+                LeaderWorldBatchExecutionRuntimeGroup,
+            )
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                vec_env.seed(13)
+                _ = vec_env.reset()
+                group = LeaderWorldBatchExecutionRuntimeGroup(vec_env)
+                results = group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
+
+                self.assertEqual(len(results), 1)
+                _obs, _reward, _terminated, _truncated, info = results[0]
+                evidence = group.last_runtime_window_evidence
+                self.assertIsNotNone(evidence)
+                assert evidence is not None
+                self.assertFalse(bool(evidence.uses_compat_fallback))
+                self.assertIn("runtime_window_evidence", info)
+                self.assertEqual(
+                    info["runtime_window_evidence"]["cadence_reason"],
+                    "selected_slice_cadence_trace_runtime_window_wp17c",
+                )
+                self.assertFalse(bool(info["runtime_window_evidence"]["uses_compat_fallback"]))
+                self.assertEqual(
+                    info["runtime_window_evidence"]["barrier_ids"],
+                    ["input_injection", "window_commit", "export"],
+                )
+            finally:
+                vec_env.close()
+
+    def test_leader_group_rejects_compatibility_fallback_without_explicit_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/single_world_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+            from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+            from python.rl.runtime.leader_world_batch_runtime import (  # noqa: E402
+                LeaderWorldBatchExecutionRuntimeGroup,
+            )
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                vec_env.seed(17)
+                _ = vec_env.reset()
+                group = LeaderWorldBatchExecutionRuntimeGroup(vec_env)
+                original_supports = group.access.supports_runtime_window_api
+                group.access.supports_runtime_window_api = lambda: False  # type: ignore[method-assign]
+                try:
+                    with self.assertRaisesRegex(RuntimeError, "compatibility fallback is quarantined"):
+                        group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
+                finally:
+                    group.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
+            finally:
+                vec_env.close()
+
+    def test_leader_group_reports_explicit_compatibility_fallback_when_opted_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/single_world_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
+
+            from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+            from python.rl.runtime.leader_world_batch_runtime import (  # noqa: E402
+                LeaderWorldBatchExecutionRuntimeGroup,
+            )
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                runtime_compatibility_enabled=True,
+            )
+            try:
+                vec_env.seed(19)
+                _ = vec_env.reset()
+                group = LeaderWorldBatchExecutionRuntimeGroup(vec_env)
+                original_supports = group.access.supports_runtime_window_api
+                group.access.supports_runtime_window_api = lambda: False  # type: ignore[method-assign]
+                try:
+                    results = group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
+                finally:
+                    group.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
+
+                self.assertEqual(len(results), 1)
+                _obs, _reward, _terminated, _truncated, info = results[0]
+                self.assertIsNone(group.last_runtime_window_evidence)
+                self.assertEqual(
+                    info["runtime_window_evidence"]["cadence_reason"],
+                    "compatibility_fallback_world_batch_step_worlds_wp16c",
+                )
+                self.assertTrue(bool(info["runtime_window_evidence"]["uses_compat_fallback"]))
+                self.assertEqual(info["runtime_window_evidence"]["barrier_ids"], [])
+            finally:
+                vec_env.close()
 
     def test_world_batch_vec_env_and_leader_group_expose_window_evidence_accessors_without_forcing_migration(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

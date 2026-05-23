@@ -246,7 +246,7 @@ class ScenarioLoader:
         self._compiled_runtime_metadata = None
         self._scenario_source_path = None
         self._compiled_conditional_objectives = []
-        self._objective_shaping_cfg = ef_py.ObjectiveShapingConfig()
+        self._objective_shaping_cfg = None
         self._compiled_rewards_cfg: dict = {}
         self._compiled_meta_cfg: dict = {}
         self._waypoint_mode_reward_cfgs: dict[str, WaypointModeRewardConfig] = {}
@@ -259,7 +259,7 @@ class ScenarioLoader:
         self._scripted_opponent_runtime = _make_scripted_opponent_runtime_impl()
         self.scripted_opponents: dict[int, Any] = self._scripted_opponent_runtime.controllers
         self.scripted_opponent_reports: dict[int, dict[str, Any]] = self._scripted_opponent_runtime.reports
-        self.set_execution_step_runtime_mode(None)
+        self.set_execution_step_runtime_mode("compiled")
         self.set_flight_shaping_backend(None)
 
     def set_execution_step_runtime_mode(self, mode: str | None) -> None:
@@ -758,8 +758,8 @@ class ScenarioLoader:
         return _compile_conditional_objectives_impl(self)
 
     @staticmethod
-    def _build_objective_shaping_config(cfg: dict):
-        return _build_objective_shaping_config_impl(cfg)
+    def _build_objective_shaping_config(cfg: dict, *, required: bool = False):
+        return _build_objective_shaping_config_impl(cfg, required=required)
 
     def _build_conditional_objective_inputs(
         self,
@@ -1063,6 +1063,24 @@ class ScenarioLoader:
 
     def get_objectives(self):
         return self.scenario_data.get("objectives", [])
+
+    def get_policy_agent_observation(self, agent_id: int | None = None):
+        resolved_agent_id = self.agent_id if agent_id is None else agent_id
+        if resolved_agent_id is None:
+            return None
+        try:
+            return self.sim.get_agent_observation(resolved_agent_id)
+        except Exception:
+            return None
+
+    def get_policy_instrument_state(self, agent_id: int | None = None):
+        resolved_agent_id = self.agent_id if agent_id is None else agent_id
+        if resolved_agent_id is None:
+            return None
+        try:
+            return self.sim.get_instrument_state(resolved_agent_id)
+        except Exception:
+            return None
 
     def _sync_kernel_mission_command(self) -> None:
         _sync_kernel_mission_command_impl(self)

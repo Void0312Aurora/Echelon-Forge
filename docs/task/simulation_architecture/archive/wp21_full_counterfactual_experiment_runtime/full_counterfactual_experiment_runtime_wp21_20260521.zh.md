@@ -1,6 +1,6 @@
 # WP21 Full Counterfactual Experiment Runtime
 
-状态：`2026-05-22` complete / accepted。
+状态：`2026-05-22` closure rejected by owner；验收已失效，并由 WP22 强制退场补救阶段接管。
 
 Language:
 
@@ -16,7 +16,8 @@ Language:
 - [WP18 runtime ownership and C++ hot-path consolidation](../wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)
 - [WP19 CUDA and resident-state mainline alignment](../wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)
 - [WP20 public capability-platform composition](../wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)
-- [WP21 验收审查](../../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md)
+- [已争议的 WP21 验收审查](../../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md)
+- [WP22 旧兼容层强制退场补救](../wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)
 - [Simulation system architecture design](../../../plan/architecture/simulation_system_architecture_design.md)
 - [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)
 - [WP Closure Lane Policy](../../../standards/governance/wp_closure_lane_policy.zh.md)
@@ -45,6 +46,22 @@ explicit typed setup 或 scenario-generation artifact
 ```
 
 WP21 是实现阶段。只有规划文档不能通过 gate。
+
+## 1.1 Owner 否决与当前权威
+
+`2026-05-22` 的 WP21 验收结论不再具备当前权威。owner 已明确否决 WP21
+收口：subagent 工作没有形成可回收证据，timeout/partial work 被过度宽松地视为
+可关闭，而 compatibility layers / old implementation surfaces 在所谓 final cleanup
+之后仍作为 first-class path 存在。
+
+因此：
+
+- WP21 不得再被引用为最终路线闭合。
+- 归档中的 WP21 验收审查只保留为历史证据。
+- 任何依赖“WP21 已退场 legacy surfaces”的后续表述，都由 WP22 取代。
+- 仍作为默认 maintained path 的 compatibility residual 是 blocker，不是可接受残留。
+- subagent 线程被关闭或超时，不等于任务完成；只有返回 touched files、validation、
+  residuals、blockers 与 integration status 的 return packet 才能计入完成。
 
 ## 2. 需要保留的当前代码事实
 
@@ -83,12 +100,12 @@ WP21 不可以：
 
 | 工作包 | 状态 | 关注点 | 目标 | 产出 |
 |--------|------|--------|------|------|
-| `WP21-A Fact Ledger And Residual Freeze` | complete / accepted | final facts and entry gate | 冻结 source/test facts、剩余 residuals 与 final-stage non-goals。 | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md) |
-| `WP21-B Snapshot Restore And Worldline Boundary` | complete / accepted | snapshot/restore runtime | 将 selected slice 扩展为 bounded、facade-owned snapshot/restore 与 worldline boundary。 | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md) |
-| `WP21-C Counterfactual Rollout And Causal Difference` | complete / accepted | branch execution | 执行 parent/branch worldlines，并在无 raw mutation 的前提下产生 causal-difference evidence。 | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md) |
-| `WP21-D Scenario Intervention Generation Runtime` | complete / accepted | deterministic generated inputs | 将 WP15 generation request surface 转为 deterministic parameter-variation generator。 | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.zh.md) |
-| `WP21-E Experiment Facade And Evidence Collection` | complete / accepted | experiment orchestration | 暴露 maintained experiment run surface，收集 observations、terminations、traces 与 evidence ancestry。 | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.zh.md) |
-| `WP21-F Final Cleanup And Acceptance Handoff` | complete / accepted | route closure | 集成 A-E，关闭或加闸 legacy residuals，运行验证，同步索引并准备最终验收。 | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.zh.md) |
+| `WP21-A Fact Ledger And Residual Freeze` | claimed complete / owner acceptance invalidated | final facts and entry gate | 冻结 source/test facts、剩余 residuals 与 final-stage non-goals。 | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md) |
+| `WP21-B Snapshot Restore And Worldline Boundary` | claimed complete / owner acceptance invalidated | snapshot/restore runtime | 将 selected slice 扩展为 bounded、facade-owned snapshot/restore 与 worldline boundary。 | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md) |
+| `WP21-C Counterfactual Rollout And Causal Difference` | claimed complete / owner acceptance invalidated | branch execution | 执行 parent/branch worldlines，并在无 raw mutation 的前提下产生 causal-difference evidence。 | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md) |
+| `WP21-D Scenario Intervention Generation Runtime` | claimed complete / owner acceptance invalidated | deterministic generated inputs | 将 WP15 generation request surface 转为 deterministic parameter-variation generator。 | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.zh.md) |
+| `WP21-E Experiment Facade And Evidence Collection` | claimed complete / owner acceptance invalidated | experiment orchestration | 暴露 maintained experiment run surface，收集 observations、terminations、traces 与 evidence ancestry。 | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.zh.md) |
+| `WP21-F Final Cleanup And Acceptance Handoff` | failed closure / superseded by WP22 | route closure | 集成 A-E，关闭或加闸 legacy residuals，运行验证，同步索引并准备最终验收。 | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.zh.md) |
 
 ## 5. 依赖图
 
@@ -149,7 +166,8 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP21 --summary
 
 ## 9. 最终阶段完成定义
 
-WP21 只有在以下条件满足时才算 complete：
+WP21 的 claimed done definition 当前未被 owner 接受。只有 WP22 证明 WP21-F
+未能完成的强制退场条件后，WP21 才能被视为历史上完成：
 
 - maintained counterfactual / experiment execution 不再只依赖 metadata-only contracts；
 - 已验收 branch/compare behavior 可通过 facade-owned runtime surfaces 访问，必要时也有 bindings；
@@ -157,3 +175,5 @@ WP21 只有在以下条件满足时才算 complete：
 - experiment evidence 被收集，且不晋级 support/truth claims；
 - legacy-only runtime mirror 或 bypass paths 被删除、加闸，或以 compatibility-only 形式保留并有测试；
 - 最终验收审查不再留下 unowned refactor-route work。
+
+截至本次 owner 否决，最后一项未满足。当前补救 gate 由 WP22 拥有。

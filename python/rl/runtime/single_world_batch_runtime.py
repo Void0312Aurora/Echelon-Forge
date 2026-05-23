@@ -15,8 +15,12 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from python.rl.runtime.execution_runtime import ExecutionRuntimeAdapter, WrappedExecutionRuntimeAdapter
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
-from gym_envs.universal_env import build_pilot_action, build_step_info, normalize_action
-from python.rl.runtime.world_batch import WorldBatchVecEnvAccess
+from gym_envs.universal_env import build_pilot_action, normalize_action
+from python.rl.runtime.world_batch import (
+    WorldBatchVecEnvAccess,
+    build_loader_step_info,
+    compute_loader_step_outcome,
+)
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 
 
@@ -127,6 +131,11 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
                 include_diagnostics=True,
             )
         if window_evidence is None:
+            if not bool(getattr(self.world_vec, "runtime_compatibility_enabled", False)):
+                raise RuntimeError(
+                    "RuntimeFacade.run_wp10_window() is unavailable and compatibility fallback is quarantined; "
+                    "pass runtime_compatibility_enabled=True to opt in explicitly."
+                )
             self.access.set_pilot_actions_batch([assignment])
             self.access.step_worlds([env_idx])
             batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
@@ -173,21 +182,20 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
         obs_build_ms = (time.perf_counter() - obs_t0) * 1000.0 if collect_timing else 0.0
 
         reward_t0 = time.perf_counter() if collect_timing else 0.0
-        reward, terminated, truncated, mission_status = handle.loader.compute_full_step(
-            obs,
-            self.access.sim(env_idx),
-            handle.steps,
-            handle.max_steps,
+        reward, terminated, truncated, mission_status = compute_loader_step_outcome(
+            handle.loader,
+            obs=obs,
+            steps=handle.steps,
+            max_steps=handle.max_steps,
             truth=truth,
             inst_state=inst,
         )
         reward_compute_ms = (time.perf_counter() - reward_t0) * 1000.0 if collect_timing else 0.0
 
         info_t0 = time.perf_counter() if collect_timing else 0.0
-        info = build_step_info(
+        info = build_loader_step_info(
             handle.loader,
-            self.access.sim(env_idx),
-            int(handle.agent_id),
+            entity_id=int(handle.agent_id),
             mission_status=mission_status,
             terminated=bool(terminated),
             truncated=bool(truncated),

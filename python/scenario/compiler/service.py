@@ -128,6 +128,7 @@ class ScenarioCompiler:
         mission_cmd_template = _normalize_runtime_mission_command(merged.get("mission_command", {}), task_cfg)
         normalized_route_waypoints = materialize_runtime_waypoint_cache(mission_cmd_template)
         normalized_waypoint_templates = _compile_normalized_waypoint_templates(mission_cmd_template)
+        compiled_conditional_objectives = _compile_conditional_objectives(merged.get("objectives", []))
         runtime_metadata = CompiledScenarioRuntimeMetadata(
             mission_command_template=mission_cmd_template,
             rewards_config=_clone_scenario_value(rewards_cfg),
@@ -135,8 +136,11 @@ class ScenarioCompiler:
             normalized_route_waypoints=tuple(_clone_scenario_value(normalized_route_waypoints)),
             normalized_waypoint_templates=normalized_waypoint_templates,
             waypoint_template_route_ref_ids=_compile_waypoint_template_route_ref_ids(normalized_waypoint_templates),
-            compiled_conditional_objectives=_compile_conditional_objectives(merged.get("objectives", [])),
-            objective_shaping_cfg=_build_objective_shaping_config(rewards_cfg),
+            compiled_conditional_objectives=compiled_conditional_objectives,
+            objective_shaping_cfg=_build_objective_shaping_config(
+                rewards_cfg,
+                required=bool(compiled_conditional_objectives),
+            ),
             ils_beacon_templates=tuple(_clone_scenario_value(_extract_ils_beacons(env_cfg))),
             waypoint_mode_configs={
                 "flyby": _build_waypoint_mode_reward_config(rewards_cfg, mode="flyby"),

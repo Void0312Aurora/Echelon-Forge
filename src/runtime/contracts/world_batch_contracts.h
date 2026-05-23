@@ -23,7 +23,7 @@ struct WorldEntityRef {
 
 struct WorldTerrainAssignment {
     std::uint64_t world_index = 0;
-    std::string terrain_type = "legacy";
+    std::string terrain_type = "flat";
 };
 
 struct WorldWindAssignment {
@@ -83,12 +83,31 @@ inline constexpr std::string_view kTypedPlatformSpawnRejectionWrongRequestKind =
     "typed_platform_spawn_requires_typed_platform_request_kind";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionCompatibilityPathRequired =
     "typed_platform_spawn_requires_type_name_compatibility_path";
+inline constexpr std::string_view
+    kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired =
+        "typed_platform_spawn_requires_maintained_typed_setup";
+inline constexpr std::string_view
+    kTypedPlatformSpawnRejectionLegacyCompatibilityRequest =
+        "typed_platform_spawn_legacy_compatibility_request";
+inline constexpr std::string_view
+    kTypedPlatformSpawnRejectionMixedSetupSurface =
+        "typed_platform_spawn_mixed_typed_setup_and_compatibility_surface";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMissingEvidence =
     "typed_platform_spawn_evidence_required";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionWorldIndexOutOfRange =
     "typed_platform_spawn_world_index_out_of_range";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMaterializationFailed =
     "typed_platform_spawn_materialization_failed";
+inline constexpr std::string_view kTypedPlatformSetupSurfaceMaintainedTypedSetup =
+    "maintained_typed_setup";
+inline constexpr std::string_view
+    kTypedPlatformSetupSurfaceLegacyCompatibilityRequest =
+        "legacy_shaped_compatibility_request";
+inline constexpr std::string_view
+    kTypedPlatformSetupSurfaceMixedTypedCompatibilityBridge =
+        "mixed_typed_setup_compatibility_bridge";
+inline constexpr std::string_view kTypedPlatformSetupSurfaceInvalid =
+    "invalid_typed_setup_surface";
 
 struct TypedPlatformSpawnRequest {
     std::uint64_t world_index = 0;
@@ -131,6 +150,15 @@ struct TypedPlatformSpawnValidationResult {
     }
 };
 
+struct TypedPlatformSetupSurfaceEvidence {
+    std::string setup_surface = std::string(kTypedPlatformSetupSurfaceInvalid);
+    bool maintained_typed_setup = false;
+    bool legacy_compatibility_request = false;
+    bool mixed_typed_compatibility_bridge = false;
+    bool invalid = false;
+    std::vector<std::string> reasons;
+};
+
 [[nodiscard]] inline TypedPlatformSpawnValidationResult
 reject_typed_platform_spawn_request(
     std::string_view reason,
@@ -143,7 +171,9 @@ reject_typed_platform_spawn_request(
 }
 
 [[nodiscard]] inline TypedPlatformSpawnValidationResult
-validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) {
+validate_typed_platform_spawn_request_common(
+    const TypedPlatformSpawnRequest& request
+) {
     namespace platform = runtime::platform_capabilities;
 
     if (platform::is_blank(request.request_id)) {
@@ -199,14 +229,6 @@ validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) 
             "resolved_spawn_plan.source_request_kind must be typed_platform_request"
         );
     }
-    if (!request.compatibility_path_preserved ||
-        !request.capability_bundle.compatibility_path_preserved ||
-        !request.resolved_spawn_plan.compatibility_path_preserved) {
-        return reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionCompatibilityPathRequired,
-            "typed platform setup must preserve the type_name compatibility path"
-        );
-    }
 
     const platform::PlatformCapabilityValidationResult plan_result =
         platform::validate_resolved_platform_spawn_plan(request.resolved_spawn_plan);
@@ -238,6 +260,152 @@ validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) 
     TypedPlatformSpawnValidationResult result{};
     result.valid = true;
     return result;
+}
+
+[[nodiscard]] inline bool typed_platform_spawn_preserves_compatibility_path(
+    const TypedPlatformSpawnRequest& request
+) {
+    return request.compatibility_path_preserved ||
+        request.capability_bundle.compatibility_path_preserved ||
+        request.resolved_spawn_plan.compatibility_path_preserved;
+}
+
+[[nodiscard]] inline TypedPlatformSetupSurfaceEvidence
+classify_typed_platform_spawn_setup_surface(
+    const TypedPlatformSpawnRequest& request
+) {
+    namespace platform = runtime::platform_capabilities;
+
+    TypedPlatformSetupSurfaceEvidence evidence{};
+    const bool typed_request_kind =
+        request.resolved_spawn_plan.source_request_kind ==
+        platform::kPlatformSpawnRequestKindTypedPlatformRequest;
+    const bool compatibility_request_kind =
+        request.resolved_spawn_plan.source_request_kind ==
+        platform::kPlatformSpawnRequestKindTypeNameCompatibility;
+    const bool resolved_spawn_bridge =
+        request.resolved_spawn_plan.materialization_strategy ==
+        platform::kPlatformMaterializationStrategyResolvedSpawnBridge;
+    const bool factory_compatibility_materialization =
+        request.resolved_spawn_plan.materialization_strategy ==
+        platform::kPlatformMaterializationStrategyFactoryCompatibility;
+    const bool compatibility_path_preserved =
+        typed_platform_spawn_preserves_compatibility_path(request);
+
+    if (typed_request_kind) {
+        evidence.reasons.push_back("typed_platform_request");
+    }
+    if (compatibility_request_kind) {
+        evidence.reasons.push_back("type_name_compatibility");
+    }
+    if (resolved_spawn_bridge) {
+        evidence.reasons.push_back("resolved_spawn_plan_bridge");
+    }
+    if (factory_compatibility_materialization) {
+        evidence.reasons.push_back("factory_compatibility_materialization");
+    }
+    if (compatibility_path_preserved) {
+        evidence.reasons.push_back("compatibility_path_preserved");
+    }
+
+    if (typed_request_kind && resolved_spawn_bridge &&
+        !factory_compatibility_materialization &&
+        !compatibility_request_kind &&
+        !compatibility_path_preserved) {
+        evidence.setup_surface =
+            std::string(kTypedPlatformSetupSurfaceMaintainedTypedSetup);
+        evidence.maintained_typed_setup = true;
+        return evidence;
+    }
+
+    if (!typed_request_kind &&
+        compatibility_request_kind &&
+        factory_compatibility_materialization &&
+        compatibility_path_preserved) {
+        evidence.setup_surface = std::string(
+            kTypedPlatformSetupSurfaceLegacyCompatibilityRequest
+        );
+        evidence.legacy_compatibility_request = true;
+        return evidence;
+    }
+
+    if ((typed_request_kind || resolved_spawn_bridge) &&
+        (compatibility_request_kind ||
+         factory_compatibility_materialization ||
+         compatibility_path_preserved)) {
+        evidence.setup_surface = std::string(
+            kTypedPlatformSetupSurfaceMixedTypedCompatibilityBridge
+        );
+        evidence.mixed_typed_compatibility_bridge = true;
+        return evidence;
+    }
+
+    evidence.invalid = true;
+    return evidence;
+}
+
+[[nodiscard]] inline TypedPlatformSpawnValidationResult
+validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) {
+    TypedPlatformSpawnValidationResult result =
+        validate_typed_platform_spawn_request_common(request);
+    if (!result.valid) {
+        return result;
+    }
+
+    if (!request.compatibility_path_preserved ||
+        !request.capability_bundle.compatibility_path_preserved ||
+        !request.resolved_spawn_plan.compatibility_path_preserved) {
+        return reject_typed_platform_spawn_request(
+            kTypedPlatformSpawnRejectionCompatibilityPathRequired,
+            "typed platform setup must preserve the type_name compatibility path"
+        );
+    }
+
+    result.valid = true;
+    return result;
+}
+
+[[nodiscard]] inline TypedPlatformSpawnValidationResult
+validate_maintained_typed_platform_spawn_request(
+    const TypedPlatformSpawnRequest& request
+) {
+    TypedPlatformSpawnValidationResult result =
+        validate_typed_platform_spawn_request_common(request);
+    if (!result.valid) {
+        return result;
+    }
+
+    const TypedPlatformSetupSurfaceEvidence surface =
+        classify_typed_platform_spawn_setup_surface(request);
+    if (surface.maintained_typed_setup) {
+        result.valid = true;
+        return result;
+    }
+
+    TypedPlatformSpawnValidationResult rejection{};
+    if (surface.legacy_compatibility_request) {
+        rejection = reject_typed_platform_spawn_request(
+            kTypedPlatformSpawnRejectionLegacyCompatibilityRequest,
+            "typed platform setup remains a legacy-shaped compatibility request"
+        );
+    } else if (surface.mixed_typed_compatibility_bridge) {
+        rejection = reject_typed_platform_spawn_request(
+            kTypedPlatformSpawnRejectionMixedSetupSurface,
+            "typed platform setup mixes maintained typed setup with compatibility preservation"
+        );
+    } else {
+        rejection = reject_typed_platform_spawn_request(
+            kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired,
+            "typed platform setup must declare maintained typed setup semantics"
+        );
+    }
+
+    rejection.errors.insert(
+        rejection.errors.end(),
+        surface.reasons.begin(),
+        surface.reasons.end()
+    );
+    return rejection;
 }
 
 [[nodiscard]] inline std::vector<std::string>
@@ -317,6 +485,7 @@ struct TypedPlatformSpawnResult {
     std::string source_type_name;
     std::string plan_id;
     std::string capability_bundle_id;
+    std::string setup_surface;
     std::string rejection_reason;
     std::vector<std::string> errors;
     std::vector<std::string> evidence_refs;
@@ -364,6 +533,7 @@ make_typed_platform_spawn_result(
     result.source_type_name = admission.source_type_name;
     result.plan_id = admission.plan_id;
     result.capability_bundle_id = admission.capability_bundle_id;
+    result.setup_surface = std::string(kTypedPlatformSetupSurfaceInvalid);
     result.rejection_reason = admission.rejection_reason;
     result.errors = admission.errors;
     result.evidence_refs = admission.evidence_refs;
@@ -377,28 +547,114 @@ struct WorldPilotActionAssignment {
 };
 
 struct WorldMissionCommandAssignment {
+    using shell_type = MissionCommandCompatibilityTransportShell;
+    static constexpr bool kCompatibilityTransportShell =
+        kMissionCommandCompatibilityTransportShell;
+    static_assert(
+        kCompatibilityTransportShell,
+        "WorldMissionCommandAssignment transports only the MissionCommand compatibility shell."
+    );
+
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
-    MissionCommand command{};
+    shell_type command{};
 };
 
 struct WorldTaskOrderAssignment {
+    using shell_type = TaskOrderCompatibilityTransportShell;
+    static constexpr bool kCompatibilityTransportShell =
+        kTaskOrderCompatibilityTransportShell;
+    static_assert(
+        kCompatibilityTransportShell,
+        "WorldTaskOrderAssignment transports only the TaskOrder compatibility shell."
+    );
+
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
-    TaskOrder order{};
+    shell_type order{};
 };
 
 struct WorldLeaderIntentAssignment {
+    using shell_type = LeaderIntentCompatibilityTransportShell;
+    static constexpr bool kCompatibilityTransportShell =
+        kLeaderIntentCompatibilityTransportShell;
+    static_assert(
+        kCompatibilityTransportShell,
+        "WorldLeaderIntentAssignment transports only the LeaderIntent compatibility shell."
+    );
+
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
-    LeaderIntent intent{};
+    shell_type intent{};
 };
 
 struct WorldPilotReportAssignment {
+    using shell_type = PilotReportCompatibilityTransportShell;
+    static constexpr bool kCompatibilityTransportShell =
+        kPilotReportCompatibilityTransportShell;
+    static_assert(
+        kCompatibilityTransportShell,
+        "WorldPilotReportAssignment transports only the PilotReport compatibility shell."
+    );
+
     std::uint64_t world_index = 0;
     std::uint64_t entity_id = 0;
-    PilotReport report{};
+    shell_type report{};
 };
+
+[[nodiscard]] inline const MissionCommandCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(
+    const WorldMissionCommandAssignment& assignment
+) noexcept {
+    return assignment.command;
+}
+
+[[nodiscard]] inline MissionCommandCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(
+    WorldMissionCommandAssignment& assignment
+) noexcept {
+    return assignment.command;
+}
+
+[[nodiscard]] inline const TaskOrderCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(
+    const WorldTaskOrderAssignment& assignment
+) noexcept {
+    return assignment.order;
+}
+
+[[nodiscard]] inline TaskOrderCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(WorldTaskOrderAssignment& assignment) noexcept {
+    return assignment.order;
+}
+
+[[nodiscard]] inline const LeaderIntentCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(
+    const WorldLeaderIntentAssignment& assignment
+) noexcept {
+    return assignment.intent;
+}
+
+[[nodiscard]] inline LeaderIntentCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(
+    WorldLeaderIntentAssignment& assignment
+) noexcept {
+    return assignment.intent;
+}
+
+[[nodiscard]] inline const PilotReportCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(
+    const WorldPilotReportAssignment& assignment
+) noexcept {
+    return assignment.report;
+}
+
+[[nodiscard]] inline PilotReportCompatibilityTransportShell&
+world_batch_assignment_compatibility_shell(
+    WorldPilotReportAssignment& assignment
+) noexcept {
+    return assignment.report;
+}
 
 struct WorldExecutionEpisodeStepRequest {
     std::uint64_t world_index = 0;

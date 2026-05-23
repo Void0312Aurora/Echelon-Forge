@@ -4,6 +4,8 @@ from typing import Any
 
 import ef_py
 
+from python.rl.tasking.bridge import sync_loader_command_chain_compat
+
 from .contracts import clone_leader_intent, clone_pilot_report, clone_task_order
 
 
@@ -44,18 +46,7 @@ class LeaderCommandBridge:
     def sync_to_kernel(self, loader: Any) -> None:
         if getattr(loader, "agent_id", None) is None:
             return
-        try:
-            if hasattr(loader.sim, "set_task_order"):
-                loader.sim.set_task_order(loader.agent_id, clone_task_order(self.task_order))
-        except Exception:
-            pass
-        try:
-            if hasattr(loader.sim, "set_leader_intent"):
-                loader.sim.set_leader_intent(loader.agent_id, clone_leader_intent(self.leader_intent))
-        except Exception:
-            pass
-        try:
-            if hasattr(loader.sim, "set_pilot_report"):
-                loader.sim.set_pilot_report(loader.agent_id, clone_pilot_report(self.pilot_report))
-        except Exception:
-            pass
+        loader.task_order = clone_task_order(self.task_order)
+        loader.leader_intent = clone_leader_intent(self.leader_intent)
+        loader.pilot_report = clone_pilot_report(self.pilot_report)
+        sync_loader_command_chain_compat(loader)

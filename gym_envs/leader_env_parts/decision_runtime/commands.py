@@ -13,12 +13,15 @@ from python.rl.control.mission_defs import (
     normalize_phase_name,
 )
 from python.rl.tasking.bridge import (
+    get_policy_agent_observation,
+    get_policy_instrument_state,
     infer_recovery_approach_type,
     infer_recovery_base_id,
     infer_recovery_runway_id,
     infer_route_ref_id,
     is_patrol_task,
     is_recover_task,
+    resolve_loader_time_step,
 )
 
 from ..common import LeaderActionMapping, wrap_deg
@@ -126,12 +129,12 @@ def station_metrics(
             inst = inst_now
     if truth is None:
         try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
+            truth = get_policy_agent_observation(loader)
         except Exception:
             truth = None
     if inst is None:
         try:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
+            inst = get_policy_instrument_state(loader)
         except Exception:
             inst = None
     if truth is None or inst is None:
@@ -518,10 +521,7 @@ def apply_leader_command(env: Any, *, mapping: LeaderActionMapping, baseline: di
     intent.abort_flag = bool(mapping.phase_bucket == "abort")
     intent.active = True
 
-    try:
-        sim_time_s = float(env.unwrapped.steps) * float(env.unwrapped.sim.get_time_step())
-    except Exception:
-        sim_time_s = 0.0
+    sim_time_s = float(env.unwrapped.steps) * float(resolve_loader_time_step(loader, default=0.05))
 
     report.report_type = report_type
     report.task_id = int(getattr(task, "task_id", 0))

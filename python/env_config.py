@@ -10,6 +10,22 @@ VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled", "legacy"}
 VALID_STEP_INFO_MODES = {"full", "terminal", "off"}
 VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "legacy", "compiled", "gpu_host"}
 
+_RUNTIME_COMPAT_TRUE = {"1", "true", "on", "yes", "compat", "compatibility", "diagnostics", "debug"}
+_RUNTIME_COMPAT_FALSE = {"", "0", "false", "off", "no", "none", "mainline", "compiled"}
+
+
+def _normalize_runtime_compatibility_enabled(value: Any) -> bool:
+    if isinstance(value, bool):
+        return bool(value)
+    if value is None:
+        return False
+    normalized = str(value).strip().lower()
+    if normalized in _RUNTIME_COMPAT_TRUE:
+        return True
+    if normalized in _RUNTIME_COMPAT_FALSE:
+        return False
+    return bool(value)
+
 
 def _merge_config_value(
     args: Any,
@@ -85,6 +101,13 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         env_cfg,
         coerce=lambda value: str(value).strip().lower(),
     )
+    runtime_compatibility_enabled = _merge_config_value(
+        args,
+        "runtime_compatibility_enabled",
+        env_cfg,
+        default=False,
+        coerce=_normalize_runtime_compatibility_enabled,
+    )
 
     action_mode = action_mode.strip()
     mission_obs_mode = mission_obs_mode.strip().lower()
@@ -104,6 +127,11 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         raise ValueError(f"Unknown step_info_mode in merged env config: {step_info_mode!r}")
     if flight_shaping_backend is not None and flight_shaping_backend not in VALID_FLIGHT_SHAPING_BACKENDS:
         raise ValueError(f"Unknown flight_shaping_backend in merged env config: {flight_shaping_backend!r}")
+    if execution_step_runtime_mode == "legacy" and not bool(runtime_compatibility_enabled):
+        raise ValueError(
+            "execution_step_runtime_mode='legacy' is quarantined; "
+            "set runtime_compatibility_enabled=True to opt in explicitly."
+        )
 
     return {
         "include_visual": bool(include_visual),
@@ -115,4 +143,5 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         "execution_step_runtime_mode": execution_step_runtime_mode,
         "step_info_mode": step_info_mode,
         "flight_shaping_backend": flight_shaping_backend,
+        "runtime_compatibility_enabled": bool(runtime_compatibility_enabled),
     }

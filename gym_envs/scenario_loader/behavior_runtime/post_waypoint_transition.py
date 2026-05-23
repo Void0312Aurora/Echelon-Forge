@@ -3,6 +3,7 @@ import math
 import numpy as np
 
 from python.rl.control.mission_defs import is_landing_command_code
+from python.rl.tasking.bridge import has_mission_command_dict, mission_command_view, resolve_loader_time_step
 from python.scenario_compiler import (
     _build_lnav_runtime_config,
     _clone_runtime_mission_command,
@@ -15,11 +16,11 @@ def landing_post_transition_terminal_ready(loader) -> bool:
     if loader.agent_id is None:
         return False
     try:
-        truth = loader.sim.get_agent_observation(loader.agent_id)
+        truth = loader.get_policy_agent_observation(loader.agent_id)
     except Exception:
         truth = None
     try:
-        inst = loader.sim.get_instrument_state(loader.agent_id)
+        inst = loader.get_policy_instrument_state(loader.agent_id)
     except Exception:
         inst = None
     if truth is None or inst is None:
@@ -103,12 +104,12 @@ def apply_pending_landing_vector(loader, *, sync_to_kernel: bool = True) -> bool
         return False
     if loader.waypoints and int(getattr(loader, "waypoint_idx", 0) or 0) < len(loader.waypoints):
         return False
-    if not isinstance(getattr(loader, "mission_cmd", None), dict):
+    if not has_mission_command_dict(loader):
         return False
     if loader.agent_id is None:
         return False
     try:
-        truth = loader.sim.get_agent_observation(loader.agent_id)
+        truth = loader.get_policy_agent_observation(loader.agent_id)
     except Exception:
         truth = None
     if truth is None:
@@ -170,19 +171,20 @@ def activate_post_waypoint_transition(loader, *, sync_to_kernel: bool = True) ->
     if not isinstance(loader.post_waypoint_transition, dict) or not loader.post_waypoint_transition:
         return None
 
+    cmd_view = mission_command_view(loader)
     next_cmd = _clone_runtime_mission_command(loader.post_waypoint_transition)
     if not isinstance(next_cmd, dict):
         return None
 
-    target_heading = float(next_cmd.get("target_heading", loader.mission_cmd.get("target_heading", 0.0)))
+    target_heading = float(next_cmd.get("target_heading", cmd_view.float_field("target_heading", 0.0)))
     if loader.rotate_mission_heading_with_world and abs(float(loader.world_yaw_deg)) > 1.0e-6:
         target_heading = (target_heading + float(loader.world_yaw_deg)) % 360.0
 
     loader.mission_cmd = {
         "command_code": int(next_cmd.get("command_code", 4)),
         "target_heading": float(target_heading),
-        "target_altitude": float(next_cmd.get("target_altitude", loader.mission_cmd.get("target_altitude", 0.0))),
-        "target_speed": float(next_cmd.get("target_speed", loader.mission_cmd.get("target_speed", 0.0))),
+        "target_altitude": float(next_cmd.get("target_altitude", cmd_view.float_field("target_altitude", 0.0))),
+        "target_speed": float(next_cmd.get("target_speed", cmd_view.float_field("target_speed", 0.0))),
     }
 
     for key, value in next_cmd.items():
@@ -263,10 +265,6 @@ def update_behaviors(loader, sim_time, *, truth=None, inst=None, sync_to_kernel:
 
 
 def update_nonhierarchical_behaviors(loader, *, truth=None, inst=None, sync_to_kernel: bool = True):
-    dt = 0.05
-    try:
-        dt = float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
-    except Exception:
-        dt = 0.05
+    dt = float(resolve_loader_time_step(loader, default=0.05))
     sim_time = float(getattr(loader, "steps", 0)) * float(dt)
     update_behaviors(loader, sim_time, truth=truth, inst=inst, sync_to_kernel=sync_to_kernel)

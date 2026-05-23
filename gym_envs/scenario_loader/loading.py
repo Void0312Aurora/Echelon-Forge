@@ -15,11 +15,17 @@ from python.scenario_compiler import (
 )
 from python.scenario_runtime import (
     active_roster_world_entity_refs,
-    apply_world_layout_to_kernel,
     find_active_roster_member,
     prepare_scenario_world_layout,
 )
-from python.rl.tasking.bridge import normalize_task_order_spec
+from python.rl.tasking.bridge import (
+    apply_loader_owned_world_layout_to_kernel,
+    get_policy_agent_observation,
+    get_policy_instrument_state,
+    mission_command_dict,
+    mission_command_view,
+    normalize_task_order_spec,
+)
 
 
 def get_active_roster_member(loader, *, entity_id=None, entity_name=None, role_code=None, formation_role_id=None):
@@ -119,7 +125,10 @@ def apply_compiled_runtime_metadata(loader) -> None:
     metadata = loader._compiled_runtime_metadata
     if metadata is None:
         loader._compiled_conditional_objectives = loader._compile_conditional_objectives()
-        loader._objective_shaping_cfg = loader._build_objective_shaping_config(loader.scenario_data.get("rewards", {}))
+        loader._objective_shaping_cfg = loader._build_objective_shaping_config(
+            loader.scenario_data.get("rewards", {}),
+            required=bool(loader._compiled_conditional_objectives),
+        )
         loader._compiled_rewards_cfg = loader.scenario_data.get("rewards", {})
         loader._compiled_meta_cfg = loader.scenario_data.get("meta", {}) if isinstance(loader.scenario_data.get("meta", {}), dict) else {}
         loader._waypoint_mode_reward_cfgs = {}
@@ -138,21 +147,18 @@ def apply_compiled_runtime_metadata(loader) -> None:
 
 
 def _resolve_primary_target(loader) -> tuple[int | None, str]:
-    mission_cmd = getattr(loader, "mission_cmd", None)
+    mission_cmd = mission_command_dict(loader)
+    cmd_view = mission_command_view(loader)
     scenario_data = getattr(loader, "scenario_data", None)
     entities = getattr(loader, "entities", None)
 
     target_name = ""
     target_id = None
 
-    if isinstance(mission_cmd, dict):
-        target_name = str(mission_cmd.get("assigned_target_name", "") or "").strip()
-        try:
-            mission_target_id = int(mission_cmd.get("assigned_target_id", 0))
-        except Exception:
-            mission_target_id = 0
-        if mission_target_id > 0:
-            target_id = mission_target_id
+    target_name = str(cmd_view.text_field("assigned_target_name", "") or "").strip()
+    mission_target_id = cmd_view.int_field("assigned_target_id", 0)
+    if mission_target_id > 0:
+        target_id = mission_target_id
 
     if target_id is None and target_name and isinstance(entities, dict):
         resolved = entities.get(target_name)
@@ -175,10 +181,9 @@ def _resolve_primary_target(loader) -> tuple[int | None, str]:
             target_id = int(resolved)
             break
 
-    if isinstance(mission_cmd, dict):
-        mission_cmd["assigned_target_id"] = int(target_id or 0)
-        if target_name:
-            mission_cmd["assigned_target_name"] = target_name
+    mission_cmd["assigned_target_id"] = int(target_id or 0)
+    if target_name:
+        mission_cmd["assigned_target_name"] = target_name
 
     return target_id, target_name
 
@@ -246,12 +251,12 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
     loader.build_scripted_opponents()
 
     if loader.agent_id is not None:
-        truth = initial_truth if initial_truth is not None else loader.sim.get_agent_observation(loader.agent_id)
+        truth = initial_truth if initial_truth is not None else get_policy_agent_observation(loader)
         loader.prev_alt = truth.z
         loader._waypoint_leg_origin_x = float(getattr(truth, "x", 0.0))
         loader._waypoint_leg_origin_y = float(getattr(truth, "y", 0.0))
         try:
-            inst0 = initial_inst if initial_inst is not None else loader.sim.get_instrument_state(loader.agent_id)
+            inst0 = initial_inst if initial_inst is not None else get_policy_instrument_state(loader)
             loader.prev_speed = float(inst0.ias)
         except Exception:
             loader.prev_speed = truth.speed
@@ -340,21 +345,15 @@ def load_instantiated_scenario(loader, seed=42):
     loader.world_yaw_deg = float(world_layout.world_yaw_deg)
     loader.world_yaw_origin_x = float(world_layout.world_yaw_origin_x)
     loader.world_yaw_origin_y = float(world_layout.world_yaw_origin_y)
-    applied_world = apply_world_layout_to_kernel(loader.sim, world_layout)
+    applied_world = apply_loader_owned_world_layout_to_kernel(loader, world_layout)
     loader.entities = dict(applied_world.entities)
     loader.active_roster = list(getattr(applied_world, "active_roster", []) or [])
     loader.agent_id = applied_world.agent_id
     initial_truth = None
     initial_inst = None
     if loader.agent_id is not None:
-        try:
-            initial_truth = loader.sim.get_agent_observation(loader.agent_id)
-        except Exception:
-            initial_truth = None
-        try:
-            initial_inst = loader.sim.get_instrument_state(loader.agent_id)
-        except Exception:
-            initial_inst = None
+        initial_truth = get_policy_agent_observation(loader)
+        initial_inst = get_policy_instrument_state(loader)
     return finalize_loaded_world(
         loader,
         initial_truth=initial_truth,

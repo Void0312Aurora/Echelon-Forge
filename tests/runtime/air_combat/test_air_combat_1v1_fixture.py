@@ -13,6 +13,7 @@ from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from gym_envs.universal_env import build_universal_observation  # noqa: E402
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim  # noqa: E402
+from python.rl.tasking.bridge import LoaderOwnedScriptedOpponentKernelCompat  # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(
@@ -90,6 +91,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         controller = loader.scripted_opponents[red_id]
         self.assertEqual(int(getattr(controller, "target_id", 0)), blue_id)
         self.assertEqual(int(loader.scripted_opponent_reports[red_id]["target_id"]), blue_id)
+        self.assertIsInstance(getattr(controller, "kernel", None), LoaderOwnedScriptedOpponentKernelCompat)
 
     def test_loader_compute_full_step_reports_combat_win_after_red_destroyed(self) -> None:
         sim = ef_py.SimulationKernel()

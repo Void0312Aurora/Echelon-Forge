@@ -22,6 +22,7 @@ def _make_args(**overrides):
         "execution_step_runtime_mode": None,
         "step_info_mode": None,
         "flight_shaping_backend": None,
+        "runtime_compatibility_enabled": None,
     }
     base.update(overrides)
     return argparse.Namespace(**base)
@@ -54,6 +55,7 @@ class EnvConfigTests(unittest.TestCase):
                 "execution_step_runtime_mode": " Legacy ",
                 "step_info_mode": "TERMINAL",
                 "flight_shaping_backend": " GPU_HOST ",
+                "runtime_compatibility_enabled": "yes",
             }
         }
 
@@ -62,6 +64,18 @@ class EnvConfigTests(unittest.TestCase):
         self.assertEqual(resolved["execution_step_runtime_mode"], "legacy")
         self.assertEqual(resolved["step_info_mode"], "terminal")
         self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
+        self.assertTrue(resolved["runtime_compatibility_enabled"])
+
+    def test_resolve_env_settings_rejects_legacy_runtime_mode_without_explicit_compatibility_opt_in(self) -> None:
+        with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=True"):
+            resolve_env_settings(
+                {
+                    "env": {
+                        "execution_step_runtime_mode": "legacy",
+                    }
+                },
+                _make_args(),
+            )
 
     def test_resolve_env_settings_allows_empty_optional_override_to_clear_env_value(self) -> None:
         train_config = {
@@ -81,6 +95,12 @@ class EnvConfigTests(unittest.TestCase):
 
         self.assertIsNone(resolved["execution_step_runtime_mode"])
         self.assertIsNone(resolved["flight_shaping_backend"])
+        self.assertFalse(resolved["runtime_compatibility_enabled"])
+
+    def test_resolve_env_settings_defaults_runtime_compatibility_to_false(self) -> None:
+        resolved = resolve_env_settings({}, _make_args())
+        self.assertIsNone(resolved["execution_step_runtime_mode"])
+        self.assertFalse(resolved["runtime_compatibility_enabled"])
 
     def test_resolve_env_settings_rejects_invalid_optional_runtime_mode(self) -> None:
         with self.assertRaisesRegex(ValueError, "Unknown execution_step_runtime_mode"):

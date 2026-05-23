@@ -9,7 +9,7 @@
 #include <spdlog/spdlog.h>
 #include "components/basic/common.h"
 #include "components/command/air/control_input_resolution.h"
-#include "components/command/legacy_command.h"
+#include "components/command/legacy_command_bridge.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
@@ -87,14 +87,13 @@ inline void register_logistics_system(flecs::world& ecs) {
         });
 
     // 3. Jettison System (Action)
-    ecs.system<FuelSystem, MassProperties, const ActionCommand>("LogisticsAction")
+    ecs.system<FuelSystem, MassProperties>("LogisticsAction")
         .run([](flecs::iter& it) {
              while (it.next()) {
                  auto fuel = it.field<FuelSystem>(0);
-                 auto cmd = it.field<const ActionCommand>(2);
                  
                  for (auto i : it) {
-                     if (cmd[i].jettison_tanks) {
+                     if (resolved_compatibility_jettison_tanks(it.entity(i))) {
                          fuel[i].external_fuel_kg = 0;
                          // Reduce drag if tracked (TODO)
                          spdlog::info("Unit {} jettisoned tanks.", it.entity(i).id());

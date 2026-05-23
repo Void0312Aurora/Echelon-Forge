@@ -6,7 +6,19 @@ import math
 from typing import Any
 
 import ef_py
-from python.rl.profile import air_profile as _air_profile
+from python.rl.tasking.bridge import (
+    build_kernel_mission_command as _bridge_build_kernel_mission_command,
+    get_policy_agent_observation,
+    get_policy_instrument_state,
+    has_active_waypoint_leg as _bridge_has_active_waypoint_leg,
+    infer_recovery_approach_type as _bridge_infer_recovery_approach_type,
+    infer_recovery_base_id as _bridge_infer_recovery_base_id,
+    infer_recovery_runway_id as _bridge_infer_recovery_runway_id,
+    infer_route_ref_id as _bridge_infer_route_ref_id,
+    landing_reference_heading_deg as _bridge_landing_reference_heading_deg,
+    mission_command_view,
+    sync_loader_command_chain,
+)
 from .common_core_profile import (
     apply_leader_intent_common_core_defaults,
     apply_pilot_report_common_core_defaults,
@@ -20,11 +32,6 @@ from python.rl.control.mission_defs import (
     command_code_for_phase_name,
     is_landing_command_code,
 )
-
-
-def _sync_air_profile_module() -> None:
-    _air_profile.ef_py = ef_py
-
 
 def _wrap_deg(angle_deg: float) -> float:
     return float((float(angle_deg) + 180.0) % 360.0 - 180.0)
@@ -150,8 +157,7 @@ def _scenario_mission_cfg(loader: Any) -> dict[str, Any] | None:
 
 
 def _mission_cmd_dict(loader: Any) -> dict[str, Any]:
-    mission_cmd = getattr(loader, "mission_cmd", {}) or {}
-    return mission_cmd if isinstance(mission_cmd, dict) else {}
+    return mission_command_view(loader).payload
 
 
 def _post_transition_cfg(loader: Any) -> dict[str, Any] | None:
@@ -176,38 +182,31 @@ def _stable_ref_id(payload: Any) -> int:
 
 
 def infer_route_ref_id(loader: Any) -> int:
-    _sync_air_profile_module()
-    return _air_profile.infer_route_ref_id(loader)
+    return _bridge_infer_route_ref_id(loader)
 
 
 def has_active_waypoint_leg(loader: Any) -> bool:
-    _sync_air_profile_module()
-    return _air_profile.has_active_waypoint_leg(loader)
+    return _bridge_has_active_waypoint_leg(loader)
 
 
 def infer_recovery_base_id(loader: Any, task: Any | None = None) -> int:
-    _sync_air_profile_module()
-    return _air_profile.infer_recovery_base_id(loader, task=task)
+    return _bridge_infer_recovery_base_id(loader, task=task)
 
 
 def infer_recovery_runway_id(loader: Any, task: Any | None = None) -> int:
-    _sync_air_profile_module()
-    return _air_profile.infer_recovery_runway_id(loader, task=task)
+    return _bridge_infer_recovery_runway_id(loader, task=task)
 
 
 def infer_recovery_approach_type(loader: Any, task: Any | None = None) -> Any:
-    _sync_air_profile_module()
-    return _air_profile.infer_recovery_approach_type(loader, task=task)
+    return _bridge_infer_recovery_approach_type(loader, task=task)
 
 
 def _landing_reference_heading_deg(loader: Any, default_heading_deg: float) -> float:
-    _sync_air_profile_module()
-    return _air_profile._landing_reference_heading_deg(loader, default_heading_deg)
+    return _bridge_landing_reference_heading_deg(loader, default_heading_deg)
 
 
 def build_kernel_mission_command(loader: Any) -> ef_py.MissionCommand:
-    _sync_air_profile_module()
-    return _air_profile.build_kernel_mission_command(loader)
+    return _bridge_build_kernel_mission_command(loader)
 
 
 def _enum_or_default(namespace: Any, raw_value: Any, default_value: Any) -> Any:
@@ -351,10 +350,11 @@ class RuleBasedLeaderPhaseManager:
         if getattr(loader, "task_order", None) is None:
             loader.task_order = self._build_task_order(loader, sim_time_s=sim_time_s)
 
+        cmd_view = mission_command_view(loader)
         if truth is None:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
+            truth = get_policy_agent_observation(loader)
         if inst is None:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
+            inst = get_policy_instrument_state(loader)
 
         alt_agl = float(getattr(inst, "alt_radar", 0.0))
         ground_speed = float(getattr(inst, "ground_speed", 0.0))
@@ -374,7 +374,7 @@ class RuleBasedLeaderPhaseManager:
         waypoint_idx = int(getattr(loader, "waypoint_idx", 0))
         remaining_waypoints = max(0, len(waypoints) - waypoint_idx)
         active_waypoint_leg = remaining_waypoints > 0
-        cmd_code = int(getattr(loader, "mission_cmd", {}).get("command_code", 0))
+        cmd_code = cmd_view.int_field("command_code", 0)
         on_ground = alt_agl <= self.rollout_alt_agl_m
 
         if self._should_arm_approach(
@@ -394,7 +394,7 @@ class RuleBasedLeaderPhaseManager:
             elif hasattr(loader, "_activate_post_waypoint_transition"):
                 transitioned = loader._activate_post_waypoint_transition(sync_to_kernel=sync_to_kernel)
             if transitioned is not None:
-                cmd_code = int(getattr(loader, "mission_cmd", {}).get("command_code", cmd_code))
+                cmd_code = mission_command_view(loader).int_field("command_code", cmd_code)
 
         phase_name = self._infer_phase_name(
             cmd_code=cmd_code,
@@ -439,15 +439,15 @@ class RuleBasedLeaderPhaseManager:
             getattr(task, "runway_slot_id", None) if task is not None else None,
             _runway_slot_unspecified(),
         )
-        intent.cmd_heading_deg = float(getattr(loader, "mission_cmd", {}).get("target_heading", 0.0))
+        intent.cmd_heading_deg = cmd_view.float_field("target_heading", 0.0)
         if (
             int(intent.command_code) == 3
             and not active_waypoint_leg
             and str(getattr(loader, "c2_task_name", "")).strip().upper() == ScriptedC2TaskManager.TASK_RECOVER_LAND
         ):
             intent.cmd_heading_deg = _landing_reference_heading_deg(loader, intent.cmd_heading_deg)
-        intent.cmd_altitude_m = float(getattr(loader, "mission_cmd", {}).get("target_altitude", 0.0))
-        intent.cmd_speed_mps = float(getattr(loader, "mission_cmd", {}).get("target_speed", 0.0))
+        intent.cmd_altitude_m = cmd_view.float_field("target_altitude", 0.0)
+        intent.cmd_speed_mps = cmd_view.float_field("target_speed", 0.0)
         intent.approach_armed = phase_name in LANDING_PHASE_NAMES
         intent.commit_to_land = phase_name in {"landing_final", "rollout"}
         intent.abort_flag = False
@@ -481,24 +481,11 @@ class RuleBasedLeaderPhaseManager:
     def sync_to_kernel(self, loader: Any) -> None:
         if getattr(loader, "agent_id", None) is None:
             return
-        try:
-            if getattr(loader, "task_order", None) is not None and hasattr(loader.sim, "set_task_order"):
-                loader.sim.set_task_order(loader.agent_id, loader.task_order)
-        except Exception:
-            pass
-        try:
-            if getattr(loader, "leader_intent", None) is not None and hasattr(loader.sim, "set_leader_intent"):
-                loader.sim.set_leader_intent(loader.agent_id, loader.leader_intent)
-        except Exception:
-            pass
-        try:
-            if getattr(loader, "pilot_report", None) is not None and hasattr(loader.sim, "set_pilot_report"):
-                loader.sim.set_pilot_report(loader.agent_id, loader.pilot_report)
-        except Exception:
-            pass
+        sync_loader_command_chain(loader)
 
     def _build_task_order(self, loader: Any, sim_time_s: float = 0.0) -> ef_py.TaskOrder:
         order = ef_py.TaskOrder()
+        cmd_view = mission_command_view(loader)
         order.active = True
         order.task_id = 1
         order.task_type = ef_py.TaskType.CAPMission if getattr(loader, "waypoints", None) else ef_py.TaskType.CAP
@@ -513,7 +500,7 @@ class RuleBasedLeaderPhaseManager:
             anchor = waypoints[anchor_idx]
             order.anchor_x_m = float(anchor.get("x", 0.0))
             order.anchor_y_m = float(anchor.get("y", 0.0))
-            order.anchor_z_m = float(anchor.get("z", anchor.get("altitude_m", getattr(loader, "mission_cmd", {}).get("target_altitude", 0.0))))
+            order.anchor_z_m = float(anchor.get("z", anchor.get("altitude_m", cmd_view.float_field("target_altitude", 0.0))))
             order.station_type = ef_py.StationType.RouteCAP
             if len(waypoints) >= 2:
                 first = waypoints[0]
@@ -524,8 +511,8 @@ class RuleBasedLeaderPhaseManager:
         else:
             order.station_type = ef_py.StationType.Orbit
 
-        order.target_altitude_m = float(getattr(loader, "mission_cmd", {}).get("target_altitude", 0.0))
-        order.target_speed_mps = float(getattr(loader, "mission_cmd", {}).get("target_speed", 0.0))
+        order.target_altitude_m = cmd_view.float_field("target_altitude", 0.0)
+        order.target_speed_mps = cmd_view.float_field("target_speed", 0.0)
         order.altitude_block_min_m = max(0.0, order.target_altitude_m - 500.0)
         order.altitude_block_max_m = max(order.altitude_block_min_m, order.target_altitude_m + 500.0)
         order.speed_min_mps = max(0.0, order.target_speed_mps - 40.0)
@@ -563,7 +550,7 @@ class RuleBasedLeaderPhaseManager:
         report.timestamp_s = float(sim_time_s)
         try:
             if truth is None:
-                truth = loader.sim.get_agent_observation(loader.agent_id)
+                truth = get_policy_agent_observation(loader)
             report.location_x_m = float(getattr(truth, "x", 0.0))
             report.location_y_m = float(getattr(truth, "y", 0.0))
             report.location_z_m = float(getattr(truth, "z", 0.0))
@@ -646,7 +633,7 @@ class RuleBasedLeaderPhaseManager:
         c2_task_name = str(getattr(loader, "c2_task_name", "")).strip().upper()
         if c2_task_name and c2_task_name != ScriptedC2TaskManager.TASK_RECOVER_LAND:
             return False
-        if is_landing_command_code(getattr(loader, "mission_cmd", {}).get("command_code", 0)):
+        if is_landing_command_code(mission_command_view(loader).int_field("command_code", 0)):
             return False
         if not is_landing_command_code(post.get("command_code", COMMAND_CODE_LANDING)):
             return False
@@ -845,9 +832,9 @@ class ScriptedC2TaskManager:
         return waypoint_idx >= len(waypoints)
 
     def _active_waypoint_targets(self, loader: Any) -> tuple[float, float, float | None, float | None]:
-        mission_cmd = getattr(loader, "mission_cmd", {}) or {}
-        target_altitude_m = float(mission_cmd.get("target_altitude", 0.0))
-        target_speed_mps = float(mission_cmd.get("target_speed", 0.0))
+        cmd_view = mission_command_view(loader)
+        target_altitude_m = cmd_view.float_field("target_altitude", 0.0)
+        target_speed_mps = cmd_view.float_field("target_speed", 0.0)
         anchor_x_m = None
         anchor_y_m = None
         waypoints = list(getattr(loader, "waypoints", []) or [])
@@ -993,10 +980,7 @@ class ScriptedC2TaskManager:
 
     def _fuel_margin_frac(self, loader: Any, *, inst: Any = None) -> tuple[float, float]:
         if inst is None:
-            try:
-                inst = loader.sim.get_instrument_state(loader.agent_id)
-            except Exception:
-                inst = None
+            inst = get_policy_instrument_state(loader)
         fuel_total_kg = (
             float(max(0.0, getattr(inst, "fuel_internal", 0.0) + getattr(inst, "fuel_external", 0.0)))
             if inst is not None
@@ -1011,15 +995,9 @@ class ScriptedC2TaskManager:
     def _station_metrics(self, loader: Any, *, truth: Any = None, inst: Any = None) -> dict[str, float | bool]:
         task = getattr(loader, "task_order", None)
         if truth is None:
-            try:
-                truth = loader.sim.get_agent_observation(loader.agent_id)
-            except Exception:
-                truth = None
+            truth = get_policy_agent_observation(loader)
         if inst is None:
-            try:
-                inst = loader.sim.get_instrument_state(loader.agent_id)
-            except Exception:
-                inst = None
+            inst = get_policy_instrument_state(loader)
         if truth is None or inst is None:
             return {"near_station": False, "anchor_dist_m": float("inf")}
         anchor_x = float(getattr(task, "anchor_x_m", 0.0) if task is not None else 0.0)
@@ -1049,15 +1027,9 @@ class ScriptedC2TaskManager:
 
     def _recovery_ready(self, loader: Any, *, truth: Any = None, inst: Any = None) -> bool:
         if truth is None:
-            try:
-                truth = loader.sim.get_agent_observation(loader.agent_id)
-            except Exception:
-                truth = None
+            truth = get_policy_agent_observation(loader)
         if inst is None:
-            try:
-                inst = loader.sim.get_instrument_state(loader.agent_id)
-            except Exception:
-                inst = None
+            inst = get_policy_instrument_state(loader)
         if truth is None or inst is None:
             return False
         try:
@@ -1153,10 +1125,7 @@ class ScriptedC2TaskManager:
         report_type = int(getattr(report, "report_type", getattr(ef_py.CommMsgType, "None"))) if report is not None else int(getattr(ef_py.CommMsgType, "None"))
 
         if inst is None:
-            try:
-                inst = loader.sim.get_instrument_state(loader.agent_id)
-            except Exception:
-                inst = None
+            inst = get_policy_instrument_state(loader)
         alt_agl_m = float(getattr(inst, "alt_radar", 0.0)) if inst is not None else 0.0
         ground_speed_mps = float(getattr(inst, "ground_speed", 0.0)) if inst is not None else 0.0
 

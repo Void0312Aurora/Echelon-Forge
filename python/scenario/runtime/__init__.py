@@ -19,6 +19,7 @@ from .world_setup_compat import (
     apply_world_setup_request_compat,
     build_batch_world_setup_request,
     extract_batch_world_setup_entity_ids,
+    normalize_world_setup_terrain_assignments,
 )
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     "build_compiled_world_layout",
     "build_batch_world_setup_request",
     "extract_batch_world_setup_entity_ids",
+    "normalize_world_setup_terrain_assignments",
     "find_active_roster_member",
     "load_compiled_scenario_batch",
     "prepare_scenario_world_layout",

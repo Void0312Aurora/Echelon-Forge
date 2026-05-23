@@ -3,6 +3,7 @@ import ef_py
 
 from python.mission_obs_taxonomy import mission_obs_mode_code
 from python.scenario_runtime import find_active_roster_member
+from python.rl.tasking.bridge import mission_command_view
 
 from .common import formation_role_code_from_member
 
@@ -86,22 +87,23 @@ def mission_observation_mode_code(mode: str) -> int:
 
 
 def build_mission_observation_runtime_inputs(loader, mode: str, *, truth=None, inst=None):
+    cmd_view = mission_command_view(loader)
     inputs = ef_py.MissionObservationInputs()
     inputs.mode_code = int(mission_observation_mode_code(mode))
-    inputs.command_code = float(loader.mission_cmd["command_code"])
-    inputs.target_heading_deg = float(loader.mission_cmd["target_heading"])
+    inputs.command_code = float(cmd_view.int_field("command_code", 0))
+    inputs.target_heading_deg = float(cmd_view.float_field("target_heading", 0.0))
     route_target_altitude_m = loader._current_route_target_altitude_m(truth=truth, inst=inst)
     inputs.target_altitude_m = float(
-        loader.mission_cmd["target_altitude"] if route_target_altitude_m is None else route_target_altitude_m
+        cmd_view.float_field("target_altitude", 0.0) if route_target_altitude_m is None else route_target_altitude_m
     )
-    inputs.target_speed_mps = float(loader.mission_cmd["target_speed"])
-    inputs.takeoff_procedure_code = float(loader.mission_cmd.get("takeoff_procedure_code", 0.0))
-    inputs.takeoff_clearance_code = float(loader.mission_cmd.get("takeoff_clearance_code", 0.0))
-    inputs.takeoff_interval_s = float(loader.mission_cmd.get("takeoff_interval_s", 0.0))
-    inputs.runway_slot_code = float(loader.mission_cmd.get("runway_slot_code", 0.0))
-    inputs.form_offset_x = float(loader.mission_cmd.get("form_offset_x", 0.0))
-    inputs.form_offset_y = float(loader.mission_cmd.get("form_offset_y", 0.0))
-    inputs.form_offset_z = float(loader.mission_cmd.get("form_offset_z", 0.0))
+    inputs.target_speed_mps = float(cmd_view.float_field("target_speed", 0.0))
+    inputs.takeoff_procedure_code = float(cmd_view.int_field("takeoff_procedure_code", 0))
+    inputs.takeoff_clearance_code = float(cmd_view.int_field("takeoff_clearance_code", 0))
+    inputs.takeoff_interval_s = float(cmd_view.float_field("takeoff_interval_s", 0.0))
+    inputs.runway_slot_code = float(cmd_view.int_field("runway_slot_code", 0))
+    inputs.form_offset_x = float(cmd_view.float_field("form_offset_x", 0.0))
+    inputs.form_offset_y = float(cmd_view.float_field("form_offset_y", 0.0))
+    inputs.form_offset_z = float(cmd_view.float_field("form_offset_z", 0.0))
     if int(inputs.mode_code) in (4, 5):
         member = find_active_roster_member(getattr(loader, "active_roster", None), entity_id=loader.agent_id)
         ref_member = None
@@ -120,12 +122,12 @@ def build_mission_observation_runtime_inputs(loader, mode: str, *, truth=None, i
 
     if truth is None:
         try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
+            truth = loader.get_policy_agent_observation(loader.agent_id)
         except Exception:
             truth = None
     if inst is None:
         try:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
+            inst = loader.get_policy_instrument_state(loader.agent_id)
         except Exception:
             inst = None
     if truth is not None:
@@ -153,12 +155,12 @@ def compute_mission_observation_products(loader, mode: str, *, truth=None, inst=
 def get_waypoint_nav_products(loader, *, truth=None, inst=None):
     if truth is None:
         try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
+            truth = loader.get_policy_agent_observation(loader.agent_id)
         except Exception:
             return None
     if inst is None:
         try:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
+            inst = loader.get_policy_instrument_state(loader.agent_id)
         except Exception:
             inst = None
     return cached_waypoint_nav_products(loader, truth=truth, inst=inst)

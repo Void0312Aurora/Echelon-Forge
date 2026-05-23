@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import copy
+import builtins
 import json
 import unittest
+from types import SimpleNamespace
 
 from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
@@ -20,6 +22,7 @@ from gym_envs.scenario_loader.runtime_state import (  # noqa: E402
     SCENARIO_LOADER_STATE_SHELL_SCENARIO_CONTENT_ADAPTER,
     SCENARIO_LOADER_STATE_SHELL_TRANSITIONAL_BEHAVIOR_MIRROR,
     ScenarioLoaderStateShell,
+    build_execution_episode_state,
     classify_scenario_loader_state_shell_attr,
 )
 
@@ -89,6 +92,21 @@ def _route_transition_scenario() -> dict:
 
 
 class ExecutionEpisodeStateTests(unittest.TestCase):
+    def test_build_execution_episode_state_raises_when_execution_episode_type_is_unavailable(self) -> None:
+        original_import = builtins.__import__
+
+        def _fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "ef_py":
+                return SimpleNamespace()
+            return original_import(name, globals, locals, fromlist, level)
+
+        builtins.__import__ = _fake_import
+        try:
+            with self.assertRaisesRegex(RuntimeError, "ef_py.ExecutionEpisodeState is not available"):
+                build_execution_episode_state(SimpleNamespace(agent_id=0, steps=0, mission_cmd={}))
+        finally:
+            builtins.__import__ = original_import
+
     def test_scenario_loader_state_shell_attrs_have_full_responsibility_classification(self) -> None:
         shell_field_names = {field_name for field_name in ScenarioLoaderStateShell.__dataclass_fields__}
         self.assertEqual(shell_field_names, set(SCENARIO_LOADER_STATE_SHELL_ATTRS))

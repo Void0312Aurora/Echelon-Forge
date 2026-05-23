@@ -12,12 +12,14 @@
 #include <vector>
 #include "components/basic/common.h"
 #include "components/command/command_link.h"
-#include "components/command/legacy_command.h"
+#include "components/command/common/mission_command_control_state.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
+#include "components/physics/instruments.h"
 #include "components/tasking/leader_intent.h"
 #include "components/tasking/pilot_report.h"
 #include "components/tasking/task_order.h"
+#include "components/systems/navigation.h"
 #include "components/systems/sensor.h"
 #include "components/systems/comm.h"
 #include "components/basic/tags.h"
@@ -156,7 +158,7 @@ public:
     void clear_maritime_state();
     IEnvironmentModel::MaritimeState get_maritime_state() const;
     
-    // Action Interface: Set command for a unit
+    // Compatibility-only legacy command API retained while typed setup stays blocked.
     void set_unit_command(uint64_t entity_id, double heading_deg, double speed_mps, double altitude_m);
     void set_unit_stick_command(uint64_t entity_id, double stick_roll, double stick_pitch, double throttle, bool gear_down);
     void set_unit_action(uint64_t entity_id,
@@ -197,8 +199,12 @@ public:
     std::vector<float> get_visual_observation_downsampled(uint64_t entity_id, int factor); // ARB downsampled visual
     std::vector<Detection> get_detections(uint64_t entity_id); // Sensor Output
     void set_contact_list(uint64_t entity_id, const std::vector<Detection>& detections);
+    InstrumentState get_instrument_state(uint64_t entity_id); // Returns instrument state or default
+    EGI get_egi_state(uint64_t entity_id); // Returns EGI state or default
     std::vector<double> get_unit_velocity(uint64_t entity_id); // Returns [vx, vy, vz]
     double get_unit_heading(uint64_t entity_id);   // Returns heading
+    int get_unit_type(uint64_t entity_id); // Returns UnitType enum value or 0
+    bool is_unit_active(uint64_t entity_id); // Returns whether entity exists
     std::vector<double> get_unit_health(uint64_t entity_id); // Returns [current, max]
     std::vector<double> get_unit_damage_state(uint64_t entity_id); // [mission, mobility, sensor, survivability]
     std::vector<double> debug_get_naval_weapon_counts(uint64_t entity_id); // [mounts, total_ready_vls, total_ready_gun, total_ready_ciws]
@@ -221,6 +227,9 @@ public:
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);
     bool fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
     flecs::entity fire_weapon_from_pilot_action(uint64_t attacker_id);
+    bool fire_naval_weapon_from_mission_command(uint64_t attacker_id) {
+        return try_fire_naval_mission_weapon(attacker_id);
+    }
     bool debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id, double damage, double fuse_distance);
     RecentEngagementEvents export_recent_engagement_events() const;
 

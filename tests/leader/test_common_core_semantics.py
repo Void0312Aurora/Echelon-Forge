@@ -36,6 +36,24 @@ class _DummySim:
 
 
 class CommonCoreSemanticTests(unittest.TestCase):
+    def test_normalize_task_order_spec_without_profile_context_uses_common_fallback(self) -> None:
+        normalized = normalize_task_order_spec(
+            {
+                "task_name": "TASK_CAP",
+                "element_id": 88,
+            }
+        )
+
+        self.assertEqual(normalized["service_profile"], ef_py.ServiceProfile.AirForce)
+        self.assertEqual(normalized["task_family"], ef_py.TaskFamily.Patrol)
+        self.assertEqual(normalized["task_type"], ef_py.TaskType.CAP)
+        self.assertEqual(normalized["tactical_unit_type"], ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(normalized["coordination_mode"], ef_py.CoordinationMode.Attached)
+
+    def test_unknown_explicit_tasking_profile_raises_clear_error(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Unknown tasking profile"):
+            normalize_task_order_spec({"tasking_profile": "space-force"})
+
     def test_split_dto_python_bindings_expose_common_and_air_fields(self) -> None:
         order = ef_py.TaskOrder()
         order.task_id = 11

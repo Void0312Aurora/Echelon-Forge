@@ -8,7 +8,7 @@
 #include "components/systems/track_management.h"
 #include "components/systems/comm.h"
 #include "components/naval/ship_platform.h"
-#include "components/command/legacy_command.h"
+#include "components/command/legacy_command_bridge.h"
 #include <spdlog/spdlog.h>
 #include <cmath>
 #include <limits>
@@ -130,11 +130,10 @@ inline double data_link_sender_local_support_window_s(const Sensor* sensor) {
                 // 1. Data Fusion (Always)
                 bool has_tracks = sender.track_db && !sender.track_db->tracks.empty();
                 
-                // 2. Messaging (If Triggered)
-                // We need to access ActionCommand. But it wasn't in the query.
-                // We can get it from entity.
+                // 2. Messaging remains a compatibility-only legacy command seam.
                 ActionCommand* cmd = sender.entity.get_mut<ActionCommand>();
-                bool sending_msg = (cmd && cmd->send_msg);
+                const auto message_command = resolve_compatibility_message_command(sender.entity);
+                const bool sending_msg = message_command.send;
                 int report_budget_remaining = std::max(0, sender.link->max_reports_per_update);
                 int message_budget_remaining = std::max(0, sender.link->max_messages_per_update);
 
@@ -155,7 +154,7 @@ inline double data_link_sender_local_support_window_s(const Sensor* sensor) {
                             continue;
                         }
 
-                        if (cmd->msg_recipient != 0 && cmd->msg_recipient != receiver.entity.id()) {
+                        if (message_command.recipient != 0 && message_command.recipient != receiver.entity.id()) {
                             continue;
                         }
 
@@ -172,9 +171,9 @@ inline double data_link_sender_local_support_window_s(const Sensor* sensor) {
 
                         q->inbox.push_back({
                             sender.entity.id(),
-                            cmd->msg_recipient, // 0 if broadcast
-                            static_cast<CommMsgType>(cmd->msg_type),
-                            cmd->msg_arg,
+                            message_command.recipient, // 0 if broadcast
+                            static_cast<CommMsgType>(message_command.msg_type),
+                            message_command.arg,
                             0, // track_ref
                             sender.trans->x,
                             sender.trans->y,
@@ -280,6 +279,7 @@ inline double data_link_sender_local_support_window_s(const Sensor* sensor) {
                             }
                         }
                     }
+
                 }
                 
                 // Clear the Message Trigger

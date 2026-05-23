@@ -9,7 +9,12 @@ from python.scenario_compiler import (
     cache_runtime_waypoint_cache,
     materialize_runtime_waypoint_cache,
 )
-from python.rl.tasking.bridge import build_kernel_mission_command
+from python.rl.tasking.bridge import (
+    build_kernel_mission_command,
+    has_mission_command_dict,
+    mission_command_dict,
+    mission_command_view,
+)
 
 from .common import safe_json_dict_loads, stable_json_dumps
 
@@ -264,66 +269,63 @@ def _canonical_runtime_mission_command_json(
 
 
 def _sync_command_chain_runtime_mirror(loader) -> None:
+    cmd_view = mission_command_view(loader)
     leader_intent = getattr(loader, "leader_intent", None)
     if leader_intent is not None:
         try:
-            leader_intent.command_code = int(getattr(loader, "mission_cmd", {}).get("command_code", 0))
+            leader_intent.command_code = cmd_view.int_field("command_code", 0)
         except Exception:
             pass
         try:
-            leader_intent.cmd_heading_deg = float(getattr(loader, "mission_cmd", {}).get("target_heading", 0.0))
+            leader_intent.cmd_heading_deg = cmd_view.float_field("target_heading", 0.0)
         except Exception:
             pass
         try:
-            leader_intent.cmd_altitude_m = float(getattr(loader, "mission_cmd", {}).get("target_altitude", 0.0))
+            leader_intent.cmd_altitude_m = cmd_view.float_field("target_altitude", 0.0)
         except Exception:
             pass
         try:
-            leader_intent.cmd_speed_mps = float(getattr(loader, "mission_cmd", {}).get("target_speed", 0.0))
+            leader_intent.cmd_speed_mps = cmd_view.float_field("target_speed", 0.0)
         except Exception:
             pass
         if hasattr(leader_intent, "route_ref_id"):
             try:
-                leader_intent.route_ref_id = int(getattr(loader, "mission_cmd", {}).get("route_ref_id", 0))
+                leader_intent.route_ref_id = cmd_view.int_field("route_ref_id", 0)
             except Exception:
                 pass
         if hasattr(leader_intent, "recovery_base_id"):
             try:
-                leader_intent.recovery_base_id = int(getattr(loader, "mission_cmd", {}).get("recovery_base_id", 0))
+                leader_intent.recovery_base_id = cmd_view.int_field("recovery_base_id", 0)
             except Exception:
                 pass
         if hasattr(leader_intent, "recovery_runway_id"):
             try:
-                leader_intent.recovery_runway_id = int(getattr(loader, "mission_cmd", {}).get("recovery_runway_id", 0))
+                leader_intent.recovery_runway_id = cmd_view.int_field("recovery_runway_id", 0)
             except Exception:
                 pass
         if hasattr(leader_intent, "authorization_to_fire"):
             try:
-                leader_intent.authorization_to_fire = bool(
-                    getattr(loader, "mission_cmd", {}).get("authorization_to_fire", False)
-                )
+                leader_intent.authorization_to_fire = cmd_view.bool_field("authorization_to_fire", False)
             except Exception:
                 pass
 
     task_order = getattr(loader, "task_order", None)
     if task_order is not None:
         try:
-            task_order.target_altitude_m = float(getattr(loader, "mission_cmd", {}).get("target_altitude", 0.0))
+            task_order.target_altitude_m = cmd_view.float_field("target_altitude", 0.0)
         except Exception:
             pass
         try:
-            task_order.target_speed_mps = float(getattr(loader, "mission_cmd", {}).get("target_speed", 0.0))
+            task_order.target_speed_mps = cmd_view.float_field("target_speed", 0.0)
         except Exception:
             pass
         try:
-            task_order.station_heading_deg = float(getattr(loader, "mission_cmd", {}).get("target_heading", 0.0))
+            task_order.station_heading_deg = cmd_view.float_field("target_heading", 0.0)
         except Exception:
             pass
 
 
 def build_execution_episode_state(loader):
-    if not hasattr(loader.sim, "__class__"):
-        pass
     if not hasattr(__import__("ef_py"), "ExecutionEpisodeState"):
         raise RuntimeError("ef_py.ExecutionEpisodeState is not available")
 
@@ -334,8 +336,8 @@ def build_execution_episode_state(loader):
     state.agent_id = int(loader.agent_id or 0)
     state.step_count = int(getattr(loader, "steps", 0))
 
-    mission_cmd = getattr(loader, "mission_cmd", None)
-    if isinstance(mission_cmd, dict):
+    mission_cmd = mission_command_dict(loader)
+    if has_mission_command_dict(loader):
         state.has_mission_command_json = True
         mission_json = _clone_runtime_mission_command(mission_cmd)
         try:

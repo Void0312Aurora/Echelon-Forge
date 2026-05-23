@@ -1,6 +1,7 @@
 #include "core/interfaces/control_model.h"
 #include "core/interfaces/environment_model.h"
 
+#include "components/command/common/mission_command_control_state.h"
 #include "components/physics/performance.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
@@ -110,6 +111,7 @@ public:
         // --- 1. Get Inputs ---
         const PilotAction* pilot = entity.get<PilotAction>();
         const MissionCommand* mission = entity.get<MissionCommand>();
+        const MissionCommandControlState* control_state = entity.get<MissionCommandControlState>();
         
         // Synthesized controls (inputs to the physical actuators)
         double stick_roll = 0.0;
@@ -120,6 +122,7 @@ public:
         const bool pilot_active = (pilot && pilot->active);
         bool has_pilot = pilot_active && pilot_action_requests_manual_takeover(*pilot);
         bool has_mission = (mission && mission->active);
+        const bool has_control_state = (control_state && control_state->lagged_active);
         const auto* ground_state = entity.get<GroundState>();
         const bool on_ground_hint = ground_state ? ground_state->on_ground : false;
 
@@ -217,6 +220,27 @@ public:
                     gear_cmd_down = false;
                 }
             }
+        }
+        else if (has_control_state) {
+            const double heading_err = normalize_angle(
+                control_state->lagged_heading_deg - transform.heading
+            );
+            const double target_bank = std::clamp(heading_err * 2.0, -45.0, 45.0);
+            const double bank_err = target_bank - transform.roll;
+            stick_roll = std::clamp(bank_err * 0.05, -1.0, 1.0);
+
+            const double alt_err = control_state->lagged_altitude_m - transform.z;
+            const double target_pitch = std::clamp(alt_err * 0.1, -15.0, 20.0);
+            const double pitch_err = target_pitch - transform.pitch;
+            stick_pitch = std::clamp(pitch_err * 0.1, -1.0, 1.0);
+
+            stick_yaw = 0.0;
+            const double speed = std::sqrt(
+                velocity.vx * velocity.vx +
+                velocity.vy * velocity.vy +
+                velocity.vz * velocity.vz
+            );
+            gear_cmd_down = (speed < 100.0 || (transform.z < 200.0 && control_state->lagged_altitude_m < 500.0));
         }
         else {
             // [C] No Command (Stability Augmentation / Dampener only)

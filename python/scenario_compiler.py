@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from python.scenario.compiler import (
+    DEFAULT_TERRAIN_TYPE,
     REPO_ROOT,
+    TERRAIN_TYPE_SOURCE_COMPATIBILITY,
+    TERRAIN_TYPE_SOURCE_DEFAULT,
+    TERRAIN_TYPE_SOURCE_EXPLICIT,
     _SCALAR_TYPES,
     _OBJECTIVE_PROPERTY_MAP,
     _OBJECTIVE_OP_MAP,
@@ -10,9 +14,13 @@ from python.scenario.compiler import (
     _mtime_ns,
     _clone_scenario_value,
     _coerce_nonnegative_int,
+    _normalize_terrain_type_value,
     _normalize_waypoint_mode,
+    _resolve_environment_terrain_type,
+    _terrain_type_source_for_value,
     _canonical_recovery_approach_name,
     _stable_ref_id,
+    resolve_environment_terrain_config,
     _merge_prefab_data,
     _compile_merged_scenario_data,
     _clone_runtime_environment,

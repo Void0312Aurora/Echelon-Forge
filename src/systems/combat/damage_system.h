@@ -6,7 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include "components/basic/common.h"
-#include "components/command/legacy_command.h"
+#include "components/command/legacy_command_bridge.h"
 #include "components/combat/damage.h"
 #include "components/combat/health.h"
 #include "components/combat/weapon.h"
@@ -102,10 +102,7 @@ inline void register_damage_system(flecs::world& ecs) {
                     double fuse = std::max(1e-6, m[i].fuse_distance);
                     double quality = std::clamp(1.0 - min_dist / fuse, 0.0, 1.0);
 
-                    double evasion = 0.0;
-                    if (const ActionCommand* ac = target_entity.get<ActionCommand>()) {
-                        evasion = std::clamp(std::abs(ac->turn_rate_cmd), 0.0, 1.0);
-                    }
+                    const double evasion = resolved_compatibility_damage_evasion(target_entity);
 
                     double base_hit = 0.35 + 0.65 * quality;
                     double hit_prob = std::clamp(base_hit * (1.0 - 0.3 * evasion), 0.05, 0.98);

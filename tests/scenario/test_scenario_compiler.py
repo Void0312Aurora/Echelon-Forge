@@ -6,6 +6,8 @@ import os
 import tempfile
 import unittest
 
+import numpy as np
+
 from python.testing.runtime import ensure_repo_imports
 
 
@@ -17,7 +19,14 @@ from python.scenario.compiler import (  # noqa: E402
     CompiledScenario as PackagedCompiledScenario,
 )
 from python.scenario.compiler import ScenarioCompiler as PackagedScenarioCompiler  # noqa: E402
-from python.scenario_compiler import ScenarioCompiler  # noqa: E402
+from python.scenario_compiler import (  # noqa: E402
+    DEFAULT_TERRAIN_TYPE,
+    ScenarioCompiler,
+    TERRAIN_TYPE_SOURCE_COMPATIBILITY,
+    TERRAIN_TYPE_SOURCE_DEFAULT,
+    TERRAIN_TYPE_SOURCE_EXPLICIT,
+)
+from python.scenario_runtime import prepare_scenario_world_layout  # noqa: E402
 
 
 def _sample_scenario() -> dict:
@@ -333,6 +342,27 @@ class ScenarioCompilerTests(unittest.TestCase):
         self.assertEqual(runtime.layout_template.terrain_type, "flat")
         self.assertAlmostEqual(float(runtime.layout_template.time_step_s), 0.05, places=6)
 
+    def test_runtime_metadata_defaults_missing_terrain_type_to_non_legacy_mainline(self) -> None:
+        scenario = _sample_scenario()
+        scenario["environment"].pop("terrain_type", None)
+
+        compiled = ScenarioCompiler.compile_data(scenario)
+
+        self.assertEqual(compiled.runtime_metadata.layout_template.terrain_type, DEFAULT_TERRAIN_TYPE)
+        self.assertEqual(compiled.runtime_metadata.layout_template.terrain_type_source, TERRAIN_TYPE_SOURCE_DEFAULT)
+
+    def test_runtime_metadata_marks_explicit_legacy_terrain_as_compatibility(self) -> None:
+        scenario = _sample_scenario()
+        scenario["environment"]["terrain_type"] = "legacy"
+
+        compiled = ScenarioCompiler.compile_data(scenario)
+
+        self.assertEqual(compiled.runtime_metadata.layout_template.terrain_type, "legacy")
+        self.assertEqual(
+            compiled.runtime_metadata.layout_template.terrain_type_source,
+            TERRAIN_TYPE_SOURCE_COMPATIBILITY,
+        )
+
     def test_runtime_metadata_precompiles_waypoint_templates(self) -> None:
         compiled = ScenarioCompiler.compile_data(_sample_route_template_scenario())
 
@@ -466,6 +496,45 @@ class SpatialQueryRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(layout.sea_state, 0.0, places=6)
         self.assertAlmostEqual(layout.wave_heading_deg, 135.0, places=6)
         self.assertAlmostEqual(layout.wave_period_s, 11.0, places=6)
+
+    def test_prepare_scenario_world_layout_defaults_missing_terrain_type_to_non_legacy_mainline(self) -> None:
+        scenario = _sample_scenario()
+        scenario["environment"].pop("terrain_type", None)
+
+        layout = prepare_scenario_world_layout(
+            scenario,
+            seed=11,
+            rng=np.random.RandomState(11),
+            compiled_template=None,
+        )
+
+        self.assertEqual(layout.terrain_type, DEFAULT_TERRAIN_TYPE)
+        self.assertEqual(layout.terrain_type_source, TERRAIN_TYPE_SOURCE_DEFAULT)
+
+    def test_prepare_scenario_world_layout_preserves_explicit_terrain_type_source(self) -> None:
+        scenario = _sample_scenario()
+        scenario["environment"]["terrain_type"] = "legacy"
+
+        layout = prepare_scenario_world_layout(
+            scenario,
+            seed=12,
+            rng=np.random.RandomState(12),
+            compiled_template=None,
+        )
+
+        self.assertEqual(layout.terrain_type, "legacy")
+        self.assertEqual(layout.terrain_type_source, TERRAIN_TYPE_SOURCE_COMPATIBILITY)
+
+        scenario["environment"]["terrain_type"] = "flat"
+        explicit_layout = prepare_scenario_world_layout(
+            scenario,
+            seed=13,
+            rng=np.random.RandomState(13),
+            compiled_template=None,
+        )
+
+        self.assertEqual(explicit_layout.terrain_type, DEFAULT_TERRAIN_TYPE)
+        self.assertEqual(explicit_layout.terrain_type_source, TERRAIN_TYPE_SOURCE_EXPLICIT)
 
 
 if __name__ == "__main__":

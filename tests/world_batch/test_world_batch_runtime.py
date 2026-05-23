@@ -16,7 +16,12 @@ import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from python.rl.tasking.leader_tasking import infer_route_ref_id  # noqa: E402
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
-from python.scenario_compiler import _clone_runtime_mission_command  # noqa: E402
+from python.scenario_compiler import (  # noqa: E402
+    DEFAULT_TERRAIN_TYPE,
+    TERRAIN_TYPE_SOURCE_COMPATIBILITY,
+    TERRAIN_TYPE_SOURCE_DEFAULT,
+    _clone_runtime_mission_command,
+)
 from python.scenario_runtime import (  # noqa: E402
     BatchWorldApplyBuffer,
     build_compiled_world_layout,
@@ -608,6 +613,54 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(getattr(obs, "missiles_remaining", -1)), 1)
         self.assertFalse(bool(getattr(obs, "can_fire", True)))
 
+    def test_apply_world_setup_batch_defaults_missing_terrain_assignment_to_flat(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+
+        legacy_spawn = _spawn_request(
+            world_index=0,
+            type_name="Aircraft",
+            entity_name="LegacyTerrainLead",
+            x=25000.0,
+            y=25000.0,
+            z=1200.0,
+        )
+        legacy_ids = batch.apply_world_setup_batch(
+            [31],
+            [],
+            [],
+            [],
+            [legacy_spawn],
+            [0.05],
+        )
+        batch.step_batch()
+        legacy_inst = batch.get_instrument_states_batch([_entity_ref(0, int(legacy_ids[0]))])[0]
+
+        explicit_legacy = ef_py.WorldTerrainAssignment()
+        explicit_legacy.world_index = 0
+        explicit_legacy.terrain_type = "legacy"
+        compat_spawn = _spawn_request(
+            world_index=0,
+            type_name="Aircraft",
+            entity_name="CompatTerrainLead",
+            x=25000.0,
+            y=25000.0,
+            z=1200.0,
+        )
+        compat_ids = batch.apply_world_setup_batch(
+            [32],
+            [explicit_legacy],
+            [],
+            [],
+            [compat_spawn],
+            [0.05],
+        )
+        batch.step_batch()
+        compat_inst = batch.get_instrument_states_batch([_entity_ref(0, int(compat_ids[0]))])[0]
+
+        self.assertAlmostEqual(float(legacy_inst.alt_radar), 1200.0, places=2)
+        self.assertLess(float(compat_inst.alt_radar), 1200.0 - 100.0)
+
     def test_world_batch_runtime_command_chain_roundtrip(self) -> None:
         batch = ef_py.WorldBatchRuntime(2)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
@@ -1112,6 +1165,41 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(layout_compiled.spawns[0].x), float(legacy_layout.spawns[0].x), places=6)
         self.assertAlmostEqual(float(layout_compiled.spawns[0].y), float(legacy_layout.spawns[0].y), places=6)
         self.assertAlmostEqual(float(layout_compiled.spawns[0].heading), float(legacy_layout.spawns[0].heading), places=6)
+
+    def test_compiled_layout_template_defaults_missing_terrain_type_to_non_legacy_mainline(self) -> None:
+        scenario = _inline_batch_scenario()
+        scenario["environment"].pop("terrain_type", None)
+        compiled = ScenarioCompiler.compile_data(scenario)
+
+        layout_compiled = build_compiled_world_layout(compiled, seed=41, use_compiled_template=True)
+        legacy_data = compiled.instantiate_runtime()
+        legacy_data["mission_command"] = _clone_runtime_mission_command(compiled.runtime_metadata.mission_command_template)
+        legacy_layout = prepare_scenario_world_layout(
+            legacy_data,
+            seed=41,
+            rng=np.random.RandomState(41),
+            compiled_template=None,
+        )
+
+        self.assertEqual(compiled.runtime_metadata.layout_template.terrain_type, DEFAULT_TERRAIN_TYPE)
+        self.assertEqual(compiled.runtime_metadata.layout_template.terrain_type_source, TERRAIN_TYPE_SOURCE_DEFAULT)
+        self.assertEqual(layout_compiled.terrain_type, DEFAULT_TERRAIN_TYPE)
+        self.assertEqual(layout_compiled.terrain_type_source, TERRAIN_TYPE_SOURCE_DEFAULT)
+        self.assertEqual(legacy_layout.terrain_type, DEFAULT_TERRAIN_TYPE)
+        self.assertEqual(legacy_layout.terrain_type_source, TERRAIN_TYPE_SOURCE_DEFAULT)
+
+    def test_compiled_layout_template_marks_explicit_legacy_terrain_as_compatibility(self) -> None:
+        compiled = ScenarioCompiler.compile_data(_inline_batch_scenario())
+
+        layout = build_compiled_world_layout(compiled, seed=41, use_compiled_template=True)
+
+        self.assertEqual(compiled.runtime_metadata.layout_template.terrain_type, "legacy")
+        self.assertEqual(
+            compiled.runtime_metadata.layout_template.terrain_type_source,
+            TERRAIN_TYPE_SOURCE_COMPATIBILITY,
+        )
+        self.assertEqual(layout.terrain_type, "legacy")
+        self.assertEqual(layout.terrain_type_source, TERRAIN_TYPE_SOURCE_COMPATIBILITY)
 
     def test_batch_loaded_route_template_preserves_rotated_waypoint_cache(self) -> None:
         compiled = ScenarioCompiler.compile_data(_inline_route_template_scenario())

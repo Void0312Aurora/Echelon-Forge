@@ -3,6 +3,14 @@ import ef_py
 from ..common import OBJECTIVE_DYNAMIC_TARGET_MAP, OBJECTIVE_OP_MAP, OBJECTIVE_PROPERTY_MAP
 
 
+def _objective_shaping_binding_error(exc: Exception) -> RuntimeError:
+    return RuntimeError(
+        "conditional objective reward shaping requires ef_py.ObjectiveShapingConfig(), "
+        "but that binding is unavailable. Rebuild or install the matching runtime bindings "
+        "before using conditional objectives."
+    ).with_traceback(exc.__traceback__)
+
+
 def _combat_target_snapshot(loader, truth):
     target_id = int(getattr(loader, "primary_target_id", 0) or 0)
     if target_id <= 0:
@@ -160,8 +168,14 @@ def compile_conditional_objectives(loader):
     return compiled
 
 
-def build_objective_shaping_config(cfg: dict):
-    shaping = ef_py.ObjectiveShapingConfig()
+def build_objective_shaping_config(cfg: dict, *, required: bool = False):
+    cfg = cfg if isinstance(cfg, dict) else {}
+    if not cfg and not required:
+        return None
+    try:
+        shaping = ef_py.ObjectiveShapingConfig()
+    except Exception as exc:
+        raise _objective_shaping_binding_error(exc) from exc
     shaping.runway_cross_penalty_weight = float(cfg.get("success_runway_cross_penalty_weight", 0.0))
     shaping.runway_cross_deadband_m = float(cfg.get("success_runway_cross_deadband_m", 0.0))
     shaping.runway_cross_norm_m = float(cfg.get("success_runway_cross_norm_m", 20.0))

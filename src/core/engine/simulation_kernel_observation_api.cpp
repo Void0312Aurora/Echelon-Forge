@@ -23,6 +23,25 @@
 #include <limits>
 #include <vector>
 
+namespace {
+
+TrackClass classify_observation_contact(
+    const Alliance* owner_alliance,
+    const Alliance* target_alliance
+) {
+    if (!owner_alliance || !target_alliance) {
+        return TrackClass::Unknown;
+    }
+    if (target_alliance->side == Side::Neutral || target_alliance->side == Side::Unknown) {
+        return TrackClass::Neutral;
+    }
+    return owner_alliance->side == target_alliance->side
+        ? TrackClass::Friendly
+        : TrackClass::Hostile;
+}
+
+} // namespace
+
 std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
@@ -75,6 +94,29 @@ std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {
     return {0.0, 0.0, 0.0};
 }
 
+double SimulationKernel::get_unit_heading(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        return 0.0;
+    }
+
+    if (const Transform* t = e.get<Transform>()) {
+        return t->heading;
+    }
+
+    const Velocity* v = e.get<Velocity>();
+    if (!v) {
+        return 0.0;
+    }
+
+    double math_rad = std::atan2(v->vy, v->vx);
+    double math_deg = math_rad * 180.0 / M_PI;
+    double nav_deg = 90.0 - math_deg;
+    while (nav_deg < 0.0) nav_deg += 360.0;
+    while (nav_deg >= 360.0) nav_deg -= 360.0;
+    return nav_deg;
+}
+
 std::vector<Detection> SimulationKernel::get_detections(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {
@@ -84,6 +126,40 @@ std::vector<Detection> SimulationKernel::get_detections(uint64_t entity_id) {
         }
     }
     return {};
+}
+
+InstrumentState SimulationKernel::get_instrument_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const InstrumentState* inst = e.get<InstrumentState>()) {
+            return *inst;
+        }
+    }
+    return InstrumentState{};
+}
+
+EGI SimulationKernel::get_egi_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (e.is_valid()) {
+        if (const EGI* egi = e.get<EGI>()) {
+            return *egi;
+        }
+    }
+    return EGI{};
+}
+
+int SimulationKernel::get_unit_type(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        return 0;
+    }
+
+    const KeyEntity* key = e.get<KeyEntity>();
+    return key ? static_cast<int>(key->type) : 0;
+}
+
+bool SimulationKernel::is_unit_active(uint64_t entity_id) {
+    return ecs.entity(entity_id).is_valid();
 }
 
 void SimulationKernel::set_contact_list(uint64_t entity_id, const std::vector<Detection>& detections) {
@@ -422,6 +498,7 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
     } else {
         // Fallback to raw sensor contacts
         const ContactList* c = e.get<ContactList>();
+        const Alliance* owner_alliance = e.get<Alliance>();
         if (c) {
             for (const auto& det : c->contacts) {
                 TrackData track;
@@ -440,7 +517,9 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
                 } else {
                     track.source = 1; // Radar (Default)
                 }
-                track.classification = 0; // Unknown
+                const Alliance* target_alliance = ecs.entity(det.target_id).get<Alliance>();
+                track.classification =
+                    static_cast<int>(classify_observation_contact(owner_alliance, target_alliance));
                 track.status = 0; // Tentative
                 const double fallback_confidence =
                     det.detection_prob_used > 0.0 ? det.detection_prob_used : 0.25;

@@ -12,6 +12,7 @@ import ef_py  # noqa: E402
 from python.scenario_runtime import apply_world_setup_payload_compat  # noqa: E402
 from python.scenario_runtime import build_batch_world_setup_request  # noqa: E402
 from python.scenario_runtime import extract_batch_world_setup_entity_ids  # noqa: E402
+from python.scenario_runtime import normalize_world_setup_terrain_assignments  # noqa: E402
 
 
 class _FacadeOnlyRuntime:
@@ -65,6 +66,24 @@ class WorldSetupCompatTests(unittest.TestCase):
         self.assertIsNotNone(request)
         self.assertEqual(list(request.seeds), [0xFFFFFFFF, 5])
         self.assertEqual(list(request.time_steps), [0.0, 0.05])
+        self.assertEqual(len(list(request.terrain_assignments)), 2)
+        self.assertEqual([str(item.terrain_type) for item in list(request.terrain_assignments)], ["flat", "flat"])
+
+    def test_normalize_world_setup_terrain_assignments_marks_default_and_compatibility_sources(self) -> None:
+        explicit_legacy = ef_py.WorldTerrainAssignment()
+        explicit_legacy.world_index = 1
+        explicit_legacy.terrain_type = "legacy"
+
+        normalized, sources = normalize_world_setup_terrain_assignments(
+            [explicit_legacy],
+            world_count=2,
+        )
+
+        self.assertEqual(len(normalized), 2)
+        normalized_by_world = {int(item.world_index): str(item.terrain_type) for item in normalized}
+        self.assertEqual(normalized_by_world[0], "flat")
+        self.assertEqual(normalized_by_world[1], "legacy")
+        self.assertEqual(sources, ["default_mainline", "explicit_legacy_compatibility"])
 
     def test_apply_world_setup_payload_prefers_facade_result_shape(self) -> None:
         runtime = _FacadeOnlyRuntime()

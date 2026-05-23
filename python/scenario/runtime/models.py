@@ -103,6 +103,7 @@ class ScenarioWorldLayout:
     world_yaw_origin_y: float
     time_step_s: float | None
     terrain_type: str
+    terrain_type_source: str
     wind_speed_mps: float
     wind_dir_from_deg: float
     wind_shear_mps_per_km: float

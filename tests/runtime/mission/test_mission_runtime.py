@@ -22,6 +22,31 @@ from gym_envs.universal_env import UniversalEnv, build_universal_observation  # 
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index  # noqa: E402
 
 
+def _make_detection(
+    target_id: int,
+    *,
+    range_m: float,
+    bearing_deg: float,
+    elevation_deg: float = 0.0,
+    closing_mps: float = 200.0,
+    timestamp_s: float = 0.0,
+) -> ef_py.Detection:
+    det = ef_py.Detection()
+    det.target_id = int(target_id)
+    det.range = float(range_m)
+    det.bearing = float(bearing_deg)
+    det.elevation = float(elevation_deg)
+    det.closing_speed = float(closing_mps)
+    det.signal_strength = 1.0
+    det.snr_db = 20.0
+    det.detection_prob_used = 0.9
+    det.measured_vr = float(closing_mps)
+    det.sensor_type = int(ef_py.SensorType.Radar)
+    det.local_sensor_hit = True
+    det.timestamp = float(timestamp_s)
+    return det
+
+
 def _build_route_result() -> ef_py.SpatialRouteQueryResult:
     geom = ef_py.CompiledScenarioGeometry()
     geom.set_route_leg_origin(0.0, 0.0)
@@ -1108,20 +1133,48 @@ class ExecutionObservationRuntimeTests(unittest.TestCase):
         inst = sim.get_instrument_state(int(lead))
         self.assertAlmostEqual(float(inst.throttle_pos), 0.75, places=6)
 
+    def test_instrument_throttle_uses_bridge_typed_overlay_for_legacy_stick_command_without_active_target(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+        sim.reset(32)
+
+        lead = sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Aircraft",
+            0.0,
+            0.0,
+            1200.0,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            180.0,
+            0.0,
+        )
+        sim.set_stick_command(int(lead), 0.0, 0.0, 0.35, True)
+
+        for _ in range(2):
+            sim.step()
+
+        inst = sim.get_instrument_state(int(lead))
+        self.assertAlmostEqual(float(inst.throttle_pos), 0.35, delta=0.05)
+
     def test_agent_observation_live_tracks_expose_radar_source_and_friend_hostile_classification(self) -> None:
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
 
         lead = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, 0.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-        sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, 4000.0, 1200.0, 180.0, 0.0, 0.0, 0.0, -180.0, 0.0)
-        sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 8000.0, 1200.0, 180.0, 0.0, 0.0, 0.0, -180.0, 0.0)
+        friend = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, 4000.0, 1200.0, 180.0, 0.0, 0.0, 0.0, -180.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 8000.0, 1200.0, 180.0, 0.0, 0.0, 0.0, -180.0, 0.0)
 
-        obs = None
-        for _ in range(80):
-            sim.step()
-            obs = sim.get_agent_observation(int(lead))
-            if len(getattr(obs, "contacts", [])) >= 2:
-                break
+        sim.set_contact_list(
+            int(lead),
+            [
+                _make_detection(int(friend), range_m=4000.0, bearing_deg=0.0),
+                _make_detection(int(foe), range_m=8000.0, bearing_deg=0.0),
+            ],
+        )
+        obs = sim.get_agent_observation(int(lead))
 
         self.assertIsNotNone(obs)
         contacts = list(getattr(obs, "contacts", []))
@@ -1137,33 +1190,38 @@ class ExecutionObservationRuntimeTests(unittest.TestCase):
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
 
-        lead = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, 0.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-        wing = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 4000.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 180.0, 0.0, 0.0)
-        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 12000.0, 0.0, 1200.0, 270.0, 0.0, 0.0, -180.0, 0.0, 0.0)
+        sender = sim.spawn_unit(ef_py.Side.Blue, "E-3_Sentry_AWACS", 0.0, 0.0, 9000.0, 0.0, 0.0, 0.0, 0.0, 200.0, 0.0)
+        receiver = sim.spawn_unit(ef_py.Side.Blue, "F-16C_Block50", 0.0, -30000.0, 5000.0, 0.0, 0.0, 0.0, 0.0, 250.0, 0.0)
+        foe = sim.spawn_unit(ef_py.Side.Red, "F-16C_Block50", 0.0, 130000.0, 4000.0, 180.0, 0.0, 0.0, 0.0, -200.0, 0.0)
 
-        lead_contact_ids = set()
-        wing_obs = None
-        for _ in range(120):
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=130000.0, bearing_deg=0.0)])
+        sim.step()
+        sim.set_contact_list(int(sender), [_make_detection(int(foe), range_m=129000.0, bearing_deg=0.0)])
+        sim.step()
+
+        receiver_obs = None
+        for _ in range(4):
             sim.step()
-            lead_obs = sim.get_agent_observation(int(lead))
-            wing_obs = sim.get_agent_observation(int(wing))
-            lead_contact_ids = {int(getattr(track, "id", 0)) for track in getattr(lead_obs, "contacts", [])}
-            wing_tracks = {
+            receiver_obs = sim.get_agent_observation(int(receiver))
+            receiver_tracks = {
                 int(getattr(track, "id", 0)): track
-                for track in getattr(wing_obs, "contacts", [])
+                for track in getattr(receiver_obs, "contacts", [])
             }
-            if int(foe) in lead_contact_ids and int(foe) in wing_tracks and int(getattr(wing_tracks[int(foe)], "source", 0)) == 3:
+            if (
+                int(foe) in receiver_tracks
+                and int(getattr(receiver_tracks[int(foe)], "source", 0)) == 3
+            ):
                 break
 
-        self.assertIn(int(foe), lead_contact_ids)
-        self.assertIsNotNone(wing_obs)
-        wing_tracks = {
+        self.assertIsNotNone(receiver_obs)
+        receiver_tracks = {
             int(getattr(track, "id", 0)): track
-            for track in getattr(wing_obs, "contacts", [])
+            for track in getattr(receiver_obs, "contacts", [])
         }
-        self.assertIn(int(foe), wing_tracks)
-        self.assertEqual(int(getattr(wing_tracks[int(foe)], "source", 0)), 3)
-        self.assertEqual(int(getattr(wing_tracks[int(foe)], "classification", 0)), 2)
+        self.assertIn(int(foe), receiver_tracks)
+        self.assertEqual(int(getattr(receiver_tracks[int(foe)], "source", 0)), 3)
+        self.assertEqual(int(getattr(receiver_tracks[int(foe)], "classification", 0)), 2)
+        self.assertEqual(sim.debug_get_contact_count(int(receiver)), 0)
 
     def test_execution_contact_runtime_contract_drops_source_and_classification(self) -> None:
         sim = ef_py.SimulationKernel()

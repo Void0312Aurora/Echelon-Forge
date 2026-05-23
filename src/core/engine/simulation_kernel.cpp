@@ -154,13 +154,6 @@ void SimulationKernel::step() {
     // We pass the fixed delta_time to progress
     // This overrides the internal clock measuring
     ecs.progress(time_step);
-    auto query = ecs.query<const MissionCommand, const NavalWeaponSystem>();
-    query.each([this](flecs::entity e, const MissionCommand& mission, const NavalWeaponSystem&) {
-        if (!mission.active) {
-            return;
-        }
-        (void)try_fire_naval_mission_weapon(static_cast<uint64_t>(e.id()));
-    });
 }
 
 bool SimulationKernel::load_database(const std::string& path) {

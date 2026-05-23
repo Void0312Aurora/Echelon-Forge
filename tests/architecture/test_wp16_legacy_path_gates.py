@@ -79,7 +79,9 @@ def test_wp16_legacy_gate_runtime_world_escape_hatch_is_bounded_to_diagnostics_o
     assert entries["tests/runtime/engagement/test_facade_engagement_export.py"]["classification"] == "diagnostics_only"
     assert "RuntimeFacade::run_wp10_window" in _load_fixture()["selected_spine_slice"]["window_api"]
     assert "WorldBatchRuntime& runtime() noexcept;" in facade_header
-    assert "self._compat_runtime = self.facade.runtime()" in adapter_source
+    assert "self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)" in adapter_source
+    assert "def _batch_target(self):" in adapter_source
+    assert "self._batch_target().step_batch()" in adapter_source
     assert "world = facade.runtime().world(0)" in diagnostics_test
     assert "escape hatches" in entries["tests/runtime/engagement/test_facade_engagement_export.py"]["reason"]
 

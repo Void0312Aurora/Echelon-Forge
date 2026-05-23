@@ -64,9 +64,26 @@ def _compile_conditional_objectives(objectives: Any) -> tuple[Any, ...]:
     return tuple(compiled)
 
 
-def _build_objective_shaping_config(cfg: dict[str, Any] | None) -> Any:
+def _objective_shaping_binding_error(exc: Exception) -> RuntimeError:
+    return RuntimeError(
+        "conditional objective reward shaping requires ef_py.ObjectiveShapingConfig(), "
+        "but that binding is unavailable. Rebuild or install the matching runtime bindings "
+        "before using conditional objectives."
+    ).with_traceback(exc.__traceback__)
+
+
+def _build_objective_shaping_config(
+    cfg: dict[str, Any] | None,
+    *,
+    required: bool = False,
+) -> Any:
     cfg = cfg if isinstance(cfg, dict) else {}
-    shaping = ef_py.ObjectiveShapingConfig()
+    if not cfg and not required:
+        return None
+    try:
+        shaping = ef_py.ObjectiveShapingConfig()
+    except Exception as exc:
+        raise _objective_shaping_binding_error(exc) from exc
     shaping.runway_cross_penalty_weight = float(cfg.get("success_runway_cross_penalty_weight", 0.0))
     shaping.runway_cross_deadband_m = float(cfg.get("success_runway_cross_deadband_m", 0.0))
     shaping.runway_cross_norm_m = float(cfg.get("success_runway_cross_norm_m", 20.0))

@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from python.rl.tasking.bridge import mission_command_view
 
 
 def get_runway_local_frame(loader, x_m: float, y_m: float):
@@ -36,13 +37,11 @@ def get_ils_observation(loader, x_m: float, y_m: float, alt_m: float):
     - For landing tasks, glideslope is referenced to a threshold-crossing-height
       point above the runway threshold rather than the threshold pavement itself.
     """
+    cmd_view = mission_command_view(loader)
     if loader._spatial_geometry is None:
         return np.zeros((4,), dtype=np.float32)
     try:
-        threshold_crossing_height_m = max(
-            0.0,
-            float(getattr(loader, "mission_cmd", {}).get("threshold_crossing_height_m", 0.0)),
-        )
+        threshold_crossing_height_m = max(0.0, float(cmd_view.float_field("threshold_crossing_height_m", 0.0)))
     except Exception:
         threshold_crossing_height_m = 0.0
     ils = loader._spatial_geometry.query_ils(

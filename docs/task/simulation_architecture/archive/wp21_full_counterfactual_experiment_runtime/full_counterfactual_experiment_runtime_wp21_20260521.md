@@ -1,6 +1,6 @@
 # WP21 Full Counterfactual Experiment Runtime
 
-Status: `2026-05-22` complete / accepted.
+Status: `2026-05-22` closure rejected by owner; acceptance invalidated and superseded by WP22 forced-retirement remediation.
 
 Language:
 
@@ -16,7 +16,8 @@ Inputs:
 - [WP18 runtime ownership and C++ hot-path consolidation](../wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md)
 - [WP19 CUDA and resident-state mainline alignment](../wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md)
 - [WP20 public capability-platform composition](../wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md)
-- [WP21 acceptance review](../../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
+- [Disputed WP21 acceptance review](../../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
+- [WP22 legacy compatibility retirement remediation](../wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md)
 - [Simulation system architecture design](../../../plan/architecture/simulation_system_architecture_design.md)
 - [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
 - [WP Closure Lane Policy](../../../standards/governance/wp_closure_lane_policy.md)
@@ -47,6 +48,26 @@ explicit typed setup or scenario-generation artifact
 ```
 
 WP21 is an implementation stage. Planning documents alone do not pass a gate.
+
+## 1.1 Owner Rejection And Current Authority
+
+The `2026-05-22` WP21 acceptance verdict is no longer authoritative. The owner
+explicitly rejected WP21 closure because subagent work was not closed as
+returnable evidence, timeout/partial work was treated too generously, and
+compatibility layers / old implementation surfaces remained first-class after
+the claimed final cleanup.
+
+Therefore:
+
+- WP21 must not be cited as final route closure.
+- The archived WP21 acceptance review is historical evidence only.
+- Any downstream statement that relied on WP21 having retired legacy surfaces is
+  superseded by WP22.
+- Compatibility residuals that remain default maintained paths are blockers,
+  not acceptable residuals.
+- A closed or timed-out subagent thread is not a completed task unless its
+  return packet names touched files, validation, residuals, blockers, and
+  integration status.
 
 ## 2. Current Code Facts To Preserve
 
@@ -93,12 +114,12 @@ WP21 cannot:
 
 | Work package | Status | Main concern | Goal | Output |
 |--------------|--------|--------------|------|--------|
-| `WP21-A Fact Ledger And Residual Freeze` | complete / accepted | final facts and entry gate | Freeze source/test facts, remaining residuals, and final-stage non-goals before implementation. | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.md) |
-| `WP21-B Snapshot Restore And Worldline Boundary` | complete / accepted | snapshot/restore runtime | Broaden the selected slice into a bounded, facade-owned snapshot/restore and worldline boundary. | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.md) |
-| `WP21-C Counterfactual Rollout And Causal Difference` | complete / accepted | branch execution | Execute parent/branch worldlines and produce causal-difference evidence without raw mutation. | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.md) |
-| `WP21-D Scenario Intervention Generation Runtime` | complete / accepted | deterministic generated inputs | Turn the WP15 generation request surface into a deterministic parameter-variation generator. | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.md) |
-| `WP21-E Experiment Facade And Evidence Collection` | complete / accepted | experiment orchestration | Expose a maintained experiment run surface that collects observations, terminations, traces, and evidence ancestry. | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.md) |
-| `WP21-F Final Cleanup And Acceptance Handoff` | complete / accepted | route closure | Integrate A-E, close or guard legacy residuals, run validation, sync indexes, and prepare final acceptance. | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.md) |
+| `WP21-A Fact Ledger And Residual Freeze` | claimed complete / owner acceptance invalidated | final facts and entry gate | Freeze source/test facts, remaining residuals, and final-stage non-goals before implementation. | [fact ledger](wp21_fact_ledger_residual_freeze_cluster_20260521.md) |
+| `WP21-B Snapshot Restore And Worldline Boundary` | claimed complete / owner acceptance invalidated | snapshot/restore runtime | Broaden the selected slice into a bounded, facade-owned snapshot/restore and worldline boundary. | [snapshot / restore boundary](wp21_snapshot_restore_worldline_boundary_cluster_20260521.md) |
+| `WP21-C Counterfactual Rollout And Causal Difference` | claimed complete / owner acceptance invalidated | branch execution | Execute parent/branch worldlines and produce causal-difference evidence without raw mutation. | [rollout and causal difference](wp21_counterfactual_rollout_causal_difference_cluster_20260521.md) |
+| `WP21-D Scenario Intervention Generation Runtime` | claimed complete / owner acceptance invalidated | deterministic generated inputs | Turn the WP15 generation request surface into a deterministic parameter-variation generator. | [scenario generation runtime](wp21_scenario_intervention_generation_cluster_20260521.md) |
+| `WP21-E Experiment Facade And Evidence Collection` | claimed complete / owner acceptance invalidated | experiment orchestration | Expose a maintained experiment run surface that collects observations, terminations, traces, and evidence ancestry. | [experiment facade and evidence](wp21_experiment_facade_evidence_cluster_20260521.md) |
+| `WP21-F Final Cleanup And Acceptance Handoff` | failed closure / superseded by WP22 | route closure | Integrate A-E, close or guard legacy residuals, run validation, sync indexes, and prepare final acceptance. | [final cleanup and handoff](wp21_final_cleanup_acceptance_cluster_20260521.md) |
 
 ## 5. Dependency Map
 
@@ -176,7 +197,9 @@ runtime, facade/binding, scenario, or architecture guard files.
 
 ## 9. Final-Stage Done Definition
 
-WP21 is complete only when:
+WP21's claimed done definition is not owner-accepted. It can only be treated as
+historically complete after WP22 proves the forced-retirement conditions that
+WP21-F failed to close:
 
 - maintained counterfactual / experiment execution no longer relies on
   metadata-only contracts;
@@ -187,3 +210,6 @@ WP21 is complete only when:
 - legacy-only runtime mirror or bypass paths are either removed, guarded, or
   explicitly retained as compatibility-only with tests;
 - the final acceptance review names no remaining unowned refactor-route work.
+
+As of the owner rejection, the final condition is not satisfied. WP22 owns the
+current remediation gate.

@@ -99,12 +99,12 @@ def query_route_guidance_result(loader, truth=None, inst=None):
 
     if truth is None:
         try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
+            truth = loader.get_policy_agent_observation(loader.agent_id)
         except Exception:
             return None
     if inst is None:
         try:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
+            inst = loader.get_policy_instrument_state(loader.agent_id)
         except Exception:
             inst = None
 
@@ -291,11 +291,11 @@ def active_waypoint_arrival_products(loader):
     mode = normalize_waypoint_mode(wp.get("waypoint_mode", loader.mission_cmd.get("waypoint_mode", "flyby")))
 
     try:
-        truth = loader.sim.get_agent_observation(loader.agent_id)
+        truth = loader.get_policy_agent_observation(loader.agent_id)
     except Exception:
         return None
     try:
-        inst = loader.sim.get_instrument_state(loader.agent_id)
+        inst = loader.get_policy_instrument_state(loader.agent_id)
     except Exception:
         inst = None
 
@@ -416,12 +416,12 @@ def active_waypoint_turn_relief_activation(loader, cfg: dict, truth=None, inst=N
 
     if truth is None:
         try:
-            truth = loader.sim.get_agent_observation(loader.agent_id)
+            truth = loader.get_policy_agent_observation(loader.agent_id)
         except Exception:
             return 0.0
     if inst is None:
         try:
-            inst = loader.sim.get_instrument_state(loader.agent_id)
+            inst = loader.get_policy_instrument_state(loader.agent_id)
         except Exception:
             inst = None
 
@@ -474,12 +474,12 @@ def apply_waypoint_guidance_update(loader, *, truth=None, inst=None) -> None:
         if idx < len(loader.waypoints):
             if truth is None:
                 try:
-                    truth = loader.sim.get_agent_observation(loader.agent_id)
+                    truth = loader.get_policy_agent_observation(loader.agent_id)
                 except Exception:
                     truth = None
             if inst is None:
                 try:
-                    inst = loader.sim.get_instrument_state(loader.agent_id)
+                    inst = loader.get_policy_instrument_state(loader.agent_id)
                 except Exception:
                     inst = None
             if truth is not None:

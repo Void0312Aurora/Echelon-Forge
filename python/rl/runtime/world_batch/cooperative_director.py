@@ -6,6 +6,8 @@ from typing import Any
 import ef_py
 import numpy as np
 
+from python.rl.tasking.bridge import resolve_loader_time_step
+
 from .state import CooperativeSlotState, CooperativeWorldState
 
 
@@ -434,9 +436,9 @@ class ScriptedCooperativeCoordinationDirector:
                     ref_airborne = ref_alt_agl >= 5.0
                 ref_start_time = _cooperative_roll_start_time(ref_loader)
                 if ref_started and ref_start_time < 0.0:
-                    ref_start_time = float(reference_state.steps) * float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
+                    ref_start_time = float(reference_state.steps) * float(resolve_loader_time_step(loader))
                     setattr(ref_loader, "_coop_takeoff_roll_start_time_s", ref_start_time)
-                current_time = float(slot_state.steps) * float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
+                current_time = float(slot_state.steps) * float(resolve_loader_time_step(loader))
                 gate_open = False
                 if ref_airborne:
                     gate_open = True
@@ -606,7 +608,7 @@ class ScriptedCooperativeCoordinationDirector:
         if inst is not None:
             ground_speed = float(getattr(inst, "ground_speed", 0.0) or 0.0)
             alt_agl = float(getattr(inst, "alt_radar", 0.0) or 0.0)
-            current_time = float(slot_state.steps) * float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
+            current_time = float(slot_state.steps) * float(resolve_loader_time_step(loader))
             clearance_code = int(takeoff_semantics["takeoff_clearance_code"])
             if clearance_code in (3, 4, 5) and ground_speed >= 35.0 and _cooperative_roll_start_time(loader) < 0.0:
                 setattr(loader, "_coop_takeoff_roll_start_time_s", current_time)

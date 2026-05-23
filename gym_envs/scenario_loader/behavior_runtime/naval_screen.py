@@ -4,6 +4,12 @@ import math
 from typing import Any
 
 import ef_py
+from python.rl.tasking.bridge import (
+    has_mission_command_dict,
+    loader_owned_raw_sim_compat,
+    mission_command_dict,
+    resolve_loader_time_step,
+)
 
 
 def _wrap_heading_deg(angle_deg: float) -> float:
@@ -73,10 +79,41 @@ def _intercept_bearing_deg(
     return _bearing_deg(lead_x - float(own_x), lead_y - float(own_y), fallback_deg)
 
 
+def _read_naval_screen_reference_motion(loader: Any, entity_id: int) -> tuple[Any, Any] | None:
+    compat = loader_owned_raw_sim_compat(loader)
+    try:
+        ref_pos = compat.get_unit_position(int(entity_id))
+        ref_vel = compat.get_unit_velocity(int(entity_id))
+    except Exception:
+        return None
+    if ref_pos is None or ref_vel is None or len(ref_pos) < 2 or len(ref_vel) < 2:
+        return None
+    return ref_pos, ref_vel
+
+
+def _prefer_last_active_naval_screen_reference(
+    loader: Any,
+    *,
+    reference_entity_id: int,
+    last_reference_entity_id: int,
+) -> tuple[int, tuple[Any, Any] | None]:
+    if last_reference_entity_id <= 0 or reference_entity_id == last_reference_entity_id:
+        return int(reference_entity_id), _read_naval_screen_reference_motion(loader, reference_entity_id)
+    compat = loader_owned_raw_sim_compat(loader)
+    try:
+        if compat.is_unit_active(last_reference_entity_id):
+            motion = _read_naval_screen_reference_motion(loader, last_reference_entity_id)
+            if motion is not None:
+                return int(last_reference_entity_id), motion
+    except Exception:
+        pass
+    return int(reference_entity_id), _read_naval_screen_reference_motion(loader, reference_entity_id)
+
+
 def apply_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> None:
     task = getattr(loader, "task_order", None)
-    mission_cmd = getattr(loader, "mission_cmd", None)
-    if task is None or not isinstance(mission_cmd, dict):
+    mission_cmd = mission_command_dict(loader)
+    if task is None or not has_mission_command_dict(loader):
         return
     result = compute_naval_screen_station_hold(loader, truth=truth)
     if result is None:
@@ -101,8 +138,8 @@ def apply_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> None:
 
 def compute_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> dict[str, float] | None:
     task = getattr(loader, "task_order", None)
-    mission_cmd = getattr(loader, "mission_cmd", None)
-    if task is None or not isinstance(mission_cmd, dict):
+    mission_cmd = mission_command_dict(loader)
+    if task is None or not has_mission_command_dict(loader):
         return None
     try:
         if int(getattr(task, "task_family", 0)) != int(getattr(ef_py.TaskFamily, "Escort")):
@@ -134,24 +171,22 @@ def compute_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> dict
         return None
 
     try:
-        own_truth = truth if truth is not None else loader.sim.get_agent_observation(loader.agent_id)
-        ref_pos = loader.sim.get_unit_position(reference_entity_id)
-        ref_vel = loader.sim.get_unit_velocity(reference_entity_id)
+        own_truth = truth if truth is not None else loader.get_policy_agent_observation(loader.agent_id)
     except Exception:
         return None
 
-    if own_truth is None or ref_pos is None or ref_vel is None or len(ref_pos) < 2 or len(ref_vel) < 2:
+    if own_truth is None:
         return None
 
     last_reference_entity_id = int(getattr(loader, "_naval_screen_last_reference_id", 0) or 0)
-    if last_reference_entity_id > 0 and reference_entity_id != last_reference_entity_id:
-        try:
-            if loader.sim.is_unit_active(last_reference_entity_id):
-                reference_entity_id = last_reference_entity_id
-                ref_pos = loader.sim.get_unit_position(reference_entity_id)
-                ref_vel = loader.sim.get_unit_velocity(reference_entity_id)
-        except Exception:
-            pass
+    reference_entity_id, reference_motion = _prefer_last_active_naval_screen_reference(
+        loader,
+        reference_entity_id=reference_entity_id,
+        last_reference_entity_id=last_reference_entity_id,
+    )
+    if reference_motion is None:
+        return None
+    ref_pos, ref_vel = reference_motion
 
     station_radius_m = float(max(1000.0, getattr(task, "station_radius_m", 0.0) or 0.0))
     station_heading_deg = float(getattr(task, "station_heading_deg", mission_cmd.get("target_heading", 0.0)) or 0.0)
@@ -233,11 +268,7 @@ def compute_naval_screen_station_hold(loader: Any, *, truth: Any = None) -> dict
         else:
             desired_heading_deg = desired_station_bearing_deg
 
-        try:
-            dt = float(loader.sim.get_time_step())
-        except Exception:
-            dt = 0.5
-        dt = max(0.05, dt)
+        dt = max(0.05, float(resolve_loader_time_step(loader, default=0.5)))
 
         max_heading_step_deg = max(2.5, 12.0 * dt)
         max_speed_step_mps = max(0.25, 1.6 * dt)

@@ -11,7 +11,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     gym = None
 
-from gym_envs.universal_env import build_pilot_action, build_step_info, normalize_action
+from gym_envs.universal_env import build_pilot_action, normalize_action
 from python.rl.runtime.execution_runtime import (
     ExecutionRuntimeAdapter,
     WrappedExecutionRuntimeAdapter,
@@ -19,7 +19,12 @@ from python.rl.runtime.execution_runtime import (
     unwrap_nested_env,
 )
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
-from python.rl.runtime.world_batch import WorldBatchVecEnvAccess, copy_obs_batch_item
+from python.rl.runtime.world_batch import (
+    WorldBatchVecEnvAccess,
+    build_loader_step_info,
+    compute_loader_step_outcome,
+    copy_obs_batch_item,
+)
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 
 
@@ -203,11 +208,76 @@ class LeaderWorldBatchExecutionRuntimeGroup:
 
     @property
     def batch_runtime(self):
+        if not bool(getattr(self.world_vec, "runtime_compatibility_enabled", False)):
+            raise RuntimeError(
+                "vec_env.batch_runtime is a quarantined compatibility/diagnostics escape hatch; "
+                "pass runtime_compatibility_enabled=True to opt in explicitly."
+            )
         return self.world_vec.batch_runtime
 
     @property
     def last_runtime_window_evidence(self):
         return self.access.last_runtime_window_evidence
+
+    def _runtime_compatibility_enabled(self) -> bool:
+        return bool(getattr(self.world_vec, "runtime_compatibility_enabled", False))
+
+    @staticmethod
+    def _runtime_window_evidence_info(window_evidence: Any) -> dict[str, Any]:
+        engagement_barrier_id = ""
+        if window_evidence.engagement_packet is not None:
+            engagement_barrier_id = str(
+                getattr(window_evidence.engagement_packet, "barrier_id", "") or ""
+            )
+        return {
+            "barrier_ids": [
+                str(getattr(record, "barrier_id", "") or "")
+                for record in list(window_evidence.barrier_trace)
+            ],
+            "event_barrier_id": engagement_barrier_id,
+            "observation_barrier_id": str(
+                getattr(window_evidence.observation_packet, "barrier_id", "") or ""
+            ),
+            "observation_provenance": str(
+                getattr(
+                    getattr(window_evidence.observation_packet, "provenance", None),
+                    "source_label",
+                    "",
+                )
+                or ""
+            ),
+            "engagement_provenance": str(
+                getattr(
+                    getattr(window_evidence.engagement_packet, "packet_provenance", None),
+                    "source_label",
+                    "",
+                )
+                or ""
+            ),
+            "diagnostics_provenance": str(
+                getattr(
+                    getattr(window_evidence.engagement_packet, "diagnostics_provenance", None),
+                    "source_label",
+                    "",
+                )
+                or ""
+            ),
+            "cadence_reason": str(window_evidence.cadence_reason),
+            "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
+        }
+
+    @staticmethod
+    def _compatibility_fallback_runtime_window_evidence_info() -> dict[str, Any]:
+        return {
+            "barrier_ids": [],
+            "event_barrier_id": "",
+            "observation_barrier_id": "",
+            "observation_provenance": "",
+            "engagement_provenance": "",
+            "diagnostics_provenance": "",
+            "cadence_reason": "compatibility_fallback_world_batch_step_worlds_wp16c",
+            "uses_compat_fallback": True,
+        }
 
     def max_decision_interval_steps(self, env_indices: Sequence[int] | None = None) -> int:
         if env_indices is None:
@@ -365,6 +435,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             inst_now_list = self._get_instrument_states_batch(refs)
 
         assignments = []
+        window_run_specs: list[tuple[int, Any, float]] = []
         for batch_idx, env_idx in enumerate(target_indices):
             handle = self.access.state(env_idx)
             if handle.agent_id is None:
@@ -384,17 +455,69 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                 inst_now=None if inst_now_list is None else inst_now_list[batch_idx],
             )
             assignments.append(assign)
+            window_run_specs.append(
+                (
+                    int(env_idx),
+                    assign.action,
+                    float(getattr(handle.last_truth, "sim_time", 0.0) or 0.0),
+                )
+            )
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if collect_timing else 0.0
 
         step_t0 = time.perf_counter() if collect_timing else 0.0
-        self._set_pilot_actions_batch(assignments)
-        self._step_runtime_worlds([int(idx) for idx in target_indices])
-        batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
+        window_evidence_by_env: dict[int, Any | None] = {}
+        truth_list: list[Any] = []
+        inst_list: list[Any] = []
+        if self.access.supports_runtime_window_api():
+            observation_read_t0 = time.perf_counter() if collect_timing else 0.0
+            for env_idx, pilot_action, source_time_s in window_run_specs:
+                handle = self.access.state(env_idx)
+                window_evidence = self.access.run_maintained_window(
+                    world_index=int(env_idx),
+                    entity_id=int(handle.agent_id),
+                    pilot_action=pilot_action,
+                    source_time_s=source_time_s,
+                    window_id=f"leader_world:{int(env_idx)}:{int(handle.steps)}",
+                    input_snapshot_version=f"obs:{int(env_idx)}:{int(handle.steps)}",
+                    source_layer="training_policy",
+                    include_engagement=True,
+                    include_diagnostics=True,
+                )
+                if window_evidence is None:
+                    window_evidence_by_env = {}
+                    break
+                observation_packet = window_evidence.observation_packet
+                truth_items = list(getattr(observation_packet, "agent_observations", []) or [])
+                inst_items = list(getattr(observation_packet, "instrument_states", []) or [])
+                if not truth_items or not inst_items:
+                    raise RuntimeError(
+                        "RuntimeFacade.run_wp10_window() did not return the maintained observation packet payload "
+                        "required by leader runtime consumers"
+                    )
+                window_evidence_by_env[int(env_idx)] = window_evidence
+                truth_list.append(truth_items[0])
+                inst_list.append(inst_items[0])
+            batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
+            state_read_ms = (time.perf_counter() - observation_read_t0) * 1000.0 if collect_timing else 0.0
+        else:
+            batch_step_ms = 0.0
+            state_read_ms = 0.0
 
-        read_t0 = time.perf_counter() if collect_timing else 0.0
-        truth_list = self._get_agent_observations_batch(refs)
-        inst_list = self._get_instrument_states_batch(refs)
-        state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
+        if not window_evidence_by_env:
+            if not self._runtime_compatibility_enabled():
+                raise RuntimeError(
+                    "RuntimeFacade.run_wp10_window() is unavailable and compatibility fallback is quarantined; "
+                    "pass runtime_compatibility_enabled=True to opt in explicitly."
+                )
+            self._set_pilot_actions_batch(assignments)
+            self._step_runtime_worlds([int(idx) for idx in target_indices])
+            batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
+
+            read_t0 = time.perf_counter() if collect_timing else 0.0
+            truth_list = self._get_agent_observations_batch(refs)
+            inst_list = self._get_instrument_states_batch(refs)
+            state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
+
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
         for batch_idx, env_idx in enumerate(target_indices):
             handle = self.access.state(env_idx)
@@ -428,27 +551,31 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             if collect_timing:
                 obs_build_ms += (time.perf_counter() - obs_t0) * 1000.0
             reward_t0 = time.perf_counter() if collect_timing else 0.0
-            reward, terminated, truncated, mission_status = handle.loader.compute_full_step(
-                obs,
-                handle.loader.sim,
-                handle.steps,
-                handle.max_steps,
+            reward, terminated, truncated, mission_status = compute_loader_step_outcome(
+                handle.loader,
+                obs=obs,
+                steps=handle.steps,
+                max_steps=handle.max_steps,
                 truth=handle.last_truth,
                 inst_state=handle.last_inst,
             )
             if collect_timing:
                 reward_compute_ms += (time.perf_counter() - reward_t0) * 1000.0
             info_t0 = time.perf_counter() if collect_timing else 0.0
-            info = build_step_info(
+            info = build_loader_step_info(
                 handle.loader,
-                handle.loader.sim,
-                int(handle.agent_id),
+                entity_id=int(handle.agent_id),
                 mission_status=mission_status,
                 terminated=bool(terminated),
                 truncated=bool(truncated),
                 inst_now=handle.last_inst,
                 truth_now=handle.last_truth,
             )
+            window_evidence = window_evidence_by_env.get(int(env_idx))
+            if window_evidence is not None:
+                info["runtime_window_evidence"] = self._runtime_window_evidence_info(window_evidence)
+            else:
+                info["runtime_window_evidence"] = self._compatibility_fallback_runtime_window_evidence_info()
             if collect_timing:
                 info_build_ms += (time.perf_counter() - info_t0) * 1000.0
             out.append((obs, float(reward), bool(terminated), bool(truncated), info))

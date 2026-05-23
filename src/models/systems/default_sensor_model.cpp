@@ -320,7 +320,6 @@ public:
         
         auto target_query = world.query<const KeyEntity, const Transform>();
         const Alliance* owner_alliance = owner.get<Alliance>();
-        
         // Environment Singleton Access
         const EnvironmentModelRef* env_ref = world.get<EnvironmentModelRef>();
 
@@ -336,7 +335,7 @@ public:
                     return;
                 }
             }
-            
+
             double dx = target_t.x - owner_transform.x;
             double dy = target_t.y - owner_transform.y;
             double dz = target_t.z - owner_transform.z;

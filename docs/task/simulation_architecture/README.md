@@ -78,18 +78,25 @@ The active design conclusion is:
     compatibility-only runtime access, and split multi-rate, fidelity-provider,
     capability-spawn, and counterfactual runtime materialization into bounded
     implementation streams.
-17. After WP17 acceptance, the remaining mainline is frozen as four stages:
+17. After WP17 acceptance, the remaining mainline was frozen as four stages:
     `WP18` runtime ownership and C++ hot-path consolidation, `WP19` CUDA /
     resident-state mainline alignment, `WP20` public capability-platform
     composition, and `WP21` full counterfactual / experiment runtime. `WP18`,
-    `WP19`, `WP20`, and `WP21` are accepted; the frozen post-WP17 refactor
-    route is closed unless a new architecture-level fact opens a new scoped
-    route.
-18. When this subproject is split across subagents or workers, follow the
+    `WP19`, and `WP20` remain accepted. WP21's claimed closure was rejected by
+    the owner on `2026-05-22`; it must not be treated as final route closure.
+18. The post-WP21
+    [architecture refactoring audit](../review/architecture_refactoring_audit_20260522.md)
+    is a new architecture-level fact: several compatibility layers and old
+    implementation surfaces still act as default or maintained paths. This
+    invalidates the WP21 acceptance claim and opens `WP22 Legacy Compatibility
+    Retirement And Architecture Hardening`, whose closure standard is stricter:
+    legacy paths must be migrated, deleted, or quarantined behind explicit
+    opt-in guards rather than accepted as open residuals.
+19. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
-19. Commit messages for implementation closure should use capability/result
+20. Commit messages for implementation closure should use capability/result
     language and avoid internal work-package labels such as `WP13` or `WP14`.
 
 ## Work Packages
@@ -97,53 +104,86 @@ The active design conclusion is:
 | Work package | Status | Goal | Output |
 |--------------|--------|------|--------|
 | `WP0 Architecture Baseline` | complete | Make the SCAL framing, semantic lifecycle, causal-temporal execution projection, and extension rules explicit | architecture design doc, task subproject entry |
-| `WP1 Pipeline Inventory` | complete | Map current code, systems, models, and tests onto `P0-P10` and current coupling hotspots | [pipeline inventory](wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.md) |
-| `WP2 Contract Freeze` | complete | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | [contract freeze](wp2_contract_freeze/contract_freeze_wp2_20260519.md) |
-| `WP2.5 Scheduler Semantics Freeze` | complete | Freeze event ordering, state versioning, barrier visibility, clock-domain merge policy, replay contract, and stage-node manifest schema | [scheduler semantics freeze](wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp25_scheduler_semantics_acceptance_review_20260519.md) |
-| `WP3 Engagement Pilot` | complete | Use weapon/engagement as the first cross-domain validation slice | [engagement pilot task family](wp3_engagement_pilot/engagement_pilot_wp3_20260519.md) |
-| `WP4 Facade Alignment` | complete | Ensure pilot behavior is reachable through facade-shaped APIs without raw runtime access | [facade alignment task family](wp4_facade_alignment/facade_alignment_wp4_20260519.md), [final acceptance](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md) |
-| `WP5 Validation Harness` | complete | Add smoke, architecture, trace, boundary, information-leakage, and replay/evidence tests that prove the shared lifecycle and graph boundaries | [validation harness task family](wp5_validation_harness/validation_harness_wp5_20260519.md), [final acceptance](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md) |
-| `WP6 Backend Profile Policy` | complete | Freeze backend profile taxonomy, parity budgets, resident-state boundaries, and backend capability exposure rules | [backend profile policy](wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md), [profile registry](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md), [parity budget registry](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md), [resident-state boundary rules](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md) |
-| `WP7 Backend Capability Materialization` | complete / accepted | Materialize accepted WP6 policy into machine-checkable registry, runtime capability projection, promotion evidence gates, and multi-fidelity entry conditions without promoting candidates | [backend capability materialization](wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md), [registry materialization](wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.md), [runtime capability projection](wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.md), [promotion evidence gates](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.md), [multi-fidelity entry conditions](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md) |
-| `WP7.5 Training Path Facade Bridge` | complete / accepted | Migrate maintained batch training paths from `RuntimeFacade.runtime()` and raw `WorldBatchRuntime` stepping to facade-shaped execution and observation APIs before `WP8` depends on them | [training path facade bridge](wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.md) |
-| `WP8 SCAL Learning Face` | complete / accepted | Define curriculum, evaluation, capability profiling, scenario generation, and learning evidence as explicit architecture and task vocabulary without reopening the simulation closure | [learning face task family](wp8_learning_face/learning_face_wp8_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md) |
-| `WP9 Contract And Infrastructure Closure` | complete / accepted | Promote deferred DTO contracts, close small infrastructure residuals, add guard allowlists, and publish final index/acceptance evidence | [contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md), [DTO batch 1](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.md), [DTO batch 2](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.md), [infrastructure closure](wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.md), [guard enforcement](wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.md), [integration sync](wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md), [acceptance review](../review/wp9_contract_infrastructure_closure_acceptance_review_20260520.md) |
+| `WP1 Pipeline Inventory` | complete | Map current code, systems, models, and tests onto `P0-P10` and current coupling hotspots | [pipeline inventory](archive/wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.md) |
+| `WP2 Contract Freeze` | complete | Identify packet families, stage-node contracts, and cross-layer policy/orchestration contracts that need explicit ownership | [contract freeze](archive/wp2_contract_freeze/contract_freeze_wp2_20260519.md) |
+| `WP2.5 Scheduler Semantics Freeze` | complete | Freeze event ordering, state versioning, barrier visibility, clock-domain merge policy, replay contract, and stage-node manifest schema | [scheduler semantics freeze](archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp25_scheduler_semantics_acceptance_review_20260519.md) |
+| `WP3 Engagement Pilot` | complete | Use weapon/engagement as the first cross-domain validation slice | [engagement pilot task family](archive/wp3_engagement_pilot/engagement_pilot_wp3_20260519.md) |
+| `WP4 Facade Alignment` | complete | Ensure pilot behavior is reachable through facade-shaped APIs without raw runtime access | [facade alignment task family](archive/wp4_facade_alignment/facade_alignment_wp4_20260519.md), [final acceptance](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md) |
+| `WP5 Validation Harness` | complete | Add smoke, architecture, trace, boundary, information-leakage, and replay/evidence tests that prove the shared lifecycle and graph boundaries | [validation harness task family](archive/wp5_validation_harness/validation_harness_wp5_20260519.md), [final acceptance](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md) |
+| `WP6 Backend Profile Policy` | complete | Freeze backend profile taxonomy, parity budgets, resident-state boundaries, and backend capability exposure rules | [backend profile policy](archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md), [profile registry](archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md), [parity budget registry](archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md), [resident-state boundary rules](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md) |
+| `WP7 Backend Capability Materialization` | complete / accepted | Materialize accepted WP6 policy into machine-checkable registry, runtime capability projection, promotion evidence gates, and multi-fidelity entry conditions without promoting candidates | [backend capability materialization](archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md), [registry materialization](archive/wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.md), [runtime capability projection](archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.md), [promotion evidence gates](archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.md), [multi-fidelity entry conditions](archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md), [acceptance review](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md) |
+| `WP7.5 Training Path Facade Bridge` | complete / accepted | Migrate maintained batch training paths from `RuntimeFacade.runtime()` and raw `WorldBatchRuntime` stepping to facade-shaped execution and observation APIs before `WP8` depends on them | [training path facade bridge](archive/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.md) |
+| `WP8 SCAL Learning Face` | complete / accepted | Define curriculum, evaluation, capability profiling, scenario generation, and learning evidence as explicit architecture and task vocabulary without reopening the simulation closure | [learning face task family](archive/wp8_learning_face/learning_face_wp8_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md) |
+| `WP9 Contract And Infrastructure Closure` | complete / accepted | Promote deferred DTO contracts, close small infrastructure residuals, add guard allowlists, and publish final index/acceptance evidence | [contract and infrastructure closure](archive/wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md), [DTO batch 1](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.md), [DTO batch 2](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.md), [infrastructure closure](archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.md), [guard enforcement](archive/wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.md), [integration sync](archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp9_contract_infrastructure_closure_acceptance_review_20260520.md) |
 | `Post-WP9 Architecture Route` | route selected | Establish the implementation order and anchor Phase 1 as WP10: causal runtime foundation, facade vertical slice, information/agency enforcement, backend/fidelity, capability composition, counterfactual/experiment generation | [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.md) |
-| `WP10 Causal Runtime Foundation` | complete / accepted | Implement Phase 1 of the post-WP9 route: manifest registry seed, minimal scheduling-window loop, request injection, same-window validation, event/snapshot evidence, and integration handoff | [causal runtime foundation](wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.md), [manifest registry](wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.md), [window loop / injection](wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.md), [same-window validation](wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.md), [event/snapshot evidence](wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.md), [integration handoff](wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp10_causal_runtime_foundation_acceptance_review_20260520.md) |
-| `WP11 Facade Vertical Slice And Provenance` | complete / accepted | Implement Phase 2 of the post-WP9 route: `ActionHoldPolicy`, information-state provenance labels, a WP10-seam facade/binding proof, consumer boundary pre-gates, and integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.md), [ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.md), [information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.md), [vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.md), [consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.md), [integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md) |
-| `WP12 Information And Agency Enforcement` | complete / accepted | Implement Phase 3 of the post-WP9 route: Law 14 read-side enforcement, `AgentRole` authority validation, information-transformation evidence, authorized intent injection, and integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md), [Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md), [agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md), [information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md), [intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md), [integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp12_information_agency_enforcement_acceptance_review_20260520.md) |
-| `WP13 Backend Fidelity Expansion` | complete / accepted | Implement Phase 4 of the post-WP9 route: make runtime capabilities, backend profiles, parity budgets, and fidelity profile requests queryable, rejectable, and evidence-backed without promoting unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md), [capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md), [backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md), [parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md), [fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md), [facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md), [integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md), [acceptance review](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md) |
-| `WP14 Capability Composition` | complete / accepted | Implement Phase 5 of the post-WP9 route: move existing type-name setup toward typed `Capability` / `CapabilityBundle` composition through compatibility-preserving resolved spawn plans, additive facade/setup DTOs, and strict implementation gates without a big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.md), [capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md), [content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md), [spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md), [additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md), [capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md), [compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md), [acceptance review](../review/wp14_capability_composition_acceptance_review_20260521.md) |
-| `WP15 Counterfactual Experiment Generation` | complete / accepted | Implement Phase 6 of the post-WP9 route: add replay envelopes, branch point and worldline metadata, counterfactual admission, scenario/adversary generation request surfaces, and experiment evidence ancestry without claiming full snapshot/restore or maintained rollout execution | [counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md), [replay envelope and branch point](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.md), [worldline branch metadata](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.md), [counterfactual admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.md), [scenario/adversary generation](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.md), [experiment evidence bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.md), [integration handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.md), [acceptance review](../review/wp15_counterfactual_experiment_generation_acceptance_review_20260521.md) |
-| `WP16 Runtime Spine Consolidation` | complete / accepted | Complete the post-WP15 architecture optimization phase: inventory bypasses, define the maintained runtime spine, enforce the first strict `GAP-9` clock-domain cadence slice, migrate facade/batch consumers, classify legacy paths, and reduce documentation-sync drag through generated closure summaries while preserving the recorded residuals | [runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md), [runtime spine inventory](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md), [clock-domain enforcement](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md), [facade/batch migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md), [legacy compatibility](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md), [documentation automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md), [integration handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md), [acceptance review](../review/wp16_runtime_spine_consolidation_acceptance_review_20260521.md) |
-| `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | Materialize the final Stage 3 selected runtime slices: facade-shaped batch reads, runnable cadence evidence, reference CPU fidelity admission, capability-gated spawn, and explicit-setup selected-entity counterfactual branch/compare while preserving legacy compatibility and full-worldline residuals | [stage3 runtime materialization and cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.md), [fact ledger](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md), [business migration](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md), [multi-rate runtime](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md), [fidelity provider runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md), [capability spawn runtime](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md), [counterfactual runtime closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md), [dispatch queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md) |
-| `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | Consolidate runtime ownership after WP17 by moving maintained execution truths and high-frequency Python paths toward C++/facade-owned surfaces while keeping compatibility APIs bounded | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md), [ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.md), [execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.md), [ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.md), [facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.md), [C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.md), [integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.md), [dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md) |
-| `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | Align existing CUDA helpers, device-resident output contracts, diagnostics boundaries, and resident-state sync/shard vocabulary without promoting exact GPU or maintained resident-state support by default | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md), [fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md), [device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md), [GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md), [resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md), [first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md), [integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md), [dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) |
-| `WP20 Public Capability-Platform Composition` | complete / accepted | Publicize the typed capability-platform setup path through validation-first admission/result contracts and compatibility-preserving materialization while keeping type-name spawning and scenario schema stable | [public capability-platform composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md), [fact ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md), [public typed spawn contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md), [runtime setup consume bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md), [facade/binding surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md), [compatibility/schema guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md), [integration handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md), [dispatch queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.md) |
-| `WP21 Full Counterfactual Experiment Runtime` | complete / accepted | Close the final refactor-route gap by turning accepted counterfactual contracts and selected runtime slices into maintained facade-owned experiment execution, scenario generation, evidence collection, and legacy cleanup | [full counterfactual experiment runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md), [fact ledger](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md), [snapshot/restore boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md), [counterfactual rollout](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md), [scenario generation runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md), [experiment facade/evidence](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md), [final cleanup](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md), [dispatch queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md), [acceptance review](../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) |
+| `WP10 Causal Runtime Foundation` | complete / accepted | Implement Phase 1 of the post-WP9 route: manifest registry seed, minimal scheduling-window loop, request injection, same-window validation, event/snapshot evidence, and integration handoff | [causal runtime foundation](archive/wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.md), [manifest registry](archive/wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.md), [window loop / injection](archive/wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.md), [same-window validation](archive/wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.md), [event/snapshot evidence](archive/wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.md), [integration handoff](archive/wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp10_causal_runtime_foundation_acceptance_review_20260520.md) |
+| `WP11 Facade Vertical Slice And Provenance` | complete / accepted | Implement Phase 2 of the post-WP9 route: `ActionHoldPolicy`, information-state provenance labels, a WP10-seam facade/binding proof, consumer boundary pre-gates, and integration handoff | [facade vertical slice and provenance](archive/wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.md), [ActionHoldPolicy](archive/wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.md), [information provenance](archive/wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.md), [vertical slice proof](archive/wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.md), [consumer boundary pre-gates](archive/wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.md), [integration handoff](archive/wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.md) |
+| `WP12 Information And Agency Enforcement` | complete / accepted | Implement Phase 3 of the post-WP9 route: Law 14 read-side enforcement, `AgentRole` authority validation, information-transformation evidence, authorized intent injection, and integration handoff | [information and agency enforcement](archive/wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md), [Law 14 read-side enforcement](archive/wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md), [agency role authority](archive/wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md), [information transformation surface](archive/wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md), [intent injection authority guard](archive/wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md), [integration handoff](archive/wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp12_information_agency_enforcement_acceptance_review_20260520.md) |
+| `WP13 Backend Fidelity Expansion` | complete / accepted | Implement Phase 4 of the post-WP9 route: make runtime capabilities, backend profiles, parity budgets, and fidelity profile requests queryable, rejectable, and evidence-backed without promoting unsupported backend claims | [backend fidelity expansion](archive/wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md), [capability query](archive/wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md), [backend profile registry gate](archive/wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md), [parity budget evidence gate](archive/wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md), [fidelity request gate](archive/wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md), [facade/binding proof](archive/wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md), [integration handoff](archive/wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md), [acceptance review](../review/archive/wp-acceptance/wp13_backend_fidelity_expansion_acceptance_review_20260520.md) |
+| `WP14 Capability Composition` | complete / accepted | Implement Phase 5 of the post-WP9 route: move existing type-name setup toward typed `Capability` / `CapabilityBundle` composition through compatibility-preserving resolved spawn plans, additive facade/setup DTOs, and strict implementation gates without a big-bang spawn rewrite | [capability composition](archive/wp14_capability_composition/capability_composition_wp14_20260521.md), [capability bundle contract](archive/wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md), [content definition lowering](archive/wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md), [spawn resolution bridge](archive/wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md), [additive facade setup DTO](archive/wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md), [capability effects materialization](archive/wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md), [compatibility validation](archive/wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp14_capability_composition_acceptance_review_20260521.md) |
+| `WP15 Counterfactual Experiment Generation` | complete / accepted | Implement Phase 6 of the post-WP9 route: add replay envelopes, branch point and worldline metadata, counterfactual admission, scenario/adversary generation request surfaces, and experiment evidence ancestry without claiming full snapshot/restore or maintained rollout execution | [counterfactual experiment generation](archive/wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md), [replay envelope and branch point](archive/wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.md), [worldline branch metadata](archive/wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.md), [counterfactual admission](archive/wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.md), [scenario/adversary generation](archive/wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.md), [experiment evidence bridge](archive/wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.md), [integration handoff](archive/wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp15_counterfactual_experiment_generation_acceptance_review_20260521.md) |
+| `WP16 Runtime Spine Consolidation` | complete / accepted | Complete the post-WP15 architecture optimization phase: inventory bypasses, define the maintained runtime spine, enforce the first strict `GAP-9` clock-domain cadence slice, migrate facade/batch consumers, classify legacy paths, and reduce documentation-sync drag through generated closure summaries while preserving the recorded residuals | [runtime spine consolidation](archive/wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md), [runtime spine inventory](archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md), [clock-domain enforcement](archive/wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md), [facade/batch migration](archive/wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md), [legacy compatibility](archive/wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md), [documentation automation](archive/wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md), [integration handoff](archive/wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp16_runtime_spine_consolidation_acceptance_review_20260521.md) |
+| `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | Materialize the final Stage 3 selected runtime slices: facade-shaped batch reads, runnable cadence evidence, reference CPU fidelity admission, capability-gated spawn, and explicit-setup selected-entity counterfactual branch/compare while preserving legacy compatibility and full-worldline residuals | [stage3 runtime materialization and cleanup](archive/wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.md), [fact ledger](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md), [business migration](archive/wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md), [multi-rate runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md), [fidelity provider runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md), [capability spawn runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md), [counterfactual runtime closure](archive/wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md), [dispatch queue](archive/wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md) |
+| `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | Consolidate runtime ownership after WP17 by moving maintained execution truths and high-frequency Python paths toward C++/facade-owned surfaces while keeping compatibility APIs bounded | [runtime ownership and C++ hot path consolidation](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md), [ownership fact ledger](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.md), [execution episode ownership sink](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.md), [ScenarioLoader adapter split](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.md), [facade contract hardening](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.md), [C++ hot path matrix](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.md), [integration handoff](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.md), [dispatch queue](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md) |
+| `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | Align existing CUDA helpers, device-resident output contracts, diagnostics boundaries, and resident-state sync/shard vocabulary without promoting exact GPU or maintained resident-state support by default | [CUDA and resident-state mainline alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md), [fact ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md), [device output contract](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md), [GPU helper diagnostics boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md), [resident-state sync and shard contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md), [first CUDA alignment slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md), [integration handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md), [dispatch queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) |
+| `WP20 Public Capability-Platform Composition` | complete / accepted | Publicize the typed capability-platform setup path through validation-first admission/result contracts and compatibility-preserving materialization while keeping type-name spawning and scenario schema stable | [public capability-platform composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md), [fact ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md), [public typed spawn contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md), [runtime setup consume bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md), [facade/binding surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md), [compatibility/schema guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md), [integration handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md), [dispatch queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.md) |
+| `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | Claimed closure attempted to turn accepted counterfactual contracts and selected runtime slices into maintained facade-owned experiment execution, scenario generation, evidence collection, and legacy cleanup, but owner rejected the closure because compatibility layers and incomplete subagent work remained. | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md), [fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md), [snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md), [counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md), [scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md), [experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md), [final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md), [dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md), [disputed acceptance record](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) |
+| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | planned / remediation active; overall complete no | Force-retire post-WP21 compatibility layers and old implementation surfaces that still act as default maintained paths; migrate, delete, or quarantine them behind explicit opt-in guards | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [fact ledger / kill list](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.md), [Python bypass retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.md), [runtime escape-hatch closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md), [command/DTO retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.md), [structural decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md), [guard/closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
+
+## WP22 Legacy Compatibility Retirement And Architecture Hardening
+
+Output:
+
+- [WP22 Legacy Compatibility Retirement And Architecture Hardening](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md)
+- [WP22-A Retirement Fact Ledger And Kill List](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.md)
+- [WP22-B Python Business Bypass Retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.md)
+- [WP22-C Runtime Escape-Hatch And Legacy Mode Closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md)
+- [WP22-D Command DTO And Legacy Surface Retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.md)
+- [WP22-E Structural God-File Decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md)
+- [WP22-F Guardrail And Acceptance Closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.md)
+- [WP22 Subagent Dispatch Queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md)
+
+WP22 is opened by the post-WP21 architecture refactoring audit. Unlike prior
+compatibility-preserving stages, WP22 does not accept open legacy residuals as a
+pass state. Each old path must be verified, migrated, deleted, or quarantined
+behind explicit opt-in guards.
+
+WP22 planned map:
+
+- `WP22-A Retirement Fact Ledger And Kill List` starts first and corrects audit
+  facts before implementation work depends on them.
+- `WP22-B Python Business Bypass Retirement` owns tasking/profile/mission-command
+  migration away from raw loader/runtime access.
+- `WP22-C Runtime Escape-Hatch And Legacy Mode Closure` owns raw runtime,
+  batch-runtime, loader-sim, and silent legacy-mode quarantine.
+- `WP22-D Command DTO And Legacy Surface Retirement` owns C++ command, DTO, and
+  setup legacy-surface retirement.
+- `WP22-E Structural God-File Decomposition` owns behavior-preserving splits of
+  monolithic contract/facade/window/factory files.
+- `WP22-F Guardrail And Acceptance Closure` is serial and must fail closure if
+  any unowned default legacy path remains.
 
 ## WP21 Full Counterfactual Experiment Runtime
 
 Output:
 
-- [WP21 Full Counterfactual Experiment Runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md)
-- [WP21-A Fact Ledger And Residual Freeze](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md)
-- [WP21-B Snapshot Restore And Worldline Boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md)
-- [WP21-C Counterfactual Rollout And Causal Difference](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md)
-- [WP21-D Scenario Intervention Generation Runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md)
-- [WP21-E Experiment Facade And Evidence Collection](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md)
-- [WP21-F Final Cleanup And Acceptance Handoff](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md)
-- [WP21 Subagent Dispatch Queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md)
-- [WP21 Acceptance Review](../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
+- [WP21 Full Counterfactual Experiment Runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md)
+- [WP21-A Fact Ledger And Residual Freeze](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md)
+- [WP21-B Snapshot Restore And Worldline Boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md)
+- [WP21-C Counterfactual Rollout And Causal Difference](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md)
+- [WP21-D Scenario Intervention Generation Runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md)
+- [WP21-E Experiment Facade And Evidence Collection](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md)
+- [WP21-F Final Cleanup And Acceptance Handoff](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md)
+- [WP21 Subagent Dispatch Queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md)
+- [Disputed WP21 Acceptance Record](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
 
-WP21 is the accepted final planned refactor stage. It consumes WP15 contracts, WP17's
-selected runtime branch/compare slice, WP18 ownership residuals, WP19
-host-visible state boundaries, and WP20 typed setup evidence. It must close the
-counterfactual / experiment runtime gap without promoting exact GPU,
-resident-state support, experiment truth claims, or forced scenario schema
-migration.
+WP21 is the disputed final planned refactor stage. It consumed WP15 contracts,
+WP17's selected runtime branch/compare slice, WP18 ownership residuals, WP19
+host-visible state boundaries, and WP20 typed setup evidence, but its claimed
+closure was rejected by the owner on `2026-05-22`. It must not be used as proof
+that legacy compatibility layers have retired.
 
-WP21 accepted map:
+WP21 disputed map:
 
 - `WP21-A Fact Ledger And Residual Freeze` starts first and freezes source facts.
 - `WP21-B Snapshot Restore And Worldline Boundary` owns bounded host-owned
@@ -154,22 +194,22 @@ WP21 accepted map:
   parent/branch rollout.
 - `WP21-E Experiment Facade And Evidence Collection` waits for C/D and owns the
   public orchestration/evidence surface.
-- `WP21-F Final Cleanup And Acceptance Handoff` closed the serial route verdict
-  through the acceptance review.
+- `WP21-F Final Cleanup And Acceptance Handoff` failed the owner-acceptance bar;
+  the archived acceptance review is historical only and superseded by WP22.
 
 ## WP20 Public Capability-Platform Composition
 
 Output:
 
-- [WP20 Public Capability-Platform Composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md)
-- [WP20-A Public Capability Fact Ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md)
-- [WP20-B Public Typed Platform Spawn Contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md)
-- [WP20-C Runtime Setup Consume Bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md)
-- [WP20-D Facade And Binding Public Surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md)
-- [WP20-E Compatibility And Schema Guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md)
-- [WP20-F Integration And Handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md)
-- [WP20 Subagent Dispatch Queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md)
-- [WP20 Acceptance Review](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.md)
+- [WP20 Public Capability-Platform Composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md)
+- [WP20-A Public Capability Fact Ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md)
+- [WP20-B Public Typed Platform Spawn Contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md)
+- [WP20-C Runtime Setup Consume Bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md)
+- [WP20-D Facade And Binding Public Surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md)
+- [WP20-E Compatibility And Schema Guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md)
+- [WP20-F Integration And Handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md)
+- [WP20 Subagent Dispatch Queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md)
+- [WP20 Acceptance Review](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.md)
 
 WP20 is the accepted third frozen post-WP17 stage. It consumes WP14's capability
 composition vocabulary and WP17's internal resolved-plan spawn path, then
@@ -196,15 +236,15 @@ WP20 current map:
 
 Output:
 
-- [WP19 CUDA And Resident-State Mainline Alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md)
-- [WP19-A CUDA / Resident-State Fact Ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md)
-- [WP19-B Device-Resident Output Contract Pre-Gate](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md)
-- [WP19-C GPU Helper Diagnostics Boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md)
-- [WP19-D Resident-State Sync And Shard Contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md)
-- [WP19-E First CUDA Alignment Slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md)
-- [WP19-F Integration And Handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md)
-- [WP19 Subagent Dispatch Queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md)
-- [WP19 Acceptance Review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md)
+- [WP19 CUDA And Resident-State Mainline Alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md)
+- [WP19-A CUDA / Resident-State Fact Ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md)
+- [WP19-B Device-Resident Output Contract Pre-Gate](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md)
+- [WP19-C GPU Helper Diagnostics Boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md)
+- [WP19-D Resident-State Sync And Shard Contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md)
+- [WP19-E First CUDA Alignment Slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md)
+- [WP19-F Integration And Handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md)
+- [WP19 Subagent Dispatch Queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md)
+- [WP19 Acceptance Review](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md)
 
 WP19 is the accepted second frozen post-WP17 stage. It consumes the accepted
 WP18 runtime-ownership boundary and aligns existing CUDA helpers,
@@ -226,21 +266,21 @@ WP19 workstream map:
   bounded helper/output path.
 - `WP19-F Integration And Handoff` remains serial closure after evidence streams
   return.
-- [WP19 Acceptance Review](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md)
+- [WP19 Acceptance Review](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md)
 
 ## WP18 Runtime Ownership And C++ Hot Path Consolidation
 
 Output:
 
-- [WP18 Runtime Ownership And C++ Hot Path Consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md)
-- [WP18-A Ownership Fact Ledger And Hot-Path Map](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.md)
-- [WP18-B Execution Episode Ownership Sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.md)
-- [WP18-C ScenarioLoader Adapter Split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.md)
-- [WP18-D Facade Contract Hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.md)
-- [WP18-E C++ Hot Path Migration Matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.md)
-- [WP18-F Integration And Handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.md)
-- [WP18 Subagent Dispatch Queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.md)
-- [WP18 Acceptance Review](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md)
+- [WP18 Runtime Ownership And C++ Hot Path Consolidation](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md)
+- [WP18-A Ownership Fact Ledger And Hot-Path Map](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.md)
+- [WP18-B Execution Episode Ownership Sink](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.md)
+- [WP18-C ScenarioLoader Adapter Split](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.md)
+- [WP18-D Facade Contract Hardening](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.md)
+- [WP18-E C++ Hot Path Migration Matrix](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.md)
+- [WP18-F Integration And Handoff](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.md)
+- [WP18 Subagent Dispatch Queue](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.md)
+- [WP18 Acceptance Review](../review/archive/wp-acceptance/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.md)
 
 WP18 is the accepted first frozen post-WP17 stage. It focuses on runtime
 ownership and C++ hot-path consolidation. CUDA/resident-state alignment, public
@@ -267,15 +307,15 @@ WP18 workstream map:
 
 Output:
 
-- [WP17 Stage 3 Runtime Materialization And Cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.md)
-- [WP17-A Fact Ledger And Boundary Freeze](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)
-- [WP17-B Facade Business Migration And Compatibility Cleanup](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)
-- [WP17-C Multi-Rate Runtime Example](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)
-- [WP17-D Fidelity Provider Runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)
-- [WP17-E Capability Spawn Runtime Promotion](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)
-- [WP17-F Counterfactual Runtime Slice And Closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)
-- [WP17 Subagent Dispatch Queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)
-- [WP17 Acceptance Review](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md)
+- [WP17 Stage 3 Runtime Materialization And Cleanup](archive/wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.md)
+- [WP17-A Fact Ledger And Boundary Freeze](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)
+- [WP17-B Facade Business Migration And Compatibility Cleanup](archive/wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)
+- [WP17-C Multi-Rate Runtime Example](archive/wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)
+- [WP17-D Fidelity Provider Runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)
+- [WP17-E Capability Spawn Runtime Promotion](archive/wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)
+- [WP17-F Counterfactual Runtime Slice And Closure](archive/wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)
+- [WP17 Subagent Dispatch Queue](archive/wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)
+- [WP17 Acceptance Review](../review/archive/wp-acceptance/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.md)
 
 WP17 is the accepted final Stage 3 runtime-materialization and cleanup task
 family. It uses current code facts to split the remaining runtime work into bounded
@@ -303,13 +343,13 @@ WP17 workstream map:
 
 Output:
 
-- [WP16 Runtime Spine Consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md)
-- [WP16-A Runtime Spine Inventory And Bypass Map](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md)
-- [WP16-B Clock-Domain Enforcement And Merge Trace](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md)
-- [WP16-C Facade And Batch Path Spine Migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md)
-- [WP16-D Legacy Path Deprecation And Compatibility Gates](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md)
-- [WP16-E Generated Documentation And Closure Automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md)
-- [WP16-F Integration And Acceptance Handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md)
+- [WP16 Runtime Spine Consolidation](archive/wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md)
+- [WP16-A Runtime Spine Inventory And Bypass Map](archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.md)
+- [WP16-B Clock-Domain Enforcement And Merge Trace](archive/wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.md)
+- [WP16-C Facade And Batch Path Spine Migration](archive/wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.md)
+- [WP16-D Legacy Path Deprecation And Compatibility Gates](archive/wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.md)
+- [WP16-E Generated Documentation And Closure Automation](archive/wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.md)
+- [WP16-F Integration And Acceptance Handoff](archive/wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.md)
 
 WP16 opens the architecture-optimization phase after the post-WP9 route is
 complete. It consumes WP10-WP15 boundaries and turns them into a maintained
@@ -356,13 +396,13 @@ and maintained independent-domain merge success are still out of scope.
 
 Output:
 
-- [WP15 Counterfactual Experiment Generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md)
-- [WP15-A Replay Envelope And Branch Point Contract](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.md)
-- [WP15-B Worldline Branch Metadata Gate](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.md)
-- [WP15-C Counterfactual Request Admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.md)
-- [WP15-D Scenario And Adversary Generation Request Surface](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.md)
-- [WP15-E Experiment Evidence And Capability Profiling Bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.md)
-- [WP15-F Integration And Acceptance Handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.md)
+- [WP15 Counterfactual Experiment Generation](archive/wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.md)
+- [WP15-A Replay Envelope And Branch Point Contract](archive/wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.md)
+- [WP15-B Worldline Branch Metadata Gate](archive/wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.md)
+- [WP15-C Counterfactual Request Admission](archive/wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.md)
+- [WP15-D Scenario And Adversary Generation Request Surface](archive/wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.md)
+- [WP15-E Experiment Evidence And Capability Profiling Bridge](archive/wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.md)
+- [WP15-F Integration And Acceptance Handoff](archive/wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.md)
 
 WP15 accepts Phase 6 of the post-WP9 route. It consumes WP8 learning-face
 vocabulary and the accepted WP10-WP14 causal, facade, agency, backend/fidelity,
@@ -398,14 +438,14 @@ and bilingual handoff.
 
 Output:
 
-- [WP14 Capability Composition](wp14_capability_composition/capability_composition_wp14_20260521.md)
-- [WP14-A Capability Bundle Contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md)
-- [WP14-B Content Definition Lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md)
-- [WP14-C Spawn Resolution Bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md)
-- [WP14-D Additive Facade Setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md)
-- [WP14-E Capability Effects Materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md)
-- [WP14-F Compatibility Validation And Acceptance Handoff](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md)
-- [WP14 acceptance review](../review/wp14_capability_composition_acceptance_review_20260521.md)
+- [WP14 Capability Composition](archive/wp14_capability_composition/capability_composition_wp14_20260521.md)
+- [WP14-A Capability Bundle Contract](archive/wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.md)
+- [WP14-B Content Definition Lowering](archive/wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.md)
+- [WP14-C Spawn Resolution Bridge](archive/wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.md)
+- [WP14-D Additive Facade Setup DTO](archive/wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.md)
+- [WP14-E Capability Effects Materialization](archive/wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.md)
+- [WP14-F Compatibility Validation And Acceptance Handoff](archive/wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.md)
+- [WP14 acceptance review](../review/archive/wp-acceptance/wp14_capability_composition_acceptance_review_20260521.md)
 
 WP14 accepts Phase 5 of the post-WP9 route. It consumes WP2/WP9 contract
 vocabulary and WP10-WP13 runtime, facade, agency, and backend evidence, then
@@ -443,14 +483,14 @@ remain future gated work.
 
 Output:
 
-- [WP13 Backend Fidelity Expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md)
-- [WP13-A Runtime Capability Query And Rejection Surface](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md)
-- [WP13-B Backend Profile Registry Runtime Gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md)
-- [WP13-C Parity Budget Evidence Gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md)
-- [WP13-D Fidelity Profile Request Gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md)
-- [WP13-E Facade And Binding Proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md)
-- [WP13-F Integration And Acceptance Handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md)
-- [WP13 acceptance review](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.md)
+- [WP13 Backend Fidelity Expansion](archive/wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.md)
+- [WP13-A Runtime Capability Query And Rejection Surface](archive/wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.md)
+- [WP13-B Backend Profile Registry Runtime Gate](archive/wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.md)
+- [WP13-C Parity Budget Evidence Gate](archive/wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.md)
+- [WP13-D Fidelity Profile Request Gate](archive/wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.md)
+- [WP13-E Facade And Binding Proof](archive/wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.md)
+- [WP13-F Integration And Acceptance Handoff](archive/wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.md)
+- [WP13 acceptance review](../review/archive/wp-acceptance/wp13_backend_fidelity_expansion_acceptance_review_20260520.md)
 
 WP13 accepts Phase 4 of the post-WP9 route. It consumes WP6/WP7 backend profile
 policy/materialization and WP10-WP12 causal, provenance, and agency evidence,
@@ -488,12 +528,12 @@ internal work-package labels.
 
 Output:
 
-- [WP12 Information And Agency Enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md)
-- [WP12-A Law 14 Read-Side Enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md)
-- [WP12-B Agency Role Authority Boundary](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md)
-- [WP12-C Information Transformation Surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md)
-- [WP12-D Intent Injection Authority Guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md)
-- [WP12-E Integration And Acceptance Handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md)
+- [WP12 Information And Agency Enforcement](archive/wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.md)
+- [WP12-A Law 14 Read-Side Enforcement](archive/wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.md)
+- [WP12-B Agency Role Authority Boundary](archive/wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.md)
+- [WP12-C Information Transformation Surface](archive/wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.md)
+- [WP12-D Intent Injection Authority Guard](archive/wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.md)
+- [WP12-E Integration And Acceptance Handoff](archive/wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.md)
 
 WP12 accepts Phase 3 of the post-WP9 route. It consumes WP10 causal evidence and
 WP11 provenance/pre-gates, then turns `GAP-5`, `GAP-6`, and `GAP-7` into
@@ -526,15 +566,15 @@ WP2.5 is a freeze document, but the follow-on work is split into bounded
 streams:
 
 - `WP2.5-F StageNodeManifest Schema` first:
-  [manifest/event cluster](wp25_scheduler_semantics/wp25_manifest_event_cluster_20260519.md).
+  [manifest/event cluster](archive/wp25_scheduler_semantics/wp25_manifest_event_cluster_20260519.md).
 - `WP2.5-A Event Ordering and ID Rules`, `WP2.5-B State Shard Versioning`, and
   `WP2.5-C Barrier Visibility` in parallel after the manifest vocabulary is
   stable:
-  [state/barrier cluster](wp25_scheduler_semantics/wp25_state_barrier_cluster_20260519.md).
+  [state/barrier cluster](archive/wp25_scheduler_semantics/wp25_state_barrier_cluster_20260519.md).
 - `WP2.5-D Clock-Domain Merge` after those semantic rules are stable.
 - `WP2.5-E Deterministic Replay Contract` after the scheduler semantics are
   frozen:
-  [clock/replay cluster](wp25_scheduler_semantics/wp25_clock_replay_cluster_20260519.md).
+  [clock/replay cluster](archive/wp25_scheduler_semantics/wp25_clock_replay_cluster_20260519.md).
 - `WP2.5-G Integration and Index Sync` last, as the serial publication pass.
 
 `WP2.5-D` and `WP2.5-E` are the highest-reasoning streams.
@@ -543,7 +583,7 @@ streams:
 
 Output:
 
-- [WP7.5 Training Path Facade Bridge](wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md)
+- [WP7.5 Training Path Facade Bridge](archive/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.md)
 
 `WP7.5` is the missing bridge between accepted simulation-side facade
 contracts and planned learning-facing contract vocabulary. It does not replace
@@ -575,10 +615,10 @@ when it is split across workers.
 
 Output:
 
-- [WP8 SCAL Learning Face task family](wp8_learning_face/learning_face_wp8_20260520.md)
-- [WP8-A curriculum and scenario generation cluster](wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md)
-- [WP8-B evaluation and capability profiling cluster](wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md)
-- [WP8-C world-model interface and learning evidence cluster](wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md)
+- [WP8 SCAL Learning Face task family](archive/wp8_learning_face/learning_face_wp8_20260520.md)
+- [WP8-A curriculum and scenario generation cluster](archive/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.md)
+- [WP8-B evaluation and capability profiling cluster](archive/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.md)
+- [WP8-C world-model interface and learning evidence cluster](archive/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.md)
 - [WP8 learning face acceptance review](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.md)
 
 WP8 gives the deferred SCAL learning face an accepted bounded task family. It does not
@@ -606,13 +646,13 @@ keep learning outputs comparable without drifting into hidden truth ownership.
 
 Output:
 
-- [WP9 Contract And Infrastructure Closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md)
-- [WP9-A DTO Promotion Batch 1](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.md)
-- [WP9-B DTO Promotion Batch 2](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.md)
-- [WP9-C Infrastructure Closure](wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.md)
-- [WP9-D Guard Enforcement](wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.md)
-- [WP9-E Integration And Index Sync](wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md)
-- [WP9 acceptance review](../review/wp9_contract_infrastructure_closure_acceptance_review_20260520.md)
+- [WP9 Contract And Infrastructure Closure](archive/wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.md)
+- [WP9-A DTO Promotion Batch 1](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.md)
+- [WP9-B DTO Promotion Batch 2](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.md)
+- [WP9-C Infrastructure Closure](archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.md)
+- [WP9-D Guard Enforcement](archive/wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.md)
+- [WP9-E Integration And Index Sync](archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.md)
+- [WP9 acceptance review](../review/archive/wp-acceptance/wp9_contract_infrastructure_closure_acceptance_review_20260520.md)
 
 WP9 compresses the deferred items from accepted `WP3-WP8` reviews into one
 closure package. It promotes typed DTO surfaces, patches small infrastructure
@@ -695,11 +735,11 @@ to complete the inventory.
 
 Input:
 
-- [WP1 pipeline inventory](wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.md)
+- [WP1 pipeline inventory](archive/wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.md)
 
 Output:
 
-- [WP2 contract freeze](wp2_contract_freeze/contract_freeze_wp2_20260519.md)
+- [WP2 contract freeze](archive/wp2_contract_freeze/contract_freeze_wp2_20260519.md)
 
 WP2 should turn the inventory into a scoped contract plan. It should decide:
 
@@ -751,7 +791,7 @@ Architecture closure note:
 
 Output:
 
-- [WP3 engagement pilot task family](wp3_engagement_pilot/engagement_pilot_wp3_20260519.md)
+- [WP3 engagement pilot task family](archive/wp3_engagement_pilot/engagement_pilot_wp3_20260519.md)
 
 The first implementation pilot should be the engagement lifecycle because it
 crosses the largest number of architecture boundaries and naturally uses
@@ -778,7 +818,7 @@ only when they do not edit the same shared kernel file.
 
 Output:
 
-- [WP4 facade alignment task family](wp4_facade_alignment/facade_alignment_wp4_20260519.md)
+- [WP4 facade alignment task family](archive/wp4_facade_alignment/facade_alignment_wp4_20260519.md)
 
 WP4 turns the accepted engagement pilot into the maintained frontend shape. It
 should reference WP2.5 for scheduler semantics and Temp-02 for the
@@ -797,13 +837,13 @@ adapters.
 WP4 dispatch clusters:
 
 - `WP4-A Surface Inventory` first:
-  [surface inventory cluster](wp4_facade_alignment/wp4_surface_inventory_cluster_20260519.md).
+  [surface inventory cluster](archive/wp4_facade_alignment/wp4_surface_inventory_cluster_20260519.md).
 - `WP4-B/C Engagement, Step, And Lifecycle Alignment` after the initial surface
   vocabulary is stable:
-  [engagement/step cluster](wp4_facade_alignment/wp4_engagement_step_cluster_20260519.md).
+  [engagement/step cluster](archive/wp4_facade_alignment/wp4_engagement_step_cluster_20260519.md).
 - `WP4-D/E Policy, AgentRole, And Python Mirror` after action, coordination,
   observation, belief, and agent-role names are stable:
-  [policy/binding cluster](wp4_facade_alignment/wp4_policy_binding_cluster_20260519.md).
+  [policy/binding cluster](archive/wp4_facade_alignment/wp4_policy_binding_cluster_20260519.md).
 - `WP4-F Integration And Docs` remains serial in the main thread or a dedicated
   integration worker after the clusters return.
 
@@ -813,31 +853,31 @@ touch cross-layer semantics, belief boundaries, or adapter ownership.
 WP4 first-wave outputs are accepted as discovery inputs:
 
 - [WP4 first-wave acceptance review](../review/archive/wp-superseded/wp4_first_wave_acceptance_review_20260519.md)
-- [WP4-A surface inventory draft](wp4_facade_alignment/wp4_surface_inventory_wp4a_20260519.md)
-- [WP4-B/C engagement-step alignment notes](wp4_facade_alignment/wp4_engagement_step_alignment_notes_20260519.md)
-- [WP4-D/E policy-binding alignment notes](wp4_facade_alignment/wp4_policy_binding_alignment_notes_20260519.md)
+- [WP4-A surface inventory draft](archive/wp4_facade_alignment/wp4_surface_inventory_wp4a_20260519.md)
+- [WP4-B/C engagement-step alignment notes](archive/wp4_facade_alignment/wp4_engagement_step_alignment_notes_20260519.md)
+- [WP4-D/E policy-binding alignment notes](archive/wp4_facade_alignment/wp4_policy_binding_alignment_notes_20260519.md)
 
 WP4 second-wave clusters:
 
 - `WP4-G Facade Evidence Gates`:
-  [facade evidence cluster](wp4_facade_alignment/wp4_facade_evidence_cluster_20260519.md).
+  [facade evidence cluster](archive/wp4_facade_alignment/wp4_facade_evidence_cluster_20260519.md).
 - `WP4-H Information And Agent Shim`:
-  [agent shim cluster](wp4_facade_alignment/wp4_agent_shim_cluster_20260519.md).
+  [agent shim cluster](archive/wp4_facade_alignment/wp4_agent_shim_cluster_20260519.md).
 - `WP4-I Compatibility Guard And Integration`:
-  [compat guard cluster](wp4_facade_alignment/wp4_compat_guard_cluster_20260519.md).
+  [compat guard cluster](archive/wp4_facade_alignment/wp4_compat_guard_cluster_20260519.md).
 
 WP4 second-wave and integration outputs:
 
 - [WP4 second-wave acceptance review](../review/archive/wp-superseded/wp4_second_wave_acceptance_review_20260519.md)
-- [WP4-I compatibility guard notes](wp4_facade_alignment/wp4_compat_guard_notes_20260519.md)
-- [WP4-F integration handoff](wp4_facade_alignment/wp4_integration_handoff_20260519.md)
+- [WP4-I compatibility guard notes](archive/wp4_facade_alignment/wp4_compat_guard_notes_20260519.md)
+- [WP4-F integration handoff](archive/wp4_facade_alignment/wp4_integration_handoff_20260519.md)
 - [WP4 final acceptance review](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.md)
 
 ## WP5 Validation Harness
 
 Output:
 
-- [WP5 validation harness task family](wp5_validation_harness/validation_harness_wp5_20260519.md)
+- [WP5 validation harness task family](archive/wp5_validation_harness/validation_harness_wp5_20260519.md)
 
 WP5 converts the architecture and facade work into maintained evidence. The
 harness should cover five validation tiers:
@@ -855,11 +895,11 @@ diagnostics, and replay metadata are enough to validate the shared architecture.
 WP5 first-wave clusters:
 
 - `WP5-A Harness Inventory`:
-  [harness inventory cluster](wp5_validation_harness/wp5_harness_inventory_cluster_20260519.md).
+  [harness inventory cluster](archive/wp5_validation_harness/wp5_harness_inventory_cluster_20260519.md).
 - `WP5-B Design And Boundary Gates`:
-  [design/boundary cluster](wp5_validation_harness/wp5_design_boundary_cluster_20260519.md).
+  [design/boundary cluster](archive/wp5_validation_harness/wp5_design_boundary_cluster_20260519.md).
 - `WP5-C Trace And Replay Gates`:
-  [trace/replay cluster](wp5_validation_harness/wp5_trace_replay_cluster_20260519.md).
+  [trace/replay cluster](archive/wp5_validation_harness/wp5_trace_replay_cluster_20260519.md).
 
 `WP5-C` is the highest-reasoning first-wave stream because trace ancestry and
 replay metadata tests can become brittle if they assume runtime metadata that
@@ -868,35 +908,35 @@ WP4 explicitly deferred.
 WP5 first-wave outputs are accepted:
 
 - [WP5 first-wave acceptance review](../review/archive/wp-superseded/wp5_first_wave_acceptance_review_20260519.md)
-- [WP5-A harness inventory notes](wp5_validation_harness/wp5_harness_inventory_notes_20260519.md)
-- [WP5-B design/boundary notes](wp5_validation_harness/wp5_design_boundary_notes_20260519.md)
-- [WP5-C trace/replay gates notes](wp5_validation_harness/wp5_trace_replay_gates_notes_20260519.md)
+- [WP5-A harness inventory notes](archive/wp5_validation_harness/wp5_harness_inventory_notes_20260519.md)
+- [WP5-B design/boundary notes](archive/wp5_validation_harness/wp5_design_boundary_notes_20260519.md)
+- [WP5-C trace/replay gates notes](archive/wp5_validation_harness/wp5_trace_replay_gates_notes_20260519.md)
 
 WP5 second-wave clusters:
 
 - `WP5-D Information And Belief Gates`:
-  [information/belief cluster](wp5_validation_harness/wp5_information_belief_cluster_20260519.md).
+  [information/belief cluster](archive/wp5_validation_harness/wp5_information_belief_cluster_20260519.md).
 - `WP5-E Smoke Promotion And Docs`:
-  [smoke promotion cluster](wp5_validation_harness/wp5_smoke_promotion_cluster_20260519.md).
+  [smoke promotion cluster](archive/wp5_validation_harness/wp5_smoke_promotion_cluster_20260519.md).
 
 WP5 second-wave and final outputs are accepted:
 
 - [WP5-D information/belief acceptance review](../review/archive/wp-superseded/wp5_information_belief_acceptance_review_20260519.md)
-- [WP5-D information/belief notes](wp5_validation_harness/wp5_information_belief_notes_20260519.md)
-- [WP5-E smoke promotion notes](wp5_validation_harness/wp5_smoke_promotion_notes_20260519.md)
+- [WP5-D information/belief notes](archive/wp5_validation_harness/wp5_information_belief_notes_20260519.md)
+- [WP5-E smoke promotion notes](archive/wp5_validation_harness/wp5_smoke_promotion_notes_20260519.md)
 - [WP5 validation harness acceptance review](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.md)
 
 ## WP6 Backend Profile Policy
 
 Output:
 
-- [WP6 backend profile policy](wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md)
-- [WP6-A backend profile taxonomy cluster](wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.md)
-- [WP6-A backend profile registry](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md)
-- [WP6-B parity budget cluster](wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.md)
-- [WP6-B parity budget registry](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md)
-- [WP6-C + WP6-D integration and index sync](wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md)
-- [WP6-C1 resident-state boundary rules](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md)
+- [WP6 backend profile policy](archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md)
+- [WP6-A backend profile taxonomy cluster](archive/wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.md)
+- [WP6-A backend profile registry](archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md)
+- [WP6-B parity budget cluster](archive/wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.md)
+- [WP6-B parity budget registry](archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md)
+- [WP6-C + WP6-D integration and index sync](archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md)
+- [WP6-C1 resident-state boundary rules](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md)
 - [WP6 backend profile policy acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md)
 
 WP6 closes the backend profile and parity-budget gap behind contracts. It
@@ -908,35 +948,35 @@ maintained.
 WP6 workstream map:
 
 - `WP6-A Backend Profile Taxonomy`:
-  [taxonomy cluster](wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.md) and
-  [profile registry](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md).
+  [taxonomy cluster](archive/wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.md) and
+  [profile registry](archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.md).
 - `WP6-B Parity Budget And Comparison Rules`:
-  [parity budget cluster](wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.md) and
-  [parity budget registry](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md).
+  [parity budget cluster](archive/wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.md) and
+  [parity budget registry](archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.md).
 - `WP6-C Resident-State And Backend Capability Alignment`:
-  [resident-state boundary rules](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md)
+  [resident-state boundary rules](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md)
   plus capability-projection guards in
   [runtime facade layering tests](../../../tests/architecture/test_runtime_facade_layering.py),
   [runtime facade tests](../../../tests/runtime/facade/test_runtime_facade.py),
   and [GPU runtime binding tests](../../../tests/test_gpu_runtime_bindings.py).
 - `WP6-D Integration And Index Sync`:
-  [integration and index sync](wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md) and
+  [integration and index sync](archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.md) and
   [acceptance review](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md).
 
 ## WP7 Backend Capability Materialization
 
 Output:
 
-- [WP7 backend capability materialization](wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md)
-- [WP7-A registry materialization cluster](wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.md)
-- [WP7-A registry materialization notes](wp7_backend_capability_materialization/wp7_registry_materialization_notes_20260519.md)
-- [WP7-B runtime capability projection cluster](wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.md)
-- [WP7-B runtime capability projection notes](wp7_backend_capability_materialization/wp7_runtime_capability_projection_notes_20260519.md)
-- [WP7-C promotion evidence gates cluster](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.md)
-- [WP7-C promotion evidence gates notes](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_notes_20260519.md)
-- [WP7-D multi-fidelity entry conditions cluster](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md)
-- [WP7-D multi-fidelity entry conditions notes](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_notes_20260519.md)
-- [WP7-E integration and index sync cluster](wp7_backend_capability_materialization/wp7_integration_and_index_sync_cluster_20260519.md)
+- [WP7 backend capability materialization](archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md)
+- [WP7-A registry materialization cluster](archive/wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.md)
+- [WP7-A registry materialization notes](archive/wp7_backend_capability_materialization/wp7_registry_materialization_notes_20260519.md)
+- [WP7-B runtime capability projection cluster](archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.md)
+- [WP7-B runtime capability projection notes](archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_notes_20260519.md)
+- [WP7-C promotion evidence gates cluster](archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.md)
+- [WP7-C promotion evidence gates notes](archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_notes_20260519.md)
+- [WP7-D multi-fidelity entry conditions cluster](archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.md)
+- [WP7-D multi-fidelity entry conditions notes](archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_notes_20260519.md)
+- [WP7-E integration and index sync cluster](archive/wp7_backend_capability_materialization/wp7_integration_and_index_sync_cluster_20260519.md)
 - [WP7 backend capability materialization acceptance review](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md)
 
 WP7 is the accepted post-WP6 documentation and implementation-preparation line.

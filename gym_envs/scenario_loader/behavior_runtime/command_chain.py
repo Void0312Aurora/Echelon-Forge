@@ -1,6 +1,13 @@
 import ef_py
 
-from python.rl.tasking.bridge import build_kernel_mission_command
+from python.rl.tasking.bridge import (
+    build_kernel_mission_command,
+    has_mission_command_dict,
+    loader_owned_raw_sim_compat,
+    mission_command_dict,
+    resolve_loader_time_step,
+    sync_loader_mission_command,
+)
 from .command_chain_owner import ensure_command_chain_owner
 from .naval_screen import apply_naval_screen_station_hold, compute_naval_screen_station_hold
 
@@ -34,8 +41,8 @@ def _apply_naval_screen_runtime_state(loader, *, truth=None) -> None:
     if result is None:
         return
     task = getattr(loader, "task_order", None)
-    mission_cmd = getattr(loader, "mission_cmd", None)
-    if task is None or not isinstance(mission_cmd, dict):
+    mission_cmd = mission_command_dict(loader)
+    if task is None or not has_mission_command_dict(loader):
         return
     loader._naval_screen_last_reference_id = int(result["reference_entity_id"])
     loader._naval_screen_last_heading_deg = float(result["target_heading_deg"])
@@ -61,7 +68,7 @@ def _apply_naval_screen_runtime_state(loader, *, truth=None) -> None:
 def sync_kernel_mission_command(loader) -> None:
     if loader.agent_id is None:
         return
-    if not hasattr(loader.sim, "set_mission_command") or not hasattr(ef_py, "MissionCommand"):
+    if not loader_owned_raw_sim_compat(loader).supports("set_mission_command") or not hasattr(ef_py, "MissionCommand"):
         return
     try:
         _apply_naval_screen_runtime_state(loader)
@@ -70,7 +77,7 @@ def sync_kernel_mission_command(loader) -> None:
     try:
         cmd = build_kernel_mission_command(loader)
         _apply_dynamic_naval_screen_command_overrides(loader, cmd)
-        loader.sim.set_mission_command(loader.agent_id, cmd)
+        sync_loader_mission_command(loader, cmd)
     except Exception:
         pass
 
@@ -112,10 +119,7 @@ def reset_command_chain(loader, *, initial_truth=None, initial_inst=None, sync_t
         if sync_to_kernel:
             sync_kernel_mission_command(loader)
         return
-    try:
-        sim_time_s = float(loader.steps) * float(loader.sim.get_time_step())
-    except Exception:
-        sim_time_s = 0.0
+    sim_time_s = float(loader.steps) * float(resolve_loader_time_step(loader, default=0.05))
     ensure_command_chain_owner(loader)._leader_phase_manager.reset(
         loader,
         sim_time_s=sim_time_s,
@@ -145,7 +149,7 @@ def update_command_chain(loader, sim_time: float, *, truth=None, inst=None, sync
         try:
             cmd = build_kernel_mission_command(loader)
             _apply_dynamic_naval_screen_command_overrides(loader, cmd)
-            loader.sim.set_mission_command(loader.agent_id, cmd)
+            sync_loader_mission_command(loader, cmd)
         except Exception:
             pass
         sync_kernel_command_chain(loader)

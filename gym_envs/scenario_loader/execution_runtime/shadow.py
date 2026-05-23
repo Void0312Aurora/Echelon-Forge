@@ -1,5 +1,6 @@
 import ef_py
 import numpy as np
+from python.rl.tasking.bridge import resolve_loader_time_step
 
 
 def build_execution_episode_controller_shadow_config(loader):
@@ -12,10 +13,7 @@ def build_execution_episode_controller_shadow_config(loader):
         rewards_cfg.get("speed_progress_target", loader.mission_cmd.get("target_speed", 0.0)) or 0.0
     )
     config.target_heading_deg = float(loader.mission_cmd.get("target_heading", 0.0) or 0.0)
-    try:
-        config.time_step_s = float(getattr(loader.sim, "get_time_step", lambda: 0.05)())
-    except Exception:
-        config.time_step_s = 0.05
+    config.time_step_s = float(resolve_loader_time_step(loader, default=0.05))
     config.crash_penalty = float(getattr(loader._safety_reward_cfg, "crash_penalty", -1000.0))
     return config
 

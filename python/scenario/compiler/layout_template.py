@@ -5,7 +5,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from .clone import _clone_scenario_value
-from .common import _coerce_nonnegative_int, _SURFACE_TYPE_MAP
+from .common import (
+    DEFAULT_TERRAIN_TYPE,
+    resolve_environment_terrain_config,
+    _coerce_nonnegative_int,
+    _SURFACE_TYPE_MAP,
+)
 
 
 def _extract_ils_beacons(env_cfg: dict[str, Any] | None) -> list[dict[str, Any]]:
@@ -197,6 +202,7 @@ class CompiledSpawnLayoutTemplate:
 class CompiledWorldLayoutTemplate:
     time_step_s: float | None
     terrain_type: str
+    terrain_type_source: str
     wind_speed_mps: float
     wind_dir_from_deg: float
     wind_shear_mps_per_km: float
@@ -215,6 +221,10 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
     env_cfg = merged_scenario_data.get("environment", {})
     if not isinstance(env_cfg, dict):
         env_cfg = {}
+    terrain_type, terrain_type_source = resolve_environment_terrain_config(
+        env_cfg,
+        default=DEFAULT_TERRAIN_TYPE,
+    )
     wind_cfg = env_cfg.get("wind", {})
     if not isinstance(wind_cfg, dict):
         wind_cfg = {}
@@ -312,7 +322,8 @@ def _compile_world_layout_template(merged_scenario_data: dict[str, Any]) -> Comp
 
     return CompiledWorldLayoutTemplate(
         time_step_s=float(env_cfg["time_step"]) if "time_step" in env_cfg else None,
-        terrain_type=str(env_cfg.get("terrain_type", "legacy")).strip() or "legacy",
+        terrain_type=terrain_type,
+        terrain_type_source=terrain_type_source,
         wind_speed_mps=float(wind_cfg.get("speed_mps", 10.0)),
         wind_dir_from_deg=float(wind_cfg.get("dir_from_deg", 270.0)),
         wind_shear_mps_per_km=float(wind_cfg.get("shear_mps_per_km", 4.0)),

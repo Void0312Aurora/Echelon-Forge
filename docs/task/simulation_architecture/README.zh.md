@@ -58,16 +58,23 @@
     从 compatibility-only runtime access 迁出，并把 multi-rate、
     fidelity-provider、capability-spawn 与 counterfactual runtime materialization
     拆成有边界的实现流。
-17. WP17 验收后，剩余主线冻结为四个阶段：`WP18` runtime ownership 与 C++ hot-path
+17. WP17 验收后，剩余主线曾冻结为四个阶段：`WP18` runtime ownership 与 C++ hot-path
     consolidation，`WP19` CUDA / resident-state mainline alignment，`WP20`
     public capability-platform composition，以及 `WP21` full counterfactual /
-    experiment runtime。`WP18`、`WP19`、`WP20` 与 `WP21` 均已验收；冻结的
-    post-WP17 refactor route 已关闭，除非新的架构级事实打开新的 scoped route。
-18. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
+    experiment runtime。`WP18`、`WP19` 与 `WP20` 仍保持已验收；WP21 的 claimed
+    closure 已在 `2026-05-22` 被 owner 否决，不得再视为最终路线闭合。
+18. post-WP21 的
+    [architecture refactoring audit](../review/architecture_refactoring_audit_20260522.zh.md)
+    是新的架构级事实：若干 compatibility layers 与旧实现面仍作为默认或
+    maintained paths 存在。这使 WP21 的验收主张失效，并打开 `WP22 Legacy
+    Compatibility Retirement And Architecture Hardening`；其 closure 标准更严格：
+    legacy paths 必须迁移、删除，或隔离到显式 opt-in guards 后，而不能继续作为
+    open residual 被接受。
+19. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
     拆写同一张规范性表格。
-19. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
+20. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
     或 `WP14` 这类 internal work-package labels。
 
 ## 工作包
@@ -75,52 +82,83 @@
 | 工作包 | 状态 | 目标 | 产出 |
 |--------|------|------|------|
 | `WP0 Architecture Baseline` | complete | 明确 SCAL 定位、语义生命周期、因果-时序执行投影与扩展规则 | 架构设计文档、任务子项目入口 |
-| `WP1 Pipeline Inventory` | complete | 把当前代码、system、model、test 映射到 `P0-P10` 与当前耦合热点 | [管线盘点](wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.zh.md) |
-| `WP2 Contract Freeze` | complete | 识别需要显式 ownership 的 packet 族、stage-node contract 与跨层 policy/orchestration contract | [契约冻结](wp2_contract_freeze/contract_freeze_wp2_20260519.zh.md) |
-| `WP2.5 Scheduler Semantics Freeze` | complete | 冻结 event ordering、state versioning、barrier visibility、clock-domain merge policy、replay contract 与 stage-node manifest schema | [调度语义冻结](wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md)、[验收审查](../review/archive/wp-acceptance/wp25_scheduler_semantics_acceptance_review_20260519.zh.md) |
-| `WP3 Engagement Pilot` | complete | 以武器/交战作为第一条跨领域验证切片 | [交战试点任务族](wp3_engagement_pilot/engagement_pilot_wp3_20260519.zh.md) |
-| `WP4 Facade Alignment` | complete | 确保试点行为可通过 facade-shaped API 访问，并避免 raw runtime access | [facade 对齐任务族](wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md)、[最终验收](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.zh.md) |
-| `WP5 Validation Harness` | complete | 添加证明共享生命周期和图边界的 smoke、architecture、trace、boundary、information-leakage 与 replay/evidence 测试 | [验证套件任务族](wp5_validation_harness/validation_harness_wp5_20260519.zh.md)、[最终验收](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.zh.md) |
-| `WP6 Backend Profile Policy` | complete | 冻结 backend profile taxonomy、parity budgets、resident-state 边界与 backend capability 暴露规则 | [后端配置文件策略](wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)、[profile 注册表](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md)、[parity budget 注册表](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)、[resident-state 边界规则](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)、[验收审查](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md) |
-| `WP7 Backend Capability Materialization` | complete / accepted | 把已验收的 WP6 policy 物化为可机器检查 registry、runtime capability projection、promotion evidence gates 与 multi-fidelity entry conditions，但不晋级候选能力 | [后端能力物化](wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)、[registry materialization](wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.zh.md)、[runtime capability projection](wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.zh.md)、[promotion evidence gates](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.zh.md)、[multi-fidelity entry conditions](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.zh.md)、[验收审查](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md) |
-| `WP7.5 训练路径 facade 桥接` | complete / accepted | 在 `WP8` 依赖之前，把维护中的 batch 训练路径从 `RuntimeFacade.runtime()` 与 raw `WorldBatchRuntime` stepping 迁到 facade-shaped execution / observation API | [训练路径 facade 桥接](wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.zh.md) |
-| `WP8 SCAL Learning Face` | complete / accepted | 把课程、评估、能力画像、场景生成与学习证据收敛为显式架构和任务词汇，但不重新打开仿真闭合 | [学习面任务族](wp8_learning_face/learning_face_wp8_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.zh.md) |
-| `WP9 Contract And Infrastructure Closure` | complete / accepted | 晋升延后的 DTO 契约，关闭小型 infrastructure residual，添加 guard allowlists，并发布最终索引/验收证据 | [contract and infrastructure closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md)、[DTO batch 1](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.zh.md)、[DTO batch 2](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.zh.md)、[infrastructure closure](wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.zh.md)、[guard enforcement](wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.zh.md)、[integration sync](wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.zh.md)、[验收审查](../review/wp9_contract_infrastructure_closure_acceptance_review_20260520.zh.md) |
+| `WP1 Pipeline Inventory` | complete | 把当前代码、system、model、test 映射到 `P0-P10` 与当前耦合热点 | [管线盘点](archive/wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.zh.md) |
+| `WP2 Contract Freeze` | complete | 识别需要显式 ownership 的 packet 族、stage-node contract 与跨层 policy/orchestration contract | [契约冻结](archive/wp2_contract_freeze/contract_freeze_wp2_20260519.zh.md) |
+| `WP2.5 Scheduler Semantics Freeze` | complete | 冻结 event ordering、state versioning、barrier visibility、clock-domain merge policy、replay contract 与 stage-node manifest schema | [调度语义冻结](archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.zh.md)、[验收审查](../review/archive/wp-acceptance/wp25_scheduler_semantics_acceptance_review_20260519.zh.md) |
+| `WP3 Engagement Pilot` | complete | 以武器/交战作为第一条跨领域验证切片 | [交战试点任务族](archive/wp3_engagement_pilot/engagement_pilot_wp3_20260519.zh.md) |
+| `WP4 Facade Alignment` | complete | 确保试点行为可通过 facade-shaped API 访问，并避免 raw runtime access | [facade 对齐任务族](archive/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md)、[最终验收](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.zh.md) |
+| `WP5 Validation Harness` | complete | 添加证明共享生命周期和图边界的 smoke、architecture、trace、boundary、information-leakage 与 replay/evidence 测试 | [验证套件任务族](archive/wp5_validation_harness/validation_harness_wp5_20260519.zh.md)、[最终验收](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.zh.md) |
+| `WP6 Backend Profile Policy` | complete | 冻结 backend profile taxonomy、parity budgets、resident-state 边界与 backend capability 暴露规则 | [后端配置文件策略](archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)、[profile 注册表](archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md)、[parity budget 注册表](archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)、[resident-state 边界规则](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)、[验收审查](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md) |
+| `WP7 Backend Capability Materialization` | complete / accepted | 把已验收的 WP6 policy 物化为可机器检查 registry、runtime capability projection、promotion evidence gates 与 multi-fidelity entry conditions，但不晋级候选能力 | [后端能力物化](archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)、[registry materialization](archive/wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.zh.md)、[runtime capability projection](archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.zh.md)、[promotion evidence gates](archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.zh.md)、[multi-fidelity entry conditions](archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.zh.md)、[验收审查](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md) |
+| `WP7.5 训练路径 facade 桥接` | complete / accepted | 在 `WP8` 依赖之前，把维护中的 batch 训练路径从 `RuntimeFacade.runtime()` 与 raw `WorldBatchRuntime` stepping 迁到 facade-shaped execution / observation API | [训练路径 facade 桥接](archive/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp75_training_path_facade_bridge_acceptance_review_20260520.zh.md) |
+| `WP8 SCAL Learning Face` | complete / accepted | 把课程、评估、能力画像、场景生成与学习证据收敛为显式架构和任务词汇，但不重新打开仿真闭合 | [学习面任务族](archive/wp8_learning_face/learning_face_wp8_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.zh.md) |
+| `WP9 Contract And Infrastructure Closure` | complete / accepted | 晋升延后的 DTO 契约，关闭小型 infrastructure residual，添加 guard allowlists，并发布最终索引/验收证据 | [contract and infrastructure closure](archive/wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md)、[DTO batch 1](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.zh.md)、[DTO batch 2](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.zh.md)、[infrastructure closure](archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.zh.md)、[guard enforcement](archive/wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.zh.md)、[integration sync](archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp9_contract_infrastructure_closure_acceptance_review_20260520.zh.md) |
 | `Post-WP9 Architecture Route` | route selected | 确定实现顺序并把 Phase 1 锚定为 WP10：causal runtime foundation、facade vertical slice、information/agency enforcement、backend/fidelity、capability composition、counterfactual/experiment generation | [post-WP9 architecture route plan](post_wp9_architecture_route_plan_20260520.zh.md) |
-| `WP10 Causal Runtime Foundation` | complete / accepted | 实现 post-WP9 路线 Phase 1：manifest registry seed、minimal scheduling-window loop、request injection、same-window validation、event/snapshot evidence 与 integration handoff | [causal runtime foundation](wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.zh.md)、[manifest registry](wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.zh.md)、[window loop / injection](wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.zh.md)、[same-window validation](wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.zh.md)、[event/snapshot evidence](wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.zh.md)、[integration handoff](wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp10_causal_runtime_foundation_acceptance_review_20260520.zh.md) |
-| `WP11 Facade Vertical Slice And Provenance` | complete / accepted | 实现 post-WP9 路线 Phase 2：`ActionHoldPolicy`、information-state provenance labels、基于 WP10 seam 的 facade/binding proof、consumer boundary pre-gates 与 integration handoff | [facade vertical slice and provenance](wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.zh.md)、[ActionHoldPolicy](wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.zh.md)、[information provenance](wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.zh.md)、[vertical slice proof](wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.zh.md)、[consumer boundary pre-gates](wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.zh.md)、[integration handoff](wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md) |
-| `WP12 Information And Agency Enforcement` | complete / accepted | 实现 post-WP9 路线 Phase 3：Law 14 read-side enforcement、`AgentRole` authority validation、information-transformation evidence、authorized intent injection 与 integration handoff | [information and agency enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)、[Law 14 read-side enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)、[agency role authority](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)、[information transformation surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)、[intent injection authority guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)、[integration handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp12_information_agency_enforcement_acceptance_review_20260520.zh.md) |
-| `WP13 Backend Fidelity Expansion` | complete / accepted | 实现 post-WP9 路线 Phase 4：让 runtime capabilities、backend profiles、parity budgets 与 fidelity profile requests 可查询、可拒绝、可证据化，同时不晋级 unsupported backend claims | [backend fidelity expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)、[capability query](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)、[backend profile registry gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)、[parity budget evidence gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)、[fidelity request gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)、[facade/binding proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)、[integration handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) |
-| `WP14 Capability Composition` | complete / accepted | 实现 post-WP9 路线 Phase 5：在保持 type-name 兼容的前提下，通过 resolved spawn plans、additive facade/setup DTO 与严格实现 gate，把现有 setup 推向 typed `Capability` / `CapabilityBundle` composition，避免 big-bang spawn rewrite | [capability composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)、[capability bundle contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)、[content definition lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)、[spawn resolution bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)、[additive facade setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)、[capability effects materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)、[compatibility validation](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp14_capability_composition_acceptance_review_20260521.zh.md) |
-| `WP15 Counterfactual Experiment Generation` | complete / accepted | 实现 post-WP9 路线 Phase 6：添加 replay envelopes、branch point 与 worldline metadata、counterfactual admission、scenario/adversary generation request surfaces 与 experiment evidence ancestry，同时不声明 full snapshot/restore 或 maintained rollout execution | [counterfactual experiment generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)、[replay envelope and branch point](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)、[worldline branch metadata](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)、[counterfactual admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)、[scenario/adversary generation](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)、[experiment evidence bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)、[integration handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md) |
-| `WP16 Runtime Spine Consolidation` | complete / accepted | 完成 post-WP15 架构优化阶段：盘点 bypasses、定义 maintained runtime spine、执行第一条严格 `GAP-9` clock-domain cadence slice、迁移 facade/batch consumers、分类 legacy paths，并通过 generated closure summaries 降低文档同步拖拽，同时保留记录下来的 residuals | [runtime spine consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)、[runtime spine inventory](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)、[clock-domain enforcement](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)、[facade/batch migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)、[legacy compatibility](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)、[documentation automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)、[integration handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md) |
-| `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | 物化 Stage 3 最后一组 selected runtime slices：facade-shaped batch reads、可运行 cadence evidence、reference CPU fidelity admission、capability-gated spawn，以及 explicit-setup selected-entity counterfactual branch/compare，同时保留 legacy compatibility 与 full-worldline residuals | [stage3 runtime materialization and cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)、[fact ledger](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)、[business migration](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)、[multi-rate runtime](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)、[fidelity provider runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)、[capability spawn runtime](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)、[counterfactual runtime closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)、[dispatch queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)、[验收审查](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md) |
-| `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | 在 WP17 后收紧 runtime ownership，把维护中的 execution truths 与高频 Python paths 推向 C++/facade-owned surfaces，同时让 compatibility APIs 保持有边界 | [runtime ownership and C++ hot path consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)、[ownership fact ledger](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)、[execution episode ownership sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)、[ScenarioLoader adapter split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)、[facade contract hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)、[C++ hot path matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)、[integration handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) |
-| `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | 对齐现有 CUDA helpers、device-resident output contracts、diagnostics boundaries 与 resident-state sync/shard vocabulary，同时默认不晋级 exact GPU 或 maintained resident-state support | [CUDA and resident-state mainline alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)、[fact ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)、[device output contract](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)、[GPU helper diagnostics boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)、[resident-state sync and shard contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)、[first CUDA alignment slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)、[integration handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) |
-| `WP20 Public Capability-Platform Composition` | complete / accepted | 通过 validation-first admission/result contracts 与 compatibility-preserving materialization 公开 typed capability-platform setup path，同时保持 type-name spawning 与 scenario schema 稳定 | [public capability-platform composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)、[fact ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)、[public typed spawn contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)、[runtime setup consume bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)、[facade/binding surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)、[compatibility/schema guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)、[integration handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md) |
-| `WP21 Full Counterfactual Experiment Runtime` | complete / accepted | 将已验收 counterfactual contracts 与 selected runtime slices 转为 maintained facade-owned experiment execution、scenario generation、evidence collection 与 legacy cleanup，关闭最终 refactor-route gap | [full counterfactual experiment runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)、[fact ledger](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)、[snapshot/restore boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)、[counterfactual rollout](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)、[scenario generation runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)、[experiment facade/evidence](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)、[final cleanup](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)、[dispatch queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md) |
+| `WP10 Causal Runtime Foundation` | complete / accepted | 实现 post-WP9 路线 Phase 1：manifest registry seed、minimal scheduling-window loop、request injection、same-window validation、event/snapshot evidence 与 integration handoff | [causal runtime foundation](archive/wp10_causal_runtime_foundation/causal_runtime_foundation_wp10_20260520.zh.md)、[manifest registry](archive/wp10_causal_runtime_foundation/wp10_manifest_registry_cluster_20260520.zh.md)、[window loop / injection](archive/wp10_causal_runtime_foundation/wp10_window_loop_injection_cluster_20260520.zh.md)、[same-window validation](archive/wp10_causal_runtime_foundation/wp10_same_window_validation_cluster_20260520.zh.md)、[event/snapshot evidence](archive/wp10_causal_runtime_foundation/wp10_event_snapshot_evidence_cluster_20260520.zh.md)、[integration handoff](archive/wp10_causal_runtime_foundation/wp10_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp10_causal_runtime_foundation_acceptance_review_20260520.zh.md) |
+| `WP11 Facade Vertical Slice And Provenance` | complete / accepted | 实现 post-WP9 路线 Phase 2：`ActionHoldPolicy`、information-state provenance labels、基于 WP10 seam 的 facade/binding proof、consumer boundary pre-gates 与 integration handoff | [facade vertical slice and provenance](archive/wp11_facade_vertical_slice_provenance/facade_vertical_slice_provenance_wp11_20260520.zh.md)、[ActionHoldPolicy](archive/wp11_facade_vertical_slice_provenance/wp11_action_hold_policy_cluster_20260520.zh.md)、[information provenance](archive/wp11_facade_vertical_slice_provenance/wp11_information_provenance_labels_cluster_20260520.zh.md)、[vertical slice proof](archive/wp11_facade_vertical_slice_provenance/wp11_facade_vertical_slice_proof_cluster_20260520.zh.md)、[consumer boundary pre-gates](archive/wp11_facade_vertical_slice_provenance/wp11_consumer_boundary_pregates_cluster_20260520.zh.md)、[integration handoff](archive/wp11_facade_vertical_slice_provenance/wp11_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp11_facade_vertical_slice_provenance_acceptance_review_20260520.zh.md) |
+| `WP12 Information And Agency Enforcement` | complete / accepted | 实现 post-WP9 路线 Phase 3：Law 14 read-side enforcement、`AgentRole` authority validation、information-transformation evidence、authorized intent injection 与 integration handoff | [information and agency enforcement](archive/wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)、[Law 14 read-side enforcement](archive/wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)、[agency role authority](archive/wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)、[information transformation surface](archive/wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)、[intent injection authority guard](archive/wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)、[integration handoff](archive/wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp12_information_agency_enforcement_acceptance_review_20260520.zh.md) |
+| `WP13 Backend Fidelity Expansion` | complete / accepted | 实现 post-WP9 路线 Phase 4：让 runtime capabilities、backend profiles、parity budgets 与 fidelity profile requests 可查询、可拒绝、可证据化，同时不晋级 unsupported backend claims | [backend fidelity expansion](archive/wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)、[capability query](archive/wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)、[backend profile registry gate](archive/wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)、[parity budget evidence gate](archive/wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)、[fidelity request gate](archive/wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)、[facade/binding proof](archive/wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)、[integration handoff](archive/wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)、[验收审查](../review/archive/wp-acceptance/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md) |
+| `WP14 Capability Composition` | complete / accepted | 实现 post-WP9 路线 Phase 5：在保持 type-name 兼容的前提下，通过 resolved spawn plans、additive facade/setup DTO 与严格实现 gate，把现有 setup 推向 typed `Capability` / `CapabilityBundle` composition，避免 big-bang spawn rewrite | [capability composition](archive/wp14_capability_composition/capability_composition_wp14_20260521.zh.md)、[capability bundle contract](archive/wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)、[content definition lowering](archive/wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)、[spawn resolution bridge](archive/wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)、[additive facade setup DTO](archive/wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)、[capability effects materialization](archive/wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)、[compatibility validation](archive/wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp14_capability_composition_acceptance_review_20260521.zh.md) |
+| `WP15 Counterfactual Experiment Generation` | complete / accepted | 实现 post-WP9 路线 Phase 6：添加 replay envelopes、branch point 与 worldline metadata、counterfactual admission、scenario/adversary generation request surfaces 与 experiment evidence ancestry，同时不声明 full snapshot/restore 或 maintained rollout execution | [counterfactual experiment generation](archive/wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)、[replay envelope and branch point](archive/wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)、[worldline branch metadata](archive/wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)、[counterfactual admission](archive/wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)、[scenario/adversary generation](archive/wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)、[experiment evidence bridge](archive/wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)、[integration handoff](archive/wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp15_counterfactual_experiment_generation_acceptance_review_20260521.zh.md) |
+| `WP16 Runtime Spine Consolidation` | complete / accepted | 完成 post-WP15 架构优化阶段：盘点 bypasses、定义 maintained runtime spine、执行第一条严格 `GAP-9` clock-domain cadence slice、迁移 facade/batch consumers、分类 legacy paths，并通过 generated closure summaries 降低文档同步拖拽，同时保留记录下来的 residuals | [runtime spine consolidation](archive/wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)、[runtime spine inventory](archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)、[clock-domain enforcement](archive/wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)、[facade/batch migration](archive/wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)、[legacy compatibility](archive/wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)、[documentation automation](archive/wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)、[integration handoff](archive/wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp16_runtime_spine_consolidation_acceptance_review_20260521.zh.md) |
+| `WP17 Stage 3 Runtime Materialization And Cleanup` | complete / accepted | 物化 Stage 3 最后一组 selected runtime slices：facade-shaped batch reads、可运行 cadence evidence、reference CPU fidelity admission、capability-gated spawn，以及 explicit-setup selected-entity counterfactual branch/compare，同时保留 legacy compatibility 与 full-worldline residuals | [stage3 runtime materialization and cleanup](archive/wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)、[fact ledger](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)、[business migration](archive/wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)、[multi-rate runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)、[fidelity provider runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)、[capability spawn runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)、[counterfactual runtime closure](archive/wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)、[dispatch queue](archive/wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)、[验收审查](../review/archive/wp-acceptance/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md) |
+| `WP18 Runtime Ownership And C++ Hot Path Consolidation` | complete / accepted | 在 WP17 后收紧 runtime ownership，把维护中的 execution truths 与高频 Python paths 推向 C++/facade-owned surfaces，同时让 compatibility APIs 保持有边界 | [runtime ownership and C++ hot path consolidation](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)、[ownership fact ledger](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)、[execution episode ownership sink](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)、[ScenarioLoader adapter split](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)、[facade contract hardening](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)、[C++ hot path matrix](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)、[integration handoff](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md) |
+| `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | 对齐现有 CUDA helpers、device-resident output contracts、diagnostics boundaries 与 resident-state sync/shard vocabulary，同时默认不晋级 exact GPU 或 maintained resident-state support | [CUDA and resident-state mainline alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)、[fact ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)、[device output contract](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)、[GPU helper diagnostics boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)、[resident-state sync and shard contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)、[first CUDA alignment slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)、[integration handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) |
+| `WP20 Public Capability-Platform Composition` | complete / accepted | 通过 validation-first admission/result contracts 与 compatibility-preserving materialization 公开 typed capability-platform setup path，同时保持 type-name spawning 与 scenario schema 稳定 | [public capability-platform composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)、[fact ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)、[public typed spawn contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)、[runtime setup consume bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)、[facade/binding surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)、[compatibility/schema guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)、[integration handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md) |
+| `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | claimed closure 试图将已验收 counterfactual contracts 与 selected runtime slices 转为 maintained facade-owned experiment execution、scenario generation、evidence collection 与 legacy cleanup，但 owner 因 compatibility layers 与未闭合 subagent work 仍残留而否决该收口。 | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)、[fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)、[snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)、[counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)、[scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)、[experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)、[final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)、[dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)、[已争议验收记录](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md) |
+| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | planned / remediation active；overall complete no | 强制退场 post-WP21 后仍作为默认 maintained paths 的兼容层和旧实现面；迁移、删除或隔离到显式 opt-in guards 后 | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[fact ledger / kill list](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.zh.md)、[Python bypass retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.zh.md)、[runtime escape-hatch closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md)、[command/DTO retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md)、[structural decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md)、[guard/closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.zh.md)、[dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
+
+## WP22 Legacy Compatibility Retirement And Architecture Hardening
+
+产出：
+
+- [WP22 Legacy Compatibility Retirement And Architecture Hardening](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)
+- [WP22-A Retirement Fact Ledger And Kill List](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.zh.md)
+- [WP22-B Python Business Bypass Retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.zh.md)
+- [WP22-C Runtime Escape-Hatch And Legacy Mode Closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md)
+- [WP22-D Command DTO And Legacy Surface Retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md)
+- [WP22-E Structural God-File Decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md)
+- [WP22-F Guardrail And Acceptance Closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.zh.md)
+- [WP22 Subagent Dispatch Queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md)
+
+WP22 由 post-WP21 architecture refactoring audit 打开。不同于此前 compatibility-preserving
+阶段，WP22 不再把开放 legacy residuals 当作 pass state。每条旧路径都必须被核验、
+迁移、删除，或隔离到 explicit opt-in guards 后。
+
+WP22 计划地图：
+
+- `WP22-A Retirement Fact Ledger And Kill List` 先启动，在实现依赖前修正审计事实。
+- `WP22-B Python Business Bypass Retirement` 拥有 tasking/profile/mission-command
+  从 raw loader/runtime access 迁出的工作。
+- `WP22-C Runtime Escape-Hatch And Legacy Mode Closure` 拥有 raw runtime、
+  batch-runtime、loader-sim 与 silent legacy-mode quarantine。
+- `WP22-D Command DTO And Legacy Surface Retirement` 拥有 C++ command、DTO 与
+  setup legacy-surface retirement。
+- `WP22-E Structural God-File Decomposition` 拥有 monolithic
+  contract/facade/window/factory 文件的 behavior-preserving splits。
+- `WP22-F Guardrail And Acceptance Closure` 串行执行；若仍有 unowned default
+  legacy path，则必须使 closure 失败。
 
 ## WP21 Full Counterfactual Experiment Runtime
 
 产出：
 
-- [WP21 Full Counterfactual Experiment Runtime](wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)
-- [WP21-A Fact Ledger And Residual Freeze](wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)
-- [WP21-B Snapshot Restore And Worldline Boundary](wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)
-- [WP21-C Counterfactual Rollout And Causal Difference](wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)
-- [WP21-D Scenario Intervention Generation Runtime](wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)
-- [WP21-E Experiment Facade And Evidence Collection](wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)
-- [WP21-F Final Cleanup And Acceptance Handoff](wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)
-- [WP21 Subagent Dispatch Queue](wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)
-- [WP21 验收审查](../review/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md)
+- [WP21 Full Counterfactual Experiment Runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)
+- [WP21-A Fact Ledger And Residual Freeze](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)
+- [WP21-B Snapshot Restore And Worldline Boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)
+- [WP21-C Counterfactual Rollout And Causal Difference](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)
+- [WP21-D Scenario Intervention Generation Runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)
+- [WP21-E Experiment Facade And Evidence Collection](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)
+- [WP21-F Final Cleanup And Acceptance Handoff](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)
+- [WP21 Subagent Dispatch Queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)
+- [已争议的 WP21 验收记录](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md)
 
-WP21 是已验收的最后一个计划中 refactor stage。它消费 WP15 contracts、WP17 的 selected
-runtime branch/compare slice、WP18 ownership residuals、WP19 host-visible state
-boundaries 与 WP20 typed setup evidence。它必须关闭 counterfactual / experiment
-runtime gap，但不得晋级 exact GPU、resident-state support、experiment truth claims
-或强制 scenario schema migration。
+WP21 是存在争议的最后一个计划中 refactor stage。它消费 WP15 contracts、WP17 的
+selected runtime branch/compare slice、WP18 ownership residuals、WP19
+host-visible state boundaries 与 WP20 typed setup evidence，但 claimed closure 已在
+`2026-05-22` 被 owner 否决。它不得再作为 legacy compatibility layers 已退场的证明。
 
-WP21 已验收地图：
+WP21 争议地图：
 
 - `WP21-A Fact Ledger And Residual Freeze` 先启动并冻结 source facts。
 - `WP21-B Snapshot Restore And Worldline Boundary` 拥有 bounded host-owned
@@ -131,22 +169,22 @@ WP21 已验收地图：
   parent/branch rollout。
 - `WP21-E Experiment Facade And Evidence Collection` 等待 C/D，并拥有 public
   orchestration/evidence surface。
-- `WP21-F Final Cleanup And Acceptance Handoff` 已通过 acceptance review 关闭最终
-  route verdict。
+- `WP21-F Final Cleanup And Acceptance Handoff` 未达到 owner acceptance bar；
+  归档的 acceptance review 仅保留为历史记录，并由 WP22 取代。
 
 ## WP20 Public Capability-Platform Composition
 
 产出：
 
-- [WP20 Public Capability-Platform Composition](wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)
-- [WP20-A Public Capability Fact Ledger](wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)
-- [WP20-B Public Typed Platform Spawn Contract](wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)
-- [WP20-C Runtime Setup Consume Bridge](wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)
-- [WP20-D Facade And Binding Public Surface](wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)
-- [WP20-E Compatibility And Schema Guard](wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)
-- [WP20-F Integration And Handoff](wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)
-- [WP20 Subagent Dispatch Queue](wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)
-- [WP20 验收审查](../review/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md)
+- [WP20 Public Capability-Platform Composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)
+- [WP20-A Public Capability Fact Ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)
+- [WP20-B Public Typed Platform Spawn Contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)
+- [WP20-C Runtime Setup Consume Bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)
+- [WP20-D Facade And Binding Public Surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)
+- [WP20-E Compatibility And Schema Guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)
+- [WP20-F Integration And Handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)
+- [WP20 Subagent Dispatch Queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)
+- [WP20 验收审查](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md)
 
 WP20 是已验收的第三个冻结 post-WP17 阶段。它消费 WP14 的 capability composition
 vocabulary 与 WP17 的 internal resolved-plan spawn path，通过 validation-first
@@ -169,15 +207,15 @@ WP20 当前地图：
 
 产出：
 
-- [WP19 CUDA And Resident-State Mainline Alignment](wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)
-- [WP19-A CUDA / Resident-State Fact Ledger](wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)
-- [WP19-B Device-Resident Output Contract Pre-Gate](wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)
-- [WP19-C GPU Helper Diagnostics Boundary](wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)
-- [WP19-D Resident-State Sync And Shard Contract](wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)
-- [WP19-E First CUDA Alignment Slice](wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)
-- [WP19-F Integration And Handoff](wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)
-- [WP19 Subagent Dispatch Queue](wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)
-- [WP19 验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md)
+- [WP19 CUDA And Resident-State Mainline Alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)
+- [WP19-A CUDA / Resident-State Fact Ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)
+- [WP19-B Device-Resident Output Contract Pre-Gate](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)
+- [WP19-C GPU Helper Diagnostics Boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)
+- [WP19-D Resident-State Sync And Shard Contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)
+- [WP19-E First CUDA Alignment Slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)
+- [WP19-F Integration And Handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)
+- [WP19 Subagent Dispatch Queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)
+- [WP19 验收审查](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md)
 
 WP19 是已验收的第二个冻结 post-WP17 阶段。它消费已验收的 WP18 runtime-ownership
 边界，把现有 CUDA helpers、device-resident output metadata 与 resident-state sync
@@ -195,21 +233,21 @@ WP19 工作流地图：
   stale-read 与 export rules 映射到 runtime evidence。
 - `WP19-E First CUDA Alignment Slice` 等 A-D 识别出安全 bounded helper/output path 后释放。
 - `WP19-F Integration And Handoff` 是 evidence streams 返回后的串行 closure。
-- [WP19 验收审查](../review/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md)
+- [WP19 验收审查](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md)
 
 ## WP18 Runtime Ownership And C++ Hot Path Consolidation
 
 产出：
 
-- [WP18 Runtime Ownership And C++ Hot Path Consolidation](wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)
-- [WP18-A Ownership Fact Ledger And Hot-Path Map](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)
-- [WP18-B Execution Episode Ownership Sink](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)
-- [WP18-C ScenarioLoader Adapter Split](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)
-- [WP18-D Facade Contract Hardening](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)
-- [WP18-E C++ Hot Path Migration Matrix](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)
-- [WP18-F Integration And Handoff](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)
-- [WP18 Subagent Dispatch Queue](wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)
-- [WP18 验收审查](../review/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md)
+- [WP18 Runtime Ownership And C++ Hot Path Consolidation](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.zh.md)
+- [WP18-A Ownership Fact Ledger And Hot-Path Map](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_ownership_fact_ledger_hot_path_map_cluster_20260521.zh.md)
+- [WP18-B Execution Episode Ownership Sink](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_execution_episode_ownership_sink_cluster_20260521.zh.md)
+- [WP18-C ScenarioLoader Adapter Split](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_scenario_loader_adapter_split_cluster_20260521.zh.md)
+- [WP18-D Facade Contract Hardening](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_facade_contract_hardening_cluster_20260521.zh.md)
+- [WP18-E C++ Hot Path Migration Matrix](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_cxx_hot_path_migration_matrix_cluster_20260521.zh.md)
+- [WP18-F Integration And Handoff](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_integration_handoff_cluster_20260521.zh.md)
+- [WP18 Subagent Dispatch Queue](archive/wp18_runtime_ownership_cxx_hot_path_consolidation/wp18_subagent_dispatch_queue_20260521.zh.md)
+- [WP18 验收审查](../review/archive/wp-acceptance/wp18_runtime_ownership_cxx_hot_path_consolidation_acceptance_review_20260521.zh.md)
 
 WP18 是 WP17 后已验收的第一个冻结阶段。它聚焦 runtime ownership 与 C++
 hot-path consolidation；CUDA/resident-state alignment、public
@@ -233,15 +271,15 @@ WP18 工作流地图：
 
 产出：
 
-- [WP17 Stage 3 Runtime Materialization And Cleanup](wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)
-- [WP17-A Fact Ledger And Boundary Freeze](wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)
-- [WP17-B Facade Business Migration And Compatibility Cleanup](wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)
-- [WP17-C Multi-Rate Runtime Example](wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)
-- [WP17-D Fidelity Provider Runtime](wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)
-- [WP17-E Capability Spawn Runtime Promotion](wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)
-- [WP17-F Counterfactual Runtime Slice And Closure](wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)
-- [WP17 Subagent Dispatch Queue](wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)
-- [WP17 验收审查](../review/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md)
+- [WP17 Stage 3 Runtime Materialization And Cleanup](archive/wp17_stage3_runtime_materialization_cleanup/stage3_runtime_materialization_cleanup_wp17_20260521.zh.md)
+- [WP17-A Fact Ledger And Boundary Freeze](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fact_ledger_and_boundary_freeze_cluster_20260521.md)
+- [WP17-B Facade Business Migration And Compatibility Cleanup](archive/wp17_stage3_runtime_materialization_cleanup/wp17_facade_business_migration_cleanup_cluster_20260521.md)
+- [WP17-C Multi-Rate Runtime Example](archive/wp17_stage3_runtime_materialization_cleanup/wp17_multirate_runtime_example_cluster_20260521.md)
+- [WP17-D Fidelity Provider Runtime](archive/wp17_stage3_runtime_materialization_cleanup/wp17_fidelity_provider_runtime_cluster_20260521.md)
+- [WP17-E Capability Spawn Runtime Promotion](archive/wp17_stage3_runtime_materialization_cleanup/wp17_capability_spawn_runtime_cluster_20260521.md)
+- [WP17-F Counterfactual Runtime Slice And Closure](archive/wp17_stage3_runtime_materialization_cleanup/wp17_counterfactual_runtime_closure_cluster_20260521.md)
+- [WP17 Subagent Dispatch Queue](archive/wp17_stage3_runtime_materialization_cleanup/wp17_subagent_dispatch_queue_20260521.md)
+- [WP17 验收审查](../review/archive/wp-acceptance/wp17_stage3_runtime_materialization_cleanup_acceptance_review_20260521.zh.md)
 
 WP17 是已验收的 Stage 3 最后 runtime-materialization 与 cleanup 任务族。它按当前代码事实
 把剩余 runtime work 拆成有边界的 selected-slice streams，并在 full-worldline 或
@@ -260,13 +298,13 @@ WP17 工作流地图：
 
 产出：
 
-- [WP16 Runtime Spine Consolidation](wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)
-- [WP16-A Runtime Spine Inventory And Bypass Map](wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)
-- [WP16-B Clock-Domain Enforcement And Merge Trace](wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)
-- [WP16-C Facade And Batch Path Spine Migration](wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)
-- [WP16-D Legacy Path Deprecation And Compatibility Gates](wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)
-- [WP16-E Generated Documentation And Closure Automation](wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)
-- [WP16-F Integration And Acceptance Handoff](wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)
+- [WP16 Runtime Spine Consolidation](archive/wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.zh.md)
+- [WP16-A Runtime Spine Inventory And Bypass Map](archive/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_cluster_20260521.zh.md)
+- [WP16-B Clock-Domain Enforcement And Merge Trace](archive/wp16_runtime_spine_consolidation/wp16_clock_domain_enforcement_cluster_20260521.zh.md)
+- [WP16-C Facade And Batch Path Spine Migration](archive/wp16_runtime_spine_consolidation/wp16_facade_batch_spine_migration_cluster_20260521.zh.md)
+- [WP16-D Legacy Path Deprecation And Compatibility Gates](archive/wp16_runtime_spine_consolidation/wp16_legacy_deprecation_compatibility_cluster_20260521.zh.md)
+- [WP16-E Generated Documentation And Closure Automation](archive/wp16_runtime_spine_consolidation/wp16_generated_documentation_automation_cluster_20260521.zh.md)
+- [WP16-F Integration And Acceptance Handoff](archive/wp16_runtime_spine_consolidation/wp16_integration_acceptance_cluster_20260521.zh.md)
 
 WP16 在 post-WP9 路线完成后开启 architecture-optimization phase。它消费
 WP10-WP15 边界，并把它们转成 maintained runtime spine。WP16 现已作为
@@ -309,13 +347,13 @@ merge success 仍在范围外。
 
 产出：
 
-- [WP15 Counterfactual Experiment Generation](wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)
-- [WP15-A Replay Envelope And Branch Point Contract](wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)
-- [WP15-B Worldline Branch Metadata Gate](wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)
-- [WP15-C Counterfactual Request Admission](wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)
-- [WP15-D Scenario And Adversary Generation Request Surface](wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)
-- [WP15-E Experiment Evidence And Capability Profiling Bridge](wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)
-- [WP15-F Integration And Acceptance Handoff](wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)
+- [WP15 Counterfactual Experiment Generation](archive/wp15_counterfactual_experiment_generation/counterfactual_experiment_generation_wp15_20260521.zh.md)
+- [WP15-A Replay Envelope And Branch Point Contract](archive/wp15_counterfactual_experiment_generation/wp15_replay_envelope_branch_point_cluster_20260521.zh.md)
+- [WP15-B Worldline Branch Metadata Gate](archive/wp15_counterfactual_experiment_generation/wp15_worldline_branch_metadata_gate_cluster_20260521.zh.md)
+- [WP15-C Counterfactual Request Admission](archive/wp15_counterfactual_experiment_generation/wp15_counterfactual_admission_cluster_20260521.zh.md)
+- [WP15-D Scenario And Adversary Generation Request Surface](archive/wp15_counterfactual_experiment_generation/wp15_scenario_adversary_generation_surface_cluster_20260521.zh.md)
+- [WP15-E Experiment Evidence And Capability Profiling Bridge](archive/wp15_counterfactual_experiment_generation/wp15_experiment_evidence_bridge_cluster_20260521.zh.md)
+- [WP15-F Integration And Acceptance Handoff](archive/wp15_counterfactual_experiment_generation/wp15_integration_acceptance_cluster_20260521.zh.md)
 
 WP15 验收 post-WP9 路线 Phase 6。它消费 WP8 learning-face vocabulary，以及已验收
 WP10-WP14 的 causal、facade、agency、backend/fidelity 与 capability evidence。第一目标
@@ -347,14 +385,14 @@ validation、residuals、acceptance review、README/route sync 与 bilingual han
 
 产出：
 
-- [WP14 Capability Composition](wp14_capability_composition/capability_composition_wp14_20260521.zh.md)
-- [WP14-A Capability Bundle Contract](wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)
-- [WP14-B Content Definition Lowering](wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)
-- [WP14-C Spawn Resolution Bridge](wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)
-- [WP14-D Additive Facade Setup DTO](wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)
-- [WP14-E Capability Effects Materialization](wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)
-- [WP14-F Compatibility Validation And Acceptance Handoff](wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)
-- [WP14 验收审查](../review/wp14_capability_composition_acceptance_review_20260521.zh.md)
+- [WP14 Capability Composition](archive/wp14_capability_composition/capability_composition_wp14_20260521.zh.md)
+- [WP14-A Capability Bundle Contract](archive/wp14_capability_composition/wp14_capability_bundle_contract_cluster_20260521.zh.md)
+- [WP14-B Content Definition Lowering](archive/wp14_capability_composition/wp14_content_definition_lowering_cluster_20260521.zh.md)
+- [WP14-C Spawn Resolution Bridge](archive/wp14_capability_composition/wp14_spawn_resolution_bridge_cluster_20260521.zh.md)
+- [WP14-D Additive Facade Setup DTO](archive/wp14_capability_composition/wp14_additive_facade_setup_dto_cluster_20260521.zh.md)
+- [WP14-E Capability Effects Materialization](archive/wp14_capability_composition/wp14_capability_effects_materialization_cluster_20260521.zh.md)
+- [WP14-F Compatibility Validation And Acceptance Handoff](archive/wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)
+- [WP14 验收审查](../review/archive/wp-acceptance/wp14_capability_composition_acceptance_review_20260521.zh.md)
 
 WP14 验收 post-WP9 路线 Phase 5。它消费 WP2/WP9 contract vocabulary，以及
 WP10-WP13 runtime、facade、agency 与 backend evidence，把隐式 platform
@@ -387,14 +425,14 @@ promotion 与 broad spawn rewrites 仍属于未来 gated work。
 
 产出：
 
-- [WP13 Backend Fidelity Expansion](wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)
-- [WP13-A Runtime Capability Query And Rejection Surface](wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)
-- [WP13-B Backend Profile Registry Runtime Gate](wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)
-- [WP13-C Parity Budget Evidence Gate](wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)
-- [WP13-D Fidelity Profile Request Gate](wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)
-- [WP13-E Facade And Binding Proof](wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)
-- [WP13-F Integration And Acceptance Handoff](wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)
-- [WP13 验收审查](../review/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md)
+- [WP13 Backend Fidelity Expansion](archive/wp13_backend_fidelity_expansion/backend_fidelity_expansion_wp13_20260520.zh.md)
+- [WP13-A Runtime Capability Query And Rejection Surface](archive/wp13_backend_fidelity_expansion/wp13_runtime_capability_query_cluster_20260520.zh.md)
+- [WP13-B Backend Profile Registry Runtime Gate](archive/wp13_backend_fidelity_expansion/wp13_backend_profile_registry_gate_cluster_20260520.zh.md)
+- [WP13-C Parity Budget Evidence Gate](archive/wp13_backend_fidelity_expansion/wp13_parity_budget_evidence_gate_cluster_20260520.zh.md)
+- [WP13-D Fidelity Profile Request Gate](archive/wp13_backend_fidelity_expansion/wp13_fidelity_profile_request_gate_cluster_20260520.zh.md)
+- [WP13-E Facade And Binding Proof](archive/wp13_backend_fidelity_expansion/wp13_facade_binding_proof_cluster_20260520.zh.md)
+- [WP13-F Integration And Acceptance Handoff](archive/wp13_backend_fidelity_expansion/wp13_integration_acceptance_cluster_20260520.zh.md)
+- [WP13 验收审查](../review/archive/wp-acceptance/wp13_backend_fidelity_expansion_acceptance_review_20260520.zh.md)
 
 WP13 验收 post-WP9 路线 Phase 4。它消费 WP6/WP7 backend profile
 policy/materialization，以及 WP10-WP12 causal、provenance 与 agency evidence，
@@ -427,12 +465,12 @@ work-package labels。
 
 产出：
 
-- [WP12 Information And Agency Enforcement](wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)
-- [WP12-A Law 14 Read-Side Enforcement](wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)
-- [WP12-B Agency Role Authority Boundary](wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)
-- [WP12-C Information Transformation Surface](wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)
-- [WP12-D Intent Injection Authority Guard](wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)
-- [WP12-E Integration And Acceptance Handoff](wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)
+- [WP12 Information And Agency Enforcement](archive/wp12_information_agency_enforcement/information_agency_enforcement_wp12_20260520.zh.md)
+- [WP12-A Law 14 Read-Side Enforcement](archive/wp12_information_agency_enforcement/wp12_law14_read_side_enforcement_cluster_20260520.zh.md)
+- [WP12-B Agency Role Authority Boundary](archive/wp12_information_agency_enforcement/wp12_agency_role_authority_cluster_20260520.zh.md)
+- [WP12-C Information Transformation Surface](archive/wp12_information_agency_enforcement/wp12_information_transformation_surface_cluster_20260520.zh.md)
+- [WP12-D Intent Injection Authority Guard](archive/wp12_information_agency_enforcement/wp12_intent_injection_authority_guard_cluster_20260520.zh.md)
+- [WP12-E Integration And Acceptance Handoff](archive/wp12_information_agency_enforcement/wp12_integration_acceptance_cluster_20260520.zh.md)
 
 WP12 验收 post-WP9 路线的 Phase 3。它消费 WP10 causal evidence 与 WP11
 provenance/pre-gates，并把 `GAP-5`、`GAP-6` 与 `GAP-7` 转成有测试支撑的
@@ -463,13 +501,13 @@ validator/vocabulary surfaces；`WP12-E` 最后执行。
 WP2.5 虽然是冻结文档，但后续工作已经拆成有边界的流：
 
 - 先做 `WP2.5-F StageNodeManifest Schema`：
-  [manifest/event 任务簇](wp25_scheduler_semantics/wp25_manifest_event_cluster_20260519.zh.md)。
+  [manifest/event 任务簇](archive/wp25_scheduler_semantics/wp25_manifest_event_cluster_20260519.zh.md)。
 - 在 manifest 词汇稳定后，并行推进 `WP2.5-A Event Ordering and ID Rules`、
   `WP2.5-B State Shard Versioning`、`WP2.5-C Barrier Visibility`：
-  [state/barrier 任务簇](wp25_scheduler_semantics/wp25_state_barrier_cluster_20260519.zh.md)。
+  [state/barrier 任务簇](archive/wp25_scheduler_semantics/wp25_state_barrier_cluster_20260519.zh.md)。
 - 语义规则稳定后，再做 `WP2.5-D Clock-Domain Merge`。
 - 调度语义完全冻结后，再做 `WP2.5-E Deterministic Replay Contract`：
-  [clock/replay 任务簇](wp25_scheduler_semantics/wp25_clock_replay_cluster_20260519.zh.md)。
+  [clock/replay 任务簇](archive/wp25_scheduler_semantics/wp25_clock_replay_cluster_20260519.zh.md)。
 - 最后做 `WP2.5-G Integration and Index Sync`，作为串行发布步骤。
 
 `WP2.5-D` 和 `WP2.5-E` 是思考预算最高的两个工作流。
@@ -478,7 +516,7 @@ WP2.5 虽然是冻结文档，但后续工作已经拆成有边界的流：
 
 产出：
 
-- [WP7.5 训练路径 facade 桥接](wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.zh.md)
+- [WP7.5 训练路径 facade 桥接](archive/wp75_training_path_facade_bridge/training_path_facade_bridge_wp75_20260520.zh.md)
 
 `WP7.5` 是已验收仿真侧 facade contracts 与计划中的 learning-facing contract
 vocabulary 之间缺失的桥。它不替代 `WP8`；它负责把维护中的训练主线从
@@ -507,10 +545,10 @@ vocabulary 之间缺失的桥。它不替代 `WP8`；它负责把维护中的训
 
 产出：
 
-- [WP8 SCAL Learning Face 任务族](wp8_learning_face/learning_face_wp8_20260520.zh.md)
-- [WP8-A 课程与场景生成任务簇](wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md)
-- [WP8-B evaluation 与 capability profiling 任务簇](wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md)
-- [WP8-C world-model 接口与学习证据任务簇](wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md)
+- [WP8 SCAL Learning Face 任务族](archive/wp8_learning_face/learning_face_wp8_20260520.zh.md)
+- [WP8-A 课程与场景生成任务簇](archive/wp8_learning_face/wp8_curriculum_scenario_generation_cluster_20260520.zh.md)
+- [WP8-B evaluation 与 capability profiling 任务簇](archive/wp8_learning_face/wp8_evaluation_capability_profiling_cluster_20260520.zh.md)
+- [WP8-C world-model 接口与学习证据任务簇](archive/wp8_learning_face/wp8_world_model_interface_and_learning_evidence_cluster_20260520.zh.md)
 - [WP8 学习面验收审查](../review/archive/wp-acceptance/wp8_learning_face_acceptance_review_20260520.zh.md)
 
 WP8 为延后的 SCAL learning face 提供已验收的有边界任务族。它不引入第二条运行时生命周期，而是把课程、评估、能力画像、场景生成与学习证据转成显式的实验与规划契约，并保持它们与权威仿真层分离。
@@ -528,13 +566,13 @@ WP8 工作流地图：
 
 产出：
 
-- [WP9 Contract And Infrastructure Closure](wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md)
-- [WP9-A DTO Promotion Batch 1](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.zh.md)
-- [WP9-B DTO Promotion Batch 2](wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.zh.md)
-- [WP9-C Infrastructure Closure](wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.zh.md)
-- [WP9-D Guard Enforcement](wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.zh.md)
-- [WP9-E Integration And Index Sync](wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.zh.md)
-- [WP9 验收审查](../review/wp9_contract_infrastructure_closure_acceptance_review_20260520.zh.md)
+- [WP9 Contract And Infrastructure Closure](archive/wp9_contract_infrastructure_closure/contract_infrastructure_closure_wp9_20260520.zh.md)
+- [WP9-A DTO Promotion Batch 1](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch1_cluster_20260520.zh.md)
+- [WP9-B DTO Promotion Batch 2](archive/wp9_contract_infrastructure_closure/wp9_dto_promotion_batch2_cluster_20260520.zh.md)
+- [WP9-C Infrastructure Closure](archive/wp9_contract_infrastructure_closure/wp9_infrastructure_closure_cluster_20260520.zh.md)
+- [WP9-D Guard Enforcement](archive/wp9_contract_infrastructure_closure/wp9_guard_enforcement_cluster_20260520.zh.md)
+- [WP9-E Integration And Index Sync](archive/wp9_contract_infrastructure_closure/wp9_integration_and_index_sync_cluster_20260520.zh.md)
+- [WP9 验收审查](../review/archive/wp-acceptance/wp9_contract_infrastructure_closure_acceptance_review_20260520.zh.md)
 
 WP9 把已验收 `WP3-WP8` 审查中延后的事项压缩为一个闭合工作包。它晋升 typed DTO surface，修补小型 infrastructure gap，添加显式 guard allowlists，并让 post-WP9 roadmap 与已验收闭合保持分离。
 
@@ -605,11 +643,11 @@ WP1 不应实现新代码，除非需要少量文档或测试 fixture 才能完�
 
 输入：
 
-- [WP1 管线盘点](wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.zh.md)
+- [WP1 管线盘点](archive/wp1_pipeline_inventory/pipeline_inventory_wp1_20260519.zh.md)
 
 产出：
 
-- [WP2 契约冻结](wp2_contract_freeze/contract_freeze_wp2_20260519.zh.md)
+- [WP2 契约冻结](archive/wp2_contract_freeze/contract_freeze_wp2_20260519.zh.md)
 
 WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 
@@ -646,7 +684,7 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 
 产出：
 
-- [WP3 交战试点任务族](wp3_engagement_pilot/engagement_pilot_wp3_20260519.zh.md)
+- [WP3 交战试点任务族](archive/wp3_engagement_pilot/engagement_pilot_wp3_20260519.zh.md)
 
 第一条实现试点应选择交战生命周期，因为它横跨最多架构边界，并且天然涉及多个 clock domain：
 
@@ -665,7 +703,7 @@ WP2 应把 inventory 转化为有范围的契约计划。它应决定：
 
 产出：
 
-- [WP4 facade 对齐任务族](wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md)
+- [WP4 facade 对齐任务族](archive/wp4_facade_alignment/facade_alignment_wp4_20260519.zh.md)
 
 WP4 把已验收的交战试点转成维护中的前端形态。它应引用 WP2.5 的调度语义，并引用 Temp-02 的 information/agency 边界：
 
@@ -678,11 +716,11 @@ WP4 不应创建新的仿真语义。它应让现有行为通过 facade-shaped A
 WP4 分发任务簇：
 
 - 先做 `WP4-A Surface Inventory`：
-  [surface inventory 任务簇](wp4_facade_alignment/wp4_surface_inventory_cluster_20260519.zh.md)。
+  [surface inventory 任务簇](archive/wp4_facade_alignment/wp4_surface_inventory_cluster_20260519.zh.md)。
 - 初始 surface 词汇稳定后，再做 `WP4-B/C Engagement, Step, And Lifecycle Alignment`：
-  [engagement/step 任务簇](wp4_facade_alignment/wp4_engagement_step_cluster_20260519.zh.md)。
+  [engagement/step 任务簇](archive/wp4_facade_alignment/wp4_engagement_step_cluster_20260519.zh.md)。
 - action、coordination、observation、belief 与 agent-role 名称稳定后，再做 `WP4-D/E Policy, AgentRole, And Python Mirror`：
-  [policy/binding 任务簇](wp4_facade_alignment/wp4_policy_binding_cluster_20260519.zh.md)。
+  [policy/binding 任务簇](archive/wp4_facade_alignment/wp4_policy_binding_cluster_20260519.zh.md)。
 - `WP4-F Integration And Docs` 保持串行，由主线程或专门 integration worker 在任务簇返回后处理。
 
 `WP4-A`、`WP4-C` 与 `WP4-D` 是思考预算最高的工作流，因为它们触及跨层语义、belief 边界或 adapter ownership。
@@ -690,31 +728,31 @@ WP4 分发任务簇：
 WP4 第一波产物已作为 discovery 输入验收：
 
 - [WP4 第一波验收审查](../review/archive/wp-superseded/wp4_first_wave_acceptance_review_20260519.zh.md)
-- [WP4-A surface inventory 初稿](wp4_facade_alignment/wp4_surface_inventory_wp4a_20260519.zh.md)
-- [WP4-B/C engagement-step 对齐笔记](wp4_facade_alignment/wp4_engagement_step_alignment_notes_20260519.md)
-- [WP4-D/E policy-binding 对齐笔记](wp4_facade_alignment/wp4_policy_binding_alignment_notes_20260519.zh.md)
+- [WP4-A surface inventory 初稿](archive/wp4_facade_alignment/wp4_surface_inventory_wp4a_20260519.zh.md)
+- [WP4-B/C engagement-step 对齐笔记](archive/wp4_facade_alignment/wp4_engagement_step_alignment_notes_20260519.md)
+- [WP4-D/E policy-binding 对齐笔记](archive/wp4_facade_alignment/wp4_policy_binding_alignment_notes_20260519.zh.md)
 
 WP4 第二波任务簇：
 
 - `WP4-G Facade Evidence Gates`：
-  [facade evidence 任务簇](wp4_facade_alignment/wp4_facade_evidence_cluster_20260519.zh.md)。
+  [facade evidence 任务簇](archive/wp4_facade_alignment/wp4_facade_evidence_cluster_20260519.zh.md)。
 - `WP4-H Information And Agent Shim`：
-  [agent shim 任务簇](wp4_facade_alignment/wp4_agent_shim_cluster_20260519.zh.md)。
+  [agent shim 任务簇](archive/wp4_facade_alignment/wp4_agent_shim_cluster_20260519.zh.md)。
 - `WP4-I Compatibility Guard And Integration`：
-  [compat guard 任务簇](wp4_facade_alignment/wp4_compat_guard_cluster_20260519.zh.md)。
+  [compat guard 任务簇](archive/wp4_facade_alignment/wp4_compat_guard_cluster_20260519.zh.md)。
 
 WP4 第二波与集成产物：
 
 - [WP4 第二波验收审查](../review/archive/wp-superseded/wp4_second_wave_acceptance_review_20260519.zh.md)
-- [WP4-I compatibility guard 笔记](wp4_facade_alignment/wp4_compat_guard_notes_20260519.zh.md)
-- [WP4-F 集成交接](wp4_facade_alignment/wp4_integration_handoff_20260519.zh.md)
+- [WP4-I compatibility guard 笔记](archive/wp4_facade_alignment/wp4_compat_guard_notes_20260519.zh.md)
+- [WP4-F 集成交接](archive/wp4_facade_alignment/wp4_integration_handoff_20260519.zh.md)
 - [WP4 最终验收审查](../review/archive/wp-acceptance/wp4_facade_alignment_acceptance_review_20260519.zh.md)
 
 ## WP5 验证套件
 
 产出：
 
-- [WP5 验证套件任务族](wp5_validation_harness/validation_harness_wp5_20260519.zh.md)
+- [WP5 验证套件任务族](archive/wp5_validation_harness/validation_harness_wp5_20260519.zh.md)
 
 WP5 把架构与 facade 工作转化为维护中的证据。验证套件应覆盖五个验证层级：
 
@@ -729,11 +767,11 @@ WP5 从已验收的 WP4 facade label 启动。它不应从 raw runtime inspectio
 WP5 第一波任务簇：
 
 - `WP5-A Harness Inventory`：
-  [harness inventory 任务簇](wp5_validation_harness/wp5_harness_inventory_cluster_20260519.zh.md)。
+  [harness inventory 任务簇](archive/wp5_validation_harness/wp5_harness_inventory_cluster_20260519.zh.md)。
 - `WP5-B Design And Boundary Gates`：
-  [design/boundary 任务簇](wp5_validation_harness/wp5_design_boundary_cluster_20260519.zh.md)。
+  [design/boundary 任务簇](archive/wp5_validation_harness/wp5_design_boundary_cluster_20260519.zh.md)。
 - `WP5-C Trace And Replay Gates`：
-  [trace/replay 任务簇](wp5_validation_harness/wp5_trace_replay_cluster_20260519.zh.md)。
+  [trace/replay 任务簇](archive/wp5_validation_harness/wp5_trace_replay_cluster_20260519.zh.md)。
 
 `WP5-C` 是第一波中推理预算最高的流，因为 trace ancestry 与 replay metadata
 测试如果假设了 WP4 明确推迟的 runtime metadata，就会变得脆弱。
@@ -741,35 +779,35 @@ WP5 第一波任务簇：
 WP5 第一波产物已验收：
 
 - [WP5 第一波验收审查](../review/archive/wp-superseded/wp5_first_wave_acceptance_review_20260519.zh.md)
-- [WP5-A harness inventory 笔记](wp5_validation_harness/wp5_harness_inventory_notes_20260519.zh.md)
-- [WP5-B design/boundary 笔记](wp5_validation_harness/wp5_design_boundary_notes_20260519.zh.md)
-- [WP5-C trace/replay gates 笔记](wp5_validation_harness/wp5_trace_replay_gates_notes_20260519.zh.md)
+- [WP5-A harness inventory 笔记](archive/wp5_validation_harness/wp5_harness_inventory_notes_20260519.zh.md)
+- [WP5-B design/boundary 笔记](archive/wp5_validation_harness/wp5_design_boundary_notes_20260519.zh.md)
+- [WP5-C trace/replay gates 笔记](archive/wp5_validation_harness/wp5_trace_replay_gates_notes_20260519.zh.md)
 
 WP5 第二波任务簇：
 
 - `WP5-D Information And Belief Gates`：
-  [information/belief 任务簇](wp5_validation_harness/wp5_information_belief_cluster_20260519.zh.md)。
+  [information/belief 任务簇](archive/wp5_validation_harness/wp5_information_belief_cluster_20260519.zh.md)。
 - `WP5-E Smoke Promotion And Docs`：
-  [smoke promotion 任务簇](wp5_validation_harness/wp5_smoke_promotion_cluster_20260519.zh.md)。
+  [smoke promotion 任务簇](archive/wp5_validation_harness/wp5_smoke_promotion_cluster_20260519.zh.md)。
 
 WP5 第二波与最终产物已验收：
 
 - [WP5-D information/belief 验收审查](../review/archive/wp-superseded/wp5_information_belief_acceptance_review_20260519.zh.md)
-- [WP5-D information/belief 笔记](wp5_validation_harness/wp5_information_belief_notes_20260519.zh.md)
-- [WP5-E smoke promotion 笔记](wp5_validation_harness/wp5_smoke_promotion_notes_20260519.zh.md)
+- [WP5-D information/belief 笔记](archive/wp5_validation_harness/wp5_information_belief_notes_20260519.zh.md)
+- [WP5-E smoke promotion 笔记](archive/wp5_validation_harness/wp5_smoke_promotion_notes_20260519.zh.md)
 - [WP5 validation harness 验收审查](../review/archive/wp-acceptance/wp5_validation_harness_acceptance_review_20260519.zh.md)
 
 ## WP6 后端配置文件策略
 
 产出：
 
-- [WP6 后端配置文件策略](wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)
-- [WP6-A 后端配置文件分类分发单](wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.zh.md)
-- [WP6-A 后端配置文件注册表](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md)
-- [WP6-B parity budget 分发单](wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.zh.md)
-- [WP6-B parity budget 注册表](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)
-- [WP6-C + WP6-D 集成交接](wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.zh.md)
-- [WP6-C1 resident-state 边界规则](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)
+- [WP6 后端配置文件策略](archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.zh.md)
+- [WP6-A 后端配置文件分类分发单](archive/wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.zh.md)
+- [WP6-A 后端配置文件注册表](archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md)
+- [WP6-B parity budget 分发单](archive/wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.zh.md)
+- [WP6-B parity budget 注册表](archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)
+- [WP6-C + WP6-D 集成交接](archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.zh.md)
+- [WP6-C1 resident-state 边界规则](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)
 - [WP6 后端配置文件策略验收审查](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)
 
 WP6 用契约把 backend profile 与 parity budget 的空档收口。它冻结 profile
@@ -779,34 +817,34 @@ accelerated、resident-state、approximate 与 diagnostics-only 路径在进入�
 WP6 工作流地图：
 
 - `WP6-A Backend Profile Taxonomy`：
-  [taxonomy 分发单](wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.zh.md) 与
-  [profile 注册表](wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md)。
+  [taxonomy 分发单](archive/wp6_backend_profile_policy/wp6_backend_profile_taxonomy_cluster_20260519.zh.md) 与
+  [profile 注册表](archive/wp6_backend_profile_policy/wp6_backend_profile_registry_20260519.zh.md)。
 - `WP6-B Parity Budget And Comparison Rules`：
-  [parity budget 分发单](wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.zh.md) 与
-  [parity budget 注册表](wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)。
+  [parity budget 分发单](archive/wp6_backend_profile_policy/wp6_parity_budget_cluster_20260519.zh.md) 与
+  [parity budget 注册表](archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)。
 - `WP6-C Resident-State And Backend Capability Alignment`：
-  [resident-state 边界规则](wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)，以及
+  [resident-state 边界规则](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)，以及
   [runtime facade layering 测试](../../../tests/architecture/test_runtime_facade_layering.py)、
   [runtime facade 测试](../../../tests/runtime/facade/test_runtime_facade.py) 和
   [GPU runtime binding 测试](../../../tests/test_gpu_runtime_bindings.py) 中的 capability-projection guard。
 - `WP6-D Integration And Index Sync`：
-  [集成交接](wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.zh.md) 与
+  [集成交接](archive/wp6_backend_profile_policy/wp6_integration_and_index_sync_20260519.zh.md) 与
   [验收审查](../review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)。
 
 ## WP7 后端能力物化
 
 产出：
 
-- [WP7 后端能力物化](wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)
-- [WP7-A registry materialization 任务簇](wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.zh.md)
-- [WP7-A registry materialization 笔记](wp7_backend_capability_materialization/wp7_registry_materialization_notes_20260519.zh.md)
-- [WP7-B runtime capability projection 任务簇](wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.zh.md)
-- [WP7-B runtime capability projection 笔记](wp7_backend_capability_materialization/wp7_runtime_capability_projection_notes_20260519.zh.md)
-- [WP7-C promotion evidence gates 任务簇](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.zh.md)
-- [WP7-C promotion evidence gates 笔记](wp7_backend_capability_materialization/wp7_promotion_evidence_gates_notes_20260519.zh.md)
-- [WP7-D multi-fidelity entry conditions 任务簇](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.zh.md)
-- [WP7-D multi-fidelity entry conditions 笔记](wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_notes_20260519.zh.md)
-- [WP7-E integration and index sync 任务簇](wp7_backend_capability_materialization/wp7_integration_and_index_sync_cluster_20260519.zh.md)
+- [WP7 后端能力物化](archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)
+- [WP7-A registry materialization 任务簇](archive/wp7_backend_capability_materialization/wp7_registry_materialization_cluster_20260519.zh.md)
+- [WP7-A registry materialization 笔记](archive/wp7_backend_capability_materialization/wp7_registry_materialization_notes_20260519.zh.md)
+- [WP7-B runtime capability projection 任务簇](archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_cluster_20260519.zh.md)
+- [WP7-B runtime capability projection 笔记](archive/wp7_backend_capability_materialization/wp7_runtime_capability_projection_notes_20260519.zh.md)
+- [WP7-C promotion evidence gates 任务簇](archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_cluster_20260519.zh.md)
+- [WP7-C promotion evidence gates 笔记](archive/wp7_backend_capability_materialization/wp7_promotion_evidence_gates_notes_20260519.zh.md)
+- [WP7-D multi-fidelity entry conditions 任务簇](archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_cluster_20260519.zh.md)
+- [WP7-D multi-fidelity entry conditions 笔记](archive/wp7_backend_capability_materialization/wp7_multifidelity_entry_conditions_notes_20260519.zh.md)
+- [WP7-E integration and index sync 任务簇](archive/wp7_backend_capability_materialization/wp7_integration_and_index_sync_cluster_20260519.zh.md)
 - [WP7 后端能力物化验收审查](../review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
 
 WP7 是 WP6 之后已验收的文档与实现准备线。它把已验收的 backend profile policy

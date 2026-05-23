@@ -19,7 +19,14 @@ from .cooperative_director import (
     count_control_slots,
     mission_status_success_flag,
 )
-from .compat import RuntimeCompatibilityView
+from .compat import (
+    build_loader_step_info,
+    compute_loader_step_outcome,
+    RuntimeCompatibilityView,
+    normalize_runtime_compatibility_enabled,
+    resolve_loader_runtime_sim,
+    runtime_compatibility_required_message,
+)
 from .normalize import (
     normalize_batch_observation_backend,
     normalize_batch_visual_backend,
@@ -36,6 +43,8 @@ from .state import BatchWorldHandle, CooperativeSlotState, CooperativeWorldState
 
 __all__ = [
     "BatchWorldHandle",
+    "build_loader_step_info",
+    "compute_loader_step_outcome",
     "CooperativeSlotState",
     "CooperativeWorldState",
     "ExecutionObservationBatch",
@@ -55,10 +64,13 @@ __all__ = [
     "normalize_batch_visual_backend",
     "normalize_flight_shaping_backend",
     "normalize_observation_return_mode",
+    "normalize_runtime_compatibility_enabled",
     "observation_timing_snapshot",
     "parse_reward_terms_json",
     "pilot_report_snapshot",
     "refresh_visual_cache_batch",
+    "resolve_loader_runtime_sim",
+    "runtime_compatibility_required_message",
     "snapshot_changed",
     "step_info_products_to_info_fields",
     "task_order_snapshot",
