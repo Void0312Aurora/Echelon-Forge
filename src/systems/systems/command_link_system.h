@@ -19,9 +19,9 @@ inline void deliver_pending_action_command(
     if (current_time < pending.deliver_time) return;
     cmd = pending.command;
     cmd.active = true;
-    refresh_optional_compatibility_typed_air_control_from_action_command(
+    refresh_optional_pending_action_typed_air_control_bridge(
         entity,
-        cmd
+        pending
     );
     pending.active = false;
 }
@@ -64,9 +64,7 @@ inline void deliver_pending_movement_command(
         lagged,
         state
     );
-    pending.command = project_pending_movement_command_diagnostics_shell(
-        pending.typed_command
-    );
+    refresh_pending_movement_command_diagnostics_shell(pending);
     pending.active = false;
 }
 }  // namespace

@@ -101,12 +101,15 @@ void queue_or_refresh_pending_action_command(
 
     if (PendingActionCommand* pending = entity.get_mut<PendingActionCommand>()) {
         pending->command = next;
+        refresh_pending_action_command_typed_air_control_bridge(*pending);
         pending->deliver_time = deliver_time;
         pending->active = true;
         return;
     }
 
-    entity.set<PendingActionCommand>({next, deliver_time, true});
+    entity.set<PendingActionCommand>(
+        make_pending_action_command(next, deliver_time, true)
+    );
 }
 
 inline void queue_or_refresh_pending_movement_command(
@@ -116,7 +119,7 @@ inline void queue_or_refresh_pending_movement_command(
 ) {
     if (PendingMovementCommand* pending = entity.get_mut<PendingMovementCommand>()) {
         pending->typed_command = value;
-        pending->command = project_pending_movement_command_diagnostics_shell(value);
+        refresh_pending_movement_command_diagnostics_shell(*pending);
         pending->deliver_time = deliver_time;
         pending->active = true;
         return;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "components/command/common/mission_command_control_state.h"
 #include "components/command/legacy_command.h"
 #include "components/command/mission_command.h"
@@ -68,6 +70,19 @@ inline MovementCommand project_pending_movement_command_diagnostics_shell(
     );
 }
 
+inline MissionCommandTypedAirControlState project_pending_action_command_typed_air_control_bridge(
+    const ActionCommand& command
+) {
+    MissionCommandTypedAirControlState typed_air_control{};
+    typed_air_control.throttle_command =
+        std::clamp((command.accel_cmd + 1.0) * 0.5, 0.0, 1.0);
+    typed_air_control.throttle_active = command.active;
+    typed_air_control.throttle_idle = typed_air_control.throttle_command < 0.01;
+    typed_air_control.ground_active = command.active;
+    typed_air_control.action_semantics_active = command.active;
+    return typed_air_control;
+}
+
 struct PendingMovementCommand {
     PendingMissionControlCommand typed_command;
     // Diagnostics transport shell only; maintained delivery must consume typed_command.
@@ -106,8 +121,20 @@ inline PendingMovementCommand make_pending_movement_command(
     };
 }
 
+inline void refresh_pending_movement_command_diagnostics_shell(
+    PendingMovementCommand& pending
+) {
+    pending.command = project_pending_movement_command_diagnostics_shell(
+        pending.typed_command
+    );
+}
+
 // Quarantined legacy action transport shell: no lossless typed replacement yet.
 struct PendingActionCommand {
+    // Bridge-owned typed overlay snapshot only. This is not a full typed
+    // action replacement; it merely preserves the maintained air-control
+    // overlay semantics that can be refreshed onto MissionCommandControlState.
+    MissionCommandTypedAirControlState typed_air_control_bridge;
     ActionCommand command;
     double deliver_time;
     bool active;
@@ -118,7 +145,19 @@ inline PendingActionCommand make_pending_action_command(
     double deliver_time = 0.0,
     bool active = false
 ) {
-    return {command, deliver_time, active};
+    return {
+        project_pending_action_command_typed_air_control_bridge(command),
+        command,
+        deliver_time,
+        active,
+    };
+}
+
+inline void refresh_pending_action_command_typed_air_control_bridge(
+    PendingActionCommand& pending
+) {
+    pending.typed_air_control_bridge =
+        project_pending_action_command_typed_air_control_bridge(pending.command);
 }
 
 struct PendingMissionCommand {

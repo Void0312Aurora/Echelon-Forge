@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "components/command/command_link.h"
 #include "components/command/common/mission_command_control_state.h"
 #include "components/command/air/control_input_resolution.h"
 #include "components/basic/common.h"
@@ -318,6 +319,29 @@ inline void refresh_compatibility_typed_air_control_from_legacy_action(
     set_mission_command_typed_air_control_state(state, typed_air_control);
 }
 
+inline void refresh_compatibility_typed_air_control_from_pending_action_bridge(
+    MissionCommandControlState& state,
+    const MissionCommandTypedAirControlState& pending_action_bridge
+) {
+    MissionCommandTypedAirControlState typed_air_control =
+        state.typed_air_control;
+
+    if (!typed_air_control.throttle_active) {
+        typed_air_control.throttle_command = pending_action_bridge.throttle_command;
+        typed_air_control.throttle_active = pending_action_bridge.throttle_active;
+        typed_air_control.throttle_idle = pending_action_bridge.throttle_idle;
+    }
+    if (!typed_air_control.ground_active) {
+        typed_air_control.throttle_idle = pending_action_bridge.throttle_idle;
+        typed_air_control.brake_amount = pending_action_bridge.brake_amount;
+        typed_air_control.ground_active = pending_action_bridge.ground_active;
+    }
+    typed_air_control.action_semantics_active =
+        pending_action_bridge.action_semantics_active;
+
+    set_mission_command_typed_air_control_state(state, typed_air_control);
+}
+
 template <typename EntityT>
 requires (!std::is_pointer_v<std::remove_reference_t<EntityT>>)
 inline void refresh_compatibility_control_mirrors_from_state(EntityT& entity) {
@@ -450,6 +474,21 @@ inline void refresh_optional_compatibility_typed_air_control_from_action_command
         refresh_compatibility_typed_air_control_from_legacy_action(
             *state,
             legacy_action
+        );
+    }
+}
+
+template <typename EntityT>
+requires (!std::is_pointer_v<std::remove_reference_t<EntityT>>)
+inline void refresh_optional_pending_action_typed_air_control_bridge(
+    EntityT& entity,
+    const PendingActionCommand& pending_action
+) {
+    if (MissionCommandControlState* state =
+            entity.template get_mut<MissionCommandControlState>()) {
+        refresh_compatibility_typed_air_control_from_pending_action_bridge(
+            *state,
+            pending_action.typed_air_control_bridge
         );
     }
 }

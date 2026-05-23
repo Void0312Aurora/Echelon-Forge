@@ -311,6 +311,10 @@ def test_wp22_legacy_command_allowlist_entries_remain_named_owner_bound_blockers
     assert "PendingActionCommand" in command_link_text
     assert "PendingMissionCommand" in command_link_text
     assert "Diagnostics transport shell only; maintained delivery must consume typed_command." in command_link_text
+    assert "refresh_pending_movement_command_diagnostics_shell(" in command_link_text
+    assert "typed_air_control_bridge" in command_link_text
+    assert "Bridge-owned typed overlay snapshot only." in command_link_text
+    assert "refresh_pending_action_command_typed_air_control_bridge(" in command_link_text
     assert "Quarantined legacy action transport shell: no lossless typed replacement yet." in command_link_text
 
     assert '#include "components/command/legacy_command.h"' in operation_text
@@ -389,6 +393,8 @@ def test_wp22_legacy_command_allowlist_entries_remain_named_owner_bound_blockers
         "set_compatibility_autopilot_control_target(",
         "refresh_compatibility_typed_air_control_from_action_command(",
         "refresh_optional_compatibility_typed_air_control_from_action_command(",
+        "refresh_compatibility_typed_air_control_from_pending_action_bridge(",
+        "refresh_optional_pending_action_typed_air_control_bridge(",
         "refresh_compatibility_control_mirrors_from_state(",
         "refresh_optional_compatibility_autopilot_movement_command_from_control_state(",
         "refresh_optional_compatibility_lagged_command_mirror_from_control_state(",
@@ -398,7 +404,8 @@ def test_wp22_legacy_command_allowlist_entries_remain_named_owner_bound_blockers
     assert "deliver_pending_movement_command(" in command_link_system_text
     assert "deliver_pending_action_command(" in command_link_system_text
     assert "pending.typed_command.control_state" in command_link_system_text
-    assert "refresh_optional_compatibility_typed_air_control_from_action_command(" in command_link_system_text
+    assert "refresh_optional_pending_action_typed_air_control_bridge(" in command_link_system_text
+    assert "refresh_pending_movement_command_diagnostics_shell(pending);" in command_link_system_text
     assert '.term_at(1).optional()' in command_link_system_text
     assert '.term_at(2).optional()' in command_link_system_text
     assert "MovementCommand* cmd" in command_link_system_text
@@ -417,6 +424,8 @@ def test_wp22_legacy_command_allowlist_entries_remain_named_owner_bound_blockers
         )
     assert "queue_or_refresh_pending_action_command(" in command_api_text
     assert "refresh_compatibility_typed_air_control_from_action_command(" in command_api_text
+    assert "refresh_pending_action_command_typed_air_control_bridge(*pending);" in command_api_text
+    assert "refresh_pending_movement_command_diagnostics_shell(*pending);" in command_api_text
 
 
 def test_wp22_air_control_maintained_consumers_use_single_bridge_owned_resolution_surface() -> None:
@@ -728,6 +737,195 @@ def test_wp22_operation_and_command_link_allow_typed_control_state_without_legac
     assert result.returncode == 0, result.stderr + result.stdout
 
 
+def test_wp22_pending_movement_delivery_ignores_corrupted_legacy_transport_shell() -> None:
+    source = textwrap.dedent(
+        r"""
+        #include <cmath>
+        #include <iostream>
+        #include <flecs.h>
+        #include "components/basic/common.h"
+        #include "components/command/command_link.h"
+        #include "components/command/common/mission_command_control_state.h"
+        #include "components/command/legacy_command.h"
+        #include "systems/systems/command_link_system.h"
+
+        namespace {
+        bool nearly_equal(double a, double b) {
+            return std::abs(a - b) < 1.0e-6;
+        }
+        }
+
+        int main() {
+            flecs::world ecs;
+
+            ecs.component<MissionCommandControlState>();
+            ecs.component<MovementCommand>();
+            ecs.component<LaggedCommand>();
+            ecs.component<PendingMovementCommand>();
+            ecs.component<CommandLink>();
+
+            register_command_link_system(ecs);
+
+            PendingMovementCommand pending = make_pending_movement_command(
+                make_pending_mission_control_command(123.0, 205.0, 1800.0, true),
+                0.0,
+                true
+            );
+            pending.command.target_heading = 301.0;
+            pending.command.target_speed = 88.0;
+            pending.command.target_altitude = 4444.0;
+            pending.command.active = true;
+
+            const flecs::entity entity = ecs.entity()
+                .set<MissionCommandControlState>(
+                    make_mission_command_control_state(10.0, 150.0, 1200.0, false)
+                )
+                .set<PendingMovementCommand>(pending)
+                .set<CommandLink>({0.0, 0.0});
+
+            ecs.progress(0.1f);
+
+            const MissionCommandControlState* state =
+                entity.get<MissionCommandControlState>();
+            const PendingMovementCommand* delivered_pending =
+                entity.get<PendingMovementCommand>();
+            if (!state || !delivered_pending) {
+                std::cerr << "expected typed state and pending transport to remain addressable\n";
+                return 1;
+            }
+            if (!nearly_equal(state->target_heading_deg, 123.0) ||
+                !nearly_equal(state->target_speed_mps, 205.0) ||
+                !nearly_equal(state->target_altitude_m, 1800.0)) {
+                std::cerr << "movement delivery must use pending typed control state, not the legacy shell\n";
+                return 1;
+            }
+            if (!nearly_equal(delivered_pending->command.target_heading, 123.0) ||
+                !nearly_equal(delivered_pending->command.target_speed, 205.0) ||
+                !nearly_equal(delivered_pending->command.target_altitude, 1800.0)) {
+                std::cerr << "movement diagnostics shell should be reprojected from typed pending state\n";
+                return 1;
+            }
+            if (delivered_pending->active) {
+                std::cerr << "pending movement transport should clear after delivery\n";
+                return 1;
+            }
+
+            return 0;
+        }
+        """
+    )
+
+    result = _compile_and_run(source)
+    assert result.returncode == 0, result.stderr + result.stdout
+
+
+def test_wp22_pending_action_delivery_refreshes_typed_overlay_without_claiming_full_replacement() -> None:
+    source = textwrap.dedent(
+        r"""
+        #include <cmath>
+        #include <iostream>
+        #include <flecs.h>
+        #include "components/command/command_link.h"
+        #include "components/command/common/mission_command_control_state.h"
+        #include "components/command/legacy_command.h"
+        #include "systems/systems/command_link_system.h"
+
+        namespace {
+        bool nearly_equal(double a, double b) {
+            return std::abs(a - b) < 1.0e-6;
+        }
+        }
+
+        int main() {
+            flecs::world ecs;
+
+            ecs.component<MissionCommandControlState>();
+            ecs.component<ActionCommand>();
+            ecs.component<PendingActionCommand>();
+            ecs.component<CommandLink>();
+
+            register_command_link_system(ecs);
+
+            MissionCommandControlState initial_state =
+                make_mission_command_control_state(15.0, 180.0, 1400.0, true);
+            MissionCommandTypedAirControlState existing_overlay{};
+            existing_overlay.instrument_active = true;
+            existing_overlay.flaps_pos = 0.35f;
+            existing_overlay.speedbrake_pos = 0.15f;
+            existing_overlay.master_arm = true;
+            existing_overlay.weapon_selected = 4;
+            set_mission_command_typed_air_control_state(initial_state, existing_overlay);
+
+            ActionCommand queued = make_action_command(
+                -0.7,
+                0.8,
+                -0.6,
+                0.3,
+                true,
+                false,
+                true,
+                false,
+                0,
+                0,
+                0,
+                true
+            );
+
+            PendingActionCommand pending =
+                make_pending_action_command(queued, 0.0, true);
+            pending.command.accel_cmd = -1.0;
+            pending.command.active = true;
+
+            const flecs::entity entity = ecs.entity()
+                .set<MissionCommandControlState>(initial_state)
+                .set<ActionCommand>(make_action_command())
+                .set<PendingActionCommand>(pending)
+                .set<CommandLink>({0.0, 0.0});
+
+            ecs.progress(0.1f);
+
+            const MissionCommandControlState* state =
+                entity.get<MissionCommandControlState>();
+            const ActionCommand* delivered_action = entity.get<ActionCommand>();
+            const PendingActionCommand* delivered_pending =
+                entity.get<PendingActionCommand>();
+            if (!state || !delivered_action || !delivered_pending) {
+                std::cerr << "expected action command, typed state, and pending transport\n";
+                return 1;
+            }
+            if (!nearly_equal(delivered_action->accel_cmd, -1.0)) {
+                std::cerr << "legacy action shell should still deliver as the quarantined transport payload\n";
+                return 1;
+            }
+            if (!state->typed_air_control.action_semantics_active) {
+                std::cerr << "delivery should refresh the typed air-control action overlay\n";
+                return 1;
+            }
+            if (!nearly_equal(state->typed_air_control.throttle_command, 0.9)) {
+                std::cerr << "typed overlay should come from the queued bridge snapshot, not the later shell mutation\n";
+                return 1;
+            }
+            if (!state->typed_air_control.instrument_active ||
+                !nearly_equal(state->typed_air_control.flaps_pos, 0.35f) ||
+                !state->typed_air_control.master_arm ||
+                state->typed_air_control.weapon_selected != 4) {
+                std::cerr << "pending action overlay must not wipe unrelated maintained typed fields\n";
+                return 1;
+            }
+            if (delivered_pending->active) {
+                std::cerr << "pending action transport should clear after delivery\n";
+                return 1;
+            }
+
+            return 0;
+        }
+        """
+    )
+
+    result = _compile_and_run(source)
+    assert result.returncode == 0, result.stderr + result.stdout
+
+
 def test_wp22_typed_air_control_overlay_becomes_the_maintained_owner_before_legacy_fallback() -> None:
     source = textwrap.dedent(
         r"""
@@ -901,13 +1099,14 @@ def test_wp22_exact_stage_inventory_demotes_command_contracts_to_guarded_ledger(
         "Guarded contract ledger for exact-stage migration evidence.",
         "They are not maintained implementation truth by themselves.",
         "PendingMovementCommand.command (diagnostics shell)",
-        "MovementCommand (optional compatibility mirror)",
-        "LaggedCommand (optional compatibility mirror)",
+        "MovementCommand (optional compatibility projection)",
+        "LaggedCommand (optional compatibility projection)",
+        "PendingActionCommand.typed_air_control_bridge (overlay projection)",
         "PendingActionCommand remains a quarantined legacy transport shell in this slice.",
-        "MissionCommandControlState is the maintained owner here.",
+        "MissionCommandControlState is the maintained typed owner here.",
         "Lagged command truth lives in MissionCommandControlState.lagged_* for maintained callers.",
         "must not be read as if MovementCommand or ActionCommand were maintained force-stage inputs.",
-        "Instrument command bugs now read MissionCommand plus typed air-control overlays",
+        "Instrument consumers now read MissionCommand plus typed air-control overlays",
         "Propulsion runtime state is the maintained fuel-burn input here.",
     ):
         assert required in exact_stage_text
@@ -919,6 +1118,8 @@ def test_wp22_exact_stage_inventory_demotes_command_contracts_to_guarded_ledger(
         "Apply first-order lag to heading, speed, and altitude targets.",
         "Consumes the global frame clock. It is the first exact stage that mutates movement-command intent.",
         "Throttle source priority across PilotAction, MovementCommand, and ActionCommand must remain exact because later fuel and instrument stages depend on the chosen propulsion state.",
+        "optional compatibility mirror",
+        "maintained command owner",
     ):
         assert forbidden not in exact_stage_text, (
             "exact-stage inventory should no longer present compatibility mirrors or quarantined "

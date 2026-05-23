@@ -612,7 +612,8 @@ def test_wp22_exact_stage_inventory_stays_contract_ledger_not_runtime_truth_regi
         "They are not maintained implementation truth by themselves.",
         "maintained delayed-delivery truth lands in MissionCommandControlState",
         "PendingActionCommand remains a quarantined legacy transport shell in this slice.",
-        "MissionCommandControlState is the maintained owner here.",
+        "PendingActionCommand.typed_air_control_bridge (overlay projection)",
+        "MissionCommandControlState is the maintained typed owner here.",
         "Propulsion runtime state is the maintained fuel-burn input here.",
     ):
         assert required in text
@@ -621,6 +622,8 @@ def test_wp22_exact_stage_inventory_stays_contract_ledger_not_runtime_truth_regi
         "Map normalized RL actions onto legacy heading/speed/altitude targets.",
         "Apply first-order lag to heading, speed, and altitude targets.",
         "Consumes the global frame clock. It is the first exact stage that mutates movement-command intent.",
+        "optional compatibility mirror",
+        "maintained command owner",
     ):
         assert forbidden not in text
 
@@ -628,6 +631,40 @@ def test_wp22_exact_stage_inventory_stays_contract_ledger_not_runtime_truth_regi
         "exact-stage inventory should remain a compact contract ledger and guard surface, "
         "not expand into another structural god file"
     )
+
+
+def test_wp22_command_link_pending_transport_headers_keep_typed_owner_markers_explicit() -> None:
+    command_link = _text(REPO_ROOT / "src" / "components" / "command" / "command_link.h")
+    bridge = _text(REPO_ROOT / "src" / "components" / "command" / "legacy_command_bridge.h")
+    command_api = _text(REPO_ROOT / "src" / "core" / "engine" / "simulation_kernel_command_api.cpp")
+    command_link_system = _text(REPO_ROOT / "src" / "systems" / "systems" / "command_link_system.h")
+
+    for required in (
+        "Diagnostics transport shell only; maintained delivery must consume typed_command.",
+        "refresh_pending_movement_command_diagnostics_shell(",
+        "typed_air_control_bridge",
+        "Bridge-owned typed overlay snapshot only. This is not a full typed",
+        "action replacement; it merely preserves the maintained air-control",
+    ):
+        assert required in command_link
+
+    for required in (
+        "refresh_compatibility_typed_air_control_from_pending_action_bridge(",
+        "refresh_optional_pending_action_typed_air_control_bridge(",
+    ):
+        assert required in bridge
+
+    for required in (
+        "refresh_pending_action_command_typed_air_control_bridge(*pending);",
+        "refresh_pending_movement_command_diagnostics_shell(*pending);",
+    ):
+        assert required in command_api
+
+    for required in (
+        "refresh_optional_pending_action_typed_air_control_bridge(",
+        "refresh_pending_movement_command_diagnostics_shell(pending);",
+    ):
+        assert required in command_link_system
 
 
 def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_blockers_explicit() -> None:

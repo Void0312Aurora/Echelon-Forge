@@ -108,8 +108,10 @@ const std::vector<ExactStepStageDescriptor>& exact_gpu_stage_inventory() {
 
 const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_inventory() {
     // Guarded contract ledger for exact-stage migration evidence. These entries
-    // document maintained typed owners, remaining compatibility projections,
-    // and quarantined legacy shells that the trace pipeline still exposes.
+    // document typed owners, compatibility projections, and diagnostics shells
+    // that the trace pipeline still exposes.
+    // Keep legacy transport shells named as diagnostics/compatibility evidence,
+    // never as maintained truth.
     // They are not maintained implementation truth by themselves.
     static const std::vector<ExactStepStageContractDescriptor> contracts = {
         {
@@ -125,31 +127,43 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
                 "MissionCommandControlState",
                 "PendingMovementCommand.active",
                 "PendingMovementCommand.command (diagnostics shell)",
-                "MovementCommand (optional compatibility mirror)",
-                "LaggedCommand (optional compatibility mirror)"
+                "MovementCommand (optional compatibility projection)",
+                "LaggedCommand (optional compatibility projection)"
             }),
             string_list({
                 "packed.PendingMovementCommand",
-                "packed.MovementCommand (optional mirror)",
-                "packed.LaggedCommand (optional mirror)",
+                "packed.MovementCommand (optional projection)",
+                "packed.LaggedCommand (optional projection)",
                 "apply_signatures"
             }),
             string_list({}),
-            "Apply delayed typed control-state targets once latency expires and refresh compatibility mirrors only when present.",
-            "Guarded contract ledger entry: maintained delayed-delivery truth lands in MissionCommandControlState. PendingMovementCommand.command plus optional MovementCommand/LaggedCommand mirrors remain diagnostics or compatibility evidence, not maintained command ownership."
+            "Apply delayed typed control-state targets once latency expires and refresh diagnostics/compatibility projections only when present.",
+            "Guarded contract ledger entry: maintained delayed-delivery truth lands in MissionCommandControlState. PendingMovementCommand.command is a diagnostics shell, and optional MovementCommand/LaggedCommand projections remain compatibility evidence rather than maintained implementation truth."
         },
         {
             3, "CommandLinkAction", "OnUpdate", "command", true, true,
-            string_list({"PendingActionCommand", "CommandLink", "world_time_total"}),
+            string_list({
+                "PendingActionCommand.command (diagnostics shell)",
+                "PendingActionCommand.typed_air_control_bridge (overlay projection)",
+                "PendingActionCommand.active",
+                "CommandLink",
+                "world_time_total"
+            }),
             string_list({
                 "ActionCommand",
                 "PendingActionCommand.active",
+                "PendingActionCommand.typed_air_control_bridge (overlay projection)",
                 "MissionCommandControlState.typed_air_control (optional bridge projection)"
             }),
-            string_list({"packed.ActionCommand", "packed.PendingActionCommand", "apply_signatures"}),
+            string_list({
+                "packed.ActionCommand",
+                "packed.PendingActionCommand",
+                "packed.PendingActionCommand.typed_air_control_bridge",
+                "apply_signatures"
+            }),
             string_list({"CommandLinkMovement"}),
-            "Deliver queued action commands into the live normalized action surface while keeping the pending shell quarantined.",
-            "PendingActionCommand remains a quarantined legacy transport shell in this slice. When MissionCommandControlState is already present, delivery refreshes its typed air-control overlay without claiming a full typed action replacement."
+            "Deliver queued action commands through the typed air-control overlay while keeping the pending shell quarantined.",
+            "PendingActionCommand remains a quarantined legacy transport shell in this slice. Its typed_air_control_bridge is an overlay projection only; when MissionCommandControlState is already present, delivery refreshes the typed air-control overlay without claiming a full typed action replacement."
         },
         {
             4, "CommandLinkMission", "OnUpdate", "command", true, true,
@@ -168,13 +182,13 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
                 "ActionSpaceConfig",
                 "Transform",
                 "Velocity",
-                "MovementCommand (optional compatibility mirror)"
+                "MovementCommand (optional compatibility projection)"
             }),
-            string_list({"MissionCommandControlState", "MovementCommand (optional compatibility mirror)"}),
-            string_list({"packed.MovementCommand (optional mirror)", "apply_signatures"}),
+            string_list({"MissionCommandControlState", "MovementCommand (optional compatibility projection)"}),
+            string_list({"packed.MovementCommand (optional projection)", "apply_signatures"}),
             string_list({"CommandLinkMission"}),
-            "Map normalized RL actions onto typed control-state targets and refresh optional compatibility movement mirrors.",
-            "MissionCommandControlState is the maintained owner here. MovementCommand survives only as an optional bridge or trace projection for compatibility consumers."
+            "Map normalized RL actions onto typed control-state targets and refresh optional compatibility movement projections only.",
+            "MissionCommandControlState is the maintained typed owner here. MovementCommand survives only as an optional bridge or trace projection for compatibility consumers."
         },
         {
             6, "CommandLag", "OnUpdate", "command", true, true,
@@ -183,12 +197,12 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
                 "CommandLag",
                 "Transform",
                 "Velocity",
-                "LaggedCommand (optional compatibility mirror)"
+                "LaggedCommand (optional compatibility projection)"
             }),
-            string_list({"MissionCommandControlState", "LaggedCommand (optional compatibility mirror)"}),
-            string_list({"packed.LaggedCommand (optional mirror)", "apply_signatures"}),
+            string_list({"MissionCommandControlState", "LaggedCommand (optional compatibility projection)"}),
+            string_list({"packed.LaggedCommand (optional projection)", "apply_signatures"}),
             string_list({"ActionMapping"}),
-            "Apply first-order lag to typed command-control targets and refresh optional compatibility lag mirrors.",
+            "Apply first-order lag to typed command-control targets and refresh optional compatibility lag projections only.",
             "Lagged command truth lives in MissionCommandControlState.lagged_* for maintained callers. LaggedCommand remains optional compatibility evidence for bridge consumers and exact-stage traces."
         },
         {
@@ -212,7 +226,7 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
             }),
             string_list({"CommandLag"}),
             "Run the exact control model from typed control-state inputs and refresh model-owned control side effects.",
-            "The Flecs signature exposes MissionCommandControlState as the maintained command owner. Additional PilotAction/MissionCommand reads and ForceAccumulator, ControlLawState, or LandingGear side effects happen inside the control-model update and stay documented here as contract evidence, not as standalone ownership claims."
+            "The Flecs signature exposes MissionCommandControlState as the maintained typed owner. Additional PilotAction/MissionCommand reads and ForceAccumulator, ControlLawState, or LandingGear side effects happen inside the control-model update and stay documented here as contract evidence, not as standalone ownership claims."
         },
         {
             8, "ClearForces", "OnLoad", "physics", true, true,
@@ -242,7 +256,7 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
             string_list({"hidden_dynamics.force_accumulator", "packed.Propulsion", "apply_signatures"}),
             string_list({"ComputeAeroState"}),
             "Accumulate gravity and thrust forces from the resolved propulsion state.",
-            "Throttle and command priority are resolved upstream through the typed air-control bridge and ComputePropulsion. This ledger must not be read as if MovementCommand or ActionCommand were maintained force-stage inputs."
+            "Throttle and command priority are resolved upstream through MissionCommandControlState plus the typed air-control bridge and ComputePropulsion. This ledger must not be read as if MovementCommand or ActionCommand were maintained force-stage inputs."
         },
         {
             11, "ComputeAerodynamics", "OnUpdate", "physics", true, true,
@@ -327,7 +341,7 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
             string_list({"instrument", "terminal"}),
             string_list({"NavigationSystem"}),
             "Build learner-facing instrument outputs from exact physics, navigation, and typed or mission command projections.",
-            "Instrument command bugs now read MissionCommand plus typed air-control overlays instead of treating MovementCommand as maintained truth. Legacy mirrors remain upstream compatibility evidence only."
+            "Instrument consumers now read MissionCommand plus typed air-control overlays instead of treating MovementCommand as maintained truth. Legacy mirrors remain upstream compatibility evidence only."
         },
         {
             24, "FuelConsumption", "OnUpdate", "logistics", true, true,
