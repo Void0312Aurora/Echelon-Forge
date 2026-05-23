@@ -88,15 +88,21 @@ The active design conclusion is:
     [architecture refactoring audit](../review/architecture_refactoring_audit_20260522.md)
     is a new architecture-level fact: several compatibility layers and old
     implementation surfaces still act as default or maintained paths. This
-    invalidates the WP21 acceptance claim and opens `WP22 Legacy Compatibility
-    Retirement And Architecture Hardening`, whose closure standard is stricter:
-    legacy paths must be migrated, deleted, or quarantined behind explicit
-    opt-in guards rather than accepted as open residuals.
-19. When this subproject is split across subagents or workers, follow the
+    invalidated the WP21 acceptance claim and opened `WP22 Legacy Compatibility
+    Retirement And Architecture Hardening`, but WP22's continuation stream was
+    stopped by the owner on `2026-05-23` after uncontrolled follow-up waves,
+    partial evidence reuse, and quarantine/dual-representation drift made the
+    plan unacceptable.
+19. The latest legacy-retirement recovery record is `WP23 Legacy Retirement
+    Recovery And Reset`: it froze WP22, classified current dirty work, forced
+    delete-or-block decisions, resolved single-representation tasking/public-API
+    exits as blocked, skipped implementation, and closed as `blocked` on
+    `2026-05-24`.
+20. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
-20. Commit messages for implementation closure should use capability/result
+21. Commit messages for implementation closure should use capability/result
     language and avoid internal work-package labels such as `WP13` or `WP14`.
 
 ## Work Packages
@@ -128,7 +134,37 @@ The active design conclusion is:
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | Align existing CUDA helpers, device-resident output contracts, diagnostics boundaries, and resident-state sync/shard vocabulary without promoting exact GPU or maintained resident-state support by default | [CUDA and resident-state mainline alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md), [fact ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md), [device output contract](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md), [GPU helper diagnostics boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md), [resident-state sync and shard contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md), [first CUDA alignment slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md), [integration handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md), [dispatch queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) |
 | `WP20 Public Capability-Platform Composition` | complete / accepted | Publicize the typed capability-platform setup path through validation-first admission/result contracts and compatibility-preserving materialization while keeping type-name spawning and scenario schema stable | [public capability-platform composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md), [fact ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md), [public typed spawn contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md), [runtime setup consume bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md), [facade/binding surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md), [compatibility/schema guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md), [integration handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md), [dispatch queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.md) |
 | `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | Claimed closure attempted to turn accepted counterfactual contracts and selected runtime slices into maintained facade-owned experiment execution, scenario generation, evidence collection, and legacy cleanup, but owner rejected the closure because compatibility layers and incomplete subagent work remained. | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md), [fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md), [snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md), [counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md), [scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md), [experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md), [final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md), [dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md), [disputed acceptance record](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) |
-| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | planned / remediation active; overall complete no | Force-retire post-WP21 compatibility layers and old implementation surfaces that still act as default maintained paths; migrate, delete, or quarantine them behind explicit opt-in guards | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [fact ledger / kill list](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.md), [Python bypass retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.md), [runtime escape-hatch closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md), [command/DTO retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.md), [structural decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md), [guard/closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
+| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen; superseded by WP23 | Attempted to force-retire post-WP21 compatibility layers, but the owner stopped the stream after uncontrolled follow-up waves and partial/quarantine evidence drift. Its queue is historical only and must not be dispatched. | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
+| `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | Froze WP22, classified current dirty work, forced delete-or-block decisions, recorded TaskOrder and public API exits as blocked, skipped implementation because no deletion-ready surface was identified, and closed as controlled blocked recovery. | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md) |
+
+## WP23 Legacy Retirement Recovery And Reset
+
+Output:
+
+- [WP23 Legacy Retirement Recovery And Reset](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md)
+
+WP23 is a reset, not a continuation wave. It froze WP22 queue entries as
+historical evidence and stayed within the strict documentation budget: only the
+canonical WP23 plan plus its Chinese companion were used. It audited the dirty
+worktree, classified every legacy/compatibility surface, and closed as
+`blocked` when deletion or migration proved unsafe inside the bounded
+implementation window.
+
+WP23 close-out map:
+
+- `WP23-A Freeze And Salvage Audit` completed the dirty-work classification.
+- `WP23-B Delete-Or-Block Table` completed the source-backed blocked/delete
+  decision baseline.
+- `WP23-C Tasking Single Representation` closed as `blocked` because TaskOrder
+  maintained-batch work still coexists with public whole-shell read/write and
+  observation exports.
+- `WP23-D Public API Exit` closed as `blocked public API` for runtime/world/batch
+  escape hatches, TaskOrder whole-shell APIs, observation tasking exports, and
+  raw GPU/visual overloads.
+- `WP23-E Minimal Implementation Batch` was skipped because no deletion-ready
+  implementation surface was identified.
+- `WP23-F Close-Out` completed with controlled `blocked` recovery, not legacy
+  retirement acceptance.
 
 ## WP22 Legacy Compatibility Retirement And Architecture Hardening
 
@@ -143,10 +179,10 @@ Output:
 - [WP22-F Guardrail And Acceptance Closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.md)
 - [WP22 Subagent Dispatch Queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md)
 
-WP22 is opened by the post-WP21 architecture refactoring audit. Unlike prior
-compatibility-preserving stages, WP22 does not accept open legacy residuals as a
-pass state. Each old path must be verified, migrated, deleted, or quarantined
-behind explicit opt-in guards.
+WP22 is frozen and superseded by WP23. It was opened by the post-WP21
+architecture refactoring audit, but its continuation stream failed the owner's
+process bar after too many ad-hoc waves and partial/quarantine evidence loops.
+These files remain useful provenance, not an active dispatch queue.
 
 WP22 planned map:
 

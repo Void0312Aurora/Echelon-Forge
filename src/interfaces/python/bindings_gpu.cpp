@@ -474,30 +474,61 @@ BatchExecutionObservationOutputs compute_execution_observation_batch_binding_out
     return out;
 }
 
-WorldBatchVisualObservationCompatibilityExport compute_world_batch_visual_binding_outputs(
+bool visual_binding_batch_allows_device_export(
+    const std::vector<WorldBatchVisualBindingCompatibilityScene>& scenes
+) {
+    if (scenes.empty()) {
+        return false;
+    }
+    for (std::size_t idx = 1; idx < scenes.size(); ++idx) {
+        if (!world_batch_visual_binding_compatibility::default_environment_snapshots_equal(
+                scenes[0].environment_snapshot,
+                scenes[idx].environment_snapshot
+            )) {
+            return false;
+        }
+    }
+    return true;
+}
+
+WorldBatchVisualObservationCompatibilityExport compute_compat_world_batch_visual_binding_outputs(
     const WorldBatchRuntime& runtime,
     const std::vector<WorldEntityRef>& refs,
     int downsample,
     bool use_gpu
 ) {
     const int factor = std::max(1, downsample);
-    return world_batch_visual_binding_compatibility::render_scenes_batch(
-        runtime.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu),
+    const auto scenes = runtime.collect_visual_binding_compatibility_scenes_batch(
+        refs,
+        factor,
         use_gpu
     );
+    auto outputs = world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
+    if (use_gpu && visual_binding_batch_allows_device_export(scenes)) {
+        outputs.device_ptr = gpu::last_visual_output_device_ptr();
+        outputs.device_float_count = gpu::last_visual_output_float_count();
+    }
+    return outputs;
 }
 
-WorldBatchVisualObservationCompatibilityExport compute_world_batch_visual_binding_outputs(
+WorldBatchVisualObservationCompatibilityExport compute_runtime_facade_visual_binding_outputs(
     const RuntimeFacade& facade,
     const std::vector<WorldEntityRef>& refs,
     int downsample,
     bool use_gpu
 ) {
     const int factor = std::max(1, downsample);
-    return world_batch_visual_binding_compatibility::render_scenes_batch(
-        facade.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu),
+    const auto scenes = facade.collect_visual_binding_compatibility_scenes_batch(
+        refs,
+        factor,
         use_gpu
     );
+    auto outputs = world_batch_visual_binding_compatibility::render_scenes_batch(scenes, use_gpu);
+    if (use_gpu && visual_binding_batch_allows_device_export(scenes)) {
+        outputs.device_ptr = gpu::last_visual_output_device_ptr();
+        outputs.device_float_count = gpu::last_visual_output_float_count();
+    }
+    return outputs;
 }
 } // namespace
 
@@ -793,7 +824,12 @@ void bind_gpu(nb::module_& m) {
            const std::vector<WorldEntityRef>& refs,
            int downsample,
            bool use_gpu) {
-            auto outputs = compute_world_batch_visual_binding_outputs(runtime, refs, downsample, use_gpu);
+            auto outputs = compute_compat_world_batch_visual_binding_outputs(
+                runtime,
+                refs,
+                downsample,
+                use_gpu
+            );
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),
@@ -813,7 +849,12 @@ void bind_gpu(nb::module_& m) {
            const std::vector<WorldEntityRef>& refs,
            int downsample,
            bool use_gpu) {
-            auto outputs = compute_world_batch_visual_binding_outputs(facade, refs, downsample, use_gpu);
+            auto outputs = compute_runtime_facade_visual_binding_outputs(
+                facade,
+                refs,
+                downsample,
+                use_gpu
+            );
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),
@@ -833,7 +874,12 @@ void bind_gpu(nb::module_& m) {
            const std::vector<WorldEntityRef>& refs,
            int downsample,
            bool use_gpu) {
-            auto outputs = compute_world_batch_visual_binding_outputs(runtime, refs, downsample, use_gpu);
+            auto outputs = compute_compat_world_batch_visual_binding_outputs(
+                runtime,
+                refs,
+                downsample,
+                use_gpu
+            );
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),
@@ -869,7 +915,12 @@ void bind_gpu(nb::module_& m) {
            const std::vector<WorldEntityRef>& refs,
            int downsample,
            bool use_gpu) {
-            auto outputs = compute_world_batch_visual_binding_outputs(facade, refs, downsample, use_gpu);
+            auto outputs = compute_runtime_facade_visual_binding_outputs(
+                facade,
+                refs,
+                downsample,
+                use_gpu
+            );
             size_t shape[4] = {
                 outputs.batch_size,
                 static_cast<std::size_t>(outputs.out_h),

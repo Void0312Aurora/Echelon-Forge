@@ -22,7 +22,7 @@ struct WorldBatchVisualObservationCompatibilityExport {
 
 namespace world_batch_visual_binding_compatibility {
 
-inline bool collect_scene(
+inline bool collect_scene_from_candidate_ids(
     const SimulationKernel& kernel,
     std::uint64_t entity_id,
     int downsample,
@@ -114,6 +114,22 @@ inline bool collect_scene(
     return true;
 }
 
+inline bool collect_scene(
+    const SimulationKernel& kernel,
+    std::uint64_t entity_id,
+    int downsample,
+    WorldBatchVisualBindingCompatibilityScene* out_scene,
+    const std::vector<std::uint64_t>* candidate_ids
+) {
+    return collect_scene_from_candidate_ids(
+        kernel,
+        entity_id,
+        downsample,
+        out_scene,
+        candidate_ids
+    );
+}
+
 inline bool default_environment_snapshots_equal(
     const DefaultEnvironmentSnapshot& lhs,
     const DefaultEnvironmentSnapshot& rhs
@@ -192,10 +208,6 @@ inline WorldBatchVisualObservationCompatibilityExport render_scenes_batch(
             ? gpu::render_visual_experiment_batch(requests, objects_batch, envs.front())
             : gpu::render_visual_reference_cpu_batch(requests, objects_batch, envs.front());
         out.flat = std::move(rendered);
-        if (use_gpu) {
-            out.device_ptr = gpu::last_visual_output_device_ptr();
-            out.device_float_count = gpu::last_visual_output_float_count();
-        }
         return out;
     }
 

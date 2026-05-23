@@ -67,14 +67,18 @@
     [architecture refactoring audit](../review/architecture_refactoring_audit_20260522.zh.md)
     是新的架构级事实：若干 compatibility layers 与旧实现面仍作为默认或
     maintained paths 存在。这使 WP21 的验收主张失效，并打开 `WP22 Legacy
-    Compatibility Retirement And Architecture Hardening`；其 closure 标准更严格：
-    legacy paths 必须迁移、删除，或隔离到显式 opt-in guards 后，而不能继续作为
-    open residual 被接受。
-19. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
+    Compatibility Retirement And Architecture Hardening`；但 WP22 continuation
+    stream 已在 `2026-05-23` 被 owner 终止，因为 uncontrolled follow-up waves、
+    partial evidence reuse 与 quarantine/dual-representation drift 使该计划不可接受。
+19. 最新 legacy-retirement recovery 记录是 `WP23 Legacy Retirement Recovery And
+    Reset`：它冻结 WP22，分类当前 dirty work，强制 delete-or-block 判定，将
+    single-representation tasking/public-API exits 判定为 blocked，跳过
+    implementation，并于 `2026-05-24` 以 `blocked` 关闭。
+20. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
     拆写同一张规范性表格。
-20. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
+21. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
     或 `WP14` 这类 internal work-package labels。
 
 ## 工作包
@@ -106,7 +110,32 @@
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | 对齐现有 CUDA helpers、device-resident output contracts、diagnostics boundaries 与 resident-state sync/shard vocabulary，同时默认不晋级 exact GPU 或 maintained resident-state support | [CUDA and resident-state mainline alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)、[fact ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)、[device output contract](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)、[GPU helper diagnostics boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)、[resident-state sync and shard contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)、[first CUDA alignment slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)、[integration handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) |
 | `WP20 Public Capability-Platform Composition` | complete / accepted | 通过 validation-first admission/result contracts 与 compatibility-preserving materialization 公开 typed capability-platform setup path，同时保持 type-name spawning 与 scenario schema 稳定 | [public capability-platform composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)、[fact ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)、[public typed spawn contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)、[runtime setup consume bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)、[facade/binding surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)、[compatibility/schema guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)、[integration handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md) |
 | `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | claimed closure 试图将已验收 counterfactual contracts 与 selected runtime slices 转为 maintained facade-owned experiment execution、scenario generation、evidence collection 与 legacy cleanup，但 owner 因 compatibility layers 与未闭合 subagent work 仍残留而否决该收口。 | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)、[fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)、[snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)、[counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)、[scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)、[experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)、[final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)、[dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)、[已争议验收记录](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md) |
-| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | planned / remediation active；overall complete no | 强制退场 post-WP21 后仍作为默认 maintained paths 的兼容层和旧实现面；迁移、删除或隔离到显式 opt-in guards 后 | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[fact ledger / kill list](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.zh.md)、[Python bypass retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.zh.md)、[runtime escape-hatch closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md)、[command/DTO retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md)、[structural decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md)、[guard/closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.zh.md)、[dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
+| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen；由 WP23 取代 | 曾试图强制退场 post-WP21 compatibility layers，但 owner 因 uncontrolled follow-up waves 与 partial/quarantine evidence drift 终止该流。其 queue 只作历史记录，不得再派发。 | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.zh.md)、[dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
+| `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | 冻结 WP22，分类当前 dirty work，强制 delete-or-block decisions，将 TaskOrder 与 public API exits 记录为 blocked；因没有 deletion-ready surface 而跳过 implementation，并以受控 blocked recovery 收口。 | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md) |
+
+## WP23 Legacy Retirement Recovery And Reset
+
+产出：
+
+- [WP23 Legacy Retirement Recovery And Reset](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md)
+
+WP23 是 reset，不是 continuation wave。它把 WP22 queue entries 冻结为历史证据，并保持
+严格文档预算：只使用 canonical WP23 plan 与中文 companion。它审计 dirty worktree，
+分类每个 legacy/compatibility surface，并在有边界实现窗口内无法安全删除或迁移时以
+`blocked` close-out。
+
+WP23 收口地图：
+
+- `WP23-A Freeze And Salvage Audit` 已完成 dirty-work 分类。
+- `WP23-B Delete-Or-Block Table` 已完成 source-backed blocked/delete 判定基线。
+- `WP23-C Tasking Single Representation` 以 `blocked` 收口，因为 TaskOrder
+  maintained-batch work 仍与 public whole-shell read/write 和 observation exports 共存。
+- `WP23-D Public API Exit` 对 runtime/world/batch escape hatches、TaskOrder
+  whole-shell APIs、observation tasking exports 与 raw GPU/visual overloads 作出
+  `blocked public API` 判定。
+- `WP23-E Minimal Implementation Batch` 因没有识别出 deletion-ready implementation
+  surface 而跳过。
+- `WP23-F Close-Out` 完成受控 `blocked` recovery，不代表 legacy retirement acceptance。
 
 ## WP22 Legacy Compatibility Retirement And Architecture Hardening
 
@@ -121,9 +150,9 @@
 - [WP22-F Guardrail And Acceptance Closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.zh.md)
 - [WP22 Subagent Dispatch Queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md)
 
-WP22 由 post-WP21 architecture refactoring audit 打开。不同于此前 compatibility-preserving
-阶段，WP22 不再把开放 legacy residuals 当作 pass state。每条旧路径都必须被核验、
-迁移、删除，或隔离到 explicit opt-in guards 后。
+WP22 已冻结并由 WP23 取代。它由 post-WP21 architecture refactoring audit 打开，但
+continuation stream 因过多 ad-hoc waves 与 partial/quarantine evidence loops 未达到
+owner 的过程标准。这些文件只保留为 provenance，不再是 active dispatch queue。
 
 WP22 计划地图：
 
