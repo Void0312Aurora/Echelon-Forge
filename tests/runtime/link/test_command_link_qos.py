@@ -109,6 +109,133 @@ def _step_until_command_code(
 
 
 class MissionCommandLinkQosTests(unittest.TestCase):
+    def test_delayed_movement_pending_shell_stays_diagnostics_only_without_forcing_legacy_mirrors(self) -> None:
+        kernel, entity_id = _spawn_aircraft_with_link(latency_s=0.3)
+
+        movement_before = kernel.debug_get_legacy_movement_command(entity_id)
+        self.assertTrue(bool(movement_before["diagnostics_only"]))
+        self.assertTrue(bool(movement_before["quarantined_surface"]))
+        self.assertTrue(bool(movement_before["diagnostics_legacy_mirror"]))
+        self.assertTrue(bool(movement_before["read_only_snapshot"]))
+        self.assertFalse(bool(movement_before["maintained_truth"]))
+        self.assertEqual(str(movement_before["diagnostics_quarantine_marker"]), "WP22-R1-2")
+        self.assertEqual(str(movement_before["state_access_mode"]), "read_only_legacy_mirror")
+        self.assertAlmostEqual(float(movement_before["target_heading"]), 90.0, places=6)
+        self.assertAlmostEqual(float(movement_before["target_speed"]), 180.0, places=6)
+        self.assertAlmostEqual(float(movement_before["target_altitude"]), 1200.0, places=6)
+        self.assertTrue(bool(movement_before["control_state_present"]))
+        self.assertAlmostEqual(float(movement_before["control_target_heading_deg"]), 90.0, places=6)
+        self.assertAlmostEqual(float(movement_before["control_target_speed_mps"]), 180.0, places=6)
+        self.assertAlmostEqual(float(movement_before["control_target_altitude_m"]), 1200.0, places=6)
+
+        kernel.set_command(entity_id, 210.0, 195.0, 1750.0)
+
+        movement_after_queue = kernel.debug_get_legacy_movement_command(entity_id)
+        self.assertTrue(bool(movement_after_queue["diagnostics_legacy_mirror"]))
+        self.assertAlmostEqual(
+            float(movement_after_queue["target_heading"]),
+            float(movement_before["target_heading"]),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(movement_after_queue["target_speed"]),
+            float(movement_before["target_speed"]),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(movement_after_queue["target_altitude"]),
+            float(movement_before["target_altitude"]),
+            places=6,
+        )
+
+        pending = kernel.debug_get_pending_movement_command(entity_id)
+        self.assertTrue(bool(pending["diagnostics_only"]))
+        self.assertTrue(bool(pending["quarantined_surface"]))
+        self.assertTrue(bool(pending["diagnostics_transport_shell"]))
+        self.assertTrue(bool(pending["read_only_snapshot"]))
+        self.assertFalse(bool(pending["maintained_truth"]))
+        self.assertEqual(str(pending["diagnostics_quarantine_marker"]), "WP22-R1-2")
+        self.assertEqual(str(pending["diagnostics_surface_kind"]), "diagnostics_pending_transport_shell")
+        self.assertEqual(str(pending["runtime_owner_kind"]), "mission_command_control_state")
+        self.assertEqual(str(pending["transport_shell_kind"]), "pending_legacy_movement_command")
+        self.assertEqual(str(pending["state_access_mode"]), "read_only_transport_shell")
+        self.assertEqual(
+            str(pending["transport_shell_truth_owner"]),
+            "typed_control_state_pending_delivery",
+        )
+        self.assertTrue(bool(pending["active"]))
+        self.assertTrue(bool(pending["command_shell_active"]))
+        self.assertAlmostEqual(float(pending["target_heading"]), 210.0, places=6)
+        self.assertAlmostEqual(float(pending["target_speed"]), 195.0, places=6)
+        self.assertAlmostEqual(float(pending["target_altitude"]), 1750.0, places=6)
+        self.assertFalse(bool(pending["use_stick_control"]))
+        self.assertTrue(bool(pending["current_control_state_present"]))
+        self.assertAlmostEqual(
+            float(pending["current_control_target_heading_deg"]),
+            float(movement_before["control_target_heading_deg"]),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(pending["current_control_target_speed_mps"]),
+            float(movement_before["control_target_speed_mps"]),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(pending["current_control_target_altitude_m"]),
+            float(movement_before["control_target_altitude_m"]),
+            places=6,
+        )
+        self.assertNotAlmostEqual(
+            float(movement_after_queue["target_heading"]),
+            float(pending["target_heading"]),
+            places=6,
+        )
+
+    def test_non_ship_set_command_uses_typed_control_state_for_immediate_and_delayed_delivery(self) -> None:
+        kernel, entity_id = _spawn_aircraft_with_link(latency_s=0.0)
+
+        kernel.set_command(entity_id, 0.0, 240.0, 1500.0)
+
+        heading_before = float(kernel.get_unit_heading(entity_id))
+        for _ in range(20):
+            kernel.step()
+        heading_after_immediate = float(kernel.get_unit_heading(entity_id))
+        self.assertLess(heading_after_immediate, heading_before - 5.0)
+
+        kernel.set_command_link(entity_id, 0.3, 0.0)
+        kernel.set_command(entity_id, 180.0, 220.0, 1500.0)
+
+        pending = kernel.debug_get_pending_movement_command(entity_id)
+        self.assertTrue(bool(pending["read_only_snapshot"]))
+        self.assertTrue(bool(pending["active"]))
+        self.assertAlmostEqual(float(pending["target_heading"]), 180.0, places=6)
+
+        kernel_baseline, baseline_entity_id = _spawn_aircraft_with_link(latency_s=0.0)
+        kernel_baseline.set_command(baseline_entity_id, 0.0, 240.0, 1500.0)
+        for _ in range(20):
+            kernel_baseline.step()
+
+        for _ in range(2):
+            kernel.step()
+            kernel_baseline.step()
+
+        pending_before_delivery = kernel.debug_get_pending_movement_command(entity_id)
+        self.assertTrue(bool(pending_before_delivery["active"]))
+
+        kernel.step()
+        kernel_baseline.step()
+
+        pending_after_delivery = kernel.debug_get_pending_movement_command(entity_id)
+        self.assertFalse(bool(pending_after_delivery["active"]))
+
+        for _ in range(37):
+            kernel.step()
+            kernel_baseline.step()
+
+        baseline_heading = float(kernel_baseline.get_unit_heading(baseline_entity_id))
+        heading_after_delivery = float(kernel.get_unit_heading(entity_id))
+        self.assertGreater(heading_after_delivery, baseline_heading + 20.0)
+
     def test_delayed_mission_command_preserves_roe_and_navigation_fields_until_atomic_delivery(self) -> None:
         kernel = ef_py.SimulationKernel()
         kernel.reset(6201)
@@ -377,6 +504,7 @@ class MissionCommandLinkQosTests(unittest.TestCase):
 
         kernel.set_command(entity_id, 15.0, 210.0, 1800.0)
         first_pending = kernel.debug_get_pending_movement_command(entity_id)
+        self.assertTrue(bool(first_pending["diagnostics_only"]))
         self.assertTrue(bool(first_pending["active"]))
         self.assertAlmostEqual(float(first_pending["deliver_time"]), 0.3, places=6)
         self.assertAlmostEqual(float(first_pending["target_heading"]), 15.0, places=6)
@@ -385,17 +513,41 @@ class MissionCommandLinkQosTests(unittest.TestCase):
         kernel.set_command(entity_id, 135.0, 190.0, 1600.0)
 
         refreshed_pending = kernel.debug_get_pending_movement_command(entity_id)
+        self.assertTrue(bool(refreshed_pending["diagnostics_only"]))
         self.assertTrue(bool(refreshed_pending["active"]))
         self.assertAlmostEqual(float(refreshed_pending["deliver_time"]), 0.4, places=6)
         self.assertAlmostEqual(float(refreshed_pending["target_heading"]), 135.0, places=6)
         self.assertAlmostEqual(float(refreshed_pending["target_speed"]), 190.0, places=6)
         self.assertAlmostEqual(float(refreshed_pending["target_altitude"]), 1600.0, places=6)
+        self.assertTrue(bool(refreshed_pending["current_control_state_present"]))
+        self.assertTrue(bool(refreshed_pending["current_control_state_active"]))
+        self.assertNotAlmostEqual(
+            float(refreshed_pending["current_control_target_heading_deg"]),
+            float(refreshed_pending["target_heading"]),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(refreshed_pending["current_control_target_heading_deg"]),
+            float(first_pending["current_control_target_heading_deg"]),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(refreshed_pending["current_control_target_speed_mps"]),
+            float(first_pending["current_control_target_speed_mps"]),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(refreshed_pending["current_control_target_altitude_m"]),
+            float(first_pending["current_control_target_altitude_m"]),
+            places=6,
+        )
 
     def test_pending_action_refresh_uses_newer_deliver_time(self) -> None:
         kernel, entity_id = _spawn_aircraft_with_link(latency_s=0.25)
 
         kernel.set_action(entity_id, 0.2, -0.4, 0.1, 0.0, False, False, False)
         first_pending = kernel.debug_get_pending_action_command(entity_id)
+        self.assertTrue(bool(first_pending["diagnostics_only"]))
         self.assertTrue(bool(first_pending["active"]))
         self.assertAlmostEqual(float(first_pending["deliver_time"]), 0.25, places=6)
         self.assertAlmostEqual(float(first_pending["turn_rate_cmd"]), 0.2, places=6)
@@ -404,6 +556,7 @@ class MissionCommandLinkQosTests(unittest.TestCase):
         kernel.set_action(entity_id, -0.7, 0.8, -0.6, 0.3, True, False, True)
 
         refreshed_pending = kernel.debug_get_pending_action_command(entity_id)
+        self.assertTrue(bool(refreshed_pending["diagnostics_only"]))
         self.assertTrue(bool(refreshed_pending["active"]))
         self.assertAlmostEqual(float(refreshed_pending["deliver_time"]), 0.35, places=6)
         self.assertAlmostEqual(float(refreshed_pending["turn_rate_cmd"]), -0.7, places=6)
@@ -413,6 +566,30 @@ class MissionCommandLinkQosTests(unittest.TestCase):
         self.assertTrue(bool(refreshed_pending["release_chaff"]))
         self.assertFalse(bool(refreshed_pending["release_flare"]))
         self.assertTrue(bool(refreshed_pending["jettison_tanks"]))
+
+    def test_pending_action_transport_remains_quarantined_legacy_shell(self) -> None:
+        kernel, entity_id = _spawn_aircraft_with_link(latency_s=0.25)
+
+        kernel.set_action(entity_id, -0.3, 0.5, -0.2, 0.4, True, True, False)
+
+        pending = kernel.debug_get_pending_action_command(entity_id)
+        self.assertTrue(bool(pending["diagnostics_only"]))
+        self.assertTrue(bool(pending["quarantined_surface"]))
+        self.assertTrue(bool(pending["diagnostics_transport_shell"]))
+        self.assertTrue(bool(pending["read_only_snapshot"]))
+        self.assertFalse(bool(pending["maintained_truth"]))
+        self.assertEqual(str(pending["diagnostics_quarantine_marker"]), "WP22-R1-2")
+        self.assertEqual(str(pending["diagnostics_surface_kind"]), "diagnostics_pending_transport_shell")
+        self.assertEqual(str(pending["runtime_owner_kind"]), "typed_action_delivery")
+        self.assertEqual(str(pending["transport_shell_kind"]), "pending_legacy_action_command")
+        self.assertEqual(str(pending["state_access_mode"]), "read_only_transport_shell")
+        self.assertEqual(
+            str(pending["transport_shell_truth_owner"]),
+            "typed_action_pending_delivery",
+        )
+        self.assertTrue(bool(pending["active"]))
+        self.assertAlmostEqual(float(pending["turn_rate_cmd"]), -0.3, places=6)
+        self.assertAlmostEqual(float(pending["accel_cmd"]), 0.5, places=6)
 
 
 if __name__ == "__main__":

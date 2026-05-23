@@ -10,7 +10,7 @@ Similar to tasking, the subsequent split direction on the command side should be
 
 - `PilotAction` and its action-space configuration.
 - `MissionCommand`, the execution command DTO issued by upper-layer tasks or training environments.
-- `MovementCommand`, `ActionCommand`, and other legacy command surfaces.
+- `MovementCommand`, `ActionCommand`, and other legacy command surfaces, but only as compatibility DTOs owned by explicit bridge seams.
 - `CommandLink`, `CommandLag`, pending commands, and other command link states.
 
 ## Not Allowed
@@ -39,6 +39,17 @@ At the code level, `CommandLink` is closer to a truly shared core than `MissionC
 ## Dependency Direction
 
 Command DTOs can be consumed by `systems/`, `core/engine`, `core/mission`, `runtime/facade`, and `interfaces/python`. They do not depend on these layers in reverse.
+
+Maintained air-control consumers must resolve legacy command fallback through
+`air/control_input_resolution.h`. Ad-hoc `MovementCommand`/`ActionCommand`
+probing inside maintained systems is not an allowed pattern.
+
+Current explicit compatibility seams that may still depend on `legacy_command.h`:
+
+- `src/components/command/legacy_command_bridge.h`
+- `src/systems/core/operation_system.h`
+- `src/systems/systems/command_link_system.h`
+- compatibility-only or still-unmigrated consumers guarded by architecture tests
 
 ## Migration Notes
 

@@ -17,6 +17,7 @@ import torch  # noqa: E402,F401
 import ef_py  # noqa: E402
 
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
+import python.rl.runtime.world_batch.compat as world_batch_compat  # noqa: E402
 import python.rl.runtime.world_batch_vec_env as vec_env_module  # noqa: E402
 from python.rl.control.wrappers import MultiTimescaleActionWrapper  # noqa: E402
 from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer  # noqa: E402
@@ -70,6 +71,16 @@ def _inline_vec_env_scenario() -> dict:
             }
         ],
     }
+
+
+def _inline_vec_env_maritime_scenario() -> dict:
+    scenario = _inline_vec_env_scenario()
+    scenario["environment"]["maritime"] = {
+        "sea_state": 0.0,
+        "wave_heading_deg": 135.0,
+        "wave_period_s": 11.0,
+    }
+    return scenario
 
 
 def _legacy_step_result_state_with_poisoned_report_fields(source_state) -> ef_py.ExecutionEpisodeState:
@@ -250,6 +261,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 n_envs=2,
                 include_visual=False,
                 include_proprio=False,
+                runtime_compatibility_enabled=True,
                 worker_threads=1,
             )
             try:
@@ -323,7 +335,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertTrue(hasattr(vec_env, "runtime_facade"))
                 self.assertIsNotNone(vec_env.runtime_facade)
                 self.assertEqual(int(vec_env.runtime_facade.world_count()), 2)
-                self.assertEqual(int(vec_env.batch_runtime.world_count()), 2)
 
                 vec_env.seed(123)
                 obs = vec_env.reset()
@@ -454,7 +465,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
-    def test_world_batch_vec_env_exposes_batch_runtime_as_compatibility_view(self) -> None:
+    def test_world_batch_vec_env_batch_runtime_requires_explicit_compatibility_opt_in(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -467,11 +478,137 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 include_proprio=False,
             )
             try:
+                with self.assertRaisesRegex(RuntimeError, "vec_env\\.batch_runtime"):
+                    _ = vec_env.batch_runtime
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_exposes_batch_runtime_as_compatibility_view(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                runtime_compatibility_enabled=True,
+            )
+            try:
                 self.assertIsNot(vec_env.batch_runtime, vec_env._runtime_adapter)
                 self.assertEqual(int(vec_env.batch_runtime.world_count()), int(vec_env.runtime_facade.world_count()))
                 self.assertTrue(hasattr(vec_env.batch_runtime, "export_execution_episode_states_batch"))
                 self.assertTrue(hasattr(vec_env.batch_runtime, "execution_episode_controller_ready"))
             finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_loader_construction_does_not_require_raw_world_access(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            original_factory = vec_env_module._RuntimeFacadeAdapter._scenario_loader_runtime
+            touched_fallback_calls: list[str] = []
+
+            def _proxy_factory(adapter, env_idx):
+                class _NoWorldConstructionProxy:
+                    def get_agent_observation(self, entity_id):
+                        return adapter.get_agent_observation(int(env_idx), int(entity_id))
+
+                    def get_instrument_state(self, entity_id):
+                        return adapter.get_instrument_state(int(env_idx), int(entity_id))
+
+                    def get_time_step(self):
+                        return adapter.get_time_step(int(env_idx))
+
+                    def set_mission_command(self, entity_id, command):
+                        assignment = ef_py.WorldMissionCommandAssignment()
+                        assignment.world_index = int(env_idx)
+                        assignment.entity_id = int(entity_id)
+                        assignment.command = command
+                        adapter.set_mission_commands_batch([assignment])
+
+                    def set_task_order(self, entity_id, order):
+                        assignment = ef_py.WorldTaskOrderAssignment()
+                        assignment.world_index = int(env_idx)
+                        assignment.entity_id = int(entity_id)
+                        assignment.order = order
+                        adapter.set_task_orders_batch([assignment])
+
+                    def set_leader_intent(self, entity_id, intent):
+                        assignment = ef_py.WorldLeaderIntentAssignment()
+                        assignment.world_index = int(env_idx)
+                        assignment.entity_id = int(entity_id)
+                        assignment.intent = intent
+                        adapter.set_leader_intents_batch([assignment])
+
+                    def set_pilot_report(self, entity_id, report):
+                        assignment = ef_py.WorldPilotReportAssignment()
+                        assignment.world_index = int(env_idx)
+                        assignment.entity_id = int(entity_id)
+                        assignment.report = report
+                        adapter.set_pilot_reports_batch([assignment])
+
+                    def __getattr__(self, name):
+                        touched_fallback_calls.append(str(name))
+                        raise AssertionError(f"loader construction/reset should not require fallback world method {name}")
+
+                return _NoWorldConstructionProxy()
+
+            vec_env_module._RuntimeFacadeAdapter._scenario_loader_runtime = _proxy_factory
+            try:
+                vec_env = WorldBatchVecEnv(
+                    scenario_path=scenario_path,
+                    n_envs=1,
+                    include_visual=False,
+                    include_proprio=False,
+                )
+                try:
+                    vec_env.seed(123)
+                    obs = vec_env.reset()
+                    self.assertEqual(obs["instruments"].shape, (1, 42))
+                    self.assertEqual(touched_fallback_calls, [])
+                finally:
+                    vec_env.close()
+            finally:
+                vec_env_module._RuntimeFacadeAdapter._scenario_loader_runtime = original_factory
+
+    def test_world_batch_vec_env_reset_layout_and_time_step_do_not_require_raw_world_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_maritime_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            original_compat_world = vec_env._runtime_adapter._compat_world
+
+            def _poisoned_compat_world(index):
+                raise AssertionError(f"maintained reset/time-step path should not need compat world {index}")
+
+            vec_env._runtime_adapter._compat_world = _poisoned_compat_world  # type: ignore[method-assign]
+            try:
+                vec_env.seed(19)
+                layout = vec_env_module.build_compiled_world_layout(vec_env._compiled_scenario, seed=19)
+                applied_world = vec_env._runtime_adapter.apply_world_layout(0, layout)
+                self.assertIsNotNone(applied_world.agent_id)
+                maritime = vec_env._runtime_adapter._compat_runtime_handle().world(0).get_maritime_state()
+                self.assertEqual(float(maritime[0]), 0.0)
+                self.assertEqual(float(maritime[1]), 135.0)
+                self.assertEqual(float(maritime[2]), 11.0)
+                obs = vec_env.reset()
+                self.assertIsNotNone(obs)
+                self.assertIsInstance(vec_env.reset_infos, list)
+                self.assertAlmostEqual(float(vec_env._runtime_adapter.get_time_step(0)), 0.05, places=6)
+            finally:
+                vec_env._runtime_adapter._compat_world = original_compat_world  # type: ignore[method-assign]
                 vec_env.close()
 
     def test_world_batch_vec_env_drives_scripted_red_opponent_on_default_path(self) -> None:
@@ -542,6 +679,46 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertEqual(rewards.shape, (2,))
                 self.assertEqual(dones.shape, (2,))
                 self.assertEqual(len(infos), 2)
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_visual_batch_export_prefers_facade_owned_helper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=True,
+                include_proprio=False,
+                visual_downsample=2,
+            )
+            try:
+                calls: list[str] = []
+                original_facade_fn = ef_py.compute_world_batch_visual_observation_batch_numpy
+                original_runtime = vec_env._runtime_adapter._compat_runtime_handle
+
+                def _wrapped(target, refs, downsample, use_gpu):
+                    calls.append(type(target).__name__)
+                    if isinstance(target, ef_py.RuntimeFacade):
+                        return original_facade_fn(target, refs, downsample, use_gpu)
+                    raise AssertionError("maintained visual export should prefer RuntimeFacade target")
+
+                def _unexpected_compat_runtime():
+                    raise AssertionError("visual batch export should not need compat runtime handle on facade path")
+
+                ef_py.compute_world_batch_visual_observation_batch_numpy = _wrapped
+                vec_env._runtime_adapter._compat_runtime_handle = _unexpected_compat_runtime  # type: ignore[method-assign]
+                try:
+                    obs = vec_env.reset()
+                finally:
+                    ef_py.compute_world_batch_visual_observation_batch_numpy = original_facade_fn
+                    vec_env._runtime_adapter._compat_runtime_handle = original_runtime  # type: ignore[method-assign]
+
+                self.assertEqual(obs["visual"].shape, (1, 24, 48, 10))
+                self.assertEqual(calls, ["RuntimeFacade"])
             finally:
                 vec_env.close()
 
@@ -776,6 +953,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 include_visual=False,
                 include_proprio=False,
                 execution_step_runtime_mode="legacy",
+                runtime_compatibility_enabled=True,
             )
             try:
                 for handle in vec_env.envs:
@@ -783,6 +961,21 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     self.assertFalse(bool(handle.loader.use_compiled_execution_step_runtime))
             finally:
                 vec_env.close()
+
+    def test_world_batch_vec_env_rejects_legacy_runtime_mode_without_explicit_compatibility_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            with self.assertRaisesRegex(RuntimeError, "runtime_compatibility_enabled=True"):
+                WorldBatchVecEnv(
+                    scenario_path=scenario_path,
+                    n_envs=1,
+                    include_visual=False,
+                    include_proprio=False,
+                    execution_step_runtime_mode="legacy",
+                )
 
     def test_world_batch_vec_env_reports_effective_flight_shaping_backend_mode(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -797,6 +990,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 include_proprio=False,
                 execution_step_runtime_mode="legacy",
                 flight_shaping_backend="auto",
+                runtime_compatibility_enabled=True,
             )
             compiled_env = WorldBatchVecEnv(
                 scenario_path=scenario_path,
@@ -1273,16 +1467,16 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     return result
 
                 vec_env._step_execution_episode_controller_mainline_requests = _wrapped
-                original_build_step_info = vec_env_module.build_step_info
+                original_build_loader_step_info = vec_env_module._build_loader_step_info
 
-                def _unexpected_build_step_info(*_args, **_kwargs):
+                def _unexpected_build_loader_step_info(*_args, **_kwargs):
                     raise AssertionError("mainline full step info should reuse facade step_info_fields")
 
-                vec_env_module.build_step_info = _unexpected_build_step_info
+                vec_env_module._build_loader_step_info = _unexpected_build_loader_step_info
                 try:
                     _obs, _rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
                 finally:
-                    vec_env_module.build_step_info = original_build_step_info
+                    vec_env_module._build_loader_step_info = original_build_loader_step_info
 
                 self.assertFalse(bool(dones[0]))
                 self.assertEqual(float(infos[0]["on_runway"]), 0.0)
@@ -1657,6 +1851,54 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     captured["step_evaluation"],
                     vec_env.envs[0].loader._runtime_eval_cache.get("step_evaluation"),
                 )
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_legacy_reward_and_info_eval_flow_through_named_compat_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["meta"]["max_steps"] = 2
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+                original_compute = vec_env_module._compute_loader_step_outcome
+                original_build = vec_env_module._build_loader_step_info
+                observed: dict[str, Any] = {}
+
+                def _wrapped_compute(loader, **kwargs):
+                    observed["compute_loader"] = loader
+                    return original_compute(loader, **kwargs)
+
+                def _wrapped_build(loader, **kwargs):
+                    observed["build_loader"] = loader
+                    observed["build_entity_id"] = kwargs.get("entity_id")
+                    return original_build(loader, **kwargs)
+
+                vec_env_module._compute_loader_step_outcome = _wrapped_compute
+                vec_env_module._build_loader_step_info = _wrapped_build
+                try:
+                    _obs, rewards, dones, infos = vec_env.step(np.zeros((1, 17), dtype=np.float32))
+                finally:
+                    vec_env_module._compute_loader_step_outcome = original_compute
+                    vec_env_module._build_loader_step_info = original_build
+
+                self.assertIs(observed.get("compute_loader"), vec_env.envs[0].loader)
+                self.assertIs(observed.get("build_loader"), vec_env.envs[0].loader)
+                self.assertEqual(int(observed.get("build_entity_id", -1)), int(vec_env.envs[0].agent_id))
+                self.assertTrue(np.isfinite(float(rewards[0])))
+                self.assertIsInstance(infos[0], dict)
+                self.assertEqual(bool(dones[0]), bool(infos[0]["terminated"] or infos[0]["truncated"]))
             finally:
                 vec_env.close()
 

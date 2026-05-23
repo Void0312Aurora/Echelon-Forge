@@ -25,8 +25,9 @@
 #include "gpu/gpu_flight_shaping_runtime.h"
 #include "gpu/gpu_interaction_broadphase_runtime.h"
 #include "gpu/gpu_visual_runtime.h"
+#include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 #include "interfaces/python/dlpack_minimal.h"
-#include "models/environment/default_environment_snapshot.h"
+#include "runtime/facade/runtime_facade.h"
 
 namespace {
 struct ManagedDLPackTensor {
@@ -244,118 +245,6 @@ std::vector<FlightShapingRuntimeProducts> unpack_flight_shaping_products_batch(
         );
     }
     return out;
-}
-
-bool default_environment_snapshots_equal(
-    const DefaultEnvironmentSnapshot& lhs,
-    const DefaultEnvironmentSnapshot& rhs
-) {
-    if (lhs.valid != rhs.valid || lhs.flat_terrain != rhs.flat_terrain) {
-        return false;
-    }
-    if (lhs.raster.origin_x != rhs.raster.origin_x ||
-        lhs.raster.origin_y != rhs.raster.origin_y ||
-        lhs.raster.resolution_m != rhs.raster.resolution_m ||
-        lhs.raster.width != rhs.raster.width ||
-        lhs.raster.height != rhs.raster.height ||
-        lhs.raster.surface_codes != rhs.raster.surface_codes) {
-        return false;
-    }
-    if (lhs.zones.size() != rhs.zones.size()) {
-        return false;
-    }
-    for (std::size_t idx = 0; idx < lhs.zones.size(); ++idx) {
-        const auto& a = lhs.zones[idx];
-        const auto& b = rhs.zones[idx];
-        if (a.center_x != b.center_x ||
-            a.center_y != b.center_y ||
-            a.width != b.width ||
-            a.length != b.length ||
-            a.heading_deg != b.heading_deg ||
-            a.type != b.type ||
-            a.surface_code != b.surface_code) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool collect_visual_scene_for_binding(
-    SimulationKernel& kernel,
-    uint64_t entity_id,
-    int downsample,
-    gpu::VisualRenderRequest* out_request,
-    std::vector<gpu::VisibleObjectPacked>* out_objects,
-    IEnvironmentModel** out_env,
-    const std::vector<uint64_t>* candidate_ids = nullptr
-) {
-    auto e = kernel.get_world().entity(entity_id);
-    if (!e.is_valid()) {
-        return false;
-    }
-    const Transform* cam_t = e.get<Transform>();
-    const Alliance* cam_a = e.get<Alliance>();
-    if (cam_t == nullptr || out_request == nullptr || out_objects == nullptr) {
-        return false;
-    }
-    const auto* env_ref = kernel.get_world().get<EnvironmentModelRef>();
-    if (out_env != nullptr) {
-        *out_env = env_ref != nullptr ? env_ref->model : nullptr;
-    }
-
-    const int factor = std::max(1, downsample);
-    gpu::VisualRenderRequest request{};
-    request.cam_pos = {cam_t->x, cam_t->y, cam_t->z};
-    request.cam_heading_deg = cam_t->heading;
-    request.cam_pitch_deg = cam_t->pitch;
-    request.fov_h_deg = 180.0;
-    request.fov_v_deg = 90.0;
-    request.out_height = arb::ARB_HEIGHT / factor;
-    request.out_width = arb::ARB_WIDTH / factor;
-    request.include_terrain = true;
-    request.allow_gpu_terrain = true;
-    *out_request = request;
-
-    const int my_side = cam_a ? static_cast<int>(cam_a->side) : 0;
-    out_objects->clear();
-    kernel.get_world().each(
-        [&](flecs::entity other_e, const Transform& t, const Velocity& v, const Alliance& a, const KeyEntity& k) {
-            if (other_e.id() == entity_id) {
-                return;
-            }
-            if (candidate_ids != nullptr && !std::binary_search(candidate_ids->begin(), candidate_ids->end(), other_e.id())) {
-                return;
-            }
-
-            gpu::VisibleObjectPacked obj{};
-            obj.x = t.x;
-            obj.y = t.y;
-            obj.z = t.z;
-            obj.vx = v.vx;
-            obj.vy = v.vy;
-            obj.vz = v.vz;
-
-            switch (k.type) {
-                case UnitType::Aircraft: obj.bounding_radius = 10.0; obj.cls = 0; break;
-                case UnitType::Ship: obj.bounding_radius = 50.0; obj.cls = 2; break;
-                case UnitType::Submarine: obj.bounding_radius = 40.0; obj.cls = 2; break;
-                case UnitType::Missile: obj.bounding_radius = 2.0; obj.cls = 0; break;
-                case UnitType::Facility: obj.bounding_radius = 20.0; obj.cls = 1; break;
-                default: obj.bounding_radius = 5.0; obj.cls = 1; break;
-            }
-
-            const int other_side = static_cast<int>(a.side);
-            if (other_side == my_side) {
-                obj.team = 1;
-            } else if (other_side == 0) {
-                obj.team = 0;
-            } else {
-                obj.team = -1;
-            }
-            out_objects->push_back(obj);
-        }
-    );
-    return true;
 }
 
 gpu::ExecutionObservationBatchRequest build_execution_observation_batch_request(
@@ -585,96 +474,30 @@ BatchExecutionObservationOutputs compute_execution_observation_batch_binding_out
     return out;
 }
 
-struct BatchVisualObservationOutputs {
-    std::size_t batch_size = 0;
-    int out_h = 0;
-    int out_w = 0;
-    std::size_t frame_size = 0;
-    std::vector<float> flat;
-    const void* device_ptr = nullptr;
-    std::size_t device_float_count = 0;
-};
-
-BatchVisualObservationOutputs compute_world_batch_visual_binding_outputs(
-    WorldBatchRuntime& runtime,
+WorldBatchVisualObservationCompatibilityExport compute_world_batch_visual_binding_outputs(
+    const WorldBatchRuntime& runtime,
     const std::vector<WorldEntityRef>& refs,
     int downsample,
     bool use_gpu
 ) {
     const int factor = std::max(1, downsample);
-    const auto visual_candidate_ids = runtime.get_visual_candidate_ids_batch(refs, 25000.0, use_gpu);
-    std::vector<gpu::VisualRenderRequest> requests;
-    std::vector<std::vector<gpu::VisibleObjectPacked>> objects_batch;
-    requests.reserve(refs.size());
-    objects_batch.reserve(refs.size());
+    return world_batch_visual_binding_compatibility::render_scenes_batch(
+        runtime.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu),
+        use_gpu
+    );
+}
 
-    std::vector<IEnvironmentModel*> envs;
-    envs.reserve(refs.size());
-    std::vector<DefaultEnvironmentSnapshot> snapshots;
-    snapshots.reserve(refs.size());
-
-    for (std::size_t idx = 0; idx < refs.size(); ++idx) {
-        const auto& ref = refs[idx];
-        auto& world = runtime.world(static_cast<size_t>(ref.world_index));
-        gpu::VisualRenderRequest request{};
-        std::vector<gpu::VisibleObjectPacked> objects;
-        IEnvironmentModel* env = nullptr;
-        const std::vector<uint64_t>* candidates =
-            idx < visual_candidate_ids.size() ? &visual_candidate_ids[idx] : nullptr;
-        if (!collect_visual_scene_for_binding(world, ref.entity_id, factor, &request, &objects, &env, candidates)) {
-            throw std::runtime_error("failed to collect visual scene for world batch visual helper");
-        }
-        DefaultEnvironmentSnapshot snapshot{};
-        if (env != nullptr) {
-            (void)extract_default_environment_snapshot(env, &snapshot);
-        }
-        requests.push_back(request);
-        objects_batch.push_back(std::move(objects));
-        envs.push_back(env);
-        snapshots.push_back(std::move(snapshot));
-    }
-
-    BatchVisualObservationOutputs out{};
-    out.batch_size = refs.size();
-    out.out_h = requests.empty() ? (arb::ARB_HEIGHT / factor) : requests.front().out_height;
-    out.out_w = requests.empty() ? (arb::ARB_WIDTH / factor) : requests.front().out_width;
-    out.frame_size =
-        static_cast<std::size_t>(out.out_h) *
-        static_cast<std::size_t>(out.out_w) *
-        static_cast<std::size_t>(arb::ARB_CHANNELS);
-    out.flat.assign(out.frame_size * refs.size(), 0.0f);
-
-    bool can_batch = !refs.empty();
-    for (std::size_t idx = 1; idx < snapshots.size(); ++idx) {
-        if (!default_environment_snapshots_equal(snapshots[0], snapshots[idx])) {
-            can_batch = false;
-            break;
-        }
-    }
-
-    if (can_batch && !requests.empty()) {
-        auto rendered = use_gpu
-            ? gpu::render_visual_experiment_batch(requests, objects_batch, envs.front())
-            : gpu::render_visual_reference_cpu_batch(requests, objects_batch, envs.front());
-        out.flat = std::move(rendered);
-        if (use_gpu) {
-            out.device_ptr = gpu::last_visual_output_device_ptr();
-            out.device_float_count = gpu::last_visual_output_float_count();
-        }
-    } else {
-        for (std::size_t idx = 0; idx < refs.size(); ++idx) {
-            auto rendered = use_gpu
-                ? gpu::render_visual_experiment(requests[idx], objects_batch[idx], envs[idx])
-                : gpu::render_visual_reference_cpu(requests[idx], objects_batch[idx], envs[idx]);
-            std::copy(
-                rendered.begin(),
-                rendered.end(),
-                out.flat.begin() + static_cast<std::ptrdiff_t>(idx * out.frame_size)
-            );
-        }
-    }
-
-    return out;
+WorldBatchVisualObservationCompatibilityExport compute_world_batch_visual_binding_outputs(
+    const RuntimeFacade& facade,
+    const std::vector<WorldEntityRef>& refs,
+    int downsample,
+    bool use_gpu
+) {
+    const int factor = std::max(1, downsample);
+    return world_batch_visual_binding_compatibility::render_scenes_batch(
+        facade.collect_visual_binding_compatibility_scenes_batch(refs, factor, use_gpu),
+        use_gpu
+    );
 }
 } // namespace
 
@@ -985,6 +808,26 @@ void bind_gpu(nb::module_& m) {
         nb::arg("use_gpu") = false
     );
     m.def(
+        "compute_world_batch_visual_observation_batch_numpy",
+        [](RuntimeFacade& facade,
+           const std::vector<WorldEntityRef>& refs,
+           int downsample,
+           bool use_gpu) {
+            auto outputs = compute_world_batch_visual_binding_outputs(facade, refs, downsample, use_gpu);
+            size_t shape[4] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(outputs.out_h),
+                static_cast<std::size_t>(outputs.out_w),
+                static_cast<std::size_t>(arb::ARB_CHANNELS),
+            };
+            return visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape);
+        },
+        nb::arg("runtime_facade"),
+        nb::arg("refs"),
+        nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false
+    );
+    m.def(
         "compute_world_batch_visual_observation_batch_export",
         [](WorldBatchRuntime& runtime,
            const std::vector<WorldEntityRef>& refs,
@@ -1016,6 +859,42 @@ void bind_gpu(nb::module_& m) {
             );
         },
         nb::arg("batch_runtime"),
+        nb::arg("refs"),
+        nb::arg("downsample") = 1,
+        nb::arg("use_gpu") = false
+    );
+    m.def(
+        "compute_world_batch_visual_observation_batch_export",
+        [](RuntimeFacade& facade,
+           const std::vector<WorldEntityRef>& refs,
+           int downsample,
+           bool use_gpu) {
+            auto outputs = compute_world_batch_visual_binding_outputs(facade, refs, downsample, use_gpu);
+            size_t shape[4] = {
+                outputs.batch_size,
+                static_cast<std::size_t>(outputs.out_h),
+                static_cast<std::size_t>(outputs.out_w),
+                static_cast<std::size_t>(arb::ARB_CHANNELS),
+            };
+            nb::object device_view = nb::none();
+            if (use_gpu) {
+                device_view = maybe_gpu_tensor_view(
+                    outputs.device_ptr,
+                    outputs.device_float_count,
+                    {
+                        static_cast<std::int64_t>(outputs.batch_size),
+                        static_cast<std::int64_t>(outputs.out_h),
+                        static_cast<std::int64_t>(outputs.out_w),
+                        static_cast<std::int64_t>(arb::ARB_CHANNELS),
+                    }
+                );
+            }
+            return nb::make_tuple(
+                visual_tensor_to_numpy<nb::ndim<4>>(std::move(outputs.flat), 4, shape),
+                device_view
+            );
+        },
+        nb::arg("runtime_facade"),
         nb::arg("refs"),
         nb::arg("downsample") = 1,
         nb::arg("use_gpu") = false

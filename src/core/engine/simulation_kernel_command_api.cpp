@@ -3,6 +3,7 @@
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
 #include "components/command/legacy_command.h"
+#include "components/command/legacy_command_bridge.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
 #include "components/tasking/leader_intent.h"
@@ -90,19 +91,40 @@ inline MissionCommand ship_mission_command_from_unit_command(
     return mission;
 }
 
-template <typename PendingT, typename CommandT>
-void queue_or_refresh_pending_command(flecs::entity entity, const CommandT& value, double deliver_time) {
-    CommandT next = value;
+void queue_or_refresh_pending_action_command(
+    flecs::entity entity,
+    const ActionCommand& value,
+    double deliver_time
+) {
+    ActionCommand next = value;
     next.active = true;
 
-    if (PendingT* pending = entity.get_mut<PendingT>()) {
+    if (PendingActionCommand* pending = entity.get_mut<PendingActionCommand>()) {
         pending->command = next;
         pending->deliver_time = deliver_time;
         pending->active = true;
         return;
     }
 
-    entity.set<PendingT>({next, deliver_time, true});
+    entity.set<PendingActionCommand>({next, deliver_time, true});
+}
+
+inline void queue_or_refresh_pending_movement_command(
+    flecs::entity entity,
+    const PendingMissionControlCommand& value,
+    double deliver_time
+) {
+    if (PendingMovementCommand* pending = entity.get_mut<PendingMovementCommand>()) {
+        pending->typed_command = value;
+        pending->command = project_pending_movement_command_diagnostics_shell(value);
+        pending->deliver_time = deliver_time;
+        pending->active = true;
+        return;
+    }
+
+    entity.set<PendingMovementCommand>(
+        make_pending_movement_command(value, deliver_time, true)
+    );
 }
 
 inline MissionCommandEnqueueResult queue_pending_mission_command(
@@ -180,20 +202,25 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
                             (entity_id * 0xbf58476d1ce4e5b9ULL) ^ 0x12345678ULL;
             double roll = deterministic_uniform01(seed);
             if (roll >= link->drop_prob) {
-                if (!e.has<MovementCommand>()) {
-                    e.set<MovementCommand>(make_legacy_autopilot_movement_command(0.0, 0.0, 0.0, false));
-                }
-                queue_or_refresh_pending_command<PendingMovementCommand>(
+                ensure_mission_command_control_state(e);
+                queue_or_refresh_pending_movement_command(
                     e,
-                    make_legacy_autopilot_movement_command(heading_deg, speed_mps, altitude_m),
+                    make_pending_mission_control_command(
+                        heading_deg,
+                        speed_mps,
+                        altitude_m,
+                        true
+                    ),
                     current_time + link->latency_s
                 );
             }
         } else {
-            e.set<MovementCommand>(make_legacy_autopilot_movement_command(heading_deg, speed_mps, altitude_m));
-            if (!e.has<LaggedCommand>()) {
-                e.set<LaggedCommand>(make_lagged_command(heading_deg, speed_mps, altitude_m));
-            }
+            set_compatibility_autopilot_control_target(
+                e,
+                heading_deg,
+                speed_mps,
+                altitude_m
+            );
         }
     }
 }
@@ -201,26 +228,13 @@ void SimulationKernel::set_unit_command(uint64_t entity_id, double heading_deg, 
 void SimulationKernel::set_unit_stick_command(uint64_t entity_id, double stick_roll, double stick_pitch, double throttle, bool gear_down) {
     auto e = resolve_valid_entity_or_warn(ecs, entity_id, "set stick command");
     if (e.is_valid()) {
-        // Stick commands override Autopilot commands
-        // We set use_stick_control = true
-        // and fill the stick inputs (mapped to MovementCommand fields)
-        if (e.has<MovementCommand>()) {
-             MovementCommand* cmd = e.get_mut<MovementCommand>();
-             *cmd = make_legacy_stick_movement_command(
-                 std::clamp(stick_roll, -1.0, 1.0),
-                 std::clamp(stick_pitch, -1.0, 1.0),
-                 std::clamp(throttle, 0.0, 1.0),
-                 gear_down
-             );
-        } else {
-             // Create if missing
-             e.set<MovementCommand>(make_legacy_stick_movement_command(
-                 std::clamp(stick_roll, -1.0, 1.0),
-                 std::clamp(stick_pitch, -1.0, 1.0),
-                 std::clamp(throttle, 0.0, 1.0),
-                 gear_down
-             ));
-        }
+        set_quarantined_compatibility_stick_movement_command(
+            e,
+            std::clamp(stick_roll, -1.0, 1.0),
+            std::clamp(stick_pitch, -1.0, 1.0),
+            std::clamp(throttle, 0.0, 1.0),
+            gear_down
+        );
     }
 }
 
@@ -236,9 +250,24 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
     if (e.is_valid()) {
         auto clamp_cmd = [](double v) { return std::clamp(v, -1.0, 1.0); };
         double fire = std::clamp(fire_cmd, 0.0, 1.0);
+        const ActionCommand next = make_action_command(
+            clamp_cmd(turn_rate_cmd),
+            clamp_cmd(accel_cmd),
+            clamp_cmd(climb_rate_cmd),
+            fire,
+            release_chaff,
+            release_flare,
+            jettison_tanks,
+            false, // send_msg
+            0,     // msg_type
+            0,     // msg_recipient
+            0,     // msg_arg
+            true   // active
+        );
         const CommandLink* link = e.get<CommandLink>();
         if (command_link_requires_delivery_queue(link)) {
             const double current_time = current_world_time_seconds(ecs);
+            ensure_mission_command_control_state(e);
             if (!e.has<ActionCommand>()) {
                 e.set<ActionCommand>(make_action_command());
             }
@@ -246,40 +275,19 @@ void SimulationKernel::set_unit_action(uint64_t entity_id,
                             (entity_id * 0x94d049bb133111ebULL) ^ 0x87654321ULL;
             double roll = deterministic_uniform01(seed);
             if (roll >= link->drop_prob) {
-                queue_or_refresh_pending_command<PendingActionCommand>(
+                // PendingActionCommand remains a quarantined legacy transport shell in this slice.
+                queue_or_refresh_pending_action_command(
                     e,
-                    make_action_command(
-                        clamp_cmd(turn_rate_cmd),
-                        clamp_cmd(accel_cmd),
-                        clamp_cmd(climb_rate_cmd),
-                        fire,
-                        release_chaff,
-                        release_flare,
-                        jettison_tanks,
-                        false, // send_msg
-                        0,     // msg_type
-                        0,     // msg_recipient
-                        0,     // msg_arg
-                        true   // active
-                    ),
+                    next,
                     current_time + link->latency_s
                 );
             }
         } else {
-            e.set<ActionCommand>(make_action_command(
-                clamp_cmd(turn_rate_cmd),
-                clamp_cmd(accel_cmd),
-                clamp_cmd(climb_rate_cmd),
-                fire,
-                release_chaff,
-                release_flare,
-                jettison_tanks,
-                false, // send_msg
-                0,     // msg_type
-                0,     // msg_recipient
-                0,     // msg_arg
-                true   // active
-            ));
+            e.set<ActionCommand>(next);
+            refresh_compatibility_typed_air_control_from_action_command(
+                e,
+                next
+            );
         }
     }
 }

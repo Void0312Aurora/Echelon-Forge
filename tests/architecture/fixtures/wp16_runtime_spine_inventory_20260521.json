@@ -133,7 +133,7 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Centralized adapter still falls back to RuntimeFacade.runtime() or raw WorldBatchRuntime when facade coverage is incomplete.",
       "evidence_markers": [
-        "self._compat_runtime = self.facade.runtime()",
+        "self.facade.runtime() if self.facade is not None else ef_py.WorldBatchRuntime",
         "ef_py.WorldBatchRuntime",
         "export_observation_packet",
         "step_worlds"
@@ -146,7 +146,7 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Maintained training entrypoint reads facade-shaped packets, but stepping still routes through compatibility batch methods instead of the selected window API.",
       "evidence_markers": [
-        "self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)",
+        "self._runtime_adapter = _RuntimeFacadeAdapter(",
         "def batch_runtime(self):",
         "self._runtime_compat",
         "read_observation_packet"

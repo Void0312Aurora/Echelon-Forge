@@ -25,7 +25,6 @@ from gym_envs.scenario_loader import (
 )
 from gym_envs.universal_env import (
     build_pilot_action,
-    build_step_info,
     build_step_info_minimal,
     build_universal_observation,
     make_action_space,
@@ -44,6 +43,8 @@ from python.rl.support.sb3_vec_env_compat import (
 from python.rl.control.wrappers import MultiTimescaleActionController
 from python.rl.runtime.world_batch import (
     BatchWorldHandle,
+    build_loader_step_info,
+    compute_loader_step_outcome,
     ExecutionObservationBatch,
     RuntimeCompatibilityView,
     RuntimeFacadeAdapter,
@@ -55,14 +56,17 @@ from python.rl.runtime.world_batch import (
     normalize_batch_visual_backend,
     normalize_flight_shaping_backend,
     normalize_observation_return_mode,
+    normalize_runtime_compatibility_enabled,
     observation_timing_snapshot,
     parse_reward_terms_json,
     pilot_report_snapshot,
     refresh_visual_cache_batch,
+    runtime_compatibility_required_message,
     snapshot_changed,
     step_info_products_to_info_fields,
     task_order_snapshot,
 )
+from python.rl.tasking.bridge import resolve_loader_time_step
 from python.scenario_compiler import ScenarioCompiler
 from python.scenario_runtime import (
     BatchWorldApplyBuffer,
@@ -80,6 +84,8 @@ _normalize_observation_return_mode = normalize_observation_return_mode
 _BatchWorldHandle = BatchWorldHandle
 _RuntimeFacadeAdapter = RuntimeFacadeAdapter
 _RuntimeCompatibilityView = RuntimeCompatibilityView
+_build_loader_step_info = build_loader_step_info
+_compute_loader_step_outcome = compute_loader_step_outcome
 
 
 def _float32_view(value: Any) -> np.ndarray:
@@ -111,6 +117,7 @@ class WorldBatchVecEnv(VecEnv):
         step_info_mode: str = "full",
         execution_step_runtime_mode: str | None = None,
         flight_shaping_backend: str | None = None,
+        runtime_compatibility_enabled: bool = False,
         database_path: str | None = None,
         worker_threads: int | None = None,
         collect_step_timing: bool = False,
@@ -134,6 +141,7 @@ class WorldBatchVecEnv(VecEnv):
         self.visual_downsample = max(1, int(visual_downsample))
         self.visual_update_interval = max(1, int(visual_update_interval))
         self.step_info_mode = str(step_info_mode).strip().lower()
+        self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
         self.execution_step_runtime_mode = (
             normalize_execution_step_runtime_mode(execution_step_runtime_mode)
             if execution_step_runtime_mode is not None
@@ -142,6 +150,11 @@ class WorldBatchVecEnv(VecEnv):
         self.flight_shaping_backend = _normalize_flight_shaping_backend(flight_shaping_backend)
         if self.execution_step_runtime_mode not in (None, "compiled", "legacy"):
             raise ValueError(f"Unknown execution_step_runtime_mode: {execution_step_runtime_mode!r}")
+        if self.execution_step_runtime_mode == "legacy" and not self.runtime_compatibility_enabled:
+            raise RuntimeError(
+                "execution_step_runtime_mode='legacy' is quarantined; pass "
+                "runtime_compatibility_enabled=True to opt in explicitly."
+            )
         if self.step_info_mode not in ("full", "terminal", "off"):
             raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
         self.collect_step_timing = bool(collect_step_timing)
@@ -191,7 +204,10 @@ class WorldBatchVecEnv(VecEnv):
             )
         )
         self._compiled_scenario = ScenarioCompiler.compile_path(self.scenario_path)
-        self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)
+        self._runtime_adapter = _RuntimeFacadeAdapter(
+            self.n_envs,
+            runtime_compatibility_enabled=self.runtime_compatibility_enabled,
+        )
         self._runtime_compat = _RuntimeCompatibilityView(self._runtime_adapter)
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
@@ -279,6 +295,8 @@ class WorldBatchVecEnv(VecEnv):
 
     @property
     def batch_runtime(self):
+        if not self.runtime_compatibility_enabled:
+            raise RuntimeError(runtime_compatibility_required_message("vec_env.batch_runtime"))
         return self._runtime_compat
 
     @property
@@ -1447,7 +1465,9 @@ class WorldBatchVecEnv(VecEnv):
             handle.loader.steps = int(handle.steps)
             handle.last_truth = truth_list[env_idx]
             handle.last_inst = inst_list[env_idx]
-            sim_time = float(handle.steps) * float(handle.loader.sim.get_time_step())
+            sim_time = float(handle.steps) * float(
+                resolve_loader_time_step(handle.loader, default=self._world_time_step(env_idx))
+            )
             if self.execution_episode_controller_mainline:
                 handle.loader.update_command_chain_only(
                     sim_time,
@@ -1501,11 +1521,11 @@ class WorldBatchVecEnv(VecEnv):
             else:
                 cache = getattr(handle.loader, "_runtime_eval_cache", None)
                 cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
-                reward, terminated, truncated, mission_status = handle.loader.compute_full_step(
-                    obs,
-                    handle.loader.sim,
-                    handle.steps,
-                    handle.max_steps,
+                reward, terminated, truncated, mission_status = _compute_loader_step_outcome(
+                    handle.loader,
+                    obs=obs,
+                    steps=handle.steps,
+                    max_steps=handle.max_steps,
                     truth=handle.last_truth,
                     inst_state=handle.last_inst,
                     step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
@@ -1527,10 +1547,9 @@ class WorldBatchVecEnv(VecEnv):
                     if not mainline_step_info_fields:
                         mainline_step_info_fields = None
             if include_full_step_info and mainline_step_info_fields is None:
-                info = build_step_info(
+                info = _build_loader_step_info(
                     handle.loader,
-                    handle.loader.sim,
-                    int(handle.agent_id),
+                    entity_id=int(handle.agent_id),
                     mission_status=mission_status,
                     terminated=terminated,
                     truncated=truncated,

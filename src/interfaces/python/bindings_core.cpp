@@ -15,6 +15,7 @@
 #include "components/combat/weapon.h"
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
+#include "components/command/legacy_command_bridge.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/flight_dynamics_tuning.h"
 #include "components/physics/forces.h"
@@ -107,6 +108,61 @@ struct FlightDynamicsDebugView {
     double current_tsfc = 0.0;
     double current_thrust_n = 0.0;
 };
+
+void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel>& kernel);
+void bind_simulation_kernel_diagnostics_introspection_surface(
+    nb::class_<SimulationKernel>& kernel
+);
+void bind_simulation_kernel_legacy_compatibility_debug_surface(
+    nb::class_<SimulationKernel>& kernel
+);
+void bind_simulation_kernel_diagnostics_override_surface(
+    nb::class_<SimulationKernel>& kernel
+);
+
+flecs::entity diagnostics_legacy_binding_entity_quarantine_lookup(
+    SimulationKernel& self,
+    uint64_t entity_id
+) {
+    // WP22-R3 quarantine marker: raw entity binding access must stay localized
+    // to diagnostics/legacy helpers instead of widening the maintained surface.
+    return self.get_world().entity(entity_id);
+}
+
+void diagnostics_mark_read_only_snapshot(
+    nb::dict& out,
+    const char* diagnostics_surface_kind,
+    const char* runtime_owner_kind
+) {
+    out["diagnostics_only"] = true;
+    out["quarantined_surface"] = true;
+    out["read_only_snapshot"] = true;
+    out["maintained_truth"] = false;
+    out["diagnostics_quarantine_marker"] = "WP22-R1-2";
+    out["diagnostics_surface_kind"] = diagnostics_surface_kind;
+    out["runtime_owner_kind"] = runtime_owner_kind;
+}
+
+void diagnostics_quarantined_legacy_movement_bridge_write(
+    flecs::entity e,
+    double target_heading_deg,
+    double target_speed_mps,
+    double target_altitude_m,
+    bool active
+) {
+    // WP22-R1-2 quarantine marker: legacy debug writes must stay bridge-only
+    // and must never become maintained command truth or direct component writes.
+    if (active) {
+        set_compatibility_autopilot_movement_command(
+            e,
+            target_heading_deg,
+            target_speed_mps,
+            target_altitude_m
+        );
+        return;
+    }
+    deactivate_compatibility_movement_command(e);
+}
 
 SensorDebugView make_sensor_debug_view(const Sensor& sensor) {
     SensorDebugView out{};
@@ -428,24 +484,30 @@ void bind_core(nb::module_& m) {
         .def_rw("damage_reports", &RecentEngagementEvents::damage_reports)
         .def_rw("diagnostics_traces", &RecentEngagementEvents::diagnostics_traces);
 
-    nb::class_<SimulationKernel>(m, "SimulationKernel")
-        .def(nb::init<>())
-        .def("get_instrument_state", [](SimulationKernel& self, uint64_t entity_id) {
-            auto e = self.get_world().entity(entity_id);
-            if (e.is_valid()) {
-                const InstrumentState* inst = e.get<InstrumentState>();
-                if (inst) return *inst;
-            }
-            return InstrumentState{};
-        }, "Get the instrument state for a unit")
-        .def("get_egi_state", [](SimulationKernel& self, uint64_t entity_id) {
-            auto e = self.get_world().entity(entity_id);
-            if (e.is_valid()) {
-                const EGI* egi = e.get<EGI>();
-                if (egi) return *egi;
-            }
-            return EGI{};
-        }, "Get the EGI state for a unit")
+    nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");
+    simulation_kernel.def(nb::init<>());
+
+    // Maintained SimulationKernel API surface unless a narrower guard marker
+    // below explicitly quarantines a diagnostics-only or legacy binding.
+    bind_simulation_kernel_maintained_surface(simulation_kernel);
+    // Diagnostics-only introspection surface. Keep additions explicit in the
+    // WP22-E binding guard allowlist instead of widening maintained API by default.
+    bind_simulation_kernel_diagnostics_introspection_surface(simulation_kernel);
+    // Legacy compatibility debug surface. This remains quarantined until the
+    // movement-command retirement stream owns a replacement or deletion path.
+    bind_simulation_kernel_legacy_compatibility_debug_surface(simulation_kernel);
+    // Diagnostics override surface. These helpers intentionally bypass the
+    // maintained API contract and must stay on an explicit allowlist.
+    bind_simulation_kernel_diagnostics_override_surface(simulation_kernel);
+}
+
+namespace {
+void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel>& kernel) {
+    kernel
+        .def("get_instrument_state", &SimulationKernel::get_instrument_state,
+             "Get the instrument state for a unit", nb::arg("entity_id"))
+        .def("get_egi_state", &SimulationKernel::get_egi_state,
+             "Get the EGI state for a unit", nb::arg("entity_id"))
         .def("reset", &SimulationKernel::reset, "Reset the simulation", nb::arg("seed") = 42)
         .def("load_database", &SimulationKernel::load_database, nb::arg("path"), "Load unit definitions from JSON directory")
         .def("step", &SimulationKernel::step, "Advance simulation by one fixed tick")
@@ -460,7 +522,7 @@ void bind_core(nb::module_& m) {
             return ok;
         }, "Load unit definitions from JSON", nb::arg("path"))
         .def("clear_zones", &SimulationKernel::clear_zones, "Clear all environment zones")
-        .def("add_zone", &SimulationKernel::add_zone, 
+        .def("add_zone", &SimulationKernel::add_zone,
              "Add a new environment zone",
              nb::arg("name"), nb::arg("x"), nb::arg("y"), nb::arg("width"), nb::arg("height"), nb::arg("heading"), nb::arg("surface_type"))
         .def("set_wind", &SimulationKernel::set_wind,
@@ -478,35 +540,44 @@ void bind_core(nb::module_& m) {
         .def("set_terrain_type", &SimulationKernel::set_terrain_type,
              "Set terrain profile (e.g. 'flat', 'legacy', 'hill')",
              nb::arg("terrain_type"))
-        .def("spawn_unit", [](SimulationKernel& self, Side side, const std::string& type, 
-                              double x, double y, double z, 
+        .def("spawn_unit", [](SimulationKernel& self, Side side, const std::string& type,
+                              double x, double y, double z,
                               double heading, double pitch, double roll,
                               double vx, double vy, double vz) {
-            // We return the Entity ID as an integer for MVP
             auto e = self.spawn_unit(side, type, x, y, z, heading, pitch, roll, vx, vy, vz);
             return e.id();
-        }, "Spawn a unit by name with orientation and return its Entity ID", 
-           nb::arg("side"), nb::arg("type_name"), 
-           nb::arg("x"), nb::arg("y"), nb::arg("z"), 
-           nb::arg("heading")=0.0, nb::arg("pitch")=0.0, nb::arg("roll")=0.0,
-           nb::arg("vx")=0.0, nb::arg("vy")=0.0, nb::arg("vz")=0.0)
+        }, "Spawn a unit by name with orientation and return its Entity ID",
+           nb::arg("side"), nb::arg("type_name"),
+           nb::arg("x"), nb::arg("y"), nb::arg("z"),
+           nb::arg("heading") = 0.0, nb::arg("pitch") = 0.0, nb::arg("roll") = 0.0,
+           nb::arg("vx") = 0.0, nb::arg("vy") = 0.0, nb::arg("vz") = 0.0)
         .def("spawn_unit", [](SimulationKernel& self, Side side, UnitType type,
                               double x, double y, double z,
                               double heading, double pitch, double roll,
                               double vx, double vy, double vz) {
-            auto e = self.spawn_unit(side, default_unit_name_for(type), x, y, z, heading, pitch, roll, vx, vy, vz);
+            auto e = self.spawn_unit(
+                side,
+                default_unit_name_for(type),
+                x,
+                y,
+                z,
+                heading,
+                pitch,
+                roll,
+                vx,
+                vy,
+                vz
+            );
             return e.id();
         }, "Spawn a default unit for the given UnitType with orientation and return its Entity ID",
            nb::arg("side"), nb::arg("type"),
            nb::arg("x"), nb::arg("y"), nb::arg("z"),
-           nb::arg("heading")=0.0, nb::arg("pitch")=0.0, nb::arg("roll")=0.0,
-           nb::arg("vx")=0.0, nb::arg("vy")=0.0, nb::arg("vz")=0.0)
-
-        // Action Interface
+           nb::arg("heading") = 0.0, nb::arg("pitch") = 0.0, nb::arg("roll") = 0.0,
+           nb::arg("vx") = 0.0, nb::arg("vy") = 0.0, nb::arg("vz") = 0.0)
         .def("set_command", &SimulationKernel::set_unit_command, "Set movement command for a unit",
              nb::arg("entity_id"), nb::arg("heading_deg"), nb::arg("speed_mps"), nb::arg("altitude_m"))
         .def("set_stick_command", &SimulationKernel::set_unit_stick_command, "Set stick inputs",
-             nb::arg("entity_id"), nb::arg("stick_roll"), nb::arg("stick_pitch"), nb::arg("throttle"), nb::arg("gear_down")=true)
+             nb::arg("entity_id"), nb::arg("stick_roll"), nb::arg("stick_pitch"), nb::arg("throttle"), nb::arg("gear_down") = true)
         .def("set_action", &SimulationKernel::set_unit_action, "Set normalized action for a unit",
              nb::arg("entity_id"),
              nb::arg("turn_rate_cmd"),
@@ -525,9 +596,7 @@ void bind_core(nb::module_& m) {
              nb::arg("max_speed_mps"),
              nb::arg("min_alt_m"),
              nb::arg("max_alt_m"))
-        
-        // Digital Pilot Bindings
-        .def("set_pilot_action", &SimulationKernel::set_pilot_action, 
+        .def("set_pilot_action", &SimulationKernel::set_pilot_action,
              "Set raw pilot inputs (stick, throttle, etc) for Digital Pilot",
              nb::arg("entity_id"), nb::arg("action"))
         .def("set_mission_command", &SimulationKernel::set_mission_command,
@@ -542,7 +611,6 @@ void bind_core(nb::module_& m) {
         .def("set_pilot_report", &SimulationKernel::set_pilot_report,
              "Store the latest pilot report for the entity",
              nb::arg("entity_id"), nb::arg("pilot_report"))
-
         .def("set_command_lag", &SimulationKernel::set_command_lag, "Override command lag time constants for a unit",
              nb::arg("entity_id"),
              nb::arg("heading_tau_s"),
@@ -556,21 +624,15 @@ void bind_core(nb::module_& m) {
         .def("set_weapon_cooldown", &SimulationKernel::set_weapon_cooldown,
              "Override unit weapon cooldown state",
              nb::arg("entity_id"), nb::arg("cooldown_s"), nb::arg("last_fire_time"))
-             
         .def("fire_missile", [](SimulationKernel& self, uint64_t attacker_id, uint64_t target_id) {
              auto e = self.fire_missile(attacker_id, target_id);
-             return e.id(); // Return ID just like spawn_unit
+             return e.id();
         }, "Fire a missile from attacker to target", nb::arg("attacker_id"), nb::arg("target_id"))
         .def("fire_naval_weapon", &SimulationKernel::fire_naval_weapon,
              "Fire a naval weapon mount type at target",
              nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("weapon_type_code"))
-        .def("debug_apply_proximity_hit", &SimulationKernel::debug_apply_proximity_hit,
-             "Testing helper: apply one synthetic proximity hit to a target",
-             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("damage"), nb::arg("fuse_distance"))
         .def("export_recent_engagement_events", &SimulationKernel::export_recent_engagement_events,
              "Export recently captured engagement events")
-        
-        // Helper to get unit position (state observation)
         .def("get_unit_position", [](SimulationKernel& self, uint64_t entity_id) {
              auto p = self.get_unit_position(entity_id);
              return std::make_tuple(p[0], p[1], p[2]);
@@ -579,171 +641,23 @@ void bind_core(nb::module_& m) {
              auto v = self.get_unit_velocity(entity_id);
              return std::make_tuple(v[0], v[1], v[2]);
         }, "Get unit velocity (vx,vy,vz)")
-        
-        // Helper to get unit heading (degrees, NAV convention: 0=North, CW)
-        .def("get_unit_heading", [](SimulationKernel& self, uint64_t entity_id) {
-             flecs::world& world = self.get_world();
-             auto e = world.entity(entity_id);
-             if(!e.is_valid()) return 0.0;
-             const Transform* t = e.get<Transform>();
-             if (t) return t->heading;
-             const Velocity* v = e.get<Velocity>();
-             if(!v) return 0.0;
-             // Math angle: atan2(vy, vx) where 0=East, CCW positive
-             double math_rad = std::atan2(v->vy, v->vx);
-             double math_deg = math_rad * 180.0 / M_PI;
-             // NAV angle: 0=North, CW positive => NAV = 90 - Math
-             double nav_deg = 90.0 - math_deg;
-             // Normalize to [0, 360)
-             while (nav_deg < 0) nav_deg += 360.0;
-             while (nav_deg >= 360.0) nav_deg -= 360.0;
-             return nav_deg;
-        }, "Get unit heading in degrees (NAV: 0=North, CW)")
-        
-        // Helper to get unit type
-        .def("get_unit_type", [](SimulationKernel& self, uint64_t entity_id) {
-             flecs::world& world = self.get_world();
-             auto e = world.entity(entity_id);
-             if(!e.is_valid()) return 0;
-             const KeyEntity* k = e.get<KeyEntity>();
-             return k ? (int)k->type : 0;
-        }, "Get unit type enum value")
-        
-        // Helper to check if unit is active/alive
-        .def("is_unit_active", [](SimulationKernel& self, uint64_t entity_id) {
-             flecs::world& world = self.get_world();
-             return world.entity(entity_id).is_valid();
-        }, "Check if unit exists")
-        
+        .def("get_unit_heading", &SimulationKernel::get_unit_heading,
+             "Get unit heading in degrees (NAV: 0=North, CW)", nb::arg("entity_id"))
+        .def("get_unit_type", &SimulationKernel::get_unit_type,
+             "Get unit type enum value", nb::arg("entity_id"))
+        .def("is_unit_active", &SimulationKernel::is_unit_active,
+             "Check if unit exists", nb::arg("entity_id"))
         .def("get_all_units", &SimulationKernel::get_all_units, "Get all units state")
         .def("get_detections", &SimulationKernel::get_detections, "Get unit sensor contacts")
-        .def("get_sensor_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             auto e = self.get_world().entity(entity_id);
-             if (!e.is_valid()) {
-                 return SensorDebugView{};
-             }
-             const Sensor* sensor = e.get<Sensor>();
-             if (!sensor) {
-                 return SensorDebugView{};
-             }
-             return make_sensor_debug_view(*sensor);
-        }, "Get current runtime sensor tuning fields", nb::arg("entity_id"))
-        .def("get_track_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             std::vector<TrackDebugView> out;
-             auto e = self.get_world().entity(entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const TrackDatabase* db = e.get<TrackDatabase>();
-             if (!db) {
-                 return out;
-             }
-             out.reserve(db->tracks.size());
-             for (const auto& track : db->tracks) {
-                 out.push_back(make_track_debug_view(track));
-             }
-             return out;
-        }, "Get confirmed/coasted runtime track debug view", nb::arg("entity_id"))
-        .def("get_tentative_track_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             std::vector<TrackDebugView> out;
-             auto e = self.get_world().entity(entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const TrackDatabase* db = e.get<TrackDatabase>();
-             if (!db) {
-                 return out;
-             }
-             out.reserve(db->tentative_tracks.size());
-             for (const auto& track : db->tentative_tracks) {
-                 out.push_back(make_track_debug_view(track));
-             }
-             return out;
-        }, "Get tentative runtime track debug view", nb::arg("entity_id"))
-        .def("get_flight_dynamics_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             FlightDynamicsDebugView out;
-             auto e = self.get_world().entity(entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             if (const AeroState* aero = e.get<AeroState>()) {
-                 out.alpha_dot_dps = aero->angle_of_attack_rate_dps;
-                 out.stall_progress = aero->stall_progress;
-             }
-             if (const StallState* stall = e.get<StallState>()) {
-                 out.stall_progress = stall->stall_progress;
-                 out.is_stalled = stall->is_stalled;
-                 out.pitch_break_active = stall->pitch_break_active;
-                 out.time_in_stall_s = stall->time_in_stall_s;
-             }
-             if (const Propulsion* propulsion = e.get<Propulsion>()) {
-                 out.throttle_command = propulsion->throttle_command;
-                 out.throttle_state = propulsion->throttle_state;
-                 out.ab_state = propulsion->ab_state;
-                 out.afterburner_active = propulsion->afterburner_active;
-                 out.current_tsfc = propulsion->current_tsfc;
-                 out.current_thrust_n = propulsion->current_thrust_n;
-             }
-             return out;
-        }, "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)", nb::arg("entity_id"))
         .def("get_unit_health", &SimulationKernel::get_unit_health, "Get unit health [current, max]")
         .def("get_unit_damage_state", &SimulationKernel::get_unit_damage_state,
              "Get unit damage state [mission, mobility, sensor, survivability]")
-        .def("debug_get_naval_weapon_counts", &SimulationKernel::debug_get_naval_weapon_counts,
-             "Get naval weapon counts [mounts, ready_vls, ready_gun, ready_ciws]")
         .def("get_unit_fuel", &SimulationKernel::get_unit_fuel, nb::arg("entity_id"),
              "Returns [internal, max_internal, external, max_external]")
-        .def("debug_get_naval_stores", &SimulationKernel::debug_get_naval_stores, nb::arg("entity_id"),
-             "Debug: get [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]")
-        .def("debug_get_logistics_node", &SimulationKernel::debug_get_logistics_node, nb::arg("entity_id"),
-             "Debug: get [supply_radius, infinite, underway_enabled, min_sep, max_sep, max_rel_speed, fuel_rate, missile_rate, dry_rate]")
-        .def("debug_get_resupply_state", &SimulationKernel::debug_get_resupply_state, nb::arg("entity_id"),
-             "Debug: get [active, kind, partner_id, stage, time_remaining, is_refueling, is_rearming]")
-        .def("debug_get_data_link_state", &SimulationKernel::debug_get_data_link_state, nb::arg("entity_id"),
-             "Debug: get [report_budget, message_budget, reports_sent_last, messages_sent_last, reports_dropped_last, messages_dropped_last, reports_sent_total, messages_sent_total, reports_dropped_total, messages_dropped_total]")
         .def("get_task_order", &SimulationKernel::get_task_order, "Get the latest task order", nb::arg("entity_id"))
         .def("get_leader_intent", &SimulationKernel::get_leader_intent, "Get the latest leader intent", nb::arg("entity_id"))
         .def("get_mission_command", &SimulationKernel::get_mission_command, "Get the active mission command", nb::arg("entity_id"))
         .def("get_pilot_report", &SimulationKernel::get_pilot_report, "Get the latest pilot report", nb::arg("entity_id"))
-        .def("debug_set_legacy_movement_command", [](SimulationKernel& self,
-                                                     uint64_t entity_id,
-                                                     double target_heading_deg,
-                                                     double target_speed_mps,
-                                                     double target_altitude_m,
-                                                     bool active) {
-             auto e = self.get_world().entity(entity_id);
-             if (!e.is_valid()) {
-                 throw std::invalid_argument("Invalid entity ID for debug_set_legacy_movement_command");
-             }
-             e.set<MovementCommand>(make_legacy_autopilot_movement_command(
-                 target_heading_deg,
-                 target_speed_mps,
-                 target_altitude_m,
-                 active
-             ));
-        }, "Debug: inject a legacy autopilot-style MovementCommand",
-             nb::arg("entity_id"),
-             nb::arg("target_heading_deg"),
-             nb::arg("target_speed_mps"),
-             nb::arg("target_altitude_m"),
-             nb::arg("active") = true)
-        .def("debug_get_legacy_movement_command", [](SimulationKernel& self, uint64_t entity_id) {
-             nb::dict out;
-             auto e = self.get_world().entity(entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const MovementCommand* movement = e.get<MovementCommand>();
-             if (!movement) {
-                 return out;
-             }
-             out["active"] = movement->active;
-             out["target_heading"] = movement->target_heading;
-             out["target_speed"] = movement->target_speed;
-             out["target_altitude"] = movement->target_altitude;
-             out["use_stick_control"] = movement->use_stick_control;
-             return out;
-        }, "Debug: get legacy movement command state", nb::arg("entity_id"))
         .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
         .def("get_visual_observation", [](SimulationKernel& self, uint64_t entity_id) {
              size_t shape[3] = {
@@ -776,8 +690,94 @@ void bind_core(nb::module_& m) {
              >(std::move(downsampled), 3, shape);
         }, "Get ARB visual observation [H/f, W/f, C] tensor", nb::arg("entity_id"), nb::arg("factor"))
         .def("get_unit_messages", &SimulationKernel::get_unit_messages, "Get inbox")
-        .def("send_message_command", &SimulationKernel::send_message_command, 
-             nb::arg("entity_id"), nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"))
+        .def("send_message_command", &SimulationKernel::send_message_command,
+             nb::arg("entity_id"), nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"));
+}
+
+void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<SimulationKernel>& kernel) {
+    kernel
+        .def("debug_apply_proximity_hit", &SimulationKernel::debug_apply_proximity_hit,
+             "Testing helper: apply one synthetic proximity hit to a target",
+             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("damage"), nb::arg("fuse_distance"))
+        .def("get_sensor_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+             if (!e.is_valid()) {
+                 return SensorDebugView{};
+             }
+             const Sensor* sensor = e.get<Sensor>();
+             if (!sensor) {
+                 return SensorDebugView{};
+             }
+             return make_sensor_debug_view(*sensor);
+        }, "Get current runtime sensor tuning fields", nb::arg("entity_id"))
+        .def("get_track_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
+             std::vector<TrackDebugView> out;
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+             if (!e.is_valid()) {
+                 return out;
+             }
+             const TrackDatabase* db = e.get<TrackDatabase>();
+             if (!db) {
+                 return out;
+             }
+             out.reserve(db->tracks.size());
+             for (const auto& track : db->tracks) {
+                 out.push_back(make_track_debug_view(track));
+             }
+             return out;
+        }, "Get confirmed/coasted runtime track debug view", nb::arg("entity_id"))
+        .def("get_tentative_track_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
+             std::vector<TrackDebugView> out;
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+             if (!e.is_valid()) {
+                 return out;
+             }
+             const TrackDatabase* db = e.get<TrackDatabase>();
+             if (!db) {
+                 return out;
+             }
+             out.reserve(db->tentative_tracks.size());
+             for (const auto& track : db->tentative_tracks) {
+                 out.push_back(make_track_debug_view(track));
+             }
+             return out;
+        }, "Get tentative runtime track debug view", nb::arg("entity_id"))
+        .def("get_flight_dynamics_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
+             FlightDynamicsDebugView out;
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+             if (!e.is_valid()) {
+                 return out;
+             }
+             if (const AeroState* aero = e.get<AeroState>()) {
+                 out.alpha_dot_dps = aero->angle_of_attack_rate_dps;
+                 out.stall_progress = aero->stall_progress;
+             }
+             if (const StallState* stall = e.get<StallState>()) {
+                 out.stall_progress = stall->stall_progress;
+                 out.is_stalled = stall->is_stalled;
+                 out.pitch_break_active = stall->pitch_break_active;
+                 out.time_in_stall_s = stall->time_in_stall_s;
+             }
+             if (const Propulsion* propulsion = e.get<Propulsion>()) {
+                 out.throttle_command = propulsion->throttle_command;
+                 out.throttle_state = propulsion->throttle_state;
+                 out.ab_state = propulsion->ab_state;
+                 out.afterburner_active = propulsion->afterburner_active;
+                 out.current_tsfc = propulsion->current_tsfc;
+                 out.current_thrust_n = propulsion->current_thrust_n;
+             }
+             return out;
+        }, "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)", nb::arg("entity_id"))
+        .def("debug_get_naval_weapon_counts", &SimulationKernel::debug_get_naval_weapon_counts,
+             "Get naval weapon counts [mounts, ready_vls, ready_gun, ready_ciws]")
+        .def("debug_get_naval_stores", &SimulationKernel::debug_get_naval_stores, nb::arg("entity_id"),
+             "Debug: get [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]")
+        .def("debug_get_logistics_node", &SimulationKernel::debug_get_logistics_node, nb::arg("entity_id"),
+             "Debug: get [supply_radius, infinite, underway_enabled, min_sep, max_sep, max_rel_speed, fuel_rate, missile_rate, dry_rate]")
+        .def("debug_get_resupply_state", &SimulationKernel::debug_get_resupply_state, nb::arg("entity_id"),
+             "Debug: get [active, kind, partner_id, stage, time_remaining, is_refueling, is_rearming]")
+        .def("debug_get_data_link_state", &SimulationKernel::debug_get_data_link_state, nb::arg("entity_id"),
+             "Debug: get [report_budget, message_budget, reports_sent_last, messages_sent_last, reports_dropped_last, messages_dropped_last, reports_sent_total, messages_sent_total, reports_dropped_total, messages_dropped_total]")
         .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time, "Debug: get sensor last_scan_time")
         .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size")
         .def("debug_get_mass_state", &SimulationKernel::debug_get_mass_state,
@@ -785,7 +785,7 @@ void bind_core(nb::module_& m) {
              nb::arg("entity_id"))
         .def("debug_get_pending_movement_command", [](SimulationKernel& self, uint64_t entity_id) {
              nb::dict out;
-             auto e = self.get_world().entity(entity_id);
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
              if (!e.is_valid()) {
                  return out;
              }
@@ -793,17 +793,38 @@ void bind_core(nb::module_& m) {
              if (!pending) {
                  return out;
              }
+             diagnostics_mark_read_only_snapshot(
+                 out,
+                 "diagnostics_pending_transport_shell",
+                 "mission_command_control_state"
+             );
+             out["diagnostics_transport_shell"] = true;
+             out["transport_shell_kind"] = "pending_legacy_movement_command";
              out["active"] = pending->active;
              out["deliver_time"] = pending->deliver_time;
+             out["command_shell_active"] = pending->command.active;
              out["target_heading"] = pending->command.target_heading;
              out["target_speed"] = pending->command.target_speed;
              out["target_altitude"] = pending->command.target_altitude;
              out["use_stick_control"] = pending->command.use_stick_control;
+             // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
+             out["state_access_mode"] = "read_only_transport_shell";
+             out["transport_shell_truth_owner"] = "typed_control_state_pending_delivery";
+             if (const MissionCommandControlState* state = e.get<MissionCommandControlState>()) {
+                 out["current_control_state_present"] = true;
+                 out["current_control_state_active"] = state->active;
+                 out["current_control_target_heading_deg"] = state->target_heading_deg;
+                 out["current_control_target_speed_mps"] = state->target_speed_mps;
+                 out["current_control_target_altitude_m"] = state->target_altitude_m;
+             } else {
+                 out["current_control_state_present"] = false;
+             }
              return out;
-        }, "Debug: get pending movement command state", nb::arg("entity_id"))
+        }, "Debug diagnostics-only read-only transport shell snapshot for pending legacy movement command state",
+             nb::arg("entity_id"))
         .def("debug_get_pending_action_command", [](SimulationKernel& self, uint64_t entity_id) {
              nb::dict out;
-             auto e = self.get_world().entity(entity_id);
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
              if (!e.is_valid()) {
                  return out;
              }
@@ -811,8 +832,16 @@ void bind_core(nb::module_& m) {
              if (!pending) {
                  return out;
              }
+             diagnostics_mark_read_only_snapshot(
+                 out,
+                 "diagnostics_pending_transport_shell",
+                 "typed_action_delivery"
+             );
+             out["diagnostics_transport_shell"] = true;
+             out["transport_shell_kind"] = "pending_legacy_action_command";
              out["active"] = pending->active;
              out["deliver_time"] = pending->deliver_time;
+             out["command_shell_active"] = pending->command.active;
              out["turn_rate_cmd"] = pending->command.turn_rate_cmd;
              out["accel_cmd"] = pending->command.accel_cmd;
              out["climb_rate_cmd"] = pending->command.climb_rate_cmd;
@@ -820,12 +849,16 @@ void bind_core(nb::module_& m) {
              out["release_chaff"] = pending->command.release_chaff;
              out["release_flare"] = pending->command.release_flare;
              out["jettison_tanks"] = pending->command.jettison_tanks;
+             // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
+             out["state_access_mode"] = "read_only_transport_shell";
+             out["transport_shell_truth_owner"] = "typed_action_pending_delivery";
              return out;
-        }, "Debug: get pending action command state", nb::arg("entity_id"))
+        }, "Debug diagnostics-only read-only transport shell snapshot for pending legacy action command state",
+             nb::arg("entity_id"))
         .def("debug_get_pending_mission_command_queue", [](SimulationKernel& self, uint64_t entity_id) {
              nb::dict out;
              nb::list queued;
-             auto e = self.get_world().entity(entity_id);
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
              if (!e.is_valid()) {
                  out["queued"] = queued;
                  return out;
@@ -872,7 +905,7 @@ void bind_core(nb::module_& m) {
              nb::arg("entity_id"))
         .def("debug_get_missile_runtime_state", [](SimulationKernel& self, uint64_t entity_id) {
              nb::dict out;
-             auto e = self.get_world().entity(entity_id);
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
              if (!e.is_valid()) {
                  return out;
              }
@@ -945,7 +978,79 @@ void bind_core(nb::module_& m) {
                  out["reference_area_m2"] = mass_properties->reference_area_m2;
              }
              return out;
-        }, "Debug: get missile runtime guidance state", nb::arg("entity_id"))
+        }, "Debug: get missile runtime guidance state", nb::arg("entity_id"));
+}
+
+void bind_simulation_kernel_legacy_compatibility_debug_surface(nb::class_<SimulationKernel>& kernel) {
+    kernel
+        .def("debug_set_legacy_movement_command", [](SimulationKernel& self,
+                                                     uint64_t entity_id,
+                                                     double target_heading_deg,
+                                                     double target_speed_mps,
+                                                     double target_altitude_m,
+                                                     bool active) {
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+             if (!e.is_valid()) {
+                 throw std::invalid_argument("Invalid entity ID for debug_set_legacy_movement_command");
+             }
+             diagnostics_quarantined_legacy_movement_bridge_write(
+                 e,
+                 target_heading_deg,
+                 target_speed_mps,
+                 target_altitude_m,
+                 active
+             );
+        }, "Debug quarantined bridge write: sync legacy movement shell through typed control-state compatibility helper only",
+             nb::arg("entity_id"),
+             nb::arg("target_heading_deg"),
+             nb::arg("target_speed_mps"),
+             nb::arg("target_altitude_m"),
+             nb::arg("active") = true)
+        .def("debug_get_legacy_movement_command", [](SimulationKernel& self, uint64_t entity_id) {
+             nb::dict out;
+             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+             if (!e.is_valid()) {
+                 return out;
+             }
+             const MovementCommand* movement = e.get<MovementCommand>();
+             if (!movement) {
+                 return out;
+             }
+             diagnostics_mark_read_only_snapshot(
+                 out,
+                 "diagnostics_legacy_mirror",
+                 "mission_command_control_state_bridge"
+             );
+             out["diagnostics_legacy_mirror"] = true;
+             out["mirror_kind"] = "legacy_movement_command";
+             out["active"] = movement->active;
+             out["target_heading"] = movement->target_heading;
+             out["target_speed"] = movement->target_speed;
+             out["target_altitude"] = movement->target_altitude;
+             out["use_stick_control"] = movement->use_stick_control;
+             // WP22-R1-2: read-only legacy movement shell mirror, not maintained truth.
+             out["state_access_mode"] = "read_only_legacy_mirror";
+             out["mirror_truth_owner"] = "typed_control_state_bridge_projection";
+             if (const MissionCommandControlState* state = e.get<MissionCommandControlState>()) {
+                 out["control_state_present"] = true;
+                 out["control_state_active"] = state->active;
+                 out["control_target_heading_deg"] = state->target_heading_deg;
+                 out["control_target_speed_mps"] = state->target_speed_mps;
+                 out["control_target_altitude_m"] = state->target_altitude_m;
+                 out["control_lagged_active"] = state->lagged_active;
+                 out["control_lagged_heading_deg"] = state->lagged_heading_deg;
+                 out["control_lagged_speed_mps"] = state->lagged_speed_mps;
+                 out["control_lagged_altitude_m"] = state->lagged_altitude_m;
+             } else {
+                 out["control_state_present"] = false;
+             }
+             return out;
+        }, "Debug diagnostics-only read-only legacy movement shell mirror plus typed control-state bridge snapshot",
+             nb::arg("entity_id"));
+}
+
+void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKernel>& kernel) {
+    kernel
         .def("set_contact_list", &SimulationKernel::set_contact_list,
              "Override the ContactList for a unit or missile",
              nb::arg("entity_id"), nb::arg("detections"))
@@ -955,3 +1060,4 @@ void bind_core(nb::module_& m) {
              nb::rv_policy::copy,
              "Get current missile tuning snapshot");
 }
+} // namespace

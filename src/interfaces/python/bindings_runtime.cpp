@@ -763,6 +763,7 @@ void bind_runtime(nb::module_& m) {
             "rejection_reason",
             &TypedPlatformSpawnResult::rejection_reason
         )
+        .def_rw("setup_surface", &TypedPlatformSpawnResult::setup_surface)
         .def_rw("errors", &TypedPlatformSpawnResult::errors)
         .def_rw("evidence_refs", &TypedPlatformSpawnResult::evidence_refs);
 
@@ -773,6 +774,27 @@ void bind_runtime(nb::module_& m) {
             "typed_platform_spawn_results",
             &BatchWorldSetupResult::typed_platform_spawn_results
         );
+
+    nb::class_<RuntimeWorldLayoutRequest>(m, "RuntimeWorldLayoutRequest")
+        .def(nb::init<>())
+        .def_rw("world_index", &RuntimeWorldLayoutRequest::world_index)
+        .def_rw("seed", &RuntimeWorldLayoutRequest::seed)
+        .def_rw("terrain_type", &RuntimeWorldLayoutRequest::terrain_type)
+        .def_rw("wind_speed_mps", &RuntimeWorldLayoutRequest::wind_speed_mps)
+        .def_rw("wind_dir_from_deg", &RuntimeWorldLayoutRequest::wind_dir_from_deg)
+        .def_rw("wind_shear_mps_per_km", &RuntimeWorldLayoutRequest::wind_shear_mps_per_km)
+        .def_rw("maritime_configured", &RuntimeWorldLayoutRequest::maritime_configured)
+        .def_rw("sea_state", &RuntimeWorldLayoutRequest::sea_state)
+        .def_rw("wave_heading_deg", &RuntimeWorldLayoutRequest::wave_heading_deg)
+        .def_rw("wave_period_s", &RuntimeWorldLayoutRequest::wave_period_s)
+        .def_rw("zones", &RuntimeWorldLayoutRequest::zones)
+        .def_rw("spawn_requests", &RuntimeWorldLayoutRequest::spawn_requests)
+        .def_rw("time_steps", &RuntimeWorldLayoutRequest::time_steps);
+
+    nb::class_<RuntimeWorldLayoutResult>(m, "RuntimeWorldLayoutResult")
+        .def(nb::init<>())
+        .def_rw("world_index", &RuntimeWorldLayoutResult::world_index)
+        .def_rw("entity_ids", &RuntimeWorldLayoutResult::entity_ids);
 
     nb::class_<RuntimeCounterfactualBranchRequest>(
         m,
@@ -1470,6 +1492,24 @@ void bind_runtime(nb::module_& m) {
             nb::arg("requests"),
             nb::arg("time_steps") = std::vector<double>{}
         )
+        .def(
+            "apply_world_layout",
+            &WorldBatchRuntime::apply_world_layout,
+            nb::arg("world_index"),
+            nb::arg("seed"),
+            nb::arg("terrain_type"),
+            nb::arg("wind_speed_mps"),
+            nb::arg("wind_dir_from_deg"),
+            nb::arg("wind_shear_mps_per_km"),
+            nb::arg("maritime_configured"),
+            nb::arg("sea_state"),
+            nb::arg("wave_heading_deg"),
+            nb::arg("wave_period_s"),
+            nb::arg("zones"),
+            nb::arg("requests"),
+            nb::arg("time_steps") = std::vector<double>{}
+        )
+        .def("world_time_step", &WorldBatchRuntime::world_time_step, nb::arg("world_index"))
         .def("set_pilot_actions_batch", &WorldBatchRuntime::set_pilot_actions_batch, nb::arg("assignments"))
         .def("set_mission_commands_batch", &WorldBatchRuntime::set_mission_commands_batch, nb::arg("assignments"))
         .def("set_task_orders_batch", &WorldBatchRuntime::set_task_orders_batch, nb::arg("assignments"))
@@ -1596,6 +1636,27 @@ void bind_runtime(nb::module_& m) {
             nb::arg("time_steps") = std::vector<double>{}
         )
         .def("apply_world_setup", &RuntimeFacade::apply_world_setup, nb::arg("request"))
+        .def("apply_world_layout", &RuntimeFacade::apply_world_layout, nb::arg("request"))
+        .def("world_time_step", &RuntimeFacade::world_time_step, nb::arg("world_index"))
+        .def(
+            "get_sensor_candidate_ids_batch",
+            &RuntimeFacade::get_sensor_candidate_ids_batch,
+            nb::arg("refs"),
+            nb::arg("use_gpu") = false
+        )
+        .def(
+            "get_visual_candidate_ids_batch",
+            &RuntimeFacade::get_visual_candidate_ids_batch,
+            nb::arg("refs"),
+            nb::arg("range_m") = 25000.0,
+            nb::arg("use_gpu") = false
+        )
+        .def(
+            "get_comm_candidate_ids_batch",
+            &RuntimeFacade::get_comm_candidate_ids_batch,
+            nb::arg("refs"),
+            nb::arg("use_gpu") = false
+        )
         .def("set_pilot_actions_batch", &RuntimeFacade::set_pilot_actions_batch, nb::arg("assignments"))
         .def("set_mission_commands_batch", &RuntimeFacade::set_mission_commands_batch, nb::arg("assignments"))
         .def("set_task_orders_batch", &RuntimeFacade::set_task_orders_batch, nb::arg("assignments"))

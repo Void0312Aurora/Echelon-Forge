@@ -11,3 +11,7 @@ struct PilotReportAir {
     double closure_mps = 0.0;
     double separation_m = 0.0;
 };
+
+// Maintained air-domain owner slice projected through PilotReport compatibility shells.
+using PilotReportAirOwnerSlice = PilotReportAir;
+inline constexpr bool kPilotReportAirOwnedDomainSlice = true;

@@ -9,6 +9,8 @@
 #include "runtime/facade/runtime_facade_types.h"
 
 class WorldBatchRuntime;
+struct WorldBatchVisualBindingCompatibilityScene;
+struct RecentEngagementEvents;
 
 class RuntimeFacade {
 public:
@@ -66,6 +68,27 @@ public:
         const std::vector<double>& time_steps = {}
     );
     BatchWorldSetupResult apply_world_setup(const BatchWorldSetupRequest& request);
+    RuntimeWorldLayoutResult apply_world_layout(const RuntimeWorldLayoutRequest& request);
+    double world_time_step(std::size_t world_index) const;
+    std::vector<std::vector<std::uint64_t>> get_sensor_candidate_ids_batch(
+        const std::vector<WorldEntityRef>& refs,
+        bool use_gpu = false
+    ) const;
+    std::vector<std::vector<std::uint64_t>> get_visual_candidate_ids_batch(
+        const std::vector<WorldEntityRef>& refs,
+        double range_m = 25000.0,
+        bool use_gpu = false
+    ) const;
+    std::vector<std::vector<std::uint64_t>> get_comm_candidate_ids_batch(
+        const std::vector<WorldEntityRef>& refs,
+        bool use_gpu = false
+    ) const;
+    std::vector<WorldBatchVisualBindingCompatibilityScene>
+    collect_visual_binding_compatibility_scenes_batch(
+        const std::vector<WorldEntityRef>& refs,
+        int downsample,
+        bool use_gpu = false
+    ) const;
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
     void set_task_orders_batch(const std::vector<WorldTaskOrderAssignment>& assignments);
@@ -102,6 +125,18 @@ public:
     RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);
 
 private:
+    bool counterfactual_world_index_valid(std::uint64_t world_index) const noexcept;
+    bool apply_counterfactual_delta(
+        const WorldEntityRef& ref,
+        const RuntimeCounterfactualBranchRequest& request
+    );
+    bool restore_counterfactual_entity(
+        const WorldEntityRef& target_ref,
+        const RuntimeCounterfactualSnapshot& snapshot
+    );
+    RecentEngagementEvents export_recent_engagement_events_for_world(
+        std::size_t world_index
+    ) const;
     ObservationBatchPacket build_observation_packet(
         const ObservationBatchRequest& request
     ) const;

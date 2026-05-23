@@ -5,8 +5,6 @@
 #include <iostream>
 #include "components/basic/common.h"
 #include "components/command/air/control_input_resolution.h"
-#include "components/command/legacy_command.h"
-#include "components/command/pilot_action.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h" // For GroundState
@@ -173,10 +171,12 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     double vx = velocity[i].vx;
                     double vy = velocity[i].vy;
                     double v_h_sq = vx*vx + vy*vy;
-                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
-                    const MovementCommand* cmd = active_legacy_movement_command(it.entity(i).get<MovementCommand>());
-                    const ResolvedGroundControlInput ground_control =
-                        resolve_pilot_or_legacy_ground_control(pilot, cmd);
+                    const ResolvedAirControlInput control_input = resolve_air_control_input(
+                        it.entity(i).get<PilotAction>(),
+                        it.entity(i).get<MissionCommandControlState>(),
+                        nullptr
+                    );
+                    const ResolvedGroundControlInput ground_control = control_input.ground_control;
                     bool throttle_idle = ground_control.throttle_idle;
                     double brake_amount = ground_control.brake_amount;
                     
@@ -251,8 +251,8 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
 	                         // (see RotationalIntegrate). Here we model steering via the wheel, so we set a negative
 	                         // steer angle for positive rudder.
 	                         double nws_steer_rad = 0.0;
-	                         if (pilot && pilot->active) {
-	                             double yaw_cmd = pilot->rudder;
+	                         if (control_input.nose_wheel_steering.available) {
+	                             double yaw_cmd = control_input.nose_wheel_steering.yaw_command;
 	                             if (const ControlLawState* ctl = it.entity(i).get<ControlLawState>()) {
 	                                 // Use the *filtered pedal* (not the yaw-rate-limited command) for NWS.
 	                                 // NWS is a mechanical linkage from pedals to the nose wheel at low speed;

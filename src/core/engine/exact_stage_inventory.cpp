@@ -25,22 +25,22 @@ const std::vector<ExactStepStageDescriptor>& exact_gpu_stage_inventory() {
          "Prunes expired comm inbox entries before the update pass.",
          false, false},
         {2, "CommandLinkMovement", "OnUpdate", "command",
-         "Delivers pending movement commands into the live command surface.",
+         "Delivers delayed typed control targets and refreshes optional compatibility movement mirrors.",
          true, true},
         {3, "CommandLinkAction", "OnUpdate", "command",
-         "Delivers pending action commands into the live action surface.",
+         "Delivers delayed action payloads while the pending shell stays quarantined.",
          true, true},
         {4, "CommandLinkMission", "OnUpdate", "command",
-         "Delivers pending mission commands into the live mission surface.",
+         "Delivers pending mission commands and advances queued mission intent.",
          true, true},
         {5, "ActionMapping", "OnUpdate", "command",
-         "Maps normalized RL action inputs into movement-command targets.",
+         "Maps normalized RL action inputs into typed control-state targets and optional movement mirrors.",
          true, true},
         {6, "CommandLag", "OnUpdate", "command",
-         "Applies the exact command-lag filter to heading, speed, and altitude.",
+         "Applies the exact lag filter to typed control targets and optional lagged mirrors.",
          true, true},
         {7, "FlightControl", "OnUpdate", "control",
-         "Runs the control model and refreshes filtered control-law state.",
+         "Runs the control model from typed control-state inputs and refreshes control side effects.",
          true, true},
         {8, "ClearForces", "OnLoad", "physics",
          "Clears ForceAccumulator before exact force/torque buildup.",
@@ -49,13 +49,13 @@ const std::vector<ExactStepStageDescriptor>& exact_gpu_stage_inventory() {
          "Refreshes air-relative dynamic pressure, Mach, AoA, and beta.",
          true, true},
         {10, "ComputeForces", "OnUpdate", "physics",
-         "Adds gravity and propulsion forces and updates propulsion readout.",
+         "Adds gravity and propulsion forces from resolved propulsion state.",
          true, true},
         {11, "ComputeAerodynamics", "OnUpdate", "physics",
          "Adds aerodynamic force and torque surfaces from aero state.",
          true, true},
         {12, "GroundContact", "OnUpdate", "physics",
-         "Applies ground normal force, tire friction, and ground-restoring torques.",
+         "Applies ground reaction, braking, and steering from bridge-resolved ground control.",
          true, true},
         {13, "RotationalIntegrate", "OnUpdate", "physics",
          "Integrates angular rates and attitude from accumulated torques.",
@@ -76,7 +76,7 @@ const std::vector<ExactStepStageDescriptor>& exact_gpu_stage_inventory() {
          "Fuses shared contacts across active data-link peers.",
          false, false},
         {19, "UpdateInstruments", "OnUpdate", "observation",
-         "Refreshes learner-facing instrument outputs from exact state.",
+         "Refreshes learner-facing instrument outputs from exact state and typed or mission projections.",
          true, true},
         {20, "ProximityFuze", "OnUpdate", "combat",
          "Applies missile fuze and hit-resolution side effects.",
@@ -91,7 +91,7 @@ const std::vector<ExactStepStageDescriptor>& exact_gpu_stage_inventory() {
          "Ages and removes transient EW expendables.",
          false, false},
         {24, "FuelConsumption", "OnUpdate", "logistics",
-         "Consumes fuel and updates afterburner/fuel-flow state.",
+         "Consumes fuel from propulsion runtime state and updates afterburner/fuel-flow state.",
          true, true},
         {25, "MassUpdate", "OnUpdate", "logistics",
          "Refreshes rigid-body total mass from the fuel system.",
@@ -107,60 +107,103 @@ const std::vector<ExactStepStageDescriptor>& exact_gpu_stage_inventory() {
 }
 
 const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_inventory() {
+    // Guarded contract ledger for exact-stage migration evidence. These entries
+    // document maintained typed owners, remaining compatibility projections,
+    // and quarantined legacy shells that the trace pipeline still exposes.
+    // They are not maintained implementation truth by themselves.
     static const std::vector<ExactStepStageContractDescriptor> contracts = {
         {
             2, "CommandLinkMovement", "OnUpdate", "command", true, true,
-            string_list({"PendingMovementCommand", "CommandLink", "world_time_total"}),
-            string_list({"MovementCommand", "PendingMovementCommand.active"}),
-            string_list({"packed.MovementCommand", "packed.PendingMovementCommand", "apply_signatures"}),
+            string_list({
+                "MissionCommandControlState",
+                "PendingMovementCommand.typed_command.control_state",
+                "PendingMovementCommand.command (diagnostics shell)",
+                "CommandLink",
+                "world_time_total"
+            }),
+            string_list({
+                "MissionCommandControlState",
+                "PendingMovementCommand.active",
+                "PendingMovementCommand.command (diagnostics shell)",
+                "MovementCommand (optional compatibility mirror)",
+                "LaggedCommand (optional compatibility mirror)"
+            }),
+            string_list({
+                "packed.PendingMovementCommand",
+                "packed.MovementCommand (optional mirror)",
+                "packed.LaggedCommand (optional mirror)",
+                "apply_signatures"
+            }),
             string_list({}),
-            "Deliver queued movement commands whose latency window has expired.",
-            "Consumes the global frame clock. It is the first exact stage that mutates movement-command intent."
+            "Apply delayed typed control-state targets once latency expires and refresh compatibility mirrors only when present.",
+            "Guarded contract ledger entry: maintained delayed-delivery truth lands in MissionCommandControlState. PendingMovementCommand.command plus optional MovementCommand/LaggedCommand mirrors remain diagnostics or compatibility evidence, not maintained command ownership."
         },
         {
             3, "CommandLinkAction", "OnUpdate", "command", true, true,
             string_list({"PendingActionCommand", "CommandLink", "world_time_total"}),
-            string_list({"ActionCommand", "PendingActionCommand.active"}),
+            string_list({
+                "ActionCommand",
+                "PendingActionCommand.active",
+                "MissionCommandControlState.typed_air_control (optional bridge projection)"
+            }),
             string_list({"packed.ActionCommand", "packed.PendingActionCommand", "apply_signatures"}),
             string_list({"CommandLinkMovement"}),
-            "Deliver queued action commands into the live normalized action surface.",
-            "Must run after movement delivery so both legacy and normalized command paths see the same frame time."
+            "Deliver queued action commands into the live normalized action surface while keeping the pending shell quarantined.",
+            "PendingActionCommand remains a quarantined legacy transport shell in this slice. When MissionCommandControlState is already present, delivery refreshes its typed air-control overlay without claiming a full typed action replacement."
         },
         {
             4, "CommandLinkMission", "OnUpdate", "command", true, true,
-            string_list({"PendingMissionCommand", "CommandLink", "world_time_total"}),
-            string_list({"MissionCommand", "PendingMissionCommand.active"}),
+            string_list({"PendingMissionCommand", "MissionCommandPendingQueue", "CommandLink", "world_time_total"}),
+            string_list({"MissionCommand", "PendingMissionCommand.active", "MissionCommandPendingQueue"}),
             string_list({"packed.MissionCommand", "packed.PendingMissionCommand", "apply_signatures"}),
             string_list({"CommandLinkAction"}),
-            "Deliver queued mission commands into the active mission surface.",
-            "Mission routing and landing/recovery intent must be settled before action mapping and control-law logic."
+            "Deliver queued mission commands into the active mission surface and advance the pending queue.",
+            "Mission intent remains first-class command truth here; the ledger keeps queue and transport state explicit rather than folding it into movement or action ownership claims."
         },
         {
             5, "ActionMapping", "OnUpdate", "command", true, true,
-            string_list({"ActionCommand", "ActionSpaceConfig", "Transform", "Velocity", "MovementCommand"}),
-            string_list({"MovementCommand"}),
-            string_list({"packed.MovementCommand", "apply_signatures"}),
+            string_list({
+                "MissionCommandControlState",
+                "ActionCommand",
+                "ActionSpaceConfig",
+                "Transform",
+                "Velocity",
+                "MovementCommand (optional compatibility mirror)"
+            }),
+            string_list({"MissionCommandControlState", "MovementCommand (optional compatibility mirror)"}),
+            string_list({"packed.MovementCommand (optional mirror)", "apply_signatures"}),
             string_list({"CommandLinkMission"}),
-            "Map normalized RL actions onto legacy heading/speed/altitude targets.",
-            "This is the bridge between learner actions and the exact movement-command lane; it seeds targets when no legacy command is active."
+            "Map normalized RL actions onto typed control-state targets and refresh optional compatibility movement mirrors.",
+            "MissionCommandControlState is the maintained owner here. MovementCommand survives only as an optional bridge or trace projection for compatibility consumers."
         },
         {
             6, "CommandLag", "OnUpdate", "command", true, true,
-            string_list({"MovementCommand", "CommandLag", "Transform", "Velocity", "LaggedCommand"}),
-            string_list({"LaggedCommand"}),
-            string_list({"packed.LaggedCommand", "apply_signatures"}),
+            string_list({
+                "MissionCommandControlState",
+                "CommandLag",
+                "Transform",
+                "Velocity",
+                "LaggedCommand (optional compatibility mirror)"
+            }),
+            string_list({"MissionCommandControlState", "LaggedCommand (optional compatibility mirror)"}),
+            string_list({"packed.LaggedCommand (optional mirror)", "apply_signatures"}),
             string_list({"ActionMapping"}),
-            "Apply first-order lag to heading, speed, and altitude targets.",
-            "Control-law stages must consume lagged commands, not raw movement commands, to preserve exact actuator latency semantics."
+            "Apply first-order lag to typed command-control targets and refresh optional compatibility lag mirrors.",
+            "Lagged command truth lives in MissionCommandControlState.lagged_* for maintained callers. LaggedCommand remains optional compatibility evidence for bridge consumers and exact-stage traces."
         },
         {
             7, "FlightControl", "OnUpdate", "control", true, true,
             string_list({
-                "LaggedCommand", "FlightModel", "PilotAction", "MissionCommand",
-                "GroundState", "AeroState", "AngularVelocity", "ForceAccumulator",
-                "ControlModelRef", "EnvironmentModelRef", "LandingGear"
+                "Velocity", "Transform", "MissionCommandControlState", "FlightModel",
+                "PilotAction/MissionCommand via control-model fetch",
+                "ControlModelRef", "EnvironmentModelRef"
             }),
-            string_list({"ForceAccumulator", "ControlLawState", "LandingGear"}),
+            string_list({
+                "Velocity", "Transform",
+                "ForceAccumulator (model-owned side effects)",
+                "ControlLawState (model-owned side effects)",
+                "LandingGear (model-owned side effects)"
+            }),
             string_list({
                 "hidden_dynamics.force_accumulator",
                 "hidden_dynamics.control_law_state",
@@ -168,8 +211,8 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
                 "apply_signatures"
             }),
             string_list({"CommandLag"}),
-            "Run the exact control model, generate control torques, and update FBW filter state.",
-            "Although the Flecs signature only exposes lagged command and flight model, the control model also reads PilotAction/MissionCommand/Aero/Ground state and mutates ForceAccumulator, ControlLawState, and gear transit state."
+            "Run the exact control model from typed control-state inputs and refresh model-owned control side effects.",
+            "The Flecs signature exposes MissionCommandControlState as the maintained command owner. Additional PilotAction/MissionCommand reads and ForceAccumulator, ControlLawState, or LandingGear side effects happen inside the control-model update and stay documented here as contract evidence, not as standalone ownership claims."
         },
         {
             8, "ClearForces", "OnLoad", "physics", true, true,
@@ -193,13 +236,13 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
             10, "ComputeForces", "OnUpdate", "physics", true, true,
             string_list({
                 "ForceAccumulator", "Transform", "Velocity", "Mass", "Propulsion",
-                "FlightModel", "MovementCommand", "PilotAction", "EnvironmentModelRef"
+                "FlightModel", "PilotAction", "MissionCommandControlState"
             }),
-            string_list({"ForceAccumulator", "Propulsion"}),
+            string_list({"ForceAccumulator"}),
             string_list({"hidden_dynamics.force_accumulator", "packed.Propulsion", "apply_signatures"}),
             string_list({"ComputeAeroState"}),
-            "Accumulate gravity and thrust forces and cache propulsion state for later readout.",
-            "Throttle source priority across PilotAction, MovementCommand, and ActionCommand must remain exact because later fuel and instrument stages depend on the chosen propulsion state."
+            "Accumulate gravity and thrust forces from the resolved propulsion state.",
+            "Throttle and command priority are resolved upstream through the typed air-control bridge and ComputePropulsion. This ledger must not be read as if MovementCommand or ActionCommand were maintained force-stage inputs."
         },
         {
             11, "ComputeAerodynamics", "OnUpdate", "physics", true, true,
@@ -217,8 +260,8 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
             12, "GroundContact", "OnUpdate", "physics", true, true,
             string_list({
                 "ForceAccumulator", "Transform", "Velocity", "Mass", "GroundState",
-                "LandingGear", "AngularVelocity", "ControlLawState", "PilotAction",
-                "MovementCommand", "GearState", "Health", "EnvironmentModelRef"
+                "LandingGear", "AngularVelocity", "PilotAction",
+                "MissionCommandControlState", "GearState", "Health", "EnvironmentModelRef"
             }),
             string_list({"ForceAccumulator", "Velocity", "GroundState", "GearState", "Health"}),
             string_list({
@@ -229,8 +272,8 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
                 "terminal"
             }),
             string_list({"ComputeAerodynamics"}),
-            "Apply normal force, tire friction, steering, and ground-restoring torques.",
-            "Ground-contact semantics span physics plus survivability state: it can damp velocity, mutate gear stress/collapse, and kill the entity through Health."
+            "Apply normal force, braking, steering, and ground-restoring torques from bridge-resolved ground control.",
+            "Maintained ground-control semantics resolve through MissionCommandControlState and PilotAction via the air-control bridge. Legacy movement mirrors only survive upstream as optional compatibility projections."
         },
         {
             13, "RotationalIntegrate", "OnUpdate", "physics", true, true,
@@ -277,23 +320,23 @@ const std::vector<ExactStepStageContractDescriptor>& exact_gpu_stage_contract_in
             string_list({
                 "InstrumentState", "Transform", "Velocity", "AeroState", "ForceAccumulator",
                 "Mass", "Propulsion", "AngularVelocity", "FuelSystem", "LandingGear",
-                "PilotAction", "MovementCommand", "MissionCommand", "RWR", "Ammo",
+                "PilotAction", "MissionCommandControlState", "MissionCommand", "RWR", "Ammo",
                 "EGI", "EnvironmentModelRef"
             }),
             string_list({"InstrumentState"}),
             string_list({"instrument", "terminal"}),
             string_list({"NavigationSystem"}),
-            "Build learner-facing instrument outputs from exact physics, navigation, and configuration state.",
-            "This is the first stage whose primary outputs are the learner-visible instrument surface and terminal metadata derived from the current world state."
+            "Build learner-facing instrument outputs from exact physics, navigation, and typed or mission command projections.",
+            "Instrument command bugs now read MissionCommand plus typed air-control overlays instead of treating MovementCommand as maintained truth. Legacy mirrors remain upstream compatibility evidence only."
         },
         {
             24, "FuelConsumption", "OnUpdate", "logistics", true, true,
-            string_list({"FuelSystem", "PilotAction", "MovementCommand", "ActionCommand"}),
+            string_list({"FuelSystem", "Propulsion"}),
             string_list({"FuelSystem"}),
             string_list({"packed.FuelSystem", "apply_signatures"}),
             string_list({"UpdateInstruments"}),
-            "Consume fuel according to the resolved throttle source and update fuel-flow state.",
-            "This stage runs after instrument refresh in the live CPU pipeline, so stage traces must treat FuelSystem as packed-state truth rather than expecting same-frame instrument fuel totals to update."
+            "Consume fuel from the resolved propulsion runtime state and update fuel-flow state.",
+            "Propulsion runtime state is the maintained fuel-burn input here. Upstream throttle resolution may consult typed control-state or compatibility bridges, but this ledger must not restate command DTOs as live fuel-stage truth."
         },
         {
             25, "MassUpdate", "OnUpdate", "logistics", true, true,

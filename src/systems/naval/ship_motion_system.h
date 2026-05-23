@@ -69,8 +69,9 @@ inline bool resolve_ship_station_command(
     if (commanded_heading_deg_out == nullptr || commanded_speed_mps_out == nullptr) {
         return false;
     }
-    const std::uint64_t reference_entity_id = mission_cmd.reference_entity_id;
-    const double station_radius_m = std::max(0.0, mission_cmd.station_radius_m);
+    const auto stationing = mission_command_naval_stationing_directive(mission_cmd);
+    const std::uint64_t reference_entity_id = stationing.reference_entity_id;
+    const double station_radius_m = std::max(0.0, stationing.station_radius_m);
     if (reference_entity_id == 0 || station_radius_m <= 0.0) {
         return false;
     }
@@ -92,7 +93,7 @@ inline bool resolve_ship_station_command(
     *commanded_heading_deg_out = ship_station_target_bearing_deg(
         reference_transform->x,
         reference_transform->y,
-        mission_cmd.station_bearing_deg,
+        stationing.station_bearing_deg,
         station_radius_m,
         own_transform.x,
         own_transform.y,

@@ -12,6 +12,20 @@ FIXTURE = (
     / "fixtures"
     / "wp16_runtime_spine_inventory_20260521.json"
 )
+RUNTIME_WINDOW_HELPERS = (
+    REPO_ROOT
+    / "src"
+    / "runtime"
+    / "facade"
+    / "runtime_window_coordinator_helpers.h"
+)
+COUNTERFACTUAL_CONSTANTS = (
+    REPO_ROOT
+    / "src"
+    / "runtime"
+    / "contracts"
+    / "counterfactual_replay_contract_constants.h"
+)
 
 EXPECTED_CLASSIFICATIONS = {
     "src/runtime/facade/runtime_window_coordinator.h": "maintained_spine",
@@ -136,13 +150,14 @@ def test_wp16_selected_slice_matches_runtime_window_and_manifest_clues() -> None
     runtime_window_source = (
         REPO_ROOT / "src" / "runtime" / "facade" / "runtime_window_coordinator.h"
     ).read_text(encoding="utf-8")
+    runtime_window_helper_source = RUNTIME_WINDOW_HELPERS.read_text(encoding="utf-8")
     manifest_source = (
         REPO_ROOT / "src" / "runtime" / "contracts" / "stage_node_manifest_registry.h"
     ).read_text(encoding="utf-8")
 
     assert "run_wp10_window" in runtime_facade_header
     for barrier_id in EXPECTED_SELECTED_BARRIERS + EXPECTED_RESERVED_BARRIERS:
-        assert barrier_id in runtime_window_source
+        assert barrier_id in runtime_window_source or barrier_id in runtime_window_helper_source
     for node_id in EXPECTED_SELECTED_NODES + EXPECTED_EXCLUDED_NODES:
         assert node_id in manifest_source
 
@@ -167,8 +182,9 @@ def test_wp16_blocked_and_compatibility_entries_do_not_hide_maintained_default_c
     replay_source = (
         REPO_ROOT / "src" / "runtime" / "contracts" / "counterfactual_replay_contracts.h"
     ).read_text(encoding="utf-8")
+    replay_constants_source = COUNTERFACTUAL_CONSTANTS.read_text(encoding="utf-8")
 
     assert "runtime() noexcept" in facade_header
     assert "self.facade.runtime()" in adapter_source
     assert "authoritative_state_mutation_allowed: bool = False" in generation_request_source
-    assert "metadata_only" in replay_source
+    assert "metadata_only" in replay_source or "metadata_only" in replay_constants_source

@@ -2,7 +2,9 @@
 
 #include <cstdint>
 
-// Legacy command surface retained for compatibility with the existing systems.
+// Compatibility-only DTO surface retained for bridge-owned legacy command seams.
+// Maintained command resolution should prefer typed command state or
+// control_input_resolution.h instead of reading these fields ad hoc.
 struct MovementCommand {
     double target_heading; // Degrees, 0 = North, Clockwise
     double target_speed;   // m/s

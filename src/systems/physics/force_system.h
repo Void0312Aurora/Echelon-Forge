@@ -9,8 +9,6 @@
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/performance.h"
-#include "components/command/legacy_command.h"
-#include "components/command/pilot_action.h"
 #include "systems/physics/propulsion_system.h"
 
 #ifndef M_PI
@@ -71,16 +69,13 @@ inline void register_force_system(flecs::world& ecs) {
                 auto flight_model = it.field<const FlightModel>(5);
                 
                 for (auto i : it) {
-                    // Check if entity has an active control source
-                    // Skip only if BOTH PilotAction and MovementCommand are inactive
-                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
-                    const MovementCommand* legacy = active_legacy_movement_command(
-                        it.entity(i).get<MovementCommand>()
+                    // Maintain a single bridge-owned compatibility seam for flight input presence.
+                    const ResolvedAirControlInput control_input = resolve_air_control_input(
+                        it.entity(i).get<PilotAction>(),
+                        it.entity(i).get<MissionCommandControlState>(),
+                        nullptr
                     );
-                    bool has_pilot = (pilot != nullptr);
-                    bool has_legacy = (legacy != nullptr);
-                    
-                    if (!has_pilot && !has_legacy) continue;
+                    if (!control_input.has_primary_flight_control_input) continue;
                     
                     double m = mass[i].get_total_kg();
                     if (m < 1.0) m = 15000.0;  // Fallback

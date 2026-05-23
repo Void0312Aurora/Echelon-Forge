@@ -11,7 +11,7 @@
 
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
-#include "components/command/legacy_command.h"
+#include "components/command/default_factory_legacy_spawn_compat.h"
 #include "components/basic/common.h"
 #include "components/combat/health.h"
 #include "components/physics/performance.h"
@@ -1256,23 +1256,32 @@ public:
             e.set<PendingMissionCommand>(make_pending_mission_command());
             e.set<MissionCommandPendingQueue>(make_mission_command_pending_queue());
         }
-        // ActionCommand
-        e.set<ActionCommand>(make_action_command());
-    
-    if (def.has_landing_gear) {
-        e.set<LandingGear>(def.landing_gear);
-    } else if (def.type == UnitType::Aircraft) {
-        // Fallback for aircraft without explicit config (assume paved only)
-        e.set<LandingGear>({false, 0.02, 3.0, 2.0, 1.0, false, 5.0});
-    }
+        if (!def.has_flight_model) {
+            default_unit_factory_detail::apply_spawn_compatibility_action_command_seed(e);
+        }
+        if (def.has_landing_gear) {
+            e.set<LandingGear>(def.landing_gear);
+        } else if (def.type == UnitType::Aircraft) {
+            // Fallback for aircraft without explicit config (assume paved only)
+            e.set<LandingGear>({false, 0.02, 3.0, 2.0, 1.0, false, 5.0});
+        }
 
         if (def.has_flight_model) {
             e.set<FlightModel>(def.flight_model);
             double speed = std::sqrt(params.vx * params.vx +
                                      params.vy * params.vy +
                                      params.vz * params.vz);
-            e.set<MovementCommand>(make_legacy_autopilot_movement_command(heading_init, speed, params.z));
-            e.set<LaggedCommand>(make_lagged_command(heading_init, speed, params.z));
+            MissionCommand mission_seed{};
+            static_cast<MissionCommandCore&>(mission_seed) =
+                default_unit_factory_detail::make_spawn_default_mission_command_core_seed(
+                    heading_init,
+                    speed,
+                    params.z);
+            e.set<MissionCommand>(mission_seed);
+            default_unit_factory_detail::apply_spawn_compatibility_control_state_seed(
+                e,
+                default_unit_factory_detail::make_spawn_compatibility_control_state_seed(
+                    static_cast<const MissionCommandCore&>(mission_seed)));
             e.set<ActionSpaceConfig>({
                 def.flight_model.max_turn_rate,
                 def.flight_model.max_accel,

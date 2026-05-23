@@ -3,29 +3,27 @@
 namespace {
 
 bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs) {
+    const auto lhs_recovery = mission_command_air_recovery_directive(lhs);
+    const auto rhs_recovery = mission_command_air_recovery_directive(rhs);
+    const auto lhs_takeoff = mission_command_air_takeoff_directive(lhs);
+    const auto rhs_takeoff = mission_command_air_takeoff_directive(rhs);
+    const auto lhs_formation = mission_command_air_formation_directive(lhs);
+    const auto rhs_formation = mission_command_air_formation_directive(rhs);
+    const auto lhs_stationing = mission_command_naval_stationing_directive(lhs);
+    const auto rhs_stationing = mission_command_naval_stationing_directive(rhs);
+    const auto lhs_embarked_helo = mission_command_naval_embarked_helo_directive(lhs);
+    const auto rhs_embarked_helo = mission_command_naval_embarked_helo_directive(rhs);
+
     return lhs.cmd_heading_deg == rhs.cmd_heading_deg &&
         lhs.cmd_altitude_m == rhs.cmd_altitude_m &&
         lhs.cmd_speed_mps == rhs.cmd_speed_mps &&
         lhs.command_code == rhs.command_code &&
         lhs.route_ref_id == rhs.route_ref_id &&
-        lhs.reference_entity_id == rhs.reference_entity_id &&
-        lhs.station_radius_m == rhs.station_radius_m &&
-        lhs.station_bearing_deg == rhs.station_bearing_deg &&
-        lhs.embarked_helo_entity_id == rhs.embarked_helo_entity_id &&
-        lhs.launch_helo == rhs.launch_helo &&
-        lhs.recover_helo == rhs.recover_helo &&
-        lhs.relay_oth_targeting == rhs.relay_oth_targeting &&
-        lhs.recovery_base_id == rhs.recovery_base_id &&
-        lhs.recovery_runway_id == rhs.recovery_runway_id &&
-        lhs.recovery_approach_type == rhs.recovery_approach_type &&
-        lhs.takeoff_procedure_id == rhs.takeoff_procedure_id &&
-        lhs.takeoff_clearance_id == rhs.takeoff_clearance_id &&
-        lhs.takeoff_interval_s == rhs.takeoff_interval_s &&
-        lhs.runway_slot_id == rhs.runway_slot_id &&
-        lhs.formation_id == rhs.formation_id &&
-        lhs.form_offset_x == rhs.form_offset_x &&
-        lhs.form_offset_y == rhs.form_offset_y &&
-        lhs.form_offset_z == rhs.form_offset_z &&
+        lhs_stationing == rhs_stationing &&
+        lhs_embarked_helo == rhs_embarked_helo &&
+        lhs_recovery == rhs_recovery &&
+        lhs_takeoff == rhs_takeoff &&
+        lhs_formation == rhs_formation &&
         lhs.roe_state == rhs.roe_state &&
         lhs.engagement_authority_holder_id == rhs.engagement_authority_holder_id &&
         lhs.engagement_authority_grantor_id == rhs.engagement_authority_grantor_id &&

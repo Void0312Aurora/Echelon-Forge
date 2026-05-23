@@ -10,7 +10,28 @@
 #include "core/engine/simulation_kernel.h"
 #include "core/interfaces/observation.h"
 #include "core/mission/episode/execution_episode_controller.h"
+#include "gpu/gpu_visual_runtime.h"
+#include "models/environment/default_environment_snapshot.h"
 #include "runtime/contracts/world_batch_contracts.h"
+
+struct WorldEntityKinematics {
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    double vx = 0.0;
+    double vy = 0.0;
+    double vz = 0.0;
+    double heading = 0.0;
+    double pitch = 0.0;
+    double roll = 0.0;
+};
+
+struct WorldBatchVisualBindingCompatibilityScene {
+    gpu::VisualRenderRequest request{};
+    std::vector<gpu::VisibleObjectPacked> objects;
+    IEnvironmentModel* environment = nullptr;
+    DefaultEnvironmentSnapshot environment_snapshot{};
+};
 
 class WorldBatchRuntime {
 public:
@@ -27,6 +48,22 @@ public:
     size_t worker_threads() const noexcept { return worker_threads_; }
     size_t effective_worker_threads() const noexcept;
 
+    std::uint64_t spawn_unit_compatibility(const WorldSpawnRequest& request);
+    std::uint64_t spawn_typed_platform_unit(
+        const TypedPlatformSpawnRequest& request
+    );
+    bool try_get_entity_kinematics(
+        const WorldEntityRef& ref,
+        WorldEntityKinematics* state
+    ) const;
+    bool try_set_entity_kinematics(
+        const WorldEntityRef& ref,
+        const WorldEntityKinematics& state
+    );
+    RecentEngagementEvents export_recent_engagement_events(size_t world_index) const;
+
+    // Compatibility/diagnostics escape hatch only. Maintained facade code should
+    // use batch-owned helper methods instead of keeping raw SimulationKernel handles.
     SimulationKernel& world(size_t index);
     const SimulationKernel& world(size_t index) const;
 
@@ -50,6 +87,22 @@ public:
         const std::vector<WorldSpawnRequest>& requests,
         const std::vector<double>& time_steps = {}
     );
+    std::vector<uint64_t> apply_world_layout(
+        std::size_t world_index,
+        std::uint32_t seed,
+        const std::string& terrain_type,
+        double wind_speed_mps,
+        double wind_dir_from_deg,
+        double wind_shear_mps_per_km,
+        bool maritime_configured,
+        double sea_state,
+        double wave_heading_deg,
+        double wave_period_s,
+        const std::vector<WorldZoneDefinition>& zones,
+        const std::vector<WorldSpawnRequest>& requests,
+        const std::vector<double>& time_steps = {}
+    );
+    double world_time_step(std::size_t world_index) const;
 
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
@@ -94,6 +147,12 @@ public:
     ) const;
     std::vector<std::vector<uint64_t>> get_comm_candidate_ids_batch(
         const std::vector<WorldEntityRef>& refs,
+        bool use_gpu = false
+    ) const;
+    std::vector<WorldBatchVisualBindingCompatibilityScene>
+    collect_visual_binding_compatibility_scenes_batch(
+        const std::vector<WorldEntityRef>& refs,
+        int downsample,
         bool use_gpu = false
     ) const;
 

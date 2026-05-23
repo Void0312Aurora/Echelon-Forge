@@ -688,6 +688,65 @@ class GpuRuntimeBindingTests(unittest.TestCase):
             ef_py.RuntimeFacade(1).capabilities()
         )
 
+    def test_runtime_facade_visual_export_dlpack_matches_host(self) -> None:
+        if torch is None:
+            self.skipTest("torch is not available")
+        if not hasattr(ef_py, "compute_world_batch_visual_observation_batch_export"):
+            self.skipTest("world batch visual export binding is not available")
+
+        facade = ef_py.RuntimeFacade(2)
+        self.assertTrue(facade.load_database(resolve_repo_path("examples", "config", "database")))
+
+        spawns = []
+        refs = []
+        for world_index in range(2):
+            spawn = ef_py.WorldSpawnRequest()
+            spawn.world_index = int(world_index)
+            spawn.side = ef_py.Side.Blue
+            spawn.type_name = "F-16C_Block50"
+            spawn.x = 0.0
+            spawn.y = float(world_index * 100.0)
+            spawn.z = 1200.0
+            spawn.heading = 90.0
+            spawn.pitch = 0.0
+            spawn.roll = 0.0
+            spawn.vx = 190.0
+            spawn.vy = 0.0
+            spawn.vz = 0.0
+            spawns.append(spawn)
+
+        entity_ids = facade.apply_world_setup_batch(
+            [42, 43],
+            [],
+            [],
+            [],
+            spawns,
+            [],
+        )
+        for world_index, entity_id in enumerate(entity_ids):
+            ref = ef_py.WorldEntityRef()
+            ref.world_index = int(world_index)
+            ref.entity_id = int(entity_id)
+            refs.append(ref)
+
+        visual_out, device_view = ef_py.compute_world_batch_visual_observation_batch_export(
+            facade,
+            refs,
+            2,
+            True,
+        )
+
+        info = ef_py.probe_gpu_device()
+        if not bool(info.cuda_runtime_available):
+            self.assertIsNone(device_view)
+            return
+
+        self.assertIsNotNone(device_view)
+        tensor = torch.from_dlpack(device_view)
+        host_visual = np.asarray(visual_out, dtype=np.float32)
+        self.assertEqual(tuple(tensor.shape), tuple(host_visual.shape))
+        self.assertTrue(np.allclose(tensor.detach().cpu().numpy(), host_visual, atol=1.0e-6))
+
 
 if __name__ == "__main__":
     unittest.main()

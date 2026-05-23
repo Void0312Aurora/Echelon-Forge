@@ -8,7 +8,7 @@
 
 - `PilotAction` 及其 action-space 配置。
 - `MissionCommand` 这类由上层任务或训练环境下发的执行命令 DTO。
-- `MovementCommand`、`ActionCommand` 等 legacy command surface。
+- `MovementCommand`、`ActionCommand` 等 legacy command surface，但仅作为由显式 bridge seam 持有的 compatibility DTO。
 - `CommandLink`、`CommandLag`、pending command 这类命令链路状态。
 
 ## 禁止
@@ -37,6 +37,17 @@
 ## 依赖方向
 
 command DTO 可以被 `systems/`、`core/engine`、`core/mission`、`runtime/facade` 和 `interfaces/python` 消费。它不反向依赖这些层。
+
+maintained 的 air-control consumer 必须通过
+`air/control_input_resolution.h` 解析 legacy command fallback，不允许在各个
+maintained system 内部继续手写 `MovementCommand`/`ActionCommand` 探测逻辑。
+
+当前允许继续依赖 `legacy_command.h` 的显式 compatibility seam：
+
+- `src/components/command/legacy_command_bridge.h`
+- `src/systems/core/operation_system.h`
+- `src/systems/systems/command_link_system.h`
+- 其余由 architecture test 标注的 compatibility-only 或仍待迁移 consumer
 
 ## 迁移备注
 

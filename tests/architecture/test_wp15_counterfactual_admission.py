@@ -14,6 +14,13 @@ HEADER = (
     / "contracts"
     / "counterfactual_replay_contracts.h"
 )
+CONSTANTS = (
+    REPO_ROOT
+    / "src"
+    / "runtime"
+    / "contracts"
+    / "counterfactual_replay_contract_constants.h"
+)
 
 
 def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
@@ -50,6 +57,7 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
 
 def test_wp15_counterfactual_admission_header_declares_request_result_and_helpers() -> None:
     text = HEADER.read_text(encoding="utf-8")
+    constants = CONSTANTS.read_text(encoding="utf-8")
 
     for symbol in (
         "struct CounterfactualExperimentRequest",
@@ -65,7 +73,7 @@ def test_wp15_counterfactual_admission_header_declares_request_result_and_helper
         "kCounterfactualInterventionKindObservationWithhold",
         "kCounterfactualSourceOperatorRequest",
     ):
-        assert symbol in text
+        assert symbol in text or symbol in constants
 
     assert "generation_request.py" not in text
 

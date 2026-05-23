@@ -7,8 +7,8 @@
 #include <flecs.h>
 
 #include "components/basic/common.h"
+#include "components/command/legacy_command_bridge.h"
 #include "components/command/mission_command.h"
-#include "components/command/legacy_command.h"
 #include "components/naval/embarked_air_ops.h"
 #include "components/systems/data_link.h"
 #include "components/systems/track_management.h"
@@ -61,7 +61,6 @@ inline void register_embarked_air_ops_system(flecs::world& ecs) {
                     Transform* helo_transform = helo.get_mut<Transform>();
                     Velocity* helo_velocity = helo.get_mut<Velocity>();
                     MissionCommand* helo_mission = helo.get_mut<MissionCommand>();
-                    MovementCommand* helo_move = helo.get_mut<MovementCommand>();
                     const MissionCommand* host_mission = host.get<MissionCommand>();
                     if (!helo_transform || !helo_velocity || !helo_mission) {
                         continue;
@@ -85,14 +84,16 @@ inline void register_embarked_air_ops_system(flecs::world& ecs) {
                         continue;
                     }
 
-                    if (host_mission->embarked_helo_entity_id != 0 &&
-                        host_mission->embarked_helo_entity_id != state.active_helo_entity_id) {
+                    const auto embarked_helo =
+                        mission_command_naval_embarked_helo_directive(*host_mission);
+                    if (embarked_helo.embarked_helo_entity_id != 0 &&
+                        embarked_helo.embarked_helo_entity_id != state.active_helo_entity_id) {
                         continue;
                     }
                     helo_mission->active = state.helo_airborne;
 
                     // command_code 31/32/33 are reserved for naval embarked-air token MVP.
-                    if (host_mission->launch_helo || host_mission->command_code == 31) {
+                    if (embarked_helo.launch_helo || host_mission->command_code == 31) {
                         state.helo_airborne = true;
                         const double heading_rad = Math::to_radians(host_transform[i].heading);
                         const double right_rad = Math::to_radians(host_transform[i].heading + 90.0);
@@ -107,13 +108,13 @@ inline void register_embarked_air_ops_system(flecs::world& ecs) {
                         helo_velocity->vx = std::sin(heading_rad) * speed_mps;
                         helo_velocity->vy = std::cos(heading_rad) * speed_mps;
                         helo_velocity->vz = 0.0;
-                        if (helo_move) {
-                            helo_move->active = true;
-                            helo_move->target_heading = host_transform[i].heading;
-                            helo_move->target_speed = speed_mps;
-                            helo_move->target_altitude = helo_transform->z;
-                        }
-                    } else if (host_mission->recover_helo || host_mission->command_code == 32) {
+                        set_compatibility_autopilot_movement_command(
+                            helo,
+                            host_transform[i].heading,
+                            speed_mps,
+                            helo_transform->z
+                        );
+                    } else if (embarked_helo.recover_helo || host_mission->command_code == 32) {
                         // Token-level recovery MVP: once commanded, snap the helo back onto the flight deck.
                         state.helo_airborne = false;
                         helo_transform->x = host_transform[i].x;
@@ -124,10 +125,11 @@ inline void register_embarked_air_ops_system(flecs::world& ecs) {
                         helo_velocity->vy = 0.0;
                         helo_velocity->vz = 0.0;
                         helo_mission->active = false;
-                        if (helo_move) {
-                            helo_move->active = false;
-                        }
-                    } else if ((host_mission->relay_oth_targeting || host_mission->command_code == 33) && state.relay_oth_targeting) {
+                        deactivate_compatibility_movement_command(helo);
+                    } else if (
+                        (embarked_helo.relay_oth_targeting || host_mission->command_code == 33) &&
+                        state.relay_oth_targeting
+                    ) {
                         if ((current_time - helo_mission->takeoff_interval_s) < state.relay_refresh_s) {
                             continue;
                         }

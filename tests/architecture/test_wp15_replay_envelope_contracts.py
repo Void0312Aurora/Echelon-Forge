@@ -14,6 +14,13 @@ HEADER = (
     / "contracts"
     / "counterfactual_replay_contracts.h"
 )
+CONSTANTS = (
+    REPO_ROOT
+    / "src"
+    / "runtime"
+    / "contracts"
+    / "counterfactual_replay_contract_constants.h"
+)
 
 
 def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
@@ -48,10 +55,12 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
 
 def test_wp15_replay_contract_header_exists_under_runtime_contracts() -> None:
     assert HEADER.is_file()
+    assert CONSTANTS.is_file()
 
 
 def test_wp15_replay_contract_header_declares_required_surface_and_restore_boundary() -> None:
     text = HEADER.read_text(encoding="utf-8")
+    constants = CONSTANTS.read_text(encoding="utf-8")
 
     for symbol in (
         "struct ReplayEnvelope",
@@ -69,7 +78,7 @@ def test_wp15_replay_contract_header_declares_required_surface_and_restore_bound
         "restore_unsupported_until_snapshot_restore_proof",
         "host_owned_facade_state_only",
     ):
-        assert symbol in text
+        assert symbol in text or symbol in constants
 
     assert "RuntimeCapabilities" not in text
     assert "platform_capability_contracts.h" not in text

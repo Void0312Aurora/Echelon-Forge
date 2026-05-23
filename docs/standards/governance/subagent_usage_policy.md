@@ -4,7 +4,7 @@ Language:
 - English canonical: `subagent_usage_policy.md`
 - Chinese companion: [subagent_usage_policy.zh.md](subagent_usage_policy.zh.md)
 
-Status: `2026-05-21` authoritative for distributed work in maintained docs and
+Status: `2026-05-23` authoritative for distributed work in maintained docs and
 implementation tasks.
 
 Use these rules when distributing implementation workers.
@@ -53,6 +53,37 @@ Project principle:
 - Reserve broader workers for cross-file, architecture-critical, or
   publication-sensitive work.
 
+## Cluster Planning Discipline
+
+Distributed work must start from a finite task-cluster plan rather than from an
+open-ended sequence of ad-hoc waves.
+
+Before dispatching implementation workers, the main thread must record or name:
+
+- the finite cluster list for the current WP, phase, or remediation slice;
+- each cluster's goal, write scope, non-goals, validation commands, and closure
+  gate;
+- which clusters are parallel-safe and which are dependency-gated;
+- the maximum expected implementation rounds per cluster before re-scoping is
+  required.
+
+Hard rules:
+
+- Do not dispatch a worker whose task cannot be mapped to a named cluster.
+- Do not let a cluster grow by repeatedly adding "one more follow-up" without
+  re-baselining the cluster boundary.
+- If a cluster exceeds its planned round cap, stop and re-scope it instead of
+  issuing another ad-hoc wave.
+- Closure or acceptance clusters must stay serial until implementation clusters
+  have returned complete packets.
+
+Recommended defaults:
+
+- Small stabilization or repair clusters should allow at most one repair round.
+- Implementation clusters should allow at most two rounds before re-scoping.
+- Exceeding three rounds for one cluster is a planning failure signal and must
+  be called out explicitly before further dispatch.
+
 ## Model And Reasoning Budget Rules
 
 Subagent dispatch must record both model choice and reasoning budget when the
@@ -86,6 +117,29 @@ Minimums:
   column or equivalent field. Deviations from this policy must be called out in
   the dispatch packet.
 
+## Dispatch Lifecycle And Background Execution
+
+The main thread should treat subagents as durable background workers, not as
+interactive scratchpads.
+
+- The main thread should not take over the primary implementation assigned to a
+  worker unless the task is clearly blocked, mis-scoped, or returned incomplete.
+- After dispatch succeeds, the main thread may end the current turn and let
+  workers continue in the background.
+- Do not close, cancel, or replace a worker merely because the main thread is
+  done waiting, the user asked for a status handoff, or the next foreground turn
+  should end.
+- Only close a worker early for explicit transport or request failures,
+  duplicate/mis-scoped dispatch, unsafe scope conflict, or a user request to
+  stop that worker.
+- A closed, timed-out, rate-limited, or interrupted worker is a transport event
+  only. It is not implementation evidence unless the worker returned a complete
+  packet before closure.
+- If dispatch fails because of a request/platform error, such as a thread limit
+  or rate limit, the main thread may close already-completed workers and
+  re-dispatch the failed task. This is exception recovery, not a new task wave.
+- Do not re-dispatch a task that is already running normally.
+
 ## Handoff And Integration
 
 - Every delegated task must return the touched files and a short conclusion.
@@ -100,6 +154,28 @@ Minimums:
   before a WP is marked `Closed`.
 - Use [WP Closure Lane Policy](wp_closure_lane_policy.md) when a delegated task
   includes simulation-architecture WP publication or acceptance cleanup.
+
+Required worker packet:
+
+```md
+status: pass | partial | blocked | failed
+touched files:
+commands/outcomes:
+remaining paths:
+behavior risks:
+integration notes:
+```
+
+Acceptance rules:
+
+- `pass` is scoped to the assigned cluster slice only.
+- `partial` records evidence but never unlocks downstream closure.
+- `blocked` must name the blocker, owner, replacement path, and failing or
+  missing guard.
+- The main thread must locally verify important worker claims before accepting
+  them as integration evidence.
+- A WP or phase cannot be marked complete while named compatibility, legacy,
+  diagnostics, or public escape-hatch residuals remain unowned.
 
 ## Linking Rule
 

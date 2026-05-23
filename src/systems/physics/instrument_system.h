@@ -6,9 +6,7 @@
 #include "components/basic/common.h"
 #include "components/command/air/control_input_resolution.h"
 #include "components/physics/instruments.h"
-#include "components/command/legacy_command.h"
 #include "components/command/mission_command.h"
-#include "components/command/pilot_action.h"
 #include "components/physics/forces.h"       // AeroState, ForceAccumulator, AngularVelocity
 #include "components/physics/dynamics.h"     // Mass, Propulsion
 #include "components/physics/performance.h"  // LandingGear
@@ -178,29 +176,17 @@ inline void register_instrument_system(flecs::world& ecs) {
                         inst[i].gear_pos = 0.0f;
                     }
 
-                    const PilotAction* pilot = active_pilot_action(it.entity(i).get<PilotAction>());
-                    const MovementCommand* legacy =
-                        active_legacy_movement_command(it.entity(i).get<MovementCommand>());
+                    const ResolvedAirControlInput control_input = resolve_air_control_input(
+                        it.entity(i).get<PilotAction>(),
+                        it.entity(i).get<MissionCommandControlState>(),
+                        nullptr
+                    );
 
-                    if (pilot) {
-                        inst[i].throttle_pos = propulsion[i].throttle_command;
-                        inst[i].flaps_pos = std::clamp(pilot->flaps, 0.0f, 1.0f);
-                        inst[i].speedbrake_pos = std::clamp(pilot->speedbrake, 0.0f, 1.0f);
-                        inst[i].master_arm = pilot->master_arm;
-                        inst[i].weapon_selected = pilot->weapon_select_id;
-                    } else if (legacy) {
-                        inst[i].throttle_pos = propulsion[i].throttle_command;
-                        inst[i].flaps_pos = 0.0f;
-                        inst[i].speedbrake_pos = 0.0f;
-                        inst[i].master_arm = false;
-                        inst[i].weapon_selected = 0;
-                    } else {
-                        inst[i].throttle_pos = propulsion[i].throttle_command;
-                        inst[i].flaps_pos = 0.0f;
-                        inst[i].speedbrake_pos = 0.0f;
-                        inst[i].master_arm = false;
-                        inst[i].weapon_selected = 0;
-                    }
+                    inst[i].throttle_pos = propulsion[i].throttle_command;
+                    inst[i].flaps_pos = control_input.instrument_control.flaps_pos;
+                    inst[i].speedbrake_pos = control_input.instrument_control.speedbrake_pos;
+                    inst[i].master_arm = control_input.instrument_control.master_arm;
+                    inst[i].weapon_selected = control_input.instrument_control.weapon_selected;
                     
                     // 3. Env
                     if (env_ref && env_ref->model) {

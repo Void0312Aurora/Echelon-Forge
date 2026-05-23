@@ -3,6 +3,8 @@
 #include "components/systems/data_link.h"
 #include "components/systems/sensor.h"
 #include "components/visual/visual_sensor.h"
+#include "core/engine/world_batch_setup_helper.h"
+#include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 #include "gpu/gpu_interaction_broadphase_runtime.h"
 
 #include <algorithm>
@@ -266,6 +268,106 @@ size_t WorldBatchRuntime::effective_worker_threads() const noexcept {
     return resolve_worker_threads(worlds_.size());
 }
 
+std::uint64_t WorldBatchRuntime::spawn_unit_compatibility(
+    const WorldSpawnRequest& request
+) {
+    const auto world_index = static_cast<size_t>(request.world_index);
+    return spawn_from_request(checked_world(world_index), request);
+}
+
+std::uint64_t WorldBatchRuntime::spawn_typed_platform_unit(
+    const TypedPlatformSpawnRequest& request
+) {
+    const auto world_index = static_cast<size_t>(request.world_index);
+    auto& world = checked_world(world_index);
+    const auto entity = world.spawn_unit(
+        request.side,
+        request.source_type_name,
+        request.x,
+        request.y,
+        request.z,
+        request.heading,
+        request.pitch,
+        request.roll,
+        request.vx,
+        request.vy,
+        request.vz
+    );
+    return entity.id();
+}
+
+bool WorldBatchRuntime::try_get_entity_kinematics(
+    const WorldEntityRef& ref,
+    WorldEntityKinematics* state
+) const {
+    if (state == nullptr) {
+        return false;
+    }
+
+    const auto world_index = static_cast<size_t>(ref.world_index);
+    const auto& world = checked_world(world_index);
+    const auto entity = world.get_world().entity(ref.entity_id);
+    if (!entity.is_valid()) {
+        return false;
+    }
+
+    const Transform* transform = entity.get<Transform>();
+    const Velocity* velocity = entity.get<Velocity>();
+    if (transform == nullptr || velocity == nullptr) {
+        return false;
+    }
+
+    state->x = transform->x;
+    state->y = transform->y;
+    state->z = transform->z;
+    state->vx = velocity->vx;
+    state->vy = velocity->vy;
+    state->vz = velocity->vz;
+    state->heading = transform->heading;
+    state->pitch = transform->pitch;
+    state->roll = transform->roll;
+    return true;
+}
+
+bool WorldBatchRuntime::try_set_entity_kinematics(
+    const WorldEntityRef& ref,
+    const WorldEntityKinematics& state
+) {
+    const auto world_index = static_cast<size_t>(ref.world_index);
+    auto& world = checked_world(world_index);
+    const auto entity = world.get_world().entity(ref.entity_id);
+    if (!entity.is_valid()) {
+        return false;
+    }
+
+    const Transform* transform = entity.get<Transform>();
+    const Velocity* velocity = entity.get<Velocity>();
+    if (transform == nullptr || velocity == nullptr) {
+        return false;
+    }
+
+    entity.set<Transform>(Transform{
+        .x = state.x,
+        .y = state.y,
+        .z = state.z,
+        .heading = state.heading,
+        .pitch = state.pitch,
+        .roll = state.roll,
+    });
+    entity.set<Velocity>(Velocity{
+        .vx = state.vx,
+        .vy = state.vy,
+        .vz = state.vz,
+    });
+    return true;
+}
+
+RecentEngagementEvents WorldBatchRuntime::export_recent_engagement_events(
+    size_t world_index
+) const {
+    return checked_world(world_index).export_recent_engagement_events();
+}
+
 void WorldBatchRuntime::reset_batch(const std::vector<uint32_t>& seeds) {
     clear_execution_episode_controller_batch();
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t i) {
@@ -471,9 +573,7 @@ void WorldBatchRuntime::set_terrain_types_batch(const std::vector<WorldTerrainAs
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
-        for (const size_t item_index : grouped[world_index]) {
-            world.set_terrain_type(assignments[item_index].terrain_type);
-        }
+        world_batch_setup::apply_terrain_assignments(world, assignments, grouped[world_index]);
     });
 }
 
@@ -481,10 +581,7 @@ void WorldBatchRuntime::set_winds_batch(const std::vector<WorldWindAssignment>& 
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto& item = assignments[item_index];
-            world.set_wind(item.speed_mps, item.dir_from_deg, item.shear_mps_per_km);
-        }
+        world_batch_setup::apply_wind_assignments(world, assignments, grouped[world_index]);
     });
 }
 
@@ -504,10 +601,7 @@ void WorldBatchRuntime::add_zones_batch(const std::vector<WorldZoneDefinition>& 
     const auto grouped = group_item_indices_by_world(worlds_.size(), zones);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
-        for (const size_t item_index : grouped[world_index]) {
-            const auto& zone = zones[item_index];
-            world.add_zone(zone.name, zone.x, zone.y, zone.width, zone.length, zone.heading, zone.surface_type);
-        }
+        world_batch_setup::append_zones(world, zones, grouped[world_index]);
     });
 }
 
@@ -543,41 +637,80 @@ std::vector<uint64_t> WorldBatchRuntime::apply_world_setup_batch(
 
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
-
-        if (!time_steps.empty()) {
-            const double dt = time_steps.size() == 1 ? time_steps[0] : time_steps[world_index];
-            if (std::isfinite(dt) && dt > 0.0) {
-                world.set_time_step(dt);
-            }
-        }
-
-        for (const size_t item_index : terrain_grouped[world_index]) {
-            world.set_terrain_type(terrain_assignments[item_index].terrain_type);
-        }
-        for (const size_t item_index : wind_grouped[world_index]) {
-            const auto& item = wind_assignments[item_index];
-            world.set_wind(item.speed_mps, item.dir_from_deg, item.shear_mps_per_km);
-        }
-
-        world.clear_zones();
-        for (const size_t item_index : zone_grouped[world_index]) {
-            const auto& zone = zones[item_index];
-            world.add_zone(zone.name, zone.x, zone.y, zone.width, zone.length, zone.heading, zone.surface_type);
-        }
-
-        uint32_t seed = static_cast<uint32_t>(42 + world_index);
-        if (seeds.size() == worlds_.size()) {
-            seed = seeds[world_index];
-        } else if (seeds.size() == 1) {
-            seed = static_cast<uint32_t>(seeds[0] + static_cast<uint32_t>(world_index));
-        }
-        world.reset(seed);
-
-        for (const size_t item_index : spawn_grouped[world_index]) {
-            out[item_index] = spawn_from_request(world, requests[item_index]);
-        }
+        world_batch_setup::apply_world_setup(
+            world,
+            world_index,
+            worlds_.size(),
+            seeds,
+            terrain_assignments,
+            terrain_grouped[world_index],
+            wind_assignments,
+            wind_grouped[world_index],
+            zones,
+            zone_grouped[world_index],
+            requests,
+            spawn_grouped[world_index],
+            time_steps,
+            &out,
+            spawn_from_request
+        );
     });
     return out;
+}
+
+std::vector<uint64_t> WorldBatchRuntime::apply_world_layout(
+    std::size_t world_index,
+    std::uint32_t seed,
+    const std::string& terrain_type,
+    double wind_speed_mps,
+    double wind_dir_from_deg,
+    double wind_shear_mps_per_km,
+    bool maritime_configured,
+    double sea_state,
+    double wave_heading_deg,
+    double wave_period_s,
+    const std::vector<WorldZoneDefinition>& zones,
+    const std::vector<WorldSpawnRequest>& requests,
+    const std::vector<double>& time_steps
+) {
+    auto& world = checked_world(world_index);
+    world_batch_setup::maybe_apply_time_step(world, world_index, time_steps);
+    world.set_terrain_type(terrain_type.empty() ? WorldTerrainAssignment{}.terrain_type : terrain_type);
+    world.set_wind(wind_speed_mps, wind_dir_from_deg, wind_shear_mps_per_km);
+    if (maritime_configured) {
+        world.set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
+    } else {
+        world.clear_maritime_state();
+    }
+    world_batch_setup::replace_zones(
+        world,
+        zones,
+        [&]() {
+            std::vector<std::size_t> grouped;
+            grouped.reserve(zones.size());
+            for (std::size_t item_index = 0; item_index < zones.size(); ++item_index) {
+                if (static_cast<std::size_t>(zones[item_index].world_index) == world_index) {
+                    grouped.push_back(item_index);
+                }
+            }
+            return grouped;
+        }()
+    );
+    world.reset(seed);
+
+    std::vector<uint64_t> out;
+    out.reserve(requests.size());
+    for (const auto& request : requests) {
+        if (static_cast<std::size_t>(request.world_index) != world_index) {
+            continue;
+        }
+        out.push_back(spawn_from_request(world, request));
+    }
+    return out;
+}
+
+double WorldBatchRuntime::world_time_step(std::size_t world_index) const {
+    return checked_world(world_index).get_time_step();
 }
 
 void WorldBatchRuntime::set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments) {
@@ -896,6 +1029,33 @@ std::vector<std::vector<uint64_t>> WorldBatchRuntime::get_comm_candidate_ids_bat
             ids.end()
         );
         std::sort(ids.begin(), ids.end());
+    }
+    return out;
+}
+
+std::vector<WorldBatchVisualBindingCompatibilityScene>
+WorldBatchRuntime::collect_visual_binding_compatibility_scenes_batch(
+    const std::vector<WorldEntityRef>& refs,
+    int downsample,
+    bool use_gpu
+) const {
+    const auto visual_candidate_ids = get_visual_candidate_ids_batch(refs, 25000.0, use_gpu);
+    std::vector<WorldBatchVisualBindingCompatibilityScene> out(refs.size());
+    for (std::size_t idx = 0; idx < refs.size(); ++idx) {
+        const auto& ref = refs[idx];
+        const std::vector<uint64_t>* candidates =
+            idx < visual_candidate_ids.size() ? &visual_candidate_ids[idx] : nullptr;
+        if (!world_batch_visual_binding_compatibility::collect_scene(
+                checked_world(static_cast<size_t>(ref.world_index)),
+                ref.entity_id,
+                downsample,
+                &out[idx],
+                candidates
+            )) {
+            throw std::runtime_error(
+                "failed to collect visual scene for world batch visual compatibility helper"
+            );
+        }
     }
     return out;
 }

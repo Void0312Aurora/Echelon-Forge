@@ -35,24 +35,6 @@ namespace flight_dynamics {
         return std::abs(rounded) <= (kPropulsionForceCanonicalQuantum * 0.5) ? 0.0 : rounded;
     }
 
-    inline double resolve_propulsion_throttle_command(
-        const PilotAction* pilot,
-        const MovementCommand* legacy,
-        const ActionCommand* action,
-        double fallback_throttle = 0.0
-    ) {
-        if (const PilotAction* active_pilot = active_pilot_action(pilot)) {
-            return std::clamp(active_pilot->throttle, 0.0, 1.0);
-        }
-        if (const MovementCommand* active_legacy = active_legacy_movement_command(legacy)) {
-            return std::clamp(active_legacy->throttle_cmd, 0.0, 1.0);
-        }
-        if (action && action->active) {
-            return std::clamp((action->accel_cmd + 1.0) * 0.5, 0.0, 1.0);
-        }
-        return std::clamp(fallback_throttle, 0.0, 1.0);
-    }
-
     inline double first_order_step(double state, double command, double dt, double tau_s) {
         if (!std::isfinite(state)) {
             state = 0.0;
@@ -283,12 +265,14 @@ namespace flight_dynamics {
 
                     for (auto i : it) {
                         const flecs::entity entity = it.entity(i);
-                        const double throttle_command = resolve_propulsion_throttle_command(
+                        const ResolvedAirControlInput control_input = resolve_air_control_input(
                             entity.get<PilotAction>(),
-                            entity.get<MovementCommand>(),
-                            entity.get<ActionCommand>(),
+                            entity.get<MissionCommandControlState>(),
+                            nullptr,
+                            nullptr,
                             0.0
                         );
+                        const double throttle_command = control_input.throttle_command;
                         const EngineTuning runtime_tuning = resolve_propulsion_runtime_tuning(
                             propulsion[i],
                             entity.get<EngineTuning>()

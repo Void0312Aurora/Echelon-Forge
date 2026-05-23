@@ -5,6 +5,7 @@
 #include "components/combat/health.h"
 #include "components/combat/weapon.h"
 #include "components/command/command_link_qos.h"
+#include "components/command/common/mission_command_control_state.h"
 #include "components/physics/control_law.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"
@@ -28,7 +29,9 @@
 #include "core/interfaces/sensor_model.h"
 #include "systems/combat/damage_system.h"
 #include "systems/combat/guidance_system.h"
+#include "systems/combat/pilot_weapon_release_system.h"
 #include "systems/core/operation_system.h"
+#include "systems/naval/naval_mission_weapon_release_system.h"
 #include "systems/physics/aero_state_system.h"
 #include "systems/physics/aerodynamics_system.h"
 #include "systems/physics/control_system.h"
@@ -75,6 +78,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<Alliance>();
     ecs.component<KeyEntity>();
     ecs.component<MovementCommand>();
+    ecs.component<MissionCommandControlState>();
     ecs.component<PilotAction>(); // New
     ecs.component<MissionCommand>(); // New
     ecs.component<TaskOrder>();
@@ -188,14 +192,8 @@ void SimulationKernel::register_components_and_systems() {
     register_track_manager_system(ecs);  // Phase 6.5: Build local/fused track picture from sensor + prior inbox
     register_data_link_system(ecs);      // Phase 6.55: Share current track picture to peers
     register_embarked_air_ops_system(ecs); // Phase 6.57: Embarked helo token launch/recover/relay
-    ecs.system<const PilotAction>("PilotWeaponRelease")
-       .kind(flecs::OnUpdate)
-       .each([this](flecs::entity e, const PilotAction& pilot) {
-           if (!pilot.active || !pilot.master_arm || !pilot.fire_weapon) {
-                return;
-           }
-           fire_weapon_from_pilot_action(static_cast<uint64_t>(e.id()));
-       });
+    register_pilot_weapon_release_system(ecs, *this); // Phase 6.58: Pilot weapon release bridge
+    register_naval_mission_weapon_release_system(ecs, *this); // Phase 6.59: Naval mission weapon release bridge
     register_instrument_system(ecs);     // Phase 6.6: Instruments (Read Physics & Sensor State)
     register_damage_system(ecs);         // Phase 7: Damage/Effects
     register_ew_system(ecs);             // Phase 8: EW Actions

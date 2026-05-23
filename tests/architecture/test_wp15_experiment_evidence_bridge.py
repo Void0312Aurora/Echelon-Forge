@@ -15,6 +15,13 @@ HEADER = (
     / "contracts"
     / "counterfactual_replay_contracts.h"
 )
+CONSTANTS = (
+    REPO_ROOT
+    / "src"
+    / "runtime"
+    / "contracts"
+    / "counterfactual_replay_contract_constants.h"
+)
 
 
 def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
@@ -52,6 +59,7 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
 
 def test_wp15_experiment_evidence_bridge_header_declares_bridge_surface() -> None:
     text = HEADER.read_text(encoding="utf-8")
+    constants = CONSTANTS.read_text(encoding="utf-8")
 
     for symbol in (
         "struct ScenarioGenerationArtifactMetadata",
@@ -70,7 +78,7 @@ def test_wp15_experiment_evidence_bridge_header_declares_bridge_surface() -> Non
         "kExperimentEvidenceClaimBoundaryNonTruthClaim",
         "kExperimentEvidencePromotionStateNotPromoted",
     ):
-        assert symbol in text
+        assert symbol in text or symbol in constants
 
 
 def test_wp15_valid_experiment_evidence_bridge_links_admission_generated_input_and_profile_observation() -> None:

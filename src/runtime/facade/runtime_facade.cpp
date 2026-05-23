@@ -258,7 +258,7 @@ void append_runtime_evidence_ref(
     evidence_refs.push_back(ref);
 }
 
-WorldSpawnRequest legacy_spawn_request_from_typed_request(
+WorldSpawnRequest legacy_compatibility_spawn_request_from_typed_request(
     const TypedPlatformSpawnRequest& request
 ) {
     WorldSpawnRequest legacy{};
@@ -280,44 +280,20 @@ WorldSpawnRequest legacy_spawn_request_from_typed_request(
 }
 
 std::uint64_t spawn_legacy_request_through_compatibility_path(
-    SimulationKernel& world,
+    WorldBatchRuntime& runtime,
     const WorldSpawnRequest& request
 ) {
-    const auto entity = world.spawn_unit(
-        request.side,
-        request.type_name,
-        request.x,
-        request.y,
-        request.z,
-        request.heading,
-        request.pitch,
-        request.roll,
-        request.vx,
-        request.vy,
-        request.vz
-    );
-    if (!entity.is_valid()) {
-        return entity.id();
-    }
-
-    if (request.ammo_override_enabled) {
-        world.set_unit_ammo(
-            entity.id(),
-            request.missiles_remaining,
-            request.max_missiles
-        );
-    }
-    if (request.weapon_cooldown_override_enabled) {
-        world.set_weapon_cooldown(
-            entity.id(),
-            request.weapon_cooldown_s,
-            request.weapon_last_fire_time
-        );
-    }
-    return entity.id();
+    return runtime.spawn_unit_compatibility(request);
 }
 
-TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
+std::uint64_t spawn_typed_request_through_maintained_path(
+    WorldBatchRuntime& runtime,
+    const TypedPlatformSpawnRequest& request
+) {
+    return runtime.spawn_typed_platform_unit(request);
+}
+
+TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
     WorldBatchRuntime& runtime,
     std::uint64_t request_index,
     const TypedPlatformSpawnRequest& request
@@ -326,6 +302,8 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         make_typed_platform_spawn_admission(request_index, request);
     const TypedPlatformSpawnValidationResult validation =
         validate_typed_platform_spawn_request(request);
+    const TypedPlatformSetupSurfaceEvidence surface =
+        classify_typed_platform_spawn_setup_surface(request);
 
     if (!validation.valid) {
         admission.reject(
@@ -336,9 +314,11 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         admission.errors = validation.errors;
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.validation_failed"
+            "RuntimeFacade.apply_world_setup.compatibility_validation_failed"
         );
-        return make_typed_platform_spawn_result(admission);
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
     }
 
     if (!valid_runtime_world_index(runtime, request.world_index)) {
@@ -348,9 +328,11 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         admission.add_error("typed platform spawn world_index is outside the configured runtime batch");
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.world_index_guard"
+            "RuntimeFacade.apply_world_setup.compatibility_world_index_guard"
         );
-        return make_typed_platform_spawn_result(admission);
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
     }
 
     if (!request.resolved_spawn_plan.admitted) {
@@ -371,9 +353,11 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         }
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.plan_admission_guard"
+            "RuntimeFacade.apply_world_setup.compatibility_plan_admission_guard"
         );
-        return make_typed_platform_spawn_result(admission);
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
     }
 
     if (!request.compatibility_path_preserved ||
@@ -387,9 +371,11 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_path_guard"
+            "RuntimeFacade.apply_world_setup.compatibility_path_required_guard"
         );
-        return make_typed_platform_spawn_result(admission);
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
     }
 
     if (request.capability_bundle.source_type_name != request.source_type_name) {
@@ -401,9 +387,11 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.bundle_identity_guard"
+            "RuntimeFacade.apply_world_setup.compatibility_bundle_identity_guard"
         );
-        return make_typed_platform_spawn_result(admission);
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
     }
 
     if (request.resolved_spawn_plan.source_type_name != request.source_type_name) {
@@ -415,9 +403,11 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.source_type_name_guard"
+            "RuntimeFacade.apply_world_setup.compatibility_source_type_name_guard"
         );
-        return make_typed_platform_spawn_result(admission);
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
     }
 
     if (request.resolved_spawn_plan.capability_bundle_id !=
@@ -430,15 +420,17 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.plan_identity_guard"
+            "RuntimeFacade.apply_world_setup.compatibility_plan_identity_guard"
         );
-        return make_typed_platform_spawn_result(admission);
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
     }
 
     admission.admitted = true;
     append_runtime_evidence_ref(
         admission.evidence_refs,
-        "RuntimeFacade.apply_world_setup.typed_platform_spawn_bridge"
+        "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_typed_platform_spawn_bridge"
     );
     append_runtime_evidence_ref(
         admission.evidence_refs,
@@ -446,11 +438,12 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
     );
 
     TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
-    WorldSpawnRequest legacy_request = legacy_spawn_request_from_typed_request(request);
+    result.setup_surface = surface.setup_surface;
+    WorldSpawnRequest legacy_request =
+        legacy_compatibility_spawn_request_from_typed_request(request);
     legacy_request.type_name = request.resolved_spawn_plan.source_type_name;
-    auto& world = runtime.world(static_cast<std::size_t>(request.world_index));
     const std::uint64_t entity_id =
-        spawn_legacy_request_through_compatibility_path(world, legacy_request);
+        spawn_legacy_request_through_compatibility_path(runtime, legacy_request);
     if (entity_id == 0U) {
         result.admitted = true;
         result.materialized = false;
@@ -463,7 +456,7 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             result.evidence_refs,
-            "RuntimeFacade.apply_world_setup.materialization_failed"
+            "RuntimeFacade.apply_world_setup.compatibility_materialization_failed"
         );
         return result;
     }
@@ -473,9 +466,187 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
     result.entity_id = entity_id;
     append_runtime_evidence_ref(
         result.evidence_refs,
-        "RuntimeFacade.apply_world_setup.materialized"
+        "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_materialized"
     );
     return result;
+}
+
+TypedPlatformSpawnResult materialize_maintained_typed_platform_spawn_request(
+    WorldBatchRuntime& runtime,
+    std::uint64_t request_index,
+    const TypedPlatformSpawnRequest& request
+) {
+    TypedPlatformSpawnAdmission admission =
+        make_typed_platform_spawn_admission(request_index, request);
+    const TypedPlatformSetupSurfaceEvidence surface =
+        classify_typed_platform_spawn_setup_surface(request);
+    const TypedPlatformSpawnValidationResult validation =
+        validate_maintained_typed_platform_spawn_request(request);
+
+    if (!validation.valid) {
+        admission.reject(
+            validation.rejection_reason.empty()
+                ? std::string(kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired)
+                : validation.rejection_reason
+        );
+        admission.errors = validation.errors;
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.maintained_typed_validation_failed"
+        );
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
+    }
+
+    if (!valid_runtime_world_index(runtime, request.world_index)) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionWorldIndexOutOfRange)
+        );
+        admission.add_error("typed platform spawn world_index is outside the configured runtime batch");
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.maintained_typed_world_index_guard"
+        );
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
+    }
+
+    if (!request.resolved_spawn_plan.admitted) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        if (!request.resolved_spawn_plan.rejection_reason.empty()) {
+            admission.add_error(
+                "resolved_spawn_plan rejected maintained typed admission: " +
+                request.resolved_spawn_plan.rejection_reason
+            );
+        }
+        if (!request.resolved_spawn_plan.diagnostics_reason.empty()) {
+            admission.add_error(
+                "resolved_spawn_plan diagnostics: " +
+                request.resolved_spawn_plan.diagnostics_reason
+            );
+        }
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.maintained_typed_plan_admission_guard"
+        );
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
+    }
+
+    if (request.capability_bundle.source_type_name != request.source_type_name) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        admission.add_error(
+            "capability_bundle.source_type_name must match request.source_type_name"
+        );
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.maintained_typed_bundle_identity_guard"
+        );
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
+    }
+
+    if (request.resolved_spawn_plan.source_type_name != request.source_type_name) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        admission.add_error(
+            "resolved_spawn_plan.source_type_name must match request.source_type_name"
+        );
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.maintained_typed_source_type_name_guard"
+        );
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
+    }
+
+    if (request.resolved_spawn_plan.capability_bundle_id !=
+        request.capability_bundle.bundle_id) {
+        admission.reject(
+            std::string(kTypedPlatformSpawnRejectionInvalidResolvedPlan)
+        );
+        admission.add_error(
+            "resolved_spawn_plan.capability_bundle_id must match capability_bundle.bundle_id"
+        );
+        append_runtime_evidence_ref(
+            admission.evidence_refs,
+            "RuntimeFacade.apply_world_setup.maintained_typed_plan_identity_guard"
+        );
+        TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+        result.setup_surface = surface.setup_surface;
+        return result;
+    }
+
+    admission.admitted = true;
+    append_runtime_evidence_ref(
+        admission.evidence_refs,
+        "RuntimeFacade.apply_world_setup.maintained_typed_platform_spawn"
+    );
+    append_runtime_evidence_ref(
+        admission.evidence_refs,
+        "RuntimeFacade.apply_world_setup.maintained_typed_setup"
+    );
+
+    TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
+    result.setup_surface = surface.setup_surface;
+    const std::uint64_t entity_id =
+        spawn_typed_request_through_maintained_path(runtime, request);
+    if (entity_id == 0U) {
+        result.admitted = true;
+        result.materialized = false;
+        result.fail_closed = true;
+        result.rejection_reason =
+            std::string(kTypedPlatformSpawnRejectionMaterializationFailed);
+        result.add_error(
+            "maintained typed platform spawn returned null entity for source_type_name=" +
+            request.source_type_name
+        );
+        append_runtime_evidence_ref(
+            result.evidence_refs,
+            "RuntimeFacade.apply_world_setup.maintained_typed_materialization_failed"
+        );
+        return result;
+    }
+
+    result.admitted = true;
+    result.materialized = true;
+    result.entity_id = entity_id;
+    append_runtime_evidence_ref(
+        result.evidence_refs,
+        "RuntimeFacade.apply_world_setup.maintained_typed_materialized"
+    );
+    return result;
+}
+
+TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
+    WorldBatchRuntime& runtime,
+    std::uint64_t request_index,
+    const TypedPlatformSpawnRequest& request
+) {
+    const TypedPlatformSetupSurfaceEvidence surface =
+        classify_typed_platform_spawn_setup_surface(request);
+    if (surface.maintained_typed_setup) {
+        return materialize_maintained_typed_platform_spawn_request(
+            runtime,
+            request_index,
+            request
+        );
+    }
+    return materialize_compatibility_typed_platform_spawn_request(
+        runtime,
+        request_index,
+        request
+    );
 }
 
 BatchWorldSetupRequest single_world_counterfactual_setup(
@@ -524,7 +695,7 @@ std::uint64_t counterfactual_spawned_entity_id(
 }
 
 RuntimeCounterfactualSnapshot counterfactual_snapshot_from_runtime(
-    WorldBatchRuntime& runtime,
+    const WorldBatchRuntime& runtime,
     const WorldEntityRef& ref,
     const RuntimeFidelityAdmission& fidelity_admission,
     const std::string& cadence_reason,
@@ -534,12 +705,8 @@ RuntimeCounterfactualSnapshot counterfactual_snapshot_from_runtime(
         throw std::out_of_range(std::string(kRuntimeCounterfactualInvalidWorld));
     }
 
-    auto& world = runtime.world(static_cast<std::size_t>(ref.world_index));
-    const auto position = world.get_unit_position(ref.entity_id);
-    const auto velocity = world.get_unit_velocity(ref.entity_id);
-    const auto observation = world.get_agent_observation(ref.entity_id);
-
-    if (position.size() < 3U || velocity.size() < 3U) {
+    WorldEntityKinematics kinematics{};
+    if (!runtime.try_get_entity_kinematics(ref, &kinematics)) {
         throw std::runtime_error(std::string(kRuntimeCounterfactualInvalidEntity));
     }
 
@@ -557,15 +724,15 @@ RuntimeCounterfactualSnapshot counterfactual_snapshot_from_runtime(
     return RuntimeCounterfactualSnapshot{
         .world_index = ref.world_index,
         .entity_id = ref.entity_id,
-        .x = position[0],
-        .y = position[1],
-        .z = position[2],
-        .vx = velocity[0],
-        .vy = velocity[1],
-        .vz = velocity[2],
-        .heading = observation.heading,
-        .pitch = observation.pitch,
-        .roll = observation.roll,
+        .x = kinematics.x,
+        .y = kinematics.y,
+        .z = kinematics.z,
+        .vx = kinematics.vx,
+        .vy = kinematics.vy,
+        .vz = kinematics.vz,
+        .heading = kinematics.heading,
+        .pitch = kinematics.pitch,
+        .roll = kinematics.roll,
         .snapshot_version = kRuntimeCounterfactualSelectedSliceSnapshotVersion,
         .barrier_id = std::string(kRuntimeCounterfactualSelectedSliceBarrierId),
         .fidelity_profile_id = fidelity_admission.backend_profile_id,
@@ -574,89 +741,6 @@ RuntimeCounterfactualSnapshot counterfactual_snapshot_from_runtime(
         .cadence_reason = cadence_reason,
         .evidence_refs = std::move(evidence_refs),
     };
-}
-
-bool apply_counterfactual_delta(
-    RuntimeFacade* facade,
-    const WorldEntityRef& ref,
-    const RuntimeCounterfactualBranchRequest& request,
-    std::string* rejection_reason
-) {
-    if (facade == nullptr || !valid_runtime_world_index(facade->runtime(), ref.world_index)) {
-        if (rejection_reason != nullptr) {
-            *rejection_reason = std::string(kRuntimeCounterfactualInvalidWorld);
-        }
-        return false;
-    }
-
-    auto& world = facade->runtime().world(static_cast<std::size_t>(ref.world_index));
-    auto entity = world.get_world().entity(ref.entity_id);
-    const Transform* transform = entity.get<Transform>();
-    const Velocity* velocity = entity.get<Velocity>();
-    if (transform == nullptr || velocity == nullptr) {
-        if (rejection_reason != nullptr) {
-            *rejection_reason = std::string(kRuntimeCounterfactualInvalidEntity);
-        }
-        return false;
-    }
-
-    entity.set<Transform>(Transform{
-        .x = transform->x + request.mutation_dx,
-        .y = transform->y + request.mutation_dy,
-        .z = transform->z + request.mutation_dz,
-        .heading = Math::normalize_heading_deg(
-            transform->heading + request.mutation_dheading
-        ),
-        .pitch = transform->pitch,
-        .roll = transform->roll,
-    });
-    entity.set<Velocity>(Velocity{
-        .vx = velocity->vx + request.mutation_dvx,
-        .vy = velocity->vy + request.mutation_dvy,
-        .vz = velocity->vz + request.mutation_dvz,
-    });
-    return true;
-}
-
-bool restore_counterfactual_snapshot_to_runtime(
-    RuntimeFacade* facade,
-    const RuntimeCounterfactualSnapshot& snapshot,
-    const WorldEntityRef& target_ref,
-    std::string* rejection_reason
-) {
-    if (facade == nullptr ||
-        !valid_runtime_world_index(facade->runtime(), target_ref.world_index)) {
-        if (rejection_reason != nullptr) {
-            *rejection_reason = std::string(kRuntimeCounterfactualInvalidWorld);
-        }
-        return false;
-    }
-
-    auto& world = facade->runtime().world(static_cast<std::size_t>(target_ref.world_index));
-    auto entity = world.get_world().entity(target_ref.entity_id);
-    const Transform* transform = entity.get<Transform>();
-    const Velocity* velocity = entity.get<Velocity>();
-    if (transform == nullptr || velocity == nullptr) {
-        if (rejection_reason != nullptr) {
-            *rejection_reason = std::string(kRuntimeCounterfactualInvalidEntity);
-        }
-        return false;
-    }
-
-    entity.set<Transform>(Transform{
-        .x = snapshot.x,
-        .y = snapshot.y,
-        .z = snapshot.z,
-        .heading = Math::normalize_heading_deg(snapshot.heading),
-        .pitch = snapshot.pitch,
-        .roll = snapshot.roll,
-    });
-    entity.set<Velocity>(Velocity{
-        .vx = snapshot.vx,
-        .vy = snapshot.vy,
-        .vz = snapshot.vz,
-    });
-    return true;
 }
 
 runtime::counterfactual::ReplayEnvelope replay_envelope_from_experiment_request(
@@ -1675,6 +1759,56 @@ RuntimeFacade& RuntimeFacade::operator=(RuntimeFacade&&) noexcept = default;
 
 RuntimeFacade::~RuntimeFacade() = default;
 
+bool RuntimeFacade::counterfactual_world_index_valid(
+    std::uint64_t world_index
+) const noexcept {
+    return valid_runtime_world_index(*runtime_, world_index);
+}
+
+bool RuntimeFacade::apply_counterfactual_delta(
+    const WorldEntityRef& ref,
+    const RuntimeCounterfactualBranchRequest& request
+) {
+    WorldEntityKinematics state{};
+    if (!runtime_->try_get_entity_kinematics(ref, &state)) {
+        return false;
+    }
+
+    state.x += request.mutation_dx;
+    state.y += request.mutation_dy;
+    state.z += request.mutation_dz;
+    state.heading = Math::normalize_heading_deg(
+        state.heading + request.mutation_dheading
+    );
+    state.vx += request.mutation_dvx;
+    state.vy += request.mutation_dvy;
+    state.vz += request.mutation_dvz;
+    return runtime_->try_set_entity_kinematics(ref, state);
+}
+
+bool RuntimeFacade::restore_counterfactual_entity(
+    const WorldEntityRef& target_ref,
+    const RuntimeCounterfactualSnapshot& snapshot
+) {
+    WorldEntityKinematics state{};
+    state.x = snapshot.x;
+    state.y = snapshot.y;
+    state.z = snapshot.z;
+    state.heading = Math::normalize_heading_deg(snapshot.heading);
+    state.pitch = snapshot.pitch;
+    state.roll = snapshot.roll;
+    state.vx = snapshot.vx;
+    state.vy = snapshot.vy;
+    state.vz = snapshot.vz;
+    return runtime_->try_set_entity_kinematics(target_ref, state);
+}
+
+RecentEngagementEvents RuntimeFacade::export_recent_engagement_events_for_world(
+    std::size_t world_index
+) const {
+    return runtime_->export_recent_engagement_events(world_index);
+}
+
 void RuntimeFacade::configure_batch(const RuntimeBatchConfig& config) {
     runtime_->resize(config.world_count);
     runtime_->set_worker_threads(config.worker_threads);
@@ -1927,12 +2061,12 @@ RuntimeCounterfactualRestoreResult RuntimeFacade::restore_counterfactual_snapsho
     }
 
     std::string restore_rejection;
-    if (!restore_counterfactual_snapshot_to_runtime(
-            this,
-            registry_it->second,
-            target_ref,
-            &restore_rejection)) {
-        result.rejection_reason = restore_rejection;
+    if (!counterfactual_world_index_valid(target_ref.world_index)) {
+        result.rejection_reason = std::string(kRuntimeCounterfactualInvalidWorld);
+        return result;
+    }
+    if (!restore_counterfactual_entity(target_ref, registry_it->second)) {
+        result.rejection_reason = std::string(kRuntimeCounterfactualInvalidEntity);
         return result;
     }
 
@@ -2079,9 +2213,13 @@ RuntimeCounterfactualBranchResult RuntimeFacade::run_counterfactual_branch(
         return result;
     }
 
-    std::string mutation_rejection;
-    if (!apply_counterfactual_delta(&branch, branch_ref, request, &mutation_rejection)) {
-        result.rejection_reason = mutation_rejection;
+    if (!branch.counterfactual_world_index_valid(branch_ref.world_index)) {
+        result.rejection_reason = std::string(kRuntimeCounterfactualInvalidWorld);
+        return result;
+    }
+    if (!branch.apply_counterfactual_delta(branch_ref, request)) {
+        result.rejection_reason =
+            std::string(kRuntimeCounterfactualInvalidEntity);
         return result;
     }
 
@@ -2422,6 +2560,66 @@ BatchWorldSetupResult RuntimeFacade::apply_world_setup(const BatchWorldSetupRequ
     return result;
 }
 
+RuntimeWorldLayoutResult RuntimeFacade::apply_world_layout(const RuntimeWorldLayoutRequest& request) {
+    RuntimeWorldLayoutResult result{};
+    result.world_index = request.world_index;
+    result.entity_ids = runtime_->apply_world_layout(
+        static_cast<std::size_t>(request.world_index),
+        request.seed,
+        request.terrain_type,
+        request.wind_speed_mps,
+        request.wind_dir_from_deg,
+        request.wind_shear_mps_per_km,
+        request.maritime_configured,
+        request.sea_state,
+        request.wave_heading_deg,
+        request.wave_period_s,
+        request.zones,
+        request.spawn_requests,
+        request.time_steps
+    );
+    return result;
+}
+
+double RuntimeFacade::world_time_step(std::size_t world_index) const {
+    return runtime_->world_time_step(world_index);
+}
+
+std::vector<std::vector<std::uint64_t>> RuntimeFacade::get_sensor_candidate_ids_batch(
+    const std::vector<WorldEntityRef>& refs,
+    bool use_gpu
+) const {
+    return runtime_->get_sensor_candidate_ids_batch(refs, use_gpu);
+}
+
+std::vector<std::vector<std::uint64_t>> RuntimeFacade::get_visual_candidate_ids_batch(
+    const std::vector<WorldEntityRef>& refs,
+    double range_m,
+    bool use_gpu
+) const {
+    return runtime_->get_visual_candidate_ids_batch(refs, range_m, use_gpu);
+}
+
+std::vector<std::vector<std::uint64_t>> RuntimeFacade::get_comm_candidate_ids_batch(
+    const std::vector<WorldEntityRef>& refs,
+    bool use_gpu
+) const {
+    return runtime_->get_comm_candidate_ids_batch(refs, use_gpu);
+}
+
+std::vector<WorldBatchVisualBindingCompatibilityScene>
+RuntimeFacade::collect_visual_binding_compatibility_scenes_batch(
+    const std::vector<WorldEntityRef>& refs,
+    int downsample,
+    bool use_gpu
+) const {
+    return runtime_->collect_visual_binding_compatibility_scenes_batch(
+        refs,
+        downsample,
+        use_gpu
+    );
+}
+
 void RuntimeFacade::set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments) {
     runtime_->set_pilot_actions_batch(assignments);
 }
@@ -2580,7 +2778,9 @@ std::vector<DiagnosticsTrace> RuntimeFacade::export_diagnostics_traces(
         append_recent_diagnostics_traces(
             traces,
             with_world_index(
-                runtime_->world(static_cast<std::size_t>(ref.world_index)).export_recent_engagement_events(),
+                export_recent_engagement_events_for_world(
+                    static_cast<std::size_t>(ref.world_index)
+                ),
                 ref.world_index
             )
         );
@@ -2685,7 +2885,9 @@ EngagementEventPacket RuntimeFacade::export_engagement_event_packet(
         append_recent_engagement_events(
             packet,
             with_world_index(
-                runtime_->world(static_cast<std::size_t>(ref.world_index)).export_recent_engagement_events(),
+                export_recent_engagement_events_for_world(
+                    static_cast<std::size_t>(ref.world_index)
+                ),
                 ref.world_index
             ),
             request

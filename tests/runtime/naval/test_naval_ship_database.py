@@ -989,6 +989,66 @@ class NavalShipDatabaseTests(unittest.TestCase):
 
         self.assertLess(int(after[3]), int(before[3]))
 
+    def test_naval_mission_command_ciws_release_survives_named_system_seam(self) -> None:
+        kernel = ef_py.SimulationKernel()
+        kernel.reset(64)
+        kernel.set_time_step(0.5)
+        self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))
+
+        ddg = kernel.spawn_unit(
+            ef_py.Side.Blue,
+            "DDG-51_Flight_I_USS_Arleigh_Burke",
+            0.0,
+            0.0,
+            0.0,
+            heading=0.0,
+            pitch=0.0,
+            roll=0.0,
+            vx=0.0,
+            vy=0.0,
+            vz=0.0,
+        )
+        missile = kernel.spawn_unit(
+            ef_py.Side.Red,
+            "Missile",
+            0.0,
+            900.0,
+            50.0,
+            heading=180.0,
+            pitch=0.0,
+            roll=0.0,
+            vx=0.0,
+            vy=-250.0,
+            vz=0.0,
+        )
+
+        det = ef_py.Detection()
+        det.target_id = int(missile)
+        det.range = 900.0
+        det.bearing = 0.0
+        det.elevation = 2.0
+        det.closing_speed = 250.0
+        det.signal_strength = 1.0
+        det.sensor_type = int(ef_py.SensorType.Radar)
+        det.local_sensor_hit = True
+        det.timestamp = 0.0
+        kernel.set_contact_list(int(ddg), [det])
+
+        mission = ef_py.MissionCommand()
+        mission.active = True
+        mission.command_code = 34
+        mission.authorization_to_fire = True
+        mission.assigned_target_id = int(missile)
+        mission.engagement_authority_holder_id = int(ddg)
+        kernel.set_mission_command(int(ddg), mission)
+
+        before = kernel.debug_get_naval_weapon_counts(int(ddg))
+        kernel.step()
+        after = kernel.debug_get_naval_weapon_counts(int(ddg))
+
+        self.assertLess(int(after[3]), int(before[3]))
+        self.assertFalse(kernel.is_unit_active(int(missile)))
+
     def test_damage_state_can_continue_degrading_after_initial_hit(self) -> None:
         kernel = ef_py.SimulationKernel()
         kernel.reset(62)

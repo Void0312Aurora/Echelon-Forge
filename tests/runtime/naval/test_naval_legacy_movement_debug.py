@@ -58,7 +58,7 @@ def _spawn_submarine() -> tuple[ef_py.SimulationKernel, int]:
 
 
 class NavalLegacyMovementDebugTests(unittest.TestCase):
-    def test_debug_hook_constructs_active_legacy_movement_without_active_mission(self) -> None:
+    def test_debug_hook_syncs_typed_control_state_and_exposes_legacy_mirror_fields(self) -> None:
         for label, spawner, heading_deg, speed_mps, altitude_m in (
             ("ship", _spawn_ship, 15.0, 8.0, 123.0),
             ("submarine", _spawn_submarine, 210.0, 6.5, 120.0),
@@ -77,14 +77,65 @@ class NavalLegacyMovementDebugTests(unittest.TestCase):
                 movement = kernel.debug_get_legacy_movement_command(entity_id)
                 mission = kernel.get_mission_command(entity_id)
 
+                self.assertTrue(bool(movement["diagnostics_only"]))
+                self.assertTrue(bool(movement["quarantined_surface"]))
+                self.assertTrue(bool(movement["diagnostics_legacy_mirror"]))
+                self.assertTrue(bool(movement["read_only_snapshot"]))
+                self.assertFalse(bool(movement["maintained_truth"]))
+                self.assertEqual(str(movement["diagnostics_quarantine_marker"]), "WP22-R1-2")
+                self.assertEqual(str(movement["diagnostics_surface_kind"]), "diagnostics_legacy_mirror")
+                self.assertEqual(
+                    str(movement["runtime_owner_kind"]),
+                    "mission_command_control_state_bridge",
+                )
+                self.assertEqual(str(movement["mirror_kind"]), "legacy_movement_command")
+                self.assertEqual(str(movement["state_access_mode"]), "read_only_legacy_mirror")
+                self.assertEqual(
+                    str(movement["mirror_truth_owner"]),
+                    "typed_control_state_bridge_projection",
+                )
                 self.assertTrue(bool(movement["active"]))
                 self.assertAlmostEqual(float(movement["target_heading"]), heading_deg, places=6)
                 self.assertAlmostEqual(float(movement["target_speed"]), speed_mps, places=6)
                 self.assertAlmostEqual(float(movement["target_altitude"]), altitude_m, places=6)
                 self.assertFalse(bool(movement["use_stick_control"]))
+                self.assertTrue(bool(movement["control_state_present"]))
+                self.assertTrue(bool(movement["control_state_active"]))
+                self.assertAlmostEqual(float(movement["control_target_heading_deg"]), heading_deg, places=6)
+                self.assertAlmostEqual(float(movement["control_target_speed_mps"]), speed_mps, places=6)
+                self.assertAlmostEqual(float(movement["control_target_altitude_m"]), altitude_m, places=6)
+                self.assertTrue(bool(movement["control_lagged_active"]))
+                self.assertAlmostEqual(float(movement["control_lagged_heading_deg"]), heading_deg, places=6)
+                self.assertAlmostEqual(float(movement["control_lagged_speed_mps"]), speed_mps, places=6)
+                self.assertAlmostEqual(float(movement["control_lagged_altitude_m"]), altitude_m, places=6)
+                self.assertFalse(bool(mission.active))
+                self.assertAlmostEqual(float(mission.cmd_heading_deg), 0.0, places=6)
+                self.assertAlmostEqual(float(mission.cmd_speed_mps), 0.0, places=6)
+                self.assertAlmostEqual(float(mission.cmd_altitude_m), 0.0, places=6)
+
+    def test_debug_hook_can_deactivate_typed_and_legacy_movement_state_together(self) -> None:
+        for label, spawner in (
+            ("ship", _spawn_ship),
+            ("submarine", _spawn_submarine),
+        ):
+            with self.subTest(platform=label):
+                kernel, entity_id = spawner()
+
+                kernel.debug_set_legacy_movement_command(entity_id, 33.0, 4.0, 75.0, True)
+                kernel.debug_set_legacy_movement_command(entity_id, 270.0, 1.0, 10.0, False)
+
+                movement = kernel.debug_get_legacy_movement_command(entity_id)
+                mission = kernel.get_mission_command(entity_id)
+
+                self.assertTrue(bool(movement["diagnostics_only"]))
+                self.assertTrue(bool(movement["quarantined_surface"]))
+                self.assertTrue(bool(movement["control_state_present"]))
+                self.assertFalse(bool(movement["active"]))
+                self.assertFalse(bool(movement["control_state_active"]))
+                self.assertFalse(bool(movement["control_lagged_active"]))
                 self.assertFalse(bool(mission.active))
 
-    def test_ship_motion_ignores_active_legacy_movement_without_mission(self) -> None:
+    def test_ship_motion_still_ignores_debug_legacy_transport_shell(self) -> None:
         kernel, entity_id = _spawn_ship()
 
         initial_heading_deg = float(kernel.get_unit_heading(entity_id))
@@ -101,7 +152,7 @@ class NavalLegacyMovementDebugTests(unittest.TestCase):
         self.assertAlmostEqual(heading_after_deg, initial_heading_deg, delta=1.0)
         self.assertAlmostEqual(speed_after_mps, initial_speed_mps, delta=0.25)
 
-    def test_submarine_motion_ignores_active_legacy_movement_without_mission(self) -> None:
+    def test_submarine_motion_still_ignores_debug_legacy_transport_shell(self) -> None:
         kernel, entity_id = _spawn_submarine()
 
         initial_heading_deg = float(kernel.get_unit_heading(entity_id))

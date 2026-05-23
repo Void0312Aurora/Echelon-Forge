@@ -130,6 +130,27 @@ struct BatchWorldSetupResult {
     std::vector<TypedPlatformSpawnResult> typed_platform_spawn_results;
 };
 
+struct RuntimeWorldLayoutRequest {
+    std::uint64_t world_index = 0;
+    std::uint32_t seed = 42;
+    std::string terrain_type;
+    double wind_speed_mps = 0.0;
+    double wind_dir_from_deg = 0.0;
+    double wind_shear_mps_per_km = 0.0;
+    bool maritime_configured = false;
+    double sea_state = 0.0;
+    double wave_heading_deg = 0.0;
+    double wave_period_s = 8.0;
+    std::vector<WorldZoneDefinition> zones;
+    std::vector<WorldSpawnRequest> spawn_requests;
+    std::vector<double> time_steps;
+};
+
+struct RuntimeWorldLayoutResult {
+    std::uint64_t world_index = 0;
+    std::vector<std::uint64_t> entity_ids;
+};
+
 struct RuntimeCounterfactualBranchRequest {
     BatchWorldSetupRequest baseline_setup;
     WorldEntityRef entity_ref;
