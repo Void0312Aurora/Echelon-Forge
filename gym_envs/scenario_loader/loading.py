@@ -13,7 +13,7 @@ from python.scenario_compiler import (
     materialize_runtime_waypoint_cache,
     rotate_ils_beacon_templates,
 )
-from python.scenario_runtime import (
+from python.scenario.runtime import (
     active_roster_world_entity_refs,
     find_active_roster_member,
     prepare_scenario_world_layout,

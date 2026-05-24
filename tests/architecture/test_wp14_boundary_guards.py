@@ -14,7 +14,7 @@ RUNTIME_FACADE_SOURCE = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_faca
 RUNTIME_FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
 BINDINGS_CORE = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_core.cpp"
 BINDINGS_RUNTIME = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp"
-SCENARIO_WORLD_SETUP_COMPAT = REPO_ROOT / "python" / "scenario" / "runtime" / "world_setup_compat.py"
+SCENARIO_WORLD_SETUP = REPO_ROOT / "python" / "scenario" / "runtime" / "world_setup.py"
 RL_WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
 EXAMPLES_CONFIG = REPO_ROOT / "examples" / "config"
 
@@ -30,7 +30,7 @@ def test_wp14_boundary_guard_no_public_spawn_platform_surface_exists() -> None:
         RUNTIME_FACADE_HEADER,
         BINDINGS_CORE,
         BINDINGS_RUNTIME,
-        SCENARIO_WORLD_SETUP_COMPAT,
+        SCENARIO_WORLD_SETUP,
         RL_WORLD_BATCH_ADAPTER,
     ):
         text = _text(path)
@@ -104,7 +104,7 @@ def test_wp14_boundary_guard_legacy_type_name_spawn_surfaces_remain_present() ->
 
 
 def test_wp14_boundary_guard_examples_and_scenario_python_schema_stay_on_legacy_spawn_requests() -> None:
-    scenario_world_setup = _text(SCENARIO_WORLD_SETUP_COMPAT)
+    scenario_world_setup = _text(SCENARIO_WORLD_SETUP)
     adapter = _text(RL_WORLD_BATCH_ADAPTER)
 
     assert "typed_platform_spawn_requests" not in scenario_world_setup, (

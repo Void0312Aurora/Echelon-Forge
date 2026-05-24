@@ -42,9 +42,9 @@ Gated work:
 | `N4-B0 threat/ROE source inventory` | `N4-B Threat / ROE Semantics` | pass / read-only | inherited parent model, medium | diagnostics explorer | read-only source/test/docs inspection | yes; does not edit files and does not unlock closure | returned field inventory, source anchors, minimal write-scope recommendation, architecture risks |
 | `N4-A1 scenario contract boundary` | `N4-A Scenario / Contract Boundary` | pass / accepted | `gpt-5.4`, high | implementation worker | `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`; `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json`; `python/testing/contracts/unit/comm.py`; focused tests under `tests/runtime/naval/` only if required | no; first blocking implementation boundary | returned pass packet; main thread re-ran contracts and naval screen tests |
 | `N4-B1 threat/ROE semantics` | `N4-B Threat / ROE Semantics` | pass / accepted | `gpt-5.4`, high | implementation worker | narrowed after `N4-A1` and `N4-B0`; expected families are command shared-core, naval profile, loader runtime-state fallback, command bindings, and focused mission/binding tests | no for this wave; blocks N4-C until maintained fields are accepted | returned pass packet; main thread re-ran build, focused tests, and N4/N3 contracts |
-| `N4-C1 facade/world-batch evidence` | `N4-C Runtime / Facade Evidence` | gated | `gpt-5.4`, high | implementation worker | narrowed after `N4-A1`; expected families are world-batch command-chain cache, vec-env tests, facade guards | maybe, only after write scopes are disjoint from N4-B | maintained projection evidence and guard results |
-| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | gated | `gpt-5.4`, medium | docs / design worker | docs under this subproject or a later explicitly named RL task doc | yes after N4-A/B semantics are accepted | observation/action/reward/termination sketch without learned-policy claim |
-| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | gated / serial | `gpt-5.4`, high | integration owner | named naval docs and acceptance/status files only | no | validation rollup, README/current-progress sync, residual register, N5 open/block decision |
+| `N4-C1 facade/world-batch evidence` | `N4-C Runtime / Facade Evidence` | pass / accepted | `gpt-5.4`, high | implementation worker | narrowed after `N4-A1`; expected families are world-batch command-chain cache, vec-env tests, facade guards | no for this wave | returned pass packet; main thread re-ran build, bindings/facade/world-batch tests, and N4 contract |
+| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | paused / not dispatched | `gpt-5.4`, medium | docs / design worker | docs under this subproject or a later explicitly named RL task doc | yes after N4-A/B/C evidence is accepted | paused by owner direction; no next wave dispatched |
+| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | paused / not dispatched | `gpt-5.4`, high | integration owner | named naval docs and acceptance/status files only | no | paused by owner direction after C1 acceptance |
 
 ## Active Worker Packets
 
@@ -226,6 +226,50 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_contact_report_geometry.json tests/contracts/unit/naval/naval_screen_closing_contact_geometry.json
 # PASS / PASS
 ```
+
+### N4-C1 Runtime / Facade Evidence
+
+Status: pass / accepted. Main thread locally re-ran build, focused tests, and
+the N4 scenario contract. No follow-on worker is dispatched after this point.
+
+Returned evidence:
+
+- Applied N4 shared-core fields back into the world-batch compatibility shell:
+  `threat_state`, `assigned_target_track_id`, `assigned_target_source_id`, and
+  `assigned_target_snapshot_time_s`.
+- Exposed the N4 fields through the runtime binding for
+  `MissionCommandSharedCoreDirective`.
+- Added focused maintained batch roundtrip coverage and facade tasking packet
+  export coverage for the N4 fields.
+- Preserved existing facade tasking packet provenance status:
+  `compatibility_adapter`.
+
+Main-thread verification:
+
+```bash
+cmake --build build-workshop --target ef_py -j2
+# passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py
+# 33 passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/facade/test_runtime_facade.py
+# 30 passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "naval or task_order or command_chain or mission_command"
+# 7 passed, 22 deselected
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "naval_owner_slice or task_order_naval or command_chain or mission_command"
+# 5 passed, 56 deselected
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
+# PASS
+```
+
+Pause note:
+
+- Work is paused after C1 acceptance.
+- `N4-D1` and `N4-E1` remain un-dispatched until a later owner decision.
 
 ## Worker Return Packet
 

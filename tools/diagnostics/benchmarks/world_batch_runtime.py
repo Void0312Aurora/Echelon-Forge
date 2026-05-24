@@ -24,12 +24,15 @@ import ef_py  # noqa: E402
 
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
 from python.scenario_compiler import _clone_runtime_mission_command  # noqa: E402
-from python.scenario_runtime import (  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import apply_world_layouts_to_batch_diagnostics  # noqa: E402
+from python.scenario.runtime import (  # noqa: E402
     BatchWorldApplyBuffer,
     apply_world_layout_to_kernel,
-    apply_world_layouts_to_batch,
     build_compiled_world_layout,
     prepare_scenario_world_layout,
+)
+from python.rl.runtime.world_batch.command_chain_cache import (  # noqa: E402
+    project_world_mission_command_maintained_assignment,
 )
 
 
@@ -70,8 +73,9 @@ def _build_refs(applied_worlds):
     return refs
 
 
-def _build_assignments(applied_worlds):
-    assignments = []
+def _build_command_payloads(applied_worlds):
+    command_shells = []
+    maintained_assignments = []
     for world_index, applied in enumerate(applied_worlds):
         cmd = ef_py.MissionCommand()
         cmd.command_code = 2
@@ -79,12 +83,16 @@ def _build_assignments(applied_worlds):
         cmd.cmd_altitude_m = 600.0 + 5.0 * world_index
         cmd.cmd_speed_mps = 120.0 + 1.0 * world_index
         cmd.active = True
-        assign = ef_py.WorldMissionCommandAssignment()
-        assign.world_index = int(world_index)
-        assign.entity_id = int(applied.agent_id)
-        assign.command = cmd
-        assignments.append(assign)
-    return assignments
+        command_shells.append(cmd)
+        assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+        project_world_mission_command_maintained_assignment(
+            assignment,
+            world_index=int(world_index),
+            entity_id=int(applied.agent_id),
+            compatibility_mission_command_shell=cmd,
+        )
+        maintained_assignments.append(assignment)
+    return command_shells, maintained_assignments
 
 
 def _build_legacy_layout(compiled, *, seed: int):
@@ -156,19 +164,23 @@ def main() -> int:
             apply_world_layout_to_kernel(sim, layout)
 
     def _batch_setup_path() -> None:
-        _ = apply_world_layouts_to_batch(batch, layouts, apply_buffer=apply_buffer)
+        _ = apply_world_layouts_to_batch_diagnostics(batch, layouts, apply_buffer=apply_buffer)
 
     loop_setup_ms = _time_call(_loop_setup_path, iters=int(args.setup_iters))
     batch_setup_ms = _time_call(_batch_setup_path, iters=int(args.setup_iters))
 
     loop_applied = [apply_world_layout_to_kernel(sim, layout) for sim, layout in zip(loop_worlds, layouts)]
-    batch_applied = apply_world_layouts_to_batch(batch, layouts, apply_buffer=apply_buffer)
+    batch_applied = apply_world_layouts_to_batch_diagnostics(
+        batch,
+        layouts,
+        apply_buffer=apply_buffer,
+    )
     refs = _build_refs(batch_applied)
-    assignments = _build_assignments(batch_applied)
+    command_shells, maintained_assignments = _build_command_payloads(batch_applied)
 
     def _loop_path() -> None:
-        for applied, assign, sim in zip(loop_applied, assignments, loop_worlds):
-            sim.set_mission_command(int(applied.agent_id), assign.command)
+        for applied, command, sim in zip(loop_applied, command_shells, loop_worlds):
+            sim.set_mission_command(int(applied.agent_id), command)
         for sim in loop_worlds:
             sim.step()
         for applied, sim in zip(loop_applied, loop_worlds):
@@ -176,7 +188,7 @@ def main() -> int:
             _ = sim.get_instrument_state(int(applied.agent_id))
 
     def _batch_path() -> None:
-        batch.set_mission_commands_batch(assignments)
+        batch.set_mission_commands_maintained_batch(maintained_assignments)
         batch.step_batch()
         _ = batch.get_agent_observations_batch(refs)
         _ = batch.get_instrument_states_batch(refs)

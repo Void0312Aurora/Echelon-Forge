@@ -54,7 +54,7 @@ When a standalone test is needed, prefer:
 - Contract execution logic now lives in [python/testing/contracts/](../python/testing/contracts).
 - [python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) is a compatibility shim that re-exports the packaged contract runner.
 - Scenario-side bootstrap logic used by tests now lives in `python/scenario/compiler/` and `python/scenario/runtime/`.
-- [python/scenario_compiler.py](../python/scenario_compiler.py) and [python/scenario_runtime.py](../python/scenario_runtime.py) remain compatibility shims for older imports and should not be treated as the primary implementation surface.
+- Diagnostics-only raw batch scenario setup helpers live under `python/scenario/diagnostics/`; maintained tests should import `python/scenario/runtime/` directly.
 
 ## Contract Types
 

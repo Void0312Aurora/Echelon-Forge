@@ -160,7 +160,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
             finally:
                 runtime.close()
 
-    def test_single_world_runtime_rejects_compatibility_fallback_without_explicit_opt_in(self) -> None:
+    def test_single_world_runtime_requires_runtime_window_api(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/single_world_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -178,13 +178,13 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                 runtime.access.supports_runtime_window_api = lambda: False  # type: ignore[method-assign]
                 _obs, _reset_info = runtime.reset(seed=9)
                 action = np.zeros((17,), dtype=np.float32)
-                with self.assertRaisesRegex(RuntimeError, "compatibility fallback is quarantined"):
+                with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
                     runtime.step(action)
                 runtime.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
             finally:
                 runtime.close()
 
-    def test_single_world_runtime_reports_explicit_compatibility_fallback_when_window_api_is_unavailable(self) -> None:
+    def test_single_world_runtime_rejects_removed_compatibility_fallback_even_when_opted_in(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/single_world_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -203,15 +203,8 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                 runtime.access.supports_runtime_window_api = lambda: False  # type: ignore[method-assign]
                 _obs, _reset_info = runtime.reset(seed=9)
                 action = np.zeros((17,), dtype=np.float32)
-                _next_obs, _reward, _terminated, _truncated, info = runtime.step(action)
-
-                self.assertIsNone(runtime.last_runtime_window_evidence)
-                self.assertEqual(
-                    info["runtime_window_evidence"]["cadence_reason"],
-                    "compatibility_fallback_world_batch_step_worlds_wp16c",
-                )
-                self.assertTrue(bool(info["runtime_window_evidence"]["uses_compat_fallback"]))
-                self.assertEqual(info["runtime_window_evidence"]["barrier_ids"], [])
+                with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
+                    runtime.step(action)
                 runtime.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
             finally:
                 runtime.close()
@@ -352,7 +345,7 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
-    def test_leader_group_rejects_compatibility_fallback_without_explicit_opt_in(self) -> None:
+    def test_leader_group_requires_runtime_window_api(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/single_world_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -376,14 +369,14 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                 original_supports = group.access.supports_runtime_window_api
                 group.access.supports_runtime_window_api = lambda: False  # type: ignore[method-assign]
                 try:
-                    with self.assertRaisesRegex(RuntimeError, "compatibility fallback is quarantined"):
+                    with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
                         group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
                 finally:
                     group.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
             finally:
                 vec_env.close()
 
-    def test_leader_group_reports_explicit_compatibility_fallback_when_opted_in(self) -> None:
+    def test_leader_group_rejects_removed_compatibility_fallback_even_when_opted_in(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/single_world_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -408,19 +401,10 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
                 original_supports = group.access.supports_runtime_window_api
                 group.access.supports_runtime_window_api = lambda: False  # type: ignore[method-assign]
                 try:
-                    results = group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
+                    with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
+                        group.step_indices([0], [np.zeros((17,), dtype=np.float32)])
                 finally:
                     group.access.supports_runtime_window_api = original_supports  # type: ignore[method-assign]
-
-                self.assertEqual(len(results), 1)
-                _obs, _reward, _terminated, _truncated, info = results[0]
-                self.assertIsNone(group.last_runtime_window_evidence)
-                self.assertEqual(
-                    info["runtime_window_evidence"]["cadence_reason"],
-                    "compatibility_fallback_world_batch_step_worlds_wp16c",
-                )
-                self.assertTrue(bool(info["runtime_window_evidence"]["uses_compat_fallback"]))
-                self.assertEqual(info["runtime_window_evidence"]["barrier_ids"], [])
             finally:
                 vec_env.close()
 

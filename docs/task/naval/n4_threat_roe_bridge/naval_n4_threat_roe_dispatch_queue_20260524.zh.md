@@ -38,9 +38,9 @@
 | `N4-B0 threat/ROE source inventory` | `N4-B Threat / ROE Semantics` | pass / 只读 | inherited parent model，medium | diagnostics explorer | 只读 source/test/docs inspection | 是；不编辑文件且不解锁闭合 | 已返回字段 inventory、source anchors、最小写入范围建议、架构风险 |
 | `N4-A1 scenario contract boundary` | `N4-A Scenario / Contract Boundary` | pass / 已接受 | `gpt-5.4`，high | implementation worker | `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`；`tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json`；`python/testing/contracts/unit/comm.py`；仅在需要时触及 `tests/runtime/naval/` 聚焦测试 | 否；这是第一个阻塞实现边界 | 已返回 pass packet；主线程已重跑合同和 naval screen tests |
 | `N4-B1 threat/ROE semantics` | `N4-B Threat / ROE Semantics` | pass / 已接受 | `gpt-5.4`，high | implementation worker | 在 `N4-A1` 和 `N4-B0` 后收窄；预期文件族为 command shared-core、naval profile、loader runtime-state fallback、command bindings 和聚焦 mission/binding tests | 本轮不并行；接受前阻塞 N4-C | 已返回 pass packet；主线程已重跑构建、聚焦测试和 N4/N3 合同 |
-| `N4-C1 facade/world-batch evidence` | `N4-C Runtime / Facade Evidence` | 门控 | `gpt-5.4`，high | implementation worker | 在 `N4-A1` 后收窄；预期文件族为 world-batch command-chain cache、vec-env tests、facade guards | 可能，仅在与 N4-B 写入范围不重叠后 | maintained projection 证据和 guard 结果 |
-| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | 门控 | `gpt-5.4`，medium | docs / design worker | 本子项目 docs 或后续明确命名的 RL task doc | N4-A/B 语义接受后可并行 | observation/action/reward/termination 草案，不声明 learned policy |
-| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | 门控 / 串行 | `gpt-5.4`，high | integration owner | 仅分发时命名的 naval docs 和 acceptance/status 文件 | 否 | 验证汇总、README/current-progress 同步、残留登记、N5 打开/阻塞决策 |
+| `N4-C1 facade/world-batch evidence` | `N4-C Runtime / Facade Evidence` | pass / 已接受 | `gpt-5.4`，high | implementation worker | 在 `N4-A1` 后收窄；预期文件族为 world-batch command-chain cache、vec-env tests、facade guards | 本轮不并行 | 已返回 pass packet；主线程已重跑构建、bindings/facade/world-batch 测试和 N4 合同 |
+| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | 暂停 / 未分发 | `gpt-5.4`，medium | docs / design worker | 本子项目 docs 或后续明确命名的 RL task doc | N4-A/B/C 证据接受后可并行 | 按 owner 指示暂停；不分发下一轮 |
+| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | 暂停 / 未分发 | `gpt-5.4`，high | integration owner | 仅分发时命名的 naval docs 和 acceptance/status 文件 | 否 | C1 接受后按 owner 指示暂停 |
 
 ## 活跃 Worker Packet
 
@@ -219,6 +219,47 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_contact_report_geometry.json tests/contracts/unit/naval/naval_screen_closing_contact_geometry.json
 # PASS / PASS
 ```
+
+### N4-C1 Runtime / Facade Evidence
+
+状态：pass / 已接受。主线程已本地重跑构建、聚焦测试和 N4 场景合同。此处之后不再
+分发 follow-on worker。
+
+返回证据：
+
+- 将 N4 shared-core 字段应用回 world-batch compatibility shell：
+  `threat_state`、`assigned_target_track_id`、`assigned_target_source_id` 和
+  `assigned_target_snapshot_time_s`。
+- 通过 `MissionCommandSharedCoreDirective` 的 runtime binding 暴露这些 N4 字段。
+- 增加 focused maintained batch roundtrip 和 facade tasking packet export 覆盖。
+- 保留既有 facade tasking packet provenance 状态：`compatibility_adapter`。
+
+主线程验证：
+
+```bash
+cmake --build build-workshop --target ef_py -j2
+# passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py
+# 33 passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/facade/test_runtime_facade.py
+# 30 passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "naval or task_order or command_chain or mission_command"
+# 7 passed, 22 deselected
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "naval_owner_slice or task_order_naval or command_chain or mission_command"
+# 5 passed, 56 deselected
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
+# PASS
+```
+
+暂停说明：
+
+- 工作在 C1 验收后暂停。
+- `N4-D1` 和 `N4-E1` 等待后续 owner 决策前不分发。
 
 ## Worker Return Packet
 

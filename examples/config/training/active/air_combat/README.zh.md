@@ -23,6 +23,11 @@
   - 在维护中的默认 `WorldBatchVecEnv` 路径上的对应烟雾测试条目。
   - 当你希望验证脚本化红方对手和 HMoE 策略也能在批处理运行时路径上正确推进时，请使用此项。
 
+- [air_combat_1v1_f16c_scripted_red_world_batch_probe_8k_v1.json](air_combat_1v1_f16c_scripted_red_world_batch_probe_8k_v1.json)
+  - 维护中的 `WorldBatchVecEnv` 路径上的短程 HMoE 训练探针。
+  - 它超过 smoke 长度，但仍足够小，适合高频诊断。
+  - 在进入 32k/64k resume ramp 前，先用它确认早期终止是否仍被飞行稳定性伪影主导。
+
 ## 设计说明
 
 - 这些烟雾测试条目有意设为非可视化。

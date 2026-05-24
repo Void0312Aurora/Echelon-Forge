@@ -76,8 +76,8 @@ class MissionCommandView:
         return str(default if raw is None else raw)
 
 
-class LoaderOwnedRawSimCompatibilityFacade:
-    """Compatibility-only quarantine around loader-owned raw simulation access."""
+class LoaderOwnedRuntimeView:
+    """Narrow loader-owned runtime view used by facade-backed and explicit raw-kernel loaders."""
 
     def __init__(self, loader: Any):
         self._loader = loader
@@ -85,7 +85,7 @@ class LoaderOwnedRawSimCompatibilityFacade:
     def _sim(self) -> Any:
         return getattr(self._loader, "sim", None)
 
-    def require_sim(self, seam_name: str = "loader-owned compatibility seam") -> Any:
+    def require_sim(self, seam_name: str = "loader-owned runtime seam") -> Any:
         sim = self._sim()
         if sim is None:
             raise RuntimeError(f"{seam_name} requires loader.sim")
@@ -165,20 +165,38 @@ class LoaderOwnedRawSimCompatibilityFacade:
             return 0
 
 
-class LoaderOwnedScriptedOpponentKernelCompat:
-    """Compatibility-only kernel adapter for scripted opponents."""
+class LoaderOwnedScriptedOpponentKernelView:
+    """Loader-owned kernel view for scripted opponents.
+
+    The batch/facade path supplies a maintained facade-backed proxy here; explicitly
+    opted-in raw single-kernel environments can still satisfy the same narrow view.
+    """
 
     def __init__(self, loader: Any):
-        self._compat = loader_owned_raw_sim_compat(loader)
+        self._loader = loader
+
+    def _surface(self) -> Any:
+        return getattr(self._loader, "sim", None)
+
+    def _method(self, method_name: str) -> Any:
+        return getattr(self._surface(), method_name, None)
+
+    def _call(self, method_name: str, *args: Any, default: Any = None) -> Any:
+        method = self._method(method_name)
+        if not callable(method):
+            if default is not None:
+                return default
+            raise RuntimeError(f"scripted opponent kernel view requires {method_name}()")
+        return method(*args)
 
     def is_unit_active(self, entity_id: int) -> bool:
-        return self._compat.is_unit_active(entity_id)
+        return bool(self._call("is_unit_active", int(entity_id), default=False))
 
     def get_unit_position(self, entity_id: int) -> Any:
-        return self._compat.get_unit_position(entity_id)
+        return self._call("get_unit_position", int(entity_id))
 
     def get_agent_observation(self, entity_id: int) -> Any:
-        return self._compat.get_agent_observation(entity_id)
+        return self._call("get_agent_observation", int(entity_id))
 
     def set_command(
         self,
@@ -187,32 +205,37 @@ class LoaderOwnedScriptedOpponentKernelCompat:
         target_speed_mps: float,
         target_altitude_m: float,
     ) -> None:
-        self._compat.set_command(
+        self._call(
+            "set_command",
             int(entity_id),
             float(target_heading_deg),
             float(target_speed_mps),
             float(target_altitude_m),
+            default=None,
         )
 
     def fire_missile(self, entity_id: int, target_id: int) -> int:
-        return self._compat.fire_missile(int(entity_id), int(target_id))
+        try:
+            return int(self._call("fire_missile", int(entity_id), int(target_id), default=0) or 0)
+        except Exception:
+            return 0
 
 
-def loader_owned_raw_sim_compat(loader: Any) -> LoaderOwnedRawSimCompatibilityFacade:
-    return LoaderOwnedRawSimCompatibilityFacade(loader)
+def loader_owned_runtime_view(loader: Any) -> LoaderOwnedRuntimeView:
+    return LoaderOwnedRuntimeView(loader)
 
 
-def loader_owned_scripted_opponent_kernel_compat(loader: Any) -> LoaderOwnedScriptedOpponentKernelCompat:
-    return LoaderOwnedScriptedOpponentKernelCompat(loader)
+def loader_owned_scripted_opponent_kernel_view(loader: Any) -> LoaderOwnedScriptedOpponentKernelView:
+    return LoaderOwnedScriptedOpponentKernelView(loader)
 
 
 def apply_loader_owned_world_layout_to_kernel(loader: Any, layout: Any) -> Any:
     """Compatibility-only quarantine around loader-owned world-layout kernel apply."""
 
-    sim = loader_owned_raw_sim_compat(loader).require_sim("loader-owned world-layout kernel-apply seam")
-    apply_world_layout = getattr(import_module("python.scenario_runtime"), "apply_world_layout_to_kernel", None)
+    sim = loader_owned_runtime_view(loader).require_sim("loader-owned world-layout kernel-apply seam")
+    apply_world_layout = getattr(import_module("python.scenario.runtime"), "apply_world_layout_to_kernel", None)
     if not callable(apply_world_layout):
-        raise RuntimeError("python.scenario_runtime.apply_world_layout_to_kernel is not available")
+        raise RuntimeError("python.scenario.runtime.apply_world_layout_to_kernel is not available")
     return apply_world_layout(sim, layout)
 
 
@@ -261,9 +284,9 @@ def resolve_loader_time_step(loader: Any, default: float = 0.05) -> float:
             except Exception:
                 pass
 
-    compat = loader_owned_raw_sim_compat(loader)
-    if compat.supports("get_time_step"):
-        return compat.read_time_step_s(default=float(default))
+    runtime_view = loader_owned_runtime_view(loader)
+    if runtime_view.supports("get_time_step"):
+        return runtime_view.read_time_step_s(default=float(default))
 
     return float(default)
 
@@ -463,30 +486,26 @@ def landing_reference_heading_deg(loader: Any, default_heading_deg: float) -> fl
     return float(default_heading_deg)
 
 
-def _raw_sync_loader_command_chain(loader: Any) -> None:
-    # compatibility_only direct simulation seam: maintained bridge fallback until a
-    # facade-owned command-chain sync surface replaces this loader-owned quarantine.
+def _sync_loader_command_chain_via_runtime_view(loader: Any) -> None:
     if getattr(loader, "agent_id", None) is None:
         return
-    compat = loader_owned_raw_sim_compat(loader)
-    compat.sync_task_order(loader.agent_id, getattr(loader, "task_order", None))
-    compat.sync_leader_intent(loader.agent_id, getattr(loader, "leader_intent", None))
-    compat.sync_pilot_report(loader.agent_id, getattr(loader, "pilot_report", None))
+    runtime_view = loader_owned_runtime_view(loader)
+    runtime_view.sync_task_order(loader.agent_id, getattr(loader, "task_order", None))
+    runtime_view.sync_leader_intent(loader.agent_id, getattr(loader, "leader_intent", None))
+    runtime_view.sync_pilot_report(loader.agent_id, getattr(loader, "pilot_report", None))
 
 
 def sync_loader_mission_command(loader: Any, cmd: Any) -> None:
-    # compatibility_only direct simulation seam: quarantine mission-command writes
-    # behind the shared tasking bridge until a facade-owned sync surface exists.
     if getattr(loader, "agent_id", None) is None:
         return
-    loader_owned_raw_sim_compat(loader).sync_mission_command(loader.agent_id, cmd)
+    loader_owned_runtime_view(loader).sync_mission_command(loader.agent_id, cmd)
 
 
 def sync_loader_command_chain(loader: Any) -> None:
     if getattr(loader, "agent_id", None) is None:
         return
     if bool(getattr(loader, "_loader_owned_command_chain_sync_in_progress", False)):
-        _raw_sync_loader_command_chain(loader)
+        _sync_loader_command_chain_via_runtime_view(loader)
         return
     sync_fn = getattr(loader, "_sync_kernel_command_chain", None)
     if callable(sync_fn):
@@ -496,16 +515,15 @@ def sync_loader_command_chain(loader: Any) -> None:
             return
         finally:
             setattr(loader, "_loader_owned_command_chain_sync_in_progress", False)
-    _raw_sync_loader_command_chain(loader)
+    _sync_loader_command_chain_via_runtime_view(loader)
 
 
-def sync_loader_command_chain_compat(loader: Any) -> None:
-    # compatibility_only direct simulation seam: use this only from bridge objects that
-    # temporarily occupy the loader-owned phase-manager slot and would recurse
-    # through loader._sync_kernel_command_chain().
+def sync_loader_command_chain_reentrant(loader: Any) -> None:
+    """Use from loader-installed bridge objects to avoid recursing through their own hook."""
+
     if getattr(loader, "agent_id", None) is None:
         return
-    _raw_sync_loader_command_chain(loader)
+    _sync_loader_command_chain_via_runtime_view(loader)
 
 
 def _loader_requires_maintained_policy_read_seam(loader: Any) -> bool:
@@ -537,7 +555,7 @@ def _read_loader_policy_state(
     if caller == "maintained" and _loader_requires_maintained_policy_read_seam(loader):
         raise RuntimeError(blocker)
 
-    return loader_owned_raw_sim_compat(loader).call_optional(raw_method_name, resolved_agent_id)
+    return loader_owned_runtime_view(loader).call_optional(raw_method_name, resolved_agent_id)
 
 
 def get_policy_agent_observation(loader: Any, agent_id: Any | None = None) -> Any:
@@ -559,32 +577,4 @@ def get_policy_instrument_state(loader: Any, agent_id: Any | None = None) -> Any
         raw_method_name="get_instrument_state",
         blocker=TASKING_INSTRUMENT_READ_BLOCKER,
         caller="maintained",
-    )
-
-
-def read_loader_truth_compat(loader: Any) -> Any:
-    # compatibility_only direct simulation seam: keep this blocker-localized until a
-    # maintained loader observation seam replaces raw fallback reads.
-    agent_id = getattr(loader, "agent_id", None)
-    return _read_loader_policy_state(
-        loader,
-        agent_id=agent_id,
-        maintained_method_name="get_policy_agent_observation",
-        raw_method_name="get_agent_observation",
-        blocker=TASKING_TRUTH_READ_BLOCKER,
-        caller="compat",
-    )
-
-
-def read_loader_instrument_compat(loader: Any) -> Any:
-    # compatibility_only direct simulation seam: keep this blocker-localized until a
-    # maintained loader instrument seam replaces raw fallback reads.
-    agent_id = getattr(loader, "agent_id", None)
-    return _read_loader_policy_state(
-        loader,
-        agent_id=agent_id,
-        maintained_method_name="get_policy_instrument_state",
-        raw_method_name="get_instrument_state",
-        blocker=TASKING_INSTRUMENT_READ_BLOCKER,
-        caller="compat",
     )

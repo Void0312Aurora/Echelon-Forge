@@ -16,8 +16,10 @@ def normalize_batch_visual_backend(value: str | None) -> str:
     backend = "auto" if value is None else str(value).strip().lower()
     if backend in ("", "auto"):
         return "auto"
-    if backend in ("legacy", "compiled", "gpu_host"):
+    if backend in ("compiled", "gpu_host"):
         return backend
+    if backend == "legacy":
+        raise ValueError("batch_visual_backend='legacy' has been removed from maintained VecEnv paths")
     raise ValueError(f"Unknown batch_visual_backend: {value!r}")
 
 

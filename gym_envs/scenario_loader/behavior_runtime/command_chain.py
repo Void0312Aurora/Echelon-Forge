@@ -3,7 +3,7 @@ import ef_py
 from python.rl.tasking.bridge import (
     build_kernel_mission_command,
     has_mission_command_dict,
-    loader_owned_raw_sim_compat,
+    loader_owned_runtime_view,
     mission_command_dict,
     resolve_loader_time_step,
     sync_loader_mission_command,
@@ -68,7 +68,7 @@ def _apply_naval_screen_runtime_state(loader, *, truth=None) -> None:
 def sync_kernel_mission_command(loader) -> None:
     if loader.agent_id is None:
         return
-    if not loader_owned_raw_sim_compat(loader).supports("set_mission_command") or not hasattr(ef_py, "MissionCommand"):
+    if not loader_owned_runtime_view(loader).supports("set_mission_command") or not hasattr(ef_py, "MissionCommand"):
         return
     try:
         _apply_naval_screen_runtime_state(loader)

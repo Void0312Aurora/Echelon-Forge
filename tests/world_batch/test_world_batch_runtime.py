@@ -82,6 +82,30 @@ def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     return ref
 
 
+def _mission_assignment(world_index: int, entity_id: int, command) -> object:
+    assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+    assignment.world_index = int(world_index)
+    assignment.entity_id = int(entity_id)
+    assignment.mission_command = ef_py.mission_command_maintained_batch_contract(command)
+    return assignment
+
+
+def _leader_intent_assignment(world_index: int, entity_id: int, intent) -> object:
+    assignment = ef_py.WorldLeaderIntentMaintainedAssignment()
+    assignment.world_index = int(world_index)
+    assignment.entity_id = int(entity_id)
+    assignment.leader_intent = ef_py.leader_intent_maintained_batch_contract(intent)
+    return assignment
+
+
+def _pilot_report_assignment(world_index: int, entity_id: int, report) -> object:
+    assignment = ef_py.WorldPilotReportMaintainedAssignment()
+    assignment.world_index = int(world_index)
+    assignment.entity_id = int(entity_id)
+    assignment.pilot_report = ef_py.pilot_report_maintained_batch_contract(report)
+    return assignment
+
+
 def _make_detection(target_id: int, *, range_m: float = 8000.0) -> ef_py.Detection:
     detection = ef_py.Detection()
     detection.target_id = int(target_id)
@@ -814,15 +838,12 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         cmd1.cmd_speed_mps = 95.0
         cmd1.active = True
 
-        cmd_assign0 = ef_py.WorldMissionCommandAssignment()
-        cmd_assign0.world_index = 0
-        cmd_assign0.entity_id = int(eid0)
-        cmd_assign0.command = cmd0
-        cmd_assign1 = ef_py.WorldMissionCommandAssignment()
-        cmd_assign1.world_index = 1
-        cmd_assign1.entity_id = int(eid1)
-        cmd_assign1.command = cmd1
-        batch.set_mission_commands_batch([cmd_assign0, cmd_assign1])
+        batch.set_mission_commands_maintained_batch(
+            [
+                _mission_assignment(0, int(eid0), cmd0),
+                _mission_assignment(1, int(eid1), cmd1),
+            ]
+        )
 
         intent0 = ef_py.LeaderIntent()
         intent0.phase_id = ef_py.LeaderPhase.Departure
@@ -864,15 +885,12 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         intent1.rejoin_required_flag = True
         intent1.wingman_command_mode = ef_py.WingmanCommandMode.Rejoin
         intent1.active = True
-        intent_assign0 = ef_py.WorldLeaderIntentAssignment()
-        intent_assign0.world_index = 0
-        intent_assign0.entity_id = int(eid0)
-        intent_assign0.intent = intent0
-        intent_assign1 = ef_py.WorldLeaderIntentAssignment()
-        intent_assign1.world_index = 1
-        intent_assign1.entity_id = int(eid1)
-        intent_assign1.intent = intent1
-        batch.set_leader_intents_batch([intent_assign0, intent_assign1])
+        batch.set_leader_intents_maintained_batch(
+            [
+                _leader_intent_assignment(0, int(eid0), intent0),
+                _leader_intent_assignment(1, int(eid1), intent1),
+            ]
+        )
 
         order0 = ef_py.TaskOrder()
         order0.task_type = ef_py.TaskType.CAP
@@ -965,25 +983,22 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         report1.formation_role_id = int(ef_py.FormationRole.Wingman)
         report1.formation_error_m = 18.0
         report1.active = True
-        report_assign0 = ef_py.WorldPilotReportAssignment()
-        report_assign0.world_index = 0
-        report_assign0.entity_id = int(eid0)
-        report_assign0.report = report0
-        report_assign1 = ef_py.WorldPilotReportAssignment()
-        report_assign1.world_index = 1
-        report_assign1.entity_id = int(eid1)
-        report_assign1.report = report1
-        batch.set_pilot_reports_batch([report_assign0, report_assign1])
+        batch.set_pilot_reports_maintained_batch(
+            [
+                _pilot_report_assignment(0, int(eid0), report0),
+                _pilot_report_assignment(1, int(eid1), report1),
+            ]
+        )
 
-        got_cmds = batch.get_mission_commands_batch(refs)
+        got_cmds = batch.get_mission_commands_maintained_batch(refs)
         got_orders = batch.get_task_orders_maintained_batch(refs)
-        got_intents = batch.get_leader_intents_batch(refs)
-        got_reports = batch.get_pilot_reports_batch(refs)
+        got_intents = batch.get_leader_intents_maintained_batch(refs)
+        got_reports = batch.get_pilot_reports_maintained_batch(refs)
 
-        self.assertEqual(int(got_cmds[0].command_code), 2)
-        self.assertEqual(int(got_cmds[1].command_code), 4)
-        self.assertAlmostEqual(float(got_cmds[0].cmd_heading_deg), 45.0, places=6)
-        self.assertAlmostEqual(float(got_cmds[1].cmd_speed_mps), 95.0, places=6)
+        self.assertEqual(int(got_cmds[0].shared_core.command_code), 2)
+        self.assertEqual(int(got_cmds[1].shared_core.command_code), 4)
+        self.assertAlmostEqual(float(got_cmds[0].shared_core.cmd_heading_deg), 45.0, places=6)
+        self.assertAlmostEqual(float(got_cmds[1].shared_core.cmd_speed_mps), 95.0, places=6)
         got_order0_identity = ef_py.task_order_maintained_air_tasking_identity(got_orders[0])
         got_order0_formation = ef_py.task_order_maintained_air_formation(got_orders[0])
         got_order0_stationing = ef_py.task_order_maintained_naval_stationing(got_orders[0])
@@ -1020,42 +1035,54 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(got_order1_stationing.naval_station_type, ef_py.NavalStationType.Support)
         self.assertEqual(got_order1_formation.formation_role_id, ef_py.FormationRole.Wingman)
         self.assertEqual(got_order1_formation.wingman_slot_id, ef_py.WingmanSlot.Right)
-        self.assertEqual(got_intents[0].phase_id, ef_py.LeaderPhase.Departure)
-        self.assertEqual(got_intents[1].phase_id, ef_py.LeaderPhase.ApproachArmed)
-        self.assertEqual(got_intents[0].service_profile, ef_py.ServiceProfile.AirForce)
-        self.assertEqual(got_intents[0].task_family, ef_py.TaskFamily.Patrol)
-        self.assertEqual(got_intents[0].tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
-        self.assertEqual(int(got_intents[0].tactical_unit_id), 7001)
-        self.assertEqual(int(got_intents[0].task_group_id), 8001)
-        self.assertEqual(int(got_intents[0].role_code), 21)
-        self.assertEqual(int(got_intents[0].warfare_role_code), int(ef_py.NavalWarfareRole.ScreenCommander))
-        self.assertEqual(got_intents[0].coordination_mode, ef_py.CoordinationMode.Follow)
-        self.assertEqual(int(got_intents[0].relative_slot_code), 11)
-        self.assertEqual(int(got_intents[0].recovery_site_id), 91)
-        self.assertEqual(int(got_intents[0].officer_in_tactical_command), 8101)
-        self.assertEqual(int(got_intents[0].element_phase_id), 11)
-        self.assertEqual(got_intents[0].formation_mode_id, ef_py.FormationMode.Joining)
-        self.assertTrue(bool(got_intents[0].join_required_flag))
-        self.assertEqual(int(got_intents[1].warfare_role_code), int(ef_py.NavalWarfareRole.AirDefenseCommander))
-        self.assertEqual(int(got_intents[1].officer_in_tactical_command), 8102)
-        self.assertEqual(got_intents[1].formation_mode_id, ef_py.FormationMode.Recover)
-        self.assertTrue(bool(got_intents[1].rejoin_required_flag))
-        self.assertEqual(got_reports[0].report_type, ef_py.CommMsgType.REP_WILCO)
-        self.assertEqual(got_reports[1].report_type, ef_py.CommMsgType.REP_JOINED)
-        self.assertEqual(got_reports[0].service_profile, ef_py.ServiceProfile.AirForce)
-        self.assertEqual(got_reports[0].task_family, ef_py.TaskFamily.Patrol)
-        self.assertEqual(got_reports[0].tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
-        self.assertEqual(int(got_reports[0].tactical_unit_id), 7001)
-        self.assertEqual(int(got_reports[0].task_group_id), 8001)
-        self.assertEqual(int(got_reports[0].role_code), 21)
-        self.assertEqual(int(got_reports[0].warfare_role_code), int(ef_py.NavalWarfareRole.ScreenCommander))
-        self.assertEqual(got_reports[0].coordination_mode, ef_py.CoordinationMode.Attached)
-        self.assertEqual(int(got_reports[0].officer_in_tactical_command), 8101)
-        self.assertEqual(int(got_reports[0].element_id), 7001)
-        self.assertEqual(int(got_reports[1].warfare_role_code), int(ef_py.NavalWarfareRole.AirDefenseCommander))
-        self.assertEqual(int(got_reports[1].officer_in_tactical_command), 8102)
-        self.assertEqual(int(got_reports[1].formation_role_id), int(ef_py.FormationRole.Wingman))
-        self.assertAlmostEqual(float(got_reports[1].formation_error_m), 18.0, places=6)
+        self.assertEqual(got_intents[0].air_recovery.phase_id, ef_py.LeaderPhase.Departure)
+        self.assertEqual(got_intents[1].air_recovery.phase_id, ef_py.LeaderPhase.ApproachArmed)
+        self.assertEqual(got_intents[0].shared_core.service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(got_intents[0].shared_core.task_family, ef_py.TaskFamily.Patrol)
+        self.assertEqual(got_intents[0].shared_core.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(int(got_intents[0].shared_core.tactical_unit_id), 7001)
+        self.assertEqual(int(got_intents[0].shared_core.task_group_id), 8001)
+        self.assertEqual(int(got_intents[0].shared_core.role_code), 21)
+        self.assertEqual(
+            int(got_intents[0].naval_command_authority.warfare_role_code),
+            int(ef_py.NavalWarfareRole.ScreenCommander),
+        )
+        self.assertEqual(got_intents[0].shared_core.coordination_mode, ef_py.CoordinationMode.Follow)
+        self.assertEqual(int(got_intents[0].shared_core.relative_slot_code), 11)
+        self.assertEqual(int(got_intents[0].shared_core.recovery_site_id), 91)
+        self.assertEqual(int(got_intents[0].naval_command_authority.officer_in_tactical_command), 8101)
+        self.assertEqual(int(got_intents[0].air_recovery.element_phase_id), 11)
+        self.assertEqual(got_intents[0].air_formation.formation_mode_id, ef_py.FormationMode.Joining)
+        self.assertTrue(bool(got_intents[0].air_formation.join_required_flag))
+        self.assertEqual(
+            int(got_intents[1].naval_command_authority.warfare_role_code),
+            int(ef_py.NavalWarfareRole.AirDefenseCommander),
+        )
+        self.assertEqual(int(got_intents[1].naval_command_authority.officer_in_tactical_command), 8102)
+        self.assertEqual(got_intents[1].air_formation.formation_mode_id, ef_py.FormationMode.Recover)
+        self.assertTrue(bool(got_intents[1].air_formation.rejoin_required_flag))
+        self.assertEqual(got_reports[0].shared_core.report_type, ef_py.CommMsgType.REP_WILCO)
+        self.assertEqual(got_reports[1].shared_core.report_type, ef_py.CommMsgType.REP_JOINED)
+        self.assertEqual(got_reports[0].shared_core.service_profile, ef_py.ServiceProfile.AirForce)
+        self.assertEqual(got_reports[0].shared_core.task_family, ef_py.TaskFamily.Patrol)
+        self.assertEqual(got_reports[0].shared_core.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
+        self.assertEqual(int(got_reports[0].shared_core.tactical_unit_id), 7001)
+        self.assertEqual(int(got_reports[0].shared_core.task_group_id), 8001)
+        self.assertEqual(int(got_reports[0].shared_core.role_code), 21)
+        self.assertEqual(
+            int(got_reports[0].naval_command_authority.warfare_role_code),
+            int(ef_py.NavalWarfareRole.ScreenCommander),
+        )
+        self.assertEqual(got_reports[0].shared_core.coordination_mode, ef_py.CoordinationMode.Attached)
+        self.assertEqual(int(got_reports[0].naval_command_authority.officer_in_tactical_command), 8101)
+        self.assertEqual(int(got_reports[0].air.element_id), 7001)
+        self.assertEqual(
+            int(got_reports[1].naval_command_authority.warfare_role_code),
+            int(ef_py.NavalWarfareRole.AirDefenseCommander),
+        )
+        self.assertEqual(int(got_reports[1].naval_command_authority.officer_in_tactical_command), 8102)
+        self.assertEqual(int(got_reports[1].air.formation_role_id), int(ef_py.FormationRole.Wingman))
+        self.assertAlmostEqual(float(got_reports[1].air.formation_error_m), 18.0, places=6)
 
     def test_world_batch_runtime_command_chain_maintained_contract_support_declared(self) -> None:
         header = (REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.h").read_text(encoding="utf-8")
@@ -1455,7 +1482,6 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         batch.set_mission_commands_maintained_batch([assignment])
 
         maintained = batch.get_mission_commands_maintained_batch([ref])
-        compat = batch.get_mission_commands_batch([ref])
 
         self.assertEqual(len(maintained), 1)
         self.assertEqual(int(maintained[0].shared_core.assigned_target_id), 7001)
@@ -1464,14 +1490,6 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertEqual(int(maintained[0].shared_core.assigned_target_source_id), 99002)
         self.assertAlmostEqual(
             float(maintained[0].shared_core.assigned_target_snapshot_time_s),
-            123.75,
-            places=6,
-        )
-        self.assertEqual(int(compat[0].threat_state), 4)
-        self.assertEqual(int(compat[0].assigned_target_track_id), 88001)
-        self.assertEqual(int(compat[0].assigned_target_source_id), 99002)
-        self.assertAlmostEqual(
-            float(compat[0].assigned_target_snapshot_time_s),
             123.75,
             places=6,
         )
@@ -1509,27 +1527,24 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         cmd1.form_offset_z = 30.0
         cmd1.active = True
 
-        assign0 = ef_py.WorldMissionCommandAssignment()
-        assign0.world_index = 0
-        assign0.entity_id = int(lead)
-        assign0.command = cmd0
-        assign1 = ef_py.WorldMissionCommandAssignment()
-        assign1.world_index = 0
-        assign1.entity_id = int(wing)
-        assign1.command = cmd1
-        batch.set_mission_commands_batch([assign0, assign1])
+        batch.set_mission_commands_maintained_batch(
+            [
+                _mission_assignment(0, int(lead), cmd0),
+                _mission_assignment(0, int(wing), cmd1),
+            ]
+        )
 
-        got = batch.get_mission_commands_batch(refs)
+        got = batch.get_mission_commands_maintained_batch(refs)
 
         self.assertEqual(len(got), 2)
-        self.assertEqual(int(got[0].formation_id), 17)
-        self.assertEqual(int(got[1].formation_id), 17)
-        self.assertAlmostEqual(float(got[0].form_offset_x), 0.0, places=6)
-        self.assertAlmostEqual(float(got[0].form_offset_y), 0.0, places=6)
-        self.assertAlmostEqual(float(got[0].form_offset_z), 0.0, places=6)
-        self.assertAlmostEqual(float(got[1].form_offset_x), 180.0, places=6)
-        self.assertAlmostEqual(float(got[1].form_offset_y), -90.0, places=6)
-        self.assertAlmostEqual(float(got[1].form_offset_z), 30.0, places=6)
+        self.assertEqual(int(got[0].air_formation.formation_id), 17)
+        self.assertEqual(int(got[1].air_formation.formation_id), 17)
+        self.assertAlmostEqual(float(got[0].air_formation.form_offset_x), 0.0, places=6)
+        self.assertAlmostEqual(float(got[0].air_formation.form_offset_y), 0.0, places=6)
+        self.assertAlmostEqual(float(got[0].air_formation.form_offset_z), 0.0, places=6)
+        self.assertAlmostEqual(float(got[1].air_formation.form_offset_x), 180.0, places=6)
+        self.assertAlmostEqual(float(got[1].air_formation.form_offset_y), -90.0, places=6)
+        self.assertAlmostEqual(float(got[1].air_formation.form_offset_z), 30.0, places=6)
 
     def test_world_batch_runtime_mission_command_roundtrip_preserves_naval_extension_fields(self) -> None:
         batch = ef_py.WorldBatchRuntime(1)
@@ -1573,29 +1588,25 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         cmd.relay_oth_targeting = True
         cmd.active = True
 
-        assign = ef_py.WorldMissionCommandAssignment()
-        assign.world_index = 0
-        assign.entity_id = int(ship)
-        assign.command = cmd
-        batch.set_mission_commands_batch([assign])
+        batch.set_mission_commands_maintained_batch([_mission_assignment(0, int(ship), cmd)])
 
-        got = batch.get_mission_commands_batch(refs)
+        got = batch.get_mission_commands_maintained_batch(refs)
 
         self.assertEqual(len(got), 1)
-        self.assertEqual(int(got[0].reference_entity_id), 5201)
-        self.assertAlmostEqual(float(got[0].station_radius_m), 16000.0, places=6)
-        self.assertAlmostEqual(float(got[0].station_bearing_deg), 75.0, places=6)
-        self.assertEqual(int(got[0].recovery_base_id), 9201)
-        self.assertEqual(int(got[0].recovery_runway_id), 14)
-        self.assertEqual(got[0].recovery_approach_type, ef_py.RecoveryApproachType.ILS)
-        self.assertEqual(int(got[0].formation_id), 73)
-        self.assertAlmostEqual(float(got[0].form_offset_x), 240.0, places=6)
-        self.assertAlmostEqual(float(got[0].form_offset_y), -110.0, places=6)
-        self.assertAlmostEqual(float(got[0].form_offset_z), 18.0, places=6)
-        self.assertEqual(int(got[0].embarked_helo_entity_id), 9301)
-        self.assertTrue(bool(got[0].launch_helo))
-        self.assertFalse(bool(got[0].recover_helo))
-        self.assertTrue(bool(got[0].relay_oth_targeting))
+        self.assertEqual(int(got[0].naval_stationing.reference_entity_id), 5201)
+        self.assertAlmostEqual(float(got[0].naval_stationing.station_radius_m), 16000.0, places=6)
+        self.assertAlmostEqual(float(got[0].naval_stationing.station_bearing_deg), 75.0, places=6)
+        self.assertEqual(int(got[0].air_recovery.recovery_base_id), 9201)
+        self.assertEqual(int(got[0].air_recovery.recovery_runway_id), 14)
+        self.assertEqual(got[0].air_recovery.recovery_approach_type, ef_py.RecoveryApproachType.ILS)
+        self.assertEqual(int(got[0].air_formation.formation_id), 73)
+        self.assertAlmostEqual(float(got[0].air_formation.form_offset_x), 240.0, places=6)
+        self.assertAlmostEqual(float(got[0].air_formation.form_offset_y), -110.0, places=6)
+        self.assertAlmostEqual(float(got[0].air_formation.form_offset_z), 18.0, places=6)
+        self.assertEqual(int(got[0].naval_embarked_helo.embarked_helo_entity_id), 9301)
+        self.assertTrue(bool(got[0].naval_embarked_helo.launch_helo))
+        self.assertFalse(bool(got[0].naval_embarked_helo.recover_helo))
+        self.assertTrue(bool(got[0].naval_embarked_helo.relay_oth_targeting))
 
 
 class BatchScenarioRuntimeTests(unittest.TestCase):

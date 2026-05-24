@@ -19,14 +19,6 @@ from .cooperative_director import (
     count_control_slots,
     mission_status_success_flag,
 )
-from .compat import (
-    build_loader_step_info,
-    compute_loader_step_outcome,
-    RuntimeCompatibilityView,
-    normalize_runtime_compatibility_enabled,
-    resolve_loader_runtime_sim,
-    runtime_compatibility_required_message,
-)
 from .normalize import (
     normalize_batch_observation_backend,
     normalize_batch_visual_backend,
@@ -38,6 +30,13 @@ from .observation_batching import (
     compute_execution_observation_batch,
     refresh_visual_cache_batch,
 )
+from .runtime_support import (
+    build_loader_step_info,
+    compute_loader_step_outcome,
+    normalize_runtime_compatibility_enabled,
+    resolve_loader_runtime_sim,
+    runtime_compatibility_required_message,
+)
 from .runtime_access import WorldBatchVecEnvAccess
 from .state import BatchWorldHandle, CooperativeSlotState, CooperativeWorldState
 
@@ -48,7 +47,6 @@ __all__ = [
     "CooperativeSlotState",
     "CooperativeWorldState",
     "ExecutionObservationBatch",
-    "RuntimeCompatibilityView",
     "RuntimeFacadeAdapter",
     "ScriptedCooperativeCoordinationDirector",
     "WorldBatchVecEnvAccess",

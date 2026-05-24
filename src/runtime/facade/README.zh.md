@@ -19,13 +19,11 @@
 - 新增未设计 request/result 的主线入口。
 - 在 `*_types.h` 或 facade public header 中直接 include `core/engine/*`。
 
-## 逃逸口规则
+## 逃逸口退休
 
-`RuntimeFacade::runtime_compatibility_quarantine()` 是 compatibility / diagnostics 逃逸口。它可以服务旧测试、迁移期调试和底层能力验证，但新主线代码不应依赖它。
+`RuntimeFacade` 不再公开 raw `WorldBatchRuntime` 逃逸口。维护前端必须使用 facade-level request/result API；低层 diagnostics 或能力验证如果确实需要 raw runtime，应在 diagnostics/test scope 直接实例化 `WorldBatchRuntime`，而不是从 facade 向下钻。
 
-维护中的 Python 前端如果仍需要兼容低层 `WorldBatchRuntime`，必须把访问集中在一个显式 adapter 中，并在 adapter 对外提供 facade-shaped 方法。主类和业务流程不得直接调用 `RuntimeFacade.runtime_compatibility_quarantine()` 或根据 facade 是否存在分叉。
-
-主线前端也不应缓存 raw `WorldBatchRuntime` 或从 adapter 重新暴露 compatibility runtime。确实需要 `SimulationKernel` 的兼容路径时，应新增 adapter 方法，并在方法名或调用点说明它是迁移期 compatibility / diagnostics 能力。
+主线前端不得缓存 raw `WorldBatchRuntime`、不得从 adapter 重新暴露 compatibility runtime，也不得根据 raw runtime 是否可用分叉。新增长期能力时，应补充设计过的 facade request/result，并在 Python 层绑定 facade 方法。
 
 新增长期 API 时，应优先补充 facade request/result，并在 Python 层绑定 facade，而不是直接暴露新的底层 runtime 方法。
 
@@ -41,7 +39,6 @@ export 共享 kernel evidence，但 facade 必须提供独立的 diagnostics que
 `RuntimeFacade` 的治理计数规则如下：
 
 - 只统计维护中的 public request/result 方法。
-- 不统计 constructor、accessor，以及像 `runtime_compatibility_quarantine()` 这样的
-  compatibility-only escape hatch。
+- 不统计 constructor 和简单 accessor。
 - 当维护中的方法数接近约 40 个时，应先围绕 Session、Setup、Execution、
   Observation、Diagnostics、Engagement 与 Capability groups 规划拆分，再继续扩张主线 surface。

@@ -257,10 +257,10 @@ struct ObservationBatchRequest {
 
 struct TaskingBatchRequest {
     std::vector<WorldEntityRef> refs;
-    bool include_mission_commands = false;
+    bool include_mission_command_contracts = false;
     bool include_task_order_contracts = false;
-    bool include_leader_intents = false;
-    bool include_pilot_reports = false;
+    bool include_leader_intent_contracts = false;
+    bool include_pilot_report_contracts = false;
 };
 
 struct EngagementBatchRequest {

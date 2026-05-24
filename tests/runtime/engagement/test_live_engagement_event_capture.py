@@ -99,6 +99,143 @@ def _make_detection(target_id: int, *, range_m: float = 30000.0) -> ef_py.Detect
     return detection
 
 
+def _world_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
+    ref = ef_py.WorldEntityRef()
+    ref.world_index = int(world_index)
+    ref.entity_id = int(entity_id)
+    return ref
+
+
+def _make_spawn_request(
+    *,
+    world_index: int,
+    side: object,
+    type_name: str,
+    entity_name: str,
+    y: float,
+    heading: float,
+    vy: float,
+    is_agent: bool,
+) -> ef_py.WorldSpawnRequest:
+    spawn = ef_py.WorldSpawnRequest()
+    spawn.world_index = int(world_index)
+    spawn.side = side
+    spawn.type_name = type_name
+    spawn.entity_name = entity_name
+    spawn.is_agent = bool(is_agent)
+    spawn.x = 0.0
+    spawn.y = float(y)
+    spawn.z = 5000.0
+    spawn.heading = float(heading)
+    spawn.vy = float(vy)
+    spawn.ammo_override_enabled = True
+    spawn.missiles_remaining = 4
+    spawn.max_missiles = 4
+    spawn.weapon_cooldown_override_enabled = True
+    spawn.weapon_cooldown_s = 0.0
+    spawn.weapon_last_fire_time = -1.0
+    return spawn
+
+
+def _make_pilot_fire_action() -> ef_py.PilotAction:
+    action = ef_py.PilotAction()
+    action.active = True
+    action.master_arm = True
+    action.fire_weapon = True
+    action.throttle = 0.8
+    return action
+
+
+def _make_facade_window_launch() -> tuple[ef_py.RuntimeFacade, int, int, int]:
+    facade = ef_py.RuntimeFacade(1)
+    if not facade.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+
+    setup = ef_py.BatchWorldSetupRequest()
+    setup.seeds = [123]
+    terrain = ef_py.WorldTerrainAssignment()
+    terrain.world_index = 0
+    terrain.terrain_type = "flat"
+    wind = ef_py.WorldWindAssignment()
+    wind.world_index = 0
+    setup.terrain_assignments = [terrain]
+    setup.wind_assignments = [wind]
+    setup.spawn_requests = [
+        _make_spawn_request(
+            world_index=0,
+            side=ef_py.Side.Blue,
+            type_name="F-16C_Block50",
+            entity_name="Blue",
+            y=0.0,
+            heading=0.0,
+            vy=250.0,
+            is_agent=True,
+        ),
+        _make_spawn_request(
+            world_index=0,
+            side=ef_py.Side.Red,
+            type_name="Aircraft",
+            entity_name="Red",
+            y=30000.0,
+            heading=180.0,
+            vy=-250.0,
+            is_agent=False,
+        ),
+    ]
+    setup.time_steps = [0.05]
+    setup_result = facade.apply_world_setup(setup)
+    blue_id = int(setup_result.entity_ids[0])
+    red_id = int(setup_result.entity_ids[1])
+
+    for _ in range(80):
+        facade.step_batch()
+        obs = facade.get_agent_observations_batch([_world_ref(0, blue_id)])[0]
+        if any(int(track.id) == red_id for track in getattr(obs, "contacts", [])):
+            break
+    else:
+        raise AssertionError("expected facade observation helper to expose a target contact")
+
+    request = ef_py.RuntimeWindowRequest()
+    request.window_id = f"window:live_engagement:{blue_id}"
+    request.world_id = 0
+    request.source_time_s = 10.0
+    observation_request = ef_py.ObservationBatchRequest()
+    observation_request.refs = [_world_ref(0, blue_id)]
+    observation_request.include_agent_observations = True
+    request.observation_request = observation_request
+    engagement_request = ef_py.EngagementBatchRequest()
+    engagement_request.refs = [_engagement_ref(0, blue_id)]
+    engagement_request.trace_ids = [95001, 95002]
+    engagement_request.include_track_packets = False
+    engagement_request.include_diagnostics_traces = True
+    request.engagement_request = engagement_request
+    request.export_observation = True
+    request.export_engagement = True
+    request.export_diagnostics = True
+
+    action_request = ef_py.RuntimeWindowActionRequest()
+    action_request.source_layer = "live_engagement_event_capture_test"
+    action_request.input_snapshot_version = f"obs:0:{blue_id}"
+    action_request.action_intent.source_id = f"test:fire:{blue_id}"
+    action_request.action_intent.effective_time_s = request.source_time_s
+    action_request.action_intent.valid_until_s = request.source_time_s + 1.0
+    action_request.action_intent.target.world_index = 0
+    action_request.action_intent.target.entity_id = int(blue_id)
+    action_request.action_intent.action_family = "direct_control"
+    action_request.action_intent.merge_policy = "last_write_wins"
+    action_request.action_intent.action_interface.kind = "PilotActionAssignmentCompat"
+    action_request.action_intent.action_interface.payload_type = "pilot_action"
+    action_request.action_intent.has_pilot_action = True
+    action_request.action_intent.pilot_action = _make_pilot_fire_action()
+    request.action_requests = [action_request]
+
+    result = facade.run_wp10_window(request)
+    launch = next(
+        event for event in result.engagement_packet.launch_events if int(event.spawned_munition.entity_id) > 0
+    )
+    return facade, blue_id, red_id, int(launch.spawned_munition.entity_id)
+
+
 def _make_air_fixture() -> tuple[ef_py.SimulationKernel, int, int]:
     sim = ef_py.SimulationKernel()
     if not sim.load_database(_DB_PATH):
@@ -212,48 +349,8 @@ def test_debug_damage_records_effects_damage_and_trace_reports() -> None:
     assert int(events.diagnostics_traces[0].damage_report_id) == int(events.damage_reports[0].report_id)
 
 
-def test_facade_exports_recent_live_engagement_events() -> None:
-    facade = ef_py.RuntimeFacade(1)
-    if not facade.load_database(_DB_PATH):
-        raise AssertionError("failed to load runtime database")
-    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)
-    blue_id = int(
-        world.spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            0.0,
-            0.0,
-            5000.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            250.0,
-            0.0,
-        )
-    )
-    red_id = int(
-        world.spawn_unit(
-            ef_py.Side.Red,
-            "Aircraft",
-            0.0,
-            30000.0,
-            5000.0,
-            180.0,
-            0.0,
-            0.0,
-            0.0,
-            -250.0,
-            0.0,
-        )
-    )
-    world.set_unit_ammo(blue_id, 4, 4)
-    world.set_weapon_cooldown(blue_id, 0.0, -1.0)
-    world.set_contact_list(blue_id, [_make_detection(red_id)])
-
-    missile_id = int(world.fire_missile(blue_id, red_id))
-    assert missile_id > 0
-
+def test_facade_exports_recent_live_engagement_events_from_maintained_window_path() -> None:
+    facade, blue_id, _, missile_id = _make_facade_window_launch()
     request = ef_py.EngagementBatchRequest()
     request.refs = [_engagement_ref(0, blue_id)]
     request.include_track_packets = False
@@ -270,48 +367,7 @@ def test_facade_exports_recent_live_engagement_events() -> None:
 
 
 def test_facade_dedicated_diagnostics_surface_exports_recent_and_observation_trace_rows() -> None:
-    facade = ef_py.RuntimeFacade(1)
-    if not facade.load_database(_DB_PATH):
-        raise AssertionError("failed to load runtime database")
-
-    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)
-    blue_id = int(
-        world.spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            0.0,
-            0.0,
-            5000.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            250.0,
-            0.0,
-        )
-    )
-    red_id = int(
-        world.spawn_unit(
-            ef_py.Side.Red,
-            "Aircraft",
-            0.0,
-            30000.0,
-            5000.0,
-            180.0,
-            0.0,
-            0.0,
-            0.0,
-            -250.0,
-            0.0,
-        )
-    )
-    world.set_unit_ammo(blue_id, 4, 4)
-    world.set_weapon_cooldown(blue_id, 0.0, -1.0)
-    world.set_contact_list(blue_id, [_make_detection(red_id)])
-
-    missile_id = int(world.fire_missile(blue_id, red_id))
-    assert missile_id > 0
-
+    facade, blue_id, red_id, missile_id = _make_facade_window_launch()
     request = ef_py.EngagementBatchRequest()
     request.refs = [_engagement_ref(0, blue_id)]
     request.trace_ids = [95001, 95002]

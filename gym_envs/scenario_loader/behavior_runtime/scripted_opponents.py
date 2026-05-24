@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from examples.agents import RedScriptedAgent
-from python.rl.tasking.bridge import loader_owned_scripted_opponent_kernel_compat
+from python.rl.tasking.bridge import loader_owned_scripted_opponent_kernel_view
 
 
 _RED_SCRIPTED_AGENT_ALIASES = frozenset({"red_scripted_agent", "red_scripted_baseline", "red_agent"})
@@ -35,7 +35,7 @@ def _build_red_scripted_agent(
 ) -> RedScriptedAgent:
     altitude_hold_m = scripted_cfg.get("altitude_hold_m", None)
     return RedScriptedAgent(
-        loader_owned_scripted_opponent_kernel_compat(loader),
+        loader_owned_scripted_opponent_kernel_view(loader),
         int(entity_id),
         target_id=int(target_id) if int(target_id) > 0 else None,
         cruise_speed_mps=float(scripted_cfg.get("cruise_speed_mps", 220.0)),

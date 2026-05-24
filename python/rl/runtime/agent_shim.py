@@ -96,8 +96,8 @@ class ObservationProvenance:
     label: str
     information_state_layer: str
     source_surface: str
-    maintained_status: str = COMPATIBILITY_ADAPTER
-    source_layer: str = "adapter"
+    maintained_status: str = MAINTAINED
+    source_layer: str = "facade"
     consumed_snapshot_version: str | None = None
     observation_packet_id: str | None = None
     diagnostics_note: str = ""
@@ -220,7 +220,7 @@ class AgentRole:
     information_state_source: ObservationProvenance
     decision_model_ref: Mapping[str, Any]
     action_interface: str
-    maintained_status: str = COMPATIBILITY_ADAPTER
+    maintained_status: str = MAINTAINED
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -288,7 +288,7 @@ def single_agent_role(
     decision_model_kind: str = "external_policy",
     decision_model_id: str = "caller_supplied",
     action_interface: str = "PilotActionAssignmentCompat",
-    maintained_status: str = COMPATIBILITY_ADAPTER,
+    maintained_status: str = MAINTAINED,
 ) -> AgentRole:
     authority_scope: dict[str, Any] = {"entity_ids": [int(agent_id)]}
     if world_index is not None:
@@ -298,7 +298,7 @@ def single_agent_role(
         role_type=role_type,
         authority_scope=authority_scope,
         information_state_source=information_state_source
-        or observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+        or observation_provenance(OBS_FACADE_OBSERVATION_PACKET),
         decision_model_ref={"kind": decision_model_kind, "id": decision_model_id},
         action_interface=action_interface,
         maintained_status=maintained_status,
@@ -314,7 +314,7 @@ def roster_slot_role(
     formation_role_id: str | None = None,
     policy_route: str | None = None,
     information_state_source: ObservationProvenance | None = None,
-    maintained_status: str = COMPATIBILITY_ADAPTER,
+    maintained_status: str = MAINTAINED,
 ) -> AgentRole:
     role_type = "roster_slot"
     if formation_role_id:
@@ -330,7 +330,7 @@ def roster_slot_role(
             "formation_role_id": formation_role_id,
         },
         information_state_source=information_state_source
-        or observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+        or observation_provenance(OBS_FACADE_OBSERVATION_PACKET),
         decision_model_ref={
             "kind": "policy_route" if policy_route else "external_policy",
             "id": str(policy_route or "caller_supplied"),
@@ -356,7 +356,7 @@ class ActionIntentCompat:
     target_entity_id: int | None = None
     target_world_index: int | None = None
     payload_kind: str = "PilotActionAssignmentCompat"
-    maintained_status: str = COMPATIBILITY_ADAPTER
+    maintained_status: str = MAINTAINED
     diagnostics_note: str = ""
 
     def __post_init__(self) -> None:
@@ -385,6 +385,7 @@ class ActionIntentCompat:
         effective_time: float | None = None,
         valid_until: float | None = None,
         merge_policy: str = MERGE_LAST_WRITE_WINS,
+        maintained_status: str = MAINTAINED,
     ) -> "ActionIntentCompat":
         return cls(
             role=role,
@@ -397,6 +398,7 @@ class ActionIntentCompat:
             merge_policy=merge_policy,
             target_entity_id=getattr(assignment, "entity_id", None),
             target_world_index=getattr(assignment, "world_index", None),
+            maintained_status=maintained_status,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -455,7 +457,7 @@ class CoordinationIntentCompat:
     merge_policy: str = MERGE_LAST_WRITE_WINS
     roster_scope: Mapping[str, Any] = field(default_factory=dict)
     payload_kind: str = "CommandChainAssignmentCompat"
-    maintained_status: str = COMPATIBILITY_ADAPTER
+    maintained_status: str = MAINTAINED
     diagnostics_note: str = ""
 
     def __post_init__(self) -> None:
@@ -557,7 +559,7 @@ class DecisionBeliefCompat:
     confidence: float = 0.0
     lower_bound: float = 0.0
     upper_bound: float = 0.0
-    maintained_status: str = COMPATIBILITY_ADAPTER
+    maintained_status: str = MAINTAINED
     diagnostics_reason: str = ""
     uses_truth_state: bool = False
     uses_raw_ecs: bool = False

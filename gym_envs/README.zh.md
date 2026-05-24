@@ -129,8 +129,8 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## 迁移备注
 
 - `scenario_loader/` 已经按运行时子域拆开，后续新增 loader 逻辑应进入相应子包，不要把 `core.py` 再次扩成总包。
-- `python/scenario_compiler.py` 与 `python/scenario_runtime.py` 对 `gym_envs/` 来说只剩兼容 shim。
-- 当前场景主实现入口是 `python/scenario/compiler/` 与 `python/scenario/runtime/`。
+- `gym_envs/` 应使用 `python/scenario/compiler/` 与 `python/scenario/runtime/` 下的打包场景入口。
+- `python/scenario/diagnostics/` 仅用于 diagnostics，不得成为环境默认路径。
 - `universal_env.py` 仍保留为稳定 env 入口，但通用 helper 主实现应继续收敛到 `universal_env_parts/`。
 - `leader_env.py` 仍保留为稳定入口，但实现应继续向 `leader_env_parts/` 下沉。
 - 如果未来只保留包入口而不再保留根级单文件 env，需要先保证 `tools/`、`tests/`、训练入口的导入路径同步切换。

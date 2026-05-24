@@ -207,20 +207,8 @@ class LeaderWorldBatchExecutionRuntimeGroup:
         return list(range(int(self.world_vec.num_envs)))
 
     @property
-    def batch_runtime(self):
-        if not bool(getattr(self.world_vec, "runtime_compatibility_enabled", False)):
-            raise RuntimeError(
-                "vec_env.batch_runtime is a quarantined compatibility/diagnostics escape hatch; "
-                "pass runtime_compatibility_enabled=True to opt in explicitly."
-            )
-        return self.world_vec.batch_runtime
-
-    @property
     def last_runtime_window_evidence(self):
         return self.access.last_runtime_window_evidence
-
-    def _runtime_compatibility_enabled(self) -> bool:
-        return bool(getattr(self.world_vec, "runtime_compatibility_enabled", False))
 
     @staticmethod
     def _runtime_window_evidence_info(window_evidence: Any) -> dict[str, Any]:
@@ -264,19 +252,6 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             ),
             "cadence_reason": str(window_evidence.cadence_reason),
             "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
-        }
-
-    @staticmethod
-    def _compatibility_fallback_runtime_window_evidence_info() -> dict[str, Any]:
-        return {
-            "barrier_ids": [],
-            "event_barrier_id": "",
-            "observation_barrier_id": "",
-            "observation_provenance": "",
-            "engagement_provenance": "",
-            "diagnostics_provenance": "",
-            "cadence_reason": "compatibility_fallback_world_batch_step_worlds_wp16c",
-            "uses_compat_fallback": True,
         }
 
     def max_decision_interval_steps(self, env_indices: Sequence[int] | None = None) -> int:
@@ -505,19 +480,9 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             state_read_ms = 0.0
 
         if not window_evidence_by_env:
-            if not self._runtime_compatibility_enabled():
-                raise RuntimeError(
-                    "RuntimeFacade.run_wp10_window() is unavailable and compatibility fallback is quarantined; "
-                    "pass runtime_compatibility_enabled=True to opt in explicitly."
-                )
-            self._set_pilot_actions_batch(assignments)
-            self._step_runtime_worlds([int(idx) for idx in target_indices])
-            batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
-
-            read_t0 = time.perf_counter() if collect_timing else 0.0
-            truth_list = self._get_agent_observations_batch(refs)
-            inst_list = self._get_instrument_states_batch(refs)
-            state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
+            raise RuntimeError(
+                "RuntimeFacade.run_wp10_window() is required by leader runtime consumers"
+            )
 
         behavior_t0 = time.perf_counter() if collect_timing else 0.0
         for batch_idx, env_idx in enumerate(target_indices):
@@ -576,7 +541,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
             if window_evidence is not None:
                 info["runtime_window_evidence"] = self._runtime_window_evidence_info(window_evidence)
             else:
-                info["runtime_window_evidence"] = self._compatibility_fallback_runtime_window_evidence_info()
+                raise RuntimeError("RuntimeFacade.run_wp10_window() is required by leader info builders")
             if collect_timing:
                 info_build_ms += (time.perf_counter() - info_t0) * 1000.0
             out.append((obs, float(reward), bool(terminated), bool(truncated), info))

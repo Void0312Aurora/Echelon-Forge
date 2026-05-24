@@ -132,19 +132,9 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
                 include_diagnostics=True,
             )
         if window_evidence is None:
-            if not bool(getattr(self.world_vec, "runtime_compatibility_enabled", False)):
-                raise RuntimeError(
-                    "RuntimeFacade.run_wp10_window() is unavailable and compatibility fallback is quarantined; "
-                    "pass runtime_compatibility_enabled=True to opt in explicitly."
-                )
-            self.access.set_pilot_actions_batch([assignment])
-            self.access.step_worlds([env_idx])
-            batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
-
-            read_t0 = time.perf_counter() if collect_timing else 0.0
-            truth = self.access.get_agent_observations_batch(refs)[0]
-            inst = self.access.get_instrument_states_batch(refs)[0]
-            state_read_ms = (time.perf_counter() - read_t0) * 1000.0 if collect_timing else 0.0
+            raise RuntimeError(
+                "RuntimeFacade.run_wp10_window() is required by single-world training consumers"
+            )
         else:
             batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if collect_timing else 0.0
             read_t0 = time.perf_counter() if collect_timing else 0.0
@@ -246,16 +236,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
                 "uses_compat_fallback": bool(window_evidence.uses_compat_fallback),
             }
         else:
-            info["runtime_window_evidence"] = {
-                "barrier_ids": [],
-                "event_barrier_id": "",
-                "observation_barrier_id": "",
-                "observation_provenance": "",
-                "engagement_provenance": "",
-                "diagnostics_provenance": "",
-                "cadence_reason": "compatibility_fallback_world_batch_step_worlds_wp16c",
-                "uses_compat_fallback": True,
-            }
+            raise RuntimeError("RuntimeFacade.run_wp10_window() is required by single-world info builders")
         if collect_timing:
             info["timing"] = {
                 "action_prepare_ms": float(action_prepare_ms),

@@ -615,6 +615,13 @@ inline void apply_mission_command_maintained_batch_contract_to_compatibility_she
     core.engagement_authority_grantor_id =
         contract.shared_core.engagement_authority_grantor_id;
     core.assigned_target_id = contract.shared_core.assigned_target_id;
+    core.threat_state = contract.shared_core.threat_state;
+    core.assigned_target_track_id =
+        contract.shared_core.assigned_target_track_id;
+    core.assigned_target_source_id =
+        contract.shared_core.assigned_target_source_id;
+    core.assigned_target_snapshot_time_s =
+        contract.shared_core.assigned_target_snapshot_time_s;
     core.authorization_to_fire =
         contract.shared_core.authorization_to_fire;
     core.active = contract.shared_core.active;

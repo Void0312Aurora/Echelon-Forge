@@ -148,15 +148,6 @@ def test_maintained_agent_role_rejects_compatibility_adapter_and_truth_inputs():
     ):
         single_agent_role(
             agent_id=10,
-            maintained_status=MAINTAINED,
-        )
-
-    with pytest.raises(
-        ValueError,
-        match="maintained consumer fixtures must use provenance-labeled ObservationPacket/DecisionBelief inputs",
-    ):
-        single_agent_role(
-            agent_id=10,
             information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
             maintained_status=MAINTAINED,
         )
@@ -207,9 +198,31 @@ def test_maintained_agent_role_rejects_compatibility_adapter_and_truth_inputs():
         )
 
 
-def test_maintained_intent_entry_points_reject_default_role_provenance():
+def test_default_agent_roles_use_maintained_facade_observation_provenance():
     default_single_role = single_agent_role(agent_id=10)
     default_roster_role = roster_slot_role(world_index=0, entity_id=10, roster_index=2)
+
+    assert default_single_role.maintained_status == MAINTAINED
+    assert default_single_role.information_state_source.label == OBS_FACADE_OBSERVATION_PACKET
+    assert default_single_role.information_state_source.maintained_status == MAINTAINED
+    assert default_roster_role.maintained_status == MAINTAINED
+    assert default_roster_role.information_state_source.label == OBS_FACADE_OBSERVATION_PACKET
+    assert default_roster_role.information_state_source.maintained_status == MAINTAINED
+
+
+def test_maintained_intent_entry_points_reject_explicit_compatibility_role_provenance():
+    compat_single_role = single_agent_role(
+        agent_id=10,
+        information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+        maintained_status=COMPATIBILITY_ADAPTER,
+    )
+    compat_roster_role = roster_slot_role(
+        world_index=0,
+        entity_id=10,
+        roster_index=2,
+        information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+        maintained_status=COMPATIBILITY_ADAPTER,
+    )
 
     with pytest.raises(
         ValueError,
@@ -219,7 +232,7 @@ def test_maintained_intent_entry_points_reject_default_role_provenance():
         ),
     ):
         ActionIntentCompat(
-            role=default_single_role,
+            role=compat_single_role,
             payload=SimpleNamespace(throttle=0.8),
             maintained_status=MAINTAINED,
         )
@@ -232,7 +245,7 @@ def test_maintained_intent_entry_points_reject_default_role_provenance():
         ),
     ):
         CoordinationIntentCompat(
-            role=default_roster_role,
+            role=compat_roster_role,
             task_order=SimpleNamespace(task_id="hold-station"),
             maintained_status=MAINTAINED,
         )
@@ -378,6 +391,7 @@ def test_agent_role_exposes_five_elements_without_runtime_dependency():
         world_index=2,
         agent_id=42,
         information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+        maintained_status=COMPATIBILITY_ADAPTER,
         decision_model_kind="scripted_controller",
         decision_model_id="ScriptedStableFlightController",
     )
@@ -418,7 +432,12 @@ def test_roster_slot_role_keeps_role_metadata():
 
 
 def test_action_intent_wrapper_does_not_mutate_assignment():
-    role = single_agent_role(world_index=0, agent_id=11)
+    role = single_agent_role(
+        world_index=0,
+        agent_id=11,
+        information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+        maintained_status=COMPATIBILITY_ADAPTER,
+    )
     payload = SimpleNamespace(stick_pitch=0.25)
     assignment = SimpleNamespace(world_index=0, entity_id=11, action=payload)
 
@@ -429,6 +448,7 @@ def test_action_intent_wrapper_does_not_mutate_assignment():
         effective_time=12.0,
         valid_until=12.1,
         merge_policy=MERGE_REJECT_ON_CONFLICT,
+        maintained_status=COMPATIBILITY_ADAPTER,
     )
 
     assert intent.payload is payload
@@ -450,6 +470,8 @@ def test_coordination_intent_records_payload_fields():
         agent_id=5,
         role_type="flight_lead",
         action_interface="CommandChainAssignmentCompat",
+        information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+        maintained_status=COMPATIBILITY_ADAPTER,
     )
     mission_command = SimpleNamespace(command_code=3)
     leader_intent = SimpleNamespace(active=True)
@@ -460,6 +482,7 @@ def test_coordination_intent_records_payload_fields():
         leader_intent=leader_intent,
         roster_scope={"team_id": 1},
         update_clock="leader_step",
+        maintained_status=COMPATIBILITY_ADAPTER,
     )
 
     assert intent.payload_fields() == ("mission_command", "leader_intent")
@@ -527,7 +550,11 @@ def test_invalid_status_and_merge_policy_are_rejected():
 
     with pytest.raises(ValueError):
         ActionIntentCompat(
-            role=single_agent_role(agent_id=1),
+            role=single_agent_role(
+                agent_id=1,
+                information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+                maintained_status=COMPATIBILITY_ADAPTER,
+            ),
             payload=object(),
             merge_policy="random_order",
         )

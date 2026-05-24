@@ -103,14 +103,14 @@
     },
     {
       "path": "src/runtime/facade/runtime_facade.h",
-      "classification": "compatibility_wrapper",
+      "classification": "maintained_spine",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Public facade still carries the selected window/export APIs alongside the migration-period runtime escape hatch.",
+      "reason": "Public facade exposes selected window/export/tasking APIs while keeping the raw runtime owner private.",
       "evidence_markers": [
         "RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);",
-        "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;",
-        "Compatibility escape hatch for diagnostics and legacy adapters only."
+        "TaskingBatchPacket export_tasking_packet(const TaskingBatchRequest& request) const;",
+        "std::unique_ptr<WorldBatchRuntime> runtime_;"
       ]
     },
     {
@@ -131,12 +131,12 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Centralized adapter still falls back to RuntimeFacade.runtime_compatibility_quarantine() or raw WorldBatchRuntime when facade coverage is incomplete.",
+      "reason": "Centralized adapter now owns a RuntimeFacade directly and no longer falls back through raw RuntimeFacade/WorldBatchRuntime escape hatches.",
       "evidence_markers": [
-        "self.facade.runtime_compatibility_quarantine()",
-        "ef_py.WorldBatchRuntime",
+        "self.facade = ef_py.RuntimeFacade(self._world_count)",
         "export_observation_packet",
-        "step_worlds"
+        "run_maintained_window",
+        "requires a full facade-owned batch step"
       ]
     },
     {
@@ -144,11 +144,11 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Maintained training entrypoint reads facade-shaped packets, but stepping still routes through compatibility batch methods instead of the selected window API.",
+      "reason": "Maintained training entrypoint reads facade-shaped packets and exposes the facade for diagnostics while keeping the old public batch runtime surface removed.",
       "evidence_markers": [
         "self._runtime_adapter = _RuntimeFacadeAdapter(",
-        "def batch_runtime(self):",
-        "self._runtime_compat",
+        "def runtime_facade(self):",
+        "load_compiled_scenario_for_setup_target",
         "read_observation_packet"
       ]
     },
@@ -165,15 +165,15 @@
       ]
     },
     {
-      "path": "python/rl/runtime/world_batch/compat.py",
+      "path": "python/rl/runtime/world_batch/runtime_support.py",
       "classification": "compatibility_wrapper",
       "owner": "WP16-D",
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
-      "reason": "Compatibility view deliberately keeps batch_runtime-style calls alive while maintained replacements are still migrating.",
+      "reason": "Runtime support module keeps only named loader/runtime helper seams after the public RuntimeCompatibilityView and compat.py module were removed.",
       "evidence_markers": [
-        "class RuntimeCompatibilityView:",
-        "Compatibility-only view for callers that still expect `vec_env.batch_runtime`.",
-        "def step_worlds"
+        "normalize_runtime_compatibility_enabled",
+        "compute_loader_step_outcome",
+        "build_loader_step_info"
       ]
     },
     {
@@ -181,11 +181,11 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Leader execution runtime avoids raw world handles, but still batches step/read flows through compatibility world-batch access.",
+      "reason": "Leader execution runtime no longer exposes batch_runtime and requires maintained runtime-window evidence for business steps.",
       "evidence_markers": [
         "WorldBatchVecEnvAccess",
-        "def batch_runtime(self):",
-        "return self.world_vec.batch_runtime",
+        "run_maintained_window",
+        "last_runtime_window_evidence",
         "leader_window_runtime"
       ]
     },
@@ -194,11 +194,11 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Single-world execution wrapper directly stages actions, steps worlds, and reads truth/instruments outside the selected runtime-window seam.",
+      "reason": "Single-world execution wrapper now requires RuntimeFacade.run_wp10_window and reads maintained observation packets from the window result.",
       "evidence_markers": [
-        "self.access.set_pilot_actions_batch([assignment])",
-        "self.access.step_worlds([env_idx])",
-        "self.access.get_agent_observations_batch(refs)"
+        "run_maintained_window",
+        "last_runtime_window_evidence",
+        "RuntimeFacade.run_wp10_window() is required by single-world training consumers"
       ]
     },
     {
@@ -269,10 +269,11 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Current vec-env tests prove behavior through the compatibility batch view instead of the selected runtime-window evidence seam.",
+      "reason": "Vec-env tests now prove the removed batch runtime surface and the maintained facade diagnostics exposure.",
       "evidence_markers": [
         "WorldBatchVecEnv(",
-        "vec_env.batch_runtime.worker_threads()",
+        "test_world_batch_vec_env_batch_runtime_surface_is_removed",
+        "runtime_facade",
         "test_world_batch_vec_env_steps_and_auto_resets"
       ]
     },
@@ -281,9 +282,10 @@
       "classification": "diagnostics_only",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Assertions are useful, but the fixture still synthesizes launch/damage through RuntimeFacade.runtime_compatibility_quarantine().world_compatibility_quarantine() escape hatches.",
+      "reason": "Assertions remain diagnostics-focused, but launch synthesis now uses the maintained RuntimeFacade.run_wp10_window path instead of the retired facade runtime escape hatch.",
       "evidence_markers": [
-        "world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)",
+        "facade.run_wp10_window",
+        "PilotActionAssignmentCompat",
         "p10.observation_export.v1",
         "\"diagnostics_only\"",
         "diagnostics_trace_surface_not_maintained_decision_path"

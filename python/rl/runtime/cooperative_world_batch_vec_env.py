@@ -48,7 +48,6 @@ from python.rl.runtime.world_batch import (
     compute_loader_step_outcome,
     CooperativeSlotState,
     CooperativeWorldState,
-    RuntimeCompatibilityView,
     RuntimeFacadeAdapter,
     ScriptedCooperativeCoordinationDirector,
     clone_small_dict,
@@ -65,20 +64,18 @@ from python.rl.runtime.world_batch import (
     observation_timing_snapshot,
     pilot_report_snapshot,
     refresh_visual_cache_batch,
-    runtime_compatibility_required_message,
     snapshot_changed,
     task_order_snapshot,
 )
 from python.rl.control.wrappers import MultiTimescaleActionController
 from python.rl.tasking.bridge import resolve_loader_time_step
 from python.scenario_compiler import ScenarioCompiler
-from python.scenario_runtime import build_compiled_world_layout
+from python.scenario.runtime import build_compiled_world_layout
 
 
 _copy_obs = copy_obs
 _CooperativeWorldState = CooperativeWorldState
 _CooperativeSlotState = CooperativeSlotState
-_RuntimeCompatibilityView = RuntimeCompatibilityView
 _RuntimeFacadeAdapter = RuntimeFacadeAdapter
 _clone_small_dict = clone_small_dict
 _count_control_slots = count_control_slots
@@ -91,13 +88,6 @@ _compute_loader_step_outcome = compute_loader_step_outcome
 
 def _float32_view(value: Any) -> np.ndarray:
     return np.asarray(value, dtype=np.float32)
-
-
-class _CooperativeRuntimeCompatibilityView(RuntimeCompatibilityView):
-    """Narrow compatibility view for cooperative batch runtime callers."""
-
-    def __getattr__(self, name: str) -> Any:
-        raise AttributeError(name)
 
 
 class CooperativeWorldBatchVecEnv(VecEnv):
@@ -187,7 +177,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             self.world_count,
             runtime_compatibility_enabled=self.runtime_compatibility_enabled,
         )
-        self._runtime_compat = _CooperativeRuntimeCompatibilityView(self._runtime_adapter)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
             self._runtime_adapter.set_worker_threads(int(self._worker_threads))
@@ -245,12 +234,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.last_observation_build_timing: dict[str, float] = {}
 
     @property
-    def batch_runtime(self):
-        if not self.runtime_compatibility_enabled:
-            raise RuntimeError(runtime_compatibility_required_message("vec_env.batch_runtime"))
-        return self._runtime_compat
-
-    @property
     def runtime_facade(self):
         return self._runtime_adapter.facade
 
@@ -269,7 +252,9 @@ class CooperativeWorldBatchVecEnv(VecEnv):
 
     def _batch_visual_backend_mode(self) -> str:
         if self.batch_visual_backend == "auto":
-            return "compiled" if hasattr(ef_py, "compute_world_batch_visual_observation_batch_numpy") else "legacy"
+            if hasattr(ef_py, "compute_world_batch_visual_observation_batch_numpy"):
+                return "compiled"
+            raise RuntimeError("maintained visual batching requires compute_world_batch_visual_observation_batch_numpy")
         return self.batch_visual_backend
 
     def _slot_refs(self, slot_indices: list[int]) -> list[Any]:

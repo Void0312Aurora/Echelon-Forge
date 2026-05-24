@@ -95,13 +95,15 @@ def test_common_core_profile_no_longer_defaults_or_exports_air_only_profile_logi
 
 def test_bridge_quarantines_legacy_command_chain_raw_writes_to_single_owner_seam() -> None:
     text = _read("python/rl/tasking/bridge.py")
-    assert "class LoaderOwnedRawSimCompatibilityFacade:" in text
-    assert "def loader_owned_raw_sim_compat(loader: Any) -> LoaderOwnedRawSimCompatibilityFacade:" in text
-    assert "def _raw_sync_loader_command_chain(loader: Any) -> None:" in text
+    assert "class LoaderOwnedRuntimeView:" in text
+    assert "def loader_owned_runtime_view(loader: Any) -> LoaderOwnedRuntimeView:" in text
+    assert "def _sync_loader_command_chain_via_runtime_view(loader: Any) -> None:" in text
     assert "def sync_loader_command_chain(loader: Any) -> None:" in text
-    assert "compat.sync_task_order(loader.agent_id, getattr(loader, \"task_order\", None))" in text
-    assert "compat.sync_leader_intent(loader.agent_id, getattr(loader, \"leader_intent\", None))" in text
-    assert "compat.sync_pilot_report(loader.agent_id, getattr(loader, \"pilot_report\", None))" in text
+    assert "runtime_view.sync_task_order(loader.agent_id, getattr(loader, \"task_order\", None))" in text
+    assert "runtime_view.sync_leader_intent(loader.agent_id, getattr(loader, \"leader_intent\", None))" in text
+    assert "runtime_view.sync_pilot_report(loader.agent_id, getattr(loader, \"pilot_report\", None))" in text
+    assert "LoaderOwnedRawSimCompatibilityFacade" not in text
+    assert "loader_owned_raw_sim_compat" not in text
     assert "loader.sim.set_task_order(" not in text
     assert "loader.sim.set_leader_intent(" not in text
     assert "loader.sim.set_pilot_report(" not in text

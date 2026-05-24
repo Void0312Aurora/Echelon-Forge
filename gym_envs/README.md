@@ -129,8 +129,8 @@ If you are looking into:
 ## Migration Notes
 
 - `scenario_loader/` has already been split by runtime subdomain. New loader logic should go into the corresponding package instead of expanding `core.py` into a grab bag again.
-- `python/scenario_compiler.py` and `python/scenario_runtime.py` are now only compatibility shims from the perspective of `gym_envs/`.
-- The current main scenario implementation entry points are `python/scenario/compiler/` and `python/scenario/runtime/`.
+- `gym_envs/` should use the packaged scenario entry points under `python/scenario/compiler/` and `python/scenario/runtime/`.
+- `python/scenario/diagnostics/` is diagnostics-only and must not become an environment default path.
 - `universal_env.py` remains the stable env entry point, but generic helper implementations should continue to converge into `universal_env_parts/`.
 - `leader_env.py` remains the stable entry point, but its implementation should continue to move down into `leader_env_parts/`.
 - If the future design keeps only package entry points instead of root-level single-file env modules, make sure the import paths in `tools/`, `tests/`, and training entry points are migrated together first.

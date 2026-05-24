@@ -9,8 +9,12 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`.
   opponent and scenario-level ammo override.
 - The missile launch bridge, minimal combat termination fields, and basic smoke
   training entry are all connected.
-- The main blocker is now training-signal quality rather than entry wiring,
-  especially `failfast_deep_stall` dominating early episodes.
+- In the `2026-05-24` 8k HMoE probe, early episodes were not dominated by
+  `failfast_deep_stall`; termination concentrated on `combat_loss`.
+- The main blocker is still training-signal quality rather than entry wiring:
+  the `combat_loss` plus `crash_penalty` terminal combination, ammo-depletion
+  warnings, invalid entity ID warnings, and HMoE routing still concentrated on
+  `nav/vector` under `mission_obs_mode=basic`.
 
 ## Active Follow-On Focus
 
@@ -18,6 +22,8 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`.
 - freeze a dedicated `1v1` eval JSON schema and maintained eval entry
 - refine reward and termination shaping beyond the minimum win/loss hooks
 - strengthen scripted or frozen-opponent baselines
+- split diagnostics for `combat_loss`, killed-entity inactive state, and terminal
+  crash penalty semantics
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
 
 ## Recommended Reading Order

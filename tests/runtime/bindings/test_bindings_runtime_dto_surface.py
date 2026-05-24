@@ -304,15 +304,24 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         self.assertFalse(hasattr(request, "include_leader_intents"))
         self.assertFalse(hasattr(request, "include_pilot_reports"))
         self.assertFalse(hasattr(tasking_request, "include_task_orders"))
+        self.assertFalse(bool(tasking_request.include_mission_command_contracts))
         self.assertFalse(bool(tasking_request.include_task_order_contracts))
+        self.assertFalse(bool(tasking_request.include_leader_intent_contracts))
+        self.assertFalse(bool(tasking_request.include_pilot_report_contracts))
         self.assertFalse(hasattr(step_request, "include_task_orders"))
         self.assertFalse(hasattr(step_request, "include_task_order_contracts"))
         self.assertFalse(hasattr(step_request, "include_mission_commands"))
         self.assertFalse(hasattr(step_request, "include_leader_intents"))
         self.assertFalse(hasattr(step_request, "include_pilot_reports"))
 
+        tasking_request.include_mission_command_contracts = True
         tasking_request.include_task_order_contracts = True
+        tasking_request.include_leader_intent_contracts = True
+        tasking_request.include_pilot_report_contracts = True
+        self.assertTrue(bool(tasking_request.include_mission_command_contracts))
         self.assertTrue(bool(tasking_request.include_task_order_contracts))
+        self.assertTrue(bool(tasking_request.include_leader_intent_contracts))
+        self.assertTrue(bool(tasking_request.include_pilot_report_contracts))
 
     def test_task_order_whole_shell_batch_bindings_are_removed(self) -> None:
         runtime = ef_py.WorldBatchRuntime(1)
@@ -389,6 +398,10 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         report_contract = ef_py.PilotReportMaintainedBatchContract()
 
         command_contract.shared_core.command_code = 31
+        command_contract.shared_core.threat_state = 3
+        command_contract.shared_core.assigned_target_track_id = 91001
+        command_contract.shared_core.assigned_target_source_id = 92002
+        command_contract.shared_core.assigned_target_snapshot_time_s = 37.5
         command_contract.air_recovery.recovery_base_id = 71
         command_contract.air_takeoff.takeoff_interval_s = 12.5
         command_contract.air_formation.formation_id = 17
@@ -410,6 +423,20 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
             ef_py.MissionCommandMaintainedBatchContract,
         )
         self.assertEqual(int(packet.mission_command_contracts[0].shared_core.command_code), 31)
+        self.assertEqual(int(packet.mission_command_contracts[0].shared_core.threat_state), 3)
+        self.assertEqual(
+            int(packet.mission_command_contracts[0].shared_core.assigned_target_track_id),
+            91001,
+        )
+        self.assertEqual(
+            int(packet.mission_command_contracts[0].shared_core.assigned_target_source_id),
+            92002,
+        )
+        self.assertAlmostEqual(
+            float(packet.mission_command_contracts[0].shared_core.assigned_target_snapshot_time_s),
+            37.5,
+            places=6,
+        )
         self.assertEqual(int(packet.mission_command_contracts[0].air_recovery.recovery_base_id), 71)
         self.assertAlmostEqual(
             float(packet.mission_command_contracts[0].air_takeoff.takeoff_interval_s),

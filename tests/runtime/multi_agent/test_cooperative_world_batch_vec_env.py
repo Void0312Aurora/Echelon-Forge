@@ -24,7 +24,6 @@ except ModuleNotFoundError:  # pragma: no cover
 
 import python.rl.runtime.cooperative_world_batch_vec_env as cooperative_vec_env_module  # noqa: E402
 from python.rl.runtime.multi_agent_runtime import MultiAgentWorldRuntimeView  # noqa: E402
-from python.rl.runtime.world_batch import RuntimeCompatibilityView  # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index  # noqa: E402
 
 
@@ -328,13 +327,14 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
         view.refs = lambda: [ref]  # type: ignore[method-assign]
 
         packet = view.export_tasking_packet(
-            include_mission_commands=False,
+            include_mission_command_contracts=False,
             include_task_order_contracts=True,
         )
 
         self.assertEqual(len(runtime.requests), 1)
         request = runtime.requests[0]
         self.assertTrue(bool(request.include_task_order_contracts))
+        self.assertFalse(bool(request.include_mission_command_contracts))
         self.assertFalse(hasattr(request, "include_task_orders"))
         self.assertEqual(len(packet.task_order_contracts), 1)
         self.assertEqual(int(packet.task_order_contracts[0].shared_core.task_id), 451)
@@ -371,9 +371,12 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
         self.assertFalse(hasattr(request, "include_mission_commands"))
         self.assertFalse(hasattr(request, "include_leader_intents"))
         self.assertFalse(hasattr(request, "include_pilot_reports"))
+        self.assertFalse(hasattr(request, "include_mission_command_contracts"))
+        self.assertFalse(hasattr(request, "include_leader_intent_contracts"))
+        self.assertFalse(hasattr(request, "include_pilot_report_contracts"))
         self.assertFalse(hasattr(request, "include_task_orders"))
 
-    def test_cooperative_world_batch_vec_env_batch_runtime_requires_explicit_compatibility_opt_in(self) -> None:
+    def test_cooperative_world_batch_vec_env_batch_runtime_surface_is_removed(self) -> None:
         if CooperativeWorldBatchVecEnv is None:
             self.skipTest("gymnasium is not available in the active interpreter")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -390,12 +393,12 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                 mission_obs_mode="nav_v2_formation_v1",
             )
             try:
-                with self.assertRaisesRegex(RuntimeError, "vec_env\\.batch_runtime"):
+                with self.assertRaises(AttributeError):
                     _ = vec_env.batch_runtime
             finally:
                 vec_env.close()
 
-    def test_cooperative_world_batch_vec_env_exposes_batch_runtime_as_compatibility_view(self) -> None:
+    def test_cooperative_world_batch_vec_env_exposes_runtime_facade(self) -> None:
         if CooperativeWorldBatchVecEnv is None:
             self.skipTest("gymnasium is not available in the active interpreter")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -410,19 +413,12 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                 include_proprio=True,
                 action_mode="full",
                 mission_obs_mode="nav_v2_formation_v1",
-                runtime_compatibility_enabled=True,
             )
             try:
-                self.assertIsNot(vec_env.batch_runtime, vec_env._runtime_adapter)
-                self.assertEqual(int(vec_env.batch_runtime.world_count()), int(vec_env.runtime_facade.world_count()))
-                self.assertTrue(isinstance(vec_env.batch_runtime, RuntimeCompatibilityView))
-                self.assertTrue(hasattr(vec_env.batch_runtime, "export_execution_episode_states_batch"))
-                self.assertTrue(hasattr(vec_env.batch_runtime, "execution_episode_controller_ready"))
-                self.assertFalse(hasattr(vec_env.batch_runtime, "load_database"))
-                self.assertFalse(hasattr(vec_env.batch_runtime, "set_worker_threads"))
-                self.assertFalse(hasattr(vec_env.batch_runtime, "make_scenario_loader"))
-                with self.assertRaises(AttributeError):
-                    _ = vec_env.batch_runtime.load_database
+                self.assertIs(vec_env.runtime_facade, vec_env._runtime_adapter.facade)
+                self.assertEqual(int(vec_env.runtime_facade.world_count()), 1)
+                self.assertTrue(hasattr(vec_env.runtime_facade, "export_observation_packet"))
+                self.assertTrue(hasattr(vec_env.runtime_facade, "step_batch"))
             finally:
                 vec_env.close()
 

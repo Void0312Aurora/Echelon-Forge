@@ -26,7 +26,7 @@ from python.scenario_compiler import (  # noqa: E402
     TERRAIN_TYPE_SOURCE_DEFAULT,
     TERRAIN_TYPE_SOURCE_EXPLICIT,
 )
-from python.scenario_runtime import prepare_scenario_world_layout  # noqa: E402
+from python.scenario.runtime import prepare_scenario_world_layout  # noqa: E402
 
 
 def _sample_scenario() -> dict:

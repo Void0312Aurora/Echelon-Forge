@@ -9,15 +9,15 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 
-from python.scenario_runtime import apply_world_setup_payload_compat  # noqa: E402
-from python.scenario_runtime import apply_runtime_world_layout_request_compat  # noqa: E402
-from python.scenario_runtime import build_batch_world_setup_request  # noqa: E402
-from python.scenario_runtime import build_runtime_world_layout_request  # noqa: E402
-from python.scenario_runtime import extract_runtime_world_layout_entity_ids  # noqa: E402
-from python.scenario_runtime import extract_batch_world_setup_entity_ids  # noqa: E402
-from python.scenario_runtime import normalize_world_setup_terrain_assignments  # noqa: E402
-from python.scenario.runtime.world_setup_compat import apply_world_setup_request_maintained  # noqa: E402
-from python.scenario.runtime.world_setup_compat import read_runtime_world_time_step_compat  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import apply_world_setup_payload_diagnostics  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import apply_runtime_world_layout_request_diagnostics  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import build_batch_world_setup_request  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import build_runtime_world_layout_request  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import extract_runtime_world_layout_entity_ids  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import extract_batch_world_setup_entity_ids  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import normalize_world_setup_terrain_assignments  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import read_runtime_world_time_step_diagnostics  # noqa: E402
+from python.scenario.runtime.world_setup import apply_world_setup_request_maintained  # noqa: E402
 
 
 class _FacadeOnlyRuntime:
@@ -75,8 +75,8 @@ class _RawRuntimeWithFutureFacadeSetupMethod:
     def apply_world_setup(self, request):
         raise AssertionError("raw runtime apply_world_setup must stay quarantined")
 
-    def world(self, index):
-        raise AssertionError(f"raw world({index}) access must stay quarantined")
+    def world_compatibility_quarantine(self, index):
+        raise AssertionError(f"raw world_compatibility_quarantine({index}) access must stay quarantined")
 
 
 class _CompatOnlyWorldLayoutRuntime:
@@ -172,7 +172,7 @@ class WorldSetupCompatTests(unittest.TestCase):
     def test_apply_world_setup_payload_prefers_facade_result_shape(self) -> None:
         runtime = _FacadeOnlyRuntime()
 
-        entity_ids = apply_world_setup_payload_compat(
+        entity_ids = apply_world_setup_payload_diagnostics(
             runtime,
             seeds=[11],
             terrain_assignments=[],
@@ -188,7 +188,7 @@ class WorldSetupCompatTests(unittest.TestCase):
     def test_apply_world_setup_payload_falls_back_to_batch_runtime_when_facade_api_missing(self) -> None:
         runtime = _CompatOnlyRuntime()
 
-        entity_ids = apply_world_setup_payload_compat(
+        entity_ids = apply_world_setup_payload_diagnostics(
             runtime,
             seeds=[17, 19],
             terrain_assignments=[],
@@ -263,7 +263,7 @@ class WorldSetupCompatTests(unittest.TestCase):
             time_steps=[0.05],
         )
 
-        result = apply_runtime_world_layout_request_compat(runtime, request)
+        result = apply_runtime_world_layout_request_diagnostics(runtime, request)
 
         self.assertEqual(runtime.calls, ["apply_world_layout_request"])
         self.assertEqual(int(result.world_index), 1)
@@ -287,7 +287,7 @@ class WorldSetupCompatTests(unittest.TestCase):
             time_steps=[0.08],
         )
 
-        result = apply_runtime_world_layout_request_compat(runtime, request)
+        result = apply_runtime_world_layout_request_diagnostics(runtime, request)
 
         self.assertEqual(runtime.calls, ["apply_world_layout_compat"])
         self.assertIsNotNone(runtime.last_layout_args)
@@ -300,7 +300,7 @@ class WorldSetupCompatTests(unittest.TestCase):
     def test_read_runtime_world_time_step_prefers_named_runtime_api(self) -> None:
         runtime = _TimeStepFacadeRuntime()
 
-        dt = read_runtime_world_time_step_compat(runtime, 4)
+        dt = read_runtime_world_time_step_diagnostics(runtime, 4)
 
         self.assertAlmostEqual(float(dt), 0.125, places=6)
         self.assertEqual(runtime.calls, [("world_time_step", 4)])
@@ -308,7 +308,7 @@ class WorldSetupCompatTests(unittest.TestCase):
     def test_read_runtime_world_time_step_uses_adapter_owned_fallback_before_raw_world(self) -> None:
         runtime = _NoTimeStepWorldRuntime()
 
-        dt = read_runtime_world_time_step_compat(runtime, 2, fallback_time_step_s=0.05)
+        dt = read_runtime_world_time_step_diagnostics(runtime, 2, fallback_time_step_s=0.05)
 
         self.assertAlmostEqual(float(dt), 0.05, places=6)
 

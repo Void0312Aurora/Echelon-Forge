@@ -7,7 +7,11 @@
 - 第一阶段 `1v1` 已落到维护中的 `execution` / HMoE 主线上。
 - 当前基线为 `F-16C_Block50 vs F-16C_Block50`，红方使用脚本对手，并支持场景级弹药覆盖。
 - 导弹发射桥、最小对抗终止字段、基础 smoke 训练入口都已经接通。
-- 当前主要阻塞点已经不是入口接线，而是训练信号质量，尤其是早期 episode 被 `failfast_deep_stall` 主导。
+- `2026-05-24` 的 8k HMoE probe 中，早期 episode 被 `failfast_deep_stall`
+  主导的现象没有复现；本轮终止集中在 `combat_loss`。
+- 当前主要阻塞点仍不是入口接线，而是训练信号质量：`combat_loss` 与
+  `crash_penalty` 的终端组合、弹药耗尽告警、invalid entity ID 告警，以及
+  `mission_obs_mode=basic` 下 HMoE 路由仍集中在 `nav/vector`。
 
 ## 当前继续推进重点
 
@@ -15,6 +19,7 @@
 - 冻结专用 `1v1` eval JSON 结构和维护型评估入口
 - 在最小胜负钩子之上补齐 reward / termination shaping
 - 强化脚本或冻结对手基线
+- 拆分 `combat_loss`、被击落实体失效和终端 crash penalty 的诊断语义
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 
 ## 推荐阅读顺序

@@ -10,7 +10,7 @@ from python.scenario_compiler import (
     WaypointModeRewardConfig,
     _build_lnav_runtime_config,
 )
-from python.scenario_runtime import (
+from python.scenario.runtime import (
     resolve_active_controllable_roster,
 )
 from .common import (

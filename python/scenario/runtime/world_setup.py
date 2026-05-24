@@ -126,30 +126,15 @@ def extract_runtime_world_layout_entity_ids(result: Any) -> list[int]:
 
 
 def _maintained_setup_target_required_message(surface: str) -> str:
-    return (
-        f"{surface} requires a maintained facade setup target; raw runtime setup fallback is "
-        "quarantined behind explicit runtime_compatibility_enabled=True opt-in."
-    )
-
-
-def read_runtime_world_time_step_compat(
-    runtime: Any,
-    world_index: int,
-    *,
-    fallback_time_step_s: float | None = None,
-) -> float:
-    if hasattr(runtime, "world_time_step"):
-        return float(runtime.world_time_step(int(world_index)))
-    if fallback_time_step_s is not None:
-        return float(fallback_time_step_s)
-    world_getter = getattr(runtime, "world", None)
-    if callable(world_getter):
-        return float(world_getter(int(world_index)).get_time_step())
-    raise AttributeError("runtime does not expose world_time_step or a callable world getter")
+    return f"{surface} requires a maintained facade setup target; raw runtime setup is outside this contract."
 
 
 def apply_runtime_world_layout_request_maintained(setup_target: Any, request: Any) -> Any:
-    if hasattr(setup_target, "world") or not hasattr(setup_target, "apply_world_layout"):
+    if (
+        hasattr(setup_target, "world_compatibility_quarantine")
+        or hasattr(setup_target, "world")
+        or not hasattr(setup_target, "apply_world_layout")
+    ):
         raise RuntimeError(
             _maintained_setup_target_required_message(
                 "apply_runtime_world_layout_request_maintained"
@@ -158,71 +143,22 @@ def apply_runtime_world_layout_request_maintained(setup_target: Any, request: An
     result = setup_target.apply_world_layout(request)
     if hasattr(result, "entity_ids") and hasattr(result, "world_index"):
         return result
-    compat_result = RuntimeWorldLayoutResultCompat()
-    compat_result.world_index = int(getattr(request, "world_index", 0))
-    compat_result.entity_ids = extract_runtime_world_layout_entity_ids(result)
-    return compat_result
-
-
-def apply_runtime_world_layout_request_compatibility_quarantine(runtime: Any, request: Any) -> Any:
-    if not hasattr(runtime, "world") and hasattr(runtime, "apply_world_layout"):
-        return apply_runtime_world_layout_request_maintained(runtime, request)
-    compat_result = RuntimeWorldLayoutResultCompat()
-    compat_result.world_index = int(getattr(request, "world_index", 0))
-    compat_result.entity_ids = [
-        int(entity_id)
-        for entity_id in runtime.apply_world_layout(
-            int(request.world_index),
-            int(request.seed),
-            str(request.terrain_type),
-            float(request.wind_speed_mps),
-            float(request.wind_dir_from_deg),
-            float(request.wind_shear_mps_per_km),
-            bool(request.maritime_configured),
-            float(request.sea_state),
-            float(request.wave_heading_deg),
-            float(request.wave_period_s),
-            list(request.zones),
-            list(request.spawn_requests),
-            list(request.time_steps),
-        )
-    ]
-    return compat_result
-
-
-def apply_runtime_world_layout_request_compat(runtime: Any, request: Any) -> Any:
-    return apply_runtime_world_layout_request_compatibility_quarantine(runtime, request)
+    maintained_result = RuntimeWorldLayoutResultCompat()
+    maintained_result.world_index = int(getattr(request, "world_index", 0))
+    maintained_result.entity_ids = extract_runtime_world_layout_entity_ids(result)
+    return maintained_result
 
 
 def apply_world_setup_request_maintained(setup_target: Any, request: Any) -> list[int]:
-    raw_runtime_shaped = hasattr(setup_target, "world") and not hasattr(setup_target, "facade")
+    raw_runtime_shaped = (
+        hasattr(setup_target, "world_compatibility_quarantine")
+        or hasattr(setup_target, "world")
+    ) and not hasattr(setup_target, "facade")
     if request is None or raw_runtime_shaped or not hasattr(setup_target, "apply_world_setup"):
         raise RuntimeError(
             _maintained_setup_target_required_message("apply_world_setup_request_maintained")
         )
     return extract_batch_world_setup_entity_ids(setup_target.apply_world_setup(request))
-
-
-def apply_world_setup_request_compatibility_quarantine(runtime: Any, request: Any) -> list[int]:
-    if hasattr(runtime, "apply_world_setup"):
-        return apply_world_setup_request_maintained(runtime, request)
-    if not hasattr(runtime, "apply_world_setup_batch"):
-        raise AttributeError("runtime does not expose apply_world_setup or apply_world_setup_batch")
-    return [
-        int(entity_id)
-        for entity_id in runtime.apply_world_setup_batch(
-            list(request.seeds),
-            list(request.terrain_assignments),
-            list(request.wind_assignments),
-            list(request.zones),
-            list(request.spawn_requests),
-            list(request.time_steps),
-        )
-    ]
-
-
-def apply_world_setup_request_compat(runtime: Any, request: Any) -> list[int]:
-    return apply_world_setup_request_compatibility_quarantine(runtime, request)
 
 
 def apply_world_setup_payload_maintained(
@@ -250,80 +186,13 @@ def apply_world_setup_payload_maintained(
     return apply_world_setup_request_maintained(setup_target, request)
 
 
-def apply_world_setup_payload_compatibility_quarantine(
-    runtime: Any,
-    *,
-    seeds: list[int],
-    terrain_assignments: list[Any],
-    wind_assignments: list[Any],
-    zones: list[Any],
-    spawn_requests: list[Any],
-    time_steps: list[float],
-) -> list[int]:
-    normalized_terrain_assignments, _ = normalize_world_setup_terrain_assignments(
-        terrain_assignments,
-        world_count=len(seeds),
-    )
-    request = build_batch_world_setup_request(
-        seeds=seeds,
-        terrain_assignments=normalized_terrain_assignments,
-        wind_assignments=wind_assignments,
-        zones=zones,
-        spawn_requests=spawn_requests,
-        time_steps=time_steps,
-    )
-    if request is not None and hasattr(runtime, "apply_world_setup"):
-        return apply_world_setup_request_maintained(runtime, request)
-    if not hasattr(runtime, "apply_world_setup_batch"):
-        raise AttributeError("runtime does not expose apply_world_setup or apply_world_setup_batch")
-    return [
-        int(entity_id)
-        for entity_id in runtime.apply_world_setup_batch(
-            list(seeds),
-            list(normalized_terrain_assignments),
-            list(wind_assignments),
-            list(zones),
-            list(spawn_requests),
-            list(time_steps),
-        )
-    ]
-
-
-def apply_world_setup_payload_compat(
-    runtime: Any,
-    *,
-    seeds: list[int],
-    terrain_assignments: list[Any],
-    wind_assignments: list[Any],
-    zones: list[Any],
-    spawn_requests: list[Any],
-    time_steps: list[float],
-) -> list[int]:
-    return apply_world_setup_payload_compatibility_quarantine(
-        runtime,
-        seeds=seeds,
-        terrain_assignments=terrain_assignments,
-        wind_assignments=wind_assignments,
-        zones=zones,
-        spawn_requests=spawn_requests,
-        time_steps=time_steps,
-    )
-
-
 __all__ = [
-    "apply_runtime_world_layout_request_compat",
-    "apply_runtime_world_layout_request_compatibility_quarantine",
     "apply_runtime_world_layout_request_maintained",
-    "apply_world_setup_payload_compat",
-    "apply_world_setup_payload_compatibility_quarantine",
     "apply_world_setup_payload_maintained",
-    "apply_world_setup_request_compat",
-    "apply_world_setup_request_compatibility_quarantine",
     "apply_world_setup_request_maintained",
     "build_batch_world_setup_request",
     "build_runtime_world_layout_request",
-    "extract_runtime_world_layout_entity_ids",
     "extract_batch_world_setup_entity_ids",
+    "extract_runtime_world_layout_entity_ids",
     "normalize_world_setup_terrain_assignments",
-    "read_runtime_world_time_step_compat",
 ]

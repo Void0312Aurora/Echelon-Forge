@@ -286,7 +286,7 @@ def main() -> int:
         )
         visual_stats = visual_runtime_stats_dict()
         flight_shaping_stats = flight_shaping_runtime_stats_dict()
-        effective_world_batch_threads = int(batch_vec.batch_runtime.effective_worker_threads())
+        effective_world_batch_threads = int(batch_vec.runtime_facade.effective_worker_threads())
         effective_batch_observation_backend = str(batch_vec._batch_observation_backend_mode())
         effective_batch_visual_backend = str(batch_vec._batch_visual_backend_mode())
     finally:

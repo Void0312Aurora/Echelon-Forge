@@ -57,8 +57,6 @@ src/interfaces/python -> ef_py
 
 - [scenario_compiler.py](scenario_compiler.py)
   - Root-level compatibility shim that only re-exports `python/scenario/compiler/`.
-- [scenario_runtime.py](scenario_runtime.py)
-  - Root-level compatibility shim that only re-exports `python/scenario/runtime/`.
 - [testing/scenario_contract_runner.py](testing/scenario_contract_runner.py)
   - Compatibility shim that only re-exports the contract execution entry point from `python/testing/contracts/`.
 
@@ -73,8 +71,6 @@ src/interfaces/python -> ef_py
     - Mission observation dimensions, field indices, and mode enums.
   - [scenario_compiler.py](scenario_compiler.py)
     - Compatibility shim; the main implementation has moved down into `python/scenario/compiler/`.
-  - [scenario_runtime.py](scenario_runtime.py)
-    - Compatibility shim; the main implementation has moved down into `python/scenario/runtime/`.
   - [training_callbacks.py](training_callbacks.py)
     - SB3 training diagnostics, curriculum, and training-time statistics callbacks.
 - `scenario/`
@@ -82,6 +78,8 @@ src/interfaces/python -> ef_py
     - Main implementation for scenario JSON compilation, prefab merging, and preprocessing of routes, objectives, and layouts.
   - `runtime/`
     - Main implementation for realizing compiled scenarios into kernel/world-batch state, randomization, and roster mapping.
+  - `diagnostics/`
+    - Explicit diagnostics-only raw runtime setup helpers for low-level tests and benchmarks.
 - `rl/`
   - `control/`
     - Scripted takeoff, landing, and stable-flight controllers and wrappers.
@@ -138,6 +136,6 @@ If you are looking into:
 ## Migration Notes
 
 - `python/rl/` has already been consolidated by subdomain. New RL logic should go into the appropriate package instead of restoring a flat file layout.
-- `python/scenario/compiler/` and `python/scenario/runtime/` are the current main implementation entry points. `scenario_compiler.py` and `scenario_runtime.py` remain only as compatibility shims for legacy import paths.
+- `python/scenario/compiler/` and `python/scenario/runtime/` are the current main implementation entry points. `python/scenario/diagnostics/` is diagnostics-only and should not be imported by maintained runtime paths.
 - `python/testing/contracts/` is the main contract runner implementation entry point. `python/testing/scenario_contract_runner.py` remains only as a compatibility shim.
 - If `world_model/` or `testing/` grows further, prefer splitting them into additional subpackages inside their own directories instead of falling back to root-level compatibility files.

@@ -9,7 +9,7 @@ import ef_py
 
 from gym_envs.universal_env import build_pilot_action, build_universal_observation, normalize_action
 from python.scenario_compiler import _clone_runtime_mission_command
-from python.scenario_runtime import AppliedScenarioRosterMember, active_roster_world_entity_refs
+from python.scenario.runtime import AppliedScenarioRosterMember, active_roster_world_entity_refs
 
 
 @dataclass(frozen=True)
@@ -28,19 +28,6 @@ class MultiAgentControlSlot:
     reference_entity_name: str | None = None
     mission_command_overrides: dict[str, Any] | None = None
     task_order_overrides: dict[str, Any] | None = None
-
-
-@dataclass
-class _ObservationPacketCompat:
-    refs: list[Any]
-    agent_observations: list[Any]
-    instrument_states: list[Any]
-
-
-@dataclass
-class _TaskingPacketCompat:
-    refs: list[Any]
-    mission_command_contracts: list[Any]
 
 
 def _slot_from_member(member: AppliedScenarioRosterMember, *, roster_index: int, world_index: int) -> MultiAgentControlSlot:
@@ -141,54 +128,36 @@ class MultiAgentWorldRuntimeView:
         include_instrument_states: bool = True,
     ) -> Any:
         refs = self.refs()
-        if hasattr(ef_py, "ObservationBatchRequest"):
-            request = ef_py.ObservationBatchRequest()
-            request.refs = list(refs)
-            request.include_agent_observations = bool(include_agent_observations)
-            request.include_instrument_states = bool(include_instrument_states)
-            if hasattr(self.runtime, "export_observation_packet"):
-                return self.runtime.export_observation_packet(request)
-        if hasattr(self.runtime, "export_observation_packet"):
-            return self.runtime.export_observation_packet(list(refs))
-        if not hasattr(self.runtime, "get_agent_observations_batch"):
-            raise AttributeError("runtime does not expose export_observation_packet or batch observation getters")
-        return _ObservationPacketCompat(
-            refs=list(refs),
-            agent_observations=(
-                list(self.runtime.get_agent_observations_batch(list(refs)))
-                if bool(include_agent_observations)
-                else []
-            ),
-            instrument_states=(
-                list(self.runtime.get_instrument_states_batch(list(refs)))
-                if bool(include_instrument_states)
-                else []
-            ),
-        )
+        if not hasattr(ef_py, "ObservationBatchRequest") or not hasattr(self.runtime, "export_observation_packet"):
+            raise RuntimeError(
+                "MultiAgentWorldRuntimeView requires maintained RuntimeFacade observation packet export"
+            )
+        request = ef_py.ObservationBatchRequest()
+        request.refs = list(refs)
+        request.include_agent_observations = bool(include_agent_observations)
+        request.include_instrument_states = bool(include_instrument_states)
+        return self.runtime.export_observation_packet(request)
 
     def export_tasking_packet(
         self,
         *,
-        include_mission_commands: bool = True,
+        include_mission_command_contracts: bool = True,
         include_task_order_contracts: bool = False,
+        include_leader_intent_contracts: bool = False,
+        include_pilot_report_contracts: bool = False,
     ) -> Any:
         refs = self.refs()
-        if hasattr(ef_py, "TaskingBatchRequest") and hasattr(self.runtime, "export_tasking_packet"):
-            request = ef_py.TaskingBatchRequest()
-            request.refs = list(refs)
-            request.include_mission_commands = bool(include_mission_commands)
-            request.include_task_order_contracts = bool(include_task_order_contracts)
-            request.include_leader_intents = False
-            request.include_pilot_reports = False
-            return self.runtime.export_tasking_packet(request)
-        return _TaskingPacketCompat(
-            refs=list(refs),
-            mission_command_contracts=(
-                list(self.runtime.get_mission_commands_maintained_batch(list(refs)))
-                if bool(include_mission_commands) and hasattr(self.runtime, "get_mission_commands_maintained_batch")
-                else []
-            ),
-        )
+        if not hasattr(ef_py, "TaskingBatchRequest") or not hasattr(self.runtime, "export_tasking_packet"):
+            raise RuntimeError(
+                "MultiAgentWorldRuntimeView requires maintained RuntimeFacade tasking packet export"
+            )
+        request = ef_py.TaskingBatchRequest()
+        request.refs = list(refs)
+        request.include_mission_command_contracts = bool(include_mission_command_contracts)
+        request.include_task_order_contracts = bool(include_task_order_contracts)
+        request.include_leader_intent_contracts = bool(include_leader_intent_contracts)
+        request.include_pilot_report_contracts = bool(include_pilot_report_contracts)
+        return self.runtime.export_tasking_packet(request)
 
     def build_observations(
         self,
@@ -199,7 +168,7 @@ class MultiAgentWorldRuntimeView:
             include_agent_observations=True,
             include_instrument_states=True,
         )
-        tasking_packet = self.export_tasking_packet(include_mission_commands=True)
+        tasking_packet = self.export_tasking_packet(include_mission_command_contracts=True)
         refs = list(getattr(packet, "refs", []) or [])
         truth_list = list(getattr(packet, "agent_observations", []) or [])
         inst_list = list(getattr(packet, "instrument_states", []) or [])

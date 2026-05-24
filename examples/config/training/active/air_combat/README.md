@@ -21,6 +21,11 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Matching smoke entry on the maintained default `WorldBatchVecEnv` path.
   - Use this when you want to verify the scripted-red opponent and HMoE policy also advance correctly through the batch runtime path.
 
+- [air_combat_1v1_f16c_scripted_red_world_batch_probe_8k_v1.json](air_combat_1v1_f16c_scripted_red_world_batch_probe_8k_v1.json)
+  - Short HMoE training probe on the maintained `WorldBatchVecEnv` path.
+  - Runs beyond smoke length while staying small enough for frequent diagnostics.
+  - Use this before any 32k/64k resume ramp to check whether early termination is still dominated by flight-stability artifacts.
+
 ## Design Notes
 
 - These smoke entries are intentionally non-visual.

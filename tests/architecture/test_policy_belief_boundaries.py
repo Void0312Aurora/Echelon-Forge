@@ -129,7 +129,15 @@ def test_wp11d_maintained_consumer_pregate_requires_labeled_packet_or_belief_inp
     assert "consumer_status != MAINTAINED" in shim_source
 
 
-def test_wp24l_maintained_role_helpers_require_explicit_provenance_at_call_sites() -> None:
+def test_wp24l_maintained_role_helpers_default_to_facade_observation_provenance() -> None:
+    shim_source = AGENT_SHIM.read_text(encoding="utf-8")
+
+    assert "maintained_status: str = MAINTAINED" in shim_source
+    assert "or observation_provenance(OBS_FACADE_OBSERVATION_PACKET)" in shim_source
+    assert "or observation_provenance(OBS_AGENT_OBSERVATION_COMPAT)" not in shim_source
+
+
+def test_wp24l_maintained_role_helper_call_sites_do_not_pass_compatibility_provenance() -> None:
     violations: list[tuple[str, int, str]] = []
 
     for path in _runtime_python_sources():
@@ -142,11 +150,14 @@ def test_wp24l_maintained_role_helpers_require_explicit_provenance_at_call_sites
                 continue
             if not _is_maintained_call(node):
                 continue
-            if "information_state_source" not in _keyword_names(node):
-                violations.append((path.relative_to(REPO_ROOT).as_posix(), node.lineno, name))
+            for keyword in node.keywords:
+                if keyword.arg == "information_state_source" and ast.unparse(keyword.value).find(
+                    "OBS_AGENT_OBSERVATION_COMPAT"
+                ) >= 0:
+                    violations.append((path.relative_to(REPO_ROOT).as_posix(), node.lineno, name))
 
     assert not violations, (
-        "maintained role helper call sites must pass explicit ObservationPacket/DecisionBelief provenance: "
+        "maintained role helper call sites must not opt back into compatibility provenance: "
         f"{violations}"
     )
 
@@ -170,7 +181,7 @@ def test_wp24l_maintained_intents_do_not_inline_default_role_helpers() -> None:
 
     assert not violations, (
         "maintained intent call sites must not rely on default single_agent_role()/roster_slot_role() "
-        f"compatibility provenance: {violations}"
+        f"with ambiguous provenance: {violations}"
     )
 
 

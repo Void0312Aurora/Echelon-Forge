@@ -6,7 +6,7 @@ from typing import Any
 import ef_py
 from python.rl.tasking.bridge import (
     has_mission_command_dict,
-    loader_owned_raw_sim_compat,
+    loader_owned_runtime_view,
     mission_command_dict,
     resolve_loader_time_step,
 )
@@ -80,10 +80,10 @@ def _intercept_bearing_deg(
 
 
 def _read_naval_screen_reference_motion(loader: Any, entity_id: int) -> tuple[Any, Any] | None:
-    compat = loader_owned_raw_sim_compat(loader)
+    runtime_view = loader_owned_runtime_view(loader)
     try:
-        ref_pos = compat.get_unit_position(int(entity_id))
-        ref_vel = compat.get_unit_velocity(int(entity_id))
+        ref_pos = runtime_view.get_unit_position(int(entity_id))
+        ref_vel = runtime_view.get_unit_velocity(int(entity_id))
     except Exception:
         return None
     if ref_pos is None or ref_vel is None or len(ref_pos) < 2 or len(ref_vel) < 2:
@@ -99,9 +99,9 @@ def _prefer_last_active_naval_screen_reference(
 ) -> tuple[int, tuple[Any, Any] | None]:
     if last_reference_entity_id <= 0 or reference_entity_id == last_reference_entity_id:
         return int(reference_entity_id), _read_naval_screen_reference_motion(loader, reference_entity_id)
-    compat = loader_owned_raw_sim_compat(loader)
+    runtime_view = loader_owned_runtime_view(loader)
     try:
-        if compat.is_unit_active(last_reference_entity_id):
+        if runtime_view.is_unit_active(last_reference_entity_id):
             motion = _read_naval_screen_reference_motion(loader, last_reference_entity_id)
             if motion is not None:
                 return int(last_reference_entity_id), motion

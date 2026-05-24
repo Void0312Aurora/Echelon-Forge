@@ -13,12 +13,12 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
-from python.scenario_runtime import BatchWorldApplyBuffer  # noqa: E402
-from python.scenario_runtime import active_roster_world_entity_refs  # noqa: E402
-from python.scenario_runtime import find_active_roster_member  # noqa: E402
-from python.scenario_runtime import load_compiled_scenario_batch  # noqa: E402
-from python.scenario_runtime import load_compiled_scenario_batch_compatibility_quarantine  # noqa: E402
-from python.scenario_runtime import resolve_active_controllable_roster  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import load_compiled_scenario_batch_diagnostics  # noqa: E402
+from python.scenario.runtime import BatchWorldApplyBuffer  # noqa: E402
+from python.scenario.runtime import active_roster_world_entity_refs  # noqa: E402
+from python.scenario.runtime import find_active_roster_member  # noqa: E402
+from python.scenario.runtime import load_compiled_scenario_for_setup_target  # noqa: E402
+from python.scenario.runtime import resolve_active_controllable_roster  # noqa: E402
 
 
 _RUNTIME_CAPABILITY_EXPECTATIONS = {
@@ -582,7 +582,7 @@ class RuntimeFacadeTests(unittest.TestCase):
         }
 
         compiled = ScenarioCompiler.compile_data(scenario)
-        worlds = load_compiled_scenario_batch_compatibility_quarantine(
+        worlds = load_compiled_scenario_batch_diagnostics(
             ef_py.WorldBatchRuntime(1),
             compiled,
             seeds=[123],
@@ -1055,6 +1055,72 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertEqual(len(packet.instrument_states), 1)
         self.assertEqual(int(packet.agent_observations[0].id), int(setup_result.entity_ids[0]))
 
+    def test_runtime_facade_tasking_packet_preserves_mission_command_n4_target_provenance(self) -> None:
+        facade = ef_py.RuntimeFacade(1)
+        self.assertTrue(facade.load_database(resolve_repo_path("examples", "config", "database")))
+
+        setup_request = ef_py.BatchWorldSetupRequest()
+        setup_request.seeds = [127]
+        terrain = ef_py.WorldTerrainAssignment()
+        terrain.world_index = 0
+        terrain.terrain_type = "legacy"
+        spawn = ef_py.WorldSpawnRequest()
+        spawn.world_index = 0
+        spawn.side = ef_py.Side.Blue
+        spawn.type_name = "F-16C_Block50"
+        spawn.entity_name = "ScreenLead"
+        spawn.is_agent = True
+        spawn.x = -1400.0
+        spawn.y = 0.0
+        spawn.z = 1200.0
+        spawn.heading = 90.0
+        spawn.vy = 180.0
+        setup_request.terrain_assignments = [terrain]
+        setup_request.spawn_requests = [spawn]
+        setup_request.time_steps = [0.05]
+
+        setup_result = facade.apply_world_setup(setup_request)
+        ref = _entity_ref(0, int(setup_result.entity_ids[0]))
+        assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+        assignment.world_index = 0
+        assignment.entity_id = int(setup_result.entity_ids[0])
+        assignment.mission_command.shared_core.command_code = 32
+        assignment.mission_command.shared_core.assigned_target_id = 7001
+        assignment.mission_command.shared_core.threat_state = 5
+        assignment.mission_command.shared_core.assigned_target_track_id = 88001
+        assignment.mission_command.shared_core.assigned_target_source_id = 99002
+        assignment.mission_command.shared_core.assigned_target_snapshot_time_s = 223.5
+        assignment.mission_command.shared_core.authorization_to_fire = True
+        assignment.mission_command.shared_core.active = True
+        facade.set_mission_commands_maintained_batch([assignment])
+
+        tasking_request = ef_py.TaskingBatchRequest()
+        tasking_request.refs = [ref]
+        tasking_request.include_mission_command_contracts = True
+        packet = facade.export_tasking_packet(tasking_request)
+
+        self.assertEqual(len(packet.mission_command_contracts), 1)
+        self.assertEqual(
+            int(packet.mission_command_contracts[0].shared_core.assigned_target_id),
+            7001,
+        )
+        self.assertEqual(int(packet.mission_command_contracts[0].shared_core.threat_state), 5)
+        self.assertEqual(
+            int(packet.mission_command_contracts[0].shared_core.assigned_target_track_id),
+            88001,
+        )
+        self.assertEqual(
+            int(packet.mission_command_contracts[0].shared_core.assigned_target_source_id),
+            99002,
+        )
+        self.assertAlmostEqual(
+            float(packet.mission_command_contracts[0].shared_core.assigned_target_snapshot_time_s),
+            223.5,
+            places=6,
+        )
+        self.assertEqual(packet.provenance.source_label, "facade_tasking_packet")
+        self.assertEqual(packet.provenance.maintained_status, "compatibility_adapter")
+
     def test_runtime_facade_apply_world_setup_defaults_missing_terrain_assignment_to_flat(self) -> None:
         facade = ef_py.RuntimeFacade(1)
         self.assertTrue(facade.load_database(resolve_repo_path("examples", "config", "database")))
@@ -1456,7 +1522,7 @@ class RuntimeFacadeTests(unittest.TestCase):
         self.assertEqual(int(exported_states[0].step_count), 1)
         self.assertEqual(len(list(exported_states[0].route_waypoints)), 0)
 
-    def test_runtime_facade_supports_batch_world_setup_via_scenario_runtime(self) -> None:
+    def test_runtime_facade_supports_batch_world_setup_via_packaged_scenario_runtime(self) -> None:
         scenario = {
             "scenario_name": "runtime_facade_batch_setup",
             "environment": {
@@ -1510,7 +1576,7 @@ class RuntimeFacadeTests(unittest.TestCase):
         facade = ef_py.RuntimeFacade(2)
         self.assertTrue(facade.load_database(resolve_repo_path("examples", "config", "database")))
 
-        worlds = load_compiled_scenario_batch(
+        worlds = load_compiled_scenario_for_setup_target(
             facade,
             compiled,
             seeds=[11, 17],

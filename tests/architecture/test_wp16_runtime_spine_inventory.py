@@ -32,12 +32,12 @@ EXPECTED_CLASSIFICATIONS = {
     "src/runtime/contracts/stage_node_manifest_registry.h": "maintained_spine",
     "tests/runtime/facade/test_runtime_facade_window_loop_injection.py": "maintained_spine",
     "tests/runtime/bindings/test_bindings_engagement_surface.py": "maintained_spine",
-    "src/runtime/facade/runtime_facade.h": "compatibility_wrapper",
+    "src/runtime/facade/runtime_facade.h": "maintained_spine",
     "src/runtime/facade/runtime_facade.cpp": "compatibility_wrapper",
     "python/rl/runtime/world_batch/adapter.py": "compatibility_wrapper",
     "python/rl/runtime/world_batch_vec_env.py": "compatibility_wrapper",
     "python/rl/runtime/world_batch/runtime_access.py": "compatibility_wrapper",
-    "python/rl/runtime/world_batch/compat.py": "compatibility_wrapper",
+    "python/rl/runtime/world_batch/runtime_support.py": "compatibility_wrapper",
     "python/rl/runtime/leader_world_batch_runtime.py": "compatibility_wrapper",
     "python/rl/runtime/single_world_batch_runtime.py": "compatibility_wrapper",
     "python/rl/runtime/leader_window_runtime.py": "compatibility_wrapper",
@@ -167,7 +167,7 @@ def test_wp16_blocked_and_compatibility_entries_do_not_hide_maintained_default_c
 
     assert entries["python/scenario/compiler/generation_request.py"]["classification"] == "blocked"
     assert entries["src/runtime/contracts/counterfactual_replay_contracts.h"]["classification"] == "blocked"
-    assert entries["src/runtime/facade/runtime_facade.h"]["classification"] == "compatibility_wrapper"
+    assert entries["src/runtime/facade/runtime_facade.h"]["classification"] == "maintained_spine"
     assert entries["python/rl/runtime/world_batch/adapter.py"]["classification"] == "compatibility_wrapper"
 
     facade_header = (
@@ -184,7 +184,7 @@ def test_wp16_blocked_and_compatibility_entries_do_not_hide_maintained_default_c
     ).read_text(encoding="utf-8")
     replay_constants_source = COUNTERFACTUAL_CONSTANTS.read_text(encoding="utf-8")
 
-    assert "runtime_compatibility_quarantine() noexcept" in facade_header
-    assert "self.facade.runtime_compatibility_quarantine()" in adapter_source
+    assert "runtime_compatibility_quarantine() noexcept" not in facade_header
+    assert "self.facade.runtime_compatibility_quarantine()" not in adapter_source
     assert "authoritative_state_mutation_allowed: bool = False" in generation_request_source
     assert "metadata_only" in replay_source or "metadata_only" in replay_constants_source

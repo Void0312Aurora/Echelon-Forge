@@ -13,7 +13,7 @@ import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
-from python.scenario_runtime import load_compiled_scenario_batch_compatibility_quarantine  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import load_compiled_scenario_batch_diagnostics  # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(
@@ -155,7 +155,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
         compiled = ScenarioCompiler.compile_data(scenario)
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(_DB_PATH))
-        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[20260516])
+        worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[20260516])
         self.assertEqual(len(worlds), 1)
 
         batch_blue = int(worlds[0].entities["Blue_Fighter"])

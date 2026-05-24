@@ -8,9 +8,6 @@ import time
 import ef_py
 import numpy as np
 
-from gym_envs.universal_env import downsample_visual_mean
-from .compat import runtime_compatibility_required_message
-
 
 @dataclass
 class ExecutionObservationBatch:
@@ -126,6 +123,13 @@ def refresh_visual_cache_batch(
     backend: str,
     allow_device_export: bool = False,
 ) -> tuple[bool, Any]:
+    _ = (
+        int(arb_height),
+        int(arb_width),
+        int(arb_channels),
+        int(arb_height_native),
+        int(arb_width_native),
+    )
     refresh_indices: list[int] = []
     refresh_states: list[Any] = []
     refs: list[Any] = []
@@ -148,41 +152,10 @@ def refresh_visual_cache_batch(
     if not refresh_states:
         return False, None
 
-    if backend == "legacy" or not hasattr(ef_py, "compute_world_batch_visual_observation_batch_numpy"):
-        compatibility_fallback_enabled = getattr(adapter, "compatibility_fallback_enabled", None)
-        compatibility_enabled = (
-            bool(compatibility_fallback_enabled())
-            if callable(compatibility_fallback_enabled)
-            else bool(compatibility_fallback_enabled)
-        )
-        if not compatibility_enabled:
-            raise RuntimeError(
-                runtime_compatibility_required_message(
-                    "RuntimeFacadeAdapter.legacy_visual_observation"
-                )
-            )
-        for state in refresh_states:
-            if (
-                visual_downsample > 1
-                and adapter.supports_visual_observation_downsampled(int(state.world_index))
-            ):
-                visual_raw = adapter.get_visual_observation_downsampled(
-                    int(state.world_index),
-                    int(state.entity_id),
-                    int(visual_downsample),
-                )
-                visual = np.asarray(visual_raw, dtype=np.float32)
-                if visual.ndim == 1:
-                    visual = visual.reshape(arb_height, arb_width, arb_channels)
-                state.visual_cache = visual
-            else:
-                visual_raw = adapter.get_visual_observation(int(state.world_index), int(state.entity_id))
-                visual = np.asarray(visual_raw, dtype=np.float32)
-                if visual.ndim == 1:
-                    visual = visual.reshape(arb_height_native, arb_width_native, arb_channels)
-                state.visual_cache = downsample_visual_mean(visual, int(visual_downsample))
-            state.visual_cache_step = int(state.steps)
-        return True, None
+    if backend == "legacy":
+        raise ValueError("batch_visual_backend='legacy' has been removed from maintained VecEnv paths")
+    if not hasattr(ef_py, "compute_world_batch_visual_observation_batch_numpy"):
+        raise RuntimeError("maintained visual batching requires compute_world_batch_visual_observation_batch_numpy")
 
     if (
         backend == "gpu_host"

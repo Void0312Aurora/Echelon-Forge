@@ -54,7 +54,7 @@
 - 契约执行逻辑现在位于 [python/testing/contracts/](../python/testing/contracts)。
 - [python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) 是一个兼容性垫片，重新导出打包的契约运行程序。
 - 测试使用的场景侧引导逻辑现在位于 `python/scenario/compiler/` 和 `python/scenario/runtime/` 中。
-- [python/scenario_compiler.py](../python/scenario_compiler.py) 和 [python/scenario_runtime.py](../python/scenario_runtime.py) 仍是旧导入的兼容性垫片，不应视为主要实现表面。
+- diagnostics-only raw batch 场景 setup helper 位于 `python/scenario/diagnostics/`；maintained 测试应直接导入 `python/scenario/runtime/`。
 
 ## 契约类型
 

@@ -38,6 +38,21 @@ def _engagement_ref(world_index: int, entity_id: int) -> ef_py.EngagementEntityR
     return ref
 
 
+def _make_detection(target_id: int, *, range_m: float = 1500.0) -> ef_py.Detection:
+    detection = ef_py.Detection()
+    detection.target_id = int(target_id)
+    detection.range = float(range_m)
+    detection.bearing = 0.0
+    detection.elevation = 0.0
+    detection.closing_speed = 0.0
+    detection.signal_strength = 1.0
+    detection.detection_prob_used = 0.9
+    detection.sensor_type = int(ef_py.SensorType.Radar)
+    detection.local_sensor_hit = True
+    detection.timestamp = 0.0
+    return detection
+
+
 def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explicit() -> None:
     facade_source = _read_repo_text("src", "runtime", "facade", "runtime_facade.cpp")
     facade_types = _read_repo_text("src", "runtime", "facade", "runtime_facade_types.h")
@@ -124,11 +139,11 @@ def test_engagement_diagnostics_inside_export_are_piggyback_evidence_not_full_lo
     assert "diagnostics_trace_from_track_packet" in export_body
 
 
-def test_recent_effects_damage_and_trace_refs_are_retagged_for_requested_world_index() -> None:
-    facade = ef_py.RuntimeFacade(2)
-    assert facade.load_database(resolve_repo_path("examples", "config", "database"))
+def test_recent_effects_damage_and_trace_refs_are_diagnostics_runtime_scoped() -> None:
+    runtime = ef_py.WorldBatchRuntime(2)
+    assert runtime.load_database(resolve_repo_path("examples", "config", "database"))
 
-    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(1)
+    world = runtime.world_compatibility_quarantine(1)
     attacker_id = int(
         world.spawn_unit(
             ef_py.Side.Blue,
@@ -159,25 +174,15 @@ def test_recent_effects_damage_and_trace_refs_are_retagged_for_requested_world_i
             0.0,
         )
     )
+    world.set_contact_list(attacker_id, [_make_detection(target_id)])
     assert world.debug_apply_proximity_hit(attacker_id, target_id, 120.0, 80.0)
 
-    request = ef_py.EngagementBatchRequest()
-    request.refs = [_engagement_ref(1, attacker_id)]
-    request.include_track_packets = False
-    request.include_diagnostics_traces = True
+    recent = world.export_recent_engagement_events()
 
-    packet = facade.export_engagement_event_packet(request)
-
-    assert len(packet.effects_events) == 1
-    assert len(packet.damage_reports) == 1
-    assert len(packet.diagnostics_traces) == 1
-    assert int(packet.effects_events[0].munition.world_index) == 1
-    assert int(packet.effects_events[0].target.world_index) == 1
-    assert int(packet.effects_events[0].target.entity_id) == target_id
-    assert int(packet.damage_reports[0].target.world_index) == 1
-    assert int(packet.damage_reports[0].target.entity_id) == target_id
-    assert int(packet.diagnostics_traces[0].munition.world_index) == 1
-    assert packet.effects_events[0].producer_node_id == "p9.effects_damage.v1"
-    assert packet.damage_reports[0].producer_node_id == "p9.effects_damage.v1"
-    assert packet.diagnostics_traces[0].source_node_id == "p9.effects_damage.v1"
-    assert packet.diagnostics_traces[0].export_node_id == "p10.observation_export.v1"
+    assert len(recent.effects_events) == 1
+    assert len(recent.damage_reports) == 1
+    assert len(recent.diagnostics_traces) == 1
+    assert int(recent.effects_events[0].target.entity_id) == target_id
+    assert int(recent.damage_reports[0].target.entity_id) == target_id
+    assert recent.effects_events[0].producer_node_id == ""
+    assert recent.damage_reports[0].producer_node_id == ""

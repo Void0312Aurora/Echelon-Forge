@@ -20,6 +20,7 @@ The current joint-layer primary references are:
 - [Joint Command and Modeling Baseline](../joint/command_and_modeling_baseline.md)
 - [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
 - [Simulation Conventions](../foundation/conventions.md)
+- [Gradient Realism Principles](../foundation/gradient_realism_principles.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 
 They define:
@@ -29,6 +30,8 @@ They define:
 - runtime stage ownership between scenario-loader orchestration and pure C++
   mission/runtime kernels
 - engine-neutral coordinate, angle, time, and observation conventions
+- gradient realism gates that keep scenario claims aligned with implemented
+  domain mechanisms
 
 ### Service Profiles
 

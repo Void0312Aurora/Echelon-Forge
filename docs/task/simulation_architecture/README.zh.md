@@ -113,6 +113,19 @@
 | `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen；由 WP23 取代 | 曾试图强制退场 post-WP21 compatibility layers，但 owner 因 uncontrolled follow-up waves 与 partial/quarantine evidence drift 终止该流。其 queue 只作历史记录，不得再派发。 | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.zh.md)、[dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
 | `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | 冻结 WP22，分类当前 dirty work，强制 delete-or-block decisions，将 TaskOrder 与 public API exits 记录为 blocked；因没有 deletion-ready surface 而跳过 implementation，并以受控 blocked recovery 收口。 | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md) |
 | `WP24 TaskOrder Maintained Business Migration` | active / deletion close-out | WP23 后的 replacement-backed TaskOrder 业务迁移：maintained contract/export/Python business paths 已集成，本轮 cleanup close-out 删除旧 public TaskOrder whole-shell compatibility surfaces。 | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)、[集成评估与清理收口](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md) |
+| `TM01 Architecture Closure Remediation` | temporary / active | 实现层闭合审计后的有边界整改线：修复 ground tasking-shell blocker，记录 launch-bridge residual，并同步 WP24 provenance / acceptance wording；不打开大范围重构。 | [TM01 entry](tm01_architecture_closure_remediation/README.md)、[task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
+
+## TM01 Architecture Closure Remediation
+
+产出：
+
+- [TM01 Architecture Closure Remediation](tm01_architecture_closure_remediation/README.md)
+- [TM01 Architecture Closure Task Clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
+
+TM01 是 temporary project，不是新的 architecture WP。它用于把本轮审计后的整改限制在有限范围内：
+修复当前 ground tasking-shell 验证失败，记录窄的 `systems -> SimulationKernel`
+launch bridge residual，并同步 WP24 provenance / acceptance wording。它不得扩展为完整
+ground runtime、P7 全面重设计或 public raw-runtime escape hatch 删除。
 
 ## WP24 TaskOrder Maintained Business Migration
 

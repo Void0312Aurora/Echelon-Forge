@@ -137,6 +137,21 @@ The active design conclusion is:
 | `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen; superseded by WP23 | Attempted to force-retire post-WP21 compatibility layers, but the owner stopped the stream after uncontrolled follow-up waves and partial/quarantine evidence drift. Its queue is historical only and must not be dispatched. | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
 | `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | Froze WP22, classified current dirty work, forced delete-or-block decisions, recorded TaskOrder and public API exits as blocked, skipped implementation because no deletion-ready surface was identified, and closed as controlled blocked recovery. | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md) |
 | `WP24 TaskOrder Maintained Business Migration` | active / deletion close-out | Replacement-backed TaskOrder business migration after WP23: maintained contract/export/Python business paths are integrated, and the old public TaskOrder whole-shell compatibility surfaces are removed in the cleanup close-out. | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md), [integration assessment and cleanup close-out](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.md) |
+| `TM01 Architecture Closure Remediation` | temporary / active | Bounded remediation lane after the implementation-level closure audit: repair the ground tasking-shell blocker, record the launch-bridge residual, and synchronize WP24 provenance/acceptance wording without opening a broad refactor. | [TM01 entry](tm01_architecture_closure_remediation/README.md), [task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
+
+## TM01 Architecture Closure Remediation
+
+Output:
+
+- [TM01 Architecture Closure Remediation](tm01_architecture_closure_remediation/README.md)
+- [TM01 Architecture Closure Task Clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
+
+TM01 is a temporary project, not a new architecture WP. It exists to keep the
+post-audit remediation finite: fix the current ground tasking-shell validation
+failure, record the narrow `systems -> SimulationKernel` launch bridge residual,
+and synchronize WP24 provenance/acceptance wording. It must not expand into full
+ground runtime implementation, broad P7 redesign, or public raw-runtime escape
+hatch deletion.
 
 ## WP24 TaskOrder Maintained Business Migration
 

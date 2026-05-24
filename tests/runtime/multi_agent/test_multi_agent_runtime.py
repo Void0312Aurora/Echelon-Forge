@@ -15,6 +15,8 @@ import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index  # noqa: E402
 from python.rl.runtime.multi_agent_runtime import MultiAgentWorldRuntimeView  # noqa: E402
+from python.scenario.runtime import load_compiled_scenario_for_setup_target  # noqa: E402
+from python.scenario_compiler import ScenarioCompiler  # noqa: E402
 
 
 def _cooperative_scenario() -> dict:
@@ -104,18 +106,22 @@ class MultiAgentRuntimeViewTests(unittest.TestCase):
         self.assertEqual([int(ref.world_index) for ref in refs], [0, 0])
 
     def test_multi_agent_runtime_view_builds_per_entity_observations(self) -> None:
-        runtime = ef_py.WorldBatchRuntime(1)
+        runtime = ef_py.RuntimeFacade(1)
         self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-        loader = ScenarioLoader(runtime.world_compatibility_quarantine(0))
-        loader.load_scenario_data(copy.deepcopy(_cooperative_scenario()), seed=41)
+        scenario = copy.deepcopy(_cooperative_scenario())
+        compiled = ScenarioCompiler.compile_data(scenario)
+        worlds = load_compiled_scenario_for_setup_target(runtime, compiled, seeds=[41])
+        loader = ScenarioLoader(ef_py.SimulationKernel())
+        loader.scenario_data = worlds[0].layout.scenario_data
+        loader.entities = dict(worlds[0].entities)
+        loader.active_roster = list(worlds[0].active_roster)
+        loader.agent_id = int(worlds[0].agent_id)
+        loader.mission_cmd = copy.deepcopy(scenario["mission_command"])
 
         lead = loader.get_active_roster_member(entity_name="Lead")
         wing = loader.get_active_roster_member(entity_name="Wing")
         self.assertIsNotNone(lead)
         self.assertIsNotNone(wing)
-        runtime.world_compatibility_quarantine(0).set_command_link(int(lead.entity_id), 0.0, 0.0)
-        runtime.world_compatibility_quarantine(0).set_command_link(int(wing.entity_id), 0.0, 0.0)
-
         lead_cmd = ef_py.MissionCommand()
         lead_cmd.command_code = 2
         lead_cmd.cmd_heading_deg = 90.0
@@ -138,15 +144,15 @@ class MultiAgentRuntimeViewTests(unittest.TestCase):
         wing_cmd.form_offset_z = 30.0
         wing_cmd.active = True
 
-        assign0 = ef_py.WorldMissionCommandAssignment()
+        assign0 = ef_py.WorldMissionCommandMaintainedAssignment()
         assign0.world_index = 0
         assign0.entity_id = int(lead.entity_id)
-        assign0.command = lead_cmd
-        assign1 = ef_py.WorldMissionCommandAssignment()
+        assign0.mission_command = ef_py.mission_command_maintained_batch_contract(lead_cmd)
+        assign1 = ef_py.WorldMissionCommandMaintainedAssignment()
         assign1.world_index = 0
         assign1.entity_id = int(wing.entity_id)
-        assign1.command = wing_cmd
-        runtime.set_mission_commands_batch([assign0, assign1])
+        assign1.mission_command = ef_py.mission_command_maintained_batch_contract(wing_cmd)
+        runtime.set_mission_commands_maintained_batch([assign0, assign1])
 
         view = MultiAgentWorldRuntimeView(
             runtime=runtime,

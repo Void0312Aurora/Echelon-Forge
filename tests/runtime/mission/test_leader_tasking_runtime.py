@@ -11,8 +11,8 @@ ensure_repo_imports()
 
 from python.rl.tasking.bridge import (  # noqa: E402
     apply_loader_owned_world_layout_to_kernel,
-    loader_owned_raw_sim_compat,
-    loader_owned_scripted_opponent_kernel_compat,
+    loader_owned_runtime_view,
+    loader_owned_scripted_opponent_kernel_view,
     resolve_loader_time_step,
     sync_loader_command_chain,
     sync_loader_mission_command,
@@ -21,7 +21,7 @@ from python.rl.tasking.leader_tasking import build_kernel_mission_command  # noq
 
 
 class LeaderTaskingRuntimeTests(unittest.TestCase):
-    def test_resolve_loader_time_step_reads_loader_owned_raw_sim_compatibility_seam(self) -> None:
+    def test_resolve_loader_time_step_reads_loader_owned_runtime_view(self) -> None:
         sim = SimpleNamespace(get_time_step=Mock(return_value=0.2))
         loader = SimpleNamespace(
             sim=sim,
@@ -33,7 +33,7 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(resolve_loader_time_step(loader, default=0.05), 0.2, places=6)
         sim.get_time_step.assert_called_once_with()
 
-    def test_sync_loader_mission_command_uses_loader_owned_compatibility_seam(self) -> None:
+    def test_sync_loader_mission_command_uses_loader_owned_runtime_view(self) -> None:
         sim = SimpleNamespace(set_mission_command=Mock())
         loader = SimpleNamespace(agent_id=9, sim=sim)
         cmd = object()
@@ -42,7 +42,7 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
 
         sim.set_mission_command.assert_called_once_with(9, cmd)
 
-    def test_loader_owned_scripted_opponent_kernel_compat_proxies_required_operations(self) -> None:
+    def test_loader_owned_scripted_opponent_kernel_view_proxies_required_operations(self) -> None:
         sim = SimpleNamespace(
             is_unit_active=Mock(side_effect=[True, False]),
             get_unit_position=Mock(return_value=(1.0, 2.0, 3.0)),
@@ -52,14 +52,14 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
         )
         loader = SimpleNamespace(sim=sim)
 
-        compat = loader_owned_scripted_opponent_kernel_compat(loader)
+        view = loader_owned_scripted_opponent_kernel_view(loader)
 
-        self.assertTrue(compat.is_unit_active(7))
-        self.assertFalse(compat.is_unit_active(8))
-        self.assertEqual(compat.get_unit_position(7), (1.0, 2.0, 3.0))
-        self.assertEqual(getattr(compat.get_agent_observation(7), "label", ""), "obs")
-        compat.set_command(7, 90.0, 250.0, 1200.0)
-        self.assertEqual(compat.fire_missile(7, 11), 42)
+        self.assertTrue(view.is_unit_active(7))
+        self.assertFalse(view.is_unit_active(8))
+        self.assertEqual(view.get_unit_position(7), (1.0, 2.0, 3.0))
+        self.assertEqual(getattr(view.get_agent_observation(7), "label", ""), "obs")
+        view.set_command(7, 90.0, 250.0, 1200.0)
+        self.assertEqual(view.fire_missile(7, 11), 42)
         sim.set_command.assert_called_once_with(7, 90.0, 250.0, 1200.0)
         sim.fire_missile.assert_called_once_with(7, 11)
 
@@ -78,7 +78,7 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
 
         sync_hook.assert_called_once_with()
 
-    def test_loader_owned_raw_sim_compatibility_facade_supports_command_chain_writes(self) -> None:
+    def test_loader_owned_runtime_view_supports_command_chain_writes(self) -> None:
         sim = SimpleNamespace(
             set_task_order=Mock(),
             set_leader_intent=Mock(),
@@ -86,16 +86,16 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
             set_mission_command=Mock(),
         )
         loader = SimpleNamespace(sim=sim)
-        compat = loader_owned_raw_sim_compat(loader)
+        runtime_view = loader_owned_runtime_view(loader)
 
         order = object()
         intent = object()
         report = object()
         cmd = object()
-        compat.sync_task_order(5, order)
-        compat.sync_leader_intent(5, intent)
-        compat.sync_pilot_report(5, report)
-        compat.sync_mission_command(5, cmd)
+        runtime_view.sync_task_order(5, order)
+        runtime_view.sync_leader_intent(5, intent)
+        runtime_view.sync_pilot_report(5, report)
+        runtime_view.sync_mission_command(5, cmd)
 
         sim.set_task_order.assert_called_once_with(5, order)
         sim.set_leader_intent.assert_called_once_with(5, intent)
@@ -126,7 +126,7 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "loader-owned world-layout kernel-apply seam requires loader.sim"):
             apply_loader_owned_world_layout_to_kernel(loader, object())
 
-    def test_sync_loader_command_chain_reentrant_loader_owned_path_falls_back_to_compatibility_seam(self) -> None:
+    def test_sync_loader_command_chain_reentrant_loader_owned_path_uses_runtime_view(self) -> None:
         sim = SimpleNamespace(
             set_task_order=Mock(),
             set_leader_intent=Mock(),

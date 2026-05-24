@@ -52,13 +52,12 @@ def test_facade_contract_and_types_headers_do_not_name_runtime_owner_types() -> 
     assert not violations, f"facade contract/type headers expose runtime owner types: {violations}"
 
 
-def test_runtime_facade_header_limits_world_batch_runtime_to_escape_hatch_and_private_owner() -> None:
+def test_runtime_facade_header_keeps_world_batch_runtime_private_only() -> None:
     header = _read(RUNTIME_FACADE / "runtime_facade.h")
 
     assert '#include "core/engine/world_batch_runtime.h"' not in header
     assert "class WorldBatchRuntime;" in header
-    assert "Compatibility escape hatch for diagnostics and legacy adapters only." in header
-    assert "Maintained frontends should use facade-level request/result APIs instead." in header
+    assert "runtime_compatibility_quarantine" not in header
 
     public_section = header.split("public:", 1)[1].split("private:", 1)[0]
     public_owner_lines = [
@@ -66,10 +65,7 @@ def test_runtime_facade_header_limits_world_batch_runtime_to_escape_hatch_and_pr
         for line in public_section.splitlines()
         if "WorldBatchRuntime" in _strip_line_comment(line)
     ]
-    assert public_owner_lines == [
-        "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;",
-        "const WorldBatchRuntime& runtime_compatibility_quarantine() const noexcept;",
-    ]
+    assert public_owner_lines == []
 
     private_section = header.split("private:", 1)[1]
     assert "std::unique_ptr<WorldBatchRuntime> runtime_;" in private_section
@@ -79,17 +75,16 @@ def test_runtime_facade_docs_do_not_describe_raw_runtime_as_maintained_path() ->
     readme_en = _read(RUNTIME_FACADE / "README.md")
     readme_zh = _read(RUNTIME_FACADE / "README.zh.md")
 
-    assert "compatibility/diagnostics escape hatch" in readme_en
-    assert "new mainline code should not depend on it" in readme_en
-    assert "must centralize access in an explicit adapter" in readme_en
-    assert "must not call `RuntimeFacade.runtime_compatibility_quarantine()` directly" in readme_en
-    assert "should also not cache the raw `WorldBatchRuntime`" in readme_en
+    assert "Escape Hatch Retirement" in readme_en
+    assert "no longer exposes a raw `WorldBatchRuntime` escape hatch" in readme_en
+    assert "must use facade-level request/result APIs" in readme_en
+    assert "不得重新引入 `RuntimeFacade.runtime_compatibility_quarantine()`" in readme_en
+    assert "must not cache raw `WorldBatchRuntime`" in readme_en
 
-    assert "compatibility / diagnostics 逃逸口" in readme_zh
-    assert "新主线代码不应依赖它" in readme_zh
-    assert "必须把访问集中在一个显式 adapter" in readme_zh
-    assert "不得直接调用 `RuntimeFacade.runtime_compatibility_quarantine()`" in readme_zh
-    assert "不应缓存 raw `WorldBatchRuntime`" in readme_zh
+    assert "逃逸口退休" in readme_zh
+    assert "不再公开 raw `WorldBatchRuntime` 逃逸口" in readme_zh
+    assert "维护前端必须使用 facade-level request/result API" in readme_zh
+    assert "不得从 adapter 重新暴露 compatibility runtime" in readme_zh
 
 
 def test_no_broad_direct_sim_ban_is_encoded_in_architecture_tests() -> None:

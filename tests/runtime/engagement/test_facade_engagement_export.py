@@ -118,63 +118,68 @@ def _make_detection(target_id: int, *, range_m: float = 30000.0) -> ef_py.Detect
     return detection
 
 
-def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int, int]:
-    facade = ef_py.RuntimeFacade(1)
-    if not facade.load_database(_DB_PATH):
-        raise AssertionError("failed to load runtime database")
+def _make_pilot_fire_action() -> ef_py.PilotAction:
+    action = ef_py.PilotAction()
+    action.active = True
+    action.master_arm = True
+    action.fire_weapon = True
+    action.throttle = 0.8
+    return action
 
-    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)
-    shooter_id = int(
-        world.spawn_unit(
-            ef_py.Side.Blue,
-            "F-16C_Block50",
-            0.0,
-            0.0,
-            5000.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            250.0,
-            0.0,
-        )
+
+def _make_window_launch_packet() -> tuple[ef_py.EngagementEventPacket, int, int, int]:
+    facade, shooter_id, target_id = _make_tracked_facade_fixture()
+
+    request = ef_py.RuntimeWindowRequest()
+    request.window_id = f"window:engagement_export:{shooter_id}"
+    request.world_id = 0
+    request.source_time_s = 10.0
+
+    observation_request = ef_py.ObservationBatchRequest()
+    observation_request.refs = [_world_ref(0, shooter_id)]
+    observation_request.include_agent_observations = True
+    observation_request.include_instrument_states = True
+    request.observation_request = observation_request
+
+    engagement_request = ef_py.EngagementBatchRequest()
+    engagement_request.refs = [_engagement_ref(0, shooter_id)]
+    engagement_request.include_track_packets = True
+    engagement_request.include_diagnostics_traces = True
+    request.engagement_request = engagement_request
+    request.export_observation = True
+    request.export_engagement = True
+    request.export_diagnostics = True
+
+    action_request = ef_py.RuntimeWindowActionRequest()
+    action_request.source_layer = "facade_engagement_export_test"
+    action_request.input_snapshot_version = f"obs:0:{shooter_id}"
+    action_request.action_intent.source_id = f"test:fire:{shooter_id}"
+    action_request.action_intent.effective_time_s = request.source_time_s
+    action_request.action_intent.valid_until_s = request.source_time_s + 1.0
+    action_request.action_intent.target.world_index = 0
+    action_request.action_intent.target.entity_id = int(shooter_id)
+    action_request.action_intent.action_family = "direct_control"
+    action_request.action_intent.merge_policy = "last_write_wins"
+    action_request.action_intent.action_interface.kind = "PilotActionAssignmentCompat"
+    action_request.action_intent.action_interface.payload_type = "pilot_action"
+    action_request.action_intent.has_pilot_action = True
+    action_request.action_intent.pilot_action = _make_pilot_fire_action()
+    request.action_requests = [action_request]
+
+    result = facade.run_wp10_window(request)
+    packet = result.engagement_packet
+    launch = next(
+        event for event in packet.launch_events if event.producer_node_id == "p7.fire_control_launch.v1"
     )
-    target_id = int(
-        world.spawn_unit(
-            ef_py.Side.Red,
-            "DDG-51_Flight_I_USS_Arleigh_Burke",
-            0.0,
-            30000.0,
-            0.0,
-            180.0,
-            0.0,
-            0.0,
-            0.0,
-            -250.0,
-            0.0,
-        )
-    )
-
-    world.set_unit_ammo(shooter_id, 4, 4)
-    world.set_weapon_cooldown(shooter_id, 0.0, -1.0)
-    world.set_contact_list(shooter_id, [_make_detection(target_id)])
-
-    missile_id = int(world.fire_missile(shooter_id, target_id))
+    missile_id = int(launch.spawned_munition.entity_id)
     if missile_id <= 0:
-        raise AssertionError("expected legacy missile launch to succeed")
-    if not bool(world.debug_apply_proximity_hit(shooter_id, target_id, 120.0, 80.0)):
-        raise AssertionError("expected debug proximity damage event to be recorded")
-
-    request = ef_py.EngagementBatchRequest()
-    request.refs = [_engagement_ref(0, shooter_id)]
-    request.include_track_packets = True
-    request.include_diagnostics_traces = True
-    return facade.export_engagement_event_packet(request), shooter_id, target_id, missile_id
+        raise AssertionError("expected maintained facade window launch to produce a munition")
+    return packet, shooter_id, target_id, missile_id
 
 
 class FacadeEngagementExportTests(unittest.TestCase):
-    def test_launch_damage_export_proves_wp10_nodes_barriers_and_wp11_provenance_chain(self) -> None:
-        packet, _, target_id, missile_id = _make_launch_damage_packet()
+    def test_window_launch_export_proves_wp10_nodes_barriers_and_wp11_provenance_chain(self) -> None:
+        packet, _, _target_id, missile_id = _make_window_launch_packet()
 
         self.assertGreaterEqual(int(packet.snapshot_version), 1)
         self.assertEqual(packet.barrier_id, "export")
@@ -222,34 +227,18 @@ class FacadeEngagementExportTests(unittest.TestCase):
         launch = next(
             event for event in packet.launch_events if event.producer_node_id == "p7.fire_control_launch.v1"
         )
-        effects = next(
-            event for event in packet.effects_events if event.producer_node_id == "p9.effects_damage.v1"
-        )
-        report = next(
-            item for item in packet.damage_reports if item.producer_node_id == "p9.effects_damage.v1"
-        )
         self.assertEqual(int(launch.spawned_munition.entity_id), missile_id)
-        self.assertEqual(int(effects.target.entity_id), target_id)
-        self.assertEqual(int(report.target.entity_id), target_id)
-        self.assertEqual(int(report.source_event_id), int(effects.event_id))
 
         launch_trace = next(
             trace for trace in packet.diagnostics_traces if int(trace.launch_event_id) == int(launch.event_id)
         )
-        damage_trace = next(
-            trace for trace in packet.diagnostics_traces if int(trace.damage_report_id) == int(report.report_id)
-        )
 
-        for trace, expected_source_node in [
-            (launch_trace, "p7.fire_control_launch.v1"),
-            (damage_trace, "p9.effects_damage.v1"),
-        ]:
-            self.assertEqual(trace.source_node_id, expected_source_node)
-            self.assertEqual(trace.export_node_id, "p10.observation_export.v1")
-            self.assertEqual(trace.barrier_id, "export")
-            self.assertEqual(trace.barrier_detail, "maintained_facade_export")
-            self.assertEqual(int(trace.source_snapshot_version), int(packet.snapshot_version))
-            self.assertGreaterEqual(float(trace.source_time_s), 0.0)
+        self.assertEqual(launch_trace.source_node_id, "p7.fire_control_launch.v1")
+        self.assertEqual(launch_trace.export_node_id, "p10.observation_export.v1")
+        self.assertEqual(launch_trace.barrier_id, "export")
+        self.assertEqual(launch_trace.barrier_detail, "maintained_facade_export")
+        self.assertEqual(int(launch_trace.source_snapshot_version), int(packet.snapshot_version))
+        self.assertGreaterEqual(float(launch_trace.source_time_s), 0.0)
 
     def test_live_snapshot_export_preserves_refs_and_trace_ids_and_does_not_fire_weapons(self) -> None:
         facade, blue_id, red_id = _make_tracked_facade_fixture()
@@ -386,32 +375,52 @@ class FacadeEngagementExportTests(unittest.TestCase):
         blue_id = int(result.entity_ids[0])
         red_id = int(result.entity_ids[1])
 
-        world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(1)
-        world.set_unit_ammo(blue_id, 4, 4)
-        world.set_weapon_cooldown(blue_id, 0.0, -1.0)
-        detection = ef_py.Detection()
-        detection.target_id = red_id
-        detection.range = 30000.0
-        detection.bearing = 0.0
-        detection.elevation = 0.0
-        detection.closing_speed = 500.0
-        detection.signal_strength = 1.0
-        detection.detection_prob_used = 0.9
-        detection.sensor_type = int(ef_py.SensorType.Radar)
-        detection.local_sensor_hit = True
-        detection.timestamp = 0.0
-        world.set_contact_list(blue_id, [detection])
+        for _ in range(80):
+            facade.step_batch()
+            obs = facade.get_agent_observations_batch([_world_ref(1, blue_id)])[0]
+            if any(int(track.id) == red_id for track in getattr(obs, "contacts", [])):
+                break
+        else:
+            raise AssertionError("expected facade observation helper to expose a target contact")
 
-        missile_id = int(world.fire_missile(blue_id, red_id))
-        self.assertGreater(missile_id, 0)
-
+        window_request = ef_py.RuntimeWindowRequest()
+        window_request.window_id = "window:engagement_export:world1"
+        window_request.world_id = 1
+        window_request.source_time_s = 10.0
+        observation_request = ef_py.ObservationBatchRequest()
+        observation_request.refs = [_world_ref(1, blue_id)]
+        observation_request.include_agent_observations = True
+        window_request.observation_request = observation_request
         request = ef_py.EngagementBatchRequest()
         request.refs = [_engagement_ref(1, blue_id)]
         request.include_track_packets = False
         request.include_diagnostics_traces = True
-        packet = facade.export_engagement_event_packet(request)
+        window_request.engagement_request = request
+        window_request.export_observation = True
+        window_request.export_engagement = True
+        window_request.export_diagnostics = True
+        action_request = ef_py.RuntimeWindowActionRequest()
+        action_request.source_layer = "facade_engagement_export_test"
+        action_request.input_snapshot_version = f"obs:1:{blue_id}"
+        action_request.action_intent.source_id = f"test:fire:1:{blue_id}"
+        action_request.action_intent.effective_time_s = window_request.source_time_s
+        action_request.action_intent.valid_until_s = window_request.source_time_s + 1.0
+        action_request.action_intent.target.world_index = 1
+        action_request.action_intent.target.entity_id = int(blue_id)
+        action_request.action_intent.action_family = "direct_control"
+        action_request.action_intent.merge_policy = "last_write_wins"
+        action_request.action_intent.action_interface.kind = "PilotActionAssignmentCompat"
+        action_request.action_intent.action_interface.payload_type = "pilot_action"
+        action_request.action_intent.has_pilot_action = True
+        action_request.action_intent.pilot_action = _make_pilot_fire_action()
+        window_request.action_requests = [action_request]
 
+        result = facade.run_wp10_window(window_request)
+        packet = result.engagement_packet
         self.assertEqual(len(packet.launch_events), 1)
+        missile_id = int(packet.launch_events[0].spawned_munition.entity_id)
+        self.assertGreater(missile_id, 0)
+
         self.assertEqual(packet.launch_events[0].producer_node_id, "p7.fire_control_launch.v1")
         self.assertEqual(int(packet.launch_events[0].spawned_munition.world_index), 1)
         self.assertEqual(int(packet.launch_events[0].spawned_munition.entity_id), missile_id)
@@ -420,7 +429,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
         )
 
     def test_exported_engagement_packet_uses_stable_time_priority_id_ordering(self) -> None:
-        packet, _, _, _ = _make_launch_damage_packet()
+        packet, _, _, _ = _make_window_launch_packet()
 
         launch_keys = [
             (float(event.event_time_s), int(event.event_id))

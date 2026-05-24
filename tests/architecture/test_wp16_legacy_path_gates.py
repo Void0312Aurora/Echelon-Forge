@@ -27,8 +27,8 @@ def test_wp16_legacy_gate_key_paths_have_bounded_status_owner_gate_and_reason() 
     expected = {
         "src/core/engine/world_batch_runtime.h": "deprecated_candidate",
         "src/core/engine/world_batch_runtime.cpp": "deprecated_candidate",
-        "python/rl/runtime/world_batch/compat.py": "compatibility_wrapper",
-        "src/runtime/facade/runtime_facade.h": "compatibility_wrapper",
+        "python/rl/runtime/world_batch/runtime_support.py": "compatibility_wrapper",
+        "src/runtime/facade/runtime_facade.h": "maintained_spine",
         "tests/runtime/engagement/test_facade_engagement_export.py": "diagnostics_only",
     }
 
@@ -40,7 +40,7 @@ def test_wp16_legacy_gate_key_paths_have_bounded_status_owner_gate_and_reason() 
         assert entry["reason"].strip()
 
 
-def test_wp16_legacy_gate_preserves_public_compatibility_surfaces_until_replacement_gate() -> None:
+def test_wp16_legacy_gate_prevents_public_facade_and_vec_env_compatibility_surfaces() -> None:
     entries = _entries_by_path()
     facade_header = (
         REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.h"
@@ -48,22 +48,21 @@ def test_wp16_legacy_gate_preserves_public_compatibility_surfaces_until_replacem
     vec_env_source = (
         REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
     ).read_text(encoding="utf-8")
-    compat_source = (
-        REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "compat.py"
+    runtime_support_source = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "runtime_support.py"
     ).read_text(encoding="utf-8")
 
     facade_entry = entries["src/runtime/facade/runtime_facade.h"]
-    compat_entry = entries["python/rl/runtime/world_batch/compat.py"]
+    runtime_support_entry = entries["python/rl/runtime/world_batch/runtime_support.py"]
 
-    assert facade_entry["classification"] == "compatibility_wrapper"
-    assert compat_entry["classification"] == "compatibility_wrapper"
-    assert "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;" in facade_header
-    assert "Compatibility escape hatch for diagnostics and legacy adapters only." in facade_header
-    assert "def batch_runtime(self):" in vec_env_source
-    assert "Compatibility-only view for callers that still expect `vec_env.batch_runtime`." in compat_source
+    assert facade_entry["classification"] == "maintained_spine"
+    assert runtime_support_entry["classification"] == "compatibility_wrapper"
+    assert "runtime_compatibility_quarantine" not in facade_header
+    assert "def batch_runtime(self):" not in vec_env_source
+    assert "RuntimeCompatibilityView" not in runtime_support_source
 
 
-def test_wp16_legacy_gate_runtime_world_escape_hatch_is_bounded_to_diagnostics_or_compatibility() -> None:
+def test_wp16_legacy_gate_runtime_world_escape_hatch_is_retired_from_facade_paths() -> None:
     entries = _entries_by_path()
     facade_header = (
         REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.h"
@@ -75,15 +74,16 @@ def test_wp16_legacy_gate_runtime_world_escape_hatch_is_bounded_to_diagnostics_o
         REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
     ).read_text(encoding="utf-8")
 
-    assert entries["src/runtime/facade/runtime_facade.h"]["classification"] == "compatibility_wrapper"
+    assert entries["src/runtime/facade/runtime_facade.h"]["classification"] == "maintained_spine"
     assert entries["tests/runtime/engagement/test_facade_engagement_export.py"]["classification"] == "diagnostics_only"
     assert "RuntimeFacade::run_wp10_window" in _load_fixture()["selected_spine_slice"]["window_api"]
-    assert "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;" in facade_header
-    assert "self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)" in adapter_source
+    assert "runtime_compatibility_quarantine" not in facade_header
+    assert "runtime_compatibility_quarantine" not in adapter_source
+    assert "ef_py.WorldBatchRuntime(" not in adapter_source
     assert "def _batch_target(self):" in adapter_source
-    assert "self._batch_target().step_batch()" in adapter_source
-    assert "world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)" in diagnostics_test
-    assert "escape hatches" in entries["tests/runtime/engagement/test_facade_engagement_export.py"]["reason"]
+    assert "self.facade.step_batch()" in adapter_source
+    assert "facade.runtime_compatibility_quarantine()" not in diagnostics_test
+    assert "run_wp10_window" in diagnostics_test
 
 
 def test_wp16_legacy_gate_diagnostics_and_unknown_paths_never_count_as_maintained() -> None:
@@ -133,8 +133,7 @@ def test_wp16_legacy_gate_deprecated_candidates_have_replacement_clue_or_next_ga
 def test_wp16_legacy_gate_compatibility_and_diagnostics_paths_do_not_upgrade_to_maintained_via_names() -> None:
     entries = _entries_by_path()
     allowed_non_maintained = {
-        "python/rl/runtime/world_batch/compat.py",
-        "src/runtime/facade/runtime_facade.h",
+        "python/rl/runtime/world_batch/runtime_support.py",
         "tests/runtime/engagement/test_facade_engagement_export.py",
         "tests/runtime/engagement/test_diagnostics_trace_contract.py",
         "tests/training/test_cooperative_diagnostics_callback.py",
@@ -143,6 +142,6 @@ def test_wp16_legacy_gate_compatibility_and_diagnostics_paths_do_not_upgrade_to_
     for path in allowed_non_maintained:
         assert entries[path]["classification"] != "maintained_spine"
 
-    assert entries["python/rl/runtime/world_batch/compat.py"]["classification"] == "compatibility_wrapper"
+    assert entries["python/rl/runtime/world_batch/runtime_support.py"]["classification"] == "compatibility_wrapper"
     assert entries["tests/runtime/engagement/test_diagnostics_trace_contract.py"]["classification"] == "diagnostics_only"
     assert entries["tests/training/test_cooperative_diagnostics_callback.py"]["classification"] == "unknown_requires_owner"

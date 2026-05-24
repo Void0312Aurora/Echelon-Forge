@@ -4,7 +4,7 @@ from typing import Any
 
 import ef_py
 
-from python.rl.tasking.bridge import sync_loader_command_chain_compat
+from python.rl.tasking.bridge import sync_loader_command_chain_reentrant
 
 from .contracts import clone_leader_intent, clone_pilot_report, clone_task_order
 
@@ -49,4 +49,4 @@ class LeaderCommandBridge:
         loader.task_order = clone_task_order(self.task_order)
         loader.leader_intent = clone_leader_intent(self.leader_intent)
         loader.pilot_report = clone_pilot_report(self.pilot_report)
-        sync_loader_command_chain_compat(loader)
+        sync_loader_command_chain_reentrant(loader)
