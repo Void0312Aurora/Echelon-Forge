@@ -1,7 +1,9 @@
 # WP24 TaskOrder Maintained Business Migration
 
-状态：`2026-05-24` 正在 close-out；本轮 cleanup patch 已删除 public TaskOrder
-whole-shell compatibility surfaces，focused validation 待运行。
+状态：`2026-05-24` focused close-out；public TaskOrder whole-shell compatibility
+surfaces 已删除，observation/tasking export 已拆分，command-chain Python business
+writes 已改用 maintained MissionCommand/LeaderIntent/PilotReport contracts。最终
+cleanup set 正在重新运行 focused validation。
 
 WP24 是
 [`WP23 Legacy Retirement Recovery And Reset`](../wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md)
@@ -14,6 +16,20 @@ public whole-shell TaskOrder path。
 
 - [WP24 集成验收评估与下一轮分发](wp24_integration_assessment_and_next_dispatch_20260524.zh.md)
 - [WP24 Facade Boundary Closure Task Package](wp24_facade_boundary_closure_task_package_20260524.zh.md)
+
+当前 close-out 状态：
+
+- TaskOrder public whole-shell batch/facade/Python writer surfaces 已移除。
+- `ObservationBatchPacket` 是纯 observation export；command/tasking reads 使用
+  `TaskingBatchRequest` 与 `TaskingBatchPacket`。
+- Python 里的 MissionCommand、LeaderIntent、PilotReport business writers 在跨越
+  runtime/facade boundary 前，会先把 compatibility shell 投影成 maintained
+  contract。
+- Runtime-window action injection 现在要求显式 maintained
+  ObservationPacket/DecisionBelief provenance，并经过 C++ action-intent
+  authorization；正常 full-batch stepping 停留在 facade `step_batch()`。
+- Raw `SimulationKernel` setup 只通过显式 compatibility quarantine path 保留；
+  它不再是默认 training/runtime setup route。
 
 ## 1. Maintained Target
 
@@ -60,13 +76,16 @@ focused validation 后才能关闭。TaskOrder-specific closure standard 证明�
 
 Boundary closure package 额外要求 pure observation packet、facade-owned
 scenario setup、maintained command-chain contracts，以及 Python call site 显式
-maintained provenance。
+maintained provenance。其中 observation split、command-chain contracts 与
+provenance guard、runtime-window authorization、正常 facade-owned batch stepping
+已在本 focused close-out 中落地；剩余具体 boundary debt 是 legacy visual
+single-world fallback。
 
 本 deletion patch 的 focused validation：
 
 ```bash
 git diff --check
-python -m py_compile python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py train.py
+python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runtime/world_setup_compat.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch/command_chain_cache.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py python/rl/runtime/agent_shim.py gym_envs/universal_env.py train.py
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "task_order or command_chain"

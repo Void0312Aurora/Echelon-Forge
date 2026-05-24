@@ -195,7 +195,8 @@ def apply_runtime_world_layout_request_compat(runtime: Any, request: Any) -> Any
 
 
 def apply_world_setup_request_maintained(setup_target: Any, request: Any) -> list[int]:
-    if request is None or not hasattr(setup_target, "apply_world_setup"):
+    raw_runtime_shaped = hasattr(setup_target, "world") and not hasattr(setup_target, "facade")
+    if request is None or raw_runtime_shaped or not hasattr(setup_target, "apply_world_setup"):
         raise RuntimeError(
             _maintained_setup_target_required_message("apply_world_setup_request_maintained")
         )

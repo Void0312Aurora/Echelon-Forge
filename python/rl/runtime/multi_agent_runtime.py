@@ -35,7 +35,6 @@ class _ObservationPacketCompat:
     refs: list[Any]
     agent_observations: list[Any]
     instrument_states: list[Any]
-    mission_commands: list[Any]
 
 
 @dataclass
@@ -167,7 +166,6 @@ class MultiAgentWorldRuntimeView:
                 if bool(include_instrument_states)
                 else []
             ),
-            mission_commands=[],
         )
 
     def export_tasking_packet(
@@ -188,8 +186,8 @@ class MultiAgentWorldRuntimeView:
         return _TaskingPacketCompat(
             refs=list(refs),
             mission_command_contracts=(
-                list(self.runtime.get_mission_commands_batch(list(refs)))
-                if bool(include_mission_commands) and hasattr(self.runtime, "get_mission_commands_batch")
+                list(self.runtime.get_mission_commands_maintained_batch(list(refs)))
+                if bool(include_mission_commands) and hasattr(self.runtime, "get_mission_commands_maintained_batch")
                 else []
             ),
         )
@@ -208,8 +206,6 @@ class MultiAgentWorldRuntimeView:
         truth_list = list(getattr(packet, "agent_observations", []) or [])
         inst_list = list(getattr(packet, "instrument_states", []) or [])
         mission_list = list(getattr(tasking_packet, "mission_command_contracts", []) or [])
-        if not mission_list:
-            mission_list = list(getattr(tasking_packet, "mission_commands", []) or [])
 
         obs_by_entity_id: dict[int, dict[str, np.ndarray]] = {}
         for idx, ref in enumerate(refs):

@@ -172,3 +172,25 @@ def test_wp24l_maintained_intents_do_not_inline_default_role_helpers() -> None:
         "maintained intent call sites must not rely on default single_agent_role()/roster_slot_role() "
         f"compatibility provenance: {violations}"
     )
+
+
+def test_wp24l_runtime_window_actions_require_explicit_maintained_provenance_and_authorization() -> None:
+    adapter_source = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
+    ).read_text(encoding="utf-8")
+    single_world_source = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "single_world_batch_runtime.py"
+    ).read_text(encoding="utf-8")
+    leader_world_source = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
+    ).read_text(encoding="utf-8")
+
+    assert "def _runtime_window_authorized_action_role(" in adapter_source
+    assert "ef_py.authorize_maintained_action_intent(" in adapter_source
+    assert "information_state_label: str | None = None" in adapter_source
+    assert "unsupported provenance label" in adapter_source
+    assert "requires explicit maintained " in adapter_source
+    assert "ObservationPacket/DecisionBelief provenance and AgentRole authorization" in adapter_source
+
+    for source in (single_world_source, leader_world_source):
+        assert 'information_state_label="facade_observation_packet"' in source

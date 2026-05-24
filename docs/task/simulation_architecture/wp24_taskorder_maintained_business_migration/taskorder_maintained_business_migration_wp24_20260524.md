@@ -1,8 +1,10 @@
 # WP24 TaskOrder Maintained Business Migration
 
-Status: active close-out on `2026-05-24`; public TaskOrder whole-shell
-compatibility surfaces have been deleted in the cleanup patch, with focused
-validation pending.
+Status: focused close-out on `2026-05-24`; public TaskOrder whole-shell
+compatibility surfaces have been deleted, observation/tasking export is split,
+and command-chain Python business writes now use maintained
+MissionCommand/LeaderIntent/PilotReport contracts. Focused validation is being
+rerun for the final cleanup set.
 
 WP24 is the replacement-backed TaskOrder business migration package opened after
 [`WP23 Legacy Retirement Recovery And Reset`](../wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md)
@@ -15,6 +17,21 @@ Latest integration records:
 
 - [WP24 Integration Assessment And Next Dispatch](wp24_integration_assessment_and_next_dispatch_20260524.md)
 - [WP24 Facade Boundary Closure Task Package](wp24_facade_boundary_closure_task_package_20260524.md)
+
+Current close-out state:
+
+- TaskOrder public whole-shell batch/facade/Python writer surfaces are removed.
+- `ObservationBatchPacket` is pure observation export; command/tasking reads use
+  `TaskingBatchRequest` and `TaskingBatchPacket`.
+- MissionCommand, LeaderIntent, and PilotReport business writers in Python now
+  project compatibility shells into maintained contracts before crossing the
+  runtime/facade boundary.
+- Runtime-window action injection now requires explicit maintained
+  ObservationPacket/DecisionBelief provenance and C++ action-intent
+  authorization; normal full-batch stepping stays on facade `step_batch()`.
+- Raw `SimulationKernel` setup remains available only through explicit
+  compatibility quarantine paths; it is no longer the default training/runtime
+  setup route.
 
 ## 1. Maintained Target
 
@@ -62,15 +79,18 @@ standard proves:
 - Python normal business paths do not expose or call the removed legacy writer;
 - architecture guards fail if the deleted public surfaces reappear.
 
-The boundary closure package adds mandatory follow-up acceptance for pure
-observation packets, facade-owned scenario setup, maintained command-chain
-contracts, and explicit maintained provenance at Python call sites.
+The boundary closure package adds mandatory acceptance for pure observation
+packets, facade-owned scenario setup, maintained command-chain contracts, and
+explicit maintained provenance at Python call sites. Observation split,
+command-chain contracts, provenance guards, runtime-window authorization, and
+normal facade-owned batch stepping are implemented for the focused close-out.
+The remaining concrete boundary debt is legacy visual single-world fallback.
 
 Focused validation for this deletion patch:
 
 ```bash
 git diff --check
-python -m py_compile python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py train.py
+python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runtime/world_setup_compat.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch/command_chain_cache.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py python/rl/runtime/agent_shim.py gym_envs/universal_env.py train.py
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "task_order or command_chain"

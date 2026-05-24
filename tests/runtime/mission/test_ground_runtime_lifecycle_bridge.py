@@ -109,8 +109,10 @@ class GroundRuntimeSourceBridgeTests(unittest.TestCase):
             self.assertIn("mission_command = build_kernel_mission_command(", text)
             self.assertIn("set_task_orders_maintained_batch", text)
             self.assertNotIn("set_task_orders_batch", text)
-            self.assertIn("set_leader_intents_batch", text)
-            self.assertIn("set_pilot_reports_batch", text)
+            self.assertIn("set_leader_intents_maintained_batch", text)
+            self.assertIn("set_pilot_reports_maintained_batch", text)
+            self.assertNotIn("set_leader_intents_batch", text)
+            self.assertNotIn("set_pilot_reports_batch", text)
 
 
 if __name__ == "__main__":

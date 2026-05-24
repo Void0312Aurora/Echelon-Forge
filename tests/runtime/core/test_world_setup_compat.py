@@ -16,6 +16,7 @@ from python.scenario_runtime import build_runtime_world_layout_request  # noqa: 
 from python.scenario_runtime import extract_runtime_world_layout_entity_ids  # noqa: E402
 from python.scenario_runtime import extract_batch_world_setup_entity_ids  # noqa: E402
 from python.scenario_runtime import normalize_world_setup_terrain_assignments  # noqa: E402
+from python.scenario.runtime.world_setup_compat import apply_world_setup_request_maintained  # noqa: E402
 from python.scenario.runtime.world_setup_compat import read_runtime_world_time_step_compat  # noqa: E402
 
 
@@ -68,6 +69,14 @@ class _CompatOnlyRuntime:
             list(time_steps),
         )
         return [801, 802, 803]
+
+
+class _RawRuntimeWithFutureFacadeSetupMethod:
+    def apply_world_setup(self, request):
+        raise AssertionError("raw runtime apply_world_setup must stay quarantined")
+
+    def world(self, index):
+        raise AssertionError(f"raw world({index}) access must stay quarantined")
 
 
 class _CompatOnlyWorldLayoutRuntime:
@@ -194,6 +203,22 @@ class WorldSetupCompatTests(unittest.TestCase):
         self.assertIsNotNone(runtime.last_batch_args)
         self.assertEqual(runtime.last_batch_args[0], [17, 19])
         self.assertEqual(runtime.last_batch_args[5], [0.1, 0.2])
+
+    def test_apply_world_setup_request_maintained_rejects_raw_runtime_shape_even_if_future_binding_drifts(self) -> None:
+        request = build_batch_world_setup_request(
+            seeds=[31],
+            terrain_assignments=[],
+            wind_assignments=[],
+            zones=[],
+            spawn_requests=[],
+            time_steps=[0.05],
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "requires a maintained facade setup target"):
+            apply_world_setup_request_maintained(
+                _RawRuntimeWithFutureFacadeSetupMethod(),
+                request,
+            )
 
     def test_build_runtime_world_layout_request_preserves_maritime_fields(self) -> None:
         request = build_runtime_world_layout_request(

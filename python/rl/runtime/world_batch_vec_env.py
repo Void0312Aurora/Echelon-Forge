@@ -33,8 +33,9 @@ from gym_envs.universal_env import (
 )
 from python.rl.tasking.bridge import build_kernel_mission_command
 from python.rl.runtime.world_batch.command_chain_cache import (
-    project_world_leader_intent_assignment_transport,
-    project_world_pilot_report_assignment_transport,
+    project_world_leader_intent_maintained_assignment,
+    project_world_mission_command_maintained_assignment,
+    project_world_pilot_report_maintained_assignment,
     project_world_task_order_maintained_assignment,
 )
 from python.rl.support.sb3_vec_env_compat import (
@@ -1247,10 +1248,13 @@ class WorldBatchVecEnv(VecEnv):
             mission_command = build_kernel_mission_command(handle.loader)
             mission_snapshot = mission_command_snapshot(mission_command)
             if snapshot_changed(handle.last_mission_command_snapshot, mission_snapshot):
-                mission_assign = ef_py.WorldMissionCommandAssignment()
-                mission_assign.world_index = int(env_idx)
-                mission_assign.entity_id = int(handle.agent_id)
-                mission_assign.command = mission_command
+                mission_assign = ef_py.WorldMissionCommandMaintainedAssignment()
+                project_world_mission_command_maintained_assignment(
+                    mission_assign,
+                    world_index=int(env_idx),
+                    entity_id=int(handle.agent_id),
+                    compatibility_mission_command_shell=mission_command,
+                )
                 mission_assignments.append(mission_assign)
                 handle.last_mission_command_snapshot = mission_snapshot
 
@@ -1268,8 +1272,8 @@ class WorldBatchVecEnv(VecEnv):
 
             intent_snapshot = leader_intent_snapshot(getattr(handle.loader, "leader_intent", None))
             if intent_snapshot is not None and snapshot_changed(handle.last_leader_intent_snapshot, intent_snapshot):
-                intent_assign = ef_py.WorldLeaderIntentAssignment()
-                project_world_leader_intent_assignment_transport(
+                intent_assign = ef_py.WorldLeaderIntentMaintainedAssignment()
+                project_world_leader_intent_maintained_assignment(
                     intent_assign,
                     world_index=int(env_idx),
                     entity_id=int(handle.agent_id),
@@ -1280,8 +1284,8 @@ class WorldBatchVecEnv(VecEnv):
 
             report_snapshot = pilot_report_snapshot(getattr(handle.loader, "pilot_report", None))
             if report_snapshot is not None and snapshot_changed(handle.last_pilot_report_snapshot, report_snapshot):
-                report_assign = ef_py.WorldPilotReportAssignment()
-                project_world_pilot_report_assignment_transport(
+                report_assign = ef_py.WorldPilotReportMaintainedAssignment()
+                project_world_pilot_report_maintained_assignment(
                     report_assign,
                     world_index=int(env_idx),
                     entity_id=int(handle.agent_id),
@@ -1291,13 +1295,13 @@ class WorldBatchVecEnv(VecEnv):
                 handle.last_pilot_report_snapshot = report_snapshot
 
         if mission_assignments:
-            self._runtime_adapter.set_mission_commands_batch(mission_assignments)
+            self._runtime_adapter.set_mission_commands_maintained_batch(mission_assignments)
         if task_assignments:
             self._runtime_adapter.set_task_orders_maintained_batch(task_assignments)
         if intent_assignments:
-            self._runtime_adapter.set_leader_intents_batch(intent_assignments)
+            self._runtime_adapter.set_leader_intents_maintained_batch(intent_assignments)
         if report_assignments:
-            self._runtime_adapter.set_pilot_reports_batch(report_assignments)
+            self._runtime_adapter.set_pilot_reports_maintained_batch(report_assignments)
 
     def _save_obs(self, env_idx: int, obs: VecEnvObs) -> None:
         for key in self.keys:

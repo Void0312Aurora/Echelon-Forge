@@ -21,8 +21,14 @@ from python.scenario.runtime.world_setup_compat import build_runtime_world_layou
 from python.scenario.runtime.world_setup_compat import extract_batch_world_setup_entity_ids
 from python.scenario.runtime.world_setup_compat import read_runtime_world_time_step_compat
 
+from python.rl.runtime.agent_shim import MAINTAINED
+from python.rl.runtime.agent_shim import OBS_DECISION_BELIEF_PACKET
+from python.rl.runtime.agent_shim import OBS_FACADE_OBSERVATION_PACKET
 from .compat import normalize_runtime_compatibility_enabled
 from .compat import runtime_compatibility_required_message
+from .command_chain_cache import project_world_leader_intent_maintained_assignment
+from .command_chain_cache import project_world_mission_command_maintained_assignment
+from .command_chain_cache import project_world_pilot_report_maintained_assignment
 from .command_chain_cache import project_world_task_order_maintained_assignment
 
 
@@ -34,14 +40,27 @@ def _maintained_task_order_write_required_message(surface: str) -> str:
     )
 
 
+def _maintained_command_chain_write_required_message(surface: str) -> str:
+    return (
+        f"{surface} requires maintained command-chain batch bindings; "
+        "MissionCommand, LeaderIntent, and PilotReport whole-shell fallback writers are "
+        "disabled for Python business paths."
+    )
+
+
+def _maintained_window_authorization_required_message(reason: str) -> str:
+    return (
+        "RuntimeFacadeAdapter.run_maintained_window requires explicit maintained "
+        "ObservationPacket/DecisionBelief provenance and AgentRole authorization; "
+        f"{reason}"
+    )
+
+
 @dataclass
 class _ObservationPacketCompat:
     refs: list[Any]
     agent_observations: list[Any]
     instrument_states: list[Any]
-    mission_commands: list[Any]
-    leader_intents: list[Any]
-    pilot_reports: list[Any]
 
 
 @dataclass
@@ -116,14 +135,21 @@ class _ScenarioLoaderRuntimeProxy:
         return self._adapter.get_time_step(self._world_index)
 
     def set_mission_command(self, entity_id: int, command: Any) -> None:
-        if hasattr(ef_py, "WorldMissionCommandAssignment"):
-            assignment = ef_py.WorldMissionCommandAssignment()
-            assignment.world_index = int(self._world_index)
-            assignment.entity_id = int(entity_id)
-            assignment.command = command
-            self._adapter.set_mission_commands_batch([assignment])
-            return
-        self._fallback_world().set_mission_command(int(entity_id), command)
+        try:
+            assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+            project_world_mission_command_maintained_assignment(
+                assignment,
+                world_index=int(self._world_index),
+                entity_id=int(entity_id),
+                compatibility_mission_command_shell=command,
+            )
+        except (AttributeError, RuntimeError) as exc:
+            raise RuntimeError(
+                _maintained_command_chain_write_required_message(
+                    "ScenarioLoader.set_mission_command"
+                )
+            ) from exc
+        self._adapter.set_mission_commands_maintained_batch([assignment])
 
     def set_task_order(self, entity_id: int, order: Any) -> None:
         try:
@@ -146,24 +172,38 @@ class _ScenarioLoaderRuntimeProxy:
         self._adapter.set_task_orders_maintained_batch([assignment])
 
     def set_leader_intent(self, entity_id: int, intent: Any) -> None:
-        if hasattr(ef_py, "WorldLeaderIntentAssignment"):
-            assignment = ef_py.WorldLeaderIntentAssignment()
-            assignment.world_index = int(self._world_index)
-            assignment.entity_id = int(entity_id)
-            assignment.intent = intent
-            self._adapter.set_leader_intents_batch([assignment])
-            return
-        self._fallback_world().set_leader_intent(int(entity_id), intent)
+        try:
+            assignment = ef_py.WorldLeaderIntentMaintainedAssignment()
+            project_world_leader_intent_maintained_assignment(
+                assignment,
+                world_index=int(self._world_index),
+                entity_id=int(entity_id),
+                compatibility_intent_shell=intent,
+            )
+        except (AttributeError, RuntimeError) as exc:
+            raise RuntimeError(
+                _maintained_command_chain_write_required_message(
+                    "ScenarioLoader.set_leader_intent"
+                )
+            ) from exc
+        self._adapter.set_leader_intents_maintained_batch([assignment])
 
     def set_pilot_report(self, entity_id: int, report: Any) -> None:
-        if hasattr(ef_py, "WorldPilotReportAssignment"):
-            assignment = ef_py.WorldPilotReportAssignment()
-            assignment.world_index = int(self._world_index)
-            assignment.entity_id = int(entity_id)
-            assignment.report = report
-            self._adapter.set_pilot_reports_batch([assignment])
-            return
-        self._fallback_world().set_pilot_report(int(entity_id), report)
+        try:
+            assignment = ef_py.WorldPilotReportMaintainedAssignment()
+            project_world_pilot_report_maintained_assignment(
+                assignment,
+                world_index=int(self._world_index),
+                entity_id=int(entity_id),
+                compatibility_report_shell=report,
+            )
+        except (AttributeError, RuntimeError) as exc:
+            raise RuntimeError(
+                _maintained_command_chain_write_required_message(
+                    "ScenarioLoader.set_pilot_report"
+                )
+            ) from exc
+        self._adapter.set_pilot_reports_maintained_batch([assignment])
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._fallback_world(), name)
@@ -191,6 +231,12 @@ class RuntimeFacadeAdapter:
         if self._compat_runtime is not None:
             return self._compat_runtime
         if self.facade is not None:
+            if not self.runtime_compatibility_enabled:
+                raise RuntimeError(
+                    runtime_compatibility_required_message(
+                        "RuntimeFacadeAdapter._compat_runtime_handle"
+                    )
+                )
             self._compat_runtime = self.facade.runtime()
             return self._compat_runtime
         if not self.runtime_compatibility_enabled:
@@ -220,7 +266,62 @@ class RuntimeFacadeAdapter:
             and hasattr(self.facade, "run_wp10_window")
             and hasattr(ef_py, "RuntimeWindowRequest")
             and hasattr(ef_py, "RuntimeWindowActionRequest")
+            and hasattr(ef_py, "AgentRole")
+            and hasattr(ef_py, "authorize_maintained_action_intent")
         )
+
+    def _runtime_window_authorized_action_role(
+        self,
+        *,
+        world_index: int,
+        entity_id: int,
+        information_state_label: str,
+        input_snapshot_version: str,
+        action_interface_kind: str,
+        action_interface_payload_type: str,
+        decision_model_kind: str,
+        decision_model_id: str,
+    ) -> Any:
+        normalized_label = str(information_state_label).strip()
+        if normalized_label not in {
+            OBS_FACADE_OBSERVATION_PACKET,
+            OBS_DECISION_BELIEF_PACKET,
+        }:
+            raise RuntimeError(
+                _maintained_window_authorization_required_message(
+                    f"unsupported provenance label {information_state_label!r}"
+                )
+            )
+
+        role = ef_py.AgentRole()
+        role.role.role_id = f"agent:{int(world_index)}:{int(entity_id)}"
+        role.role.role_type = "autopilot_controller"
+        role.authority_scope.scope = (
+            "mission_command"
+            if str(action_interface_payload_type) == "mission_command"
+            else "platform_control"
+        )
+        role.authority_scope.world_index = int(world_index)
+        role.authority_scope.has_world_index = True
+        role.authority_scope.entity_ids = [int(entity_id)]
+        if normalized_label == OBS_DECISION_BELIEF_PACKET:
+            role.information_state_source.information_state_layer = "DecisionBelief"
+            role.information_state_source.source_label = "observation_derived_belief"
+        else:
+            role.information_state_source.information_state_layer = "AgentObservation"
+            role.information_state_source.source_label = "facade_observation_packet"
+            role.information_state_source.observation_packet_ids = [
+                f"obs:{int(world_index)}:{int(entity_id)}"
+            ]
+        role.information_state_source.maintained_status = MAINTAINED
+        role.information_state_source.source_observation_versions = [
+            str(input_snapshot_version)
+        ]
+        role.decision_model_ref.kind = str(decision_model_kind)
+        role.decision_model_ref.id = str(decision_model_id)
+        role.action_interface.kind = str(action_interface_kind)
+        role.action_interface.payload_type = str(action_interface_payload_type)
+        return role
 
     def _store_window_evidence(
         self,
@@ -255,6 +356,9 @@ class RuntimeFacadeAdapter:
         window_id: str | None = None,
         input_snapshot_version: str | None = None,
         source_layer: str = "training_policy",
+        information_state_label: str | None = None,
+        decision_model_kind: str = "policy",
+        decision_model_id: str = "runtime_window_policy",
         include_engagement: bool = True,
         include_diagnostics: bool = True,
     ) -> RuntimeWindowEvidence | None:
@@ -278,9 +382,12 @@ class RuntimeFacadeAdapter:
         observation_request.refs = [observation_ref]
         observation_request.include_agent_observations = True
         observation_request.include_instrument_states = True
-        observation_request.include_mission_commands = False
-        observation_request.include_leader_intents = False
-        observation_request.include_pilot_reports = False
+        if hasattr(observation_request, "include_mission_commands"):
+            observation_request.include_mission_commands = False
+        if hasattr(observation_request, "include_leader_intents"):
+            observation_request.include_leader_intents = False
+        if hasattr(observation_request, "include_pilot_reports"):
+            observation_request.include_pilot_reports = False
         request.observation_request = observation_request
 
         engagement_request = ef_py.EngagementBatchRequest()
@@ -297,11 +404,12 @@ class RuntimeFacadeAdapter:
         if pilot_action is not None or mission_command is not None:
             action_request = ef_py.RuntimeWindowActionRequest()
             action_request.source_layer = str(source_layer)
-            action_request.input_snapshot_version = str(
+            snapshot_version = str(
                 input_snapshot_version
                 if input_snapshot_version is not None and str(input_snapshot_version).strip()
                 else f"obs:{int(world_index)}:{int(entity_id)}"
             )
+            action_request.input_snapshot_version = snapshot_version
             action_request.action_intent.source_id = (
                 f"{action_request.source_layer}:{int(world_index)}:{int(entity_id)}"
             )
@@ -311,8 +419,14 @@ class RuntimeFacadeAdapter:
             action_request.action_intent.target.entity_id = int(entity_id)
             action_request.action_intent.action_family = "direct_control"
             action_request.action_intent.merge_policy = "last_write_wins"
-            action_request.action_intent.action_interface.kind = "PilotActionAssignmentCompat"
-            action_request.action_intent.action_interface.payload_type = "pilot_action"
+            payload_type = "mission_command" if mission_command is not None else "pilot_action"
+            interface_kind = (
+                "CommandChainAssignmentCompat"
+                if mission_command is not None
+                else "PilotActionAssignmentCompat"
+            )
+            action_request.action_intent.action_interface.kind = interface_kind
+            action_request.action_intent.action_interface.payload_type = payload_type
             action_request.cadence_control.enabled = True
             action_request.cadence_control.hold_policy.hold_mode = "hold_last"
             action_request.cadence_control.hold_policy.validity_duration_s = 0.1
@@ -324,6 +438,26 @@ class RuntimeFacadeAdapter:
             if mission_command is not None:
                 action_request.action_intent.has_mission_command = True
                 action_request.action_intent.mission_command = mission_command
+            role = self._runtime_window_authorized_action_role(
+                world_index=int(world_index),
+                entity_id=int(entity_id),
+                information_state_label="" if information_state_label is None else str(information_state_label),
+                input_snapshot_version=snapshot_version,
+                action_interface_kind=interface_kind,
+                action_interface_payload_type=payload_type,
+                decision_model_kind=str(decision_model_kind),
+                decision_model_id=str(decision_model_id),
+            )
+            authorization = ef_py.authorize_maintained_action_intent(
+                role,
+                action_request.action_intent,
+            )
+            if not bool(getattr(authorization, "authorized", False)):
+                raise RuntimeError(
+                    _maintained_window_authorization_required_message(
+                        str(getattr(authorization, "reason", "") or "authorization failed")
+                    )
+                )
             request.action_requests = [action_request]
 
         result = self.facade.run_wp10_window(request)
@@ -580,9 +714,6 @@ class RuntimeFacadeAdapter:
         include_instrument_states = bool(
             True if request is None else getattr(request, "include_instrument_states", True)
         )
-        include_mission_commands = bool(
-            False if request is None else getattr(request, "include_mission_commands", False)
-        )
         return _ObservationPacketCompat(
             refs=refs,
             agent_observations=(
@@ -595,13 +726,6 @@ class RuntimeFacadeAdapter:
                 if include_instrument_states
                 else []
             ),
-            mission_commands=(
-                list(self.get_mission_commands_batch(refs))
-                if include_mission_commands
-                else []
-            ),
-            leader_intents=[],
-            pilot_reports=[],
         )
 
     def export_observation_packet_for_refs(
@@ -697,8 +821,8 @@ class RuntimeFacadeAdapter:
             return instrument_states[0]
         return self._compat_world(int(world_index)).get_instrument_state(int(entity_id))
 
-    def get_mission_commands_batch(self, refs: Sequence[Any]) -> list[Any]:
-        return list(self._batch_target().get_mission_commands_batch(list(refs)))
+    def get_mission_commands_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
+        return list(self._batch_target().get_mission_commands_maintained_batch(list(refs)))
 
     def get_task_orders_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
         batch_target = self._batch_target()
@@ -785,10 +909,25 @@ class RuntimeFacadeAdapter:
 
     def step_worlds(self, world_indices: Sequence[int]) -> None:
         self._last_window_evidence = None
-        self._compat_runtime_handle().step_worlds([int(index) for index in world_indices])
+        indices = [int(index) for index in world_indices]
+        if self.facade is not None:
+            if len(indices) == self.world_count() and indices == list(range(self.world_count())):
+                self.facade.step_batch()
+                return
+            if not self.runtime_compatibility_enabled:
+                raise RuntimeError(runtime_compatibility_required_message("RuntimeFacadeAdapter.step_worlds"))
+        self._compat_runtime_handle().step_worlds(indices)
 
-    def set_mission_commands_batch(self, assignments: Sequence[Any]) -> None:
-        self._batch_target().set_mission_commands_batch(list(assignments))
+    def set_mission_commands_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        batch_target = self._batch_target()
+        if hasattr(batch_target, "set_mission_commands_maintained_batch"):
+            batch_target.set_mission_commands_maintained_batch(list(assignments))
+            return
+        raise RuntimeError(
+            _maintained_command_chain_write_required_message(
+                "RuntimeFacadeAdapter.set_mission_commands_maintained_batch"
+            )
+        )
 
     def set_task_orders_maintained_batch(self, assignments: Sequence[Any]) -> None:
         batch_target = self._batch_target()
@@ -802,11 +941,27 @@ class RuntimeFacadeAdapter:
             )
         )
 
-    def set_leader_intents_batch(self, assignments: Sequence[Any]) -> None:
-        self._batch_target().set_leader_intents_batch(list(assignments))
+    def set_leader_intents_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        batch_target = self._batch_target()
+        if hasattr(batch_target, "set_leader_intents_maintained_batch"):
+            batch_target.set_leader_intents_maintained_batch(list(assignments))
+            return
+        raise RuntimeError(
+            _maintained_command_chain_write_required_message(
+                "RuntimeFacadeAdapter.set_leader_intents_maintained_batch"
+            )
+        )
 
-    def set_pilot_reports_batch(self, assignments: Sequence[Any]) -> None:
-        self._batch_target().set_pilot_reports_batch(list(assignments))
+    def set_pilot_reports_maintained_batch(self, assignments: Sequence[Any]) -> None:
+        batch_target = self._batch_target()
+        if hasattr(batch_target, "set_pilot_reports_maintained_batch"):
+            batch_target.set_pilot_reports_maintained_batch(list(assignments))
+            return
+        raise RuntimeError(
+            _maintained_command_chain_write_required_message(
+                "RuntimeFacadeAdapter.set_pilot_reports_maintained_batch"
+            )
+        )
 
 
 __all__ = ["RuntimeFacadeAdapter"]

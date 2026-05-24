@@ -480,6 +480,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                     window_id=f"leader_world:{int(env_idx)}:{int(handle.steps)}",
                     input_snapshot_version=f"obs:{int(env_idx)}:{int(handle.steps)}",
                     source_layer="training_policy",
+                    information_state_label="facade_observation_packet",
                     include_engagement=True,
                     include_diagnostics=True,
                 )

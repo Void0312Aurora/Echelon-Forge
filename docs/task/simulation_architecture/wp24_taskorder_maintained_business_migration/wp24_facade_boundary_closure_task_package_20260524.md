@@ -1,9 +1,11 @@
 # WP24 Facade Boundary Closure Task Package
 
-Status: `2026-05-24` confirmed corrective package after parallel subagent
-verification. This package extends the TaskOrder maintained business migration
-from "TaskOrder whole-shell retirement" into full facade/information-boundary
-closure.
+Status: `2026-05-24` focused close-out implementation in progress. The initial
+parallel subagent verification opened this corrective package; the current
+close-out has implemented the observation/tasking split, command-chain
+maintained contract wiring, runtime-window provenance authorization, and
+facade-owned normal batch stepping. Raw setup is explicitly quarantined; the
+remaining raw-runtime boundary debt is legacy single-world visual fallback.
 
 Chinese companion:
 [wp24_facade_boundary_closure_task_package_20260524.zh.md](wp24_facade_boundary_closure_task_package_20260524.zh.md)
@@ -17,8 +19,8 @@ boundary leaks.
 | Concern | Verdict | Evidence | Required response |
 | --- | --- | --- | --- |
 | `ObservationBatchPacket` mixes agent observation with command-side payloads. | Confirmed, P1. | `ObservationBatchPacket` exposes `mission_commands`, `leader_intents`, and `pilot_reports`; the packet has a single `AgentObservation` provenance. | Split observation export from command/tasking export and guard the packet shape. |
-| Scenario loading bypasses facade-owned boundaries. | Confirmed with calibration, P1. | `batch_apply.py` accepts a raw-runtime-shaped `batch_runtime`; maintained `WorldBatchVecEnv` currently passes an adapter, but the adapter still keeps raw runtime fallback. `UniversalEnv` directly creates `SimulationKernel`. | Move scenario setup behind maintained facade/adapter contracts and quarantine raw fallback. |
-| Facade/contract is still a dual-representation host. | Partially confirmed. | TaskOrder public whole-shell APIs are already retired; however `MissionCommand`, `LeaderIntent`, and `PilotReport` remain compatibility transport shells without maintained contract equivalents. | Add maintained command/tasking contracts or explicitly quarantine these shells as compatibility-only. |
+| Scenario loading bypasses facade-owned boundaries. | Confirmed with calibration, P1; setup and normal batch stepping are now guarded. | `batch_apply.py` now defaults to maintained setup-target APIs; `RuntimeFacadeAdapter.step_worlds()` uses facade `step_batch()` for normal full-batch stepping and rejects partial raw stepping without explicit compatibility opt-in. `UniversalEnv` raw `SimulationKernel` remains gated. | Keep setup/step paths behind maintained facade/adapter contracts; schedule legacy visual fallback retirement separately. |
+| Facade/contract is still a dual-representation host. | Partially confirmed at package open; close-out implemented for command-chain business paths. | TaskOrder public whole-shell APIs are retired. `MissionCommand`, `LeaderIntent`, and `PilotReport` now have maintained contract equivalents for runtime/facade/binding/Python business flow; remaining whole-shell APIs are compatibility/diagnostics transport below the maintained path. | Keep maintained business callers on the contract route and guard against whole-shell writer re-entry. |
 | `agent_shim.py` defaults to `COMPATIBILITY_ADAPTER`. | Confirmed with calibration, P2. | The default is fail-closed metadata, not direct runtime execution, but maintained callers can still inherit compatibility provenance accidentally. | Maintained business paths must pass maintained provenance explicitly and be guarded. |
 
 ## 2. Mandatory Work Lanes
@@ -129,9 +131,9 @@ ideas.
 | Lane | Owner scope | Files to start from | Output |
 | --- | --- | --- | --- |
 | WP24-I | Facade DTO and Python binding packet split. | `src/runtime/facade/runtime_facade_types.h`, `src/runtime/facade/runtime_facade.cpp`, `src/interfaces/python/bindings_runtime.cpp`, DTO tests. | Pure observation packet plus command/tasking export replacement. |
-| WP24-J | Scenario setup facade ownership. | `python/scenario/runtime/batch_apply.py`, `python/scenario/runtime/world_setup_compat.py`, `python/rl/runtime/world_batch/adapter.py`, `gym_envs/universal_env.py`, `train.py`. | Maintained setup target and raw-runtime quarantine. |
-| WP24-K | Command-chain maintained contracts. | `src/runtime/contracts/world_batch_contracts.h`, runtime/facade APIs, command-chain tests. | Maintained MissionCommand/LeaderIntent/PilotReport contracts or explicit quarantine APIs. |
-| WP24-L | Python provenance call-site hardening. | `python/rl/runtime/agent_shim.py`, runtime Python callers, Law 14 tests. | Explicit maintained provenance at maintained call sites. |
+| WP24-J | Scenario setup facade ownership. | `python/scenario/runtime/batch_apply.py`, `python/scenario/runtime/world_setup_compat.py`, `python/rl/runtime/world_batch/adapter.py`, `gym_envs/universal_env.py`, `train.py`. | Maintained setup target, facade-owned normal batch step, raw setup quarantine, and explicit legacy visual fallback debt. |
+| WP24-K | Command-chain maintained contracts. | `src/runtime/contracts/world_batch_contracts.h`, runtime/facade APIs, command-chain tests. | Implemented maintained MissionCommand/LeaderIntent/PilotReport contracts through runtime/facade/bindings and Python business writers; whole-shell APIs stay compatibility/diagnostics-only. |
+| WP24-L | Python provenance call-site hardening. | `python/rl/runtime/agent_shim.py`, runtime Python callers, Law 14 tests. | Explicit maintained provenance at maintained call sites and runtime-window action authorization. |
 
 ## 4. Validation Gate
 
@@ -139,7 +141,7 @@ Focused validation for this package must include:
 
 ```bash
 git diff --check
-python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runtime/world_setup_compat.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/agent_shim.py gym_envs/universal_env.py train.py
+python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runtime/world_setup_compat.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch/command_chain_cache.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py python/rl/runtime/agent_shim.py gym_envs/universal_env.py train.py
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/test_agent_shim.py
 PYTHONPATH=build-workshop python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_policy_belief_boundaries.py tests/architecture/test_wp12_law14_read_side_enforcement.py tests/architecture/test_wp22_dto_domain_shell_guard.py
@@ -154,7 +156,8 @@ shell paths cannot re-enter maintained production flow by default.
 
 ### WP24-K
 
-Implemented the runtime-contract side of the command-chain maintained route:
+Implemented the command-chain maintained route through runtime contracts,
+facade/binding surfaces, and Python business writers:
 
 - added slice-based `MissionCommandMaintainedBatchContract`,
   `LeaderIntentMaintainedBatchContract`, and `PilotReportMaintainedBatchContract`;
@@ -162,9 +165,39 @@ Implemented the runtime-contract side of the command-chain maintained route:
   only maintained contracts, not whole-shell payloads;
 - kept `WorldMissionCommandAssignment`, `WorldLeaderIntentAssignment`, and
   `WorldPilotReportAssignment` explicitly compatibility-shell transports;
-- added `WorldBatchRuntime` maintained batch read/write methods for the three
-  payload families, projecting to compatibility storage internally until the
-  ECS storage split is scheduled.
+- added `WorldBatchRuntime` and `RuntimeFacade` maintained batch read/write
+  methods for the three payload families, projecting to compatibility storage
+  internally until the ECS storage split is scheduled;
+- exposed Python bindings for the maintained contracts, maintained assignment
+  structs, maintained batch methods, and shell-to-contract projectors;
+- migrated Python scenario-loader, VecEnv, cooperative VecEnv, and multi-agent
+  tasking reads/writes to `World*MaintainedAssignment` and
+  `get/set_*_maintained_batch`;
+- added architecture and runtime tests that reject old whole-shell writer
+  re-entry on Python maintained business paths.
 
-Integration still needs WP24-I/main-thread facade and binding wiring before
-Python or facade callers can use these new runtime methods directly.
+`WorldMissionCommandAssignment`, `WorldLeaderIntentAssignment`, and
+`WorldPilotReportAssignment` remain only as lower-level compatibility shell
+transports for runtime-window coordination, diagnostics, and low-level tests.
+They are not accepted maintained Python business APIs.
+
+### WP24-J / WP24-L
+
+Additional close-out hardening completed after focused review:
+
+- `RuntimeFacadeAdapter.step_worlds()` now uses facade-owned `step_batch()` for
+  normal full-batch stepping and fails closed before raw runtime partial stepping
+  unless `runtime_compatibility_enabled=True` is explicit;
+- `apply_world_setup_request_maintained()` rejects raw-runtime-shaped setup
+  targets even if future bindings add similarly named setup methods;
+- `run_maintained_window()` requires an explicit maintained
+  ObservationPacket/DecisionBelief provenance label before injecting actions and
+  calls `authorize_maintained_action_intent()` before executing the runtime
+  window;
+- single-world and leader runtime callers pass
+  `facade_observation_packet` provenance explicitly.
+
+The remaining WP24-J boundary debt is legacy visual observation fallback that
+still reaches single-world raw visual APIs through the adapter. It is isolated as
+the next concrete cleanup target because replacing it cleanly needs a facade
+visual single-world API or a hard compatibility gate decision.

@@ -413,6 +413,16 @@ def test_world_batch_adapter_keeps_runtime_escape_hatch_lazy_and_explicit() -> N
     assert "batch_target = self.facade if self.facade is not None else self._compat_runtime_handle()" in source
     assert "compute_world_batch_visual_observation_batch_numpy(" in source
     assert "compute_world_batch_visual_observation_batch_export(" in source
+    step_worlds_section = source.split("def step_worlds(self, world_indices: Sequence[int]) -> None:", 1)[1].split(
+        "def set_mission_commands_maintained_batch",
+        1,
+    )[0]
+    assert "self.facade.step_batch()" in step_worlds_section
+    assert 'runtime_compatibility_required_message("RuntimeFacadeAdapter.step_worlds")' in step_worlds_section
+    assert "self._compat_runtime_handle().step_worlds(indices)" in step_worlds_section
+    assert step_worlds_section.index("self.facade.step_batch()") < step_worlds_section.index(
+        "self._compat_runtime_handle().step_worlds(indices)"
+    )
 
 
 def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
@@ -423,6 +433,8 @@ def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
     assert "def apply_runtime_world_layout_request_compatibility_quarantine(runtime: Any, request: Any) -> Any:" in seam_source
     assert "def apply_runtime_world_layout_request_compat(runtime: Any, request: Any) -> Any:" in seam_source
     assert "def apply_world_setup_request_maintained(setup_target: Any, request: Any) -> list[int]:" in seam_source
+    assert 'hasattr(setup_target, "world")' in seam_source
+    assert 'not hasattr(setup_target, "facade")' in seam_source
     assert "def apply_world_setup_payload_maintained(" in seam_source
     assert "def apply_world_setup_payload_compatibility_quarantine(" in seam_source
     assert "def read_runtime_world_time_step_compat(" in seam_source
@@ -1224,3 +1236,58 @@ def test_wp24_python_maintained_observation_consumers_do_not_read_compatibility_
     for source in (world_batch_vec_env, cooperative_vec_env):
         assert "include_task_orders=False" not in source
         assert ".task_orders" not in source
+
+
+def test_wp24_python_command_chain_business_writes_use_maintained_contracts() -> None:
+    adapter = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
+    ).read_text(encoding="utf-8")
+    command_chain_cache = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "command_chain_cache.py"
+    ).read_text(encoding="utf-8")
+    world_batch_vec_env = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
+    ).read_text(encoding="utf-8")
+    cooperative_vec_env = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
+    ).read_text(encoding="utf-8")
+    multi_agent_runtime = (
+        REPO_ROOT / "python" / "rl" / "runtime" / "multi_agent_runtime.py"
+    ).read_text(encoding="utf-8")
+
+    for source in (adapter, world_batch_vec_env, cooperative_vec_env):
+        assert "WorldMissionCommandMaintainedAssignment" in source
+        assert "WorldLeaderIntentMaintainedAssignment" in source
+        assert "WorldPilotReportMaintainedAssignment" in source
+        assert "set_mission_commands_maintained_batch" in source
+        assert "set_leader_intents_maintained_batch" in source
+        assert "set_pilot_reports_maintained_batch" in source
+
+    for forbidden in (
+        "WorldMissionCommandAssignment()",
+        "WorldLeaderIntentAssignment()",
+        "WorldPilotReportAssignment()",
+        "set_mission_commands_batch(",
+        "set_leader_intents_batch(",
+        "set_pilot_reports_batch(",
+        "project_world_leader_intent_assignment_transport",
+        "project_world_pilot_report_assignment_transport",
+    ):
+        assert forbidden not in adapter
+        assert forbidden not in world_batch_vec_env
+        assert forbidden not in cooperative_vec_env
+
+    for required in (
+        "mission_command_maintained_batch_contract",
+        "leader_intent_maintained_batch_contract",
+        "pilot_report_maintained_batch_contract",
+        "project_world_mission_command_maintained_assignment",
+        "project_world_leader_intent_maintained_assignment",
+        "project_world_pilot_report_maintained_assignment",
+    ):
+        assert required in command_chain_cache
+
+    assert "get_mission_commands_maintained_batch" in multi_agent_runtime
+    assert "get_mission_commands_batch" not in multi_agent_runtime
+    assert "mission_commands=[]" not in multi_agent_runtime
+    assert 'getattr(tasking_packet, "mission_commands"' not in multi_agent_runtime

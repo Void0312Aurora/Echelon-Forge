@@ -19,8 +19,9 @@ import ef_py  # noqa: E402
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
 from python.rl.runtime.world_batch import command_chain_cache  # noqa: E402
 from python.rl.runtime.world_batch.command_chain_cache import (  # noqa: E402
-    project_world_leader_intent_assignment_transport,
-    project_world_pilot_report_assignment_transport,
+    project_world_leader_intent_maintained_assignment,
+    project_world_mission_command_maintained_assignment,
+    project_world_pilot_report_maintained_assignment,
     project_world_task_order_maintained_assignment,
 )
 import python.rl.runtime.world_batch.adapter as world_batch_adapter_module  # noqa: E402
@@ -540,17 +541,19 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 intent_calls: list[int] = []
                 report_calls: list[int] = []
 
-                original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
+                original_set_mission = vec_env._runtime_adapter.set_mission_commands_maintained_batch
                 original_set_task = vec_env._runtime_adapter.set_task_orders_maintained_batch
-                original_set_intent = vec_env._runtime_adapter.set_leader_intents_batch
-                original_set_report = vec_env._runtime_adapter.set_pilot_reports_batch
+                original_set_intent = vec_env._runtime_adapter.set_leader_intents_maintained_batch
+                original_set_report = vec_env._runtime_adapter.set_pilot_reports_maintained_batch
+                original_project_mission = vec_env_module.project_world_mission_command_maintained_assignment
                 original_project_task = vec_env_module.project_world_task_order_maintained_assignment
-                original_project_intent = vec_env_module.project_world_leader_intent_assignment_transport
-                original_project_report = vec_env_module.project_world_pilot_report_assignment_transport
+                original_project_intent = vec_env_module.project_world_leader_intent_maintained_assignment
+                original_project_report = vec_env_module.project_world_pilot_report_maintained_assignment
                 projection_calls: list[tuple[str, int, int]] = []
 
                 def _track_mission(assignments):
                     materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "mission_command") for assignment in materialized))
                     mission_calls.append(len(materialized))
                     return original_set_mission(materialized)
 
@@ -562,13 +565,24 @@ class WorldBatchVecEnvTests(unittest.TestCase):
 
                 def _track_intent(assignments):
                     materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "leader_intent") for assignment in materialized))
                     intent_calls.append(len(materialized))
                     return original_set_intent(materialized)
 
                 def _track_report(assignments):
                     materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "pilot_report") for assignment in materialized))
                     report_calls.append(len(materialized))
                     return original_set_report(materialized)
+
+                def _track_project_mission(assignment, *, world_index, entity_id, compatibility_mission_command_shell):
+                    projection_calls.append(("mission", int(world_index), int(entity_id)))
+                    return original_project_mission(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_mission_command_shell=compatibility_mission_command_shell,
+                    )
 
                 def _track_project_intent(assignment, *, world_index, entity_id, compatibility_intent_shell):
                     projection_calls.append(("intent", int(world_index), int(entity_id)))
@@ -597,13 +611,14 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                         compatibility_task_order_shell=compatibility_task_order_shell,
                     )
 
-                vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_mission_commands_maintained_batch = _track_mission  # type: ignore[method-assign]
                 vec_env._runtime_adapter.set_task_orders_maintained_batch = _track_task  # type: ignore[method-assign]
-                vec_env._runtime_adapter.set_leader_intents_batch = _track_intent  # type: ignore[method-assign]
-                vec_env._runtime_adapter.set_pilot_reports_batch = _track_report  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_leader_intents_maintained_batch = _track_intent  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_pilot_reports_maintained_batch = _track_report  # type: ignore[method-assign]
+                vec_env_module.project_world_mission_command_maintained_assignment = _track_project_mission  # type: ignore[assignment]
                 vec_env_module.project_world_task_order_maintained_assignment = _track_project_task  # type: ignore[assignment]
-                vec_env_module.project_world_leader_intent_assignment_transport = _track_project_intent  # type: ignore[assignment]
-                vec_env_module.project_world_pilot_report_assignment_transport = _track_project_report  # type: ignore[assignment]
+                vec_env_module.project_world_leader_intent_maintained_assignment = _track_project_intent  # type: ignore[assignment]
+                vec_env_module.project_world_pilot_report_maintained_assignment = _track_project_report  # type: ignore[assignment]
 
                 try:
                     vec_env.reset()
@@ -617,7 +632,11 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     self.assertGreater(first_counts[1], 0)
                     self.assertGreater(first_counts[2], 0)
                     self.assertGreater(first_counts[3], 0)
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_mission_commands_batch"))
                     self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_leader_intents_batch"))
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_pilot_reports_batch"))
+                    self.assertTrue(any(kind == "mission" for kind, _world_index, _entity_id in projection_calls))
                     self.assertTrue(any(kind == "task" for kind, _world_index, _entity_id in projection_calls))
                     self.assertTrue(any(kind == "intent" for kind, _world_index, _entity_id in projection_calls))
                     self.assertTrue(any(kind == "report" for kind, _world_index, _entity_id in projection_calls))
@@ -632,9 +651,10 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     self.assertEqual(first_counts, second_counts)
                     self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
                 finally:
+                    vec_env_module.project_world_mission_command_maintained_assignment = original_project_mission  # type: ignore[assignment]
                     vec_env_module.project_world_task_order_maintained_assignment = original_project_task  # type: ignore[assignment]
-                    vec_env_module.project_world_leader_intent_assignment_transport = original_project_intent  # type: ignore[assignment]
-                    vec_env_module.project_world_pilot_report_assignment_transport = original_project_report  # type: ignore[assignment]
+                    vec_env_module.project_world_leader_intent_maintained_assignment = original_project_intent  # type: ignore[assignment]
+                    vec_env_module.project_world_pilot_report_maintained_assignment = original_project_report  # type: ignore[assignment]
             finally:
                 vec_env.close()
 
@@ -654,14 +674,14 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 vec_env.seed(7)
 
                 mission_calls: list[int] = []
-                original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
+                original_set_mission = vec_env._runtime_adapter.set_mission_commands_maintained_batch
 
                 def _track_mission(assignments):
                     materialized = list(assignments)
                     mission_calls.append(len(materialized))
                     return original_set_mission(materialized)
 
-                vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_mission_commands_maintained_batch = _track_mission  # type: ignore[method-assign]
 
                 vec_env.reset()
                 first_total = sum(mission_calls)
@@ -732,11 +752,14 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                         return adapter.get_time_step(int(env_idx))
 
                     def set_mission_command(self, entity_id, command):
-                        assignment = ef_py.WorldMissionCommandAssignment()
-                        assignment.world_index = int(env_idx)
-                        assignment.entity_id = int(entity_id)
-                        assignment.command = command
-                        adapter.set_mission_commands_batch([assignment])
+                        assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+                        project_world_mission_command_maintained_assignment(
+                            assignment,
+                            world_index=int(env_idx),
+                            entity_id=int(entity_id),
+                            compatibility_mission_command_shell=command,
+                        )
+                        adapter.set_mission_commands_maintained_batch([assignment])
 
                     def set_task_order(self, entity_id, order):
                         assignment = ef_py.WorldTaskOrderMaintainedAssignment()
@@ -749,24 +772,24 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                         adapter.set_task_orders_maintained_batch([assignment])
 
                     def set_leader_intent(self, entity_id, intent):
-                        assignment = ef_py.WorldLeaderIntentAssignment()
-                        project_world_leader_intent_assignment_transport(
+                        assignment = ef_py.WorldLeaderIntentMaintainedAssignment()
+                        project_world_leader_intent_maintained_assignment(
                             assignment,
                             world_index=int(env_idx),
                             entity_id=int(entity_id),
                             compatibility_intent_shell=intent,
                         )
-                        adapter.set_leader_intents_batch([assignment])
+                        adapter.set_leader_intents_maintained_batch([assignment])
 
                     def set_pilot_report(self, entity_id, report):
-                        assignment = ef_py.WorldPilotReportAssignment()
-                        project_world_pilot_report_assignment_transport(
+                        assignment = ef_py.WorldPilotReportMaintainedAssignment()
+                        project_world_pilot_report_maintained_assignment(
                             assignment,
                             world_index=int(env_idx),
                             entity_id=int(entity_id),
                             compatibility_report_shell=report,
                         )
-                        adapter.set_pilot_reports_batch([assignment])
+                        adapter.set_pilot_reports_maintained_batch([assignment])
 
                     def __getattr__(self, name):
                         touched_fallback_calls.append(str(name))
@@ -839,6 +862,99 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         self.assertFalse(hasattr(adapter, "set_task_orders_batch_compatibility"))
         self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch"))
         self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch_compatibility"))
+
+    def test_world_batch_adapter_step_worlds_uses_facade_batch_step_without_raw_runtime_escape(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(2)
+
+        class _FacadeStepOnly:
+            def __init__(self) -> None:
+                self.step_batch_calls = 0
+
+            def step_batch(self):
+                self.step_batch_calls += 1
+
+            def world_count(self):
+                return 2
+
+            def runtime(self):
+                raise AssertionError("maintained step_worlds must not request raw facade.runtime()")
+
+        facade = _FacadeStepOnly()
+        adapter.facade = facade  # type: ignore[assignment]
+
+        adapter.step_worlds([0, 1])
+
+        self.assertEqual(facade.step_batch_calls, 1)
+
+    def test_world_batch_adapter_step_worlds_rejects_partial_raw_runtime_step_without_compatibility_opt_in(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(2)
+
+        class _FacadeWithRawRuntime:
+            def step_batch(self):
+                raise AssertionError("partial step should not be widened silently")
+
+            def world_count(self):
+                return 2
+
+            def runtime(self):
+                raise AssertionError("partial maintained step must fail closed before raw runtime")
+
+        adapter.facade = _FacadeWithRawRuntime()  # type: ignore[assignment]
+
+        with self.assertRaisesRegex(RuntimeError, "RuntimeFacadeAdapter.step_worlds"):
+            adapter.step_worlds([1])
+
+    def test_world_batch_adapter_maintained_window_authorizes_explicit_facade_observation_provenance(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+
+        class _FacadeWindow:
+            def __init__(self) -> None:
+                self.requests: list[Any] = []
+
+            def run_wp10_window(self, request):
+                self.requests.append(request)
+                result = ef_py.RuntimeWindowResult()
+                result.observation_packet = ef_py.ObservationBatchPacket()
+                result.engagement_packet = ef_py.EngagementEventPacket()
+                return result
+
+        facade = _FacadeWindow()
+        adapter.facade = facade  # type: ignore[assignment]
+        action = ef_py.PilotAction()
+        action.throttle = 0.75
+
+        evidence = adapter.run_maintained_window(
+            world_index=0,
+            entity_id=42,
+            pilot_action=action,
+            input_snapshot_version="obs:0:42:7",
+            information_state_label="facade_observation_packet",
+            decision_model_id="blue-policy",
+        )
+
+        self.assertIsNotNone(evidence)
+        self.assertEqual(len(facade.requests), 1)
+        action_request = list(facade.requests[0].action_requests)[0]
+        self.assertEqual(str(action_request.input_snapshot_version), "obs:0:42:7")
+        self.assertEqual(str(action_request.action_intent.action_interface.kind), "PilotActionAssignmentCompat")
+        self.assertEqual(str(action_request.action_intent.action_interface.payload_type), "pilot_action")
+
+    def test_world_batch_adapter_maintained_window_rejects_compatibility_provenance_label(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+
+        class _FacadeWindow:
+            def run_wp10_window(self, request):
+                raise AssertionError("authorization should fail before runtime window execution")
+
+        adapter.facade = _FacadeWindow()  # type: ignore[assignment]
+
+        with self.assertRaisesRegex(RuntimeError, "requires explicit maintained ObservationPacket/DecisionBelief"):
+            adapter.run_maintained_window(
+                world_index=0,
+                entity_id=42,
+                pilot_action=ef_py.PilotAction(),
+                information_state_label="agent_observation_compat",
+            )
 
     def test_world_batch_adapter_loader_runtime_task_order_write_requires_maintained_binding(self) -> None:
         adapter = vec_env_module._RuntimeFacadeAdapter(1)

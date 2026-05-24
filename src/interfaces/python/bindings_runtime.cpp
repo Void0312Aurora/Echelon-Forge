@@ -1448,6 +1448,28 @@ void bind_runtime(nb::module_& m) {
             &PilotReportMaintainedBatchContract::naval_command_authority
         );
 
+    m.def(
+        "mission_command_maintained_batch_contract",
+        [](const MissionCommand& command) {
+            return mission_command_maintained_batch_contract(command);
+        },
+        nb::arg("command")
+    );
+    m.def(
+        "leader_intent_maintained_batch_contract",
+        [](const LeaderIntent& intent) {
+            return leader_intent_maintained_batch_contract(intent);
+        },
+        nb::arg("intent")
+    );
+    m.def(
+        "pilot_report_maintained_batch_contract",
+        [](const PilotReport& report) {
+            return pilot_report_maintained_batch_contract(report);
+        },
+        nb::arg("report")
+    );
+
     nb::class_<RuntimeExperimentAncestry>(m, "RuntimeExperimentAncestry")
         .def(nb::init<>())
         .def_rw(

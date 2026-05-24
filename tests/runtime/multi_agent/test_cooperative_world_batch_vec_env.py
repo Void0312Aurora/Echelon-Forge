@@ -1335,18 +1335,21 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                 intent_calls: list[int] = []
                 report_calls: list[int] = []
 
-                original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
+                original_set_mission = vec_env._runtime_adapter.set_mission_commands_maintained_batch
                 original_set_task = vec_env._runtime_adapter.set_task_orders_maintained_batch
-                original_set_intent = vec_env._runtime_adapter.set_leader_intents_batch
-                original_set_report = vec_env._runtime_adapter.set_pilot_reports_batch
+                original_set_intent = vec_env._runtime_adapter.set_leader_intents_maintained_batch
+                original_set_report = vec_env._runtime_adapter.set_pilot_reports_maintained_batch
+                original_project_mission = cooperative_vec_env_module.project_world_mission_command_maintained_assignment
                 original_project_task = cooperative_vec_env_module.project_world_task_order_maintained_assignment
-                original_project_intent = cooperative_vec_env_module.project_world_leader_intent_assignment_transport
-                original_project_report = cooperative_vec_env_module.project_world_pilot_report_assignment_transport
+                original_project_intent = cooperative_vec_env_module.project_world_leader_intent_maintained_assignment
+                original_project_report = cooperative_vec_env_module.project_world_pilot_report_maintained_assignment
                 projection_calls: list[tuple[str, int, int]] = []
 
                 def _track_mission(assignments):
-                    mission_calls.append(len(list(assignments)))
-                    return original_set_mission(assignments)
+                    materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "mission_command") for assignment in materialized))
+                    mission_calls.append(len(materialized))
+                    return original_set_mission(materialized)
 
                 def _track_task(assignments):
                     materialized = list(assignments)
@@ -1355,12 +1358,25 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                     return original_set_task(materialized)
 
                 def _track_intent(assignments):
-                    intent_calls.append(len(list(assignments)))
-                    return original_set_intent(assignments)
+                    materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "leader_intent") for assignment in materialized))
+                    intent_calls.append(len(materialized))
+                    return original_set_intent(materialized)
 
                 def _track_report(assignments):
-                    report_calls.append(len(list(assignments)))
-                    return original_set_report(assignments)
+                    materialized = list(assignments)
+                    self.assertTrue(all(hasattr(assignment, "pilot_report") for assignment in materialized))
+                    report_calls.append(len(materialized))
+                    return original_set_report(materialized)
+
+                def _track_project_mission(assignment, *, world_index, entity_id, compatibility_mission_command_shell):
+                    projection_calls.append(("mission", int(world_index), int(entity_id)))
+                    return original_project_mission(
+                        assignment,
+                        world_index=world_index,
+                        entity_id=entity_id,
+                        compatibility_mission_command_shell=compatibility_mission_command_shell,
+                    )
 
                 def _track_project_intent(assignment, *, world_index, entity_id, compatibility_intent_shell):
                     projection_calls.append(("intent", int(world_index), int(entity_id)))
@@ -1389,13 +1405,14 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                         compatibility_task_order_shell=compatibility_task_order_shell,
                     )
 
-                vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_mission_commands_maintained_batch = _track_mission  # type: ignore[method-assign]
                 vec_env._runtime_adapter.set_task_orders_maintained_batch = _track_task  # type: ignore[method-assign]
-                vec_env._runtime_adapter.set_leader_intents_batch = _track_intent  # type: ignore[method-assign]
-                vec_env._runtime_adapter.set_pilot_reports_batch = _track_report  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_leader_intents_maintained_batch = _track_intent  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_pilot_reports_maintained_batch = _track_report  # type: ignore[method-assign]
+                cooperative_vec_env_module.project_world_mission_command_maintained_assignment = _track_project_mission  # type: ignore[assignment]
                 cooperative_vec_env_module.project_world_task_order_maintained_assignment = _track_project_task  # type: ignore[assignment]
-                cooperative_vec_env_module.project_world_leader_intent_assignment_transport = _track_project_intent  # type: ignore[assignment]
-                cooperative_vec_env_module.project_world_pilot_report_assignment_transport = _track_project_report  # type: ignore[assignment]
+                cooperative_vec_env_module.project_world_leader_intent_maintained_assignment = _track_project_intent  # type: ignore[assignment]
+                cooperative_vec_env_module.project_world_pilot_report_maintained_assignment = _track_project_report  # type: ignore[assignment]
 
                 try:
                     world.command_chain_dirty = True
@@ -1410,7 +1427,11 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                     self.assertGreater(first_counts[1], 0)
                     self.assertGreater(first_counts[2], 0)
                     self.assertGreater(first_counts[3], 0)
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_mission_commands_batch"))
                     self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_leader_intents_batch"))
+                    self.assertFalse(hasattr(vec_env._runtime_adapter, "set_pilot_reports_batch"))
+                    self.assertTrue(any(kind == "mission" for kind, _world_index, _entity_id in projection_calls))
                     self.assertTrue(any(kind == "task" for kind, _world_index, _entity_id in projection_calls))
                     self.assertTrue(any(kind == "intent" for kind, _world_index, _entity_id in projection_calls))
                     self.assertTrue(any(kind == "report" for kind, _world_index, _entity_id in projection_calls))
@@ -1426,9 +1447,10 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                     self.assertEqual(first_counts, second_counts)
                     self.assertFalse(hasattr(vec_env._runtime_adapter, "set_task_orders_batch"))
                 finally:
+                    cooperative_vec_env_module.project_world_mission_command_maintained_assignment = original_project_mission  # type: ignore[assignment]
                     cooperative_vec_env_module.project_world_task_order_maintained_assignment = original_project_task  # type: ignore[assignment]
-                    cooperative_vec_env_module.project_world_leader_intent_assignment_transport = original_project_intent  # type: ignore[assignment]
-                    cooperative_vec_env_module.project_world_pilot_report_assignment_transport = original_project_report  # type: ignore[assignment]
+                    cooperative_vec_env_module.project_world_leader_intent_maintained_assignment = original_project_intent  # type: ignore[assignment]
+                    cooperative_vec_env_module.project_world_pilot_report_maintained_assignment = original_project_report  # type: ignore[assignment]
             finally:
                 vec_env.close()
 
@@ -1453,14 +1475,14 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
                 world = vec_env._worlds[0]
                 vec_env.reset()
                 mission_calls: list[int] = []
-                original_set_mission = vec_env._runtime_adapter.set_mission_commands_batch
+                original_set_mission = vec_env._runtime_adapter.set_mission_commands_maintained_batch
 
                 def _track_mission(assignments):
                     materialized = list(assignments)
                     mission_calls.append(len(materialized))
                     return original_set_mission(materialized)
 
-                vec_env._runtime_adapter.set_mission_commands_batch = _track_mission  # type: ignore[method-assign]
+                vec_env._runtime_adapter.set_mission_commands_maintained_batch = _track_mission  # type: ignore[method-assign]
 
                 world.command_chain_dirty = True
                 vec_env._sync_command_chain_batch([0])

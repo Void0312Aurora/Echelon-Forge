@@ -127,6 +127,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
                 window_id=f"single_world:{int(env_idx)}:{int(handle.steps)}",
                 input_snapshot_version=f"obs:{int(env_idx)}:{int(handle.steps)}",
                 source_layer="training_policy",
+                information_state_label="facade_observation_packet",
                 include_engagement=True,
                 include_diagnostics=True,
             )

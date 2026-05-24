@@ -85,6 +85,30 @@ def mission_command_snapshot(value: Any) -> tuple[Any, ...] | None:
     return command_contract_snapshot(value, _bound_fields("MissionCommand"))
 
 
+def mission_command_maintained_batch_contract(
+    compatibility_mission_command_shell: Any,
+) -> Any:
+    return _projection_helper(
+        "MissionCommand",
+        "mission_command_maintained_batch_contract",
+    )(compatibility_mission_command_shell)
+
+
+def project_world_mission_command_maintained_assignment(
+    assignment: Any,
+    *,
+    world_index: int,
+    entity_id: int,
+    compatibility_mission_command_shell: Any,
+) -> Any:
+    assignment.world_index = int(world_index)
+    assignment.entity_id = int(entity_id)
+    assignment.mission_command = mission_command_maintained_batch_contract(
+        compatibility_mission_command_shell
+    )
+    return assignment
+
+
 def task_order_snapshot(value: Any) -> tuple[Any, ...] | None:
     if value is None:
         return None
@@ -240,7 +264,16 @@ def pilot_report_snapshot(value: Any) -> tuple[Any, ...] | None:
     )
 
 
-def project_world_leader_intent_assignment_transport(
+def leader_intent_maintained_batch_contract(
+    compatibility_intent_shell: Any,
+) -> Any:
+    return _projection_helper(
+        "LeaderIntent",
+        "leader_intent_maintained_batch_contract",
+    )(compatibility_intent_shell)
+
+
+def project_world_leader_intent_maintained_assignment(
     assignment: Any,
     *,
     world_index: int,
@@ -249,7 +282,9 @@ def project_world_leader_intent_assignment_transport(
 ) -> Any:
     assignment.world_index = int(world_index)
     assignment.entity_id = int(entity_id)
-    assignment.intent = compatibility_intent_shell
+    assignment.leader_intent = leader_intent_maintained_batch_contract(
+        compatibility_intent_shell
+    )
     return assignment
 
 
@@ -299,7 +334,16 @@ def project_world_task_order_maintained_assignment(
     return assignment
 
 
-def project_world_pilot_report_assignment_transport(
+def pilot_report_maintained_batch_contract(
+    compatibility_report_shell: Any,
+) -> Any:
+    return _projection_helper(
+        "PilotReport",
+        "pilot_report_maintained_batch_contract",
+    )(compatibility_report_shell)
+
+
+def project_world_pilot_report_maintained_assignment(
     assignment: Any,
     *,
     world_index: int,
@@ -308,7 +352,9 @@ def project_world_pilot_report_assignment_transport(
 ) -> Any:
     assignment.world_index = int(world_index)
     assignment.entity_id = int(entity_id)
-    assignment.report = compatibility_report_shell
+    assignment.pilot_report = pilot_report_maintained_batch_contract(
+        compatibility_report_shell
+    )
     return assignment
 
 
@@ -318,16 +364,20 @@ def snapshot_changed(previous: Any, current: Any) -> bool:
 
 __all__ = [
     "leader_intent_air_owner_slice_snapshot",
+    "leader_intent_maintained_batch_contract",
     "leader_intent_naval_owner_slice_snapshot",
     "leader_intent_shared_core_projection_snapshot",
     "leader_intent_snapshot",
+    "mission_command_maintained_batch_contract",
     "mission_command_snapshot",
+    "pilot_report_maintained_batch_contract",
     "pilot_report_air_owner_slice_snapshot",
     "pilot_report_naval_owner_slice_snapshot",
     "pilot_report_shared_core_projection_snapshot",
     "pilot_report_snapshot",
-    "project_world_leader_intent_assignment_transport",
-    "project_world_pilot_report_assignment_transport",
+    "project_world_leader_intent_maintained_assignment",
+    "project_world_mission_command_maintained_assignment",
+    "project_world_pilot_report_maintained_assignment",
     "project_world_task_order_maintained_assignment",
     "snapshot_changed",
     "task_order_maintained_batch_contract",

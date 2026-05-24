@@ -1,8 +1,10 @@
 # WP24 Integration Assessment And Cleanup Close-Out
 
-Status: `2026-05-24` cleanup close-out in progress; old public TaskOrder
-whole-shell compatibility surfaces have been removed from code and tests are
-being revalidated.
+Status: `2026-05-24` focused cleanup close-out in progress. Old public
+TaskOrder whole-shell compatibility surfaces have been removed; observation and
+tasking export are split; command-chain Python business writes now route through
+maintained MissionCommand/LeaderIntent/PilotReport contracts and are being
+revalidated.
 
 Chinese companion:
 [wp24_integration_assessment_and_next_dispatch_20260524.zh.md](wp24_integration_assessment_and_next_dispatch_20260524.zh.md)
@@ -29,6 +31,17 @@ After this assessment, a parallel subagent verification wave confirmed additiona
 facade/information-boundary leaks outside the retired TaskOrder public whole-shell
 surface. The corrective package is tracked in
 [WP24 Facade Boundary Closure Task Package](wp24_facade_boundary_closure_task_package_20260524.md).
+
+The current implementation wave has closed the highest-risk command-chain leak:
+runtime/facade/bindings expose maintained command-chain contracts, Python
+scenario-loader and VecEnv paths write maintained assignments, and multi-agent
+tasking reads use maintained mission-command contracts instead of whole-shell
+fallbacks.
+
+The follow-up hardening also closed two production-boundary leaks identified by
+focused review: normal full-batch stepping now stays on facade `step_batch()`,
+and runtime-window action injection requires explicit maintained
+ObservationPacket/DecisionBelief provenance plus C++ authorization.
 
 ## 2. Cleanup Result
 
@@ -61,7 +74,21 @@ The focused tests now assert the deletion state:
 - observation and execution requests expose `include_task_order_contracts`, not
   `include_task_orders`;
 - Python adapters do not expose legacy TaskOrder batch writers;
-- architecture tests fail if the deleted names return.
+- architecture tests fail if the deleted names return;
+- Python command-chain business writers use `World*MaintainedAssignment` and
+  `set_*_maintained_batch`, with guards against old whole-shell writer re-entry.
+- maintained runtime-window action injection calls
+  `authorize_maintained_action_intent()` and rejects compatibility/default
+  provenance labels;
+- maintained full-batch stepping does not use `facade.runtime().step_worlds()`.
+
+Remaining boundary item:
+
+- `UniversalEnv` still owns a raw `SimulationKernel`, but this path is gated by
+  `runtime_compatibility_enabled=True`, rejected by default from `train.py`, and
+- legacy visual observation fallback still reaches single-world raw visual APIs
+  through the adapter. Full retirement requires either a facade visual
+  single-world API or a hard compatibility gate decision.
 
 ## 4. Validation Plan
 
@@ -69,7 +96,7 @@ Focused validation for this cleanup:
 
 ```bash
 git diff --check
-python -m py_compile python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py train.py
+python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runtime/world_setup_compat.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch/command_chain_cache.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py python/rl/runtime/agent_shim.py gym_envs/universal_env.py train.py
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "task_order or command_chain"
