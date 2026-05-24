@@ -2518,14 +2518,6 @@ std::size_t RuntimeFacade::effective_worker_threads() const noexcept {
     return runtime_->effective_worker_threads();
 }
 
-WorldBatchRuntime& RuntimeFacade::runtime_compatibility_quarantine() noexcept {
-    return *runtime_;
-}
-
-const WorldBatchRuntime& RuntimeFacade::runtime_compatibility_quarantine() const noexcept {
-    return *runtime_;
-}
-
 bool RuntimeFacade::load_database(const std::string& path) {
     return runtime_->load_database(path);
 }
@@ -2663,6 +2655,12 @@ RuntimeFacade::collect_visual_binding_compatibility_scenes_from_candidate_ids_ba
 
 void RuntimeFacade::set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments) {
     runtime_->set_pilot_actions_batch(assignments);
+}
+
+std::vector<LaunchEvent> RuntimeFacade::apply_launch_requests_batch(
+    const std::vector<LaunchRequest>& requests
+) {
+    return runtime_->apply_launch_requests_batch(requests);
 }
 
 void RuntimeFacade::set_mission_commands_maintained_batch(
@@ -3072,18 +3070,18 @@ TaskingBatchPacket RuntimeFacade::build_tasking_packet(
         return packet;
     }
 
-    if (request.include_mission_commands) {
+    if (request.include_mission_command_contracts) {
         packet.mission_command_contracts =
             runtime_->get_mission_commands_maintained_batch(request.refs);
     }
     if (request.include_task_order_contracts) {
         packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);
     }
-    if (request.include_leader_intents) {
+    if (request.include_leader_intent_contracts) {
         packet.leader_intent_contracts =
             runtime_->get_leader_intents_maintained_batch(request.refs);
     }
-    if (request.include_pilot_reports) {
+    if (request.include_pilot_report_contracts) {
         packet.pilot_report_contracts =
             runtime_->get_pilot_reports_maintained_batch(request.refs);
     }

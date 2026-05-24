@@ -25,7 +25,6 @@ from python.rl.runtime.world_batch.command_chain_cache import (  # noqa: E402
     project_world_task_order_maintained_assignment,
 )
 import python.rl.runtime.world_batch.adapter as world_batch_adapter_module  # noqa: E402
-import python.rl.runtime.world_batch.compat as world_batch_compat  # noqa: E402
 import python.rl.runtime.world_batch_vec_env as vec_env_module  # noqa: E402
 from python.rl.control.wrappers import MultiTimescaleActionWrapper  # noqa: E402
 from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer  # noqa: E402
@@ -420,12 +419,11 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 n_envs=2,
                 include_visual=False,
                 include_proprio=False,
-                runtime_compatibility_enabled=True,
                 worker_threads=1,
             )
             try:
-                self.assertEqual(int(vec_env.batch_runtime.worker_threads()), 1)
-                self.assertEqual(int(vec_env.batch_runtime.effective_worker_threads()), 1)
+                self.assertEqual(int(vec_env.runtime_facade.worker_threads()), 1)
+                self.assertEqual(int(vec_env.runtime_facade.effective_worker_threads()), 1)
             finally:
                 vec_env.close()
 
@@ -688,7 +686,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
-    def test_world_batch_vec_env_batch_runtime_requires_explicit_compatibility_opt_in(self) -> None:
+    def test_world_batch_vec_env_batch_runtime_surface_is_removed(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -701,12 +699,12 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 include_proprio=False,
             )
             try:
-                with self.assertRaisesRegex(RuntimeError, "vec_env\\.batch_runtime"):
+                with self.assertRaises(AttributeError):
                     _ = vec_env.batch_runtime
             finally:
                 vec_env.close()
 
-    def test_world_batch_vec_env_exposes_batch_runtime_as_compatibility_view(self) -> None:
+    def test_world_batch_vec_env_exposes_runtime_facade_for_diagnostics(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -717,13 +715,12 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 n_envs=1,
                 include_visual=False,
                 include_proprio=False,
-                runtime_compatibility_enabled=True,
             )
             try:
-                self.assertIsNot(vec_env.batch_runtime, vec_env._runtime_adapter)
-                self.assertEqual(int(vec_env.batch_runtime.world_count()), int(vec_env.runtime_facade.world_count()))
-                self.assertTrue(hasattr(vec_env.batch_runtime, "export_execution_episode_states_batch"))
-                self.assertTrue(hasattr(vec_env.batch_runtime, "execution_episode_controller_ready"))
+                self.assertIs(vec_env.runtime_facade, vec_env._runtime_adapter.facade)
+                self.assertEqual(int(vec_env.runtime_facade.world_count()), 1)
+                self.assertTrue(hasattr(vec_env.runtime_facade, "export_execution_episode_states"))
+                self.assertTrue(hasattr(vec_env.runtime_facade, "execution_episode_ready"))
             finally:
                 vec_env.close()
 
@@ -850,6 +847,94 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         finally:
             world_batch_adapter_module.project_world_task_order_maintained_assignment = original_project_task  # type: ignore[assignment]
 
+    def test_world_batch_adapter_scripted_fire_uses_launch_request_not_pilot_action(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+        proxy = adapter._scenario_loader_runtime(0)
+        mission_batches: list[list[Any]] = []
+        launch_batches: list[list[Any]] = []
+        pilot_batches: list[list[Any]] = []
+
+        class _Observation:
+            health = 1.0
+
+        adapter.get_time_step = lambda _world_index: 0.05  # type: ignore[method-assign]
+        adapter.get_agent_observation = lambda _world_index, _entity_id: _Observation()  # type: ignore[method-assign]
+
+        def _capture_mission(assignments):
+            mission_batches.append(list(assignments))
+
+        def _capture_launch(requests):
+            materialized = list(requests)
+            launch_batches.append(materialized)
+            event = ef_py.LaunchEvent()
+            event.request_id = int(materialized[0].request_id)
+            event.accepted = True
+            event.has_spawned_munition = True
+            event.spawned_munition.world_index = int(materialized[0].shooter.world_index)
+            event.spawned_munition.entity_id = 9101
+            return [event]
+
+        def _capture_pilot(assignments):
+            pilot_batches.append(list(assignments))
+
+        adapter.set_mission_commands_maintained_batch = _capture_mission  # type: ignore[method-assign]
+        adapter.apply_launch_requests_batch = _capture_launch  # type: ignore[method-assign]
+        adapter.set_pilot_actions_batch = _capture_pilot  # type: ignore[method-assign]
+
+        missile_id = proxy.fire_missile(17, 23)
+
+        self.assertEqual(missile_id, 9101)
+        self.assertEqual(len(mission_batches), 1)
+        self.assertEqual(len(launch_batches), 1)
+        self.assertEqual(pilot_batches, [])
+        request = launch_batches[0][0]
+        self.assertEqual(int(request.shooter.world_index), 0)
+        self.assertEqual(int(request.shooter.entity_id), 17)
+        self.assertEqual(int(request.target_entity.entity_id), 23)
+        self.assertTrue(bool(request.has_target_entity))
+        self.assertEqual(str(request.authority), "scripted_opponent")
+
+    def test_world_batch_vec_env_skips_command_sync_for_inactive_terminal_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+            )
+            try:
+                vec_env.seed(5)
+                vec_env.reset()
+                handle = vec_env.envs[0]
+
+                class _InactiveTruth:
+                    health = 0.0
+
+                handle.last_truth = _InactiveTruth()
+                calls: list[str] = []
+                vec_env._runtime_adapter.set_mission_commands_maintained_batch = (  # type: ignore[method-assign]
+                    lambda assignments: calls.append(f"mission:{len(list(assignments))}")
+                )
+                vec_env._runtime_adapter.set_task_orders_maintained_batch = (  # type: ignore[method-assign]
+                    lambda assignments: calls.append(f"task:{len(list(assignments))}")
+                )
+                vec_env._runtime_adapter.set_leader_intents_maintained_batch = (  # type: ignore[method-assign]
+                    lambda assignments: calls.append(f"intent:{len(list(assignments))}")
+                )
+                vec_env._runtime_adapter.set_pilot_reports_maintained_batch = (  # type: ignore[method-assign]
+                    lambda assignments: calls.append(f"report:{len(list(assignments))}")
+                )
+
+                vec_env._sync_command_chain_batch([0])
+
+                self.assertEqual(calls, [])
+            finally:
+                vec_env.close()
+
     def test_world_batch_adapter_legacy_task_order_batch_writer_is_removed(self) -> None:
         adapter = vec_env_module._RuntimeFacadeAdapter(1)
         compat_adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
@@ -882,8 +967,8 @@ class WorldBatchVecEnvTests(unittest.TestCase):
 
         self.assertEqual(facade.step_batch_calls, 1)
 
-    def test_world_batch_adapter_step_worlds_rejects_partial_raw_runtime_step_without_compatibility_opt_in(self) -> None:
-        adapter = vec_env_module._RuntimeFacadeAdapter(2)
+    def test_world_batch_adapter_step_worlds_rejects_partial_raw_runtime_step(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(2, runtime_compatibility_enabled=True)
 
         class _FacadeWithRawRuntime:
             def step_batch(self):
@@ -897,7 +982,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
 
         adapter.facade = _FacadeWithRawRuntime()  # type: ignore[assignment]
 
-        with self.assertRaisesRegex(RuntimeError, "RuntimeFacadeAdapter.step_worlds"):
+        with self.assertRaisesRegex(RuntimeError, "requires a full facade-owned batch step"):
             adapter.step_worlds([1])
 
     def test_world_batch_adapter_maintained_window_authorizes_explicit_facade_observation_provenance(self) -> None:
@@ -1043,27 +1128,18 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 include_visual=False,
                 include_proprio=False,
             )
-            original_compat_world = vec_env._runtime_adapter._compat_world
-
-            def _poisoned_compat_world(index):
-                raise AssertionError(f"maintained reset/time-step path should not need compat world {index}")
-
-            vec_env._runtime_adapter._compat_world = _poisoned_compat_world  # type: ignore[method-assign]
             try:
                 vec_env.seed(19)
                 layout = vec_env_module.build_compiled_world_layout(vec_env._compiled_scenario, seed=19)
                 applied_world = vec_env._runtime_adapter.apply_world_layout(0, layout)
                 self.assertIsNotNone(applied_world.agent_id)
-                maritime = vec_env._runtime_adapter._compat_runtime_handle().world_compatibility_quarantine(0).get_maritime_state()
-                self.assertEqual(float(maritime[0]), 0.0)
-                self.assertEqual(float(maritime[1]), 135.0)
-                self.assertEqual(float(maritime[2]), 11.0)
+                self.assertFalse(hasattr(vec_env._runtime_adapter, "_compat_world"))
+                self.assertFalse(hasattr(vec_env._runtime_adapter, "_compat_runtime_handle"))
                 obs = vec_env.reset()
                 self.assertIsNotNone(obs)
                 self.assertIsInstance(vec_env.reset_infos, list)
                 self.assertAlmostEqual(float(vec_env._runtime_adapter.get_time_step(0)), 0.05, places=6)
             finally:
-                vec_env._runtime_adapter._compat_world = original_compat_world  # type: ignore[method-assign]
                 vec_env.close()
 
     def test_world_batch_vec_env_layout_materialization_routes_through_named_request_helper(self) -> None:
@@ -1102,7 +1178,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 vec_env._runtime_adapter._apply_runtime_world_layout_request = original_apply  # type: ignore[method-assign]
                 vec_env.close()
 
-    def test_world_batch_adapter_world_proxy_reads_layout_and_time_step_without_raw_world_time_step(self) -> None:
+    def test_world_batch_adapter_exposes_layout_and_time_step_without_raw_world_proxy(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
@@ -1114,29 +1190,16 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 include_visual=False,
                 include_proprio=False,
             )
-            original_compat_world = vec_env._runtime_adapter._compat_world
-
-            def _poisoned_compat_world(index):
-                world = original_compat_world(index)
-
-                class _ProxyPoisonWorld:
-                    def __getattr__(self, name):
-                        if name == "get_time_step":
-                            raise AssertionError("world proxy time-step read should not require raw world.get_time_step()")
-                        return getattr(world, name)
-
-                return _ProxyPoisonWorld()
-
-            vec_env._runtime_adapter._compat_world = _poisoned_compat_world  # type: ignore[method-assign]
             try:
                 layout = vec_env_module.build_compiled_world_layout(vec_env._compiled_scenario, seed=41)
                 vec_env._runtime_adapter.apply_world_layout(0, layout)
-                world_proxy = vec_env._runtime_adapter.world_compatibility_quarantine(0)
-                proxy_layout = world_proxy.get_layout()
+                proxy_layout = vec_env._runtime_adapter.get_world_layout(0)
+                self.assertIsNotNone(proxy_layout)
+                assert proxy_layout is not None
                 self.assertEqual(proxy_layout.terrain_type, "legacy")
-                self.assertAlmostEqual(float(world_proxy.get_time_step()), 0.05, places=6)
+                self.assertAlmostEqual(float(vec_env._runtime_adapter.get_time_step(0)), 0.05, places=6)
+                self.assertFalse(hasattr(vec_env._runtime_adapter, "world_compatibility_quarantine"))
             finally:
-                vec_env._runtime_adapter._compat_world = original_compat_world  # type: ignore[method-assign]
                 vec_env.close()
 
     def test_world_batch_vec_env_drives_scripted_red_opponent_on_default_path(self) -> None:
@@ -1226,7 +1289,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             try:
                 calls: list[str] = []
                 original_facade_fn = ef_py.compute_world_batch_visual_observation_batch_numpy
-                original_runtime = vec_env._runtime_adapter._compat_runtime_handle
 
                 def _wrapped(target, refs, downsample, use_gpu):
                     calls.append(type(target).__name__)
@@ -1234,43 +1296,32 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                         return original_facade_fn(target, refs, downsample, use_gpu)
                     raise AssertionError("maintained visual export should prefer RuntimeFacade target")
 
-                def _unexpected_compat_runtime():
-                    raise AssertionError("visual batch export should not need compat runtime handle on facade path")
-
                 ef_py.compute_world_batch_visual_observation_batch_numpy = _wrapped
-                vec_env._runtime_adapter._compat_runtime_handle = _unexpected_compat_runtime  # type: ignore[method-assign]
                 try:
                     obs = vec_env.reset()
                 finally:
                     ef_py.compute_world_batch_visual_observation_batch_numpy = original_facade_fn
-                    vec_env._runtime_adapter._compat_runtime_handle = original_runtime  # type: ignore[method-assign]
 
                 self.assertEqual(obs["visual"].shape, (1, 24, 48, 10))
                 self.assertEqual(calls, ["RuntimeFacade"])
             finally:
                 vec_env.close()
 
-    def test_world_batch_vec_env_legacy_visual_backend_requires_explicit_compatibility_opt_in(self) -> None:
+    def test_world_batch_vec_env_legacy_visual_backend_is_removed(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
             with open(scenario_path, "w", encoding="utf-8") as f:
                 json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
 
-            vec_env = WorldBatchVecEnv(
-                scenario_path=scenario_path,
-                n_envs=1,
-                include_visual=True,
-                include_proprio=False,
-                visual_downsample=2,
-                batch_visual_backend="legacy",
-            )
-            try:
-                with self.assertRaises(RuntimeError) as ctx:
-                    vec_env.reset()
-                self.assertIn("RuntimeFacadeAdapter.legacy_visual_observation", str(ctx.exception))
-                self.assertIn("runtime_compatibility_enabled=True", str(ctx.exception))
-            finally:
-                vec_env.close()
+            with self.assertRaisesRegex(ValueError, "batch_visual_backend='legacy' has been removed"):
+                WorldBatchVecEnv(
+                    scenario_path=scenario_path,
+                    n_envs=1,
+                    include_visual=True,
+                    include_proprio=False,
+                    visual_downsample=2,
+                    batch_visual_backend="legacy",
+                )
 
     def test_world_batch_vec_env_attaches_visual_without_redundant_refresh(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1405,7 +1456,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
-    def test_world_batch_vec_env_compiled_batch_visual_matches_legacy(self) -> None:
+    def test_world_batch_vec_env_compiled_batch_visual_is_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_data = _inline_vec_env_scenario()
             scenario_data["meta"]["max_steps"] = 2
@@ -1413,17 +1464,16 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             with open(scenario_path, "w", encoding="utf-8") as f:
                 json.dump(scenario_data, f, ensure_ascii=True)
 
-            legacy_env = WorldBatchVecEnv(
+            first_env = WorldBatchVecEnv(
                 scenario_path=scenario_path,
                 n_envs=2,
                 include_visual=True,
                 include_proprio=False,
                 visual_downsample=2,
                 visual_update_interval=1,
-                batch_visual_backend="legacy",
-                runtime_compatibility_enabled=True,
+                batch_visual_backend="compiled",
             )
-            compiled_env = WorldBatchVecEnv(
+            second_env = WorldBatchVecEnv(
                 scenario_path=scenario_path,
                 n_envs=2,
                 include_visual=True,
@@ -1433,27 +1483,27 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 batch_visual_backend="compiled",
             )
             try:
-                legacy_env.seed(123)
-                compiled_env.seed(123)
-                legacy_obs = legacy_env.reset()
-                compiled_obs = compiled_env.reset()
+                first_env.seed(123)
+                second_env.seed(123)
+                first_obs = first_env.reset()
+                second_obs = second_env.reset()
                 self.assertTrue(
-                    np.allclose(legacy_obs["visual"], compiled_obs["visual"], atol=1.0e-5),
+                    np.allclose(first_obs["visual"], second_obs["visual"], atol=1.0e-5),
                     msg="reset visual mismatch",
                 )
 
                 actions = np.zeros((2, 17), dtype=np.float32)
-                legacy_obs, legacy_rewards, legacy_dones, _legacy_infos = legacy_env.step(actions)
-                compiled_obs, compiled_rewards, compiled_dones, _compiled_infos = compiled_env.step(actions)
+                first_obs, first_rewards, first_dones, _first_infos = first_env.step(actions)
+                second_obs, second_rewards, second_dones, _second_infos = second_env.step(actions)
                 self.assertTrue(
-                    np.allclose(legacy_obs["visual"], compiled_obs["visual"], atol=1.0e-5),
+                    np.allclose(first_obs["visual"], second_obs["visual"], atol=1.0e-5),
                     msg="step visual mismatch",
                 )
-                self.assertTrue(np.allclose(legacy_rewards, compiled_rewards, atol=1.0e-6))
-                self.assertTrue(np.array_equal(legacy_dones, compiled_dones))
+                self.assertTrue(np.allclose(first_rewards, second_rewards, atol=1.0e-6))
+                self.assertTrue(np.array_equal(first_dones, second_dones))
             finally:
-                legacy_env.close()
-                compiled_env.close()
+                first_env.close()
+                second_env.close()
 
     def test_world_batch_vec_env_binds_compiled_runtime_metadata_to_loaders(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

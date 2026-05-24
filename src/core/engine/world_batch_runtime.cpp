@@ -724,6 +724,79 @@ void WorldBatchRuntime::set_pilot_actions_batch(const std::vector<WorldPilotActi
     });
 }
 
+std::vector<LaunchEvent> WorldBatchRuntime::apply_launch_requests_batch(
+    const std::vector<LaunchRequest>& requests
+) {
+    std::vector<LaunchEvent> events(requests.size());
+    std::vector<std::vector<size_t>> grouped(worlds_.size());
+    for (size_t item_index = 0; item_index < requests.size(); ++item_index) {
+        const size_t world_index = static_cast<size_t>(requests[item_index].shooter.world_index);
+        if (world_index >= worlds_.size()) {
+            throw std::out_of_range("world index out of range");
+        }
+        grouped[world_index].push_back(item_index);
+    }
+    parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
+        auto& world = checked_world(world_index);
+        for (const size_t item_index : grouped[world_index]) {
+            const auto& request = requests[item_index];
+            LaunchEvent event{};
+            event.request_id = request.request_id;
+            event.event_id = request.request_id;
+            event.event_time_s = request.requested_time_s;
+            event.producer_node_id = "p7.fire_control_launch.v1";
+            event.selected_launcher = request.station_id;
+            event.selected_munition = request.requested_munition_family.empty()
+                ? "missile"
+                : request.requested_munition_family;
+
+            if (!request.has_target_entity || request.target_entity.entity_id == 0) {
+                event.rejection_reason = "target_entity_required";
+                events[item_index] = event;
+                continue;
+            }
+            if (request.target_entity.world_index != request.shooter.world_index) {
+                event.rejection_reason = "cross_world_launch_not_supported";
+                events[item_index] = event;
+                continue;
+            }
+
+            const flecs::entity munition = world.fire_missile(
+                request.shooter.entity_id,
+                request.target_entity.entity_id
+            );
+            if (!munition.is_valid()) {
+                event.rejection_reason = "launch_rejected";
+                events[item_index] = event;
+                continue;
+            }
+
+            event.accepted = true;
+            event.rejection_reason.clear();
+            event.ammo_delta = -1;
+            if (const auto recent = world.export_recent_engagement_events();
+                !recent.launch_events.empty()) {
+                const LaunchEvent& recorded = recent.launch_events.back();
+                event.event_id = recorded.event_id;
+                event.event_time_s = recorded.event_time_s;
+                event.selected_launcher = recorded.selected_launcher;
+                event.selected_munition = recorded.selected_munition;
+                event.cooldown_delta_s = recorded.cooldown_delta_s;
+            }
+            event.spawned_munition = EngagementEntityRef{
+                .world_index = request.shooter.world_index,
+                .entity_id = static_cast<std::uint64_t>(munition.id()),
+            };
+            event.has_spawned_munition = true;
+            if (event.event_id == 0) {
+                event.event_id = static_cast<std::uint64_t>(munition.id());
+            }
+            events[item_index] = event;
+        }
+    });
+    return events;
+}
+
 void WorldBatchRuntime::set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments) {
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {

@@ -11,21 +11,15 @@ from gym_envs.scenario_loader import ScenarioLoader
 from python.scenario.runtime import AppliedScenarioWorld
 from python.scenario.runtime import BatchWorldApplyBuffer
 from python.scenario.runtime import resolve_active_controllable_roster
-from python.scenario.runtime.world_setup_compat import apply_runtime_world_layout_request_compatibility_quarantine
-from python.scenario.runtime.world_setup_compat import apply_runtime_world_layout_request_maintained
-from python.scenario.runtime.world_setup_compat import apply_world_setup_payload_compatibility_quarantine
-from python.scenario.runtime.world_setup_compat import apply_world_setup_request_compatibility_quarantine
-from python.scenario.runtime.world_setup_compat import apply_world_setup_request_maintained
-from python.scenario.runtime.world_setup_compat import build_batch_world_setup_request
-from python.scenario.runtime.world_setup_compat import build_runtime_world_layout_request
-from python.scenario.runtime.world_setup_compat import extract_batch_world_setup_entity_ids
-from python.scenario.runtime.world_setup_compat import read_runtime_world_time_step_compat
+from python.scenario.runtime.world_setup import apply_runtime_world_layout_request_maintained
+from python.scenario.runtime.world_setup import apply_world_setup_request_maintained
+from python.scenario.runtime.world_setup import build_batch_world_setup_request
+from python.scenario.runtime.world_setup import build_runtime_world_layout_request
+from python.scenario.runtime.world_setup import extract_batch_world_setup_entity_ids
 
 from python.rl.runtime.agent_shim import MAINTAINED
 from python.rl.runtime.agent_shim import OBS_DECISION_BELIEF_PACKET
 from python.rl.runtime.agent_shim import OBS_FACADE_OBSERVATION_PACKET
-from .compat import normalize_runtime_compatibility_enabled
-from .compat import runtime_compatibility_required_message
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
@@ -57,13 +51,6 @@ def _maintained_window_authorization_required_message(reason: str) -> str:
 
 
 @dataclass
-class _ObservationPacketCompat:
-    refs: list[Any]
-    agent_observations: list[Any]
-    instrument_states: list[Any]
-
-
-@dataclass
 class RuntimeWindowEvidence:
     """Consumer-facing view of the selected facade window evidence slice."""
 
@@ -79,45 +66,13 @@ class RuntimeWindowEvidence:
     uses_compat_fallback: bool = False
 
 
-@dataclass
-class _WorldLayoutSnapshot:
-    world_index: int
-    applied_world: AppliedScenarioWorld | None = None
-    time_step_s: float | None = None
-
-
-class _WorldAccessProxy:
-    """Compatibility-facing world proxy that prefers adapter-owned read seams."""
-
-    def __init__(self, adapter: "RuntimeFacadeAdapter", world_index: int):
-        self._adapter = adapter
-        self._world_index = int(world_index)
-
-    def _fallback_world(self) -> Any:
-        return self._adapter._compat_world(self._world_index)
-
-    def get_time_step(self) -> float:
-        return self._adapter.get_time_step(self._world_index)
-
-    def get_layout(self) -> Any:
-        layout = self._adapter.get_world_layout(self._world_index)
-        if layout is None:
-            raise AttributeError(f"world {self._world_index} has no adapter-owned layout snapshot")
-        return layout
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._fallback_world(), name)
-
-
 class _ScenarioLoaderRuntimeProxy:
     """World-indexed loader runtime shim that prefers facade-owned batch surfaces."""
 
     def __init__(self, adapter: "RuntimeFacadeAdapter", world_index: int):
         self._adapter = adapter
         self._world_index = int(world_index)
-
-    def _fallback_world(self):
-        return self._adapter._compat_world(self._world_index)
+        self._mission_commands: dict[int, Any] = {}
 
     def _ref(self, entity_id: int):
         ref = ef_py.WorldEntityRef()
@@ -134,6 +89,68 @@ class _ScenarioLoaderRuntimeProxy:
     def get_time_step(self) -> float:
         return self._adapter.get_time_step(self._world_index)
 
+    def is_unit_active(self, entity_id: int) -> bool:
+        observation = self.get_agent_observation(int(entity_id))
+        return float(getattr(observation, "health", 0.0) or 0.0) > 0.0
+
+    def _mission_command_shell(self, entity_id: int) -> Any:
+        entity_key = int(entity_id)
+        command = self._mission_commands.get(entity_key)
+        if command is None:
+            command = ef_py.MissionCommand()
+            self._mission_commands[entity_key] = command
+        return command
+
+    def get_unit_position(self, entity_id: int) -> tuple[float, float, float]:
+        observation = self.get_agent_observation(int(entity_id))
+        return (
+            float(getattr(observation, "x", 0.0) or 0.0),
+            float(getattr(observation, "y", 0.0) or 0.0),
+            float(getattr(observation, "z", 0.0) or 0.0),
+        )
+
+    def set_command(
+        self,
+        entity_id: int,
+        target_heading_deg: float,
+        target_speed_mps: float,
+        target_altitude_m: float,
+    ) -> None:
+        command = self._mission_command_shell(int(entity_id))
+        command.cmd_heading_deg = float(target_heading_deg)
+        command.cmd_speed_mps = float(target_speed_mps)
+        command.cmd_altitude_m = float(target_altitude_m)
+        command.active = True
+        self.set_mission_command(int(entity_id), command)
+
+    def fire_missile(self, entity_id: int, target_id: int) -> int:
+        command = self._mission_command_shell(int(entity_id))
+        command.assigned_target_id = int(target_id)
+        command.authorization_to_fire = True
+        command.active = True
+        self.set_mission_command(int(entity_id), command)
+
+        try:
+            observation = self.get_agent_observation(int(entity_id))
+            requested_time_s = float(getattr(observation, "sim_time", 0.0) or 0.0)
+        except Exception:
+            requested_time_s = 0.0
+        request = ef_py.LaunchRequest()
+        request.request_id = self._adapter.next_launch_request_id()
+        request.shooter.world_index = int(self._world_index)
+        request.shooter.entity_id = int(entity_id)
+        request.target_entity.world_index = int(self._world_index)
+        request.target_entity.entity_id = int(target_id)
+        request.has_target_entity = True
+        request.authority = "scripted_opponent"
+        request.requested_time_s = requested_time_s
+        request.requested_munition_family = "missile"
+        events = self._adapter.apply_launch_requests_batch([request])
+        if not events:
+            return 0
+        event = events[0]
+        return int(getattr(event, "spawned_munition").entity_id) if bool(getattr(event, "accepted", False)) else 0
+
     def set_mission_command(self, entity_id: int, command: Any) -> None:
         try:
             assignment = ef_py.WorldMissionCommandMaintainedAssignment()
@@ -149,6 +166,7 @@ class _ScenarioLoaderRuntimeProxy:
                     "ScenarioLoader.set_mission_command"
                 )
             ) from exc
+        self._mission_commands[int(entity_id)] = command
         self._adapter.set_mission_commands_maintained_batch([assignment])
 
     def set_task_order(self, entity_id: int, order: Any) -> None:
@@ -206,56 +224,28 @@ class _ScenarioLoaderRuntimeProxy:
         self._adapter.set_pilot_reports_maintained_batch([assignment])
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self._fallback_world(), name)
+        raise AttributeError(name)
 
 
 class RuntimeFacadeAdapter:
     """Centralized compatibility adapter for facade-shaped runtime access."""
 
     def __init__(self, world_count: int, *, runtime_compatibility_enabled: bool = False):
+        _ = runtime_compatibility_enabled
         self._world_count = int(world_count)
-        self.facade = ef_py.RuntimeFacade(self._world_count) if hasattr(ef_py, "RuntimeFacade") else None
-        self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
-        self._compat_runtime = None
+        if not hasattr(ef_py, "RuntimeFacade"):
+            raise RuntimeError("RuntimeFacadeAdapter requires ef_py.RuntimeFacade bindings")
+        self.facade = ef_py.RuntimeFacade(self._world_count)
         self._last_window_evidence: RuntimeWindowEvidence | None = None
-        self._world_layout_snapshots: dict[int, _WorldLayoutSnapshot] = {}
+        self._world_layouts: dict[int, AppliedScenarioWorld] = {}
+        self._world_time_steps: dict[int, float] = {}
+        self._next_launch_request_id = 1
 
     def _batch_target(self):
-        if self.facade is not None:
-            return self.facade
-        if not self.runtime_compatibility_enabled:
-            raise RuntimeError(runtime_compatibility_required_message("RuntimeFacadeAdapter._batch_target"))
-        return self._compat_runtime_handle()
-
-    def _compat_runtime_handle(self):
-        if self._compat_runtime is not None:
-            return self._compat_runtime
-        if self.facade is not None:
-            if not self.runtime_compatibility_enabled:
-                raise RuntimeError(
-                    runtime_compatibility_required_message(
-                        "RuntimeFacadeAdapter._compat_runtime_handle"
-                    )
-                )
-            self._compat_runtime = self.facade.runtime_compatibility_quarantine()
-            return self._compat_runtime
-        if not self.runtime_compatibility_enabled:
-            raise RuntimeError(runtime_compatibility_required_message("RuntimeFacadeAdapter._compat_runtime_handle"))
-        self._compat_runtime = ef_py.WorldBatchRuntime(self._world_count)
-        return self._compat_runtime
-
-    def _compat_world(self, index: int):
-        return self._compat_runtime_handle().world_compatibility_quarantine(int(index))
-
-    def _require_compatibility_fallback(self, surface: str) -> None:
-        if not self.runtime_compatibility_enabled:
-            raise RuntimeError(runtime_compatibility_required_message(surface))
+        return self.facade
 
     def _scenario_loader_runtime(self, index: int) -> _ScenarioLoaderRuntimeProxy:
         return _ScenarioLoaderRuntimeProxy(self, int(index))
-
-    def compatibility_fallback_enabled(self) -> bool:
-        return bool(self.runtime_compatibility_enabled)
 
     @property
     def last_window_evidence(self) -> RuntimeWindowEvidence | None:
@@ -266,8 +256,7 @@ class RuntimeFacadeAdapter:
 
     def supports_runtime_window_api(self) -> bool:
         return bool(
-            self.facade is not None
-            and hasattr(self.facade, "run_wp10_window")
+            hasattr(self.facade, "run_wp10_window")
             and hasattr(ef_py, "RuntimeWindowRequest")
             and hasattr(ef_py, "RuntimeWindowActionRequest")
             and hasattr(ef_py, "AgentRole")
@@ -466,9 +455,7 @@ class RuntimeFacadeAdapter:
         )
 
     def world_count(self) -> int:
-        if self.facade is not None:
-            return int(self.facade.world_count())
-        return int(self._world_count)
+        return int(self.facade.world_count())
 
     def set_worker_threads(self, worker_threads: int) -> None:
         self._batch_target().set_worker_threads(int(worker_threads))
@@ -481,9 +468,6 @@ class RuntimeFacadeAdapter:
 
     def load_database(self, path: str) -> bool:
         return bool(self._batch_target().load_database(path))
-
-    def world_compatibility_quarantine(self, index: int):
-        return _WorldAccessProxy(self, int(index))
 
     def _build_runtime_world_layout_request(self, world_index: int, layout: Any):
         apply_buffer = BatchWorldApplyBuffer(1)
@@ -509,16 +493,7 @@ class RuntimeFacadeAdapter:
         )
 
     def _apply_runtime_world_layout_request(self, request: Any) -> Any:
-        if self.facade is not None:
-            return apply_runtime_world_layout_request_maintained(self.facade, request)
-        if self.runtime_compatibility_enabled:
-            return apply_runtime_world_layout_request_compatibility_quarantine(
-                self._compat_runtime_handle(),
-                request,
-            )
-        raise RuntimeError(
-            runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_layout")
-        )
+        return apply_runtime_world_layout_request_maintained(self.facade, request)
 
     def _materialize_applied_world(self, world_index: int, layout: Any, entity_ids: Sequence[Any]) -> AppliedScenarioWorld:
         entities: dict[str, int] = {}
@@ -534,11 +509,9 @@ class RuntimeFacadeAdapter:
             entities,
             world_index=int(world_index),
         )
-        self._world_layout_snapshots[int(world_index)] = _WorldLayoutSnapshot(
-            world_index=int(world_index),
-            applied_world=applied_world,
-            time_step_s=None if getattr(layout, "time_step_s", None) is None else float(layout.time_step_s),
-        )
+        self._world_layouts[int(world_index)] = applied_world
+        if getattr(layout, "time_step_s", None) is not None:
+            self._world_time_steps[int(world_index)] = float(layout.time_step_s)
         return applied_world
 
     def apply_world_layout(self, world_index: int, layout: Any):
@@ -554,43 +527,17 @@ class RuntimeFacadeAdapter:
         return ScenarioLoader(self._scenario_loader_runtime(int(index)))
 
     def get_time_step(self, world_index: int) -> float:
-        snapshot = self._world_layout_snapshots.get(int(world_index))
-        if self.facade is not None and hasattr(self.facade, "world_time_step"):
+        if int(world_index) in self._world_time_steps:
+            return float(self._world_time_steps[int(world_index)])
+        if hasattr(self.facade, "world_time_step"):
             return float(self.facade.world_time_step(int(world_index)))
-        compat_runtime = self._compat_runtime_handle()
-        return float(
-            read_runtime_world_time_step_compat(
-                compat_runtime,
-                int(world_index),
-                fallback_time_step_s=None if snapshot is None else snapshot.time_step_s,
-            )
-        )
+        raise RuntimeError("RuntimeFacadeAdapter.get_time_step requires maintained facade time-step bindings")
 
     def get_world_layout(self, world_index: int) -> Any | None:
-        snapshot = self._world_layout_snapshots.get(int(world_index))
-        if snapshot is None or snapshot.applied_world is None:
+        applied_world = self._world_layouts.get(int(world_index))
+        if applied_world is None:
             return None
-        return snapshot.applied_world.layout
-
-    def get_visual_observation(self, world_index: int, entity_id: int) -> Any:
-        self._require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")
-        return self._compat_world(int(world_index)).get_visual_observation(int(entity_id))
-
-    def get_visual_observation_downsampled(
-        self,
-        world_index: int,
-        entity_id: int,
-        downsample: int,
-    ) -> Any:
-        self._require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")
-        return self._compat_world(int(world_index)).get_visual_observation_downsampled(
-            int(entity_id),
-            int(downsample),
-        )
-
-    def supports_visual_observation_downsampled(self, world_index: int) -> bool:
-        self._require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")
-        return hasattr(self._compat_world(int(world_index)), "get_visual_observation_downsampled")
+        return applied_world.layout
 
     def compute_visual_observation_batch_numpy(
         self,
@@ -598,9 +545,8 @@ class RuntimeFacadeAdapter:
         downsample: int,
         use_gpu_host: bool,
     ) -> Any:
-        batch_target = self.facade if self.facade is not None else self._compat_runtime_handle()
         return ef_py.compute_world_batch_visual_observation_batch_numpy(
-            batch_target,
+            self.facade,
             list(refs),
             int(downsample),
             bool(use_gpu_host),
@@ -612,9 +558,8 @@ class RuntimeFacadeAdapter:
         downsample: int,
         prefer_device_view: bool,
     ) -> Any:
-        batch_target = self.facade if self.facade is not None else self._compat_runtime_handle()
         return ef_py.compute_world_batch_visual_observation_batch_export(
-            batch_target,
+            self.facade,
             list(refs),
             int(downsample),
             bool(prefer_device_view),
@@ -649,17 +594,7 @@ class RuntimeFacadeAdapter:
         return list(self._batch_target().get_comm_candidate_ids_batch(list(refs), bool(use_gpu)))
 
     def apply_world_setup(self, request: Any):
-        if self.facade is not None:
-            entity_ids = apply_world_setup_request_maintained(self.facade, request)
-        elif self.runtime_compatibility_enabled:
-            entity_ids = apply_world_setup_request_compatibility_quarantine(
-                self._compat_runtime_handle(),
-                request,
-            )
-        else:
-            raise RuntimeError(
-                runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_setup")
-            )
+        entity_ids = apply_world_setup_request_maintained(self.facade, request)
         result = ef_py.BatchWorldSetupResult() if hasattr(ef_py, "BatchWorldSetupResult") else None
         if result is None:
             return entity_ids
@@ -686,47 +621,16 @@ class RuntimeFacadeAdapter:
         )
         if request is not None:
             return extract_batch_world_setup_entity_ids(self.apply_world_setup(request))
-        if not self.runtime_compatibility_enabled:
-            raise RuntimeError(
-                runtime_compatibility_required_message("RuntimeFacadeAdapter.apply_world_setup_batch")
-            )
-        return apply_world_setup_payload_compatibility_quarantine(
-            self._compat_runtime_handle(),
-            seeds=[int(seed) for seed in seeds],
-            terrain_assignments=list(terrain_assignments),
-            wind_assignments=list(wind_assignments),
-            zones=list(zones),
-            spawn_requests=list(requests),
-            time_steps=normalized_time_steps,
+        raise RuntimeError(
+            "RuntimeFacadeAdapter.apply_world_setup_batch requires maintained BatchWorldSetupRequest bindings"
         )
 
     def export_observation_packet(self, request_or_refs: Any) -> Any:
-        if self.facade is not None and hasattr(self.facade, "export_observation_packet"):
+        if hasattr(self.facade, "export_observation_packet"):
             return self.facade.export_observation_packet(request_or_refs)
-        refs = (
-            list(getattr(request_or_refs, "refs", []) or [])
-            if hasattr(request_or_refs, "refs")
-            else list(request_or_refs)
-        )
-        request = request_or_refs if hasattr(request_or_refs, "refs") else None
-        include_agent_observations = bool(
-            True if request is None else getattr(request, "include_agent_observations", True)
-        )
-        include_instrument_states = bool(
-            True if request is None else getattr(request, "include_instrument_states", True)
-        )
-        return _ObservationPacketCompat(
-            refs=refs,
-            agent_observations=(
-                list(self._compat_runtime_handle().get_agent_observations_batch(refs))
-                if include_agent_observations
-                else []
-            ),
-            instrument_states=(
-                list(self._compat_runtime_handle().get_instrument_states_batch(refs))
-                if include_instrument_states
-                else []
-            ),
+        raise RuntimeError(
+            "RuntimeFacadeAdapter.export_observation_packet requires maintained "
+            "RuntimeFacade observation packet bindings"
         )
 
     def export_observation_packet_for_refs(
@@ -754,15 +658,9 @@ class RuntimeFacadeAdapter:
         if hasattr(packet, "agent_observations") and hasattr(packet, "instrument_states"):
             return list(packet.agent_observations), list(packet.instrument_states)
         refs_list = list(refs)
-        if self.facade is not None:
-            return (
-                list(self.facade.get_agent_observations_batch(refs_list)),
-                list(self.facade.get_instrument_states_batch(refs_list)),
-            )
-        compat_runtime = self._compat_runtime_handle()
         return (
-            list(compat_runtime.get_agent_observations_batch(refs_list)),
-            list(compat_runtime.get_instrument_states_batch(refs_list)),
+            list(self.facade.get_agent_observations_batch(refs_list)),
+            list(self.facade.get_instrument_states_batch(refs_list)),
         )
 
     def read_observation_packet(
@@ -793,7 +691,7 @@ class RuntimeFacadeAdapter:
         observations = self.get_agent_observations_batch([ref])
         if observations:
             return observations[0]
-        return self._compat_world(int(world_index)).get_agent_observation(int(entity_id))
+        raise RuntimeError("RuntimeFacadeAdapter.get_agent_observation received no facade observation result")
 
     def get_instrument_state(self, world_index: int, entity_id: int) -> Any:
         ref = ef_py.WorldEntityRef()
@@ -802,7 +700,7 @@ class RuntimeFacadeAdapter:
         instrument_states = self.get_instrument_states_batch([ref])
         if instrument_states:
             return instrument_states[0]
-        return self._compat_world(int(world_index)).get_instrument_state(int(entity_id))
+        raise RuntimeError("RuntimeFacadeAdapter.get_instrument_state received no facade instrument result")
 
     def get_mission_commands_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
         return list(self._batch_target().get_mission_commands_maintained_batch(list(refs)))
@@ -817,75 +715,42 @@ class RuntimeFacadeAdapter:
         self._last_window_evidence = None
         self._batch_target().set_pilot_actions_batch(list(assignments))
 
+    def next_launch_request_id(self) -> int:
+        request_id = int(self._next_launch_request_id)
+        self._next_launch_request_id += 1
+        return request_id
+
+    def apply_launch_requests_batch(self, requests: Sequence[Any]) -> list[Any]:
+        self._last_window_evidence = None
+        batch_target = self._batch_target()
+        if not hasattr(batch_target, "apply_launch_requests_batch"):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.apply_launch_requests_batch requires maintained "
+                "LaunchRequest batch bindings"
+            )
+        return list(batch_target.apply_launch_requests_batch(list(requests)))
+
     def step_batch(self) -> None:
         self._last_window_evidence = None
         self._batch_target().step_batch()
 
     def prime_execution_episode_batch(self, refs: Sequence[Any], states: Sequence[Any]) -> None:
-        if self.facade is not None:
-            self.facade.prime_execution_episode_batch(list(refs), list(states))
-            return
-        self._compat_runtime_handle().prime_execution_episode_controller_batch(list(refs), list(states))
+        self.facade.prime_execution_episode_batch(list(refs), list(states))
 
     def execution_episode_ready(self, world_index: int) -> bool:
-        if self.facade is not None:
-            return bool(self.facade.execution_episode_ready(int(world_index)))
-        return bool(self._compat_runtime_handle().execution_episode_controller_ready(int(world_index)))
+        return bool(self.facade.execution_episode_ready(int(world_index)))
 
     def execution_episode_controller_ready(self, world_index: int) -> bool:
         return self.execution_episode_ready(int(world_index))
 
     def step_execution_batch(self, request: Any) -> Any:
-        if self.facade is not None:
-            return self.facade.step_execution_batch(request)
-        result = ef_py.ExecutionBatchStepResult()
-        compat_runtime = self._compat_runtime_handle()
-        step_results = list(compat_runtime.step_execution_episode_results_batch(list(request.step_requests)))
-        refs = []
-        for step_request in list(getattr(request, "step_requests", []) or []):
-            ref = ef_py.WorldEntityRef()
-            ref.world_index = int(getattr(step_request, "world_index", 0))
-            ref.entity_id = int(getattr(step_request, "entity_id", 0))
-            refs.append(ref)
-        result.step_results = step_results
-        result.execution_episode_states = list(
-            compat_runtime.export_execution_episode_states_batch(refs)
-        )
-        result.rewards = [float(getattr(step_result, "reward_total", 0.0)) for step_result in step_results]
-        result.terminated = [bool(getattr(step_result, "terminated", False)) for step_result in step_results]
-        result.truncated = [bool(getattr(step_result, "truncated", False)) for step_result in step_results]
-        result.status_vectors = [
-            [
-                float(getattr(step_result, "status0", 0.0)),
-                float(getattr(step_result, "status1", 0.0)),
-                float(getattr(step_result, "status2", 0.0)),
-                float(getattr(step_result, "status3", 0.0)),
-            ]
-            for step_result in step_results
-        ]
-        result.termination_reasons = [
-            str(getattr(getattr(step_result, "controller_state", None), "last_termination_reason", "") or "")
-            for step_result in step_results
-        ]
-        result.reward_breakdown_jsons = [
-            str(getattr(getattr(step_result, "controller_state", None), "last_reward_breakdown_json", "") or "")
-            for step_result in step_results
-        ]
-        result.controller_state_changed_flags = [
-            bool(getattr(step_result, "structural_state_changed", False))
-            for step_result in step_results
-        ]
-        return result
+        return self.facade.step_execution_batch(request)
 
     def step_execution_products_batch(self, requests: Sequence[Any]) -> list[Any]:
-        if self.facade is not None:
-            return list(self.facade.step_execution_products_batch(list(requests)))
-        return list(self._compat_runtime_handle().step_execution_episode_batch(list(requests)))
+        return list(self.facade.step_execution_products_batch(list(requests)))
 
     def export_execution_episode_states(self, refs: Sequence[Any]) -> list[Any]:
-        if self.facade is not None:
-            return list(self.facade.export_execution_episode_states(list(refs)))
-        return list(self._compat_runtime_handle().export_execution_episode_states_batch(list(refs)))
+        return list(self.facade.export_execution_episode_states(list(refs)))
 
     def export_execution_episode_states_batch(self, refs: Sequence[Any]) -> list[Any]:
         return self.export_execution_episode_states(refs)
@@ -893,13 +758,10 @@ class RuntimeFacadeAdapter:
     def step_worlds(self, world_indices: Sequence[int]) -> None:
         self._last_window_evidence = None
         indices = [int(index) for index in world_indices]
-        if self.facade is not None:
-            if len(indices) == self.world_count() and indices == list(range(self.world_count())):
-                self.facade.step_batch()
-                return
-            if not self.runtime_compatibility_enabled:
-                raise RuntimeError(runtime_compatibility_required_message("RuntimeFacadeAdapter.step_worlds"))
-        self._compat_runtime_handle().step_worlds(indices)
+        if len(indices) == self.world_count() and indices == list(range(self.world_count())):
+            self.facade.step_batch()
+            return
+        raise RuntimeError("RuntimeFacadeAdapter.step_worlds requires a full facade-owned batch step")
 
     def set_mission_commands_maintained_batch(self, assignments: Sequence[Any]) -> None:
         batch_target = self._batch_target()

@@ -105,6 +105,7 @@ public:
     double world_time_step(std::size_t world_index) const;
 
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
+    std::vector<LaunchEvent> apply_launch_requests_batch(const std::vector<LaunchRequest>& requests);
     void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
     void set_mission_commands_maintained_batch(
         const std::vector<WorldMissionCommandMaintainedAssignment>& assignments

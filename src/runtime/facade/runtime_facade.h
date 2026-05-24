@@ -50,11 +50,6 @@ public:
     std::size_t worker_threads() const noexcept;
     std::size_t effective_worker_threads() const noexcept;
 
-    // Compatibility escape hatch for diagnostics and legacy adapters only.
-    // Maintained frontends should use facade-level request/result APIs instead.
-    WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;
-    const WorldBatchRuntime& runtime_compatibility_quarantine() const noexcept;
-
     bool load_database(const std::string& path);
     bool load_unit_definitions(const std::string& path, std::string* error = nullptr);
 
@@ -93,6 +88,7 @@ public:
         bool use_gpu = false
     ) const;
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
+    std::vector<LaunchEvent> apply_launch_requests_batch(const std::vector<LaunchRequest>& requests);
     void set_mission_commands_maintained_batch(
         const std::vector<WorldMissionCommandMaintainedAssignment>& assignments
     );

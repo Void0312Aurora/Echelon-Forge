@@ -52,7 +52,6 @@ from python.rl.runtime.world_batch import (
     build_loader_step_info,
     compute_loader_step_outcome,
     ExecutionObservationBatch,
-    RuntimeCompatibilityView,
     RuntimeFacadeAdapter,
     compute_execution_observation_batch,
     copy_obs,
@@ -67,17 +66,16 @@ from python.rl.runtime.world_batch import (
     parse_reward_terms_json,
     pilot_report_snapshot,
     refresh_visual_cache_batch,
-    runtime_compatibility_required_message,
     snapshot_changed,
     step_info_products_to_info_fields,
     task_order_snapshot,
 )
 from python.rl.tasking.bridge import resolve_loader_time_step
 from python.scenario_compiler import ScenarioCompiler
-from python.scenario_runtime import (
+from python.scenario.runtime import (
     BatchWorldApplyBuffer,
     build_compiled_world_layout,
-    load_compiled_scenario_batch,
+    load_compiled_scenario_for_setup_target,
 )
 
 _copy_obs = copy_obs
@@ -89,7 +87,6 @@ _normalize_flight_shaping_backend = normalize_flight_shaping_backend
 _normalize_observation_return_mode = normalize_observation_return_mode
 _BatchWorldHandle = BatchWorldHandle
 _RuntimeFacadeAdapter = RuntimeFacadeAdapter
-_RuntimeCompatibilityView = RuntimeCompatibilityView
 _build_loader_step_info = build_loader_step_info
 _compute_loader_step_outcome = compute_loader_step_outcome
 
@@ -214,7 +211,6 @@ class WorldBatchVecEnv(VecEnv):
             self.n_envs,
             runtime_compatibility_enabled=self.runtime_compatibility_enabled,
         )
-        self._runtime_compat = _RuntimeCompatibilityView(self._runtime_adapter)
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
@@ -298,12 +294,6 @@ class WorldBatchVecEnv(VecEnv):
         self._policy_torch_bridge_enabled = bool(
             self.policy_observation_torch_bridge and torch is not None and hasattr(torch, "from_dlpack")
         )
-
-    @property
-    def batch_runtime(self):
-        if not self.runtime_compatibility_enabled:
-            raise RuntimeError(runtime_compatibility_required_message("vec_env.batch_runtime"))
-        return self._runtime_compat
 
     @property
     def runtime_facade(self):
@@ -406,7 +396,9 @@ class WorldBatchVecEnv(VecEnv):
 
     def _batch_visual_backend_mode(self) -> str:
         if self.batch_visual_backend == "auto":
-            return "compiled" if self._batch_visual_runtime_available() else "legacy"
+            if self._batch_visual_runtime_available():
+                return "compiled"
+            raise RuntimeError("maintained visual batching requires compute_world_batch_visual_observation_batch_numpy")
         return self.batch_visual_backend
 
     def _batch_visual_runtime_available(self) -> bool:
@@ -1235,6 +1227,8 @@ class WorldBatchVecEnv(VecEnv):
             handle = self._handles[env_idx]
             if handle.agent_id is None:
                 continue
+            if not self._command_chain_entity_active(handle):
+                continue
 
             mission_command = build_kernel_mission_command(handle.loader)
             mission_snapshot = mission_command_snapshot(mission_command)
@@ -1293,6 +1287,16 @@ class WorldBatchVecEnv(VecEnv):
             self._runtime_adapter.set_leader_intents_maintained_batch(intent_assignments)
         if report_assignments:
             self._runtime_adapter.set_pilot_reports_maintained_batch(report_assignments)
+
+    @staticmethod
+    def _command_chain_entity_active(handle: _BatchWorldHandle) -> bool:
+        truth = getattr(handle, "last_truth", None)
+        if truth is None:
+            return True
+        try:
+            return float(getattr(truth, "health", 1.0) or 0.0) > 0.0
+        except Exception:
+            return True
 
     def _save_obs(self, env_idx: int, obs: VecEnvObs) -> None:
         for key in self.keys:
@@ -1647,7 +1651,7 @@ class WorldBatchVecEnv(VecEnv):
         shared_overrides = self._shared_randomization_overrides()
         if shared_overrides is not None:
             batch_setup_t0 = time.perf_counter() if self.collect_step_timing else 0.0
-            applied_worlds = load_compiled_scenario_batch(
+            applied_worlds = load_compiled_scenario_for_setup_target(
                 self._runtime_adapter,
                 self._compiled_scenario,
                 seeds=seeds,

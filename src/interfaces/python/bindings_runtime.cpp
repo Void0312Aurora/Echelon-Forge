@@ -964,13 +964,22 @@ void bind_runtime(nb::module_& m) {
     nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")
         .def(nb::init<>())
         .def_rw("refs", &TaskingBatchRequest::refs)
-        .def_rw("include_mission_commands", &TaskingBatchRequest::include_mission_commands)
+        .def_rw(
+            "include_mission_command_contracts",
+            &TaskingBatchRequest::include_mission_command_contracts
+        )
         .def_rw(
             "include_task_order_contracts",
             &TaskingBatchRequest::include_task_order_contracts
         )
-        .def_rw("include_leader_intents", &TaskingBatchRequest::include_leader_intents)
-        .def_rw("include_pilot_reports", &TaskingBatchRequest::include_pilot_reports);
+        .def_rw(
+            "include_leader_intent_contracts",
+            &TaskingBatchRequest::include_leader_intent_contracts
+        )
+        .def_rw(
+            "include_pilot_report_contracts",
+            &TaskingBatchRequest::include_pilot_report_contracts
+        );
 
     nb::class_<EngagementBatchRequest>(m, "EngagementBatchRequest")
         .def(nb::init<>())
@@ -1205,6 +1214,19 @@ void bind_runtime(nb::module_& m) {
         .def_rw(
             "assigned_target_id",
             &MissionCommandSharedCoreDirective::assigned_target_id
+        )
+        .def_rw("threat_state", &MissionCommandSharedCoreDirective::threat_state)
+        .def_rw(
+            "assigned_target_track_id",
+            &MissionCommandSharedCoreDirective::assigned_target_track_id
+        )
+        .def_rw(
+            "assigned_target_source_id",
+            &MissionCommandSharedCoreDirective::assigned_target_source_id
+        )
+        .def_rw(
+            "assigned_target_snapshot_time_s",
+            &MissionCommandSharedCoreDirective::assigned_target_snapshot_time_s
         )
         .def_rw(
             "authorization_to_fire",
@@ -1853,6 +1875,7 @@ void bind_runtime(nb::module_& m) {
         )
         .def("world_time_step", &WorldBatchRuntime::world_time_step, nb::arg("world_index"))
         .def("set_pilot_actions_batch", &WorldBatchRuntime::set_pilot_actions_batch, nb::arg("assignments"))
+        .def("apply_launch_requests_batch", &WorldBatchRuntime::apply_launch_requests_batch, nb::arg("requests"))
         .def("set_mission_commands_batch", &WorldBatchRuntime::set_mission_commands_batch, nb::arg("assignments"))
         .def(
             "set_mission_commands_maintained_batch",
@@ -1993,11 +2016,6 @@ void bind_runtime(nb::module_& m) {
         .def("set_worker_threads", &RuntimeFacade::set_worker_threads, nb::arg("worker_threads"))
         .def("worker_threads", &RuntimeFacade::worker_threads)
         .def("effective_worker_threads", &RuntimeFacade::effective_worker_threads)
-        .def(
-            "runtime_compatibility_quarantine",
-            nb::overload_cast<>(&RuntimeFacade::runtime_compatibility_quarantine),
-            nb::rv_policy::reference_internal
-        )
         .def("load_database", &RuntimeFacade::load_database, nb::arg("path"))
         .def("load_unit_definitions", [](RuntimeFacade& self, const std::string& path) {
             std::string error;
@@ -2042,6 +2060,7 @@ void bind_runtime(nb::module_& m) {
             nb::arg("use_gpu") = false
         )
         .def("set_pilot_actions_batch", &RuntimeFacade::set_pilot_actions_batch, nb::arg("assignments"))
+        .def("apply_launch_requests_batch", &RuntimeFacade::apply_launch_requests_batch, nb::arg("requests"))
         .def(
             "set_mission_commands_maintained_batch",
             &RuntimeFacade::set_mission_commands_maintained_batch,

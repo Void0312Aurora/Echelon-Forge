@@ -27,11 +27,11 @@ from python.scenario_compiler import (  # noqa: E402
     TERRAIN_TYPE_SOURCE_DEFAULT,
     _clone_runtime_mission_command,
 )
-from python.scenario_runtime import (  # noqa: E402
+from python.scenario.diagnostics.runtime_setup import load_compiled_scenario_batch_diagnostics  # noqa: E402
+from python.scenario.runtime import (  # noqa: E402
     BatchWorldApplyBuffer,
     build_compiled_world_layout,
-    load_compiled_scenario_batch,
-    load_compiled_scenario_batch_compatibility_quarantine,
+    load_compiled_scenario_for_setup_target,
     prepare_scenario_world_layout,
 )
 
@@ -80,6 +80,21 @@ def _entity_ref(world_index: int, entity_id: int) -> ef_py.WorldEntityRef:
     ref.world_index = int(world_index)
     ref.entity_id = int(entity_id)
     return ref
+
+
+def _make_detection(target_id: int, *, range_m: float = 8000.0) -> ef_py.Detection:
+    detection = ef_py.Detection()
+    detection.target_id = int(target_id)
+    detection.range = float(range_m)
+    detection.bearing = 0.0
+    detection.elevation = 0.0
+    detection.closing_speed = 350.0
+    detection.signal_strength = 1.0
+    detection.detection_prob_used = 1.0
+    detection.sensor_type = int(ef_py.SensorType.Radar)
+    detection.local_sensor_hit = True
+    detection.timestamp = 0.0
+    return detection
 
 
 def _spawn_request(
@@ -513,6 +528,74 @@ class WorldBatchRuntimeTests(unittest.TestCase):
         self.assertAlmostEqual(float(inst[0].throttle_pos), 1.0, places=6)
         self.assertAlmostEqual(float(inst[1].throttle_pos), 0.25, places=6)
         self.assertGreater(float(inst[0].throttle_pos), float(inst[1].throttle_pos))
+
+    def test_world_batch_runtime_applies_launch_request_as_single_shot_without_pilot_action(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+        world = batch.world_compatibility_quarantine(0)
+        world.set_time_step(0.05)
+        shooter = int(
+            world.spawn_unit(
+                ef_py.Side.Red,
+                "F-16C_Block50",
+                0.0,
+                0.0,
+                1200.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                220.0,
+                0.0,
+            )
+        )
+        target = int(
+            world.spawn_unit(
+                ef_py.Side.Blue,
+                "F-16C_Block50",
+                0.0,
+                8000.0,
+                1200.0,
+                180.0,
+                0.0,
+                0.0,
+                0.0,
+                -220.0,
+                0.0,
+            )
+        )
+        world.set_unit_ammo(shooter, 4, 4)
+        world.set_weapon_cooldown(shooter, 0.0, -1.0)
+        world.set_contact_list(shooter, [_make_detection(target)])
+
+        request = ef_py.LaunchRequest()
+        request.request_id = 77
+        request.shooter.world_index = 0
+        request.shooter.entity_id = shooter
+        request.target_entity.world_index = 0
+        request.target_entity.entity_id = target
+        request.has_target_entity = True
+        request.authority = "unit_test"
+        request.requested_munition_family = "missile"
+
+        events = batch.apply_launch_requests_batch([request])
+
+        self.assertEqual(len(events), 1)
+        self.assertTrue(bool(events[0].accepted))
+        self.assertEqual(int(events[0].request_id), 77)
+        self.assertTrue(bool(events[0].has_spawned_munition))
+        self.assertEqual(
+            int(batch.get_agent_observations_batch([_entity_ref(0, shooter)])[0].missiles_remaining),
+            3,
+        )
+
+        for _ in range(3):
+            batch.step_batch()
+
+        self.assertEqual(
+            int(batch.get_agent_observations_batch([_entity_ref(0, shooter)])[0].missiles_remaining),
+            3,
+        )
 
     def test_world_batch_runtime_applies_world_setup_batch(self) -> None:
         batch = ef_py.WorldBatchRuntime(2)
@@ -1333,6 +1416,66 @@ class WorldBatchRuntimeTests(unittest.TestCase):
             ef_py.NavalStationType.Screen,
         )
 
+    def test_world_batch_runtime_mission_command_maintained_batch_roundtrip_preserves_n4_target_provenance(self) -> None:
+        batch = ef_py.WorldBatchRuntime(1)
+        self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+        batch.reset_batch([33])
+
+        ship = batch.world_compatibility_quarantine(0).spawn_unit(
+            ef_py.Side.Blue,
+            "DDG-51_Flight_I_ASW_Helo_MVP",
+            -1400.0,
+            0.0,
+            0.0,
+            90.0,
+            0.0,
+            0.0,
+            0.0,
+            10.29,
+            0.0,
+        )
+        batch.world_compatibility_quarantine(0).set_command_link(int(ship), 0.0, 0.0)
+        ref = _entity_ref(0, int(ship))
+
+        assignment = ef_py.WorldMissionCommandMaintainedAssignment()
+        assignment.world_index = 0
+        assignment.entity_id = int(ship)
+        assignment.mission_command.shared_core.command_code = 32
+        assignment.mission_command.shared_core.cmd_heading_deg = 45.0
+        assignment.mission_command.shared_core.cmd_altitude_m = 0.0
+        assignment.mission_command.shared_core.cmd_speed_mps = 12.0
+        assignment.mission_command.shared_core.assigned_target_id = 7001
+        assignment.mission_command.shared_core.threat_state = 4
+        assignment.mission_command.shared_core.assigned_target_track_id = 88001
+        assignment.mission_command.shared_core.assigned_target_source_id = 99002
+        assignment.mission_command.shared_core.assigned_target_snapshot_time_s = 123.75
+        assignment.mission_command.shared_core.authorization_to_fire = True
+        assignment.mission_command.shared_core.active = True
+
+        batch.set_mission_commands_maintained_batch([assignment])
+
+        maintained = batch.get_mission_commands_maintained_batch([ref])
+        compat = batch.get_mission_commands_batch([ref])
+
+        self.assertEqual(len(maintained), 1)
+        self.assertEqual(int(maintained[0].shared_core.assigned_target_id), 7001)
+        self.assertEqual(int(maintained[0].shared_core.threat_state), 4)
+        self.assertEqual(int(maintained[0].shared_core.assigned_target_track_id), 88001)
+        self.assertEqual(int(maintained[0].shared_core.assigned_target_source_id), 99002)
+        self.assertAlmostEqual(
+            float(maintained[0].shared_core.assigned_target_snapshot_time_s),
+            123.75,
+            places=6,
+        )
+        self.assertEqual(int(compat[0].threat_state), 4)
+        self.assertEqual(int(compat[0].assigned_target_track_id), 88001)
+        self.assertEqual(int(compat[0].assigned_target_source_id), 99002)
+        self.assertAlmostEqual(
+            float(compat[0].assigned_target_snapshot_time_s),
+            123.75,
+            places=6,
+        )
+
     def test_world_batch_runtime_mission_command_roundtrip_preserves_formation_offsets(self) -> None:
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
@@ -1462,13 +1605,13 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
         apply_buffer = BatchWorldApplyBuffer(2)
 
-        worlds_a = load_compiled_scenario_batch_compatibility_quarantine(
+        worlds_a = load_compiled_scenario_batch_diagnostics(
             batch,
             compiled,
             seeds=[11, 17],
             apply_buffer=apply_buffer,
         )
-        worlds_b = load_compiled_scenario_batch_compatibility_quarantine(
+        worlds_b = load_compiled_scenario_batch_diagnostics(
             batch,
             compiled,
             seeds=[21, 27],
@@ -1496,9 +1639,9 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
 
         with self.assertRaisesRegex(RuntimeError, "maintained facade setup target"):
-            load_compiled_scenario_batch(batch, compiled, seeds=[11, 17])
+            load_compiled_scenario_for_setup_target(batch, compiled, seeds=[11, 17])
 
-        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[11, 17])
+        worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[11, 17])
         self.assertEqual(len(worlds), 2)
         self.assertIsNotNone(worlds[0].agent_id)
         self.assertIsNotNone(worlds[1].agent_id)
@@ -1528,7 +1671,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
 
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
-        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[23])
+        worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[23])
         self.assertEqual(len(worlds), 1)
         batch_obs = batch.world_compatibility_quarantine(0).get_agent_observation(int(worlds[0].agent_id))
 
@@ -1634,7 +1777,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
 
-        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[41])
+        worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[41])
         loader = ScenarioLoader(batch.world_compatibility_quarantine(0))
         loader._compiled_scenario = compiled
         loader._compiled_runtime_metadata = compiled.runtime_metadata
@@ -1657,7 +1800,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
 
-        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[53])
+        worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[53])
         loader = ScenarioLoader(batch.world_compatibility_quarantine(0))
         loader._compiled_scenario = compiled
         loader._compiled_runtime_metadata = compiled.runtime_metadata
