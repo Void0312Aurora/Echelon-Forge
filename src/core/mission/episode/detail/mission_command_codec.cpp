@@ -280,6 +280,10 @@ void write_mission_command_fields_to_json(const MissionCommand& command, nlohman
     (*mission_json)["engagement_authority_holder_id"] = core.engagement_authority_holder_id;
     (*mission_json)["engagement_authority_grantor_id"] = core.engagement_authority_grantor_id;
     (*mission_json)["assigned_target_id"] = core.assigned_target_id;
+    (*mission_json)["threat_state"] = core.threat_state;
+    (*mission_json)["assigned_target_track_id"] = core.assigned_target_track_id;
+    (*mission_json)["assigned_target_source_id"] = core.assigned_target_source_id;
+    (*mission_json)["assigned_target_snapshot_time_s"] = core.assigned_target_snapshot_time_s;
     (*mission_json)["authorization_to_fire"] = core.authorization_to_fire;
     (*mission_json)["active"] = core.active;
 }
@@ -317,6 +321,11 @@ MissionCommand build_mission_command_from_json(const nlohmann::json& mission_jso
     core.engagement_authority_grantor_id =
         json_uint64_or(mission_json, "engagement_authority_grantor_id", 0);
     core.assigned_target_id = json_uint64_or(mission_json, "assigned_target_id", 0);
+    core.threat_state = json_int_or(mission_json, "threat_state", 0);
+    core.assigned_target_track_id = json_uint64_or(mission_json, "assigned_target_track_id", 0);
+    core.assigned_target_source_id = json_uint64_or(mission_json, "assigned_target_source_id", 0);
+    core.assigned_target_snapshot_time_s =
+        json_double_or(mission_json, "assigned_target_snapshot_time_s", 0.0);
     core.authorization_to_fire = json_bool_or(mission_json, "authorization_to_fire", false);
     core.active = json_bool_or(mission_json, "active", false);
     return command;

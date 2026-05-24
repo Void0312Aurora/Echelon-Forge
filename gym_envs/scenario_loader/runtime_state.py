@@ -227,7 +227,10 @@ def _canonical_runtime_mission_command_json(
         ("roe_state", "roe_state"),
         ("engagement_authority_holder_id", "engagement_authority_holder_id"),
         ("engagement_authority_grantor_id", "engagement_authority_grantor_id"),
+        ("threat_state", "threat_state"),
         ("embarked_helo_entity_id", "embarked_helo_entity_id"),
+        ("assigned_target_track_id", "assigned_target_track_id"),
+        ("assigned_target_source_id", "assigned_target_source_id"),
     )
     for out_key, attr_name in scalar_int_fields:
         if hasattr(kernel_cmd, attr_name):
@@ -240,6 +243,7 @@ def _canonical_runtime_mission_command_json(
         ("form_offset_z", "form_offset_z"),
         ("station_radius_m", "station_radius_m"),
         ("station_bearing_deg", "station_bearing_deg"),
+        ("assigned_target_snapshot_time_s", "assigned_target_snapshot_time_s"),
     )
     for out_key, attr_name in scalar_float_fields:
         if hasattr(kernel_cmd, attr_name):
@@ -306,6 +310,34 @@ def _sync_command_chain_runtime_mirror(loader) -> None:
         if hasattr(leader_intent, "authorization_to_fire"):
             try:
                 leader_intent.authorization_to_fire = cmd_view.bool_field("authorization_to_fire", False)
+            except Exception:
+                pass
+        if hasattr(leader_intent, "threat_state"):
+            try:
+                leader_intent.threat_state = cmd_view.int_field("threat_state", 0)
+            except Exception:
+                pass
+        if hasattr(leader_intent, "assigned_target_id"):
+            try:
+                leader_intent.assigned_target_id = cmd_view.int_field("assigned_target_id", 0)
+            except Exception:
+                pass
+        if hasattr(leader_intent, "assigned_target_track_id"):
+            try:
+                leader_intent.assigned_target_track_id = cmd_view.int_field("assigned_target_track_id", 0)
+            except Exception:
+                pass
+        if hasattr(leader_intent, "assigned_target_source_id"):
+            try:
+                leader_intent.assigned_target_source_id = cmd_view.int_field("assigned_target_source_id", 0)
+            except Exception:
+                pass
+        if hasattr(leader_intent, "assigned_target_snapshot_time_s"):
+            try:
+                leader_intent.assigned_target_snapshot_time_s = cmd_view.float_field(
+                    "assigned_target_snapshot_time_s",
+                    0.0,
+                )
             except Exception:
                 pass
 
@@ -451,6 +483,12 @@ def apply_execution_episode_state(loader, state) -> None:
             "form_offset_y": float(getattr(state.mission_command, "form_offset_y", 0.0)),
             "form_offset_z": float(getattr(state.mission_command, "form_offset_z", 0.0)),
             "assigned_target_id": int(getattr(state.mission_command, "assigned_target_id", 0)),
+            "threat_state": int(getattr(state.mission_command, "threat_state", 0)),
+            "assigned_target_track_id": int(getattr(state.mission_command, "assigned_target_track_id", 0)),
+            "assigned_target_source_id": int(getattr(state.mission_command, "assigned_target_source_id", 0)),
+            "assigned_target_snapshot_time_s": float(
+                getattr(state.mission_command, "assigned_target_snapshot_time_s", 0.0)
+            ),
             "authorization_to_fire": bool(getattr(state.mission_command, "authorization_to_fire", False)),
             "active": bool(getattr(state.mission_command, "active", False)),
         }
@@ -613,6 +651,12 @@ def apply_execution_episode_runtime_fields(
             "form_offset_y": float(getattr(state.mission_command, "form_offset_y", 0.0)),
             "form_offset_z": float(getattr(state.mission_command, "form_offset_z", 0.0)),
             "assigned_target_id": int(getattr(state.mission_command, "assigned_target_id", 0)),
+            "threat_state": int(getattr(state.mission_command, "threat_state", 0)),
+            "assigned_target_track_id": int(getattr(state.mission_command, "assigned_target_track_id", 0)),
+            "assigned_target_source_id": int(getattr(state.mission_command, "assigned_target_source_id", 0)),
+            "assigned_target_snapshot_time_s": float(
+                getattr(state.mission_command, "assigned_target_snapshot_time_s", 0.0)
+            ),
             "authorization_to_fire": bool(getattr(state.mission_command, "authorization_to_fire", False)),
             "active": bool(getattr(state.mission_command, "active", False)),
         }

@@ -432,6 +432,28 @@ def build_kernel_mission_command(loader: Any):
         )
     if hasattr(cmd, "assigned_target_id"):
         cmd.assigned_target_id = coerce_positive_int(mission_cmd.get("assigned_target_id", 0))
+    if hasattr(cmd, "threat_state"):
+        cmd.threat_state = int(
+            mission_cmd.get(
+                "threat_state",
+                1 if coerce_positive_int(mission_cmd.get("assigned_target_id", 0)) > 0 else 0,
+            )
+        )
+    if hasattr(cmd, "assigned_target_track_id"):
+        cmd.assigned_target_track_id = coerce_positive_int(
+            mission_cmd.get("assigned_target_track_id", mission_cmd.get("assigned_target_id", 0))
+        )
+    if hasattr(cmd, "assigned_target_source_id"):
+        cmd.assigned_target_source_id = coerce_positive_int(
+            mission_cmd.get(
+                "assigned_target_source_id",
+                mission_cmd.get("engagement_authority_holder_id", 0),
+            )
+        )
+    if hasattr(cmd, "assigned_target_snapshot_time_s"):
+        cmd.assigned_target_snapshot_time_s = float(
+            mission_cmd.get("assigned_target_snapshot_time_s", 0.0) or 0.0
+        )
     if hasattr(cmd, "authorization_to_fire"):
         cmd.authorization_to_fire = bool(mission_cmd.get("authorization_to_fire", False))
     if hasattr(cmd, "route_ref_id"):
@@ -497,6 +519,33 @@ def build_kernel_mission_command(loader: Any):
             if hasattr(cmd, "assigned_target_id"):
                 cmd.assigned_target_id = coerce_positive_int(
                     mission_cfg.get("assigned_target_id", cmd.assigned_target_id)
+                )
+            if hasattr(cmd, "threat_state"):
+                cmd.threat_state = int(mission_cfg.get("threat_state", cmd.threat_state))
+            if hasattr(cmd, "assigned_target_track_id"):
+                cmd.assigned_target_track_id = coerce_positive_int(
+                    mission_cfg.get(
+                        "assigned_target_track_id",
+                        mission_cfg.get("assigned_target_id", cmd.assigned_target_track_id),
+                    )
+                )
+            if hasattr(cmd, "assigned_target_source_id"):
+                cmd.assigned_target_source_id = coerce_positive_int(
+                    mission_cfg.get(
+                        "assigned_target_source_id",
+                        mission_cfg.get(
+                            "engagement_authority_holder_id",
+                            cmd.assigned_target_source_id,
+                        ),
+                    )
+                )
+            if hasattr(cmd, "assigned_target_snapshot_time_s"):
+                cmd.assigned_target_snapshot_time_s = float(
+                    mission_cfg.get(
+                        "assigned_target_snapshot_time_s",
+                        cmd.assigned_target_snapshot_time_s,
+                    )
+                    or 0.0
                 )
             if hasattr(cmd, "authorization_to_fire"):
                 cmd.authorization_to_fire = bool(

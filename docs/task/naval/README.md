@@ -1,29 +1,44 @@
 # Naval
 
-Status: active naval-realism workline; local entry converged on `2026-05-18`.
+Status: active naval-realism workline; current tracking entry updated on
+`2026-05-24`.
 
 ## Current Status
 
 - The current naval line has already moved beyond a bare minimum contact demo
   into a tactical prototype with maritime motion, situational awareness,
   localized weapon-chain skeleton, and support-chain rudiments.
-- The best latest state summary is the `2026-05-17` progress checkpoint with
-  the `2026-05-18` workspace recheck addendum.
+- The latest state summary is
+  [naval_current_progress_20260524.md](./naval_current_progress_20260524.md).
+- The older `2026-05-17` progress checkpoint remains archived for historical
+  traceability.
 - The line remains active, but the main focus is closure and stabilization of
-  the existing naval command/sensor/runtime chain rather than broad new feature
-  expansion.
+  the existing naval command, sensor, runtime, and RL/tasking chain rather than
+  broad new feature expansion.
 
 ## Recommended Reading Order
 
+- Current progress tracking:
+  [naval_current_progress_20260524.md](./naval_current_progress_20260524.md)
+- Next scenario-expansion subproject:
+  [n4_threat_roe_bridge/README.md](./n4_threat_roe_bridge/README.md)
 - Archive index:
   [archive/README.md](./archive/README.md)
-- All planning/checkpoint material has been moved into the archive.
+- Historical planning/checkpoint material has been moved into the archive.
 
 ## Current Follow-On Focus
 
-- treat this subproject as archived planning material
-- use the archive index for traceability only
-- do not treat the old checkpoints or backlogs as active entrypoints
+- freeze a minimal naval RL task entry, such as `naval_screen_station_hold` or
+  `naval_contact_report`
+- use the `N4` threat/ROE bridge as the first expansion beyond the current
+  `N1-N3` screen/contact MVP, before attempting limited weapon engagement
+- continue moving business-bearing loader-owned raw simulation compatibility
+  seams to facade-owned maintained surfaces
+- add facade/world-batch gates for `MissionCommand -> naval weapon`,
+  `screen-hold`, and `tasking_profile: naval`
+- stabilize maritime state, sensor/LOS coupling, naval weapon command chains,
+  and training entrypoints before expanding into larger high-fidelity fleet
+  combat
 
 The earlier scenario-bound freeze snapshot now lives under
 [archive/README.md](./archive/README.md).

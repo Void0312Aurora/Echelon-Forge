@@ -24,10 +24,18 @@ class NavalMissionCommandMappingTests(unittest.TestCase):
         cmd.reference_entity_id = 5201
         cmd.station_radius_m = 14500.0
         cmd.station_bearing_deg = 42.0
+        cmd.threat_state = 4
+        cmd.assigned_target_track_id = 6101
+        cmd.assigned_target_source_id = 5101
+        cmd.assigned_target_snapshot_time_s = 18.0
 
         self.assertEqual(int(cmd.reference_entity_id), 5201)
         self.assertAlmostEqual(float(cmd.station_radius_m), 14500.0, places=6)
         self.assertAlmostEqual(float(cmd.station_bearing_deg), 42.0, places=6)
+        self.assertEqual(int(cmd.threat_state), 4)
+        self.assertEqual(int(cmd.assigned_target_track_id), 6101)
+        self.assertEqual(int(cmd.assigned_target_source_id), 5101)
+        self.assertAlmostEqual(float(cmd.assigned_target_snapshot_time_s), 18.0, places=6)
 
     def test_tasking_profile_for_loader_prefers_explicit_profile_over_service_profile(self) -> None:
         task = ef_py.TaskOrder()
@@ -120,6 +128,11 @@ class NavalMissionCommandMappingTests(unittest.TestCase):
                     "target_heading": 80.0,
                     "target_altitude": 15.0,
                     "target_speed": 14.0,
+                    "assigned_target_id": 6202,
+                    "threat_state": 5,
+                    "assigned_target_track_id": 6202,
+                    "assigned_target_source_id": 6201,
+                    "assigned_target_snapshot_time_s": 42.0,
                     "recovery_base_id": 9201,
                     "recovery_runway_id": 24,
                     "recovery_approach_type": "ILS",
@@ -138,6 +151,11 @@ class NavalMissionCommandMappingTests(unittest.TestCase):
                 "reference_entity_id": 5301,
                 "station_radius_m": 13000.0,
                 "station_bearing_deg": 25.0,
+                "assigned_target_id": 5302,
+                "threat_state": 3,
+                "assigned_target_track_id": 5302,
+                "assigned_target_source_id": 5301,
+                "assigned_target_snapshot_time_s": 24.0,
                 "formation_id": 41,
                 "form_offset_x": 90.0,
                 "form_offset_y": -45.0,
@@ -166,6 +184,11 @@ class NavalMissionCommandMappingTests(unittest.TestCase):
         self.assertEqual(int(cmd.reference_entity_id), 6201)
         self.assertAlmostEqual(float(cmd.station_radius_m), 16000.0, places=6)
         self.assertAlmostEqual(float(cmd.station_bearing_deg), 75.0, places=6)
+        self.assertEqual(int(cmd.assigned_target_id), 6202)
+        self.assertEqual(int(cmd.threat_state), 5)
+        self.assertEqual(int(cmd.assigned_target_track_id), 6202)
+        self.assertEqual(int(cmd.assigned_target_source_id), 6201)
+        self.assertAlmostEqual(float(cmd.assigned_target_snapshot_time_s), 42.0, places=6)
         self.assertEqual(int(cmd.recovery_base_id), 9201)
         self.assertEqual(int(cmd.recovery_runway_id), 24)
         self.assertEqual(cmd.recovery_approach_type, ef_py.RecoveryApproachType.ILS)

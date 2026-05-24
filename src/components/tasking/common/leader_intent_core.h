@@ -22,6 +22,10 @@ struct LeaderIntentCore {
     std::uint64_t engagement_authority_holder_id = 0;
     std::uint64_t engagement_authority_grantor_id = 0;
     std::uint64_t assigned_target_id = 0;
+    int threat_state = 0;
+    std::uint64_t assigned_target_track_id = 0;
+    std::uint64_t assigned_target_source_id = 0;
+    double assigned_target_snapshot_time_s = 0.0;
     bool authorization_to_fire = false;
     bool active = false;
 };

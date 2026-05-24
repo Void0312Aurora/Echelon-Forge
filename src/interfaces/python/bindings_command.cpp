@@ -389,6 +389,13 @@ void bind_command(nb::module_& m) {
         .def_rw("engagement_authority_holder_id", &MissionCommand::engagement_authority_holder_id)
         .def_rw("engagement_authority_grantor_id", &MissionCommand::engagement_authority_grantor_id)
         .def_rw("assigned_target_id", &MissionCommand::assigned_target_id)
+        .def_rw("threat_state", &MissionCommand::threat_state)
+        .def_rw("assigned_target_track_id", &MissionCommand::assigned_target_track_id)
+        .def_rw("assigned_target_source_id", &MissionCommand::assigned_target_source_id)
+        .def_rw(
+            "assigned_target_snapshot_time_s",
+            &MissionCommand::assigned_target_snapshot_time_s
+        )
         .def_rw("authorization_to_fire", &MissionCommand::authorization_to_fire)
         .def_rw("active", &MissionCommand::active);
 
@@ -876,6 +883,13 @@ void bind_command(nb::module_& m) {
             &LeaderIntentCore::engagement_authority_grantor_id
         )
         .def_rw("assigned_target_id", &LeaderIntentCore::assigned_target_id)
+        .def_rw("threat_state", &LeaderIntentCore::threat_state)
+        .def_rw("assigned_target_track_id", &LeaderIntentCore::assigned_target_track_id)
+        .def_rw("assigned_target_source_id", &LeaderIntentCore::assigned_target_source_id)
+        .def_rw(
+            "assigned_target_snapshot_time_s",
+            &LeaderIntentCore::assigned_target_snapshot_time_s
+        )
         .def_rw("authorization_to_fire", &LeaderIntentCore::authorization_to_fire)
         .def_rw("active", &LeaderIntentCore::active);
 
@@ -951,6 +965,13 @@ void bind_command(nb::module_& m) {
         .def_rw("engagement_authority_holder_id", &LeaderIntent::engagement_authority_holder_id)
         .def_rw("engagement_authority_grantor_id", &LeaderIntent::engagement_authority_grantor_id)
         .def_rw("assigned_target_id", &LeaderIntent::assigned_target_id)
+        .def_rw("threat_state", &LeaderIntent::threat_state)
+        .def_rw("assigned_target_track_id", &LeaderIntent::assigned_target_track_id)
+        .def_rw("assigned_target_source_id", &LeaderIntent::assigned_target_source_id)
+        .def_rw(
+            "assigned_target_snapshot_time_s",
+            &LeaderIntent::assigned_target_snapshot_time_s
+        )
         .def_rw("authorization_to_fire", &LeaderIntent::authorization_to_fire)
         .def_rw("formation_mode_id", &LeaderIntent::formation_mode_id)
         .def_rw("join_required_flag", &LeaderIntent::join_required_flag)

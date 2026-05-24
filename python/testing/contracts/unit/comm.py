@@ -401,7 +401,7 @@ def run_comm_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
                 except OSError:
                     pass
 
-    if check_kind == "naval_screen_contact_report":
+    if check_kind in {"naval_screen_contact_report", "naval_screen_threat_roe"}:
         import ef_py
         from gym_envs.scenario_loader import ScenarioLoader
 
@@ -469,16 +469,37 @@ def run_comm_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
             hvu_id = int(loader.entities[hvu_name])
             contact_id = int(loader.entities[contact_name])
 
+            def _vector_delta_norm(before: Any, after: Any) -> float:
+                before_values = list(before or [])
+                after_values = list(after or [])
+                if len(before_values) != len(after_values):
+                    return float("inf")
+                total = 0.0
+                for lhs, rhs in zip(before_values, after_values):
+                    total += abs(float(rhs) - float(lhs))
+                return float(total)
+
             max_steps = max(1, int(spec.get("max_steps", 80)))
             continue_after_contact_chain = bool(spec.get("continue_after_contact_chain", False))
             screen_required_first_source = int(spec.get("screen_required_first_source", 1))
             hvu_required_shared_source = int(spec.get("hvu_required_shared_source", 3))
             report_msg_type = int(getattr(ef_py.CommMsgType, str(spec.get("report_message_type", "ReportContact"))))
             forbid_hvu_local_source = bool(spec.get("forbid_hvu_local_source", True))
+            check_threat_roe = check_kind == "naval_screen_threat_roe"
+            expected_mission = dict(spec.get("expected_runtime_mission_command", {}) or {})
+            initial_contact_health = sim.get_unit_health(contact_id) if check_threat_roe else None
+            initial_contact_damage = sim.get_unit_damage_state(contact_id) if check_threat_roe else None
+            initial_screen_weapon_counts = (
+                sim.debug_get_naval_weapon_counts(screen_id)
+                if check_threat_roe and hasattr(sim, "debug_get_naval_weapon_counts")
+                else None
+            )
 
             first_screen_step = None
             first_hvu_shared_step = None
             first_hvu_report_step = None
+            first_mission_active_step = None
+            observed_mission_cmd = None
             first_screen_source = None
             hvu_local_source_seen = False
             min_screen_hvu_m = float("inf")
@@ -502,6 +523,12 @@ def run_comm_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
                 screen_pos = sim.get_unit_position(screen_id)
                 hvu_pos = sim.get_unit_position(hvu_id)
                 contact_pos = sim.get_unit_position(contact_id)
+                if check_threat_roe:
+                    mission_cmd = sim.get_mission_command(screen_id)
+                    if bool(getattr(mission_cmd, "active", False)):
+                        if first_mission_active_step is None:
+                            first_mission_active_step = step + 1
+                        observed_mission_cmd = mission_cmd
 
                 screen_hvu_m = float(math.dist(screen_pos, hvu_pos))
                 hvu_contact_m = float(math.dist(hvu_pos, contact_pos))
@@ -553,6 +580,51 @@ def run_comm_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
                 return False, "HVU report arrived before the screen detected the contact"
             if forbid_hvu_local_source and hvu_local_source_seen:
                 return False, "HVU unexpectedly acquired a local radar track inside the blind-zone contract"
+            if check_threat_roe:
+                if observed_mission_cmd is None:
+                    return False, "screen mission command never became observable/active for threat ROE contract"
+                for field_name in (
+                    "active",
+                    "roe_state",
+                    "engagement_authority_holder_id",
+                    "engagement_authority_grantor_id",
+                    "authorization_to_fire",
+                ):
+                    if field_name not in expected_mission:
+                        continue
+                    actual_value = getattr(observed_mission_cmd, field_name)
+                    expected_value = expected_mission[field_name]
+                    if isinstance(expected_value, bool):
+                        same = bool(actual_value) == bool(expected_value)
+                    else:
+                        try:
+                            same = int(actual_value) == int(expected_value)
+                        except Exception:
+                            same = actual_value == expected_value
+                    if not same:
+                        return False, (
+                            f"mission command {field_name} mismatch: "
+                            f"{actual_value!r} != {expected_value!r}"
+                        )
+                expected_target_entity = str(expected_mission.get("assigned_target_entity", "") or "").strip()
+                if expected_target_entity:
+                    expected_target_id = int(loader.entities.get(expected_target_entity, 0))
+                    if expected_target_id <= 0:
+                        return False, f"expected assigned target entity is not loaded: {expected_target_entity!r}"
+                    actual_target_id = int(getattr(observed_mission_cmd, "assigned_target_id", 0))
+                    if actual_target_id != expected_target_id:
+                        return False, (
+                            f"mission command assigned_target_id mismatch: "
+                            f"{actual_target_id} != {expected_target_id} ({expected_target_entity})"
+                        )
+                elif "assigned_target_id" in expected_mission:
+                    actual_target_id = int(getattr(observed_mission_cmd, "assigned_target_id", 0))
+                    expected_target_id = int(expected_mission["assigned_target_id"])
+                    if actual_target_id != expected_target_id:
+                        return False, (
+                            f"mission command assigned_target_id mismatch: "
+                            f"{actual_target_id} != {expected_target_id}"
+                        )
 
             runtime_checks = {
                 "screen_first_detection_step": float(first_screen_step),
@@ -562,6 +634,21 @@ def run_comm_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
                 "screen_hvu_separation_m_max": float(max_screen_hvu_m),
                 "hvu_contact_closest_approach_m": float(min_hvu_contact_m),
             }
+            if check_threat_roe:
+                runtime_checks["mission_command_first_active_step"] = float(first_mission_active_step or max_steps + 1)
+                runtime_checks["contact_health_delta"] = _vector_delta_norm(
+                    initial_contact_health,
+                    sim.get_unit_health(contact_id),
+                )
+                runtime_checks["contact_damage_delta"] = _vector_delta_norm(
+                    initial_contact_damage,
+                    sim.get_unit_damage_state(contact_id),
+                )
+                if initial_screen_weapon_counts is not None:
+                    runtime_checks["screen_weapon_inventory_delta"] = _vector_delta_norm(
+                        initial_screen_weapon_counts,
+                        sim.debug_get_naval_weapon_counts(screen_id),
+                    )
             for label, value in runtime_checks.items():
                 bounds = checks.get(label, None)
                 if isinstance(bounds, dict):
@@ -569,6 +656,8 @@ def run_comm_contract(check_kind: str, spec: dict[str, Any]) -> tuple[bool, str]
                     if message is not None:
                         return False, message
 
+            if check_threat_roe:
+                return True, "naval screen threat/ROE pre-fire contract passed"
             return True, "naval screen/contact reporting contract passed"
         finally:
             if cleanup:

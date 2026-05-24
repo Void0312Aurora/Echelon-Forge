@@ -374,6 +374,9 @@ class BindingsCommandSurfaceTests(unittest.TestCase):
             (
                 "active",
                 "assigned_target_id",
+                "assigned_target_snapshot_time_s",
+                "assigned_target_source_id",
+                "assigned_target_track_id",
                 "authorization_to_fire",
                 "cmd_altitude_m",
                 "cmd_heading_deg",
@@ -401,6 +404,7 @@ class BindingsCommandSurfaceTests(unittest.TestCase):
                 "takeoff_clearance_id",
                 "takeoff_interval_s",
                 "takeoff_procedure_id",
+                "threat_state",
             ),
         )
 
