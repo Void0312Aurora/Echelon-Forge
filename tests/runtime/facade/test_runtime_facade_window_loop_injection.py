@@ -81,7 +81,8 @@ def test_runtime_facade_exposes_wp10_window_loop_api() -> None:
     )
     assert "return execute_runtime_window(" in body
     assert "set_pilot_actions_batch(assignments)" in body
-    assert "set_mission_commands_batch(assignments)" in body
+    assert "set_mission_commands_maintained_batch(assignments)" in body
+    assert "set_mission_commands_batch(assignments)" not in body
     assert "step_batch()" in body
     assert "export_observation_packet(observation_request)" in body
     assert "export_engagement_event_packet(engagement_request)" in body
@@ -234,9 +235,9 @@ def test_runtime_window_coordinator_classifies_requests_and_records_visibility()
                                 return;
                             }
                             callback_order.push_back("pilot_apply");
-                        },
-                    .apply_mission_commands =
-                        [&mission_apply_called](const std::vector<WorldMissionCommandAssignment>&) {
+                    },
+                .apply_mission_commands =
+                        [&mission_apply_called](const std::vector<WorldMissionCommandMaintainedAssignment>&) {
                             mission_apply_called = true;
                         },
                     .step_window = [&callback_order]() {

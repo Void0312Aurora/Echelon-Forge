@@ -52,8 +52,8 @@ public:
 
     // Compatibility escape hatch for diagnostics and legacy adapters only.
     // Maintained frontends should use facade-level request/result APIs instead.
-    WorldBatchRuntime& runtime() noexcept;
-    const WorldBatchRuntime& runtime() const noexcept;
+    WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;
+    const WorldBatchRuntime& runtime_compatibility_quarantine() const noexcept;
 
     bool load_database(const std::string& path);
     bool load_unit_definitions(const std::string& path, std::string* error = nullptr);
@@ -93,7 +93,6 @@ public:
         bool use_gpu = false
     ) const;
     void set_pilot_actions_batch(const std::vector<WorldPilotActionAssignment>& assignments);
-    void set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments);
     void set_mission_commands_maintained_batch(
         const std::vector<WorldMissionCommandMaintainedAssignment>& assignments
     );
@@ -103,11 +102,9 @@ public:
     std::vector<TaskOrderMaintainedBatchContract> get_task_orders_maintained_batch(
         const std::vector<WorldEntityRef>& refs
     ) const;
-    void set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments);
     void set_leader_intents_maintained_batch(
         const std::vector<WorldLeaderIntentMaintainedAssignment>& assignments
     );
-    void set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments);
     void set_pilot_reports_maintained_batch(
         const std::vector<WorldPilotReportMaintainedAssignment>& assignments
     );
@@ -131,13 +128,10 @@ public:
     ExecutionBatchStepResult step_execution_batch(const ExecutionBatchStepRequest& request);
     std::vector<AgentObservation> get_agent_observations_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<InstrumentState> get_instrument_states_batch(const std::vector<WorldEntityRef>& refs) const;
-    std::vector<MissionCommand> get_mission_commands_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<MissionCommandMaintainedBatchContract>
     get_mission_commands_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
-    std::vector<LeaderIntent> get_leader_intents_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<LeaderIntentMaintainedBatchContract>
     get_leader_intents_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
-    std::vector<PilotReport> get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const;
     std::vector<PilotReportMaintainedBatchContract>
     get_pilot_reports_maintained_batch(const std::vector<WorldEntityRef>& refs) const;
     ObservationBatchPacket export_observation_packet(const std::vector<WorldEntityRef>& refs) const;

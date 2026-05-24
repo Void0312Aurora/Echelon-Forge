@@ -1535,10 +1535,6 @@ TaskingBatchRequest tasking_request_from_step_request(
 ) {
     return TaskingBatchRequest{
         .refs = refs_from_step_requests(request.step_requests),
-        .include_mission_commands = request.include_mission_commands,
-        .include_task_order_contracts = request.include_task_order_contracts,
-        .include_leader_intents = request.include_leader_intents,
-        .include_pilot_reports = request.include_pilot_reports,
     };
 }
 
@@ -2522,11 +2518,11 @@ std::size_t RuntimeFacade::effective_worker_threads() const noexcept {
     return runtime_->effective_worker_threads();
 }
 
-WorldBatchRuntime& RuntimeFacade::runtime() noexcept {
+WorldBatchRuntime& RuntimeFacade::runtime_compatibility_quarantine() noexcept {
     return *runtime_;
 }
 
-const WorldBatchRuntime& RuntimeFacade::runtime() const noexcept {
+const WorldBatchRuntime& RuntimeFacade::runtime_compatibility_quarantine() const noexcept {
     return *runtime_;
 }
 
@@ -2669,10 +2665,6 @@ void RuntimeFacade::set_pilot_actions_batch(const std::vector<WorldPilotActionAs
     runtime_->set_pilot_actions_batch(assignments);
 }
 
-void RuntimeFacade::set_mission_commands_batch(const std::vector<WorldMissionCommandAssignment>& assignments) {
-    runtime_->set_mission_commands_batch(assignments);
-}
-
 void RuntimeFacade::set_mission_commands_maintained_batch(
     const std::vector<WorldMissionCommandMaintainedAssignment>& assignments
 ) {
@@ -2685,18 +2677,10 @@ void RuntimeFacade::set_task_orders_maintained_batch(
     runtime_->set_task_orders_maintained_batch(assignments);
 }
 
-void RuntimeFacade::set_leader_intents_batch(const std::vector<WorldLeaderIntentAssignment>& assignments) {
-    runtime_->set_leader_intents_batch(assignments);
-}
-
 void RuntimeFacade::set_leader_intents_maintained_batch(
     const std::vector<WorldLeaderIntentMaintainedAssignment>& assignments
 ) {
     runtime_->set_leader_intents_maintained_batch(assignments);
-}
-
-void RuntimeFacade::set_pilot_reports_batch(const std::vector<WorldPilotReportAssignment>& assignments) {
-    runtime_->set_pilot_reports_batch(assignments);
 }
 
 void RuntimeFacade::set_pilot_reports_maintained_batch(
@@ -2795,10 +2779,6 @@ std::vector<InstrumentState> RuntimeFacade::get_instrument_states_batch(const st
     return runtime_->get_instrument_states_batch(refs);
 }
 
-std::vector<MissionCommand> RuntimeFacade::get_mission_commands_batch(const std::vector<WorldEntityRef>& refs) const {
-    return runtime_->get_mission_commands_batch(refs);
-}
-
 std::vector<MissionCommandMaintainedBatchContract>
 RuntimeFacade::get_mission_commands_maintained_batch(
     const std::vector<WorldEntityRef>& refs
@@ -2813,19 +2793,11 @@ RuntimeFacade::get_task_orders_maintained_batch(
     return runtime_->get_task_orders_maintained_batch(refs);
 }
 
-std::vector<LeaderIntent> RuntimeFacade::get_leader_intents_batch(const std::vector<WorldEntityRef>& refs) const {
-    return runtime_->get_leader_intents_batch(refs);
-}
-
 std::vector<LeaderIntentMaintainedBatchContract>
 RuntimeFacade::get_leader_intents_maintained_batch(
     const std::vector<WorldEntityRef>& refs
 ) const {
     return runtime_->get_leader_intents_maintained_batch(refs);
-}
-
-std::vector<PilotReport> RuntimeFacade::get_pilot_reports_batch(const std::vector<WorldEntityRef>& refs) const {
-    return runtime_->get_pilot_reports_batch(refs);
 }
 
 std::vector<PilotReportMaintainedBatchContract>
@@ -2931,8 +2903,8 @@ RuntimeWindowResult RuntimeFacade::run_wp10_window(
                     set_pilot_actions_batch(assignments);
                 },
             .apply_mission_commands =
-                [this](const std::vector<WorldMissionCommandAssignment>& assignments) {
-                    set_mission_commands_batch(assignments);
+                [this](const std::vector<WorldMissionCommandMaintainedAssignment>& assignments) {
+                    set_mission_commands_maintained_batch(assignments);
                 },
             .step_window = [this]() {
                 step_batch();

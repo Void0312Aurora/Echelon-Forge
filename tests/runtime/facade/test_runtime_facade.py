@@ -17,6 +17,7 @@ from python.scenario_runtime import BatchWorldApplyBuffer  # noqa: E402
 from python.scenario_runtime import active_roster_world_entity_refs  # noqa: E402
 from python.scenario_runtime import find_active_roster_member  # noqa: E402
 from python.scenario_runtime import load_compiled_scenario_batch  # noqa: E402
+from python.scenario_runtime import load_compiled_scenario_batch_compatibility_quarantine  # noqa: E402
 from python.scenario_runtime import resolve_active_controllable_roster  # noqa: E402
 
 
@@ -581,7 +582,7 @@ class RuntimeFacadeTests(unittest.TestCase):
         }
 
         compiled = ScenarioCompiler.compile_data(scenario)
-        worlds = load_compiled_scenario_batch(
+        worlds = load_compiled_scenario_batch_compatibility_quarantine(
             ef_py.WorldBatchRuntime(1),
             compiled,
             seeds=[123],

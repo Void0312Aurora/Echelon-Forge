@@ -237,7 +237,7 @@ class RuntimeFacadeAdapter:
                         "RuntimeFacadeAdapter._compat_runtime_handle"
                     )
                 )
-            self._compat_runtime = self.facade.runtime()
+            self._compat_runtime = self.facade.runtime_compatibility_quarantine()
             return self._compat_runtime
         if not self.runtime_compatibility_enabled:
             raise RuntimeError(runtime_compatibility_required_message("RuntimeFacadeAdapter._compat_runtime_handle"))
@@ -245,7 +245,7 @@ class RuntimeFacadeAdapter:
         return self._compat_runtime
 
     def _compat_world(self, index: int):
-        return self._compat_runtime_handle().world(int(index))
+        return self._compat_runtime_handle().world_compatibility_quarantine(int(index))
 
     def _require_compatibility_fallback(self, surface: str) -> None:
         if not self.runtime_compatibility_enabled:
@@ -386,12 +386,6 @@ class RuntimeFacadeAdapter:
         observation_request.refs = [observation_ref]
         observation_request.include_agent_observations = True
         observation_request.include_instrument_states = True
-        if hasattr(observation_request, "include_mission_commands"):
-            observation_request.include_mission_commands = False
-        if hasattr(observation_request, "include_leader_intents"):
-            observation_request.include_leader_intents = False
-        if hasattr(observation_request, "include_pilot_reports"):
-            observation_request.include_pilot_reports = False
         request.observation_request = observation_request
 
         engagement_request = ef_py.EngagementBatchRequest()
@@ -488,7 +482,7 @@ class RuntimeFacadeAdapter:
     def load_database(self, path: str) -> bool:
         return bool(self._batch_target().load_database(path))
 
-    def world(self, index: int):
+    def world_compatibility_quarantine(self, index: int):
         return _WorldAccessProxy(self, int(index))
 
     def _build_runtime_world_layout_request(self, world_index: int, layout: Any):
@@ -741,9 +735,6 @@ class RuntimeFacadeAdapter:
         *,
         include_agent_observations: bool = True,
         include_instrument_states: bool = True,
-        include_mission_commands: bool = False,
-        include_leader_intents: bool = False,
-        include_pilot_reports: bool = False,
     ) -> Any:
         refs_list = list(refs)
         if hasattr(ef_py, "ObservationBatchRequest"):
@@ -751,12 +742,6 @@ class RuntimeFacadeAdapter:
             request.refs = refs_list
             request.include_agent_observations = bool(include_agent_observations)
             request.include_instrument_states = bool(include_instrument_states)
-            if hasattr(request, "include_mission_commands"):
-                request.include_mission_commands = bool(include_mission_commands)
-            if hasattr(request, "include_leader_intents"):
-                request.include_leader_intents = bool(include_leader_intents)
-            if hasattr(request, "include_pilot_reports"):
-                request.include_pilot_reports = bool(include_pilot_reports)
             return self.export_observation_packet(request)
         return self.export_observation_packet(refs_list)
 
@@ -765,9 +750,6 @@ class RuntimeFacadeAdapter:
             refs,
             include_agent_observations=True,
             include_instrument_states=True,
-            include_mission_commands=False,
-            include_leader_intents=False,
-            include_pilot_reports=False,
         )
         if hasattr(packet, "agent_observations") and hasattr(packet, "instrument_states"):
             return list(packet.agent_observations), list(packet.instrument_states)
@@ -789,17 +771,11 @@ class RuntimeFacadeAdapter:
         *,
         include_agent_observations: bool = True,
         include_instrument_states: bool = True,
-        include_mission_commands: bool = False,
-        include_leader_intents: bool = False,
-        include_pilot_reports: bool = False,
     ) -> Any:
         return self.export_observation_packet_for_refs(
             refs,
             include_agent_observations=include_agent_observations,
             include_instrument_states=include_instrument_states,
-            include_mission_commands=include_mission_commands,
-            include_leader_intents=include_leader_intents,
-            include_pilot_reports=include_pilot_reports,
         )
 
     def get_instrument_states_batch(self, refs: Sequence[Any]) -> list[Any]:

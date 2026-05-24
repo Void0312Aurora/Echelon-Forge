@@ -279,10 +279,6 @@ struct ExecutionBatchStepRequest {
     std::vector<WorldExecutionEpisodeStepRequest> step_requests;
     bool include_agent_observations = true;
     bool include_instrument_states = false;
-    bool include_mission_commands = false;
-    bool include_task_order_contracts = false;
-    bool include_leader_intents = false;
-    bool include_pilot_reports = false;
 };
 
 struct DeviceResidentOutputDescriptor {

@@ -31,7 +31,7 @@ inline constexpr std::string_view kRuntimeWindowCadenceDomainExport = "export";
 struct RuntimeWindowCoordinatorCallbacks {
     std::function<void(const std::vector<WorldPilotActionAssignment>&)>
         apply_pilot_actions;
-    std::function<void(const std::vector<WorldMissionCommandAssignment>&)>
+    std::function<void(const std::vector<WorldMissionCommandMaintainedAssignment>&)>
         apply_mission_commands;
     std::function<void()> step_window;
     std::function<ObservationBatchPacket(const ObservationBatchRequest&)>
@@ -257,7 +257,7 @@ inline RuntimeWindowResult execute_runtime_window(
     });
 
     std::vector<WorldPilotActionAssignment> pilot_assignments;
-    std::vector<WorldMissionCommandAssignment> mission_assignments;
+    std::vector<WorldMissionCommandMaintainedAssignment> mission_assignments;
     pilot_assignments.reserve(result.context.accepted_inputs.size());
     mission_assignments.reserve(result.context.accepted_inputs.size());
 
@@ -271,10 +271,12 @@ inline RuntimeWindowResult execute_runtime_window(
             });
         }
         if (intent.has_mission_command) {
-            mission_assignments.push_back(WorldMissionCommandAssignment{
+            mission_assignments.push_back(WorldMissionCommandMaintainedAssignment{
                 .world_index = intent.target.world_index,
                 .entity_id = intent.target.entity_id,
-                .command = intent.mission_command,
+                .mission_command = mission_command_maintained_batch_contract(
+                    intent.mission_command
+                ),
             });
         }
     }

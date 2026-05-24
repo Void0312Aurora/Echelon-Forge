@@ -39,7 +39,7 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     if not facade.load_database(_DB_PATH):
         raise AssertionError("failed to load runtime database")
 
-    world = facade.runtime().world(0)
+    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)
     shooter_id = int(
         world.spawn_unit(
             ef_py.Side.Blue,

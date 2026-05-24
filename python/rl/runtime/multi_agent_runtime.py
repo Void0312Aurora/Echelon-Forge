@@ -139,8 +139,6 @@ class MultiAgentWorldRuntimeView:
         *,
         include_agent_observations: bool = True,
         include_instrument_states: bool = True,
-        include_mission_commands: bool = False,
-        include_task_order_contracts: bool = False,
     ) -> Any:
         refs = self.refs()
         if hasattr(ef_py, "ObservationBatchRequest"):

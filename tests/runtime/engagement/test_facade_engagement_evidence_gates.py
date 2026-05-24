@@ -128,7 +128,7 @@ def test_recent_effects_damage_and_trace_refs_are_retagged_for_requested_world_i
     facade = ef_py.RuntimeFacade(2)
     assert facade.load_database(resolve_repo_path("examples", "config", "database"))
 
-    world = facade.runtime().world(1)
+    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(1)
     attacker_id = int(
         world.spawn_unit(
             ef_py.Side.Blue,

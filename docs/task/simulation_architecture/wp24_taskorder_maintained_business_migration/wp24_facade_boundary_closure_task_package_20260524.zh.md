@@ -18,7 +18,7 @@ hard-gating。
 | --- | --- | --- | --- |
 | `ObservationBatchPacket` 混合 agent observation 与 command-side payload。 | 属实，P1。 | `ObservationBatchPacket` 暴露 `mission_commands`、`leader_intents`、`pilot_reports`；packet 只有一个 `AgentObservation` provenance。 | 拆分 observation export 与 command/tasking export，并守住 packet shape。 |
 | 场景加载绕过 facade-owned boundary。 | 经校准后属实，P1；setup、normal batch stepping 与 visual fallback 已加 guard。 | `batch_apply.py` 现在默认走 maintained setup-target API；`RuntimeFacadeAdapter.step_worlds()` 对正常 full-batch step 使用 facade `step_batch()`，partial raw stepping 没有显式 compatibility opt-in 会 fail closed。`UniversalEnv` raw `SimulationKernel` 仍被 gate。Legacy visual fallback 现在没有显式 runtime compatibility 时 fail closed。 | 继续把 setup/step 路径放在 maintained facade/adapter contract 后面；任何 raw visual fallback 都只能是 compatibility-only。 |
-| Facade/contract 仍是双重表示主机。 | 任务包打开时部分属实；command-chain business path 已完成收口。 | TaskOrder public whole-shell API 已经退休。`MissionCommand`、`LeaderIntent`、`PilotReport` 现在已有 runtime/facade/binding/Python business flow 使用的 maintained contract 等价物；剩余 whole-shell API 是 maintained path 下方的 compatibility/diagnostics transport。 | 继续要求 maintained business caller 走 contract route，并用 guard 禁止 whole-shell writer 回流。 |
+| Facade/contract 仍是双重表示主机。 | 任务包打开时属实；close-out 已删除 public facade whole-shell MC/LI/PR API。 | TaskOrder public whole-shell API 已经退休。`MissionCommand`、`LeaderIntent`、`PilotReport` 现在已有 runtime/facade/binding/Python business flow 使用的 maintained contract 等价物。Whole-shell MC/LI/PR transport 只保留在低层 `WorldBatchRuntime` compatibility shell。 | 继续要求 maintained business caller 走 contract route，并用 guard 禁止 whole-shell writer 回流。 |
 | `agent_shim.py` 默认 `COMPATIBILITY_ADAPTER`。 | 经校准后属实，P2。 | 默认值是 fail-closed metadata，不是直接 runtime 执行；但 maintained caller 仍可能意外继承 compatibility provenance。 | maintained business path 必须显式传入 maintained provenance，并加 guard。 |
 
 ## 2. 强制工作线
@@ -121,7 +121,7 @@ Implementation wave 已作为强制收口集合执行，不再作为 optional ba
 | --- | --- | --- | --- |
 | WP24-I | Facade DTO 与 Python binding packet split。 | `src/runtime/facade/runtime_facade_types.h`、`src/runtime/facade/runtime_facade.cpp`、`src/interfaces/python/bindings_runtime.cpp`、DTO tests。 | 纯 observation packet 与 command/tasking export replacement。 |
 | WP24-J | Scenario setup facade ownership。 | `python/scenario/runtime/batch_apply.py`、`python/scenario/runtime/world_setup_compat.py`、`python/rl/runtime/world_batch/adapter.py`、`gym_envs/universal_env.py`、`train.py`。 | Maintained setup target、facade-owned normal batch step、raw setup quarantine，以及 compatibility-only legacy visual fallback。 |
-| WP24-K | Command-chain maintained contracts。 | `src/runtime/contracts/world_batch_contracts.h`、runtime/facade APIs、command-chain tests。 | 已通过 runtime/facade/bindings 与 Python business writers 实现 maintained MissionCommand/LeaderIntent/PilotReport contracts；whole-shell APIs 保留为 compatibility/diagnostics-only。 |
+| WP24-K | Command-chain maintained contracts。 | `src/runtime/contracts/world_batch_contracts.h`、runtime/facade APIs、command-chain tests。 | 已通过 runtime/facade/bindings 与 Python business writers 实现 maintained MissionCommand/LeaderIntent/PilotReport contracts；public facade whole-shell APIs 已删除，whole-shell transport 只留在 facade 下方作为 compatibility shell。 |
 | WP24-L | Python provenance call-site hardening。 | `python/rl/runtime/agent_shim.py`、runtime Python callers、Law 14 tests。 | Maintained call site 显式 provenance 与 runtime-window action authorization。 |
 
 ## 4. 验证门
@@ -153,7 +153,8 @@ surface 与 Python business writers：
 - 新增对应 `World*MaintainedAssignment` transport struct，只承载 maintained
   contract，不承载 whole-shell payload；
 - 保留 `WorldMissionCommandAssignment`、`WorldLeaderIntentAssignment`、
-  `WorldPilotReportAssignment` 为明确的 compatibility-shell transport；
+  `WorldPilotReportAssignment` 为 public facade API 下方明确的
+  compatibility-shell transport；
 - 为三类 payload 增加 `WorldBatchRuntime` 与 `RuntimeFacade` maintained batch
   read/write 方法；在 ECS storage split 排期前，runtime 内部仍投影到
   compatibility storage；
@@ -166,9 +167,9 @@ surface 与 Python business writers：
   maintained business paths。
 
 `WorldMissionCommandAssignment`、`WorldLeaderIntentAssignment` 与
-`WorldPilotReportAssignment` 只作为 runtime-window coordination、diagnostics 与
-低层测试使用的 compatibility shell transport 保留；它们不是 accepted maintained
-Python business API。
+`WorldPilotReportAssignment` 只作为 diagnostics 与低层 runtime tests 使用的
+compatibility shell transport 保留。它们不由 `RuntimeFacade` 暴露，也不是 accepted
+maintained Python business API。
 
 ### WP24-J / WP24-L
 

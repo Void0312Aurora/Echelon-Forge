@@ -21,9 +21,9 @@
 
 ## 逃逸口规则
 
-`RuntimeFacade::runtime()` 是 compatibility / diagnostics 逃逸口。它可以服务旧测试、迁移期调试和底层能力验证，但新主线代码不应依赖它。
+`RuntimeFacade::runtime_compatibility_quarantine()` 是 compatibility / diagnostics 逃逸口。它可以服务旧测试、迁移期调试和底层能力验证，但新主线代码不应依赖它。
 
-维护中的 Python 前端如果仍需要兼容低层 `WorldBatchRuntime`，必须把访问集中在一个显式 adapter 中，并在 adapter 对外提供 facade-shaped 方法。主类和业务流程不得直接调用 `RuntimeFacade.runtime()` 或根据 facade 是否存在分叉。
+维护中的 Python 前端如果仍需要兼容低层 `WorldBatchRuntime`，必须把访问集中在一个显式 adapter 中，并在 adapter 对外提供 facade-shaped 方法。主类和业务流程不得直接调用 `RuntimeFacade.runtime_compatibility_quarantine()` 或根据 facade 是否存在分叉。
 
 主线前端也不应缓存 raw `WorldBatchRuntime` 或从 adapter 重新暴露 compatibility runtime。确实需要 `SimulationKernel` 的兼容路径时，应新增 adapter 方法，并在方法名或调用点说明它是迁移期 compatibility / diagnostics 能力。
 
@@ -41,7 +41,7 @@ export 共享 kernel evidence，但 facade 必须提供独立的 diagnostics que
 `RuntimeFacade` 的治理计数规则如下：
 
 - 只统计维护中的 public request/result 方法。
-- 不统计 constructor、accessor，以及像 `runtime()` 这样的
+- 不统计 constructor、accessor，以及像 `runtime_compatibility_quarantine()` 这样的
   compatibility-only escape hatch。
 - 当维护中的方法数接近约 40 个时，应先围绕 Session、Setup、Execution、
   Observation、Diagnostics、Engagement 与 Capability groups 规划拆分，再继续扩张主线 surface。

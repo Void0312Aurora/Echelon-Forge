@@ -69,6 +69,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
             include_proprio=False,
             action_mode="full",
             mission_obs_mode="basic",
+            runtime_compatibility_enabled=True,
         )
         try:
             obs, _info = env.reset(seed=20260516)

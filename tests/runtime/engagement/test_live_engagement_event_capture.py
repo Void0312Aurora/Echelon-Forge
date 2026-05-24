@@ -216,7 +216,7 @@ def test_facade_exports_recent_live_engagement_events() -> None:
     facade = ef_py.RuntimeFacade(1)
     if not facade.load_database(_DB_PATH):
         raise AssertionError("failed to load runtime database")
-    world = facade.runtime().world(0)
+    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)
     blue_id = int(
         world.spawn_unit(
             ef_py.Side.Blue,
@@ -274,7 +274,7 @@ def test_facade_dedicated_diagnostics_surface_exports_recent_and_observation_tra
     if not facade.load_database(_DB_PATH):
         raise AssertionError("failed to load runtime database")
 
-    world = facade.runtime().world(0)
+    world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)
     blue_id = int(
         world.spawn_unit(
             ef_py.Side.Blue,

@@ -42,6 +42,7 @@ def run_scripted_bridge_contract(spec_path: str) -> tuple[bool, str]:
         include_proprio=bool(spec.get("include_proprio", True)),
         mission_obs_mode=str(spec.get("mission_obs_mode", "nav_v2")),
         action_mode=str(spec.get("action_mode", "full")),
+        runtime_compatibility_enabled=True,
     )
     randomization_overrides = dict(spec.get("randomization_overrides", {}) or {})
     if randomization_overrides:

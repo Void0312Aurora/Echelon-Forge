@@ -350,9 +350,6 @@ class WorldBatchVecEnv(VecEnv):
             refs,
             include_agent_observations=True,
             include_instrument_states=True,
-            include_mission_commands=False,
-            include_leader_intents=False,
-            include_pilot_reports=False,
         )
         truth_list = list(getattr(packet, "agent_observations", []) or [])
         inst_list = list(getattr(packet, "instrument_states", []) or [])
@@ -366,9 +363,6 @@ class WorldBatchVecEnv(VecEnv):
             refs,
             include_agent_observations=True,
             include_instrument_states=True,
-            include_mission_commands=False,
-            include_leader_intents=False,
-            include_pilot_reports=False,
         )
         return (
             list(getattr(packet, "agent_observations", []) or []),
@@ -777,9 +771,6 @@ class WorldBatchVecEnv(VecEnv):
         batch_request.step_requests = list(requests)
         batch_request.include_agent_observations = True
         batch_request.include_instrument_states = True
-        batch_request.include_mission_commands = False
-        batch_request.include_leader_intents = False
-        batch_request.include_pilot_reports = False
         return self._runtime_adapter.step_execution_batch(batch_request)
 
     def _consume_execution_episode_controller_mainline_observation_packet(

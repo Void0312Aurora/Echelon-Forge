@@ -13,7 +13,7 @@ import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
-from python.scenario_runtime import load_compiled_scenario_batch  # noqa: E402
+from python.scenario_runtime import load_compiled_scenario_batch_compatibility_quarantine  # noqa: E402
 
 
 _SCENARIO_PATH = resolve_repo_path(
@@ -155,13 +155,13 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
         compiled = ScenarioCompiler.compile_data(scenario)
         batch = ef_py.WorldBatchRuntime(1)
         self.assertTrue(batch.load_database(_DB_PATH))
-        worlds = load_compiled_scenario_batch(batch, compiled, seeds=[20260516])
+        worlds = load_compiled_scenario_batch_compatibility_quarantine(batch, compiled, seeds=[20260516])
         self.assertEqual(len(worlds), 1)
 
         batch_blue = int(worlds[0].entities["Blue_Fighter"])
         batch_red = int(worlds[0].entities["Red_Fighter"])
-        batch_blue_obs = batch.world(0).get_agent_observation(batch_blue)
-        batch_red_obs = batch.world(0).get_agent_observation(batch_red)
+        batch_blue_obs = batch.world_compatibility_quarantine(0).get_agent_observation(batch_blue)
+        batch_red_obs = batch.world_compatibility_quarantine(0).get_agent_observation(batch_red)
         self.assertEqual(int(getattr(batch_blue_obs, "missiles_remaining", -1)), 2)
         self.assertEqual(int(getattr(batch_red_obs, "missiles_remaining", -1)), 1)
 
@@ -350,6 +350,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
             include_proprio=False,
             action_mode="full",
             mission_obs_mode="basic",
+            runtime_compatibility_enabled=True,
         )
         try:
             _obs, _info = env.reset(seed=20260516)
@@ -383,6 +384,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
             include_proprio=False,
             action_mode="full",
             mission_obs_mode="basic",
+            runtime_compatibility_enabled=True,
         )
         try:
             _obs, _info = env.reset(seed=20260516)

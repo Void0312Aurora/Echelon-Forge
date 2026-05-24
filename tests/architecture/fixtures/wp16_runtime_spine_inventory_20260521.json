@@ -109,7 +109,7 @@
       "reason": "Public facade still carries the selected window/export APIs alongside the migration-period runtime escape hatch.",
       "evidence_markers": [
         "RuntimeWindowResult run_wp10_window(const RuntimeWindowRequest& request);",
-        "WorldBatchRuntime& runtime() noexcept;",
+        "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;",
         "Compatibility escape hatch for diagnostics and legacy adapters only."
       ]
     },
@@ -131,9 +131,9 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Centralized adapter still falls back to RuntimeFacade.runtime() or raw WorldBatchRuntime when facade coverage is incomplete.",
+      "reason": "Centralized adapter still falls back to RuntimeFacade.runtime_compatibility_quarantine() or raw WorldBatchRuntime when facade coverage is incomplete.",
       "evidence_markers": [
-        "self.facade.runtime() if self.facade is not None else ef_py.WorldBatchRuntime",
+        "self.facade.runtime_compatibility_quarantine()",
         "ef_py.WorldBatchRuntime",
         "export_observation_packet",
         "step_worlds"
@@ -233,7 +233,7 @@
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
       "reason": "Public raw owner exposes world(), spawn/setup, direct step, and direct observation methods that bypass runtime-window and facade evidence.",
       "evidence_markers": [
-        "SimulationKernel& world(size_t index);",
+        "SimulationKernel& world_compatibility_quarantine(size_t index);",
         "void step_batch();",
         "std::vector<uint64_t> spawn_units_batch",
         "std::vector<AgentObservation> get_agent_observations_batch"
@@ -246,7 +246,7 @@
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
       "reason": "Underlying implementation remains necessary, but direct caller ownership should shrink behind explicit compatibility gates.",
       "evidence_markers": [
-        "SimulationKernel& WorldBatchRuntime::world(size_t index)",
+        "SimulationKernel& WorldBatchRuntime::world_compatibility_quarantine(size_t index)",
         "uint64_t spawn_from_request(",
         "void WorldBatchRuntime::reset_batch",
         "void WorldBatchRuntime::step_batch"
@@ -281,9 +281,9 @@
       "classification": "diagnostics_only",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Assertions are useful, but the fixture still synthesizes launch/damage through RuntimeFacade.runtime().world() escape hatches.",
+      "reason": "Assertions are useful, but the fixture still synthesizes launch/damage through RuntimeFacade.runtime_compatibility_quarantine().world_compatibility_quarantine() escape hatches.",
       "evidence_markers": [
-        "world = facade.runtime().world(0)",
+        "world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)",
         "p10.observation_export.v1",
         "\"diagnostics_only\"",
         "diagnostics_trace_surface_not_maintained_decision_path"
@@ -333,10 +333,10 @@
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
       "reason": "Counterfactual admission is still metadata-only and explicitly restore-unsupported, so it cannot yet claim maintained runtime-spine execution.",
       "evidence_markers": [
-        "kReplayRestoreSupportBoundaryUnsupported",
-        "kWorldlineBranchSupportStateMetadataOnly",
-        "kCounterfactualRequestRejectionRestoreUnsupportedBoundary",
-        "kScenarioGenerationArtifactKindRequestMetadata"
+        "snapshot_restore_supported = false",
+        "validate_replay_envelope_for_snapshot_restore(",
+        "validate_worldline_branch_metadata_for_snapshot_restore(",
+        "ScenarioGenerationArtifactMetadata"
       ]
     },
     {

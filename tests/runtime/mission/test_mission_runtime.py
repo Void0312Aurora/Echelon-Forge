@@ -1287,6 +1287,7 @@ class ExecutionObservationRuntimeTests(unittest.TestCase):
                 include_visual=False,
                 include_proprio=False,
                 execution_step_runtime_mode="compiled",
+                runtime_compatibility_enabled=True,
             )
             try:
                 _obs, _info = env.reset()

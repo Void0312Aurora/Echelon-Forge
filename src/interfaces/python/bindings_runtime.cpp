@@ -991,14 +991,7 @@ void bind_runtime(nb::module_& m) {
         .def(nb::init<>())
         .def_rw("step_requests", &ExecutionBatchStepRequest::step_requests)
         .def_rw("include_agent_observations", &ExecutionBatchStepRequest::include_agent_observations)
-        .def_rw("include_instrument_states", &ExecutionBatchStepRequest::include_instrument_states)
-        .def_rw("include_mission_commands", &ExecutionBatchStepRequest::include_mission_commands)
-        .def_rw(
-            "include_task_order_contracts",
-            &ExecutionBatchStepRequest::include_task_order_contracts
-        )
-        .def_rw("include_leader_intents", &ExecutionBatchStepRequest::include_leader_intents)
-        .def_rw("include_pilot_reports", &ExecutionBatchStepRequest::include_pilot_reports);
+        .def_rw("include_instrument_states", &ExecutionBatchStepRequest::include_instrument_states);
 
     nb::class_<RewardTerm>(m, "RewardTerm")
         .def(nb::init<>())
@@ -1807,7 +1800,12 @@ void bind_runtime(nb::module_& m) {
         .def("set_worker_threads", &WorldBatchRuntime::set_worker_threads, nb::arg("worker_threads"))
         .def("worker_threads", &WorldBatchRuntime::worker_threads)
         .def("effective_worker_threads", &WorldBatchRuntime::effective_worker_threads)
-        .def("world", nb::overload_cast<size_t>(&WorldBatchRuntime::world), nb::rv_policy::reference_internal, nb::arg("index"))
+        .def(
+            "world_compatibility_quarantine",
+            nb::overload_cast<size_t>(&WorldBatchRuntime::world_compatibility_quarantine),
+            nb::rv_policy::reference_internal,
+            nb::arg("index")
+        )
         .def("reset_batch", &WorldBatchRuntime::reset_batch, nb::arg("seeds") = std::vector<uint32_t>{})
         .def("step_batch", &WorldBatchRuntime::step_batch)
         .def("step_worlds", &WorldBatchRuntime::step_worlds, nb::arg("world_indices"))
@@ -1995,7 +1993,11 @@ void bind_runtime(nb::module_& m) {
         .def("set_worker_threads", &RuntimeFacade::set_worker_threads, nb::arg("worker_threads"))
         .def("worker_threads", &RuntimeFacade::worker_threads)
         .def("effective_worker_threads", &RuntimeFacade::effective_worker_threads)
-        .def("runtime", nb::overload_cast<>(&RuntimeFacade::runtime), nb::rv_policy::reference_internal)
+        .def(
+            "runtime_compatibility_quarantine",
+            nb::overload_cast<>(&RuntimeFacade::runtime_compatibility_quarantine),
+            nb::rv_policy::reference_internal
+        )
         .def("load_database", &RuntimeFacade::load_database, nb::arg("path"))
         .def("load_unit_definitions", [](RuntimeFacade& self, const std::string& path) {
             std::string error;
@@ -2040,7 +2042,6 @@ void bind_runtime(nb::module_& m) {
             nb::arg("use_gpu") = false
         )
         .def("set_pilot_actions_batch", &RuntimeFacade::set_pilot_actions_batch, nb::arg("assignments"))
-        .def("set_mission_commands_batch", &RuntimeFacade::set_mission_commands_batch, nb::arg("assignments"))
         .def(
             "set_mission_commands_maintained_batch",
             &RuntimeFacade::set_mission_commands_maintained_batch,
@@ -2051,13 +2052,11 @@ void bind_runtime(nb::module_& m) {
             &RuntimeFacade::set_task_orders_maintained_batch,
             nb::arg("assignments")
         )
-        .def("set_leader_intents_batch", &RuntimeFacade::set_leader_intents_batch, nb::arg("assignments"))
         .def(
             "set_leader_intents_maintained_batch",
             &RuntimeFacade::set_leader_intents_maintained_batch,
             nb::arg("assignments")
         )
-        .def("set_pilot_reports_batch", &RuntimeFacade::set_pilot_reports_batch, nb::arg("assignments"))
         .def(
             "set_pilot_reports_maintained_batch",
             &RuntimeFacade::set_pilot_reports_maintained_batch,
@@ -2093,7 +2092,6 @@ void bind_runtime(nb::module_& m) {
         )
         .def("get_agent_observations_batch", &RuntimeFacade::get_agent_observations_batch, nb::arg("refs"))
         .def("get_instrument_states_batch", &RuntimeFacade::get_instrument_states_batch, nb::arg("refs"))
-        .def("get_mission_commands_batch", &RuntimeFacade::get_mission_commands_batch, nb::arg("refs"))
         .def(
             "get_mission_commands_maintained_batch",
             &RuntimeFacade::get_mission_commands_maintained_batch,
@@ -2104,13 +2102,11 @@ void bind_runtime(nb::module_& m) {
             &RuntimeFacade::get_task_orders_maintained_batch,
             nb::arg("refs")
         )
-        .def("get_leader_intents_batch", &RuntimeFacade::get_leader_intents_batch, nb::arg("refs"))
         .def(
             "get_leader_intents_maintained_batch",
             &RuntimeFacade::get_leader_intents_maintained_batch,
             nb::arg("refs")
         )
-        .def("get_pilot_reports_batch", &RuntimeFacade::get_pilot_reports_batch, nb::arg("refs"))
         .def(
             "get_pilot_reports_maintained_batch",
             &RuntimeFacade::get_pilot_reports_maintained_batch,

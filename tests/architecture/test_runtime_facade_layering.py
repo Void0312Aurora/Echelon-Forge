@@ -341,14 +341,14 @@ def _runtime_escape_hatch_counts(path: Path) -> tuple[int, int, int]:
                 and func.attr == "WorldBatchRuntime"
             ):
                 world_batch_ctor_calls += 1
-            if isinstance(func, ast.Attribute) and func.attr == "runtime":
+            if isinstance(func, ast.Attribute) and func.attr == "runtime_compatibility_quarantine":
                 runtime_calls += 1
             if (
                 isinstance(func, ast.Attribute)
-                and func.attr == "world"
+                and func.attr == "world_compatibility_quarantine"
                 and isinstance(func.value, ast.Call)
                 and isinstance(func.value.func, ast.Attribute)
-                and func.value.func.attr == "runtime"
+                and func.value.func.attr == "runtime_compatibility_quarantine"
             ):
                 runtime_world_calls += 1
             self.generic_visit(node)
@@ -385,25 +385,27 @@ def test_world_batch_adapter_keeps_direct_runtime_fallback_inside_adapter() -> N
 
 def test_world_batch_adapter_keeps_runtime_escape_hatch_lazy_and_explicit() -> None:
     source = _adapter_source()
-    assert "self.facade.runtime() if self.facade is not None" not in source
+    assert "self.facade.runtime_compatibility_quarantine() if self.facade is not None" not in source
     assert "def _compat_runtime_handle(self):" in source
     assert "def _compat_world(self, index: int):" in source
+    assert "def world(self, index: int):" not in source
+    assert "def world_compatibility_quarantine(self, index: int):" in source
     assert "class _WorldAccessProxy:" in source
     assert "def _scenario_loader_runtime(self, index: int) -> _ScenarioLoaderRuntimeProxy:" in source
     assert "def _build_runtime_world_layout_request(self, world_index: int, layout: Any):" in source
     assert "def _apply_runtime_world_layout_request(self, request: Any) -> Any:" in source
     assert "def _materialize_applied_world(self, world_index: int, layout: Any, entity_ids: Sequence[Any]) -> AppliedScenarioWorld:" in source
-    assert "self._compat_runtime = self.facade.runtime()" in source
+    assert "self._compat_runtime = self.facade.runtime_compatibility_quarantine()" in source
     assert "self._compat_runtime = None" in source
-    assert "self._compat_runtime_handle().world(int(index))" in source
+    assert "self._compat_runtime_handle().world_compatibility_quarantine(int(index))" in source
     assert "return _WorldAccessProxy(self, int(index))" in source
-    assert "apply_world_layout_to_kernel(self.world(int(world_index)), layout)" not in source
-    assert "ScenarioLoader(self.world(int(index)))" not in source
+    assert "apply_world_layout_to_kernel(self.world_compatibility_quarantine(int(world_index)), layout)" not in source
+    assert "ScenarioLoader(self.world_compatibility_quarantine(int(index)))" not in source
     assert "ScenarioLoader(self._compat_world(int(index)))" not in source
     assert "ScenarioLoader(self._scenario_loader_runtime(int(index)))" in source
-    assert "self.world(int(world_index)).get_time_step()" not in source
-    assert "self.world(int(world_index)).get_visual_observation(" not in source
-    assert 'hasattr(self.world(int(world_index)), "get_visual_observation_downsampled")' not in source
+    assert "self.world_compatibility_quarantine(int(world_index)).get_time_step()" not in source
+    assert "self.world_compatibility_quarantine(int(world_index)).get_visual_observation(" not in source
+    assert 'hasattr(self.world_compatibility_quarantine(int(world_index)), "get_visual_observation_downsampled")' not in source
     assert "def _require_compatibility_fallback(self, surface: str) -> None:" in source
     assert '_require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")' in source
     assert "return build_runtime_world_layout_request(" in source
@@ -576,16 +578,16 @@ def test_world_batch_vec_env_main_class_does_not_cache_raw_runtime_handles() -> 
 def test_world_batch_vec_env_access_stays_thin_forwarder_without_raw_runtime_ownership() -> None:
     source = _runtime_access_source()
     assert ".batch_runtime." not in source
-    assert ".runtime()" not in source
-    assert ".world(" not in source
+    assert ".runtime_compatibility_quarantine()" not in source
+    assert ".world_compatibility_quarantine(" not in source
     assert "WorldBatchRuntime" not in source
     assert "RuntimeFacade" not in source
 
 
 def test_leader_world_batch_runtime_does_not_reach_raw_world_handles() -> None:
     source = _leader_source()
-    assert ".batch_runtime.world(" not in source
-    assert ".world_vec.batch_runtime.world(" not in source
+    assert ".batch_runtime.world_compatibility_quarantine(" not in source
+    assert ".world_vec.batch_runtime.world_compatibility_quarantine(" not in source
 
 
 def test_leader_world_batch_runtime_keeps_batch_runtime_as_compat_only_surface() -> None:
@@ -684,7 +686,7 @@ def test_wp22_public_world_escape_hatch_consumers_stay_explicit_and_localized() 
             violations.append((rel, lineno))
 
     assert not violations, (
-        "WP22 maintained non-test Python paths must keep public `.world()` escape-hatch calls inside the explicit "
+        "WP22 maintained non-test Python paths must keep public `.world_compatibility_quarantine()` escape-hatch calls inside the explicit "
         f"compatibility adapter allowlist only: {violations}"
     )
 
@@ -702,7 +704,7 @@ def test_maintained_paths_do_not_add_new_runtime_facade_runtime_consumers() -> N
             violations.append((rel, runtime_calls, runtime_world_calls))
 
     assert not violations, (
-        "maintained facade-layer paths must keep RuntimeFacade.runtime() escape hatches inside the "
+        "maintained facade-layer paths must keep RuntimeFacade.runtime_compatibility_quarantine() escape hatches inside the "
         f"explicit compatibility/diagnostics allowlist only: {violations}"
     )
 
@@ -795,15 +797,15 @@ def test_world_batch_compat_names_loader_owned_reward_and_info_runtime_helpers()
     assert "def build_loader_step_info(" in text
 
 
-def test_leader_world_batch_runtime_does_not_call_runtime_facade_runtime() -> None:
+def test_leader_world_batch_runtime_does_not_call_runtime_facade_compatibility_quarantine() -> None:
     tree = ast.parse(_leader_source())
     violations: list[tuple[int, str]] = []
 
     class Visitor(ast.NodeVisitor):
         def visit_Call(self, node: ast.Call) -> None:
             func = node.func
-            if isinstance(func, ast.Attribute) and func.attr == "runtime":
-                violations.append((node.lineno, "runtime()"))
+            if isinstance(func, ast.Attribute) and func.attr == "runtime_compatibility_quarantine":
+                violations.append((node.lineno, "runtime_compatibility_quarantine()"))
             self.generic_visit(node)
 
     Visitor().visit(tree)
@@ -813,10 +815,10 @@ def test_leader_world_batch_runtime_does_not_call_runtime_facade_runtime() -> No
 def test_runtime_facade_cpp_maintained_paths_do_not_drill_through_raw_runtime_or_world() -> None:
     source = (RUNTIME_FACADE / "runtime_facade.cpp").read_text(encoding="utf-8")
 
-    assert "runtime_->world(" not in source
-    assert "runtime().world(" not in source
-    assert "runtime()->world(" not in source
-    assert "facade->runtime().world(" not in source
+    assert "runtime_->world_compatibility_quarantine(" not in source
+    assert "runtime_compatibility_quarantine().world_compatibility_quarantine(" not in source
+    assert "runtime()->world_compatibility_quarantine(" not in source
+    assert "facade->runtime_compatibility_quarantine().world_compatibility_quarantine(" not in source
     assert "runtime_->apply_world_layout(" in source
     assert "runtime_->world_time_step(" in source
     assert "runtime_->get_visual_candidate_ids_batch(" in source
@@ -828,7 +830,7 @@ def test_runtime_facade_cpp_maintained_paths_do_not_drill_through_raw_runtime_or
 def test_wp22_gpu_visual_binding_routes_through_named_world_batch_compatibility_helper() -> None:
     source = _gpu_bindings_source()
 
-    assert ".world(" not in source
+    assert ".world_compatibility_quarantine(" not in source
     assert "RuntimeFacade" in source
     assert "compute_runtime_facade_visual_binding_outputs(" in source
     assert "compute_compat_world_batch_visual_binding_outputs(" in source
@@ -878,7 +880,7 @@ def test_runtime_facade_escape_hatch_is_documented() -> None:
     assert "Compatibility escape hatch" in header
     assert "Maintained frontends should use facade-level request/result APIs" in header
     assert "必须把访问集中在一个显式 adapter" in readme
-    assert "不得直接调用 `RuntimeFacade.runtime()`" in readme
+    assert "不得直接调用 `RuntimeFacade.runtime_compatibility_quarantine()`" in readme
     assert "不应缓存 raw `WorldBatchRuntime`" in readme
 
 
@@ -1114,6 +1116,12 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
     assert "std::vector<TaskOrder> get_task_orders_batch(" not in facade_header
     assert "void set_task_orders_compatibility_batch(" not in facade_header
     assert "std::vector<TaskOrder> get_task_orders_compatibility_batch(" not in facade_header
+    assert "void set_mission_commands_batch(" not in facade_header
+    assert "std::vector<MissionCommand> get_mission_commands_batch(" not in facade_header
+    assert "void set_leader_intents_batch(" not in facade_header
+    assert "std::vector<LeaderIntent> get_leader_intents_batch(" not in facade_header
+    assert "void set_pilot_reports_batch(" not in facade_header
+    assert "std::vector<PilotReport> get_pilot_reports_batch(" not in facade_header
 
     observation_request_section = facade_types.split("struct ObservationBatchRequest", 1)[1].split("struct TaskingBatchRequest", 1)[0]
     tasking_request_section = facade_types.split("struct TaskingBatchRequest", 1)[1].split("struct EngagementBatchRequest", 1)[0]
@@ -1125,7 +1133,10 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
     assert "bool include_pilot_reports = false;" not in observation_request_section
     assert "bool include_task_order_contracts = false;" in tasking_request_section
     assert "bool include_task_orders = false;" not in execution_request_section
-    assert "bool include_task_order_contracts = false;" in execution_request_section
+    assert "bool include_task_order_contracts = false;" not in execution_request_section
+    assert "bool include_mission_commands = false;" not in execution_request_section
+    assert "bool include_leader_intents = false;" not in execution_request_section
+    assert "bool include_pilot_reports = false;" not in execution_request_section
 
     observation_packet_section = facade_types.split("struct ObservationBatchPacket", 1)[1].split("struct EngagementEventPacket", 1)[0]
     tasking_packet_section = facade_types.split("struct TaskingBatchPacket", 1)[1].split("struct ExecutionBatchStepResult", 1)[0]
@@ -1148,7 +1159,10 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
     assert ".include_task_order_contracts = request.include_task_order_contracts," not in observation_request_helper_section
     assert "TaskingBatchRequest tasking_request_from_step_request" in facade_cpp
     tasking_request_helper_section = facade_cpp.split("TaskingBatchRequest tasking_request_from_step_request", 1)[1].split("std::uint64_t next_snapshot_version", 1)[0]
-    assert ".include_task_order_contracts = request.include_task_order_contracts," in tasking_request_helper_section
+    assert ".include_task_order_contracts = request.include_task_order_contracts," not in tasking_request_helper_section
+    assert ".include_mission_commands = request.include_mission_commands," not in tasking_request_helper_section
+    assert ".include_leader_intents = request.include_leader_intents," not in tasking_request_helper_section
+    assert ".include_pilot_reports = request.include_pilot_reports," not in tasking_request_helper_section
 
     export_vector_overload_section = facade_cpp.split("ObservationBatchPacket RuntimeFacade::export_observation_packet(const std::vector<WorldEntityRef>& refs) const", 1)[1].split("ObservationBatchPacket RuntimeFacade::export_observation_packet(const ObservationBatchRequest& request) const", 1)[0]
     assert ".include_task_orders = true," not in export_vector_overload_section
@@ -1179,6 +1193,13 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
     assert '"get_task_orders_batch"' not in bindings_runtime
     assert '"set_task_orders_compatibility_batch"' not in bindings_runtime
     assert '"get_task_orders_compatibility_batch"' not in bindings_runtime
+    facade_binding_section = bindings_runtime.split('nb::class_<RuntimeFacade>(m, "RuntimeFacade")', 1)[1]
+    assert '"set_mission_commands_batch"' not in facade_binding_section
+    assert '"get_mission_commands_batch"' not in facade_binding_section
+    assert '"set_leader_intents_batch"' not in facade_binding_section
+    assert '"get_leader_intents_batch"' not in facade_binding_section
+    assert '"set_pilot_reports_batch"' not in facade_binding_section
+    assert '"get_pilot_reports_batch"' not in facade_binding_section
     assert '"WorldTaskOrderAssignment"' not in bindings_runtime
     assert '"WorldTaskOrderCompatibilityAssignment"' not in bindings_runtime
     observation_request_binding_section = bindings_runtime.split('nb::class_<ObservationBatchRequest>(m, "ObservationBatchRequest")', 1)[1].split('nb::class_<TaskingBatchRequest>(m, "TaskingBatchRequest")', 1)[0]
@@ -1229,6 +1250,9 @@ def test_wp24_python_maintained_observation_consumers_do_not_read_compatibility_
         REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
     ).read_text(encoding="utf-8")
 
+    export_packet_section = multi_agent_runtime.split("def export_packet(", 1)[1].split("def export_tasking_packet(", 1)[0]
+    assert "include_mission_commands" not in export_packet_section
+    assert "include_task_order_contracts" not in export_packet_section
     assert "include_task_order_contracts: bool = False" in multi_agent_runtime
     assert "request.include_task_orders = False" not in multi_agent_runtime
     assert "ef_py.TaskingBatchRequest" in multi_agent_runtime

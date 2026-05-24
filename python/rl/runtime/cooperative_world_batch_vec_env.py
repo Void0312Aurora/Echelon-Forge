@@ -294,9 +294,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             refs,
             include_agent_observations=True,
             include_instrument_states=True,
-            include_mission_commands=False,
-            include_leader_intents=False,
-            include_pilot_reports=False,
         )
         truth_list = list(getattr(packet, "agent_observations", []) or [])
         inst_list = list(getattr(packet, "instrument_states", []) or [])

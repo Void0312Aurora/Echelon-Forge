@@ -38,9 +38,9 @@ public whole-shell TaskOrder path。
 已接受的 maintained path 是：
 
 - 写入使用 `WorldTaskOrderMaintainedAssignment`；
-- 读取与 observation export 使用 `TaskOrderMaintainedBatchContract`；
-- facade observation packet 通过 `include_task_order_contracts` gate 暴露
-  `task_order_contracts`；
+- tasking read 使用 `TaskingBatchRequest` 与 `TaskingBatchPacket`，并通过
+  `include_task_order_contracts` gate 暴露 `task_order_contracts`；
+- observation export 保持为纯 agent observation 与 instrument state 数据；
 - Python VecEnv、cooperative、scenario-loader 与 multi-agent observation 路径在缺少
   maintained TaskOrder batch binding 时 fail closed。
 
@@ -72,7 +72,7 @@ focused validation 后才能关闭。TaskOrder-specific closure standard 证明�
 
 - maintained runtime/facade TaskOrder write/read roundtrip 保留 command-chain paths
   使用的业务字段；
-- observation export 仍支持 maintained `task_order_contracts`；
+- tasking export 仍支持 maintained `task_order_contracts`；
 - Python normal business paths 不暴露也不调用已删除的 legacy writer；
 - architecture guards 会在已删除 public surfaces 重新出现时失败。
 

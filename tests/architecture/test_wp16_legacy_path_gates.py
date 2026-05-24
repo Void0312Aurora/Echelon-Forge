@@ -57,7 +57,7 @@ def test_wp16_legacy_gate_preserves_public_compatibility_surfaces_until_replacem
 
     assert facade_entry["classification"] == "compatibility_wrapper"
     assert compat_entry["classification"] == "compatibility_wrapper"
-    assert "WorldBatchRuntime& runtime() noexcept;" in facade_header
+    assert "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;" in facade_header
     assert "Compatibility escape hatch for diagnostics and legacy adapters only." in facade_header
     assert "def batch_runtime(self):" in vec_env_source
     assert "Compatibility-only view for callers that still expect `vec_env.batch_runtime`." in compat_source
@@ -78,11 +78,11 @@ def test_wp16_legacy_gate_runtime_world_escape_hatch_is_bounded_to_diagnostics_o
     assert entries["src/runtime/facade/runtime_facade.h"]["classification"] == "compatibility_wrapper"
     assert entries["tests/runtime/engagement/test_facade_engagement_export.py"]["classification"] == "diagnostics_only"
     assert "RuntimeFacade::run_wp10_window" in _load_fixture()["selected_spine_slice"]["window_api"]
-    assert "WorldBatchRuntime& runtime() noexcept;" in facade_header
+    assert "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;" in facade_header
     assert "self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)" in adapter_source
     assert "def _batch_target(self):" in adapter_source
     assert "self._batch_target().step_batch()" in adapter_source
-    assert "world = facade.runtime().world(0)" in diagnostics_test
+    assert "world = facade.runtime_compatibility_quarantine().world_compatibility_quarantine(0)" in diagnostics_test
     assert "escape hatches" in entries["tests/runtime/engagement/test_facade_engagement_export.py"]["reason"]
 
 

@@ -34,6 +34,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
         include_proprio=bool(spec.get("include_proprio", False)),
         action_mode=str(spec.get("action_mode", "full")),
         mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+        runtime_compatibility_enabled=True,
     )
 
     seed = int(spec.get("seed", 0))
@@ -64,6 +65,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                 include_proprio=bool(spec.get("include_proprio", False)),
                 action_mode=str(spec.get("action_mode", "full")),
                 mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+                runtime_compatibility_enabled=True,
             )
             obs_drift, _ = env_drift.reset(seed=seed)
             reward_drift, terminated_drift, truncated_drift, _status_drift = env_drift.loader.compute_full_step(
@@ -286,6 +288,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                         include_proprio=bool(spec.get("include_proprio", False)),
                         action_mode=str(spec.get("action_mode", "full")),
                         mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+                        runtime_compatibility_enabled=True,
                     )
                     case_env.reset(seed=seed)
                     case_env.loader.waypoint_idx = 1
@@ -490,6 +493,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                         include_proprio=bool(spec.get("include_proprio", False)),
                         action_mode=str(spec.get("action_mode", "full")),
                         mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+                        runtime_compatibility_enabled=True,
                     )
                     case_obs, _ = case_env.reset(seed=seed)
                     _reward, case_terminated, _case_truncated, _status = case_env.loader.compute_full_step(
@@ -568,6 +572,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                 include_proprio=bool(spec.get("include_proprio", False)),
                 action_mode=str(spec.get("action_mode", "takeoff4")),
                 mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+                runtime_compatibility_enabled=True,
             )
             env_neg.set_randomization_overrides(dict(spec.get("randomization_overrides", {}) or {}))
             d_neg = _run_episode(env_neg, rudder_pulse=float(spec.get("negative_pulse", -0.25)))

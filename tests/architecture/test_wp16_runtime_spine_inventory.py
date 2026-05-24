@@ -184,7 +184,7 @@ def test_wp16_blocked_and_compatibility_entries_do_not_hide_maintained_default_c
     ).read_text(encoding="utf-8")
     replay_constants_source = COUNTERFACTUAL_CONSTANTS.read_text(encoding="utf-8")
 
-    assert "runtime() noexcept" in facade_header
-    assert "self.facade.runtime()" in adapter_source
+    assert "runtime_compatibility_quarantine() noexcept" in facade_header
+    assert "self.facade.runtime_compatibility_quarantine()" in adapter_source
     assert "authoritative_state_mutation_allowed: bool = False" in generation_request_source
     assert "metadata_only" in replay_source or "metadata_only" in replay_constants_source

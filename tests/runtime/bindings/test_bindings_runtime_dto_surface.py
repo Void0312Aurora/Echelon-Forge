@@ -306,12 +306,13 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         self.assertFalse(hasattr(tasking_request, "include_task_orders"))
         self.assertFalse(bool(tasking_request.include_task_order_contracts))
         self.assertFalse(hasattr(step_request, "include_task_orders"))
-        self.assertFalse(bool(step_request.include_task_order_contracts))
+        self.assertFalse(hasattr(step_request, "include_task_order_contracts"))
+        self.assertFalse(hasattr(step_request, "include_mission_commands"))
+        self.assertFalse(hasattr(step_request, "include_leader_intents"))
+        self.assertFalse(hasattr(step_request, "include_pilot_reports"))
 
         tasking_request.include_task_order_contracts = True
-        step_request.include_task_order_contracts = True
         self.assertTrue(bool(tasking_request.include_task_order_contracts))
-        self.assertTrue(bool(step_request.include_task_order_contracts))
 
     def test_task_order_whole_shell_batch_bindings_are_removed(self) -> None:
         runtime = ef_py.WorldBatchRuntime(1)
@@ -344,6 +345,12 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
         self.assertFalse(hasattr(facade, "get_task_orders_compatibility_batch"))
         self.assertFalse(hasattr(ef_py, "WorldTaskOrderAssignment"))
         self.assertFalse(hasattr(ef_py, "WorldTaskOrderCompatibilityAssignment"))
+        self.assertFalse(hasattr(facade, "set_mission_commands_batch"))
+        self.assertFalse(hasattr(facade, "get_mission_commands_batch"))
+        self.assertFalse(hasattr(facade, "set_leader_intents_batch"))
+        self.assertFalse(hasattr(facade, "get_leader_intents_batch"))
+        self.assertFalse(hasattr(facade, "set_pilot_reports_batch"))
+        self.assertFalse(hasattr(facade, "get_pilot_reports_batch"))
 
     def test_observation_batch_packet_public_fields_include_metadata(self) -> None:
         self.assertTupleEqual(

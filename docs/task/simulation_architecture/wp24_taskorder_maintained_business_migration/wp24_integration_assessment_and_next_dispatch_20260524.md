@@ -17,8 +17,9 @@ WP24-A through WP24-H established the maintained TaskOrder business path:
   slices used by current runtime paths.
 - `WorldBatchRuntime` and `RuntimeFacade` expose maintained
   `set_task_orders_maintained_batch` and `get_task_orders_maintained_batch`.
-- `ObservationBatchPacket.task_order_contracts` plus
-  `include_task_order_contracts` provide maintained observation export.
+- `TaskingBatchPacket.task_order_contracts` plus
+  `TaskingBatchRequest.include_task_order_contracts` provide maintained tasking
+  export, while `ObservationBatchPacket` stays observation-only.
 - Python VecEnv, cooperative VecEnv, scenario-loader runtime proxy, and
   multi-agent observation consumers use maintained TaskOrder assignments and
   maintained observation contracts.
@@ -73,8 +74,8 @@ The focused tests now assert the deletion state:
 
 - runtime/facade/bindings expose maintained TaskOrder batch APIs only;
 - DTOs expose `task_order_contracts`, not `task_orders`;
-- observation and execution requests expose `include_task_order_contracts`, not
-  `include_task_orders`;
+- tasking requests expose `include_task_order_contracts`, while observation and
+  execution requests expose no tasking flags;
 - Python adapters do not expose legacy TaskOrder batch writers;
 - architecture tests fail if the deleted names return;
 - Python command-chain business writers use `World*MaintainedAssignment` and
@@ -82,7 +83,8 @@ The focused tests now assert the deletion state:
 - maintained runtime-window action injection calls
   `authorize_maintained_action_intent()` and rejects compatibility/default
   provenance labels;
-- maintained full-batch stepping does not use `facade.runtime().step_worlds()`;
+- maintained full-batch stepping does not use
+  `facade.runtime_compatibility_quarantine().step_worlds()`;
 - legacy visual fallback is compatibility-only and fails closed unless
   `runtime_compatibility_enabled=True` is explicit.
 

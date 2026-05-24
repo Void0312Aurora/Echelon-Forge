@@ -64,8 +64,8 @@ public:
 
     // Compatibility/diagnostics escape hatch only. Maintained facade code should
     // use batch-owned helper methods instead of keeping raw SimulationKernel handles.
-    SimulationKernel& world(size_t index);
-    const SimulationKernel& world(size_t index) const;
+    SimulationKernel& world_compatibility_quarantine(size_t index);
+    const SimulationKernel& world_compatibility_quarantine(size_t index) const;
 
     void reset_batch(const std::vector<uint32_t>& seeds = {});
     void step_batch();

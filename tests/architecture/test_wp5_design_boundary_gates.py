@@ -67,8 +67,8 @@ def test_runtime_facade_header_limits_world_batch_runtime_to_escape_hatch_and_pr
         if "WorldBatchRuntime" in _strip_line_comment(line)
     ]
     assert public_owner_lines == [
-        "WorldBatchRuntime& runtime() noexcept;",
-        "const WorldBatchRuntime& runtime() const noexcept;",
+        "WorldBatchRuntime& runtime_compatibility_quarantine() noexcept;",
+        "const WorldBatchRuntime& runtime_compatibility_quarantine() const noexcept;",
     ]
 
     private_section = header.split("private:", 1)[1]
@@ -82,13 +82,13 @@ def test_runtime_facade_docs_do_not_describe_raw_runtime_as_maintained_path() ->
     assert "compatibility/diagnostics escape hatch" in readme_en
     assert "new mainline code should not depend on it" in readme_en
     assert "must centralize access in an explicit adapter" in readme_en
-    assert "must not call `RuntimeFacade.runtime()` directly" in readme_en
+    assert "must not call `RuntimeFacade.runtime_compatibility_quarantine()` directly" in readme_en
     assert "should also not cache the raw `WorldBatchRuntime`" in readme_en
 
     assert "compatibility / diagnostics 逃逸口" in readme_zh
     assert "新主线代码不应依赖它" in readme_zh
     assert "必须把访问集中在一个显式 adapter" in readme_zh
-    assert "不得直接调用 `RuntimeFacade.runtime()`" in readme_zh
+    assert "不得直接调用 `RuntimeFacade.runtime_compatibility_quarantine()`" in readme_zh
     assert "不应缓存 raw `WorldBatchRuntime`" in readme_zh
 
 

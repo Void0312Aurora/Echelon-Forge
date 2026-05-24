@@ -511,13 +511,9 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertTrue(
                     all(bool(request.get("include_instrument_states", False)) for request in packet_requests)
                 )
-                self.assertTrue(
-                    all(not bool(request.get("include_mission_commands", False)) for request in packet_requests)
-                )
+                self.assertTrue(all("include_mission_commands" not in request for request in packet_requests))
                 self.assertTrue(all("include_task_orders" not in request for request in packet_requests))
-                self.assertTrue(
-                    all(not bool(request.get("include_task_order_contracts", False)) for request in packet_requests)
-                )
+                self.assertTrue(all("include_task_order_contracts" not in request for request in packet_requests))
             finally:
                 vec_env.close()
 
@@ -877,7 +873,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 return 2
 
             def runtime(self):
-                raise AssertionError("maintained step_worlds must not request raw facade.runtime()")
+                raise AssertionError("maintained step_worlds must not request raw facade.runtime_compatibility_quarantine()")
 
         facade = _FacadeStepOnly()
         adapter.facade = facade  # type: ignore[assignment]
@@ -1058,7 +1054,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 layout = vec_env_module.build_compiled_world_layout(vec_env._compiled_scenario, seed=19)
                 applied_world = vec_env._runtime_adapter.apply_world_layout(0, layout)
                 self.assertIsNotNone(applied_world.agent_id)
-                maritime = vec_env._runtime_adapter._compat_runtime_handle().world(0).get_maritime_state()
+                maritime = vec_env._runtime_adapter._compat_runtime_handle().world_compatibility_quarantine(0).get_maritime_state()
                 self.assertEqual(float(maritime[0]), 0.0)
                 self.assertEqual(float(maritime[1]), 135.0)
                 self.assertEqual(float(maritime[2]), 11.0)
@@ -1135,7 +1131,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             try:
                 layout = vec_env_module.build_compiled_world_layout(vec_env._compiled_scenario, seed=41)
                 vec_env._runtime_adapter.apply_world_layout(0, layout)
-                world_proxy = vec_env._runtime_adapter.world(0)
+                world_proxy = vec_env._runtime_adapter.world_compatibility_quarantine(0)
                 proxy_layout = world_proxy.get_layout()
                 self.assertEqual(proxy_layout.terrain_type, "legacy")
                 self.assertAlmostEqual(float(world_proxy.get_time_step()), 0.05, places=6)
@@ -2196,9 +2192,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                         [ref],
                         include_agent_observations=True,
                         include_instrument_states=True,
-                        include_mission_commands=False,
-                        include_leader_intents=False,
-                        include_pilot_reports=False,
                     )
                     observed["mainline_truth"] = result.observation_packet.agent_observations[0]
                     observed["mainline_inst"] = result.observation_packet.instrument_states[0]
@@ -2492,6 +2485,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                     include_proprio=True,
                     action_mode="full",
                     mission_obs_mode="basic",
+                    runtime_compatibility_enabled=True,
                 ),
                 **wrapper_kwargs,
             )

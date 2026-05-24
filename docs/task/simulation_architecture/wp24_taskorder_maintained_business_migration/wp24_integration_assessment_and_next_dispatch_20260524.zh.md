@@ -17,8 +17,9 @@ WP24-A 到 WP24-H 已建立 maintained TaskOrder business path：
   TaskOrder 业务 slices。
 - `WorldBatchRuntime` 与 `RuntimeFacade` 暴露 maintained
   `set_task_orders_maintained_batch` 与 `get_task_orders_maintained_batch`。
-- `ObservationBatchPacket.task_order_contracts` 与
-  `include_task_order_contracts` 提供 maintained observation export。
+- `TaskingBatchPacket.task_order_contracts` 与
+  `TaskingBatchRequest.include_task_order_contracts` 提供 maintained tasking
+  export；`ObservationBatchPacket` 保持 observation-only。
 - Python VecEnv、cooperative VecEnv、scenario-loader runtime proxy 与 multi-agent
   observation consumers 使用 maintained TaskOrder assignments 和 maintained
   observation contracts。
@@ -68,8 +69,8 @@ focused tests 现在断言 deletion state：
 
 - runtime/facade/bindings 只暴露 maintained TaskOrder batch APIs；
 - DTO 暴露 `task_order_contracts`，不暴露 `task_orders`；
-- observation 与 execution requests 暴露 `include_task_order_contracts`，不暴露
-  `include_task_orders`；
+- tasking request 暴露 `include_task_order_contracts`；observation 与
+  execution requests 不暴露 tasking flags；
 - Python adapters 不暴露 legacy TaskOrder batch writers；
 - architecture tests 会在已删除名称回归时失败；
 - Python command-chain business writers 使用 `World*MaintainedAssignment` 与
@@ -77,7 +78,8 @@ focused tests 现在断言 deletion state：
 - maintained runtime-window action injection 调用
   `authorize_maintained_action_intent()`，并拒绝 compatibility/default provenance
   labels；
-- maintained full-batch stepping 不再使用 `facade.runtime().step_worlds()`；
+- maintained full-batch stepping 不再使用
+  `facade.runtime_compatibility_quarantine().step_worlds()`；
 - legacy visual fallback 是 compatibility-only，没有显式
   `runtime_compatibility_enabled=True` 时会 fail closed。
 

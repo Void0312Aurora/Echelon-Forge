@@ -40,9 +40,9 @@ Current close-out state:
 The accepted maintained path is:
 
 - writes use `WorldTaskOrderMaintainedAssignment`;
-- reads and observation export use `TaskOrderMaintainedBatchContract`;
-- facade observation packets expose `task_order_contracts` gated by
-  `include_task_order_contracts`;
+- tasking reads use `TaskingBatchRequest` and `TaskingBatchPacket` with
+  `task_order_contracts` gated by `include_task_order_contracts`;
+- observation export remains pure agent-observation and instrument-state data;
 - Python VecEnv, cooperative, scenario-loader, and multi-agent observation paths
   fail closed if the maintained TaskOrder batch binding is unavailable.
 
@@ -77,7 +77,7 @@ standard proves:
 
 - maintained runtime/facade TaskOrder write/read roundtrips preserve the business
   fields used by command-chain paths;
-- observation export still supports maintained `task_order_contracts`;
+- tasking export supports maintained `task_order_contracts`;
 - Python normal business paths do not expose or call the removed legacy writer;
 - architecture guards fail if the deleted public surfaces reappear.
 

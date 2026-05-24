@@ -644,7 +644,7 @@ class GpuRuntimeBindingTests(unittest.TestCase):
 
         refs = []
         for world_index in range(2):
-            world = runtime.world(world_index)
+            world = runtime.world_compatibility_quarantine(world_index)
             world.set_terrain_type("flat")
             entity_id = world.spawn_unit(
                 ef_py.Side.Blue,
