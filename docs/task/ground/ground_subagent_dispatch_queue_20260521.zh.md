@@ -4,7 +4,8 @@
 
 状态：`2026-05-24` G0-G4 已封存为 accepted ground baseline。G5 tasking
 smoke 已接受；G6-A/B 已接受第一批 G1 realism-gradient MVP 场景 fixture；
-G6-C 已接受 route-move boundary guardrails。
+G6-C 已接受 route-move boundary guardrails；G6-D 开启 schema-first
+route-move release decision。
 
 启动子代理时使用此队列。主线程拥有集成和最终验收。
 
@@ -35,6 +36,7 @@ flowchart TD
     G4 --> G5["G5 MVP 场景"]
     G5 --> G6["G6 Realism Gradient MVP 场景"]
     G6 --> G6C["G6-C Route-Move Boundary"]
+    G6C --> G6D["G6-D Route-Move Release Decision"]
 ```
 
 并行规则：
@@ -52,6 +54,9 @@ flowchart TD
   terrain、sensing、fires、damage、native ground platform schema 和 G2+
   realism 仍保持保留。
 - `G6-C` 只接受 route-move boundary guardrails；它不释放 movement 场景。
+- `G6-D` 选择 schema-first route-move release path。它不释放 movement 场景；
+  它只为 native ground platform schema 与 movement evidence gates 建立
+  D1/D2 预检包。
 
 术语说明：这里的调度阶段 `G6 Realism Gradient MVP 场景` 不是域真实性梯度表中的
 `G6 effects/damage/termination`。本阶段只发布两个 `G1` 真实性 fixture。
@@ -78,12 +83,17 @@ flowchart TD
 | `G6-A` | worker | `gpt-5.4`，medium | 已接受：创建 realism-gradient MVP planning surface。 | 仅 `docs/task/ground/g6_realism_gradient_mvp_scenarios/**`。 |
 | `G6-B` | worker | `gpt-5.4`，medium | 已接受：添加 G1 static occupy/support relationship 场景和 focused validation。 | 仅 `scenarios/ground/ground_platoon_static_occupy_v1.json`、`scenarios/ground/ground_platoon_support_relationship_v1.json`、`tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py`。 |
 | `G6-C` | 主线程集成 | 当前主线程 | 已接受：route-move boundary guardrails，不释放 movement behavior。 | 仅 `docs/task/ground/g6_route_move_boundary/**`、`python/rl/tasking/bridge.py`、`tests/leader/test_ground_profile_semantics.py`、`tests/architecture/test_ground_realism_gradient_guardrails.py` 与 ground README/queue/progress sync。 |
+| `G6-D0` | 主线程集成 | 当前主线程 | 开启 route-move release decision，并选择 schema-first 路径。 | 仅 `docs/task/ground/g6_route_move_release_decision/**` 与 ground README/queue/progress/plan sync。 |
+| `G6-D1` | explorer | `gpt-5.4`，high | 预检最小 runtime-loadable native ground platform schema 路径。 | 首先只读 diagnostics。不编辑 scenario、runtime、bindings 或 C++ implementation。 |
+| `G6-D2` | explorer | `gpt-5.4`，high | 预检 flat route movement 的 movement evidence gates。 | 首先只读 diagnostics。不编辑 platform schema implementation、terrain、sensing、fires、damage 或 combat。 |
+| `G6-D3` | 主线程集成 | 当前主线程 | 集成 D1/D2，并决定是否释放有边界的 route-move implementation cluster。 | 仅 ground queue/progress/README sync 与已批准 cluster docs。 |
 
 ## 保留流
 
 | 流 | 释放条件 |
 |--------|-------------------|
-| `G6-D / G2 route move implementation` | 需要已接受的 G6-C guardrails，以及 runtime-loadable ground platform schema 或针对 movement 的明确 compatibility boundary。 |
+| `G6-D1/D2 preflight` | 需要已接受的 G6-D0 route-move release decision。 |
+| `G2 route move implementation` | 需要已接受的 G6-D3 release vote，以及 runtime-loadable ground platform schema 证据。 |
 | `P3/P10 ground work` | 需要单独 accepted work package；G5 不释放 formal command delivery 或 observation export。 |
 
 ## 调度详情

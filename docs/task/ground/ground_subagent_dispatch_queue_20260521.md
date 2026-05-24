@@ -2,7 +2,8 @@
 
 Status: `2026-05-24` G0-G4 sealed as the accepted ground baseline. G5 tasking
 smoke is accepted, G6-A/B are accepted for the first G1 realism-gradient MVP
-scenario fixtures, and G6-C is accepted for route-move boundary guardrails.
+scenario fixtures, G6-C is accepted for route-move boundary guardrails, and
+G6-D opens the schema-first route-move release decision.
 
 Use this queue when launching subagents. The main thread owns integration and
 final acceptance.
@@ -36,6 +37,7 @@ flowchart TD
     G4 --> G5["G5 MVP Scenario"]
     G5 --> G6["G6 Realism Gradient MVP Scenarios"]
     G6 --> G6C["G6-C Route-Move Boundary"]
+    G6C --> G6D["G6-D Route-Move Release Decision"]
 ```
 
 Parallel rule:
@@ -56,6 +58,9 @@ Parallel rule:
   schemas, and G2+ realism remain held.
 - `G6-C` accepts only route-move boundary guardrails. It does not release a
   movement scenario.
+- `G6-D` selects the schema-first route-move release path. It does not release
+  a movement scenario; it creates D1/D2 preflight packets for native ground
+  platform schema and movement evidence gates.
 
 Terminology note: this project phase `G6 Realism Gradient MVP Scenarios` is not
 the same as the domain-realism grade `G6 effects/damage/termination`; this
@@ -83,12 +88,17 @@ phase releases only two `G1` realism fixtures.
 | `G6-A` | worker | `gpt-5.4`, medium | Accepted: create the realism-gradient MVP planning surface. | `docs/task/ground/g6_realism_gradient_mvp_scenarios/**` only. |
 | `G6-B` | worker | `gpt-5.4`, medium | Accepted: add G1 static occupy/support relationship scenarios and focused validation. | `scenarios/ground/ground_platoon_static_occupy_v1.json`, `scenarios/ground/ground_platoon_support_relationship_v1.json`, `tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py` only. |
 | `G6-C` | main-thread integration | current main thread | Accepted: route-move boundary guardrails without releasing movement behavior. | `docs/task/ground/g6_route_move_boundary/**`, `python/rl/tasking/bridge.py`, `tests/leader/test_ground_profile_semantics.py`, `tests/architecture/test_ground_realism_gradient_guardrails.py`, and ground README/queue/progress sync only. |
+| `G6-D0` | main-thread integration | current main thread | Open the route-move release decision and select the schema-first path. | `docs/task/ground/g6_route_move_release_decision/**`, ground README/queue/progress/plan sync only. |
+| `G6-D1` | explorer | `gpt-5.4`, high | Preflight the smallest runtime-loadable native ground platform schema path. | Read-only diagnostics first. No scenario, runtime, bindings, or C++ implementation edits. |
+| `G6-D2` | explorer | `gpt-5.4`, high | Preflight the movement evidence gates for flat route movement. | Read-only diagnostics first. No platform schema implementation, terrain, sensing, fires, damage, or combat edits. |
+| `G6-D3` | main-thread integration | current main thread | Integrate D1/D2 and decide whether a bounded route-move implementation cluster can be released. | Ground queue/progress/README sync and approved cluster docs only. |
 
 ## Held Streams
 
 | Stream | Release condition |
 |--------|-------------------|
-| `G6-D / G2 route move implementation` | Requires accepted G6-C guardrails plus runtime-loadable ground platform schema or an explicit compatibility boundary for movement. |
+| `G6-D1/D2 preflight` | Requires accepted G6-D0 route-move release decision. |
+| `G2 route move implementation` | Requires accepted G6-D3 release vote plus runtime-loadable ground platform schema evidence. |
 | `P3/P10 ground work` | Requires a separate accepted work package; G5 does not release formal command delivery or observation export. |
 
 ## Dispatch Details

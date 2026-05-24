@@ -68,6 +68,7 @@
 | `G4 runtime 切片` | 第一条维护中的行为切片 | 一个通过共享生命周期跑通的 ground 端到端切片 | 不新增 ground-only 并行管线 |
 | `G5 MVP 场景` | 第一版规范 ground 场景壳 | 一个维护中的 `scenarios/ground/` smoke fixture，用于证明 loader 与 tasking status chain | 不声明真实 ground platform schema、movement、terrain、sensing、fires 或 combat |
 | `G6 Realism Gradient MVP Scenarios` | 第一批受梯度约束的场景 | G1 static occupy 与 support relationship fixture，并为后续 G2+ work 设置 gate | 不声明 movement、terrain、sensing、fires、damage 或 native ground platform |
+| `G6-D Route-Move Release Decision` | 第一版 G2 movement release posture | schema-first 决策，以及 native platform schema 与 movement evidence 的有限预检 cluster | 不发布 route-move scenario、movement implementation、terrain、sensing、fires、damage 或 native schema implementation |
 
 关键规则是：`G1-G4` 必须复用现有的
 `common + specialization + profile bridge` 模式，而不是再发明一套新的
@@ -79,6 +80,10 @@ loader 或 runtime path。
 
 G6 继续把该规则扩展为梯度边界：每个新 ground 场景都必须声明进入的
 realism grade，证明该 grade 的最低临界点，并显式延后更高复杂度声明。
+
+G6-D 将该规则应用到 route movement：`G2` movement 场景必须等待
+runtime-loadable native ground platform schema。当前 compatibility spawn shell
+不能作为 movement-realism 证据。
 
 ### 4.1 阶段子项目与任务簇
 
@@ -93,6 +98,7 @@ realism grade，证明该 grade 的最低临界点，并显式延后更高复杂
 | `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
 | `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
 | `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | schema-first route-move release decision；implementation held |
 
 当前分发队列是
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)。

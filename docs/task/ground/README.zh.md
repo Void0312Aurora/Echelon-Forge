@@ -44,6 +44,9 @@
   fail closed，当前 ground 场景必须保持 G0/G1，`G2` route movement 继续
   held，直到 native ground platform schema 或显式 movement compatibility
   boundary 被接受。
+- G6-D 开启 route-move release decision，并选择 schema-first 路径：第一版
+  `G2` route-move 场景必须等待 runtime-loadable native ground platform schema。
+  当前 `Aircraft` compatibility shell 只保留给 G0/G1。
 
 ## 推荐阅读顺序
 
@@ -69,6 +72,8 @@
   [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
 - G6-C：
   [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
+- G6-D：
+  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
 - Review：
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - 架构基线：
@@ -96,7 +101,9 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
 
 - 维护 G0/G5 tasking smoke 与 G6 G1 static occupy/support fixtures，作为
   realism-gradient guardrails
-- 在添加任何 movement 场景前，保持 G6-C route-move guardrails 生效
+- 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效
+- 在 route-move implementation 前，先预检 native ground platform schema 与
+  movement evidence gates
 - G1 场景只验证 static occupy/support relationship 语义，不扩张为 ground
   combat/runtime 证明
 - command delivery、observation/export、movement、sensing、terrain、fires、

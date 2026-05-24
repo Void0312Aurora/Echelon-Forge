@@ -1,7 +1,8 @@
 # Ground Domain Bootstrap Plan
 
 Status: `2026-05-24` sealed baseline for G0-G4; G5 tasking smoke is accepted;
-G6 opens the first realism-gradient MVP scenario batch.
+G6 opens the first realism-gradient MVP scenario batch; G6-D selects the
+schema-first route-move release path.
 
 Inputs:
 
@@ -77,6 +78,7 @@ The repository does not yet have:
 | `G4 Runtime Slice` | first maintained behavior slice | one selected end-to-end ground behavior through shared lifecycle | no parallel ground-only pipeline |
 | `G5 MVP Scenario` | first canonical ground scenario shell | one maintained `scenarios/ground/` smoke fixture proving loader plus tasking status chain | no real ground platform schema, movement, terrain, sensing, fires, or combat claims |
 | `G6 Realism Gradient MVP Scenarios` | first gradient-bounded scenario batch | G1 static occupy and support relationship fixtures plus gates for future G2+ work | no movement, terrain, sensing, fires, damage, or native ground platform claims |
+| `G6-D Route-Move Release Decision` | first G2 movement release posture | schema-first decision and finite preflight clusters for native platform schema plus movement evidence | no route-move scenario, movement implementation, terrain, sensing, fires, damage, or native schema implementation |
 
 The critical design rule is that `G1-G4` should reuse the existing
 `common + specialization + profile bridge` pattern rather than inventing a new
@@ -89,6 +91,10 @@ creating a private ground scenario loader or runtime path.
 G6 extends the rule with gradient boundaries: each new ground scenario must
 declare the realism grade it enters, prove that grade's minimum critical
 points, and explicitly defer higher-complexity claims.
+
+G6-D applies that rule to route movement: a `G2` movement scenario must wait for
+a runtime-loadable native ground platform schema. The current compatibility
+spawn shell is not accepted as movement-realism evidence.
 
 ### 4.1 Phase Subprojects And Task Clusters
 
@@ -104,6 +110,7 @@ reviewed, and closed without widening the whole ground bootstrap lane.
 | `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
 | `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
 | `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | schema-first route-move release decision; implementation held |
 
 The active assignment queue is
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).

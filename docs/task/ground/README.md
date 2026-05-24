@@ -49,6 +49,10 @@ simulation lifecycle without creating a new vertical runtime path.
   now fail closed, current ground scenarios must stay G0/G1, and `G2` route
   movement remains held until a native ground platform schema or explicit
   movement compatibility boundary is accepted.
+- G6-D opens the route-move release decision and selects the schema-first path:
+  the first `G2` route-move scenario must wait for a runtime-loadable native
+  ground platform schema. The current `Aircraft` compatibility shell remains
+  G0/G1 only.
 
 ## Recommended Reading Order
 
@@ -74,6 +78,8 @@ simulation lifecycle without creating a new vertical runtime path.
   [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
 - G6-C:
   [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
+- G6-D:
+  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
 - Review:
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - Architecture baseline:
@@ -102,7 +108,10 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
 
 - maintain G0/G5 tasking smoke and G6 G1 static occupy/support fixtures as
   realism-gradient guardrails
-- keep G6-C route-move guardrails active before adding any movement scenario
+- keep G6-C/G6-D route-move guardrails active before adding any movement
+  scenario
+- preflight the native ground platform schema and movement evidence gates
+  before route-move implementation
 - keep G1 scenarios scoped to static occupy/support relationship semantics only
 - keep command delivery, observation/export, movement, sensing, terrain, fires,
   effects, damage, and broad `MissionCommand` growth held
