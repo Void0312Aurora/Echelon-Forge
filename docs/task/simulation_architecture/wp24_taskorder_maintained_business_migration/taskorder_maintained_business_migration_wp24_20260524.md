@@ -1,10 +1,10 @@
 # WP24 TaskOrder Maintained Business Migration
 
-Status: focused close-out on `2026-05-24`; public TaskOrder whole-shell
-compatibility surfaces have been deleted, observation/tasking export is split,
-and command-chain Python business writes now use maintained
-MissionCommand/LeaderIntent/PilotReport contracts. Focused validation is being
-rerun for the final cleanup set.
+Status: closed on `2026-05-24`; public TaskOrder whole-shell compatibility
+surfaces have been deleted, observation/tasking export is split, command-chain
+Python business writes now use maintained MissionCommand/LeaderIntent/
+PilotReport contracts, and legacy visual fallback is hard-gated behind explicit
+runtime compatibility opt-in.
 
 WP24 is the replacement-backed TaskOrder business migration package opened after
 [`WP23 Legacy Retirement Recovery And Reset`](../wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md)
@@ -32,6 +32,8 @@ Current close-out state:
 - Raw `SimulationKernel` setup remains available only through explicit
   compatibility quarantine paths; it is no longer the default training/runtime
   setup route.
+- Legacy single-world visual fallback is compatibility-only and fails closed
+  unless `runtime_compatibility_enabled=True` is explicit.
 
 ## 1. Maintained Target
 
@@ -82,9 +84,9 @@ standard proves:
 The boundary closure package adds mandatory acceptance for pure observation
 packets, facade-owned scenario setup, maintained command-chain contracts, and
 explicit maintained provenance at Python call sites. Observation split,
-command-chain contracts, provenance guards, runtime-window authorization, and
-normal facade-owned batch stepping are implemented for the focused close-out.
-The remaining concrete boundary debt is legacy visual single-world fallback.
+command-chain contracts, provenance guards, runtime-window authorization, normal
+facade-owned batch stepping, and legacy visual fallback hard-gating are
+implemented for the close-out.
 
 Focused validation for this deletion patch:
 
@@ -94,7 +96,7 @@ python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runt
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "task_order or command_chain"
-PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime"
+PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime or visual"
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime"
 PYTHONPATH=build-workshop python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp22_dto_domain_shell_guard.py
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py

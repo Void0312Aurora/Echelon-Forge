@@ -247,6 +247,10 @@ class RuntimeFacadeAdapter:
     def _compat_world(self, index: int):
         return self._compat_runtime_handle().world(int(index))
 
+    def _require_compatibility_fallback(self, surface: str) -> None:
+        if not self.runtime_compatibility_enabled:
+            raise RuntimeError(runtime_compatibility_required_message(surface))
+
     def _scenario_loader_runtime(self, index: int) -> _ScenarioLoaderRuntimeProxy:
         return _ScenarioLoaderRuntimeProxy(self, int(index))
 
@@ -575,6 +579,7 @@ class RuntimeFacadeAdapter:
         return snapshot.applied_world.layout
 
     def get_visual_observation(self, world_index: int, entity_id: int) -> Any:
+        self._require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")
         return self._compat_world(int(world_index)).get_visual_observation(int(entity_id))
 
     def get_visual_observation_downsampled(
@@ -583,12 +588,14 @@ class RuntimeFacadeAdapter:
         entity_id: int,
         downsample: int,
     ) -> Any:
+        self._require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")
         return self._compat_world(int(world_index)).get_visual_observation_downsampled(
             int(entity_id),
             int(downsample),
         )
 
     def supports_visual_observation_downsampled(self, world_index: int) -> bool:
+        self._require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")
         return hasattr(self._compat_world(int(world_index)), "get_visual_observation_downsampled")
 
     def compute_visual_observation_batch_numpy(

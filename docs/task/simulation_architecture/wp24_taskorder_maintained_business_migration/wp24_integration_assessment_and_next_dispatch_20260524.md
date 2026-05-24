@@ -1,10 +1,10 @@
 # WP24 Integration Assessment And Cleanup Close-Out
 
-Status: `2026-05-24` focused cleanup close-out in progress. Old public
-TaskOrder whole-shell compatibility surfaces have been removed; observation and
-tasking export are split; command-chain Python business writes now route through
-maintained MissionCommand/LeaderIntent/PilotReport contracts and are being
-revalidated.
+Status: closed on `2026-05-24`. Old public TaskOrder whole-shell compatibility
+surfaces have been removed; observation and tasking export are split;
+command-chain Python business writes now route through maintained
+MissionCommand/LeaderIntent/PilotReport contracts; runtime-window, setup/step,
+and legacy visual fallback boundaries fail closed by default.
 
 Chinese companion:
 [wp24_integration_assessment_and_next_dispatch_20260524.zh.md](wp24_integration_assessment_and_next_dispatch_20260524.zh.md)
@@ -42,6 +42,8 @@ The follow-up hardening also closed two production-boundary leaks identified by
 focused review: normal full-batch stepping now stays on facade `step_batch()`,
 and runtime-window action injection requires explicit maintained
 ObservationPacket/DecisionBelief provenance plus C++ authorization.
+The final close-out hardens legacy visual fallback as compatibility-only, so
+maintained visual export uses the facade-owned batch helper or fails closed.
 
 ## 2. Cleanup Result
 
@@ -80,15 +82,14 @@ The focused tests now assert the deletion state:
 - maintained runtime-window action injection calls
   `authorize_maintained_action_intent()` and rejects compatibility/default
   provenance labels;
-- maintained full-batch stepping does not use `facade.runtime().step_worlds()`.
+- maintained full-batch stepping does not use `facade.runtime().step_worlds()`;
+- legacy visual fallback is compatibility-only and fails closed unless
+  `runtime_compatibility_enabled=True` is explicit.
 
-Remaining boundary item:
-
-- `UniversalEnv` still owns a raw `SimulationKernel`, but this path is gated by
-  `runtime_compatibility_enabled=True`, rejected by default from `train.py`, and
-- legacy visual observation fallback still reaches single-world raw visual APIs
-  through the adapter. Full retirement requires either a facade visual
-  single-world API or a hard compatibility gate decision.
+Residual raw runtime surfaces are not accepted on the default maintained
+production path. `UniversalEnv` raw `SimulationKernel` ownership remains gated by
+`runtime_compatibility_enabled=True`, rejected by default from `train.py`, and
+guarded as compatibility quarantine.
 
 ## 4. Validation Plan
 
@@ -100,7 +101,7 @@ python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runt
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "task_order or command_chain"
-PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime"
+PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime or visual"
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime"
 PYTHONPATH=build-workshop python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp22_dto_domain_shell_guard.py
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py

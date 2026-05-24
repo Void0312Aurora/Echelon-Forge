@@ -1,9 +1,10 @@
 # WP24 集成评估与清理收口
 
-状态：`2026-05-24` focused cleanup close-out 进行中。旧 public TaskOrder
-whole-shell compatibility surfaces 已删除；observation 与 tasking export 已拆分；
-command-chain Python business writes 已通过 maintained MissionCommand/LeaderIntent/
-PilotReport contracts 路由，正在重新验证。
+状态：`2026-05-24` 已关闭。旧 public TaskOrder whole-shell compatibility
+surfaces 已删除；observation 与 tasking export 已拆分；command-chain Python
+business writes 已通过 maintained MissionCommand/LeaderIntent/PilotReport
+contracts 路由；runtime-window、setup/step 与 legacy visual fallback 边界默认
+fail closed。
 
 英文主文：
 [wp24_integration_assessment_and_next_dispatch_20260524.md](wp24_integration_assessment_and_next_dispatch_20260524.md)
@@ -37,6 +38,8 @@ mission-command contracts，不再回落 whole-shell fallback。
 Focused review 后的补刀也关闭了两个 production-boundary leaks：正常 full-batch
 stepping 现在停留在 facade `step_batch()`，runtime-window action injection 要求显式
 maintained ObservationPacket/DecisionBelief provenance，并经过 C++ authorization。
+最终收口还把 legacy visual fallback harden 成 compatibility-only，因此 maintained
+visual export 要么使用 facade-owned batch helper，要么 fail closed。
 
 ## 2. 清理结果
 
@@ -74,15 +77,14 @@ focused tests 现在断言 deletion state：
 - maintained runtime-window action injection 调用
   `authorize_maintained_action_intent()`，并拒绝 compatibility/default provenance
   labels；
-- maintained full-batch stepping 不再使用 `facade.runtime().step_worlds()`。
+- maintained full-batch stepping 不再使用 `facade.runtime().step_worlds()`；
+- legacy visual fallback 是 compatibility-only，没有显式
+  `runtime_compatibility_enabled=True` 时会 fail closed。
 
-剩余边界项：
-
-- `UniversalEnv` 仍持有 raw `SimulationKernel`，但该路径必须显式设置
-  `runtime_compatibility_enabled=True`，`train.py` 默认拒绝进入，并由 guard 约束为
-  compatibility quarantine。
-- legacy visual observation fallback 仍通过 adapter 触达 single-world raw visual API。
-  彻底退休需要 facade visual single-world API，或者明确 hard compatibility gate 决策。
+默认 maintained production path 不再接受 residual raw runtime surface。
+`UniversalEnv` raw `SimulationKernel` ownership 仍被
+`runtime_compatibility_enabled=True` gate，`train.py` 默认拒绝进入，并由 guard 约束为
+compatibility quarantine。
 
 ## 4. 验证计划
 
@@ -94,7 +96,7 @@ python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runt
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "task_order or command_chain"
-PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime"
+PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime or visual"
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "task_order or command_chain or observation or batch_runtime"
 PYTHONPATH=build-workshop python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp22_dto_domain_shell_guard.py
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py

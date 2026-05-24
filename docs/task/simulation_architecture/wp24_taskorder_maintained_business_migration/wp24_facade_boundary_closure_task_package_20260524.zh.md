@@ -1,10 +1,10 @@
 # WP24 Facade Boundary Closure Task Package
 
-状态：`2026-05-24`，focused close-out implementation 正在推进。最初的并行
-subagent 核验打开了这个整改任务包；当前 close-out 已完成 observation/tasking split、
-command-chain maintained contract wiring、runtime-window provenance authorization，
-以及 facade-owned normal batch stepping。Raw setup 已显式 quarantine；剩余
-raw-runtime boundary debt 是 legacy single-world visual fallback。
+状态：`2026-05-24` 已关闭。最初的并行 subagent 核验打开了这个整改任务包；
+本 close-out 已完成 observation/tasking split、command-chain maintained
+contract wiring、runtime-window provenance authorization、facade-owned normal
+batch stepping、raw setup quarantine，以及 legacy single-world visual fallback
+hard-gating。
 
 英文主文：
 [wp24_facade_boundary_closure_task_package_20260524.md](wp24_facade_boundary_closure_task_package_20260524.md)
@@ -17,7 +17,7 @@ raw-runtime boundary debt 是 legacy single-world visual fallback。
 | 问题 | 结论 | 证据 | 必须响应 |
 | --- | --- | --- | --- |
 | `ObservationBatchPacket` 混合 agent observation 与 command-side payload。 | 属实，P1。 | `ObservationBatchPacket` 暴露 `mission_commands`、`leader_intents`、`pilot_reports`；packet 只有一个 `AgentObservation` provenance。 | 拆分 observation export 与 command/tasking export，并守住 packet shape。 |
-| 场景加载绕过 facade-owned boundary。 | 经校准后属实，P1；setup 与 normal batch stepping 已加 guard。 | `batch_apply.py` 现在默认走 maintained setup-target API；`RuntimeFacadeAdapter.step_worlds()` 对正常 full-batch step 使用 facade `step_batch()`，partial raw stepping 没有显式 compatibility opt-in 会 fail closed。`UniversalEnv` raw `SimulationKernel` 仍被 gate。 | 继续把 setup/step 路径放在 maintained facade/adapter contract 后面；legacy visual fallback 单独排下一刀。 |
+| 场景加载绕过 facade-owned boundary。 | 经校准后属实，P1；setup、normal batch stepping 与 visual fallback 已加 guard。 | `batch_apply.py` 现在默认走 maintained setup-target API；`RuntimeFacadeAdapter.step_worlds()` 对正常 full-batch step 使用 facade `step_batch()`，partial raw stepping 没有显式 compatibility opt-in 会 fail closed。`UniversalEnv` raw `SimulationKernel` 仍被 gate。Legacy visual fallback 现在没有显式 runtime compatibility 时 fail closed。 | 继续把 setup/step 路径放在 maintained facade/adapter contract 后面；任何 raw visual fallback 都只能是 compatibility-only。 |
 | Facade/contract 仍是双重表示主机。 | 任务包打开时部分属实；command-chain business path 已完成收口。 | TaskOrder public whole-shell API 已经退休。`MissionCommand`、`LeaderIntent`、`PilotReport` 现在已有 runtime/facade/binding/Python business flow 使用的 maintained contract 等价物；剩余 whole-shell API 是 maintained path 下方的 compatibility/diagnostics transport。 | 继续要求 maintained business caller 走 contract route，并用 guard 禁止 whole-shell writer 回流。 |
 | `agent_shim.py` 默认 `COMPATIBILITY_ADAPTER`。 | 经校准后属实，P2。 | 默认值是 fail-closed metadata，不是直接 runtime 执行；但 maintained caller 仍可能意外继承 compatibility provenance。 | maintained business path 必须显式传入 maintained provenance，并加 guard。 |
 
@@ -113,14 +113,14 @@ business path 不允许隐式继承这个默认值。
   default。
 - Law 14 read-side guard 持续拒绝 relabeled raw 或 compatibility input。
 
-## 3. 分发队列
+## 3. 收口台账
 
-下一轮 implementation wave 可以并行，但不能拆成松散 optional ideas。
+Implementation wave 已作为强制收口集合执行，不再作为 optional backlog 保留。
 
 | 工作线 | 所有权范围 | 起点文件 | 产出 |
 | --- | --- | --- | --- |
 | WP24-I | Facade DTO 与 Python binding packet split。 | `src/runtime/facade/runtime_facade_types.h`、`src/runtime/facade/runtime_facade.cpp`、`src/interfaces/python/bindings_runtime.cpp`、DTO tests。 | 纯 observation packet 与 command/tasking export replacement。 |
-| WP24-J | Scenario setup facade ownership。 | `python/scenario/runtime/batch_apply.py`、`python/scenario/runtime/world_setup_compat.py`、`python/rl/runtime/world_batch/adapter.py`、`gym_envs/universal_env.py`、`train.py`。 | Maintained setup target、facade-owned normal batch step、raw setup quarantine，以及明确 legacy visual fallback debt。 |
+| WP24-J | Scenario setup facade ownership。 | `python/scenario/runtime/batch_apply.py`、`python/scenario/runtime/world_setup_compat.py`、`python/rl/runtime/world_batch/adapter.py`、`gym_envs/universal_env.py`、`train.py`。 | Maintained setup target、facade-owned normal batch step、raw setup quarantine，以及 compatibility-only legacy visual fallback。 |
 | WP24-K | Command-chain maintained contracts。 | `src/runtime/contracts/world_batch_contracts.h`、runtime/facade APIs、command-chain tests。 | 已通过 runtime/facade/bindings 与 Python business writers 实现 maintained MissionCommand/LeaderIntent/PilotReport contracts；whole-shell APIs 保留为 compatibility/diagnostics-only。 |
 | WP24-L | Python provenance call-site hardening。 | `python/rl/runtime/agent_shim.py`、runtime Python callers、Law 14 tests。 | Maintained call site 显式 provenance 与 runtime-window action authorization。 |
 
@@ -134,7 +134,7 @@ python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runt
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/test_agent_shim.py
 PYTHONPATH=build-workshop python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_policy_belief_boundaries.py tests/architecture/test_wp12_law14_read_side_enforcement.py tests/architecture/test_wp22_dto_domain_shell_guard.py
-PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain"
+PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain or visual"
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain"
 ```
 
@@ -185,6 +185,10 @@ Focused review 后额外完成的 hardening：
 - single-world 与 leader runtime callers 显式传入
   `facade_observation_packet` provenance。
 
-剩余 WP24-J boundary debt 是 legacy visual observation fallback 仍通过 adapter 触达
-single-world raw visual API。它被列为下一刀具体 cleanup target，因为干净替换需要
-facade visual single-world API，或者明确做 hard compatibility gate 决策。
+- legacy visual observation fallback 现在会在 batch refresh 边界与 adapter visual
+  methods 上 fail closed；只有显式 `runtime_compatibility_enabled=True` 才能进入。
+  Maintained auto/compiled visual export 继续使用 facade-owned batch helper。
+
+默认 maintained production path 不接受任何 WP24 boundary debt。残留 raw runtime
+使用只能是 maintained contract 下方的 storage implementation detail，或显式命名的
+compatibility/diagnostics quarantine。

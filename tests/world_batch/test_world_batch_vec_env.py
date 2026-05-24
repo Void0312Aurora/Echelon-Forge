@@ -1254,6 +1254,28 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
+    def test_world_batch_vec_env_legacy_visual_backend_requires_explicit_compatibility_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=True,
+                include_proprio=False,
+                visual_downsample=2,
+                batch_visual_backend="legacy",
+            )
+            try:
+                with self.assertRaises(RuntimeError) as ctx:
+                    vec_env.reset()
+                self.assertIn("RuntimeFacadeAdapter.legacy_visual_observation", str(ctx.exception))
+                self.assertIn("runtime_compatibility_enabled=True", str(ctx.exception))
+            finally:
+                vec_env.close()
+
     def test_world_batch_vec_env_attaches_visual_without_redundant_refresh(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"
@@ -1403,6 +1425,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 visual_downsample=2,
                 visual_update_interval=1,
                 batch_visual_backend="legacy",
+                runtime_compatibility_enabled=True,
             )
             compiled_env = WorldBatchVecEnv(
                 scenario_path=scenario_path,

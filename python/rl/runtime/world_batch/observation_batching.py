@@ -9,6 +9,7 @@ import ef_py
 import numpy as np
 
 from gym_envs.universal_env import downsample_visual_mean
+from .compat import runtime_compatibility_required_message
 
 
 @dataclass
@@ -148,6 +149,18 @@ def refresh_visual_cache_batch(
         return False, None
 
     if backend == "legacy" or not hasattr(ef_py, "compute_world_batch_visual_observation_batch_numpy"):
+        compatibility_fallback_enabled = getattr(adapter, "compatibility_fallback_enabled", None)
+        compatibility_enabled = (
+            bool(compatibility_fallback_enabled())
+            if callable(compatibility_fallback_enabled)
+            else bool(compatibility_fallback_enabled)
+        )
+        if not compatibility_enabled:
+            raise RuntimeError(
+                runtime_compatibility_required_message(
+                    "RuntimeFacadeAdapter.legacy_visual_observation"
+                )
+            )
         for state in refresh_states:
             if (
                 visual_downsample > 1

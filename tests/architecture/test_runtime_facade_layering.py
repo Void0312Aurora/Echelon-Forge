@@ -404,6 +404,8 @@ def test_world_batch_adapter_keeps_runtime_escape_hatch_lazy_and_explicit() -> N
     assert "self.world(int(world_index)).get_time_step()" not in source
     assert "self.world(int(world_index)).get_visual_observation(" not in source
     assert 'hasattr(self.world(int(world_index)), "get_visual_observation_downsampled")' not in source
+    assert "def _require_compatibility_fallback(self, surface: str) -> None:" in source
+    assert '_require_compatibility_fallback("RuntimeFacadeAdapter.legacy_visual_observation")' in source
     assert "return build_runtime_world_layout_request(" in source
     assert "return apply_runtime_world_layout_request_maintained(self.facade, request)" in source
     assert "apply_runtime_world_layout_request_compatibility_quarantine(" in source

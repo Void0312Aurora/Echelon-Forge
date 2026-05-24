@@ -1,11 +1,10 @@
 # WP24 Facade Boundary Closure Task Package
 
-Status: `2026-05-24` focused close-out implementation in progress. The initial
-parallel subagent verification opened this corrective package; the current
-close-out has implemented the observation/tasking split, command-chain
-maintained contract wiring, runtime-window provenance authorization, and
-facade-owned normal batch stepping. Raw setup is explicitly quarantined; the
-remaining raw-runtime boundary debt is legacy single-world visual fallback.
+Status: closed on `2026-05-24`. The initial parallel subagent verification opened
+this corrective package; the close-out implemented the observation/tasking
+split, command-chain maintained contract wiring, runtime-window provenance
+authorization, facade-owned normal batch stepping, raw setup quarantine, and
+legacy single-world visual fallback hard-gating.
 
 Chinese companion:
 [wp24_facade_boundary_closure_task_package_20260524.zh.md](wp24_facade_boundary_closure_task_package_20260524.zh.md)
@@ -19,7 +18,7 @@ boundary leaks.
 | Concern | Verdict | Evidence | Required response |
 | --- | --- | --- | --- |
 | `ObservationBatchPacket` mixes agent observation with command-side payloads. | Confirmed, P1. | `ObservationBatchPacket` exposes `mission_commands`, `leader_intents`, and `pilot_reports`; the packet has a single `AgentObservation` provenance. | Split observation export from command/tasking export and guard the packet shape. |
-| Scenario loading bypasses facade-owned boundaries. | Confirmed with calibration, P1; setup and normal batch stepping are now guarded. | `batch_apply.py` now defaults to maintained setup-target APIs; `RuntimeFacadeAdapter.step_worlds()` uses facade `step_batch()` for normal full-batch stepping and rejects partial raw stepping without explicit compatibility opt-in. `UniversalEnv` raw `SimulationKernel` remains gated. | Keep setup/step paths behind maintained facade/adapter contracts; schedule legacy visual fallback retirement separately. |
+| Scenario loading bypasses facade-owned boundaries. | Confirmed with calibration, P1; setup, normal batch stepping, and visual fallback are now guarded. | `batch_apply.py` now defaults to maintained setup-target APIs; `RuntimeFacadeAdapter.step_worlds()` uses facade `step_batch()` for normal full-batch stepping and rejects partial raw stepping without explicit compatibility opt-in. `UniversalEnv` raw `SimulationKernel` remains gated. Legacy visual fallback now fails closed unless runtime compatibility is explicit. | Keep setup/step paths behind maintained facade/adapter contracts; any raw visual fallback remains compatibility-only. |
 | Facade/contract is still a dual-representation host. | Partially confirmed at package open; close-out implemented for command-chain business paths. | TaskOrder public whole-shell APIs are retired. `MissionCommand`, `LeaderIntent`, and `PilotReport` now have maintained contract equivalents for runtime/facade/binding/Python business flow; remaining whole-shell APIs are compatibility/diagnostics transport below the maintained path. | Keep maintained business callers on the contract route and guard against whole-shell writer re-entry. |
 | `agent_shim.py` defaults to `COMPATIBILITY_ADAPTER`. | Confirmed with calibration, P2. | The default is fail-closed metadata, not direct runtime execution, but maintained callers can still inherit compatibility provenance accidentally. | Maintained business paths must pass maintained provenance explicitly and be guarded. |
 
@@ -123,15 +122,15 @@ Acceptance criteria:
 - Law 14 read-side guards continue to reject relabeled raw or compatibility
   inputs.
 
-## 3. Dispatch Queue
+## 3. Closure Ledger
 
-The next implementation wave should be parallel but not fragmented into optional
-ideas.
+The implementation wave was executed as a forced close-out set, not as optional
+backlog.
 
 | Lane | Owner scope | Files to start from | Output |
 | --- | --- | --- | --- |
 | WP24-I | Facade DTO and Python binding packet split. | `src/runtime/facade/runtime_facade_types.h`, `src/runtime/facade/runtime_facade.cpp`, `src/interfaces/python/bindings_runtime.cpp`, DTO tests. | Pure observation packet plus command/tasking export replacement. |
-| WP24-J | Scenario setup facade ownership. | `python/scenario/runtime/batch_apply.py`, `python/scenario/runtime/world_setup_compat.py`, `python/rl/runtime/world_batch/adapter.py`, `gym_envs/universal_env.py`, `train.py`. | Maintained setup target, facade-owned normal batch step, raw setup quarantine, and explicit legacy visual fallback debt. |
+| WP24-J | Scenario setup facade ownership. | `python/scenario/runtime/batch_apply.py`, `python/scenario/runtime/world_setup_compat.py`, `python/rl/runtime/world_batch/adapter.py`, `gym_envs/universal_env.py`, `train.py`. | Maintained setup target, facade-owned normal batch step, raw setup quarantine, and compatibility-only legacy visual fallback. |
 | WP24-K | Command-chain maintained contracts. | `src/runtime/contracts/world_batch_contracts.h`, runtime/facade APIs, command-chain tests. | Implemented maintained MissionCommand/LeaderIntent/PilotReport contracts through runtime/facade/bindings and Python business writers; whole-shell APIs stay compatibility/diagnostics-only. |
 | WP24-L | Python provenance call-site hardening. | `python/rl/runtime/agent_shim.py`, runtime Python callers, Law 14 tests. | Explicit maintained provenance at maintained call sites and runtime-window action authorization. |
 
@@ -145,7 +144,7 @@ python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runt
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/test_agent_shim.py
 PYTHONPATH=build-workshop python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_policy_belief_boundaries.py tests/architecture/test_wp12_law14_read_side_enforcement.py tests/architecture/test_wp22_dto_domain_shell_guard.py
-PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain"
+PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain or visual"
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain"
 ```
 
@@ -197,7 +196,11 @@ Additional close-out hardening completed after focused review:
 - single-world and leader runtime callers pass
   `facade_observation_packet` provenance explicitly.
 
-The remaining WP24-J boundary debt is legacy visual observation fallback that
-still reaches single-world raw visual APIs through the adapter. It is isolated as
-the next concrete cleanup target because replacing it cleanly needs a facade
-visual single-world API or a hard compatibility gate decision.
+- legacy visual observation fallback now fails closed at the batch refresh
+  boundary and adapter visual methods unless `runtime_compatibility_enabled=True`
+  is explicit; maintained auto/compiled visual export continues to use the
+  facade-owned batch helper.
+
+The default maintained production path accepts no WP24 boundary debt. Residual
+raw runtime use is either below maintained contracts as storage
+implementation detail or explicitly named compatibility/diagnostics quarantine.
