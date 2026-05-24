@@ -10,7 +10,7 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 
-from python.rl.profile.ground_profile import build_kernel_mission_command  # noqa: E402
+from python.rl.profile.ground_profile import build_kernel_mission_command, infer_recovery_approach_type  # noqa: E402
 from python.rl.tasking import bridge as tasking_bridge  # noqa: E402
 from python.rl.tasking.common_core_profile import (  # noqa: E402
     apply_leader_intent_common_core_defaults,
@@ -56,6 +56,37 @@ class GroundProfileSemanticTests(unittest.TestCase):
         profile = tasking_bridge.tasking_profile_for_loader(loader)
 
         self.assertIs(profile, tasking_bridge.resolve_tasking_profile("ground"))
+
+    def test_loader_profile_fails_closed_for_unknown_explicit_profile(self) -> None:
+        task = ef_py.TaskOrder()
+        task.service_profile = ef_py.ServiceProfile.Army
+        loader = SimpleNamespace(
+            scenario_data={"tasking_profile": "groudn"},
+            task_order=task,
+            mission_cmd={},
+        )
+
+        with self.assertRaisesRegex(ValueError, "Unknown tasking profile"):
+            tasking_bridge.tasking_profile_for_loader(loader)
+
+    def test_loader_profile_fails_closed_for_unknown_service_profile_hint(self) -> None:
+        loader = SimpleNamespace(
+            scenario_data={"service_profile": "Armie"},
+            task_order=None,
+            mission_cmd={},
+        )
+
+        with self.assertRaisesRegex(ValueError, "Unknown tasking profile"):
+            tasking_bridge.tasking_profile_for_loader(loader)
+
+    def test_loader_profile_keeps_legacy_air_default_when_no_profile_hint_exists(self) -> None:
+        loader = SimpleNamespace(
+            scenario_data={},
+            task_order=ef_py.TaskOrder(),
+            mission_cmd={},
+        )
+
+        self.assertIs(tasking_bridge.tasking_profile_for_loader(loader), tasking_bridge.resolve_tasking_profile("air"))
 
     def test_normalize_task_order_spec_uses_ground_defaults(self) -> None:
         cases = {
@@ -170,6 +201,14 @@ class GroundProfileSemanticTests(unittest.TestCase):
         self.assertAlmostEqual(float(cmd.form_offset_y), 2.0)
         self.assertEqual(int(cmd.assigned_target_id), 77)
         self.assertTrue(bool(cmd.authorization_to_fire))
+
+    def test_ground_recovery_approach_inference_returns_binding_enum(self) -> None:
+        none_value = getattr(ef_py.RecoveryApproachType, "None")
+        self.assertEqual(infer_recovery_approach_type(SimpleNamespace(), task=None), none_value)
+
+        order = ef_py.TaskOrder()
+        order.recovery_approach_type = ef_py.RecoveryApproachType.Visual
+        self.assertEqual(infer_recovery_approach_type(SimpleNamespace(), task=order), ef_py.RecoveryApproachType.Visual)
 
 
 if __name__ == "__main__":

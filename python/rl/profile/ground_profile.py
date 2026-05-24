@@ -292,5 +292,9 @@ def infer_recovery_runway_id(loader: Any, task: Any | None = None) -> int:
 
 
 def infer_recovery_approach_type(loader: Any, task: Any | None = None):
-    _ = (loader, task)
-    return 0
+    _ = loader
+    namespace = getattr(ef_py, "RecoveryApproachType", object())
+    default_value = getattr(namespace, "None", 0)
+    if task is not None and hasattr(task, "recovery_approach_type"):
+        return enum_or_default(namespace, getattr(task, "recovery_approach_type", default_value), default_value)
+    return default_value

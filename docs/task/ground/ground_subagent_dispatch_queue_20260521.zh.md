@@ -1,9 +1,10 @@
-<!-- Machine-translated draft generated on 2026-05-21 from docs/task/ground/ground_subagent_dispatch_queue_20260521.md. Review before treating this file as authoritative. -->
+<!-- Chinese companion synchronized on 2026-05-24 from docs/task/ground/ground_subagent_dispatch_queue_20260521.md. Review English canonical file for disputed wording. -->
 
 # 地面子代理调度队列
 
-状态：`2026-05-22` G0-G4 已封存为 accepted ground baseline。G5 已开启，
-用于第一版最小 MVP 场景壳。
+状态：`2026-05-24` G0-G4 已封存为 accepted ground baseline。G5 tasking
+smoke 已接受；G6-A/B 已接受第一批 G1 realism-gradient MVP 场景 fixture；
+G6-C 已接受 route-move boundary guardrails。
 
 启动子代理时使用此队列。主线程拥有集成和最终验收。
 
@@ -19,6 +20,8 @@
 - 工作者不得撤销无关编辑或其他工作者所做的编辑。
 - 如果下一个切片不合理，工作者可以在 `preflight-only` 处停止。
 - G1 实现仅针对 G1-B 的仅 Python 配置文件切片被接受。C++ DTO 外壳、绑定、运行时行为和场景加载器仍被保留。
+- G2 仅针对内容/测试种子范围被接受。runtime-loadable ground unit schema、
+  movement、terrain、sensing、fires、weapon、damage 和 combat behavior 仍被保留。
 
 ## 阶段图
 
@@ -30,6 +33,8 @@ flowchart TD
     G2 --> G3
     G3 --> G4["G4 运行时切片"]
     G4 --> G5["G5 MVP 场景"]
+    G5 --> G6["G6 Realism Gradient MVP 场景"]
+    G6 --> G6C["G6-C Route-Move Boundary"]
 ```
 
 并行规则：
@@ -43,6 +48,13 @@ flowchart TD
 - `G5` 仅针对第一版规范场景 smoke fixture 释放；command delivery、
   observation export、movement、terrain、sensing、fires、effects、damage 和
   宽泛 `MissionCommand` 范围仍保持保留。
+- `G6` 仅释放 G1 static occupy/support relationship 场景 fixture。movement、
+  terrain、sensing、fires、damage、native ground platform schema 和 G2+
+  realism 仍保持保留。
+- `G6-C` 只接受 route-move boundary guardrails；它不释放 movement 场景。
+
+术语说明：这里的调度阶段 `G6 Realism Gradient MVP 场景` 不是域真实性梯度表中的
+`G6 effects/damage/termination`。本阶段只发布两个 `G1` 真实性 fixture。
 
 ## 第一波
 
@@ -63,12 +75,15 @@ flowchart TD
 | `G5-A` | 主线程集成 | 当前主线程 | 添加最小规范 MVP 场景与 focused loader/tasking smoke test。 | 仅 `scenarios/ground/**`、`tests/runtime/ground/**`、G5 docs 与导航同步。 |
 | `G5-B` | explorer | `gpt-5.4-mini`，high | 审计 G0-G4 封存状态与 G5 文档验收要求。 | 只读 diagnostics。已于 `2026-05-22` 返回。 |
 | `G5-C` | explorer | `gpt-5.4-mini`，high | 审计 ScenarioLoader 与 tasking-shell 对 MVP 场景的约束。 | 只读 diagnostics。已于 `2026-05-22` 返回。 |
+| `G6-A` | worker | `gpt-5.4`，medium | 已接受：创建 realism-gradient MVP planning surface。 | 仅 `docs/task/ground/g6_realism_gradient_mvp_scenarios/**`。 |
+| `G6-B` | worker | `gpt-5.4`，medium | 已接受：添加 G1 static occupy/support relationship 场景和 focused validation。 | 仅 `scenarios/ground/ground_platoon_static_occupy_v1.json`、`scenarios/ground/ground_platoon_support_relationship_v1.json`、`tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py`。 |
+| `G6-C` | 主线程集成 | 当前主线程 | 已接受：route-move boundary guardrails，不释放 movement behavior。 | 仅 `docs/task/ground/g6_route_move_boundary/**`、`python/rl/tasking/bridge.py`、`tests/leader/test_ground_profile_semantics.py`、`tests/architecture/test_ground_realism_gradient_guardrails.py` 与 ground README/queue/progress sync。 |
 
 ## 保留流
 
 | 流 | 释放条件 |
 |--------|-------------------|
-| `G6-A` | 需要已验收的 G5 证据，以及针对真实 ground platform schema 或下一条 runtime behavior 的新 scoped plan。 |
+| `G6-D / G2 route move implementation` | 需要已接受的 G6-C guardrails，以及 runtime-loadable ground platform schema 或针对 movement 的明确 compatibility boundary。 |
 | `P3/P10 ground work` | 需要单独 accepted work package；G5 不释放 formal command delivery 或 observation export。 |
 
 ## 调度详情

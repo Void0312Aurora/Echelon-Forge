@@ -76,6 +76,10 @@ Maintained configs, tools, and tests should continue to reference canonical scen
 - `ground/`
   - `ground_platoon_tasking_smoke_v1.json`
     - Minimal Army/ground tasking smoke fixture. It uses the current runtime-compatible `Aircraft` spawn shell and validates only the shared loader plus `TaskOrder -> LeaderIntent -> PilotReport` status chain.
+  - `ground_platoon_static_occupy_v1.json`
+    - G1 realism-gradient static occupy fixture. It validates Army/ground `TASK_OCCUPY` status semantics while explicitly deferring movement, terrain, sensing, fires, and damage.
+  - `ground_platoon_support_relationship_v1.json`
+    - G1 realism-gradient support relationship fixture. It validates `TASK_SUPPORT` support IDs and common-core status propagation while explicitly deferring fire support, sustainment, movement, sensing, and damage.
 - `landing/`
   - `landing_ils_final_train_v1.json`
   - `landing_ils_final_eval_v1.json`

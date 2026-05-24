@@ -1,7 +1,7 @@
 # Ground
 
-Status: active planning entry opened on `2026-05-21`; G0-G4 are sealed as the
-accepted ground baseline. G5 is open for the first minimal MVP scenario shell.
+Status: active planning entry opened on `2026-05-21`; current progress tracking
+updated on `2026-05-24`.
 
 Language:
 
@@ -14,6 +14,8 @@ simulation lifecycle without creating a new vertical runtime path.
 
 ## Current Status
 
+- The latest state summary is
+  [ground_current_progress_20260524.md](ground_current_progress_20260524.md).
 - `services/army` already exists as the authoritative service-profile boundary.
 - The task tree now maintains a dedicated ground execution-specialization lane;
   runtime execution remains deferred.
@@ -22,7 +24,7 @@ simulation lifecycle without creating a new vertical runtime path.
   task family default.
 - `army` and `land` are accepted aliases that normalize to `ground`; navigation
   routes through `services/army` plus `ground/`, not a new `army` runtime stack.
-- The workline is split into G0-G5 phases so subagents can take bounded,
+- The workline is split into G0-G6 phases so subagents can take bounded,
   non-overlapping tasks.
 - G0 is accepted by main-thread G0-D.
 - G1 accepted a narrow Python-profile-only slice: `army`, `ground`, `land`, and
@@ -39,9 +41,19 @@ simulation lifecycle without creating a new vertical runtime path.
 - G5 opens the first canonical MVP scenario under `scenarios/ground/` and keeps
   command delivery, observation/export, movement, sensing, terrain, fires, and
   broad facade work held.
+- G6 opens the first realism-gradient MVP scenario batch. G6-A records the
+  gradient decision, and G6-B adds two G1 compatibility-shell fixtures:
+  `ground_platoon_static_occupy_v1` and
+  `ground_platoon_support_relationship_v1`.
+- G6-C accepts route-move boundary guardrails: unknown explicit profile hints
+  now fail closed, current ground scenarios must stay G0/G1, and `G2` route
+  movement remains held until a native ground platform schema or explicit
+  movement compatibility boundary is accepted.
 
 ## Recommended Reading Order
 
+- Current progress tracking:
+  [ground_current_progress_20260524.md](ground_current_progress_20260524.md)
 - Primary plan:
   [ground_domain_bootstrap_plan_20260521.md](ground_domain_bootstrap_plan_20260521.md)
 - Subagent dispatch:
@@ -58,6 +70,10 @@ simulation lifecycle without creating a new vertical runtime path.
   [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
 - G5:
   [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
+- G6:
+  [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
+- G6-C:
+  [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
 - Review:
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - Architecture baseline:
@@ -84,9 +100,10 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
 
 ## Current Follow-On Focus
 
-- build the G5 MVP scenario shell as the first canonical `scenarios/ground/`
-  fixture
-- keep the scenario scoped to tasking status-chain validation only
+- maintain G0/G5 tasking smoke and G6 G1 static occupy/support fixtures as
+  realism-gradient guardrails
+- keep G6-C route-move guardrails active before adding any movement scenario
+- keep G1 scenarios scoped to static occupy/support relationship semantics only
 - keep command delivery, observation/export, movement, sensing, terrain, fires,
   effects, damage, and broad `MissionCommand` growth held
 - use the subagent queue for all delegated work

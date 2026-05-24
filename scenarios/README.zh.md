@@ -78,6 +78,10 @@
 - `ground/`
   - `ground_platoon_tasking_smoke_v1.json`
     - 最小 Army/ground tasking smoke fixture。它使用当前 runtime 可接收的 `Aircraft` spawn shell，只验证共享 loader 与 `TaskOrder -> LeaderIntent -> PilotReport` status chain。
+  - `ground_platoon_static_occupy_v1.json`
+    - G1 realism-gradient static occupy fixture。它验证 Army/ground `TASK_OCCUPY` status 语义，并明确延后 movement、terrain、sensing、fires 与 damage。
+  - `ground_platoon_support_relationship_v1.json`
+    - G1 realism-gradient support relationship fixture。它验证 `TASK_SUPPORT` support IDs 与 common-core status propagation，并明确延后 fire support、sustainment、movement、sensing 与 damage。
 - `landing/`
   - `landing_ils_final_train_v1.json`
   - `landing_ils_final_eval_v1.json`

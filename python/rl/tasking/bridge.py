@@ -274,6 +274,8 @@ def _normalized_profile_name(profile_name: Any | None) -> str | None:
 
     service_profile = getattr(ef_py, "ServiceProfile", None)
     if service_profile is not None:
+        if profile_name == getattr(service_profile, "Unspecified", object()):
+            return None
         if profile_name == getattr(service_profile, "Navy", object()):
             return "naval"
         if profile_name == getattr(service_profile, "Army", object()):
@@ -282,7 +284,7 @@ def _normalized_profile_name(profile_name: Any | None) -> str | None:
             return "air"
 
     text = str(getattr(profile_name, "name", profile_name)).strip().lower()
-    if text.startswith("serviceprofile."):
+    if "serviceprofile." in text:
         text = text.rsplit(".", 1)[-1]
 
     if text in {"", "unspecified"}:
@@ -296,9 +298,27 @@ def _normalized_profile_name(profile_name: Any | None) -> str | None:
     return None
 
 
-def _resolve_profile_from_candidates(*candidates: Any) -> Any:
+def _profile_candidate_has_value(candidate: Any) -> bool:
+    if candidate is None:
+        return False
+    text = str(getattr(candidate, "name", candidate)).strip().lower()
+    if "serviceprofile." in text:
+        text = text.rsplit(".", 1)[-1]
+    return text not in {"", "unspecified"}
+
+
+def _strict_profile_name(profile_name: Any | None) -> str | None:
+    normalized = _normalized_profile_name(profile_name)
+    if normalized is not None:
+        return normalized
+    if not _profile_candidate_has_value(profile_name):
+        return None
+    raise ValueError(f"Unknown tasking profile: {profile_name!r}")
+
+
+def _resolve_profile_from_candidates(*candidates: Any, strict: bool = False) -> Any:
     for candidate in candidates:
-        normalized = _normalized_profile_name(candidate)
+        normalized = _strict_profile_name(candidate) if strict else _normalized_profile_name(candidate)
         if normalized is not None:
             return resolve_tasking_profile(candidate)
     return resolve_tasking_profile(None)
@@ -333,7 +353,7 @@ def tasking_profile_for_loader(loader: Any):
         getattr(task_order, "tasking_profile", None),
         mission_cmd.get("tasking_profile", None),
     ]
-    profile = _resolve_profile_from_candidates(*explicit_profile_candidates)
+    profile = _resolve_profile_from_candidates(*explicit_profile_candidates, strict=True)
     if profile is not _air or any(_normalized_profile_name(candidate) == "air" for candidate in explicit_profile_candidates):
         return profile
 
@@ -343,7 +363,7 @@ def tasking_profile_for_loader(loader: Any):
         mission_cfg.get("service_profile", None) if isinstance(mission_cfg, dict) else None,
         scenario_data.get("service_profile", None) if isinstance(scenario_data, dict) else None,
     ]
-    return _resolve_profile_from_candidates(*inferred_profile_candidates)
+    return _resolve_profile_from_candidates(*inferred_profile_candidates, strict=True)
 
 
 def normalize_task_order_spec(order_spec: dict[str, Any] | None, *, loader: Any | None = None) -> dict[str, Any]:

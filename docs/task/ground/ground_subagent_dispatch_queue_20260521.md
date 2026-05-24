@@ -1,7 +1,8 @@
 # Ground Subagent Dispatch Queue
 
-Status: `2026-05-22` G0-G4 sealed as the accepted ground baseline. G5 is open
-for the first minimal MVP scenario shell.
+Status: `2026-05-24` G0-G4 sealed as the accepted ground baseline. G5 tasking
+smoke is accepted, G6-A/B are accepted for the first G1 realism-gradient MVP
+scenario fixtures, and G6-C is accepted for route-move boundary guardrails.
 
 Use this queue when launching subagents. The main thread owns integration and
 final acceptance.
@@ -33,6 +34,8 @@ flowchart TD
     G2 --> G3
     G3 --> G4["G4 Runtime Slice"]
     G4 --> G5["G5 MVP Scenario"]
+    G5 --> G6["G6 Realism Gradient MVP Scenarios"]
+    G6 --> G6C["G6-C Route-Move Boundary"]
 ```
 
 Parallel rule:
@@ -48,6 +51,15 @@ Parallel rule:
 - `G5` is released only for the first canonical scenario smoke fixture and
   remains held for command delivery, observation export, movement, terrain,
   sensing, fires, effects, damage, and broad `MissionCommand` scope.
+- `G6` releases only the G1 static occupy/support relationship scenario
+  fixtures. Movement, terrain, sensing, fires, damage, native ground platform
+  schemas, and G2+ realism remain held.
+- `G6-C` accepts only route-move boundary guardrails. It does not release a
+  movement scenario.
+
+Terminology note: this project phase `G6 Realism Gradient MVP Scenarios` is not
+the same as the domain-realism grade `G6 effects/damage/termination`; this
+phase releases only two `G1` realism fixtures.
 
 ## First Wave
 
@@ -68,12 +80,15 @@ Parallel rule:
 | `G5-A` | main-thread integration | current main thread | Add the minimal canonical MVP scenario and focused loader/tasking smoke test. | `scenarios/ground/**`, `tests/runtime/ground/**`, G5 docs, and navigation sync only. |
 | `G5-B` | explorer | `gpt-5.4-mini`, high | Audit G0-G4 seal state and G5 documentation requirements. | Read-only diagnostics. Returned `2026-05-22`. |
 | `G5-C` | explorer | `gpt-5.4-mini`, high | Audit ScenarioLoader and tasking-shell constraints for the MVP scenario. | Read-only diagnostics. Returned `2026-05-22`. |
+| `G6-A` | worker | `gpt-5.4`, medium | Accepted: create the realism-gradient MVP planning surface. | `docs/task/ground/g6_realism_gradient_mvp_scenarios/**` only. |
+| `G6-B` | worker | `gpt-5.4`, medium | Accepted: add G1 static occupy/support relationship scenarios and focused validation. | `scenarios/ground/ground_platoon_static_occupy_v1.json`, `scenarios/ground/ground_platoon_support_relationship_v1.json`, `tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py` only. |
+| `G6-C` | main-thread integration | current main thread | Accepted: route-move boundary guardrails without releasing movement behavior. | `docs/task/ground/g6_route_move_boundary/**`, `python/rl/tasking/bridge.py`, `tests/leader/test_ground_profile_semantics.py`, `tests/architecture/test_ground_realism_gradient_guardrails.py`, and ground README/queue/progress sync only. |
 
 ## Held Streams
 
 | Stream | Release condition |
 |--------|-------------------|
-| `G6-A` | Requires accepted G5 evidence plus a new scoped plan for real ground platform schema or next runtime behavior. |
+| `G6-D / G2 route move implementation` | Requires accepted G6-C guardrails plus runtime-loadable ground platform schema or an explicit compatibility boundary for movement. |
 | `P3/P10 ground work` | Requires a separate accepted work package; G5 does not release formal command delivery or observation export. |
 
 ## Dispatch Details

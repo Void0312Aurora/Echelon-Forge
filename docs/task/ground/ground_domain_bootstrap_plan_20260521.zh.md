@@ -1,6 +1,7 @@
 # Ground 域启动计划
 
-状态：`2026-05-22` G0-G4 封存基线；G5 已开启，用于第一版最小 MVP 场景壳。
+状态：`2026-05-24` G0-G4 封存基线；G5 tasking smoke 已验收；G6
+开启第一批 realism-gradient MVP 场景。
 
 输入：
 
@@ -66,6 +67,7 @@
 | `G3 执行面设计` | 有界执行语义 | 第一版 ground command/task/observation 设计说明、stage coverage、capability map | 不做完整物理或战斗实现 |
 | `G4 runtime 切片` | 第一条维护中的行为切片 | 一个通过共享生命周期跑通的 ground 端到端切片 | 不新增 ground-only 并行管线 |
 | `G5 MVP 场景` | 第一版规范 ground 场景壳 | 一个维护中的 `scenarios/ground/` smoke fixture，用于证明 loader 与 tasking status chain | 不声明真实 ground platform schema、movement、terrain、sensing、fires 或 combat |
+| `G6 Realism Gradient MVP Scenarios` | 第一批受梯度约束的场景 | G1 static occupy 与 support relationship fixture，并为后续 G2+ work 设置 gate | 不声明 movement、terrain、sensing、fires、damage 或 native ground platform |
 
 关键规则是：`G1-G4` 必须复用现有的
 `common + specialization + profile bridge` 模式，而不是再发明一套新的
@@ -74,6 +76,9 @@ tasking/mission/runtime 链路。
 G5 将这条规则延伸到 scenario content：第一版 ground MVP 场景必须复用共享
 `ScenarioLoader` 与已验收的 G4 tasking lifecycle，不得创建私有 ground scenario
 loader 或 runtime path。
+
+G6 继续把该规则扩展为梯度边界：每个新 ground 场景都必须声明进入的
+realism grade，证明该 grade 的最低临界点，并显式延后更高复杂度声明。
 
 ### 4.1 阶段子项目与任务簇
 
@@ -86,7 +91,8 @@ loader 或 runtime path。
 | `G2 内容与测试种子` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
 | `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_preflight_cluster_20260521.md) | accepted |
 | `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
-| `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已开启 tasking smoke scenario |
+| `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
+| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
 
 当前分发队列是
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)。

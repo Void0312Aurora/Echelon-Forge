@@ -1,7 +1,7 @@
 # Ground Domain Bootstrap Plan
 
-Status: `2026-05-22` sealed baseline for G0-G4; G5 is open for the first
-minimal MVP scenario shell.
+Status: `2026-05-24` sealed baseline for G0-G4; G5 tasking smoke is accepted;
+G6 opens the first realism-gradient MVP scenario batch.
 
 Inputs:
 
@@ -76,6 +76,7 @@ The repository does not yet have:
 | `G3 Execution Surface Design` | bounded execution semantics | first ground command/task/observation design note, stage coverage, capability map | no full physics or combat implementation |
 | `G4 Runtime Slice` | first maintained behavior slice | one selected end-to-end ground behavior through shared lifecycle | no parallel ground-only pipeline |
 | `G5 MVP Scenario` | first canonical ground scenario shell | one maintained `scenarios/ground/` smoke fixture proving loader plus tasking status chain | no real ground platform schema, movement, terrain, sensing, fires, or combat claims |
+| `G6 Realism Gradient MVP Scenarios` | first gradient-bounded scenario batch | G1 static occupy and support relationship fixtures plus gates for future G2+ work | no movement, terrain, sensing, fires, damage, or native ground platform claims |
 
 The critical design rule is that `G1-G4` should reuse the existing
 `common + specialization + profile bridge` pattern rather than inventing a new
@@ -84,6 +85,10 @@ tasking/mission/runtime chain.
 G5 extends that rule to scenario content: the first ground MVP scenario must
 reuse the shared `ScenarioLoader` and accepted G4 tasking lifecycle instead of
 creating a private ground scenario loader or runtime path.
+
+G6 extends the rule with gradient boundaries: each new ground scenario must
+declare the realism grade it enters, prove that grade's minimum critical
+points, and explicitly defer higher-complexity claims.
 
 ### 4.1 Phase Subprojects And Task Clusters
 
@@ -97,7 +102,8 @@ reviewed, and closed without widening the whole ground bootstrap lane.
 | `G2 Content And Test Seed` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
 | `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | accepted |
 | `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
-| `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | open for tasking smoke scenario |
+| `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
+| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
 
 The active assignment queue is
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).

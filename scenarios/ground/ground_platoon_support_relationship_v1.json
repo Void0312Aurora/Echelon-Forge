@@ -1,0 +1,113 @@
+{
+  "scenario_name": "Ground Platoon Support Relationship V1",
+  "description": "G1 ground MVP support relationship scenario. It validates Army/ground TASK_SUPPORT common-core relationship semantics and preservation of supported_node_id/supporting_node_id through ScenarioLoader and TaskOrder -> LeaderIntent -> PilotReport status propagation. The single entity intentionally uses the current runtime-compatible Aircraft spawn shell; this scenario does not claim fire support, sustainment, or movement behavior.",
+  "tasking_profile": "ground",
+  "mvp_boundary": {
+    "status": "support_relationship_status_shell",
+    "compatibility_spawn_type": "Aircraft",
+    "validated_surface": "ScenarioLoader load plus normalized Army/ground TASK_SUPPORT Support/Support relationship status shell with supported and supporting node IDs preserved",
+    "realism_gradient": {
+      "grade": "G1",
+      "compatibility_shell": "Current runtime-compatible Aircraft spawn shell used for a ground platoon until native ground unit schema is loadable.",
+      "validated_claims": [
+        "Army service_profile resolves through explicit ground tasking_profile",
+        "TASK_SUPPORT maps to Defend task family",
+        "TASK_SUPPORT maps to Support command relationship",
+        "TASK_SUPPORT maps to Support coordination mode",
+        "supported_node_id and supporting_node_id are preserved"
+      ],
+      "deferred_claims": [
+        "runtime-loadable ground unit schema",
+        "ground movement dynamics",
+        "terrain traversal, masking, cover, or line-of-sight",
+        "ground sensing, track fusion, or observation export",
+        "direct fires",
+        "indirect fires",
+        "fire support execution",
+        "sustainment or resupply execution",
+        "effects, damage, or suppression",
+        "formal CommandPacket",
+        "ObservationPacket",
+        "TrackPacket"
+      ]
+    },
+    "deferred_runtime_claims": [
+      "runtime-loadable ground unit schema",
+      "ground movement dynamics",
+      "terrain traversal, masking, cover, or line-of-sight",
+      "ground sensing, track fusion, or observation export",
+      "direct fires",
+      "indirect fires",
+      "fire support execution",
+      "sustainment or resupply execution",
+      "effects, damage, or suppression",
+      "formal CommandPacket",
+      "ObservationPacket",
+      "TrackPacket"
+    ]
+  },
+  "environment": {
+    "time_step": 1.0,
+    "max_steps": 30,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    },
+    "zones": [
+      {
+        "name": "SupportAssemblyArea",
+        "x": -200.0,
+        "y": 50.0,
+        "width": 600.0,
+        "length": 400.0,
+        "heading": 0.0,
+        "surface": "HardPacked"
+      }
+    ]
+  },
+  "mission_command": {
+    "tasking_profile": "ground",
+    "command_code": 0,
+    "target_heading": 0.0,
+    "target_altitude": 0.0,
+    "target_speed": 0.0,
+    "formation_id": 0,
+    "authorization_to_fire": false
+  },
+  "task_order": {
+    "tasking_profile": "ground",
+    "task_name": "TASK_SUPPORT",
+    "service_profile": "Army",
+    "task_group_id": 4501,
+    "parent_node_id": 4501,
+    "supported_node_id": 4601,
+    "supporting_node_id": 4501,
+    "assignee_id": 4501,
+    "element_id": 4501,
+    "anchor_x_m": -200.0,
+    "anchor_y_m": 50.0,
+    "anchor_z_m": 0.0,
+    "target_altitude_m": 0.0,
+    "target_speed_mps": 0.0,
+    "speed_min_mps": 0.0,
+    "speed_max_mps": 0.0
+  },
+  "entities": [
+    {
+      "name": "Blue_Ground_Platoon_Support_Shell",
+      "side": "Blue",
+      "type": "Aircraft",
+      "is_agent": true,
+      "pos": [-200.0, 50.0, 0.0],
+      "vel": [0.0, 0.0, 0.0],
+      "heading": 0.0
+    }
+  ],
+  "objectives": [],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": 0.0
+  }
+}
