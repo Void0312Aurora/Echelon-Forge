@@ -44,7 +44,7 @@ range/arc/cooldown/inventory 和非毁伤验收 gate。
 | 目标分配不能只来自静态 metadata | 通过 assigned-target track/source/snapshot provenance 字段接受 |
 | 未授权开火不是成功证据 | 在 N4 合同和 RL preflight 中作为范围外/失败姿态接受 |
 | 场景保持 N4，而不是 N5/N6 | 已接受；launch、hit/intercept、damage 和 kill proof 继续延后 |
-| RL 材料保持 preflight | 已接受；不声明 trainer、reward code 或 learned policy |
+| RL 材料保持 gate-only | 已接受；active smoke/probe trainer 条目现在已存在，但 reward code、海军专用 action API、evaluation package 和 learned-policy 声明仍在范围外 |
 
 ## 验证记录
 
@@ -95,6 +95,6 @@ N5 limited engagement 仍被阻塞，直到新包定义：
 ## 残留
 
 - N4 威胁逻辑仍是 bridge-level decision surface，不是完整战术指挥官。
-- RL 任务面已经设计，但本验收片段不实现 trainer config 或评估命令。
+- RL 任务面现在已有 active smoke/probe trainer configs，但海军专用 observation/action/reward/eval package 仍然延后。
 - N6 毁伤与终止继续延后。
 - 舰队 C2、ASW、舰载机和 UNREP 真实性保持在 N4 bridge 范围外。

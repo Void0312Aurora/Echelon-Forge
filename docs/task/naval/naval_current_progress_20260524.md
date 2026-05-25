@@ -11,8 +11,9 @@ Current positioning:
 - The minimal realistic naval screen/contact scenario is stable.
 - The naval domain now has a runnable tactical-prototype skeleton.
 - RL/tasking integration has profile, contract, and batch-sync plumbing.
-- Dedicated naval training tasks, rewards, curriculum, and evaluation gates are
-  still pending.
+- Dedicated naval training tasks now have N4 smoke/probe entry gates; naval
+  rewards, curriculum, evaluation gates, and learned-policy acceptance remain
+  pending.
 
 ## Current Conclusion
 
@@ -205,6 +206,7 @@ N4 bridge acceptance:
 
 - [N4 RL task surface preflight](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md)
 - [N4 integration acceptance](n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md)
+- [N4 closure](n4_threat_roe_bridge/naval_n4_closure_20260525.md)
 
 Docs validation:
 
@@ -233,9 +235,10 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 
 Recommended next steps:
 
-1. Turn the accepted N4 RL preflight into a concrete implementation package for
-   `naval_contact_report_threat_roe_v1` or
-   `naval_screen_station_hold_threat_aware_v1`.
+1. Treat N4 as closed and avoid reopening it for engagement work.
+   `naval_contact_report_threat_roe_v1` and
+   `naval_screen_station_hold_threat_aware_v1` now have active smoke/probe
+   entries.
 2. Continue moving loader-owned raw simulation compatibility seams toward
    facade-owned maintained command-chain surfaces.
 3. Add facade or world-batch acceptance around naval mission-command weapons,

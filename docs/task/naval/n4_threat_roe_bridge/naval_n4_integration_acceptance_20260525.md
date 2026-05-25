@@ -46,7 +46,7 @@ gates before any weapon-release task can be claimed.
 | Target assignment cannot be static metadata only | accepted through assigned-target track/source/snapshot provenance fields |
 | Unauthorized fire is not success evidence | accepted as out-of-scope/failure posture in the N4 contract and RL preflight |
 | Scenario remains N4, not N5/N6 | accepted; launch, hit/intercept, damage, and kill proof remain deferred |
-| RL material remains preflight only | accepted; no trainer, reward code, or learned-policy claim is made |
+| RL material remains gate-only | accepted; active smoke/probe trainer entries now exist, but reward code, naval-specific action APIs, evaluation package, and learned-policy claims remain out of scope |
 
 ## Validation Record
 
@@ -100,7 +100,7 @@ Recommended next planning surface:
 
 - N4 threat logic is still a bridge-level decision surface, not a complete
   tactical commander.
-- The RL task surface is designed, but trainer configs and evaluation commands
-  are not implemented in this acceptance slice.
+- The RL task surface now has active smoke/probe trainer configs, but a
+  naval-specific observation/action/reward/eval package is still deferred.
 - N6 damage and termination remain deferred.
 - Fleet C2, ASW, embarked-air, and UNREP realism stay outside the N4 bridge.

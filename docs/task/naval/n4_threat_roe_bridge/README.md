@@ -1,7 +1,7 @@
 # N4 Threat / ROE Bridge
 
-Status: `2026-05-25` accepted as the first post-MVP naval pre-fire
-scenario-expansion bridge.
+Status: `2026-05-25` closed as the first post-MVP naval pre-fire
+scenario-expansion bridge and active-entry gate.
 
 Language:
 
@@ -39,6 +39,7 @@ Scenario concept:
 - [N4 threat / ROE dispatch queue](naval_n4_threat_roe_dispatch_queue_20260524.md)
 - [N4 RL task surface preflight](naval_n4_rl_task_surface_preflight_20260525.md)
 - [N4 integration acceptance](naval_n4_integration_acceptance_20260525.md)
+- [N4 closure](naval_n4_closure_20260525.md)
 
 Documentation budget:
 
@@ -47,7 +48,8 @@ Documentation budget:
 - one dispatch-queue pair after owner approval to distribute implementation
   work;
 - one RL preflight pair and one integration acceptance pair after the
-  implementation packets return.
+  implementation packets return;
+- one closure pair after active training-entry gates are accepted.
 
 ## Scope
 
@@ -81,6 +83,8 @@ documents record:
 - the RL preflight surface without treating it as a trained task.
 - the integration decision that N4 is accepted but N5 limited engagement remains
   blocked behind launch/reject and non-damage gates.
+- the closure decision that the N4 bridge should not be reopened for N5 work;
+  N5 must use a separate limited-engagement package.
 
 Validation for this docs-only slice:
 

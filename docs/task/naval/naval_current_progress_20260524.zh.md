@@ -14,7 +14,8 @@
 - 最小现实海上屏护接触场景已经稳定。
 - 海军域已经拥有可运行的战术原型骨架。
 - RL/tasking 对接已具备 profile、合同和 batch-sync 通道。
-- 专门面向海军的训练任务、奖励体系和课程仍未成为独立主线。
+- 专门面向海军的训练任务已有 N4 smoke/probe entry gates；海军 reward、curriculum、
+  evaluation gates 和 learned-policy acceptance 仍待后续完成。
 
 ## 一、当前结论
 
@@ -302,6 +303,7 @@ N4 bridge 验收：
 
 - [N4 RL 任务面预检](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.zh.md)
 - [N4 集成验收](n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.zh.md)
+- [N4 闭合](n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)
 
 文档验证：
 
@@ -330,9 +332,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 
 建议下一轮按下面顺序推进：
 
-1. 海军 RL 任务实现包：把已接受的 N4 RL preflight 转成
-   `naval_contact_report_threat_roe_v1` 或
-   `naval_screen_station_hold_threat_aware_v1` 的具体 implementation package。
+1. 将 N4 视为已闭合，避免为了 engagement 工作重新打开 N4。
+   `naval_contact_report_threat_roe_v1` 与
+   `naval_screen_station_hold_threat_aware_v1` 现在已有 active smoke/probe 条目。
 2. Facade 化收口：把 loader-owned raw simulation compatibility seam 中仍承担业务含义的 naval command-chain 同步继续迁到 facade-owned maintained surface。
 3. 任务面守门：为 `MissionCommand -> naval weapon`、`screen-hold` 和 `tasking_profile: naval` 增加更少依赖调试 API 的 facade 或 world-batch 级验收。
 4. N5 门控：`naval_limited_engagement_v1` 继续阻塞，直到独立 N5 包定义

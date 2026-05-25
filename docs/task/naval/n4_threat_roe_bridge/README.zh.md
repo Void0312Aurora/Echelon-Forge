@@ -1,6 +1,7 @@
 # N4 威胁 / ROE 桥接场景
 
-状态：`2026-05-25`，作为海军 MVP 之后第一个开火前场景扩大化桥接，已接受。
+状态：`2026-05-25`，作为海军 MVP 之后第一个开火前场景扩大化桥接与
+active-entry gate 已闭合。
 
 语言：
 
@@ -35,13 +36,15 @@
 - [N4 威胁 / ROE 分发队列](naval_n4_threat_roe_dispatch_queue_20260524.zh.md)
 - [N4 RL 任务面预检](naval_n4_rl_task_surface_preflight_20260525.zh.md)
 - [N4 集成验收](naval_n4_integration_acceptance_20260525.zh.md)
+- [N4 闭合](naval_n4_closure_20260525.zh.md)
 
 文档预算：
 
 - 一对 README 用于导航；
 - 一对任务簇文档用于记录有限工作包；
 - owner 批准分发实现工作后，新增一对 dispatch queue；
-- 实现 packets 返回后，新增一对 RL preflight 和一对 integration acceptance 文档。
+- 实现 packets 返回后，新增一对 RL preflight 和一对 integration acceptance 文档；
+- active training-entry gates 接受后，新增一对 closure 文档。
 
 ## 范围
 
@@ -70,6 +73,8 @@
 - RL 预检面，但不把它描述成已训练任务。
 - N4 已接受但 N5 limited engagement 仍被 launch/reject 和非毁伤 gate 阻塞的
   集成决策。
+- N4 bridge 不应为 N5 工作重新打开；N5 必须使用独立 limited-engagement package 的
+  闭合决策。
 
 本文档片段的验证：
 
