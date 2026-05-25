@@ -325,6 +325,45 @@
             letter-spacing: 0;
         }
 
+        .tactical-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .tactical-header-left > span,
+        #tactical-scale {
+            white-space: nowrap;
+        }
+
+        .tactical-layer-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            pointer-events: auto;
+        }
+
+        .tactical-layer-controls .menu-tag {
+            color: #607f91;
+        }
+
+        .tactical-layer-button {
+            min-width: 0;
+            padding: 5px 6px;
+            border-color: #2a4658;
+            background: rgba(5, 14, 21, 0.82);
+            color: #6f8794;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .tactical-layer-button.active {
+            border-color: #42b9db;
+            background: rgba(16, 55, 70, 0.82);
+            color: #caedf7;
+        }
+
         #tactical-canvas {
             position: absolute;
             inset: 0;
@@ -404,7 +443,18 @@
 
     <div id="tactical-panel">
         <div id="tactical-header">
-            <span>TACTICAL VIEW</span>
+            <div class="tactical-header-left">
+                <span>TACTICAL VIEW</span>
+                <div class="tactical-layer-controls" aria-label="Tactical layers">
+                    <span class="menu-tag">LAYERS</span>
+                    <button id="btn-layer-route" class="tactical-layer-button" onclick="toggleTacticalLayer('route')">ROUTE</button>
+                    <button id="btn-layer-trails" class="tactical-layer-button" onclick="toggleTacticalLayer('trails')">TRAILS</button>
+                    <button id="btn-layer-weapons" class="tactical-layer-button" onclick="toggleTacticalLayer('weapons')">WEAPONS</button>
+                    <button id="btn-layer-tracks" class="tactical-layer-button" onclick="toggleTacticalLayer('tracks')">TRACKS</button>
+                    <button id="btn-layer-sensor-rings" class="tactical-layer-button" onclick="toggleTacticalLayer('sensorRings')">RINGS</button>
+                    <button id="btn-layer-datalinks" class="tactical-layer-button" onclick="toggleTacticalLayer('datalinks')">LINKS</button>
+                </div>
+            </div>
             <span id="tactical-scale">SCALE --</span>
         </div>
         <canvas id="tactical-canvas"></canvas>
@@ -440,9 +490,21 @@
         let chaseTargetPrev = null;
         let trailFrameCounter = 0;
         const MAX_TRAIL_POINTS_PER_UNIT = 6000;
+        const MAX_TACTICAL_TRAIL_POINTS_PER_UNIT = 360;
+        const MAX_UNIT_VISUAL_SAMPLES = 8;
+        const VISUAL_INTERPOLATION_MIN_DELAY_MS = 45.0;
+        const VISUAL_INTERPOLATION_MAX_DELAY_MS = 950.0;
+        const VISUAL_INTERPOLATION_DELAY_MULT = 1.15;
+        const VISUAL_EXTRAPOLATION_LIMIT_MS = 180.0;
+        const TACTICAL_RENDER_INTERVAL_MS = 1000.0 / 30.0;
         let presentationMode = 'MAP';
         let lastTacticalState = null;
         let tacticalViewport = null;
+        let lastStateFrameAt = null;
+        let smoothedStateFrameIntervalMs = 1000.0 / 30.0;
+        let lastTacticalRenderAt = 0.0;
+        let tacticalNeedsDraw = true;
+        const tacticalTrailHistory = new Map();
         const tacticalInteraction = {
             zoom: 1.0,
             panX: 0.0,
@@ -453,6 +515,14 @@
             dragStartY: 0.0,
             panStartX: 0.0,
             panStartY: 0.0,
+        };
+        const tacticalLayers = {
+            route: true,
+            trails: true,
+            weapons: true,
+            tracks: false,
+            sensorRings: false,
+            datalinks: false,
         };
 
         // Input State
@@ -515,11 +585,78 @@
             document.getElementById('btn-cam').innerText = `3D: ${viewMode}`;
         }
 
+        function updateTacticalLayerButtons() {
+            const buttonMap = {
+                route: document.getElementById('btn-layer-route'),
+                trails: document.getElementById('btn-layer-trails'),
+                weapons: document.getElementById('btn-layer-weapons'),
+                tracks: document.getElementById('btn-layer-tracks'),
+                sensorRings: document.getElementById('btn-layer-sensor-rings'),
+                datalinks: document.getElementById('btn-layer-datalinks'),
+            };
+            for (const [key, button] of Object.entries(buttonMap)) {
+                if (!button) continue;
+                button.classList.toggle('active', !!tacticalLayers[key]);
+                button.setAttribute('aria-pressed', tacticalLayers[key] ? 'true' : 'false');
+            }
+        }
+
+        function requestTacticalDraw() {
+            tacticalNeedsDraw = true;
+        }
+
+        window.toggleTacticalLayer = function (layerName) {
+            if (!Object.prototype.hasOwnProperty.call(tacticalLayers, layerName)) return;
+            tacticalLayers[layerName] = !tacticalLayers[layerName];
+            updateTacticalLayerButtons();
+            requestTacticalDraw();
+        };
+
+        function updateTacticalTrailHistory(unitsData) {
+            const activeIds = new Set();
+            const items = Array.isArray(unitsData) ? unitsData : [];
+            for (const uData of items) {
+                const id = Number(uData?.id);
+                if (!Number.isFinite(id)) continue;
+                activeIds.add(id);
+                const x = Number(uData?.x);
+                const y = Number(uData?.y);
+                if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+                const type = String(uData?.type || '');
+                const minSpacingSq = type === 'Missile' ? 16.0 : 400.0;
+                let points = tacticalTrailHistory.get(id);
+                if (!points) {
+                    points = [];
+                    tacticalTrailHistory.set(id, points);
+                }
+                const prev = points.length > 0 ? points[points.length - 1] : null;
+                const dx = prev ? x - prev.x : Infinity;
+                const dy = prev ? y - prev.y : Infinity;
+                if (!prev || (dx * dx + dy * dy) >= minSpacingSq) {
+                    points.push({
+                        x,
+                        y,
+                        side: String(uData?.side || 'Unknown'),
+                        type,
+                        name: String(uData?.name || id),
+                    });
+                    if (points.length > MAX_TACTICAL_TRAIL_POINTS_PER_UNIT) {
+                        points.splice(0, points.length - MAX_TACTICAL_TRAIL_POINTS_PER_UNIT);
+                    }
+                }
+            }
+            Array.from(tacticalTrailHistory.keys()).forEach((id) => {
+                if (!activeIds.has(id) && !units.has(id)) {
+                    tacticalTrailHistory.delete(id);
+                }
+            });
+        }
+
         window.togglePresentationMode = function () {
             presentationMode = presentationMode === 'MAP' ? '3D' : 'MAP';
             chaseTargetPrev = null;
             updatePresentationModeUI();
-            if (presentationMode === 'MAP' && lastTacticalState) drawTacticalView(lastTacticalState);
+            if (presentationMode === 'MAP') requestTacticalDraw();
         };
 
         function resizeTacticalCanvas() {
@@ -531,7 +668,7 @@
             tacticalCanvas.width = Math.round(width * dpr);
             tacticalCanvas.height = Math.round(height * dpr);
             tacticalCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            if (lastTacticalState) drawTacticalView(lastTacticalState);
+            requestTacticalDraw();
         }
         updateLayoutOffsets();
         resizeTacticalCanvas();
@@ -541,7 +678,7 @@
             event.preventDefault();
             const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
             tacticalInteraction.zoom = Math.max(0.35, Math.min(12.0, tacticalInteraction.zoom * factor));
-            if (lastTacticalState) drawTacticalView(lastTacticalState);
+            requestTacticalDraw();
         }, { passive: false });
 
         tacticalCanvas.addEventListener('pointerdown', (event) => {
@@ -560,7 +697,7 @@
             if (!tacticalInteraction.dragging || tacticalInteraction.pointerId !== event.pointerId) return;
             tacticalInteraction.panX = tacticalInteraction.panStartX + (event.clientX - tacticalInteraction.dragStartX);
             tacticalInteraction.panY = tacticalInteraction.panStartY + (event.clientY - tacticalInteraction.dragStartY);
-            if (lastTacticalState) drawTacticalView(lastTacticalState);
+            requestTacticalDraw();
         });
 
         function endTacticalDrag(event) {
@@ -657,6 +794,7 @@
                 }
             });
             units = new Map();
+            tacticalTrailHistory.clear();
             focusedId = null;
             chaseTargetPrev = null;
             renderUnitList();
@@ -675,6 +813,7 @@
                 if (uObj.trail.material) uObj.trail.material.dispose();
             }
             units.delete(id);
+            tacticalTrailHistory.delete(id);
             if (focusedId === id) {
                 focusedId = null;
                 chaseTargetPrev = null;
@@ -687,6 +826,10 @@
             clearMapGroup();
             lastTacticalState = null;
             tacticalViewport = null;
+            lastStateFrameAt = null;
+            smoothedStateFrameIntervalMs = 1000.0 / 30.0;
+            lastTacticalRenderAt = 0.0;
+            tacticalNeedsDraw = true;
             simTime = 0;
             document.getElementById('v-time').innerText = '0.00 s';
             document.getElementById('v-name').innerText = '--';
@@ -790,7 +933,7 @@
                 maybeUpgradeUnitVisual(uObj);
             });
             renderUnitList();
-            if (lastTacticalState) drawTacticalView(lastTacticalState);
+            requestTacticalDraw();
         }
 
         function matchesPattern(pattern, text) {
@@ -961,6 +1104,11 @@
                 const geo = new THREE.ConeGeometry(5, 18, 10);
                 geo.rotateZ(Math.PI / 2);
                 const mat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xff6666 : 0x7fc8ff });
+                group.add(new THREE.Mesh(geo, mat));
+            } else if (uData.type === 'Missile') {
+                const geo = new THREE.ConeGeometry(1.6, 10, 8);
+                geo.rotateZ(Math.PI / 2);
+                const mat = new THREE.MeshLambertMaterial({ color: uData.side === 'Red' ? 0xff4f4f : 0xffdd55 });
                 group.add(new THREE.Mesh(geo, mat));
             } else {
                 const geo = new THREE.BoxGeometry(30, 60, 30);
@@ -1265,7 +1413,7 @@
                 tacticalInteraction.panY = 0.0;
             }
             updatePresentationModeUI();
-            if (lastTacticalState) drawTacticalView(lastTacticalState);
+            requestTacticalDraw();
         }
 
         function unitSymbolSpec(u) {
@@ -1277,6 +1425,9 @@
             if (style === 'aircraft') {
                 return { kind: 'aircraft', len: 16, wing: 6 };
             }
+            if (style === 'missile') {
+                return { kind: 'missile', len: 13, wing: 4 };
+            }
             if (style === 'generic') {
                 return { kind: 'generic', len: 12, wing: 5 };
             }
@@ -1285,6 +1436,9 @@
             }
             if (u.type === 'Ship') {
                 return { kind: 'ship', len: 18, wing: 7 };
+            }
+            if (u.type === 'Missile') {
+                return { kind: 'missile', len: 13, wing: 4 };
             }
             return { kind: 'generic', len: 12, wing: 5 };
         }
@@ -1328,11 +1482,17 @@
 
         function drawTacticalView(state) {
             if (presentationMode !== 'MAP' || !tacticalCtx || !state) return;
-            const unitsList = Array.isArray(state.units) ? state.units : [];
-            const tactical = state.tactical || {};
+            const renderState = buildSmoothedTacticalState(state);
+            const unitsList = Array.isArray(renderState.units) ? renderState.units : [];
+            const tactical = renderState.tactical || {};
             const rings = Array.isArray(tactical.sensor_rings) ? tactical.sensor_rings : [];
             const tracks = Array.isArray(tactical.tracks) ? tactical.tracks : [];
             const links = Array.isArray(tactical.datalinks) ? tactical.datalinks : [];
+            const navMarkers = Array.isArray(tactical.nav?.markers) ? tactical.nav.markers : [];
+            const weapons = Array.isArray(tactical.weapons) ? tactical.weapons : [];
+            const plottedUnits = tacticalLayers.weapons
+                ? unitsList
+                : unitsList.filter((u) => String(u.type || '') !== 'Missile');
 
             const width = tacticalCanvas.clientWidth || window.innerWidth;
             const height = tacticalCanvas.clientHeight || window.innerHeight;
@@ -1340,7 +1500,7 @@
             tacticalCtx.fillStyle = '#081018';
             tacticalCtx.fillRect(0, 0, width, height);
 
-            if (unitsList.length === 0) {
+            if (plottedUnits.length === 0 && navMarkers.length === 0) {
                 tacticalCtx.fillStyle = '#6f8794';
                 tacticalCtx.font = '12px monospace';
                 tacticalCtx.fillText('NO UNITS', 24, 40);
@@ -1348,18 +1508,83 @@
             }
 
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            for (const u of unitsList) {
+            for (const u of plottedUnits) {
                 minX = Math.min(minX, Number(u.x || 0));
                 maxX = Math.max(maxX, Number(u.x || 0));
                 minY = Math.min(minY, Number(u.y || 0));
                 maxY = Math.max(maxY, Number(u.y || 0));
             }
-            for (const r of rings) {
-                const range = Number(r.range_m || 0);
-                minX = Math.min(minX, Number(r.x || 0) - range);
-                maxX = Math.max(maxX, Number(r.x || 0) + range);
-                minY = Math.min(minY, Number(r.y || 0) - range);
-                maxY = Math.max(maxY, Number(r.y || 0) + range);
+            if (tacticalLayers.route) {
+                for (const marker of navMarkers) {
+                    minX = Math.min(minX, Number(marker.x || 0));
+                    maxX = Math.max(maxX, Number(marker.x || 0));
+                    minY = Math.min(minY, Number(marker.y || 0));
+                    maxY = Math.max(maxY, Number(marker.y || 0));
+                }
+            }
+            if (tacticalLayers.trails) {
+                tacticalTrailHistory.forEach((points) => {
+                    const isMissileTrail = String(points?.[0]?.type || '') === 'Missile';
+                    if (isMissileTrail) return;
+                    const step = Math.max(1, Math.floor(Math.max(1, points.length) / 180));
+                    for (let i = 0; i < points.length; i += step) {
+                        minX = Math.min(minX, Number(points[i].x || 0));
+                        maxX = Math.max(maxX, Number(points[i].x || 0));
+                        minY = Math.min(minY, Number(points[i].y || 0));
+                        maxY = Math.max(maxY, Number(points[i].y || 0));
+                    }
+                });
+            }
+            if (tacticalLayers.weapons) {
+                for (const weapon of weapons) {
+                    minX = Math.min(minX, Number(weapon.x || 0));
+                    maxX = Math.max(maxX, Number(weapon.x || 0));
+                    minY = Math.min(minY, Number(weapon.y || 0));
+                        maxY = Math.max(maxY, Number(weapon.y || 0));
+                }
+                tacticalTrailHistory.forEach((points) => {
+                    const isMissileTrail = String(points?.[0]?.type || '') === 'Missile';
+                    if (!isMissileTrail) return;
+                    const step = Math.max(1, Math.floor(Math.max(1, points.length) / 180));
+                    for (let i = 0; i < points.length; i += step) {
+                        minX = Math.min(minX, Number(points[i].x || 0));
+                        maxX = Math.max(maxX, Number(points[i].x || 0));
+                        minY = Math.min(minY, Number(points[i].y || 0));
+                        maxY = Math.max(maxY, Number(points[i].y || 0));
+                    }
+                });
+            }
+            if (tacticalLayers.sensorRings) {
+                for (const r of rings) {
+                    if (!shouldShowSensorRingForUnit(r)) continue;
+                    const range = Number(r.range_m || 0);
+                    minX = Math.min(minX, Number(r.x || 0) - range);
+                    maxX = Math.max(maxX, Number(r.x || 0) + range);
+                    minY = Math.min(minY, Number(r.y || 0) - range);
+                    maxY = Math.max(maxY, Number(r.y || 0) + range);
+                }
+            }
+            if (tacticalLayers.datalinks) {
+                for (const link of links) {
+                    minX = Math.min(minX, Number(link.from_x || 0), Number(link.to_x || 0));
+                    maxX = Math.max(maxX, Number(link.from_x || 0), Number(link.to_x || 0));
+                    minY = Math.min(minY, Number(link.from_y || 0), Number(link.to_y || 0));
+                    maxY = Math.max(maxY, Number(link.from_y || 0), Number(link.to_y || 0));
+                }
+            }
+            if (tacticalLayers.tracks) {
+                for (const track of tracks) {
+                    minX = Math.min(minX, Number(track.x0 || 0), Number(track.x1 || 0));
+                    maxX = Math.max(maxX, Number(track.x0 || 0), Number(track.x1 || 0));
+                    minY = Math.min(minY, Number(track.y0 || 0), Number(track.y1 || 0));
+                    maxY = Math.max(maxY, Number(track.y0 || 0), Number(track.y1 || 0));
+                }
+            }
+            if (!Number.isFinite(minX) || !Number.isFinite(maxX) || !Number.isFinite(minY) || !Number.isFinite(maxY)) {
+                minX = -500.0;
+                maxX = 500.0;
+                minY = -500.0;
+                maxY = 500.0;
             }
 
             const viewportPadding = {
@@ -1445,44 +1670,182 @@
                 tacticalCtx.stroke();
             }
 
-            for (const link of links) {
-                const a = toCanvas(Number(link.from_x || 0), Number(link.from_y || 0));
-                const b = toCanvas(Number(link.to_x || 0), Number(link.to_y || 0));
-                tacticalCtx.strokeStyle = 'rgba(80, 170, 255, 0.28)';
-                tacticalCtx.lineWidth = 1;
-                tacticalCtx.beginPath();
-                tacticalCtx.moveTo(a.x, a.y);
-                tacticalCtx.lineTo(b.x, b.y);
-                tacticalCtx.stroke();
+            if (tacticalLayers.route && navMarkers.length > 0) {
+                if (navMarkers.length >= 2) {
+                    tacticalCtx.strokeStyle = 'rgba(235, 218, 106, 0.62)';
+                    tacticalCtx.lineWidth = 1.2;
+                    tacticalCtx.setLineDash([7, 6]);
+                    tacticalCtx.beginPath();
+                    for (const [idx, marker] of navMarkers.entries()) {
+                        const p = toCanvas(Number(marker.x || 0), Number(marker.y || 0));
+                        if (idx === 0) tacticalCtx.moveTo(p.x, p.y);
+                        else tacticalCtx.lineTo(p.x, p.y);
+                    }
+                    tacticalCtx.stroke();
+                    tacticalCtx.setLineDash([]);
+                }
+                for (const [idx, marker] of navMarkers.entries()) {
+                    const p = toCanvas(Number(marker.x || 0), Number(marker.y || 0));
+                    const radiusM = Number(marker.arrival_radius_m || marker.radius_m || 0);
+                    const rr = Math.max(5, Math.min(28, radiusM * scale));
+                    const active = !!marker.is_active;
+                    const mode = String(marker.waypoint_mode || 'flyby').toLowerCase();
+                    tacticalCtx.strokeStyle = active ? '#89ff8b' : mode === 'flyover' ? '#ffb16a' : '#e8db7d';
+                    tacticalCtx.fillStyle = active ? 'rgba(137, 255, 139, 0.18)' : 'rgba(232, 219, 125, 0.12)';
+                    tacticalCtx.lineWidth = active ? 1.8 : 1.1;
+                    tacticalCtx.beginPath();
+                    tacticalCtx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+                    tacticalCtx.fill();
+                    tacticalCtx.stroke();
+                    tacticalCtx.fillStyle = active ? '#c8ffd0' : '#e8db7d';
+                    tacticalCtx.font = '10px monospace';
+                    tacticalCtx.fillText(String(marker.name || `WP_${idx + 1}`), p.x + rr + 5, p.y - rr - 3);
+                    const sequenceGate = Number(marker.sequence_gate_m || 0);
+                    if (active && sequenceGate > radiusM + 1.0) {
+                        tacticalCtx.strokeStyle = 'rgba(80, 220, 255, 0.45)';
+                        tacticalCtx.lineWidth = 1;
+                        tacticalCtx.beginPath();
+                        tacticalCtx.arc(p.x, p.y, Math.max(rr + 3, sequenceGate * scale), 0, Math.PI * 2);
+                        tacticalCtx.stroke();
+                    }
+                }
             }
 
-            for (const ring of rings) {
-                if (!shouldShowSensorRingForUnit(ring)) continue;
-                const p = toCanvas(Number(ring.x || 0), Number(ring.y || 0));
-                const rr = Math.max(2, Number(ring.range_m || 0) * scale);
-                tacticalCtx.strokeStyle = ring.side === 'Red' ? 'rgba(255, 120, 120, 0.24)' : 'rgba(90, 210, 255, 0.24)';
-                tacticalCtx.lineWidth = 1;
-                tacticalCtx.beginPath();
-                tacticalCtx.arc(p.x, p.y, rr, 0, Math.PI * 2);
-                tacticalCtx.stroke();
+            if (tacticalLayers.trails) {
+                tacticalTrailHistory.forEach((points) => {
+                    if (!Array.isArray(points) || points.length < 2 || String(points[0]?.type || '') === 'Missile') return;
+                    const step = Math.max(1, Math.floor(points.length / 260));
+                    tacticalCtx.strokeStyle = points[0]?.side === 'Red' ? 'rgba(255, 120, 120, 0.34)' : 'rgba(100, 210, 255, 0.34)';
+                    tacticalCtx.lineWidth = 1.2;
+                    tacticalCtx.beginPath();
+                    let first = true;
+                    for (let i = 0; i < points.length; i += step) {
+                        const p = toCanvas(Number(points[i].x || 0), Number(points[i].y || 0));
+                        if (first) {
+                            tacticalCtx.moveTo(p.x, p.y);
+                            first = false;
+                        } else {
+                            tacticalCtx.lineTo(p.x, p.y);
+                        }
+                    }
+                    tacticalCtx.stroke();
+                });
             }
 
-            for (const track of tracks) {
-                const a = toCanvas(Number(track.x0 || 0), Number(track.y0 || 0));
-                const b = toCanvas(Number(track.x1 || 0), Number(track.y1 || 0));
-                tacticalCtx.strokeStyle = Number(track.source) === 3 ? 'rgba(0, 255, 200, 0.75)' : 'rgba(255, 200, 0, 0.78)';
-                tacticalCtx.lineWidth = 1.4;
-                tacticalCtx.beginPath();
-                tacticalCtx.moveTo(a.x, a.y);
-                tacticalCtx.lineTo(b.x, b.y);
-                tacticalCtx.stroke();
-                tacticalCtx.fillStyle = Number(track.source) === 3 ? '#00ffd0' : '#ffd04d';
-                tacticalCtx.beginPath();
-                tacticalCtx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
-                tacticalCtx.fill();
+            if (tacticalLayers.datalinks) {
+                for (const link of links) {
+                    const a = toCanvas(Number(link.from_x || 0), Number(link.from_y || 0));
+                    const b = toCanvas(Number(link.to_x || 0), Number(link.to_y || 0));
+                    tacticalCtx.strokeStyle = 'rgba(80, 170, 255, 0.28)';
+                    tacticalCtx.lineWidth = 1;
+                    tacticalCtx.beginPath();
+                    tacticalCtx.moveTo(a.x, a.y);
+                    tacticalCtx.lineTo(b.x, b.y);
+                    tacticalCtx.stroke();
+                }
             }
 
-            for (const u of unitsList) {
+            if (tacticalLayers.sensorRings) {
+                for (const ring of rings) {
+                    if (!shouldShowSensorRingForUnit(ring)) continue;
+                    const p = toCanvas(Number(ring.x || 0), Number(ring.y || 0));
+                    const rr = Math.max(2, Number(ring.range_m || 0) * scale);
+                    tacticalCtx.strokeStyle = ring.side === 'Red' ? 'rgba(255, 120, 120, 0.24)' : 'rgba(90, 210, 255, 0.24)';
+                    tacticalCtx.lineWidth = 1;
+                    tacticalCtx.beginPath();
+                    tacticalCtx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+                    tacticalCtx.stroke();
+                }
+            }
+
+            if (tacticalLayers.tracks) {
+                for (const track of tracks) {
+                    const a = toCanvas(Number(track.x0 || 0), Number(track.y0 || 0));
+                    const b = toCanvas(Number(track.x1 || 0), Number(track.y1 || 0));
+                    tacticalCtx.strokeStyle = Number(track.source) === 3 ? 'rgba(0, 255, 200, 0.75)' : 'rgba(255, 200, 0, 0.78)';
+                    tacticalCtx.lineWidth = 1.4;
+                    tacticalCtx.beginPath();
+                    tacticalCtx.moveTo(a.x, a.y);
+                    tacticalCtx.lineTo(b.x, b.y);
+                    tacticalCtx.stroke();
+                    tacticalCtx.fillStyle = Number(track.source) === 3 ? '#00ffd0' : '#ffd04d';
+                    tacticalCtx.beginPath();
+                    tacticalCtx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
+                    tacticalCtx.fill();
+                }
+            }
+
+            if (tacticalLayers.weapons) {
+                const unitById = new Map(unitsList.map((u) => [Number(u.id), u]));
+                tacticalTrailHistory.forEach((points) => {
+                    if (!Array.isArray(points) || points.length < 2 || String(points[0]?.type || '') !== 'Missile') return;
+                    const step = Math.max(1, Math.floor(points.length / 240));
+                    tacticalCtx.strokeStyle = points[0]?.side === 'Red' ? 'rgba(255, 92, 92, 0.86)' : 'rgba(255, 230, 90, 0.9)';
+                    tacticalCtx.lineWidth = 2.2;
+                    tacticalCtx.beginPath();
+                    let first = true;
+                    for (let i = 0; i < points.length; i += step) {
+                        const p = toCanvas(Number(points[i].x || 0), Number(points[i].y || 0));
+                        if (first) {
+                            tacticalCtx.moveTo(p.x, p.y);
+                            first = false;
+                        } else {
+                            tacticalCtx.lineTo(p.x, p.y);
+                        }
+                    }
+                    tacticalCtx.stroke();
+                });
+
+                for (const weapon of weapons) {
+                    const p = toCanvas(Number(weapon.x || 0), Number(weapon.y || 0));
+                    const hdg = Number(weapon.heading || 0);
+                    const rad = (90.0 - hdg) * Math.PI / 180.0;
+                    const dirX = Math.cos(rad);
+                    const dirY = -Math.sin(rad);
+                    const color = weapon.side === 'Red' ? '#ff5252' : '#ffe65a';
+                    const target = unitById.get(Number(weapon.target_id || 0));
+
+                    if (target) {
+                        const t = toCanvas(Number(target.x || 0), Number(target.y || 0));
+                        tacticalCtx.save();
+                        tacticalCtx.setLineDash([4, 5]);
+                        tacticalCtx.strokeStyle = weapon.side === 'Red' ? 'rgba(255, 82, 82, 0.38)' : 'rgba(255, 230, 90, 0.4)';
+                        tacticalCtx.lineWidth = 1;
+                        tacticalCtx.beginPath();
+                        tacticalCtx.moveTo(p.x, p.y);
+                        tacticalCtx.lineTo(t.x, t.y);
+                        tacticalCtx.stroke();
+                        tacticalCtx.restore();
+                    }
+
+                    tacticalCtx.save();
+                    tacticalCtx.shadowBlur = 14;
+                    tacticalCtx.shadowColor = color;
+                    tacticalCtx.strokeStyle = color;
+                    tacticalCtx.fillStyle = color;
+                    tacticalCtx.lineWidth = 2.4;
+                    tacticalCtx.beginPath();
+                    tacticalCtx.moveTo(p.x - dirX * 30, p.y - dirY * 30);
+                    tacticalCtx.lineTo(p.x - dirX * 8, p.y - dirY * 8);
+                    tacticalCtx.stroke();
+                    tacticalCtx.beginPath();
+                    tacticalCtx.moveTo(p.x + dirX * 17, p.y + dirY * 17);
+                    tacticalCtx.lineTo(p.x - dirX * 11 + dirY * 6, p.y - dirY * 11 - dirX * 6);
+                    tacticalCtx.lineTo(p.x - dirX * 5, p.y - dirY * 5);
+                    tacticalCtx.lineTo(p.x - dirX * 11 - dirY * 6, p.y - dirY * 11 + dirX * 6);
+                    tacticalCtx.closePath();
+                    tacticalCtx.fill();
+                    tacticalCtx.beginPath();
+                    tacticalCtx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                    tacticalCtx.stroke();
+                    tacticalCtx.shadowBlur = 0;
+                    tacticalCtx.font = '10px monospace';
+                    tacticalCtx.fillText(`MSL ${Number(weapon.entity_id || 0)}`, p.x + 12, p.y - 12);
+                    tacticalCtx.restore();
+                }
+            }
+
+            for (const u of plottedUnits) {
                 const p = toCanvas(Number(u.x || 0), Number(u.y || 0));
                 const hdg = Number(u.heading || 0);
                 const rad = (90.0 - hdg) * Math.PI / 180.0;
@@ -1503,17 +1866,52 @@
                     tacticalCtx.lineTo(p.x - dirX * len * 0.65 + dirY * wing, p.y - dirY * len * 0.65 - dirX * wing);
                     tacticalCtx.lineTo(p.x - dirX * len * 0.45, p.y - dirY * len * 0.45);
                     tacticalCtx.lineTo(p.x - dirX * len * 0.65 - dirY * wing, p.y - dirY * len * 0.65 + dirX * wing);
+                } else if (symbol.kind === 'missile') {
+                    tacticalCtx.moveTo(p.x + dirX * len, p.y + dirY * len);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.6 + dirY * wing, p.y - dirY * len * 0.6 - dirX * wing);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.35, p.y - dirY * len * 0.35);
+                    tacticalCtx.lineTo(p.x - dirX * len * 0.6 - dirY * wing, p.y - dirY * len * 0.6 + dirX * wing);
                 } else {
                     tacticalCtx.arc(p.x, p.y, 5, 0, Math.PI * 2);
                 }
                 tacticalCtx.closePath();
                 tacticalCtx.fill();
             }
+
+            if (tacticalLayers.weapons) {
+                const missileUnits = plottedUnits.filter((u) => String(u.type || '') === 'Missile');
+                for (const u of missileUnits) {
+                    const p = toCanvas(Number(u.x || 0), Number(u.y || 0));
+                    const hdg = Number(u.heading || 0);
+                    const rad = (90.0 - hdg) * Math.PI / 180.0;
+                    const dirX = Math.cos(rad);
+                    const dirY = -Math.sin(rad);
+                    const color = u.side === 'Red' ? '#ff5252' : '#ffe65a';
+                    tacticalCtx.save();
+                    tacticalCtx.shadowBlur = 12;
+                    tacticalCtx.shadowColor = color;
+                    tacticalCtx.strokeStyle = color;
+                    tacticalCtx.fillStyle = color;
+                    tacticalCtx.lineWidth = 2;
+                    tacticalCtx.beginPath();
+                    tacticalCtx.moveTo(p.x + dirX * 15, p.y + dirY * 15);
+                    tacticalCtx.lineTo(p.x - dirX * 10 + dirY * 5, p.y - dirY * 10 - dirX * 5);
+                    tacticalCtx.lineTo(p.x - dirX * 5, p.y - dirY * 5);
+                    tacticalCtx.lineTo(p.x - dirX * 10 - dirY * 5, p.y - dirY * 10 + dirX * 5);
+                    tacticalCtx.closePath();
+                    tacticalCtx.fill();
+                    tacticalCtx.beginPath();
+                    tacticalCtx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                    tacticalCtx.stroke();
+                    tacticalCtx.restore();
+                }
+            }
             tacticalCtx.restore();
 
             const placedLabels = [];
             tacticalCtx.font = '11px monospace';
-            for (const [idx, u] of unitsList.entries()) {
+            for (const [idx, u] of plottedUnits.entries()) {
+                if (String(u.type || '') === 'Missile') continue;
                 const p = toCanvas(Number(u.x || 0), Number(u.y || 0));
                 const label = String(u.name || u.id);
                 const textWidth = tacticalCtx.measureText(label).width;
@@ -1642,6 +2040,8 @@
                 isNew: true,
                 targetPosition: new THREE.Vector3(),
                 targetQuaternion: new THREE.Quaternion(),
+                visualSamples: [],
+                renderData: { ...uData },
             };
 
             units.set(uData.id, unitObj);
@@ -1653,21 +2053,105 @@
             return unitObj;
         }
 
-        function updateUnit(uObj, uData) {
-            uObj.data = uData;
-            uObj.assetEntry = resolveAssetEntry(uData);
-            maybeUpgradeUnitVisual(uObj);
+        function shortestAngleDeltaDeg(fromDeg, toDeg) {
+            let delta = (Number(toDeg || 0) - Number(fromDeg || 0)) % 360.0;
+            if (delta > 180.0) delta -= 360.0;
+            if (delta < -180.0) delta += 360.0;
+            return delta;
+        }
+
+        function lerpAngleDeg(fromDeg, toDeg, alpha) {
+            const value = Number(fromDeg || 0) + shortestAngleDeltaDeg(fromDeg, toDeg) * alpha;
+            return ((value % 360.0) + 360.0) % 360.0;
+        }
+
+        function blendUnitData(aData, bData, alpha) {
+            const t = Math.max(0.0, Math.min(1.0, Number(alpha) || 0.0));
+            const out = { ...bData };
+            const numericFields = ['x', 'y', 'z', 'pitch', 'roll', 'speed', 'ias', 'throttle', 'hp', 'max_hp'];
+            for (const key of numericFields) {
+                const av = Number(aData?.[key]);
+                const bv = Number(bData?.[key]);
+                if (Number.isFinite(av) && Number.isFinite(bv)) {
+                    out[key] = av + (bv - av) * t;
+                }
+            }
+            const ah = Number(aData?.heading);
+            const bh = Number(bData?.heading);
+            if (Number.isFinite(ah) && Number.isFinite(bh)) {
+                out.heading = lerpAngleDeg(ah, bh, t);
+            }
+            return out;
+        }
+
+        function extrapolateUnitData(prevData, latestData, dtSeconds) {
+            const dt = Math.max(0.0, Number(dtSeconds) || 0.0);
+            const out = { ...latestData };
+            const speed = Number(latestData?.speed);
+            const heading = Number(latestData?.heading);
+            if (Number.isFinite(speed) && Number.isFinite(heading) && speed > 0.0) {
+                const rad = (90.0 - heading) * Math.PI / 180.0;
+                out.x = Number(latestData.x || 0) + Math.cos(rad) * speed * dt;
+                out.y = Number(latestData.y || 0) + Math.sin(rad) * speed * dt;
+            } else if (prevData && Number.isFinite(Number(prevData.x)) && Number.isFinite(Number(prevData.y))) {
+                const latestAt = Number(latestData?.sampleAt);
+                const prevAt = Number(prevData?.sampleAt);
+                const sampleDt = latestAt - prevAt;
+                if (Number.isFinite(sampleDt) && sampleDt > 1.0) {
+                    const gain = (dt * 1000.0) / sampleDt;
+                    out.x = Number(latestData.x || 0) + (Number(latestData.x || 0) - Number(prevData.x || 0)) * gain;
+                    out.y = Number(latestData.y || 0) + (Number(latestData.y || 0) - Number(prevData.y || 0)) * gain;
+                    out.z = Number(latestData.z || 0) + (Number(latestData.z || 0) - Number(prevData.z || 0)) * gain;
+                }
+            }
+            return out;
+        }
+
+        function sampleUnitForRender(uObj, nowMs) {
+            const samples = Array.isArray(uObj?.visualSamples) ? uObj.visualSamples : [];
+            if (samples.length === 0) return uObj?.data || null;
+            if (!sessionControlState.running || sessionControlState.paused || samples.length === 1) {
+                return { ...samples[samples.length - 1] };
+            }
+
+            const delayMs = Math.max(
+                VISUAL_INTERPOLATION_MIN_DELAY_MS,
+                Math.min(VISUAL_INTERPOLATION_MAX_DELAY_MS, smoothedStateFrameIntervalMs * VISUAL_INTERPOLATION_DELAY_MULT)
+            );
+            const renderAt = Number(nowMs || performance.now()) - delayMs;
+            let before = samples[0];
+            let after = samples[samples.length - 1];
+            for (let i = 1; i < samples.length; i++) {
+                if (samples[i].sampleAt >= renderAt) {
+                    before = samples[i - 1];
+                    after = samples[i];
+                    break;
+                }
+            }
+
+            if (renderAt <= samples[0].sampleAt) return { ...samples[0] };
+            if (renderAt <= after.sampleAt && after.sampleAt > before.sampleAt) {
+                return blendUnitData(before, after, (renderAt - before.sampleAt) / (after.sampleAt - before.sampleAt));
+            }
+
+            const latest = samples[samples.length - 1];
+            const prev = samples.length >= 2 ? samples[samples.length - 2] : null;
+            const extraMs = Math.min(VISUAL_EXTRAPOLATION_LIMIT_MS, Math.max(0.0, renderAt - latest.sampleAt));
+            return extrapolateUnitData(prev, latest, extraMs / 1000.0);
+        }
+
+        function updateUnitFromRenderData(uObj, renderData, snap = false) {
+            if (!uObj || !renderData) return;
 
             // Update Transform
             // Sim (ENU: X=East, Y=North, Z=Up) -> Three (Y-Up: X=East, Y=Up, Z=-North)
-            const tx = uData.x;
-            const ty = uData.z + (uData.type === 'Aircraft' ? 2.5 : 0); // Z is Up. Add 2.5m for Gear.
-            const tz = -uData.y; // Y is North -> -Z
+            const tx = Number(renderData.x || 0);
+            const ty = Number(renderData.z || 0) + (renderData.type === 'Aircraft' ? 2.5 : 0); // Z is Up. Add 2.5m for Gear.
+            const tz = -Number(renderData.y || 0); // Y is North -> -Z
 
             const nextPosition = new THREE.Vector3(tx, ty, tz);
 
-            // LERP for smoothness, but SNAP on first update
-            if (uObj.isNew) {
+            if (snap || uObj.isNew) {
                 uObj.mesh.position.copy(nextPosition);
                 uObj.targetPosition.copy(nextPosition);
                 uObj.isNew = false;
@@ -1679,7 +2163,7 @@
             const exFlame = uObj.mesh.getObjectByName("ExternalFlame");
             const inFlame = uObj.mesh.getObjectByName("InternalFlame");
 
-            const thr = uData.throttle || 0;
+            const thr = renderData.throttle || 0;
             const abActive = thr > 1.0;
 
             if (exFlame) {
@@ -1702,17 +2186,17 @@
             // Formula: RotY = -Heading
 
             const rad = Math.PI / 180;
-            const yawRad = -uData.heading * rad;
+            const yawRad = -Number(renderData.heading || 0) * rad;
 
             const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawRad);
             // Pitch: Sim +Pitch is Nose Up. RotX + is nose up.
-            const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), uData.pitch * rad);
+            const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Number(renderData.pitch || 0) * rad);
             // Roll: Sim +Roll is right wing down.
-            const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -uData.roll * rad);
+            const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -Number(renderData.roll || 0) * rad);
 
             // DEBUG: Log first few frames
-            if (simTime < 0.5 && uData.type === 'Aircraft') {
-                console.log(`Aircraft '${uData.name}' (Unified): hdg=${uData.heading} -> RotY=${yawRad.toFixed(2)}rad`);
+            if (simTime < 0.5 && renderData.type === 'Aircraft') {
+                console.log(`Aircraft '${renderData.name}' (Unified): hdg=${renderData.heading} -> RotY=${yawRad.toFixed(2)}rad`);
             }
 
             const targetQuat = qYaw.multiply(qPitch).multiply(qRoll);
@@ -1722,13 +2206,56 @@
             uObj.targetQuaternion.copy(targetQuat);
         }
 
+        function updateUnit(uObj, uData, sampleAtMs) {
+            const sample = {
+                ...uData,
+                sampleAt: Number(sampleAtMs || performance.now()),
+            };
+            uObj.data = uData;
+            uObj.assetEntry = resolveAssetEntry(uData);
+            maybeUpgradeUnitVisual(uObj);
+            uObj.renderData = { ...uData };
+            if (!Array.isArray(uObj.visualSamples)) uObj.visualSamples = [];
+            const samples = uObj.visualSamples;
+            const last = samples.length > 0 ? samples[samples.length - 1] : null;
+            if (!last || sample.sampleAt >= last.sampleAt) {
+                samples.push(sample);
+            } else {
+                samples.splice(0, samples.length, sample);
+            }
+            if (samples.length > MAX_UNIT_VISUAL_SAMPLES) {
+                samples.splice(0, samples.length - MAX_UNIT_VISUAL_SAMPLES);
+            }
+            if (uObj.isNew || !sessionControlState.running || sessionControlState.paused) {
+                updateUnitFromRenderData(uObj, sample, true);
+                uObj.renderData = { ...sample };
+            }
+        }
+
         function animateUnits(dt) {
             const alpha = 1.0 - Math.exp(-Math.max(0.0, dt) * 10.0);
             trailFrameCounter = (trailFrameCounter + 1) % 3;
+            const nowMs = performance.now();
+            let moved = false;
             units.forEach((uObj) => {
                 if (!uObj.targetPosition || !uObj.targetQuaternion) return;
+                const prevX = uObj.mesh.position.x;
+                const prevY = uObj.mesh.position.y;
+                const prevZ = uObj.mesh.position.z;
+                const renderData = sampleUnitForRender(uObj, nowMs);
+                if (renderData) {
+                    uObj.renderData = renderData;
+                    updateUnitFromRenderData(uObj, renderData, false);
+                }
                 uObj.mesh.position.lerp(uObj.targetPosition, alpha);
                 uObj.mesh.quaternion.slerp(uObj.targetQuaternion, alpha);
+                if (
+                    Math.abs(uObj.mesh.position.x - prevX) > 0.01
+                    || Math.abs(uObj.mesh.position.y - prevY) > 0.01
+                    || Math.abs(uObj.mesh.position.z - prevZ) > 0.01
+                ) {
+                    moved = true;
+                }
 
                 if (trailFrameCounter !== 0) return;
                 const prevIdx = Math.max(0, uObj.trailCount - 1);
@@ -1753,6 +2280,92 @@
                     ensureGridContainsPoint(uObj.mesh.position.x, uObj.mesh.position.z);
                 }
             });
+            if (moved) requestTacticalDraw();
+        }
+
+        function maybeDrawTacticalView(nowMs) {
+            if (presentationMode !== 'MAP' || !lastTacticalState || !tacticalNeedsDraw) return;
+            if ((nowMs - lastTacticalRenderAt) < TACTICAL_RENDER_INTERVAL_MS) return;
+            drawTacticalView(lastTacticalState);
+            lastTacticalRenderAt = nowMs;
+            tacticalNeedsDraw = false;
+        }
+
+        function getSmoothedUnitsForTacticalState(state) {
+            const unitsList = Array.isArray(state?.units) ? state.units : [];
+            return unitsList.map((uData) => {
+                const id = Number(uData?.id);
+                const uObj = units.get(id);
+                if (!uObj?.renderData) return uData;
+                return { ...uData, ...uObj.renderData };
+            });
+        }
+
+        function buildSmoothedTacticalState(state) {
+            if (!state) return state;
+            const smoothedUnits = getSmoothedUnitsForTacticalState(state);
+            const smoothedById = new Map(smoothedUnits.map((u) => [Number(u.id), u]));
+            const tactical = state.tactical || {};
+            const sensorRings = Array.isArray(tactical.sensor_rings)
+                ? tactical.sensor_rings.map((ring) => {
+                    const u = smoothedById.get(Number(ring?.entity_id));
+                    return u ? { ...ring, x: u.x, y: u.y } : ring;
+                })
+                : tactical.sensor_rings;
+            const datalinks = Array.isArray(tactical.datalinks)
+                ? tactical.datalinks.map((link) => {
+                    const from = smoothedById.get(Number(link?.from_id));
+                    const to = smoothedById.get(Number(link?.to_id));
+                    return {
+                        ...link,
+                        from_x: from ? from.x : link.from_x,
+                        from_y: from ? from.y : link.from_y,
+                        to_x: to ? to.x : link.to_x,
+                        to_y: to ? to.y : link.to_y,
+                    };
+                })
+                : tactical.datalinks;
+            const tracks = Array.isArray(tactical.tracks)
+                ? tactical.tracks.map((track) => {
+                    const observer = smoothedById.get(Number(track?.observer_id));
+                    if (!observer) return track;
+                    const dx = Number(track.x1 || 0) - Number(track.x0 || 0);
+                    const dy = Number(track.y1 || 0) - Number(track.y0 || 0);
+                    return {
+                        ...track,
+                        x0: observer.x,
+                        y0: observer.y,
+                        x1: Number(observer.x || 0) + dx,
+                        y1: Number(observer.y || 0) + dy,
+                    };
+                })
+                : tactical.tracks;
+            const weapons = Array.isArray(tactical.weapons)
+                ? tactical.weapons.map((weapon) => {
+                    const id = Number(weapon?.entity_id);
+                    const u = smoothedById.get(id);
+                    if (!u) return weapon;
+                    return {
+                        ...weapon,
+                        x: u.x,
+                        y: u.y,
+                        z: u.z,
+                        heading: u.heading,
+                        speed_mps: Number.isFinite(Number(u.speed)) ? u.speed : weapon.speed_mps,
+                    };
+                })
+                : tactical.weapons;
+            return {
+                ...state,
+                units: smoothedUnits,
+                tactical: {
+                    ...tactical,
+                    sensor_rings: sensorRings,
+                    datalinks,
+                    tracks,
+                    weapons,
+                },
+            };
         }
 
         function renderUnitList() {
@@ -1916,7 +2529,7 @@
                 const mode = String(m.waypoint_mode || 'flyby').toLowerCase();
 
                 const markerColor = isActive ? 0x00ff00 : 0xffff00;
-                const sphereRadius = Math.max(45.0, Math.min(140.0, arrivalRadius * 0.05));
+                const sphereRadius = Math.max(18.0, Math.min(55.0, arrivalRadius * 0.018));
                 const geo = new THREE.SphereGeometry(sphereRadius, 16, 12);
                 const mat = new THREE.MeshBasicMaterial({ color: markerColor });
                 const mesh = new THREE.Mesh(geo, mat);
@@ -1947,16 +2560,23 @@
         });
 
         socket.on('state_update', (state) => {
+            const frameAt = performance.now();
+            if (lastStateFrameAt !== null) {
+                const interval = Math.max(1.0, frameAt - lastStateFrameAt);
+                smoothedStateFrameIntervalMs = smoothedStateFrameIntervalMs * 0.82 + interval * 0.18;
+            }
+            lastStateFrameAt = frameAt;
             simTime = state.tick;
             document.getElementById('v-time').innerText = simTime.toFixed(2) + " s";
             renderMissionStatus(state.mission_status);
+            updateTacticalTrailHistory(state.units);
 
             const activeIds = new Set();
 
             state.units.forEach(uData => {
                 activeIds.add(uData.id);
                 const uObj = getOrSpawnUnit(uData);
-                updateUnit(uObj, uData);
+                updateUnit(uObj, uData, frameAt);
 
                 // Update UI if focused
                 if (uData.id === focusedId) {
@@ -1972,7 +2592,7 @@
             });
 
             lastTacticalState = state;
-            drawTacticalView(state);
+            requestTacticalDraw();
 
             Array.from(units.keys()).forEach((id) => {
                 if (!activeIds.has(id)) {
@@ -2006,6 +2626,7 @@
         });
 
         updatePresentationModeUI();
+        updateTacticalLayerButtons();
 
         // --- Loop ---
         function animate() {
@@ -2014,6 +2635,7 @@
             const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTs) / 1000.0));
             lastFrameTs = now;
             animateUnits(dt);
+            maybeDrawTacticalView(now);
 
             // Camera Logic
             if (viewMode === 'FREE') {
@@ -2062,7 +2684,7 @@
                     const delta = targetPos.clone().sub(chaseTargetPrev);
                     camera.position.add(delta);
                     chaseTargetPrev.copy(targetPos);
-                    controls.target.lerp(targetPos, 1.0 - Math.exp(-dt * 12.0));
+                    controls.target.copy(targetPos);
                 }
             }
 

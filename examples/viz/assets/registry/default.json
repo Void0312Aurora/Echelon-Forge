@@ -29,6 +29,113 @@
       "render_priority": 100
     },
     {
+      "id": "uav_mq9_reaper_game_ready",
+      "label": "MQ-9 Reaper UAV Visual",
+      "match": {
+        "unit_type": "Aircraft",
+        "platform_type_patterns": [
+          "MQ-9",
+          "MQ9",
+          "REAPER"
+        ],
+        "name_patterns": [
+          "MQ-9",
+          "MQ9",
+          "REAPER"
+        ],
+        "service_profiles": []
+      },
+      "visual": {
+        "asset_path": "/static/assets/uav/mq9_reaper_game_ready_aesthetic_modeler.glb",
+        "scale": 1.0,
+        "yaw_correction_deg": 0.0,
+        "waterline_offset_m": 0.0,
+        "chase_offset": [0.0, 24.0, 70.0]
+      },
+      "show_in_2d_as": "aircraft",
+      "realism_note": "CC BY visualization asset by The Aesthetic Modeler from Sketchfab; suitable as an MQ-9/MALE UAV visual surrogate.",
+      "render_priority": 40
+    },
+    {
+      "id": "uav_shahed136_red_surrogate",
+      "label": "Shahed-136 Red UAV Visual",
+      "match": {
+        "unit_type": "Aircraft",
+        "platform_type_patterns": [
+          "SHAHED",
+          "SHAHED-136",
+          "GERAN",
+          "GERAN-2",
+          "RED_UAV_SHAHED"
+        ],
+        "name_patterns": [
+          "SHAHED",
+          "SHAHED-136",
+          "GERAN",
+          "GERAN-2",
+          "RED_UAV_SHAHED",
+          "RED_DRONE"
+        ],
+        "service_profiles": []
+      },
+      "visual": {
+        "asset_path": "/static/assets/uav/shahed_136_faintastic18.glb",
+        "scale": 1.0,
+        "yaw_correction_deg": 0.0,
+        "waterline_offset_m": 0.0,
+        "chase_offset": [0.0, 12.0, 42.0]
+      },
+      "show_in_2d_as": "aircraft",
+      "realism_note": "CC BY visualization asset by faintastic18 from Sketchfab; used as a red-force Shahed-136/Geran-style UAV visual surrogate.",
+      "render_priority": 39
+    },
+    {
+      "id": "missile_aim120_blue_default",
+      "label": "AIM-120 AMRAAM Missile Visual",
+      "match": {
+        "unit_type": "Missile",
+        "platform_type_patterns": [
+          "Missile"
+        ],
+        "service_profiles": [
+          "BlueAir"
+        ]
+      },
+      "visual": {
+        "asset_path": "/static/assets/missiles/aim120_amraam_rickslash.glb",
+        "scale": 1.0,
+        "yaw_correction_deg": 180.0,
+        "waterline_offset_m": 0.0,
+        "chase_offset": [0.0, 8.0, 24.0]
+      },
+      "show_in_2d_as": "missile",
+      "realism_note": "CC-BY-4.0 visualization asset by RickSlash from Sketchfab; used as the blue/default BVR missile visual.",
+      "render_priority": 30
+    },
+    {
+      "id": "missile_r77_red_default",
+      "label": "R-77 Missile Visual",
+      "match": {
+        "unit_type": "Missile",
+        "platform_type_patterns": [
+          "Missile"
+        ],
+        "service_profiles": [
+          "RedAir"
+        ]
+      },
+      "visual": {
+        "asset_path": "/static/assets/missiles/r77_mustafa_garip.glb",
+        "scale": 1.0,
+        "yaw_correction_deg": 180.0,
+        "waterline_offset_m": 0.0,
+        "chase_offset": [0.0, 8.0, 24.0]
+      },
+      "show_in_2d_as": "missile",
+      "realism_note": "CC-BY-4.0 visualization asset by Mustafa.Garip from Sketchfab; used as the red/opposing BVR missile visual.",
+      "render_priority": 31
+    },
+    {
       "id": "naval_ddg51_flight_i",
       "label": "USS Arleigh Burke (DDG-51) Visual",
       "match": {

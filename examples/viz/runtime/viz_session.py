@@ -1651,6 +1651,8 @@ class VizSession:
                     "sensor_rings": [],
                     "datalinks": [],
                     "tracks": [],
+                    "nav": self.nav_data if isinstance(self.nav_data, dict) else None,
+                    "weapons": [],
                 }
                 coop_slot_state_by_entity_id = {}
                 coop_info_by_entity_id = {}
@@ -1731,6 +1733,56 @@ class VizSession:
                         "speed": 0.0,
                         "hp": 100.0,
                         "max_hp": 100.0,
+                    }
+
+                def get_runtime_unit_data(runtime_unit, known_entity_ids):
+                    try:
+                        eid = int(getattr(runtime_unit, "id"))
+                    except Exception:
+                        return None
+                    if eid in known_entity_ids:
+                        return None
+                    try:
+                        unit_type = int(getattr(runtime_unit, "type", 0))
+                    except Exception:
+                        unit_type = 0
+                    # Runtime UnitType values: Aircraft=1, Ship=2, Missile=3, Facility=4.
+                    if unit_type != 3:
+                        return None
+                    try:
+                        missile_state = sim_env.sim.debug_get_missile_runtime_state(eid)
+                    except Exception:
+                        missile_state = {}
+                    try:
+                        velocity = sim_env.sim.get_unit_velocity(eid)
+                    except Exception:
+                        velocity = (0.0, 0.0, 0.0)
+                    vx = float(velocity[0]) if len(velocity) > 0 else 0.0
+                    vy = float(velocity[1]) if len(velocity) > 1 else 0.0
+                    vz = float(velocity[2]) if len(velocity) > 2 else 0.0
+                    speed = float(math.sqrt(vx * vx + vy * vy + vz * vz))
+                    side_code = int(getattr(runtime_unit, "side", 0) or 0)
+                    side = "Blue" if side_code == 1 else "Red" if side_code == 2 else "Neutral" if side_code == 3 else "Unknown"
+                    service_profile = "BlueAir" if side == "Blue" else "RedAir" if side == "Red" else ""
+                    return {
+                        "id": eid,
+                        "name": f"Missile_{eid}",
+                        "side": side,
+                        "type": "Missile",
+                        "platform_type": "Missile",
+                        "service_profile": service_profile,
+                        "x": float(getattr(runtime_unit, "x", 0.0)),
+                        "y": float(getattr(runtime_unit, "y", 0.0)),
+                        "z": float(getattr(runtime_unit, "z", 0.0)),
+                        "heading": float(getattr(runtime_unit, "heading", 0.0)),
+                        "pitch": 0.0,
+                        "roll": 0.0,
+                        "speed": speed,
+                        "ias": speed,
+                        "hp": 100.0,
+                        "max_hp": 100.0,
+                        "attacker_id": int(missile_state.get("attacker_id", 0)) if isinstance(missile_state, dict) else 0,
+                        "target_id": int(missile_state.get("target_id", 0)) if isinstance(missile_state, dict) else 0,
                     }
 
                 for name, eid in sim_env.loader.entities.items():
@@ -1900,6 +1952,31 @@ class VizSession:
                                     }
                                 )
 
+                        units_data.append(u)
+
+                known_entity_ids = {int(v) for v in sim_env.loader.entities.values()}
+                try:
+                    runtime_units = list(sim_env.sim.get_all_units())
+                except Exception:
+                    runtime_units = []
+                for runtime_unit in runtime_units:
+                    u = get_runtime_unit_data(runtime_unit, known_entity_ids)
+                    if u:
+                        tactical_overlays["weapons"].append(
+                            {
+                                "entity_id": int(u["id"]),
+                                "name": str(u["name"]),
+                                "side": str(u["side"]),
+                                "type": str(u["type"]),
+                                "x": float(u["x"]),
+                                "y": float(u["y"]),
+                                "z": float(u["z"]),
+                                "heading": float(u["heading"]),
+                                "speed_mps": float(u["speed"]),
+                                "attacker_id": int(u.get("attacker_id", 0) or 0),
+                                "target_id": int(u.get("target_id", 0) or 0),
+                            }
+                        )
                         units_data.append(u)
 
                 state = {
