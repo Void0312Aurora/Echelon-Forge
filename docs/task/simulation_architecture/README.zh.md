@@ -144,8 +144,8 @@ raw-runtime 退场仍在 TM03 范围之外。
 - [WP24 TaskOrder Maintained Business Migration 验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md)
 
 TM02 是 WP24 的串行 closure lane。它已在 focused validation 后发布 canonical acceptance
-review 并同步索引，同时把 TM01-B launch bridge ownership、ground runtime expansion
-与 public raw-runtime retirement 保持在 WP24 之外。
+review 并同步索引，同时把 ground runtime expansion 与 public raw-runtime retirement
+保持在 WP24 之外。TM01-B launch bridge 仍不属于 WP24，后续由 TM03 单独关闭。
 
 ## TM01 Architecture Closure Remediation
 
@@ -159,10 +159,11 @@ WP24 acceptance。`TM01-A` 已恢复聚焦的 ground tasking-shell 验证路径�
 已把 WP24 provenance wording 同步到 maintained `agent_shim.py` 默认值，`TM01-D`
 已发布聚焦验证结果与 close/block 建议。
 
-`TM01-B` 仍由 owner 负责，作为带源码锚点的 `systems -> SimulationKernel`
-launch bridge residual。更广泛的架构闭合、P7 launch/fire-control contract 重设、
-public raw-runtime 或 compatibility 退场、完整 ground runtime、以及 WP24 canonical
-acceptance review 均仍显式未闭合。
+TM01 关闭后的两个 ledgered gap 已由后续 closure lane 处理：`TM02` 发布 WP24
+canonical acceptance review，`TM03` 通过 `IWeaponReleaseService` 关闭
+`systems -> SimulationKernel` launch-helper residual。更广泛的架构闭合、超出该
+helper seam 的 P7 launch/fire-control contract 重设、public raw-runtime 或
+compatibility 退场、以及完整 ground runtime 仍显式未闭合。
 
 ## WP24 TaskOrder Maintained Business Migration
 

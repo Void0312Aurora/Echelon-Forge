@@ -171,9 +171,9 @@ Output:
 - [WP24 TaskOrder Maintained Business Migration Acceptance Review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md)
 
 TM02 is the serial closure lane for WP24. It published the canonical acceptance
-review and index synchronization after focused validation, while keeping TM01-B
-launch bridge ownership, ground runtime expansion, and public raw-runtime
-retirement outside WP24.
+review and index synchronization after focused validation, while keeping ground
+runtime expansion and public raw-runtime retirement outside WP24. The TM01-B
+launch bridge was still outside WP24 and was closed separately by TM03.
 
 ## TM01 Architecture Closure Remediation
 
@@ -188,10 +188,12 @@ the focused ground tasking-shell validation path, `TM01-C` synchronized WP24
 provenance wording to the maintained `agent_shim.py` defaults, and `TM01-D`
 published the focused validation and close/block recommendation.
 
-`TM01-B` remains owned as the ledgered `systems -> SimulationKernel` launch
-bridge residual. Broader architecture closure, P7 launch/fire-control contract
-redesign, public raw-runtime or compatibility retirement, ground runtime
-completion, and WP24 canonical acceptance review remain explicitly unclosed.
+Post-TM01 closure lanes have since closed two ledgered gaps without reopening
+TM01: `TM02` published the WP24 canonical acceptance review, and `TM03` closed
+the ledgered `systems -> SimulationKernel` launch-helper residual through
+`IWeaponReleaseService`. Broader architecture closure, P7 launch/fire-control
+contract redesign beyond that helper seam, public raw-runtime or compatibility
+retirement, and ground runtime completion remain explicitly unclosed.
 
 ## WP24 TaskOrder Maintained Business Migration
 
