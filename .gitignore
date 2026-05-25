@@ -33,6 +33,7 @@ htmlcov/
 .codex/
 .agents/tmp/
 .agent
+/.claude/launch.json
 compile_commands.json
 
 # --- CMake ---

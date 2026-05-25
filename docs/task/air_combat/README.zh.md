@@ -24,6 +24,9 @@
 - 在最小胜负钩子之上补齐 reward / termination shaping
 - 强化脚本或冻结对手基线
 - 拆分 `combat_loss`、被击落实体失效和终端 crash penalty 的诊断语义
+- 推进高保真空战毁伤模型：从权威 effects 路径移除 HP 优先击杀旁路，
+  让 kill state 从武器事件、局部子系统毁伤和平台损失状态推导出来
+- 在任何 Phase 1 代码变更落地前，先闭合毁伤模型 Phase 0 预检门
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 
@@ -42,5 +45,7 @@
   [air_combat_1v1_stall_rootcause_followup_20260516.zh.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
 - 当前分阶段课程：
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
+- 高保真毁伤系统基线：
+  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 
 历史带日期快照现统一放入 [archive/README.zh.md](archive/README.zh.md)。

@@ -28,6 +28,11 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
 - strengthen scripted or frozen-opponent baselines
 - split diagnostics for `combat_loss`, killed-entity inactive state, and terminal
   crash penalty semantics
+- promote the high-fidelity air-combat damage model: remove the HP-first kill
+  bypass from the authoritative effects path, and make kill states derive from
+  weapon events, local subsystem damage, and platform loss state
+- close the Phase 0 damage-model preflight gates before any Phase 1 code move
+  lands
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
@@ -48,5 +53,7 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
   [air_combat_1v1_stall_rootcause_followup_20260516.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.md)
 - Current staged curriculum:
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
+- High-fidelity damage-system baseline:
+  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 
 Historical dated snapshots now live under [archive/README.md](archive/README.md).
