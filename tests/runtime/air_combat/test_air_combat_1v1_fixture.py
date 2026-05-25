@@ -21,6 +21,12 @@ _SCENARIO_PATH = resolve_repo_path(
     "air_combat",
     "air_combat_1v1_headon_sensor_smoke_v1.json",
 )
+_STAGE0_SCENARIO_PATH = resolve_repo_path(
+    "scenarios",
+    "air_combat",
+    "1v1",
+    "air_combat_1v1_stage0_drone_weapon_employment_v1.json",
+)
 _DB_PATH = resolve_repo_path("examples", "config", "database")
 
 
@@ -183,3 +189,50 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
 
         red_obs1 = sim.get_agent_observation(red_id)
         self.assertLess(int(getattr(red_obs1, "missiles_remaining", -1)), initial_missiles)
+
+    def test_stage0_drone_weapon_employment_fixed_fire_reaches_combat_win(self) -> None:
+        env = UniversalEnv(
+            _STAGE0_SCENARIO_PATH,
+            include_visual=False,
+            include_proprio=True,
+            action_mode="full",
+            mission_obs_mode="basic",
+            step_info_mode="full",
+            execution_step_runtime_mode="compiled",
+            flight_shaping_backend="compiled",
+            runtime_compatibility_enabled=True,
+        )
+        try:
+            _obs, _info = env.reset(seed=20260525)
+
+            action = np.zeros((17,), dtype=np.float32)
+            action[0] = 0.02
+            action[3] = 0.65
+            action[9] = 1.0
+            action[13] = 1.0
+            action[14] = 1.0
+            action[16] = 1.0 / 7.0
+
+            fired = False
+            terminated = False
+            truncated = False
+            info: dict[str, object] = {}
+            for _ in range(int(env.max_steps)):
+                _obs, _reward, terminated, truncated, info = env.step(action)
+                missiles_remaining = int(
+                    getattr(env.sim.get_agent_observation(env.agent_id), "missiles_remaining", -1)
+                )
+                if missiles_remaining < 4:
+                    fired = True
+                if terminated or truncated:
+                    break
+
+            self.assertTrue(fired)
+            self.assertTrue(terminated)
+            self.assertFalse(truncated)
+            self.assertEqual(str(info.get("termination_reason")), "combat_win")
+            reward_terms = info.get("reward_terms", {})
+            self.assertIsInstance(reward_terms, dict)
+            self.assertGreater(float(reward_terms.get("combat_win_bonus", 0.0)), 0.0)
+        finally:
+            env.close()

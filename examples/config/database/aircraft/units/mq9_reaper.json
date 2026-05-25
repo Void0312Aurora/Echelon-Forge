@@ -1,0 +1,33 @@
+{
+    "name": "MQ-9_Reaper",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 2223.0,
+        "max_fuel_kg": 1800.0,
+        "drag_coefficient": 0.045,
+        "reference_area": 25.0,
+        "length_m": 11.0,
+        "wingspan_m": 20.1,
+        "height_m": 3.8,
+        "configuration": "Conventional"
+    },
+    "health": {
+        "current_hp": 40.0,
+        "max_hp": 40.0
+    },
+    "flight_model": {
+        "max_speed": 135.0,
+        "min_speed": 45.0,
+        "max_turn_rate": 8.0,
+        "max_climb_rate": 12.0,
+        "max_accel": 2.5,
+        "max_g": 3.5,
+        "min_g": -0.5
+    },
+    "has_ammo": false,
+    "has_data_link": false,
+    "has_command_link": false,
+    "_provenance": {
+        "modeling_note": "Engineering-calibrated unarmed UAV target surrogate for early air-combat curriculum. Public MQ-9 dimensions and broad performance bands inform the shape, but this is not an authoritative platform model."
+    }
+}

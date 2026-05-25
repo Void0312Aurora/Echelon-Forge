@@ -7,10 +7,10 @@ The top-level historical smoke scenario remains available at
 ## Stage Files
 
 - `air_combat_1v1_stage0_drone_weapon_employment_v1.json`
-  - close/intermediate unarmed flying target surrogate;
+  - close/intermediate unarmed `MQ-9_Reaper` target surrogate;
   - validates weapon-action reachability and terminal `combat_win`.
 - `air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
-  - unarmed non-maneuvering target at first BVR-like range;
+  - unarmed non-maneuvering `MQ-9_Reaper` target at first BVR-like range;
   - validates contact persistence and missile time-of-flight behavior.
 - `air_combat_1v1_stage2_evasive_fighter_no_weapons_v1.json`
   - scripted evasive fighter with no usable missiles;

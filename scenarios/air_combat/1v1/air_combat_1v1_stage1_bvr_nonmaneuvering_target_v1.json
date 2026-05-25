@@ -59,7 +59,7 @@
     },
     {
       "name": "Red_Target",
-      "type": "Aircraft",
+      "type": "MQ-9_Reaper",
       "side": "Red",
       "pos": [0.0, 35000.0, 7000.0],
       "vel": [0.0, -160.0, 0.0],

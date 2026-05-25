@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import shutil
 from typing import Iterable
 
 
@@ -28,6 +29,7 @@ def build_dirs(root: str | None = None) -> list[str]:
 
     candidates.extend(
         [
+            os.path.join(base, "build-local-win"),
             os.path.join(base, "build-workshop"),
             os.path.join(base, "build-gpu"),
             os.path.join(base, "build"),
@@ -54,6 +56,38 @@ def build_dir(root: str | None = None) -> str:
     return os.path.join(root or repo_root(), "build")
 
 
+def _iter_windows_dll_dirs(build: str) -> tuple[str, ...]:
+    if os.name != "nt":
+        return ()
+
+    candidates: list[str] = []
+    for candidate in (
+        build,
+        os.path.join(build, "_deps", "flecs-build"),
+        os.path.join(build, "Release"),
+        os.path.join(build, "RelWithDebInfo"),
+        os.path.join(build, "Debug"),
+    ):
+        if os.path.isdir(candidate):
+            candidates.append(os.path.abspath(candidate))
+
+    compiler = shutil.which("g++.exe")
+    if compiler:
+        compiler_dir = os.path.abspath(os.path.dirname(compiler))
+        if os.path.isdir(compiler_dir):
+            candidates.append(compiler_dir)
+
+    # Preserve order but drop duplicates.
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        ordered.append(candidate)
+    return tuple(ordered)
+
+
 def ensure_repo_imports() -> str:
     root = repo_root()
     builds = build_dirs(root)
@@ -63,6 +97,12 @@ def ensure_repo_imports() -> str:
         sys.path.insert(0, build)
     if root not in sys.path:
         sys.path.insert(0, root)
+    if builds and os.name == "nt":
+        for dll_dir in _iter_windows_dll_dirs(builds[0]):
+            try:
+                os.add_dll_directory(dll_dir)
+            except (AttributeError, OSError):
+                pass
     if builds:
         os.environ["CMO_BUILD_DIR"] = builds[0]
     return root

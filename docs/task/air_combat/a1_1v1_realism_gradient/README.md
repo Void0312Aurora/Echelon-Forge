@@ -137,8 +137,8 @@ with `--model` and without the fixed-action profile.
 
 ## Residuals
 
-- Add a real UAV/drone database platform instead of the current generic
-  unarmed airborne target surrogate.
+- Validate and tune the dedicated `MQ-9_Reaper` target surrogate before using it
+  as a realism claim beyond early curriculum reachability.
 - Add combat-specific mission observation fields and HMoE routing once the
   action reachability problem is fixed.
 - Add fire-chain shaping and diagnostics so the curriculum can report why a

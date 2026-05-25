@@ -60,9 +60,9 @@
     },
     {
       "name": "Red_Drone",
-      "type": "Aircraft",
+      "type": "MQ-9_Reaper",
       "side": "Red",
-      "pos": [0.0, 12000.0, 5000.0],
+      "pos": [0.0, 8000.0, 5000.0],
       "vel": [0.0, -150.0, 0.0],
       "heading": 180.0,
       "ammo": {

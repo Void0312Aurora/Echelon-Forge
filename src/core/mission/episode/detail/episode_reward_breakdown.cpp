@@ -8,8 +8,6 @@
 
 #include "core/mission/episode/detail/mission_command_codec.h"
 
-namespace episode_controller_detail {
-
 namespace {
 
 void add_breakdown_term(nlohmann::json* breakdown, const std::string& name, double value) {
@@ -81,7 +79,7 @@ std::string build_episode_reward_breakdown_json(
         breakdown["tracked_total"] = 0.0;
         breakdown["untracked"] = reward_total;
         breakdown["total"] = reward_total;
-        return stable_json_dump(breakdown);
+        return episode_controller_detail::stable_json_dump(breakdown);
     }
 
     const auto& execution_step = products.execution_step;
@@ -263,7 +261,5 @@ std::string build_episode_reward_breakdown_json(
     breakdown["tracked_total"] = tracked_total;
     breakdown["untracked"] = reward_total - tracked_total;
     breakdown["total"] = reward_total;
-    return stable_json_dump(breakdown);
+    return episode_controller_detail::stable_json_dump(breakdown);
 }
-
-}  // namespace episode_controller_detail
