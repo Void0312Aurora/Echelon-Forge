@@ -1024,7 +1024,12 @@ struct LeaderIntentMaintainedBatchContract {
     static constexpr bool kMaintainedBatchTruth = true;
 
     shared_core_type shared_core{};
+    LeaderPhase phase_id = LeaderPhase::Idle;
+    int element_phase_id = 0;
     air_recovery_type air_recovery{};
+    FormationMode formation_mode_id = FormationMode::Unspecified;
+    bool join_required_flag = false;
+    bool rejoin_required_flag = false;
     air_takeoff_type air_takeoff{};
     air_formation_type air_formation{};
     naval_command_authority_type naval_command_authority{};
@@ -1041,7 +1046,12 @@ leader_intent_maintained_batch_contract(
 ) noexcept {
     return {
         .shared_core = leader_intent_shared_core(intent),
+        .phase_id = leader_intent_air_owner_slice(intent).phase_id,
+        .element_phase_id = leader_intent_air_owner_slice(intent).element_phase_id,
         .air_recovery = leader_intent_air_recovery_directive(intent),
+        .formation_mode_id = leader_intent_air_owner_slice(intent).formation_mode_id,
+        .join_required_flag = leader_intent_air_owner_slice(intent).join_required_flag,
+        .rejoin_required_flag = leader_intent_air_owner_slice(intent).rejoin_required_flag,
         .air_takeoff = leader_intent_air_takeoff_directive(intent),
         .air_formation = leader_intent_air_formation_directive(intent),
         .naval_command_authority = leader_intent_naval_command_authority(intent),
@@ -1054,6 +1064,11 @@ inline void apply_leader_intent_maintained_batch_contract_to_compatibility_shell
 ) noexcept {
     leader_intent_shared_core(intent) = contract.shared_core;
     auto& air = leader_intent_air_owner_slice(intent);
+    air.phase_id = contract.phase_id;
+    air.element_phase_id = contract.element_phase_id;
+    air.formation_mode_id = contract.formation_mode_id;
+    air.join_required_flag = contract.join_required_flag;
+    air.rejoin_required_flag = contract.rejoin_required_flag;
     air.recovery_base_id = contract.air_recovery.recovery_base_id;
     air.recovery_runway_id = contract.air_recovery.recovery_runway_id;
     air.recovery_approach_type = contract.air_recovery.recovery_approach_type;

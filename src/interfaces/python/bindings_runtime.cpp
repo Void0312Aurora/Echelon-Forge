@@ -1443,7 +1443,12 @@ void bind_runtime(nb::module_& m) {
     )
         .def(nb::init<>())
         .def_rw("shared_core", &LeaderIntentMaintainedBatchContract::shared_core)
+        .def_rw("phase_id", &LeaderIntentMaintainedBatchContract::phase_id)
+        .def_rw("element_phase_id", &LeaderIntentMaintainedBatchContract::element_phase_id)
         .def_rw("air_recovery", &LeaderIntentMaintainedBatchContract::air_recovery)
+        .def_rw("formation_mode_id", &LeaderIntentMaintainedBatchContract::formation_mode_id)
+        .def_rw("join_required_flag", &LeaderIntentMaintainedBatchContract::join_required_flag)
+        .def_rw("rejoin_required_flag", &LeaderIntentMaintainedBatchContract::rejoin_required_flag)
         .def_rw("air_takeoff", &LeaderIntentMaintainedBatchContract::air_takeoff)
         .def_rw("air_formation", &LeaderIntentMaintainedBatchContract::air_formation)
         .def_rw(

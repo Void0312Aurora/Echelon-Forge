@@ -206,6 +206,11 @@ struct WeaponCooldown {
     double last_fire_time;
 };
 
+struct PilotWeaponReleaseState {
+    bool fire_weapon_was_down = false;
+    bool release_consumed = false;
+};
+
 struct Munition {
     int station_id;
     bool is_fired;

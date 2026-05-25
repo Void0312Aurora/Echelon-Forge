@@ -257,6 +257,39 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
         self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)
         self.assertFalse(bool(getattr(post_fire, "can_fire", True)))
 
+    def test_fire_weapon_bridge_latches_held_trigger_after_one_successful_release(self) -> None:
+        sim, blue_id, red_id = _make_direct_fixture()
+        _wait_for_track(sim, blue_id, red_id)
+        sim.set_weapon_cooldown(blue_id, 0.0, -1.0)
+
+        pilot = ef_py.PilotAction()
+        pilot.active = True
+        pilot.master_arm = True
+        pilot.fire_weapon = True
+        pilot.weapon_select_id = 1
+        sim.set_pilot_action(blue_id, pilot)
+
+        missile_ids_before = _missile_ids(sim)
+        for _ in range(5):
+            sim.step()
+
+        new_missile_ids = _missile_ids(sim) - missile_ids_before
+        self.assertEqual(len(new_missile_ids), 1)
+        held_fire_obs = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(held_fire_obs, "missiles_remaining", -1)), 3)
+
+        pilot.fire_weapon = False
+        sim.set_pilot_action(blue_id, pilot)
+        sim.step()
+        pilot.fire_weapon = True
+        sim.set_pilot_action(blue_id, pilot)
+        sim.step()
+
+        relaunch_missile_ids = _missile_ids(sim) - missile_ids_before
+        self.assertEqual(len(relaunch_missile_ids), 2)
+        relaunched_obs = sim.get_agent_observation(blue_id)
+        self.assertEqual(int(getattr(relaunched_obs, "missiles_remaining", -1)), 2)
+
     def test_fire_weapon_bridge_prefers_assigned_target_over_nearer_contact(self) -> None:
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(_DB_PATH))

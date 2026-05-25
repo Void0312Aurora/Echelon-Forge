@@ -115,6 +115,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<Munition>();
     ecs.component<Ammo>();
     ecs.component<WeaponCooldown>();
+    ecs.component<PilotWeaponReleaseState>();
     ecs.component<NavalWeaponSystem>();
     
     // EW Components
