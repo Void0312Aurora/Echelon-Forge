@@ -97,11 +97,11 @@ def _resolve_path_value(root: Any, path: tuple[str | int, ...]) -> Any:
     for component in path:
         if isinstance(component, int):
             if not isinstance(current, list) or component < 0 or component >= len(current):
-                raise KeyError(f"path { _path_to_text(path)!r } does not exist")
+                raise KeyError(f"path {_path_to_text(path)!r} does not exist")
             current = current[component]
             continue
         if not isinstance(current, dict) or component not in current:
-            raise KeyError(f"path { _path_to_text(path)!r } does not exist")
+            raise KeyError(f"path {_path_to_text(path)!r} does not exist")
         current = current[component]
     return current
 
@@ -118,21 +118,21 @@ def _assign_existing_path_value(
     for component in path[:-1]:
         if isinstance(component, int):
             if not isinstance(parent, list) or component < 0 or component >= len(parent):
-                raise KeyError(f"path { _path_to_text(path)!r } does not exist")
+                raise KeyError(f"path {_path_to_text(path)!r} does not exist")
             parent = parent[component]
             continue
         if not isinstance(parent, dict) or component not in parent:
-            raise KeyError(f"path { _path_to_text(path)!r } does not exist")
+            raise KeyError(f"path {_path_to_text(path)!r} does not exist")
         parent = parent[component]
 
     final_component = path[-1]
     if isinstance(final_component, int):
         if not isinstance(parent, list) or final_component < 0 or final_component >= len(parent):
-            raise KeyError(f"path { _path_to_text(path)!r } does not exist")
+            raise KeyError(f"path {_path_to_text(path)!r} does not exist")
         parent[final_component] = value
         return
     if not isinstance(parent, dict) or final_component not in parent:
-        raise KeyError(f"path { _path_to_text(path)!r } does not exist")
+        raise KeyError(f"path {_path_to_text(path)!r} does not exist")
     parent[final_component] = value
 
 
@@ -144,16 +144,16 @@ def _ensure_list_container(root: dict[str, Any], path: tuple[str, ...]) -> list[
     for index, component in enumerate(path):
         is_last = index == len(path) - 1
         if not isinstance(current, dict):
-            raise TypeError(f"container path { _path_to_text(path)!r } crossed a non-dict branch")
+            raise TypeError(f"container path {_path_to_text(path)!r} crossed a non-dict branch")
         if component not in current:
             current[component] = [] if is_last else {}
         next_value = current[component]
         if is_last:
             if not isinstance(next_value, list):
-                raise TypeError(f"container path { _path_to_text(path)!r } must resolve to a list")
+                raise TypeError(f"container path {_path_to_text(path)!r} must resolve to a list")
             return next_value
         if not isinstance(next_value, dict):
-            raise TypeError(f"container path { _path_to_text(path)!r } crossed a non-dict branch")
+            raise TypeError(f"container path {_path_to_text(path)!r} crossed a non-dict branch")
         current = next_value
     raise RuntimeError("unreachable container path state")
 
