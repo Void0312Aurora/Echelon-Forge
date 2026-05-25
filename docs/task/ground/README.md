@@ -1,7 +1,7 @@
 # Ground
 
 Status: active planning entry opened on `2026-05-21`; current progress tracking
-updated on `2026-05-24`.
+updated on `2026-05-25`.
 
 Language:
 
@@ -56,6 +56,10 @@ simulation lifecycle without creating a new vertical runtime path.
 - G6-D1/D2 preflight returned `preflight-only`: no accepted runtime-loadable
   `Ground` unit type/schema exists yet, and movement evidence gates cannot
   release route movement until that blocker closes.
+- G6-E0 opens the native ground platform schema planning package. It defines
+  the minimum implementation surface and evidence gates for a loadable/spawnable
+  native ground entity, but it does not release route movement or runtime
+  movement behavior.
 
 ## Recommended Reading Order
 
@@ -83,6 +87,8 @@ simulation lifecycle without creating a new vertical runtime path.
   [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
 - G6-D:
   [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
+- G6-E:
+  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
 - Review:
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - Architecture baseline:
@@ -113,8 +119,8 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
   realism-gradient guardrails
 - keep G6-C/G6-D route-move guardrails active before adding any movement
   scenario
-- open a bounded native ground platform schema package before route-move
-  implementation
+- advance G6-E1 source-inventory/design preflight for the native ground platform
+  schema before route-move implementation
 - keep G1 scenarios scoped to static occupy/support relationship semantics only
 - keep command delivery, observation/export, movement, sensing, terrain, fires,
   effects, damage, and broad `MissionCommand` growth held

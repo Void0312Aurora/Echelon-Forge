@@ -1,6 +1,6 @@
 # 陆军 / 地面当前进展追踪
 
-状态：`2026-05-24` 工作区采样复核。
+状态：`2026-05-25` 工作区采样复核。
 
 这是 `docs/task/ground/` 在 `2026-05-21` 开启 G0-G5 地面启动线之后的当前活跃追踪入口。它按基础设施、域语义和 RL/tasking 对接跟踪陆军/地面线。
 
@@ -14,6 +14,8 @@
   relationship 语义。
 - G6-D 选择 schema-first route-move release posture。D1/D2 预检确认：第一版
   G2 route-move 场景必须等待 runtime-loadable native ground platform schema。
+- G6-E0 开启 native ground platform schema planning package，并定义在重新考虑
+  route movement 前必须具备的最小 load/spawn/identity 证据。
 - 真实地面机动、地形交互、感知、火力、毁伤和 observation export 仍然延后。
 
 术语说明：项目阶段 `G6 Realism Gradient MVP Scenarios` 不等于域真实性梯度
@@ -33,6 +35,8 @@
 - G4 runtime bridge，证明 normalized ground `TaskOrder -> LeaderIntent -> PilotReport`；
 - `scenarios/ground/` 下的 G5 场景 smoke 壳；
 - 两个 G6 G1 场景，证明 static occupy/support relationship 语义；
+- 一个 G6-E0 native schema planning package，命名 loadable/spawnable native
+  ground identity 的最小实现面；
 - RL/runtime 入口现在通过共享 tasking bridge 构造 mission command，而不是 air-only 路径。
 
 当前主要风险不是“链路是否存在”，而是边界纪律：很容易把 G5 smoke 场景误读为真实 ground unit 或 movement 证明。现有证据只支持 Army/ground tasking-chain participation。
@@ -77,6 +81,8 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 - `G6-D1/D2` 预检发现当前没有已接受的 runtime-loadable `Ground` unit type
   或 schema。`type_name = Ground` 的 spawn probe 返回 `0`，因此 route
   movement 仍被 native-schema work 阻塞。
+- `G6-E0` 定义 native schema package 边界。它尚未实现或释放 ground entity，
+  但记录第一版 native ground platform implementation 需要的文件、测试和证据。
 - 后续每个新场景都必须声明自己是继续停留在 `G0`，推进到 `G1`，还是进入 `G2+`，并在宣称该层真实性前补齐相应 gate。
 
 ## 基础设施
@@ -88,6 +94,7 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 - [Ground 最小任务结构](../../standards/ground/minimal_task_structure.zh.md)
 - [Ground bootstrap plan](./ground_domain_bootstrap_plan_20260521.md)
 - [Ground defect inventory](../review/ground_domain_defect_inventory_20260522.md)
+- [G6-E native ground platform schema](g6_native_ground_platform_schema/README.md)
 
 已验收阶段：
 
@@ -104,6 +111,8 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 - `G6-D Route-Move Release Decision`：schema-first 决策，以及 native ground
   platform schema 与 movement evidence gates 的 D1/D2 预检包；implementation
   仍保持 held。D1/D2 已以 `preflight-only` 返回。
+- `G6-E Native Ground Platform Schema`：G6-E0 planning package，定义最小
+  native ground platform schema；implementation 继续 held，等待 E1/E2。
 
 内容与场景：
 
@@ -136,6 +145,10 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 - 尚无 runtime-loadable ground unit schema 或 capability-bundle lowering 路径。
 - 未来 G2 的 movement-state evidence gates 已定义，但 native ground platform
   loader path 尚未接受。
+- G6-E0 现在定义了最小候选实现面：`UnitType` / identity、unit-definition
+  loading、default factory spawn-plan admission/materialization、Python identity
+  exposure、一个 auto-loadable ground JSON，以及 focused load/spawn/negative
+  tests。
 
 ## 域状态
 
@@ -187,7 +200,7 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 
 ## 验证
 
-采样时间：`2026-05-24 21:35 CST`。
+采样时间：`2026-05-25`。
 
 已通过：
 
@@ -209,11 +222,14 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 建议下一步：
 
-1. 在 route movement 前，先开启有边界的 native ground platform schema package。
-2. 保持已接受的 G6-C/G6-D guardrails 生效：无 private ground runtime path、
+1. 运行 `G6-E1` source-inventory/design preflight，选择 native ground
+   identity/materialization path。
+2. 保持已接受的 G6-C/G6-D/G6-E guardrails 生效：无 private ground runtime path、
    G1 fixture 不声明 G2+ realism、未知显式 profile hint fail closed，并且不通过
    compatibility shell 释放 G2 movement。
-3. 在 native ground platform schema 证据存在并且后续 release vote 接受有界
-   implementation cluster 前，不添加 `ground_platoon_flat_route_move_v1`。
-4. 在 ground command vocabulary 被验收前，继续把 `build_kernel_mission_command()` 视为 compatibility shell。
-5. 只有在 observation、action、reward、termination 和 eval surface 定界后，再定义第一个真实 ground RL task。可信的第一步应是静态 `ground_occupy_status` 或 `ground_support_relationship`，先于任何 maneuver、terrain 或 fires policy。
+3. 在 E1 选定 public identity、schema fields、materialization path 与 focused
+   validation commands 前，不实现 `G6-E2`。
+4. 在 native ground platform schema 证据存在且后续 release vote 接受有界
+   route-move implementation cluster 前，不添加 `ground_platoon_flat_route_move_v1`。
+5. 在 ground command vocabulary 被验收前，继续把 `build_kernel_mission_command()` 视为 compatibility shell。
+6. 只有在 observation、action、reward、termination 和 eval surface 定界后，再定义第一个真实 ground RL task。可信的第一步应是静态 `ground_occupy_status` 或 `ground_support_relationship`，先于任何 maneuver、terrain 或 fires policy。

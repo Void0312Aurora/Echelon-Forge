@@ -3,7 +3,7 @@
 Status: `2026-05-25` sealed baseline for G0-G4; G5 tasking smoke is accepted;
 G6 opens the first realism-gradient MVP scenario batch; G6-D1/D2 preflight is
 accepted as `preflight-only` and keeps route movement blocked on native ground
-platform schema work.
+platform schema work; G6-E0 opens the native schema planning package.
 
 Inputs:
 
@@ -105,6 +105,10 @@ and movement evidence gates can only become release gates after that schema path
 exists. The next credible work package is therefore native ground platform
 schema implementation planning, not a route-move scenario.
 
+G6-E0 opens that planning package. It records the smallest implementation
+surface for a runtime-loadable, spawnable, and inspectable native ground entity
+while keeping route movement, terrain, sensing, fires, damage, and combat held.
+
 ### 4.1 Phase Subprojects And Task Clusters
 
 Each phase is tracked as a separate task subproject so it can be assigned,
@@ -120,7 +124,7 @@ reviewed, and closed without widening the whole ground bootstrap lane.
 | `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
 | `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
 | `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 accepted as `preflight-only`; native schema blocker remains; route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | planned `g6_native_ground_platform_schema/` | planned `G6-E0` native schema package | next candidate; planning only until separately released |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0 planning opened; implementation held until E1/E2 release |
 
 The active assignment queue is
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).

@@ -1,7 +1,7 @@
 # Ground
 
 状态：已于 `2026-05-21` 建立活跃规划入口；当前进展追踪更新于
-`2026-05-24`。
+`2026-05-25`。
 
 语言：
 
@@ -50,6 +50,9 @@
 - G6-D1/D2 已以 `preflight-only` 返回：当前还没有已接受的 runtime-loadable
   `Ground` unit type/schema；在该 blocker 关闭前，movement evidence gates
   不能释放 route movement。
+- G6-E0 开启 native ground platform schema planning package。它定义
+  loadable/spawnable native ground entity 的最小实现面和证据门槛，但不释放
+  route movement 或 runtime movement behavior。
 
 ## 推荐阅读顺序
 
@@ -77,6 +80,8 @@
   [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
 - G6-D：
   [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
+- G6-E：
+  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
 - Review：
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - 架构基线：
@@ -105,8 +110,8 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
 - 维护 G0/G5 tasking smoke 与 G6 G1 static occupy/support fixtures，作为
   realism-gradient guardrails
 - 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效
-- 在 route-move implementation 前，先开启有边界的 native ground platform
-  schema package
+- 在 route-move implementation 前，推进 G6-E1 source-inventory/design
+  preflight，先收束 native ground platform schema
 - G1 场景只验证 static occupy/support relationship 语义，不扩张为 ground
   combat/runtime 证明
 - command delivery、observation/export、movement、sensing、terrain、fires、

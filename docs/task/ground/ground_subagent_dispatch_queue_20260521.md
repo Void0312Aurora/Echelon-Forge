@@ -3,7 +3,8 @@
 Status: `2026-05-25` G0-G4 sealed as the accepted ground baseline. G5 tasking
 smoke is accepted, G6-A/B are accepted for the first G1 realism-gradient MVP
 scenario fixtures, G6-C is accepted for route-move boundary guardrails, and
-G6-D1/D2 returned `preflight-only` with native-schema blockers.
+G6-D1/D2 returned `preflight-only` with native-schema blockers. G6-E0 opens the
+native ground platform schema planning package; implementation remains held.
 
 Use this queue when launching subagents. The main thread owns integration and
 final acceptance.
@@ -38,6 +39,7 @@ flowchart TD
     G5 --> G6["G6 Realism Gradient MVP Scenarios"]
     G6 --> G6C["G6-C Route-Move Boundary"]
     G6C --> G6D["G6-D Route-Move Release Decision"]
+    G6D --> G6E["G6-E Native Ground Platform Schema"]
 ```
 
 Parallel rule:
@@ -61,6 +63,9 @@ Parallel rule:
 - `G6-D` selects the schema-first route-move release path. D1/D2 preflight
   found that native ground platform schema work must happen before any
   route-move implementation release.
+- `G6-E0` records the minimum native ground platform schema package and keeps
+  implementation held until source-inventory/design preflight accepts the exact
+  identity/materialization path.
 
 Terminology note: this project phase `G6 Realism Gradient MVP Scenarios` is not
 the same as the domain-realism grade `G6 effects/damage/termination`; this
@@ -91,14 +96,18 @@ phase releases only two `G1` realism fixtures.
 | `G6-D0` | main-thread integration | current main thread | Accepted: open the route-move release decision and select the schema-first path. | `docs/task/ground/g6_route_move_release_decision/**`, ground README/queue/progress/plan sync only. |
 | `G6-D1` | main-thread diagnostics | current main thread | Accepted as `preflight-only`: native schema path is blocked by missing runtime-loadable ground platform type/schema. | Read-only diagnostics plus G6-D doc/queue/progress sync. No scenario, runtime, bindings, or C++ implementation edits. |
 | `G6-D2` | main-thread diagnostics | current main thread | Accepted as `preflight-only`: movement evidence gates are defined but cannot release route movement before native schema closes. | Read-only diagnostics plus G6-D doc/queue/progress sync. No platform schema implementation, terrain, sensing, fires, damage, or combat edits. |
-| `G6-E0` | worker | `gpt-5.4`, high | Next candidate: plan the minimal native ground platform schema implementation package. | New `docs/task/ground/g6_native_ground_platform_schema/**` planning docs only unless implementation is separately released. |
+| `G6-E0` | main-thread integration | current main thread | Opened: plan the minimal native ground platform schema implementation package. | `docs/task/ground/g6_native_ground_platform_schema/**` and ground README/queue/progress/plan sync only. |
+| `G6-E1` | explorer or main-thread diagnostics | `gpt-5.4`, high | Next candidate: source-inventory/design preflight for the native ground identity and materialization path. | Read-only diagnostics first; no runtime, bindings, content, tests, route movement, terrain, sensing, fires, damage, or combat edits unless separately released. |
+| `G6-E2` | worker | `gpt-5.4`, high | Held: implement one runtime-loadable native ground platform schema after E1 selects the exact path. | Approved source/test/content files from E1 only. No route movement or combat behavior. |
+| `G6-E3` | main-thread integration | current main thread | Held: integrate native schema evidence and decide whether a later route-move release vote can be opened. | Ground docs/queue/progress sync only unless a fix is explicitly released. |
 
 ## Held Streams
 
 | Stream | Release condition |
 |--------|-------------------|
-| `G6-E native ground platform schema package` | Requires accepted G6-D1/D2 preflight evidence and must stay separate from route-move scenario release. |
-| `G2 route move implementation` | Requires accepted native ground platform schema evidence plus a later G6-D3/G6-F release vote. |
+| `G6-E1 native schema design preflight` | Requires accepted G6-E0 planning package. |
+| `G6-E2 native schema implementation` | Requires accepted G6-E1 identity/materialization decision and focused validation plan. |
+| `G2 route move implementation` | Requires accepted native ground platform schema evidence from G6-E2/E3 plus a later G6-D3/G6-F release vote. |
 | `P3/P10 ground work` | Requires a separate accepted work package; G5 does not release formal command delivery or observation export. |
 
 ## Dispatch Details
