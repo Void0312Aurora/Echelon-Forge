@@ -145,7 +145,9 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         self.assertTrue(bool(terminated))
         self.assertFalse(bool(truncated))
         self.assertEqual(str(loader.last_termination_reason), "combat_win")
+        self.assertNotIn("objective_bonus", loader.last_reward_breakdown)
         self.assertGreater(float(loader.last_reward_breakdown.get("combat_win_bonus", 0.0)), 0.0)
+        self.assertAlmostEqual(float(loader.last_reward_breakdown.get("total", 0.0)), 1500.0, places=6)
         self.assertGreater(float(reward), 0.0)
 
     def test_loader_scripted_red_opponent_updates_command_and_can_fire(self) -> None:

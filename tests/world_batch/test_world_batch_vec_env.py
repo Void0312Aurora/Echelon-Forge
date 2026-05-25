@@ -1248,6 +1248,43 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
+    def test_world_batch_vec_env_combat_loss_does_not_stack_crash_penalty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/air_combat_scripted_opponent.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(_inline_air_combat_scripted_opponent_scenario(), f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                mission_obs_mode="basic",
+                step_info_mode="terminal",
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+            )
+            try:
+                vec_env.seed(20260516)
+                vec_env.reset()
+
+                action = np.zeros((1, 17), dtype=np.float32)
+                for _step in range(260):
+                    _obs, rewards, dones, infos = vec_env.step(action)
+                    if bool(dones[0]):
+                        break
+                else:
+                    self.fail("scripted red opponent did not terminate the 1v1 probe")
+
+                self.assertEqual(str(infos[0].get("termination_reason")), "combat_loss")
+                reward_terms = dict(infos[0].get("reward_terms", {}))
+                self.assertEqual(float(rewards[0]), -1500.0)
+                self.assertEqual(float(reward_terms.get("combat_loss_penalty", 0.0)), -1500.0)
+                self.assertNotIn("crash_penalty", reward_terms)
+                self.assertAlmostEqual(float(reward_terms.get("total", 0.0)), -1500.0, places=6)
+            finally:
+                vec_env.close()
+
     def test_world_batch_vec_env_supports_visual_observations(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_scenario.json"

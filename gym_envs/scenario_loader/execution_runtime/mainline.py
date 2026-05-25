@@ -9,6 +9,27 @@ from gym_envs.scenario_loader.common import safe_json_dict_loads
 from .shaping import apply_legacy_flight_shaping_terms
 
 
+_COMBAT_TERMINAL_EXCLUSIVE_TERMS = {
+    "crash_penalty",
+    "objective_bonus",
+    "success_runway_cross_penalty",
+    "success_ground_track_error_penalty",
+}
+
+
+def _remove_reward_terms(reward: float, breakdown: dict | None, term_names: set[str]) -> tuple[float, dict]:
+    next_rb = dict(breakdown or {})
+    adjusted_reward = float(reward)
+    for term_name in term_names:
+        if term_name not in next_rb:
+            continue
+        try:
+            adjusted_reward -= float(next_rb.pop(term_name))
+        except Exception:
+            next_rb.pop(term_name, None)
+    return adjusted_reward, next_rb
+
+
 def _apply_combat_terminal_override(loader, sim, truth, reward, terminated, truncated, status, rb):
     target_id = int(getattr(loader, "primary_target_id", 0) or 0)
     if target_id <= 0:
@@ -19,7 +40,7 @@ def _apply_combat_terminal_override(loader, sim, truth, reward, terminated, trun
     if target_active and self_active and not bool(truncated):
         return reward, terminated, truncated, status, rb, None
 
-    next_rb = dict(rb or {})
+    reward, next_rb = _remove_reward_terms(reward, rb, _COMBAT_TERMINAL_EXCLUSIVE_TERMS)
     reason_override = None
     if (not target_active) and self_active:
         bonus = float(getattr(loader, "_compiled_meta_cfg", {}).get("combat_win_bonus", 1500.0))
