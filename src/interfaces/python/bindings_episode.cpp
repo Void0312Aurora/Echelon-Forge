@@ -1,7 +1,7 @@
 #include "interfaces/python/binding_utils.h"
 
 #include "core/geometry/spatial_query_runtime.h"
-#include "core/mission/episode/detail/episode_reward_breakdown.h"
+#include "core/mission/episode/episode_reward_breakdown.h"
 #include "core/mission/episode/execution_episode_batch_prepare.h"
 #include "core/mission/episode/execution_episode_controller.h"
 #include "core/mission/runtime/execution_episode_runtime.h"
@@ -819,7 +819,7 @@ void bind_episode(nb::module_& m) {
     );
     m.def(
         "build_episode_reward_breakdown_json",
-        &episode_controller_detail::build_episode_reward_breakdown_json,
+        &build_episode_reward_breakdown_json,
         nb::arg("runtime_inputs"),
         nb::arg("products"),
         nb::arg("reward_total"),
