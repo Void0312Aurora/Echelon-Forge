@@ -1,7 +1,8 @@
 # Naval N4 Threat / ROE Dispatch Queue
 
-Status: active dispatch queue opened on `2026-05-24` after owner approval to
-expand distribution work.
+Status: closed dispatch queue. Opened on `2026-05-24` after owner approval to
+expand distribution work; closed on `2026-05-25` after N4 integration
+acceptance.
 
 Language:
 
@@ -32,8 +33,10 @@ Gated work:
 - `N4-B1 Threat / ROE Semantics` waits for the N4-A boundary and B0 source
   inventory.
 - `N4-C1 Runtime / Facade Evidence` waits for N4-A and narrowed write scopes.
-- `N4-D1 RL Task Surface Preflight` waits for accepted N4-A/B semantics.
-- `N4-E1 Integration / Acceptance` is serial after implementation packets.
+- `N4-D1 RL Task Surface Preflight` consumed accepted N4-A/B/C evidence and
+  closed as a main-thread docs preflight.
+- `N4-E1 Integration / Acceptance` closed serially after implementation
+  packets.
 
 ## Queue
 
@@ -43,8 +46,8 @@ Gated work:
 | `N4-A1 scenario contract boundary` | `N4-A Scenario / Contract Boundary` | pass / accepted | `gpt-5.4`, high | implementation worker | `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`; `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json`; `python/testing/contracts/unit/comm.py`; focused tests under `tests/runtime/naval/` only if required | no; first blocking implementation boundary | returned pass packet; main thread re-ran contracts and naval screen tests |
 | `N4-B1 threat/ROE semantics` | `N4-B Threat / ROE Semantics` | pass / accepted | `gpt-5.4`, high | implementation worker | narrowed after `N4-A1` and `N4-B0`; expected families are command shared-core, naval profile, loader runtime-state fallback, command bindings, and focused mission/binding tests | no for this wave; blocks N4-C until maintained fields are accepted | returned pass packet; main thread re-ran build, focused tests, and N4/N3 contracts |
 | `N4-C1 facade/world-batch evidence` | `N4-C Runtime / Facade Evidence` | pass / accepted | `gpt-5.4`, high | implementation worker | narrowed after `N4-A1`; expected families are world-batch command-chain cache, vec-env tests, facade guards | no for this wave | returned pass packet; main thread re-ran build, bindings/facade/world-batch tests, and N4 contract |
-| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | paused / not dispatched | `gpt-5.4`, medium | docs / design worker | docs under this subproject or a later explicitly named RL task doc | yes after N4-A/B/C evidence is accepted | paused by owner direction; no next wave dispatched |
-| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | paused / not dispatched | `gpt-5.4`, high | integration owner | named naval docs and acceptance/status files only | no | paused by owner direction after C1 acceptance |
+| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | pass / accepted | `gpt-5.4`, medium | main-thread docs owner | `naval_n4_rl_task_surface_preflight_20260525*.md` | no worker dispatch in this wave | observation/action/reward/termination/eval surface accepted without N5/N6 claims |
+| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | pass / accepted; N5 blocked | `gpt-5.4`, high | main-thread integration owner | named naval docs and acceptance/status files only | no | N4 accepted as pre-fire bridge; N5 limited engagement remains blocked behind launch/reject gates |
 
 ## Active Worker Packets
 
@@ -266,10 +269,45 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 # PASS
 ```
 
-Pause note:
+### N4-D1 RL Task Surface Preflight
 
-- Work is paused after C1 acceptance.
-- `N4-D1` and `N4-E1` remain un-dispatched until a later owner decision.
+Status: pass / accepted. Closed by the main thread as a docs-only preflight
+surface; no worker was dispatched for this wave.
+
+Output:
+
+- Added
+  `docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md`
+  and the Chinese companion.
+- Selected the next RL-compatible task candidates:
+  `naval_contact_report_threat_roe_v1` and
+  `naval_screen_station_hold_threat_aware_v1`.
+- Froze the N4 observation, action, reward, termination, and evaluation
+  surfaces.
+- Explicitly excluded weapon release, damage, and learned-policy claims.
+
+### N4-E1 Integration and Acceptance
+
+Status: pass / accepted for the pre-fire N4 bridge. N5 limited engagement is
+not opened by this queue.
+
+Output:
+
+- Added
+  `docs/task/naval/n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md`
+  and the Chinese companion.
+- Accepted `ddg51_take1_screen_threat_roe_v1` as an N4 bridge with maintained
+  threat/ROE, engagement-authority, and assigned-target provenance evidence.
+- Recorded that `naval_limited_engagement_v1` remains blocked behind a separate
+  N5 package with launch/reject, range/arc/cooldown/inventory, action masking,
+  and non-damage acceptance gates.
+
+Final docs validation:
+
+```bash
+git diff --check -- docs/task/naval
+# passed
+```
 
 ## Worker Return Packet
 

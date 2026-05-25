@@ -1,6 +1,6 @@
 # Naval Current Progress Tracking
 
-Status: `2026-05-24` workspace sampling review.
+Status: `2026-05-25` workspace sampling review with N4 bridge acceptance.
 
 This is the active tracking entry for `docs/task/naval/` after the
 `2026-05-17` naval progress checkpoint. It focuses on infrastructure, naval
@@ -28,6 +28,8 @@ The naval line has moved beyond the older checkpoint where gun and
 - world-batch and cooperative vec env command-chain sync project naval fields
   through maintained assignments rather than relying only on old whole-shell
   compatibility transport.
+- the `ddg51_take1_screen_threat_roe_v1` N4 bridge is accepted as a pre-fire
+  scenario expansion with maintained threat/ROE and assigned-target provenance.
 
 The remaining risk is mostly not "does the chain exist?" but "how much of it is
 still MVP or engineering approximation?"
@@ -55,7 +57,7 @@ Suggested critical points:
 | `N1` cruise/transit | ships move by heading/speed or hold simple station | speed limits, acceleration/deceleration, turn rate, low-speed steerage, maritime state, mass/stores that do not break runtime | MVP present; enough for simple cruise and station-keeping |
 | `N2` contact/report | detect, share tracks, report contacts | radar horizon, sea-state loss, LOS, data-link throttling, track source, report semantics, HVU blind-zone gates | current screen/contact contracts pass |
 | `N3` screen/C2 | escort, station hold, disturbance recovery | `TASK_SCREEN/TASK_SUPPORT`, naval roles, station radius/bearing, reference entity, recovery and oscillation guards | single DDG/HVU screen present; not full fleet C2 |
-| `N4` threatened maneuver/ROE | threat approach, target priority, pre-fire authorization | ROE state, engagement authority, target assignment, threat priority, sensor quality affecting decisions | fields are partial; tactical decision layer is not complete |
+| `N4` threatened maneuver/ROE | threat approach, target priority, pre-fire authorization | ROE state, engagement authority, target assignment, threat priority, sensor quality affecting decisions | pre-fire bridge accepted for `ddg51_take1_screen_threat_roe_v1`; still not a complete tactical commander |
 | `N5` weapons engagement | VLS, gun, CIWS, or missile engagement is a scenario objective | fire-control prerequisites, valid track, range/arcs/cooldown/inventory, launch event, rejection reason, hit/intercept evidence | minimal skeleton passes focused tests; scenario-level gates still needed for firefight tasks |
 | `N6` hit/damage/termination | damage evolves or decides outcome | mission/mobility/sensor kill, continuing fire/flooding proxy, capability degradation, termination and reward binding | proxy present; not high-fidelity survivability |
 | `N7` ASW/embarked air/logistics | sonar, submarine, helo, or UNREP is core gameplay | acoustic propagation, contact confidence, sortie/recovery constraints, UNREP windows and store transfer | token/MVP; good for chain validation, not high-fidelity core tasks |
@@ -67,6 +69,9 @@ The current naval scenarios mainly sit at `N1-N3`:
   realism gate.
 - `ddg51_take1_screen_closing_contact_v1` adds contact closure and `N3`
   screen-geometry stability.
+- `ddg51_take1_screen_threat_roe_v1` is accepted as an `N4` pre-fire bridge:
+  threat/ROE state and assigned-target provenance are observable, but weapon
+  release and damage are not acceptance proof.
 - Weapons, CIWS, damage, ASW, embarked air, and UNREP have runtime tests, but
   they are currently infrastructure and local chain evidence. They do not by
   themselves promote the current screen/contact scenarios into firefight or full
@@ -86,11 +91,13 @@ Scenarios:
 
 - [ddg51_take1_screen_contact_report_v1.json](../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
 - [ddg51_take1_screen_closing_contact_v1.json](../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
+- [ddg51_take1_screen_threat_roe_v1.json](../../../scenarios/naval/ddg51_take1_screen_threat_roe_v1.json)
 
 Contracts:
 
 - [naval_screen_contact_report_geometry.json](../../../tests/contracts/unit/naval/naval_screen_contact_report_geometry.json)
 - [naval_screen_closing_contact_geometry.json](../../../tests/contracts/unit/naval/naval_screen_closing_contact_geometry.json)
+- [naval_screen_threat_roe_geometry.json](../../../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json)
 - [scenario_loader_naval_common_core_semantics.json](../../../tests/contracts/unit/naval/scenario_loader_naval_common_core_semantics.json)
 
 Runtime surfaces now include ship/submarine platform components, ship and
@@ -150,6 +157,17 @@ Current limitation: naval RL has integration plumbing, not a full dedicated
 training product. It should not yet be described as a learned naval screen,
 engagement, ASW, or UNREP policy.
 
+N4 RL preflight is now recorded under
+[naval_n4_rl_task_surface_preflight_20260525.md](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md).
+The accepted next RL-compatible task candidates are:
+
+- `naval_contact_report_threat_roe_v1`;
+- `naval_screen_station_hold_threat_aware_v1`.
+
+Both remain preflight surfaces until trainer/eval configs, observation-schema
+tests, reward code, and policy validation exist. `naval_limited_engagement_v1`
+is blocked behind N5 launch/reject and non-damage gates.
+
 ## Validation
 
 Sampling time: `2026-05-24 21:24 CST`.
@@ -179,18 +197,33 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 # 12 passed
 ```
 
+N4 bridge acceptance:
+
+- [N4 RL task surface preflight](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md)
+- [N4 integration acceptance](n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md)
+
+Docs validation:
+
+```bash
+git diff --check -- docs/task/naval
+# passed
+```
+
 ## Next Focus
 
 Recommended next steps:
 
-1. Freeze a small naval RL task such as `naval_screen_station_hold` or
-   `naval_contact_report`, including observation, action, reward, termination,
-   and eval gates.
+1. Turn the accepted N4 RL preflight into a concrete implementation package for
+   `naval_contact_report_threat_roe_v1` or
+   `naval_screen_station_hold_threat_aware_v1`.
 2. Continue moving loader-owned raw simulation compatibility seams toward
    facade-owned maintained command-chain surfaces.
 3. Add facade or world-batch acceptance around naval mission-command weapons,
    screen-hold, and `tasking_profile: naval`.
-4. Strengthen maritime-state field tests, sensor/LOS coupling, and naval weapon
+4. Keep `naval_limited_engagement_v1` blocked until a separate N5 package
+   defines launch/reject, range/arc/cooldown/inventory, action masking, and
+   non-damage acceptance gates.
+5. Strengthen maritime-state field tests, sensor/LOS coupling, and naval weapon
    command stability before expanding into larger fleet combat.
-5. Turn the two current naval scenarios into training/eval CLI-ready config
+6. Turn the current naval scenarios into training/eval CLI-ready config
    entrypoints.

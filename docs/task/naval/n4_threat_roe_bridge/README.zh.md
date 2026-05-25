@@ -1,6 +1,6 @@
 # N4 威胁 / ROE 桥接场景
 
-状态：`2026-05-24`，作为海军 MVP 之后第一个场景扩大化规划面打开。
+状态：`2026-05-25`，作为海军 MVP 之后第一个开火前场景扩大化桥接，已接受。
 
 语言：
 
@@ -33,13 +33,15 @@
 
 - [N4 威胁 / ROE 桥接任务簇](naval_n4_threat_roe_bridge_cluster_20260524.zh.md)
 - [N4 威胁 / ROE 分发队列](naval_n4_threat_roe_dispatch_queue_20260524.zh.md)
+- [N4 RL 任务面预检](naval_n4_rl_task_surface_preflight_20260525.zh.md)
+- [N4 集成验收](naval_n4_integration_acceptance_20260525.zh.md)
 
 文档预算：
 
 - 一对 README 用于导航；
 - 一对任务簇文档用于记录有限工作包；
 - owner 批准分发实现工作后，新增一对 dispatch queue；
-- 在实现 packets 返回前，不新增 acceptance ledger。
+- 实现 packets 返回后，新增一对 RL preflight 和一对 integration acceptance 文档。
 
 ## 范围
 
@@ -59,13 +61,15 @@
 
 ## 闭合门
 
-本规划面完成时，任务簇文档应记录：
+本桥接完成时，任务簇、队列、preflight 和 acceptance 文档应记录：
 
 - 为什么 `ddg51_take1_screen_threat_roe_v1` 是下一个候选场景；
 - 真实性声明是 `N3 -> N4`，而不是 `N5` 或 `N6`；
 - 子代理政策要求的有限任务簇、目标、写入范围、非目标、验证命令、闭合门、
   依赖/并行关系、轮次上限和 model/reasoning 选择；
 - RL 预检面，但不把它描述成已训练任务。
+- N4 已接受但 N5 limited engagement 仍被 launch/reject 和非毁伤 gate 阻塞的
+  集成决策。
 
 本文档片段的验证：
 

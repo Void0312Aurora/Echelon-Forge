@@ -1,6 +1,6 @@
 # 海军当前进展追踪
 
-状态：`2026-05-24` 工作区抽样复核版。
+状态：`2026-05-25` 工作区抽样复核版，并纳入 N4 bridge 验收。
 
 本文档是 `docs/task/naval/` 的当前活跃追踪入口，用来承接
 `2026-05-17` 海军进度检查点之后的状态。它重点追踪三件事：
@@ -27,6 +27,8 @@
 - 旧检查点中提到的主炮直调和 `MissionCommand -> CIWS` 两个定向红点，在当前抽样复核中已转绿。
 - 海军 tasking profile 已进入 Python RL/tasking bridge，并能投影到 maintained TaskOrder/MissionCommand/LeaderIntent/PilotReport 合同面。
 - world-batch 和 cooperative vec env 的 command-chain sync 已通过 maintained assignment 投影海军字段，而不是只依赖旧 whole-shell 口径。
+- `ddg51_take1_screen_threat_roe_v1` N4 bridge 已作为开火前场景扩展接受，
+  具备 maintained threat/ROE 和 assigned-target provenance。
 
 当前主要剩余风险不在“最小链路是否存在”，而在：
 
@@ -51,7 +53,7 @@
 | `N1` 巡航/航渡 | 舰艇按航向/速度移动，做简单巡航或跟随 | 水面速度上限、加减速、转向速率、低速舵效、海况入口、基础质量/库存不破坏运行 | 已具备 MVP；可支撑简单巡航和屏护站位 |
 | `N2` 接触/报告 | 发现目标、共享航迹、生成报告 | 雷达地平线/海况损失/LOS、数据链节流、航迹来源、报告消息语义、HVU 本舰盲区守门 | 当前 screen/contact 场景已通过合同 |
 | `N3` 屏护/C2 | 护航、站位保持、受扰恢复 | `TASK_SCREEN/TASK_SUPPORT`、海军角色、站位半径/方位、reference entity、扰动恢复和振荡守门 | 当前单 DDG/HVU 屏护已具备；不是完整舰队 C2 |
-| `N4` 受威胁机动/ROE | 目标逼近、威胁排序、授权开火前态势 | ROE 状态、交战授权、目标分配、威胁优先级、传感器质量对决策的影响 | 部分字段存在；还不是完整战术决策层 |
+| `N4` 受威胁机动/ROE | 目标逼近、威胁排序、授权开火前态势 | ROE 状态、交战授权、目标分配、威胁优先级、传感器质量对决策的影响 | `ddg51_take1_screen_threat_roe_v1` 开火前 bridge 已接受；仍不是完整战术指挥官 |
 | `N5` 交火/武器 | VLS、舰炮、CIWS 或导弹交战成为场景目标 | 火控前置条件、有效航迹、射程/射界/冷却/库存、发射事件、拒绝原因、命中/拦截证据 | 有最小骨架并通过定向测试；若作为交火场景核心仍需扩 gate |
 | `N6` 命中/毁伤/终止 | 命中后继续演化或以战损判胜负 | mission kill/mobility kill/sensor kill、持续火灾/进水 proxy、能力退化、终止条件与奖励绑定 | 有 proxy；不够支撑高保真抗毁声明 |
 | `N7` ASW/舰载机/后勤 | 声纳、潜艇、舰载机、UNREP 成为核心玩法 | 水声传播、接触置信度、舰载机 sortie/回收约束、UNREP 窗口和库存转移 | token/MVP；适合链路验证，不适合作为高保真主任务 |
@@ -61,6 +63,8 @@
 
 - `ddg51_take1_screen_contact_report_v1`：`N2` 接触/报告真实性是主要验收面。
 - `ddg51_take1_screen_closing_contact_v1`：在 `N2` 基础上加入接触逼近和 `N3` 屏护几何稳定性。
+- `ddg51_take1_screen_threat_roe_v1`：已接受为 `N4` 开火前 bridge，威胁/ROE 状态和
+  assigned-target provenance 可观察，但 weapon release 和 damage 不是验收证明。
 - 武器、CIWS、毁伤、ASW、舰载机和 UNREP 虽有 runtime 测试，但目前主要作为后续扩展的基础设施和局部链路证明，不能自动把现有 screen/contact 场景提升为交火或完整海战场景。
 
 因此，后续每新增一个场景类型，都应先声明它进入了哪个梯度，并把对应临界点变成测试或合同。比如：
@@ -78,9 +82,11 @@
 - 场景：
   - [ddg51_take1_screen_contact_report_v1.json](../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
   - [ddg51_take1_screen_closing_contact_v1.json](../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
+  - [ddg51_take1_screen_threat_roe_v1.json](../../../scenarios/naval/ddg51_take1_screen_threat_roe_v1.json)
 - 合同：
   - [naval_screen_contact_report_geometry.json](../../../tests/contracts/unit/naval/naval_screen_contact_report_geometry.json)
   - [naval_screen_closing_contact_geometry.json](../../../tests/contracts/unit/naval/naval_screen_closing_contact_geometry.json)
+  - [naval_screen_threat_roe_geometry.json](../../../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json)
   - [scenario_loader_naval_common_core_semantics.json](../../../tests/contracts/unit/naval/scenario_loader_naval_common_core_semantics.json)
 
 这些合同证明当前海军场景不再只是静态摆拍。它们至少锁住：
@@ -249,6 +255,17 @@
 - 最小 naval scenarios 可作为 RL 接入候选场景。
 - 训练目标、奖励定义、curriculum 和评估 gate 仍待下一轮设计。
 
+N4 RL preflight 已记录在
+[naval_n4_rl_task_surface_preflight_20260525.zh.md](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.zh.md)。
+已接受的下一步 RL 兼容任务候选是：
+
+- `naval_contact_report_threat_roe_v1`；
+- `naval_screen_station_hold_threat_aware_v1`。
+
+二者在 trainer/eval config、observation-schema tests、reward code 和 policy
+validation 存在前仍只是 preflight surface。`naval_limited_engagement_v1` 继续被
+N5 launch/reject 和非毁伤 gate 阻塞。
+
 ## 六、验证记录
 
 本次抽样复核时间：`2026-05-24 21:24 CST`。
@@ -278,14 +295,30 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 # 12 passed
 ```
 
+N4 bridge 验收：
+
+- [N4 RL 任务面预检](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.zh.md)
+- [N4 集成验收](n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.zh.md)
+
+文档验证：
+
+```bash
+git diff --check -- docs/task/naval
+# passed
+```
+
 ## 七、下一步建议
 
 建议下一轮按下面顺序推进：
 
-1. 海军 RL 任务定义：先冻结一个 `naval_screen_station_hold` 或 `naval_contact_report` 训练目标，明确 observation、action、reward、termination 和 eval gate。
+1. 海军 RL 任务实现包：把已接受的 N4 RL preflight 转成
+   `naval_contact_report_threat_roe_v1` 或
+   `naval_screen_station_hold_threat_aware_v1` 的具体 implementation package。
 2. Facade 化收口：把 loader-owned raw simulation compatibility seam 中仍承担业务含义的 naval command-chain 同步继续迁到 facade-owned maintained surface。
 3. 任务面守门：为 `MissionCommand -> naval weapon`、`screen-hold` 和 `tasking_profile: naval` 增加更少依赖调试 API 的 facade 或 world-batch 级验收。
-4. 域真实性小步补强：优先补 maritime state 细字段测试、传感器/LOS 联动和武器命令链稳定性，不急于扩成多舰队高保真交战。
-5. 训练入口候选：把两个现有 naval scenarios 整理成可被 training/eval CLI 直接引用的最小 config，避免 RL 接入继续停留在 runtime tests。
+4. N5 门控：`naval_limited_engagement_v1` 继续阻塞，直到独立 N5 包定义
+   launch/reject、range/arc/cooldown/inventory、action masking 和非毁伤验收 gate。
+5. 域真实性小步补强：优先补 maritime state 细字段测试、传感器/LOS 联动和武器命令链稳定性，不急于扩成多舰队高保真交战。
+6. 训练入口候选：把当前 naval scenarios 整理成可被 training/eval CLI 直接引用的最小 config，避免 RL 接入继续停留在 runtime tests。
 
 当前优先级仍应是“把已存在的海军任务语义稳定接入学习面”，而不是继续横向扩更多海军系统。

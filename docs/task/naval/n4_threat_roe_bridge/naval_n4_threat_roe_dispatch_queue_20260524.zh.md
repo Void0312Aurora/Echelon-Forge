@@ -1,6 +1,7 @@
 # 海军 N4 威胁 / ROE 分发队列
 
-状态：`2026-05-24`，在 owner 批准展开分发工作后打开的活跃分发队列。
+状态：已闭合的分发队列。`2026-05-24` 在 owner 批准展开分发工作后打开，
+并在 `2026-05-25` N4 集成验收后闭合。
 
 语言：
 
@@ -28,8 +29,9 @@
 
 - `N4-B1 Threat / ROE Semantics` 等待 N4-A 边界和 B0 source inventory。
 - `N4-C1 Runtime / Facade Evidence` 等待 N4-A 和收窄后的写入范围。
-- `N4-D1 RL Task Surface Preflight` 等待 N4-A/B 语义被接受。
-- `N4-E1 Integration / Acceptance` 在实现 packets 之后串行执行。
+- `N4-D1 RL Task Surface Preflight` 消费已接受的 N4-A/B/C 证据，并作为主线程
+  docs preflight 闭合。
+- `N4-E1 Integration / Acceptance` 在实现 packets 之后串行闭合。
 
 ## 队列
 
@@ -39,8 +41,8 @@
 | `N4-A1 scenario contract boundary` | `N4-A Scenario / Contract Boundary` | pass / 已接受 | `gpt-5.4`，high | implementation worker | `scenarios/naval/ddg51_take1_screen_threat_roe_v1.json`；`tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json`；`python/testing/contracts/unit/comm.py`；仅在需要时触及 `tests/runtime/naval/` 聚焦测试 | 否；这是第一个阻塞实现边界 | 已返回 pass packet；主线程已重跑合同和 naval screen tests |
 | `N4-B1 threat/ROE semantics` | `N4-B Threat / ROE Semantics` | pass / 已接受 | `gpt-5.4`，high | implementation worker | 在 `N4-A1` 和 `N4-B0` 后收窄；预期文件族为 command shared-core、naval profile、loader runtime-state fallback、command bindings 和聚焦 mission/binding tests | 本轮不并行；接受前阻塞 N4-C | 已返回 pass packet；主线程已重跑构建、聚焦测试和 N4/N3 合同 |
 | `N4-C1 facade/world-batch evidence` | `N4-C Runtime / Facade Evidence` | pass / 已接受 | `gpt-5.4`，high | implementation worker | 在 `N4-A1` 后收窄；预期文件族为 world-batch command-chain cache、vec-env tests、facade guards | 本轮不并行 | 已返回 pass packet；主线程已重跑构建、bindings/facade/world-batch 测试和 N4 合同 |
-| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | 暂停 / 未分发 | `gpt-5.4`，medium | docs / design worker | 本子项目 docs 或后续明确命名的 RL task doc | N4-A/B/C 证据接受后可并行 | 按 owner 指示暂停；不分发下一轮 |
-| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | 暂停 / 未分发 | `gpt-5.4`，high | integration owner | 仅分发时命名的 naval docs 和 acceptance/status 文件 | 否 | C1 接受后按 owner 指示暂停 |
+| `N4-D1 RL preflight surface` | `N4-D RL Task Surface Preflight` | pass / 已接受 | `gpt-5.4`，medium | main-thread docs owner | `naval_n4_rl_task_surface_preflight_20260525*.md` | 本轮不分发 worker | observation/action/reward/termination/eval surface 已接受，且不声明 N5/N6 |
+| `N4-E1 integration and acceptance` | `N4-E Integration / Acceptance` | pass / 已接受；N5 阻塞 | `gpt-5.4`，high | main-thread integration owner | 仅命名的 naval docs 和 acceptance/status 文件 | 否 | N4 作为开火前 bridge 接受；N5 limited engagement 仍被 launch/reject gate 阻塞 |
 
 ## 活跃 Worker Packet
 
@@ -256,10 +258,42 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 # PASS
 ```
 
-暂停说明：
+### N4-D1 RL Task Surface Preflight
 
-- 工作在 C1 验收后暂停。
-- `N4-D1` 和 `N4-E1` 等待后续 owner 决策前不分发。
+状态：pass / 已接受。由主线程作为仅文档 preflight surface 闭合；本轮没有分发
+worker。
+
+输出：
+
+- 新增
+  `docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md`
+  及中文伴随版。
+- 选择下一步 RL 兼容任务候选：
+  `naval_contact_report_threat_roe_v1` 和
+  `naval_screen_station_hold_threat_aware_v1`。
+- 冻结 N4 observation、action、reward、termination 和 evaluation surface。
+- 明确排除 weapon release、damage 和 learned-policy 声明。
+
+### N4-E1 Integration and Acceptance
+
+状态：pre-fire N4 bridge pass / 已接受。本队列不打开 N5 limited engagement。
+
+输出：
+
+- 新增
+  `docs/task/naval/n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md`
+  及中文伴随版。
+- 接受 `ddg51_take1_screen_threat_roe_v1` 作为具备 maintained threat/ROE、
+  engagement-authority 和 assigned-target provenance 证据的 N4 bridge。
+- 记录 `naval_limited_engagement_v1` 仍被独立 N5 包阻塞，后者必须包含
+  launch/reject、range/arc/cooldown/inventory、action masking 和非毁伤验收 gate。
+
+最终文档验证：
+
+```bash
+git diff --check -- docs/task/naval
+# passed
+```
 
 ## Worker Return Packet
 

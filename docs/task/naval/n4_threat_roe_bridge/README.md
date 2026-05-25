@@ -1,7 +1,7 @@
 # N4 Threat / ROE Bridge
 
-Status: `2026-05-24` opened as the first post-MVP naval scenario-expansion
-planning surface.
+Status: `2026-05-25` accepted as the first post-MVP naval pre-fire
+scenario-expansion bridge.
 
 Language:
 
@@ -37,6 +37,8 @@ Scenario concept:
 
 - [N4 threat / ROE bridge task cluster](naval_n4_threat_roe_bridge_cluster_20260524.md)
 - [N4 threat / ROE dispatch queue](naval_n4_threat_roe_dispatch_queue_20260524.md)
+- [N4 RL task surface preflight](naval_n4_rl_task_surface_preflight_20260525.md)
+- [N4 integration acceptance](naval_n4_integration_acceptance_20260525.md)
 
 Documentation budget:
 
@@ -44,7 +46,8 @@ Documentation budget:
 - one task-cluster pair for the finite work package;
 - one dispatch-queue pair after owner approval to distribute implementation
   work;
-- no acceptance ledger until implementation packets return.
+- one RL preflight pair and one integration acceptance pair after the
+  implementation packets return.
 
 ## Scope
 
@@ -67,7 +70,8 @@ Out of scope:
 
 ## Gate
 
-This planning surface is complete when the cluster document records:
+This bridge is complete when the cluster, queue, preflight, and acceptance
+documents record:
 
 - why `ddg51_take1_screen_threat_roe_v1` is the next scenario candidate;
 - that the realism claim is `N3 -> N4`, not `N5` or `N6`;
@@ -75,6 +79,8 @@ This planning surface is complete when the cluster document records:
   closure gates, dependency/parallel posture, round caps, and model/reasoning
   choices required by the subagent policy;
 - the RL preflight surface without treating it as a trained task.
+- the integration decision that N4 is accepted but N5 limited engagement remains
+  blocked behind launch/reject and non-damage gates.
 
 Validation for this docs-only slice:
 
