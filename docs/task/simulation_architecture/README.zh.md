@@ -118,6 +118,18 @@
 | `WP24 TaskOrder Maintained Business Migration` | closed / accepted | WP23 后的 replacement-backed TaskOrder 业务迁移：maintained contract/export/Python business paths 已集成，旧 public TaskOrder whole-shell compatibility surfaces 已删除，canonical acceptance review 已发布。 | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)、[集成评估与清理收口](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md)、[验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) |
 | `TM01 Architecture Closure Remediation` | audited-slice closed / residuals owned | 审计后的有边界整改线：`TM01-A`、`TM01-C`、`TM01-D` 已完成并覆盖本次 maintained-path 切片；`TM01-B` 仍是已记录的 launch-bridge residual，且更广泛的架构、P7/raw-runtime 与 WP24 canonical acceptance 闭合仍未完成。 | [TM01 entry](tm01_architecture_closure_remediation/README.md)、[task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
 | `TM02 WP24 Acceptance Closure` | temporary / closed | 已发布 WP24 canonical acceptance review 并同步索引的 closure lane；未重开 implementation scope。 | [TM02 entry](tm02_wp24_acceptance_closure/README.md)、[验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) |
+| `TM03 Launch Bridge Boundary` | temporary / active | 处理 TM01-B 记录的两个 `systems -> SimulationKernel` weapon-release bridge 的有边界架构 lane。 | [TM03 entry](tm03_launch_bridge_boundary/README.md)、[task clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
+
+## TM03 Launch Bridge Boundary
+
+产出：
+
+- [TM03 Launch Bridge Boundary](tm03_launch_bridge_boundary/README.md)
+- [TM03 Launch Bridge Boundary Task Clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md)
+
+TM03 只负责 TM01-B 记录下来的窄 launch-bridge residual。第一步是冻结源码事实，
+并要求先完成 replacement-seam decision，然后才允许 implementation worker 触碰 P7
+weapon-release code。
 
 ## TM02 WP24 Acceptance Closure
 
