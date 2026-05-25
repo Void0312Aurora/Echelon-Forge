@@ -12,8 +12,8 @@
 - G5 已有规范 MVP 场景壳，只证明 loader 加 tasking 状态链参与。
 - G6 新增两个 G1 realism-gradient fixture，用于 static occupy 与 support
   relationship 语义。
-- G6-D 选择 schema-first route-move release posture：第一版 G2 route-move
-  场景必须等待 runtime-loadable native ground platform schema。
+- G6-D 选择 schema-first route-move release posture。D1/D2 预检确认：第一版
+  G2 route-move 场景必须等待 runtime-loadable native ground platform schema。
 - 真实地面机动、地形交互、感知、火力、毁伤和 observation export 仍然延后。
 
 术语说明：项目阶段 `G6 Realism Gradient MVP Scenarios` 不等于域真实性梯度
@@ -74,6 +74,9 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   `ground_platoon_flat_route_move_v1` 仍保持 held。
 - `G6-D` 选择 schema-first route-move release path。当前 `Aircraft`
   compatibility spawn shell 不能作为 G2 movement realism 证据。
+- `G6-D1/D2` 预检发现当前没有已接受的 runtime-loadable `Ground` unit type
+  或 schema。`type_name = Ground` 的 spawn probe 返回 `0`，因此 route
+  movement 仍被 native-schema work 阻塞。
 - 后续每个新场景都必须声明自己是继续停留在 `G0`，推进到 `G1`，还是进入 `G2+`，并在宣称该层真实性前补齐相应 gate。
 
 ## 基础设施
@@ -100,7 +103,7 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   guardrails；route movement 仍保持 held。
 - `G6-D Route-Move Release Decision`：schema-first 决策，以及 native ground
   platform schema 与 movement evidence gates 的 D1/D2 预检包；implementation
-  仍保持 held。
+  仍保持 held。D1/D2 已以 `preflight-only` 返回。
 
 内容与场景：
 
@@ -131,8 +134,8 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 - 尚无 ground-specific C++ enums 或绑定面；
 - 尚无 formal P2 stage-node manifest 用于 tasking 可见性；
 - 尚无 runtime-loadable ground unit schema 或 capability-bundle lowering 路径。
-- 尚未接受 route-move movement-state evidence gate 或 native ground platform
-  loader path。
+- 未来 G2 的 movement-state evidence gates 已定义，但 native ground platform
+  loader path 尚未接受。
 
 ## 域状态
 
@@ -206,12 +209,11 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 建议下一步：
 
-1. 执行 `G6-D1` native ground platform schema 预检。
-2. 执行 `G6-D2` flat route movement evidence-gate 预检。
-3. 保持已接受的 G6-C/G6-D guardrails 生效：无 private ground runtime path、
+1. 在 route movement 前，先开启有边界的 native ground platform schema package。
+2. 保持已接受的 G6-C/G6-D guardrails 生效：无 private ground runtime path、
    G1 fixture 不声明 G2+ realism、未知显式 profile hint fail closed，并且不通过
    compatibility shell 释放 G2 movement。
-4. 在 G6-D3 基于 D1/D2 证据接受有界 implementation cluster 前，不添加
-   `ground_platoon_flat_route_move_v1`。
-5. 在 ground command vocabulary 被验收前，继续把 `build_kernel_mission_command()` 视为 compatibility shell。
-6. 只有在 observation、action、reward、termination 和 eval surface 定界后，再定义第一个真实 ground RL task。可信的第一步应是静态 `ground_occupy_status` 或 `ground_support_relationship`，先于任何 maneuver、terrain 或 fires policy。
+3. 在 native ground platform schema 证据存在并且后续 release vote 接受有界
+   implementation cluster 前，不添加 `ground_platoon_flat_route_move_v1`。
+4. 在 ground command vocabulary 被验收前，继续把 `build_kernel_mission_command()` 视为 compatibility shell。
+5. 只有在 observation、action、reward、termination 和 eval surface 定界后，再定义第一个真实 ground RL task。可信的第一步应是静态 `ground_occupy_status` 或 `ground_support_relationship`，先于任何 maneuver、terrain 或 fires policy。

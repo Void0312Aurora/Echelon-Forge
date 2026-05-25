@@ -16,9 +16,9 @@ Current positioning:
   status-chain participation only.
 - G6 adds the first two G1 realism-gradient fixtures for static occupy and
   support relationship semantics.
-- G6-D selects the schema-first route-move release posture: the first G2
-  route-move scenario must wait for a runtime-loadable native ground platform
-  schema.
+- G6-D selects the schema-first route-move release posture. D1/D2 preflight
+  confirmed the first G2 route-move scenario must wait for a runtime-loadable
+  native ground platform schema.
 - Real ground movement, terrain interaction, sensing, fires, damage, and
   observation export are still deferred.
 
@@ -98,6 +98,9 @@ Current ground placement:
 - `G6-D` chooses the schema-first route-move release path. The current
   `Aircraft` compatibility spawn shell is not accepted as evidence for G2
   movement realism.
+- `G6-D1/D2` preflight found no accepted runtime-loadable `Ground` unit type or
+  schema. A spawn probe for `type_name = Ground` returns `0`, so route movement
+  remains blocked by native-schema work.
 - Any next scenario must declare whether it remains `G0`, moves to `G1`, or
   enters `G2+`, and it must add the corresponding gates before claiming
   realism at that level.
@@ -127,7 +130,7 @@ Accepted task phases:
   guardrails; route movement remains held.
 - `G6-D Route-Move Release Decision`: schema-first decision plus D1/D2
   preflight packets for native ground platform schema and movement evidence
-  gates; implementation remains held.
+  gates; D1/D2 returned `preflight-only`, and implementation remains held.
 
 Content and scenarios:
 
@@ -161,8 +164,8 @@ Infrastructure gaps:
 - no ground-specific C++ enums or binding surface;
 - no formal P2 stage-node manifest for tasking visibility;
 - no runtime-loadable ground unit schema or capability-bundle lowering path.
-- no route-move movement-state evidence gate or native ground platform loader
-  path accepted yet.
+- movement-state evidence gates are now defined for future G2, but no native
+  ground platform loader path is accepted yet.
 
 ## Domain State
 
@@ -254,16 +257,16 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 Recommended next steps:
 
-1. Run `G6-D1` native ground platform schema preflight.
-2. Run `G6-D2` flat route movement evidence-gate preflight.
-3. Keep the accepted G6-C/G6-D guardrails active: no private ground runtime
+1. Open a bounded native ground platform schema package before route movement.
+2. Keep the accepted G6-C/G6-D guardrails active: no private ground runtime
    path, no G1 fixture claims of G2+ realism, fail-closed explicit profile
    hints, and no compatibility-shell G2 movement release.
-4. Do not add `ground_platoon_flat_route_move_v1` until G6-D3 accepts a bounded
-   implementation cluster after D1/D2 evidence.
-5. Keep `build_kernel_mission_command()` as a compatibility shell until a
+3. Do not add `ground_platoon_flat_route_move_v1` until native ground platform
+   schema evidence exists and a later release vote accepts a bounded
+   implementation cluster.
+4. Keep `build_kernel_mission_command()` as a compatibility shell until a
    ground command vocabulary is accepted.
-6. Define a first real ground RL task only after observation, action, reward,
+5. Define a first real ground RL task only after observation, action, reward,
    termination, and eval surfaces are scoped. A credible first task would be a
    static `ground_occupy_status` or `ground_support_relationship` task before
    any maneuver, terrain, or fires policy.

@@ -1,6 +1,7 @@
 # G6-D Route-Move Release Decision
 
-Status: `2026-05-24` accepted for `G6-D0 Route-Move Release Decision`. No
+Status: `2026-05-25` accepted for `G6-D0 Route-Move Release Decision`; `G6-D1`
+and `G6-D2` preflight returned `preflight-only` with native-schema blockers. No
 movement scenario is released by this package.
 
 Language:
@@ -51,6 +52,16 @@ Rationale:
 - Releasing route movement through the shell would blur the realism-gradient
   boundary between tasking evidence and movement evidence.
 
+## Preflight Result
+
+`G6-D1` found that no runtime-loadable native ground platform schema exists yet:
+the current database loader and public `UnitType` binding do not accept
+`Ground`, and a probe spawn with `type_name = Ground` returns `0`.
+
+`G6-D2` defined the future movement evidence gates, but those gates cannot be
+used to release `ground_platoon_flat_route_move_v1` until the native schema
+blocker is closed.
+
 ## Output
 
 - [G6-D route-move release-decision cluster](g6_route_move_release_decision_cluster_20260524.md)
@@ -94,7 +105,9 @@ boundary is explicitly approved with equivalent evidence gates.
 
 ## Residuals
 
-- Preflight the minimal runtime-loadable native ground platform schema.
-- Preflight the exact state/evidence hooks needed to prove flat route movement.
+- Implement the minimal runtime-loadable native ground platform schema through
+  an accepted follow-on package.
+- Keep the exact state/evidence hooks needed to prove flat route movement ready
+  for the first route-move implementation gate.
 - Keep G3+ terrain-aware movement, G4 contact report, G5 fires, G6 damage, and
   G7 sustainment outside this release package.

@@ -53,6 +53,9 @@ simulation lifecycle without creating a new vertical runtime path.
   the first `G2` route-move scenario must wait for a runtime-loadable native
   ground platform schema. The current `Aircraft` compatibility shell remains
   G0/G1 only.
+- G6-D1/D2 preflight returned `preflight-only`: no accepted runtime-loadable
+  `Ground` unit type/schema exists yet, and movement evidence gates cannot
+  release route movement until that blocker closes.
 
 ## Recommended Reading Order
 
@@ -110,8 +113,8 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
   realism-gradient guardrails
 - keep G6-C/G6-D route-move guardrails active before adding any movement
   scenario
-- preflight the native ground platform schema and movement evidence gates
-  before route-move implementation
+- open a bounded native ground platform schema package before route-move
+  implementation
 - keep G1 scenarios scoped to static occupy/support relationship semantics only
 - keep command delivery, observation/export, movement, sensing, terrain, fires,
   effects, damage, and broad `MissionCommand` growth held
