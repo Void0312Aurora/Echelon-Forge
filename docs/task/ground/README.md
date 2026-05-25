@@ -60,6 +60,9 @@ simulation lifecycle without creating a new vertical runtime path.
   the minimum implementation surface and evidence gates for a loadable/spawnable
   native ground entity, but it does not release route movement or runtime
   movement behavior.
+- G6-E1 source-inventory/design preflight selects `UnitType::Ground`,
+  `type = "Ground"`, `Ground_Platoon_MVP`, and the existing type-name/default
+  factory materialization path for the first native schema implementation.
 
 ## Recommended Reading Order
 
@@ -119,8 +122,8 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
   realism-gradient guardrails
 - keep G6-C/G6-D route-move guardrails active before adding any movement
   scenario
-- advance G6-E1 source-inventory/design preflight for the native ground platform
-  schema before route-move implementation
+- implement G6-E2 only within the accepted native schema file surface before
+  route-move implementation
 - keep G1 scenarios scoped to static occupy/support relationship semantics only
 - keep command delivery, observation/export, movement, sensing, terrain, fires,
   effects, damage, and broad `MissionCommand` growth held

@@ -1,8 +1,9 @@
 # G6-E Native Ground Platform Schema
 
-Status: `2026-05-25` opened for `G6-E0 Native Ground Platform Schema Planning`.
-No runtime schema, movement scenario, movement behavior, terrain, sensing,
-fires, damage, or combat implementation is released by this package.
+Status: `2026-05-25` accepted for `G6-E0 Native Ground Platform Schema Planning`;
+`G6-E1` source-inventory/design preflight is accepted. No runtime schema,
+movement scenario, movement behavior, terrain, sensing, fires, damage, or
+combat implementation is released by this package.
 
 Language:
 
@@ -44,6 +45,24 @@ The accepted `G6-D1/D2` preflight found:
   `resolved_platform_spawn_plan_type_name_not_found`.
 
 Therefore `ground_platoon_flat_route_move_v1` remains held.
+
+## E1 Design Result
+
+`G6-E1` selects the smallest implementation path:
+
+- public identity should be `UnitType::Ground`;
+- the first auto-loadable JSON should use `type = "Ground"` and source name
+  `Ground_Platoon_MVP`;
+- materialization should reuse the existing type-name/default-factory spawn
+  path;
+- Python identity evidence should use existing `SimulationKernel.get_unit_type()`
+  plus the new `ef_py.UnitType.Ground` enum value;
+- no typed-platform/facade path is required for E2;
+- no movement-specific component is required for E2.
+
+The first implementation should make a static or caller-initial-velocity ground
+entity loadable/spawnable/inspectable. Route following and movement updates
+remain later work.
 
 ## Output
 
@@ -94,6 +113,10 @@ are true:
 - capability-bundle evidence names ground platform/mobility families but does
   not claim route movement;
 - focused tests include at least one fail-closed negative case.
+
+For the accepted E1 path, the implementation gate should use
+`SimulationKernel::spawn_unit(..., "Ground_Platoon_MVP", ...)` and
+`get_unit_type(entity_id) == int(ef_py.UnitType.Ground)`.
 
 ## Residuals
 

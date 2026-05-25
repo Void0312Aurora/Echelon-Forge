@@ -3,7 +3,7 @@
 状态：`2026-05-25` G0-G4 封存基线；G5 tasking smoke 已验收；G6
 开启第一批 realism-gradient MVP 场景；G6-D1/D2 preflight 以
 `preflight-only` 验收，并继续把 route movement 阻塞在 native ground
-platform schema 工作之前；G6-E0 开启 native schema planning package。
+platform schema 工作之前；G6-E0/E1 开启并选择 native schema path。
 
 输入：
 
@@ -95,9 +95,10 @@ unit type surface 尚不能接受 native `Ground` entity，movement evidence gat
 native ground platform schema implementation planning，而不是 route-move
 scenario。
 
-G6-E0 开启该 planning package。它记录 runtime-loadable、spawnable 且可检查的
-native ground entity 最小实现面，同时继续 held route movement、terrain、
-sensing、fires、damage 与 combat。
+G6-E0 开启该 planning package。G6-E1 选择 `UnitType::Ground`、
+`type = "Ground"`、`Ground_Platoon_MVP`，以及现有 type-name/default factory
+materialization path，作为第一版 native schema implementation 路线，同时继续
+held route movement、terrain、sensing、fires、damage 与 combat。
 
 ### 4.1 阶段子项目与任务簇
 
@@ -113,7 +114,7 @@ sensing、fires、damage 与 combat。
 | `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
 | `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
 | `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 以 `preflight-only` 验收；native schema blocker 仍在；route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0 planning 已开启；implementation held，直到 E1/E2 单独释放 |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1 已接受；G6-E2 implementation 是下一候选 |
 
 当前分发队列是
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)。

@@ -53,6 +53,9 @@
 - G6-E0 开启 native ground platform schema planning package。它定义
   loadable/spawnable native ground entity 的最小实现面和证据门槛，但不释放
   route movement 或 runtime movement behavior。
+- G6-E1 source-inventory/design preflight 选择 `UnitType::Ground`、
+  `type = "Ground"`、`Ground_Platoon_MVP`，以及现有 type-name/default factory
+  materialization path，作为第一版 native schema implementation 路线。
 
 ## 推荐阅读顺序
 
@@ -110,8 +113,8 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
 - 维护 G0/G5 tasking smoke 与 G6 G1 static occupy/support fixtures，作为
   realism-gradient guardrails
 - 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效
-- 在 route-move implementation 前，推进 G6-E1 source-inventory/design
-  preflight，先收束 native ground platform schema
+- 在 route-move implementation 前，只在已接受的 native schema 文件面内实现
+  G6-E2
 - G1 场景只验证 static occupy/support relationship 语义，不扩张为 ground
   combat/runtime 证明
 - command delivery、observation/export、movement、sensing、terrain、fires、

@@ -16,6 +16,9 @@
   G2 route-move 场景必须等待 runtime-loadable native ground platform schema。
 - G6-E0 开启 native ground platform schema planning package，并定义在重新考虑
   route movement 前必须具备的最小 load/spawn/identity 证据。
+- G6-E1 接受 source-inventory/design preflight：第一版 native schema
+  implementation 应使用 `UnitType::Ground`、`type = "Ground"`、
+  `Ground_Platoon_MVP`，以及现有 type-name/default factory materialization。
 - 真实地面机动、地形交互、感知、火力、毁伤和 observation export 仍然延后。
 
 术语说明：项目阶段 `G6 Realism Gradient MVP Scenarios` 不等于域真实性梯度
@@ -37,6 +40,8 @@
 - 两个 G6 G1 场景，证明 static occupy/support relationship 语义；
 - 一个 G6-E0 native schema planning package，命名 loadable/spawnable native
   ground identity 的最小实现面；
+- 一个 G6-E1 design decision，避免在第一版 schema 切片中新增
+  typed-platform/facade 路径；
 - RL/runtime 入口现在通过共享 tasking bridge 构造 mission command，而不是 air-only 路径。
 
 当前主要风险不是“链路是否存在”，而是边界纪律：很容易把 G5 smoke 场景误读为真实 ground unit 或 movement 证明。现有证据只支持 Army/ground tasking-chain participation。
@@ -83,6 +88,9 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   movement 仍被 native-schema work 阻塞。
 - `G6-E0` 定义 native schema package 边界。它尚未实现或释放 ground entity，
   但记录第一版 native ground platform implementation 需要的文件、测试和证据。
+- `G6-E1` 选择 E2 路线：添加 public `UnitType::Ground`，解析
+  `type = "Ground"`，新增 `Ground_Platoon_MVP`，复用 default-factory spawn，
+  并通过现有 `get_unit_type()` 断言 identity。
 - 后续每个新场景都必须声明自己是继续停留在 `G0`，推进到 `G1`，还是进入 `G2+`，并在宣称该层真实性前补齐相应 gate。
 
 ## 基础设施
@@ -112,7 +120,8 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   platform schema 与 movement evidence gates 的 D1/D2 预检包；implementation
   仍保持 held。D1/D2 已以 `preflight-only` 返回。
 - `G6-E Native Ground Platform Schema`：G6-E0 planning package，定义最小
-  native ground platform schema；implementation 继续 held，等待 E1/E2。
+  native ground platform schema；G6-E1 design preflight 已接受；E2
+  implementation 继续 held。
 
 内容与场景：
 
@@ -149,6 +158,9 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   loading、default factory spawn-plan admission/materialization、Python identity
   exposure、一个 auto-loadable ground JSON，以及 focused load/spawn/negative
   tests。
+- G6-E1 将该范围收窄到 `UnitType::Ground`、`type = "Ground"`、
+  `Ground_Platoon_MVP`、`DefaultUnitFactory::spawn()`，以及现有
+  `SimulationKernel.get_unit_type()` Python 证据。
 
 ## 域状态
 
@@ -222,14 +234,13 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 建议下一步：
 
-1. 运行 `G6-E1` source-inventory/design preflight，选择 native ground
-   identity/materialization path。
+1. 只在已接受的 native schema write surface 内实现 `G6-E2`：
+   `UnitType::Ground`、loader parse、default factory evidence/materialization、
+   一个 ground JSON、binding enum exposure 与 focused tests。
 2. 保持已接受的 G6-C/G6-D/G6-E guardrails 生效：无 private ground runtime path、
    G1 fixture 不声明 G2+ realism、未知显式 profile hint fail closed，并且不通过
    compatibility shell 释放 G2 movement。
-3. 在 E1 选定 public identity、schema fields、materialization path 与 focused
-   validation commands 前，不实现 `G6-E2`。
-4. 在 native ground platform schema 证据存在且后续 release vote 接受有界
+3. 在 native ground platform schema 证据存在且后续 release vote 接受有界
    route-move implementation cluster 前，不添加 `ground_platoon_flat_route_move_v1`。
-5. 在 ground command vocabulary 被验收前，继续把 `build_kernel_mission_command()` 视为 compatibility shell。
-6. 只有在 observation、action、reward、termination 和 eval surface 定界后，再定义第一个真实 ground RL task。可信的第一步应是静态 `ground_occupy_status` 或 `ground_support_relationship`，先于任何 maneuver、terrain 或 fires policy。
+4. 在 ground command vocabulary 被验收前，继续把 `build_kernel_mission_command()` 视为 compatibility shell。
+5. 只有在 observation、action、reward、termination 和 eval surface 定界后，再定义第一个真实 ground RL task。可信的第一步应是静态 `ground_occupy_status` 或 `ground_support_relationship`，先于任何 maneuver、terrain 或 fires policy。

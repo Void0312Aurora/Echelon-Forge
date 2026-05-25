@@ -22,6 +22,9 @@ Current positioning:
 - G6-E0 opens the native ground platform schema planning package and defines
   the minimum load/spawn/identity evidence needed before route movement can be
   reconsidered.
+- G6-E1 accepts the source-inventory/design preflight: the first native schema
+  implementation should use `UnitType::Ground`, `type = "Ground"`,
+  `Ground_Platoon_MVP`, and existing type-name/default factory materialization.
 - Real ground movement, terrain interaction, sensing, fires, damage, and
   observation export are still deferred.
 
@@ -48,6 +51,8 @@ What is already real:
 - two G6 G1 scenarios for static occupy/support relationship semantics;
 - a G6-E0 native schema planning package that names the minimum implementation
   surface for loadable/spawnable native ground identity;
+- a G6-E1 design decision that avoids a new typed-platform/facade path for the
+  first schema slice;
 - RL/runtime entry points now route mission-command construction through the
   shared tasking bridge rather than an air-only path.
 
@@ -109,6 +114,9 @@ Current ground placement:
 - `G6-E0` defines the native schema package boundary. It does not implement or
   release a ground entity yet, but it records the files, tests, and evidence
   needed for the first native ground platform implementation.
+- `G6-E1` selects the E2 route: add public `UnitType::Ground`, parse
+  `type = "Ground"`, add `Ground_Platoon_MVP`, reuse default-factory spawn, and
+  assert identity through existing `get_unit_type()`.
 - Any next scenario must declare whether it remains `G0`, moves to `G1`, or
   enters `G2+`, and it must add the corresponding gates before claiming
   realism at that level.
@@ -141,7 +149,8 @@ Accepted task phases:
   preflight packets for native ground platform schema and movement evidence
   gates; D1/D2 returned `preflight-only`, and implementation remains held.
 - `G6-E Native Ground Platform Schema`: G6-E0 planning package for the minimum
-  native ground platform schema; implementation remains held pending E1/E2.
+  native ground platform schema; G6-E1 design preflight is accepted; E2
+  implementation remains held.
 
 Content and scenarios:
 
@@ -181,6 +190,9 @@ Infrastructure gaps:
   `UnitType`/identity, unit-definition loading, default factory spawn-plan
   admission/materialization, Python identity exposure, one auto-loadable ground
   JSON, and focused load/spawn/negative tests.
+- G6-E1 narrows that surface to `UnitType::Ground`, `type = "Ground"`,
+  `Ground_Platoon_MVP`, `DefaultUnitFactory::spawn()`, and existing
+  `SimulationKernel.get_unit_type()` Python evidence.
 
 ## Domain State
 
@@ -272,19 +284,18 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 Recommended next steps:
 
-1. Run `G6-E1` source-inventory/design preflight to select the native ground
-   identity/materialization path.
+1. Implement `G6-E2` only within the accepted native schema write surface:
+   `UnitType::Ground`, loader parse, default factory evidence/materialization,
+   one ground JSON, binding enum exposure, and focused tests.
 2. Keep the accepted G6-C/G6-D/G6-E guardrails active: no private ground runtime
    path, no G1 fixture claims of G2+ realism, fail-closed explicit profile
    hints, and no compatibility-shell G2 movement release.
-3. Do not implement `G6-E2` until E1 selects the exact public identity, schema
-   fields, materialization path, and focused validation commands.
-4. Do not add `ground_platoon_flat_route_move_v1` until native ground platform
+3. Do not add `ground_platoon_flat_route_move_v1` until native ground platform
    schema evidence exists and a later release vote accepts a bounded route-move
    implementation cluster.
-5. Keep `build_kernel_mission_command()` as a compatibility shell until a
+4. Keep `build_kernel_mission_command()` as a compatibility shell until a
    ground command vocabulary is accepted.
-6. Define a first real ground RL task only after observation, action, reward,
+5. Define a first real ground RL task only after observation, action, reward,
    termination, and eval surfaces are scoped. A credible first task would be a
    static `ground_occupy_status` or `ground_support_relationship` task before
    any maneuver, terrain, or fires policy.

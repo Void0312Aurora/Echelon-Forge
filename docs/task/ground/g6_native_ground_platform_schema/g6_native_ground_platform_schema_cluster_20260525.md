@@ -1,7 +1,8 @@
 # G6-E Native Ground Platform Schema Cluster
 
-Status: `2026-05-25` opened for `G6-E0`; implementation remains held until this
-planning package is accepted. No route-move scenario is released.
+Status: `2026-05-25` accepted for `G6-E0`; `G6-E1` source-inventory/design
+preflight is accepted. `G6-E2` implementation remains held. No route-move
+scenario is released.
 
 ## Decision
 
@@ -16,8 +17,7 @@ identified through maintained shared runtime surfaces.
 The target entity is a starter platoon-scale ground platform token:
 
 - canonical source name candidate: `Ground_Platoon_MVP`;
-- public type candidate: `Ground` or `GroundUnit`, pending implementation
-  review;
+- public type: `Ground`;
 - service profile: `Army`;
 - specialization/tasking profile: `ground`;
 - first platform family: `dismounted_unit`;
@@ -32,27 +32,90 @@ The starter platform may expose enough static mobility metadata to bound future
 movement tests, but that metadata must not move the unit or claim `G2` route
 movement by itself.
 
-## Minimum File Surface Candidate
+## E1 Source Inventory Result
+
+Observed source facts:
+
+- `src/components/basic/common.h::UnitType` is the public runtime identity used
+  by `KeyEntity`.
+- `src/content/unit_definition_loader.cpp::parse_unit_type()` is the current
+  type-name admission point for auto-loaded database JSON.
+- `load_unit_definitions_json()` recursively auto-loads only `.json` files, so
+  the existing `ground_platoon_starter.seed` can remain a planning seed.
+- `DefaultUnitFactory::build_platform_capability_bundle_template()` already
+  builds capability-bundle evidence from `UnitDefinition` fields.
+- `DefaultUnitFactory::spawn()` already materializes entities with `Transform`,
+  `Velocity`, `Alliance`, `KeyEntity`, and `Health` for any admitted
+  definition.
+- `SimulationKernel::get_unit_type()` is already bound to Python, so E2 does
+  not need a new identity getter.
+- Current probe evidence remains negative:
+
+```bash
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python - <<'PY'
+from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+ensure_repo_imports()
+import ef_py
+sim = ef_py.SimulationKernel()
+print(hasattr(ef_py.UnitType, "Ground"))
+print(sim.load_database(resolve_repo_path("examples", "config", "database")))
+entity = int(sim.spawn_unit(ef_py.Side.Blue, "Ground", 0, 0, 0, 0, 0, 0, 0, 0, 0))
+print(entity)
+print(sim.get_unit_type(entity))
+PY
+# False
+# True
+# 0
+# 0
+```
+
+## E1 Design Decision
+
+Accepted path for E2:
+
+- use `UnitType::Ground` as the public identity;
+- parse `type = "Ground"` in `parse_unit_type()`;
+- add one auto-loadable JSON named `Ground_Platoon_MVP`;
+- keep the existing `.seed` file as planning/contract context;
+- reuse `DefaultUnitFactory::spawn()` type-name materialization;
+- add ground capability-bundle evidence in the existing mobility/doctrine
+  capability families, without adding new runtime contract constants;
+- use existing Python `get_unit_type()` for identity evidence;
+- keep E2 limited to load/spawn/identity/static runtime inspection.
+
+Rejected or deferred paths:
+
+- `UnitType::GroundUnit`: too narrow and less consistent with existing public
+  enum names.
+- Maintained typed-platform/facade materialization: useful later, but not the
+  smallest E2 path because type-name/default factory already owns runtime load
+  and spawn evidence.
+- New movement-specific component such as `GroundMobilityProfile`: deferred
+  until route-move or speed-envelope tests require maintained fields.
+- Using `Facility` or `C2Node`: remains rejected as a ground substitute.
+
+## Minimum File Surface For E2
 
 Likely implementation write surface:
 
 - `src/components/basic/common.h`
-  - add a public native ground unit type only if selected as the maintained
-    identity path;
+  - add `UnitType::Ground`;
 - `src/content/unit_definition_loader.cpp`
-  - parse the selected ground unit type and the minimal ground platform schema;
+  - parse `type = "Ground"` and optionally read minimal ground metadata;
 - `src/content/unit_definition.h`
-  - add only the minimum structured fields needed to represent the native
-    ground platform identity and static mobility envelope;
+  - add only optional static metadata if E2 needs it for evidence; avoid
+    movement-specific maintained behavior fields;
 - `src/models/core/default_unit_factory.h`
-  - add default ground definition or load/materialization support, capability
-    bundle evidence, and spawn-plan admission;
+  - add load/materialization support, optional built-in fallback if needed,
+    ground capability evidence, and spawn-plan admission;
 - `src/interfaces/python/bindings_core.cpp`
-  - expose enough identity for Python tests to assert native ground status;
-- `examples/config/database/ground/units/*.json`
+  - expose `ef_py.UnitType.Ground` and default UnitType spawn mapping only if a
+    default type-name is added;
+- `examples/config/database/ground/units/ground_platoon_mvp.json`
   - add one auto-loadable native ground unit definition;
-- focused tests under `tests/runtime/ground/`, `tests/contracts/unit/ground/`,
-  or the nearest existing platform-spawn test location.
+- `tests/runtime/ground/test_ground_native_platform_schema.py`
+  - add load/spawn/identity/static inspection tests plus negative malformed
+    schema coverage.
 
 Possible supporting surfaces if the maintained typed platform setup path is
 used:
@@ -62,16 +125,17 @@ used:
 - `src/runtime/facade/runtime_facade.cpp`;
 - `src/interfaces/python/bindings_runtime.cpp`.
 
-These supporting surfaces are not released by `G6-E0`; they must be justified
-by the implementation review before editing.
+These supporting surfaces are not released for E2 by the accepted E1 path. They
+must stay untouched unless implementation discovers a hard blocker that forces
+re-scoping.
 
 ## Required Evidence
 
 The implementation package must provide:
 
 - a load probe proving `sim.load_database("examples/config/database")` accepts
-  the native ground JSON;
-- a spawn probe proving `spawn_unit(..., selected_ground_type_name, ...)`
+  `examples/config/database/ground/units/ground_platoon_mvp.json`;
+- a spawn probe proving `spawn_unit(..., "Ground_Platoon_MVP", ...)`
   materializes a non-null entity;
 - a Python identity assertion proving the entity is native ground and not an
   `Aircraft`, `Ship`, `Submarine`, `Facility`, or `C2Node` substitute;
@@ -98,7 +162,7 @@ categories above must remain.
 | Stream | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Parallel / dependency | Round cap | Status |
 |--------|-------|-------------------|------|-----------|-----------|------------|--------------|-----------------------|-----------|--------|
 | `G6-E0 Native Schema Planning` | main-thread integration | current main thread | Record the minimum native ground platform schema package and release gate. | `docs/task/ground/g6_native_ground_platform_schema/**`, ground README/queue/progress/plan sync | runtime implementation, scenario files, route movement, terrain, sensing, fires, damage, combat | `git diff --check -- docs/task/ground`; focused ground guardrail tests | finite implementation clusters and acceptance gate recorded | depends on accepted G6-D1/D2 preflight | 1 documentation round | open |
-| `G6-E1 Source Inventory And Design Preflight` | explorer or main-thread diagnostics | `gpt-5.4`, high | Confirm selected identity path: public `UnitType` versus maintained typed-platform capability materialization. | read-only diagnostics first; docs update only if released | code edits, scenario release, movement implementation | source inventory plus proposed patch/test list | selects the smallest implementation path and names blocked alternatives | after G6-E0 | 1 diagnostics round | planned |
+| `G6-E1 Source Inventory And Design Preflight` | main-thread diagnostics | current main thread | Confirm selected identity path: public `UnitType` versus maintained typed-platform capability materialization. | read-only diagnostics plus this package/queue/progress sync | code edits, scenario release, movement implementation | source inventory plus proposed patch/test list | selects the smallest implementation path and names blocked alternatives | after G6-E0 | 1 diagnostics round | accepted |
 | `G6-E2 Native Schema Implementation` | worker | `gpt-5.4`, high | Implement one runtime-loadable native ground platform schema and focused tests. | approved source/test/content files from E1 only | route movement, terrain, sensing, fires, damage, combat, broad facade growth | focused C++/Python build plus runtime ground tests | native entity loads, spawns, and is inspectable without substitute type fallback | after accepted E1 release | at most 2 implementation rounds | held |
 | `G6-E3 Integration And Release Vote` | main-thread integration | current main thread | Decide whether native schema evidence is sufficient to unblock a later route-move implementation vote. | ground docs/queue/progress sync only unless a fix is explicitly released | route-move implementation | focused tests from E2 plus docs check | either accepts native schema evidence or records residual blockers | after E2 | 1 integration round | held |
 
@@ -114,21 +178,18 @@ categories above must remain.
 - Any implementation must reuse shared content, platform factory, runtime, and
   binding surfaces instead of adding a private ground runtime stack.
 
-## Open Questions For E1
+## E1 Answers
 
-- Should public identity be `UnitType::Ground` or `UnitType::GroundUnit`?
-- Should the starter JSON use `type = "Ground"` or a more explicit platform
-  family such as `type = "GroundUnit"` plus `platform_family`?
-- Can minimal ground identity be represented without adding movement-specific
-  components, or is a small static `GroundMobilityProfile` structure required
-  for future speed-envelope assertions?
-- Which existing runtime hook should Python use for entity identity: `UnitType`,
-  `KeyEntity`, capability evidence, or a new narrow getter?
-- Should the first auto-loadable JSON replace or sit beside the existing
-  `.seed` planning file?
+- Public identity: `UnitType::Ground`.
+- Starter JSON: `type = "Ground"` and name `Ground_Platoon_MVP`.
+- Movement-specific components: not required for E2.
+- Python identity hook: existing `get_unit_type()` plus `ef_py.UnitType.Ground`.
+- Content placement: add a `.json` beside the existing `.seed`; do not replace
+  the `.seed` planning file.
 
 ## Exit State
 
-After G6-E0, the queue should point to `G6-E1` as the next decision step. Route
-movement remains blocked until E2/E3 close native schema evidence and a later
-G6-D3/G6-F release vote explicitly accepts route-move implementation.
+After G6-E1, the queue should point to `G6-E2` as the first implementation
+candidate. Route movement remains blocked until E2/E3 close native schema
+evidence and a later G6-D3/G6-F release vote explicitly accepts route-move
+implementation.
