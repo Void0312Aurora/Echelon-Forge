@@ -50,6 +50,12 @@
   - 当前空战线路的维护`1v1`执行层HMoE条目。
   - 保持第一个对手冻结为场景声明的脚本化红方战斗机，以便在转向自对弈或`2v2`之前验证作战任务合约和HMoE运行时链。
 
+## 海军 N4 线路
+
+- [naval/README.zh.md](naval/README.zh.md)
+  - 已接受 DDG/T-AKE `N4` 威胁/ROE bridge 的维护中 smoke/probe 条目。
+  - 这些条目只是 entry/runtime gates：它们把已接受海军场景与 maintained world-batch training path 配对，同时把武器释放、毁伤、击杀奖励和 learned-policy 声明排除在范围外。
+
 ## 备注
 
 - 这是当前向前推进的训练线路，而非冻结的验收集。
@@ -58,3 +64,4 @@
 - 协同巡航线路是可选的协同基准线路，与冻结的长机/执行基线并存。
 - 对于协同起飞至巡航桥接的直接HMoE控制实验，优先使用`*_shared_fair_v1`和`*_hmoe_fair_v1`对，以保持非策略超参数对齐。
 - 不要将活动配置指向`examples/config/Archive/**`；如果旧设置仍需要维护使用，则先将其重新表达在`frozen/`或其他维护兼容性位置下。
+- 海军条目必须停留在其声明的真实性梯度。`N4` 条目在独立 `N5` 包接受 launch/reject 和非毁伤 gates 前，不得暴露武器释放动作，也不得使用毁伤/击杀奖励。

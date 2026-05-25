@@ -48,6 +48,12 @@ Status for this directory is `Active Mainline`.
   - Maintained `1v1` execution-layer HMoE entries for the current air-combat line.
   - Keeps the first opponent frozen as a scenario-declared scripted red fighter, so we can validate the combat task contract and HMoE runtime chain before moving to self-play or `2v2`.
 
+## Naval N4 Line
+
+- [naval/README.md](naval/README.md)
+  - Maintained smoke/probe entries for the accepted DDG/T-AKE `N4` threat/ROE bridge.
+  - These entries are entry/runtime gates only: they pair the accepted naval scenario with the maintained world-batch training path while keeping weapon release, damage, kill rewards, and learned-policy claims out of scope.
+
 ## Notes
 
 - This is the current forward-moving training line, not a frozen acceptance set.
@@ -56,3 +62,4 @@ Status for this directory is `Active Mainline`.
 - The cooperative cruise line is an opt-in cooperative benchmark line, alongside the frozen leader/execution baselines.
 - For direct HMoE control experiments on the cooperative takeoff-to-cruise bridge, prefer the `*_shared_fair_v1` and `*_hmoe_fair_v1` pair so non-policy hyperparameters stay aligned.
 - Do not point active configs at `examples/config/Archive/**`; if an older setup is still needed for maintained use, re-express it under `frozen/` or another maintained compatibility location first.
+- Keep naval entries at their declared realism grade. `N4` entries must not expose a weapon-release action or use damage/kill rewards until a separate `N5` package accepts launch/reject and non-damage gates.

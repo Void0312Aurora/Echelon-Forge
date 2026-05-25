@@ -262,9 +262,12 @@ N4 RL preflight 已记录在
 - `naval_contact_report_threat_roe_v1`；
 - `naval_screen_station_hold_threat_aware_v1`。
 
-二者在 trainer/eval config、observation-schema tests、reward code 和 policy
-validation 存在前仍只是 preflight surface。`naval_limited_engagement_v1` 继续被
-N5 launch/reject 和非毁伤 gate 阻塞。
+二者现在已有 active smoke/probe 入口，位置是
+[examples/config/training/active/naval](../../../examples/config/training/active/naval/README.zh.md)。
+这些条目是实现 gate，而不是已训练 policy 证据：它们把已接受 N4 场景与 maintained
+world-batch training path 配对，使用临时 no-release action surface，并把武器释放、
+毁伤奖励、击杀奖励和 learned-policy 声明排除在范围外。`naval_limited_engagement_v1`
+继续被 N5 launch/reject 和非毁伤 gate 阻塞。
 
 ## 六、验证记录
 
@@ -307,6 +310,22 @@ git diff --check -- docs/task/naval
 # passed
 ```
 
+N4 active training-entry gate：
+
+```bash
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py
+# 4 passed, 4 subtests passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_contact_report_threat_roe_smoke_v1.json --output_base /tmp/cmo-naval-train.<tmp> --run_name naval_contact_report_threat_roe_smoke_v1
+# Training Complete.
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --output_base /tmp/cmo-naval-train.<tmp> --run_name naval_screen_station_hold_threat_aware_smoke_v1
+# Training Complete.
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
+# PASS
+```
+
 ## 七、下一步建议
 
 建议下一轮按下面顺序推进：
@@ -319,6 +338,6 @@ git diff --check -- docs/task/naval
 4. N5 门控：`naval_limited_engagement_v1` 继续阻塞，直到独立 N5 包定义
    launch/reject、range/arc/cooldown/inventory、action masking 和非毁伤验收 gate。
 5. 域真实性小步补强：优先补 maritime state 细字段测试、传感器/LOS 联动和武器命令链稳定性，不急于扩成多舰队高保真交战。
-6. 训练入口候选：把当前 naval scenarios 整理成可被 training/eval CLI 直接引用的最小 config，避免 RL 接入继续停留在 runtime tests。
+6. 用专门的海军 observation/action/reward/eval package 替换当前 N4 临时 no-release execution probe，再考虑 learned-policy 或 cooperative naval training 声明。
 
 当前优先级仍应是“把已存在的海军任务语义稳定接入学习面”，而不是继续横向扩更多海军系统。

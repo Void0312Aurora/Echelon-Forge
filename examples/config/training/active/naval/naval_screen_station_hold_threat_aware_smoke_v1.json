@@ -1,0 +1,81 @@
+{
+  "agent_layer": "execution",
+  "algo": "AdaptiveKLPPO",
+  "policy": "SquashedMultiInputPolicy",
+  "total_timesteps": 512,
+  "n_envs": 1,
+  "save_freq": 256,
+  "seed": 20260525,
+  "runtime": {
+    "world_batch_vec_env": true,
+    "world_batch_threads": 1,
+    "batch_observation_backend": "compiled",
+    "batch_visual_backend": "compiled",
+    "torch_threads": 1
+  },
+  "naval_entry": {
+    "task_id": "naval_screen_station_hold_threat_aware_v1",
+    "scenario_path": "scenarios/naval/ddg51_take1_screen_threat_roe_v1.json",
+    "contract_path": "tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json",
+    "source_preflight": "docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md",
+    "realism_grade": "N4_pre_fire_bridge",
+    "entry_status": "active_smoke_probe",
+    "claim_level": "entry_and_gate_only",
+    "engagement_scope": "pre_fire_only",
+    "current_action_surface": "no_release_probe",
+    "cooperative_runtime_status": "pending_non_agent_roster_slot_gate",
+    "required_gate_groups": [
+      "screen_geometry",
+      "surface_contact",
+      "threat_roe",
+      "assigned_target_provenance",
+      "station_hold"
+    ]
+  },
+  "env": {
+    "include_visual": false,
+    "include_proprio": true,
+    "mission_obs_mode": "nav_v2_formation_role_v1",
+    "step_info_mode": "terminal",
+    "execution_step_runtime_mode": "compiled",
+    "flight_shaping_backend": "compiled",
+    "action_mode": "takeoff4"
+  },
+  "early_stop": {
+    "enabled": false
+  },
+  "diagnostics": {
+    "nonfinite_probe": true,
+    "nonfinite_probe_report": "nonfinite_probe_report.json",
+    "nonfinite_probe_history": 128
+  },
+  "hyperparameters": {
+    "learning_rate": 0.0003,
+    "n_steps": 32,
+    "batch_size": 32,
+    "n_epochs": 1,
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "clip_range": 0.2,
+    "normalize_advantage": true,
+    "ent_coef": 0.0,
+    "vf_coef": 0.5,
+    "max_grad_norm": 0.5,
+    "device": "cpu",
+    "policy_kwargs": {
+      "features_extractor_class": "TransformerExtractor",
+      "features_extractor_kwargs": {
+        "features_dim": 64,
+        "n_heads": 4,
+        "n_layers": 1,
+        "use_amp": false,
+        "use_checkpointing": false
+      },
+      "log_std_init": -1.0,
+      "net_arch": {
+        "pi": [64],
+        "vf": [64]
+      }
+    }
+  }
+}

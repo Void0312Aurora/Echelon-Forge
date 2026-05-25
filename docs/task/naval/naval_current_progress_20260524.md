@@ -164,9 +164,13 @@ The accepted next RL-compatible task candidates are:
 - `naval_contact_report_threat_roe_v1`;
 - `naval_screen_station_hold_threat_aware_v1`.
 
-Both remain preflight surfaces until trainer/eval configs, observation-schema
-tests, reward code, and policy validation exist. `naval_limited_engagement_v1`
-is blocked behind N5 launch/reject and non-damage gates.
+Both now have active smoke/probe entrypoints under
+[examples/config/training/active/naval](../../../examples/config/training/active/naval/README.md).
+These entries are implementation gates, not trained-policy evidence: they pair
+the accepted N4 scenario with the maintained world-batch training path, use a
+temporary no-release action surface, and keep weapon release, damage rewards,
+kill rewards, and learned-policy claims out of scope. `naval_limited_engagement_v1`
+remains blocked behind N5 launch/reject and non-damage gates.
 
 ## Validation
 
@@ -209,6 +213,22 @@ git diff --check -- docs/task/naval
 # passed
 ```
 
+N4 active training-entry gate:
+
+```bash
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py
+# 4 passed, 4 subtests passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_contact_report_threat_roe_smoke_v1.json --output_base /tmp/cmo-naval-train.<tmp> --run_name naval_contact_report_threat_roe_smoke_v1
+# Training Complete.
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --output_base /tmp/cmo-naval-train.<tmp> --run_name naval_screen_station_hold_threat_aware_smoke_v1
+# Training Complete.
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
+# PASS
+```
+
 ## Next Focus
 
 Recommended next steps:
@@ -225,5 +245,6 @@ Recommended next steps:
    non-damage acceptance gates.
 5. Strengthen maritime-state field tests, sensor/LOS coupling, and naval weapon
    command stability before expanding into larger fleet combat.
-6. Turn the current naval scenarios into training/eval CLI-ready config
-   entrypoints.
+6. Replace the temporary N4 no-release execution probe with a dedicated naval
+   observation/action/reward/eval package before any learned-policy or
+   cooperative naval training claim.
