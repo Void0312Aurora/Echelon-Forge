@@ -439,6 +439,7 @@
         let lastFrameTs = performance.now();
         let chaseTargetPrev = null;
         let trailFrameCounter = 0;
+        const MAX_TRAIL_POINTS_PER_UNIT = 6000;
         let presentationMode = 'MAP';
         let lastTacticalState = null;
         let tacticalViewport = null;
@@ -456,7 +457,7 @@
 
         // Input State
         const keys = { w: false, a: false, s: false, d: false, q: false, e: false, Shift: false };
-        const SPEED_STEPS = [1, 2, 4, 8];
+        const SPEED_STEPS = [0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8, 16];
         let vizScenarioList = [];
         let vizProfileList = [];
         let vizAssetRegistryList = [];
@@ -646,6 +647,7 @@
             units.forEach((uObj) => {
                 if (uObj.mesh) {
                     scene.remove(uObj.mesh);
+                    disposeObjectTree(uObj.mesh);
                 }
                 if (uObj.trail) {
                     scene.remove(uObj.trail);
@@ -759,11 +761,25 @@
         }
 
         function applyAssetRegistry(registry) {
+            const nextPath = String(registry?.path || '').trim();
+            const nextName = String(registry?.name || 'default').trim() || 'default';
+            const nextEntries = Array.isArray(registry?.entries) ? registry.entries : [];
+            const currentPath = String(currentAssetRegistry?.path || '').trim();
+            const currentName = String(currentAssetRegistry?.name || '').trim();
+            const currentEntryCount = Array.isArray(currentAssetRegistry?.entries) ? currentAssetRegistry.entries.length : 0;
+            if (
+                currentPath === nextPath
+                && currentName === nextName
+                && currentEntryCount === nextEntries.length
+                && assetModelCache.size > 0
+            ) {
+                return;
+            }
             const entries = Array.isArray(registry?.entries) ? registry.entries.map(normalizeRegistryEntry) : [];
             currentAssetRegistry = {
-                name: String(registry?.name || 'default').trim() || 'default',
+                name: nextName,
                 description: String(registry?.description || '').trim(),
-                path: String(registry?.path || '').trim(),
+                path: nextPath,
                 entries,
             };
             assetModelCache.clear();
@@ -800,19 +816,29 @@
             const platformPatterns = Array.isArray(match.platform_type_patterns) ? match.platform_type_patterns : [];
             const namePatterns = Array.isArray(match.name_patterns) ? match.name_patterns : [];
             const serviceProfiles = Array.isArray(match.service_profiles) ? match.service_profiles : [];
+            const hasIdentityPatterns = platformPatterns.length > 0 || namePatterns.length > 0;
 
+            let identityHit = false;
             if (platformPatterns.length > 0) {
                 const hit = platformPatterns.some((pattern) => matchesPattern(pattern, platformType));
-                if (!hit) return null;
-                matchedAnything = true;
-                score -= 100;
+                if (hit) {
+                    identityHit = true;
+                    matchedAnything = true;
+                    score -= 100;
+                }
             }
 
             if (namePatterns.length > 0) {
                 const hit = namePatterns.some((pattern) => matchesPattern(pattern, name));
-                if (!hit) return null;
-                matchedAnything = true;
-                score -= 25;
+                if (hit) {
+                    identityHit = true;
+                    matchedAnything = true;
+                    score -= 25;
+                }
+            }
+
+            if (hasIdentityPatterns && !identityHit) {
+                return null;
             }
 
             if (serviceProfiles.length > 0) {
@@ -1282,9 +1308,15 @@
         };
 
         function setSpeed(value) {
-            simSpeed = value;
+            simSpeed = Number(value);
             socket.emit('set_speed', { value });
-            document.getElementById('btn-speed').innerText = `SPD: ${value}x`;
+            document.getElementById('btn-speed').innerText = `SPD: ${formatSpeed(value)}x`;
+        }
+
+        function formatSpeed(value) {
+            const speed = Number(value);
+            if (!Number.isFinite(speed)) return '1';
+            return speed >= 1 ? String(Math.round(speed)) : speed.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
         }
 
         function drawTacticalView(state) {
@@ -1582,7 +1614,7 @@
 
             // Trail
             const trailGeo = new THREE.BufferGeometry();
-            const positions = new Float32Array(6000 * 3);
+            const positions = new Float32Array(MAX_TRAIL_POINTS_PER_UNIT * 3);
             trailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             trailGeo.setDrawRange(0, 0);
             const trailMat = new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.5, transparent: true });
@@ -1595,6 +1627,7 @@
                 mesh: group,
                 trail: trail,
                 trailIdx: 0,
+                trailCount: 0,
                 trailPos: positions,
                 data: uData,
                 assetEntry: assetEntry,
@@ -1691,25 +1724,23 @@
                 uObj.mesh.quaternion.slerp(uObj.targetQuaternion, alpha);
 
                 if (trailFrameCounter !== 0) return;
-                const idx = uObj.trailIdx;
-                if ((idx * 3 + 2) >= uObj.trailPos.length) {
-                    const grown = new Float32Array(uObj.trailPos.length * 2);
-                    grown.set(uObj.trailPos);
-                    uObj.trailPos = grown;
-                    uObj.trail.geometry.setAttribute('position', new THREE.BufferAttribute(grown, 3));
-                }
-                const prevIdx = Math.max(0, idx - 1);
+                const prevIdx = Math.max(0, uObj.trailCount - 1);
                 const px = uObj.trailPos[prevIdx * 3];
                 const py = uObj.trailPos[prevIdx * 3 + 1];
                 const pz = uObj.trailPos[prevIdx * 3 + 2];
                 const dx = uObj.mesh.position.x - px;
                 const dy = uObj.mesh.position.y - py;
                 const dz = uObj.mesh.position.z - pz;
-                if (idx === 0 || (dx * dx + dy * dy + dz * dz) > 25.0) {
+                if (uObj.trailCount === 0 || (dx * dx + dy * dy + dz * dz) > 25.0) {
+                    if (uObj.trailCount >= MAX_TRAIL_POINTS_PER_UNIT) {
+                        uObj.trailPos.copyWithin(0, 3);
+                    }
+                    const idx = Math.min(uObj.trailCount, MAX_TRAIL_POINTS_PER_UNIT - 1);
                     uObj.trailPos[idx * 3] = uObj.mesh.position.x;
                     uObj.trailPos[idx * 3 + 1] = uObj.mesh.position.y;
                     uObj.trailPos[idx * 3 + 2] = uObj.mesh.position.z;
-                    uObj.trail.geometry.setDrawRange(0, idx + 1);
+                    uObj.trailCount = Math.min(MAX_TRAIL_POINTS_PER_UNIT, uObj.trailCount + 1);
+                    uObj.trail.geometry.setDrawRange(0, uObj.trailCount);
                     uObj.trail.geometry.attributes.position.needsUpdate = true;
                     uObj.trailIdx++;
                     ensureGridContainsPoint(uObj.mesh.position.x, uObj.mesh.position.z);
@@ -1949,9 +1980,9 @@
 
         socket.on('speed_update', (data) => {
             const value = Number(data?.value);
-            if (!Number.isFinite(value) || value < 1) return;
+            if (!Number.isFinite(value) || value < 0.05) return;
             simSpeed = value;
-            document.getElementById('btn-speed').innerText = `SPD: ${simSpeed}x`;
+            document.getElementById('btn-speed').innerText = `SPD: ${formatSpeed(simSpeed)}x`;
         });
 
         socket.on('viz_app_status', (status) => {

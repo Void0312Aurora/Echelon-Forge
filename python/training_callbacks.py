@@ -37,6 +37,9 @@ class CMODiagnosticsCallback(BaseCallback):
         "waypoint_progress",
         "waypoint_success_bonus",
         "objective_bonus",
+        "combat_win_bonus",
+        "combat_loss_penalty",
+        "combat_draw_reward",
     )
 
     LEADER_REWARD_KEYS = (
@@ -130,6 +133,8 @@ class CMODiagnosticsCallback(BaseCallback):
     @staticmethod
     def _is_failure_reason(reason: str) -> bool:
         if reason.startswith("success"):
+            return False
+        if reason == "combat_win":
             return False
         if reason in ("timeout", "running"):
             return False
@@ -233,6 +238,12 @@ class CMODiagnosticsCallback(BaseCallback):
             if a is not None and a.size > 8:
                 brake_raw = float(max(float(a[7]), float(a[8])))
                 snap["brake"] = float(np.clip((brake_raw - 0.5) * 2.0, 0.0, 1.0))
+            if a is not None and a.size > 16:
+                snap["radar_active"] = float(a[9] > 0.5)
+                snap["master_arm"] = float(a[13] > 0.5)
+                snap["fire_weapon"] = float(a[14] > 0.5)
+                snap["fire_gun"] = float(a[15] > 0.5)
+                snap["weapon_select_id"] = float(int(np.clip(float(a[16]), 0.0, 1.0) * 7.0))
 
         if reward_scalar is not None:
             try:
@@ -300,6 +311,13 @@ class CMODiagnosticsCallback(BaseCallback):
         brk = _values("brake")
         if brk:
             self._preterm_stats_window["mean_brake"].append(float(np.mean(brk)))
+        for switch_name in ("radar_active", "master_arm", "fire_weapon", "fire_gun"):
+            vals = _values(switch_name)
+            if vals:
+                self._preterm_stats_window[f"mean_{switch_name}"].append(float(np.mean(vals)))
+        weapon_select = _values("weapon_select_id")
+        if weapon_select:
+            self._preterm_stats_window["mean_weapon_select_id"].append(float(np.mean(weapon_select)))
 
     @staticmethod
     def _coop_role_name(info: dict) -> str | None:
@@ -804,6 +822,13 @@ class CMODiagnosticsCallback(BaseCallback):
                 brake_raw = np.maximum(a[:, 7], a[:, 8])
                 brake_amt = np.clip((brake_raw - 0.5) * 2.0, 0.0, 1.0)
                 self.logger.record("diag/action_brake_amt_mean", float(brake_amt.mean()))
+            if a.ndim == 2 and a.shape[1] >= 17:
+                self.logger.record("diag/action_radar_active_frac", float((a[:, 9] > 0.5).mean()))
+                self.logger.record("diag/action_master_arm_frac", float((a[:, 13] > 0.5).mean()))
+                self.logger.record("diag/action_fire_weapon_frac", float((a[:, 14] > 0.5).mean()))
+                self.logger.record("diag/action_fire_gun_frac", float((a[:, 15] > 0.5).mean()))
+                weapon_select_id = np.floor(np.clip(a[:, 16], 0.0, 1.0) * 7.0)
+                self.logger.record("diag/action_weapon_select_id_mean", float(weapon_select_id.mean()))
 
         if isinstance(infos, (list, tuple)) and infos:
             reward_keys = [
@@ -834,6 +859,9 @@ class CMODiagnosticsCallback(BaseCallback):
                 "waypoint_reached_bonus",
                 "waypoint_success_bonus",
                 "objective_bonus",
+                "combat_win_bonus",
+                "combat_loss_penalty",
+                "combat_draw_reward",
                 "untracked",
             ]
             for key in reward_keys:

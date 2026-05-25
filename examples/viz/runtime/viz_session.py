@@ -39,6 +39,7 @@ from python.world_model.features import (
     append_angle_sincos_features,
     nav_tracking_features,
 )
+from examples.viz.runtime.action_utils import normalize_fixed_action
 
 
 def _format_reward_terms(reward_terms: dict | None, *, limit: int = 8) -> str:
@@ -766,6 +767,9 @@ def _cooperative_action_wrapper_kwargs(train_config: dict | None) -> dict | None
 class VizSession:
     def __init__(self, args: Namespace, socketio, *, status_callback=None) -> None:
         self.args = args
+        fixed_action = normalize_fixed_action(getattr(args, "fixed_action", None))
+        if fixed_action is not None:
+            setattr(self.args, "fixed_action", fixed_action)
         self.socketio = socketio
         self.status_callback = status_callback
         self.scenario = str(getattr(args, "scenario", ""))
@@ -778,7 +782,20 @@ class VizSession:
         self.episode_return = 0.0
         self.map_data = None
         self.nav_data = None
-        self.sim_speed = 1
+        self.sim_speed = 1.0
+
+    def _release_runtime_resources(self) -> None:
+        env = self.env
+        self.env = None
+        self.model = None
+        if env is None:
+            return
+        close_fn = getattr(env, "close", None)
+        if callable(close_fn):
+            try:
+                close_fn()
+            except Exception as exc:
+                print(f"[WARN] Failed to close viz env: {exc}")
 
     def emit_cached_setup(self) -> None:
         if self.map_data:
@@ -786,7 +803,7 @@ class VizSession:
             self.socketio.emit("map_setup", self.map_data)
         if self.nav_data:
             self.socketio.emit("nav_setup", self.nav_data)
-        self.socketio.emit("speed_update", {"value": int(self.sim_speed)})
+        self.socketio.emit("speed_update", {"value": float(self.sim_speed)})
         self._notify_status()
 
     def _notify_status(self) -> None:
@@ -816,20 +833,21 @@ class VizSession:
         self.ready = False
         self.map_data = None
         self.nav_data = None
+        self._release_runtime_resources()
         self._notify_status()
 
     def set_speed(self, data) -> None:
         try:
-            value = 1
+            value = 1.0
             if isinstance(data, dict):
-                value = int(data.get("value", 1))
+                value = float(data.get("value", 1.0))
             else:
-                value = int(data)
+                value = float(data)
         except Exception:
-            value = 1
-        self.sim_speed = max(1, min(16, value))
-        print(f"Speed Set: {self.sim_speed}x")
-        self.socketio.emit("speed_update", {"value": int(self.sim_speed)})
+            value = 1.0
+        self.sim_speed = max(0.05, min(16.0, value))
+        print(f"Speed Set: {self.sim_speed:g}x")
+        self.socketio.emit("speed_update", {"value": float(self.sim_speed)})
         self._notify_status()
 
     def status_payload(self) -> dict:
@@ -839,7 +857,7 @@ class VizSession:
             "paused": bool(self.simulation_paused),
             "ready": bool(self.ready),
             "stopped": bool(self.stop_requested),
-            "speed": int(self.sim_speed),
+            "speed": float(self.sim_speed),
         }
 
     def run_loop(self) -> None:
@@ -986,6 +1004,7 @@ class VizSession:
                 mission_obs_mode=mission_obs_mode,
                 visual_downsample=visual_downsample,
                 visual_update_interval=visual_update_interval,
+                runtime_compatibility_enabled=True,
             )
             if bool(getattr(args, "zero_randomization", False)):
                 base_env.set_randomization_overrides(
@@ -1452,13 +1471,17 @@ class VizSession:
             )
         print("=" * 60)
         self.socketio.emit("map_setup", self.map_data)
-        self.socketio.emit("speed_update", {"value": int(self.sim_speed)})
+        self.socketio.emit("speed_update", {"value": float(self.sim_speed)})
 
         while True:
             try:
                 if self.stop_requested:
                     break
-                eventlet.sleep(dt_wall)
+                speed = max(0.05, float(self.sim_speed))
+                if speed >= 1.0:
+                    eventlet.sleep(dt_wall)
+                else:
+                    eventlet.sleep(dt_wall / speed)
 
                 if not self.simulation_running:
                     continue
@@ -1466,7 +1489,7 @@ class VizSession:
                 if self.simulation_paused:
                     continue
 
-                substeps = max(1, int(self.sim_speed))
+                substeps = max(1, int(speed)) if speed >= 1.0 else 1
                 terminated = False
                 truncated = False
                 info = {}
@@ -1938,4 +1961,5 @@ class VizSession:
                 break
 
         self.ready = False
+        self._release_runtime_resources()
         self._notify_status()

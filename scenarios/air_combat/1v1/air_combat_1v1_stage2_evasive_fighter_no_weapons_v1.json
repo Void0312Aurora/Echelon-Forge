@@ -1,0 +1,105 @@
+{
+  "scenario_name": "Air Combat 1v1 Stage 2 Evasive Fighter No Weapons V1",
+  "description": "Stage 2 air-combat curriculum scenario. Blue F-16C engages a scripted red fighter that can maneuver but has no usable missiles. This isolates geometry, pursuit, and launch timing before reciprocal weapon pressure is introduced.",
+  "realism_gradient": {
+    "domain": "air_combat",
+    "workline": "1v1",
+    "stage": "A1-S2",
+    "stage_name": "evasive_fighter_weapons_locked",
+    "training_goal": "Kill a maneuvering fighter while red weapons remain locked.",
+    "engagement_range_m": [40000.0, 70000.0],
+    "realism_scope": [
+      "fighter kinematics",
+      "scripted offset and beam behavior",
+      "launch timing against an evasive target",
+      "blue-only weapon employment"
+    ],
+    "deferred_realism": [
+      "red missile release",
+      "symmetric BVR tactics",
+      "multi-shot defensive logic",
+      "self-play"
+    ]
+  },
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 3200,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    }
+  },
+  "mission_command": {
+    "command_code": 2,
+    "target_heading": 0.0,
+    "target_altitude": 8000.0,
+    "target_speed": 240.0,
+    "assigned_target_name": "Red_Fighter",
+    "authorization_to_fire": true
+  },
+  "entities": [
+    {
+      "name": "Blue_Fighter",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 8000.0],
+      "vel": [0.0, 240.0, 0.0],
+      "heading": 0.0,
+      "is_agent": true,
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    },
+    {
+      "name": "Red_Fighter",
+      "type": "F-16C_Block50",
+      "side": "Red",
+      "pos": [0.0, 55000.0, 8000.0],
+      "vel": [0.0, -230.0, 0.0],
+      "heading": 180.0,
+      "scripted_agent": {
+        "name": "red_scripted_agent",
+        "target_name": "Blue_Fighter",
+        "cruise_speed_mps": 230.0,
+        "attack_speed_mps": 260.0,
+        "defensive_speed_mps": 300.0,
+        "threat_range_m": 60000.0,
+        "merge_range_m": 25000.0,
+        "fire_range_m": 500.0,
+        "beam_offset_deg": 85.0
+      },
+      "ammo": {
+        "missiles_remaining": 0,
+        "max_missiles": 0
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    }
+  ],
+  "objectives": [
+    {
+      "type": "conditional",
+      "reward": 1500.0,
+      "conditions": [
+        {
+          "property": "target_active",
+          "op": "<=",
+          "value": 0.0
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": -1000.0
+  }
+}

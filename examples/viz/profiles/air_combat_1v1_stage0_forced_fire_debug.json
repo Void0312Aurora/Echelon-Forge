@@ -1,0 +1,25 @@
+{
+  "name": "Air Combat 1v1 Stage 0 Forced Fire Debug",
+  "description": "Stage 0 air-combat visualization profile for inspecting the weapon-employment chain against the unarmed flying drone surrogate. Uses a fixed full-action vector that keeps radar/master-arm/fire active so the missile-release, flyout, damage, and combat_win sequence can be watched in examples/viz. Use the 0.1x or 0.05x viz speed controls for slow-motion inspection.",
+  "scenario": "scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json",
+  "asset_registry": "examples/viz/assets/registry/default.json",
+  "session": {
+    "pause_on_done": true,
+    "action_mode": "full",
+    "include_proprio": true,
+    "mission_obs_mode": "basic",
+    "visual_update_interval": 2,
+    "fixed_action": "0.02,0.0,0.0,0.65,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,1.0,0.0,0.1428571429",
+    "zero_randomization": true
+  },
+  "startup": {
+    "speed": 0.1,
+    "auto_start": false
+  },
+  "ui": {
+    "presentation_mode": "MAP",
+    "camera_mode": "CHASE",
+    "focus_unit": "Blue_Fighter",
+    "tactical_zoom": 1.2
+  }
+}

@@ -513,6 +513,7 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel>& ker
         .def("step", &SimulationKernel::step, "Advance simulation by one fixed tick")
         .def("get_time_step", &SimulationKernel::get_time_step, "Get the fixed time step in seconds")
         .def("set_time_step", &SimulationKernel::set_time_step, "Set the fixed time step in seconds")
+        .def("shutdown", &SimulationKernel::shutdown, "Release simulation kernel resources")
         .def("load_unit_definitions", [](SimulationKernel& self, const std::string& path) {
             std::string error;
             bool ok = self.load_unit_definitions(path, &error);

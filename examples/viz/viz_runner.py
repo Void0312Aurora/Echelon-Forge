@@ -14,6 +14,7 @@ if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
 from examples.viz.runtime.viz_session import VizSession
+from examples.viz.runtime.action_utils import normalize_fixed_action
 
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -145,12 +146,7 @@ def main():
     args = parser.parse_args()
 
     if args.fixed_action is not None:
-        import numpy as np
-
-        toks = [t.strip() for t in str(args.fixed_action).split(",") if t.strip()]
-        if not toks:
-            raise ValueError("--fixed_action provided but empty")
-        args.fixed_action = np.asarray([float(t) for t in toks], dtype=np.float32)
+        args.fixed_action = normalize_fixed_action(args.fixed_action, name="--fixed_action")
 
     app.config["SECRET_KEY"] = "universal_viz_secret"
     session = VizSession(args, socketio)

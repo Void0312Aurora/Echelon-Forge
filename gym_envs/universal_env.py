@@ -175,8 +175,31 @@ else:
             self.agent_id = None
             self.steps = 0
             self.max_steps = 1000
+            self._closed = False
+
+        def close(self):
+            self._last_inst = None
+            self._last_truth = None
+            self._last_action = None
+            self._visual_cache = None
+            self.loader = None
+            sim = getattr(self, "sim", None)
+            self.sim = None
+            self.agent_id = None
+            if sim is not None and hasattr(sim, "shutdown"):
+                try:
+                    sim.shutdown()
+                except Exception as e:
+                    print(f"[WARN] SimulationKernel shutdown failed: {e}")
+            self._closed = True
+            try:
+                return super().close()
+            except AttributeError:
+                return None
 
         def reset(self, seed=None, options=None):
+            if getattr(self, "_closed", False):
+                raise RuntimeError("UniversalEnv has been closed")
             reset_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             super().reset(seed=seed)
             load_t0 = time.perf_counter() if self.collect_step_timing else 0.0

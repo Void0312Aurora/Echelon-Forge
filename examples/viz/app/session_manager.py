@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import time
 from typing import Iterable
 
 from examples.viz.app.asset_registry import list_asset_registries, load_asset_registry
@@ -16,6 +17,7 @@ class SessionManager:
         self.session: VizSession | None = None
         self.current_profile: dict | None = None
         self.asset_registry = load_asset_registry()
+        self._tasks: list = []
 
     def list_scenarios(self, roots: Iterable[str] | None = None) -> list[str]:
         search_roots = list(roots or ["scenarios"])
@@ -80,10 +82,12 @@ class SessionManager:
         old_session = self.session
         if old_session is not None:
             old_session.stop()
+            self._drain_tasks(timeout_s=2.0)
 
         session = VizSession(base, self.socketio, status_callback=self.emit_status)
         self.session = session
-        self.socketio.start_background_task(session.run_loop)
+        task = self.socketio.start_background_task(session.run_loop)
+        self._tasks.append(task)
         self.emit_status()
         return session
 
@@ -96,9 +100,9 @@ class SessionManager:
 
         startup = profile.get("startup", {}) if isinstance(profile, dict) else {}
         try:
-            speed = int(startup.get("speed", 1))
+            speed = float(startup.get("speed", 1.0))
         except Exception:
-            speed = 1
+            speed = 1.0
         session.set_speed({"value": speed})
         if bool(startup.get("auto_start", False)):
             session.start()
@@ -136,6 +140,34 @@ class SessionManager:
             return
         self.session.stop()
         self.session = None
+        self._drain_tasks(timeout_s=2.0)
+        self.emit_status()
+
+    def _drain_tasks(self, *, timeout_s: float) -> None:
+        deadline = time.monotonic() + max(0.0, float(timeout_s))
+        for task in list(self._tasks):
+            while not bool(getattr(task, "dead", False)) and time.monotonic() < deadline:
+                try:
+                    import eventlet
+
+                    eventlet.sleep(0.05)
+                except Exception:
+                    break
+            if not bool(getattr(task, "dead", False)):
+                kill_fn = getattr(task, "kill", None)
+                if callable(kill_fn):
+                    try:
+                        kill_fn()
+                    except Exception:
+                        pass
+        self._tasks = [task for task in self._tasks if not bool(getattr(task, "dead", False))]
+
+    def shutdown(self, *, timeout_s: float = 5.0) -> None:
+        session = self.session
+        self.session = None
+        if session is not None:
+            session.stop()
+        self._drain_tasks(timeout_s=timeout_s)
         self.emit_status()
 
     def set_speed(self, data) -> None:

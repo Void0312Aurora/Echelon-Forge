@@ -1,0 +1,90 @@
+{
+  "scenario_name": "Air Combat 1v1 Stage 1 BVR Non-Maneuvering Target V1",
+  "description": "Stage 1 air-combat curriculum scenario. Blue F-16C engages an unarmed, non-maneuvering airborne red target at first BVR-like range. This extends the Stage 0 fire chain to longer contact persistence and missile time-of-flight without adding target evasion or reciprocal weapons.",
+  "realism_gradient": {
+    "domain": "air_combat",
+    "workline": "1v1",
+    "stage": "A1-S1",
+    "stage_name": "bvr_range_expansion_nonmaneuvering_target",
+    "training_goal": "Preserve the fire chain while increasing range to the 20-40 km band.",
+    "engagement_range_m": [20000.0, 40000.0],
+    "realism_scope": [
+      "BVR-like initial separation",
+      "contact persistence",
+      "missile time of flight",
+      "clean target kill termination"
+    ],
+    "deferred_realism": [
+      "target evasion",
+      "red weapons",
+      "datalink or offboard sensing",
+      "full peer BVR tactics"
+    ]
+  },
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 2400,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    }
+  },
+  "mission_command": {
+    "command_code": 2,
+    "target_heading": 0.0,
+    "target_altitude": 7000.0,
+    "target_speed": 230.0,
+    "assigned_target_name": "Red_Target",
+    "authorization_to_fire": true
+  },
+  "entities": [
+    {
+      "name": "Blue_Fighter",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 7000.0],
+      "vel": [0.0, 230.0, 0.0],
+      "heading": 0.0,
+      "is_agent": true,
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    },
+    {
+      "name": "Red_Target",
+      "type": "Aircraft",
+      "side": "Red",
+      "pos": [0.0, 35000.0, 7000.0],
+      "vel": [0.0, -160.0, 0.0],
+      "heading": 180.0,
+      "ammo": {
+        "missiles_remaining": 0,
+        "max_missiles": 0
+      }
+    }
+  ],
+  "objectives": [
+    {
+      "type": "conditional",
+      "reward": 1500.0,
+      "conditions": [
+        {
+          "property": "target_active",
+          "op": "<=",
+          "value": 0.0
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": -1000.0
+  }
+}

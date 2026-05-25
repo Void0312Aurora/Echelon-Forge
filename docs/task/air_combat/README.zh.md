@@ -1,17 +1,21 @@
 # 空战
 
-状态：`1v1` 工作线仍在活跃推进；默认入口已于 `2026-05-18` 收敛。
+状态：`1v1` 工作线仍在活跃推进；默认入口已于 `2026-05-18` 收敛；
+`2026-05-25` 已开启分阶段 `1v1` 真实度梯度课程。
 
 ## 当前状态
 
 - 第一阶段 `1v1` 已落到维护中的 `execution` / HMoE 主线上。
-- 当前基线为 `F-16C_Block50 vs F-16C_Block50`，红方使用脚本对手，并支持场景级弹药覆盖。
+- 当前 smoke 基线为 `F-16C_Block50 vs F-16C_Block50`，红方使用脚本对手，并支持场景级弹药覆盖。
 - 导弹发射桥、最小对抗终止字段、基础 smoke 训练入口都已经接通。
 - `2026-05-24` 的 8k HMoE probe 中，早期 episode 被 `failfast_deep_stall`
   主导的现象没有复现；本轮终止集中在 `combat_loss`。
-- 当前主要阻塞点仍不是入口接线，而是训练信号质量：`combat_loss` 与
-  `crash_penalty` 的终端组合、弹药耗尽告警、invalid entity ID 告警，以及
-  `mission_obs_mode=basic` 下 HMoE 路由仍集中在 `nav/vector`。
+- 当前主要阻塞点已明确为训练可达性：武器开关动作初始几乎不可达，smoke
+  红方会在开局立即发射，且 `mission_obs_mode=basic` 下 HMoE 路由仍集中在
+  `nav/vector`。
+- 第一训练入口应转向
+  [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
+  中定义的分阶段课程，而不是历史 smoke fixture。
 
 ## 当前继续推进重点
 
@@ -21,6 +25,7 @@
 - 强化脚本或冻结对手基线
 - 拆分 `combat_loss`、被击落实体失效和终端 crash penalty 的诊断语义
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
+- 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 
 ## 推荐阅读顺序
 
@@ -35,5 +40,7 @@
 - 训练信号与当前主要阻塞：
   [air_combat_1v1_training_smoke_progress_20260516.zh.md](archive/air_combat_1v1_training_smoke_progress_20260516.zh.md)、
   [air_combat_1v1_stall_rootcause_followup_20260516.zh.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
+- 当前分阶段课程：
+  [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
 
 历史带日期快照现统一放入 [archive/README.zh.md](archive/README.zh.md)。

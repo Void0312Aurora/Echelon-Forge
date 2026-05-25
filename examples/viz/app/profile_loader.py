@@ -4,6 +4,8 @@ import json
 import os
 from typing import Iterable
 
+from examples.viz.runtime.action_utils import normalize_fixed_action
+
 
 DEFAULT_PROFILE_ROOTS = ("examples/viz/profiles",)
 SESSION_OVERRIDE_FIELDS = {
@@ -91,13 +93,13 @@ def _normalize_ui_defaults(raw_ui: dict | None) -> dict:
 def _normalize_startup(raw_startup: dict | None) -> dict:
     startup = raw_startup if isinstance(raw_startup, dict) else {}
     out = {
-        "speed": 1,
+        "speed": 1.0,
         "auto_start": False,
     }
     try:
-        out["speed"] = max(1, min(16, int(startup.get("speed", 1))))
+        out["speed"] = max(0.05, min(16.0, float(startup.get("speed", 1.0))))
     except Exception:
-        out["speed"] = 1
+        out["speed"] = 1.0
     out["auto_start"] = bool(startup.get("auto_start", False))
     return out
 
@@ -111,6 +113,8 @@ def _normalize_session_overrides(raw_session: dict | None, *, profile_dir: str) 
         value = session.get(key)
         if key in {"model", "train_config"}:
             value = _resolve_path(value, profile_dir=profile_dir)
+        elif key == "fixed_action":
+            value = normalize_fixed_action(value, name="profile session.fixed_action")
         out[key] = value
     return out
 
