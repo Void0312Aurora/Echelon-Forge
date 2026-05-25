@@ -192,8 +192,9 @@ void SimulationKernel::register_components_and_systems() {
     register_track_manager_system(ecs);  // Phase 6.5: Build local/fused track picture from sensor + prior inbox
     register_data_link_system(ecs);      // Phase 6.55: Share current track picture to peers
     register_embarked_air_ops_system(ecs); // Phase 6.57: Embarked helo token launch/recover/relay
-    register_pilot_weapon_release_system(ecs, *this); // Phase 6.58: Pilot weapon release bridge
-    register_naval_mission_weapon_release_system(ecs, *this); // Phase 6.59: Naval mission weapon release bridge
+    IWeaponReleaseService& weapon_release_service = *this;
+    register_pilot_weapon_release_system(ecs, weapon_release_service); // Phase 6.58: Pilot weapon release bridge
+    register_naval_mission_weapon_release_system(ecs, weapon_release_service); // Phase 6.59: Naval mission weapon release bridge
     register_instrument_system(ecs);     // Phase 6.6: Instruments (Read Physics & Sensor State)
     register_damage_system(ecs);         // Phase 7: Damage/Effects
     register_ew_system(ecs);             // Phase 8: EW Actions

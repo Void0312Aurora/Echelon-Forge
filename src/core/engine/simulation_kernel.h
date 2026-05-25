@@ -26,6 +26,7 @@
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
 #include "core/interfaces/environment_model.h"
+#include "core/interfaces/weapon_release_service.h"
 #include "runtime/contracts/engagement_contracts.h"
 
 class IUnitFactory;
@@ -112,7 +113,7 @@ struct RecentEngagementEvents {
     std::vector<DiagnosticsTrace> diagnostics_traces;
 };
 
-class SimulationKernel {
+class SimulationKernel : public IWeaponReleaseService {
 public:
     SimulationKernel();
     ~SimulationKernel();
@@ -226,8 +227,8 @@ public:
     // Weapon Interface: Fire missile
     flecs::entity fire_missile(uint64_t attacker_id, uint64_t target_id);
     bool fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code);
-    flecs::entity fire_weapon_from_pilot_action(uint64_t attacker_id);
-    bool fire_naval_weapon_from_mission_command(uint64_t attacker_id) {
+    flecs::entity fire_weapon_from_pilot_action(uint64_t attacker_id) override;
+    bool fire_naval_weapon_from_mission_command(uint64_t attacker_id) override {
         return try_fire_naval_mission_weapon(attacker_id);
     }
     bool debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id, double damage, double fuse_distance);

@@ -421,15 +421,24 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     )
     assert '#include "systems/combat/pilot_weapon_release_system.h"' in systems_text
     assert '#include "systems/naval/naval_mission_weapon_release_system.h"' in systems_text
-    assert "register_pilot_weapon_release_system(ecs, *this)" in systems_text
-    assert "register_naval_mission_weapon_release_system(ecs, *this)" in systems_text
+    assert "IWeaponReleaseService& weapon_release_service = *this" in systems_text
+    assert "register_pilot_weapon_release_system(ecs, weapon_release_service)" in systems_text
+    assert "register_naval_mission_weapon_release_system(ecs, weapon_release_service)" in systems_text
     assert 'ecs.system<const PilotAction>("PilotWeaponRelease")' not in systems_text
     assert 'query<const MissionCommand, const NavalWeaponSystem>()' not in kernel_cpp_text
 
+    assert '#include "core/engine/simulation_kernel.h"' not in helper_text
+    assert '#include "core/engine/simulation_kernel.h"' not in naval_helper_text
+    assert "SimulationKernel&" not in helper_text
+    assert "SimulationKernel&" not in naval_helper_text
+    assert '#include "core/interfaces/weapon_release_service.h"' in helper_text
+    assert '#include "core/interfaces/weapon_release_service.h"' in naval_helper_text
     assert "register_pilot_weapon_release_system(" in helper_text
+    assert "IWeaponReleaseService& weapon_release_service" in helper_text
     assert 'ecs.system<const PilotAction>("PilotWeaponRelease")' in helper_text
     assert "fire_weapon_from_pilot_action(" in helper_text
     assert "register_naval_mission_weapon_release_system(" in naval_helper_text
+    assert "IWeaponReleaseService& weapon_release_service" in naval_helper_text
     assert 'ecs.system<const MissionCommand, const NavalWeaponSystem>("NavalMissionWeaponRelease")' in naval_helper_text
     assert "fire_naval_weapon_from_mission_command(" in naval_helper_text
 

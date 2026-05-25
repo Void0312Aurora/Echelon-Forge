@@ -100,14 +100,19 @@ The active design conclusion is:
     `2026-05-24`.
 20. `TM01 Architecture Closure Remediation` is closed for the audited
     implementation slice only: `TM01-A`, `TM01-C`, and `TM01-D` passed for the
-    focused maintained path, while the `TM01-B` launch bridge remains a
-    source-backed residual with later architecture ownership.
+    focused maintained path, while the `TM01-B` launch bridge was recorded as a
+    source-backed residual for later architecture ownership.
 21. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
 22. Commit messages for implementation closure should use capability/result
     language and avoid internal work-package labels such as `WP13` or `WP14`.
+23. `TM03 Launch Bridge Boundary` closed the TM01-B source-backed
+    `systems -> SimulationKernel` weapon-release residual for the two explicit
+    release helpers by introducing `IWeaponReleaseService`; it does not claim
+    broader P7 launch/fire-control redesign, raw-runtime retirement, or general
+    compatibility cleanup.
 
 ## Work Packages
 
@@ -141,9 +146,9 @@ The active design conclusion is:
 | `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen; superseded by WP23 | Attempted to force-retire post-WP21 compatibility layers, but the owner stopped the stream after uncontrolled follow-up waves and partial/quarantine evidence drift. Its queue is historical only and must not be dispatched. | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
 | `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | Froze WP22, classified current dirty work, forced delete-or-block decisions, recorded TaskOrder and public API exits as blocked, skipped implementation because no deletion-ready surface was identified, and closed as controlled blocked recovery. | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md) |
 | `WP24 TaskOrder Maintained Business Migration` | closed / accepted | Replacement-backed TaskOrder business migration after WP23: maintained contract/export/Python business paths are integrated, the old public TaskOrder whole-shell compatibility surfaces are removed, and the canonical acceptance review is published. | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md), [integration assessment and cleanup close-out](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
-| `TM01 Architecture Closure Remediation` | audited-slice closed / residuals owned | Focused remediation after the implementation-level closure audit: `TM01-A`, `TM01-C`, and `TM01-D` are complete for the audited maintained-path slice; `TM01-B` remains the ledgered launch-bridge residual, and broader architecture, P7/raw-runtime, and WP24 canonical acceptance closure remain out of scope. | [TM01 entry](tm01_architecture_closure_remediation/README.md), [task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
+| `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | Focused remediation after the implementation-level closure audit: `TM01-A`, `TM01-C`, and `TM01-D` are complete for the audited maintained-path slice; `TM01-B` recorded the launch-bridge residual that was later closed by TM03, while broader architecture, P7/raw-runtime, and WP24 canonical acceptance closure remain out of scope. | [TM01 entry](tm01_architecture_closure_remediation/README.md), [task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
 | `TM02 WP24 Acceptance Closure` | temporary / closed | Closure lane that published WP24 canonical acceptance review and index sync without reopening implementation scope. | [TM02 entry](tm02_wp24_acceptance_closure/README.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
-| `TM03 Launch Bridge Boundary` | temporary / active | Bounded architecture lane for the two `systems -> SimulationKernel` weapon-release bridges recorded by TM01-B. | [TM03 entry](tm03_launch_bridge_boundary/README.md), [task clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
+| `TM03 Launch Bridge Boundary` | temporary / closed | Bounded architecture lane that closed the two `systems -> SimulationKernel` weapon-release bridges recorded by TM01-B through a narrow `IWeaponReleaseService` seam. | [TM03 entry](tm03_launch_bridge_boundary/README.md), [task clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
 
 ## TM03 Launch Bridge Boundary
 
@@ -152,9 +157,11 @@ Output:
 - [TM03 Launch Bridge Boundary](tm03_launch_bridge_boundary/README.md)
 - [TM03 Launch Bridge Boundary Task Clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md)
 
-TM03 owns only the narrow launch-bridge residual recorded by TM01-B. Its first
-step freezes the source-backed facts and requires a replacement-seam decision
-before any implementation worker touches P7 weapon-release code.
+TM03 owned only the narrow launch-bridge residual recorded by TM01-B. It closed
+that residual by adding `IWeaponReleaseService`, removing direct
+`SimulationKernel` dependencies from the two release helper headers, and
+recording focused architecture and weapon-release validation. Broader P7
+launch/fire-control redesign and raw-runtime retirement remain outside TM03.
 
 ## TM02 WP24 Acceptance Closure
 
