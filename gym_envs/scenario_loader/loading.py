@@ -96,7 +96,7 @@ def set_randomization_overrides(loader, overrides: dict | None) -> None:
 
 def prepare_load_seed(loader, seed=42) -> int:
     if seed is None:
-        seed = np.random.randint(0, 2**32 - 1)
+        seed = int(np.random.default_rng().integers(0, 2**32, dtype=np.uint32))
     seed = int(seed) & 0xFFFFFFFF
     loader.rng = np.random.RandomState(seed)
     return seed

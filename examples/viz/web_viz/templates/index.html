@@ -16,6 +16,23 @@
     <style>
         :root {
             --viz-top-offset: 132px;
+            --viz-gutter: 20px;
+            --overlay-left: var(--viz-gutter);
+            --overlay-top: var(--viz-top-offset);
+            --overlay-width: 340px;
+            --overlay-max-height: calc(100vh - var(--viz-top-offset) - 160px);
+            --unit-list-top: var(--viz-top-offset);
+            --unit-list-left: auto;
+            --unit-list-right: var(--viz-gutter);
+            --unit-list-width: 220px;
+            --unit-list-max-height: calc(100vh - var(--viz-top-offset) - 160px);
+            --controls-help-left: var(--viz-gutter);
+            --controls-help-right: auto;
+            --controls-help-bottom: var(--viz-gutter);
+            --controls-help-width: 340px;
+            --ui-controls-left: auto;
+            --ui-controls-right: var(--viz-gutter);
+            --ui-controls-bottom: var(--viz-gutter);
         }
 
         body {
@@ -28,13 +45,17 @@
 
         #overlay {
             position: fixed;
-            top: var(--viz-top-offset);
-            left: 20px;
+            top: var(--overlay-top);
+            left: var(--overlay-left);
+            width: min(var(--overlay-width), calc(100vw - var(--viz-gutter) - var(--viz-gutter)));
+            max-height: var(--overlay-max-height);
             pointer-events: none;
             background: rgba(0, 0, 0, 0.6);
             padding: 15px;
             border: 1px solid #444;
-            min-width: 320px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            overscroll-behavior: contain;
             z-index: 3;
         }
 
@@ -63,14 +84,17 @@
 
         #unit-list {
             position: fixed;
-            top: var(--viz-top-offset);
-            right: 20px;
-            width: 200px;
+            top: var(--unit-list-top);
+            left: var(--unit-list-left);
+            right: var(--unit-list-right);
+            width: min(var(--unit-list-width), calc(100vw - var(--viz-gutter) - var(--viz-gutter)));
             background: rgba(0, 0, 0, 0.6);
             padding: 10px;
             border: 1px solid #444;
-            max-height: 80vh;
+            box-sizing: border-box;
+            max-height: var(--unit-list-max-height);
             overflow-y: auto;
+            overscroll-behavior: contain;
             z-index: 3;
         }
 
@@ -104,21 +128,25 @@
 
         #controls-help {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
+            bottom: var(--controls-help-bottom);
+            left: var(--controls-help-left);
+            right: var(--controls-help-right);
             font-size: 12px;
             color: #666;
             pointer-events: none;
-            max-width: 340px;
+            max-width: min(var(--controls-help-width), calc(100vw - var(--viz-gutter) - var(--viz-gutter)));
             z-index: 3;
         }
 
         #ui-controls {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: var(--ui-controls-bottom);
+            left: var(--ui-controls-left);
+            right: var(--ui-controls-right);
             pointer-events: auto;
             display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
             gap: 10px;
             z-index: 3;
         }
@@ -538,6 +566,16 @@
         let appliedProfileUiDefaultsKey = '';
         let currentAssetRegistry = { name: 'default', entries: [] };
         let sessionControlState = { loaded: false, ready: false, running: false, paused: false };
+        const layoutState = {
+            mode: 'wide',
+            topInset: 132,
+            leftInset: 20,
+            rightInset: 20,
+            bottomInset: 20,
+            tacticalPadding: { left: 320, right: 220, top: 72, bottom: 110 },
+            measurements: {},
+            applying: false,
+        };
 
         // --- Init ThreeJS ---
         const scene = new THREE.Scene();
@@ -568,21 +606,195 @@
         const tacticalCanvas = document.getElementById('tactical-canvas');
         const tacticalCtx = tacticalCanvas.getContext('2d');
         const vizMenubar = document.getElementById('viz-menubar');
+        const overlayPanel = document.getElementById('overlay');
+        const unitListPanel = document.getElementById('unit-list');
+        const controlsHelpPanel = document.getElementById('controls-help');
+        const uiControlsPanel = document.getElementById('ui-controls');
+
+        function measureLayoutPanels() {
+            const measure = (element, fallbackWidth = 0, fallbackHeight = 0) => {
+                if (!element) return { width: fallbackWidth, height: fallbackHeight };
+                const rect = element.getBoundingClientRect();
+                return {
+                    width: Math.max(fallbackWidth, Math.round(rect.width || element.offsetWidth || 0)),
+                    height: Math.max(fallbackHeight, Math.round(rect.height || element.offsetHeight || 0)),
+                };
+            };
+            const overlayBox = measure(overlayPanel, 340, 0);
+            const unitListBox = measure(unitListPanel, 220, 0);
+            const controlsHelpBox = measure(controlsHelpPanel, 340, 0);
+            const uiControlsBox = measure(uiControlsPanel, 220, 0);
+            return {
+                viewportWidth: window.innerWidth,
+                viewportHeight: window.innerHeight,
+                gutter: 20,
+                topOffset: (vizMenubar?.offsetHeight || 116) + 16,
+                overlayWidth: overlayBox.width,
+                overlayHeight: overlayBox.height,
+                unitListWidth: unitListBox.width,
+                unitListHeight: unitListBox.height,
+                controlsHelpWidth: controlsHelpBox.width,
+                controlsHelpHeight: controlsHelpBox.height,
+                uiControlsWidth: uiControlsBox.width,
+                uiControlsHeight: uiControlsBox.height,
+            };
+        }
+
+        function resolveLayoutMode(measurements) {
+            const overlayWidth = Math.max(280, Math.min(380, measurements.overlayWidth || 340));
+            const unitListWidth = Math.max(200, Math.min(300, measurements.unitListWidth || 220));
+            const overlayHeight = Math.max(200, measurements.overlayHeight || 0);
+            const unitListHeight = Math.max(48, measurements.unitListHeight || 0);
+            const controlsHelpHeight = Math.max(14, measurements.controlsHelpHeight || 0);
+            const uiControlsHeight = Math.max(48, measurements.uiControlsHeight || 0);
+            const wideWidthNeeded = overlayWidth + unitListWidth + measurements.gutter * 4 + 360;
+            const wideHeightNeeded = measurements.topOffset + Math.max(overlayHeight, unitListHeight) + Math.max(controlsHelpHeight, uiControlsHeight) + measurements.gutter * 3 + 160;
+            if (measurements.viewportWidth >= wideWidthNeeded && measurements.viewportHeight >= wideHeightNeeded) {
+                return 'wide';
+            }
+            const compactWidthNeeded = Math.max(overlayWidth, unitListWidth) + measurements.gutter * 3 + 420;
+            const compactHeightNeeded = measurements.topOffset + overlayHeight + unitListHeight + Math.max(controlsHelpHeight, uiControlsHeight) + measurements.gutter * 4 + 140;
+            if (measurements.viewportWidth >= compactWidthNeeded && measurements.viewportHeight >= compactHeightNeeded) {
+                return 'compact';
+            }
+            return 'stacked';
+        }
+
+        function applyAutoLayout(mode, measurements) {
+            const rootStyle = document.documentElement.style;
+            const gutter = measurements.gutter;
+            const topOffset = measurements.topOffset;
+            const overlayWidth = Math.max(280, Math.min(380, measurements.overlayWidth || 340));
+            const unitListWidth = Math.max(200, Math.min(300, measurements.unitListWidth || 220));
+            const leftColumnWidth = Math.max(overlayWidth, unitListWidth);
+            const bottomDockHeight = Math.max(measurements.controlsHelpHeight, measurements.uiControlsHeight, 48);
+            let overlayTop = topOffset;
+            let overlayLeft = `${gutter}px`;
+            let overlayWidthValue = `${overlayWidth}px`;
+            let overlayMaxHeight = `calc(100vh - ${topOffset + bottomDockHeight + gutter * 3}px)`;
+            let unitListTop = topOffset;
+            let unitListLeft = 'auto';
+            let unitListRight = `${gutter}px`;
+            let unitListWidthValue = `${unitListWidth}px`;
+            let unitListMaxHeight = `calc(100vh - ${topOffset + bottomDockHeight + gutter * 3}px)`;
+            let controlsHelpLeft = `${gutter}px`;
+            let controlsHelpRight = 'auto';
+            let controlsHelpBottom = `${gutter}px`;
+            let controlsHelpWidth = `${overlayWidth}px`;
+            let uiControlsLeft = 'auto';
+            let uiControlsRight = `${gutter}px`;
+            let uiControlsBottom = `${gutter}px`;
+
+            if (mode === 'compact') {
+                overlayWidthValue = `${leftColumnWidth}px`;
+                unitListTop = topOffset + measurements.overlayHeight + gutter;
+                unitListLeft = `${gutter}px`;
+                unitListRight = 'auto';
+                unitListWidthValue = `${leftColumnWidth}px`;
+                controlsHelpWidth = `${leftColumnWidth}px`;
+                overlayMaxHeight = `calc(100vh - ${topOffset + bottomDockHeight + gutter * 4 + measurements.unitListHeight}px)`;
+                unitListMaxHeight = `calc(100vh - ${unitListTop + bottomDockHeight + gutter * 3}px)`;
+            } else if (mode === 'stacked') {
+                const stackedWidth = `${Math.max(320, Math.min(420, measurements.viewportWidth - gutter * 2))}px`;
+                const stackedBottom = measurements.uiControlsHeight + gutter * 2;
+                overlayWidthValue = stackedWidth;
+                unitListTop = topOffset + measurements.overlayHeight + gutter;
+                unitListLeft = `${gutter}px`;
+                unitListRight = 'auto';
+                unitListWidthValue = stackedWidth;
+                controlsHelpLeft = `${gutter}px`;
+                controlsHelpRight = 'auto';
+                controlsHelpBottom = `${stackedBottom}px`;
+                controlsHelpWidth = stackedWidth;
+                uiControlsLeft = 'auto';
+                uiControlsRight = `${gutter}px`;
+                overlayMaxHeight = `calc(100vh - ${topOffset + measurements.unitListHeight + measurements.controlsHelpHeight + measurements.uiControlsHeight + gutter * 5}px)`;
+                unitListMaxHeight = `calc(100vh - ${unitListTop + measurements.controlsHelpHeight + measurements.uiControlsHeight + gutter * 4}px)`;
+            }
+
+            rootStyle.setProperty('--viz-top-offset', `${topOffset}px`);
+            rootStyle.setProperty('--overlay-left', overlayLeft);
+            rootStyle.setProperty('--overlay-top', `${overlayTop}px`);
+            rootStyle.setProperty('--overlay-width', overlayWidthValue);
+            rootStyle.setProperty('--overlay-max-height', overlayMaxHeight);
+            rootStyle.setProperty('--unit-list-top', `${unitListTop}px`);
+            rootStyle.setProperty('--unit-list-left', unitListLeft);
+            rootStyle.setProperty('--unit-list-right', unitListRight);
+            rootStyle.setProperty('--unit-list-width', unitListWidthValue);
+            rootStyle.setProperty('--unit-list-max-height', unitListMaxHeight);
+            rootStyle.setProperty('--controls-help-left', controlsHelpLeft);
+            rootStyle.setProperty('--controls-help-right', controlsHelpRight);
+            rootStyle.setProperty('--controls-help-bottom', controlsHelpBottom);
+            rootStyle.setProperty('--controls-help-width', controlsHelpWidth);
+            rootStyle.setProperty('--ui-controls-left', uiControlsLeft);
+            rootStyle.setProperty('--ui-controls-right', uiControlsRight);
+            rootStyle.setProperty('--ui-controls-bottom', uiControlsBottom);
+            document.documentElement.dataset.layoutMode = mode;
+
+            layoutState.mode = mode;
+            layoutState.measurements = measurements;
+        }
+
+        function computeTacticalPaddingFromLayout() {
+            const measurements = layoutState.measurements || {};
+            const gutter = measurements.gutter || 20;
+            const bottomWide = Math.max(110, Math.max(measurements.controlsHelpHeight || 0, measurements.uiControlsHeight || 0) + gutter * 2);
+            if (layoutState.mode === 'stacked') {
+                return {
+                    left: gutter + 8,
+                    right: gutter + 8,
+                    top: Math.max(72, (measurements.topOffset || 72) + (measurements.overlayHeight || 0) + (measurements.unitListHeight || 0) + gutter * 2),
+                    bottom: Math.max(120, (measurements.controlsHelpHeight || 0) + (measurements.uiControlsHeight || 0) + gutter * 3),
+                };
+            }
+            if (layoutState.mode === 'compact') {
+                return {
+                    left: Math.max(220, Math.max(measurements.overlayWidth || 0, measurements.unitListWidth || 0) + gutter * 2),
+                    right: Math.max(140, Math.min(260, (measurements.uiControlsWidth || 0) + gutter)),
+                    top: 72,
+                    bottom: bottomWide,
+                };
+            }
+            return {
+                left: Math.max(220, (measurements.overlayWidth || 340) + gutter * 2),
+                right: Math.max(180, (measurements.unitListWidth || 220) + gutter * 2),
+                top: 72,
+                bottom: bottomWide,
+            };
+        }
+
+        function refreshAutoLayout(options = {}) {
+            if (layoutState.applying) return;
+            layoutState.applying = true;
+            const measurements = measureLayoutPanels();
+            const mode = resolveLayoutMode(measurements);
+            applyAutoLayout(mode, measurements);
+            layoutState.tacticalPadding = computeTacticalPaddingFromLayout();
+            layoutState.topInset = layoutState.tacticalPadding.top;
+            layoutState.leftInset = layoutState.tacticalPadding.left;
+            layoutState.rightInset = layoutState.tacticalPadding.right;
+            layoutState.bottomInset = layoutState.tacticalPadding.bottom;
+            layoutState.applying = false;
+            if (options.redraw && lastTacticalState && presentationMode === 'MAP') {
+                drawTacticalView(lastTacticalState);
+            }
+        }
 
         function updateLayoutOffsets() {
-            const topOffset = (vizMenubar?.offsetHeight || 116) + 16;
-            document.documentElement.style.setProperty('--viz-top-offset', `${topOffset}px`);
+            refreshAutoLayout();
         }
 
         function updatePresentationModeUI() {
             const mapMode = presentationMode === 'MAP';
+            const cameraButton = document.getElementById('btn-cam');
             tacticalPanel.classList.toggle('hidden', !mapMode);
             renderer.domElement.style.opacity = mapMode ? '0.16' : '1.0';
             renderer.domElement.style.pointerEvents = mapMode ? 'none' : 'auto';
             controls.enabled = !mapMode;
             controls.enablePan = (!mapMode && viewMode !== 'CHASE');
             document.getElementById('btn-view').innerText = `VIEW: ${presentationMode}`;
-            document.getElementById('btn-cam').innerText = `3D: ${viewMode}`;
+            cameraButton.innerText = `3D: ${viewMode}`;
+            cameraButton.style.display = mapMode ? 'none' : '';
         }
 
         function updateTacticalLayerButtons() {
@@ -660,6 +872,7 @@
         };
 
         function resizeTacticalCanvas() {
+            refreshAutoLayout();
             const dpr = Math.max(1, window.devicePixelRatio || 1);
             const width = window.innerWidth;
             const height = window.innerHeight;
@@ -1342,7 +1555,7 @@
                 btnLoadProfile.disabled = vizProfileList.length === 0;
                 btnLoadAssetRegistry.disabled = vizAssetRegistryList.length === 0;
                 syncRunControl();
-                updateLayoutOffsets();
+                refreshAutoLayout({ redraw: true });
                 return;
             }
 
@@ -1355,7 +1568,7 @@
             btnLoadProfile.disabled = vizProfileList.length === 0;
             btnLoadAssetRegistry.disabled = vizAssetRegistryList.length === 0;
             syncRunControl();
-            updateLayoutOffsets();
+            refreshAutoLayout({ redraw: true });
         }
 
         window.loadSelectedProfile = function () {
@@ -1587,7 +1800,7 @@
                 maxY = 500.0;
             }
 
-            const viewportPadding = {
+            const viewportPadding = layoutState.tacticalPadding || {
                 left: Math.min(420, Math.max(220, width * 0.26)),
                 right: Math.min(260, Math.max(180, width * 0.18)),
                 top: 72,
@@ -2394,6 +2607,7 @@
                 div.onclick = () => setFocus(u.id);
                 list.appendChild(div);
             });
+            refreshAutoLayout();
         }
 
         function renderMissionStatus(status) {
@@ -2697,7 +2911,6 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            updateLayoutOffsets();
             resizeTacticalCanvas();
         });
     </script>
