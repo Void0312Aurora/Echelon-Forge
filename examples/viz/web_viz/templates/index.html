@@ -465,6 +465,7 @@
         let currentProfile = '';
         let sessionReady = false;
         let currentProfileUiDefaults = null;
+        let appliedProfileUiDefaultsKey = '';
         let currentAssetRegistry = { name: 'default', entries: [] };
         let sessionControlState = { loaded: false, ready: false, running: false, paused: false };
 
@@ -1158,6 +1159,7 @@
             if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'profile')) {
                 currentProfile = String(appStatus?.profile?.path || '').trim();
                 currentProfileUiDefaults = appStatus?.profile?.ui_defaults || null;
+                if (!currentProfile) appliedProfileUiDefaultsKey = '';
             }
             if (appStatus && Object.prototype.hasOwnProperty.call(appStatus, 'asset_registry')) {
                 applyAssetRegistry(appStatus.asset_registry);
@@ -1241,6 +1243,11 @@
         };
 
         function applyProfileUiDefaults() {
+            if (!currentProfile || !currentProfileUiDefaults) return;
+            const defaultsKey = `${currentProfile}|${JSON.stringify(currentProfileUiDefaults)}`;
+            if (appliedProfileUiDefaultsKey === defaultsKey) return;
+            appliedProfileUiDefaultsKey = defaultsKey;
+
             const ui = currentProfileUiDefaults || {};
             const nextPresentationMode = String(ui.presentation_mode || '').toUpperCase();
             const nextCameraMode = String(ui.camera_mode || '').toUpperCase();
