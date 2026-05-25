@@ -84,7 +84,30 @@ def _recovery_approach_type_or_default(raw_value: Any, default_value: Any) -> An
         if raw_value is None:
             return default_value
         return _coerce_nonnegative_int(raw_value)
-    return _enum_or_default(namespace, raw_value, default_value)
+    try:
+        default_member = namespace(int(default_value))
+    except Exception:
+        default_member = default_value
+    if raw_value is None:
+        return default_member
+    if isinstance(raw_value, str):
+        text = str(raw_value).strip()
+        if not text:
+            return default_member
+        direct = getattr(namespace, text, None)
+        if direct is not None:
+            return direct
+        normalized = text.replace("_", "").replace(" ", "").lower()
+        for name in dir(namespace):
+            if name.startswith("_"):
+                continue
+            if name.replace("_", "").lower() == normalized:
+                return getattr(namespace, name)
+        return default_member
+    try:
+        return namespace(int(raw_value))
+    except Exception:
+        return default_member
 
 
 def _takeoff_procedure_or_default(raw_value: Any, default_value: Any) -> Any:
@@ -421,7 +444,10 @@ class RuleBasedLeaderPhaseManager:
         route_ref_id = infer_route_ref_id(loader)
         recovery_base_id = infer_recovery_base_id(loader, task=task)
         recovery_runway_id = infer_recovery_runway_id(loader, task=task)
-        recovery_approach_type = infer_recovery_approach_type(loader, task=task)
+        recovery_approach_type = _recovery_approach_type_or_default(
+            infer_recovery_approach_type(loader, task=task),
+            _recovery_approach_none(),
+        )
         intent.route_ref_id = int(route_ref_id if int(intent.command_code) == 3 and active_waypoint_leg else 0)
         intent.recovery_base_id = int(recovery_base_id)
         intent.recovery_runway_id = int(recovery_runway_id)
@@ -532,7 +558,10 @@ class RuleBasedLeaderPhaseManager:
                 _recovery_approach_none(),
             )
             if int(current) == int(_recovery_approach_none()):
-                order.recovery_approach_type = infer_recovery_approach_type(loader, task=order)
+                order.recovery_approach_type = _recovery_approach_type_or_default(
+                    infer_recovery_approach_type(loader, task=order),
+                    _recovery_approach_none(),
+                )
         apply_task_order_common_core_defaults(
             order,
             task_name=str(getattr(loader, "c2_task_name", "") or "").strip().upper() or None,

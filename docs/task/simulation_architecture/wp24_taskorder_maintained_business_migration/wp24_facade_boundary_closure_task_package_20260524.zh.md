@@ -19,7 +19,7 @@ hard-gating。
 | `ObservationBatchPacket` 混合 agent observation 与 command-side payload。 | 属实，P1。 | `ObservationBatchPacket` 暴露 `mission_commands`、`leader_intents`、`pilot_reports`；packet 只有一个 `AgentObservation` provenance。 | 拆分 observation export 与 command/tasking export，并守住 packet shape。 |
 | 场景加载绕过 facade-owned boundary。 | 经校准后属实，P1；setup、normal batch stepping 与 visual fallback 已加 guard。 | `batch_apply.py` 现在默认走 maintained setup-target API；`RuntimeFacadeAdapter.step_worlds()` 对正常 full-batch step 使用 facade `step_batch()`，partial raw stepping 没有显式 compatibility opt-in 会 fail closed。`UniversalEnv` raw `SimulationKernel` 仍被 gate。Legacy visual fallback 现在没有显式 runtime compatibility 时 fail closed。 | 继续把 setup/step 路径放在 maintained facade/adapter contract 后面；任何 raw visual fallback 都只能是 compatibility-only。 |
 | Facade/contract 仍是双重表示主机。 | 任务包打开时属实；close-out 已删除 public facade whole-shell MC/LI/PR API。 | TaskOrder public whole-shell API 已经退休。`MissionCommand`、`LeaderIntent`、`PilotReport` 现在已有 runtime/facade/binding/Python business flow 使用的 maintained contract 等价物。Whole-shell MC/LI/PR transport 只保留在低层 `WorldBatchRuntime` compatibility shell。 | 继续要求 maintained business caller 走 contract route，并用 guard 禁止 whole-shell writer 回流。 |
-| `agent_shim.py` 默认 `COMPATIBILITY_ADAPTER`。 | 经校准后属实，P2。 | 默认值是 fail-closed metadata，不是直接 runtime 执行；但 maintained caller 仍可能意外继承 compatibility provenance。 | maintained business path 必须显式传入 maintained provenance，并加 guard。 |
+| `agent_shim.py` 的默认值是 maintained，不是 compatibility。 | 经校准后属实，P2。 | `single_agent_role()` 和 `roster_slot_role()` 默认使用 `MAINTAINED`；maintained entry point 仍需要显式标记 compatibility 或 raw provenance。 | 继续让 WP24-L 文案与 maintained 默认值对齐，并保留显式 provenance guard；canonical acceptance review 仍不在当前 lane 内，直到更广的验证门通过。 |
 
 ## 2. 强制工作线
 
@@ -95,22 +95,21 @@ surface 上含混的 whole-shell payload。
 
 ### WP24-L: Maintained Provenance Defaults At Call Sites
 
-`agent_shim.py` 可以保留 compatibility default 作为 fail-closed 行为，但 maintained
-business path 不允许隐式继承这个默认值。
+`agent_shim.py` 的默认值是 maintained。之前“compatibility default”的表述已经过时，
+但 maintained business path 仍然不允许隐式继承 provenance。
 
 必须修改：
 
 - 审计 maintained caller 对 `single_agent_role()` 和 `roster_slot_role()` 的使用。
 - 要求 maintained caller 显式传入 `OBS_FACADE_OBSERVATION_PACKET` 或 maintained
   `DecisionBelief` provenance。
-- 增加测试证明默认 compatibility provenance 会在 maintained business entry point
-  被拒绝。
+- 增加测试证明 relabeled raw 或 compatibility provenance 会在 maintained business
+  entry point 被拒绝，同时 maintained 默认值保持安全。
 
 验收标准：
 
-- shim 默认值仍是安全的 compatibility metadata。
-- Maintained path 必须显式选择 maintained provenance，不能意外使用 compatibility
-  default。
+- shim 默认值仍是安全的 maintained metadata。
+- Maintained path 必须显式选择 provenance，不能意外降级为 compatibility label。
 - Law 14 read-side guard 持续拒绝 relabeled raw 或 compatibility input。
 
 ## 3. 收口台账

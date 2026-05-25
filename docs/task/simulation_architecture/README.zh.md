@@ -74,11 +74,14 @@
     Reset`：它冻结 WP22，分类当前 dirty work，强制 delete-or-block 判定，将
     single-representation tasking/public-API exits 判定为 blocked，跳过
     implementation，并于 `2026-05-24` 以 `blocked` 关闭。
-20. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
+20. `TM01 Architecture Closure Remediation` 仅就已审计的实现切片关闭：`TM01-A`、
+    `TM01-C` 与 `TM01-D` 已完成并验证，而 `TM01-B` 的 launch bridge 仍是有
+    源码锚点的 residual，并由后续架构工作负责。
+21. 当本子项目被拆分给多个 subagent 或 worker 时，应遵循
     [Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
     保持写入范围互不重叠、保留一个 integration owner，并且不要让多个并行作者
     拆写同一张规范性表格。
-21. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
+22. 实现收口的 commit message 应使用 capability/result language，避免 `WP13`
     或 `WP14` 这类 internal work-package labels。
 
 ## 工作包
@@ -113,7 +116,7 @@
 | `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen；由 WP23 取代 | 曾试图强制退场 post-WP21 compatibility layers，但 owner 因 uncontrolled follow-up waves 与 partial/quarantine evidence drift 终止该流。其 queue 只作历史记录，不得再派发。 | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.zh.md)、[dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
 | `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | 冻结 WP22，分类当前 dirty work，强制 delete-or-block decisions，将 TaskOrder 与 public API exits 记录为 blocked；因没有 deletion-ready surface 而跳过 implementation，并以受控 blocked recovery 收口。 | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md) |
 | `WP24 TaskOrder Maintained Business Migration` | active / deletion close-out | WP23 后的 replacement-backed TaskOrder 业务迁移：maintained contract/export/Python business paths 已集成，本轮 cleanup close-out 删除旧 public TaskOrder whole-shell compatibility surfaces。 | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)、[集成评估与清理收口](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md) |
-| `TM01 Architecture Closure Remediation` | temporary / active | 实现层闭合审计后的有边界整改线：修复 ground tasking-shell blocker，记录 launch-bridge residual，并同步 WP24 provenance / acceptance wording；不打开大范围重构。 | [TM01 entry](tm01_architecture_closure_remediation/README.md)、[task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
+| `TM01 Architecture Closure Remediation` | audited-slice closed / residuals owned | 审计后的有边界整改线：`TM01-A`、`TM01-C`、`TM01-D` 已完成并覆盖本次 maintained-path 切片；`TM01-B` 仍是已记录的 launch-bridge residual，且更广泛的架构、P7/raw-runtime 与 WP24 canonical acceptance 闭合仍未完成。 | [TM01 entry](tm01_architecture_closure_remediation/README.md)、[task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
 
 ## TM01 Architecture Closure Remediation
 
@@ -122,10 +125,15 @@
 - [TM01 Architecture Closure Remediation](tm01_architecture_closure_remediation/README.md)
 - [TM01 Architecture Closure Task Clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
 
-TM01 是 temporary project，不是新的 architecture WP。它用于把本轮审计后的整改限制在有限范围内：
-修复当前 ground tasking-shell 验证失败，记录窄的 `systems -> SimulationKernel`
-launch bridge residual，并同步 WP24 provenance / acceptance wording。它不得扩展为完整
-ground runtime、P7 全面重设计或 public raw-runtime escape hatch 删除。
+TM01 仅对已审计的实现切片关闭；它不是新的 architecture WP，也不会创建 canonical
+WP24 acceptance。`TM01-A` 已恢复聚焦的 ground tasking-shell 验证路径，`TM01-C`
+已把 WP24 provenance wording 同步到 maintained `agent_shim.py` 默认值，`TM01-D`
+已发布聚焦验证结果与 close/block 建议。
+
+`TM01-B` 仍由 owner 负责，作为带源码锚点的 `systems -> SimulationKernel`
+launch bridge residual。更广泛的架构闭合、P7 launch/fire-control contract 重设、
+public raw-runtime 或 compatibility 退场、完整 ground runtime、以及 WP24 canonical
+acceptance review 均仍显式未闭合。
 
 ## WP24 TaskOrder Maintained Business Migration
 

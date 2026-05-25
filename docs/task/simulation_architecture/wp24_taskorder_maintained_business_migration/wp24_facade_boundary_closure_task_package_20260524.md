@@ -20,7 +20,7 @@ boundary leaks.
 | `ObservationBatchPacket` mixes agent observation with command-side payloads. | Confirmed, P1. | `ObservationBatchPacket` exposes `mission_commands`, `leader_intents`, and `pilot_reports`; the packet has a single `AgentObservation` provenance. | Split observation export from command/tasking export and guard the packet shape. |
 | Scenario loading bypasses facade-owned boundaries. | Confirmed with calibration, P1; setup, normal batch stepping, and visual fallback are now guarded. | `batch_apply.py` now defaults to maintained setup-target APIs; `RuntimeFacadeAdapter.step_worlds()` uses facade `step_batch()` for normal full-batch stepping and rejects partial raw stepping without explicit compatibility opt-in. `UniversalEnv` raw `SimulationKernel` remains gated. Legacy visual fallback now fails closed unless runtime compatibility is explicit. | Keep setup/step paths behind maintained facade/adapter contracts; any raw visual fallback remains compatibility-only. |
 | Facade/contract is still a dual-representation host. | Confirmed at package open; close-out removed the public facade whole-shell MC/LI/PR API. | TaskOrder public whole-shell APIs are retired. `MissionCommand`, `LeaderIntent`, and `PilotReport` now have maintained contract equivalents for runtime/facade/binding/Python business flow. Whole-shell MC/LI/PR transport remains only on the lower-level `WorldBatchRuntime` compatibility shell. | Keep maintained business callers on the contract route and guard against whole-shell writer re-entry. |
-| `agent_shim.py` defaults to `COMPATIBILITY_ADAPTER`. | Confirmed with calibration, P2. | The default is fail-closed metadata, not direct runtime execution, but maintained callers can still inherit compatibility provenance accidentally. | Maintained business paths must pass maintained provenance explicitly and be guarded. |
+| `agent_shim.py` defaults are maintained, not compatibility. | Confirmed with calibration, P2. | `single_agent_role()` and `roster_slot_role()` default to `MAINTAINED`; compatibility and raw provenance still need explicit labels at maintained entry points. | Keep WP24-L wording aligned with maintained defaults and preserve explicit provenance guards; canonical acceptance review remains outside this lane until the broader validation gate is green. |
 
 ## 2. Mandatory Work Lanes
 
@@ -103,22 +103,23 @@ Acceptance criteria:
 
 ### WP24-L: Maintained Provenance Defaults At Call Sites
 
-`agent_shim.py` may keep compatibility defaults for fail-closed behavior, but
-maintained business paths must not inherit them implicitly.
+`agent_shim.py` defaults are maintained. The earlier compatibility-default note
+was stale, but maintained business paths must still not inherit provenance
+implicitly.
 
 Required changes:
 
 - Audit maintained callers of `single_agent_role()` and `roster_slot_role()`.
 - Require maintained callers to pass `OBS_FACADE_OBSERVATION_PACKET` or a
   maintained `DecisionBelief` provenance explicitly.
-- Add tests proving default compatibility provenance is rejected at maintained
-  business entry points.
+- Add tests proving relabeled raw or compatibility provenance is rejected at
+  maintained business entry points while the maintained default remains safe.
 
 Acceptance criteria:
 
-- The shim default remains safe compatibility metadata.
-- Maintained paths are explicit and cannot accidentally use the compatibility
-  default.
+- The shim default remains safe maintained metadata.
+- Maintained paths are explicit and cannot accidentally downgrade to a
+  compatibility label.
 - Law 14 read-side guards continue to reject relabeled raw or compatibility
   inputs.
 

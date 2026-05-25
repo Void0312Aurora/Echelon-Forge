@@ -98,11 +98,15 @@ The active design conclusion is:
     delete-or-block decisions, resolved single-representation tasking/public-API
     exits as blocked, skipped implementation, and closed as `blocked` on
     `2026-05-24`.
-20. When this subproject is split across subagents or workers, follow the
+20. `TM01 Architecture Closure Remediation` is closed for the audited
+    implementation slice only: `TM01-A`, `TM01-C`, and `TM01-D` passed for the
+    focused maintained path, while the `TM01-B` launch bridge remains a
+    source-backed residual with later architecture ownership.
+21. When this subproject is split across subagents or workers, follow the
     [Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
     keep write scopes disjoint, keep one integration owner, and do not split
     the same normative table across concurrent authors.
-21. Commit messages for implementation closure should use capability/result
+22. Commit messages for implementation closure should use capability/result
     language and avoid internal work-package labels such as `WP13` or `WP14`.
 
 ## Work Packages
@@ -137,7 +141,7 @@ The active design conclusion is:
 | `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen; superseded by WP23 | Attempted to force-retire post-WP21 compatibility layers, but the owner stopped the stream after uncontrolled follow-up waves and partial/quarantine evidence drift. Its queue is historical only and must not be dispatched. | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
 | `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | Froze WP22, classified current dirty work, forced delete-or-block decisions, recorded TaskOrder and public API exits as blocked, skipped implementation because no deletion-ready surface was identified, and closed as controlled blocked recovery. | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md) |
 | `WP24 TaskOrder Maintained Business Migration` | active / deletion close-out | Replacement-backed TaskOrder business migration after WP23: maintained contract/export/Python business paths are integrated, and the old public TaskOrder whole-shell compatibility surfaces are removed in the cleanup close-out. | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md), [integration assessment and cleanup close-out](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.md) |
-| `TM01 Architecture Closure Remediation` | temporary / active | Bounded remediation lane after the implementation-level closure audit: repair the ground tasking-shell blocker, record the launch-bridge residual, and synchronize WP24 provenance/acceptance wording without opening a broad refactor. | [TM01 entry](tm01_architecture_closure_remediation/README.md), [task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
+| `TM01 Architecture Closure Remediation` | audited-slice closed / residuals owned | Focused remediation after the implementation-level closure audit: `TM01-A`, `TM01-C`, and `TM01-D` are complete for the audited maintained-path slice; `TM01-B` remains the ledgered launch-bridge residual, and broader architecture, P7/raw-runtime, and WP24 canonical acceptance closure remain out of scope. | [TM01 entry](tm01_architecture_closure_remediation/README.md), [task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
 
 ## TM01 Architecture Closure Remediation
 
@@ -146,12 +150,16 @@ Output:
 - [TM01 Architecture Closure Remediation](tm01_architecture_closure_remediation/README.md)
 - [TM01 Architecture Closure Task Clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
 
-TM01 is a temporary project, not a new architecture WP. It exists to keep the
-post-audit remediation finite: fix the current ground tasking-shell validation
-failure, record the narrow `systems -> SimulationKernel` launch bridge residual,
-and synchronize WP24 provenance/acceptance wording. It must not expand into full
-ground runtime implementation, broad P7 redesign, or public raw-runtime escape
-hatch deletion.
+TM01 is closed for the audited implementation slice only; it is not a new
+architecture WP and does not create canonical WP24 acceptance. `TM01-A` restored
+the focused ground tasking-shell validation path, `TM01-C` synchronized WP24
+provenance wording to the maintained `agent_shim.py` defaults, and `TM01-D`
+published the focused validation and close/block recommendation.
+
+`TM01-B` remains owned as the ledgered `systems -> SimulationKernel` launch
+bridge residual. Broader architecture closure, P7 launch/fire-control contract
+redesign, public raw-runtime or compatibility retirement, ground runtime
+completion, and WP24 canonical acceptance review remain explicitly unclosed.
 
 ## WP24 TaskOrder Maintained Business Migration
 

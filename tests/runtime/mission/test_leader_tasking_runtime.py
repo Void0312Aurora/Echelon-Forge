@@ -9,6 +9,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
+import ef_py  # noqa: E402
 from python.rl.tasking.bridge import (  # noqa: E402
     apply_loader_owned_world_layout_to_kernel,
     loader_owned_runtime_view,
@@ -17,7 +18,10 @@ from python.rl.tasking.bridge import (  # noqa: E402
     sync_loader_command_chain,
     sync_loader_mission_command,
 )
-from python.rl.tasking.leader_tasking import build_kernel_mission_command  # noqa: E402
+from python.rl.tasking.leader_tasking import (  # noqa: E402
+    RuleBasedLeaderPhaseManager,
+    build_kernel_mission_command,
+)
 
 
 class LeaderTaskingRuntimeTests(unittest.TestCase):
@@ -77,6 +81,38 @@ class LeaderTaskingRuntimeTests(unittest.TestCase):
         manager.sync_to_kernel(loader)
 
         sync_hook.assert_called_once_with()
+
+    def test_rule_based_leader_phase_manager_coerces_ground_recovery_enum(self) -> None:
+        manager = RuleBasedLeaderPhaseManager()
+        loader = SimpleNamespace(
+            agent_id=7,
+            tasking_profile="ground",
+            c2_task_name="TASK_OCCUPY",
+            task_order=SimpleNamespace(
+                active=True,
+                tasking_profile="ground",
+                recovery_approach_type=999,
+            ),
+            mission_cmd={
+                "command_code": 2,
+                "target_heading": 90.0,
+                "target_altitude": 1200.0,
+                "target_speed": 80.0,
+            },
+            scenario_data={},
+            waypoints=[],
+            waypoint_idx=0,
+            get_ils_observation=Mock(return_value=(0.0, 0.0, 0.0, 0.0)),
+        )
+        truth = SimpleNamespace(x=0.0, y=0.0, z=0.0, heading=90.0)
+        inst = SimpleNamespace(alt_radar=1000.0, ground_speed=80.0, heading=90.0, alt_baro=1200.0)
+
+        manager.update(loader, truth=truth, inst=inst, sync_to_kernel=False)
+
+        self.assertEqual(
+            loader.leader_intent.recovery_approach_type,
+            getattr(ef_py.RecoveryApproachType, "None"),
+        )
 
     def test_loader_owned_runtime_view_supports_command_chain_writes(self) -> None:
         sim = SimpleNamespace(
