@@ -39,7 +39,7 @@ for _build_dir_name in _BUILD_DIR_NAMES:
 # Add local path
 sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
-from python.models.transformer import TransformerExtractor, TransformerVisualExtractor
+from python.models.transformer import TemporalTransformerExtractor, TransformerExtractor, TransformerVisualExtractor
 from python.training_callbacks import (
     CMODiagnosticsCallback,
     ScenarioCurriculumCallback,
@@ -67,6 +67,8 @@ def get_policy_kwargs(train_config):
     fe_name = kwargs.get("features_extractor_class")
     if fe_name == "TransformerExtractor":
         kwargs["features_extractor_class"] = TransformerExtractor
+    elif fe_name == "TemporalTransformerExtractor":
+        kwargs["features_extractor_class"] = TemporalTransformerExtractor
     elif fe_name == "TransformerVisualExtractor":
         kwargs["features_extractor_class"] = TransformerVisualExtractor
     
@@ -614,6 +616,9 @@ def main():
         if p_kwargs.get("features_extractor_class") == "TransformerExtractor":
             print("Using Transformer Feature Extractor")
             p_kwargs["features_extractor_class"] = TransformerExtractor
+        elif p_kwargs.get("features_extractor_class") == "TemporalTransformerExtractor":
+            print("Using Temporal Transformer Feature Extractor")
+            p_kwargs["features_extractor_class"] = TemporalTransformerExtractor
         elif p_kwargs.get("features_extractor_class") == "TransformerVisualExtractor":
             print("Using Transformer+Visual Feature Extractor")
             p_kwargs["features_extractor_class"] = TransformerVisualExtractor

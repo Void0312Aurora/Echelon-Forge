@@ -243,6 +243,38 @@ def preprocess_visual_tensor(visual: torch.Tensor) -> torch.Tensor:
     return _sanitize_features(torch.clamp(visual.float().clone(), -10.0, 10.0))
 
 
+def _preprocess_instrument_sequence(instruments: torch.Tensor) -> torch.Tensor:
+    if instruments.ndim != 3:
+        return _sanitize_features(instruments.float())
+    b, t, d = instruments.shape
+    return preprocess_instrument_tensor(instruments.reshape(b * t, d)).reshape(b, t, d)
+
+
+def _preprocess_contact_sequence(contacts: torch.Tensor) -> torch.Tensor:
+    if contacts.ndim != 4:
+        return _sanitize_features(contacts.float())
+    b, t, n, d = contacts.shape
+    return preprocess_contact_tensor(contacts.reshape(b * t, n, d)).reshape(b, t, n, d)
+
+
+def _preprocess_rwr_sequence(rwr: torch.Tensor) -> torch.Tensor:
+    if rwr.ndim != 4:
+        return _sanitize_features(rwr.float())
+    b, t, n, d = rwr.shape
+    return preprocess_rwr_tensor(rwr.reshape(b * t, n, d)).reshape(b, t, n, d)
+
+
+def _preprocess_mission_sequence(mission: torch.Tensor) -> torch.Tensor:
+    if mission.ndim != 3:
+        return _sanitize_features(mission.float())
+    b, t, d = mission.shape
+    return preprocess_mission_tensor(mission.reshape(b * t, d)).reshape(b, t, d)
+
+
+def _preprocess_proprio_sequence(proprio: torch.Tensor) -> torch.Tensor:
+    return _sanitize_features(proprio.float().clone())
+
+
 def preprocess_transformer_observations(observations: Mapping[str, torch.Tensor]) -> dict[str, torch.Tensor]:
     processed = {
         "instruments": preprocess_instrument_tensor(observations["instruments"]),
@@ -405,6 +437,168 @@ class TransformerExtractor(BaseFeaturesExtractor):
             cls_token = transformed[:, 0, :]
             
             out = self.ln_final(cls_token)
+        return out.float()
+
+
+class TemporalTransformerExtractor(BaseFeaturesExtractor):
+    """
+    Observation-window temporal extractor for Dict observation spaces.
+
+    This is the low-intrusion Path-A extractor: the environment provides fixed
+    history tensors such as `instruments_history` and `contacts_history`, this
+    module encodes each frame with the same token layout as `TransformerExtractor`,
+    then applies causal frame-level attention and returns the latest contextual
+    frame embedding.
+    """
+
+    def __init__(
+        self,
+        observation_space: gym.spaces.Dict,
+        features_dim: int = 128,
+        n_heads: int = 4,
+        n_layers: int = 2,
+        temporal_n_heads: int | None = None,
+        temporal_n_layers: int = 2,
+        use_amp: bool = False,
+        amp_dtype: str = "auto",
+        use_checkpointing: bool = True,
+    ):
+        super().__init__(observation_space, features_dim)
+
+        required = ("instruments_history", "contacts_history", "rwr_history", "mission_history", "proprio_history")
+        missing = [key for key in required if key not in observation_space.spaces]
+        if missing:
+            raise ValueError(
+                "TemporalTransformerExtractor requires temporal_history_len>1 observation keys; "
+                f"missing={missing}"
+            )
+
+        self.d_model = int(features_dim)
+        self.use_amp = bool(use_amp)
+        self.amp_dtype = _normalize_amp_dtype(amp_dtype)
+        self._use_checkpointing = bool(use_checkpointing)
+
+        instruments_shape = observation_space["instruments_history"].shape
+        contacts_shape = observation_space["contacts_history"].shape
+        rwr_shape = observation_space["rwr_history"].shape
+        mission_shape = observation_space["mission_history"].shape
+        proprio_shape = observation_space["proprio_history"].shape
+        self.history_len = int(instruments_shape[0])
+        self.has_proprio = True
+
+        self.embed_instruments = nn.Linear(int(instruments_shape[-1]), self.d_model)
+        self.embed_contact = nn.Linear(int(contacts_shape[-1]), self.d_model)
+        self.embed_rwr = nn.Linear(int(rwr_shape[-1]), self.d_model)
+        self.embed_mission = nn.Linear(int(mission_shape[-1]), self.d_model)
+        self.embed_proprio = nn.Linear(int(proprio_shape[-1]), self.d_model)
+
+        # 0=Instruments, 1=Mission, 2=Proprio, 3=Contact, 4=RWR
+        self.type_embed = nn.Embedding(5, self.d_model)
+        self.register_buffer("idx_inst", torch.tensor(0))
+        self.register_buffer("idx_mission", torch.tensor(1))
+        self.register_buffer("idx_proprio", torch.tensor(2))
+        self.register_buffer("idx_contact", torch.tensor(3))
+        self.register_buffer("idx_rwr", torch.tensor(4))
+
+        frame_layer = nn.TransformerEncoderLayer(
+            d_model=self.d_model,
+            nhead=int(n_heads),
+            dim_feedforward=self.d_model * 4,
+            dropout=0.0,
+            batch_first=True,
+        )
+        self.frame_transformer = nn.TransformerEncoder(frame_layer, num_layers=int(n_layers), enable_nested_tensor=False)
+
+        temporal_layer = nn.TransformerEncoderLayer(
+            d_model=self.d_model,
+            nhead=int(temporal_n_heads if temporal_n_heads is not None else n_heads),
+            dim_feedforward=self.d_model * 4,
+            dropout=0.0,
+            batch_first=True,
+        )
+        self.temporal_transformer = nn.TransformerEncoder(
+            temporal_layer,
+            num_layers=int(temporal_n_layers),
+            enable_nested_tensor=False,
+        )
+        self.temporal_pos_embed = nn.Parameter(torch.zeros(1, self.history_len, self.d_model))
+        self.ln_final = nn.LayerNorm(self.d_model)
+
+    def _autocast_enabled_for_forward(self) -> bool:
+        return bool(torch.cuda.is_available() and self.use_amp)
+
+    def _autocast_dtype(self) -> torch.dtype:
+        if self.amp_dtype == "bf16":
+            return torch.bfloat16
+        if self.amp_dtype == "fp16":
+            return torch.float16
+        if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+            return torch.bfloat16
+        return torch.float16
+
+    def _encode_frames(
+        self,
+        instruments: torch.Tensor,
+        contacts: torch.Tensor,
+        rwr: torch.Tensor,
+        mission: torch.Tensor,
+        proprio: torch.Tensor,
+    ) -> torch.Tensor:
+        b, t, _ = instruments.shape
+        inst_flat = instruments.reshape(b * t, instruments.shape[-1])
+        mission_flat = mission.reshape(b * t, mission.shape[-1])
+        proprio_flat = proprio.reshape(b * t, proprio.shape[-1])
+        contacts_flat = contacts.reshape(b * t, contacts.shape[-2], contacts.shape[-1])
+        rwr_flat = rwr.reshape(b * t, rwr.shape[-2], rwr.shape[-1])
+
+        emb_inst = self.embed_instruments(inst_flat).unsqueeze(1) + self.type_embed(self.idx_inst)
+        emb_mission = self.embed_mission(mission_flat).unsqueeze(1) + self.type_embed(self.idx_mission)
+        emb_proprio = self.embed_proprio(proprio_flat).unsqueeze(1) + self.type_embed(self.idx_proprio)
+        emb_contacts = self.embed_contact(contacts_flat) + self.type_embed(self.idx_contact)
+        emb_rwr = self.embed_rwr(rwr_flat) + self.type_embed(self.idx_rwr)
+
+        frame_tokens = torch.cat([emb_inst, emb_mission, emb_proprio, emb_contacts, emb_rwr], dim=1)
+        if self._use_checkpointing and self.training:
+            from torch.utils.checkpoint import checkpoint
+
+            x = frame_tokens
+            for layer in self.frame_transformer.layers:
+                x = checkpoint(layer, x, use_reentrant=False)
+            frame_out = x
+        else:
+            frame_out = self.frame_transformer(frame_tokens)
+        return frame_out[:, 0, :].reshape(b, t, self.d_model)
+
+    def forward(self, observations: dict) -> torch.Tensor:
+        with torch.autocast(
+            "cuda",
+            enabled=self._autocast_enabled_for_forward(),
+            dtype=self._autocast_dtype(),
+        ):
+            instruments = _preprocess_instrument_sequence(observations["instruments_history"])
+            contacts = _preprocess_contact_sequence(observations["contacts_history"])
+            rwr = _preprocess_rwr_sequence(observations["rwr_history"])
+            mission = _preprocess_mission_sequence(observations["mission_history"])
+            proprio = _preprocess_proprio_sequence(observations["proprio_history"])
+
+            frame_embeddings = self._encode_frames(instruments, contacts, rwr, mission, proprio)
+            frame_embeddings = frame_embeddings + self.temporal_pos_embed[:, : frame_embeddings.shape[1], :]
+            seq_len = int(frame_embeddings.shape[1])
+            causal_mask = torch.triu(
+                torch.ones((seq_len, seq_len), dtype=torch.bool, device=frame_embeddings.device),
+                diagonal=1,
+            )
+            if self._use_checkpointing and self.training:
+                from torch.utils.checkpoint import checkpoint
+
+                x = frame_embeddings
+                for layer in self.temporal_transformer.layers:
+                    x = checkpoint(lambda hidden, layer=layer: layer(hidden, src_mask=causal_mask), x, use_reentrant=False)
+                temporal_out = x
+            else:
+                temporal_out = self.temporal_transformer(frame_embeddings, mask=causal_mask)
+            latest = temporal_out[:, -1, :]
+            out = self.ln_final(latest)
         return out.float()
 
 

@@ -329,7 +329,8 @@ def print_training_bootstrap_summary(bootstrap: TrainingBootstrap) -> None:
             f"flight_shaping_backend={env_settings.get('flight_shaping_backend', '<auto>') or 'auto'} "
             f"step_info_mode={env_settings['step_info_mode']} "
             f"visual_downsample={env_settings['visual_downsample']} "
-            f"visual_update_interval={env_settings['visual_update_interval']}"
+            f"visual_update_interval={env_settings['visual_update_interval']} "
+            f"temporal_history_len={env_settings['temporal_history_len']}"
         )
         return
 
@@ -345,6 +346,7 @@ def print_training_bootstrap_summary(bootstrap: TrainingBootstrap) -> None:
         f"step_info_mode={env_settings['step_info_mode']} "
         f"visual_downsample={env_settings['visual_downsample']} "
         f"visual_update_interval={env_settings['visual_update_interval']} "
+        f"temporal_history_len={env_settings['temporal_history_len']} "
         f"policy_route={cooperative_cfg.get('policy_route', 'shared_execution')}"
     )
 

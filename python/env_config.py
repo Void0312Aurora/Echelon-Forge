@@ -88,6 +88,7 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
     mission_obs_mode = _merge_config_value(args, "mission_obs_mode", env_cfg, default="basic", coerce=str)
     visual_downsample = _merge_config_value(args, "visual_downsample", env_cfg, default=1, coerce=int)
     visual_update_interval = _merge_config_value(args, "visual_update_interval", env_cfg, default=1, coerce=int)
+    temporal_history_len = _merge_config_value(args, "temporal_history_len", env_cfg, default=1, coerce=int)
     execution_step_runtime_mode = _merge_optional_config_value(
         args,
         "execution_step_runtime_mode",
@@ -114,6 +115,7 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
     step_info_mode = step_info_mode.strip().lower()
     visual_downsample = max(1, int(visual_downsample))
     visual_update_interval = max(1, int(visual_update_interval))
+    temporal_history_len = max(1, int(temporal_history_len))
 
     if action_mode not in VALID_ACTION_MODES:
         raise ValueError(f"Unknown action_mode in merged env config: {action_mode!r}")
@@ -140,6 +142,7 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         "mission_obs_mode": mission_obs_mode,
         "visual_downsample": visual_downsample,
         "visual_update_interval": visual_update_interval,
+        "temporal_history_len": temporal_history_len,
         "execution_step_runtime_mode": execution_step_runtime_mode,
         "step_info_mode": step_info_mode,
         "flight_shaping_backend": flight_shaping_backend,

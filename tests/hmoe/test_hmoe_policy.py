@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest import mock
 
+import numpy as np
 import torch as th
 from gymnasium import spaces
 
@@ -10,7 +11,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.models.transformer import TransformerExtractor, preprocess_transformer_observations
+from python.models.transformer import TemporalTransformerExtractor, TransformerExtractor, preprocess_transformer_observations
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy
 from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
 from train import apply_safe_action_bias
@@ -323,6 +324,68 @@ class HMoEPolicyTests(unittest.TestCase):
 
         with th.no_grad():
             features = extractor(observations)
+
+        self.assertEqual(tuple(features.shape), (2, 32))
+        self.assertTrue(th.isfinite(features).all())
+
+    def test_temporal_transformer_extractor_forward_is_finite(self) -> None:
+        history_len = 4
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-np.inf, high=np.inf, shape=(42,), dtype=np.float32),
+                "contacts": spaces.Box(low=-np.inf, high=np.inf, shape=(10, 5), dtype=np.float32),
+                "rwr": spaces.Box(low=-np.inf, high=np.inf, shape=(4, 4), dtype=np.float32),
+                "mission": spaces.Box(low=-np.inf, high=np.inf, shape=(21,), dtype=np.float32),
+                "proprio": spaces.Box(low=-1.0, high=1.0, shape=(17,), dtype=np.float32),
+                "instruments_history": spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(history_len, 42),
+                    dtype=np.float32,
+                ),
+                "contacts_history": spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(history_len, 10, 5),
+                    dtype=np.float32,
+                ),
+                "rwr_history": spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(history_len, 4, 4),
+                    dtype=np.float32,
+                ),
+                "mission_history": spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(history_len, 21),
+                    dtype=np.float32,
+                ),
+                "proprio_history": spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(history_len, 17),
+                    dtype=np.float32,
+                ),
+            }
+        )
+        extractor = TemporalTransformerExtractor(
+            observation_space,
+            features_dim=32,
+            n_heads=4,
+            n_layers=1,
+            temporal_n_layers=1,
+            use_checkpointing=False,
+        )
+        observations = {
+            "instruments_history": th.randn((2, history_len, 42), dtype=th.float32),
+            "contacts_history": th.randn((2, history_len, 10, 5), dtype=th.float32),
+            "rwr_history": th.randn((2, history_len, 4, 4), dtype=th.float32),
+            "mission_history": th.randn((2, history_len, 21), dtype=th.float32),
+            "proprio_history": th.randn((2, history_len, 17), dtype=th.float32),
+        }
+
+        features = extractor(observations)
 
         self.assertEqual(tuple(features.shape), (2, 32))
         self.assertTrue(th.isfinite(features).all())

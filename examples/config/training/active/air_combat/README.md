@@ -26,6 +26,15 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Runs beyond smoke length while staying small enough for frequent diagnostics.
   - Use this before any 32k/64k resume ramp to check whether early termination is still dominated by flight-stability artifacts.
 
+- [air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json](air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json)
+  - Stage-0 drone weapon-employment probe using the single-frame `TransformerExtractor` reactive baseline.
+  - Use it to inspect basic fire flow, repeated launches, reward, and termination behavior.
+
+- [air_combat_1v1_stage0_drone_weapon_employment_temporal_world_batch_probe_v1.json](air_combat_1v1_stage0_drone_weapon_employment_temporal_world_batch_probe_v1.json)
+  - Stage-0 M1 temporal HMoE probe.
+  - Enables `temporal_history_len=16` plus `TemporalTransformerExtractor` while keeping the main hyperparameters close to the reactive baseline.
+  - This is a validation entry before Path C, not the final sequence-native causal policy.
+
 ## Design Notes
 
 - These smoke entries are intentionally non-visual.
@@ -40,3 +49,5 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - For first `1v1` smoke we want the learner to retain the raw `full` action surface.
 - These entries are not acceptance/frozen baselines yet.
   - Promote only after `1v1` reward/termination/eval behavior is stable enough to compare across runs.
+- Temporal entries only expose short history to the policy.
+  - They do not change missile physics, ammunition, cooldown, or environment-side tactical memory.

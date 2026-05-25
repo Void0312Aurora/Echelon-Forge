@@ -20,6 +20,7 @@ from stable_baselines3.common.distributions import (
 )
 
 from python.models.transformer import (
+    TemporalTransformerExtractor,
     TransformerExtractor,
     TransformerVisualExtractor,
     preprocess_transformer_observations,
@@ -353,6 +354,9 @@ class NonFiniteTrainingProbe:
             self._patch_transformer_extractor(policy.features_extractor)
         elif isinstance(policy.features_extractor, TransformerVisualExtractor):
             raise ValueError("non-finite probe currently supports TransformerExtractor-based policies only")
+        elif isinstance(policy.features_extractor, TemporalTransformerExtractor):
+            # Generic policy-level tensor checks still cover temporal extractor inputs/outputs.
+            pass
 
         original_get_action_dist_from_latent = policy._get_action_dist_from_latent
         original_forward = policy.forward

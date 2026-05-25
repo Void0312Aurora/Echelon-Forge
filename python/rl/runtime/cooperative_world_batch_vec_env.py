@@ -27,6 +27,12 @@ from gym_envs.universal_env import (
     make_observation_space,
     normalize_action,
 )
+from gym_envs.universal_env_parts import (
+    append_temporal_history,
+    attach_temporal_history,
+    make_temporal_history_buffer,
+    temporal_history_enabled,
+)
 from python.rl.tasking.bridge import build_kernel_mission_command
 from python.rl.runtime.world_batch.command_chain_cache import (
     project_world_leader_intent_maintained_assignment,
@@ -110,6 +116,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         mission_obs_mode: str = "basic",
         visual_downsample: int = 1,
         visual_update_interval: int = 1,
+        temporal_history_len: int = 1,
         batch_observation_backend: str | None = "auto",
         batch_visual_backend: str | None = "auto",
         step_info_mode: str = "full",
@@ -137,6 +144,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.mission_obs_mode = str(mission_obs_mode).strip().lower()
         self.visual_downsample = max(1, int(visual_downsample))
         self.visual_update_interval = max(1, int(visual_update_interval))
+        self.temporal_history_len = max(1, int(temporal_history_len))
         self.batch_observation_backend = _normalize_batch_observation_backend(batch_observation_backend)
         self.batch_visual_backend = _normalize_batch_visual_backend(batch_visual_backend)
         self.step_info_mode = str(step_info_mode).strip().lower()
@@ -204,6 +212,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             arb_height=self.arb_height,
             arb_width=self.arb_width,
             arb_channels=self.arb_channels,
+            temporal_history_len=self.temporal_history_len,
             obs_size=self.obs_size,
             max_contacts=self.max_contacts,
             max_rwr=self.max_rwr,
@@ -350,6 +359,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 dt_getter=lambda loader=loader: float(resolve_loader_time_step(loader)),
                 **self._action_wrapper_kwargs,
             )
+        slot_state.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
         return slot_state
 
     def _refresh_visual_batch(self, indices: list[int] | None = None) -> None:
@@ -500,7 +510,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 )
                 if self.include_visual:
                     obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
-                obs_batch.append(obs)
+                obs_batch.append(self._attach_temporal_history(slot_state, obs))
             return obs_batch
 
         obs_batch_data = compute_execution_observation_batch(
@@ -587,8 +597,30 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 obs["proprio"] = proprio
             if self.include_visual:
                 obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
-            obs_batch.append(obs)
+            obs_batch.append(self._attach_temporal_history(slot_state, obs))
         return obs_batch
+
+    def _attach_temporal_history(
+        self,
+        slot_state: _CooperativeSlotState,
+        obs: dict[str, np.ndarray],
+    ) -> dict[str, np.ndarray]:
+        if not temporal_history_enabled(self.temporal_history_len):
+            return obs
+        if slot_state.temporal_history is None:
+            slot_state.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
+        append_temporal_history(
+            slot_state.temporal_history,
+            obs,
+            history_len=self.temporal_history_len,
+            action_dim=int(self.action_space.shape[0]),
+        )
+        return attach_temporal_history(
+            obs,
+            slot_state.temporal_history,
+            history_len=self.temporal_history_len,
+            action_dim=int(self.action_space.shape[0]),
+        )
 
     def _build_slot_observation(
         self,
@@ -804,6 +836,10 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             slot_state.steps = 0
             slot_state.loader.steps = 0
             slot_state.last_action = None
+            if slot_state.temporal_history is None:
+                slot_state.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
+            else:
+                slot_state.temporal_history.clear()
             slot_state.episode_return = 0.0
             slot_state.episode_length = 0
             slot_state.coop_success_latched = False

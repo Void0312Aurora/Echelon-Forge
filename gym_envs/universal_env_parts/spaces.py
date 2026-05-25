@@ -57,6 +57,7 @@ def make_observation_space(
     arb_height: int,
     arb_width: int,
     arb_channels: int,
+    temporal_history_len: int = 1,
     obs_size: int = 42,
     max_contacts: int = 10,
     max_rwr: int = 4,
@@ -75,6 +76,38 @@ def make_observation_space(
             low=action_space.low.astype(np.float32, copy=False),
             high=action_space.high.astype(np.float32, copy=False),
             shape=action_space.shape,
+            dtype=np.float32,
+        )
+    history_len = max(1, int(temporal_history_len))
+    if history_len > 1:
+        obs_spaces["instruments_history"] = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(history_len, int(obs_size)),
+            dtype=np.float32,
+        )
+        obs_spaces["contacts_history"] = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(history_len, int(max_contacts), 5),
+            dtype=np.float32,
+        )
+        obs_spaces["rwr_history"] = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(history_len, int(max_rwr), 4),
+            dtype=np.float32,
+        )
+        obs_spaces["mission_history"] = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(history_len, int(mission_dim)),
+            dtype=np.float32,
+        )
+        obs_spaces["proprio_history"] = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(history_len, int(action_space.shape[0])),
             dtype=np.float32,
         )
     if include_visual:

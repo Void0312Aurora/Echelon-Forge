@@ -1493,6 +1493,106 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
+    def test_world_batch_vec_env_temporal_history_tracks_reset_and_last_action(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["meta"]["max_steps"] = 3
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=2,
+                include_visual=False,
+                include_proprio=True,
+                temporal_history_len=4,
+                batch_observation_backend="compiled",
+            )
+            try:
+                obs = vec_env.reset()
+                self.assertEqual(obs["instruments_history"].shape, (2, 4, 42))
+                self.assertEqual(obs["contacts_history"].shape, (2, 4, 10, 5))
+                self.assertEqual(obs["rwr_history"].shape, (2, 4, 4, 4))
+                self.assertEqual(obs["mission_history"].shape, (2, 4, obs["mission"].shape[-1]))
+                self.assertEqual(obs["proprio_history"].shape, (2, 4, 17))
+                self.assertTrue(np.allclose(obs["instruments_history"][:, -1], obs["instruments"]))
+                self.assertTrue(np.allclose(obs["proprio_history"], 0.0))
+
+                actions = np.zeros((2, 17), dtype=np.float32)
+                actions[0, 0] = 0.25
+                actions[0, 3] = 0.75
+                actions[1, 1] = -0.5
+                obs, _rewards, _dones, _infos = vec_env.step(actions)
+
+                self.assertTrue(np.allclose(obs["proprio"], actions))
+                self.assertTrue(np.allclose(obs["proprio_history"][:, -1, :], actions))
+                self.assertTrue(np.allclose(obs["instruments_history"][:, -1], obs["instruments"]))
+                self.assertTrue(np.allclose(obs["proprio_history"][:, -2, :], 0.0))
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_temporal_history_matches_legacy_and_compiled_shapes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["meta"]["max_steps"] = 2
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            legacy_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=2,
+                include_visual=False,
+                include_proprio=True,
+                temporal_history_len=3,
+                batch_observation_backend="legacy",
+            )
+            compiled_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=2,
+                include_visual=False,
+                include_proprio=True,
+                temporal_history_len=3,
+                batch_observation_backend="compiled",
+            )
+            try:
+                legacy_env.seed(123)
+                compiled_env.seed(123)
+                legacy_obs = legacy_env.reset()
+                compiled_obs = compiled_env.reset()
+                for key in (
+                    "instruments_history",
+                    "contacts_history",
+                    "rwr_history",
+                    "mission_history",
+                    "proprio_history",
+                ):
+                    self.assertEqual(legacy_obs[key].shape, compiled_obs[key].shape)
+                    self.assertTrue(
+                        np.allclose(legacy_obs[key], compiled_obs[key], atol=1.0e-6),
+                        msg=f"reset mismatch for key={key}",
+                    )
+
+                actions = np.full((2, 17), 0.1, dtype=np.float32)
+                legacy_obs, _legacy_rewards, _legacy_dones, _legacy_infos = legacy_env.step(actions)
+                compiled_obs, _compiled_rewards, _compiled_dones, _compiled_infos = compiled_env.step(actions)
+                for key in (
+                    "instruments_history",
+                    "contacts_history",
+                    "rwr_history",
+                    "mission_history",
+                    "proprio_history",
+                ):
+                    self.assertEqual(legacy_obs[key].shape, compiled_obs[key].shape)
+                    self.assertTrue(
+                        np.allclose(legacy_obs[key], compiled_obs[key], atol=1.0e-6),
+                        msg=f"step mismatch for key={key}",
+                    )
+            finally:
+                legacy_env.close()
+                compiled_env.close()
+
     def test_world_batch_vec_env_compiled_batch_visual_is_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_data = _inline_vec_env_scenario()

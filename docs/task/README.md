@@ -52,6 +52,9 @@ For lifecycle cleanup across this tree, see the
   simulation-system architecture workline. Start here before turning the
   canonical pipeline design into broad weapon, naval, sensor/track, facade, or
   backend work.
+- [model/](model/README.md): active model-side planning line for temporal
+  HMoE/sequence policy work. Start here when RL behavior needs policy memory
+  rather than environment-side tactical memory boards.
 - [code_redundancy/](code_redundancy/README.md): archived code-redundancy workline.
 - [diagnostics_eval/](diagnostics_eval/README.md): archived diagnostics/eval convergence records.
 - [python_rl/](python_rl/README.md): archived `python/rl` convergence records.

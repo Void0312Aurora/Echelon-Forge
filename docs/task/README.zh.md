@@ -28,6 +28,7 @@
 - [ground/](ground/README.zh.md)：未来地面域启动规划的入口。在展开专门的
   ground 实现前，请先从这里对齐命名、范围和新增域必须补上的横向内容。
 - [仿真架构/](simulation_architecture/README.md)：活跃的仿真系统架构工作线。把规范管线设计转化为武器、海军、传感器/航迹、facade 或后端工作前，应先从这里收敛任务。
+- [模型/](model/README.zh.md)：活跃的模型侧规划线，用于时间 HMoE / 序列策略工作。当 RL 行为需要策略记忆而不是环境侧战术记忆板时，请先从这里进入。
 - [代码冗余/](code_redundancy/README.zh.md)：已归档的代码冗余工作线。
 - [诊断评估/](diagnostics_eval/README.zh.md)：已归档的诊断/评估收敛记录。
 - [Python 强化学习/](python_rl/README.zh.md)：已归档的 `python/rl` 收敛记录。

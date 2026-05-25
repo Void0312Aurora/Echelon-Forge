@@ -21,8 +21,13 @@ from gym_envs.universal_env_parts import (
     half_to_unit,
     make_action_space,
     make_observation_space,
+    make_temporal_history_buffer,
     mission_observation_dim,
     normalize_action,
+    append_temporal_history,
+    attach_temporal_history,
+    reset_temporal_history,
+    temporal_history_enabled,
 )
 
 _configure_sim_log_level = configure_sim_log_level
@@ -86,6 +91,7 @@ else:
             mission_obs_mode: str = "basic",
             visual_downsample: int = 1,
             visual_update_interval: int = 1,
+            temporal_history_len: int = 1,
             execution_step_runtime_mode: str | None = None,
             step_info_mode: str = "full",
             flight_shaping_backend: str | None = None,
@@ -106,6 +112,7 @@ else:
             self.mission_obs_mode = str(mission_obs_mode).strip().lower()
             self.visual_downsample = max(1, int(visual_downsample))
             self.visual_update_interval = max(1, int(visual_update_interval))
+            self.temporal_history_len = max(1, int(temporal_history_len))
             self.execution_step_runtime_mode = (
                 normalize_execution_step_runtime_mode(execution_step_runtime_mode)
                 if execution_step_runtime_mode is not None
@@ -127,6 +134,7 @@ else:
             self._last_inst = None
             self._last_truth = None
             self._last_action = None
+            self._temporal_history = make_temporal_history_buffer(self.temporal_history_len)
             self._visual_cache = None
             self._visual_cache_step = -1
             self.last_reset_timing: dict[str, float] = {}
@@ -167,6 +175,7 @@ else:
                 arb_height=self.arb_height,
                 arb_width=self.arb_width,
                 arb_channels=self.arb_channels,
+                temporal_history_len=self.temporal_history_len,
                 obs_size=self.obs_size,
                 max_contacts=self.max_contacts,
                 max_rwr=self.max_rwr,
@@ -181,6 +190,7 @@ else:
             self._last_inst = None
             self._last_truth = None
             self._last_action = None
+            self._temporal_history.clear()
             self._visual_cache = None
             self.loader = None
             sim = getattr(self, "sim", None)
@@ -212,6 +222,7 @@ else:
 
             self.steps = 0
             self._last_action = None
+            self._temporal_history.clear()
             self._visual_cache = None
             self._visual_cache_step = -1
             obs_t0 = time.perf_counter() if self.collect_step_timing else 0.0
@@ -371,6 +382,27 @@ else:
                         self._visual_cache = downsample_visual_mean(visual, self.visual_downsample)
                     self._visual_cache_step = int(self.steps)
                 obs["visual"] = np.asarray(self._visual_cache, dtype=np.float32, copy=False)
+            if temporal_history_enabled(self.temporal_history_len):
+                if len(self._temporal_history) <= 0:
+                    reset_temporal_history(
+                        self._temporal_history,
+                        obs,
+                        history_len=self.temporal_history_len,
+                        action_dim=int(self.action_space.shape[0]),
+                    )
+                else:
+                    append_temporal_history(
+                        self._temporal_history,
+                        obs,
+                        history_len=self.temporal_history_len,
+                        action_dim=int(self.action_space.shape[0]),
+                    )
+                attach_temporal_history(
+                    obs,
+                    self._temporal_history,
+                    history_len=self.temporal_history_len,
+                    action_dim=int(self.action_space.shape[0]),
+                )
             return obs
 
         def _get_obs(self):

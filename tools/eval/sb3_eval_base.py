@@ -73,6 +73,7 @@ def make_env_settings(train_config: dict[str, Any], args: argparse.Namespace, *,
         mission_obs_mode = args.mission_obs_mode
         visual_downsample = args.visual_downsample
         visual_update_interval = args.visual_update_interval
+        temporal_history_len = getattr(args, "temporal_history_len", None)
         execution_step_runtime_mode = getattr(args, "execution_step_runtime_mode", None) if include_runtime_overrides else None
         step_info_mode = getattr(args, "step_info_mode", None) if include_runtime_overrides else None
         flight_shaping_backend = getattr(args, "flight_shaping_backend", None) if include_runtime_overrides else None
@@ -121,6 +122,7 @@ def add_common_sb3_eval_args(
     )
     parser.add_argument("--visual_downsample", type=int, default=None)
     parser.add_argument("--visual_update_interval", type=int, default=None)
+    parser.add_argument("--temporal_history_len", type=int, default=None)
     parser.add_argument("--action_mode", type=str, default=None, choices=["full", "takeoff2", "takeoff4"])
     if include_runtime_overrides:
         parser.add_argument("--execution_step_runtime_mode", type=str, default=None, choices=["compiled", "legacy"])

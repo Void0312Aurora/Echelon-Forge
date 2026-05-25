@@ -27,6 +27,7 @@ class BatchWorldHandle:
     last_action: np.ndarray | None = None
     last_inst: Any = None
     last_truth: Any = None
+    temporal_history: Any = None
     randomization_overrides: dict[str, Any] = field(default_factory=dict)
     episode_return: float = 0.0
     episode_length: int = 0
@@ -102,6 +103,7 @@ class CooperativeSlotState:
     last_inst: Any = None
     last_truth: Any = None
     last_obs: dict[str, np.ndarray] | None = None
+    temporal_history: Any = None
     episode_return: float = 0.0
     episode_length: int = 0
     visual_cache: np.ndarray | None = None

@@ -57,6 +57,12 @@ def build_train_arg_parser() -> argparse.ArgumentParser:
         help="Visual refresh interval (defaults to train_config env settings).",
     )
     parser.add_argument(
+        "--temporal_history_len",
+        type=int,
+        default=None,
+        help="Temporal observation history length for opt-in temporal policies.",
+    )
+    parser.add_argument(
         "--action_mode",
         type=str,
         default=None,

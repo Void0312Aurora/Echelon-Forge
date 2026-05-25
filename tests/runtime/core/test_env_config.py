@@ -18,6 +18,7 @@ def _make_args(**overrides):
         "mission_obs_mode": None,
         "visual_downsample": None,
         "visual_update_interval": None,
+        "temporal_history_len": None,
         "action_mode": None,
         "execution_step_runtime_mode": None,
         "step_info_mode": None,
@@ -51,6 +52,7 @@ class EnvConfigTests(unittest.TestCase):
                 "mission_obs_mode": "NAV_V2",
                 "visual_downsample": 2,
                 "visual_update_interval": 3,
+                "temporal_history_len": 16,
                 "action_mode": "full",
                 "execution_step_runtime_mode": " Legacy ",
                 "step_info_mode": "TERMINAL",
@@ -64,7 +66,21 @@ class EnvConfigTests(unittest.TestCase):
         self.assertEqual(resolved["execution_step_runtime_mode"], "legacy")
         self.assertEqual(resolved["step_info_mode"], "terminal")
         self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
+        self.assertEqual(resolved["temporal_history_len"], 16)
         self.assertTrue(resolved["runtime_compatibility_enabled"])
+
+    def test_resolve_env_settings_normalizes_temporal_history_len(self) -> None:
+        resolved = resolve_env_settings(
+            {"env": {"temporal_history_len": 0}},
+            _make_args(),
+        )
+        self.assertEqual(resolved["temporal_history_len"], 1)
+
+        resolved = resolve_env_settings(
+            {"env": {"temporal_history_len": 4}},
+            _make_args(temporal_history_len=8),
+        )
+        self.assertEqual(resolved["temporal_history_len"], 8)
 
     def test_resolve_env_settings_rejects_legacy_runtime_mode_without_explicit_compatibility_opt_in(self) -> None:
         with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=True"):

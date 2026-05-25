@@ -24,12 +24,16 @@ from gym_envs.scenario_loader import (
     normalize_execution_step_runtime_mode,
 )
 from gym_envs.universal_env import (
+    append_temporal_history,
+    attach_temporal_history,
     build_pilot_action,
     build_step_info_minimal,
     build_universal_observation,
     make_action_space,
     make_observation_space,
+    make_temporal_history_buffer,
     normalize_action,
+    temporal_history_enabled,
 )
 from python.rl.tasking.bridge import build_kernel_mission_command
 from python.rl.runtime.world_batch.command_chain_cache import (
@@ -117,6 +121,7 @@ class WorldBatchVecEnv(VecEnv):
         mission_obs_mode: str = "basic",
         visual_downsample: int = 1,
         visual_update_interval: int = 1,
+        temporal_history_len: int = 1,
         step_info_mode: str = "full",
         execution_step_runtime_mode: str | None = None,
         flight_shaping_backend: str | None = None,
@@ -143,6 +148,7 @@ class WorldBatchVecEnv(VecEnv):
         self.mission_obs_mode = str(mission_obs_mode).strip().lower()
         self.visual_downsample = max(1, int(visual_downsample))
         self.visual_update_interval = max(1, int(visual_update_interval))
+        self.temporal_history_len = max(1, int(temporal_history_len))
         self.step_info_mode = str(step_info_mode).strip().lower()
         self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
         self.execution_step_runtime_mode = (
@@ -239,6 +245,7 @@ class WorldBatchVecEnv(VecEnv):
             arb_height=self.arb_height,
             arb_width=self.arb_width,
             arb_channels=self.arb_channels,
+            temporal_history_len=self.temporal_history_len,
             obs_size=self.obs_size,
             max_contacts=self.max_contacts,
             max_rwr=self.max_rwr,
@@ -275,6 +282,7 @@ class WorldBatchVecEnv(VecEnv):
                     dt_getter=lambda handle=handle: self._runtime_adapter.get_time_step(handle.env_idx),
                     **self._action_wrapper_kwargs,
                 )
+            handle.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
         self.envs = list(self._handles)
         self._actions: np.ndarray | None = None
         self._closed = False
@@ -557,7 +565,7 @@ class WorldBatchVecEnv(VecEnv):
                     steps=int(handle.steps),
                     max_steps=int(handle.max_steps),
                 )
-                obs_batch.append(self._attach_visual_observation(env_idx, obs))
+                obs_batch.append(self._attach_temporal_history(env_idx, self._attach_visual_observation(env_idx, obs)))
             return obs_batch
 
         obs_batch_data: ExecutionObservationBatch = compute_execution_observation_batch(
@@ -640,7 +648,7 @@ class WorldBatchVecEnv(VecEnv):
                 else:
                     proprio = _float32_view(handle.last_action).reshape(-1)
                 obs["proprio"] = proprio
-            obs_batch.append(self._attach_visual_observation(env_idx, obs))
+            obs_batch.append(self._attach_temporal_history(env_idx, self._attach_visual_observation(env_idx, obs)))
         return obs_batch
 
     def _observation_timing_snapshot(self) -> dict[str, float]:
@@ -654,6 +662,25 @@ class WorldBatchVecEnv(VecEnv):
             self._refresh_visual_batch([env_idx])
         obs["visual"] = np.asarray(handle.visual_cache, dtype=np.float32, copy=False)
         return obs
+
+    def _attach_temporal_history(self, env_idx: int, obs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+        if not temporal_history_enabled(self.temporal_history_len):
+            return obs
+        handle = self._handles[int(env_idx)]
+        if handle.temporal_history is None:
+            handle.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
+        append_temporal_history(
+            handle.temporal_history,
+            obs,
+            history_len=self.temporal_history_len,
+            action_dim=int(self.action_space.shape[0]),
+        )
+        return attach_temporal_history(
+            obs,
+            handle.temporal_history,
+            history_len=self.temporal_history_len,
+            action_dim=int(self.action_space.shape[0]),
+        )
 
     @staticmethod
     def _execution_episode_shadow_state_summary(state) -> dict[str, Any]:
@@ -1154,6 +1181,17 @@ class WorldBatchVecEnv(VecEnv):
             else:
                 obs_torch["visual"] = torch.as_tensor(self.buf_obs["visual"], device=target_device)
 
+        if temporal_history_enabled(self.temporal_history_len):
+            for key in (
+                "instruments_history",
+                "contacts_history",
+                "rwr_history",
+                "mission_history",
+                "proprio_history",
+            ):
+                if key in self.buf_obs:
+                    obs_torch[key] = torch.as_tensor(self.buf_obs[key], device=target_device)
+
         return obs_torch
 
     def _prepare_batch_flight_shaping_overrides(self) -> None:
@@ -1342,6 +1380,10 @@ class WorldBatchVecEnv(VecEnv):
         handle.last_action = None
         handle.last_inst = initial_inst
         handle.last_truth = initial_truth
+        if handle.temporal_history is None:
+            handle.temporal_history = make_temporal_history_buffer(self.temporal_history_len)
+        else:
+            handle.temporal_history.clear()
         handle.episode_return = 0.0
         handle.episode_length = 0
         handle.visual_cache = None

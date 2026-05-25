@@ -28,6 +28,15 @@
   - 它超过 smoke 长度，但仍足够小，适合高频诊断。
   - 在进入 32k/64k resume ramp 前，先用它确认早期终止是否仍被飞行稳定性伪影主导。
 
+- [air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json](air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json)
+  - 阶段零无人机武器使用探针，保留单帧 `TransformerExtractor` 作为 reactive 对照。
+  - 用于观察基础开火流程、重复发射和奖励/终止链路。
+
+- [air_combat_1v1_stage0_drone_weapon_employment_temporal_world_batch_probe_v1.json](air_combat_1v1_stage0_drone_weapon_employment_temporal_world_batch_probe_v1.json)
+  - 阶段零的 M1 temporal HMoE 探针。
+  - 它启用 `temporal_history_len=16` 与 `TemporalTransformerExtractor`，其余主要超参贴近 reactive 对照。
+  - 这是路径 C 前的验证入口，不代表正式 sequence-native 因果策略。
+
 ## 设计说明
 
 - 这些烟雾测试条目有意设为非可视化。
@@ -42,3 +51,5 @@
   - 在首次 `1v1` 烟雾测试中，我们希望学习者保留原始的 `full` 动作表面。
 - 这些条目尚未成为验收/冻结基线。
   - 仅在 `1v1` 奖励/终止/评估行为足够稳定（可跨运行比较）之后才进行提升。
+- temporal 条目只增加策略可见的短历史。
+  - 它不改变导弹物理、弹药、冷却或环境侧战术记忆。
