@@ -25,3 +25,4 @@ current acceptance authority.
 - [WP19 CUDA And Resident-State Mainline Alignment](./wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) ([中文](./wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md))
 - [WP20 Public Capability-Platform Composition](./wp20_public_capability_platform_composition_acceptance_review_20260521.md) ([中文](./wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md))
 - [WP21 Full Counterfactual Experiment Runtime (owner-rejected historical record)](./wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) ([中文](./wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md))
+- [WP24 TaskOrder Maintained Business Migration](./wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) ([中文](./wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md))

@@ -21,6 +21,10 @@ Status: active review record.
 
 - [WP21 Full Counterfactual Experiment Runtime owner-rejected record](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) ([中文](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md))
 
+## Recent Acceptance
+
+- [WP24 TaskOrder Maintained Business Migration Acceptance Review](archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) ([中文](archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md))
+
 ## Archive
 
 Completed WP acceptance reviews, disputed WP21 closure record, superseded wave

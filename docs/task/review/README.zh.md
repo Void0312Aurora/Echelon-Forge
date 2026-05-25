@@ -21,6 +21,10 @@
 
 - [WP21 Full Counterfactual Experiment Runtime owner-rejected record](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md) ([English](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md))
 
+## 最新验收
+
+- [WP24 TaskOrder Maintained Business Migration 验收审查](archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) ([English](archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md))
+
 ## 归档
 
 已完成的 WP 验收审查、存在争议的 WP21 closure 记录、被取代的波次审查、
