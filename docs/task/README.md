@@ -55,6 +55,9 @@ For lifecycle cleanup across this tree, see the
 - [model/](model/README.md): active model-side planning line for temporal
   HMoE/sequence policy work. Start here when RL behavior needs policy memory
   rather than environment-side tactical memory boards.
+- [issues/](issues/README.md): active cross-cutting issue board for problems
+  that should remain visible across domain, runtime, model, training, and eval
+  worklines.
 - [code_redundancy/](code_redundancy/README.md): archived code-redundancy workline.
 - [diagnostics_eval/](diagnostics_eval/README.md): archived diagnostics/eval convergence records.
 - [python_rl/](python_rl/README.md): archived `python/rl` convergence records.
