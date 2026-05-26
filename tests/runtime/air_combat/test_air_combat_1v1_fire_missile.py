@@ -201,7 +201,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
         self.assertEqual(int(getattr(cooled, "missiles_remaining", -1)), 3)
         self.assertTrue(bool(getattr(cooled, "can_fire", False)))
 
-    def test_fired_missile_does_not_retarget_friendly_and_kills_red(self) -> None:
+    def test_fired_missile_does_not_retarget_friendly_and_records_engagement(self) -> None:
         sim, blue_id, red_id = _make_direct_fixture()
         _wait_for_track(sim, blue_id, red_id)
         self.assertEqual(sim.get_unit_health(blue_id), [100.0, 100.0])
@@ -225,8 +225,15 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
         self.assertTrue(saw_red_in_missile_contacts)
         self.assertTrue(sim.is_unit_active(blue_id))
         self.assertEqual(sim.get_unit_health(blue_id), [100.0, 100.0])
-        self.assertFalse(sim.is_unit_active(red_id))
-        self.assertEqual(sim.get_unit_health(red_id), [0.0, 0.0])
+        self.assertFalse(sim.is_unit_active(missile_id))
+
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.launch_events), 1)
+        for event in events.effects_events:
+            self.assertEqual(int(event.target.entity_id), red_id)
+            self.assertNotEqual(int(event.target.entity_id), blue_id)
+        for report in events.damage_reports:
+            self.assertEqual(int(report.target.entity_id), red_id)
 
     def test_fire_weapon_bridge_uses_assigned_target_and_spawns_missile(self) -> None:
         sim, blue_id, red_id = _make_direct_fixture()

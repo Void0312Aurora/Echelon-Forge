@@ -206,6 +206,25 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         effects.quality = 1.0 if hit_applied else 0.0
         effects.confidence = 1.0
         effects.effect_family = "blast_fragmentation"
+        effects.warhead_mass_kg = 0.0
+        effects.warhead_lethal_radius_m = 80.0
+        effects.warhead_profile_synthetic = True
+        effects.damage_scalar_synthetic = True
+        effects.fuze_type = "proximity"
+        effects.fuze_trigger_radius_m = 80.0
+        effects.fuze_delay_s = 0.0
+        effects.fuze_reliability = 1.0
+        effects.fuze_profile_synthetic = True
+        effects.direct_hitbox_intersection = True
+        effects.projected_hitbox_count = 0
+        effects.spatial_effect_scale = 1.0
+        effects.mechanism_armor_scale = 1.0
+        effects.mechanism_exposure_scale = 1.0
+        effects.mechanism_effect_scale = 1.0
+        effects.component_threshold_scale = 1.0
+        effects.component_failure_probability = 0.50
+        effects.component_failure_sample = 0.25
+        effects.component_failure_count = 1
 
         report = ef_py.DamageReport()
         report.report_id = 9201
@@ -229,7 +248,13 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         self.assertEqual(effects.target.entity_id, target_id)
         self.assertEqual(effects.outcome_state, "hit")
         self.assertEqual(effects.effect_family, "blast_fragmentation")
+        self.assertTrue(bool(effects.warhead_profile_synthetic))
+        self.assertTrue(bool(effects.damage_scalar_synthetic))
         self.assertTrue(math.isclose(effects.quality, 1.0))
+        self.assertTrue(bool(effects.direct_hitbox_intersection))
+        self.assertEqual(int(effects.projected_hitbox_count), 0)
+        self.assertTrue(math.isclose(float(effects.mechanism_effect_scale), 1.0))
+        self.assertTrue(math.isclose(float(effects.component_threshold_scale), 1.0))
 
         self.assertEqual(report.target.entity_id, target_id)
         self.assertEqual(report.source_event_id, effects.event_id)

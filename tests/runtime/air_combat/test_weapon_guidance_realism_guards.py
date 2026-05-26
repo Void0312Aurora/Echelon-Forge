@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import math
+import tempfile
 import unittest
 
 from python.testing.runtime import ensure_repo_imports, resolve_repo_path
@@ -120,6 +122,568 @@ def _heading_from_velocity(sim: ef_py.SimulationKernel, entity_id: int) -> float
     return deg
 
 
+def _relative_detection_from_truth(
+    sim: ef_py.SimulationKernel,
+    observer_id: int,
+    target_id: int,
+    *,
+    timestamp: float,
+    signal_strength: float = 1.0,
+    local_sensor_hit: bool = True,
+) -> ef_py.Detection:
+    ox, oy, oz = (float(value) for value in sim.get_unit_position(int(observer_id)))
+    tx, ty, tz = (float(value) for value in sim.get_unit_position(int(target_id)))
+    ovx, ovy, ovz = (float(value) for value in sim.get_unit_velocity(int(observer_id)))
+    tvx, tvy, tvz = (float(value) for value in sim.get_unit_velocity(int(target_id)))
+    dx = tx - ox
+    dy = ty - oy
+    dz = tz - oz
+    horizontal = math.hypot(dx, dy)
+    distance = math.sqrt(dx * dx + dy * dy + dz * dz)
+    bearing_nav = math.degrees(math.atan2(dx, dy))
+    heading = float(sim.get_unit_heading(int(observer_id)))
+    relative_bearing = bearing_nav - heading
+    while relative_bearing > 180.0:
+        relative_bearing -= 360.0
+    while relative_bearing < -180.0:
+        relative_bearing += 360.0
+    elevation = math.degrees(math.atan2(dz, horizontal)) if horizontal > 1.0e-9 else 0.0
+    closing = 0.0
+    if distance > 1.0e-9:
+        ux = dx / distance
+        uy = dy / distance
+        uz = dz / distance
+        rel_vx = tvx - ovx
+        rel_vy = tvy - ovy
+        rel_vz = tvz - ovz
+        closing = -(rel_vx * ux + rel_vy * uy + rel_vz * uz)
+    return _make_detection(
+        int(target_id),
+        range_m=distance,
+        bearing_deg=relative_bearing,
+        elevation_deg=elevation,
+        closing_speed_mps=closing,
+        signal_strength=signal_strength,
+        local_sensor_hit=local_sensor_hit,
+        timestamp=timestamp,
+    )
+
+
+def _drive_missile_with_truth_track(
+    sim: ef_py.SimulationKernel,
+    missile_id: int,
+    target_id: int,
+    *,
+    max_steps: int = 3600,
+) -> dict[str, float | bool]:
+    dt = float(sim.get_time_step())
+    last_runtime: dict = _missile_runtime(sim, missile_id)
+    min_truth_distance = math.inf
+    max_achieved_lateral_accel = float(last_runtime["achieved_lateral_accel_mps2"])
+    time_s = 0.0
+    for step_idx in range(max_steps):
+        if not sim.is_unit_active(missile_id):
+            break
+        mx, my, mz = (float(value) for value in sim.get_unit_position(int(missile_id)))
+        tx, ty, tz = (float(value) for value in sim.get_unit_position(int(target_id)))
+        min_truth_distance = min(min_truth_distance, math.dist((mx, my, mz), (tx, ty, tz)))
+        _set_contacts(
+            sim,
+            missile_id,
+            [
+                _relative_detection_from_truth(
+                    sim,
+                    missile_id,
+                    target_id,
+                    timestamp=step_idx * dt,
+                    local_sensor_hit=True,
+                )
+            ],
+        )
+        sim.step()
+        time_s += dt
+        if sim.is_unit_active(missile_id):
+            last_runtime = _missile_runtime(sim, missile_id)
+            max_achieved_lateral_accel = max(
+                max_achieved_lateral_accel,
+                float(last_runtime["achieved_lateral_accel_mps2"]),
+            )
+
+    target_active = bool(sim.is_unit_active(target_id))
+    missile_active = bool(sim.is_unit_active(missile_id))
+    if missile_active:
+        last_runtime = _missile_runtime(sim, missile_id)
+    return {
+        "missile_active": missile_active,
+        "target_active": target_active,
+        "time_s": time_s,
+        "truth_min_dist_m": float(min_truth_distance),
+        "proximity_min_dist_m": float(last_runtime["proximity_min_dist_m"]),
+        "proximity_last_dist_m": float(last_runtime["proximity_last_dist_m"]),
+        "proximity_engaged": bool(last_runtime["proximity_engaged"]),
+        "seeker_has_valid_track": bool(last_runtime["seeker_has_valid_track"]),
+        "terminal_seeker_active": bool(last_runtime["terminal_seeker_active"]),
+        "achieved_lateral_accel_mps2": float(last_runtime["achieved_lateral_accel_mps2"]),
+        "max_achieved_lateral_accel_mps2": max_achieved_lateral_accel,
+    }
+
+
+def _make_baseline_kernel() -> ef_py.SimulationKernel:
+    sim = _make_kernel()
+    tuning = sim.get_missile_tuning()
+    tuning.sensor_scan_period = 1.0e9
+    tuning.sensor_detection_prob = 0.0
+    tuning.sensor_track_memory_s = 0.0
+    tuning.seeker_fov_deg = 180.0
+    tuning.seeker_lock_range = 1.0e6
+    tuning.max_speed = 1100.0
+    tuning.turn_rate = 45.0
+    tuning.max_lateral_g = 35.0
+    tuning.autopilot_tau_s = 0.04
+    tuning.max_accel_response_g_per_s = 500.0
+    tuning.nav_gain = 4.0
+    tuning.fuse_distance = 35.0
+    tuning.damage = 1.0
+    tuning.max_flight_time_s = 45.0
+    tuning.guidance_delay_s = 0.0
+    tuning.guidance_update_period_s = 0.0
+    tuning.bearing_filter_tau_s = 0.0
+    tuning.elevation_filter_tau_s = 0.0
+    tuning.range_filter_tau_s = 0.0
+    tuning.track_break_time_s = 0.4
+    tuning.boost_time_s = 3.0
+    tuning.sustain_time_s = 1.5
+    tuning.reference_area_m2 = 0.025
+    sim.set_missile_tuning(tuning)
+    return sim
+
+
+def _spawn_geometry_pair(
+    sim: ef_py.SimulationKernel,
+    *,
+    red_x: float,
+    red_y: float,
+    red_heading: float,
+    red_vx: float,
+    red_vy: float,
+    red_vz: float = 0.0,
+    blue_heading: float = 0.0,
+    blue_vx: float = 0.0,
+    blue_vy: float = 250.0,
+    blue_z: float = 5000.0,
+    red_z: float = 5000.0,
+) -> tuple[int, int]:
+    blue_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            blue_z,
+            blue_heading,
+            0.0,
+            0.0,
+            blue_vx,
+            blue_vy,
+            0.0,
+        )
+    )
+    red_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Red,
+            "F-16C_Block50",
+            red_x,
+            red_y,
+            red_z,
+            red_heading,
+            0.0,
+            0.0,
+            red_vx,
+            red_vy,
+            red_vz,
+        )
+    )
+    sim.set_unit_ammo(blue_id, 4, 4)
+    sim.set_weapon_cooldown(blue_id, 0.0, -1.0)
+    initial_detection = _relative_detection_from_truth(sim, blue_id, red_id, timestamp=0.0)
+    _set_contacts(sim, blue_id, [initial_detection])
+    return blue_id, red_id
+
+
+def _run_miss_distance_case(
+    *,
+    red_x: float,
+    red_y: float,
+    red_heading: float,
+    red_vx: float,
+    red_vy: float,
+    red_vz: float = 0.0,
+    blue_heading: float = 0.0,
+    blue_vx: float = 0.0,
+    blue_vy: float = 250.0,
+    max_steps: int = 3600,
+) -> dict[str, float | bool]:
+    sim = _make_baseline_kernel()
+    blue_id, red_id = _spawn_geometry_pair(
+        sim,
+        red_x=red_x,
+        red_y=red_y,
+        red_heading=red_heading,
+        red_vx=red_vx,
+        red_vy=red_vy,
+        red_vz=red_vz,
+        blue_heading=blue_heading,
+        blue_vx=blue_vx,
+        blue_vy=blue_vy,
+    )
+    missile_id = int(sim.fire_missile(blue_id, red_id))
+    if missile_id <= 0:
+        raise AssertionError("expected missile launch to succeed for miss-distance baseline")
+    return _drive_missile_with_truth_track(sim, missile_id, red_id, max_steps=max_steps)
+
+
+def _spawn_structured_f16_pair(sim: ef_py.SimulationKernel) -> tuple[int, int]:
+    attacker_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            5000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            250.0,
+            0.0,
+        )
+    )
+    target_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Red,
+            "F-16C_Block50",
+            0.0,
+            500.0,
+            5000.0,
+            180.0,
+            0.0,
+            0.0,
+            0.0,
+            -250.0,
+            0.0,
+        )
+    )
+    return attacker_id, target_id
+
+
+def _spawn_attacker_and_e3_target(sim: ef_py.SimulationKernel) -> tuple[int, int]:
+    attacker_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            9000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            250.0,
+            0.0,
+        )
+    )
+    target_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Red,
+            "E-3_Sentry_AWACS",
+            0.0,
+            1000.0,
+            9000.0,
+            180.0,
+            0.0,
+            0.0,
+            0.0,
+            200.0,
+            0.0,
+        )
+    )
+    return attacker_id, target_id
+
+
+def _spawn_attacker_and_named_target(
+    sim: ef_py.SimulationKernel,
+    target_type: str,
+    *,
+    target_side: ef_py.Side = ef_py.Side.Red,
+    altitude_m: float = 5000.0,
+) -> tuple[int, int]:
+    attacker_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            altitude_m,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            250.0,
+            0.0,
+        )
+    )
+    target_id = int(
+        sim.spawn_unit(
+            target_side,
+            target_type,
+            0.0,
+            1000.0,
+            altitude_m,
+            180.0,
+            0.0,
+            0.0,
+            0.0,
+            -200.0,
+            0.0,
+        )
+    )
+    return attacker_id, target_id
+
+
+def _make_warhead_profile(family: str, *, damage: float = 90.0, radius: float = 25.0) -> ef_py.WarheadProfile:
+    profile = ef_py.WarheadProfile()
+    profile.family = str(family)
+    profile.mass_kg = 12.0
+    profile.lethal_radius_m = float(radius)
+    profile.damage_scalar = float(damage)
+    profile.synthetic = False
+    profile.damage_scalar_synthetic = False
+    profile.provenance = f"test_{family}_profile"
+    return profile
+
+
+def _make_f16_armor_override(name: str, *, wing_armor_mm: float) -> dict:
+    with open(
+        resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = name
+    damage_model = unit["damage_model"]
+    damage_model.pop("vulnerability", None)
+    for hitbox in damage_model["hitboxes"]:
+        systems = set(str(system) for system in hitbox.get("systems", []))
+        if "wings" in systems and "flight_control" in systems:
+            hitbox["armor"] = float(wing_armor_mm)
+    return unit
+
+
+def _make_f16_componentized_wing_override(name: str) -> dict:
+    with open(
+        resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = name
+    damage_model = unit["damage_model"]
+    damage_model.pop("vulnerability", None)
+    for hitbox in damage_model["hitboxes"]:
+        systems = set(str(system) for system in hitbox.get("systems", []))
+        if "wings" in systems and "flight_control" in systems:
+            hitbox["components"] = [
+                {
+                    "name": "left_wing_fuel_cell",
+                    "system": "fuel",
+                    "offset": [-0.8, -2.8, 0.0],
+                    "size": [1.2, 1.2, 0.25],
+                    "armor": 2.0,
+                    "threshold_scale": 1.25,
+                },
+                {
+                    "name": "right_aileron_actuator",
+                    "system": "flight_control",
+                    "offset": [-0.8, 2.8, 0.0],
+                    "size": [1.0, 1.1, 0.22],
+                    "armor": 3.0,
+                    "threshold_scale": 1.35,
+                },
+            ]
+    return unit
+
+
+def _kernel_with_unit_overrides(overrides: list[dict]) -> ef_py.SimulationKernel:
+    sim = ef_py.SimulationKernel()
+    sim.reset(20260526 + len(overrides))
+    if not sim.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+    with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8", delete=False) as handle:
+        json.dump({"units": overrides}, handle)
+        override_path = handle.name
+    if not sim.load_unit_definitions(override_path):
+        raise AssertionError(f"failed to load unit overrides from {override_path}")
+    return sim
+
+
+def _profiled_local_hit_overlay_for_target(
+    target_type: str,
+    family: str,
+    local: tuple[float, float, float],
+    *,
+    damage: float = 90.0,
+    radius: float = 25.0,
+    overrides: list[dict] | None = None,
+) -> tuple[dict[str, float], list[float], object]:
+    sim = _kernel_with_unit_overrides(overrides or [])
+    attacker_id, target_id = _spawn_attacker_and_named_target(sim, target_type)
+    profile = _make_warhead_profile(family, damage=damage, radius=radius)
+    ok = sim.debug_apply_profiled_local_proximity_hit(
+        attacker_id,
+        target_id,
+        float(local[0]),
+        float(local[1]),
+        float(local[2]),
+        profile,
+    )
+    if not ok:
+        raise AssertionError(f"profiled local hit failed for {family} against {target_type}")
+    if not sim.is_unit_active(target_id):
+        raise AssertionError(f"profiled local hit destroyed target unexpectedly for {target_type}")
+    events = sim.export_recent_engagement_events()
+    if len(events.effects_events) != 1:
+        raise AssertionError(f"expected one effects event for {target_type}")
+    return (
+        _aircraft_damage_overlay(sim, target_id),
+        [float(value) for value in sim.get_unit_damage_state(target_id)],
+        events.effects_events[0],
+    )
+
+
+def _profiled_local_hit_damage_state(
+    family: str,
+    local: tuple[float, float, float],
+    *,
+    damage: float = 90.0,
+) -> tuple[list[float], object]:
+    sim = ef_py.SimulationKernel()
+    sim.reset(20260526)
+    if not sim.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+    attacker_id, target_id = _spawn_structured_f16_pair(sim)
+    profile = _make_warhead_profile(family, damage=damage)
+    ok = sim.debug_apply_profiled_local_proximity_hit(
+        attacker_id,
+        target_id,
+        float(local[0]),
+        float(local[1]),
+        float(local[2]),
+        profile,
+    )
+    if not ok:
+        raise AssertionError(f"profiled local hit failed for {family}")
+    if not sim.is_unit_active(target_id):
+        raise AssertionError(f"profiled local hit destroyed target unexpectedly for {family}")
+    events = sim.export_recent_engagement_events()
+    if len(events.effects_events) != 1:
+        raise AssertionError(f"expected one effects event for {family}")
+    return [float(value) for value in sim.get_unit_damage_state(target_id)], events.effects_events[0]
+
+
+def _profiled_local_hit_overlay(
+    family: str,
+    local: tuple[float, float, float],
+    *,
+    damage: float = 90.0,
+    radius: float = 25.0,
+) -> tuple[dict[str, float], list[float], object]:
+    sim = ef_py.SimulationKernel()
+    sim.reset(20260526)
+    if not sim.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+    attacker_id, target_id = _spawn_structured_f16_pair(sim)
+    profile = _make_warhead_profile(family, damage=damage, radius=radius)
+    ok = sim.debug_apply_profiled_local_proximity_hit(
+        attacker_id,
+        target_id,
+        float(local[0]),
+        float(local[1]),
+        float(local[2]),
+        profile,
+    )
+    if not ok:
+        raise AssertionError(f"profiled local hit failed for {family}")
+    if not sim.is_unit_active(target_id):
+        raise AssertionError(f"profiled local hit destroyed target unexpectedly for {family}")
+    events = sim.export_recent_engagement_events()
+    if len(events.effects_events) != 1:
+        raise AssertionError(f"expected one effects event for {family}")
+    return (
+        _aircraft_damage_overlay(sim, target_id),
+        [float(value) for value in sim.get_unit_damage_state(target_id)],
+        events.effects_events[0],
+    )
+
+
+def _profiled_local_hit_overlay_with_velocity(
+    family: str,
+    local: tuple[float, float, float],
+    missile_velocity: tuple[float, float, float],
+    *,
+    damage: float = 90.0,
+    radius: float = 25.0,
+) -> dict[str, float]:
+    sim = ef_py.SimulationKernel()
+    sim.reset(20260526)
+    if not sim.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+    attacker_id, target_id = _spawn_structured_f16_pair(sim)
+    profile = _make_warhead_profile(family, damage=damage, radius=radius)
+    ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+        attacker_id,
+        target_id,
+        float(local[0]),
+        float(local[1]),
+        float(local[2]),
+        profile,
+        float(missile_velocity[0]),
+        float(missile_velocity[1]),
+        float(missile_velocity[2]),
+    )
+    if not ok:
+        raise AssertionError(f"profiled local hit with velocity failed for {family}")
+    if not sim.is_unit_active(target_id):
+        raise AssertionError(f"profiled local hit destroyed target unexpectedly for {family}")
+    events = sim.export_recent_engagement_events()
+    if len(events.effects_events) != 1:
+        raise AssertionError(f"expected one effects event for {family}")
+    return _aircraft_damage_overlay(sim, target_id)
+
+
+def _aircraft_damage_overlay(sim: ef_py.SimulationKernel, entity_id: int) -> dict[str, float]:
+    values = [float(value) for value in sim.debug_get_aircraft_damage_state(int(entity_id))]
+    names = (
+        "structure",
+        "flight_control",
+        "hydraulic",
+        "propulsion",
+        "fuel",
+        "avionics",
+        "crew",
+        "fire",
+        "fuel_leak",
+        "structural_overstress",
+        "flutter_exposure",
+        "forced_landing",
+        "flight_control_kill",
+        "propulsion_kill",
+        "crew_kill",
+    )
+    if len(values) != len(names):
+        raise AssertionError(f"expected aircraft damage overlay with {len(names)} fields, got {values!r}")
+    return dict(zip(names, values))
+
+
 def _spawn_and_fire(
     sim: ef_py.SimulationKernel,
     *,
@@ -176,6 +740,17 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertAlmostEqual(float(aim120["turn_rate_deg_s"]), 30.0, delta=1.0e-6)
         self.assertAlmostEqual(float(aim120["guidance_max_lateral_g"]), 35.0, delta=1.0e-6)
         self.assertAlmostEqual(float(aim120["fuse_distance_m"]), 15.0, delta=1.0e-6)
+        self.assertEqual(str(aim120["warhead_family"]), "blast_fragmentation")
+        self.assertAlmostEqual(float(aim120["warhead_mass_kg"]), 20.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["warhead_lethal_radius_m"]), 15.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["warhead_damage_scalar"]), 180.0, delta=1.0e-6)
+        self.assertFalse(bool(aim120["warhead_profile_synthetic"]))
+        self.assertTrue(bool(aim120["warhead_damage_scalar_synthetic"]))
+        self.assertEqual(str(aim120["fuze_type"]), "radar_proximity")
+        self.assertAlmostEqual(float(aim120["fuze_trigger_radius_m"]), 15.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["fuze_delay_s"]), 0.015, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim120["fuze_reliability"]), 0.94, delta=1.0e-6)
+        self.assertFalse(bool(aim120["fuze_profile_synthetic"]))
         self.assertAlmostEqual(float(aim120["sensor_max_range_m"]), 16000.0, delta=1.0e-6)
         self.assertEqual(int(aim120["sensor_type"]), int(ef_py.SensorType.Radar))
 
@@ -190,6 +765,17 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertAlmostEqual(float(aim9x["turn_rate_deg_s"]), 60.0, delta=1.0e-6)
         self.assertAlmostEqual(float(aim9x["guidance_max_lateral_g"]), 60.0, delta=1.0e-6)
         self.assertAlmostEqual(float(aim9x["fuse_distance_m"]), 8.0, delta=1.0e-6)
+        self.assertEqual(str(aim9x["warhead_family"]), "blast_fragmentation")
+        self.assertAlmostEqual(float(aim9x["warhead_mass_kg"]), 9.4, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["warhead_lethal_radius_m"]), 8.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["warhead_damage_scalar"]), 84.6, delta=1.0e-6)
+        self.assertFalse(bool(aim9x["warhead_profile_synthetic"]))
+        self.assertTrue(bool(aim9x["warhead_damage_scalar_synthetic"]))
+        self.assertEqual(str(aim9x["fuze_type"]), "laser_proximity")
+        self.assertAlmostEqual(float(aim9x["fuze_trigger_radius_m"]), 8.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["fuze_delay_s"]), 0.008, delta=1.0e-6)
+        self.assertAlmostEqual(float(aim9x["fuze_reliability"]), 0.92, delta=1.0e-6)
+        self.assertFalse(bool(aim9x["fuze_profile_synthetic"]))
         self.assertEqual(int(aim9x["sensor_type"]), int(ef_py.SensorType.Infrared))
 
     def test_global_missile_tuning_can_override_definition_baseline(self) -> None:
@@ -225,6 +811,326 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertAlmostEqual(float(runtime["sensor_track_memory_s"]), 3.0, delta=1.0e-6)
         self.assertAlmostEqual(float(runtime["guidance_max_lateral_g"]), 47.0, delta=1.0e-6)
         self.assertEqual(int(runtime["sensor_type"]), int(ef_py.SensorType.Radar))
+
+    def test_global_fuze_profile_override_flows_into_runtime_and_effects_event(self) -> None:
+        sim = _make_baseline_kernel()
+
+        profile = ef_py.FuzeProfile()
+        profile.type = "laser_proximity"
+        profile.trigger_radius_m = 35.0
+        profile.delay_s = 0.02
+        profile.reliability = 0.88
+        profile.synthetic = False
+        profile.provenance = "test_authored_fuze_profile"
+
+        tuning = sim.get_missile_tuning()
+        tuning.fuze_profile = profile
+        tuning.has_fuze_profile = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=13000.0,
+            red_y=9000.0,
+            red_heading=270.0,
+            red_vx=-260.0,
+            red_vy=0.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+        runtime = _missile_runtime(sim, missile_id)
+        self.assertAlmostEqual(float(runtime["fuse_distance_m"]), 35.0, delta=1.0e-6)
+        self.assertEqual(str(runtime["fuze_type"]), "laser_proximity")
+        self.assertAlmostEqual(float(runtime["fuze_trigger_radius_m"]), 35.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["fuze_delay_s"]), 0.02, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["fuze_reliability"]), 0.88, delta=1.0e-6)
+        self.assertFalse(bool(runtime["fuze_profile_synthetic"]))
+
+        for step_idx in range(3600):
+            if not sim.is_unit_active(missile_id):
+                break
+            _set_contacts(
+                sim,
+                missile_id,
+                [
+                    _relative_detection_from_truth(
+                        sim,
+                        missile_id,
+                        red_id,
+                        timestamp=step_idx * sim.get_time_step(),
+                        local_sensor_hit=True,
+                    )
+                ],
+            )
+            sim.step()
+
+        events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.effects_events), 1)
+        effects = events.effects_events[-1]
+        self.assertEqual(str(effects.fuze_type), "laser_proximity")
+        self.assertAlmostEqual(float(effects.fuze_trigger_radius_m), 35.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.fuze_delay_s), 0.02, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.fuze_reliability), 0.88, delta=1.0e-6)
+        self.assertFalse(bool(effects.fuze_profile_synthetic))
+
+    def test_fuze_delay_schedules_detonation_after_nearest_approach(self) -> None:
+        sim = _make_baseline_kernel()
+        sim.set_time_step(0.02)
+
+        profile = ef_py.FuzeProfile()
+        profile.type = "radar_proximity"
+        profile.trigger_radius_m = 35.0
+        profile.delay_s = 0.08
+        profile.reliability = 1.0
+        profile.synthetic = False
+        profile.provenance = "test_delay_fuze_profile"
+
+        tuning = sim.get_missile_tuning()
+        tuning.fuze_profile = profile
+        tuning.has_fuze_profile = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=13000.0,
+            red_y=9000.0,
+            red_heading=270.0,
+            red_vx=-260.0,
+            red_vy=0.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        armed_seen = False
+        for step_idx in range(3600):
+            if not sim.is_unit_active(missile_id):
+                break
+            _set_contacts(
+                sim,
+                missile_id,
+                [
+                    _relative_detection_from_truth(
+                        sim,
+                        missile_id,
+                        red_id,
+                        timestamp=step_idx * sim.get_time_step(),
+                        local_sensor_hit=True,
+                    )
+                ],
+            )
+            sim.step()
+            if sim.is_unit_active(missile_id):
+                runtime = _missile_runtime(sim, missile_id)
+                if bool(runtime["fuze_delay_armed"]):
+                    armed_seen = True
+                    self.assertTrue(math.isfinite(float(runtime["fuze_nearest_approach_time_s"])))
+                    self.assertAlmostEqual(
+                        float(runtime["fuze_detonation_time_s"]) -
+                        float(runtime["fuze_nearest_approach_time_s"]),
+                        0.08,
+                        delta=sim.get_time_step() + 1.0e-6,
+                    )
+                    self.assertGreater(float(runtime["fuze_hit_probability"]), 0.0)
+
+        self.assertTrue(armed_seen)
+        events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.effects_events), 1)
+        effects = events.effects_events[-1]
+        self.assertEqual(str(effects.fuze_type), "radar_proximity")
+        self.assertAlmostEqual(float(effects.fuze_delay_s), 0.08, delta=1.0e-6)
+        self.assertGreater(float(effects.detonation_time_s), float(effects.nearest_approach_time_s))
+        self.assertAlmostEqual(
+            float(effects.detonation_time_s) - float(effects.nearest_approach_time_s),
+            0.08,
+            delta=sim.get_time_step() + 1.0e-6,
+        )
+
+    def test_contact_fuze_does_not_trigger_from_near_miss_radius(self) -> None:
+        def run_with_fuze(fuze_type: str) -> tuple[dict[str, float | bool], object]:
+            sim = _make_baseline_kernel()
+            sim.set_time_step(0.02)
+
+            profile = ef_py.FuzeProfile()
+            profile.type = fuze_type
+            profile.trigger_radius_m = 35.0
+            profile.delay_s = 0.0
+            profile.reliability = 1.0
+            profile.synthetic = False
+            profile.provenance = "test_fuze_type_trigger_semantics"
+
+            tuning = sim.get_missile_tuning()
+            tuning.fuze_profile = profile
+            tuning.has_fuze_profile = True
+            sim.set_missile_tuning(tuning)
+
+            blue_id, red_id = _spawn_geometry_pair(
+                sim,
+                red_x=0.0,
+                red_y=22000.0,
+                red_heading=180.0,
+                red_vx=0.0,
+                red_vy=-250.0,
+            )
+            missile_id = int(sim.fire_missile(blue_id, red_id))
+            self.assertGreater(missile_id, 0)
+
+            result = _drive_missile_with_truth_track(
+                sim,
+                missile_id,
+                red_id,
+                max_steps=3600,
+            )
+            return result, sim.export_recent_engagement_events()
+
+        proximity_result, proximity_events = run_with_fuze("radar_proximity")
+        self.assertFalse(bool(proximity_result["missile_active"]))
+        self.assertLess(float(proximity_result["truth_min_dist_m"]), 35.0)
+        self.assertGreaterEqual(len(proximity_events.effects_events), 1)
+        proximity_effect = proximity_events.effects_events[-1]
+        self.assertEqual(str(proximity_effect.trigger_type), "proximity_fuze")
+        self.assertEqual(str(proximity_effect.fuze_type), "radar_proximity")
+        self.assertFalse(bool(proximity_effect.direct_hitbox_intersection))
+        self.assertGreater(int(proximity_effect.projected_hitbox_count), 0)
+
+        contact_result, contact_events = run_with_fuze("contact")
+        self.assertFalse(bool(contact_result["missile_active"]))
+        self.assertLess(float(contact_result["truth_min_dist_m"]), 35.0)
+        self.assertEqual(len(contact_events.effects_events), 0)
+        self.assertEqual(len(contact_events.damage_reports), 0)
+
+    def test_timed_fuze_detonates_on_delay_without_proximity_gate(self) -> None:
+        sim = _make_baseline_kernel()
+        sim.set_time_step(0.02)
+
+        profile = ef_py.FuzeProfile()
+        profile.type = "timed"
+        profile.trigger_radius_m = 35.0
+        profile.delay_s = 0.10
+        profile.reliability = 1.0
+        profile.synthetic = False
+        profile.provenance = "test_timed_fuze_independent_trigger"
+
+        tuning = sim.get_missile_tuning()
+        tuning.fuze_profile = profile
+        tuning.has_fuze_profile = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=0.0,
+            red_y=26000.0,
+            red_heading=180.0,
+            red_vx=0.0,
+            red_vy=-250.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        launch_time = 0.0
+        for step_idx in range(60):
+            if not sim.is_unit_active(missile_id):
+                break
+            _set_contacts(
+                sim,
+                missile_id,
+                [
+                    _relative_detection_from_truth(
+                        sim,
+                        missile_id,
+                        red_id,
+                        timestamp=step_idx * sim.get_time_step(),
+                        local_sensor_hit=True,
+                    )
+                ],
+            )
+            sim.step()
+
+        self.assertFalse(sim.is_unit_active(missile_id))
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.damage_reports), 1)
+
+        effects = events.effects_events[-1]
+        report = events.damage_reports[-1]
+        self.assertEqual(str(effects.trigger_type), "timed_fuze")
+        self.assertEqual(str(effects.fuze_type), "timed")
+        self.assertEqual(str(effects.outcome_state), "detonated_no_effect")
+        self.assertGreater(float(effects.miss_distance_m), 1000.0)
+        self.assertFalse(bool(effects.direct_hitbox_intersection))
+        self.assertEqual(int(effects.projected_hitbox_count), 0)
+        self.assertAlmostEqual(float(effects.fuze_delay_s), 0.10, delta=1.0e-6)
+        self.assertAlmostEqual(
+            float(effects.detonation_time_s) - launch_time,
+            0.10,
+            delta=(2.0 * sim.get_time_step()) + 1.0e-6,
+        )
+        self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
+        self.assertFalse(bool(report.destroyed))
+
+    def test_global_warhead_profile_override_flows_into_runtime_and_effects_event(self) -> None:
+        sim = _make_baseline_kernel()
+
+        profile = ef_py.WarheadProfile()
+        profile.family = "continuous_rod"
+        profile.mass_kg = 12.5
+        profile.lethal_radius_m = 35.0
+        profile.damage_scalar = 77.0
+        profile.synthetic = False
+        profile.damage_scalar_synthetic = False
+        profile.provenance = "test_authored_profile"
+
+        tuning = sim.get_missile_tuning()
+        tuning.warhead_profile = profile
+        tuning.has_warhead_profile = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=13000.0,
+            red_y=9000.0,
+            red_heading=270.0,
+            red_vx=-260.0,
+            red_vy=0.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+        runtime = _missile_runtime(sim, missile_id)
+        self.assertAlmostEqual(float(runtime["fuse_distance_m"]), 35.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(runtime["damage"]), 77.0, delta=1.0e-6)
+        self.assertEqual(str(runtime["warhead_family"]), "continuous_rod")
+        self.assertAlmostEqual(float(runtime["warhead_mass_kg"]), 12.5, delta=1.0e-6)
+        self.assertFalse(bool(runtime["warhead_profile_synthetic"]))
+        self.assertFalse(bool(runtime["warhead_damage_scalar_synthetic"]))
+
+        for step_idx in range(3600):
+            if not sim.is_unit_active(missile_id):
+                break
+            _set_contacts(
+                sim,
+                missile_id,
+                [
+                    _relative_detection_from_truth(
+                        sim,
+                        missile_id,
+                        red_id,
+                        timestamp=step_idx * sim.get_time_step(),
+                        local_sensor_hit=True,
+                    )
+                ],
+            )
+            sim.step()
+
+        events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.effects_events), 1)
+        effects = events.effects_events[-1]
+        self.assertEqual(str(effects.effect_family), "continuous_rod")
+        self.assertAlmostEqual(float(effects.warhead_mass_kg), 12.5, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.warhead_lethal_radius_m), 35.0, delta=1.0e-6)
+        self.assertFalse(bool(effects.warhead_profile_synthetic))
+        self.assertFalse(bool(effects.damage_scalar_synthetic))
+        self.assertEqual(str(effects.fuze_type), "proximity")
+        self.assertAlmostEqual(float(effects.fuze_trigger_radius_m), 35.0, delta=1.0e-6)
+        self.assertTrue(bool(effects.fuze_profile_synthetic))
 
     def test_min_launch_range_rejects_without_consuming_ammo_or_cooldown(self) -> None:
         sim = _make_kernel()
@@ -616,6 +1522,1029 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
 
         self.assertTrue(sim.is_unit_active(red_id))
         self.assertEqual(list(sim.get_unit_health(red_id)), target_health_before)
+
+    def test_structured_air_target_uses_damage_state_instead_of_hp_first_kill(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+        health_before = [float(value) for value in sim.get_unit_health(target_id)]
+        damage_before = [float(value) for value in sim.get_unit_damage_state(target_id)]
+        self.assertEqual(health_before, [100.0, 100.0])
+        self.assertEqual(damage_before, [1.0, 1.0, 1.0, 1.0])
+
+        self.assertTrue(bool(sim.debug_apply_proximity_hit(attacker_id, target_id, 240.0, 80.0)))
+
+        health_after = [float(value) for value in sim.get_unit_health(target_id)]
+        damage_after = [float(value) for value in sim.get_unit_damage_state(target_id)]
+        self.assertTrue(sim.is_unit_active(target_id))
+        self.assertEqual(health_after, health_before)
+        self.assertLess(min(damage_after), min(damage_before))
+        self.assertGreater(float(damage_after[3]), 0.0)
+
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.damage_reports), 1)
+        effect = events.effects_events[0]
+        report = events.damage_reports[0]
+        self.assertAlmostEqual(float(effect.miss_distance_m), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effect.detonation_local_forward_m), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effect.detonation_local_right_m), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effect.detonation_local_up_m), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
+        self.assertLess(float(report.system_health_delta), 0.0)
+        self.assertFalse(bool(report.destroyed))
+        self.assertNotEqual(str(report.loss_state_to), "lost")
+
+    def test_structured_air_damage_does_not_write_rl_score_from_physical_effects(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+        attacker_reward_before = float(sim.get_agent_observation(attacker_id).total_reward)
+        target_health_before = [float(value) for value in sim.get_unit_health(target_id)]
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    -0.753,
+                    4.0,
+                    0.0,
+                    240.0,
+                    80.0,
+                )
+            )
+        )
+
+        attacker_reward_after = float(sim.get_agent_observation(attacker_id).total_reward)
+        events = sim.export_recent_engagement_events()
+        self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], target_health_before)
+        self.assertEqual(len(events.damage_reports), 1)
+        self.assertLess(float(events.damage_reports[0].system_health_delta), 0.0)
+        self.assertAlmostEqual(attacker_reward_after, attacker_reward_before, delta=1.0e-6)
+
+    def test_phase2_aircraft_hitboxes_produce_distinct_subsystem_effects(self) -> None:
+        cases = {
+            "nose_radar": {
+                "local": (6.024, 0.0, 0.0),
+                "expect_sensor_drop": True,
+                "expect_thrust_drop": False,
+                "expect_fuel_leak": False,
+                "expect_structure_drop": True,
+                "expect_flight_control_drop": True,
+            },
+            "fuselage_engine_fuel": {
+                "local": (0.0, 0.0, 0.3),
+                "expect_sensor_drop": False,
+                "expect_thrust_drop": True,
+                "expect_fuel_leak": True,
+                "expect_structure_drop": True,
+                "expect_flight_control_drop": False,
+            },
+            "wing_flight_control": {
+                "local": (-0.753, 4.0, 0.0),
+                "expect_sensor_drop": False,
+                "expect_thrust_drop": False,
+                "expect_fuel_leak": True,
+                "expect_structure_drop": True,
+                "expect_flight_control_drop": True,
+            },
+        }
+
+        for name, case in cases.items():
+            with self.subTest(hitbox=name):
+                sim = ef_py.SimulationKernel()
+                sim.reset(20260526)
+                self.assertTrue(sim.load_database(_DB_PATH))
+                attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+                sensor_before = sim.get_sensor_debug_view(target_id)
+                flight_before = sim.get_flight_dynamics_debug_view(target_id)
+                damage_before = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                local_forward, local_right, local_up = case["local"]
+
+                self.assertTrue(
+                    bool(
+                        sim.debug_apply_local_proximity_hit(
+                            attacker_id,
+                            target_id,
+                            float(local_forward),
+                            float(local_right),
+                            float(local_up),
+                            240.0,
+                            80.0,
+                        )
+                    )
+                )
+
+                sensor_after = sim.get_sensor_debug_view(target_id)
+                damage_after = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                sim.step()
+                flight_after = sim.get_flight_dynamics_debug_view(target_id)
+                self.assertTrue(sim.is_unit_active(target_id))
+                self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], [100.0, 100.0])
+                self.assertLess(min(damage_after), min(damage_before))
+
+                if case["expect_sensor_drop"]:
+                    self.assertLess(float(sensor_after.max_range), float(sensor_before.max_range))
+                    self.assertLess(float(damage_after[2]), float(damage_before[2]))
+                else:
+                    self.assertAlmostEqual(float(sensor_after.max_range), float(sensor_before.max_range), delta=1.0e-6)
+
+                if case["expect_thrust_drop"]:
+                    self.assertLess(float(flight_after.mil_thrust_n), float(flight_before.mil_thrust_n))
+                    self.assertLess(float(flight_after.ab_thrust_n), float(flight_before.ab_thrust_n))
+                else:
+                    self.assertAlmostEqual(float(flight_after.mil_thrust_n), float(flight_before.mil_thrust_n), delta=1.0e-6)
+                    self.assertAlmostEqual(float(flight_after.ab_thrust_n), float(flight_before.ab_thrust_n), delta=1.0e-6)
+
+                if case["expect_fuel_leak"]:
+                    self.assertGreater(float(flight_after.fuel_leak_rate_kg_s), float(flight_before.fuel_leak_rate_kg_s))
+                else:
+                    self.assertAlmostEqual(
+                        float(flight_after.fuel_leak_rate_kg_s),
+                        float(flight_before.fuel_leak_rate_kg_s),
+                        delta=1.0e-6,
+                    )
+
+                if case["expect_flight_control_drop"]:
+                    self.assertLess(float(flight_after.max_turn_rate), float(flight_before.max_turn_rate))
+                else:
+                    self.assertLessEqual(
+                        float(flight_after.max_turn_rate),
+                        float(flight_before.max_turn_rate),
+                    )
+                if case["expect_structure_drop"]:
+                    self.assertLess(float(flight_after.max_g), float(flight_before.max_g))
+                else:
+                    self.assertAlmostEqual(float(flight_after.max_g), float(flight_before.max_g), delta=1.0e-6)
+
+    def test_phase2_aircraft_damage_overlay_tracks_air_specific_subsystems(self) -> None:
+        cases = {
+            "nose_crew_avionics": {
+                "local": (6.024, 0.0, 0.0),
+                "drops": ("crew", "avionics", "structure", "flight_control"),
+                "stable": ("propulsion", "fuel", "hydraulic"),
+                "rises": ("fire",),
+            },
+            "fuselage_propulsion_fuel": {
+                "local": (0.0, 0.0, 0.3),
+                "drops": ("propulsion", "fuel", "avionics", "structure"),
+                "stable": ("crew", "flight_control", "hydraulic"),
+                "rises": ("fire", "fuel_leak"),
+            },
+            "wing_flight_control_hydraulic": {
+                "local": (-0.753, 4.0, 0.0),
+                "drops": ("flight_control", "hydraulic", "fuel", "structure"),
+                "stable": ("crew", "avionics"),
+                "rises": ("fire", "fuel_leak"),
+            },
+        }
+
+        for name, case in cases.items():
+            with self.subTest(hitbox=name):
+                sim = ef_py.SimulationKernel()
+                sim.reset(20260526)
+                self.assertTrue(sim.load_database(_DB_PATH))
+                attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+                overlay_before = _aircraft_damage_overlay(sim, target_id)
+                platform_before = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                flight_before = sim.get_flight_dynamics_debug_view(target_id)
+                self.assertEqual(overlay_before["forced_landing"], 0.0)
+                self.assertEqual(overlay_before["flight_control_kill"], 0.0)
+                self.assertEqual(overlay_before["propulsion_kill"], 0.0)
+                self.assertEqual(overlay_before["crew_kill"], 0.0)
+
+                self.assertTrue(
+                    bool(
+                        sim.debug_apply_local_proximity_hit(
+                            attacker_id,
+                            target_id,
+                            float(case["local"][0]),
+                            float(case["local"][1]),
+                            float(case["local"][2]),
+                            240.0,
+                            80.0,
+                        )
+                    )
+                )
+
+                overlay_after = _aircraft_damage_overlay(sim, target_id)
+                platform_after = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                sim.step()
+                flight_after_update = sim.get_flight_dynamics_debug_view(target_id)
+                self.assertTrue(sim.is_unit_active(target_id))
+                self.assertLess(min(platform_after), min(platform_before))
+
+                for field in case["drops"]:
+                    self.assertLess(overlay_after[field], overlay_before[field], field)
+                for field in case["stable"]:
+                    self.assertAlmostEqual(overlay_after[field], overlay_before[field], delta=1.0e-6, msg=field)
+                for field in case["rises"]:
+                    self.assertGreater(overlay_after[field], overlay_before[field], field)
+
+                if "flight_control" in case["drops"]:
+                    self.assertLess(platform_after[1], platform_before[1])
+                    self.assertLess(float(flight_after_update.max_turn_rate), float(flight_before.max_turn_rate))
+                    self.assertLess(float(flight_after_update.max_accel), float(flight_before.max_accel))
+                if "avionics" in case["drops"] or "crew" in case["drops"]:
+                    self.assertLess(platform_after[0], platform_before[0])
+                if "structure" in case["drops"]:
+                    self.assertLess(float(flight_after_update.max_g), float(flight_before.max_g))
+                if "propulsion" in case["drops"]:
+                    self.assertLess(float(flight_after_update.mil_thrust_n), float(flight_before.mil_thrust_n))
+                    self.assertLess(float(flight_after_update.ab_thrust_n), float(flight_before.ab_thrust_n))
+                if "fuel_leak" in case["rises"]:
+                    self.assertGreater(
+                        float(flight_after_update.fuel_leak_rate_kg_s),
+                        float(flight_before.fuel_leak_rate_kg_s),
+                    )
+
+    def test_phase2_avionics_and_crew_damage_derives_sensor_performance(self) -> None:
+        cases = {
+            "nose_cockpit_avionics": {
+                "local": (6.024, 0.0, 0.0),
+                "expect_sensor_degradation": True,
+            },
+            "wing_flight_control": {
+                "local": (-0.753, 4.0, 0.0),
+                "expect_sensor_degradation": False,
+            },
+        }
+
+        for name, case in cases.items():
+            with self.subTest(hitbox=name):
+                sim = ef_py.SimulationKernel()
+                sim.reset(20260526)
+                self.assertTrue(sim.load_database(_DB_PATH))
+                attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+                sensor_before = sim.get_sensor_debug_view(target_id)
+                overlay_before = _aircraft_damage_overlay(sim, target_id)
+                self.assertGreater(float(sensor_before.max_range), 0.0)
+                self.assertGreater(float(sensor_before.detection_prob), 0.0)
+
+                self.assertTrue(
+                    bool(
+                        sim.debug_apply_local_proximity_hit(
+                            attacker_id,
+                            target_id,
+                            float(case["local"][0]),
+                            float(case["local"][1]),
+                            float(case["local"][2]),
+                            240.0,
+                            80.0,
+                        )
+                    )
+                )
+                sim.step()
+
+                overlay_after = _aircraft_damage_overlay(sim, target_id)
+                sensor_after = sim.get_sensor_debug_view(target_id)
+                self.assertTrue(sim.is_unit_active(target_id))
+
+                if case["expect_sensor_degradation"]:
+                    self.assertLess(overlay_after["avionics"], overlay_before["avionics"])
+                    self.assertLess(overlay_after["crew"], overlay_before["crew"])
+                    self.assertLess(float(sensor_after.max_range), float(sensor_before.max_range))
+                    self.assertLess(float(sensor_after.detection_prob), float(sensor_before.detection_prob))
+                    self.assertGreater(float(sensor_after.bearing_noise_std), float(sensor_before.bearing_noise_std))
+                    self.assertGreater(float(sensor_after.range_noise_std), float(sensor_before.range_noise_std))
+                    self.assertLess(float(sensor_after.track_memory_s), float(sensor_before.track_memory_s))
+                else:
+                    self.assertGreaterEqual(
+                        overlay_after["avionics"],
+                        overlay_before["avionics"] - 5.0e-4,
+                    )
+                    self.assertGreaterEqual(
+                        overlay_after["crew"],
+                        overlay_before["crew"] - 5.0e-4,
+                    )
+                    self.assertGreater(
+                        float(sensor_after.max_range),
+                        float(sensor_before.max_range) * 0.99,
+                    )
+                    self.assertGreater(
+                        float(sensor_after.detection_prob),
+                        float(sensor_before.detection_prob) * 0.99,
+                    )
+
+    def test_phase2_aircraft_fire_fuel_and_hydraulic_damage_cascade_over_time(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        sim.set_time_step(0.5)
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    -0.753,
+                    4.0,
+                    0.0,
+                    240.0,
+                    80.0,
+                )
+            )
+        )
+
+        overlay_initial = _aircraft_damage_overlay(sim, target_id)
+        fuel_initial = [float(value) for value in sim.get_unit_fuel(target_id)]
+        mass_initial = [float(value) for value in sim.debug_get_mass_state(target_id)]
+        platform_initial = [float(value) for value in sim.get_unit_damage_state(target_id)]
+        flight_initial = sim.get_flight_dynamics_debug_view(target_id)
+        self.assertGreater(overlay_initial["fuel_leak"], 0.0)
+        self.assertGreater(overlay_initial["fire"], 0.0)
+
+        for _ in range(40):
+            sim.step()
+
+        overlay_after = _aircraft_damage_overlay(sim, target_id)
+        fuel_after = [float(value) for value in sim.get_unit_fuel(target_id)]
+        mass_after = [float(value) for value in sim.debug_get_mass_state(target_id)]
+        platform_after = [float(value) for value in sim.get_unit_damage_state(target_id)]
+        flight_after = sim.get_flight_dynamics_debug_view(target_id)
+
+        self.assertTrue(sim.is_unit_active(target_id))
+        self.assertLess(fuel_after[0] + fuel_after[2], fuel_initial[0] + fuel_initial[2])
+        self.assertLess(mass_after[1], mass_initial[1])
+        self.assertGreater(overlay_after["fire"], overlay_initial["fire"])
+        self.assertLess(overlay_after["hydraulic"], overlay_initial["hydraulic"])
+        self.assertLess(overlay_after["flight_control"], overlay_initial["flight_control"])
+        self.assertLess(overlay_after["structure"], overlay_initial["structure"])
+        self.assertLess(platform_after[1], platform_initial[1])
+        self.assertLess(platform_after[3], platform_initial[3])
+        self.assertLess(float(flight_after.max_turn_rate), float(flight_initial.max_turn_rate))
+
+    def test_phase2_damaged_airframe_high_speed_envelope_accumulates_structural_damage(self) -> None:
+        cases = {
+            "moderate": {
+                "vx": 0.0,
+                "vy": 260.0,
+                "expect_degradation": False,
+            },
+            "high_dynamic_pressure": {
+                "vx": 0.0,
+                "vy": 430.0,
+                "expect_degradation": True,
+            },
+        }
+
+        for name, case in cases.items():
+            with self.subTest(profile=name):
+                sim = ef_py.SimulationKernel()
+                sim.reset(20260526)
+                self.assertTrue(sim.load_database(_DB_PATH))
+                sim.set_time_step(0.25)
+                target_id = int(
+                    sim.spawn_unit(
+                        ef_py.Side.Red,
+                        "F-16C_Block50",
+                        0.0,
+                        0.0,
+                        1200.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        float(case["vx"]),
+                        float(case["vy"]),
+                        0.0,
+                    )
+                )
+                attacker_id = int(
+                    sim.spawn_unit(
+                        ef_py.Side.Blue,
+                        "F-16C_Block50",
+                        0.0,
+                        -5000.0,
+                        1200.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        250.0,
+                        0.0,
+                    )
+                )
+
+                self.assertTrue(
+                    bool(
+                        sim.debug_apply_local_proximity_hit(
+                            attacker_id,
+                            target_id,
+                            -0.753,
+                            4.0,
+                            0.0,
+                            240.0,
+                            80.0,
+                        )
+                    )
+                )
+                sim.step()
+                overlay_before = _aircraft_damage_overlay(sim, target_id)
+                flight_before = sim.get_flight_dynamics_debug_view(target_id)
+
+                for _ in range(80):
+                    sim.step()
+
+                overlay_after = _aircraft_damage_overlay(sim, target_id)
+                flight_after = sim.get_flight_dynamics_debug_view(target_id)
+                self.assertTrue(sim.is_unit_active(target_id))
+                self.assertLess(overlay_before["structure"], 1.0)
+
+                if case["expect_degradation"]:
+                    self.assertLess(overlay_after["structure"], overlay_before["structure"])
+                    self.assertGreater(overlay_after["flutter_exposure"], overlay_before["flutter_exposure"])
+                    self.assertGreater(overlay_after["structural_overstress"], overlay_before["structural_overstress"])
+                    self.assertLess(float(flight_after.max_g), float(flight_before.max_g))
+                else:
+                    self.assertLess(
+                        overlay_after["structure"],
+                        overlay_before["structure"],
+                    )
+                    self.assertAlmostEqual(
+                        overlay_after["flutter_exposure"],
+                        overlay_before["flutter_exposure"],
+                        delta=1.0e-6,
+                    )
+
+    def test_phase3_warhead_family_changes_structured_air_effect_distribution(self) -> None:
+        fuselage = (0.0, 0.0, 0.3)
+        wing = (-0.753, 4.0, 0.0)
+        nose = (6.024, 0.0, 0.0)
+
+        blast_fragmentation_fuselage, baseline_event = _profiled_local_hit_damage_state(
+            "blast_fragmentation",
+            fuselage,
+        )
+        blast_fuselage, blast_event = _profiled_local_hit_damage_state("blast", fuselage)
+        self.assertEqual(str(baseline_event.effect_family), "blast_fragmentation")
+        self.assertEqual(str(blast_event.effect_family), "blast")
+        self.assertFalse(bool(blast_event.warhead_profile_synthetic))
+        self.assertFalse(bool(blast_event.damage_scalar_synthetic))
+        self.assertGreater(float(blast_event.component_threshold_scale), 1.0)
+        self.assertLess(blast_fuselage[3], blast_fragmentation_fuselage[3])
+
+        blast_fragmentation_wing, _ = _profiled_local_hit_damage_state(
+            "blast_fragmentation",
+            wing,
+        )
+        continuous_rod_wing, continuous_event = _profiled_local_hit_damage_state(
+            "continuous_rod",
+            wing,
+        )
+        self.assertEqual(str(continuous_event.effect_family), "continuous_rod")
+        self.assertGreater(float(continuous_event.component_threshold_scale), 1.0)
+        self.assertLess(continuous_rod_wing[1], blast_fragmentation_wing[1])
+
+        blast_fragmentation_nose, _ = _profiled_local_hit_damage_state(
+            "blast_fragmentation",
+            nose,
+            damage=60.0,
+        )
+        hit_to_kill_nose, hit_to_kill_event = _profiled_local_hit_damage_state(
+            "hit_to_kill",
+            nose,
+            damage=60.0,
+        )
+        self.assertEqual(str(hit_to_kill_event.effect_family), "hit_to_kill")
+        self.assertGreater(float(hit_to_kill_event.component_threshold_scale), 1.0)
+        self.assertLess(hit_to_kill_nose[0], blast_fragmentation_nose[0])
+        self.assertLess(hit_to_kill_nose[2], blast_fragmentation_nose[2])
+
+    def test_phase3_proximity_field_projects_near_miss_onto_nearest_air_hitbox(self) -> None:
+        direct_wing_overlay, direct_damage, _ = _profiled_local_hit_overlay(
+            "blast_fragmentation",
+            (-0.753, 4.0, 0.0),
+            damage=90.0,
+            radius=25.0,
+        )
+        near_wing_overlay, near_damage, near_event = _profiled_local_hit_overlay(
+            "blast_fragmentation",
+            (-0.753, 7.1, 0.0),
+            damage=90.0,
+            radius=25.0,
+        )
+        far_overlay, far_damage, far_event = _profiled_local_hit_overlay(
+            "blast_fragmentation",
+            (-0.753, 20.0, 0.0),
+            damage=90.0,
+            radius=25.0,
+        )
+
+        self.assertEqual(str(near_event.effect_family), "blast_fragmentation")
+        self.assertAlmostEqual(float(near_event.miss_distance_m), math.hypot(-0.753, 7.1), delta=1.0e-6)
+        self.assertAlmostEqual(float(near_event.detonation_local_forward_m), -0.753, delta=1.0e-6)
+        self.assertAlmostEqual(float(near_event.detonation_local_right_m), 7.1, delta=1.0e-6)
+        self.assertAlmostEqual(float(near_event.detonation_local_up_m), 0.0, delta=1.0e-6)
+        self.assertFalse(bool(near_event.direct_hitbox_intersection))
+        self.assertGreater(int(near_event.projected_hitbox_count), 0)
+        self.assertGreater(float(near_event.spatial_effect_scale), 0.0)
+        self.assertLess(float(near_event.spatial_effect_scale), 1.0)
+        self.assertGreater(float(near_event.mechanism_effect_scale), 0.0)
+        self.assertLessEqual(float(near_event.mechanism_effect_scale), 1.10)
+        self.assertLess(near_wing_overlay["structure"], 1.0)
+        self.assertLess(near_wing_overlay["flight_control"], 1.0)
+        self.assertLess(near_wing_overlay["hydraulic"], 1.0)
+        self.assertLess(near_wing_overlay["fuel"], 1.0)
+        self.assertGreater(near_wing_overlay["fuel_leak"], 0.0)
+        self.assertGreater(min(far_damage), 0.99)
+        self.assertAlmostEqual(far_overlay["structure"], 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(far_overlay["flight_control"], 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(far_overlay["fuel"], 1.0, delta=1.0e-6)
+        self.assertEqual(str(far_event.effect_family), "blast_fragmentation")
+
+        self.assertGreater(near_wing_overlay["structure"], direct_wing_overlay["structure"])
+        self.assertGreater(near_wing_overlay["flight_control"], direct_wing_overlay["flight_control"])
+        self.assertGreater(near_damage[1], direct_damage[1])
+
+    def test_phase3_spatial_projection_respects_warhead_family_footprint(self) -> None:
+        near_wing = (-0.753, 7.1, 0.0)
+        blast_fragmentation_overlay, _, blast_fragmentation_event = _profiled_local_hit_overlay(
+            "blast_fragmentation",
+            near_wing,
+            damage=90.0,
+            radius=35.0,
+        )
+        hit_to_kill_overlay, _, hit_to_kill_event = _profiled_local_hit_overlay(
+            "hit_to_kill",
+            near_wing,
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(blast_fragmentation_event.effect_family), "blast_fragmentation")
+        self.assertEqual(str(hit_to_kill_event.effect_family), "hit_to_kill")
+
+        self.assertLess(blast_fragmentation_overlay["flight_control"], 1.0)
+        self.assertLess(blast_fragmentation_overlay["hydraulic"], 1.0)
+        self.assertLess(blast_fragmentation_overlay["fuel"], 1.0)
+        self.assertLess(blast_fragmentation_overlay["propulsion"], 1.0)
+        self.assertLess(blast_fragmentation_overlay["avionics"], 1.0)
+        self.assertLess(blast_fragmentation_overlay["crew"], 1.0)
+
+        self.assertLess(hit_to_kill_overlay["flight_control"], 1.0)
+        self.assertLess(hit_to_kill_overlay["hydraulic"], 1.0)
+        self.assertLess(hit_to_kill_overlay["fuel"], 1.0)
+        self.assertAlmostEqual(hit_to_kill_overlay["propulsion"], 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(hit_to_kill_overlay["avionics"], 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(hit_to_kill_overlay["crew"], 1.0, delta=1.0e-6)
+
+    def test_phase3_warhead_mechanism_sampling_consumes_hitbox_armor(self) -> None:
+        low_armor_name = "F-16C_A2_LowArmor_Test"
+        high_armor_name = "F-16C_A2_HighArmor_Test"
+        overrides = [
+            _make_f16_armor_override(low_armor_name, wing_armor_mm=1.0),
+            _make_f16_armor_override(high_armor_name, wing_armor_mm=80.0),
+        ]
+
+        low_armor_overlay, low_armor_damage, low_event = _profiled_local_hit_overlay_for_target(
+            low_armor_name,
+            "blast_fragmentation",
+            (-0.753, 4.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+        high_armor_overlay, high_armor_damage, high_event = _profiled_local_hit_overlay_for_target(
+            high_armor_name,
+            "blast_fragmentation",
+            (-0.753, 4.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+
+        self.assertEqual(str(low_event.effect_family), "blast_fragmentation")
+        self.assertEqual(str(high_event.effect_family), "blast_fragmentation")
+        self.assertAlmostEqual(float(low_event.miss_distance_m), float(high_event.miss_distance_m), delta=1.0e-6)
+        self.assertTrue(bool(low_event.direct_hitbox_intersection))
+        self.assertTrue(bool(high_event.direct_hitbox_intersection))
+        self.assertGreater(
+            float(low_event.mechanism_armor_scale),
+            float(high_event.mechanism_armor_scale),
+        )
+        self.assertGreater(
+            float(low_event.mechanism_effect_scale),
+            float(high_event.mechanism_effect_scale),
+        )
+        self.assertLess(low_armor_overlay["flight_control"], high_armor_overlay["flight_control"])
+        self.assertLess(low_armor_overlay["hydraulic"], high_armor_overlay["hydraulic"])
+        self.assertLess(low_armor_overlay["structure"], high_armor_overlay["structure"])
+        self.assertLess(low_armor_damage[1], high_armor_damage[1])
+
+    def test_phase3_componentized_hitbox_localizes_damage_within_wing(self) -> None:
+        target_name = "F-16C_A2_ComponentWing_Test"
+        overrides = [_make_f16_componentized_wing_override(target_name)]
+
+        fuel_overlay, _, fuel_event = _profiled_local_hit_overlay_for_target(
+            target_name,
+            "blast_fragmentation",
+            (-0.8, -2.8, 0.0),
+            damage=90.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+        control_overlay, _, control_event = _profiled_local_hit_overlay_for_target(
+            target_name,
+            "blast_fragmentation",
+            (-0.8, 2.8, 0.0),
+            damage=90.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+
+        self.assertTrue(bool(fuel_event.direct_hitbox_intersection))
+        self.assertTrue(bool(control_event.direct_hitbox_intersection))
+        self.assertGreater(float(fuel_event.component_threshold_scale), 1.0)
+        self.assertGreater(float(control_event.component_threshold_scale), 1.0)
+
+        self.assertLess(fuel_overlay["fuel"], control_overlay["fuel"])
+        self.assertGreater(fuel_overlay["fuel_leak"], control_overlay["fuel_leak"])
+        self.assertAlmostEqual(fuel_overlay["flight_control"], 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(fuel_overlay["hydraulic"], 1.0, delta=1.0e-6)
+
+        self.assertLess(control_overlay["flight_control"], fuel_overlay["flight_control"])
+        self.assertLess(control_overlay["hydraulic"], fuel_overlay["hydraulic"])
+        self.assertAlmostEqual(control_overlay["fuel"], 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(control_overlay["fuel_leak"], 0.0, delta=1.0e-6)
+
+    def test_phase3_component_failure_probability_is_sampled_and_reported(self) -> None:
+        wing = (-0.753, 4.0, 0.0)
+
+        low_energy_overlay, _, low_event = _profiled_local_hit_overlay(
+            "continuous_rod",
+            wing,
+            damage=35.0,
+            radius=35.0,
+        )
+        high_energy_overlay, _, high_event = _profiled_local_hit_overlay(
+            "continuous_rod",
+            wing,
+            damage=180.0,
+            radius=35.0,
+        )
+
+        self.assertTrue(bool(high_event.direct_hitbox_intersection))
+        self.assertGreater(float(high_event.component_failure_probability), 0.0)
+        self.assertLessEqual(float(high_event.component_failure_probability), 1.0)
+        self.assertGreaterEqual(float(high_event.component_failure_sample), 0.0)
+        self.assertLessEqual(float(high_event.component_failure_sample), 1.0)
+        self.assertGreater(
+            float(high_event.component_failure_probability),
+            float(low_event.component_failure_probability),
+        )
+        self.assertGreater(int(high_event.component_failure_count), 0)
+        self.assertLess(
+            high_energy_overlay["flight_control"],
+            low_energy_overlay["flight_control"],
+        )
+        self.assertLess(
+            high_energy_overlay["hydraulic"],
+            low_energy_overlay["hydraulic"],
+        )
+
+    def test_phase5_aircraft_vulnerability_profile_modulates_structured_damage(self) -> None:
+        beam_high_closure = _profiled_local_hit_overlay_with_velocity(
+            "continuous_rod",
+            (-0.753, 4.0, 0.0),
+            (0.0, -900.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        tail_low_closure = _profiled_local_hit_overlay_with_velocity(
+            "continuous_rod",
+            (-6.0, 0.0, 0.0),
+            (0.0, -210.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        direct_wing = _profiled_local_hit_overlay_with_velocity(
+            "continuous_rod",
+            (-0.753, 4.0, 0.0),
+            (0.0, -900.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        near_wing = _profiled_local_hit_overlay_with_velocity(
+            "continuous_rod",
+            (-0.753, 7.1, 0.0),
+            (0.0, -900.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertLess(beam_high_closure["flight_control"], tail_low_closure["flight_control"])
+        self.assertLess(beam_high_closure["hydraulic"], tail_low_closure["hydraulic"])
+        self.assertLess(direct_wing["flight_control"], near_wing["flight_control"])
+        self.assertLess(direct_wing["structure"], near_wing["structure"])
+
+    def test_phase5_synthetic_vulnerability_profile_is_not_pk_or_fuze_authority(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+        evidence = [
+            float(value)
+            for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+        ]
+        self.assertEqual(evidence, [1.0, 1.0, 0.0, 0.0, 0.0])
+
+    def test_phase3_continuous_rod_near_miss_uses_relative_velocity_axis(self) -> None:
+        near_wing = (-0.753, 7.1, 0.0)
+        broadside_sweep = _profiled_local_hit_overlay_with_velocity(
+            "continuous_rod",
+            near_wing,
+            (0.0, -900.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        axial_pass = _profiled_local_hit_overlay_with_velocity(
+            "continuous_rod",
+            near_wing,
+            (-900.0, 0.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        blast_fragmentation_broadside = _profiled_local_hit_overlay_with_velocity(
+            "blast_fragmentation",
+            near_wing,
+            (0.0, -900.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        blast_fragmentation_axial = _profiled_local_hit_overlay_with_velocity(
+            "blast_fragmentation",
+            near_wing,
+            (-900.0, 0.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertLess(broadside_sweep["flight_control"], axial_pass["flight_control"])
+        self.assertLess(broadside_sweep["hydraulic"], axial_pass["hydraulic"])
+        self.assertLess(broadside_sweep["structure"], axial_pass["structure"])
+        self.assertLess(
+            abs(blast_fragmentation_broadside["flight_control"] - blast_fragmentation_axial["flight_control"]),
+            abs(broadside_sweep["flight_control"] - axial_pass["flight_control"]),
+        )
+
+    def test_e3_sentry_c2node_uses_authored_structured_damage_model(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_attacker_and_e3_target(sim)
+
+        health_before = [float(value) for value in sim.get_unit_health(target_id)]
+        damage_before = [float(value) for value in sim.get_unit_damage_state(target_id)]
+        sensor_before = sim.get_sensor_debug_view(target_id)
+        self.assertEqual(health_before, [500.0, 500.0])
+        self.assertEqual(damage_before, [1.0, 1.0, 1.0, 1.0])
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    5.0,
+                    0.0,
+                    3.8,
+                    240.0,
+                    80.0,
+                )
+            )
+        )
+
+        health_after = [float(value) for value in sim.get_unit_health(target_id)]
+        damage_after = [float(value) for value in sim.get_unit_damage_state(target_id)]
+        sensor_after = sim.get_sensor_debug_view(target_id)
+        self.assertTrue(sim.is_unit_active(target_id))
+        self.assertEqual(health_after, health_before)
+        self.assertLess(float(damage_after[0]), float(damage_before[0]))
+        self.assertLess(float(damage_after[2]), float(damage_before[2]))
+        self.assertLess(float(sensor_after.max_range), float(sensor_before.max_range))
+
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.damage_reports), 1)
+        report = events.damage_reports[0]
+        self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
+        self.assertLess(float(report.system_health_delta), 0.0)
+        self.assertFalse(bool(report.destroyed))
+        self.assertNotEqual(str(report.loss_state_to), "lost")
+
+    def test_aircraft_database_units_have_authored_structured_damage_models(self) -> None:
+        cases = {
+            "F-16C_Block50": (0.0, 0.0, 0.0),
+            "Su-35S_Flanker-E": (0.0, 0.0, 0.0),
+            "MQ-9_Reaper": (0.0, 0.0, 0.0),
+            "MH-60R_MVP": (0.0, 0.0, 0.0),
+            "E-3_Sentry_AWACS": (5.0, 0.0, 3.8),
+        }
+
+        for target_type, local_impact in cases.items():
+            with self.subTest(target_type=target_type):
+                sim = ef_py.SimulationKernel()
+                sim.reset(20260526)
+                self.assertTrue(sim.load_database(_DB_PATH))
+                attacker_id, target_id = _spawn_attacker_and_named_target(sim, target_type)
+
+                health_before = [float(value) for value in sim.get_unit_health(target_id)]
+                damage_before = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                self.assertGreater(health_before[0], 0.0)
+                self.assertEqual(damage_before, [1.0, 1.0, 1.0, 1.0])
+
+                self.assertTrue(
+                    bool(
+                        sim.debug_apply_local_proximity_hit(
+                            attacker_id,
+                            target_id,
+                            float(local_impact[0]),
+                            float(local_impact[1]),
+                            float(local_impact[2]),
+                            240.0,
+                            80.0,
+                        )
+                    )
+                )
+
+                health_after = [float(value) for value in sim.get_unit_health(target_id)]
+                damage_after = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                self.assertTrue(sim.is_unit_active(target_id))
+                self.assertEqual(health_after, health_before)
+                self.assertLess(min(damage_after), min(damage_before))
+
+                events = sim.export_recent_engagement_events()
+                self.assertEqual(len(events.effects_events), 1)
+                self.assertEqual(len(events.damage_reports), 1)
+                report = events.damage_reports[0]
+                self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
+                self.assertLess(float(report.system_health_delta), 0.0)
+                self.assertFalse(bool(report.destroyed))
+                self.assertNotEqual(str(report.loss_state_to), "lost")
+
+    def test_live_missile_hit_records_structured_air_damage_without_hp_first_kill(self) -> None:
+        sim = _make_baseline_kernel()
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=13000.0,
+            red_y=9000.0,
+            red_heading=270.0,
+            red_vx=-260.0,
+            red_vy=0.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        health_before = [float(value) for value in sim.get_unit_health(red_id)]
+        damage_before = [float(value) for value in sim.get_unit_damage_state(red_id)]
+
+        for step_idx in range(3600):
+            if not sim.is_unit_active(missile_id):
+                break
+            _set_contacts(
+                sim,
+                missile_id,
+                [
+                    _relative_detection_from_truth(
+                        sim,
+                        missile_id,
+                        red_id,
+                        timestamp=step_idx * sim.get_time_step(),
+                        local_sensor_hit=True,
+                    )
+                ],
+            )
+            sim.step()
+
+        self.assertFalse(sim.is_unit_active(missile_id))
+        self.assertTrue(sim.is_unit_active(red_id))
+        self.assertEqual([float(value) for value in sim.get_unit_health(red_id)], health_before)
+        damage_after = [float(value) for value in sim.get_unit_damage_state(red_id)]
+        self.assertLess(min(damage_after), min(damage_before))
+
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.launch_events), 1)
+        self.assertEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.damage_reports), 1)
+        effect = events.effects_events[0]
+        report = events.damage_reports[0]
+        self.assertEqual(int(effect.munition.entity_id), missile_id)
+        self.assertEqual(int(effect.target.entity_id), red_id)
+        self.assertEqual(str(effect.trigger_type), "proximity_fuze")
+        self.assertEqual(str(effect.outcome_state), "damage_applied")
+        self.assertTrue(math.isfinite(float(effect.miss_distance_m)))
+        self.assertGreaterEqual(float(effect.miss_distance_m), 0.0)
+        self.assertLess(float(effect.miss_distance_m), 35.0)
+        self.assertAlmostEqual(float(effect.warhead_lethal_radius_m), 35.0, delta=1.0e-6)
+        self.assertTrue(math.isfinite(float(effect.closure_mps)))
+        self.assertGreaterEqual(float(effect.closure_mps), 0.0)
+        missile_axis_norm = math.sqrt(
+            float(effect.missile_axis_forward) ** 2 +
+            float(effect.missile_axis_right) ** 2 +
+            float(effect.missile_axis_up) ** 2
+        )
+        self.assertAlmostEqual(missile_axis_norm, 1.0, delta=1.0e-3)
+        self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
+        self.assertLess(float(report.system_health_delta), 0.0)
+        self.assertFalse(bool(report.destroyed))
+        self.assertNotEqual(str(report.loss_state_to), "lost")
+
+    def test_debug_runtime_exposes_proximity_fuze_miss_distance_state(self) -> None:
+        sim = _make_baseline_kernel()
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=0.0,
+            red_y=22000.0,
+            red_heading=180.0,
+            red_vx=0.0,
+            red_vy=-250.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        initial_runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(math.isinf(float(initial_runtime["proximity_min_dist_m"])))
+        self.assertTrue(math.isinf(float(initial_runtime["proximity_last_dist_m"])))
+        self.assertFalse(bool(initial_runtime["proximity_engaged"]))
+
+        for step_idx in range(3):
+            _set_contacts(
+                sim,
+                missile_id,
+                [_relative_detection_from_truth(sim, missile_id, red_id, timestamp=step_idx * sim.get_time_step())],
+            )
+            sim.step()
+
+        runtime = _missile_runtime(sim, missile_id)
+        self.assertTrue(math.isfinite(float(runtime["proximity_min_dist_m"])))
+        self.assertTrue(math.isfinite(float(runtime["proximity_last_dist_m"])))
+        self.assertGreater(float(runtime["proximity_min_dist_m"]), 0.0)
+        self.assertGreater(float(runtime["proximity_last_dist_m"]), 0.0)
+
+    def test_phase0_pn_miss_distance_baseline_matrix_tracks_engagement_geometries(self) -> None:
+        cases = {
+            "head_on": _run_miss_distance_case(
+                red_x=0.0,
+                red_y=26000.0,
+                red_heading=180.0,
+                red_vx=0.0,
+                red_vy=-250.0,
+            ),
+            "tail_chase": _run_miss_distance_case(
+                red_x=0.0,
+                red_y=18000.0,
+                red_heading=0.0,
+                red_vx=0.0,
+                red_vy=290.0,
+            ),
+            "beam": _run_miss_distance_case(
+                red_x=-9000.0,
+                red_y=15000.0,
+                red_heading=90.0,
+                red_vx=300.0,
+                red_vy=0.0,
+            ),
+            "high_off_boresight": _run_miss_distance_case(
+                red_x=13000.0,
+                red_y=9000.0,
+                red_heading=270.0,
+                red_vx=-260.0,
+                red_vy=0.0,
+            ),
+        }
+
+        for name, result in cases.items():
+            with self.subTest(geometry=name):
+                self.assertFalse(bool(result["missile_active"]))
+                self.assertTrue(math.isfinite(float(result["truth_min_dist_m"])))
+                self.assertTrue(math.isfinite(float(result["proximity_min_dist_m"])))
+                self.assertGreaterEqual(float(result["proximity_min_dist_m"]), 0.0)
+                self.assertLess(
+                    abs(float(result["truth_min_dist_m"]) - float(result["proximity_min_dist_m"])),
+                    500.0,
+                )
+                self.assertTrue(bool(result["proximity_engaged"]))
+                self.assertTrue(bool(result["terminal_seeker_active"]))
+
+        self.assertLess(float(cases["head_on"]["proximity_min_dist_m"]), 50.0)
+        self.assertGreater(float(cases["tail_chase"]["proximity_min_dist_m"]), 5000.0)
+        self.assertGreater(float(cases["beam"]["proximity_min_dist_m"]), 250.0)
+        self.assertLess(float(cases["beam"]["proximity_min_dist_m"]), 1000.0)
+        self.assertLess(float(cases["high_off_boresight"]["proximity_min_dist_m"]), 5.0)
+        self.assertGreater(
+            float(cases["head_on"]["max_achieved_lateral_accel_mps2"]),
+            float(cases["tail_chase"]["max_achieved_lateral_accel_mps2"]) + 100.0,
+        )
 
     def test_launch_initializes_mass_and_runtime_state(self) -> None:
         sim = _make_kernel()
