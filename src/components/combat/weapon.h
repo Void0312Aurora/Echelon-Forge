@@ -11,6 +11,63 @@
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 
+struct WarheadProfile {
+    std::string family = "blast_fragmentation";
+    double mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double lethal_radius_m = std::numeric_limits<double>::quiet_NaN();
+    double damage_scalar = std::numeric_limits<double>::quiet_NaN();
+    bool synthetic = true;
+    bool damage_scalar_synthetic = true;
+    std::string provenance = "synthetic_legacy_damage";
+};
+
+struct FuzeProfile {
+    std::string type = "proximity";
+    double trigger_radius_m = std::numeric_limits<double>::quiet_NaN();
+    double delay_s = 0.0;
+    double reliability = 1.0;
+    bool synthetic = true;
+    std::string provenance = "synthetic_legacy_fuse_distance";
+};
+
+inline WarheadProfile make_synthetic_warhead_profile(
+    double damage_scalar,
+    double lethal_radius_m,
+    const std::string& provenance = "synthetic_legacy_damage"
+) {
+    WarheadProfile profile{};
+    profile.family = "blast_fragmentation";
+    profile.mass_kg = std::numeric_limits<double>::quiet_NaN();
+    profile.lethal_radius_m = lethal_radius_m;
+    profile.damage_scalar = damage_scalar;
+    profile.synthetic = true;
+    profile.damage_scalar_synthetic = true;
+    profile.provenance = provenance;
+    return profile;
+}
+
+inline std::string warhead_effect_family(const WarheadProfile& profile) {
+    return profile.family.empty() ? "blast_fragmentation" : profile.family;
+}
+
+inline FuzeProfile make_synthetic_fuze_profile(
+    double trigger_radius_m,
+    const std::string& provenance = "synthetic_legacy_fuse_distance"
+) {
+    FuzeProfile profile{};
+    profile.type = "proximity";
+    profile.trigger_radius_m = trigger_radius_m;
+    profile.delay_s = 0.0;
+    profile.reliability = 1.0;
+    profile.synthetic = true;
+    profile.provenance = provenance;
+    return profile;
+}
+
+inline std::string fuze_profile_type(const FuzeProfile& profile) {
+    return profile.type.empty() ? "proximity" : profile.type;
+}
+
 struct Missile {
     uint64_t attacker_id;  // Entity ID of the shooter
     uint64_t target_id;    // Entity ID of the target
@@ -36,6 +93,18 @@ struct Missile {
     double proximity_min_dist_m = std::numeric_limits<double>::infinity();
     double proximity_last_dist_m = std::numeric_limits<double>::infinity();
     bool proximity_engaged = false;
+    bool fuze_delay_armed = false;
+    double fuze_nearest_approach_time_s = std::numeric_limits<double>::quiet_NaN();
+    double fuze_detonation_time_s = std::numeric_limits<double>::quiet_NaN();
+    double fuze_detonation_x = std::numeric_limits<double>::quiet_NaN();
+    double fuze_detonation_y = std::numeric_limits<double>::quiet_NaN();
+    double fuze_detonation_z = std::numeric_limits<double>::quiet_NaN();
+    double fuze_quality = 0.0;
+    double fuze_hit_probability = 0.0;
+    double fuze_closure_mps = 0.0;
+    double fuze_missile_axis_forward = 0.0;
+    double fuze_missile_axis_right = 0.0;
+    double fuze_missile_axis_up = 0.0;
 
     // P0 seeker / guidance runtime state.
     bool p0_runtime_initialized = false;
@@ -72,6 +141,9 @@ struct Missile {
     double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
     bool midcourse_datalink_supported = false;
     bool terminal_seeker_active = true;
+
+    WarheadProfile warhead_profile{};
+    FuzeProfile fuze_profile{};
 };
 
 struct MissileSharedLaunchRuntimeState {

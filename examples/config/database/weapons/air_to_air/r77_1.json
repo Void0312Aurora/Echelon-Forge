@@ -15,5 +15,12 @@
         "type": "Frag",
         "mass_kg": 22.0,
         "lethal_radius": 18.0
+    },
+    "fuze": {
+        "type": "radar_proximity",
+        "trigger_radius_m": 18.0,
+        "delay_s": 0.015,
+        "reliability": 0.93,
+        "provenance": "A2 authored radar proximity fuze scaffold"
     }
 }

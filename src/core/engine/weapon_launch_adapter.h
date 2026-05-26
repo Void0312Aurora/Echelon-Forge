@@ -67,9 +67,41 @@ struct EffectsEventSnapshot {
     std::string outcome_state = "unknown";
     double detonation_time_s = 0.0;
     double nearest_approach_time_s = 0.0;
+    double miss_distance_m = 0.0;
+    double detonation_local_forward_m = 0.0;
+    double detonation_local_right_m = 0.0;
+    double detonation_local_up_m = 0.0;
+    double closure_mps = 0.0;
+    double missile_axis_forward = 0.0;
+    double missile_axis_right = 0.0;
+    double missile_axis_up = 0.0;
     double quality = 0.0;
     double confidence = 0.0;
     std::string effect_family = "unknown";
+    double warhead_mass_kg = 0.0;
+    double warhead_lethal_radius_m = 0.0;
+    bool warhead_profile_synthetic = true;
+    bool damage_scalar_synthetic = true;
+    std::string fuze_type = "unknown";
+    double fuze_trigger_radius_m = 0.0;
+    double fuze_delay_s = 0.0;
+    double fuze_reliability = 1.0;
+    bool fuze_profile_synthetic = true;
+    bool direct_hitbox_intersection = false;
+    std::uint32_t projected_hitbox_count = 0;
+    double spatial_effect_scale = 0.0;
+    double mechanism_armor_scale = 1.0;
+    double mechanism_exposure_scale = 1.0;
+    double mechanism_effect_scale = 1.0;
+    double component_threshold_scale = 1.0;
+    double component_failure_probability = 0.0;
+    double component_failure_sample = 1.0;
+    std::uint32_t component_failure_count = 0;
+    std::uint32_t component_hit_count = 0;
+    std::string component_primary_name;
+    std::string component_primary_system;
+    double component_primary_redundancy_group = 0.0;
+    bool component_primary_critical = false;
 };
 
 struct DamageReportSnapshot {
@@ -180,9 +212,41 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .outcome_state = snapshot.outcome_state,
         .detonation_time_s = snapshot.detonation_time_s,
         .nearest_approach_time_s = snapshot.nearest_approach_time_s,
+        .miss_distance_m = snapshot.miss_distance_m,
+        .detonation_local_forward_m = snapshot.detonation_local_forward_m,
+        .detonation_local_right_m = snapshot.detonation_local_right_m,
+        .detonation_local_up_m = snapshot.detonation_local_up_m,
+        .closure_mps = snapshot.closure_mps,
+        .missile_axis_forward = snapshot.missile_axis_forward,
+        .missile_axis_right = snapshot.missile_axis_right,
+        .missile_axis_up = snapshot.missile_axis_up,
         .quality = snapshot.quality,
         .confidence = snapshot.confidence,
         .effect_family = snapshot.effect_family,
+        .warhead_mass_kg = snapshot.warhead_mass_kg,
+        .warhead_lethal_radius_m = snapshot.warhead_lethal_radius_m,
+        .warhead_profile_synthetic = snapshot.warhead_profile_synthetic,
+        .damage_scalar_synthetic = snapshot.damage_scalar_synthetic,
+        .fuze_type = snapshot.fuze_type,
+        .fuze_trigger_radius_m = snapshot.fuze_trigger_radius_m,
+        .fuze_delay_s = snapshot.fuze_delay_s,
+        .fuze_reliability = snapshot.fuze_reliability,
+        .fuze_profile_synthetic = snapshot.fuze_profile_synthetic,
+        .direct_hitbox_intersection = snapshot.direct_hitbox_intersection,
+        .projected_hitbox_count = snapshot.projected_hitbox_count,
+        .spatial_effect_scale = snapshot.spatial_effect_scale,
+        .mechanism_armor_scale = snapshot.mechanism_armor_scale,
+        .mechanism_exposure_scale = snapshot.mechanism_exposure_scale,
+        .mechanism_effect_scale = snapshot.mechanism_effect_scale,
+        .component_threshold_scale = snapshot.component_threshold_scale,
+        .component_failure_probability = snapshot.component_failure_probability,
+        .component_failure_sample = snapshot.component_failure_sample,
+        .component_failure_count = snapshot.component_failure_count,
+        .component_hit_count = snapshot.component_hit_count,
+        .component_primary_name = snapshot.component_primary_name,
+        .component_primary_system = snapshot.component_primary_system,
+        .component_primary_redundancy_group = snapshot.component_primary_redundancy_group,
+        .component_primary_critical = snapshot.component_primary_critical,
     };
 }
 

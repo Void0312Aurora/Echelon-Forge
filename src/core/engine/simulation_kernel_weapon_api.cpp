@@ -240,7 +240,9 @@ bool has_explicit_global_missile_tuning(const MissileTuning& tuning) {
         std::isfinite(tuning.min_launch_range_m) ||
         std::isfinite(tuning.max_launch_off_boresight_deg) ||
         tuning.lobl_required ||
-        tuning.midcourse_datalink_supported;
+        tuning.midcourse_datalink_supported ||
+        tuning.has_warhead_profile ||
+        tuning.has_fuze_profile;
 }
 
 std::string naval_weapon_type_name(NavalWeaponType weapon_type) {
@@ -300,6 +302,10 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition& src) {
     out.max_launch_off_boresight_deg = src.max_launch_off_boresight_deg;
     out.lobl_required = src.lobl_required;
     out.midcourse_datalink_supported = src.midcourse_datalink_supported;
+    out.warhead_profile = src.warhead_profile;
+    out.has_warhead_profile = src.has_warhead_profile;
+    out.fuze_profile = src.fuze_profile;
+    out.has_fuze_profile = src.has_fuze_profile;
     return out;
 }
 
@@ -348,6 +354,23 @@ void overlay_missile_tuning(MissileTuning* base, const MissileTuning& overlay) {
     if (std::isfinite(overlay.max_launch_off_boresight_deg)) base->max_launch_off_boresight_deg = overlay.max_launch_off_boresight_deg;
     if (overlay.lobl_required) base->lobl_required = true;
     if (overlay.midcourse_datalink_supported) base->midcourse_datalink_supported = true;
+    if (overlay.has_fuze_profile) {
+        base->fuze_profile = overlay.fuze_profile;
+        base->has_fuze_profile = true;
+        if (std::isfinite(overlay.fuze_profile.trigger_radius_m)) {
+            base->fuse_distance = overlay.fuze_profile.trigger_radius_m;
+        }
+    }
+    if (overlay.has_warhead_profile) {
+        base->warhead_profile = overlay.warhead_profile;
+        base->has_warhead_profile = true;
+        if (std::isfinite(overlay.warhead_profile.lethal_radius_m)) {
+            base->fuse_distance = overlay.warhead_profile.lethal_radius_m;
+        }
+        if (std::isfinite(overlay.warhead_profile.damage_scalar)) {
+            base->damage = overlay.warhead_profile.damage_scalar;
+        }
+    }
 }
 
 std::optional<std::string> platform_definition_name_from_munition_name(const char* munition_name, int station_id) {
@@ -564,6 +587,24 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     const double missile_turn_rate = positive_or_default(resolved_tuning.turn_rate, 35.0);
     const double missile_fuse_distance = positive_or_default(resolved_tuning.fuse_distance, 300.0);
     const double missile_damage = positive_or_default(resolved_tuning.damage, 120.0);
+    WarheadProfile missile_warhead_profile = resolved_tuning.has_warhead_profile
+        ? resolved_tuning.warhead_profile
+        : make_synthetic_warhead_profile(missile_damage, missile_fuse_distance);
+    if (!std::isfinite(missile_warhead_profile.lethal_radius_m)) {
+        missile_warhead_profile.lethal_radius_m = missile_fuse_distance;
+    }
+    if (!std::isfinite(missile_warhead_profile.damage_scalar)) {
+        missile_warhead_profile.damage_scalar = missile_damage;
+        missile_warhead_profile.damage_scalar_synthetic = true;
+    }
+    FuzeProfile missile_fuze_profile = resolved_tuning.has_fuze_profile
+        ? resolved_tuning.fuze_profile
+        : make_synthetic_fuze_profile(missile_fuse_distance);
+    if (!std::isfinite(missile_fuze_profile.trigger_radius_m)) {
+        missile_fuze_profile.trigger_radius_m = missile_fuse_distance;
+    }
+    missile_fuze_profile.delay_s = std::max(0.0, missile_fuze_profile.delay_s);
+    missile_fuze_profile.reliability = std::clamp(missile_fuze_profile.reliability, 0.0, 1.0);
     const double missile_seeker_fov = positive_or_default(resolved_tuning.seeker_fov_deg, 180.0);
     const double missile_seeker_range = positive_or_default(resolved_tuning.seeker_lock_range, 30000.0);
     const double missile_guidance_delay = nonnegative_or_default(resolved_tuning.guidance_delay_s, 0.0);
@@ -687,10 +728,15 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     missile.max_flight_time_s = missile_max_flight_time;
     missile.nav_gain = missile_nav_gain;
     missile.active = true;
+    missile.warhead_profile = missile_warhead_profile;
+    missile.fuze_profile = missile_fuze_profile;
     missile.rng_state = missile_seed;
     missile.proximity_min_dist_m = std::numeric_limits<double>::infinity();
     missile.proximity_last_dist_m = std::numeric_limits<double>::infinity();
     missile.proximity_engaged = false;
+    missile.fuze_delay_armed = false;
+    missile.fuze_nearest_approach_time_s = std::numeric_limits<double>::quiet_NaN();
+    missile.fuze_detonation_time_s = std::numeric_limits<double>::quiet_NaN();
     initialize_missile_launch_runtime(
         missile,
         MissileSharedLaunchRuntimeState{
@@ -940,9 +986,26 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
                 "hit",
                 current_time,
                 current_time,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
                 hit_probability,
                 1.0,
-                "kinetic_intercept");
+                "kinetic_intercept",
+                0.0,
+                0.0,
+                true,
+                true,
+                "contact",
+                0.0,
+                0.0,
+                1.0,
+                true);
             if (score) {
                 score->hits_landed += 1;
                 score->kills_confirmed += 1;
