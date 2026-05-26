@@ -1,9 +1,9 @@
 # Ground Domain Bootstrap Plan
 
-Status: `2026-05-25` sealed baseline for G0-G4; G5 tasking smoke is accepted;
+Status: `2026-05-26` sealed baseline for G0-G4; G5 tasking smoke is accepted;
 G6 opens the first realism-gradient MVP scenario batch; G6-D1/D2 preflight is
 accepted as `preflight-only` and keeps route movement blocked on native ground
-platform schema work; G6-E0/E1 open and select the native schema path.
+platform schema work; G6-E0/E1/E2/E3 accept the first native schema evidence.
 
 Inputs:
 
@@ -52,22 +52,25 @@ Rationale:
 
 ## 3. Current Repo Position
 
-As of `2026-05-21`, the repository already has:
+As of `2026-05-26`, the repository already has:
 
 - an authoritative Army service-profile document
+- a maintained `ground/` standards specialization
 - a `common + air + naval` split across tasking/command DTO layers
 - Python tasking-profile dispatch for `air` and `naval`
+- ground tasking profile dispatch for `army`, `ground`, `land`, and
+  `ServiceProfile.Army`
 - architecture law that new domains should add capability implementations
   rather than new runtime paths
+- accepted ground tasking profiles, content seeds, scenario fixtures, and
+  focused runtime/contract tests through the G6-E native schema slice
 
 The repository does not yet have:
 
-- a maintained `ground/` standards specialization
-- a ground tasking profile in Python dispatch
 - ground-specific DTO landing points
-- ground scenarios, content fixtures, or runtime-contract tests
 - a first agreed movement / fires / observation surface
-- a runtime-loadable native ground platform schema or public `Ground` unit type
+- route movement, terrain-aware movement, ground sensing, fires, damage, and
+  combat behavior
 
 ## 4. Proposed Phases
 
@@ -81,7 +84,7 @@ The repository does not yet have:
 | `G5 MVP Scenario` | first canonical ground scenario shell | one maintained `scenarios/ground/` smoke fixture proving loader plus tasking status chain | no real ground platform schema, movement, terrain, sensing, fires, or combat claims |
 | `G6 Realism Gradient MVP Scenarios` | first gradient-bounded scenario batch | G1 static occupy and support relationship fixtures plus gates for future G2+ work | no movement, terrain, sensing, fires, damage, or native ground platform claims |
 | `G6-D Route-Move Release Decision` | first G2 movement release posture | schema-first decision and finite preflight clusters for native platform schema plus movement evidence | no route-move scenario, movement implementation, terrain, sensing, fires, damage, or native schema implementation |
-| `G6-E Native Ground Platform Schema Package` | next package candidate before movement | bounded native ground platform schema implementation plan and later separately released implementation evidence | no route-move scenario, terrain, sensing, fires, damage, combat, or private ground runtime stack |
+| `G6-E Native Ground Platform Schema Package` | accepted schema package before movement | bounded native ground platform schema implementation evidence | no route-move scenario, terrain, sensing, fires, damage, combat, or private ground runtime stack |
 
 The critical design rule is that `G1-G4` should reuse the existing
 `common + specialization + profile bridge` pattern rather than inventing a new
@@ -110,6 +113,13 @@ G6-E0 opens that planning package. G6-E1 selects `UnitType::Ground`,
 factory materialization path for the first native schema implementation while
 keeping route movement, terrain, sensing, fires, damage, and combat held.
 
+G6-E2/E3 accept the first native ground platform schema evidence:
+`Ground_Platoon_MVP` loads from the example database, spawns through the shared
+factory path, reports `UnitType::Ground` through Python identity inspection,
+and exposes static position, velocity, heading, instrument, and health state.
+This closes the native-schema blocker only. Route movement still requires a
+later G6-D3/G6-F release vote.
+
 ### 4.1 Phase Subprojects And Task Clusters
 
 Each phase is tracked as a separate task subproject so it can be assigned,
@@ -124,8 +134,8 @@ reviewed, and closed without widening the whole ground bootstrap lane.
 | `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
 | `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
 | `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
-| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 accepted as `preflight-only`; native schema blocker remains; route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1 accepted; G6-E2 implementation is next candidate |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 accepted as `preflight-only`; G6-E2/E3 now closes native schema identity; route-move implementation held |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 accepted for native schema evidence; route movement remains held |
 
 The active assignment queue is
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).

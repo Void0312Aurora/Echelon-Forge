@@ -311,6 +311,7 @@ bool parse_unit_type(const std::string& value, UnitType* out_type) {
     if (value == "EWSuite") { *out_type = UnitType::EWSuite; return true; }
     if (value == "RCSProfile") { *out_type = UnitType::RCSProfile; return true; }
     if (value == "Submarine") { *out_type = UnitType::Submarine; return true; }
+    if (value == "Ground") { *out_type = UnitType::Ground; return true; }
     *out_type = UnitType::Unknown;
     return false;
 }

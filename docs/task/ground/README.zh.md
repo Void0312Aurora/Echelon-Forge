@@ -1,7 +1,7 @@
 # Ground
 
 状态：已于 `2026-05-21` 建立活跃规划入口；当前进展追踪更新于
-`2026-05-25`。
+`2026-05-26`。
 
 语言：
 
@@ -47,15 +47,21 @@
 - G6-D 开启 route-move release decision，并选择 schema-first 路径：第一版
   `G2` route-move 场景必须等待 runtime-loadable native ground platform schema。
   当前 `Aircraft` compatibility shell 只保留给 G0/G1。
-- G6-D1/D2 已以 `preflight-only` 返回：当前还没有已接受的 runtime-loadable
-  `Ground` unit type/schema；在该 blocker 关闭前，movement evidence gates
-  不能释放 route movement。
+- G6-D1/D2 已以 `preflight-only` 返回：当时 native `Ground` unit
+  type/schema blocker 仍处于打开状态；在 schema package 关闭它之前，
+  movement evidence gates 不能释放 route movement。
 - G6-E0 开启 native ground platform schema planning package。它定义
   loadable/spawnable native ground entity 的最小实现面和证据门槛，但不释放
   route movement 或 runtime movement behavior。
 - G6-E1 source-inventory/design preflight 选择 `UnitType::Ground`、
   `type = "Ground"`、`Ground_Platoon_MVP`，以及现有 type-name/default factory
   materialization path，作为第一版 native schema implementation 路线。
+- G6-E2/E3 已接受第一版 native ground platform schema：示例数据库现在能加载
+  `Ground_Platoon_MVP`，Python 暴露 `ef_py.UnitType.Ground`，并且
+  `spawn_unit(..., "Ground_Platoon_MVP", ...)` 能 materialize native ground
+  entity，且可稳定检查 position、velocity、heading、instrument 与 health。
+  这仅是 schema 证据；route movement、terrain、sensing、fires、damage 和
+  combat 仍保持 held。
 
 ## 推荐阅读顺序
 
@@ -113,8 +119,7 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
 - 维护 G0/G5 tasking smoke 与 G6 G1 static occupy/support fixtures，作为
   realism-gradient guardrails
 - 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效
-- 在 route-move implementation 前，只在已接受的 native schema 文件面内实现
-  G6-E2
+- 将已接受的 G6-E2/E3 native schema 证据作为后续 route-move release vote 的输入
 - G1 场景只验证 static occupy/support relationship 语义，不扩张为 ground
   combat/runtime 证明
 - command delivery、observation/export、movement、sensing、terrain、fires、

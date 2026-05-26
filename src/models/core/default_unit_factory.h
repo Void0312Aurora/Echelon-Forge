@@ -480,6 +480,21 @@ public:
                     make_evidence_ref(type_name, "survivability"),
                 });
         }
+        if (def.type == UnitType::Ground) {
+            add_mobility_capability(
+                "ground_mobility_flat_deferred",
+                {
+                    make_evidence_ref(type_name, "ground_platform"),
+                    make_evidence_ref(type_name, "ground_mobility_flat_deferred"),
+                    make_evidence_ref(type_name, "movement_behavior_deferred"),
+                });
+            add_doctrine_capability(
+                "land_tactics",
+                {
+                    make_evidence_ref(type_name, "army_service_profile"),
+                    make_evidence_ref(type_name, "land_tactics"),
+                });
+        }
         if (def.airframe.empty_mass_kg > 0.0 || def.has_flight_model || def.type == UnitType::Aircraft) {
             add_mobility_capability(
                 "airframe",

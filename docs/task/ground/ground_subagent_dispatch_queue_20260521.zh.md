@@ -2,12 +2,12 @@
 
 # 地面子代理调度队列
 
-状态：`2026-05-25` G0-G4 已封存为 accepted ground baseline。G5 tasking
+状态：`2026-05-26` G0-G4 已封存为 accepted ground baseline。G5 tasking
 smoke 已接受；G6-A/B 已接受第一批 G1 realism-gradient MVP 场景 fixture；
 G6-C 已接受 route-move boundary guardrails；G6-D1/D2 已以
-`preflight-only` 返回 native-schema blocker。G6-E0 已开启 native ground
-platform schema planning package，G6-E1 已选择 `UnitType::Ground`
-type-name/default-factory 路径；implementation 仍 held。
+`preflight-only` 返回 native-schema blocker。G6-E0/E1/E2/E3 已接受第一版
+native ground platform schema；route movement 仍保持 held，等待后续 release
+vote。
 
 启动子代理时使用此队列。主线程拥有集成和最终验收。
 
@@ -65,6 +65,9 @@ flowchart TD
   `UnitType::Ground`、`type = "Ground"`、`Ground_Platoon_MVP`、现有
   type-name/default factory materialization，以及现有 Python `get_unit_type()`
   identity evidence。
+- `G6-E2/E3` 接受 native schema 证据：`Ground_Platoon_MVP` 可作为
+  `UnitType::Ground` load/spawn/inspect；route movement 与 combat behavior
+  仍保持 held。
 
 术语说明：这里的调度阶段 `G6 Realism Gradient MVP 场景` 不是域真实性梯度表中的
 `G6 effects/damage/termination`。本阶段只发布两个 `G1` 真实性 fixture。
@@ -96,15 +99,14 @@ flowchart TD
 | `G6-D2` | 主线程 diagnostics | 当前主线程 | 已作为 `preflight-only` 接受：movement evidence gates 已定义，但在 native schema 关闭前不能释放 route movement。 | 只读 diagnostics 加 G6-D doc/queue/progress sync。不编辑 platform schema implementation、terrain、sensing、fires、damage 或 combat。 |
 | `G6-E0` | 主线程集成 | 当前主线程 | 已接受：规划最小 native ground platform schema implementation package。 | 仅 `docs/task/ground/g6_native_ground_platform_schema/**` 与 ground README/queue/progress/plan sync。 |
 | `G6-E1` | 主线程 diagnostics | 当前主线程 | 已接受：source-inventory/design preflight 已选择 native ground identity 与 materialization path。 | 只读 diagnostics 加 G6-E package/queue/progress sync。不编辑 runtime、bindings、content、tests、route movement、terrain、sensing、fires、damage 或 combat。 |
-| `G6-E2` | worker | `gpt-5.4`，high | 下一候选：使用 `UnitType::Ground` 实现一个 runtime-loadable native `Ground_Platoon_MVP` schema。 | 仅 `src/components/basic/common.h`、`src/content/unit_definition_loader.cpp`、可选最小 `src/content/unit_definition.h`、`src/models/core/default_unit_factory.h`、`src/interfaces/python/bindings_core.cpp`、`examples/config/database/ground/units/ground_platoon_mvp.json`、`tests/runtime/ground/test_ground_native_platform_schema.py`。不做 route movement 或 combat behavior。 |
-| `G6-E3` | 主线程集成 | 当前主线程 | Held：整合 native schema 证据，并决定后续 route-move release vote 是否可开启。 | 除非单独释放修复，否则仅 ground docs/queue/progress sync。 |
+| `G6-E2` | 主线程 implementation | 当前主线程 | 已接受：使用 `UnitType::Ground` 实现一个 runtime-loadable native `Ground_Platoon_MVP` schema。 | 仅 `src/components/basic/common.h`、`src/content/unit_definition_loader.cpp`、`src/models/core/default_unit_factory.h`、`src/interfaces/python/bindings_core.cpp`、`examples/config/database/ground/units/ground_platoon_mvp.json`、`tests/runtime/ground/test_ground_native_platform_schema.py`。不做 route movement 或 combat behavior。 |
+| `G6-E3` | 主线程集成 | 当前主线程 | 已接受：整合 native schema 证据，并允许后续 route-move release vote 开启。 | 仅 ground docs/queue/progress sync；route movement 仍保持 held。 |
 
 ## 保留流
 
 | 流 | 释放条件 |
 |--------|-------------------|
-| `G6-E2 native schema implementation` | 需要已接受的 G6-E1 identity/materialization decision 与 focused validation plan。 |
-| `G2 route move implementation` | 需要来自 G6-E2/E3 的已接受 native ground platform schema 证据，以及后续 G6-D3/G6-F release vote。 |
+| `G2 route move implementation` | 需要后续 G6-D3/G6-F release vote 消费已接受的 G6-E2/E3 native schema 证据。 |
 | `P3/P10 ground work` | 需要单独 accepted work package；G5 不释放 formal command delivery 或 observation export。 |
 
 ## 调度详情

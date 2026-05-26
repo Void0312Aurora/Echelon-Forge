@@ -42,6 +42,8 @@ const char* default_unit_name_for(UnitType type) {
             return "Ship";
         case UnitType::Submarine:
             return "Submarine";
+        case UnitType::Ground:
+            return "Ground_Platoon_MVP";
         case UnitType::Missile:
             return "Missile";
         case UnitType::Facility:
@@ -231,6 +233,7 @@ void bind_core(nb::module_& m) {
         .value("Aircraft", UnitType::Aircraft)
         .value("Ship", UnitType::Ship)
         .value("Submarine", UnitType::Submarine)
+        .value("Ground", UnitType::Ground)
         .value("Missile", UnitType::Missile)
         .value("Facility", UnitType::Facility)
         .value("C2Node", UnitType::C2Node);

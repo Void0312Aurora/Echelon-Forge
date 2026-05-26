@@ -1,6 +1,6 @@
 # Ground / Army Current Progress Tracking
 
-Status: `2026-05-25` workspace sampling review.
+Status: `2026-05-26` workspace sampling review.
 
 This is the active tracking entry for `docs/task/ground/` after the G0-G5
 ground bootstrap line opened on `2026-05-21`. It tracks the Army/ground line
@@ -25,6 +25,9 @@ Current positioning:
 - G6-E1 accepts the source-inventory/design preflight: the first native schema
   implementation should use `UnitType::Ground`, `type = "Ground"`,
   `Ground_Platoon_MVP`, and existing type-name/default factory materialization.
+- G6-E2/E3 accept the first native ground platform schema evidence:
+  `Ground_Platoon_MVP` loads, spawns, reports `UnitType::Ground`, and exposes
+  static runtime inspection state through shared surfaces.
 - Real ground movement, terrain interaction, sensing, fires, damage, and
   observation export are still deferred.
 
@@ -53,6 +56,8 @@ What is already real:
   surface for loadable/spawnable native ground identity;
 - a G6-E1 design decision that avoids a new typed-platform/facade path for the
   first schema slice;
+- a G6-E2/E3 native schema slice that makes `Ground_Platoon_MVP` loadable,
+  spawnable, and inspectable as native `Ground` without releasing movement;
 - RL/runtime entry points now route mission-command construction through the
   shared tasking bridge rather than an air-only path.
 
@@ -108,15 +113,20 @@ Current ground placement:
 - `G6-D` chooses the schema-first route-move release path. The current
   `Aircraft` compatibility spawn shell is not accepted as evidence for G2
   movement realism.
-- `G6-D1/D2` preflight found no accepted runtime-loadable `Ground` unit type or
-  schema. A spawn probe for `type_name = Ground` returns `0`, so route movement
-  remains blocked by native-schema work.
-- `G6-E0` defines the native schema package boundary. It does not implement or
-  release a ground entity yet, but it records the files, tests, and evidence
-  needed for the first native ground platform implementation.
+- `G6-D1/D2` preflight found that the runtime lacked an accepted `Ground` unit
+  type/schema at that time. That historical blocker is the one `G6-E2/E3` now
+  closes for schema identity.
+- `G6-E0` defines the native schema package boundary and records the files,
+  tests, and evidence needed for the first native ground platform
+  implementation.
 - `G6-E1` selects the E2 route: add public `UnitType::Ground`, parse
   `type = "Ground"`, add `Ground_Platoon_MVP`, reuse default-factory spawn, and
   assert identity through existing `get_unit_type()`.
+- `G6-E2/E3` accept the native schema evidence: the database loads
+  `Ground_Platoon_MVP`, spawn returns a non-null entity, Python identity is
+  `ef_py.UnitType.Ground`, the entity is not an air/naval/facility substitute,
+  and malformed ground schemas fail closed.
+- This closes schema identity only; it does not release `G2` movement.
 - Any next scenario must declare whether it remains `G0`, moves to `G1`, or
   enters `G2+`, and it must add the corresponding gates before claiming
   realism at that level.
@@ -147,16 +157,21 @@ Accepted task phases:
   guardrails; route movement remains held.
 - `G6-D Route-Move Release Decision`: schema-first decision plus D1/D2
   preflight packets for native ground platform schema and movement evidence
-  gates; D1/D2 returned `preflight-only`, and implementation remains held.
+  gates; D1/D2 returned `preflight-only`, and route movement remains held for a
+  later release vote.
 - `G6-E Native Ground Platform Schema`: G6-E0 planning package for the minimum
-  native ground platform schema; G6-E1 design preflight is accepted; E2
-  implementation remains held.
+  native ground platform schema; G6-E1 design preflight, G6-E2 implementation,
+  and G6-E3 integration/release vote are accepted for native schema evidence.
 
 Content and scenarios:
 
 - [ground_platoon_starter.seed](../../../examples/config/database/ground/units/ground_platoon_starter.seed)
   is a planning/content seed only. It is intentionally not auto-loaded by the
   runtime database loader.
+- [ground_platoon_mvp.json](../../../examples/config/database/ground/units/ground_platoon_mvp.json)
+  is the first auto-loaded native ground unit definition. It is accepted as a
+  static or caller-initial-velocity schema token only, with route movement,
+  terrain, sensing, fires, damage, and combat deferred.
 - [ground_platoon_tasking_smoke_v1.json](../../../scenarios/ground/ground_platoon_tasking_smoke_v1.json)
   is the first canonical ground scenario shell. It uses an `Aircraft`
   compatibility spawn type and documents that it is not a maintained ground
@@ -176,23 +191,19 @@ Contracts and tests:
 - [test_ground_mvp_scenario.py](../../../tests/runtime/ground/test_ground_mvp_scenario.py)
 - [test_ground_realism_gradient_mvp_scenarios.py](../../../tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py)
 - [test_ground_realism_gradient_guardrails.py](../../../tests/architecture/test_ground_realism_gradient_guardrails.py)
+- [test_ground_native_platform_schema.py](../../../tests/runtime/ground/test_ground_native_platform_schema.py)
 
 Infrastructure gaps:
 
 - no `src/components/tasking/ground/` DTO directory yet;
 - no `src/components/command/ground/` command directory yet;
-- no ground-specific C++ enums or binding surface;
 - no formal P2 stage-node manifest for tasking visibility;
-- no runtime-loadable ground unit schema or capability-bundle lowering path.
 - movement-state evidence gates are now defined for future G2, but no native
-  ground platform loader path is accepted yet.
-- G6-E0 now defines the minimum candidate implementation surface:
-  `UnitType`/identity, unit-definition loading, default factory spawn-plan
-  admission/materialization, Python identity exposure, one auto-loadable ground
-  JSON, and focused load/spawn/negative tests.
-- G6-E1 narrows that surface to `UnitType::Ground`, `type = "Ground"`,
-  `Ground_Platoon_MVP`, `DefaultUnitFactory::spawn()`, and existing
-  `SimulationKernel.get_unit_type()` Python evidence.
+  route-move scenario is accepted yet.
+- G6-E2 now provides the minimum native loader path:
+  `UnitType::Ground`, `type = "Ground"`, `Ground_Platoon_MVP`,
+  `DefaultUnitFactory::spawn()`, existing `SimulationKernel.get_unit_type()`
+  Python evidence, and focused load/spawn/negative tests.
 
 ## Domain State
 
@@ -280,19 +291,31 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 # 14 passed
 ```
 
+Additional G6-E2/E3 validation sampled on `2026-05-26`:
+
+```bash
+cmake --build build-workshop --target ef_py -j2
+# [100%] Built target ef_py
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/ground/test_ground_native_platform_schema.py
+# 5 passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/ground/test_ground_native_platform_schema.py tests/contracts/unit/ground tests/architecture/test_ground_realism_gradient_guardrails.py tests/runtime/ground/test_ground_mvp_scenario.py tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py tests/leader/test_ground_profile_semantics.py
+# 24 passed
+```
+
 ## Next Focus
 
 Recommended next steps:
 
-1. Implement `G6-E2` only within the accepted native schema write surface:
-   `UnitType::Ground`, loader parse, default factory evidence/materialization,
-   one ground JSON, binding enum exposure, and focused tests.
+1. Open a later G6-D3/G6-F route-move release vote only if it consumes the
+   accepted G6-E2/E3 native schema evidence and names the new movement evidence
+   gates.
 2. Keep the accepted G6-C/G6-D/G6-E guardrails active: no private ground runtime
    path, no G1 fixture claims of G2+ realism, fail-closed explicit profile
    hints, and no compatibility-shell G2 movement release.
-3. Do not add `ground_platoon_flat_route_move_v1` until native ground platform
-   schema evidence exists and a later release vote accepts a bounded route-move
-   implementation cluster.
+3. Do not add `ground_platoon_flat_route_move_v1` until that later release vote
+   accepts a bounded route-move implementation cluster.
 4. Keep `build_kernel_mission_command()` as a compatibility shell until a
    ground command vocabulary is accepted.
 5. Define a first real ground RL task only after observation, action, reward,

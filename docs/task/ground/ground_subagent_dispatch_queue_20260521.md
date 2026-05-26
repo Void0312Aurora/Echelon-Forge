@@ -1,11 +1,11 @@
 # Ground Subagent Dispatch Queue
 
-Status: `2026-05-25` G0-G4 sealed as the accepted ground baseline. G5 tasking
+Status: `2026-05-26` G0-G4 sealed as the accepted ground baseline. G5 tasking
 smoke is accepted, G6-A/B are accepted for the first G1 realism-gradient MVP
 scenario fixtures, G6-C is accepted for route-move boundary guardrails, and
-G6-D1/D2 returned `preflight-only` with native-schema blockers. G6-E0 opens the
-native ground platform schema planning package, and G6-E1 selects the
-`UnitType::Ground` type-name/default-factory path; implementation remains held.
+G6-D1/D2 returned `preflight-only` with native-schema blockers. G6-E0/E1/E2/E3
+are accepted for the first native ground platform schema; route movement remains
+held pending a later release vote.
 
 Use this queue when launching subagents. The main thread owns integration and
 final acceptance.
@@ -69,6 +69,9 @@ Parallel rule:
   `UnitType::Ground`, `type = "Ground"`, `Ground_Platoon_MVP`, existing
   type-name/default factory materialization, and existing Python
   `get_unit_type()` identity evidence.
+- `G6-E2/E3` accept the native schema evidence: `Ground_Platoon_MVP` is
+  loadable/spawnable/inspectable as `UnitType::Ground`; route movement and
+  combat behavior remain held.
 
 Terminology note: this project phase `G6 Realism Gradient MVP Scenarios` is not
 the same as the domain-realism grade `G6 effects/damage/termination`; this
@@ -101,15 +104,14 @@ phase releases only two `G1` realism fixtures.
 | `G6-D2` | main-thread diagnostics | current main thread | Accepted as `preflight-only`: movement evidence gates are defined but cannot release route movement before native schema closes. | Read-only diagnostics plus G6-D doc/queue/progress sync. No platform schema implementation, terrain, sensing, fires, damage, or combat edits. |
 | `G6-E0` | main-thread integration | current main thread | Accepted: plan the minimal native ground platform schema implementation package. | `docs/task/ground/g6_native_ground_platform_schema/**` and ground README/queue/progress/plan sync only. |
 | `G6-E1` | main-thread diagnostics | current main thread | Accepted: source-inventory/design preflight selected the native ground identity and materialization path. | Read-only diagnostics plus G6-E package/queue/progress sync. No runtime, bindings, content, tests, route movement, terrain, sensing, fires, damage, or combat edits. |
-| `G6-E2` | worker | `gpt-5.4`, high | Next candidate: implement one runtime-loadable native `Ground_Platoon_MVP` schema using `UnitType::Ground`. | `src/components/basic/common.h`, `src/content/unit_definition_loader.cpp`, optional minimal `src/content/unit_definition.h`, `src/models/core/default_unit_factory.h`, `src/interfaces/python/bindings_core.cpp`, `examples/config/database/ground/units/ground_platoon_mvp.json`, `tests/runtime/ground/test_ground_native_platform_schema.py` only. No route movement or combat behavior. |
-| `G6-E3` | main-thread integration | current main thread | Held: integrate native schema evidence and decide whether a later route-move release vote can be opened. | Ground docs/queue/progress sync only unless a fix is explicitly released. |
+| `G6-E2` | main-thread implementation | current main thread | Accepted: implemented one runtime-loadable native `Ground_Platoon_MVP` schema using `UnitType::Ground`. | `src/components/basic/common.h`, `src/content/unit_definition_loader.cpp`, `src/models/core/default_unit_factory.h`, `src/interfaces/python/bindings_core.cpp`, `examples/config/database/ground/units/ground_platoon_mvp.json`, `tests/runtime/ground/test_ground_native_platform_schema.py` only. No route movement or combat behavior. |
+| `G6-E3` | main-thread integration | current main thread | Accepted: integrated native schema evidence and allowed a later route-move release vote to be opened. | Ground docs/queue/progress sync only; route movement remains held. |
 
 ## Held Streams
 
 | Stream | Release condition |
 |--------|-------------------|
-| `G6-E2 native schema implementation` | Requires accepted G6-E1 identity/materialization decision and focused validation plan. |
-| `G2 route move implementation` | Requires accepted native ground platform schema evidence from G6-E2/E3 plus a later G6-D3/G6-F release vote. |
+| `G2 route move implementation` | Requires a later G6-D3/G6-F release vote that consumes accepted G6-E2/E3 native schema evidence. |
 | `P3/P10 ground work` | Requires a separate accepted work package; G5 does not release formal command delivery or observation export. |
 
 ## Dispatch Details

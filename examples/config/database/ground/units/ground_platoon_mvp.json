@@ -1,0 +1,34 @@
+{
+  "name": "Ground_Platoon_MVP",
+  "type": "Ground",
+  "mass_kg": 1800.0,
+  "health": {
+    "current_hp": 100.0,
+    "max_hp": 100.0
+  },
+  "has_score": true,
+  "has_command_link": true,
+  "command_link": {
+    "latency_s": 0.2,
+    "drop_prob": 0.0
+  },
+  "has_data_link": false,
+  "_ground_schema": {
+    "specialization": "ground",
+    "service_profile": "Army",
+    "tasking_profile": "ground",
+    "tactical_unit_type": "TacticalUnit",
+    "echelon": "platoon",
+    "platform_family": "dismounted_unit",
+    "doctrine_family": "land_tactics",
+    "mobility_declaration": "ground_mobility_flat_deferred",
+    "movement_behavior": "static_or_caller_initial_velocity_only"
+  },
+  "_deferred_runtime_claims": [
+    "route following or movement behavior",
+    "terrain traversal, masking, cover, or line-of-sight",
+    "ground sensing, track fusion, or observation export",
+    "direct fires, indirect fires, effects, damage, or suppression",
+    "logistics or sustainment behavior"
+  ]
+}

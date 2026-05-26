@@ -158,7 +158,8 @@ enum class UnitType : uint8_t {
     Engine,
     EWSuite,
     RCSProfile,
-    Submarine
+    Submarine,
+    Ground
 };
 
 struct KeyEntity {

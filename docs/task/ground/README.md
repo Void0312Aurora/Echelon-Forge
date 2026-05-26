@@ -1,7 +1,7 @@
 # Ground
 
 Status: active planning entry opened on `2026-05-21`; current progress tracking
-updated on `2026-05-25`.
+updated on `2026-05-26`.
 
 Language:
 
@@ -53,9 +53,9 @@ simulation lifecycle without creating a new vertical runtime path.
   the first `G2` route-move scenario must wait for a runtime-loadable native
   ground platform schema. The current `Aircraft` compatibility shell remains
   G0/G1 only.
-- G6-D1/D2 preflight returned `preflight-only`: no accepted runtime-loadable
-  `Ground` unit type/schema exists yet, and movement evidence gates cannot
-  release route movement until that blocker closes.
+- G6-D1/D2 preflight returned `preflight-only`: at that time the native
+  `Ground` unit type/schema blocker was still open, and movement evidence gates
+  could not release route movement until a schema package closed it.
 - G6-E0 opens the native ground platform schema planning package. It defines
   the minimum implementation surface and evidence gates for a loadable/spawnable
   native ground entity, but it does not release route movement or runtime
@@ -63,6 +63,12 @@ simulation lifecycle without creating a new vertical runtime path.
 - G6-E1 source-inventory/design preflight selects `UnitType::Ground`,
   `type = "Ground"`, `Ground_Platoon_MVP`, and the existing type-name/default
   factory materialization path for the first native schema implementation.
+- G6-E2/E3 accept the first native ground platform schema: the example
+  database now loads `Ground_Platoon_MVP`, Python exposes `ef_py.UnitType.Ground`,
+  and `spawn_unit(..., "Ground_Platoon_MVP", ...)` materializes a native ground
+  entity with stable position, velocity, heading, instrument, and health
+  inspection. This is schema evidence only; route movement, terrain, sensing,
+  fires, damage, and combat remain held.
 
 ## Recommended Reading Order
 
@@ -122,8 +128,8 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
   realism-gradient guardrails
 - keep G6-C/G6-D route-move guardrails active before adding any movement
   scenario
-- implement G6-E2 only within the accepted native schema file surface before
-  route-move implementation
+- use the accepted G6-E2/E3 native schema evidence as input to a later
+  route-move release vote
 - keep G1 scenarios scoped to static occupy/support relationship semantics only
 - keep command delivery, observation/export, movement, sensing, terrain, fires,
   effects, damage, and broad `MissionCommand` growth held

@@ -1,8 +1,9 @@
 # G6-E Native Ground Platform Schema Cluster
 
-Status: `2026-05-25` accepted for `G6-E0`; `G6-E1` source-inventory/design
-preflight is accepted. `G6-E2` implementation remains held. No route-move
-scenario is released.
+Status: `2026-05-26` accepted for `G6-E0`; `G6-E1` source-inventory/design
+preflight is accepted; `G6-E2` native schema implementation is accepted;
+`G6-E3` integration/release vote accepts native schema evidence only. No
+route-move scenario is released.
 
 ## Decision
 
@@ -31,6 +32,95 @@ The target entity is a starter platoon-scale ground platform token:
 The starter platform may expose enough static mobility metadata to bound future
 movement tests, but that metadata must not move the unit or claim `G2` route
 movement by itself.
+
+## E2 Implementation Evidence
+
+Accepted implementation surface:
+
+- `src/components/basic/common.h` adds `UnitType::Ground`.
+- `src/content/unit_definition_loader.cpp` admits `type = "Ground"`.
+- `src/models/core/default_unit_factory.h` emits
+  `ground_mobility_flat_deferred` mobility evidence and `land_tactics` doctrine
+  evidence for native ground definitions.
+- `src/interfaces/python/bindings_core.cpp` exposes `ef_py.UnitType.Ground` and
+  maps the UnitType overload to `Ground_Platoon_MVP`.
+- `examples/config/database/ground/units/ground_platoon_mvp.json` adds the
+  first auto-loaded native ground unit definition.
+- `tests/runtime/ground/test_ground_native_platform_schema.py` proves
+  load/spawn/identity/static-inspection/negative-schema behavior.
+
+The implementation does not add a ground movement component, route-following
+system, terrain model, sensing model, fires model, damage model, combat path,
+facade expansion, or private `systems/ground/` runtime stack.
+
+Direct probe:
+
+```bash
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python - <<'PY'
+from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+ensure_repo_imports()
+import ef_py
+sim = ef_py.SimulationKernel()
+print(hasattr(ef_py.UnitType, "Ground"))
+print(sim.load_database(resolve_repo_path("examples", "config", "database")))
+entity = int(sim.spawn_unit(ef_py.Side.Blue, "Ground_Platoon_MVP", 10, 20, 0, 45, 0, 0, 0, 0, 0))
+print(entity > 0)
+print(sim.get_unit_type(entity), int(ef_py.UnitType.Ground))
+print(tuple(sim.get_unit_position(entity)))
+print(tuple(sim.get_unit_velocity(entity)))
+print(sim.get_unit_heading(entity))
+print(list(sim.get_unit_health(entity)))
+PY
+# True
+# True
+# True
+# 11 11
+# (10.0, 20.0, 0.0)
+# (0.0, 0.0, 0.0)
+# 45.0
+# [100.0, 100.0]
+```
+
+Focused validation:
+
+```bash
+cmake --build build-workshop --target ef_py -j2
+# [100%] Built target ef_py
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
+  tests/runtime/ground/test_ground_native_platform_schema.py
+# 5 passed
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
+  tests/runtime/ground/test_ground_native_platform_schema.py \
+  tests/contracts/unit/ground \
+  tests/architecture/test_ground_realism_gradient_guardrails.py \
+  tests/runtime/ground/test_ground_mvp_scenario.py \
+  tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py \
+  tests/leader/test_ground_profile_semantics.py
+# 24 passed
+```
+
+## E3 Release Vote
+
+Decision: accepted for native schema evidence only.
+
+This closes the `G6-D1/D2` native-schema blocker that prevented a ground entity
+from being loaded, spawned, and identified through maintained shared surfaces.
+It does not close the `G2` movement gate.
+
+Next authorized action:
+
+- a later G6-D3/G6-F route-move release vote may be opened using this native
+  schema evidence as an input.
+
+Still not authorized:
+
+- `ground_platoon_flat_route_move_v1`;
+- route following, speed/acceleration updates, stuck/off-route checks, or
+  terrain passability;
+- terrain-aware movement, line-of-sight sensing, contact reports, fires,
+  effects, suppression, damage, combat, or logistics behavior.
 
 ## E1 Source Inventory Result
 
@@ -161,10 +251,10 @@ categories above must remain.
 
 | Stream | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Parallel / dependency | Round cap | Status |
 |--------|-------|-------------------|------|-----------|-----------|------------|--------------|-----------------------|-----------|--------|
-| `G6-E0 Native Schema Planning` | main-thread integration | current main thread | Record the minimum native ground platform schema package and release gate. | `docs/task/ground/g6_native_ground_platform_schema/**`, ground README/queue/progress/plan sync | runtime implementation, scenario files, route movement, terrain, sensing, fires, damage, combat | `git diff --check -- docs/task/ground`; focused ground guardrail tests | finite implementation clusters and acceptance gate recorded | depends on accepted G6-D1/D2 preflight | 1 documentation round | open |
+| `G6-E0 Native Schema Planning` | main-thread integration | current main thread | Record the minimum native ground platform schema package and release gate. | `docs/task/ground/g6_native_ground_platform_schema/**`, ground README/queue/progress/plan sync | runtime implementation, scenario files, route movement, terrain, sensing, fires, damage, combat | `git diff --check -- docs/task/ground`; focused ground guardrail tests | finite implementation clusters and acceptance gate recorded | depends on accepted G6-D1/D2 preflight | 1 documentation round | accepted |
 | `G6-E1 Source Inventory And Design Preflight` | main-thread diagnostics | current main thread | Confirm selected identity path: public `UnitType` versus maintained typed-platform capability materialization. | read-only diagnostics plus this package/queue/progress sync | code edits, scenario release, movement implementation | source inventory plus proposed patch/test list | selects the smallest implementation path and names blocked alternatives | after G6-E0 | 1 diagnostics round | accepted |
-| `G6-E2 Native Schema Implementation` | worker | `gpt-5.4`, high | Implement one runtime-loadable native ground platform schema and focused tests. | approved source/test/content files from E1 only | route movement, terrain, sensing, fires, damage, combat, broad facade growth | focused C++/Python build plus runtime ground tests | native entity loads, spawns, and is inspectable without substitute type fallback | after accepted E1 release | at most 2 implementation rounds | held |
-| `G6-E3 Integration And Release Vote` | main-thread integration | current main thread | Decide whether native schema evidence is sufficient to unblock a later route-move implementation vote. | ground docs/queue/progress sync only unless a fix is explicitly released | route-move implementation | focused tests from E2 plus docs check | either accepts native schema evidence or records residual blockers | after E2 | 1 integration round | held |
+| `G6-E2 Native Schema Implementation` | main-thread implementation | current main thread | Implement one runtime-loadable native ground platform schema and focused tests. | approved source/test/content files from E1 only | route movement, terrain, sensing, fires, damage, combat, broad facade growth | focused C++/Python build plus runtime ground tests | native entity loads, spawns, and is inspectable without substitute type fallback | after accepted E1 release | at most 2 implementation rounds | accepted |
+| `G6-E3 Integration And Release Vote` | main-thread integration | current main thread | Decide whether native schema evidence is sufficient to unblock a later route-move implementation vote. | ground docs/queue/progress sync only unless a fix is explicitly released | route-move implementation | focused tests from E2 plus docs check | accepts native schema evidence; route movement remains held for later vote | after E2 | 1 integration round | accepted |
 
 ## Guardrails
 
@@ -189,7 +279,6 @@ categories above must remain.
 
 ## Exit State
 
-After G6-E1, the queue should point to `G6-E2` as the first implementation
-candidate. Route movement remains blocked until E2/E3 close native schema
-evidence and a later G6-D3/G6-F release vote explicitly accepts route-move
-implementation.
+After G6-E3, native schema evidence is accepted and may feed a later G6-D3/G6-F
+route-move release vote. Route movement remains blocked until that later vote
+explicitly accepts a bounded route-move implementation.

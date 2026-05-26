@@ -1,9 +1,9 @@
 # Ground 域启动计划
 
-状态：`2026-05-25` G0-G4 封存基线；G5 tasking smoke 已验收；G6
+状态：`2026-05-26` G0-G4 封存基线；G5 tasking smoke 已验收；G6
 开启第一批 realism-gradient MVP 场景；G6-D1/D2 preflight 以
 `preflight-only` 验收，并继续把 route movement 阻塞在 native ground
-platform schema 工作之前；G6-E0/E1 开启并选择 native schema path。
+platform schema 工作之前；G6-E0/E1/E2/E3 已接受第一版 native schema evidence。
 
 输入：
 
@@ -44,21 +44,23 @@ platform schema 工作之前；G6-E0/E1 开启并选择 native schema path。
 
 ## 3. 当前仓库位置
 
-截至 `2026-05-21`，仓库已经具备：
+截至 `2026-05-26`，仓库已经具备：
 
 - 权威的 Army service-profile 文档
+- 维护中的 `ground/` standards 特化层
 - tasking/command DTO 层的 `common + air + naval` 拆分
 - `air` 与 `naval` 的 Python tasking-profile 分发
+- `army`、`ground`、`land` 与 `ServiceProfile.Army` 的 ground tasking profile 分发
 - “新域通过 capability 实现接入，而非新增 runtime path”的架构法则
+- 通过 G6-E native schema 切片验收的 ground tasking profile、content seed、
+  scenario fixture 与 focused runtime/contract tests
 
 当前仓库尚未具备：
 
-- 维护中的 `ground/` standards 特化层
-- Python 分发中的 ground tasking profile
 - ground 专用 DTO 落点
-- ground 场景、内容样例与 runtime-contract 测试
 - 第一版可达成共识的机动 / 火力 / 观测语义面
-- runtime-loadable native ground platform schema 或 public `Ground` unit type
+- route movement、terrain-aware movement、ground sensing、fires、damage 与
+  combat behavior
 
 ## 4. 建议阶段
 
@@ -72,7 +74,7 @@ platform schema 工作之前；G6-E0/E1 开启并选择 native schema path。
 | `G5 MVP 场景` | 第一版规范 ground 场景壳 | 一个维护中的 `scenarios/ground/` smoke fixture，用于证明 loader 与 tasking status chain | 不声明真实 ground platform schema、movement、terrain、sensing、fires 或 combat |
 | `G6 Realism Gradient MVP Scenarios` | 第一批受梯度约束的场景 | G1 static occupy 与 support relationship fixture，并为后续 G2+ work 设置 gate | 不声明 movement、terrain、sensing、fires、damage 或 native ground platform |
 | `G6-D Route-Move Release Decision` | 第一版 G2 movement release posture | schema-first 决策，以及 native platform schema 与 movement evidence 的有限预检 cluster | 不发布 route-move scenario、movement implementation、terrain、sensing、fires、damage 或 native schema implementation |
-| `G6-E Native Ground Platform Schema Package` | movement 前的下一候选包 | 有边界的 native ground platform schema 实现计划，以及后续单独释放的实现证据 | 不发布 route-move scenario、terrain、sensing、fires、damage、combat 或私有 ground runtime stack |
+| `G6-E Native Ground Platform Schema Package` | movement 前已接受的 schema package | 有边界的 native ground platform schema implementation evidence | 不发布 route-move scenario、terrain、sensing、fires、damage、combat 或私有 ground runtime stack |
 
 关键规则是：`G1-G4` 必须复用现有的
 `common + specialization + profile bridge` 模式，而不是再发明一套新的
@@ -100,6 +102,12 @@ G6-E0 开启该 planning package。G6-E1 选择 `UnitType::Ground`、
 materialization path，作为第一版 native schema implementation 路线，同时继续
 held route movement、terrain、sensing、fires、damage 与 combat。
 
+G6-E2/E3 接受第一版 native ground platform schema 证据：
+`Ground_Platoon_MVP` 可从示例数据库加载，经由共享 factory path spawn，通过
+Python identity inspection 报告 `UnitType::Ground`，并暴露静态 position、
+velocity、heading、instrument 与 health state。这只关闭 native-schema
+blocker；route movement 仍需要后续 G6-D3/G6-F release vote。
+
 ### 4.1 阶段子项目与任务簇
 
 每个阶段都作为独立 task 子项目维护，便于单独分发、review 和关闭，而不把整个 ground bootstrap 任务线一次性放大。
@@ -113,8 +121,8 @@ held route movement、terrain、sensing、fires、damage 与 combat。
 | `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
 | `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
 | `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
-| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 以 `preflight-only` 验收；native schema blocker 仍在；route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1 已接受；G6-E2 implementation 是下一候选 |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 以 `preflight-only` 验收；G6-E2/E3 现已关闭 native schema identity；route-move implementation held |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 已接受 native schema evidence；route movement 仍保持 held |
 
 当前分发队列是
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)。
