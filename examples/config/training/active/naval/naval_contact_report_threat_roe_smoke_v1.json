@@ -17,12 +17,12 @@
     "task_id": "naval_contact_report_threat_roe_v1",
     "scenario_path": "scenarios/naval/ddg51_take1_screen_threat_roe_v1.json",
     "contract_path": "tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json",
-    "source_preflight": "docs/task/naval/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md",
+    "source_preflight": "docs/task/naval/n5_rl_action_surface_split/naval_n5_rl_action_surface_split_cluster_20260526.md",
     "realism_grade": "N4_pre_fire_bridge",
     "entry_status": "active_smoke_probe",
     "claim_level": "entry_and_gate_only",
     "engagement_scope": "pre_fire_only",
-    "current_action_surface": "no_release_probe",
+    "current_action_surface": "naval_station_order_probe",
     "cooperative_runtime_status": "pending_non_agent_roster_slot_gate",
     "required_gate_groups": [
       "screen_geometry",
@@ -35,11 +35,11 @@
   "env": {
     "include_visual": false,
     "include_proprio": true,
-    "mission_obs_mode": "nav_v2_formation_role_v1",
+    "mission_obs_mode": "naval_screen_station_v1",
     "step_info_mode": "terminal",
     "execution_step_runtime_mode": "compiled",
     "flight_shaping_backend": "compiled",
-    "action_mode": "takeoff4"
+    "action_mode": "naval_station3"
   },
   "early_stop": {
     "enabled": false

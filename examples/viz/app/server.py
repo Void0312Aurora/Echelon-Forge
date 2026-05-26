@@ -36,7 +36,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--mission_obs_mode",
         type=str,
         default=None,
-        choices=["basic", "nav_v1", "nav_v2", "nav_v2_formation_v1", "nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"],
+        choices=[
+            "basic",
+            "nav_v1",
+            "nav_v2",
+            "nav_v2_formation_v1",
+            "nav_v2_formation_role_v1",
+            "nav_v2_cooperative_takeoff_v1",
+            "naval_screen_station_v1",
+        ],
     )
     parser.add_argument("--visual_downsample", type=int, default=None)
     parser.add_argument("--visual_update_interval", type=int, default=None)

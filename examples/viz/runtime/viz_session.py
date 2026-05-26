@@ -735,6 +735,8 @@ def _infer_mission_obs_mode(model_obj, requested_mode: str | None) -> str:
         return "nav_v2_formation_role_v1"
     if dim == 25:
         return "nav_v2_cooperative_takeoff_v1"
+    if dim == 23:
+        return "naval_screen_station_v1"
     if dim == 17:
         return "nav_v2_formation_v1"
     if dim == 14:

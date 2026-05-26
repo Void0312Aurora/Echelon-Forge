@@ -15,7 +15,7 @@ _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
 if _REPO_ROOT_HINT not in sys.path:
     sys.path.insert(0, _REPO_ROOT_HINT)
 
-from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES
+from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.testing.runtime import configure_sim_log_level, ensure_repo_imports, resolve_repo_path
 
 REPO_ROOT = ensure_repo_imports()
@@ -150,7 +150,7 @@ def main() -> int:
         "--mission-obs-mode",
         type=str,
         default="nav_v2",
-        choices=list(BASE_MISSION_OBS_MODES) + list(COOPERATIVE_MISSION_OBS_MODES),
+        choices=list(BASE_MISSION_OBS_MODES) + list(COOPERATIVE_MISSION_OBS_MODES) + list(NAVAL_MISSION_OBS_MODES),
         help="Mission observation mode.",
     )
     parser.add_argument(
@@ -189,7 +189,7 @@ def main() -> int:
         "--action-mode",
         type=str,
         default="full",
-        choices=["full", "takeoff2", "takeoff4"],
+        choices=["full", "takeoff2", "takeoff4", "naval_station3"],
         help="Action mode.",
     )
     parser.add_argument("--include-proprio", action="store_true", help="Include proprio in observations.")
@@ -253,7 +253,7 @@ def main() -> int:
         "flight_shaping_backend": args.flight_shaping_backend,
         "collect_step_timing": bool(args.collect_step_timing),
     }
-    action_dim = 17 if args.action_mode == "full" else (2 if args.action_mode == "takeoff2" else 4)
+    action_dim = 17 if args.action_mode == "full" else (2 if args.action_mode == "takeoff2" else (3 if args.action_mode == "naval_station3" else 4))
     action_batch = _build_action_batch(
         steps=int(args.steps),
         n_envs=int(args.n_envs),

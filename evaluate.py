@@ -28,6 +28,7 @@ for _build_dir_name in _BUILD_DIR_NAMES:
 sys.path.insert(0, _REPO_ROOT)
 from gym_envs.universal_env import UniversalEnv
 from python.env_config import resolve_env_settings
+from python.training.cli import ACTION_MODE_CHOICES, MISSION_OBS_MODE_CHOICES
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.control.wrappers import get_action_wrapper_spec
 
@@ -61,7 +62,7 @@ def main():
         "--mission_obs_mode",
         type=str,
         default=None,
-        choices=["basic", "nav_v1", "nav_v2"],
+        choices=MISSION_OBS_MODE_CHOICES,
         help="Mission observation format (defaults to train_config env settings).",
     )
     parser.add_argument(
@@ -80,7 +81,7 @@ def main():
         "--action_mode",
         type=str,
         default=None,
-        choices=["full", "takeoff2", "takeoff4"],
+        choices=ACTION_MODE_CHOICES,
         help="Action space mode (defaults to train_config env settings).",
     )
     parser.add_argument(

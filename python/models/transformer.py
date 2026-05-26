@@ -7,6 +7,8 @@ import torch
 import torch.nn as nn
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
+from python.mission_obs_taxonomy import mission_observation_dim
+
 
 _TRANSFORMER_FEATURE_CLAMP = 12.0
 
@@ -80,6 +82,31 @@ _MISSION_IDX_SELF_ROLE_CODE = 21
 _MISSION_IDX_SELF_FORMATION_ROLE_CODE = 22
 _MISSION_IDX_RELATIVE_SLOT_CODE = 23
 _MISSION_IDX_REFERENCE_RELATIVE_SLOT_CODE = 24
+
+_MISSION_NAVAL_SCREEN_DIM = mission_observation_dim("naval_screen_station_v1")
+_MISSION_NAVAL_IDX_COMMAND_CODE = 0
+_MISSION_NAVAL_IDX_TARGET_HEADING = 1
+_MISSION_NAVAL_IDX_TARGET_SPEED = 2
+_MISSION_NAVAL_IDX_STATION_RADIUS = 3
+_MISSION_NAVAL_IDX_STATION_BEARING = 4
+_MISSION_NAVAL_IDX_STATION_ERROR = 5
+_MISSION_NAVAL_IDX_STATION_ERROR_NORM = 6
+_MISSION_NAVAL_IDX_SCREEN_SEPARATION = 7
+_MISSION_NAVAL_IDX_SCREEN_SEPARATION_ERROR = 8
+_MISSION_NAVAL_IDX_OWN_REL_X = 9
+_MISSION_NAVAL_IDX_OWN_REL_Y = 10
+_MISSION_NAVAL_IDX_DESIRED_REL_X = 11
+_MISSION_NAVAL_IDX_DESIRED_REL_Y = 12
+_MISSION_NAVAL_IDX_TARGET_CONTACT_PRESENT = 13
+_MISSION_NAVAL_IDX_SUPPORT_TRACK_PRESENT = 14
+_MISSION_NAVAL_IDX_REPORT_CHAIN_SEEN = 15
+_MISSION_NAVAL_IDX_ROE_STATE = 16
+_MISSION_NAVAL_IDX_AUTHORIZATION_TO_FIRE = 17
+_MISSION_NAVAL_IDX_ASSIGNED_TARGET_ID = 18
+_MISSION_NAVAL_IDX_ASSIGNED_TARGET_SOURCE_ID = 19
+_MISSION_NAVAL_IDX_SELF_ROLE_CODE = 20
+_MISSION_NAVAL_IDX_RELATIVE_SLOT_CODE = 21
+_MISSION_NAVAL_IDX_REFERENCE_RELATIVE_SLOT_CODE = 22
 
 _CONTACT_IDX_RANGE_M = 0
 _CONTACT_IDX_AZIMUTH_DEG = 1
@@ -206,6 +233,8 @@ def preprocess_mission_tensor(mission: torch.Tensor) -> torch.Tensor:
     out = mission.float().clone()
     if out.ndim != 2:
         return _sanitize_features(out)
+    if int(out.shape[-1]) == _MISSION_NAVAL_SCREEN_DIM:
+        return preprocess_naval_screen_station_mission_tensor(out)
 
     _set_last_dim(out, _MISSION_IDX_COMMAND_CODE, lambda x: _scaled(x, scale=4.0))
     _set_last_dim(out, _MISSION_IDX_TARGET_HEADING, _wrap_degrees_unit)
@@ -232,6 +261,37 @@ def preprocess_mission_tensor(mission: torch.Tensor) -> torch.Tensor:
     _set_last_dim(out, _MISSION_IDX_SELF_FORMATION_ROLE_CODE, lambda x: _scaled(x, scale=4.0))
     _set_last_dim(out, _MISSION_IDX_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=16.0))
     _set_last_dim(out, _MISSION_IDX_REFERENCE_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=16.0))
+    return _sanitize_features(out)
+
+
+def preprocess_naval_screen_station_mission_tensor(mission: torch.Tensor) -> torch.Tensor:
+    out = mission.float().clone()
+    if out.ndim != 2:
+        return _sanitize_features(out)
+
+    _set_last_dim(out, _MISSION_NAVAL_IDX_COMMAND_CODE, lambda x: _scaled(x, scale=4.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_TARGET_HEADING, _wrap_degrees_unit)
+    _set_last_dim(out, _MISSION_NAVAL_IDX_TARGET_SPEED, lambda x: _scaled(x, scale=25.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_STATION_RADIUS, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_STATION_BEARING, _wrap_degrees_unit)
+    _set_last_dim(out, _MISSION_NAVAL_IDX_STATION_ERROR, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_STATION_ERROR_NORM, lambda x: torch.clamp(x, -4.0, 4.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_SCREEN_SEPARATION, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_SCREEN_SEPARATION_ERROR, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_OWN_REL_X, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_OWN_REL_Y, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_DESIRED_REL_X, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_DESIRED_REL_Y, lambda x: _symlog(x, scale=1000.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_TARGET_CONTACT_PRESENT, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_SUPPORT_TRACK_PRESENT, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_REPORT_CHAIN_SEEN, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_ROE_STATE, lambda x: _scaled(x, scale=4.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_AUTHORIZATION_TO_FIRE, lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_ASSIGNED_TARGET_ID, lambda x: _symlog(x, scale=100.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_ASSIGNED_TARGET_SOURCE_ID, lambda x: _symlog(x, scale=100.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_SELF_ROLE_CODE, lambda x: _scaled(x, scale=32.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=32.0))
+    _set_last_dim(out, _MISSION_NAVAL_IDX_REFERENCE_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=32.0))
     return _sanitize_features(out)
 
 

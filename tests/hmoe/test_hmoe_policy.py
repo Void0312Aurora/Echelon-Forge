@@ -11,8 +11,14 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from python.models.transformer import TemporalTransformerExtractor, TransformerExtractor, preprocess_transformer_observations
-from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy
+from python.models.transformer import (
+    TemporalTransformerExtractor,
+    TransformerExtractor,
+    preprocess_mission_tensor,
+    preprocess_transformer_observations,
+)
+from python.mission_obs_taxonomy import mission_observation_field_index
+from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
 from train import apply_safe_action_bias
 
@@ -181,6 +187,39 @@ class HMoEPolicyTests(unittest.TestCase):
             for head in family_subheads:
                 self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
 
+    def test_safe_action_bias_zeroes_naval_station_action_head(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(23,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=float),
+            }
+        )
+        action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=float)
+        policy = SquashedMultiInputPolicy(
+            observation_space,
+            action_space,
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+        )
+        with th.no_grad():
+            policy.action_net.weight.fill_(0.25)
+            policy.action_net.bias.fill_(0.1)
+
+        class _Model:
+            pass
+
+        model = _Model()
+        model.policy = policy
+        apply_safe_action_bias(model, "naval_station3", "scenarios/naval/ddg51_take1_screen_threat_roe_v1.json")
+
+        self.assertTrue(th.allclose(policy.action_net.weight.detach(), th.zeros_like(policy.action_net.weight)))
+        self.assertTrue(th.allclose(policy.action_net.bias.detach(), th.zeros_like(policy.action_net.bias)))
+
     def test_initialize_hmoe_from_shared_action_head_preserves_zero_residual_bootstrap(self) -> None:
         policy = self._make_policy()
         with th.no_grad():
@@ -295,6 +334,59 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertAlmostEqual(float(processed["contacts"][0, 0, 0].item()), float(th.log1p(th.tensor(34.055)).item()), places=5)
         self.assertAlmostEqual(float(processed["mission"][0, 6].item()), float(th.log1p(th.tensor(17.423)).item()), places=5)
         self.assertAlmostEqual(float(processed["rwr"][0, 0, 1].item()), 4.0, places=6)
+
+    def test_transformer_preprocesses_naval_screen_station_mission_by_domain_fields(self) -> None:
+        mode = "naval_screen_station_v1"
+        mission = th.zeros((1, 23), dtype=th.float32)
+        mission[0, mission_observation_field_index(mode, "command_code")] = 3.0
+        mission[0, mission_observation_field_index(mode, "target_heading_deg")] = 90.0
+        mission[0, mission_observation_field_index(mode, "target_speed_mps")] = 10.29
+        mission[0, mission_observation_field_index(mode, "station_radius_m")] = 14816.0
+        mission[0, mission_observation_field_index(mode, "station_bearing_deg")] = 90.0
+        mission[0, mission_observation_field_index(mode, "station_error_m")] = 4040.0
+        mission[0, mission_observation_field_index(mode, "station_error_norm")] = 0.306
+        mission[0, mission_observation_field_index(mode, "screen_separation_m")] = 14816.0
+        mission[0, mission_observation_field_index(mode, "screen_separation_error_m")] = 1618.0
+        mission[0, mission_observation_field_index(mode, "target_contact_present")] = 1.0
+        mission[0, mission_observation_field_index(mode, "support_track_present")] = 1.0
+        mission[0, mission_observation_field_index(mode, "report_chain_seen")] = 0.5
+        mission[0, mission_observation_field_index(mode, "roe_state")] = 1.0
+        mission[0, mission_observation_field_index(mode, "assigned_target_id")] = 580.0
+
+        processed = preprocess_mission_tensor(mission)
+
+        self.assertTrue(th.isfinite(processed).all())
+        self.assertLess(float(processed.abs().max().item()), 6.0)
+        self.assertAlmostEqual(
+            float(processed[0, mission_observation_field_index(mode, "station_bearing_deg")].item()),
+            0.5,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(processed[0, mission_observation_field_index(mode, "station_radius_m")].item()),
+            float(th.log1p(th.tensor(14.816)).item()),
+            places=5,
+        )
+        self.assertAlmostEqual(
+            float(processed[0, mission_observation_field_index(mode, "station_error_m")].item()),
+            float(th.log1p(th.tensor(4.04)).item()),
+            places=5,
+        )
+        self.assertAlmostEqual(
+            float(processed[0, mission_observation_field_index(mode, "station_error_norm")].item()),
+            0.306,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(processed[0, mission_observation_field_index(mode, "target_contact_present")].item()),
+            1.0,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float(processed[0, mission_observation_field_index(mode, "report_chain_seen")].item()),
+            0.5,
+            places=6,
+        )
 
     def test_transformer_extractor_forward_stays_finite_on_large_observations(self) -> None:
         observation_space = spaces.Dict(

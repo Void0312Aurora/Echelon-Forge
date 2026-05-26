@@ -45,16 +45,19 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python trai
 
 ## 设计说明
 
-- active action surface 是临时 no-release execution probe。它使用
-  `action_mode=takeoff4`，因为当前 `full` execution action layout 包含武器开关，
-  而专门的海军 helm/order action API 尚未落地。
+- active action surface 是专门的 no-release 海军站位指令 probe：
+  `action_mode=naval_station3`。它通过海军 task/command 链调整站位方位、
+  站位半径和受限速度意图，同时保持舰艇 pilot-action carrier 为中性。
+- active observation surface 是海军站位/接触模式：
+  `mission_obs_mode=naval_screen_station_v1`。它暴露站位几何、接触可见性、
+  支援轨迹/报告链状态、ROE 和指定目标来源，不再继承空军编队或起飞字段命名。
 - trainer 路径为 `agent_layer=execution` 且
   `runtime.world_batch_vec_env=true`，因此停留在 maintained world-batch runtime，
   不走隔离中的 raw-kernel compatibility path。
 - 此处有意暂不使用 `cooperative_execution`。当前海军 roster 包含非 agent 支援舰，
   cooperative slot accounting 在提升为多槽位海军路径前需要单独 gate。
-- 从这些 smoke/probe 条目继续提升，需要专门的海军 observation schema、action mask、
-  reward surface 和 eval gates。
+- 从这些 smoke/probe 条目继续提升，仍需要更清晰的 packet 所有权、更完整的
+  action mask、reward shaping、cooperative slot 和 eval gates。
 
 ## 验证
 

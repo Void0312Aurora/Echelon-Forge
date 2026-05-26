@@ -67,11 +67,11 @@ class NavalN4ClosureGateTests(unittest.TestCase):
                 self.assertEqual(naval_entry.get("entry_status"), "active_smoke_probe")
                 self.assertEqual(naval_entry.get("claim_level"), "entry_and_gate_only")
                 self.assertEqual(naval_entry.get("engagement_scope"), "pre_fire_only")
-                self.assertEqual(naval_entry.get("current_action_surface"), "no_release_probe")
+                self.assertEqual(naval_entry.get("current_action_surface"), "naval_station_order_probe")
 
                 env = cfg.get("env")
                 self.assertIsInstance(env, dict)
-                self.assertEqual(env.get("action_mode"), "takeoff4")
+                self.assertEqual(env.get("action_mode"), "naval_station3")
 
                 gate_groups = set(map(str, naval_entry.get("required_gate_groups", [])))
                 self.assertIn("screen_geometry", gate_groups)
@@ -103,6 +103,11 @@ class NavalN4ClosureGateTests(unittest.TestCase):
         self.assertEqual(scenario.get("objectives"), [])
         forbidden_reward_keys = {"weapon", "launch", "damage", "kill", "hit", "intercept"}
         self.assertTrue(forbidden_reward_keys.isdisjoint({str(key).lower() for key in rewards.keys()}))
+        self.assertTrue(bool(rewards.get("naval_reward_enabled")))
+        self.assertTrue(bool(rewards.get("naval_suppress_off_runway_penalty")))
+        self.assertIn("naval_station_error_weight", rewards)
+        self.assertIn("naval_report_chain_bonus", rewards)
+        self.assertIn("naval_pre_fire_roe_hold_bonus", rewards)
 
         contract_text = json.dumps(contract, ensure_ascii=True).lower()
         self.assertIn("authorization_to_fire", contract_text)

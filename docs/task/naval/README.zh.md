@@ -8,6 +8,8 @@
 - 最新状态总结应以 [海军当前进展追踪](./naval_current_progress_20260524.zh.md) 为准。
 - 当前 N4 威胁/ROE bridge 已作为开火前场景与 active training-entry gate 闭合：
   [naval_n4_closure_20260525.zh.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)。
+- 当前 RL 动作面拆分追踪于
+  [n5_rl_action_surface_split/README.zh.md](./n5_rl_action_surface_split/README.zh.md)。
 - 旧的 `2026-05-17` 进度检查点仍保留在归档中，用于追溯阶段性上下文。
 - 该工作线仍然活跃，但当前重点是把已有海军命令链、传感器、runtime 和 RL/tasking 对接继续收口，而不是横向大规模扩功能。
 
@@ -19,6 +21,8 @@
   [n4_threat_roe_bridge/README.zh.md](./n4_threat_roe_bridge/README.zh.md)
 - N4 闭合：
   [n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)
+- 当前 RL 动作面拆分：
+  [n5_rl_action_surface_split/README.zh.md](./n5_rl_action_surface_split/README.zh.md)
 - 归档索引：
   [archive/README.zh.md](./archive/README.zh.md)
 - 历史规划/检查点材料已移入归档。
@@ -29,6 +33,10 @@
 - 从两个 active N4 smoke/probe 条目继续推进：
   `naval_contact_report_threat_roe_v1` 和
   `naval_screen_station_hold_threat_aware_v1`
+- 让这些入口保持在专门的 `naval_station3` 站位指令动作面，而不是空军
+  `takeoff4` 训练面
+- 让这些入口的策略任务输入保持在 `naval_screen_station_v1`，而不是空军
+  formation-role 观测面
 - 将有限武器交战继续放在独立 N5 package 与 opening gate 之后
 - 将仍有业务含义的 loader-owned raw simulation compatibility seam 继续迁到 facade-owned maintained surface
 - 补强 `MissionCommand -> naval weapon`、`screen-hold`、`tasking_profile: naval` 的 facade/world-batch 级守门

@@ -45,18 +45,22 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python trai
 
 ## Design Notes
 
-- The active action surface is a temporary no-release execution probe. It uses
-  `action_mode=takeoff4` because the current `full` execution action layout
-  contains weapon switches and there is not yet a dedicated naval helm/order
-  action API.
+- The active action surface is a dedicated no-release naval station-order probe:
+  `action_mode=naval_station3`. It adjusts station bearing, station radius, and
+  bounded speed intent through the naval task/command chain while keeping the
+  ship pilot-action carrier neutral.
+- The active observation surface is the naval station/contact mode:
+  `mission_obs_mode=naval_screen_station_v1`. It exposes station geometry,
+  contact visibility, support-track/report-chain state, ROE, and assigned target
+  provenance without inheriting air formation or takeoff field names.
 - The trainer path is `agent_layer=execution` with
   `runtime.world_batch_vec_env=true`, so it stays on the maintained world-batch
   runtime rather than the quarantined raw-kernel compatibility path.
 - `cooperative_execution` is intentionally not used here yet. The current naval
   roster includes a non-agent support ship, and cooperative slot accounting needs
   a separate gate before this entry can be promoted to a multi-slot naval path.
-- Promotion beyond these smoke/probe entries requires a dedicated naval
-  observation schema, action mask, reward surface, and eval gates.
+- Promotion beyond these smoke/probe entries still requires richer packet
+  ownership, action masks, reward shaping, cooperative slots, and eval gates.
 
 ## Validation
 

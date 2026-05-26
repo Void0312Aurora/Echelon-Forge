@@ -104,7 +104,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--mission_obs_mode",
         type=str,
         default=None,
-        choices=["basic", "nav_v1", "nav_v2", "nav_v2_formation_v1", "nav_v2_formation_role_v1", "nav_v2_cooperative_takeoff_v1"],
+        choices=[
+            "basic",
+            "nav_v1",
+            "nav_v2",
+            "nav_v2_formation_v1",
+            "nav_v2_formation_role_v1",
+            "nav_v2_cooperative_takeoff_v1",
+            "naval_screen_station_v1",
+        ],
         help="Mission observation format. If omitted, infer it from the model observation space when possible.",
     )
     parser.add_argument(

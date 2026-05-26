@@ -17,7 +17,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from python.env_config import resolve_env_settings
-from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES
+from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 
@@ -114,6 +114,7 @@ def add_common_sb3_eval_args(
     mission_choices = list(BASE_MISSION_OBS_MODES)
     if cooperative:
         mission_choices.extend(COOPERATIVE_MISSION_OBS_MODES)
+    mission_choices.extend(NAVAL_MISSION_OBS_MODES)
     parser.add_argument(
         "--mission_obs_mode",
         type=str,
@@ -123,7 +124,7 @@ def add_common_sb3_eval_args(
     parser.add_argument("--visual_downsample", type=int, default=None)
     parser.add_argument("--visual_update_interval", type=int, default=None)
     parser.add_argument("--temporal_history_len", type=int, default=None)
-    parser.add_argument("--action_mode", type=str, default=None, choices=["full", "takeoff2", "takeoff4"])
+    parser.add_argument("--action_mode", type=str, default=None, choices=["full", "takeoff2", "takeoff4", "naval_station3"])
     if include_runtime_overrides:
         parser.add_argument("--execution_step_runtime_mode", type=str, default=None, choices=["compiled", "legacy"])
         parser.add_argument("--step_info_mode", type=str, default=None, choices=["full", "terminal", "off"])

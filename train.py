@@ -193,6 +193,12 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
                 b[0] = 0.0
                 b[1] = 0.0
                 b[2] = 0.0
+            elif action_mode == "naval_station3":
+                if int(b.shape[0]) < 3:
+                    return
+                b[0] = 0.0
+                b[1] = 0.0
+                b[2] = 0.0
 
         has_standard_bias = action_net is not None and getattr(action_net, "bias", None) is not None
         has_hmoe_bias = hmoe_head_bank is not None
@@ -202,6 +208,10 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
         with torch.no_grad():
             if has_standard_bias:
                 _apply_bias_vector(action_net.bias)
+                if action_mode == "naval_station3":
+                    weight = getattr(action_net, "weight", None)
+                    if weight is not None and int(weight.shape[0]) >= 3:
+                        weight.zero_()
             if has_hmoe_bias:
                 for head in getattr(hmoe_head_bank, "family_heads", []):
                     bias = getattr(head, "bias", None)

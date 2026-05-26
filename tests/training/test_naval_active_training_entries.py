@@ -70,8 +70,8 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
                 self.assertEqual(env.get("execution_step_runtime_mode"), "compiled")
                 self.assertEqual(env.get("flight_shaping_backend"), "compiled")
                 self.assertEqual(env.get("step_info_mode"), "terminal")
-                self.assertEqual(env.get("mission_obs_mode"), "nav_v2_formation_role_v1")
-                self.assertEqual(env.get("action_mode"), "takeoff4")
+                self.assertEqual(env.get("mission_obs_mode"), "naval_screen_station_v1")
+                self.assertEqual(env.get("action_mode"), "naval_station3")
 
                 self.assertEqual(naval_entry.get("task_id"), expected_task_id)
                 self.assertEqual(naval_entry.get("scenario_path"), str(EXPECTED_SCENARIO))
@@ -79,7 +79,7 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
                 self.assertEqual(naval_entry.get("realism_grade"), "N4_pre_fire_bridge")
                 self.assertEqual(naval_entry.get("claim_level"), "entry_and_gate_only")
                 self.assertEqual(naval_entry.get("engagement_scope"), "pre_fire_only")
-                self.assertEqual(naval_entry.get("current_action_surface"), "no_release_probe")
+                self.assertEqual(naval_entry.get("current_action_surface"), "naval_station_order_probe")
                 self.assertEqual(
                     naval_entry.get("cooperative_runtime_status"),
                     "pending_non_agent_roster_slot_gate",
@@ -106,6 +106,11 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
         self.assertIsInstance(rewards, dict)
         forbidden_reward_keys = {"damage", "damage_reward", "kill", "kill_reward", "hit", "intercept"}
         self.assertTrue(forbidden_reward_keys.isdisjoint(set(map(str, rewards.keys()))))
+        self.assertTrue(bool(rewards.get("naval_reward_enabled")))
+        self.assertTrue(bool(rewards.get("naval_suppress_off_runway_penalty")))
+        self.assertIn("naval_station_error_weight", rewards)
+        self.assertIn("naval_contact_maintained_bonus", rewards)
+        self.assertIn("naval_pre_fire_roe_hold_bonus", rewards)
         self.assertEqual(scenario.get("objectives"), [])
 
     def test_train_bootstrap_accepts_naval_active_entries_on_maintained_world_batch_path(self) -> None:
@@ -136,7 +141,8 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
                 self.assertNotIn("unknown agent_layer", proc.stdout)
                 self.assertIn("Agent layer: execution", proc.stdout)
                 self.assertIn("world_batch_vec_env=True", proc.stdout)
-                self.assertIn("Effective env settings: action_mode=takeoff4", proc.stdout)
+                self.assertIn("Effective env settings: action_mode=naval_station3", proc.stdout)
+                self.assertIn("mission_obs_mode=naval_screen_station_v1", proc.stdout)
                 self.assertIn("World batch runtime:", proc.stdout)
                 self.assertIn("Error: --test_only requires --resume_path", proc.stdout)
 
@@ -150,6 +156,10 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
         self.assertIn(str(EXPECTED_CONTRACT), readme)
         self.assertIn("not a trained naval policy", readme)
         self.assertIn("do not expose a weapon-release action", readme)
+        self.assertIn("action_mode=naval_station3", readme)
+        self.assertIn("mission_obs_mode=naval_screen_station_v1", readme)
+        self.assertIn("naval_station3", readme_zh)
+        self.assertIn("naval_screen_station_v1", readme_zh)
         self.assertIn("不暴露武器", readme_zh)
 
 
