@@ -563,7 +563,16 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             if slot_state is None:
                 continue
             inst_vec = _float32_view(inst_out[batch_idx])
-            miss_vec = _float32_view(mission_out[batch_idx])
+            if slot_state.loader._python_owned_mission_observation_mode(self.mission_obs_mode):
+                miss_vec = _float32_view(
+                    slot_state.loader.get_mission_observation(
+                        self.mission_obs_mode,
+                        truth=truth_batch[batch_idx],
+                        inst=inst_batch[batch_idx],
+                    )
+                )
+            else:
+                miss_vec = _float32_view(mission_out[batch_idx])
             if step_eval_batch is not None and batch_idx < len(step_eval_batch):
                 step_eval = step_eval_batch[batch_idx]
             else:
@@ -581,7 +590,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     step_eval = None
             if isinstance(step_eval, dict):
                 frame_products = step_eval.get("frame_products")
-                if frame_products is not None and bool(getattr(frame_products, "mission_observation_evaluated", False)):
+                if (
+                    not slot_state.loader._python_owned_mission_observation_mode(self.mission_obs_mode)
+                    and frame_products is not None
+                    and bool(getattr(frame_products, "mission_observation_evaluated", False))
+                ):
                     miss_vec = _float32_view(frame_products.mission_observation.values)
             obs = {
                 "instruments": inst_vec,

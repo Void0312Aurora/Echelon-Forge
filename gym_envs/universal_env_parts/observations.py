@@ -134,7 +134,11 @@ def build_universal_observation(
             step_eval = None
     if isinstance(step_eval, dict):
         frame_products = step_eval.get("frame_products")
-        if frame_products is not None and bool(getattr(frame_products, "mission_observation_evaluated", False)):
+        if (
+            not loader._python_owned_mission_observation_mode(mission_obs_mode)
+            and frame_products is not None
+            and bool(getattr(frame_products, "mission_observation_evaluated", False))
+        ):
             miss_vec = np.asarray(frame_products.mission_observation.values, dtype=np.float32)
         else:
             miss_vec = loader.get_mission_observation(mission_obs_mode, truth=truth, inst=inst)

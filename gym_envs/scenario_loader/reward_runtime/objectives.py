@@ -1,6 +1,7 @@
 import ef_py
 
 from ..common import OBJECTIVE_DYNAMIC_TARGET_MAP, OBJECTIVE_OP_MAP, OBJECTIVE_PROPERTY_MAP
+from .air_combat import combat_entity_terminal_state
 
 
 def _objective_shaping_binding_error(exc: Exception) -> RuntimeError:
@@ -48,6 +49,11 @@ def _combat_target_snapshot(loader, truth):
             break
         except Exception:
             continue
+
+    combat_target_state = combat_entity_terminal_state(loader, sim, int(target_id))
+    if bool(combat_target_state.get("neutralized", False)):
+        target_active = False
+        target_health = 0.0
 
     return {
         "target_id": int(target_id),

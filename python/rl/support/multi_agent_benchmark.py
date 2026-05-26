@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 
 from python.env_config import resolve_env_settings
-from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES
+from python.mission_obs_taxonomy import BASE_MISSION_OBS_MODES, COOPERATIVE_MISSION_OBS_MODES, NAVAL_MISSION_OBS_MODES
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
 from python.rl.runtime.execution_runtime import coerce_timing_dict
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
@@ -374,7 +374,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--mission_obs_mode",
         type=str,
         default=None,
-        choices=list(BASE_MISSION_OBS_MODES) + list(COOPERATIVE_MISSION_OBS_MODES),
+        choices=list(BASE_MISSION_OBS_MODES) + list(COOPERATIVE_MISSION_OBS_MODES) + list(NAVAL_MISSION_OBS_MODES),
     )
     parser.add_argument("--visual_downsample", type=int, default=None)
     parser.add_argument("--visual_update_interval", type=int, default=None)

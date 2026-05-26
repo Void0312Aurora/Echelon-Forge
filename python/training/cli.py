@@ -10,9 +10,10 @@ MISSION_OBS_MODE_CHOICES = [
     "nav_v2_formation_v1",
     "nav_v2_formation_role_v1",
     "nav_v2_cooperative_takeoff_v1",
+    "naval_screen_station_v1",
 ]
 
-ACTION_MODE_CHOICES = ["full", "takeoff2", "takeoff4"]
+ACTION_MODE_CHOICES = ["full", "takeoff2", "takeoff4", "naval_station3"]
 
 
 def build_train_arg_parser() -> argparse.ArgumentParser:

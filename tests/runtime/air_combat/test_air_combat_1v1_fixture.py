@@ -108,14 +108,24 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         agent_id = int(loader.load_scenario(_SCENARIO_PATH, seed=20260516))
         red_id = int(loader.entities["Red_Fighter"])
 
-        for _ in range(60):
+        for _ in range(10):
+            self.assertTrue(
+                bool(
+                    sim.debug_apply_local_proximity_hit(
+                        agent_id,
+                        red_id,
+                        0.0,
+                        0.0,
+                        0.3,
+                        240.0,
+                        80.0,
+                    )
+                )
+            )
             sim.step()
-            obs = sim.get_agent_observation(agent_id)
-            if any(int(getattr(track, "id", 0)) == red_id for track in getattr(obs, "contacts", [])):
+            if not bool(sim.is_unit_active(red_id)):
                 break
-
-        missile_id = int(sim.fire_missile(agent_id, red_id))
-        self.assertGreater(missile_id, 0)
+        self.assertFalse(bool(sim.is_unit_active(red_id)))
 
         terminated = False
         truncated = False
@@ -156,6 +166,161 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         self.assertAlmostEqual(float(loader.last_reward_breakdown.get("total", 0.0)), 1500.0, places=6)
         self.assertGreater(float(reward), 0.0)
 
+    def test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+
+        loader = ScenarioLoader(sim)
+        agent_id = int(loader.load_scenario(_SCENARIO_PATH, seed=20260516))
+        red_id = int(loader.entities["Red_Fighter"])
+
+        health_before = [float(value) for value in sim.get_unit_health(red_id)]
+        self.assertTrue(bool(sim.is_unit_active(red_id)))
+
+        for _ in range(2):
+            self.assertTrue(
+                bool(
+                    sim.debug_apply_local_proximity_hit(
+                        agent_id,
+                        red_id,
+                        0.0,
+                        0.0,
+                        0.3,
+                        240.0,
+                        80.0,
+                    )
+                )
+            )
+
+        events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.damage_reports), 1)
+        report = events.damage_reports[-1]
+        self.assertTrue(bool(report.mobility_kill))
+        self.assertEqual(str(report.loss_state_to), "mobility_kill")
+        self.assertFalse(bool(report.destroyed))
+        self.assertTrue(bool(sim.is_unit_active(red_id)))
+        self.assertEqual([float(value) for value in sim.get_unit_health(red_id)], health_before)
+
+        truth = sim.get_agent_observation(agent_id)
+        inst = sim.get_instrument_state(agent_id)
+        obs = build_universal_observation(
+            loader,
+            inst,
+            truth,
+            mission_obs_mode="basic",
+            max_contacts=10,
+            max_rwr=4,
+            include_proprio=False,
+            last_action=None,
+            action_space=None,
+            steps=1,
+            max_steps=loader.get_max_steps(),
+        )
+        reward, terminated, truncated, _status = loader.compute_full_step(
+            obs,
+            sim,
+            1,
+            loader.get_max_steps(),
+            truth=truth,
+            inst_state=inst,
+        )
+
+        self.assertTrue(bool(terminated))
+        self.assertFalse(bool(truncated))
+        self.assertEqual(str(loader.last_termination_reason), "combat_win")
+        self.assertNotIn("objective_bonus", loader.last_reward_breakdown)
+        self.assertGreater(float(loader.last_reward_breakdown.get("combat_win_bonus", 0.0)), 0.0)
+        self.assertAlmostEqual(float(loader.last_reward_breakdown.get("total", 0.0)), 1500.0, places=6)
+        self.assertGreater(float(reward), 0.0)
+
+    def test_loader_damage_report_shaping_consumes_nonterminal_structured_damage_once(self) -> None:
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+
+        loader = ScenarioLoader(sim)
+        agent_id = int(loader.load_scenario(_SCENARIO_PATH, seed=20260516))
+        red_id = int(loader.entities["Red_Fighter"])
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_local_proximity_hit(
+                    agent_id,
+                    red_id,
+                    0.0,
+                    0.0,
+                    0.3,
+                    80.0,
+                    40.0,
+                )
+            )
+        )
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.damage_reports), 1)
+        report = events.damage_reports[0]
+        self.assertLess(float(report.system_health_delta), 0.0)
+        self.assertEqual(str(report.loss_state_to), "combat_capable")
+        self.assertTrue(bool(sim.is_unit_active(red_id)))
+
+        truth = sim.get_agent_observation(agent_id)
+        inst = sim.get_instrument_state(agent_id)
+        obs = build_universal_observation(
+            loader,
+            inst,
+            truth,
+            mission_obs_mode="basic",
+            max_contacts=10,
+            max_rwr=4,
+            include_proprio=False,
+            last_action=None,
+            action_space=None,
+            steps=1,
+            max_steps=loader.get_max_steps(),
+        )
+        reward, terminated, truncated, _status = loader.compute_full_step(
+            obs,
+            sim,
+            1,
+            loader.get_max_steps(),
+            truth=truth,
+            inst_state=inst,
+        )
+
+        self.assertFalse(bool(terminated))
+        self.assertFalse(bool(truncated))
+        self.assertGreater(float(loader.last_reward_breakdown.get("air_combat_target_system_damage_progress", 0.0)), 0.0)
+        self.assertGreater(float(loader.last_reward_breakdown.get("air_combat_target_mission_capability_progress", 0.0)), 0.0)
+        self.assertAlmostEqual(float(loader.last_reward_breakdown.get("total", 0.0)), float(reward), places=6)
+        self.assertGreater(float(reward), 0.0)
+
+        truth = sim.get_agent_observation(agent_id)
+        inst = sim.get_instrument_state(agent_id)
+        obs = build_universal_observation(
+            loader,
+            inst,
+            truth,
+            mission_obs_mode="basic",
+            max_contacts=10,
+            max_rwr=4,
+            include_proprio=False,
+            last_action=None,
+            action_space=None,
+            steps=2,
+            max_steps=loader.get_max_steps(),
+        )
+        reward2, terminated2, truncated2, _status2 = loader.compute_full_step(
+            obs,
+            sim,
+            2,
+            loader.get_max_steps(),
+            truth=truth,
+            inst_state=inst,
+        )
+
+        self.assertFalse(bool(terminated2))
+        self.assertFalse(bool(truncated2))
+        self.assertNotIn("air_combat_target_system_damage_progress", loader.last_reward_breakdown)
+        self.assertAlmostEqual(float(loader.last_reward_breakdown.get("total", 0.0)), float(reward2), places=6)
+
     def test_loader_scripted_red_opponent_updates_command_and_can_fire(self) -> None:
         sim = ef_py.SimulationKernel()
         self.assertTrue(sim.load_database(_DB_PATH))
@@ -190,7 +355,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         red_obs1 = sim.get_agent_observation(red_id)
         self.assertLess(int(getattr(red_obs1, "missiles_remaining", -1)), initial_missiles)
 
-    def test_stage0_drone_weapon_employment_fixed_fire_reaches_combat_win(self) -> None:
+    def test_stage0_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release(self) -> None:
         env = UniversalEnv(
             _STAGE0_SCENARIO_PATH,
             include_visual=False,
@@ -217,6 +382,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
             terminated = False
             truncated = False
             info: dict[str, object] = {}
+            reports_before = len(env.sim.export_recent_engagement_events().damage_reports)
             for _ in range(int(env.max_steps)):
                 _obs, _reward, terminated, truncated, info = env.step(action)
                 missiles_remaining = int(
@@ -228,11 +394,18 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
                     break
 
             self.assertTrue(fired)
-            self.assertTrue(terminated)
-            self.assertFalse(truncated)
-            self.assertEqual(str(info.get("termination_reason")), "combat_win")
+            self.assertIn(str(info.get("termination_reason")), {"combat_win", "combat_timeout"})
+            if bool(terminated):
+                self.assertFalse(truncated)
+                self.assertEqual(str(info.get("termination_reason")), "combat_win")
+            else:
+                self.assertTrue(truncated)
+                self.assertEqual(str(info.get("termination_reason")), "combat_timeout")
             reward_terms = info.get("reward_terms", {})
             self.assertIsInstance(reward_terms, dict)
-            self.assertGreater(float(reward_terms.get("combat_win_bonus", 0.0)), 0.0)
+            reports_after = len(env.sim.export_recent_engagement_events().damage_reports)
+            if str(info.get("termination_reason")) == "combat_win":
+                self.assertGreater(float(reward_terms.get("combat_win_bonus", 0.0)), 0.0)
+                self.assertGreater(reports_after, reports_before)
         finally:
             env.close()

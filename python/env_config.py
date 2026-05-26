@@ -5,7 +5,7 @@ from typing import Any
 from python.mission_obs_taxonomy import VALID_MISSION_OBS_MODES
 
 
-VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4"}
+VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4", "naval_station3"}
 VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled", "legacy"}
 VALID_STEP_INFO_MODES = {"full", "terminal", "off"}
 VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "legacy", "compiled", "gpu_host"}

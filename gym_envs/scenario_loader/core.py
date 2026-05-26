@@ -63,6 +63,7 @@ from .mission_observation import (
     get_waypoint_nav_products as _get_waypoint_nav_products_impl,
     mission_nav_inputs as _mission_nav_inputs_impl,
     mission_observation_mode_code as _mission_observation_mode_code_impl,
+    python_owned_mission_observation_mode as _python_owned_mission_observation_mode_impl,
 )
 from .step_evaluation import (
     build_step_evaluation_batch_env_state as _build_step_evaluation_batch_env_state_impl,
@@ -134,6 +135,8 @@ from .behavior_runtime import (
 )
 from .reward_runtime import (
     add_breakdown_term as _add_breakdown_term_impl,
+    apply_air_combat_reward_surface as _apply_air_combat_reward_surface_impl,
+    apply_naval_reward_surface as _apply_naval_reward_surface_impl,
     apply_compiled_flight_shaping_terms as _apply_compiled_flight_shaping_terms_impl,
     build_approach_reward_inputs as _build_approach_reward_inputs_impl,
     build_conditional_objective_inputs as _build_conditional_objective_inputs_impl,
@@ -256,6 +259,7 @@ class ScenarioLoader:
         self._runtime_eval_cache: dict[str, object] = {}
         self.primary_target_id: int | None = None
         self.primary_target_name: str = ""
+        self._air_combat_reward_last_report_id = 0
         self._scripted_opponent_runtime = _make_scripted_opponent_runtime_impl()
         self.scripted_opponents: dict[int, Any] = self._scripted_opponent_runtime.controllers
         self.scripted_opponent_reports: dict[int, dict[str, Any]] = self._scripted_opponent_runtime.reports
@@ -525,6 +529,10 @@ class ScenarioLoader:
     def _mission_observation_mode_code(mode: str) -> int:
         return _mission_observation_mode_code_impl(mode)
 
+    @staticmethod
+    def _python_owned_mission_observation_mode(mode: str | None) -> bool:
+        return _python_owned_mission_observation_mode_impl(mode)
+
     def _build_mission_observation_runtime_inputs(self, mode: str, *, truth=None, inst=None):
         return _build_mission_observation_runtime_inputs_impl(self, mode, truth=truth, inst=inst)
 
@@ -606,6 +614,50 @@ class ScenarioLoader:
     @staticmethod
     def _add_breakdown_term(breakdown: dict, name: str, value: float) -> None:
         _add_breakdown_term_impl(breakdown, name, value)
+
+    def _apply_naval_reward_surface(
+        self,
+        sim,
+        truth,
+        *,
+        reward: float,
+        terminated: bool,
+        truncated: bool,
+        status: list[float],
+        reward_breakdown: dict | None,
+    ):
+        return _apply_naval_reward_surface_impl(
+            self,
+            sim,
+            truth,
+            reward=reward,
+            terminated=terminated,
+            truncated=truncated,
+            status=status,
+            reward_breakdown=reward_breakdown,
+        )
+
+    def _apply_air_combat_reward_surface(
+        self,
+        sim,
+        truth,
+        *,
+        reward: float,
+        terminated: bool,
+        truncated: bool,
+        status: list[float],
+        reward_breakdown: dict | None,
+    ):
+        return _apply_air_combat_reward_surface_impl(
+            self,
+            sim,
+            truth,
+            reward=reward,
+            terminated=terminated,
+            truncated=truncated,
+            status=status,
+            reward_breakdown=reward_breakdown,
+        )
 
     def _apply_legacy_flight_shaping_terms(
         self,

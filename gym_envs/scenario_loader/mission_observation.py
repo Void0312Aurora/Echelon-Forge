@@ -1,9 +1,9 @@
 import numpy as np
 import ef_py
 
-from python.mission_obs_taxonomy import mission_obs_mode_code
+from python.mission_obs_taxonomy import mission_obs_mode_code, mission_observation_python_owned
 from python.scenario.runtime import find_active_roster_member
-from python.rl.tasking.bridge import mission_command_view
+from python.rl.tasking.bridge import loader_owned_runtime_view, mission_command_view
 
 from .common import formation_role_code_from_member
 
@@ -86,7 +86,13 @@ def mission_observation_mode_code(mode: str) -> int:
     return int(mission_obs_mode_code(mode))
 
 
+def python_owned_mission_observation_mode(mode: str | None) -> bool:
+    return mission_observation_python_owned(mode)
+
+
 def build_mission_observation_runtime_inputs(loader, mode: str, *, truth=None, inst=None):
+    if python_owned_mission_observation_mode(mode):
+        return None
     cmd_view = mission_command_view(loader)
     inputs = ef_py.MissionObservationInputs()
     inputs.mode_code = int(mission_observation_mode_code(mode))
@@ -208,9 +214,178 @@ def _takeoff_vector(loader):
     )
 
 
+def _target_track(truth, target_id: int):
+    if truth is None or int(target_id) <= 0:
+        return None
+    for track in getattr(truth, "contacts", []) or []:
+        try:
+            if int(getattr(track, "id", 0)) == int(target_id):
+                return track
+        except Exception:
+            continue
+    return None
+
+
+def _support_entity_ids(loader) -> list[int]:
+    agent_id = int(getattr(loader, "agent_id", 0) or 0)
+    out: list[int] = []
+    for member in list(getattr(loader, "active_roster", []) or []):
+        try:
+            entity_id = int(getattr(member, "entity_id", 0) or 0)
+            if entity_id <= 0 or entity_id == agent_id:
+                continue
+            reference_id = int(getattr(member, "reference_entity_id", 0) or 0)
+            if reference_id == agent_id or not bool(getattr(member, "is_agent", True)):
+                out.append(entity_id)
+        except Exception:
+            continue
+    return out
+
+
+def _support_has_target_track(runtime_view, support_ids: list[int], target_id: int) -> bool:
+    if int(target_id) <= 0:
+        return False
+    for entity_id in support_ids:
+        try:
+            obs = runtime_view.get_agent_observation(int(entity_id))
+        except Exception:
+            continue
+        if _target_track(obs, int(target_id)) is not None:
+            return True
+    return False
+
+
+def _support_received_target_report(runtime_view, support_ids: list[int], target_id: int) -> bool:
+    if int(target_id) <= 0:
+        return False
+    for entity_id in support_ids:
+        messages = runtime_view.call_optional("get_unit_messages", int(entity_id), default=[]) or []
+        for msg in messages:
+            try:
+                if int(getattr(msg, "entity_ref", 0)) == int(target_id):
+                    return True
+            except Exception:
+                continue
+    return False
+
+
+def _first_support_position(runtime_view, support_ids: list[int]) -> tuple[float, float] | None:
+    for entity_id in support_ids:
+        try:
+            pos = runtime_view.get_unit_position(int(entity_id))
+        except Exception:
+            continue
+        if pos is None or len(pos) < 2:
+            continue
+        return float(pos[0]), float(pos[1])
+    return None
+
+
+def _naval_screen_station_vector(loader, *, truth=None, inst=None) -> np.ndarray:
+    _ = inst
+    if truth is None:
+        try:
+            truth = loader.get_policy_agent_observation(loader.agent_id)
+        except Exception:
+            truth = None
+    task = getattr(loader, "task_order", None)
+    cmd_view = mission_command_view(loader)
+    mission_cmd = getattr(loader, "mission_cmd", {}) if isinstance(getattr(loader, "mission_cmd", {}), dict) else {}
+    runtime_view = loader_owned_runtime_view(loader)
+
+    station_radius_m = float(
+        getattr(task, "station_radius_m", 0.0)
+        if task is not None
+        else cmd_view.float_field("station_radius_m", 0.0)
+    )
+    station_bearing_deg = float(
+        getattr(task, "station_heading_deg", 0.0)
+        if task is not None
+        else cmd_view.float_field("station_bearing_deg", cmd_view.float_field("target_heading", 0.0))
+    )
+    support_ids = _support_entity_ids(loader)
+    ref_pos = _first_support_position(runtime_view, support_ids)
+    own_x = float(getattr(truth, "x", 0.0)) if truth is not None else 0.0
+    own_y = float(getattr(truth, "y", 0.0)) if truth is not None else 0.0
+    own_relative_x_m = 0.0
+    own_relative_y_m = 0.0
+    desired_relative_x_m = 0.0
+    desired_relative_y_m = 0.0
+    station_error_m = 0.0
+    separation_m = 0.0
+    separation_error_m = 0.0
+    if ref_pos is not None:
+        ref_x, ref_y = ref_pos
+        own_relative_x_m = own_x - ref_x
+        own_relative_y_m = own_y - ref_y
+        heading_rad = np.deg2rad(station_bearing_deg)
+        desired_relative_x_m = float(np.sin(heading_rad) * station_radius_m)
+        desired_relative_y_m = float(np.cos(heading_rad) * station_radius_m)
+        station_error_m = float(
+            np.hypot(desired_relative_x_m - own_relative_x_m, desired_relative_y_m - own_relative_y_m)
+        )
+        separation_m = float(np.hypot(own_relative_x_m, own_relative_y_m))
+        separation_error_m = float(separation_m - station_radius_m)
+
+    target_id = int(getattr(loader, "primary_target_id", 0) or mission_cmd.get("assigned_target_id", 0) or 0)
+    target_contact_present = 1.0 if _target_track(truth, target_id) is not None else 0.0
+    support_track_present = 1.0 if _support_has_target_track(runtime_view, support_ids, target_id) else 0.0
+    report_chain_seen = 1.0 if _support_received_target_report(runtime_view, support_ids, target_id) else 0.0
+    if report_chain_seen <= 0.0 and support_track_present > 0.0:
+        report_chain_seen = 0.5
+
+    station_norm = max(1.0, station_radius_m)
+    member = find_active_roster_member(getattr(loader, "active_roster", None), entity_id=getattr(loader, "agent_id", 0))
+    ref_member = None
+    if member is not None and getattr(member, "reference_entity_id", None) is not None:
+        ref_member = find_active_roster_member(
+            getattr(loader, "active_roster", None),
+            entity_id=int(member.reference_entity_id),
+        )
+
+    return np.array(
+        [
+            float(cmd_view.int_field("command_code", 0)),
+            float(cmd_view.float_field("target_heading", 0.0)),
+            float(cmd_view.float_field("target_speed", 0.0)),
+            float(station_radius_m),
+            float(station_bearing_deg),
+            float(station_error_m),
+            float(station_error_m / station_norm),
+            float(separation_m),
+            float(separation_error_m),
+            float(own_relative_x_m),
+            float(own_relative_y_m),
+            float(desired_relative_x_m),
+            float(desired_relative_y_m),
+            float(target_contact_present),
+            float(support_track_present),
+            float(report_chain_seen),
+            float(cmd_view.int_field("roe_state", 0)),
+            1.0 if bool(cmd_view.bool_field("authorization_to_fire", False)) else 0.0,
+            float(target_id),
+            float(cmd_view.int_field("assigned_target_source_id", 0)),
+            float(getattr(member, "role_code", 0) or 0),
+            float(getattr(member, "relative_slot_code", 0) or 0),
+            float(getattr(ref_member, "relative_slot_code", 0) or 0),
+        ],
+        dtype=np.float32,
+    )
+
+
+def get_python_owned_mission_observation(loader, mode: str, *, truth=None, inst=None):
+    mode_norm = str(mode).strip().lower()
+    if mode_norm == "naval_screen_station_v1":
+        return _naval_screen_station_vector(loader, truth=truth, inst=inst)
+    raise ValueError(f"Unknown Python-owned mission observation mode: {mode!r}")
+
+
 def get_mission_observation(loader, mode: str = "basic", *, truth=None, inst=None):
     mode_norm = str(mode).strip().lower()
     _ = mission_observation_mode_code(mode_norm)
+    if python_owned_mission_observation_mode(mode_norm):
+        return get_python_owned_mission_observation(loader, mode_norm, truth=truth, inst=inst)
+
     if compiled_mission_observation_enabled(loader):
         cached = loader._get_cached_step_evaluation(truth=truth, inst_obj=inst, mission_obs_mode=mode_norm)
         if isinstance(cached, dict):

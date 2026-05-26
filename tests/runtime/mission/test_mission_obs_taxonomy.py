@@ -12,7 +12,9 @@ from gym_envs.universal_env import mission_observation_dim as env_mission_observ
 from python.mission_obs_taxonomy import (  # noqa: E402
     BASE_MISSION_OBS_MODES,
     COOPERATIVE_MISSION_OBS_MODES,
+    NAVAL_MISSION_OBS_MODES,
     mission_observation_field_index,
+    mission_observation_python_owned,
     mission_obs_mode_code,
     mission_observation_dim,
     mission_observation_field_names,
@@ -21,7 +23,7 @@ from python.mission_obs_taxonomy import (  # noqa: E402
 
 class MissionObservationTaxonomyTests(unittest.TestCase):
     def test_shared_taxonomy_matches_runtime_entrypoints(self) -> None:
-        modes = list(BASE_MISSION_OBS_MODES) + list(COOPERATIVE_MISSION_OBS_MODES)
+        modes = list(BASE_MISSION_OBS_MODES) + list(COOPERATIVE_MISSION_OBS_MODES) + list(NAVAL_MISSION_OBS_MODES)
         self.assertEqual(
             modes,
             [
@@ -31,6 +33,7 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
                 "nav_v2_formation_v1",
                 "nav_v2_formation_role_v1",
                 "nav_v2_cooperative_takeoff_v1",
+                "naval_screen_station_v1",
             ],
         )
 
@@ -109,6 +112,47 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
             mission_observation_field_index("nav_v2_cooperative_takeoff_v1", "reference_relative_slot_code"),
             24,
         )
+
+    def test_naval_screen_station_observation_has_domain_fields(self) -> None:
+        mode = "naval_screen_station_v1"
+
+        self.assertTrue(mission_observation_python_owned(mode))
+        self.assertEqual(mission_observation_dim(mode), 23)
+        self.assertEqual(env_mission_observation_dim(mode), 23)
+        self.assertEqual(ScenarioLoader._mission_observation_mode_code(mode), 6)
+        self.assertEqual(ScenarioLoader._python_owned_mission_observation_mode(mode), True)
+        self.assertEqual(
+            mission_observation_field_names(mode),
+            [
+                "command_code",
+                "target_heading_deg",
+                "target_speed_mps",
+                "station_radius_m",
+                "station_bearing_deg",
+                "station_error_m",
+                "station_error_norm",
+                "screen_separation_m",
+                "screen_separation_error_m",
+                "own_relative_x_m",
+                "own_relative_y_m",
+                "desired_relative_x_m",
+                "desired_relative_y_m",
+                "target_contact_present",
+                "support_track_present",
+                "report_chain_seen",
+                "roe_state",
+                "authorization_to_fire",
+                "assigned_target_id",
+                "assigned_target_source_id",
+                "self_role_code",
+                "relative_slot_code",
+                "reference_relative_slot_code",
+            ],
+        )
+        self.assertEqual(mission_observation_field_index(mode, "station_radius_m"), 3)
+        self.assertEqual(mission_observation_field_index(mode, "target_contact_present"), 13)
+        self.assertEqual(mission_observation_field_index(mode, "roe_state"), 16)
+        self.assertEqual(mission_observation_field_index(mode, "reference_relative_slot_code"), 22)
 
 
 if __name__ == "__main__":

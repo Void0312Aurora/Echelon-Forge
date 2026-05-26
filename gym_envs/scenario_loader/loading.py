@@ -206,6 +206,7 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
     loader.off_runway_steps = 0
     loader.last_reward_breakdown = {}
     loader.last_termination_reason = "running"
+    loader._air_combat_reward_last_report_id = 0
     loader._approach_prev_dme_m = None
     loader._approach_prev_loc_abs = None
     loader._approach_prev_gs_abs = None

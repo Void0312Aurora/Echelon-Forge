@@ -25,8 +25,11 @@ from gym_envs.universal_env_parts import (
     mission_observation_dim,
     normalize_action,
     append_temporal_history,
+    apply_naval_station_action,
     attach_temporal_history,
     reset_temporal_history,
+    reset_naval_station_action_state,
+    is_naval_station_action_mode,
     temporal_history_enabled,
 )
 
@@ -222,6 +225,7 @@ else:
 
             self.steps = 0
             self._last_action = None
+            reset_naval_station_action_state(self.loader)
             self._temporal_history.clear()
             self._visual_cache = None
             self._visual_cache_step = -1
@@ -257,6 +261,10 @@ else:
             action_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             action = normalize_action(action, action_space=self.action_space, action_mode=self.action_mode)
             self._last_action = action.astype(np.float32, copy=True)
+
+            if is_naval_station_action_mode(self.action_mode):
+                apply_naval_station_action(self.loader, action)
+                self.loader._sync_kernel_mission_command()
 
             inst_now = None if self.action_mode == "full" else self.sim.get_instrument_state(self.agent_id)
             pilot_act = build_pilot_action(action, action_mode=self.action_mode, inst_now=inst_now)

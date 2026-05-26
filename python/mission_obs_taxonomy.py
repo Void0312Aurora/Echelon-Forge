@@ -6,6 +6,7 @@ MISSION_OBS_NAV_V2 = "nav_v2"
 MISSION_OBS_NAV_V2_FORMATION_V1 = "nav_v2_formation_v1"
 MISSION_OBS_NAV_V2_FORMATION_ROLE_V1 = "nav_v2_formation_role_v1"
 MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1 = "nav_v2_cooperative_takeoff_v1"
+MISSION_OBS_NAVAL_SCREEN_STATION_V1 = "naval_screen_station_v1"
 
 MISSION_OBS_MODE_CODE_BY_NAME = {
     MISSION_OBS_BASIC: 0,
@@ -14,6 +15,7 @@ MISSION_OBS_MODE_CODE_BY_NAME = {
     MISSION_OBS_NAV_V2_FORMATION_V1: 3,
     MISSION_OBS_NAV_V2_FORMATION_ROLE_V1: 4,
     MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1: 5,
+    MISSION_OBS_NAVAL_SCREEN_STATION_V1: 6,
 }
 
 _MISSION_OBS_BASIC_FIELDS = [
@@ -66,6 +68,32 @@ _MISSION_OBS_COOPERATIVE_TAKEOFF_EXTRA_FIELDS = [
     "runway_slot_code",
 ]
 
+_MISSION_OBS_NAVAL_SCREEN_STATION_FIELDS = [
+    "command_code",
+    "target_heading_deg",
+    "target_speed_mps",
+    "station_radius_m",
+    "station_bearing_deg",
+    "station_error_m",
+    "station_error_norm",
+    "screen_separation_m",
+    "screen_separation_error_m",
+    "own_relative_x_m",
+    "own_relative_y_m",
+    "desired_relative_x_m",
+    "desired_relative_y_m",
+    "target_contact_present",
+    "support_track_present",
+    "report_chain_seen",
+    "roe_state",
+    "authorization_to_fire",
+    "assigned_target_id",
+    "assigned_target_source_id",
+    "self_role_code",
+    "relative_slot_code",
+    "reference_relative_slot_code",
+]
+
 MISSION_OBS_FIELD_NAMES_BY_NAME = {
     MISSION_OBS_BASIC: list(_MISSION_OBS_BASIC_FIELDS),
     MISSION_OBS_NAV_V1: list(_MISSION_OBS_BASIC_FIELDS + _MISSION_OBS_NAV_V1_EXTRA_FIELDS),
@@ -86,6 +114,7 @@ MISSION_OBS_FIELD_NAMES_BY_NAME = {
         + _MISSION_OBS_FORMATION_EXTRA_FIELDS
         + _MISSION_OBS_ROLE_EXTRA_FIELDS
     ),
+    MISSION_OBS_NAVAL_SCREEN_STATION_V1: list(_MISSION_OBS_NAVAL_SCREEN_STATION_FIELDS),
 }
 
 MISSION_OBS_DIM_BY_NAME = {
@@ -109,6 +138,10 @@ BASE_MISSION_OBS_MODES = (
 COOPERATIVE_MISSION_OBS_MODES = (
     MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1,
 )
+NAVAL_MISSION_OBS_MODES = (
+    MISSION_OBS_NAVAL_SCREEN_STATION_V1,
+)
+PYTHON_OWNED_MISSION_OBS_MODES = frozenset(NAVAL_MISSION_OBS_MODES)
 
 
 def normalize_mission_obs_mode(mode: str | None) -> str:
@@ -122,6 +155,10 @@ def normalize_mission_obs_mode(mode: str | None) -> str:
 
 def mission_obs_mode_code(mode: str | None) -> int:
     return int(MISSION_OBS_MODE_CODE_BY_NAME[normalize_mission_obs_mode(mode)])
+
+
+def mission_observation_python_owned(mode: str | None) -> bool:
+    return normalize_mission_obs_mode(mode) in PYTHON_OWNED_MISSION_OBS_MODES
 
 
 def mission_observation_dim(mode: str | None) -> int:

@@ -25,6 +25,7 @@ from gym_envs.scenario_loader import (
 )
 from gym_envs.universal_env import (
     append_temporal_history,
+    apply_naval_station_action,
     attach_temporal_history,
     build_pilot_action,
     build_step_info_minimal,
@@ -33,6 +34,8 @@ from gym_envs.universal_env import (
     make_observation_space,
     make_temporal_history_buffer,
     normalize_action,
+    reset_naval_station_action_state,
+    is_naval_station_action_mode,
     temporal_history_enabled,
 )
 from python.rl.tasking.bridge import build_kernel_mission_command
@@ -612,7 +615,16 @@ class WorldBatchVecEnv(VecEnv):
             inst_vec = _float32_view(inst_out[batch_idx])
             contacts = _float32_view(contacts_out[batch_idx]).reshape(int(self.max_contacts), 5)
             rwr = _float32_view(rwr_out[batch_idx]).reshape(int(self.max_rwr), 4)
-            miss_vec = _float32_view(mission_out[batch_idx])
+            if handle.loader._python_owned_mission_observation_mode(self.mission_obs_mode):
+                miss_vec = _float32_view(
+                    handle.loader.get_mission_observation(
+                        self.mission_obs_mode,
+                        truth=truth_batch[batch_idx],
+                        inst=inst_batch[batch_idx],
+                    )
+                )
+            else:
+                miss_vec = _float32_view(mission_out[batch_idx])
 
             # Use batch result if available, otherwise fall back to per-env
             step_eval = None
@@ -633,7 +645,11 @@ class WorldBatchVecEnv(VecEnv):
                     step_eval = None
             if isinstance(step_eval, dict):
                 frame_products = step_eval.get("frame_products")
-                if frame_products is not None and bool(getattr(frame_products, "mission_observation_evaluated", False)):
+                if (
+                    not handle.loader._python_owned_mission_observation_mode(self.mission_obs_mode)
+                    and frame_products is not None
+                    and bool(getattr(frame_products, "mission_observation_evaluated", False))
+                ):
                     miss_vec = _float32_view(frame_products.mission_observation.values)
 
             obs = {
@@ -1378,6 +1394,7 @@ class WorldBatchVecEnv(VecEnv):
         handle.last_leader_intent_snapshot = None
         handle.last_pilot_report_snapshot = None
         handle.last_action = None
+        reset_naval_station_action_state(handle.loader)
         handle.last_inst = initial_inst
         handle.last_truth = initial_truth
         if handle.temporal_history is None:
@@ -1482,6 +1499,7 @@ class WorldBatchVecEnv(VecEnv):
 
         assignments = []
         prepared_actions: list[Any | None] = [None] * self.num_envs
+        naval_action_sync_indices: list[int] = []
         for env_idx, handle in enumerate(self._handles):
             if handle.agent_id is None:
                 raise RuntimeError(f"world {env_idx} is not initialized; call reset() before step().")
@@ -1492,6 +1510,9 @@ class WorldBatchVecEnv(VecEnv):
                 effective_action = prepared.action
             action = normalize_action(effective_action, action_space=self.action_space, action_mode=self.action_mode)
             handle.last_action = np.asarray(effective_action, dtype=np.float32).reshape(-1).copy()
+            if is_naval_station_action_mode(self.action_mode):
+                if apply_naval_station_action(handle.loader, action):
+                    naval_action_sync_indices.append(env_idx)
             assign = ef_py.WorldPilotActionAssignment()
             assign.world_index = int(env_idx)
             assign.entity_id = int(handle.agent_id)
@@ -1504,6 +1525,8 @@ class WorldBatchVecEnv(VecEnv):
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
 
         step_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        if naval_action_sync_indices:
+            self._sync_command_chain_batch(naval_action_sync_indices)
         self._set_pilot_actions_batch(assignments)
         self._step_runtime_batch()
         batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0

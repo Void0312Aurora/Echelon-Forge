@@ -38,6 +38,17 @@ def compute_execution_observation_batch(
     mission_inputs_batch: list[Any] = []
     ils_batch = np.zeros((len(states), 4), dtype=np.float32)
 
+    mission_mode_for_compiled = str(mission_obs_mode or "basic")
+    python_owned_mission = False
+    if states:
+        first_loader = states[0].loader
+        mode_check = getattr(first_loader, "_python_owned_mission_observation_mode", None)
+        if callable(mode_check):
+            python_owned_mission = bool(mode_check(mission_obs_mode))
+    if python_owned_mission:
+        mission_mode_for_compiled = "basic"
+        allow_device_export = False
+
     mission_input_t0 = time.perf_counter()
     for state_index, state in enumerate(states):
         if state.last_inst is None or state.last_truth is None:
@@ -55,6 +66,12 @@ def compute_execution_observation_batch(
         mission_inputs_batch.append(
             loader._build_mission_observation_runtime_inputs(
                 mission_obs_mode,
+                truth=truth,
+                inst=inst,
+            )
+            if not python_owned_mission
+            else loader._build_mission_observation_runtime_inputs(
+                mission_mode_for_compiled,
                 truth=truth,
                 inst=inst,
             )

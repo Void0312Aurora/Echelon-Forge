@@ -6,7 +6,8 @@ from python.mission_obs_taxonomy import mission_observation_dim as shared_missio
 
 from .common import spaces
 
-_ACTION_DIMS = {"full": 17, "takeoff2": 2, "takeoff4": 4}
+NAVAL_STATION3_ACTION_MODE = "naval_station3"
+_ACTION_DIMS = {"full": 17, "takeoff2": 2, "takeoff4": 4, NAVAL_STATION3_ACTION_MODE: 3}
 _FULL_ACTION_LOW = np.array(
     [-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     dtype=np.float32,
@@ -43,6 +44,12 @@ def make_action_space(action_mode: str):
         return spaces.Box(
             low=np.array([-1.0, -1.0, -1.0, 0.0], dtype=np.float32),
             high=np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+            dtype=np.float32,
+        )
+    if action_mode == NAVAL_STATION3_ACTION_MODE:
+        return spaces.Box(
+            low=np.array([-1.0, -1.0, -1.0], dtype=np.float32),
+            high=np.array([1.0, 1.0, 1.0], dtype=np.float32),
             dtype=np.float32,
         )
     raise ValueError(f"Unknown action_mode: {action_mode}")

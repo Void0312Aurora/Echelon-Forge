@@ -152,6 +152,39 @@ class NavalLegacyMovementDebugTests(unittest.TestCase):
         self.assertAlmostEqual(heading_after_deg, initial_heading_deg, delta=1.0)
         self.assertAlmostEqual(speed_after_mps, initial_speed_mps, delta=0.25)
 
+    def test_ship_motion_consumes_nontrivial_pilot_action_as_manual_control(self) -> None:
+        idle_kernel, idle_id = _spawn_ship()
+        full_kernel, full_id = _spawn_ship()
+        turn_kernel, turn_id = _spawn_ship()
+
+        idle = ef_py.PilotAction()
+        idle.active = True
+        idle.throttle = 0.0
+        idle_kernel.set_pilot_action(idle_id, idle)
+
+        full = ef_py.PilotAction()
+        full.active = True
+        full.throttle = 1.0
+        full_kernel.set_pilot_action(full_id, full)
+
+        turn = ef_py.PilotAction()
+        turn.active = True
+        turn.throttle = 1.0
+        turn.rudder = 1.0
+        turn_kernel.set_pilot_action(turn_id, turn)
+
+        for _ in range(40):
+            idle_kernel.step()
+            full_kernel.step()
+            turn_kernel.step()
+
+        idle_speed_mps = math.hypot(*(float(v) for v in idle_kernel.get_unit_velocity(idle_id)[:2]))
+        full_speed_mps = math.hypot(*(float(v) for v in full_kernel.get_unit_velocity(full_id)[:2]))
+        turn_heading_deg = float(turn_kernel.get_unit_heading(turn_id))
+
+        self.assertGreater(full_speed_mps, idle_speed_mps + 4.0)
+        self.assertGreater(turn_heading_deg, 95.0)
+
     def test_submarine_motion_still_ignores_debug_legacy_transport_shell(self) -> None:
         kernel, entity_id = _spawn_submarine()
 
