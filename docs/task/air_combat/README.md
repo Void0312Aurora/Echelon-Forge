@@ -19,6 +19,10 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
 - The first training entry should move to the staged curriculum under
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
   instead of the historical smoke fixture.
+- The high-fidelity damage-model line now lives under
+  [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md).
+  That line is limited to Phase 0 preflight until its audit gates close; HP
+  bypass reversal, aircraft hitboxes, and deterministic fuze work remain held.
 
 ## Active Follow-On Focus
 
@@ -53,6 +57,8 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
   [air_combat_1v1_stall_rootcause_followup_20260516.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.md)
 - Current staged curriculum:
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
+- High-fidelity damage-model task:
+  [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
 - High-fidelity damage-system baseline:
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 

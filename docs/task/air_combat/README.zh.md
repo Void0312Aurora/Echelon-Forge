@@ -16,6 +16,9 @@
 - 第一训练入口应转向
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
   中定义的分阶段课程，而不是历史 smoke fixture。
+- 高真实度毁伤模型已拆出为
+  [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)。
+  该线当前只允许推进 Phase 0 预检，不允许直接改 HP bypass、飞机 hitbox 或 deterministic fuze。
 
 ## 当前继续推进重点
 
@@ -45,6 +48,8 @@
   [air_combat_1v1_stall_rootcause_followup_20260516.zh.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
 - 当前分阶段课程：
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
+- 高真实度毁伤模型任务：
+  [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
 - 高保真毁伤系统基线：
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 
