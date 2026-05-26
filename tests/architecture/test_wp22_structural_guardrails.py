@@ -138,6 +138,13 @@ BINDINGS_CORE = (
     / "python"
     / "bindings_core.cpp"
 )
+DEFAULT_EFFECTS_MODEL = (
+    REPO_ROOT
+    / "src"
+    / "models"
+    / "weapons"
+    / "default_effects_model.cpp"
+)
 STRUCTURAL_DOC_EN = (
     REPO_ROOT
     / "docs"
@@ -219,10 +226,15 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
     "debug_get_pending_mission_command_queue",
     "debug_get_embarked_helo",
     "debug_get_missile_runtime_state",
+    "debug_get_aircraft_damage_state",
+    "debug_get_aircraft_vulnerability_evidence_state",
     "set_contact_list",
     "set_missile_tuning",
     "get_missile_tuning",
     "debug_apply_proximity_hit",
+    "debug_apply_local_proximity_hit",
+    "debug_apply_profiled_local_proximity_hit",
+    "debug_apply_profiled_local_proximity_hit_with_velocity",
 }
 
 BINDINGS_LEGACY_ALLOWLIST = {
@@ -584,7 +596,7 @@ def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot
 
 def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() -> None:
     names = _simulation_kernel_binding_names()
-    assert len(names) == 75, (
+    assert len(names) == 81, (
         "WP22-E first wave expects the broad SimulationKernel binding count to stay explicit; "
         "update this guard only with a deliberate allowlist reshaping change"
     )
@@ -674,6 +686,22 @@ def test_wp22_command_link_pending_transport_headers_keep_typed_owner_markers_ex
         "refresh_pending_movement_command_diagnostics_shell(pending);",
     ):
         assert required in command_link_system
+
+
+def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
+    text = _text(DEFAULT_EFFECTS_MODEL)
+    legacy_start = text.index("if (hp && !structured_air_target) {")
+    legacy_end = text.index("// --- 2. Geometric Damage Logic (New) ---", legacy_start)
+    structured_start = text.index("if (platform_damage && structured_air_target && structure_hit)")
+    structured_end = text.index("// --- 3. Fallback to Randomized Effects (Legacy) ---", structured_start)
+
+    legacy_block = text[legacy_start:legacy_end]
+    structured_block = text[structured_start:structured_end]
+
+    assert "score->total_reward" in legacy_block
+    assert "score->hits_landed" in legacy_block
+    assert "score->kills_confirmed" in legacy_block
+    assert "score->" not in structured_block
 
 
 def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_blockers_explicit() -> None:

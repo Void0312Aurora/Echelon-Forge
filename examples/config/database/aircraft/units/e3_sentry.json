@@ -5,6 +5,56 @@
         "current_hp": 500.0,
         "max_hp": 500.0
     },
+    "airframe": {
+        "empty_mass_kg": 77100.0,
+        "max_fuel_kg": 90700.0,
+        "drag_coefficient": 0.03,
+        "reference_area": 283.0,
+        "length_m": 46.61,
+        "wingspan_m": 44.42,
+        "height_m": 12.73,
+        "configuration": "LargeAirframe"
+    },
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [17.5, 0.0, 0.0],
+                "size": [7.5, 5.5, 5.5],
+                "armor": 4.0,
+                "systems": ["cockpit", "navigation", "command"]
+            },
+            {
+                "offset": [5.0, 0.0, 3.8],
+                "size": [10.0, 8.0, 2.8],
+                "armor": 3.0,
+                "systems": ["radar", "data_link", "mission_systems"]
+            },
+            {
+                "offset": [0.0, 0.0, 0.0],
+                "size": [24.0, 5.8, 5.8],
+                "armor": 5.0,
+                "systems": ["fuel", "avionics", "data_link"]
+            },
+            {
+                "offset": [-5.0, -12.0, -1.0],
+                "size": [8.0, 5.0, 2.5],
+                "armor": 4.0,
+                "systems": ["engine_left", "fuel"]
+            },
+            {
+                "offset": [-5.0, 12.0, -1.0],
+                "size": [8.0, 5.0, 2.5],
+                "armor": 4.0,
+                "systems": ["engine_right", "fuel"]
+            },
+            {
+                "offset": [-2.0, 0.0, 0.0],
+                "size": [8.0, 44.0, 1.0],
+                "armor": 3.0,
+                "systems": ["wings", "flight_control", "fuel"]
+            }
+        ]
+    },
     "flight_model": {
         "max_speed": 250.0,
         "min_speed": 100.0,

@@ -11,6 +11,7 @@
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
+#include "components/combat/weapon.h"
 #include "components/command/command_link.h"
 #include "components/command/common/mission_command_control_state.h"
 #include "components/command/mission_command.h"
@@ -26,6 +27,7 @@
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
 #include "core/interfaces/environment_model.h"
+#include "core/interfaces/engagement_event_recorder.h"
 #include "core/interfaces/weapon_release_service.h"
 #include "runtime/contracts/engagement_contracts.h"
 
@@ -79,6 +81,10 @@ struct MissileTuning {
     double max_launch_off_boresight_deg = std::numeric_limits<double>::quiet_NaN();
     bool lobl_required = false;
     bool midcourse_datalink_supported = false;
+    WarheadProfile warhead_profile{};
+    bool has_warhead_profile = false;
+    FuzeProfile fuze_profile{};
+    bool has_fuze_profile = false;
 };
 
 struct ExactStepStageDescriptor {
@@ -113,7 +119,7 @@ struct RecentEngagementEvents {
     std::vector<DiagnosticsTrace> diagnostics_traces;
 };
 
-class SimulationKernel : public IWeaponReleaseService {
+class SimulationKernel : public IWeaponReleaseService, public IEngagementEventRecorder {
 public:
     SimulationKernel();
     ~SimulationKernel();
@@ -208,6 +214,8 @@ public:
     bool is_unit_active(uint64_t entity_id); // Returns whether entity exists
     std::vector<double> get_unit_health(uint64_t entity_id); // Returns [current, max]
     std::vector<double> get_unit_damage_state(uint64_t entity_id); // [mission, mobility, sensor, survivability]
+    std::vector<double> debug_get_aircraft_damage_state(uint64_t entity_id); // [structure, flight_control, hydraulic, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]
+    std::vector<double> debug_get_aircraft_vulnerability_evidence_state(uint64_t entity_id); // [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority]
     std::vector<double> debug_get_naval_weapon_counts(uint64_t entity_id); // [mounts, total_ready_vls, total_ready_gun, total_ready_ciws]
     std::vector<double> get_unit_fuel(uint64_t entity_id); // Returns [internal, max_internal, external, max_external]
     std::vector<double> debug_get_naval_stores(uint64_t entity_id); // [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]
@@ -232,6 +240,34 @@ public:
         return try_fire_naval_mission_weapon(attacker_id);
     }
     bool debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id, double damage, double fuse_distance);
+    bool debug_apply_local_proximity_hit(
+        uint64_t attacker_id,
+        uint64_t target_id,
+        double local_forward_m,
+        double local_right_m,
+        double local_up_m,
+        double damage,
+        double fuse_distance
+    );
+    bool debug_apply_profiled_local_proximity_hit(
+        uint64_t attacker_id,
+        uint64_t target_id,
+        double local_forward_m,
+        double local_right_m,
+        double local_up_m,
+        const WarheadProfile& warhead_profile
+    );
+    bool debug_apply_profiled_local_proximity_hit_with_velocity(
+        uint64_t attacker_id,
+        uint64_t target_id,
+        double local_forward_m,
+        double local_right_m,
+        double local_up_m,
+        const WarheadProfile& warhead_profile,
+        double missile_vx_mps,
+        double missile_vy_mps,
+        double missile_vz_mps
+    );
     RecentEngagementEvents export_recent_engagement_events() const;
 
     // Unit factory override (for modular swaps)
@@ -264,23 +300,7 @@ private:
     void register_components_and_systems();
     bool try_fire_naval_mission_weapon(uint64_t attacker_id);
 
-    struct EngagementDamageStateSnapshot {
-        bool entity_active = false;
-        bool has_health = false;
-        double hp = 0.0;
-        double max_hp = 0.0;
-        bool mission_kill = false;
-        bool mobility_kill = false;
-        bool sensor_kill = false;
-        bool has_platform_damage = false;
-        double mission_capability = 1.0;
-        double mobility_capability = 1.0;
-        double sensor_capability = 1.0;
-        double survivability_margin = 1.0;
-        std::string loss_state = "unknown";
-    };
-
-    EngagementDamageStateSnapshot capture_engagement_damage_state(uint64_t target_id) const;
+    EngagementDamageStateSnapshot capture_engagement_damage_state(uint64_t target_id) const override;
     std::uint64_t record_legacy_launch_event(
         uint64_t shooter_id,
         uint64_t target_id,
@@ -300,10 +320,42 @@ private:
         const std::string& outcome_state,
         double event_time_s,
         double nearest_approach_time_s,
+        double miss_distance_m,
+        double detonation_local_forward_m,
+        double detonation_local_right_m,
+        double detonation_local_up_m,
+        double closure_mps,
+        double missile_axis_forward,
+        double missile_axis_right,
+        double missile_axis_up,
         double quality,
         double confidence,
-        const std::string& effect_family
-    );
+        const std::string& effect_family,
+        double warhead_mass_kg = 0.0,
+        double warhead_lethal_radius_m = 0.0,
+        bool warhead_profile_synthetic = true,
+        bool damage_scalar_synthetic = true,
+        const std::string& fuze_type = "unknown",
+        double fuze_trigger_radius_m = 0.0,
+        double fuze_delay_s = 0.0,
+        double fuze_reliability = 1.0,
+        bool fuze_profile_synthetic = true,
+        bool direct_hitbox_intersection = false,
+        std::uint32_t projected_hitbox_count = 0,
+        double spatial_effect_scale = 0.0,
+        double mechanism_armor_scale = 1.0,
+        double mechanism_exposure_scale = 1.0,
+        double mechanism_effect_scale = 1.0,
+        double component_threshold_scale = 1.0,
+        double component_failure_probability = 0.0,
+        double component_failure_sample = 1.0,
+        std::uint32_t component_failure_count = 0,
+        std::uint32_t component_hit_count = 0,
+        const std::string& component_primary_name = "",
+        const std::string& component_primary_system = "",
+        double component_primary_redundancy_group = 0.0,
+        bool component_primary_critical = false
+    ) override;
     void clear_recent_engagement_events();
 
     flecs::world ecs;

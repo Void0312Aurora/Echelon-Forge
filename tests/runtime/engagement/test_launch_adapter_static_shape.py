@@ -169,6 +169,11 @@ def test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_con
             "component_failure_probability",
             "component_failure_sample",
             "component_failure_count",
+            "component_hit_count",
+            "component_primary_name",
+            "component_primary_system",
+            "component_primary_redundancy_group",
+            "component_primary_critical",
         ),
     )
     _assert_fields_present(

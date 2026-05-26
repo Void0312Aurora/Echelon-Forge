@@ -20,6 +20,7 @@
 #include "components/physics/flight_dynamics_tuning.h"
 #include "components/physics/forces.h"
 #include "components/physics/instruments.h"
+#include "components/physics/performance.h"
 #include "components/systems/ew.h"
 #include "components/systems/navigation.h"
 #include "components/systems/sensor.h"
@@ -56,16 +57,21 @@ const char* default_unit_name_for(UnitType type) {
 }
 
 struct SensorDebugView {
+    double max_range = 0.0;
+    double detection_prob = 0.0;
     double reference_snr_db = 0.0;
     double reference_range_m = 0.0;
     double reference_rcs_m2 = 0.0;
     double pfa = 0.0;
     int confirm_hits_m = 0;
     int confirm_window_n = 0;
+    double bearing_noise_std = 0.0;
+    double range_noise_std = 0.0;
     double velocity_noise_std = 0.0;
     double alpha_beta_alpha = 0.0;
     double alpha_beta_beta = 0.0;
     double range_power = 0.0;
+    double track_memory_s = 0.0;
     int type = 0;
 };
 
@@ -98,6 +104,11 @@ struct TrackDebugView {
 };
 
 struct FlightDynamicsDebugView {
+    double max_speed = 0.0;
+    double max_turn_rate = 0.0;
+    double max_accel = 0.0;
+    double max_climb_rate = 0.0;
+    double max_g = 0.0;
     double alpha_dot_dps = 0.0;
     double stall_progress = 0.0;
     bool is_stalled = false;
@@ -109,6 +120,9 @@ struct FlightDynamicsDebugView {
     bool afterburner_active = false;
     double current_tsfc = 0.0;
     double current_thrust_n = 0.0;
+    double mil_thrust_n = 0.0;
+    double ab_thrust_n = 0.0;
+    double fuel_leak_rate_kg_s = 0.0;
 };
 
 void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel>& kernel);
@@ -168,16 +182,21 @@ void diagnostics_quarantined_legacy_movement_bridge_write(
 
 SensorDebugView make_sensor_debug_view(const Sensor& sensor) {
     SensorDebugView out{};
+    out.max_range = sensor.max_range;
+    out.detection_prob = sensor.detection_prob;
     out.reference_snr_db = sensor.reference_snr_db;
     out.reference_range_m = sensor.reference_range_m;
     out.reference_rcs_m2 = sensor.reference_rcs_m2;
     out.pfa = sensor.pfa;
     out.confirm_hits_m = sensor.confirm_hits_m;
     out.confirm_window_n = sensor.confirm_window_n;
+    out.bearing_noise_std = sensor.bearing_noise_std;
+    out.range_noise_std = sensor.range_noise_std;
     out.velocity_noise_std = sensor.velocity_noise_std;
     out.alpha_beta_alpha = sensor.alpha_beta_alpha;
     out.alpha_beta_beta = sensor.alpha_beta_beta;
     out.range_power = sensor.range_power;
+    out.track_memory_s = sensor.track_memory_s;
     out.type = sensor.type;
     return out;
 }
@@ -320,6 +339,25 @@ void bind_core(nb::module_& m) {
         .def_rw("time_since_fix", &EGI::time_since_last_gps_fix)
         .def_rw("gps_avail", &EGI::gps_available);
 
+    nb::class_<WarheadProfile>(m, "WarheadProfile")
+        .def(nb::init<>())
+        .def_rw("family", &WarheadProfile::family)
+        .def_rw("mass_kg", &WarheadProfile::mass_kg)
+        .def_rw("lethal_radius_m", &WarheadProfile::lethal_radius_m)
+        .def_rw("damage_scalar", &WarheadProfile::damage_scalar)
+        .def_rw("synthetic", &WarheadProfile::synthetic)
+        .def_rw("damage_scalar_synthetic", &WarheadProfile::damage_scalar_synthetic)
+        .def_rw("provenance", &WarheadProfile::provenance);
+
+    nb::class_<FuzeProfile>(m, "FuzeProfile")
+        .def(nb::init<>())
+        .def_rw("type", &FuzeProfile::type)
+        .def_rw("trigger_radius_m", &FuzeProfile::trigger_radius_m)
+        .def_rw("delay_s", &FuzeProfile::delay_s)
+        .def_rw("reliability", &FuzeProfile::reliability)
+        .def_rw("synthetic", &FuzeProfile::synthetic)
+        .def_rw("provenance", &FuzeProfile::provenance);
+
     // Bind MissileTuning
     nb::class_<MissileTuning>(m, "MissileTuning")
         .def(nb::init<>())
@@ -363,7 +401,11 @@ void bind_core(nb::module_& m) {
         .def_rw("min_launch_range_m", &MissileTuning::min_launch_range_m)
         .def_rw("max_launch_off_boresight_deg", &MissileTuning::max_launch_off_boresight_deg)
         .def_rw("lobl_required", &MissileTuning::lobl_required)
-        .def_rw("midcourse_datalink_supported", &MissileTuning::midcourse_datalink_supported);
+        .def_rw("midcourse_datalink_supported", &MissileTuning::midcourse_datalink_supported)
+        .def_rw("warhead_profile", &MissileTuning::warhead_profile)
+        .def_rw("has_warhead_profile", &MissileTuning::has_warhead_profile)
+        .def_rw("fuze_profile", &MissileTuning::fuze_profile)
+        .def_rw("has_fuze_profile", &MissileTuning::has_fuze_profile);
 
     nb::class_<UnitData>(m, "UnitData")
         .def_ro("id", &UnitData::id)
@@ -406,16 +448,21 @@ void bind_core(nb::module_& m) {
         .def_ro("classification_confidence", &TrackData::classification_confidence);
 
     nb::class_<SensorDebugView>(m, "SensorDebugView")
+        .def_ro("max_range", &SensorDebugView::max_range)
+        .def_ro("detection_prob", &SensorDebugView::detection_prob)
         .def_ro("reference_snr_db", &SensorDebugView::reference_snr_db)
         .def_ro("reference_range_m", &SensorDebugView::reference_range_m)
         .def_ro("reference_rcs_m2", &SensorDebugView::reference_rcs_m2)
         .def_ro("pfa", &SensorDebugView::pfa)
         .def_ro("confirm_hits_m", &SensorDebugView::confirm_hits_m)
         .def_ro("confirm_window_n", &SensorDebugView::confirm_window_n)
+        .def_ro("bearing_noise_std", &SensorDebugView::bearing_noise_std)
+        .def_ro("range_noise_std", &SensorDebugView::range_noise_std)
         .def_ro("velocity_noise_std", &SensorDebugView::velocity_noise_std)
         .def_ro("alpha_beta_alpha", &SensorDebugView::alpha_beta_alpha)
         .def_ro("alpha_beta_beta", &SensorDebugView::alpha_beta_beta)
         .def_ro("range_power", &SensorDebugView::range_power)
+        .def_ro("track_memory_s", &SensorDebugView::track_memory_s)
         .def_ro("type", &SensorDebugView::type);
 
     nb::class_<TrackDebugView>(m, "TrackDebugView")
@@ -446,6 +493,11 @@ void bind_core(nb::module_& m) {
         .def_ro("elevation", &TrackDebugView::elevation);
 
     nb::class_<FlightDynamicsDebugView>(m, "FlightDynamicsDebugView")
+        .def_ro("max_speed", &FlightDynamicsDebugView::max_speed)
+        .def_ro("max_turn_rate", &FlightDynamicsDebugView::max_turn_rate)
+        .def_ro("max_accel", &FlightDynamicsDebugView::max_accel)
+        .def_ro("max_climb_rate", &FlightDynamicsDebugView::max_climb_rate)
+        .def_ro("max_g", &FlightDynamicsDebugView::max_g)
         .def_ro("alpha_dot_dps", &FlightDynamicsDebugView::alpha_dot_dps)
         .def_ro("stall_progress", &FlightDynamicsDebugView::stall_progress)
         .def_ro("is_stalled", &FlightDynamicsDebugView::is_stalled)
@@ -456,7 +508,10 @@ void bind_core(nb::module_& m) {
         .def_ro("ab_state", &FlightDynamicsDebugView::ab_state)
         .def_ro("afterburner_active", &FlightDynamicsDebugView::afterburner_active)
         .def_ro("current_tsfc", &FlightDynamicsDebugView::current_tsfc)
-        .def_ro("current_thrust_n", &FlightDynamicsDebugView::current_thrust_n);
+        .def_ro("current_thrust_n", &FlightDynamicsDebugView::current_thrust_n)
+        .def_ro("mil_thrust_n", &FlightDynamicsDebugView::mil_thrust_n)
+        .def_ro("ab_thrust_n", &FlightDynamicsDebugView::ab_thrust_n)
+        .def_ro("fuel_leak_rate_kg_s", &FlightDynamicsDebugView::fuel_leak_rate_kg_s);
 
     nb::class_<AgentObservation>(m, "AgentObservation")
         .def_ro("sim_time", &AgentObservation::sim_time)
@@ -703,6 +758,23 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
         .def("debug_apply_proximity_hit", &SimulationKernel::debug_apply_proximity_hit,
              "Testing helper: apply one synthetic proximity hit to a target",
              nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("damage"), nb::arg("fuse_distance"))
+        .def("debug_apply_local_proximity_hit", &SimulationKernel::debug_apply_local_proximity_hit,
+             "Testing helper: apply one synthetic proximity hit at a target-body local point",
+             nb::arg("attacker_id"), nb::arg("target_id"),
+             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
+             nb::arg("damage"), nb::arg("fuse_distance"))
+        .def("debug_apply_profiled_local_proximity_hit", &SimulationKernel::debug_apply_profiled_local_proximity_hit,
+             "Testing helper: apply one synthetic local proximity hit with an explicit warhead profile",
+             nb::arg("attacker_id"), nb::arg("target_id"),
+             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
+             nb::arg("warhead_profile"))
+        .def("debug_apply_profiled_local_proximity_hit_with_velocity",
+             &SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity,
+             "Testing helper: apply one synthetic local proximity hit with warhead profile and missile velocity",
+             nb::arg("attacker_id"), nb::arg("target_id"),
+             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
+             nb::arg("warhead_profile"),
+             nb::arg("missile_vx_mps"), nb::arg("missile_vy_mps"), nb::arg("missile_vz_mps"))
         .def("get_sensor_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
              auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
              if (!e.is_valid()) {
@@ -756,6 +828,13 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
                  out.alpha_dot_dps = aero->angle_of_attack_rate_dps;
                  out.stall_progress = aero->stall_progress;
              }
+             if (const FlightModel* flight_model = e.get<FlightModel>()) {
+                 out.max_speed = flight_model->max_speed;
+                 out.max_turn_rate = flight_model->max_turn_rate;
+                 out.max_accel = flight_model->max_accel;
+                 out.max_climb_rate = flight_model->max_climb_rate;
+                 out.max_g = flight_model->max_g;
+             }
              if (const StallState* stall = e.get<StallState>()) {
                  out.stall_progress = stall->stall_progress;
                  out.is_stalled = stall->is_stalled;
@@ -763,6 +842,8 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
                  out.time_in_stall_s = stall->time_in_stall_s;
              }
              if (const Propulsion* propulsion = e.get<Propulsion>()) {
+                 out.mil_thrust_n = propulsion->mil_thrust_n;
+                 out.ab_thrust_n = propulsion->ab_thrust_n;
                  out.throttle_command = propulsion->throttle_command;
                  out.throttle_state = propulsion->throttle_state;
                  out.ab_state = propulsion->ab_state;
@@ -770,8 +851,18 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
                  out.current_tsfc = propulsion->current_tsfc;
                  out.current_thrust_n = propulsion->current_thrust_n;
              }
+             if (const Mass* mass = e.get<Mass>()) {
+                 out.fuel_leak_rate_kg_s = mass->fuel_leak_rate_kg_s;
+             }
              return out;
         }, "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)", nb::arg("entity_id"))
+        .def("debug_get_aircraft_damage_state", &SimulationKernel::debug_get_aircraft_damage_state,
+             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
+             nb::arg("entity_id"))
+        .def("debug_get_aircraft_vulnerability_evidence_state",
+             &SimulationKernel::debug_get_aircraft_vulnerability_evidence_state,
+             "Get aircraft vulnerability evidence gate [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority]",
+             nb::arg("entity_id"))
         .def("debug_get_naval_weapon_counts", &SimulationKernel::debug_get_naval_weapon_counts,
              "Get naval weapon counts [mounts, ready_vls, ready_gun, ready_ciws]")
         .def("debug_get_naval_stores", &SimulationKernel::debug_get_naval_stores, nb::arg("entity_id"),
@@ -924,12 +1015,33 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              out["turn_rate_deg_s"] = missile->turn_rate;
              out["fuse_distance_m"] = missile->fuse_distance;
              out["damage"] = missile->damage;
+             out["warhead_family"] = missile->warhead_profile.family;
+             out["warhead_mass_kg"] = missile->warhead_profile.mass_kg;
+             out["warhead_lethal_radius_m"] = missile->warhead_profile.lethal_radius_m;
+             out["warhead_damage_scalar"] = missile->warhead_profile.damage_scalar;
+             out["warhead_profile_synthetic"] = missile->warhead_profile.synthetic;
+             out["warhead_damage_scalar_synthetic"] = missile->warhead_profile.damage_scalar_synthetic;
+             out["warhead_provenance"] = missile->warhead_profile.provenance;
+             out["fuze_type"] = missile->fuze_profile.type;
+             out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
+             out["fuze_delay_s"] = missile->fuze_profile.delay_s;
+             out["fuze_reliability"] = missile->fuze_profile.reliability;
+             out["fuze_profile_synthetic"] = missile->fuze_profile.synthetic;
+             out["fuze_provenance"] = missile->fuze_profile.provenance;
              out["seeker_fov_deg"] = missile->seeker_fov_deg;
              out["seeker_lock_range_m"] = missile->seeker_lock_range;
              out["guidance_delay_s"] = missile->guidance_delay_s;
              out["guidance_update_period_s"] = missile->guidance_update_period_s;
              out["max_flight_time_s"] = missile->max_flight_time_s;
              out["nav_gain"] = missile->nav_gain;
+             out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
+             out["proximity_last_dist_m"] = missile->proximity_last_dist_m;
+             out["proximity_engaged"] = missile->proximity_engaged;
+             out["fuze_delay_armed"] = missile->fuze_delay_armed;
+             out["fuze_nearest_approach_time_s"] = missile->fuze_nearest_approach_time_s;
+             out["fuze_detonation_time_s"] = missile->fuze_detonation_time_s;
+             out["fuze_quality"] = missile->fuze_quality;
+             out["fuze_hit_probability"] = missile->fuze_hit_probability;
              out["p0_runtime_initialized"] = missile->p0_runtime_initialized;
              out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
              out["seeker_has_range"] = missile->seeker_has_range;

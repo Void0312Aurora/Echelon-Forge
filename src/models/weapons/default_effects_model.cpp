@@ -1202,12 +1202,15 @@ public:
                                 std::clamp(component.threshold_scale, 0.40, 1.80);
                             sampled_component_threshold_scale =
                                 std::max(sampled_component_threshold_scale, component_scale);
+                            record_component_hit(component, direct_mechanism_scale);
                             apply_system_effect(
                                 component.system,
                                 system_severity,
                                 direct_mechanism_scale,
                                 component_scale,
-                                true);
+                                true,
+                                component.critical,
+                                component.redundancy_group);
                             spdlog::info(
                                 "   - component {}:{} Status: {:.2f} component_scale={:.2f}",
                                 component.name.empty() ? component.system : component.name,
@@ -1392,12 +1395,15 @@ public:
                             std::clamp(projected_component->threshold_scale, 0.40, 1.80);
                         sampled_component_threshold_scale =
                             std::max(sampled_component_threshold_scale, component_scale);
+                        record_component_hit(*projected_component, candidate.effect_scale);
                         apply_system_effect(
                             projected_component->system,
                             projected_system_severity,
                             candidate.effect_scale,
                             component_scale,
-                            false);
+                            false,
+                            projected_component->critical,
+                            projected_component->redundancy_group);
                         spdlog::info(
                             "   - component {}:{} Status: {:.2f}",
                             projected_component->name.empty()
@@ -1697,6 +1703,11 @@ public:
                     result.component_failure_probability = sampled_component_failure_probability;
                     result.component_failure_sample = sampled_component_failure_sample;
                     result.component_failure_count = component_failure_count;
+                    result.component_hit_count = component_hit_count;
+                    result.component_primary_name = component_primary_name;
+                    result.component_primary_system = component_primary_system;
+                    result.component_primary_redundancy_group = component_primary_redundancy_group;
+                    result.component_primary_critical = component_primary_critical;
                     return result;
                 }
             }
@@ -1714,6 +1725,11 @@ public:
             result.component_failure_probability = sampled_component_failure_probability;
             result.component_failure_sample = sampled_component_failure_sample;
             result.component_failure_count = component_failure_count;
+            result.component_hit_count = component_hit_count;
+            result.component_primary_name = component_primary_name;
+            result.component_primary_system = component_primary_system;
+            result.component_primary_redundancy_group = component_primary_redundancy_group;
+            result.component_primary_critical = component_primary_critical;
         } 
         // --- 3. Fallback to Randomized Effects (Legacy) ---
         else {

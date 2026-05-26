@@ -573,6 +573,18 @@ public:
                     make_evidence_ref(type_name, "damage_model"),
                 });
         }
+        if (def.has_aircraft_vulnerability) {
+            add_survivability_capability(
+                aircraft_vulnerability_has_calibrated_evidence(def.aircraft_vulnerability)
+                    ? "aircraft_vulnerability_calibrated_profile"
+                    : "aircraft_vulnerability_synthetic_profile",
+                {
+                    make_evidence_ref(type_name, "damage_model.vulnerability"),
+                    aircraft_vulnerability_has_calibrated_evidence(def.aircraft_vulnerability)
+                        ? make_evidence_ref(type_name, "damage_model.vulnerability.calibrated_dataset")
+                        : make_evidence_ref(type_name, "damage_model.vulnerability.synthetic_scaffold"),
+                });
+        }
 
         return bundle;
     }
@@ -1110,6 +1122,11 @@ public:
                     : 3.0,
                 true
             };
+            missile_runtime.warhead_profile = def.has_missile_tuning && def.missile_tuning.has_warhead_profile
+                ? def.missile_tuning.warhead_profile
+                : make_synthetic_warhead_profile(
+                    missile_runtime.damage,
+                    missile_runtime.fuse_distance);
             missile_runtime.p0_runtime_initialized = true;
             missile_runtime.seeker_has_valid_track = false;
             missile_runtime.seeker_has_range = false;
@@ -1281,8 +1298,24 @@ public:
             e.set<LandingGear>({false, 0.02, 3.0, 2.0, 1.0, false, 5.0});
         }
 
+        const bool has_air_damage_baseline =
+            (def.type == UnitType::Aircraft || def.type == UnitType::C2Node || def.has_flight_model);
+        bool aircraft_damage_baseline_set = false;
         if (def.has_flight_model) {
             e.set<FlightModel>(def.flight_model);
+            AircraftDamageBaseline baseline{};
+            baseline.max_speed = def.flight_model.max_speed;
+            baseline.min_speed = def.flight_model.min_speed;
+            baseline.max_turn_rate = def.flight_model.max_turn_rate;
+            baseline.max_accel = def.flight_model.max_accel;
+            baseline.max_climb_rate = def.flight_model.max_climb_rate;
+            baseline.max_g = def.flight_model.max_g;
+            baseline.min_g = def.flight_model.min_g;
+            baseline.takeoff_speed = def.flight_model.takeoff_speed;
+            baseline.landing_speed = def.flight_model.landing_speed;
+            baseline.taxi_turn_rate = def.flight_model.taxi_turn_rate;
+            e.set<AircraftDamageBaseline>(baseline);
+            aircraft_damage_baseline_set = true;
             double speed = std::sqrt(params.vx * params.vx +
                                      params.vy * params.vy +
                                      params.vz * params.vz);
@@ -1308,10 +1341,33 @@ public:
             });
             e.set<CommandLag>({0.5, 1.0, 1.5});
         }
+        if (has_air_damage_baseline) {
+            AircraftDamageBaseline baseline = aircraft_damage_baseline_set
+                ? *e.get<AircraftDamageBaseline>()
+                : AircraftDamageBaseline{};
+            if (const Propulsion* propulsion = e.get<Propulsion>()) {
+                baseline.mil_thrust_n = propulsion->mil_thrust_n;
+                baseline.ab_thrust_n = propulsion->ab_thrust_n;
+            }
+            if (const Mass* mass = e.get<Mass>()) {
+                baseline.fuel_leak_rate_kg_s = mass->fuel_leak_rate_kg_s;
+            }
+            if (const Sensor* sensor = e.get<Sensor>()) {
+                baseline.sensor_max_range = sensor->max_range;
+                baseline.sensor_detection_prob = sensor->detection_prob;
+                baseline.sensor_bearing_noise_std = sensor->bearing_noise_std;
+                baseline.sensor_range_noise_std = sensor->range_noise_std;
+                baseline.sensor_track_memory_s = sensor->track_memory_s;
+            }
+            e.set<AircraftDamageBaseline>(baseline);
+        }
 
         // Damage Model Initialization
         if (!def.damage_model.hitboxes.empty()) {
             e.set<HitboxConfig>(def.damage_model);
+            if (def.has_aircraft_vulnerability) {
+                e.set<AircraftVulnerabilityProfile>(def.aircraft_vulnerability);
+            }
             
             SystemHealth initial_health;
             for (const auto& hb : def.damage_model.hitboxes) {
@@ -1321,10 +1377,16 @@ public:
             }
             e.set<SystemHealth>(initial_health);
             e.set<PlatformDamageState>({});
+            if (def.type == UnitType::Aircraft || def.type == UnitType::C2Node) {
+                e.set<AircraftDamageState>({});
+            }
         } else if (def.airframe.length_m > 0.0) {
             // Procedural Generation
             HitboxConfig generated = generate_default_hitboxes(def.airframe);
             e.set<HitboxConfig>(generated);
+            if (def.has_aircraft_vulnerability) {
+                e.set<AircraftVulnerabilityProfile>(def.aircraft_vulnerability);
+            }
             
             SystemHealth initial_health;
             for (const auto& hb : generated.hitboxes) {
@@ -1334,6 +1396,9 @@ public:
             }
             e.set<SystemHealth>(initial_health);
             e.set<PlatformDamageState>({});
+            if (def.type == UnitType::Aircraft || def.type == UnitType::C2Node) {
+                e.set<AircraftDamageState>({});
+            }
         }
 
 
@@ -1458,8 +1523,8 @@ private:
              // 4. Right Engine Nacelle
              config.hitboxes.push_back({3, -L * 0.35, 1.0, -0.5, L * 0.25, 0.8, 0.8, 15.0, {"engine_right"}});
              
-             // 5. Wings (Fuel, Control)
-             config.hitboxes.push_back({4, -L * 0.1, 0, 0, L * 0.2, W, 0.2, 3.0, {"wings"}});
+             // 5. Wings (Fuel, Flight Control)
+             config.hitboxes.push_back({4, -L * 0.1, 0, 0, L * 0.2, W, 0.2, 3.0, {"wings", "flight_control"}});
             
         } else {
              // "Conventional" (Default F-16 style)
@@ -1473,7 +1538,7 @@ private:
              config.hitboxes.push_back({2, -L * 0.4, 0, 0, L * 0.2, 0.8, 0.8, 12.0, {"engine"}});
              
              // 4. Wings
-             config.hitboxes.push_back({3, -L * 0.05, 0, 0, L * 0.2, W, 0.2, 3.0, {"wings"}});
+             config.hitboxes.push_back({3, -L * 0.05, 0, 0, L * 0.2, W, 0.2, 3.0, {"wings", "flight_control"}});
         }
         
         return config;

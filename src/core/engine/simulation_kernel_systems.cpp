@@ -148,11 +148,14 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<HitboxConfig>();
     ecs.component<SystemHealth>();
     ecs.component<PlatformDamageState>();
+    ecs.component<AircraftDamageState>();
+    ecs.component<AircraftDamageBaseline>();
 
     // Systems are registered sequentially below to ensure correct execution order.
     // See "Register Systems IN ORDER" block.
 
     ecs.component<EffectsModelRef>();
+    ecs.component<EngagementEventRecorderRef>();
     ecs.component<SensorModelRef>();
     ecs.component<AcousticModelRef>();
     ecs.component<ControlModelRef>();
@@ -202,6 +205,7 @@ void SimulationKernel::register_components_and_systems() {
     register_logistics_system(ecs);      // Phase 9: Logistics
 
     ecs.set<EffectsModelRef>({effects_model_.get()});
+    ecs.set<EngagementEventRecorderRef>({this});
     ecs.set<SensorModelRef>({sensor_model_.get()});
     ecs.set<AcousticModelRef>({acoustic_model_.get()});
     ecs.set<ControlModelRef>({control_model_.get()});

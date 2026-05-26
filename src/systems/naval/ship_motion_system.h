@@ -7,6 +7,7 @@
 
 #include "components/basic/common.h"
 #include "components/command/mission_command.h"
+#include "components/command/pilot_action.h"
 #include "components/naval/ship_platform.h"
 #include "core/interfaces/environment_model.h"
 
@@ -35,6 +36,16 @@ inline double ship_beam_seas_factor(double wave_heading_deg, double ship_heading
 
 inline double ship_sea_state_scale(double sea_state) {
     return std::clamp(sea_state / 6.0, 0.0, 1.0);
+}
+
+inline bool ship_pilot_action_requests_manual_takeover(const PilotAction& pilot) {
+    constexpr double kPrimaryAxisDeadband = 0.05;
+    constexpr double kThrottleDeadband = 0.05;
+    return bool(pilot.active) && (
+        std::abs(pilot.stick_roll) > kPrimaryAxisDeadband ||
+        std::abs(pilot.rudder) > kPrimaryAxisDeadband ||
+        std::abs(pilot.throttle - 0.5) > kThrottleDeadband
+    );
 }
 
 inline double ship_station_target_bearing_deg(
@@ -124,13 +135,28 @@ inline void register_ship_motion_system(flecs::world& ecs) {
                 const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
 
                 for (auto i : it) {
+                    const PilotAction* pilot = it.entity(i).get<PilotAction>();
                     const MissionCommand* mission_cmd = it.entity(i).get<MissionCommand>();
 
                     double commanded_heading_deg = transform[i].heading;
                     double commanded_speed_mps = std::hypot(velocity[i].vx, velocity[i].vy);
                     bool command_active = false;
 
-                    if (mission_cmd && bool(mission_cmd->active)) {
+                    if (pilot && ship_pilot_action_requests_manual_takeover(*pilot)) {
+                        const double current_heading_deg =
+                            Math::normalize_heading_deg(transform[i].heading);
+                        const double manual_turn =
+                            std::clamp(pilot->rudder + pilot->stick_roll, -1.0, 1.0);
+                        commanded_heading_deg = Math::normalize_heading_deg(
+                            current_heading_deg + manual_turn * std::max(0.0, ship[i].max_turn_rate_deg_s)
+                        );
+                        const double speed_ceiling = ship[i].max_speed_mps > 0.0
+                            ? ship[i].max_speed_mps
+                            : std::max(0.0, commanded_speed_mps);
+                        commanded_speed_mps =
+                            std::clamp(pilot->throttle, 0.0, 1.0) * std::max(0.0, speed_ceiling);
+                        command_active = true;
+                    } else if (mission_cmd && bool(mission_cmd->active)) {
                         commanded_heading_deg = Math::normalize_heading_deg(mission_cmd->cmd_heading_deg);
                         commanded_speed_mps = std::max(0.0, mission_cmd->cmd_speed_mps);
                         resolve_ship_station_command(

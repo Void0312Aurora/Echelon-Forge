@@ -15,6 +15,40 @@
         "current_hp": 120.0,
         "max_hp": 120.0
     },
+    "damage_model": {
+        "hitboxes": [
+            {
+                "offset": [6.0, 0.0, 0.0],
+                "size": [4.0, 2.2, 2.0],
+                "armor": 4.0,
+                "systems": ["cockpit", "sensor_payload"]
+            },
+            {
+                "offset": [0.0, 0.0, 0.0],
+                "size": [8.5, 2.4, 2.2],
+                "armor": 6.0,
+                "systems": ["fuel", "avionics", "data_link"]
+            },
+            {
+                "offset": [-4.0, 0.0, 1.0],
+                "size": [3.0, 2.0, 1.4],
+                "armor": 8.0,
+                "systems": ["engine", "transmission"]
+            },
+            {
+                "offset": [-1.0, 0.0, 2.5],
+                "size": [2.0, 16.0, 0.5],
+                "armor": 3.0,
+                "systems": ["rotor", "flight_control"]
+            },
+            {
+                "offset": [-8.0, 0.0, 0.2],
+                "size": [5.0, 1.0, 1.0],
+                "armor": 3.0,
+                "systems": ["tail_rotor", "flight_control"]
+            }
+        ]
+    },
     "flight_model": {
         "max_speed": 75.0,
         "min_speed": 20.0,

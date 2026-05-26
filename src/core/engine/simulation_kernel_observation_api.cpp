@@ -264,6 +264,53 @@ std::vector<double> SimulationKernel::get_unit_damage_state(uint64_t entity_id) 
     return {1.0, 1.0, 1.0, 1.0};
 }
 
+std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        return {};
+    }
+
+    if (const AircraftDamageState* state = e.get<AircraftDamageState>()) {
+        return {
+            state->structural_integrity,
+            state->flight_control_integrity,
+            state->hydraulic_integrity,
+            state->propulsion_integrity,
+            state->fuel_system_integrity,
+            state->avionics_integrity,
+            state->crew_effectiveness,
+            state->fire_severity,
+            state->fuel_leak_severity,
+            state->structural_overstress,
+            state->flutter_exposure,
+            state->forced_landing_required ? 1.0 : 0.0,
+            state->flight_control_kill ? 1.0 : 0.0,
+            state->propulsion_kill ? 1.0 : 0.0,
+            state->crew_kill ? 1.0 : 0.0,
+        };
+    }
+    return {};
+}
+
+std::vector<double> SimulationKernel::debug_get_aircraft_vulnerability_evidence_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        return {};
+    }
+
+    const AircraftVulnerabilityProfile* profile = e.get<AircraftVulnerabilityProfile>();
+    if (!profile) {
+        return {0.0, 0.0, 0.0, 0.0, 0.0};
+    }
+    return {
+        1.0,
+        profile->synthetic ? 1.0 : 0.0,
+        aircraft_vulnerability_has_calibrated_evidence(*profile) ? 1.0 : 0.0,
+        aircraft_vulnerability_pk_authority(*profile) ? 1.0 : 0.0,
+        aircraft_vulnerability_deterministic_fuze_authority(*profile) ? 1.0 : 0.0,
+    };
+}
+
 std::vector<double> SimulationKernel::debug_get_naval_weapon_counts(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (!e.is_valid()) return {};

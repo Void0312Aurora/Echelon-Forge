@@ -101,6 +101,10 @@ struct MissileTuningDefinition {
     double max_launch_off_boresight_deg = std::numeric_limits<double>::quiet_NaN();
     bool lobl_required = false;
     bool midcourse_datalink_supported = false;
+    WarheadProfile warhead_profile{};
+    bool has_warhead_profile = false;
+    FuzeProfile fuze_profile{};
+    bool has_fuze_profile = false;
 };
 
 
@@ -206,6 +210,8 @@ struct UnitDefinition {
     bool has_embarked_air_ops = false;
     EmbarkedAirOps embarked_air_ops;
     HitboxConfig damage_model;
+    bool has_aircraft_vulnerability = false;
+    AircraftVulnerabilityProfile aircraft_vulnerability;
     
     // Legacy Inline Components (Backwards Compat)
     Health health;

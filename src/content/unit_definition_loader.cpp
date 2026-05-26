@@ -238,6 +238,114 @@ void parse_missile_tuning_json_fields(
     *out_tuning = tuning;
 }
 
+std::string normalize_warhead_family(const std::string& raw_type) {
+    if (raw_type == "Frag" || raw_type == "Fragmentation" || raw_type == "blast_fragmentation") {
+        return "blast_fragmentation";
+    }
+    if (raw_type == "ContinuousRod" || raw_type == "continuous_rod") {
+        return "continuous_rod";
+    }
+    if (raw_type == "HitToKill" || raw_type == "hit_to_kill") {
+        return "hit_to_kill";
+    }
+    if (raw_type == "Blast" || raw_type == "blast") {
+        return "blast";
+    }
+    return raw_type.empty() ? "blast_fragmentation" : raw_type;
+}
+
+std::string normalize_fuze_type(const std::string& raw_type) {
+    if (raw_type == "RadarProximity" || raw_type == "radar_proximity" ||
+        raw_type == "RFProximity" || raw_type == "rf_proximity") {
+        return "radar_proximity";
+    }
+    if (raw_type == "LaserProximity" || raw_type == "laser_proximity") {
+        return "laser_proximity";
+    }
+    if (raw_type == "Contact" || raw_type == "impact" || raw_type == "contact") {
+        return "contact";
+    }
+    if (raw_type == "Timed" || raw_type == "time" || raw_type == "timed") {
+        return "timed";
+    }
+    if (raw_type == "Proximity" || raw_type == "proximity") {
+        return "proximity";
+    }
+    return raw_type.empty() ? "proximity" : raw_type;
+}
+
+double synthetic_damage_from_warhead_mass(double mass_kg) {
+    if (!std::isfinite(mass_kg) || mass_kg <= 0.0) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    return std::clamp(mass_kg * 9.0, 40.0, 320.0);
+}
+
+void parse_fuze_json_fields(
+    const nlohmann::json& src,
+    MissileTuningDefinition* out_tuning
+) {
+    if (!out_tuning || !src.is_object()) return;
+    FuzeProfile profile = out_tuning->fuze_profile;
+    profile.type = normalize_fuze_type(src.value("type", profile.type));
+    if (src.contains("trigger_radius_m") && src["trigger_radius_m"].is_number()) {
+        profile.trigger_radius_m = src["trigger_radius_m"].get<double>();
+    } else if (src.contains("trigger_radius") && src["trigger_radius"].is_number()) {
+        profile.trigger_radius_m = src["trigger_radius"].get<double>();
+    } else if (src.contains("radius_m") && src["radius_m"].is_number()) {
+        profile.trigger_radius_m = src["radius_m"].get<double>();
+    }
+    profile.delay_s = src.value("delay_s", profile.delay_s);
+    profile.reliability = std::clamp(src.value("reliability", profile.reliability), 0.0, 1.0);
+    profile.synthetic = src.value("synthetic", false);
+    profile.provenance = src.value("provenance", "authored_fuze_profile");
+
+    out_tuning->fuze_profile = profile;
+    out_tuning->has_fuze_profile = true;
+    if (std::isfinite(profile.trigger_radius_m)) {
+        out_tuning->fuse_distance = profile.trigger_radius_m;
+    }
+}
+
+void parse_warhead_json_fields(
+    const nlohmann::json& src,
+    MissileTuningDefinition* out_tuning
+) {
+    if (!out_tuning || !src.is_object()) return;
+    WarheadProfile profile = out_tuning->warhead_profile;
+    profile.family = normalize_warhead_family(src.value("type", profile.family));
+    profile.mass_kg = src.value("mass_kg", profile.mass_kg);
+    profile.lethal_radius_m = src.value("lethal_radius", profile.lethal_radius_m);
+    if (src.contains("damage") && src["damage"].is_number()) {
+        profile.damage_scalar = src["damage"].get<double>();
+        profile.damage_scalar_synthetic = false;
+    } else if (!std::isfinite(profile.damage_scalar)) {
+        profile.damage_scalar = synthetic_damage_from_warhead_mass(profile.mass_kg);
+        profile.damage_scalar_synthetic = true;
+    }
+    profile.synthetic = src.value("synthetic", false);
+    profile.provenance = src.value(
+        "provenance",
+        profile.damage_scalar_synthetic
+            ? "warhead_mass_synthetic_damage_scalar"
+            : "authored_warhead_profile");
+
+    out_tuning->warhead_profile = profile;
+    out_tuning->has_warhead_profile = true;
+    if (std::isfinite(profile.lethal_radius_m)) {
+        out_tuning->fuse_distance = profile.lethal_radius_m;
+    }
+    if (std::isfinite(profile.damage_scalar)) {
+        out_tuning->damage = profile.damage_scalar;
+    }
+
+    if (!out_tuning->has_fuze_profile && std::isfinite(profile.lethal_radius_m)) {
+        out_tuning->fuze_profile =
+            make_synthetic_fuze_profile(profile.lethal_radius_m, "warhead_lethal_radius_fuze_compat");
+        out_tuning->has_fuze_profile = true;
+    }
+}
+
 Sonar make_default_sonar_definition() {
     Sonar sonar{};
     sonar.max_range_m = 25000.0;
@@ -736,8 +844,98 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
                         hb.protected_systems.push_back(sys.get<std::string>());
                     }
                 }
+                if (hb_json.contains("components") && hb_json["components"].is_array()) {
+                    for (const auto& component_json : hb_json["components"]) {
+                        if (!component_json.is_object()) {
+                            continue;
+                        }
+                        DamageComponent component{};
+                        component.name = component_json.value("name", "");
+                        component.system = component_json.value("system", component.name);
+                        if (component.system.empty()) {
+                            continue;
+                        }
+                        if (component_json.contains("offset") &&
+                            component_json["offset"].is_array() &&
+                            component_json["offset"].size() >= 3) {
+                            component.offset_x = component_json["offset"][0];
+                            component.offset_y = component_json["offset"][1];
+                            component.offset_z = component_json["offset"][2];
+                        } else {
+                            component.offset_x = hb.offset_x;
+                            component.offset_y = hb.offset_y;
+                            component.offset_z = hb.offset_z;
+                        }
+                        if (component_json.contains("size") &&
+                            component_json["size"].is_array() &&
+                            component_json["size"].size() >= 3) {
+                            component.dim_l = component_json["size"][0];
+                            component.dim_w = component_json["size"][1];
+                            component.dim_h = component_json["size"][2];
+                        } else {
+                            component.dim_l = hb.dim_l;
+                            component.dim_w = hb.dim_w;
+                            component.dim_h = hb.dim_h;
+                        }
+                        component.armor_mm = component_json.value("armor", hb.armor_mm);
+                        component.threshold_scale =
+                            component_json.value("threshold_scale", component.threshold_scale);
+                        component.redundancy_group =
+                            component_json.value("redundancy_group", component.redundancy_group);
+                        component.critical = component_json.value("critical", component.critical);
+                        hb.components.push_back(component);
+                    }
+                }
                 def.damage_model.hitboxes.push_back(hb);
             }
+        }
+        def.has_aircraft_vulnerability = false;
+        def.aircraft_vulnerability = {};
+        if (dm.contains("vulnerability") && dm["vulnerability"].is_object()) {
+            const auto& vuln = dm["vulnerability"];
+            def.has_aircraft_vulnerability = true;
+            def.aircraft_vulnerability.synthetic =
+                vuln.value("synthetic", def.aircraft_vulnerability.synthetic);
+            def.aircraft_vulnerability.calibrated =
+                vuln.value("calibrated", def.aircraft_vulnerability.calibrated);
+            def.aircraft_vulnerability.pk_authority =
+                vuln.value("pk_authority", def.aircraft_vulnerability.pk_authority);
+            def.aircraft_vulnerability.deterministic_fuze_authority =
+                vuln.value(
+                    "deterministic_fuze_authority",
+                    def.aircraft_vulnerability.deterministic_fuze_authority);
+            def.aircraft_vulnerability.provenance =
+                vuln.value("provenance", def.aircraft_vulnerability.provenance);
+            def.aircraft_vulnerability.evidence_dataset_ref =
+                vuln.value("evidence_dataset_ref", def.aircraft_vulnerability.evidence_dataset_ref);
+            def.aircraft_vulnerability.calibration_status =
+                vuln.value("calibration_status", def.aircraft_vulnerability.calibration_status);
+            if (!aircraft_vulnerability_has_calibrated_evidence(def.aircraft_vulnerability)) {
+                def.aircraft_vulnerability.pk_authority = false;
+                def.aircraft_vulnerability.deterministic_fuze_authority = false;
+            }
+            def.aircraft_vulnerability.blast_scale =
+                vuln.value("blast_scale", def.aircraft_vulnerability.blast_scale);
+            def.aircraft_vulnerability.fragmentation_scale =
+                vuln.value("fragmentation_scale", def.aircraft_vulnerability.fragmentation_scale);
+            def.aircraft_vulnerability.continuous_rod_scale =
+                vuln.value("continuous_rod_scale", def.aircraft_vulnerability.continuous_rod_scale);
+            def.aircraft_vulnerability.hit_to_kill_scale =
+                vuln.value("hit_to_kill_scale", def.aircraft_vulnerability.hit_to_kill_scale);
+            def.aircraft_vulnerability.nose_aspect_scale =
+                vuln.value("nose_aspect_scale", def.aircraft_vulnerability.nose_aspect_scale);
+            def.aircraft_vulnerability.beam_aspect_scale =
+                vuln.value("beam_aspect_scale", def.aircraft_vulnerability.beam_aspect_scale);
+            def.aircraft_vulnerability.tail_aspect_scale =
+                vuln.value("tail_aspect_scale", def.aircraft_vulnerability.tail_aspect_scale);
+            def.aircraft_vulnerability.high_closure_scale =
+                vuln.value("high_closure_scale", def.aircraft_vulnerability.high_closure_scale);
+            def.aircraft_vulnerability.low_closure_scale =
+                vuln.value("low_closure_scale", def.aircraft_vulnerability.low_closure_scale);
+            def.aircraft_vulnerability.near_miss_scale =
+                vuln.value("near_miss_scale", def.aircraft_vulnerability.near_miss_scale);
+            def.aircraft_vulnerability.direct_hit_scale =
+                vuln.value("direct_hit_scale", def.aircraft_vulnerability.direct_hit_scale);
         }
     }
 
@@ -791,10 +989,13 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
             );
         }
         if (entry.contains("warhead") && entry["warhead"].is_object()) {
-            const auto& warhead = entry["warhead"];
-            missile_tuning.fuse_distance =
-                warhead.value("lethal_radius", missile_tuning.fuse_distance);
-            missile_tuning.damage = warhead.value("damage", missile_tuning.damage);
+            parse_warhead_json_fields(entry["warhead"], &missile_tuning);
+        }
+        if (entry.contains("fuze") && entry["fuze"].is_object()) {
+            parse_fuze_json_fields(entry["fuze"], &missile_tuning);
+        }
+        if (entry.contains("fuse") && entry["fuse"].is_object()) {
+            parse_fuze_json_fields(entry["fuse"], &missile_tuning);
         }
         if (entry.contains("sensor") && entry["sensor"].is_object()) {
             Sensor missile_sensor = make_unit_definition_default_sensor();

@@ -11,7 +11,106 @@
         "height_m": 4.88,
         "configuration": "Conventional"
     },
-    "damage_model": {},
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "A2-P5 synthetic fighter vulnerability scaffold; requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.05,
+            "fragmentation_scale": 1.0,
+            "continuous_rod_scale": 1.18,
+            "hit_to_kill_scale": 1.25,
+            "nose_aspect_scale": 1.10,
+            "beam_aspect_scale": 1.18,
+            "tail_aspect_scale": 0.92,
+            "high_closure_scale": 1.10,
+            "low_closure_scale": 0.86,
+            "near_miss_scale": 0.82,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [6.0, 0.0, 0.0],
+                "size": [3.6, 1.0, 1.0],
+                "armor": 5.0,
+                "systems": ["radar", "cockpit"]
+            },
+            {
+                "offset": [0.0, 0.0, 0.0],
+                "size": [7.6, 1.4, 1.2],
+                "armor": 8.0,
+                "systems": ["fuel", "avionics", "engine"]
+            },
+            {
+                "offset": [-6.0, 0.0, 0.0],
+                "size": [3.0, 1.1, 1.1],
+                "armor": 10.0,
+                "systems": ["engine", "flight_control"]
+            },
+            {
+                "offset": [-0.8, 0.0, 0.0],
+                "size": [3.0, 9.8, 0.35],
+                "armor": 3.0,
+                "systems": ["wings", "flight_control", "fuel"],
+                "components": [
+                    {
+                        "name": "left_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-0.8, -2.8, 0.0],
+                        "size": [1.2, 1.2, 0.25],
+                        "armor": 2.0,
+                        "threshold_scale": 1.25,
+                        "redundancy_group": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "right_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-0.8, 2.8, 0.0],
+                        "size": [1.2, 1.2, 0.25],
+                        "armor": 2.0,
+                        "threshold_scale": 1.25,
+                        "redundancy_group": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "left_aileron_actuator",
+                        "system": "flight_control",
+                        "offset": [-0.8, -4.1, 0.0],
+                        "size": [0.9, 0.8, 0.22],
+                        "armor": 3.0,
+                        "threshold_scale": 1.35,
+                        "redundancy_group": 2.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_aileron_actuator",
+                        "system": "flight_control",
+                        "offset": [-0.8, 4.1, 0.0],
+                        "size": [0.9, 0.8, 0.22],
+                        "armor": 3.0,
+                        "threshold_scale": 1.35,
+                        "redundancy_group": 2.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_spar_center",
+                        "system": "wings",
+                        "offset": [-0.8, 0.0, 0.0],
+                        "size": [2.4, 6.6, 0.18],
+                        "armor": 4.0,
+                        "threshold_scale": 1.10,
+                        "redundancy_group": 0.0,
+                        "critical": true
+                    }
+                ]
+            }
+        ]
+    },
     "flight_model": {
         "current_hp": 100.0,
         "max_hp": 100.0,

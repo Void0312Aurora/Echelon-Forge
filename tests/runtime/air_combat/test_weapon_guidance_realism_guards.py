@@ -476,6 +476,8 @@ def _make_f16_armor_override(name: str, *, wing_armor_mm: float) -> dict:
         systems = set(str(system) for system in hitbox.get("systems", []))
         if "wings" in systems and "flight_control" in systems:
             hitbox["armor"] = float(wing_armor_mm)
+            for component in hitbox.get("components", []):
+                component["armor"] = float(wing_armor_mm)
     return unit
 
 
@@ -510,6 +512,30 @@ def _make_f16_componentized_wing_override(name: str) -> dict:
                     "threshold_scale": 1.35,
                 },
             ]
+    return unit
+
+
+def _make_f16_component_redundancy_override(
+    name: str,
+    *,
+    redundancy_group: float,
+    critical: bool,
+) -> dict:
+    with open(
+        resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = name
+    damage_model = unit["damage_model"]
+    damage_model.pop("vulnerability", None)
+    for hitbox in damage_model["hitboxes"]:
+        for component in hitbox.get("components", []):
+            if str(component.get("name", "")) == "right_aileron_actuator":
+                component["redundancy_group"] = float(redundancy_group)
+                component["critical"] = bool(critical)
+                component["threshold_scale"] = 1.35
     return unit
 
 
@@ -1610,7 +1636,7 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 "local": (-0.753, 4.0, 0.0),
                 "expect_sensor_drop": False,
                 "expect_thrust_drop": False,
-                "expect_fuel_leak": True,
+                "expect_fuel_leak": False,
                 "expect_structure_drop": True,
                 "expect_flight_control_drop": True,
             },
@@ -1700,9 +1726,9 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             },
             "wing_flight_control_hydraulic": {
                 "local": (-0.753, 4.0, 0.0),
-                "drops": ("flight_control", "hydraulic", "fuel", "structure"),
-                "stable": ("crew", "avionics"),
-                "rises": ("fire", "fuel_leak"),
+                "drops": ("flight_control", "hydraulic", "structure"),
+                "stable": ("crew", "avionics", "fuel"),
+                "rises": (),
             },
         }
 
@@ -1847,8 +1873,21 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 sim.debug_apply_local_proximity_hit(
                     attacker_id,
                     target_id,
-                    -0.753,
-                    4.0,
+                    -0.8,
+                    2.8,
+                    0.0,
+                    240.0,
+                    80.0,
+                )
+            )
+        )
+        self.assertTrue(
+            bool(
+                sim.debug_apply_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    -0.8,
+                    4.1,
                     0.0,
                     240.0,
                     80.0,
@@ -2089,11 +2128,11 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertLess(blast_fragmentation_overlay["fuel"], 1.0)
         self.assertLess(blast_fragmentation_overlay["propulsion"], 1.0)
         self.assertLess(blast_fragmentation_overlay["avionics"], 1.0)
-        self.assertLess(blast_fragmentation_overlay["crew"], 1.0)
+        self.assertAlmostEqual(blast_fragmentation_overlay["crew"], 1.0, delta=1.0e-6)
 
         self.assertLess(hit_to_kill_overlay["flight_control"], 1.0)
         self.assertLess(hit_to_kill_overlay["hydraulic"], 1.0)
-        self.assertLess(hit_to_kill_overlay["fuel"], 1.0)
+        self.assertAlmostEqual(hit_to_kill_overlay["fuel"], 1.0, delta=1.0e-6)
         self.assertAlmostEqual(hit_to_kill_overlay["propulsion"], 1.0, delta=1.0e-6)
         self.assertAlmostEqual(hit_to_kill_overlay["avionics"], 1.0, delta=1.0e-6)
         self.assertAlmostEqual(hit_to_kill_overlay["crew"], 1.0, delta=1.0e-6)
@@ -2176,6 +2215,86 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertLess(control_overlay["hydraulic"], fuel_overlay["hydraulic"])
         self.assertAlmostEqual(control_overlay["fuel"], 1.0, delta=1.0e-6)
         self.assertAlmostEqual(control_overlay["fuel_leak"], 0.0, delta=1.0e-6)
+
+    def test_phase3_database_f16_component_geometry_reports_primary_component(self) -> None:
+        fuel_overlay, _, fuel_event = _profiled_local_hit_overlay_for_target(
+            "F-16C_Block50",
+            "blast_fragmentation",
+            (-0.8, -2.8, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        control_overlay, _, control_event = _profiled_local_hit_overlay_for_target(
+            "F-16C_Block50",
+            "blast_fragmentation",
+            (-0.8, 4.1, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertTrue(bool(fuel_event.direct_hitbox_intersection))
+        self.assertGreaterEqual(int(fuel_event.component_hit_count), 1)
+        self.assertEqual(str(fuel_event.component_primary_name), "left_wing_fuel_cell")
+        self.assertEqual(str(fuel_event.component_primary_system), "fuel")
+        self.assertAlmostEqual(float(fuel_event.component_primary_redundancy_group), 1.0, delta=1.0e-6)
+        self.assertTrue(bool(fuel_event.component_primary_critical))
+        self.assertLess(fuel_overlay["fuel"], 1.0)
+        self.assertGreater(fuel_overlay["fuel_leak"], 0.0)
+        self.assertAlmostEqual(fuel_overlay["flight_control"], 1.0, delta=1.0e-6)
+
+        self.assertTrue(bool(control_event.direct_hitbox_intersection))
+        self.assertEqual(int(control_event.component_hit_count), 1)
+        self.assertEqual(str(control_event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(control_event.component_primary_system), "flight_control")
+        self.assertAlmostEqual(float(control_event.component_primary_redundancy_group), 2.0, delta=1.0e-6)
+        self.assertFalse(bool(control_event.component_primary_critical))
+        self.assertLess(control_overlay["flight_control"], 1.0)
+        self.assertLess(control_overlay["hydraulic"], 1.0)
+        self.assertAlmostEqual(control_overlay["fuel"], 1.0, delta=1.0e-6)
+
+    def test_phase3_component_redundancy_reduces_failure_probability(self) -> None:
+        single_name = "F-16C_A2_SingleCriticalActuator_Test"
+        redundant_name = "F-16C_A2_RedundantActuator_Test"
+        overrides = [
+            _make_f16_component_redundancy_override(
+                single_name,
+                redundancy_group=0.0,
+                critical=True,
+            ),
+            _make_f16_component_redundancy_override(
+                redundant_name,
+                redundancy_group=2.0,
+                critical=False,
+            ),
+        ]
+
+        _, _, single_event = _profiled_local_hit_overlay_for_target(
+            single_name,
+            "continuous_rod",
+            (-0.8, 4.1, 0.0),
+            damage=140.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+        _, _, redundant_event = _profiled_local_hit_overlay_for_target(
+            redundant_name,
+            "continuous_rod",
+            (-0.8, 4.1, 0.0),
+            damage=140.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+
+        self.assertEqual(str(single_event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(redundant_event.component_primary_name), "right_aileron_actuator")
+        self.assertTrue(bool(single_event.component_primary_critical))
+        self.assertFalse(bool(redundant_event.component_primary_critical))
+        self.assertAlmostEqual(float(single_event.component_primary_redundancy_group), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(redundant_event.component_primary_redundancy_group), 2.0, delta=1.0e-6)
+        self.assertGreater(
+            float(single_event.component_failure_probability),
+            float(redundant_event.component_failure_probability),
+        )
 
     def test_phase3_component_failure_probability_is_sampled_and_reported(self) -> None:
         wing = (-0.753, 4.0, 0.0)

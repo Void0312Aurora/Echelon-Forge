@@ -225,6 +225,11 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         effects.component_failure_probability = 0.50
         effects.component_failure_sample = 0.25
         effects.component_failure_count = 1
+        effects.component_hit_count = 1
+        effects.component_primary_name = "test_component"
+        effects.component_primary_system = "fuel"
+        effects.component_primary_redundancy_group = 0.0
+        effects.component_primary_critical = True
 
         report = ef_py.DamageReport()
         report.report_id = 9201
@@ -255,6 +260,8 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         self.assertEqual(int(effects.projected_hitbox_count), 0)
         self.assertTrue(math.isclose(float(effects.mechanism_effect_scale), 1.0))
         self.assertTrue(math.isclose(float(effects.component_threshold_scale), 1.0))
+        self.assertEqual(int(effects.component_hit_count), 1)
+        self.assertEqual(str(effects.component_primary_system), "fuel")
 
         self.assertEqual(report.target.entity_id, target_id)
         self.assertEqual(report.source_event_id, effects.event_id)

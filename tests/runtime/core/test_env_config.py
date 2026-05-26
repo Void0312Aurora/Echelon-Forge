@@ -118,6 +118,13 @@ class EnvConfigTests(unittest.TestCase):
         self.assertIsNone(resolved["execution_step_runtime_mode"])
         self.assertFalse(resolved["runtime_compatibility_enabled"])
 
+    def test_resolve_env_settings_accepts_dedicated_naval_action_mode(self) -> None:
+        resolved = resolve_env_settings(
+            {"env": {"action_mode": "naval_station3"}},
+            _make_args(),
+        )
+        self.assertEqual(resolved["action_mode"], "naval_station3")
+
     def test_resolve_env_settings_rejects_invalid_optional_runtime_mode(self) -> None:
         with self.assertRaisesRegex(ValueError, "Unknown execution_step_runtime_mode"):
             resolve_env_settings(

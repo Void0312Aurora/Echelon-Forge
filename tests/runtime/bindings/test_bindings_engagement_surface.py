@@ -8,13 +8,99 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 import ef_py  # noqa: E402
-from tests.runtime.engagement.test_facade_engagement_export import (  # noqa: E402
-    _make_launch_damage_packet,
-)
 
 
 def public_fields(instance: object) -> tuple[str, ...]:
     return tuple(name for name in dir(instance) if not name.startswith("_"))
+
+
+def _engagement_ref(entity_id: int, *, world_index: int = 0) -> ef_py.EngagementEntityRef:
+    ref = ef_py.EngagementEntityRef()
+    ref.world_index = int(world_index)
+    ref.entity_id = int(entity_id)
+    return ref
+
+
+def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int, int]:
+    shooter_id = 101
+    target_id = 202
+    missile_id = 303
+    snapshot_version = 11
+
+    packet = ef_py.EngagementEventPacket()
+    packet.snapshot_version = snapshot_version
+    packet.barrier_id = "export"
+    packet.barrier_sequence = 4
+    packet.barrier_detail = "maintained_facade_export"
+    packet.source_time_s = 10.0
+    packet.producer_node_id = "p10.observation_export.v1"
+    packet.refs = [_engagement_ref(shooter_id)]
+    packet.trace_ids = [77, 78]
+    packet.packet_provenance.information_state_layer = "TrackState"
+    packet.packet_provenance.source_label = "track_state_packet"
+    packet.packet_provenance.maintained_status = "maintained"
+    packet.packet_provenance.observation_packet_ids = [f"eng:{snapshot_version}"]
+    packet.packet_provenance.source_observation_versions = [f"track:{snapshot_version}"]
+    packet.diagnostics_provenance.information_state_layer = "DecisionBelief"
+    packet.diagnostics_provenance.source_label = "world_truth_diagnostics"
+    packet.diagnostics_provenance.maintained_status = "diagnostics_only"
+    packet.diagnostics_provenance.observation_packet_ids = [f"diag:{snapshot_version}"]
+
+    launch = ef_py.LaunchEvent()
+    launch.event_id = 701
+    launch.accepted = True
+    launch.event_time_s = 10.0
+    launch.spawned_munition = _engagement_ref(missile_id)
+    launch.has_spawned_munition = True
+    launch.producer_node_id = "p7.fire_control_launch.v1"
+    packet.launch_events = [launch]
+
+    effect = ef_py.EffectsEvent()
+    effect.event_id = 702
+    effect.munition = _engagement_ref(missile_id)
+    effect.target = _engagement_ref(target_id)
+    effect.detonation_time_s = 10.2
+    effect.component_hit_count = 1
+    effect.component_primary_name = "left_wing_fuel_cell"
+    effect.component_primary_system = "fuel"
+    effect.component_primary_redundancy_group = 1.0
+    effect.component_primary_critical = True
+    effect.producer_node_id = "p9.effects_damage.v1"
+    packet.effects_events = [effect]
+
+    report = ef_py.DamageReport()
+    report.report_id = 703
+    report.target = _engagement_ref(target_id)
+    report.source_event_id = effect.event_id
+    report.report_time_s = 10.2
+    report.producer_node_id = "p9.effects_damage.v1"
+    packet.damage_reports = [report]
+
+    launch_trace = ef_py.DiagnosticsTrace()
+    launch_trace.trace_id = 77
+    launch_trace.launch_event_id = launch.event_id
+    launch_trace.munition = _engagement_ref(missile_id)
+    launch_trace.source_snapshot_version = snapshot_version
+    launch_trace.barrier_id = "export"
+    launch_trace.barrier_detail = "maintained_facade_export"
+    launch_trace.source_time_s = 10.0
+    launch_trace.source_node_id = "p7.fire_control_launch.v1"
+    launch_trace.export_node_id = "p10.observation_export.v1"
+
+    damage_trace = ef_py.DiagnosticsTrace()
+    damage_trace.trace_id = 78
+    damage_trace.launch_event_id = launch.event_id
+    damage_trace.effects_event_id = effect.event_id
+    damage_trace.damage_report_id = report.report_id
+    damage_trace.munition = _engagement_ref(missile_id)
+    damage_trace.source_snapshot_version = snapshot_version
+    damage_trace.barrier_id = "export"
+    damage_trace.barrier_detail = "maintained_facade_export"
+    damage_trace.source_time_s = 10.2
+    damage_trace.source_node_id = "p9.effects_damage.v1"
+    damage_trace.export_node_id = "p10.observation_export.v1"
+    packet.diagnostics_traces = [launch_trace, damage_trace]
+    return packet, shooter_id, target_id, missile_id
 
 
 class BindingsEngagementSurfaceTests(unittest.TestCase):
@@ -114,17 +200,49 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertTupleEqual(
             public_fields(ef_py.EffectsEvent()),
             (
+                "closure_mps",
+                "component_failure_count",
+                "component_failure_probability",
+                "component_failure_sample",
+                "component_hit_count",
+                "component_primary_critical",
+                "component_primary_name",
+                "component_primary_redundancy_group",
+                "component_primary_system",
+                "component_threshold_scale",
                 "confidence",
+                "damage_scalar_synthetic",
+                "detonation_local_forward_m",
+                "detonation_local_right_m",
+                "detonation_local_up_m",
                 "detonation_time_s",
+                "direct_hitbox_intersection",
                 "effect_family",
                 "event_id",
+                "fuze_delay_s",
+                "fuze_profile_synthetic",
+                "fuze_reliability",
+                "fuze_trigger_radius_m",
+                "fuze_type",
+                "mechanism_armor_scale",
+                "mechanism_effect_scale",
+                "mechanism_exposure_scale",
+                "miss_distance_m",
+                "missile_axis_forward",
+                "missile_axis_right",
+                "missile_axis_up",
                 "munition",
                 "nearest_approach_time_s",
                 "outcome_state",
                 "producer_node_id",
+                "projected_hitbox_count",
                 "quality",
+                "spatial_effect_scale",
                 "target",
                 "trigger_type",
+                "warhead_lethal_radius_m",
+                "warhead_mass_kg",
+                "warhead_profile_synthetic",
             ),
         )
 
@@ -293,6 +411,13 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         request = ef_py.LaunchRequest()
         self.assertEqual(request.authority, "unspecified")
         self.assertEqual(request.merge_policy, "reject_on_conflict")
+
+        effects = ef_py.EffectsEvent()
+        self.assertEqual(int(effects.component_hit_count), 0)
+        self.assertEqual(str(effects.component_primary_name), "")
+        self.assertEqual(str(effects.component_primary_system), "")
+        self.assertAlmostEqual(float(effects.component_primary_redundancy_group), 0.0)
+        self.assertFalse(bool(effects.component_primary_critical))
 
     def test_nested_entity_ref_round_trips_through_dto_fields(self) -> None:
         ref = ef_py.EngagementEntityRef()
