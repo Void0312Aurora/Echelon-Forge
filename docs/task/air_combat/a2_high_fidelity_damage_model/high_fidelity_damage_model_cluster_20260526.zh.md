@@ -1,6 +1,6 @@
 # A2 高真实度空战毁伤模型任务簇 - 2026-05-26
 
-状态：`A2-D0` 已开启；`2026-05-26` Phase 0 预检已完成主要证据审计，但 `PN miss-distance baseline` 仍阻塞行为代码。
+状态：`A2-D0` 已接受；`2026-05-26` Phase 0 已接受，Phase 1 最小补丁正在推进，Phase 2 已从 generated fallback 推进到首批 authored aircraft hitbox 内容，并新增 `AircraftDamageState` 飞机专用 overlay、overlay-driven 飞行动力学/推进/传感器派生、受损结构在高动压/高速包线下继续劣化的最小闭环，以及火灾/燃油泄漏/液压损伤的最小时间级联，Phase 3 已从最小 `WarheadProfile` 数据通路推进到首个弹头族 effects 分配补丁、按弹头族 footprint 的近炸空间投射闭环、最小 relative-velocity-axis 空间方向耦合、`EffectsEvent` 几何证据字段、hitbox armor / projected exposure / warhead mechanism 可审计采样字段、机制特定 component-threshold 尺度字段、合成 component-failure probability 采样字段、显式 `FuzeProfile` 证据字段、proximity fuze delay 的最小延迟爆轰调度，以及首个 fuze type trigger semantics 行为分支，Phase 5 已启动 synthetic vulnerability evidence scaffold 并补入 calibrated evidence gate；structured-air physical effects 已补“不直接写 RL Score”的行为/静态守卫；1v1 consumer 已从 terminal/objective 迁移推进到非终局 `DamageReport` 连续 shaping 的最小一次性消费。`PN miss-distance baseline` 已闭合，不再阻塞 HP-first bypass 最小反转；deterministic fuze 仍 deferred；contact/impact/timed 的触发语义已开始脱离单一 proximity radius，但仍不是校准引信模型。
 
 ## 决策
 
@@ -21,13 +21,13 @@
 | `A2-P0.2 health observer 审计` | closed_with_guard | 盘点 `health > 0`、`get_unit_health`、`is_unit_active` 的语义依赖。 | 文档、只读 probe | 改 reward/termination | 调用点表 | 明确 HP 派生读数迁移影响 |
 | `A2-P0.3 ShipPlatform filter 审计` | closed_for_design | 判定 damage update 是新建 aircraft 系统还是泛化现有 naval 系统。 | 文档、只读 grep | 移除 filter | consumer matrix | 不破坏 ship-only 系统 |
 | `A2-P0.4 Aircraft content inventory` | evidence_closed/content_gap_open | 列出飞机类型与 hitbox 缺口，选择 authored/generator 策略。 | 文档、数据库清单 | 批量填内容 | aircraft inventory | 每类飞机有明确 hitbox 路径 |
-| `A2-P0.5 Score write-point 审计` | closed_with_decoupling_required | 找出 effects model 中 reward/score 写点，设计事件消费层迁移。 | 文档、必要时测试计划 | 立即重构 score | write-point list | physical effects 不再被 reward 语义污染 |
-| `A2-P0.6 PN miss-distance baseline` | blocked | 构造 head-on / tail-chase / beam / high-off-boresight miss-distance 基线。 | benchmark/test docs，可能新增 probe | deterministic fuze | 可重复基线输出 | 决定 Phase 4 是否可启动 |
-| `A2-P1 Aircraft structured damage` | held | 反转 HP-first bypass，并让飞机走结构化毁伤路径。 | effects model、spawn path、aircraft JSON、tests | deterministic fuze、warhead profile 全量实现 | focused combat tests | structured target 不被 HP-first bypass kill |
-| `A2-P2 Aircraft subsystem effects` | held | 飞机推进/飞控/结构/燃油/传感器/航电/飞行员级联效果。 | damage systems、flight/sensor consumers | Pk 曲线 | hitbox-specific tests | 不同 hitbox 后果可区分 |
-| `A2-P3 Warhead profile` | held | 引入 blast/frag/rod/HTK profile，旧 JSON synthetic 兼容。 | weapon definitions、loader、effects model | external Pk 数据 | warhead unit tests | scalar damage 不再是高真实度权威 |
+| `A2-P0.5 Score write-point 审计` | structured_air_guarded/consumer_started | 找出 effects model 中 reward/score 写点，设计事件消费层迁移。 | 文档、必要时测试计划 | 立即重构 legacy score | write-point list + guard tests | structured-air physical effects 不直接写 Score；1v1 terminal/objective 已开始消费 DamageReport |
+| `A2-P0.6 PN miss-distance baseline` | closed_with_baseline | 构造 head-on / tail-chase / beam / high-off-boresight miss-distance 基线。 | benchmark/test docs，debug runtime probe | deterministic fuze | 可重复基线输出 | 已决定 Phase 4 继续 deferred |
+| `A2-P1 Aircraft structured damage` | minimal_patch_in_progress | 反转 HP-first bypass，并让飞机走结构化毁伤路径。 | effects model、damage system、engagement event recorder、tests | deterministic fuze、warhead profile 全量实现 | focused combat tests | structured target 不被 HP-first bypass kill，live missile 能产出 DamageReport |
+| `A2-P2 Aircraft subsystem effects` | overlay_dynamic_coupling_started | 飞机推进/飞控/结构/燃油/传感器/航电/飞行员级联效果。 | damage systems、flight/sensor consumers、aircraft JSON | Pk 曲线、全量 vulnerability 声称 | hitbox-specific tests | 不同 authored hitbox 后果可区分，且单次近炸不会因重叠 box 被重复放大；飞机专用 overlay 可审计并下推飞行动力学/推进约束 |
+| `A2-P3 Warhead profile` | profile_fuze_trigger_semantics_started | 引入 blast/frag/rod/HTK profile 与显式 fuze profile，旧 JSON synthetic 兼容，并让近炸空间 footprint 随弹头族、速度轴、hitbox armor、projected exposure、组件机制阈值、合成组件失效概率、fuze reliability、fuze delay 调度和 fuze type trigger semantics 变化。 | weapon definitions、loader、effects model、engagement contracts | external Pk 数据、完整破片云、校准组件失效概率、校准引信性能 | warhead runtime/effects tests | warhead/fuze family/mass/radius/delay/reliability/provenance 可审计，scalar damage 标记为兼容层；near miss 投射按弹头族半径/衰减/影响数量和 relative velocity axis 区分；contact/impact fuze 不再把 near-miss radius 当作触发条件；timed fuze 能按发射后 delay 独立起爆；EffectsEvent 暴露 miss distance、局部起爆点、闭合速度、导弹速度轴、direct/projection 命中形态、fuze type/radius/delay/reliability、nearest approach 与 detonation time 分离、空间效应尺度、装甲耦合、投影暴露、机制效应尺度、component-threshold 尺度和 component-failure probability/sample/count |
 | `A2-P4 Deterministic fuze` | deferred | 几何优先引信/杀伤替代 RNG hit roll。 | fuze/damage system | 未验证 PN 前移除 RNG | miss-distance matrix + controlled fuze tests | evasion 通过 miss distance 生效 |
-| `A2-P5 Vulnerability evidence` | future | 引入 weapon/target/aspect/closure 脆弱性或 Pk 校准数据。 | content/data/contracts | 黑箱替代物理模型 | provenance tests | 数据来源可审计 |
+| `A2-P5 Vulnerability evidence` | synthetic_evidence_scaffold_started | 引入 weapon/target/aspect/closure 脆弱性或 Pk 校准数据。 | content/data/contracts | 黑箱替代物理模型 | provenance tests | F-16 synthetic vulnerability profile 可审计并调制 physical effects；仍不放行 Pk/确定性引信 |
 
 ## Phase 0 证据表模板
 
@@ -58,22 +58,144 @@ Phase 1 的第一批代码变更应该足够小：
 - `Score` 写入迁移可以先通过事件消费层最小实现，不把奖励逻辑留在 effects model；
 - 新测试必须能证明 HP bypass 不再提前 `return`。
 
+当前已完成的最小实现：
+
+- `default_effects_model.cpp` 对 structured aircraft / C2Node 跳过 HP-first branch，legacy 非结构化目标仍保持旧 HP path；
+- `debug_apply_proximity_hit` 对 structured aircraft 使用中心线合成 impact，保证调试命中能触达 generated hitbox；
+- `ProximityFuze` live missile 路径通过 `EngagementEventRecorderRef` 记录 `EffectsEvent` 与 `DamageReport`；
+- `AircraftDamageStateUpdate` 只同步 Aircraft/C2Node 的 capability kill flags 与 `Lost` 析构，不泛化舰船 `NavalDamageStateUpdate`；
+- `AircraftDamageStateUpdate` 已开始消费 `AeroState`：结构受损后，高动压/高 Mach 暴露会累积 `flutter_exposure` / `structural_overstress` 并缓慢降低结构完整性；普通受损巡航和低速失速不会被直接当作 flutter；
+- `AircraftDamageStateUpdate` 已开始从 aircraft overlay 派生传感器性能：航电/机组损伤会降低 range/Pd、增加噪声并缩短 track memory，非传感器/非航电命中不误降感知；
+- 默认 1v1 发射测试从“一发必杀”改为“不误锁/不误伤友方 + 事件目标一致”。
+
+## Phase 2 authored hitbox 最小差异化
+
+本轮已从 generated fallback 推进到首批 authored aircraft hitbox。它仍是工程校准的结构化内容，不宣称完整 vulnerability/Pk 证据闭环：
+
+- nose/radar：降低 sensor capability 与 radar range；
+- fuselage engine/fuel：降低 mobility capability、削弱推力、增加 fuel leak；
+- wing/flight_control：降低 mobility capability，并收紧 `max_g`、`max_turn_rate`、`max_accel`、`max_climb_rate`；若 authored wing 同时保护 fuel，则触发 fuel leak；
+- 单次近炸事件对 structured aircraft 的平台级能力扣减按类别归一化，避免重叠 authored hitbox 把一枚近炸重复放大成直接 `Lost`；
+- diagnostics-only `debug_apply_local_proximity_hit` 用局部机体系坐标稳定命中指定 hitbox，避免测试依赖随机近炸几何。
+- 新增 `AircraftDamageState` overlay，记录结构、飞控、液压、推进、燃油、航电、机组、火灾、燃油泄漏、结构过载/颤振暴露、forced landing 和 subsystem kill 标志；
+- authored hitbox 命中先更新飞机专用 overlay，再下推到兼容的 `PlatformDamageState` capability 字段，避免继续把飞机毁伤细节挤进舰船语义字段；
+- diagnostics-only `debug_get_aircraft_damage_state` 用于验证 air-specific overlay。
+- 新增 `AircraftDamageBaseline` 保存初始 FlightModel/Propulsion/fuel-leak 基线，damage update 每帧从 overlay 派生 turn rate、accel、climb、g-limit、speed、推力和 fuel leak；
+- `AircraftDamageBaseline` 也保存初始 `Sensor` 基线，damage update 每帧从 `avionics_integrity` 与 `crew_effectiveness` 派生 BVR sensor range、detection probability、measurement noise 与 track memory；
+- propulsion 与 fuel 在 overlay 中拆分：fuel hit 不再直接等价 thrust loss，engine/propulsion hit 才降低推力派生值。
+- `AircraftDamageStateUpdate` 已补最小级联时间线：燃油泄漏会真实消耗 `FuelSystem` 内/外挂油并同步 `Mass` 燃油质量；火灾按燃油/液压/航电损伤和泄漏活动继续传播到结构、航电、机组、液压和燃油系统；液压损伤会继续拖累飞控并增加结构过载暴露；级联结果下推平台 mission/sensor/mobility/survivability 能力。
+
+已补的 authored content：
+
+- `E-3_Sentry_AWACS` 从 HP-only/C2Node 迁移到 authored structured damage path，覆盖 cockpit/command、radar/data-link、fuel/avionics、engine、wing/flight-control hitboxes；
+- `F-16C_Block50` 覆盖 nose radar/cockpit、fuselage fuel/avionics/engine、aft engine/flight-control、wing flight-control/fuel；
+- `Su-35S_Flanker-E` 覆盖 nose radar/cockpit、fuselage fuel/avionics/data-link、双发 engine/fuel、wing flight-control/fuel；
+- `MQ-9_Reaper` 覆盖 sensor/navigation、fuel/data-link/avionics、engine/propeller、wing flight-control/fuel；
+- `MH-60R_MVP` 覆盖 cockpit/sensor、fuel/avionics/data-link、engine/transmission、rotor/tail-rotor flight-control；
+- 测试证明 E-3 radar hit 后 HP 不扣减、不析构，但 sensor capability、mission capability 与 radar range 会下降，并产生 `DamageReport`。
+
+验收测试：
+
+- `test_phase2_aircraft_hitboxes_produce_distinct_subsystem_effects`
+- `test_phase2_aircraft_damage_overlay_tracks_air_specific_subsystems`
+- `test_phase2_avionics_and_crew_damage_derives_sensor_performance`
+- `test_phase2_aircraft_fire_fuel_and_hydraulic_damage_cascade_over_time`
+- `test_phase2_damaged_airframe_high_speed_envelope_accumulates_structural_damage`
+- `test_e3_sentry_c2node_uses_authored_structured_damage_model`
+- `test_aircraft_database_units_have_authored_structured_damage_models`
+
+## Phase 3 WarheadProfile 数据通路与首个 effects 分配
+
+本轮关闭战斗部 profile 数据面，并开始让 profile 影响 structured aircraft effects 分配和近炸空间 footprint；仍不宣称完整战斗部空间效应：
+
+- weapon JSON 的 `warhead.type/mass_kg/lethal_radius/damage` 进入 `MissileTuningDefinition`；
+- `MissileTuning`、运行时 `Missile` 和 Python diagnostics 暴露 `WarheadProfile`；
+- 没有显式 `damage` 的现有空空导弹以 warhead mass 生成 synthetic damage scalar，并通过 `damage_scalar_synthetic` 标记；
+- `EffectsEvent` 增加 `warhead_mass_kg`、`warhead_lethal_radius_m`、`warhead_profile_synthetic`、`damage_scalar_synthetic`；
+- `EffectsEvent` 增加 `miss_distance_m`、目标机体系 `detonation_local_forward/right/up_m`、`closure_mps` 和 `missile_axis_forward/right/up`，用于记录近炸几何和后续引信/Pk 校准输入；
+- live proximity fuze 记录的 `effect_family` 来自 missile warhead profile，可覆盖为 `continuous_rod` 等族。
+- `default_effects_model` 对 structured aircraft 引入弹头族 effects 分配：blast 偏结构/火灾，blast-fragmentation 为平衡基线，continuous rod 偏机翼/飞控，hit-to-kill 偏局部系统杀伤且低火灾扩散；
+- 新增 diagnostics-only `debug_apply_profiled_local_proximity_hit`，用于固定局部命中点对比不同 `WarheadProfile` effects。
+- 新增近炸空间投射：structured aircraft 无直接 hitbox 交点时，战斗部 lethal radius 的保守局部范围会按弹头族设定半径、衰减曲线和最大影响 hitbox 数；blast/fragmentation 可覆盖多个邻近 hitbox，continuous rod 更窄，hit-to-kill 保持局部化；远场 near miss 仍不产生结构化毁伤。
+- 近炸投射按系统类别保留局部场强，避免一个弱覆盖系统套用最近 hitbox 的强场，从而保持“近炸弱于直接命中对应关键 hitbox”的回归约束。
+- 近炸投射引入最小 relative-velocity-axis 耦合：导弹速度轴会转入目标机体系，continuous rod 对横向扫掠候选 hitbox 更敏感，hit-to-kill 更偏轴向局部，blast/fragmentation 只做较弱方向修正。
+- live proximity fuze 结算会把最近距离和当前目标机体系起爆点写入事件；由于结算发生在最近点后一帧，`closure_mps` 可合法为 0，因此它是诊断证据而非确定性引信放行条件。
+- 新增首个机制采样脚手架：直接 hitbox 交叠与近炸空间投射都会消费 hitbox `armor_mm`、局部投影暴露面积、弹头族机制容量、距离质量和 velocity-axis 权重；同几何下低装甲翼面会比高装甲翼面承受更强飞控/液压/结构损伤。
+- 新增首个机制特定 component-threshold scaffold：同一 hitbox 内的飞控、燃油、传感器/航电、发动机、座舱/机组和结构按弹头族使用不同敏感度，避免所有组件继续共享同一个通用 severity 标量。
+- 新增首个合成 component-failure probability scaffold：直接命中和近炸投射会按 severity、mechanism scale、component threshold scale 与 direct/projection 形态采样组件失效；触发后把额外失效冲击写入 aircraft overlay / platform damage。
+- 新增显式 `FuzeProfile` 证据面：weapon JSON、运行时 missile 和 `EffectsEvent` 暴露 fuze type、trigger radius、delay、reliability 与 synthetic provenance；live proximity 仍不放行确定性引信，只用 trigger radius/reliability 调制现有 proximity/RNG gate，并用 delay 调度 delayed detonation。
+- 新增首个 fuze type trigger semantics：`proximity` / `radar_proximity` / `laser_proximity` 继续按近炸触发半径工作；`contact` / `impact` 要求导弹进入目标 authored hitbox 表面接触容差，不再把 near-miss radius 误记录为接触引信起爆；`timed` 按发射后 `delay_s` 独立调度起爆，不依赖近炸门，远离目标时可记录 `detonated_no_effect`。
+- `EffectsEvent` 增加 `direct_hitbox_intersection`、`projected_hitbox_count`、`spatial_effect_scale`、`mechanism_armor_scale`、`mechanism_exposure_scale`、`mechanism_effect_scale`、`component_threshold_scale`、`component_failure_probability`、`component_failure_sample`、`component_failure_count`、`fuze_type`、`fuze_trigger_radius_m`、`fuze_delay_s`、`fuze_reliability` 与 `fuze_profile_synthetic`，用于把一次 effects 结论回溯到几何、引信、弹头族、目标结构、机制采样和组件失效采样证据。
+
+验收测试：
+
+- `test_definition_missile_tuning_flows_into_launch_runtime`
+- `test_global_warhead_profile_override_flows_into_runtime_and_effects_event`
+- `test_fuze_delay_schedules_detonation_after_nearest_approach`
+- `test_contact_fuze_does_not_trigger_from_near_miss_radius`
+- `test_timed_fuze_detonates_on_delay_without_proximity_gate`
+- `test_phase3_warhead_family_changes_structured_air_effect_distribution`
+- `test_phase3_proximity_field_projects_near_miss_onto_nearest_air_hitbox`
+- `test_phase3_spatial_projection_respects_warhead_family_footprint`
+- `test_phase3_continuous_rod_near_miss_uses_relative_velocity_axis`
+- `test_phase3_warhead_mechanism_sampling_consumes_hitbox_armor`
+- `test_phase5_aircraft_vulnerability_profile_modulates_structured_damage`
+- `test_phase5_synthetic_vulnerability_profile_is_not_pk_or_fuze_authority`
+- `test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface`
+- `test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_contract_fields`
+
+## Phase 5 Vulnerability evidence scaffold
+
+本轮启动脆弱性/Pk 证据入口，但仍不把 Pk 当作 physical effects authority：
+
+- 新增 `AircraftVulnerabilityProfile`，可由 aircraft JSON 的 `damage_model.vulnerability` 进入 runtime component；
+- profile 包含弹头族、aspect、closure、near-miss/direct-hit 调制项，以及 `synthetic`、`provenance`、`calibrated`、`evidence_dataset_ref`、`calibration_status`、`pk_authority`、`deterministic_fuze_authority`；
+- F-16 先使用 synthetic scaffold，明确标注需要校准，不能据此声称确定性引信或 Pk 完成；
+- loader 对不满足 `synthetic=false + calibrated=true + calibration_status=calibrated + 非空 evidence_dataset_ref` 的 profile 强制关闭 Pk/确定性引信 authority；
+- capability bundle 区分 synthetic scaffold 与 calibrated profile，避免把工程调参误标为校准证据；
+- `default_effects_model` 只用 profile 调制 structured aircraft effects severity，仍由 hitbox、warhead profile、miss-distance 与平台状态决定后果；
+- 新增 velocity-aware diagnostics helper，用于验证 closure/aspect 对调制的影响；
+- 新增 vulnerability evidence diagnostics helper，用于验证 synthetic F-16 profile 只能作为调制输入，不能作为 Pk 或 deterministic fuze authority。
+
+未完成项保持打开：正式 vulnerability/Pk dataset、目标族覆盖、外部/校准证据、正式 Pk/kill-chain 校准和 deterministic fuze 放行。
+
+## Reward / score authority guard
+
+本轮补齐 A2-P0.5 的 structured-air 最小防退化证据：
+
+- `test_structured_air_damage_does_not_write_rl_score_from_physical_effects` 验证结构化空中目标毁伤会产生 `DamageReport`，但 attacker `AgentObservation.total_reward` 不被 physical effects path 改写；
+- `test_a2_structured_air_effects_do_not_write_rl_score_authority` 静态固定 `default_effects_model` 的 structured-air 分支不能写 `score->...`；
+- legacy HP path 的历史 `Score` 写入暂时保留在 `if (hp && !structured_air_target)` 中，作为兼容边界。
+
+本轮 consumer 迁移启动：
+
+- `gym_envs.scenario_loader.reward_runtime.air_combat` 提供空战 profile 识别和 `DamageReport` terminal 解释；
+- 1v1 terminal override 会把 `lost`、`mobility_kill`、`mission_kill` 等 `DamageReport` 结果解释为目标不再具备战斗可行动性；
+- conditional objective 的 `target_active` / `target_health` 兼容读数同步消费该 neutralized 语义；
+- `apply_air_combat_reward_surface` 只读未消费过的近期 `DamageReport`，从 `system_health_delta` 与 `platform_damage_state_delta` 派生目标毁伤进展、自身受损惩罚和 loss-state progression 奖惩；
+- `test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win` 固定“HP 不变、entity active、DamageReport mobility_kill”仍能触发 `combat_win`；
+- `test_loader_damage_report_shaping_consumes_nonterminal_structured_damage_once` 固定非终局结构毁伤可以给 RL shaping，但同一 report 不会重复计分。
+
+仍未完成：全量 subsystem capability 曲线、课程级训练统计、target-family vulnerability dataset 和 Pk/evidence calibration 还未系统性迁移；当前 shaping 不能反向定义物理毁伤权威。
+阶段零 fixed-fire smoke 仍受 RNG fuze 影响：真实导弹进入 fuse radius 后仍可能随机未命中，因此 smoke 只证明发射链路和稳定运行；不得把单发必然 `combat_win` 作为 Phase 4 未放行前的验收。
+
 ## 风险与保护
 
 - **行为突变风险**：已有 air combat tests 可能默认一次导弹命中直接击杀。Phase 1 必须保留 legacy fixture 或更新断言，使测试描述真实语义；
 - **训练信号风险**：RL 可能失去连续 HP reward。应从 `DamageReport` 和 kill state 构造训练读数；
 - **舰船回归风险**：泛化 `NavalDamageStateUpdate` 容易伤及 ship-only 系统。若证据不足，优先新建 aircraft damage update；
-- **数据缺口风险**：没有 aircraft hitbox 内容时，不允许声称真实度提升，只能称 generated fallback；
+- **数据缺口风险**：已有 authored hitbox、warhead/fuze profile plumbing、armor/exposure/component-threshold/component-failure 机制采样仍是工程校准/数据通路，不允许声称已完成战斗部空间效应、破片云、连续杆切割、校准组件级失效概率、冗余依赖图、校准引信、脆弱性/Pk 全高保真闭环；
 - **引信过确定风险**：没有 PN miss-distance 基线时，deterministic fuze 可能让 evasion 在 damage 上失效。
 
 ## 当前推荐下一步
 
-继续 Phase 0，不写行为代码：
+继续 Phase 1/2/3 最小闭环，不启动 P4：
 
-1. `A2-P0.6`：补 PN miss-distance benchmark/probe；
-2. 只读暴露 `proximity_min_dist_m`、`proximity_last_dist_m`、`proximity_engaged` 或等价 benchmark 输出；
-3. 形成 head-on / tail-chase / beam / high-off-boresight 基线；
-4. 基线闭合后再评审是否允许 Phase 1 最小行为 patch。
+1. 保持 deterministic fuze deferred，不在 warhead/fuze/脆弱性校准前移除 RNG hit roll；
+2. 用 live missile regression 固定 structured aircraft damage report；
+3. 后续 Phase 2 应从首批 authored hitbox 继续推进到更细飞控/液压、结构 g-limit、flutter 边界、座舱/飞行员 overlay；
+4. 后续 Phase 3 应推进 blast/fragment/rod/HTK 差异化 effects 和 warhead geometry sampling；
+5. 后续训练 reward 应消费 `DamageReport` / loss state / subsystem capability，而不是重新依赖 HP 连续扣减。
 
 ## 建议命令
 

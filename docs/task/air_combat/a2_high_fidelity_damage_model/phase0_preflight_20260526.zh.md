@@ -1,21 +1,28 @@
 # A2 Phase 0 预检审计 - 高真实度空战毁伤模型 - 2026-05-26
 
-状态：`phase0 partial accepted / behavior held`。
+状态：`phase0 accepted / phase1 minimal patch started`。
 
-结论：本轮已完成 Phase 0 的主要代码证据审计。`A2-P0.1` 到 `A2-P0.5` 可以作为 Phase 1 设计输入，但 `A2-P0.6 PN miss-distance baseline` 尚未闭合，因此仍不允许直接开始 HP bypass 反转、飞机损伤系统行为改造或 deterministic fuze 实现。
+结论：本轮已完成 Phase 0 的主要代码证据审计，并补齐 `A2-P0.6 PN miss-distance baseline`。`A2-P0.1` 到 `A2-P0.6` 可作为 Phase 1 设计输入，允许开展最小 HP-first bypass 反转和事件闭环实现。deterministic fuze 仍不放行。
 
 ## 执行边界
 
-本轮只做审计和任务文档更新，不改 C++/Python 行为代码。
+Phase 0 关闭后，允许 Phase 1 最小行为补丁，但仍禁止把生成式 hitbox、标量 `damage` 或 RNG hit roll 宣称为完整高真实度毁伤模型。
 
-保持 held 的内容：
+保持 held/deferred 的内容：
 
-- 不修改 `Health.current_hp` 的杀伤语义；
 - 不改 `PlatformLossState` 枚举值；
-- 不改 `default_effects_model.cpp` 中 HP-first bypass；
 - 不改 `NavalDamageStateUpdate` 的 `ShipPlatform` filter；
 - 不实现 deterministic fuze；
 - 不展开正式训练。
+
+已允许且已开始的 Phase 1 最小补丁：
+
+- structured aircraft / C2Node 跳过 legacy HP-first kill branch；
+- live missile proximity fuze 记录 `EffectsEvent` 与 `DamageReport`；
+- aircraft damage update 只同步 Aircraft/C2Node 的 damage-state flags 与 `Lost` 析构；
+- legacy 非结构化目标保持 HP path。
+
+Phase 2 最小补丁也已启动：用于证明不同 aircraft hitbox 能产生不同子系统后果。E-3 C2Node 以及 F-16、Su-35、MQ-9、MH-60R 已补 authored structured damage model；但这些仍是工程校准 hitbox，不等价于战斗部、引信、脆弱性/Pk 全高保真闭环。
 
 ## 审计命令
 
@@ -111,11 +118,11 @@ rg -n "proximity_min_dist_m|proximity_last_dist_m|fuse_distance|min_dist|miss_di
 
 | 文件 | 类型 | airframe | authored damage_model | 当前结构化路径 |
 |----|----|----|----|----|
-| `examples/config/database/aircraft/units/f16c_block50.json` | `Aircraft` | 有 | `{}` 空对象 | generated Conventional hitbox |
-| `examples/config/database/aircraft/units/su35s_flanker_e.json` | `Aircraft` | 有 | 未显式 authored | generated Flanker hitbox |
-| `examples/config/database/aircraft/units/mq9_reaper.json` | `Aircraft` | 有 | 未显式 authored | generated Conventional hitbox |
-| `examples/config/database/aircraft/units/mh60r_mvp.json` | `Aircraft` | 有 | 未显式 authored | generated Conventional hitbox，直升机真实性较弱 |
-| `examples/config/database/aircraft/units/e3_sentry.json` | `C2Node` | 无 | 无 | HP-only / no generated hitbox |
+| `examples/config/database/aircraft/units/f16c_block50.json` | `Aircraft` | 有 | 有 | authored structured hitbox |
+| `examples/config/database/aircraft/units/su35s_flanker_e.json` | `Aircraft` | 有 | 有 | authored structured hitbox |
+| `examples/config/database/aircraft/units/mq9_reaper.json` | `Aircraft` | 有 | 有 | authored structured hitbox |
+| `examples/config/database/aircraft/units/mh60r_mvp.json` | `Aircraft` | 有 | 有 | authored structured hitbox，直升机仍需 rotor/flight-control 更细建模 |
+| `examples/config/database/aircraft/units/e3_sentry.json` | `C2Node` | 有 | 有 | authored structured hitbox |
 
 修正结论：
 
@@ -125,9 +132,9 @@ rg -n "proximity_min_dist_m|proximity_last_dist_m|fuse_distance|min_dist|miss_di
 
 判定：
 
-- Phase 1 可以以 generated fallback 作为最小结构化入口，但文档和测试必须标明它不是高真实度内容。
-- `E-3_Sentry_AWACS` 需要补 airframe 或 authored damage model，否则仍是 HP-only。
-- 后续 authored hitbox 优先级应为：F-16C、Su-35S、MQ-9、E-3、MH-60R。
+- Phase 1 可以以 generated fallback 作为最小结构化入口；Phase 2 已补首批 authored aircraft hitbox，但文档和测试必须标明它仍不是全量高真实度 vulnerability evidence。
+- `E-3_Sentry_AWACS`、`F-16C_Block50`、`Su-35S_Flanker-E`、`MQ-9_Reaper`、`MH-60R_MVP` 已补 airframe 与 authored damage model，不再是 HP-only。
+- 后续 authored 内容优先级应转为：飞控/液压细节、结构 g-limit 与 flutter 边界、座舱/飞行员 overlay、战斗部 profile 和脆弱性/Pk 校准。
 
 ## P0.5 Score write-point 审计
 
@@ -154,21 +161,29 @@ rg -n "proximity_min_dist_m|proximity_last_dist_m|fuse_distance|min_dist|miss_di
 
 ## P0.6 PN miss-distance baseline
 
-状态：`blocked`。
+状态：`closed_with_baseline`。
 
 关键证据：
 
 - `src/components/combat/weapon.h:35` 到 `src/components/combat/weapon.h:38` 已保存 `proximity_min_dist_m`、`proximity_last_dist_m`、`proximity_engaged`。
 - `src/systems/combat/damage_system.h:69` 到 `src/systems/combat/damage_system.h:76` 更新最近距离。
 - `src/systems/combat/damage_system.h:96` 到 `src/systems/combat/damage_system.h:123` 用 `min_dist/fuse_distance` 计算 `quality`、RNG `hit_prob` 与 effective damage。
-- `src/interfaces/python/bindings_core.cpp:907` 到 `src/interfaces/python/bindings_core.cpp:961` 的 `debug_get_missile_runtime_state` 暴露了 seeker/guidance/fuse 字段，但未暴露 `proximity_min_dist_m` 和 `proximity_last_dist_m`。
-- 现有 `tests/runtime/air_combat/test_weapon_guidance_realism_guards.py` 覆盖 guidance/fuse 参数、terminal seeker、track memory 等守卫，但没有 head-on / tail-chase / beam / high-off-boresight miss-distance 矩阵。
+- `src/interfaces/python/bindings_core.cpp` 的 `debug_get_missile_runtime_state` 已只读暴露 `proximity_min_dist_m`、`proximity_last_dist_m`、`proximity_engaged`。
+- `tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase0_pn_miss_distance_baseline_matrix_tracks_engagement_geometries` 固定 head-on / tail-chase / beam / high-off-boresight 基线。
+
+基线矩阵：
+
+| 几何 | `truth_min_dist_m` | `proximity_min_dist_m` | `time_s` | 判读 |
+|----|----:|----:|----:|----|
+| head-on | 10.36 | 10.36 | 33.43 | 近炸可达，但结构交点依赖 hitbox/impact 几何 |
+| tail-chase | 7446.37 | 7446.37 | 45.02 | 追尾不可达，能量不足明确 |
+| beam | 501.30 | 501.30 | 43.53 | 横穿几何产生显著 miss distance |
+| high-off-boresight | 0.02 | 0.02 | 33.67 | 可控结构命中，适合作为 Phase 1 live missile regression |
 
 判定：
 
-- deterministic fuze 继续 held。
-- Phase 1 行为代码也继续 held，因为本任务簇原定六个 Phase 0 gate 全部关闭后才允许行为变更。
-- 下一步最小可执行工作是新增 miss-distance benchmark/probe，而不是改 damage behavior。
+- deterministic fuze 继续 held/deferred。当前几何差异足够明显，说明不能在缺少 warhead/fuze/脆弱性校准时简单移除 RNG hit roll。
+- Phase 1 最小行为代码已放行：仅限 HP-first bypass 反转、structured aircraft damage path、live missile event report、aircraft damage-state 同步。
 
 建议 benchmark 矩阵：
 
@@ -194,19 +209,48 @@ rg -n "proximity_min_dist_m|proximity_last_dist_m|fuse_distance|min_dist|miss_di
 | `A2-P0.3 ShipPlatform filter` | closed for design | 不单独放行 |
 | `A2-P0.4 aircraft content inventory` | evidence closed, content gap open | 不单独放行 |
 | `A2-P0.5 Score write-point` | closed with decoupling required | 不单独放行 |
-| `A2-P0.6 PN miss-distance baseline` | blocked | 阻止 Phase 1/4 行为实现 |
+| `A2-P0.6 PN miss-distance baseline` | closed with baseline | 放行 Phase 1 最小补丁；Phase 4 继续 deferred |
 
 当前允许推进：
 
-- 设计 Phase 1 patch，但不能落行为代码；
-- 新增 PN miss-distance benchmark/probe；
-- 新增只读 debug 字段或测试脚手架，如果其目的仅是测量现有行为；
-- 更新文档和验收标准。
+- Phase 1 最小 HP-first bypass 反转；
+- live missile effects/damage event 闭环；
+- aircraft-specific damage-state 同步；
+- 更新训练消费层，使其读取 `DamageReport`、loss state 或 subsystem capability。
 
 当前禁止推进：
 
-- 反转 HP-first bypass；
 - 改 `PlatformLossState` 数值；
 - 泛化 `NavalDamageStateUpdate` 并影响舰船；
 - 将 generated hitbox 宣称为高真实度 authored damage model；
-- 在没有 miss-distance baseline 的情况下移除 RNG fuze。
+- 仅凭 miss-distance baseline、在缺少 warhead/fuze/脆弱性校准时移除 RNG fuze。
+
+## Phase 1 最小补丁证据
+
+已新增/调整的关键验证：
+
+- `test_debug_runtime_exposes_proximity_fuze_miss_distance_state`：只读暴露 proximity fuze miss-distance state；
+- `test_phase0_pn_miss_distance_baseline_matrix_tracks_engagement_geometries`：固定四类 PN/miss-distance 几何；
+- `test_structured_air_target_uses_damage_state_instead_of_hp_first_kill`：debug 命中 structured F-16 时 HP 不扣减、damage state 下降、`DamageReport.hp_delta == 0`；
+- `test_live_missile_hit_records_structured_air_damage_without_hp_first_kill`：真实导弹命中 structured F-16 时产生 `EffectsEvent/DamageReport`，HP 不再作为 kill authority；
+- `test_phase2_aircraft_hitboxes_produce_distinct_subsystem_effects`：nose/radar、fuselage engine/fuel、wing/flight_control 三类命中产生不同后果，且 authored wing/fuel 重叠会产生燃油泄漏；
+- `test_e3_sentry_c2node_uses_authored_structured_damage_model`：E-3 C2Node authored radar hitbox 进入 structured damage path，HP 不扣减但 sensor/mission capability 和 radar range 下降；
+- `test_aircraft_database_units_have_authored_structured_damage_models`：F-16、Su-35、MQ-9、MH-60R、E-3 一次局部近炸进入 structured path，HP 不扣减、不直接析构，并记录 `DamageReport`；
+- `test_fired_missile_does_not_retarget_friendly_and_records_engagement`：默认 1v1 发射测试改为不误锁/不误伤友方和事件目标一致，不再要求默认几何一发必杀。
+- `test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win`：目标 entity 仍 active 且 HP 不变时，`DamageReport.loss_state_to == mobility_kill` 会由 1v1 consumer 解释为 `combat_win`；
+- `test_stage0_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release`：阶段零 fixed-fire smoke 只验证发射链路和运行稳定性；由于 Phase 4 deterministic fuze 未放行，真实导弹一次进入 fuse radius 后仍可随机未命中，不再把单发必然 `combat_win` 当作 smoke 验收。
+
+聚焦测试：
+
+```bash
+source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
+  tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py::AirCombat1v1FireMissileTests::test_fired_missile_does_not_retarget_friendly_and_records_engagement \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_live_missile_hit_records_structured_air_damage_without_hp_first_kill \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_structured_air_target_uses_damage_state_instead_of_hp_first_kill \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_aircraft_hitboxes_produce_distinct_subsystem_effects \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_e3_sentry_c2node_uses_authored_structured_damage_model \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_aircraft_database_units_have_authored_structured_damage_models \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase0_pn_miss_distance_baseline_matrix_tracks_engagement_geometries
+```
+
+结果：当前空战聚焦文件为 `42 passed, 12 subtests passed`。
