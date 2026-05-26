@@ -214,7 +214,7 @@ public:
     bool is_unit_active(uint64_t entity_id); // Returns whether entity exists
     std::vector<double> get_unit_health(uint64_t entity_id); // Returns [current, max]
     std::vector<double> get_unit_damage_state(uint64_t entity_id); // [mission, mobility, sensor, survivability]
-    std::vector<double> debug_get_aircraft_damage_state(uint64_t entity_id); // [structure, flight_control, hydraulic, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]
+    std::vector<double> debug_get_aircraft_damage_state(uint64_t entity_id); // [structure, flight_control, hydraulic, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]
     std::vector<double> debug_get_aircraft_vulnerability_evidence_state(uint64_t entity_id); // [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority]
     std::vector<double> debug_get_naval_weapon_counts(uint64_t entity_id); // [mounts, total_ready_vls, total_ready_gun, total_ready_ciws]
     std::vector<double> get_unit_fuel(uint64_t entity_id); // Returns [internal, max_internal, external, max_external]

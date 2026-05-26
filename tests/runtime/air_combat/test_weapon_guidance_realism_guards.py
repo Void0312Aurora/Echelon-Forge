@@ -692,6 +692,10 @@ def _aircraft_damage_overlay(sim: ef_py.SimulationKernel, entity_id: int) -> dic
         "structure",
         "flight_control",
         "hydraulic",
+        "roll_control",
+        "pitch_control",
+        "yaw_control",
+        "control_asymmetry",
         "propulsion",
         "fuel",
         "avionics",
@@ -1792,6 +1796,48 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                         float(flight_before.fuel_leak_rate_kg_s),
                     )
 
+    def test_phase2_aileron_component_damage_derives_roll_axis_authority(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+        overlay_before = _aircraft_damage_overlay(sim, target_id)
+        flight_before = sim.get_flight_dynamics_debug_view(target_id)
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    -0.8,
+                    4.1,
+                    0.0,
+                    240.0,
+                    80.0,
+                )
+            )
+        )
+
+        overlay_after = _aircraft_damage_overlay(sim, target_id)
+        self.assertLess(overlay_after["roll_control"], overlay_before["roll_control"])
+        self.assertGreater(overlay_after["control_asymmetry"], overlay_before["control_asymmetry"])
+        self.assertAlmostEqual(
+            overlay_after["pitch_control"],
+            overlay_before["pitch_control"],
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            overlay_after["yaw_control"],
+            overlay_before["yaw_control"],
+            delta=1.0e-6,
+        )
+
+        sim.step()
+        flight_after = sim.get_flight_dynamics_debug_view(target_id)
+        self.assertTrue(sim.is_unit_active(target_id))
+        self.assertLess(float(flight_after.max_turn_rate), float(flight_before.max_turn_rate))
+
     def test_phase2_avionics_and_crew_damage_derives_sensor_performance(self) -> None:
         cases = {
             "nose_cockpit_avionics": {
@@ -2245,6 +2291,42 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertTrue(bool(control_event.direct_hitbox_intersection))
         self.assertEqual(int(control_event.component_hit_count), 1)
         self.assertEqual(str(control_event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(control_event.component_primary_system), "flight_control")
+        self.assertAlmostEqual(float(control_event.component_primary_redundancy_group), 2.0, delta=1.0e-6)
+        self.assertFalse(bool(control_event.component_primary_critical))
+        self.assertLess(control_overlay["flight_control"], 1.0)
+        self.assertLess(control_overlay["hydraulic"], 1.0)
+        self.assertAlmostEqual(control_overlay["fuel"], 1.0, delta=1.0e-6)
+
+    def test_phase3_database_su35_component_geometry_reports_primary_component(self) -> None:
+        fuel_overlay, _, fuel_event = _profiled_local_hit_overlay_for_target(
+            "Su-35S_Flanker-E",
+            "blast_fragmentation",
+            (-2.0, -4.4, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        control_overlay, _, control_event = _profiled_local_hit_overlay_for_target(
+            "Su-35S_Flanker-E",
+            "blast_fragmentation",
+            (-2.0, 6.2, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertTrue(bool(fuel_event.direct_hitbox_intersection))
+        self.assertGreaterEqual(int(fuel_event.component_hit_count), 1)
+        self.assertEqual(str(fuel_event.component_primary_name), "left_wing_fuel_cell")
+        self.assertEqual(str(fuel_event.component_primary_system), "fuel")
+        self.assertAlmostEqual(float(fuel_event.component_primary_redundancy_group), 1.0, delta=1.0e-6)
+        self.assertTrue(bool(fuel_event.component_primary_critical))
+        self.assertLess(fuel_overlay["fuel"], 1.0)
+        self.assertGreater(fuel_overlay["fuel_leak"], 0.0)
+        self.assertAlmostEqual(fuel_overlay["flight_control"], 1.0, delta=1.0e-6)
+
+        self.assertTrue(bool(control_event.direct_hitbox_intersection))
+        self.assertEqual(int(control_event.component_hit_count), 1)
+        self.assertEqual(str(control_event.component_primary_name), "right_elevon_actuator")
         self.assertEqual(str(control_event.component_primary_system), "flight_control")
         self.assertAlmostEqual(float(control_event.component_primary_redundancy_group), 2.0, delta=1.0e-6)
         self.assertFalse(bool(control_event.component_primary_critical))

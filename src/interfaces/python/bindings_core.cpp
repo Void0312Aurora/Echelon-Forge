@@ -857,7 +857,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              return out;
         }, "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)", nb::arg("entity_id"))
         .def("debug_get_aircraft_damage_state", &SimulationKernel::debug_get_aircraft_damage_state,
-             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
+             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
              nb::arg("entity_id"))
         .def("debug_get_aircraft_vulnerability_evidence_state",
              &SimulationKernel::debug_get_aircraft_vulnerability_evidence_state,

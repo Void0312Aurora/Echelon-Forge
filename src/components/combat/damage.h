@@ -116,6 +116,10 @@ struct AircraftDamageState {
     double structural_integrity = 1.0;
     double flight_control_integrity = 1.0;
     double hydraulic_integrity = 1.0;
+    double roll_control_integrity = 1.0;
+    double pitch_control_integrity = 1.0;
+    double yaw_control_integrity = 1.0;
+    double control_asymmetry = 0.0;
     double propulsion_integrity = 1.0;
     double fuel_system_integrity = 1.0;
     double avionics_integrity = 1.0;
@@ -157,6 +161,10 @@ inline void clamp_aircraft_damage_state(AircraftDamageState& state) {
     state.structural_integrity = std::clamp(state.structural_integrity, 0.0, 1.0);
     state.flight_control_integrity = std::clamp(state.flight_control_integrity, 0.0, 1.0);
     state.hydraulic_integrity = std::clamp(state.hydraulic_integrity, 0.0, 1.0);
+    state.roll_control_integrity = std::clamp(state.roll_control_integrity, 0.0, 1.0);
+    state.pitch_control_integrity = std::clamp(state.pitch_control_integrity, 0.0, 1.0);
+    state.yaw_control_integrity = std::clamp(state.yaw_control_integrity, 0.0, 1.0);
+    state.control_asymmetry = std::clamp(state.control_asymmetry, 0.0, 1.0);
     state.propulsion_integrity = std::clamp(state.propulsion_integrity, 0.0, 1.0);
     state.fuel_system_integrity = std::clamp(state.fuel_system_integrity, 0.0, 1.0);
     state.avionics_integrity = std::clamp(state.avionics_integrity, 0.0, 1.0);
@@ -166,14 +174,22 @@ inline void clamp_aircraft_damage_state(AircraftDamageState& state) {
     state.structural_overstress = std::clamp(state.structural_overstress, 0.0, 1.0);
     state.flutter_exposure = std::clamp(state.flutter_exposure, 0.0, 1.0);
 
+    const double axis_control_integrity = std::min({
+        state.flight_control_integrity,
+        state.roll_control_integrity,
+        state.pitch_control_integrity,
+        state.yaw_control_integrity});
     state.flight_control_kill =
-        state.flight_control_integrity <= 0.25 || state.hydraulic_integrity <= 0.20;
+        axis_control_integrity <= 0.25 ||
+        state.hydraulic_integrity <= 0.20 ||
+        state.control_asymmetry >= 0.75;
     state.propulsion_kill = state.propulsion_integrity <= 0.20;
     state.crew_kill = state.crew_effectiveness <= 0.20;
     state.forced_landing_required =
         state.forced_landing_required ||
         state.structural_integrity <= 0.35 ||
-        state.flight_control_integrity <= 0.40 ||
+        axis_control_integrity <= 0.40 ||
+        state.control_asymmetry >= 0.60 ||
         state.hydraulic_integrity <= 0.35 ||
         state.propulsion_integrity <= 0.35 ||
         state.fuel_leak_severity >= 0.70 ||
@@ -184,10 +200,17 @@ inline void apply_aircraft_damage_state_to_platform(
     const AircraftDamageState& aircraft,
     PlatformDamageState& platform
 ) {
+    const double axis_control_integrity = std::min({
+        aircraft.flight_control_integrity,
+        aircraft.roll_control_integrity,
+        aircraft.pitch_control_integrity,
+        aircraft.yaw_control_integrity});
+    const double asymmetry_limited_control =
+        std::min(axis_control_integrity, 1.0 - (0.55 * aircraft.control_asymmetry));
     platform.mobility_capability = std::min(
         platform.mobility_capability,
         std::min(
-            aircraft.flight_control_integrity,
+            asymmetry_limited_control,
             std::min(aircraft.hydraulic_integrity, aircraft.propulsion_integrity)));
     platform.mission_capability = std::min(
         platform.mission_capability,

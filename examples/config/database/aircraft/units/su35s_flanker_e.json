@@ -45,7 +45,59 @@
                 "offset": [-2.0, 0.0, 0.0],
                 "size": [4.8, 15.0, 0.35],
                 "armor": 4.0,
-                "systems": ["wings", "flight_control", "fuel"]
+                "systems": ["wings", "flight_control", "fuel"],
+                "components": [
+                    {
+                        "name": "left_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-2.0, -4.4, 0.0],
+                        "size": [1.8, 1.6, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "redundancy_group": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "right_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-2.0, 4.4, 0.0],
+                        "size": [1.8, 1.6, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "redundancy_group": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "left_elevon_actuator",
+                        "system": "flight_control",
+                        "offset": [-2.0, -6.2, 0.0],
+                        "size": [1.1, 1.0, 0.22],
+                        "armor": 4.0,
+                        "threshold_scale": 1.35,
+                        "redundancy_group": 2.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_elevon_actuator",
+                        "system": "flight_control",
+                        "offset": [-2.0, 6.2, 0.0],
+                        "size": [1.1, 1.0, 0.22],
+                        "armor": 4.0,
+                        "threshold_scale": 1.35,
+                        "redundancy_group": 2.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_spar_center",
+                        "system": "wings",
+                        "offset": [-2.0, 0.0, 0.0],
+                        "size": [3.8, 9.8, 0.18],
+                        "armor": 5.0,
+                        "threshold_scale": 1.10,
+                        "redundancy_group": 0.0,
+                        "critical": true
+                    }
+                ]
             }
         ]
     },

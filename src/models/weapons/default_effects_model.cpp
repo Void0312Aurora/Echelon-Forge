@@ -425,6 +425,59 @@ void apply_component_failure_impulse(
     }
 }
 
+void apply_control_axis_component_damage(
+    const DamageComponent& component,
+    double base_severity,
+    double mechanism_scale,
+    double component_scale,
+    bool direct_hit,
+    AircraftDamageState* aircraft_damage
+) {
+    if (!aircraft_damage || !system_is_air_control_surface(component.system)) {
+        return;
+    }
+
+    const std::string& component_name =
+        component.name.empty() ? component.system : component.name;
+    const bool roll_component =
+        system_name_matches(component_name, "aileron") ||
+        system_name_matches(component_name, "elevon") ||
+        system_name_matches(component_name, "flaperon");
+    const bool pitch_component =
+        system_name_matches(component_name, "elevator") ||
+        system_name_matches(component_name, "stabilator") ||
+        system_name_matches(component_name, "elevon");
+    const bool yaw_component = system_name_matches(component_name, "rudder");
+    if (!roll_component && !pitch_component && !yaw_component) {
+        return;
+    }
+
+    const double impulse = std::clamp(
+        base_severity *
+            std::clamp(mechanism_scale, 0.0, 1.25) *
+            std::clamp(component_scale, 0.40, 1.80),
+        0.0,
+        1.0);
+    const double axis_loss = (direct_hit ? 0.08 : 0.03) +
+        ((direct_hit ? 0.18 : 0.10) * impulse);
+
+    if (roll_component) {
+        aircraft_damage->roll_control_integrity -= axis_loss;
+        const bool asymmetric_side =
+            system_name_matches(component_name, "left") ||
+            system_name_matches(component_name, "right");
+        aircraft_damage->control_asymmetry +=
+            (asymmetric_side ? 1.05 : 0.45) * axis_loss;
+    }
+    if (pitch_component) {
+        aircraft_damage->pitch_control_integrity -= 0.70 * axis_loss;
+    }
+    if (yaw_component) {
+        aircraft_damage->yaw_control_integrity -= axis_loss;
+        aircraft_damage->control_asymmetry += 0.55 * axis_loss;
+    }
+}
+
 struct WarheadEffectProfile {
     double system_damage_scale = 1.0;
     double structure_scale = 1.0;
@@ -1057,7 +1110,8 @@ public:
                 double component_scale,
                 bool direct_hit,
                 bool component_critical = true,
-                double redundancy_group = 0.0
+                double redundancy_group = 0.0,
+                const DamageComponent* component = nullptr
             ) {
                 const double resolved_component_scale = std::clamp(component_scale, 0.40, 1.80);
                 sys_health->systems[system] = std::max(
@@ -1075,6 +1129,15 @@ public:
                     direct_hit,
                     component_critical,
                     redundancy_group);
+                if (structured_air_target && component) {
+                    apply_control_axis_component_damage(
+                        *component,
+                        system_base_severity,
+                        mechanism_scale,
+                        resolved_component_scale,
+                        direct_hit,
+                        aircraft_damage);
+                }
 
                 if (platform_damage) {
                     if (structured_air_target) {
@@ -1210,7 +1273,8 @@ public:
                                 component_scale,
                                 true,
                                 component.critical,
-                                component.redundancy_group);
+                                component.redundancy_group,
+                                &component);
                             spdlog::info(
                                 "   - component {}:{} Status: {:.2f} component_scale={:.2f}",
                                 component.name.empty() ? component.system : component.name,
@@ -1403,7 +1467,8 @@ public:
                             component_scale,
                             false,
                             projected_component->critical,
-                            projected_component->redundancy_group);
+                            projected_component->redundancy_group,
+                            projected_component);
                         spdlog::info(
                             "   - component {}:{} Status: {:.2f}",
                             projected_component->name.empty()

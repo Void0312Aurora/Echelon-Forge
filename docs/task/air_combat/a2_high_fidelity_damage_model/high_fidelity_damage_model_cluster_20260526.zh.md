@@ -66,6 +66,7 @@ Phase 1 的第一批代码变更应该足够小：
 - `AircraftDamageStateUpdate` 只同步 Aircraft/C2Node 的 capability kill flags 与 `Lost` 析构，不泛化舰船 `NavalDamageStateUpdate`；
 - `AircraftDamageStateUpdate` 已开始消费 `AeroState`：结构受损后，高动压/高 Mach 暴露会累积 `flutter_exposure` / `structural_overstress` 并缓慢降低结构完整性；普通受损巡航和低速失速不会被直接当作 flutter；
 - `AircraftDamageStateUpdate` 已开始从 aircraft overlay 派生传感器性能：航电/机组损伤会降低 range/Pd、增加噪声并缩短 track memory，非传感器/非航电命中不误降感知；
+- `AircraftDamageStateUpdate` 已开始消费 control-axis overlay：aileron/elevon 组件命中会降低 roll/pitch authority，单侧控制面损伤会提高 `control_asymmetry`，并下推到 turn-rate / mobility 派生约束；
 - 默认 1v1 发射测试从“一发必杀”改为“不误锁/不误伤友方 + 事件目标一致”。
 
 ## Phase 2 authored hitbox 最小差异化
@@ -77,13 +78,14 @@ Phase 1 的第一批代码变更应该足够小：
 - wing/flight_control：降低 mobility capability，并收紧 `max_g`、`max_turn_rate`、`max_accel`、`max_climb_rate`；若 authored wing 同时保护 fuel，则触发 fuel leak；
 - 单次近炸事件对 structured aircraft 的平台级能力扣减按类别归一化，避免重叠 authored hitbox 把一枚近炸重复放大成直接 `Lost`；
 - diagnostics-only `debug_apply_local_proximity_hit` 用局部机体系坐标稳定命中指定 hitbox，避免测试依赖随机近炸几何。
-- 新增 `AircraftDamageState` overlay，记录结构、飞控、液压、推进、燃油、航电、机组、火灾、燃油泄漏、结构过载/颤振暴露、forced landing 和 subsystem kill 标志；
+- 新增 `AircraftDamageState` overlay，记录结构、飞控、液压、roll/pitch/yaw control authority、control asymmetry、推进、燃油、航电、机组、火灾、燃油泄漏、结构过载/颤振暴露、forced landing 和 subsystem kill 标志；
 - authored hitbox 命中先更新飞机专用 overlay，再下推到兼容的 `PlatformDamageState` capability 字段，避免继续把飞机毁伤细节挤进舰船语义字段；
 - diagnostics-only `debug_get_aircraft_damage_state` 用于验证 air-specific overlay。
 - 新增 `AircraftDamageBaseline` 保存初始 FlightModel/Propulsion/fuel-leak 基线，damage update 每帧从 overlay 派生 turn rate、accel、climb、g-limit、speed、推力和 fuel leak；
 - `AircraftDamageBaseline` 也保存初始 `Sensor` 基线，damage update 每帧从 `avionics_integrity` 与 `crew_effectiveness` 派生 BVR sensor range、detection probability、measurement noise 与 track memory；
 - propulsion 与 fuel 在 overlay 中拆分：fuel hit 不再直接等价 thrust loss，engine/propulsion hit 才降低推力派生值。
 - `AircraftDamageStateUpdate` 已补最小级联时间线：燃油泄漏会真实消耗 `FuelSystem` 内/外挂油并同步 `Mass` 燃油质量；火灾按燃油/液压/航电损伤和泄漏活动继续传播到结构、航电、机组、液压和燃油系统；液压损伤会继续拖累飞控并增加结构过载暴露；级联结果下推平台 mission/sensor/mobility/survivability 能力。
+- 最小离散控制面接入已开始：F-16 aileron 组件命中会降低 roll-axis authority、记录 control asymmetry，并通过外层 FlightModel 派生收紧 turn rate；这仍不是完整控制律/力矩模型。
 
 已补的 authored content：
 
@@ -98,6 +100,7 @@ Phase 1 的第一批代码变更应该足够小：
 
 - `test_phase2_aircraft_hitboxes_produce_distinct_subsystem_effects`
 - `test_phase2_aircraft_damage_overlay_tracks_air_specific_subsystems`
+- `test_phase2_aileron_component_damage_derives_roll_axis_authority`
 - `test_phase2_avionics_and_crew_damage_derives_sensor_performance`
 - `test_phase2_aircraft_fire_fuel_and_hydraulic_damage_cascade_over_time`
 - `test_phase2_damaged_airframe_high_speed_envelope_accumulates_structural_damage`
@@ -124,6 +127,7 @@ Phase 1 的第一批代码变更应该足够小：
 - 新增首个机制特定 component-threshold scaffold：同一 hitbox 内的飞控、燃油、传感器/航电、发动机、座舱/机组和结构按弹头族使用不同敏感度，避免所有组件继续共享同一个通用 severity 标量。
 - 新增首个合成 component-failure probability scaffold：直接命中和近炸投射会按 severity、mechanism scale、component threshold scale 与 direct/projection 形态采样组件失效；触发后把额外失效冲击写入 aircraft overlay / platform damage。
 - 新增数据库级 F-16 组件样例：wing hitbox 内声明 fuel cell、aileron actuator 和 wing spar 组件，包含组件名称、系统、局部几何、装甲、阈值、冗余组和关键性；
+- 新增数据库级 Su-35S 组件样例：wing hitbox 内声明 fuel cell、elevon actuator 和 wing spar 组件，证明组件化飞机数据模式可复用于第二个 airframe，而不只依赖 F-16 特例；
 - `EffectsEvent` 新增 `component_hit_count`、`component_primary_name`、`component_primary_system`、`component_primary_redundancy_group` 和 `component_primary_critical`，使组件级几何命中可由事件面追溯，而不是只出现在日志中；
 - component-failure probability 已开始消费组件 `critical` 与 `redundancy_group`：同几何下非关键、冗余 actuator 的失效概率低于单点关键 actuator；该语义仍是最小脚手架，不是完整冗余依赖图。
 - 新增显式 `FuzeProfile` 证据面：weapon JSON、运行时 missile 和 `EffectsEvent` 暴露 fuze type、trigger radius、delay、reliability 与 synthetic provenance；live proximity 仍不放行确定性引信，只用 trigger radius/reliability 调制现有 proximity/RNG gate，并用 delay 调度 delayed detonation。
@@ -143,9 +147,11 @@ Phase 1 的第一批代码变更应该足够小：
 - `test_phase3_continuous_rod_near_miss_uses_relative_velocity_axis`
 - `test_phase3_warhead_mechanism_sampling_consumes_hitbox_armor`
 - `test_phase3_database_f16_component_geometry_reports_primary_component`
+- `test_phase3_database_su35_component_geometry_reports_primary_component`
 - `test_phase3_component_redundancy_reduces_failure_probability`
 - `test_phase5_aircraft_vulnerability_profile_modulates_structured_damage`
 - `test_phase5_synthetic_vulnerability_profile_is_not_pk_or_fuze_authority`
+- `test_phase5_vulnerability_evidence_dataset_descriptor_loads_without_authority`
 - `test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface`
 - `test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_contract_fields`
 
@@ -161,8 +167,9 @@ Phase 1 的第一批代码变更应该足够小：
 - `default_effects_model` 只用 profile 调制 structured aircraft effects severity，仍由 hitbox、warhead profile、miss-distance 与平台状态决定后果；
 - 新增 velocity-aware diagnostics helper，用于验证 closure/aspect 对调制的影响；
 - 新增 vulnerability evidence diagnostics helper，用于验证 synthetic F-16 profile 只能作为调制输入，不能作为 Pk 或 deterministic fuze authority。
+- 新增首个只读 vulnerability evidence dataset descriptor，固定 target/weapon/aspect/closure/miss-distance key 和 authority=false 元数据；该 descriptor 当前只证明 evidence 数据形状可审计，不参与 damage 计算，也不授予 Pk 或 deterministic fuze authority。
 
-未完成项保持打开：正式 vulnerability/Pk dataset、目标族覆盖、外部/校准证据、正式 Pk/kill-chain 校准和 deterministic fuze 放行。
+未完成项保持打开：正式 calibrated vulnerability/Pk dataset、目标族覆盖、外部/校准证据、正式 Pk/kill-chain 校准和 deterministic fuze 放行。
 
 ## Reward / score authority guard
 

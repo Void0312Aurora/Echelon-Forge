@@ -757,9 +757,24 @@ inline void register_damage_system(flecs::world& ecs) {
                             }
 
                             if (FlightModel* flight_model = e.get_mut<FlightModel>()) {
-                                const double control = aircraft_damage_capability_floor(
-                                    std::min(aircraft->flight_control_integrity, aircraft->hydraulic_integrity),
+                                const double aggregate_control = std::min(
+                                    aircraft->flight_control_integrity,
+                                    aircraft->hydraulic_integrity);
+                                const double roll_control = aircraft_damage_capability_floor(
+                                    std::min(aggregate_control, aircraft->roll_control_integrity),
+                                    0.20) *
+                                    std::clamp(1.0 - (0.60 * aircraft->control_asymmetry), 0.45, 1.0);
+                                const double pitch_control = aircraft_damage_capability_floor(
+                                    std::min(aggregate_control, aircraft->pitch_control_integrity),
                                     0.20);
+                                const double yaw_control = aircraft_damage_capability_floor(
+                                    std::min(aggregate_control, aircraft->yaw_control_integrity),
+                                    0.20) *
+                                    std::clamp(1.0 - (0.35 * aircraft->control_asymmetry), 0.55, 1.0);
+                                const double control = std::min({
+                                    roll_control,
+                                    pitch_control,
+                                    yaw_control});
                                 const double structure = aircraft_damage_capability_floor(
                                     aircraft->structural_integrity,
                                     0.35);
@@ -779,8 +794,8 @@ inline void register_damage_system(flecs::world& ecs) {
                                 flight_model->takeoff_speed = baseline->takeoff_speed *
                                     (1.0 + (0.20 * (1.0 - aircraft->structural_integrity)));
                                 flight_model->landing_speed = baseline->landing_speed *
-                                    (1.0 + (0.25 * (1.0 - aircraft->flight_control_integrity)));
-                                flight_model->taxi_turn_rate = baseline->taxi_turn_rate * control;
+                                    (1.0 + (0.25 * (1.0 - pitch_control)));
+                                flight_model->taxi_turn_rate = baseline->taxi_turn_rate * yaw_control;
                             }
 
                             if (Propulsion* propulsion = e.get_mut<Propulsion>()) {
