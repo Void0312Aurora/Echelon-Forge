@@ -21,6 +21,7 @@
 #include "components/physics/performance.h"
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
+#include "components/systems/ew.h"
 #include "core/interfaces/engagement_event_recorder.h"
 #include "core/interfaces/effects_model.h"
 #include <spdlog/spdlog.h>
@@ -83,6 +84,108 @@ inline bool damage_fuze_is_timed(const std::string& fuze_type) {
     return fuze_type == "timed";
 }
 
+struct DamageFuzeSignatureEvidence {
+    std::string source = "none";
+    double target_signature = 0.0;
+    double signature_scale = 1.0;
+    double effective_reliability = 1.0;
+};
+
+inline double damage_target_rcs_from_aspect(
+    const RCSProfile* rcs,
+    const Transform& target_transform,
+    const Transform& observer_transform
+) {
+    if (!rcs) {
+        return 5.0;
+    }
+
+    constexpr double kPi = 3.14159265358979323846;
+    const double los_math_deg =
+        std::atan2(observer_transform.y - target_transform.y,
+                  observer_transform.x - target_transform.x) *
+        180.0 / kPi;
+    double los_nav_deg = 90.0 - los_math_deg;
+    while (los_nav_deg < 0.0) {
+        los_nav_deg += 360.0;
+    }
+    while (los_nav_deg >= 360.0) {
+        los_nav_deg -= 360.0;
+    }
+    double aspect_deg = los_nav_deg - target_transform.heading;
+    while (aspect_deg > 180.0) {
+        aspect_deg -= 360.0;
+    }
+    while (aspect_deg < -180.0) {
+        aspect_deg += 360.0;
+    }
+
+    const double aspect_abs = std::abs(aspect_deg);
+    if (aspect_abs <= 45.0) {
+        return std::max(1.0e-6, rcs->frontal_rcs);
+    }
+    if (aspect_abs >= 135.0) {
+        return std::max(1.0e-6, rcs->rear_rcs);
+    }
+    return std::max(1.0e-6, rcs->side_rcs);
+}
+
+inline double damage_target_projected_size_signature(
+    const HitboxConfig* hitboxes
+) {
+    if (!hitboxes || hitboxes->hitboxes.empty()) {
+        return 5.0;
+    }
+
+    double max_cross_section_m2 = 0.0;
+    for (const Hitbox& box : hitboxes->hitboxes) {
+        const double forward_area = std::max(0.0, box.dim_w * box.dim_h);
+        const double side_area = std::max(0.0, box.dim_l * box.dim_h);
+        const double plan_area = std::max(0.0, box.dim_l * box.dim_w);
+        max_cross_section_m2 = std::max(
+            max_cross_section_m2,
+            std::max({forward_area, side_area, plan_area}));
+    }
+    return std::max(0.1, max_cross_section_m2);
+}
+
+inline DamageFuzeSignatureEvidence damage_fuze_signature_evidence(
+    const std::string& fuze_type,
+    const Transform& missile_transform,
+    const Transform& target_transform,
+    const RCSProfile* target_rcs,
+    const HitboxConfig* target_hitboxes,
+    double fuze_reliability
+) {
+    DamageFuzeSignatureEvidence evidence{};
+    evidence.effective_reliability = std::clamp(fuze_reliability, 0.0, 1.0);
+
+    if (fuze_type == "radar_proximity") {
+        const double rcs_m2 = damage_target_rcs_from_aspect(
+            target_rcs,
+            target_transform,
+            missile_transform);
+        evidence.source = "target_rcs_aspect";
+        evidence.target_signature = rcs_m2;
+        evidence.signature_scale = std::clamp(std::sqrt(rcs_m2 / 5.0), 0.35, 1.25);
+    } else if (fuze_type == "laser_proximity") {
+        const double projected_area_m2 = damage_target_projected_size_signature(target_hitboxes);
+        evidence.source = "target_projected_geometry";
+        evidence.target_signature = projected_area_m2;
+        evidence.signature_scale = std::clamp(std::sqrt(projected_area_m2 / 6.0), 0.45, 1.15);
+    } else if (fuze_type == "proximity") {
+        evidence.source = "generic_proximity";
+        evidence.target_signature = 1.0;
+        evidence.signature_scale = 1.0;
+    }
+
+    evidence.effective_reliability = std::clamp(
+        fuze_reliability * evidence.signature_scale,
+        0.0,
+        1.0);
+    return evidence;
+}
+
 inline std::string damage_fuze_trigger_type(const Missile& missile) {
     const std::string fuze_type = damage_resolved_fuze_type(missile);
     if (damage_fuze_is_contact(fuze_type)) {
@@ -124,6 +227,89 @@ inline double damage_hitbox_surface_distance_local(
     const double dy = std::max({min_y - local_point[1], 0.0, local_point[1] - max_y});
     const double dz = std::max({min_z - local_point[2], 0.0, local_point[2] - max_z});
     return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+inline bool damage_point_inside_hitbox_local(
+    const std::array<double, 3>& local_point,
+    const Hitbox& box
+) {
+    return local_point[0] >= box.offset_x - box.dim_l * 0.5 &&
+        local_point[0] <= box.offset_x + box.dim_l * 0.5 &&
+        local_point[1] >= box.offset_y - box.dim_w * 0.5 &&
+        local_point[1] <= box.offset_y + box.dim_w * 0.5 &&
+        local_point[2] >= box.offset_z - box.dim_h * 0.5 &&
+        local_point[2] <= box.offset_z + box.dim_h * 0.5;
+}
+
+inline double damage_hitbox_penetration_depth_local(
+    const std::array<double, 3>& local_point,
+    const Hitbox& box
+) {
+    if (!damage_point_inside_hitbox_local(local_point, box)) {
+        return 0.0;
+    }
+    const double min_x = box.offset_x - box.dim_l * 0.5;
+    const double max_x = box.offset_x + box.dim_l * 0.5;
+    const double min_y = box.offset_y - box.dim_w * 0.5;
+    const double max_y = box.offset_y + box.dim_w * 0.5;
+    const double min_z = box.offset_z - box.dim_h * 0.5;
+    const double max_z = box.offset_z + box.dim_h * 0.5;
+    return std::max(
+        0.0,
+        std::min({
+            local_point[0] - min_x,
+            max_x - local_point[0],
+            local_point[1] - min_y,
+            max_y - local_point[1],
+            local_point[2] - min_z,
+            max_z - local_point[2],
+        }));
+}
+
+struct DamageContactFuzeEvidence {
+    double surface_distance_m = 0.0;
+    double penetration_depth_m = 0.0;
+    bool inside_hitbox = false;
+};
+
+inline DamageContactFuzeEvidence damage_contact_fuze_evidence(
+    const Transform& target_transform,
+    double world_x,
+    double world_y,
+    double world_z,
+    const HitboxConfig* hitboxes
+) {
+    DamageContactFuzeEvidence evidence{};
+    if (!hitboxes || hitboxes->hitboxes.empty()) {
+        const double dx = world_x - target_transform.x;
+        const double dy = world_y - target_transform.y;
+        const double dz = world_z - target_transform.z;
+        evidence.surface_distance_m = std::sqrt(dx * dx + dy * dy + dz * dz);
+        return evidence;
+    }
+
+    const auto local_point =
+        damage_world_point_to_local_body(target_transform, world_x, world_y, world_z);
+    double min_surface_distance_m = std::numeric_limits<double>::infinity();
+    double max_penetration_depth_m = 0.0;
+    bool inside_hitbox = false;
+    for (const auto& box : hitboxes->hitboxes) {
+        min_surface_distance_m = std::min(
+            min_surface_distance_m,
+            damage_hitbox_surface_distance_local(local_point, box));
+        if (damage_point_inside_hitbox_local(local_point, box)) {
+            inside_hitbox = true;
+            max_penetration_depth_m = std::max(
+                max_penetration_depth_m,
+                damage_hitbox_penetration_depth_local(local_point, box));
+        }
+    }
+
+    evidence.surface_distance_m =
+        std::isfinite(min_surface_distance_m) ? min_surface_distance_m : 0.0;
+    evidence.penetration_depth_m = max_penetration_depth_m;
+    evidence.inside_hitbox = inside_hitbox;
+    return evidence;
 }
 
 inline double damage_target_surface_distance_m(
@@ -205,19 +391,17 @@ inline std::array<double, 3> damage_world_point_to_local_body(
     double world_y,
     double world_z
 ) {
-    constexpr double kPi = 3.14159265358979323846;
-    const double dx = world_x - target_transform.x;
-    const double dy = world_y - target_transform.y;
-    const double dz = world_z - target_transform.z;
-    const double heading_rad = target_transform.heading * kPi / 180.0;
-    const double fwd_x = std::sin(heading_rad);
-    const double fwd_y = std::cos(heading_rad);
-    const double right_x = std::cos(heading_rad);
-    const double right_y = -std::sin(heading_rad);
+    const Math::Vector3 local = Math::world_to_body(
+        {
+            world_x - target_transform.x,
+            world_y - target_transform.y,
+            world_z - target_transform.z,
+        },
+        target_transform);
     return {
-        dx * fwd_x + dy * fwd_y,
-        dx * right_x + dy * right_y,
-        dz,
+        local.x,
+        -local.y,
+        local.z,
     };
 }
 
@@ -331,9 +515,16 @@ inline void apply_aircraft_damage_state_to_sensor(
 
     const double avionics = std::clamp(aircraft.avionics_integrity, 0.0, 1.0);
     const double crew = std::clamp(aircraft.crew_effectiveness, 0.0, 1.0);
-    const double mission_scale = aircraft_damage_capability_floor(std::min(avionics, crew), 0.12);
+    const double mission_crew =
+        std::clamp(aircraft.mission_crew_effectiveness, 0.0, 1.0);
+    const double command_navigation =
+        std::clamp(aircraft.command_navigation_integrity, 0.0, 1.0);
+    const double mission_operator =
+        std::min({crew, mission_crew, command_navigation});
+    const double mission_scale =
+        aircraft_damage_capability_floor(std::min(avionics, mission_operator), 0.12);
     const double avionics_scale = aircraft_damage_capability_floor(avionics, 0.10);
-    const double crew_scale = aircraft_damage_capability_floor(crew, 0.35);
+    const double crew_scale = aircraft_damage_capability_floor(mission_operator, 0.35);
 
     sensor.max_range = baseline.sensor_max_range * mission_scale;
     sensor.detection_prob = std::clamp(
@@ -414,6 +605,9 @@ inline void propagate_aircraft_damage_cascade(
         aircraft.structural_integrity -= 0.0060 * fire * dt_s;
         aircraft.avionics_integrity -= 0.0065 * fire * dt_s;
         aircraft.crew_effectiveness -= 0.0035 * fire * dt_s;
+        aircraft.pilot_effectiveness -= 0.0025 * fire * dt_s;
+        aircraft.mission_crew_effectiveness -= 0.0030 * fire * dt_s;
+        aircraft.command_navigation_integrity -= 0.0020 * fire * dt_s;
         aircraft.hydraulic_integrity -= 0.0045 * fire * dt_s;
         aircraft.fuel_system_integrity -= 0.0040 * fire * dt_s;
     }
@@ -486,6 +680,15 @@ inline void register_damage_system(flecs::world& ecs) {
                         p[i].x = std::isfinite(m[i].fuze_detonation_x) ? m[i].fuze_detonation_x : p[i].x;
                         p[i].y = std::isfinite(m[i].fuze_detonation_y) ? m[i].fuze_detonation_y : p[i].y;
                         p[i].z = std::isfinite(m[i].fuze_detonation_z) ? m[i].fuze_detonation_z : p[i].z;
+                        p[i].heading = std::isfinite(m[i].fuze_detonation_heading_deg)
+                            ? m[i].fuze_detonation_heading_deg
+                            : p[i].heading;
+                        p[i].pitch = std::isfinite(m[i].fuze_detonation_pitch_deg)
+                            ? m[i].fuze_detonation_pitch_deg
+                            : p[i].pitch;
+                        p[i].roll = std::isfinite(m[i].fuze_detonation_roll_deg)
+                            ? m[i].fuze_detonation_roll_deg
+                            : p[i].roll;
 
                         Missile effective = m[i];
                         effective.damage = effective.damage * (0.6 + 0.4 * m[i].fuze_quality);
@@ -525,6 +728,9 @@ inline void register_damage_system(flecs::world& ecs) {
                                 detonation_local[0],
                                 detonation_local[1],
                                 detonation_local[2],
+                                p[i].heading,
+                                p[i].pitch,
+                                p[i].roll,
                                 m[i].fuze_closure_mps,
                                 m[i].fuze_missile_axis_forward,
                                 m[i].fuze_missile_axis_right,
@@ -545,21 +751,67 @@ inline void register_damage_system(flecs::world& ecs) {
                                 std::max(0.0, effective.fuze_profile.delay_s),
                                 fuze_reliability,
                                 effective.fuze_profile.synthetic,
+                                m[i].fuze_signature_source,
+                                m[i].fuze_target_signature,
+                                m[i].fuze_signature_scale,
+                                m[i].fuze_effective_reliability,
+                                m[i].fuze_contact_surface_distance_m,
+                                m[i].fuze_contact_penetration_depth_m,
+                                m[i].fuze_contact_surface_tolerance_m,
+                                m[i].fuze_contact_inside_hitbox,
                                 effects_result.direct_hitbox_intersection,
                                 effects_result.projected_hitbox_count,
                                 effects_result.spatial_effect_scale,
                                 effects_result.mechanism_armor_scale,
                                 effects_result.mechanism_exposure_scale,
                                 effects_result.mechanism_effect_scale,
+                                effects_result.mechanism_fragment_energy_j,
+                                effects_result.mechanism_penetration_margin,
+                                effects_result.mechanism_blast_overpressure_kpa,
+                                effects_result.mechanism_blast_impulse_kpa_ms,
+                                effects_result.mechanism_rod_cut_margin,
+                                effects_result.warhead_spatial_sample_count,
+                                effects_result.warhead_spatial_hit_estimate,
+                                effects_result.warhead_spatial_hit_fraction,
+                                effects_result.warhead_spatial_energy_scale,
+                                effects_result.warhead_spatial_pattern_scale,
+                                effects_result.warhead_orientation_axis_forward,
+                                effects_result.warhead_orientation_axis_right,
+                                effects_result.warhead_orientation_axis_up,
+                                effects_result.warhead_orientation_pattern_scale,
                                 effects_result.component_threshold_scale,
                                 effects_result.component_failure_probability,
+                                effects_result.component_failure_probability_source,
+                                effects_result.component_failure_probability_calibrated,
+                                effects_result.component_failure_probability_evidence_dataset_ref,
                                 effects_result.component_failure_sample,
                                 effects_result.component_failure_count,
                                 effects_result.component_hit_count,
                                 effects_result.component_primary_name,
                                 effects_result.component_primary_system,
                                 effects_result.component_primary_redundancy_group,
-                                effects_result.component_primary_critical);
+                                effects_result.component_primary_critical,
+                                effects_result.component_primary_redundancy_group_id,
+                                effects_result.component_primary_integrity,
+                                effects_result.component_redundancy_group_availability,
+                                effects_result.component_redundancy_group_member_count,
+                                effects_result.component_redundancy_group_failed_count,
+                                effects_result.vulnerability_profile_present,
+                                effects_result.vulnerability_profile_synthetic,
+                                effects_result.vulnerability_calibrated_evidence,
+                                effects_result.vulnerability_pk_authority,
+                                effects_result.vulnerability_deterministic_fuze_authority,
+                                effects_result.vulnerability_evidence_dataset_valid,
+                                effects_result.vulnerability_evidence_dataset_ref,
+                                effects_result.vulnerability_calibration_status,
+                                effects_result.vulnerability_provenance,
+                                effects_result.vulnerability_aspect_bucket,
+                                effects_result.vulnerability_family_scale,
+                                effects_result.vulnerability_aspect_scale,
+                                effects_result.vulnerability_closure_mps,
+                                effects_result.vulnerability_closure_scale,
+                                effects_result.vulnerability_miss_distance_scale,
+                                effects_result.vulnerability_effect_scale);
                         }
                         it.entity(i).destruct();
                         continue;
@@ -610,8 +862,19 @@ inline void register_damage_system(flecs::world& ecs) {
                         m[i].fuze_detonation_x = p[i].x;
                         m[i].fuze_detonation_y = p[i].y;
                         m[i].fuze_detonation_z = p[i].z;
+                        m[i].fuze_detonation_heading_deg = p[i].heading;
+                        m[i].fuze_detonation_pitch_deg = p[i].pitch;
+                        m[i].fuze_detonation_roll_deg = p[i].roll;
                         m[i].fuze_quality = quality;
                         m[i].fuze_hit_probability = fuze_reliability;
+                        m[i].fuze_signature_source = "timed";
+                        m[i].fuze_target_signature = 0.0;
+                        m[i].fuze_signature_scale = 1.0;
+                        m[i].fuze_effective_reliability = fuze_reliability;
+                        m[i].fuze_contact_surface_distance_m = 0.0;
+                        m[i].fuze_contact_penetration_depth_m = 0.0;
+                        m[i].fuze_contact_surface_tolerance_m = 0.0;
+                        m[i].fuze_contact_inside_hitbox = false;
                         m[i].fuze_closure_mps = event_closure_mps;
                         m[i].fuze_missile_axis_forward = missile_axis[0];
                         m[i].fuze_missile_axis_right = missile_axis[1];
@@ -653,13 +916,15 @@ inline void register_damage_system(flecs::world& ecs) {
                         : m[i].fuse_distance;
                     double detonation_metric_m = min_dist;
                     double effective_trigger_radius_m = trigger_radius_m;
+                    DamageContactFuzeEvidence contact_evidence{};
                     if (contact_fuze) {
-                        detonation_metric_m = damage_target_surface_distance_m(
+                        contact_evidence = damage_contact_fuze_evidence(
                             *t_pos,
                             p[i].x,
                             p[i].y,
                             p[i].z,
                             target_hitboxes);
+                        detonation_metric_m = contact_evidence.surface_distance_m;
                         effective_trigger_radius_m = damage_contact_fuze_surface_tolerance_m(m[i]);
                     }
                     if (detonation_metric_m > effective_trigger_radius_m) {
@@ -673,6 +938,20 @@ inline void register_damage_system(flecs::world& ecs) {
                         : std::clamp(1.0 - min_dist / fuse, 0.0, 1.0);
                     const double fuze_reliability =
                         std::clamp(m[i].fuze_profile.reliability, 0.0, 1.0);
+                    const DamageFuzeSignatureEvidence fuze_signature =
+                        contact_fuze
+                            ? DamageFuzeSignatureEvidence{
+                                  "contact_surface",
+                                  0.0,
+                                  1.0,
+                                  fuze_reliability}
+                            : damage_fuze_signature_evidence(
+                                  fuze_type,
+                                  p[i],
+                                  *t_pos,
+                                  target_entity.get<RCSProfile>(),
+                                  target_hitboxes,
+                                  fuze_reliability);
 
                     const double evasion = resolved_compatibility_damage_evasion(target_entity);
 
@@ -680,7 +959,9 @@ inline void register_damage_system(flecs::world& ecs) {
                         ? 1.0
                         : 0.35 + 0.65 * quality;
                     double hit_prob = std::clamp(
-                        base_hit * fuze_reliability * (contact_fuze ? 1.0 : (1.0 - 0.3 * evasion)),
+                        base_hit *
+                            fuze_signature.effective_reliability *
+                            (contact_fuze ? 1.0 : (1.0 - 0.3 * evasion)),
                         0.0,
                         contact_fuze ? 1.0 : 0.98);
                     if (damage_rand_uniform01(m[i].rng_state) > hit_prob) {
@@ -706,8 +987,23 @@ inline void register_damage_system(flecs::world& ecs) {
                     m[i].fuze_detonation_x = p[i].x;
                     m[i].fuze_detonation_y = p[i].y;
                     m[i].fuze_detonation_z = p[i].z;
+                    m[i].fuze_detonation_heading_deg = p[i].heading;
+                    m[i].fuze_detonation_pitch_deg = p[i].pitch;
+                    m[i].fuze_detonation_roll_deg = p[i].roll;
                     m[i].fuze_quality = quality;
                     m[i].fuze_hit_probability = hit_prob;
+                    m[i].fuze_signature_source = fuze_signature.source;
+                    m[i].fuze_target_signature = fuze_signature.target_signature;
+                    m[i].fuze_signature_scale = fuze_signature.signature_scale;
+                    m[i].fuze_effective_reliability = fuze_signature.effective_reliability;
+                    m[i].fuze_contact_surface_distance_m =
+                        contact_fuze ? contact_evidence.surface_distance_m : 0.0;
+                    m[i].fuze_contact_penetration_depth_m =
+                        contact_fuze ? contact_evidence.penetration_depth_m : 0.0;
+                    m[i].fuze_contact_surface_tolerance_m =
+                        contact_fuze ? effective_trigger_radius_m : 0.0;
+                    m[i].fuze_contact_inside_hitbox =
+                        contact_fuze && contact_evidence.inside_hitbox;
                     m[i].fuze_closure_mps = event_closure_mps;
                     m[i].fuze_missile_axis_forward = missile_axis[0];
                     m[i].fuze_missile_axis_right = missile_axis[1];
@@ -760,17 +1056,23 @@ inline void register_damage_system(flecs::world& ecs) {
                                 const double aggregate_control = std::min(
                                     aircraft->flight_control_integrity,
                                     aircraft->hydraulic_integrity);
+                                const double pilot_control = aircraft_damage_capability_floor(
+                                    aircraft->pilot_effectiveness,
+                                    0.18);
                                 const double roll_control = aircraft_damage_capability_floor(
                                     std::min(aggregate_control, aircraft->roll_control_integrity),
                                     0.20) *
-                                    std::clamp(1.0 - (0.60 * aircraft->control_asymmetry), 0.45, 1.0);
+                                    std::clamp(1.0 - (0.60 * aircraft->control_asymmetry), 0.45, 1.0) *
+                                    pilot_control;
                                 const double pitch_control = aircraft_damage_capability_floor(
                                     std::min(aggregate_control, aircraft->pitch_control_integrity),
-                                    0.20);
+                                    0.20) *
+                                    pilot_control;
                                 const double yaw_control = aircraft_damage_capability_floor(
                                     std::min(aggregate_control, aircraft->yaw_control_integrity),
                                     0.20) *
-                                    std::clamp(1.0 - (0.35 * aircraft->control_asymmetry), 0.55, 1.0);
+                                    std::clamp(1.0 - (0.35 * aircraft->control_asymmetry), 0.55, 1.0) *
+                                    pilot_control;
                                 const double control = std::min({
                                     roll_control,
                                     pitch_control,

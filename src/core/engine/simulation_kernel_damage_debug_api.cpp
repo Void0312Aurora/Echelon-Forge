@@ -44,19 +44,16 @@ Transform local_body_point_to_world_transform(
     double local_right_m,
     double local_up_m
 ) {
-    constexpr double kPi = 3.14159265358979323846;
-    const double heading_rad = target_transform.heading * kPi / 180.0;
-    const double fwd_x = std::sin(heading_rad);
-    const double fwd_y = std::cos(heading_rad);
-    const double right_x = std::cos(heading_rad);
-    const double right_y = -std::sin(heading_rad);
+    const Math::Vector3 world_delta = Math::body_to_world(
+        {local_forward_m, -local_right_m, local_up_m},
+        target_transform);
     return {
-        target_transform.x + (local_forward_m * fwd_x) + (local_right_m * right_x),
-        target_transform.y + (local_forward_m * fwd_y) + (local_right_m * right_y),
-        target_transform.z + local_up_m,
+        target_transform.x + world_delta.x,
+        target_transform.y + world_delta.y,
+        target_transform.z + world_delta.z,
         target_transform.heading,
-        0.0,
-        0.0,
+        target_transform.pitch,
+        target_transform.roll,
     };
 }
 
@@ -66,19 +63,17 @@ std::array<double, 3> world_point_to_local_body(
     double world_y,
     double world_z
 ) {
-    constexpr double kPi = 3.14159265358979323846;
-    const double dx = world_x - target_transform.x;
-    const double dy = world_y - target_transform.y;
-    const double dz = world_z - target_transform.z;
-    const double heading_rad = target_transform.heading * kPi / 180.0;
-    const double fwd_x = std::sin(heading_rad);
-    const double fwd_y = std::cos(heading_rad);
-    const double right_x = std::cos(heading_rad);
-    const double right_y = -std::sin(heading_rad);
+    const Math::Vector3 local = Math::world_to_body(
+        {
+            world_x - target_transform.x,
+            world_y - target_transform.y,
+            world_z - target_transform.z,
+        },
+        target_transform);
     return {
-        dx * fwd_x + dy * fwd_y,
-        dx * right_x + dy * right_y,
-        dz,
+        local.x,
+        -local.y,
+        local.z,
     };
 }
 
@@ -192,6 +187,9 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     double detonation_local_forward_m,
     double detonation_local_right_m,
     double detonation_local_up_m,
+    double detonation_heading_deg,
+    double detonation_pitch_deg,
+    double detonation_roll_deg,
     double closure_mps,
     double missile_axis_forward,
     double missile_axis_right,
@@ -208,21 +206,67 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     double fuze_delay_s,
     double fuze_reliability,
     bool fuze_profile_synthetic,
+    const std::string& fuze_signature_source,
+    double fuze_target_signature,
+    double fuze_signature_scale,
+    double fuze_effective_reliability,
+    double fuze_contact_surface_distance_m,
+    double fuze_contact_penetration_depth_m,
+    double fuze_contact_surface_tolerance_m,
+    bool fuze_contact_inside_hitbox,
     bool direct_hitbox_intersection,
     std::uint32_t projected_hitbox_count,
     double spatial_effect_scale,
     double mechanism_armor_scale,
     double mechanism_exposure_scale,
     double mechanism_effect_scale,
+    double mechanism_fragment_energy_j,
+    double mechanism_penetration_margin,
+    double mechanism_blast_overpressure_kpa,
+    double mechanism_blast_impulse_kpa_ms,
+    double mechanism_rod_cut_margin,
+    std::uint32_t warhead_spatial_sample_count,
+    double warhead_spatial_hit_estimate,
+    double warhead_spatial_hit_fraction,
+    double warhead_spatial_energy_scale,
+    double warhead_spatial_pattern_scale,
+    double warhead_orientation_axis_forward,
+    double warhead_orientation_axis_right,
+    double warhead_orientation_axis_up,
+    double warhead_orientation_pattern_scale,
     double component_threshold_scale,
     double component_failure_probability,
+    const std::string& component_failure_probability_source,
+    bool component_failure_probability_calibrated,
+    const std::string& component_failure_probability_evidence_dataset_ref,
     double component_failure_sample,
     std::uint32_t component_failure_count,
     std::uint32_t component_hit_count,
     const std::string& component_primary_name,
     const std::string& component_primary_system,
     double component_primary_redundancy_group,
-    bool component_primary_critical
+    bool component_primary_critical,
+    const std::string& component_primary_redundancy_group_id,
+    double component_primary_integrity,
+    double component_redundancy_group_availability,
+    std::uint32_t component_redundancy_group_member_count,
+    std::uint32_t component_redundancy_group_failed_count,
+    bool vulnerability_profile_present,
+    bool vulnerability_profile_synthetic,
+    bool vulnerability_calibrated_evidence,
+    bool vulnerability_pk_authority,
+    bool vulnerability_deterministic_fuze_authority,
+    bool vulnerability_evidence_dataset_valid,
+    const std::string& vulnerability_evidence_dataset_ref,
+    const std::string& vulnerability_calibration_status,
+    const std::string& vulnerability_provenance,
+    const std::string& vulnerability_aspect_bucket,
+    double vulnerability_family_scale,
+    double vulnerability_aspect_scale,
+    double vulnerability_closure_mps,
+    double vulnerability_closure_scale,
+    double vulnerability_miss_distance_scale,
+    double vulnerability_effect_scale
 ) {
     const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
     const std::int64_t frame_count = info ? info->frame_count_total : 0;
@@ -262,6 +306,9 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.detonation_local_forward_m = detonation_local_forward_m;
     effects.detonation_local_right_m = detonation_local_right_m;
     effects.detonation_local_up_m = detonation_local_up_m;
+    effects.detonation_heading_deg = detonation_heading_deg;
+    effects.detonation_pitch_deg = detonation_pitch_deg;
+    effects.detonation_roll_deg = detonation_roll_deg;
     effects.closure_mps = closure_mps;
     effects.missile_axis_forward = missile_axis_forward;
     effects.missile_axis_right = missile_axis_right;
@@ -278,14 +325,41 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.fuze_delay_s = fuze_delay_s;
     effects.fuze_reliability = fuze_reliability;
     effects.fuze_profile_synthetic = fuze_profile_synthetic;
+    effects.fuze_signature_source = fuze_signature_source;
+    effects.fuze_target_signature = fuze_target_signature;
+    effects.fuze_signature_scale = fuze_signature_scale;
+    effects.fuze_effective_reliability = fuze_effective_reliability;
+    effects.fuze_contact_surface_distance_m = fuze_contact_surface_distance_m;
+    effects.fuze_contact_penetration_depth_m = fuze_contact_penetration_depth_m;
+    effects.fuze_contact_surface_tolerance_m = fuze_contact_surface_tolerance_m;
+    effects.fuze_contact_inside_hitbox = fuze_contact_inside_hitbox;
     effects.direct_hitbox_intersection = direct_hitbox_intersection;
     effects.projected_hitbox_count = projected_hitbox_count;
     effects.spatial_effect_scale = spatial_effect_scale;
     effects.mechanism_armor_scale = mechanism_armor_scale;
     effects.mechanism_exposure_scale = mechanism_exposure_scale;
     effects.mechanism_effect_scale = mechanism_effect_scale;
+    effects.mechanism_fragment_energy_j = mechanism_fragment_energy_j;
+    effects.mechanism_penetration_margin = mechanism_penetration_margin;
+    effects.mechanism_blast_overpressure_kpa = mechanism_blast_overpressure_kpa;
+    effects.mechanism_blast_impulse_kpa_ms = mechanism_blast_impulse_kpa_ms;
+    effects.mechanism_rod_cut_margin = mechanism_rod_cut_margin;
+    effects.warhead_spatial_sample_count = warhead_spatial_sample_count;
+    effects.warhead_spatial_hit_estimate = warhead_spatial_hit_estimate;
+    effects.warhead_spatial_hit_fraction = warhead_spatial_hit_fraction;
+    effects.warhead_spatial_energy_scale = warhead_spatial_energy_scale;
+    effects.warhead_spatial_pattern_scale = warhead_spatial_pattern_scale;
+    effects.warhead_orientation_axis_forward = warhead_orientation_axis_forward;
+    effects.warhead_orientation_axis_right = warhead_orientation_axis_right;
+    effects.warhead_orientation_axis_up = warhead_orientation_axis_up;
+    effects.warhead_orientation_pattern_scale = warhead_orientation_pattern_scale;
     effects.component_threshold_scale = component_threshold_scale;
     effects.component_failure_probability = component_failure_probability;
+    effects.component_failure_probability_source = component_failure_probability_source;
+    effects.component_failure_probability_calibrated =
+        component_failure_probability_calibrated;
+    effects.component_failure_probability_evidence_dataset_ref =
+        component_failure_probability_evidence_dataset_ref;
     effects.component_failure_sample = component_failure_sample;
     effects.component_failure_count = component_failure_count;
     effects.component_hit_count = component_hit_count;
@@ -293,6 +367,28 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.component_primary_system = component_primary_system;
     effects.component_primary_redundancy_group = component_primary_redundancy_group;
     effects.component_primary_critical = component_primary_critical;
+    effects.component_primary_redundancy_group_id = component_primary_redundancy_group_id;
+    effects.component_primary_integrity = component_primary_integrity;
+    effects.component_redundancy_group_availability = component_redundancy_group_availability;
+    effects.component_redundancy_group_member_count = component_redundancy_group_member_count;
+    effects.component_redundancy_group_failed_count = component_redundancy_group_failed_count;
+    effects.vulnerability_profile_present = vulnerability_profile_present;
+    effects.vulnerability_profile_synthetic = vulnerability_profile_synthetic;
+    effects.vulnerability_calibrated_evidence = vulnerability_calibrated_evidence;
+    effects.vulnerability_pk_authority = vulnerability_pk_authority;
+    effects.vulnerability_deterministic_fuze_authority =
+        vulnerability_deterministic_fuze_authority;
+    effects.vulnerability_evidence_dataset_valid = vulnerability_evidence_dataset_valid;
+    effects.vulnerability_evidence_dataset_ref = vulnerability_evidence_dataset_ref;
+    effects.vulnerability_calibration_status = vulnerability_calibration_status;
+    effects.vulnerability_provenance = vulnerability_provenance;
+    effects.vulnerability_aspect_bucket = vulnerability_aspect_bucket;
+    effects.vulnerability_family_scale = vulnerability_family_scale;
+    effects.vulnerability_aspect_scale = vulnerability_aspect_scale;
+    effects.vulnerability_closure_mps = vulnerability_closure_mps;
+    effects.vulnerability_closure_scale = vulnerability_closure_scale;
+    effects.vulnerability_miss_distance_scale = vulnerability_miss_distance_scale;
+    effects.vulnerability_effect_scale = vulnerability_effect_scale;
     recent_engagement_events_.effects_events.push_back(effects);
     while (recent_engagement_events_.effects_events.size() > kMaxRecentEngagementEvents) {
         recent_engagement_events_.effects_events.erase(recent_engagement_events_.effects_events.begin());
@@ -445,6 +541,9 @@ bool SimulationKernel::debug_apply_proximity_hit(
         detonation_local[0],
         detonation_local[1],
         detonation_local[2],
+        impact_transform.heading,
+        impact_transform.pitch,
+        impact_transform.roll,
         0.0,
         0.0,
         0.0,
@@ -461,21 +560,67 @@ bool SimulationKernel::debug_apply_proximity_hit(
         synthetic.fuze_profile.delay_s,
         synthetic.fuze_profile.reliability,
         synthetic.fuze_profile.synthetic,
+        "debug",
+        0.0,
+        1.0,
+        synthetic.fuze_profile.reliability,
+        0.0,
+        0.0,
+        0.0,
+        false,
         effects_result.direct_hitbox_intersection,
         effects_result.projected_hitbox_count,
         effects_result.spatial_effect_scale,
         effects_result.mechanism_armor_scale,
         effects_result.mechanism_exposure_scale,
         effects_result.mechanism_effect_scale,
+        effects_result.mechanism_fragment_energy_j,
+        effects_result.mechanism_penetration_margin,
+        effects_result.mechanism_blast_overpressure_kpa,
+        effects_result.mechanism_blast_impulse_kpa_ms,
+        effects_result.mechanism_rod_cut_margin,
+        effects_result.warhead_spatial_sample_count,
+        effects_result.warhead_spatial_hit_estimate,
+        effects_result.warhead_spatial_hit_fraction,
+        effects_result.warhead_spatial_energy_scale,
+        effects_result.warhead_spatial_pattern_scale,
+        effects_result.warhead_orientation_axis_forward,
+        effects_result.warhead_orientation_axis_right,
+        effects_result.warhead_orientation_axis_up,
+        effects_result.warhead_orientation_pattern_scale,
         effects_result.component_threshold_scale,
         effects_result.component_failure_probability,
+        effects_result.component_failure_probability_source,
+        effects_result.component_failure_probability_calibrated,
+        effects_result.component_failure_probability_evidence_dataset_ref,
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
         effects_result.component_primary_name,
         effects_result.component_primary_system,
         effects_result.component_primary_redundancy_group,
-        effects_result.component_primary_critical);
+        effects_result.component_primary_critical,
+        effects_result.component_primary_redundancy_group_id,
+        effects_result.component_primary_integrity,
+        effects_result.component_redundancy_group_availability,
+        effects_result.component_redundancy_group_member_count,
+        effects_result.component_redundancy_group_failed_count,
+        effects_result.vulnerability_profile_present,
+        effects_result.vulnerability_profile_synthetic,
+        effects_result.vulnerability_calibrated_evidence,
+        effects_result.vulnerability_pk_authority,
+        effects_result.vulnerability_deterministic_fuze_authority,
+        effects_result.vulnerability_evidence_dataset_valid,
+        effects_result.vulnerability_evidence_dataset_ref,
+        effects_result.vulnerability_calibration_status,
+        effects_result.vulnerability_provenance,
+        effects_result.vulnerability_aspect_bucket,
+        effects_result.vulnerability_family_scale,
+        effects_result.vulnerability_aspect_scale,
+        effects_result.vulnerability_closure_mps,
+        effects_result.vulnerability_closure_scale,
+        effects_result.vulnerability_miss_distance_scale,
+        effects_result.vulnerability_effect_scale);
     impact.destruct();
     return true;
 }
@@ -563,6 +708,9 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
         detonation_local[0],
         detonation_local[1],
         detonation_local[2],
+        impact_transform.heading,
+        impact_transform.pitch,
+        impact_transform.roll,
         0.0,
         0.0,
         0.0,
@@ -579,21 +727,67 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
         synthetic.fuze_profile.delay_s,
         synthetic.fuze_profile.reliability,
         synthetic.fuze_profile.synthetic,
+        "debug",
+        0.0,
+        1.0,
+        synthetic.fuze_profile.reliability,
+        0.0,
+        0.0,
+        0.0,
+        false,
         effects_result.direct_hitbox_intersection,
         effects_result.projected_hitbox_count,
         effects_result.spatial_effect_scale,
         effects_result.mechanism_armor_scale,
         effects_result.mechanism_exposure_scale,
         effects_result.mechanism_effect_scale,
+        effects_result.mechanism_fragment_energy_j,
+        effects_result.mechanism_penetration_margin,
+        effects_result.mechanism_blast_overpressure_kpa,
+        effects_result.mechanism_blast_impulse_kpa_ms,
+        effects_result.mechanism_rod_cut_margin,
+        effects_result.warhead_spatial_sample_count,
+        effects_result.warhead_spatial_hit_estimate,
+        effects_result.warhead_spatial_hit_fraction,
+        effects_result.warhead_spatial_energy_scale,
+        effects_result.warhead_spatial_pattern_scale,
+        effects_result.warhead_orientation_axis_forward,
+        effects_result.warhead_orientation_axis_right,
+        effects_result.warhead_orientation_axis_up,
+        effects_result.warhead_orientation_pattern_scale,
         effects_result.component_threshold_scale,
         effects_result.component_failure_probability,
+        effects_result.component_failure_probability_source,
+        effects_result.component_failure_probability_calibrated,
+        effects_result.component_failure_probability_evidence_dataset_ref,
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
         effects_result.component_primary_name,
         effects_result.component_primary_system,
         effects_result.component_primary_redundancy_group,
-        effects_result.component_primary_critical);
+        effects_result.component_primary_critical,
+        effects_result.component_primary_redundancy_group_id,
+        effects_result.component_primary_integrity,
+        effects_result.component_redundancy_group_availability,
+        effects_result.component_redundancy_group_member_count,
+        effects_result.component_redundancy_group_failed_count,
+        effects_result.vulnerability_profile_present,
+        effects_result.vulnerability_profile_synthetic,
+        effects_result.vulnerability_calibrated_evidence,
+        effects_result.vulnerability_pk_authority,
+        effects_result.vulnerability_deterministic_fuze_authority,
+        effects_result.vulnerability_evidence_dataset_valid,
+        effects_result.vulnerability_evidence_dataset_ref,
+        effects_result.vulnerability_calibration_status,
+        effects_result.vulnerability_provenance,
+        effects_result.vulnerability_aspect_bucket,
+        effects_result.vulnerability_family_scale,
+        effects_result.vulnerability_aspect_scale,
+        effects_result.vulnerability_closure_mps,
+        effects_result.vulnerability_closure_scale,
+        effects_result.vulnerability_miss_distance_scale,
+        effects_result.vulnerability_effect_scale);
     impact.destruct();
     return true;
 }
@@ -628,6 +822,37 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
     double missile_vx_mps,
     double missile_vy_mps,
     double missile_vz_mps
+) {
+    const auto target = ecs.entity(target_id);
+    const Transform* target_transform = target.is_valid() ? target.get<Transform>() : nullptr;
+    return debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
+        attacker_id,
+        target_id,
+        local_forward_m,
+        local_right_m,
+        local_up_m,
+        warhead_profile,
+        missile_vx_mps,
+        missile_vy_mps,
+        missile_vz_mps,
+        target_transform ? target_transform->heading : 0.0,
+        target_transform ? target_transform->pitch : 0.0,
+        target_transform ? target_transform->roll : 0.0);
+}
+
+bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
+    uint64_t attacker_id,
+    uint64_t target_id,
+    double local_forward_m,
+    double local_right_m,
+    double local_up_m,
+    const WarheadProfile& warhead_profile,
+    double missile_vx_mps,
+    double missile_vy_mps,
+    double missile_vz_mps,
+    double detonation_heading_deg,
+    double detonation_pitch_deg,
+    double detonation_roll_deg
 ) {
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
@@ -690,8 +915,12 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
         local_forward_m,
         local_right_m,
         local_up_m);
+    Transform detonation_transform = impact_transform;
+    detonation_transform.heading = detonation_heading_deg;
+    detonation_transform.pitch = detonation_pitch_deg;
+    detonation_transform.roll = detonation_roll_deg;
     auto impact = ecs.entity()
-        .set<Transform>(impact_transform)
+        .set<Transform>(detonation_transform)
         .set<Velocity>({missile_vx_mps, missile_vy_mps, missile_vz_mps})
         .set<Missile>(synthetic)
         .add<SimObject>();
@@ -731,6 +960,9 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
         detonation_local[0],
         detonation_local[1],
         detonation_local[2],
+        detonation_transform.heading,
+        detonation_transform.pitch,
+        detonation_transform.roll,
         closure_mps,
         missile_axis[0],
         missile_axis[1],
@@ -751,21 +983,67 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
         synthetic.fuze_profile.delay_s,
         synthetic.fuze_profile.reliability,
         synthetic.fuze_profile.synthetic,
+        "debug",
+        0.0,
+        1.0,
+        synthetic.fuze_profile.reliability,
+        0.0,
+        0.0,
+        0.0,
+        false,
         effects_result.direct_hitbox_intersection,
         effects_result.projected_hitbox_count,
         effects_result.spatial_effect_scale,
         effects_result.mechanism_armor_scale,
         effects_result.mechanism_exposure_scale,
         effects_result.mechanism_effect_scale,
+        effects_result.mechanism_fragment_energy_j,
+        effects_result.mechanism_penetration_margin,
+        effects_result.mechanism_blast_overpressure_kpa,
+        effects_result.mechanism_blast_impulse_kpa_ms,
+        effects_result.mechanism_rod_cut_margin,
+        effects_result.warhead_spatial_sample_count,
+        effects_result.warhead_spatial_hit_estimate,
+        effects_result.warhead_spatial_hit_fraction,
+        effects_result.warhead_spatial_energy_scale,
+        effects_result.warhead_spatial_pattern_scale,
+        effects_result.warhead_orientation_axis_forward,
+        effects_result.warhead_orientation_axis_right,
+        effects_result.warhead_orientation_axis_up,
+        effects_result.warhead_orientation_pattern_scale,
         effects_result.component_threshold_scale,
         effects_result.component_failure_probability,
+        effects_result.component_failure_probability_source,
+        effects_result.component_failure_probability_calibrated,
+        effects_result.component_failure_probability_evidence_dataset_ref,
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
         effects_result.component_primary_name,
         effects_result.component_primary_system,
         effects_result.component_primary_redundancy_group,
-        effects_result.component_primary_critical);
+        effects_result.component_primary_critical,
+        effects_result.component_primary_redundancy_group_id,
+        effects_result.component_primary_integrity,
+        effects_result.component_redundancy_group_availability,
+        effects_result.component_redundancy_group_member_count,
+        effects_result.component_redundancy_group_failed_count,
+        effects_result.vulnerability_profile_present,
+        effects_result.vulnerability_profile_synthetic,
+        effects_result.vulnerability_calibrated_evidence,
+        effects_result.vulnerability_pk_authority,
+        effects_result.vulnerability_deterministic_fuze_authority,
+        effects_result.vulnerability_evidence_dataset_valid,
+        effects_result.vulnerability_evidence_dataset_ref,
+        effects_result.vulnerability_calibration_status,
+        effects_result.vulnerability_provenance,
+        effects_result.vulnerability_aspect_bucket,
+        effects_result.vulnerability_family_scale,
+        effects_result.vulnerability_aspect_scale,
+        effects_result.vulnerability_closure_mps,
+        effects_result.vulnerability_closure_scale,
+        effects_result.vulnerability_miss_distance_scale,
+        effects_result.vulnerability_effect_scale);
     impact.destruct();
     return true;
 }

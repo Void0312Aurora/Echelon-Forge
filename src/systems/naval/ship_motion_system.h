@@ -98,9 +98,13 @@ inline bool resolve_ship_station_command(
         return false;
     }
 
-    const double dx = own_transform.x - reference_transform->x;
-    const double dy = own_transform.y - reference_transform->y;
-    const double range_error_m = std::hypot(dx, dy) - station_radius_m;
+    const double desired_heading_rad = Math::to_radians(stationing.station_bearing_deg);
+    const double desired_x =
+        reference_transform->x + std::sin(desired_heading_rad) * station_radius_m;
+    const double desired_y =
+        reference_transform->y + std::cos(desired_heading_rad) * station_radius_m;
+    const double to_station_x = desired_x - own_transform.x;
+    const double to_station_y = desired_y - own_transform.y;
     *commanded_heading_deg_out = ship_station_target_bearing_deg(
         reference_transform->x,
         reference_transform->y,
@@ -113,7 +117,11 @@ inline bool resolve_ship_station_command(
 
     const double reference_speed_mps =
         std::hypot(reference_velocity->vx, reference_velocity->vy);
-    const double correction_mps = std::clamp(range_error_m * 0.0025, -3.0, 3.0);
+    const double reference_speed_norm = std::max(1.0e-6, reference_speed_mps);
+    const double along_track_error_m =
+        (to_station_x * reference_velocity->vx + to_station_y * reference_velocity->vy) /
+        reference_speed_norm;
+    const double correction_mps = std::clamp(along_track_error_m * 0.0025, -3.0, 3.0);
     *commanded_speed_mps_out = std::max(0.0, reference_speed_mps + correction_mps);
     return true;
 }

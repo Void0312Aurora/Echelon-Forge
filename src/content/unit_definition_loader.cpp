@@ -6,8 +6,31 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <unordered_map>
+
+namespace fs = std::filesystem;
 
 namespace {
+
+struct VulnerabilityEvidenceDescriptor {
+    std::string dataset_id;
+    std::string target_type;
+    std::string weapon_family;
+    std::string aspect_bucket;
+    std::string closure_bucket;
+    std::string miss_distance_bucket;
+    std::string calibration_status = "unvalidated";
+    std::string source_kind;
+    bool effect_scale_authority = false;
+    bool component_failure_probability_authority = false;
+    bool pk_authority = false;
+    bool deterministic_fuze_authority = false;
+    std::vector<AircraftVulnerabilityEvidenceRow> rows;
+};
+
+using VulnerabilityEvidenceDescriptorMap =
+    std::unordered_map<std::string, VulnerabilityEvidenceDescriptor>;
 
 int parse_sensor_type_code(const std::string& type_str) {
     if (type_str == "Visual") return static_cast<int>(SensorType::Visual);
@@ -424,12 +447,99 @@ bool parse_unit_type(const std::string& value, UnitType* out_type) {
     return false;
 }
 
+bool vulnerability_evidence_descriptor_is_calibrated_match(
+    const VulnerabilityEvidenceDescriptorMap* descriptors,
+    const AircraftVulnerabilityProfile& profile,
+    const std::string& target_type
+) {
+    if (!descriptors || profile.evidence_dataset_ref.empty()) {
+        return false;
+    }
+    if (profile.synthetic || !profile.calibrated ||
+        profile.calibration_status != "calibrated") {
+        return false;
+    }
+    const auto descriptor_it = descriptors->find(profile.evidence_dataset_ref);
+    if (descriptor_it == descriptors->end()) {
+        return false;
+    }
+
+    const VulnerabilityEvidenceDescriptor& descriptor = descriptor_it->second;
+    if (descriptor.target_type != target_type) {
+        return false;
+    }
+    if (descriptor.calibration_status != "calibrated") {
+        return false;
+    }
+    if (descriptor.weapon_family.empty() ||
+        descriptor.aspect_bucket.empty() ||
+        descriptor.closure_bucket.empty() ||
+        descriptor.miss_distance_bucket.empty()) {
+        return false;
+    }
+    if (descriptor.source_kind == "synthetic_placeholder" ||
+        descriptor.source_kind == "synthetic") {
+        return false;
+    }
+    return true;
+}
+
+const VulnerabilityEvidenceDescriptor* find_vulnerability_evidence_descriptor(
+    const VulnerabilityEvidenceDescriptorMap* descriptors,
+    const AircraftVulnerabilityProfile& profile
+) {
+    if (!descriptors || profile.evidence_dataset_ref.empty()) {
+        return nullptr;
+    }
+    const auto descriptor_it = descriptors->find(profile.evidence_dataset_ref);
+    if (descriptor_it == descriptors->end()) {
+        return nullptr;
+    }
+    return &descriptor_it->second;
+}
+
+bool vulnerability_row_matches_descriptor(
+    const AircraftVulnerabilityEvidenceRow& row,
+    const VulnerabilityEvidenceDescriptor& descriptor
+) {
+    return row.weapon_family == descriptor.weapon_family &&
+        row.aspect_bucket == descriptor.aspect_bucket &&
+        row.closure_bucket == descriptor.closure_bucket &&
+        row.miss_distance_bucket == descriptor.miss_distance_bucket;
+}
+
+void copy_authoritative_vulnerability_rows(
+    const VulnerabilityEvidenceDescriptor* descriptor,
+    AircraftVulnerabilityProfile* profile
+) {
+    if (!descriptor || !profile || !profile->evidence_dataset_valid ||
+        (!descriptor->effect_scale_authority &&
+         !descriptor->component_failure_probability_authority)) {
+        return;
+    }
+
+    for (const AircraftVulnerabilityEvidenceRow& row : descriptor->rows) {
+        if (vulnerability_row_matches_descriptor(row, *descriptor)) {
+            profile->evidence_rows.push_back(row);
+        }
+    }
+    profile->effect_scale_authority =
+        descriptor->effect_scale_authority &&
+        !profile->evidence_rows.empty();
+    profile->component_failure_probability_authority =
+        descriptor->component_failure_probability_authority &&
+        !profile->evidence_rows.empty();
+}
+
 } // namespace
 
-namespace fs = std::filesystem;
-
 // Helper to parse a single JSON object (unit definition)
-bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::string* error) {
+bool parse_unit_json(
+    const nlohmann::json& entry,
+    UnitDefinition& def,
+    std::string* error,
+    const VulnerabilityEvidenceDescriptorMap* vulnerability_descriptors = nullptr
+) {
     if (!entry.contains("type") || !entry["type"].is_string()) {
         if (error) *error = "Unit entry missing string 'type'.";
         return false;
@@ -852,6 +962,25 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
                         DamageComponent component{};
                         component.name = component_json.value("name", "");
                         component.system = component_json.value("system", component.name);
+                        component.redundancy_group_id =
+                            component_json.value("redundancy_group_id", "");
+                        if (component_json.contains("dependencies") &&
+                            component_json["dependencies"].is_array()) {
+                            for (const auto& dependency_json : component_json["dependencies"]) {
+                                DamageComponentDependency dependency{};
+                                if (dependency_json.is_string()) {
+                                    dependency.system = dependency_json.get<std::string>();
+                                } else if (dependency_json.is_object()) {
+                                    dependency.system = dependency_json.value("system", "");
+                                    dependency.scale =
+                                        dependency_json.value("scale", dependency.scale);
+                                }
+                                if (dependency.system.empty()) {
+                                    continue;
+                                }
+                                component.dependencies.push_back(dependency);
+                            }
+                        }
                         if (component.system.empty()) {
                             continue;
                         }
@@ -880,8 +1009,20 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
                         component.armor_mm = component_json.value("armor", hb.armor_mm);
                         component.threshold_scale =
                             component_json.value("threshold_scale", component.threshold_scale);
+                        if (component_json.contains("mechanism_thresholds") &&
+                            component_json["mechanism_thresholds"].is_object()) {
+                            for (const auto& [family, value] :
+                                 component_json["mechanism_thresholds"].items()) {
+                                if (value.is_number()) {
+                                    component.mechanism_threshold_scales[family] =
+                                        value.get<double>();
+                                }
+                            }
+                        }
                         component.redundancy_group =
                             component_json.value("redundancy_group", component.redundancy_group);
+                        component.redundancy_weight =
+                            component_json.value("redundancy_weight", component.redundancy_weight);
                         component.critical = component_json.value("critical", component.critical);
                         hb.components.push_back(component);
                     }
@@ -910,9 +1051,35 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
                 vuln.value("evidence_dataset_ref", def.aircraft_vulnerability.evidence_dataset_ref);
             def.aircraft_vulnerability.calibration_status =
                 vuln.value("calibration_status", def.aircraft_vulnerability.calibration_status);
+            const bool requested_pk_authority = def.aircraft_vulnerability.pk_authority;
+            const bool requested_deterministic_fuze_authority =
+                def.aircraft_vulnerability.deterministic_fuze_authority;
+            const VulnerabilityEvidenceDescriptor* descriptor =
+                find_vulnerability_evidence_descriptor(
+                    vulnerability_descriptors,
+                    def.aircraft_vulnerability);
+            def.aircraft_vulnerability.evidence_dataset_valid =
+                vulnerability_evidence_descriptor_is_calibrated_match(
+                    vulnerability_descriptors,
+                    def.aircraft_vulnerability,
+                    def.name);
             if (!aircraft_vulnerability_has_calibrated_evidence(def.aircraft_vulnerability)) {
+                def.aircraft_vulnerability.effect_scale_authority = false;
+                def.aircraft_vulnerability.component_failure_probability_authority = false;
                 def.aircraft_vulnerability.pk_authority = false;
                 def.aircraft_vulnerability.deterministic_fuze_authority = false;
+            } else {
+                def.aircraft_vulnerability.pk_authority =
+                    requested_pk_authority &&
+                    descriptor &&
+                    descriptor->pk_authority;
+                def.aircraft_vulnerability.deterministic_fuze_authority =
+                    requested_deterministic_fuze_authority &&
+                    descriptor &&
+                    descriptor->deterministic_fuze_authority;
+                copy_authoritative_vulnerability_rows(
+                    descriptor,
+                    &def.aircraft_vulnerability);
             }
             def.aircraft_vulnerability.blast_scale =
                 vuln.value("blast_scale", def.aircraft_vulnerability.blast_scale);
@@ -1087,7 +1254,12 @@ bool parse_unit_json(const nlohmann::json& entry, UnitDefinition& def, std::stri
     return true;
 }
 
-bool load_file(const std::string& path, std::vector<UnitDefinition>& out_definitions, std::string* error) {
+bool load_file(
+    const std::string& path,
+    std::vector<UnitDefinition>& out_definitions,
+    std::string* error,
+    const VulnerabilityEvidenceDescriptorMap* vulnerability_descriptors = nullptr
+) {
     std::ifstream file(path);
     if (!file.is_open()) {
         if (error) *error = "Failed to open unit definition file: " + path;
@@ -1107,7 +1279,7 @@ bool load_file(const std::string& path, std::vector<UnitDefinition>& out_definit
     if (root.contains("units") && root["units"].is_array()) {
         for (const auto& entry : root["units"]) {
             UnitDefinition def{};
-            if (parse_unit_json(entry, def, error)) {
+            if (parse_unit_json(entry, def, error, vulnerability_descriptors)) {
                 out_definitions.push_back(def);
             } else {
                 return false;
@@ -1117,7 +1289,7 @@ bool load_file(const std::string& path, std::vector<UnitDefinition>& out_definit
     // Case 2: Root IS the unit object (single file per unit)
     else if (root.contains("name") && root.contains("type")) {
         UnitDefinition def{};
-        if (parse_unit_json(root, def, error)) {
+        if (parse_unit_json(root, def, error, vulnerability_descriptors)) {
             out_definitions.push_back(def);
         } else {
             return false;
@@ -1130,14 +1302,118 @@ bool load_file(const std::string& path, std::vector<UnitDefinition>& out_definit
     return true;
 }
 
+VulnerabilityEvidenceDescriptorMap load_vulnerability_evidence_descriptors(
+    const std::string& root_path
+) {
+    VulnerabilityEvidenceDescriptorMap descriptors;
+    const fs::path base_path(root_path);
+    if (!fs::is_directory(base_path)) {
+        return descriptors;
+    }
+
+    const fs::path evidence_dir = base_path / "damage" / "vulnerability_evidence";
+    if (!fs::is_directory(evidence_dir)) {
+        return descriptors;
+    }
+
+    for (const auto& entry : fs::directory_iterator(evidence_dir)) {
+        if (!entry.is_regular_file() || entry.path().extension() != ".json") {
+            continue;
+        }
+        try {
+            std::ifstream file(entry.path());
+            if (!file.is_open()) {
+                continue;
+            }
+            nlohmann::json root;
+            file >> root;
+            if (!root.is_object()) {
+                continue;
+            }
+            VulnerabilityEvidenceDescriptor descriptor{};
+            descriptor.dataset_id = root.value("dataset_id", "");
+            descriptor.target_type = root.value("target_type", "");
+            descriptor.weapon_family =
+                normalize_warhead_family(root.value("weapon_family", ""));
+            descriptor.aspect_bucket = root.value("aspect_bucket", "");
+            descriptor.closure_bucket = root.value("closure_bucket", "");
+            descriptor.miss_distance_bucket = root.value("miss_distance_bucket", "");
+            descriptor.calibration_status =
+                root.value("calibration_status", descriptor.calibration_status);
+            descriptor.source_kind = root.value("source_kind", "");
+            descriptor.effect_scale_authority =
+                root.value("effect_scale_authority", false);
+            descriptor.component_failure_probability_authority =
+                root.value("component_failure_probability_authority", false);
+            descriptor.pk_authority = root.value("pk_authority", false);
+            descriptor.deterministic_fuze_authority =
+                root.value("deterministic_fuze_authority", false);
+            if (root.contains("rows") && root["rows"].is_array()) {
+                for (const auto& row_json : root["rows"]) {
+                    if (!row_json.is_object()) {
+                        continue;
+                    }
+                    AircraftVulnerabilityEvidenceRow row{};
+                    row.weapon_family = normalize_warhead_family(
+                        row_json.value("weapon_family", descriptor.weapon_family));
+                    row.aspect_bucket =
+                        row_json.value("aspect_bucket", descriptor.aspect_bucket);
+                    row.closure_bucket =
+                        row_json.value("closure_bucket", descriptor.closure_bucket);
+                    row.miss_distance_bucket =
+                        row_json.value(
+                            "miss_distance_bucket",
+                            descriptor.miss_distance_bucket);
+                    row.family_scale = row_json.value("family_scale", row.family_scale);
+                    row.aspect_scale = row_json.value("aspect_scale", row.aspect_scale);
+                    row.closure_scale = row_json.value("closure_scale", row.closure_scale);
+                    row.miss_distance_scale =
+                        row_json.value(
+                            "miss_distance_scale",
+                            row.miss_distance_scale);
+                    row.effect_scale = row_json.value("effect_scale", row.effect_scale);
+                    if (row_json.contains("component_failure_probability") &&
+                        row_json["component_failure_probability"].is_number()) {
+                        row.has_component_failure_probability = true;
+                        row.component_failure_probability =
+                            row_json["component_failure_probability"].get<double>();
+                    }
+                    descriptor.rows.push_back(row);
+                }
+            }
+            if (descriptor.dataset_id.empty() || descriptor.target_type.empty()) {
+                continue;
+            }
+            descriptors[descriptor.dataset_id] = descriptor;
+        } catch (const std::exception& ex) {
+            spdlog::warn(
+                "Failed to load vulnerability evidence descriptor {}: {}",
+                entry.path().string(),
+                ex.what());
+        }
+    }
+    return descriptors;
+}
+
 bool load_unit_definitions_json(const std::string& path,
                                 std::vector<UnitDefinition>& out_definitions,
                                 std::string* error) {
     if (fs::is_directory(path)) {
+        const fs::path vulnerability_evidence_dir =
+            fs::path(path) / "damage" / "vulnerability_evidence";
+        const VulnerabilityEvidenceDescriptorMap vulnerability_descriptors =
+            load_vulnerability_evidence_descriptors(path);
         // Recursive scan
         for (const auto& entry : fs::recursive_directory_iterator(path)) {
             if (entry.is_regular_file() && entry.path().extension() == ".json") {
-                if (!load_file(entry.path().string(), out_definitions, error)) {
+                if (entry.path().parent_path() == vulnerability_evidence_dir) {
+                    continue;
+                }
+                if (!load_file(
+                        entry.path().string(),
+                        out_definitions,
+                        error,
+                        &vulnerability_descriptors)) {
                     spdlog::warn("Failed to load file {}: {}", entry.path().string(), (error ? *error : "unknown"));
                     // Continue loading others? For now, yes, just warn.
                 }

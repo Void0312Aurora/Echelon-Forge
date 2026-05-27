@@ -221,8 +221,25 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         effects.mechanism_armor_scale = 1.0
         effects.mechanism_exposure_scale = 1.0
         effects.mechanism_effect_scale = 1.0
+        effects.mechanism_fragment_energy_j = 480.0
+        effects.mechanism_penetration_margin = 0.30
+        effects.mechanism_blast_overpressure_kpa = 15.0
+        effects.mechanism_blast_impulse_kpa_ms = 36.0
+        effects.mechanism_rod_cut_margin = 0.0
+        effects.warhead_spatial_sample_count = 1
+        effects.warhead_spatial_hit_estimate = 1.0
+        effects.warhead_spatial_hit_fraction = 1.0
+        effects.warhead_spatial_energy_scale = 1.0
+        effects.warhead_spatial_pattern_scale = 1.0
+        effects.warhead_orientation_axis_forward = 1.0
+        effects.warhead_orientation_axis_right = 0.0
+        effects.warhead_orientation_axis_up = 0.0
+        effects.warhead_orientation_pattern_scale = 1.0
         effects.component_threshold_scale = 1.0
         effects.component_failure_probability = 0.50
+        effects.component_failure_probability_source = "synthetic_sigmoid"
+        effects.component_failure_probability_calibrated = False
+        effects.component_failure_probability_evidence_dataset_ref = ""
         effects.component_failure_sample = 0.25
         effects.component_failure_count = 1
         effects.component_hit_count = 1
@@ -230,6 +247,11 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         effects.component_primary_system = "fuel"
         effects.component_primary_redundancy_group = 0.0
         effects.component_primary_critical = True
+        effects.component_primary_redundancy_group_id = "fuel_singleton"
+        effects.component_primary_integrity = 0.66
+        effects.component_redundancy_group_availability = 0.66
+        effects.component_redundancy_group_member_count = 1
+        effects.component_redundancy_group_failed_count = 0
 
         report = ef_py.DamageReport()
         report.report_id = 9201
@@ -255,10 +277,25 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         self.assertEqual(effects.effect_family, "blast_fragmentation")
         self.assertTrue(bool(effects.warhead_profile_synthetic))
         self.assertTrue(bool(effects.damage_scalar_synthetic))
+        self.assertAlmostEqual(float(effects.detonation_heading_deg), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.detonation_pitch_deg), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.detonation_roll_deg), 0.0, delta=1.0e-6)
         self.assertTrue(math.isclose(effects.quality, 1.0))
         self.assertTrue(bool(effects.direct_hitbox_intersection))
         self.assertEqual(int(effects.projected_hitbox_count), 0)
+        self.assertEqual(str(effects.component_primary_redundancy_group_id), "fuel_singleton")
+        self.assertAlmostEqual(float(effects.component_primary_integrity), 0.66)
+        self.assertAlmostEqual(float(effects.component_redundancy_group_availability), 0.66)
         self.assertTrue(math.isclose(float(effects.mechanism_effect_scale), 1.0))
+        self.assertGreater(float(effects.mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(effects.mechanism_penetration_margin), 0.0)
+        self.assertGreater(float(effects.mechanism_blast_overpressure_kpa), 0.0)
+        self.assertGreater(float(effects.mechanism_blast_impulse_kpa_ms), 0.0)
+        self.assertEqual(int(effects.warhead_spatial_sample_count), 1)
+        self.assertTrue(math.isclose(float(effects.warhead_spatial_hit_estimate), 1.0))
+        self.assertTrue(math.isclose(float(effects.warhead_spatial_hit_fraction), 1.0))
+        self.assertTrue(math.isclose(float(effects.warhead_orientation_axis_forward), 1.0))
+        self.assertTrue(math.isclose(float(effects.warhead_orientation_pattern_scale), 1.0))
         self.assertTrue(math.isclose(float(effects.component_threshold_scale), 1.0))
         self.assertEqual(int(effects.component_hit_count), 1)
         self.assertEqual(str(effects.component_primary_system), "fuel")

@@ -214,8 +214,8 @@ public:
     bool is_unit_active(uint64_t entity_id); // Returns whether entity exists
     std::vector<double> get_unit_health(uint64_t entity_id); // Returns [current, max]
     std::vector<double> get_unit_damage_state(uint64_t entity_id); // [mission, mobility, sensor, survivability]
-    std::vector<double> debug_get_aircraft_damage_state(uint64_t entity_id); // [structure, flight_control, hydraulic, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]
-    std::vector<double> debug_get_aircraft_vulnerability_evidence_state(uint64_t entity_id); // [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority]
+    std::vector<double> debug_get_aircraft_damage_state(uint64_t entity_id); // [structure, flight_control, hydraulic, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, pilot, mission_crew, command_navigation, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]
+    std::vector<double> debug_get_aircraft_vulnerability_evidence_state(uint64_t entity_id); // [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority, evidence_dataset_valid]
     std::vector<double> debug_get_naval_weapon_counts(uint64_t entity_id); // [mounts, total_ready_vls, total_ready_gun, total_ready_ciws]
     std::vector<double> get_unit_fuel(uint64_t entity_id); // Returns [internal, max_internal, external, max_external]
     std::vector<double> debug_get_naval_stores(uint64_t entity_id); // [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]
@@ -267,6 +267,20 @@ public:
         double missile_vx_mps,
         double missile_vy_mps,
         double missile_vz_mps
+    );
+    bool debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
+        uint64_t attacker_id,
+        uint64_t target_id,
+        double local_forward_m,
+        double local_right_m,
+        double local_up_m,
+        const WarheadProfile& warhead_profile,
+        double missile_vx_mps,
+        double missile_vy_mps,
+        double missile_vz_mps,
+        double detonation_heading_deg,
+        double detonation_pitch_deg,
+        double detonation_roll_deg
     );
     RecentEngagementEvents export_recent_engagement_events() const;
 
@@ -324,6 +338,9 @@ private:
         double detonation_local_forward_m,
         double detonation_local_right_m,
         double detonation_local_up_m,
+        double detonation_heading_deg,
+        double detonation_pitch_deg,
+        double detonation_roll_deg,
         double closure_mps,
         double missile_axis_forward,
         double missile_axis_right,
@@ -340,21 +357,67 @@ private:
         double fuze_delay_s = 0.0,
         double fuze_reliability = 1.0,
         bool fuze_profile_synthetic = true,
+        const std::string& fuze_signature_source = "none",
+        double fuze_target_signature = 0.0,
+        double fuze_signature_scale = 1.0,
+        double fuze_effective_reliability = 1.0,
+        double fuze_contact_surface_distance_m = 0.0,
+        double fuze_contact_penetration_depth_m = 0.0,
+        double fuze_contact_surface_tolerance_m = 0.0,
+        bool fuze_contact_inside_hitbox = false,
         bool direct_hitbox_intersection = false,
         std::uint32_t projected_hitbox_count = 0,
         double spatial_effect_scale = 0.0,
         double mechanism_armor_scale = 1.0,
         double mechanism_exposure_scale = 1.0,
         double mechanism_effect_scale = 1.0,
+        double mechanism_fragment_energy_j = 0.0,
+        double mechanism_penetration_margin = 0.0,
+        double mechanism_blast_overpressure_kpa = 0.0,
+        double mechanism_blast_impulse_kpa_ms = 0.0,
+        double mechanism_rod_cut_margin = 0.0,
+        std::uint32_t warhead_spatial_sample_count = 0,
+        double warhead_spatial_hit_estimate = 0.0,
+        double warhead_spatial_hit_fraction = 0.0,
+        double warhead_spatial_energy_scale = 1.0,
+        double warhead_spatial_pattern_scale = 1.0,
+        double warhead_orientation_axis_forward = 0.0,
+        double warhead_orientation_axis_right = 0.0,
+        double warhead_orientation_axis_up = 0.0,
+        double warhead_orientation_pattern_scale = 1.0,
         double component_threshold_scale = 1.0,
         double component_failure_probability = 0.0,
+        const std::string& component_failure_probability_source = "none",
+        bool component_failure_probability_calibrated = false,
+        const std::string& component_failure_probability_evidence_dataset_ref = "",
         double component_failure_sample = 1.0,
         std::uint32_t component_failure_count = 0,
         std::uint32_t component_hit_count = 0,
         const std::string& component_primary_name = "",
         const std::string& component_primary_system = "",
         double component_primary_redundancy_group = 0.0,
-        bool component_primary_critical = false
+        bool component_primary_critical = false,
+        const std::string& component_primary_redundancy_group_id = "",
+        double component_primary_integrity = 1.0,
+        double component_redundancy_group_availability = 1.0,
+        std::uint32_t component_redundancy_group_member_count = 0,
+        std::uint32_t component_redundancy_group_failed_count = 0,
+        bool vulnerability_profile_present = false,
+        bool vulnerability_profile_synthetic = true,
+        bool vulnerability_calibrated_evidence = false,
+        bool vulnerability_pk_authority = false,
+        bool vulnerability_deterministic_fuze_authority = false,
+        bool vulnerability_evidence_dataset_valid = false,
+        const std::string& vulnerability_evidence_dataset_ref = "",
+        const std::string& vulnerability_calibration_status = "none",
+        const std::string& vulnerability_provenance = "",
+        const std::string& vulnerability_aspect_bucket = "unknown",
+        double vulnerability_family_scale = 1.0,
+        double vulnerability_aspect_scale = 1.0,
+        double vulnerability_closure_mps = 0.0,
+        double vulnerability_closure_scale = 1.0,
+        double vulnerability_miss_distance_scale = 1.0,
+        double vulnerability_effect_scale = 1.0
     ) override;
     void clear_recent_engagement_events();
 

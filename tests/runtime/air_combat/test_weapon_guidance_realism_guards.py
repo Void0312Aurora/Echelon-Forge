@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import shutil
 import tempfile
 import unittest
 
@@ -376,6 +378,45 @@ def _spawn_structured_f16_pair(sim: ef_py.SimulationKernel) -> tuple[int, int]:
     return attacker_id, target_id
 
 
+def _spawn_structured_f16_pair_with_target_attitude(
+    sim: ef_py.SimulationKernel,
+    *,
+    target_pitch_deg: float,
+    target_roll_deg: float,
+) -> tuple[int, int]:
+    attacker_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "F-16C_Block50",
+            0.0,
+            0.0,
+            5000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            250.0,
+            0.0,
+        )
+    )
+    target_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Red,
+            "F-16C_Block50",
+            0.0,
+            500.0,
+            5000.0,
+            180.0,
+            float(target_pitch_deg),
+            float(target_roll_deg),
+            0.0,
+            -250.0,
+            0.0,
+        )
+    )
+    return attacker_id, target_id
+
+
 def _spawn_attacker_and_e3_target(sim: ef_py.SimulationKernel) -> tuple[int, int]:
     attacker_id = int(
         sim.spawn_unit(
@@ -502,6 +543,10 @@ def _make_f16_componentized_wing_override(name: str) -> dict:
                     "size": [1.2, 1.2, 0.25],
                     "armor": 2.0,
                     "threshold_scale": 1.25,
+                    "redundancy_group_id": "wing_fuel_cells",
+                    "redundancy_group": 1.0,
+                    "redundancy_weight": 1.0,
+                    "critical": True,
                 },
                 {
                     "name": "right_aileron_actuator",
@@ -510,6 +555,10 @@ def _make_f16_componentized_wing_override(name: str) -> dict:
                     "size": [1.0, 1.1, 0.22],
                     "armor": 3.0,
                     "threshold_scale": 1.35,
+                    "redundancy_group_id": "lateral_flight_control_actuators",
+                    "redundancy_group": 2.0,
+                    "redundancy_weight": 1.0,
+                    "critical": False,
                 },
             ]
     return unit
@@ -534,9 +583,80 @@ def _make_f16_component_redundancy_override(
         for component in hitbox.get("components", []):
             if str(component.get("name", "")) == "right_aileron_actuator":
                 component["redundancy_group"] = float(redundancy_group)
+                component["redundancy_group_id"] = (
+                    "lateral_flight_control_actuators"
+                    if redundancy_group > 0.0
+                    else "single_right_aileron_actuator"
+                )
                 component["critical"] = bool(critical)
                 component["threshold_scale"] = 1.35
     return unit
+
+
+def _make_f16_component_mechanism_threshold_override(
+    name: str,
+    *,
+    continuous_rod_scale: float,
+) -> dict:
+    with open(
+        resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = name
+    unit["damage_model"].pop("vulnerability", None)
+    for hitbox in unit["damage_model"]["hitboxes"]:
+        for component in hitbox.get("components", []):
+            if str(component.get("name", "")) == "right_aileron_actuator":
+                component["mechanism_thresholds"] = {
+                    "blast_fragmentation": 1.0,
+                    "continuous_rod": float(continuous_rod_scale),
+                }
+    return unit
+
+
+def _copy_database_with_f16_vulnerability(
+    tmpdir: str,
+    vulnerability_patch: dict,
+    *,
+    descriptor: dict | None = None,
+    descriptor_patch: dict | None = None,
+) -> str:
+    db_dir = os.path.join(tmpdir, "database")
+    shutil.copytree(_DB_PATH, db_dir)
+
+    unit_path = os.path.join(db_dir, "aircraft", "units", "f16c_block50.json")
+    with open(unit_path, "r", encoding="utf-8") as handle:
+        unit = json.load(handle)
+    vulnerability = dict(unit["damage_model"].get("vulnerability", {}))
+    vulnerability.update(vulnerability_patch)
+    unit["damage_model"]["vulnerability"] = vulnerability
+    with open(unit_path, "w", encoding="utf-8") as handle:
+        json.dump(unit, handle)
+
+    if descriptor is not None or descriptor_patch is not None:
+        evidence_dir = os.path.join(db_dir, "damage", "vulnerability_evidence")
+        os.makedirs(evidence_dir, exist_ok=True)
+        descriptor_data = dict(descriptor) if descriptor is not None else {}
+        if descriptor_patch is not None:
+            placeholder_path = os.path.join(
+                evidence_dir,
+                "a2_synthetic_f16_aim120_placeholder.json",
+            )
+            if os.path.exists(placeholder_path):
+                with open(placeholder_path, "r", encoding="utf-8") as handle:
+                    descriptor_data = json.load(handle)
+            descriptor_data.update(descriptor_patch)
+        dataset_id = str(descriptor_data["dataset_id"])
+        with open(
+            os.path.join(evidence_dir, f"{dataset_id}.json"),
+            "w",
+            encoding="utf-8",
+        ) as handle:
+            json.dump(descriptor_data, handle)
+
+    return db_dir
 
 
 def _kernel_with_unit_overrides(overrides: list[dict]) -> ef_py.SimulationKernel:
@@ -659,9 +779,28 @@ def _profiled_local_hit_overlay_with_velocity(
     damage: float = 90.0,
     radius: float = 25.0,
 ) -> dict[str, float]:
+    overlay, _event = _profiled_local_hit_overlay_and_event_with_velocity(
+        family,
+        local,
+        missile_velocity,
+        damage=damage,
+        radius=radius,
+    )
+    return overlay
+
+
+def _profiled_local_hit_overlay_and_event_with_velocity(
+    family: str,
+    local: tuple[float, float, float],
+    missile_velocity: tuple[float, float, float],
+    *,
+    damage: float = 90.0,
+    radius: float = 25.0,
+    database_path: str | None = None,
+) -> tuple[dict[str, float], object]:
     sim = ef_py.SimulationKernel()
     sim.reset(20260526)
-    if not sim.load_database(_DB_PATH):
+    if not sim.load_database(database_path or _DB_PATH):
         raise AssertionError("failed to load runtime database")
     attacker_id, target_id = _spawn_structured_f16_pair(sim)
     profile = _make_warhead_profile(family, damage=damage, radius=radius)
@@ -683,7 +822,82 @@ def _profiled_local_hit_overlay_with_velocity(
     events = sim.export_recent_engagement_events()
     if len(events.effects_events) != 1:
         raise AssertionError(f"expected one effects event for {family}")
-    return _aircraft_damage_overlay(sim, target_id)
+    return _aircraft_damage_overlay(sim, target_id), events.effects_events[0]
+
+
+def _profiled_local_hit_overlay_and_event_with_velocity_and_attitude(
+    family: str,
+    local: tuple[float, float, float],
+    missile_velocity: tuple[float, float, float],
+    attitude_deg: tuple[float, float, float],
+    *,
+    damage: float = 90.0,
+    radius: float = 25.0,
+) -> tuple[dict[str, float], object]:
+    sim = ef_py.SimulationKernel()
+    sim.reset(20260526)
+    if not sim.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+    attacker_id, target_id = _spawn_structured_f16_pair(sim)
+    profile = _make_warhead_profile(family, damage=damage, radius=radius)
+    ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
+        attacker_id,
+        target_id,
+        float(local[0]),
+        float(local[1]),
+        float(local[2]),
+        profile,
+        float(missile_velocity[0]),
+        float(missile_velocity[1]),
+        float(missile_velocity[2]),
+        float(attitude_deg[0]),
+        float(attitude_deg[1]),
+        float(attitude_deg[2]),
+    )
+    if not ok:
+        raise AssertionError(f"profiled local hit with attitude failed for {family}")
+    if not sim.is_unit_active(target_id):
+        raise AssertionError(f"profiled local hit destroyed target unexpectedly for {family}")
+    events = sim.export_recent_engagement_events()
+    if len(events.effects_events) != 1:
+        raise AssertionError(f"expected one effects event for {family}")
+    return _aircraft_damage_overlay(sim, target_id), events.effects_events[0]
+
+
+def _profiled_local_hit_overlay_and_event_with_target_attitude(
+    family: str,
+    local: tuple[float, float, float],
+    target_attitude_deg: tuple[float, float],
+    *,
+    damage: float = 90.0,
+    radius: float = 25.0,
+) -> tuple[dict[str, float], object]:
+    sim = ef_py.SimulationKernel()
+    sim.reset(20260526)
+    if not sim.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+    attacker_id, target_id = _spawn_structured_f16_pair_with_target_attitude(
+        sim,
+        target_pitch_deg=target_attitude_deg[0],
+        target_roll_deg=target_attitude_deg[1],
+    )
+    profile = _make_warhead_profile(family, damage=damage, radius=radius)
+    ok = sim.debug_apply_profiled_local_proximity_hit(
+        attacker_id,
+        target_id,
+        float(local[0]),
+        float(local[1]),
+        float(local[2]),
+        profile,
+    )
+    if not ok:
+        raise AssertionError(f"profiled local hit with target attitude failed for {family}")
+    if not sim.is_unit_active(target_id):
+        raise AssertionError(f"profiled local hit destroyed target unexpectedly for {family}")
+    events = sim.export_recent_engagement_events()
+    if len(events.effects_events) != 1:
+        raise AssertionError(f"expected one effects event for {family}")
+    return _aircraft_damage_overlay(sim, target_id), events.effects_events[0]
 
 
 def _aircraft_damage_overlay(sim: ef_py.SimulationKernel, entity_id: int) -> dict[str, float]:
@@ -700,6 +914,9 @@ def _aircraft_damage_overlay(sim: ef_py.SimulationKernel, entity_id: int) -> dic
         "fuel",
         "avionics",
         "crew",
+        "pilot",
+        "mission_crew",
+        "command_navigation",
         "fire",
         "fuel_leak",
         "structural_overstress",
@@ -902,6 +1119,15 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertAlmostEqual(float(effects.fuze_delay_s), 0.02, delta=1.0e-6)
         self.assertAlmostEqual(float(effects.fuze_reliability), 0.88, delta=1.0e-6)
         self.assertFalse(bool(effects.fuze_profile_synthetic))
+        self.assertEqual(str(effects.fuze_signature_source), "target_projected_geometry")
+        self.assertGreater(float(effects.fuze_target_signature), 1.0)
+        self.assertGreater(float(effects.fuze_signature_scale), 0.0)
+        self.assertLessEqual(float(effects.fuze_signature_scale), 1.15)
+        self.assertAlmostEqual(
+            float(effects.fuze_effective_reliability),
+            min(1.0, 0.88 * float(effects.fuze_signature_scale)),
+            delta=1.0e-6,
+        )
 
     def test_fuze_delay_schedules_detonation_after_nearest_approach(self) -> None:
         sim = _make_baseline_kernel()
@@ -954,6 +1180,10 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 if bool(runtime["fuze_delay_armed"]):
                     armed_seen = True
                     self.assertTrue(math.isfinite(float(runtime["fuze_nearest_approach_time_s"])))
+                    self.assertEqual(str(runtime["fuze_signature_source"]), "target_rcs_aspect")
+                    self.assertGreater(float(runtime["fuze_target_signature"]), 0.0)
+                    self.assertGreater(float(runtime["fuze_signature_scale"]), 0.0)
+                    self.assertLessEqual(float(runtime["fuze_effective_reliability"]), 1.0)
                     self.assertAlmostEqual(
                         float(runtime["fuze_detonation_time_s"]) -
                         float(runtime["fuze_nearest_approach_time_s"]),
@@ -968,12 +1198,86 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         effects = events.effects_events[-1]
         self.assertEqual(str(effects.fuze_type), "radar_proximity")
         self.assertAlmostEqual(float(effects.fuze_delay_s), 0.08, delta=1.0e-6)
+        self.assertEqual(str(effects.fuze_signature_source), "target_rcs_aspect")
+        self.assertGreater(float(effects.fuze_target_signature), 0.0)
+        self.assertGreater(float(effects.fuze_signature_scale), 0.0)
+        self.assertLessEqual(float(effects.fuze_effective_reliability), 1.0)
         self.assertGreater(float(effects.detonation_time_s), float(effects.nearest_approach_time_s))
         self.assertAlmostEqual(
             float(effects.detonation_time_s) - float(effects.nearest_approach_time_s),
             0.08,
             delta=sim.get_time_step() + 1.0e-6,
         )
+
+    def test_fuze_event_records_detonation_attitude_evidence(self) -> None:
+        sim = _make_baseline_kernel()
+        sim.set_time_step(0.02)
+
+        profile = ef_py.FuzeProfile()
+        profile.type = "radar_proximity"
+        profile.trigger_radius_m = 35.0
+        profile.delay_s = 0.08
+        profile.reliability = 1.0
+        profile.synthetic = False
+        profile.provenance = "test_detonation_attitude_evidence"
+
+        tuning = sim.get_missile_tuning()
+        tuning.fuze_profile = profile
+        tuning.has_fuze_profile = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=13000.0,
+            red_y=9000.0,
+            red_heading=270.0,
+            red_vx=-260.0,
+            red_vy=0.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        armed_attitude: tuple[float, float, float] | None = None
+        for step_idx in range(3600):
+            if not sim.is_unit_active(missile_id):
+                break
+            _set_contacts(
+                sim,
+                missile_id,
+                [
+                    _relative_detection_from_truth(
+                        sim,
+                        missile_id,
+                        red_id,
+                        timestamp=step_idx * sim.get_time_step(),
+                        local_sensor_hit=True,
+                    )
+                ],
+            )
+            sim.step()
+            if sim.is_unit_active(missile_id):
+                runtime = _missile_runtime(sim, missile_id)
+                if bool(runtime["fuze_delay_armed"]):
+                    armed_attitude = (
+                        float(runtime["fuze_detonation_heading_deg"]),
+                        float(runtime["fuze_detonation_pitch_deg"]),
+                        float(runtime["fuze_detonation_roll_deg"]),
+                    )
+                    self.assertTrue(all(math.isfinite(value) for value in armed_attitude))
+                    break
+
+        self.assertIsNotNone(armed_attitude)
+        while sim.is_unit_active(missile_id):
+            sim.step()
+
+        events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.effects_events), 1)
+        effects = events.effects_events[-1]
+        assert armed_attitude is not None
+        self.assertAlmostEqual(float(effects.detonation_heading_deg), armed_attitude[0], delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.detonation_pitch_deg), armed_attitude[1], delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.detonation_roll_deg), armed_attitude[2], delta=1.0e-6)
+        self.assertEqual(str(effects.fuze_type), "radar_proximity")
 
     def test_contact_fuze_does_not_trigger_from_near_miss_radius(self) -> None:
         def run_with_fuze(fuze_type: str) -> tuple[dict[str, float | bool], object]:
@@ -1027,6 +1331,87 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertLess(float(contact_result["truth_min_dist_m"]), 35.0)
         self.assertEqual(len(contact_events.effects_events), 0)
         self.assertEqual(len(contact_events.damage_reports), 0)
+
+    def test_contact_fuze_records_surface_and_penetration_evidence(self) -> None:
+        sim = _make_baseline_kernel()
+        sim.set_time_step(0.02)
+
+        profile = ef_py.FuzeProfile()
+        profile.type = "impact"
+        profile.trigger_radius_m = 0.25
+        profile.delay_s = 0.0
+        profile.reliability = 1.0
+        profile.synthetic = False
+        profile.provenance = "test_contact_penetration_evidence"
+
+        tuning = sim.get_missile_tuning()
+        tuning.fuze_profile = profile
+        tuning.has_fuze_profile = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=13000.0,
+            red_y=9000.0,
+            red_heading=270.0,
+            red_vx=-260.0,
+            red_vy=0.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        armed_seen = False
+        for step_idx in range(3600):
+            if not sim.is_unit_active(missile_id):
+                break
+            _set_contacts(
+                sim,
+                missile_id,
+                [
+                    _relative_detection_from_truth(
+                        sim,
+                        missile_id,
+                        red_id,
+                        timestamp=step_idx * sim.get_time_step(),
+                        local_sensor_hit=True,
+                    )
+                ],
+            )
+            sim.step()
+            if sim.is_unit_active(missile_id):
+                runtime = _missile_runtime(sim, missile_id)
+                if bool(runtime["fuze_delay_armed"]):
+                    armed_seen = True
+                    self.assertEqual(str(runtime["fuze_signature_source"]), "contact_surface")
+                    self.assertAlmostEqual(
+                        float(runtime["fuze_contact_surface_tolerance_m"]),
+                        0.25,
+                        delta=1.0e-6,
+                    )
+                    self.assertLessEqual(
+                        float(runtime["fuze_contact_surface_distance_m"]),
+                        float(runtime["fuze_contact_surface_tolerance_m"]) + 1.0e-6,
+                    )
+                    self.assertTrue(bool(runtime["fuze_contact_inside_hitbox"]))
+                    self.assertGreater(float(runtime["fuze_contact_penetration_depth_m"]), 0.0)
+
+        self.assertTrue(armed_seen)
+        events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.effects_events), 1)
+        effects = events.effects_events[-1]
+        self.assertEqual(str(effects.trigger_type), "contact_fuze")
+        self.assertEqual(str(effects.fuze_type), "impact")
+        self.assertEqual(str(effects.fuze_signature_source), "contact_surface")
+        self.assertAlmostEqual(float(effects.fuze_contact_surface_tolerance_m), 0.25, delta=1.0e-6)
+        self.assertLessEqual(
+            float(effects.fuze_contact_surface_distance_m),
+            float(effects.fuze_contact_surface_tolerance_m) + 1.0e-6,
+        )
+        self.assertTrue(bool(effects.fuze_contact_inside_hitbox))
+        self.assertGreater(float(effects.fuze_contact_penetration_depth_m), 0.0)
+        self.assertAlmostEqual(float(effects.fuze_target_signature), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.fuze_signature_scale), 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.fuze_effective_reliability), 1.0, delta=1.0e-6)
 
     def test_timed_fuze_detonates_on_delay_without_proximity_gate(self) -> None:
         sim = _make_baseline_kernel()
@@ -1838,6 +2223,80 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertTrue(sim.is_unit_active(target_id))
         self.assertLess(float(flight_after.max_turn_rate), float(flight_before.max_turn_rate))
 
+    def test_phase2_named_control_components_derive_axis_specific_authority(
+        self,
+    ) -> None:
+        cases = [
+            (
+                "F-16C_Block50",
+                (-6.7, 0.0, 0.45),
+                "rudder_actuator",
+                {"yaw_control"},
+                set(),
+                set(),
+            ),
+            (
+                "F-16C_Block50",
+                (-0.2, 1.6, 0.0),
+                "right_leading_edge_flap_actuator",
+                {"roll_control", "pitch_control"},
+                set(),
+                {"control_asymmetry"},
+            ),
+            (
+                "Su-35S_Flanker-E",
+                (-9.2, 1.4, -0.15),
+                "right_thrust_vector_actuator",
+                {"pitch_control", "yaw_control"},
+                set(),
+                {"control_asymmetry"},
+            ),
+            (
+                "MH-60R_MVP",
+                (-1.0, 3.2, 2.5),
+                "right_cyclic_servo",
+                {"roll_control", "pitch_control"},
+                set(),
+                {"control_asymmetry"},
+            ),
+            (
+                "MH-60R_MVP",
+                (-1.0, 0.0, 2.5),
+                "collective_servo",
+                {"pitch_control"},
+                {"roll_control", "yaw_control"},
+                set(),
+            ),
+            (
+                "MQ-9_Reaper",
+                (-0.2, 2.8, 0.0),
+                "right_inboard_flap_servo",
+                {"roll_control", "pitch_control"},
+                set(),
+                {"control_asymmetry"},
+            ),
+        ]
+
+        for target_type, local_impact, expected_component, drops, unchanged, rises in cases:
+            with self.subTest(target_type=target_type, component=expected_component):
+                overlay, _, event = _profiled_local_hit_overlay_for_target(
+                    target_type,
+                    "blast_fragmentation",
+                    local_impact,
+                    damage=120.0,
+                    radius=35.0,
+                )
+
+                self.assertTrue(bool(event.direct_hitbox_intersection))
+                self.assertEqual(str(event.component_primary_name), expected_component)
+                self.assertEqual(str(event.component_primary_system), "flight_control")
+                for field in drops:
+                    self.assertLess(overlay[field], 1.0, field)
+                for field in unchanged:
+                    self.assertAlmostEqual(overlay[field], 1.0, delta=1.0e-6, msg=field)
+                for field in rises:
+                    self.assertGreater(overlay[field], 0.0, field)
+
     def test_phase2_avionics_and_crew_damage_derives_sensor_performance(self) -> None:
         cases = {
             "nose_cockpit_avionics": {
@@ -1907,6 +2366,82 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                         float(sensor_before.detection_prob) * 0.99,
                     )
 
+    def test_phase2_crew_consequences_distinguish_pilot_mission_and_command_roles(self) -> None:
+        cases = [
+            (
+                "F-16C_Block50",
+                (5.15, 0.0, 0.1),
+                "cockpit_crew_station",
+                "pilot",
+                {"pilot", "crew", "flight_control"},
+                {"mission_crew", "command_navigation"},
+            ),
+            (
+                "E-3_Sentry_AWACS",
+                (1.0, 1.8, 3.0),
+                "mission_operator_consoles",
+                "mission_crew",
+                {"mission_crew", "crew", "avionics"},
+                {"pilot", "command_navigation"},
+            ),
+            (
+                "E-3_Sentry_AWACS",
+                (15.5, 0.0, 0.0),
+                "command_navigation_suite",
+                "command_navigation",
+                {"command_navigation", "crew", "avionics"},
+                {"pilot", "mission_crew"},
+            ),
+        ]
+
+        for target_type, local, expected_component, primary_role, drops, stable in cases:
+            with self.subTest(target_type=target_type, component=expected_component):
+                sim = _kernel_with_unit_overrides([])
+                attacker_id, target_id = _spawn_attacker_and_named_target(sim, target_type)
+                overlay_before = _aircraft_damage_overlay(sim, target_id)
+                platform_before = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                flight_before = sim.get_flight_dynamics_debug_view(target_id)
+                sensor_before = sim.get_sensor_debug_view(target_id)
+
+                ok = sim.debug_apply_profiled_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    float(local[0]),
+                    float(local[1]),
+                    float(local[2]),
+                    _make_warhead_profile("blast_fragmentation", damage=120.0, radius=35.0),
+                )
+                self.assertTrue(bool(ok))
+
+                overlay, _, event = (
+                    _aircraft_damage_overlay(sim, target_id),
+                    [float(value) for value in sim.get_unit_damage_state(target_id)],
+                    sim.export_recent_engagement_events().effects_events[0],
+                )
+                self.assertEqual(str(event.component_primary_name), expected_component)
+                self.assertLess(overlay[primary_role], overlay_before[primary_role])
+                for field in drops:
+                    self.assertLess(overlay[field], overlay_before[field], field)
+                for field in stable:
+                    self.assertAlmostEqual(
+                        overlay[field],
+                        overlay_before[field],
+                        delta=1.0e-6,
+                        msg=field,
+                    )
+
+                sim.step()
+                platform_after = [float(value) for value in sim.get_unit_damage_state(target_id)]
+                flight_after = sim.get_flight_dynamics_debug_view(target_id)
+                sensor_after = sim.get_sensor_debug_view(target_id)
+                if primary_role == "pilot":
+                    self.assertLess(platform_after[1], platform_before[1])
+                    self.assertLess(float(flight_after.max_turn_rate), float(flight_before.max_turn_rate))
+                else:
+                    self.assertLess(platform_after[0], platform_before[0])
+                    self.assertLess(float(sensor_after.max_range), float(sensor_before.max_range))
+                    self.assertLess(float(sensor_after.detection_prob), float(sensor_before.detection_prob))
+
     def test_phase2_aircraft_fire_fuel_and_hydraulic_damage_cascade_over_time(self) -> None:
         sim = ef_py.SimulationKernel()
         sim.reset(20260526)
@@ -1922,7 +2457,7 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                     -0.8,
                     2.8,
                     0.0,
-                    240.0,
+                    180.0,
                     80.0,
                 )
             )
@@ -1935,7 +2470,7 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                     -0.8,
                     4.1,
                     0.0,
-                    240.0,
+                    180.0,
                     80.0,
                 )
             )
@@ -2136,6 +2671,9 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertLess(float(near_event.spatial_effect_scale), 1.0)
         self.assertGreater(float(near_event.mechanism_effect_scale), 0.0)
         self.assertLessEqual(float(near_event.mechanism_effect_scale), 1.10)
+        self.assertGreater(int(near_event.warhead_spatial_sample_count), 100)
+        self.assertGreater(float(near_event.warhead_spatial_hit_estimate), 0.0)
+        self.assertGreater(float(near_event.warhead_spatial_energy_scale), 0.0)
         self.assertLess(near_wing_overlay["structure"], 1.0)
         self.assertLess(near_wing_overlay["flight_control"], 1.0)
         self.assertLess(near_wing_overlay["hydraulic"], 1.0)
@@ -2168,6 +2706,10 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
 
         self.assertEqual(str(blast_fragmentation_event.effect_family), "blast_fragmentation")
         self.assertEqual(str(hit_to_kill_event.effect_family), "hit_to_kill")
+        self.assertFalse(bool(blast_fragmentation_event.direct_hitbox_intersection))
+        self.assertEqual(int(blast_fragmentation_event.projected_hitbox_count), 3)
+        self.assertFalse(bool(hit_to_kill_event.direct_hitbox_intersection))
+        self.assertEqual(int(hit_to_kill_event.projected_hitbox_count), 1)
 
         self.assertLess(blast_fragmentation_overlay["flight_control"], 1.0)
         self.assertLess(blast_fragmentation_overlay["hydraulic"], 1.0)
@@ -2283,7 +2825,11 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertEqual(str(fuel_event.component_primary_name), "left_wing_fuel_cell")
         self.assertEqual(str(fuel_event.component_primary_system), "fuel")
         self.assertAlmostEqual(float(fuel_event.component_primary_redundancy_group), 1.0, delta=1.0e-6)
+        self.assertEqual(str(fuel_event.component_primary_redundancy_group_id), "wing_fuel_cells")
         self.assertTrue(bool(fuel_event.component_primary_critical))
+        self.assertLess(float(fuel_event.component_primary_integrity), 1.0)
+        self.assertGreater(float(fuel_event.component_redundancy_group_availability), 0.0)
+        self.assertEqual(int(fuel_event.component_redundancy_group_member_count), 2)
         self.assertLess(fuel_overlay["fuel"], 1.0)
         self.assertGreater(fuel_overlay["fuel_leak"], 0.0)
         self.assertAlmostEqual(fuel_overlay["flight_control"], 1.0, delta=1.0e-6)
@@ -2293,7 +2839,13 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertEqual(str(control_event.component_primary_name), "right_aileron_actuator")
         self.assertEqual(str(control_event.component_primary_system), "flight_control")
         self.assertAlmostEqual(float(control_event.component_primary_redundancy_group), 2.0, delta=1.0e-6)
+        self.assertEqual(
+            str(control_event.component_primary_redundancy_group_id),
+            "lateral_flight_control_actuators",
+        )
         self.assertFalse(bool(control_event.component_primary_critical))
+        self.assertLess(float(control_event.component_primary_integrity), 1.0)
+        self.assertEqual(int(control_event.component_redundancy_group_member_count), 2)
         self.assertLess(control_overlay["flight_control"], 1.0)
         self.assertLess(control_overlay["hydraulic"], 1.0)
         self.assertAlmostEqual(control_overlay["fuel"], 1.0, delta=1.0e-6)
@@ -2319,6 +2871,7 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertEqual(str(fuel_event.component_primary_name), "left_wing_fuel_cell")
         self.assertEqual(str(fuel_event.component_primary_system), "fuel")
         self.assertAlmostEqual(float(fuel_event.component_primary_redundancy_group), 1.0, delta=1.0e-6)
+        self.assertEqual(str(fuel_event.component_primary_redundancy_group_id), "wing_fuel_cells")
         self.assertTrue(bool(fuel_event.component_primary_critical))
         self.assertLess(fuel_overlay["fuel"], 1.0)
         self.assertGreater(fuel_overlay["fuel_leak"], 0.0)
@@ -2329,10 +2882,656 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertEqual(str(control_event.component_primary_name), "right_elevon_actuator")
         self.assertEqual(str(control_event.component_primary_system), "flight_control")
         self.assertAlmostEqual(float(control_event.component_primary_redundancy_group), 2.0, delta=1.0e-6)
+        self.assertEqual(
+            str(control_event.component_primary_redundancy_group_id),
+            "lateral_flight_control_actuators",
+        )
         self.assertFalse(bool(control_event.component_primary_critical))
         self.assertLess(control_overlay["flight_control"], 1.0)
         self.assertLess(control_overlay["hydraulic"], 1.0)
         self.assertAlmostEqual(control_overlay["fuel"], 1.0, delta=1.0e-6)
+
+    def test_phase3_fighter_component_geometry_covers_nose_avionics_and_engine_runtime_identity(
+        self,
+    ) -> None:
+        cases = [
+            ("F-16C_Block50", (6.6, 0.0, 0.0), "apg68_radar_array", "radar", "avionics"),
+            ("F-16C_Block50", (1.5, 0.0, 0.25), "mission_computer", "avionics", "avionics"),
+            ("F-16C_Block50", (-5.8, 0.0, 0.0), "engine_core", "engine", "propulsion"),
+            ("Su-35S_Flanker-E", (9.2, 0.0, 0.0), "irbis_radar_array", "radar", "avionics"),
+            ("Su-35S_Flanker-E", (1.8, 0.0, 0.25), "mission_computer", "avionics", "avionics"),
+            ("Su-35S_Flanker-E", (-7.5, -1.4, -0.4), "left_engine_core", "engine_left", "propulsion"),
+            ("Su-35S_Flanker-E", (-7.5, 1.4, -0.4), "right_engine_core", "engine_right", "propulsion"),
+        ]
+
+        for target_type, local, expected_component, expected_system, affected_overlay in cases:
+            with self.subTest(target=target_type, component=expected_component):
+                overlay, _, event = _profiled_local_hit_overlay_for_target(
+                    target_type,
+                    "blast_fragmentation",
+                    local,
+                    damage=90.0,
+                    radius=35.0,
+                )
+
+                self.assertTrue(bool(event.direct_hitbox_intersection))
+                self.assertEqual(int(event.component_hit_count), 1)
+                self.assertEqual(str(event.component_primary_name), expected_component)
+                self.assertEqual(str(event.component_primary_system), expected_system)
+                self.assertLess(float(event.component_primary_integrity), 1.0)
+                self.assertGreater(float(event.component_threshold_scale), 1.0)
+                self.assertLess(overlay[affected_overlay], 1.0)
+
+    def test_phase3_representative_aircraft_database_components_cover_uav_helo_c2(self) -> None:
+        cases = {
+            "mq9_reaper.json": {
+                "eo_ir_sensor_turret",
+                "synthetic_aperture_radar",
+                "satcom_antenna_array",
+                "mission_payload_processor",
+                "power_distribution_unit",
+                "data_link_transceiver",
+                "rear_engine_block",
+                "engine_fuel_control_unit",
+                "starter_generator",
+                "pusher_propeller_hub",
+                "left_wing_fuel_cell",
+                "right_aileron_servo",
+                "left_inboard_flap_servo",
+                "right_outboard_wing_spar",
+            },
+            "mh60r_mvp.json": {
+                "cockpit_crew_station",
+                "surface_search_radar",
+                "forward_flir_turret",
+                "tactical_navigation_unit",
+                "fuel_bladders",
+                "dipping_sonar_processor",
+                "esm_receiver_rack",
+                "power_distribution_panel",
+                "left_engine_module",
+                "main_gearbox",
+                "hydraulic_pump_module",
+                "main_rotor_hub",
+                "collective_servo",
+                "tail_drive_shaft",
+                "right_tail_rudder_servo",
+            },
+            "e3_sentry.json": {
+                "flight_deck_crew_station",
+                "iff_transponder_suite",
+                "rotodome_radar_array",
+                "mission_processing_racks",
+                "radar_signal_processor",
+                "mission_operator_consoles",
+                "center_fuselage_fuel_cell",
+                "navigation_reference_unit",
+                "power_distribution_bus",
+                "auxiliary_power_unit",
+                "left_engine_pod",
+                "right_engine_pod",
+                "left_engine_fire_bottle",
+                "right_engine_fire_bottle",
+                "right_aileron_actuator",
+                "right_spoiler_actuator",
+            },
+        }
+
+        for filename, expected_names in cases.items():
+            with self.subTest(filename=filename):
+                with open(
+                    resolve_repo_path("examples", "config", "database", "aircraft", "units", filename),
+                    "r",
+                    encoding="utf-8",
+                ) as handle:
+                    unit = json.load(handle)
+                components = [
+                    component
+                    for hitbox in unit["damage_model"]["hitboxes"]
+                    for component in hitbox.get("components", [])
+                ]
+                component_names = {str(component.get("name", "")) for component in components}
+
+                self.assertGreaterEqual(len(components), 20)
+                self.assertTrue(expected_names.issubset(component_names))
+                for component in components:
+                    self.assertTrue(str(component.get("name", "")))
+                    self.assertTrue(str(component.get("system", "")))
+                    self.assertTrue(str(component.get("redundancy_group_id", "")))
+                    self.assertGreater(float(component.get("threshold_scale", 0.0)), 0.0)
+
+    def test_phase3_fighter_components_author_mechanism_specific_thresholds(self) -> None:
+        cases = [
+            (
+                "f16c_block50.json",
+                {
+                    "apg68_radar_array",
+                    "cockpit_crew_station",
+                    "nose_avionics_bay",
+                    "iff_interrogator",
+                    "center_fuselage_fuel_cell",
+                    "mission_computer",
+                    "data_link_terminal",
+                    "flight_control_computer",
+                    "inertial_navigation_unit",
+                    "electrical_power_bus",
+                    "engine_core",
+                    "afterburner_nozzle",
+                    "tail_hydraulic_pump",
+                    "engine_fuel_control_unit",
+                    "rudder_actuator",
+                    "left_wing_fuel_cell",
+                    "right_wing_fuel_cell",
+                    "left_aileron_actuator",
+                    "right_aileron_actuator",
+                    "wing_spar_center",
+                    "left_leading_edge_flap_actuator",
+                    "right_leading_edge_flap_actuator",
+                },
+                {
+                    "radar",
+                    "cockpit",
+                    "avionics",
+                    "navigation",
+                    "data_link",
+                    "engine",
+                    "hydraulic",
+                    "flight_control",
+                    "fuel",
+                    "wings",
+                },
+            ),
+            (
+                "su35s_flanker_e.json",
+                {
+                    "irbis_radar_array",
+                    "cockpit_crew_station",
+                    "nose_avionics_bay",
+                    "irst_sensor",
+                    "center_fuselage_fuel_cell",
+                    "mission_computer",
+                    "data_link_terminal",
+                    "flight_control_computer",
+                    "inertial_navigation_unit",
+                    "electrical_power_bus",
+                    "left_engine_core",
+                    "left_engine_fuel_feed",
+                    "left_thrust_vector_actuator",
+                    "right_engine_core",
+                    "right_engine_fuel_feed",
+                    "right_thrust_vector_actuator",
+                    "left_wing_fuel_cell",
+                    "right_wing_fuel_cell",
+                    "left_elevon_actuator",
+                    "right_elevon_actuator",
+                    "wing_spar_center",
+                    "left_leading_edge_flap_actuator",
+                    "right_leading_edge_flap_actuator",
+                },
+                {
+                    "radar",
+                    "cockpit",
+                    "avionics",
+                    "sensor_payload",
+                    "navigation",
+                    "data_link",
+                    "engine_left",
+                    "engine_right",
+                    "flight_control",
+                    "fuel",
+                    "wings",
+                },
+            ),
+        ]
+        required_families = {"blast", "fragmentation", "blast_fragmentation", "continuous_rod", "hit_to_kill"}
+
+        for filename, expected_components, expected_systems in cases:
+            with self.subTest(filename=filename):
+                with open(
+                    resolve_repo_path("examples", "config", "database", "aircraft", "units", filename),
+                    "r",
+                    encoding="utf-8",
+                ) as handle:
+                    unit = json.load(handle)
+                components = {
+                    str(component.get("name", "")): component
+                    for hitbox in unit["damage_model"]["hitboxes"]
+                    for component in hitbox.get("components", [])
+                }
+                self.assertGreaterEqual(len(components), 20)
+                self.assertTrue(expected_components.issubset(set(components)))
+                self.assertTrue(expected_systems.issubset({str(c.get("system", "")) for c in components.values()}))
+                for component_name in expected_components:
+                    thresholds = components[component_name].get("mechanism_thresholds", {})
+                    self.assertTrue(required_families.issubset(set(thresholds)))
+                    self.assertGreater(len({float(value) for value in thresholds.values()}), 1)
+
+    def test_phase3_component_mechanism_thresholds_drive_failure_probability(self) -> None:
+        low_target = "F-16C_A2_LowRodThreshold_Test"
+        high_target = "F-16C_A2_HighRodThreshold_Test"
+        low_override = _make_f16_component_mechanism_threshold_override(
+            low_target,
+            continuous_rod_scale=0.60,
+        )
+        high_override = _make_f16_component_mechanism_threshold_override(
+            high_target,
+            continuous_rod_scale=1.00,
+        )
+
+        _low_overlay, _, low_event = _profiled_local_hit_overlay_for_target(
+            low_target,
+            "continuous_rod",
+            (-0.8, 4.1, 0.0),
+            damage=90.0,
+            radius=35.0,
+            overrides=[low_override],
+        )
+        _high_overlay, _, high_event = _profiled_local_hit_overlay_for_target(
+            high_target,
+            "continuous_rod",
+            (-0.8, 4.1, 0.0),
+            damage=90.0,
+            radius=35.0,
+            overrides=[high_override],
+        )
+
+        self.assertEqual(str(low_event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(high_event.component_primary_name), "right_aileron_actuator")
+        self.assertAlmostEqual(
+            float(low_event.component_failure_sample),
+            float(high_event.component_failure_sample),
+            delta=1.0e-9,
+        )
+        self.assertLess(
+            float(low_event.component_threshold_scale),
+            float(high_event.component_threshold_scale),
+        )
+        self.assertLess(
+            float(low_event.component_failure_probability),
+            float(high_event.component_failure_probability),
+        )
+
+    def test_phase3_representative_aircraft_components_author_mechanism_thresholds(
+        self,
+    ) -> None:
+        filenames = [
+            "f16c_block50.json",
+            "su35s_flanker_e.json",
+            "mq9_reaper.json",
+            "mh60r_mvp.json",
+            "e3_sentry.json",
+        ]
+        required_families = {"blast", "fragmentation", "blast_fragmentation", "continuous_rod", "hit_to_kill"}
+
+        for filename in filenames:
+            with self.subTest(filename=filename):
+                with open(
+                    resolve_repo_path("examples", "config", "database", "aircraft", "units", filename),
+                    "r",
+                    encoding="utf-8",
+                ) as handle:
+                    unit = json.load(handle)
+                components = [
+                    component
+                    for hitbox in unit["damage_model"]["hitboxes"]
+                    for component in hitbox.get("components", [])
+                ]
+                self.assertGreaterEqual(len(components), 20)
+                for component in components:
+                    thresholds = component.get("mechanism_thresholds", {})
+                    self.assertTrue(required_families.issubset(set(thresholds)))
+                    for family in required_families:
+                        self.assertGreater(float(thresholds[family]), 0.0)
+                    self.assertGreater(len({float(value) for value in thresholds.values()}), 1)
+
+    def test_phase3_current_aircraft_unit_database_has_20_plus_component_models(
+        self,
+    ) -> None:
+        units_dir = resolve_repo_path("examples", "config", "database", "aircraft", "units")
+        required_families = {"blast", "fragmentation", "blast_fragmentation", "continuous_rod", "hit_to_kill"}
+        filenames = sorted(
+            filename
+            for filename in os.listdir(units_dir)
+            if filename.endswith(".json")
+        )
+
+        self.assertGreater(len(filenames), 0)
+        for filename in filenames:
+            with self.subTest(filename=filename):
+                with open(os.path.join(units_dir, filename), "r", encoding="utf-8") as handle:
+                    unit = json.load(handle)
+                hitboxes = unit.get("damage_model", {}).get("hitboxes", [])
+                components = [
+                    component
+                    for hitbox in hitboxes
+                    for component in hitbox.get("components", [])
+                ]
+                self.assertGreater(len(hitboxes), 0)
+                self.assertGreaterEqual(len(components), 20)
+                self.assertEqual(
+                    len({str(component.get("name", "")) for component in components}),
+                    len(components),
+                )
+                for component in components:
+                    self.assertTrue(str(component.get("name", "")))
+                    self.assertTrue(str(component.get("system", "")))
+                    self.assertTrue(str(component.get("redundancy_group_id", "")))
+                    self.assertGreater(float(component.get("threshold_scale", 0.0)), 0.0)
+                    thresholds = component.get("mechanism_thresholds", {})
+                    self.assertTrue(required_families.issubset(set(thresholds)))
+                    for family in required_families:
+                        self.assertGreater(float(thresholds[family]), 0.0)
+                    self.assertGreater(len({float(value) for value in thresholds.values()}), 1)
+
+    def test_phase3_current_aircraft_unit_component_centers_stay_inside_parent_hitboxes(
+        self,
+    ) -> None:
+        units_dir = resolve_repo_path("examples", "config", "database", "aircraft", "units")
+        filenames = sorted(
+            filename
+            for filename in os.listdir(units_dir)
+            if filename.endswith(".json")
+        )
+
+        for filename in filenames:
+            with self.subTest(filename=filename):
+                with open(os.path.join(units_dir, filename), "r", encoding="utf-8") as handle:
+                    unit = json.load(handle)
+                for hitbox in unit.get("damage_model", {}).get("hitboxes", []):
+                    hitbox_offset = [float(value) for value in hitbox["offset"]]
+                    hitbox_size = [float(value) for value in hitbox["size"]]
+                    hitbox_min = [
+                        hitbox_offset[index] - 0.5 * hitbox_size[index]
+                        for index in range(3)
+                    ]
+                    hitbox_max = [
+                        hitbox_offset[index] + 0.5 * hitbox_size[index]
+                        for index in range(3)
+                    ]
+                    for component in hitbox.get("components", []):
+                        component_offset = [float(value) for value in component["offset"]]
+                        for axis in range(3):
+                            self.assertGreaterEqual(
+                                component_offset[axis],
+                                hitbox_min[axis] - 1.0e-9,
+                                str(component.get("name", "")),
+                            )
+                            self.assertLessEqual(
+                                component_offset[axis],
+                                hitbox_max[axis] + 1.0e-9,
+                                str(component.get("name", "")),
+                            )
+
+    def test_phase3_component_dependencies_are_authored_for_representative_control_and_mission_components(
+        self,
+    ) -> None:
+        cases = [
+            ("f16c_block50.json", "right_aileron_actuator", {"hydraulic", "flight_control"}),
+            ("su35s_flanker_e.json", "right_elevon_actuator", {"hydraulic", "flight_control"}),
+            ("mq9_reaper.json", "right_aileron_servo", {"hydraulic", "flight_control"}),
+            ("mh60r_mvp.json", "right_tail_rudder_servo", {"hydraulic", "flight_control"}),
+            ("e3_sentry.json", "rotodome_radar_array", {"avionics", "mission_systems"}),
+        ]
+
+        for filename, component_name, expected_dependencies in cases:
+            with self.subTest(filename=filename, component=component_name):
+                with open(
+                    resolve_repo_path("examples", "config", "database", "aircraft", "units", filename),
+                    "r",
+                    encoding="utf-8",
+                ) as handle:
+                    unit = json.load(handle)
+                components = [
+                    component
+                    for hitbox in unit["damage_model"]["hitboxes"]
+                    for component in hitbox.get("components", [])
+                    if str(component.get("name", "")) == component_name
+                ]
+                self.assertEqual(len(components), 1)
+                dependency_systems = {
+                    str(dependency.get("system", ""))
+                    for dependency in components[0].get("dependencies", [])
+                }
+                self.assertTrue(expected_dependencies.issubset(dependency_systems))
+
+    def test_phase3_current_aircraft_units_author_mission_power_and_link_dependencies(
+        self,
+    ) -> None:
+        units_dir = resolve_repo_path("examples", "config", "database", "aircraft", "units")
+        cases = [
+            ("f16c_block50.json", "electrical_power_bus", {"flight_control", "data_link", "mission_systems"}),
+            ("f16c_block50.json", "data_link_terminal", {"avionics", "mission_systems"}),
+            ("su35s_flanker_e.json", "electrical_power_bus", {"flight_control", "data_link", "mission_systems"}),
+            ("su35s_flanker_e.json", "data_link_terminal", {"avionics", "mission_systems"}),
+            ("mq9_reaper.json", "power_distribution_unit", {"flight_control", "data_link", "mission_systems"}),
+            ("mq9_reaper.json", "data_link_transceiver", {"avionics", "mission_systems"}),
+            ("mh60r_mvp.json", "power_distribution_panel", {"flight_control", "data_link", "mission_systems"}),
+            ("mh60r_mvp.json", "data_link_terminal", {"avionics", "mission_systems"}),
+            ("e3_sentry.json", "power_distribution_bus", {"flight_control", "data_link", "mission_systems"}),
+            ("e3_sentry.json", "wideband_data_link_array", {"avionics", "mission_systems"}),
+        ]
+
+        for filename, component_name, expected_dependencies in cases:
+            with self.subTest(filename=filename, component=component_name):
+                with open(os.path.join(units_dir, filename), "r", encoding="utf-8") as handle:
+                    unit = json.load(handle)
+                matches = [
+                    component
+                    for hitbox in unit["damage_model"]["hitboxes"]
+                    for component in hitbox.get("components", [])
+                    if str(component.get("name", "")) == component_name
+                ]
+                self.assertEqual(len(matches), 1)
+                dependency_systems = {
+                    str(dependency.get("system", ""))
+                    for dependency in matches[0].get("dependencies", [])
+                }
+                self.assertTrue(expected_dependencies.issubset(dependency_systems))
+
+    def test_phase3_representative_aircraft_components_report_runtime_identity(self) -> None:
+        cases = [
+            (
+                "MQ-9_Reaper",
+                (4.8, 0.0, -0.25),
+                "eo_ir_sensor_turret",
+                "sensor_payload",
+                "mission_sensor_payload",
+                1,
+                "avionics",
+                None,
+            ),
+            (
+                "MQ-9_Reaper",
+                (-0.4, 8.0, 0.0),
+                "right_aileron_servo",
+                "flight_control",
+                "lateral_flight_control_actuators",
+                2,
+                "flight_control",
+                "roll_control",
+            ),
+            (
+                "MH-60R_MVP",
+                (4.6, 0.0, -0.5),
+                "surface_search_radar",
+                "sensor_payload",
+                "helo_sensor_payload",
+                1,
+                "avionics",
+                None,
+            ),
+            (
+                "MH-60R_MVP",
+                (-8.5, 0.35, 0.2),
+                "right_tail_rudder_servo",
+                "flight_control",
+                "yaw_control_servos",
+                2,
+                "flight_control",
+                "yaw_control",
+            ),
+            (
+                "E-3_Sentry_AWACS",
+                (5.0, 0.0, 4.4),
+                "rotodome_radar_array",
+                "radar",
+                "awacs_primary_radar",
+                1,
+                "avionics",
+                None,
+            ),
+            (
+                "E-3_Sentry_AWACS",
+                (-2.0, 19.0, 0.0),
+                "right_aileron_actuator",
+                "flight_control",
+                "lateral_flight_control_actuators",
+                2,
+                "flight_control",
+                "roll_control",
+            ),
+        ]
+
+        for (
+            target_type,
+            local_impact,
+            expected_component,
+            expected_system,
+            expected_group,
+            expected_group_members,
+            expected_overlay_drop,
+            expected_axis_drop,
+        ) in cases:
+            with self.subTest(target_type=target_type, component=expected_component):
+                overlay, _, event = _profiled_local_hit_overlay_for_target(
+                    target_type,
+                    "blast_fragmentation",
+                    local_impact,
+                    damage=90.0,
+                    radius=35.0,
+                )
+
+                self.assertTrue(bool(event.direct_hitbox_intersection))
+                self.assertGreaterEqual(int(event.component_hit_count), 1)
+                self.assertEqual(str(event.component_primary_name), expected_component)
+                self.assertEqual(str(event.component_primary_system), expected_system)
+                self.assertEqual(str(event.component_primary_redundancy_group_id), expected_group)
+                self.assertEqual(
+                    int(event.component_redundancy_group_member_count),
+                    expected_group_members,
+                )
+                self.assertLess(float(event.component_primary_integrity), 1.0)
+                self.assertGreater(float(event.component_redundancy_group_availability), 0.0)
+                self.assertLess(overlay[expected_overlay_drop], 1.0)
+                if expected_axis_drop is not None:
+                    self.assertLess(overlay[expected_axis_drop], 1.0)
+
+    def test_phase3_component_dependency_damage_propagates_to_related_aircraft_systems(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_attacker_and_named_target(sim, "F-16C_Block50")
+        profile = _make_warhead_profile("continuous_rod", damage=160.0, radius=35.0)
+
+        before = _aircraft_damage_overlay(sim, target_id)
+        self.assertAlmostEqual(before["hydraulic"], 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(before["flight_control"], 1.0, delta=1.0e-6)
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_profiled_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    -0.8,
+                    4.1,
+                    0.0,
+                    profile,
+                )
+            )
+        )
+
+        event = sim.export_recent_engagement_events().effects_events[-1]
+        after = _aircraft_damage_overlay(sim, target_id)
+
+        self.assertEqual(str(event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(
+            str(event.component_primary_redundancy_group_id),
+            "lateral_flight_control_actuators",
+        )
+        self.assertLess(float(event.component_redundancy_group_availability), 1.0)
+        self.assertLess(after["hydraulic"], before["hydraulic"])
+        self.assertLess(after["flight_control"], before["flight_control"])
+        self.assertLess(after["roll_control"], before["roll_control"])
+
+    def test_phase3_mission_component_dependency_damage_propagates_to_avionics_overlay(self) -> None:
+        overlay, _, event = _profiled_local_hit_overlay_for_target(
+            "E-3_Sentry_AWACS",
+            "blast_fragmentation",
+            (5.0, 0.0, 4.4),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(event.component_primary_name), "rotodome_radar_array")
+        self.assertEqual(str(event.component_primary_system), "radar")
+        self.assertEqual(str(event.component_primary_redundancy_group_id), "awacs_primary_radar")
+        self.assertLess(float(event.component_primary_integrity), 1.0)
+        self.assertLess(overlay["avionics"], 1.0)
+
+    def test_phase3_power_and_data_link_dependencies_propagate_to_aircraft_overlay(self) -> None:
+        cases = [
+            (
+                "F-16C_Block50",
+                (-2.8, 0.45, 0.05),
+                "electrical_power_bus",
+                {"avionics": 1.0, "flight_control": 1.0},
+            ),
+            (
+                "MQ-9_Reaper",
+                (-1.8, 0.0, 0.2),
+                "power_distribution_unit",
+                {"avionics": 1.0, "flight_control": 1.0},
+            ),
+            (
+                "MH-60R_MVP",
+                (-2.0, 0.0, 0.35),
+                "power_distribution_panel",
+                {"avionics": 1.0, "flight_control": 1.0},
+            ),
+            (
+                "E-3_Sentry_AWACS",
+                (-8.0, 0.0, 0.0),
+                "power_distribution_bus",
+                {"avionics": 1.0, "flight_control": 1.0},
+            ),
+            (
+                "MQ-9_Reaper",
+                (1.0, 0.0, 0.2),
+                "data_link_transceiver",
+                {"avionics": 1.0},
+            ),
+            (
+                "E-3_Sentry_AWACS",
+                (7.0, 0.0, 3.2),
+                "wideband_data_link_array",
+                {"avionics": 1.0},
+            ),
+        ]
+
+        for target_type, local_impact, expected_component, expected_drops in cases:
+            with self.subTest(target_type=target_type, component=expected_component):
+                overlay, _, event = _profiled_local_hit_overlay_for_target(
+                    target_type,
+                    "blast_fragmentation",
+                    local_impact,
+                    damage=120.0,
+                    radius=35.0,
+                )
+
+                self.assertEqual(str(event.component_primary_name), expected_component)
+                self.assertLess(float(event.component_primary_integrity), 1.0)
+                for overlay_name, baseline in expected_drops.items():
+                    self.assertLess(overlay[overlay_name], baseline)
 
     def test_phase3_component_redundancy_reduces_failure_probability(self) -> None:
         single_name = "F-16C_A2_SingleCriticalActuator_Test"
@@ -2378,6 +3577,59 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             float(redundant_event.component_failure_probability),
         )
 
+    def test_phase3_component_redundancy_group_tracks_cumulative_integrity(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_attacker_and_named_target(sim, "F-16C_Block50")
+        profile = _make_warhead_profile("continuous_rod", damage=160.0, radius=35.0)
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_profiled_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    -0.8,
+                    4.1,
+                    0.0,
+                    profile,
+                )
+            )
+        )
+        first_event = sim.export_recent_engagement_events().effects_events[-1]
+        first_integrity = float(first_event.component_primary_integrity)
+        first_group_availability = float(first_event.component_redundancy_group_availability)
+
+        self.assertEqual(str(first_event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(
+            str(first_event.component_primary_redundancy_group_id),
+            "lateral_flight_control_actuators",
+        )
+        self.assertEqual(int(first_event.component_redundancy_group_member_count), 2)
+        self.assertEqual(int(first_event.component_redundancy_group_failed_count), 0)
+        self.assertLess(first_integrity, 1.0)
+        self.assertGreater(first_group_availability, first_integrity)
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_profiled_local_proximity_hit(
+                    attacker_id,
+                    target_id,
+                    -0.8,
+                    4.1,
+                    0.0,
+                    profile,
+                )
+            )
+        )
+        second_event = sim.export_recent_engagement_events().effects_events[-1]
+        second_integrity = float(second_event.component_primary_integrity)
+        second_group_availability = float(second_event.component_redundancy_group_availability)
+
+        self.assertLess(second_integrity, first_integrity)
+        self.assertLess(second_group_availability, first_group_availability)
+        self.assertGreater(second_group_availability, second_integrity)
+
     def test_phase3_component_failure_probability_is_sampled_and_reported(self) -> None:
         wing = (-0.753, 4.0, 0.0)
 
@@ -2413,11 +3665,52 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             low_energy_overlay["hydraulic"],
         )
 
+    def test_phase3_component_failure_probability_consumes_mechanism_load_evidence(self) -> None:
+        wing = (-0.753, 4.0, 0.0)
+
+        _low_overlay, low_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            wing,
+            (0.0, -220.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _high_overlay, high_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(low_event.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertEqual(str(high_event.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertFalse(bool(low_event.component_failure_probability_calibrated))
+        self.assertFalse(bool(high_event.component_failure_probability_calibrated))
+        self.assertAlmostEqual(
+            float(low_event.component_failure_sample),
+            float(high_event.component_failure_sample),
+            delta=1.0e-9,
+        )
+        self.assertGreater(float(high_event.closure_mps), float(low_event.closure_mps))
+        self.assertGreater(
+            float(high_event.mechanism_rod_cut_margin),
+            float(low_event.mechanism_rod_cut_margin),
+        )
+        self.assertGreater(
+            float(high_event.mechanism_penetration_margin),
+            float(low_event.mechanism_penetration_margin),
+        )
+        self.assertGreater(
+            float(high_event.component_failure_probability),
+            float(low_event.component_failure_probability),
+        )
+
     def test_phase5_aircraft_vulnerability_profile_modulates_structured_damage(self) -> None:
         beam_high_closure = _profiled_local_hit_overlay_with_velocity(
             "continuous_rod",
             (-0.753, 4.0, 0.0),
-            (0.0, -900.0, 0.0),
+            (900.0, -250.0, 0.0),
             damage=90.0,
             radius=35.0,
         )
@@ -2431,14 +3724,14 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         direct_wing = _profiled_local_hit_overlay_with_velocity(
             "continuous_rod",
             (-0.753, 4.0, 0.0),
-            (0.0, -900.0, 0.0),
+            (900.0, -250.0, 0.0),
             damage=90.0,
             radius=35.0,
         )
         near_wing = _profiled_local_hit_overlay_with_velocity(
             "continuous_rod",
             (-0.753, 7.1, 0.0),
-            (0.0, -900.0, 0.0),
+            (900.0, -250.0, 0.0),
             damage=90.0,
             radius=35.0,
         )
@@ -2447,6 +3740,37 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertLess(beam_high_closure["hydraulic"], tail_low_closure["hydraulic"])
         self.assertLess(direct_wing["flight_control"], near_wing["flight_control"])
         self.assertLess(direct_wing["structure"], near_wing["structure"])
+
+    def test_phase5_vulnerability_adjustment_is_recorded_on_effects_event(self) -> None:
+        _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            (-0.753, 4.0, 0.0),
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertTrue(bool(event.vulnerability_profile_present))
+        self.assertTrue(bool(event.vulnerability_profile_synthetic))
+        self.assertFalse(bool(event.vulnerability_calibrated_evidence))
+        self.assertFalse(bool(event.vulnerability_pk_authority))
+        self.assertFalse(bool(event.vulnerability_deterministic_fuze_authority))
+        self.assertFalse(bool(event.vulnerability_evidence_dataset_valid))
+        self.assertEqual(str(event.vulnerability_evidence_dataset_ref), "")
+        self.assertEqual(str(event.vulnerability_calibration_status), "unvalidated")
+        self.assertIn("synthetic fighter vulnerability scaffold", str(event.vulnerability_provenance))
+        self.assertEqual(str(event.vulnerability_aspect_bucket), "beam")
+        self.assertAlmostEqual(float(event.vulnerability_family_scale), 1.18, delta=1.0e-6)
+        self.assertAlmostEqual(float(event.vulnerability_aspect_scale), 1.18, delta=1.0e-6)
+        expected_closure_mps = 900.0 * 4.0 / math.hypot(4.0, 0.753)
+        self.assertAlmostEqual(
+            float(event.vulnerability_closure_mps),
+            expected_closure_mps,
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(float(event.vulnerability_closure_scale), 1.10, delta=1.0e-6)
+        self.assertAlmostEqual(float(event.vulnerability_miss_distance_scale), 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(event.vulnerability_effect_scale), 1.25, delta=1.0e-6)
 
     def test_phase5_synthetic_vulnerability_profile_is_not_pk_or_fuze_authority(self) -> None:
         sim = ef_py.SimulationKernel()
@@ -2458,7 +3782,480 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             float(value)
             for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
         ]
-        self.assertEqual(evidence, [1.0, 1.0, 0.0, 0.0, 0.0])
+        self.assertEqual(evidence, [1.0, 1.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_representative_aircraft_vulnerability_scaffolds_are_non_authoritative(
+        self,
+    ) -> None:
+        cases = (
+            "F-16C_Block50",
+            "Su-35S_Flanker-E",
+            "MQ-9_Reaper",
+            "MH-60R_MVP",
+            "E-3_Sentry_AWACS",
+        )
+
+        for target_type in cases:
+            with self.subTest(target_type=target_type):
+                sim = ef_py.SimulationKernel()
+                sim.reset(20260526)
+                self.assertTrue(sim.load_database(_DB_PATH))
+                target_id = int(
+                    sim.spawn_unit(
+                        ef_py.Side.Red,
+                        target_type,
+                        0.0,
+                        1000.0,
+                        5000.0,
+                        180.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        -200.0,
+                        0.0,
+                    )
+                )
+
+                evidence = [
+                    float(value)
+                    for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+                ]
+                self.assertEqual(evidence, [1.0, 1.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_calibrated_vulnerability_claim_requires_dataset_descriptor(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_missing_descriptor_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                    "evidence_dataset_ref": "missing_external_dataset",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test forged calibrated claim without descriptor",
+                },
+            )
+
+            sim = ef_py.SimulationKernel()
+            sim.reset(20260526)
+            self.assertTrue(sim.load_database(db_dir))
+            _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+            evidence = [
+                float(value)
+                for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+            ]
+            self.assertEqual(evidence, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_synthetic_descriptor_cannot_grant_vulnerability_authority(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_synthetic_descriptor_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                    "evidence_dataset_ref": "a2_synthetic_f16_aim120_placeholder",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test calibrated claim pointed at synthetic descriptor",
+                },
+                descriptor_patch={
+                    "calibration_status": "calibrated",
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                },
+            )
+
+            sim = ef_py.SimulationKernel()
+            sim.reset(20260526)
+            self.assertTrue(sim.load_database(db_dir))
+            _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+            evidence = [
+                float(value)
+                for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+            ]
+            self.assertEqual(evidence, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_calibrated_descriptor_grants_only_requested_authority(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_pk_descriptor_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                    "evidence_dataset_ref": "unit_test_calibrated_f16_frag_pk",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test calibrated descriptor gate; synthetic fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_calibrated_f16_frag_pk",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "blast_fragmentation",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "near_miss_0_35m",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving authority gating mechanics only",
+                },
+            )
+
+            sim = ef_py.SimulationKernel()
+            sim.reset(20260526)
+            self.assertTrue(sim.load_database(db_dir))
+            _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+            evidence = [
+                float(value)
+                for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+            ]
+            self.assertEqual(evidence, [1.0, 0.0, 1.0, 1.0, 0.0, 1.0])
+
+    def test_phase5_calibrated_descriptor_requires_evidence_axes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_axis_descriptor_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                    "evidence_dataset_ref": "unit_test_calibrated_f16_axis_missing",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test calibrated descriptor missing evidence axes",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_calibrated_f16_axis_missing",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "blast_fragmentation",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                    "provenance": "unit-test descriptor missing aspect/closure/miss-distance axes",
+                },
+            )
+
+            sim = ef_py.SimulationKernel()
+            sim.reset(20260526)
+            self.assertTrue(sim.load_database(db_dir))
+            _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+            evidence = [
+                float(value)
+                for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+            ]
+            self.assertEqual(evidence, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_calibrated_descriptor_can_grant_pk_and_deterministic_fuze_authority(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_full_descriptor_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                    "evidence_dataset_ref": "unit_test_calibrated_f16_frag_full",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test calibrated descriptor gate; synthetic fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_calibrated_f16_frag_full",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "blast_fragmentation",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "near_miss_0_35m",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": True,
+                    "provenance": "unit-test descriptor proving authority gating mechanics only",
+                },
+            )
+
+            sim = ef_py.SimulationKernel()
+            sim.reset(20260526)
+            self.assertTrue(sim.load_database(db_dir))
+            _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+            evidence = [
+                float(value)
+                for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+            ]
+            self.assertEqual(evidence, [1.0, 0.0, 1.0, 1.0, 1.0, 1.0])
+
+    def test_phase5_authorized_vulnerability_rows_drive_effects_event_scales(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_rows_descriptor_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_calibrated_f16_rod_rows",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test calibrated rows gate; synthetic fixture, not project data",
+                    "continuous_rod_scale": 0.91,
+                    "beam_aspect_scale": 0.92,
+                    "high_closure_scale": 0.93,
+                    "direct_hit_scale": 0.94,
+                },
+                descriptor={
+                    "dataset_id": "unit_test_calibrated_f16_rod_rows",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving row consumption mechanics only",
+                    "rows": [
+                        {
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "family_scale": 1.31,
+                            "aspect_scale": 1.17,
+                            "closure_scale": 1.09,
+                            "miss_distance_scale": 1.03,
+                            "effect_scale": 1.42,
+                        },
+                        {
+                            "weapon_family": "blast",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "effect_scale": 0.66,
+                        },
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.753, 4.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_profile_present))
+            self.assertFalse(bool(event.vulnerability_profile_synthetic))
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertFalse(bool(event.vulnerability_pk_authority))
+            self.assertFalse(bool(event.vulnerability_deterministic_fuze_authority))
+            self.assertEqual(str(event.vulnerability_evidence_dataset_ref), "unit_test_calibrated_f16_rod_rows")
+            self.assertEqual(str(event.vulnerability_calibration_status), "calibrated")
+            self.assertEqual(str(event.vulnerability_aspect_bucket), "beam")
+            self.assertAlmostEqual(float(event.vulnerability_family_scale), 1.31, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_aspect_scale), 1.17, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_closure_scale), 1.09, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_miss_distance_scale), 1.03, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_effect_scale), 1.42, delta=1.0e-6)
+
+    def test_phase5_vulnerability_rows_require_effect_scale_authority(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_rows_denied_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_calibrated_f16_rows_denied",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test rows denied fixture, not project data",
+                    "continuous_rod_scale": 0.91,
+                    "beam_aspect_scale": 0.92,
+                    "high_closure_scale": 0.93,
+                    "direct_hit_scale": 0.94,
+                },
+                descriptor={
+                    "dataset_id": "unit_test_calibrated_f16_rows_denied",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving row authority is explicit",
+                    "rows": [
+                        {
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "family_scale": 1.31,
+                            "aspect_scale": 1.17,
+                            "closure_scale": 1.09,
+                            "miss_distance_scale": 1.03,
+                            "effect_scale": 1.42,
+                        }
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.753, 4.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertAlmostEqual(float(event.vulnerability_family_scale), 0.91, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_aspect_scale), 0.92, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_closure_scale), 0.93, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_miss_distance_scale), 0.94, delta=1.0e-6)
+            self.assertAlmostEqual(
+                float(event.vulnerability_effect_scale),
+                0.91 * 0.92 * 0.93 * 0.94,
+                delta=1.0e-6,
+            )
+
+    def test_phase5_authorized_rows_drive_component_failure_probability(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_component_pk_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_calibrated_f16_component_failure",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test component failure row gate; synthetic fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_calibrated_f16_component_failure",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "component_failure_probability_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving component probability row mechanics only",
+                    "rows": [
+                        {
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "component_failure_probability": 0.37,
+                        }
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.753, 4.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+        self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+        self.assertFalse(bool(event.vulnerability_pk_authority))
+        self.assertAlmostEqual(float(event.component_failure_probability), 0.37, delta=1.0e-6)
+        self.assertEqual(str(event.component_failure_probability_source), "vulnerability_evidence_row")
+        self.assertTrue(bool(event.component_failure_probability_calibrated))
+        self.assertEqual(
+            str(event.component_failure_probability_evidence_dataset_ref),
+            "unit_test_calibrated_f16_component_failure",
+        )
+
+    def test_phase5_component_failure_rows_require_probability_authority(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_component_pk_denied_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_calibrated_f16_component_failure_denied",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test component failure row denied fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_calibrated_f16_component_failure_denied",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "component_failure_probability_authority": False,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving component probability authority is explicit",
+                    "rows": [
+                        {
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "component_failure_probability": 0.37,
+                        }
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.753, 4.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertNotAlmostEqual(
+                float(event.component_failure_probability),
+                0.37,
+                delta=1.0e-6,
+            )
+            self.assertEqual(str(event.component_failure_probability_source), "synthetic_sigmoid")
+            self.assertFalse(bool(event.component_failure_probability_calibrated))
+            self.assertEqual(str(event.component_failure_probability_evidence_dataset_ref), "")
 
     def test_phase3_continuous_rod_near_miss_uses_relative_velocity_axis(self) -> None:
         near_wing = (-0.753, 7.1, 0.0)
@@ -2498,6 +4295,184 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             abs(blast_fragmentation_broadside["flight_control"] - blast_fragmentation_axial["flight_control"]),
             abs(broadside_sweep["flight_control"] - axial_pass["flight_control"]),
         )
+
+    def test_phase3_warhead_spatial_sampling_reports_fragment_and_rod_evidence(self) -> None:
+        near_wing = (-0.753, 7.1, 0.0)
+        _blast_overlay, _, blast_event = _profiled_local_hit_overlay(
+            "blast_fragmentation",
+            near_wing,
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(blast_event.effect_family), "blast_fragmentation")
+        self.assertGreater(int(blast_event.warhead_spatial_sample_count), 100)
+        self.assertGreater(float(blast_event.warhead_spatial_hit_estimate), 0.0)
+        self.assertLess(float(blast_event.warhead_spatial_hit_fraction), 0.10)
+        self.assertGreater(float(blast_event.warhead_spatial_energy_scale), 0.0)
+        self.assertGreater(float(blast_event.mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(blast_event.mechanism_penetration_margin), 0.0)
+        self.assertGreater(float(blast_event.mechanism_blast_overpressure_kpa), 0.0)
+        self.assertGreater(float(blast_event.mechanism_blast_impulse_kpa_ms), 0.0)
+
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+        rod_profile = _make_warhead_profile("continuous_rod", damage=90.0, radius=35.0)
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+                    attacker_id,
+                    target_id,
+                    near_wing[0],
+                    near_wing[1],
+                    near_wing[2],
+                    rod_profile,
+                    0.0,
+                    -900.0,
+                    0.0,
+                )
+            )
+        )
+        broadside_event = sim.export_recent_engagement_events().effects_events[-1]
+
+        self.assertTrue(
+            bool(
+                sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+                    attacker_id,
+                    target_id,
+                    near_wing[0],
+                    near_wing[1],
+                    near_wing[2],
+                    rod_profile,
+                    -900.0,
+                    0.0,
+                    0.0,
+                )
+            )
+        )
+        axial_event = sim.export_recent_engagement_events().effects_events[-1]
+
+        self.assertEqual(str(broadside_event.effect_family), "continuous_rod")
+        self.assertGreater(int(broadside_event.warhead_spatial_sample_count), 20)
+        self.assertGreater(
+            float(broadside_event.warhead_spatial_pattern_scale),
+            float(axial_event.warhead_spatial_pattern_scale),
+        )
+        self.assertGreater(
+            float(broadside_event.warhead_spatial_hit_estimate),
+            float(axial_event.warhead_spatial_hit_estimate),
+        )
+        self.assertGreater(float(broadside_event.mechanism_rod_cut_margin), 0.0)
+        self.assertGreater(
+            float(broadside_event.mechanism_rod_cut_margin),
+            float(axial_event.mechanism_rod_cut_margin),
+        )
+
+    def test_phase3_warhead_mechanism_load_evidence_tracks_mechanism_family(self) -> None:
+        direct_wing = (-0.8, 4.1, 0.0)
+        _blast_overlay, blast_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast",
+            direct_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _frag_overlay, frag_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            direct_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _rod_overlay, rod_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            direct_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(blast_event.effect_family), "blast")
+        self.assertGreater(float(blast_event.mechanism_blast_overpressure_kpa), 0.0)
+        self.assertGreater(float(blast_event.mechanism_blast_impulse_kpa_ms), 0.0)
+        self.assertAlmostEqual(float(blast_event.mechanism_fragment_energy_j), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(blast_event.mechanism_rod_cut_margin), 0.0, delta=1.0e-6)
+
+        self.assertEqual(str(frag_event.effect_family), "blast_fragmentation")
+        self.assertGreater(float(frag_event.mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(frag_event.mechanism_penetration_margin), 0.0)
+        self.assertGreater(float(frag_event.mechanism_blast_overpressure_kpa), 0.0)
+
+        self.assertEqual(str(rod_event.effect_family), "continuous_rod")
+        self.assertGreater(float(rod_event.mechanism_rod_cut_margin), 0.0)
+        self.assertGreater(float(rod_event.mechanism_penetration_margin), 0.0)
+        self.assertAlmostEqual(float(rod_event.mechanism_blast_overpressure_kpa), 0.0, delta=1.0e-6)
+
+    def test_phase3_warhead_orientation_axis_modulates_rod_pattern_evidence(self) -> None:
+        near_wing = (-0.753, 7.1, 0.0)
+        missile_velocity = (0.0, -900.0, 0.0)
+        broadside_overlay, broadside_event = (
+            _profiled_local_hit_overlay_and_event_with_velocity_and_attitude(
+                "continuous_rod",
+                near_wing,
+                missile_velocity,
+                (0.0, 0.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+            )
+        )
+        axial_overlay, axial_event = (
+            _profiled_local_hit_overlay_and_event_with_velocity_and_attitude(
+                "continuous_rod",
+                near_wing,
+                missile_velocity,
+                (90.0, 0.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+            )
+        )
+
+        self.assertEqual(str(broadside_event.effect_family), "continuous_rod")
+        self.assertAlmostEqual(abs(float(broadside_event.warhead_orientation_axis_forward)), 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(abs(float(axial_event.warhead_orientation_axis_right)), 1.0, delta=1.0e-6)
+        self.assertGreater(
+            float(broadside_event.warhead_orientation_pattern_scale),
+            float(axial_event.warhead_orientation_pattern_scale),
+        )
+        self.assertGreater(
+            float(broadside_event.warhead_spatial_pattern_scale),
+            float(axial_event.warhead_spatial_pattern_scale),
+        )
+        self.assertGreater(
+            float(broadside_event.warhead_spatial_hit_estimate),
+            float(axial_event.warhead_spatial_hit_estimate),
+        )
+        self.assertLess(
+            broadside_overlay["flight_control"],
+            axial_overlay["flight_control"],
+        )
+
+    def test_phase3_local_hit_geometry_respects_target_pitch_and_roll(self) -> None:
+        local_aileron = (-0.8, 4.1, 0.0)
+        overlay, event = _profiled_local_hit_overlay_and_event_with_target_attitude(
+            "continuous_rod",
+            local_aileron,
+            (12.0, 25.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertAlmostEqual(float(event.detonation_local_forward_m), local_aileron[0], delta=1.0e-5)
+        self.assertAlmostEqual(float(event.detonation_local_right_m), local_aileron[1], delta=1.0e-5)
+        self.assertAlmostEqual(float(event.detonation_local_up_m), local_aileron[2], delta=1.0e-5)
+        self.assertTrue(bool(event.direct_hitbox_intersection))
+        self.assertEqual(str(event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(event.component_primary_system), "flight_control")
+        self.assertLess(overlay["flight_control"], 1.0)
+        self.assertLess(overlay["roll_control"], 1.0)
 
     def test_e3_sentry_c2node_uses_authored_structured_damage_model(self) -> None:
         sim = ef_py.SimulationKernel()

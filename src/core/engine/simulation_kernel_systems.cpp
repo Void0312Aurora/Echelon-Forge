@@ -147,6 +147,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<EmbarkedAirOps>();
     ecs.component<HitboxConfig>();
     ecs.component<SystemHealth>();
+    ecs.component<ComponentDamageState>();
     ecs.component<PlatformDamageState>();
     ecs.component<AircraftDamageState>();
     ecs.component<AircraftDamageBaseline>();

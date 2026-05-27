@@ -99,12 +99,23 @@ struct Missile {
     double fuze_detonation_x = std::numeric_limits<double>::quiet_NaN();
     double fuze_detonation_y = std::numeric_limits<double>::quiet_NaN();
     double fuze_detonation_z = std::numeric_limits<double>::quiet_NaN();
+    double fuze_detonation_heading_deg = std::numeric_limits<double>::quiet_NaN();
+    double fuze_detonation_pitch_deg = std::numeric_limits<double>::quiet_NaN();
+    double fuze_detonation_roll_deg = std::numeric_limits<double>::quiet_NaN();
     double fuze_quality = 0.0;
     double fuze_hit_probability = 0.0;
     double fuze_closure_mps = 0.0;
     double fuze_missile_axis_forward = 0.0;
     double fuze_missile_axis_right = 0.0;
     double fuze_missile_axis_up = 0.0;
+    std::string fuze_signature_source = "none";
+    double fuze_target_signature = 0.0;
+    double fuze_signature_scale = 1.0;
+    double fuze_effective_reliability = 1.0;
+    double fuze_contact_surface_distance_m = 0.0;
+    double fuze_contact_penetration_depth_m = 0.0;
+    double fuze_contact_surface_tolerance_m = 0.0;
+    bool fuze_contact_inside_hitbox = false;
 
     // P0 seeker / guidance runtime state.
     bool p0_runtime_initialized = false;

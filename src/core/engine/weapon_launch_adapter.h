@@ -71,6 +71,9 @@ struct EffectsEventSnapshot {
     double detonation_local_forward_m = 0.0;
     double detonation_local_right_m = 0.0;
     double detonation_local_up_m = 0.0;
+    double detonation_heading_deg = 0.0;
+    double detonation_pitch_deg = 0.0;
+    double detonation_roll_deg = 0.0;
     double closure_mps = 0.0;
     double missile_axis_forward = 0.0;
     double missile_axis_right = 0.0;
@@ -87,14 +90,39 @@ struct EffectsEventSnapshot {
     double fuze_delay_s = 0.0;
     double fuze_reliability = 1.0;
     bool fuze_profile_synthetic = true;
+    std::string fuze_signature_source = "none";
+    double fuze_target_signature = 0.0;
+    double fuze_signature_scale = 1.0;
+    double fuze_effective_reliability = 1.0;
+    double fuze_contact_surface_distance_m = 0.0;
+    double fuze_contact_penetration_depth_m = 0.0;
+    double fuze_contact_surface_tolerance_m = 0.0;
+    bool fuze_contact_inside_hitbox = false;
     bool direct_hitbox_intersection = false;
     std::uint32_t projected_hitbox_count = 0;
     double spatial_effect_scale = 0.0;
     double mechanism_armor_scale = 1.0;
     double mechanism_exposure_scale = 1.0;
     double mechanism_effect_scale = 1.0;
+    double mechanism_fragment_energy_j = 0.0;
+    double mechanism_penetration_margin = 0.0;
+    double mechanism_blast_overpressure_kpa = 0.0;
+    double mechanism_blast_impulse_kpa_ms = 0.0;
+    double mechanism_rod_cut_margin = 0.0;
+    std::uint32_t warhead_spatial_sample_count = 0;
+    double warhead_spatial_hit_estimate = 0.0;
+    double warhead_spatial_hit_fraction = 0.0;
+    double warhead_spatial_energy_scale = 1.0;
+    double warhead_spatial_pattern_scale = 1.0;
+    double warhead_orientation_axis_forward = 0.0;
+    double warhead_orientation_axis_right = 0.0;
+    double warhead_orientation_axis_up = 0.0;
+    double warhead_orientation_pattern_scale = 1.0;
     double component_threshold_scale = 1.0;
     double component_failure_probability = 0.0;
+    std::string component_failure_probability_source = "none";
+    bool component_failure_probability_calibrated = false;
+    std::string component_failure_probability_evidence_dataset_ref;
     double component_failure_sample = 1.0;
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
@@ -102,6 +130,27 @@ struct EffectsEventSnapshot {
     std::string component_primary_system;
     double component_primary_redundancy_group = 0.0;
     bool component_primary_critical = false;
+    std::string component_primary_redundancy_group_id;
+    double component_primary_integrity = 1.0;
+    double component_redundancy_group_availability = 1.0;
+    std::uint32_t component_redundancy_group_member_count = 0;
+    std::uint32_t component_redundancy_group_failed_count = 0;
+    bool vulnerability_profile_present = false;
+    bool vulnerability_profile_synthetic = true;
+    bool vulnerability_calibrated_evidence = false;
+    bool vulnerability_pk_authority = false;
+    bool vulnerability_deterministic_fuze_authority = false;
+    bool vulnerability_evidence_dataset_valid = false;
+    std::string vulnerability_evidence_dataset_ref;
+    std::string vulnerability_calibration_status = "none";
+    std::string vulnerability_provenance;
+    std::string vulnerability_aspect_bucket = "unknown";
+    double vulnerability_family_scale = 1.0;
+    double vulnerability_aspect_scale = 1.0;
+    double vulnerability_closure_mps = 0.0;
+    double vulnerability_closure_scale = 1.0;
+    double vulnerability_miss_distance_scale = 1.0;
+    double vulnerability_effect_scale = 1.0;
 };
 
 struct DamageReportSnapshot {
@@ -216,6 +265,9 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .detonation_local_forward_m = snapshot.detonation_local_forward_m,
         .detonation_local_right_m = snapshot.detonation_local_right_m,
         .detonation_local_up_m = snapshot.detonation_local_up_m,
+        .detonation_heading_deg = snapshot.detonation_heading_deg,
+        .detonation_pitch_deg = snapshot.detonation_pitch_deg,
+        .detonation_roll_deg = snapshot.detonation_roll_deg,
         .closure_mps = snapshot.closure_mps,
         .missile_axis_forward = snapshot.missile_axis_forward,
         .missile_axis_right = snapshot.missile_axis_right,
@@ -232,14 +284,41 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .fuze_delay_s = snapshot.fuze_delay_s,
         .fuze_reliability = snapshot.fuze_reliability,
         .fuze_profile_synthetic = snapshot.fuze_profile_synthetic,
+        .fuze_signature_source = snapshot.fuze_signature_source,
+        .fuze_target_signature = snapshot.fuze_target_signature,
+        .fuze_signature_scale = snapshot.fuze_signature_scale,
+        .fuze_effective_reliability = snapshot.fuze_effective_reliability,
+        .fuze_contact_surface_distance_m = snapshot.fuze_contact_surface_distance_m,
+        .fuze_contact_penetration_depth_m = snapshot.fuze_contact_penetration_depth_m,
+        .fuze_contact_surface_tolerance_m = snapshot.fuze_contact_surface_tolerance_m,
+        .fuze_contact_inside_hitbox = snapshot.fuze_contact_inside_hitbox,
         .direct_hitbox_intersection = snapshot.direct_hitbox_intersection,
         .projected_hitbox_count = snapshot.projected_hitbox_count,
         .spatial_effect_scale = snapshot.spatial_effect_scale,
         .mechanism_armor_scale = snapshot.mechanism_armor_scale,
         .mechanism_exposure_scale = snapshot.mechanism_exposure_scale,
         .mechanism_effect_scale = snapshot.mechanism_effect_scale,
+        .mechanism_fragment_energy_j = snapshot.mechanism_fragment_energy_j,
+        .mechanism_penetration_margin = snapshot.mechanism_penetration_margin,
+        .mechanism_blast_overpressure_kpa = snapshot.mechanism_blast_overpressure_kpa,
+        .mechanism_blast_impulse_kpa_ms = snapshot.mechanism_blast_impulse_kpa_ms,
+        .mechanism_rod_cut_margin = snapshot.mechanism_rod_cut_margin,
+        .warhead_spatial_sample_count = snapshot.warhead_spatial_sample_count,
+        .warhead_spatial_hit_estimate = snapshot.warhead_spatial_hit_estimate,
+        .warhead_spatial_hit_fraction = snapshot.warhead_spatial_hit_fraction,
+        .warhead_spatial_energy_scale = snapshot.warhead_spatial_energy_scale,
+        .warhead_spatial_pattern_scale = snapshot.warhead_spatial_pattern_scale,
+        .warhead_orientation_axis_forward = snapshot.warhead_orientation_axis_forward,
+        .warhead_orientation_axis_right = snapshot.warhead_orientation_axis_right,
+        .warhead_orientation_axis_up = snapshot.warhead_orientation_axis_up,
+        .warhead_orientation_pattern_scale = snapshot.warhead_orientation_pattern_scale,
         .component_threshold_scale = snapshot.component_threshold_scale,
         .component_failure_probability = snapshot.component_failure_probability,
+        .component_failure_probability_source = snapshot.component_failure_probability_source,
+        .component_failure_probability_calibrated =
+            snapshot.component_failure_probability_calibrated,
+        .component_failure_probability_evidence_dataset_ref =
+            snapshot.component_failure_probability_evidence_dataset_ref,
         .component_failure_sample = snapshot.component_failure_sample,
         .component_failure_count = snapshot.component_failure_count,
         .component_hit_count = snapshot.component_hit_count,
@@ -247,6 +326,32 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .component_primary_system = snapshot.component_primary_system,
         .component_primary_redundancy_group = snapshot.component_primary_redundancy_group,
         .component_primary_critical = snapshot.component_primary_critical,
+        .component_primary_redundancy_group_id = snapshot.component_primary_redundancy_group_id,
+        .component_primary_integrity = snapshot.component_primary_integrity,
+        .component_redundancy_group_availability =
+            snapshot.component_redundancy_group_availability,
+        .component_redundancy_group_member_count =
+            snapshot.component_redundancy_group_member_count,
+        .component_redundancy_group_failed_count =
+            snapshot.component_redundancy_group_failed_count,
+        .vulnerability_profile_present = snapshot.vulnerability_profile_present,
+        .vulnerability_profile_synthetic = snapshot.vulnerability_profile_synthetic,
+        .vulnerability_calibrated_evidence = snapshot.vulnerability_calibrated_evidence,
+        .vulnerability_pk_authority = snapshot.vulnerability_pk_authority,
+        .vulnerability_deterministic_fuze_authority =
+            snapshot.vulnerability_deterministic_fuze_authority,
+        .vulnerability_evidence_dataset_valid =
+            snapshot.vulnerability_evidence_dataset_valid,
+        .vulnerability_evidence_dataset_ref = snapshot.vulnerability_evidence_dataset_ref,
+        .vulnerability_calibration_status = snapshot.vulnerability_calibration_status,
+        .vulnerability_provenance = snapshot.vulnerability_provenance,
+        .vulnerability_aspect_bucket = snapshot.vulnerability_aspect_bucket,
+        .vulnerability_family_scale = snapshot.vulnerability_family_scale,
+        .vulnerability_aspect_scale = snapshot.vulnerability_aspect_scale,
+        .vulnerability_closure_mps = snapshot.vulnerability_closure_mps,
+        .vulnerability_closure_scale = snapshot.vulnerability_closure_scale,
+        .vulnerability_miss_distance_scale = snapshot.vulnerability_miss_distance_scale,
+        .vulnerability_effect_scale = snapshot.vulnerability_effect_scale,
     };
 }
 

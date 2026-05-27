@@ -556,6 +556,9 @@ void bind_runtime(nb::module_& m) {
         .def_rw("detonation_local_forward_m", &EffectsEvent::detonation_local_forward_m)
         .def_rw("detonation_local_right_m", &EffectsEvent::detonation_local_right_m)
         .def_rw("detonation_local_up_m", &EffectsEvent::detonation_local_up_m)
+        .def_rw("detonation_heading_deg", &EffectsEvent::detonation_heading_deg)
+        .def_rw("detonation_pitch_deg", &EffectsEvent::detonation_pitch_deg)
+        .def_rw("detonation_roll_deg", &EffectsEvent::detonation_roll_deg)
         .def_rw("closure_mps", &EffectsEvent::closure_mps)
         .def_rw("missile_axis_forward", &EffectsEvent::missile_axis_forward)
         .def_rw("missile_axis_right", &EffectsEvent::missile_axis_right)
@@ -572,14 +575,55 @@ void bind_runtime(nb::module_& m) {
         .def_rw("fuze_delay_s", &EffectsEvent::fuze_delay_s)
         .def_rw("fuze_reliability", &EffectsEvent::fuze_reliability)
         .def_rw("fuze_profile_synthetic", &EffectsEvent::fuze_profile_synthetic)
+        .def_rw("fuze_signature_source", &EffectsEvent::fuze_signature_source)
+        .def_rw("fuze_target_signature", &EffectsEvent::fuze_target_signature)
+        .def_rw("fuze_signature_scale", &EffectsEvent::fuze_signature_scale)
+        .def_rw("fuze_effective_reliability", &EffectsEvent::fuze_effective_reliability)
+        .def_rw("fuze_contact_surface_distance_m",
+                &EffectsEvent::fuze_contact_surface_distance_m)
+        .def_rw("fuze_contact_penetration_depth_m",
+                &EffectsEvent::fuze_contact_penetration_depth_m)
+        .def_rw("fuze_contact_surface_tolerance_m",
+                &EffectsEvent::fuze_contact_surface_tolerance_m)
+        .def_rw("fuze_contact_inside_hitbox", &EffectsEvent::fuze_contact_inside_hitbox)
         .def_rw("direct_hitbox_intersection", &EffectsEvent::direct_hitbox_intersection)
         .def_rw("projected_hitbox_count", &EffectsEvent::projected_hitbox_count)
         .def_rw("spatial_effect_scale", &EffectsEvent::spatial_effect_scale)
         .def_rw("mechanism_armor_scale", &EffectsEvent::mechanism_armor_scale)
         .def_rw("mechanism_exposure_scale", &EffectsEvent::mechanism_exposure_scale)
         .def_rw("mechanism_effect_scale", &EffectsEvent::mechanism_effect_scale)
+        .def_rw("mechanism_fragment_energy_j", &EffectsEvent::mechanism_fragment_energy_j)
+        .def_rw("mechanism_penetration_margin", &EffectsEvent::mechanism_penetration_margin)
+        .def_rw("mechanism_blast_overpressure_kpa",
+                &EffectsEvent::mechanism_blast_overpressure_kpa)
+        .def_rw("mechanism_blast_impulse_kpa_ms",
+                &EffectsEvent::mechanism_blast_impulse_kpa_ms)
+        .def_rw("mechanism_rod_cut_margin", &EffectsEvent::mechanism_rod_cut_margin)
+        .def_rw("warhead_spatial_sample_count", &EffectsEvent::warhead_spatial_sample_count)
+        .def_rw("warhead_spatial_hit_estimate", &EffectsEvent::warhead_spatial_hit_estimate)
+        .def_rw("warhead_spatial_hit_fraction", &EffectsEvent::warhead_spatial_hit_fraction)
+        .def_rw("warhead_spatial_energy_scale", &EffectsEvent::warhead_spatial_energy_scale)
+        .def_rw("warhead_spatial_pattern_scale", &EffectsEvent::warhead_spatial_pattern_scale)
+        .def_rw(
+            "warhead_orientation_axis_forward",
+            &EffectsEvent::warhead_orientation_axis_forward)
+        .def_rw(
+            "warhead_orientation_axis_right",
+            &EffectsEvent::warhead_orientation_axis_right)
+        .def_rw(
+            "warhead_orientation_axis_up",
+            &EffectsEvent::warhead_orientation_axis_up)
+        .def_rw(
+            "warhead_orientation_pattern_scale",
+            &EffectsEvent::warhead_orientation_pattern_scale)
         .def_rw("component_threshold_scale", &EffectsEvent::component_threshold_scale)
         .def_rw("component_failure_probability", &EffectsEvent::component_failure_probability)
+        .def_rw("component_failure_probability_source",
+                &EffectsEvent::component_failure_probability_source)
+        .def_rw("component_failure_probability_calibrated",
+                &EffectsEvent::component_failure_probability_calibrated)
+        .def_rw("component_failure_probability_evidence_dataset_ref",
+                &EffectsEvent::component_failure_probability_evidence_dataset_ref)
         .def_rw("component_failure_sample", &EffectsEvent::component_failure_sample)
         .def_rw("component_failure_count", &EffectsEvent::component_failure_count)
         .def_rw("component_hit_count", &EffectsEvent::component_hit_count)
@@ -589,6 +633,45 @@ void bind_runtime(nb::module_& m) {
             "component_primary_redundancy_group",
             &EffectsEvent::component_primary_redundancy_group)
         .def_rw("component_primary_critical", &EffectsEvent::component_primary_critical)
+        .def_rw(
+            "component_primary_redundancy_group_id",
+            &EffectsEvent::component_primary_redundancy_group_id)
+        .def_rw("component_primary_integrity", &EffectsEvent::component_primary_integrity)
+        .def_rw(
+            "component_redundancy_group_availability",
+            &EffectsEvent::component_redundancy_group_availability)
+        .def_rw(
+            "component_redundancy_group_member_count",
+            &EffectsEvent::component_redundancy_group_member_count)
+        .def_rw(
+            "component_redundancy_group_failed_count",
+            &EffectsEvent::component_redundancy_group_failed_count)
+        .def_rw("vulnerability_profile_present", &EffectsEvent::vulnerability_profile_present)
+        .def_rw("vulnerability_profile_synthetic", &EffectsEvent::vulnerability_profile_synthetic)
+        .def_rw("vulnerability_calibrated_evidence", &EffectsEvent::vulnerability_calibrated_evidence)
+        .def_rw("vulnerability_pk_authority", &EffectsEvent::vulnerability_pk_authority)
+        .def_rw(
+            "vulnerability_deterministic_fuze_authority",
+            &EffectsEvent::vulnerability_deterministic_fuze_authority)
+        .def_rw(
+            "vulnerability_evidence_dataset_valid",
+            &EffectsEvent::vulnerability_evidence_dataset_valid)
+        .def_rw(
+            "vulnerability_evidence_dataset_ref",
+            &EffectsEvent::vulnerability_evidence_dataset_ref)
+        .def_rw(
+            "vulnerability_calibration_status",
+            &EffectsEvent::vulnerability_calibration_status)
+        .def_rw("vulnerability_provenance", &EffectsEvent::vulnerability_provenance)
+        .def_rw("vulnerability_aspect_bucket", &EffectsEvent::vulnerability_aspect_bucket)
+        .def_rw("vulnerability_family_scale", &EffectsEvent::vulnerability_family_scale)
+        .def_rw("vulnerability_aspect_scale", &EffectsEvent::vulnerability_aspect_scale)
+        .def_rw("vulnerability_closure_mps", &EffectsEvent::vulnerability_closure_mps)
+        .def_rw("vulnerability_closure_scale", &EffectsEvent::vulnerability_closure_scale)
+        .def_rw(
+            "vulnerability_miss_distance_scale",
+            &EffectsEvent::vulnerability_miss_distance_scale)
+        .def_rw("vulnerability_effect_scale", &EffectsEvent::vulnerability_effect_scale)
         .def_rw("producer_node_id", &EffectsEvent::producer_node_id);
 
     nb::class_<DamageReport>(m, "DamageReport")

@@ -1374,8 +1374,35 @@ public:
                 for (const auto& sys_name : hb.protected_systems) {
                     initial_health.systems[sys_name] = 1.0;
                 }
+                for (const auto& component : hb.components) {
+                    if (!component.system.empty()) {
+                        initial_health.systems[component.system] = 1.0;
+                    }
+                    for (const auto& dependency : component.dependencies) {
+                        if (!dependency.system.empty()) {
+                            initial_health.systems[dependency.system] = 1.0;
+                        }
+                    }
+                }
             }
             e.set<SystemHealth>(initial_health);
+            ComponentDamageState component_damage;
+            for (const auto& hb : def.damage_model.hitboxes) {
+                for (const auto& component : hb.components) {
+                    const std::string component_key = damage_component_key(component);
+                    const std::string group_key = damage_component_redundancy_group_key(component);
+                    component_damage.component_integrity[component_key] = 1.0;
+                    component_damage.component_redundancy_group[component_key] = group_key;
+                    component_damage.component_redundancy_weight[component_key] =
+                        std::clamp(component.redundancy_weight, 0.15, 2.50);
+                    component_damage.redundancy_group_availability[group_key] = 1.0;
+                    component_damage.redundancy_group_member_count[group_key] += 1;
+                    component_damage.redundancy_group_failed_count[group_key] += 0;
+                }
+            }
+            if (!component_damage.component_integrity.empty()) {
+                e.set<ComponentDamageState>(component_damage);
+            }
             e.set<PlatformDamageState>({});
             if (def.type == UnitType::Aircraft || def.type == UnitType::C2Node) {
                 e.set<AircraftDamageState>({});

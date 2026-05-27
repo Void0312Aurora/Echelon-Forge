@@ -775,6 +775,15 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
              nb::arg("warhead_profile"),
              nb::arg("missile_vx_mps"), nb::arg("missile_vy_mps"), nb::arg("missile_vz_mps"))
+        .def("debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude",
+             &SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude,
+             "Testing helper: apply one synthetic local proximity hit with explicit missile velocity and detonation attitude",
+             nb::arg("attacker_id"), nb::arg("target_id"),
+             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
+             nb::arg("warhead_profile"),
+             nb::arg("missile_vx_mps"), nb::arg("missile_vy_mps"), nb::arg("missile_vz_mps"),
+             nb::arg("detonation_heading_deg"), nb::arg("detonation_pitch_deg"),
+             nb::arg("detonation_roll_deg"))
         .def("get_sensor_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
              auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
              if (!e.is_valid()) {
@@ -857,11 +866,11 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              return out;
         }, "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)", nb::arg("entity_id"))
         .def("debug_get_aircraft_damage_state", &SimulationKernel::debug_get_aircraft_damage_state,
-             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
+             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, pilot, mission_crew, command_navigation, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
              nb::arg("entity_id"))
         .def("debug_get_aircraft_vulnerability_evidence_state",
              &SimulationKernel::debug_get_aircraft_vulnerability_evidence_state,
-             "Get aircraft vulnerability evidence gate [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority]",
+             "Get aircraft vulnerability evidence gate [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority, evidence_dataset_valid]",
              nb::arg("entity_id"))
         .def("debug_get_naval_weapon_counts", &SimulationKernel::debug_get_naval_weapon_counts,
              "Get naval weapon counts [mounts, ready_vls, ready_gun, ready_ciws]")
@@ -1040,8 +1049,19 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              out["fuze_delay_armed"] = missile->fuze_delay_armed;
              out["fuze_nearest_approach_time_s"] = missile->fuze_nearest_approach_time_s;
              out["fuze_detonation_time_s"] = missile->fuze_detonation_time_s;
+             out["fuze_detonation_heading_deg"] = missile->fuze_detonation_heading_deg;
+             out["fuze_detonation_pitch_deg"] = missile->fuze_detonation_pitch_deg;
+             out["fuze_detonation_roll_deg"] = missile->fuze_detonation_roll_deg;
              out["fuze_quality"] = missile->fuze_quality;
              out["fuze_hit_probability"] = missile->fuze_hit_probability;
+             out["fuze_signature_source"] = missile->fuze_signature_source;
+             out["fuze_target_signature"] = missile->fuze_target_signature;
+             out["fuze_signature_scale"] = missile->fuze_signature_scale;
+             out["fuze_effective_reliability"] = missile->fuze_effective_reliability;
+             out["fuze_contact_surface_distance_m"] = missile->fuze_contact_surface_distance_m;
+             out["fuze_contact_penetration_depth_m"] = missile->fuze_contact_penetration_depth_m;
+             out["fuze_contact_surface_tolerance_m"] = missile->fuze_contact_surface_tolerance_m;
+             out["fuze_contact_inside_hitbox"] = missile->fuze_contact_inside_hitbox;
              out["p0_runtime_initialized"] = missile->p0_runtime_initialized;
              out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
              out["seeker_has_range"] = missile->seeker_has_range;

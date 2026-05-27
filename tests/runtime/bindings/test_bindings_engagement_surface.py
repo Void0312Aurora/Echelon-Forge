@@ -65,6 +65,15 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     effect.component_primary_system = "fuel"
     effect.component_primary_redundancy_group = 1.0
     effect.component_primary_critical = True
+    effect.component_primary_redundancy_group_id = "wing_fuel_cells"
+    effect.component_primary_integrity = 0.71
+    effect.component_redundancy_group_availability = 0.86
+    effect.component_redundancy_group_member_count = 2
+    effect.component_redundancy_group_failed_count = 0
+    effect.mechanism_fragment_energy_j = 540.0
+    effect.mechanism_penetration_margin = 0.42
+    effect.mechanism_blast_overpressure_kpa = 18.0
+    effect.mechanism_blast_impulse_kpa_ms = 44.0
     effect.producer_node_id = "p9.effects_damage.v1"
     packet.effects_events = [effect]
 
@@ -203,30 +212,54 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "closure_mps",
                 "component_failure_count",
                 "component_failure_probability",
+                "component_failure_probability_calibrated",
+                "component_failure_probability_evidence_dataset_ref",
+                "component_failure_probability_source",
                 "component_failure_sample",
                 "component_hit_count",
                 "component_primary_critical",
+                "component_primary_integrity",
                 "component_primary_name",
                 "component_primary_redundancy_group",
+                "component_primary_redundancy_group_id",
                 "component_primary_system",
+                "component_redundancy_group_availability",
+                "component_redundancy_group_failed_count",
+                "component_redundancy_group_member_count",
                 "component_threshold_scale",
                 "confidence",
                 "damage_scalar_synthetic",
+                "detonation_heading_deg",
                 "detonation_local_forward_m",
                 "detonation_local_right_m",
                 "detonation_local_up_m",
+                "detonation_pitch_deg",
+                "detonation_roll_deg",
                 "detonation_time_s",
                 "direct_hitbox_intersection",
                 "effect_family",
                 "event_id",
+                "fuze_contact_inside_hitbox",
+                "fuze_contact_penetration_depth_m",
+                "fuze_contact_surface_distance_m",
+                "fuze_contact_surface_tolerance_m",
                 "fuze_delay_s",
+                "fuze_effective_reliability",
                 "fuze_profile_synthetic",
                 "fuze_reliability",
+                "fuze_signature_scale",
+                "fuze_signature_source",
+                "fuze_target_signature",
                 "fuze_trigger_radius_m",
                 "fuze_type",
                 "mechanism_armor_scale",
+                "mechanism_blast_impulse_kpa_ms",
+                "mechanism_blast_overpressure_kpa",
                 "mechanism_effect_scale",
                 "mechanism_exposure_scale",
+                "mechanism_fragment_energy_j",
+                "mechanism_penetration_margin",
+                "mechanism_rod_cut_margin",
                 "miss_distance_m",
                 "missile_axis_forward",
                 "missile_axis_right",
@@ -240,9 +273,34 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "spatial_effect_scale",
                 "target",
                 "trigger_type",
+                "vulnerability_aspect_bucket",
+                "vulnerability_aspect_scale",
+                "vulnerability_calibrated_evidence",
+                "vulnerability_calibration_status",
+                "vulnerability_closure_mps",
+                "vulnerability_closure_scale",
+                "vulnerability_deterministic_fuze_authority",
+                "vulnerability_effect_scale",
+                "vulnerability_evidence_dataset_ref",
+                "vulnerability_evidence_dataset_valid",
+                "vulnerability_family_scale",
+                "vulnerability_miss_distance_scale",
+                "vulnerability_pk_authority",
+                "vulnerability_profile_present",
+                "vulnerability_profile_synthetic",
+                "vulnerability_provenance",
                 "warhead_lethal_radius_m",
                 "warhead_mass_kg",
+                "warhead_orientation_axis_forward",
+                "warhead_orientation_axis_right",
+                "warhead_orientation_axis_up",
+                "warhead_orientation_pattern_scale",
                 "warhead_profile_synthetic",
+                "warhead_spatial_energy_scale",
+                "warhead_spatial_hit_estimate",
+                "warhead_spatial_hit_fraction",
+                "warhead_spatial_pattern_scale",
+                "warhead_spatial_sample_count",
             ),
         )
 
@@ -418,6 +476,50 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertEqual(str(effects.component_primary_system), "")
         self.assertAlmostEqual(float(effects.component_primary_redundancy_group), 0.0)
         self.assertFalse(bool(effects.component_primary_critical))
+        self.assertEqual(str(effects.component_primary_redundancy_group_id), "")
+        self.assertAlmostEqual(float(effects.component_primary_integrity), 1.0)
+        self.assertAlmostEqual(float(effects.component_redundancy_group_availability), 1.0)
+        self.assertEqual(int(effects.component_redundancy_group_member_count), 0)
+        self.assertEqual(int(effects.component_redundancy_group_failed_count), 0)
+        self.assertEqual(str(effects.component_failure_probability_source), "none")
+        self.assertFalse(bool(effects.component_failure_probability_calibrated))
+        self.assertEqual(str(effects.component_failure_probability_evidence_dataset_ref), "")
+        self.assertAlmostEqual(float(effects.detonation_heading_deg), 0.0)
+        self.assertAlmostEqual(float(effects.detonation_pitch_deg), 0.0)
+        self.assertAlmostEqual(float(effects.detonation_roll_deg), 0.0)
+        self.assertAlmostEqual(float(effects.warhead_orientation_axis_forward), 0.0)
+        self.assertAlmostEqual(float(effects.warhead_orientation_axis_right), 0.0)
+        self.assertAlmostEqual(float(effects.warhead_orientation_axis_up), 0.0)
+        self.assertAlmostEqual(float(effects.warhead_orientation_pattern_scale), 1.0)
+        self.assertAlmostEqual(float(effects.mechanism_fragment_energy_j), 0.0)
+        self.assertAlmostEqual(float(effects.mechanism_penetration_margin), 0.0)
+        self.assertAlmostEqual(float(effects.mechanism_blast_overpressure_kpa), 0.0)
+        self.assertAlmostEqual(float(effects.mechanism_blast_impulse_kpa_ms), 0.0)
+        self.assertAlmostEqual(float(effects.mechanism_rod_cut_margin), 0.0)
+        self.assertEqual(str(effects.fuze_signature_source), "none")
+        self.assertAlmostEqual(float(effects.fuze_target_signature), 0.0)
+        self.assertAlmostEqual(float(effects.fuze_signature_scale), 1.0)
+        self.assertAlmostEqual(float(effects.fuze_effective_reliability), 1.0)
+        self.assertAlmostEqual(float(effects.fuze_contact_surface_distance_m), 0.0)
+        self.assertAlmostEqual(float(effects.fuze_contact_penetration_depth_m), 0.0)
+        self.assertAlmostEqual(float(effects.fuze_contact_surface_tolerance_m), 0.0)
+        self.assertFalse(bool(effects.fuze_contact_inside_hitbox))
+        self.assertFalse(bool(effects.vulnerability_profile_present))
+        self.assertTrue(bool(effects.vulnerability_profile_synthetic))
+        self.assertFalse(bool(effects.vulnerability_calibrated_evidence))
+        self.assertFalse(bool(effects.vulnerability_pk_authority))
+        self.assertFalse(bool(effects.vulnerability_deterministic_fuze_authority))
+        self.assertFalse(bool(effects.vulnerability_evidence_dataset_valid))
+        self.assertEqual(str(effects.vulnerability_evidence_dataset_ref), "")
+        self.assertEqual(str(effects.vulnerability_calibration_status), "none")
+        self.assertEqual(str(effects.vulnerability_provenance), "")
+        self.assertEqual(str(effects.vulnerability_aspect_bucket), "unknown")
+        self.assertAlmostEqual(float(effects.vulnerability_family_scale), 1.0)
+        self.assertAlmostEqual(float(effects.vulnerability_aspect_scale), 1.0)
+        self.assertAlmostEqual(float(effects.vulnerability_closure_mps), 0.0)
+        self.assertAlmostEqual(float(effects.vulnerability_closure_scale), 1.0)
+        self.assertAlmostEqual(float(effects.vulnerability_miss_distance_scale), 1.0)
+        self.assertAlmostEqual(float(effects.vulnerability_effect_scale), 1.0)
 
     def test_nested_entity_ref_round_trips_through_dto_fields(self) -> None:
         ref = ef_py.EngagementEntityRef()

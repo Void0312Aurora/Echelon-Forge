@@ -283,6 +283,9 @@ std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t e
             state->fuel_system_integrity,
             state->avionics_integrity,
             state->crew_effectiveness,
+            state->pilot_effectiveness,
+            state->mission_crew_effectiveness,
+            state->command_navigation_integrity,
             state->fire_severity,
             state->fuel_leak_severity,
             state->structural_overstress,
@@ -304,7 +307,7 @@ std::vector<double> SimulationKernel::debug_get_aircraft_vulnerability_evidence_
 
     const AircraftVulnerabilityProfile* profile = e.get<AircraftVulnerabilityProfile>();
     if (!profile) {
-        return {0.0, 0.0, 0.0, 0.0, 0.0};
+        return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     }
     return {
         1.0,
@@ -312,6 +315,7 @@ std::vector<double> SimulationKernel::debug_get_aircraft_vulnerability_evidence_
         aircraft_vulnerability_has_calibrated_evidence(*profile) ? 1.0 : 0.0,
         aircraft_vulnerability_pk_authority(*profile) ? 1.0 : 0.0,
         aircraft_vulnerability_deterministic_fuze_authority(*profile) ? 1.0 : 0.0,
+        profile->evidence_dataset_valid ? 1.0 : 0.0,
     };
 }
 

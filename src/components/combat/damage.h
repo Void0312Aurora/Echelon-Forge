@@ -1,13 +1,21 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <unordered_map>
 
+struct DamageComponentDependency {
+    std::string system;
+    double scale = 1.0;
+};
+
 struct DamageComponent {
     std::string name;
     std::string system;
+    std::string redundancy_group_id;
+    std::vector<DamageComponentDependency> dependencies;
     double offset_x = 0.0;
     double offset_y = 0.0;
     double offset_z = 0.0;
@@ -16,9 +24,31 @@ struct DamageComponent {
     double dim_h = 0.0;
     double armor_mm = 0.0;
     double threshold_scale = 1.0;
+    std::unordered_map<std::string, double> mechanism_threshold_scales;
     double redundancy_group = 0.0;
+    double redundancy_weight = 1.0;
     bool critical = true;
 };
+
+inline std::string damage_component_key(const DamageComponent& component) {
+    if (!component.name.empty()) {
+        return component.name;
+    }
+    if (!component.system.empty()) {
+        return component.system;
+    }
+    return "unnamed_component";
+}
+
+inline std::string damage_component_redundancy_group_key(const DamageComponent& component) {
+    if (!component.redundancy_group_id.empty()) {
+        return component.redundancy_group_id;
+    }
+    if (component.redundancy_group > 0.0) {
+        return component.system + ":rg:" + std::to_string(component.redundancy_group);
+    }
+    return damage_component_key(component);
+}
 
 // Geometric shape approximation (OBB/Box oriented aligned for now)
 struct Hitbox {
@@ -40,14 +70,32 @@ struct HitboxConfig {
     std::vector<Hitbox> hitboxes;
 };
 
+struct AircraftVulnerabilityEvidenceRow {
+    std::string weapon_family;
+    std::string aspect_bucket;
+    std::string closure_bucket;
+    std::string miss_distance_bucket;
+    double family_scale = 1.0;
+    double aspect_scale = 1.0;
+    double closure_scale = 1.0;
+    double miss_distance_scale = 1.0;
+    double effect_scale = 1.0;
+    bool has_component_failure_probability = false;
+    double component_failure_probability = 0.0;
+};
+
 struct AircraftVulnerabilityProfile {
     bool synthetic = true;
     bool calibrated = false;
+    bool evidence_dataset_valid = false;
+    bool effect_scale_authority = false;
+    bool component_failure_probability_authority = false;
     bool pk_authority = false;
     bool deterministic_fuze_authority = false;
     std::string provenance = "synthetic_unvalidated_vulnerability";
     std::string evidence_dataset_ref;
     std::string calibration_status = "unvalidated";
+    std::vector<AircraftVulnerabilityEvidenceRow> evidence_rows;
     double blast_scale = 1.0;
     double fragmentation_scale = 1.0;
     double continuous_rod_scale = 1.0;
@@ -66,6 +114,7 @@ inline bool aircraft_vulnerability_has_calibrated_evidence(
 ) {
     return !profile.synthetic &&
         profile.calibrated &&
+        profile.evidence_dataset_valid &&
         !profile.evidence_dataset_ref.empty() &&
         profile.calibration_status == "calibrated";
 }
@@ -88,6 +137,15 @@ struct SystemHealth {
     // 0.0 = Dead, 1.0 = Fully Operational
     // Key: System Name (e.g., "radar", "engine", "flight_control")
     std::unordered_map<std::string, double> systems;
+};
+
+struct ComponentDamageState {
+    std::unordered_map<std::string, double> component_integrity;
+    std::unordered_map<std::string, std::string> component_redundancy_group;
+    std::unordered_map<std::string, double> component_redundancy_weight;
+    std::unordered_map<std::string, double> redundancy_group_availability;
+    std::unordered_map<std::string, std::uint32_t> redundancy_group_member_count;
+    std::unordered_map<std::string, std::uint32_t> redundancy_group_failed_count;
 };
 
 enum class PlatformLossState : int {
@@ -124,6 +182,9 @@ struct AircraftDamageState {
     double fuel_system_integrity = 1.0;
     double avionics_integrity = 1.0;
     double crew_effectiveness = 1.0;
+    double pilot_effectiveness = 1.0;
+    double mission_crew_effectiveness = 1.0;
+    double command_navigation_integrity = 1.0;
     double fire_severity = 0.0;
     double fuel_leak_severity = 0.0;
     double structural_overstress = 0.0;
@@ -169,6 +230,16 @@ inline void clamp_aircraft_damage_state(AircraftDamageState& state) {
     state.fuel_system_integrity = std::clamp(state.fuel_system_integrity, 0.0, 1.0);
     state.avionics_integrity = std::clamp(state.avionics_integrity, 0.0, 1.0);
     state.crew_effectiveness = std::clamp(state.crew_effectiveness, 0.0, 1.0);
+    state.pilot_effectiveness = std::clamp(state.pilot_effectiveness, 0.0, 1.0);
+    state.mission_crew_effectiveness =
+        std::clamp(state.mission_crew_effectiveness, 0.0, 1.0);
+    state.command_navigation_integrity =
+        std::clamp(state.command_navigation_integrity, 0.0, 1.0);
+    state.crew_effectiveness = std::min({
+        state.crew_effectiveness,
+        state.pilot_effectiveness,
+        state.mission_crew_effectiveness,
+        state.command_navigation_integrity});
     state.fire_severity = std::clamp(state.fire_severity, 0.0, 1.0);
     state.fuel_leak_severity = std::clamp(state.fuel_leak_severity, 0.0, 1.0);
     state.structural_overstress = std::clamp(state.structural_overstress, 0.0, 1.0);
@@ -184,7 +255,9 @@ inline void clamp_aircraft_damage_state(AircraftDamageState& state) {
         state.hydraulic_integrity <= 0.20 ||
         state.control_asymmetry >= 0.75;
     state.propulsion_kill = state.propulsion_integrity <= 0.20;
-    state.crew_kill = state.crew_effectiveness <= 0.20;
+    state.crew_kill =
+        state.crew_effectiveness <= 0.20 ||
+        state.pilot_effectiveness <= 0.20;
     state.forced_landing_required =
         state.forced_landing_required ||
         state.structural_integrity <= 0.35 ||
@@ -193,7 +266,8 @@ inline void clamp_aircraft_damage_state(AircraftDamageState& state) {
         state.hydraulic_integrity <= 0.35 ||
         state.propulsion_integrity <= 0.35 ||
         state.fuel_leak_severity >= 0.70 ||
-        state.crew_effectiveness <= 0.40;
+        state.crew_effectiveness <= 0.40 ||
+        state.pilot_effectiveness <= 0.45;
 }
 
 inline void apply_aircraft_damage_state_to_platform(
@@ -207,14 +281,21 @@ inline void apply_aircraft_damage_state_to_platform(
         aircraft.yaw_control_integrity});
     const double asymmetry_limited_control =
         std::min(axis_control_integrity, 1.0 - (0.55 * aircraft.control_asymmetry));
+    const double pilot_limited_control =
+        std::min(asymmetry_limited_control, aircraft.pilot_effectiveness);
+    const double mission_crew_capability = std::min({
+        aircraft.avionics_integrity,
+        aircraft.crew_effectiveness,
+        aircraft.mission_crew_effectiveness,
+        aircraft.command_navigation_integrity});
     platform.mobility_capability = std::min(
         platform.mobility_capability,
         std::min(
-            asymmetry_limited_control,
+            pilot_limited_control,
             std::min(aircraft.hydraulic_integrity, aircraft.propulsion_integrity)));
     platform.mission_capability = std::min(
         platform.mission_capability,
-        std::min(aircraft.avionics_integrity, aircraft.crew_effectiveness));
+        mission_crew_capability);
     platform.survivability_margin = std::min(
         platform.survivability_margin,
         aircraft.structural_integrity);

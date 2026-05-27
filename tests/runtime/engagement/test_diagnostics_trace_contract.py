@@ -95,6 +95,9 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
         effects.detonation_local_forward_m = 1.0
         effects.detonation_local_right_m = -2.0
         effects.detonation_local_up_m = 0.5
+        effects.detonation_heading_deg = 42.0
+        effects.detonation_pitch_deg = -3.5
+        effects.detonation_roll_deg = 12.0
         effects.closure_mps = 850.0
         effects.missile_axis_forward = 0.98
         effects.missile_axis_right = 0.20
@@ -117,8 +120,25 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
         effects.mechanism_armor_scale = 0.81
         effects.mechanism_exposure_scale = 0.74
         effects.mechanism_effect_scale = 0.60
+        effects.mechanism_fragment_energy_j = 540.0
+        effects.mechanism_penetration_margin = 0.42
+        effects.mechanism_blast_overpressure_kpa = 18.0
+        effects.mechanism_blast_impulse_kpa_ms = 44.0
+        effects.mechanism_rod_cut_margin = 0.0
+        effects.warhead_spatial_sample_count = 360
+        effects.warhead_spatial_hit_estimate = 1.8
+        effects.warhead_spatial_hit_fraction = 0.005
+        effects.warhead_spatial_energy_scale = 0.74
+        effects.warhead_spatial_pattern_scale = 1.10
+        effects.warhead_orientation_axis_forward = 0.10
+        effects.warhead_orientation_axis_right = 0.98
+        effects.warhead_orientation_axis_up = 0.04
+        effects.warhead_orientation_pattern_scale = 1.18
         effects.component_threshold_scale = 1.20
         effects.component_failure_probability = 0.47
+        effects.component_failure_probability_source = "vulnerability_evidence_row"
+        effects.component_failure_probability_calibrated = True
+        effects.component_failure_probability_evidence_dataset_ref = "unit_test_dataset"
         effects.component_failure_sample = 0.31
         effects.component_failure_count = 1
         effects.component_hit_count = 2
@@ -126,6 +146,11 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
         effects.component_primary_system = "fuel"
         effects.component_primary_redundancy_group = 1.0
         effects.component_primary_critical = True
+        effects.component_primary_redundancy_group_id = "wing_fuel_cells"
+        effects.component_primary_integrity = 0.72
+        effects.component_redundancy_group_availability = 0.86
+        effects.component_redundancy_group_member_count = 2
+        effects.component_redundancy_group_failed_count = 0
 
         damage = ef_py.DamageReport()
         damage.report_id = 9101
@@ -180,6 +205,11 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
             packet.launch_events[0].spawned_munition.entity_id,
         )
         self.assertEqual(packet.effects_events[0].munition.entity_id, packet.launch_events[0].spawned_munition.entity_id)
+        self.assertAlmostEqual(float(packet.effects_events[0].detonation_heading_deg), 42.0)
+        self.assertAlmostEqual(float(packet.effects_events[0].detonation_pitch_deg), -3.5)
+        self.assertAlmostEqual(float(packet.effects_events[0].detonation_roll_deg), 12.0)
+        self.assertAlmostEqual(float(packet.effects_events[0].warhead_orientation_axis_right), 0.98)
+        self.assertAlmostEqual(float(packet.effects_events[0].warhead_orientation_pattern_scale), 1.18)
         self.assertEqual(packet.damage_reports[0].source_event_id, packet.effects_events[0].event_id)
         self.assertEqual(packet.diagnostics_traces[0].launch_request_id, packet.launch_requests[0].request_id)
         self.assertEqual(packet.diagnostics_traces[0].launch_event_id, packet.launch_events[0].event_id)

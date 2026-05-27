@@ -737,6 +737,9 @@ flecs::entity SimulationKernel::fire_missile(uint64_t attacker_id, uint64_t targ
     missile.fuze_delay_armed = false;
     missile.fuze_nearest_approach_time_s = std::numeric_limits<double>::quiet_NaN();
     missile.fuze_detonation_time_s = std::numeric_limits<double>::quiet_NaN();
+    missile.fuze_detonation_heading_deg = std::numeric_limits<double>::quiet_NaN();
+    missile.fuze_detonation_pitch_deg = std::numeric_limits<double>::quiet_NaN();
+    missile.fuze_detonation_roll_deg = std::numeric_limits<double>::quiet_NaN();
     initialize_missile_launch_runtime(
         missile,
         MissileSharedLaunchRuntimeState{
@@ -986,6 +989,9 @@ bool SimulationKernel::fire_naval_weapon(uint64_t attacker_id, uint64_t target_i
                 "hit",
                 current_time,
                 current_time,
+                0.0,
+                0.0,
+                0.0,
                 0.0,
                 0.0,
                 0.0,
