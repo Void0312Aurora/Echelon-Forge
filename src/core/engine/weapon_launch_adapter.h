@@ -126,12 +126,18 @@ struct EffectsEventSnapshot {
     double component_failure_sample = 1.0;
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
+    std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows;
     std::string component_primary_name;
     std::string component_primary_system;
     double component_primary_redundancy_group = 0.0;
     bool component_primary_critical = false;
     std::string component_primary_redundancy_group_id;
     double component_primary_integrity = 1.0;
+    double component_primary_mechanism_fragment_energy_j = 0.0;
+    double component_primary_mechanism_penetration_margin = 0.0;
+    double component_primary_mechanism_blast_overpressure_kpa = 0.0;
+    double component_primary_mechanism_blast_impulse_kpa_ms = 0.0;
+    double component_primary_mechanism_rod_cut_margin = 0.0;
     double component_redundancy_group_availability = 1.0;
     std::uint32_t component_redundancy_group_member_count = 0;
     std::uint32_t component_redundancy_group_failed_count = 0;
@@ -322,12 +328,23 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .component_failure_sample = snapshot.component_failure_sample,
         .component_failure_count = snapshot.component_failure_count,
         .component_hit_count = snapshot.component_hit_count,
+        .component_mechanism_load_rows = snapshot.component_mechanism_load_rows,
         .component_primary_name = snapshot.component_primary_name,
         .component_primary_system = snapshot.component_primary_system,
         .component_primary_redundancy_group = snapshot.component_primary_redundancy_group,
         .component_primary_critical = snapshot.component_primary_critical,
         .component_primary_redundancy_group_id = snapshot.component_primary_redundancy_group_id,
         .component_primary_integrity = snapshot.component_primary_integrity,
+        .component_primary_mechanism_fragment_energy_j =
+            snapshot.component_primary_mechanism_fragment_energy_j,
+        .component_primary_mechanism_penetration_margin =
+            snapshot.component_primary_mechanism_penetration_margin,
+        .component_primary_mechanism_blast_overpressure_kpa =
+            snapshot.component_primary_mechanism_blast_overpressure_kpa,
+        .component_primary_mechanism_blast_impulse_kpa_ms =
+            snapshot.component_primary_mechanism_blast_impulse_kpa_ms,
+        .component_primary_mechanism_rod_cut_margin =
+            snapshot.component_primary_mechanism_rod_cut_margin,
         .component_redundancy_group_availability =
             snapshot.component_redundancy_group_availability,
         .component_redundancy_group_member_count =

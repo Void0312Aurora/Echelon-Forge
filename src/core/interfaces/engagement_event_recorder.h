@@ -2,6 +2,9 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
+
+#include "runtime/contracts/engagement_contracts.h"
 
 struct EngagementDamageStateSnapshot {
     bool entity_active = false;
@@ -95,12 +98,18 @@ public:
         double component_failure_sample = 1.0,
         std::uint32_t component_failure_count = 0,
         std::uint32_t component_hit_count = 0,
+        std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows = {},
         const std::string& component_primary_name = "",
         const std::string& component_primary_system = "",
         double component_primary_redundancy_group = 0.0,
         bool component_primary_critical = false,
         const std::string& component_primary_redundancy_group_id = "",
         double component_primary_integrity = 1.0,
+        double component_primary_mechanism_fragment_energy_j = 0.0,
+        double component_primary_mechanism_penetration_margin = 0.0,
+        double component_primary_mechanism_blast_overpressure_kpa = 0.0,
+        double component_primary_mechanism_blast_impulse_kpa_ms = 0.0,
+        double component_primary_mechanism_rod_cut_margin = 0.0,
         double component_redundancy_group_availability = 1.0,
         std::uint32_t component_redundancy_group_member_count = 0,
         std::uint32_t component_redundancy_group_failed_count = 0,

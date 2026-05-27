@@ -242,12 +242,18 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     double component_failure_sample,
     std::uint32_t component_failure_count,
     std::uint32_t component_hit_count,
+    std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows,
     const std::string& component_primary_name,
     const std::string& component_primary_system,
     double component_primary_redundancy_group,
     bool component_primary_critical,
     const std::string& component_primary_redundancy_group_id,
     double component_primary_integrity,
+    double component_primary_mechanism_fragment_energy_j,
+    double component_primary_mechanism_penetration_margin,
+    double component_primary_mechanism_blast_overpressure_kpa,
+    double component_primary_mechanism_blast_impulse_kpa_ms,
+    double component_primary_mechanism_rod_cut_margin,
     double component_redundancy_group_availability,
     std::uint32_t component_redundancy_group_member_count,
     std::uint32_t component_redundancy_group_failed_count,
@@ -363,12 +369,23 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.component_failure_sample = component_failure_sample;
     effects.component_failure_count = component_failure_count;
     effects.component_hit_count = component_hit_count;
+    effects.component_mechanism_load_rows = component_mechanism_load_rows;
     effects.component_primary_name = component_primary_name;
     effects.component_primary_system = component_primary_system;
     effects.component_primary_redundancy_group = component_primary_redundancy_group;
     effects.component_primary_critical = component_primary_critical;
     effects.component_primary_redundancy_group_id = component_primary_redundancy_group_id;
     effects.component_primary_integrity = component_primary_integrity;
+    effects.component_primary_mechanism_fragment_energy_j =
+        component_primary_mechanism_fragment_energy_j;
+    effects.component_primary_mechanism_penetration_margin =
+        component_primary_mechanism_penetration_margin;
+    effects.component_primary_mechanism_blast_overpressure_kpa =
+        component_primary_mechanism_blast_overpressure_kpa;
+    effects.component_primary_mechanism_blast_impulse_kpa_ms =
+        component_primary_mechanism_blast_impulse_kpa_ms;
+    effects.component_primary_mechanism_rod_cut_margin =
+        component_primary_mechanism_rod_cut_margin;
     effects.component_redundancy_group_availability = component_redundancy_group_availability;
     effects.component_redundancy_group_member_count = component_redundancy_group_member_count;
     effects.component_redundancy_group_failed_count = component_redundancy_group_failed_count;
@@ -596,12 +613,18 @@ bool SimulationKernel::debug_apply_proximity_hit(
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
+        effects_result.component_mechanism_load_rows,
         effects_result.component_primary_name,
         effects_result.component_primary_system,
         effects_result.component_primary_redundancy_group,
         effects_result.component_primary_critical,
         effects_result.component_primary_redundancy_group_id,
         effects_result.component_primary_integrity,
+        effects_result.component_primary_mechanism_fragment_energy_j,
+        effects_result.component_primary_mechanism_penetration_margin,
+        effects_result.component_primary_mechanism_blast_overpressure_kpa,
+        effects_result.component_primary_mechanism_blast_impulse_kpa_ms,
+        effects_result.component_primary_mechanism_rod_cut_margin,
         effects_result.component_redundancy_group_availability,
         effects_result.component_redundancy_group_member_count,
         effects_result.component_redundancy_group_failed_count,
@@ -763,12 +786,18 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
+        effects_result.component_mechanism_load_rows,
         effects_result.component_primary_name,
         effects_result.component_primary_system,
         effects_result.component_primary_redundancy_group,
         effects_result.component_primary_critical,
         effects_result.component_primary_redundancy_group_id,
         effects_result.component_primary_integrity,
+        effects_result.component_primary_mechanism_fragment_energy_j,
+        effects_result.component_primary_mechanism_penetration_margin,
+        effects_result.component_primary_mechanism_blast_overpressure_kpa,
+        effects_result.component_primary_mechanism_blast_impulse_kpa_ms,
+        effects_result.component_primary_mechanism_rod_cut_margin,
         effects_result.component_redundancy_group_availability,
         effects_result.component_redundancy_group_member_count,
         effects_result.component_redundancy_group_failed_count,
@@ -1019,12 +1048,18 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
+        effects_result.component_mechanism_load_rows,
         effects_result.component_primary_name,
         effects_result.component_primary_system,
         effects_result.component_primary_redundancy_group,
         effects_result.component_primary_critical,
         effects_result.component_primary_redundancy_group_id,
         effects_result.component_primary_integrity,
+        effects_result.component_primary_mechanism_fragment_energy_j,
+        effects_result.component_primary_mechanism_penetration_margin,
+        effects_result.component_primary_mechanism_blast_overpressure_kpa,
+        effects_result.component_primary_mechanism_blast_impulse_kpa_ms,
+        effects_result.component_primary_mechanism_rod_cut_margin,
         effects_result.component_redundancy_group_availability,
         effects_result.component_redundancy_group_member_count,
         effects_result.component_redundancy_group_failed_count,

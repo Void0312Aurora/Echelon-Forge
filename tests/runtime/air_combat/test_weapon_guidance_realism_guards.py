@@ -4411,6 +4411,119 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertGreater(float(rod_event.mechanism_penetration_margin), 0.0)
         self.assertAlmostEqual(float(rod_event.mechanism_blast_overpressure_kpa), 0.0, delta=1.0e-6)
 
+    def test_phase3_primary_component_reports_mechanism_load_vector(self) -> None:
+        direct_wing = (-0.8, 4.1, 0.0)
+        _frag_overlay, frag_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            direct_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _rod_overlay, rod_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            direct_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(frag_event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(frag_event.component_primary_system), "flight_control")
+        frag_rows = list(frag_event.component_mechanism_load_rows)
+        self.assertEqual(len(frag_rows), int(frag_event.component_hit_count))
+        frag_primary_row = next(
+            (
+                row
+                for row in frag_rows
+                if str(row.component_name) == str(frag_event.component_primary_name)
+            ),
+            None,
+        )
+        self.assertIsNotNone(frag_primary_row)
+        assert frag_primary_row is not None
+        self.assertEqual(str(frag_primary_row.component_system), "flight_control")
+        self.assertEqual(
+            str(frag_primary_row.component_redundancy_group_id),
+            str(frag_event.component_primary_redundancy_group_id),
+        )
+        self.assertTrue(bool(frag_primary_row.direct_hit))
+        self.assertAlmostEqual(float(frag_primary_row.distance_m), 0.0, delta=1.0e-6)
+        self.assertGreater(float(frag_primary_row.effect_scale), 0.0)
+        self.assertGreater(float(frag_primary_row.component_threshold_scale), 0.0)
+        self.assertGreater(float(frag_event.component_primary_mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(frag_event.component_primary_mechanism_penetration_margin), 0.0)
+        self.assertGreater(
+            float(frag_event.component_primary_mechanism_blast_overpressure_kpa),
+            0.0,
+        )
+        self.assertGreater(
+            float(frag_event.component_primary_mechanism_blast_impulse_kpa_ms),
+            0.0,
+        )
+        self.assertAlmostEqual(
+            float(frag_event.component_primary_mechanism_rod_cut_margin),
+            0.0,
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(frag_primary_row.mechanism_fragment_energy_j),
+            float(frag_event.component_primary_mechanism_fragment_energy_j),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(frag_primary_row.mechanism_penetration_margin),
+            float(frag_event.component_primary_mechanism_penetration_margin),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(frag_primary_row.mechanism_blast_overpressure_kpa),
+            float(frag_event.component_primary_mechanism_blast_overpressure_kpa),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(frag_primary_row.mechanism_blast_impulse_kpa_ms),
+            float(frag_event.component_primary_mechanism_blast_impulse_kpa_ms),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(frag_primary_row.mechanism_rod_cut_margin),
+            float(frag_event.component_primary_mechanism_rod_cut_margin),
+            delta=1.0e-6,
+        )
+
+        self.assertEqual(str(rod_event.component_primary_name), "right_aileron_actuator")
+        rod_rows = list(rod_event.component_mechanism_load_rows)
+        self.assertEqual(len(rod_rows), int(rod_event.component_hit_count))
+        rod_primary_row = next(
+            (
+                row
+                for row in rod_rows
+                if str(row.component_name) == str(rod_event.component_primary_name)
+            ),
+            None,
+        )
+        self.assertIsNotNone(rod_primary_row)
+        assert rod_primary_row is not None
+        self.assertGreater(float(rod_event.component_primary_mechanism_rod_cut_margin), 0.0)
+        self.assertGreater(float(rod_event.component_primary_mechanism_penetration_margin), 0.0)
+        self.assertAlmostEqual(
+            float(rod_event.component_primary_mechanism_blast_overpressure_kpa),
+            0.0,
+            delta=1.0e-6,
+        )
+        self.assertGreater(float(rod_primary_row.mechanism_rod_cut_margin), 0.0)
+        self.assertAlmostEqual(
+            float(rod_primary_row.mechanism_rod_cut_margin),
+            float(rod_event.component_primary_mechanism_rod_cut_margin),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(rod_primary_row.mechanism_blast_overpressure_kpa),
+            0.0,
+            delta=1.0e-6,
+        )
+
     def test_phase3_warhead_orientation_axis_modulates_rod_pattern_evidence(self) -> None:
         near_wing = (-0.753, 7.1, 0.0)
         missile_velocity = (0.0, -900.0, 0.0)

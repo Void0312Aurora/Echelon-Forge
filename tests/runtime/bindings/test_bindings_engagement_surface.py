@@ -67,6 +67,25 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     effect.component_primary_critical = True
     effect.component_primary_redundancy_group_id = "wing_fuel_cells"
     effect.component_primary_integrity = 0.71
+    effect.component_primary_mechanism_fragment_energy_j = 540.0
+    effect.component_primary_mechanism_penetration_margin = 0.42
+    effect.component_primary_mechanism_blast_overpressure_kpa = 18.0
+    effect.component_primary_mechanism_blast_impulse_kpa_ms = 44.0
+    effect.component_primary_mechanism_rod_cut_margin = 0.0
+    component_load = ef_py.ComponentMechanismLoadRow()
+    component_load.component_name = "left_wing_fuel_cell"
+    component_load.component_system = "fuel"
+    component_load.component_redundancy_group_id = "wing_fuel_cells"
+    component_load.direct_hit = True
+    component_load.distance_m = 0.0
+    component_load.effect_scale = 0.82
+    component_load.component_threshold_scale = 1.15
+    component_load.mechanism_fragment_energy_j = 540.0
+    component_load.mechanism_penetration_margin = 0.42
+    component_load.mechanism_blast_overpressure_kpa = 18.0
+    component_load.mechanism_blast_impulse_kpa_ms = 44.0
+    component_load.mechanism_rod_cut_margin = 0.0
+    effect.component_mechanism_load_rows = [component_load]
     effect.component_redundancy_group_availability = 0.86
     effect.component_redundancy_group_member_count = 2
     effect.component_redundancy_group_failed_count = 0
@@ -205,6 +224,25 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
             ),
         )
 
+    def test_component_mechanism_load_row_public_fields_match_expected_binding_surface(self) -> None:
+        self.assertTupleEqual(
+            public_fields(ef_py.ComponentMechanismLoadRow()),
+            (
+                "component_name",
+                "component_redundancy_group_id",
+                "component_system",
+                "component_threshold_scale",
+                "direct_hit",
+                "distance_m",
+                "effect_scale",
+                "mechanism_blast_impulse_kpa_ms",
+                "mechanism_blast_overpressure_kpa",
+                "mechanism_fragment_energy_j",
+                "mechanism_penetration_margin",
+                "mechanism_rod_cut_margin",
+            ),
+        )
+
     def test_effects_event_public_fields_match_expected_binding_surface(self) -> None:
         self.assertTupleEqual(
             public_fields(ef_py.EffectsEvent()),
@@ -217,8 +255,14 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "component_failure_probability_source",
                 "component_failure_sample",
                 "component_hit_count",
+                "component_mechanism_load_rows",
                 "component_primary_critical",
                 "component_primary_integrity",
+                "component_primary_mechanism_blast_impulse_kpa_ms",
+                "component_primary_mechanism_blast_overpressure_kpa",
+                "component_primary_mechanism_fragment_energy_j",
+                "component_primary_mechanism_penetration_margin",
+                "component_primary_mechanism_rod_cut_margin",
                 "component_primary_name",
                 "component_primary_redundancy_group",
                 "component_primary_redundancy_group_id",
@@ -436,6 +480,19 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 for event in packet.effects_events
             )
         )
+        damage_event = next(
+            event
+            for event in packet.effects_events
+            if event.producer_node_id == "p9.effects_damage.v1"
+            and int(event.target.entity_id) == target_id
+        )
+        component_rows = list(damage_event.component_mechanism_load_rows)
+        self.assertEqual(len(component_rows), 1)
+        self.assertEqual(str(component_rows[0].component_name), "left_wing_fuel_cell")
+        self.assertEqual(str(component_rows[0].component_system), "fuel")
+        self.assertEqual(str(component_rows[0].component_redundancy_group_id), "wing_fuel_cells")
+        self.assertTrue(bool(component_rows[0].direct_hit))
+        self.assertAlmostEqual(float(component_rows[0].mechanism_fragment_energy_j), 540.0)
         self.assertTrue(
             any(
                 report.producer_node_id == "p9.effects_damage.v1"
@@ -472,12 +529,24 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
 
         effects = ef_py.EffectsEvent()
         self.assertEqual(int(effects.component_hit_count), 0)
+        self.assertEqual(list(effects.component_mechanism_load_rows), [])
         self.assertEqual(str(effects.component_primary_name), "")
         self.assertEqual(str(effects.component_primary_system), "")
         self.assertAlmostEqual(float(effects.component_primary_redundancy_group), 0.0)
         self.assertFalse(bool(effects.component_primary_critical))
         self.assertEqual(str(effects.component_primary_redundancy_group_id), "")
         self.assertAlmostEqual(float(effects.component_primary_integrity), 1.0)
+        self.assertAlmostEqual(float(effects.component_primary_mechanism_fragment_energy_j), 0.0)
+        self.assertAlmostEqual(float(effects.component_primary_mechanism_penetration_margin), 0.0)
+        self.assertAlmostEqual(
+            float(effects.component_primary_mechanism_blast_overpressure_kpa),
+            0.0,
+        )
+        self.assertAlmostEqual(
+            float(effects.component_primary_mechanism_blast_impulse_kpa_ms),
+            0.0,
+        )
+        self.assertAlmostEqual(float(effects.component_primary_mechanism_rod_cut_margin), 0.0)
         self.assertAlmostEqual(float(effects.component_redundancy_group_availability), 1.0)
         self.assertEqual(int(effects.component_redundancy_group_member_count), 0)
         self.assertEqual(int(effects.component_redundancy_group_failed_count), 0)

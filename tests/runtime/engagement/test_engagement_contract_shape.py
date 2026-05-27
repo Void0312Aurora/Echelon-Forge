@@ -86,10 +86,28 @@ def test_engagement_contract_header_exposes_cross_domain_launch_surface() -> Non
 def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface() -> None:
     header = _header_text()
 
+    component_mechanism_load_row = _struct_body(header, "ComponentMechanismLoadRow")
     lifecycle_packet = _struct_body(header, "MunitionLifecyclePacket")
     effects_event = _struct_body(header, "EffectsEvent")
     damage_report = _struct_body(header, "DamageReport")
 
+    _assert_fields_present(
+        component_mechanism_load_row,
+        (
+            "component_name",
+            "component_system",
+            "component_redundancy_group_id",
+            "direct_hit",
+            "distance_m",
+            "effect_scale",
+            "component_threshold_scale",
+            "mechanism_fragment_energy_j",
+            "mechanism_penetration_margin",
+            "mechanism_blast_overpressure_kpa",
+            "mechanism_blast_impulse_kpa_ms",
+            "mechanism_rod_cut_margin",
+        ),
+    )
     _assert_fields_present(
         lifecycle_packet,
         (
@@ -177,12 +195,18 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
             "component_failure_sample",
             "component_failure_count",
             "component_hit_count",
+            "component_mechanism_load_rows",
             "component_primary_name",
             "component_primary_system",
             "component_primary_redundancy_group",
             "component_primary_critical",
             "component_primary_redundancy_group_id",
             "component_primary_integrity",
+            "component_primary_mechanism_fragment_energy_j",
+            "component_primary_mechanism_penetration_margin",
+            "component_primary_mechanism_blast_overpressure_kpa",
+            "component_primary_mechanism_blast_impulse_kpa_ms",
+            "component_primary_mechanism_rod_cut_margin",
             "component_redundancy_group_availability",
             "component_redundancy_group_member_count",
             "component_redundancy_group_failed_count",

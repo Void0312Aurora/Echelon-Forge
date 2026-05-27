@@ -543,6 +543,33 @@ void bind_runtime(nb::module_& m) {
         .def_rw("fuze_state", &MunitionLifecyclePacket::fuze_state)
         .def_rw("source_time_s", &MunitionLifecyclePacket::source_time_s);
 
+    nb::class_<ComponentMechanismLoadRow>(m, "ComponentMechanismLoadRow")
+        .def(nb::init<>())
+        .def_rw("component_name", &ComponentMechanismLoadRow::component_name)
+        .def_rw("component_system", &ComponentMechanismLoadRow::component_system)
+        .def_rw(
+            "component_redundancy_group_id",
+            &ComponentMechanismLoadRow::component_redundancy_group_id)
+        .def_rw("direct_hit", &ComponentMechanismLoadRow::direct_hit)
+        .def_rw("distance_m", &ComponentMechanismLoadRow::distance_m)
+        .def_rw("effect_scale", &ComponentMechanismLoadRow::effect_scale)
+        .def_rw("component_threshold_scale", &ComponentMechanismLoadRow::component_threshold_scale)
+        .def_rw(
+            "mechanism_fragment_energy_j",
+            &ComponentMechanismLoadRow::mechanism_fragment_energy_j)
+        .def_rw(
+            "mechanism_penetration_margin",
+            &ComponentMechanismLoadRow::mechanism_penetration_margin)
+        .def_rw(
+            "mechanism_blast_overpressure_kpa",
+            &ComponentMechanismLoadRow::mechanism_blast_overpressure_kpa)
+        .def_rw(
+            "mechanism_blast_impulse_kpa_ms",
+            &ComponentMechanismLoadRow::mechanism_blast_impulse_kpa_ms)
+        .def_rw(
+            "mechanism_rod_cut_margin",
+            &ComponentMechanismLoadRow::mechanism_rod_cut_margin);
+
     nb::class_<EffectsEvent>(m, "EffectsEvent")
         .def(nb::init<>())
         .def_rw("event_id", &EffectsEvent::event_id)
@@ -627,6 +654,7 @@ void bind_runtime(nb::module_& m) {
         .def_rw("component_failure_sample", &EffectsEvent::component_failure_sample)
         .def_rw("component_failure_count", &EffectsEvent::component_failure_count)
         .def_rw("component_hit_count", &EffectsEvent::component_hit_count)
+        .def_rw("component_mechanism_load_rows", &EffectsEvent::component_mechanism_load_rows)
         .def_rw("component_primary_name", &EffectsEvent::component_primary_name)
         .def_rw("component_primary_system", &EffectsEvent::component_primary_system)
         .def_rw(
@@ -637,6 +665,16 @@ void bind_runtime(nb::module_& m) {
             "component_primary_redundancy_group_id",
             &EffectsEvent::component_primary_redundancy_group_id)
         .def_rw("component_primary_integrity", &EffectsEvent::component_primary_integrity)
+        .def_rw("component_primary_mechanism_fragment_energy_j",
+                &EffectsEvent::component_primary_mechanism_fragment_energy_j)
+        .def_rw("component_primary_mechanism_penetration_margin",
+                &EffectsEvent::component_primary_mechanism_penetration_margin)
+        .def_rw("component_primary_mechanism_blast_overpressure_kpa",
+                &EffectsEvent::component_primary_mechanism_blast_overpressure_kpa)
+        .def_rw("component_primary_mechanism_blast_impulse_kpa_ms",
+                &EffectsEvent::component_primary_mechanism_blast_impulse_kpa_ms)
+        .def_rw("component_primary_mechanism_rod_cut_margin",
+                &EffectsEvent::component_primary_mechanism_rod_cut_margin)
         .def_rw(
             "component_redundancy_group_availability",
             &EffectsEvent::component_redundancy_group_availability)

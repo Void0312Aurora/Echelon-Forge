@@ -3,10 +3,12 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <flecs.h>
 
 #include "components/combat/weapon.h"
+#include "runtime/contracts/engagement_contracts.h"
 
 struct EffectsResult {
     bool destroy_missile = true;
@@ -38,12 +40,18 @@ struct EffectsResult {
     double component_failure_sample = 1.0;
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
+    std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows;
     std::string component_primary_name;
     std::string component_primary_system;
     double component_primary_redundancy_group = 0.0;
     bool component_primary_critical = false;
     std::string component_primary_redundancy_group_id;
     double component_primary_integrity = 1.0;
+    double component_primary_mechanism_fragment_energy_j = 0.0;
+    double component_primary_mechanism_penetration_margin = 0.0;
+    double component_primary_mechanism_blast_overpressure_kpa = 0.0;
+    double component_primary_mechanism_blast_impulse_kpa_ms = 0.0;
+    double component_primary_mechanism_rod_cut_margin = 0.0;
     double component_redundancy_group_availability = 1.0;
     std::uint32_t component_redundancy_group_member_count = 0;
     std::uint32_t component_redundancy_group_failed_count = 0;

@@ -1704,6 +1704,7 @@ public:
             std::uint32_t projected_hitbox_count = 0;
             const double severity = std::clamp(missile.damage / 180.0, 0.15, 0.65);
             std::uint32_t component_hit_count = 0;
+            std::vector<ComponentMechanismLoadRow> component_mechanism_load_rows;
             std::string component_primary_name;
             std::string component_primary_system;
             double component_primary_redundancy_group = 0.0;
@@ -1715,8 +1716,46 @@ public:
             std::uint32_t component_redundancy_group_failed_count = 0;
             VulnerabilityAdjustment sampled_vulnerability_adjustment;
             double component_primary_effect_scale = -1.0;
-            const auto record_component_hit = [&](const DamageComponent& component, double effect_scale) {
+            WarheadMechanismLoadEvidence component_primary_mechanism_load{};
+            const auto make_component_mechanism_load_row = [&](
+                const DamageComponent& component,
+                double effect_scale,
+                double component_scale,
+                bool direct_hit,
+                double distance_m,
+                const WarheadMechanismLoadEvidence& mechanism_load) {
+                ComponentMechanismLoadRow row{};
+                row.component_name = component.name.empty() ? component.system : component.name;
+                row.component_system = component.system;
+                row.component_redundancy_group_id =
+                    damage_component_redundancy_group_key(component);
+                row.direct_hit = direct_hit;
+                row.distance_m = std::max(0.0, distance_m);
+                row.effect_scale = effect_scale;
+                row.component_threshold_scale = component_scale;
+                row.mechanism_fragment_energy_j = mechanism_load.fragment_energy_j;
+                row.mechanism_penetration_margin = mechanism_load.penetration_margin;
+                row.mechanism_blast_overpressure_kpa = mechanism_load.blast_overpressure_kpa;
+                row.mechanism_blast_impulse_kpa_ms = mechanism_load.blast_impulse_kpa_ms;
+                row.mechanism_rod_cut_margin = mechanism_load.rod_cut_margin;
+                return row;
+            };
+            const auto record_component_hit = [&](
+                const DamageComponent& component,
+                double effect_scale,
+                double component_scale,
+                bool direct_hit,
+                double distance_m,
+                const WarheadMechanismLoadEvidence& mechanism_load) {
                 ++component_hit_count;
+                component_mechanism_load_rows.push_back(
+                    make_component_mechanism_load_row(
+                        component,
+                        effect_scale,
+                        component_scale,
+                        direct_hit,
+                        distance_m,
+                        mechanism_load));
                 if (effect_scale > component_primary_effect_scale) {
                     component_primary_effect_scale = effect_scale;
                     component_primary_name = component.name.empty() ? component.system : component.name;
@@ -1725,6 +1764,7 @@ public:
                     component_primary_critical = component.critical;
                     component_primary_redundancy_group_id =
                         damage_component_redundancy_group_key(component);
+                    component_primary_mechanism_load = mechanism_load;
                 }
             };
             const auto sample_component_failure = [&](
@@ -2125,7 +2165,13 @@ public:
                                     component);
                             sampled_component_threshold_scale =
                                 std::max(sampled_component_threshold_scale, component_scale);
-                            record_component_hit(component, direct_mechanism_scale);
+                            record_component_hit(
+                                component,
+                                direct_mechanism_scale,
+                                component_scale,
+                                true,
+                                0.0,
+                                mechanism_load);
                             apply_system_effect(
                                 component.system,
                                 system_severity,
@@ -2523,7 +2569,13 @@ public:
                                 *projected_component);
                         sampled_component_threshold_scale =
                             std::max(sampled_component_threshold_scale, component_scale);
-                        record_component_hit(*projected_component, candidate.effect_scale);
+                        record_component_hit(
+                            *projected_component,
+                            candidate.effect_scale,
+                            component_scale,
+                            false,
+                            candidate.distance_m,
+                            candidate.mechanism_load);
                         apply_system_effect(
                             projected_component->system,
                             projected_system_severity,
@@ -2905,12 +2957,23 @@ public:
                     result.component_failure_sample = sampled_component_failure_sample;
                     result.component_failure_count = component_failure_count;
                     result.component_hit_count = component_hit_count;
+                    result.component_mechanism_load_rows = component_mechanism_load_rows;
                     result.component_primary_name = component_primary_name;
                     result.component_primary_system = component_primary_system;
                     result.component_primary_redundancy_group = component_primary_redundancy_group;
                     result.component_primary_critical = component_primary_critical;
                     result.component_primary_redundancy_group_id = component_primary_redundancy_group_id;
                     result.component_primary_integrity = component_primary_integrity;
+                    result.component_primary_mechanism_fragment_energy_j =
+                        component_primary_mechanism_load.fragment_energy_j;
+                    result.component_primary_mechanism_penetration_margin =
+                        component_primary_mechanism_load.penetration_margin;
+                    result.component_primary_mechanism_blast_overpressure_kpa =
+                        component_primary_mechanism_load.blast_overpressure_kpa;
+                    result.component_primary_mechanism_blast_impulse_kpa_ms =
+                        component_primary_mechanism_load.blast_impulse_kpa_ms;
+                    result.component_primary_mechanism_rod_cut_margin =
+                        component_primary_mechanism_load.rod_cut_margin;
                     result.component_redundancy_group_availability =
                         component_redundancy_group_availability;
                     result.component_redundancy_group_member_count =
@@ -2993,12 +3056,23 @@ public:
             result.component_failure_sample = sampled_component_failure_sample;
             result.component_failure_count = component_failure_count;
             result.component_hit_count = component_hit_count;
+            result.component_mechanism_load_rows = component_mechanism_load_rows;
             result.component_primary_name = component_primary_name;
             result.component_primary_system = component_primary_system;
             result.component_primary_redundancy_group = component_primary_redundancy_group;
             result.component_primary_critical = component_primary_critical;
             result.component_primary_redundancy_group_id = component_primary_redundancy_group_id;
             result.component_primary_integrity = component_primary_integrity;
+            result.component_primary_mechanism_fragment_energy_j =
+                component_primary_mechanism_load.fragment_energy_j;
+            result.component_primary_mechanism_penetration_margin =
+                component_primary_mechanism_load.penetration_margin;
+            result.component_primary_mechanism_blast_overpressure_kpa =
+                component_primary_mechanism_load.blast_overpressure_kpa;
+            result.component_primary_mechanism_blast_impulse_kpa_ms =
+                component_primary_mechanism_load.blast_impulse_kpa_ms;
+            result.component_primary_mechanism_rod_cut_margin =
+                component_primary_mechanism_load.rod_cut_margin;
             result.component_redundancy_group_availability =
                 component_redundancy_group_availability;
             result.component_redundancy_group_member_count =
