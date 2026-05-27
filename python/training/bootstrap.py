@@ -112,6 +112,119 @@ def _resolve_agent_layer(train_config: dict[str, Any]) -> str | None:
     return agent_layer
 
 
+def _repo_root() -> str:
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def _realpath(value: str) -> str:
+    return os.path.normcase(os.path.realpath(os.path.abspath(value)))
+
+
+def _declared_path_candidates(path_value: str, train_cfg_path: str) -> list[str]:
+    raw = str(path_value).strip()
+    if not raw:
+        return []
+    if os.path.isabs(raw):
+        return [_realpath(raw)]
+    roots = (
+        _repo_root(),
+        os.path.dirname(os.path.abspath(train_cfg_path)),
+        os.getcwd(),
+    )
+    out: list[str] = []
+    seen: set[str] = set()
+    for root in roots:
+        candidate = _realpath(os.path.join(root, raw))
+        if candidate not in seen:
+            seen.add(candidate)
+            out.append(candidate)
+    return out
+
+
+def validate_declared_training_entry_paths(
+    *,
+    scenario_path: str,
+    train_cfg_path: str,
+    train_config: dict[str, Any],
+) -> str | None:
+    naval_entry = train_config.get("naval_entry")
+    if not isinstance(naval_entry, dict):
+        return None
+
+    declared_scenario = str(naval_entry.get("scenario_path", "") or "").strip()
+    if declared_scenario:
+        scenario_real = _realpath(scenario_path)
+        if scenario_real not in _declared_path_candidates(declared_scenario, train_cfg_path):
+            return (
+                "Error: train config naval_entry.scenario_path="
+                f"{declared_scenario!r} does not match --scenario {scenario_path!r}. "
+                "Use the scenario declared by the active entry, or update the entry metadata."
+            )
+
+    declared_contract = str(naval_entry.get("contract_path", "") or "").strip()
+    if declared_contract:
+        contract_candidates = _declared_path_candidates(declared_contract, train_cfg_path)
+        existing_contracts = [candidate for candidate in contract_candidates if os.path.exists(candidate)]
+        if not existing_contracts:
+            return (
+                "Error: train config naval_entry.contract_path="
+                f"{declared_contract!r} could not be resolved from the repository root, "
+                "train config directory, or current working directory."
+            )
+        if declared_scenario:
+            try:
+                with open(existing_contracts[0], "r", encoding="utf-8") as handle:
+                    contract = json.load(handle)
+            except Exception as exc:
+                return (
+                    "Error: train config naval_entry.contract_path="
+                    f"{declared_contract!r} could not be read as JSON: {exc}"
+                )
+            contract_scenario = str(contract.get("scenario", "") or "").strip() if isinstance(contract, dict) else ""
+            if contract_scenario:
+                declared_scenario_paths = set(_declared_path_candidates(declared_scenario, train_cfg_path))
+                contract_scenario_paths = set(_declared_path_candidates(contract_scenario, existing_contracts[0]))
+                if declared_scenario_paths.isdisjoint(contract_scenario_paths):
+                    return (
+                        "Error: train config naval_entry.contract_path="
+                        f"{declared_contract!r} points to scenario {contract_scenario!r}, "
+                        f"but naval_entry.scenario_path is {declared_scenario!r}."
+                    )
+
+    return None
+
+
+def validate_declared_training_entry_env_surface(
+    *,
+    train_config: dict[str, Any],
+    env_settings: dict[str, Any] | None,
+) -> str | None:
+    naval_entry = train_config.get("naval_entry")
+    if not isinstance(naval_entry, dict):
+        return None
+
+    if env_settings is None:
+        return (
+            "Error: train config naval_entry requires execution env settings so the "
+            "naval action and observation surfaces can be checked."
+        )
+
+    action_mode = str(env_settings.get("action_mode", "") or "").strip()
+    mission_obs_mode = str(env_settings.get("mission_obs_mode", "") or "").strip().lower()
+    if action_mode != "naval_station3":
+        return (
+            "Error: train config naval_entry requires action_mode='naval_station3' "
+            f"for the current N4 naval station-order surface, got {action_mode!r}."
+        )
+    if mission_obs_mode != "naval_screen_station_v1":
+        return (
+            "Error: train config naval_entry requires mission_obs_mode='naval_screen_station_v1' "
+            f"for the current N4 naval policy observation surface, got {mission_obs_mode!r}."
+        )
+
+    return None
+
+
 def _load_leader_runtime_classes(agent_layer: str) -> tuple[type[Any] | None, type[Any] | None]:
     if agent_layer != "leader":
         return None, None
@@ -231,12 +344,28 @@ def prepare_training_bootstrap(args: argparse.Namespace) -> TrainingBootstrap | 
     with open(train_cfg_path, "r", encoding="utf-8") as f:
         train_config = json.load(f)
 
+    entry_error = validate_declared_training_entry_paths(
+        scenario_path=scenario_path,
+        train_cfg_path=train_cfg_path,
+        train_config=train_config,
+    )
+    if entry_error is not None:
+        print(entry_error)
+        return None
+
     agent_layer = _resolve_agent_layer(train_config)
     if agent_layer is None:
         return None
 
     leader_env_cls, leader_batched_vec_env_cls = _load_leader_runtime_classes(agent_layer)
     env_settings = resolve_env_settings(train_config, args) if agent_layer in {"execution", "cooperative_execution"} else None
+    env_surface_error = validate_declared_training_entry_env_surface(
+        train_config=train_config,
+        env_settings=env_settings,
+    )
+    if env_surface_error is not None:
+        print(env_surface_error)
+        return None
 
     layout = _prepare_experiment_layout(args, scenario_path, train_cfg_path)
     if layout is None:

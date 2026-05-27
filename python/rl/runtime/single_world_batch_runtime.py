@@ -15,7 +15,13 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from python.rl.runtime.execution_runtime import ExecutionRuntimeAdapter, WrappedExecutionRuntimeAdapter
 from python.rl.control.wrappers import MultiTimescaleActionWrapper
-from gym_envs.universal_env import build_pilot_action, normalize_action
+from gym_envs.universal_env import (
+    apply_naval_station_action,
+    build_pilot_action,
+    is_naval_station_action_mode,
+    naval_station_action_command,
+    normalize_action,
+)
 from python.rl.runtime.world_batch import (
     WorldBatchVecEnvAccess,
     build_loader_step_info,
@@ -104,7 +110,16 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
             action_space=self.world_vec.action_space,
             action_mode=self.world_vec.action_mode,
         )
-        handle.last_action = normalized_action.astype(np.float32, copy=True)
+        if is_naval_station_action_mode(self.world_vec.action_mode):
+            normalized_action = naval_station_action_command(normalized_action)
+            handle.last_action = normalized_action.astype(np.float32, copy=True)
+            if apply_naval_station_action(handle.loader, normalized_action):
+                sync_t0 = time.perf_counter() if collect_timing else 0.0
+                self.access.sync_command_chain([env_idx])
+                if collect_timing:
+                    command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
+        else:
+            handle.last_action = normalized_action.astype(np.float32, copy=True)
         assignment = ef_py.WorldPilotActionAssignment()
         assignment.world_index = int(env_idx)
         assignment.entity_id = int(handle.agent_id)

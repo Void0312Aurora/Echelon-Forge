@@ -27,16 +27,20 @@ from gym_envs.universal_env import (
     append_temporal_history,
     apply_naval_station_action,
     attach_temporal_history,
+    bind_naval_station_eval_reference,
     build_pilot_action,
     build_step_info_minimal,
     build_universal_observation,
     make_action_space,
     make_observation_space,
     make_temporal_history_buffer,
+    naval_policy_instruments,
+    naval_station_action_command,
     normalize_action,
     reset_naval_station_action_state,
     is_naval_station_action_mode,
     temporal_history_enabled,
+    validate_naval_action_mode_for_loader,
 )
 from python.rl.tasking.bridge import build_kernel_mission_command
 from python.rl.runtime.world_batch.command_chain_cache import (
@@ -77,7 +81,7 @@ from python.rl.runtime.world_batch import (
     step_info_products_to_info_fields,
     task_order_snapshot,
 )
-from python.rl.tasking.bridge import resolve_loader_time_step
+from python.rl.tasking.bridge import resolve_loader_time_step, resolve_tasking_profile, tasking_profile_for_loader
 from python.scenario_compiler import ScenarioCompiler
 from python.scenario.runtime import (
     BatchWorldApplyBuffer,
@@ -100,6 +104,21 @@ _compute_loader_step_outcome = compute_loader_step_outcome
 
 def _float32_view(value: Any) -> np.ndarray:
     return np.asarray(value, dtype=np.float32)
+
+
+def _execution_instrument_vector(loader: ScenarioLoader, truth: Any, inst: Any, *, max_contacts: int, max_rwr: int) -> np.ndarray:
+    ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
+    inst_vec, _contacts, _rwr = ef_py.compute_execution_observation_runtime_numpy(
+        inst,
+        truth,
+        float(ils_vec[0]) if len(ils_vec) > 0 else 0.0,
+        float(ils_vec[1]) if len(ils_vec) > 1 else 0.0,
+        float(ils_vec[2]) if len(ils_vec) > 2 else 0.0,
+        float(ils_vec[3]) if len(ils_vec) > 3 else 0.0,
+        int(max_contacts),
+        int(max_rwr),
+    )
+    return np.asarray(inst_vec, dtype=np.float32)
 
 
 class WorldBatchVecEnv(VecEnv):
@@ -431,6 +450,15 @@ class WorldBatchVecEnv(VecEnv):
     def _is_full_batch_indices(self, indices: Sequence[int]) -> bool:
         return len(indices) == self.num_envs and all(int(env_idx) == idx for idx, env_idx in enumerate(indices))
 
+    def _execution_observation_device_export_allowed(self, indices: Sequence[int]) -> bool:
+        if not self._is_full_batch_indices(indices):
+            return False
+        naval_profile = resolve_tasking_profile("naval")
+        for env_idx in indices:
+            if tasking_profile_for_loader(self._handles[int(env_idx)].loader) is naval_profile:
+                return False
+        return True
+
     def _refresh_visual_batch(self, indices: Sequence[int] | None = None) -> None:
         if not self.include_visual:
             return
@@ -571,13 +599,14 @@ class WorldBatchVecEnv(VecEnv):
                 obs_batch.append(self._attach_temporal_history(env_idx, self._attach_visual_observation(env_idx, obs)))
             return obs_batch
 
+        allow_execution_device_export = self._execution_observation_device_export_allowed(target_indices)
         obs_batch_data: ExecutionObservationBatch = compute_execution_observation_batch(
             states=[self._handles[env_idx] for env_idx in target_indices],
             mission_obs_mode=self.mission_obs_mode,
             max_contacts=int(self.max_contacts),
             max_rwr=int(self.max_rwr),
             backend=backend,
-            allow_device_export=bool(self._is_full_batch_indices(target_indices)),
+            allow_device_export=bool(allow_execution_device_export),
             torch_bridge_enabled=bool(self._policy_torch_bridge_enabled),
         )
         inst_batch = obs_batch_data.inst_batch
@@ -588,9 +617,7 @@ class WorldBatchVecEnv(VecEnv):
         contacts_out = obs_batch_data.contacts_out
         rwr_out = obs_batch_data.rwr_out
         mission_out = obs_batch_data.mission_out
-        self._policy_execution_device_view = (
-            obs_batch_data.device_view if self._is_full_batch_indices(target_indices) else None
-        )
+        self._policy_execution_device_view = obs_batch_data.device_view if allow_execution_device_export else None
 
         # Try batch step evaluation preparation if available
         step_eval_batch = None
@@ -652,8 +679,13 @@ class WorldBatchVecEnv(VecEnv):
                 ):
                     miss_vec = _float32_view(frame_products.mission_observation.values)
 
+            policy_inst_vec = (
+                naval_policy_instruments(inst_vec)
+                if tasking_profile_for_loader(handle.loader) is resolve_tasking_profile("naval")
+                else inst_vec
+            )
             obs = {
-                "instruments": inst_vec,
+                "instruments": policy_inst_vec,
                 "contacts": contacts,
                 "rwr": rwr,
                 "mission": miss_vec,
@@ -878,12 +910,18 @@ class WorldBatchVecEnv(VecEnv):
         request_metadata: list[tuple[int, ScenarioLoader, dict[str, Any] | None, Any]] = []
         reports: list[dict[str, Any] | None] = [None] * self.num_envs
 
-        for env_idx, obs in enumerate(obs_batch):
+        for env_idx, _obs in enumerate(obs_batch):
             handle = self._handles[env_idx]
             loader = handle.loader
             cache = getattr(loader, "_runtime_eval_cache", None)
             step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
-            inst_vec = np.asarray(obs["instruments"], dtype=np.float32)
+            inst_vec = _execution_instrument_vector(
+                loader,
+                handle.last_truth,
+                handle.last_inst,
+                max_contacts=self.max_contacts,
+                max_rwr=self.max_rwr,
+            )
             ils_vec = (
                 np.asarray(inst_vec[-4:], dtype=np.float32)
                 if inst_vec.size >= 4
@@ -995,10 +1033,16 @@ class WorldBatchVecEnv(VecEnv):
         request_metadata: list[tuple[int, Any]] = []
         results: list[dict[str, Any] | None] = [None] * self.num_envs
 
-        for env_idx, obs in enumerate(obs_batch):
+        for env_idx, _obs in enumerate(obs_batch):
             handle = self._handles[env_idx]
             loader = handle.loader
-            inst_vec = np.asarray(obs["instruments"], dtype=np.float32)
+            inst_vec = _execution_instrument_vector(
+                loader,
+                handle.last_truth,
+                handle.last_inst,
+                max_contacts=self.max_contacts,
+                max_rwr=self.max_rwr,
+            )
             ils_vec = np.asarray(inst_vec[-4:], dtype=np.float32) if inst_vec.size >= 4 else np.zeros((4,), dtype=np.float32)
             cache = getattr(loader, "_runtime_eval_cache", None)
             cached_step_eval = cache.get("step_evaluation") if isinstance(cache, dict) else None
@@ -1125,7 +1169,7 @@ class WorldBatchVecEnv(VecEnv):
                     )
                 ),
                 "step_info_fields": (
-                    _step_info_products_to_info_fields(step_infos_batch[result_idx])
+                    _step_info_products_to_info_fields(step_infos_batch[result_idx], loader=handle.loader)
                     if (
                         result_idx < len(step_infos_batch)
                         and result_idx < len(step_info_valid_flags)
@@ -1386,6 +1430,7 @@ class WorldBatchVecEnv(VecEnv):
             initial_inst=initial_inst,
             sync_to_kernel=sync_to_kernel,
         )
+        validate_naval_action_mode_for_loader(handle.loader, self.action_mode)
         handle.max_steps = int(handle.loader.get_max_steps())
         handle.steps = 0
         handle.loader.steps = 0
@@ -1395,6 +1440,7 @@ class WorldBatchVecEnv(VecEnv):
         handle.last_pilot_report_snapshot = None
         handle.last_action = None
         reset_naval_station_action_state(handle.loader)
+        bind_naval_station_eval_reference(handle.loader)
         handle.last_inst = initial_inst
         handle.last_truth = initial_truth
         if handle.temporal_history is None:
@@ -1509,10 +1555,13 @@ class WorldBatchVecEnv(VecEnv):
                 prepared_actions[env_idx] = prepared
                 effective_action = prepared.action
             action = normalize_action(effective_action, action_space=self.action_space, action_mode=self.action_mode)
-            handle.last_action = np.asarray(effective_action, dtype=np.float32).reshape(-1).copy()
             if is_naval_station_action_mode(self.action_mode):
+                action = naval_station_action_command(action)
+                handle.last_action = action.astype(np.float32, copy=True)
                 if apply_naval_station_action(handle.loader, action):
                     naval_action_sync_indices.append(env_idx)
+            else:
+                handle.last_action = action.astype(np.float32, copy=True)
             assign = ef_py.WorldPilotActionAssignment()
             assign.world_index = int(env_idx)
             assign.entity_id = int(handle.agent_id)

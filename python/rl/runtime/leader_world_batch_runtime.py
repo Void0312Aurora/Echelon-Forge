@@ -11,7 +11,13 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     gym = None
 
-from gym_envs.universal_env import build_pilot_action, normalize_action
+from gym_envs.universal_env import (
+    apply_naval_station_action,
+    build_pilot_action,
+    is_naval_station_action_mode,
+    naval_station_action_command,
+    normalize_action,
+)
 from python.rl.runtime.execution_runtime import (
     ExecutionRuntimeAdapter,
     WrappedExecutionRuntimeAdapter,
@@ -411,6 +417,7 @@ class LeaderWorldBatchExecutionRuntimeGroup:
 
         assignments = []
         window_run_specs: list[tuple[int, Any, float]] = []
+        naval_action_sync_indices: list[int] = []
         for batch_idx, env_idx in enumerate(target_indices):
             handle = self.access.state(env_idx)
             if handle.agent_id is None:
@@ -420,7 +427,13 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                 action_space=self.world_vec.action_space,
                 action_mode=self.world_vec.action_mode,
             )
-            handle.last_action = action.astype(np.float32, copy=True)
+            if is_naval_station_action_mode(self.world_vec.action_mode):
+                action = naval_station_action_command(action)
+                handle.last_action = action.astype(np.float32, copy=True)
+                if apply_naval_station_action(handle.loader, action):
+                    naval_action_sync_indices.append(int(env_idx))
+            else:
+                handle.last_action = action.astype(np.float32, copy=True)
             assign = ef_py.WorldPilotActionAssignment()
             assign.world_index = int(env_idx)
             assign.entity_id = int(handle.agent_id)
@@ -438,6 +451,11 @@ class LeaderWorldBatchExecutionRuntimeGroup:
                 )
             )
         action_prepare_ms = (time.perf_counter() - prepare_t0) * 1000.0 if collect_timing else 0.0
+        if naval_action_sync_indices:
+            sync_t0 = time.perf_counter() if collect_timing else 0.0
+            self.sync_command_chain_indices(naval_action_sync_indices)
+            if collect_timing:
+                command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
 
         step_t0 = time.perf_counter() if collect_timing else 0.0
         window_evidence_by_env: dict[int, Any | None] = {}

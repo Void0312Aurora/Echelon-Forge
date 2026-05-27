@@ -2,7 +2,35 @@ from __future__ import annotations
 
 import numpy as np
 
+from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
+
 from .common import ef_py
+
+_NAVAL_INSTRUMENT_KEEP_INDICES = (
+    8,   # roll/orientation sanity.
+    9,   # heading.
+    21,  # commanded heading.
+    23,  # commanded speed.
+    26,  # north velocity.
+    27,  # east velocity.
+    29,  # ground speed.
+    30,  # ground track.
+    31,  # wind speed.
+    32,  # wind direction.
+    34,  # GPS available.
+    35,  # position uncertainty.
+    36,  # threat/warning activity.
+    37,  # abstract store count.
+)
+
+
+def naval_policy_instruments(inst_vec: np.ndarray) -> np.ndarray:
+    flat = np.asarray(inst_vec, dtype=np.float32).reshape(-1)
+    out = np.zeros_like(flat)
+    for idx in _NAVAL_INSTRUMENT_KEEP_INDICES:
+        if idx < flat.size:
+            out[idx] = flat[idx]
+    return out.reshape(np.asarray(inst_vec).shape)
 
 
 def downsample_visual_mean(visual: np.ndarray, factor: int) -> np.ndarray:
@@ -145,8 +173,13 @@ def build_universal_observation(
     else:
         miss_vec = loader.get_mission_observation(mission_obs_mode, truth=truth, inst=inst)
 
+    policy_inst_vec = (
+        naval_policy_instruments(inst_vec)
+        if tasking_profile_for_loader(loader) is resolve_tasking_profile("naval")
+        else inst_vec
+    )
     obs = {
-        "instruments": inst_vec,
+        "instruments": policy_inst_vec,
         "contacts": contacts,
         "rwr": rwr,
         "mission": miss_vec,
@@ -160,4 +193,4 @@ def build_universal_observation(
     return obs
 
 
-__all__ = ["build_universal_observation", "downsample_visual_mean"]
+__all__ = ["build_universal_observation", "downsample_visual_mean", "naval_policy_instruments"]

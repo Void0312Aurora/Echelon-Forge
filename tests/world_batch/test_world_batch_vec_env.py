@@ -2227,6 +2227,118 @@ class WorldBatchVecEnvTests(unittest.TestCase):
             finally:
                 vec_env.close()
 
+    def test_world_batch_vec_env_mainline_filters_airfield_step_info_for_naval_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_naval_route_transition_scenario.json"
+            scenario = _inline_vec_env_route_transition_scenario()
+            scenario["tasking_profile"] = "naval"
+            scenario["mission_command"]["tasking_profile"] = "naval"
+            scenario["task_order"] = {
+                "tasking_profile": "naval",
+                "service_profile": "Navy",
+                "task_name": "TASK_SCREEN",
+            }
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                execution_step_runtime_mode="compiled",
+                flight_shaping_backend="compiled",
+                execution_episode_controller_mainline=True,
+                step_info_mode="full",
+                action_mode="naval_station3",
+            )
+            try:
+                vec_env.seed(123)
+                _ = vec_env.reset()
+                original = vec_env._step_execution_episode_controller_mainline_requests
+
+                def _wrapped(requests):
+                    result = original(requests)
+                    step_result = result.step_results[0]
+                    result.rewards = [float(getattr(step_result, "reward_total", 0.0))]
+                    result.terminated = [bool(step_result.terminated)]
+                    result.truncated = [bool(step_result.truncated)]
+                    result.status_vectors = [[1.0, 2.0, 3.0, 4.0]]
+                    result.termination_reasons = ["facade_contract_reason"]
+                    result.reward_breakdown_jsons = ['{"facade_bonus": 1.0, "total": 1.0}']
+                    step_info_inputs = ef_py.StepInfoInputs()
+                    step_info_inputs.on_runway = False
+                    step_info_inputs.gear_collapsed = True
+                    step_info_inputs.gear_stress = 9.5
+                    step_info_inputs.alt_agl_m = 0.0
+                    step_info_inputs.has_runway_frame = True
+                    step_info_inputs.runway_frame.valid = True
+                    step_info_inputs.runway_frame.cross_m = 321.0
+                    step_info_inputs.runway_frame.along_m = 654.0
+                    step_info_inputs.runway_frame.length_m = 2000.0
+                    step_info_inputs.runway_frame.width_m = 50.0
+                    result.step_infos = [ef_py.compute_step_info_runtime(step_info_inputs)]
+                    result.step_info_valid_flags = [True]
+                    result.controller_state_changed_flags = [bool(step_result.structural_state_changed)]
+                    return result
+
+                vec_env._step_execution_episode_controller_mainline_requests = _wrapped
+                _obs, _rewards, dones, infos = vec_env.step(np.zeros((1, 3), dtype=np.float32))
+
+                self.assertFalse(bool(dones[0]))
+                for key in (
+                    "on_runway",
+                    "gear_collapsed",
+                    "gear_stress",
+                    "on_runway_geom",
+                    "runway_cross_m",
+                    "runway_along_m",
+                ):
+                    self.assertNotIn(key, infos[0])
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_disables_execution_device_export_for_naval_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = f"{tmpdir}/inline_naval_route_transition_scenario.json"
+            scenario = _inline_vec_env_route_transition_scenario()
+            scenario["tasking_profile"] = "naval"
+            scenario["mission_command"]["tasking_profile"] = "naval"
+            scenario["task_order"] = {
+                "tasking_profile": "naval",
+                "service_profile": "Navy",
+                "task_name": "TASK_SCREEN",
+            }
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=1,
+                include_visual=False,
+                include_proprio=False,
+                action_mode="naval_station3",
+                batch_observation_backend="compiled",
+                policy_observation_torch_bridge=True,
+            )
+            observed_allow_device_export: list[bool] = []
+            original_compute_batch = vec_env_module.compute_execution_observation_batch
+
+            def _wrapped_compute_execution_observation_batch(**kwargs):
+                observed_allow_device_export.append(bool(kwargs.get("allow_device_export")))
+                return original_compute_batch(**kwargs)
+
+            try:
+                vec_env_module.compute_execution_observation_batch = _wrapped_compute_execution_observation_batch  # type: ignore[assignment]
+                vec_env.seed(123)
+                _ = vec_env.reset()
+                self.assertTrue(observed_allow_device_export)
+                self.assertTrue(all(not value for value in observed_allow_device_export))
+                self.assertIsNone(vec_env._policy_execution_device_view)
+            finally:
+                vec_env_module.compute_execution_observation_batch = original_compute_batch  # type: ignore[assignment]
+                vec_env.close()
+
     def test_world_batch_vec_env_mainline_request_build_skips_unused_episode_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             scenario_path = f"{tmpdir}/inline_route_transition_scenario.json"

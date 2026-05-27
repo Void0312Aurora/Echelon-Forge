@@ -4,7 +4,12 @@ from typing import Any
 
 import numpy as np
 
-from python.rl.tasking.bridge import has_mission_command_dict, mission_command_dict
+from python.rl.tasking.bridge import (
+    has_mission_command_dict,
+    mission_command_dict,
+    resolve_tasking_profile,
+    tasking_profile_for_loader,
+)
 
 from .common import ef_py
 from .spaces import NAVAL_STATION3_ACTION_MODE
@@ -13,10 +18,22 @@ from .spaces import NAVAL_STATION3_ACTION_MODE
 NAVAL_STATION3_BEARING_DELTA_DEG = 25.0
 NAVAL_STATION3_RADIUS_DELTA_M = 1800.0
 NAVAL_STATION3_SPEED_BIAS_MPS = 1.25
+NAVAL_STATION3_ACTION_DEADBAND = 0.005
 
 
 def is_naval_station_action_mode(action_mode: str) -> bool:
     return str(action_mode) == NAVAL_STATION3_ACTION_MODE
+
+
+def validate_naval_action_mode_for_loader(loader: Any, action_mode: str) -> None:
+    if tasking_profile_for_loader(loader) is not resolve_tasking_profile("naval"):
+        return
+    if is_naval_station_action_mode(action_mode):
+        return
+    raise RuntimeError(
+        "Naval tasking profiles require action_mode='naval_station3'; "
+        f"got action_mode='{action_mode}'."
+    )
 
 
 def build_neutral_ship_pilot_action():
@@ -61,7 +78,11 @@ def reset_naval_station_action_state(loader: Any) -> None:
         "_naval_station3_base_heading_deg",
         "_naval_station3_base_radius_m",
         "_naval_station3_base_speed_mps",
+        "_naval_station3_eval_heading_deg",
+        "_naval_station3_eval_radius_m",
+        "_naval_station3_eval_speed_mps",
         "_naval_station3_last_action",
+        "_naval_reward_last_station_error_m",
     ):
         try:
             delattr(loader, attr_name)
@@ -69,10 +90,36 @@ def reset_naval_station_action_state(loader: Any) -> None:
             pass
 
 
-def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
+def bind_naval_station_eval_reference(loader: Any) -> None:
     task = getattr(loader, "task_order", None)
     if task is None or not has_mission_command_dict(loader):
-        return False
+        return
+    mission_cmd = mission_command_dict(loader)
+    _get_base(
+        loader,
+        "_naval_station3_eval_heading_deg",
+        float(
+            getattr(
+                task,
+                "station_heading_deg",
+                mission_cmd.get("station_bearing_deg", mission_cmd.get("target_heading", 0.0)),
+            )
+            or 0.0
+        ),
+    )
+    _get_base(
+        loader,
+        "_naval_station3_eval_radius_m",
+        float(getattr(task, "station_radius_m", mission_cmd.get("station_radius_m", 0.0)) or 0.0),
+    )
+    _get_base(
+        loader,
+        "_naval_station3_eval_speed_mps",
+        float(getattr(task, "target_speed_mps", mission_cmd.get("target_speed", 0.0)) or 0.0),
+    )
+
+
+def naval_station_action_command(action: np.ndarray) -> np.ndarray:
     action_arr = np.asarray(action, dtype=np.float32).reshape(-1)
     if action_arr.size != 3:
         raise ValueError(
@@ -80,7 +127,17 @@ def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
             f"got {action_arr.shape} (size={action_arr.size}), expected (3,)."
         )
     action_arr = np.clip(action_arr, -1.0, 1.0)
+    action_arr = np.where(np.abs(action_arr) <= NAVAL_STATION3_ACTION_DEADBAND, 0.0, action_arr)
+    return action_arr.astype(np.float32, copy=True)
+
+
+def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
+    task = getattr(loader, "task_order", None)
+    if task is None or not has_mission_command_dict(loader):
+        return False
+    action_arr = naval_station_action_command(action)
     setattr(loader, "_naval_station3_last_action", action_arr.astype(np.float32, copy=True))
+    bind_naval_station_eval_reference(loader)
 
     mission_cmd = mission_command_dict(loader)
     base_heading = _get_base(
@@ -126,8 +183,12 @@ def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
 
 __all__ = [
     "NAVAL_STATION3_ACTION_MODE",
+    "NAVAL_STATION3_ACTION_DEADBAND",
     "apply_naval_station_action",
+    "bind_naval_station_eval_reference",
     "build_neutral_ship_pilot_action",
     "is_naval_station_action_mode",
+    "naval_station_action_command",
     "reset_naval_station_action_state",
+    "validate_naval_action_mode_for_loader",
 ]

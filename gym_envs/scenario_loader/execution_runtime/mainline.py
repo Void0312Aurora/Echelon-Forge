@@ -527,54 +527,55 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
         _add_reward_term("survival", float(safety_terms.survival))
 
     if not terminated:
-        waypoint_turn_relief_activation = float(step_eval.get("waypoint_turn_relief_activation", 0.0))
-        shaping_inputs = step_eval.get("shaping_inputs")
-        compiled_flight_shaping = step_eval.get("flight_shaping_products_override")
-        if (
-            compiled_flight_shaping is None
-            and flight_shaping_backend == "compiled"
-            and compiled_runtime_enabled
-            and frame_products is not None
-            and bool(getattr(frame_products, "flight_shaping_evaluated", False))
-        ):
-            compiled_flight_shaping = frame_products.flight_shaping
-        elif compiled_flight_shaping is None and flight_shaping_backend in {"compiled", "gpu_host"}:
-            compiled_flight_shaping = loader._compute_flight_shaping_products(
-                shaping_inputs,
-                use_gpu=flight_shaping_backend == "gpu_host",
-            )
-            if compiled_flight_shaping is not None and isinstance(step_eval, dict):
-                step_eval["flight_shaping_products_override"] = compiled_flight_shaping
+        if bool(step_eval.get("domain_flight_shaping_enabled", True)):
+            waypoint_turn_relief_activation = float(step_eval.get("waypoint_turn_relief_activation", 0.0))
+            shaping_inputs = step_eval.get("shaping_inputs")
+            compiled_flight_shaping = step_eval.get("flight_shaping_products_override")
+            if (
+                compiled_flight_shaping is None
+                and flight_shaping_backend == "compiled"
+                and compiled_runtime_enabled
+                and frame_products is not None
+                and bool(getattr(frame_products, "flight_shaping_evaluated", False))
+            ):
+                compiled_flight_shaping = frame_products.flight_shaping
+            elif compiled_flight_shaping is None and flight_shaping_backend in {"compiled", "gpu_host"}:
+                compiled_flight_shaping = loader._compute_flight_shaping_products(
+                    shaping_inputs,
+                    use_gpu=flight_shaping_backend == "gpu_host",
+                )
+                if compiled_flight_shaping is not None and isinstance(step_eval, dict):
+                    step_eval["flight_shaping_products_override"] = compiled_flight_shaping
 
-        if compiled_flight_shaping is not None:
-            loader._apply_compiled_flight_shaping_terms(
-                compiled_flight_shaping,
-                _add_reward_term,
-                include_roll_stability=bool(truth.z < 100.0),
-            )
-        else:
-            apply_legacy_flight_shaping_terms(
-                loader,
-                cfg,
-                truth=truth,
-                inst=inst,
-                curr_ias=float(curr_ias),
-                curr_alt_agl=float(curr_alt_agl),
-                curr_gear=float(step_eval.get("curr_gear", inst[18])),
-                curr_roll=float(curr_roll),
-                heading_error_deg=float(heading_error_deg),
-                ground_track_error_deg=float(ground_track_error_deg),
-                waypoint_turn_relief_activation=float(waypoint_turn_relief_activation),
-                airborne=bool(airborne),
-                preliftoff=bool(preliftoff),
-                on_runway_task=bool(on_runway_task),
-                runway_cross_m=runway_cross_m,
-                runway_wid_m=runway_wid_m,
-                ils_valid=float(ils_valid),
-                ils_loc=float(ils_loc),
-                steps=int(steps),
-                add_reward_term=_add_reward_term,
-            )
+            if compiled_flight_shaping is not None:
+                loader._apply_compiled_flight_shaping_terms(
+                    compiled_flight_shaping,
+                    _add_reward_term,
+                    include_roll_stability=bool(truth.z < 100.0),
+                )
+            else:
+                apply_legacy_flight_shaping_terms(
+                    loader,
+                    cfg,
+                    truth=truth,
+                    inst=inst,
+                    curr_ias=float(curr_ias),
+                    curr_alt_agl=float(curr_alt_agl),
+                    curr_gear=float(step_eval.get("curr_gear", inst[18])),
+                    curr_roll=float(curr_roll),
+                    heading_error_deg=float(heading_error_deg),
+                    ground_track_error_deg=float(ground_track_error_deg),
+                    waypoint_turn_relief_activation=float(waypoint_turn_relief_activation),
+                    airborne=bool(airborne),
+                    preliftoff=bool(preliftoff),
+                    on_runway_task=bool(on_runway_task),
+                    runway_cross_m=runway_cross_m,
+                    runway_wid_m=runway_wid_m,
+                    ils_valid=float(ils_valid),
+                    ils_loc=float(ils_loc),
+                    steps=int(steps),
+                    add_reward_term=_add_reward_term,
+                )
 
         if float(safety_terms.stall_penalty) != 0.0:
             _add_reward_term("stall_penalty", float(safety_terms.stall_penalty))

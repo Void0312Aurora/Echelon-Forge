@@ -1,6 +1,6 @@
 {
-  "scenario_name": "DDG-51 Screens T-AKE Surface Threat ROE V1",
-  "description": "N4 bridge-boundary variant of the DDG-51/T-AKE screen. USS Arleigh Burke (DDG-51) screens USNS Lewis and Clark (T-AKE-1) while an opposing surface combatant closes from inside the destroyer's surface-search picture but outside the support ship's local radar horizon. The scenario carries pre-fire ROE, engagement-authority, and assigned-target command state for contract visibility only; it does not model or require weapons release, interception, damage, or kill.",
+  "scenario_name": "DDG-51 Screens T-AKE Surface Threat ROE Off-Station Recovery V1",
+  "description": "N4 bridge-boundary off-station recovery variant of the DDG-51/T-AKE screen. USS Arleigh Burke (DDG-51) starts 1800 m inside the nominal screen station for validating scripted station recovery and fixed original-task reward reference behavior while an opposing surface combatant remains in the same pre-fire threat/ROE picture. The scenario carries pre-fire ROE, engagement-authority, and assigned-target command state for contract visibility only; it does not model or require weapons release, interception, damage, or kill.",
   "tasking_profile": "naval",
   "environment": {
     "time_step": 0.5,
@@ -55,7 +55,7 @@
       "type": "DDG-51_Flight_I_USS_Arleigh_Burke",
       "side": "Blue",
       "is_agent": true,
-      "pos": [14816.0, 0.0, 0.0],
+      "pos": [13016.0, 0.0, 0.0],
       "vel": [10.29, 0.0, 0.0],
       "heading": 90.0
     },
@@ -122,6 +122,9 @@
     "naval_station_error_clip": 4.0,
     "naval_station_band_m": 750.0,
     "naval_station_band_bonus": 0.04,
+    "naval_station_recovery_progress_weight": 0.08,
+    "naval_station_recovery_progress_norm_m": 100.0,
+    "naval_station_recovery_progress_clip": 1.0,
     "naval_screen_separation_weight": 0.02,
     "naval_screen_separation_norm_m": 1000.0,
     "naval_screen_separation_clip": 4.0,

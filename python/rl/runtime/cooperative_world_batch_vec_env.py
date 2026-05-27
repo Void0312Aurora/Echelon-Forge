@@ -25,13 +25,19 @@ from gym_envs.universal_env import (
     build_universal_observation,
     make_action_space,
     make_observation_space,
+    naval_policy_instruments,
+    naval_station_action_command,
     normalize_action,
 )
 from gym_envs.universal_env_parts import (
     append_temporal_history,
+    apply_naval_station_action,
     attach_temporal_history,
+    bind_naval_station_eval_reference,
+    is_naval_station_action_mode,
     make_temporal_history_buffer,
     temporal_history_enabled,
+    validate_naval_action_mode_for_loader,
 )
 from python.rl.tasking.bridge import build_kernel_mission_command
 from python.rl.runtime.world_batch.command_chain_cache import (
@@ -74,7 +80,7 @@ from python.rl.runtime.world_batch import (
     task_order_snapshot,
 )
 from python.rl.control.wrappers import MultiTimescaleActionController
-from python.rl.tasking.bridge import resolve_loader_time_step
+from python.rl.tasking.bridge import resolve_loader_time_step, resolve_tasking_profile, tasking_profile_for_loader
 from python.scenario_compiler import ScenarioCompiler
 from python.scenario.runtime import build_compiled_world_layout
 
@@ -596,8 +602,13 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                     and bool(getattr(frame_products, "mission_observation_evaluated", False))
                 ):
                     miss_vec = _float32_view(frame_products.mission_observation.values)
+            policy_inst_vec = (
+                naval_policy_instruments(inst_vec)
+                if tasking_profile_for_loader(slot_state.loader) is resolve_tasking_profile("naval")
+                else inst_vec
+            )
             obs = {
-                "instruments": inst_vec,
+                "instruments": policy_inst_vec,
                 "contacts": _float32_view(contacts_out[batch_idx]).reshape(int(self.max_contacts), 5),
                 "rwr": _float32_view(rwr_out[batch_idx]).reshape(int(self.max_rwr), 4),
                 "mission": miss_vec,
@@ -760,9 +771,15 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         applied_world = self._runtime_adapter.apply_world_layout(int(world_index), layout)
         kernel_apply_ms = (time.perf_counter() - apply_t0) * 1000.0 if self.collect_step_timing else 0.0
         active_roster = list(getattr(applied_world, "active_roster", []) or [])
-        if len(active_roster) != self.slots_per_world:
+        control_roster = [
+            member
+            for member in active_roster
+            if bool(getattr(member, "is_agent", True))
+        ]
+        if len(control_roster) != self.slots_per_world:
             raise RuntimeError(
-                f"cooperative world {world_index} roster size changed from {self.slots_per_world} to {len(active_roster)}"
+                f"cooperative world {world_index} control roster size changed from "
+                f"{self.slots_per_world} to {len(control_roster)}"
             )
 
         world.routing_loader = None
@@ -770,18 +787,20 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         world.slot_indices = []
         base_slot_index = int(world_index) * int(self.slots_per_world)
 
-        for local_slot_index, member in enumerate(active_roster):
+        for local_slot_index, member in enumerate(control_roster):
+            roster_index = active_roster.index(member)
             loader = self._build_slot_loader(
                 int(world_index),
                 applied_world,
                 int(member.entity_id),
                 normalized_seed,
             )
+            validate_naval_action_mode_for_loader(loader, self.action_mode)
             control_slot = MultiAgentControlSlot(
                 world_index=int(world_index),
                 entity_id=int(member.entity_id),
                 entity_name=str(member.entity_name),
-                roster_index=int(local_slot_index),
+                roster_index=int(roster_index),
                 team_id=None if member.team_id is None else int(member.team_id),
                 element_id=None if member.element_id is None else int(member.element_id),
                 role_code=None if member.role_code is None else int(member.role_code),
@@ -805,6 +824,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             )
             slot_state.visual_cache = None
             slot_state.visual_cache_step = -1
+            bind_naval_station_eval_reference(slot_state.loader)
             self._slots[slot_index] = slot_state
             world.slot_indices.append(slot_index)
             if world.routing_loader is None:
@@ -916,8 +936,10 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         if slot_state.action_controller is not None:
             prepared = slot_state.action_controller.prepare_action(effective_action)
             effective_action = np.asarray(prepared.action, dtype=np.float32).reshape(-1)
+        if is_naval_station_action_mode(self.action_mode):
+            effective_action = naval_station_action_command(effective_action)
         slot_state.last_action = np.asarray(effective_action, dtype=np.float32, copy=True)
-        return slot_state.last_action, prepared
+        return slot_state.last_action.astype(np.float32, copy=True), prepared
 
     def _neutral_hold_action(self, slot_state: _CooperativeSlotState) -> np.ndarray:
         action = np.zeros(self.action_space.shape, dtype=np.float32)
@@ -972,6 +994,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         command_sync_ms = (time.perf_counter() - sync_t0) * 1000.0 if self.collect_step_timing else 0.0
 
         prepared_by_slot: dict[int, Any] = {}
+        naval_action_sync_world_indices: set[int] = set()
         action_prepare_t0 = time.perf_counter() if self.collect_step_timing else 0.0
         for world in self._worlds:
             if world.view is None:
@@ -985,9 +1008,14 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 if bool(slot_state.coop_success_latched):
                     effective_action = self._neutral_hold_action(slot_state)
                     prepared = None
+                    if is_naval_station_action_mode(self.action_mode):
+                        effective_action = naval_station_action_command(effective_action)
                     slot_state.last_action = np.asarray(effective_action, dtype=np.float32, copy=True)
                 else:
                     effective_action, prepared = self._prepare_slot_action(slot_state, self._actions[slot_index])
+                if is_naval_station_action_mode(self.action_mode):
+                    if apply_naval_station_action(slot_state.loader, effective_action):
+                        naval_action_sync_world_indices.add(int(world.world_index))
                 actions_by_entity_id[int(slot_state.entity_id)] = effective_action
                 inst_by_entity_id[int(slot_state.entity_id)] = slot_state.last_inst
                 prepared_by_slot[int(slot_index)] = prepared
@@ -995,6 +1023,11 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         action_prepare_ms = (time.perf_counter() - action_prepare_t0) * 1000.0 if self.collect_step_timing else 0.0
 
         step_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+        if naval_action_sync_world_indices:
+            sync_t0 = time.perf_counter() if self.collect_step_timing else 0.0
+            self._sync_command_chain_batch(sorted(naval_action_sync_world_indices))
+            if self.collect_step_timing:
+                command_sync_ms += (time.perf_counter() - sync_t0) * 1000.0
         self._runtime_adapter.step_worlds(list(range(self.world_count)))
         batch_step_ms = (time.perf_counter() - step_t0) * 1000.0 if self.collect_step_timing else 0.0
 

@@ -567,6 +567,7 @@ class NonFiniteTrainingProbe:
 
             entropy_losses = []
             pg_losses, value_losses = [], []
+            action_mean_regularization_losses = []
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
@@ -655,6 +656,19 @@ class NonFiniteTrainingProbe:
                     loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
                     if self.kl_penalty_coef > 0.0:
                         loss = loss + float(self.kl_penalty_coef) * approx_kl
+                    action_mean_regularization_loss = None
+                    action_mean_regularization_fn = getattr(self, "_action_mean_regularization_loss", None)
+                    if callable(action_mean_regularization_fn):
+                        action_mean_regularization_loss = action_mean_regularization_fn(
+                            rollout_data.observations,
+                            actions,
+                        )
+                    if action_mean_regularization_loss is not None:
+                        tracer.check("train.action_mean_regularization_loss", action_mean_regularization_loss)
+                        action_mean_regularization_losses.append(
+                            float(action_mean_regularization_loss.detach().cpu())
+                        )
+                        loss = loss + float(getattr(self, "action_mean_regularization_coef", 0.0)) * action_mean_regularization_loss
                     tracer.check("train.loss", loss)
 
                     with th.no_grad():
@@ -704,6 +718,15 @@ class NonFiniteTrainingProbe:
             self.logger.record("train/explained_variance", float(explained))
             if hasattr(self.policy, "log_std"):
                 self.logger.record("train/std", float(th.exp(self.policy.log_std).mean().item()))
+            if float(getattr(self, "action_mean_regularization_coef", 0.0)) > 0.0:
+                self.logger.record(
+                    "train/action_mean_regularization_loss",
+                    float(np.mean(action_mean_regularization_losses)) if action_mean_regularization_losses else 0.0,
+                )
+                self.logger.record(
+                    "train/action_mean_regularization_coef",
+                    float(getattr(self, "action_mean_regularization_coef", 0.0)),
+                )
 
             self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")
             self.logger.record("train/clip_range", float(clip_range))

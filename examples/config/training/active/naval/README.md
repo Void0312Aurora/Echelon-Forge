@@ -5,27 +5,41 @@ DDG/T-AKE `N4` threat/ROE bridge.
 
 ## Scope
 
-- Scenario pairing for this line is:
+- Scenario pairings for this line are:
   - [ddg51_take1_screen_threat_roe_v1.json](../../../../../scenarios/naval/ddg51_take1_screen_threat_roe_v1.json)
-- Contract pairing is:
+  - [ddg51_take1_screen_threat_roe_offstation_recovery_v1.json](../../../../../scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json)
+- Contract pairings are:
   - [naval_screen_threat_roe_geometry.json](../../../../../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json)
+  - [naval_screen_threat_roe_offstation_recovery.json](../../../../../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json)
 - Current baseline is an entry/runtime gate, not a trained naval policy.
+- Maintained baseline evaluation is the cooperative zero-action N4 gate in
+  [eval_naval_n4_baseline.py](../../../../../tools/eval/eval_naval_n4_baseline.py).
 
 These entries deliberately stay at the pre-fire `N4` boundary. They validate
-that the scenario, config, and maintained world-batch execution path can be
-paired for RL experiments. They do not expose a weapon-release action, do not
-use damage or kill rewards, and do not claim learned screen or engagement
-behavior.
+that the scenario, config, and current execution runtimes can be paired for RL
+experiments. They do not expose a weapon-release action, do not use damage or
+kill rewards, and do not claim learned screen or engagement behavior.
 
 ## Entries
 
 - [naval_contact_report_threat_roe_smoke_v1.json](naval_contact_report_threat_roe_smoke_v1.json)
   - Minimal contact-report/threat-ROE smoke probe.
   - Uses the accepted N4 scenario and threat/ROE contract as the gate source.
+  - Uses `agent_layer=cooperative_execution` with one DDG policy slot while
+    retaining the non-agent T-AKE support roster in the scenario loader.
 
 - [naval_screen_station_hold_threat_aware_smoke_v1.json](naval_screen_station_hold_threat_aware_smoke_v1.json)
   - Minimal screen-station threat-aware smoke probe.
   - Uses the same N4 scenario while tracking the second accepted RL task id.
+  - Uses `agent_layer=cooperative_execution` with one DDG policy slot while
+    retaining the non-agent T-AKE support roster in the scenario loader.
+
+- [naval_screen_station_recovery_threat_aware_smoke_v1.json](naval_screen_station_recovery_threat_aware_smoke_v1.json)
+  - Minimal off-station recovery smoke probe.
+  - Uses the maintained off-station N4 scenario where the DDG starts `1800 m`
+    inside the nominal screen station.
+  - Keeps the same pre-fire threat/ROE boundary and one-DDG policy slot while
+    enabling the station-recovery progress reward in the scenario.
 
 ## Commands
 
@@ -41,10 +55,37 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python trai
   --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json \
   --output_base experiments/naval \
   --run_name naval_screen_station_hold_threat_aware_smoke_v1
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py \
+  --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json \
+  --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json \
+  --output_base experiments/naval \
+  --run_name naval_screen_station_recovery_threat_aware_smoke_v1
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py \
+  --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json \
+  --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json \
+  --steps 1200 \
+  --json_out experiments/naval/naval_n4_zero_action_baseline.json
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py \
+  --mode offstation_probe \
+  --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json \
+  --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json \
+  --steps 300 \
+  --json_out experiments/naval/naval_n4_offstation_recovery_probe.json
 ```
 
 ## Design Notes
 
+- `naval_entry.scenario_path` is an execution contract, not only documentation:
+  `train.py` and the maintained N4 eval tool reject an active entry if
+  `--scenario` does not resolve to the declared scenario. This prevents the
+  recovery entry from being accidentally run on the nominal station-hold
+  scenario or vice versa.
+- `naval_entry.contract_path` is bound to the same declared scenario. Bootstrap
+  rejects a contract whose internal `scenario` field points at a different
+  scenario, so scenario/config/contract triads remain aligned.
 - The active action surface is a dedicated no-release naval station-order probe:
   `action_mode=naval_station3`. It adjusts station bearing, station radius, and
   bounded speed intent through the naval task/command chain while keeping the
@@ -53,18 +94,31 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python trai
   `mission_obs_mode=naval_screen_station_v1`. It exposes station geometry,
   contact visibility, support-track/report-chain state, ROE, and assigned target
   provenance without inheriting air formation or takeoff field names.
-- The trainer path is `agent_layer=execution` with
-  `runtime.world_batch_vec_env=true`, so it stays on the maintained world-batch
-  runtime rather than the quarantined raw-kernel compatibility path.
-- `cooperative_execution` is intentionally not used here yet. The current naval
-  roster includes a non-agent support ship, and cooperative slot accounting needs
-  a separate gate before this entry can be promoted to a multi-slot naval path.
+- All active entries use `cooperative_execution` for the accepted
+  single-policy-slot case: the DDG receives the policy slot, and the non-agent
+  T-AKE remains in the support roster for reference/report-chain context. This
+  is not a general multi-agent naval promotion.
 - Promotion beyond these smoke/probe entries still requires richer packet
-  ownership, action masks, reward shaping, cooperative slots, and eval gates.
+  ownership, action masks, reward shaping, broader cooperative observation
+  schema, and eval gates.
+- The baseline eval gate is not a trained-policy claim. It verifies that the N4
+  cooperative zero-action hold keeps one DDG policy slot, retains the non-agent
+  T-AKE support roster, emits required naval station/contact/report/ROE reward
+  terms, and does not emit airfield, weapon, damage, or kill reward terms.
+- The off-station probe gate is also not a trained-policy claim. It verifies
+  that scripted station hold recovers from an off-station start under the fixed
+  original task reference, and that `naval_station3` station-order actions
+  cannot move the reward reference onto ownship. The maintained recovery entry
+  makes this gate a stable scenario/config pairing; useful non-zero policy
+  recovery still requires a separate curriculum and learned-policy acceptance.
 
 ## Validation
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_train_bootstrap.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_eval_naval_n4_baseline.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json
 ```

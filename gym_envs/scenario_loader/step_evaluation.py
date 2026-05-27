@@ -3,7 +3,7 @@ import math
 import ef_py
 
 from python.rl.control.mission_defs import is_landing_command_code
-from python.rl.tasking.bridge import resolve_loader_time_step
+from python.rl.tasking.bridge import resolve_loader_time_step, resolve_tasking_profile, tasking_profile_for_loader
 
 from .mission_observation import build_mission_observation_runtime_inputs
 
@@ -173,10 +173,14 @@ def build_step_evaluation_inputs(
         cmd_code = 0
     landing_mode = str(loader.mission_cmd.get("landing_mode", "")).strip().lower()
     is_landing_task = bool(is_landing_command_code(cmd_code) or landing_mode)
+    naval_runtime_profile = tasking_profile_for_loader(loader) is resolve_tasking_profile("naval")
     runway_surface_phase = bool(on_ground) if is_landing_task else bool(preliftoff)
     on_runway_task = bool(on_paved) if runway_surface_phase else False
     if on_runway_geom is not None:
         on_runway_task = bool(on_runway_geom) if runway_surface_phase else False
+    if naval_runtime_profile:
+        runway_surface_phase = False
+        on_runway_task = False
     next_off_runway_steps = int(getattr(loader, "off_runway_steps", 0)) + 1 if runway_surface_phase and (not on_runway_task) else 0
 
     if not finite_state_valid:
@@ -238,26 +242,27 @@ def build_step_evaluation_inputs(
                 turn_relief_activation=float(waypoint_turn_relief_activation),
             )
 
-        shaping_inputs = loader._build_flight_shaping_runtime_inputs(
-            cfg,
-            steps=int(steps),
-            truth=truth,
-            inst_vec=inst_vec,
-            curr_ias=float(curr_ias),
-            curr_alt_agl=float(curr_alt_agl),
-            curr_gear=float(curr_gear),
-            curr_roll=float(curr_roll),
-            heading_error_deg=float(heading_error_deg),
-            ground_track_error_deg=float(ground_track_error_deg),
-            waypoint_turn_relief_activation=float(waypoint_turn_relief_activation),
-            preliftoff=bool(preliftoff),
-            on_runway_task=bool(on_runway_task),
-            airborne=bool(airborne),
-            runway_cross_m=runway_cross_m,
-            runway_wid_m=runway_wid_m,
-            ils_valid=float(ils_valid),
-            ils_loc=float(ils_loc),
-        )
+        if not naval_runtime_profile:
+            shaping_inputs = loader._build_flight_shaping_runtime_inputs(
+                cfg,
+                steps=int(steps),
+                truth=truth,
+                inst_vec=inst_vec,
+                curr_ias=float(curr_ias),
+                curr_alt_agl=float(curr_alt_agl),
+                curr_gear=float(curr_gear),
+                curr_roll=float(curr_roll),
+                heading_error_deg=float(heading_error_deg),
+                ground_track_error_deg=float(ground_track_error_deg),
+                waypoint_turn_relief_activation=float(waypoint_turn_relief_activation),
+                preliftoff=bool(preliftoff),
+                on_runway_task=bool(on_runway_task),
+                airborne=bool(airborne),
+                runway_cross_m=runway_cross_m,
+                runway_wid_m=runway_wid_m,
+                ils_valid=float(ils_valid),
+                ils_loc=float(ils_loc),
+            )
 
         objective_inputs = loader._build_conditional_objective_inputs(
             truth,
@@ -303,6 +308,7 @@ def build_step_evaluation_inputs(
         "runway_surface_phase": bool(runway_surface_phase),
         "on_runway_task": bool(on_runway_task),
         "next_off_runway_steps": int(next_off_runway_steps),
+        "domain_flight_shaping_enabled": not bool(naval_runtime_profile),
         "waypoint_turn_relief_activation": float(waypoint_turn_relief_activation),
         "waypoint_state": waypoint_state,
         "objective_inputs": objective_inputs,

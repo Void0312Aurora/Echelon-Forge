@@ -5,6 +5,8 @@ import json
 
 import numpy as np
 
+from python.rl.tasking.bridge import resolve_tasking_profile, tasking_profile_for_loader
+
 
 def copy_obs(obs: Any) -> Any:
     if isinstance(obs, dict):
@@ -39,7 +41,9 @@ def parse_reward_terms_json(raw: Any) -> dict[str, float] | None:
     return out if out else None
 
 
-def step_info_products_to_info_fields(step_info: Any) -> dict[str, float]:
+def step_info_products_to_info_fields(step_info: Any, *, loader: Any | None = None) -> dict[str, float]:
+    if loader is not None and tasking_profile_for_loader(loader) is resolve_tasking_profile("naval"):
+        return {}
     fields: dict[str, float] = {}
     try:
         fields["on_runway"] = float(bool(getattr(step_info, "on_runway", True)))

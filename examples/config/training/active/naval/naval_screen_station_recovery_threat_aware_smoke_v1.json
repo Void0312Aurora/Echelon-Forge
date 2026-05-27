@@ -16,9 +16,9 @@
     "policy_route": "shared_execution"
   },
   "naval_entry": {
-    "task_id": "naval_contact_report_threat_roe_v1",
-    "scenario_path": "scenarios/naval/ddg51_take1_screen_threat_roe_v1.json",
-    "contract_path": "tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json",
+    "task_id": "naval_screen_station_recovery_threat_aware_v1",
+    "scenario_path": "scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json",
+    "contract_path": "tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json",
     "source_preflight": "docs/task/naval/n5_rl_action_surface_split/naval_n5_rl_action_surface_split_cluster_20260526.md",
     "realism_grade": "N4_pre_fire_bridge",
     "entry_status": "active_smoke_probe",
@@ -31,7 +31,7 @@
       "surface_contact",
       "threat_roe",
       "assigned_target_provenance",
-      "report_chain"
+      "station_recovery"
     ]
   },
   "env": {
@@ -52,9 +52,9 @@
     "nonfinite_probe_history": 128
   },
   "hyperparameters": {
-    "learning_rate": 0.0003,
-    "n_steps": 32,
-    "batch_size": 32,
+    "learning_rate": 0.0001,
+    "n_steps": 128,
+    "batch_size": 128,
     "n_epochs": 1,
     "gamma": 0.99,
     "gae_lambda": 0.95,
@@ -63,6 +63,8 @@
     "ent_coef": 0.0,
     "vf_coef": 0.5,
     "max_grad_norm": 0.5,
+    "action_mean_regularization_coef": 500.0,
+    "action_mean_regularization_target": [0.0, 0.0, 0.0],
     "device": "cpu",
     "policy_kwargs": {
       "features_extractor_class": "TransformerExtractor",
@@ -73,7 +75,8 @@
         "use_amp": false,
         "use_checkpointing": false
       },
-      "log_std_init": -1.0,
+      "share_features_extractor": false,
+      "log_std_init": -4.0,
       "net_arch": {
         "pi": [64],
         "vf": [64]

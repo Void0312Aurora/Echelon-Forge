@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import torch as th
@@ -41,6 +41,8 @@ class AdaptiveKLPPO(PPO):
         low_kl_boost_patience: int = 2,
         boost_lr_on_low_kl: bool = True,
         boost_clip_on_low_kl: bool = False,
+        action_mean_regularization_coef: float = 0.0,
+        action_mean_regularization_target: Any = 0.0,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -58,6 +60,8 @@ class AdaptiveKLPPO(PPO):
         self.boost_lr_on_low_kl = bool(boost_lr_on_low_kl)
         self.boost_clip_on_low_kl = bool(boost_clip_on_low_kl)
         self._low_kl_streak = 0
+        self.action_mean_regularization_coef = float(max(0.0, action_mean_regularization_coef))
+        self.action_mean_regularization_target = action_mean_regularization_target
         super().__init__(*args, **kwargs)
 
     def _should_use_device_rollout_buffer(self) -> bool:
@@ -228,6 +232,34 @@ class AdaptiveKLPPO(PPO):
         else:
             self._low_kl_streak = 0
 
+    def _action_mean_regularization_target_tensor(self, reference_actions: th.Tensor) -> th.Tensor:
+        target = th.as_tensor(
+            np.asarray(self.action_mean_regularization_target, dtype=np.float32).reshape(-1),
+            dtype=reference_actions.dtype,
+            device=reference_actions.device,
+        )
+        if int(target.numel()) == 1:
+            return target.reshape(1, 1).expand_as(reference_actions)
+
+        action_dim = int(np.prod(reference_actions.shape[1:]))
+        if int(target.numel()) != action_dim:
+            raise ValueError(
+                "action_mean_regularization_target must be a scalar or match the flattened action dimension: "
+                f"got {int(target.numel())}, expected {action_dim}"
+            )
+        return target.reshape((1, *reference_actions.shape[1:])).expand_as(reference_actions)
+
+    def _action_mean_regularization_loss(self, obs, reference_actions: th.Tensor) -> th.Tensor | None:
+        if self.action_mean_regularization_coef <= 0.0:
+            return None
+        if not isinstance(self.action_space, spaces.Box):
+            return None
+
+        distribution = self.policy.get_distribution(obs)
+        deterministic_actions = distribution.mode().reshape(reference_actions.shape)
+        target = self._action_mean_regularization_target_tensor(reference_actions)
+        return F.mse_loss(deterministic_actions, target, reduction="mean")
+
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
         # Switch to train mode (affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -253,6 +285,7 @@ class AdaptiveKLPPO(PPO):
 
         entropy_losses = []
         pg_losses, value_losses = [], []
+        action_mean_regularization_losses = []
         clip_fractions = []
 
         approx_kl_divs = []
@@ -311,6 +344,13 @@ class AdaptiveKLPPO(PPO):
                 loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
                 if self.kl_penalty_coef > 0.0:
                     loss = loss + float(self.kl_penalty_coef) * approx_kl
+                action_mean_regularization_loss = self._action_mean_regularization_loss(
+                    rollout_data.observations,
+                    actions,
+                )
+                if action_mean_regularization_loss is not None:
+                    action_mean_regularization_losses.append(float(action_mean_regularization_loss.detach().cpu()))
+                    loss = loss + float(self.action_mean_regularization_coef) * action_mean_regularization_loss
 
                 # Early stopping based on observed KL (same criterion as SB3 PPO)
                 with th.no_grad():
@@ -350,6 +390,12 @@ class AdaptiveKLPPO(PPO):
         self.logger.record("train/explained_variance", float(explained_var))
         if hasattr(self.policy, "log_std"):
             self.logger.record("train/std", float(th.exp(self.policy.log_std).mean().item()))
+        if self.action_mean_regularization_coef > 0.0:
+            self.logger.record(
+                "train/action_mean_regularization_loss",
+                float(np.mean(action_mean_regularization_losses)) if action_mean_regularization_losses else 0.0,
+            )
+            self.logger.record("train/action_mean_regularization_coef", float(self.action_mean_regularization_coef))
 
         self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")
         self.logger.record("train/clip_range", float(clip_range))

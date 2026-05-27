@@ -144,8 +144,13 @@ def _station_reward_terms(loader: Any, sim: Any, truth: Any, cfg: dict[str, Any]
     if ref_pos is None:
         return 0.0, {}, 0.0
 
-    station_radius_m = max(1.0, float(getattr(task, "station_radius_m", 0.0) or 0.0))
-    station_heading_deg = float(getattr(task, "station_heading_deg", 0.0) or 0.0)
+    station_radius_m = max(
+        1.0,
+        float(getattr(loader, "_naval_station3_eval_radius_m", getattr(task, "station_radius_m", 0.0)) or 0.0),
+    )
+    station_heading_deg = float(
+        getattr(loader, "_naval_station3_eval_heading_deg", getattr(task, "station_heading_deg", 0.0)) or 0.0
+    )
     heading_rad = math.radians(station_heading_deg)
     desired_x = float(ref_pos[0]) + math.sin(heading_rad) * station_radius_m
     desired_y = float(ref_pos[1]) + math.cos(heading_rad) * station_radius_m
@@ -169,6 +174,21 @@ def _station_reward_terms(loader: Any, sim: Any, truth: Any, cfg: dict[str, Any]
     band_m = max(0.0, _cfg_float(cfg, "naval_station_band_m", 750.0))
     if band_m > 0.0 and station_error_m <= band_m:
         reward += _add_term(terms, "naval_station_band_bonus", _cfg_float(cfg, "naval_station_band_bonus", 0.04))
+
+    recovery_weight = max(0.0, _cfg_float(cfg, "naval_station_recovery_progress_weight", 0.0))
+    last_station_error = getattr(loader, "_naval_reward_last_station_error_m", None)
+    if recovery_weight > 0.0 and last_station_error is not None:
+        try:
+            progress_m = max(0.0, float(last_station_error) - float(station_error_m))
+        except Exception:
+            progress_m = 0.0
+        progress_norm_m = max(1.0, _cfg_float(cfg, "naval_station_recovery_progress_norm_m", 100.0))
+        progress_clip = max(0.0, _cfg_float(cfg, "naval_station_recovery_progress_clip", 1.0))
+        progress_norm = progress_m / progress_norm_m
+        if progress_clip > 0.0:
+            progress_norm = min(progress_norm, progress_clip)
+        reward += _add_term(terms, "naval_station_recovery_progress_bonus", recovery_weight * progress_norm)
+    setattr(loader, "_naval_reward_last_station_error_m", float(station_error_m))
 
     own_ref_sep_m = math.hypot(own_x - float(ref_pos[0]), own_y - float(ref_pos[1]))
     sep_error_m = abs(own_ref_sep_m - station_radius_m)
@@ -227,16 +247,18 @@ def apply_naval_reward_surface(
 ) -> tuple[float, bool, bool, list[float], dict[str, float], str | None]:
     cfg = loader.get_rewards_config() if hasattr(loader, "get_rewards_config") else {}
     cfg = cfg if isinstance(cfg, dict) else {}
-    if not _is_naval_profile(loader) or not bool(cfg.get("naval_reward_enabled", False)):
+    naval_profile = _is_naval_profile(loader)
+    if naval_profile and bool(cfg.get("naval_suppress_off_runway_penalty", False)):
+        raise RuntimeError(
+            "naval_suppress_off_runway_penalty is retired; naval profiles must disable "
+            "runway/off-runway interpretation before safety rewards are built instead "
+            "of cancelling off_runway_penalty afterward."
+        )
+    if not naval_profile or not bool(cfg.get("naval_reward_enabled", False)):
         return float(reward), bool(terminated), bool(truncated), status, dict(reward_breakdown or {}), None
 
     next_reward = float(reward)
     rb = {str(key): float(value) for key, value in dict(reward_breakdown or {}).items()}
-
-    if bool(cfg.get("naval_suppress_off_runway_penalty", True)) and "off_runway_penalty" in rb:
-        suppression = -float(rb.get("off_runway_penalty", 0.0))
-        next_reward += suppression
-        _add_term(rb, "naval_off_runway_penalty_suppressed", suppression)
 
     station_reward, station_terms, station_error_m = _station_reward_terms(loader, sim, truth, cfg)
     next_reward += station_reward
