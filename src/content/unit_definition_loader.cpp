@@ -1364,6 +1364,10 @@ VulnerabilityEvidenceDescriptorMap load_vulnerability_evidence_descriptors(
                         row_json.value(
                             "miss_distance_bucket",
                             descriptor.miss_distance_bucket);
+                    row.component_name = row_json.value("component_name", "");
+                    row.component_system = row_json.value("component_system", "");
+                    row.component_redundancy_group_id =
+                        row_json.value("component_redundancy_group_id", "");
                     row.family_scale = row_json.value("family_scale", row.family_scale);
                     row.aspect_scale = row_json.value("aspect_scale", row.aspect_scale);
                     row.closure_scale = row_json.value("closure_scale", row.closure_scale);

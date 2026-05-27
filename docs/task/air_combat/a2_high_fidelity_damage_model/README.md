@@ -61,7 +61,7 @@ Current Phase 0 evidence:
 - `EffectsEvent` exposes warhead spatial sample count, estimated fragment/rod hits, hit fraction, energy scale, pattern scale, detonation orientation axis, and orientation pattern scale as parameterized evidence; these fields are not calibrated fragment-cloud, blast, or continuous-rod authority.
 - `EffectsEvent` exposes component-threshold scale, proving the event did not treat every protected system as the same generic scalar.
 - `EffectsEvent` exposes component-failure probability/source/calibrated/dataset/sample/count as component-level probability evidence; the synthetic sigmoid path consumes uncalibrated mechanism-load evidence, authorized descriptor rows can still override the probability and are auditable as `vulnerability_evidence_row`, but test fixtures are not calibrated Pk authority.
-- `EffectsEvent` exposes component hit count, candidate component mechanism-load rows, and primary component identity so component geometry and row-level load selection are auditable outside logs.
+- `EffectsEvent` exposes component hit count, candidate component mechanism-load rows, and primary component identity so component geometry and row-level load selection are auditable outside logs; the rows now also retain component-failure probability/source/calibrated/dataset/sample provenance, explicit probability-authority status, and the matched weapon/aspect/closure/miss-distance axes when the effects model samples them.
 - `EffectsEvent` exposes primary component integrity, primary component mechanism-load fields, and named redundancy-group availability/member/failure counts, so repeated component damage has runtime memory instead of being only a one-shot probability discount.
 - `EffectsEvent` exposes vulnerability profile/evidence/authority/provenance/aspect/closure/scale fields, including the radial `vulnerability_closure_mps` actually used by the effects model; these fields make vulnerability adjustment auditable but do not grant Pk or deterministic-fuze authority.
 - Representative F-16, Su-35S, MQ-9, MH-60R, and E-3 target-family vulnerability scaffolds spawn as synthetic/non-authoritative evidence; the non-F-16 profiles are neutral scale placeholders and do not change uncalibrated damage strength.
@@ -130,7 +130,7 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase0_pn_miss_distance_baseline_matrix_tracks_engagement_geometries
 ```
 
-Recent focused result for the latest air-combat increment: `cmake --build build-local-win --target ef_py --config Release -j 4` passed; the focused contract/binding/component-load subset passed with `26 passed`; the air-combat guard + evidence descriptor subset passed with `92 passed, 87 subtests passed`; the engagement/binding contract subset passed with `52 passed`; `git diff --check` passed.
+Recent focused result for the latest air-combat increment: `cmake --build build-local-win --target ef_py --config Release -j 4` passed; the focused contract/binding/component-load subset passed with `23 passed`; the air-combat guard + evidence descriptor subset passed with `92 passed, 87 subtests passed`; the engagement/binding contract subset passed with `52 passed`; `git diff --check` passed.
 
 ## External Review
 

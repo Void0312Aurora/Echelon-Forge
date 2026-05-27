@@ -80,6 +80,17 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     component_load.distance_m = 0.0
     component_load.effect_scale = 0.82
     component_load.component_threshold_scale = 1.15
+    component_load.component_failure_probability = 0.37
+    component_load.component_failure_probability_source = "vulnerability_evidence_row"
+    component_load.component_failure_probability_calibrated = True
+    component_load.component_failure_probability_evidence_dataset_ref = "unit_test_rows"
+    component_load.component_failure_sample = 0.21
+    component_load.component_failure_probability_authority = True
+    component_load.component_failure_probability_component_specific = True
+    component_load.component_failure_probability_weapon_family = "continuous_rod"
+    component_load.component_failure_probability_aspect_bucket = "beam"
+    component_load.component_failure_probability_closure_bucket = "high"
+    component_load.component_failure_probability_miss_distance_bucket = "direct_hit"
     component_load.mechanism_fragment_energy_j = 540.0
     component_load.mechanism_penetration_margin = 0.42
     component_load.mechanism_blast_overpressure_kpa = 18.0
@@ -228,6 +239,17 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertTupleEqual(
             public_fields(ef_py.ComponentMechanismLoadRow()),
             (
+                "component_failure_probability",
+                "component_failure_probability_aspect_bucket",
+                "component_failure_probability_authority",
+                "component_failure_probability_calibrated",
+                "component_failure_probability_closure_bucket",
+                "component_failure_probability_component_specific",
+                "component_failure_probability_evidence_dataset_ref",
+                "component_failure_probability_miss_distance_bucket",
+                "component_failure_probability_source",
+                "component_failure_probability_weapon_family",
+                "component_failure_sample",
                 "component_name",
                 "component_redundancy_group_id",
                 "component_system",
@@ -492,6 +514,29 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertEqual(str(component_rows[0].component_system), "fuel")
         self.assertEqual(str(component_rows[0].component_redundancy_group_id), "wing_fuel_cells")
         self.assertTrue(bool(component_rows[0].direct_hit))
+        self.assertAlmostEqual(float(component_rows[0].component_failure_probability), 0.37)
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_source),
+            "vulnerability_evidence_row",
+        )
+        self.assertTrue(bool(component_rows[0].component_failure_probability_calibrated))
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_evidence_dataset_ref),
+            "unit_test_rows",
+        )
+        self.assertAlmostEqual(float(component_rows[0].component_failure_sample), 0.21)
+        self.assertTrue(bool(component_rows[0].component_failure_probability_authority))
+        self.assertTrue(bool(component_rows[0].component_failure_probability_component_specific))
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_weapon_family),
+            "continuous_rod",
+        )
+        self.assertEqual(str(component_rows[0].component_failure_probability_aspect_bucket), "beam")
+        self.assertEqual(str(component_rows[0].component_failure_probability_closure_bucket), "high")
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_miss_distance_bucket),
+            "direct_hit",
+        )
         self.assertAlmostEqual(float(component_rows[0].mechanism_fragment_energy_j), 540.0)
         self.assertTrue(
             any(
@@ -530,6 +575,21 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         effects = ef_py.EffectsEvent()
         self.assertEqual(int(effects.component_hit_count), 0)
         self.assertEqual(list(effects.component_mechanism_load_rows), [])
+        component_row = ef_py.ComponentMechanismLoadRow()
+        self.assertAlmostEqual(float(component_row.component_failure_probability), 0.0)
+        self.assertEqual(str(component_row.component_failure_probability_source), "none")
+        self.assertFalse(bool(component_row.component_failure_probability_calibrated))
+        self.assertEqual(str(component_row.component_failure_probability_evidence_dataset_ref), "")
+        self.assertAlmostEqual(float(component_row.component_failure_sample), 1.0)
+        self.assertFalse(bool(component_row.component_failure_probability_authority))
+        self.assertFalse(bool(component_row.component_failure_probability_component_specific))
+        self.assertEqual(str(component_row.component_failure_probability_weapon_family), "unknown")
+        self.assertEqual(str(component_row.component_failure_probability_aspect_bucket), "unknown")
+        self.assertEqual(str(component_row.component_failure_probability_closure_bucket), "unknown")
+        self.assertEqual(
+            str(component_row.component_failure_probability_miss_distance_bucket),
+            "unknown",
+        )
         self.assertEqual(str(effects.component_primary_name), "")
         self.assertEqual(str(effects.component_primary_system), "")
         self.assertAlmostEqual(float(effects.component_primary_redundancy_group), 0.0)

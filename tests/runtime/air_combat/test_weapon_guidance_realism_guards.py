@@ -4197,6 +4197,27 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             str(event.component_failure_probability_evidence_dataset_ref),
             "unit_test_calibrated_f16_component_failure",
         )
+        component_rows = list(event.component_mechanism_load_rows)
+        self.assertGreater(len(component_rows), 0)
+        for row in component_rows:
+            self.assertAlmostEqual(float(row.component_failure_probability), 0.37, delta=1.0e-6)
+            self.assertEqual(
+                str(row.component_failure_probability_source),
+                "vulnerability_evidence_row",
+            )
+            self.assertTrue(bool(row.component_failure_probability_calibrated))
+            self.assertEqual(
+                str(row.component_failure_probability_evidence_dataset_ref),
+                "unit_test_calibrated_f16_component_failure",
+            )
+            self.assertTrue(bool(row.component_failure_probability_authority))
+            self.assertEqual(str(row.component_failure_probability_weapon_family), "continuous_rod")
+            self.assertEqual(str(row.component_failure_probability_aspect_bucket), "beam")
+            self.assertEqual(str(row.component_failure_probability_closure_bucket), "high")
+            self.assertEqual(
+                str(row.component_failure_probability_miss_distance_bucket),
+                "direct_hit",
+            )
 
     def test_phase5_component_failure_rows_require_probability_authority(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_component_pk_denied_") as tmpdir:
@@ -4256,6 +4277,31 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             self.assertEqual(str(event.component_failure_probability_source), "synthetic_sigmoid")
             self.assertFalse(bool(event.component_failure_probability_calibrated))
             self.assertEqual(str(event.component_failure_probability_evidence_dataset_ref), "")
+            component_rows = list(event.component_mechanism_load_rows)
+            self.assertGreater(len(component_rows), 0)
+            for row in component_rows:
+                self.assertNotAlmostEqual(
+                    float(row.component_failure_probability),
+                    0.37,
+                    delta=1.0e-6,
+                )
+                self.assertEqual(
+                    str(row.component_failure_probability_source),
+                    "synthetic_sigmoid",
+                )
+                self.assertFalse(bool(row.component_failure_probability_calibrated))
+                self.assertEqual(
+                    str(row.component_failure_probability_evidence_dataset_ref),
+                    "",
+                )
+                self.assertFalse(bool(row.component_failure_probability_authority))
+                self.assertEqual(str(row.component_failure_probability_weapon_family), "continuous_rod")
+                self.assertEqual(str(row.component_failure_probability_aspect_bucket), "beam")
+                self.assertEqual(str(row.component_failure_probability_closure_bucket), "high")
+                self.assertEqual(
+                    str(row.component_failure_probability_miss_distance_bucket),
+                    "direct_hit",
+                )
 
     def test_phase3_continuous_rod_near_miss_uses_relative_velocity_axis(self) -> None:
         near_wing = (-0.753, 7.1, 0.0)
@@ -4451,6 +4497,29 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertAlmostEqual(float(frag_primary_row.distance_m), 0.0, delta=1.0e-6)
         self.assertGreater(float(frag_primary_row.effect_scale), 0.0)
         self.assertGreater(float(frag_primary_row.component_threshold_scale), 0.0)
+        self.assertGreater(float(frag_primary_row.component_failure_probability), 0.0)
+        self.assertEqual(
+            str(frag_primary_row.component_failure_probability_source),
+            "synthetic_sigmoid",
+        )
+        self.assertFalse(bool(frag_primary_row.component_failure_probability_calibrated))
+        self.assertEqual(
+            str(frag_primary_row.component_failure_probability_evidence_dataset_ref),
+            "",
+        )
+        self.assertGreaterEqual(float(frag_primary_row.component_failure_sample), 0.0)
+        self.assertLessEqual(float(frag_primary_row.component_failure_sample), 1.0)
+        self.assertFalse(bool(frag_primary_row.component_failure_probability_authority))
+        self.assertEqual(
+            str(frag_primary_row.component_failure_probability_weapon_family),
+            "blast_fragmentation",
+        )
+        self.assertEqual(str(frag_primary_row.component_failure_probability_aspect_bucket), "beam")
+        self.assertEqual(str(frag_primary_row.component_failure_probability_closure_bucket), "high")
+        self.assertEqual(
+            str(frag_primary_row.component_failure_probability_miss_distance_bucket),
+            "direct_hit",
+        )
         self.assertGreater(float(frag_event.component_primary_mechanism_fragment_energy_j), 0.0)
         self.assertGreater(float(frag_event.component_primary_mechanism_penetration_margin), 0.0)
         self.assertGreater(

@@ -75,6 +75,9 @@ struct AircraftVulnerabilityEvidenceRow {
     std::string aspect_bucket;
     std::string closure_bucket;
     std::string miss_distance_bucket;
+    std::string component_name;
+    std::string component_system;
+    std::string component_redundancy_group_id;
     double family_scale = 1.0;
     double aspect_scale = 1.0;
     double closure_scale = 1.0;

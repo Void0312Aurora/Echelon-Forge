@@ -1427,11 +1427,50 @@ const AircraftVulnerabilityEvidenceRow* find_matching_vulnerability_evidence_row
         if (row.weapon_family == family &&
             row.aspect_bucket == aspect_bucket &&
             row.closure_bucket == closure_bucket &&
-            row.miss_distance_bucket == miss_distance_bucket) {
+            row.miss_distance_bucket == miss_distance_bucket &&
+            row.component_name.empty() &&
+            row.component_system.empty() &&
+            row.component_redundancy_group_id.empty()) {
             return &row;
         }
     }
     return nullptr;
+}
+
+bool vulnerability_row_matches_component(
+    const AircraftVulnerabilityEvidenceRow& row,
+    const DamageComponent* component
+) {
+    if (!component) {
+        return row.component_name.empty() &&
+            row.component_system.empty() &&
+            row.component_redundancy_group_id.empty();
+    }
+    if (!row.component_name.empty() && row.component_name != damage_component_key(*component)) {
+        return false;
+    }
+    if (!row.component_system.empty() && row.component_system != component->system) {
+        return false;
+    }
+    if (!row.component_redundancy_group_id.empty() &&
+        row.component_redundancy_group_id != damage_component_redundancy_group_key(*component)) {
+        return false;
+    }
+    return true;
+}
+
+int vulnerability_row_specificity(const AircraftVulnerabilityEvidenceRow& row) {
+    int specificity = 0;
+    if (!row.component_name.empty()) {
+        specificity += 4;
+    }
+    if (!row.component_system.empty()) {
+        specificity += 2;
+    }
+    if (!row.component_redundancy_group_id.empty()) {
+        specificity += 1;
+    }
+    return specificity;
 }
 
 const AircraftVulnerabilityEvidenceRow* find_effect_scale_vulnerability_evidence_row(
@@ -1458,22 +1497,34 @@ find_component_failure_vulnerability_evidence_row(
     const std::string& family,
     const std::string& aspect_bucket,
     const std::string& closure_bucket,
-    const std::string& miss_distance_bucket
+    const std::string& miss_distance_bucket,
+    const DamageComponent* component,
+    bool* component_specific = nullptr
 ) {
     if (!vulnerability.component_failure_probability_authority) {
         return nullptr;
     }
-    const AircraftVulnerabilityEvidenceRow* row =
-        find_matching_vulnerability_evidence_row(
-            vulnerability,
-            family,
-            aspect_bucket,
-            closure_bucket,
-            miss_distance_bucket);
-    if (!row || !row->has_component_failure_probability) {
-        return nullptr;
+    const AircraftVulnerabilityEvidenceRow* best_row = nullptr;
+    int best_specificity = -1;
+    for (const AircraftVulnerabilityEvidenceRow& row : vulnerability.evidence_rows) {
+        if (row.weapon_family != family ||
+            row.aspect_bucket != aspect_bucket ||
+            row.closure_bucket != closure_bucket ||
+            row.miss_distance_bucket != miss_distance_bucket ||
+            !row.has_component_failure_probability ||
+            !vulnerability_row_matches_component(row, component)) {
+            continue;
+        }
+        const int specificity = vulnerability_row_specificity(row);
+        if (specificity > best_specificity) {
+            best_specificity = specificity;
+            best_row = &row;
+        }
     }
-    return row;
+    if (component_specific) {
+        *component_specific = best_specificity > 0;
+    }
+    return best_row;
 }
 
 VulnerabilityAdjustment make_vulnerability_adjustment(
@@ -1746,7 +1797,7 @@ public:
                 double component_scale,
                 bool direct_hit,
                 double distance_m,
-                const WarheadMechanismLoadEvidence& mechanism_load) {
+                const WarheadMechanismLoadEvidence& mechanism_load) -> ComponentMechanismLoadRow* {
                 ++component_hit_count;
                 component_mechanism_load_rows.push_back(
                     make_component_mechanism_load_row(
@@ -1756,6 +1807,7 @@ public:
                         direct_hit,
                         distance_m,
                         mechanism_load));
+                ComponentMechanismLoadRow& row = component_mechanism_load_rows.back();
                 if (effect_scale > component_primary_effect_scale) {
                     component_primary_effect_scale = effect_scale;
                     component_primary_name = component.name.empty() ? component.system : component.name;
@@ -1766,6 +1818,7 @@ public:
                         damage_component_redundancy_group_key(component);
                     component_primary_mechanism_load = mechanism_load;
                 }
+                return &row;
             };
             const auto sample_component_failure = [&](
                 const std::string& system,
@@ -1776,7 +1829,8 @@ public:
                 const WarheadMechanismLoadEvidence& mechanism_load,
                 bool component_critical,
                 double redundancy_group,
-                const DamageComponent* component
+                const DamageComponent* component,
+                ComponentMechanismLoadRow* component_row
             ) {
                 if (!structured_air_target) {
                     return;
@@ -1797,23 +1851,26 @@ public:
                     mechanism_load);
                 std::string failure_probability_source = "synthetic_sigmoid";
                 bool failure_probability_calibrated = false;
+                bool failure_probability_component_specific = false;
                 std::string failure_probability_evidence_dataset_ref;
+                const std::string failure_family =
+                    warhead_effect_family(missile.warhead_profile);
+                const std::string failure_aspect_bucket =
+                    classify_local_aspect_bucket(local_imp);
+                const std::string failure_closure_bucket =
+                    classify_closure_bucket(closure_mps);
+                const std::string failure_miss_distance_bucket =
+                    classify_miss_distance_bucket(direct_hit);
                 if (aircraft_vulnerability) {
-                    const std::string failure_family =
-                        warhead_effect_family(missile.warhead_profile);
-                    const std::string failure_aspect_bucket =
-                        classify_local_aspect_bucket(local_imp);
-                    const std::string failure_closure_bucket =
-                        classify_closure_bucket(closure_mps);
-                    const std::string failure_miss_distance_bucket =
-                        classify_miss_distance_bucket(direct_hit);
                     const AircraftVulnerabilityEvidenceRow* failure_row =
                         find_component_failure_vulnerability_evidence_row(
                             *aircraft_vulnerability,
                             failure_family,
                             failure_aspect_bucket,
                             failure_closure_bucket,
-                            failure_miss_distance_bucket);
+                            failure_miss_distance_bucket,
+                            component,
+                            &failure_probability_component_specific);
                     if (failure_row) {
                         failure_probability = std::clamp(
                             failure_row->component_failure_probability,
@@ -1826,6 +1883,28 @@ public:
                     }
                 }
                 const double failure_sample = rand_uniform01(component_rng_state);
+                if (component_row) {
+                    component_row->component_failure_probability = failure_probability;
+                    component_row->component_failure_probability_source =
+                        failure_probability_source;
+                    component_row->component_failure_probability_calibrated =
+                        failure_probability_calibrated;
+                    component_row->component_failure_probability_evidence_dataset_ref =
+                        failure_probability_evidence_dataset_ref;
+                    component_row->component_failure_sample = failure_sample;
+                    component_row->component_failure_probability_authority =
+                        failure_probability_source == "vulnerability_evidence_row";
+                    component_row->component_failure_probability_component_specific =
+                        failure_probability_component_specific;
+                    component_row->component_failure_probability_weapon_family =
+                        failure_family;
+                    component_row->component_failure_probability_aspect_bucket =
+                        failure_aspect_bucket;
+                    component_row->component_failure_probability_closure_bucket =
+                        failure_closure_bucket;
+                    component_row->component_failure_probability_miss_distance_bucket =
+                        failure_miss_distance_bucket;
+                }
                 sampled_component_failure_probability =
                     std::max(sampled_component_failure_probability, failure_probability);
                 if (failure_probability >= sampled_component_failure_probability) {
@@ -1945,7 +2024,8 @@ public:
                 const WarheadMechanismLoadEvidence& mechanism_load = WarheadMechanismLoadEvidence{},
                 bool component_critical = true,
                 double redundancy_group = 0.0,
-                const DamageComponent* component = nullptr
+                const DamageComponent* component = nullptr,
+                ComponentMechanismLoadRow* component_row = nullptr
             ) {
                 const double resolved_component_scale = std::clamp(component_scale, 0.40, 1.80);
                 sys_health->systems[system] = std::max(
@@ -1964,7 +2044,8 @@ public:
                     mechanism_load,
                     component_critical,
                     redundancy_group,
-                    component);
+                    component,
+                    component_row);
                 if (structured_air_target && component) {
                     apply_control_axis_component_damage(
                         *component,
@@ -2165,7 +2246,7 @@ public:
                                     component);
                             sampled_component_threshold_scale =
                                 std::max(sampled_component_threshold_scale, component_scale);
-                            record_component_hit(
+                            ComponentMechanismLoadRow* component_row = record_component_hit(
                                 component,
                                 direct_mechanism_scale,
                                 component_scale,
@@ -2181,7 +2262,8 @@ public:
                                 mechanism_load,
                                 component.critical,
                                 component.redundancy_group,
-                                &component);
+                                &component,
+                                component_row);
                             spdlog::info(
                                 "   - component {}:{} Status: {:.2f} component_scale={:.2f}",
                                 component.name.empty() ? component.system : component.name,
@@ -2569,7 +2651,7 @@ public:
                                 *projected_component);
                         sampled_component_threshold_scale =
                             std::max(sampled_component_threshold_scale, component_scale);
-                        record_component_hit(
+                        ComponentMechanismLoadRow* component_row = record_component_hit(
                             *projected_component,
                             candidate.effect_scale,
                             component_scale,
@@ -2585,7 +2667,8 @@ public:
 	                            candidate.mechanism_load,
 	                            projected_component->critical,
 	                            projected_component->redundancy_group,
-	                            projected_component);
+	                            projected_component,
+	                            component_row);
                         spdlog::info(
                             "   - component {}:{} Status: {:.2f}",
                             projected_component->name.empty()

@@ -128,14 +128,14 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 
 - Phase 1：HP-first bypass 反转、structured aircraft path、`EffectsEvent` / `DamageReport` 记录、physical effects 不直接写 RL `Score`。
 - Phase 2：`AircraftDamageState` overlay、飞行动力学/推进/传感器/fuel leak 派生、火灾/液压/燃油级联、控制轴和 control-asymmetry overlay。
-- Phase 3：`WarheadProfile` / `FuzeProfile`、弹头族 footprint、近炸空间投射、orientation-pattern 证据、机制载荷字段、候选组件机制载荷行、contact/impact/timed 初步语义、组件几何/阈值/冗余/依赖。
+- Phase 3：`WarheadProfile` / `FuzeProfile`、弹头族 footprint、近炸空间投射、orientation-pattern 证据、机制载荷字段、候选组件机制载荷行及 row 级 failure provenance / authority / evidence-axis 审计、contact/impact/timed 初步语义、组件几何/阈值/冗余/依赖。
 - Phase 5：synthetic vulnerability scaffold、descriptor gate、authority 分离、rows 受控接入、Pk / deterministic-fuze authority 防误提升。
 
 ## 5. 下一步建议
 
 1. 固化层级 2A 验收门：继续保持"组件几何 + 机制证据 + 事件审计"为当前阶段目标，但文档和测试中避免使用"已高保真"的措辞。
 
-2. 将候选组件级机制载荷行接入校准证据形状：当前同一事件已经能记录每个命中/投射候选组件的 fragment / blast / rod / penetration 载荷行，下一步应让这些 row 能携带或匹配明确的 evidence ref / authority 状态，而不是停留在工程化 mechanism-load scaffold。
+2. 将候选组件级机制载荷行接入校准证据形状：当前同一事件已经能记录每个命中/投射候选组件的 fragment / blast / rod / penetration 载荷行，且 row 级 failure probability/source/calibrated/dataset/sample、authority 和 weapon/aspect/closure/miss-distance 匹配轴已可审计，下一步应让这些 row 能对接更细的 component-specific evidence ref，而不是停留在工程化 mechanism-load scaffold。
 
 3. 继续把 evasion 迁移出黑盒 hit probability：下一步应让末端规避主要通过 miss distance、目标签名、引信触发和机制载荷传递，而不是独立乘数。
 

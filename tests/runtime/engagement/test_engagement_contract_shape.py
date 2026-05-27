@@ -94,6 +94,17 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
     _assert_fields_present(
         component_mechanism_load_row,
         (
+            "component_failure_probability",
+            "component_failure_probability_aspect_bucket",
+            "component_failure_probability_authority",
+            "component_failure_probability_source",
+            "component_failure_probability_calibrated",
+            "component_failure_probability_closure_bucket",
+            "component_failure_probability_component_specific",
+            "component_failure_probability_evidence_dataset_ref",
+            "component_failure_probability_miss_distance_bucket",
+            "component_failure_sample",
+            "component_failure_probability_weapon_family",
             "component_name",
             "component_system",
             "component_redundancy_group_id",

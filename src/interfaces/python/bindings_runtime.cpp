@@ -555,6 +555,37 @@ void bind_runtime(nb::module_& m) {
         .def_rw("effect_scale", &ComponentMechanismLoadRow::effect_scale)
         .def_rw("component_threshold_scale", &ComponentMechanismLoadRow::component_threshold_scale)
         .def_rw(
+            "component_failure_probability",
+            &ComponentMechanismLoadRow::component_failure_probability)
+        .def_rw(
+            "component_failure_probability_source",
+            &ComponentMechanismLoadRow::component_failure_probability_source)
+        .def_rw(
+            "component_failure_probability_calibrated",
+            &ComponentMechanismLoadRow::component_failure_probability_calibrated)
+        .def_rw(
+            "component_failure_probability_evidence_dataset_ref",
+            &ComponentMechanismLoadRow::component_failure_probability_evidence_dataset_ref)
+        .def_rw("component_failure_sample", &ComponentMechanismLoadRow::component_failure_sample)
+        .def_rw(
+            "component_failure_probability_authority",
+            &ComponentMechanismLoadRow::component_failure_probability_authority)
+        .def_rw(
+            "component_failure_probability_component_specific",
+            &ComponentMechanismLoadRow::component_failure_probability_component_specific)
+        .def_rw(
+            "component_failure_probability_weapon_family",
+            &ComponentMechanismLoadRow::component_failure_probability_weapon_family)
+        .def_rw(
+            "component_failure_probability_aspect_bucket",
+            &ComponentMechanismLoadRow::component_failure_probability_aspect_bucket)
+        .def_rw(
+            "component_failure_probability_closure_bucket",
+            &ComponentMechanismLoadRow::component_failure_probability_closure_bucket)
+        .def_rw(
+            "component_failure_probability_miss_distance_bucket",
+            &ComponentMechanismLoadRow::component_failure_probability_miss_distance_bucket)
+        .def_rw(
             "mechanism_fragment_energy_j",
             &ComponentMechanismLoadRow::mechanism_fragment_energy_j)
         .def_rw(
