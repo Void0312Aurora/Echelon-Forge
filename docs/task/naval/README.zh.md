@@ -30,9 +30,10 @@
 ## 当前继续推进重点
 
 - 将 `N4` 视为已闭合，避免为了 engagement 工作重新打开 N4
-- 从两个 active N4 smoke/probe 条目继续推进：
-  `naval_contact_report_threat_roe_v1` 和
-  `naval_screen_station_hold_threat_aware_v1`
+- 从 active N4 smoke/probe 条目继续推进：
+  `naval_contact_report_threat_roe_v1`、
+  `naval_screen_station_hold_threat_aware_v1` 和
+  `naval_screen_station_recovery_threat_aware_v1`
 - 让这些入口保持在专门的 `naval_station3` 站位指令动作面，而不是空军
   `takeoff4` 训练面
 - 让这些入口的策略任务输入保持在 `naval_screen_station_v1`，而不是空军

@@ -1,11 +1,12 @@
 # Naval N5 RL Action Surface Split Cluster
 
-Status: `2026-05-26` implemented and focused validation passed for the first
-naval action-surface split. The same repair line now includes `N5-E`, the first
-naval observation-surface split. Despite the `N5` folder name, this cluster
-keeps the released behavior inside the accepted `N4_pre_fire_bridge` boundary;
-it only unblocks later N5 work by removing air-action and air-observation
-dependencies.
+Status: `2026-05-27` implemented and focused validation passed for the first
+naval action-surface split, the first naval observation-surface split, and the
+active-entry single-policy-slot cooperative roster gate. Despite the `N5`
+folder name, this cluster keeps the released behavior inside the accepted
+`N4_pre_fire_bridge` boundary; it only unblocks later N5 work by removing
+air-action, air-observation, and active-entry single-slot cooperative roster
+blockers.
 
 Cluster round cap:
 
@@ -34,10 +35,12 @@ The following reuse is no longer accepted for active naval RL entries:
 | Stream | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Parallel / dependency | Round cap | Status |
 |--------|-------|-------------------|------|-----------|-----------|------------|--------------|-----------------------|-----------|--------|
 | `N5-A Evidence and boundary` | main-thread integration | current main thread | Record why the air `takeoff4` surface must be split from naval active RL while preserving shared infrastructure reuse. | `docs/task/naval/n5_rl_action_surface_split/**`, naval README index | broad naval doctrine, new scenario, weapon release | `git diff --check -- docs/task/naval` | docs name accepted reuse, rejected reuse, and residuals | serial before implementation | 1 + 1 repair | implemented |
-| `N5-B Naval station action mode` | main-thread integration | current main thread | Add `naval_station3`: bearing delta, radius delta, speed bias mapped to naval station-order intent. | `gym_envs/universal_env_parts/**`, `gym_envs/universal_env.py`, `python/rl/runtime/world_batch_vec_env.py`, `python/env_config.py`, `python/training/cli.py`, `train.py`, maintained eval/benchmark CLIs | weapon switches, damage, full helm/autopilot, cooperative promotion | env-config pytest, runtime naval pytest | zero action remains neutral; non-zero action changes naval task/command intent; pilot action remains neutral | depends on N5-A | 1 + 1 repair | implemented |
+| `N5-B Naval station action mode` | main-thread integration | current main thread | Add `naval_station3`: bearing delta, radius delta, speed bias mapped to naval station-order intent. | `gym_envs/universal_env_parts/**`, `gym_envs/universal_env.py`, `python/rl/runtime/world_batch_vec_env.py`, `python/env_config.py`, `python/training/cli.py`, `train.py`, maintained eval/benchmark CLIs | weapon switches, damage, full helm/autopilot | env-config pytest, runtime naval pytest | zero action remains neutral; non-zero action changes naval task/command intent; pilot action remains neutral | depends on N5-A | 1 + 1 repair | implemented |
 | `N5-C Active entry migration` | main-thread integration | current main thread | Move active N4 naval training configs from `takeoff4` to `naval_station3`. | `examples/config/training/active/naval/**`, training entry tests | new trained-policy claim, larger curriculum | training-entry pytest, bootstrap `--test_only` gate | active entries no longer use air takeoff action mode and still stay pre-fire | depends on N5-B | 1 + 1 repair | implemented |
 | `N5-D Focused acceptance` | main-thread integration | current main thread | Prove the first split did not reopen N4 engagement/damage semantics. | tests and validation notes in this doc | broad regression suite, formal training claim | focused pytest plus naval contract runner | focused tests pass; residuals remain explicit | after N5-B/C | 1 + 1 repair | passed |
 | `N5-E Naval observation mode` | main-thread integration | current main thread | Add `naval_screen_station_v1` so active naval RL receives station/contact/ROE/report fields instead of air formation-role fields. | `python/mission_obs_taxonomy.py`, `gym_envs/scenario_loader/mission_observation.py`, `python/rl/runtime/world_batch/**`, active naval configs/docs, mission/naval/training tests | weapon release, damage/kill observation, cooperative packet schema | taxonomy pytest, runtime naval pytest, training-entry pytest | active entries use the naval mode; world-batch keeps C++ mission batching on a safe fallback while replacing the policy mission vector with naval fields | after N5-D and before new formal training | 1 + 1 repair | implemented |
+| `N5-F Cooperative single-policy roster gate` | main-thread integration | current main thread | Let active N4 entries use `cooperative_execution` while keeping the non-agent T-AKE support ship in the roster without allocating it a policy slot. | `python/rl/runtime/cooperative_world_batch_vec_env.py`, active naval configs/docs, runtime/training tests | general multi-agent naval promotion, cooperative weapon release, new policy routes | runtime naval pytest, cooperative world-batch pytest, training-entry bootstrap | real N4 DDG/T-AKE scenarios start with one DDG policy slot and two roster members; support/report reward terms remain visible | after N5-E | 1 repair | implemented |
+| `N5-G Baseline/off-station eval gates` | main-thread integration | current main thread | Add maintained N4 cooperative zero-action and off-station station-order evaluators for active entries. | `tools/eval/eval_naval_n4_baseline.py`, eval tests, active/naval docs | learned-policy acceptance, off-station curriculum success claim, weapon release, damage rewards | eval pytest, short CLI smoke | baseline eval verifies one DDG policy slot, non-agent support roster retention, required naval reward terms, and no airfield/weapon/damage reward terms; off-station probe verifies station-order actions cannot move the reward reference onto ownship | after N5-F | 1 repair | implemented |
 
 No subagents were dispatched for this implementation round. The cluster is
 still finite and policy-compatible; future delegated work should map to one of
@@ -58,11 +61,14 @@ Runtime behavior:
   task/mission intent before stepping the batch world.
 - The maintained command-chain synchronization then projects the updated
   station order into the runtime.
+- `CooperativeWorldBatchVecEnv` applies the same station-order action semantics
+  for naval loaders. The screen-station hold entry now uses this path for the
+  accepted single-policy-slot case.
 - The low-level `PilotAction` sent for this action mode is neutral:
   rudder/stick-roll `0.0`, throttle `0.5`, weapon triggers off.
-- The legacy `takeoff4` path remains available for focused low-level ship
-  manual-takeover diagnostics, but active naval training entries no longer use
-  it.
+- Naval tasking profiles now fail fast if started with air-style action modes
+  such as `takeoff4`; any low-level ship manual-takeover diagnostic must run
+  through a separate non-naval or explicitly isolated entry.
 
 `naval_screen_station_v1` mission observation vector:
 
@@ -86,6 +92,39 @@ Runtime behavior:
 - This avoids passing a new mode code to the legacy C++ mission-observation
   surface before the packet/ownership split is ready.
 
+Cooperative runtime behavior:
+
+- cooperative slot accounting counts only `is_agent=true` roster members as
+  policy slots;
+- the full active roster remains attached to each slot loader, so the non-agent
+  T-AKE support ship stays available for reference, support-track, and
+  report-chain context;
+- active N4 entries use `agent_layer=cooperative_execution` with
+  `policy_route=shared_execution`, `slots_per_world=1`, and `total_slots=1`.
+- active entries with `naval_entry.scenario_path` are rejected at training
+  bootstrap and maintained N4 eval time if `--scenario` does not resolve to the
+  declared scenario, keeping the nominal station-hold and off-station recovery
+  gates from being silently swapped.
+- active entries with `naval_entry.contract_path` are rejected if the referenced
+  contract's internal `scenario` field does not match the declared entry
+  scenario.
+
+Baseline evaluation behavior:
+
+- `tools/eval/eval_naval_n4_baseline.py` runs the active N4 cooperative runtime
+  with a zero `naval_station3` action for a fixed step window;
+- it emits JSON with reward totals, slot/roster shape, required naval reward
+  terms, and forbidden airfield/weapon/damage reward checks;
+- `--mode offstation_probe` can use the maintained off-station recovery
+  scenario directly, proves the scripted station hold reduces error under the
+  fixed original task reference, and compares a matched radius station-order
+  action to prove station commands cannot move the reward reference onto
+  ownship;
+- the maintained recovery entry enables the recovery-progress reward term for
+  scripted gate evidence while normal station-hold/contact-report entries keep
+  that term disabled;
+- these are stable baseline/regression gates, not trained-policy claims.
+
 ## Verification
 
 Validation commands for this slice:
@@ -94,8 +133,13 @@ Validation commands for this slice:
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/core/test_env_config.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/naval/test_naval_n4_reward_surface.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_eval_naval_n4_baseline.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_train_bootstrap.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 300
 git diff --check -- docs/task/naval examples/config/training/active/naval gym_envs/scenario_loader gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py python/mission_obs_taxonomy.py python/training/cli.py python/rl/runtime/world_batch python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py train.py tools/eval tools/diagnostics/benchmarks/world_batch_vec_env.py tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_n4_reward_surface.py tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
 ```
 
@@ -138,13 +182,14 @@ Future `N5-F` packet split:
   narrower command/tasking packets after the architecture lane releases that
   surface.
 
-Future `N5-G` cooperative promotion:
+Future `N5-H` broader cooperative promotion:
 
-- handle non-agent support ship roster accounting before promoting active
-  naval entries to cooperative execution.
+- expand beyond the accepted active N4 single-policy-slot support-roster case
+  only after cooperative observation schema, packet ownership, and policy route
+  rules are released.
 
-Future `N5-H` training evidence:
+Future `N5-I` training evidence:
 
-- run formal training only after the action and observation surfaces are both
-  accepted, and report learned behavior as evidence rather than as a config
-  bootstrap claim.
+- run formal training only after the action, observation, cooperative roster,
+  and baseline eval surfaces are accepted, and report learned behavior as
+  evidence rather than as a config bootstrap claim.

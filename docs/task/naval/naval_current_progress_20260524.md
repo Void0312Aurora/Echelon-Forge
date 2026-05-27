@@ -73,6 +73,10 @@ The current naval scenarios mainly sit at `N1-N3`:
 - `ddg51_take1_screen_threat_roe_v1` is accepted as an `N4` pre-fire bridge:
   threat/ROE state and assigned-target provenance are observable, but weapon
   release and damage are not acceptance proof.
+- `ddg51_take1_screen_threat_roe_offstation_recovery_v1` is the maintained N4
+  off-station recovery variant: it starts the DDG `1800 m` inside station and
+  gates scripted recovery under the fixed original-task reward reference. It
+  still stays below learned-policy acceptance.
 - Weapons, CIWS, damage, ASW, embarked air, and UNREP have runtime tests, but
   they are currently infrastructure and local chain evidence. They do not by
   themselves promote the current screen/contact scenarios into firefight or full
@@ -93,12 +97,14 @@ Scenarios:
 - [ddg51_take1_screen_contact_report_v1.json](../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
 - [ddg51_take1_screen_closing_contact_v1.json](../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
 - [ddg51_take1_screen_threat_roe_v1.json](../../../scenarios/naval/ddg51_take1_screen_threat_roe_v1.json)
+- [ddg51_take1_screen_threat_roe_offstation_recovery_v1.json](../../../scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json)
 
 Contracts:
 
 - [naval_screen_contact_report_geometry.json](../../../tests/contracts/unit/naval/naval_screen_contact_report_geometry.json)
 - [naval_screen_closing_contact_geometry.json](../../../tests/contracts/unit/naval/naval_screen_closing_contact_geometry.json)
 - [naval_screen_threat_roe_geometry.json](../../../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json)
+- [naval_screen_threat_roe_offstation_recovery.json](../../../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json)
 - [scenario_loader_naval_common_core_semantics.json](../../../tests/contracts/unit/naval/scenario_loader_naval_common_core_semantics.json)
 
 Runtime surfaces now include ship/submarine platform components, ship and
@@ -164,14 +170,17 @@ The accepted next RL-compatible task candidates are:
 
 - `naval_contact_report_threat_roe_v1`;
 - `naval_screen_station_hold_threat_aware_v1`.
+- `naval_screen_station_recovery_threat_aware_v1`.
 
-Both now have active smoke/probe entrypoints under
+All three now have active smoke/probe entrypoints under
 [examples/config/training/active/naval](../../../examples/config/training/active/naval/README.md).
 These entries are implementation gates, not trained-policy evidence: they pair
-the accepted N4 scenario with the maintained world-batch training path, use a
-temporary no-release action surface, and keep weapon release, damage rewards,
-kill rewards, and learned-policy claims out of scope. `naval_limited_engagement_v1`
-remains blocked behind N5 launch/reject and non-damage gates.
+the accepted N4 scenarios with the cooperative single-policy-slot runtime, use
+the dedicated no-release `naval_station3` station-order action surface and
+`naval_screen_station_v1` policy observation surface, and keep weapon release,
+damage rewards, kill rewards, and learned-policy claims out of scope.
+`naval_limited_engagement_v1` remains blocked behind N5 launch/reject and
+non-damage gates.
 
 ## Validation
 
@@ -229,6 +238,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python trai
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
 # PASS
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json
+# PASS
 ```
 
 ## Next Focus
@@ -236,8 +248,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 Recommended next steps:
 
 1. Treat N4 as closed and avoid reopening it for engagement work.
-   `naval_contact_report_threat_roe_v1` and
-   `naval_screen_station_hold_threat_aware_v1` now have active smoke/probe
+   `naval_contact_report_threat_roe_v1`,
+   `naval_screen_station_hold_threat_aware_v1`, and
+   `naval_screen_station_recovery_threat_aware_v1` now have active smoke/probe
    entries.
 2. Continue moving loader-owned raw simulation compatibility seams toward
    facade-owned maintained command-chain surfaces.
@@ -248,6 +261,6 @@ Recommended next steps:
    non-damage acceptance gates.
 5. Strengthen maritime-state field tests, sensor/LOS coupling, and naval weapon
    command stability before expanding into larger fleet combat.
-6. Replace the temporary N4 no-release execution probe with a dedicated naval
-   observation/action/reward/eval package before any learned-policy or
-   cooperative naval training claim.
+6. Expand from the current N4 cooperative baseline eval gate into a complete
+   curriculum and learned-policy acceptance package before any learned-policy
+   or broader cooperative naval training claim.

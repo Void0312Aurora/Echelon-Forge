@@ -66,6 +66,9 @@
 - `ddg51_take1_screen_closing_contact_v1`：在 `N2` 基础上加入接触逼近和 `N3` 屏护几何稳定性。
 - `ddg51_take1_screen_threat_roe_v1`：已接受为 `N4` 开火前 bridge，威胁/ROE 状态和
   assigned-target provenance 可观察，但 weapon release 和 damage 不是验收证明。
+- `ddg51_take1_screen_threat_roe_offstation_recovery_v1`：维护态 N4 离站位恢复变体，
+  DDG 初始位于名义站位内侧 `1800 m`，用于在固定原始任务奖励参考下守住脚本恢复 gate；
+  它仍不等于 learned-policy 验收。
 - 武器、CIWS、毁伤、ASW、舰载机和 UNREP 虽有 runtime 测试，但目前主要作为后续扩展的基础设施和局部链路证明，不能自动把现有 screen/contact 场景提升为交火或完整海战场景。
 
 因此，后续每新增一个场景类型，都应先声明它进入了哪个梯度，并把对应临界点变成测试或合同。比如：
@@ -84,10 +87,12 @@
   - [ddg51_take1_screen_contact_report_v1.json](../../../scenarios/naval/ddg51_take1_screen_contact_report_v1.json)
   - [ddg51_take1_screen_closing_contact_v1.json](../../../scenarios/naval/ddg51_take1_screen_closing_contact_v1.json)
   - [ddg51_take1_screen_threat_roe_v1.json](../../../scenarios/naval/ddg51_take1_screen_threat_roe_v1.json)
+  - [ddg51_take1_screen_threat_roe_offstation_recovery_v1.json](../../../scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json)
 - 合同：
   - [naval_screen_contact_report_geometry.json](../../../tests/contracts/unit/naval/naval_screen_contact_report_geometry.json)
   - [naval_screen_closing_contact_geometry.json](../../../tests/contracts/unit/naval/naval_screen_closing_contact_geometry.json)
   - [naval_screen_threat_roe_geometry.json](../../../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json)
+  - [naval_screen_threat_roe_offstation_recovery.json](../../../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json)
   - [scenario_loader_naval_common_core_semantics.json](../../../tests/contracts/unit/naval/scenario_loader_naval_common_core_semantics.json)
 
 这些合同证明当前海军场景不再只是静态摆拍。它们至少锁住：
@@ -263,12 +268,13 @@ N4 RL preflight 已记录在
 - `naval_contact_report_threat_roe_v1`；
 - `naval_screen_station_hold_threat_aware_v1`。
 
-二者现在已有 active smoke/probe 入口，位置是
+三者现在都有 active smoke/probe 入口，位置是
 [examples/config/training/active/naval](../../../examples/config/training/active/naval/README.zh.md)。
-这些条目是实现 gate，而不是已训练 policy 证据：它们把已接受 N4 场景与 maintained
-world-batch training path 配对，使用临时 no-release action surface，并把武器释放、
-毁伤奖励、击杀奖励和 learned-policy 声明排除在范围外。`naval_limited_engagement_v1`
-继续被 N5 launch/reject 和非毁伤 gate 阻塞。
+这些条目是实现 gate，而不是已训练 policy 证据：它们把已接受 N4 场景与 cooperative
+单策略槽位 runtime 配对，使用专门的 no-release `naval_station3` 站位指令动作面和
+`naval_screen_station_v1` 策略观测面，并把武器释放、毁伤奖励、击杀奖励和 learned-policy
+声明排除在范围外。`naval_limited_engagement_v1` 继续被 N5 launch/reject 和非毁伤 gate
+阻塞。
 
 ## 六、验证记录
 
@@ -333,13 +339,14 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 建议下一轮按下面顺序推进：
 
 1. 将 N4 视为已闭合，避免为了 engagement 工作重新打开 N4。
-   `naval_contact_report_threat_roe_v1` 与
-   `naval_screen_station_hold_threat_aware_v1` 现在已有 active smoke/probe 条目。
+   `naval_contact_report_threat_roe_v1`、`naval_screen_station_hold_threat_aware_v1`
+   与 `naval_screen_station_recovery_threat_aware_v1` 现在已有 active smoke/probe 条目。
 2. Facade 化收口：把 loader-owned raw simulation compatibility seam 中仍承担业务含义的 naval command-chain 同步继续迁到 facade-owned maintained surface。
 3. 任务面守门：为 `MissionCommand -> naval weapon`、`screen-hold` 和 `tasking_profile: naval` 增加更少依赖调试 API 的 facade 或 world-batch 级验收。
 4. N5 门控：`naval_limited_engagement_v1` 继续阻塞，直到独立 N5 包定义
    launch/reject、range/arc/cooldown/inventory、action masking 和非毁伤验收 gate。
 5. 域真实性小步补强：优先补 maritime state 细字段测试、传感器/LOS 联动和武器命令链稳定性，不急于扩成多舰队高保真交战。
-6. 用专门的海军 observation/action/reward/eval package 替换当前 N4 临时 no-release execution probe，再考虑 learned-policy 或 cooperative naval training 声明。
+6. 在当前 N4 cooperative baseline eval gate 之上，继续扩展完整 curriculum 和
+   learned-policy acceptance，再考虑 learned-policy 或更广 cooperative naval training 声明。
 
 当前优先级仍应是“把已存在的海军任务语义稳定接入学习面”，而不是继续横向扩更多海军系统。

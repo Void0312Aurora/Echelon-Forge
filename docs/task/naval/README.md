@@ -38,9 +38,10 @@ Status: active naval-realism workline; N4 pre-fire bridge closed on
 ## Current Follow-On Focus
 
 - treat `N4` as closed and avoid reopening it for engagement work
-- continue from the two active N4 smoke/probe entries:
-  `naval_contact_report_threat_roe_v1` and
-  `naval_screen_station_hold_threat_aware_v1`
+- continue from the active N4 smoke/probe entries:
+  `naval_contact_report_threat_roe_v1`,
+  `naval_screen_station_hold_threat_aware_v1`, and
+  `naval_screen_station_recovery_threat_aware_v1`
 - keep those entries on the dedicated `naval_station3` station-order action
   surface rather than the air `takeoff4` training surface
 - keep their policy mission input on `naval_screen_station_v1` rather than the

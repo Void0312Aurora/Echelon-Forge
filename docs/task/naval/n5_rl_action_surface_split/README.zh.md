@@ -1,7 +1,8 @@
 # N5 RL 动作面拆分
 
-状态：`2026-05-26` 已实现第一段维护中的海军 RL 动作面和观测面切片。它仍然是
-`N4` 开火前训练入口修复，不是 `N5` 武器交战释放。
+状态：`2026-05-27` 已实现第一段维护中的海军 RL 动作面和观测面切片，并将 active
+active N4 入口提升到单策略槽位 cooperative runtime。它仍然是 `N4`
+开火前训练入口修复，不是 `N5` 武器交战释放。
 
 语言：
 
@@ -54,7 +55,7 @@ N4 训练入口此前有价值，因为它证明了场景、奖励和维护中�
 
 - 武器释放、命中/拦截、毁伤、击杀或交战奖励；
 - 完整海军舵令/自动舰艇控制 doctrine；
-- cooperative naval 多槽位提升；
+- 通用 cooperative naval 多槽位提升；
 - 最终海军 packet 所有权和 cooperative 观测 schema；
 - 用正式 `CommandPacket` 全面替换兼容 `MissionCommand`。
 
@@ -69,11 +70,13 @@ N4 训练入口此前有价值，因为它证明了场景、奖励和维护中�
 - 策略任务向量暴露站位误差、屏护距离、接触、支援/报告、ROE 和指定目标字段；
 - 新动作模式下舰艇 pilot-action carrier 保持中性；
 - training bootstrap 接受 active 入口；
+- active cooperative 入口都保留非 agent 支援舰 roster，但不为它分配策略槽位；
 - 合同和奖励测试仍保持开火前边界。
 
 ## 残留
 
 - 架构线释放后，用更窄的 command/tasking packet 替代兼容 `MissionCommand` 聚合。
-- 只有在非 agent roster 计数被接受后，才提升 cooperative naval 槽位。
+- 只有在更广的观测和 packet 所有权模型释放后，才把 cooperative naval 从已接受的
+  active N4 单策略槽位支援 roster 情况继续扩大。
 - `naval_limited_engagement_v1` 继续阻塞在独立 launch/reject package 之后。
 - 只有当场景实际越过 screen-station 与开火前接触/报告行为后，才继续扩展第一段海军观测切片。

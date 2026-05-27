@@ -1,8 +1,9 @@
 # N5 RL Action Surface Split
 
-Status: `2026-05-26` implemented for the first maintained naval RL action and
-observation surface slices. This is still an `N4` pre-fire training-entry
-repair, not an `N5` weapon-engagement release.
+Status: `2026-05-27` implemented for the first maintained naval RL action and
+observation surface slices, with the active N4 entries promoted to the
+single-policy-slot cooperative runtime. This is still an `N4` pre-fire
+training-entry repair, not an `N5` weapon-engagement release.
 
 Language:
 
@@ -63,7 +64,7 @@ Out of scope:
 
 - weapon release, hit/intercept, damage, kill, or engagement reward;
 - full naval helm/autopilot doctrine;
-- cooperative naval multi-slot promotion;
+- general cooperative naval multi-slot promotion;
 - final naval packet ownership and cooperative observation schema;
 - broad `MissionCommand` replacement with formal `CommandPacket`.
 
@@ -80,14 +81,17 @@ This slice is mergeable when:
   support/report, ROE, and assigned-target fields;
 - the ship pilot-action carrier stays neutral for the naval action mode;
 - training bootstrap accepts the active entries;
+- active cooperative entries keep the non-agent support ship in the roster
+  without allocating it a policy slot;
 - contract and reward tests remain pre-fire.
 
 ## Residuals
 
 - Replace compatibility `MissionCommand` aggregation with narrower command and
   tasking packets once the architecture lane releases them.
-- Promote cooperative naval slots only after non-agent roster accounting is
-  accepted.
+- Expand cooperative naval promotion beyond the accepted single-policy-slot
+  active N4 support-roster case only after the broader observation and packet
+  ownership model is released.
 - Keep `naval_limited_engagement_v1` blocked behind a separate launch/reject
   package.
 - Extend the first naval observation slice only when the scenario actually
