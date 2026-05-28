@@ -169,9 +169,9 @@
       "english": "docs/standards/README.md",
       "chinese": "docs/standards/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-05-24",
-      "english_hash": "0d7d8711a906c26d9e27e93dd752dea88b538fec39e2fe73846e43b18a7c3979",
-      "chinese_hash": "3e785aabac14a3e8810fbff71f1eff553391ba91bda720eb60408def06db4a42"
+      "last_verified": "2026-05-28",
+      "english_hash": "dae016e9cf54a4f2e6cc4b3172c68dddd70ef0d7d25a9007804399f317d48764",
+      "chinese_hash": "33b1b220b0a3b8b046d128e0e7b4fbcfc7ec87fd3b0edbdfd9729f98e24becae"
     },
     {
       "pair_id": "standards/air/README",
@@ -253,6 +253,15 @@
       "last_verified": "2026-05-24",
       "english_hash": "2ac9ae19dc67e590aeab7395492690ca7ab00931c4229f64bbac07f99ec13b48",
       "chinese_hash": "954c17d5095aa4f1811eafa7eb7e4d4cb70b8d220f895b300caaf7a88e0a42d0"
+    },
+    {
+      "pair_id": "standards/foundation/public_data_source_admission",
+      "english": "docs/standards/foundation/public_data_source_admission.md",
+      "chinese": "docs/standards/foundation/public_data_source_admission.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-05-28",
+      "english_hash": "4229eab31dedd141854a53eb3b9108ca1f4405247de704848fc8c3ec1e57d477",
+      "chinese_hash": "f69ad0f21b326d9301d34cadee53221908c5321dc2d79bc7601d6274baacfb2c"
     },
     {
       "pair_id": "standards/governance/bilingual_document_clusters",

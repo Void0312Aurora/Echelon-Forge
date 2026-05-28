@@ -62,15 +62,16 @@
 3. [联合命令链与汇报基线](joint/command_link_and_reporting_baseline.md)
 4. [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.md)
 5. [梯度真实性原则](foundation/gradient_realism_principles.zh.md)
-6. [军种画像总览](services/README.md)
-7. [美国空军画像](services/air_force.md)
-8. [美国陆军画像](services/army.md)
-9. [美国海军画像](services/navy.md)
-10. [文档对齐映射](overview/document_alignment_map.md)
-11. [场景配置指南](bridge/scenario_guide.md)
-12. [空中平台特化总览](air/README.md)
-13. [海军标准总览](naval/README.md)
-14. [Ground 标准总览](ground/README.zh.md)
+6. [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
+7. [军种画像总览](services/README.md)
+8. [美国空军画像](services/air_force.md)
+9. [美国陆军画像](services/army.md)
+10. [美国海军画像](services/navy.md)
+11. [文档对齐映射](overview/document_alignment_map.md)
+12. [场景配置指南](bridge/scenario_guide.md)
+13. [空中平台特化总览](air/README.md)
+14. [海军标准总览](naval/README.md)
+15. [Ground 标准总览](ground/README.zh.md)
 
 ## 与活跃任务树的关系
 
@@ -128,6 +129,7 @@ bootstrap。
 
 当前划分：
 
+- `foundation/*.md`：`Authoritative foundation`
 - `joint/*.md`：`Authoritative`
 - `services/*.md`：`Authoritative`
 - `runtime_workflow_and_contract_baseline.md`：`Authoritative`
@@ -167,6 +169,7 @@ bootstrap。
 - [文档对齐映射](overview/document_alignment_map.zh.md)
 - [仿真约定](foundation/conventions.zh.md)
 - [梯度真实性原则](foundation/gradient_realism_principles.zh.md)
+- [公开数据来源准入标准](foundation/public_data_source_admission.zh.md)
 - [场景配置指南](bridge/scenario_guide.zh.md)
 - [运行时工作流与合同基线](bridge/runtime_workflow_and_contract_baseline.zh.md)
 - [模块化规划](planning/modularization_plan.zh.md)

@@ -28,6 +28,12 @@ Current maintained helpers:
   - Emits a read-only checklist or a generated closure summary for a closure
     subagent instead of rewriting README or review indexes on the main
     implementation path.
+- [a2_source_admission_audit.py](a2_source_admission_audit.py)
+  - Audits A2 high-fidelity damage-model source ledgers, source pin / gap
+    updates, and candidate validation manifests for public-source admission
+    hygiene.
+  - Keeps candidate data non-authoritative by failing on accidental validation
+    pass or runtime authority grants before descriptor review.
 
 Maintenance guidance:
 
@@ -185,6 +191,17 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
 
 Use `--strict` when error-level closure gaps should fail the command. Warnings
 are intended to be closure-subagent work items rather than main-lane blockers.
+
+Audit A2 damage-model public-source admission docs:
+
+```bash
+python3 tools/maintenance/a2_source_admission_audit.py
+python3 tools/maintenance/a2_source_admission_audit.py --strict
+```
+
+Default mode fails only error-level authority, candidate source update, or
+manifest violations. `--strict` also fails source-pin warnings, which is useful
+before promoting a candidate source package into a validation run.
 
 Required API environment variables for translation:
 

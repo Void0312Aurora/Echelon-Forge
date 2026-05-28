@@ -64,15 +64,16 @@ For new work, read in this order:
 3. [Joint Command-Link and Reporting Baseline](joint/command_link_and_reporting_baseline.md)
 4. [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
 5. [Gradient Realism Principles](foundation/gradient_realism_principles.md)
-6. [Service Profile Overview](services/README.md)
-7. [USAF Profile](services/air_force.md)
-8. [US Army Profile](services/army.md)
-9. [US Navy Profile](services/navy.md)
-10. [Document Alignment Map](overview/document_alignment_map.md)
-11. [Scenario Configuration Guide](bridge/scenario_guide.md)
-12. [Air Platform Specialization Overview](air/README.md)
-13. [Naval Standards Overview](naval/README.md)
-14. [Ground Standards Overview](ground/README.md)
+6. [Public Data Source Admission Standard](foundation/public_data_source_admission.md)
+7. [Service Profile Overview](services/README.md)
+8. [USAF Profile](services/air_force.md)
+9. [US Army Profile](services/army.md)
+10. [US Navy Profile](services/navy.md)
+11. [Document Alignment Map](overview/document_alignment_map.md)
+12. [Scenario Configuration Guide](bridge/scenario_guide.md)
+13. [Air Platform Specialization Overview](air/README.md)
+14. [Naval Standards Overview](naval/README.md)
+15. [Ground Standards Overview](ground/README.md)
 
 ## Relationship to Active Task Plans
 
@@ -134,6 +135,7 @@ The maintained standards tree uses three status categories:
 
 Current status mapping:
 
+- `foundation/*.md`: `Authoritative foundation`
 - `joint/*.md`: `Authoritative`
 - `services/*.md`: `Authoritative`
 - `runtime_workflow_and_contract_baseline.md`: `Authoritative`
@@ -180,6 +182,7 @@ Additional maintained supplements:
 - [Document Alignment Map](overview/document_alignment_map.md)
 - [Simulation Conventions](foundation/conventions.md)
 - [Gradient Realism Principles](foundation/gradient_realism_principles.md)
+- [Public Data Source Admission Standard](foundation/public_data_source_admission.md)
 - [Scenario Configuration Guide](bridge/scenario_guide.md)
 - [Runtime Workflow and Contract Baseline](bridge/runtime_workflow_and_contract_baseline.md)
 - [Modularization Plan](planning/modularization_plan.md)

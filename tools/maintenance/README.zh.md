@@ -25,6 +25,9 @@
     acceptance review 链接和 WP 作用域内 Markdown 链接健康度。
   - 输出只读清单或生成 closure 摘要供 closure subagent 使用，而不是让主
     实现路径手工重写 README 或 review index。
+- [a2_source_admission_audit.py](a2_source_admission_audit.py)
+  - 审计 A2 高保真毁伤模型 source ledger、source pin / gap update 和候选 validation manifest 的公开来源准入卫生。
+  - 在 descriptor review 前，对意外的 validation pass 或 runtime authority 授权执行失败关闭，保持候选数据非权威。
 
 维护指南：
 
@@ -153,6 +156,16 @@ python3 tools/maintenance/wp_doc_closure_audit.py --wp WP9 --json
 
 当 error-level closure gap 应导致命令失败时使用 `--strict`。warning 应被视为
 closure subagent 的工作项，而不是主实现流 blocker。
+
+审计 A2 毁伤模型公开来源准入文档：
+
+```bash
+python3 tools/maintenance/a2_source_admission_audit.py
+python3 tools/maintenance/a2_source_admission_audit.py --strict
+```
+
+默认模式只因 error-level authority、候选来源更新或 manifest 违规失败。`--strict` 还会因 source pin
+warning 失败，适合在候选来源包升级为 validation run 前使用。
 
 翻译所需的 API 环境变量：
 
