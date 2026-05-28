@@ -42,7 +42,7 @@ Current Phase 0 evidence:
 | `Phase 2 Aircraft Subsystem Effects` | overlay dynamic coupling started | Add propulsion, flight-control, structure, fuel, sensor, avionics, and cockpit effects. | Flight dynamics and sensor consumers. |
 | `Phase 3 Warhead Profiles` | profile fuze trigger semantics started | Replace scalar `damage` with blast/fragment/rod/HTK profiles, explicit fuze profiles, delayed detonation scheduling, fuze-type trigger semantics, and family/velocity-axis/armor/exposure/component-specific mechanism-threshold/component-failure evidence. | Content and geometry calibration. |
 | `Phase 4 Deterministic Fuze` | held/deferred | Replace RNG hit probability with geometry-first fuze/effects. | PN baselines are closed; still needs warhead/fuze/vulnerability calibration. |
-| `Phase 5 Vulnerability Evidence` | synthetic evidence scaffold started | Add target/weapon/aspect/closure evidence and Pk calibration. | Data provenance. |
+| `Phase 5 Vulnerability Evidence` | gated row evidence and audit surface started | Add target/weapon/aspect/closure/miss-distance evidence, controlled row gates, and future Pk calibration. | Data provenance. |
 
 ## Non-Goals
 
@@ -62,14 +62,15 @@ Current Phase 0 evidence:
 - `EffectsEvent` exposes component-threshold scale, proving the event did not treat every protected system as the same generic scalar.
 - `EffectsEvent` exposes component-failure probability/source/calibrated/dataset/sample/count as component-level probability evidence; the synthetic sigmoid path consumes uncalibrated mechanism-load evidence, authorized descriptor rows can still override the probability and are auditable as `vulnerability_evidence_row`, but test fixtures are not calibrated Pk authority.
 - `EffectsEvent` exposes component hit count, candidate component mechanism-load rows, and primary component identity so component geometry and row-level load selection are auditable outside logs; the rows now also retain component-failure probability/source/calibrated/dataset/sample provenance, explicit probability-authority status, and the matched weapon/aspect/closure/miss-distance axes when the effects model samples them.
+- `EffectsEvent` exposes `mechanism_surface_incidence_cos`, primary-component surface incidence, and per-component-row surface incidence as obliquity evidence. Authorized effect-scale and component-failure rows may use `min_surface_incidence_cos` / `max_surface_incidence_cos` as row gates, with consumed row id/source/provenance kept on the event, but this is not kill, Pk, deterministic-fuze, or calibrated lethality authority.
 - `EffectsEvent` exposes primary component integrity, primary component mechanism-load fields, and named redundancy-group availability/member/failure counts, so repeated component damage has runtime memory instead of being only a one-shot probability discount.
-- `EffectsEvent` exposes vulnerability profile/evidence/authority/provenance/aspect/closure/scale fields, including the radial `vulnerability_closure_mps` actually used by the effects model; these fields make vulnerability adjustment auditable but do not grant Pk or deterministic-fuze authority.
+- `EffectsEvent` exposes vulnerability profile/evidence/authority/provenance/aspect/closure/scale fields, surrogate validation manifest metadata, and the radial `vulnerability_closure_mps` actually used by the effects model; these fields make vulnerability adjustment auditable but do not grant Pk or deterministic-fuze authority.
 - Representative F-16, Su-35S, MQ-9, MH-60R, and E-3 target-family vulnerability scaffolds spawn as synthetic/non-authoritative evidence; the non-F-16 profiles are neutral scale placeholders and do not change uncalibrated damage strength.
 - Calibrated vulnerability rows can drive family/aspect/closure/miss-distance/effect scales only when the descriptor passes the evidence gate and explicitly grants `effect_scale_authority`; component-failure probability rows likewise require `component_failure_probability_authority`; rows without the matching authority are ignored.
 - The database-level F-16, Su-35S, MQ-9, MH-60R, and E-3 examples now carry 20+ representative components. The fighter examples cover navigation, power-bus, IFF/IRST, thrust-vector, rudder, and leading-edge actuator attach points; the UAV/helicopter/C2 examples cover mission sensors, command/data links, mission processing, power generation/distribution, propulsion/transmission, fuel, control actuators, and structural spars. These examples distinguish component-specific consequences and author per-component `mechanism_thresholds` for blast, fragmentation, blast-fragmentation, continuous-rod, and hit-to-kill effects, while remaining engineering scaffolds rather than calibrated vulnerability data.
 - Component `dependencies` can propagate control-actuator damage into hydraulic/flight-control overlays, mission-radar damage into avionics/mission-system overlays, and representative power/data-link damage into avionics, flight-control, data-link, and mission-system overlays across the current aircraft units; this remains a minimal dependency scaffold, not a complete dependency graph.
 - Named control-component damage can derive axis-specific roll/pitch/yaw authority loss and control-asymmetry evidence for aileron/elevon/rudder/flap/thrust-vector/cyclic/collective components before any full flight-control torque-law rewrite.
-- Vulnerability authority requires a loaded, non-synthetic, calibrated evidence descriptor that matches the target type and declares weapon/aspect/closure/miss-distance evidence axes; aircraft JSON self-claims, missing descriptors, synthetic placeholder descriptors, incomplete evidence axes, and per-authority descriptor denials keep Pk / deterministic-fuze authority disabled.
+- Vulnerability authority requires a loaded, non-synthetic, calibrated evidence descriptor that matches the target type and declares weapon/aspect/closure/miss-distance evidence axes; `validated_physics_surrogate` descriptors additionally require an auditable validation manifest with matching scope. Aircraft JSON self-claims, missing descriptors, synthetic placeholder descriptors, incomplete evidence axes, missing surrogate manifests, and per-authority descriptor denials keep Pk disabled, while deterministic-fuze authority remains deferred outside vulnerability descriptors.
 - `EffectsEvent` exposes fuze type, trigger radius, delay, reliability, and synthetic provenance as evidence; this does not release deterministic fuze authority.
 - `EffectsEvent` exposes detonation heading/pitch/roll captured from live missile attitude at fuze arming, and the effects model derives target-body `warhead_orientation_axis_*` plus `warhead_orientation_pattern_scale` evidence from that attitude; this remains parameterized orientation evidence, not a calibrated orientation-driven fragment or rod effect model.
 - `EffectsEvent` exposes proximity-fuze target-signature evidence (`fuze_signature_source`, `fuze_target_signature`, `fuze_signature_scale`, `fuze_effective_reliability`), so radar/laser proximity fuzes can start consuming target RCS/aspect or projected-geometry proxies without becoming calibrated deterministic fuzes.
@@ -114,6 +115,7 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_component_dependency_damage_propagates_to_related_aircraft_systems \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_mission_component_dependency_damage_propagates_to_avionics_overlay \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_component_redundancy_reduces_failure_probability \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_surface_incidence_cos_reports_obliquity_evidence \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_aircraft_vulnerability_profile_modulates_structured_damage \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_vulnerability_adjustment_is_recorded_on_effects_event \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_synthetic_vulnerability_profile_is_not_pk_or_fuze_authority \
@@ -121,16 +123,20 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_synthetic_descriptor_cannot_grant_vulnerability_authority \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_descriptor_grants_only_requested_authority \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_descriptor_requires_evidence_axes \
-  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_descriptor_can_grant_pk_and_deterministic_fuze_authority \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_validated_physics_surrogate_requires_auditable_manifest \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_validated_physics_surrogate_exports_manifest_metadata \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_descriptor_can_grant_pk_but_deterministic_fuze_remains_deferred \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_authorized_vulnerability_rows_drive_effects_event_scales \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_vulnerability_rows_require_effect_scale_authority \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_effect_scale_rows_can_use_surface_incidence_gate \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_authorized_rows_drive_component_failure_probability \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_component_failure_rows_require_probability_authority \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_component_failure_rows_can_use_surface_incidence_gate \
   tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase0_pn_miss_distance_baseline_matrix_tracks_engagement_geometries
 ```
 
-Recent focused result for the latest air-combat increment: `cmake --build build-local-win --target ef_py --config Release -j 4` passed; the focused contract/binding/component-load subset passed with `23 passed`; the air-combat guard + evidence descriptor subset passed with `92 passed, 87 subtests passed`; the engagement/binding contract subset passed with `52 passed`; `git diff --check` passed.
+Recent focused result for the latest air-combat increment: `cmake --build build-workshop --target ef_py -j4` passed; the air-combat guard, evidence descriptor, engagement contract, launch adapter, and binding subset passed with `135 passed, 96 subtests passed`; `git diff --check` passed.
 
 ## External Review
 
@@ -139,3 +145,4 @@ Recent focused result for the latest air-combat increment: `cmake --build build-
 ## Task Cluster
 
 - [High-fidelity damage model cluster](high_fidelity_damage_model_cluster_20260526.zh.md)
+- [A2 data collection entry](data_collection/README.zh.md)

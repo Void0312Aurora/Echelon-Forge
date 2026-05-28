@@ -1,0 +1,66 @@
+# Source Ledger：guidance / miss-distance / terminal evasion 公开方法候选
+
+状态：`2026-05-28 candidate-ledger / non-authoritative`。
+
+本台账记录可公开 guidance、miss-distance、terminal evasion、seeker/track/noise 来源候选。每条记录均需保留 `source_ref`、发布方、可公开性/权利、scope 匹配、交叉验证状态和不确定性。来源存在本身不构成 A2 calibrated evidence，不授予 Pk、deterministic fuze、effect-scale 或 component-failure probability authority。
+
+## 候选来源
+
+| `source_id` | `source_ref` | 发布方 / 持有人 | 可公开性 / 权利 | scope 匹配 | 证据角色 | 交叉验证状态 | 不确定性 | admission |
+|---|---|---|---|---|---|---|---|---|
+| `GMD-SRC-001` | Paul Zarchan, *Tactical and Strategic Missile Guidance*, 7th ed., AIAA, 2019；ISBN 978-1-62410-537-1 / 978-1-62410-584-5；公开定位：[MathWorks book page](https://www.mathworks.com/academia/books/tactical-and-strategic-missile-guidance-zarchan.html)、[AIAA course outline](https://www.aiaa.org/courses/fundamentals-of-tactical-and-strategic-missile-guidance/) | AIAA / Paul Zarchan | 书籍版权受限；可公开引用书目信息；companion code 如需使用必须遵守出版方/MathWorks 条款，不入仓复制。 | 高匹配：PN、miss distance、adjoint、noise、Kalman/homing loop、advanced guidance；不匹配具体现代 AAM 参数。 | `validation_criteria_candidate`、`reproducibility_candidate`（仅限自实现或合法 companion material） | 与 JHU/APL Basic/Modern、USNA/FAS Chapter 15、Siouris 交叉验证 PN/APN/LOS/lag 术语。 | 付费/版权限制；例题不是外部验证数据；不能授权 Pk 或 fuze。 | 支持 benchmark criteria；不能作为 benchmark_dataset 原始数据入仓。 |
+| `GMD-SRC-002` | Neil F. Palumbo, Ross A. Blauwkamp, Justin M. Lloyd, "Basic Principles of Homing Guidance," *Johns Hopkins APL Technical Digest*, Vol. 29, No. 1, 2010；[article page](https://www.jhuapl.edu/technical-digest/issues/vol-29-no-1-2010/basic-principles-homing-guidance)、[PDF](https://www.jhuapl.edu/sites/default/files/2024-09/29-01-Palumbo_Principles_Rev2018.pdf) | Johns Hopkins University Applied Physics Laboratory | 公开可读；版权归 JHU/APL；仓库只记录引用和摘要，不复制全文/图表。 | 高匹配：homing guidance、LOS kinematics、PN、sensor/INS reconstruction；中等匹配 seeker entry。 | `validation_criteria_candidate`、`background_only` | 与 Zarchan、USNA/FAS、JHU/APL Modern/Guidance Filter 相互印证。 | 概念性强，不给现代武器参数或 validation dataset。 | 支持 PN baseline 和 seeker/LOS 术语；不支持 calibrated data。 |
+| `GMD-SRC-003` | Neil F. Palumbo, Ross A. Blauwkamp, Justin M. Lloyd, "Modern Homing Missile Guidance Theory and Techniques," *Johns Hopkins APL Technical Digest*, Vol. 29, No. 1, 2010；[article page](https://www.jhuapl.edu/technical-digest/issues/vol-29-no-1-2010/modern-homing-missile-guidance-theory-and-techniques)、[PDF](https://www.jhuapl.edu/sites/default/files/2024-09/29-01-Palumbo_Homing.pdf) | Johns Hopkins University Applied Physics Laboratory | 公开可读；JHU/APL copyright；只引用。 | 高匹配：PN as classical baseline、optimal/APN-like guidance、target maneuver、autopilot/airframe lag assumptions。 | `validation_criteria_candidate` | 与 Zarchan advanced guidance、Jackson flight-control、Singer target acceleration model 交叉验证。 | 主要是 theory review；不提供可直接复用的现代 validation data。 | 支持 APN/optimal guidance criteria；背景+criteria。 |
+| `GMD-SRC-004` | Neil F. Palumbo, Gregg A. Harrison, Ross A. Blauwkamp, Jeffrey K. Marquart, "Guidance Filter Fundamentals," *Johns Hopkins APL Technical Digest*, Vol. 29, No. 1, 2010；[article page](https://www.jhuapl.edu/technical-digest/issues/vol-29-no-1-2010/guidance-filter-fundamentals)、[PDF](https://www.jhuapl.edu/sites/default/files/2024-09/29-01-Palumbo_Guidance.pdf) | Johns Hopkins University Applied Physics Laboratory | 公开可读；JHU/APL copyright；只引用。 | 高匹配：seeker/track/noise、Kalman/EKF/Bayesian filter、LOS/range pseudo-measurement、relative velocity estimate。 | `validation_criteria_candidate`、`reproducibility_candidate`（自实现 filter benchmark） | 与 Singer 1970、Zarchan noise/Kalman chapters、Hawley 6DOF terminal sensor model 交叉验证。 | 不给特定 seeker 参数；filter benchmark 需自建 sensor/noise manifest。 | 支持 `seeker_filter_noise_v1` criteria。 |
+| `GMD-SRC-005` | Patricia A. Hawley, Ross A. Blauwkamp, "Six-Degree-of-Freedom Digital Simulations for Missile Guidance, Navigation, and Control," *Johns Hopkins APL Technical Digest*, Vol. 29, No. 1, 2010；[article page](https://www.jhuapl.edu/technical-digest/issues/vol-29-no-1-2010/six-degree-freedom-digital-simulations-missile-guidance)、[PDF](https://www.jhuapl.edu/sites/default/files/2024-09/29-01-Hawley.pdf) | Johns Hopkins University Applied Physics Laboratory | 公开可读；JHU/APL copyright；只引用。 | 中高匹配：6DOF simulation architecture、airframe/propulsion/aero/sensor/filter/guidance/autopilot module boundary；不匹配 AAM parameter data。 | `validation_criteria_candidate`、`reproducibility_candidate` | 与 Jackson flight-control、Zarchan homing loop、A2 current guidance tests 交叉验证。 | 模块边界和 fidelity guidance，不是 validation dataset；高保真参数缺失。 | 支持 simulation benchmark manifest 与 residual criteria。 |
+| `GMD-SRC-006` | Paul B. Jackson, "Overview of Missile Flight Control Systems," *Johns Hopkins APL Technical Digest*, Vol. 29, No. 1, 2010；[PDF](https://www.jhuapl.edu/sites/default/files/2024-09/29-01-Jackson.pdf) | Johns Hopkins University Applied Physics Laboratory | 公开可读；JHU/APL copyright；只引用。 | 中高匹配：autopilot、actuator、airframe dynamics、command bandwidth、sensor noise impact、missile/target acceleration advantage criteria。 | `validation_criteria_candidate` | 与 Hawley 6DOF、Zarchan lag/saturation treatment、JHU/APL Modern 交叉验证。 | 给原则和 rule-of-thumb，不给 weapon-specific dynamics。 | 支持 achieved-accel / lag / saturation validation criteria。 |
+| `GMD-SRC-007` | *Fundamentals of Naval Weapons Systems*, Chapter 15 "Guidance and Control"；[index](https://man.fas.org/dod-101/navy/docs/fun/index.html)、[chapter](https://man.fas.org/dod-101/navy/docs/fun/part15.htm) | United States Naval Academy Weapons and Systems Engineering Department；FAS mirror | FAS 公开镜像；原始 USNA 课程资料权利需按来源页处理；仓库只引用。 | 中匹配：guidance phases、homing taxonomy、PN explanation、monopulse/interferometer、TVM；偏教材背景。 | `background_only`、`validation_criteria_candidate`（术语级） | 与 JHU/APL Basic、Zarchan、Siouris 交叉验证。 | 章节编号/网页格式较旧；不是研究数据；不应用作高保真参数来源。 | 术语和 taxonomy 背景；不支持数据行。 |
+| `GMD-SRC-008` | George M. Siouris, *Missile Guidance and Control Systems*, Springer, 2004；DOI [10.1007/b97614](https://link.springer.com/book/10.1007/b97614) | Springer / George M. Siouris | 版权受限；publisher page 公开；正文需合法访问，不入仓复制。 | 高匹配教材：tactical missile guidance laws、aero/control、tracking/filtering；不匹配公开 validation data。 | `background_only`、`validation_criteria_candidate` | 与 Zarchan、JHU/APL、USNA/FAS 交叉验证术语和 modeling axes。 | 付费/版权；不提供可公开 benchmark dataset。 | 背景/criteria；不能作为数据源。 |
+| `GMD-SRC-009` | Robert A. Singer, "Estimating Optimal Tracking Filter Performance for Manned Maneuvering Targets," *IEEE Transactions on Aerospace and Electronic Systems*, AES-6(4), 473-483, 1970；DOI [10.1109/TAES.1970.310128](https://doi.org/10.1109/TAES.1970.310128)；公开书目：[CiNii](https://cir.nii.ac.jp/crid/1363670318727521792) | IEEE / Robert A. Singer | 论文版权受限；DOI/书目信息公开；不复制正文。 | 高匹配 seeker/track/noise 入口：manned maneuvering target model、sensor observation noise、data rate、tracking performance；间接匹配 miss-distance。 | `validation_criteria_candidate`、`reproducibility_candidate`（自实现 Singer maneuver model） | 与 JHU/APL Guidance Filter、Zarchan Kalman/noise treatment、MathWorks Singer-model docs 交叉验证。 | 是 tracking model，不是 evasion tactics 或 kill data；参数需重新声明。 | 支持 target maneuver/filter benchmark；不授权 Pk。 |
+| `GMD-SRC-010` | Francis C. Lukenbill, *A Target/Missile Engagement Scenario Using Classical Proportional Navigation*, Naval Postgraduate School thesis, Dec. 1990；Handle [10945/27627](https://hdl.handle.net/10945/27627)；public PDF via Calhoun / Wikimedia record | Naval Postgraduate School / U.S. Government work | 公开；Wikimedia record states U.S. Government work / public domain in the U.S.；仍应以 NPS Calhoun handle 为主引用。 | 高匹配 simplified benchmark：classical PN、seeker/autopilot/missile/target transfer functions、3D simulation、adjoint model、evasion timing、miss distance。 | `benchmark_dataset_candidate`、`validation_criteria_candidate`、`reproducibility_candidate` | 与 Zarchan adjoint/miss-distance method、JHU/APL Basic/Modern、Straight terminal evasion record 交叉验证。 | 1990 simplified thesis；非现代 AAM；具体代码/scan quality 需提取审计；参数不能外推。 | 推荐首批 `pn_classical_toy_v1` benchmark。 |
+| `GMD-SRC-011` | Gregory E. Straight, *An Open Loop Missile Evasion Algorithm for Fighters*, AFIT M.S. thesis, 1983；NTIS record [ADA136834](https://ntrl.ntis.gov/NTRL/dashboard/searchResults/titleDetail/ADA136834.xhtml) | Air Force Institute of Technology / NTIS | NTIS 书目公开；官方全文获取需按 NTIS/ADAS 路径；第三方 PDF 镜像只能 sanity check，不作为入仓权利依据。 | 高匹配 terminal evasion：PN-guided missile, fighter maneuvers, jink/switching, last-second bank reversal, barrel roll, miss distance via TACTICS IV。 | `benchmark_dataset_candidate`（pending full-text acquisition）、`validation_criteria_candidate` | 与 Lukenbill、McNamara、Zarchan/JHU guidance theory 交叉验证 maneuver taxonomy 和 miss-distance metric。 | 老论文；TACTICS IV 不是公开可复现代码；公开记录摘要可能不足以抽取数据；现代战术外推风险高。 | 候选；官方全文和 rights/checksum 明确前不入数据包。 |
+| `GMD-SRC-012` | Stephen J. McNamara, *Suboptimal Missile Evasion Through a Sensitivity Analysis of Proportional Guidance to Target Evasion Maneuvers*, AFIT M.S. thesis, Dec. 1983；NASA STAR abstract `N84-19338` / `AD-A136803` in [NASA SP-7037(175)](https://ntrs.nasa.gov/api/citations/19840020657/downloads/19840020657.pdf) | Air Force Institute of Technology / NASA STAR / NTIS | NASA abstract publicly available；full thesis likely via NTIS/DTIC/ADAS; rights/acquisition pending。 | 高匹配 evasion sensitivity：classic/radar/heat PN variants, nonlinear simulation with drag/lag/accel bounds, constant turn/switching maneuver, timing/aspect/seeker bias sensitivity。 | `validation_criteria_candidate`、`benchmark_dataset_candidate`（pending full-text acquisition） | Cross-checks Straight maneuver conclusions and Lukenbill adjoint/timing framing。 | 仅有 abstract 当前足够稳定；无官方 full-text checksum；not modern AAM。 | 候选 criteria；数据集 pending。 |
+
+## 支持能力矩阵
+
+| 能力 | 可用候选 | 当前可推进 | 禁止误用 |
+|---|---|---|---|
+| `benchmark_dataset` | `GMD-SRC-010`；`GMD-SRC-011/012` pending；`GMD-INT-001` internal | simplified PN / terminal evasion toy suite | 不得声称 modern AAM validation。 |
+| `validation_criteria` | `GMD-SRC-001` 到 `GMD-SRC-009`，`GMD-SRC-010` 到 `GMD-SRC-012` | guidance/filter/lag/noise/evasion-sensitivity criteria | 不得把 criteria 当校准数据。 |
+| `reproducibility` | `GMD-SRC-004/005/010` 最强；`GMD-SRC-001/009/011/012` 受访问限制；`GMD-INT-001` 仅内部 | 自实现 benchmark manifest、公开 handle/DOI 引用 | 不复制受限 companion code、论文表格或第三方镜像。 |
+| `background` | `GMD-SRC-002/003/007/008` | 术语、taxonomy、建模边界 | 不进入 authority gate。 |
+| `sanity_check` | `GMD-SANITY-001` class record only | 检查 sign convention、数量级、edge cases | 不作为 source_ref 主证据。 |
+
+## 交叉验证状态摘要
+
+| 主题 | 已有交叉验证 | 仍需补 |
+|---|---|---|
+| PN / LOS-rate / navigation ratio | Zarchan、JHU/APL Basic、USNA/FAS、Siouris 一致支持。 | 统一 A2 code 中 true PN / pure pursuit / APN 命名和 event 字段。 |
+| APN / target acceleration | JHU/APL Modern、Zarchan、Singer 支持 target-accel / optimal-guidance 建模入口。 | A2 是否具备 target acceleration estimate、filter covariance 和 lag compensation。 |
+| miss-distance benchmark | Zarchan 方法、Lukenbill public thesis、A2 P0 baseline 可形成三角验证。 | 从 Lukenbill 提取参数/代码形状，补 self-generated expected outputs。 |
+| terminal evasion | Straight、McNamara、Lukenbill 均指向 maneuver timing / switching / LOS-orthogonal maneuver 对 miss distance 的影响。 | 官方全文和数据表 acquisition；不要使用第三方 PDF 作为 primary。 |
+| seeker / track / noise | JHU/APL Guidance Filter、Singer、Hawley、Jackson 建立 filter-noise-flight-control loop。 | A2 track-quality proxy、dropout/noise/input manifest。 |
+
+## 非候选辅助记录
+
+| `record_id` | 类型 | 定位 | 用途 | 限制 |
+|---|---|---|---|---|
+| `GMD-INT-001` | internal reproducibility | `docs/task/air_combat/a2_high_fidelity_damage_model/README.zh.md` and `guidance_miss_distance/guidance_miss_distance_evasion_evidence_route_20260528.zh.md` | A2 head-on / tail-chase / beam / high-off-boresight regression seed；可与公开 PN 来源做 qualitative cross-check。 | 不是公开外部来源；数值受当前实现影响；不作为 source authority。 |
+| `GMD-SANITY-001` | sanity-check class | open-source / 民间 PN missile simulations、game/forum models、third-party PDF mirrors | 只用于发现 sign convention、单位、数量级、edge case 异常。 | 不是候选来源；没有逐项 license/provenance audit 前，不进入 benchmark_dataset / validation_criteria / reproducibility。 |
+
+## 排除 / 暂缓记录
+
+| `rejection_id` | 来源 | 排除或暂缓原因 | 影响 |
+|---|---|---|---|
+| `GMD-REJ-001` | 第三方非官方 Zarchan/Siouris PDF 镜像 | 版权和再分发风险；即使内容真实也不能作为仓库来源。 | 只使用 publisher page / DOI / ISBN 记录。 |
+| `GMD-REJ-002` | game / forum / 民间 missile model | provenance、参数和实现质量不可审计。 | 仅 sanity check，不进入 criteria 或 dataset。 |
+| `GMD-REJ-003` | 未经官方记录定位的 AFIT thesis mirror | 不能证明权利、完整性、checksum。 | Straight/McNamara 需以 NTIS/NASA/DTIC official record 为主。 |
+| `GMD-REJ-004` | 任何单行 Pk 曲线或匿名 hit probability 表 | 缺 source_ref、provenance、scope axes、权利和 validation manifest。 | 不得接入 A2 vulnerability descriptor。 |
+
+## Ledger 使用规则
+
+- 每个后续 benchmark 包必须引用本台账 `source_id`，并补充实际 artifact checksum / manifest。
+- 若某来源只具备书目记录，benchmark 包只能把它列为 `method_ref`，不能把未获取的正文、表格或代码写成已采集数据。
+- 若使用 public-domain 政府论文，也要记录扫描来源、handle、download date、checksum 和 OCR/手工转录误差。
+- 若根据教材或论文自实现 benchmark，生成数据的 `source_kind` 应标为 internal generated benchmark，provenance 指向公式/代码/配置，而不是把教材本身标为 dataset。
+- 任何未来 `validated_physics_surrogate` 必须另行满足 A2 vulnerability / fuze authority gate：non-synthetic、scope 匹配、source_ref/provenance 非空、validation manifest 完整、rows 有 row_id/source_ref/provenance。

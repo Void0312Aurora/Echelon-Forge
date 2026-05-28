@@ -55,7 +55,7 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 | 要素 | 当前状态 | 仍存缺口 |
 |------|---------|---------|
 | 破片样本数和命中估计 | `warhead_spatial_sample_count`、hit estimate/fraction 和 energy scale 已进入事件面 | 仍是参数化采样证据，不是 Mott 分布或真实破片质量/速度分布 |
-| 破片穿透 / 装甲耦合 | `mechanism_fragment_energy_j`、`mechanism_penetration_margin`、armor/exposure scale 已进入 effects | 没有 THOR / FATEPEN 等穿透方程校准，也没有逐破片轨迹 |
+| 破片穿透 / 装甲耦合 | `mechanism_fragment_energy_j`、`mechanism_fragment_areal_density_per_m2`、`mechanism_penetration_margin`、armor/exposure scale 已进入 effects；破片面密度可作为 vulnerability evidence row 门槛 | areal density 仍是破片数、爆距球面稀释、方向 pattern 与暴露面积形成的代理，没有 THOR / FATEPEN 等穿透方程校准，也没有逐破片轨迹 |
 | 空间分布 | 近炸投射按弹头族 footprint、距离、速度轴和姿态轴调制 | 仍不是 3D 破片云，也没有组件表面入射角和遮挡模型 |
 
 #### 2.3.2 连续杆战斗部
@@ -69,7 +69,7 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 
 | 要素 | 当前状态 | 仍存缺口 |
 |------|---------|---------|
-| 超压 / 冲量证据 | `mechanism_blast_overpressure_kpa` 与 `mechanism_blast_impulse_kpa_ms` 已进入事件 | 仍是工程化载荷证据，不是 Sachs 缩放或校准爆轰传播模型 |
+| 超压 / 冲量证据 | `mechanism_blast_overpressure_kpa`、`mechanism_blast_impulse_kpa_ms` 与 Hopkinson-Cranz / Sachs 风格 `mechanism_blast_scaled_distance_m_kg13` 已进入事件，且 evidence rows 可按 scaled distance 做适用门槛 | scaled distance 仍只是可校准尺度入口，不是校准爆轰传播模型 |
 | 目标表面反射 | exposure scale 开始作为代理进入 mechanism scale | 未建模表面反射、遮挡、姿态相关增强和结构阈值 |
 
 ### 2.4 目标脆弱性与组件级几何
@@ -80,7 +80,7 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 |------|---------|---------|
 | 组件级 hitbox | 当前代表飞机库均有 20+ 组件，组件中心位于父 hitbox 内，并能在 runtime 报告 primary component | 仍只是代表组件样例，不是全机完整工程结构模型 |
 | 机制特定阈值 | 组件可声明 `mechanism_thresholds`，并影响 failure probability | 阈值为工程化参数，不来自实测/公开校准数据 |
-| 组件失效概率 | synthetic sigmoid 已消费机制载荷、阈值、direct/projection 和 RNG；授权 fixture rows 可覆盖概率 | 真实 calibrated rows 未接入，fixture 只能证明门控和数据通路 |
+| 组件失效概率 | synthetic sigmoid 已消费机制载荷、阈值、direct/projection 和 RNG；授权 fixture rows 可覆盖 effect scale 或概率，可用机制载荷门槛约束 row 适用范围，row 必须携带 id/source/provenance 才能被消费，并能在事件面报告被消费 row 的 id/source/provenance | 真实 calibrated rows 未接入，fixture 只能证明门控和数据通路 |
 | 冗余建模 | `ComponentDamageState` 记录组件完整性、冗余组可用性、成员数和失败数 | 冗余仍是组可用性脚手架，不是完整液压/电气/飞控依赖网络 |
 | 方位角相关暴露 | aspect bucket、velocity axis、orientation axis、projected exposure scale 已开始调制 | 仍不是基于全 3D 几何的暴露面积、遮挡和入射角计算 |
 | 特定组件装甲 | hitbox/component `armor_mm` 已被机制采样读取 | armor 数值和材料模型未校准 |
@@ -95,7 +95,7 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 | 液压级联 | 液压损伤会拖累飞控，组件依赖可传播到 flight_control/hydraulic overlay | 没有具体液压回路、管线破裂、作动器卡滞/漂移/自由模式 |
 | 结构级联 | `structural_overstress` / `flutter_exposure` 在高能包线下累积并收紧包线 | 没有离散翼梁屈服、疲劳裂纹或灾难性结构失效事件 |
 | 电气 / 航电级联 | power/data-link/mission radar 等组件可通过 dependencies 影响相关 overlay | 仍是最小依赖脚手架，不是总线切换和负载 shedding 模型 |
-| 飞行员 / 机组 | crew/pilot/mission crew 字段影响传感器和控制能力 | 仍是能力乘数，不是伤害类型、任务分工和时间线模型 |
+| 飞行员 / 机组 | crew/pilot/mission crew/command-navigation 字段影响传感器、任务和控制能力 | 仍是能力乘数，不是伤害类型、人员替代、任务分工和时间线模型 |
 
 ### 2.6 杀伤评估
 
@@ -129,21 +129,21 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 - Phase 1：HP-first bypass 反转、structured aircraft path、`EffectsEvent` / `DamageReport` 记录、physical effects 不直接写 RL `Score`。
 - Phase 2：`AircraftDamageState` overlay、飞行动力学/推进/传感器/fuel leak 派生、火灾/液压/燃油级联、控制轴和 control-asymmetry overlay。
 - Phase 3：`WarheadProfile` / `FuzeProfile`、弹头族 footprint、近炸空间投射、orientation-pattern 证据、机制载荷字段、候选组件机制载荷行及 row 级 failure provenance / authority / evidence-axis 审计、contact/impact/timed 初步语义、组件几何/阈值/冗余/依赖。
-- Phase 5：synthetic vulnerability scaffold、descriptor gate、authority 分离、rows 受控接入、Pk / deterministic-fuze authority 防误提升。
+- Phase 5：synthetic vulnerability scaffold、descriptor gate、authority 分离、schema/source/provenance 准入门、descriptor source metadata 事件审计、rows 受控接入、effect-scale 与 component-failure rows 的机制载荷条件化、row provenance metadata 准入门、被消费 row 的 id/source/provenance 事件审计、Pk / deterministic-fuze authority 防误提升。
 
 ## 5. 下一步建议
 
 1. 固化层级 2A 验收门：继续保持"组件几何 + 机制证据 + 事件审计"为当前阶段目标，但文档和测试中避免使用"已高保真"的措辞。
 
-2. 将候选组件级机制载荷行接入校准证据形状：当前同一事件已经能记录每个命中/投射候选组件的 fragment / blast / rod / penetration 载荷行，且 row 级 failure probability/source/calibrated/dataset/sample、authority 和 weapon/aspect/closure/miss-distance 匹配轴已可审计，下一步应让这些 row 能对接更细的 component-specific evidence ref，而不是停留在工程化 mechanism-load scaffold。
+2. 将候选组件级机制载荷行接入校准证据形状：当前同一事件已经能记录每个命中/投射候选组件的 fragment energy / fragment areal density / blast / rod / penetration 载荷行，且 descriptor source metadata、row 级 effect-scale / failure probability 来源、calibrated/dataset/sample、authority、weapon/aspect/closure/miss-distance 匹配轴、component-specific evidence component name/system/redundancy-group provenance、被消费 evidence row 的 id/source/provenance，以及 evidence row 对机制载荷区间的适用门槛已可审计。下一步应让这些 row 对接真实或物理 surrogate 的 component-specific evidence ref，而不是停留在工程化 mechanism-load scaffold。
 
 3. 继续把 evasion 迁移出黑盒 hit probability：下一步应让末端规避主要通过 miss distance、目标签名、引信触发和机制载荷传递，而不是独立乘数。
 
-4. 建立非权威校准数据形状：可以先加入一份明确 non-authoritative 的 schema/fixture 文档，约束 future calibrated rows 的 weapon family、target、aspect、closure、miss-distance、mechanism-load 和 component-failure 字段。
+4. 建立非权威校准数据形状：已加入明确 non-authoritative 的 `a2.vulnerability_evidence.v1` schema fixture，约束 future calibrated rows 的 weapon family、target、aspect、closure、miss-distance、mechanism-load 和 component-failure 字段；下一步应将真实或物理 surrogate 数据接入该形状。
 
 5. Phase 4 deterministic fuze 仍不应放行：只有当 fuze trigger、miss-distance、target signature、warhead footprint 和 vulnerability evidence 都有可审计且非 synthetic 的授权路径时，才允许替换 RNG hit gate。
 
-6. Phase 5 的真实工作不是更多 synthetic profile，而是选择一个窄目标/武器对，接入可追溯的校准来源或明确验证过的物理 surrogate，并让 authority gate 只对该窄域放行。
+6. Phase 5 的真实工作不是更多 synthetic profile，而是选择一个窄目标/武器对，接入可追溯的校准来源或明确验证过的物理 surrogate，并让 authority gate 只对该窄域放行。当前 gate 只接受 `external_calibration_dataset`，以及带可审计 `validation_manifest` 且 scope 匹配 descriptor 证据轴的 `validated_physics_surrogate`；descriptor 必须声明当前 schema、非空 `source_ref` 和 provenance。`validation_artifact_ref` 只作为验证产物引用，不能单独授权 surrogate。
 
 ## 6. 结论
 
