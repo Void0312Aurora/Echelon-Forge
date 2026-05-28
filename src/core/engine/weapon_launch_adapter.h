@@ -105,10 +105,13 @@ struct EffectsEventSnapshot {
     double mechanism_exposure_scale = 1.0;
     double mechanism_effect_scale = 1.0;
     double mechanism_fragment_energy_j = 0.0;
+    double mechanism_fragment_areal_density_per_m2 = 0.0;
     double mechanism_penetration_margin = 0.0;
     double mechanism_blast_overpressure_kpa = 0.0;
     double mechanism_blast_impulse_kpa_ms = 0.0;
+    double mechanism_blast_scaled_distance_m_kg13 = 0.0;
     double mechanism_rod_cut_margin = 0.0;
+    double mechanism_surface_incidence_cos = 0.0;
     std::uint32_t warhead_spatial_sample_count = 0;
     double warhead_spatial_hit_estimate = 0.0;
     double warhead_spatial_hit_fraction = 0.0;
@@ -123,6 +126,9 @@ struct EffectsEventSnapshot {
     std::string component_failure_probability_source = "none";
     bool component_failure_probability_calibrated = false;
     std::string component_failure_probability_evidence_dataset_ref;
+    std::string component_failure_probability_evidence_row_id;
+    std::string component_failure_probability_evidence_source_ref;
+    std::string component_failure_probability_evidence_provenance;
     double component_failure_sample = 1.0;
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
@@ -134,10 +140,13 @@ struct EffectsEventSnapshot {
     std::string component_primary_redundancy_group_id;
     double component_primary_integrity = 1.0;
     double component_primary_mechanism_fragment_energy_j = 0.0;
+    double component_primary_mechanism_fragment_areal_density_per_m2 = 0.0;
     double component_primary_mechanism_penetration_margin = 0.0;
     double component_primary_mechanism_blast_overpressure_kpa = 0.0;
     double component_primary_mechanism_blast_impulse_kpa_ms = 0.0;
+    double component_primary_mechanism_blast_scaled_distance_m_kg13 = 0.0;
     double component_primary_mechanism_rod_cut_margin = 0.0;
+    double component_primary_mechanism_surface_incidence_cos = 0.0;
     double component_redundancy_group_availability = 1.0;
     std::uint32_t component_redundancy_group_member_count = 0;
     std::uint32_t component_redundancy_group_failed_count = 0;
@@ -150,6 +159,17 @@ struct EffectsEventSnapshot {
     std::string vulnerability_evidence_dataset_ref;
     std::string vulnerability_calibration_status = "none";
     std::string vulnerability_provenance;
+    std::string vulnerability_evidence_schema_version;
+    std::string vulnerability_evidence_source_kind;
+    std::string vulnerability_evidence_source_ref;
+    std::string vulnerability_evidence_validation_artifact_ref;
+    std::string vulnerability_evidence_validation_manifest_schema_version;
+    std::string vulnerability_evidence_validation_status;
+    std::string vulnerability_evidence_validation_artifact_sha256;
+    std::string vulnerability_evidence_validated_surrogate_model_ref;
+    std::string vulnerability_evidence_validation_benchmark_ref;
+    std::string vulnerability_evidence_validation_metrics_ref;
+    std::string vulnerability_evidence_validation_acceptance_criteria_ref;
     std::string vulnerability_aspect_bucket = "unknown";
     double vulnerability_family_scale = 1.0;
     double vulnerability_aspect_scale = 1.0;
@@ -157,6 +177,11 @@ struct EffectsEventSnapshot {
     double vulnerability_closure_scale = 1.0;
     double vulnerability_miss_distance_scale = 1.0;
     double vulnerability_effect_scale = 1.0;
+    std::string vulnerability_effect_scale_source = "profile_scale";
+    std::string vulnerability_effect_scale_evidence_row_id;
+    std::string vulnerability_effect_scale_evidence_source_ref;
+    std::string vulnerability_effect_scale_evidence_provenance;
+    std::string producer_node_id;
 };
 
 struct DamageReportSnapshot {
@@ -305,10 +330,15 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .mechanism_exposure_scale = snapshot.mechanism_exposure_scale,
         .mechanism_effect_scale = snapshot.mechanism_effect_scale,
         .mechanism_fragment_energy_j = snapshot.mechanism_fragment_energy_j,
+        .mechanism_fragment_areal_density_per_m2 =
+            snapshot.mechanism_fragment_areal_density_per_m2,
         .mechanism_penetration_margin = snapshot.mechanism_penetration_margin,
         .mechanism_blast_overpressure_kpa = snapshot.mechanism_blast_overpressure_kpa,
         .mechanism_blast_impulse_kpa_ms = snapshot.mechanism_blast_impulse_kpa_ms,
+        .mechanism_blast_scaled_distance_m_kg13 =
+            snapshot.mechanism_blast_scaled_distance_m_kg13,
         .mechanism_rod_cut_margin = snapshot.mechanism_rod_cut_margin,
+        .mechanism_surface_incidence_cos = snapshot.mechanism_surface_incidence_cos,
         .warhead_spatial_sample_count = snapshot.warhead_spatial_sample_count,
         .warhead_spatial_hit_estimate = snapshot.warhead_spatial_hit_estimate,
         .warhead_spatial_hit_fraction = snapshot.warhead_spatial_hit_fraction,
@@ -325,6 +355,12 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
             snapshot.component_failure_probability_calibrated,
         .component_failure_probability_evidence_dataset_ref =
             snapshot.component_failure_probability_evidence_dataset_ref,
+        .component_failure_probability_evidence_row_id =
+            snapshot.component_failure_probability_evidence_row_id,
+        .component_failure_probability_evidence_source_ref =
+            snapshot.component_failure_probability_evidence_source_ref,
+        .component_failure_probability_evidence_provenance =
+            snapshot.component_failure_probability_evidence_provenance,
         .component_failure_sample = snapshot.component_failure_sample,
         .component_failure_count = snapshot.component_failure_count,
         .component_hit_count = snapshot.component_hit_count,
@@ -337,14 +373,20 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .component_primary_integrity = snapshot.component_primary_integrity,
         .component_primary_mechanism_fragment_energy_j =
             snapshot.component_primary_mechanism_fragment_energy_j,
+        .component_primary_mechanism_fragment_areal_density_per_m2 =
+            snapshot.component_primary_mechanism_fragment_areal_density_per_m2,
         .component_primary_mechanism_penetration_margin =
             snapshot.component_primary_mechanism_penetration_margin,
         .component_primary_mechanism_blast_overpressure_kpa =
             snapshot.component_primary_mechanism_blast_overpressure_kpa,
         .component_primary_mechanism_blast_impulse_kpa_ms =
             snapshot.component_primary_mechanism_blast_impulse_kpa_ms,
+        .component_primary_mechanism_blast_scaled_distance_m_kg13 =
+            snapshot.component_primary_mechanism_blast_scaled_distance_m_kg13,
         .component_primary_mechanism_rod_cut_margin =
             snapshot.component_primary_mechanism_rod_cut_margin,
+        .component_primary_mechanism_surface_incidence_cos =
+            snapshot.component_primary_mechanism_surface_incidence_cos,
         .component_redundancy_group_availability =
             snapshot.component_redundancy_group_availability,
         .component_redundancy_group_member_count =
@@ -362,6 +404,28 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .vulnerability_evidence_dataset_ref = snapshot.vulnerability_evidence_dataset_ref,
         .vulnerability_calibration_status = snapshot.vulnerability_calibration_status,
         .vulnerability_provenance = snapshot.vulnerability_provenance,
+        .vulnerability_evidence_schema_version =
+            snapshot.vulnerability_evidence_schema_version,
+        .vulnerability_evidence_source_kind =
+            snapshot.vulnerability_evidence_source_kind,
+        .vulnerability_evidence_source_ref =
+            snapshot.vulnerability_evidence_source_ref,
+        .vulnerability_evidence_validation_artifact_ref =
+            snapshot.vulnerability_evidence_validation_artifact_ref,
+        .vulnerability_evidence_validation_manifest_schema_version =
+            snapshot.vulnerability_evidence_validation_manifest_schema_version,
+        .vulnerability_evidence_validation_status =
+            snapshot.vulnerability_evidence_validation_status,
+        .vulnerability_evidence_validation_artifact_sha256 =
+            snapshot.vulnerability_evidence_validation_artifact_sha256,
+        .vulnerability_evidence_validated_surrogate_model_ref =
+            snapshot.vulnerability_evidence_validated_surrogate_model_ref,
+        .vulnerability_evidence_validation_benchmark_ref =
+            snapshot.vulnerability_evidence_validation_benchmark_ref,
+        .vulnerability_evidence_validation_metrics_ref =
+            snapshot.vulnerability_evidence_validation_metrics_ref,
+        .vulnerability_evidence_validation_acceptance_criteria_ref =
+            snapshot.vulnerability_evidence_validation_acceptance_criteria_ref,
         .vulnerability_aspect_bucket = snapshot.vulnerability_aspect_bucket,
         .vulnerability_family_scale = snapshot.vulnerability_family_scale,
         .vulnerability_aspect_scale = snapshot.vulnerability_aspect_scale,
@@ -369,6 +433,14 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .vulnerability_closure_scale = snapshot.vulnerability_closure_scale,
         .vulnerability_miss_distance_scale = snapshot.vulnerability_miss_distance_scale,
         .vulnerability_effect_scale = snapshot.vulnerability_effect_scale,
+        .vulnerability_effect_scale_source = snapshot.vulnerability_effect_scale_source,
+        .vulnerability_effect_scale_evidence_row_id =
+            snapshot.vulnerability_effect_scale_evidence_row_id,
+        .vulnerability_effect_scale_evidence_source_ref =
+            snapshot.vulnerability_effect_scale_evidence_source_ref,
+        .vulnerability_effect_scale_evidence_provenance =
+            snapshot.vulnerability_effect_scale_evidence_provenance,
+        .producer_node_id = snapshot.producer_node_id,
     };
 }
 

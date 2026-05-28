@@ -68,10 +68,12 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     effect.component_primary_redundancy_group_id = "wing_fuel_cells"
     effect.component_primary_integrity = 0.71
     effect.component_primary_mechanism_fragment_energy_j = 540.0
+    effect.component_primary_mechanism_fragment_areal_density_per_m2 = 17.0
     effect.component_primary_mechanism_penetration_margin = 0.42
     effect.component_primary_mechanism_blast_overpressure_kpa = 18.0
     effect.component_primary_mechanism_blast_impulse_kpa_ms = 44.0
     effect.component_primary_mechanism_rod_cut_margin = 0.0
+    effect.component_primary_mechanism_surface_incidence_cos = 0.67
     component_load = ef_py.ComponentMechanismLoadRow()
     component_load.component_name = "left_wing_fuel_cell"
     component_load.component_system = "fuel"
@@ -84,6 +86,9 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     component_load.component_failure_probability_source = "vulnerability_evidence_row"
     component_load.component_failure_probability_calibrated = True
     component_load.component_failure_probability_evidence_dataset_ref = "unit_test_rows"
+    component_load.component_failure_probability_evidence_row_id = "row-wing-fuel-high-rod"
+    component_load.component_failure_probability_evidence_source_ref = "fixture://unit-test-rows#row-wing-fuel-high-rod"
+    component_load.component_failure_probability_evidence_provenance = "unit-test row fixture"
     component_load.component_failure_sample = 0.21
     component_load.component_failure_probability_authority = True
     component_load.component_failure_probability_component_specific = True
@@ -91,19 +96,41 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     component_load.component_failure_probability_aspect_bucket = "beam"
     component_load.component_failure_probability_closure_bucket = "high"
     component_load.component_failure_probability_miss_distance_bucket = "direct_hit"
+    component_load.component_failure_probability_evidence_component_name = "left_wing_fuel_cell"
+    component_load.component_failure_probability_evidence_component_system = "fuel"
+    component_load.component_failure_probability_evidence_component_redundancy_group_id = "wing_fuel_cells"
     component_load.mechanism_fragment_energy_j = 540.0
+    component_load.mechanism_fragment_areal_density_per_m2 = 17.0
     component_load.mechanism_penetration_margin = 0.42
     component_load.mechanism_blast_overpressure_kpa = 18.0
     component_load.mechanism_blast_impulse_kpa_ms = 44.0
     component_load.mechanism_rod_cut_margin = 0.0
+    component_load.mechanism_surface_incidence_cos = 0.67
     effect.component_mechanism_load_rows = [component_load]
+    effect.component_failure_probability_source = "vulnerability_evidence_row"
+    effect.component_failure_probability_calibrated = True
+    effect.component_failure_probability_evidence_dataset_ref = "unit_test_rows"
+    effect.component_failure_probability_evidence_row_id = "row-wing-fuel-high-rod"
+    effect.component_failure_probability_evidence_source_ref = "fixture://unit-test-rows#row-wing-fuel-high-rod"
+    effect.component_failure_probability_evidence_provenance = "unit-test row fixture"
+    effect.vulnerability_evidence_validation_manifest_schema_version = (
+        "a2.vulnerability_surrogate_validation.v1"
+    )
+    effect.vulnerability_evidence_validation_status = "validated"
+    effect.vulnerability_evidence_validation_artifact_sha256 = "abc123"
+    effect.vulnerability_evidence_validated_surrogate_model_ref = "fixture://surrogate/model"
+    effect.vulnerability_evidence_validation_benchmark_ref = "fixture://surrogate/benchmark"
+    effect.vulnerability_evidence_validation_metrics_ref = "fixture://surrogate/metrics"
+    effect.vulnerability_evidence_validation_acceptance_criteria_ref = "fixture://surrogate/acceptance"
     effect.component_redundancy_group_availability = 0.86
     effect.component_redundancy_group_member_count = 2
     effect.component_redundancy_group_failed_count = 0
     effect.mechanism_fragment_energy_j = 540.0
+    effect.mechanism_fragment_areal_density_per_m2 = 17.0
     effect.mechanism_penetration_margin = 0.42
     effect.mechanism_blast_overpressure_kpa = 18.0
     effect.mechanism_blast_impulse_kpa_ms = 44.0
+    effect.mechanism_surface_incidence_cos = 0.67
     effect.producer_node_id = "p9.effects_damage.v1"
     packet.effects_events = [effect]
 
@@ -245,7 +272,13 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "component_failure_probability_calibrated",
                 "component_failure_probability_closure_bucket",
                 "component_failure_probability_component_specific",
+                "component_failure_probability_evidence_component_name",
+                "component_failure_probability_evidence_component_redundancy_group_id",
+                "component_failure_probability_evidence_component_system",
                 "component_failure_probability_evidence_dataset_ref",
+                "component_failure_probability_evidence_provenance",
+                "component_failure_probability_evidence_row_id",
+                "component_failure_probability_evidence_source_ref",
                 "component_failure_probability_miss_distance_bucket",
                 "component_failure_probability_source",
                 "component_failure_probability_weapon_family",
@@ -259,9 +292,12 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "effect_scale",
                 "mechanism_blast_impulse_kpa_ms",
                 "mechanism_blast_overpressure_kpa",
+                "mechanism_blast_scaled_distance_m_kg13",
+                "mechanism_fragment_areal_density_per_m2",
                 "mechanism_fragment_energy_j",
                 "mechanism_penetration_margin",
                 "mechanism_rod_cut_margin",
+                "mechanism_surface_incidence_cos",
             ),
         )
 
@@ -274,6 +310,9 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "component_failure_probability",
                 "component_failure_probability_calibrated",
                 "component_failure_probability_evidence_dataset_ref",
+                "component_failure_probability_evidence_provenance",
+                "component_failure_probability_evidence_row_id",
+                "component_failure_probability_evidence_source_ref",
                 "component_failure_probability_source",
                 "component_failure_sample",
                 "component_hit_count",
@@ -282,9 +321,12 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "component_primary_integrity",
                 "component_primary_mechanism_blast_impulse_kpa_ms",
                 "component_primary_mechanism_blast_overpressure_kpa",
+                "component_primary_mechanism_blast_scaled_distance_m_kg13",
+                "component_primary_mechanism_fragment_areal_density_per_m2",
                 "component_primary_mechanism_fragment_energy_j",
                 "component_primary_mechanism_penetration_margin",
                 "component_primary_mechanism_rod_cut_margin",
+                "component_primary_mechanism_surface_incidence_cos",
                 "component_primary_name",
                 "component_primary_redundancy_group",
                 "component_primary_redundancy_group_id",
@@ -321,11 +363,14 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "mechanism_armor_scale",
                 "mechanism_blast_impulse_kpa_ms",
                 "mechanism_blast_overpressure_kpa",
+                "mechanism_blast_scaled_distance_m_kg13",
                 "mechanism_effect_scale",
                 "mechanism_exposure_scale",
+                "mechanism_fragment_areal_density_per_m2",
                 "mechanism_fragment_energy_j",
                 "mechanism_penetration_margin",
                 "mechanism_rod_cut_margin",
+                "mechanism_surface_incidence_cos",
                 "miss_distance_m",
                 "missile_axis_forward",
                 "missile_axis_right",
@@ -347,8 +392,23 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "vulnerability_closure_scale",
                 "vulnerability_deterministic_fuze_authority",
                 "vulnerability_effect_scale",
+                "vulnerability_effect_scale_evidence_provenance",
+                "vulnerability_effect_scale_evidence_row_id",
+                "vulnerability_effect_scale_evidence_source_ref",
+                "vulnerability_effect_scale_source",
                 "vulnerability_evidence_dataset_ref",
                 "vulnerability_evidence_dataset_valid",
+                "vulnerability_evidence_schema_version",
+                "vulnerability_evidence_source_kind",
+                "vulnerability_evidence_source_ref",
+                "vulnerability_evidence_validated_surrogate_model_ref",
+                "vulnerability_evidence_validation_acceptance_criteria_ref",
+                "vulnerability_evidence_validation_artifact_ref",
+                "vulnerability_evidence_validation_artifact_sha256",
+                "vulnerability_evidence_validation_benchmark_ref",
+                "vulnerability_evidence_validation_manifest_schema_version",
+                "vulnerability_evidence_validation_metrics_ref",
+                "vulnerability_evidence_validation_status",
                 "vulnerability_family_scale",
                 "vulnerability_miss_distance_scale",
                 "vulnerability_pk_authority",
@@ -524,6 +584,40 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
             str(component_rows[0].component_failure_probability_evidence_dataset_ref),
             "unit_test_rows",
         )
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_evidence_row_id),
+            "row-wing-fuel-high-rod",
+        )
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_evidence_source_ref),
+            "fixture://unit-test-rows#row-wing-fuel-high-rod",
+        )
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_evidence_provenance),
+            "unit-test row fixture",
+        )
+        self.assertEqual(
+            str(damage_event.vulnerability_evidence_validation_manifest_schema_version),
+            "a2.vulnerability_surrogate_validation.v1",
+        )
+        self.assertEqual(str(damage_event.vulnerability_evidence_validation_status), "validated")
+        self.assertEqual(str(damage_event.vulnerability_evidence_validation_artifact_sha256), "abc123")
+        self.assertEqual(
+            str(damage_event.vulnerability_evidence_validated_surrogate_model_ref),
+            "fixture://surrogate/model",
+        )
+        self.assertEqual(
+            str(damage_event.vulnerability_evidence_validation_benchmark_ref),
+            "fixture://surrogate/benchmark",
+        )
+        self.assertEqual(
+            str(damage_event.vulnerability_evidence_validation_metrics_ref),
+            "fixture://surrogate/metrics",
+        )
+        self.assertEqual(
+            str(damage_event.vulnerability_evidence_validation_acceptance_criteria_ref),
+            "fixture://surrogate/acceptance",
+        )
         self.assertAlmostEqual(float(component_rows[0].component_failure_sample), 0.21)
         self.assertTrue(bool(component_rows[0].component_failure_probability_authority))
         self.assertTrue(bool(component_rows[0].component_failure_probability_component_specific))
@@ -537,7 +631,24 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
             str(component_rows[0].component_failure_probability_miss_distance_bucket),
             "direct_hit",
         )
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_evidence_component_name),
+            "left_wing_fuel_cell",
+        )
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_evidence_component_system),
+            "fuel",
+        )
+        self.assertEqual(
+            str(component_rows[0].component_failure_probability_evidence_component_redundancy_group_id),
+            "wing_fuel_cells",
+        )
         self.assertAlmostEqual(float(component_rows[0].mechanism_fragment_energy_j), 540.0)
+        self.assertAlmostEqual(
+            float(component_rows[0].mechanism_fragment_areal_density_per_m2),
+            17.0,
+        )
+        self.assertAlmostEqual(float(component_rows[0].mechanism_surface_incidence_cos), 0.67)
         self.assertTrue(
             any(
                 report.producer_node_id == "p9.effects_damage.v1"
@@ -580,6 +691,9 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertEqual(str(component_row.component_failure_probability_source), "none")
         self.assertFalse(bool(component_row.component_failure_probability_calibrated))
         self.assertEqual(str(component_row.component_failure_probability_evidence_dataset_ref), "")
+        self.assertEqual(str(component_row.component_failure_probability_evidence_row_id), "")
+        self.assertEqual(str(component_row.component_failure_probability_evidence_source_ref), "")
+        self.assertEqual(str(component_row.component_failure_probability_evidence_provenance), "")
         self.assertAlmostEqual(float(component_row.component_failure_sample), 1.0)
         self.assertFalse(bool(component_row.component_failure_probability_authority))
         self.assertFalse(bool(component_row.component_failure_probability_component_specific))
@@ -597,6 +711,10 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertEqual(str(effects.component_primary_redundancy_group_id), "")
         self.assertAlmostEqual(float(effects.component_primary_integrity), 1.0)
         self.assertAlmostEqual(float(effects.component_primary_mechanism_fragment_energy_j), 0.0)
+        self.assertAlmostEqual(
+            float(effects.component_primary_mechanism_fragment_areal_density_per_m2),
+            0.0,
+        )
         self.assertAlmostEqual(float(effects.component_primary_mechanism_penetration_margin), 0.0)
         self.assertAlmostEqual(
             float(effects.component_primary_mechanism_blast_overpressure_kpa),
@@ -607,12 +725,19 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
             0.0,
         )
         self.assertAlmostEqual(float(effects.component_primary_mechanism_rod_cut_margin), 0.0)
+        self.assertAlmostEqual(
+            float(effects.component_primary_mechanism_surface_incidence_cos),
+            0.0,
+        )
         self.assertAlmostEqual(float(effects.component_redundancy_group_availability), 1.0)
         self.assertEqual(int(effects.component_redundancy_group_member_count), 0)
         self.assertEqual(int(effects.component_redundancy_group_failed_count), 0)
         self.assertEqual(str(effects.component_failure_probability_source), "none")
         self.assertFalse(bool(effects.component_failure_probability_calibrated))
         self.assertEqual(str(effects.component_failure_probability_evidence_dataset_ref), "")
+        self.assertEqual(str(effects.component_failure_probability_evidence_row_id), "")
+        self.assertEqual(str(effects.component_failure_probability_evidence_source_ref), "")
+        self.assertEqual(str(effects.component_failure_probability_evidence_provenance), "")
         self.assertAlmostEqual(float(effects.detonation_heading_deg), 0.0)
         self.assertAlmostEqual(float(effects.detonation_pitch_deg), 0.0)
         self.assertAlmostEqual(float(effects.detonation_roll_deg), 0.0)
@@ -621,10 +746,13 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertAlmostEqual(float(effects.warhead_orientation_axis_up), 0.0)
         self.assertAlmostEqual(float(effects.warhead_orientation_pattern_scale), 1.0)
         self.assertAlmostEqual(float(effects.mechanism_fragment_energy_j), 0.0)
+        self.assertAlmostEqual(float(effects.mechanism_fragment_areal_density_per_m2), 0.0)
         self.assertAlmostEqual(float(effects.mechanism_penetration_margin), 0.0)
         self.assertAlmostEqual(float(effects.mechanism_blast_overpressure_kpa), 0.0)
         self.assertAlmostEqual(float(effects.mechanism_blast_impulse_kpa_ms), 0.0)
+        self.assertAlmostEqual(float(effects.mechanism_blast_scaled_distance_m_kg13), 0.0)
         self.assertAlmostEqual(float(effects.mechanism_rod_cut_margin), 0.0)
+        self.assertAlmostEqual(float(effects.mechanism_surface_incidence_cos), 0.0)
         self.assertEqual(str(effects.fuze_signature_source), "none")
         self.assertAlmostEqual(float(effects.fuze_target_signature), 0.0)
         self.assertAlmostEqual(float(effects.fuze_signature_scale), 1.0)
@@ -642,6 +770,17 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertEqual(str(effects.vulnerability_evidence_dataset_ref), "")
         self.assertEqual(str(effects.vulnerability_calibration_status), "none")
         self.assertEqual(str(effects.vulnerability_provenance), "")
+        self.assertEqual(str(effects.vulnerability_evidence_schema_version), "")
+        self.assertEqual(str(effects.vulnerability_evidence_source_kind), "")
+        self.assertEqual(str(effects.vulnerability_evidence_source_ref), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validation_artifact_ref), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validation_manifest_schema_version), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validation_status), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validation_artifact_sha256), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validated_surrogate_model_ref), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validation_benchmark_ref), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validation_metrics_ref), "")
+        self.assertEqual(str(effects.vulnerability_evidence_validation_acceptance_criteria_ref), "")
         self.assertEqual(str(effects.vulnerability_aspect_bucket), "unknown")
         self.assertAlmostEqual(float(effects.vulnerability_family_scale), 1.0)
         self.assertAlmostEqual(float(effects.vulnerability_aspect_scale), 1.0)
@@ -649,6 +788,10 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertAlmostEqual(float(effects.vulnerability_closure_scale), 1.0)
         self.assertAlmostEqual(float(effects.vulnerability_miss_distance_scale), 1.0)
         self.assertAlmostEqual(float(effects.vulnerability_effect_scale), 1.0)
+        self.assertEqual(str(effects.vulnerability_effect_scale_source), "profile_scale")
+        self.assertEqual(str(effects.vulnerability_effect_scale_evidence_row_id), "")
+        self.assertEqual(str(effects.vulnerability_effect_scale_evidence_source_ref), "")
+        self.assertEqual(str(effects.vulnerability_effect_scale_evidence_provenance), "")
 
     def test_nested_entity_ref_round_trips_through_dto_fields(self) -> None:
         ref = ef_py.EngagementEntityRef()

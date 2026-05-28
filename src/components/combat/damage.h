@@ -71,6 +71,9 @@ struct HitboxConfig {
 };
 
 struct AircraftVulnerabilityEvidenceRow {
+    std::string row_id;
+    std::string source_ref;
+    std::string provenance;
     std::string weapon_family;
     std::string aspect_bucket;
     std::string closure_bucket;
@@ -85,6 +88,38 @@ struct AircraftVulnerabilityEvidenceRow {
     double effect_scale = 1.0;
     bool has_component_failure_probability = false;
     double component_failure_probability = 0.0;
+    bool has_min_fragment_energy_j = false;
+    double min_fragment_energy_j = 0.0;
+    bool has_max_fragment_energy_j = false;
+    double max_fragment_energy_j = 0.0;
+    bool has_min_fragment_areal_density_per_m2 = false;
+    double min_fragment_areal_density_per_m2 = 0.0;
+    bool has_max_fragment_areal_density_per_m2 = false;
+    double max_fragment_areal_density_per_m2 = 0.0;
+    bool has_min_penetration_margin = false;
+    double min_penetration_margin = 0.0;
+    bool has_max_penetration_margin = false;
+    double max_penetration_margin = 0.0;
+    bool has_min_blast_overpressure_kpa = false;
+    double min_blast_overpressure_kpa = 0.0;
+    bool has_max_blast_overpressure_kpa = false;
+    double max_blast_overpressure_kpa = 0.0;
+    bool has_min_blast_impulse_kpa_ms = false;
+    double min_blast_impulse_kpa_ms = 0.0;
+    bool has_max_blast_impulse_kpa_ms = false;
+    double max_blast_impulse_kpa_ms = 0.0;
+    bool has_min_blast_scaled_distance_m_kg13 = false;
+    double min_blast_scaled_distance_m_kg13 = 0.0;
+    bool has_max_blast_scaled_distance_m_kg13 = false;
+    double max_blast_scaled_distance_m_kg13 = 0.0;
+    bool has_min_rod_cut_margin = false;
+    double min_rod_cut_margin = 0.0;
+    bool has_max_rod_cut_margin = false;
+    double max_rod_cut_margin = 0.0;
+    bool has_min_surface_incidence_cos = false;
+    double min_surface_incidence_cos = 0.0;
+    bool has_max_surface_incidence_cos = false;
+    double max_surface_incidence_cos = 0.0;
 };
 
 struct AircraftVulnerabilityProfile {
@@ -98,6 +133,17 @@ struct AircraftVulnerabilityProfile {
     std::string provenance = "synthetic_unvalidated_vulnerability";
     std::string evidence_dataset_ref;
     std::string calibration_status = "unvalidated";
+    std::string evidence_schema_version;
+    std::string evidence_source_kind;
+    std::string evidence_source_ref;
+    std::string evidence_validation_artifact_ref;
+    std::string evidence_validation_manifest_schema_version;
+    std::string evidence_validation_status;
+    std::string evidence_validation_artifact_sha256;
+    std::string evidence_validated_surrogate_model_ref;
+    std::string evidence_validation_benchmark_ref;
+    std::string evidence_validation_metrics_ref;
+    std::string evidence_validation_acceptance_criteria_ref;
     std::vector<AircraftVulnerabilityEvidenceRow> evidence_rows;
     double blast_scale = 1.0;
     double fragmentation_scale = 1.0;

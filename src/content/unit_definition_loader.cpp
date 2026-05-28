@@ -13,8 +13,14 @@ namespace fs = std::filesystem;
 
 namespace {
 
+constexpr const char* kVulnerabilityEvidenceSchemaVersion =
+    "a2.vulnerability_evidence.v1";
+constexpr const char* kVulnerabilitySurrogateValidationManifestSchemaVersion =
+    "a2.vulnerability_surrogate_validation.v1";
+
 struct VulnerabilityEvidenceDescriptor {
     std::string dataset_id;
+    std::string schema_version;
     std::string target_type;
     std::string weapon_family;
     std::string aspect_bucket;
@@ -22,6 +28,21 @@ struct VulnerabilityEvidenceDescriptor {
     std::string miss_distance_bucket;
     std::string calibration_status = "unvalidated";
     std::string source_kind;
+    std::string source_ref;
+    std::string validation_artifact_ref;
+    std::string validation_manifest_schema_version;
+    std::string validation_status = "unvalidated";
+    std::string validation_artifact_sha256;
+    std::string validated_surrogate_model_ref;
+    std::string validation_benchmark_ref;
+    std::string validation_metrics_ref;
+    std::string validation_acceptance_criteria_ref;
+    std::string validation_scope_target_type;
+    std::string validation_scope_weapon_family;
+    std::string validation_scope_aspect_bucket;
+    std::string validation_scope_closure_bucket;
+    std::string validation_scope_miss_distance_bucket;
+    std::string provenance;
     bool effect_scale_authority = false;
     bool component_failure_probability_authority = false;
     bool pk_authority = false;
@@ -31,6 +52,19 @@ struct VulnerabilityEvidenceDescriptor {
 
 using VulnerabilityEvidenceDescriptorMap =
     std::unordered_map<std::string, VulnerabilityEvidenceDescriptor>;
+
+void parse_optional_evidence_row_number(
+    const nlohmann::json& row_json,
+    const char* key,
+    bool* has_value,
+    double* value
+) {
+    if (!has_value || !value || !row_json.contains(key) || !row_json[key].is_number()) {
+        return;
+    }
+    *has_value = true;
+    *value = row_json[key].get<double>();
+}
 
 int parse_sensor_type_code(const std::string& type_str) {
     if (type_str == "Visual") return static_cast<int>(SensorType::Visual);
@@ -447,6 +481,44 @@ bool parse_unit_type(const std::string& value, UnitType* out_type) {
     return false;
 }
 
+bool validation_status_is_passed(const std::string& status) {
+    return status == "validated" || status == "passed";
+}
+
+bool validated_physics_surrogate_has_auditable_manifest(
+    const VulnerabilityEvidenceDescriptor& descriptor
+) {
+    if (descriptor.validation_artifact_ref.empty() ||
+        descriptor.validation_manifest_schema_version !=
+            kVulnerabilitySurrogateValidationManifestSchemaVersion ||
+        !validation_status_is_passed(descriptor.validation_status) ||
+        descriptor.validation_artifact_sha256.empty() ||
+        descriptor.validated_surrogate_model_ref.empty() ||
+        descriptor.validation_benchmark_ref.empty() ||
+        descriptor.validation_metrics_ref.empty() ||
+        descriptor.validation_acceptance_criteria_ref.empty()) {
+        return false;
+    }
+    return descriptor.validation_scope_target_type == descriptor.target_type &&
+        descriptor.validation_scope_weapon_family == descriptor.weapon_family &&
+        descriptor.validation_scope_aspect_bucket == descriptor.aspect_bucket &&
+        descriptor.validation_scope_closure_bucket == descriptor.closure_bucket &&
+        descriptor.validation_scope_miss_distance_bucket ==
+            descriptor.miss_distance_bucket;
+}
+
+bool vulnerability_evidence_descriptor_has_authoritative_source(
+    const VulnerabilityEvidenceDescriptor& descriptor
+) {
+    if (descriptor.source_kind == "external_calibration_dataset") {
+        return true;
+    }
+    if (descriptor.source_kind == "validated_physics_surrogate") {
+        return validated_physics_surrogate_has_auditable_manifest(descriptor);
+    }
+    return false;
+}
+
 bool vulnerability_evidence_descriptor_is_calibrated_match(
     const VulnerabilityEvidenceDescriptorMap* descriptors,
     const AircraftVulnerabilityProfile& profile,
@@ -471,17 +543,18 @@ bool vulnerability_evidence_descriptor_is_calibrated_match(
     if (descriptor.calibration_status != "calibrated") {
         return false;
     }
+    if (descriptor.schema_version != kVulnerabilityEvidenceSchemaVersion ||
+        descriptor.source_ref.empty() ||
+        descriptor.provenance.empty()) {
+        return false;
+    }
     if (descriptor.weapon_family.empty() ||
         descriptor.aspect_bucket.empty() ||
         descriptor.closure_bucket.empty() ||
         descriptor.miss_distance_bucket.empty()) {
         return false;
     }
-    if (descriptor.source_kind == "synthetic_placeholder" ||
-        descriptor.source_kind == "synthetic") {
-        return false;
-    }
-    return true;
+    return vulnerability_evidence_descriptor_has_authoritative_source(descriptor);
 }
 
 const VulnerabilityEvidenceDescriptor* find_vulnerability_evidence_descriptor(
@@ -498,6 +571,33 @@ const VulnerabilityEvidenceDescriptor* find_vulnerability_evidence_descriptor(
     return &descriptor_it->second;
 }
 
+void copy_vulnerability_descriptor_metadata(
+    const VulnerabilityEvidenceDescriptor* descriptor,
+    AircraftVulnerabilityProfile* profile
+) {
+    if (!descriptor || !profile) {
+        return;
+    }
+    profile->evidence_schema_version = descriptor->schema_version;
+    profile->evidence_source_kind = descriptor->source_kind;
+    profile->evidence_source_ref = descriptor->source_ref;
+    profile->evidence_validation_artifact_ref =
+        descriptor->validation_artifact_ref;
+    profile->evidence_validation_manifest_schema_version =
+        descriptor->validation_manifest_schema_version;
+    profile->evidence_validation_status = descriptor->validation_status;
+    profile->evidence_validation_artifact_sha256 =
+        descriptor->validation_artifact_sha256;
+    profile->evidence_validated_surrogate_model_ref =
+        descriptor->validated_surrogate_model_ref;
+    profile->evidence_validation_benchmark_ref =
+        descriptor->validation_benchmark_ref;
+    profile->evidence_validation_metrics_ref =
+        descriptor->validation_metrics_ref;
+    profile->evidence_validation_acceptance_criteria_ref =
+        descriptor->validation_acceptance_criteria_ref;
+}
+
 bool vulnerability_row_matches_descriptor(
     const AircraftVulnerabilityEvidenceRow& row,
     const VulnerabilityEvidenceDescriptor& descriptor
@@ -506,6 +606,14 @@ bool vulnerability_row_matches_descriptor(
         row.aspect_bucket == descriptor.aspect_bucket &&
         row.closure_bucket == descriptor.closure_bucket &&
         row.miss_distance_bucket == descriptor.miss_distance_bucket;
+}
+
+bool vulnerability_row_has_authority_metadata(
+    const AircraftVulnerabilityEvidenceRow& row
+) {
+    return !row.row_id.empty() &&
+        !row.source_ref.empty() &&
+        !row.provenance.empty();
 }
 
 void copy_authoritative_vulnerability_rows(
@@ -519,7 +627,8 @@ void copy_authoritative_vulnerability_rows(
     }
 
     for (const AircraftVulnerabilityEvidenceRow& row : descriptor->rows) {
-        if (vulnerability_row_matches_descriptor(row, *descriptor)) {
+        if (vulnerability_row_matches_descriptor(row, *descriptor) &&
+            vulnerability_row_has_authority_metadata(row)) {
             profile->evidence_rows.push_back(row);
         }
     }
@@ -1063,6 +1172,9 @@ bool parse_unit_json(
                     vulnerability_descriptors,
                     def.aircraft_vulnerability,
                     def.name);
+            copy_vulnerability_descriptor_metadata(
+                descriptor,
+                &def.aircraft_vulnerability);
             if (!aircraft_vulnerability_has_calibrated_evidence(def.aircraft_vulnerability)) {
                 def.aircraft_vulnerability.effect_scale_authority = false;
                 def.aircraft_vulnerability.component_failure_probability_authority = false;
@@ -1332,6 +1444,7 @@ VulnerabilityEvidenceDescriptorMap load_vulnerability_evidence_descriptors(
             }
             VulnerabilityEvidenceDescriptor descriptor{};
             descriptor.dataset_id = root.value("dataset_id", "");
+            descriptor.schema_version = root.value("schema_version", "");
             descriptor.target_type = root.value("target_type", "");
             descriptor.weapon_family =
                 normalize_warhead_family(root.value("weapon_family", ""));
@@ -1341,19 +1454,58 @@ VulnerabilityEvidenceDescriptorMap load_vulnerability_evidence_descriptors(
             descriptor.calibration_status =
                 root.value("calibration_status", descriptor.calibration_status);
             descriptor.source_kind = root.value("source_kind", "");
+            descriptor.source_ref = root.value("source_ref", "");
+            descriptor.validation_artifact_ref =
+                root.value("validation_artifact_ref", "");
+            if (root.contains("validation_manifest") &&
+                root["validation_manifest"].is_object()) {
+                const auto& manifest = root["validation_manifest"];
+                descriptor.validation_manifest_schema_version =
+                    manifest.value("schema_version", "");
+                descriptor.validation_status =
+                    manifest.value("validation_status", descriptor.validation_status);
+                descriptor.validation_artifact_sha256 =
+                    manifest.value("validation_artifact_sha256", "");
+                descriptor.validated_surrogate_model_ref =
+                    manifest.value("validated_surrogate_model_ref", "");
+                descriptor.validation_benchmark_ref =
+                    manifest.value("validation_benchmark_ref", "");
+                descriptor.validation_metrics_ref =
+                    manifest.value("validation_metrics_ref", "");
+                descriptor.validation_acceptance_criteria_ref =
+                    manifest.value("validation_acceptance_criteria_ref", "");
+                if (manifest.contains("validation_scope") &&
+                    manifest["validation_scope"].is_object()) {
+                    const auto& scope = manifest["validation_scope"];
+                    descriptor.validation_scope_target_type =
+                        scope.value("target_type", "");
+                    descriptor.validation_scope_weapon_family =
+                        normalize_warhead_family(scope.value("weapon_family", ""));
+                    descriptor.validation_scope_aspect_bucket =
+                        scope.value("aspect_bucket", "");
+                    descriptor.validation_scope_closure_bucket =
+                        scope.value("closure_bucket", "");
+                    descriptor.validation_scope_miss_distance_bucket =
+                        scope.value("miss_distance_bucket", "");
+                }
+            }
+            descriptor.provenance = root.value("provenance", "");
             descriptor.effect_scale_authority =
                 root.value("effect_scale_authority", false);
             descriptor.component_failure_probability_authority =
                 root.value("component_failure_probability_authority", false);
             descriptor.pk_authority = root.value("pk_authority", false);
             descriptor.deterministic_fuze_authority =
-                root.value("deterministic_fuze_authority", false);
+                false;
             if (root.contains("rows") && root["rows"].is_array()) {
                 for (const auto& row_json : root["rows"]) {
                     if (!row_json.is_object()) {
                         continue;
                     }
                     AircraftVulnerabilityEvidenceRow row{};
+                    row.row_id = row_json.value("row_id", "");
+                    row.source_ref = row_json.value("source_ref", "");
+                    row.provenance = row_json.value("provenance", "");
                     row.weapon_family = normalize_warhead_family(
                         row_json.value("weapon_family", descriptor.weapon_family));
                     row.aspect_bucket =
@@ -1382,6 +1534,86 @@ VulnerabilityEvidenceDescriptorMap load_vulnerability_evidence_descriptors(
                         row.component_failure_probability =
                             row_json["component_failure_probability"].get<double>();
                     }
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_fragment_energy_j",
+                        &row.has_min_fragment_energy_j,
+                        &row.min_fragment_energy_j);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_fragment_energy_j",
+                        &row.has_max_fragment_energy_j,
+                        &row.max_fragment_energy_j);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_fragment_areal_density_per_m2",
+                        &row.has_min_fragment_areal_density_per_m2,
+                        &row.min_fragment_areal_density_per_m2);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_fragment_areal_density_per_m2",
+                        &row.has_max_fragment_areal_density_per_m2,
+                        &row.max_fragment_areal_density_per_m2);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_penetration_margin",
+                        &row.has_min_penetration_margin,
+                        &row.min_penetration_margin);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_penetration_margin",
+                        &row.has_max_penetration_margin,
+                        &row.max_penetration_margin);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_blast_overpressure_kpa",
+                        &row.has_min_blast_overpressure_kpa,
+                        &row.min_blast_overpressure_kpa);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_blast_overpressure_kpa",
+                        &row.has_max_blast_overpressure_kpa,
+                        &row.max_blast_overpressure_kpa);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_blast_impulse_kpa_ms",
+                        &row.has_min_blast_impulse_kpa_ms,
+                        &row.min_blast_impulse_kpa_ms);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_blast_impulse_kpa_ms",
+                        &row.has_max_blast_impulse_kpa_ms,
+                        &row.max_blast_impulse_kpa_ms);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_blast_scaled_distance_m_kg13",
+                        &row.has_min_blast_scaled_distance_m_kg13,
+                        &row.min_blast_scaled_distance_m_kg13);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_blast_scaled_distance_m_kg13",
+                        &row.has_max_blast_scaled_distance_m_kg13,
+                        &row.max_blast_scaled_distance_m_kg13);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_rod_cut_margin",
+                        &row.has_min_rod_cut_margin,
+                        &row.min_rod_cut_margin);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_rod_cut_margin",
+                        &row.has_max_rod_cut_margin,
+                        &row.max_rod_cut_margin);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "min_surface_incidence_cos",
+                        &row.has_min_surface_incidence_cos,
+                        &row.min_surface_incidence_cos);
+                    parse_optional_evidence_row_number(
+                        row_json,
+                        "max_surface_incidence_cos",
+                        &row.has_max_surface_incidence_cos,
+                        &row.max_surface_incidence_cos);
                     descriptor.rows.push_back(row);
                 }
             }

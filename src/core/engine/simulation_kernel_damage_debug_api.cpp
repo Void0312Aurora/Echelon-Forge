@@ -221,9 +221,11 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     double mechanism_exposure_scale,
     double mechanism_effect_scale,
     double mechanism_fragment_energy_j,
+    double mechanism_fragment_areal_density_per_m2,
     double mechanism_penetration_margin,
     double mechanism_blast_overpressure_kpa,
     double mechanism_blast_impulse_kpa_ms,
+    double mechanism_blast_scaled_distance_m_kg13,
     double mechanism_rod_cut_margin,
     std::uint32_t warhead_spatial_sample_count,
     double warhead_spatial_hit_estimate,
@@ -239,6 +241,9 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     const std::string& component_failure_probability_source,
     bool component_failure_probability_calibrated,
     const std::string& component_failure_probability_evidence_dataset_ref,
+    const std::string& component_failure_probability_evidence_row_id,
+    const std::string& component_failure_probability_evidence_source_ref,
+    const std::string& component_failure_probability_evidence_provenance,
     double component_failure_sample,
     std::uint32_t component_failure_count,
     std::uint32_t component_hit_count,
@@ -250,9 +255,11 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     const std::string& component_primary_redundancy_group_id,
     double component_primary_integrity,
     double component_primary_mechanism_fragment_energy_j,
+    double component_primary_mechanism_fragment_areal_density_per_m2,
     double component_primary_mechanism_penetration_margin,
     double component_primary_mechanism_blast_overpressure_kpa,
     double component_primary_mechanism_blast_impulse_kpa_ms,
+    double component_primary_mechanism_blast_scaled_distance_m_kg13,
     double component_primary_mechanism_rod_cut_margin,
     double component_redundancy_group_availability,
     std::uint32_t component_redundancy_group_member_count,
@@ -266,13 +273,30 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     const std::string& vulnerability_evidence_dataset_ref,
     const std::string& vulnerability_calibration_status,
     const std::string& vulnerability_provenance,
+    const std::string& vulnerability_evidence_schema_version,
+    const std::string& vulnerability_evidence_source_kind,
+    const std::string& vulnerability_evidence_source_ref,
+    const std::string& vulnerability_evidence_validation_artifact_ref,
+    const std::string& vulnerability_evidence_validation_manifest_schema_version,
+    const std::string& vulnerability_evidence_validation_status,
+    const std::string& vulnerability_evidence_validation_artifact_sha256,
+    const std::string& vulnerability_evidence_validated_surrogate_model_ref,
+    const std::string& vulnerability_evidence_validation_benchmark_ref,
+    const std::string& vulnerability_evidence_validation_metrics_ref,
+    const std::string& vulnerability_evidence_validation_acceptance_criteria_ref,
     const std::string& vulnerability_aspect_bucket,
     double vulnerability_family_scale,
     double vulnerability_aspect_scale,
     double vulnerability_closure_mps,
     double vulnerability_closure_scale,
     double vulnerability_miss_distance_scale,
-    double vulnerability_effect_scale
+    double vulnerability_effect_scale,
+    const std::string& vulnerability_effect_scale_source,
+    const std::string& vulnerability_effect_scale_evidence_row_id,
+    const std::string& vulnerability_effect_scale_evidence_source_ref,
+    const std::string& vulnerability_effect_scale_evidence_provenance,
+    double mechanism_surface_incidence_cos,
+    double component_primary_mechanism_surface_incidence_cos
 ) {
     const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
     const std::int64_t frame_count = info ? info->frame_count_total : 0;
@@ -346,10 +370,15 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.mechanism_exposure_scale = mechanism_exposure_scale;
     effects.mechanism_effect_scale = mechanism_effect_scale;
     effects.mechanism_fragment_energy_j = mechanism_fragment_energy_j;
+    effects.mechanism_fragment_areal_density_per_m2 =
+        mechanism_fragment_areal_density_per_m2;
     effects.mechanism_penetration_margin = mechanism_penetration_margin;
     effects.mechanism_blast_overpressure_kpa = mechanism_blast_overpressure_kpa;
     effects.mechanism_blast_impulse_kpa_ms = mechanism_blast_impulse_kpa_ms;
+    effects.mechanism_blast_scaled_distance_m_kg13 =
+        mechanism_blast_scaled_distance_m_kg13;
     effects.mechanism_rod_cut_margin = mechanism_rod_cut_margin;
+    effects.mechanism_surface_incidence_cos = mechanism_surface_incidence_cos;
     effects.warhead_spatial_sample_count = warhead_spatial_sample_count;
     effects.warhead_spatial_hit_estimate = warhead_spatial_hit_estimate;
     effects.warhead_spatial_hit_fraction = warhead_spatial_hit_fraction;
@@ -366,6 +395,12 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
         component_failure_probability_calibrated;
     effects.component_failure_probability_evidence_dataset_ref =
         component_failure_probability_evidence_dataset_ref;
+    effects.component_failure_probability_evidence_row_id =
+        component_failure_probability_evidence_row_id;
+    effects.component_failure_probability_evidence_source_ref =
+        component_failure_probability_evidence_source_ref;
+    effects.component_failure_probability_evidence_provenance =
+        component_failure_probability_evidence_provenance;
     effects.component_failure_sample = component_failure_sample;
     effects.component_failure_count = component_failure_count;
     effects.component_hit_count = component_hit_count;
@@ -378,14 +413,20 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.component_primary_integrity = component_primary_integrity;
     effects.component_primary_mechanism_fragment_energy_j =
         component_primary_mechanism_fragment_energy_j;
+    effects.component_primary_mechanism_fragment_areal_density_per_m2 =
+        component_primary_mechanism_fragment_areal_density_per_m2;
     effects.component_primary_mechanism_penetration_margin =
         component_primary_mechanism_penetration_margin;
     effects.component_primary_mechanism_blast_overpressure_kpa =
         component_primary_mechanism_blast_overpressure_kpa;
     effects.component_primary_mechanism_blast_impulse_kpa_ms =
         component_primary_mechanism_blast_impulse_kpa_ms;
+    effects.component_primary_mechanism_blast_scaled_distance_m_kg13 =
+        component_primary_mechanism_blast_scaled_distance_m_kg13;
     effects.component_primary_mechanism_rod_cut_margin =
         component_primary_mechanism_rod_cut_margin;
+    effects.component_primary_mechanism_surface_incidence_cos =
+        component_primary_mechanism_surface_incidence_cos;
     effects.component_redundancy_group_availability = component_redundancy_group_availability;
     effects.component_redundancy_group_member_count = component_redundancy_group_member_count;
     effects.component_redundancy_group_failed_count = component_redundancy_group_failed_count;
@@ -399,6 +440,28 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.vulnerability_evidence_dataset_ref = vulnerability_evidence_dataset_ref;
     effects.vulnerability_calibration_status = vulnerability_calibration_status;
     effects.vulnerability_provenance = vulnerability_provenance;
+    effects.vulnerability_evidence_schema_version =
+        vulnerability_evidence_schema_version;
+    effects.vulnerability_evidence_source_kind =
+        vulnerability_evidence_source_kind;
+    effects.vulnerability_evidence_source_ref =
+        vulnerability_evidence_source_ref;
+    effects.vulnerability_evidence_validation_artifact_ref =
+        vulnerability_evidence_validation_artifact_ref;
+    effects.vulnerability_evidence_validation_manifest_schema_version =
+        vulnerability_evidence_validation_manifest_schema_version;
+    effects.vulnerability_evidence_validation_status =
+        vulnerability_evidence_validation_status;
+    effects.vulnerability_evidence_validation_artifact_sha256 =
+        vulnerability_evidence_validation_artifact_sha256;
+    effects.vulnerability_evidence_validated_surrogate_model_ref =
+        vulnerability_evidence_validated_surrogate_model_ref;
+    effects.vulnerability_evidence_validation_benchmark_ref =
+        vulnerability_evidence_validation_benchmark_ref;
+    effects.vulnerability_evidence_validation_metrics_ref =
+        vulnerability_evidence_validation_metrics_ref;
+    effects.vulnerability_evidence_validation_acceptance_criteria_ref =
+        vulnerability_evidence_validation_acceptance_criteria_ref;
     effects.vulnerability_aspect_bucket = vulnerability_aspect_bucket;
     effects.vulnerability_family_scale = vulnerability_family_scale;
     effects.vulnerability_aspect_scale = vulnerability_aspect_scale;
@@ -406,6 +469,13 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     effects.vulnerability_closure_scale = vulnerability_closure_scale;
     effects.vulnerability_miss_distance_scale = vulnerability_miss_distance_scale;
     effects.vulnerability_effect_scale = vulnerability_effect_scale;
+    effects.vulnerability_effect_scale_source = vulnerability_effect_scale_source;
+    effects.vulnerability_effect_scale_evidence_row_id =
+        vulnerability_effect_scale_evidence_row_id;
+    effects.vulnerability_effect_scale_evidence_source_ref =
+        vulnerability_effect_scale_evidence_source_ref;
+    effects.vulnerability_effect_scale_evidence_provenance =
+        vulnerability_effect_scale_evidence_provenance;
     recent_engagement_events_.effects_events.push_back(effects);
     while (recent_engagement_events_.effects_events.size() > kMaxRecentEngagementEvents) {
         recent_engagement_events_.effects_events.erase(recent_engagement_events_.effects_events.begin());
@@ -592,9 +662,11 @@ bool SimulationKernel::debug_apply_proximity_hit(
         effects_result.mechanism_exposure_scale,
         effects_result.mechanism_effect_scale,
         effects_result.mechanism_fragment_energy_j,
+        effects_result.mechanism_fragment_areal_density_per_m2,
         effects_result.mechanism_penetration_margin,
         effects_result.mechanism_blast_overpressure_kpa,
         effects_result.mechanism_blast_impulse_kpa_ms,
+        effects_result.mechanism_blast_scaled_distance_m_kg13,
         effects_result.mechanism_rod_cut_margin,
         effects_result.warhead_spatial_sample_count,
         effects_result.warhead_spatial_hit_estimate,
@@ -610,6 +682,9 @@ bool SimulationKernel::debug_apply_proximity_hit(
         effects_result.component_failure_probability_source,
         effects_result.component_failure_probability_calibrated,
         effects_result.component_failure_probability_evidence_dataset_ref,
+        effects_result.component_failure_probability_evidence_row_id,
+        effects_result.component_failure_probability_evidence_source_ref,
+        effects_result.component_failure_probability_evidence_provenance,
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
@@ -621,9 +696,11 @@ bool SimulationKernel::debug_apply_proximity_hit(
         effects_result.component_primary_redundancy_group_id,
         effects_result.component_primary_integrity,
         effects_result.component_primary_mechanism_fragment_energy_j,
+        effects_result.component_primary_mechanism_fragment_areal_density_per_m2,
         effects_result.component_primary_mechanism_penetration_margin,
         effects_result.component_primary_mechanism_blast_overpressure_kpa,
         effects_result.component_primary_mechanism_blast_impulse_kpa_ms,
+        effects_result.component_primary_mechanism_blast_scaled_distance_m_kg13,
         effects_result.component_primary_mechanism_rod_cut_margin,
         effects_result.component_redundancy_group_availability,
         effects_result.component_redundancy_group_member_count,
@@ -637,13 +714,30 @@ bool SimulationKernel::debug_apply_proximity_hit(
         effects_result.vulnerability_evidence_dataset_ref,
         effects_result.vulnerability_calibration_status,
         effects_result.vulnerability_provenance,
+        effects_result.vulnerability_evidence_schema_version,
+        effects_result.vulnerability_evidence_source_kind,
+        effects_result.vulnerability_evidence_source_ref,
+        effects_result.vulnerability_evidence_validation_artifact_ref,
+        effects_result.vulnerability_evidence_validation_manifest_schema_version,
+        effects_result.vulnerability_evidence_validation_status,
+        effects_result.vulnerability_evidence_validation_artifact_sha256,
+        effects_result.vulnerability_evidence_validated_surrogate_model_ref,
+        effects_result.vulnerability_evidence_validation_benchmark_ref,
+        effects_result.vulnerability_evidence_validation_metrics_ref,
+        effects_result.vulnerability_evidence_validation_acceptance_criteria_ref,
         effects_result.vulnerability_aspect_bucket,
         effects_result.vulnerability_family_scale,
         effects_result.vulnerability_aspect_scale,
         effects_result.vulnerability_closure_mps,
         effects_result.vulnerability_closure_scale,
         effects_result.vulnerability_miss_distance_scale,
-        effects_result.vulnerability_effect_scale);
+        effects_result.vulnerability_effect_scale,
+        effects_result.vulnerability_effect_scale_source,
+        effects_result.vulnerability_effect_scale_evidence_row_id,
+        effects_result.vulnerability_effect_scale_evidence_source_ref,
+        effects_result.vulnerability_effect_scale_evidence_provenance,
+        effects_result.mechanism_surface_incidence_cos,
+        effects_result.component_primary_mechanism_surface_incidence_cos);
     impact.destruct();
     return true;
 }
@@ -765,9 +859,11 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
         effects_result.mechanism_exposure_scale,
         effects_result.mechanism_effect_scale,
         effects_result.mechanism_fragment_energy_j,
+        effects_result.mechanism_fragment_areal_density_per_m2,
         effects_result.mechanism_penetration_margin,
         effects_result.mechanism_blast_overpressure_kpa,
         effects_result.mechanism_blast_impulse_kpa_ms,
+        effects_result.mechanism_blast_scaled_distance_m_kg13,
         effects_result.mechanism_rod_cut_margin,
         effects_result.warhead_spatial_sample_count,
         effects_result.warhead_spatial_hit_estimate,
@@ -783,6 +879,9 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
         effects_result.component_failure_probability_source,
         effects_result.component_failure_probability_calibrated,
         effects_result.component_failure_probability_evidence_dataset_ref,
+        effects_result.component_failure_probability_evidence_row_id,
+        effects_result.component_failure_probability_evidence_source_ref,
+        effects_result.component_failure_probability_evidence_provenance,
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
@@ -794,9 +893,11 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
         effects_result.component_primary_redundancy_group_id,
         effects_result.component_primary_integrity,
         effects_result.component_primary_mechanism_fragment_energy_j,
+        effects_result.component_primary_mechanism_fragment_areal_density_per_m2,
         effects_result.component_primary_mechanism_penetration_margin,
         effects_result.component_primary_mechanism_blast_overpressure_kpa,
         effects_result.component_primary_mechanism_blast_impulse_kpa_ms,
+        effects_result.component_primary_mechanism_blast_scaled_distance_m_kg13,
         effects_result.component_primary_mechanism_rod_cut_margin,
         effects_result.component_redundancy_group_availability,
         effects_result.component_redundancy_group_member_count,
@@ -810,13 +911,30 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
         effects_result.vulnerability_evidence_dataset_ref,
         effects_result.vulnerability_calibration_status,
         effects_result.vulnerability_provenance,
+        effects_result.vulnerability_evidence_schema_version,
+        effects_result.vulnerability_evidence_source_kind,
+        effects_result.vulnerability_evidence_source_ref,
+        effects_result.vulnerability_evidence_validation_artifact_ref,
+        effects_result.vulnerability_evidence_validation_manifest_schema_version,
+        effects_result.vulnerability_evidence_validation_status,
+        effects_result.vulnerability_evidence_validation_artifact_sha256,
+        effects_result.vulnerability_evidence_validated_surrogate_model_ref,
+        effects_result.vulnerability_evidence_validation_benchmark_ref,
+        effects_result.vulnerability_evidence_validation_metrics_ref,
+        effects_result.vulnerability_evidence_validation_acceptance_criteria_ref,
         effects_result.vulnerability_aspect_bucket,
         effects_result.vulnerability_family_scale,
         effects_result.vulnerability_aspect_scale,
         effects_result.vulnerability_closure_mps,
         effects_result.vulnerability_closure_scale,
         effects_result.vulnerability_miss_distance_scale,
-        effects_result.vulnerability_effect_scale);
+        effects_result.vulnerability_effect_scale,
+        effects_result.vulnerability_effect_scale_source,
+        effects_result.vulnerability_effect_scale_evidence_row_id,
+        effects_result.vulnerability_effect_scale_evidence_source_ref,
+        effects_result.vulnerability_effect_scale_evidence_provenance,
+        effects_result.mechanism_surface_incidence_cos,
+        effects_result.component_primary_mechanism_surface_incidence_cos);
     impact.destruct();
     return true;
 }
@@ -1027,9 +1145,11 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
         effects_result.mechanism_exposure_scale,
         effects_result.mechanism_effect_scale,
         effects_result.mechanism_fragment_energy_j,
+        effects_result.mechanism_fragment_areal_density_per_m2,
         effects_result.mechanism_penetration_margin,
         effects_result.mechanism_blast_overpressure_kpa,
         effects_result.mechanism_blast_impulse_kpa_ms,
+        effects_result.mechanism_blast_scaled_distance_m_kg13,
         effects_result.mechanism_rod_cut_margin,
         effects_result.warhead_spatial_sample_count,
         effects_result.warhead_spatial_hit_estimate,
@@ -1045,6 +1165,9 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
         effects_result.component_failure_probability_source,
         effects_result.component_failure_probability_calibrated,
         effects_result.component_failure_probability_evidence_dataset_ref,
+        effects_result.component_failure_probability_evidence_row_id,
+        effects_result.component_failure_probability_evidence_source_ref,
+        effects_result.component_failure_probability_evidence_provenance,
         effects_result.component_failure_sample,
         effects_result.component_failure_count,
         effects_result.component_hit_count,
@@ -1056,9 +1179,11 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
         effects_result.component_primary_redundancy_group_id,
         effects_result.component_primary_integrity,
         effects_result.component_primary_mechanism_fragment_energy_j,
+        effects_result.component_primary_mechanism_fragment_areal_density_per_m2,
         effects_result.component_primary_mechanism_penetration_margin,
         effects_result.component_primary_mechanism_blast_overpressure_kpa,
         effects_result.component_primary_mechanism_blast_impulse_kpa_ms,
+        effects_result.component_primary_mechanism_blast_scaled_distance_m_kg13,
         effects_result.component_primary_mechanism_rod_cut_margin,
         effects_result.component_redundancy_group_availability,
         effects_result.component_redundancy_group_member_count,
@@ -1072,13 +1197,30 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
         effects_result.vulnerability_evidence_dataset_ref,
         effects_result.vulnerability_calibration_status,
         effects_result.vulnerability_provenance,
+        effects_result.vulnerability_evidence_schema_version,
+        effects_result.vulnerability_evidence_source_kind,
+        effects_result.vulnerability_evidence_source_ref,
+        effects_result.vulnerability_evidence_validation_artifact_ref,
+        effects_result.vulnerability_evidence_validation_manifest_schema_version,
+        effects_result.vulnerability_evidence_validation_status,
+        effects_result.vulnerability_evidence_validation_artifact_sha256,
+        effects_result.vulnerability_evidence_validated_surrogate_model_ref,
+        effects_result.vulnerability_evidence_validation_benchmark_ref,
+        effects_result.vulnerability_evidence_validation_metrics_ref,
+        effects_result.vulnerability_evidence_validation_acceptance_criteria_ref,
         effects_result.vulnerability_aspect_bucket,
         effects_result.vulnerability_family_scale,
         effects_result.vulnerability_aspect_scale,
         effects_result.vulnerability_closure_mps,
         effects_result.vulnerability_closure_scale,
         effects_result.vulnerability_miss_distance_scale,
-        effects_result.vulnerability_effect_scale);
+        effects_result.vulnerability_effect_scale,
+        effects_result.vulnerability_effect_scale_source,
+        effects_result.vulnerability_effect_scale_evidence_row_id,
+        effects_result.vulnerability_effect_scale_evidence_source_ref,
+        effects_result.vulnerability_effect_scale_evidence_provenance,
+        effects_result.mechanism_surface_incidence_cos,
+        effects_result.component_primary_mechanism_surface_incidence_cos);
     impact.destruct();
     return true;
 }

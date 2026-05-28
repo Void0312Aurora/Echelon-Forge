@@ -21,6 +21,9 @@ struct ComponentMechanismLoadRow {
     std::string component_failure_probability_source = "none";
     bool component_failure_probability_calibrated = false;
     std::string component_failure_probability_evidence_dataset_ref;
+    std::string component_failure_probability_evidence_row_id;
+    std::string component_failure_probability_evidence_source_ref;
+    std::string component_failure_probability_evidence_provenance;
     double component_failure_sample = 1.0;
     bool component_failure_probability_authority = false;
     bool component_failure_probability_component_specific = false;
@@ -32,10 +35,13 @@ struct ComponentMechanismLoadRow {
     std::string component_failure_probability_evidence_component_system;
     std::string component_failure_probability_evidence_component_redundancy_group_id;
     double mechanism_fragment_energy_j = 0.0;
+    double mechanism_fragment_areal_density_per_m2 = 0.0;
     double mechanism_penetration_margin = 0.0;
     double mechanism_blast_overpressure_kpa = 0.0;
     double mechanism_blast_impulse_kpa_ms = 0.0;
+    double mechanism_blast_scaled_distance_m_kg13 = 0.0;
     double mechanism_rod_cut_margin = 0.0;
+    double mechanism_surface_incidence_cos = 0.0;
 };
 
 struct TrackPacket {
@@ -151,10 +157,13 @@ struct EffectsEvent {
     double mechanism_exposure_scale = 1.0;
     double mechanism_effect_scale = 1.0;
     double mechanism_fragment_energy_j = 0.0;
+    double mechanism_fragment_areal_density_per_m2 = 0.0;
     double mechanism_penetration_margin = 0.0;
     double mechanism_blast_overpressure_kpa = 0.0;
     double mechanism_blast_impulse_kpa_ms = 0.0;
+    double mechanism_blast_scaled_distance_m_kg13 = 0.0;
     double mechanism_rod_cut_margin = 0.0;
+    double mechanism_surface_incidence_cos = 0.0;
     std::uint32_t warhead_spatial_sample_count = 0;
     double warhead_spatial_hit_estimate = 0.0;
     double warhead_spatial_hit_fraction = 0.0;
@@ -169,6 +178,9 @@ struct EffectsEvent {
     std::string component_failure_probability_source = "none";
     bool component_failure_probability_calibrated = false;
     std::string component_failure_probability_evidence_dataset_ref;
+    std::string component_failure_probability_evidence_row_id;
+    std::string component_failure_probability_evidence_source_ref;
+    std::string component_failure_probability_evidence_provenance;
     double component_failure_sample = 1.0;
     std::uint32_t component_failure_count = 0;
     std::uint32_t component_hit_count = 0;
@@ -180,10 +192,13 @@ struct EffectsEvent {
     std::string component_primary_redundancy_group_id;
     double component_primary_integrity = 1.0;
     double component_primary_mechanism_fragment_energy_j = 0.0;
+    double component_primary_mechanism_fragment_areal_density_per_m2 = 0.0;
     double component_primary_mechanism_penetration_margin = 0.0;
     double component_primary_mechanism_blast_overpressure_kpa = 0.0;
     double component_primary_mechanism_blast_impulse_kpa_ms = 0.0;
+    double component_primary_mechanism_blast_scaled_distance_m_kg13 = 0.0;
     double component_primary_mechanism_rod_cut_margin = 0.0;
+    double component_primary_mechanism_surface_incidence_cos = 0.0;
     double component_redundancy_group_availability = 1.0;
     std::uint32_t component_redundancy_group_member_count = 0;
     std::uint32_t component_redundancy_group_failed_count = 0;
@@ -196,6 +211,17 @@ struct EffectsEvent {
     std::string vulnerability_evidence_dataset_ref;
     std::string vulnerability_calibration_status = "none";
     std::string vulnerability_provenance;
+    std::string vulnerability_evidence_schema_version;
+    std::string vulnerability_evidence_source_kind;
+    std::string vulnerability_evidence_source_ref;
+    std::string vulnerability_evidence_validation_artifact_ref;
+    std::string vulnerability_evidence_validation_manifest_schema_version;
+    std::string vulnerability_evidence_validation_status;
+    std::string vulnerability_evidence_validation_artifact_sha256;
+    std::string vulnerability_evidence_validated_surrogate_model_ref;
+    std::string vulnerability_evidence_validation_benchmark_ref;
+    std::string vulnerability_evidence_validation_metrics_ref;
+    std::string vulnerability_evidence_validation_acceptance_criteria_ref;
     std::string vulnerability_aspect_bucket = "unknown";
     double vulnerability_family_scale = 1.0;
     double vulnerability_aspect_scale = 1.0;
@@ -203,6 +229,10 @@ struct EffectsEvent {
     double vulnerability_closure_scale = 1.0;
     double vulnerability_miss_distance_scale = 1.0;
     double vulnerability_effect_scale = 1.0;
+    std::string vulnerability_effect_scale_source = "profile_scale";
+    std::string vulnerability_effect_scale_evidence_row_id;
+    std::string vulnerability_effect_scale_evidence_source_ref;
+    std::string vulnerability_effect_scale_evidence_provenance;
     std::string producer_node_id;
 };
 

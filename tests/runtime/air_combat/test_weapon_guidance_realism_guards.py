@@ -649,6 +649,9 @@ def _copy_database_with_f16_vulnerability(
                     descriptor_data = json.load(handle)
             descriptor_data.update(descriptor_patch)
         dataset_id = str(descriptor_data["dataset_id"])
+        if descriptor_data.get("calibration_status") == "calibrated":
+            descriptor_data.setdefault("schema_version", "a2.vulnerability_evidence.v1")
+            descriptor_data.setdefault("source_ref", f"fixture://descriptor/{dataset_id}")
         with open(
             os.path.join(evidence_dir, f"{dataset_id}.json"),
             "w",
@@ -657,6 +660,35 @@ def _copy_database_with_f16_vulnerability(
             json.dump(descriptor_data, handle)
 
     return db_dir
+
+
+def _validated_surrogate_manifest_patch(
+    *,
+    target_type: str = "F-16C_Block50",
+    weapon_family: str = "blast_fragmentation",
+    aspect_bucket: str = "beam",
+    closure_bucket: str = "high",
+    miss_distance_bucket: str = "near_miss_0_35m",
+    validation_status: str = "validated",
+) -> dict:
+    return {
+        "validation_manifest": {
+            "schema_version": "a2.vulnerability_surrogate_validation.v1",
+            "validation_status": validation_status,
+            "validation_artifact_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "validated_surrogate_model_ref": "fixture://surrogate/model/f16-aim120-v1",
+            "validation_benchmark_ref": "fixture://surrogate/benchmark/f16-aim120-v1",
+            "validation_metrics_ref": "fixture://surrogate/metrics/f16-aim120-v1",
+            "validation_acceptance_criteria_ref": "fixture://surrogate/acceptance/f16-aim120-v1",
+            "validation_scope": {
+                "target_type": target_type,
+                "weapon_family": weapon_family,
+                "aspect_bucket": aspect_bucket,
+                "closure_bucket": closure_bucket,
+                "miss_distance_bucket": miss_distance_bucket,
+            },
+        }
+    }
 
 
 def _kernel_with_unit_overrides(overrides: list[dict]) -> ef_py.SimulationKernel:
@@ -3954,7 +3986,259 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             ]
             self.assertEqual(evidence, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    def test_phase5_calibrated_descriptor_can_grant_pk_and_deterministic_fuze_authority(
+    def test_phase5_calibrated_descriptor_requires_schema_and_source_ref(self) -> None:
+        cases = (
+            ("missing_schema_version", {"schema_version": ""}),
+            ("unknown_schema_version", {"schema_version": "a2.vulnerability_evidence.v0"}),
+            ("missing_source_ref", {"source_ref": ""}),
+        )
+        for label, descriptor_patch in cases:
+            with self.subTest(label=label):
+                with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_source_ref_") as tmpdir:
+                    dataset_id = f"unit_test_calibrated_f16_{label}"
+                    db_dir = _copy_database_with_f16_vulnerability(
+                        tmpdir,
+                        {
+                            "synthetic": False,
+                            "calibrated": True,
+                            "pk_authority": True,
+                            "deterministic_fuze_authority": True,
+                            "evidence_dataset_ref": dataset_id,
+                            "calibration_status": "calibrated",
+                            "provenance": "unit-test descriptor schema/source-ref gate",
+                        },
+                        descriptor={
+                            "dataset_id": dataset_id,
+                            "target_type": "F-16C_Block50",
+                            "weapon_family": "blast_fragmentation",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss_0_35m",
+                            "source_kind": "external_calibration_dataset",
+                            "calibration_status": "calibrated",
+                            "pk_authority": True,
+                            "deterministic_fuze_authority": True,
+                            "provenance": "unit-test descriptor must declare schema and source ref",
+                            **descriptor_patch,
+                        },
+                    )
+
+                    sim = ef_py.SimulationKernel()
+                    sim.reset(20260526)
+                    self.assertTrue(sim.load_database(db_dir))
+                    _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+                    evidence = [
+                        float(value)
+                        for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+                    ]
+                    self.assertEqual(evidence, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_descriptor_requires_authoritative_source_kind(self) -> None:
+        for source_kind, validation_artifact_ref, extra_descriptor in (
+            (
+                "engineering_surrogate",
+                "fixture://unvalidated-engineering-surrogate",
+                _validated_surrogate_manifest_patch(),
+            ),
+            ("validated_physics_surrogate", "", {}),
+        ):
+            with self.subTest(source_kind=source_kind):
+                with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_source_kind_") as tmpdir:
+                    db_dir = _copy_database_with_f16_vulnerability(
+                        tmpdir,
+                        {
+                            "synthetic": False,
+                            "calibrated": True,
+                            "pk_authority": True,
+                            "deterministic_fuze_authority": True,
+                            "evidence_dataset_ref": f"unit_test_{source_kind}",
+                            "calibration_status": "calibrated",
+                            "provenance": "unit-test descriptor source-kind gate",
+                        },
+                        descriptor={
+                            "dataset_id": f"unit_test_{source_kind}",
+                            "target_type": "F-16C_Block50",
+                            "weapon_family": "blast_fragmentation",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss_0_35m",
+                            "source_kind": source_kind,
+                            "validation_artifact_ref": validation_artifact_ref,
+                            "calibration_status": "calibrated",
+                            "pk_authority": True,
+                            "deterministic_fuze_authority": True,
+                            "provenance": "unit-test descriptor must not grant authority without accepted source kind",
+                            **extra_descriptor,
+                        },
+                    )
+
+                    sim = ef_py.SimulationKernel()
+                    sim.reset(20260526)
+                    self.assertTrue(sim.load_database(db_dir))
+                    _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+                    evidence = [
+                        float(value)
+                        for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+                    ]
+                    self.assertEqual(evidence, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_validated_physics_surrogate_requires_auditable_manifest(
+        self,
+    ) -> None:
+        cases = (
+            ("artifact_only", {}),
+            (
+                "missing_digest",
+                {
+                    "validation_manifest": {
+                        **_validated_surrogate_manifest_patch()["validation_manifest"],
+                        "validation_artifact_sha256": "",
+                    }
+                },
+            ),
+            (
+                "failed_status",
+                _validated_surrogate_manifest_patch(validation_status="failed"),
+            ),
+            (
+                "scope_mismatch",
+                _validated_surrogate_manifest_patch(aspect_bucket="tail"),
+            ),
+        )
+        for label, manifest_patch in cases:
+            with self.subTest(label=label):
+                with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_validated_surrogate_denied_") as tmpdir:
+                    dataset_id = f"unit_test_validated_physics_surrogate_{label}"
+                    db_dir = _copy_database_with_f16_vulnerability(
+                        tmpdir,
+                        {
+                            "synthetic": False,
+                            "calibrated": True,
+                            "pk_authority": True,
+                            "deterministic_fuze_authority": False,
+                            "evidence_dataset_ref": dataset_id,
+                            "calibration_status": "calibrated",
+                            "provenance": "unit-test validated physics surrogate manifest gate",
+                        },
+                        descriptor={
+                            "dataset_id": dataset_id,
+                            "target_type": "F-16C_Block50",
+                            "weapon_family": "blast_fragmentation",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss_0_35m",
+                            "source_kind": "validated_physics_surrogate",
+                            "validation_artifact_ref": "fixture://validated-physics-surrogate-report",
+                            "calibration_status": "calibrated",
+                            "pk_authority": True,
+                            "deterministic_fuze_authority": False,
+                            "provenance": "unit-test descriptor must carry audited surrogate manifest",
+                            **manifest_patch,
+                        },
+                    )
+
+                    sim = ef_py.SimulationKernel()
+                    sim.reset(20260526)
+                    self.assertTrue(sim.load_database(db_dir))
+                    _attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+                    evidence = [
+                        float(value)
+                        for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
+                    ]
+                    self.assertEqual(evidence, [1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_phase5_validated_physics_surrogate_exports_manifest_metadata(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_validated_surrogate_accepted_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_validated_physics_surrogate_manifest",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test validated physics surrogate manifest gate",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_validated_physics_surrogate_manifest",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "validated_physics_surrogate",
+                    "validation_artifact_ref": "fixture://validated-physics-surrogate-report",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": True,
+                    "pk_authority": True,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving audited surrogate manifest mechanics only",
+                    **_validated_surrogate_manifest_patch(
+                        weapon_family="continuous_rod",
+                        miss_distance_bucket="direct_hit",
+                    ),
+                    "rows": [
+                        {
+                            "row_id": "surrogate-manifest-effect-row",
+                            "source_ref": "fixture://surrogate/effect-row",
+                            "provenance": "unit-test validated surrogate row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "effect_scale": 1.19,
+                        }
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.753, 4.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertTrue(bool(event.vulnerability_pk_authority))
+            self.assertFalse(bool(event.vulnerability_deterministic_fuze_authority))
+            self.assertEqual(
+                str(event.vulnerability_evidence_validation_manifest_schema_version),
+                "a2.vulnerability_surrogate_validation.v1",
+            )
+            self.assertEqual(str(event.vulnerability_evidence_validation_status), "validated")
+            self.assertEqual(
+                str(event.vulnerability_evidence_validation_artifact_sha256),
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            )
+            self.assertEqual(
+                str(event.vulnerability_evidence_validated_surrogate_model_ref),
+                "fixture://surrogate/model/f16-aim120-v1",
+            )
+            self.assertEqual(
+                str(event.vulnerability_evidence_validation_benchmark_ref),
+                "fixture://surrogate/benchmark/f16-aim120-v1",
+            )
+            self.assertEqual(
+                str(event.vulnerability_evidence_validation_metrics_ref),
+                "fixture://surrogate/metrics/f16-aim120-v1",
+            )
+            self.assertEqual(
+                str(event.vulnerability_evidence_validation_acceptance_criteria_ref),
+                "fixture://surrogate/acceptance/f16-aim120-v1",
+            )
+            self.assertEqual(str(event.vulnerability_effect_scale_source), "vulnerability_evidence_row")
+            self.assertAlmostEqual(float(event.vulnerability_effect_scale), 1.19, delta=1.0e-6)
+
+    def test_phase5_calibrated_descriptor_can_grant_pk_but_deterministic_fuze_remains_deferred(
         self,
     ) -> None:
         with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_full_descriptor_") as tmpdir:
@@ -3993,7 +4277,7 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 float(value)
                 for value in sim.debug_get_aircraft_vulnerability_evidence_state(target_id)
             ]
-            self.assertEqual(evidence, [1.0, 0.0, 1.0, 1.0, 1.0, 1.0])
+            self.assertEqual(evidence, [1.0, 0.0, 1.0, 1.0, 0.0, 1.0])
 
     def test_phase5_authorized_vulnerability_rows_drive_effects_event_scales(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_rows_descriptor_") as tmpdir:
@@ -4014,12 +4298,15 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 },
                 descriptor={
                     "dataset_id": "unit_test_calibrated_f16_rod_rows",
+                    "schema_version": "a2.vulnerability_evidence.v1",
                     "target_type": "F-16C_Block50",
                     "weapon_family": "continuous_rod",
                     "aspect_bucket": "beam",
                     "closure_bucket": "high",
                     "miss_distance_bucket": "direct_hit",
                     "source_kind": "external_calibration_dataset",
+                    "source_ref": "fixture://descriptor/unit-test-calibrated-f16-rod-rows",
+                    "validation_artifact_ref": "fixture://validation/effect-scale-rows-report",
                     "calibration_status": "calibrated",
                     "effect_scale_authority": True,
                     "pk_authority": False,
@@ -4027,6 +4314,9 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                     "provenance": "unit-test descriptor proving row consumption mechanics only",
                     "rows": [
                         {
+                            "row_id": "effect-scale-continuous-rod-beam-high",
+                            "source_ref": "fixture://effect-scale/continuous-rod-beam-high",
+                            "provenance": "unit-test effect-scale row fixture",
                             "weapon_family": "continuous_rod",
                             "aspect_bucket": "beam",
                             "closure_bucket": "high",
@@ -4065,12 +4355,38 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             self.assertFalse(bool(event.vulnerability_deterministic_fuze_authority))
             self.assertEqual(str(event.vulnerability_evidence_dataset_ref), "unit_test_calibrated_f16_rod_rows")
             self.assertEqual(str(event.vulnerability_calibration_status), "calibrated")
+            self.assertEqual(
+                str(event.vulnerability_evidence_schema_version),
+                "a2.vulnerability_evidence.v1",
+            )
+            self.assertEqual(str(event.vulnerability_evidence_source_kind), "external_calibration_dataset")
+            self.assertEqual(
+                str(event.vulnerability_evidence_source_ref),
+                "fixture://descriptor/unit-test-calibrated-f16-rod-rows",
+            )
+            self.assertEqual(
+                str(event.vulnerability_evidence_validation_artifact_ref),
+                "fixture://validation/effect-scale-rows-report",
+            )
             self.assertEqual(str(event.vulnerability_aspect_bucket), "beam")
             self.assertAlmostEqual(float(event.vulnerability_family_scale), 1.31, delta=1.0e-6)
             self.assertAlmostEqual(float(event.vulnerability_aspect_scale), 1.17, delta=1.0e-6)
             self.assertAlmostEqual(float(event.vulnerability_closure_scale), 1.09, delta=1.0e-6)
             self.assertAlmostEqual(float(event.vulnerability_miss_distance_scale), 1.03, delta=1.0e-6)
             self.assertAlmostEqual(float(event.vulnerability_effect_scale), 1.42, delta=1.0e-6)
+            self.assertEqual(str(event.vulnerability_effect_scale_source), "vulnerability_evidence_row")
+            self.assertEqual(
+                str(event.vulnerability_effect_scale_evidence_row_id),
+                "effect-scale-continuous-rod-beam-high",
+            )
+            self.assertEqual(
+                str(event.vulnerability_effect_scale_evidence_source_ref),
+                "fixture://effect-scale/continuous-rod-beam-high",
+            )
+            self.assertEqual(
+                str(event.vulnerability_effect_scale_evidence_provenance),
+                "unit-test effect-scale row fixture",
+            )
 
     def test_phase5_vulnerability_rows_require_effect_scale_authority(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_rows_denied_") as tmpdir:
@@ -4104,6 +4420,9 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                     "provenance": "unit-test descriptor proving row authority is explicit",
                     "rows": [
                         {
+                            "row_id": "global-component-failure-probability",
+                            "source_ref": "fixture://component-probability/global",
+                            "provenance": "unit-test component probability row fixture",
                             "weapon_family": "continuous_rod",
                             "aspect_bucket": "beam",
                             "closure_bucket": "high",
@@ -4138,6 +4457,356 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 0.91 * 0.92 * 0.93 * 0.94,
                 delta=1.0e-6,
             )
+            self.assertEqual(str(event.vulnerability_effect_scale_source), "profile_scale")
+            self.assertEqual(str(event.vulnerability_effect_scale_evidence_row_id), "")
+
+    def test_phase5_effect_scale_rows_respect_mechanism_load_gate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_effect_mechanism_gate_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_effect_scale_mechanism_gate",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test effect-scale mechanism-load gate fixture, not project data",
+                    "continuous_rod_scale": 0.91,
+                    "beam_aspect_scale": 0.92,
+                    "high_closure_scale": 0.93,
+                    "direct_hit_scale": 0.94,
+                },
+                descriptor={
+                    "dataset_id": "unit_test_effect_scale_mechanism_gate",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": True,
+                    "component_failure_probability_authority": False,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving effect-scale rows consume mechanism gates",
+                    "rows": [
+                        {
+                            "row_id": "unreachable-effect-scale-high-rod-margin",
+                            "source_ref": "fixture://effect-scale-mechanism/unreachable-high-rod",
+                            "provenance": "unit-test unreachable effect-scale row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "min_rod_cut_margin": 9.0,
+                            "effect_scale": 1.55,
+                        },
+                        {
+                            "row_id": "reachable-effect-scale-fallback",
+                            "source_ref": "fixture://effect-scale-mechanism/reachable-fallback",
+                            "provenance": "unit-test reachable effect-scale row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "effect_scale": 1.18,
+                        },
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.8, 4.1, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertLess(float(event.component_primary_mechanism_rod_cut_margin), 9.0)
+            self.assertAlmostEqual(float(event.vulnerability_effect_scale), 1.18, delta=1.0e-6)
+            self.assertEqual(str(event.vulnerability_effect_scale_source), "vulnerability_evidence_row")
+            self.assertEqual(
+                str(event.vulnerability_effect_scale_evidence_row_id),
+                "reachable-effect-scale-fallback",
+            )
+            self.assertEqual(
+                str(event.vulnerability_effect_scale_evidence_source_ref),
+                "fixture://effect-scale-mechanism/reachable-fallback",
+            )
+            self.assertEqual(
+                str(event.vulnerability_effect_scale_evidence_provenance),
+                "unit-test reachable effect-scale row fixture",
+            )
+
+    def test_phase5_effect_scale_rows_can_use_blast_scaled_distance_gate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_blast_scaled_gate_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_blast_scaled_distance_gate",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test blast scaled-distance gate fixture, not project data",
+                    "blast_scale": 0.91,
+                    "beam_aspect_scale": 0.92,
+                    "high_closure_scale": 0.93,
+                    "near_miss_scale": 0.94,
+                },
+                descriptor={
+                    "dataset_id": "unit_test_blast_scaled_distance_gate",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "blast",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "near_miss",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": True,
+                    "component_failure_probability_authority": False,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving blast scaled-distance row gates",
+                    "rows": [
+                        {
+                            "row_id": "blast-close-scaled-distance",
+                            "source_ref": "fixture://blast-scaled-distance/close",
+                            "provenance": "unit-test close blast scaled-distance row fixture",
+                            "weapon_family": "blast",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss",
+                            "max_blast_scaled_distance_m_kg13": 2.0,
+                            "effect_scale": 1.36,
+                        },
+                        {
+                            "row_id": "blast-far-scaled-distance",
+                            "source_ref": "fixture://blast-scaled-distance/far",
+                            "provenance": "unit-test far blast scaled-distance row fixture",
+                            "weapon_family": "blast",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss",
+                            "min_blast_scaled_distance_m_kg13": 2.0,
+                            "effect_scale": 0.82,
+                        },
+                    ],
+                },
+            )
+
+            _close_overlay, close_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "blast",
+                (-0.753, 6.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+            _far_overlay, far_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "blast",
+                (-0.753, 10.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertLess(float(close_event.mechanism_blast_scaled_distance_m_kg13), 2.0)
+            self.assertGreater(float(far_event.mechanism_blast_scaled_distance_m_kg13), 2.0)
+            self.assertGreater(
+                float(close_event.vulnerability_effect_scale),
+                float(far_event.vulnerability_effect_scale),
+            )
+            self.assertEqual(
+                str(close_event.vulnerability_effect_scale_evidence_row_id),
+                "blast-close-scaled-distance",
+            )
+            self.assertEqual(
+                str(far_event.vulnerability_effect_scale_evidence_row_id),
+                "blast-far-scaled-distance",
+            )
+
+    def test_phase5_effect_scale_rows_can_use_fragment_areal_density_gate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_frag_density_gate_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_fragment_areal_density_gate",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test fragment areal-density gate fixture, not project data",
+                    "fragmentation_scale": 0.91,
+                    "beam_aspect_scale": 0.92,
+                    "high_closure_scale": 0.93,
+                    "near_miss_scale": 0.94,
+                },
+                descriptor={
+                    "dataset_id": "unit_test_fragment_areal_density_gate",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "blast_fragmentation",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "near_miss",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": True,
+                    "component_failure_probability_authority": False,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving fragment areal-density row gates",
+                    "rows": [
+                        {
+                            "row_id": "fragment-high-areal-density",
+                            "source_ref": "fixture://fragment-density/high",
+                            "provenance": "unit-test high fragment areal-density row fixture",
+                            "weapon_family": "blast_fragmentation",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss",
+                            "min_fragment_areal_density_per_m2": 2.0,
+                            "effect_scale": 1.31,
+                        },
+                        {
+                            "row_id": "fragment-low-areal-density",
+                            "source_ref": "fixture://fragment-density/low",
+                            "provenance": "unit-test low fragment areal-density row fixture",
+                            "weapon_family": "blast_fragmentation",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss",
+                            "max_fragment_areal_density_per_m2": 2.0,
+                            "effect_scale": 0.79,
+                        },
+                    ],
+                },
+            )
+
+            _close_overlay, close_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "blast_fragmentation",
+                (-0.753, 6.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+            _far_overlay, far_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "blast_fragmentation",
+                (-0.753, 10.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertGreater(float(close_event.mechanism_fragment_areal_density_per_m2), 2.0)
+            self.assertLess(float(far_event.mechanism_fragment_areal_density_per_m2), 2.0)
+            self.assertEqual(
+                str(close_event.vulnerability_effect_scale_evidence_row_id),
+                "fragment-high-areal-density",
+            )
+            self.assertEqual(
+                str(far_event.vulnerability_effect_scale_evidence_row_id),
+                "fragment-low-areal-density",
+            )
+
+    def test_phase5_effect_scale_rows_can_use_surface_incidence_gate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_surface_incidence_gate_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_surface_incidence_gate",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test surface-incidence gate fixture, not project data",
+                    "continuous_rod_scale": 0.91,
+                    "beam_aspect_scale": 0.92,
+                    "high_closure_scale": 0.93,
+                    "direct_hit_scale": 0.94,
+                },
+                descriptor={
+                    "dataset_id": "unit_test_surface_incidence_gate",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": True,
+                    "component_failure_probability_authority": False,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving surface-incidence row gates",
+                    "rows": [
+                        {
+                            "row_id": "surface-normal-incidence",
+                            "source_ref": "fixture://surface-incidence/normal",
+                            "provenance": "unit-test normal-incidence row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "min_surface_incidence_cos": 0.5,
+                            "effect_scale": 1.32,
+                        },
+                        {
+                            "row_id": "surface-oblique-incidence",
+                            "source_ref": "fixture://surface-incidence/oblique",
+                            "provenance": "unit-test oblique-incidence row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "max_surface_incidence_cos": 0.5,
+                            "effect_scale": 0.72,
+                        },
+                    ],
+                },
+            )
+
+            _normal_overlay, normal_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.8, 4.49, 0.0),
+                (900.0, 0.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+            _oblique_overlay, oblique_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.36, 4.1, 0.0),
+                (900.0, 0.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertGreater(float(normal_event.mechanism_surface_incidence_cos), 0.5)
+            self.assertLess(float(oblique_event.mechanism_surface_incidence_cos), 0.5)
+            self.assertAlmostEqual(float(normal_event.vulnerability_effect_scale), 1.32, delta=1.0e-6)
+            self.assertAlmostEqual(float(oblique_event.vulnerability_effect_scale), 0.72, delta=1.0e-6)
+            self.assertEqual(
+                str(normal_event.vulnerability_effect_scale_evidence_row_id),
+                "surface-normal-incidence",
+            )
+            self.assertEqual(
+                str(oblique_event.vulnerability_effect_scale_evidence_row_id),
+                "surface-oblique-incidence",
+            )
 
     def test_phase5_authorized_rows_drive_component_failure_probability(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_component_pk_") as tmpdir:
@@ -4168,6 +4837,9 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                     "provenance": "unit-test descriptor proving component probability row mechanics only",
                     "rows": [
                         {
+                            "row_id": "global-component-failure-probability",
+                            "source_ref": "fixture://component-probability/global",
+                            "provenance": "unit-test component probability row fixture",
                             "weapon_family": "continuous_rod",
                             "aspect_bucket": "beam",
                             "closure_bucket": "high",
@@ -4188,36 +4860,52 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             )
 
             self.assertTrue(bool(event.vulnerability_calibrated_evidence))
-        self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
-        self.assertFalse(bool(event.vulnerability_pk_authority))
-        self.assertAlmostEqual(float(event.component_failure_probability), 0.37, delta=1.0e-6)
-        self.assertEqual(str(event.component_failure_probability_source), "vulnerability_evidence_row")
-        self.assertTrue(bool(event.component_failure_probability_calibrated))
-        self.assertEqual(
-            str(event.component_failure_probability_evidence_dataset_ref),
-            "unit_test_calibrated_f16_component_failure",
-        )
-        component_rows = list(event.component_mechanism_load_rows)
-        self.assertGreater(len(component_rows), 0)
-        for row in component_rows:
-            self.assertAlmostEqual(float(row.component_failure_probability), 0.37, delta=1.0e-6)
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertFalse(bool(event.vulnerability_pk_authority))
+            self.assertAlmostEqual(float(event.component_failure_probability), 0.37, delta=1.0e-6)
+            self.assertEqual(str(event.component_failure_probability_source), "vulnerability_evidence_row")
+            self.assertTrue(bool(event.component_failure_probability_calibrated))
             self.assertEqual(
-                str(row.component_failure_probability_source),
-                "vulnerability_evidence_row",
-            )
-            self.assertTrue(bool(row.component_failure_probability_calibrated))
-            self.assertEqual(
-                str(row.component_failure_probability_evidence_dataset_ref),
+                str(event.component_failure_probability_evidence_dataset_ref),
                 "unit_test_calibrated_f16_component_failure",
             )
-            self.assertTrue(bool(row.component_failure_probability_authority))
-            self.assertEqual(str(row.component_failure_probability_weapon_family), "continuous_rod")
-            self.assertEqual(str(row.component_failure_probability_aspect_bucket), "beam")
-            self.assertEqual(str(row.component_failure_probability_closure_bucket), "high")
             self.assertEqual(
-                str(row.component_failure_probability_miss_distance_bucket),
-                "direct_hit",
+                str(event.component_failure_probability_evidence_row_id),
+                "global-component-failure-probability",
             )
+            self.assertEqual(
+                str(event.component_failure_probability_evidence_source_ref),
+                "fixture://component-probability/global",
+            )
+            self.assertEqual(
+                str(event.component_failure_probability_evidence_provenance),
+                "unit-test component probability row fixture",
+            )
+            component_rows = list(event.component_mechanism_load_rows)
+            self.assertGreater(len(component_rows), 0)
+            for row in component_rows:
+                self.assertAlmostEqual(float(row.component_failure_probability), 0.37, delta=1.0e-6)
+                self.assertEqual(
+                    str(row.component_failure_probability_source),
+                    "vulnerability_evidence_row",
+                )
+                self.assertTrue(bool(row.component_failure_probability_calibrated))
+                self.assertEqual(
+                    str(row.component_failure_probability_evidence_dataset_ref),
+                    "unit_test_calibrated_f16_component_failure",
+                )
+                self.assertEqual(
+                    str(row.component_failure_probability_evidence_row_id),
+                    "global-component-failure-probability",
+                )
+                self.assertTrue(bool(row.component_failure_probability_authority))
+                self.assertEqual(str(row.component_failure_probability_weapon_family), "continuous_rod")
+                self.assertEqual(str(row.component_failure_probability_aspect_bucket), "beam")
+                self.assertEqual(str(row.component_failure_probability_closure_bucket), "high")
+                self.assertEqual(
+                    str(row.component_failure_probability_miss_distance_bucket),
+                    "direct_hit",
+                )
 
     def test_phase5_component_failure_rows_require_probability_authority(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_component_pk_denied_") as tmpdir:
@@ -4303,6 +4991,544 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                     "direct_hit",
                 )
 
+    def test_phase5_authorized_rows_require_row_provenance_metadata(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_row_metadata_denied_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_row_metadata_required",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test row provenance metadata gate, not project data",
+                    "continuous_rod_scale": 0.91,
+                    "beam_aspect_scale": 0.92,
+                    "high_closure_scale": 0.93,
+                    "direct_hit_scale": 0.94,
+                },
+                descriptor={
+                    "dataset_id": "unit_test_row_metadata_required",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": True,
+                    "component_failure_probability_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving row metadata is mandatory",
+                    "rows": [
+                        {
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "effect_scale": 1.42,
+                            "component_failure_probability": 0.81,
+                        }
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.753, 4.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertAlmostEqual(float(event.vulnerability_family_scale), 0.91, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_aspect_scale), 0.92, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_closure_scale), 0.93, delta=1.0e-6)
+            self.assertAlmostEqual(float(event.vulnerability_miss_distance_scale), 0.94, delta=1.0e-6)
+            self.assertNotAlmostEqual(float(event.vulnerability_effect_scale), 1.42, delta=1.0e-6)
+            self.assertEqual(str(event.vulnerability_effect_scale_source), "profile_scale")
+            self.assertEqual(str(event.vulnerability_effect_scale_evidence_row_id), "")
+            self.assertEqual(str(event.component_failure_probability_source), "synthetic_sigmoid")
+            self.assertFalse(bool(event.component_failure_probability_calibrated))
+            self.assertEqual(str(event.component_failure_probability_evidence_row_id), "")
+            component_rows = list(event.component_mechanism_load_rows)
+            self.assertGreater(len(component_rows), 0)
+            for row in component_rows:
+                self.assertEqual(str(row.component_failure_probability_source), "synthetic_sigmoid")
+                self.assertFalse(bool(row.component_failure_probability_authority))
+                self.assertEqual(str(row.component_failure_probability_evidence_row_id), "")
+
+    def test_phase5_component_specific_probability_rows_override_global_rows(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_component_specific_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_component_specific_probability_rows",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test component-specific probability row fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_component_specific_probability_rows",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "component_failure_probability_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving component-specific row precedence only",
+                    "rows": [
+                        {
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "component_failure_probability": 0.21,
+                        },
+                        {
+                            "row_id": "right-aileron-actuator-specific",
+                            "source_ref": "fixture://component-specific/right-aileron-actuator-specific",
+                            "provenance": "unit-test component-specific row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "component_name": "right_aileron_actuator",
+                            "component_system": "flight_control",
+                            "component_redundancy_group_id": "lateral_flight_control_actuators",
+                            "component_failure_probability": 0.73,
+                        },
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.8, 4.1, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+            self.assertEqual(str(event.component_primary_name), "right_aileron_actuator")
+            self.assertAlmostEqual(float(event.component_failure_probability), 0.73, delta=1.0e-6)
+            self.assertEqual(str(event.component_failure_probability_source), "vulnerability_evidence_row")
+            self.assertEqual(
+                str(event.component_failure_probability_evidence_row_id),
+                "right-aileron-actuator-specific",
+            )
+            self.assertEqual(
+                str(event.component_failure_probability_evidence_source_ref),
+                "fixture://component-specific/right-aileron-actuator-specific",
+            )
+            self.assertEqual(
+                str(event.component_failure_probability_evidence_provenance),
+                "unit-test component-specific row fixture",
+            )
+            component_rows = list(event.component_mechanism_load_rows)
+            matching_rows = [
+                row for row in component_rows
+                if str(row.component_name) == "right_aileron_actuator"
+            ]
+            self.assertEqual(len(matching_rows), 1)
+            row = matching_rows[0]
+            self.assertTrue(bool(row.component_failure_probability_component_specific))
+            self.assertAlmostEqual(float(row.component_failure_probability), 0.73, delta=1.0e-6)
+            self.assertEqual(
+                str(row.component_failure_probability_evidence_component_name),
+                "right_aileron_actuator",
+            )
+            self.assertEqual(
+                str(row.component_failure_probability_evidence_component_system),
+                "flight_control",
+            )
+            self.assertEqual(
+                str(row.component_failure_probability_evidence_component_redundancy_group_id),
+                "lateral_flight_control_actuators",
+            )
+            self.assertEqual(
+                str(row.component_failure_probability_evidence_row_id),
+                "right-aileron-actuator-specific",
+            )
+            self.assertEqual(
+                str(row.component_failure_probability_evidence_source_ref),
+                "fixture://component-specific/right-aileron-actuator-specific",
+            )
+            self.assertEqual(
+                str(row.component_failure_probability_evidence_provenance),
+                "unit-test component-specific row fixture",
+            )
+
+    def test_phase5_component_failure_rows_require_mechanism_load_gate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_mechanism_gate_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_component_probability_mechanism_gate",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test mechanism-load row gate fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_component_probability_mechanism_gate",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "component_failure_probability_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving mechanism-load gates only",
+                    "rows": [
+                        {
+                            "row_id": "unreachable-high-rod-margin",
+                            "source_ref": "fixture://mechanism-gate/unreachable-high-rod-margin",
+                            "provenance": "unit-test unreachable mechanism-load row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "min_rod_cut_margin": 9.0,
+                            "component_failure_probability": 0.97,
+                        },
+                        {
+                            "row_id": "reachable-fallback-rod-margin",
+                            "source_ref": "fixture://mechanism-gate/reachable-fallback-rod-margin",
+                            "provenance": "unit-test reachable fallback row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "component_failure_probability": 0.33,
+                        },
+                    ],
+                },
+            )
+
+            _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.8, 4.1, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertTrue(bool(event.vulnerability_calibrated_evidence))
+            self.assertTrue(bool(event.vulnerability_evidence_dataset_valid))
+            self.assertLess(float(event.component_primary_mechanism_rod_cut_margin), 9.0)
+            self.assertEqual(str(event.component_failure_probability_source), "vulnerability_evidence_row")
+            self.assertAlmostEqual(float(event.component_failure_probability), 0.33, delta=1.0e-6)
+            self.assertEqual(
+                str(event.component_failure_probability_evidence_row_id),
+                "reachable-fallback-rod-margin",
+            )
+            component_rows = list(event.component_mechanism_load_rows)
+            self.assertGreater(len(component_rows), 0)
+            for row in component_rows:
+                self.assertLess(float(row.mechanism_rod_cut_margin), 9.0)
+                self.assertAlmostEqual(float(row.component_failure_probability), 0.33, delta=1.0e-6)
+                self.assertEqual(
+                    str(row.component_failure_probability_source),
+                    "vulnerability_evidence_row",
+                )
+                self.assertEqual(
+                    str(row.component_failure_probability_evidence_row_id),
+                    "reachable-fallback-rod-margin",
+                )
+                self.assertFalse(bool(row.component_failure_probability_component_specific))
+
+    def test_phase5_component_failure_rows_can_use_fragment_areal_density_gate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_frag_density_component_gate_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_component_probability_fragment_density",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test fragment-density component gate fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_component_probability_fragment_density",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "blast_fragmentation",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "near_miss",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "component_failure_probability_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving fragment-density gates component rows",
+                    "rows": [
+                        {
+                            "row_id": "component-high-fragment-density",
+                            "source_ref": "fixture://fragment-density-component/high",
+                            "provenance": "unit-test high fragment-density component row fixture",
+                            "weapon_family": "blast_fragmentation",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss",
+                            "min_fragment_areal_density_per_m2": 2.0,
+                            "component_failure_probability": 0.62,
+                        },
+                        {
+                            "row_id": "component-low-fragment-density",
+                            "source_ref": "fixture://fragment-density-component/low",
+                            "provenance": "unit-test low fragment-density component row fixture",
+                            "weapon_family": "blast_fragmentation",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "near_miss",
+                            "max_fragment_areal_density_per_m2": 2.0,
+                            "component_failure_probability": 0.18,
+                        },
+                    ],
+                },
+            )
+
+            _close_overlay, close_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "blast_fragmentation",
+                (-0.753, 6.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+            _far_overlay, far_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "blast_fragmentation",
+                (-0.753, 10.0, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertGreater(float(close_event.mechanism_fragment_areal_density_per_m2), 2.0)
+            self.assertLess(float(far_event.mechanism_fragment_areal_density_per_m2), 2.0)
+            self.assertAlmostEqual(float(close_event.component_failure_probability), 0.62, delta=1.0e-6)
+            self.assertAlmostEqual(float(far_event.component_failure_probability), 0.18, delta=1.0e-6)
+            self.assertEqual(
+                str(close_event.component_failure_probability_evidence_row_id),
+                "component-high-fragment-density",
+            )
+            self.assertEqual(
+                str(far_event.component_failure_probability_evidence_row_id),
+                "component-low-fragment-density",
+            )
+
+    def test_phase5_component_failure_rows_can_use_surface_incidence_gate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_surface_incidence_component_gate_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_component_probability_surface_incidence",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test surface-incidence component gate fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_component_probability_surface_incidence",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "component_failure_probability_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving surface-incidence gates component rows",
+                    "rows": [
+                        {
+                            "row_id": "component-normal-surface-incidence",
+                            "source_ref": "fixture://surface-incidence-component/normal",
+                            "provenance": "unit-test normal surface-incidence component row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "min_surface_incidence_cos": 0.5,
+                            "component_failure_probability": 0.61,
+                        },
+                        {
+                            "row_id": "component-oblique-surface-incidence",
+                            "source_ref": "fixture://surface-incidence-component/oblique",
+                            "provenance": "unit-test oblique surface-incidence component row fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "max_surface_incidence_cos": 0.5,
+                            "component_failure_probability": 0.19,
+                        },
+                    ],
+                },
+            )
+
+            _normal_overlay, normal_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.8, 4.49, 0.0),
+                (900.0, 0.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+            _oblique_overlay, oblique_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.36, 4.1, 0.0),
+                (900.0, 0.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertGreater(float(normal_event.mechanism_surface_incidence_cos), 0.5)
+            self.assertLess(float(oblique_event.mechanism_surface_incidence_cos), 0.5)
+            self.assertAlmostEqual(float(normal_event.component_failure_probability), 0.61, delta=1.0e-6)
+            self.assertAlmostEqual(float(oblique_event.component_failure_probability), 0.19, delta=1.0e-6)
+            self.assertEqual(str(normal_event.component_failure_probability_source), "vulnerability_evidence_row")
+            self.assertEqual(str(oblique_event.component_failure_probability_source), "vulnerability_evidence_row")
+            self.assertTrue(bool(normal_event.component_failure_probability_calibrated))
+            self.assertTrue(bool(oblique_event.component_failure_probability_calibrated))
+            self.assertEqual(
+                str(normal_event.component_failure_probability_evidence_row_id),
+                "component-normal-surface-incidence",
+            )
+            self.assertEqual(
+                str(normal_event.component_failure_probability_evidence_source_ref),
+                "fixture://surface-incidence-component/normal",
+            )
+            self.assertEqual(
+                str(oblique_event.component_failure_probability_evidence_row_id),
+                "component-oblique-surface-incidence",
+            )
+            self.assertEqual(
+                str(oblique_event.component_failure_probability_evidence_source_ref),
+                "fixture://surface-incidence-component/oblique",
+            )
+
+    def test_phase5_component_failure_rows_select_mechanism_load_bucket(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cmo_a2_vuln_mechanism_bucket_") as tmpdir:
+            db_dir = _copy_database_with_f16_vulnerability(
+                tmpdir,
+                {
+                    "synthetic": False,
+                    "calibrated": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "evidence_dataset_ref": "unit_test_component_probability_mechanism_bucket",
+                    "calibration_status": "calibrated",
+                    "provenance": "unit-test mechanism-load bucket fixture, not project data",
+                },
+                descriptor={
+                    "dataset_id": "unit_test_component_probability_mechanism_bucket",
+                    "target_type": "F-16C_Block50",
+                    "weapon_family": "continuous_rod",
+                    "aspect_bucket": "beam",
+                    "closure_bucket": "high",
+                    "miss_distance_bucket": "direct_hit",
+                    "source_kind": "external_calibration_dataset",
+                    "calibration_status": "calibrated",
+                    "effect_scale_authority": False,
+                    "component_failure_probability_authority": True,
+                    "pk_authority": False,
+                    "deterministic_fuze_authority": False,
+                    "provenance": "unit-test descriptor proving row buckets consume mechanism loads",
+                    "rows": [
+                        {
+                            "row_id": "low-rod-cut-margin",
+                            "source_ref": "fixture://mechanism-bucket/low-rod-cut-margin",
+                            "provenance": "unit-test low rod-load bucket fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "max_rod_cut_margin": 2.24,
+                            "component_failure_probability": 0.24,
+                        },
+                        {
+                            "row_id": "high-rod-cut-margin",
+                            "source_ref": "fixture://mechanism-bucket/high-rod-cut-margin",
+                            "provenance": "unit-test high rod-load bucket fixture",
+                            "weapon_family": "continuous_rod",
+                            "aspect_bucket": "beam",
+                            "closure_bucket": "high",
+                            "miss_distance_bucket": "direct_hit",
+                            "min_rod_cut_margin": 2.24,
+                            "component_failure_probability": 0.64,
+                        },
+                    ],
+                },
+            )
+
+            _low_overlay, low_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.8, 4.1, 0.0),
+                (750.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+            _high_overlay, high_event = _profiled_local_hit_overlay_and_event_with_velocity(
+                "continuous_rod",
+                (-0.8, 4.1, 0.0),
+                (900.0, -250.0, 0.0),
+                damage=90.0,
+                radius=35.0,
+                database_path=db_dir,
+            )
+
+            self.assertGreaterEqual(float(low_event.closure_mps), 700.0)
+            self.assertLess(float(low_event.component_primary_mechanism_rod_cut_margin), 2.24)
+            self.assertGreater(float(high_event.component_primary_mechanism_rod_cut_margin), 2.24)
+            self.assertAlmostEqual(float(low_event.component_failure_probability), 0.24, delta=1.0e-6)
+            self.assertAlmostEqual(float(high_event.component_failure_probability), 0.64, delta=1.0e-6)
+            self.assertEqual(str(low_event.component_failure_probability_source), "vulnerability_evidence_row")
+            self.assertEqual(str(high_event.component_failure_probability_source), "vulnerability_evidence_row")
+            self.assertTrue(bool(low_event.component_failure_probability_calibrated))
+            self.assertTrue(bool(high_event.component_failure_probability_calibrated))
+            self.assertEqual(
+                str(low_event.component_failure_probability_evidence_row_id),
+                "low-rod-cut-margin",
+            )
+            self.assertEqual(
+                str(high_event.component_failure_probability_evidence_row_id),
+                "high-rod-cut-margin",
+            )
+
     def test_phase3_continuous_rod_near_miss_uses_relative_velocity_axis(self) -> None:
         near_wing = (-0.753, 7.1, 0.0)
         broadside_sweep = _profiled_local_hit_overlay_with_velocity(
@@ -4340,6 +5566,50 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertLess(
             abs(blast_fragmentation_broadside["flight_control"] - blast_fragmentation_axial["flight_control"]),
             abs(broadside_sweep["flight_control"] - axial_pass["flight_control"]),
+        )
+
+    def test_phase3_surface_incidence_cos_reports_obliquity_evidence(self) -> None:
+        normal_side = (-0.8, 4.49, 0.0)
+        oblique_side = (-0.36, 4.1, 0.0)
+        _normal_overlay, normal_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            normal_side,
+            (900.0, 0.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _oblique_overlay, oblique_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            oblique_side,
+            (900.0, 0.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _invalid_overlay, invalid_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "continuous_rod",
+            normal_side,
+            (0.0, 0.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertGreater(float(normal_event.mechanism_surface_incidence_cos), 0.5)
+        self.assertLess(float(oblique_event.mechanism_surface_incidence_cos), 0.5)
+        self.assertAlmostEqual(float(invalid_event.mechanism_surface_incidence_cos), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(
+            float(normal_event.component_primary_mechanism_surface_incidence_cos),
+            float(normal_event.mechanism_surface_incidence_cos),
+            delta=1.0e-6,
+        )
+        normal_rows = list(normal_event.component_mechanism_load_rows)
+        self.assertGreater(len(normal_rows), 0)
+        self.assertGreaterEqual(
+            min(float(row.mechanism_surface_incidence_cos) for row in normal_rows),
+            0.0,
+        )
+        self.assertLessEqual(
+            max(float(row.mechanism_surface_incidence_cos) for row in normal_rows),
+            1.0,
         )
 
     def test_phase3_warhead_spatial_sampling_reports_fragment_and_rod_evidence(self) -> None:
@@ -4444,18 +5714,81 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertEqual(str(blast_event.effect_family), "blast")
         self.assertGreater(float(blast_event.mechanism_blast_overpressure_kpa), 0.0)
         self.assertGreater(float(blast_event.mechanism_blast_impulse_kpa_ms), 0.0)
+        self.assertGreater(float(blast_event.mechanism_blast_scaled_distance_m_kg13), 0.0)
         self.assertAlmostEqual(float(blast_event.mechanism_fragment_energy_j), 0.0, delta=1.0e-6)
         self.assertAlmostEqual(float(blast_event.mechanism_rod_cut_margin), 0.0, delta=1.0e-6)
 
         self.assertEqual(str(frag_event.effect_family), "blast_fragmentation")
         self.assertGreater(float(frag_event.mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(frag_event.mechanism_fragment_areal_density_per_m2), 0.0)
         self.assertGreater(float(frag_event.mechanism_penetration_margin), 0.0)
         self.assertGreater(float(frag_event.mechanism_blast_overpressure_kpa), 0.0)
+        self.assertGreater(float(frag_event.mechanism_blast_scaled_distance_m_kg13), 0.0)
 
         self.assertEqual(str(rod_event.effect_family), "continuous_rod")
         self.assertGreater(float(rod_event.mechanism_rod_cut_margin), 0.0)
         self.assertGreater(float(rod_event.mechanism_penetration_margin), 0.0)
         self.assertAlmostEqual(float(rod_event.mechanism_blast_overpressure_kpa), 0.0, delta=1.0e-6)
+
+    def test_phase3_blast_scaled_distance_tracks_standoff_and_pressure(self) -> None:
+        near_wing = (-0.753, 6.0, 0.0)
+        far_wing = (-0.753, 10.0, 0.0)
+        _near_overlay, near_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast",
+            near_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _far_overlay, far_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast",
+            far_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertGreater(float(near_event.mechanism_blast_scaled_distance_m_kg13), 0.0)
+        self.assertGreater(
+            float(far_event.mechanism_blast_scaled_distance_m_kg13),
+            float(near_event.mechanism_blast_scaled_distance_m_kg13),
+        )
+        self.assertLess(
+            float(far_event.mechanism_blast_overpressure_kpa),
+            float(near_event.mechanism_blast_overpressure_kpa),
+        )
+        self.assertLess(
+            float(far_event.mechanism_blast_impulse_kpa_ms),
+            float(near_event.mechanism_blast_impulse_kpa_ms),
+        )
+
+    def test_phase3_fragment_areal_density_tracks_standoff(self) -> None:
+        near_wing = (-0.753, 6.0, 0.0)
+        far_wing = (-0.753, 10.0, 0.0)
+        _near_overlay, near_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            near_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _far_overlay, far_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            far_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertGreater(float(near_event.mechanism_fragment_areal_density_per_m2), 0.0)
+        self.assertLess(
+            float(far_event.mechanism_fragment_areal_density_per_m2),
+            float(near_event.mechanism_fragment_areal_density_per_m2),
+        )
+        self.assertLess(
+            float(far_event.warhead_spatial_hit_estimate),
+            float(near_event.warhead_spatial_hit_estimate),
+        )
 
     def test_phase3_primary_component_reports_mechanism_load_vector(self) -> None:
         direct_wing = (-0.8, 4.1, 0.0)
@@ -4521,6 +5854,10 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             "direct_hit",
         )
         self.assertGreater(float(frag_event.component_primary_mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(
+            float(frag_event.component_primary_mechanism_fragment_areal_density_per_m2),
+            0.0,
+        )
         self.assertGreater(float(frag_event.component_primary_mechanism_penetration_margin), 0.0)
         self.assertGreater(
             float(frag_event.component_primary_mechanism_blast_overpressure_kpa),
@@ -4528,6 +5865,10 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         )
         self.assertGreater(
             float(frag_event.component_primary_mechanism_blast_impulse_kpa_ms),
+            0.0,
+        )
+        self.assertGreater(
+            float(frag_event.component_primary_mechanism_blast_scaled_distance_m_kg13),
             0.0,
         )
         self.assertAlmostEqual(
@@ -4538,6 +5879,11 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertAlmostEqual(
             float(frag_primary_row.mechanism_fragment_energy_j),
             float(frag_event.component_primary_mechanism_fragment_energy_j),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(frag_primary_row.mechanism_fragment_areal_density_per_m2),
+            float(frag_event.component_primary_mechanism_fragment_areal_density_per_m2),
             delta=1.0e-6,
         )
         self.assertAlmostEqual(
@@ -4553,6 +5899,11 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
         self.assertAlmostEqual(
             float(frag_primary_row.mechanism_blast_impulse_kpa_ms),
             float(frag_event.component_primary_mechanism_blast_impulse_kpa_ms),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(frag_primary_row.mechanism_blast_scaled_distance_m_kg13),
+            float(frag_event.component_primary_mechanism_blast_scaled_distance_m_kg13),
             delta=1.0e-6,
         )
         self.assertAlmostEqual(

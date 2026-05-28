@@ -121,6 +121,7 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
         effects.mechanism_exposure_scale = 0.74
         effects.mechanism_effect_scale = 0.60
         effects.mechanism_fragment_energy_j = 540.0
+        effects.mechanism_fragment_areal_density_per_m2 = 17.0
         effects.mechanism_penetration_margin = 0.42
         effects.mechanism_blast_overpressure_kpa = 18.0
         effects.mechanism_blast_impulse_kpa_ms = 44.0
@@ -139,6 +140,9 @@ class DiagnosticsTraceContractTests(unittest.TestCase):
         effects.component_failure_probability_source = "vulnerability_evidence_row"
         effects.component_failure_probability_calibrated = True
         effects.component_failure_probability_evidence_dataset_ref = "unit_test_dataset"
+        effects.component_failure_probability_evidence_row_id = "row-debug-001"
+        effects.component_failure_probability_evidence_source_ref = "fixture://unit-test-dataset#row-debug-001"
+        effects.component_failure_probability_evidence_provenance = "unit-test diagnostics fixture"
         effects.component_failure_sample = 0.31
         effects.component_failure_count = 1
         effects.component_hit_count = 2

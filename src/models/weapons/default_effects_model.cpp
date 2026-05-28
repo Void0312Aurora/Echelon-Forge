@@ -39,6 +39,10 @@ double vec3_dot(const Vec3& lhs, const Vec3& rhs) {
     return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
 }
 
+bool vec3_is_finite(const Vec3& value) {
+    return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
+}
+
 Vec3 math_to_vec3(const Math::Vector3& value) {
     return {value.x, value.y, value.z};
 }
@@ -106,6 +110,86 @@ Vec3 hitbox_nearest_point(const Vec3& local_p, const Hitbox& box) {
         std::clamp(local_p.y, min_y, max_y),
         std::clamp(local_p.z, min_z, max_z),
     };
+}
+
+double hitbox_surface_incidence_cos(
+    const Vec3& local_p,
+    const Hitbox& box,
+    const Vec3& missile_axis_body
+) {
+    const Vec3 axis = vec3_normalize(missile_axis_body);
+    if (!vec3_is_finite(local_p) || !vec3_is_finite(axis) || vec3_norm(axis) <= 1.0e-9 ||
+        !std::isfinite(box.offset_x) || !std::isfinite(box.offset_y) ||
+        !std::isfinite(box.offset_z) || !std::isfinite(box.dim_l) ||
+        !std::isfinite(box.dim_w) || !std::isfinite(box.dim_h) ||
+        box.dim_l <= 0.0 || box.dim_w <= 0.0 || box.dim_h <= 0.0) {
+        return 0.0;
+    }
+
+    const double min_x = box.offset_x - box.dim_l * 0.5;
+    const double max_x = box.offset_x + box.dim_l * 0.5;
+    const double min_y = box.offset_y - box.dim_w * 0.5;
+    const double max_y = box.offset_y + box.dim_w * 0.5;
+    const double min_z = box.offset_z - box.dim_h * 0.5;
+    const double max_z = box.offset_z + box.dim_h * 0.5;
+
+    bool has_candidate = false;
+    double incidence_cos = 1.0;
+    const auto consider_face = [&](const Vec3& normal) {
+        const double candidate =
+            std::clamp(std::abs(vec3_dot(axis, normal)), 0.0, 1.0);
+        incidence_cos = has_candidate ? std::min(incidence_cos, candidate) : candidate;
+        has_candidate = true;
+    };
+
+    if (local_p.x < min_x) {
+        consider_face({-1.0, 0.0, 0.0});
+    } else if (local_p.x > max_x) {
+        consider_face({1.0, 0.0, 0.0});
+    }
+    if (local_p.y < min_y) {
+        consider_face({0.0, -1.0, 0.0});
+    } else if (local_p.y > max_y) {
+        consider_face({0.0, 1.0, 0.0});
+    }
+    if (local_p.z < min_z) {
+        consider_face({0.0, 0.0, -1.0});
+    } else if (local_p.z > max_z) {
+        consider_face({0.0, 0.0, 1.0});
+    }
+    if (has_candidate) {
+        return incidence_cos;
+    }
+
+    const double distances[] = {
+        std::abs(local_p.x - min_x),
+        std::abs(max_x - local_p.x),
+        std::abs(local_p.y - min_y),
+        std::abs(max_y - local_p.y),
+        std::abs(local_p.z - min_z),
+        std::abs(max_z - local_p.z),
+    };
+    const double nearest_distance = *std::min_element(std::begin(distances), std::end(distances));
+    const double epsilon = 1.0e-9;
+    if (distances[0] <= nearest_distance + epsilon) {
+        consider_face({-1.0, 0.0, 0.0});
+    }
+    if (distances[1] <= nearest_distance + epsilon) {
+        consider_face({1.0, 0.0, 0.0});
+    }
+    if (distances[2] <= nearest_distance + epsilon) {
+        consider_face({0.0, -1.0, 0.0});
+    }
+    if (distances[3] <= nearest_distance + epsilon) {
+        consider_face({0.0, 1.0, 0.0});
+    }
+    if (distances[4] <= nearest_distance + epsilon) {
+        consider_face({0.0, 0.0, -1.0});
+    }
+    if (distances[5] <= nearest_distance + epsilon) {
+        consider_face({0.0, 0.0, 1.0});
+    }
+    return has_candidate ? incidence_cos : 0.0;
 }
 
 bool check_component(const Vec3& local_p, const DamageComponent& component) {
@@ -262,8 +346,7 @@ CrewConsequenceKind classify_crew_consequence(
         system_name_matches(name, "navigation")) {
         return CrewConsequenceKind::CommandNavigation;
     }
-    if (system_name_matches(system, "mission_systems") ||
-        system_name_matches(name, "mission_operator") ||
+    if (system_name_matches(name, "mission_operator") ||
         system_name_matches(name, "operator") ||
         system_name_matches(name, "console")) {
         return CrewConsequenceKind::MissionCrew;
@@ -418,11 +501,22 @@ double component_authored_mechanism_threshold_scale(
 
 struct WarheadMechanismLoadEvidence {
     double fragment_energy_j = 0.0;
+    double fragment_areal_density_per_m2 = 0.0;
     double penetration_margin = 0.0;
     double blast_overpressure_kpa = 0.0;
     double blast_impulse_kpa_ms = 0.0;
+    double blast_scaled_distance_m_kg13 = 0.0;
     double rod_cut_margin = 0.0;
+    double surface_incidence_cos = 0.0;
 };
+
+WarheadMechanismLoadEvidence with_surface_incidence(
+    WarheadMechanismLoadEvidence evidence,
+    double surface_incidence_cos
+) {
+    evidence.surface_incidence_cos = std::clamp(surface_incidence_cos, 0.0, 1.0);
+    return evidence;
+}
 
 double component_failure_probability(
     double severity,
@@ -445,7 +539,7 @@ double component_failure_probability(
     const double rod_load =
         std::clamp(mechanism_load.rod_cut_margin / 1.6, 0.0, 1.35);
     const double mechanism_load_scale = std::clamp(
-        0.74 +
+            0.74 +
             0.16 * fragment_load +
             0.22 * penetration_load +
             0.18 * blast_load +
@@ -838,6 +932,7 @@ struct SpatialProjectionCandidate {
     double spatial_hit_fraction = 0.0;
     double spatial_energy_scale = 1.0;
     double spatial_pattern_scale = 1.0;
+    double surface_incidence_cos = 0.0;
     WarheadMechanismLoadEvidence mechanism_load;
 };
 
@@ -845,6 +940,7 @@ struct WarheadSpatialSample {
     std::uint32_t sample_count = 0;
     double hit_estimate = 0.0;
     double hit_fraction = 0.0;
+    double areal_density_per_m2 = 0.0;
     double energy_scale = 1.0;
     double pattern_scale = 1.0;
     double orientation_pattern_scale = 1.0;
@@ -867,6 +963,21 @@ struct VulnerabilityAdjustment {
     std::string provenance;
     std::string calibration_status = "none";
     std::string evidence_dataset_ref;
+    std::string evidence_schema_version;
+    std::string evidence_source_kind;
+    std::string evidence_source_ref;
+    std::string evidence_validation_artifact_ref;
+    std::string evidence_validation_manifest_schema_version;
+    std::string evidence_validation_status;
+    std::string evidence_validation_artifact_sha256;
+    std::string evidence_validated_surrogate_model_ref;
+    std::string evidence_validation_benchmark_ref;
+    std::string evidence_validation_metrics_ref;
+    std::string evidence_validation_acceptance_criteria_ref;
+    std::string effect_scale_source = "profile_scale";
+    std::string effect_scale_evidence_row_id;
+    std::string effect_scale_evidence_source_ref;
+    std::string effect_scale_evidence_provenance;
 };
 
 WarheadEffectProfile make_warhead_effect_profile(const WarheadProfile& profile) {
@@ -1096,6 +1207,8 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
         evidence.fragment_energy_j =
             0.5 * fragment_mass_kg * fragment_velocity_mps * fragment_velocity_mps *
             std::clamp(spatial_sample.energy_scale, 0.05, 1.20);
+        evidence.fragment_areal_density_per_m2 =
+            std::max(0.0, spatial_sample.areal_density_per_m2);
         const double penetration_capacity_mm =
             (1.2 + 0.028 * std::sqrt(std::max(0.0, evidence.fragment_energy_j))) *
             std::clamp(0.65 + 0.35 * spatial_sample.pattern_scale, 0.45, 1.30);
@@ -1106,10 +1219,13 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
     }
 
     if (family == "blast" || family == "blast_fragmentation") {
-        const double scaled_distance = std::cbrt(std::max(0.1, mass_kg)) / standoff_m;
+        const double cube_root_mass_kg = std::cbrt(std::max(0.1, mass_kg));
+        const double inverse_scaled_distance = cube_root_mass_kg / standoff_m;
+        evidence.blast_scaled_distance_m_kg13 =
+            standoff_m / std::max(1.0e-6, cube_root_mass_kg);
         evidence.blast_overpressure_kpa =
             std::clamp(
-                115.0 * scaled_distance * scaled_distance *
+                115.0 * inverse_scaled_distance * inverse_scaled_distance *
                     (0.30 + 0.70 * radius_quality) *
                     exposure,
                 0.0,
@@ -1188,6 +1304,10 @@ WarheadSpatialSample sample_warhead_spatial_effect(
             (0.70 + 0.30 * axis_weight) * std::clamp(orientation_weight, 0.70, 1.18),
             0.50,
             1.35);
+        sample.areal_density_per_m2 =
+            fragment_count / sphere_area_m2 *
+            pattern_scale *
+            (0.35 + 0.65 * radius_quality);
         sample.hit_estimate = fragment_count *
             std::clamp(exposed_area_m2 / sphere_area_m2, 0.0, 0.35) *
             pattern_scale *
@@ -1459,15 +1579,161 @@ bool vulnerability_row_matches_component(
     return true;
 }
 
+bool vulnerability_row_matches_mechanism_load(
+    const AircraftVulnerabilityEvidenceRow& row,
+    const WarheadMechanismLoadEvidence& mechanism_load
+) {
+    const auto passes_min = [](bool has_value, double threshold, double value) {
+        return !has_value || value + 1.0e-9 >= threshold;
+    };
+    const auto passes_max = [](bool has_value, double threshold, double value) {
+        return !has_value || value <= threshold + 1.0e-9;
+    };
+
+    return passes_min(
+               row.has_min_fragment_energy_j,
+               row.min_fragment_energy_j,
+               mechanism_load.fragment_energy_j) &&
+        passes_max(
+               row.has_max_fragment_energy_j,
+               row.max_fragment_energy_j,
+               mechanism_load.fragment_energy_j) &&
+        passes_min(
+               row.has_min_fragment_areal_density_per_m2,
+               row.min_fragment_areal_density_per_m2,
+               mechanism_load.fragment_areal_density_per_m2) &&
+        passes_max(
+               row.has_max_fragment_areal_density_per_m2,
+               row.max_fragment_areal_density_per_m2,
+               mechanism_load.fragment_areal_density_per_m2) &&
+        passes_min(
+               row.has_min_penetration_margin,
+               row.min_penetration_margin,
+               mechanism_load.penetration_margin) &&
+        passes_max(
+               row.has_max_penetration_margin,
+               row.max_penetration_margin,
+               mechanism_load.penetration_margin) &&
+        passes_min(
+               row.has_min_blast_overpressure_kpa,
+               row.min_blast_overpressure_kpa,
+               mechanism_load.blast_overpressure_kpa) &&
+        passes_max(
+               row.has_max_blast_overpressure_kpa,
+               row.max_blast_overpressure_kpa,
+               mechanism_load.blast_overpressure_kpa) &&
+        passes_min(
+               row.has_min_blast_impulse_kpa_ms,
+               row.min_blast_impulse_kpa_ms,
+               mechanism_load.blast_impulse_kpa_ms) &&
+        passes_max(
+               row.has_max_blast_impulse_kpa_ms,
+               row.max_blast_impulse_kpa_ms,
+               mechanism_load.blast_impulse_kpa_ms) &&
+        passes_min(
+               row.has_min_blast_scaled_distance_m_kg13,
+               row.min_blast_scaled_distance_m_kg13,
+               mechanism_load.blast_scaled_distance_m_kg13) &&
+        passes_max(
+               row.has_max_blast_scaled_distance_m_kg13,
+               row.max_blast_scaled_distance_m_kg13,
+               mechanism_load.blast_scaled_distance_m_kg13) &&
+        passes_min(
+               row.has_min_rod_cut_margin,
+               row.min_rod_cut_margin,
+               mechanism_load.rod_cut_margin) &&
+        passes_max(
+               row.has_max_rod_cut_margin,
+               row.max_rod_cut_margin,
+               mechanism_load.rod_cut_margin) &&
+        passes_min(
+               row.has_min_surface_incidence_cos,
+               row.min_surface_incidence_cos,
+               mechanism_load.surface_incidence_cos) &&
+        passes_max(
+               row.has_max_surface_incidence_cos,
+               row.max_surface_incidence_cos,
+               mechanism_load.surface_incidence_cos);
+}
+
+bool vulnerability_row_has_mechanism_load_gate(
+    const AircraftVulnerabilityEvidenceRow& row
+) {
+    return row.has_min_fragment_energy_j ||
+        row.has_max_fragment_energy_j ||
+        row.has_min_fragment_areal_density_per_m2 ||
+        row.has_max_fragment_areal_density_per_m2 ||
+        row.has_min_penetration_margin ||
+        row.has_max_penetration_margin ||
+        row.has_min_blast_overpressure_kpa ||
+        row.has_max_blast_overpressure_kpa ||
+        row.has_min_blast_impulse_kpa_ms ||
+        row.has_max_blast_impulse_kpa_ms ||
+        row.has_min_blast_scaled_distance_m_kg13 ||
+        row.has_max_blast_scaled_distance_m_kg13 ||
+        row.has_min_rod_cut_margin ||
+        row.has_max_rod_cut_margin ||
+        row.has_min_surface_incidence_cos ||
+        row.has_max_surface_incidence_cos;
+}
+
 int vulnerability_row_specificity(const AircraftVulnerabilityEvidenceRow& row) {
     int specificity = 0;
     if (!row.component_name.empty()) {
-        specificity += 4;
+        specificity += 400;
     }
     if (!row.component_system.empty()) {
-        specificity += 2;
+        specificity += 200;
     }
     if (!row.component_redundancy_group_id.empty()) {
+        specificity += 100;
+    }
+    if (row.has_min_fragment_energy_j) {
+        specificity += 1;
+    }
+    if (row.has_max_fragment_energy_j) {
+        specificity += 1;
+    }
+    if (row.has_min_fragment_areal_density_per_m2) {
+        specificity += 1;
+    }
+    if (row.has_max_fragment_areal_density_per_m2) {
+        specificity += 1;
+    }
+    if (row.has_min_penetration_margin) {
+        specificity += 1;
+    }
+    if (row.has_max_penetration_margin) {
+        specificity += 1;
+    }
+    if (row.has_min_blast_overpressure_kpa) {
+        specificity += 1;
+    }
+    if (row.has_max_blast_overpressure_kpa) {
+        specificity += 1;
+    }
+    if (row.has_min_blast_impulse_kpa_ms) {
+        specificity += 1;
+    }
+    if (row.has_max_blast_impulse_kpa_ms) {
+        specificity += 1;
+    }
+    if (row.has_min_blast_scaled_distance_m_kg13) {
+        specificity += 1;
+    }
+    if (row.has_max_blast_scaled_distance_m_kg13) {
+        specificity += 1;
+    }
+    if (row.has_min_rod_cut_margin) {
+        specificity += 1;
+    }
+    if (row.has_max_rod_cut_margin) {
+        specificity += 1;
+    }
+    if (row.has_min_surface_incidence_cos) {
+        specificity += 1;
+    }
+    if (row.has_max_surface_incidence_cos) {
         specificity += 1;
     }
     return specificity;
@@ -1478,17 +1744,38 @@ const AircraftVulnerabilityEvidenceRow* find_effect_scale_vulnerability_evidence
     const std::string& family,
     const std::string& aspect_bucket,
     const std::string& closure_bucket,
-    const std::string& miss_distance_bucket
+    const std::string& miss_distance_bucket,
+    const WarheadMechanismLoadEvidence* mechanism_load
 ) {
     if (!vulnerability.effect_scale_authority) {
         return nullptr;
     }
-    return find_matching_vulnerability_evidence_row(
-        vulnerability,
-        family,
-        aspect_bucket,
-        closure_bucket,
-        miss_distance_bucket);
+    const AircraftVulnerabilityEvidenceRow* best_row = nullptr;
+    int best_specificity = -1;
+    for (const AircraftVulnerabilityEvidenceRow& row : vulnerability.evidence_rows) {
+        if (row.weapon_family != family ||
+            row.aspect_bucket != aspect_bucket ||
+            row.closure_bucket != closure_bucket ||
+            row.miss_distance_bucket != miss_distance_bucket ||
+            !row.component_name.empty() ||
+            !row.component_system.empty() ||
+            !row.component_redundancy_group_id.empty()) {
+            continue;
+        }
+        if (!mechanism_load && vulnerability_row_has_mechanism_load_gate(row)) {
+            continue;
+        }
+        if (mechanism_load &&
+            !vulnerability_row_matches_mechanism_load(row, *mechanism_load)) {
+            continue;
+        }
+        const int specificity = vulnerability_row_specificity(row);
+        if (specificity > best_specificity) {
+            best_specificity = specificity;
+            best_row = &row;
+        }
+    }
+    return best_row;
 }
 
 const AircraftVulnerabilityEvidenceRow*
@@ -1499,6 +1786,7 @@ find_component_failure_vulnerability_evidence_row(
     const std::string& closure_bucket,
     const std::string& miss_distance_bucket,
     const DamageComponent* component,
+    const WarheadMechanismLoadEvidence& mechanism_load,
     bool* component_specific = nullptr
 ) {
     if (!vulnerability.component_failure_probability_authority) {
@@ -1512,7 +1800,8 @@ find_component_failure_vulnerability_evidence_row(
             row.closure_bucket != closure_bucket ||
             row.miss_distance_bucket != miss_distance_bucket ||
             !row.has_component_failure_probability ||
-            !vulnerability_row_matches_component(row, component)) {
+            !vulnerability_row_matches_component(row, component) ||
+            !vulnerability_row_matches_mechanism_load(row, mechanism_load)) {
             continue;
         }
         const int specificity = vulnerability_row_specificity(row);
@@ -1533,7 +1822,8 @@ VulnerabilityAdjustment make_vulnerability_adjustment(
     const Vec3& local_imp,
     double closure_mps,
     double spatial_effect_scale,
-    bool direct_structure_hit
+    bool direct_structure_hit,
+    const WarheadMechanismLoadEvidence* mechanism_load
 ) {
     VulnerabilityAdjustment out{};
     if (!vulnerability) {
@@ -1549,6 +1839,25 @@ VulnerabilityAdjustment make_vulnerability_adjustment(
     out.provenance = vulnerability->provenance;
     out.calibration_status = vulnerability->calibration_status;
     out.evidence_dataset_ref = vulnerability->evidence_dataset_ref;
+    out.evidence_schema_version = vulnerability->evidence_schema_version;
+    out.evidence_source_kind = vulnerability->evidence_source_kind;
+    out.evidence_source_ref = vulnerability->evidence_source_ref;
+    out.evidence_validation_artifact_ref =
+        vulnerability->evidence_validation_artifact_ref;
+    out.evidence_validation_manifest_schema_version =
+        vulnerability->evidence_validation_manifest_schema_version;
+    out.evidence_validation_status =
+        vulnerability->evidence_validation_status;
+    out.evidence_validation_artifact_sha256 =
+        vulnerability->evidence_validation_artifact_sha256;
+    out.evidence_validated_surrogate_model_ref =
+        vulnerability->evidence_validated_surrogate_model_ref;
+    out.evidence_validation_benchmark_ref =
+        vulnerability->evidence_validation_benchmark_ref;
+    out.evidence_validation_metrics_ref =
+        vulnerability->evidence_validation_metrics_ref;
+    out.evidence_validation_acceptance_criteria_ref =
+        vulnerability->evidence_validation_acceptance_criteria_ref;
 
     const std::string family = warhead_effect_family(warhead_profile);
     double family_scale = vulnerability->fragmentation_scale;
@@ -1590,13 +1899,18 @@ VulnerabilityAdjustment make_vulnerability_adjustment(
             family,
             out.aspect_bucket,
             closure_bucket,
-            miss_distance_bucket);
+            miss_distance_bucket,
+            mechanism_load);
     if (evidence_row) {
         out.family_scale = evidence_row->family_scale;
         out.aspect_scale = evidence_row->aspect_scale;
         out.closure_scale = evidence_row->closure_scale;
         out.miss_distance_scale = evidence_row->miss_distance_scale;
         out.scale = evidence_row->effect_scale;
+        out.effect_scale_source = "vulnerability_evidence_row";
+        out.effect_scale_evidence_row_id = evidence_row->row_id;
+        out.effect_scale_evidence_source_ref = evidence_row->source_ref;
+        out.effect_scale_evidence_provenance = evidence_row->provenance;
     }
 
     const double raw_scale =
@@ -1734,10 +2048,14 @@ public:
             double sampled_armor_scale = 1.0;
             double sampled_exposure_scale = 1.0;
             double sampled_mechanism_fragment_energy_j = 0.0;
+            double sampled_mechanism_fragment_areal_density_per_m2 = 0.0;
             double sampled_mechanism_penetration_margin = 0.0;
             double sampled_mechanism_blast_overpressure_kpa = 0.0;
             double sampled_mechanism_blast_impulse_kpa_ms = 0.0;
+            double sampled_mechanism_blast_scaled_distance_m_kg13 = 0.0;
             double sampled_mechanism_rod_cut_margin = 0.0;
+            double sampled_mechanism_surface_incidence_cos = 0.0;
+            bool sampled_mechanism_surface_incidence_seen = false;
             std::uint32_t sampled_warhead_spatial_sample_count = 0;
             double sampled_warhead_spatial_hit_estimate = 0.0;
             double sampled_warhead_spatial_hit_fraction = 0.0;
@@ -1746,9 +2064,13 @@ public:
             double sampled_warhead_orientation_pattern_scale = 0.0;
             double sampled_component_threshold_scale = 1.0;
             double sampled_component_failure_probability = 0.0;
+            bool sampled_component_failure_probability_seen = false;
             std::string sampled_component_failure_probability_source = "none";
             bool sampled_component_failure_probability_calibrated = false;
             std::string sampled_component_failure_probability_evidence_dataset_ref;
+            std::string sampled_component_failure_probability_evidence_row_id;
+            std::string sampled_component_failure_probability_evidence_source_ref;
+            std::string sampled_component_failure_probability_evidence_provenance;
             double sampled_component_failure_sample = 1.0;
             std::uint32_t component_failure_count = 0;
             std::uint64_t component_rng_state = missile.rng_state;
@@ -1785,10 +2107,15 @@ public:
                 row.effect_scale = effect_scale;
                 row.component_threshold_scale = component_scale;
                 row.mechanism_fragment_energy_j = mechanism_load.fragment_energy_j;
+                row.mechanism_fragment_areal_density_per_m2 =
+                    mechanism_load.fragment_areal_density_per_m2;
                 row.mechanism_penetration_margin = mechanism_load.penetration_margin;
                 row.mechanism_blast_overpressure_kpa = mechanism_load.blast_overpressure_kpa;
                 row.mechanism_blast_impulse_kpa_ms = mechanism_load.blast_impulse_kpa_ms;
+                row.mechanism_blast_scaled_distance_m_kg13 =
+                    mechanism_load.blast_scaled_distance_m_kg13;
                 row.mechanism_rod_cut_margin = mechanism_load.rod_cut_margin;
+                row.mechanism_surface_incidence_cos = mechanism_load.surface_incidence_cos;
                 return row;
             };
             const auto record_component_hit = [&](
@@ -1853,6 +2180,12 @@ public:
                 bool failure_probability_calibrated = false;
                 bool failure_probability_component_specific = false;
                 std::string failure_probability_evidence_dataset_ref;
+                std::string failure_probability_evidence_row_id;
+                std::string failure_probability_evidence_source_ref;
+                std::string failure_probability_evidence_provenance;
+                std::string failure_probability_evidence_component_name;
+                std::string failure_probability_evidence_component_system;
+                std::string failure_probability_evidence_component_redundancy_group_id;
                 const std::string failure_family =
                     warhead_effect_family(missile.warhead_profile);
                 const std::string failure_aspect_bucket =
@@ -1870,6 +2203,7 @@ public:
                             failure_closure_bucket,
                             failure_miss_distance_bucket,
                             component,
+                            mechanism_load,
                             &failure_probability_component_specific);
                     if (failure_row) {
                         failure_probability = std::clamp(
@@ -1880,6 +2214,18 @@ public:
                         failure_probability_calibrated = true;
                         failure_probability_evidence_dataset_ref =
                             aircraft_vulnerability->evidence_dataset_ref;
+                        failure_probability_evidence_row_id =
+                            failure_row->row_id;
+                        failure_probability_evidence_source_ref =
+                            failure_row->source_ref;
+                        failure_probability_evidence_provenance =
+                            failure_row->provenance;
+                        failure_probability_evidence_component_name =
+                            failure_row->component_name;
+                        failure_probability_evidence_component_system =
+                            failure_row->component_system;
+                        failure_probability_evidence_component_redundancy_group_id =
+                            failure_row->component_redundancy_group_id;
                     }
                 }
                 const double failure_sample = rand_uniform01(component_rng_state);
@@ -1891,6 +2237,12 @@ public:
                         failure_probability_calibrated;
                     component_row->component_failure_probability_evidence_dataset_ref =
                         failure_probability_evidence_dataset_ref;
+                    component_row->component_failure_probability_evidence_row_id =
+                        failure_probability_evidence_row_id;
+                    component_row->component_failure_probability_evidence_source_ref =
+                        failure_probability_evidence_source_ref;
+                    component_row->component_failure_probability_evidence_provenance =
+                        failure_probability_evidence_provenance;
                     component_row->component_failure_sample = failure_sample;
                     component_row->component_failure_probability_authority =
                         failure_probability_source == "vulnerability_evidence_row";
@@ -1904,16 +2256,30 @@ public:
                         failure_closure_bucket;
                     component_row->component_failure_probability_miss_distance_bucket =
                         failure_miss_distance_bucket;
+                    component_row->component_failure_probability_evidence_component_name =
+                        failure_probability_evidence_component_name;
+                    component_row->component_failure_probability_evidence_component_system =
+                        failure_probability_evidence_component_system;
+                    component_row->component_failure_probability_evidence_component_redundancy_group_id =
+                        failure_probability_evidence_component_redundancy_group_id;
                 }
-                sampled_component_failure_probability =
-                    std::max(sampled_component_failure_probability, failure_probability);
-                if (failure_probability >= sampled_component_failure_probability) {
+                if (!sampled_component_failure_probability_seen ||
+                    failure_probability > sampled_component_failure_probability) {
+                    sampled_component_failure_probability_seen = true;
+                    sampled_component_failure_probability =
+                        failure_probability;
                     sampled_component_failure_probability_source =
                         failure_probability_source;
                     sampled_component_failure_probability_calibrated =
                         failure_probability_calibrated;
                     sampled_component_failure_probability_evidence_dataset_ref =
                         failure_probability_evidence_dataset_ref;
+                    sampled_component_failure_probability_evidence_row_id =
+                        failure_probability_evidence_row_id;
+                    sampled_component_failure_probability_evidence_source_ref =
+                        failure_probability_evidence_source_ref;
+                    sampled_component_failure_probability_evidence_provenance =
+                        failure_probability_evidence_provenance;
                 }
                 sampled_component_failure_sample =
                     std::min(sampled_component_failure_sample, failure_sample);
@@ -2134,7 +2500,8 @@ public:
                           local_imp,
                           closure_mps,
                           1.0,
-                          true).scale
+                          true,
+                          nullptr).scale
                     : 1.0;
             const double system_severity = structured_air_target
                 ? std::clamp(
@@ -2166,14 +2533,32 @@ public:
             const auto record_mechanism_load = [&](const WarheadMechanismLoadEvidence& load) {
                 sampled_mechanism_fragment_energy_j =
                     std::max(sampled_mechanism_fragment_energy_j, load.fragment_energy_j);
+                sampled_mechanism_fragment_areal_density_per_m2 =
+                    std::max(
+                        sampled_mechanism_fragment_areal_density_per_m2,
+                        load.fragment_areal_density_per_m2);
                 sampled_mechanism_penetration_margin =
                     std::max(sampled_mechanism_penetration_margin, load.penetration_margin);
                 sampled_mechanism_blast_overpressure_kpa =
                     std::max(sampled_mechanism_blast_overpressure_kpa, load.blast_overpressure_kpa);
                 sampled_mechanism_blast_impulse_kpa_ms =
                     std::max(sampled_mechanism_blast_impulse_kpa_ms, load.blast_impulse_kpa_ms);
+                if (load.blast_scaled_distance_m_kg13 > 0.0 &&
+                    (sampled_mechanism_blast_scaled_distance_m_kg13 <= 0.0 ||
+                     load.blast_scaled_distance_m_kg13 <
+                         sampled_mechanism_blast_scaled_distance_m_kg13)) {
+                    sampled_mechanism_blast_scaled_distance_m_kg13 =
+                        load.blast_scaled_distance_m_kg13;
+                }
                 sampled_mechanism_rod_cut_margin =
                     std::max(sampled_mechanism_rod_cut_margin, load.rod_cut_margin);
+                const double incidence_cos =
+                    std::clamp(load.surface_incidence_cos, 0.0, 1.0);
+                sampled_mechanism_surface_incidence_cos =
+                    sampled_mechanism_surface_incidence_seen
+                        ? std::min(sampled_mechanism_surface_incidence_cos, incidence_cos)
+                        : incidence_cos;
+                sampled_mechanism_surface_incidence_seen = true;
             };
             for (const auto& box : hitboxes->hitboxes) {
                 if (check_hitbox(local_imp, box)) {
@@ -2215,17 +2600,22 @@ public:
                                     true);
                             record_warhead_spatial_sample(spatial_sample);
                             const WarheadMechanismLoadEvidence mechanism_load =
-                                estimate_warhead_mechanism_load(
-                                missile,
-                                component_box,
-                                0.0,
-                                1.0,
-                                1.0,
-                                orientation_weight,
-                                exposure_scale,
-                                true,
-                                closure_mps,
-                                spatial_sample);
+                                with_surface_incidence(
+                                    estimate_warhead_mechanism_load(
+                                        missile,
+                                        component_box,
+                                        0.0,
+                                        1.0,
+                                        1.0,
+                                        orientation_weight,
+                                        exposure_scale,
+                                        true,
+                                        closure_mps,
+                                        spatial_sample),
+                                    hitbox_surface_incidence_cos(
+                                        local_imp,
+                                        component_box,
+                                        missile_axis_body));
                             record_mechanism_load(mechanism_load);
                             const double direct_mechanism_scale =
                                 std::clamp(armor_scale * exposure_scale, 0.05, 1.10);
@@ -2304,17 +2694,22 @@ public:
                                     exposure_scale,
                                     true);
                             record_warhead_spatial_sample(spatial_sample);
-                            mechanism_load = estimate_warhead_mechanism_load(
-                                missile,
-                                box,
-                                0.0,
-                                1.0,
-                                1.0,
-                                orientation_weight,
-                                exposure_scale,
-                                true,
-                                closure_mps,
-                                spatial_sample);
+                            mechanism_load = with_surface_incidence(
+                                estimate_warhead_mechanism_load(
+                                    missile,
+                                    box,
+                                    0.0,
+                                    1.0,
+                                    1.0,
+                                    orientation_weight,
+                                    exposure_scale,
+                                    true,
+                                    closure_mps,
+                                    spatial_sample),
+                                hitbox_surface_incidence_cos(
+                                    local_imp,
+                                    box,
+                                    missile_axis_body));
                             record_mechanism_load(mechanism_load);
                         }
                         const double direct_mechanism_scale =
@@ -2423,17 +2818,26 @@ public:
                                 .spatial_hit_fraction = spatial_sample.hit_fraction,
                                 .spatial_energy_scale = spatial_sample.energy_scale,
                                 .spatial_pattern_scale = spatial_sample.pattern_scale,
-                                .mechanism_load = estimate_warhead_mechanism_load(
-                                    missile,
+                                .surface_incidence_cos = hitbox_surface_incidence_cos(
+                                    local_imp,
                                     box,
-                                    distance_m,
-                                    spatial_radius_m,
-                                    axis_weight,
-                                    orientation_weight,
-                                    exposure_scale,
-                                    false,
-                                    closure_mps,
-                                    spatial_sample),
+                                    missile_axis_body),
+                                .mechanism_load = with_surface_incidence(
+                                    estimate_warhead_mechanism_load(
+                                        missile,
+                                        box,
+                                        distance_m,
+                                        spatial_radius_m,
+                                        axis_weight,
+                                        orientation_weight,
+                                        exposure_scale,
+                                        false,
+                                        closure_mps,
+                                        spatial_sample),
+                                    hitbox_surface_incidence_cos(
+                                        local_imp,
+                                        box,
+                                        missile_axis_body)),
                             });
                         }
                     }
@@ -2504,17 +2908,26 @@ public:
                                 .spatial_hit_fraction = spatial_sample.hit_fraction,
                                 .spatial_energy_scale = spatial_sample.energy_scale,
                                 .spatial_pattern_scale = spatial_sample.pattern_scale,
-                                .mechanism_load = estimate_warhead_mechanism_load(
-                                    missile,
+                                .surface_incidence_cos = hitbox_surface_incidence_cos(
+                                    local_imp,
                                     component_box,
-                                    distance_m,
-                                    spatial_radius_m,
-                                    axis_weight,
-                                    orientation_weight,
-                                    exposure_scale,
-                                    false,
-                                    closure_mps,
-                                    spatial_sample),
+                                    missile_axis_body),
+                                .mechanism_load = with_surface_incidence(
+                                    estimate_warhead_mechanism_load(
+                                        missile,
+                                        component_box,
+                                        distance_m,
+                                        spatial_radius_m,
+                                        axis_weight,
+                                        orientation_weight,
+                                        exposure_scale,
+                                        false,
+                                        closure_mps,
+                                        spatial_sample),
+                                    hitbox_surface_incidence_cos(
+                                        local_imp,
+                                        component_box,
+                                        missile_axis_body)),
                             });
                         }
                     } else if (!broad_spatial_projection) {
@@ -2578,17 +2991,26 @@ public:
                                 .spatial_hit_fraction = spatial_sample.hit_fraction,
                                 .spatial_energy_scale = spatial_sample.energy_scale,
                                 .spatial_pattern_scale = spatial_sample.pattern_scale,
-                                .mechanism_load = estimate_warhead_mechanism_load(
-                                    missile,
+                                .surface_incidence_cos = hitbox_surface_incidence_cos(
+                                    local_imp,
                                     box,
-                                    distance_m,
-                                    spatial_radius_m,
-                                    axis_weight,
-                                    orientation_weight,
-                                    exposure_scale,
-                                    false,
-                                    closure_mps,
-                                    spatial_sample),
+                                    missile_axis_body),
+                                .mechanism_load = with_surface_incidence(
+                                    estimate_warhead_mechanism_load(
+                                        missile,
+                                        box,
+                                        distance_m,
+                                        spatial_radius_m,
+                                        axis_weight,
+                                        orientation_weight,
+                                        exposure_scale,
+                                        false,
+                                        closure_mps,
+                                        spatial_sample),
+                                    hitbox_surface_incidence_cos(
+                                        local_imp,
+                                        box,
+                                        missile_axis_body)),
                             });
                         }
                     }
@@ -2700,6 +3122,33 @@ public:
 
             if (platform_damage && structured_air_target && structure_hit) {
                 const bool direct_structure_hit = direct_hitbox_intersection;
+                WarheadMechanismLoadEvidence vulnerability_effect_mechanism_load =
+                    component_primary_mechanism_load;
+                if (vulnerability_effect_mechanism_load.fragment_energy_j <= 0.0 &&
+                    vulnerability_effect_mechanism_load.fragment_areal_density_per_m2 <= 0.0 &&
+                    vulnerability_effect_mechanism_load.penetration_margin <= 0.0 &&
+                    vulnerability_effect_mechanism_load.blast_overpressure_kpa <= 0.0 &&
+                    vulnerability_effect_mechanism_load.blast_impulse_kpa_ms <= 0.0 &&
+                    vulnerability_effect_mechanism_load.blast_scaled_distance_m_kg13 <= 0.0 &&
+                    vulnerability_effect_mechanism_load.rod_cut_margin <= 0.0 &&
+                    vulnerability_effect_mechanism_load.surface_incidence_cos <= 0.0) {
+                    vulnerability_effect_mechanism_load.fragment_energy_j =
+                        sampled_mechanism_fragment_energy_j;
+                    vulnerability_effect_mechanism_load.fragment_areal_density_per_m2 =
+                        sampled_mechanism_fragment_areal_density_per_m2;
+                    vulnerability_effect_mechanism_load.penetration_margin =
+                        sampled_mechanism_penetration_margin;
+                    vulnerability_effect_mechanism_load.blast_overpressure_kpa =
+                        sampled_mechanism_blast_overpressure_kpa;
+                    vulnerability_effect_mechanism_load.blast_impulse_kpa_ms =
+                        sampled_mechanism_blast_impulse_kpa_ms;
+                    vulnerability_effect_mechanism_load.blast_scaled_distance_m_kg13 =
+                        sampled_mechanism_blast_scaled_distance_m_kg13;
+                    vulnerability_effect_mechanism_load.rod_cut_margin =
+                        sampled_mechanism_rod_cut_margin;
+                    vulnerability_effect_mechanism_load.surface_incidence_cos =
+                        sampled_mechanism_surface_incidence_cos;
+                }
                 const VulnerabilityAdjustment vulnerability_adjustment =
                     make_vulnerability_adjustment(
                         missile.warhead_profile,
@@ -2707,7 +3156,8 @@ public:
                         local_imp,
                         closure_mps,
                         spatial_effect_scale,
-                        direct_structure_hit);
+                        direct_structure_hit,
+                        &vulnerability_effect_mechanism_load);
                 sampled_vulnerability_adjustment = vulnerability_adjustment;
                 const double resolved_severity =
                     std::clamp(
@@ -3008,12 +3458,18 @@ public:
                     result.mechanism_exposure_scale = sampled_exposure_scale;
                     result.mechanism_effect_scale = sampled_mechanism_scale;
                     result.mechanism_fragment_energy_j = sampled_mechanism_fragment_energy_j;
+                    result.mechanism_fragment_areal_density_per_m2 =
+                        sampled_mechanism_fragment_areal_density_per_m2;
                     result.mechanism_penetration_margin = sampled_mechanism_penetration_margin;
                     result.mechanism_blast_overpressure_kpa =
                         sampled_mechanism_blast_overpressure_kpa;
                     result.mechanism_blast_impulse_kpa_ms =
                         sampled_mechanism_blast_impulse_kpa_ms;
+                    result.mechanism_blast_scaled_distance_m_kg13 =
+                        sampled_mechanism_blast_scaled_distance_m_kg13;
                     result.mechanism_rod_cut_margin = sampled_mechanism_rod_cut_margin;
+                    result.mechanism_surface_incidence_cos =
+                        sampled_mechanism_surface_incidence_cos;
                     result.warhead_spatial_sample_count = sampled_warhead_spatial_sample_count;
                     result.warhead_spatial_hit_estimate = sampled_warhead_spatial_hit_estimate;
                     result.warhead_spatial_hit_fraction = sampled_warhead_spatial_hit_fraction;
@@ -3037,6 +3493,12 @@ public:
                         sampled_component_failure_probability_calibrated;
                     result.component_failure_probability_evidence_dataset_ref =
                         sampled_component_failure_probability_evidence_dataset_ref;
+                    result.component_failure_probability_evidence_row_id =
+                        sampled_component_failure_probability_evidence_row_id;
+                    result.component_failure_probability_evidence_source_ref =
+                        sampled_component_failure_probability_evidence_source_ref;
+                    result.component_failure_probability_evidence_provenance =
+                        sampled_component_failure_probability_evidence_provenance;
                     result.component_failure_sample = sampled_component_failure_sample;
                     result.component_failure_count = component_failure_count;
                     result.component_hit_count = component_hit_count;
@@ -3049,14 +3511,20 @@ public:
                     result.component_primary_integrity = component_primary_integrity;
                     result.component_primary_mechanism_fragment_energy_j =
                         component_primary_mechanism_load.fragment_energy_j;
+                    result.component_primary_mechanism_fragment_areal_density_per_m2 =
+                        component_primary_mechanism_load.fragment_areal_density_per_m2;
                     result.component_primary_mechanism_penetration_margin =
                         component_primary_mechanism_load.penetration_margin;
                     result.component_primary_mechanism_blast_overpressure_kpa =
                         component_primary_mechanism_load.blast_overpressure_kpa;
                     result.component_primary_mechanism_blast_impulse_kpa_ms =
                         component_primary_mechanism_load.blast_impulse_kpa_ms;
+                    result.component_primary_mechanism_blast_scaled_distance_m_kg13 =
+                        component_primary_mechanism_load.blast_scaled_distance_m_kg13;
                     result.component_primary_mechanism_rod_cut_margin =
                         component_primary_mechanism_load.rod_cut_margin;
+                    result.component_primary_mechanism_surface_incidence_cos =
+                        component_primary_mechanism_load.surface_incidence_cos;
                     result.component_redundancy_group_availability =
                         component_redundancy_group_availability;
                     result.component_redundancy_group_member_count =
@@ -3081,6 +3549,28 @@ public:
                         sampled_vulnerability_adjustment.calibration_status;
                     result.vulnerability_provenance =
                         sampled_vulnerability_adjustment.provenance;
+                    result.vulnerability_evidence_schema_version =
+                        sampled_vulnerability_adjustment.evidence_schema_version;
+                    result.vulnerability_evidence_source_kind =
+                        sampled_vulnerability_adjustment.evidence_source_kind;
+                    result.vulnerability_evidence_source_ref =
+                        sampled_vulnerability_adjustment.evidence_source_ref;
+                    result.vulnerability_evidence_validation_artifact_ref =
+                        sampled_vulnerability_adjustment.evidence_validation_artifact_ref;
+                    result.vulnerability_evidence_validation_manifest_schema_version =
+                        sampled_vulnerability_adjustment.evidence_validation_manifest_schema_version;
+                    result.vulnerability_evidence_validation_status =
+                        sampled_vulnerability_adjustment.evidence_validation_status;
+                    result.vulnerability_evidence_validation_artifact_sha256 =
+                        sampled_vulnerability_adjustment.evidence_validation_artifact_sha256;
+                    result.vulnerability_evidence_validated_surrogate_model_ref =
+                        sampled_vulnerability_adjustment.evidence_validated_surrogate_model_ref;
+                    result.vulnerability_evidence_validation_benchmark_ref =
+                        sampled_vulnerability_adjustment.evidence_validation_benchmark_ref;
+                    result.vulnerability_evidence_validation_metrics_ref =
+                        sampled_vulnerability_adjustment.evidence_validation_metrics_ref;
+                    result.vulnerability_evidence_validation_acceptance_criteria_ref =
+                        sampled_vulnerability_adjustment.evidence_validation_acceptance_criteria_ref;
                     result.vulnerability_aspect_bucket =
                         sampled_vulnerability_adjustment.aspect_bucket;
                     result.vulnerability_family_scale =
@@ -3095,6 +3585,14 @@ public:
                         sampled_vulnerability_adjustment.miss_distance_scale;
                     result.vulnerability_effect_scale =
                         sampled_vulnerability_adjustment.scale;
+                    result.vulnerability_effect_scale_source =
+                        sampled_vulnerability_adjustment.effect_scale_source;
+                    result.vulnerability_effect_scale_evidence_row_id =
+                        sampled_vulnerability_adjustment.effect_scale_evidence_row_id;
+                    result.vulnerability_effect_scale_evidence_source_ref =
+                        sampled_vulnerability_adjustment.effect_scale_evidence_source_ref;
+                    result.vulnerability_effect_scale_evidence_provenance =
+                        sampled_vulnerability_adjustment.effect_scale_evidence_provenance;
                     return result;
                 }
             }
@@ -3109,10 +3607,16 @@ public:
             result.mechanism_exposure_scale = sampled_exposure_scale;
             result.mechanism_effect_scale = sampled_mechanism_scale;
             result.mechanism_fragment_energy_j = sampled_mechanism_fragment_energy_j;
+            result.mechanism_fragment_areal_density_per_m2 =
+                sampled_mechanism_fragment_areal_density_per_m2;
             result.mechanism_penetration_margin = sampled_mechanism_penetration_margin;
             result.mechanism_blast_overpressure_kpa = sampled_mechanism_blast_overpressure_kpa;
             result.mechanism_blast_impulse_kpa_ms = sampled_mechanism_blast_impulse_kpa_ms;
+            result.mechanism_blast_scaled_distance_m_kg13 =
+                sampled_mechanism_blast_scaled_distance_m_kg13;
             result.mechanism_rod_cut_margin = sampled_mechanism_rod_cut_margin;
+            result.mechanism_surface_incidence_cos =
+                sampled_mechanism_surface_incidence_cos;
             result.warhead_spatial_sample_count = sampled_warhead_spatial_sample_count;
             result.warhead_spatial_hit_estimate = sampled_warhead_spatial_hit_estimate;
             result.warhead_spatial_hit_fraction = sampled_warhead_spatial_hit_fraction;
@@ -3136,6 +3640,12 @@ public:
                 sampled_component_failure_probability_calibrated;
             result.component_failure_probability_evidence_dataset_ref =
                 sampled_component_failure_probability_evidence_dataset_ref;
+            result.component_failure_probability_evidence_row_id =
+                sampled_component_failure_probability_evidence_row_id;
+            result.component_failure_probability_evidence_source_ref =
+                sampled_component_failure_probability_evidence_source_ref;
+            result.component_failure_probability_evidence_provenance =
+                sampled_component_failure_probability_evidence_provenance;
             result.component_failure_sample = sampled_component_failure_sample;
             result.component_failure_count = component_failure_count;
             result.component_hit_count = component_hit_count;
@@ -3148,14 +3658,20 @@ public:
             result.component_primary_integrity = component_primary_integrity;
             result.component_primary_mechanism_fragment_energy_j =
                 component_primary_mechanism_load.fragment_energy_j;
+            result.component_primary_mechanism_fragment_areal_density_per_m2 =
+                component_primary_mechanism_load.fragment_areal_density_per_m2;
             result.component_primary_mechanism_penetration_margin =
                 component_primary_mechanism_load.penetration_margin;
             result.component_primary_mechanism_blast_overpressure_kpa =
                 component_primary_mechanism_load.blast_overpressure_kpa;
             result.component_primary_mechanism_blast_impulse_kpa_ms =
                 component_primary_mechanism_load.blast_impulse_kpa_ms;
+            result.component_primary_mechanism_blast_scaled_distance_m_kg13 =
+                component_primary_mechanism_load.blast_scaled_distance_m_kg13;
             result.component_primary_mechanism_rod_cut_margin =
                 component_primary_mechanism_load.rod_cut_margin;
+            result.component_primary_mechanism_surface_incidence_cos =
+                component_primary_mechanism_load.surface_incidence_cos;
             result.component_redundancy_group_availability =
                 component_redundancy_group_availability;
             result.component_redundancy_group_member_count =
@@ -3180,6 +3696,28 @@ public:
                 sampled_vulnerability_adjustment.calibration_status;
             result.vulnerability_provenance =
                 sampled_vulnerability_adjustment.provenance;
+            result.vulnerability_evidence_schema_version =
+                sampled_vulnerability_adjustment.evidence_schema_version;
+            result.vulnerability_evidence_source_kind =
+                sampled_vulnerability_adjustment.evidence_source_kind;
+            result.vulnerability_evidence_source_ref =
+                sampled_vulnerability_adjustment.evidence_source_ref;
+            result.vulnerability_evidence_validation_artifact_ref =
+                sampled_vulnerability_adjustment.evidence_validation_artifact_ref;
+            result.vulnerability_evidence_validation_manifest_schema_version =
+                sampled_vulnerability_adjustment.evidence_validation_manifest_schema_version;
+            result.vulnerability_evidence_validation_status =
+                sampled_vulnerability_adjustment.evidence_validation_status;
+            result.vulnerability_evidence_validation_artifact_sha256 =
+                sampled_vulnerability_adjustment.evidence_validation_artifact_sha256;
+            result.vulnerability_evidence_validated_surrogate_model_ref =
+                sampled_vulnerability_adjustment.evidence_validated_surrogate_model_ref;
+            result.vulnerability_evidence_validation_benchmark_ref =
+                sampled_vulnerability_adjustment.evidence_validation_benchmark_ref;
+            result.vulnerability_evidence_validation_metrics_ref =
+                sampled_vulnerability_adjustment.evidence_validation_metrics_ref;
+            result.vulnerability_evidence_validation_acceptance_criteria_ref =
+                sampled_vulnerability_adjustment.evidence_validation_acceptance_criteria_ref;
             result.vulnerability_aspect_bucket =
                 sampled_vulnerability_adjustment.aspect_bucket;
             result.vulnerability_family_scale =
@@ -3194,6 +3732,14 @@ public:
                 sampled_vulnerability_adjustment.miss_distance_scale;
             result.vulnerability_effect_scale =
                 sampled_vulnerability_adjustment.scale;
+            result.vulnerability_effect_scale_source =
+                sampled_vulnerability_adjustment.effect_scale_source;
+            result.vulnerability_effect_scale_evidence_row_id =
+                sampled_vulnerability_adjustment.effect_scale_evidence_row_id;
+            result.vulnerability_effect_scale_evidence_source_ref =
+                sampled_vulnerability_adjustment.effect_scale_evidence_source_ref;
+            result.vulnerability_effect_scale_evidence_provenance =
+                sampled_vulnerability_adjustment.effect_scale_evidence_provenance;
         } 
         // --- 3. Fallback to Randomized Effects (Legacy) ---
         else {

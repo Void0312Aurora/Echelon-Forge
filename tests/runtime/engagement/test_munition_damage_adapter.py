@@ -222,6 +222,7 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         effects.mechanism_exposure_scale = 1.0
         effects.mechanism_effect_scale = 1.0
         effects.mechanism_fragment_energy_j = 480.0
+        effects.mechanism_fragment_areal_density_per_m2 = 11.0
         effects.mechanism_penetration_margin = 0.30
         effects.mechanism_blast_overpressure_kpa = 15.0
         effects.mechanism_blast_impulse_kpa_ms = 36.0
@@ -288,6 +289,7 @@ class MunitionDamageAdapterTests(unittest.TestCase):
         self.assertAlmostEqual(float(effects.component_redundancy_group_availability), 0.66)
         self.assertTrue(math.isclose(float(effects.mechanism_effect_scale), 1.0))
         self.assertGreater(float(effects.mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(effects.mechanism_fragment_areal_density_per_m2), 0.0)
         self.assertGreater(float(effects.mechanism_penetration_margin), 0.0)
         self.assertGreater(float(effects.mechanism_blast_overpressure_kpa), 0.0)
         self.assertGreater(float(effects.mechanism_blast_impulse_kpa_ms), 0.0)

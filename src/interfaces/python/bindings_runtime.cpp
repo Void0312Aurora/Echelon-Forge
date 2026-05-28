@@ -566,6 +566,15 @@ void bind_runtime(nb::module_& m) {
         .def_rw(
             "component_failure_probability_evidence_dataset_ref",
             &ComponentMechanismLoadRow::component_failure_probability_evidence_dataset_ref)
+        .def_rw(
+            "component_failure_probability_evidence_row_id",
+            &ComponentMechanismLoadRow::component_failure_probability_evidence_row_id)
+        .def_rw(
+            "component_failure_probability_evidence_source_ref",
+            &ComponentMechanismLoadRow::component_failure_probability_evidence_source_ref)
+        .def_rw(
+            "component_failure_probability_evidence_provenance",
+            &ComponentMechanismLoadRow::component_failure_probability_evidence_provenance)
         .def_rw("component_failure_sample", &ComponentMechanismLoadRow::component_failure_sample)
         .def_rw(
             "component_failure_probability_authority",
@@ -586,8 +595,20 @@ void bind_runtime(nb::module_& m) {
             "component_failure_probability_miss_distance_bucket",
             &ComponentMechanismLoadRow::component_failure_probability_miss_distance_bucket)
         .def_rw(
+            "component_failure_probability_evidence_component_name",
+            &ComponentMechanismLoadRow::component_failure_probability_evidence_component_name)
+        .def_rw(
+            "component_failure_probability_evidence_component_system",
+            &ComponentMechanismLoadRow::component_failure_probability_evidence_component_system)
+        .def_rw(
+            "component_failure_probability_evidence_component_redundancy_group_id",
+            &ComponentMechanismLoadRow::component_failure_probability_evidence_component_redundancy_group_id)
+        .def_rw(
             "mechanism_fragment_energy_j",
             &ComponentMechanismLoadRow::mechanism_fragment_energy_j)
+        .def_rw(
+            "mechanism_fragment_areal_density_per_m2",
+            &ComponentMechanismLoadRow::mechanism_fragment_areal_density_per_m2)
         .def_rw(
             "mechanism_penetration_margin",
             &ComponentMechanismLoadRow::mechanism_penetration_margin)
@@ -598,8 +619,14 @@ void bind_runtime(nb::module_& m) {
             "mechanism_blast_impulse_kpa_ms",
             &ComponentMechanismLoadRow::mechanism_blast_impulse_kpa_ms)
         .def_rw(
+            "mechanism_blast_scaled_distance_m_kg13",
+            &ComponentMechanismLoadRow::mechanism_blast_scaled_distance_m_kg13)
+        .def_rw(
             "mechanism_rod_cut_margin",
-            &ComponentMechanismLoadRow::mechanism_rod_cut_margin);
+            &ComponentMechanismLoadRow::mechanism_rod_cut_margin)
+        .def_rw(
+            "mechanism_surface_incidence_cos",
+            &ComponentMechanismLoadRow::mechanism_surface_incidence_cos);
 
     nb::class_<EffectsEvent>(m, "EffectsEvent")
         .def(nb::init<>())
@@ -651,12 +678,20 @@ void bind_runtime(nb::module_& m) {
         .def_rw("mechanism_exposure_scale", &EffectsEvent::mechanism_exposure_scale)
         .def_rw("mechanism_effect_scale", &EffectsEvent::mechanism_effect_scale)
         .def_rw("mechanism_fragment_energy_j", &EffectsEvent::mechanism_fragment_energy_j)
+        .def_rw(
+            "mechanism_fragment_areal_density_per_m2",
+            &EffectsEvent::mechanism_fragment_areal_density_per_m2)
         .def_rw("mechanism_penetration_margin", &EffectsEvent::mechanism_penetration_margin)
         .def_rw("mechanism_blast_overpressure_kpa",
                 &EffectsEvent::mechanism_blast_overpressure_kpa)
         .def_rw("mechanism_blast_impulse_kpa_ms",
                 &EffectsEvent::mechanism_blast_impulse_kpa_ms)
+        .def_rw(
+            "mechanism_blast_scaled_distance_m_kg13",
+            &EffectsEvent::mechanism_blast_scaled_distance_m_kg13)
         .def_rw("mechanism_rod_cut_margin", &EffectsEvent::mechanism_rod_cut_margin)
+        .def_rw("mechanism_surface_incidence_cos",
+                &EffectsEvent::mechanism_surface_incidence_cos)
         .def_rw("warhead_spatial_sample_count", &EffectsEvent::warhead_spatial_sample_count)
         .def_rw("warhead_spatial_hit_estimate", &EffectsEvent::warhead_spatial_hit_estimate)
         .def_rw("warhead_spatial_hit_fraction", &EffectsEvent::warhead_spatial_hit_fraction)
@@ -682,6 +717,12 @@ void bind_runtime(nb::module_& m) {
                 &EffectsEvent::component_failure_probability_calibrated)
         .def_rw("component_failure_probability_evidence_dataset_ref",
                 &EffectsEvent::component_failure_probability_evidence_dataset_ref)
+        .def_rw("component_failure_probability_evidence_row_id",
+                &EffectsEvent::component_failure_probability_evidence_row_id)
+        .def_rw("component_failure_probability_evidence_source_ref",
+                &EffectsEvent::component_failure_probability_evidence_source_ref)
+        .def_rw("component_failure_probability_evidence_provenance",
+                &EffectsEvent::component_failure_probability_evidence_provenance)
         .def_rw("component_failure_sample", &EffectsEvent::component_failure_sample)
         .def_rw("component_failure_count", &EffectsEvent::component_failure_count)
         .def_rw("component_hit_count", &EffectsEvent::component_hit_count)
@@ -698,14 +739,22 @@ void bind_runtime(nb::module_& m) {
         .def_rw("component_primary_integrity", &EffectsEvent::component_primary_integrity)
         .def_rw("component_primary_mechanism_fragment_energy_j",
                 &EffectsEvent::component_primary_mechanism_fragment_energy_j)
+        .def_rw(
+            "component_primary_mechanism_fragment_areal_density_per_m2",
+            &EffectsEvent::component_primary_mechanism_fragment_areal_density_per_m2)
         .def_rw("component_primary_mechanism_penetration_margin",
                 &EffectsEvent::component_primary_mechanism_penetration_margin)
         .def_rw("component_primary_mechanism_blast_overpressure_kpa",
                 &EffectsEvent::component_primary_mechanism_blast_overpressure_kpa)
         .def_rw("component_primary_mechanism_blast_impulse_kpa_ms",
                 &EffectsEvent::component_primary_mechanism_blast_impulse_kpa_ms)
+        .def_rw(
+            "component_primary_mechanism_blast_scaled_distance_m_kg13",
+            &EffectsEvent::component_primary_mechanism_blast_scaled_distance_m_kg13)
         .def_rw("component_primary_mechanism_rod_cut_margin",
                 &EffectsEvent::component_primary_mechanism_rod_cut_margin)
+        .def_rw("component_primary_mechanism_surface_incidence_cos",
+                &EffectsEvent::component_primary_mechanism_surface_incidence_cos)
         .def_rw(
             "component_redundancy_group_availability",
             &EffectsEvent::component_redundancy_group_availability)
@@ -732,6 +781,39 @@ void bind_runtime(nb::module_& m) {
             "vulnerability_calibration_status",
             &EffectsEvent::vulnerability_calibration_status)
         .def_rw("vulnerability_provenance", &EffectsEvent::vulnerability_provenance)
+        .def_rw(
+            "vulnerability_evidence_schema_version",
+            &EffectsEvent::vulnerability_evidence_schema_version)
+        .def_rw(
+            "vulnerability_evidence_source_kind",
+            &EffectsEvent::vulnerability_evidence_source_kind)
+        .def_rw(
+            "vulnerability_evidence_source_ref",
+            &EffectsEvent::vulnerability_evidence_source_ref)
+        .def_rw(
+            "vulnerability_evidence_validation_artifact_ref",
+            &EffectsEvent::vulnerability_evidence_validation_artifact_ref)
+        .def_rw(
+            "vulnerability_evidence_validation_manifest_schema_version",
+            &EffectsEvent::vulnerability_evidence_validation_manifest_schema_version)
+        .def_rw(
+            "vulnerability_evidence_validation_status",
+            &EffectsEvent::vulnerability_evidence_validation_status)
+        .def_rw(
+            "vulnerability_evidence_validation_artifact_sha256",
+            &EffectsEvent::vulnerability_evidence_validation_artifact_sha256)
+        .def_rw(
+            "vulnerability_evidence_validated_surrogate_model_ref",
+            &EffectsEvent::vulnerability_evidence_validated_surrogate_model_ref)
+        .def_rw(
+            "vulnerability_evidence_validation_benchmark_ref",
+            &EffectsEvent::vulnerability_evidence_validation_benchmark_ref)
+        .def_rw(
+            "vulnerability_evidence_validation_metrics_ref",
+            &EffectsEvent::vulnerability_evidence_validation_metrics_ref)
+        .def_rw(
+            "vulnerability_evidence_validation_acceptance_criteria_ref",
+            &EffectsEvent::vulnerability_evidence_validation_acceptance_criteria_ref)
         .def_rw("vulnerability_aspect_bucket", &EffectsEvent::vulnerability_aspect_bucket)
         .def_rw("vulnerability_family_scale", &EffectsEvent::vulnerability_family_scale)
         .def_rw("vulnerability_aspect_scale", &EffectsEvent::vulnerability_aspect_scale)
@@ -741,6 +823,18 @@ void bind_runtime(nb::module_& m) {
             "vulnerability_miss_distance_scale",
             &EffectsEvent::vulnerability_miss_distance_scale)
         .def_rw("vulnerability_effect_scale", &EffectsEvent::vulnerability_effect_scale)
+        .def_rw(
+            "vulnerability_effect_scale_source",
+            &EffectsEvent::vulnerability_effect_scale_source)
+        .def_rw(
+            "vulnerability_effect_scale_evidence_row_id",
+            &EffectsEvent::vulnerability_effect_scale_evidence_row_id)
+        .def_rw(
+            "vulnerability_effect_scale_evidence_source_ref",
+            &EffectsEvent::vulnerability_effect_scale_evidence_source_ref)
+        .def_rw(
+            "vulnerability_effect_scale_evidence_provenance",
+            &EffectsEvent::vulnerability_effect_scale_evidence_provenance)
         .def_rw("producer_node_id", &EffectsEvent::producer_node_id);
 
     nb::class_<DamageReport>(m, "DamageReport")
