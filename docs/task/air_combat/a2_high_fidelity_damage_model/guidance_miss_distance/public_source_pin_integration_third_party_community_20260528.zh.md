@@ -29,8 +29,8 @@
 | status | Meaning | Affected groups |
 |---|---|---|
 | `source_ref_pinned` | Stable public URL/repo/page exists and is useful for citation. | CSBA, CSIS Missile Threat articles, Designation-Systems, GlobalSecurity, Air & Space Forces Magazine, C4DYNAMICS, BVRGym, JSBSim, Stone Soup, FilterPy, community/game rejection records |
-| `repo_ref_pinned` | `git ls-remote` captured current branch/tag commits, but no local artifact or output hash exists. | C4DYNAMICS, BVRGym, JSBSim, small PN repos, FilterPy |
-| `rights_partial` | Page-level copyright or repo license identified, but body artifact/license copy not retained here. | CSBA/CSIS/GlobalSecurity/Designation/Air & Space Forces/C4DYNAMICS |
+| `repo_ref_pinned` | `git ls-remote` captured current branch/tag commits; shallow clones verified license text for C4DYNAMICS, BVRGym, JSBSim and FilterPy, but no canonical source tarball or output hash exists. | C4DYNAMICS, BVRGym, JSBSim, small PN repos, FilterPy |
+| `rights_partial` | Page-level copyright or repo license identified, but body artifact/license copy not retained here. Some URLs timed out locally and remain source-ref-only until retried. | CSBA/CSIS/GlobalSecurity/Designation/Air & Space Forces/C4DYNAMICS |
 | `pending_rights_or_license` | License unknown or inconsistent; source cannot be used as benchmark input. | AIM-120C-5 community PDF, `iwishiwasaneagle/proportional_navigation`, `gedeschaines/propNav` |
 | `rejected_as_truth` | Source may be mentioned only to prevent accidental future use as truth. | CMO-DB viewer, DCS forum/mod ecosystem, War Thunder wiki/forum/community data, anonymous spreadsheets/mirrors |
 
