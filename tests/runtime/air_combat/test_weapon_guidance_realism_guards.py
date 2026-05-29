@@ -593,6 +593,37 @@ def _make_f16_component_redundancy_override(
     return unit
 
 
+def _make_f16_typed_dependency_override(name: str, dependencies: list[dict]) -> dict:
+    with open(
+        resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = name
+    damage_model = unit["damage_model"]
+    damage_model.pop("vulnerability", None)
+    for hitbox in damage_model["hitboxes"]:
+        systems = set(str(system) for system in hitbox.get("systems", []))
+        if "wings" in systems and "flight_control" in systems:
+            hitbox["components"] = [
+                {
+                    "name": "typed_dependency_source",
+                    "system": "auxiliary_dependency_source",
+                    "offset": [-0.8, 2.8, 0.0],
+                    "size": [1.0, 1.1, 0.22],
+                    "armor": 2.0,
+                    "threshold_scale": 1.0,
+                    "redundancy_group_id": "typed_dependency_source",
+                    "redundancy_group": 0.0,
+                    "redundancy_weight": 1.0,
+                    "dependencies": dependencies,
+                    "critical": False,
+                },
+            ]
+    return unit
+
+
 def _make_f16_component_mechanism_threshold_override(
     name: str,
     *,
@@ -3360,6 +3391,71 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 }
                 self.assertTrue(expected_dependencies.issubset(dependency_systems))
 
+    def test_phase3_current_aircraft_dependencies_carry_typed_edge_metadata(self) -> None:
+        units_dir = resolve_repo_path("examples", "config", "database", "aircraft", "units")
+        filenames = (
+            "f16c_block50.json",
+            "su35s_flanker_e.json",
+            "mq9_reaper.json",
+            "mh60r_mvp.json",
+            "e3_sentry.json",
+        )
+        allowed_edge_types = {
+            "generic",
+            "hydraulic_power",
+            "electrical_power",
+            "control_signal",
+            "data_path",
+            "fuel_feed",
+            "structural_support",
+            "crew_operated",
+        }
+        dependency_count = 0
+        observed_edges: dict[tuple[str, str, str], str] = {}
+
+        for filename in filenames:
+            with self.subTest(filename=filename):
+                with open(os.path.join(units_dir, filename), "r", encoding="utf-8") as handle:
+                    unit = json.load(handle)
+                for hitbox in unit["damage_model"]["hitboxes"]:
+                    for component in hitbox.get("components", []):
+                        component_name = str(component.get("name", ""))
+                        for dependency in component.get("dependencies", []):
+                            dependency_count += 1
+                            target_system = str(dependency.get("target_system", ""))
+                            self.assertTrue(target_system, component_name)
+                            self.assertEqual(str(dependency.get("system", "")), target_system)
+                            self.assertIn(str(dependency.get("edge_type", "")), allowed_edge_types)
+                            self.assertIn(
+                                "non-authoritative",
+                                str(dependency.get("provenance", "")),
+                            )
+                            observed_edges[(filename, component_name, target_system)] = str(
+                                dependency.get("edge_type", "")
+                            )
+
+        self.assertGreaterEqual(dependency_count, 100)
+        self.assertEqual(
+            observed_edges[("f16c_block50.json", "electrical_power_bus", "flight_control")],
+            "electrical_power",
+        )
+        self.assertEqual(
+            observed_edges[("f16c_block50.json", "data_link_terminal", "avionics")],
+            "data_path",
+        )
+        self.assertEqual(
+            observed_edges[("f16c_block50.json", "tail_hydraulic_pump", "flight_control")],
+            "hydraulic_power",
+        )
+        self.assertEqual(
+            observed_edges[("mq9_reaper.json", "engine_fuel_control_unit", "fuel")],
+            "fuel_feed",
+        )
+        self.assertEqual(
+            observed_edges[("e3_sentry.json", "rotodome_radar_array", "avionics")],
+            "generic",
+        )
+
     def test_phase3_representative_aircraft_components_report_runtime_identity(self) -> None:
         cases = [
             (
@@ -3490,6 +3586,18 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
             str(event.component_primary_redundancy_group_id),
             "lateral_flight_control_actuators",
         )
+        component_rows = list(event.component_mechanism_load_rows)
+        self.assertTrue(component_rows)
+        self.assertEqual(int(component_rows[0].component_dependency_propagation_count), 2)
+        self.assertIn(
+            str(component_rows[0].component_dependency_edge_type),
+            {"generic", "hydraulic_power"},
+        )
+        self.assertIn(
+            "non-authoritative",
+            str(component_rows[0].component_dependency_provenance),
+        )
+        self.assertTrue(bool(component_rows[0].component_dependency_propagated))
         self.assertLess(float(event.component_redundancy_group_availability), 1.0)
         self.assertLess(after["hydraulic"], before["hydraulic"])
         self.assertLess(after["flight_control"], before["flight_control"])
@@ -3564,6 +3672,145 @@ class WeaponGuidanceRealismGuardTests(unittest.TestCase):
                 self.assertLess(float(event.component_primary_integrity), 1.0)
                 for overlay_name, baseline in expected_drops.items():
                     self.assertLess(overlay[overlay_name], baseline)
+
+    def test_phase3_typed_dependency_target_system_alias_propagates(self) -> None:
+        target_name = "F-16C_A2_TypedDependencyAlias_Test"
+        overrides = [
+            _make_f16_typed_dependency_override(
+                target_name,
+                [
+                    {
+                        "target_system": "hydraulic",
+                        "edge_type": "hydraulic_power",
+                        "scale": 1.0,
+                        "provenance": "unit-test typed dependency",
+                    }
+                ],
+            )
+        ]
+
+        overlay, _, event = _profiled_local_hit_overlay_for_target(
+            target_name,
+            "continuous_rod",
+            (-0.8, 2.8, 0.0),
+            damage=160.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+
+        self.assertEqual(str(event.component_primary_name), "typed_dependency_source")
+        component_rows = list(event.component_mechanism_load_rows)
+        self.assertEqual(len(component_rows), 1)
+        self.assertEqual(int(component_rows[0].component_dependency_propagation_count), 1)
+        self.assertEqual(str(component_rows[0].component_dependency_target_system), "hydraulic")
+        self.assertEqual(str(component_rows[0].component_dependency_edge_type), "hydraulic_power")
+        self.assertEqual(
+            str(component_rows[0].component_dependency_provenance),
+            "unit-test typed dependency",
+        )
+        self.assertLess(float(component_rows[0].component_dependency_source_availability), 1.0)
+        self.assertGreater(float(component_rows[0].component_dependency_effective_scale), 0.0)
+        self.assertTrue(bool(component_rows[0].component_dependency_propagated))
+        self.assertLess(overlay["hydraulic"], 1.0)
+        self.assertLess(overlay["flight_control"], 1.0)
+        self.assertAlmostEqual(overlay["fuel"], 1.0, delta=1.0e-6)
+
+    def test_phase3_typed_dependency_edges_remain_backward_compatible(self) -> None:
+        target_name = "F-16C_A2_MixedDependencySchema_Test"
+        overrides = [
+            _make_f16_typed_dependency_override(
+                target_name,
+                [
+                    {
+                        "system": "fuel",
+                        "edge_type": "fuel_feed",
+                        "scale": 0.80,
+                    },
+                    {
+                        "target_system": "hydraulic",
+                        "edge_type": "hydraulic_power",
+                        "scale": 0.80,
+                        "threshold": 1.0,
+                        "provenance": "unit-test typed dependency",
+                    },
+                ],
+            )
+        ]
+
+        overlay, _, event = _profiled_local_hit_overlay_for_target(
+            target_name,
+            "continuous_rod",
+            (-0.8, 2.8, 0.0),
+            damage=160.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+
+        self.assertEqual(str(event.component_primary_name), "typed_dependency_source")
+        component_rows = list(event.component_mechanism_load_rows)
+        self.assertEqual(len(component_rows), 1)
+        self.assertEqual(int(component_rows[0].component_dependency_propagation_count), 2)
+        self.assertTrue(bool(component_rows[0].component_dependency_propagated))
+        self.assertLess(overlay["fuel"], 1.0)
+        self.assertLess(overlay["hydraulic"], 1.0)
+        self.assertGreater(overlay["fuel_leak"], 0.0)
+
+    def test_phase3_typed_dependency_threshold_can_gate_propagation(self) -> None:
+        permissive_name = "F-16C_A2_TypedDependencyThresholdPermissive_Test"
+        gated_name = "F-16C_A2_TypedDependencyThresholdGated_Test"
+        permissive_overrides = [
+            _make_f16_typed_dependency_override(
+                permissive_name,
+                [
+                    {
+                        "target_system": "hydraulic",
+                        "edge_type": "hydraulic_power",
+                        "scale": 1.0,
+                        "threshold": 1.0,
+                    }
+                ],
+            )
+        ]
+        gated_overrides = [
+            _make_f16_typed_dependency_override(
+                gated_name,
+                [
+                    {
+                        "target_system": "hydraulic",
+                        "edge_type": "hydraulic_power",
+                        "scale": 1.0,
+                        "threshold": 0.0,
+                    }
+                ],
+            )
+        ]
+
+        permissive_overlay, _, permissive_event = _profiled_local_hit_overlay_for_target(
+            permissive_name,
+            "continuous_rod",
+            (-0.8, 2.8, 0.0),
+            damage=160.0,
+            radius=35.0,
+            overrides=permissive_overrides,
+        )
+        gated_overlay, _, gated_event = _profiled_local_hit_overlay_for_target(
+            gated_name,
+            "continuous_rod",
+            (-0.8, 2.8, 0.0),
+            damage=160.0,
+            radius=35.0,
+            overrides=gated_overrides,
+        )
+
+        self.assertEqual(str(permissive_event.component_primary_name), "typed_dependency_source")
+        self.assertEqual(str(gated_event.component_primary_name), "typed_dependency_source")
+        permissive_rows = list(permissive_event.component_mechanism_load_rows)
+        gated_rows = list(gated_event.component_mechanism_load_rows)
+        self.assertEqual(int(permissive_rows[0].component_dependency_propagation_count), 1)
+        self.assertEqual(int(gated_rows[0].component_dependency_propagation_count), 0)
+        self.assertFalse(bool(gated_rows[0].component_dependency_propagated))
+        self.assertLess(permissive_overlay["hydraulic"], gated_overlay["hydraulic"])
+        self.assertAlmostEqual(gated_overlay["hydraulic"], 1.0, delta=1.0e-6)
 
     def test_phase3_component_redundancy_reduces_failure_probability(self) -> None:
         single_name = "F-16C_A2_SingleCriticalActuator_Test"

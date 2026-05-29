@@ -42,6 +42,15 @@ flowchart LR
 
 短期不要要求真实平台全量管线，只要求同一 schema 可以承载后续校准图。
 
+### 2026-05-29 最小运行时增量
+
+- 已把 `DamageComponentDependency` 扩展为可保存 `target_system`、`edge_type`、`threshold`、`delay_s`、`direction` 和 `provenance` 的 typed edge；旧 `system + scale` 保持兼容。
+- loader 已接受三种写法：字符串依赖、旧对象 `system + scale`、新对象 `target_system + edge_type + scale + threshold/provenance`；缺失 `system` 时会用 `target_system` 回填。
+- effects model 已按 `target_system` 投射依赖后果，并用 `edge_type` 做保守工程化方向调制；`threshold=1.0` 保持旧连续传播，低于 1.0 时只在源组件/冗余组可用性跌破门槛后传播。
+- `EffectsEvent.component_mechanism_load_rows[]` 已暴露最小依赖传播摘要：传播条数、代表性 `target_system`、`edge_type`、`threshold`、`delay_s`、`direction`、`provenance`、源可用性和有效尺度；该摘要用于审计工程化传播路径，不授予校准/Pk/确定性引信 authority。
+- F-16、Su-35S、MQ-9、MH-60R 和 E-3 代表性 aircraft unit JSON 已把现有 dependency objects 迁到 typed metadata，同时保留旧 `system` 字段以兼容现有读取路径；明显链路使用 `hydraulic_power`、`electrical_power`、`data_path`、`fuel_feed`，暧昧链路保持 `generic` 并标注 synthetic engineering / non-authoritative provenance。
+- 该增量仍不是完整 graph solve：`delay_s` 和 `direction` 当前可被加载与审计，但尚未形成延迟求解或双向图传播。
+
 ## 路线 B：统一冗余组语义
 
 当前冗余组已经能表达成员数和组可用性，但需要冻结解释：

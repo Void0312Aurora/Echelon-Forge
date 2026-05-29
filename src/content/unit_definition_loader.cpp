@@ -1079,12 +1079,36 @@ bool parse_unit_json(
                                 DamageComponentDependency dependency{};
                                 if (dependency_json.is_string()) {
                                     dependency.system = dependency_json.get<std::string>();
+                                    dependency.target_system = dependency.system;
                                 } else if (dependency_json.is_object()) {
-                                    dependency.system = dependency_json.value("system", "");
+                                    dependency.target_system =
+                                        dependency_json.value("target_system",
+                                            dependency_json.value("system", ""));
+                                    dependency.system =
+                                        dependency_json.value("system", dependency.target_system);
+                                    if (dependency.target_system.empty()) {
+                                        dependency.target_system = dependency.system;
+                                    }
                                     dependency.scale =
                                         dependency_json.value("scale", dependency.scale);
+                                    dependency.edge_type =
+                                        dependency_json.value("edge_type", dependency.edge_type);
+                                    dependency.threshold =
+                                        dependency_json.value("threshold", dependency.threshold);
+                                    dependency.delay_s =
+                                        dependency_json.value("delay_s", dependency.delay_s);
+                                    dependency.direction =
+                                        dependency_json.value("direction", dependency.direction);
+                                    dependency.provenance =
+                                        dependency_json.value("provenance", dependency.provenance);
                                 }
                                 if (dependency.system.empty()) {
+                                    dependency.system = dependency.target_system;
+                                }
+                                if (dependency.target_system.empty()) {
+                                    dependency.target_system = dependency.system;
+                                }
+                                if (dependency.system.empty() && dependency.target_system.empty()) {
                                     continue;
                                 }
                                 component.dependencies.push_back(dependency);

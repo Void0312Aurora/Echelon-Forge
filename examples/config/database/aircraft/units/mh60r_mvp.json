@@ -80,8 +80,8 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "avionics", "scale": 0.75},
-                            {"system": "mission_systems", "scale": 0.65}
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.75, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.65, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     },
@@ -103,8 +103,8 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "avionics", "scale": 0.65},
-                            {"system": "mission_systems", "scale": 0.55}
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.65, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.55, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     },
@@ -126,8 +126,8 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "avionics", "scale": 0.55},
-                            {"system": "mission_systems", "scale": 0.40}
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.55, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.40, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     }
@@ -195,8 +195,8 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "avionics", "scale": 0.60},
-                            {"system": "mission_systems", "scale": 0.45}
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.60, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.45, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     },
@@ -218,8 +218,8 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "avionics", "scale": 0.65},
-                            {"system": "data_link", "scale": 0.35}
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "generic", "scale": 0.65, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "data_link", "target_system": "data_link", "edge_type": "generic", "scale": 0.35, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     },
@@ -241,8 +241,8 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "avionics", "scale": 0.60},
-                            {"system": "data_link", "scale": 0.40}
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "generic", "scale": 0.60, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "data_link", "target_system": "data_link", "edge_type": "generic", "scale": 0.40, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": false
                     },
@@ -264,9 +264,9 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "flight_control", "scale": 0.45},
-                            {"system": "mission_systems", "scale": 0.50},
-                            {"system": "data_link", "scale": 0.45}
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "electrical_power", "scale": 0.45, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "electrical_power", "scale": 0.50, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "data_link", "target_system": "data_link", "edge_type": "electrical_power", "scale": 0.45, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     }
@@ -353,7 +353,7 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "flight_control", "scale": 0.85}
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     }
@@ -402,8 +402,8 @@
                         "redundancy_group": 2.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "hydraulic", "scale": 0.85},
-                            {"system": "flight_control", "scale": 1.00}
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 1.00, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": false
                     },
@@ -425,8 +425,8 @@
                         "redundancy_group": 2.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "hydraulic", "scale": 0.85},
-                            {"system": "flight_control", "scale": 1.00}
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 1.00, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": false
                     },
@@ -448,8 +448,8 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "hydraulic", "scale": 0.85},
-                            {"system": "flight_control", "scale": 1.00}
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 1.00, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     }
@@ -498,7 +498,7 @@
                         "redundancy_group": 0.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "flight_control", "scale": 0.55}
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.55, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": true
                     },
@@ -520,8 +520,8 @@
                         "redundancy_group": 2.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "hydraulic", "scale": 0.75},
-                            {"system": "flight_control", "scale": 0.90}
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.75, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.90, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": false
                     },
@@ -543,8 +543,8 @@
                         "redundancy_group": 2.0,
                         "redundancy_weight": 1.0,
                         "dependencies": [
-                            {"system": "hydraulic", "scale": 0.75},
-                            {"system": "flight_control", "scale": 0.90}
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.75, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.90, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": false
                     }

@@ -555,6 +555,36 @@ void bind_runtime(nb::module_& m) {
         .def_rw("effect_scale", &ComponentMechanismLoadRow::effect_scale)
         .def_rw("component_threshold_scale", &ComponentMechanismLoadRow::component_threshold_scale)
         .def_rw(
+            "component_dependency_propagation_count",
+            &ComponentMechanismLoadRow::component_dependency_propagation_count)
+        .def_rw(
+            "component_dependency_target_system",
+            &ComponentMechanismLoadRow::component_dependency_target_system)
+        .def_rw(
+            "component_dependency_edge_type",
+            &ComponentMechanismLoadRow::component_dependency_edge_type)
+        .def_rw(
+            "component_dependency_threshold",
+            &ComponentMechanismLoadRow::component_dependency_threshold)
+        .def_rw(
+            "component_dependency_delay_s",
+            &ComponentMechanismLoadRow::component_dependency_delay_s)
+        .def_rw(
+            "component_dependency_direction",
+            &ComponentMechanismLoadRow::component_dependency_direction)
+        .def_rw(
+            "component_dependency_provenance",
+            &ComponentMechanismLoadRow::component_dependency_provenance)
+        .def_rw(
+            "component_dependency_source_availability",
+            &ComponentMechanismLoadRow::component_dependency_source_availability)
+        .def_rw(
+            "component_dependency_effective_scale",
+            &ComponentMechanismLoadRow::component_dependency_effective_scale)
+        .def_rw(
+            "component_dependency_propagated",
+            &ComponentMechanismLoadRow::component_dependency_propagated)
+        .def_rw(
             "component_failure_probability",
             &ComponentMechanismLoadRow::component_failure_probability)
         .def_rw(

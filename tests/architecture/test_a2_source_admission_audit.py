@@ -34,6 +34,7 @@ def test_a2_source_admission_audit_current_docs_have_no_error_level_gaps() -> No
     assert result.checked_candidate_docs >= 9
     assert result.checked_calibration_docs >= 6
     assert not [issue for issue in result.issues if issue.severity == "error"]
+    assert not [issue for issue in result.issues if issue.severity == "warning"]
 
 
 def test_a2_source_admission_audit_rejects_candidate_manifest_authority_grants(

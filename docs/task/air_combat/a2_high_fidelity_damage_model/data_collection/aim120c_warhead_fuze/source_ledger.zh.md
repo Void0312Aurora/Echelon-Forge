@@ -44,10 +44,10 @@
 | `source_id` | 来源类型 | `source_ref` | 发布方 / 持有人 | 可公开性 / 权利 | 可用字段 | 交叉验证状态 | 限制 |
 |---|---|---|---|---|---|---|---|
 | `SAN-AIM120-001` | 民间数据库 | `https://www.designation-systems.net/dusrm/m-120.html` | Designation-Systems.net | 民间公开网站；版权归站点所有 | variant history、公开尺寸/重量量级、部件号线索 | 只能与官方 fact sheet 做量级对照 | 不作为 warhead/fuze authority；部件号和质量需要官方/标准来源确认 |
-| `SAN-AIM120-002` | 民间安全/武器资料库 | MissileThreat / CSIS AMRAAM page | CSIS Missile Defense Project | 公开网页；版权归发布方 | 系列概述、尺寸/重量/射程量级 | sanity only | 不是 warhead/fuze engineering source；不得导出 trigger or lethality |
-| `SAN-AIM120-003` | 百科/汇编 | Wikipedia AIM-120 AMRAAM 及其引用链 | Wikipedia contributors / linked sources | CC BY-SA，但引用链质量不一 | 用于发现公开引用线索，不采纳单点值 | sanity only | 不把 wiki 表格值写为 candidate authority |
-| `SAN-AIM120-004` | 仿真/游戏/民间数据库 | CMANO / Command DB、DCS、War Thunder、论坛表格、GitHub 游戏配置 | 各站点/项目 | 权利不一，常不可审计 | 仅用于发现明显量级异常 | sanity only | 单点 warhead mass、fuse radius、fragment count、damage、Pk 必须拒绝权威化 |
-| `SAN-AIM120-005` | 官方公告线索但非 C 型直接证据 | Federal Register / Congress.gov 中 AIM-120D / AIM-120D-3 / AIM-120C-8 军售公告，例如 `public-inspection.federalregister.gov/2024-12392.pdf` | U.S. Department of Defense / Federal Register / Congress.gov | 公开公告；需逐条固定最终 Federal Register 或 Congress.gov URL | 可帮助确认 AMRAAM target-detection / warhead-detonation terminology，但常针对 D/D-3 而不是 C 型 | terminology sanity | 与 `AIM120-WF-006` 交叉 | 不把 D/D-3 TDD 描述外推成 C 型参数；不采纳 classified/sensitive 技术细节 |
+| `SAN-AIM120-002` | 民间安全/武器资料库 | `https://missilethreat.csis.org/missile/amraam/`；MissileThreat / CSIS AMRAAM page | CSIS Missile Defense Project | 公开网页；版权归发布方 | 系列概述、尺寸/重量/射程量级 | sanity only | 不是 warhead/fuze engineering source；不得导出 trigger or lethality |
+| `SAN-AIM120-003` | 百科/汇编 | `https://en.wikipedia.org/wiki/AIM-120_AMRAAM`；Wikipedia AIM-120 AMRAAM 及其引用链 | Wikipedia contributors / linked sources | CC BY-SA，但引用链质量不一 | 用于发现公开引用线索，不采纳单点值 | sanity only | 不把 wiki 表格值写为 candidate authority |
+| `SAN-AIM120-004` | 仿真/游戏/民间数据库 | `category_record:SAN-AIM120-004`；CMANO / Command DB、DCS、War Thunder、论坛表格、GitHub 游戏配置 | 各站点/项目 | 权利不一，常不可审计 | 仅用于发现明显量级异常 | sanity only | 单点 warhead mass、fuse radius、fragment count、damage、Pk 必须拒绝权威化 |
+| `SAN-AIM120-005` | 官方公告线索但非 C 型直接证据 | Federal Register / Congress.gov 中 AIM-120D / AIM-120D-3 / AIM-120C-8 军售公告，例如 `https://public-inspection.federalregister.gov/2024-12392.pdf` | U.S. Department of Defense / Federal Register / Congress.gov | 公开公告；需逐条固定最终 Federal Register 或 Congress.gov URL | 可帮助确认 AMRAAM target-detection / warhead-detonation terminology，但常针对 D/D-3 而不是 C 型 | terminology sanity | 与 `AIM120-WF-006` 交叉 | 不把 D/D-3 TDD 描述外推成 C 型参数；不采纳 classified/sensitive 技术细节 |
 
 ## 拒绝 / 排除记录
 

@@ -731,6 +731,19 @@ struct ComponentDamageSample {
     std::uint32_t group_failed_count = 0;
 };
 
+struct ComponentDependencyPropagationSummary {
+    std::uint32_t propagation_count = 0;
+    std::string target_system;
+    std::string edge_type = "none";
+    double threshold = 1.0;
+    double delay_s = 0.0;
+    std::string direction = "one_way";
+    std::string provenance;
+    double source_availability = 1.0;
+    double effective_scale = 0.0;
+    bool propagated = false;
+};
+
 ComponentDamageSample apply_component_damage_state(
     const DamageComponent& component,
     double failure_probability,
@@ -813,7 +826,88 @@ ComponentDamageSample apply_component_damage_state(
     return sample;
 }
 
-void apply_component_dependency_damage(
+std::string component_dependency_target_system(const DamageComponentDependency& dependency) {
+    if (!dependency.target_system.empty()) {
+        return dependency.target_system;
+    }
+    return dependency.system;
+}
+
+double component_dependency_source_availability(const ComponentDamageSample& sample) {
+    return std::min(
+        std::clamp(sample.integrity, 0.0, 1.0),
+        std::clamp(sample.group_availability, 0.0, 1.0));
+}
+
+double component_dependency_edge_scale(
+    const DamageComponentDependency& dependency,
+    const std::string& target_system
+) {
+    const std::string& edge_type = dependency.edge_type;
+    if (edge_type.empty() || edge_type == "generic") {
+        return 1.0;
+    }
+    if (edge_type == "hydraulic_power" || edge_type == "hydraulic-power") {
+        return system_name_matches(target_system, "hydraulic") ||
+                system_is_air_control_surface(target_system)
+            ? 1.05
+            : 0.60;
+    }
+    if (edge_type == "electrical_power" || edge_type == "electrical-power" ||
+        edge_type == "supply") {
+        return system_name_matches(target_system, "avionics") ||
+                system_is_mission_or_combat(target_system) ||
+                system_is_air_control_surface(target_system)
+            ? 1.00
+            : 0.70;
+    }
+    if (edge_type == "control_signal" || edge_type == "control-signal") {
+        return system_is_air_control_surface(target_system) ||
+                system_name_matches(target_system, "avionics")
+            ? 0.95
+            : 0.55;
+    }
+    if (edge_type == "data_path" || edge_type == "data") {
+        return system_name_matches(target_system, "data_link") ||
+                system_name_matches(target_system, "avionics") ||
+                system_is_mission_or_combat(target_system) ||
+                system_is_air_sensor(target_system)
+            ? 0.95
+            : 0.45;
+    }
+    if (edge_type == "fuel_feed" || edge_type == "fuel-feed") {
+        return system_is_air_fuel(target_system) || system_is_air_propulsion(target_system)
+            ? 1.05
+            : 0.55;
+    }
+    if (edge_type == "structural_support" || edge_type == "structural-support") {
+        return system_is_air_structure(target_system) ||
+                system_is_air_control_surface(target_system)
+            ? 1.00
+            : 0.60;
+    }
+    if (edge_type == "crew_operated" || edge_type == "crew-operated") {
+        return system_is_crew_or_cockpit(target_system) ||
+                system_is_mission_or_combat(target_system) ||
+                system_name_matches(target_system, "flight_control")
+            ? 0.90
+            : 0.55;
+    }
+    return 1.0;
+}
+
+bool component_dependency_threshold_allows(
+    const DamageComponentDependency& dependency,
+    const ComponentDamageSample& sample
+) {
+    const double threshold = std::clamp(dependency.threshold, 0.0, 1.0);
+    if (threshold >= 1.0) {
+        return true;
+    }
+    return component_dependency_source_availability(sample) <= threshold;
+}
+
+ComponentDependencyPropagationSummary apply_component_dependency_damage(
     const DamageComponent& component,
     const ComponentDamageSample& sample,
     double failure_probability,
@@ -822,8 +916,9 @@ void apply_component_dependency_damage(
     AircraftDamageState* aircraft_damage,
     PlatformDamageState* platform_damage
 ) {
+    ComponentDependencyPropagationSummary summary{};
     if (component.dependencies.empty()) {
-        return;
+        return summary;
     }
 
     const double dependency_loss = std::clamp(
@@ -833,67 +928,87 @@ void apply_component_dependency_damage(
         0.0,
         0.85);
     if (dependency_loss <= 1.0e-6) {
-        return;
+        return summary;
     }
 
     for (const auto& dependency : component.dependencies) {
-        if (dependency.system.empty()) {
+        const std::string target_system = component_dependency_target_system(dependency);
+        if (target_system.empty()) {
+            continue;
+        }
+        if (!component_dependency_threshold_allows(dependency, sample)) {
             continue;
         }
         const double dependency_scale =
-            std::clamp(dependency.scale, 0.05, 2.0);
+            std::clamp(
+                dependency.scale * component_dependency_edge_scale(dependency, target_system),
+                0.05,
+                2.0);
         const double availability = std::clamp(
             1.0 - dependency_loss * dependency_scale,
             0.0,
             1.0);
         if (sys_health) {
-            sys_health->systems[dependency.system] =
-                std::min(sys_health->systems[dependency.system], availability);
+            sys_health->systems[target_system] =
+                std::min(sys_health->systems[target_system], availability);
         }
 
         const double impulse =
             std::clamp(dependency_loss * dependency_scale, 0.0, 1.0);
+        ++summary.propagation_count;
+        if (!summary.propagated || dependency_scale > summary.effective_scale) {
+            summary.target_system = target_system;
+            summary.edge_type = dependency.edge_type.empty() ? "generic" : dependency.edge_type;
+            summary.threshold = std::clamp(dependency.threshold, 0.0, 1.0);
+            summary.delay_s = std::max(0.0, dependency.delay_s);
+            summary.direction = dependency.direction.empty() ? "one_way" : dependency.direction;
+            summary.provenance = dependency.provenance;
+            summary.source_availability = component_dependency_source_availability(sample);
+            summary.effective_scale = dependency_scale;
+            summary.propagated = true;
+        }
         if (aircraft_damage) {
-            if (system_is_air_control_surface(dependency.system)) {
+            if (system_is_air_control_surface(target_system)) {
                 aircraft_damage->flight_control_integrity -= 0.06 + 0.12 * impulse;
             }
-            if (system_name_matches(dependency.system, "hydraulic")) {
+            if (system_name_matches(target_system, "hydraulic")) {
                 aircraft_damage->hydraulic_integrity -= 0.06 + 0.14 * impulse;
                 aircraft_damage->flight_control_integrity -= 0.03 + 0.08 * impulse;
             }
-            if (system_is_air_sensor(dependency.system) ||
-                system_name_matches(dependency.system, "avionics")) {
+            if (system_is_air_sensor(target_system) ||
+                system_name_matches(target_system, "avionics")) {
                 aircraft_damage->avionics_integrity -= 0.05 + 0.10 * impulse;
             }
-            if (system_is_air_propulsion(dependency.system)) {
+            if (system_is_air_propulsion(target_system)) {
                 aircraft_damage->propulsion_integrity -= 0.05 + 0.12 * impulse;
             }
-            if (system_is_air_fuel(dependency.system)) {
+            if (system_is_air_fuel(target_system)) {
                 aircraft_damage->fuel_system_integrity -= 0.04 + 0.10 * impulse;
                 aircraft_damage->fuel_leak_severity += 0.02 + 0.05 * impulse;
             }
-            if (system_is_mission_or_combat(dependency.system)) {
+            if (system_is_mission_or_combat(target_system)) {
                 aircraft_damage->avionics_integrity -= 0.03 + 0.08 * impulse;
             }
         }
         if (platform_damage) {
-            if (system_is_air_sensor(dependency.system) ||
-                system_name_matches(dependency.system, "avionics")) {
+            if (system_is_air_sensor(target_system) ||
+                system_name_matches(target_system, "avionics")) {
                 platform_damage->sensor_capability -= 0.02 + 0.06 * impulse;
             }
-            if (system_is_air_control_surface(dependency.system) ||
-                system_name_matches(dependency.system, "hydraulic") ||
-                system_is_air_propulsion(dependency.system)) {
+            if (system_is_air_control_surface(target_system) ||
+                system_name_matches(target_system, "hydraulic") ||
+                system_is_air_propulsion(target_system)) {
                 platform_damage->mobility_capability -= 0.02 + 0.06 * impulse;
             }
-            if (system_is_mission_or_combat(dependency.system)) {
+            if (system_is_mission_or_combat(target_system)) {
                 platform_damage->mission_capability -= 0.02 + 0.06 * impulse;
             }
-            if (system_is_air_fuel(dependency.system)) {
+            if (system_is_air_fuel(target_system)) {
                 platform_damage->survivability_margin -= 0.02 + 0.05 * impulse;
             }
         }
     }
+    return summary;
 }
 
 struct WarheadEffectProfile {
@@ -2301,14 +2416,37 @@ public:
                         component_redundancy_group_failed_count =
                             component_sample.group_failed_count;
                     }
-                    apply_component_dependency_damage(
-                        *component,
-                        component_sample,
-                        failure_probability,
-                        mechanism_scale * resolved_component_scale,
-                        sys_health,
-                        aircraft_damage,
-                        platform_damage);
+                    const ComponentDependencyPropagationSummary dependency_summary =
+                        apply_component_dependency_damage(
+                            *component,
+                            component_sample,
+                            failure_probability,
+                            mechanism_scale * resolved_component_scale,
+                            sys_health,
+                            aircraft_damage,
+                            platform_damage);
+                    if (component_row) {
+                        component_row->component_dependency_propagation_count =
+                            dependency_summary.propagation_count;
+                        component_row->component_dependency_target_system =
+                            dependency_summary.target_system;
+                        component_row->component_dependency_edge_type =
+                            dependency_summary.edge_type;
+                        component_row->component_dependency_threshold =
+                            dependency_summary.threshold;
+                        component_row->component_dependency_delay_s =
+                            dependency_summary.delay_s;
+                        component_row->component_dependency_direction =
+                            dependency_summary.direction;
+                        component_row->component_dependency_provenance =
+                            dependency_summary.provenance;
+                        component_row->component_dependency_source_availability =
+                            dependency_summary.source_availability;
+                        component_row->component_dependency_effective_scale =
+                            dependency_summary.effective_scale;
+                        component_row->component_dependency_propagated =
+                            dependency_summary.propagated;
+                    }
                 }
                 if (failure_sample <= failure_probability) {
                     ++component_failure_count;

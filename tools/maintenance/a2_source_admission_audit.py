@@ -111,7 +111,14 @@ def looks_like_source_row(cells: list[str]) -> bool:
 
 def row_mentions_stable_ref(row_text: str) -> bool:
     return bool(
-        re.search(r"https?://|doi\.org|DOI|ISBN|NTRS|NTIS|DTIC|DLA|ASSIST|report|报告|标准", row_text)
+        re.search(
+            r"https?://|doi\.org|DOI|ISBN|NTRS|NTIS|DTIC|DLA|ASSIST|"
+            r"report|报告|标准|题录|Technical Paper|TP-\d+|ARBRL-TR|"
+            r"BRL Report|MIL-HDBK|MIL-STD|TM\s+\d|category[_ -]record|"
+            r"rejection[_ -]category|search[_ -]lead|examples/",
+            row_text,
+            re.IGNORECASE,
+        )
     )
 
 
@@ -119,14 +126,29 @@ def row_mentions_non_authority(row_text: str) -> bool:
     lowered = row_text.lower()
     return (
         "non-authoritative" in lowered
+        or "candidate" in lowered
         or "authority=`none`" in lowered
         or "authority=none" in lowered
+        or "authority none" in lowered
+        or "authority: none" in lowered
+        or "no authority" in lowered
         or "no authoritative" in lowered
+        or "not authoritative" in lowered
         or "not descriptor" in lowered
+        or "sanity" in lowered
+        or "residual_reference" in lowered
+        or "background_only" in lowered
         or "不授予" in row_text
         or "不得" in row_text
         or "不可" in row_text
         or "不能" in row_text
+        or "不是" in row_text
+        or "不含" in row_text
+        or "不包含" in row_text
+        or "不提供" in row_text
+        or "不采纳" in row_text
+        or "不作为" in row_text
+        or "只记录" in row_text
         or "候选" in row_text
         or "rejected" in lowered
         or "pending" in lowered

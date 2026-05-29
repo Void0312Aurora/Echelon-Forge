@@ -17,6 +17,16 @@ struct ComponentMechanismLoadRow {
     double distance_m = 0.0;
     double effect_scale = 0.0;
     double component_threshold_scale = 1.0;
+    std::uint32_t component_dependency_propagation_count = 0;
+    std::string component_dependency_target_system;
+    std::string component_dependency_edge_type = "none";
+    double component_dependency_threshold = 1.0;
+    double component_dependency_delay_s = 0.0;
+    std::string component_dependency_direction = "one_way";
+    std::string component_dependency_provenance;
+    double component_dependency_source_availability = 1.0;
+    double component_dependency_effective_scale = 0.0;
+    bool component_dependency_propagated = false;
     double component_failure_probability = 0.0;
     std::string component_failure_probability_source = "none";
     bool component_failure_probability_calibrated = false;

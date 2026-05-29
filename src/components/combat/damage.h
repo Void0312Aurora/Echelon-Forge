@@ -8,7 +8,13 @@
 
 struct DamageComponentDependency {
     std::string system;
+    std::string target_system;
+    std::string edge_type = "generic";
     double scale = 1.0;
+    double threshold = 1.0;
+    double delay_s = 0.0;
+    std::string direction = "one_way";
+    std::string provenance = "synthetic_engineering";
 };
 
 struct DamageComponent {

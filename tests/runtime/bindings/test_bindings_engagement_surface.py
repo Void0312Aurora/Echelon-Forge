@@ -82,6 +82,16 @@ def _make_launch_damage_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
     component_load.distance_m = 0.0
     component_load.effect_scale = 0.82
     component_load.component_threshold_scale = 1.15
+    component_load.component_dependency_propagation_count = 1
+    component_load.component_dependency_target_system = "fuel"
+    component_load.component_dependency_edge_type = "fuel_feed"
+    component_load.component_dependency_threshold = 0.95
+    component_load.component_dependency_delay_s = 0.0
+    component_load.component_dependency_direction = "one_way"
+    component_load.component_dependency_provenance = "unit-test typed dependency"
+    component_load.component_dependency_source_availability = 0.71
+    component_load.component_dependency_effective_scale = 0.80
+    component_load.component_dependency_propagated = True
     component_load.component_failure_probability = 0.37
     component_load.component_failure_probability_source = "vulnerability_evidence_row"
     component_load.component_failure_probability_calibrated = True
@@ -266,6 +276,16 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertTupleEqual(
             public_fields(ef_py.ComponentMechanismLoadRow()),
             (
+                "component_dependency_delay_s",
+                "component_dependency_direction",
+                "component_dependency_edge_type",
+                "component_dependency_effective_scale",
+                "component_dependency_propagated",
+                "component_dependency_propagation_count",
+                "component_dependency_provenance",
+                "component_dependency_source_availability",
+                "component_dependency_target_system",
+                "component_dependency_threshold",
                 "component_failure_probability",
                 "component_failure_probability_aspect_bucket",
                 "component_failure_probability_authority",
@@ -574,6 +594,22 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertEqual(str(component_rows[0].component_system), "fuel")
         self.assertEqual(str(component_rows[0].component_redundancy_group_id), "wing_fuel_cells")
         self.assertTrue(bool(component_rows[0].direct_hit))
+        self.assertEqual(int(component_rows[0].component_dependency_propagation_count), 1)
+        self.assertEqual(str(component_rows[0].component_dependency_target_system), "fuel")
+        self.assertEqual(str(component_rows[0].component_dependency_edge_type), "fuel_feed")
+        self.assertAlmostEqual(float(component_rows[0].component_dependency_threshold), 0.95)
+        self.assertAlmostEqual(float(component_rows[0].component_dependency_delay_s), 0.0)
+        self.assertEqual(str(component_rows[0].component_dependency_direction), "one_way")
+        self.assertEqual(
+            str(component_rows[0].component_dependency_provenance),
+            "unit-test typed dependency",
+        )
+        self.assertAlmostEqual(
+            float(component_rows[0].component_dependency_source_availability),
+            0.71,
+        )
+        self.assertAlmostEqual(float(component_rows[0].component_dependency_effective_scale), 0.80)
+        self.assertTrue(bool(component_rows[0].component_dependency_propagated))
         self.assertAlmostEqual(float(component_rows[0].component_failure_probability), 0.37)
         self.assertEqual(
             str(component_rows[0].component_failure_probability_source),
@@ -687,6 +723,16 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertEqual(int(effects.component_hit_count), 0)
         self.assertEqual(list(effects.component_mechanism_load_rows), [])
         component_row = ef_py.ComponentMechanismLoadRow()
+        self.assertEqual(int(component_row.component_dependency_propagation_count), 0)
+        self.assertEqual(str(component_row.component_dependency_target_system), "")
+        self.assertEqual(str(component_row.component_dependency_edge_type), "none")
+        self.assertAlmostEqual(float(component_row.component_dependency_threshold), 1.0)
+        self.assertAlmostEqual(float(component_row.component_dependency_delay_s), 0.0)
+        self.assertEqual(str(component_row.component_dependency_direction), "one_way")
+        self.assertEqual(str(component_row.component_dependency_provenance), "")
+        self.assertAlmostEqual(float(component_row.component_dependency_source_availability), 1.0)
+        self.assertAlmostEqual(float(component_row.component_dependency_effective_scale), 0.0)
+        self.assertFalse(bool(component_row.component_dependency_propagated))
         self.assertAlmostEqual(float(component_row.component_failure_probability), 0.0)
         self.assertEqual(str(component_row.component_failure_probability_source), "none")
         self.assertFalse(bool(component_row.component_failure_probability_calibrated))
