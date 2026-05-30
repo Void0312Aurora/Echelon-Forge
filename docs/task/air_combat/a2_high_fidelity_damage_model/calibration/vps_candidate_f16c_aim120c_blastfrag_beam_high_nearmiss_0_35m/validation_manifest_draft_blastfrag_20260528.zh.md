@@ -20,6 +20,15 @@
 
 当前可执行 scaffold 入口为 `tools/maintenance/a2_blastfrag_validation_scaffold.py`。该工具会保留候选 scope 标签 `near_miss_0_35m`，但同时显式导出当前 runtime 粗桶 `near_miss`，提醒 benchmark/validation scope 与运行时 row 匹配语义尚未完全细化到 0.35 m 子桶。
 同一工具还会导出一个 schema-aligned non-authoritative row draft：descriptor 保持 `source_kind=engineering_surrogate`、`calibration_status=unvalidated`、全部 authority=false，row 只带机制载荷 gate 字段，不带 `effect_scale` 或 `component_failure_probability` 真值。
+当前已新增独立 metrics / acceptance criteria artifact：
+[validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md)。
+它只冻结 Stage B `effect_scale` 候选评审所需的 hard gates，不等于 validation passed。
+当前还新增了独立 scope / independence manifest：
+[validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md](validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md)。
+它冻结 `beam / high / near_miss_0_35m` 的候选边界和 benchmark/input separation；第一版 boundary result table 已经生成，但独立 review 仍未完成。
+当前已补入第一版 boundary probe result report：
+[validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md)。
+它证明 boundary probe 已可执行，但仍只属于 candidate scope review，不构成 authority 放行。
 
 ## Authority 边界
 
@@ -66,7 +75,10 @@
 | `source_trace_completeness` | `BFM-BM-005/006` | `not_run` | manifest prerequisite only |
 | `authority_field_absence` | all | `not_run` | ensures no accidental Pk/fuze/probability output |
 
-所有 metric 仍是草案。验收门槛必须在运行 benchmark 前冻结；不得根据结果反推门槛。
+并非所有 metric 都已冻结。验收门槛必须在运行 benchmark 前冻结；不得根据结果反推门槛。
+当前 Stage B `effect_scale` 的 metrics / thresholds 已冻结到
+[validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md)；
+本 manifest 仍保持 `not_run`，并且 Stage C `component_failure_probability` 继续 deferred。
 
 ## Manifest 缺失项
 
@@ -75,8 +87,10 @@
 | `validated_surrogate_model_ref` | missing | 指向版本化代码、配置、容器或 archive。 |
 | `validation_benchmark_ref` | missing | 指向生成的 benchmark artifact 和 source manifest。 |
 | `validation_artifact_sha256` | missing | benchmark 输出生成后固定 sha256。 |
-| `validation_metrics_ref` | draft only | 指标定义冻结并可复核。 |
-| `validation_acceptance_criteria_ref` | missing | 运行前冻结验收阈值和 reviewer signoff。 |
+| `validation_metrics_ref` | [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md) | 保持 pre-run freeze，不得在结果生成后改写。 |
+| `validation_acceptance_criteria_ref` | [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md) | 独立 reviewer signoff 与 benchmark result table 仍需补齐。 |
+| `validation_scope_ref` | [validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md](validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md) | boundary probes、scope leakage report 和 independence review 仍需补齐。 |
+| `validation_scope_probe_report_ref` | [validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md) | 当前 probe 结果仍是 candidate / non-authoritative，且需要独立 review。 |
 | `review_record` | missing | 独立审阅记录和 residual closeout。 |
 
 ## Recommended Run Order

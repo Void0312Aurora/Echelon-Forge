@@ -3126,6 +3126,127 @@ public:
                     warhead_effect_family(missile.warhead_profile) == "blast" ||
                     warhead_effect_family(missile.warhead_profile) == "fragmentation" ||
                     warhead_effect_family(missile.warhead_profile) == "blast_fragmentation";
+                const auto make_component_projection_candidate = [&](
+                    const Hitbox& parent_box,
+                    const DamageComponent& component,
+                    SpatialProjectionCandidate* out_candidate) {
+                    if (!out_candidate) {
+                        return false;
+                    }
+                    const double distance_m = component_surface_distance(local_imp, component);
+                    if (distance_m > spatial_radius_m) {
+                        return false;
+                    }
+                    const Hitbox component_box = component_as_hitbox(component, parent_box);
+                    const double axis_weight = warhead_axis_projection_weight(
+                        missile.warhead_profile,
+                        local_imp,
+                        component_box,
+                        missile_axis_body);
+                    const double armor_scale = warhead_mechanism_armor_scale(
+                        missile,
+                        component_box,
+                        distance_m,
+                        spatial_radius_m,
+                        axis_weight,
+                        false);
+                    const double exposure_scale =
+                        component_projected_exposure_scale(local_imp, component);
+                    const double orientation_weight = warhead_orientation_pattern_weight(
+                        missile.warhead_profile,
+                        local_imp,
+                        component_box,
+                        warhead_orientation_axis_body);
+                    const WarheadSpatialSample spatial_sample =
+                        sample_warhead_spatial_effect(
+                            missile,
+                            component_box,
+                            distance_m,
+                            spatial_radius_m,
+                            axis_weight,
+                            orientation_weight,
+                            exposure_scale,
+                            false);
+                    const double sampling_scale = std::clamp(
+                        0.55 +
+                            0.35 * std::clamp(spatial_sample.hit_estimate, 0.0, 3.0) / 3.0 +
+                            0.10 * spatial_sample.energy_scale,
+                        0.35,
+                        1.20);
+                    *out_candidate = SpatialProjectionCandidate{
+                        .box = &parent_box,
+                        .component = &component,
+                        .distance_m = distance_m,
+                        .effect_scale = std::clamp(
+                            projected_spatial_effect_scale(
+                                distance_m,
+                                spatial_radius_m,
+                                warhead_projection) *
+                                axis_weight *
+                                orientation_weight *
+                                armor_scale *
+                                exposure_scale *
+                                sampling_scale,
+                            warhead_projection.min_effect_scale,
+                            warhead_projection.max_effect_scale),
+                        .axis_weight = axis_weight,
+                        .orientation_weight = orientation_weight,
+                        .armor_scale = armor_scale,
+                        .exposure_scale = exposure_scale,
+                        .spatial_sample_count = spatial_sample.sample_count,
+                        .spatial_hit_estimate = spatial_sample.hit_estimate,
+                        .spatial_hit_fraction = spatial_sample.hit_fraction,
+                        .spatial_energy_scale = spatial_sample.energy_scale,
+                        .spatial_pattern_scale = spatial_sample.pattern_scale,
+                        .surface_incidence_cos = hitbox_surface_incidence_cos(
+                            local_imp,
+                            component_box,
+                            missile_axis_body),
+                        .mechanism_load = with_surface_incidence(
+                            estimate_warhead_mechanism_load(
+                                missile,
+                                component_box,
+                                distance_m,
+                                spatial_radius_m,
+                                axis_weight,
+                                orientation_weight,
+                                exposure_scale,
+                                false,
+                                closure_mps,
+                                spatial_sample),
+                            hitbox_surface_incidence_cos(
+                                local_imp,
+                                component_box,
+                                missile_axis_body)),
+                    };
+                    return true;
+                };
+                const auto select_best_component_projection_candidate = [&](
+                    const Hitbox& parent_box,
+                    SpatialProjectionCandidate* out_candidate) {
+                    bool found = false;
+                    SpatialProjectionCandidate best_candidate{};
+                    for (const auto& component : parent_box.components) {
+                        SpatialProjectionCandidate candidate{};
+                        if (!make_component_projection_candidate(
+                                parent_box,
+                                component,
+                                &candidate)) {
+                            continue;
+                        }
+                        if (!found ||
+                            candidate.distance_m < best_candidate.distance_m ||
+                            (candidate.distance_m == best_candidate.distance_m &&
+                             candidate.effect_scale > best_candidate.effect_scale)) {
+                            best_candidate = candidate;
+                            found = true;
+                        }
+                    }
+                    if (found && out_candidate) {
+                        *out_candidate = best_candidate;
+                    }
+                    return found;
+                };
                 for (const auto& box : hitboxes->hitboxes) {
                     if (broad_spatial_projection) {
                         const double distance_m = hitbox_surface_distance(local_imp, box);
@@ -3213,92 +3334,13 @@ public:
                     }
                     if (!broad_spatial_projection && !box.components.empty()) {
                         for (const auto& component : box.components) {
-                            const double distance_m = component_surface_distance(local_imp, component);
-                            if (distance_m > spatial_radius_m) {
-                                continue;
+                            SpatialProjectionCandidate component_candidate{};
+                            if (make_component_projection_candidate(
+                                    box,
+                                    component,
+                                    &component_candidate)) {
+                                candidates.push_back(component_candidate);
                             }
-                            const Hitbox component_box = component_as_hitbox(component, box);
-                            const double axis_weight = warhead_axis_projection_weight(
-                                missile.warhead_profile,
-                                local_imp,
-                                component_box,
-                                missile_axis_body);
-                            const double armor_scale = warhead_mechanism_armor_scale(
-                                missile,
-                                component_box,
-                                distance_m,
-                                spatial_radius_m,
-                                axis_weight,
-                                false);
-                            const double exposure_scale =
-                                component_projected_exposure_scale(local_imp, component);
-                            const double orientation_weight = warhead_orientation_pattern_weight(
-                                missile.warhead_profile,
-                                local_imp,
-                                component_box,
-                                warhead_orientation_axis_body);
-                            const WarheadSpatialSample spatial_sample =
-                                sample_warhead_spatial_effect(
-                                    missile,
-                                    component_box,
-                                    distance_m,
-                                    spatial_radius_m,
-                                    axis_weight,
-                                    orientation_weight,
-                                    exposure_scale,
-                                    false);
-                            const double sampling_scale = std::clamp(
-                                0.55 +
-                                    0.35 * std::clamp(spatial_sample.hit_estimate, 0.0, 3.0) / 3.0 +
-                                    0.10 * spatial_sample.energy_scale,
-                                0.35,
-                                1.20);
-                            candidates.push_back(SpatialProjectionCandidate{
-                                .box = &box,
-                                .component = &component,
-                                .distance_m = distance_m,
-                                .effect_scale = std::clamp(
-                                    projected_spatial_effect_scale(
-                                        distance_m,
-                                        spatial_radius_m,
-                                        warhead_projection) *
-                                        axis_weight *
-                                        orientation_weight *
-                                        armor_scale *
-                                        exposure_scale *
-                                        sampling_scale,
-                                    warhead_projection.min_effect_scale,
-                                    warhead_projection.max_effect_scale),
-                                .axis_weight = axis_weight,
-                                .orientation_weight = orientation_weight,
-                                .armor_scale = armor_scale,
-                                .exposure_scale = exposure_scale,
-                                .spatial_sample_count = spatial_sample.sample_count,
-                                .spatial_hit_estimate = spatial_sample.hit_estimate,
-                                .spatial_hit_fraction = spatial_sample.hit_fraction,
-                                .spatial_energy_scale = spatial_sample.energy_scale,
-                                .spatial_pattern_scale = spatial_sample.pattern_scale,
-                                .surface_incidence_cos = hitbox_surface_incidence_cos(
-                                    local_imp,
-                                    component_box,
-                                    missile_axis_body),
-                                .mechanism_load = with_surface_incidence(
-                                    estimate_warhead_mechanism_load(
-                                        missile,
-                                        component_box,
-                                        distance_m,
-                                        spatial_radius_m,
-                                        axis_weight,
-                                        orientation_weight,
-                                        exposure_scale,
-                                        false,
-                                        closure_mps,
-                                        spatial_sample),
-                                    hitbox_surface_incidence_cos(
-                                        local_imp,
-                                        component_box,
-                                        missile_axis_body)),
-                            });
                         }
                     } else if (!broad_spatial_projection) {
                         const double distance_m = hitbox_surface_distance(local_imp, box);
@@ -3432,6 +3474,87 @@ public:
 
                     const double projected_system_severity =
                         std::clamp(system_severity * candidate.effect_scale, 0.02, 0.95);
+                    if (!projected_component &&
+                        broad_spatial_projection &&
+                        !projected_box->components.empty()) {
+                        SpatialProjectionCandidate component_candidate{};
+                        if (select_best_component_projection_candidate(
+                                *projected_box,
+                                &component_candidate)) {
+                            spatial_effect_scale =
+                                std::max(spatial_effect_scale, component_candidate.effect_scale);
+                            sampled_mechanism_scale =
+                                std::max(
+                                    sampled_mechanism_scale,
+                                    component_candidate.armor_scale *
+                                        component_candidate.exposure_scale);
+                            sampled_armor_scale = std::min(
+                                sampled_armor_scale,
+                                component_candidate.armor_scale);
+                            sampled_exposure_scale = std::min(
+                                sampled_exposure_scale,
+                                component_candidate.exposure_scale);
+                            record_warhead_spatial_sample(WarheadSpatialSample{
+                                .sample_count = component_candidate.spatial_sample_count,
+                                .hit_estimate = component_candidate.spatial_hit_estimate,
+                                .hit_fraction = component_candidate.spatial_hit_fraction,
+                                .energy_scale = component_candidate.spatial_energy_scale,
+                                .pattern_scale = component_candidate.spatial_pattern_scale,
+                                .orientation_pattern_scale =
+                                    component_candidate.orientation_weight,
+                            });
+                            record_mechanism_load(component_candidate.mechanism_load);
+
+                            const double component_projected_system_severity = std::clamp(
+                                system_severity * component_candidate.effect_scale,
+                                0.02,
+                                0.95);
+                            const double component_scale =
+                                component_mechanism_threshold_scale(
+                                    missile.warhead_profile,
+                                    component_candidate.component->system) *
+                                std::clamp(
+                                    component_candidate.component->threshold_scale,
+                                    0.40,
+                                    1.80) *
+                                component_authored_mechanism_threshold_scale(
+                                    missile.warhead_profile,
+                                    *component_candidate.component);
+                            sampled_component_threshold_scale =
+                                std::max(
+                                    sampled_component_threshold_scale,
+                                    component_scale);
+                            ComponentMechanismLoadRow* component_row =
+                                record_component_hit(
+                                    *component_candidate.component,
+                                    component_candidate.effect_scale,
+                                    component_scale,
+                                    false,
+                                    component_candidate.distance_m,
+                                    component_candidate.mechanism_load);
+                            processed_air_systems.insert(
+                                component_candidate.component->system);
+                            apply_system_effect(
+                                component_candidate.component->system,
+                                component_projected_system_severity,
+                                component_candidate.effect_scale,
+                                component_scale,
+                                false,
+                                component_candidate.mechanism_load,
+                                component_candidate.component->critical,
+                                component_candidate.component->redundancy_group,
+                                component_candidate.component,
+                                component_row);
+                            spdlog::info(
+                                "   - projected component {}:{} Status: {:.2f}",
+                                component_candidate.component->name.empty()
+                                    ? component_candidate.component->system
+                                    : component_candidate.component->name,
+                                component_candidate.component->system,
+                                sys_health->systems[
+                                    component_candidate.component->system]);
+                        }
+                    }
                     if (projected_component) {
                         const double component_scale =
                             component_mechanism_threshold_scale(
@@ -3493,7 +3616,9 @@ public:
             if (platform_damage && structured_air_target && structure_hit) {
                 const bool direct_structure_hit = direct_hitbox_intersection;
                 WarheadMechanismLoadEvidence vulnerability_effect_mechanism_load =
-                    component_primary_mechanism_load;
+                    direct_structure_hit
+                        ? component_primary_mechanism_load
+                        : WarheadMechanismLoadEvidence{};
                 if (vulnerability_effect_mechanism_load.fragment_energy_j <= 0.0 &&
                     vulnerability_effect_mechanism_load.fragment_areal_density_per_m2 <= 0.0 &&
                     vulnerability_effect_mechanism_load.penetration_margin <= 0.0 &&

@@ -36,6 +36,12 @@
 
 ## Candidate acceptance criteria draft
 
+说明：
+本节仍保留为 data-collection 侧的草案来源，但当前 calibration 包已经把 Stage B
+`effect_scale` 所需的 metrics / thresholds 冻结到
+[validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md)。
+后续若两者冲突，以 calibration 包内的冻结 artifact 为准。
+
 These criteria are draft-only and must be frozen in a future validation report before any run:
 
 | `criteria_id` | Applies to | Draft check | Source basis | Authority effect |

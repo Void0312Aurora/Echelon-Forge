@@ -36,13 +36,35 @@
 
 ## 本目录交付物
 
-- [source_ledger_template.zh.md](source_ledger_template.zh.md)：来源台账模板，记录可追溯引用、保留边界、许可证和 scope 覆盖，不授予 authority。
-- [surrogate_model_card_template.zh.md](surrogate_model_card_template.zh.md)：surrogate model card 模板，记录模型版本、输入输出、假设、限制和非用途。
-- [validation_report_template.zh.md](validation_report_template.zh.md)：验证报告模板，预留 `a2.vulnerability_surrogate_validation.v1` manifest 字段和指标表，但默认 `not_run` / non-authoritative。
+- [source_ledger.zh.md](source_ledger.zh.md)：本候选包的 package-level 来源台账，聚合 target geometry、warhead/fuze、mechanism-load、fragility benchmark 和 standards 控制文档，不授予 authority。
+- [surrogate_model_card.zh.md](surrogate_model_card.zh.md)：本候选包当前 runtime-aligned engineering surrogate 的实际 model card，记录输入、输出、假设、限制和 evidence gate 关系。
+- [validation_report_draft.zh.md](validation_report_draft.zh.md)：本候选包当前的验证报告草案，固化 benchmark、metrics、审阅和 `not_run` / non-authoritative 边界。
 - [validation_manifest_draft_blastfrag_20260528.zh.md](validation_manifest_draft_blastfrag_20260528.zh.md)：把 blast-fragmentation 公开方法收集包映射到首个 `not_run` validation manifest 草案。
+- [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md)：本候选包当前冻结的 validation metrics 与 acceptance criteria artifact。它只服务于 Stage B `effect_scale` 候选评审，不放行 stock authority，也不把 Stage C `component_failure_probability` 混入同一轮验收。
+- [validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md](validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md)：本候选包当前冻结的 scope / bucket / independence manifest。它把 `beam / high / near_miss_0_35m` 的候选边界和 benchmark/input separation 写清楚，但不等于这些边界已经通过执行验证。
+- [validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md)：本候选包当前第一版 scope boundary probe 结果表。它证明边界 probe 已可执行，但仍保持 candidate / non-authoritative。
+- [validation_benchmark_snapshot_stage_b_effect_scale_20260530.zh.md](validation_benchmark_snapshot_stage_b_effect_scale_20260530.zh.md)：本候选包当前第一版 fixed-seed Stage B benchmark snapshot。它把 frozen hard gates 对应的当前候选结果表固化下来，但仍不是独立 validation result。
+- [validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md](validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md)：本候选包当前 author-side review readiness 记录。它汇总可供审阅的 artifacts、当前允许的结论和仍必须保持 open 的 residual。
+- [artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md](artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md)：本候选包当前 Stage B 真正引用或拒绝的 artifact pin 清单。它明确哪些是 acquired candidate、哪些只是 sanity/pending/rejected。
+- [surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md](surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md)：本候选包当前 Stage B surrogate 的 author-side 身份快照。它固定代码、输入、命令和当前输出 hash，但不构成 release-grade validation identity。
+- [target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md](target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md)：本候选包当前 Stage B 使用的目标几何假设表。它明确哪些几何只够支撑 beam witness bookkeeping，哪些 claim 仍被禁止。
+- [warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md](warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md)：本候选包当前 Stage B 使用的战斗部 scope / sensitivity 假设表。它明确 family label、repo toy proxy、third-party sanity 和 rejected data 的边界。
 - [residual_register.zh.md](residual_register.zh.md)：候选残差与阻塞项登记表，初始条目全部保持 open。
 - `tools/maintenance/a2_blastfrag_validation_scaffold.py`：首个可执行的 non-authoritative blast-fragmentation validation scaffold。它输出 fixed-seed toy benchmark、mechanism-load vector，以及与 `a2.vulnerability_evidence.v1` 对齐的 non-authoritative row draft；该 row draft 只保留 gate 字段，不创建 runtime descriptor，不授予 `effect_scale`、`component_failure_probability`、`Pk` 或 `deterministic_fuze` authority。
+- 上述 scaffold 当前已覆盖 `BFM-BM-001..006` 的可执行脚手架层：其中 `BFM-BM-002` 提供非型号化的 Mott/Gurney fragment mass/velocity/energy toy benchmark，`BFM-BM-004` 提供 penetration-margin / domain-rejection toy benchmark，二者都只服务于 candidate validation planning，不构成运行时 authority。
+- `tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py`：把 Stage B `effect_scale` frozen hard gates 对应的当前 fixed-seed scaffold 结果固化成 machine-readable snapshot，用于 review 和 residual 审计；它不会创建 runtime descriptor，也不会绕过独立 review。
+- `tests/architecture/test_a2_blastfrag_stage_b_effect_scale_snapshot.py`：固定上述 Stage B snapshot 的 artifact 形状、hard-gate pass 记录和 non-authoritative 边界。
+- `tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py`：把 Stage B / Stage C 的 runtime-aligned authority exercise 抽成独立 maintenance 工具。它先采样 stock `blast_fragmentation` 近失事件，再导出 baseline event summary、baseline component rows，以及仅限 `test_local_authority_exercise_only` 的 effect-scale / component-probability descriptor candidate；它不是 stock 数据库写入工具，不授予默认 authority。
+- `tests/architecture/test_a2_blastfrag_runtime_aligned_authority_pack.py`：固定上述 authority exercise pack 的 package 边界、可复现性与 CLI 输出形状，防止 test-local 演练被误叙述成正式 candidate authority。
+- `tools/maintenance/a2_candidate_vps_bundle.py`：把本目录文档、validation scaffold 和 runtime-aligned authority exercise 汇总成一个 package-level candidate bundle JSON，用于审阅、验收和后续 authority 评审；该 bundle 默认保持 `candidate_non_authoritative`。
+- `tests/architecture/test_a2_candidate_vps_bundle.py`：固定 candidate bundle 的边界、文档完备性、open residual 列表和 CLI 输出形状，防止候选包再次退回模板状态。
+- 当前 candidate bundle 还会汇总 acceptance criteria artifact 的状态、primary release scope 和 required benchmarks，防止 “criteria 已冻结” 与 “authority 已放行” 被混为一谈。
+- 当前 candidate bundle 还会汇总 scope / independence manifest 的状态、boundary probes 和 out-of-scope labels，防止 “scope 已命名” 与 “scope 已验证” 被混为一谈。
+- 当前 candidate bundle 还会汇总 scope boundary probe 的执行摘要，防止 “有 manifest” 与 “probe 已经跑过” 被混为一谈。
+- 当前 candidate bundle 还会汇总 Stage B fixed-seed benchmark snapshot 与 author-side review readiness，防止 “当前 snapshot 通过 hard gates” 与 “independent validation 已完成” 被混为一谈。
 - `tests/runtime/air_combat/weapon_guidance_realism/vulnerability_scaffold.py`：runtime 回归守卫。它伪造 aircraft JSON 指向上述 non-authoritative row draft，证明该草案即使被加载到 `EffectsEvent.vulnerability_evidence_*` 审计面，也仍保持 `evidence_dataset_valid=false` 且不会放行 `effect_scale_authority`、`component_failure_probability_authority`、`Pk` 或 `deterministic_fuze`。
+- 同一回归文件还包含一个 test-local Stage B 演练：它先从 stock `blast_fragmentation` 近失事件采样 runtime mechanism-load，再构造一个 scope 对齐、manifest 完整、仅放行 `effect_scale_authority` 的 `validated_physics_surrogate` descriptor，证明 A2 候选包已经具备“从 scaffold 元数据到 row-backed effect-scale authority”的最小正向数据路径。该闭环仍只存在于测试临时数据库中，不修改默认 `examples/config/database` authority 状态。
+- 同一回归文件现已补入 test-local Stage C 演练：运行时 broad near-miss 投影会为 `blast_fragmentation` 的被选中 hitbox 补一个 projected component 候选，因此该演练能够在原 `beam / high / near_miss` 子轴上，为 `right_aileron_actuator` 放行 component-specific `component_failure_probability_authority`，同时保留其他 projected components 的 synthetic probability。该闭环同样只存在于测试临时数据库中，不修改默认 `examples/config/database` authority 状态。
 
 相关 data-collection 更新：
 
@@ -57,7 +79,19 @@
 ```bash
 python3 tools/maintenance/a2_blastfrag_validation_scaffold.py
 python3 tools/maintenance/a2_blastfrag_validation_scaffold.py --output /tmp/a2_blastfrag_scaffold.json
+python3 tools/maintenance/a2_blastfrag_scope_boundary_probe.py
+python3 tools/maintenance/a2_blastfrag_scope_boundary_probe.py --output /tmp/a2_scope_boundary_probe.json
+python3 tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py
+python3 tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py --output /tmp/a2_stage_b_effect_scale_snapshot.json
+python3 tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py
+python3 tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py --output /tmp/a2_blastfrag_runtime_aligned_authority_pack.json
+python3 tools/maintenance/a2_candidate_vps_bundle.py
+python3 tools/maintenance/a2_candidate_vps_bundle.py --output /tmp/a2_candidate_vps_bundle.json
 python3 -m pytest -q tests/architecture/test_a2_blastfrag_validation_scaffold.py
+python3 -m pytest -q tests/architecture/test_a2_blastfrag_scope_boundary_probe.py
+python3 -m pytest -q tests/architecture/test_a2_blastfrag_stage_b_effect_scale_snapshot.py
+python3 -m pytest -q tests/architecture/test_a2_blastfrag_runtime_aligned_authority_pack.py
+python3 -m pytest -q tests/architecture/test_a2_candidate_vps_bundle.py
 python3 -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k scaffold
 ```
 

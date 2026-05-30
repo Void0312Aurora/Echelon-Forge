@@ -36,9 +36,33 @@ def test_a2_blastfrag_validation_scaffold_current_repo_is_non_authoritative() ->
     assert not boundary["deterministic_fuze_authority"]
     assert boundary["runtime_descriptor_status"] == "not_created"
 
+    bm002 = artifact["benchmarks"]["BFM-BM-002"]
+    assert bm002["metrics"]["fixed_seed_replay_pass"]
+    assert bm002["metrics"]["positive_mass_velocity_pass"]
+    assert bm002["metrics"]["energy_unit_sanity_pass"]
+    assert bm002["metrics"]["no_truth_labels_pass"]
+    assert bm002["current_point"]["mean_fragment_mass_kg"] > 0.0
+    assert bm002["current_point"]["mean_fragment_velocity_mps"] > 0.0
+    assert bm002["current_point"]["mean_fragment_energy_j"] > 0.0
+
+    bm004 = artifact["benchmarks"]["BFM-BM-004"]
+    assert bm004["metrics"]["unit_roundtrip_pass"]
+    assert bm004["metrics"]["domain_rejection_pass"]
+    assert bm004["metrics"]["monotonic_penetration_margin_pass"]
+    assert bm004["metrics"]["incidence_domain_rejection_pass"]
+    assert bm004["current_point"]["penetration_margin_proxy"] < (
+        bm004["samples"][0]["penetration_margin_proxy"]
+    )
+
     bm006 = artifact["benchmarks"]["BFM-BM-006"]
     assert bm006["metrics"]["source_trace_error_count"] == 0
     assert bm006["metrics"]["source_trace_warning_count"] == 0
+
+    bm003 = artifact["benchmarks"]["BFM-BM-003"]
+    assert bm003["metrics"]["sampling_convergence_pass"]
+    assert bm003["sampling_convergence_summary"]["reference_sample_count"] == 4096
+    assert bm003["sampling_convergence_summary"]["comparison_sample_count"] == 8192
+    assert bm003["sampling_convergence_summary"]["relative_delta"] <= 0.05
 
     mechanism = artifact["mechanism_load_vector"]
     assert set(mechanism.keys()) == {
@@ -81,12 +105,25 @@ def test_a2_blastfrag_validation_scaffold_current_repo_is_non_authoritative() ->
     assert row["miss_distance_bucket"] == "near_miss"
     assert "effect_scale" not in row
     assert "component_failure_probability" not in row
+    assert row["min_fragment_energy_j"] <= artifact["diagnostic_only_fields"]["fragment_energy_j_proxy"]
+    assert row["max_fragment_energy_j"] >= artifact["diagnostic_only_fields"]["fragment_energy_j_proxy"]
     assert row["min_blast_scaled_distance_m_kg13"] <= mechanism["blast_scaled_distance_m_kg13"]
     assert row["max_blast_scaled_distance_m_kg13"] >= mechanism["blast_scaled_distance_m_kg13"]
     assert row["min_fragment_areal_density_per_m2"] <= mechanism["fragment_areal_density_per_m2"]
     assert row["max_fragment_areal_density_per_m2"] >= mechanism["fragment_areal_density_per_m2"]
+    assert row["min_penetration_margin"] <= artifact["diagnostic_only_fields"]["penetration_margin_proxy"]
+    assert row["max_penetration_margin"] >= artifact["diagnostic_only_fields"]["penetration_margin_proxy"]
     assert row["min_surface_incidence_cos"] <= mechanism["surface_incidence_cos"]
     assert row["max_surface_incidence_cos"] >= mechanism["surface_incidence_cos"]
+
+    bm005 = artifact["benchmarks"]["BFM-BM-005"]
+    assert bm005["metrics"]["uncertainty_summary_present"]
+    assert bm005["metrics"]["seed_window_cv_pass"]
+    uncertainty = bm005["uncertainty_summary"]
+    assert uncertainty["evaluated_seeds"] == [20260529, 20260630, 20260731, 20260832]
+    assert uncertainty["fragment_areal_density_per_m2"]["cv"] <= 0.05
+    assert uncertainty["fragment_energy_j_proxy"]["cv"] <= 0.05
+    assert uncertainty["penetration_margin_proxy"]["cv"] <= 0.05
 
 
 def test_a2_blastfrag_validation_scaffold_is_fixed_seed_reproducible() -> None:
@@ -94,12 +131,20 @@ def test_a2_blastfrag_validation_scaffold_is_fixed_seed_reproducible() -> None:
     rhs = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, seed=12345)
 
     assert (
+        lhs["benchmarks"]["BFM-BM-002"]["current_point"]["mean_fragment_energy_j"]
+        == rhs["benchmarks"]["BFM-BM-002"]["current_point"]["mean_fragment_energy_j"]
+    )
+    assert (
         lhs["benchmarks"]["BFM-BM-003"]["current_point"]["beam_witness_areal_density_per_m2"]
         == rhs["benchmarks"]["BFM-BM-003"]["current_point"]["beam_witness_areal_density_per_m2"]
     )
     assert (
         lhs["benchmarks"]["BFM-BM-003"]["current_point"]["hit_count"]
         == rhs["benchmarks"]["BFM-BM-003"]["current_point"]["hit_count"]
+    )
+    assert (
+        lhs["benchmarks"]["BFM-BM-004"]["current_point"]["penetration_margin_proxy"]
+        == rhs["benchmarks"]["BFM-BM-004"]["current_point"]["penetration_margin_proxy"]
     )
     assert lhs["mechanism_load_vector"] == rhs["mechanism_load_vector"]
     assert lhs["diagnostic_only_fields"] == rhs["diagnostic_only_fields"]

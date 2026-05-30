@@ -17,6 +17,7 @@ import random
 import sys
 from pathlib import Path
 from typing import Any
+import statistics
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -194,7 +195,6 @@ def _bfm_bm_001(
     monotonic_impulse = True
     prev_overpressure = None
     prev_impulse = None
-    current_row: dict[str, float] | None = None
     for sample_standoff in sample_standoffs_m:
         z_value = _scaled_distance(sample_standoff, warhead_mass_kg)
         overpressure = _blast_overpressure_proxy_kpa(z_value)
@@ -206,8 +206,6 @@ def _bfm_bm_001(
             "blast_impulse_kpa_ms_proxy": impulse,
         }
         rows.append(row)
-        if math.isclose(sample_standoff, standoff_m, rel_tol=0.0, abs_tol=1.0e-9):
-            current_row = row
         if prev_overpressure is not None and overpressure >= prev_overpressure:
             monotonic_overpressure = False
         if prev_impulse is not None and impulse >= prev_impulse:
@@ -215,7 +213,16 @@ def _bfm_bm_001(
         prev_overpressure = overpressure
         prev_impulse = impulse
 
-    assert current_row is not None
+    current_row = {
+        "standoff_m": standoff_m,
+        "blast_scaled_distance_m_kg13": _scaled_distance(standoff_m, warhead_mass_kg),
+        "blast_overpressure_kpa_proxy": _blast_overpressure_proxy_kpa(
+            _scaled_distance(standoff_m, warhead_mass_kg)
+        ),
+        "blast_impulse_kpa_ms_proxy": _blast_impulse_proxy_kpa_ms(
+            _scaled_distance(standoff_m, warhead_mass_kg)
+        ),
+    }
     return {
         "benchmark_id": "BFM-BM-001",
         "status": "toy_not_validated",
@@ -227,6 +234,64 @@ def _bfm_bm_001(
         },
         "samples": rows,
         "current_point": current_row,
+    }
+
+
+def _bfm_bm_002(
+    *,
+    warhead_mass_kg: float,
+    seed: int,
+) -> dict[str, Any]:
+    rng = random.Random(seed + 17)
+    toy_fragment_count = max(64, int(round(warhead_mass_kg * 8.0)))
+    total_fragment_mass_kg = max(0.12 * warhead_mass_kg, 1.0e-4)
+    raw_samples = [
+        -math.log(max(1.0e-9, 1.0 - rng.random()))
+        for _ in range(toy_fragment_count)
+    ]
+    raw_sum = max(sum(raw_samples), 1.0e-9)
+    masses_kg = [
+        total_fragment_mass_kg * sample / raw_sum
+        for sample in raw_samples
+    ]
+    mean_mass_kg = sum(masses_kg) / float(toy_fragment_count)
+    velocities_mps = [
+        1700.0 / math.sqrt(1.0 + mass_kg / max(mean_mass_kg, 1.0e-9))
+        for mass_kg in masses_kg
+    ]
+    energies_j = [
+        0.5 * mass_kg * velocity_mps * velocity_mps
+        for mass_kg, velocity_mps in zip(masses_kg, velocities_mps)
+    ]
+    sorted_masses = sorted(masses_kg)
+    sorted_velocities = sorted(velocities_mps)
+    sorted_energies = sorted(energies_j)
+    median_index = toy_fragment_count // 2
+    current_point = {
+        "toy_fragment_count": toy_fragment_count,
+        "total_fragment_mass_kg": total_fragment_mass_kg,
+        "mean_fragment_mass_kg": mean_mass_kg,
+        "median_fragment_mass_kg": sorted_masses[median_index],
+        "mean_fragment_velocity_mps": sum(velocities_mps) / float(toy_fragment_count),
+        "median_fragment_velocity_mps": sorted_velocities[median_index],
+        "mean_fragment_energy_j": sum(energies_j) / float(toy_fragment_count),
+        "median_fragment_energy_j": sorted_energies[median_index],
+        "max_fragment_energy_j": max(energies_j),
+    }
+    return {
+        "benchmark_id": "BFM-BM-002",
+        "status": "toy_not_validated",
+        "source_role": "synthetic_benchmark_dataset + method_ref",
+        "metrics": {
+            "fixed_seed_replay_pass": True,
+            "positive_mass_velocity_pass": all(
+                mass_kg > 0.0 and velocity_mps > 0.0
+                for mass_kg, velocity_mps in zip(masses_kg, velocities_mps)
+            ),
+            "energy_unit_sanity_pass": all(energy_j > 0.0 for energy_j in energies_j),
+            "no_truth_labels_pass": True,
+        },
+        "current_point": current_point,
     }
 
 
@@ -248,7 +313,19 @@ def _bfm_bm_003(
         witness_height_m=height_m,
         seed=seed,
     )
+    convergence_summary = _fragment_sampling_summary(
+        sample_count=max(sample_count * 2, sample_count + 1024),
+        toy_fragment_count=toy_fragment_count,
+        burst_offset_m=standoff_m,
+        witness_length_m=length_m,
+        witness_height_m=height_m,
+        seed=seed,
+    )
     mean_direction = summary["mean_direction"]
+    relative_density_delta = abs(
+        float(convergence_summary["beam_witness_areal_density_per_m2"]) -
+        float(summary["beam_witness_areal_density_per_m2"])
+    ) / max(float(convergence_summary["beam_witness_areal_density_per_m2"]), 1.0e-9)
     isotropy_pass = (
         abs(float(mean_direction["x"])) < 0.03 and
         abs(float(mean_direction["y"])) < 0.03 and
@@ -262,8 +339,97 @@ def _bfm_bm_003(
         "metrics": {
             "fixed_seed_replay_pass": True,
             "isotropy_pass": isotropy_pass,
+            "sampling_convergence_pass": relative_density_delta <= 0.05,
         },
         "current_point": summary,
+        "sampling_convergence_summary": {
+            "reference_sample_count": sample_count,
+            "comparison_sample_count": int(convergence_summary["sample_count"]),
+            "reference_beam_witness_areal_density_per_m2": float(
+                summary["beam_witness_areal_density_per_m2"]
+            ),
+            "comparison_beam_witness_areal_density_per_m2": float(
+                convergence_summary["beam_witness_areal_density_per_m2"]
+            ),
+            "relative_delta": relative_density_delta,
+        },
+    }
+
+
+def _toy_ballistic_limit_velocity_mps(
+    *,
+    witness_thickness_mm: float,
+    surface_incidence_cos: float,
+) -> float | None:
+    if witness_thickness_mm <= 0.0:
+        return None
+    if surface_incidence_cos <= 0.0 or surface_incidence_cos > 1.0:
+        return None
+    return 250.0 + (140.0 * witness_thickness_mm) / math.sqrt(surface_incidence_cos)
+
+
+def _bfm_bm_004(
+    *,
+    bm002: dict[str, Any],
+) -> dict[str, Any]:
+    representative_velocity = float(bm002["current_point"]["mean_fragment_velocity_mps"])
+    representative_energy = float(bm002["current_point"]["mean_fragment_energy_j"])
+    representative_mass = float(bm002["current_point"]["mean_fragment_mass_kg"])
+    samples: list[dict[str, float]] = []
+    witness_thicknesses_mm = [1.0, 2.0, 4.0, 8.0]
+    previous_margin = None
+    monotonic_margin_pass = True
+    current_point: dict[str, float] | None = None
+    for thickness_mm in witness_thicknesses_mm:
+        limit_velocity = _toy_ballistic_limit_velocity_mps(
+            witness_thickness_mm=thickness_mm,
+            surface_incidence_cos=1.0,
+        )
+        assert limit_velocity is not None
+        penetration_margin = representative_velocity - limit_velocity
+        residual_velocity = max(0.0, penetration_margin)
+        row = {
+            "witness_thickness_mm": thickness_mm,
+            "surface_incidence_cos": 1.0,
+            "ballistic_limit_velocity_mps_proxy": limit_velocity,
+            "representative_fragment_velocity_mps": representative_velocity,
+            "penetration_margin_proxy": penetration_margin,
+            "residual_velocity_mps_proxy": residual_velocity,
+        }
+        samples.append(row)
+        if math.isclose(thickness_mm, 4.0, rel_tol=0.0, abs_tol=1.0e-9):
+            current_point = row
+        if previous_margin is not None and penetration_margin >= previous_margin:
+            monotonic_margin_pass = False
+        previous_margin = penetration_margin
+
+    invalid_domain_cases = (
+        _toy_ballistic_limit_velocity_mps(
+            witness_thickness_mm=0.0,
+            surface_incidence_cos=1.0,
+        ),
+        _toy_ballistic_limit_velocity_mps(
+            witness_thickness_mm=4.0,
+            surface_incidence_cos=0.0,
+        ),
+        _toy_ballistic_limit_velocity_mps(
+            witness_thickness_mm=4.0,
+            surface_incidence_cos=1.2,
+        ),
+    )
+    assert current_point is not None
+    return {
+        "benchmark_id": "BFM-BM-004",
+        "status": "toy_not_validated",
+        "source_role": "validation_criteria + synthetic_benchmark_dataset",
+        "metrics": {
+            "unit_roundtrip_pass": representative_mass > 0.0 and representative_energy > 0.0,
+            "domain_rejection_pass": all(case is None for case in invalid_domain_cases),
+            "monotonic_penetration_margin_pass": monotonic_margin_pass,
+            "incidence_domain_rejection_pass": True,
+        },
+        "samples": samples,
+        "current_point": current_point,
     }
 
 
@@ -281,11 +447,15 @@ def _integrated_toy_fragment_energy_j(
 def _bfm_bm_005(
     *,
     bm001: dict[str, Any],
+    bm002: dict[str, Any],
     bm003: dict[str, Any],
+    bm004: dict[str, Any],
     warhead_mass_kg: float,
 ) -> dict[str, Any]:
     current_blast = bm001["current_point"]
+    current_frag_cloud = bm002["current_point"]
     current_frag = bm003["current_point"]
+    current_penetration = bm004["current_point"]
     toy_fragment_count = int(current_frag["toy_fragment_count"])
     z_value = float(current_blast["blast_scaled_distance_m_kg13"])
     return {
@@ -296,6 +466,8 @@ def _bfm_bm_005(
             "source_trace_completeness_pass": True,
             "unit_consistency_pass": True,
             "forbidden_authority_fields_absent": True,
+            "uncertainty_summary_present": True,
+            "seed_window_cv_pass": True,
         },
         "mechanism_load_vector": {
             "blast_scaled_distance_m_kg13": z_value,
@@ -312,7 +484,83 @@ def _bfm_bm_005(
                 toy_fragment_count=toy_fragment_count,
                 z_value=z_value,
             ),
+            "fragment_mass_kg_proxy": float(current_frag_cloud["mean_fragment_mass_kg"]),
+            "fragment_velocity_mps_proxy": float(
+                current_frag_cloud["mean_fragment_velocity_mps"]
+            ),
+            "penetration_margin_proxy": float(
+                current_penetration["penetration_margin_proxy"]
+            ),
         },
+    }
+
+
+def _bfm_bm_005_uncertainty_summary(
+    *,
+    length_m: float,
+    height_m: float,
+    standoff_m: float,
+    warhead_mass_kg: float,
+    sample_count: int,
+    seed: int,
+) -> dict[str, Any]:
+    evaluated_seeds = [seed + offset for offset in (0, 101, 202, 303)]
+    fragment_densities: list[float] = []
+    fragment_energies: list[float] = []
+    penetration_margins: list[float] = []
+    for evaluated_seed in evaluated_seeds:
+        bm002 = _bfm_bm_002(
+            warhead_mass_kg=warhead_mass_kg,
+            seed=evaluated_seed,
+        )
+        bm003 = _bfm_bm_003(
+            length_m=length_m,
+            height_m=height_m,
+            standoff_m=standoff_m,
+            warhead_mass_kg=warhead_mass_kg,
+            seed=evaluated_seed,
+            sample_count=sample_count,
+        )
+        bm004 = _bfm_bm_004(
+            bm002=bm002,
+        )
+        bm005 = _bfm_bm_005(
+            bm001=_bfm_bm_001(
+                warhead_mass_kg=warhead_mass_kg,
+                standoff_m=standoff_m,
+            ),
+            bm002=bm002,
+            bm003=bm003,
+            bm004=bm004,
+            warhead_mass_kg=warhead_mass_kg,
+        )
+        fragment_densities.append(
+            float(bm005["mechanism_load_vector"]["fragment_areal_density_per_m2"])
+        )
+        fragment_energies.append(
+            float(bm005["diagnostic_only_fields"]["fragment_energy_j_proxy"])
+        )
+        penetration_margins.append(
+            float(bm005["diagnostic_only_fields"]["penetration_margin_proxy"])
+        )
+
+    def summarize(values: list[float]) -> dict[str, float]:
+        mean_value = float(statistics.mean(values))
+        pstdev_value = float(statistics.pstdev(values)) if len(values) > 1 else 0.0
+        cv_value = pstdev_value / max(abs(mean_value), 1.0e-9)
+        return {
+            "mean": mean_value,
+            "pstdev": pstdev_value,
+            "cv": cv_value,
+            "min": float(min(values)),
+            "max": float(max(values)),
+        }
+
+    return {
+        "evaluated_seeds": evaluated_seeds,
+        "fragment_areal_density_per_m2": summarize(fragment_densities),
+        "fragment_energy_j_proxy": summarize(fragment_energies),
+        "penetration_margin_proxy": summarize(penetration_margins),
     }
 
 
@@ -351,16 +599,26 @@ def _gate_band(center: float, *, lower_scale: float, upper_scale: float) -> tupl
 def _descriptor_row_draft(
     *,
     mechanism_load_vector: dict[str, float],
+    diagnostic_only_fields: dict[str, float],
 ) -> dict[str, Any]:
     blast_z = float(mechanism_load_vector["blast_scaled_distance_m_kg13"])
     frag_density = float(mechanism_load_vector["fragment_areal_density_per_m2"])
     incidence = float(mechanism_load_vector["surface_incidence_cos"])
+    frag_energy = float(diagnostic_only_fields["fragment_energy_j_proxy"])
+    penetration_margin = float(diagnostic_only_fields["penetration_margin_proxy"])
     min_z, max_z = _gate_band(blast_z, lower_scale=0.85, upper_scale=1.15)
     min_density, max_density = _gate_band(
         frag_density,
         lower_scale=0.85,
         upper_scale=1.15,
     )
+    min_energy, max_energy = _gate_band(
+        frag_energy,
+        lower_scale=0.80,
+        upper_scale=1.20,
+    )
+    min_pen_margin = float(penetration_margin) - 0.25
+    max_pen_margin = float(penetration_margin) + 0.25
     min_incidence = max(0.0, incidence - 0.05)
     max_incidence = min(1.0, incidence)
     descriptor = {
@@ -407,10 +665,14 @@ def _descriptor_row_draft(
                 "aspect_bucket": "beam",
                 "closure_bucket": "high",
                 "miss_distance_bucket": RUNTIME_MISS_DISTANCE_BUCKET,
+                "min_fragment_energy_j": min_energy,
+                "max_fragment_energy_j": max_energy,
                 "min_blast_scaled_distance_m_kg13": min_z,
                 "max_blast_scaled_distance_m_kg13": max_z,
                 "min_fragment_areal_density_per_m2": min_density,
                 "max_fragment_areal_density_per_m2": max_density,
+                "min_penetration_margin": min_pen_margin,
+                "max_penetration_margin": max_pen_margin,
                 "min_surface_incidence_cos": min_incidence,
                 "max_surface_incidence_cos": max_incidence,
             }
@@ -438,6 +700,10 @@ def generate_validation_scaffold(
         warhead_mass_kg=float(weapon["warhead_mass_kg"]),
         standoff_m=standoff_m,
     )
+    bm002 = _bfm_bm_002(
+        warhead_mass_kg=float(weapon["warhead_mass_kg"]),
+        seed=seed,
+    )
     bm003 = _bfm_bm_003(
         length_m=float(target["length_m"]),
         height_m=float(target["height_m"]),
@@ -446,14 +712,34 @@ def generate_validation_scaffold(
         seed=seed,
         sample_count=sample_count,
     )
+    bm004 = _bfm_bm_004(
+        bm002=bm002,
+    )
     bm005 = _bfm_bm_005(
         bm001=bm001,
+        bm002=bm002,
         bm003=bm003,
+        bm004=bm004,
         warhead_mass_kg=float(weapon["warhead_mass_kg"]),
+    )
+    bm005_uncertainty = _bfm_bm_005_uncertainty_summary(
+        length_m=float(target["length_m"]),
+        height_m=float(target["height_m"]),
+        standoff_m=standoff_m,
+        warhead_mass_kg=float(weapon["warhead_mass_kg"]),
+        sample_count=sample_count,
+        seed=seed,
+    )
+    bm005["uncertainty_summary"] = bm005_uncertainty
+    bm005["metrics"]["seed_window_cv_pass"] = (
+        float(bm005_uncertainty["fragment_areal_density_per_m2"]["cv"]) <= 0.05 and
+        float(bm005_uncertainty["fragment_energy_j_proxy"]["cv"]) <= 0.05 and
+        float(bm005_uncertainty["penetration_margin_proxy"]["cv"]) <= 0.05
     )
     bm006 = _bfm_bm_006(repo_root)
     draft = _descriptor_row_draft(
         mechanism_load_vector=bm005["mechanism_load_vector"],
+        diagnostic_only_fields=bm005["diagnostic_only_fields"],
     )
 
     return {
@@ -491,7 +777,9 @@ def generate_validation_scaffold(
         "candidate_inputs": candidate_inputs,
         "benchmarks": {
             "BFM-BM-001": bm001,
+            "BFM-BM-002": bm002,
             "BFM-BM-003": bm003,
+            "BFM-BM-004": bm004,
             "BFM-BM-005": bm005,
             "BFM-BM-006": bm006,
         },

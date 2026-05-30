@@ -184,10 +184,13 @@
 建议按以下顺序升级，避免多层 authority 一起松动：
 
 1. **阶段 A**：冻结本窄域 scope，补齐 source ledger、validation manifest、residual register 和 authority 声明。
-2. **阶段 B**：先放行 `effect_scale_authority`，让 blast/fragment 机制载荷缩放进入 row-backed authority。
-3. **阶段 C**：在同一窄域内再放行 `component_failure_probability_authority`，优先从 component-specific rows 开始。
+2. **阶段 B**：先放行 `effect_scale_authority`，让 blast/fragment 机制载荷缩放进入 row-backed authority。当前仓库已存在 test-local runtime 回归，证明 `AIM-120C-class / blast_fragmentation / F-16C_Block50 / beam / high / near_miss` 的 `validated_physics_surrogate` effect-scale-only descriptor 可被端到端消费；但该闭环仍停留在临时数据库与测试路径，不代表 stock 数据库或正式候选包已默认授予 authority。
+3. **阶段 C**：在同一窄域内再放行 `component_failure_probability_authority`，优先从 component-specific rows 开始。当前仓库已存在 test-local runtime 回归，证明 `blast_fragmentation` 的 broad near-miss 投影现在能够导出 projected component rows，并在同一 `beam / high / near_miss` 子轴上为 `right_aileron_actuator` 演练 component-specific probability authority；但该闭环仍停留在临时数据库与测试路径，不代表 stock 数据库或正式候选包已默认授予 authority。
 4. **阶段 D**：只在同一 weapon-target 主 scope 内，逐步扩到更多 aspect / closure / miss-distance buckets。
 5. **阶段 E**：待独立 fuze 证据链、replay/admission matrix、target signature 和 kill-chain 校准闭合后，再单独评估 `deterministic_fuze_authority` 与 `pk_authority`；二者不得借本轮结果自动继承。
+
+当前建议把 Stage B / C 的 test-local authority 演练统一收口到 `tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py`。该工具固定导出 baseline near-miss event summary、projected component rows，以及仅限 `test_local_authority_exercise_only` 的 descriptor candidate，避免把测试私有 helper、stock 数据库 authority 和正式候选包产物混在一起。
+当前 Stage A 也已有 package-level 收口工具 `tools/maintenance/a2_candidate_vps_bundle.py`：它会把 source ledger、surrogate model card、validation report draft、validation scaffold 和 test-local authority exercise 汇成一个 candidate bundle，确保正式候选包不再只是模板集合，而是一个可审计、可测试、但仍保持 non-authoritative 的评审单元。
 
 ## 11. 当前判定
 

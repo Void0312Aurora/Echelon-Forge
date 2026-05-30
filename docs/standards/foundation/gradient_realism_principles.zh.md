@@ -98,6 +98,9 @@ sensor、weapon 以及未来领域。
    reward、termination、diagnostics 或可追踪的 runtime product。
 4. compatibility 或 diagnostics-only 路径不能建立维护中的真实性，除非该门槛明确允许。
 5. 低门槛回归会阻断所有依赖它的更高真实性声明。
+6. 当某个域把 authority 拆成 `effect scale`、`component failure`、`pk`、`deterministic fuze`
+   等分层字段时，文档必须逐项声明哪些已放行、哪些仍关闭；局部 row-backed authority
+   不能自动上卷成更高场景梯度或全域真实性升级。
 
 ## 回归规则
 
