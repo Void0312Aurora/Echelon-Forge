@@ -78,6 +78,20 @@ The first MVP should prove the following:
 - mainline simulation semantics do not need to be weakened just to satisfy the
   frontend shell.
 
+## Current Operator Path
+
+For the current single-aircraft MVP, the practical operator flow is:
+
+- run the authoritative inference backend on HEI inside `~/Workshop/CMO`;
+- load the trained policy plus its paired `train_config_backup.json` and
+  `scenario_backup.json`;
+- expose `127.0.0.1:8765` from HEI to the local workstation over SSH;
+- launch Arma locally against the forwarded endpoint so the frontend stays a
+  proxy shell while HEI remains the source of truth.
+
+This keeps training and inference close to the heavier runtime environment
+while leaving the local workstation responsible for the game client only.
+
 ## Non-Goals
 
 - Do not treat the external game shell as the source of truth.

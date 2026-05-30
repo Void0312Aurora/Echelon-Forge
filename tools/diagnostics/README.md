@@ -137,6 +137,29 @@ Run the env-backed Arma proxy backend:
   --mission-obs-mode basic
 ```
 
+Run the env-backed Arma proxy backend with a trained SB3 policy:
+
+```bash
+./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
+  --host 127.0.0.1 \
+  --port 8765 \
+  --scenario /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
+  --train-config /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
+  --model /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
+  --algo AdaptiveKLPPO \
+  --device cpu
+```
+
+Typical HEI-backed operator flow for the Arma bridge:
+
+```bash
+ssh -N -L 8765:127.0.0.1:8765 HEI
+```
+
+Then launch the local Arma side against the forwarded endpoint, for example
+with the existing PowerShell helper in `ArmaOnly` mode plus
+`-ReuseExistingBackend`.
+
 Show family-specific help:
 
 ```bash

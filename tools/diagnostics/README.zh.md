@@ -136,6 +136,28 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
   --mission-obs-mode basic
 ```
 
+运行挂接训练后 SB3 策略的 env-backed Arma proxy backend：
+
+```bash
+./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
+  --host 127.0.0.1 \
+  --port 8765 \
+  --scenario /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
+  --train-config /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
+  --model /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
+  --algo AdaptiveKLPPO \
+  --device cpu
+```
+
+Arma bridge 走 HEI 推理后端时的典型操作流：
+
+```bash
+ssh -N -L 8765:127.0.0.1:8765 HEI
+```
+
+随后本地 Arma 侧可继续复用现有 PowerShell helper，以 `ArmaOnly` 模式配合
+`-ReuseExistingBackend` 连接该转发端口。
+
 显示族特定帮助：
 
 ```bash
