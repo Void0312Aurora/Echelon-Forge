@@ -1,9 +1,9 @@
 {
   "algo": "AdaptiveKLPPO",
   "policy": "SquashedMultiInputPolicy",
-  "total_timesteps": 32768,
+  "total_timesteps": 98304,
   "n_envs": 4,
-  "save_freq": 8192,
+  "save_freq": 16384,
   "runtime": {
     "world_batch_vec_env": true,
     "world_batch_threads": 1,

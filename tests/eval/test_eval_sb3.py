@@ -5,10 +5,12 @@ import os
 import subprocess
 import sys
 import tempfile
+from argparse import Namespace
 import unittest
 from pathlib import Path
 
 from python.testing.runtime import ensure_repo_imports
+from tools.eval.eval_sb3 import _build_single_env
 from tools.eval.sb3_eval_base import load_sb3_policy
 
 
@@ -16,6 +18,63 @@ ensure_repo_imports()
 
 
 class EvalSB3Tests(unittest.TestCase):
+    def test_single_eval_builds_world_batch_runtime_for_maintained_execution_entry(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        train_config_path = repo_root / "examples" / "config" / "training" / "frozen" / "execution" / "p3_takeoff_to_cruise_retrain_v1.json"
+        train_config = json.loads(train_config_path.read_text(encoding="utf-8"))
+
+        scenario = {
+            "scenario_name": "eval_sb3_single_world_batch_smoke",
+            "meta": {"max_steps": 2},
+            "environment": {
+                "time_step": 0.05,
+                "terrain_type": "flat",
+                "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+            },
+            "mission_command": {
+                "command_code": 3,
+                "target_heading": 90.0,
+                "target_altitude": 1200.0,
+                "target_speed": 180.0,
+                "waypoint_mode": "flyby",
+                "waypoints": [{"x": 3000.0, "y": 0.0, "z": 1200.0}],
+            },
+            "entities": [
+                {
+                    "name": "Lead",
+                    "type": "Aircraft",
+                    "side": "Blue",
+                    "is_agent": True,
+                    "pos": [0.0, 0.0, 1200.0],
+                    "vel": [0.0, 180.0, 0.0],
+                    "heading": 90.0,
+                }
+            ],
+        }
+
+        args = Namespace(
+            include_visual=None,
+            include_proprio=None,
+            action_mode=None,
+            mission_obs_mode=None,
+            visual_downsample=None,
+            visual_update_interval=None,
+            temporal_history_len=None,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_path = Path(tmpdir) / "scenario.json"
+            scenario_path.write_text(json.dumps(scenario, ensure_ascii=True), encoding="utf-8")
+
+            env, env_settings = _build_single_env(str(scenario_path), train_config, args)
+            try:
+                self.assertTrue(bool(train_config.get("runtime", {}).get("world_batch_vec_env")))
+                self.assertEqual(env_settings.get("execution_step_runtime_mode"), "compiled")
+                handle = getattr(env, "_handle", env)
+                self.assertIsNotNone(getattr(handle, "world_vec", None))
+            finally:
+                env.close()
+
     def test_load_sb3_policy_supports_historical_shared_and_hmoe_models(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         cases = [

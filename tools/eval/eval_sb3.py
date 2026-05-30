@@ -20,6 +20,7 @@ ensure_repo_imports()
 
 from gym_envs.universal_env import UniversalEnv
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 from tools.eval.eval_utils import format_stats
 from tools.eval.sb3_eval_base import (
@@ -37,9 +38,19 @@ VALID_MODES = {"single", "cooperative"}
 def _build_single_env(scenario_path: str, train_config: dict[str, Any], args: argparse.Namespace):
     env_settings = make_env_settings(train_config, args, include_runtime_overrides=False)
     wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
-    env = UniversalEnv(os.path.abspath(scenario_path), **env_settings)
-    if wrapper_class is not None:
-        env = wrapper_class(env, **(wrapper_kwargs or {}))
+    runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config.get("runtime", {}), dict) else {}
+    if bool(runtime_cfg.get("world_batch_vec_env", False)):
+        env = build_single_world_batch_execution_runtime(
+            scenario_path=os.path.abspath(scenario_path),
+            env_settings=env_settings,
+            wrapper_class=wrapper_class,
+            wrapper_kwargs=wrapper_kwargs,
+            worker_threads=runtime_cfg.get("world_batch_threads"),
+        )
+    else:
+        env = UniversalEnv(os.path.abspath(scenario_path), **env_settings)
+        if wrapper_class is not None:
+            env = wrapper_class(env, **(wrapper_kwargs or {}))
     return env, env_settings
 
 

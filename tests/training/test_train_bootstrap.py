@@ -11,6 +11,21 @@ from python.training import build_train_arg_parser, prepare_training_bootstrap
 
 
 class TrainBootstrapTests(unittest.TestCase):
+    def test_p3_frozen_execution_entry_uses_maintained_world_batch_path(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        config_path = repo_root / "examples" / "config" / "training" / "frozen" / "execution" / "p3_takeoff_to_cruise_retrain_v1.json"
+
+        with config_path.open("r", encoding="utf-8") as handle:
+            config = json.load(handle)
+
+        runtime = config.get("runtime", {})
+        env = config.get("env", {})
+
+        self.assertTrue(bool(runtime.get("world_batch_vec_env")))
+        self.assertEqual(runtime.get("batch_observation_backend"), "compiled")
+        self.assertEqual(runtime.get("batch_visual_backend"), "compiled")
+        self.assertEqual(env.get("execution_step_runtime_mode"), "compiled")
+
     def test_prepare_training_bootstrap_sets_run_layout_and_seed(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
