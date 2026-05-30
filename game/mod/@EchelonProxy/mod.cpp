@@ -1,0 +1,13 @@
+name = "Echelon Proxy";
+picture = "";
+logo = "";
+logoOver = "";
+logoSmall = "";
+actionName = "Echelon Proxy";
+action = "";
+tooltip = "Echelon Proxy";
+tooltipOwned = "Echelon Proxy";
+overview = "Local-only proxy frontend mod for Echelon authoritative-backend experiments.";
+hideName = 0;
+hidePicture = 1;
+dlcColor[] = {0.08, 0.12, 0.16, 1};

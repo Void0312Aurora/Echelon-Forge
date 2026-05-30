@@ -38,6 +38,10 @@
   - 用于维护的诊断系列的统一基准测试 CLI。
 - [run_benchmark_suite.py](diagnostics/run_benchmark_suite.py)
   - 用于 `tools/diagnostics/` 下维护的基准测试套件的统一配置驱动入口点。
+- [arma_proxy_backend_stub.py](diagnostics/arma_proxy_backend_stub.py)
+  - 面向第一版 `@EchelonProxy` Arma bridge 协议的最小本地 TCP 后端 stub。
+- [arma_proxy_backend_echelon_env.py](diagnostics/arma_proxy_backend_echelon_env.py)
+  - 基于 Echelon `UniversalEnv` 的 TCP 后端，让 Arma 继续做表现壳，而后端状态在仓库内真实 step。
 - [diagnose_cooperative_trajectory.py](diagnostics/diagnose_cooperative_trajectory.py)
   - 统一的协同轨迹回放/导出 CLI，支持 `takeoff` 和 `takeoff_to_cruise`。
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)

@@ -31,6 +31,10 @@ Current maintained diagnostics:
   - Quick leader-layer throughput probe for the maintained `auto`, `subproc`, `shared`, and `dummy` baselines.
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
+- [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
+  - Minimal line-protocol TCP stub for the local `game/` Arma bridge. It acknowledges `begin_session`, consumes `host_frame`, and emits synthetic `proxy_state` payloads for `echelon_bridge.dll`.
+- [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
+  - `UniversalEnv`-backed line-protocol TCP backend for the same Arma bridge. It anchors backend truth to the Arma host-frame position/orientation while stepping authoritative flight state inside Echelon Forge.
 - `spatial_query`
   - Compiled spatial-query vs legacy geometry benchmark.
 - `scenario_compiler`
@@ -109,6 +113,28 @@ Run one benchmark family through the unified CLI:
 ./.venv/bin/python tools/diagnostics/benchmark.py \
   --family world_batch_vec_env \
   --n-envs 8 --steps 128 --reset-iters 24 --mission-obs-mode nav_v2 --action-mode full
+```
+
+Run the local Arma proxy backend stub:
+
+```bash
+./.venv/bin/python tools/diagnostics/arma_proxy_backend_stub.py \
+  --host 127.0.0.1 \
+  --port 8765 \
+  --start-position 1200 3400 1500 \
+  --speed-mps 220 \
+  --log-requests
+```
+
+Run the env-backed Arma proxy backend:
+
+```bash
+./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
+  --host 127.0.0.1 \
+  --port 8765 \
+  --scenario scenarios/stable_flight/stable_flight.json \
+  --action-mode full \
+  --mission-obs-mode basic
 ```
 
 Show family-specific help:

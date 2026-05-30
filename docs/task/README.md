@@ -42,6 +42,9 @@ For lifecycle cleanup across this tree, see the
 - [air_combat/](air_combat/README.md): active `1v1` air-combat workline.
   Start from the local README for the current status, then use the linked
   archive snapshots only for traceability.
+- [game/](game/README.md): exploratory game-frontend integration workline.
+  Start here when evaluating simulation-backed gameplay shells, local-only game
+  branches, or authoritative-backend proxy frontend experiments.
 - [common_air_naval/](common_air_naval/README.md): converged entry for the
   common/air/naval split workline. The local README separates the still-active
   carry-over plan from the superseded pre-implementation analysis in archive.

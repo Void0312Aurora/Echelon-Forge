@@ -30,6 +30,10 @@
   - 针对维护的 `auto`、`subproc`、`shared` 和 `dummy` 基线的快速领导者层吞吐量探针。
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - 自动执行 `visual_downsample` 训练/评估矩阵，用于视觉执行策略，并按因子聚合最终指标。
+- [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
+  - 面向本地 `game/` Arma bridge 的最小行协议 TCP stub。它确认 `begin_session`，消费 `host_frame`，并为 `echelon_bridge.dll` 产出合成 `proxy_state` 载荷。
+- [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
+  - 面向同一 Arma bridge 的 `UniversalEnv` 真值 TCP 后端。它把后端真值刚体锚定到 Arma host-frame 的位置和朝向上，同时在 Echelon Forge 内真实 step 飞行状态。
 - `spatial_query`
   - 编译的空间查询与传统几何基准。
 - `scenario_compiler`
@@ -108,6 +112,28 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
 ./.venv/bin/python tools/diagnostics/benchmark.py \
   --family world_batch_vec_env \
   --n-envs 8 --steps 128 --reset-iters 24 --mission-obs-mode nav_v2 --action-mode full
+```
+
+运行本地 Arma proxy backend stub：
+
+```bash
+./.venv/bin/python tools/diagnostics/arma_proxy_backend_stub.py \
+  --host 127.0.0.1 \
+  --port 8765 \
+  --start-position 1200 3400 1500 \
+  --speed-mps 220 \
+  --log-requests
+```
+
+运行 env-backed Arma proxy backend：
+
+```bash
+./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
+  --host 127.0.0.1 \
+  --port 8765 \
+  --scenario scenarios/stable_flight/stable_flight.json \
+  --action-mode full \
+  --mission-obs-mode basic
 ```
 
 显示族特定帮助：

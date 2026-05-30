@@ -24,6 +24,9 @@
 - [海军/](naval/README.md)：仍在推进的海军真实性工作线。请先从局部 README 查看当前如何解释已归档 checkpoint 与 backlog 材料。
 - [审查/](review/README.zh.md)：已归档的架构审查工作线。
 - [空战/](air_combat/README.zh.md)：仍在推进的 `1v1` 空战工作线。请先从局部 README 查看当前状态，再按其中链接进入入口分析、冻结、基线进展、武器链、训练烟雾和失速跟进等历史快照。
+- [game/](game/README.md)：探索性的游戏前端集成工作线。凡是要评估
+  “仿真后端为真值的游戏壳”、本地专用 game 分支，或代理前端实验时，
+  请先从这里进入。
 - [通用空海军/](common_air_naval/README.md)：`common / air / naval` 拆分工作线的收敛入口。局部 README 已区分仍活跃的承接计划和 archive 中被吸收的前置分析。
 - [ground/](ground/README.zh.md)：未来地面域启动规划的入口。在展开专门的
   ground 实现前，请先从这里对齐命名、范围和新增域必须补上的横向内容。

@@ -36,6 +36,10 @@
   - Unified benchmark CLI for maintained diagnostics families.
 - [run_benchmark_suite.py](diagnostics/run_benchmark_suite.py)
   - Unified config-driven entrypoint for maintained benchmark suites under `tools/diagnostics/`.
+- [arma_proxy_backend_stub.py](diagnostics/arma_proxy_backend_stub.py)
+  - Minimal local TCP backend stub for the first-pass `@EchelonProxy` Arma bridge protocol.
+- [arma_proxy_backend_echelon_env.py](diagnostics/arma_proxy_backend_echelon_env.py)
+  - Echelon `UniversalEnv`-backed TCP backend that keeps Arma as a presentation shell while backend state steps in-repo.
 - [diagnose_cooperative_trajectory.py](diagnostics/diagnose_cooperative_trajectory.py)
   - Unified cooperative trajectory replay/export CLI for `takeoff` and `takeoff_to_cruise`.
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
