@@ -81,6 +81,7 @@ docs/book/
 # Local gameplay/frontend workspace. Track source/docs, but keep machine-
 # generated bridge outputs and runtime residue out of version control.
 /game/bridge/build/
+/game/.session_cache/
 /game/logs/
 /game/runtime/
 /game/tmp_build_log.txt
