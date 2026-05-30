@@ -866,11 +866,15 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              return out;
         }, "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)", nb::arg("entity_id"))
         .def("debug_get_aircraft_damage_state", &SimulationKernel::debug_get_aircraft_damage_state,
-             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, pilot, mission_crew, command_navigation, fire, fuel_leak, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
+             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, hydraulic_pressure, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, pilot, mission_crew, command_navigation, fire, fuel_leak, fuel_imbalance, flammable_fluid, ignition_source, fire_suppression, smoke_heat, engine_fire_zone, wing_fire_zone, fuselage_fire_zone, mission_fire_zone, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
              nb::arg("entity_id"))
         .def("debug_get_aircraft_vulnerability_evidence_state",
              &SimulationKernel::debug_get_aircraft_vulnerability_evidence_state,
              "Get aircraft vulnerability evidence gate [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority, evidence_dataset_valid]",
+             nb::arg("entity_id"))
+        .def("debug_get_aircraft_vulnerability_authority_state",
+             &SimulationKernel::debug_get_aircraft_vulnerability_authority_state,
+             "Get aircraft vulnerability authority gate [present, synthetic, calibrated_evidence, effect_scale_authority, component_failure_probability_authority, pk_authority, deterministic_fuze_authority, evidence_dataset_valid]",
              nb::arg("entity_id"))
         .def("debug_get_naval_weapon_counts", &SimulationKernel::debug_get_naval_weapon_counts,
              "Get naval weapon counts [mounts, ready_vls, ready_gun, ready_ciws]")

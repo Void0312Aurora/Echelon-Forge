@@ -305,6 +305,13 @@ bool system_is_air_fuel(const std::string& system) {
     return system_name_matches(system, "fuel");
 }
 
+bool system_is_air_fire_suppression(const std::string& system) {
+    return system_name_matches(system, "fire_suppression") ||
+        system_name_matches(system, "fire_bottle") ||
+        system_name_matches(system, "suppression") ||
+        system_name_matches(system, "extinguish");
+}
+
 bool system_is_crew_or_cockpit(const std::string& system) {
     return system_name_matches(system, "cockpit") ||
         system_name_matches(system, "pilot") ||
@@ -400,6 +407,136 @@ bool system_is_air_structure(const std::string& system) {
         system_name_matches(system, "structure") ||
         system_name_matches(system, "rotor") ||
         system_name_matches(system, "tail");
+}
+
+bool component_is_engine_fuel_feed_path(const DamageComponent& component) {
+    const std::string name = damage_component_key(component);
+    return system_name_matches(name, "fuel_feed") ||
+        system_name_matches(name, "fuel_control") ||
+        (system_name_matches(name, "engine") && system_name_matches(name, "fuel"));
+}
+
+bool component_is_fire_suppression_path(const DamageComponent& component) {
+    const std::string name = damage_component_key(component);
+    const std::string group = damage_component_redundancy_group_key(component);
+    return system_is_air_fire_suppression(component.system) ||
+        system_name_matches(name, "fire_bottle") ||
+        system_name_matches(name, "fire_suppression") ||
+        system_name_matches(name, "suppression") ||
+        system_name_matches(group, "fire_suppression") ||
+        system_name_matches(group, "fire_bottle");
+}
+
+bool component_is_lateral_fuel_storage_path(const DamageComponent& component) {
+    if (!system_is_air_fuel(component.system) ||
+        component_is_engine_fuel_feed_path(component) ||
+        component_is_fire_suppression_path(component)) {
+        return false;
+    }
+    const std::string name = damage_component_key(component);
+    return system_name_matches(name, "left") ||
+        system_name_matches(name, "right");
+}
+
+bool component_is_hydraulic_supply_path(const DamageComponent& component) {
+    const std::string name = damage_component_key(component);
+    const std::string group = damage_component_redundancy_group_key(component);
+    return system_name_matches(component.system, "hydraulic") ||
+        (system_name_matches(name, "hydraulic") &&
+         (system_name_matches(name, "pump") ||
+          system_name_matches(name, "reservoir") ||
+          system_name_matches(name, "supply") ||
+          system_name_matches(name, "line") ||
+          system_name_matches(name, "module"))) ||
+        (system_name_matches(group, "hydraulic") &&
+         (system_name_matches(group, "supply") ||
+          system_name_matches(group, "pump")));
+}
+
+bool component_depends_on_hydraulic_power(const DamageComponent& component) {
+    for (const auto& dependency : component.dependencies) {
+        const bool hydraulic_target =
+            system_name_matches(dependency.target_system, "hydraulic") ||
+            system_name_matches(dependency.system, "hydraulic");
+        const bool hydraulic_edge =
+            dependency.edge_type == "hydraulic_power" ||
+            dependency.edge_type == "hydraulic-power";
+        if (hydraulic_target || hydraulic_edge) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool component_is_hydraulic_consumer_path(const DamageComponent& component) {
+    if (component_is_hydraulic_supply_path(component)) {
+        return false;
+    }
+    const std::string name = damage_component_key(component);
+    return component_depends_on_hydraulic_power(component) ||
+        ((system_is_air_control_surface(component.system) ||
+          system_name_matches(component.system, "rotor")) &&
+         (system_name_matches(name, "actuator") ||
+          system_name_matches(name, "servo") ||
+          system_name_matches(name, "cyclic") ||
+          system_name_matches(name, "collective")));
+}
+
+enum class AircraftFireZone {
+    None,
+    EngineBay,
+    Wing,
+    Fuselage,
+    MissionBay
+};
+
+AircraftFireZone classify_aircraft_fire_zone(
+    const std::string& system,
+    const DamageComponent* component
+) {
+    std::string key = system;
+    if (component) {
+        key += " ";
+        key += damage_component_key(*component);
+        key += " ";
+        key += damage_component_redundancy_group_key(*component);
+    }
+    if (system_name_matches(key, "engine") ||
+        system_name_matches(key, "propulsion") ||
+        system_name_matches(key, "afterburner") ||
+        system_name_matches(key, "nozzle") ||
+        system_name_matches(key, "fuel_feed") ||
+        system_name_matches(key, "fuel_control") ||
+        system_name_matches(key, "transmission")) {
+        return AircraftFireZone::EngineBay;
+    }
+    if (system_name_matches(key, "wing") ||
+        system_name_matches(key, "aileron") ||
+        system_name_matches(key, "elevon") ||
+        system_name_matches(key, "flap") ||
+        system_name_matches(key, "spar")) {
+        return AircraftFireZone::Wing;
+    }
+    if (system_name_matches(key, "radar") ||
+        system_name_matches(key, "sensor") ||
+        system_name_matches(key, "avionics") ||
+        system_name_matches(key, "data_link") ||
+        system_name_matches(key, "mission") ||
+        system_name_matches(key, "command") ||
+        system_name_matches(key, "navigation") ||
+        system_name_matches(key, "operator") ||
+        system_name_matches(key, "power") ||
+        system_name_matches(key, "electrical")) {
+        return AircraftFireZone::MissionBay;
+    }
+    if (system_name_matches(key, "fuselage") ||
+        system_name_matches(key, "fuel") ||
+        system_name_matches(key, "cockpit") ||
+        system_name_matches(key, "crew") ||
+        system_name_matches(key, "hydraulic")) {
+        return AircraftFireZone::Fuselage;
+    }
+    return AircraftFireZone::None;
 }
 
 double component_mechanism_threshold_scale(
@@ -562,6 +699,11 @@ void apply_component_failure_impulse(
     double probability,
     double component_scale,
     double mechanism_scale,
+    bool engine_fuel_feed_path,
+    bool fire_suppression_path,
+    bool lateral_fuel_storage_path,
+    bool hydraulic_supply_path,
+    bool hydraulic_consumer_path,
     AircraftDamageState* aircraft_damage,
     PlatformDamageState* platform_damage
 ) {
@@ -573,18 +715,42 @@ void apply_component_failure_impulse(
         if (system_is_air_sensor(system) || system_name_matches(system, "avionics")) {
             aircraft_damage->avionics_integrity -= 0.10 + 0.12 * impulse;
             aircraft_damage->fire_severity += 0.015 + 0.025 * impulse;
+            aircraft_damage->ignition_source_severity += 0.03 + 0.08 * impulse;
         }
         if (system_is_air_propulsion(system)) {
             aircraft_damage->propulsion_integrity -= 0.08 + 0.14 * impulse;
+            aircraft_damage->ignition_source_severity += 0.03 + 0.09 * impulse;
         }
-        if (system_is_air_fuel(system)) {
+        if (system_is_air_fuel(system) && !fire_suppression_path) {
             aircraft_damage->fuel_system_integrity -= 0.08 + 0.12 * impulse;
             aircraft_damage->fuel_leak_severity += 0.06 + 0.12 * impulse;
             aircraft_damage->fire_severity += 0.02 + 0.06 * impulse;
+            aircraft_damage->flammable_fluid_exposure += 0.05 + 0.14 * impulse;
+            if (lateral_fuel_storage_path) {
+                aircraft_damage->fuel_imbalance_severity += 0.04 + 0.12 * impulse;
+                aircraft_damage->control_asymmetry += 0.006 + 0.018 * impulse;
+            }
+        }
+        if (engine_fuel_feed_path && system_is_air_fuel(system)) {
+            aircraft_damage->propulsion_integrity -= 0.06 + 0.12 * impulse;
+            aircraft_damage->flammable_fluid_exposure += 0.02 + 0.08 * impulse;
+            aircraft_damage->ignition_source_severity += 0.02 + 0.05 * impulse;
         }
         if (system_is_air_control_surface(system)) {
             aircraft_damage->flight_control_integrity -= 0.10 + 0.14 * impulse;
             aircraft_damage->hydraulic_integrity -= 0.08 + 0.12 * impulse;
+            if (system_name_matches(system, "hydraulic")) {
+                aircraft_damage->hydraulic_pressure_availability -= 0.10 + 0.18 * impulse;
+                aircraft_damage->flammable_fluid_exposure += 0.02 + 0.06 * impulse;
+            }
+        }
+        if (hydraulic_supply_path) {
+            aircraft_damage->hydraulic_pressure_availability -= 0.12 + 0.20 * impulse;
+            aircraft_damage->hydraulic_integrity -= 0.04 + 0.08 * impulse;
+            aircraft_damage->flammable_fluid_exposure += 0.03 + 0.08 * impulse;
+        } else if (hydraulic_consumer_path) {
+            aircraft_damage->hydraulic_pressure_availability -= 0.035 + 0.08 * impulse;
+            aircraft_damage->flammable_fluid_exposure += 0.01 + 0.04 * impulse;
         }
         if (system_is_crew_or_cockpit(system)) {
             apply_aircraft_crew_consequence(
@@ -614,13 +780,15 @@ void apply_component_failure_impulse(
             platform_damage->sensor_capability -= 0.04 + 0.08 * impulse;
             platform_damage->mission_capability -= 0.03 + 0.06 * impulse;
         }
-        if (system_is_air_propulsion(system) || system_is_air_control_surface(system)) {
+        if (system_is_air_propulsion(system) || system_is_air_control_surface(system) ||
+            (engine_fuel_feed_path && system_is_air_fuel(system))) {
             platform_damage->mobility_capability -= 0.05 + 0.08 * impulse;
         }
         if (system_is_crew_or_cockpit(system)) {
             platform_damage->mission_capability -= 0.05 + 0.10 * impulse;
         }
-        if (system_is_air_structure(system) || system_is_air_fuel(system)) {
+        if (system_is_air_structure(system) || system_is_air_fuel(system) ||
+            fire_suppression_path || system_is_air_fire_suppression(system)) {
             platform_damage->survivability_margin -= 0.04 + 0.08 * impulse;
         }
     }
@@ -912,6 +1080,7 @@ ComponentDependencyPropagationSummary apply_component_dependency_damage(
     const ComponentDamageSample& sample,
     double failure_probability,
     double effect_scale,
+    ComponentDamageState* component_damage,
     SystemHealth* sys_health,
     AircraftDamageState* aircraft_damage,
     PlatformDamageState* platform_damage
@@ -948,11 +1117,6 @@ ComponentDependencyPropagationSummary apply_component_dependency_damage(
             1.0 - dependency_loss * dependency_scale,
             0.0,
             1.0);
-        if (sys_health) {
-            sys_health->systems[target_system] =
-                std::min(sys_health->systems[target_system], availability);
-        }
-
         const double impulse =
             std::clamp(dependency_loss * dependency_scale, 0.0, 1.0);
         ++summary.propagation_count;
@@ -967,45 +1131,28 @@ ComponentDependencyPropagationSummary apply_component_dependency_damage(
             summary.effective_scale = dependency_scale;
             summary.propagated = true;
         }
-        if (aircraft_damage) {
-            if (system_is_air_control_surface(target_system)) {
-                aircraft_damage->flight_control_integrity -= 0.06 + 0.12 * impulse;
-            }
-            if (system_name_matches(target_system, "hydraulic")) {
-                aircraft_damage->hydraulic_integrity -= 0.06 + 0.14 * impulse;
-                aircraft_damage->flight_control_integrity -= 0.03 + 0.08 * impulse;
-            }
-            if (system_is_air_sensor(target_system) ||
-                system_name_matches(target_system, "avionics")) {
-                aircraft_damage->avionics_integrity -= 0.05 + 0.10 * impulse;
-            }
-            if (system_is_air_propulsion(target_system)) {
-                aircraft_damage->propulsion_integrity -= 0.05 + 0.12 * impulse;
-            }
-            if (system_is_air_fuel(target_system)) {
-                aircraft_damage->fuel_system_integrity -= 0.04 + 0.10 * impulse;
-                aircraft_damage->fuel_leak_severity += 0.02 + 0.05 * impulse;
-            }
-            if (system_is_mission_or_combat(target_system)) {
-                aircraft_damage->avionics_integrity -= 0.03 + 0.08 * impulse;
-            }
-        }
-        if (platform_damage) {
-            if (system_is_air_sensor(target_system) ||
-                system_name_matches(target_system, "avionics")) {
-                platform_damage->sensor_capability -= 0.02 + 0.06 * impulse;
-            }
-            if (system_is_air_control_surface(target_system) ||
-                system_name_matches(target_system, "hydraulic") ||
-                system_is_air_propulsion(target_system)) {
-                platform_damage->mobility_capability -= 0.02 + 0.06 * impulse;
-            }
-            if (system_is_mission_or_combat(target_system)) {
-                platform_damage->mission_capability -= 0.02 + 0.06 * impulse;
-            }
-            if (system_is_air_fuel(target_system)) {
-                platform_damage->survivability_margin -= 0.02 + 0.05 * impulse;
-            }
+        const double delay_s = std::max(0.0, dependency.delay_s);
+        if (delay_s > 1.0e-6 && component_damage && aircraft_damage) {
+            ComponentDamageState::PendingDependencyEffect pending{};
+            pending.target_system = target_system;
+            pending.edge_type = dependency.edge_type.empty() ? "generic" : dependency.edge_type;
+            pending.remaining_delay_s = delay_s;
+            pending.availability = availability;
+            pending.impulse = impulse;
+            pending.effective_scale = dependency_scale;
+            pending.source_availability = component_dependency_source_availability(sample);
+            pending.direction = dependency.direction.empty() ? "one_way" : dependency.direction;
+            pending.provenance = dependency.provenance;
+            component_damage->pending_dependency_effects.push_back(pending);
+        } else {
+            apply_damage_component_dependency_impulse(
+                target_system,
+                dependency.edge_type.empty() ? "generic" : dependency.edge_type,
+                availability,
+                impulse,
+                sys_health,
+                aircraft_damage,
+                platform_damage);
         }
     }
     return summary;
@@ -2146,6 +2293,13 @@ public:
             bool air_mission_crew_hit = false;
             bool air_command_navigation_hit = false;
             bool air_mission_or_combat_hit = false;
+            bool air_fire_suppression_hit = false;
+            bool air_lateral_fuel_storage_hit = false;
+            bool air_hydraulic_supply_hit = false;
+            bool air_engine_fire_zone_hit = false;
+            bool air_wing_fire_zone_hit = false;
+            bool air_fuselage_fire_zone_hit = false;
+            bool air_mission_fire_zone_hit = false;
             bool direct_hitbox_intersection = false;
             std::unordered_set<std::string> processed_air_systems;
             double air_sensor_spatial_scale = 0.0;
@@ -2158,6 +2312,13 @@ public:
             double air_mission_crew_spatial_scale = 0.0;
             double air_command_navigation_spatial_scale = 0.0;
             double air_mission_or_combat_spatial_scale = 0.0;
+            double air_fire_suppression_spatial_scale = 0.0;
+            double air_lateral_fuel_storage_spatial_scale = 0.0;
+            double air_hydraulic_supply_spatial_scale = 0.0;
+            double air_engine_fire_zone_spatial_scale = 0.0;
+            double air_wing_fire_zone_spatial_scale = 0.0;
+            double air_fuselage_fire_zone_spatial_scale = 0.0;
+            double air_mission_fire_zone_spatial_scale = 0.0;
             double air_structure_spatial_scale = 0.0;
             double sampled_mechanism_scale = 0.0;
             double sampled_armor_scale = 1.0;
@@ -2416,12 +2577,18 @@ public:
                         component_redundancy_group_failed_count =
                             component_sample.group_failed_count;
                     }
+                    if (component_is_fire_suppression_path(*component) && aircraft_damage) {
+                        aircraft_damage->fire_suppression_integrity = std::min(
+                            aircraft_damage->fire_suppression_integrity,
+                            component_sample.group_availability);
+                    }
                     const ComponentDependencyPropagationSummary dependency_summary =
                         apply_component_dependency_damage(
                             *component,
                             component_sample,
                             failure_probability,
                             mechanism_scale * resolved_component_scale,
+                            component_damage,
                             sys_health,
                             aircraft_damage,
                             platform_damage);
@@ -2455,6 +2622,11 @@ public:
                         failure_probability,
                         resolved_component_scale,
                         mechanism_scale,
+                        component ? component_is_engine_fuel_feed_path(*component) : false,
+                        component ? component_is_fire_suppression_path(*component) : false,
+                        component ? component_is_lateral_fuel_storage_path(*component) : false,
+                        component ? component_is_hydraulic_supply_path(*component) : false,
+                        component ? component_is_hydraulic_consumer_path(*component) : false,
                         aircraft_damage,
                         platform_damage);
                 }
@@ -2465,12 +2637,46 @@ public:
                 const DamageComponent* component = nullptr
             ) {
                 const double resolved_spatial_scale = std::clamp(system_spatial_scale, 0.0, 1.0);
+                const bool fire_suppression_path =
+                    component && component_is_fire_suppression_path(*component);
+                switch (classify_aircraft_fire_zone(system, component)) {
+                    case AircraftFireZone::EngineBay:
+                        air_engine_fire_zone_hit = true;
+                        air_engine_fire_zone_spatial_scale =
+                            std::max(
+                                air_engine_fire_zone_spatial_scale,
+                                resolved_spatial_scale);
+                        break;
+                    case AircraftFireZone::Wing:
+                        air_wing_fire_zone_hit = true;
+                        air_wing_fire_zone_spatial_scale =
+                            std::max(
+                                air_wing_fire_zone_spatial_scale,
+                                resolved_spatial_scale);
+                        break;
+                    case AircraftFireZone::Fuselage:
+                        air_fuselage_fire_zone_hit = true;
+                        air_fuselage_fire_zone_spatial_scale =
+                            std::max(
+                                air_fuselage_fire_zone_spatial_scale,
+                                resolved_spatial_scale);
+                        break;
+                    case AircraftFireZone::MissionBay:
+                        air_mission_fire_zone_hit = true;
+                        air_mission_fire_zone_spatial_scale =
+                            std::max(
+                                air_mission_fire_zone_spatial_scale,
+                                resolved_spatial_scale);
+                        break;
+                    case AircraftFireZone::None:
+                        break;
+                }
                 if (system_is_air_sensor(system)) {
                     air_sensor_hit = true;
                     air_sensor_spatial_scale =
                         std::max(air_sensor_spatial_scale, resolved_spatial_scale);
                 }
-                if (system_is_air_propulsion_or_fuel(system)) {
+                if (system_is_air_propulsion_or_fuel(system) && !fire_suppression_path) {
                     air_propulsion_or_fuel_hit = true;
                     air_propulsion_or_fuel_spatial_scale =
                         std::max(air_propulsion_or_fuel_spatial_scale, resolved_spatial_scale);
@@ -2480,9 +2686,35 @@ public:
                     air_propulsion_spatial_scale =
                         std::max(air_propulsion_spatial_scale, resolved_spatial_scale);
                 }
-                if (system_is_air_fuel(system)) {
+                if (component && component_is_engine_fuel_feed_path(*component) &&
+                    system_is_air_fuel(system)) {
+                    air_propulsion_hit = true;
+                    air_propulsion_spatial_scale =
+                        std::max(air_propulsion_spatial_scale, resolved_spatial_scale);
+                }
+                if (system_is_air_fuel(system) && !fire_suppression_path) {
                     air_fuel_hit = true;
                     air_fuel_spatial_scale = std::max(air_fuel_spatial_scale, resolved_spatial_scale);
+                }
+                if (component && component_is_lateral_fuel_storage_path(*component)) {
+                    air_lateral_fuel_storage_hit = true;
+                    air_lateral_fuel_storage_spatial_scale =
+                        std::max(
+                            air_lateral_fuel_storage_spatial_scale,
+                            resolved_spatial_scale);
+                }
+                if ((component && component_is_hydraulic_supply_path(*component)) ||
+                    system_name_matches(system, "hydraulic")) {
+                    air_hydraulic_supply_hit = true;
+                    air_hydraulic_supply_spatial_scale =
+                        std::max(
+                            air_hydraulic_supply_spatial_scale,
+                            resolved_spatial_scale);
+                }
+                if (fire_suppression_path || system_is_air_fire_suppression(system)) {
+                    air_fire_suppression_hit = true;
+                    air_fire_suppression_spatial_scale =
+                        std::max(air_fire_suppression_spatial_scale, resolved_spatial_scale);
                 }
                 if (system_is_air_control_surface(system)) {
                     air_control_hit = true;
@@ -3349,6 +3581,27 @@ public:
                 const double mission_or_combat_scale = air_mission_or_combat_hit
                     ? std::max(0.05, air_mission_or_combat_spatial_scale)
                     : 0.0;
+                const double fire_suppression_scale = air_fire_suppression_hit
+                    ? std::max(0.05, air_fire_suppression_spatial_scale)
+                    : 0.0;
+                const double lateral_fuel_storage_scale = air_lateral_fuel_storage_hit
+                    ? std::max(0.05, air_lateral_fuel_storage_spatial_scale)
+                    : 0.0;
+                const double hydraulic_supply_scale = air_hydraulic_supply_hit
+                    ? std::max(0.05, air_hydraulic_supply_spatial_scale)
+                    : 0.0;
+                const double engine_fire_zone_scale = air_engine_fire_zone_hit
+                    ? std::max(0.05, air_engine_fire_zone_spatial_scale)
+                    : 0.0;
+                const double wing_fire_zone_scale = air_wing_fire_zone_hit
+                    ? std::max(0.05, air_wing_fire_zone_spatial_scale)
+                    : 0.0;
+                const double fuselage_fire_zone_scale = air_fuselage_fire_zone_hit
+                    ? std::max(0.05, air_fuselage_fire_zone_spatial_scale)
+                    : 0.0;
+                const double mission_fire_zone_scale = air_mission_fire_zone_hit
+                    ? std::max(0.05, air_mission_fire_zone_spatial_scale)
+                    : 0.0;
                 const double structure_scale = std::max(0.05, air_structure_spatial_scale);
                 platform_damage->survivability_margin -=
                     localized_effect_delta(
@@ -3396,6 +3649,13 @@ public:
                                 resolved_severity,
                                 warhead_effects.fire_scale,
                                 sensor_scale);
+                        aircraft_damage->ignition_source_severity +=
+                            localized_effect_delta(
+                                0.03,
+                                0.05,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                sensor_scale);
                     }
                     if (air_propulsion_hit) {
                         aircraft_damage->propulsion_integrity -=
@@ -3404,6 +3664,13 @@ public:
                                 0.22,
                                 resolved_severity,
                                 warhead_effects.propulsion_scale,
+                                propulsion_scale);
+                        aircraft_damage->ignition_source_severity +=
+                            localized_effect_delta(
+                                0.04,
+                                0.08,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
                                 propulsion_scale);
                     }
                     if (air_fuel_hit) {
@@ -3428,6 +3695,45 @@ public:
                                 resolved_severity,
                                 warhead_effects.fire_scale,
                                 fuel_scale);
+                        aircraft_damage->flammable_fluid_exposure +=
+                            localized_effect_delta(
+                                0.12,
+                                0.20,
+                                resolved_severity,
+                                warhead_effects.breach_scale,
+                                fuel_scale);
+                    }
+                    if (air_lateral_fuel_storage_hit) {
+                        aircraft_damage->fuel_imbalance_severity +=
+                            localized_effect_delta(
+                                0.07,
+                                0.12,
+                                resolved_severity,
+                                warhead_effects.breach_scale,
+                                lateral_fuel_storage_scale);
+                        aircraft_damage->control_asymmetry +=
+                            localized_effect_delta(
+                                0.010,
+                                0.020,
+                                resolved_severity,
+                                warhead_effects.control_scale,
+                                lateral_fuel_storage_scale);
+                    }
+                    if (air_hydraulic_supply_hit) {
+                        aircraft_damage->hydraulic_pressure_availability -=
+                            localized_effect_delta(
+                                0.18,
+                                0.22,
+                                resolved_severity,
+                                warhead_effects.control_scale,
+                                hydraulic_supply_scale);
+                        aircraft_damage->flammable_fluid_exposure +=
+                            localized_effect_delta(
+                                0.04,
+                                0.06,
+                                resolved_severity,
+                                warhead_effects.breach_scale,
+                                hydraulic_supply_scale);
                     }
                     if (air_control_hit) {
                         aircraft_damage->flight_control_integrity -=
@@ -3450,6 +3756,13 @@ public:
                                 0.06,
                                 resolved_severity,
                                 warhead_effects.control_scale,
+                                control_scale);
+                        aircraft_damage->flammable_fluid_exposure +=
+                            localized_effect_delta(
+                                0.03,
+                                0.05,
+                                resolved_severity,
+                                warhead_effects.breach_scale,
                                 control_scale);
                     }
                     if (air_pilot_hit) {
@@ -3510,8 +3823,14 @@ public:
                                 resolved_severity,
                                 warhead_effects.fire_scale,
                                 mission_or_combat_scale);
+                        aircraft_damage->ignition_source_severity +=
+                            localized_effect_delta(
+                                0.02,
+                                0.05,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                mission_or_combat_scale);
                     }
-
                     if (air_structure_spatial_scale > 0.0) {
                         aircraft_damage->structural_integrity -=
                             localized_effect_delta(
@@ -3520,6 +3839,70 @@ public:
                                 resolved_severity,
                                 warhead_effects.structure_scale,
                                 structure_scale);
+                    }
+                    if (air_engine_fire_zone_hit) {
+                        aircraft_damage->engine_fire_zone_severity +=
+                            localized_effect_delta(
+                                0.06,
+                                0.10,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                engine_fire_zone_scale);
+                        aircraft_damage->smoke_heat_exposure +=
+                            localized_effect_delta(
+                                0.010,
+                                0.020,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                engine_fire_zone_scale);
+                    }
+                    if (air_wing_fire_zone_hit) {
+                        aircraft_damage->wing_fire_zone_severity +=
+                            localized_effect_delta(
+                                0.04,
+                                0.07,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                wing_fire_zone_scale);
+                        aircraft_damage->smoke_heat_exposure +=
+                            localized_effect_delta(
+                                0.012,
+                                0.020,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                wing_fire_zone_scale);
+                    }
+                    if (air_fuselage_fire_zone_hit) {
+                        aircraft_damage->fuselage_fire_zone_severity +=
+                            localized_effect_delta(
+                                0.04,
+                                0.08,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                fuselage_fire_zone_scale);
+                        aircraft_damage->smoke_heat_exposure +=
+                            localized_effect_delta(
+                                0.030,
+                                0.045,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                fuselage_fire_zone_scale);
+                    }
+                    if (air_mission_fire_zone_hit) {
+                        aircraft_damage->mission_fire_zone_severity +=
+                            localized_effect_delta(
+                                0.05,
+                                0.08,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                mission_fire_zone_scale);
+                        aircraft_damage->smoke_heat_exposure +=
+                            localized_effect_delta(
+                                0.035,
+                                0.050,
+                                resolved_severity,
+                                warhead_effects.fire_scale,
+                                mission_fire_zone_scale);
                     }
                     clamp_aircraft_damage_state(*aircraft_damage);
                     apply_aircraft_damage_state_to_platform(*aircraft_damage, *platform_damage);
@@ -3571,6 +3954,15 @@ public:
                             resolved_severity,
                             warhead_effects.fire_scale,
                             mission_or_combat_scale);
+                }
+                if (air_fire_suppression_hit) {
+                    platform_damage->survivability_margin -=
+                        localized_effect_delta(
+                            0.03,
+                            0.05,
+                            resolved_severity,
+                            warhead_effects.breach_scale,
+                            fire_suppression_scale);
                 }
                 platform_damage->fire_severity = std::clamp(platform_damage->fire_severity, 0.0, 1.0);
                 platform_damage->flooding_severity = std::clamp(platform_damage->flooding_severity, 0.0, 1.0);

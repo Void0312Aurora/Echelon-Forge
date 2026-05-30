@@ -412,7 +412,7 @@
                     },
                     {
                         "name": "left_engine_fire_bottle",
-                        "system": "fuel",
+                        "system": "fire_suppression",
                         "offset": [-7.0, -10.2, -0.2],
                         "size": [1.2, 0.9, 0.8],
                         "armor": 4.0,
@@ -480,7 +480,7 @@
                     },
                     {
                         "name": "right_engine_fire_bottle",
-                        "system": "fuel",
+                        "system": "fire_suppression",
                         "offset": [-7.0, 10.2, -0.2],
                         "size": [1.2, 0.9, 0.8],
                         "armor": 4.0,

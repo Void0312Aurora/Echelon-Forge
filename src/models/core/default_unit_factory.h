@@ -1398,6 +1398,12 @@ public:
                     component_damage.redundancy_group_availability[group_key] = 1.0;
                     component_damage.redundancy_group_member_count[group_key] += 1;
                     component_damage.redundancy_group_failed_count[group_key] += 0;
+                    if (!component_damage.has_fire_suppression_components &&
+                        (damage_dependency_system_is_fire_suppression(component.system) ||
+                         damage_dependency_system_is_fire_suppression(component.name) ||
+                         damage_dependency_system_is_fire_suppression(group_key))) {
+                        component_damage.has_fire_suppression_components = true;
+                    }
                 }
             }
             if (!component_damage.component_integrity.empty()) {

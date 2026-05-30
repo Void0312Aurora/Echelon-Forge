@@ -18,6 +18,9 @@
 
 `near_miss_0_35m`、`beam` 和 `high` 仍是候选 scope 标签；当前没有完成 bucket 内采样密度、边界行为或真实校准验证。
 
+当前可执行 scaffold 入口为 `tools/maintenance/a2_blastfrag_validation_scaffold.py`。该工具会保留候选 scope 标签 `near_miss_0_35m`，但同时显式导出当前 runtime 粗桶 `near_miss`，提醒 benchmark/validation scope 与运行时 row 匹配语义尚未完全细化到 0.35 m 子桶。
+同一工具还会导出一个 schema-aligned non-authoritative row draft：descriptor 保持 `source_kind=engineering_surrogate`、`calibration_status=unvalidated`、全部 authority=false，row 只带机制载荷 gate 字段，不带 `effect_scale` 或 `component_failure_probability` 真值。
+
 ## Authority 边界
 
 | authority 字段 | 当前值 | 原因 |

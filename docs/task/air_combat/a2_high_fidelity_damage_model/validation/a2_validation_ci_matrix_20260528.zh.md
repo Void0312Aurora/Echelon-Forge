@@ -85,9 +85,14 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_contact_fuze_does_not_trigger_from_near_miss_radius \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_contact_fuze_records_surface_and_penetration_evidence \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_timed_fuze_detonates_on_delay_without_proximity_gate \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_fuze_event_records_detonation_attitude_evidence \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_global_warhead_profile_override_flows_into_runtime_and_effects_event \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_warhead_family_changes_structured_air_effect_distribution \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_warhead_spatial_sampling_reports_fragment_and_rod_evidence \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_surface_incidence_cos_reports_obliquity_evidence \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_blast_scaled_distance_tracks_standoff_and_pressure \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_fragment_areal_density_tracks_standoff \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_warhead_orientation_axis_modulates_rod_pattern_evidence \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_warhead_mechanism_load_evidence_tracks_mechanism_family
 ```
 
@@ -98,12 +103,24 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_aircraft_hitboxes_produce_distinct_subsystem_effects \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_aircraft_damage_overlay_tracks_air_specific_subsystems \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_named_control_components_derive_axis_specific_authority \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_hydraulic_supply_damage_tracks_pressure_availability \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_avionics_and_crew_damage_derives_sensor_performance \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_crew_consequences_distinguish_pilot_mission_and_command_roles \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_aircraft_fire_fuel_and_hydraulic_damage_cascade_over_time \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_lateral_fuel_storage_damage_tracks_fuel_imbalance \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_fire_suppression_integrity_reduces_fire_cascade_growth \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_fire_zone_scaffold_localizes_secondary_damage_paths \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase2_damaged_airframe_high_speed_envelope_accumulates_structural_damage \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_primary_component_reports_mechanism_load_vector \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_component_dependency_damage_propagates_to_related_aircraft_systems \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_typed_dependency_edge_types_route_to_distinct_aircraft_overlays \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_typed_dependency_delay_queues_then_applies_cascade \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_engine_fuel_feed_damage_can_reduce_propulsion \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_component_failure_probability_consumes_mechanism_load_evidence \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_current_aircraft_unit_database_has_20_plus_component_models \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_current_aircraft_unit_component_centers_stay_inside_parent_hitboxes \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_e3_fire_bottles_are_authored_as_suppression_components \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase3_representative_aircraft_database_components_cover_uav_helo_c2 \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_aircraft_database_units_have_authored_structured_damage_models
 ```
 
@@ -116,10 +133,16 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_vulnerability_claim_requires_dataset_descriptor \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_synthetic_descriptor_cannot_grant_vulnerability_authority \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_descriptor_requires_evidence_axes \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_descriptor_requires_schema_and_source_ref \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_descriptor_requires_authoritative_source_kind \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_validated_physics_surrogate_requires_auditable_manifest \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_calibrated_descriptor_can_grant_pk_but_deterministic_fuze_remains_deferred \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_authorized_vulnerability_rows_drive_effects_event_scales \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_authorized_rows_require_row_provenance_metadata \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_effect_scale_rows_respect_mechanism_load_gate \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_effect_scale_rows_can_use_surface_incidence_gate \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_component_failure_rows_can_use_surface_incidence_gate \
+  tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_component_failure_rows_require_mechanism_load_gate \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_component_failure_rows_require_probability_authority \
   tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
 ```
@@ -185,14 +208,14 @@ source tools/maintenance/cmo_env.sh && cmo_python tools/runners/run_pytest_suite
 A2 source trace / rights 门禁：
 
 ```bash
-python3 tools/maintenance/a2_source_admission_audit.py
-python3 -m pytest -q tests/architecture/test_a2_source_admission_audit.py
+source tools/maintenance/cmo_env.sh && cmo_python tools/maintenance/a2_source_admission_audit.py
+source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q tests/architecture/test_a2_source_admission_audit.py
 ```
 
 在候选来源包升级为 validation run 前，应额外运行：
 
 ```bash
-python3 tools/maintenance/a2_source_admission_audit.py --strict
+source tools/maintenance/cmo_env.sh && cmo_python tools/maintenance/a2_source_admission_audit.py --strict
 ```
 
 ## 6. 验收结论边界

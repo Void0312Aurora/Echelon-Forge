@@ -41,6 +41,8 @@
 - [validation_report_template.zh.md](validation_report_template.zh.md)：验证报告模板，预留 `a2.vulnerability_surrogate_validation.v1` manifest 字段和指标表，但默认 `not_run` / non-authoritative。
 - [validation_manifest_draft_blastfrag_20260528.zh.md](validation_manifest_draft_blastfrag_20260528.zh.md)：把 blast-fragmentation 公开方法收集包映射到首个 `not_run` validation manifest 草案。
 - [residual_register.zh.md](residual_register.zh.md)：候选残差与阻塞项登记表，初始条目全部保持 open。
+- `tools/maintenance/a2_blastfrag_validation_scaffold.py`：首个可执行的 non-authoritative blast-fragmentation validation scaffold。它输出 fixed-seed toy benchmark、mechanism-load vector，以及与 `a2.vulnerability_evidence.v1` 对齐的 non-authoritative row draft；该 row draft 只保留 gate 字段，不创建 runtime descriptor，不授予 `effect_scale`、`component_failure_probability`、`Pk` 或 `deterministic_fuze` authority。
+- `tests/runtime/air_combat/weapon_guidance_realism/vulnerability_scaffold.py`：runtime 回归守卫。它伪造 aircraft JSON 指向上述 non-authoritative row draft，证明该草案即使被加载到 `EffectsEvent.vulnerability_evidence_*` 审计面，也仍保持 `evidence_dataset_valid=false` 且不会放行 `effect_scale_authority`、`component_failure_probability_authority`、`Pk` 或 `deterministic_fuze`。
 
 相关 data-collection 更新：
 
@@ -49,6 +51,15 @@
 相关 validation gate：
 
 - [BFM-BM-006 Source Trace Manifest Gate](../../validation/bfm_bm_006_source_trace_manifest_gate_20260528.zh.md)：记录当前已实现的 source trace / rights / authority 行政准入门禁。
+
+推荐命令：
+
+```bash
+python3 tools/maintenance/a2_blastfrag_validation_scaffold.py
+python3 tools/maintenance/a2_blastfrag_validation_scaffold.py --output /tmp/a2_blastfrag_scaffold.json
+python3 -m pytest -q tests/architecture/test_a2_blastfrag_validation_scaffold.py
+python3 -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k scaffold
+```
 
 ## 使用规则
 

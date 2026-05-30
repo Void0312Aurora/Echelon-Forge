@@ -26,13 +26,15 @@
 
 ## 2. Hydraulic 后果线
 
-当前已有：`hydraulic_integrity`、hydraulic pump 组件、flight-control actuator 对 hydraulic 的依赖、液压损伤继续拖累飞控并增加结构过载暴露。
+当前已有：`hydraulic_integrity`、`hydraulic_pressure_availability`、hydraulic pump 组件、flight-control actuator 对 hydraulic 的依赖、液压损伤继续拖累飞控并增加结构过载暴露。
+
+2026-05-29 最小增量：新增 `hydraulic_pressure_availability` 作为 pressure/capacity 工程代理。hydraulic pump/source 命中会比普通 actuator 更强地降低 pressure availability；flight-control actuator/servo 的 `hydraulic_power` 依赖可产生较小压力损失；`AircraftDamageStateUpdate` 会把压力不足和 `hydraulic_integrity` 一起投射到 flight-control 派生、turn-rate 和 mobility capability。该语义仍不是真实液压回路、蓄压器时间常数、管线隔离或压力-作动器曲线。
 
 后续路线：
 
 1. 分离 hydraulic source、line、reservoir、actuator consumer 四类节点。
-2. 引入 pressure/capacity 代理值，用 0-1 表达残余 hydraulic availability。
-3. 把 hydraulic availability 投射到 axis authority，而不是直接全局降低 flight_control。
+2. 引入 pressure/capacity 代理值，用 0-1 表达残余 hydraulic availability。（`hydraulic_pressure_availability` 已启动）
+3. 把 hydraulic availability 投射到 axis authority，而不是直接全局降低 flight_control。（pressure 已进入 aggregate control；按轴 hydraulic supply 分配仍未启动）
 4. 对多液压源平台引入 load-sharing 和 isolation scaffold。
 5. 对 helicopter 增加 rotor servo 对 hydraulic pressure 的高权重依赖。
 
@@ -42,12 +44,14 @@
 
 当前已有：fuel system integrity、fuel leak severity、FuelSystem 油量消耗、Mass 燃油质量同步、engine fuel control/feed 组件和 wing/fuselage fuel cells。
 
+2026-05-29 最小增量：fuel storage 与 engine fuel feed/control 已开始分化。普通 fuel cell 命中仍主要造成 fuel integrity、fuel leak、fire risk 和 quantity loss，不直接等价 thrust loss；命名 `*_fuel_feed` / `*_fuel_control*` 组件或 `edge_type=fuel_feed` 依赖会额外投射到 `propulsion_integrity` / mobility，表示工程化 engine starvation 后果。left/right wing fuel storage 命中会额外写入 `fuel_imbalance_severity`，并在后续帧轻微增加 control asymmetry / 降低 roll authority；center fuselage fuel cell 与 engine fuel feed 不触发该左右不平衡语义。该语义仍非校准供油管路、阀门、油压、油箱几何、横向重心或发动机控制模型。
+
 后续路线：
 
 1. 区分 fuel storage、fuel feed、fuel control、fuel quantity、fuel leak、fuel fire risk。
-2. 让 fuel storage hit 主要产生 leak/quantity loss/fire risk，不直接等价 thrust loss。
-3. 让 fuel feed/control hit 影响 engine starvation、propulsion integrity 和 forced landing。
-4. 引入 internal/external fuel 分层和左右侧 fuel imbalance scaffold。
+2. 让 fuel storage hit 主要产生 leak/quantity loss/fire risk，不直接等价 thrust loss。（最小工程语义已启动）
+3. 让 fuel feed/control hit 影响 engine starvation、propulsion integrity 和 forced landing。（propulsion integrity 影响已启动；forced landing 仍由既有低 propulsion / fuel exhaustion 阈值间接触发）
+4. 引入 internal/external fuel 分层和左右侧 fuel imbalance scaffold。（左右侧 engineering overlay 已启动；internal/external fuel 分层仍未启动）
 5. 对 large aircraft/helo 分别处理多油箱、多发动机供油和 mission endurance 后果。
 
 必须等校准：油箱位置/容积、管路和阀门、燃油类型、自密封能力、泄漏截面积、耗油率变化、燃油不平衡飞行影响。
@@ -56,12 +60,14 @@
 
 当前已有：fire severity、fuel leak/fire 级联、火灾对结构、航电、机组、液压和燃油系统的时间传播。
 
+2026-05-29 最小增量：新增 `flammable_fluid_exposure`、`ignition_source_severity` 与 `fire_suppression_integrity` 三个 aircraft overlay 轴。fuel/hydraulic leak 作为可燃流体暴露代理，engine/avionics/mission-system 损伤作为点火源代理，E-3 engine fire bottle 已从普通 `fuel` 组件改为 `fire_suppression` 组件；`AircraftDamageStateUpdate` 会从 `ComponentDamageState` 的 suppression 组件/冗余组可用性派生 suppression integrity，命名 suppression 冗余组存在时优先使用组可用性，并用它调制 fire growth / extinguish decay。新增 engine bay、wing、fuselage、mission bay 四个 fire-zone severity，用组件/系统命名把局部火源投射到不同二次损伤方向。该语义仍是工程化状态机，不是校准点火概率、灭火成功概率、喷嘴/灭火剂分布或真实 fire-zone 模型。
+
 后续路线：
 
-1. 区分 ignition risk、active fire、fire spread、suppression availability、secondary damage。
-2. 把 fire source 绑定到 fuel、engine、avionics、电源、hydraulic fluid 等不同源。
-3. 引入 fire compartment/zone scaffold：nose、fuselage、engine bay、wing、rotor/transmission、mission bay。
-4. 让 fire suppression components 通过 dependency graph 降低 spread rate 或 active fire duration。
+1. 区分 ignition risk、active fire、fire spread、suppression availability、secondary damage。（最小 overlay 已启动）
+2. 把 fire source 绑定到 fuel、engine、avionics、电源、hydraulic fluid 等不同源。（flammable/ignition 代理已启动）
+3. 引入 fire compartment/zone scaffold：nose、fuselage、engine bay、wing、rotor/transmission、mission bay。（engine/wing/fuselage/mission 四区 engineering overlay 已启动；nose、rotor/transmission 和真实邻接图仍未启动）
+4. 让 fire suppression components 通过 dependency graph 降低 spread rate 或 active fire duration。（E-3 fire bottle 的最小 direct component path 已启动）
 5. 对 crew/mission systems 增加 smoke/heat incapacitation 的工程化影响，但保持非权威。
 
 必须等校准：点火概率、热释放、灭火系统能力、舱段通风、火焰传播、烟雾毒性、结构热损伤速率。
@@ -103,4 +109,3 @@
 | `MobilityKill` | flight-control、hydraulic、propulsion、结构或 rotor/drive train 使平台无法继续有效飞行/机动 | 固定翼/直升机/UAV/C2 阈值应分族 |
 | `ForcedLanding` | overlay 状态，不应通过重排 `PlatformLossState` 枚举实现 | 可作为 aircraft-only 后果和训练读数 |
 | `Lost` | 结构/火灾/控制/推进/机组等综合达到平台丧失条件 | 未校准前不要作为真实 kill probability |
-

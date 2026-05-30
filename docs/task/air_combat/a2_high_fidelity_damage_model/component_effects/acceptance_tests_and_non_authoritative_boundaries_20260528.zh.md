@@ -18,14 +18,21 @@
 
 - `component_inventory_schema_lint_for_representative_aircraft`：检查五类代表平台的 hitbox/component/redundancy/dependency 最小字段。
 - `component_dependency_edges_remain_backward_compatible`：旧 `dependencies: [{system, scale}]` 和新 typed dependency 同时可加载。
+- `typed_dependency_edge_types_route_to_distinct_aircraft_overlays`：`electrical_power`、`data_path`、`crew_operated`、`cooling` 进入不同 aircraft overlay 后果线，并验证 data-path/crew-operated 不串到 fuel、propulsion 或 hydraulic。
 - `local_hit_reports_primary_component_identity_and_group_state`：固定局部命中后 event 记录 primary component、system、redundancy group、integrity、group availability。
 - `redundant_group_second_member_damage_reduces_availability`：同组第二成员受损时 group availability 继续下降。
 - `dependency_damage_propagates_without_cross_system_bleed`：控制作动器影响 hydraulic/flight_control，不误降 data_link；data_link 不误降 hydraulic。
+- `typed_dependency_delay_queues_then_applies_cascade`：`delay_s>0` 的依赖后果命中瞬间只记录/排队，未到期前不提前降低目标系统，到期后再有界地投射到 hydraulic/flight_control 等后果线。
 - `flight_control_axis_damage_derives_axis_authority`：roll/pitch/yaw 组件分别影响对应 axis。
 - `hydraulic_damage_degrades_control_authority_over_time`：hydraulic availability 下降后 flight_control 继续被拖累。
+- `hydraulic_supply_damage_tracks_pressure_availability`：hydraulic pump/source 命中会降低 `hydraulic_pressure_availability`，并在后续帧通过 pressure/capacity 代理继续拖累 flight-control/turn-rate。
 - `fuel_storage_damage_causes_leak_not_immediate_thrust_loss`：fuel cell hit 触发 leak/quantity 后果，但 engine hit 才强影响 propulsion。
-- `engine_fuel_feed_damage_can_reduce_propulsion`：fuel feed/control 组件通过 fuel/engine dependency 降低推进。
+- `engine_fuel_feed_damage_can_reduce_propulsion`：fuel feed/control 组件或 `edge_type=fuel_feed` 依赖可降低推进；普通 fuel cell 命中仍不直接等价 thrust loss。
+- `lateral_fuel_storage_damage_tracks_fuel_imbalance`：left/right wing fuel storage 命中会写入 `fuel_imbalance_severity`，并在后续帧轻微增加 control asymmetry / 降低 roll authority；center fuselage fuel cell 和 engine fuel feed 不触发该左右不平衡语义。
 - `fire_cascade_is_bounded_and_auditable`：active fire 后续传播到结构、航电、液压、机组，但 severity 保持 0-1。
+- `fire_suppression_integrity_reduces_fire_cascade_growth`：fire bottle / suppression component 损伤降低 suppression integrity 后，同等 fuel fire 级联增长更强；该测试只验证工程化 availability 进入级联。
+- `e3_fire_bottles_are_authored_as_suppression_components`：E-3 engine fire bottle 不再作为普通 fuel cell 触发 fuel leak，而是报告 `fire_suppression` 主组件，并让 suppression overlay 优先从命名 suppression 冗余组可用性派生，避免单件完整性绕过冗余语义。
+- `fire_zone_scaffold_localizes_secondary_damage_paths`：engine bay、wing、fuselage、mission bay 四类局部火源会写入不同 zone severity，并在后续帧投射到不同二次损伤方向；该测试只验证 compartment scaffold 的隔离性和有界性。
 - `sensor_payload_damage_affects_sensor_metrics`：radar/sensor payload 命中降低 range/Pd 或增加 noise。
 - `mission_crew_damage_affects_c2_sensor_exploitation`：E-3 mission operator consoles 命中降低 mission/sensor exploitation，不直接 mobility kill。
 - `crew_station_damage_affects_pilot_control_path`：cockpit crew station 命中影响 pilot/control 和 forced landing 风险。
@@ -48,7 +55,11 @@
 - 未校准的真实 Pk、真实失效概率或真实 kill threshold。
 - 未授权的 deterministic fuze 起爆/杀伤结论。
 - 精确火灾传播速率、燃油泄漏速率、液压压力曲线。
+- 真实 hydraulic source/line/reservoir/actuator 回路、蓄压器时间常数、隔离阀和压力-作动器曲线；当前 `hydraulic_pressure_availability` 只是 pressure/capacity 工程代理。
 - 真实机型敏感组件位置、真实系统架构或真实冗余切换逻辑。
+- 真实依赖传播延迟、隔离阀/电气切换/液压压力时间常数；当前 `delay_s` 只是工程化单跳队列。
+- 真实燃油不平衡飞行影响、油箱几何、油量分配、横向重心和自动配平；当前 `fuel_imbalance_severity` 只是左右 fuel storage 命中的工程化后果代理。
+- 真实点火概率、灭火成功概率、灭火剂/喷嘴/瓶压分布、舱段通风、热释放、烟雾毒性、烧穿时间线或平台 specific fire-zone；当前 fire-zone severity 只是局部二次损伤代理。
 - “单发必杀”或“进入 fuze radius 必命中”。
 
 ## Non-Authoritative 边界
@@ -76,4 +87,3 @@
 - 是否有 live missile smoke 证明真实链路仍产出 `EffectsEvent`/`DamageReport`。
 - 是否避免 physical effects path 直接写 RL Score。
 - 是否明确未授权数据不能授予 Pk、deterministic fuze 或真实组件失效 probability。
-

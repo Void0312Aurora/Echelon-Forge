@@ -47,9 +47,11 @@ flowchart LR
 - 已把 `DamageComponentDependency` 扩展为可保存 `target_system`、`edge_type`、`threshold`、`delay_s`、`direction` 和 `provenance` 的 typed edge；旧 `system + scale` 保持兼容。
 - loader 已接受三种写法：字符串依赖、旧对象 `system + scale`、新对象 `target_system + edge_type + scale + threshold/provenance`；缺失 `system` 时会用 `target_system` 回填。
 - effects model 已按 `target_system` 投射依赖后果，并用 `edge_type` 做保守工程化方向调制；`threshold=1.0` 保持旧连续传播，低于 1.0 时只在源组件/冗余组可用性跌破门槛后传播。
+- `delay_s > 0` 已从单纯事件字段推进为最小 pending queue：命中瞬间记录并排队 dependency 后果，`AircraftDamageStateUpdate` 在后续帧到期后一次性、有界地投射到 `SystemHealth`、`AircraftDamageState` 和 `PlatformDamageState`；`delay_s == 0` 保持旧的立即传播语义。
+- typed edge 后果线已开始分化：`electrical_power` 影响航电/指挥导航并可拖累受供电飞控，`data_path` 影响航电/任务/指挥导航但不应制造燃油/液压/推进后果，`crew_operated` 影响机组/任务操作链，`cooling` 增加点火/火灾风险并可拖累受冷却航电，`control_signal` 和 `structural_support` 分别进入控制信号和结构支撑代理。该分化仍是工程化 routing，不是实际电源图、数据总线、冷却回路或人员流程模型。
 - `EffectsEvent.component_mechanism_load_rows[]` 已暴露最小依赖传播摘要：传播条数、代表性 `target_system`、`edge_type`、`threshold`、`delay_s`、`direction`、`provenance`、源可用性和有效尺度；该摘要用于审计工程化传播路径，不授予校准/Pk/确定性引信 authority。
 - F-16、Su-35S、MQ-9、MH-60R 和 E-3 代表性 aircraft unit JSON 已把现有 dependency objects 迁到 typed metadata，同时保留旧 `system` 字段以兼容现有读取路径；明显链路使用 `hydraulic_power`、`electrical_power`、`data_path`、`fuel_feed`，暧昧链路保持 `generic` 并标注 synthetic engineering / non-authoritative provenance。
-- 该增量仍不是完整 graph solve：`delay_s` 和 `direction` 当前可被加载与审计，但尚未形成延迟求解或双向图传播。
+- 该增量仍不是完整 graph solve：`delay_s` 目前只是单跳延迟后果队列，不是网络级时序求解；`direction` 当前可被加载与审计，但尚未形成双向图传播。
 
 ## 路线 B：统一冗余组语义
 
@@ -104,4 +106,3 @@ flowchart LR
 ## 非权威边界
 
 当前图是工程化 dependency graph，不是实际飞机系统原理图、线路图、液压图、电源图或任务系统架构图。任何真实架构、失败阈值、隔离逻辑、冗余切换时间和恢复能力都必须等待校准或可引用的 authoritative/validated evidence。
-

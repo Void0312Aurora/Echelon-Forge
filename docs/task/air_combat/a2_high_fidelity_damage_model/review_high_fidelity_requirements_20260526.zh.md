@@ -91,10 +91,10 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 
 | 要素 | 当前状态 | 仍存缺口 |
 |------|---------|---------|
-| 火灾 / 燃油泄漏 | fuel leak 消耗 `FuelSystem` / `Mass`，火灾可继续影响结构、航电、机组、液压和燃油 | 没有起燃概率、邻接传播、抑制系统、烧穿时间线 |
-| 液压级联 | 液压损伤会拖累飞控，组件依赖可传播到 flight_control/hydraulic overlay | 没有具体液压回路、管线破裂、作动器卡滞/漂移/自由模式 |
+| 火灾 / 燃油泄漏 | fuel leak 消耗 `FuelSystem` / `Mass`，火灾可继续影响结构、航电、机组、液压和燃油；fuel storage 与 engine fuel feed/control 已开始区分，后者可额外降低 propulsion integrity；left/right wing fuel storage 可写入 `fuel_imbalance_severity` 并轻微影响 control asymmetry / roll authority；`flammable_fluid_exposure` / `ignition_source_severity` / `fire_suppression_integrity` 已进入最小级联，E-3 fire bottle 已按 `fire_suppression` 组件处理，suppression integrity 可由组件/冗余组可用性派生；engine/wing/fuselage/mission fire-zone severity 已能把局部火源投射到不同二次损伤方向 | 没有起燃概率、真实邻接传播、真实 fire-zone、真实 suppression bottle/nozzle/agent/distribution、热释放/烟雾/烧穿时间线；供油链、燃油不平衡和 fire-zone 仍是工程化代理，不是管路/阀门/油压/油箱几何/横向重心/舱段火灾模型 |
+| 液压级联 | 液压损伤会拖累飞控，组件依赖可传播到 flight_control/hydraulic overlay；`hydraulic_pressure_availability` 已作为 pressure/capacity 代理进入飞控派生；`delay_s>0` 的 typed dependency 已能排队并在后续帧到期传播 | 没有具体液压 source/line/reservoir/actuator 回路、管线破裂、蓄压器时间常数、隔离阀、作动器卡滞/漂移/自由模式；hydraulic pressure 和 dependency delay 仍是工程化单跳/能力代理 |
 | 结构级联 | `structural_overstress` / `flutter_exposure` 在高能包线下累积并收紧包线 | 没有离散翼梁屈服、疲劳裂纹或灾难性结构失效事件 |
-| 电气 / 航电级联 | power/data-link/mission radar 等组件可通过 dependencies 影响相关 overlay | 仍是最小依赖脚手架，不是总线切换和负载 shedding 模型 |
+| 电气 / 航电级联 | power/data-link/mission radar 等组件可通过 dependencies 影响相关 overlay，且 typed dependency 可记录 threshold / delay / edge metadata | 仍是最小依赖脚手架，不是总线切换和负载 shedding 模型 |
 | 飞行员 / 机组 | crew/pilot/mission crew/command-navigation 字段影响传感器、任务和控制能力 | 仍是能力乘数，不是伤害类型、人员替代、任务分工和时间线模型 |
 
 ### 2.6 杀伤评估
@@ -128,7 +128,7 @@ A2 当前已经越过最初的 HP-only / 大区域 hitbox 阶段：
 
 - Phase 1：HP-first bypass 反转、structured aircraft path、`EffectsEvent` / `DamageReport` 记录、physical effects 不直接写 RL `Score`。
 - Phase 2：`AircraftDamageState` overlay、飞行动力学/推进/传感器/fuel leak 派生、火灾/液压/燃油级联、控制轴和 control-asymmetry overlay。
-- Phase 3：`WarheadProfile` / `FuzeProfile`、弹头族 footprint、近炸空间投射、orientation-pattern 证据、机制载荷字段、候选组件机制载荷行及 row 级 failure provenance / authority / evidence-axis 审计、contact/impact/timed 初步语义、组件几何/阈值/冗余/依赖。
+- Phase 3：`WarheadProfile` / `FuzeProfile`、弹头族 footprint、近炸空间投射、orientation-pattern 证据、机制载荷字段、候选组件机制载荷行及 row 级 failure provenance / authority / evidence-axis 审计、contact/impact/timed 初步语义、组件几何/阈值/冗余/依赖，以及 typed dependency 的最小延迟队列。
 - Phase 5：synthetic vulnerability scaffold、descriptor gate、authority 分离、schema/source/provenance 准入门、descriptor source metadata 事件审计、rows 受控接入、effect-scale 与 component-failure rows 的机制载荷条件化、row provenance metadata 准入门、被消费 row 的 id/source/provenance 事件审计、Pk / deterministic-fuze authority 防误提升。
 
 ## 5. 下一步建议

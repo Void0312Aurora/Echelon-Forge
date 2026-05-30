@@ -51,6 +51,51 @@ Examples:
 
 Passing a lower gate never implies that higher gates have passed.
 
+## Simplified-But-Credible Modeling Rule
+
+The project's default target is not research-grade, engineering-grade, or
+full-physics exactness. For most runtime, scenario, and RL workloads, the
+correct target is:
+
+> a simplified model that remains as realistic as practical while staying
+> implementable, maintainable, and verifiable.
+
+The simplification here is relative to research-grade or engineering-grade
+models, not relative to game-like or toy abstractions. In other words, the
+project does not require default implementation of highly detailed models whose
+data support is weak and whose implementation cost is disproportionate, but it
+also must not reduce a claimed tactical-realism problem into little more than a
+functional wiring exercise for the sake of trainability.
+
+An acceptable simplified model should preserve at least the following:
+
+- causal structure: critical state, action, and event relationships remain
+  intact
+- relative ordering: better/worse, stronger/weaker, nearer/farther consequence
+  directions remain broadly aligned with real tactical expectations
+- consequence chains: the observation changes, constraints, risks, windows,
+  damage, failure modes, or authority logic that the task actually depends on
+  leave visible runtime effects
+- verifiable boundaries: the claimed precision level matches available data,
+  test evidence, and implementation strength
+
+An unacceptable pseudo-high-fidelity model often shows one or more of these
+signs:
+
+- numerically finer output without source support or reasonable calibration
+- many parameters while the key causal direction is still wrong, causing policy
+  learning to optimize simulator artifacts instead of tactics
+- dense local detail while the consequence chain that matters to the task is
+  still missing
+
+The target, then, is neither "make everything engineering-grade by default" nor
+"turn it into game rules for convenience," but a tactically credible simplified
+model between those extremes that can support both reasoning and RL learning.
+
+This rule is cross-domain. It applies not only to lethality models, but also to
+flight dynamics, sensing, weapon guidance, electronic warfare, air/ground/naval
+platform behavior, command chains, logistics constraints, and future domains.
+
 ## Gradient Levels
 
 The following labels are shared project vocabulary. They are not exhaustive

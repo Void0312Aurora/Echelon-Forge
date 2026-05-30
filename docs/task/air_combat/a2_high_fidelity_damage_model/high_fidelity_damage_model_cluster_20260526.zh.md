@@ -129,12 +129,14 @@ Phase 1 的第一批代码变更应该足够小：
 - 新增首个机制采样脚手架：直接 hitbox 交叠与近炸空间投射都会消费 hitbox `armor_mm`、局部投影暴露面积、弹头族机制容量、距离质量和 velocity-axis 权重；同几何下低装甲翼面会比高装甲翼面承受更强飞控/液压/结构损伤。
 - 新增首个机制特定 component-threshold scaffold：同一 hitbox 内的飞控、燃油、传感器/航电、发动机、座舱/机组和结构按弹头族使用不同敏感度，避免所有组件继续共享同一个通用 severity 标量。
 - 新增首个合成 component-failure probability scaffold：直接命中和近炸投射会按 severity、mechanism scale、component threshold scale 与 direct/projection 形态采样组件失效；触发后把额外失效冲击写入 aircraft overlay / platform damage。
-- F-16 数据库级组件样例已扩展到 22 个代表组件，覆盖 fire-control radar、cockpit、nose avionics、IFF、fuselage fuel、mission computer、data link、navigation、power bus、flight-control computer、engine core、afterburner nozzle、engine fuel control、hydraulic pump、rudder actuator、wing fuel、aileron、leading-edge flap actuator 和 wing spar 等挂点；
+- F-16 数据库级组件样例已扩展到 22 个代表组件，覆盖 fire-control radar、cockpit、nose avionics、IFF、fuselage fuel、mission computer、data link、navigation、power bus、flight-control computer、engine core、afterburner nozzle、engine fuel control、hydraulic pump、rudder actuator、wing fuel、aileron、leading-edge flap actuator 和 wing spar 等挂点；fuel storage 与 engine fuel feed/control 后果已开始分化，fuel cell 命中不直接等价 thrust loss，fuel-feed/control 命中或 `edge_type=fuel_feed` 依赖可额外降低 propulsion integrity，left/right wing fuel storage 命中可写入工程化 `fuel_imbalance_severity` 并随时间轻微投射到 control asymmetry / roll authority；
 - Su-35S 数据库级组件样例已扩展到 23 个代表组件，覆盖 nose radar/cockpit/avionics/IRST、fuselage fuel/avionics/data-link/navigation/power/flight-control computer、左右发动机 core/fuel-feed/thrust-vector actuator 和机翼 fuel/elevon/leading-edge flap/spar 等挂点；
 - MQ-9、MH-60R、E-3 已分别扩展到 23/22/27 个代表性组件：覆盖 UAV 传感器/数据链/任务处理/电源/推进/机翼飞控，直升机座舱/传感器/燃油/任务系统/电源/传动/旋翼与尾桨飞控，以及 C2 大型机 rotodome radar、任务系统、数据链/导航/电源、中机身燃油、发动机舱、机翼燃油/飞控/翼梁；这些样例证明组件化证据面已跨 fighter/UAV/直升机/C2 平台族运行，但仍不是全库所有飞机 20-50 项组件数据。
 - `EffectsEvent` 新增 `component_hit_count`、`component_mechanism_load_rows`、`component_primary_name`、`component_primary_system`、`component_primary_redundancy_group` 和 `component_primary_critical`，使组件级几何命中及候选组件机制载荷可由事件面追溯，而不是只出现在日志中；当前 row 还会记录 component-failure probability/source/calibrated/dataset/sample、probability-authority 状态、surface-incidence cos，以及 weapon/aspect/closure/miss-distance 匹配轴，以便把候选组件载荷与其 provenance 一并审计。
 - component-failure probability 已开始消费组件 `critical` 与 `redundancy_group`：同几何下非关键、冗余 actuator 的失效概率低于单点关键 actuator；本轮新增 `ComponentDamageState` 运行时记忆和命名 `redundancy_group_id`，F-16/Su-35S wing fuel cell、aileron/elevon actuator、wing spar 样例以及 MQ-9/MH-60R/E-3 代表性组件会初始化组件完整性、冗余组成员数和组可用性。连续命中同一组件会累计降低 `component_primary_integrity`，而组可用性按同组其他成员贡献保留，作为最小冗余依赖图入口；它仍不是完整液压/飞控/电源依赖网络。
-- 新增组件 `dependencies` 最小传播：组件可声明依赖系统，loader/factory 会初始化依赖系统，effects model 会在组件完整性/冗余组可用性下降后把影响传播到依赖系统与 aircraft overlay。当前覆盖飞控作动器到 hydraulic/flight_control、任务雷达到 avionics/mission_systems/data_link，以及代表性电源/数据链组件到 flight_control/data_link/mission_systems/avionics 等最小链路；这是冗余依赖图入口，不是完整系统网络。
+- 新增组件 `dependencies` 最小传播：组件可声明依赖系统，loader/factory 会初始化依赖系统，effects model 会在组件完整性/冗余组可用性下降后把影响传播到依赖系统与 aircraft overlay。当前覆盖飞控作动器到 hydraulic/flight_control、任务雷达到 avionics/mission_systems/data_link，以及代表性电源/数据链组件到 flight_control/data_link/mission_systems/avionics 等最小链路；`delay_s>0` 的 dependency 已进入运行时 pending queue，并由 aircraft damage update 在后续帧到期后传播。这是冗余依赖图入口，不是完整系统网络或真实依赖时序求解。
+- 新增 fire-source / suppression / zone 最小级联：aircraft overlay 记录 `flammable_fluid_exposure`、`ignition_source_severity` 和 `fire_suppression_integrity`，E-3 engine fire bottle 已从普通 `fuel` 组件改为 `fire_suppression` 组件；suppression integrity 可由 `ComponentDamageState` 中 suppression 组件/冗余组可用性派生，命名 suppression 冗余组存在时优先使用组可用性，fire cascade 会用 suppression integrity 保守调制 fire growth / extinguish decay。新增 engine bay、wing、fuselage、mission bay 四个 fire-zone severity，让局部火源能投射到不同二次损伤方向。该路径仍是非权威工程状态机，不是起火概率、灭火成功概率或真实舱段火灾模型。
+- 新增 hydraulic pressure/capacity 最小代理：aircraft overlay 记录 `hydraulic_pressure_availability`，hydraulic pump/source 命中和 `hydraulic_power` 依赖会降低 pressure availability，AircraftDamageStateUpdate 会把 pressure availability 与 `hydraulic_integrity` 一起投射到 flight-control 派生、turn-rate 和 mobility capability。该路径仍不是真实液压回路、蓄压器时间常数、隔离阀或压力-作动器曲线。
 - 新增显式 `FuzeProfile` 证据面：weapon JSON、运行时 missile 和 `EffectsEvent` 暴露 fuze type、trigger radius、delay、reliability 与 synthetic provenance；live proximity 仍不放行确定性引信，只用 trigger radius/reliability 调制现有 proximity/RNG gate，并用 delay 调度 delayed detonation。
 - 新增首个 fuze type trigger semantics：`proximity` / `radar_proximity` / `laser_proximity` 继续按近炸触发半径工作；`contact` / `impact` 要求导弹进入目标 authored hitbox 表面接触容差，不再把 near-miss radius 误记录为接触引信起爆；当前 live contact/impact 事件还会把表面距离、穿入深度、接触容差和是否进入 hitbox 写入运行时与 `EffectsEvent`；`timed` 按发射后 `delay_s` 独立调度起爆，不依赖近炸门，远离目标时可记录 `detonated_no_effect`。
 - 新增 proximity-fuze target-signature scaffold：`radar_proximity` 会按目标 RCS/aspect 代理调制有效引信可靠度，`laser_proximity` 会按目标 hitbox 投影几何代理调制有效引信可靠度，并在事件中暴露 `fuze_signature_source`、`fuze_target_signature`、`fuze_signature_scale` 与 `fuze_effective_reliability`。该路径只证明雷达/激光近炸引信开始消费目标签名证据，仍保留 RNG gate，不是校准引信模型。
@@ -161,10 +163,17 @@ Phase 1 的第一批代码变更应该足够小：
 - `test_phase3_primary_component_reports_mechanism_load_vector`
 - `test_phase3_database_f16_component_geometry_reports_primary_component`
 - `test_phase3_database_su35_component_geometry_reports_primary_component`
+- `test_phase3_engine_fuel_feed_damage_can_reduce_propulsion`
+- `test_phase2_lateral_fuel_storage_damage_tracks_fuel_imbalance`
+- `test_phase2_hydraulic_supply_damage_tracks_pressure_availability`
 - `test_phase3_representative_aircraft_database_components_cover_uav_helo_c2`
 - `test_phase3_representative_aircraft_components_report_runtime_identity`
 - `test_phase3_component_dependencies_are_authored_for_representative_control_and_mission_components`
 - `test_phase3_component_dependency_damage_propagates_to_related_aircraft_systems`
+- `test_phase3_typed_dependency_delay_queues_then_applies_cascade`
+- `test_phase2_fire_suppression_integrity_reduces_fire_cascade_growth`
+- `test_phase2_fire_zone_scaffold_localizes_secondary_damage_paths`
+- `test_phase3_e3_fire_bottles_are_authored_as_suppression_components`
 - `test_phase3_mission_component_dependency_damage_propagates_to_avionics_overlay`
 - `test_phase3_component_redundancy_reduces_failure_probability`
 - `test_phase3_component_redundancy_group_tracks_cumulative_integrity`

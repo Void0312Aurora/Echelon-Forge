@@ -275,6 +275,7 @@ std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t e
             state->structural_integrity,
             state->flight_control_integrity,
             state->hydraulic_integrity,
+            state->hydraulic_pressure_availability,
             state->roll_control_integrity,
             state->pitch_control_integrity,
             state->yaw_control_integrity,
@@ -288,6 +289,15 @@ std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t e
             state->command_navigation_integrity,
             state->fire_severity,
             state->fuel_leak_severity,
+            state->fuel_imbalance_severity,
+            state->flammable_fluid_exposure,
+            state->ignition_source_severity,
+            state->fire_suppression_integrity,
+            state->smoke_heat_exposure,
+            state->engine_fire_zone_severity,
+            state->wing_fire_zone_severity,
+            state->fuselage_fire_zone_severity,
+            state->mission_fire_zone_severity,
             state->structural_overstress,
             state->flutter_exposure,
             state->forced_landing_required ? 1.0 : 0.0,
@@ -313,6 +323,28 @@ std::vector<double> SimulationKernel::debug_get_aircraft_vulnerability_evidence_
         1.0,
         profile->synthetic ? 1.0 : 0.0,
         aircraft_vulnerability_has_calibrated_evidence(*profile) ? 1.0 : 0.0,
+        aircraft_vulnerability_pk_authority(*profile) ? 1.0 : 0.0,
+        aircraft_vulnerability_deterministic_fuze_authority(*profile) ? 1.0 : 0.0,
+        profile->evidence_dataset_valid ? 1.0 : 0.0,
+    };
+}
+
+std::vector<double> SimulationKernel::debug_get_aircraft_vulnerability_authority_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        return {};
+    }
+
+    const AircraftVulnerabilityProfile* profile = e.get<AircraftVulnerabilityProfile>();
+    if (!profile) {
+        return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    }
+    return {
+        1.0,
+        profile->synthetic ? 1.0 : 0.0,
+        aircraft_vulnerability_has_calibrated_evidence(*profile) ? 1.0 : 0.0,
+        profile->effect_scale_authority ? 1.0 : 0.0,
+        profile->component_failure_probability_authority ? 1.0 : 0.0,
         aircraft_vulnerability_pk_authority(*profile) ? 1.0 : 0.0,
         aircraft_vulnerability_deterministic_fuze_authority(*profile) ? 1.0 : 0.0,
         profile->evidence_dataset_valid ? 1.0 : 0.0,

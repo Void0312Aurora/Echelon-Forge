@@ -590,15 +590,84 @@ inline void propagate_aircraft_damage_cascade(
         return;
     }
 
+    // Early exit: if no cascade sources are active, the function is a no-op.
+    // All guarded blocks below will be skipped, and the unguarded float math
+    // (fire growth, flammable/ignition decay, fire extinguish) evaluates to
+    // zero-delta clamped to [0,1] — equivalent to idempotent pass-through.
+    if (aircraft.fire_severity <= 0.0 &&
+        aircraft.fuel_leak_severity <= 0.0 &&
+        aircraft.fuel_imbalance_severity <= 0.0 &&
+        aircraft.flammable_fluid_exposure <= 0.0 &&
+        aircraft.ignition_source_severity <= 0.0 &&
+        aircraft.smoke_heat_exposure <= 0.0 &&
+        aircraft.engine_fire_zone_severity <= 0.0 &&
+        aircraft.wing_fire_zone_severity <= 0.0 &&
+        aircraft.fuselage_fire_zone_severity <= 0.0 &&
+        aircraft.mission_fire_zone_severity <= 0.0 &&
+        aircraft.hydraulic_integrity >= 1.0 &&
+        aircraft.hydraulic_pressure_availability >= 1.0 &&
+        aircraft.structural_integrity >= 1.0 &&
+        leaked_fuel_kg <= 0.0) {
+        return;
+    }
+
     const double fuel_damage = std::clamp(1.0 - aircraft.fuel_system_integrity, 0.0, 1.0);
-    const double hydraulic_damage = std::clamp(1.0 - aircraft.hydraulic_integrity, 0.0, 1.0);
+    const double hydraulic_pressure_loss =
+        std::clamp(1.0 - aircraft.hydraulic_pressure_availability, 0.0, 1.0);
+    const double hydraulic_damage = std::max(
+        std::clamp(1.0 - aircraft.hydraulic_integrity, 0.0, 1.0),
+        hydraulic_pressure_loss);
     const double avionics_damage = std::clamp(1.0 - aircraft.avionics_integrity, 0.0, 1.0);
     const double leak_activity = std::clamp(leaked_fuel_kg / std::max(1.0e-6, dt_s * 8.0), 0.0, 1.0);
+    const double flammable_exposure = std::clamp(
+        aircraft.flammable_fluid_exposure +
+            0.45 * fuel_damage +
+            0.25 * hydraulic_damage +
+            0.65 * leak_activity,
+        0.0,
+        1.0);
+    const double ignition_source = std::clamp(
+        aircraft.ignition_source_severity +
+            0.25 * avionics_damage +
+            0.12 * fuel_damage,
+        0.0,
+        1.0);
+    const double suppression = std::clamp(aircraft.fire_suppression_integrity, 0.0, 1.0);
+    const double suppression_growth_scale = 1.15 - 0.35 * suppression;
 
     aircraft.fire_severity +=
         ((0.0040 * fuel_damage) + (0.0025 * hydraulic_damage) +
-         (0.0020 * avionics_damage) + (0.0035 * leak_activity)) *
+         (0.0020 * avionics_damage) + (0.0035 * leak_activity) +
+         (0.0025 * flammable_exposure * (0.35 + ignition_source))) *
+        suppression_growth_scale *
         dt_s;
+
+    const double engine_fire_zone = std::clamp(aircraft.engine_fire_zone_severity, 0.0, 1.0);
+    const double wing_fire_zone = std::clamp(aircraft.wing_fire_zone_severity, 0.0, 1.0);
+    const double fuselage_fire_zone = std::clamp(aircraft.fuselage_fire_zone_severity, 0.0, 1.0);
+    const double mission_fire_zone = std::clamp(aircraft.mission_fire_zone_severity, 0.0, 1.0);
+    const double active_zone_fire = std::max({
+        engine_fire_zone,
+        wing_fire_zone,
+        fuselage_fire_zone,
+        mission_fire_zone});
+    const double pre_zone_fire = std::clamp(aircraft.fire_severity, 0.0, 1.0);
+    if (active_zone_fire > 0.0) {
+        aircraft.fire_severity +=
+            0.0015 *
+            active_zone_fire *
+            (0.35 + flammable_exposure) *
+            (1.05 - 0.30 * suppression) *
+            dt_s;
+        aircraft.smoke_heat_exposure +=
+            (0.0018 * engine_fire_zone +
+             0.0020 * wing_fire_zone +
+             0.0040 * fuselage_fire_zone +
+             0.0045 * mission_fire_zone) *
+            (0.45 + pre_zone_fire + 0.35 * flammable_exposure) *
+            (1.10 - 0.25 * suppression) *
+            dt_s;
+    }
 
     const double fire = std::clamp(aircraft.fire_severity, 0.0, 1.0);
     if (fire > 0.0) {
@@ -609,18 +678,197 @@ inline void propagate_aircraft_damage_cascade(
         aircraft.mission_crew_effectiveness -= 0.0030 * fire * dt_s;
         aircraft.command_navigation_integrity -= 0.0020 * fire * dt_s;
         aircraft.hydraulic_integrity -= 0.0045 * fire * dt_s;
+        aircraft.hydraulic_pressure_availability -= 0.0035 * fire * dt_s;
         aircraft.fuel_system_integrity -= 0.0040 * fire * dt_s;
     }
 
+    if (active_zone_fire > 0.0) {
+        const double spread = (1.0 - 0.65 * suppression) * fire * dt_s;
+        aircraft.fuselage_fire_zone_severity +=
+            0.0006 * (engine_fire_zone + wing_fire_zone + mission_fire_zone) * spread;
+        aircraft.engine_fire_zone_severity +=
+            0.0003 * fuselage_fire_zone * spread;
+        aircraft.wing_fire_zone_severity +=
+            0.0004 * fuselage_fire_zone * spread;
+        aircraft.mission_fire_zone_severity +=
+            0.0005 * fuselage_fire_zone * spread;
+
+        aircraft.propulsion_integrity -= 0.0045 * engine_fire_zone * dt_s;
+        aircraft.fuel_system_integrity -= 0.0020 * engine_fire_zone * dt_s;
+        aircraft.flight_control_integrity -= 0.0025 * wing_fire_zone * dt_s;
+        aircraft.hydraulic_integrity -= 0.0018 * wing_fire_zone * dt_s;
+        aircraft.hydraulic_pressure_availability -= 0.0015 * wing_fire_zone * dt_s;
+        aircraft.fuel_system_integrity -= 0.0022 * wing_fire_zone * dt_s;
+        aircraft.structural_integrity -=
+            (0.0020 * wing_fire_zone + 0.0018 * fuselage_fire_zone) * dt_s;
+        aircraft.crew_effectiveness -= 0.0020 * fuselage_fire_zone * dt_s;
+        aircraft.avionics_integrity -= 0.0038 * mission_fire_zone * dt_s;
+        aircraft.mission_crew_effectiveness -= 0.0024 * mission_fire_zone * dt_s;
+        aircraft.command_navigation_integrity -= 0.0022 * mission_fire_zone * dt_s;
+
+        const double zone_decay =
+            (0.0005 + 0.0014 * suppression) *
+            (1.0 - std::clamp(fire + flammable_exposure, 0.0, 1.0));
+        aircraft.engine_fire_zone_severity = std::clamp(
+            aircraft.engine_fire_zone_severity - zone_decay * dt_s,
+            0.0,
+            1.0);
+        aircraft.wing_fire_zone_severity = std::clamp(
+            aircraft.wing_fire_zone_severity - zone_decay * dt_s,
+            0.0,
+            1.0);
+        aircraft.fuselage_fire_zone_severity = std::clamp(
+            aircraft.fuselage_fire_zone_severity - zone_decay * dt_s,
+            0.0,
+            1.0);
+        aircraft.mission_fire_zone_severity = std::clamp(
+            aircraft.mission_fire_zone_severity - zone_decay * dt_s,
+            0.0,
+            1.0);
+    }
+
     if (hydraulic_damage > 0.0) {
-        aircraft.flight_control_integrity -= 0.0040 * hydraulic_damage * dt_s;
+        aircraft.hydraulic_pressure_availability -=
+            0.0012 *
+            std::clamp(1.0 - aircraft.hydraulic_integrity, 0.0, 1.0) *
+            dt_s;
+        aircraft.flight_control_integrity -=
+            (0.0025 * hydraulic_pressure_loss + 0.0030 * hydraulic_damage) * dt_s;
         if (hydraulic_damage > 0.65) {
             aircraft.structural_overstress += 0.0020 * (hydraulic_damage - 0.65) * dt_s;
         }
     }
 
-    const double extinguish_rate = 0.0015 * (1.0 - std::clamp(fuel_damage + leak_activity, 0.0, 1.0));
+    const double smoke_heat = std::clamp(aircraft.smoke_heat_exposure, 0.0, 1.0);
+    if (smoke_heat > 0.0) {
+        aircraft.crew_effectiveness -= 0.0020 * smoke_heat * dt_s;
+        aircraft.pilot_effectiveness -=
+            0.0016 * smoke_heat * (0.35 + fuselage_fire_zone) * dt_s;
+        aircraft.mission_crew_effectiveness -=
+            0.0026 * smoke_heat * (0.45 + mission_fire_zone) * dt_s;
+        aircraft.command_navigation_integrity -=
+            0.0022 * smoke_heat * (0.40 + mission_fire_zone + 0.35 * fuselage_fire_zone) * dt_s;
+        aircraft.avionics_integrity -= 0.0008 * smoke_heat * mission_fire_zone * dt_s;
+        aircraft.smoke_heat_exposure = std::clamp(
+            aircraft.smoke_heat_exposure -
+                (0.0007 + 0.0009 * suppression) *
+                (1.0 - std::clamp(fire + active_zone_fire, 0.0, 1.0)) *
+                dt_s,
+            0.0,
+            1.0);
+    }
+
+    const double fuel_imbalance = std::clamp(aircraft.fuel_imbalance_severity, 0.0, 1.0);
+    if (fuel_imbalance > 0.0) {
+        aircraft.control_asymmetry += 0.0014 * fuel_imbalance * dt_s;
+        aircraft.roll_control_integrity -= 0.0009 * fuel_imbalance * dt_s;
+        aircraft.fuel_imbalance_severity = std::clamp(
+            aircraft.fuel_imbalance_severity - 0.0004 * dt_s,
+            0.0,
+            1.0);
+    }
+
+    aircraft.flammable_fluid_exposure = std::clamp(
+        aircraft.flammable_fluid_exposure -
+            (0.0010 + 0.0015 * suppression) * dt_s +
+            0.0010 * leak_activity * dt_s,
+        0.0,
+        1.0);
+    aircraft.ignition_source_severity = std::clamp(
+        aircraft.ignition_source_severity -
+            (0.0010 + 0.0008 * suppression) * dt_s +
+            0.0008 * fire * dt_s,
+        0.0,
+        1.0);
+
+    const double extinguish_rate =
+        (0.0010 + 0.0012 * suppression) *
+        (1.0 - std::clamp(fuel_damage + leak_activity + 0.5 * flammable_exposure, 0.0, 1.0));
     aircraft.fire_severity = std::clamp(aircraft.fire_severity - extinguish_rate * dt_s, 0.0, 1.0);
+}
+
+inline void consume_pending_component_dependency_effects(
+    ComponentDamageState& component_damage,
+    double dt_s,
+    SystemHealth* sys_health,
+    AircraftDamageState& aircraft,
+    PlatformDamageState& platform
+) {
+    if (dt_s <= 0.0 || component_damage.pending_dependency_effects.empty()) {
+        return;
+    }
+
+    std::size_t write_index = 0;
+    auto& pending = component_damage.pending_dependency_effects;
+    for (std::size_t read_index = 0; read_index < pending.size(); ++read_index) {
+        auto effect = pending[read_index];
+        effect.remaining_delay_s = std::max(0.0, effect.remaining_delay_s - dt_s);
+        if (effect.remaining_delay_s > 1.0e-9) {
+            pending[write_index++] = effect;
+            continue;
+        }
+        apply_damage_component_dependency_impulse(
+            effect.target_system,
+            effect.edge_type,
+            effect.availability,
+            effect.impulse,
+            sys_health,
+            &aircraft,
+            &platform);
+    }
+    pending.resize(write_index);
+}
+
+inline bool component_damage_key_is_fire_suppression(const std::string& key) {
+    return damage_dependency_system_is_fire_suppression(key);
+}
+
+inline void derive_aircraft_fire_suppression_from_component_state(
+    const ComponentDamageState& component_damage,
+    AircraftDamageState& aircraft
+) {
+    // Early exit: most aircraft (F-16, Su-35, MQ-9, MH-60R) have no fire
+    // suppression components.  Skip the two hash-map scans when it is known
+    // at spawn time that no suppression component exists.
+    if (!component_damage.has_fire_suppression_components) {
+        return;
+    }
+
+    bool saw_suppression_component = false;
+    double suppression_availability = 1.0;
+
+    for (const auto& [group_key, availability] :
+         component_damage.redundancy_group_availability) {
+        if (!component_damage_key_is_fire_suppression(group_key)) {
+            continue;
+        }
+        saw_suppression_component = true;
+        suppression_availability = std::min(
+            suppression_availability,
+            std::clamp(availability, 0.0, 1.0));
+    }
+
+    for (const auto& [component_key, integrity] :
+         component_damage.component_integrity) {
+        const auto group_it = component_damage.component_redundancy_group.find(component_key);
+        if (group_it != component_damage.component_redundancy_group.end() &&
+            component_damage_key_is_fire_suppression(group_it->second)) {
+            continue;
+        }
+        if (!component_damage_key_is_fire_suppression(component_key)) {
+            continue;
+        }
+        saw_suppression_component = true;
+        suppression_availability = std::min(
+            suppression_availability,
+            std::clamp(integrity, 0.0, 1.0));
+    }
+
+    if (saw_suppression_component) {
+        aircraft.fire_suppression_integrity = std::min(
+            aircraft.fire_suppression_integrity,
+            suppression_availability);
+    }
 }
 } // namespace
 
@@ -1061,6 +1309,19 @@ inline void register_damage_system(flecs::world& ecs) {
 
                     if (AircraftDamageState* aircraft = e.get_mut<AircraftDamageState>()) {
                         clamp_aircraft_damage_state(*aircraft);
+                        if (ComponentDamageState* component_damage =
+                                e.get_mut<ComponentDamageState>()) {
+                            consume_pending_component_dependency_effects(
+                                *component_damage,
+                                dt_s,
+                                e.get_mut<SystemHealth>(),
+                                *aircraft,
+                                damage[i]);
+                            derive_aircraft_fire_suppression_from_component_state(
+                                *component_damage,
+                                *aircraft);
+                            clamp_aircraft_damage_state(*aircraft);
+                        }
 
                         if (const AircraftDamageBaseline* baseline = e.get<AircraftDamageBaseline>()) {
                             Mass* mass = e.get_mut<Mass>();
@@ -1085,7 +1346,9 @@ inline void register_damage_system(flecs::world& ecs) {
                             if (FlightModel* flight_model = e.get_mut<FlightModel>()) {
                                 const double aggregate_control = std::min(
                                     aircraft->flight_control_integrity,
-                                    aircraft->hydraulic_integrity);
+                                    std::min(
+                                        aircraft->hydraulic_integrity,
+                                        aircraft->hydraulic_pressure_availability));
                                 const double pilot_control = aircraft_damage_capability_floor(
                                     aircraft->pilot_effectiveness,
                                     0.18);
@@ -1153,7 +1416,12 @@ inline void register_damage_system(flecs::world& ecs) {
                         const double fire_progress = std::clamp(aircraft->fire_severity, 0.0, 1.0);
                         const double leak_progress = std::clamp(aircraft->fuel_leak_severity, 0.0, 1.0);
                         const double hydraulic_damage =
-                            std::clamp(1.0 - aircraft->hydraulic_integrity, 0.0, 1.0);
+                            std::max(
+                                std::clamp(1.0 - aircraft->hydraulic_integrity, 0.0, 1.0),
+                                std::clamp(
+                                    1.0 - aircraft->hydraulic_pressure_availability,
+                                    0.0,
+                                    1.0));
                         damage[i].fire_severity = std::max(damage[i].fire_severity, fire_progress);
                         damage[i].mission_capability -= 0.0012 * fire_progress * dt_s;
                         damage[i].sensor_capability -= 0.0010 * fire_progress * dt_s;
