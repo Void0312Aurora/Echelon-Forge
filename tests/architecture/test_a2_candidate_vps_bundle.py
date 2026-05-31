@@ -59,8 +59,31 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
         assert (REPO_ROOT / entry["ledger_ref"]).exists()
         assert len(entry["selected_source_ids"]) >= 4
 
+    residual_statuses = artifact["residual_statuses"]
+    assert residual_statuses["RES-001"] == (
+        "closed_narrow_internal_signoff_non_authoritative"
+    )
+    assert residual_statuses["RES-002"] == (
+        "closed_scoped_identity_non_authoritative"
+    )
+    assert residual_statuses["RES-007"] == (
+        "closed_stage_b_scope_review_only_release_blocked"
+    )
+    assert residual_statuses["RES-008"] == (
+        "closed_stage_b_scope_review_only_release_blocked"
+    )
+    assert residual_statuses["RES-005"] == (
+        "open_fail_closed_tp21_selected_debris_outputs_missing"
+    )
+    assert residual_statuses["RES-006"] == (
+        "open_fail_closed_beco_recalculation_not_admitted"
+    )
+
     residuals = artifact["open_residual_ids"]
-    assert "RES-001" in residuals
+    assert "RES-001" not in residuals
+    assert "RES-002" not in residuals
+    assert "RES-007" not in residuals
+    assert "RES-008" not in residuals
     assert "RES-009" in residuals
     assert "RES-013" in residuals
     assert "RES-014" in residuals
@@ -100,6 +123,35 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
         "BFM-DEF-002",
         "BFM-DEF-003",
         "BFM-DEF-004",
+    ]
+
+    stage_c_acceptance_summary = artifact["validation_stage_c_acceptance_criteria_summary"]
+    assert (
+        stage_c_acceptance_summary["criteria_status"]
+        == "frozen_pre_run_stage_c_component_probability_candidate_only"
+    )
+    assert (
+        stage_c_acceptance_summary["primary_release_scope"]
+        == "component_failure_probability_authority_only"
+    )
+    assert (
+        stage_c_acceptance_summary["effect_scale_dependency_status"]
+        == "stage_b_review_track_retained_separately"
+    )
+    assert (
+        stage_c_acceptance_summary["review_status"]
+        == "author_frozen_pending_independent_review"
+    )
+    assert (
+        stage_c_acceptance_summary["runtime_descriptor_action"]
+        == "forbidden_until_fragility_review_record_and_result_closeout_exist"
+    )
+    assert stage_c_acceptance_summary["hard_gate_count"] == 23
+    assert stage_c_acceptance_summary["deferred_items"] == [
+        "BFM-DEF-CP-001",
+        "BFM-DEF-CP-002",
+        "BFM-DEF-CP-003",
+        "BFM-DEF-CP-004",
     ]
 
     scope_summary = artifact["validation_scope_and_independence_summary"]
@@ -144,12 +196,17 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
     assert probe_summary["miss_distance_probe"]["standoff_values_m"] == [0.25, 0.35, 0.45]
     assert probe_summary["closure_probe"]["probe_id"] == "SCP-PROBE-002"
     assert probe_summary["closure_probe"]["row_count"] == 3
-    assert not probe_summary["closure_probe"]["metrics"]["mechanism_response_active"]
-    assert probe_summary["closure_probe"]["metrics"][
+    assert probe_summary["closure_probe"]["metrics"]["mechanism_response_active"]
+    assert not probe_summary["closure_probe"]["metrics"][
         "mechanism_response_constant_across_closure"
     ]
+    assert probe_summary["closure_probe"]["metrics"][
+        "candidate_closure_sensitive_response_observed"
+    ]
+    assert not probe_summary["closure_probe"]["metrics"]["res008_closed_by_probe"]
     assert probe_summary["closure_probe"]["closure_values_mps"] == [700.0, 900.0, 1100.0]
-    assert "does not consume closure_mps" in probe_summary["closure_probe"]["limitation_note"]
+    assert "candidate closure-sensitive response is present" in probe_summary["closure_probe"]["limitation_note"]
+    assert "RES-008 remains open" in probe_summary["closure_probe"]["limitation_note"]
     assert probe_summary["aspect_guard_probe"]["probe_id"] == "SCP-PROBE-003"
     assert probe_summary["aspect_guard_probe"]["accepted_scope_labels"] == ["beam"]
     assert probe_summary["aspect_guard_probe"]["rejected_scope_labels"] == [
@@ -176,8 +233,204 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
         == "author_snapshot_only_pending_independent_review"
     )
     assert stage_b_snapshot_summary["fragment_areal_density_cv"] <= 0.05
+    assert stage_b_snapshot_summary["blast_impulse_cv"] <= 0.05
     assert stage_b_snapshot_summary["fragment_energy_cv"] <= 0.05
     assert stage_b_snapshot_summary["penetration_margin_cv"] <= 0.05
+
+    stage_c_snapshot_summary = artifact[
+        "validation_stage_c_component_probability_snapshot_summary"
+    ]
+    assert (
+        stage_c_snapshot_summary["status"]
+        == "candidate_non_authoritative_stage_c_component_probability_snapshot"
+    )
+    assert stage_c_snapshot_summary["all_hard_gates_pass_in_current_snapshot"] is True
+    assert (
+        stage_c_snapshot_summary["review_status"]
+        == "author_snapshot_only_pending_independent_review"
+    )
+    assert (
+        stage_c_snapshot_summary["primary_release_scope"]
+        == "component_failure_probability_authority_only"
+    )
+    assert stage_c_snapshot_summary["baseline_component_probability_source"] == (
+        "synthetic_sigmoid"
+    )
+    assert stage_c_snapshot_summary["component_name"] == "right_aileron_actuator"
+    assert stage_c_snapshot_summary["component_system"] == "flight_control"
+    assert (
+        stage_c_snapshot_summary["component_redundancy_group_id"]
+        == "lateral_flight_control_actuators"
+    )
+    assert stage_c_snapshot_summary["component_failure_probability"] == 0.67
+    assert stage_c_snapshot_summary["surface_probability_monotonic_pass"] is True
+    assert stage_c_snapshot_summary["surface_anchor_probability_cv"] <= 0.05
+
+    stage_c_result_pack_summary = artifact[
+        "validation_stage_c_component_probability_result_pack_summary"
+    ]
+    assert (
+        stage_c_result_pack_summary["status"]
+        == "candidate_non_authoritative_stage_c_component_probability_result_pack"
+    )
+    assert stage_c_result_pack_summary["artifact_hash_count"] == 3
+    assert stage_c_result_pack_summary["all_hard_gates_pass_in_current_snapshot"] is True
+    assert (
+        stage_c_result_pack_summary["review_status"]
+        == "author_result_pack_only_pending_independent_review"
+    )
+    assert (
+        stage_c_result_pack_summary["primary_release_scope"]
+        == "component_failure_probability_authority_only"
+    )
+    assert stage_c_result_pack_summary["gate_band_contains_primary_fragment_energy"] is True
+    assert (
+        stage_c_result_pack_summary["gate_band_contains_primary_penetration_margin"] is True
+    )
+    assert stage_c_result_pack_summary["gate_band_contains_primary_blast_impulse"] is True
+    assert (
+        stage_c_result_pack_summary["baseline_component_probability_source"]
+        == "synthetic_sigmoid"
+    )
+    assert (
+        stage_c_result_pack_summary["candidate_component_name"]
+        == "right_aileron_actuator"
+    )
+    assert stage_c_result_pack_summary["candidate_component_failure_probability"] == 0.67
+    assert stage_c_result_pack_summary["gate_band_contains_primary_surface_incidence"] is True
+    assert stage_c_result_pack_summary["surface_probability_monotonic_pass"] is True
+    assert stage_c_result_pack_summary["surface_anchor_probability_cv"] <= 0.05
+
+    stage_c_review_gate_summary = artifact[
+        "validation_stage_c_component_probability_review_gate_summary"
+    ]
+    assert (
+        stage_c_review_gate_summary["status"]
+        == "blocked_non_authoritative_stage_c_review_candidate"
+    )
+    assert (
+        stage_c_review_gate_summary["review_target"]
+        == "component_failure_probability_authority_only"
+    )
+    assert (
+        stage_c_review_gate_summary["readiness_level"]
+        == "author_side_component_candidate_ready_but_not_fragility_review_closed"
+    )
+    assert stage_c_review_gate_summary["satisfied_condition_count"] == 7
+    assert stage_c_review_gate_summary["blocking_condition_count"] == 8
+    assert stage_c_review_gate_summary["blocking_residual_ids"] == [
+        "RES-012",
+        "RES-010",
+        "RES-009",
+        "RES-011",
+        "RES-003",
+        "RES-005",
+        "RES-006",
+        "RES-013/014-boundary",
+    ]
+    assert (
+        stage_c_review_gate_summary["upstream_stage_b_status"]
+        == "blocked_non_authoritative_stage_b_release_candidate"
+    )
+
+    provenance_identity_summary = artifact["validation_provenance_identity_gate_summary"]
+    assert (
+        provenance_identity_summary["status"]
+        == "blocked_non_authoritative_package_provenance_identity_candidate"
+    )
+    assert (
+        provenance_identity_summary["review_target"]
+        == "shared_provenance_and_surrogate_identity_surface"
+    )
+    assert (
+        provenance_identity_summary["readiness_level"]
+        == "author_side_pin_and_identity_surface_present_but_not_release_grade"
+    )
+    assert provenance_identity_summary["satisfied_condition_count"] == 5
+    assert provenance_identity_summary["blocking_condition_count"] == 4
+    assert provenance_identity_summary["blocking_residual_ids"] == [
+        "RES-001",
+        "RES-002",
+        "RES-002",
+        "RES-013/014-boundary",
+    ]
+
+    stage_c_retained_pack_summary = artifact[
+        "validation_stage_c_component_probability_retained_artifact_pack_summary"
+    ]
+    assert (
+        stage_c_retained_pack_summary["status"]
+        == "author_retained_stage_c_component_probability_candidate_artifacts_only"
+    )
+    assert stage_c_retained_pack_summary["manifest_exists"] is True
+    assert stage_c_retained_pack_summary["retained_artifact_count"] == 4
+    assert stage_c_retained_pack_summary["all_artifacts_exist"] is True
+    assert (
+        stage_c_retained_pack_summary["retention_scope"]
+        == "stage_c_component_probability_author_side_candidate_only"
+    )
+    assert stage_c_retained_pack_summary["artifact_keys"] == [
+        "runtime_aligned_authority_pack",
+        "stage_c_component_probability_snapshot",
+        "stage_c_component_probability_surface_probe",
+        "stage_c_component_probability_result_pack",
+    ]
+    assert (
+        stage_c_retained_pack_summary["runtime_origin"]
+        == "test_local_runtime_authority_exercise_only"
+    )
+
+    result_pack_summary = artifact["validation_result_pack_summary"]
+    assert result_pack_summary["status"] == "candidate_non_authoritative_stage_b_result_pack"
+    assert result_pack_summary["artifact_hash_count"] == 3
+    assert result_pack_summary["all_hard_gates_pass_in_current_snapshot"] is True
+    assert (
+        result_pack_summary["review_status"]
+        == "author_result_pack_only_pending_independent_review"
+    )
+    assert result_pack_summary["closure_mechanism_response_active"] is True
+    assert (
+        result_pack_summary["bm005_audit_outcome"]
+        == "candidate_hygiene_only_not_independent_validation"
+    )
+
+    readiness_gate_summary = artifact["validation_release_readiness_gate_summary"]
+    assert (
+        readiness_gate_summary["status"]
+        == "blocked_non_authoritative_stage_b_release_candidate"
+    )
+    assert readiness_gate_summary["release_target"] == "effect_scale_authority_only"
+    assert (
+        readiness_gate_summary["readiness_level"]
+        == "author_side_candidate_review_ready_but_not_release_ready"
+    )
+    assert readiness_gate_summary["satisfied_condition_count"] == 6
+    assert readiness_gate_summary["blocking_condition_count"] == 8
+    assert readiness_gate_summary["blocking_residual_ids"] == [
+        "RES-010",
+        "RES-002",
+        "RES-001",
+        "RES-008",
+        "RES-010",
+        "RES-012",
+        "RES-011",
+        "RES-013/014-boundary",
+    ]
+
+    retained_pack_summary = artifact["validation_retained_artifact_pack_summary"]
+    assert retained_pack_summary["status"] == "author_retained_candidate_artifacts_only"
+    assert retained_pack_summary["manifest_exists"] is True
+    assert retained_pack_summary["retained_artifact_count"] == 4
+    assert retained_pack_summary["all_artifacts_exist"] is True
+    assert retained_pack_summary["retention_scope"] == (
+        "stage_b_effect_scale_author_side_candidate_only"
+    )
+    assert retained_pack_summary["artifact_keys"] == [
+        "validation_scaffold_snapshot",
+        "scope_boundary_probe_snapshot",
+        "stage_b_effect_scale_snapshot",
+        "stage_b_validation_result_pack",
+    ]
 
     review_readiness = artifact["validation_review_readiness_summary"]
     assert (
@@ -201,10 +454,15 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
 
     artifact_pin_summary = artifact["artifact_pin_manifest_summary"]
     assert artifact_pin_summary["manifest_status"] == "author_frozen_pending_independent_review"
+    assert (
+        artifact_pin_summary["package_provenance_status"]
+        == "official_public_artifacts_partially_verified_release_grade_closeout_pending"
+    )
     assert artifact_pin_summary["primary_release_scope"] == "effect_scale_authority_only"
     assert artifact_pin_summary["status_counts"]["acquired_for_candidate"] >= 4
+    assert artifact_pin_summary["status_counts"]["verified_candidate_artifact"] == 2
     assert artifact_pin_summary["status_counts"]["sanity_only"] >= 1
-    assert artifact_pin_summary["status_counts"]["pending_acquisition"] >= 2
+    assert artifact_pin_summary["status_counts"]["pending_acquisition"] == 0
     assert artifact_pin_summary["status_counts"]["rejected"] >= 2
 
     identity_summary = artifact["surrogate_identity_manifest_summary"]
@@ -213,10 +471,19 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
         "f16c-aim120c-blastfrag-beam-high-nearmiss-0_35m-v0"
     )
     assert identity_summary["model_version"] == "v0_candidate_runtime_aligned"
-    assert identity_summary["worktree_state"] == "dirty_and_untracked_present"
+    assert (
+        identity_summary["worktree_state"]
+        == "repo_dirty_relevant_stage_b_file_set_hashed_retained_artifacts_present"
+    )
     assert identity_summary["current_validation_status"] == "not_validated"
     assert identity_summary["primary_release_scope"] == "effect_scale_authority_only"
     assert identity_summary["output_anchor_count"] == 3
+    assert (
+        identity_summary["retained_artifact_pack_status"]
+        == "present_author_side_non_authoritative"
+    )
+    assert identity_summary["retained_artifact_manifest_ref"].endswith("manifest.json")
+    assert identity_summary["retained_artifact_count"] == 4
 
     geometry_summary = artifact["target_geometry_assumption_summary"]
     assert geometry_summary["author_status"] == "frozen_for_stage_b_review_only"
@@ -271,10 +538,25 @@ def test_a2_candidate_vps_bundle_cli_writes_json(tmp_path: Path) -> None:
         == "frozen_pre_run_stage_b_effect_scale_only"
     )
     assert (
+        artifact["validation_stage_c_acceptance_criteria_summary"]["hard_gate_count"] == 23
+    )
+    assert (
+        artifact["validation_stage_c_component_probability_snapshot_summary"][
+            "component_failure_probability"
+        ]
+        == 0.67
+    )
+    assert (
+        artifact["validation_stage_c_component_probability_result_pack_summary"][
+            "artifact_hash_count"
+        ]
+        == 3
+    )
+    assert (
         artifact["validation_scope_probe_summary"]["closure_probe"]["metrics"][
             "mechanism_response_constant_across_closure"
         ]
-        is True
+        is False
     )
     assert (
         artifact["validation_benchmark_snapshot_summary"][
@@ -282,3 +564,13 @@ def test_a2_candidate_vps_bundle_cli_writes_json(tmp_path: Path) -> None:
         ]
         is True
     )
+    assert artifact["validation_result_pack_summary"]["artifact_hash_count"] == 3
+    assert (
+        artifact["validation_release_readiness_gate_summary"]["blocking_condition_count"]
+        == 8
+    )
+    assert (
+        artifact["validation_release_readiness_gate_summary"]["satisfied_condition_count"]
+        == 6
+    )
+    assert artifact["validation_retained_artifact_pack_summary"]["retained_artifact_count"] == 4

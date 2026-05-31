@@ -23,8 +23,26 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance import a2_blastfrag_runtime_aligned_authority_pack as authority_pack
+from tools.maintenance import (
+    a2_blastfrag_package_provenance_identity_gate as provenance_identity_gate,
+)
+from tools.maintenance import a2_blastfrag_stage_b_release_readiness_gate as readiness_gate
+from tools.maintenance import a2_blastfrag_stage_b_retained_artifact_pack as retained_pack
+from tools.maintenance import (
+    a2_blastfrag_stage_c_component_probability_review_readiness_gate as stage_c_review_gate,
+)
+from tools.maintenance import (
+    a2_blastfrag_stage_c_component_probability_result_pack as stage_c_result_pack,
+)
+from tools.maintenance import (
+    a2_blastfrag_stage_c_component_probability_retained_artifact_pack as stage_c_retained_pack,
+)
+from tools.maintenance import (
+    a2_blastfrag_stage_c_component_probability_snapshot as stage_c_snapshot,
+)
 from tools.maintenance import a2_blastfrag_scope_boundary_probe as scope_probe
 from tools.maintenance import a2_blastfrag_stage_b_effect_scale_snapshot as stage_b_snapshot
+from tools.maintenance import a2_blastfrag_stage_b_validation_result_pack as result_pack
 from tools.maintenance import a2_blastfrag_validation_scaffold as scaffold
 
 
@@ -65,6 +83,36 @@ DOC_REFS = {
     ),
     "validation_benchmark_snapshot": (
         PACKAGE_DIR / "validation_benchmark_snapshot_stage_b_effect_scale_20260530.zh.md"
+    ),
+    "validation_stage_c_component_probability_metrics": (
+        PACKAGE_DIR
+        / "validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md"
+    ),
+    "validation_stage_c_component_probability_snapshot": (
+        PACKAGE_DIR / "validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md"
+    ),
+    "validation_stage_c_component_probability_result_pack": (
+        PACKAGE_DIR / "validation_result_pack_stage_c_component_probability_20260530.zh.md"
+    ),
+    "validation_stage_c_component_probability_retained_artifact_pack": (
+        PACKAGE_DIR
+        / "validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md"
+    ),
+    "validation_provenance_identity_gate": (
+        PACKAGE_DIR / "validation_provenance_and_identity_gate_20260530.zh.md"
+    ),
+    "validation_stage_c_component_probability_review_gate": (
+        PACKAGE_DIR
+        / "validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md"
+    ),
+    "validation_result_pack": (
+        PACKAGE_DIR / "validation_result_pack_stage_b_effect_scale_20260530.zh.md"
+    ),
+    "validation_release_readiness_gate": (
+        PACKAGE_DIR / "validation_release_readiness_gate_stage_b_effect_scale_20260530.zh.md"
+    ),
+    "validation_retained_artifact_pack": (
+        PACKAGE_DIR / "validation_retained_artifact_pack_stage_b_effect_scale_20260530.zh.md"
     ),
     "validation_review_readiness_record": (
         PACKAGE_DIR / "validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md"
@@ -169,13 +217,25 @@ def _rel(path: Path) -> str:
     return path.relative_to(REPO_ROOT).as_posix()
 
 
-def _parse_open_residual_ids(path: Path) -> list[str]:
-    residuals: list[str] = []
+def _parse_residual_statuses(path: Path) -> dict[str, str]:
+    statuses: dict[str, str] = {}
     for line in _read_text(path).splitlines():
-        match = re.search(r"\|\s*`(RES-\d+)`\s*\|.*\|\s*open\s*\|", line)
-        if match:
-            residuals.append(match.group(1))
-    return residuals
+        if not line.startswith("| `RES-"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 7:
+            continue
+        residual_id = cells[0].strip("`")
+        statuses[residual_id] = cells[-1].strip("`")
+    return statuses
+
+
+def _parse_open_residual_ids(path: Path) -> list[str]:
+    return [
+        residual_id
+        for residual_id, status in _parse_residual_statuses(path).items()
+        if status == "open" or status.startswith("open_")
+    ]
 
 
 def _scan_placeholder_hits(paths: list[Path]) -> list[dict[str, Any]]:
@@ -256,6 +316,35 @@ def _validation_acceptance_criteria_summary(path: Path) -> dict[str, Any]:
         "review_status": extract("`review_status`"),
         "runtime_descriptor_action": extract("`runtime_descriptor_action`"),
         "hard_gate_benchmarks": hard_gate_benchmarks,
+        "deferred_items": deferred_items,
+    }
+
+
+def _validation_stage_c_acceptance_criteria_summary(path: Path) -> dict[str, Any]:
+    text = _read_text(path)
+
+    def extract(field: str) -> str:
+        match = re.search(
+            rf"\|\s*{re.escape(field)}\s*\|\s*`?([^|`]+?)`?\s*\|",
+            text,
+        )
+        return match.group(1).strip() if match else ""
+
+    hard_gate_count = len(
+        re.findall(r"\|\s*`BFM-CRIT-CP-\d+`\s*\|", text)
+    )
+    deferred_items = sorted(
+        match.group(1)
+        for match in re.finditer(r"\|\s*`(BFM-DEF-CP-\d+)`\s*\|", text)
+    )
+    return {
+        "artifact_ref": _rel(path),
+        "criteria_status": extract("`criteria_status`"),
+        "primary_release_scope": extract("`primary_release_scope`"),
+        "effect_scale_dependency_status": extract("`effect_scale_dependency_status`"),
+        "review_status": extract("`review_status`"),
+        "runtime_descriptor_action": extract("`runtime_descriptor_action`"),
+        "hard_gate_count": hard_gate_count,
         "deferred_items": deferred_items,
     }
 
@@ -354,12 +443,160 @@ def _validation_benchmark_snapshot_summary(artifact: dict[str, Any]) -> dict[str
         "fragment_areal_density_cv": float(
             bm005["uncertainty_summary"]["fragment_areal_density_per_m2"]["cv"]
         ),
+        "blast_impulse_cv": float(
+            bm005["uncertainty_summary"]["blast_impulse_kpa_ms_proxy"]["cv"]
+        ),
         "fragment_energy_cv": float(
             bm005["uncertainty_summary"]["fragment_energy_j_proxy"]["cv"]
         ),
         "penetration_margin_cv": float(
             bm005["uncertainty_summary"]["penetration_margin_proxy"]["cv"]
         ),
+    }
+
+
+def _validation_stage_c_component_probability_snapshot_summary(
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    snapshot = artifact["component_probability_snapshot"]
+    row = snapshot["row"]
+    surface_probe = artifact["surface_probe_summary"]
+    return {
+        "status": artifact["status"],
+        "all_hard_gates_pass_in_current_snapshot": artifact["summary"][
+            "all_hard_gates_pass_in_current_snapshot"
+        ],
+        "review_status": artifact["summary"]["review_status"],
+        "primary_release_scope": artifact["summary"]["primary_release_scope"],
+        "baseline_component_probability_source": artifact["baseline_event_summary"][
+            "component_failure_probability_source"
+        ],
+        "component_name": row["component_name"],
+        "component_system": row["component_system"],
+        "component_redundancy_group_id": row["component_redundancy_group_id"],
+        "component_failure_probability": row["component_failure_probability"],
+        "surface_probability_monotonic_pass": surface_probe[
+            "probability_monotonic_decreasing_with_standoff_pass"
+        ],
+        "surface_anchor_probability_cv": surface_probe["anchor_seed_window_probability_cv"],
+    }
+
+
+def _validation_stage_c_component_probability_result_pack_summary(
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    result_table = artifact["result_table_summary"]
+    probability = artifact["component_probability_result_summary"]
+    scope_audit = artifact["scope_audit_summary"]
+    fragility_surface = artifact["fragility_surface_summary"]
+    return {
+        "status": artifact["status"],
+        "artifact_hash_count": len(artifact["artifact_hashes"]),
+        "all_hard_gates_pass_in_current_snapshot": result_table[
+            "all_hard_gates_pass_in_current_snapshot"
+        ],
+        "review_status": result_table["review_status"],
+        "primary_release_scope": result_table["primary_release_scope"],
+        "baseline_component_probability_source": probability[
+            "baseline_component_probability_source"
+        ],
+        "candidate_component_name": probability["candidate_component_name"],
+        "candidate_component_failure_probability": probability[
+            "candidate_component_failure_probability"
+        ],
+        "gate_band_contains_primary_fragment_energy": scope_audit[
+            "gate_band_contains_primary_fragment_energy"
+        ],
+        "gate_band_contains_primary_penetration_margin": scope_audit[
+            "gate_band_contains_primary_penetration_margin"
+        ],
+        "gate_band_contains_primary_blast_impulse": scope_audit[
+            "gate_band_contains_primary_blast_impulse"
+        ],
+        "gate_band_contains_primary_surface_incidence": scope_audit[
+            "gate_band_contains_primary_surface_incidence"
+        ],
+        "surface_probability_monotonic_pass": fragility_surface[
+            "probability_monotonic_decreasing_with_standoff_pass"
+        ],
+        "surface_anchor_probability_cv": fragility_surface[
+            "anchor_seed_window_probability_cv"
+        ],
+    }
+
+
+def _validation_stage_c_component_probability_review_gate_summary(
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    upstream = artifact["upstream_stage_b_dependency_summary"]
+    return {
+        "status": artifact["status"],
+        "review_target": artifact["review_target"],
+        "readiness_level": artifact["readiness_level"],
+        "satisfied_condition_count": len(artifact["satisfied_conditions"]),
+        "blocking_condition_count": len(artifact["blocking_conditions"]),
+        "blocking_residual_ids": list(artifact["blocking_residual_ids"]),
+        "upstream_stage_b_status": upstream["status"],
+    }
+
+
+def _validation_stage_c_component_probability_retained_artifact_pack_summary(
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    origin = artifact.get("retained_origin_summary", {})
+    return {
+        "status": artifact["status"],
+        "manifest_exists": artifact["manifest_exists"],
+        "manifest_relative_path": artifact["manifest_relative_path"],
+        "retained_artifact_count": artifact["retained_artifact_count"],
+        "all_artifacts_exist": artifact["all_artifacts_exist"],
+        "retention_scope": artifact["retention_scope"],
+        "artifact_keys": [row["artifact_key"] for row in artifact["artifacts"]],
+        "runtime_origin": origin.get("runtime_origin", ""),
+    }
+
+
+def _validation_provenance_identity_gate_summary(
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "status": artifact["status"],
+        "review_target": artifact["review_target"],
+        "readiness_level": artifact["readiness_level"],
+        "satisfied_condition_count": len(artifact["satisfied_conditions"]),
+        "blocking_condition_count": len(artifact["blocking_conditions"]),
+        "blocking_residual_ids": list(artifact["blocking_residual_ids"]),
+    }
+
+
+def _validation_result_pack_summary(artifact: dict[str, Any]) -> dict[str, Any]:
+    result_table = artifact["result_table_summary"]
+    scope_audit = artifact["scope_audit_summary"]
+    bm005 = next(
+        row for row in artifact["independence_audit"] if row["benchmark_id"] == "BFM-BM-005"
+    )
+    return {
+        "status": artifact["status"],
+        "artifact_hash_count": len(artifact["artifact_hashes"]),
+        "all_hard_gates_pass_in_current_snapshot": result_table[
+            "all_hard_gates_pass_in_current_snapshot"
+        ],
+        "review_status": result_table["review_status"],
+        "closure_mechanism_response_active": scope_audit[
+            "closure_mechanism_response_active"
+        ],
+        "bm005_audit_outcome": bm005["audit_outcome"],
+    }
+
+
+def _validation_release_readiness_gate_summary(artifact: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": artifact["status"],
+        "release_target": artifact["release_target"],
+        "readiness_level": artifact["readiness_level"],
+        "satisfied_condition_count": len(artifact["satisfied_conditions"]),
+        "blocking_condition_count": len(artifact["blocking_conditions"]),
+        "blocking_residual_ids": list(artifact["blocking_residual_ids"]),
     }
 
 
@@ -402,6 +639,12 @@ def _artifact_pin_manifest_summary(path: Path) -> dict[str, Any]:
         "acquired_for_candidate": len(
             re.findall(r"\|\s*`[^`]+`\s*\|.*\|\s*`acquired_for_candidate`\s*\|", text)
         ),
+        "verified_candidate_artifact": len(
+            re.findall(
+                r"\|\s*`[^`]+`\s*\|.*\|\s*`[^`]*verified_candidate_artifact[^`]*`\s*\|",
+                text,
+            )
+        ),
         "sanity_only": len(
             re.findall(r"\|\s*`[^`]+`\s*\|.*\|\s*`sanity_only`\s*\|", text)
         ),
@@ -415,6 +658,7 @@ def _artifact_pin_manifest_summary(path: Path) -> dict[str, Any]:
     return {
         "artifact_ref": _rel(path),
         "manifest_status": extract("manifest_status"),
+        "package_provenance_status": extract("package_provenance_status"),
         "primary_release_scope": extract("primary_release_scope"),
         "third_party_policy": extract("third_party_policy"),
         "forbidden_release_action": extract("forbidden_release_action"),
@@ -444,6 +688,9 @@ def _surrogate_identity_manifest_summary(path: Path) -> dict[str, Any]:
         "current_validation_status": extract("current_validation_status"),
         "primary_release_scope": extract("primary_release_scope"),
         "output_anchor_count": output_anchor_count,
+        "retained_artifact_pack_status": extract("retained_artifact_pack_status"),
+        "retained_artifact_manifest_ref": extract("retained_artifact_manifest_ref"),
+        "retained_artifact_count": int(extract("retained_artifact_count") or 0),
     }
 
 
@@ -525,6 +772,18 @@ def _runtime_aligned_exercise_summary(artifact: dict[str, Any]) -> dict[str, Any
     }
 
 
+def _validation_retained_artifact_pack_summary(artifact: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": artifact["status"],
+        "manifest_exists": artifact["manifest_exists"],
+        "manifest_relative_path": artifact["manifest_relative_path"],
+        "retained_artifact_count": artifact["retained_artifact_count"],
+        "all_artifacts_exist": artifact["all_artifacts_exist"],
+        "retention_scope": artifact["retention_scope"],
+        "artifact_keys": [row["artifact_key"] for row in artifact["artifacts"]],
+    }
+
+
 def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
     doc_refs = {key: _rel(path) for key, path in DOC_REFS.items()}
     placeholder_hits = _scan_placeholder_hits(
@@ -536,6 +795,15 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
             DOC_REFS["validation_scope_and_independence_manifest"],
             DOC_REFS["validation_scope_probe_report"],
             DOC_REFS["validation_benchmark_snapshot"],
+            DOC_REFS["validation_stage_c_component_probability_metrics"],
+            DOC_REFS["validation_stage_c_component_probability_snapshot"],
+            DOC_REFS["validation_stage_c_component_probability_result_pack"],
+            DOC_REFS["validation_stage_c_component_probability_retained_artifact_pack"],
+            DOC_REFS["validation_provenance_identity_gate"],
+            DOC_REFS["validation_stage_c_component_probability_review_gate"],
+            DOC_REFS["validation_result_pack"],
+            DOC_REFS["validation_release_readiness_gate"],
+            DOC_REFS["validation_retained_artifact_pack"],
             DOC_REFS["validation_review_readiness_record"],
             DOC_REFS["artifact_pin_manifest"],
             DOC_REFS["surrogate_identity_manifest"],
@@ -548,6 +816,36 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
     stage_b_snapshot_artifact = stage_b_snapshot.generate_stage_b_effect_scale_snapshot(
         repo_root=repo_root
     )
+    stage_c_snapshot_artifact = stage_c_snapshot.generate_stage_c_component_probability_snapshot(
+        repo_root=repo_root
+    )
+    stage_c_result_pack_artifact = (
+        stage_c_result_pack.generate_stage_c_component_probability_result_pack(
+            repo_root=repo_root
+        )
+    )
+    stage_c_review_gate_artifact = (
+        stage_c_review_gate.generate_stage_c_component_probability_review_readiness_gate(
+            repo_root=repo_root
+        )
+    )
+    stage_c_retained_pack_artifact = (
+        stage_c_retained_pack.load_retained_artifact_pack_manifest(repo_root=repo_root)
+    )
+    result_pack_artifact = result_pack.generate_stage_b_validation_result_pack(
+        repo_root=repo_root
+    )
+    readiness_gate_artifact = readiness_gate.generate_stage_b_release_readiness_gate(
+        repo_root=repo_root
+    )
+    retained_pack_artifact = retained_pack.load_retained_artifact_pack_manifest(
+        repo_root=repo_root
+    )
+    provenance_identity_artifact = (
+        provenance_identity_gate.generate_package_provenance_identity_gate(
+            repo_root=repo_root
+        )
+    )
     authority_artifact = authority_pack.generate_runtime_aligned_authority_pack(
         repo_root=repo_root
     )
@@ -559,7 +857,12 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
         }
         for entry in SOURCE_GROUPS
     ]
-    open_residual_ids = _parse_open_residual_ids(DOC_REFS["residual_register"])
+    residual_statuses = _parse_residual_statuses(DOC_REFS["residual_register"])
+    open_residual_ids = [
+        residual_id
+        for residual_id, status in residual_statuses.items()
+        if status == "open" or status.startswith("open_")
+    ]
 
     return {
         "bundle_id": BUNDLE_ID,
@@ -589,12 +892,18 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
         },
         "doc_refs": doc_refs,
         "source_groups": source_groups,
+        "residual_statuses": residual_statuses,
         "open_residual_ids": open_residual_ids,
         "validation_manifest_summary": _validation_manifest_summary(
             DOC_REFS["validation_manifest_draft"]
         ),
         "validation_acceptance_criteria_summary": _validation_acceptance_criteria_summary(
             DOC_REFS["validation_metrics_and_acceptance_criteria"]
+        ),
+        "validation_stage_c_acceptance_criteria_summary": (
+            _validation_stage_c_acceptance_criteria_summary(
+                DOC_REFS["validation_stage_c_component_probability_metrics"]
+            )
         ),
         "validation_scope_and_independence_summary": _validation_scope_and_independence_summary(
             DOC_REFS["validation_scope_and_independence_manifest"]
@@ -604,6 +913,40 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
         ),
         "validation_benchmark_snapshot_summary": _validation_benchmark_snapshot_summary(
             stage_b_snapshot_artifact
+        ),
+        "validation_stage_c_component_probability_snapshot_summary": (
+            _validation_stage_c_component_probability_snapshot_summary(
+                stage_c_snapshot_artifact
+            )
+        ),
+        "validation_stage_c_component_probability_result_pack_summary": (
+            _validation_stage_c_component_probability_result_pack_summary(
+                stage_c_result_pack_artifact
+            )
+        ),
+        "validation_stage_c_component_probability_review_gate_summary": (
+            _validation_stage_c_component_probability_review_gate_summary(
+                stage_c_review_gate_artifact
+            )
+        ),
+        "validation_stage_c_component_probability_retained_artifact_pack_summary": (
+            _validation_stage_c_component_probability_retained_artifact_pack_summary(
+                stage_c_retained_pack_artifact
+            )
+        ),
+        "validation_provenance_identity_gate_summary": (
+            _validation_provenance_identity_gate_summary(
+                provenance_identity_artifact
+            )
+        ),
+        "validation_result_pack_summary": _validation_result_pack_summary(
+            result_pack_artifact
+        ),
+        "validation_release_readiness_gate_summary": _validation_release_readiness_gate_summary(
+            readiness_gate_artifact
+        ),
+        "validation_retained_artifact_pack_summary": _validation_retained_artifact_pack_summary(
+            retained_pack_artifact
         ),
         "validation_review_readiness_summary": _validation_review_readiness_summary(
             DOC_REFS["validation_review_readiness_record"]
@@ -636,9 +979,9 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
         ),
         "candidate_inputs": scaffold_artifact["candidate_inputs"],
         "next_graduation_step": (
-            "review the frozen stage-b effect-scale criteria, snapshot, provenance "
-            "and scope artifacts, then close provenance, bucket-definition and "
-            "result-record residuals before "
+            "review the frozen stage-b effect-scale criteria, result-pack, retained "
+            "artifact chain, provenance and scope artifacts, then close provenance, "
+            "bucket-definition and result-record residuals before "
             "any stock database authority is granted"
         ),
     }
