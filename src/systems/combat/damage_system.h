@@ -382,6 +382,10 @@ inline bool engagement_damage_snapshot_changed(
         before.mission_kill != after.mission_kill ||
         before.mobility_kill != after.mobility_kill ||
         before.sensor_kill != after.sensor_kill ||
+        before.forced_landing != after.forced_landing ||
+        before.flight_control_kill != after.flight_control_kill ||
+        before.propulsion_kill != after.propulsion_kill ||
+        before.crew_kill != after.crew_kill ||
         before.loss_state != after.loss_state;
 }
 

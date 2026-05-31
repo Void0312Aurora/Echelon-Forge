@@ -102,7 +102,7 @@ closeout 前冻结下来，优先服务于：
 
 本 artifact 的冻结依据来自：
 
-- [梯度真实性原则](../../../../standards/foundation/gradient_realism_principles.zh.md)
+- [梯度真实性原则](../../../../../standards/foundation/gradient_realism_principles.zh.md)
 - [A2 数据来源准入规则](../../data_collection/source_admission_rules_20260528.zh.md)
 - [A2 窄域 Authority 闭环任务定义](../../narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md)
 - [Validation Report Draft](validation_report_draft.zh.md)

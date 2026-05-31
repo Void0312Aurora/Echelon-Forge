@@ -18,7 +18,8 @@
   中定义的分阶段课程，而不是历史 smoke fixture。
 - 高真实度毁伤模型已拆出为
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)。
-  该线当前只允许推进 Phase 0 预检，不允许直接改 HP bypass、飞机 hitbox 或 deterministic fuze。
+  该线的 structured-aircraft damage/effects runtime 已进入维护路径，当前 blast-fragmentation
+  候选包最多只到非权威 candidate 验收；stock authority、Pk 与 deterministic fuze 仍未放行。
 
 ## 当前继续推进重点
 
@@ -27,9 +28,11 @@
 - 在最小胜负钩子之上补齐 reward / termination shaping
 - 强化脚本或冻结对手基线
 - 拆分 `combat_loss`、被击落实体失效和终端 crash penalty 的诊断语义
-- 推进高保真空战毁伤模型：从权威 effects 路径移除 HP 优先击杀旁路，
-  让 kill state 从武器事件、局部子系统毁伤和平台损失状态推导出来
-- 在任何 Phase 1 代码变更落地前，先闭合毁伤模型 Phase 0 预检门
+- 维护高保真空战毁伤模型的 structured-aircraft runtime contract，并按
+  `G1 runtime`、`G2/G3 candidate/residual`、`G4 authority`、`G5 kill-chain`
+  区分后续工作
+- 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
+  演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 

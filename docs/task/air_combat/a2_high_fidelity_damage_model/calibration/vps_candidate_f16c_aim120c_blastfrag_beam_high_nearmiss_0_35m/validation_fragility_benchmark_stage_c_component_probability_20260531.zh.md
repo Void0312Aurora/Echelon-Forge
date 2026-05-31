@@ -3,9 +3,9 @@
 状态：`blocked / benchmark_manifest_only / non-authoritative / stage_c_component_probability_only / 2026-05-31`。
 
 本文档记录 Stage C `right_aileron_actuator` fragility benchmark evidence 包。对应工具为
-[a2_blastfrag_stage_c_fragility_benchmark.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_c_fragility_benchmark.py)。
+[a2_blastfrag_stage_c_fragility_benchmark.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_fragility_benchmark.py)。
 retained artifact 位于
-[stage_c_fragility_benchmark_20260531](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531)。
+[stage_c_fragility_benchmark_20260531](retained_artifacts/stage_c_fragility_benchmark_20260531)。
 
 当前没有独立 `right_aileron_actuator` fragility truth / benchmark。本文档和 retained JSON 因此只能作为
 blocked benchmark manifest 与 author-side comparison/probe，不能作为 authority、不能替换 stock

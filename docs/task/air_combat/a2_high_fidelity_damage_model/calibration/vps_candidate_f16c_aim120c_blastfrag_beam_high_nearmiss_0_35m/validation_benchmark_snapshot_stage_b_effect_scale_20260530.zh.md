@@ -4,7 +4,7 @@
 
 本文档记录当前候选包按 frozen Stage B `effect_scale_authority` hard gates
 生成的第一版 benchmark snapshot。它来自
-[a2_blastfrag_stage_b_effect_scale_snapshot.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py)
+[a2_blastfrag_stage_b_effect_scale_snapshot.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py)
 对当前 non-authoritative validation scaffold 的固定种子执行结果。
 
 本文档不是独立 validation result，不创建 runtime descriptor，不授予
@@ -21,8 +21,8 @@
 | `seed` | `20260529` |
 | `sample_count` | `4096` |
 | `criteria_ref` | [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md) |
-| `scaffold_ref` | [a2_blastfrag_validation_scaffold.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_validation_scaffold.py) |
-| `snapshot_artifact_ref` | [a2_blastfrag_stage_b_effect_scale_snapshot.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py) |
+| `scaffold_ref` | [a2_blastfrag_validation_scaffold.py](../../../../../../tools/maintenance/a2_blastfrag_validation_scaffold.py) |
+| `snapshot_artifact_ref` | [a2_blastfrag_stage_b_effect_scale_snapshot.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py) |
 | `stock_runtime_action` | `forbidden_pending_independent_review_and_residual_closeout` |
 
 ## 2. Hard-Gate Snapshot

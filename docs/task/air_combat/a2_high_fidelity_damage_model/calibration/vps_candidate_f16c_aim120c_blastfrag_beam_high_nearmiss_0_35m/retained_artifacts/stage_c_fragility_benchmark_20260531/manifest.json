@@ -6,14 +6,14 @@
       "path": "stage_c_fragility_benchmark.json",
       "role": "blocked right_aileron_actuator fragility benchmark evidence manifest",
       "schema_version": "a2.stage_c_fragility_benchmark.v1",
-      "sha256": "8905156b1e8ede7207fc8f6be58065e0647f3dd4ead649c67a2f4f34f82f418a"
+      "sha256": "b55b5f28764af9adf484d1d02971bc358d2be9fdd8213f8e013608ab3f109321"
     },
     {
       "artifact_id": "candidate_vs_synthetic_sigmoid_comparison",
       "path": "candidate_vs_synthetic_sigmoid_comparison.json",
       "role": "author-side candidate evidence-row vs synthetic_sigmoid comparison and blocked calibration ledger",
       "schema_version": "a2.stage_c_fragility_benchmark_comparison.v1",
-      "sha256": "28e0f71b80817935bfd130e9d76a86b5dcdf11ed9fb0cb43230550139c1410a6"
+      "sha256": "470fdc435604440c064b6bafdab4035b163406e9a0f0e02ca1060e90f63b2bad"
     }
   ],
   "authority_granted": false,

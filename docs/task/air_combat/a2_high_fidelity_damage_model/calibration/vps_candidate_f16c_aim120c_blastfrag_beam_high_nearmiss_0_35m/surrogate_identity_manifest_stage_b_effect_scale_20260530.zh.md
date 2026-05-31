@@ -28,14 +28,14 @@ surrogate identity”。
 
 | 类别 | 路径 | 角色 | `sha256` |
 |---|---|---|---|
-| runtime | [default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp) | structured-aircraft near-miss / projected-component runtime path | `317dedd29f63978d12428fe65a13a4cfb5f788c36bedbbac19ceb4bb612db394` |
-| tooling | [a2_blastfrag_validation_scaffold.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_validation_scaffold.py) | Stage B candidate benchmark scaffold | `3fac25413327fecfc870029e1ad0a90793ef4e85c5750d575c93f3c5b2a38694` |
-| tooling | [a2_blastfrag_scope_boundary_probe.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_scope_boundary_probe.py) | Stage B scope boundary probes | `fbcc31fb34df0e810aacc3e58cca426d3e550c3346a91c45612426b2bd1e7782` |
-| tooling | [a2_blastfrag_stage_b_effect_scale_snapshot.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py) | Stage B hard-gate snapshot artifact generator | `e3b609f20745f177b4470f3e7acdca1933bf9bfe151f0833a54df2ff55d4cc09` |
-| tooling | [a2_blastfrag_stage_b_retained_artifact_pack.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py) | canonical retained Stage B candidate artifact writer/reader | `1fa48da4af20cd737e169f4b04813f586366786e2c4f5dec52c5e0565fb8a6bb` |
-| tooling | [a2_blastfrag_runtime_aligned_authority_pack.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py) | test-local authority exercise pack | `f4429b048b1f468610c811fb14b717978c6b609aac3c6c5ec32cfbd5c2a81485` |
-| input DB | [f16c_block50.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/f16c_block50.json) | target outer-dimension / repo component scaffold input | `4259d631c10863cb673a13d365f50f6745c85597992f391ee976087c9f6194c4` |
-| input DB | [aim_120c.json](/home/void0312/Workshop/CMO/examples/config/database/weapons/air_to_air/aim_120c.json) | candidate warhead/fuze family envelope input | `9983680622a89064230de56a9a54157c2a3d054d33c8770e1f513f09c6f69f34` |
+| runtime | [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp) | structured-aircraft near-miss / projected-component runtime path | `317dedd29f63978d12428fe65a13a4cfb5f788c36bedbbac19ceb4bb612db394` |
+| tooling | [a2_blastfrag_validation_scaffold.py](../../../../../../tools/maintenance/a2_blastfrag_validation_scaffold.py) | Stage B candidate benchmark scaffold | `3fac25413327fecfc870029e1ad0a90793ef4e85c5750d575c93f3c5b2a38694` |
+| tooling | [a2_blastfrag_scope_boundary_probe.py](../../../../../../tools/maintenance/a2_blastfrag_scope_boundary_probe.py) | Stage B scope boundary probes | `fbcc31fb34df0e810aacc3e58cca426d3e550c3346a91c45612426b2bd1e7782` |
+| tooling | [a2_blastfrag_stage_b_effect_scale_snapshot.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py) | Stage B hard-gate snapshot artifact generator | `e3b609f20745f177b4470f3e7acdca1933bf9bfe151f0833a54df2ff55d4cc09` |
+| tooling | [a2_blastfrag_stage_b_retained_artifact_pack.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py) | canonical retained Stage B candidate artifact writer/reader | `1fa48da4af20cd737e169f4b04813f586366786e2c4f5dec52c5e0565fb8a6bb` |
+| tooling | [a2_blastfrag_runtime_aligned_authority_pack.py](../../../../../../tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py) | test-local authority exercise pack | `f4429b048b1f468610c811fb14b717978c6b609aac3c6c5ec32cfbd5c2a81485` |
+| input DB | [f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json) | target outer-dimension / repo component scaffold input | `4259d631c10863cb673a13d365f50f6745c85597992f391ee976087c9f6194c4` |
+| input DB | [aim_120c.json](../../../../../../examples/config/database/weapons/air_to_air/aim_120c.json) | candidate warhead/fuze family envelope input | `9983680622a89064230de56a9a54157c2a3d054d33c8770e1f513f09c6f69f34` |
 
 ## 3. 命令、临时 author-side 输出与 retained 保留入口
 

@@ -10,11 +10,11 @@
 |---|---|
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `schema_version` | `a2.res003_target_geometry_closeout_gate.v1` |
-| `tool_ref` | [a2_blastfrag_res003_target_geometry_closeout_gate.py](tools/maintenance/a2_blastfrag_res003_target_geometry_closeout_gate.py) |
-| `retained_artifact` | [res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json) |
-| `retained_artifact_sha256` | `98c324b0cac7642e406ea029dd0c32301a32fd92bb12f08b756b145343139bbe` |
-| `manifest` | [res003_target_geometry_closeout_20260531/manifest.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res003_target_geometry_closeout_20260531/manifest.json) |
-| `manifest_sha256` | `12750d913eb5902bfac0cbc8ee696a3226fe100e951e7e1ba39619b439c535ee` |
+| `tool_ref` | [a2_blastfrag_res003_target_geometry_closeout_gate.py](../../../../../../tools/maintenance/a2_blastfrag_res003_target_geometry_closeout_gate.py) |
+| `retained_artifact` | [res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json](retained_artifacts/res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json) |
+| `retained_artifact_sha256` | `4953dbf17be433bb558fd67049096927097ac794ed13cdecc0ed37bbb3613ac1` |
+| `manifest` | [res003_target_geometry_closeout_20260531/manifest.json](retained_artifacts/res003_target_geometry_closeout_20260531/manifest.json) |
+| `manifest_sha256` | `f99f59096e1851d17ba00b324e5f7ff25e8303b38ee987afae21e56795b9414d` |
 | `overall_status` | `res003_stage_b_effect_scale_witness_geometry_closeout_pass_release_blocked` |
 | `manifest_status` | `res003_target_geometry_closeout_retained_release_blocked` |
 

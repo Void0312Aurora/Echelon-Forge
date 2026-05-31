@@ -247,6 +247,38 @@ class AircraftDamageRuntimeMixin:
                         float(flight_before.fuel_leak_rate_kg_s),
                     )
 
+    def test_phase2_aircraft_consequence_flags_flow_into_damage_report(self) -> None:
+        sim = _make_kernel()
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+        profile = _make_warhead_profile("blast_fragmentation", damage=180.0, radius=35.0)
+
+        for _ in range(2):
+            ok = sim.debug_apply_profiled_local_proximity_hit(
+                attacker_id,
+                target_id,
+                -0.8,
+                4.1,
+                0.0,
+                profile,
+            )
+            self.assertTrue(bool(ok))
+            self.assertTrue(sim.is_unit_active(target_id))
+
+        overlay = _aircraft_damage_overlay(sim, target_id)
+        report = sim.export_recent_engagement_events().damage_reports[-1]
+
+        self.assertTrue(bool(report.forced_landing))
+        self.assertTrue(bool(report.flight_control_kill))
+        self.assertFalse(bool(report.propulsion_kill))
+        self.assertFalse(bool(report.crew_kill))
+        self.assertTrue(bool(report.mobility_kill))
+        self.assertEqual(str(report.loss_state_to), "mobility_kill")
+        self.assertFalse(bool(report.destroyed))
+        self.assertEqual(bool(report.forced_landing), bool(overlay["forced_landing"]))
+        self.assertEqual(bool(report.flight_control_kill), bool(overlay["flight_control_kill"]))
+        self.assertEqual(bool(report.propulsion_kill), bool(overlay["propulsion_kill"]))
+        self.assertEqual(bool(report.crew_kill), bool(overlay["crew_kill"]))
+
     def test_phase2_aileron_component_damage_derives_roll_axis_authority(self) -> None:
         sim = ef_py.SimulationKernel()
         sim.reset(20260526)

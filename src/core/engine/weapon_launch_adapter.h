@@ -196,6 +196,10 @@ struct DamageReportSnapshot {
     bool mobility_kill = false;
     bool sensor_kill = false;
     bool survivability_kill = false;
+    bool forced_landing = false;
+    bool flight_control_kill = false;
+    bool propulsion_kill = false;
+    bool crew_kill = false;
     std::string loss_state_from = "unknown";
     std::string loss_state_to = "unknown";
     bool destroyed = false;
@@ -456,6 +460,10 @@ inline DamageReport make_damage_report(const DamageReportSnapshot& snapshot) {
         .mobility_kill = snapshot.mobility_kill,
         .sensor_kill = snapshot.sensor_kill,
         .survivability_kill = snapshot.survivability_kill,
+        .forced_landing = snapshot.forced_landing,
+        .flight_control_kill = snapshot.flight_control_kill,
+        .propulsion_kill = snapshot.propulsion_kill,
+        .crew_kill = snapshot.crew_kill,
         .loss_state_from = snapshot.loss_state_from,
         .loss_state_to = snapshot.loss_state_to,
         .destroyed = snapshot.destroyed,

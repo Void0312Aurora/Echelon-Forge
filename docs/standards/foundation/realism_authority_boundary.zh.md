@@ -12,7 +12,8 @@ Language:
 
 - [梯度真实性原则](gradient_realism_principles.zh.md)
 - [A2 高真实度空战毁伤模型](../../task/air_combat/a2_high_fidelity_damage_model/README.zh.md)
-- [A2 当前 Authority 状态与最小收口集](../../task/air_combat/a2_high_fidelity_damage_model/current_authority_status_and_minimal_closeout_20260530.zh.md)
+- [A2 Authority Promotion Backlog](../../task/air_combat/a2_high_fidelity_damage_model/authority_promotion_backlog.zh.md)
+- [A2 历史 Authority 状态审计快照](../../task/air_combat/a2_high_fidelity_damage_model/archive/20260601_doc_governance/current_authority_status_and_minimal_closeout_20260530.zh.md)
 - [A2 窄域 Authority 闭环任务定义](../../task/air_combat/a2_high_fidelity_damage_model/narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md)
 
 ## 1. 高真实度是方向，不是默认声明

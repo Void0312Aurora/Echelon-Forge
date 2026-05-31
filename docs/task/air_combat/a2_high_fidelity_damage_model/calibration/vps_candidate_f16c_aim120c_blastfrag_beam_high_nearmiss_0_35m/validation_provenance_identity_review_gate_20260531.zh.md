@@ -3,7 +3,7 @@
 状态：`blocked / candidate / non-authoritative / provenance_identity_review_gate`。
 
 本文档记录 `RES-001 source provenance` 与 `RES-002 surrogate identity` 的 release-grade review gate。对应工具为
-[a2_blastfrag_provenance_identity_review_gate.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_provenance_identity_review_gate.py)。
+[a2_blastfrag_provenance_identity_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_provenance_identity_review_gate.py)。
 
 本 gate 只保留 review blocker surface，不创建 stock descriptor，不授予
 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority`

@@ -171,6 +171,12 @@ EngagementDamageStateSnapshot SimulationKernel::capture_engagement_damage_state(
     } else if (snapshot.has_health) {
         snapshot.loss_state = snapshot.hp <= 0.0 ? "lost" : "combat_capable";
     }
+    if (const AircraftDamageState* aircraft = target.get<AircraftDamageState>()) {
+        snapshot.forced_landing = aircraft->forced_landing_required;
+        snapshot.flight_control_kill = aircraft->flight_control_kill;
+        snapshot.propulsion_kill = aircraft->propulsion_kill;
+        snapshot.crew_kill = aircraft->crew_kill;
+    }
     return snapshot;
 }
 
@@ -508,6 +514,10 @@ std::uint64_t SimulationKernel::record_effects_damage_event(
     report.mobility_kill = after.mobility_kill;
     report.sensor_kill = after.sensor_kill;
     report.survivability_kill = after.survivability_margin <= 0.0 || !after.entity_active;
+    report.forced_landing = after.forced_landing;
+    report.flight_control_kill = after.flight_control_kill;
+    report.propulsion_kill = after.propulsion_kill;
+    report.crew_kill = after.crew_kill;
     report.loss_state_from = before.loss_state;
     report.loss_state_to = after.entity_active ? after.loss_state : "lost";
     report.destroyed = !after.entity_active || report.loss_state_to == "lost";

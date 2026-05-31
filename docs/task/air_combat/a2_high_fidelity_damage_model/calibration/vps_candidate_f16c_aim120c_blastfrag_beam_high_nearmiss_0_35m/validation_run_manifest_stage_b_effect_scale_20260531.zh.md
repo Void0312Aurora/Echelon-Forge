@@ -21,7 +21,7 @@ benchmark/result execution record。它只减少 author-side 未完成项，不�
 | `closure_mps` | `900.0` |
 | `scope_probe_standoffs_m` | `0.25 / 0.35 / 0.45` |
 | `scope_probe_closures_mps` | `700 / 900 / 1100` |
-| `closeout_tool_ref` | [a2_blastfrag_stage_b_release_closeout.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_b_release_closeout.py) |
+| `closeout_tool_ref` | [a2_blastfrag_stage_b_release_closeout.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_release_closeout.py) |
 | `retained_closeout_artifact_ref` | [stage_b_release_closeout.json](retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json) |
 
 ## 2. 复现命令

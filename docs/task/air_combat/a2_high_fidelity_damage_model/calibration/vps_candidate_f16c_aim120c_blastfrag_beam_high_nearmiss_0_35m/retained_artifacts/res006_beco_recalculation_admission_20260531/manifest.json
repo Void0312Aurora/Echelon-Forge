@@ -26,13 +26,13 @@
       "filename": "res006_beco_recalculation_admission_gate.json",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/res006_beco_recalculation_admission_gate.json",
       "schema_version": "a2.res006_beco_recalculation_admission_gate.v1",
-      "sha256": "d45a56aa6d8be816a60b0e9cef31331c582c90f5efe30b6e25c770feb3ec0e8a"
+      "sha256": "2cf33d73d0a4d328ea2368b27a22639acd9c808523196bbfd818e415d661f925"
     },
     {
       "filename": "beco_recalculated_hash_anchor_set.json",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/beco_recalculated_hash_anchor_set.json",
       "schema_version": "a2.res006_beco_recalculated_hash_anchor_set.v1",
-      "sha256": "2d26a10918223bfb2b229ed9d11fb0d378d473f0c3dd8674917b8dbb995550a5"
+      "sha256": "cc5b31a030892cd00e1bd83525736897cf12d5d77da1c4592ad133519cb7783a"
     }
   ],
   "authority_guards": {

@@ -3,7 +3,7 @@
 状态：`partial_fail_closed_mechanism_comparison_hash_manifest / non-authoritative / hash-only`。
 
 本文记录 `A2-EV-MECH-COMPARISON-HASHES` 对 retained `TP-20.pdf`、`BEC-O-V1.xlsx`、`TP-21.pdf` 的 mechanism comparison-output hash pass。对应工具为
-[a2_blastfrag_mechanism_comparison_hashes.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_mechanism_comparison_hashes.py)。
+[a2_blastfrag_mechanism_comparison_hashes.py](../../../../../../tools/maintenance/a2_blastfrag_mechanism_comparison_hashes.py)。
 
 本文不修改 runtime、stock descriptor、source rights/policy、provenance gate 或 Stage C benchmark 文件；不把 BEC-O/TP-21 source presence 当 calibration；不释放 `effect_scale_authority`、`component_failure_probability_authority`、`Pk` 或 deterministic fuze authority。
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -125,6 +126,13 @@ def _display_path(path: Path, repo_root: Path) -> str:
         return path.relative_to(repo_root).as_posix()
     except ValueError:
         return str(path)
+
+
+def _doc_link(path: Path, doc_output: Path, repo_root: Path) -> str:
+    try:
+        return Path(os.path.relpath(path.resolve(), doc_output.parent.resolve())).as_posix()
+    except ValueError:
+        return _display_path(path, repo_root)
 
 
 def _canonical_json(payload: dict[str, Any]) -> str:
@@ -823,6 +831,7 @@ def _render_doc(
     gate_sha256: str,
     manifest_sha256: str,
     output_dir: Path,
+    doc_output: Path,
     repo_root: Path,
 ) -> str:
     res004 = artifact["residual_closeout_decisions"]["RES-004"]
@@ -853,10 +862,10 @@ def _render_doc(
 |---|---|
 | `package_id` | `{artifact['package_id']}` |
 | `schema_version` | `{artifact['schema_version']}` |
-| `tool_ref` | [a2_blastfrag_res004_warhead_scope_closeout_gate.py](tools/maintenance/a2_blastfrag_res004_warhead_scope_closeout_gate.py) |
-| `retained_artifact` | [{output_dir.name}/res004_warhead_scope_closeout_gate.json]({_display_path(output_dir / 'res004_warhead_scope_closeout_gate.json', repo_root)}) |
+| `tool_ref` | [a2_blastfrag_res004_warhead_scope_closeout_gate.py]({_doc_link(repo_root / "tools" / "maintenance" / "a2_blastfrag_res004_warhead_scope_closeout_gate.py", doc_output, repo_root)}) |
+| `retained_artifact` | [{output_dir.name}/res004_warhead_scope_closeout_gate.json]({_doc_link(output_dir / 'res004_warhead_scope_closeout_gate.json', doc_output, repo_root)}) |
 | `retained_artifact_sha256` | `{gate_sha256}` |
-| `manifest` | [{output_dir.name}/manifest.json]({_display_path(output_dir / 'manifest.json', repo_root)}) |
+| `manifest` | [{output_dir.name}/manifest.json]({_doc_link(output_dir / 'manifest.json', doc_output, repo_root)}) |
 | `manifest_sha256` | `{manifest_sha256}` |
 | `overall_status` | `{artifact['status']}` |
 | `manifest_status` | `{manifest['status']}` |
@@ -930,6 +939,7 @@ def write_retained_outputs(
             gate_sha256=gate_sha256,
             manifest_sha256=manifest_sha256,
             output_dir=output_dir,
+            doc_output=doc_output,
             repo_root=repo_root,
         ),
         encoding="utf-8",

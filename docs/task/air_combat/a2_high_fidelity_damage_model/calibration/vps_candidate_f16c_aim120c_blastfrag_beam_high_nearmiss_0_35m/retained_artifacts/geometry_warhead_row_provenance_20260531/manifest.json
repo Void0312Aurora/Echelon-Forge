@@ -3,10 +3,10 @@
   "artifacts": [
     {
       "artifact_id": "geometry_warhead_row_provenance_gate",
-      "content_hash": "sha256:648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726",
+      "content_hash": "sha256:46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
       "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
-      "sha256": "648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726"
+      "sha256": "46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e"
     }
   ],
   "authority_guard": {
@@ -24,104 +24,104 @@
   },
   "consumed_inputs": [
     {
-      "content_hash": "sha256:edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51",
+      "content_hash": "sha256:f276d010cf84be7430ce4d929c10fcfb9a88180f4b11ca3fdfed04c0c1682de8",
       "exists": true,
       "input_id": "subagent_usage_policy",
       "path": "docs/standards/governance/subagent_usage_policy.md",
       "required": true,
       "role": "governance_boundary",
-      "sha256": "edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51",
-      "size_bytes": 8935
+      "sha256": "f276d010cf84be7430ce4d929c10fcfb9a88180f4b11ca3fdfed04c0c1682de8",
+      "size_bytes": 9140
     },
     {
-      "content_hash": "sha256:4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
+      "content_hash": "sha256:8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
       "exists": true,
       "input_id": "residual_register",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
       "required": true,
       "role": "residual_status_source",
-      "sha256": "4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
-      "size_bytes": 9263
+      "sha256": "8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
+      "size_bytes": 9308
     },
     {
-      "content_hash": "sha256:3dd6dbabf06745392d16ac3f9071dbafb6fb9b182f7fae591d1fac3f6b5896d2",
+      "content_hash": "sha256:ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
       "exists": true,
       "input_id": "target_geometry_assumptions",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
       "required": true,
       "role": "res_003_assumption_surface",
-      "sha256": "3dd6dbabf06745392d16ac3f9071dbafb6fb9b182f7fae591d1fac3f6b5896d2",
-      "size_bytes": 5282
+      "sha256": "ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
+      "size_bytes": 5285
     },
     {
-      "content_hash": "sha256:254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
+      "content_hash": "sha256:505cfc9b7da77635de167fa48beae0a1379139733ab73d8736bc733a0e3cc69b",
       "exists": true,
       "input_id": "warhead_scope_and_sensitivity",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
       "required": true,
       "role": "res_004_scope_surface",
-      "sha256": "254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
-      "size_bytes": 4716
+      "sha256": "505cfc9b7da77635de167fa48beae0a1379139733ab73d8736bc733a0e3cc69b",
+      "size_bytes": 4780
     },
     {
-      "content_hash": "sha256:a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
+      "content_hash": "sha256:6c82c04437feebfcc44acba855a93327f59f9515db19319ec50bea47e6cbbd70",
       "exists": true,
       "input_id": "artifact_pin_manifest",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
       "required": true,
       "role": "source_pin_boundary",
-      "sha256": "a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
-      "size_bytes": 7676
+      "sha256": "6c82c04437feebfcc44acba855a93327f59f9515db19319ec50bea47e6cbbd70",
+      "size_bytes": 7727
     },
     {
-      "content_hash": "sha256:a95af895f445450937c3c64c25a974848b2c675d67b1c4f5c61782adfceb7dfa",
+      "content_hash": "sha256:59a9fc649e6edd31552548a3ff16d58803da95145245c039b86c91f25f66fe84",
       "exists": true,
       "input_id": "target_geometry_source_ledger",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
       "required": true,
       "role": "res_003_source_ledger",
-      "sha256": "a95af895f445450937c3c64c25a974848b2c675d67b1c4f5c61782adfceb7dfa",
-      "size_bytes": 15450
+      "sha256": "59a9fc649e6edd31552548a3ff16d58803da95145245c039b86c91f25f66fe84",
+      "size_bytes": 15527
     },
     {
-      "content_hash": "sha256:26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
+      "content_hash": "sha256:b72415596777b5ee0a6a1e76a14bdd4ba1ab44fed1782746ae86d28693476abb",
       "exists": true,
       "input_id": "warhead_source_ledger",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
       "required": true,
       "role": "res_004_source_ledger",
-      "sha256": "26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
-      "size_bytes": 18747
+      "sha256": "b72415596777b5ee0a6a1e76a14bdd4ba1ab44fed1782746ae86d28693476abb",
+      "size_bytes": 18844
     },
     {
-      "content_hash": "sha256:79660516091f596ab76ac81c5ef25e1a6aa268aa27801ce2731561efa0e734ae",
+      "content_hash": "sha256:f5af245dad0f031f5ea13a399d45b1ab96496a2c32dccc14df11fb3d5cfa64e1",
       "exists": true,
       "input_id": "mechanism_source_closeout_doc",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
       "required": false,
       "role": "optional_upstream_closeout_doc",
-      "sha256": "79660516091f596ab76ac81c5ef25e1a6aa268aa27801ce2731561efa0e734ae",
-      "size_bytes": 6273
+      "sha256": "f5af245dad0f031f5ea13a399d45b1ab96496a2c32dccc14df11fb3d5cfa64e1",
+      "size_bytes": 6323
     },
     {
-      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "content_hash": "sha256:a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
       "exists": true,
       "input_id": "mechanism_source_closeout_json",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "required": false,
       "role": "optional_upstream_closeout_artifact",
-      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
-      "size_bytes": 29136
+      "sha256": "a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
+      "size_bytes": 29809
     },
     {
-      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "content_hash": "sha256:a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
       "exists": true,
       "input_id": "mechanism_source_closeout_retained_file:docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "required": false,
       "role": "optional_upstream_closeout_retained_artifact",
-      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
-      "size_bytes": 29136
+      "sha256": "a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
+      "size_bytes": 29809
     }
   ],
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",

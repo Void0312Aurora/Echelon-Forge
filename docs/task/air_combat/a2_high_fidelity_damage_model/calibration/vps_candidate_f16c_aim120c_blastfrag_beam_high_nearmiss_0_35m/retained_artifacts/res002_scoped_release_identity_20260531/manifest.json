@@ -4,12 +4,12 @@
     {
       "allowed_claim": "bounded RES-002 scoped package identity surface is retained",
       "artifact_key": "res002_scoped_release_identity_gate",
-      "content_sha256": "92c8d0cae1e8a0e93013ee2339fa4594745824b2860a15f8c7b888f57f28ee4c",
+      "content_sha256": "4cbad46b0ca98774fe2ea97c5e42fb144ac3cbb4b35b9d30572af5d18dc405a8",
       "filename": "res002_scoped_release_identity_gate.json",
       "forbidden_claim": "global clean release identity, validation status promotion, stock authority, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res002_scoped_release_identity_20260531/res002_scoped_release_identity_gate.json",
       "schema_version": "a2.res002_scoped_release_identity_gate.v1",
-      "sha256": "ef4e38ccf457c80a96151c20260a52d3a5f6561431d571bc6d32f63983855bda",
+      "sha256": "4cbad46b0ca98774fe2ea97c5e42fb144ac3cbb4b35b9d30572af5d18dc405a8",
       "status": "scoped_res002_identity_pass_non_authoritative"
     }
   ],

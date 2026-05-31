@@ -30,7 +30,7 @@
   },
   "consumed_evidence": [
     {
-      "content_sha256": "a8ea676082c052edf599d69bf1256f05ffc032c36139324d6e1d2083710ac10c",
+      "content_sha256": "53a23aad1d5dd1d701e6df82b4877df6ae90581fc43edc4a03d650b64a671788",
       "evidence_id": "stage_b_independent_review_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
       "present": true,
@@ -39,7 +39,7 @@
       "status": "independent_review_passed_release_blocked"
     },
     {
-      "content_sha256": "b895bc3d88a8f7c5d666d8b5fd7401325a51004cb3b5cad139781c64561721a9",
+      "content_sha256": "26f8bb6246484f4969800491968ab51f4f5ea80867d86a36af49ec4b5b3aa00c",
       "evidence_id": "stage_b_independent_review_manifest",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/manifest.json",
       "present": true,
@@ -48,7 +48,7 @@
       "status": "independent_review_retained_release_blocked"
     },
     {
-      "content_sha256": "c1edc4b0b7fe4a8495a9ba484fd280dfccb49095c3c7582219e45bc82c32f310",
+      "content_sha256": "950d993463afa0992797527d90fb924f7f43206cdd75e1ea8d82eed2339269e6",
       "evidence_id": "stage_b_release_closeout",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json",
       "present": true,
@@ -57,7 +57,7 @@
       "status": "author_side_stage_b_release_closeout_complete_release_blocked"
     },
     {
-      "content_sha256": "689fd974bde350320d3afb67cb5ae5e583511280d80c74979d756568b425c38a",
+      "content_sha256": "4ac6cf760af8af41300152545900c840edaf0679df5ceb93a0e4d0a76d5746f4",
       "evidence_id": "uncertainty_review_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531/uncertainty_review_gate.json",
       "present": true,
@@ -66,7 +66,7 @@
       "status": "uncertainty_review_stage_b_narrow_pass_stage_c_blocked_release_blocked"
     },
     {
-      "content_sha256": "23e0a667a20a6207e9f2fd8f8cbcdc26ee5c608dbc544b858e1d34955a813d4a",
+      "content_sha256": "f2a02e0782d6346934c4eff0943ece221a74300cd650d0de246ce265ae7ca56e",
       "evidence_id": "uncertainty_review_manifest",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531/manifest.json",
       "present": true,
@@ -75,7 +75,7 @@
       "status": "uncertainty_review_retained_release_blocked"
     },
     {
-      "content_sha256": "a916d001ec0b228ed051c048a8028f65046a0ea4f58ea0e5df62770365fe42e3",
+      "content_sha256": "16e827f4c75c043094c6bc3f90f4cf1277bc3e1f3bf7e3375705d070a8193997",
       "evidence_id": "stage_c_fragility_review_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/stage_c_fragility_review_gate.json",
       "present": true,
@@ -84,7 +84,7 @@
       "status": "blocked_non_authoritative_stage_c_fragility_review_gate"
     },
     {
-      "content_sha256": "696502d7454792e35ea0049babcbd51515e4665be6d1ba447715ae8506786059",
+      "content_sha256": "5223c5aba20548640339d81c2037364d3244ee30a319a7d46665c3bd5bb7e239",
       "evidence_id": "stage_c_fragility_review_manifest",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/manifest.json",
       "present": true,
@@ -93,7 +93,7 @@
       "status": "author_retained_stage_c_fragility_review_gate_artifact_only"
     },
     {
-      "content_sha256": "ab944fcab8a05d08ab1e0be27fc188fe0334f1e8f12610f27ff073e16161cb1b",
+      "content_sha256": "a8bf49752278857a1e95cec28a1768620f208e7dbf204edcaf67971584427d3f",
       "evidence_id": "stage_c_fragility_validation_prep",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_validation_prep_20260531/stage_c_fragility_validation_prep.json",
       "present": true,
@@ -102,7 +102,7 @@
       "status": "prepared_non_authoritative_stage_c_fragility_validation_review_inputs"
     },
     {
-      "content_sha256": "f7a6c2f56885af562bba12ed5b8013ad86206632424488ac007bc82a668552d8",
+      "content_sha256": "61323ada144f0963327b757859db67f86d3e2cc2bba29a1cb8e9267f6a341293",
       "evidence_id": "stage_c_fragility_validation_prep_manifest",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_validation_prep_20260531/manifest.json",
       "present": true,
@@ -111,7 +111,7 @@
       "status": "author_retained_stage_c_fragility_validation_prep_artifact_only"
     },
     {
-      "content_sha256": "8905156b1e8ede7207fc8f6be58065e0647f3dd4ead649c67a2f4f34f82f418a",
+      "content_sha256": "b55b5f28764af9adf484d1d02971bc358d2be9fdd8213f8e013608ab3f109321",
       "evidence_id": "stage_c_fragility_benchmark",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
       "present": true,
@@ -120,7 +120,7 @@
       "status": "blocked_non_authoritative_stage_c_fragility_benchmark"
     },
     {
-      "content_sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
+      "content_sha256": "fde146cfaf728a7c52916e2ae9ca33a69de410cd26dd939e8451f16f76d18caf",
       "evidence_id": "provenance_identity_review_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
       "present": true,
@@ -129,7 +129,7 @@
       "status": "blocked_non_authoritative_provenance_identity_review_gate"
     },
     {
-      "content_sha256": "648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726",
+      "content_sha256": "46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e",
       "evidence_id": "geometry_warhead_row_provenance_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
       "present": true,
@@ -138,7 +138,7 @@
       "status": "blocked_non_authoritative_geometry_warhead_row_provenance_candidate"
     },
     {
-      "content_sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "content_sha256": "a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
       "evidence_id": "mechanism_source_closeout_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "present": true,
@@ -147,7 +147,7 @@
       "status": "blocked_non_authoritative_mechanism_source_closeout_candidate"
     },
     {
-      "content_sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "content_sha256": "44432f4c589273e0fb2f9327b7f6b65bae4cb2f6f0d28aa32f319c9cad1fed4c",
       "evidence_id": "source_rights_output_policy_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
       "present": true,

@@ -10,11 +10,11 @@
 |---|---|
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `schema_version` | `a2.res004_warhead_scope_closeout_gate.v1` |
-| `tool_ref` | [a2_blastfrag_res004_warhead_scope_closeout_gate.py](tools/maintenance/a2_blastfrag_res004_warhead_scope_closeout_gate.py) |
-| `retained_artifact` | [res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json) |
-| `retained_artifact_sha256` | `478a914cca44c5b977e855c2d4ff169a6ad4c07884700d1660acde7c30a96146` |
-| `manifest` | [res004_warhead_scope_closeout_20260531/manifest.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res004_warhead_scope_closeout_20260531/manifest.json) |
-| `manifest_sha256` | `ffb119fd363f70842d34ee367cbc8d13cff5305802015da77fd2f74befdaf932` |
+| `tool_ref` | [a2_blastfrag_res004_warhead_scope_closeout_gate.py](../../../../../../tools/maintenance/a2_blastfrag_res004_warhead_scope_closeout_gate.py) |
+| `retained_artifact` | [res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json](retained_artifacts/res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json) |
+| `retained_artifact_sha256` | `2165ab3e4802a678db41643da2c7622b38a47cecd41c82c5c214b723925b0d78` |
+| `manifest` | [res004_warhead_scope_closeout_20260531/manifest.json](retained_artifacts/res004_warhead_scope_closeout_20260531/manifest.json) |
+| `manifest_sha256` | `216bc71dd9035286ff6ecf8b0278c081c6a5f5917db3420785d3386e5062214f` |
 | `overall_status` | `res004_stage_b_effect_scale_warhead_family_scope_closeout_pass_release_blocked` |
 | `manifest_status` | `res004_warhead_scope_closeout_retained_release_blocked` |
 

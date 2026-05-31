@@ -46,59 +46,59 @@
   },
   "consumed_evidence": [
     {
-      "content_hash": "sha256:4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
-      "content_sha256": "4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
+      "content_hash": "sha256:8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
+      "content_sha256": "8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
       "evidence_id": "residual_register",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
       "present": true,
       "required": true,
       "role": "canonical_residual_status",
-      "size_bytes": 9263
+      "size_bytes": 9308
     },
     {
-      "content_hash": "sha256:3dd6dbabf06745392d16ac3f9071dbafb6fb9b182f7fae591d1fac3f6b5896d2",
-      "content_sha256": "3dd6dbabf06745392d16ac3f9071dbafb6fb9b182f7fae591d1fac3f6b5896d2",
+      "content_hash": "sha256:ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
+      "content_sha256": "ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
       "evidence_id": "target_geometry_assumptions",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
       "present": true,
       "required": true,
       "role": "res003_stage_b_assumption_surface",
-      "size_bytes": 5282
+      "size_bytes": 5285
     },
     {
-      "content_hash": "sha256:648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726",
-      "content_sha256": "648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726",
+      "content_hash": "sha256:46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e",
+      "content_sha256": "46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e",
       "evidence_id": "geometry_warhead_row_provenance_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
       "present": true,
       "required": true,
       "role": "res003_row_provenance_interlock",
       "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
-      "size_bytes": 31426,
+      "size_bytes": 32016,
       "status": "blocked_non_authoritative_geometry_warhead_row_provenance_candidate"
     },
     {
-      "content_hash": "sha256:a8ea676082c052edf599d69bf1256f05ffc032c36139324d6e1d2083710ac10c",
-      "content_sha256": "a8ea676082c052edf599d69bf1256f05ffc032c36139324d6e1d2083710ac10c",
+      "content_hash": "sha256:53a23aad1d5dd1d701e6df82b4877df6ae90581fc43edc4a03d650b64a671788",
+      "content_sha256": "53a23aad1d5dd1d701e6df82b4877df6ae90581fc43edc4a03d650b64a671788",
       "evidence_id": "stage_b_independent_review_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
       "present": true,
       "required": true,
       "role": "stage_b_independent_review_boundary",
       "schema_version": "a2.stage_b_independent_review_gate.v1",
-      "size_bytes": 19884,
+      "size_bytes": 20405,
       "status": "independent_review_passed_release_blocked"
     },
     {
-      "content_hash": "sha256:818e2612ec58ce0c3442dadc5031234ef67ac944f39af6c5028ed7f22b05cbe1",
-      "content_sha256": "818e2612ec58ce0c3442dadc5031234ef67ac944f39af6c5028ed7f22b05cbe1",
+      "content_hash": "sha256:ae4847e7018ca337e61769e35e909b0b826102b4e943203c6a5499c930afd8d8",
+      "content_sha256": "ae4847e7018ca337e61769e35e909b0b826102b4e943203c6a5499c930afd8d8",
       "evidence_id": "scope_bucket_independent_review_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/scope_bucket_independent_review_20260531/scope_bucket_independent_review_gate.json",
       "present": true,
       "required": true,
       "role": "stage_b_scope_bucket_boundary",
       "schema_version": "a2.scope_bucket_independent_review_gate.v1",
-      "size_bytes": 15383,
+      "size_bytes": 15815,
       "status": "scope_bucket_independent_review_passed_release_blocked"
     }
   ],
@@ -250,7 +250,7 @@
         "geometry_item": "beam_witness_panel",
         "not_supported_claims": "真实 3D beam exposure、occlusion、局部曲面、局部 vulnerable area",
         "residual": "RES-003",
-        "runtime_ref": "[a2_blastfrag_validation_scaffold.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_validation_scaffold.py), `_bfm_bm_003()` witness length/height",
+        "runtime_ref": "[a2_blastfrag_validation_scaffold.py](../../../../../../tools/maintenance/a2_blastfrag_validation_scaffold.py), `_bfm_bm_003()` witness length/height",
         "source_ids": [
           "F16-TG-SRC-001",
           "F16-TG-SRC-002",
@@ -264,7 +264,7 @@
         "geometry_item": "engine_aft_region",
         "not_supported_claims": "F110 installation boundary, accessory placement, fuel/hydraulic routing or vulnerability",
         "residual": "RES-003",
-        "runtime_ref": "[f16c_block50.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/f16c_block50.json), engine/component scaffold",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), engine/component scaffold",
         "source_ids": [
           "F16-TG-SRC-002",
           "F16-TG-SRC-004",
@@ -288,7 +288,7 @@
         "geometry_item": "nose_radar_rough_region",
         "not_supported_claims": "APG-68 precise antenna size、radome thickness、material or fragility truth",
         "residual": "RES-003",
-        "runtime_ref": "[f16c_block50.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/f16c_block50.json), structured hitbox/component scaffold",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), structured hitbox/component scaffold",
         "source_ids": [
           "F16-TG-SRC-002",
           "F16-TG-SRC-005",
@@ -312,7 +312,7 @@
         "geometry_item": "outer_bbox",
         "not_supported_claims": "真实截面、站位、内部舱段与 vulnerability area",
         "residual": "RES-003",
-        "runtime_ref": "[f16c_block50.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/f16c_block50.json), `airframe.length_m/wingspan_m/height_m",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), `airframe.length_m/wingspan_m/height_m",
         "source_ids": [
           "F16-TG-SRC-001",
           "F16-TG-SRC-002",
@@ -326,7 +326,7 @@
         "geometry_item": "right_aileron_actuator_projection",
         "not_supported_claims": "real actuator size, exposure, redundancy or failure probability truth",
         "residual": "RES-003`, `RES-009",
-        "runtime_ref": "runtime projected component path in [default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp) + repo component scaffold",
+        "runtime_ref": "runtime projected component path in [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp) + repo component scaffold",
         "source_ids": [
           "F16-TG-SRC-012",
           "F16-TG-3P-006",
@@ -340,7 +340,7 @@
         "geometry_item": "wing_and_control_surface_regions",
         "not_supported_claims": "mesh-derived hitboxes, spar/rib layout, fuel cell segmentation or surface-specific fragility",
         "residual": "RES-003",
-        "runtime_ref": "[f16c_block50.json](/home/void0312/Workshop/CMO/examples/config/database/aircraft/units/f16c_block50.json), wing/control components",
+        "runtime_ref": "[f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json), wing/control components",
         "source_ids": [
           "F16-TG-SRC-012",
           "F16-TG-3P-006",

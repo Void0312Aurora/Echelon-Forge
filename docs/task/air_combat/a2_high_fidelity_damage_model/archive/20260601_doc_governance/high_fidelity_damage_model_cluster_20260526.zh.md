@@ -252,7 +252,7 @@ Phase 1 的第一批代码变更应该足够小：
 4. 后续 Phase 3 应推进 blast/fragment/rod/HTK 差异化 effects、warhead geometry sampling、全库组件数据和冗余依赖图；
 5. 后续训练 reward 应消费 `DamageReport` / loss state / subsystem capability，而不是重新依赖 HP 连续扣减。
 
-数据来源与准入回收入口见 [A2 数据收集入口](data_collection/README.zh.md)。所有外部来源必须先进入 source ledger，并按 scope、来源层级、可公开性、交叉验证、residual 和 authority 默认关闭规则审查；不得直接把公开方法、民间资料或测试 fixture 提升为 Pk、deterministic fuze、effect-scale 或 component-failure probability 权威。
+数据来源与准入回收入口见 [A2 数据收集入口](../../data_collection/README.zh.md)。所有外部来源必须先进入 source ledger，并按 scope、来源层级、可公开性、交叉验证、residual 和 authority 默认关闭规则审查；不得直接把公开方法、民间资料或测试 fixture 提升为 Pk、deterministic fuze、effect-scale 或 component-failure probability 权威。
 
 ## 建议命令
 

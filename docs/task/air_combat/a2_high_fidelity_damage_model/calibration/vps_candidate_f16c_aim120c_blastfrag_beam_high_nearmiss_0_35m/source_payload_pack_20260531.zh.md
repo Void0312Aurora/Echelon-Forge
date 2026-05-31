@@ -3,7 +3,7 @@
 状态：`partial_payloads_retained_release_review_blocked / candidate / non-authoritative / source_payload_pack`。
 
 本文档记录 `A2-EV-SOURCE-PAYLOAD-PACK` 对 `RES-001 source provenance` 的实际 payload retained 情况，并给 `RES-002 release identity` 提供可消费但不放权的 source payload / rights / consumption evidence。对应工具为
-[a2_blastfrag_source_payload_pack.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_source_payload_pack.py)。
+[a2_blastfrag_source_payload_pack.py](../../../../../../tools/maintenance/a2_blastfrag_source_payload_pack.py)。
 
 本 pack 不创建 stock descriptor，不授予 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority` 或 `deterministic_fuze_authority`。
 

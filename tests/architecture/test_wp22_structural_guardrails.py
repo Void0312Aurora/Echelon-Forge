@@ -228,6 +228,7 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
     "debug_get_missile_runtime_state",
     "debug_get_aircraft_damage_state",
     "debug_get_aircraft_vulnerability_evidence_state",
+    "debug_get_aircraft_vulnerability_authority_state",
     "set_contact_list",
     "set_missile_tuning",
     "get_missile_tuning",
@@ -235,6 +236,7 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
     "debug_apply_local_proximity_hit",
     "debug_apply_profiled_local_proximity_hit",
     "debug_apply_profiled_local_proximity_hit_with_velocity",
+    "debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude",
 }
 
 BINDINGS_LEGACY_ALLOWLIST = {
@@ -596,7 +598,7 @@ def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot
 
 def test_wp22_bindings_core_still_exposes_broad_surface_as_quarantined_fact() -> None:
     names = _simulation_kernel_binding_names()
-    assert len(names) == 81, (
+    assert len(names) == 83, (
         "WP22-E first wave expects the broad SimulationKernel binding count to stay explicit; "
         "update this guard only with a deliberate allowlist reshaping change"
     )

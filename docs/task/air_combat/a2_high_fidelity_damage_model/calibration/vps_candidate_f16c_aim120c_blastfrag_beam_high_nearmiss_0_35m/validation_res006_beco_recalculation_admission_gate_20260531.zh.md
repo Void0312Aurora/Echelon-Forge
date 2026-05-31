@@ -3,7 +3,7 @@
 状态：`partial_fail_closed_res006_beco_recalculation_admission / non-authoritative / hash-only`。
 
 本文记录 `A2-RES006-BECO-ADMISSION` 对 BEC-O blast mechanism recalculation/hash/tolerance blocker 的窄域收口结果。对应工具为
-[a2_blastfrag_res006_beco_recalculation_admission_gate.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_res006_beco_recalculation_admission_gate.py)。
+[a2_blastfrag_res006_beco_recalculation_admission_gate.py](../../../../../../tools/maintenance/a2_blastfrag_res006_beco_recalculation_admission_gate.py)。
 
 本 gate 只处理 `RES-006`：不修改 `mechanism_comparison_hashes` cached anchors，不编辑 `residual_register`，不处理 `RES-003/004/005`，不复制 spreadsheet formulas/raw selected values/raw output values，不释放 stock/runtime/effect-scale/component/Pk/fuze authority。
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -127,6 +128,13 @@ def _rel(path: Path, repo_root: Path) -> str:
         return path.relative_to(repo_root).as_posix()
     except ValueError:
         return path.as_posix()
+
+
+def _doc_link(path: Path, doc_path: Path, repo_root: Path) -> str:
+    try:
+        return Path(os.path.relpath(path.resolve(), doc_path.parent.resolve())).as_posix()
+    except ValueError:
+        return _rel(path, repo_root)
 
 
 def _read_text(path: Path) -> str:
@@ -725,6 +733,7 @@ def _validation_doc(
     gate_sha256: str,
     manifest_path: Path,
     manifest_sha256: str,
+    doc_path: Path,
     repo_root: Path,
 ) -> str:
     res003 = gate["residual_status"]["RES-003"]
@@ -743,10 +752,10 @@ def _validation_doc(
 |---|---|
 | `package_id` | `{gate["package_id"]}` |
 | `schema_version` | `{gate["schema_version"]}` |
-| `tool_ref` | [a2_blastfrag_geometry_warhead_row_provenance_gate.py]({ _rel(REPO_ROOT / "tools" / "maintenance" / "a2_blastfrag_geometry_warhead_row_provenance_gate.py", repo_root) }) |
-| `retained_artifact` | [{gate_path.name}]({_rel(gate_path, repo_root)}) |
+| `tool_ref` | [a2_blastfrag_geometry_warhead_row_provenance_gate.py]({_doc_link(repo_root / "tools" / "maintenance" / "a2_blastfrag_geometry_warhead_row_provenance_gate.py", doc_path, repo_root)}) |
+| `retained_artifact` | [{gate_path.name}]({_doc_link(gate_path, doc_path, repo_root)}) |
 | `retained_artifact_sha256` | `{gate_sha256}` |
-| `manifest` | [{manifest_path.name}]({_rel(manifest_path, repo_root)}) |
+| `manifest` | [{manifest_path.name}]({_doc_link(manifest_path, doc_path, repo_root)}) |
 | `manifest_sha256` | `{manifest_sha256}` |
 | `overall_status` | `{gate["status"]}` |
 
@@ -817,6 +826,7 @@ def write_retained_artifacts(
             gate_sha256=gate_sha,
             manifest_path=manifest_path,
             manifest_sha256=manifest_sha,
+            doc_path=doc_path,
             repo_root=repo_root,
         ),
         encoding="utf-8",

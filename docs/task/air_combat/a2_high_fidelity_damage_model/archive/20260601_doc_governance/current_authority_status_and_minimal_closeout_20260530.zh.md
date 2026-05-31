@@ -15,7 +15,7 @@
 
 > structured-aircraft damage/effects runtime 主链已经进入维护路径；窄域 candidate 包、validation scaffold 和 test-local authority exercise 已经成形；但 stock runtime authority 仍未放开。
 
-按 [梯度真实性原则](../../../standards/foundation/gradient_realism_principles.zh.md)，当前最稳妥的真实性声明应停留在：
+按 [梯度真实性原则](../../../../../standards/foundation/gradient_realism_principles.zh.md)，当前最稳妥的真实性声明应停留在：
 
 - 已有可信的结构化飞机毁伤 runtime contract；
 - 已有窄域 `AIM-120C-class blast_fragmentation -> F-16C_Block50` 的 authority 演练路径；
@@ -35,9 +35,9 @@
 
 相关实现入口：
 
-- [default_effects_model.cpp](/home/void0312/Workshop/CMO/src/models/weapons/default_effects_model.cpp)
-- [unit_definition_loader.cpp](/home/void0312/Workshop/CMO/src/content/unit_definition_loader.cpp)
-- [damage.h](/home/void0312/Workshop/CMO/src/components/combat/damage.h)
+- [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp)
+- [unit_definition_loader.cpp](../../../../../../src/content/unit_definition_loader.cpp)
+- [damage.h](../../../../../../src/components/combat/damage.h)
 
 ### 2.2 Candidate / scaffold 层：已成形
 
@@ -51,11 +51,11 @@
 
 相关入口：
 
-- [候选包 README](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/README.zh.md)
-- [validation manifest 草案](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_manifest_draft_blastfrag_20260528.zh.md)
-- [residual register](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md)
-- [a2_candidate_vps_bundle.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_candidate_vps_bundle.py)
-- [a2_blastfrag_runtime_aligned_authority_pack.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py)
+- [候选包 README](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/README.zh.md)
+- [validation manifest 草案](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_manifest_draft_blastfrag_20260528.zh.md)
+- [residual register](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md)
+- [a2_candidate_vps_bundle.py](../../../../../../tools/maintenance/a2_candidate_vps_bundle.py)
+- [a2_blastfrag_runtime_aligned_authority_pack.py](../../../../../../tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py)
 
 ### 2.3 Stock authority 层：仍未放开
 
@@ -95,7 +95,7 @@
 
 当前最容易混淆的地方是：runtime 已能消费 row，并不等于项目已经获得可宣称的 authority。
 
-按 [窄域任务定义](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md) 与 [A2 数据来源准入规则](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/source_admission_rules_20260528.zh.md)，当前至少还缺三类东西：
+按 [窄域任务定义](../../narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md) 与 [A2 数据来源准入规则](../../data_collection/source_admission_rules_20260528.zh.md)，当前至少还缺三类东西：
 
 ### 4.1 验证冻结还没完成
 
@@ -108,53 +108,53 @@
 
 当前已经新增并冻结了一个 Stage B `effect_scale` 用的独立 artifact：
 
-- [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md)
+- [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md)
 
 这意味着 `RES-010` 已经从“指标和门槛未定义”推进到了“criteria 已冻结，但 run/review/closeout 未完成”。
 
 本轮又补入了两类 author-side closeout artifacts：
 
-- [validation_benchmark_snapshot_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_benchmark_snapshot_stage_b_effect_scale_20260530.zh.md)
-- [validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md)
+- [validation_benchmark_snapshot_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_benchmark_snapshot_stage_b_effect_scale_20260530.zh.md)
+- [validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md)
 
 它们把 Stage B frozen hard gates 的第一版 fixed-seed candidate snapshot 与 author-side review inputs 固化下来，
 但仍不构成独立 review 或 stock authority。
 
 本轮还补入了一个统一结果包：
 
-- [validation_result_pack_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_b_effect_scale_20260530.zh.md)
+- [validation_result_pack_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_b_effect_scale_20260530.zh.md)
 
 它把 scaffold、scope probe 与 Stage B snapshot 汇总为带 content hash 与 independence 语义的统一 candidate result pack，
 进一步减少“结果分散在多份 author-side artifact 中”的问题，但仍不构成 retained validation artifact。
 
 本轮还补入了一个 release-readiness gate：
 
-- [validation_release_readiness_gate_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_release_readiness_gate_stage_b_effect_scale_20260530.zh.md)
+- [validation_release_readiness_gate_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_release_readiness_gate_stage_b_effect_scale_20260530.zh.md)
 
 它的作用是把“当前为什么 blocked”机器化固定下来，防止当前 author-side hard-gate pass 被误读成
 `ready to release`。
 
 本轮还把 Stage B author-side retained evidence chain 固化到 repo 内：
 
-- [validation_retained_artifact_pack_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_retained_artifact_pack_stage_b_effect_scale_20260530.zh.md)
+- [validation_retained_artifact_pack_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_retained_artifact_pack_stage_b_effect_scale_20260530.zh.md)
 
 这意味着 `RES-002` 当前更准确的状态已经不是“完全没有 retained chain”，而是“canonical author-side
 retained pack 已存在，但 release-grade surrogate identity 仍未闭合”。
 
 本轮还补入了一个 package-level shared provenance / surrogate identity gate：
 
-- [validation_provenance_and_identity_gate_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_provenance_and_identity_gate_20260530.zh.md)
+- [validation_provenance_and_identity_gate_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_provenance_and_identity_gate_20260530.zh.md)
 
 它把 `RES-001` 与 `RES-002` 的共享阻塞面单独机器化收口，避免 Stage B / Stage C 各自重复解释
 同一套 provenance / identity blocker。
 
 当前还新增了一个 Stage B `effect_scale` 用的 scope / independence manifest：
 
-- [validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md)
+- [validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md)
 
 并且已经补入第一版 boundary result report：
 
-- [validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md)
+- [validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md)
 
 这意味着：
 
@@ -185,10 +185,10 @@ retained pack 已存在，但 release-grade surrogate identity 仍未闭合”�
 
 本轮又补入了四份把这些 residual 从“口头边界”推进成“显式 artifact”的文档：
 
-- [artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md)
-- [surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md)
-- [target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md)
-- [warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md)
+- [artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md)
+- [surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md)
+- [target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md)
+- [warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md)
 
 它们的作用是把 provenance / surrogate identity / geometry / warhead boundary 说清楚，
 不是把 `RES-001..004` 直接关闭。
@@ -237,7 +237,7 @@ retained pack 已存在，但 release-grade surrogate identity 仍未闭合”�
 
 当前这一层也不再只存在于 runtime test 断言里。本轮已经补入第一版 Stage C author-side snapshot：
 
-- [validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md)
+- [validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md)
 
 它把 `right_aileron_actuator` 的 component-specific probability candidate、component provenance
 字段以及 mechanism-load gate band 固化成 package-level artifact，但仍明确保持
@@ -245,10 +245,10 @@ retained pack 已存在，但 release-grade surrogate identity 仍未闭合”�
 
 本轮还进一步补入了多类 Stage C 收口 artifact：
 
-- [validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md)
-- [validation_result_pack_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_c_component_probability_20260530.zh.md)
-- [validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md)
-- [validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md)
+- [validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md)
+- [validation_result_pack_stage_c_component_probability_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_c_component_probability_20260530.zh.md)
+- [validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md)
+- [validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md)
 - `tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py` 对应的 retained
   surface probe / repeatability snapshot 已进入 Stage C canonical artifact 链。
 

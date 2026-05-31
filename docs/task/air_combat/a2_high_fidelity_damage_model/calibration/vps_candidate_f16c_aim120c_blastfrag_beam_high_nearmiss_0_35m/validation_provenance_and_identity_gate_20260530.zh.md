@@ -3,7 +3,7 @@
 状态：`blocked / candidate / non-authoritative / shared_package_surface_only`。
 
 本文档记录当前 A2 窄域候选包的第一版 shared provenance / surrogate identity gate。它来自
-[a2_blastfrag_package_provenance_identity_gate.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_package_provenance_identity_gate.py)，
+[a2_blastfrag_package_provenance_identity_gate.py](../../../../../../tools/maintenance/a2_blastfrag_package_provenance_identity_gate.py)，
 目标不是放行 authority，而是把 `RES-001 source provenance` 与 `RES-002 surrogate identity`
 的共享阻塞面机器化固定下来，供 Stage B 与 Stage C 共用。
 

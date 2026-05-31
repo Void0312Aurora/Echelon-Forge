@@ -11,8 +11,8 @@ Stage B 与 Stage C 的 uncertainty 证据分层，不创建 stock descriptor，
 
 | 字段 | 值 |
 |---|---|
-| `tool_ref` | [a2_blastfrag_uncertainty_review_gate.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_uncertainty_review_gate.py) |
-| `test_ref` | [test_a2_blastfrag_uncertainty_review_gate.py](/home/void0312/Workshop/CMO/tests/architecture/test_a2_blastfrag_uncertainty_review_gate.py) |
+| `tool_ref` | [a2_blastfrag_uncertainty_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_uncertainty_review_gate.py) |
+| `test_ref` | [test_a2_blastfrag_uncertainty_review_gate.py](../../../../../../tests/architecture/test_a2_blastfrag_uncertainty_review_gate.py) |
 | `retained_gate` | [uncertainty_review_gate.json](retained_artifacts/uncertainty_review_20260531/uncertainty_review_gate.json) |
 | `retained_manifest` | [manifest.json](retained_artifacts/uncertainty_review_20260531/manifest.json) |
 | `review_target` | `RES-011_uncertainty_review_only` |

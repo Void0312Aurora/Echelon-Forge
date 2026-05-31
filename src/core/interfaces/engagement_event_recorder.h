@@ -14,6 +14,10 @@ struct EngagementDamageStateSnapshot {
     bool mission_kill = false;
     bool mobility_kill = false;
     bool sensor_kill = false;
+    bool forced_landing = false;
+    bool flight_control_kill = false;
+    bool propulsion_kill = false;
+    bool crew_kill = false;
     bool has_platform_damage = false;
     double mission_capability = 1.0;
     double mobility_capability = 1.0;

@@ -454,7 +454,10 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         self.assertTupleEqual(
             public_fields(ef_py.DamageReport()),
             (
+                "crew_kill",
                 "destroyed",
+                "flight_control_kill",
+                "forced_landing",
                 "hp_delta",
                 "loss_state_from",
                 "loss_state_to",
@@ -462,6 +465,7 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "mobility_kill",
                 "platform_damage_state_delta",
                 "producer_node_id",
+                "propulsion_kill",
                 "report_id",
                 "report_time_s",
                 "sensor_kill",

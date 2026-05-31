@@ -3,7 +3,7 @@
 状态：`blocked / candidate / non-authoritative / release_provenance_closeout_lane`。
 
 本文档记录 `RES-001 source provenance` 与 `RES-002 surrogate identity` 在 shared provenance / identity gate 之后的细分 closeout gate。对应工具为
-[a2_blastfrag_release_provenance_closeout_gate.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_release_provenance_closeout_gate.py)。
+[a2_blastfrag_release_provenance_closeout_gate.py](../../../../../../tools/maintenance/a2_blastfrag_release_provenance_closeout_gate.py)。
 
 本文档不创建 runtime descriptor，不授予 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority` 或 `deterministic_fuze_authority`，也不关闭 Stage B release gate 或 Stage C fragility gate。
 

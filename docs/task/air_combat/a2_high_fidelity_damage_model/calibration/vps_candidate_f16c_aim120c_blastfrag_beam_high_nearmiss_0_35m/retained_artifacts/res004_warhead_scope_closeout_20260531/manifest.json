@@ -2,9 +2,9 @@
   "artifacts": [
     {
       "artifact_key": "res004_warhead_scope_closeout_gate",
-      "content_sha256": "478a914cca44c5b977e855c2d4ff169a6ad4c07884700d1660acde7c30a96146",
+      "content_sha256": "2165ab3e4802a678db41643da2c7622b38a47cecd41c82c5c214b723925b0d78",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json",
-      "size_bytes": 21745
+      "size_bytes": 22208
     }
   ],
   "authority_guards": {

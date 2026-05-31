@@ -257,6 +257,10 @@ struct DamageReport {
     bool mobility_kill = false;
     bool sensor_kill = false;
     bool survivability_kill = false;
+    bool forced_landing = false;
+    bool flight_control_kill = false;
+    bool propulsion_kill = false;
+    bool crew_kill = false;
     std::string loss_state_from = "unknown";
     std::string loss_state_to = "unknown";
     bool destroyed = false;

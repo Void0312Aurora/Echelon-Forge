@@ -4,7 +4,7 @@
 
 本文档记录当前候选包按 Stage C `component_failure_probability_authority` 候选路径
 生成的第一版 component-specific snapshot。它来自
-[a2_blastfrag_stage_c_component_probability_snapshot.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py)
+[a2_blastfrag_stage_c_component_probability_snapshot.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py)
 对当前 runtime-aligned authority exercise 的 author-side 固定结果。
 
 本文档不是独立 validation result，不创建 runtime descriptor，不授予
@@ -18,9 +18,9 @@
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `snapshot_status` | `author_snapshot_complete_pending_independent_review` |
 | `primary_release_scope` | `component_failure_probability_authority_only` |
-| `scope_ref` | [narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md) |
-| `runtime_aligned_ref` | [a2_blastfrag_runtime_aligned_authority_pack.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py) |
-| `snapshot_artifact_ref` | [a2_blastfrag_stage_c_component_probability_snapshot.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py) |
+| `scope_ref` | [narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md](../../narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md) |
+| `runtime_aligned_ref` | [a2_blastfrag_runtime_aligned_authority_pack.py](../../../../../../tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py) |
+| `snapshot_artifact_ref` | [a2_blastfrag_stage_c_component_probability_snapshot.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py) |
 | `stock_runtime_action` | `forbidden_pending_fragility_validation_and_residual_closeout` |
 
 ## 2. Current Candidate Snapshot

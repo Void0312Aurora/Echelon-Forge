@@ -95,7 +95,7 @@
 
 本 artifact 的冻结依据来自：
 
-- [梯度真实性原则](../../../../standards/foundation/gradient_realism_principles.zh.md)
+- [梯度真实性原则](../../../../../standards/foundation/gradient_realism_principles.zh.md)
 - [A2 数据来源准入规则](../../data_collection/source_admission_rules_20260528.zh.md)
 - [A2 窄域 Authority 闭环任务定义](../../narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md)
 - [Blast-Fragmentation VPS Validation Manifest 草案](validation_manifest_draft_blastfrag_20260528.zh.md)

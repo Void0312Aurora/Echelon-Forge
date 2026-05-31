@@ -4,7 +4,7 @@
 
 本文档记录 `A2-RC-STAGE-B-INDEPENDENT-REVIEW` 对 Stage B author-side closeout 的独立 review gate。
 它来自
-[a2_blastfrag_stage_b_independent_review_gate.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_b_independent_review_gate.py)，
+[a2_blastfrag_stage_b_independent_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_independent_review_gate.py)，
 只审查 `RES-007/008/010/011/012` 的 author-side closeout evidence 是否可通过 independent review。
 
 本文档不创建 runtime descriptor，不授予 stock authority，不提升 formal validation manifest，也不释放

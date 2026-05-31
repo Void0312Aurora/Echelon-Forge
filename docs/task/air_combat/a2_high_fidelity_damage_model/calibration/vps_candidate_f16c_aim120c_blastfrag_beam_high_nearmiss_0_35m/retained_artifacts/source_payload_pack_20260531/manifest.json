@@ -44,18 +44,18 @@
   "retention_scope": "res_001_source_payload_candidate_pack_non_authoritative",
   "schema_version": "a2.source_payload_pack_retained_manifest.v1",
   "source_artifact_pack_manifest": {
-    "content_sha256": "a7c0328d32660853c6ff0634e3c4fe8b58909e7e0a0a9a33a336d6b7af9781f3",
+    "content_sha256": "ae38712cfd988c069c161c21b2f80a6852fada891f5df95e9f3f9be9c863a0eb",
     "filename": "source_artifact_pack_manifest.json",
     "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
     "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
-    "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729"
+    "sha256": "ae38712cfd988c069c161c21b2f80a6852fada891f5df95e9f3f9be9c863a0eb"
   },
   "source_payload_pack_artifact": {
-    "content_sha256": "f95ae22f2ee7e639a8faf5a42a04363ad2fff9994fdc768eff7b95c73fe85860",
+    "content_sha256": "993398bbfdd9dffe6ab26466fc1b49d1af37cbb985bc3e91cbd6eea5029c1830",
     "filename": "source_payload_pack.json",
     "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
     "schema_version": "a2.source_payload_pack.v1",
-    "sha256": "0fd5e757ae5f64a8c12a44b4dc395c47d51860237a82b1ce7e5594fa4252384c"
+    "sha256": "993398bbfdd9dffe6ab26466fc1b49d1af37cbb985bc3e91cbd6eea5029c1830"
   },
   "status": "partial_payloads_retained_release_review_blocked"
 }

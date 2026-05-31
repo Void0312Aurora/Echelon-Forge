@@ -21,8 +21,10 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
   instead of the historical smoke fixture.
 - The high-fidelity damage-model line now lives under
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md).
-  That line is limited to Phase 0 preflight until its audit gates close; HP
-  bypass reversal, aircraft hitboxes, and deterministic fuze work remain held.
+  Its structured-aircraft damage/effects runtime is now on a maintained path,
+  while the current blast-fragmentation package remains non-authoritative
+  candidate evidence. Stock authority, Pk, and deterministic fuze authority are
+  still not released.
 
 ## Active Follow-On Focus
 
@@ -32,11 +34,11 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
 - strengthen scripted or frozen-opponent baselines
 - split diagnostics for `combat_loss`, killed-entity inactive state, and terminal
   crash penalty semantics
-- promote the high-fidelity air-combat damage model: remove the HP-first kill
-  bypass from the authoritative effects path, and make kill states derive from
-  weapon events, local subsystem damage, and platform loss state
-- close the Phase 0 damage-model preflight gates before any Phase 1 code move
-  lands
+- maintain the high-fidelity air-combat damage runtime contract, and keep future
+  work separated into `G1 runtime`, `G2/G3 candidate/residual`, `G4 authority`,
+  and `G5 kill-chain` layers
+- preserve the non-authoritative boundary of the current blast-fragmentation
+  candidate package; test-local descriptor exercises are not stock authority
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal

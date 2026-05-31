@@ -12,11 +12,11 @@
 |---|---|
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `schema_version` | `a2.geometry_warhead_row_provenance_gate.v1` |
-| `tool_ref` | [a2_blastfrag_geometry_warhead_row_provenance_gate.py](tools/maintenance/a2_blastfrag_geometry_warhead_row_provenance_gate.py) |
-| `retained_artifact` | [geometry_warhead_row_provenance_gate.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json) |
-| `retained_artifact_sha256` | `648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726` |
-| `manifest` | [manifest.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json) |
-| `manifest_sha256` | `0dfdd2722ff7d28e96040812c655cada107849238093b9836b3be3717c30af0c` |
+| `tool_ref` | [a2_blastfrag_geometry_warhead_row_provenance_gate.py](../../../../../../tools/maintenance/a2_blastfrag_geometry_warhead_row_provenance_gate.py) |
+| `retained_artifact` | [geometry_warhead_row_provenance_gate.json](retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json) |
+| `retained_artifact_sha256` | `46b5476f0c102ddcd756110f93a7ae0be9723a0a03075151d1b20771531be38e` |
+| `manifest` | [manifest.json](retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json) |
+| `manifest_sha256` | `ae0ce8f6393916bee957a0c3c688837d40a4756145e45a4c9b289468b309cce1` |
 | `overall_status` | `blocked_non_authoritative_geometry_warhead_row_provenance_candidate` |
 
 ## 2. Current Gate Results

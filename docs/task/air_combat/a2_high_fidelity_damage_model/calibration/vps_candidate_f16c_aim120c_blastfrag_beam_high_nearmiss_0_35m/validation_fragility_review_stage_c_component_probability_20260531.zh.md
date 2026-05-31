@@ -3,14 +3,14 @@
 状态：`blocked / candidate / non-authoritative / stage_c_component_probability_only / 2026-05-31`。
 
 本文档记录 Stage C `right_aileron_actuator` fragility review gate。对应工具为
-[a2_blastfrag_stage_c_fragility_review_gate.py](/home/void0312/Workshop/CMO/tools/maintenance/a2_blastfrag_stage_c_fragility_review_gate.py)。
+[a2_blastfrag_stage_c_fragility_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_fragility_review_gate.py)。
 
 本 review gate 只审查当前 retained prep/result surface 是否足够清楚地 fail-closed。它不创建
 stock descriptor，不授予 `component_failure_probability_authority`、`pk_authority` 或
 `deterministic_fuze_authority`，也不能越过 Stage B effect-scale release gate。
 
 本轮 review gate 已消费上一轮 retained Stage C fragility benchmark artifact：
-[stage_c_fragility_benchmark_20260531](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531)。
+[stage_c_fragility_benchmark_20260531](retained_artifacts/stage_c_fragility_benchmark_20260531)。
 该 artifact 提供 candidate-vs-`synthetic_sigmoid` delta evidence，但仍不是 independent truth。
 
 ## 1. Gate Result
