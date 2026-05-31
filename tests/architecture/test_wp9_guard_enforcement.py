@@ -40,11 +40,9 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
             "python/rl/tasking/bridge.py",
             "python/rl/tasking/leader_tasking.py",
             "python/scenario/runtime/kernel_apply.py",
-            "game/backend/app.py",
         },
         "prefixes": {
             "gym_envs/",
-            "game/backend/",
         },
     },
     "diagnostics_only": {
@@ -55,6 +53,7 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
             "tools/eval/",
         },
         "files": {
+            "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py",
             "world_model_train.py",
         },
     },

@@ -21,8 +21,8 @@ already has an owned label elsewhere in the repository.
 | Label | File family evidence |
 |-------|----------------------|
 | `compatibility_only` | `python/rl/control/wrappers.py`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, `python/rl/runtime/leader_world_batch_runtime.py`, `python/rl/runtime/single_world_batch_runtime.py`, `python/rl/runtime/world_batch/cooperative_director.py`, `python/rl/runtime/world_batch/runtime_access.py`, `python/rl/runtime/world_batch_vec_env.py`, `python/rl/tasking/leader_tasking.py`, `python/scenario/runtime/kernel_apply.py` |
-| `compatibility_only` | `gym_envs/`, `game/backend/`, plus the compatibility bridge files above |
-| `diagnostics_only` | `python/testing/contracts/`, `examples/viz/runtime/`, `tools/diagnostics/`, `tools/eval/`, and `world_model_train.py` |
+| `compatibility_only` | `gym_envs/` plus the compatibility bridge files above |
+| `diagnostics_only` | `python/testing/contracts/`, `examples/viz/runtime/`, `tools/diagnostics/`, `tools/eval/`, `tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py`, and `world_model_train.py` |
 | `test_only` | `tests/` |
 
 ## Guard Note
