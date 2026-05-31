@@ -203,6 +203,11 @@ def _component_rows_summary(event: object) -> list[dict[str, Any]]:
                 "mechanism_fragment_areal_density_per_m2": float(
                     row.mechanism_fragment_areal_density_per_m2
                 ),
+                "mechanism_fragment_energy_j": float(row.mechanism_fragment_energy_j),
+                "mechanism_penetration_margin": float(row.mechanism_penetration_margin),
+                "mechanism_blast_impulse_kpa_ms": float(
+                    row.mechanism_blast_impulse_kpa_ms
+                ),
                 "mechanism_blast_scaled_distance_m_kg13": float(
                     row.mechanism_blast_scaled_distance_m_kg13
                 ),
@@ -231,6 +236,9 @@ def _baseline_event_summary(event: object) -> dict[str, Any]:
         "component_failure_probability_source": str(
             event.component_failure_probability_source
         ),
+        "mechanism_fragment_energy_j": float(event.mechanism_fragment_energy_j),
+        "mechanism_penetration_margin": float(event.mechanism_penetration_margin),
+        "mechanism_blast_impulse_kpa_ms": float(event.mechanism_blast_impulse_kpa_ms),
         "mechanism_blast_scaled_distance_m_kg13": float(
             event.mechanism_blast_scaled_distance_m_kg13
         ),
@@ -239,6 +247,15 @@ def _baseline_event_summary(event: object) -> dict[str, Any]:
         ),
         "mechanism_surface_incidence_cos": float(
             event.mechanism_surface_incidence_cos
+        ),
+        "component_primary_mechanism_fragment_energy_j": float(
+            event.component_primary_mechanism_fragment_energy_j
+        ),
+        "component_primary_mechanism_penetration_margin": float(
+            event.component_primary_mechanism_penetration_margin
+        ),
+        "component_primary_mechanism_blast_impulse_kpa_ms": float(
+            event.component_primary_mechanism_blast_impulse_kpa_ms
         ),
         "component_primary_mechanism_blast_scaled_distance_m_kg13": float(
             event.component_primary_mechanism_blast_scaled_distance_m_kg13
@@ -260,9 +277,19 @@ def _build_effect_scale_descriptor(
 ) -> dict[str, Any]:
     blast_scaled_distance = float(baseline_event.mechanism_blast_scaled_distance_m_kg13)
     fragment_areal_density = float(baseline_event.mechanism_fragment_areal_density_per_m2)
+    fragment_energy = float(baseline_event.mechanism_fragment_energy_j)
+    penetration_margin = float(baseline_event.mechanism_penetration_margin)
+    blast_impulse = float(baseline_event.mechanism_blast_impulse_kpa_ms)
     surface_incidence = float(baseline_event.mechanism_surface_incidence_cos)
     min_z, max_z = _runtime_gate_band(blast_scaled_distance)
     min_density, max_density = _runtime_gate_band(fragment_areal_density)
+    min_energy, max_energy = _runtime_gate_band(fragment_energy)
+    min_penetration, max_penetration = _runtime_gate_band(
+        penetration_margin,
+        lower_scale=0.90,
+        upper_scale=1.10,
+    )
+    min_blast_impulse, max_blast_impulse = _runtime_gate_band(blast_impulse)
     min_incidence, max_incidence = _runtime_gate_band(
         surface_incidence,
         lower_scale=0.90,
@@ -315,6 +342,12 @@ def _build_effect_scale_descriptor(
                 "max_blast_scaled_distance_m_kg13": max_z,
                 "min_fragment_areal_density_per_m2": min_density,
                 "max_fragment_areal_density_per_m2": max_density,
+                "min_fragment_energy_j": min_energy,
+                "max_fragment_energy_j": max_energy,
+                "min_penetration_margin": min_penetration,
+                "max_penetration_margin": max_penetration,
+                "min_blast_impulse_kpa_ms": min_blast_impulse,
+                "max_blast_impulse_kpa_ms": max_blast_impulse,
                 "min_surface_incidence_cos": min_incidence,
                 "max_surface_incidence_cos": max_incidence,
             }
@@ -333,6 +366,17 @@ def _build_component_probability_descriptor(
     )
     min_density, max_density = _runtime_gate_band(
         float(primary_row["mechanism_fragment_areal_density_per_m2"])
+    )
+    min_energy, max_energy = _runtime_gate_band(
+        float(primary_row["mechanism_fragment_energy_j"])
+    )
+    min_penetration, max_penetration = _runtime_gate_band(
+        float(primary_row["mechanism_penetration_margin"]),
+        lower_scale=0.90,
+        upper_scale=1.10,
+    )
+    min_blast_impulse, max_blast_impulse = _runtime_gate_band(
+        float(primary_row["mechanism_blast_impulse_kpa_ms"])
     )
     min_incidence, max_incidence = _runtime_gate_band(
         float(primary_row["mechanism_surface_incidence_cos"]),
@@ -391,6 +435,12 @@ def _build_component_probability_descriptor(
                 "max_blast_scaled_distance_m_kg13": max_z,
                 "min_fragment_areal_density_per_m2": min_density,
                 "max_fragment_areal_density_per_m2": max_density,
+                "min_fragment_energy_j": min_energy,
+                "max_fragment_energy_j": max_energy,
+                "min_penetration_margin": min_penetration,
+                "max_penetration_margin": max_penetration,
+                "min_blast_impulse_kpa_ms": min_blast_impulse,
+                "max_blast_impulse_kpa_ms": max_blast_impulse,
                 "min_surface_incidence_cos": min_incidence,
                 "max_surface_incidence_cos": max_incidence,
             }

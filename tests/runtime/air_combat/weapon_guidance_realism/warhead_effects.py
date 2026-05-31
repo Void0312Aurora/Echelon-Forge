@@ -241,6 +241,84 @@ class WarheadEffectsRuntimeMixin:
         self.assertLess(low_armor_overlay["structure"], high_armor_overlay["structure"])
         self.assertLess(low_armor_damage[1], high_armor_damage[1])
 
+    def test_phase3_mechanism_load_tracks_target_geometry_intercept_scale(self) -> None:
+        narrow_name = "F-16C_A2_NarrowWing_Test"
+        wide_name = "F-16C_A2_WideWing_Test"
+        overrides = [
+            _make_f16_wing_only_geometry_override(narrow_name, wing_width_m=7.0),
+            _make_f16_wing_only_geometry_override(wide_name, wing_width_m=12.4),
+        ]
+        narrow_local = (-0.8, 4.6, 0.0)
+        wide_local = (-0.8, 7.3, 0.0)
+        _narrow_overlay, _, narrow_event = _profiled_local_hit_overlay_for_target(
+            narrow_name,
+            "blast_fragmentation",
+            narrow_local,
+            damage=90.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+        _wide_overlay, _, wide_event = _profiled_local_hit_overlay_for_target(
+            wide_name,
+            "blast_fragmentation",
+            wide_local,
+            damage=90.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+
+        self.assertFalse(bool(narrow_event.direct_hitbox_intersection))
+        self.assertFalse(bool(wide_event.direct_hitbox_intersection))
+        self.assertGreater(int(narrow_event.projected_hitbox_count), 0)
+        self.assertGreater(int(wide_event.projected_hitbox_count), 0)
+        self.assertGreater(
+            float(wide_event.mechanism_fragment_areal_density_per_m2),
+            float(narrow_event.mechanism_fragment_areal_density_per_m2),
+        )
+        self.assertGreater(
+            float(wide_event.mechanism_blast_impulse_kpa_ms),
+            float(narrow_event.mechanism_blast_impulse_kpa_ms),
+        )
+        self.assertGreater(int(narrow_event.component_hit_count), 0)
+        self.assertGreater(int(wide_event.component_hit_count), 0)
+
+    def test_phase3_blast_fragmentation_mechanism_load_tracks_closure_intercept_scale(self) -> None:
+        wing = (-0.753, 7.1, 0.0)
+        _low_overlay, low_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            wing,
+            (300.0, -83.3, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _high_overlay, high_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            wing,
+            (1200.0, -333.3, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertFalse(bool(low_event.direct_hitbox_intersection))
+        self.assertFalse(bool(high_event.direct_hitbox_intersection))
+        self.assertGreater(float(high_event.closure_mps), float(low_event.closure_mps))
+        self.assertGreater(
+            float(high_event.mechanism_fragment_energy_j),
+            float(low_event.mechanism_fragment_energy_j),
+        )
+        self.assertGreater(
+            float(high_event.mechanism_fragment_areal_density_per_m2),
+            float(low_event.mechanism_fragment_areal_density_per_m2),
+        )
+        self.assertGreater(
+            float(high_event.mechanism_blast_impulse_kpa_ms),
+            float(low_event.mechanism_blast_impulse_kpa_ms),
+        )
+        self.assertGreater(
+            float(high_event.component_failure_probability),
+            float(low_event.component_failure_probability),
+        )
+
     def test_phase3_continuous_rod_near_miss_uses_relative_velocity_axis(self) -> None:
         near_wing = (-0.753, 7.1, 0.0)
         broadside_sweep = _profiled_local_hit_overlay_with_velocity(
@@ -502,6 +580,125 @@ class WarheadEffectsRuntimeMixin:
             float(near_event.warhead_spatial_hit_estimate),
         )
 
+    def test_phase3_mechanism_load_tracks_authored_damage_scalar_when_mass_is_fixed(self) -> None:
+        local = (-0.753, 6.0, 0.0)
+        missile_velocity = (900.0, -250.0, 0.0)
+        _low_overlay, low_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            local,
+            missile_velocity,
+            damage=30.0,
+            radius=35.0,
+        )
+        _high_overlay, high_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            local,
+            missile_velocity,
+            damage=180.0,
+            radius=35.0,
+        )
+
+        self.assertAlmostEqual(float(low_event.warhead_mass_kg), 12.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(high_event.warhead_mass_kg), 12.0, delta=1.0e-6)
+        self.assertGreater(
+            float(high_event.mechanism_fragment_energy_j),
+            float(low_event.mechanism_fragment_energy_j),
+        )
+        self.assertGreater(
+            float(high_event.mechanism_fragment_areal_density_per_m2),
+            float(low_event.mechanism_fragment_areal_density_per_m2),
+        )
+        self.assertLess(
+            float(high_event.mechanism_blast_scaled_distance_m_kg13),
+            float(low_event.mechanism_blast_scaled_distance_m_kg13),
+        )
+        self.assertGreater(
+            float(high_event.mechanism_blast_overpressure_kpa),
+            float(low_event.mechanism_blast_overpressure_kpa),
+        )
+        self.assertGreater(
+            float(high_event.component_failure_probability),
+            float(low_event.component_failure_probability),
+        )
+
+    def test_phase3_mechanism_load_keeps_authored_mass_anchor_when_damage_scalar_is_synthetic(self) -> None:
+        local = (-0.753, 6.0, 0.0)
+        velocity = (900.0, -250.0, 0.0)
+
+        def run_case(damage: float) -> object:
+            sim = ef_py.SimulationKernel()
+            sim.reset(20260526)
+            if not sim.load_database(_DB_PATH):
+                raise AssertionError("failed to load runtime database")
+            attacker_id, target_id = _spawn_structured_f16_pair(sim)
+            profile = _make_warhead_profile(
+                "blast_fragmentation",
+                damage=damage,
+                radius=35.0,
+                mass_kg=12.0,
+                damage_scalar_synthetic=True,
+            )
+            ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+                attacker_id,
+                target_id,
+                float(local[0]),
+                float(local[1]),
+                float(local[2]),
+                profile,
+                float(velocity[0]),
+                float(velocity[1]),
+                float(velocity[2]),
+            )
+            self.assertTrue(bool(ok))
+            return sim.export_recent_engagement_events().effects_events[-1]
+
+        low_event = run_case(30.0)
+        high_event = run_case(180.0)
+
+        self.assertAlmostEqual(
+            float(high_event.mechanism_fragment_energy_j),
+            float(low_event.mechanism_fragment_energy_j),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(high_event.mechanism_fragment_areal_density_per_m2),
+            float(low_event.mechanism_fragment_areal_density_per_m2),
+            delta=1.0e-9,
+        )
+        self.assertAlmostEqual(
+            float(high_event.mechanism_blast_scaled_distance_m_kg13),
+            float(low_event.mechanism_blast_scaled_distance_m_kg13),
+            delta=1.0e-9,
+        )
+
+    def test_phase3_near_miss_component_failure_probability_is_low_but_continuous(self) -> None:
+        close_wing = (-0.753, 6.0, 0.0)
+        far_wing = (-0.753, 10.0, 0.0)
+        _close_overlay, close_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            close_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+        _far_overlay, far_event = _profiled_local_hit_overlay_and_event_with_velocity(
+            "blast_fragmentation",
+            far_wing,
+            (900.0, -250.0, 0.0),
+            damage=90.0,
+            radius=35.0,
+        )
+
+        self.assertFalse(bool(close_event.direct_hitbox_intersection))
+        self.assertFalse(bool(far_event.direct_hitbox_intersection))
+        self.assertGreater(float(close_event.component_failure_probability), 0.0)
+        self.assertGreaterEqual(float(far_event.component_failure_probability), 0.0)
+        self.assertLess(float(close_event.component_failure_probability), 0.20)
+        self.assertGreater(
+            float(close_event.component_failure_probability),
+            float(far_event.component_failure_probability),
+        )
+
     def test_phase3_primary_component_reports_mechanism_load_vector(self) -> None:
         direct_wing = (-0.8, 4.1, 0.0)
         _frag_overlay, frag_event = _profiled_local_hit_overlay_and_event_with_velocity(
@@ -655,6 +852,37 @@ class WarheadEffectsRuntimeMixin:
             0.0,
             delta=1.0e-6,
         )
+
+    def test_phase3_near_miss_component_primary_prefers_highest_consequence_projection(self) -> None:
+        target_name = "F-16C_A2_ProjectionPriority_Test"
+        overrides = [_make_f16_projection_priority_override(target_name)]
+
+        overlay, _, event = _profiled_local_hit_overlay_for_target(
+            target_name,
+            "blast_fragmentation",
+            (-0.8, 5.25, 0.0),
+            damage=90.0,
+            radius=35.0,
+            overrides=overrides,
+        )
+
+        self.assertFalse(bool(event.direct_hitbox_intersection))
+        self.assertGreater(int(event.projected_hitbox_count), 0)
+        rows = list(event.component_mechanism_load_rows)
+        self.assertGreaterEqual(len(rows), 2)
+        by_name = {str(row.component_name): row for row in rows}
+        near_row = by_name["near_resistant_wing_structure"]
+        far_row = by_name["far_vulnerable_flight_servo"]
+
+        self.assertLess(float(near_row.distance_m), float(far_row.distance_m))
+        self.assertGreater(
+            float(far_row.effect_scale),
+            float(near_row.effect_scale),
+        )
+        self.assertGreater(int(event.component_hit_count), int(event.projected_hitbox_count))
+        self.assertEqual(str(event.component_primary_name), "far_vulnerable_flight_servo")
+        self.assertEqual(str(event.component_primary_system), "flight_control")
+        self.assertLess(overlay["flight_control"], 1.0)
 
     def test_phase3_warhead_orientation_axis_modulates_rod_pattern_evidence(self) -> None:
         near_wing = (-0.753, 7.1, 0.0)

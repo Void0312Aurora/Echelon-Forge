@@ -103,6 +103,16 @@ def _blast_impulse_proxy_kpa_ms(z_value: float) -> float:
     return 940.0 / ((z_value + 0.42) ** 1.10)
 
 
+def _closure_intercept_scale(closure_mps: float) -> float:
+    centered = max(-1.0, min((max(0.0, min(closure_mps, 1600.0)) - 900.0) / 400.0, 1.0))
+    return max(0.92, min(1.0 + 0.08 * centered, 1.08))
+
+
+def _closure_blast_coupling_scale(closure_mps: float) -> float:
+    centered = max(-1.0, min((max(0.0, min(closure_mps, 1600.0)) - 900.0) / 400.0, 1.0))
+    return max(0.95, min(1.0 + 0.05 * centered, 1.05))
+
+
 def _sample_unit_sphere(rng: random.Random) -> tuple[float, float, float]:
     while True:
         u = rng.uniform(-1.0, 1.0)
@@ -438,9 +448,13 @@ def _integrated_toy_fragment_energy_j(
     warhead_mass_kg: float,
     toy_fragment_count: int,
     z_value: float,
+    closure_mps: float = 900.0,
 ) -> float:
     toy_fragment_mass_kg = max((0.12 * warhead_mass_kg) / max(toy_fragment_count, 1), 1.0e-5)
-    toy_fragment_velocity_mps = 1650.0 / math.sqrt(1.0 + max(z_value, 0.0))
+    closure_delta_mps = min(max(closure_mps, 0.0), 1600.0) - 900.0
+    toy_fragment_velocity_mps = (
+        1650.0 + 0.18 * closure_delta_mps
+    ) / math.sqrt(1.0 + max(z_value, 0.0))
     return 0.5 * toy_fragment_mass_kg * toy_fragment_velocity_mps * toy_fragment_velocity_mps
 
 
@@ -451,6 +465,7 @@ def _bfm_bm_005(
     bm003: dict[str, Any],
     bm004: dict[str, Any],
     warhead_mass_kg: float,
+    closure_mps: float = 900.0,
 ) -> dict[str, Any]:
     current_blast = bm001["current_point"]
     current_frag_cloud = bm002["current_point"]
@@ -473,16 +488,20 @@ def _bfm_bm_005(
             "blast_scaled_distance_m_kg13": z_value,
             "fragment_areal_density_per_m2": float(
                 current_frag["beam_witness_areal_density_per_m2"]
-            ),
+            ) * _closure_intercept_scale(closure_mps),
             "surface_incidence_cos": 1.0,
         },
         "diagnostic_only_fields": {
             "blast_overpressure_kpa_proxy": float(current_blast["blast_overpressure_kpa_proxy"]),
-            "blast_impulse_kpa_ms_proxy": float(current_blast["blast_impulse_kpa_ms_proxy"]),
+            "blast_impulse_kpa_ms_proxy": (
+                float(current_blast["blast_impulse_kpa_ms_proxy"]) *
+                _closure_blast_coupling_scale(closure_mps)
+            ),
             "fragment_energy_j_proxy": _integrated_toy_fragment_energy_j(
                 warhead_mass_kg=warhead_mass_kg,
                 toy_fragment_count=toy_fragment_count,
                 z_value=z_value,
+                closure_mps=closure_mps,
             ),
             "fragment_mass_kg_proxy": float(current_frag_cloud["mean_fragment_mass_kg"]),
             "fragment_velocity_mps_proxy": float(
@@ -503,9 +522,11 @@ def _bfm_bm_005_uncertainty_summary(
     warhead_mass_kg: float,
     sample_count: int,
     seed: int,
+    closure_mps: float,
 ) -> dict[str, Any]:
     evaluated_seeds = [seed + offset for offset in (0, 101, 202, 303)]
     fragment_densities: list[float] = []
+    blast_impulses: list[float] = []
     fragment_energies: list[float] = []
     penetration_margins: list[float] = []
     for evaluated_seed in evaluated_seeds:
@@ -533,9 +554,13 @@ def _bfm_bm_005_uncertainty_summary(
             bm003=bm003,
             bm004=bm004,
             warhead_mass_kg=warhead_mass_kg,
+            closure_mps=closure_mps,
         )
         fragment_densities.append(
             float(bm005["mechanism_load_vector"]["fragment_areal_density_per_m2"])
+        )
+        blast_impulses.append(
+            float(bm005["diagnostic_only_fields"]["blast_impulse_kpa_ms_proxy"])
         )
         fragment_energies.append(
             float(bm005["diagnostic_only_fields"]["fragment_energy_j_proxy"])
@@ -559,6 +584,7 @@ def _bfm_bm_005_uncertainty_summary(
     return {
         "evaluated_seeds": evaluated_seeds,
         "fragment_areal_density_per_m2": summarize(fragment_densities),
+        "blast_impulse_kpa_ms_proxy": summarize(blast_impulses),
         "fragment_energy_j_proxy": summarize(fragment_energies),
         "penetration_margin_proxy": summarize(penetration_margins),
     }
@@ -721,6 +747,7 @@ def generate_validation_scaffold(
         bm003=bm003,
         bm004=bm004,
         warhead_mass_kg=float(weapon["warhead_mass_kg"]),
+        closure_mps=closure_mps,
     )
     bm005_uncertainty = _bfm_bm_005_uncertainty_summary(
         length_m=float(target["length_m"]),
@@ -729,6 +756,7 @@ def generate_validation_scaffold(
         warhead_mass_kg=float(weapon["warhead_mass_kg"]),
         sample_count=sample_count,
         seed=seed,
+        closure_mps=closure_mps,
     )
     bm005["uncertainty_summary"] = bm005_uncertainty
     bm005["metrics"]["seed_window_cv_pass"] = (

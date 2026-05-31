@@ -655,15 +655,112 @@ WarheadMechanismLoadEvidence with_surface_incidence(
     return evidence;
 }
 
+double smoothstep01(double value) {
+    const double x = std::clamp(value, 0.0, 1.0);
+    return x * x * (3.0 - 2.0 * x);
+}
+
+struct ComponentFragilityRuntimeState {
+    double integrity = 1.0;
+    double group_availability = 1.0;
+    std::uint32_t group_member_count = 0;
+    std::uint32_t group_failed_count = 0;
+};
+
+ComponentFragilityRuntimeState resolve_component_fragility_runtime_state(
+    const DamageComponent* component,
+    const ComponentDamageState* component_damage
+) {
+    ComponentFragilityRuntimeState state{};
+    if (!component || !component_damage) {
+        return state;
+    }
+
+    const std::string component_key = damage_component_key(*component);
+    const std::string group_key = damage_component_redundancy_group_key(*component);
+    if (const auto integrity_it = component_damage->component_integrity.find(component_key);
+        integrity_it != component_damage->component_integrity.end()) {
+        state.integrity = std::clamp(integrity_it->second, 0.0, 1.0);
+    }
+    if (const auto availability_it =
+            component_damage->redundancy_group_availability.find(group_key);
+        availability_it != component_damage->redundancy_group_availability.end()) {
+        state.group_availability = std::clamp(availability_it->second, 0.0, 1.0);
+    }
+    if (const auto member_it =
+            component_damage->redundancy_group_member_count.find(group_key);
+        member_it != component_damage->redundancy_group_member_count.end()) {
+        state.group_member_count = member_it->second;
+    }
+    if (const auto failed_it =
+            component_damage->redundancy_group_failed_count.find(group_key);
+        failed_it != component_damage->redundancy_group_failed_count.end()) {
+        state.group_failed_count = failed_it->second;
+    }
+    return state;
+}
+
+double component_dependency_complexity_scale(const DamageComponent* component) {
+    if (!component) {
+        return 1.0;
+    }
+
+    double scale = 1.0;
+    bool typed_dependency_present = false;
+    for (const auto& dependency : component->dependencies) {
+        if (!dependency.edge_type.empty() && dependency.edge_type != "generic") {
+            typed_dependency_present = true;
+        }
+    }
+    scale += 0.025 * std::min<std::size_t>(component->dependencies.size(), 4U);
+    if (typed_dependency_present) {
+        scale += 0.035;
+    }
+    return std::clamp(scale, 1.0, 1.16);
+}
+
+double component_system_fragility_scale(
+    const std::string& system,
+    const DamageComponent* component
+) {
+    double scale = 1.0;
+    if (system_is_crew_or_cockpit(system)) {
+        scale = 1.16;
+    } else if (system_is_air_sensor(system) || system_name_matches(system, "avionics")) {
+        scale = 1.08;
+    } else if (component && component_is_hydraulic_supply_path(*component)) {
+        scale = 1.10;
+    } else if (system_is_air_control_surface(system)) {
+        scale = 1.06;
+    } else if (system_is_air_propulsion(system)) {
+        scale = 1.02;
+    } else if (system_is_air_fuel(system)) {
+        scale = 1.01;
+    } else if (system_is_air_structure(system)) {
+        scale = 0.94;
+    }
+    if (component && component_is_fire_suppression_path(*component)) {
+        scale *= 0.92;
+    }
+    return std::clamp(scale, 0.84, 1.20);
+}
+
 double component_failure_probability(
     double severity,
     double mechanism_scale,
     double component_scale,
     bool direct_hit,
-    const WarheadMechanismLoadEvidence& mechanism_load
+    const WarheadMechanismLoadEvidence& mechanism_load,
+    const std::string& system,
+    const DamageComponent* component,
+    const ComponentFragilityRuntimeState& runtime_state
 ) {
     const double fragment_load = std::clamp(
         std::log1p(std::max(0.0, mechanism_load.fragment_energy_j)) / std::log(2501.0),
+        0.0,
+        1.35);
+    const double density_load = std::clamp(
+        mechanism_load.fragment_areal_density_per_m2 / 140.0,
         0.0,
         1.35);
     const double penetration_load =
@@ -675,23 +772,104 @@ double component_failure_probability(
         1.35);
     const double rod_load =
         std::clamp(mechanism_load.rod_cut_margin / 1.6, 0.0, 1.35);
-    const double mechanism_load_scale = std::clamp(
-            0.74 +
-            0.16 * fragment_load +
+    const double incidence_load = std::clamp(
+        0.45 + 0.55 * std::max(0.0, mechanism_load.surface_incidence_cos),
+        0.45,
+        1.0);
+    const double fragment_channel = std::clamp(
+        0.34 * fragment_load +
+            0.22 * density_load +
+            0.30 * penetration_load +
+            0.14 * incidence_load,
+        0.0,
+        1.45);
+    const double blast_channel = std::clamp(
+        0.76 * blast_load +
+            0.14 * fragment_load +
+            0.10 * incidence_load,
+        0.0,
+        1.45);
+    const double rod_channel = std::clamp(
+        0.68 * rod_load +
             0.22 * penetration_load +
-            0.18 * blast_load +
-            0.24 * rod_load,
-        0.70,
+            0.10 * incidence_load,
+        0.0,
+        1.45);
+    const double dominant_channel = std::max({fragment_channel, blast_channel, rod_channel});
+    const double support_channel =
+        fragment_channel + blast_channel + rod_channel - dominant_channel -
+        std::min({fragment_channel, blast_channel, rod_channel});
+    const double mechanism_load_scale = std::clamp(
+        0.62 +
+            0.24 * dominant_channel +
+            0.10 * support_channel +
+            0.04 * incidence_load,
+        0.55,
+        1.45);
+    const double failed_fraction = runtime_state.group_member_count == 0
+        ? 0.0
+        : static_cast<double>(runtime_state.group_failed_count) /
+            static_cast<double>(runtime_state.group_member_count);
+    const double pre_damage_scale = std::clamp(
+        1.0 +
+            0.32 * (1.0 - std::clamp(runtime_state.integrity, 0.0, 1.0)) +
+            0.18 * (1.0 - std::clamp(runtime_state.group_availability, 0.0, 1.0)) +
+            0.06 * std::clamp(failed_fraction, 0.0, 1.0),
+        1.0,
         1.55);
     const double impulse =
         std::clamp(severity, 0.0, 1.0) *
         std::clamp(mechanism_scale, 0.0, 1.25) *
         std::clamp(component_scale, 0.40, 1.60) *
-        mechanism_load_scale;
-    const double threshold = direct_hit ? 0.42 : 0.58;
-    const double slope = direct_hit ? 5.2 : 4.4;
-    const double probability = 1.0 / (1.0 + std::exp(-slope * (impulse - threshold)));
-    return std::clamp(probability, direct_hit ? 0.02 : 0.0, direct_hit ? 0.92 : 0.65);
+        mechanism_load_scale *
+        component_system_fragility_scale(system, component) *
+        component_dependency_complexity_scale(component) *
+        pre_damage_scale;
+    const double threshold = direct_hit ? 0.40 : 0.56;
+    const double spread = direct_hit ? 0.58 : 0.68;
+    const double band =
+        smoothstep01((impulse - (threshold - 0.12)) / spread);
+    const double probability_floor = direct_hit ? 0.02 : 0.0;
+    const double probability_ceiling = direct_hit ? 0.92 : 0.68;
+    double probability =
+        probability_floor + (probability_ceiling - probability_floor) * band;
+    if (!direct_hit) {
+        const double normalized_impulse =
+            std::clamp(impulse / std::max(0.15, threshold), 0.0, 1.0);
+        const double subthreshold_tail =
+            0.05 *
+            smoothstep01(normalized_impulse) *
+            smoothstep01(dominant_channel / 0.55) *
+            std::clamp(
+                0.90 + 0.10 * component_system_fragility_scale(system, component),
+                0.80,
+                1.08);
+        probability = std::max(probability, subthreshold_tail);
+    }
+    if (impulse > threshold) {
+        probability +=
+            (direct_hit ? 0.04 : 0.03) *
+            (1.0 - std::exp(-2.8 * (impulse - threshold)));
+    }
+    return std::clamp(
+        probability,
+        probability_floor,
+        direct_hit ? 0.95 : 0.72);
+}
+
+double component_primary_priority_score(
+    double failure_probability,
+    double mechanism_scale,
+    double component_scale,
+    bool direct_hit
+) {
+    const double consequence_scale =
+        std::clamp(mechanism_scale, 0.05, 1.25) *
+        std::sqrt(std::clamp(component_scale, 0.40, 1.80));
+    return
+        std::clamp(failure_probability, 0.0, 1.0) *
+        consequence_scale *
+        (direct_hit ? 1.05 : 1.0);
 }
 
 void apply_component_failure_impulse(
@@ -1198,6 +1376,28 @@ struct SpatialProjectionCandidate {
     WarheadMechanismLoadEvidence mechanism_load;
 };
 
+double component_projection_priority_score(
+    const WarheadProfile& profile,
+    const SpatialProjectionCandidate& candidate
+) {
+    if (!candidate.component) {
+        return std::clamp(candidate.effect_scale, 0.0, 1.0);
+    }
+
+    const DamageComponent& component = *candidate.component;
+    const double component_scale =
+        component_mechanism_threshold_scale(profile, component.system) *
+        std::clamp(component.threshold_scale, 0.40, 1.80) *
+        component_authored_mechanism_threshold_scale(profile, component);
+    const double criticality_scale = component.critical ? 1.0 : 0.82;
+    return
+        std::clamp(candidate.effect_scale, 0.0, 1.0) *
+        std::clamp(component_scale, 0.40, 1.80) *
+        component_system_fragility_scale(component.system, &component) *
+        component_dependency_complexity_scale(&component) *
+        criticality_scale;
+}
+
 struct WarheadSpatialSample {
     std::uint32_t sample_count = 0;
     double hit_estimate = 0.0;
@@ -1351,14 +1551,33 @@ double projected_spatial_effect_scale(
 }
 
 double resolved_warhead_effective_mass_kg(const Missile& missile) {
-    if (std::isfinite(missile.warhead_profile.mass_kg) && missile.warhead_profile.mass_kg > 0.0) {
-        return missile.warhead_profile.mass_kg;
+    const bool has_authored_mass =
+        std::isfinite(missile.warhead_profile.mass_kg) &&
+        missile.warhead_profile.mass_kg > 0.0;
+    const bool has_damage_proxy =
+        std::isfinite(missile.warhead_profile.damage_scalar) &&
+        missile.warhead_profile.damage_scalar > 0.0;
+    const double damage_proxy_mass_kg = has_damage_proxy
+        ? std::max(1.0, missile.warhead_profile.damage_scalar * 0.12)
+        : std::max(1.0, missile.damage * 0.12);
+
+    if (has_authored_mass) {
+        if (!has_damage_proxy || missile.warhead_profile.damage_scalar_synthetic) {
+            return missile.warhead_profile.mass_kg;
+        }
+
+        // Keep explicit warhead mass as the anchor, but let an authored damage
+        // scalar nudge the local mechanism-load surrogate when the two disagree.
+        const double blended_mass_kg =
+            missile.warhead_profile.mass_kg +
+            0.35 * (damage_proxy_mass_kg - missile.warhead_profile.mass_kg);
+        return std::clamp(
+            blended_mass_kg,
+            missile.warhead_profile.mass_kg * 0.70,
+            missile.warhead_profile.mass_kg * 1.60);
     }
-    if (std::isfinite(missile.warhead_profile.damage_scalar) &&
-        missile.warhead_profile.damage_scalar > 0.0) {
-        return std::max(1.0, missile.warhead_profile.damage_scalar * 0.12);
-    }
-    return std::max(1.0, missile.damage * 0.12);
+
+    return damage_proxy_mass_kg;
 }
 
 double hitbox_projected_exposure_scale(const Vec3& local_imp, const Hitbox& box) {
@@ -1381,6 +1600,24 @@ double hitbox_projected_exposure_scale(const Vec3& local_imp, const Hitbox& box)
         (std::abs(ray.z) * area_top);
     const double reference_area = std::max({area_forward, area_side, area_top, 1.0e-6});
     return std::clamp(0.45 + 0.55 * (projected_area / reference_area), 0.45, 1.0);
+}
+
+double hitbox_projected_area_m2(const Hitbox& box, double exposure_scale) {
+    const double projected_area = std::max(
+        1.0e-4,
+        std::max({box.dim_l * box.dim_w, box.dim_l * box.dim_h, box.dim_w * box.dim_h}) *
+            std::clamp(exposure_scale, 0.05, 1.25));
+    return projected_area;
+}
+
+double closure_intercept_scale(double closure_mps) {
+    const double centered = std::clamp((closure_mps - 900.0) / 400.0, -1.0, 1.0);
+    return std::clamp(1.0 + 0.08 * centered, 0.92, 1.08);
+}
+
+double closure_blast_coupling_scale(double closure_mps) {
+    const double centered = std::clamp((closure_mps - 900.0) / 400.0, -1.0, 1.0);
+    return std::clamp(1.0 + 0.05 * centered, 0.95, 1.05);
 }
 
 double warhead_mechanism_armor_scale(
@@ -1458,6 +1695,25 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
     const double exposure = std::clamp(exposure_scale, 0.05, 1.25);
     const double pattern = std::clamp(axis_weight * orientation_weight, 0.20, 1.60);
     const double closure = std::clamp(closure_mps, 0.0, 1600.0);
+    const double projected_area_m2 = hitbox_projected_area_m2(target_shape, exposure);
+    const double characteristic_length_m = std::sqrt(projected_area_m2);
+    const double hit_estimate_scale =
+        std::clamp(std::sqrt(std::clamp(spatial_sample.hit_estimate, 0.0, 4.0)) / 2.0, 0.0, 1.0);
+    const double geometry_intercept_scale = std::clamp(
+        0.52 +
+            0.18 * exposure +
+            0.18 * hit_estimate_scale +
+            0.12 * std::clamp(characteristic_length_m / 3.0, 0.25, 1.50),
+        0.45,
+        1.35);
+    const double closure_intercept = closure_intercept_scale(closure);
+    const double blast_coupling_scale = std::clamp(
+        0.76 +
+            0.12 * exposure +
+            0.08 * hit_estimate_scale +
+            0.10 * std::clamp(characteristic_length_m / 3.0, 0.25, 1.50),
+        0.70,
+        1.28) * closure_blast_coupling_scale(closure);
 
     if (family == "fragmentation" || family == "blast_fragmentation") {
         const double fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);
@@ -1470,7 +1726,9 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
             0.5 * fragment_mass_kg * fragment_velocity_mps * fragment_velocity_mps *
             std::clamp(spatial_sample.energy_scale, 0.05, 1.20);
         evidence.fragment_areal_density_per_m2 =
-            std::max(0.0, spatial_sample.areal_density_per_m2);
+            std::max(0.0, spatial_sample.areal_density_per_m2) *
+            geometry_intercept_scale *
+            closure_intercept;
         const double penetration_capacity_mm =
             (1.2 + 0.028 * std::sqrt(std::max(0.0, evidence.fragment_energy_j))) *
             std::clamp(0.65 + 0.35 * spatial_sample.pattern_scale, 0.45, 1.30);
@@ -1494,7 +1752,8 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
                 1800.0);
         evidence.blast_impulse_kpa_ms =
             evidence.blast_overpressure_kpa *
-            std::clamp(1.1 + 0.32 * std::cbrt(std::max(0.1, mass_kg)), 1.0, 5.0);
+            std::clamp(1.1 + 0.32 * std::cbrt(std::max(0.1, mass_kg)), 1.0, 5.0) *
+            blast_coupling_scale;
     }
 
     if (family == "continuous_rod") {
@@ -2365,6 +2624,7 @@ public:
             std::uint32_t component_redundancy_group_failed_count = 0;
             VulnerabilityAdjustment sampled_vulnerability_adjustment;
             double component_primary_effect_scale = -1.0;
+            double component_primary_priority = -1.0;
             WarheadMechanismLoadEvidence component_primary_mechanism_load{};
             const auto make_component_mechanism_load_row = [&](
                 const DamageComponent& component,
@@ -2446,12 +2706,18 @@ public:
                     resolved_component_scale *=
                         std::clamp(1.0 / std::sqrt(1.0 + redundancy_group), 0.45, 1.0);
                 }
+                const ComponentFragilityRuntimeState fragility_state =
+                    resolve_component_fragility_runtime_state(component, component_damage);
                 double failure_probability = component_failure_probability(
                     base_severity,
                     mechanism_scale,
                     resolved_component_scale,
                     direct_hit,
-                    mechanism_load);
+                    mechanism_load,
+                    system,
+                    component,
+                    fragility_state);
+                // Keep the legacy baseline identifier stable until Stage C snapshots are refreshed.
                 std::string failure_probability_source = "synthetic_sigmoid";
                 bool failure_probability_calibrated = false;
                 bool failure_probability_component_specific = false;
@@ -2568,7 +2834,30 @@ public:
                             component_damage,
                             sys_health);
                     const std::string component_key = damage_component_key(*component);
-                    if (component_key == component_primary_name) {
+                    const double primary_priority = component_primary_priority_score(
+                        failure_probability,
+                        mechanism_scale,
+                        resolved_component_scale,
+                        direct_hit);
+                    const bool promote_primary =
+                        direct_hit
+                            ? (component_key == component_primary_name)
+                            : (primary_priority > component_primary_priority ||
+                               (primary_priority == component_primary_priority &&
+                                mechanism_scale > component_primary_effect_scale) ||
+                               (component_key == component_primary_name &&
+                                component_primary_priority < 0.0));
+                    if (promote_primary) {
+                        component_primary_priority = primary_priority;
+                        component_primary_effect_scale = mechanism_scale;
+                        component_primary_name =
+                            component->name.empty() ? component->system : component->name;
+                        component_primary_system = component->system;
+                        component_primary_redundancy_group = component->redundancy_group;
+                        component_primary_critical = component->critical;
+                        component_primary_redundancy_group_id =
+                            damage_component_redundancy_group_key(*component);
+                        component_primary_mechanism_load = mechanism_load;
                         component_primary_integrity = component_sample.integrity;
                         component_redundancy_group_availability =
                             component_sample.group_availability;
@@ -3221,7 +3510,40 @@ public:
                     };
                     return true;
                 };
-                const auto select_best_component_projection_candidate = [&](
+                const auto collect_component_projection_candidates = [&](
+                    const Hitbox& parent_box) {
+                    std::vector<SpatialProjectionCandidate> component_candidates;
+                    for (const auto& component : parent_box.components) {
+                        SpatialProjectionCandidate candidate{};
+                        if (!make_component_projection_candidate(
+                                parent_box,
+                                component,
+                                &candidate)) {
+                            continue;
+                        }
+                        component_candidates.push_back(candidate);
+                    }
+                    std::sort(
+                        component_candidates.begin(),
+                        component_candidates.end(),
+                        [&](const SpatialProjectionCandidate& lhs,
+                            const SpatialProjectionCandidate& rhs) {
+                            const double lhs_score =
+                                component_projection_priority_score(
+                                    missile.warhead_profile,
+                                    lhs);
+                            const double rhs_score =
+                                component_projection_priority_score(
+                                    missile.warhead_profile,
+                                    rhs);
+                            if (lhs_score == rhs_score) {
+                                return lhs.distance_m < rhs.distance_m;
+                            }
+                            return lhs_score > rhs_score;
+                        });
+                    return component_candidates;
+                };
+                const auto select_closest_component_projection_candidate = [&](
                     const Hitbox& parent_box,
                     SpatialProjectionCandidate* out_candidate) {
                     bool found = false;
@@ -3477,10 +3799,23 @@ public:
                     if (!projected_component &&
                         broad_spatial_projection &&
                         !projected_box->components.empty()) {
-                        SpatialProjectionCandidate component_candidate{};
-                        if (select_best_component_projection_candidate(
-                                *projected_box,
-                                &component_candidate)) {
+                        std::vector<SpatialProjectionCandidate> component_candidates;
+                        if (candidate_index == 0) {
+                            component_candidates =
+                                collect_component_projection_candidates(*projected_box);
+                            if (component_candidates.size() > 2U) {
+                                component_candidates.resize(2U);
+                            }
+                        } else {
+                            SpatialProjectionCandidate closest_candidate{};
+                            if (select_closest_component_projection_candidate(
+                                    *projected_box,
+                                    &closest_candidate)) {
+                                component_candidates.push_back(closest_candidate);
+                            }
+                        }
+                        for (const SpatialProjectionCandidate& component_candidate :
+                             component_candidates) {
                             spatial_effect_scale =
                                 std::max(spatial_effect_scale, component_candidate.effect_scale);
                             sampled_mechanism_scale =

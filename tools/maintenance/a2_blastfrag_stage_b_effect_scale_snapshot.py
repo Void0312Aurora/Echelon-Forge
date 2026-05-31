@@ -170,12 +170,24 @@ def _criteria_rows(artifact: dict[str, Any]) -> list[dict[str, Any]]:
         },
         {
             "criteria_id": "BFM-CRIT-ES-016",
+            "benchmark_id": "BFM-BM-005",
+            "field_path": (
+                "benchmarks",
+                "BFM-BM-005",
+                "uncertainty_summary",
+                "blast_impulse_kpa_ms_proxy",
+                "cv",
+            ),
+            "expected": "<=0.05",
+        },
+        {
+            "criteria_id": "BFM-CRIT-ES-017",
             "benchmark_id": "BFM-BM-006",
             "field_path": ("benchmarks", "BFM-BM-006", "metrics", "source_trace_error_count"),
             "expected": "=0",
         },
         {
-            "criteria_id": "BFM-CRIT-ES-017",
+            "criteria_id": "BFM-CRIT-ES-018",
             "benchmark_id": "BFM-BM-006",
             "field_path": ("benchmarks", "BFM-BM-006", "metrics", "source_trace_warning_count"),
             "expected": "=0",
@@ -283,9 +295,9 @@ def generate_stage_b_effect_scale_snapshot(*, repo_root: Path = REPO_ROOT) -> di
                 "non-authoritative scaffold; it is not an independent validation result"
             ),
             (
-                "closure-sensitive physical discrimination is not established here; "
-                "the Stage B snapshot only supports effect-scale review hygiene inside "
-                "beam/high/near_miss_0_35m scope"
+                "candidate closure-sensitive response is tracked by the scope probe, "
+                "but this Stage B snapshot remains non-authoritative and does not close "
+                "RES-008 or independent review"
             ),
         ],
         "non_authoritative_guards": {

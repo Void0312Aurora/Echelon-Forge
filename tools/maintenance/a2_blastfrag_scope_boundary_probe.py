@@ -42,11 +42,15 @@ OUT_OF_SCOPE_LABELS = (
 
 def _mechanism_row_from_artifact(artifact: dict[str, Any]) -> dict[str, float | str]:
     mechanism = artifact["mechanism_load_vector"]
+    diagnostics = artifact["diagnostic_only_fields"]
     return {
         "runtime_miss_distance_bucket": str(artifact["scope"]["runtime_miss_distance_bucket"]),
         "blast_scaled_distance_m_kg13": float(mechanism["blast_scaled_distance_m_kg13"]),
         "fragment_areal_density_per_m2": float(mechanism["fragment_areal_density_per_m2"]),
         "surface_incidence_cos": float(mechanism["surface_incidence_cos"]),
+        "blast_impulse_kpa_ms_proxy": float(diagnostics["blast_impulse_kpa_ms_proxy"]),
+        "fragment_energy_j_proxy": float(diagnostics["fragment_energy_j_proxy"]),
+        "penetration_margin_proxy": float(diagnostics["penetration_margin_proxy"]),
     }
 
 
@@ -103,31 +107,38 @@ def _closure_probe(*, repo_root: Path) -> dict[str, Any]:
         rows.append(row)
 
     anchor = rows[1]
+    response_fields = (
+        "blast_scaled_distance_m_kg13",
+        "fragment_areal_density_per_m2",
+        "surface_incidence_cos",
+        "blast_impulse_kpa_ms_proxy",
+        "fragment_energy_j_proxy",
+        "penetration_margin_proxy",
+    )
     max_abs_delta = max(
-        max(
-            abs(float(row["blast_scaled_distance_m_kg13"]) - float(anchor["blast_scaled_distance_m_kg13"])),
-            abs(float(row["fragment_areal_density_per_m2"]) - float(anchor["fragment_areal_density_per_m2"])),
-            abs(float(row["surface_incidence_cos"]) - float(anchor["surface_incidence_cos"])),
-        )
+        max(abs(float(row[field]) - float(anchor[field])) for field in response_fields)
         for row in rows
     )
     mechanism_response_active = max_abs_delta > 1.0e-12
     return {
         "probe_id": "SCP-PROBE-002",
-        "status": "executed_candidate_label_probe",
+        "status": "executed_candidate_response_probe",
         "rows": rows,
         "metrics": {
             "closure_label_probe_executed": True,
             "mechanism_response_active": mechanism_response_active,
             "mechanism_response_constant_across_closure": not mechanism_response_active,
+            "candidate_closure_sensitive_response_observed": mechanism_response_active,
+            "res008_closed_by_probe": False,
+            "independent_review_complete": False,
             "runtime_bucket_consistent_pass": len(
                 {str(row["runtime_miss_distance_bucket"]) for row in rows}
             ) == 1,
             "anchor_present": any(abs(float(row["closure_mps"]) - 900.0) <= 1.0e-9 for row in rows),
         },
         "limitation_note": (
-            "current Stage B mechanism surrogate does not consume closure_mps; this probe "
-            "currently validates scope bookkeeping rather than physical closure sensitivity"
+            "candidate closure-sensitive response is present in closure-sensitive gate fields, "
+            "but RES-008 remains open, non-authoritative and pending independent review"
         ),
     }
 
@@ -180,8 +191,8 @@ def generate_scope_boundary_probe(*, repo_root: Path = REPO_ROOT) -> dict[str, A
                 "and stays inside the runtime coarse bucket near_miss"
             ),
             (
-                "closure probe currently shows no mechanism-load sensitivity across 700/900/1100 mps; "
-                "the high-closure axis remains a scope label for Stage B rather than a validated physical discriminator"
+                "closure probe now shows candidate closure-sensitive response across 700/900/1100 mps; "
+                "RES-008 remains open, non-authoritative and pending independent review"
             ),
             (
                 "aspect guard remains beam-only and explicitly rejects head_on, tail_chase, high_off_boresight and direct_hit labels"

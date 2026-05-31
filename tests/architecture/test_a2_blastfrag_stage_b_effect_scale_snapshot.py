@@ -45,10 +45,10 @@ def test_a2_blastfrag_stage_b_effect_scale_snapshot_current_repo_is_non_authorit
     assert summary["review_status"] == "author_snapshot_only_pending_independent_review"
 
     criteria_rows = artifact["criteria_evaluation"]
-    assert len(criteria_rows) == 17
+    assert len(criteria_rows) == 18
     assert all(row["pass"] for row in criteria_rows)
     assert criteria_rows[0]["criteria_id"] == "BFM-CRIT-ES-001"
-    assert criteria_rows[-1]["criteria_id"] == "BFM-CRIT-ES-017"
+    assert criteria_rows[-1]["criteria_id"] == "BFM-CRIT-ES-018"
 
     bm005 = artifact["benchmark_snapshot"]["BFM-BM-005"]
     assert bm005["metrics"]["source_trace_completeness_pass"]
@@ -57,13 +57,15 @@ def test_a2_blastfrag_stage_b_effect_scale_snapshot_current_repo_is_non_authorit
     assert bm005["metrics"]["uncertainty_summary_present"]
     assert bm005["metrics"]["seed_window_cv_pass"]
     assert bm005["uncertainty_summary"]["fragment_areal_density_per_m2"]["cv"] <= 0.05
+    assert bm005["uncertainty_summary"]["blast_impulse_kpa_ms_proxy"]["cv"] <= 0.05
     assert bm005["uncertainty_summary"]["fragment_energy_j_proxy"]["cv"] <= 0.05
     assert bm005["uncertainty_summary"]["penetration_margin_proxy"]["cv"] <= 0.05
 
     findings = artifact["current_findings"]
     assert "every frozen Stage B hard gate" in findings[0]
     assert "not an independent validation result" in findings[1]
-    assert "closure-sensitive physical discrimination is not established" in findings[2]
+    assert "candidate closure-sensitive response is tracked" in findings[2]
+    assert "does not close RES-008" in findings[2]
 
     guards = artifact["non_authoritative_guards"]
     assert not guards["stock_runtime_authority_granted"]

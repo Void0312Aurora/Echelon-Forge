@@ -151,6 +151,33 @@ def test_a2_blastfrag_validation_scaffold_is_fixed_seed_reproducible() -> None:
     assert lhs["vulnerability_evidence_draft"] == rhs["vulnerability_evidence_draft"]
 
 
+def test_a2_blastfrag_validation_scaffold_tracks_candidate_closure_sensitive_mechanism_fields() -> None:
+    low = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, closure_mps=700.0)
+    anchor = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, closure_mps=900.0)
+    high = scaffold.generate_validation_scaffold(repo_root=REPO_ROOT, closure_mps=1100.0)
+
+    assert (
+        low["mechanism_load_vector"]["blast_scaled_distance_m_kg13"] ==
+        anchor["mechanism_load_vector"]["blast_scaled_distance_m_kg13"] ==
+        high["mechanism_load_vector"]["blast_scaled_distance_m_kg13"]
+    )
+    assert (
+        low["mechanism_load_vector"]["fragment_areal_density_per_m2"] <
+        anchor["mechanism_load_vector"]["fragment_areal_density_per_m2"] <
+        high["mechanism_load_vector"]["fragment_areal_density_per_m2"]
+    )
+    assert (
+        low["diagnostic_only_fields"]["blast_impulse_kpa_ms_proxy"] <
+        anchor["diagnostic_only_fields"]["blast_impulse_kpa_ms_proxy"] <
+        high["diagnostic_only_fields"]["blast_impulse_kpa_ms_proxy"]
+    )
+    assert (
+        low["diagnostic_only_fields"]["fragment_energy_j_proxy"] <
+        anchor["diagnostic_only_fields"]["fragment_energy_j_proxy"] <
+        high["diagnostic_only_fields"]["fragment_energy_j_proxy"]
+    )
+
+
 def test_a2_blastfrag_validation_scaffold_cli_writes_json(tmp_path: Path) -> None:
     output_path = tmp_path / "blastfrag_scaffold.json"
     subprocess.run(

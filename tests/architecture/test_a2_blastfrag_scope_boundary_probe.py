@@ -44,12 +44,31 @@ def test_a2_blastfrag_scope_boundary_probe_current_repo_is_non_authoritative() -
     closure_probe = artifact["closure_probe"]
     assert closure_probe["probe_id"] == "SCP-PROBE-002"
     assert closure_probe["metrics"]["closure_label_probe_executed"]
-    assert not closure_probe["metrics"]["mechanism_response_active"]
-    assert closure_probe["metrics"]["mechanism_response_constant_across_closure"]
+    assert closure_probe["metrics"]["mechanism_response_active"]
+    assert not closure_probe["metrics"]["mechanism_response_constant_across_closure"]
+    assert closure_probe["metrics"]["candidate_closure_sensitive_response_observed"]
+    assert not closure_probe["metrics"]["res008_closed_by_probe"]
+    assert not closure_probe["metrics"]["independent_review_complete"]
     assert closure_probe["metrics"]["runtime_bucket_consistent_pass"]
     assert closure_probe["metrics"]["anchor_present"]
     assert [row["closure_mps"] for row in closure_probe["rows"]] == [700.0, 900.0, 1100.0]
-    assert "does not consume closure_mps" in closure_probe["limitation_note"]
+    assert (
+        closure_probe["rows"][0]["fragment_areal_density_per_m2"] <
+        closure_probe["rows"][1]["fragment_areal_density_per_m2"] <
+        closure_probe["rows"][2]["fragment_areal_density_per_m2"]
+    )
+    assert (
+        closure_probe["rows"][0]["blast_impulse_kpa_ms_proxy"] <
+        closure_probe["rows"][1]["blast_impulse_kpa_ms_proxy"] <
+        closure_probe["rows"][2]["blast_impulse_kpa_ms_proxy"]
+    )
+    assert (
+        closure_probe["rows"][0]["fragment_energy_j_proxy"] <
+        closure_probe["rows"][1]["fragment_energy_j_proxy"] <
+        closure_probe["rows"][2]["fragment_energy_j_proxy"]
+    )
+    assert "candidate closure-sensitive response is present" in closure_probe["limitation_note"]
+    assert "RES-008 remains open" in closure_probe["limitation_note"]
 
     aspect_probe = artifact["aspect_guard_probe"]
     assert aspect_probe["probe_id"] == "SCP-PROBE-003"

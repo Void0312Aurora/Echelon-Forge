@@ -491,14 +491,21 @@ def _spawn_attacker_and_named_target(
     return attacker_id, target_id
 
 
-def _make_warhead_profile(family: str, *, damage: float = 90.0, radius: float = 25.0) -> ef_py.WarheadProfile:
+def _make_warhead_profile(
+    family: str,
+    *,
+    damage: float = 90.0,
+    radius: float = 25.0,
+    mass_kg: float = 12.0,
+    damage_scalar_synthetic: bool = False,
+) -> ef_py.WarheadProfile:
     profile = ef_py.WarheadProfile()
     profile.family = str(family)
-    profile.mass_kg = 12.0
+    profile.mass_kg = float(mass_kg)
     profile.lethal_radius_m = float(radius)
     profile.damage_scalar = float(damage)
     profile.synthetic = False
-    profile.damage_scalar_synthetic = False
+    profile.damage_scalar_synthetic = bool(damage_scalar_synthetic)
     profile.provenance = f"test_{family}_profile"
     return profile
 
@@ -561,6 +568,46 @@ def _make_f16_componentized_wing_override(name: str) -> dict:
                     "critical": False,
                 },
             ]
+    return unit
+
+
+def _make_f16_wing_geometry_override(name: str, *, wing_width_m: float) -> dict:
+    with open(
+        resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = name
+    damage_model = unit["damage_model"]
+    damage_model.pop("vulnerability", None)
+    for hitbox in damage_model["hitboxes"]:
+        systems = set(str(system) for system in hitbox.get("systems", []))
+        if "wings" in systems and "flight_control" in systems:
+            old_width = float(hitbox["size"][1])
+            width_ratio = float(wing_width_m) / max(1.0e-6, old_width)
+            hitbox["size"][1] = float(wing_width_m)
+            for component in hitbox.get("components", []):
+                offset = [float(value) for value in component.get("offset", [0.0, 0.0, 0.0])]
+                size = [float(value) for value in component.get("size", [0.5, 0.5, 0.2])]
+                if len(offset) >= 2:
+                    offset[1] *= width_ratio
+                if len(size) >= 2:
+                    size[1] = max(0.12, size[1] * width_ratio)
+                component["offset"] = offset
+                component["size"] = size
+    return unit
+
+
+def _make_f16_wing_only_geometry_override(name: str, *, wing_width_m: float) -> dict:
+    unit = _make_f16_wing_geometry_override(name, wing_width_m=wing_width_m)
+    damage_model = unit["damage_model"]
+    filtered_hitboxes = []
+    for hitbox in damage_model["hitboxes"]:
+        systems = set(str(system) for system in hitbox.get("systems", []))
+        if "wings" in systems and "flight_control" in systems:
+            filtered_hitboxes.append(hitbox)
+    damage_model["hitboxes"] = filtered_hitboxes
     return unit
 
 
@@ -644,6 +691,70 @@ def _make_f16_component_mechanism_threshold_override(
                     "blast_fragmentation": 1.0,
                     "continuous_rod": float(continuous_rod_scale),
                 }
+    return unit
+
+
+def _make_f16_projection_priority_override(name: str) -> dict:
+    with open(
+        resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = name
+    damage_model = unit["damage_model"]
+    damage_model.pop("vulnerability", None)
+    for hitbox in damage_model["hitboxes"]:
+        systems = set(str(system) for system in hitbox.get("systems", []))
+        if "wings" in systems and "flight_control" in systems:
+            hitbox["components"] = [
+                {
+                    "name": "near_resistant_wing_structure",
+                    "system": "wing_structure",
+                    "offset": [-0.8, 4.1, 0.0],
+                    "size": [0.9, 0.8, 0.22],
+                    "armor": 12.0,
+                    "threshold_scale": 0.35,
+                    "mechanism_thresholds": {
+                        "blast": 0.45,
+                        "fragmentation": 0.40,
+                        "blast_fragmentation": 0.40,
+                        "continuous_rod": 0.40,
+                        "hit_to_kill": 0.50,
+                    },
+                    "redundancy_group_id": "projection_priority_structure",
+                    "redundancy_group": 1.0,
+                    "redundancy_weight": 1.5,
+                    "critical": False,
+                },
+                {
+                    "name": "far_vulnerable_flight_servo",
+                    "system": "flight_control",
+                    "offset": [-0.8, 2.8, 0.0],
+                    "size": [1.2, 1.0, 0.25],
+                    "armor": 0.2,
+                    "threshold_scale": 2.2,
+                    "mechanism_thresholds": {
+                        "blast": 1.10,
+                        "fragmentation": 1.70,
+                        "blast_fragmentation": 1.80,
+                        "continuous_rod": 1.75,
+                        "hit_to_kill": 1.40,
+                    },
+                    "redundancy_group_id": "projection_priority_servo",
+                    "redundancy_group": 0.0,
+                    "redundancy_weight": 0.8,
+                    "dependencies": [
+                        {
+                            "target_system": "hydraulic",
+                            "edge_type": "hydraulic_power",
+                            "scale": 1.0,
+                            "threshold": 1.0,
+                        }
+                    ],
+                    "critical": True,
+                },
+            ]
     return unit
 
 

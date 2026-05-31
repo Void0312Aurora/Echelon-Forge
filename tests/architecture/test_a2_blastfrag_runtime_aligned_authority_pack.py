@@ -45,6 +45,12 @@ def test_a2_blastfrag_runtime_aligned_authority_pack_current_repo_is_test_local_
     assert baseline["projected_hitbox_count"] > 0
     assert baseline["component_hit_count"] > 0
     assert baseline["component_primary_name"] == "right_aileron_actuator"
+    assert baseline["mechanism_fragment_energy_j"] > 0.0
+    assert baseline["mechanism_penetration_margin"] > 0.0
+    assert baseline["mechanism_blast_impulse_kpa_ms"] > 0.0
+    assert baseline["component_primary_mechanism_fragment_energy_j"] > 0.0
+    assert baseline["component_primary_mechanism_penetration_margin"] > 0.0
+    assert baseline["component_primary_mechanism_blast_impulse_kpa_ms"] > 0.0
 
     component_rows = artifact["baseline_component_rows"]
     assert len(component_rows) >= 1
@@ -52,6 +58,10 @@ def test_a2_blastfrag_runtime_aligned_authority_pack_current_repo_is_test_local_
         row for row in component_rows if row["component_name"] == "right_aileron_actuator"
     ]
     assert len(primary_rows) == 1
+    primary_row = primary_rows[0]
+    assert primary_row["mechanism_fragment_energy_j"] > 0.0
+    assert primary_row["mechanism_penetration_margin"] > 0.0
+    assert primary_row["mechanism_blast_impulse_kpa_ms"] > 0.0
 
     effect_descriptor = artifact["effect_scale_descriptor_candidate"]
     assert effect_descriptor["source_kind"] == "validated_physics_surrogate"
@@ -63,6 +73,18 @@ def test_a2_blastfrag_runtime_aligned_authority_pack_current_repo_is_test_local_
     effect_row = effect_descriptor["rows"][0]
     assert effect_row["miss_distance_bucket"] == "near_miss"
     assert effect_row["effect_scale"] == 1.11
+    assert effect_row["min_fragment_energy_j"] <= baseline["mechanism_fragment_energy_j"]
+    assert effect_row["max_fragment_energy_j"] >= baseline["mechanism_fragment_energy_j"]
+    assert (
+        effect_row["min_penetration_margin"]
+        <= baseline["mechanism_penetration_margin"]
+        <= effect_row["max_penetration_margin"]
+    )
+    assert (
+        effect_row["min_blast_impulse_kpa_ms"]
+        <= baseline["mechanism_blast_impulse_kpa_ms"]
+        <= effect_row["max_blast_impulse_kpa_ms"]
+    )
 
     component_descriptor = artifact["component_failure_probability_descriptor_candidate"]
     assert component_descriptor["source_kind"] == "validated_physics_surrogate"
@@ -76,6 +98,21 @@ def test_a2_blastfrag_runtime_aligned_authority_pack_current_repo_is_test_local_
     assert component_row["component_system"] == "flight_control"
     assert component_row["component_redundancy_group_id"] == "lateral_flight_control_actuators"
     assert component_row["component_failure_probability"] == 0.67
+    assert (
+        component_row["min_fragment_energy_j"]
+        <= primary_row["mechanism_fragment_energy_j"]
+        <= component_row["max_fragment_energy_j"]
+    )
+    assert (
+        component_row["min_penetration_margin"]
+        <= primary_row["mechanism_penetration_margin"]
+        <= component_row["max_penetration_margin"]
+    )
+    assert (
+        component_row["min_blast_impulse_kpa_ms"]
+        <= primary_row["mechanism_blast_impulse_kpa_ms"]
+        <= component_row["max_blast_impulse_kpa_ms"]
+    )
 
 
 def test_a2_blastfrag_runtime_aligned_authority_pack_is_reproducible() -> None:

@@ -1460,3 +1460,70 @@ class ComponentDamageRuntimeMixin:
             float(high_event.component_failure_probability),
             float(low_event.component_failure_probability),
         )
+
+    def test_phase3_blast_fragmentation_component_failure_probability_tracks_load(self) -> None:
+        wing = (-0.753, 4.0, 0.0)
+
+        _low_overlay, _, low_event = _profiled_local_hit_overlay(
+            "blast_fragmentation",
+            wing,
+            damage=55.0,
+            radius=35.0,
+        )
+        _high_overlay, _, high_event = _profiled_local_hit_overlay(
+            "blast_fragmentation",
+            wing,
+            damage=150.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(low_event.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertEqual(str(high_event.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertLess(
+            float(high_event.component_primary_integrity),
+            float(low_event.component_primary_integrity),
+        )
+        self.assertGreater(
+            float(high_event.component_failure_probability),
+            float(low_event.component_failure_probability),
+        )
+
+    def test_phase3_repeated_hits_raise_component_failure_probability_as_integrity_drops(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260526)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+        profile = _make_warhead_profile("continuous_rod", damage=45.0, radius=35.0)
+
+        for _ in range(2):
+            self.assertTrue(
+                bool(
+                    sim.debug_apply_profiled_local_proximity_hit(
+                        attacker_id,
+                        target_id,
+                        -0.753,
+                        4.0,
+                        0.0,
+                        profile,
+                    )
+                )
+            )
+
+        events = list(sim.export_recent_engagement_events().effects_events)
+        self.assertEqual(len(events), 2)
+        first_event, second_event = events
+
+        self.assertEqual(str(first_event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(second_event.component_primary_name), "right_aileron_actuator")
+        self.assertLess(
+            float(second_event.component_primary_integrity),
+            float(first_event.component_primary_integrity),
+        )
+        self.assertLess(
+            float(second_event.component_redundancy_group_availability),
+            float(first_event.component_redundancy_group_availability),
+        )
+        self.assertGreater(
+            float(second_event.component_failure_probability),
+            float(first_event.component_failure_probability),
+        )
