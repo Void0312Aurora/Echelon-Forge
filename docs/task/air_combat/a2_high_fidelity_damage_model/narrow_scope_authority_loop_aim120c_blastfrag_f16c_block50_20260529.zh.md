@@ -130,16 +130,26 @@
 
 ### 7.0 本轮任务簇冻结与收敛门
 
-自 2026-05-31 起，本窄域任务的当前执行批次冻结为 `A2 blastfrag candidate evidence package acceptance`，不是 `release-grade authority promotion`。这是一条硬边界：本轮验收只判断候选证据包是否可审计、可复现、未越权；不得再把 Stage C truth、Pk、deterministic fuze 或真实弹药/目标 vulnerability authority 作为本轮“未完成”条件。
+自 2026-05-31 起，本窄域任务的当前执行批次冻结为 `A2 blastfrag candidate evidence package acceptance`，不是 `release-grade authority promotion`。这是一条硬边界：本轮验收只判断候选证据包是否可审计、可复现、未越权；不得再把 release-grade `component_failure_probability_authority`、Pk、deterministic fuze 或真实弹药/目标 vulnerability authority 作为本轮“未完成”条件。
+
+这里的冻结不改变高保真杀伤模型已经定义的粒度。禁止使用“更大模型项”这类模糊说法；所有剩余项必须映射回以下既有粒度：
+
+| 既有粒度 | 本轮证据包中的判定 |
+|---|---|
+| Phase 1 structured aircraft damage | 已有 structured target / DamageReport / 非 HP-first 权威路径；不是本轮 A2 blastfrag residual 阻塞项 |
+| Phase 2 aircraft subsystem / overlay effects | 已有代表性 hitbox、overlay、flight/control/fuel/sensor cascade；真实 F-16 内部 vulnerability 几何仍是 `RES-003` 的 release-grade 证据缺口 |
+| Phase 3 warhead / fuze / component mechanism evidence | 已有 warhead family、空间采样、mechanism-load、component identity 与 fuze evidence 字段；具体 AIM-120C 战斗部真值仍是 `RES-004`，TP-21/BEC-O admission 仍是 `RES-005/006` |
+| Phase 5 vulnerability evidence rows | `effect_scale_authority` 与 `component_failure_probability_authority` 是本窄域的目标 authority 粒度；当前只完成 candidate evidence package，不等于 release-grade row authority |
+| Phase 4 deterministic fuze / Pk kill-chain | 明确 deferred / boundary，不属于本轮 blastfrag candidate evidence acceptance 关闭门 |
 
 本轮任务簇固定为以下四类，不能在验收时继续扩张：
 
 | 任务簇 | 本轮关闭门 | 本轮允许状态 | 禁止扩张 |
 |---|---|---|---|
 | `TC-A2-BF-001` source / identity / retained evidence | source provenance、scoped identity、retained artifact 与 bundle 可复现，authority guard 全 false | `accepted_non_authoritative` | 不要求 stock DB clean release 或外部发布权 |
-| `TC-A2-BF-002` Stage B scope / geometry / warhead evidence | Stage B scope bucket、witness geometry bookkeeping、AIM-120C-class family scope 有 retained gate；真实 geometry/warhead truth 保持 blocked | `accepted_with_deferred_truth_residuals` | 不追真实 F-16 component geometry、材料、遮挡或具体 AIM-120C 战斗部真值 |
+| `TC-A2-BF-002` Phase 2/3 scope / geometry / warhead evidence | scope bucket、witness geometry bookkeeping、AIM-120C-class family scope 有 retained gate；真实 geometry/warhead truth 保持 blocked | `accepted_with_deferred_truth_residuals` | 本轮不把真实 F-16 component geometry、材料、遮挡或具体 AIM-120C 战斗部真值作为关闭门 |
 | `TC-A2-BF-003` mechanism admission evidence | `RES-005/006` 至少有远端 retained gate，能精确说明 admit / fail-closed 原因 | `accepted_fail_closed_if_evidence_retained` | 不要求 TP-21/BEC-O 输出被 release-consumed，也不允许复制受限原文/表格/原始数值 |
-| `TC-A2-BF-004` Stage B review / bundle regression | candidate bundle 暴露 residual 状态，A2 architecture regression 通过 | `accepted_non_authoritative_package` | 不把 Stage C component probability、Pk、fuze、kill-chain 当成本轮关闭门 |
+| `TC-A2-BF-004` Phase 5 candidate bundle / regression | candidate bundle 暴露 residual 状态，A2 architecture regression 通过 | `accepted_non_authoritative_package` | 不把 release-grade component probability authority、Pk、fuze、kill-chain 当成本轮关闭门 |
 
 本轮完成的硬验收标准只有以下几条：
 
@@ -149,11 +159,11 @@
 4. authority boundary 全程保持 false：不创建 stock descriptor，不授予 runtime、effect-scale、component probability、Pk 或 deterministic fuze authority。
 5. A2 blastfrag architecture regression 通过。
 
-如果后续 gate 暴露出更细缺口，它只能被归入以下三类之一，不能自动扩大本轮任务簇：
+如果后续 gate 暴露出未满足项，它只能按既有保真度粒度归类，不能自动扩大本轮任务簇：
 
-- `future_stage_c`：Stage C component probability / fragility truth / uncertainty / independence。
-- `future_release_authority`：把 non-authoritative candidate 晋级为 release-grade authority。
-- `boundary_deferred`：Pk、deterministic fuze、kill-chain 或外部证据链。
+- `same_scope_phase2_3_truth_gap`：同一 weapon-target scope 内的真实 target geometry、material、occlusion 或具体 warhead truth 缺口。
+- `same_scope_phase5_authority_gap`：同一 weapon-target scope 内的 release-grade `effect_scale_authority` 或 `component_failure_probability_authority` 缺口。
+- `boundary_deferred`：Phase 4 deterministic fuze、Pk、kill-chain 或外部证据链。
 
 除非用户明确重新基线化任务簇，否则上述三类只能登记，不能作为本轮继续分发 subagent 的理由。
 

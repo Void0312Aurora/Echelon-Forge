@@ -286,6 +286,6 @@ bash tools/maintenance/cmo_env.sh python -m pytest -q \
 - `phase0 accepted`：六个预检门均有证据，允许设计 Phase 1 patch；
 - `phase0 blocked`：任一预检门发现未处理的跨层风险，禁止行为代码；
 - `phase1 accepted`：structured aircraft target 已能通过非 HP-first 权威路径产生 kill state；
-- `candidate evidence accepted`：窄域 blast-fragmentation candidate evidence package 已有可复现 retained artifacts、residual register、bundle 和 architecture regression；该状态不等于 release-grade authority，不再要求本轮继续追 Stage C truth、Pk 或 deterministic fuze；
+- `candidate evidence accepted`：窄域 blast-fragmentation candidate evidence package 已有可复现 retained artifacts、residual register、bundle 和 architecture regression；该状态不等于 release-grade Phase 5 vulnerability row authority，不代表 `effect_scale_authority` 或 `component_failure_probability_authority` 已放行，也不要求本轮继续追 Phase 4 deterministic fuze 或 Pk；
 - `deferred`：损伤模型被明确排在训练或可视化任务之后；
 - `rejected`：仅当项目决定不追求高真实度毁伤模型时使用。

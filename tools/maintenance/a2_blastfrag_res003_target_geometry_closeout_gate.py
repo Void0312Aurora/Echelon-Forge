@@ -491,11 +491,11 @@ def _minimum_gap_list(
     if closeout_allowed:
         return [
             {
-                "gap_id": "RES003-STAGEC-001",
-                "owner": "future_stage_c_target_geometry_fragility_worker",
+                "gap_id": "RES003-PHASE5-AUTHORITY-001",
+                "owner": "same_scope_phase5_component_probability_geometry_worker",
                 "minimum_next_step": (
                     "bind real component geometry/material/occlusion/exposed-area evidence "
-                    "before any Stage C component-probability or vulnerability authority claim"
+                    "before any release-grade component_failure_probability_authority or vulnerability authority claim"
                 ),
             },
             {
@@ -618,7 +618,7 @@ def generate_res003_target_geometry_closeout_gate(
                 "global_target_geometry_authority": "not_granted",
                 "real_f16_component_geometry_material_occlusion": "blocked",
                 "row_level_geometry_release_grade": "not_granted",
-                "stage_c_component_probability_geometry_dependency": "blocked",
+                "phase5_component_probability_geometry_dependency": "blocked",
                 "residual_register_edit_required_by_this_gate": False,
                 "main_thread_register_integration_note": (
                     "may mark only the Stage B witness-geometry bookkeeping subscope "
@@ -649,7 +649,7 @@ def generate_res003_target_geometry_closeout_gate(
             "beam_witness_panel is repo-authored sampler bookkeeping, not true 3D exposure geometry.",
             "No real F-16 component coordinates, materials, armor, occlusion, or exposed vulnerable area authority is granted.",
             "No stock descriptor, runtime authority, component probability, Pk, deterministic fuze, or formal validation promotion is granted.",
-            "Stage C remains blocked until component geometry/material/occlusion evidence and independent fragility truth exist.",
+            "Phase 5 component_failure_probability authority remains blocked until component geometry/material/occlusion evidence and independent fragility truth exist.",
         ],
         "minimum_gap_list": _minimum_gap_list(
             closeout_allowed=closeout_allowed,
@@ -659,12 +659,12 @@ def generate_res003_target_geometry_closeout_gate(
         "behavior_risks": [
             "coarse outer dimensions may be over-read as true F-16C section or station geometry",
             "beam witness sampler bookkeeping may be over-read as real 3D exposure or occlusion truth",
-            "Stage B narrow closeout may be mistaken for Stage C component-geometry or fragility authority",
+            "Stage B narrow closeout may be mistaken for Phase 5 component-geometry or fragility authority",
         ],
         "integration_notes": [
             "This gate supersedes RES-003 only for the bounded Stage B witness-geometry bookkeeping subscope.",
             "Existing geometry/warhead provenance evidence remains valid and still blocks release-grade row-level geometry authority.",
-            "Main-thread acceptance should preserve RES-004/005/006 and Stage C blockers unless their own gates close.",
+            "Main-thread acceptance should preserve RES-004/005/006 and Phase 5 authority blockers unless their own gates close.",
             "RES-013 Pk and RES-014 deterministic-fuze boundaries remain outside this package.",
         ],
     }
@@ -722,7 +722,7 @@ def _render_doc(
 
 状态：`generated_from_res003_target_geometry_closeout_gate / non-authoritative / release_blocked`。
 
-本文记录 `RES-003 target geometry` 的窄域 closeout。该 gate 只允许关闭 Stage B `effect_scale` 的 witness-geometry bookkeeping 子范围；不关闭真实 F-16 component geometry、material、occlusion、exposed area 或 Stage C component-probability 依赖。
+本文记录 `RES-003 target geometry` 的窄域 closeout。该 gate 只允许关闭 Stage B `effect_scale` 的 witness-geometry bookkeeping 子范围；不关闭真实 F-16 component geometry、material、occlusion、exposed area 或 Phase 5 `component_failure_probability_authority` 依赖。
 
 ## 1. Retained Artifact
 
@@ -746,13 +746,13 @@ def _render_doc(
 | `closed_residual_subscope` | `{res003['closed_residual_subscope']}` |
 | `global_target_geometry_authority` | `{res003['global_target_geometry_authority']}` |
 | `real_f16_component_geometry_material_occlusion` | `{res003['real_f16_component_geometry_material_occlusion']}` |
-| `stage_c_component_probability_geometry_dependency` | `{res003['stage_c_component_probability_geometry_dependency']}` |
+| `phase5_component_probability_geometry_dependency` | `{res003['phase5_component_probability_geometry_dependency']}` |
 | `release_ready` | `{str(artifact['closeout_decision']['release_ready']).lower()}` |
 | `release_blocked` | `{str(artifact['closeout_decision']['release_blocked']).lower()}` |
 
 当前可审计结论：
 
-> `RES-003 is narrowly closed only for Stage B effect-scale witness-geometry bookkeeping; real F-16 vulnerability geometry, material, occlusion, Stage C component probability, stock runtime, Pk and deterministic-fuze authority remain blocked`.
+> `RES-003 is narrowly closed only for Stage B effect-scale witness-geometry bookkeeping; real F-16 vulnerability geometry, material, occlusion, Phase 5 component_failure_probability_authority, stock runtime, Pk and deterministic-fuze authority remain blocked`.
 
 ## 3. Consumed Evidence
 

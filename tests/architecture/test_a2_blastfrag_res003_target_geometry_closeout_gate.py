@@ -101,7 +101,7 @@ def test_res003_target_geometry_closeout_closes_stage_b_witness_only() -> None:
     )
     assert res003["global_target_geometry_authority"] == "not_granted"
     assert res003["real_f16_component_geometry_material_occlusion"] == "blocked"
-    assert res003["stage_c_component_probability_geometry_dependency"] == "blocked"
+    assert res003["phase5_component_probability_geometry_dependency"] == "blocked"
     assert res003["residual_register_edit_required_by_this_gate"] is False
 
     decision = artifact["closeout_decision"]
@@ -141,7 +141,7 @@ def test_res003_target_geometry_closeout_keeps_authority_guards_false() -> None:
     assert "Stage B effect-scale witness-geometry bookkeeping" in boundaries
     assert "not true 3D exposure geometry" in boundaries
     assert "No real F-16 component coordinates" in boundaries
-    assert "Stage C remains blocked" in boundaries
+    assert "Phase 5 component_failure_probability authority remains blocked" in boundaries
 
 
 def test_res003_target_geometry_closeout_fails_closed_without_evidence(

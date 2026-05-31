@@ -2,7 +2,7 @@
 
 状态：`generated_from_res003_target_geometry_closeout_gate / non-authoritative / release_blocked`。
 
-本文记录 `RES-003 target geometry` 的窄域 closeout。该 gate 只允许关闭 Stage B `effect_scale` 的 witness-geometry bookkeeping 子范围；不关闭真实 F-16 component geometry、material、occlusion、exposed area 或 Stage C component-probability 依赖。
+本文记录 `RES-003 target geometry` 的窄域 closeout。该 gate 只允许关闭 Stage B `effect_scale` 的 witness-geometry bookkeeping 子范围；不关闭真实 F-16 component geometry、material、occlusion、exposed area 或 Phase 5 `component_failure_probability_authority` 依赖。
 
 ## 1. Retained Artifact
 
@@ -12,9 +12,9 @@
 | `schema_version` | `a2.res003_target_geometry_closeout_gate.v1` |
 | `tool_ref` | [a2_blastfrag_res003_target_geometry_closeout_gate.py](tools/maintenance/a2_blastfrag_res003_target_geometry_closeout_gate.py) |
 | `retained_artifact` | [res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json) |
-| `retained_artifact_sha256` | `dbfe973f96f6e0273a3b0e59b196ba979630429e517e5549cc050d8a29f2140d` |
+| `retained_artifact_sha256` | `98c324b0cac7642e406ea029dd0c32301a32fd92bb12f08b756b145343139bbe` |
 | `manifest` | [res003_target_geometry_closeout_20260531/manifest.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res003_target_geometry_closeout_20260531/manifest.json) |
-| `manifest_sha256` | `ad3715ee6a78efbbd3e6bfaca6df62c08863b4464e389fd4ef1ac9f73981d607` |
+| `manifest_sha256` | `12750d913eb5902bfac0cbc8ee696a3226fe100e951e7e1ba39619b439c535ee` |
 | `overall_status` | `res003_stage_b_effect_scale_witness_geometry_closeout_pass_release_blocked` |
 | `manifest_status` | `res003_target_geometry_closeout_retained_release_blocked` |
 
@@ -26,13 +26,13 @@
 | `closed_residual_subscope` | `stage_b_effect_scale_witness_geometry_bookkeeping` |
 | `global_target_geometry_authority` | `not_granted` |
 | `real_f16_component_geometry_material_occlusion` | `blocked` |
-| `stage_c_component_probability_geometry_dependency` | `blocked` |
+| `phase5_component_probability_geometry_dependency` | `blocked` |
 | `release_ready` | `false` |
 | `release_blocked` | `true` |
 
 当前可审计结论：
 
-> `RES-003 is narrowly closed only for Stage B effect-scale witness-geometry bookkeeping; real F-16 vulnerability geometry, material, occlusion, Stage C component probability, stock runtime, Pk and deterministic-fuze authority remain blocked`.
+> `RES-003 is narrowly closed only for Stage B effect-scale witness-geometry bookkeeping; real F-16 vulnerability geometry, material, occlusion, Phase 5 component_failure_probability_authority, stock runtime, Pk and deterministic-fuze authority remain blocked`.
 
 ## 3. Consumed Evidence
 
@@ -80,11 +80,11 @@
 - beam_witness_panel is repo-authored sampler bookkeeping, not true 3D exposure geometry.
 - No real F-16 component coordinates, materials, armor, occlusion, or exposed vulnerable area authority is granted.
 - No stock descriptor, runtime authority, component probability, Pk, deterministic fuze, or formal validation promotion is granted.
-- Stage C remains blocked until component geometry/material/occlusion evidence and independent fragility truth exist.
+- Phase 5 component_failure_probability authority remains blocked until component geometry/material/occlusion evidence and independent fragility truth exist.
 
 ## 6. Remaining Paths
 
 | gap | owner | minimum next step |
 |---|---|---|
-| `RES003-STAGEC-001` | `future_stage_c_target_geometry_fragility_worker` | bind real component geometry/material/occlusion/exposed-area evidence before any Stage C component-probability or vulnerability authority claim |
+| `RES003-PHASE5-AUTHORITY-001` | `same_scope_phase5_component_probability_geometry_worker` | bind real component geometry/material/occlusion/exposed-area evidence before any release-grade component_failure_probability_authority or vulnerability authority claim |
 | `RES003-GLOBAL-001` | `main_thread_acceptance_owner` | if accepted, update the residual register only as a Stage B witness-geometry bookkeeping narrow closeout, not as global target-geometry authority |
