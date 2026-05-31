@@ -1,0 +1,286 @@
+{
+  "artifact_provenance": {
+    "component_effects_acceptance_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/component_effects/acceptance_tests_and_non_authoritative_boundaries_20260528.zh.md",
+    "runtime_aligned_authority_pack_ref": "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py",
+    "scope_definition_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md",
+    "source_kind": "candidate_stage_c_component_probability_snapshot",
+    "surface_probe_ref": "tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py"
+  },
+  "baseline_event_summary": {
+    "component_failure_probability": 0.0016625621124417252,
+    "component_failure_probability_source": "synthetic_sigmoid",
+    "component_primary_mechanism_blast_impulse_kpa_ms": 248.53014426669876,
+    "component_primary_mechanism_blast_scaled_distance_m_kg13": 0.6630125349221248,
+    "component_primary_mechanism_fragment_areal_density_per_m2": 6.094412265983388,
+    "component_primary_mechanism_fragment_energy_j": 13295.197033437602,
+    "component_primary_mechanism_penetration_margin": 0.3867646102877764,
+    "component_primary_mechanism_surface_incidence_cos": 0.9635179096299407,
+    "component_primary_name": "right_aileron_actuator",
+    "component_primary_redundancy_group_id": "lateral_flight_control_actuators",
+    "component_primary_system": "flight_control"
+  },
+  "component_probability_snapshot": {
+    "calibration_status": "calibrated",
+    "component_failure_probability_authority": true,
+    "dataset_id": "unit_test_a2_blastfrag_runtime_aligned_component_probability",
+    "descriptor_status": "test_local_component_specific_probability_candidate",
+    "row": {
+      "aspect_bucket": "beam",
+      "closure_bucket": "high",
+      "component_failure_probability": 0.67,
+      "component_name": "right_aileron_actuator",
+      "component_redundancy_group_id": "lateral_flight_control_actuators",
+      "component_system": "flight_control",
+      "max_blast_impulse_kpa_ms": 285.8096659067036,
+      "max_blast_scaled_distance_m_kg13": 0.7624644151604434,
+      "max_fragment_areal_density_per_m2": 7.008574105880896,
+      "max_fragment_energy_j": 15289.47658845324,
+      "max_penetration_margin": 0.4254410713165541,
+      "max_surface_incidence_cos": 1.0,
+      "min_blast_impulse_kpa_ms": 211.25062262669394,
+      "min_blast_scaled_distance_m_kg13": 0.563560654683806,
+      "min_fragment_areal_density_per_m2": 5.18025042608588,
+      "min_fragment_energy_j": 11300.917478421961,
+      "min_penetration_margin": 0.3480881492589988,
+      "min_surface_incidence_cos": 0.8671661186669466,
+      "miss_distance_bucket": "near_miss",
+      "provenance": "runtime-aligned component-probability row candidate derived from stock A2 blast-fragmentation near-miss projected component load",
+      "row_id": "a2-runtime-aligned-blastfrag-component-probability",
+      "source_ref": "tools/maintenance/a2_blastfrag_validation_scaffold.py#a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0#a2-runtime-aligned-blastfrag-component-probability",
+      "weapon_family": "blast_fragmentation"
+    },
+    "source_kind": "validated_physics_surrogate"
+  },
+  "criteria_evaluation": [
+    {
+      "actual": "right_aileron_actuator",
+      "criteria_id": "BFM-CRIT-CP-001",
+      "expected": "right_aileron_actuator",
+      "field": "baseline_event_summary.component_primary_name",
+      "pass": true
+    },
+    {
+      "actual": "validated_physics_surrogate",
+      "criteria_id": "BFM-CRIT-CP-002",
+      "expected": "validated_physics_surrogate",
+      "field": "component_failure_probability_descriptor_candidate.source_kind",
+      "pass": true
+    },
+    {
+      "actual": "calibrated",
+      "criteria_id": "BFM-CRIT-CP-003",
+      "expected": "calibrated",
+      "field": "component_failure_probability_descriptor_candidate.calibration_status",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "criteria_id": "BFM-CRIT-CP-004",
+      "expected": false,
+      "field": "component_failure_probability_descriptor_candidate.effect_scale_authority",
+      "pass": true
+    },
+    {
+      "actual": true,
+      "criteria_id": "BFM-CRIT-CP-005",
+      "expected": true,
+      "field": "component_failure_probability_descriptor_candidate.component_failure_probability_authority",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "criteria_id": "BFM-CRIT-CP-006",
+      "expected": false,
+      "field": "component_failure_probability_descriptor_candidate.pk_authority",
+      "pass": true
+    },
+    {
+      "actual": false,
+      "criteria_id": "BFM-CRIT-CP-007",
+      "expected": false,
+      "field": "component_failure_probability_descriptor_candidate.deterministic_fuze_authority",
+      "pass": true
+    },
+    {
+      "actual": "right_aileron_actuator",
+      "criteria_id": "BFM-CRIT-CP-008",
+      "expected": "right_aileron_actuator",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.component_name",
+      "pass": true
+    },
+    {
+      "actual": "flight_control",
+      "criteria_id": "BFM-CRIT-CP-009",
+      "expected": "flight_control",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.component_system",
+      "pass": true
+    },
+    {
+      "actual": "lateral_flight_control_actuators",
+      "criteria_id": "BFM-CRIT-CP-010",
+      "expected": "lateral_flight_control_actuators",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.component_redundancy_group_id",
+      "pass": true
+    },
+    {
+      "actual": 0.67,
+      "criteria_id": "BFM-CRIT-CP-011",
+      "expected": "0<=x<=1",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.component_failure_probability",
+      "pass": true
+    },
+    {
+      "actual": 0.563560654683806,
+      "criteria_id": "BFM-CRIT-CP-012",
+      "expected": "<=primary_row.blast_scaled_distance",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.min_blast_scaled_distance_m_kg13",
+      "pass": true
+    },
+    {
+      "actual": 0.7624644151604434,
+      "criteria_id": "BFM-CRIT-CP-013",
+      "expected": ">=primary_row.blast_scaled_distance",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.max_blast_scaled_distance_m_kg13",
+      "pass": true
+    },
+    {
+      "actual": 5.18025042608588,
+      "criteria_id": "BFM-CRIT-CP-014",
+      "expected": "<=primary_row.fragment_density",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.min_fragment_areal_density_per_m2",
+      "pass": true
+    },
+    {
+      "actual": 7.008574105880896,
+      "criteria_id": "BFM-CRIT-CP-015",
+      "expected": ">=primary_row.fragment_density",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.max_fragment_areal_density_per_m2",
+      "pass": true
+    },
+    {
+      "actual": 0.8671661186669466,
+      "criteria_id": "BFM-CRIT-CP-016",
+      "expected": "<=primary_row.surface_incidence",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.min_surface_incidence_cos",
+      "pass": true
+    },
+    {
+      "actual": 1.0,
+      "criteria_id": "BFM-CRIT-CP-017",
+      "expected": ">=primary_row.surface_incidence",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.max_surface_incidence_cos",
+      "pass": true
+    },
+    {
+      "actual": 11300.917478421961,
+      "criteria_id": "BFM-CRIT-CP-018",
+      "expected": "<=primary_row.fragment_energy",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.min_fragment_energy_j",
+      "pass": true
+    },
+    {
+      "actual": 15289.47658845324,
+      "criteria_id": "BFM-CRIT-CP-019",
+      "expected": ">=primary_row.fragment_energy",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.max_fragment_energy_j",
+      "pass": true
+    },
+    {
+      "actual": 0.3480881492589988,
+      "criteria_id": "BFM-CRIT-CP-020",
+      "expected": "<=primary_row.penetration_margin",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.min_penetration_margin",
+      "pass": true
+    },
+    {
+      "actual": 0.4254410713165541,
+      "criteria_id": "BFM-CRIT-CP-021",
+      "expected": ">=primary_row.penetration_margin",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.max_penetration_margin",
+      "pass": true
+    },
+    {
+      "actual": 211.25062262669394,
+      "criteria_id": "BFM-CRIT-CP-022",
+      "expected": "<=primary_row.blast_impulse",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.min_blast_impulse_kpa_ms",
+      "pass": true
+    },
+    {
+      "actual": 285.8096659067036,
+      "criteria_id": "BFM-CRIT-CP-023",
+      "expected": ">=primary_row.blast_impulse",
+      "field": "component_failure_probability_descriptor_candidate.rows.0.max_blast_impulse_kpa_ms",
+      "pass": true
+    }
+  ],
+  "current_findings": [
+    "the current runtime-aligned Stage C candidate can bind a component-specific probability row to the projected primary component within the narrow blast-fragmentation scope",
+    "the same narrow scope now also exposes a three-point candidate component-probability surface probe with monotonic inner-to-outer row selection",
+    "the baseline stock event still reports synthetic component probability, while the descriptor candidate demonstrates only a test-local authority surface",
+    "this snapshot does not validate fragility truth, independence, or stock component-probability authority release"
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "schema_version": "a2.stage_c_component_probability_snapshot.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "component_name": "right_aileron_actuator",
+    "component_redundancy_group_id": "lateral_flight_control_actuators",
+    "component_system": "flight_control",
+    "runtime_miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "candidate_non_authoritative_stage_c_component_probability_snapshot",
+  "summary": {
+    "all_hard_gates_pass_in_current_snapshot": true,
+    "failed_criteria_ids": [],
+    "primary_release_scope": "component_failure_probability_authority_only",
+    "review_status": "author_snapshot_only_pending_independent_review",
+    "reviewed_checks": [
+      "runtime_projected_component_row_present",
+      "descriptor_authority_flags",
+      "component_provenance_fields",
+      "mechanism_load_gate_band_contains_primary_row",
+      "component_probability_surface_probe"
+    ]
+  },
+  "surface_probe_summary": {
+    "anchor_seed_window_probability_cv": 0.0,
+    "component_specific_precedence_pass": true,
+    "component_specific_rows_scope_locked_to_right_aileron_actuator": true,
+    "json_output_uses_sort_keys": true,
+    "primary_component_identity_stable_pass": true,
+    "probability_monotonic_decreasing_with_standoff_pass": true,
+    "probe_labels": [
+      "inner",
+      "middle",
+      "outer"
+    ],
+    "runtime_seed_values_are_fixed": [
+      20260526,
+      20260527,
+      20260528
+    ],
+    "selected_row_ids": [
+      "component-inner",
+      "component-middle",
+      "component-outer"
+    ],
+    "selected_rows_cover_primary_loads_pass": true,
+    "selected_rows_scope_locked_to_right_aileron_actuator": true,
+    "status": "candidate_non_authoritative_stage_c_component_probability_surface_probe",
+    "stock_baseline_calibrated_probability_present": false,
+    "stock_baseline_sources_are_synthetic_sigmoid": true
+  }
+}

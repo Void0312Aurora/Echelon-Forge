@@ -1,0 +1,470 @@
+{
+  "all_payload_inventory": [
+    {
+      "actual_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+      "allowed_use": "candidate_provenance_and_benchmark_design_reference_only",
+      "artifact_id": "PIN-BFM-001",
+      "available_candidates": [
+        {
+          "candidate_origin": "canonical_retained_payload",
+          "hash_matches_expected": true,
+          "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+          "sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f"
+        }
+      ],
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/pdf",
+      "expected_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+      "forbidden_use": "source truth, runtime authority, stock descriptor authority, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "payload_exists": true,
+      "pin_artifact_status": "verified_candidate_artifact_bundle / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-001:tp-20-pdf",
+      "retained_for_pack": true,
+      "retained_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+      "retention_status": "candidate_retained_not_release_reviewed",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "TP-20 PDF",
+      "source_id": "VPS-BFM-014",
+      "source_payload_role": "blast_effects_computer_documentation"
+    },
+    {
+      "actual_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "allowed_use": "candidate_provenance_and_benchmark_design_reference_only",
+      "artifact_id": "PIN-BFM-001",
+      "available_candidates": [
+        {
+          "candidate_origin": "workspace_existing_payload",
+          "hash_matches_expected": true,
+          "relative_path": ".playwright-mcp/BEC-O-V1.xlsx",
+          "sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc"
+        },
+        {
+          "candidate_origin": "canonical_retained_payload",
+          "hash_matches_expected": true,
+          "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+          "sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc"
+        }
+      ],
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "expected_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "forbidden_use": "source truth, runtime authority, stock descriptor authority, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "payload_exists": true,
+      "pin_artifact_status": "verified_candidate_artifact_bundle / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
+      "retained_for_pack": true,
+      "retained_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+      "retention_status": "candidate_retained_not_release_reviewed",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "BEC-O-V1.xlsx",
+      "source_id": "VPS-BFM-014",
+      "source_payload_role": "blast_effects_computer_spreadsheet_tool"
+    },
+    {
+      "actual_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "allowed_use": "candidate_provenance_and_benchmark_design_reference_only",
+      "artifact_id": "PIN-BFM-002",
+      "available_candidates": [
+        {
+          "candidate_origin": "canonical_retained_payload",
+          "hash_matches_expected": true,
+          "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+          "sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8"
+        }
+      ],
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/pdf",
+      "expected_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "forbidden_use": "source truth, runtime authority, stock descriptor authority, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "payload_exists": true,
+      "pin_artifact_status": "verified_candidate_artifact / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-002:tp-21-pdf",
+      "retained_for_pack": true,
+      "retained_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+      "retention_status": "candidate_retained_not_release_reviewed",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "TP-21 PDF",
+      "source_id": "VPS-BFM-015",
+      "source_payload_role": "explosion_produced_debris_documentation"
+    }
+  ],
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531",
+  "authority_guards_all_false": true,
+  "benchmark_consumption_trace": {
+    "benchmark_consumption_chain_status": "explicit_non_consumption_only_release_chain_missing",
+    "benchmark_consumption_release_grade_satisfied": false,
+    "explicit_non_consumed_artifact_ids": [
+      "PIN-BFM-001",
+      "PIN-BFM-002"
+    ],
+    "release_consumed_artifact_ids": [],
+    "retained_payloads_consumed_for_release": [],
+    "trace_note": "Retained payloads remain candidate provenance/design references only; the Stage B release path still records DENIX rows as not consumed."
+  },
+  "comparison_output_hash_status": {
+    "benchmark_consumed_for_release": false,
+    "candidate_result_hashes_are_not_comparison_output_hashes": true,
+    "comparison_output_hash_status": "partial_hash_manifest_present_release_review_blocked",
+    "comparison_output_release_grade_satisfied": false,
+    "comparison_outputs_retained": true,
+    "current_gate_results": {
+      "RES-005": "partial_fail_closed_tp21_criteria_vocabulary_hash_present_selected_debris_output_requirements_open",
+      "RES-006": "partial_fail_closed_beco_cached_comparison_hashes_present_spreadsheet_execution_required"
+    },
+    "mechanism_comparison_hashes_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+    "mechanism_comparison_hashes_sha256": "5d267029a11a47f281f726d6c58131aea946294a7979d8dcfaa72b27141973d1",
+    "release_grade_blockers": [
+      "reviewed spreadsheet execution/recalculation missing",
+      "tolerance and allowed-output policy signoff missing",
+      "TP-21 selected debris comparison outputs missing",
+      "benchmark-consumption chain still fail-closed"
+    ],
+    "selected_beco_cached_output_hash_count": 9,
+    "selected_comparison_output_hashes": [
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-001",
+        "comparison_output_sha256": "e1f06f693bd44bfb437fdc95ccf97e36e0edfda1e77e8cfca3124206ce1ac92c",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-002",
+        "comparison_output_sha256": "abf887eb1fbdafb1bda0f4d3352633f0239f59d2023ff2a93b5108e4d36f2783",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-003",
+        "comparison_output_sha256": "0dbe8724edceb81f592172adaee4fc2e0ceb9706117e9d947e12f60f7e7e6ac5",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-004",
+        "comparison_output_sha256": "8e3f33c1eddbf85ca61f17182d634bcac84eda471daf918f352816a8531d677c",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-005",
+        "comparison_output_sha256": "86d250933ff3f6225cb44759e8291ab6af98f4d7ed9864fea03868daac7e31dd",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-006",
+        "comparison_output_sha256": "d6b5226f38a6eebad7dd3762d19c8b90447c53081fe1d604d109f3757208f181",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-007",
+        "comparison_output_sha256": "701916857eb03ed760f1423f9d6f4b3f339632f1a20fe8acf43cebcd87d814ad",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-008",
+        "comparison_output_sha256": "565ee6db32ed7a6721f69f07b303020218da7353be1f3a593caa7a86e3355560",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-009",
+        "comparison_output_sha256": "95b5a8c100ccda24a735d7cbdffb558a88c8f713d4e481d9639a0db54d8a1d68",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014"
+      }
+    ],
+    "tp21_selected_debris_output_hashes_present": false
+  },
+  "explicit_boundaries": [
+    "do not use this pack as a stock descriptor",
+    "do not treat retained payloads as benchmark outputs",
+    "do not treat spreadsheet/tool outputs as source truth",
+    "do not release effect-scale, component-probability, Pk, or deterministic-fuze authority"
+  ],
+  "missing_payloads": [],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_in_stock": false,
+    "component_failure_probability_authority_released": false,
+    "deterministic_fuze_authority": false,
+    "deterministic_fuze_authority_released": false,
+    "effect_scale_authority_in_stock": false,
+    "effect_scale_authority_released": false,
+    "pk_authority": false,
+    "pk_authority_released": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "readiness_level": "source_payload_inventory_partial_release_grade_blocked",
+  "res_001_gate_result": {
+    "blocking_conditions": [
+      "release_rights_review_missing",
+      "allowed_output_policy_not_release_frozen",
+      "benchmark_consumption_release_chain_missing",
+      "selected_comparison_output_hashes_not_release_grade"
+    ],
+    "gate_result": "blocked",
+    "release_grade_satisfied": false,
+    "source_payload_pack_status": "partial_payloads_retained_release_review_blocked"
+  },
+  "res_002_consumption_note": {
+    "reason": "source payload evidence can be consumed by a later RES-002 identity lane, but clean release identity and reviewer signoff are outside this pack",
+    "release_identity_closed_by_this_pack": false,
+    "release_identity_consumable_evidence": true
+  },
+  "residual_gate_results": {
+    "RES-001": "blocked",
+    "RES-002": "blocked"
+  },
+  "retained_payload_inventory": [
+    {
+      "actual_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+      "allowed_use": "candidate_provenance_and_benchmark_design_reference_only",
+      "artifact_id": "PIN-BFM-001",
+      "available_candidates": [
+        {
+          "candidate_origin": "canonical_retained_payload",
+          "hash_matches_expected": true,
+          "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+          "sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f"
+        }
+      ],
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/pdf",
+      "expected_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+      "forbidden_use": "source truth, runtime authority, stock descriptor authority, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "payload_exists": true,
+      "pin_artifact_status": "verified_candidate_artifact_bundle / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-001:tp-20-pdf",
+      "retained_for_pack": true,
+      "retained_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+      "retention_status": "candidate_retained_not_release_reviewed",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "TP-20 PDF",
+      "source_id": "VPS-BFM-014",
+      "source_payload_role": "blast_effects_computer_documentation"
+    },
+    {
+      "actual_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "allowed_use": "candidate_provenance_and_benchmark_design_reference_only",
+      "artifact_id": "PIN-BFM-001",
+      "available_candidates": [
+        {
+          "candidate_origin": "workspace_existing_payload",
+          "hash_matches_expected": true,
+          "relative_path": ".playwright-mcp/BEC-O-V1.xlsx",
+          "sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc"
+        },
+        {
+          "candidate_origin": "canonical_retained_payload",
+          "hash_matches_expected": true,
+          "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+          "sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc"
+        }
+      ],
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "expected_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "forbidden_use": "source truth, runtime authority, stock descriptor authority, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "payload_exists": true,
+      "pin_artifact_status": "verified_candidate_artifact_bundle / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
+      "retained_for_pack": true,
+      "retained_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+      "retention_status": "candidate_retained_not_release_reviewed",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "BEC-O-V1.xlsx",
+      "source_id": "VPS-BFM-014",
+      "source_payload_role": "blast_effects_computer_spreadsheet_tool"
+    },
+    {
+      "actual_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "allowed_use": "candidate_provenance_and_benchmark_design_reference_only",
+      "artifact_id": "PIN-BFM-002",
+      "available_candidates": [
+        {
+          "candidate_origin": "canonical_retained_payload",
+          "hash_matches_expected": true,
+          "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+          "sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8"
+        }
+      ],
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/pdf",
+      "expected_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "forbidden_use": "source truth, runtime authority, stock descriptor authority, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "payload_exists": true,
+      "pin_artifact_status": "verified_candidate_artifact / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-002:tp-21-pdf",
+      "retained_for_pack": true,
+      "retained_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+      "retention_status": "candidate_retained_not_release_reviewed",
+      "rights_status": "official_public_candidate_only_rights_not_release_reviewed",
+      "source_artifact_label": "TP-21 PDF",
+      "source_id": "VPS-BFM-015",
+      "source_payload_role": "explosion_produced_debris_documentation"
+    }
+  ],
+  "review_gate_summary": {
+    "provenance_identity_residual_gate_results": {
+      "RES-001": "blocked",
+      "RES-002": "blocked"
+    },
+    "provenance_identity_review_status": "blocked_non_authoritative_provenance_identity_review_gate",
+    "release_closeout_blocked": true,
+    "release_closeout_ready": false,
+    "release_provenance_closeout_status": "blocked_non_authoritative_release_provenance_closeout_candidate"
+  },
+  "review_target": "res_001_source_payload_pack_for_res_002_release_identity",
+  "rights_allowed_output_policy_status": {
+    "allowed_output_boundary": "source rights/output policy gate freezes hash-only allowed outputs and forbids copying source bodies, spreadsheet cells, comparison values or runtime authority fields",
+    "allowed_output_policy_frozen": true,
+    "allowed_output_policy_gate_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+    "allowed_output_policy_gate_sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+    "allowed_output_policy_status": "release_candidate_fail_closed_policy_frozen",
+    "allowed_output_release_grade_satisfied": false,
+    "candidate_public_distribution_supported": true,
+    "payloads_without_release_rights_review": [
+      "PIN-BFM-001:tp-20-pdf",
+      "PIN-BFM-001:bec-o-v1-xlsx",
+      "PIN-BFM-002:tp-21-pdf"
+    ],
+    "release_grade_blockers": [
+      "independent_rights_reviewer_signoff_missing",
+      "allowed_output_policy_release_grade_signoff_missing",
+      "selected_comparison_output_hash_manifest_missing",
+      "benchmark_consumption_release_signoff_missing",
+      "authority_boundary_signoff_missing"
+    ],
+    "retained_payloads_with_candidate_rights": [
+      "PIN-BFM-001:tp-20-pdf",
+      "PIN-BFM-001:bec-o-v1-xlsx",
+      "PIN-BFM-002:tp-21-pdf"
+    ],
+    "rights_release_grade_satisfied": false,
+    "rights_review_status": "public_distribution_statement_supported_candidate_not_signed_off"
+  },
+  "schema_version": "a2.source_payload_pack.v1",
+  "source_artifact_pack_manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+  "source_payload_pack_decision": {
+    "all_required_payloads_retained": true,
+    "all_retained_payload_hashes_match": true,
+    "authority_release_included": false,
+    "missing_payload_count": 0,
+    "release_grade_rights_reviewed": false,
+    "required_payload_count": 3,
+    "retained_payload_count": 3,
+    "source_payload_pack_blocked": false,
+    "source_payload_pack_closed": false,
+    "source_payload_pack_partial": true
+  },
+  "source_requirements": [
+    {
+      "artifact_id": "PIN-BFM-001",
+      "authority_boundary": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority",
+      "candidate_use": "future blast implementation comparison route",
+      "expected_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+      "pin_artifact_status": "verified_candidate_artifact_bundle / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-001:tp-20-pdf",
+      "source_artifact_label": "TP-20 PDF",
+      "source_id": "VPS-BFM-014",
+      "source_ref": "DENIX TP-20 PDF + BEC-O-V1.xlsx public artifacts",
+      "source_tier": "Tier A candidate"
+    },
+    {
+      "artifact_id": "PIN-BFM-001",
+      "authority_boundary": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority",
+      "candidate_use": "future blast implementation comparison route",
+      "expected_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "pin_artifact_status": "verified_candidate_artifact_bundle / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
+      "source_artifact_label": "BEC-O-V1.xlsx",
+      "source_id": "VPS-BFM-014",
+      "source_ref": "DENIX TP-20 PDF + BEC-O-V1.xlsx public artifacts",
+      "source_tier": "Tier A candidate"
+    },
+    {
+      "artifact_id": "PIN-BFM-002",
+      "authority_boundary": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority",
+      "candidate_use": "future debris / areal-density vocabulary route",
+      "expected_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "pin_artifact_status": "verified_candidate_artifact / retention_pending",
+      "pin_consumption_status": "not_consumed_for_stage_b_release",
+      "requirement_id": "PIN-BFM-002:tp-21-pdf",
+      "source_artifact_label": "TP-21 PDF",
+      "source_id": "VPS-BFM-015",
+      "source_ref": "DENIX TP-21 public artifact",
+      "source_tier": "Tier A candidate"
+    }
+  ],
+  "status": "partial_payloads_retained_release_review_blocked"
+}

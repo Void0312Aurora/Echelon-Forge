@@ -1,0 +1,353 @@
+{
+  "artifact_provenance": {
+    "provenance": "non-authoritative toy/mechanism-load validation scaffold generated from repo candidate inputs, public-method proxy structure, and fixed-seed sampling",
+    "sample_count": 4096,
+    "seed": 20260529,
+    "source_kind": "validated_physics_surrogate_candidate_scaffold"
+  },
+  "benchmarks": {
+    "BFM-BM-001": {
+      "benchmark_id": "BFM-BM-001",
+      "current_point": {
+        "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+        "blast_overpressure_kpa_proxy": 2990.19783601993,
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "standoff_m": 0.35
+      },
+      "metrics": {
+        "monotonic_impulse_pass": true,
+        "monotonic_overpressure_pass": true,
+        "unit_roundtrip_pass": true
+      },
+      "samples": [
+        {
+          "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+          "blast_overpressure_kpa_proxy": 2990.19783601993,
+          "blast_scaled_distance_m_kg13": 0.12894110245241353,
+          "standoff_m": 0.35
+        },
+        {
+          "blast_impulse_kpa_ms_proxy": 1636.1677015941186,
+          "blast_overpressure_kpa_proxy": 2713.6931713577874,
+          "blast_scaled_distance_m_kg13": 0.18420157493201936,
+          "standoff_m": 0.5
+        },
+        {
+          "blast_impulse_kpa_ms_proxy": 1220.969085219094,
+          "blast_overpressure_kpa_proxy": 2055.939622080187,
+          "blast_scaled_distance_m_kg13": 0.3684031498640387,
+          "standoff_m": 1.0
+        },
+        {
+          "blast_impulse_kpa_ms_proxy": 800.8314938485828,
+          "blast_overpressure_kpa_proxy": 1353.2417472085244,
+          "blast_scaled_distance_m_kg13": 0.7368062997280774,
+          "standoff_m": 2.0
+        },
+        {
+          "blast_impulse_kpa_ms_proxy": 465.70146653117195,
+          "blast_overpressure_kpa_proxy": 771.9226488973299,
+          "blast_scaled_distance_m_kg13": 1.4736125994561549,
+          "standoff_m": 4.0
+        }
+      ],
+      "source_role": "method_ref + validation_criteria",
+      "status": "toy_not_validated"
+    },
+    "BFM-BM-002": {
+      "benchmark_id": "BFM-BM-002",
+      "current_point": {
+        "max_fragment_energy_j": 17615.87119138217,
+        "mean_fragment_energy_j": 8836.862018042557,
+        "mean_fragment_mass_kg": 0.015,
+        "mean_fragment_velocity_mps": 1284.2814124898239,
+        "median_fragment_energy_j": 9194.188923487738,
+        "median_fragment_mass_kg": 0.011049989700737907,
+        "median_fragment_velocity_mps": 1293.3168072530534,
+        "total_fragment_mass_kg": 2.4,
+        "toy_fragment_count": 160
+      },
+      "metrics": {
+        "energy_unit_sanity_pass": true,
+        "fixed_seed_replay_pass": true,
+        "no_truth_labels_pass": true,
+        "positive_mass_velocity_pass": true
+      },
+      "source_role": "synthetic_benchmark_dataset + method_ref",
+      "status": "toy_not_validated"
+    },
+    "BFM-BM-003": {
+      "benchmark_id": "BFM-BM-003",
+      "current_point": {
+        "beam_witness_areal_density_per_m2": 2.2375438053115406,
+        "burst_offset_m": 0.35,
+        "hit_count": 1871,
+        "hit_fraction": 0.456787109375,
+        "mean_direction": {
+          "x": 0.0030945105370943004,
+          "y": -0.007624290435225162,
+          "z": -0.007040122039437772
+        },
+        "negative_y_hemisphere_fraction": 0.510498046875,
+        "sample_count": 4096,
+        "toy_fragment_count": 360,
+        "witness_area_m2": 73.4928
+      },
+      "metrics": {
+        "fixed_seed_replay_pass": true,
+        "isotropy_pass": true,
+        "sampling_convergence_pass": true
+      },
+      "sampling_convergence_summary": {
+        "comparison_beam_witness_areal_density_per_m2": 2.2357499433617987,
+        "comparison_sample_count": 8192,
+        "reference_beam_witness_areal_density_per_m2": 2.2375438053115406,
+        "reference_sample_count": 4096,
+        "relative_delta": 0.0008023535704733635
+      },
+      "source_role": "reproducibility + benchmark_design_reference",
+      "status": "toy_not_validated"
+    },
+    "BFM-BM-004": {
+      "benchmark_id": "BFM-BM-004",
+      "current_point": {
+        "ballistic_limit_velocity_mps_proxy": 810.0,
+        "penetration_margin_proxy": 474.2814124898239,
+        "representative_fragment_velocity_mps": 1284.2814124898239,
+        "residual_velocity_mps_proxy": 474.2814124898239,
+        "surface_incidence_cos": 1.0,
+        "witness_thickness_mm": 4.0
+      },
+      "metrics": {
+        "domain_rejection_pass": true,
+        "incidence_domain_rejection_pass": true,
+        "monotonic_penetration_margin_pass": true,
+        "unit_roundtrip_pass": true
+      },
+      "samples": [
+        {
+          "ballistic_limit_velocity_mps_proxy": 390.0,
+          "penetration_margin_proxy": 894.2814124898239,
+          "representative_fragment_velocity_mps": 1284.2814124898239,
+          "residual_velocity_mps_proxy": 894.2814124898239,
+          "surface_incidence_cos": 1.0,
+          "witness_thickness_mm": 1.0
+        },
+        {
+          "ballistic_limit_velocity_mps_proxy": 530.0,
+          "penetration_margin_proxy": 754.2814124898239,
+          "representative_fragment_velocity_mps": 1284.2814124898239,
+          "residual_velocity_mps_proxy": 754.2814124898239,
+          "surface_incidence_cos": 1.0,
+          "witness_thickness_mm": 2.0
+        },
+        {
+          "ballistic_limit_velocity_mps_proxy": 810.0,
+          "penetration_margin_proxy": 474.2814124898239,
+          "representative_fragment_velocity_mps": 1284.2814124898239,
+          "residual_velocity_mps_proxy": 474.2814124898239,
+          "surface_incidence_cos": 1.0,
+          "witness_thickness_mm": 4.0
+        },
+        {
+          "ballistic_limit_velocity_mps_proxy": 1370.0,
+          "penetration_margin_proxy": -85.71858751017612,
+          "representative_fragment_velocity_mps": 1284.2814124898239,
+          "residual_velocity_mps_proxy": 0.0,
+          "surface_incidence_cos": 1.0,
+          "witness_thickness_mm": 8.0
+        }
+      ],
+      "source_role": "validation_criteria + synthetic_benchmark_dataset",
+      "status": "toy_not_validated"
+    },
+    "BFM-BM-005": {
+      "benchmark_id": "BFM-BM-005",
+      "diagnostic_only_fields": {
+        "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+        "blast_overpressure_kpa_proxy": 2990.19783601993,
+        "fragment_energy_j_proxy": 8038.506154383306,
+        "fragment_mass_kg_proxy": 0.015,
+        "fragment_velocity_mps_proxy": 1284.2814124898239,
+        "penetration_margin_proxy": 474.2814124898239
+      },
+      "mechanism_load_vector": {
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "fragment_areal_density_per_m2": 2.2375438053115406,
+        "surface_incidence_cos": 1.0
+      },
+      "metrics": {
+        "forbidden_authority_fields_absent": true,
+        "seed_window_cv_pass": true,
+        "source_trace_completeness_pass": true,
+        "uncertainty_summary_present": true,
+        "unit_consistency_pass": true
+      },
+      "source_role": "synthetic_benchmark_dataset + reproducibility",
+      "status": "toy_not_validated",
+      "uncertainty_summary": {
+        "blast_impulse_kpa_ms_proxy": {
+          "cv": 0.0,
+          "max": 1818.232969328465,
+          "mean": 1818.232969328465,
+          "min": 1818.232969328465,
+          "pstdev": 0.0
+        },
+        "evaluated_seeds": [
+          20260529,
+          20260630,
+          20260731,
+          20260832
+        ],
+        "fragment_areal_density_per_m2": {
+          "cv": 0.013556475680557211,
+          "max": 2.2794005841388545,
+          "mean": 2.2321622194623147,
+          "min": 2.202862474283195,
+          "pstdev": 0.030260252843199477
+        },
+        "fragment_energy_j_proxy": {
+          "cv": 0.0,
+          "max": 8038.506154383306,
+          "mean": 8038.506154383306,
+          "min": 8038.506154383306,
+          "pstdev": 0.0
+        },
+        "penetration_margin_proxy": {
+          "cv": 0.014953428348644477,
+          "max": 488.17637622405573,
+          "mean": 478.7925499524515,
+          "min": 469.84618188494005,
+          "pstdev": 7.159590089578765
+        }
+      }
+    },
+    "BFM-BM-006": {
+      "benchmark_id": "BFM-BM-006",
+      "issues": [],
+      "metrics": {
+        "checked_calibration_docs": 24,
+        "checked_candidate_docs": 29,
+        "checked_ledgers": 9,
+        "source_trace_error_count": 0,
+        "source_trace_warning_count": 0
+      },
+      "status": "administrative_gate"
+    }
+  },
+  "candidate_inputs": {
+    "target": {
+      "height_m": 4.88,
+      "length_m": 15.06,
+      "name": "F-16C_Block50",
+      "provenance": "repo-authored candidate F-16C geometry scaffold; non-authoritative and suitable only for coarse witness geometry",
+      "reference_area_m2": 27.87,
+      "source_kind": "repo_candidate_database",
+      "source_ref": "examples/config/database/aircraft/units/f16c_block50.json",
+      "wingspan_m": 9.96
+    },
+    "weapon": {
+      "fuze_type": "radar_proximity",
+      "name": "AIM-120C-7",
+      "provenance": "repo-authored AIM-120C-class family envelope scaffold; non-authoritative and not a claim of real C-model warhead/fuze truth",
+      "repo_lethal_radius_m": 15.0,
+      "source_kind": "repo_candidate_database",
+      "source_ref": "examples/config/database/weapons/air_to_air/aim_120c.json",
+      "warhead_family": "blast_fragmentation",
+      "warhead_mass_kg": 20.0,
+      "weapon_class": "AIM-120C-class"
+    }
+  },
+  "current_authority_boundary": {
+    "calibration_status": "unvalidated",
+    "component_failure_probability_authority": false,
+    "deterministic_fuze_authority": false,
+    "effect_scale_authority": false,
+    "pk_authority": false,
+    "runtime_descriptor_status": "not_created"
+  },
+  "diagnostic_only_fields": {
+    "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+    "blast_overpressure_kpa_proxy": 2990.19783601993,
+    "fragment_energy_j_proxy": 8038.506154383306,
+    "fragment_mass_kg_proxy": 0.015,
+    "fragment_velocity_mps_proxy": 1284.2814124898239,
+    "penetration_margin_proxy": 474.2814124898239
+  },
+  "mechanism_load_vector": {
+    "blast_scaled_distance_m_kg13": 0.12894110245241353,
+    "fragment_areal_density_per_m2": 2.2375438053115406,
+    "surface_incidence_cos": 1.0
+  },
+  "non_authoritative_guards": {
+    "descriptor_row_created": false,
+    "forbidden_outputs_omitted": [
+      "effect_scale",
+      "component_failure_probability",
+      "pk",
+      "deterministic_fuze"
+    ],
+    "runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "schema_version": "a2.vulnerability_surrogate_validation.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "closure_mps": 900.0,
+    "runtime_miss_distance_bucket": "near_miss",
+    "standoff_m": 0.35,
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "validation_status": "not_run",
+  "vulnerability_evidence_draft": {
+    "descriptor": {
+      "aspect_bucket": "beam",
+      "calibration_status": "unvalidated",
+      "closure_bucket": "high",
+      "component_failure_probability_authority": false,
+      "dataset_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0_descriptor_row_draft",
+      "deterministic_fuze_authority": false,
+      "effect_scale_authority": false,
+      "miss_distance_bucket": "near_miss",
+      "pk_authority": false,
+      "provenance": "schema-aligned non-authoritative row draft derived from the A2 blast-fragmentation toy/mechanism-load scaffold; gate-only and not a calibrated effect-scale or component-failure descriptor",
+      "rows": [
+        {
+          "aspect_bucket": "beam",
+          "closure_bucket": "high",
+          "max_blast_scaled_distance_m_kg13": 0.14828226782027554,
+          "max_fragment_areal_density_per_m2": 2.5731753761082716,
+          "max_fragment_energy_j": 9646.207385259968,
+          "max_penetration_margin": 474.5314124898239,
+          "max_surface_incidence_cos": 1.0,
+          "min_blast_scaled_distance_m_kg13": 0.1095999370845515,
+          "min_fragment_areal_density_per_m2": 1.9019122345148094,
+          "min_fragment_energy_j": 6430.8049235066455,
+          "min_penetration_margin": 474.0314124898239,
+          "min_surface_incidence_cos": 0.95,
+          "miss_distance_bucket": "near_miss",
+          "provenance": "non-authoritative mechanism-load gate row drafted from fixed-seed toy witness geometry; no effect_scale or component_failure_probability",
+          "row_id": "draft-blastfrag-beam-high-near-miss-mechanism-gate",
+          "source_ref": "tools/maintenance/a2_blastfrag_validation_scaffold.py#draft-blastfrag-beam-high-near-miss-mechanism-gate",
+          "weapon_family": "blast_fragmentation"
+        }
+      ],
+      "runtime_row_gate_notes": {
+        "authority_boundary": "all authority fields remain false",
+        "candidate_scope_label": "near_miss_0_35m",
+        "runtime_miss_distance_bucket": "near_miss"
+      },
+      "schema_version": "a2.vulnerability_evidence.v1",
+      "source_kind": "engineering_surrogate",
+      "source_ref": "tools/maintenance/a2_blastfrag_validation_scaffold.py#a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+      "target_type": "F-16C_Block50",
+      "validation_artifact_ref": "",
+      "weapon_family": "blast_fragmentation"
+    },
+    "status": "schema_aligned_non_authoritative_draft"
+  }
+}

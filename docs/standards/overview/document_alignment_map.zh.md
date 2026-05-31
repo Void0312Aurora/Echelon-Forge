@@ -23,6 +23,7 @@ Language:
 - [联合命令链与汇报基线](../joint/command_link_and_reporting_baseline.md)
 - [仿真约定](../foundation/conventions.md)
 - [梯度真实性原则](../foundation/gradient_realism_principles.zh.md)
+- [真实性与 Authority 边界规则](../foundation/realism_authority_boundary.zh.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
 
 它们负责定义：
@@ -32,6 +33,7 @@ Language:
 - `ScenarioLoader` 编排层与 C++ mission/runtime 纯计算层的阶段归属
 - 引擎中立的坐标、角度、时间和观测约定
 - 让场景声明与已实现领域机制保持一致的梯度真实性门槛
+- 把“高真实度 / candidate / non-authoritative / authority release”这些口径稳定抽取成共享边界
 
 ### 军种画像
 

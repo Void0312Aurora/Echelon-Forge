@@ -52,7 +52,7 @@ python3 -m pytest -q tests/architecture/test_a2_source_admission_audit.py
 并行数据收集后，A2 仍停留在 `candidate / non-authoritative`：
 
 - guidance / miss-distance：PN/APN、terminal evasion、seeker/filter/noise 只达到 `method_reference`、`validation_criteria_reference`、`benchmark_design_reference` 或 `reproducibility_candidate`。
-- VPS / blast-fragmentation：Kingery-Bulmash、Gurney、DDESB TP-20/TP-21 仍缺官方 artifact、rights 和 sha256；UFC 3-340-01 继续 rejected。
+- VPS / blast-fragmentation：DENIX TP-20/TP-21 / BEC-O public artifacts 现已 externally verified 并固定 checksum，但 retained benchmark input、allowed-output policy 和 release-grade provenance 仍 open；Kingery-Bulmash、Gurney 仍缺官方 artifact closeout；UFC 3-340-01 继续 rejected。
 - target / material / fuze：F-16 内部几何、材料分区、AIM-120C 战斗部/引信、MIL-STD-662F artifact 仍未闭合；只能作为 reference / sanity / pending。
 - component fragility：公开来源可支持方法、准则和 benchmark design；尚无 scope-matched AAM/F-16 组件失效概率校准数据。
 

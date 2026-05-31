@@ -37,19 +37,19 @@
 
 | `closure_mps` | `blast_scaled_distance_m_kg13` | `fragment_areal_density_per_m2` | `surface_incidence_cos` | 判读 |
 |---:|---:|---:|---:|---|
-| `700` | `0.1289411025` | `2.2375438053` | `1.0` | 与 anchor 相同。 |
+| `700` | `0.1289411025` | `2.1480420531` | `1.0` | 低于 anchor，保留同一 coarse bucket。 |
 | `900` | `0.1289411025` | `2.2375438053` | `1.0` | 当前 Stage B anchor。 |
-| `1100` | `0.1289411025` | `2.2375438053` | `1.0` | 与 anchor 相同。 |
+| `1100` | `0.1289411025` | `2.3270455575` | `1.0` | 高于 anchor，保留同一 coarse bucket。 |
 
 当前 probe 结论：
 
-- 这三个 closure probe 在当前 scaffold 中给出完全相同的 mechanism-load 输出；
-- 因此 `high` 目前仍更像一个 scope label，而不是已被该 surrogate 消费的物理敏感轴；
-- 这对 Stage B 是可接受的，因为本轮目标是 effect-scale review hygiene，而不是 closure-sensitive calibrated surrogate。
+- 这三个 closure probe 现在已在当前 scaffold 中给出第一版 candidate closure-sensitive mechanism-load 响应；
+- 因此 `high` 不再只是纯 bookkeeping label，但该响应仍然只是 candidate surrogate 级别，而不是已验证的 closure-sensitive authority；
+- 这对 Stage B 是可接受的，因为本轮目标仍是 effect-scale review hygiene，而不是 closure-sensitive calibrated surrogate。
 
 因此：
 
-> `SCP-PROBE-002` 当前证明的是“closure 轴的 bookkeeping 已冻结”，而不是“closure 轴的物理敏感性已经验证”。
+> `SCP-PROBE-002` 当前证明的是“closure 轴已经出现 candidate-level response 且 bookkeeping 已冻结”，而不是“closure 轴的物理敏感性已经完成验证”。
 
 ## 4. Aspect Guard Results
 
@@ -68,7 +68,7 @@
 这份结果表生成后，当前 residual 可更准确地解释为：
 
 - `RES-007`：已拥有三点 miss-distance boundary results，但仍缺独立 review 与更强的 bucket sensitivity 审计。
-- `RES-008`：已拥有 beam/high 边界结果与 rejection guard，但 closure 轴当前仍未表现出物理敏感性。
+- `RES-008`：已拥有 beam/high 边界结果、rejection guard 与第一版 candidate closure-sensitive response，但该响应仍缺独立 review，不能直接上升为 authority 语义。
 - `RES-012`：probe 结果表已经出现，但 benchmark/input independence 仍缺独立 reviewer audit。
 
 ## 6. 当前判定

@@ -1,0 +1,516 @@
+{
+  "author_side_uncertainty_probe": {
+    "anchor_probe_label": "middle",
+    "component_failure_probability": {
+      "cv": 0.0,
+      "max": 0.37,
+      "mean": 0.36999999999999994,
+      "min": 0.37
+    },
+    "current_author_side_result": "repeatability_probe_pass_candidate_only",
+    "mechanism_load_repeatability": {
+      "blast_impulse_kpa_ms": {
+        "cv": 0.0,
+        "max": 336.95985939968347,
+        "mean": 336.95985939968347,
+        "min": 336.95985939968347
+      },
+      "fragment_areal_density_per_m2": {
+        "cv": 0.0,
+        "max": 8.368477755628792,
+        "mean": 8.368477755628792,
+        "min": 8.368477755628792
+      },
+      "fragment_energy_j": {
+        "cv": 0.0,
+        "max": 13620.333062198828,
+        "mean": 13620.333062198828,
+        "min": 13620.333062198828
+      },
+      "penetration_margin": {
+        "cv": 0.0,
+        "max": 0.3968368279964385,
+        "mean": 0.3968368279964385,
+        "min": 0.3968368279964385
+      }
+    },
+    "not_covered": [
+      "independent Brier/log-loss or calibration-curve scoring",
+      "scenario spread outside the three-point author-side surface probe",
+      "reviewer-accepted confidence or coverage interval",
+      "release-grade uncertainty budget for stock descriptor admission"
+    ],
+    "probe_status": "author_side_repeatability_probe_only",
+    "seed_values": [
+      20260526,
+      20260527,
+      20260528
+    ],
+    "selected_row_ids": [
+      "component-middle",
+      "component-middle",
+      "component-middle"
+    ]
+  },
+  "authority_guards": {
+    "deterministic_fuze_authority": false,
+    "pk_authority": false,
+    "stage_c_candidate_bundle_role": "review_and_packaging_only",
+    "stock_component_probability_authority": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "baseline_synthetic_sigmoid_vs_candidate_evidence_row_replacement_path": {
+    "baseline": {
+      "authority_role": "stock_runtime_baseline_remains_closed",
+      "component_name": "right_aileron_actuator",
+      "component_probability_source": "synthetic_sigmoid",
+      "replacement_allowed_now": false
+    },
+    "candidate_evidence_row_surface": [
+      {
+        "candidate_evidence_provenance": "author-side inner-bucket component row for Stage C surface probe only",
+        "candidate_evidence_source_ref": "fixture://stage-c-surface-probe/component-inner",
+        "candidate_probability": 0.52,
+        "candidate_probability_source": "vulnerability_evidence_row",
+        "candidate_row_id": "component-inner",
+        "component_name": "right_aileron_actuator",
+        "component_redundancy_group_id": "lateral_flight_control_actuators",
+        "component_system": "flight_control",
+        "probe_label": "inner"
+      },
+      {
+        "candidate_evidence_provenance": "author-side middle-bucket component row for Stage C surface probe only",
+        "candidate_evidence_source_ref": "fixture://stage-c-surface-probe/component-middle",
+        "candidate_probability": 0.37,
+        "candidate_probability_source": "vulnerability_evidence_row",
+        "candidate_row_id": "component-middle",
+        "component_name": "right_aileron_actuator",
+        "component_redundancy_group_id": "lateral_flight_control_actuators",
+        "component_system": "flight_control",
+        "probe_label": "middle"
+      },
+      {
+        "candidate_evidence_provenance": "author-side outer-bucket component row for Stage C surface probe only",
+        "candidate_evidence_source_ref": "fixture://stage-c-surface-probe/component-outer",
+        "candidate_probability": 0.21,
+        "candidate_probability_source": "vulnerability_evidence_row",
+        "candidate_row_id": "component-outer",
+        "component_name": "right_aileron_actuator",
+        "component_redundancy_group_id": "lateral_flight_control_actuators",
+        "component_system": "flight_control",
+        "probe_label": "outer"
+      }
+    ],
+    "forbidden_shortcuts": [
+      "do not copy the test-local candidate rows into stock descriptors",
+      "do not treat component_failure_probability_calibrated=true in a fixture as stock authority",
+      "do not promote baseline replacement while Stage B remains blocked"
+    ],
+    "path_status": "defined_but_not_authorized",
+    "replacement_sequence": [
+      "retain synthetic_sigmoid as non-authoritative stock baseline",
+      "run independent fragility validation against the frozen matrix",
+      "close RES-009, RES-010, RES-011 and RES-012 with reviewer-owned records",
+      "re-check Stage B effect-scale release dependency before Stage C promotion",
+      "only then consider a separate stock descriptor admission review"
+    ]
+  },
+  "explicit_boundaries": [
+    "prep packet only; not an independent fragility review result",
+    "do not create or update stock runtime descriptors from this artifact",
+    "do not promote component probability while Stage B effect-scale is blocked",
+    "pk_authority=false and deterministic_fuze_authority=false remain mandatory"
+  ],
+  "fragility_validation_matrix": [
+    {
+      "current_author_side_result": "pass_candidate_only",
+      "evidence_summary": {
+        "component_name": "right_aileron_actuator",
+        "component_redundancy_group_id": "lateral_flight_control_actuators",
+        "component_system": "flight_control"
+      },
+      "executable_artifact": "tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py",
+      "matrix_id": "FRAG-MAT-CP-001",
+      "release_interpretation": "component identity is reviewable, but not independently audited truth",
+      "residual_links": [
+        "RES-009",
+        "RES-010"
+      ],
+      "review_question": "Does the candidate review surface remain locked to right_aileron_actuator and its flight-control redundancy group?"
+    },
+    {
+      "current_author_side_result": "pass_candidate_only",
+      "evidence_summary": {
+        "all_selected_rows_cover_primary_loads": true,
+        "probe_labels": [
+          "inner",
+          "middle",
+          "outer"
+        ],
+        "selected_row_ids": [
+          "component-inner",
+          "component-middle",
+          "component-outer"
+        ]
+      },
+      "executable_artifact": "tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py",
+      "matrix_id": "FRAG-MAT-CP-002",
+      "release_interpretation": "load-gate coverage is ready for reviewer audit, not authority release",
+      "residual_links": [
+        "RES-009",
+        "RES-010"
+      ],
+      "review_question": "Does each candidate row cover the primary mechanism-load gate band for the projected component?"
+    },
+    {
+      "current_author_side_result": "blocked_expected_non_authoritative",
+      "evidence_summary": {
+        "baseline_component_probability_source": "synthetic_sigmoid",
+        "candidate_component_failure_probability": 0.67
+      },
+      "executable_artifact": "tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack.py",
+      "matrix_id": "FRAG-MAT-CP-003",
+      "release_interpretation": "synthetic baseline must be replaced only after independent fragility closeout and descriptor review",
+      "residual_links": [
+        "RES-009"
+      ],
+      "review_question": "Is the baseline still synthetic_sigmoid, and therefore not a release-grade component fragility curve?"
+    },
+    {
+      "current_author_side_result": "pass_candidate_only",
+      "evidence_summary": {
+        "probe_probabilities": [
+          0.52,
+          0.37,
+          0.21
+        ],
+        "probe_row_ids": [
+          "component-inner",
+          "component-middle",
+          "component-outer"
+        ]
+      },
+      "executable_artifact": "tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py",
+      "matrix_id": "FRAG-MAT-CP-004",
+      "release_interpretation": "monotonic candidate behavior is an author-side review input only",
+      "residual_links": [
+        "RES-009",
+        "RES-011"
+      ],
+      "review_question": "Is the author-side candidate surface monotonic with standoff inside the narrow near-miss bucket?"
+    },
+    {
+      "current_author_side_result": "pass_candidate_only",
+      "evidence_summary": {
+        "component_failure_probability_cv": 0.0,
+        "seed_values": [
+          20260526,
+          20260527,
+          20260528
+        ]
+      },
+      "executable_artifact": "tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py",
+      "matrix_id": "FRAG-MAT-CP-005",
+      "release_interpretation": "repeatability exists for the toy candidate probe, but uncertainty coverage remains open",
+      "residual_links": [
+        "RES-011"
+      ],
+      "review_question": "Is the fixed-seed repeatability probe stable enough to hand to an uncertainty reviewer?"
+    },
+    {
+      "current_author_side_result": "prepared_pending_independent_audit",
+      "evidence_summary": {
+        "independence_rows": [
+          "ART-RUNTIME-AUTH-001",
+          "ART-STAGE-C-SNAPSHOT-001",
+          "ROW-COMPONENT-001"
+        ],
+        "review_gate_has_res012_blocker": true
+      },
+      "executable_artifact": "tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack.py",
+      "matrix_id": "FRAG-MAT-CP-006",
+      "release_interpretation": "separation trace is ready to inspect, but independent audit is not closed",
+      "residual_links": [
+        "RES-012"
+      ],
+      "review_question": "Are input/tuning artifacts separated from output/result artifacts in the review packet?"
+    },
+    {
+      "current_author_side_result": "dependency_preserved_as_blocked",
+      "evidence_summary": {
+        "stage_b_blocking_residual_ids": [
+          "RES-010",
+          "RES-002",
+          "RES-001",
+          "RES-008",
+          "RES-012",
+          "RES-007",
+          "RES-011",
+          "RES-013/014-boundary"
+        ],
+        "stage_b_status": "blocked_non_authoritative_stage_b_release_candidate"
+      },
+      "executable_artifact": "tools/maintenance/a2_blastfrag_stage_c_component_probability_review_readiness_gate.py",
+      "matrix_id": "FRAG-MAT-CP-007",
+      "release_interpretation": "Stage C may prepare review inputs, but cannot outrun blocked Stage B",
+      "residual_links": [
+        "RES-010",
+        "RES-012"
+      ],
+      "review_question": "Does Stage C preserve the blocked Stage B effect-scale dependency instead of promoting component probability independently?"
+    }
+  ],
+  "independence_trace": {
+    "existing_independence_audit_rows": [
+      {
+        "allowed_claim": "runtime-aligned component-specific positive path exists",
+        "artifact_id": "ART-RUNTIME-AUTH-001",
+        "audit_outcome": "test_local_positive_path_only",
+        "current_release_role": "positive_path_runtime_shape_demonstration",
+        "forbidden_claim": "stock runtime authority or independent fragility validation",
+        "independence_class": "test_local_runtime_exercise_only"
+      },
+      {
+        "allowed_claim": "author-side candidate snapshot and provenance surface exist",
+        "artifact_id": "ART-STAGE-C-SNAPSHOT-001",
+        "audit_outcome": "candidate_snapshot_only_not_independent_validation",
+        "current_release_role": "frozen_author_side_component_probability_snapshot",
+        "forbidden_claim": "validated component fragility truth or released probability authority",
+        "independence_class": "author_side_candidate_snapshot_only"
+      },
+      {
+        "allowed_claim": "candidate row binds to one projected component with traceable fields",
+        "artifact_id": "ROW-COMPONENT-001",
+        "audit_outcome": "candidate_component_specific_only",
+        "current_release_role": "component-specific provenance and gate-band demonstration",
+        "forbidden_claim": "real actuator fragility curve or aircraft-wide failure probability truth",
+        "independence_class": "component_specific_candidate_row_only"
+      }
+    ],
+    "input_or_tuning_layer": [
+      {
+        "artifact_id": "INPUT-CP-001",
+        "artifact_kind": "candidate_descriptor_rows",
+        "forbidden_use": "validation benchmark truth or reviewer result",
+        "role": "candidate evidence-row inputs only"
+      },
+      {
+        "artifact_id": "INPUT-CP-002",
+        "artifact_kind": "runtime_aligned_authority_exercise_fixture",
+        "forbidden_use": "stock descriptor admission evidence",
+        "role": "test-local positive-path exercise"
+      }
+    ],
+    "open_independence_blockers": [
+      {
+        "blocker_id": "BLOCK-CP-001",
+        "residual_id": "RES-012",
+        "summary": "independent fragility review and result-level independence audit are still missing"
+      }
+    ],
+    "required_independent_review_record": "reviewer-owned signoff that benchmark outputs, acceptance thresholds and descriptor/tuning inputs are separated and non-circular",
+    "residual_id": "RES-012",
+    "result_or_review_layer": [
+      {
+        "artifact_id": "RESULT-CP-001",
+        "artifact_kind": "stage_c_component_probability_result_pack",
+        "current_independence_class": "candidate_result_pack_only",
+        "role": "author-side consolidated result snapshot"
+      },
+      {
+        "artifact_id": "RESULT-CP-002",
+        "artifact_kind": "stage_c_fragility_validation_prep",
+        "current_independence_class": "prep_packet_only",
+        "role": "reviewer input matrix and closeout plan"
+      }
+    ],
+    "stage_b_dependency_interlock": {
+      "dependency_preserved_as_blocked": true,
+      "dependency_role": "separate_upstream_effect_scale_authority_track",
+      "stage_b_blocking_residual_ids": [
+        "RES-010",
+        "RES-002",
+        "RES-001",
+        "RES-008",
+        "RES-012",
+        "RES-007",
+        "RES-011",
+        "RES-013/014-boundary"
+      ],
+      "stage_b_release_target": "effect_scale_authority_only",
+      "stage_b_status": "blocked_non_authoritative_stage_b_release_candidate",
+      "stage_c_must_not_promote_before_stage_b_release": true
+    },
+    "trace_status": "prepared_pending_independent_result_audit"
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "readiness_level": "fragility_review_input_packet_ready_but_authority_release_blocked",
+  "residual_gate_results": [
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocking_condition_ids": [
+        "BLOCK-CP-003"
+      ],
+      "blocking_summaries": [
+        "component fragility truth is still unclosed: the baseline remains 'synthetic_sigmoid' and the candidate row is still a test-local, component-specific positive path"
+      ],
+      "current_gate_result": "blocked_non_authoritative",
+      "prep_outputs_added": [
+        "fragility_validation_matrix",
+        "baseline_synthetic_sigmoid_vs_candidate_evidence_row_replacement_path"
+      ],
+      "required_to_close": "Run and independently review a component fragility curve/benchmark for right_aileron_actuator; prove the candidate evidence-row mapping is not a synthetic_sigmoid substitute or a test-local positive path.",
+      "residual_id": "RES-009"
+    },
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocking_condition_ids": [
+        "BLOCK-CP-002"
+      ],
+      "blocking_summaries": [
+        "validation manifest still stays at not_run rather than validated/passed"
+      ],
+      "current_gate_result": "blocked_non_authoritative",
+      "prep_outputs_added": [
+        "fragility_validation_matrix",
+        "review_entry_artifact_inventory"
+      ],
+      "required_to_close": "Attach the pre-run Stage C criteria to a formal result table, validation manifest update and independent reviewer signoff.",
+      "residual_id": "RES-010"
+    },
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocking_condition_ids": [
+        "BLOCK-CP-004"
+      ],
+      "blocking_summaries": [
+        "probability uncertainty coverage and closeout are still missing"
+      ],
+      "current_gate_result": "blocked_non_authoritative",
+      "prep_outputs_added": [
+        "author_side_uncertainty_probe",
+        "uncertainty_closeout_plan"
+      ],
+      "required_to_close": "Close probability uncertainty with calibrated coverage metrics, seed and scenario spread, and reviewer-accepted uncertainty bounds.",
+      "residual_id": "RES-011"
+    },
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocking_condition_ids": [
+        "BLOCK-CP-001"
+      ],
+      "blocking_summaries": [
+        "independent fragility review and result-level independence audit are still missing"
+      ],
+      "current_gate_result": "blocked_non_authoritative",
+      "prep_outputs_added": [
+        "independence_trace",
+        "stage_b_dependency_interlock"
+      ],
+      "required_to_close": "Audit benchmark/input separation at result level and record independent reviewer confirmation that the benchmark does not circularly reuse model inputs or tuning rows.",
+      "residual_id": "RES-012"
+    }
+  ],
+  "review_entry_artifact_inventory": [
+    {
+      "artifact_id": "REVIEW-CP-001",
+      "artifact_kind": "stage_c_result_pack",
+      "current_status": "candidate_non_authoritative_stage_c_component_probability_result_pack",
+      "review_role": "author-side current result summary",
+      "tool_ref": "tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack.py"
+    },
+    {
+      "artifact_id": "REVIEW-CP-002",
+      "artifact_kind": "stage_c_surface_probe",
+      "current_status": "candidate_non_authoritative_stage_c_component_probability_surface_probe",
+      "review_role": "fragility-surface and repeatability input",
+      "tool_ref": "tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py"
+    },
+    {
+      "artifact_id": "REVIEW-CP-003",
+      "artifact_kind": "stage_c_review_readiness_gate",
+      "current_status": "blocked_non_authoritative_stage_c_review_candidate",
+      "review_role": "blocked authority boundary and residual gate",
+      "tool_ref": "tools/maintenance/a2_blastfrag_stage_c_component_probability_review_readiness_gate.py"
+    },
+    {
+      "artifact_id": "REVIEW-CP-004",
+      "artifact_kind": "stage_c_fragility_validation_prep",
+      "current_status": "prep_packet_generated_by_this_tool",
+      "review_role": "independent fragility review entry matrix",
+      "tool_ref": "tools/maintenance/a2_blastfrag_stage_c_fragility_validation_prep.py"
+    }
+  ],
+  "review_packet_summary": {
+    "authority_release_ready": false,
+    "independent_fragility_review_closed": false,
+    "ready_to_request_independent_fragility_review": true,
+    "residuals_still_blocking_authority": [
+      "RES-009",
+      "RES-010",
+      "RES-011",
+      "RES-012"
+    ],
+    "stage_b_dependency_preserved_as_blocked": true,
+    "stock_authority_remains_closed": true
+  },
+  "schema_version": "a2.stage_c_fragility_validation_prep.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "component_name": "right_aileron_actuator",
+    "component_redundancy_group_id": "lateral_flight_control_actuators",
+    "component_system": "flight_control",
+    "miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "stage_b_dependency_interlock": {
+    "dependency_preserved_as_blocked": true,
+    "dependency_role": "separate_upstream_effect_scale_authority_track",
+    "interlock_result": "dependency_preserved_no_stage_c_authority_promotion",
+    "stage_b_blocking_residual_ids": [
+      "RES-010",
+      "RES-002",
+      "RES-001",
+      "RES-008",
+      "RES-012",
+      "RES-007",
+      "RES-011",
+      "RES-013/014-boundary"
+    ],
+    "stage_b_readiness_level": "author_side_candidate_review_ready_but_not_release_ready",
+    "stage_b_release_target": "effect_scale_authority_only",
+    "stage_b_status": "blocked_non_authoritative_stage_b_release_candidate"
+  },
+  "status": "prepared_non_authoritative_stage_c_fragility_validation_review_inputs",
+  "uncertainty_closeout_plan": [
+    {
+      "acceptance_signal": "coverage metrics pass pre-declared Stage C thresholds",
+      "owner_role": "independent_fragility_reviewer",
+      "plan_id": "UNC-CP-001",
+      "required_input": "frozen Stage C fragility validation matrix and retained prep artifact",
+      "required_output": "reviewer-owned uncertainty result table",
+      "residual_id": "RES-011"
+    },
+    {
+      "acceptance_signal": "author-side fixed-seed repeatability is reproducible and clearly separated from release-grade uncertainty claims",
+      "owner_role": "author_support_only",
+      "plan_id": "UNC-CP-002",
+      "required_input": "author-side repeatability probe and surface probe rows",
+      "required_output": "reviewer-auditable seed/scenario spread ledger",
+      "residual_id": "RES-011"
+    },
+    {
+      "acceptance_signal": "synthetic_sigmoid is not replaced unless uncertainty and fragility validation both pass",
+      "owner_role": "release_reviewer",
+      "plan_id": "UNC-CP-003",
+      "required_input": "candidate evidence-row replacement path",
+      "required_output": "explicit decision to retain or reject the evidence-row probabilities",
+      "residual_id": "RES-011"
+    }
+  ]
+}

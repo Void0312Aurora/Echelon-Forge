@@ -1,0 +1,30 @@
+{
+  "artifact_count": 2,
+  "artifacts": [
+    {
+      "artifact_id": "stage_c_fragility_benchmark",
+      "path": "stage_c_fragility_benchmark.json",
+      "role": "blocked right_aileron_actuator fragility benchmark evidence manifest",
+      "schema_version": "a2.stage_c_fragility_benchmark.v1",
+      "sha256": "8905156b1e8ede7207fc8f6be58065e0647f3dd4ead649c67a2f4f34f82f418a"
+    },
+    {
+      "artifact_id": "candidate_vs_synthetic_sigmoid_comparison",
+      "path": "candidate_vs_synthetic_sigmoid_comparison.json",
+      "role": "author-side candidate evidence-row vs synthetic_sigmoid comparison and blocked calibration ledger",
+      "schema_version": "a2.stage_c_fragility_benchmark_comparison.v1",
+      "sha256": "28e0f71b80817935bfd130e9d76a86b5dcdf11ed9fb0cb43230550139c1410a6"
+    }
+  ],
+  "authority_granted": false,
+  "deterministic_fuze_authority": false,
+  "external_truth_present": false,
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "pk_authority": false,
+  "replacement_allowed": false,
+  "retention_scope": "stage_c_fragility_benchmark_author_side_blocked_only",
+  "schema_version": "a2.stage_c_fragility_benchmark_retained_manifest.v1",
+  "stage_b_dependency_preserved_as_blocked": true,
+  "status": "blocked_stage_c_fragility_benchmark_manifest_only",
+  "stock_component_probability_authority": false
+}

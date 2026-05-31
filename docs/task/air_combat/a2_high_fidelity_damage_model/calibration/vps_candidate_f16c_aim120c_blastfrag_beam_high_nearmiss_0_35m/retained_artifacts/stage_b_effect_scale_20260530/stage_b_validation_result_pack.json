@@ -1,0 +1,141 @@
+{
+  "artifact_hashes": [
+    {
+      "artifact_id": "ART-SCAFFOLD-001",
+      "artifact_kind": "validation_scaffold_snapshot",
+      "sha256": "0e007353a8615f2f85866dfefe90a4cfe2fc2251d9c86f6d8c8ba01085be205e",
+      "status": "not_run",
+      "tool_ref": "tools/maintenance/a2_blastfrag_validation_scaffold.py"
+    },
+    {
+      "artifact_id": "ART-SCOPE-PROBE-001",
+      "artifact_kind": "scope_boundary_probe_snapshot",
+      "sha256": "4321242f12c6f5878f19e8989d05e46b87f96ece37a00f1f1470e72584e2d1cf",
+      "status": "candidate_non_authoritative_scope_probe_results",
+      "tool_ref": "tools/maintenance/a2_blastfrag_scope_boundary_probe.py"
+    },
+    {
+      "artifact_id": "ART-STAGE-B-SNAPSHOT-001",
+      "artifact_kind": "stage_b_hard_gate_snapshot",
+      "sha256": "ed78f202eb23a1494a48c9b34afc8cefdaf16d13e618a041b505d10fb113312b",
+      "status": "candidate_non_authoritative_stage_b_snapshot",
+      "tool_ref": "tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py"
+    }
+  ],
+  "current_findings": [
+    "the current result pack consolidates fixed-seed scaffold, scope probe and stage-b snapshot outputs under stable content hashes",
+    "all current Stage B hard gates pass inside the candidate snapshot, but the result pack is still author-side and non-authoritative",
+    "BFM-BM-005 remains integrated hygiene only and must not be narrated as independent surrogate validation"
+  ],
+  "independence_audit": [
+    {
+      "allowed_claim": "candidate blast unit/domain lock only",
+      "audit_outcome": "candidate_method_independence_only",
+      "benchmark_id": "BFM-BM-001",
+      "current_release_role": "unit_domain_lock",
+      "forbidden_claim": "external blast truth or missile-specific validation truth",
+      "independence_class": "partial_independent_method_only"
+    },
+    {
+      "allowed_claim": "toy fragment mass-energy sanity only",
+      "audit_outcome": "deferred_not_release_gating",
+      "benchmark_id": "BFM-BM-002",
+      "current_release_role": "deferred_fragment_sanity",
+      "forbidden_claim": "AIM-120C fragment truth or release gating",
+      "independence_class": "synthetic_only"
+    },
+    {
+      "allowed_claim": "sampling replay and convergence inside witness-geometry bookkeeping",
+      "audit_outcome": "candidate_sampling_hygiene_only",
+      "benchmark_id": "BFM-BM-003",
+      "current_release_role": "sampler_reproducibility_and_convergence",
+      "forbidden_claim": "true F-16 exposure geometry or direction-pattern truth",
+      "independence_class": "independent_for_sampler_replay_not_for_target_truth"
+    },
+    {
+      "allowed_claim": "formula-shape and domain-rejection hygiene only",
+      "audit_outcome": "deferred_not_release_gating",
+      "benchmark_id": "BFM-BM-004",
+      "current_release_role": "deferred_penetration_domain_hygiene",
+      "forbidden_claim": "aircraft component penetration truth or release gating",
+      "independence_class": "partial_independent_method_only"
+    },
+    {
+      "allowed_claim": "integrated mechanism-load bookkeeping hygiene only",
+      "audit_outcome": "candidate_hygiene_only_not_independent_validation",
+      "benchmark_id": "BFM-BM-005",
+      "current_release_role": "integrated_mechanism_load_hygiene_only",
+      "forbidden_claim": "independent surrogate validation or authority release by itself",
+      "independence_class": "not_independent_real_validation"
+    },
+    {
+      "allowed_claim": "administrative trace and rights gate only",
+      "audit_outcome": "administrative_gate_only",
+      "benchmark_id": "BFM-BM-006",
+      "current_release_role": "source_trace_and_rights_gate",
+      "forbidden_claim": "physics validation by itself",
+      "independence_class": "administratively_independent"
+    }
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "release_readiness_interpretation": {
+    "current_hard_gate_snapshot_pass": true,
+    "current_release_decision": "blocked_pending_independent_review_release_grade_identity_provenance_uncertainty_and_scope_closeout",
+    "hard_gate_pass_is_release": false,
+    "release_ready": false,
+    "release_target": "effect_scale_authority_only",
+    "stage_c_component_probability_release_included": false,
+    "stock_runtime_authority_granted": false
+  },
+  "result_table_summary": {
+    "all_hard_gates_pass_in_current_snapshot": true,
+    "evidence_artifact_hashes": {
+      "scope_boundary_probe": "4321242f12c6f5878f19e8989d05e46b87f96ece37a00f1f1470e72584e2d1cf",
+      "stage_b_snapshot": "ed78f202eb23a1494a48c9b34afc8cefdaf16d13e618a041b505d10fb113312b",
+      "validation_scaffold": "0e007353a8615f2f85866dfefe90a4cfe2fc2251d9c86f6d8c8ba01085be205e"
+    },
+    "failed_criteria_ids": [],
+    "hard_gate_pass_is_release": false,
+    "primary_release_scope": "effect_scale_authority_only",
+    "review_status": "author_result_pack_only_pending_independent_review",
+    "reviewed_benchmarks": [
+      "BFM-BM-001",
+      "BFM-BM-003",
+      "BFM-BM-005",
+      "BFM-BM-006"
+    ]
+  },
+  "schema_version": "a2.stage_b_validation_result_pack.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "runtime_miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "scope_audit_summary": {
+    "closure_limitation_note": "candidate closure-sensitive response is present in closure-sensitive gate fields, but RES-008 remains open, non-authoritative and pending independent review",
+    "closure_mechanism_response_active": true,
+    "miss_distance_monotonic_pass": true,
+    "miss_distance_row_count": 3,
+    "scope_guard_interpretation": "candidate closure-sensitive response is observed in Stage B scope probe; RES-008 remains open, non-authoritative and pending independent review"
+  },
+  "status": "candidate_non_authoritative_stage_b_result_pack",
+  "uncertainty_result_summary": {
+    "blast_impulse_cv": 0.0,
+    "fragment_areal_density_cv": 0.013556475680557211,
+    "fragment_energy_cv": 0.0,
+    "penetration_margin_cv": 0.014953428348644477,
+    "result_interpretation": "candidate uncertainty snapshot only; not an independently reviewed uncertainty boundary",
+    "seed_window_cv_pass": true
+  }
+}

@@ -29,6 +29,22 @@
 当前已补入第一版 boundary probe result report：
 [validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md)。
 它证明 boundary probe 已可执行，但仍只属于 candidate scope review，不构成 authority 放行。
+当前已补入第一版统一 candidate result pack：
+[validation_result_pack_stage_b_effect_scale_20260530.zh.md](validation_result_pack_stage_b_effect_scale_20260530.zh.md)。
+它把 scaffold、scope probe 和 hard-gate snapshot 汇总为统一结果包，但仍不是 retained validation artifact。
+当前 Stage C `component_failure_probability` 的 pre-run candidate metrics 已冻结到
+[validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md)；
+第一版 Stage C component-specific snapshot 已记录到
+[validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md](validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md)，
+并且已补入第一版 Stage C unified candidate result pack：
+[validation_result_pack_stage_c_component_probability_20260530.zh.md](validation_result_pack_stage_c_component_probability_20260530.zh.md)。
+当前还新增了一个 Stage C retained artifact pack：
+[validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md](validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md)。
+当前还新增了一个 Stage C blocked review gate：
+[validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md](validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md)。
+当前还新增了一个 shared provenance / surrogate identity gate：
+[validation_provenance_and_identity_gate_20260530.zh.md](validation_provenance_and_identity_gate_20260530.zh.md)。
+这些 artifact 只说明 Stage C 已进入 author-side candidate review 形态，不等于 component fragility validation 已完成。
 
 ## Authority 边界
 
@@ -46,12 +62,12 @@
 | source group | source refs | 状态 | 用途 | gate 影响 |
 |---|---|---|---|---|
 | blast scaled-distance methods | `VPS-BFM-001/002/005` | candidate | `method_ref`、unit/domain criteria | 可进入方法说明；不授权 row。 |
-| Kingery-Bulmash / BEC-O route | `VPS-BFM-003/014` | `pending_acquisition` | 未来 blast curve reproducibility | 未固定官方版本/rights/checksum 前不能作为 acquired input。 |
+| Kingery-Bulmash / BEC-O route | `VPS-BFM-003/014` | `mixed: 003 pending_acquisition; 014 official_public_artifacts_externally_verified_candidate_only` | 未来 blast curve reproducibility | `003` 未固定官方版本/rights/checksum 前不能作为 acquired input；`014` 已 externally verified，但 canonical retention/output-policy/benchmark-consumption closeout 未完成。 |
 | Mott / fragmentation | `VPS-BFM-006` | candidate | fragment mass distribution method | toy benchmark only。 |
 | Gurney route | `VPS-BFM-007` | `pending_acquisition` | future velocity proxy method | 未固定官方公开版本前不能作为 acquired input。 |
-| penetration / ballistic-limit | `VPS-BFM-010/011/012/015`; `VPS-BFM-009` rejected | mixed candidate / pending artifact | penetration-margin method/domain check | 仅方法和域外拒绝；不支持组件概率；UFC 3-340-01 不得作为输入。 |
+| penetration / ballistic-limit | `VPS-BFM-010/011/012/015`; `VPS-BFM-009` rejected | mixed candidate / metadata-pending / externally verified candidate artifact | penetration-margin method/domain check | 仅方法和域外拒绝；`015` 已 externally verified 但仍未 retained/consumed；不支持组件概率；UFC 3-340-01 不得作为输入。 |
 | spatial sampling | `VPS-BFM-013` | candidate | reproducible sphere sampling | 支持采样复现，不代表真实方向图。 |
-| DDESB / blast/debris candidate references | `VPS-BFM-014/015`; `016` search lead only | candidate routes identified / artifact-rights-hash pending | blast curve and fragment/debris benchmark design | 可支撑候选 benchmark design reference；未固定官方可达性、rights、checksum/output policy 前不作为 acquired benchmark artifact。 |
+| DDESB / blast/debris candidate references | `VPS-BFM-014/015`; `016` search lead only | official public artifacts externally verified / candidate-only; `016` search lead only | blast curve and fragment/debris benchmark design | `014/015` 可支撑候选 benchmark design reference；但 canonical retention、allowed-output policy 和 benchmark consumption 仍未闭合，因此不作为 acquired benchmark artifact。 |
 
 ## Benchmark 映射
 
@@ -78,25 +94,30 @@
 并非所有 metric 都已冻结。验收门槛必须在运行 benchmark 前冻结；不得根据结果反推门槛。
 当前 Stage B `effect_scale` 的 metrics / thresholds 已冻结到
 [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md)；
-本 manifest 仍保持 `not_run`，并且 Stage C `component_failure_probability` 继续 deferred。
+本 manifest 仍保持 `not_run`；Stage C `component_failure_probability` 虽已进入 pre-run candidate freeze，但 validation / uncertainty / independent review 仍继续 deferred。
 
 ## Manifest 缺失项
 
 | 字段 | 当前状态 | close 条件 |
 |---|---|---|
 | `validated_surrogate_model_ref` | missing | 指向版本化代码、配置、容器或 archive。 |
-| `validation_benchmark_ref` | missing | 指向生成的 benchmark artifact 和 source manifest。 |
+| `validation_benchmark_ref` | [validation_result_pack_stage_b_effect_scale_20260530.zh.md](validation_result_pack_stage_b_effect_scale_20260530.zh.md) | retained validation artifact 仍未形成；当前只存在 author-side candidate result pack。 |
 | `validation_artifact_sha256` | missing | benchmark 输出生成后固定 sha256。 |
 | `validation_metrics_ref` | [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md) | 保持 pre-run freeze，不得在结果生成后改写。 |
 | `validation_acceptance_criteria_ref` | [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md) | 独立 reviewer signoff 与 benchmark result table 仍需补齐。 |
+| `validation_stage_c_acceptance_criteria_ref` | [validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md) | 当前只冻结 Stage C candidate hygiene；fragility validation closeout 仍需补齐。 |
 | `validation_scope_ref` | [validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md](validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md) | boundary probes、scope leakage report 和 independence review 仍需补齐。 |
 | `validation_scope_probe_report_ref` | [validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md) | 当前 probe 结果仍是 candidate / non-authoritative，且需要独立 review。 |
-| `review_record` | missing | 独立审阅记录和 residual closeout。 |
+| `validation_stage_c_result_pack_ref` | [validation_result_pack_stage_c_component_probability_20260530.zh.md](validation_result_pack_stage_c_component_probability_20260530.zh.md) | 当前 result pack 仍是 author-side / non-authoritative，不替代独立 fragility review。 |
+| `validation_stage_c_retained_pack_ref` | [validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md](validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md) | 当前 retained pack 只固定 repo 内 canonical JSON 锚点，不等于 release-grade retained identity。 |
+| `validation_stage_c_review_gate_ref` | [validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md](validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md) | 当前 gate 只说明 Stage C 已进入 blocked review 形态，不代表 authority 可以 release。 |
+| `validation_provenance_identity_gate_ref` | [validation_provenance_and_identity_gate_20260530.zh.md](validation_provenance_and_identity_gate_20260530.zh.md) | 当前 shared gate 只说明 provenance / surrogate identity 已形成统一阻塞面，不代表 `RES-001/002` 已关闭。 |
+| `review_record` | [validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md](validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md) | 当前只存在 author-side readiness / result-pack 记录；独立审阅记录和 residual closeout 仍缺。 |
 
 ## Recommended Run Order
 
 1. 先运行 `BFM-BM-006` source trace / rights manifest check，禁止 pending sources 被误当 acquired input。
-2. 固定或排除 Kingery-Bulmash、Gurney 等 pending sources；固定 DDESB TP-20/TP-21 artifact sha256、tool package version and allowed-output policy；保持 UFC 3-340-01 rejected。
+2. 固定或排除 Kingery-Bulmash、Gurney 等 pending sources；把 DDESB TP-20/TP-21 / BEC-O 的 retained refs、tool package version、allowed-output policy 和 comparison-output hashes 冻结下来；保持 UFC 3-340-01 rejected。
 3. 运行 `BFM-BM-001` 和 `BFM-BM-004` 的 unit/domain checks。
 4. 运行 `BFM-BM-002` 和 `BFM-BM-003` 的 fixed-seed toy sampling checks。
 5. 最后运行 `BFM-BM-005` integrated mechanism-vector toy benchmark，仍只输出非权威 mechanism-load vector。

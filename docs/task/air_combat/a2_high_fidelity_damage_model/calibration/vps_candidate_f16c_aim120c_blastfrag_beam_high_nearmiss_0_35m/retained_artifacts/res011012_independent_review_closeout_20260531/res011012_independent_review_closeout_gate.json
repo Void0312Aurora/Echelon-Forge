@@ -1,0 +1,373 @@
+{
+  "authority_guards": {
+    "component_failure_probability_authority_granted": false,
+    "component_failure_probability_authority_in_stock": false,
+    "component_failure_probability_authority_released": false,
+    "deterministic_fuze_authority_granted": false,
+    "deterministic_fuze_authority_released": false,
+    "effect_scale_authority_granted": false,
+    "effect_scale_authority_in_stock": false,
+    "effect_scale_authority_released": false,
+    "formal_validation_manifest_promoted": false,
+    "hard_gate_pass_is_release": false,
+    "pk_authority_granted": false,
+    "pk_authority_released": false,
+    "replacement_allowed": false,
+    "runtime_authority_granted": false,
+    "stock_component_probability_authority": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "stock_runtime_authority_granted": false
+  },
+  "closeout_decision": {
+    "release_blocked": true,
+    "release_ready": false,
+    "res011012_package_release_grade_complete": false,
+    "stage_b_effect_scale_closeout_is_release_authority": false,
+    "stage_b_effect_scale_res011012_closeout_complete": true,
+    "stage_c_blocked_until_evidence_present": true,
+    "stage_c_res011012_closeout_complete": false
+  },
+  "consumed_evidence": [
+    {
+      "content_sha256": "a8ea676082c052edf599d69bf1256f05ffc032c36139324d6e1d2083710ac10c",
+      "evidence_id": "stage_b_independent_review_gate",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
+      "present": true,
+      "required_for": "Stage B RES-011/012 independent review pass",
+      "schema_version": "a2.stage_b_independent_review_gate.v1",
+      "status": "independent_review_passed_release_blocked"
+    },
+    {
+      "content_sha256": "b895bc3d88a8f7c5d666d8b5fd7401325a51004cb3b5cad139781c64561721a9",
+      "evidence_id": "stage_b_independent_review_manifest",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/manifest.json",
+      "present": true,
+      "required_for": "retained Stage B review provenance",
+      "schema_version": "a2.stage_b_independent_review_retained_artifact_pack.v1",
+      "status": "independent_review_retained_release_blocked"
+    },
+    {
+      "content_sha256": "c1edc4b0b7fe4a8495a9ba484fd280dfccb49095c3c7582219e45bc82c32f310",
+      "evidence_id": "stage_b_release_closeout",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json",
+      "present": true,
+      "required_for": "Stage B author-side release closeout evidence",
+      "schema_version": "a2.stage_b_release_closeout.v1",
+      "status": "author_side_stage_b_release_closeout_complete_release_blocked"
+    },
+    {
+      "content_sha256": "689fd974bde350320d3afb67cb5ae5e583511280d80c74979d756568b425c38a",
+      "evidence_id": "uncertainty_review_gate",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531/uncertainty_review_gate.json",
+      "present": true,
+      "required_for": "RES-011 split Stage B/Stage C uncertainty decision",
+      "schema_version": "a2.uncertainty_review_gate.v1",
+      "status": "uncertainty_review_stage_b_narrow_pass_stage_c_blocked_release_blocked"
+    },
+    {
+      "content_sha256": "23e0a667a20a6207e9f2fd8f8cbcdc26ee5c608dbc544b858e1d34955a813d4a",
+      "evidence_id": "uncertainty_review_manifest",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/uncertainty_review_20260531/manifest.json",
+      "present": true,
+      "required_for": "retained RES-011 uncertainty review provenance",
+      "schema_version": "a2.uncertainty_review_retained_artifacts.v1",
+      "status": "uncertainty_review_retained_release_blocked"
+    },
+    {
+      "content_sha256": "a916d001ec0b228ed051c048a8028f65046a0ea4f58ea0e5df62770365fe42e3",
+      "evidence_id": "stage_c_fragility_review_gate",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/stage_c_fragility_review_gate.json",
+      "present": true,
+      "required_for": "Stage C RES-011/012 blocking decision",
+      "schema_version": "a2.stage_c_fragility_review_gate.v1",
+      "status": "blocked_non_authoritative_stage_c_fragility_review_gate"
+    },
+    {
+      "content_sha256": "696502d7454792e35ea0049babcbd51515e4665be6d1ba447715ae8506786059",
+      "evidence_id": "stage_c_fragility_review_manifest",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_review_20260531/manifest.json",
+      "present": true,
+      "required_for": "retained Stage C fragility review provenance",
+      "schema_version": "a2.stage_c_fragility_review_retained_manifest.v1",
+      "status": "author_retained_stage_c_fragility_review_gate_artifact_only"
+    },
+    {
+      "content_sha256": "ab944fcab8a05d08ab1e0be27fc188fe0334f1e8f12610f27ff073e16161cb1b",
+      "evidence_id": "stage_c_fragility_validation_prep",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_validation_prep_20260531/stage_c_fragility_validation_prep.json",
+      "present": true,
+      "required_for": "Stage C review-prep uncertainty and independence trace",
+      "schema_version": "a2.stage_c_fragility_validation_prep.v1",
+      "status": "prepared_non_authoritative_stage_c_fragility_validation_review_inputs"
+    },
+    {
+      "content_sha256": "f7a6c2f56885af562bba12ed5b8013ad86206632424488ac007bc82a668552d8",
+      "evidence_id": "stage_c_fragility_validation_prep_manifest",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_validation_prep_20260531/manifest.json",
+      "present": true,
+      "required_for": "retained Stage C prep provenance",
+      "schema_version": "",
+      "status": "author_retained_stage_c_fragility_validation_prep_artifact_only"
+    },
+    {
+      "content_sha256": "8905156b1e8ede7207fc8f6be58065e0647f3dd4ead649c67a2f4f34f82f418a",
+      "evidence_id": "stage_c_fragility_benchmark",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
+      "present": true,
+      "required_for": "Stage C independent truth inventory",
+      "schema_version": "a2.stage_c_fragility_benchmark.v1",
+      "status": "blocked_non_authoritative_stage_c_fragility_benchmark"
+    },
+    {
+      "content_sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
+      "evidence_id": "provenance_identity_review_gate",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
+      "present": true,
+      "required_for": "RES-001/002 provenance and identity interlock",
+      "schema_version": "a2.provenance_identity_review_gate.v1",
+      "status": "blocked_non_authoritative_provenance_identity_review_gate"
+    },
+    {
+      "content_sha256": "7bbd0d2aa68dadfd27d61873ec4b06fbeec6f26a538d372bb158856a88b98f1c",
+      "evidence_id": "geometry_warhead_row_provenance_gate",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
+      "present": true,
+      "required_for": "RES-003/004 provenance interlock",
+      "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
+      "status": "blocked_non_authoritative_geometry_warhead_row_provenance_candidate"
+    },
+    {
+      "content_sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "evidence_id": "mechanism_source_closeout_gate",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
+      "present": true,
+      "required_for": "RES-003/004/005/006 mechanism-source interlock",
+      "schema_version": "a2.mechanism_source_closeout_gate.v1",
+      "status": "blocked_non_authoritative_mechanism_source_closeout_candidate"
+    },
+    {
+      "content_sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "evidence_id": "source_rights_output_policy_gate",
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "present": true,
+      "required_for": "RES-001 rights and output-policy interlock",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    }
+  ],
+  "explicit_boundaries": [
+    "Stage B closeout is limited to retained effect-scale independent review evidence",
+    "Stage B closeout does not grant stock/runtime authority or external validation",
+    "Stage C remains blocked without probability uncertainty coverage and independent fragility truth",
+    "Benchmark/input separation closure for Stage B does not close Stage C result-level independence",
+    "No stock, component-probability, Pk, deterministic-fuze, or formal validation authority is released"
+  ],
+  "generated_on": "2026-05-31",
+  "integration_notes": [
+    "Do not edit residual_register.zh.md from this gate; use the retained JSON as closeout evidence.",
+    "Downstream release integration may cite the Stage B RES-011/012 bounded closeout only for effect-scale review.",
+    "Any Stage C promotion must rerun after independent fragility truth, probability uncertainty bounds, and result-level independence signoff exist."
+  ],
+  "missing_evidence": [],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "provenance_interlock": {
+    "blocking_residual_ids": [
+      "RES-001",
+      "RES-002",
+      "RES-003",
+      "RES-004",
+      "RES-005",
+      "RES-006"
+    ],
+    "checks": [
+      {
+        "check_id": "RES011012-PROV-001",
+        "pass": true,
+        "summary": "RES-001/002 provenance and identity review remains release-grade blocked"
+      },
+      {
+        "check_id": "RES011012-PROV-002",
+        "pass": true,
+        "summary": "source rights and allowed-output policy remains fail-closed for release"
+      },
+      {
+        "check_id": "RES011012-PROV-003",
+        "pass": true,
+        "summary": "geometry and warhead row provenance keeps RES-003/004 open"
+      },
+      {
+        "check_id": "RES011012-PROV-004",
+        "pass": true,
+        "summary": "mechanism-source closeout remains non-authoritative"
+      },
+      {
+        "check_id": "RES011012-PROV-005",
+        "pass": true,
+        "summary": "provenance gates grant no stock/component/Pk/fuze authority"
+      }
+    ],
+    "decision": "provenance_interlocks_preserved_release_blocked",
+    "release_blocked": true,
+    "release_ready": false
+  },
+  "release_target": "stage_b_effect_scale_review_closeout_only",
+  "residual_closeout_decisions": {
+    "RES-011": {
+      "package_release_grade": "remains_open_release_blocked",
+      "residual_register_edit_required_by_this_gate": false,
+      "stage_b_effect_scale": "closed_for_bounded_independent_review_closeout",
+      "stage_c_component_probability": "blocked"
+    },
+    "RES-012": {
+      "package_release_grade": "remains_open_release_blocked",
+      "residual_register_edit_required_by_this_gate": false,
+      "stage_b_effect_scale": "closed_for_bounded_independent_review_closeout",
+      "stage_c_component_probability": "blocked"
+    }
+  },
+  "review_target": "RES-011_RES-012_independent_review_closeout_gate",
+  "reviewer_identity": {
+    "external_validation_claimed": false,
+    "independence_class": "project_internal_independent_review_worker",
+    "nickname": "res011012-closeout-reviewer",
+    "note": "Reviewer identity is project-internal; this gate does not claim external validation or third-party certification.",
+    "worker_id": "A2-RES011012-INDEPENDENT-REVIEW-CLOSEOUT"
+  },
+  "schema_version": "a2.res011012_independent_review_closeout_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "stage_b_scope": "effect_scale_only",
+    "stage_c_scope": "right_aileron_actuator_component_probability",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "stage_b_effect_scale_closeout": {
+    "checks": [
+      {
+        "check_id": "RES011012-B-001",
+        "pass": true,
+        "summary": "retained Stage B independent review completed with no focused blocked residuals"
+      },
+      {
+        "check_id": "RES011012-B-002",
+        "pass": true,
+        "summary": "RES-011 and RES-012 are included in the Stage B review-passed residual set"
+      },
+      {
+        "check_id": "RES011012-B-003",
+        "pass": true,
+        "summary": "Stage B RES-011 seed-window CV evidence passes retained thresholds"
+      },
+      {
+        "check_id": "RES011012-B-004",
+        "pass": true,
+        "summary": "Stage B RES-012 benchmark/input separation review passes while preserving forbidden claims"
+      },
+      {
+        "check_id": "RES011012-B-005",
+        "pass": true,
+        "summary": "uncertainty gate agrees that Stage B author-side closeout is complete but not release-grade uncertainty authority"
+      },
+      {
+        "check_id": "RES011012-B-006",
+        "pass": true,
+        "summary": "Stage B release closeout remains effect-scale-only and release-blocked"
+      },
+      {
+        "check_id": "RES011012-B-007",
+        "pass": true,
+        "summary": "retained Stage B guards do not grant stock/runtime/component/Pk/fuze authority"
+      }
+    ],
+    "closed_scope": "RES-011 uncertainty and RES-012 benchmark/input separation are closed only for the retained Stage B effect-scale review surface",
+    "closeout_allowed": true,
+    "decision": "closeable_for_stage_b_effect_scale_independent_review_only",
+    "forbidden_promotions": [
+      "stock descriptor admission",
+      "component probability authority",
+      "Pk authority",
+      "deterministic fuze authority",
+      "external validation claim",
+      "formal validation manifest promotion"
+    ],
+    "release_authority_effect": "none_review_closeout_record_only",
+    "res011_basis": {
+      "release_grade_uncertainty_complete": false,
+      "seed_window_cv_pass": true,
+      "source": "retained Stage B independent review plus RES-011 uncertainty review gate"
+    },
+    "res011_stage_b_effect_scale_closeout": true,
+    "res012_basis": {
+      "external_validation_claimed": false,
+      "review_gate_result": "review_passed",
+      "source": "retained Stage B independent review benchmark/input separation audit"
+    },
+    "res012_stage_b_effect_scale_closeout": true,
+    "stage": "stage_b_effect_scale",
+    "stage_c_component_probability_included": false
+  },
+  "stage_c_component_probability_closeout": {
+    "blocked_residual_ids": [
+      "RES-009",
+      "RES-010",
+      "RES-011",
+      "RES-012"
+    ],
+    "blocking_evidence": {
+      "author_repeatability_present": true,
+      "component_failure_probability_cv": 0.0,
+      "independent_fragility_truth_present": false,
+      "probability_uncertainty_release_grade_complete": false,
+      "replacement_allowed": false,
+      "result_level_independence_audit_complete": false
+    },
+    "checks": [
+      {
+        "check_id": "RES011012-C-001",
+        "pass": true,
+        "summary": "Stage C fragility review remains blocked for RES-011 and RES-012"
+      },
+      {
+        "check_id": "RES011012-C-002",
+        "pass": true,
+        "summary": "Stage C prep records RES-011/012 as blocked non-authoritative review inputs"
+      },
+      {
+        "check_id": "RES011012-C-003",
+        "pass": true,
+        "summary": "probability uncertainty is repeatable author-side only and lacks release-grade coverage"
+      },
+      {
+        "check_id": "RES011012-C-004",
+        "pass": true,
+        "summary": "independent fragility truth is absent and replacement is not allowed"
+      },
+      {
+        "check_id": "RES011012-C-005",
+        "pass": true,
+        "summary": "result-level benchmark/input independence remains blocked"
+      },
+      {
+        "check_id": "RES011012-C-006",
+        "pass": true,
+        "summary": "Stage C grants no stock/component/Pk/fuze authority"
+      }
+    ],
+    "closeout_allowed": false,
+    "decision": "blocked_probability_uncertainty_fragility_truth_and_independence_missing",
+    "minimum_evidence_to_unblock": [
+      "independent component fragility curve or benchmark over the frozen Stage C load band",
+      "probability uncertainty coverage with reviewer-accepted bounds",
+      "result-level benchmark/input separation signoff proving non-circularity",
+      "formal Stage C validation result promotion after independent review"
+    ],
+    "res011_stage_c_closeout": false,
+    "res012_stage_c_closeout": false,
+    "stage": "stage_c_component_probability"
+  },
+  "status": "res011012_stage_b_effect_scale_closeout_pass_stage_c_blocked_release_blocked"
+}

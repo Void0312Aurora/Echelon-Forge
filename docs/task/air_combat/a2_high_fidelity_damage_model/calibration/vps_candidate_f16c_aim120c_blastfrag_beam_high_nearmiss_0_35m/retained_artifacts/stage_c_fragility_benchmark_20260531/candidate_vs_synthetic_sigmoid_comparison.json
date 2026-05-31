@@ -1,0 +1,226 @@
+{
+  "authority_decision": {
+    "benchmark_gate_result": "blocked",
+    "blocked_residual_ids": [
+      "RES-009",
+      "RES-010",
+      "RES-011",
+      "RES-012"
+    ],
+    "deterministic_fuze_authority": false,
+    "pk_authority": false,
+    "replacement_allowed": false,
+    "stage_c_component_probability_authority_ready": false,
+    "stock_component_probability_authority": false
+  },
+  "authority_guards": {
+    "deterministic_fuze_authority": false,
+    "pk_authority": false,
+    "replacement_allowed": false,
+    "stock_component_probability_authority": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "comparison": {
+    "comparison_status": "author_side_delta_available_but_not_truth_benchmark",
+    "metrics": {
+      "all_candidate_probabilities_exceed_synthetic_sigmoid": true,
+      "calibration_interpretation": "large deltas show the candidate rows differ from synthetic_sigmoid, but cannot prove accuracy without independent fragility truth",
+      "max_absolute_difference_vs_synthetic_sigmoid": 0.5175989853932921,
+      "max_candidate_to_synthetic_sigmoid_ratio": 216.57510893404597,
+      "mean_absolute_difference_vs_synthetic_sigmoid": 0.36470769166349637,
+      "mean_candidate_probability": 0.3666666666666667,
+      "mean_synthetic_sigmoid_probability": 0.0019589750031702626,
+      "metric_role": "candidate_vs_synthetic_baseline_delta_only_not_calibration_truth",
+      "min_candidate_to_synthetic_sigmoid_ratio": 126.31107038255736,
+      "point_count": 3,
+      "replacement_allowed": false
+    },
+    "replacement_allowed": false,
+    "replacement_conclusion": "candidate rows differ from synthetic_sigmoid but cannot replace it without independent fragility truth, uncertainty closeout and reviewer signoff",
+    "replacement_decision": "blocked_no_independent_fragility_truth",
+    "rows": [
+      {
+        "absolute_difference_vs_synthetic_sigmoid": 0.5175989853932921,
+        "candidate_minus_synthetic_sigmoid": 0.5175989853932921,
+        "candidate_probability": 0.52,
+        "candidate_probability_source": "vulnerability_evidence_row",
+        "candidate_row_id": "component-inner",
+        "candidate_to_synthetic_sigmoid_ratio": 216.57510893404597,
+        "comparison_role": "author_side_delta_against_stock_synthetic_baseline_not_truth",
+        "probe_label": "inner",
+        "replacement_conclusion": "replacement_blocked_no_independent_truth",
+        "synthetic_sigmoid_calibrated": false,
+        "synthetic_sigmoid_probability": 0.0024010146067079048,
+        "synthetic_sigmoid_probability_source": "synthetic_sigmoid"
+      },
+      {
+        "absolute_difference_vs_synthetic_sigmoid": 0.3681866517096388,
+        "candidate_minus_synthetic_sigmoid": 0.3681866517096388,
+        "candidate_probability": 0.37,
+        "candidate_probability_source": "vulnerability_evidence_row",
+        "candidate_row_id": "component-middle",
+        "candidate_to_synthetic_sigmoid_ratio": 204.0424346314124,
+        "comparison_role": "author_side_delta_against_stock_synthetic_baseline_not_truth",
+        "probe_label": "middle",
+        "replacement_conclusion": "replacement_blocked_no_independent_truth",
+        "synthetic_sigmoid_calibrated": false,
+        "synthetic_sigmoid_probability": 0.001813348290361158,
+        "synthetic_sigmoid_probability_source": "synthetic_sigmoid"
+      },
+      {
+        "absolute_difference_vs_synthetic_sigmoid": 0.20833743788755826,
+        "candidate_minus_synthetic_sigmoid": 0.20833743788755826,
+        "candidate_probability": 0.21,
+        "candidate_probability_source": "vulnerability_evidence_row",
+        "candidate_row_id": "component-outer",
+        "candidate_to_synthetic_sigmoid_ratio": 126.31107038255736,
+        "comparison_role": "author_side_delta_against_stock_synthetic_baseline_not_truth",
+        "probe_label": "outer",
+        "replacement_conclusion": "replacement_blocked_no_independent_truth",
+        "synthetic_sigmoid_calibrated": false,
+        "synthetic_sigmoid_probability": 0.0016625621124417252,
+        "synthetic_sigmoid_probability_source": "synthetic_sigmoid"
+      }
+    ]
+  },
+  "generated_on": "2026-05-31",
+  "independence_trace": {
+    "authority_effect": "continues_to_block_res012",
+    "benchmark_output_layer": [
+      {
+        "artifact_id": "RESULT-FRAG-BENCH-001",
+        "artifact_kind": "blocked_stage_c_fragility_benchmark_manifest",
+        "current_independence_class": "blocked_manifest_only",
+        "role": "author-side blocked comparison and shortest evidence path"
+      }
+    ],
+    "candidate_input_layer": [
+      {
+        "artifact_id": "INPUT-FRAG-BENCH-001",
+        "artifact_kind": "stage_c_component_probability_surface_probe_rows",
+        "forbidden_use": "independent benchmark truth",
+        "role": "candidate evidence-row curve inputs"
+      }
+    ],
+    "circularity_guard": "candidate evidence rows are not scored against themselves; synthetic_sigmoid is retained only as a non-truth comparator",
+    "independent_result_audit_result": "blocked",
+    "independent_truth_layer": {
+      "artifact_present": false,
+      "required_artifact": "independent right_aileron_actuator fragility curve/benchmark over the frozen Stage C load band",
+      "required_owner": "independent_fragility_reviewer"
+    },
+    "review_gate_independence_context": {
+      "author_trace_review_result": "review_passed",
+      "independent_result_audit_result": "blocked",
+      "input_or_tuning_artifact_ids": [
+        "INPUT-CP-001",
+        "INPUT-CP-002"
+      ],
+      "minimum_evidence_path": [
+        "have an independent reviewer audit benchmark outputs, thresholds and candidate inputs for circular reuse",
+        "record reviewer-owned independence signoff at result level",
+        "rerun the Stage C review gate after the independence blocker is removed from readiness output"
+      ],
+      "open_independence_blockers": [
+        {
+          "blocker_id": "BLOCK-CP-001",
+          "residual_id": "RES-012",
+          "summary": "independent fragility review and result-level independence audit are still missing"
+        }
+      ],
+      "required_independent_review_record": "reviewer-owned signoff that benchmark outputs, acceptance thresholds and descriptor/tuning inputs are separated and non-circular",
+      "result_or_review_artifact_ids": [
+        "RESULT-CP-001",
+        "RESULT-CP-002"
+      ],
+      "trace_status": "prepared_pending_independent_result_audit"
+    },
+    "synthetic_baseline_layer": [
+      {
+        "artifact_id": "BASELINE-FRAG-BENCH-001",
+        "artifact_kind": "stock_synthetic_sigmoid_component_probability",
+        "forbidden_use": "release-grade fragility truth",
+        "role": "delta comparator only"
+      }
+    ],
+    "trace_status": "candidate_inputs_and_synthetic_baseline_separated_but_truth_missing"
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "schema_version": "a2.stage_c_fragility_benchmark_comparison.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "component_name": "right_aileron_actuator",
+    "component_redundancy_group_id": "lateral_flight_control_actuators",
+    "component_system": "flight_control",
+    "runtime_miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "blocked_author_side_candidate_vs_synthetic_sigmoid_comparison",
+  "truth_status": "missing_independent_right_aileron_actuator_fragility_truth",
+  "uncertainty_calibration_metrics": {
+    "author_side_repeatability": {
+      "anchor_probe_label": "middle",
+      "blast_impulse_cv": 0.0,
+      "component_failure_probability_cv": 0.0,
+      "fragment_areal_density_cv": 0.0,
+      "fragment_energy_cv": 0.0,
+      "penetration_margin_cv": 0.0,
+      "repeatability_result": "pass_candidate_only",
+      "seed_count": 3,
+      "seed_values": [
+        20260526,
+        20260527,
+        20260528
+      ]
+    },
+    "authority_effect": "continues_to_block_res011_and_replacement",
+    "calibration_scores": [
+      {
+        "blocked_by": "missing_independent_truth_labels",
+        "metric_id": "CAL-FRAG-001",
+        "metric_name": "brier_score_vs_independent_truth",
+        "residual_link": "RES-011",
+        "status": "not_computed"
+      },
+      {
+        "blocked_by": "missing_independent_truth_labels",
+        "metric_id": "CAL-FRAG-002",
+        "metric_name": "log_loss_vs_independent_truth",
+        "residual_link": "RES-011",
+        "status": "not_computed"
+      },
+      {
+        "blocked_by": "missing_independent_truth_distribution",
+        "metric_id": "CAL-FRAG-003",
+        "metric_name": "calibration_curve_or_ece",
+        "residual_link": "RES-011",
+        "status": "not_computed"
+      }
+    ],
+    "candidate_vs_synthetic_baseline_delta_metrics": {
+      "all_candidate_probabilities_exceed_synthetic_sigmoid": true,
+      "calibration_interpretation": "large deltas show the candidate rows differ from synthetic_sigmoid, but cannot prove accuracy without independent fragility truth",
+      "max_absolute_difference_vs_synthetic_sigmoid": 0.5175989853932921,
+      "max_candidate_to_synthetic_sigmoid_ratio": 216.57510893404597,
+      "mean_absolute_difference_vs_synthetic_sigmoid": 0.36470769166349637,
+      "mean_candidate_probability": 0.3666666666666667,
+      "mean_synthetic_sigmoid_probability": 0.0019589750031702626,
+      "metric_role": "candidate_vs_synthetic_baseline_delta_only_not_calibration_truth",
+      "min_candidate_to_synthetic_sigmoid_ratio": 126.31107038255736,
+      "point_count": 3,
+      "replacement_allowed": false
+    },
+    "coverage_limits": [
+      "three fixed seeds only",
+      "three near-miss surface points only",
+      "no independent damage/no-damage labels",
+      "no reviewer-accepted uncertainty interval"
+    ],
+    "metric_status": "blocked_calibration_truth_missing_author_side_metrics_only"
+  }
+}

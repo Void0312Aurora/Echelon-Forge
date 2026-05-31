@@ -1,0 +1,432 @@
+{
+  "allowed_claim": "RES-007 and RES-008 are independently review-complete only for the bounded Stage B scope/bucket evidence slice",
+  "authority_guards": {
+    "component_failure_probability_authority_granted": false,
+    "component_failure_probability_authority_in_stock": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "effect_scale_authority_in_stock": false,
+    "formal_validation_manifest_promoted": false,
+    "hard_gate_pass_is_release": false,
+    "pk_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "stock_runtime_authority_granted": false
+  },
+  "boundary_rejection_coverage": {
+    "accepted_scope_labels": [
+      "beam"
+    ],
+    "all_required_rejections_observed": true,
+    "missing_rejected_scope_labels": [],
+    "observed_rejected_scope_labels": [
+      "head_on",
+      "tail_chase",
+      "high_off_boresight",
+      "direct_hit",
+      "closure_bucket != high",
+      "weapon_family != blast_fragmentation"
+    ],
+    "required_rejected_scope_labels": [
+      "head_on",
+      "tail_chase",
+      "high_off_boresight",
+      "direct_hit",
+      "closure_bucket != high",
+      "weapon_family != blast_fragmentation"
+    ]
+  },
+  "closure_response_review_status": {
+    "decision": "review_complete_for_stage_b_scope_only",
+    "independent_review_complete": true,
+    "probe_response_active": true,
+    "probe_self_review_complete": false
+  },
+  "consumed_evidence": {
+    "scope_and_independence_manifest": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md",
+      "present": true,
+      "status": "scope_manifest_complete"
+    },
+    "scope_boundary_probe_rerun": {
+      "schema_version": "a2.scope_boundary_probe.v1",
+      "sha256": "4321242f12c6f5878f19e8989d05e46b87f96ece37a00f1f1470e72584e2d1cf",
+      "status": "candidate_non_authoritative_scope_probe_results"
+    },
+    "stage_b_independent_review_doc": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_independent_review_stage_b_effect_scale_20260531.zh.md",
+      "present": true
+    },
+    "stage_b_independent_review_gate": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
+      "present": true,
+      "status": "independent_review_complete"
+    },
+    "stage_b_independent_review_manifest": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/manifest.json",
+      "present": true
+    },
+    "stage_b_result_pack": {
+      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
+      "present": true,
+      "status": "result_pack_complete"
+    }
+  },
+  "current_findings": [
+    "near_miss_0_35m has a retained three-point boundary probe and review-passing independent evidence for Stage B scope-only acceptance",
+    "beam/high has retained closure-response and out-of-scope rejection coverage with review-passing independent evidence for Stage B scope-only acceptance",
+    "all runtime, Pk, deterministic-fuze and component-probability authority guards remain false"
+  ],
+  "fail_closed_blockers": [],
+  "forbidden_claims": [
+    "stock runtime authority",
+    "effect-scale release authority",
+    "component-failure probability authority",
+    "Pk authority",
+    "deterministic fuze authority",
+    "validated near_miss sub-bucket authority",
+    "closure physics authority"
+  ],
+  "generated_on": "2026-05-31",
+  "missing_review_evidence": [],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "probe_coverage_summary": {
+    "aspect_guard_probe_id": "SCP-PROBE-003",
+    "closure_probe_id": "SCP-PROBE-002",
+    "closure_response_active": true,
+    "closure_response_review_status": "review_required_from_independent_review_artifact",
+    "closure_row_count": 3,
+    "closure_rows_mps": [
+      700.0,
+      900.0,
+      1100.0
+    ],
+    "miss_distance_anchor_present": true,
+    "miss_distance_probe_id": "SCP-PROBE-001",
+    "miss_distance_row_count": 3,
+    "runtime_bucket_consistent": true,
+    "standoff_rows_m": [
+      0.25,
+      0.35,
+      0.45
+    ]
+  },
+  "release_target": "none_review_gate_record_only",
+  "residual_statuses": [
+    {
+      "blockers": [],
+      "checks": [
+        {
+          "check_id": "SCOPE-MANIFEST-001",
+          "pass": true,
+          "summary": "scope manifest freezes the expected package id"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-002",
+          "pass": true,
+          "summary": "scope manifest records near_miss_0_35m as the candidate scope label"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-003",
+          "pass": true,
+          "summary": "scope manifest records beam/high axes"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-004",
+          "pass": true,
+          "summary": "scope manifest records runtime coarse near_miss guard"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-005",
+          "pass": true,
+          "summary": "scope manifest lists all required out-of-scope rejection labels"
+        },
+        {
+          "check_id": "PROBE-RES007-001",
+          "pass": true,
+          "summary": "miss-distance probe uses 0.25/0.35/0.45 m rows"
+        },
+        {
+          "check_id": "PROBE-RES007-002",
+          "pass": true,
+          "summary": "0.35 m anchor is present"
+        },
+        {
+          "check_id": "PROBE-RES007-003",
+          "pass": true,
+          "summary": "blast scaled distance is monotonic increasing"
+        },
+        {
+          "check_id": "PROBE-RES007-004",
+          "pass": true,
+          "summary": "fragment areal density is monotonic decreasing"
+        },
+        {
+          "check_id": "PROBE-RES007-005",
+          "pass": true,
+          "summary": "all miss-distance rows stay in runtime coarse near_miss bucket"
+        },
+        {
+          "check_id": "RESULT-PACK-001",
+          "pass": true,
+          "summary": "retained Stage B result pack exists"
+        },
+        {
+          "check_id": "RESULT-PACK-002",
+          "pass": true,
+          "summary": "result pack schema is Stage B validation result pack v1"
+        },
+        {
+          "check_id": "RESULT-PACK-003",
+          "pass": true,
+          "summary": "result pack scope matches near_miss_0_35m beam/high blast-fragmentation"
+        },
+        {
+          "check_id": "RESULT-PACK-004",
+          "pass": true,
+          "summary": "result pack keeps hard-gate pass below release authority"
+        },
+        {
+          "check_id": "RESULT-PACK-005",
+          "pass": true,
+          "summary": "result pack records complete miss-distance and active closure scope audit"
+        },
+        {
+          "check_id": "RESULT-PACK-006",
+          "pass": true,
+          "summary": "result pack keeps BFM-BM-005 out of independent validation authority"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-001",
+          "pass": true,
+          "summary": "retained Stage B independent-review gate exists"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-002",
+          "pass": true,
+          "summary": "independent review is complete and focused review passed"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-003",
+          "pass": true,
+          "summary": "RES-007 is review-passed in retained independent review"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-004",
+          "pass": true,
+          "summary": "RES-008 is review-passed in retained independent review"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-005",
+          "pass": true,
+          "summary": "independent review keeps release blocked"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-006",
+          "pass": true,
+          "summary": "independent review grants no runtime, component, Pk, or fuze authority"
+        },
+        {
+          "check_id": "REVIEW-DOC-001",
+          "pass": true,
+          "summary": "independent-review document records review passed and release blocked"
+        },
+        {
+          "check_id": "REVIEW-MANIFEST-001",
+          "pass": true,
+          "summary": "independent-review manifest retains the review gate artifact"
+        }
+      ],
+      "decision": "narrow_pass_stage_b_scope_only",
+      "release_blocked_by_residual_ids": [
+        "RES-001",
+        "RES-002",
+        "RES-003",
+        "RES-004",
+        "RES-005",
+        "RES-006",
+        "RES-013/014-boundary"
+      ],
+      "release_gate_result": "release_blocked_by_upstream_and_runtime_boundary_residuals",
+      "residual_id": "RES-007",
+      "residual_register_status_after_gate": "remains_open_release_blocked",
+      "review_area": "near_miss_0_35m_bucket_boundary",
+      "scope_bucket_review_status": "narrow_stage_b_scope_review_complete"
+    },
+    {
+      "blockers": [],
+      "checks": [
+        {
+          "check_id": "SCOPE-MANIFEST-001",
+          "pass": true,
+          "summary": "scope manifest freezes the expected package id"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-002",
+          "pass": true,
+          "summary": "scope manifest records near_miss_0_35m as the candidate scope label"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-003",
+          "pass": true,
+          "summary": "scope manifest records beam/high axes"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-004",
+          "pass": true,
+          "summary": "scope manifest records runtime coarse near_miss guard"
+        },
+        {
+          "check_id": "SCOPE-MANIFEST-005",
+          "pass": true,
+          "summary": "scope manifest lists all required out-of-scope rejection labels"
+        },
+        {
+          "check_id": "PROBE-RES008-001",
+          "pass": true,
+          "summary": "closure probe uses 700/900/1100 mps rows"
+        },
+        {
+          "check_id": "PROBE-RES008-002",
+          "pass": true,
+          "summary": "closure response is active and not constant across retained rows"
+        },
+        {
+          "check_id": "PROBE-RES008-003",
+          "pass": true,
+          "summary": "closure rows stay in runtime coarse near_miss bucket"
+        },
+        {
+          "check_id": "PROBE-RES008-004",
+          "pass": true,
+          "summary": "closure probe does not self-close RES-008"
+        },
+        {
+          "check_id": "PROBE-RES008-005",
+          "pass": true,
+          "summary": "scope guard accepts only beam"
+        },
+        {
+          "check_id": "PROBE-RES008-006",
+          "pass": true,
+          "summary": "scope guard rejects every required out-of-scope label"
+        },
+        {
+          "check_id": "RESULT-PACK-001",
+          "pass": true,
+          "summary": "retained Stage B result pack exists"
+        },
+        {
+          "check_id": "RESULT-PACK-002",
+          "pass": true,
+          "summary": "result pack schema is Stage B validation result pack v1"
+        },
+        {
+          "check_id": "RESULT-PACK-003",
+          "pass": true,
+          "summary": "result pack scope matches near_miss_0_35m beam/high blast-fragmentation"
+        },
+        {
+          "check_id": "RESULT-PACK-004",
+          "pass": true,
+          "summary": "result pack keeps hard-gate pass below release authority"
+        },
+        {
+          "check_id": "RESULT-PACK-005",
+          "pass": true,
+          "summary": "result pack records complete miss-distance and active closure scope audit"
+        },
+        {
+          "check_id": "RESULT-PACK-006",
+          "pass": true,
+          "summary": "result pack keeps BFM-BM-005 out of independent validation authority"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-001",
+          "pass": true,
+          "summary": "retained Stage B independent-review gate exists"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-002",
+          "pass": true,
+          "summary": "independent review is complete and focused review passed"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-003",
+          "pass": true,
+          "summary": "RES-007 is review-passed in retained independent review"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-004",
+          "pass": true,
+          "summary": "RES-008 is review-passed in retained independent review"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-005",
+          "pass": true,
+          "summary": "independent review keeps release blocked"
+        },
+        {
+          "check_id": "INDEPENDENT-REVIEW-006",
+          "pass": true,
+          "summary": "independent review grants no runtime, component, Pk, or fuze authority"
+        },
+        {
+          "check_id": "REVIEW-DOC-001",
+          "pass": true,
+          "summary": "independent-review document records review passed and release blocked"
+        },
+        {
+          "check_id": "REVIEW-MANIFEST-001",
+          "pass": true,
+          "summary": "independent-review manifest retains the review gate artifact"
+        }
+      ],
+      "decision": "narrow_pass_stage_b_scope_only",
+      "release_blocked_by_residual_ids": [
+        "RES-001",
+        "RES-002",
+        "RES-003",
+        "RES-004",
+        "RES-005",
+        "RES-006",
+        "RES-013/014-boundary"
+      ],
+      "release_gate_result": "release_blocked_by_mechanism_source_and_runtime_boundary_residuals",
+      "residual_id": "RES-008",
+      "residual_register_status_after_gate": "remains_open_release_blocked",
+      "review_area": "beam_high_scope_boundary",
+      "scope_bucket_review_status": "narrow_stage_b_scope_review_complete"
+    }
+  ],
+  "review_decision": {
+    "missing_review_evidence_count": 0,
+    "narrow_stage_b_scope_only_acceptance": true,
+    "release_blocked": true,
+    "release_blocked_by_residual_ids": [
+      "RES-001",
+      "RES-002",
+      "RES-003",
+      "RES-004",
+      "RES-005",
+      "RES-006",
+      "RES-013/014-boundary"
+    ],
+    "release_ready": false,
+    "res007_scope_bucket_review_complete": true,
+    "res008_scope_bucket_review_complete": true
+  },
+  "review_target": "RES-007_RES-008_scope_bucket_independent_review_only",
+  "reviewer_role": "A2-EV-SCOPE-BUCKET-INDEPENDENT-REVIEW",
+  "schema_version": "a2.scope_bucket_independent_review_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "runtime_miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "scope_bucket_independent_review_passed_release_blocked"
+}

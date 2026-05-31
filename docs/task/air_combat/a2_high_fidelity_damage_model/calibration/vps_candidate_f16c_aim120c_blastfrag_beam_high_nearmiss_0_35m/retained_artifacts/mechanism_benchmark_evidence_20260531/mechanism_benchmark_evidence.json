@@ -1,0 +1,2016 @@
+{
+  "behavior_risks": [
+    "F-16 witness geometry could be mistaken for true vulnerability geometry if RES-003 is narrated as closed",
+    "AIM-120C-class toy warhead inputs could be mistaken for C-model mass, TNT-equivalent or fuze truth if RES-004 is narrated as closed",
+    "Gurney/TP-21 fragment routes could be mistaken for consumed calibration benchmarks if source presence is conflated with benchmark consumption",
+    "Kingery-Bulmash/BEC-O blast routes could be mistaken for pressure/impulse authority if artifact verification is conflated with release validation"
+  ],
+  "benchmark_evidence_decision": {
+    "candidate_or_toy_probe_is_calibration": false,
+    "closed_residual_ids_by_this_gate": [],
+    "deterministic_fuze_authority_included": false,
+    "fail_closed": true,
+    "mechanism_benchmark_evidence_blocked": true,
+    "mechanism_benchmark_evidence_ready": false,
+    "pk_authority_included": false
+  },
+  "current_gate_results": {
+    "RES-003": "blocked_fail_closed_release_grade_geometry_benchmark_missing",
+    "RES-004": "blocked_fail_closed_release_grade_warhead_sensitivity_benchmark_missing",
+    "RES-005": "blocked_fail_closed_fragment_benchmark_payload_missing",
+    "RES-006": "blocked_fail_closed_blast_benchmark_payload_missing"
+  },
+  "doc_refs": {
+    "artifact_pin_manifest": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
+    "mechanism_model_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+    "mechanism_source_closeout_gate": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
+    "stage_b_result_pack": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_b_effect_scale_20260530.zh.md",
+    "stage_c_result_pack": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_c_component_probability_20260530.zh.md",
+    "target_geometry_assumptions": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+    "target_geometry_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+    "vps_blastfrag_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+    "warhead_scope_and_sensitivity": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+    "warhead_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md"
+  },
+  "fragment_blast_lineage_summary": {
+    "blast": [
+      {
+        "benchmark_consumed": false,
+        "candidate_or_scaffold_consumed": false,
+        "evidence_label": "Kingery-Bulmash TNT airblast source route",
+        "evidence_status": "source_route_present_pending_official_artifact",
+        "externally_verified_source_ids": [
+          "MECH-BLAST-003",
+          "VPS-BFM-003"
+        ],
+        "lineage_id": "BLAST-KINGERY-BULMASH",
+        "pending_acquisition_source_ids": [
+          "MECH-BLAST-003",
+          "VPS-BFM-003"
+        ],
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {},
+          "authority_boundaries": {},
+          "candidate_or_acquired_pin_ids": [],
+          "consumption_status_by_pin": {},
+          "externally_verified_candidate_pin_ids": [],
+          "pin_ids": [],
+          "rejected_pin_ids": [],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [],
+          "sanity_only_pin_ids": [],
+          "source_ids": []
+        },
+        "release_grade_validated": false,
+        "residual_id": "RES-006",
+        "shortest_completion_path": [
+          "resolve the official public Kingery-Bulmash ARBRL-TR-02555 artifact or explicitly exclude it",
+          "freeze coefficient/output provenance before any blast benchmark comparison"
+        ],
+        "source_evidence": [
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "VPS-BFM-003"
+            ],
+            "externally_verified_source_ids": [
+              "VPS-BFM-003"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "VPS-BFM-003"
+            ],
+            "present_source_ids": [
+              "VPS-BFM-003"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-003"
+              }
+            ],
+            "selected_source_ids": [
+              "VPS-BFM-003"
+            ]
+          },
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "MECH-BLAST-003"
+            ],
+            "externally_verified_source_ids": [
+              "MECH-BLAST-003"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "MECH-BLAST-003"
+            ],
+            "present_source_ids": [
+              "MECH-BLAST-003"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "MECH-BLAST-003"
+              }
+            ],
+            "selected_source_ids": [
+              "MECH-BLAST-003"
+            ]
+          }
+        ],
+        "source_present": true
+      },
+      {
+        "benchmark_consumed": false,
+        "candidate_or_scaffold_consumed": false,
+        "evidence_label": "DDESB TP-20 / BEC-O public blast implementation path",
+        "evidence_status": "official_public_source_present_benchmark_not_consumed",
+        "externally_verified_source_ids": [
+          "MECH-BLAST-004",
+          "PHYS-BF-002",
+          "VPS-BFM-014"
+        ],
+        "lineage_id": "BLAST-BEC-O-TP20",
+        "pending_acquisition_source_ids": [
+          "MECH-BLAST-004",
+          "VPS-BFM-014"
+        ],
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {
+            "PIN-BFM-001": "verified_candidate_artifact_bundle / retention_pending"
+          },
+          "authority_boundaries": {
+            "PIN-BFM-001": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+          },
+          "candidate_or_acquired_pin_ids": [
+            "PIN-BFM-001"
+          ],
+          "consumption_status_by_pin": {
+            "PIN-BFM-001": "not_consumed_for_stage_b_release"
+          },
+          "externally_verified_candidate_pin_ids": [
+            "PIN-BFM-001"
+          ],
+          "pin_ids": [
+            "PIN-BFM-001"
+          ],
+          "rejected_pin_ids": [],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [
+            "PIN-BFM-001"
+          ],
+          "sanity_only_pin_ids": [],
+          "source_ids": [
+            "VPS-BFM-014"
+          ]
+        },
+        "release_grade_validated": false,
+        "residual_id": "RES-006",
+        "shortest_completion_path": [
+          "freeze canonical TP-20/BEC-O retained refs, package version and allowed-output policy",
+          "add selected comparison-output hashes, tolerances and applicability envelope"
+        ],
+        "source_evidence": [
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "VPS-BFM-014"
+            ],
+            "externally_verified_source_ids": [
+              "VPS-BFM-014"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "VPS-BFM-014"
+            ],
+            "present_source_ids": [
+              "VPS-BFM-014"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-014"
+              }
+            ],
+            "selected_source_ids": [
+              "VPS-BFM-014"
+            ]
+          },
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "MECH-BLAST-004"
+            ],
+            "externally_verified_source_ids": [
+              "MECH-BLAST-004"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "MECH-BLAST-004"
+            ],
+            "present_source_ids": [
+              "MECH-BLAST-004"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "MECH-BLAST-004"
+              }
+            ],
+            "selected_source_ids": [
+              "MECH-BLAST-004"
+            ]
+          },
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [],
+            "externally_verified_source_ids": [
+              "PHYS-BF-002"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [],
+            "present_source_ids": [
+              "PHYS-BF-002"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": false,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "PHYS-BF-002"
+              }
+            ],
+            "selected_source_ids": [
+              "PHYS-BF-002"
+            ]
+          }
+        ],
+        "source_present": true
+      },
+      {
+        "benchmark_consumed": false,
+        "candidate_or_scaffold_consumed": true,
+        "evidence_label": "Stage B/C blast scaled-distance and impulse hygiene scaffold",
+        "evidence_status": "toy_probe_consumed_for_hygiene_not_calibration",
+        "externally_verified_source_ids": [
+          "VPS-BFM-002"
+        ],
+        "lineage_id": "BLAST-TOY-SCAFFOLD",
+        "pending_acquisition_source_ids": [],
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {
+            "PIN-AIM120-002": "official_public_pdf",
+            "PIN-BFM-001": "verified_candidate_artifact_bundle / retention_pending"
+          },
+          "authority_boundaries": {
+            "PIN-AIM120-002": "\u4e0d\u662f AIM-120C explosive truth \u6216 calibrated effect row",
+            "PIN-BFM-001": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+          },
+          "candidate_or_acquired_pin_ids": [
+            "PIN-AIM120-002",
+            "PIN-BFM-001"
+          ],
+          "consumption_status_by_pin": {
+            "PIN-AIM120-002": "acquired_for_candidate",
+            "PIN-BFM-001": "not_consumed_for_stage_b_release"
+          },
+          "externally_verified_candidate_pin_ids": [
+            "PIN-BFM-001"
+          ],
+          "pin_ids": [
+            "PIN-AIM120-002",
+            "PIN-BFM-001"
+          ],
+          "rejected_pin_ids": [],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [
+            "PIN-BFM-001"
+          ],
+          "sanity_only_pin_ids": [],
+          "source_ids": [
+            "AIM120-GMF-PHYS-001",
+            "VPS-BFM-014"
+          ]
+        },
+        "release_grade_validated": false,
+        "residual_id": "RES-006",
+        "shortest_completion_path": [
+          "compare the blast curve against retained BEC-O/public-tool outputs under frozen tolerances",
+          "review TNT-equivalent, airburst/reflection and aircraft-coupling applicability before release"
+        ],
+        "source_evidence": [
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "VPS-BFM-001",
+              "VPS-BFM-002"
+            ],
+            "externally_verified_source_ids": [
+              "VPS-BFM-002"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [],
+            "present_source_ids": [
+              "VPS-BFM-001",
+              "VPS-BFM-002"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": false,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-001"
+              },
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-002"
+              }
+            ],
+            "selected_source_ids": [
+              "VPS-BFM-001",
+              "VPS-BFM-002"
+            ]
+          },
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "PHYS-BF-001"
+            ],
+            "externally_verified_source_ids": [],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [],
+            "present_source_ids": [
+              "PHYS-BF-001"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": false,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "PHYS-BF-001"
+              }
+            ],
+            "selected_source_ids": [
+              "PHYS-BF-001"
+            ]
+          }
+        ],
+        "source_present": true
+      }
+    ],
+    "fragment": [
+      {
+        "benchmark_consumed": false,
+        "candidate_or_scaffold_consumed": false,
+        "evidence_label": "Gurney initial fragment velocity source route",
+        "evidence_status": "source_route_present_pending_official_artifact",
+        "externally_verified_source_ids": [
+          "MECH-FRAG-002",
+          "VPS-BFM-007"
+        ],
+        "lineage_id": "FRAG-GURNEY-BRL405",
+        "pending_acquisition_source_ids": [
+          "MECH-FRAG-002",
+          "VPS-BFM-007"
+        ],
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {},
+          "authority_boundaries": {},
+          "candidate_or_acquired_pin_ids": [],
+          "consumption_status_by_pin": {},
+          "externally_verified_candidate_pin_ids": [],
+          "pin_ids": [],
+          "rejected_pin_ids": [],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [],
+          "sanity_only_pin_ids": [],
+          "source_ids": []
+        },
+        "release_grade_validated": false,
+        "residual_id": "RES-005",
+        "shortest_completion_path": [
+          "resolve the official public Gurney BRL-405 artifact, rights and checksum or explicitly exclude it",
+          "freeze charge/casing assumptions and retained reference-output hashes before any velocity benchmark consumption"
+        ],
+        "source_evidence": [
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "VPS-BFM-007"
+            ],
+            "externally_verified_source_ids": [
+              "VPS-BFM-007"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "VPS-BFM-007"
+            ],
+            "present_source_ids": [
+              "VPS-BFM-007"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-007"
+              }
+            ],
+            "selected_source_ids": [
+              "VPS-BFM-007"
+            ]
+          },
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "MECH-FRAG-002"
+            ],
+            "externally_verified_source_ids": [
+              "MECH-FRAG-002"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "MECH-FRAG-002"
+            ],
+            "present_source_ids": [
+              "MECH-FRAG-002"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "MECH-FRAG-002"
+              }
+            ],
+            "selected_source_ids": [
+              "MECH-FRAG-002"
+            ]
+          },
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "PHYS-BF-006"
+            ],
+            "externally_verified_source_ids": [],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [],
+            "present_source_ids": [
+              "PHYS-BF-006"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": false,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "PHYS-BF-006"
+              }
+            ],
+            "selected_source_ids": [
+              "PHYS-BF-006"
+            ]
+          }
+        ],
+        "source_present": true
+      },
+      {
+        "benchmark_consumed": false,
+        "candidate_or_scaffold_consumed": false,
+        "evidence_label": "DDESB TP-21 explosion-produced debris reference path",
+        "evidence_status": "official_public_source_present_benchmark_not_consumed",
+        "externally_verified_source_ids": [
+          "MECH-FRAG-004",
+          "VPS-BFM-015"
+        ],
+        "lineage_id": "FRAG-TP21-DEBRIS",
+        "pending_acquisition_source_ids": [
+          "MECH-FRAG-004",
+          "VPS-BFM-015"
+        ],
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {
+            "PIN-BFM-002": "verified_candidate_artifact / retention_pending"
+          },
+          "authority_boundaries": {
+            "PIN-BFM-002": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+          },
+          "candidate_or_acquired_pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "consumption_status_by_pin": {
+            "PIN-BFM-002": "not_consumed_for_stage_b_release"
+          },
+          "externally_verified_candidate_pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "rejected_pin_ids": [],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "sanity_only_pin_ids": [],
+          "source_ids": [
+            "VPS-BFM-015"
+          ]
+        },
+        "release_grade_validated": false,
+        "residual_id": "RES-005",
+        "shortest_completion_path": [
+          "create canonical TP-21 retention refs and allowed-output policy",
+          "add reviewer-frozen fragment/debris comparison payload hashes and tolerances"
+        ],
+        "source_evidence": [
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "VPS-BFM-015"
+            ],
+            "externally_verified_source_ids": [
+              "VPS-BFM-015"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "VPS-BFM-015"
+            ],
+            "present_source_ids": [
+              "VPS-BFM-015"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-015"
+              }
+            ],
+            "selected_source_ids": [
+              "VPS-BFM-015"
+            ]
+          },
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "MECH-FRAG-004"
+            ],
+            "externally_verified_source_ids": [
+              "MECH-FRAG-004"
+            ],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [
+              "MECH-FRAG-004"
+            ],
+            "present_source_ids": [
+              "MECH-FRAG-004"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": true,
+                "pending_acquisition": true,
+                "present": true,
+                "rejected": false,
+                "source_id": "MECH-FRAG-004"
+              }
+            ],
+            "selected_source_ids": [
+              "MECH-FRAG-004"
+            ]
+          }
+        ],
+        "source_present": true
+      },
+      {
+        "benchmark_consumed": false,
+        "candidate_or_scaffold_consumed": true,
+        "evidence_label": "Stage B/C fragment hygiene scaffold",
+        "evidence_status": "toy_probe_consumed_for_hygiene_not_calibration",
+        "externally_verified_source_ids": [],
+        "lineage_id": "FRAG-TOY-SCAFFOLD",
+        "pending_acquisition_source_ids": [],
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {
+            "PIN-BFM-002": "verified_candidate_artifact / retention_pending"
+          },
+          "authority_boundaries": {
+            "PIN-BFM-002": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+          },
+          "candidate_or_acquired_pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "consumption_status_by_pin": {
+            "PIN-BFM-002": "not_consumed_for_stage_b_release"
+          },
+          "externally_verified_candidate_pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "rejected_pin_ids": [],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [
+            "PIN-BFM-002"
+          ],
+          "sanity_only_pin_ids": [],
+          "source_ids": [
+            "VPS-BFM-015"
+          ]
+        },
+        "release_grade_validated": false,
+        "residual_id": "RES-005",
+        "shortest_completion_path": [
+          "replace toy areal-density and energy checks with retained public/reference benchmark outputs",
+          "obtain independent review that the scaffold is not treated as fragment authority"
+        ],
+        "source_evidence": [
+          {
+            "all_selected_sources_present": true,
+            "candidate_only_source_ids": [
+              "VPS-BFM-001"
+            ],
+            "externally_verified_source_ids": [],
+            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "missing_source_ids": [],
+            "pending_acquisition_source_ids": [],
+            "present_source_ids": [
+              "VPS-BFM-001",
+              "VPS-BFM-006",
+              "VPS-BFM-013"
+            ],
+            "rejected_source_ids": [],
+            "rows": [
+              {
+                "candidate_only": true,
+                "official_public_artifact_externally_verified": false,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-001"
+              },
+              {
+                "candidate_only": false,
+                "official_public_artifact_externally_verified": false,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-006"
+              },
+              {
+                "candidate_only": false,
+                "official_public_artifact_externally_verified": false,
+                "pending_acquisition": false,
+                "present": true,
+                "rejected": false,
+                "source_id": "VPS-BFM-013"
+              }
+            ],
+            "selected_source_ids": [
+              "VPS-BFM-001",
+              "VPS-BFM-006",
+              "VPS-BFM-013"
+            ]
+          }
+        ],
+        "source_present": true
+      }
+    ]
+  },
+  "integration_notes": [
+    "this manifest does not update residual_register.zh.md and does not create runtime descriptors",
+    "Stage B/C toy scaffold outputs are recorded only as hygiene evidence",
+    "source_present, benchmark_consumed and release_grade_validated must be consumed as separate fields",
+    "RES-013 Pk and RES-014 deterministic fuze remain outside this lane and stay false"
+  ],
+  "non_authoritative_guards": {
+    "aim120c_warhead_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false,
+    "target_geometry_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "remaining_release_grade_paths": {
+    "RES-003": [
+      "freeze row-level uncertainty bounds for outer box, beam witness geometry and component projection rows",
+      "obtain independent review that repo hitboxes are engineering scaffolds, not F-16 vulnerability geometry",
+      "add or explicitly waive a release-grade geometry benchmark/comparison payload"
+    ],
+    "RES-004": [
+      "freeze an AIM-120C-class sensitivity envelope that never treats toy mass as C-model truth",
+      "pin admitted benchmark/reference payloads for mass, TNT-equivalent or explicitly keep those out of scope",
+      "keep deterministic fuze and Pk blocked unless a separate evidence chain exists"
+    ],
+    "RES-005": [
+      "resolve or exclude Gurney BRL-405 before any release velocity benchmark",
+      "freeze TP-21 retained refs, allowed-output policy, comparison hashes and tolerances",
+      "replace toy fragment probe use with release-grade retained/reference benchmark consumption"
+    ],
+    "RES-006": [
+      "resolve or explicitly exclude the original Kingery-Bulmash artifact",
+      "freeze TP-20/BEC-O retained refs, package version, output policy, comparison hashes and tolerances",
+      "review the blast applicability envelope before any release-grade pressure/impulse authority"
+    ]
+  },
+  "residual_benchmark_evidence": [
+    {
+      "benchmark_consumed": false,
+      "candidate_or_scaffold_consumed": true,
+      "evidence_status": "review_inputs_present_external_geometry_benchmark_missing",
+      "evidence_target": "F-16 geometry uncertainty and review inputs",
+      "gate_result": "blocked_fail_closed_release_grade_geometry_benchmark_missing",
+      "observed_evidence": {
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {
+            "PIN-F16-001": "reference_only_html",
+            "PIN-F16-002": "candidate_route_recorded",
+            "PIN-F16-003": "open_source_config_candidate"
+          },
+          "authority_boundaries": {
+            "PIN-F16-001": "\u4e0d\u662f\u5185\u90e8\u7ec4\u4ef6\u51e0\u4f55\u3001\u6750\u6599\u6216 vulnerability truth",
+            "PIN-F16-002": "\u4e0d\u662f F-16 \u5b89\u88c5\u8fb9\u754c\u3001\u9644\u4ef6\u3001\u7ba1\u8def\u6216 vulnerability truth",
+            "PIN-F16-003": "\u4e0d\u662f F-16C Block 50 geometry authority"
+          },
+          "candidate_or_acquired_pin_ids": [
+            "PIN-F16-001",
+            "PIN-F16-002"
+          ],
+          "consumption_status_by_pin": {
+            "PIN-F16-001": "acquired_for_candidate",
+            "PIN-F16-002": "acquired_for_candidate",
+            "PIN-F16-003": "sanity_only"
+          },
+          "externally_verified_candidate_pin_ids": [],
+          "pin_ids": [
+            "PIN-F16-001",
+            "PIN-F16-002",
+            "PIN-F16-003"
+          ],
+          "rejected_pin_ids": [],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [],
+          "sanity_only_pin_ids": [
+            "PIN-F16-003"
+          ],
+          "source_ids": [
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-3P-006"
+          ]
+        },
+        "source_evidence": {
+          "all_selected_sources_present": true,
+          "candidate_only_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ],
+          "externally_verified_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-012"
+          ],
+          "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+          "missing_source_ids": [],
+          "pending_acquisition_source_ids": [],
+          "present_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ],
+          "rejected_source_ids": [],
+          "rows": [
+            {
+              "candidate_only": true,
+              "official_public_artifact_externally_verified": true,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "F16-TG-SRC-001"
+            },
+            {
+              "candidate_only": true,
+              "official_public_artifact_externally_verified": true,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "F16-TG-SRC-002"
+            },
+            {
+              "candidate_only": true,
+              "official_public_artifact_externally_verified": false,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "F16-TG-SRC-004"
+            },
+            {
+              "candidate_only": true,
+              "official_public_artifact_externally_verified": false,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "F16-TG-SRC-005"
+            },
+            {
+              "candidate_only": true,
+              "official_public_artifact_externally_verified": true,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "F16-TG-SRC-012"
+            }
+          ],
+          "selected_source_ids": [
+            "F16-TG-SRC-001",
+            "F16-TG-SRC-002",
+            "F16-TG-SRC-004",
+            "F16-TG-SRC-005",
+            "F16-TG-SRC-012"
+          ]
+        },
+        "stage_b_c_artifact_refs": {
+          "implemented_scaffold_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-002",
+            "BFM-BM-003",
+            "BFM-BM-004",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "mechanism_load_vector": {
+            "blast_scaled_distance_m_kg13": 0.12894110245241353,
+            "fragment_areal_density_per_m2": 2.2375438053115406,
+            "surface_incidence_cos": 1.0
+          },
+          "stage_b_all_hard_gates_pass": true,
+          "stage_b_bm005_audit_outcome": "candidate_hygiene_only_not_independent_validation",
+          "stage_b_result_pack_status": "candidate_non_authoritative_stage_b_result_pack",
+          "stage_b_review_status": "author_result_pack_only_pending_independent_review",
+          "stage_b_reviewed_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-003",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "stage_c_baseline_component_probability_source": "synthetic_sigmoid",
+          "stage_c_gate_band_contains_primary_blast_impulse": true,
+          "stage_c_gate_band_contains_primary_fragment_energy": true,
+          "stage_c_gate_band_contains_primary_penetration_margin": true,
+          "stage_c_gate_band_contains_primary_surface_incidence": true,
+          "stage_c_result_pack_status": "candidate_non_authoritative_stage_c_component_probability_result_pack",
+          "stage_c_review_status": "author_result_pack_only_pending_independent_review",
+          "validation_scaffold_status": "not_run"
+        },
+        "target_geometry_assumption_summary": {
+          "artifact_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+          "author_status": "frozen_for_stage_b_review_only",
+          "target_type": "F-16C_Block50",
+          "unsupported_row_count": 2,
+          "used_by_stage_b_yes_count": 2
+        }
+      },
+      "release_grade_validated": false,
+      "residual_id": "RES-003",
+      "shortest_completion_path": [
+        "freeze row-level uncertainty bounds for outer box, beam witness geometry and component projection rows",
+        "obtain independent review that repo hitboxes are engineering scaffolds, not F-16 vulnerability geometry",
+        "add or explicitly waive a release-grade geometry benchmark/comparison payload"
+      ],
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "candidate_or_scaffold_consumed": true,
+      "evidence_status": "scope_and_sensitivity_boundary_present_external_warhead_benchmark_missing",
+      "evidence_target": "AIM-120C-class warhead sensitivity boundary",
+      "gate_result": "blocked_fail_closed_release_grade_warhead_sensitivity_benchmark_missing",
+      "observed_evidence": {
+        "pin_evidence": {
+          "any_release_benchmark_consumed": false,
+          "artifact_status_by_pin": {
+            "PIN-AIM120-001": "official_public_pdf",
+            "PIN-AIM120-002": "official_public_pdf",
+            "PIN-AIM120-TPC-001": "third_party_candidate_cluster",
+            "PIN-AIM120-TPC-REJ": "rejected"
+          },
+          "authority_boundaries": {
+            "PIN-AIM120-001": "\u4e0d\u652f\u6301 trigger threshold\u3001delay\u3001reliability \u6216 deterministic fuze",
+            "PIN-AIM120-002": "\u4e0d\u662f AIM-120C explosive truth \u6216 calibrated effect row",
+            "PIN-AIM120-TPC-001": "\u7edd\u4e0d\u5199\u6210 AIM-120C mass truth \u6216 runtime row",
+            "PIN-AIM120-TPC-REJ": "DCS / War Thunder / forum / tabletop values \u6c38\u4e0d\u8fdb\u5165 authority path"
+          },
+          "candidate_or_acquired_pin_ids": [
+            "PIN-AIM120-001",
+            "PIN-AIM120-002"
+          ],
+          "consumption_status_by_pin": {
+            "PIN-AIM120-001": "acquired_for_candidate",
+            "PIN-AIM120-002": "acquired_for_candidate",
+            "PIN-AIM120-TPC-001": "sanity_only",
+            "PIN-AIM120-TPC-REJ": "rejected"
+          },
+          "externally_verified_candidate_pin_ids": [],
+          "pin_ids": [
+            "PIN-AIM120-001",
+            "PIN-AIM120-002",
+            "PIN-AIM120-TPC-001",
+            "PIN-AIM120-TPC-REJ"
+          ],
+          "rejected_pin_ids": [
+            "PIN-AIM120-TPC-REJ"
+          ],
+          "release_benchmark_consumed_pin_ids": [],
+          "retention_pending_pin_ids": [],
+          "sanity_only_pin_ids": [
+            "PIN-AIM120-TPC-001"
+          ],
+          "source_ids": [
+            "AIM120-GMF-WF-006",
+            "AIM120-GMF-PHYS-001",
+            "AIM120-TPC-001/002/006",
+            "AIM120-TPC-REJ-001..005"
+          ]
+        },
+        "source_evidence": {
+          "all_selected_sources_present": true,
+          "candidate_only_source_ids": [
+            "PHYS-BF-001",
+            "PHYS-BF-006"
+          ],
+          "externally_verified_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-002"
+          ],
+          "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+          "missing_source_ids": [],
+          "pending_acquisition_source_ids": [],
+          "present_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-001",
+            "PHYS-BF-002",
+            "PHYS-BF-006"
+          ],
+          "rejected_source_ids": [],
+          "rows": [
+            {
+              "candidate_only": false,
+              "official_public_artifact_externally_verified": true,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "AIM120-WF-002"
+            },
+            {
+              "candidate_only": false,
+              "official_public_artifact_externally_verified": true,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "AIM120-WF-006"
+            },
+            {
+              "candidate_only": false,
+              "official_public_artifact_externally_verified": true,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "AIM120-WF-007"
+            },
+            {
+              "candidate_only": true,
+              "official_public_artifact_externally_verified": false,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "PHYS-BF-001"
+            },
+            {
+              "candidate_only": false,
+              "official_public_artifact_externally_verified": true,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "PHYS-BF-002"
+            },
+            {
+              "candidate_only": true,
+              "official_public_artifact_externally_verified": false,
+              "pending_acquisition": false,
+              "present": true,
+              "rejected": false,
+              "source_id": "PHYS-BF-006"
+            }
+          ],
+          "selected_source_ids": [
+            "AIM120-WF-002",
+            "AIM120-WF-006",
+            "AIM120-WF-007",
+            "PHYS-BF-001",
+            "PHYS-BF-002",
+            "PHYS-BF-006"
+          ]
+        },
+        "stage_b_c_artifact_refs": {
+          "implemented_scaffold_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-002",
+            "BFM-BM-003",
+            "BFM-BM-004",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "mechanism_load_vector": {
+            "blast_scaled_distance_m_kg13": 0.12894110245241353,
+            "fragment_areal_density_per_m2": 2.2375438053115406,
+            "surface_incidence_cos": 1.0
+          },
+          "stage_b_all_hard_gates_pass": true,
+          "stage_b_bm005_audit_outcome": "candidate_hygiene_only_not_independent_validation",
+          "stage_b_result_pack_status": "candidate_non_authoritative_stage_b_result_pack",
+          "stage_b_review_status": "author_result_pack_only_pending_independent_review",
+          "stage_b_reviewed_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-003",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "stage_c_baseline_component_probability_source": "synthetic_sigmoid",
+          "stage_c_gate_band_contains_primary_blast_impulse": true,
+          "stage_c_gate_band_contains_primary_fragment_energy": true,
+          "stage_c_gate_band_contains_primary_penetration_margin": true,
+          "stage_c_gate_band_contains_primary_surface_incidence": true,
+          "stage_c_result_pack_status": "candidate_non_authoritative_stage_c_component_probability_result_pack",
+          "stage_c_review_status": "author_result_pack_only_pending_independent_review",
+          "validation_scaffold_status": "not_run"
+        },
+        "warhead_scope_summary": {
+          "artifact_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+          "consumed_by_surrogate_yes_count": 3,
+          "rejected_rows": 1,
+          "weapon_class": "AIM-120C-class",
+          "weapon_family": "blast_fragmentation"
+        }
+      },
+      "release_grade_validated": false,
+      "residual_id": "RES-004",
+      "shortest_completion_path": [
+        "freeze an AIM-120C-class sensitivity envelope that never treats toy mass as C-model truth",
+        "pin admitted benchmark/reference payloads for mass, TNT-equivalent or explicitly keep those out of scope",
+        "keep deterministic fuze and Pk blocked unless a separate evidence chain exists"
+      ],
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "candidate_or_scaffold_consumed": true,
+      "evidence_status": "source_routes_present_benchmark_payload_not_consumed",
+      "evidence_target": "fragment evidence path",
+      "gate_result": "blocked_fail_closed_fragment_benchmark_payload_missing",
+      "observed_evidence": {
+        "lineages": [
+          {
+            "benchmark_consumed": false,
+            "candidate_or_scaffold_consumed": false,
+            "evidence_label": "Gurney initial fragment velocity source route",
+            "evidence_status": "source_route_present_pending_official_artifact",
+            "externally_verified_source_ids": [
+              "MECH-FRAG-002",
+              "VPS-BFM-007"
+            ],
+            "lineage_id": "FRAG-GURNEY-BRL405",
+            "pending_acquisition_source_ids": [
+              "MECH-FRAG-002",
+              "VPS-BFM-007"
+            ],
+            "pin_evidence": {
+              "any_release_benchmark_consumed": false,
+              "artifact_status_by_pin": {},
+              "authority_boundaries": {},
+              "candidate_or_acquired_pin_ids": [],
+              "consumption_status_by_pin": {},
+              "externally_verified_candidate_pin_ids": [],
+              "pin_ids": [],
+              "rejected_pin_ids": [],
+              "release_benchmark_consumed_pin_ids": [],
+              "retention_pending_pin_ids": [],
+              "sanity_only_pin_ids": [],
+              "source_ids": []
+            },
+            "release_grade_validated": false,
+            "residual_id": "RES-005",
+            "shortest_completion_path": [
+              "resolve the official public Gurney BRL-405 artifact, rights and checksum or explicitly exclude it",
+              "freeze charge/casing assumptions and retained reference-output hashes before any velocity benchmark consumption"
+            ],
+            "source_evidence": [
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "VPS-BFM-007"
+                ],
+                "externally_verified_source_ids": [
+                  "VPS-BFM-007"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "VPS-BFM-007"
+                ],
+                "present_source_ids": [
+                  "VPS-BFM-007"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-007"
+                  }
+                ],
+                "selected_source_ids": [
+                  "VPS-BFM-007"
+                ]
+              },
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "MECH-FRAG-002"
+                ],
+                "externally_verified_source_ids": [
+                  "MECH-FRAG-002"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "MECH-FRAG-002"
+                ],
+                "present_source_ids": [
+                  "MECH-FRAG-002"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "MECH-FRAG-002"
+                  }
+                ],
+                "selected_source_ids": [
+                  "MECH-FRAG-002"
+                ]
+              },
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "PHYS-BF-006"
+                ],
+                "externally_verified_source_ids": [],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [],
+                "present_source_ids": [
+                  "PHYS-BF-006"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": false,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "PHYS-BF-006"
+                  }
+                ],
+                "selected_source_ids": [
+                  "PHYS-BF-006"
+                ]
+              }
+            ],
+            "source_present": true
+          },
+          {
+            "benchmark_consumed": false,
+            "candidate_or_scaffold_consumed": false,
+            "evidence_label": "DDESB TP-21 explosion-produced debris reference path",
+            "evidence_status": "official_public_source_present_benchmark_not_consumed",
+            "externally_verified_source_ids": [
+              "MECH-FRAG-004",
+              "VPS-BFM-015"
+            ],
+            "lineage_id": "FRAG-TP21-DEBRIS",
+            "pending_acquisition_source_ids": [
+              "MECH-FRAG-004",
+              "VPS-BFM-015"
+            ],
+            "pin_evidence": {
+              "any_release_benchmark_consumed": false,
+              "artifact_status_by_pin": {
+                "PIN-BFM-002": "verified_candidate_artifact / retention_pending"
+              },
+              "authority_boundaries": {
+                "PIN-BFM-002": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+              },
+              "candidate_or_acquired_pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "consumption_status_by_pin": {
+                "PIN-BFM-002": "not_consumed_for_stage_b_release"
+              },
+              "externally_verified_candidate_pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "rejected_pin_ids": [],
+              "release_benchmark_consumed_pin_ids": [],
+              "retention_pending_pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "sanity_only_pin_ids": [],
+              "source_ids": [
+                "VPS-BFM-015"
+              ]
+            },
+            "release_grade_validated": false,
+            "residual_id": "RES-005",
+            "shortest_completion_path": [
+              "create canonical TP-21 retention refs and allowed-output policy",
+              "add reviewer-frozen fragment/debris comparison payload hashes and tolerances"
+            ],
+            "source_evidence": [
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "VPS-BFM-015"
+                ],
+                "externally_verified_source_ids": [
+                  "VPS-BFM-015"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "VPS-BFM-015"
+                ],
+                "present_source_ids": [
+                  "VPS-BFM-015"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-015"
+                  }
+                ],
+                "selected_source_ids": [
+                  "VPS-BFM-015"
+                ]
+              },
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "MECH-FRAG-004"
+                ],
+                "externally_verified_source_ids": [
+                  "MECH-FRAG-004"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "MECH-FRAG-004"
+                ],
+                "present_source_ids": [
+                  "MECH-FRAG-004"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "MECH-FRAG-004"
+                  }
+                ],
+                "selected_source_ids": [
+                  "MECH-FRAG-004"
+                ]
+              }
+            ],
+            "source_present": true
+          },
+          {
+            "benchmark_consumed": false,
+            "candidate_or_scaffold_consumed": true,
+            "evidence_label": "Stage B/C fragment hygiene scaffold",
+            "evidence_status": "toy_probe_consumed_for_hygiene_not_calibration",
+            "externally_verified_source_ids": [],
+            "lineage_id": "FRAG-TOY-SCAFFOLD",
+            "pending_acquisition_source_ids": [],
+            "pin_evidence": {
+              "any_release_benchmark_consumed": false,
+              "artifact_status_by_pin": {
+                "PIN-BFM-002": "verified_candidate_artifact / retention_pending"
+              },
+              "authority_boundaries": {
+                "PIN-BFM-002": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+              },
+              "candidate_or_acquired_pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "consumption_status_by_pin": {
+                "PIN-BFM-002": "not_consumed_for_stage_b_release"
+              },
+              "externally_verified_candidate_pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "rejected_pin_ids": [],
+              "release_benchmark_consumed_pin_ids": [],
+              "retention_pending_pin_ids": [
+                "PIN-BFM-002"
+              ],
+              "sanity_only_pin_ids": [],
+              "source_ids": [
+                "VPS-BFM-015"
+              ]
+            },
+            "release_grade_validated": false,
+            "residual_id": "RES-005",
+            "shortest_completion_path": [
+              "replace toy areal-density and energy checks with retained public/reference benchmark outputs",
+              "obtain independent review that the scaffold is not treated as fragment authority"
+            ],
+            "source_evidence": [
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "VPS-BFM-001"
+                ],
+                "externally_verified_source_ids": [],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [],
+                "present_source_ids": [
+                  "VPS-BFM-001",
+                  "VPS-BFM-006",
+                  "VPS-BFM-013"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": false,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-001"
+                  },
+                  {
+                    "candidate_only": false,
+                    "official_public_artifact_externally_verified": false,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-006"
+                  },
+                  {
+                    "candidate_only": false,
+                    "official_public_artifact_externally_verified": false,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-013"
+                  }
+                ],
+                "selected_source_ids": [
+                  "VPS-BFM-001",
+                  "VPS-BFM-006",
+                  "VPS-BFM-013"
+                ]
+              }
+            ],
+            "source_present": true
+          }
+        ],
+        "stage_b_c_artifact_refs": {
+          "implemented_scaffold_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-002",
+            "BFM-BM-003",
+            "BFM-BM-004",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "mechanism_load_vector": {
+            "blast_scaled_distance_m_kg13": 0.12894110245241353,
+            "fragment_areal_density_per_m2": 2.2375438053115406,
+            "surface_incidence_cos": 1.0
+          },
+          "stage_b_all_hard_gates_pass": true,
+          "stage_b_bm005_audit_outcome": "candidate_hygiene_only_not_independent_validation",
+          "stage_b_result_pack_status": "candidate_non_authoritative_stage_b_result_pack",
+          "stage_b_review_status": "author_result_pack_only_pending_independent_review",
+          "stage_b_reviewed_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-003",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "stage_c_baseline_component_probability_source": "synthetic_sigmoid",
+          "stage_c_gate_band_contains_primary_blast_impulse": true,
+          "stage_c_gate_band_contains_primary_fragment_energy": true,
+          "stage_c_gate_band_contains_primary_penetration_margin": true,
+          "stage_c_gate_band_contains_primary_surface_incidence": true,
+          "stage_c_result_pack_status": "candidate_non_authoritative_stage_c_component_probability_result_pack",
+          "stage_c_review_status": "author_result_pack_only_pending_independent_review",
+          "validation_scaffold_status": "not_run"
+        }
+      },
+      "release_grade_validated": false,
+      "residual_id": "RES-005",
+      "shortest_completion_path": [
+        "resolve or exclude Gurney BRL-405 before any release velocity benchmark",
+        "freeze TP-21 retained refs, allowed-output policy, comparison hashes and tolerances",
+        "replace toy fragment probe use with release-grade retained/reference benchmark consumption"
+      ],
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "candidate_or_scaffold_consumed": true,
+      "evidence_status": "source_routes_present_benchmark_payload_not_consumed",
+      "evidence_target": "blast evidence path",
+      "gate_result": "blocked_fail_closed_blast_benchmark_payload_missing",
+      "observed_evidence": {
+        "lineages": [
+          {
+            "benchmark_consumed": false,
+            "candidate_or_scaffold_consumed": false,
+            "evidence_label": "Kingery-Bulmash TNT airblast source route",
+            "evidence_status": "source_route_present_pending_official_artifact",
+            "externally_verified_source_ids": [
+              "MECH-BLAST-003",
+              "VPS-BFM-003"
+            ],
+            "lineage_id": "BLAST-KINGERY-BULMASH",
+            "pending_acquisition_source_ids": [
+              "MECH-BLAST-003",
+              "VPS-BFM-003"
+            ],
+            "pin_evidence": {
+              "any_release_benchmark_consumed": false,
+              "artifact_status_by_pin": {},
+              "authority_boundaries": {},
+              "candidate_or_acquired_pin_ids": [],
+              "consumption_status_by_pin": {},
+              "externally_verified_candidate_pin_ids": [],
+              "pin_ids": [],
+              "rejected_pin_ids": [],
+              "release_benchmark_consumed_pin_ids": [],
+              "retention_pending_pin_ids": [],
+              "sanity_only_pin_ids": [],
+              "source_ids": []
+            },
+            "release_grade_validated": false,
+            "residual_id": "RES-006",
+            "shortest_completion_path": [
+              "resolve the official public Kingery-Bulmash ARBRL-TR-02555 artifact or explicitly exclude it",
+              "freeze coefficient/output provenance before any blast benchmark comparison"
+            ],
+            "source_evidence": [
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "VPS-BFM-003"
+                ],
+                "externally_verified_source_ids": [
+                  "VPS-BFM-003"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "VPS-BFM-003"
+                ],
+                "present_source_ids": [
+                  "VPS-BFM-003"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-003"
+                  }
+                ],
+                "selected_source_ids": [
+                  "VPS-BFM-003"
+                ]
+              },
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "MECH-BLAST-003"
+                ],
+                "externally_verified_source_ids": [
+                  "MECH-BLAST-003"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "MECH-BLAST-003"
+                ],
+                "present_source_ids": [
+                  "MECH-BLAST-003"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "MECH-BLAST-003"
+                  }
+                ],
+                "selected_source_ids": [
+                  "MECH-BLAST-003"
+                ]
+              }
+            ],
+            "source_present": true
+          },
+          {
+            "benchmark_consumed": false,
+            "candidate_or_scaffold_consumed": false,
+            "evidence_label": "DDESB TP-20 / BEC-O public blast implementation path",
+            "evidence_status": "official_public_source_present_benchmark_not_consumed",
+            "externally_verified_source_ids": [
+              "MECH-BLAST-004",
+              "PHYS-BF-002",
+              "VPS-BFM-014"
+            ],
+            "lineage_id": "BLAST-BEC-O-TP20",
+            "pending_acquisition_source_ids": [
+              "MECH-BLAST-004",
+              "VPS-BFM-014"
+            ],
+            "pin_evidence": {
+              "any_release_benchmark_consumed": false,
+              "artifact_status_by_pin": {
+                "PIN-BFM-001": "verified_candidate_artifact_bundle / retention_pending"
+              },
+              "authority_boundaries": {
+                "PIN-BFM-001": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+              },
+              "candidate_or_acquired_pin_ids": [
+                "PIN-BFM-001"
+              ],
+              "consumption_status_by_pin": {
+                "PIN-BFM-001": "not_consumed_for_stage_b_release"
+              },
+              "externally_verified_candidate_pin_ids": [
+                "PIN-BFM-001"
+              ],
+              "pin_ids": [
+                "PIN-BFM-001"
+              ],
+              "rejected_pin_ids": [],
+              "release_benchmark_consumed_pin_ids": [],
+              "retention_pending_pin_ids": [
+                "PIN-BFM-001"
+              ],
+              "sanity_only_pin_ids": [],
+              "source_ids": [
+                "VPS-BFM-014"
+              ]
+            },
+            "release_grade_validated": false,
+            "residual_id": "RES-006",
+            "shortest_completion_path": [
+              "freeze canonical TP-20/BEC-O retained refs, package version and allowed-output policy",
+              "add selected comparison-output hashes, tolerances and applicability envelope"
+            ],
+            "source_evidence": [
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "VPS-BFM-014"
+                ],
+                "externally_verified_source_ids": [
+                  "VPS-BFM-014"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "VPS-BFM-014"
+                ],
+                "present_source_ids": [
+                  "VPS-BFM-014"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-014"
+                  }
+                ],
+                "selected_source_ids": [
+                  "VPS-BFM-014"
+                ]
+              },
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "MECH-BLAST-004"
+                ],
+                "externally_verified_source_ids": [
+                  "MECH-BLAST-004"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [
+                  "MECH-BLAST-004"
+                ],
+                "present_source_ids": [
+                  "MECH-BLAST-004"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": true,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "MECH-BLAST-004"
+                  }
+                ],
+                "selected_source_ids": [
+                  "MECH-BLAST-004"
+                ]
+              },
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [],
+                "externally_verified_source_ids": [
+                  "PHYS-BF-002"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [],
+                "present_source_ids": [
+                  "PHYS-BF-002"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": false,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "PHYS-BF-002"
+                  }
+                ],
+                "selected_source_ids": [
+                  "PHYS-BF-002"
+                ]
+              }
+            ],
+            "source_present": true
+          },
+          {
+            "benchmark_consumed": false,
+            "candidate_or_scaffold_consumed": true,
+            "evidence_label": "Stage B/C blast scaled-distance and impulse hygiene scaffold",
+            "evidence_status": "toy_probe_consumed_for_hygiene_not_calibration",
+            "externally_verified_source_ids": [
+              "VPS-BFM-002"
+            ],
+            "lineage_id": "BLAST-TOY-SCAFFOLD",
+            "pending_acquisition_source_ids": [],
+            "pin_evidence": {
+              "any_release_benchmark_consumed": false,
+              "artifact_status_by_pin": {
+                "PIN-AIM120-002": "official_public_pdf",
+                "PIN-BFM-001": "verified_candidate_artifact_bundle / retention_pending"
+              },
+              "authority_boundaries": {
+                "PIN-AIM120-002": "\u4e0d\u662f AIM-120C explosive truth \u6216 calibrated effect row",
+                "PIN-BFM-001": "official artifact verification does not imply Stage B release ingestion\u3001benchmark-output admission \u6216 runtime authority"
+              },
+              "candidate_or_acquired_pin_ids": [
+                "PIN-AIM120-002",
+                "PIN-BFM-001"
+              ],
+              "consumption_status_by_pin": {
+                "PIN-AIM120-002": "acquired_for_candidate",
+                "PIN-BFM-001": "not_consumed_for_stage_b_release"
+              },
+              "externally_verified_candidate_pin_ids": [
+                "PIN-BFM-001"
+              ],
+              "pin_ids": [
+                "PIN-AIM120-002",
+                "PIN-BFM-001"
+              ],
+              "rejected_pin_ids": [],
+              "release_benchmark_consumed_pin_ids": [],
+              "retention_pending_pin_ids": [
+                "PIN-BFM-001"
+              ],
+              "sanity_only_pin_ids": [],
+              "source_ids": [
+                "AIM120-GMF-PHYS-001",
+                "VPS-BFM-014"
+              ]
+            },
+            "release_grade_validated": false,
+            "residual_id": "RES-006",
+            "shortest_completion_path": [
+              "compare the blast curve against retained BEC-O/public-tool outputs under frozen tolerances",
+              "review TNT-equivalent, airburst/reflection and aircraft-coupling applicability before release"
+            ],
+            "source_evidence": [
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "VPS-BFM-001",
+                  "VPS-BFM-002"
+                ],
+                "externally_verified_source_ids": [
+                  "VPS-BFM-002"
+                ],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [],
+                "present_source_ids": [
+                  "VPS-BFM-001",
+                  "VPS-BFM-002"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": false,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-001"
+                  },
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": true,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "VPS-BFM-002"
+                  }
+                ],
+                "selected_source_ids": [
+                  "VPS-BFM-001",
+                  "VPS-BFM-002"
+                ]
+              },
+              {
+                "all_selected_sources_present": true,
+                "candidate_only_source_ids": [
+                  "PHYS-BF-001"
+                ],
+                "externally_verified_source_ids": [],
+                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+                "missing_source_ids": [],
+                "pending_acquisition_source_ids": [],
+                "present_source_ids": [
+                  "PHYS-BF-001"
+                ],
+                "rejected_source_ids": [],
+                "rows": [
+                  {
+                    "candidate_only": true,
+                    "official_public_artifact_externally_verified": false,
+                    "pending_acquisition": false,
+                    "present": true,
+                    "rejected": false,
+                    "source_id": "PHYS-BF-001"
+                  }
+                ],
+                "selected_source_ids": [
+                  "PHYS-BF-001"
+                ]
+              }
+            ],
+            "source_present": true
+          }
+        ],
+        "stage_b_c_artifact_refs": {
+          "implemented_scaffold_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-002",
+            "BFM-BM-003",
+            "BFM-BM-004",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "mechanism_load_vector": {
+            "blast_scaled_distance_m_kg13": 0.12894110245241353,
+            "fragment_areal_density_per_m2": 2.2375438053115406,
+            "surface_incidence_cos": 1.0
+          },
+          "stage_b_all_hard_gates_pass": true,
+          "stage_b_bm005_audit_outcome": "candidate_hygiene_only_not_independent_validation",
+          "stage_b_result_pack_status": "candidate_non_authoritative_stage_b_result_pack",
+          "stage_b_review_status": "author_result_pack_only_pending_independent_review",
+          "stage_b_reviewed_benchmarks": [
+            "BFM-BM-001",
+            "BFM-BM-003",
+            "BFM-BM-005",
+            "BFM-BM-006"
+          ],
+          "stage_c_baseline_component_probability_source": "synthetic_sigmoid",
+          "stage_c_gate_band_contains_primary_blast_impulse": true,
+          "stage_c_gate_band_contains_primary_fragment_energy": true,
+          "stage_c_gate_band_contains_primary_penetration_margin": true,
+          "stage_c_gate_band_contains_primary_surface_incidence": true,
+          "stage_c_result_pack_status": "candidate_non_authoritative_stage_c_component_probability_result_pack",
+          "stage_c_review_status": "author_result_pack_only_pending_independent_review",
+          "validation_scaffold_status": "not_run"
+        }
+      },
+      "release_grade_validated": false,
+      "residual_id": "RES-006",
+      "shortest_completion_path": [
+        "resolve or explicitly exclude the original Kingery-Bulmash artifact",
+        "freeze TP-20/BEC-O retained refs, package version, output policy, comparison hashes and tolerances",
+        "review the blast applicability envelope before any release-grade pressure/impulse authority"
+      ],
+      "source_present": true
+    }
+  ],
+  "review_target": "res_003_004_005_006_mechanism_benchmark_evidence_lane",
+  "schema_version": "a2.mechanism_benchmark_evidence.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "closure_bucket": "high",
+    "miss_distance_bucket": "near_miss_0_35m",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "source_consumption_validation_matrix": [
+    {
+      "benchmark_consumed": false,
+      "evidence_status": "source_route_present_pending_official_artifact",
+      "lineage_id": "FRAG-GURNEY-BRL405",
+      "release_grade_validated": false,
+      "residual_id": "RES-005",
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "evidence_status": "official_public_source_present_benchmark_not_consumed",
+      "lineage_id": "FRAG-TP21-DEBRIS",
+      "release_grade_validated": false,
+      "residual_id": "RES-005",
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "evidence_status": "toy_probe_consumed_for_hygiene_not_calibration",
+      "lineage_id": "FRAG-TOY-SCAFFOLD",
+      "release_grade_validated": false,
+      "residual_id": "RES-005",
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "evidence_status": "source_route_present_pending_official_artifact",
+      "lineage_id": "BLAST-KINGERY-BULMASH",
+      "release_grade_validated": false,
+      "residual_id": "RES-006",
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "evidence_status": "official_public_source_present_benchmark_not_consumed",
+      "lineage_id": "BLAST-BEC-O-TP20",
+      "release_grade_validated": false,
+      "residual_id": "RES-006",
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "evidence_status": "toy_probe_consumed_for_hygiene_not_calibration",
+      "lineage_id": "BLAST-TOY-SCAFFOLD",
+      "release_grade_validated": false,
+      "residual_id": "RES-006",
+      "source_present": true
+    }
+  ],
+  "status": "blocked_fail_closed_mechanism_benchmark_evidence_manifest"
+}

@@ -1,0 +1,20 @@
+{
+  "artifact_count": 1,
+  "artifacts": [
+    {
+      "artifact_id": "stage_c_fragility_validation_prep",
+      "path": "stage_c_fragility_validation_prep.json",
+      "role": "author-side Stage C fragility validation review input packet",
+      "schema_version": "a2.stage_c_fragility_validation_prep.v1",
+      "sha256": "ab944fcab8a05d08ab1e0be27fc188fe0334f1e8f12610f27ff073e16161cb1b"
+    }
+  ],
+  "authority_granted": false,
+  "deterministic_fuze_authority": false,
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "pk_authority": false,
+  "retention_scope": "stage_c_fragility_validation_prep_author_side_candidate_only",
+  "stage_b_dependency_preserved_as_blocked": true,
+  "status": "author_retained_stage_c_fragility_validation_prep_artifact_only",
+  "stock_component_probability_authority": false
+}

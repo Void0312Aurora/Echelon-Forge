@@ -1,0 +1,24 @@
+{
+  "artifact_count": 1,
+  "artifacts": [
+    {
+      "artifact_id": "stage_c_fragility_review_gate",
+      "path": "stage_c_fragility_review_gate.json",
+      "role": "Stage C residual fragility review gate and shortest evidence paths",
+      "schema_version": "a2.stage_c_fragility_review_gate.v1",
+      "sha256": "a916d001ec0b228ed051c048a8028f65046a0ea4f58ea0e5df62770365fe42e3"
+    }
+  ],
+  "authority_granted": false,
+  "candidate_vs_synthetic_delta_evidence_present": true,
+  "deterministic_fuze_authority": false,
+  "independent_truth_present": false,
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "pk_authority": false,
+  "replacement_allowed": false,
+  "retention_scope": "stage_c_fragility_review_gate_candidate_only",
+  "schema_version": "a2.stage_c_fragility_review_retained_manifest.v1",
+  "stage_b_dependency_preserved_as_blocked": true,
+  "status": "author_retained_stage_c_fragility_review_gate_artifact_only",
+  "stock_component_probability_authority": false
+}

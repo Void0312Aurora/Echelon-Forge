@@ -37,8 +37,8 @@
 | `review_id` | 结论 | release 含义 |
 |---|---|---|
 | `RR-ES-001` | 当前 Stage B 已有 frozen criteria、scope manifest、probe report 和 benchmark snapshot。 | 可进入 independent review queue，但不能跳过。 |
-| `RR-ES-002` | 当前 `closure` probe 在 `700 / 900 / 1100 mps` 上没有 mechanism-load 响应。 | 只能宣称 `high` scope bookkeeping 已记录，不能宣称 closure-sensitive surrogate 已成立。 |
-| `RR-ES-003` | 当前 candidate snapshot 覆盖的 `17` 个 Stage B hard gates 全部通过。 | 只证明 candidate scaffold 与 frozen gates 一致，不证明 validated authority。 |
+| `RR-ES-002` | 当前 `closure` probe 在 `700 / 900 / 1100 mps` 上已经出现 candidate closure-sensitive mechanism-load 响应。 | 只允许宣称 candidate response 已存在，仍不能把它叙述成 authoritative closure-sensitive surrogate。 |
+| `RR-ES-003` | 当前 candidate snapshot 覆盖的 `18` 个 Stage B hard gates 全部通过。 | 只证明 candidate scaffold 与 frozen gates 一致，不证明 validated authority。 |
 | `RR-ES-004` | 当前 stock descriptor 仍不存在，stock 数据库 authority 仍保持关闭。 | 禁止把当前 package 叙述成已放权。 |
 | `RR-ES-005` | `component_failure_probability_authority`、`Pk`、deterministic fuze 仍不在本轮 release 范围。 | Stage B 只讨论 effect-scale-only。 |
 

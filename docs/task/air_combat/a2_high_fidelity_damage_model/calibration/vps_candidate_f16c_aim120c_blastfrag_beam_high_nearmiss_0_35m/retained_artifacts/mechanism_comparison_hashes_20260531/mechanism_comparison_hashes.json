@@ -1,0 +1,851 @@
+{
+  "authority_guards_all_false": true,
+  "beco_workbook": {
+    "all_selected_cached_hashes_present": true,
+    "benchmark_consumed_for_release": false,
+    "cached_workbook_values_are_calibration": false,
+    "parse_status": "metadata_and_cached_formula_hashes_retained",
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+    "residual_id": "RES-006",
+    "selected_comparison_hashes": [
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E36",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-001",
+        "comparison_output_sha256": "e1f06f693bd44bfb437fdc95ccf97e36e0edfda1e77e8cfca3124206ce1ac92c",
+        "formula_present": true,
+        "formula_sha256": "c7158b274feacdb4d7aba630e09dfb10efc4e6c0c137be51a838f6600319ed08",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "scaled_distance_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "scaled_distance",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E38",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-002",
+        "comparison_output_sha256": "abf887eb1fbdafb1bda0f4d3352633f0239f59d2023ff2a93b5108e4d36f2783",
+        "formula_present": true,
+        "formula_sha256": "b481fdacd38238da28754b7eb78db2dced6137ad211da2a2e28e2b94155e95b9",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "time_of_arrival_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "time",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E40",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-003",
+        "comparison_output_sha256": "0dbe8724edceb81f592172adaee4fc2e0ceb9706117e9d947e12f60f7e7e6ac5",
+        "formula_present": true,
+        "formula_sha256": "114b97cb44e38b863ac002d74ca465991233885b5700c2b74733194a8d207daf",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "incident_pressure_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "pressure",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E43",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-004",
+        "comparison_output_sha256": "8e3f33c1eddbf85ca61f17182d634bcac84eda471daf918f352816a8531d677c",
+        "formula_present": true,
+        "formula_sha256": "b44c0e4cbf0a846b35d7cfa8cce1a6d7d630e67d4a10ef1f6e09c6bc2992e3ee",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "reflected_pressure_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "pressure",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E45",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-005",
+        "comparison_output_sha256": "86d250933ff3f6225cb44759e8291ab6af98f4d7ed9864fea03868daac7e31dd",
+        "formula_present": true,
+        "formula_sha256": "eb14d155a55b9ab39e545820b5b771d38a64b34687530974497993cd446e8214",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "positive_phase_duration_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "time",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E48",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-006",
+        "comparison_output_sha256": "d6b5226f38a6eebad7dd3762d19c8b90447c53081fe1d604d109f3757208f181",
+        "formula_present": true,
+        "formula_sha256": "ec81d7159800e0b68a337f4c769f8d32540572282b850b47609140a65608ea39",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "positive_phase_impulse_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "pressure_time",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E51",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-007",
+        "comparison_output_sha256": "701916857eb03ed760f1423f9d6f4b3f339632f1a20fe8acf43cebcd87d814ad",
+        "formula_present": true,
+        "formula_sha256": "3c7a2befc5339db47365ebc15d56bf727e6059dfedfb690b5be553b0086b28e6",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "reflected_impulse_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "pressure_time",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E54",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-008",
+        "comparison_output_sha256": "565ee6db32ed7a6721f69f07b303020218da7353be1f3a593caa7a86e3355560",
+        "formula_present": true,
+        "formula_sha256": "54de00968979f2c682218607785ac39114a66c7fae8125a1b0a35b93dc636788",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "dynamic_overpressure_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "pressure",
+        "value_kind": "cached_formula_numeric"
+      },
+      {
+        "benchmark_consumed_for_release": false,
+        "cached_formula_value_present": true,
+        "calculation_source": "workbook_cached_formula_value_not_recomputed",
+        "cell": "E57",
+        "cell_exists": true,
+        "comparison_hash_is_calibration": false,
+        "comparison_id": "BEC-O-METRIC-DEFAULT-009",
+        "comparison_output_sha256": "95b5a8c100ccda24a735d7cbdffb558a88c8f713d4e481d9639a0db54d8a1d68",
+        "formula_present": true,
+        "formula_sha256": "f45cb772910152e2e53c3a7ca85501a2d84139b53a7491d490b2d68259eee361",
+        "hash_preimage_disclosure": "hash_only; cached workbook value and formula text are not retained in this manifest",
+        "numeric_cached_formula_value_present": true,
+        "output_role": "dynamic_impulse_metric_default",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "unit_family": "pressure_time",
+        "value_kind": "cached_formula_numeric"
+      }
+    ],
+    "selected_comparison_output_count": 9,
+    "selected_comparison_output_set_sha256": "93dcc54794dd391b88bd5a6c6a5e50ef80eb739dac18fbd645df4ec671218f21",
+    "selected_output_requirements": [
+      {
+        "cell": "E36",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "scaled_distance_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-001-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E38",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "time_of_arrival_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-002-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E40",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "incident_pressure_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-003-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E43",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "reflected_pressure_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-004-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E45",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "positive_phase_duration_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-005-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E48",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "positive_phase_impulse_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-006-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E51",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "reflected_impulse_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-007-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E54",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "dynamic_overpressure_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-008-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E57",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "dynamic_impulse_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-009-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      }
+    ],
+    "sheet_inventory": [
+      {
+        "cached_formula_value_count": 0,
+        "dimension": "A1:CK38",
+        "formula_cell_count": 0,
+        "numeric_cached_formula_value_count": 0,
+        "populated_cell_count": 326,
+        "relationship_id": "rId1",
+        "sheet_name": "START",
+        "state": "visible",
+        "target": "xl/worksheets/sheet1.xml"
+      },
+      {
+        "cached_formula_value_count": 415,
+        "dimension": "A1:BP272",
+        "formula_cell_count": 448,
+        "numeric_cached_formula_value_count": 388,
+        "populated_cell_count": 5070,
+        "relationship_id": "rId2",
+        "sheet_name": "ENGLISH UNITS ",
+        "state": "visible",
+        "target": "xl/worksheets/sheet2.xml"
+      },
+      {
+        "cached_formula_value_count": 887,
+        "dimension": "A1:AL161",
+        "formula_cell_count": 895,
+        "numeric_cached_formula_value_count": 850,
+        "populated_cell_count": 1948,
+        "relationship_id": "rId3",
+        "sheet_name": "ENGLISH-TO-METRIC CONVERSION",
+        "state": "visible",
+        "target": "xl/worksheets/sheet3.xml"
+      },
+      {
+        "cached_formula_value_count": 419,
+        "dimension": "A1:CL273",
+        "formula_cell_count": 448,
+        "numeric_cached_formula_value_count": 390,
+        "populated_cell_count": 5770,
+        "relationship_id": "rId4",
+        "sheet_name": "METRIC UNITS",
+        "state": "visible",
+        "target": "xl/worksheets/sheet4.xml"
+      },
+      {
+        "cached_formula_value_count": 887,
+        "dimension": "A1:AL266",
+        "formula_cell_count": 894,
+        "numeric_cached_formula_value_count": 854,
+        "populated_cell_count": 1907,
+        "relationship_id": "rId5",
+        "sheet_name": "METRIC-TO-ENGLISH CONVERSION",
+        "state": "visible",
+        "target": "xl/worksheets/sheet5.xml"
+      },
+      {
+        "cached_formula_value_count": 9,
+        "dimension": "A1:D10",
+        "formula_cell_count": 9,
+        "numeric_cached_formula_value_count": 9,
+        "populated_cell_count": 40,
+        "relationship_id": "rId6",
+        "sheet_name": "Munition Data",
+        "state": "hidden",
+        "target": "xl/worksheets/sheet6.xml"
+      },
+      {
+        "cached_formula_value_count": 0,
+        "dimension": "A1:E22",
+        "formula_cell_count": 0,
+        "numeric_cached_formula_value_count": 0,
+        "populated_cell_count": 110,
+        "relationship_id": "rId7",
+        "sheet_name": "Explosive Data",
+        "state": "hidden",
+        "target": "xl/worksheets/sheet7.xml"
+      }
+    ],
+    "source_artifact_label": "BEC-O-V1.xlsx",
+    "source_id": "VPS-BFM-014",
+    "spreadsheet_calculation_executed": false,
+    "spreadsheet_execution_status": "not_executed_fail_closed_cached_values_only",
+    "workbook_metadata_hashes": {
+      "app": {
+        "present": true,
+        "property_keys": [
+          "AppVersion",
+          "Application",
+          "DocSecurity",
+          "HeadingPairs",
+          "HyperlinksChanged",
+          "LinksUpToDate",
+          "ScaleCrop",
+          "SharedDoc",
+          "TitlesOfParts"
+        ],
+        "property_value_sha256_by_key": {
+          "AppVersion": "1b1405e245ecbe7565b1cdfd06599c5e300a9c365727c7fe321500544bdf5ef6",
+          "Application": "654a61e7ae7d88bfdde11b7c212030231fd50e6102ace359839ba268bc87f2d0",
+          "DocSecurity": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+          "HeadingPairs": "1aca68357ef36ee3a7961056fea629724a430a6d23a6f0725ced560f93bca141",
+          "HyperlinksChanged": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+          "LinksUpToDate": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+          "ScaleCrop": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+          "SharedDoc": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+          "TitlesOfParts": "6543a95dae66dc4974cea173c24742a35be5e451cafbc4841bee6247a5de8d74"
+        }
+      },
+      "core": {
+        "present": true,
+        "property_keys": [
+          "created",
+          "creator",
+          "lastModifiedBy",
+          "lastPrinted",
+          "modified",
+          "title"
+        ],
+        "property_value_sha256_by_key": {
+          "created": "32bb1fcdf675de3d62643a3fe4ba25eadf2083c17566be5cc1b0c7bc4d61d22d",
+          "creator": "8a527908e4ca0d5ee03b750d47df8a09a65aa26dbcfae2c193984df582252ec5",
+          "lastModifiedBy": "8a527908e4ca0d5ee03b750d47df8a09a65aa26dbcfae2c193984df582252ec5",
+          "lastPrinted": "0bfe7d3b7a14a7fcd62884f181eb5650d24d46a78e47331156845087a75f7eab",
+          "modified": "af81eccb413fb558add6f9f15a623f258a122c74aea1499ae83afeb19d00bf89",
+          "title": "2bfd02063356c7372306798321d4ce941cae0c74af92e31868c72ef2fa87a45e"
+        }
+      }
+    },
+    "workbook_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc"
+  },
+  "behavior_risks": [
+    "cached spreadsheet values could be mistaken for independently executed benchmark outputs",
+    "TP-21 controlled vocabulary could be mistaken for admitted debris benchmark data",
+    "source payload presence could be mistaken for release-grade calibration evidence"
+  ],
+  "comparison_hash_decision": {
+    "beco_cached_hashes_are_calibration": false,
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_gate": [],
+    "fail_closed": true,
+    "release_grade_validated": false,
+    "selected_beco_cached_output_hashes_present": true,
+    "source_presence_is_calibration": false,
+    "tp21_selected_debris_output_hashes_present": false,
+    "tp21_vocabulary_is_calibration": false
+  },
+  "current_gate_results": {
+    "RES-005": "partial_fail_closed_tp21_criteria_vocabulary_hash_present_selected_debris_output_requirements_open",
+    "RES-006": "partial_fail_closed_beco_cached_comparison_hashes_present_spreadsheet_execution_required"
+  },
+  "fail_closed_selected_output_requirements": {
+    "RES-005": [
+      {
+        "criteria_key": "debris_item_class",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-001-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "debris_mass_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-002-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "debris_velocity_or_throw_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-003-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "standoff_or_separation_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-004-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "target_exposure_or_area_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-005-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "unit_system",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-006-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "applicability_limit",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-007-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "exclusion_reason",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-008-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      }
+    ],
+    "RES-006": [
+      {
+        "cell": "E36",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "scaled_distance_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-001-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E38",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "time_of_arrival_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-002-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E40",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "incident_pressure_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-003-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E43",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "reflected_pressure_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-004-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E45",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "positive_phase_duration_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-005-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E48",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "positive_phase_impulse_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-006-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E51",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "reflected_impulse_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-007-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E54",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "dynamic_overpressure_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-008-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      },
+      {
+        "cell": "E57",
+        "current_status": "cached_hash_available_recalculation_required",
+        "missing_reasons": [],
+        "output_role": "dynamic_impulse_metric_default",
+        "raw_source_value_must_not_be_copied_to_dataset": true,
+        "required_action": "execute the retained workbook or an independently reviewed equivalent tool, then record the same hash-only output cell preimage under frozen tolerance and rights policy",
+        "requirement_id": "BEC-O-METRIC-DEFAULT-009-EXECUTION-REQ",
+        "residual_id": "RES-006",
+        "sheet": "METRIC UNITS",
+        "source_artifact_label": "BEC-O-V1.xlsx"
+      }
+    ]
+  },
+  "integration_notes": [
+    "BEC-O cached formula hashes are retained as hash-only comparison anchors, not calibration.",
+    "Spreadsheet calculation was not executed; release use still requires a reviewed execution chain.",
+    "TP-21 is represented by a controlled criteria vocabulary hash and selected-output requirements, not copied source prose or tables.",
+    "RES-005/006 remain fail-closed and do not release effect-scale, component-probability, Pk, or deterministic-fuze authority."
+  ],
+  "non_authoritative_guards": {
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "payload_inventory": {
+    "all_payload_hashes_match": true,
+    "all_payloads_exist": true,
+    "payloads": [
+      {
+        "actual_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+        "benchmark_consumed_for_release": false,
+        "expected_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+        "hash_matches_expected": true,
+        "payload_exists": true,
+        "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+        "residual_id": "RES-006",
+        "source_artifact_label": "TP-20 PDF",
+        "source_id": "VPS-BFM-014",
+        "source_presence_is_calibration": false
+      },
+      {
+        "actual_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+        "benchmark_consumed_for_release": false,
+        "expected_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+        "hash_matches_expected": true,
+        "payload_exists": true,
+        "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+        "residual_id": "RES-006",
+        "source_artifact_label": "BEC-O-V1.xlsx",
+        "source_id": "VPS-BFM-014",
+        "source_presence_is_calibration": false
+      },
+      {
+        "actual_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+        "benchmark_consumed_for_release": false,
+        "expected_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+        "hash_matches_expected": true,
+        "payload_exists": true,
+        "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+        "residual_id": "RES-005",
+        "source_artifact_label": "TP-21 PDF",
+        "source_id": "VPS-BFM-015",
+        "source_presence_is_calibration": false
+      }
+    ],
+    "source_payload_pack_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531"
+  },
+  "review_target": "res_005_006_mechanism_comparison_output_hashes",
+  "schema_version": "a2.mechanism_comparison_hashes.v1",
+  "source_consumption_validation_matrix": [
+    {
+      "benchmark_consumed": false,
+      "comparison_output_hash_present": false,
+      "evidence_status": "criteria_vocabulary_hash_present_selected_outputs_missing",
+      "lineage_id": "FRAG-TP21-DEBRIS",
+      "release_grade_validated": false,
+      "residual_id": "RES-005",
+      "source_present": true
+    },
+    {
+      "benchmark_consumed": false,
+      "comparison_output_hash_present": true,
+      "evidence_status": "cached_spreadsheet_comparison_hashes_present_execution_missing",
+      "lineage_id": "BLAST-BEC-O-TP20",
+      "release_grade_validated": false,
+      "residual_id": "RES-006",
+      "source_present": true
+    }
+  ],
+  "source_payload_pack_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531",
+  "status": "partial_fail_closed_mechanism_comparison_hash_manifest",
+  "tp20_reference": {
+    "artifact_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+    "benchmark_consumed_for_release": false,
+    "documentation_role": "blast_effects_computer_reference_context_only",
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+    "residual_id": "RES-006",
+    "source_artifact_label": "TP-20 PDF",
+    "source_id": "VPS-BFM-014",
+    "source_presence_is_calibration": false,
+    "text_extracted_to_dataset": false
+  },
+  "tp21_criteria_vocabulary": {
+    "allowed_criteria_vocabulary": [
+      {
+        "allowed_use": "classification_key_for_selected_debris_comparison_only",
+        "criteria_key": "debris_item_class"
+      },
+      {
+        "allowed_use": "reviewer_selected_bin_key_not_source_content",
+        "criteria_key": "debris_mass_bin"
+      },
+      {
+        "allowed_use": "reviewer_selected_bin_key_not_source_content",
+        "criteria_key": "debris_velocity_or_throw_bin"
+      },
+      {
+        "allowed_use": "reviewer_selected_distance_key_not_source_content",
+        "criteria_key": "standoff_or_separation_bin"
+      },
+      {
+        "allowed_use": "normalization_key_for_future_hash_only_output",
+        "criteria_key": "target_exposure_or_area_bin"
+      },
+      {
+        "allowed_use": "unit_family_marker_for_future_recalculation_manifest",
+        "criteria_key": "unit_system"
+      },
+      {
+        "allowed_use": "review_boundary_marker_not_calibration_value",
+        "criteria_key": "applicability_limit"
+      },
+      {
+        "allowed_use": "fail_closed_reason_when_a_debris_case_is_not_admitted",
+        "criteria_key": "exclusion_reason"
+      }
+    ],
+    "artifact_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+    "benchmark_consumed_for_release": false,
+    "criteria_vocabulary_is_calibration": false,
+    "criteria_vocabulary_sha256": "6760351838bd84a24945a5459f53fffc8326edbaf447cb0e2223f7228a2b1969",
+    "criteria_vocabulary_status": "controlled_vocabulary_hash_retained_no_source_text_dataset",
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+    "residual_id": "RES-005",
+    "selected_debris_output_hashes": [],
+    "selected_output_requirements": [
+      {
+        "criteria_key": "debris_item_class",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-001-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "debris_mass_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-002-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "debris_velocity_or_throw_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-003-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "standoff_or_separation_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-004-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "target_exposure_or_area_bin",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-005-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "unit_system",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-006-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "applicability_limit",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-007-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      },
+      {
+        "criteria_key": "exclusion_reason",
+        "current_status": "selected_debris_output_hash_missing",
+        "required_action": "reviewer selects a concrete TP-21 comparison case using this controlled key, records page/section provenance separately, and retains only hash-only comparison outputs in this package",
+        "requirement_id": "TP21-008-HASH-ONLY-REQ",
+        "residual_id": "RES-005",
+        "source_text_must_not_be_copied_to_dataset": true
+      }
+    ],
+    "source_artifact_label": "TP-21 PDF",
+    "source_id": "VPS-BFM-015",
+    "source_text_copied_to_dataset": false
+  }
+}

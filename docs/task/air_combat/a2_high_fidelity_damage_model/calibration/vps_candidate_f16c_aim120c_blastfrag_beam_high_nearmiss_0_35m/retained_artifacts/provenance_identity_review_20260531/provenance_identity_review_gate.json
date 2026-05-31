@@ -1,0 +1,377 @@
+{
+  "author_side_closed_summary": {
+    "RES-001": [
+      "verified DENIX source artifact rows and sha256 pins are present",
+      "canonical source payload pack retains all required payload files",
+      "forbidden outputs and forbidden release action are explicit",
+      "verified DENIX rows are explicitly marked not consumed for Stage B release"
+    ],
+    "RES-002": [
+      "surrogate model/version/repo anchor is recorded",
+      "Stage B and Stage C author-side retained identity surfaces are present"
+    ]
+  },
+  "authority_guards_all_false": true,
+  "blocking_residual_ids": [
+    "RES-001",
+    "RES-002",
+    "RES-013/014-boundary"
+  ],
+  "explicit_boundaries": [
+    "do not create a stock descriptor from this review gate",
+    "do not promote author-side retained packs to release identity",
+    "do not treat comparison-output hashes as source truth",
+    "do not grant Pk or deterministic fuze authority from this gate"
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_in_stock": false,
+    "component_failure_probability_authority_released": false,
+    "deterministic_fuze_authority": false,
+    "deterministic_fuze_authority_released": false,
+    "effect_scale_authority_in_stock": false,
+    "effect_scale_authority_released": false,
+    "pk_authority": false,
+    "pk_authority_released": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "readiness_level": "author_side_subitems_partly_closed_release_grade_review_blocked",
+  "release_provenance_closeout_gate_summary": {
+    "blocking_residual_ids": [
+      "RES-001",
+      "RES-002",
+      "RES-013/014-boundary"
+    ],
+    "release_closeout_blocked": true,
+    "release_closeout_ready": false,
+    "schema_version": "a2.release_provenance_closeout_gate.v1",
+    "status": "blocked_non_authoritative_release_provenance_closeout_candidate"
+  },
+  "remaining_release_grade_paths": {
+    "RES-001": [
+      "release-grade rights review for the canonical retained source payload pack",
+      "release-grade allowed-output policy freeze",
+      "reviewed benchmark-consumption chain or explicit release non-consumption decision",
+      "selected comparison-output sha256 values",
+      "independent reviewer signoff"
+    ],
+    "RES-002": [
+      "clean release identity state with no /tmp anchors",
+      "release validation status",
+      "release identity artifacts distinct from author-side retained packs",
+      "independent reviewer signoff"
+    ]
+  },
+  "residual_condition_trace": [
+    {
+      "author_side_blocking_check_ids": [
+        "REVIEW-RES001-002-001"
+      ],
+      "author_side_closed_check_ids": [
+        "REVIEW-RES001-001",
+        "REVIEW-RES001-002",
+        "REVIEW-RES001-003",
+        "REVIEW-RES001-004"
+      ],
+      "gate_result": "blocked",
+      "release_grade_blocking_check_ids": [
+        "REVIEW-RES001-001",
+        "REVIEW-RES001-002",
+        "REVIEW-RES001-003",
+        "REVIEW-RES001-004",
+        "REVIEW-RES001-002-001"
+      ],
+      "residual_id": "RES-001"
+    },
+    {
+      "author_side_blocking_check_ids": [
+        "REVIEW-RES001-002-001"
+      ],
+      "author_side_closed_check_ids": [
+        "REVIEW-RES002-001",
+        "REVIEW-RES002-002",
+        "REVIEW-RES002-003"
+      ],
+      "gate_result": "blocked",
+      "release_grade_blocking_check_ids": [
+        "REVIEW-RES002-001",
+        "REVIEW-RES002-002",
+        "REVIEW-RES002-003",
+        "REVIEW-RES001-002-001"
+      ],
+      "residual_id": "RES-002"
+    }
+  ],
+  "residual_gate_results": {
+    "RES-001": "blocked",
+    "RES-002": "blocked"
+  },
+  "review_checks": [
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "canonical source payload pack retains all required TP-20, BEC-O-V1.xlsx and TP-21 payloads; release-grade rights review and source-pack status remain blocked",
+      "check_id": "REVIEW-RES001-001",
+      "observed_evidence": {
+        "all_payload_hashes_match": true,
+        "all_payloads_exist": true,
+        "missing_required_payload_ids": [],
+        "payload_retention_satisfied": true,
+        "release_grade_blocking_reasons": [
+          "rights review status is not release-reviewed",
+          "source pack status is not release-retained",
+          "payload retention statuses are candidate-only: PIN-BFM-001:tp-20-pdf, PIN-BFM-001:bec-o-v1-xlsx, PIN-BFM-002:tp-21-pdf",
+          "payload rights statuses are not release-reviewed: PIN-BFM-001:tp-20-pdf, PIN-BFM-001:bec-o-v1-xlsx, PIN-BFM-002:tp-21-pdf"
+        ],
+        "required_source_artifact_payload_count": 3,
+        "required_source_artifacts": [
+          {
+            "artifact_id": "PIN-BFM-001",
+            "expected_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+            "requirement_id": "PIN-BFM-001:tp-20-pdf",
+            "source_artifact_label": "TP-20 PDF",
+            "source_id": "VPS-BFM-014"
+          },
+          {
+            "artifact_id": "PIN-BFM-001",
+            "expected_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+            "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
+            "source_artifact_label": "BEC-O-V1.xlsx",
+            "source_id": "VPS-BFM-014"
+          },
+          {
+            "artifact_id": "PIN-BFM-002",
+            "expected_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+            "requirement_id": "PIN-BFM-002:source-artifact",
+            "source_artifact_label": "DENIX TP-21 public artifact",
+            "source_id": "VPS-BFM-015"
+          }
+        ],
+        "retained_payload_count": 3,
+        "rights_review_status": "public_distribution_statement_supported_candidate_not_signed_off",
+        "sha256_pinned_artifact_ids": [
+          "PIN-BFM-001",
+          "PIN-BFM-002"
+        ],
+        "source_pack_lookup_order": [
+          {
+            "manifest_exists": true,
+            "manifest_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+            "source": "canonical_source_payload_pack"
+          },
+          {
+            "manifest_exists": false,
+            "manifest_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/source_artifact_pack_manifest.json",
+            "source": "retained_review_dir_fallback"
+          }
+        ],
+        "source_pack_manifest_exists": true,
+        "source_pack_manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+        "source_pack_manifest_source": "canonical_source_payload_pack",
+        "source_pack_status": "partial_payloads_retained_release_review_blocked",
+        "verified_source_artifact_ids": [
+          "PIN-BFM-001",
+          "PIN-BFM-002"
+        ]
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-001"
+      ],
+      "review_surface": "retained_source_artifact_pack",
+      "shortest_remaining_path": "keep the canonical retained payload pack pinned; complete release-grade rights review and reviewer-retained source-pack status",
+      "status": "author_side_closed_release_grade_blocked"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "candidate-side forbidden outputs and fail-closed policy are explicit, but no release-grade allowed-output policy signoff is recorded",
+      "check_id": "REVIEW-RES001-002",
+      "observed_evidence": {
+        "forbidden_outputs": [
+          "effect_scale_authority",
+          "component_failure_probability_authority",
+          "pk_authority",
+          "deterministic_fuze_authority"
+        ],
+        "forbidden_release_action": "do not treat pending, verified-candidate or sanity-only artifacts as acquired calibration inputs",
+        "missing_forbidden_outputs": [],
+        "policy_source": "canonical_source_payload_pack",
+        "policy_status": "release_candidate_fail_closed_policy_frozen",
+        "third_party_policy": "allowed_as_candidate_or_sanity_only_when_rationality_and residuals are explicit; never auto-authoritative"
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-001"
+      ],
+      "review_surface": "allowed_output_policy",
+      "shortest_remaining_path": "add reviewer-frozen allowed_output_policy_status and machine-readable rule that spreadsheet/tool outputs and comparison outputs cannot become source truth or runtime authority",
+      "status": "author_side_closed_release_grade_blocked"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "verified DENIX rows have an author-side non-consumption trace, but no release-reviewed benchmark-consumption chain exists",
+      "check_id": "REVIEW-RES001-003",
+      "observed_evidence": {
+        "explicit_non_consumed_artifact_ids": [
+          "PIN-BFM-001",
+          "PIN-BFM-002"
+        ],
+        "manifest_records_non_consumption": true,
+        "release_consumed_artifact_ids": [],
+        "source_pack_chain_status": "explicit_non_consumption_only_release_chain_missing",
+        "source_payload_retention_satisfied": true
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-001"
+      ],
+      "review_surface": "benchmark_consumption_trace",
+      "shortest_remaining_path": "either keep DENIX payloads explicitly non-consumed for release, or promote them through a reviewed retained benchmark input chain with comparison-output hashes and signoff",
+      "status": "author_side_closed_release_grade_blocked"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "hash-only comparison anchors may exist, but no release-reviewed selected comparison-output sha256 admission is recorded",
+      "check_id": "REVIEW-RES001-004",
+      "observed_evidence": {
+        "candidate_result_artifact_hash_count": 8,
+        "candidate_result_hashes_are_not_comparison_output_hashes": true,
+        "comparison_output_hashes": [],
+        "source_pack_comparison_output_hash_status": "partial_hash_manifest_present_release_review_blocked",
+        "source_pack_selected_beco_cached_output_hash_count": 9
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-001"
+      ],
+      "review_surface": "comparison_output_hash",
+      "shortest_remaining_path": "pin selected comparison-output sha256 values and reviewer-owned admission boundaries for any BEC-O or debris comparison outputs",
+      "status": "author_side_closed_release_grade_blocked"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "worktree_state is not clean_release_candidate; /tmp author-side output anchors remain",
+      "check_id": "REVIEW-RES002-001",
+      "observed_evidence": {
+        "current_validation_status": "not_validated",
+        "model_ref": "candidate://a2/runtime-aligned-vps/f16c-aim120c-blastfrag-beam-high-nearmiss-0_35m-v0",
+        "model_version": "v0_candidate_runtime_aligned",
+        "output_anchor_count": 3,
+        "repo_commit": "e634f3aca7deed73c2918f58a8d07068c5727215",
+        "retained_artifact_pack_status": "present_author_side_non_authoritative",
+        "worktree_state": "repo_dirty_relevant_stage_b_file_set_hashed_retained_artifacts_present"
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-002"
+      ],
+      "review_surface": "clean_release_identity",
+      "shortest_remaining_path": "publish a clean release candidate identity state with no /tmp author-output anchors and with retained outputs referenced from repo artifacts",
+      "status": "author_side_closed_release_grade_blocked"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "surrogate identity and validation manifest remain not_validated / unvalidated",
+      "check_id": "REVIEW-RES002-002",
+      "observed_evidence": {
+        "identity_current_validation_status": "not_validated",
+        "validation_manifest_calibration_status": "unvalidated"
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-002"
+      ],
+      "review_surface": "release_validation_status",
+      "shortest_remaining_path": "promote validation status only after formal result table, residual closeout and independent reviewer signoff exist",
+      "status": "author_side_closed_release_grade_blocked"
+    },
+    {
+      "author_side_satisfied": true,
+      "blocking_summary": "Stage B and Stage C retained packs are author-side candidate packs, not independent release identity artifacts",
+      "check_id": "REVIEW-RES002-003",
+      "observed_evidence": {
+        "stage_b_all_artifacts_exist": true,
+        "stage_b_manifest_exists": true,
+        "stage_b_retained_artifact_count": 4,
+        "stage_b_retained_origin_summary": {
+          "independent_release_artifact_present": false,
+          "review_surface": "author_side_stage_b_effect_scale_candidate_only",
+          "runtime_origin": "no_stock_runtime_descriptor_author_side_artifacts_only",
+          "stage_c_component_probability_artifacts_present": false,
+          "stock_runtime_authority_present": false
+        },
+        "stage_b_status": "author_retained_candidate_artifacts_only",
+        "stage_c_all_artifacts_exist": true,
+        "stage_c_manifest_exists": true,
+        "stage_c_retained_artifact_count": 4,
+        "stage_c_retained_origin_summary": {
+          "independent_release_artifact_present": false,
+          "review_surface": "author_side_candidate_snapshot_and_result_pack_only",
+          "runtime_origin": "test_local_runtime_authority_exercise_only",
+          "stock_runtime_authority_present": false
+        },
+        "stage_c_status": "author_retained_stage_c_component_probability_candidate_artifacts_only"
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-002"
+      ],
+      "review_surface": "retained_identity_surface",
+      "shortest_remaining_path": "add release identity artifacts and independent-review state distinct from author-side retained Stage B/C packs",
+      "status": "author_side_closed_release_grade_blocked"
+    },
+    {
+      "author_side_satisfied": false,
+      "blocking_summary": "no independent reviewer signoff manifest exists for RES-001/RES-002",
+      "check_id": "REVIEW-RES001-002-001",
+      "observed_evidence": {
+        "review_date_present": false,
+        "reviewer_id_present": false,
+        "reviewer_signoff_status": "missing",
+        "signed_residual_ids": [],
+        "signoff_manifest_exists": false,
+        "signoff_manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/independent_review_signoff_manifest.json"
+      },
+      "release_grade_satisfied": false,
+      "residual_ids": [
+        "RES-001",
+        "RES-002"
+      ],
+      "review_surface": "independent_review_signoff",
+      "shortest_remaining_path": "obtain independent reviewer signoff that covers retained source payloads, allowed-output policy, benchmark consumption, comparison hashes and clean release identity",
+      "status": "blocked_author_side_evidence_missing"
+    }
+  ],
+  "review_decision": {
+    "authority_release_included": false,
+    "release_grade_review_blocked": true,
+    "release_grade_review_ready": false,
+    "retained_review_artifact_included": true,
+    "retained_source_payload_pack_included": true
+  },
+  "review_target": "res_001_002_provenance_identity_release_review",
+  "schema_version": "a2.provenance_identity_review_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "closure_bucket": "high",
+    "miss_distance_bucket": "near_miss_0_35m",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "source_payload_pack_consumption": {
+    "allowed_output_policy_blocked": true,
+    "authority_release_included": false,
+    "benchmark_consumption_review_blocked": true,
+    "comparison_output_hash_blocked": true,
+    "independent_review_signoff_blocked": true,
+    "manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+    "manifest_source": "canonical_source_payload_pack",
+    "payload_retention_satisfied": true,
+    "required_payload_count": 3,
+    "retained_payload_count": 3,
+    "rights_review_blocked": true,
+    "rights_review_status": "public_distribution_statement_supported_candidate_not_signed_off"
+  },
+  "status": "blocked_non_authoritative_provenance_identity_review_gate"
+}

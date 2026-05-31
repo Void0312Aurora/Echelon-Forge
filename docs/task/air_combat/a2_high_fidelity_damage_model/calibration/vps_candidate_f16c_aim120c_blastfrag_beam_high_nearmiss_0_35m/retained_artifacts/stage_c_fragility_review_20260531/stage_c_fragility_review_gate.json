@@ -1,0 +1,501 @@
+{
+  "authority_decision": {
+    "blocked_residual_ids": [
+      "RES-009",
+      "RES-010",
+      "RES-011",
+      "RES-012"
+    ],
+    "candidate_vs_synthetic_delta_evidence_present": true,
+    "deterministic_fuze_authority": false,
+    "independent_fragility_truth_present": false,
+    "pk_authority": false,
+    "replacement_allowed": false,
+    "review_gate_release_ready": false,
+    "stage_b_upstream_dependency_still_blocking": true,
+    "stage_c_component_probability_authority_ready": false,
+    "stock_component_probability_authority": false
+  },
+  "authority_guards": {
+    "deterministic_fuze_authority": false,
+    "pk_authority": false,
+    "replacement_allowed": false,
+    "stage_c_candidate_bundle_role": "review_gate_only",
+    "stock_component_probability_authority": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "baseline_replacement_review": {
+    "baseline_component_probability_source": "synthetic_sigmoid",
+    "candidate_probability_sources": [
+      "vulnerability_evidence_row",
+      "vulnerability_evidence_row",
+      "vulnerability_evidence_row"
+    ],
+    "candidate_row_ids": [
+      "component-inner",
+      "component-middle",
+      "component-outer"
+    ],
+    "candidate_vs_synthetic_delta_metrics": {
+      "all_candidate_probabilities_exceed_synthetic_sigmoid": true,
+      "max_absolute_difference_vs_synthetic_sigmoid": 0.5175989853932921,
+      "max_candidate_to_synthetic_sigmoid_ratio": 216.57510893404597,
+      "mean_absolute_difference_vs_synthetic_sigmoid": 0.36470769166349637,
+      "min_candidate_to_synthetic_sigmoid_ratio": 126.31107038255736
+    },
+    "fail_closed_finding": "retained candidate-vs-synthetic delta evidence is present, but candidate evidence rows are still author-side vulnerability_evidence_row inputs, independent truth is absent, and they are not authorized to replace the synthetic_sigmoid baseline",
+    "independent_truth_present": false,
+    "minimum_evidence_path": [
+      "obtain an independent right_aileron_actuator fragility curve or benchmark over the frozen Stage C load band",
+      "compare candidate evidence-row probabilities against that benchmark with reviewer-owned scoring",
+      "record reviewer signoff before any separate stock descriptor admission review"
+    ],
+    "replacement_allowed": false,
+    "replacement_allowed_now": false,
+    "replacement_result": "blocked",
+    "retained_benchmark_artifact_status": "present_retained_candidate_vs_synthetic_delta_evidence",
+    "retained_benchmark_comparison_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/candidate_vs_synthetic_sigmoid_comparison.json",
+    "retained_benchmark_delta_evidence_present": true,
+    "review_result": "review_passed"
+  },
+  "explicit_boundaries": [
+    "review gate only; not an independent fragility benchmark",
+    "retained candidate-vs-synthetic delta evidence is review input only",
+    "do not replace synthetic_sigmoid from this gate",
+    "do not create or update stock runtime descriptors from this artifact",
+    "do not promote Stage C component probability while Stage B remains blocked",
+    "stock_component_probability_authority=false remains mandatory",
+    "pk_authority=false and deterministic_fuze_authority=false remain mandatory"
+  ],
+  "focused_residual_ids": [
+    "RES-009",
+    "RES-010",
+    "RES-011",
+    "RES-012"
+  ],
+  "formal_result_closeout_review": {
+    "author_result_pack_present": true,
+    "blocking_conditions": [
+      {
+        "blocker_id": "BLOCK-CP-002",
+        "residual_id": "RES-010",
+        "summary": "validation manifest still stays at not_run rather than validated/passed"
+      }
+    ],
+    "fragility_prep_packet_present": true,
+    "independent_reviewer_signoff_present": false,
+    "minimum_evidence_path": [
+      "promote the Stage C validation manifest only after a reviewer-owned result record exists",
+      "attach a formal result table that references the frozen criteria and retained artifacts",
+      "record independent reviewer signoff for the Stage C component-probability result"
+    ],
+    "review_result": "blocked",
+    "stage_c_readiness_gate_status": "blocked_non_authoritative_stage_c_review_candidate",
+    "validation_manifest_promoted": false
+  },
+  "fragility_matrix_review": {
+    "review_result": "review_passed",
+    "review_rows": [
+      {
+        "check_id": "FRAG-REVIEW-001",
+        "release_effect": "supports review entry only; does not release authority",
+        "residual_links": [
+          "RES-009",
+          "RES-010"
+        ],
+        "review_result": "review_passed",
+        "reviewed_finding": "candidate surface remains locked to right_aileron_actuator, flight_control and lateral_flight_control_actuators",
+        "source_matrix_id": "FRAG-MAT-CP-001"
+      },
+      {
+        "check_id": "FRAG-REVIEW-002",
+        "release_effect": "supports reviewer audit input only",
+        "residual_links": [
+          "RES-009",
+          "RES-010"
+        ],
+        "review_result": "review_passed",
+        "reviewed_finding": "inner/middle/outer candidate rows cover the projected primary mechanism-load gate band",
+        "source_matrix_id": "FRAG-MAT-CP-002"
+      },
+      {
+        "check_id": "FRAG-REVIEW-003",
+        "release_effect": "blocks replacement until independent fragility closeout",
+        "residual_links": [
+          "RES-009"
+        ],
+        "review_result": "review_passed",
+        "reviewed_finding": "baseline remains synthetic_sigmoid and is correctly retained as non-authoritative",
+        "source_matrix_id": "FRAG-MAT-CP-003"
+      },
+      {
+        "check_id": "FRAG-REVIEW-004",
+        "release_effect": "candidate behavior is review input, not truth",
+        "residual_links": [
+          "RES-009",
+          "RES-011"
+        ],
+        "review_result": "review_passed",
+        "reviewed_finding": "author-side probabilities decrease across inner/middle/outer near-miss probes",
+        "source_matrix_id": "FRAG-MAT-CP-004"
+      },
+      {
+        "check_id": "FRAG-REVIEW-005",
+        "release_effect": "uncertainty coverage remains blocked",
+        "residual_links": [
+          "RES-011"
+        ],
+        "review_result": "review_passed",
+        "reviewed_finding": "fixed-seed repeatability probe is stable enough to hand to an uncertainty reviewer",
+        "source_matrix_id": "FRAG-MAT-CP-005"
+      },
+      {
+        "check_id": "FRAG-REVIEW-006",
+        "release_effect": "independent result-level audit remains blocked",
+        "residual_links": [
+          "RES-012"
+        ],
+        "review_result": "review_passed",
+        "reviewed_finding": "author-side input/result separation trace is present and fail-closed",
+        "source_matrix_id": "FRAG-MAT-CP-006"
+      },
+      {
+        "check_id": "FRAG-REVIEW-007",
+        "release_effect": "Stage B remains an upstream authority blocker",
+        "residual_links": [
+          "RES-010",
+          "RES-012"
+        ],
+        "review_result": "review_passed",
+        "reviewed_finding": "Stage C preserves the blocked Stage B effect-scale dependency instead of promoting component probability independently",
+        "source_matrix_id": "FRAG-MAT-CP-007"
+      }
+    ],
+    "source_matrix_status": "prepared_non_authoritative_stage_c_fragility_validation_review_inputs"
+  },
+  "generated_on": "2026-05-31",
+  "independence_review": {
+    "author_trace_review_result": "review_passed",
+    "independent_result_audit_result": "blocked",
+    "input_or_tuning_artifact_ids": [
+      "INPUT-CP-001",
+      "INPUT-CP-002"
+    ],
+    "minimum_evidence_path": [
+      "have an independent reviewer audit benchmark outputs, thresholds and candidate inputs for circular reuse",
+      "record reviewer-owned independence signoff at result level",
+      "rerun the Stage C review gate after the independence blocker is removed from readiness output"
+    ],
+    "open_independence_blockers": [
+      {
+        "blocker_id": "BLOCK-CP-001",
+        "residual_id": "RES-012",
+        "summary": "independent fragility review and result-level independence audit are still missing"
+      }
+    ],
+    "required_independent_review_record": "reviewer-owned signoff that benchmark outputs, acceptance thresholds and descriptor/tuning inputs are separated and non-circular",
+    "result_or_review_artifact_ids": [
+      "RESULT-CP-001",
+      "RESULT-CP-002"
+    ],
+    "trace_status": "prepared_pending_independent_result_audit"
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "readiness_level": "bounded_review_checks_passed_but_residuals_and_authority_blocked",
+  "remaining_paths": [
+    {
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-003 and retained benchmark evidence is available",
+      "minimum_evidence_path": [
+        "run an independent right_aileron_actuator fragility benchmark over the frozen load band",
+        "score candidate evidence-row probabilities against the independent benchmark",
+        "retain reviewer signoff before replacing synthetic_sigmoid"
+      ],
+      "owner": "independent_fragility_reviewer",
+      "residual_id": "RES-009"
+    },
+    {
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-002 and the validation manifest is reviewer-promoted",
+      "minimum_evidence_path": [
+        "attach the frozen Stage C criteria to a formal result table",
+        "promote validation manifest only after independent reviewer signoff",
+        "rerun readiness and fragility review gates"
+      ],
+      "owner": "validation_integrator_and_independent_reviewer",
+      "residual_id": "RES-010"
+    },
+    {
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-004 and uncertainty coverage results are retained",
+      "minimum_evidence_path": [
+        "run independent calibration or coverage metrics against frozen thresholds",
+        "extend seed/scenario spread and publish reviewer-owned uncertainty table",
+        "rerun the review gate after BLOCK-CP-004 is absent"
+      ],
+      "owner": "independent_uncertainty_reviewer",
+      "residual_id": "RES-011"
+    },
+    {
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-001 and the result-level independence signoff is retained",
+      "minimum_evidence_path": [
+        "audit benchmark outputs, acceptance thresholds and candidate inputs for circular reuse",
+        "record independent result-level separation signoff",
+        "rerun readiness and fragility review gates after BLOCK-CP-001 is absent"
+      ],
+      "owner": "independent_independence_reviewer",
+      "residual_id": "RES-012"
+    }
+  ],
+  "residual_gate_results": [
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocker_owner": "independent_fragility_reviewer",
+      "blocking_condition_ids": [
+        "BLOCK-CP-003"
+      ],
+      "blocking_conditions": [
+        {
+          "blocker_id": "BLOCK-CP-003",
+          "residual_id": "RES-009",
+          "summary": "component fragility truth is still unclosed: the baseline remains 'synthetic_sigmoid' and the candidate row is still a test-local, component-specific positive path"
+        }
+      ],
+      "blocking_conditions_remaining": [
+        "independent_fragility_truth_absent",
+        "reviewer_owned_candidate_vs_truth_scoring_absent"
+      ],
+      "candidate_vs_synthetic_delta_evidence_present": true,
+      "candidate_vs_synthetic_delta_metrics": {
+        "all_candidate_probabilities_exceed_synthetic_sigmoid": true,
+        "max_absolute_difference_vs_synthetic_sigmoid": 0.5175989853932921,
+        "max_candidate_to_synthetic_sigmoid_ratio": 216.57510893404597,
+        "mean_absolute_difference_vs_synthetic_sigmoid": 0.36470769166349637,
+        "min_candidate_to_synthetic_sigmoid_ratio": 126.31107038255736
+      },
+      "comparison_point_count": 3,
+      "delta_evidence_status": "present_author_side_candidate_vs_synthetic_only",
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-003 and retained benchmark evidence is available",
+      "independent_truth_present": false,
+      "minimum_evidence_path": [
+        "run an independent right_aileron_actuator fragility benchmark over the frozen load band",
+        "score candidate evidence-row probabilities against the independent benchmark",
+        "retain reviewer signoff before replacing synthetic_sigmoid"
+      ],
+      "missing_evidence": [
+        "independent component fragility curve or benchmark",
+        "reviewer-owned comparison of candidate evidence rows against independent fragility truth"
+      ],
+      "replacement_allowed": false,
+      "residual_id": "RES-009",
+      "retained_benchmark_artifact_status": "present_retained_candidate_vs_synthetic_delta_evidence",
+      "review_gate_result": "blocked",
+      "review_passed_items": [
+        "right_aileron_actuator matrix identity",
+        "load-gate coverage",
+        "baseline replacement path fail-closed",
+        "candidate surface monotonicity",
+        "retained candidate-vs-synthetic delta evidence"
+      ]
+    },
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocker_owner": "validation_integrator_and_independent_reviewer",
+      "blocking_condition_ids": [
+        "BLOCK-CP-002"
+      ],
+      "blocking_conditions": [
+        {
+          "blocker_id": "BLOCK-CP-002",
+          "residual_id": "RES-010",
+          "summary": "validation manifest still stays at not_run rather than validated/passed"
+        }
+      ],
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-002 and the validation manifest is reviewer-promoted",
+      "minimum_evidence_path": [
+        "attach the frozen Stage C criteria to a formal result table",
+        "promote validation manifest only after independent reviewer signoff",
+        "rerun readiness and fragility review gates"
+      ],
+      "missing_evidence": [
+        "validated/passed validation manifest state",
+        "formal reviewer-owned result closeout",
+        "independent signoff"
+      ],
+      "residual_id": "RES-010",
+      "review_gate_result": "blocked",
+      "review_passed_items": [
+        "pre-run criteria entry exists",
+        "author-side result pack exists",
+        "review artifact inventory exists"
+      ]
+    },
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocker_owner": "independent_uncertainty_reviewer",
+      "blocking_condition_ids": [
+        "BLOCK-CP-004"
+      ],
+      "blocking_conditions": [
+        {
+          "blocker_id": "BLOCK-CP-004",
+          "residual_id": "RES-011",
+          "summary": "probability uncertainty coverage and closeout are still missing"
+        }
+      ],
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-004 and uncertainty coverage results are retained",
+      "minimum_evidence_path": [
+        "run independent calibration or coverage metrics against frozen thresholds",
+        "extend seed/scenario spread and publish reviewer-owned uncertainty table",
+        "rerun the review gate after BLOCK-CP-004 is absent"
+      ],
+      "missing_evidence": [
+        "calibration or coverage scoring",
+        "scenario spread beyond the author-side probe",
+        "reviewer-accepted uncertainty bounds"
+      ],
+      "residual_id": "RES-011",
+      "review_gate_result": "blocked",
+      "review_passed_items": [
+        "fixed-seed author repeatability probe is stable",
+        "uncertainty closeout plan is actionable"
+      ]
+    },
+    {
+      "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+      "blocker_owner": "independent_independence_reviewer",
+      "blocking_condition_ids": [
+        "BLOCK-CP-001"
+      ],
+      "blocking_conditions": [
+        {
+          "blocker_id": "BLOCK-CP-001",
+          "residual_id": "RES-012",
+          "summary": "independent fragility review and result-level independence audit are still missing"
+        }
+      ],
+      "forced_review_trigger": "readiness gate no longer emits BLOCK-CP-001 and the result-level independence signoff is retained",
+      "minimum_evidence_path": [
+        "audit benchmark outputs, acceptance thresholds and candidate inputs for circular reuse",
+        "record independent result-level separation signoff",
+        "rerun readiness and fragility review gates after BLOCK-CP-001 is absent"
+      ],
+      "missing_evidence": [
+        "reviewer-owned result-level independence audit",
+        "non-circular benchmark/input separation signoff"
+      ],
+      "residual_id": "RES-012",
+      "review_gate_result": "blocked",
+      "review_passed_items": [
+        "input/result separation trace exists",
+        "Stage B dependency interlock is preserved"
+      ]
+    }
+  ],
+  "retained_benchmark_artifact_review": {
+    "artifact_read_status": "present_retained_candidate_vs_synthetic_delta_evidence",
+    "authority_release_effect": "continues_to_block_stage_c_component_probability_authority",
+    "benchmark_artifact_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/stage_c_fragility_benchmark.json",
+    "benchmark_schema_version": "a2.stage_c_fragility_benchmark.v1",
+    "benchmark_sha256_verified": true,
+    "blocking_conditions_remaining": [
+      "independent fragility truth absent",
+      "reviewer-owned candidate-vs-truth scoring absent",
+      "formal result closeout absent",
+      "uncertainty closeout absent",
+      "independence audit absent"
+    ],
+    "candidate_probability_sources": [
+      "vulnerability_evidence_row",
+      "vulnerability_evidence_row",
+      "vulnerability_evidence_row"
+    ],
+    "candidate_vs_synthetic_delta_evidence_present": true,
+    "candidate_vs_synthetic_delta_metrics": {
+      "all_candidate_probabilities_exceed_synthetic_sigmoid": true,
+      "max_absolute_difference_vs_synthetic_sigmoid": 0.5175989853932921,
+      "max_candidate_to_synthetic_sigmoid_ratio": 216.57510893404597,
+      "mean_absolute_difference_vs_synthetic_sigmoid": 0.36470769166349637,
+      "min_candidate_to_synthetic_sigmoid_ratio": 126.31107038255736
+    },
+    "comparison_artifact_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/candidate_vs_synthetic_sigmoid_comparison.json",
+    "comparison_point_count": 3,
+    "comparison_probe_labels": [
+      "inner",
+      "middle",
+      "outer"
+    ],
+    "comparison_schema_version": "a2.stage_c_fragility_benchmark_comparison.v1",
+    "comparison_sha256_verified": true,
+    "comparison_status": "author_side_delta_available_but_not_truth_benchmark",
+    "delta_evidence_status": "present_author_side_candidate_vs_synthetic_only",
+    "independent_truth_present": false,
+    "manifest_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531/manifest.json",
+    "manifest_schema_version": "a2.stage_c_fragility_benchmark_retained_manifest.v1",
+    "replacement_allowed": false,
+    "replacement_decision": "blocked_no_independent_fragility_truth",
+    "retained_artifact_claims_replacement_allowed": false,
+    "retained_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531",
+    "review_result": "blocked",
+    "stage_b_dependency_preserved_as_blocked": true,
+    "synthetic_sigmoid_probability_source": "synthetic_sigmoid",
+    "truth_status": "missing_independent_right_aileron_actuator_fragility_truth"
+  },
+  "review_target": "right_aileron_actuator_component_fragility_review_only",
+  "schema_version": "a2.stage_c_fragility_review_gate.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "component_name": "right_aileron_actuator",
+    "component_redundancy_group_id": "lateral_flight_control_actuators",
+    "component_system": "flight_control",
+    "miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "stage_b_dependency_interlock_review": {
+    "dependency_preserved_as_blocked": true,
+    "minimum_evidence_path": [
+      "close the separate Stage B effect-scale release gate before any Stage C authority promotion",
+      "rerun the Stage C fragility review gate after Stage B no longer reports blocked release status"
+    ],
+    "review_result": "review_passed",
+    "stage_b_blocking_residual_ids": [
+      "RES-010",
+      "RES-002",
+      "RES-001",
+      "RES-008",
+      "RES-012",
+      "RES-007",
+      "RES-011",
+      "RES-013/014-boundary"
+    ],
+    "stage_b_release_target": "effect_scale_authority_only",
+    "stage_b_status": "blocked_non_authoritative_stage_b_release_candidate",
+    "stage_c_authority_promotion_allowed": false,
+    "still_blocks_stage_c_authority": true
+  },
+  "status": "blocked_non_authoritative_stage_c_fragility_review_gate",
+  "uncertainty_review": {
+    "anchor_probe_label": "middle",
+    "author_repeatability_review_result": "review_passed",
+    "component_failure_probability_cv": 0.0,
+    "minimum_evidence_path": [
+      "run independent Brier/log-loss or calibration-curve scoring for the component-probability surface",
+      "extend seed and scenario spread beyond the three-point author-side probe",
+      "record reviewer-accepted confidence or coverage bounds before authority promotion"
+    ],
+    "not_covered": [
+      "independent Brier/log-loss or calibration-curve scoring",
+      "scenario spread outside the three-point author-side surface probe",
+      "reviewer-accepted confidence or coverage interval",
+      "release-grade uncertainty budget for stock descriptor admission"
+    ],
+    "seed_values": [
+      20260526,
+      20260527,
+      20260528
+    ],
+    "uncertainty_closeout_result": "blocked"
+  }
+}

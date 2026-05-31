@@ -1,0 +1,356 @@
+{
+  "allowed_output_policy": {
+    "allowed_hash_outputs": [
+      "retained_payload_file_sha256",
+      "source_manifest_sha256",
+      "rights_policy_gate_sha256",
+      "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+    ],
+    "current_selected_comparison_output_hashes": [],
+    "forbidden_consume_outputs": [
+      "source_payloads_as_release_benchmark_inputs",
+      "spreadsheet_or_tool_outputs_as_release_benchmark_without_signoff",
+      "document_examples_as_release_benchmark",
+      "comparison_outputs_without_selected_sha256_and_signoff",
+      "effect_scale_authority",
+      "component_failure_probability_authority",
+      "pk_authority",
+      "deterministic_fuze_authority"
+    ],
+    "forbidden_copy_outputs": [
+      "source_payload_body_or_bulk_content",
+      "document_numeric_tables_or_figures",
+      "spreadsheet_formulas_or_cell_ranges",
+      "spreadsheet_tool_output_tables",
+      "comparison_output_values_without_review_admission",
+      "stock_descriptor_fields",
+      "runtime_authority_fields"
+    ],
+    "policy_frozen_by_this_gate": true,
+    "policy_id": "A2-RES001-SOURCE-RIGHTS-OUTPUT-POLICY-20260531",
+    "policy_status": "release_candidate_fail_closed_policy_frozen",
+    "release_grade_satisfied": false
+  },
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531",
+  "authority_guards_all_false": true,
+  "explicit_boundaries": [
+    "payload retention is complete only because retained files exist and sha256 values match",
+    "public distribution statements can support rights review but are not reviewer signoff",
+    "allowed-output policy is frozen fail-closed and not release-grade",
+    "hashes may be recorded for retained payloads and future admitted comparison outputs",
+    "payload bodies, spreadsheet outputs and comparison values cannot be copied or consumed by this gate",
+    "no stock, runtime, effect-scale, component-probability, Pk or deterministic-fuze authority is released"
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_in_stock": false,
+    "component_failure_probability_authority_released": false,
+    "deterministic_fuze_authority": false,
+    "deterministic_fuze_authority_released": false,
+    "effect_scale_authority_in_stock": false,
+    "effect_scale_authority_released": false,
+    "pk_authority": false,
+    "pk_authority_released": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "payload_rights_inventory": [
+    {
+      "actual_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+      "allowed_use": "candidate_provenance_hash_rights_evidence_and_blast_method_design_reference_only",
+      "artifact_id": "PIN-BFM-001",
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/pdf",
+      "expected_sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
+      "forbidden_use": "copying document body, tables or figures into release artifacts; consuming document examples as benchmark results; source truth; runtime authority; stock descriptor authority; effect-scale authority; component-probability authority; Pk authority; deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "output_policy": {
+        "benchmark_consumption_allowed": false,
+        "consume_forbidden_outputs": [
+          "source_payload_body_as_benchmark_input",
+          "spreadsheet_or_tool_outputs_as_release_benchmark",
+          "document_examples_as_release_benchmark",
+          "comparison_outputs_without_selected_sha256_and_signoff",
+          "effect_scale_authority",
+          "component_failure_probability_authority",
+          "pk_authority",
+          "deterministic_fuze_authority",
+          "stock_descriptor_authority",
+          "runtime_authority"
+        ],
+        "copy_allowed_outputs": [
+          "payload_filename",
+          "payload_sha256",
+          "content_type",
+          "public_distribution_statement_locator_and_phrase_id",
+          "rights_status",
+          "allowed_use",
+          "forbidden_use"
+        ],
+        "copy_forbidden_outputs": [
+          "payload_body_or_bulk_content",
+          "numeric_tables_or_figures",
+          "derived_calibration_values",
+          "runtime_or_stock_descriptor_fields"
+        ],
+        "current_comparison_outputs_admitted": false,
+        "hash_allowed_outputs": [
+          "retained_payload_file_sha256",
+          "source_manifest_sha256",
+          "rights_policy_gate_sha256",
+          "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+        ],
+        "policy_status": "release_candidate_fail_closed_policy_frozen",
+        "release_authority_allowed": false
+      },
+      "payload_exists": true,
+      "payload_retention_status": "retained_hash_matched",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+      "release_consumption_allowed": false,
+      "requirement_id": "PIN-BFM-001:tp-20-pdf",
+      "rights_release_grade_satisfied": false,
+      "rights_statement_evidence": {
+        "extraction_status": "pdf_text_probe_ok",
+        "has_distribution_statement_a_label": true,
+        "has_public_release_phrase": true,
+        "has_unlimited_distribution_phrase": true,
+        "statement_detected": true,
+        "statement_id": "distribution_statement_a_public_release_unlimited",
+        "statement_locator": "pdf_first_8_pages"
+      },
+      "rights_status": "public_distribution_statement_supported_rights_review_candidate",
+      "rights_supported_by_public_distribution_statement": true,
+      "source_artifact_label": "TP-20 PDF",
+      "source_id": "VPS-BFM-014"
+    },
+    {
+      "actual_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "allowed_use": "candidate_provenance_hash_rights_evidence_and_future_tool_output_hash_planning_only",
+      "artifact_id": "PIN-BFM-001",
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "expected_sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
+      "forbidden_use": "copying spreadsheet body, formula or output tables; consuming spreadsheet/tool outputs as benchmark results; source truth; runtime authority; stock descriptor authority; effect-scale authority; component-probability authority; Pk authority; deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "output_policy": {
+        "benchmark_consumption_allowed": false,
+        "consume_forbidden_outputs": [
+          "source_payload_body_as_benchmark_input",
+          "spreadsheet_or_tool_outputs_as_release_benchmark",
+          "document_examples_as_release_benchmark",
+          "comparison_outputs_without_selected_sha256_and_signoff",
+          "effect_scale_authority",
+          "component_failure_probability_authority",
+          "pk_authority",
+          "deterministic_fuze_authority",
+          "stock_descriptor_authority",
+          "runtime_authority"
+        ],
+        "copy_allowed_outputs": [
+          "payload_filename",
+          "payload_sha256",
+          "content_type",
+          "public_distribution_statement_locator_and_phrase_id",
+          "rights_status",
+          "allowed_use",
+          "forbidden_use"
+        ],
+        "copy_forbidden_outputs": [
+          "payload_body_or_bulk_content",
+          "numeric_tables_or_figures",
+          "derived_calibration_values",
+          "runtime_or_stock_descriptor_fields",
+          "spreadsheet_formulas",
+          "spreadsheet_cell_ranges",
+          "spreadsheet_or_tool_output_tables"
+        ],
+        "current_comparison_outputs_admitted": false,
+        "hash_allowed_outputs": [
+          "retained_payload_file_sha256",
+          "source_manifest_sha256",
+          "rights_policy_gate_sha256",
+          "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+        ],
+        "policy_status": "release_candidate_fail_closed_policy_frozen",
+        "release_authority_allowed": false
+      },
+      "payload_exists": true,
+      "payload_retention_status": "retained_hash_matched",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+      "release_consumption_allowed": false,
+      "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
+      "rights_release_grade_satisfied": false,
+      "rights_statement_evidence": {
+        "extraction_status": "xlsx_text_probe_ok",
+        "has_distribution_statement_a_label": true,
+        "has_public_release_phrase": true,
+        "has_unlimited_distribution_phrase": true,
+        "statement_detected": true,
+        "statement_id": "distribution_statement_a_public_release_unlimited",
+        "statement_locator": "xlsx_shared_strings_and_docprops"
+      },
+      "rights_status": "public_distribution_statement_supported_rights_review_candidate",
+      "rights_supported_by_public_distribution_statement": true,
+      "source_artifact_label": "BEC-O-V1.xlsx",
+      "source_id": "VPS-BFM-014"
+    },
+    {
+      "actual_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "allowed_use": "candidate_provenance_hash_rights_evidence_and_debris_vocabulary_reference_only",
+      "artifact_id": "PIN-BFM-002",
+      "benchmark_consumed_for_release": false,
+      "benchmark_consumption_status": "not_consumed_for_stage_b_release",
+      "content_type": "application/pdf",
+      "expected_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "forbidden_use": "copying document body, tables or figures into release artifacts; consuming document examples as benchmark results; source truth; runtime authority; stock descriptor authority; effect-scale authority; component-probability authority; Pk authority; deterministic-fuze authority",
+      "hash_matches_expected": true,
+      "output_policy": {
+        "benchmark_consumption_allowed": false,
+        "consume_forbidden_outputs": [
+          "source_payload_body_as_benchmark_input",
+          "spreadsheet_or_tool_outputs_as_release_benchmark",
+          "document_examples_as_release_benchmark",
+          "comparison_outputs_without_selected_sha256_and_signoff",
+          "effect_scale_authority",
+          "component_failure_probability_authority",
+          "pk_authority",
+          "deterministic_fuze_authority",
+          "stock_descriptor_authority",
+          "runtime_authority"
+        ],
+        "copy_allowed_outputs": [
+          "payload_filename",
+          "payload_sha256",
+          "content_type",
+          "public_distribution_statement_locator_and_phrase_id",
+          "rights_status",
+          "allowed_use",
+          "forbidden_use"
+        ],
+        "copy_forbidden_outputs": [
+          "payload_body_or_bulk_content",
+          "numeric_tables_or_figures",
+          "derived_calibration_values",
+          "runtime_or_stock_descriptor_fields"
+        ],
+        "current_comparison_outputs_admitted": false,
+        "hash_allowed_outputs": [
+          "retained_payload_file_sha256",
+          "source_manifest_sha256",
+          "rights_policy_gate_sha256",
+          "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+        ],
+        "policy_status": "release_candidate_fail_closed_policy_frozen",
+        "release_authority_allowed": false
+      },
+      "payload_exists": true,
+      "payload_retention_status": "retained_hash_matched",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+      "release_consumption_allowed": false,
+      "requirement_id": "PIN-BFM-002:tp-21-pdf",
+      "rights_release_grade_satisfied": false,
+      "rights_statement_evidence": {
+        "extraction_status": "pdf_text_probe_ok",
+        "has_distribution_statement_a_label": false,
+        "has_public_release_phrase": true,
+        "has_unlimited_distribution_phrase": true,
+        "statement_detected": true,
+        "statement_id": "public_release_distribution_unlimited",
+        "statement_locator": "pdf_first_8_pages"
+      },
+      "rights_status": "public_distribution_statement_supported_rights_review_candidate",
+      "rights_supported_by_public_distribution_statement": true,
+      "source_artifact_label": "TP-21 PDF",
+      "source_id": "VPS-BFM-015"
+    }
+  ],
+  "readiness_level": "payload_retention_complete_public_distribution_supported_policy_candidate_frozen_release_grade_blocked",
+  "remaining_release_grade_paths": {
+    "RES-001": [
+      "record independent rights reviewer identity and decision for the retained DENIX payloads",
+      "upgrade allowed-output policy from release-candidate fail-closed to reviewer-frozen release-grade",
+      "pin selected comparison-output hashes before any comparison output is admitted",
+      "record benchmark-consumption signoff, including explicit do-not-consume decisions if outputs stay excluded",
+      "record authority-boundary signoff with all stock/effect/component/Pk/fuze guards false"
+    ]
+  },
+  "required_release_signoff_fields": [
+    {
+      "current_value": "missing",
+      "field": "rights_reviewer_identity",
+      "required_value": "named independent rights reviewer or release owner"
+    },
+    {
+      "current_value": "missing",
+      "field": "rights_review_decision",
+      "required_value": "release_reviewed or reviewer_approved_public_retention"
+    },
+    {
+      "current_value": "missing",
+      "field": "allowed_output_policy_reviewer_identity",
+      "required_value": "named reviewer who freezes copy/hash/consume policy"
+    },
+    {
+      "current_value": "release_candidate_fail_closed_policy_frozen",
+      "field": "allowed_output_policy_release_grade_status",
+      "required_value": "reviewer_frozen_release_grade or independently_reviewed_release_grade"
+    },
+    {
+      "current_value": "missing",
+      "field": "selected_comparison_output_hash_manifest_sha256",
+      "required_value": "sha256 manifest for each admitted comparison/tool output"
+    },
+    {
+      "current_value": "missing",
+      "field": "benchmark_consumption_signoff",
+      "required_value": "explicit consume-or-do-not-consume release decision"
+    },
+    {
+      "current_value": "missing",
+      "field": "authority_boundary_signoff",
+      "required_value": "reviewer confirmation that no stock/runtime/Pk/fuze authority is released"
+    }
+  ],
+  "res_001_gate_result": {
+    "allowed_output_policy_frozen": true,
+    "allowed_output_policy_release_grade_satisfied": false,
+    "benchmark_consumption_release_grade_satisfied": false,
+    "blocking_conditions": [
+      "independent_rights_reviewer_signoff_missing",
+      "allowed_output_policy_release_grade_signoff_missing",
+      "selected_comparison_output_hash_manifest_missing",
+      "benchmark_consumption_release_signoff_missing",
+      "authority_boundary_signoff_missing"
+    ],
+    "comparison_outputs_admitted": false,
+    "gate_result": "blocked",
+    "payload_hashes_match": true,
+    "payload_retention_complete": true,
+    "release_grade_rights_reviewed": false,
+    "release_grade_satisfied": false,
+    "rights_supported_by_public_distribution_statement": true
+  },
+  "review_target": "res_001_source_rights_review_allowed_output_policy",
+  "rights_review_summary": {
+    "public_distribution_statement_supported_payload_count": 3,
+    "release_grade_blocker": "independent_rights_reviewer_signoff_missing",
+    "release_grade_rights_review_satisfied": false,
+    "required_payload_count": 3,
+    "rights_review_status": "public_distribution_statement_supported_candidate_not_signed_off"
+  },
+  "schema_version": "a2.source_rights_output_policy_gate.v1",
+  "source_payload_pack_manifest": {
+    "all_payload_hashes_match": true,
+    "all_payloads_exist": true,
+    "allowed_output_policy_status": "release_candidate_fail_closed_policy_frozen",
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+    "rights_review_status": "public_distribution_statement_supported_candidate_not_signed_off",
+    "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
+    "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
+    "status": "partial_payloads_retained_release_review_blocked"
+  },
+  "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+}

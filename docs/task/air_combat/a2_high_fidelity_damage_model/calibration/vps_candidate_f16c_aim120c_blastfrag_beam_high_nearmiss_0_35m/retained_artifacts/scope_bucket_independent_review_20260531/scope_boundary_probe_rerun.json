@@ -1,0 +1,138 @@
+{
+  "artifact_provenance": {
+    "provenance": "generated from the current non-authoritative validation scaffold for Stage B effect-scale scope boundary review",
+    "source_kind": "candidate_scope_boundary_probe"
+  },
+  "aspect_guard_probe": {
+    "accepted_scope_labels": [
+      "beam"
+    ],
+    "metrics": {
+      "beam_only_guard_documented": true,
+      "rejected_label_count": 6
+    },
+    "probe_id": "SCP-PROBE-003",
+    "rejected_scope_labels": [
+      "head_on",
+      "tail_chase",
+      "high_off_boresight",
+      "direct_hit",
+      "closure_bucket != high",
+      "weapon_family != blast_fragmentation"
+    ],
+    "status": "executed_scope_guard_audit"
+  },
+  "closure_probe": {
+    "limitation_note": "candidate closure-sensitive response is present in closure-sensitive gate fields, but RES-008 remains open, non-authoritative and pending independent review",
+    "metrics": {
+      "anchor_present": true,
+      "candidate_closure_sensitive_response_observed": true,
+      "closure_label_probe_executed": true,
+      "independent_review_complete": false,
+      "mechanism_response_active": true,
+      "mechanism_response_constant_across_closure": false,
+      "res008_closed_by_probe": false,
+      "runtime_bucket_consistent_pass": true
+    },
+    "probe_id": "SCP-PROBE-002",
+    "rows": [
+      {
+        "blast_impulse_kpa_ms_proxy": 1772.7771450952534,
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "closure_mps": 700.0,
+        "fragment_areal_density_per_m2": 2.148042053099079,
+        "fragment_energy_j_proxy": 7691.561571402716,
+        "penetration_margin_proxy": 474.2814124898239,
+        "runtime_miss_distance_bucket": "near_miss",
+        "surface_incidence_cos": 1.0
+      },
+      {
+        "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "closure_mps": 900.0,
+        "fragment_areal_density_per_m2": 2.2375438053115406,
+        "fragment_energy_j_proxy": 8038.506154383306,
+        "penetration_margin_proxy": 474.2814124898239,
+        "runtime_miss_distance_bucket": "near_miss",
+        "surface_incidence_cos": 1.0
+      },
+      {
+        "blast_impulse_kpa_ms_proxy": 1863.6887935616764,
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "closure_mps": 1100.0,
+        "fragment_areal_density_per_m2": 2.327045557524002,
+        "fragment_energy_j_proxy": 8393.103926694348,
+        "penetration_margin_proxy": 474.2814124898239,
+        "runtime_miss_distance_bucket": "near_miss",
+        "surface_incidence_cos": 1.0
+      }
+    ],
+    "status": "executed_candidate_response_probe"
+  },
+  "current_findings": [
+    "standoff probe now has a three-point candidate result table at 0.25/0.35/0.45 m and stays inside the runtime coarse bucket near_miss",
+    "closure probe now shows candidate closure-sensitive response across 700/900/1100 mps; RES-008 remains open, non-authoritative and pending independent review",
+    "aspect guard remains beam-only and explicitly rejects head_on, tail_chase, high_off_boresight and direct_hit labels"
+  ],
+  "miss_distance_probe": {
+    "metrics": {
+      "anchor_present": true,
+      "blast_scaled_distance_monotonic_increasing_pass": true,
+      "fragment_areal_density_monotonic_decreasing_pass": true,
+      "runtime_bucket_consistent_pass": true
+    },
+    "probe_id": "SCP-PROBE-001",
+    "rows": [
+      {
+        "blast_impulse_kpa_ms_proxy": 1962.622916563828,
+        "blast_scaled_distance_m_kg13": 0.09210078746600968,
+        "fragment_areal_density_per_m2": 2.3057105594017373,
+        "fragment_energy_j_proxy": 8309.672609115714,
+        "penetration_margin_proxy": 474.2814124898239,
+        "runtime_miss_distance_bucket": "near_miss",
+        "standoff_m": 0.25,
+        "surface_incidence_cos": 1.0
+      },
+      {
+        "blast_impulse_kpa_ms_proxy": 1818.232969328465,
+        "blast_scaled_distance_m_kg13": 0.12894110245241353,
+        "fragment_areal_density_per_m2": 2.2375438053115406,
+        "fragment_energy_j_proxy": 8038.506154383306,
+        "penetration_margin_proxy": 474.2814124898239,
+        "runtime_miss_distance_bucket": "near_miss",
+        "standoff_m": 0.35,
+        "surface_incidence_cos": 1.0
+      },
+      {
+        "blast_impulse_kpa_ms_proxy": 1692.8508813403153,
+        "blast_scaled_distance_m_kg13": 0.1657814174388174,
+        "fragment_areal_density_per_m2": 2.1753565910538173,
+        "fragment_energy_j_proxy": 7784.478174251114,
+        "penetration_margin_proxy": 474.2814124898239,
+        "runtime_miss_distance_bucket": "near_miss",
+        "standoff_m": 0.45,
+        "surface_incidence_cos": 1.0
+      }
+    ],
+    "status": "executed_candidate_toy_probe"
+  },
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "schema_version": "a2.scope_boundary_probe.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "runtime_miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "status": "candidate_non_authoritative_scope_probe_results"
+}

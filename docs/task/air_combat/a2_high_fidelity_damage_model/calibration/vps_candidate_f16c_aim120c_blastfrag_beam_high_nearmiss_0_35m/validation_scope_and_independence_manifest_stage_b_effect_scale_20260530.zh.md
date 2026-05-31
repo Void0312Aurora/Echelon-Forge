@@ -80,7 +80,7 @@ candidate scope audit，不等于 validated physical truth：
 本文档新增后，当前状态应解释为：
 
 - `RES-007`：从“bucket 未定义”推进到“bucket anchor、boundary probes 与第一版结果表都已存在，但独立 review 仍缺”。
-- `RES-008`：从“beam/high 轴未固化”推进到“轴定义、rejection rules 与第一版 boundary audit 结果都已存在，但 closure 物理敏感性仍未成立”。
+- `RES-008`：从“beam/high 轴未固化”推进到“轴定义、rejection rules、第一版 boundary audit 结果与 candidate closure-sensitive response 都已存在，但该响应仍 non-authoritative 且未独立 review”。
 - `RES-012`：从“benchmark/input separation 未证明”推进到“independence 边界与第一版结果表都已成文，但尚无独立 review 与结果级审计”。
 
 它们都**没有**因为本文存在而关闭。

@@ -1,0 +1,169 @@
+{
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531",
+  "authority_boundary_signoff": {
+    "authority_guards_all_false": true,
+    "non_authoritative_guards": {
+      "blast_mechanism_authority_granted": false,
+      "component_failure_probability_authority_granted": false,
+      "component_failure_probability_authority_in_stock": false,
+      "component_failure_probability_authority_released": false,
+      "deterministic_fuze_authority": false,
+      "deterministic_fuze_authority_granted": false,
+      "deterministic_fuze_authority_released": false,
+      "effect_scale_authority_granted": false,
+      "effect_scale_authority_in_stock": false,
+      "effect_scale_authority_released": false,
+      "fragment_mechanism_authority_granted": false,
+      "pk_authority": false,
+      "pk_authority_granted": false,
+      "pk_authority_released": false,
+      "runtime_authority_granted": false,
+      "stock_database_authority_granted": false,
+      "stock_descriptor_created": false
+    },
+    "signed_off_by_this_gate": true,
+    "stock_effect_component_pk_fuze_authority_all_false": true
+  },
+  "input_artifacts": {
+    "mechanism_comparison_hashes": {
+      "exists": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "schema_version": "a2.mechanism_comparison_hashes.v1",
+      "sha256": "5d267029a11a47f281f726d6c58131aea946294a7979d8dcfaa72b27141973d1",
+      "status": "partial_fail_closed_mechanism_comparison_hash_manifest"
+    },
+    "provenance_identity_review_gate": {
+      "exists": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
+      "schema_version": "a2.provenance_identity_review_gate.v1",
+      "sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
+      "status": "blocked_non_authoritative_provenance_identity_review_gate"
+    },
+    "source_artifact_pack_manifest": {
+      "exists": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+      "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
+      "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
+      "status": "partial_payloads_retained_release_review_blocked"
+    },
+    "source_payload_pack": {
+      "exists": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
+      "schema_version": "a2.source_payload_pack.v1",
+      "sha256": "0fd5e757ae5f64a8c12a44b4dc395c47d51860237a82b1ce7e5594fa4252384c",
+      "status": "partial_payloads_retained_release_review_blocked"
+    },
+    "source_rights_output_policy_gate": {
+      "exists": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    }
+  },
+  "manifest_relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/manifest.json",
+  "non_authoritative_guards": {
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "component_failure_probability_authority_in_stock": false,
+    "component_failure_probability_authority_released": false,
+    "deterministic_fuze_authority": false,
+    "deterministic_fuze_authority_granted": false,
+    "deterministic_fuze_authority_released": false,
+    "effect_scale_authority_granted": false,
+    "effect_scale_authority_in_stock": false,
+    "effect_scale_authority_released": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority": false,
+    "pk_authority_granted": false,
+    "pk_authority_released": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "required_checks": [
+    {
+      "check_id": "source_payload_pack_present",
+      "satisfied": true
+    },
+    {
+      "check_id": "payload_retention_complete",
+      "satisfied": true
+    },
+    {
+      "check_id": "payload_hashes_match",
+      "satisfied": true
+    },
+    {
+      "check_id": "public_distribution_support_present",
+      "satisfied": true
+    },
+    {
+      "check_id": "release_grade_legal_rights_not_asserted",
+      "satisfied": true
+    },
+    {
+      "check_id": "allowed_output_policy_frozen_fail_closed",
+      "satisfied": true
+    },
+    {
+      "check_id": "raw_payload_bodies_non_copyable",
+      "satisfied": true
+    },
+    {
+      "check_id": "benchmark_explicitly_not_consumed_or_hash_only_admitted",
+      "satisfied": true
+    },
+    {
+      "check_id": "beco_tp21_outputs_not_release_consumed_unless_hash_only_admitted",
+      "satisfied": true
+    },
+    {
+      "check_id": "comparison_values_not_copied",
+      "satisfied": true
+    },
+    {
+      "check_id": "provenance_identity_review_res001_author_side_present",
+      "satisfied": true
+    },
+    {
+      "check_id": "authority_guards_all_false",
+      "satisfied": true
+    }
+  ],
+  "res001_release_signoff_gate": {
+    "content_sha256": "de38414cf1839bc2e4cdc31cb75671b8d7a3cb17ecad61c11c0258b0e197caf7",
+    "filename": "res001_release_signoff_gate.json",
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/res001_release_signoff_gate.json",
+    "schema_version": "a2.res001_release_signoff_gate.v1",
+    "sha256": "b3a2c1aceb1d8ef10fd37e2a3ed859cfdb7216e88032ee81ca05a3cd535f3b26"
+  },
+  "residual_decision": {
+    "closed_residual_ids_by_this_gate": [
+      "RES-001"
+    ],
+    "gate_result": "narrowly_closeable_by_internal_release_signoff_gate",
+    "legal_advice_provided": false,
+    "missing_required_fields": [],
+    "release_grade_legal_rights_asserted": false,
+    "residual_closeable_by_this_gate": true,
+    "residual_id": "RES-001",
+    "residual_ids_not_closed_by_this_gate": [
+      "RES-002",
+      "RES-003",
+      "RES-004",
+      "RES-005",
+      "RES-006",
+      "RES-013",
+      "RES-014"
+    ]
+  },
+  "schema_version": "a2.res001_release_signoff_manifest.v1",
+  "status": "narrowly_closeable_internal_release_signoff_fail_closed_boundaries",
+  "validation_report": {
+    "exists": true,
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_res001_release_signoff_gate_20260531.zh.md",
+    "sha256": "7b510d067dbe820a4fa8047dc830c72d3dfcb0d22eff8d34cf293a92cbfe42e3"
+  }
+}

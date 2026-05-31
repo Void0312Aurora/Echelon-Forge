@@ -120,6 +120,34 @@
 它们把 Stage B frozen hard gates 的第一版 fixed-seed candidate snapshot 与 author-side review inputs 固化下来，
 但仍不构成独立 review 或 stock authority。
 
+本轮还补入了一个统一结果包：
+
+- [validation_result_pack_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_b_effect_scale_20260530.zh.md)
+
+它把 scaffold、scope probe 与 Stage B snapshot 汇总为带 content hash 与 independence 语义的统一 candidate result pack，
+进一步减少“结果分散在多份 author-side artifact 中”的问题，但仍不构成 retained validation artifact。
+
+本轮还补入了一个 release-readiness gate：
+
+- [validation_release_readiness_gate_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_release_readiness_gate_stage_b_effect_scale_20260530.zh.md)
+
+它的作用是把“当前为什么 blocked”机器化固定下来，防止当前 author-side hard-gate pass 被误读成
+`ready to release`。
+
+本轮还把 Stage B author-side retained evidence chain 固化到 repo 内：
+
+- [validation_retained_artifact_pack_stage_b_effect_scale_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_retained_artifact_pack_stage_b_effect_scale_20260530.zh.md)
+
+这意味着 `RES-002` 当前更准确的状态已经不是“完全没有 retained chain”，而是“canonical author-side
+retained pack 已存在，但 release-grade surrogate identity 仍未闭合”。
+
+本轮还补入了一个 package-level shared provenance / surrogate identity gate：
+
+- [validation_provenance_and_identity_gate_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_provenance_and_identity_gate_20260530.zh.md)
+
+它把 `RES-001` 与 `RES-002` 的共享阻塞面单独机器化收口，避免 Stage B / Stage C 各自重复解释
+同一套 provenance / identity blocker。
+
 当前还新增了一个 Stage B `effect_scale` 用的 scope / independence manifest：
 
 - [validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md](/home/void0312/Workshop/CMO/docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md)
@@ -131,7 +159,7 @@
 这意味着：
 
 - `RES-007` 已从“near-miss 子桶未定义”推进到“anchor、boundary probes 和第一版结果表已存在”；
-- `RES-008` 已从“beam/high 轴未固化”推进到“轴定义、rejection rules 和第一版结果表已存在”；
+- `RES-008` 已从“beam/high 轴未固化”推进到“轴定义、rejection rules、第一版结果表和 candidate closure-sensitive response 已存在”；
 - `RES-012` 已从“independence 边界未写清”推进到“benchmark/input separation 与初版结果表都已成文，但尚未独立审计”。
 
 这直接阻塞：
@@ -167,7 +195,7 @@
 
 ### 4.3 窄域 bucket 与 mechanism residual 还没有真正收口
 
-当前 `beam / high / near_miss_0_35m` 仍更多是 candidate scope label，而不是验证完成的 authority bucket。并且 `blast_fragmentation` 的 row gate 仍依赖 mechanism-load residual 关闭。
+当前 `beam / high / near_miss_0_35m` 已经不只是纯 scope bookkeeping：`high` closure 上已出现第一版 candidate closure-sensitive response；但它仍远不是验证完成的 authority bucket。并且 `blast_fragmentation` 的 row gate 仍依赖 mechanism-load residual 关闭。
 
 这直接阻塞：
 
@@ -206,6 +234,28 @@
 当 effect-scale-only 已经具备 release 条件后，若继续推进 `component_failure_probability_authority`，还需要额外收口：
 
 - `RES-009 component failure`
+
+当前这一层也不再只存在于 runtime test 断言里。本轮已经补入第一版 Stage C author-side snapshot：
+
+- [validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_benchmark_snapshot_stage_c_component_probability_20260530.zh.md)
+
+它把 `right_aileron_actuator` 的 component-specific probability candidate、component provenance
+字段以及 mechanism-load gate band 固化成 package-level artifact，但仍明确保持
+`test_local_authority_exercise_only` 来源，不构成 stock authority。
+
+本轮还进一步补入了多类 Stage C 收口 artifact：
+
+- [validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_c_component_probability_20260530.zh.md)
+- [validation_result_pack_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_c_component_probability_20260530.zh.md)
+- [validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_retained_artifact_pack_stage_c_component_probability_20260530.zh.md)
+- [validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md)
+- `tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py` 对应的 retained
+  surface probe / repeatability snapshot 已进入 Stage C canonical artifact 链。
+
+这意味着 Stage C 当前更准确的状态已经不是“只有 snapshot”，而是“已有 pre-run candidate
+criteria、snapshot、surface probe、unified candidate result pack、canonical retained
+pack 和 blocked review gate，但 fragility validation / uncertainty / independent review
+仍未闭合”。
 
 这一项不是简单“补一条 row”就能算完成，而至少要明确：
 

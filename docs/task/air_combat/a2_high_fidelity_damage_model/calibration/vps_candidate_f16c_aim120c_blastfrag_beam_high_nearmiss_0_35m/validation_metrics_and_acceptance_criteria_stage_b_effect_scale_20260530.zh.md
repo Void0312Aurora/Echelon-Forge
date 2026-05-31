@@ -57,10 +57,11 @@
 | `BFM-CRIT-ES-011` | `BFM-BM-005` | `metrics.uncertainty_summary_present` | `true` | 没有 uncertainty 摘要，Stage B 停止。 |
 | `BFM-CRIT-ES-012` | `BFM-BM-005` | `metrics.seed_window_cv_pass` | `true` | 多 seed 波动超出当前候选包容忍度，Stage B 停止。 |
 | `BFM-CRIT-ES-013` | `BFM-BM-005` | `uncertainty_summary.fragment_areal_density_per_m2.cv` | `<= 0.05` | fragment areal-density proxy 波动过大。 |
-| `BFM-CRIT-ES-014` | `BFM-BM-005` | `uncertainty_summary.fragment_energy_j_proxy.cv` | `<= 0.05` | fragment energy proxy 波动过大。 |
-| `BFM-CRIT-ES-015` | `BFM-BM-005` | `uncertainty_summary.penetration_margin_proxy.cv` | `<= 0.05` | penetration proxy 波动过大。 |
-| `BFM-CRIT-ES-016` | `BFM-BM-006` | `metrics.source_trace_error_count` | `= 0` | source trace / rights / authority gate 未通过，Stage B 停止。 |
-| `BFM-CRIT-ES-017` | `BFM-BM-006` | `metrics.source_trace_warning_count` | `= 0` | 候选包仍含未解释 warning，Stage B 停止。 |
+| `BFM-CRIT-ES-014` | `BFM-BM-005` | `uncertainty_summary.blast_impulse_kpa_ms_proxy.cv` | `<= 0.05` | blast impulse proxy 波动过大。 |
+| `BFM-CRIT-ES-015` | `BFM-BM-005` | `uncertainty_summary.fragment_energy_j_proxy.cv` | `<= 0.05` | fragment energy proxy 波动过大。 |
+| `BFM-CRIT-ES-016` | `BFM-BM-005` | `uncertainty_summary.penetration_margin_proxy.cv` | `<= 0.05` | penetration proxy 波动过大。 |
+| `BFM-CRIT-ES-017` | `BFM-BM-006` | `metrics.source_trace_error_count` | `= 0` | source trace / rights / authority gate 未通过，Stage B 停止。 |
+| `BFM-CRIT-ES-018` | `BFM-BM-006` | `metrics.source_trace_warning_count` | `= 0` | 候选包仍含未解释 warning，Stage B 停止。 |
 
 ## 4. Stage B Release Notes
 

@@ -44,14 +44,15 @@
 | `BFM-CRIT-ES-011` | `BFM-BM-005` | `metrics.uncertainty_summary_present` | `true` | `true` | `pass` |
 | `BFM-CRIT-ES-012` | `BFM-BM-005` | `metrics.seed_window_cv_pass` | `true` | `true` | `pass` |
 | `BFM-CRIT-ES-013` | `BFM-BM-005` | `uncertainty_summary.fragment_areal_density_per_m2.cv` | `0.0135564757` | `<= 0.05` | `pass` |
-| `BFM-CRIT-ES-014` | `BFM-BM-005` | `uncertainty_summary.fragment_energy_j_proxy.cv` | `0.0` | `<= 0.05` | `pass` |
-| `BFM-CRIT-ES-015` | `BFM-BM-005` | `uncertainty_summary.penetration_margin_proxy.cv` | `0.0149534283` | `<= 0.05` | `pass` |
-| `BFM-CRIT-ES-016` | `BFM-BM-006` | `metrics.source_trace_error_count` | `0` | `= 0` | `pass` |
-| `BFM-CRIT-ES-017` | `BFM-BM-006` | `metrics.source_trace_warning_count` | `0` | `= 0` | `pass` |
+| `BFM-CRIT-ES-014` | `BFM-BM-005` | `uncertainty_summary.blast_impulse_kpa_ms_proxy.cv` | `0.0` | `<= 0.05` | `pass` |
+| `BFM-CRIT-ES-015` | `BFM-BM-005` | `uncertainty_summary.fragment_energy_j_proxy.cv` | `0.0` | `<= 0.05` | `pass` |
+| `BFM-CRIT-ES-016` | `BFM-BM-005` | `uncertainty_summary.penetration_margin_proxy.cv` | `0.0149534283` | `<= 0.05` | `pass` |
+| `BFM-CRIT-ES-017` | `BFM-BM-006` | `metrics.source_trace_error_count` | `0` | `= 0` | `pass` |
+| `BFM-CRIT-ES-018` | `BFM-BM-006` | `metrics.source_trace_warning_count` | `0` | `= 0` | `pass` |
 
 当前 snapshot 结论：
 
-- 当前固定种子 candidate snapshot 覆盖的 `17` 个 Stage B hard gates 全部通过；
+- 当前固定种子 candidate snapshot 覆盖的 `18` 个 Stage B hard gates 全部通过；
 - 这只说明“当前 scaffold 产物与 frozen hard gates 一致”，不说明 surrogate 已经被独立验证；
 - 该表仍不能单独触发 authority release。
 
@@ -67,6 +68,7 @@
 | `BFM-BM-005` | `fragment_energy_j_proxy` | `8038.5061543833` |
 | `BFM-BM-005` | `penetration_margin_proxy` | `474.2814124898` |
 | `BFM-BM-005` | `fragment_areal_density_per_m2.cv` | `0.0135564757` |
+| `BFM-BM-005` | `blast_impulse_kpa_ms_proxy.cv` | `0.0` |
 | `BFM-BM-005` | `fragment_energy_j_proxy.cv` | `0.0` |
 | `BFM-BM-005` | `penetration_margin_proxy.cv` | `0.0149534283` |
 

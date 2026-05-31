@@ -1,0 +1,157 @@
+{
+  "artifact_hashes": [
+    {
+      "artifact_id": "ART-RUNTIME-AUTH-001",
+      "artifact_kind": "runtime_aligned_authority_exercise",
+      "sha256": "b6552fc87f8c5554346f0037e05b98c5c392b7cd190e5ad81086dbb1326e29bc",
+      "status": "test_local_authority_exercise_only",
+      "tool_ref": "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py"
+    },
+    {
+      "artifact_id": "ART-STAGE-C-SNAPSHOT-001",
+      "artifact_kind": "stage_c_component_probability_snapshot",
+      "sha256": "4a265ab7a8d6ca7d891eb98e8d5b9ed3fed966cff35fc3b3b00fa5a91f48f023",
+      "status": "candidate_non_authoritative_stage_c_component_probability_snapshot",
+      "tool_ref": "tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py"
+    },
+    {
+      "artifact_id": "ART-STAGE-C-SURFACE-001",
+      "artifact_kind": "stage_c_component_probability_surface_probe",
+      "sha256": "267424ad809b4ab2fc9629e84218eafce70214172c0304ab36f09d329db18d4c",
+      "status": "candidate_non_authoritative_stage_c_component_probability_surface_probe",
+      "tool_ref": "tools/maintenance/a2_blastfrag_stage_c_component_probability_surface_probe.py"
+    }
+  ],
+  "component_probability_result_summary": {
+    "baseline_component_probability": 0.0016625621124417252,
+    "baseline_component_probability_source": "synthetic_sigmoid",
+    "candidate_component_failure_probability": 0.67,
+    "candidate_component_name": "right_aileron_actuator",
+    "candidate_component_redundancy_group_id": "lateral_flight_control_actuators",
+    "candidate_component_system": "flight_control",
+    "result_interpretation": "candidate component-specific probability snapshot only; not an independently reviewed fragility curve or uncertainty boundary"
+  },
+  "current_findings": [
+    "the current result pack consolidates the runtime-aligned authority exercise, the Stage C snapshot and the Stage C surface probe under stable content hashes",
+    "the candidate surface probe now shows monotonic component-specific row selection inside the narrow near-miss bucket, while the baseline stock event still reports synthetic component probability",
+    "Stage C still lacks independent fragility validation, uncertainty closeout and stock authority release"
+  ],
+  "fragility_surface_summary": {
+    "anchor_seed_window_probability_cv": 0.0,
+    "component_scope_locked_to_right_aileron_actuator": true,
+    "component_specific_precedence_pass": true,
+    "json_output_uses_sort_keys": true,
+    "primary_component_identity_stable_pass": true,
+    "probability_monotonic_decreasing_with_standoff_pass": true,
+    "probe_labels": [
+      "inner",
+      "middle",
+      "outer"
+    ],
+    "probe_row_count": 3,
+    "result_interpretation": "candidate fragility-surface and runtime repeatability snapshot only; not an independently reviewed fragility curve or uncertainty boundary",
+    "runtime_seed_values_are_fixed": [
+      20260526,
+      20260527,
+      20260528
+    ],
+    "selected_rows_cover_primary_loads_pass": true,
+    "stock_baseline_sources_are_synthetic_sigmoid": true,
+    "surface_probe_status": "candidate_non_authoritative_stage_c_component_probability_surface_probe"
+  },
+  "independence_audit": [
+    {
+      "allowed_claim": "runtime-aligned component-specific positive path exists",
+      "artifact_id": "ART-RUNTIME-AUTH-001",
+      "audit_outcome": "test_local_positive_path_only",
+      "current_release_role": "positive_path_runtime_shape_demonstration",
+      "forbidden_claim": "stock runtime authority or independent fragility validation",
+      "independence_class": "test_local_runtime_exercise_only"
+    },
+    {
+      "allowed_claim": "author-side candidate snapshot and provenance surface exist",
+      "artifact_id": "ART-STAGE-C-SNAPSHOT-001",
+      "audit_outcome": "candidate_snapshot_only_not_independent_validation",
+      "current_release_role": "frozen_author_side_component_probability_snapshot",
+      "forbidden_claim": "validated component fragility truth or released probability authority",
+      "independence_class": "author_side_candidate_snapshot_only"
+    },
+    {
+      "allowed_claim": "candidate row binds to one projected component with traceable fields",
+      "artifact_id": "ROW-COMPONENT-001",
+      "audit_outcome": "candidate_component_specific_only",
+      "current_release_role": "component-specific provenance and gate-band demonstration",
+      "forbidden_claim": "real actuator fragility curve or aircraft-wide failure probability truth",
+      "independence_class": "component_specific_candidate_row_only"
+    }
+  ],
+  "non_authoritative_guards": {
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "pk_authority_granted": false,
+    "stock_runtime_authority_granted": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "result_table_summary": {
+    "all_hard_gates_pass_in_current_snapshot": true,
+    "evidence_artifact_hashes": {
+      "runtime_aligned_authority_exercise": "b6552fc87f8c5554346f0037e05b98c5c392b7cd190e5ad81086dbb1326e29bc",
+      "stage_c_snapshot": "4a265ab7a8d6ca7d891eb98e8d5b9ed3fed966cff35fc3b3b00fa5a91f48f023",
+      "stage_c_surface_probe": "267424ad809b4ab2fc9629e84218eafce70214172c0304ab36f09d329db18d4c"
+    },
+    "failed_criteria_ids": [],
+    "primary_release_scope": "component_failure_probability_authority_only",
+    "review_status": "author_result_pack_only_pending_independent_review",
+    "reviewed_checks": [
+      "runtime_projected_component_row_present",
+      "descriptor_authority_flags",
+      "component_provenance_fields",
+      "mechanism_load_gate_band_contains_primary_row",
+      "component_probability_surface_probe"
+    ]
+  },
+  "schema_version": "a2.stage_c_component_probability_result_pack.v1",
+  "scope": {
+    "aspect_bucket": "beam",
+    "candidate_scope_label": "near_miss_0_35m",
+    "closure_bucket": "high",
+    "component_name": "right_aileron_actuator",
+    "component_redundancy_group_id": "lateral_flight_control_actuators",
+    "component_system": "flight_control",
+    "runtime_miss_distance_bucket": "near_miss",
+    "target_type": "F-16C_Block50",
+    "weapon_class": "AIM-120C-class",
+    "weapon_family": "blast_fragmentation"
+  },
+  "scope_audit_summary": {
+    "gate_band_contains_primary_blast_impulse": true,
+    "gate_band_contains_primary_blast_scaled_distance": true,
+    "gate_band_contains_primary_fragment_density": true,
+    "gate_band_contains_primary_fragment_energy": true,
+    "gate_band_contains_primary_penetration_margin": true,
+    "gate_band_contains_primary_surface_incidence": true,
+    "primary_component_name": "right_aileron_actuator",
+    "projected_component_row_count": 4,
+    "scope_guard_interpretation": "Stage C currently proves only one component-specific candidate row inside the narrow scope; it does not yet establish wider fragility coverage or independent probability validation"
+  },
+  "status": "candidate_non_authoritative_stage_c_component_probability_result_pack",
+  "upstream_stage_b_dependency_summary": {
+    "blocking_residual_ids": [
+      "RES-010",
+      "RES-002",
+      "RES-001",
+      "RES-008",
+      "RES-012",
+      "RES-007",
+      "RES-011",
+      "RES-013/014-boundary"
+    ],
+    "dependency_preserved_as_blocked": true,
+    "dependency_role": "separate_upstream_effect_scale_authority_track",
+    "readiness_level": "author_side_candidate_review_ready_but_not_release_ready",
+    "release_target": "effect_scale_authority_only",
+    "stage_c_interlock": "Stage C component-probability packaging remains candidate review hygiene and cannot be promoted while the separate Stage B effect-scale release gate is blocked",
+    "status": "blocked_non_authoritative_stage_b_release_candidate"
+  }
+}
