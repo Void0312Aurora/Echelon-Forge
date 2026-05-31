@@ -54,10 +54,14 @@ def test_a2_blastfrag_geometry_warhead_row_provenance_gate_blocks_current_scope(
 
     residual_status = artifact["residual_status"]
     assert residual_status["RES-003"]["status"] == "blocked_row_level_bounds_missing"
-    assert residual_status["RES-003"]["register"]["register_status"] == "open"
+    assert residual_status["RES-003"]["register"]["register_status"] == (
+        "open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked"
+    )
     assert residual_status["RES-003"]["closed_by_this_gate"] is False
     assert residual_status["RES-004"]["status"] == "blocked_warhead_class_bounds_missing"
-    assert residual_status["RES-004"]["register"]["register_status"] == "open"
+    assert residual_status["RES-004"]["register"]["register_status"] == (
+        "open_stage_b_family_scope_closed_specific_warhead_truth_blocked"
+    )
     assert residual_status["RES-004"]["closed_by_this_gate"] is False
 
     assert [check["check_id"] for check in artifact["gate_checks"]] == [

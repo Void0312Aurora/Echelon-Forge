@@ -29,14 +29,14 @@
       "size_bytes": 8935
     },
     {
-      "content_hash": "sha256:06d1248a9ed5dbd59f6de4a70472f1d25430f15c6b76bfc590dca20855373cc3",
+      "content_hash": "sha256:4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
       "exists": true,
       "input_id": "residual_register",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
       "required": true,
       "role": "residual_status_source",
-      "sha256": "06d1248a9ed5dbd59f6de4a70472f1d25430f15c6b76bfc590dca20855373cc3",
-      "size_bytes": 6338
+      "sha256": "4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
+      "size_bytes": 9263
     },
     {
       "content_hash": "sha256:3dd6dbabf06745392d16ac3f9071dbafb6fb9b182f7fae591d1fac3f6b5896d2",
@@ -601,8 +601,8 @@
       "register": {
         "area": "target geometry",
         "blocked_authority": "effect scale / component probability",
-        "description": "F-16C Block 50 组件几何、材料、遮挡和暴露面积来源未审计",
-        "register_status": "open",
+        "description": "Stage B witness-geometry bookkeeping 已窄域 closeout；真实 F-16C Block 50 组件几何、材料、遮挡和暴露面积来源仍未审计",
+        "register_status": "open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked",
         "residual_id": "RES-003"
       },
       "release_grade": false,
@@ -615,8 +615,8 @@
       "register": {
         "area": "warhead scope",
         "blocked_authority": "effect scale / mechanism load",
-        "description": "AIM-120C-class blast-fragmentation 候选参数未与可公开、可审计来源绑定",
-        "register_status": "open",
+        "description": "Stage B AIM-120C-class blast-fragmentation family scope 已窄域 closeout；具体 AIM-120C 战斗部真值、质量、破片形态和 fuze 证据仍未关闭",
+        "register_status": "open_stage_b_family_scope_closed_specific_warhead_truth_blocked",
         "residual_id": "RES-004"
       },
       "release_grade": false,

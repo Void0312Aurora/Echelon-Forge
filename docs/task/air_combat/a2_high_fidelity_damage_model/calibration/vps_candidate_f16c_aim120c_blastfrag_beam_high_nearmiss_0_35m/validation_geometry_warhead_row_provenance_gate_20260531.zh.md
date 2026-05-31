@@ -14,17 +14,17 @@
 | `schema_version` | `a2.geometry_warhead_row_provenance_gate.v1` |
 | `tool_ref` | [a2_blastfrag_geometry_warhead_row_provenance_gate.py](tools/maintenance/a2_blastfrag_geometry_warhead_row_provenance_gate.py) |
 | `retained_artifact` | [geometry_warhead_row_provenance_gate.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json) |
-| `retained_artifact_sha256` | `7bbd0d2aa68dadfd27d61873ec4b06fbeec6f26a538d372bb158856a88b98f1c` |
+| `retained_artifact_sha256` | `648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726` |
 | `manifest` | [manifest.json](docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json) |
-| `manifest_sha256` | `2d72341f1603c3d36df901a8ddeeb3dd504b2dca4d7c70f5e30694e19d868807` |
+| `manifest_sha256` | `0dfdd2722ff7d28e96040812c655cada107849238093b9836b3be3717c30af0c` |
 | `overall_status` | `blocked_non_authoritative_geometry_warhead_row_provenance_candidate` |
 
 ## 2. Current Gate Results
 
 | residual | gate result | register status | upstream mechanism gate | true close by this gate | shortest remaining path |
 |---|---|---|---|---:|---|
-| `RES-003` target geometry | `blocked_row_level_bounds_missing` | `open` | `blocked_author_side_review_ready` | `false` | freeze row-level geometry provenance and reviewed uncertainty bounds for coarse bbox / beam witness rows |
-| `RES-004` warhead scope | `blocked_warhead_class_bounds_missing` | `open` | `blocked_author_side_review_ready` | `false` | freeze release-grade warhead class/sensitivity envelope without consuming toy mass or fuze/Pk values as truth |
+| `RES-003` target geometry | `blocked_row_level_bounds_missing` | `open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked` | `blocked_author_side_review_ready` | `false` | freeze row-level geometry provenance and reviewed uncertainty bounds for coarse bbox / beam witness rows |
+| `RES-004` warhead scope | `blocked_warhead_class_bounds_missing` | `open_stage_b_family_scope_closed_specific_warhead_truth_blocked` | `blocked_author_side_review_ready` | `false` | freeze release-grade warhead class/sensitivity envelope without consuming toy mass or fuze/Pk values as truth |
 
 ## 3. Non-Authoritative Guards
 

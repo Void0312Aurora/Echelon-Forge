@@ -129,7 +129,7 @@
       "status": "blocked_non_authoritative_provenance_identity_review_gate"
     },
     {
-      "content_sha256": "7bbd0d2aa68dadfd27d61873ec4b06fbeec6f26a538d372bb158856a88b98f1c",
+      "content_sha256": "648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726",
       "evidence_id": "geometry_warhead_row_provenance_gate",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
       "present": true,

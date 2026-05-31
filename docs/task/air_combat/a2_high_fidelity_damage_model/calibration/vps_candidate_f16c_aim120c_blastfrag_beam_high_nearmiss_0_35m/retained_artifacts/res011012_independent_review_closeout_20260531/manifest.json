@@ -4,11 +4,11 @@
     {
       "allowed_claim": "RES-011/012 are closed only for bounded Stage B effect-scale independent review closeout",
       "artifact_key": "res011012_independent_review_closeout_gate",
-      "content_sha256": "ae7edad6b2837dfff36c68276c9128df3fae9dc5b040e5f981e48da9cdf8c99e",
+      "content_sha256": "b6249fbba44db0c057e85009f5446756e66b2e3f71e699985a1b5c01dbfd520b",
       "filename": "res011012_independent_review_closeout_gate.json",
       "forbidden_claim": "external validation, Stage C component-probability release, stock runtime authority, Pk authority, deterministic-fuze authority, or formal validation manifest promotion",
       "origin_class": "project_internal_independent_review_closeout_gate",
-      "payload_sha256": "0f82f803ae890b51573b335f060ef6d23c00e9744a970c74c2352cfd89c60864",
+      "payload_sha256": "e49a1e8e15d53316672a0863d7cc8ddcef52f56e760c574fcb4d8a7deaee20bf",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res011012_independent_review_closeout_20260531/res011012_independent_review_closeout_gate.json",
       "schema_version": "a2.res011012_independent_review_closeout_gate.v1",
       "size_bytes": 18419,

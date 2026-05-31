@@ -129,10 +129,49 @@ DOC_REFS = {
     "warhead_scope_and_sensitivity": (
         PACKAGE_DIR / "warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md"
     ),
+    "validation_res003_target_geometry_closeout_gate": (
+        PACKAGE_DIR / "validation_res003_target_geometry_closeout_gate_20260531.zh.md"
+    ),
+    "validation_res004_warhead_scope_closeout_gate": (
+        PACKAGE_DIR / "validation_res004_warhead_scope_closeout_gate_20260531.zh.md"
+    ),
+    "validation_res005_tp21_debris_admission_gate": (
+        PACKAGE_DIR / "validation_res005_tp21_debris_admission_gate_20260531.zh.md"
+    ),
+    "validation_res006_beco_recalculation_admission_gate": (
+        PACKAGE_DIR / "validation_res006_beco_recalculation_admission_gate_20260531.zh.md"
+    ),
     "residual_register": PACKAGE_DIR / "residual_register.zh.md",
     "narrow_scope_task": A2_ROOT / "narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md",
     "schema_rule": A2_ROOT / "vulnerability_evidence_schema_v1.zh.md",
     "source_admission_rule": A2_ROOT / "data_collection" / "source_admission_rules_20260528.zh.md",
+}
+
+RESIDUAL_ACCEPTANCE_GATE_REFS = {
+    "res003_target_geometry_closeout": (
+        PACKAGE_DIR
+        / "retained_artifacts"
+        / "res003_target_geometry_closeout_20260531"
+        / "res003_target_geometry_closeout_gate.json"
+    ),
+    "res004_warhead_scope_closeout": (
+        PACKAGE_DIR
+        / "retained_artifacts"
+        / "res004_warhead_scope_closeout_20260531"
+        / "res004_warhead_scope_closeout_gate.json"
+    ),
+    "res005_tp21_debris_admission": (
+        PACKAGE_DIR
+        / "retained_artifacts"
+        / "res005_tp21_debris_admission_20260531"
+        / "res005_tp21_debris_admission_gate.json"
+    ),
+    "res006_beco_recalculation_admission": (
+        PACKAGE_DIR
+        / "retained_artifacts"
+        / "res006_beco_recalculation_admission_20260531"
+        / "res006_beco_recalculation_admission_gate.json"
+    ),
 }
 
 SOURCE_GROUPS = (
@@ -211,6 +250,10 @@ SOURCE_GROUPS = (
 
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _rel(path: Path) -> str:
@@ -784,6 +827,120 @@ def _validation_retained_artifact_pack_summary(artifact: dict[str, Any]) -> dict
     }
 
 
+def _guards_all_false(guards: dict[str, Any]) -> bool:
+    return not any(value is True for value in guards.values())
+
+
+def _closeout_gate_summary(
+    *, path: Path, artifact: dict[str, Any], residual_id: str
+) -> dict[str, Any]:
+    decision = artifact["closeout_decision"]
+    residual_decision = artifact["residual_closeout_decisions"][residual_id]
+    return {
+        "gate_ref": _rel(path),
+        "status": artifact["status"],
+        "review_target": artifact["review_target"],
+        "release_target": artifact["release_target"],
+        "missing_evidence_count": len(artifact.get("missing_evidence", [])),
+        "closed_residual_ids_by_this_gate": list(
+            decision["closed_residual_ids_by_this_gate"]
+        ),
+        "closed_residual_subscopes_by_this_gate": list(
+            decision["closed_residual_subscopes_by_this_gate"]
+        ),
+        "release_ready": decision["release_ready"],
+        "release_blocked": decision["release_blocked"],
+        "authority_guards_all_false": _guards_all_false(artifact["authority_guards"]),
+        "residual_decision": residual_decision,
+    }
+
+
+def _residual_acceptance_gate_summaries() -> dict[str, Any]:
+    res003_path = RESIDUAL_ACCEPTANCE_GATE_REFS["res003_target_geometry_closeout"]
+    res004_path = RESIDUAL_ACCEPTANCE_GATE_REFS["res004_warhead_scope_closeout"]
+    res005_path = RESIDUAL_ACCEPTANCE_GATE_REFS["res005_tp21_debris_admission"]
+    res006_path = RESIDUAL_ACCEPTANCE_GATE_REFS["res006_beco_recalculation_admission"]
+
+    res003 = _read_json(res003_path)
+    res004 = _read_json(res004_path)
+    res005 = _read_json(res005_path)
+    res006 = _read_json(res006_path)
+
+    res005_decision = res005["admission_decision"]
+    res005_anchor_set = res005["selected_debris_output_anchor_set"]
+    res006_decision = res006["admission_decision"]
+    res006_mismatch = res006["mismatch_lineage"]
+    res006_replacement = res006["replacement_path"]
+
+    return {
+        "res003_target_geometry_closeout": _closeout_gate_summary(
+            path=res003_path,
+            artifact=res003,
+            residual_id="RES-003",
+        ),
+        "res004_warhead_scope_closeout": _closeout_gate_summary(
+            path=res004_path,
+            artifact=res004,
+            residual_id="RES-004",
+        ),
+        "res005_tp21_debris_admission": {
+            "gate_ref": _rel(res005_path),
+            "status": res005["status"],
+            "review_target": res005["review_target"],
+            "decision": res005_decision["decision"],
+            "narrowly_closes_res005": res005_decision["narrowly_closes_res005"],
+            "closed_residual_ids_by_this_gate": list(
+                res005_decision["closed_residual_ids_by_this_gate"]
+            ),
+            "closed_residual_subscopes_by_this_gate": list(
+                res005_decision["closed_residual_subscopes_by_this_gate"]
+            ),
+            "release_grade_validated": res005_decision["release_grade_validated"],
+            "benchmark_consumed_for_release": res005_decision[
+                "benchmark_consumed_for_release"
+            ],
+            "exact_blockers": list(res005_decision["exact_blockers"]),
+            "selected_debris_output_hash_count": res005_anchor_set[
+                "selected_debris_output_hash_count"
+            ],
+            "raw_tp21_source_content_retained": res005_anchor_set[
+                "raw_tp21_source_content_retained"
+            ],
+            "authority_guards_all_false": res005["authority_guards_all_false"],
+        },
+        "res006_beco_recalculation_admission": {
+            "gate_ref": _rel(res006_path),
+            "status": res006["status"],
+            "review_target": res006["review_target"],
+            "decision": res006_decision["decision"],
+            "res006_narrowly_closed": res006_decision["res006_narrowly_closed"],
+            "closed_residual_ids_by_this_gate": list(
+                res006_decision["closed_residual_ids_by_this_gate"]
+            ),
+            "remaining_blockers": list(res006_decision["remaining_blockers"]),
+            "cached_anchor_count": res006_mismatch["cached_anchor_count"],
+            "recalculated_anchor_count": res006_mismatch[
+                "recalculated_anchor_count"
+            ],
+            "matching_count": res006_mismatch["matching_count"],
+            "mismatch_count": res006_mismatch["mismatch_count"],
+            "candidate_replacement_anchor_set_retained": res006_replacement[
+                "candidate_replacement_anchor_set_retained"
+            ],
+            "replacement_anchor_set_admitted": res006_decision[
+                "replacement_anchor_set_admitted"
+            ],
+            "allowed_output_signoff_present": res006_decision[
+                "allowed_output_signoff_present"
+            ],
+            "tolerance_policy_admitted": res006_decision[
+                "tolerance_policy_admitted"
+            ],
+            "authority_guards_all_false": res006["authority_guards_all_false"],
+        },
+    }
+
+
 def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
     doc_refs = {key: _rel(path) for key, path in DOC_REFS.items()}
     placeholder_hits = _scan_placeholder_hits(
@@ -809,6 +966,10 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
             DOC_REFS["surrogate_identity_manifest"],
             DOC_REFS["target_geometry_assumptions"],
             DOC_REFS["warhead_scope_and_sensitivity"],
+            DOC_REFS["validation_res003_target_geometry_closeout_gate"],
+            DOC_REFS["validation_res004_warhead_scope_closeout_gate"],
+            DOC_REFS["validation_res005_tp21_debris_admission_gate"],
+            DOC_REFS["validation_res006_beco_recalculation_admission_gate"],
         ]
     )
     scaffold_artifact = scaffold.generate_validation_scaffold(repo_root=repo_root)
@@ -894,6 +1055,7 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
         "source_groups": source_groups,
         "residual_statuses": residual_statuses,
         "open_residual_ids": open_residual_ids,
+        "residual_acceptance_gate_summaries": _residual_acceptance_gate_summaries(),
         "validation_manifest_summary": _validation_manifest_summary(
             DOC_REFS["validation_manifest_draft"]
         ),

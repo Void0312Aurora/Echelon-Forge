@@ -66,6 +66,12 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
     assert residual_statuses["RES-002"] == (
         "closed_scoped_identity_non_authoritative"
     )
+    assert residual_statuses["RES-003"] == (
+        "open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked"
+    )
+    assert residual_statuses["RES-004"] == (
+        "open_stage_b_family_scope_closed_specific_warhead_truth_blocked"
+    )
     assert residual_statuses["RES-007"] == (
         "closed_stage_b_scope_review_only_release_blocked"
     )
@@ -82,11 +88,70 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
     residuals = artifact["open_residual_ids"]
     assert "RES-001" not in residuals
     assert "RES-002" not in residuals
+    assert "RES-003" in residuals
+    assert "RES-004" in residuals
+    assert "RES-005" in residuals
+    assert "RES-006" in residuals
     assert "RES-007" not in residuals
     assert "RES-008" not in residuals
     assert "RES-009" in residuals
     assert "RES-013" in residuals
     assert "RES-014" in residuals
+
+    acceptance_gates = artifact["residual_acceptance_gate_summaries"]
+    res003_gate = acceptance_gates["res003_target_geometry_closeout"]
+    assert res003_gate["status"] == (
+        "res003_stage_b_effect_scale_witness_geometry_closeout_pass_release_blocked"
+    )
+    assert res003_gate["release_ready"] is False
+    assert res003_gate["release_blocked"] is True
+    assert res003_gate["closed_residual_ids_by_this_gate"] == []
+    assert res003_gate["closed_residual_subscopes_by_this_gate"] == [
+        "RES-003:stage_b_effect_scale_witness_geometry_bookkeeping"
+    ]
+    assert res003_gate["authority_guards_all_false"] is True
+    assert res003_gate["residual_decision"][
+        "global_target_geometry_authority"
+    ] == "not_granted"
+
+    res004_gate = acceptance_gates["res004_warhead_scope_closeout"]
+    assert res004_gate["status"] == (
+        "res004_stage_b_effect_scale_warhead_family_scope_closeout_pass_release_blocked"
+    )
+    assert res004_gate["release_ready"] is False
+    assert res004_gate["release_blocked"] is True
+    assert res004_gate["closed_residual_ids_by_this_gate"] == []
+    assert res004_gate["closed_residual_subscopes_by_this_gate"] == [
+        "RES-004:stage_b_effect_scale_aim120c_class_blast_fragmentation_family_scope"
+    ]
+    assert res004_gate["authority_guards_all_false"] is True
+    assert res004_gate["residual_decision"][
+        "missile_specific_aim120c_warhead_truth"
+    ] == "forbidden"
+
+    res005_gate = acceptance_gates["res005_tp21_debris_admission"]
+    assert res005_gate["decision"] == "not_admitted_fail_closed"
+    assert res005_gate["narrowly_closes_res005"] is False
+    assert res005_gate["closed_residual_ids_by_this_gate"] == []
+    assert res005_gate["selected_debris_output_hash_count"] == 0
+    assert res005_gate["raw_tp21_source_content_retained"] is False
+    assert res005_gate["benchmark_consumed_for_release"] is False
+    assert res005_gate["authority_guards_all_false"] is True
+    assert len(res005_gate["exact_blockers"]) == 4
+
+    res006_gate = acceptance_gates["res006_beco_recalculation_admission"]
+    assert res006_gate["decision"] == "res006_remains_blocked_fail_closed"
+    assert res006_gate["res006_narrowly_closed"] is False
+    assert res006_gate["closed_residual_ids_by_this_gate"] == []
+    assert res006_gate["cached_anchor_count"] == 9
+    assert res006_gate["recalculated_anchor_count"] == 9
+    assert res006_gate["matching_count"] == 0
+    assert res006_gate["mismatch_count"] == 9
+    assert res006_gate["candidate_replacement_anchor_set_retained"] is True
+    assert res006_gate["replacement_anchor_set_admitted"] is False
+    assert res006_gate["allowed_output_signoff_present"] is False
+    assert res006_gate["tolerance_policy_admitted"] is False
+    assert res006_gate["authority_guards_all_false"] is True
 
     validation_summary = artifact["validation_scaffold_summary"]
     assert validation_summary["validation_status"] == "not_run"
@@ -574,3 +639,15 @@ def test_a2_candidate_vps_bundle_cli_writes_json(tmp_path: Path) -> None:
         == 6
     )
     assert artifact["validation_retained_artifact_pack_summary"]["retained_artifact_count"] == 4
+    assert (
+        artifact["residual_acceptance_gate_summaries"][
+            "res003_target_geometry_closeout"
+        ]["release_blocked"]
+        is True
+    )
+    assert (
+        artifact["residual_acceptance_gate_summaries"][
+            "res006_beco_recalculation_admission"
+        ]["mismatch_count"]
+        == 9
+    )

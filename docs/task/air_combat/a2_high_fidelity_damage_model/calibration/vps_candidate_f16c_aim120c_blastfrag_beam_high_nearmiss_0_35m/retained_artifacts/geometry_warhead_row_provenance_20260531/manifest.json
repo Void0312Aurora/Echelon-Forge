@@ -3,10 +3,10 @@
   "artifacts": [
     {
       "artifact_id": "geometry_warhead_row_provenance_gate",
-      "content_hash": "sha256:7bbd0d2aa68dadfd27d61873ec4b06fbeec6f26a538d372bb158856a88b98f1c",
+      "content_hash": "sha256:648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
       "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
-      "sha256": "7bbd0d2aa68dadfd27d61873ec4b06fbeec6f26a538d372bb158856a88b98f1c"
+      "sha256": "648758a2db8f21dc5f35f4b7cfa4ad520f502237881cfa2a1342961432359726"
     }
   ],
   "authority_guard": {
@@ -34,14 +34,14 @@
       "size_bytes": 8935
     },
     {
-      "content_hash": "sha256:06d1248a9ed5dbd59f6de4a70472f1d25430f15c6b76bfc590dca20855373cc3",
+      "content_hash": "sha256:4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
       "exists": true,
       "input_id": "residual_register",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
       "required": true,
       "role": "residual_status_source",
-      "sha256": "06d1248a9ed5dbd59f6de4a70472f1d25430f15c6b76bfc590dca20855373cc3",
-      "size_bytes": 6338
+      "sha256": "4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
+      "size_bytes": 9263
     },
     {
       "content_hash": "sha256:3dd6dbabf06745392d16ac3f9071dbafb6fb9b182f7fae591d1fac3f6b5896d2",

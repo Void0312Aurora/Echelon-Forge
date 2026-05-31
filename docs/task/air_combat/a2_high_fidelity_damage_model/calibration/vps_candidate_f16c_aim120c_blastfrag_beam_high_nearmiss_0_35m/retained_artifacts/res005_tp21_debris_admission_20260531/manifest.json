@@ -1,0 +1,62 @@
+{
+  "admission_decision": {
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_gate": [],
+    "closed_residual_subscopes_by_this_gate": [],
+    "decision": "not_admitted_fail_closed",
+    "exact_blockers": [
+      "missing page/section provenance labels for a reviewer-selected TP-21 debris comparison case",
+      "missing selected output preimage hash for the reviewer-selected concrete case",
+      "missing independent reviewer signoff for the selected TP-21 debris case",
+      "source-rights allowed-output policy does not admit current comparison output hashes"
+    ],
+    "narrowly_closes_res005": false,
+    "release_grade_validated": false,
+    "selected_tp21_case_admitted_for_release": false
+  },
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531",
+  "authority_guards_all_false": true,
+  "criteria_vocabulary": {
+    "controlled_criteria_key_count": 8,
+    "controlled_criteria_keys": [
+      "debris_item_class",
+      "debris_mass_bin",
+      "debris_velocity_or_throw_bin",
+      "standoff_or_separation_bin",
+      "target_exposure_or_area_bin",
+      "unit_system",
+      "applicability_limit",
+      "exclusion_reason"
+    ],
+    "controlled_criteria_keys_only": true,
+    "criteria_vocabulary_is_calibration": false,
+    "criteria_vocabulary_sha256": "6760351838bd84a24945a5459f53fffc8326edbaf447cb0e2223f7228a2b1969",
+    "status": "controlled_vocabulary_hash_retained_no_source_text_dataset"
+  },
+  "non_authoritative_guards": {
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "res005_tp21_debris_admission_gate_artifact": {
+    "filename": "res005_tp21_debris_admission_gate.json",
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
+    "schema_version": "a2.res005_tp21_debris_admission_gate.v1",
+    "sha256": "d0f64487b4d71762e383f3420d81c31d66591c18e341b95996ec979d9505ff2b"
+  },
+  "schema_version": "a2.res005_tp21_debris_admission_retained_manifest.v1",
+  "selected_debris_output_anchor_set_artifact": {
+    "filename": "selected_debris_output_anchor_set.json",
+    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
+    "schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",
+    "sha256": "b17f164da8488bcf232d2e72492baa7febf70079a1cab13171d1de5e75c6b638"
+  },
+  "status": "blocked_fail_closed_tp21_debris_admission_gate"
+}
