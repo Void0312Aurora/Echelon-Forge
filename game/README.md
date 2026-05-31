@@ -1,71 +1,47 @@
-# CMO Game Branch
+# CMO Game Workspace
 
-`game/` is the isolated game-line workspace for the playable Godot client and
-its backend bridge.
+`game/` now follows the active Arma authoritative-backend integration line.
 
-This subtree is intentionally separated from the research/training path:
+The maintained contents in this tree are:
 
-- game-only plans, contracts, and design notes live under `game/docs/`
-- the Godot client lives under `game/client/`
-- the game-backend bridge lives under `game/backend/`
-- protocol-facing notes live under `game/protocol/`
+- `mod/@EchelonProxy/`: local Arma mod shell
+- `bridge/`: Windows DLL extension project
+- `docs/echelon_proxy_backend_sync_v1.md`: Arma/backend sync contract
+- `scripts/build_bridge.ps1`: local bridge build helper
+- `scripts/launch_arma_proxy.ps1`: local Arma bring-up helper
 
-Do not place game-line planning notes in the repo-root `docs/` tree unless they
-also affect the maintained research/runtime mainline.
+On `2026-05-30`, the locally mixed Godot/WebSocket playable-shell experiment was
+removed from `game/` and archived under the local-only ignored path
+`archive/20260530_game_godot_local_archive/` so this workspace matches the
+active Arma project again.
 
 ## Current Layout
 
 ```text
 game/
-  backend/
-  client/
-    godot_project/
+  bridge/
   docs/
-  protocol/
+  mod/
+  scripts/
 ```
 
 ## Local Usage
 
-Open the Godot client:
+Build the DLL bridge:
 
-```bash
-game/scripts/run_godot_client.sh
+```powershell
+powershell -File game/scripts/build_bridge.ps1
 ```
 
-Run the local backend bridge:
+Launch the Arma-side workflow:
 
-```bash
-game/scripts/run_local_backend.sh
+```powershell
+powershell -File game/scripts/launch_arma_proxy.ps1 -Mode StubAndArma -ShowScriptErrors
 ```
 
-Run the automated game smoke/debug flow:
-
-```bash
-game/scripts/run_game_smoke.sh
-```
-
-This smoke runner will:
-
-- launch a temporary local backend on a separate port
-- start the Godot client in automation mode under `xvfb`
-- auto-enter a local session as `Lead` by default
-- capture a machine-readable render/debug report
-- exit non-zero if the player unit is missing, not visible, or the imported F-16 model is not in use
-
-Current implementation status:
-
-- [docs/current_progress.md](/home/void0312/Workshop/CMO/game/docs/current_progress.md)
-
-## Near-Term Goal
-
-The first maintained game milestone is:
-
-- a Godot client that owns presentation, input, UI, camera, and game session UX
-- a local Python backend that remains authoritative for simulation state
-- a stable protocol boundary between the two
-
-See:
+See also:
 
 - [docs/README.md](/home/void0312/Workshop/CMO/game/docs/README.md)
-- [docs/godot_game_branch_plan.md](/home/void0312/Workshop/CMO/game/docs/godot_game_branch_plan.md)
-- [docs/backend_integration_contract.md](/home/void0312/Workshop/CMO/game/docs/backend_integration_contract.md)
+- [docs/echelon_proxy_backend_sync_v1.md](/home/void0312/Workshop/CMO/game/docs/echelon_proxy_backend_sync_v1.md)
+- [bridge/README.md](/home/void0312/Workshop/CMO/game/bridge/README.md)
+- [mod/@EchelonProxy/README.md](/home/void0312/Workshop/CMO/game/mod/@EchelonProxy/README.md)

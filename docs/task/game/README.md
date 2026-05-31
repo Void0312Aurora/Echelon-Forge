@@ -1,6 +1,7 @@
 # Game Frontend Integration
 
-Status: exploratory workline opened on `2026-05-29`.
+Status: exploratory workline with Arma currently retained as the active
+`game/` workspace on `2026-05-30`.
 
 Language:
 
@@ -23,18 +24,18 @@ The initial target is not a player-flown aircraft. The intended direction is:
 
 ## Local Workspace Boundary
 
-The repo-root `game/` folder is a local-only sandbox and is intentionally
-ignored by git.
+The active `game/` tree currently keeps the Arma proxy integration workspace.
+It is not wholly ignored by git; only generated residue such as runtime logs,
+session cache, bridge build output, and other machine-local artifacts remain
+ignored.
 
-Use it for workstation-local material such as:
+On `2026-05-30`, a locally mixed Godot/WebSocket playable-shell experiment was
+removed from `game/` and archived to the local-only ignored path
+`archive/20260530_game_godot_local_archive/` so the tracked `game/` tree stays
+aligned with the active Arma project.
 
-- external-game integration scripts;
-- temporary assets, exports, and launcher glue;
-- prototype notes that are not yet ready for repo review;
-- local test harnesses that should not become mainline dependencies.
-
-Tracked, reviewable documentation belongs under `docs/task/game/`, not under
-the ignored `game/` workspace.
+Tracked, reviewable documentation for the broader workline still belongs under
+`docs/task/game/`.
 
 The current maintained repo-side companions for this line are:
 
@@ -105,14 +106,15 @@ while leaving the local workstation responsible for the game client only.
 
 The default policy is:
 
-- local gameplay/frontend glue, temporary assets, build output, and launcher
-  scripts live in the ignored `game/` workspace;
-- tracked backend, runtime, contract, or documentation changes may be committed
-  on the mainline when the integration reveals real coupling that should not be
+- keep the active Arma proxy project under `game/`;
+- keep generated residue under the existing ignored paths inside `game/`;
+- archive unrelated local-only frontend experiments outside `game/` when they
+  start to blur the workspace boundary;
+- allow tracked backend, runtime, contract, or documentation changes to land on
+  the mainline when the integration reveals real coupling that should not be
   duplicated or hidden behind a long-lived side branch;
-- only the local-only shell stays quarantined in `game/`;
-- any promoted backend changes should remain useful even if the external-game
-  experiment is later abandoned.
+- keep any promoted backend changes useful even if the external-game experiment
+  is later abandoned.
 
 A dedicated game branch is optional, not required. The priority is to keep
 local-only frontend scaffolding out of the maintained repo surface while still

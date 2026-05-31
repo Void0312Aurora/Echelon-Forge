@@ -1,22 +1,21 @@
-# Local Game Workspace
+# Arma Game Workspace Docs
 
-This folder is a local-only sandbox for gameplay/frontend experiments.
+This folder now documents the active Arma proxy integration under `game/`.
 
-It is intentionally ignored by git. Keep branch-local launchers, scratch notes,
-temporary exports, and integration glue here unless and until they are ready to
-be promoted into tracked repo documentation or reusable code.
+Current tracked entrypoints:
 
-Current local entrypoints:
+- `../mod/@EchelonProxy/`: Arma mod shell
+- `../bridge/`: DLL bridge project
+- `../scripts/build_bridge.ps1`: local bridge build helper
+- `../scripts/launch_arma_proxy.ps1`: Arma bring-up helper
+- `echelon_proxy_backend_sync_v1.md`: backend sync contract
 
-- `mod/@EchelonProxy/`: first-pass local Arma mod shell
-- `bridge/`: Windows DLL extension project
-- `scripts/build_bridge.ps1`: local build helper
-- `scripts/launch_arma_proxy.ps1`: local launcher helper
-- `docs/echelon_proxy_backend_sync_v1.md`: first-pass state-sync protocol
+On `2026-05-30`, the locally mixed Godot/WebSocket playable-shell materials were
+archived to the local-only ignored path
+`archive/20260530_game_godot_local_archive/` so `game/` stays aligned with the
+active Arma workflow.
 
-## Current Bring-Up Order
-
-Recommended local order:
+## Bring-Up Order
 
 1. Build the DLL bridge:
    - `powershell -File game/scripts/build_bridge.ps1`
