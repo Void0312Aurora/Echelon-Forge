@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -19,6 +20,47 @@ NAVAL_STATION3_BEARING_DELTA_DEG = 25.0
 NAVAL_STATION3_RADIUS_DELTA_M = 1800.0
 NAVAL_STATION3_SPEED_BIAS_MPS = 1.25
 NAVAL_STATION3_ACTION_DEADBAND = 0.005
+NAVAL_STATION3_ACTION_FAMILY = "naval_station_command"
+NAVAL_STATION3_TRANSPORT_ADAPTER_KIND = "naval_station3_pilot_action_transport_compat"
+NAVAL_STATION3_CARRIER_INTERFACE_KIND = "PilotActionAssignmentCompat"
+NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE = "pilot_action"
+NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE = (
+    "PilotAction carrier is compatibility-only transport for naval_station3 and not "
+    "policy-visible action truth."
+)
+
+
+@dataclass(frozen=True)
+class NavalStationActionTransport:
+    policy_action: tuple[float, float, float]
+    pilot_action: Any
+    policy_surface: str = NAVAL_STATION3_ACTION_MODE
+    action_family: str = NAVAL_STATION3_ACTION_FAMILY
+    transport_adapter_kind: str = NAVAL_STATION3_TRANSPORT_ADAPTER_KIND
+    carrier_interface_kind: str = NAVAL_STATION3_CARRIER_INTERFACE_KIND
+    payload_type: str = NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE
+    compatibility_only: bool = True
+    diagnostics_note: str = NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE
+
+    def as_dict(self) -> dict[str, Any]:
+        pilot = self.pilot_action
+        return {
+            "policy_surface": self.policy_surface,
+            "policy_action": [float(value) for value in self.policy_action],
+            "action_family": self.action_family,
+            "transport_adapter_kind": self.transport_adapter_kind,
+            "carrier_interface_kind": self.carrier_interface_kind,
+            "payload_type": self.payload_type,
+            "compatibility_only": bool(self.compatibility_only),
+            "diagnostics_note": self.diagnostics_note,
+            "carrier_action": {
+                "throttle": float(getattr(pilot, "throttle", 0.0)),
+                "gear_handle": float(getattr(pilot, "gear_handle", 0.0)),
+                "master_arm": bool(getattr(pilot, "master_arm", False)),
+                "fire_weapon": bool(getattr(pilot, "fire_weapon", False)),
+                "fire_gun": bool(getattr(pilot, "fire_gun", False)),
+            },
+        }
 
 
 def is_naval_station_action_mode(action_mode: str) -> bool:
@@ -63,6 +105,19 @@ def build_neutral_ship_pilot_action():
     return pilot_act
 
 
+def naval_action_family_for_mode(action_mode: str) -> str:
+    return NAVAL_STATION3_ACTION_FAMILY if is_naval_station_action_mode(action_mode) else "direct_control"
+
+
+def build_naval_station_action_transport(action: np.ndarray) -> NavalStationActionTransport:
+    action_arr = naval_station_action_command(action)
+    pilot_act = build_neutral_ship_pilot_action()
+    return NavalStationActionTransport(
+        policy_action=tuple(float(value) for value in action_arr[:3]),
+        pilot_action=pilot_act,
+    )
+
+
 def _wrap_heading_deg(value: float) -> float:
     return float(value % 360.0)
 
@@ -82,6 +137,7 @@ def reset_naval_station_action_state(loader: Any) -> None:
         "_naval_station3_eval_radius_m",
         "_naval_station3_eval_speed_mps",
         "_naval_station3_last_action",
+        "_naval_station3_transport_adapter",
         "_naval_reward_last_station_error_m",
     ):
         try:
@@ -135,8 +191,10 @@ def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
     task = getattr(loader, "task_order", None)
     if task is None or not has_mission_command_dict(loader):
         return False
-    action_arr = naval_station_action_command(action)
+    transport = build_naval_station_action_transport(action)
+    action_arr = np.asarray(transport.policy_action, dtype=np.float32)
     setattr(loader, "_naval_station3_last_action", action_arr.astype(np.float32, copy=True))
+    setattr(loader, "_naval_station3_transport_adapter", transport.as_dict())
     bind_naval_station_eval_reference(loader)
 
     mission_cmd = mission_command_dict(loader)
@@ -184,10 +242,18 @@ def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
 __all__ = [
     "NAVAL_STATION3_ACTION_MODE",
     "NAVAL_STATION3_ACTION_DEADBAND",
+    "NAVAL_STATION3_ACTION_FAMILY",
+    "NAVAL_STATION3_CARRIER_INTERFACE_KIND",
+    "NAVAL_STATION3_TRANSPORT_ADAPTER_KIND",
+    "NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE",
+    "NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE",
+    "NavalStationActionTransport",
     "apply_naval_station_action",
     "bind_naval_station_eval_reference",
+    "build_naval_station_action_transport",
     "build_neutral_ship_pilot_action",
     "is_naval_station_action_mode",
+    "naval_action_family_for_mode",
     "naval_station_action_command",
     "reset_naval_station_action_state",
     "validate_naval_action_mode_for_loader",

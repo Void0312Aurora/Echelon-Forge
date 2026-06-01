@@ -352,6 +352,7 @@ class RuntimeFacadeAdapter:
         information_state_label: str | None = None,
         decision_model_kind: str = "policy",
         decision_model_id: str = "runtime_window_policy",
+        action_family: str = "direct_control",
         include_engagement: bool = True,
         include_diagnostics: bool = True,
     ) -> RuntimeWindowEvidence | None:
@@ -404,7 +405,7 @@ class RuntimeFacadeAdapter:
             action_request.action_intent.valid_until_s = request.source_time_s + 1.0
             action_request.action_intent.target.world_index = int(world_index)
             action_request.action_intent.target.entity_id = int(entity_id)
-            action_request.action_intent.action_family = "direct_control"
+            action_request.action_intent.action_family = str(action_family)
             action_request.action_intent.merge_policy = "last_write_wins"
             payload_type = "mission_command" if mission_command is not None else "pilot_action"
             interface_kind = (

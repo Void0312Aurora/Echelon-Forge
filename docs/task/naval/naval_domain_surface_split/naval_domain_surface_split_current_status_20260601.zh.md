@@ -1,6 +1,6 @@
 # 海军领域执行面拆分当前状态
 
-状态：`2026-06-01`，`P1-A/P1-B` 已验收，`P2-A/P3-B` 已分发；面向
+状态：`2026-06-01`，`P1-A/P1-B/P2-A/P3-B` 已验收；面向
 [海军领域执行面拆分](README.zh.md) 的 inventory 快照。
 
 ## 已确认实现事实
@@ -14,6 +14,8 @@
 | `MissionCommand` 仍是 flat compatibility shell。 | `src/components/command/mission_command.h:11-18`；`src/runtime/contracts/world_batch_contracts.h:549-599`。 | compatibility adapter |
 | World-batch 仍暴露 `WorldPilotActionAssignment`。 | `src/runtime/contracts/world_batch_contracts.h:543-547`。 | blocker |
 | N4 contracts 仍禁止 weapon / damage proof。 | `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json:1-64` 与 `tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json:1-64`。 | 必须保留的边界 |
+| `naval_station3` 已有 `naval_station_command` action family 和 compatibility-only `PilotAction` transport adapter。 | `gym_envs/universal_env_parts/naval_actions.py:23-65`；`python/rl/runtime/world_batch/adapter.py:341-408`；`tests/runtime/naval/test_naval_n4_reward_surface.py:36-56`。 | 第二切片已接受 |
+| Active naval config 已使用 domain-neutral `shaping_backend` alias，并在 env settings 中归一到 canonical `flight_shaping_backend`。 | `python/env_config.py:60-76, 120-125`；`examples/config/training/active/naval/naval_contact_report_threat_roe_smoke_v1.json:43`；`tests/runtime/core/test_env_config.py:73-102`。 | 第二切片已接受 |
 
 ## 剩余依赖清单
 
@@ -33,10 +35,10 @@
 
 | 面向 | 当前等级 | 下一步 |
 | --- | --- | --- |
-| Action | N4 pre-fire station-order probe | 把 policy-visible naval action truth 从 `PilotAction` carrier 中拆出来 |
+| Action | N4 pre-fire station-order probe，加 explicit compatibility adapter | 继续把 `PilotAction` carrier 从更广的 maintained path 中退休，或保持测试约束为 compatibility-only |
 | Command | 带 naval owner slice 的 shared shell | 增加 projection guard，并收窄 command / action packet 边界 |
 | Observation | Python-owned naval vector | 提升为 maintained packet，或把 adapter 明确收束为有界临时层 |
-| Config | active naval config 使用 naval modes | 为 `flight_shaping_backend` 这类 air-labeled backend knob 增加 domain-neutral alias |
+| Config | active naval config 使用 naval modes 与 `shaping_backend` alias | 保持 legacy `flight_shaping_backend` 兼容，并避免中性 alias 破坏 CLI / canonical override 优先级 |
 | Eval | zero-action / offstation N4 gates | 在迁移到新 surface 时保持这些 gate |
 | Runtime math | 共享的 `flight_shaping` terms | 保持通用数学共享，但不要把它重命名成 naval-owned 行为 |
 
@@ -50,6 +52,6 @@
 
 ## 下一步
 
-`P2-A` 先处理 action/intent transport 边界，`P2-B` 保持串行等待以避免
-`src/runtime/contracts/**` 写集冲突；`P3-B` 并行处理 domain-neutral config alias。
-`P3-A` observation packet 继续 held，直到 action/command 边界有可验收结果。
+`P2-A` 与 `P3-B` 已验收。下一步可在 `P2-B` command projection 与 `P3-A`
+observation packet 中选择一个继续；如果 `P2-B` 会触及 `src/runtime/contracts/**`，
+仍保持串行分发。

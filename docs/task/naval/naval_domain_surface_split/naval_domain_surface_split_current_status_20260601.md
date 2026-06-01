@@ -1,6 +1,6 @@
 # Naval Domain Surface Split Current Status
 
-Status: `2026-06-01`; `P1-A/P1-B` accepted and `P2-A/P3-B` dispatched;
+Status: `2026-06-01`; `P1-A/P1-B/P2-A/P3-B` accepted;
 inventory snapshot for [Naval Domain Surface Split](README.md).
 
 ## Confirmed Implementation Facts
@@ -14,6 +14,8 @@ inventory snapshot for [Naval Domain Surface Split](README.md).
 | `MissionCommand` remains a flat compatibility shell. | `src/components/command/mission_command.h:11-18`; `src/runtime/contracts/world_batch_contracts.h:549-599`. | compatibility adapter |
 | World-batch still exposes `WorldPilotActionAssignment`. | `src/runtime/contracts/world_batch_contracts.h:543-547`. | blocker |
 | N4 contracts still forbid weapon/damage proof. | `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json:1-64` and `tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json:1-64`. | required boundary |
+| `naval_station3` now has a `naval_station_command` action family and compatibility-only `PilotAction` transport adapter. | `gym_envs/universal_env_parts/naval_actions.py:23-65`; `python/rl/runtime/world_batch/adapter.py:341-408`; `tests/runtime/naval/test_naval_n4_reward_surface.py:36-56`. | accepted second slice |
+| Active naval config now uses the domain-neutral `shaping_backend` alias and resolves it to canonical `flight_shaping_backend` env settings. | `python/env_config.py:60-76, 120-125`; `examples/config/training/active/naval/naval_contact_report_threat_roe_smoke_v1.json:43`; `tests/runtime/core/test_env_config.py:73-102`. | accepted second slice |
 
 ## Residual Dependency Inventory
 
@@ -33,10 +35,10 @@ Accepted shared infrastructure here means generic runtime or reward plumbing tha
 
 | Surface | Current grade | Next required move |
 | --- | --- | --- |
-| Action | N4 pre-fire station-order probe | split policy-visible naval action truth from the `PilotAction` carrier |
+| Action | N4 pre-fire station-order probe with explicit compatibility adapter | continue retiring `PilotAction` carrier from the wider maintained path or keep it tested as compatibility-only |
 | Command | shared shell with naval owner slice | add projection guards and narrow the command/action packet boundary |
 | Observation | Python-owned naval vector | promote to a maintained packet or document the adapter as bounded and temporary |
-| Config | active naval config uses naval modes | add domain-neutral aliases for air-labeled backend knobs like `flight_shaping_backend` |
+| Config | active naval config uses naval modes and `shaping_backend` alias | keep legacy `flight_shaping_backend` compatible and preserve CLI/canonical override precedence |
 | Eval | zero-action/offstation N4 gates | keep the gates while moving onto the new surface |
 | Runtime math | shared `flight_shaping` terms | keep generic math shared, but do not relabel it as naval-owned behavior |
 
@@ -50,7 +52,6 @@ Accepted shared infrastructure here means generic runtime or reward plumbing tha
 
 ## Immediate Next Step
 
-Run `P2-A` first on the action/intent transport boundary while holding `P2-B`
-serially to avoid `src/runtime/contracts/**` write-set conflicts. Run `P3-B` in
-parallel on the domain-neutral config alias. Keep `P3-A` observation packet held
-until the action/command boundary has an accepted result.
+`P2-A` and `P3-B` are accepted. The next dispatch may choose either `P2-B`
+command projection or `P3-A` observation packet; keep `P2-B` serial if it touches
+`src/runtime/contracts/**`.

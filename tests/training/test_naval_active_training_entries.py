@@ -6,9 +6,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
+from python.env_config import resolve_env_settings
 from python.testing.scenario_contract_runner import run_contract
+from python.training.bootstrap import validate_declared_training_entry_env_surface
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -36,12 +39,33 @@ NAVAL_ENTRIES = {
 EXPECTED_SCENARIO = Path("scenarios/naval/ddg51_take1_screen_threat_roe_v1.json")
 EXPECTED_CONTRACT = Path("tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json")
 RECOVERY_SCENARIO = Path("scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json")
-FORBIDDEN_TERMS = (
+FORBIDDEN_ACTION_MODES = (
+    "takeoff2",
+    "takeoff4",
+)
+FORBIDDEN_MISSION_OBS_MODES = (
+    "basic",
+    "nav_v1",
+    "nav_v2",
+    "nav_v2_formation_v1",
+    "nav_v2_formation_role_v1",
+    "nav_v2_cooperative_takeoff_v1",
+)
+FORBIDDEN_REWARD_ACTION_TERMS = (
     "weapon_release",
     "fire_weapon",
     "fire_gun",
+    "damage",
     "damage_reward",
+    "kill",
     "kill_reward",
+    "hit",
+    "intercept",
+)
+FORBIDDEN_CONFIG_TERMS = (
+    *FORBIDDEN_ACTION_MODES,
+    *FORBIDDEN_MISSION_OBS_MODES,
+    *FORBIDDEN_REWARD_ACTION_TERMS,
     "learned_policy",
     "trained_policy",
 )
@@ -49,19 +73,6 @@ FORBIDDEN_TERMS = (
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def _walk_strings(value: Any) -> list[str]:
-    strings: list[str] = []
-    if isinstance(value, str):
-        strings.append(value)
-    elif isinstance(value, dict):
-        for item in value.values():
-            strings.extend(_walk_strings(item))
-    elif isinstance(value, list):
-        for item in value:
-            strings.extend(_walk_strings(item))
-    return strings
 
 
 class NavalActiveTrainingEntryTests(unittest.TestCase):
@@ -97,10 +108,15 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
                 env = cfg.get("env")
                 self.assertIsInstance(env, dict)
                 self.assertEqual(env.get("execution_step_runtime_mode"), "compiled")
-                self.assertEqual(env.get("flight_shaping_backend"), "compiled")
+                self.assertEqual(env.get("shaping_backend"), "compiled")
+                self.assertIsNone(env.get("flight_shaping_backend"))
                 self.assertEqual(env.get("step_info_mode"), "terminal")
                 self.assertEqual(env.get("mission_obs_mode"), "naval_screen_station_v1")
                 self.assertEqual(env.get("action_mode"), "naval_station3")
+                self.assertNotIn(env.get("mission_obs_mode"), FORBIDDEN_MISSION_OBS_MODES)
+                self.assertNotIn(env.get("action_mode"), FORBIDDEN_ACTION_MODES)
+                resolved_env = resolve_env_settings(cfg, SimpleNamespace())
+                self.assertEqual(resolved_env.get("flight_shaping_backend"), "compiled")
 
                 if station_command_entry:
                     self.assertEqual(float(hyperparams.get("learning_rate")), 1.0e-4)
@@ -136,9 +152,40 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
                 gate_groups = set(map(str, naval_entry.get("required_gate_groups", [])))
                 self.assertIn(str(expected["gate_group"]), gate_groups)
 
-                joined_strings = "\n".join(_walk_strings(cfg)).lower()
-                for term in FORBIDDEN_TERMS:
+                joined_strings = json.dumps(cfg, ensure_ascii=True).lower()
+                for term in FORBIDDEN_CONFIG_TERMS:
                     self.assertNotIn(term, joined_strings)
+
+    def test_naval_active_configs_reject_air_surface_regressions(self) -> None:
+        for filename in NAVAL_ENTRIES:
+            config_path = NAVAL_ACTIVE_DIR / filename
+            cfg = _load_json(config_path)
+
+            for bad_action_mode in FORBIDDEN_ACTION_MODES:
+                with self.subTest(filename=filename, action_mode=bad_action_mode):
+                    mutated = json.loads(json.dumps(cfg))
+                    mutated["env"]["action_mode"] = bad_action_mode
+                    env_settings = resolve_env_settings(mutated, SimpleNamespace())
+                    error = validate_declared_training_entry_env_surface(
+                        train_config=mutated,
+                        env_settings=env_settings,
+                    )
+                    self.assertIsNotNone(error)
+                    self.assertIn("action_mode='naval_station3'", str(error))
+                    self.assertIn(repr(bad_action_mode), str(error))
+
+            for bad_mission_obs_mode in FORBIDDEN_MISSION_OBS_MODES:
+                with self.subTest(filename=filename, mission_obs_mode=bad_mission_obs_mode):
+                    mutated = json.loads(json.dumps(cfg))
+                    mutated["env"]["mission_obs_mode"] = bad_mission_obs_mode
+                    env_settings = resolve_env_settings(mutated, SimpleNamespace())
+                    error = validate_declared_training_entry_env_surface(
+                        train_config=mutated,
+                        env_settings=env_settings,
+                    )
+                    self.assertIsNotNone(error)
+                    self.assertIn("mission_obs_mode='naval_screen_station_v1'", str(error))
+                    self.assertIn(repr(bad_mission_obs_mode), str(error))
 
     def test_naval_active_declared_contracts_execute_successfully(self) -> None:
         contract_paths = sorted({REPO_ROOT / entry["contract"] for entry in NAVAL_ENTRIES.values()})
@@ -167,6 +214,16 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
                 self.assertIn("naval_station_error_weight", rewards)
                 self.assertIn("naval_contact_maintained_bonus", rewards)
                 self.assertIn("naval_pre_fire_roe_hold_bonus", rewards)
+                reward_surface_strings = json.dumps(
+                    {
+                        "mission_command": mission,
+                        "rewards": rewards,
+                        "objectives": scenario.get("objectives"),
+                    },
+                    ensure_ascii=True,
+                ).lower()
+                for term in FORBIDDEN_REWARD_ACTION_TERMS:
+                    self.assertNotIn(term, reward_surface_strings)
                 if scenario_rel == EXPECTED_SCENARIO:
                     self.assertNotIn("naval_station_recovery_progress_weight", rewards)
                 if scenario_rel == RECOVERY_SCENARIO:

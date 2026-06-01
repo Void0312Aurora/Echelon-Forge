@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from .common import ef_py
-from .naval_actions import build_neutral_ship_pilot_action, is_naval_station_action_mode
+from .naval_actions import build_naval_station_action_transport, is_naval_station_action_mode
 from .spaces import expected_action_dim
 
 
@@ -35,7 +35,7 @@ def normalize_action(action, *, action_space, action_mode: str) -> np.ndarray:
 
 def build_pilot_action(action: np.ndarray, *, action_mode: str, inst_now=None):
     if is_naval_station_action_mode(action_mode):
-        return build_neutral_ship_pilot_action()
+        return build_naval_station_action_transport(action).pilot_action
 
     pilot_act = ef_py.PilotAction()
     pilot_act.active = True

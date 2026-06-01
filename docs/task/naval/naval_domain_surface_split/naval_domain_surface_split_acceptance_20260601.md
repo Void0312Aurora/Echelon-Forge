@@ -1,7 +1,7 @@
 # Naval Domain Surface Split Acceptance Gate
 
-Status: `2026-06-01` gate defined; `P1-A/P1-B` accepted as the first slice,
-but the full subproject is not accepted.
+Status: `2026-06-01` gate defined; `P1-A/P1-B/P2-A/P3-B` accepted as
+slices, but the full subproject is not accepted.
 
 Parent project: [Naval Domain Surface Split](README.md)
 
@@ -9,15 +9,16 @@ Parent project: [Naval Domain Surface Split](README.md)
 
 Current decision: `not accepted`.
 
-Reason: the first slice has completed inventory and guard tests, but the active
-codebase still contains known compatibility adapters and blockers on the
-maintained naval path: neutral `PilotAction` transport, flat `MissionCommand`
-compatibility shell, Python-owned naval mission observation fallback, and
-air-labeled environment backend knobs.
+Reason: the first two waves completed inventory, guard tests, action transport
+adapter work, and the domain-neutral config alias. The active codebase still
+contains known compatibility adapters and blockers on the maintained naval path:
+the flat `MissionCommand` compatibility shell, Python-owned naval mission
+observation fallback, and the not-yet-retired global `PilotAction` compatibility
+carrier.
 
 ## Interim Evidence Accepted
 
-`P1-A/P1-B` are accepted, but only for the first slice:
+`P1-A/P1-B/P2-A/P3-B` are accepted, but only for the dispatched slices:
 
 - `P1-A` classified active naval path dependencies on `PilotAction`,
   `MissionCommand`, `flight_shaping`, runway/takeoff/formation, gear/ILS,
@@ -26,22 +27,37 @@ air-labeled environment backend knobs.
 - `P1-B` added active naval config/eval guards covering `takeoff*` action modes,
   air mission-observation modes, and weapon/fire/damage/kill reward or action
   leakage.
+- `P2-A` established the `naval_station_command` action family and marked the
+  remaining `PilotAction` path as a compatibility-only transport adapter. It did
+  not touch `src/runtime/contracts/**`, so no binding rebuild was required.
+- `P3-B` added the domain-neutral `shaping_backend` alias while preserving
+  canonical `flight_shaping_backend` compatibility and CLI/canonical override
+  precedence.
 - Main-thread acceptance commands:
 
 ```bash
-git diff --check -- docs/task/naval tests/training tests/eval
+git diff --check -- docs/task/naval examples/config/training/active/naval \
+  gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py \
+  python/rl/runtime tests/eval/test_eval_naval_n4_baseline.py \
+  tests/runtime/core/test_env_config.py tests/runtime/naval/test_naval_n4_reward_surface.py \
+  tests/training/test_naval_active_training_entries.py tests/world_batch/test_world_batch_vec_env.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
+  tests/runtime/core/test_env_config.py \
   tests/training/test_naval_active_training_entries.py \
-  tests/training/test_naval_n4_closure_gate.py \
   tests/eval/test_eval_naval_n4_baseline.py \
   tests/runtime/naval/test_naval_n4_reward_surface.py
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
+  tests/runtime/naval/test_naval_n4_reward_surface.py \
+  tests/world_batch/test_world_batch_vec_env.py \
+  -k "transport_adapter or naval_action_family or naval_station3 or maintained_window"
 ```
 
 Result: `git diff --check` was clean; pytest reported
-`39 passed, 48 subtests passed in 35.66s`. Overall acceptance remains
-`not accepted` until action, command, observation, and config ownership evidence
-is complete.
+`45 passed, 45 subtests passed in 34.50s` and
+`13 passed, 74 deselected in 3.44s`. Overall acceptance remains `not accepted`
+until command projection and observation packet evidence is complete.
 
 ## Required Evidence
 

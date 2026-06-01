@@ -19,6 +19,7 @@ from gym_envs.universal_env import (
     apply_naval_station_action,
     build_pilot_action,
     is_naval_station_action_mode,
+    naval_action_family_for_mode,
     naval_station_action_command,
     normalize_action,
 )
@@ -143,6 +144,7 @@ class SingleWorldBatchExecutionRuntimeHandle(ExecutionRuntimeAdapter, gym.Env if
                 input_snapshot_version=f"obs:{int(env_idx)}:{int(handle.steps)}",
                 source_layer="training_policy",
                 information_state_label="facade_observation_packet",
+                action_family=naval_action_family_for_mode(self.world_vec.action_mode),
                 include_engagement=True,
                 include_diagnostics=True,
             )

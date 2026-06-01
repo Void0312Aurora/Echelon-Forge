@@ -1,6 +1,6 @@
 # 海军领域执行面拆分验收门
 
-状态：`2026-06-01`，gate 已定义；`P1-A/P1-B` 已作为第一切片验收，
+状态：`2026-06-01`，gate 已定义；`P1-A/P1-B/P2-A/P3-B` 已作为切片验收，
 但子项目整体尚未接受。
 
 父项目：[海军领域执行面拆分](README.zh.md)
@@ -9,14 +9,15 @@
 
 当前决定：`not accepted`。
 
-原因：第一切片已经完成 inventory 与 guard tests，但当前代码库在 maintained naval path
-上仍有已知 compatibility adapter / blocker：中性 `PilotAction` transport、flat
-`MissionCommand` compatibility shell、Python-owned naval mission observation fallback，
-以及 air-labeled environment backend knob。
+原因：前两波切片已经完成 inventory、guard tests、action transport adapter 与
+domain-neutral config alias；但当前代码库在 maintained naval path 上仍有已知
+compatibility adapter / blocker：flat `MissionCommand` compatibility shell、
+Python-owned naval mission observation fallback，以及仍未全局退休的 `PilotAction`
+compatibility carrier。
 
 ## Interim Evidence Accepted
 
-`P1-A/P1-B` 验收为 `accepted`，但只关闭第一切片：
+`P1-A/P1-B/P2-A/P3-B` 验收为 `accepted`，但只关闭已分发切片：
 
 - `P1-A` 已把 active naval path 上的 `PilotAction`、`MissionCommand`、
   `flight_shaping`、runway/takeoff/formation、gear/ILS、Python-owned observation
@@ -24,21 +25,36 @@
   compatibility adapter 或 blocker。
 - `P1-B` 已增加 active naval config / eval guard，覆盖 `takeoff*` action mode、
   air mission-observation mode，以及 weapon/fire/damage/kill reward/action leakage。
+- `P2-A` 已建立 `naval_station_command` action family，并把剩余 `PilotAction`
+  标记为 compatibility-only transport adapter；未触及 `src/runtime/contracts/**`，
+  因此不需要 binding rebuild。
+- `P3-B` 已增加 domain-neutral `shaping_backend` alias，并保持 canonical
+  `flight_shaping_backend` 与 CLI / canonical override 优先级兼容。
 - 本地主线程验收命令：
 
 ```bash
-git diff --check -- docs/task/naval tests/training tests/eval
+git diff --check -- docs/task/naval examples/config/training/active/naval \
+  gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py \
+  python/rl/runtime tests/eval/test_eval_naval_n4_baseline.py \
+  tests/runtime/core/test_env_config.py tests/runtime/naval/test_naval_n4_reward_surface.py \
+  tests/training/test_naval_active_training_entries.py tests/world_batch/test_world_batch_vec_env.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
+  tests/runtime/core/test_env_config.py \
   tests/training/test_naval_active_training_entries.py \
-  tests/training/test_naval_n4_closure_gate.py \
   tests/eval/test_eval_naval_n4_baseline.py \
   tests/runtime/naval/test_naval_n4_reward_surface.py
+
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
+  tests/runtime/naval/test_naval_n4_reward_surface.py \
+  tests/world_batch/test_world_batch_vec_env.py \
+  -k "transport_adapter or naval_action_family or naval_station3 or maintained_window"
 ```
 
-结果：`git diff --check` 无输出；pytest `39 passed, 48 subtests passed in 35.66s`。
-整体 acceptance 仍保持 `not accepted`，直到 action/command/observation/config ownership
-证据全部到位。
+结果：`git diff --check` 无输出；pytest 分别为
+`45 passed, 45 subtests passed in 34.50s` 与
+`13 passed, 74 deselected in 3.44s`。整体 acceptance 仍保持 `not accepted`，
+直到 command projection 与 observation packet 证据到位。
 
 ## Required Evidence
 

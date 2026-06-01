@@ -23,6 +23,7 @@ def _make_args(**overrides):
         "execution_step_runtime_mode": None,
         "step_info_mode": None,
         "flight_shaping_backend": None,
+        "shaping_backend": None,
         "runtime_compatibility_enabled": None,
     }
     base.update(overrides)
@@ -68,6 +69,36 @@ class EnvConfigTests(unittest.TestCase):
         self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
         self.assertEqual(resolved["temporal_history_len"], 16)
         self.assertTrue(resolved["runtime_compatibility_enabled"])
+
+    def test_resolve_env_settings_accepts_domain_neutral_shaping_backend_alias(self) -> None:
+        train_config = {
+            "env": {
+                "include_proprio": True,
+                "mission_obs_mode": "naval_screen_station_v1",
+                "action_mode": "naval_station3",
+                "shaping_backend": " GPU_HOST ",
+            }
+        }
+
+        resolved = resolve_env_settings(train_config, _make_args())
+        self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
+
+    def test_resolve_env_settings_prefers_canonical_backend_over_alias(self) -> None:
+        train_config = {
+            "env": {
+                "flight_shaping_backend": "compiled",
+                "shaping_backend": "gpu_host",
+            }
+        }
+
+        resolved = resolve_env_settings(train_config, _make_args())
+        self.assertEqual(resolved["flight_shaping_backend"], "compiled")
+
+        resolved = resolve_env_settings(
+            {"env": {"shaping_backend": "compiled"}},
+            _make_args(flight_shaping_backend="gpu_host"),
+        )
+        self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
 
     def test_resolve_env_settings_normalizes_temporal_history_len(self) -> None:
         resolved = resolve_env_settings(
@@ -135,6 +166,12 @@ class EnvConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unknown flight_shaping_backend"):
             resolve_env_settings(
                 {"env": {"flight_shaping_backend": "bad-backend"}},
+                _make_args(),
+            )
+
+        with self.assertRaisesRegex(ValueError, "Unknown flight_shaping_backend"):
+            resolve_env_settings(
+                {"env": {"shaping_backend": "bad-backend"}},
                 _make_args(),
             )
 

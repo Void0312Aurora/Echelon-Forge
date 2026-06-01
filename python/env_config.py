@@ -57,6 +57,27 @@ def _merge_optional_config_value(
     return value if value != "" else None
 
 
+def _merge_optional_config_value_with_alias(
+    args: Any,
+    attr_name: str,
+    alias_attr_name: str,
+    env_cfg: dict[str, Any],
+    *,
+    coerce: Any,
+) -> Any:
+    value = getattr(args, attr_name, None)
+    if value is None:
+        value = getattr(args, alias_attr_name, None)
+    if value is None:
+        value = env_cfg.get(attr_name)
+    if value is None:
+        value = env_cfg.get(alias_attr_name)
+    if value is None:
+        return None
+    value = coerce(value)
+    return value if value != "" else None
+
+
 def infer_include_visual_from_train_config(train_config: dict[str, Any] | None) -> bool:
     if not isinstance(train_config, dict):
         return False
@@ -96,9 +117,10 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         coerce=lambda value: str(value).strip().lower(),
     )
     step_info_mode = _merge_config_value(args, "step_info_mode", env_cfg, default="full", coerce=str)
-    flight_shaping_backend = _merge_optional_config_value(
+    flight_shaping_backend = _merge_optional_config_value_with_alias(
         args,
         "flight_shaping_backend",
+        "shaping_backend",
         env_cfg,
         coerce=lambda value: str(value).strip().lower(),
     )

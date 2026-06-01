@@ -1,7 +1,7 @@
 # 海军领域执行面拆分任务簇
 
-状态：`2026-06-01`，`P1-A/P1-B` 已验收，`P2-A` 与 `P3-B`
-已分发；面向 [海军领域执行面拆分](README.zh.md) 的有限任务簇计划。
+状态：`2026-06-01`，`P1-A/P1-B/P2-A/P3-B` 已验收；面向
+[海军领域执行面拆分](README.zh.md) 的有限任务簇计划。
 
 ## Boundary Decision
 
@@ -20,10 +20,10 @@ surface 所有，不能归 air takeoff、runway、formation、gear 或 flight-co
 | `P0-A` | main thread | current | 创建子项目、状态、队列、验收和父级海军索引链接。 | `docs/task/naval/naval_domain_surface_split/**`, `docs/task/naval/README*` | runtime code、测试、能力提升声明 | `git diff --check -- docs/task/naval` | 必需文件存在且父 README 链接本项目 | 第一个串行簇 | 1 | pass |
 | `P1-A` | worker `Linnaeus` | `gpt-5.4-mini` / `xhigh` | 盘点 active naval policy/runtime 路径上仍存在的所有 air-first 依赖。 | `naval_domain_surface_split_current_status_20260601*.md`, optional diagnostics notes | 代码改动、重构 | 只读 `rg` inventory 加文件/行证据 | 每项依赖被分类为 accepted shared、compatibility adapter 或 blocker | `P0-A` 后；只读可单独运行 | 1 + 1 repair | accepted |
 | `P1-B` | worker `Locke` | `gpt-5.4` / `high` | 增加 guard 测试，防止 active naval 入口回退到 air action 或 air mission-observation surface。 | `tests/training/**`, `tests/eval/**`, active naval config tests only | 新 packet 实现、N5 行为 | naval active entries 与 baseline eval 聚焦 pytest | `takeoff*`、air formation/takeoff mission mode、weapon/damage reward 泄漏会失败 | `P1-A` dispatch 后；可先于实现 | 1 + 1 repair | accepted |
-| `P2-A` | worker `Locke` | `gpt-5.4` / `high` | 设计并实现 naval-owned action/intent assignment seam，或围绕当前 `PilotAction` carrier 建立显式 adapter。 | `src/runtime/contracts/**`, `gym_envs/universal_env_parts/**`, `python/rl/runtime/**`, focused tests | 完整 helm/autopilot doctrine、武器开关 | 若触及则跑 C++/binding build；聚焦 world-batch naval tests | maintained naval 路径不再把 `PilotAction` 语义当作 policy action truth | `P1-A/P1-B` 已验收；不与 `P2-B` 并行 | 2 + 1 repair | dispatched |
+| `P2-A` | worker `Locke` | `gpt-5.4` / `high` | 设计并实现 naval-owned action/intent assignment seam，或围绕当前 `PilotAction` carrier 建立显式 adapter。 | `src/runtime/contracts/**`, `gym_envs/universal_env_parts/**`, `python/rl/runtime/**`, focused tests | 完整 helm/autopilot doctrine、武器开关 | 若触及则跑 C++/binding build；聚焦 world-batch naval tests | maintained naval 路径不再把 `PilotAction` 语义当作 policy action truth | `P1-A/P1-B` 已验收；不与 `P2-B` 并行 | 2 + 1 repair | accepted |
 | `P2-B` | future worker | n/a | 通过 shared-core 与 naval-owner projection 测试约束 `MissionCommand` compatibility 用法。 | `src/components/command/**`, `src/runtime/contracts/**`, `python/rl/profile/naval_profile.py`, command-chain tests | 重写所有 command consumer 为嵌套结构 | command roundtrip tests、world-batch command-chain tests | naval station/ROE/assigned-target 字段经 maintained naval slice 存活 | `P1-A` 后；若触及同一 contract 文件，不与 `P2-A` 并行 | 2 + 1 repair | planned |
-| `P3-A` | future worker | n/a | 将 `naval_screen_station_v1` 推向 maintained naval observation packet。 | `python/mission_obs_taxonomy.py`, `gym_envs/scenario_loader/mission_observation.py`, observation runtime/batching, tests | weapon/damage observation、fleet C2 schema | mission observation taxonomy 与 naval reward/observation tests | policy-visible naval vector 不是 air takeoff/formation fallback | `P2-A` boundary accepted 后 | 2 + 1 repair | planned |
-| `P3-B` | worker `Linnaeus` | `gpt-5.4-mini` / `xhigh` | 当 air-labeled knob 阻塞 naval ownership 时增加 domain-neutral config alias。 | `python/env_config.py`, `train.py`, examples config docs, tests | 破坏既有 air config | env-config tests 与 naval training-entry bootstrap | naval entry 可使用中性名称，legacy air 名称仍兼容 | `P1-B` 已验收；与 `P2-A` 写集不重叠 | 1 + 1 repair | dispatched |
+| `P3-A` | future worker | n/a | 将 `naval_screen_station_v1` 推向 maintained naval observation packet。 | `python/mission_obs_taxonomy.py`, `gym_envs/scenario_loader/mission_observation.py`, observation runtime/batching, tests | weapon/damage observation、fleet C2 schema | mission observation taxonomy 与 naval reward/observation tests | policy-visible naval vector 不是 air takeoff/formation fallback | `P2-A` boundary accepted 后 | 2 + 1 repair | ready |
+| `P3-B` | worker `Linnaeus` | `gpt-5.4-mini` / `xhigh` | 当 air-labeled knob 阻塞 naval ownership 时增加 domain-neutral config alias。 | `python/env_config.py`, `train.py`, examples config docs, tests | 破坏既有 air config | env-config tests 与 naval training-entry bootstrap | naval entry 可使用中性名称，legacy air 名称仍兼容 | `P1-B` 已验收；与 `P2-A` 写集不重叠 | 1 + 1 repair | accepted |
 | `P4-A` | integration worker | n/a | 将 active naval config、eval gate 与 contract 接到已接受的拆分 surface。 | `examples/config/training/active/naval/**`, `tools/eval/**`, `tests/runtime/naval/**`, `tests/eval/**` | 正式训练、N5/N6 release | naval active pytest、eval CLI smoke、scenario contracts | active entry 在新 surface 上运行，仍禁止 airfield/weapon/damage term | `P2/P3` accepted 后 | 1 + 1 repair | planned |
 | `P5-A` | main thread | current | 通过 acceptance 与父级进展更新关闭或 hold 本子项目。 | `docs/task/naval/naval_domain_surface_split/**`, `docs/task/naval/README*`, optional current progress update | 后补实现 | `git diff --check -- docs/task/naval` 加记录的测试结果 | acceptance doc 记录 pass/held residuals 且不越界声明 | 最终串行簇 | 1 | planned |
 
@@ -88,9 +88,11 @@ worker packet 必须补充更窄的 build、binding 或 contract 命令。
 Immediate:
 
 - `P1-A/P1-B` 已完成 active air-first 依赖盘点与回归 guard；
-- `P2-A` 先处理 action/intent transport，`P2-B` 保持串行等待；
-- `P3-B` 并行处理 domain-neutral config alias，避免继续把 naval-facing
-  ownership 暴露为 air-labeled backend knob。
+- `P2-A` 已建立 `naval_station_command` policy family 与 `PilotAction`
+  compatibility-only transport adapter；
+- `P3-B` 已让 active naval config 使用 domain-neutral `shaping_backend` alias；
+- 下一步在 `P2-B` command projection 与 `P3-A` observation packet 之间择一继续，
+  仍避免两个 `src/runtime/contracts/**` 写集并发。
 
 Follow-on:
 

@@ -21,6 +21,38 @@ RECOVERY_SCENARIO = REPO_ROOT / "scenarios" / "naval" / "ddg51_take1_screen_thre
 CONTACT_CONFIG = REPO_ROOT / "examples" / "config" / "training" / "active" / "naval" / "naval_contact_report_threat_roe_smoke_v1.json"
 HOLD_CONFIG = REPO_ROOT / "examples" / "config" / "training" / "active" / "naval" / "naval_screen_station_hold_threat_aware_smoke_v1.json"
 RECOVERY_CONFIG = REPO_ROOT / "examples" / "config" / "training" / "active" / "naval" / "naval_screen_station_recovery_threat_aware_smoke_v1.json"
+FORBIDDEN_ACTION_MODES = (
+    "takeoff2",
+    "takeoff4",
+)
+FORBIDDEN_MISSION_OBS_MODES = (
+    "basic",
+    "nav_v1",
+    "nav_v2",
+    "nav_v2_formation_v1",
+    "nav_v2_formation_role_v1",
+    "nav_v2_cooperative_takeoff_v1",
+)
+FORBIDDEN_REWARD_TERMS = {
+    "weapon_release",
+    "fire_weapon",
+    "fire_gun",
+    "damage",
+    "damage_reward",
+    "kill",
+    "kill_reward",
+    "hit",
+    "intercept",
+}
+
+
+def _assert_reward_surface_clean(testcase: unittest.TestCase, payload: dict[str, object]) -> None:
+    reward_terms_sum = set(map(str, dict(payload.get("reward_terms_sum", {}) or {}).keys()))
+    reward_terms_last = set(map(str, dict(payload.get("reward_terms_last", {}) or {}).keys()))
+    testcase.assertTrue(
+        FORBIDDEN_REWARD_TERMS.isdisjoint(reward_terms_sum | reward_terms_last),
+        payload,
+    )
 
 
 class NavalN4BaselineEvalTests(unittest.TestCase):
@@ -50,6 +82,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
         self.assertNotIn("off_runway_penalty", reward_terms)
         self.assertNotIn("speed_reward", reward_terms)
         self.assertNotIn("damage_reward", reward_terms)
+        _assert_reward_surface_clean(self, payload)
 
         roster = list(payload.get("active_roster", []) or [])
         self.assertEqual([(member["entity_name"], member["is_agent"]) for member in roster[:2]], [
@@ -95,6 +128,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
                     self.assertEqual(int(payload.get("executed_steps")), 16)
                     self.assertEqual(int(payload.get("policy_slot_count")), 1)
                     self.assertEqual(payload.get("forbidden_reward_terms_present"), [])
+                    _assert_reward_surface_clean(self, payload)
 
     def test_n4_baseline_eval_rejects_mismatched_declared_scenario(self) -> None:
         with self.assertRaisesRegex(ValueError, "naval_entry\\.scenario_path"):
@@ -138,18 +172,31 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
             self.assertIn("does not match --scenario", str(payload.get("error", "")))
 
     def test_n4_baseline_eval_rejects_naval_entry_without_naval_env_surface(self) -> None:
-        for env_key, bad_value, expected_error in (
-            ("action_mode", "takeoff4", "action_mode='naval_station3'"),
-            ("mission_obs_mode", "basic", "mission_obs_mode='naval_screen_station_v1'"),
-        ):
-            with self.subTest(env_key=env_key):
+        for bad_value in FORBIDDEN_ACTION_MODES:
+            with self.subTest(env_key="action_mode", bad_value=bad_value):
                 with tempfile.TemporaryDirectory() as tmpdir:
                     config_path = Path(tmpdir) / "bad_surface.json"
                     cfg = json.loads(HOLD_CONFIG.read_text(encoding="utf-8"))
-                    cfg["env"][env_key] = bad_value
+                    cfg["env"]["action_mode"] = bad_value
                     config_path.write_text(json.dumps(cfg, ensure_ascii=True), encoding="utf-8")
 
-                    with self.assertRaisesRegex(ValueError, expected_error):
+                    with self.assertRaisesRegex(ValueError, "action_mode='naval_station3'"):
+                        run_baseline_eval(
+                            scenario_path=str(SCENARIO),
+                            train_config_path=str(config_path),
+                            steps=4,
+                            seed=20260525,
+                            worker_threads=1,
+                        )
+        for bad_value in FORBIDDEN_MISSION_OBS_MODES:
+            with self.subTest(env_key="mission_obs_mode", bad_value=bad_value):
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    config_path = Path(tmpdir) / "bad_surface.json"
+                    cfg = json.loads(HOLD_CONFIG.read_text(encoding="utf-8"))
+                    cfg["env"]["mission_obs_mode"] = bad_value
+                    config_path.write_text(json.dumps(cfg, ensure_ascii=True), encoding="utf-8")
+
+                    with self.assertRaisesRegex(ValueError, "mission_obs_mode='naval_screen_station_v1'"):
                         run_baseline_eval(
                             scenario_path=str(SCENARIO),
                             train_config_path=str(config_path),
@@ -181,6 +228,8 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
         self.assertGreater(float(zero_terms.get("naval_station_recovery_progress_bonus", 0.0)), 0.0)
         self.assertIn("naval_station_action_radius_penalty", terms)
         self.assertNotIn("naval_station_band_bonus", last_terms)
+        _assert_reward_surface_clean(self, matched)
+        _assert_reward_surface_clean(self, dict(payload.get("zero_action", {}) or {}))
         final_status = list(matched.get("final_mission_status", []) or [])
         self.assertGreater(float(final_status[0]), 1000.0)
 
@@ -200,6 +249,8 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
         self.assertGreater(float(derived.get("initial_station_error_m", 0.0)), 1000.0)
         zero_terms = dict(dict(payload.get("zero_action", {}) or {}).get("reward_terms_sum", {}) or {})
         self.assertGreater(float(zero_terms.get("naval_station_recovery_progress_bonus", 0.0)), 0.0)
+        _assert_reward_surface_clean(self, dict(payload.get("zero_action", {}) or {}))
+        _assert_reward_surface_clean(self, dict(payload.get("matched_radius_action", {}) or {}))
 
     def test_n4_offstation_probe_cli_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -237,6 +288,8 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
                 float(payload.get("zero_station_error_delta_final_minus_first")),
                 -float(payload.get("minimum_recovery_delta_m")),
             )
+            _assert_reward_surface_clean(self, dict(payload.get("zero_action", {}) or {}))
+            _assert_reward_surface_clean(self, dict(payload.get("matched_radius_action", {}) or {}))
 
 
 if __name__ == "__main__":

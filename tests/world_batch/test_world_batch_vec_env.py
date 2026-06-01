@@ -17,6 +17,7 @@ import torch  # noqa: E402,F401
 import ef_py  # noqa: E402
 
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
+from gym_envs.universal_env_parts import NAVAL_STATION3_ACTION_FAMILY  # noqa: E402
 from python.rl.runtime.world_batch import command_chain_cache  # noqa: E402
 from python.rl.runtime.world_batch.command_chain_cache import (  # noqa: E402
     project_world_leader_intent_maintained_assignment,
@@ -1017,6 +1018,41 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         self.assertEqual(len(facade.requests), 1)
         action_request = list(facade.requests[0].action_requests)[0]
         self.assertEqual(str(action_request.input_snapshot_version), "obs:0:42:7")
+        self.assertEqual(str(action_request.action_intent.action_interface.kind), "PilotActionAssignmentCompat")
+        self.assertEqual(str(action_request.action_intent.action_interface.payload_type), "pilot_action")
+        self.assertEqual(str(action_request.action_intent.action_family), "direct_control")
+
+    def test_world_batch_adapter_maintained_window_accepts_explicit_naval_action_family_while_using_pilot_action_transport(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1)
+
+        class _FacadeWindow:
+            def __init__(self) -> None:
+                self.requests: list[Any] = []
+
+            def run_wp10_window(self, request):
+                self.requests.append(request)
+                result = ef_py.RuntimeWindowResult()
+                result.observation_packet = ef_py.ObservationBatchPacket()
+                result.engagement_packet = ef_py.EngagementEventPacket()
+                return result
+
+        facade = _FacadeWindow()
+        adapter.facade = facade  # type: ignore[assignment]
+
+        evidence = adapter.run_maintained_window(
+            world_index=0,
+            entity_id=42,
+            pilot_action=ef_py.PilotAction(),
+            input_snapshot_version="obs:0:42:8",
+            information_state_label="facade_observation_packet",
+            action_family=NAVAL_STATION3_ACTION_FAMILY,
+            decision_model_id="naval-station-policy",
+        )
+
+        self.assertIsNotNone(evidence)
+        self.assertEqual(len(facade.requests), 1)
+        action_request = list(facade.requests[0].action_requests)[0]
+        self.assertEqual(str(action_request.action_intent.action_family), NAVAL_STATION3_ACTION_FAMILY)
         self.assertEqual(str(action_request.action_intent.action_interface.kind), "PilotActionAssignmentCompat")
         self.assertEqual(str(action_request.action_intent.action_interface.payload_type), "pilot_action")
 

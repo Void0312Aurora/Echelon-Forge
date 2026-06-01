@@ -40,7 +40,7 @@
     "mission_obs_mode": "naval_screen_station_v1",
     "step_info_mode": "terminal",
     "execution_step_runtime_mode": "compiled",
-    "flight_shaping_backend": "compiled",
+    "shaping_backend": "compiled",
     "action_mode": "naval_station3"
   },
   "early_stop": {
