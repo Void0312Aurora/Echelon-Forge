@@ -1324,6 +1324,9 @@ inline void register_damage_system(flecs::world& ecs) {
                             derive_aircraft_fire_suppression_from_component_state(
                                 *component_damage,
                                 *aircraft);
+                            derive_aircraft_damage_from_component_state(
+                                *component_damage,
+                                *aircraft);
                             clamp_aircraft_damage_state(*aircraft);
                         }
 

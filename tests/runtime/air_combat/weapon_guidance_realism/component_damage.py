@@ -1385,6 +1385,33 @@ class ComponentDamageRuntimeMixin:
         self.assertLess(second_group_availability, first_group_availability)
         self.assertGreater(second_group_availability, second_integrity)
 
+    def test_phase3_component_availability_feeds_aircraft_structure_state(self) -> None:
+        sim = _make_kernel()
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+        profile = _make_warhead_profile("blast_fragmentation", damage=140.0, radius=35.0)
+
+        ok = sim.debug_apply_profiled_local_proximity_hit(
+            attacker_id,
+            target_id,
+            -0.8,
+            0.0,
+            0.0,
+            profile,
+        )
+        self.assertTrue(bool(ok))
+        self.assertTrue(sim.is_unit_active(target_id))
+
+        event = sim.export_recent_engagement_events().effects_events[-1]
+        overlay = _aircraft_damage_overlay(sim, target_id)
+
+        self.assertEqual(str(event.component_primary_name), "wing_spar_center")
+        self.assertEqual(str(event.component_primary_system), "wings")
+        self.assertLess(float(event.component_redundancy_group_availability), 1.0)
+        self.assertLessEqual(
+            overlay["structure"],
+            float(event.component_redundancy_group_availability) + 1.0e-6,
+        )
+
     def test_phase3_component_failure_probability_is_sampled_and_reported(self) -> None:
         wing = (-0.753, 4.0, 0.0)
 

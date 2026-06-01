@@ -1111,6 +1111,7 @@ ComponentDamageSample apply_component_damage_state(
         component_damage->component_redundancy_weight[component_key] =
             std::clamp(component.redundancy_weight, 0.15, 2.50);
     }
+    component_damage->component_system[component_key] = component.system;
     double& integrity = component_damage->component_integrity[component_key];
 
     const double weight = std::clamp(component.redundancy_weight, 0.15, 2.50);
@@ -4397,6 +4398,11 @@ public:
                                 resolved_severity,
                                 warhead_effects.fire_scale,
                                 mission_fire_zone_scale);
+                    }
+                    if (component_damage) {
+                        derive_aircraft_damage_from_component_state(
+                            *component_damage,
+                            *aircraft_damage);
                     }
                     clamp_aircraft_damage_state(*aircraft_damage);
                     apply_aircraft_damage_state_to_platform(*aircraft_damage, *platform_damage);

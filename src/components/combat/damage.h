@@ -197,6 +197,7 @@ struct SystemHealth {
 struct ComponentDamageState {
     std::unordered_map<std::string, double> component_integrity;
     std::unordered_map<std::string, std::string> component_redundancy_group;
+    std::unordered_map<std::string, std::string> component_system;
     std::unordered_map<std::string, double> component_redundancy_weight;
     std::unordered_map<std::string, double> redundancy_group_availability;
     std::unordered_map<std::string, std::uint32_t> redundancy_group_member_count;
@@ -301,6 +302,15 @@ inline bool damage_dependency_system_is_air_fuel(const std::string& system) {
     return damage_dependency_system_name_matches(system, "fuel");
 }
 
+inline bool damage_dependency_system_is_air_structure(const std::string& system) {
+    return damage_dependency_system_name_matches(system, "wing") ||
+        damage_dependency_system_name_matches(system, "airframe") ||
+        damage_dependency_system_name_matches(system, "fuselage") ||
+        damage_dependency_system_name_matches(system, "structure") ||
+        damage_dependency_system_name_matches(system, "rotor") ||
+        damage_dependency_system_name_matches(system, "tail");
+}
+
 inline bool damage_dependency_system_is_fire_suppression(const std::string& system) {
     return damage_dependency_system_name_matches(system, "fire_suppression") ||
         damage_dependency_system_name_matches(system, "fire_bottle") ||
@@ -351,6 +361,77 @@ inline bool damage_dependency_edge_is_crew_operated(const std::string& edge_type
 
 inline bool damage_dependency_edge_is_structural_support(const std::string& edge_type) {
     return edge_type == "structural_support" || edge_type == "structural-support";
+}
+
+inline void derive_aircraft_damage_from_component_state(
+    const ComponentDamageState& component_damage,
+    AircraftDamageState& aircraft_damage
+) {
+    for (const auto& [component_key, integrity] : component_damage.component_integrity) {
+        const auto system_it = component_damage.component_system.find(component_key);
+        if (system_it == component_damage.component_system.end() ||
+            system_it->second.empty()) {
+            continue;
+        }
+        double availability = std::clamp(integrity, 0.0, 1.0);
+        const auto group_it = component_damage.component_redundancy_group.find(component_key);
+        if (group_it != component_damage.component_redundancy_group.end()) {
+            const auto availability_it =
+                component_damage.redundancy_group_availability.find(group_it->second);
+            if (availability_it != component_damage.redundancy_group_availability.end()) {
+                availability = std::clamp(availability_it->second, 0.0, 1.0);
+            }
+        }
+
+        const std::string& system = system_it->second;
+        if (damage_dependency_system_is_air_control_surface(system)) {
+            aircraft_damage.flight_control_integrity =
+                std::min(aircraft_damage.flight_control_integrity, availability);
+            if (damage_dependency_system_name_matches(system, "hydraulic")) {
+                aircraft_damage.hydraulic_integrity =
+                    std::min(aircraft_damage.hydraulic_integrity, availability);
+                aircraft_damage.hydraulic_pressure_availability =
+                    std::min(aircraft_damage.hydraulic_pressure_availability, availability);
+            }
+        }
+        if (damage_dependency_system_is_air_sensor(system) ||
+            damage_dependency_system_name_matches(system, "avionics") ||
+            damage_dependency_system_name_matches(system, "data_link")) {
+            aircraft_damage.avionics_integrity =
+                std::min(aircraft_damage.avionics_integrity, availability);
+        }
+        if (damage_dependency_system_name_matches(system, "command") ||
+            damage_dependency_system_name_matches(system, "navigation")) {
+            aircraft_damage.command_navigation_integrity =
+                std::min(aircraft_damage.command_navigation_integrity, availability);
+            aircraft_damage.avionics_integrity =
+                std::min(aircraft_damage.avionics_integrity, availability);
+        }
+        if (damage_dependency_system_is_air_propulsion(system)) {
+            aircraft_damage.propulsion_integrity =
+                std::min(aircraft_damage.propulsion_integrity, availability);
+        }
+        if (damage_dependency_system_is_air_fuel(system)) {
+            aircraft_damage.fuel_system_integrity =
+                std::min(aircraft_damage.fuel_system_integrity, availability);
+        }
+        if (damage_dependency_system_is_air_structure(system)) {
+            aircraft_damage.structural_integrity =
+                std::min(aircraft_damage.structural_integrity, availability);
+        }
+        if (damage_dependency_system_is_fire_suppression(system)) {
+            aircraft_damage.fire_suppression_integrity =
+                std::min(aircraft_damage.fire_suppression_integrity, availability);
+        }
+        if (damage_dependency_system_name_matches(system, "cockpit") ||
+            damage_dependency_system_name_matches(system, "pilot") ||
+            damage_dependency_system_name_matches(system, "crew")) {
+            aircraft_damage.crew_effectiveness =
+                std::min(aircraft_damage.crew_effectiveness, availability);
+            aircraft_damage.pilot_effectiveness =
+                std::min(aircraft_damage.pilot_effectiveness, availability);
+        }
+    }
 }
 
 inline void apply_damage_component_dependency_impulse(

@@ -1393,6 +1393,7 @@ public:
                     const std::string group_key = damage_component_redundancy_group_key(component);
                     component_damage.component_integrity[component_key] = 1.0;
                     component_damage.component_redundancy_group[component_key] = group_key;
+                    component_damage.component_system[component_key] = component.system;
                     component_damage.component_redundancy_weight[component_key] =
                         std::clamp(component.redundancy_weight, 0.15, 2.50);
                     component_damage.redundancy_group_availability[group_key] = 1.0;
