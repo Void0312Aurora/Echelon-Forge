@@ -6,6 +6,7 @@ build-backend = "scikit_build_core.build"
 name = "cmo"
 version = "0.2.0"
 description = "CMO Simulation Engine"
+license = "Apache-2.0"
 requires-python = ">=3.8"
 
 [project.optional-dependencies]

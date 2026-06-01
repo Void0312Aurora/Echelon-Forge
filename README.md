@@ -326,6 +326,15 @@ That includes the newly added HMoE design note for the execution policy:
 
 - [docs/forward/models/hierarchical_moe_execution_policy.md](docs/forward/models/hierarchical_moe_execution_policy.md)
 
+## License
+
+Project code and maintained documentation are licensed under the
+[Apache License 2.0](LICENSE).
+
+Third-party assets and bundled third-party files keep their own licenses. See
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the current local notice
+inventory.
+
 ## Working Conventions
 
 - prefer `.venv` for repository-local validation

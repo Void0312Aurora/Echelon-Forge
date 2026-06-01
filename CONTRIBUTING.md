@@ -73,12 +73,16 @@ For the maintained documentation policy, see:
 
 ## Licensing Status
 
-No general inbound contribution workflow, CLA flow, or broad reuse promise is
-being declared here.
+The project is licensed under the Apache License, Version 2.0. See
+[LICENSE](LICENSE).
 
-Until the repository owner publishes a formal project license, contributors
-should assume that review and acceptance remain discretionary and that copying,
-redistribution, or derivative-use rights are not granted by this file alone.
+Unless explicitly stated otherwise, any contribution intentionally submitted
+for inclusion in this repository is submitted under the same Apache-2.0 terms.
+
+Third-party assets, datasets, generated artifacts, and copied upstream code
+must include their own source and license information. Do not add material with
+unclear redistribution rights. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+for the current local notice inventory.
 
 ## Communication Style
 
