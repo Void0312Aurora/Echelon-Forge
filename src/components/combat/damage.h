@@ -363,6 +363,13 @@ inline bool damage_dependency_edge_is_structural_support(const std::string& edge
     return edge_type == "structural_support" || edge_type == "structural-support";
 }
 
+inline double damage_component_axis_availability(double availability, double axis_weight) {
+    return std::clamp(
+        1.0 - std::clamp(axis_weight, 0.0, 1.0) * (1.0 - std::clamp(availability, 0.0, 1.0)),
+        0.0,
+        1.0);
+}
+
 inline void derive_aircraft_damage_from_component_state(
     const ComponentDamageState& component_damage,
     AircraftDamageState& aircraft_damage
@@ -387,6 +394,83 @@ inline void derive_aircraft_damage_from_component_state(
         if (damage_dependency_system_is_air_control_surface(system)) {
             aircraft_damage.flight_control_integrity =
                 std::min(aircraft_damage.flight_control_integrity, availability);
+            const bool side_specific =
+                damage_dependency_system_name_matches(component_key, "left") ||
+                damage_dependency_system_name_matches(component_key, "right");
+            const bool aileron_like =
+                damage_dependency_system_name_matches(component_key, "aileron") ||
+                damage_dependency_system_name_matches(component_key, "elevon") ||
+                damage_dependency_system_name_matches(component_key, "flaperon");
+            const bool elevator_like =
+                damage_dependency_system_name_matches(component_key, "elevator") ||
+                damage_dependency_system_name_matches(component_key, "stabilator") ||
+                damage_dependency_system_name_matches(component_key, "elevon");
+            const bool flap_like =
+                damage_dependency_system_name_matches(component_key, "flap");
+            const bool spoiler_like =
+                damage_dependency_system_name_matches(component_key, "spoiler");
+            const bool thrust_vector_like =
+                damage_dependency_system_name_matches(component_key, "thrust_vector") ||
+                damage_dependency_system_name_matches(component_key, "vector_actuator");
+            const bool cyclic_like =
+                damage_dependency_system_name_matches(component_key, "cyclic");
+            const bool collective_like =
+                damage_dependency_system_name_matches(component_key, "collective");
+            const bool rudder_like =
+                damage_dependency_system_name_matches(component_key, "rudder");
+
+            double roll_weight = 0.0;
+            double pitch_weight = 0.0;
+            double yaw_weight = 0.0;
+            if (aileron_like) {
+                roll_weight = std::max(roll_weight, 1.0);
+            }
+            if (spoiler_like) {
+                roll_weight = std::max(roll_weight, 0.85);
+            }
+            if (flap_like && side_specific) {
+                roll_weight = std::max(roll_weight, 0.55);
+            }
+            if (cyclic_like) {
+                roll_weight = std::max(roll_weight, 0.80);
+            }
+            if (elevator_like) {
+                pitch_weight = std::max(pitch_weight, 0.70);
+            }
+            if (flap_like) {
+                pitch_weight = std::max(pitch_weight, 0.55);
+            }
+            if (thrust_vector_like) {
+                pitch_weight = std::max(pitch_weight, 0.75);
+                yaw_weight = std::max(yaw_weight, 0.75);
+            }
+            if (cyclic_like) {
+                pitch_weight = std::max(pitch_weight, 0.65);
+            }
+            if (collective_like) {
+                pitch_weight = std::max(pitch_weight, 0.80);
+            }
+            if (rudder_like) {
+                yaw_weight = std::max(yaw_weight, 1.0);
+            }
+            if (roll_weight > 0.0) {
+                aircraft_damage.roll_control_integrity =
+                    std::min(
+                        aircraft_damage.roll_control_integrity,
+                        damage_component_axis_availability(availability, roll_weight));
+            }
+            if (pitch_weight > 0.0) {
+                aircraft_damage.pitch_control_integrity =
+                    std::min(
+                        aircraft_damage.pitch_control_integrity,
+                        damage_component_axis_availability(availability, pitch_weight));
+            }
+            if (yaw_weight > 0.0) {
+                aircraft_damage.yaw_control_integrity =
+                    std::min(
+                        aircraft_damage.yaw_control_integrity,
+                        damage_component_axis_availability(availability, yaw_weight));
+            }
             if (damage_dependency_system_name_matches(system, "hydraulic")) {
                 aircraft_damage.hydraulic_integrity =
                     std::min(aircraft_damage.hydraulic_integrity, availability);

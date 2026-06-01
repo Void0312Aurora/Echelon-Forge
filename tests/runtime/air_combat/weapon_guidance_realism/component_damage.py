@@ -1412,6 +1412,48 @@ class ComponentDamageRuntimeMixin:
             float(event.component_redundancy_group_availability) + 1.0e-6,
         )
 
+    def test_phase3_component_availability_feeds_control_axis_state(self) -> None:
+        target_name = "F-16C_A2_SingleAxisAvailability_Test"
+        overrides = [
+            _make_f16_component_redundancy_override(
+                target_name,
+                redundancy_group=0.0,
+                critical=True,
+            )
+        ]
+        sim = _kernel_with_unit_overrides(overrides)
+        attacker_id, target_id = _spawn_attacker_and_named_target(sim, target_name)
+        profile = _make_warhead_profile("blast_fragmentation", damage=90.0, radius=35.0)
+
+        before = _aircraft_damage_overlay(sim, target_id)
+        ok = sim.debug_apply_profiled_local_proximity_hit(
+            attacker_id,
+            target_id,
+            -0.8,
+            4.1,
+            0.0,
+            profile,
+        )
+        self.assertTrue(bool(ok))
+        self.assertTrue(sim.is_unit_active(target_id))
+
+        event = sim.export_recent_engagement_events().effects_events[-1]
+        overlay = _aircraft_damage_overlay(sim, target_id)
+        group_availability = float(event.component_redundancy_group_availability)
+
+        self.assertEqual(str(event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(event.component_primary_system), "flight_control")
+        self.assertEqual(int(event.component_redundancy_group_member_count), 1)
+        self.assertLess(group_availability, 1.0)
+        self.assertLess(overlay["roll_control"], before["roll_control"])
+        self.assertLessEqual(overlay["roll_control"], group_availability + 1.0e-6)
+        self.assertAlmostEqual(overlay["pitch_control"], before["pitch_control"], delta=1.0e-6)
+        self.assertAlmostEqual(overlay["yaw_control"], before["yaw_control"], delta=1.0e-6)
+
+        sim.step()
+        tick_overlay = _aircraft_damage_overlay(sim, target_id)
+        self.assertLessEqual(tick_overlay["roll_control"], group_availability + 1.0e-6)
+
     def test_phase3_component_failure_probability_is_sampled_and_reported(self) -> None:
         wing = (-0.753, 4.0, 0.0)
 
