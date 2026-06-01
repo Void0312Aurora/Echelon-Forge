@@ -114,11 +114,16 @@ The active design conclusion is:
     release helpers by introducing `IWeaponReleaseService`; it does not claim
     broader P7 launch/fire-control redesign, raw-runtime retirement, or general
     compatibility cleanup.
-24. `TM04 SimulationKernel Decomposition` is the active bounded lane for the
-    current `SimulationKernel` god-class cleanup: it records the extracted
-    engagement-event store, keeps the release-service adapter residual visible,
-    and requires real responsibility migration before any full decomposition
-    claim.
+24. `TM04 SimulationKernel Decomposition` is the accepted bounded lane for the
+    current `SimulationKernel` god-class cleanup slice: it records the extracted
+    engagement-event store, migrated release service, DTO effects recording, and
+    named release-damage bridge without claiming full decomposition.
+25. `TM05 Engagement Event Store DTO Closure` is the accepted post-TM04 cleanup
+    slice that removed the remaining private long-argument store helper and
+    guards the DTO-only recorder/store boundary.
+26. `TM06 Damage Debug Event DTO Builder` is the accepted post-TM05 cleanup slice
+    that contains repeated debug damage DTO construction behind local helper
+    logic without changing public debug APIs or damage semantics.
 
 ## Work Packages
 
@@ -159,25 +164,52 @@ than as top-level active subproject directories.
 | `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | Focused remediation after the implementation-level closure audit: `TM01-A`, `TM01-C`, and `TM01-D` are complete for the audited maintained-path slice; `TM01-B` recorded the launch-bridge residual that was later closed by TM03, while broader architecture, P7/raw-runtime, and WP24 canonical acceptance closure remain out of scope. | [TM01 entry](archive/tm01_architecture_closure_remediation/README.md), [task clusters](archive/tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
 | `TM02 WP24 Acceptance Closure` | temporary / closed | Closure lane that published WP24 canonical acceptance review and index sync without reopening implementation scope. | [TM02 entry](archive/tm02_wp24_acceptance_closure/README.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
 | `TM03 Launch Bridge Boundary` | temporary / closed | Bounded architecture lane that closed the two `systems -> SimulationKernel` weapon-release bridges recorded by TM01-B through a narrow `IWeaponReleaseService` seam. | [TM03 entry](archive/tm03_launch_bridge_boundary/README.md), [task clusters](archive/tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
-| `TM04 SimulationKernel Decomposition` | active | Bounded continuation of the current `SimulationKernel` god-class cleanup: move concrete engagement/release/effects responsibilities out of the kernel while preserving public behavior and refusing broad P7/raw-runtime claims. | [TM04 entry](tm04_simulation_kernel_decomposition/README.md), [task clusters](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md) |
+| `TM04 SimulationKernel Decomposition` | accepted | Bounded continuation of the current `SimulationKernel` god-class cleanup: moved concrete engagement/release/effects responsibilities out of the kernel while preserving public behavior and refusing broad P7/raw-runtime claims. | [TM04 entry](archive/tm04_simulation_kernel_decomposition/README.md), [task clusters](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md) |
+| `TM05 Engagement Event Store DTO Closure` | accepted | Post-TM04 bounded cleanup that removed the remaining private long-argument engagement event store helper and guards the DTO-only effects recording boundary. | [TM05 entry](archive/tm05_engagement_event_store_dto_closure/README.md), [task clusters](archive/tm05_engagement_event_store_dto_closure/tm05_engagement_event_store_dto_closure_task_clusters_20260602.md) |
+| `TM06 Damage Debug Event DTO Builder` | accepted | Post-TM05 bounded cleanup that contains repeated debug damage DTO construction behind local helper logic while preserving public debug APIs and damage semantics. | [TM06 entry](archive/tm06_damage_debug_event_dto_builder/README.md), [task clusters](archive/tm06_damage_debug_event_dto_builder/tm06_damage_debug_event_dto_builder_task_clusters_20260602.md) |
+
+## TM06 Damage Debug Event DTO Builder
+
+Output:
+
+- [TM06 Damage Debug Event DTO Builder](archive/tm06_damage_debug_event_dto_builder/README.md)
+- [TM06 Damage Debug Event DTO Builder Task Clusters](archive/tm06_damage_debug_event_dto_builder/tm06_damage_debug_event_dto_builder_task_clusters_20260602.md)
+
+TM06 is the accepted post-TM05 cleanup slice for debug damage event recording.
+It moved repeated `EngagementEffectsDamageEventRecord` setup in
+`simulation_kernel_damage_debug_api.cpp` behind local helper logic. It does not
+claim public debug API retirement, damage-model redesign, P7 launch/fire-control
+closure, raw-runtime retirement, or full `SimulationKernel` decomposition.
+
+## TM05 Engagement Event Store DTO Closure
+
+Output:
+
+- [TM05 Engagement Event Store DTO Closure](archive/tm05_engagement_event_store_dto_closure/README.md)
+- [TM05 Engagement Event Store DTO Closure Task Clusters](archive/tm05_engagement_event_store_dto_closure/tm05_engagement_event_store_dto_closure_task_clusters_20260602.md)
+
+TM05 is the accepted post-TM04 cleanup slice for the engagement event store. It
+removed the private long-argument effects recording helper and guards the
+DTO-only public/store boundary. It must not claim broader
+`SimulationKernel` decomposition, P7 launch/fire-control closure, raw-runtime
+retirement, or damage-model maturity.
 
 ## TM04 SimulationKernel Decomposition
 
 Output:
 
-- [TM04 SimulationKernel Decomposition](tm04_simulation_kernel_decomposition/README.md)
-- [TM04 SimulationKernel Decomposition Task Clusters](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md)
-- [TM04 Current Status](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_current_status_20260601.md)
-- [TM04 Dispatch Queue](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_dispatch_queue_20260601.md)
-- [TM04 Acceptance Gate](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_acceptance_20260601.md)
+- [TM04 SimulationKernel Decomposition](archive/tm04_simulation_kernel_decomposition/README.md)
+- [TM04 SimulationKernel Decomposition Task Clusters](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md)
+- [TM04 Current Status](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_current_status_20260601.md)
+- [TM04 Dispatch Queue](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_dispatch_queue_20260601.md)
+- [TM04 Acceptance Gate](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_acceptance_20260601.md)
 
-TM04 is the active decomposition lane for the current `SimulationKernel`
-god-class cleanup. It records the completed engagement-event store extraction
-and header/interface boundary reduction, then keeps the remaining release-service
-and effects DTO work as finite clusters. TM04 must not claim full
+TM04 is the accepted decomposition lane for the bounded `SimulationKernel`
+god-class cleanup slice. It records the engagement-event store extraction,
+header/interface boundary reduction, release-service migration, effects DTO
+recording, and named release-damage bridge. TM04 must not claim full
 `SimulationKernel` decomposition, P7 launch/fire-control closure, public
-raw-runtime retirement, or broad damage-model maturity until its acceptance gate
-is satisfied.
+raw-runtime retirement, or broad damage-model maturity.
 
 ## TM03 Launch Bridge Boundary
 

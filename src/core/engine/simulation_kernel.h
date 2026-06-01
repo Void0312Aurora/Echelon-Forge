@@ -35,6 +35,7 @@ class ISensorModel;
 class IAcousticModel;
 class IControlModel;
 class IGuidanceModel;
+class IWeaponReleaseDamageBridge;
 struct UnitDefinition;
 class SimulationKernelEngagementEventStore;
 
@@ -257,6 +258,7 @@ private:
     std::unique_ptr<IGuidanceModel> guidance_model_;
     MissileTuning missile_tuning_;
     std::unique_ptr<SimulationKernelEngagementEventStore> engagement_event_store_;
+    std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_;
     std::unique_ptr<IWeaponReleaseService> weapon_release_service_;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;

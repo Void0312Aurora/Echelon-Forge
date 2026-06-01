@@ -23,6 +23,16 @@ kept for traceability. The current architecture entry remains
 - [TM03 Launch Bridge Boundary](tm03_launch_bridge_boundary/README.md):
   temporary closure lane that closed the two explicit launch-helper
   `systems -> SimulationKernel` bridges through `IWeaponReleaseService`.
+- [TM04 SimulationKernel Decomposition](tm04_simulation_kernel_decomposition/README.md):
+  accepted bounded `SimulationKernel` cleanup slice covering the engagement
+  event store, release service, effects DTO recording, and named release-damage
+  bridge without claiming full decomposition.
+- [TM05 Engagement Event Store DTO Closure](tm05_engagement_event_store_dto_closure/README.md):
+  accepted post-TM04 cleanup that removed the private long-argument engagement
+  event store helper and guarded the DTO-only effects recording boundary.
+- [TM06 Damage Debug Event DTO Builder](tm06_damage_debug_event_dto_builder/README.md):
+  accepted post-TM05 cleanup that centralized debug damage DTO construction
+  behind local helper logic while preserving public debug APIs.
 
 ## Older WP Records
 

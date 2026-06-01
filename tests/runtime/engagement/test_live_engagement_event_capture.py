@@ -12,10 +12,91 @@ import ef_py  # noqa: E402
 
 
 _DB_PATH = resolve_repo_path("examples", "config", "database")
+_EFFECTS_DAMAGE_RECORDER_SIGNATURE_PATTERN = re.compile(
+    r"(?:virtual\s+)?(?:std::)?uint64_t\s+"
+    r"(?:(?:SimulationKernelEngagementEventStore)::)?"
+    r"(?P<name>record_effects_damage_event(?:_legacy)?)\s*"
+    r"\((?P<params>[^)]*)\)"
+)
+_DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE = (
+    "EngagementEffectsDamageEventRecord build_debug_effects_damage_event_record("
+)
+_DEBUG_DAMAGE_DTO_CALLER_SIGNATURES = (
+    "bool SimulationKernel::debug_apply_proximity_hit(",
+    "bool SimulationKernel::debug_apply_local_proximity_hit(",
+    "bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(",
+)
 
 
 def _read(path: str) -> str:
     return Path(resolve_repo_path(path)).read_text(encoding="utf-8")
+
+
+def _normalized_cpp_parameters(parameters: str) -> str:
+    return re.sub(r"\s+", " ", parameters).strip()
+
+
+def _effects_damage_recorder_signatures(text: str) -> list[tuple[str, str]]:
+    return [
+        (match.group("name"), _normalized_cpp_parameters(match.group("params")))
+        for match in _EFFECTS_DAMAGE_RECORDER_SIGNATURE_PATTERN.finditer(text)
+    ]
+
+
+def _assert_effects_damage_recorder_signatures_are_dto_only(
+    source_name: str,
+    text: str,
+) -> None:
+    signatures = _effects_damage_recorder_signatures(text)
+    assert signatures == [
+        ("record_effects_damage_event", "EngagementEffectsDamageEventRecord record")
+    ], (
+        f"{source_name} must expose exactly one DTO-shaped effects damage recorder "
+        "signature and no public or private long-argument compatibility helper"
+    )
+
+
+def _extract_function_block(text: str, signature: str) -> str:
+    start = text.rindex(signature)
+    brace_start = text.index("{", start)
+    depth = 0
+    for idx in range(brace_start, len(text)):
+        char = text[idx]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:idx + 1]
+    raise AssertionError(f"could not extract block for {signature}")
+
+
+def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
+    assert "build_debug_effects_damage_event_record(" in text, (
+        "debug damage paths should build EngagementEffectsDamageEventRecord DTOs "
+        "through the named TM06 helper"
+    )
+    helper_block = _extract_function_block(text, _DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE)
+    assert "EngagementEffectsDamageEventRecord event_record{}" in helper_block
+    assert "EffectsEvent& effects = event_record.effects;" in helper_block
+    assert "engagement_events::apply_effects_result_fields(effects, input.effects_result);" in helper_block
+    assert "return event_record;" in helper_block
+    assert text.count("EngagementEffectsDamageEventRecord event_record{}") == 1
+    assert text.count("EffectsEvent& effects = event_record.effects;") == 1
+    assert text.count("engagement_events::apply_effects_result_fields(") == 1
+
+    for signature in _DEBUG_DAMAGE_DTO_CALLER_SIGNATURES:
+        caller_block = _extract_function_block(text, signature)
+        assert "build_debug_effects_damage_event_record({" in caller_block
+        assert "record_effects_damage_event(std::move(event_record))" in caller_block
+        assert "impact.destruct();" in caller_block
+        assert (
+            caller_block.index("record_effects_damage_event(std::move(event_record))")
+            < caller_block.index("impact.destruct();")
+        )
+        assert "EngagementEffectsDamageEventRecord event_record{}" not in caller_block
+        assert "EffectsEvent& effects = event_record.effects;" not in caller_block
+        assert "engagement_events::apply_effects_result_fields(" not in caller_block
 
 
 def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -> None:
@@ -53,26 +134,64 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
 
 def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> None:
     recorder_header = _read("src/core/interfaces/engagement_event_recorder.h")
+    store_header = _read("src/core/engine/simulation_kernel_engagement_event_store.h")
     release_service = _read("src/core/engine/simulation_kernel_weapon_release_service.cpp")
+    release_service_header = _read("src/core/engine/simulation_kernel_weapon_release_service.h")
+    kernel_header = _read("src/core/engine/simulation_kernel.h")
+    kernel_impl = _read("src/core/engine/simulation_kernel.cpp")
+    services_header = _read("src/core/engine/simulation_kernel_services.h")
+    services_impl = _read("src/core/engine/simulation_kernel_services.cpp")
     damage_api = _read("src/core/engine/simulation_kernel_damage_debug_api.cpp")
     store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
+    damage_bridge_header = _read("src/core/interfaces/weapon_release_damage_bridge.h")
 
     assert "struct EngagementEffectsDamageEventRecord" in recorder_header
     assert "record_effects_damage_event(\n        EngagementEffectsDamageEventRecord record" in recorder_header
+    assert "record_effects_damage_event_legacy(" not in recorder_header
+    for source_name, source_text in (
+        ("engagement_event_recorder.h", recorder_header),
+        ("simulation_kernel_engagement_event_store.h", store_header),
+        ("simulation_kernel_engagement_event_store.cpp", store_impl),
+    ):
+        _assert_effects_damage_recorder_signatures_are_dto_only(source_name, source_text)
+        assert "record_effects_damage_event_legacy(" not in source_text
     assert "SimulationKernelEngagementEventStore::record_effects_damage_event(\n    EngagementEffectsDamageEventRecord record" in store_impl
     assert "launch_recorder_.record_legacy_launch_event(" in release_service
     assert "damage_recorder_.record_effects_damage_event(" in release_service
     assert "engagement_event_store_->record_effects_damage_event(" in damage_api
     assert "SimulationKernelEngagementEventStore::record_legacy_launch_event(" in store_impl
     assert "SimulationKernelEngagementEventStore::record_effects_damage_event(" in store_impl
+    assert "const std::uint64_t munition_entity_id = record.munition_entity_id;" in store_impl
+    assert "const std::uint64_t target_id = record.target_id;" in store_impl
+    assert "const double event_time_s = record.effects.detonation_time_s;" in store_impl
+    assert "effects = std::move(record.effects);" in store_impl
     assert "LaunchEvent event{}" in store_impl
     assert "EffectsEvent effects{}" in store_impl
     assert "DamageReport report{}" in store_impl
     assert "DiagnosticsTrace trace{}" in store_impl
     assert "launch_recorder_.set_pending_effects_launch_event_id(launch_event_id)" in release_service
     assert "EngagementEffectsDamageEventRecord event_record{}" in release_service
+    assert "EngagementEffectsDamageEventRecord event_record{}" in damage_api
+    assert "engagement_events::apply_effects_result_fields(" in damage_api
+    _assert_debug_damage_paths_use_dto_builder(damage_api)
     assert "std::move(event_record)" in release_service
     assert "engagement_event_store_->capture_engagement_damage_state(target_id)" in damage_api
+    assert "class IWeaponReleaseDamageBridge" in damage_bridge_header
+    assert "virtual bool apply_proximity_hit(" in damage_bridge_header
+    assert "class IWeaponReleaseDamageBridge;" in kernel_header
+    assert "std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_" in kernel_header
+    assert (
+        "class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge"
+        in kernel_impl
+    )
+    assert "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)" in kernel_impl
+    assert "*weapon_release_damage_bridge_" in kernel_impl
+    assert "IWeaponReleaseDamageBridge& damage_bridge" in services_header
+    assert "IWeaponReleaseDamageBridge& damage_bridge" in services_impl
+    assert "IWeaponReleaseDamageBridge& damage_bridge_" in release_service_header
+    assert "std::function" not in release_service_header
+    assert "apply_proximity_hit_(" not in release_service
+    assert "damage_bridge_.apply_proximity_hit(" in release_service
 
 
 def test_recent_event_storage_uses_shared_monotonic_ids_and_queue_aligned_sorted_exports() -> None:

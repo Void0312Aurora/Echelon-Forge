@@ -10,6 +10,7 @@
 #include "core/interfaces/guidance_model.h"
 #include "core/interfaces/sensor_model.h"
 #include "core/interfaces/unit_factory.h"
+#include "core/interfaces/weapon_release_damage_bridge.h"
 #include "models/core/default_unit_factory.h"
 
 #include <spdlog/spdlog.h>
@@ -17,6 +18,28 @@
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
+
+namespace {
+
+class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge {
+public:
+    explicit SimulationKernelWeaponReleaseDamageBridge(SimulationKernel& kernel)
+        : kernel_(kernel) {}
+
+    bool apply_proximity_hit(
+        std::uint64_t attacker_id,
+        std::uint64_t target_id,
+        double damage,
+        double fuse_distance
+    ) override {
+        return kernel_.debug_apply_proximity_hit(attacker_id, target_id, damage, fuse_distance);
+    }
+
+private:
+    SimulationKernel& kernel_;
+};
+
+}  // namespace
 
 SimulationKernel::SimulationKernel()
     : environment_model_(make_default_environment_model()),
@@ -27,20 +50,14 @@ SimulationKernel::SimulationKernel()
       control_model_(make_default_control_model()),
       guidance_model_(make_default_guidance_model()),
       engagement_event_store_(std::make_unique<SimulationKernelEngagementEventStore>(ecs)),
+      weapon_release_damage_bridge_(std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)),
       weapon_release_service_(make_simulation_kernel_weapon_release_service(
           ecs,
           unit_factory_,
           missile_tuning_,
           *engagement_event_store_,
           *engagement_event_store_,
-          [this](
-              std::uint64_t attacker_id,
-              std::uint64_t target_id,
-              double damage,
-              double fuse_distance
-          ) {
-              return debug_apply_proximity_hit(attacker_id, target_id, damage, fuse_distance);
-          })) {
+          *weapon_release_damage_bridge_)) {
     register_components_and_systems();
     if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);

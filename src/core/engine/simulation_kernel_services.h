@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <functional>
 #include <memory>
 
 #include <flecs.h>
@@ -9,6 +7,7 @@
 class IEngagementEventRecorder;
 class IEngagementLaunchRecorder;
 class IUnitFactory;
+class IWeaponReleaseDamageBridge;
 class IWeaponReleaseService;
 struct MissileTuning;
 
@@ -18,5 +17,5 @@ std::unique_ptr<IWeaponReleaseService> make_simulation_kernel_weapon_release_ser
     MissileTuning& missile_tuning,
     IEngagementLaunchRecorder& launch_recorder,
     IEngagementEventRecorder& damage_recorder,
-    std::function<bool(std::uint64_t, std::uint64_t, double, double)> apply_proximity_hit
+    IWeaponReleaseDamageBridge& damage_bridge
 );

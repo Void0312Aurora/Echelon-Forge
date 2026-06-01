@@ -88,8 +88,14 @@
     helper 改为经由 `IWeaponReleaseService` 窄接口；这不声明更广泛的 P7
     launch/fire-control 重设、raw-runtime 退场或通用 compatibility cleanup。
 24. `TM04 SimulationKernel Decomposition` 是当前 `SimulationKernel` god-class
-    清理的活跃有边界 lane：它记录 engagement-event store 已抽出、保留
-    release-service adapter residual，并要求真实职责迁移完成后才允许声明完整拆分。
+    清理的已验收有边界 lane：它记录 engagement-event store 抽出、release
+    service 迁移、effects DTO 录制和命名 release-damage bridge，但不声明完整拆分。
+25. `TM05 Engagement Event Store DTO Closure` 是 TM04 后续的已验收小切片：
+    已移除剩余 private long-argument store helper，并守住 DTO-only
+    recorder/store 边界。
+26. `TM06 Damage Debug Event DTO Builder` 是 TM05 后续的已验收小切片：
+    已把 debug damage DTO 的重复构造收进局部 helper，同时不改变 public debug
+    API 或 damage semantics。
 
 ## 工作包
 
@@ -129,22 +135,48 @@ packet 已移入 [archive/](archive/README.zh.md)，不再作为顶层 active �
 | `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | 审计后的有边界整改线：`TM01-A`、`TM01-C`、`TM01-D` 已完成并覆盖本次 maintained-path 切片；`TM01-B` 记录的 launch-bridge residual 已由 TM03 关闭，且更广泛的架构、P7/raw-runtime 与 WP24 canonical acceptance 闭合仍未完成。 | [TM01 entry](archive/tm01_architecture_closure_remediation/README.md)、[task clusters](archive/tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
 | `TM02 WP24 Acceptance Closure` | temporary / closed | 已发布 WP24 canonical acceptance review 并同步索引的 closure lane；未重开 implementation scope。 | [TM02 entry](archive/tm02_wp24_acceptance_closure/README.md)、[验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) |
 | `TM03 Launch Bridge Boundary` | temporary / closed | 通过 `IWeaponReleaseService` 窄接口关闭 TM01-B 记录的两个 `systems -> SimulationKernel` weapon-release bridge 的有边界架构 lane。 | [TM03 entry](archive/tm03_launch_bridge_boundary/README.md)、[task clusters](archive/tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
-| `TM04 SimulationKernel Decomposition` | active | 当前 `SimulationKernel` god-class 清理的有边界延续：在保持 public behavior 的同时，把 engagement / release / effects 的具体职责从 kernel 中迁出，并拒绝宽泛 P7/raw-runtime 声明。 | [TM04 entry](tm04_simulation_kernel_decomposition/README.md)、[task clusters](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md) |
+| `TM04 SimulationKernel Decomposition` | accepted | 当前 `SimulationKernel` god-class 清理的有边界延续：在保持 public behavior 的同时，已把 engagement / release / effects 的具体职责从 kernel 中迁出，并拒绝宽泛 P7/raw-runtime 声明。 | [TM04 entry](archive/tm04_simulation_kernel_decomposition/README.md)、[task clusters](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md) |
+| `TM05 Engagement Event Store DTO Closure` | accepted | TM04 后续的有边界清理：已移除剩余 private long-argument engagement event store helper，并用 guard 固化 DTO-only effects recording 边界。 | [TM05 entry](archive/tm05_engagement_event_store_dto_closure/README.md)、[task clusters](archive/tm05_engagement_event_store_dto_closure/tm05_engagement_event_store_dto_closure_task_clusters_20260602.md) |
+| `TM06 Damage Debug Event DTO Builder` | accepted | TM05 后续的有边界清理：已把 debug damage DTO 的重复构造收进局部 helper，同时保持 public debug API 与 damage semantics 稳定。 | [TM06 entry](archive/tm06_damage_debug_event_dto_builder/README.md)、[task clusters](archive/tm06_damage_debug_event_dto_builder/tm06_damage_debug_event_dto_builder_task_clusters_20260602.md) |
+
+## TM06 Damage Debug Event DTO Builder
+
+产出：
+
+- [TM06 Damage Debug Event DTO Builder](archive/tm06_damage_debug_event_dto_builder/README.md)
+- [TM06 Damage Debug Event DTO Builder Task Clusters](archive/tm06_damage_debug_event_dto_builder/tm06_damage_debug_event_dto_builder_task_clusters_20260602.md)
+
+TM06 是 TM05 后续已验收的 debug damage event recording cleanup 小切片。它已把
+`simulation_kernel_damage_debug_api.cpp` 中重复的 `EngagementEffectsDamageEventRecord`
+构造收进局部 helper；不声明 public debug API 退场、damage-model 重设、P7
+launch/fire-control 闭合、raw-runtime 退场或完整 `SimulationKernel` 拆分。
+
+## TM05 Engagement Event Store DTO Closure
+
+产出：
+
+- [TM05 Engagement Event Store DTO Closure](archive/tm05_engagement_event_store_dto_closure/README.md)
+- [TM05 Engagement Event Store DTO Closure Task Clusters](archive/tm05_engagement_event_store_dto_closure/tm05_engagement_event_store_dto_closure_task_clusters_20260602.md)
+
+TM05 是 TM04 后续已验收的 engagement event store cleanup 小切片。它已移除 private
+long-argument effects recording helper，并守住 DTO-only public/store 边界；不得声明更广泛的
+`SimulationKernel` 拆分、P7 launch/fire-control 闭合、raw-runtime 退场或
+damage-model 成熟度。
 
 ## TM04 SimulationKernel Decomposition
 
 产出：
 
-- [TM04 SimulationKernel Decomposition](tm04_simulation_kernel_decomposition/README.md)
-- [TM04 SimulationKernel Decomposition Task Clusters](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md)
-- [TM04 Current Status](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_current_status_20260601.md)
-- [TM04 Dispatch Queue](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_dispatch_queue_20260601.md)
-- [TM04 Acceptance Gate](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_acceptance_20260601.md)
+- [TM04 SimulationKernel Decomposition](archive/tm04_simulation_kernel_decomposition/README.md)
+- [TM04 SimulationKernel Decomposition Task Clusters](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md)
+- [TM04 Current Status](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_current_status_20260601.md)
+- [TM04 Dispatch Queue](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_dispatch_queue_20260601.md)
+- [TM04 Acceptance Gate](archive/tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_acceptance_20260601.md)
 
-TM04 是当前 `SimulationKernel` god-class 清理的活跃 decomposition lane。它记录已经完成的
-engagement-event store 抽出与 header/interface 边界收缩，并把仍未完成的
-release-service 与 effects DTO 工作固化为有限任务簇。只有通过验收门后，TM04 才能声明
-完整 `SimulationKernel` 拆分；在此之前不得声明 P7 launch/fire-control 闭合、public
+TM04 是当前 `SimulationKernel` god-class 清理的已验收 bounded decomposition
+lane。它记录 engagement-event store 抽出、header/interface 边界收缩、
+release-service 迁移、effects DTO 录制和命名 release-damage bridge。TM04
+不得声明完整 `SimulationKernel` 拆分、P7 launch/fire-control 闭合、public
 raw-runtime 退场或宽泛 damage-model 成熟度。
 
 ## TM03 Launch Bridge Boundary

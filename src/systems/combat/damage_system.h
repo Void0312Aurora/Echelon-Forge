@@ -8,6 +8,7 @@
 #include <cmath>
 #include <limits>
 #include <string>
+#include <utility>
 #include <spdlog/spdlog.h>
 
 #include "components/basic/common.h"
@@ -22,6 +23,7 @@
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
 #include "components/systems/ew.h"
+#include "core/interfaces/engagement_effects_event_builder.h"
 #include "core/interfaces/engagement_event_recorder.h"
 #include "core/interfaces/effects_model.h"
 #include <spdlog/spdlog.h>
@@ -963,137 +965,71 @@ inline void register_damage_system(flecs::world& ecs) {
                                 p[i].x,
                                 p[i].y,
                                 p[i].z);
-                            (void)recorder_ref->recorder->record_effects_damage_event(
-                                static_cast<std::uint64_t>(it.entity(i).id()),
-                                m[i].target_id,
-                                before,
-                                after,
-                                trigger_type,
-                                engagement_damage_snapshot_changed(before, after)
-                                    ? "damage_applied"
-                                    : "detonated_no_effect",
-                                detonation_time_s,
+                            EngagementEffectsDamageEventRecord event_record{};
+                            event_record.munition_entity_id =
+                                static_cast<std::uint64_t>(it.entity(i).id());
+                            event_record.target_id = m[i].target_id;
+                            event_record.before = before;
+                            event_record.after = after;
+                            EffectsEvent& effects = event_record.effects;
+                            effects.trigger_type = trigger_type;
+                            effects.outcome_state = engagement_damage_snapshot_changed(before, after)
+                                ? "damage_applied"
+                                : "detonated_no_effect";
+                            effects.detonation_time_s = detonation_time_s;
+                            effects.nearest_approach_time_s =
                                 std::isfinite(m[i].fuze_nearest_approach_time_s)
                                     ? m[i].fuze_nearest_approach_time_s
-                                    : detonation_time_s,
-                                m[i].proximity_min_dist_m,
-                                detonation_local[0],
-                                detonation_local[1],
-                                detonation_local[2],
-                                p[i].heading,
-                                p[i].pitch,
-                                p[i].roll,
-                                m[i].fuze_closure_mps,
-                                m[i].fuze_missile_axis_forward,
-                                m[i].fuze_missile_axis_right,
-                                m[i].fuze_missile_axis_up,
-                                m[i].fuze_quality,
-                                m[i].fuze_hit_probability,
-                                warhead_effect_family(effective.warhead_profile),
+                                    : detonation_time_s;
+                            effects.miss_distance_m = m[i].proximity_min_dist_m;
+                            effects.detonation_local_forward_m = detonation_local[0];
+                            effects.detonation_local_right_m = detonation_local[1];
+                            effects.detonation_local_up_m = detonation_local[2];
+                            effects.detonation_heading_deg = p[i].heading;
+                            effects.detonation_pitch_deg = p[i].pitch;
+                            effects.detonation_roll_deg = p[i].roll;
+                            effects.closure_mps = m[i].fuze_closure_mps;
+                            effects.missile_axis_forward = m[i].fuze_missile_axis_forward;
+                            effects.missile_axis_right = m[i].fuze_missile_axis_right;
+                            effects.missile_axis_up = m[i].fuze_missile_axis_up;
+                            effects.quality = m[i].fuze_quality;
+                            effects.confidence = m[i].fuze_hit_probability;
+                            effects.effect_family = warhead_effect_family(effective.warhead_profile);
+                            effects.warhead_mass_kg =
                                 std::isfinite(effective.warhead_profile.mass_kg)
                                     ? effective.warhead_profile.mass_kg
-                                    : 0.0,
+                                    : 0.0;
+                            effects.warhead_lethal_radius_m =
                                 std::isfinite(effective.warhead_profile.lethal_radius_m)
                                     ? effective.warhead_profile.lethal_radius_m
-                                    : effective.fuse_distance,
-                                effective.warhead_profile.synthetic,
-                                effective.warhead_profile.damage_scalar_synthetic,
-                                fuze_profile_type(effective.fuze_profile),
-                                trigger_radius_m,
-                                std::max(0.0, effective.fuze_profile.delay_s),
-                                fuze_reliability,
-                                effective.fuze_profile.synthetic,
-                                m[i].fuze_signature_source,
-                                m[i].fuze_target_signature,
-                                m[i].fuze_signature_scale,
-                                m[i].fuze_effective_reliability,
-                                m[i].fuze_contact_surface_distance_m,
-                                m[i].fuze_contact_penetration_depth_m,
-                                m[i].fuze_contact_surface_tolerance_m,
-                                m[i].fuze_contact_inside_hitbox,
-                                effects_result.direct_hitbox_intersection,
-                                effects_result.projected_hitbox_count,
-                                effects_result.spatial_effect_scale,
-                                effects_result.mechanism_armor_scale,
-                                effects_result.mechanism_exposure_scale,
-                                effects_result.mechanism_effect_scale,
-                                effects_result.mechanism_fragment_energy_j,
-                                effects_result.mechanism_fragment_areal_density_per_m2,
-                                effects_result.mechanism_penetration_margin,
-                                effects_result.mechanism_blast_overpressure_kpa,
-                                effects_result.mechanism_blast_impulse_kpa_ms,
-                                effects_result.mechanism_blast_scaled_distance_m_kg13,
-                                effects_result.mechanism_rod_cut_margin,
-                                effects_result.warhead_spatial_sample_count,
-                                effects_result.warhead_spatial_hit_estimate,
-                                effects_result.warhead_spatial_hit_fraction,
-                                effects_result.warhead_spatial_energy_scale,
-                                effects_result.warhead_spatial_pattern_scale,
-                                effects_result.warhead_orientation_axis_forward,
-                                effects_result.warhead_orientation_axis_right,
-                                effects_result.warhead_orientation_axis_up,
-                                effects_result.warhead_orientation_pattern_scale,
-                                effects_result.component_threshold_scale,
-                                effects_result.component_failure_probability,
-                                effects_result.component_failure_probability_source,
-                                effects_result.component_failure_probability_calibrated,
-                                effects_result.component_failure_probability_evidence_dataset_ref,
-                                effects_result.component_failure_probability_evidence_row_id,
-                                effects_result.component_failure_probability_evidence_source_ref,
-                                effects_result.component_failure_probability_evidence_provenance,
-                                effects_result.component_failure_sample,
-                                effects_result.component_failure_count,
-                                effects_result.component_hit_count,
-                                effects_result.component_mechanism_load_rows,
-                                effects_result.component_primary_name,
-                                effects_result.component_primary_system,
-                                effects_result.component_primary_redundancy_group,
-                                effects_result.component_primary_critical,
-                                effects_result.component_primary_redundancy_group_id,
-                                effects_result.component_primary_integrity,
-                                effects_result.component_primary_mechanism_fragment_energy_j,
-                                effects_result.component_primary_mechanism_fragment_areal_density_per_m2,
-                                effects_result.component_primary_mechanism_penetration_margin,
-                                effects_result.component_primary_mechanism_blast_overpressure_kpa,
-                                effects_result.component_primary_mechanism_blast_impulse_kpa_ms,
-                                effects_result.component_primary_mechanism_blast_scaled_distance_m_kg13,
-                                effects_result.component_primary_mechanism_rod_cut_margin,
-                                effects_result.component_redundancy_group_availability,
-                                effects_result.component_redundancy_group_member_count,
-                                effects_result.component_redundancy_group_failed_count,
-                                effects_result.vulnerability_profile_present,
-                                effects_result.vulnerability_profile_synthetic,
-                                effects_result.vulnerability_calibrated_evidence,
-                                effects_result.vulnerability_pk_authority,
-                                effects_result.vulnerability_deterministic_fuze_authority,
-                                effects_result.vulnerability_evidence_dataset_valid,
-                                effects_result.vulnerability_evidence_dataset_ref,
-                                effects_result.vulnerability_calibration_status,
-                                effects_result.vulnerability_provenance,
-                                effects_result.vulnerability_evidence_schema_version,
-                                effects_result.vulnerability_evidence_source_kind,
-                                effects_result.vulnerability_evidence_source_ref,
-                                effects_result.vulnerability_evidence_validation_artifact_ref,
-                                effects_result.vulnerability_evidence_validation_manifest_schema_version,
-                                effects_result.vulnerability_evidence_validation_status,
-                                effects_result.vulnerability_evidence_validation_artifact_sha256,
-                                effects_result.vulnerability_evidence_validated_surrogate_model_ref,
-                                effects_result.vulnerability_evidence_validation_benchmark_ref,
-                                effects_result.vulnerability_evidence_validation_metrics_ref,
-                                effects_result.vulnerability_evidence_validation_acceptance_criteria_ref,
-                                effects_result.vulnerability_aspect_bucket,
-                                effects_result.vulnerability_family_scale,
-                                effects_result.vulnerability_aspect_scale,
-                                effects_result.vulnerability_closure_mps,
-                                effects_result.vulnerability_closure_scale,
-                                effects_result.vulnerability_miss_distance_scale,
-                                effects_result.vulnerability_effect_scale,
-                                effects_result.vulnerability_effect_scale_source,
-                                effects_result.vulnerability_effect_scale_evidence_row_id,
-                                effects_result.vulnerability_effect_scale_evidence_source_ref,
-                                effects_result.vulnerability_effect_scale_evidence_provenance,
-                                effects_result.mechanism_surface_incidence_cos,
-                                effects_result.component_primary_mechanism_surface_incidence_cos);
+                                    : effective.fuse_distance;
+                            effects.warhead_profile_synthetic =
+                                effective.warhead_profile.synthetic;
+                            effects.damage_scalar_synthetic =
+                                effective.warhead_profile.damage_scalar_synthetic;
+                            effects.fuze_type = fuze_profile_type(effective.fuze_profile);
+                            effects.fuze_trigger_radius_m = trigger_radius_m;
+                            effects.fuze_delay_s = std::max(0.0, effective.fuze_profile.delay_s);
+                            effects.fuze_reliability = fuze_reliability;
+                            effects.fuze_profile_synthetic = effective.fuze_profile.synthetic;
+                            effects.fuze_signature_source = m[i].fuze_signature_source;
+                            effects.fuze_target_signature = m[i].fuze_target_signature;
+                            effects.fuze_signature_scale = m[i].fuze_signature_scale;
+                            effects.fuze_effective_reliability =
+                                m[i].fuze_effective_reliability;
+                            effects.fuze_contact_surface_distance_m =
+                                m[i].fuze_contact_surface_distance_m;
+                            effects.fuze_contact_penetration_depth_m =
+                                m[i].fuze_contact_penetration_depth_m;
+                            effects.fuze_contact_surface_tolerance_m =
+                                m[i].fuze_contact_surface_tolerance_m;
+                            effects.fuze_contact_inside_hitbox =
+                                m[i].fuze_contact_inside_hitbox;
+                            engagement_events::apply_effects_result_fields(
+                                effects,
+                                effects_result);
+                            (void)recorder_ref->recorder->record_effects_damage_event(
+                                std::move(event_record));
                         }
                         it.entity(i).destruct();
                         continue;

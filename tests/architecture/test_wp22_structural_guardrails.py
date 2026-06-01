@@ -139,6 +139,13 @@ SIMULATION_KERNEL_SERVICES = (
     / "engine"
     / "simulation_kernel_services.cpp"
 )
+SIMULATION_KERNEL_SERVICES_HEADER = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "engine"
+    / "simulation_kernel_services.h"
+)
 SIMULATION_KERNEL_WEAPON_API = (
     REPO_ROOT
     / "src"
@@ -180,6 +187,20 @@ SIMULATION_KERNEL_DAMAGE_DEBUG_API = (
     / "core"
     / "engine"
     / "simulation_kernel_damage_debug_api.cpp"
+)
+ENGAGEMENT_EVENT_RECORDER = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "interfaces"
+    / "engagement_event_recorder.h"
+)
+WEAPON_RELEASE_DAMAGE_BRIDGE = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "interfaces"
+    / "weapon_release_damage_bridge.h"
 )
 PILOT_WEAPON_RELEASE_SYSTEM = (
     REPO_ROOT
@@ -332,6 +353,20 @@ WINDOW_COORDINATOR_CLOSURE_BLOCKING_MAX_LINES = 1000
 INLINE_REGISTERED_SYSTEM_PATTERN = re.compile(
     r'ecs\.system<[^>]+>\("([^"]+)"\)\s*\n\s*\.kind\(flecs::(OnUpdate|PreUpdate)\)'
 )
+EFFECTS_DAMAGE_RECORDER_SIGNATURE_PATTERN = re.compile(
+    r"(?:virtual\s+)?(?:std::)?uint64_t\s+"
+    r"(?:(?:SimulationKernelEngagementEventStore)::)?"
+    r"(?P<name>record_effects_damage_event(?:_legacy)?)\s*"
+    r"\((?P<params>[^)]*)\)"
+)
+DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE = (
+    "EngagementEffectsDamageEventRecord build_debug_effects_damage_event_record("
+)
+DEBUG_DAMAGE_DTO_CALLER_SIGNATURES = (
+    "bool SimulationKernel::debug_apply_proximity_hit(",
+    "bool SimulationKernel::debug_apply_local_proximity_hit(",
+    "bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(",
+)
 
 
 def _text(path: Path) -> str:
@@ -347,6 +382,64 @@ def _has_inline_definition(text: str, function_name: str) -> bool:
         rf"\binline\b[\s\S]{{0,240}}?\b{re.escape(function_name)}\s*\("
     )
     return pattern.search(text) is not None
+
+
+def _normalized_cpp_parameters(parameters: str) -> str:
+    return re.sub(r"\s+", " ", parameters).strip()
+
+
+def _effects_damage_recorder_signatures(text: str) -> list[tuple[str, str]]:
+    return [
+        (match.group("name"), _normalized_cpp_parameters(match.group("params")))
+        for match in EFFECTS_DAMAGE_RECORDER_SIGNATURE_PATTERN.finditer(text)
+    ]
+
+
+def _assert_effects_damage_recorder_signatures_are_dto_only(
+    source_name: str,
+    text: str,
+) -> None:
+    signatures = _effects_damage_recorder_signatures(text)
+    assert signatures == [
+        ("record_effects_damage_event", "EngagementEffectsDamageEventRecord record")
+    ], (
+        f"{source_name} must keep effects damage recording DTO-shaped only; "
+        "public or private long-argument recorder/store helpers are TM05 closure regressions"
+    )
+
+
+def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
+    assert "build_debug_effects_damage_event_record(" in text, (
+        "TM06 debug damage paths should build event DTOs through the named local helper"
+    )
+    helper_block = _extract_function_block(text, DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE)
+    assert "EngagementEffectsDamageEventRecord event_record{}" in helper_block
+    assert "EffectsEvent& effects = event_record.effects;" in helper_block
+    assert "engagement_events::apply_effects_result_fields(effects, input.effects_result);" in helper_block
+    assert "return event_record;" in helper_block
+    assert text.count("EngagementEffectsDamageEventRecord event_record{}") == 1, (
+        "debug damage DTO default construction should stay centralized in "
+        "build_debug_effects_damage_event_record"
+    )
+    assert text.count("EffectsEvent& effects = event_record.effects;") == 1, (
+        "debug EffectsEvent field population should not be duplicated in public debug methods"
+    )
+    assert text.count("engagement_events::apply_effects_result_fields(") == 1, (
+        "debug effects-result DTO population should stay in the local builder helper"
+    )
+
+    for signature in DEBUG_DAMAGE_DTO_CALLER_SIGNATURES:
+        caller_block = _extract_function_block(text, signature)
+        assert "build_debug_effects_damage_event_record({" in caller_block
+        assert "record_effects_damage_event(std::move(event_record))" in caller_block
+        assert "impact.destruct();" in caller_block
+        assert (
+            caller_block.index("record_effects_damage_event(std::move(event_record))")
+            < caller_block.index("impact.destruct();")
+        )
+        assert "EngagementEffectsDamageEventRecord event_record{}" not in caller_block
+        assert "EffectsEvent& effects = event_record.effects;" not in caller_block
+        assert "engagement_events::apply_effects_result_fields(" not in caller_block
 
 
 def _simulation_kernel_binding_names() -> list[str]:
@@ -495,12 +588,15 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     kernel_header_text = _text(SIMULATION_KERNEL_HEADER)
     kernel_cpp_text = _text(SIMULATION_KERNEL_CPP)
     kernel_services_text = _text(SIMULATION_KERNEL_SERVICES)
+    kernel_services_header_text = _text(SIMULATION_KERNEL_SERVICES_HEADER)
     weapon_api_text = _text(SIMULATION_KERNEL_WEAPON_API)
     release_service_text = _text(SIMULATION_KERNEL_WEAPON_RELEASE_SERVICE)
     release_service_header_text = _text(SIMULATION_KERNEL_WEAPON_RELEASE_SERVICE_HEADER)
+    recorder_header_text = _text(ENGAGEMENT_EVENT_RECORDER)
     engagement_store_text = _text(SIMULATION_KERNEL_ENGAGEMENT_EVENT_STORE)
     engagement_store_cpp_text = _text(SIMULATION_KERNEL_ENGAGEMENT_EVENT_STORE_CPP)
     damage_debug_text = _text(SIMULATION_KERNEL_DAMAGE_DEBUG_API)
+    damage_bridge_text = _text(WEAPON_RELEASE_DAMAGE_BRIDGE)
     cmake_text = _text(CMAKE_LISTS)
     inline_systems = INLINE_REGISTERED_SYSTEM_PATTERN.findall(systems_text)
     inline_on_update = [name for name, kind in inline_systems if kind == "OnUpdate"]
@@ -537,6 +633,17 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     assert "public IEngagementEventRecorder" in engagement_store_text
     assert "public IEngagementLaunchRecorder" in engagement_store_text
     assert '#include "core/interfaces/engagement_launch_recorder.h"' in engagement_store_text
+    assert "struct EngagementEffectsDamageEventRecord" in recorder_header_text
+    for source_name, source_text in (
+        ("engagement_event_recorder.h", recorder_header_text),
+        ("simulation_kernel_engagement_event_store.h", engagement_store_text),
+        ("simulation_kernel_engagement_event_store.cpp", engagement_store_cpp_text),
+    ):
+        _assert_effects_damage_recorder_signatures_are_dto_only(source_name, source_text)
+        assert "record_effects_damage_event_legacy(" not in source_text, (
+            f"{source_name} must not reintroduce the private TM05 long-argument "
+            "effects damage recording helper"
+        )
     assert "RecentEngagementEvents recent_engagement_events_" in engagement_store_text
     assert "next_engagement_event_id_" in engagement_store_text
     assert "pending_effects_launch_event_id_" in engagement_store_text
@@ -546,6 +653,7 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     assert "EngagementEffectsDamageEventRecord event_record{}" in release_service_text
     assert "SimulationKernelEngagementEventStore::capture_engagement_damage_state(" in engagement_store_cpp_text
     assert "SimulationKernelEngagementEventStore::" not in damage_debug_text
+    _assert_debug_damage_paths_use_dto_builder(damage_debug_text)
     assert "SimulationKernelWeaponReleaseService final : public IWeaponReleaseService" not in kernel_cpp_text
     assert (
         "SimulationKernelEngagementEventRecorder final : public IEngagementEventRecorder"
@@ -575,6 +683,22 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     assert "launch_recorder_.record_legacy_launch_event(" in release_service_text
     assert "SimulationKernel&" not in release_service_header_text
     assert "SimulationKernel&" not in release_service_text
+    assert "class IWeaponReleaseDamageBridge" in damage_bridge_text
+    assert "virtual bool apply_proximity_hit(" in damage_bridge_text
+    assert '#include "core/interfaces/weapon_release_damage_bridge.h"' in release_service_header_text
+    assert '#include "core/interfaces/weapon_release_damage_bridge.h"' in kernel_cpp_text
+    assert "class IWeaponReleaseDamageBridge;" in kernel_header_text
+    assert "std::unique_ptr<IWeaponReleaseDamageBridge> weapon_release_damage_bridge_" in kernel_header_text
+    assert (
+        "class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge"
+        in kernel_cpp_text
+    )
+    assert "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)" in kernel_cpp_text
+    assert "*weapon_release_damage_bridge_" in kernel_cpp_text
+    assert "IWeaponReleaseDamageBridge& damage_bridge" in kernel_services_header_text
+    assert "IWeaponReleaseDamageBridge& damage_bridge" in kernel_services_text
+    assert "IWeaponReleaseDamageBridge& damage_bridge_" in release_service_header_text
+    assert "std::function" not in release_service_header_text
     assert "kernel_.fire_weapon_from_pilot_action(" not in kernel_services_text
     assert "kernel_.fire_naval_weapon_from_mission_command(" not in kernel_services_text
     assert 'ecs.system<const PilotAction>("PilotWeaponRelease")' not in systems_text
@@ -619,7 +743,7 @@ def test_tm04_weapon_release_service_is_not_a_kernel_forwarding_adapter() -> Non
         "naval_weapon_mounts::consume_mount_shot(",
         "launch_recorder_.record_legacy_launch_event(",
         "damage_recorder_.record_effects_damage_event(",
-        "apply_proximity_hit_(",
+        "damage_bridge_.apply_proximity_hit(",
     ):
         assert marker in release_service_text
 

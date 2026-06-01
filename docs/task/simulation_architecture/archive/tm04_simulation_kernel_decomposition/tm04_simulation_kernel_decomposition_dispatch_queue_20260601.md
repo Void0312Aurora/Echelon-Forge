@@ -1,6 +1,6 @@
 # TM04 SimulationKernel Decomposition Dispatch Queue
 
-Status: `2026-06-01` active dispatch queue for
+Status: `2026-06-02` accepted dispatch queue for
 [TM04 SimulationKernel Decomposition](README.md).
 
 This queue is subordinate to
@@ -31,6 +31,17 @@ agents remained read-only because both could collide with
 | `TM04-E1 damage bridge decision` | `TM04-E` | implementation or diagnostics worker | inherited / xhigh | Candidate narrow interface and release/damage bridge files only after source facts are known | No with `TM04-C1` if changing release damage paths. | `status`, selected bridge or blocked residual, touched files, validation gap. |
 | `TM04-F1 validation` | `TM04-F` | integration worker | inherited / xhigh | Validation docs and any minimal test/build fixes within TM04 scope | No; serial after implementation. | Pass/block validation matrix with exact commands and blockers. |
 | `TM04-G1 closeout` | `TM04-G` | integration/docs worker | inherited / xhigh | TM04 docs, parent indexes, archive README | No; final status lines are serial. | Accepted/blocked/held closeout and residual map. |
+
+## Final Continuation
+
+Completed on `2026-06-02`:
+
+| Continuation | Cluster | Owner type | Status | Evidence |
+| --- | --- | --- | --- | --- |
+| `TM04-D2 effects DTO implementation` | `TM04-D` | integration implementation | pass | Public recorder interface exposes DTO recording only; `damage_system.h` and debug damage API call sites construct `EngagementEffectsDamageEventRecord`; private store helper was contained for TM04 and later removed by TM05. |
+| `TM04-E2 damage bridge implementation` | `TM04-E` | integration implementation | pass | `IWeaponReleaseDamageBridge` names the non-CIWS release-to-damage compatibility path; release service no longer owns a raw proximity callback. |
+| `TM04-F1 validation` | `TM04-F` | integration owner | pass | `git diff --check`, `cmake --build build-local-win --target ef_py -j2`, focused structural guards, and focused engagement/launch runtime suite passed. |
+| `TM04-G1 closeout` | `TM04-G` | integration/docs owner | pass | Current status, acceptance gate, task clusters, TM04 README, and parent indexes synchronized to accepted state. |
 
 ## Dispatch Guardrails
 

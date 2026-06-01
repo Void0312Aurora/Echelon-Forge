@@ -19,6 +19,15 @@
 - [TM03 Launch Bridge Boundary](tm03_launch_bridge_boundary/README.md)：
   临时 closure lane，通过 `IWeaponReleaseService` 关闭两个明确的 launch-helper
   `systems -> SimulationKernel` bridge。
+- [TM04 SimulationKernel Decomposition](tm04_simulation_kernel_decomposition/README.md)：
+  已验收的有界 `SimulationKernel` 清理切片，覆盖 engagement event store、release
+  service、effects DTO recording 与命名 release-damage bridge，但不声明完整拆分。
+- [TM05 Engagement Event Store DTO Closure](tm05_engagement_event_store_dto_closure/README.md)：
+  已验收的 TM04 后续清理，移除 private long-argument engagement event store helper，
+  并守住 DTO-only effects recording 边界。
+- [TM06 Damage Debug Event DTO Builder](tm06_damage_debug_event_dto_builder/README.md)：
+  已验收的 TM05 后续清理，把 debug damage DTO 构造集中到局部 helper，同时保持
+  public debug API 稳定。
 
 ## 旧 WP 记录
 

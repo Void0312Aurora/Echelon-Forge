@@ -1,13 +1,13 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 
 #include <flecs.h>
 
+#include "core/interfaces/weapon_release_damage_bridge.h"
 #include "core/interfaces/weapon_release_service.h"
 
 class IEngagementEventRecorder;
@@ -19,20 +19,13 @@ struct UnitDefinition;
 
 class SimulationKernelWeaponReleaseService final : public IWeaponReleaseService {
 public:
-    using ProximityDamageApplier = std::function<bool(
-        std::uint64_t attacker_id,
-        std::uint64_t target_id,
-        double damage,
-        double fuse_distance
-    )>;
-
     SimulationKernelWeaponReleaseService(
         flecs::world& ecs,
         const std::unique_ptr<IUnitFactory>& unit_factory,
         MissileTuning& missile_tuning,
         IEngagementLaunchRecorder& launch_recorder,
         IEngagementEventRecorder& damage_recorder,
-        ProximityDamageApplier apply_proximity_hit
+        IWeaponReleaseDamageBridge& damage_bridge
     );
 
     flecs::entity fire_missile(std::uint64_t attacker_id, std::uint64_t target_id) override;
@@ -64,5 +57,5 @@ private:
     MissileTuning& missile_tuning_;
     IEngagementLaunchRecorder& launch_recorder_;
     IEngagementEventRecorder& damage_recorder_;
-    ProximityDamageApplier apply_proximity_hit_;
+    IWeaponReleaseDamageBridge& damage_bridge_;
 };

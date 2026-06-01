@@ -419,14 +419,14 @@ SimulationKernelWeaponReleaseService::SimulationKernelWeaponReleaseService(
     MissileTuning& missile_tuning,
     IEngagementLaunchRecorder& launch_recorder,
     IEngagementEventRecorder& damage_recorder,
-    ProximityDamageApplier apply_proximity_hit
+    IWeaponReleaseDamageBridge& damage_bridge
 )
     : ecs_(ecs),
       unit_factory_(unit_factory),
       missile_tuning_(missile_tuning),
       launch_recorder_(launch_recorder),
       damage_recorder_(damage_recorder),
-      apply_proximity_hit_(std::move(apply_proximity_hit)) {}
+      damage_bridge_(damage_bridge) {}
 
 std::optional<SimulationKernelWeaponReleaseService::ResolvedMissileLaunchDefinition>
 SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(flecs::entity attacker, const PilotAction* pilot) const {
@@ -983,7 +983,7 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
     const double applied_damage = mount->damage_per_hit > 0.0 ? mount->damage_per_hit : 60.0;
     const double fuse_distance = weapon_type == NavalWeaponType::DeckGun ? 25.0 : 40.0;
     launch_recorder_.set_pending_effects_launch_event_id(launch_event_id);
-    (void)apply_proximity_hit_(attacker_id, target_id, applied_damage, fuse_distance);
+    (void)damage_bridge_.apply_proximity_hit(attacker_id, target_id, applied_damage, fuse_distance);
     return true;
 }
 
