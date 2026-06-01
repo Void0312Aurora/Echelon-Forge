@@ -29,35 +29,35 @@
       "exists": true,
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
       "schema_version": "a2.mechanism_comparison_hashes.v1",
-      "sha256": "9aecb5f74d4a6d2b092fa90d158d5a2bd76dd7cbf0f5c491eff13a2927434a45",
+      "sha256": "5d267029a11a47f281f726d6c58131aea946294a7979d8dcfaa72b27141973d1",
       "status": "partial_fail_closed_mechanism_comparison_hash_manifest"
     },
     "provenance_identity_review_gate": {
       "exists": true,
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
       "schema_version": "a2.provenance_identity_review_gate.v1",
-      "sha256": "fde146cfaf728a7c52916e2ae9ca33a69de410cd26dd939e8451f16f76d18caf",
+      "sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
       "status": "blocked_non_authoritative_provenance_identity_review_gate"
     },
     "source_artifact_pack_manifest": {
       "exists": true,
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
       "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
-      "sha256": "ae38712cfd988c069c161c21b2f80a6852fada891f5df95e9f3f9be9c863a0eb",
+      "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
       "status": "partial_payloads_retained_release_review_blocked"
     },
     "source_payload_pack": {
       "exists": true,
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
       "schema_version": "a2.source_payload_pack.v1",
-      "sha256": "993398bbfdd9dffe6ab26466fc1b49d1af37cbb985bc3e91cbd6eea5029c1830",
+      "sha256": "0fd5e757ae5f64a8c12a44b4dc395c47d51860237a82b1ce7e5594fa4252384c",
       "status": "partial_payloads_retained_release_review_blocked"
     },
     "source_rights_output_policy_gate": {
       "exists": true,
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
       "schema_version": "a2.source_rights_output_policy_gate.v1",
-      "sha256": "44432f4c589273e0fb2f9327b7f6b65bae4cb2f6f0d28aa32f319c9cad1fed4c",
+      "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
       "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
     }
   },
@@ -133,11 +133,11 @@
     }
   ],
   "res001_release_signoff_gate": {
-    "content_sha256": "ce0e5932bcf53d7ac7c707baa84b0a55d0f344eb32f34dff37c521b78289ae93",
+    "content_sha256": "b3a2c1aceb1d8ef10fd37e2a3ed859cfdb7216e88032ee81ca05a3cd535f3b26",
     "filename": "res001_release_signoff_gate.json",
     "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/res001_release_signoff_gate.json",
     "schema_version": "a2.res001_release_signoff_gate.v1",
-    "sha256": "ce0e5932bcf53d7ac7c707baa84b0a55d0f344eb32f34dff37c521b78289ae93"
+    "sha256": "b3a2c1aceb1d8ef10fd37e2a3ed859cfdb7216e88032ee81ca05a3cd535f3b26"
   },
   "residual_decision": {
     "closed_residual_ids_by_this_gate": [
@@ -164,6 +164,6 @@
   "validation_report": {
     "exists": true,
     "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_res001_release_signoff_gate_20260531.zh.md",
-    "sha256": "d572c1cca37c6b7bfd6ff1c475d57c60b569587ea6be0ce200c1dc890eabadc7"
+    "sha256": "7b510d067dbe820a4fa8047dc830c72d3dfcb0d22eff8d34cf293a92cbfe42e3"
   }
 }

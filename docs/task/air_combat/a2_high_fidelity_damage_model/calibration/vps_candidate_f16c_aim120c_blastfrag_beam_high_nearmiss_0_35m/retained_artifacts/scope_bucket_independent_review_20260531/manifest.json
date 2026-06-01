@@ -4,7 +4,7 @@
     {
       "allowed_claim": "bounded RES-007/RES-008 scope-bucket review gate decision is retained",
       "artifact_key": "scope_bucket_independent_review_gate",
-      "content_sha256": "ae4847e7018ca337e61769e35e909b0b826102b4e943203c6a5499c930afd8d8",
+      "content_sha256": "818e2612ec58ce0c3442dadc5031234ef67ac944f39af6c5028ed7f22b05cbe1",
       "filename": "scope_bucket_independent_review_gate.json",
       "forbidden_claim": "release readiness, stock runtime authority, component-probability release, Pk authority, deterministic-fuze authority, or validated closure physics",
       "origin_class": "scope_bucket_independent_review_gate_record_only",
@@ -16,7 +16,7 @@
     {
       "allowed_claim": "current scope boundary probe rerun consumed by the gate is retained",
       "artifact_key": "scope_boundary_probe_rerun",
-      "content_sha256": "89ab26db6c60d34fb080bfd77fe1fffc837432b240dc583e6101b83f4ba4dbea",
+      "content_sha256": "74dea1dd924843bd4e1ad62bb02eb5672b1f23c6ce04561cfa67f6f10efcc876",
       "filename": "scope_boundary_probe_rerun.json",
       "forbidden_claim": "release readiness, stock runtime authority, component-probability release, Pk authority, deterministic-fuze authority, or validated closure physics",
       "origin_class": "rerun_scope_boundary_probe_input_to_review_gate",

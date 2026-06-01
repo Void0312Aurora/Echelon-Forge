@@ -4,7 +4,7 @@
     {
       "allowed_claim": "independent review gate record for RES-007/008/010/011/012 is retained",
       "artifact_key": "stage_b_independent_review_gate",
-      "content_sha256": "53a23aad1d5dd1d701e6df82b4877df6ae90581fc43edc4a03d650b64a671788",
+      "content_sha256": "a8ea676082c052edf599d69bf1256f05ffc032c36139324d6e1d2083710ac10c",
       "filename": "stage_b_independent_review_gate.json",
       "forbidden_claim": "release readiness, stock runtime authority, validation manifest promotion, component-probability release, Pk authority, or deterministic-fuze authority",
       "origin_class": "independent_review_gate_record_only",
