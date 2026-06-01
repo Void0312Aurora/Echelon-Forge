@@ -1,13 +1,11 @@
 #pragma once
 
 #include <flecs.h>
-#include <cmath>
 #include <cstddef>
-#include <limits>
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <string>
-#include <optional>
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
@@ -25,6 +23,7 @@
 #include "components/systems/comm.h"
 #include "components/basic/tags.h"
 #include "core/engine/engagement_event_types.h"
+#include "core/engine/simulation_kernel_missile_tuning.h"
 #include "core/interfaces/unit_data.h"
 #include "core/interfaces/observation.h"
 #include "core/interfaces/environment_model.h"
@@ -38,55 +37,6 @@ class IControlModel;
 class IGuidanceModel;
 struct UnitDefinition;
 class SimulationKernelEngagementEventStore;
-class SimulationKernelWeaponReleaseService;
-
-struct MissileTuning {
-    double max_speed = std::numeric_limits<double>::quiet_NaN();
-    double turn_rate = std::numeric_limits<double>::quiet_NaN();
-    double fuse_distance = std::numeric_limits<double>::quiet_NaN();
-    double damage = std::numeric_limits<double>::quiet_NaN();
-    double seeker_fov_deg = std::numeric_limits<double>::quiet_NaN();
-    double seeker_lock_range = std::numeric_limits<double>::quiet_NaN();
-    double guidance_delay_s = std::numeric_limits<double>::quiet_NaN();
-    double guidance_update_period_s = std::numeric_limits<double>::quiet_NaN();
-    double max_flight_time_s = std::numeric_limits<double>::quiet_NaN();
-    double nav_gain = std::numeric_limits<double>::quiet_NaN();
-    double sensor_max_range = std::numeric_limits<double>::quiet_NaN();
-    double sensor_fov_deg = std::numeric_limits<double>::quiet_NaN();
-    double sensor_scan_period = std::numeric_limits<double>::quiet_NaN();
-    double sensor_detection_prob = std::numeric_limits<double>::quiet_NaN();
-    double sensor_bearing_noise_std = std::numeric_limits<double>::quiet_NaN();
-    double sensor_range_noise_std = std::numeric_limits<double>::quiet_NaN();
-    double sensor_track_memory_s = std::numeric_limits<double>::quiet_NaN();
-    int seeker_type = -1;
-    double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
-    double seeker_gimbal_limit_deg = std::numeric_limits<double>::quiet_NaN();
-    double seeker_ifov_deg = std::numeric_limits<double>::quiet_NaN();
-    double bearing_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
-    double elevation_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
-    double range_filter_tau_s = std::numeric_limits<double>::quiet_NaN();
-    double track_break_time_s = std::numeric_limits<double>::quiet_NaN();
-    double boost_time_s = std::numeric_limits<double>::quiet_NaN();
-    double sustain_time_s = std::numeric_limits<double>::quiet_NaN();
-    double boost_thrust_n = std::numeric_limits<double>::quiet_NaN();
-    double sustain_thrust_n = std::numeric_limits<double>::quiet_NaN();
-    double reference_area_m2 = std::numeric_limits<double>::quiet_NaN();
-    double cd0_subsonic = std::numeric_limits<double>::quiet_NaN();
-    double cd0_supersonic = std::numeric_limits<double>::quiet_NaN();
-    double induced_drag_k = std::numeric_limits<double>::quiet_NaN();
-    double propellant_mass_kg = std::numeric_limits<double>::quiet_NaN();
-    double max_lateral_g = std::numeric_limits<double>::quiet_NaN();
-    double autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
-    double max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
-    double min_launch_range_m = std::numeric_limits<double>::quiet_NaN();
-    double max_launch_off_boresight_deg = std::numeric_limits<double>::quiet_NaN();
-    bool lobl_required = false;
-    bool midcourse_datalink_supported = false;
-    WarheadProfile warhead_profile{};
-    bool has_warhead_profile = false;
-    FuzeProfile fuze_profile{};
-    bool has_fuze_profile = false;
-};
 
 struct ExactStepStageDescriptor {
     int order = 0;
@@ -289,27 +239,7 @@ public:
     void shutdown();
 
 private:
-    struct ResolvedMissileLaunchDefinition {
-        uint64_t munition_entity_id = 0;
-        std::string platform_definition_name;
-        std::string weapon_definition_name;
-        int station_id = 0;
-        const UnitDefinition* platform_definition = nullptr;
-        const UnitDefinition* weapon_definition = nullptr;
-    };
-
-    std::optional<ResolvedMissileLaunchDefinition> resolve_missile_launch_definition(
-        flecs::entity attacker,
-        const PilotAction* pilot
-    ) const;
     void register_components_and_systems();
-    flecs::entity fire_weapon_from_pilot_action(uint64_t attacker_id);
-    bool fire_naval_weapon_from_mission_command(uint64_t attacker_id) {
-        return try_fire_naval_mission_weapon(attacker_id);
-    }
-    bool try_fire_naval_mission_weapon(uint64_t attacker_id);
-
-    friend class SimulationKernelWeaponReleaseService;
 
     flecs::world ecs;
     double time_step = 1.0 / 60.0; // 60 Hz by default
@@ -325,9 +255,9 @@ private:
     std::unique_ptr<IAcousticModel> acoustic_model_;
     std::unique_ptr<IControlModel> control_model_;
     std::unique_ptr<IGuidanceModel> guidance_model_;
-    std::unique_ptr<IWeaponReleaseService> weapon_release_service_;
-    std::unique_ptr<SimulationKernelEngagementEventStore> engagement_event_store_;
     MissileTuning missile_tuning_;
+    std::unique_ptr<SimulationKernelEngagementEventStore> engagement_event_store_;
+    std::unique_ptr<IWeaponReleaseService> weapon_release_service_;
     bool exact_stage_trace_frame_active_ = false;
     bool shutdown_complete_ = false;
 };

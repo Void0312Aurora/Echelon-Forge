@@ -16,25 +16,26 @@ recording, focused damage bridge decisions, and synchronized validation records.
 | --- | --- | --- | --- |
 | Public service inheritance removed from `SimulationKernel` | pass | [simulation_kernel.h](../../../../src/core/engine/simulation_kernel.h) | Keep structural guards green. |
 | Engagement event store extracted | pass | [simulation_kernel_engagement_event_store.cpp](../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp) | Keep event ownership out of kernel implementation files. |
-| Weapon release service is independent | open | [simulation_kernel_services.cpp](../../../../src/core/engine/simulation_kernel_services.cpp) still forwards through `SimulationKernel&`. | Complete `TM04-C`. |
+| Weapon release service is independent | pass | [simulation_kernel_weapon_release_service.cpp](../../../../src/core/engine/simulation_kernel_weapon_release_service.cpp) owns release decisions and release-side state mutation behind explicit dependencies; [simulation_kernel_weapon_api.cpp](../../../../src/core/engine/simulation_kernel_weapon_api.cpp) is now a compatibility wrapper. | Keep focused service guard green. |
 | Effects damage recorder is DTO-shaped | partial | [engagement_event_recorder.h](../../../../src/core/interfaces/engagement_event_recorder.h) contains both DTO and legacy long-argument overloads. | Complete `TM04-D`. |
-| Naval/damage coupling is bounded | open | To be checked during `TM04-C` / `TM04-E`. | Add a narrow bridge or record a named blocker. |
-| Validation matrix is current | partial | Focused object and runtime checks passed during the current work stream; full build is held by unrelated effects-model dirty work. | Run `TM04-F` commands and record exact outcomes. |
+| Naval/damage coupling is bounded | partial | Non-CIWS naval damage is explicit as an injected proximity-hit callback from the release service to existing debug damage behavior. | Add a narrow bridge or record a named blocker in `TM04-E`. |
+| Validation matrix is current | pass / round 1 | `git diff --check`, `cmake --build build --target ef_py -j2`, focused structural guards, and focused engagement/launch runtime suite passed during Round 1 acceptance. | Re-run after `TM04-D` / `TM04-E` implementation. |
 | Parent indexes synchronized | pass | [../README.md](../README.md) and [../README.zh.md](../README.zh.md) link the TM04 entry, task clusters, status, dispatch queue, and acceptance gate. | Re-sync after final state changes. |
 
 ## Required Validation Evidence
 
+Round 1 observed:
+
 ```bash
 git diff --check
-ninja -C build CMakeFiles/ef_core.dir/src/core/engine/simulation_kernel.cpp.o CMakeFiles/ef_core.dir/src/core/engine/simulation_kernel_engagement_event_store.cpp.o CMakeFiles/ef_core.dir/src/core/engine/simulation_kernel_weapon_api.cpp.o CMakeFiles/ef_core.dir/src/core/engine/simulation_kernel_systems.cpp.o CMakeFiles/ef_core.dir/src/core/engine/simulation_kernel_observation_api.cpp.o CMakeFiles/ef_core.dir/src/core/engine/simulation_kernel_damage_debug_api.cpp.o
-python -m pytest -q tests/architecture/test_wp22_structural_guardrails.py::test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free
-python -m pytest -q tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_munition_damage_adapter.py tests/runtime/engagement/test_air_launch_adapter.py tests/runtime/engagement/test_naval_launch_adapter.py tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
 cmake --build build --target ef_py -j2
+python -m pytest -q tests/architecture/test_wp22_structural_guardrails.py::test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free tests/architecture/test_wp22_structural_guardrails.py::test_tm04_weapon_release_service_is_not_a_kernel_forwarding_adapter
+PYTHONPATH=build python -m pytest -q tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_munition_damage_adapter.py tests/runtime/engagement/test_air_launch_adapter.py tests/runtime/engagement/test_naval_launch_adapter.py tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
 ```
 
-The final build command may be recorded as held only if the unrelated
-`default_effects_model.cpp` / warhead detail blocker remains source-backed and
-outside TM04.
+Outcomes: `git diff --check` passed, `ef_py` build passed, focused structural
+guards reported `2 passed`, and the focused engagement/launch runtime suite
+reported `29 passed`.
 
 ## Forbidden Acceptance Claims
 
@@ -44,6 +45,8 @@ outside TM04.
 - Do not count docs-only setup as runtime validation.
 - Do not claim P7 launch/fire-control closure, damage-model maturity, raw-runtime
   retirement, backend support, or facade maturity.
+- Do not mark TM04 fully accepted until `TM04-D` and `TM04-E` either pass
+  implementation gates or are explicitly closed as named residuals/blockers.
 
 ## Closeout Requirement
 

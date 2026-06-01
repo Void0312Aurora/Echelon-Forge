@@ -7,6 +7,20 @@ This queue is subordinate to
 [tm04_simulation_kernel_decomposition_task_clusters_20260601.md](tm04_simulation_kernel_decomposition_task_clusters_20260601.md).
 It is not implementation evidence.
 
+## Round 1 Dispatch
+
+Issued on `2026-06-01`:
+
+| Dispatch | Cluster | Agent | Role | Status | Write scope |
+| --- | --- | --- | --- | --- | --- |
+| `TM04-C1 release service migration` | `TM04-C` | `019e83cf-8961-78e3-9610-25ad528a5f75` / Laplace | implementation worker | pass | Release-service files, bounded kernel/weapon API edits, CMake source registration, focused tests only. |
+| `TM04-D1 effects DTO diagnostics` | `TM04-D` | `019e83cf-b3ef-7a32-8739-15edb6c5c7ba` / Bacon | read-only diagnostics worker | pass | No writes; mapped DTO call paths and legacy overload blockers. |
+| `TM04-E1 naval damage bridge diagnostics` | `TM04-E` | `019e83cf-df72-7140-93e8-daf565b0f35a` / Jason | read-only diagnostics worker | pass | No writes; mapped naval deck-gun/CIWS damage coupling and bridge needs. |
+
+Round 1 opened only one implementation write scope. The DTO and damage-bridge
+agents remained read-only because both could collide with
+`simulation_kernel_weapon_api.cpp` if turned into implementation work too early.
+
 ## Queue
 
 | Dispatch | Cluster | Owner type | Model / reasoning | Write scope | Parallel-safe | Expected packet |

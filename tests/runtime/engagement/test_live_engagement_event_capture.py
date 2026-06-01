@@ -53,15 +53,15 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
 
 def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> None:
     recorder_header = _read("src/core/interfaces/engagement_event_recorder.h")
-    weapon_api = _read("src/core/engine/simulation_kernel_weapon_api.cpp")
+    release_service = _read("src/core/engine/simulation_kernel_weapon_release_service.cpp")
     damage_api = _read("src/core/engine/simulation_kernel_damage_debug_api.cpp")
     store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
 
     assert "struct EngagementEffectsDamageEventRecord" in recorder_header
     assert "record_effects_damage_event(\n        EngagementEffectsDamageEventRecord record" in recorder_header
     assert "SimulationKernelEngagementEventStore::record_effects_damage_event(\n    EngagementEffectsDamageEventRecord record" in store_impl
-    assert "engagement_event_store_->record_legacy_launch_event(" in weapon_api
-    assert "engagement_event_store_->record_effects_damage_event(" in weapon_api
+    assert "launch_recorder_.record_legacy_launch_event(" in release_service
+    assert "damage_recorder_.record_effects_damage_event(" in release_service
     assert "engagement_event_store_->record_effects_damage_event(" in damage_api
     assert "SimulationKernelEngagementEventStore::record_legacy_launch_event(" in store_impl
     assert "SimulationKernelEngagementEventStore::record_effects_damage_event(" in store_impl
@@ -69,9 +69,9 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
     assert "EffectsEvent effects{}" in store_impl
     assert "DamageReport report{}" in store_impl
     assert "DiagnosticsTrace trace{}" in store_impl
-    assert "engagement_event_store_->set_pending_effects_launch_event_id(launch_event_id)" in weapon_api
-    assert "EngagementEffectsDamageEventRecord event_record{}" in weapon_api
-    assert "std::move(event_record)" in weapon_api
+    assert "launch_recorder_.set_pending_effects_launch_event_id(launch_event_id)" in release_service
+    assert "EngagementEffectsDamageEventRecord event_record{}" in release_service
+    assert "std::move(event_record)" in release_service
     assert "engagement_event_store_->capture_engagement_damage_state(target_id)" in damage_api
 
 
@@ -79,7 +79,7 @@ def test_recent_event_storage_uses_shared_monotonic_ids_and_queue_aligned_sorted
     header = _read("src/core/engine/simulation_kernel.h")
     store_header = _read("src/core/engine/simulation_kernel_engagement_event_store.h")
     observation_api = _read("src/core/engine/simulation_kernel_observation_api.cpp")
-    weapon_api = _read("src/core/engine/simulation_kernel_weapon_api.cpp")
+    release_service = _read("src/core/engine/simulation_kernel_weapon_release_service.cpp")
     damage_api = _read("src/core/engine/simulation_kernel_damage_debug_api.cpp")
     store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
 
@@ -98,7 +98,7 @@ def test_recent_event_storage_uses_shared_monotonic_ids_and_queue_aligned_sorted
     ):
         assert comparator in store_impl
     assert "export_recent_events_sorted()" in observation_api
-    assert "record_legacy_launch_event(" in weapon_api
+    assert "record_legacy_launch_event(" in release_service
     assert "SimulationKernelEngagementEventStore::" not in damage_api
 
 

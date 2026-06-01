@@ -87,6 +87,8 @@ Out of scope:
   [tm04_simulation_kernel_decomposition_current_status_20260601.md](tm04_simulation_kernel_decomposition_current_status_20260601.md)
 - Dispatch queue:
   [tm04_simulation_kernel_decomposition_dispatch_queue_20260601.md](tm04_simulation_kernel_decomposition_dispatch_queue_20260601.md)
+- Round 1 dispatch:
+  [tm04_simulation_kernel_decomposition_round1_dispatch_20260601.md](tm04_simulation_kernel_decomposition_round1_dispatch_20260601.md)
 - Acceptance gate:
   [tm04_simulation_kernel_decomposition_acceptance_20260601.md](tm04_simulation_kernel_decomposition_acceptance_20260601.md)
 

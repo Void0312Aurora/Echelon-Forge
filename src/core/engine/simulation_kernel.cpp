@@ -14,19 +14,33 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <stdexcept>
 #include <utility>
 
 SimulationKernel::SimulationKernel()
-    : unit_factory_(std::make_unique<DefaultUnitFactory>()),
+    : environment_model_(make_default_environment_model()),
+      unit_factory_(std::make_unique<DefaultUnitFactory>()),
       effects_model_(make_default_effects_model()),
       sensor_model_(make_default_sensor_model()),
       acoustic_model_(make_default_acoustic_model()),
       control_model_(make_default_control_model()),
       guidance_model_(make_default_guidance_model()),
-      environment_model_(make_default_environment_model()),
-      weapon_release_service_(make_simulation_kernel_weapon_release_service(*this)),
-      engagement_event_store_(std::make_unique<SimulationKernelEngagementEventStore>(ecs)) {
+      engagement_event_store_(std::make_unique<SimulationKernelEngagementEventStore>(ecs)),
+      weapon_release_service_(make_simulation_kernel_weapon_release_service(
+          ecs,
+          unit_factory_,
+          missile_tuning_,
+          *engagement_event_store_,
+          *engagement_event_store_,
+          [this](
+              std::uint64_t attacker_id,
+              std::uint64_t target_id,
+              double damage,
+              double fuse_distance
+          ) {
+              return debug_apply_proximity_hit(attacker_id, target_id, damage, fuse_distance);
+          })) {
     register_components_and_systems();
     if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
