@@ -29,6 +29,9 @@ new work.
   - Joint/service/domain modeling standards, platform baselines, governance
     rules, and bridge contracts. Standards own shared vocabulary and layer
     ownership.
+- [agent/README.md](agent/README.md)
+  - Agent-facing authority map and reusable project-orientation prompts that
+    index the maintained standards, task, manual, test, and governance surfaces.
 - [manual/](manual)
   - Maintainer and operator manuals: code layer map, engine capabilities,
     physics inventory, visualization guide, and task notes.
@@ -83,6 +86,7 @@ new work.
 | `plan/` | Architecture direction, frozen scopes, contract plans, and route governance | Authoritative when the plan is current or explicitly frozen; archived plan records are history |
 | `task/` | Active domain work, dated task packages, progress records, and closeout evidence | Local README pages state the current entry point; deep dated files are supporting records unless promoted |
 | `standards/` | Shared vocabulary, service/domain ownership, public-source admission, bilingual policy, and governance | Wins for naming, layer ownership, and modeling boundaries when task docs disagree |
+| `agent/` | Agent-facing prompts and document-authority routing | Indexes current rules for AI/agent work; it does not override root docs, standards, code, tests, or user instructions |
 | `manual/` | Code maps, operator notes, capability inventories, and practical workflows | Describes maintained behavior; verify against current code and tests before changing implementation |
 | `forward/` | Backlogs, roadmaps, and design ideas not yet scheduled as implementation work | Not implementation authority until promoted into `plan/` or `task/` |
 | `Archive/`, nested `archive/`, `temp/`, `log/`, `book/`, `results/` | Provenance, local retention, scratch, generated/reference material, or historical snapshots | Not default authority for current work unless a maintained README explicitly points there |
