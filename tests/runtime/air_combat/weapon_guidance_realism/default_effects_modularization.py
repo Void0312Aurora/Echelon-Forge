@@ -57,6 +57,49 @@ def _component_row_by_name(event: object) -> dict[str, object]:
     return {str(row.component_name): row for row in event.component_mechanism_load_rows}
 
 
+def _destructive_structured_air_platform_hit_event(
+    *,
+    max_hits: int = 5,
+) -> tuple[object, object, int]:
+    sim = _kernel_with_unit_overrides([])
+    attacker_id, target_id = _spawn_attacker_and_named_target(sim, "F-16C_Block50")
+    profile = _make_warhead_profile("hit_to_kill", damage=180.0, radius=35.0)
+
+    last_event: object | None = None
+    last_report: object | None = None
+    for hit_count in range(1, max_hits + 1):
+        ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+            attacker_id,
+            target_id,
+            5.15,
+            0.0,
+            0.1,
+            profile,
+            900.0,
+            -250.0,
+            0.0,
+        )
+        if not ok:
+            raise AssertionError(f"profiled destructive hit {hit_count} failed")
+
+        events = sim.export_recent_engagement_events()
+        if len(events.effects_events) != hit_count:
+            raise AssertionError(f"expected {hit_count} effects events after destructive hit loop")
+        if len(events.damage_reports) != hit_count:
+            raise AssertionError(f"expected {hit_count} damage reports after destructive hit loop")
+        last_event = events.effects_events[-1]
+        last_report = events.damage_reports[-1]
+        if not sim.is_unit_active(target_id):
+            return last_event, last_report, hit_count
+
+    if last_report is None:
+        raise AssertionError("destructive structured air-platform fixture produced no damage report")
+    raise AssertionError(
+        "structured air-platform target did not reach loss/destruct within "
+        f"{max_hits} rebuilt-fixture hits; last loss_state_to={last_report.loss_state_to}"
+    )
+
+
 class DefaultEffectsModularizationRuntimeMixin:
     def test_dfm_p4_direct_component_hit_populates_primary_component_event_fields(self) -> None:
         event, report = _local_hit_event_for_target(
@@ -109,6 +152,39 @@ class DefaultEffectsModularizationRuntimeMixin:
         self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
         self.assertLess(float(report.system_health_delta), 0.0)
         self.assertFalse(bool(report.destroyed))
+
+    def test_dfm_p4_structured_air_platform_loss_early_return_populates_effect_fields(self) -> None:
+        event, report, hit_count = _destructive_structured_air_platform_hit_event()
+
+        self.assertLessEqual(hit_count, 5)
+        self.assertEqual(str(report.loss_state_to), "lost")
+        self.assertTrue(bool(report.destroyed))
+        self.assertTrue(bool(report.survivability_kill))
+        self.assertEqual(str(event.effect_family), "hit_to_kill")
+        self.assertTrue(bool(event.direct_hitbox_intersection))
+        self.assertEqual(int(event.projected_hitbox_count), 0)
+        self.assertEqual(int(event.component_hit_count), 1)
+        self.assertEqual(str(event.component_primary_name), "cockpit_crew_station")
+        self.assertEqual(str(event.component_primary_system), "cockpit")
+        self.assertEqual(str(event.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertGreater(float(event.component_failure_probability), 0.0)
+        self.assertGreaterEqual(float(event.component_failure_sample), 0.0)
+        self.assertLessEqual(float(event.component_failure_sample), 1.0)
+        self.assertEqual(int(event.warhead_spatial_sample_count), 1)
+        self.assertGreater(float(event.mechanism_penetration_margin), 0.0)
+
+        rows = list(event.component_mechanism_load_rows)
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(str(row.component_name), "cockpit_crew_station")
+        self.assertEqual(str(row.component_system), "cockpit")
+        self.assertTrue(bool(row.direct_hit))
+        self.assertAlmostEqual(float(row.distance_m), 0.0, delta=1.0e-6)
+        self.assertGreater(float(row.effect_scale), 0.0)
+        self.assertEqual(str(row.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertGreater(float(row.component_failure_probability), 0.0)
+        self.assertGreaterEqual(float(row.component_failure_sample), 0.0)
+        self.assertLessEqual(float(row.component_failure_sample), 1.0)
 
     def test_dfm_p4_direct_hit_without_component_uses_protected_system_fallback(self) -> None:
         target_name = "F-16C_A2_DFM_P4_ProtectedFallback_Test"

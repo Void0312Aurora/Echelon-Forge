@@ -153,6 +153,393 @@ bool finalize_default_effects_platform_damage(
     return false;
 }
 
+void apply_default_effects_platform_air_consequence_blocks(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    PlatformDamageState& platform_damage
+) {
+    if (scratch.air_propulsion_or_fuel_hit) {
+        platform_damage.fire_severity +=
+            localized_effect_delta(
+                0.08,
+                0.08,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.propulsion_or_fuel);
+        platform_damage.ongoing_hull_breach +=
+            localized_effect_delta(
+                0.03,
+                0.04,
+                resolved_severity,
+                warhead_effects.breach_scale,
+                scales.propulsion_or_fuel);
+    }
+    if (scratch.air_control_hit) {
+        platform_damage.survivability_margin -=
+            localized_effect_delta(
+                0.06,
+                0.08,
+                resolved_severity,
+                warhead_effects.control_scale,
+                scales.control);
+    }
+    if (scratch.air_crew_hit || scratch.air_pilot_hit || scratch.air_mission_crew_hit ||
+        scratch.air_command_navigation_hit) {
+        platform_damage.survivability_margin -=
+            localized_effect_delta(
+                0.10,
+                0.10,
+                resolved_severity,
+                warhead_effects.crew_scale,
+                std::max({
+                    scales.crew,
+                    scales.pilot,
+                    scales.mission_crew,
+                    scales.command_navigation}));
+    }
+    if (scratch.air_mission_or_combat_hit) {
+        platform_damage.fire_severity +=
+            localized_effect_delta(
+                0.04,
+                0.04,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.mission_or_combat);
+    }
+    if (scratch.air_fire_suppression_hit) {
+        platform_damage.survivability_margin -=
+            localized_effect_delta(
+                0.03,
+                0.05,
+                resolved_severity,
+                warhead_effects.breach_scale,
+                scales.fire_suppression);
+    }
+    platform_damage.fire_severity =
+        std::clamp(platform_damage.fire_severity, 0.0, 1.0);
+    platform_damage.flooding_severity =
+        std::clamp(platform_damage.flooding_severity, 0.0, 1.0);
+    platform_damage.ongoing_hull_breach =
+        std::clamp(platform_damage.ongoing_hull_breach, 0.0, 1.0);
+}
+
+void apply_default_effects_aircraft_sensor_consequence_block(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    AircraftDamageState& aircraft_damage
+) {
+    if (scratch.air_sensor_hit) {
+        aircraft_damage.avionics_integrity -=
+            localized_effect_delta(
+                0.25,
+                0.20,
+                resolved_severity,
+                warhead_effects.sensor_scale,
+                scales.sensor);
+        aircraft_damage.fire_severity +=
+            localized_effect_delta(
+                0.03,
+                0.04,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.sensor);
+        aircraft_damage.ignition_source_severity +=
+            localized_effect_delta(
+                0.03,
+                0.05,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.sensor);
+    }
+}
+
+void apply_default_effects_aircraft_propulsion_fuel_consequence_blocks(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    AircraftDamageState& aircraft_damage
+) {
+    if (scratch.air_propulsion_hit) {
+        aircraft_damage.propulsion_integrity -=
+            localized_effect_delta(
+                0.22,
+                0.22,
+                resolved_severity,
+                warhead_effects.propulsion_scale,
+                scales.propulsion);
+        aircraft_damage.ignition_source_severity +=
+            localized_effect_delta(
+                0.04,
+                0.08,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.propulsion);
+    }
+    if (scratch.air_fuel_hit) {
+        aircraft_damage.fuel_system_integrity -=
+            localized_effect_delta(
+                0.25,
+                0.20,
+                resolved_severity,
+                warhead_effects.propulsion_scale,
+                scales.fuel);
+        aircraft_damage.fuel_leak_severity +=
+            localized_effect_delta(
+                0.18,
+                0.25,
+                resolved_severity,
+                warhead_effects.breach_scale,
+                scales.fuel);
+        aircraft_damage.fire_severity +=
+            localized_effect_delta(
+                0.08,
+                0.10,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.fuel);
+        aircraft_damage.flammable_fluid_exposure +=
+            localized_effect_delta(
+                0.12,
+                0.20,
+                resolved_severity,
+                warhead_effects.breach_scale,
+                scales.fuel);
+    }
+}
+
+void apply_default_effects_aircraft_control_hydraulic_consequence_blocks(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    AircraftDamageState& aircraft_damage
+) {
+    if (scratch.air_lateral_fuel_storage_hit) {
+        aircraft_damage.fuel_imbalance_severity +=
+            localized_effect_delta(
+                0.07,
+                0.12,
+                resolved_severity,
+                warhead_effects.breach_scale,
+                scales.lateral_fuel_storage);
+        aircraft_damage.control_asymmetry +=
+            localized_effect_delta(
+                0.010,
+                0.020,
+                resolved_severity,
+                warhead_effects.control_scale,
+                scales.lateral_fuel_storage);
+    }
+    if (scratch.air_hydraulic_supply_hit) {
+        aircraft_damage.hydraulic_pressure_availability -=
+            localized_effect_delta(
+                0.18,
+                0.22,
+                resolved_severity,
+                warhead_effects.control_scale,
+                scales.hydraulic_supply);
+        aircraft_damage.flammable_fluid_exposure +=
+            localized_effect_delta(
+                0.04,
+                0.06,
+                resolved_severity,
+                warhead_effects.breach_scale,
+                scales.hydraulic_supply);
+    }
+    if (scratch.air_control_hit) {
+        aircraft_damage.flight_control_integrity -=
+            localized_effect_delta(
+                0.28,
+                0.24,
+                resolved_severity,
+                warhead_effects.control_scale,
+                scales.control);
+        aircraft_damage.hydraulic_integrity -=
+            localized_effect_delta(
+                0.20,
+                0.20,
+                resolved_severity,
+                warhead_effects.control_scale,
+                scales.control);
+        aircraft_damage.structural_integrity -=
+            localized_effect_delta(
+                0.05,
+                0.06,
+                resolved_severity,
+                warhead_effects.control_scale,
+                scales.control);
+        aircraft_damage.flammable_fluid_exposure +=
+            localized_effect_delta(
+                0.03,
+                0.05,
+                resolved_severity,
+                warhead_effects.breach_scale,
+                scales.control);
+    }
+}
+
+void apply_default_effects_aircraft_crew_role_consequence_blocks(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    AircraftDamageState& aircraft_damage
+) {
+    if (scratch.air_pilot_hit) {
+        apply_aircraft_crew_consequence(
+            aircraft_damage,
+            CrewConsequenceKind::Pilot,
+            localized_effect_delta(
+                0.42,
+                0.25,
+                resolved_severity,
+                warhead_effects.crew_scale,
+                scales.pilot));
+    }
+    if (scratch.air_mission_crew_hit) {
+        apply_aircraft_crew_consequence(
+            aircraft_damage,
+            CrewConsequenceKind::MissionCrew,
+            localized_effect_delta(
+                0.32,
+                0.22,
+                resolved_severity,
+                warhead_effects.crew_scale,
+                scales.mission_crew));
+    }
+    if (scratch.air_command_navigation_hit) {
+        apply_aircraft_crew_consequence(
+            aircraft_damage,
+            CrewConsequenceKind::CommandNavigation,
+            localized_effect_delta(
+                0.34,
+                0.22,
+                resolved_severity,
+                warhead_effects.mission_scale,
+                scales.command_navigation));
+    }
+    if (scratch.air_crew_hit &&
+        !(scratch.air_pilot_hit || scratch.air_mission_crew_hit || scratch.air_command_navigation_hit)) {
+        aircraft_damage.crew_effectiveness -=
+            localized_effect_delta(
+                0.42,
+                0.25,
+                resolved_severity,
+                warhead_effects.crew_scale,
+                scales.crew);
+    }
+}
+
+void apply_default_effects_aircraft_mission_combat_consequence_block(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    AircraftDamageState& aircraft_damage
+) {
+    if (scratch.air_mission_or_combat_hit) {
+        aircraft_damage.avionics_integrity -=
+            localized_effect_delta(
+                0.18,
+                0.20,
+                resolved_severity,
+                warhead_effects.mission_scale,
+                scales.mission_or_combat);
+        aircraft_damage.fire_severity +=
+            localized_effect_delta(
+                0.04,
+                0.04,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.mission_or_combat);
+        aircraft_damage.ignition_source_severity +=
+            localized_effect_delta(
+                0.02,
+                0.05,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.mission_or_combat);
+    }
+}
+
+void apply_default_effects_aircraft_fire_zone_consequence_blocks(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    AircraftDamageState& aircraft_damage
+) {
+    if (scratch.air_engine_fire_zone_hit) {
+        aircraft_damage.engine_fire_zone_severity +=
+            localized_effect_delta(
+                0.06,
+                0.10,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.engine_fire_zone);
+        aircraft_damage.smoke_heat_exposure +=
+            localized_effect_delta(
+                0.010,
+                0.020,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.engine_fire_zone);
+    }
+    if (scratch.air_wing_fire_zone_hit) {
+        aircraft_damage.wing_fire_zone_severity +=
+            localized_effect_delta(
+                0.04,
+                0.07,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.wing_fire_zone);
+        aircraft_damage.smoke_heat_exposure +=
+            localized_effect_delta(
+                0.012,
+                0.020,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.wing_fire_zone);
+    }
+    if (scratch.air_fuselage_fire_zone_hit) {
+        aircraft_damage.fuselage_fire_zone_severity +=
+            localized_effect_delta(
+                0.04,
+                0.08,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.fuselage_fire_zone);
+        aircraft_damage.smoke_heat_exposure +=
+            localized_effect_delta(
+                0.030,
+                0.045,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.fuselage_fire_zone);
+    }
+    if (scratch.air_mission_fire_zone_hit) {
+        aircraft_damage.mission_fire_zone_severity +=
+            localized_effect_delta(
+                0.05,
+                0.08,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.mission_fire_zone);
+        aircraft_damage.smoke_heat_exposure +=
+            localized_effect_delta(
+                0.035,
+                0.050,
+                resolved_severity,
+                warhead_effects.fire_scale,
+                scales.mission_fire_zone);
+    }
+}
+
 bool resolve_default_effects_air_platform_consequences(
     DefaultEffectsScratch& scratch,
     flecs::entity target_entity,
@@ -239,203 +626,36 @@ bool resolve_default_effects_air_platform_consequences(
                             resolved_severity,
                             warhead_effects.structure_scale,
                             std::max(scales.structure, scratch.spatial_effect_scale));
-                    if (scratch.air_sensor_hit) {
-                        aircraft_damage->avionics_integrity -=
-                            localized_effect_delta(
-                                0.25,
-                                0.20,
-                                resolved_severity,
-                                warhead_effects.sensor_scale,
-                                scales.sensor);
-                        aircraft_damage->fire_severity +=
-                            localized_effect_delta(
-                                0.03,
-                                0.04,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.sensor);
-                        aircraft_damage->ignition_source_severity +=
-                            localized_effect_delta(
-                                0.03,
-                                0.05,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.sensor);
-                    }
-                    if (scratch.air_propulsion_hit) {
-                        aircraft_damage->propulsion_integrity -=
-                            localized_effect_delta(
-                                0.22,
-                                0.22,
-                                resolved_severity,
-                                warhead_effects.propulsion_scale,
-                                scales.propulsion);
-                        aircraft_damage->ignition_source_severity +=
-                            localized_effect_delta(
-                                0.04,
-                                0.08,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.propulsion);
-                    }
-                    if (scratch.air_fuel_hit) {
-                        aircraft_damage->fuel_system_integrity -=
-                            localized_effect_delta(
-                                0.25,
-                                0.20,
-                                resolved_severity,
-                                warhead_effects.propulsion_scale,
-                                scales.fuel);
-                        aircraft_damage->fuel_leak_severity +=
-                            localized_effect_delta(
-                                0.18,
-                                0.25,
-                                resolved_severity,
-                                warhead_effects.breach_scale,
-                                scales.fuel);
-                        aircraft_damage->fire_severity +=
-                            localized_effect_delta(
-                                0.08,
-                                0.10,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.fuel);
-                        aircraft_damage->flammable_fluid_exposure +=
-                            localized_effect_delta(
-                                0.12,
-                                0.20,
-                                resolved_severity,
-                                warhead_effects.breach_scale,
-                                scales.fuel);
-                    }
-                    if (scratch.air_lateral_fuel_storage_hit) {
-                        aircraft_damage->fuel_imbalance_severity +=
-                            localized_effect_delta(
-                                0.07,
-                                0.12,
-                                resolved_severity,
-                                warhead_effects.breach_scale,
-                                scales.lateral_fuel_storage);
-                        aircraft_damage->control_asymmetry +=
-                            localized_effect_delta(
-                                0.010,
-                                0.020,
-                                resolved_severity,
-                                warhead_effects.control_scale,
-                                scales.lateral_fuel_storage);
-                    }
-                    if (scratch.air_hydraulic_supply_hit) {
-                        aircraft_damage->hydraulic_pressure_availability -=
-                            localized_effect_delta(
-                                0.18,
-                                0.22,
-                                resolved_severity,
-                                warhead_effects.control_scale,
-                                scales.hydraulic_supply);
-                        aircraft_damage->flammable_fluid_exposure +=
-                            localized_effect_delta(
-                                0.04,
-                                0.06,
-                                resolved_severity,
-                                warhead_effects.breach_scale,
-                                scales.hydraulic_supply);
-                    }
-                    if (scratch.air_control_hit) {
-                        aircraft_damage->flight_control_integrity -=
-                            localized_effect_delta(
-                                0.28,
-                                0.24,
-                                resolved_severity,
-                                warhead_effects.control_scale,
-                                scales.control);
-                        aircraft_damage->hydraulic_integrity -=
-                            localized_effect_delta(
-                                0.20,
-                                0.20,
-                                resolved_severity,
-                                warhead_effects.control_scale,
-                                scales.control);
-                        aircraft_damage->structural_integrity -=
-                            localized_effect_delta(
-                                0.05,
-                                0.06,
-                                resolved_severity,
-                                warhead_effects.control_scale,
-                                scales.control);
-                        aircraft_damage->flammable_fluid_exposure +=
-                            localized_effect_delta(
-                                0.03,
-                                0.05,
-                                resolved_severity,
-                                warhead_effects.breach_scale,
-                                scales.control);
-                    }
-                    if (scratch.air_pilot_hit) {
-                        apply_aircraft_crew_consequence(
-                            *aircraft_damage,
-                            CrewConsequenceKind::Pilot,
-                            localized_effect_delta(
-                                0.42,
-                                0.25,
-                                resolved_severity,
-                                warhead_effects.crew_scale,
-                                scales.pilot));
-                    }
-                    if (scratch.air_mission_crew_hit) {
-                        apply_aircraft_crew_consequence(
-                            *aircraft_damage,
-                            CrewConsequenceKind::MissionCrew,
-                            localized_effect_delta(
-                                0.32,
-                                0.22,
-                                resolved_severity,
-                                warhead_effects.crew_scale,
-                                scales.mission_crew));
-                    }
-                    if (scratch.air_command_navigation_hit) {
-                        apply_aircraft_crew_consequence(
-                            *aircraft_damage,
-                            CrewConsequenceKind::CommandNavigation,
-                            localized_effect_delta(
-                                0.34,
-                                0.22,
-                                resolved_severity,
-                                warhead_effects.mission_scale,
-                                scales.command_navigation));
-                    }
-                    if (scratch.air_crew_hit &&
-                        !(scratch.air_pilot_hit || scratch.air_mission_crew_hit || scratch.air_command_navigation_hit)) {
-                        aircraft_damage->crew_effectiveness -=
-                            localized_effect_delta(
-                                0.42,
-                                0.25,
-                                resolved_severity,
-                                warhead_effects.crew_scale,
-                                scales.crew);
-                    }
-                    if (scratch.air_mission_or_combat_hit) {
-                        aircraft_damage->avionics_integrity -=
-                            localized_effect_delta(
-                                0.18,
-                                0.20,
-                                resolved_severity,
-                                warhead_effects.mission_scale,
-                                scales.mission_or_combat);
-                        aircraft_damage->fire_severity +=
-                            localized_effect_delta(
-                                0.04,
-                                0.04,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.mission_or_combat);
-                        aircraft_damage->ignition_source_severity +=
-                            localized_effect_delta(
-                                0.02,
-                                0.05,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.mission_or_combat);
-                    }
+                    apply_default_effects_aircraft_sensor_consequence_block(
+                        scratch,
+                        scales,
+                        resolved_severity,
+                        warhead_effects,
+                        *aircraft_damage);
+                    apply_default_effects_aircraft_propulsion_fuel_consequence_blocks(
+                        scratch,
+                        scales,
+                        resolved_severity,
+                        warhead_effects,
+                        *aircraft_damage);
+                    apply_default_effects_aircraft_control_hydraulic_consequence_blocks(
+                        scratch,
+                        scales,
+                        resolved_severity,
+                        warhead_effects,
+                        *aircraft_damage);
+                    apply_default_effects_aircraft_crew_role_consequence_blocks(
+                        scratch,
+                        scales,
+                        resolved_severity,
+                        warhead_effects,
+                        *aircraft_damage);
+                    apply_default_effects_aircraft_mission_combat_consequence_block(
+                        scratch,
+                        scales,
+                        resolved_severity,
+                        warhead_effects,
+                        *aircraft_damage);
                     if (scratch.air_structure_spatial_scale > 0.0) {
                         aircraft_damage->structural_integrity -=
                             localized_effect_delta(
@@ -445,70 +665,12 @@ bool resolve_default_effects_air_platform_consequences(
                                 warhead_effects.structure_scale,
                                 scales.structure);
                     }
-                    if (scratch.air_engine_fire_zone_hit) {
-                        aircraft_damage->engine_fire_zone_severity +=
-                            localized_effect_delta(
-                                0.06,
-                                0.10,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.engine_fire_zone);
-                        aircraft_damage->smoke_heat_exposure +=
-                            localized_effect_delta(
-                                0.010,
-                                0.020,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.engine_fire_zone);
-                    }
-                    if (scratch.air_wing_fire_zone_hit) {
-                        aircraft_damage->wing_fire_zone_severity +=
-                            localized_effect_delta(
-                                0.04,
-                                0.07,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.wing_fire_zone);
-                        aircraft_damage->smoke_heat_exposure +=
-                            localized_effect_delta(
-                                0.012,
-                                0.020,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.wing_fire_zone);
-                    }
-                    if (scratch.air_fuselage_fire_zone_hit) {
-                        aircraft_damage->fuselage_fire_zone_severity +=
-                            localized_effect_delta(
-                                0.04,
-                                0.08,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.fuselage_fire_zone);
-                        aircraft_damage->smoke_heat_exposure +=
-                            localized_effect_delta(
-                                0.030,
-                                0.045,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.fuselage_fire_zone);
-                    }
-                    if (scratch.air_mission_fire_zone_hit) {
-                        aircraft_damage->mission_fire_zone_severity +=
-                            localized_effect_delta(
-                                0.05,
-                                0.08,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.mission_fire_zone);
-                        aircraft_damage->smoke_heat_exposure +=
-                            localized_effect_delta(
-                                0.035,
-                                0.050,
-                                resolved_severity,
-                                warhead_effects.fire_scale,
-                                scales.mission_fire_zone);
-                    }
+                    apply_default_effects_aircraft_fire_zone_consequence_blocks(
+                        scratch,
+                        scales,
+                        resolved_severity,
+                        warhead_effects,
+                        *aircraft_damage);
                     if (component_damage) {
                         derive_aircraft_damage_from_component_state(
                             *component_damage,
@@ -517,66 +679,12 @@ bool resolve_default_effects_air_platform_consequences(
                     clamp_aircraft_damage_state(*aircraft_damage);
                     apply_aircraft_damage_state_to_platform(*aircraft_damage, *platform_damage);
                 }
-                if (scratch.air_propulsion_or_fuel_hit) {
-                    platform_damage->fire_severity +=
-                        localized_effect_delta(
-                            0.08,
-                            0.08,
-                            resolved_severity,
-                            warhead_effects.fire_scale,
-                            scales.propulsion_or_fuel);
-                    platform_damage->ongoing_hull_breach +=
-                        localized_effect_delta(
-                            0.03,
-                            0.04,
-                            resolved_severity,
-                            warhead_effects.breach_scale,
-                            scales.propulsion_or_fuel);
-                }
-                if (scratch.air_control_hit) {
-                    platform_damage->survivability_margin -=
-                        localized_effect_delta(
-                            0.06,
-                            0.08,
-                            resolved_severity,
-                            warhead_effects.control_scale,
-                            scales.control);
-                }
-                if (scratch.air_crew_hit || scratch.air_pilot_hit || scratch.air_mission_crew_hit ||
-                    scratch.air_command_navigation_hit) {
-                    platform_damage->survivability_margin -=
-                        localized_effect_delta(
-                            0.10,
-                            0.10,
-                            resolved_severity,
-                            warhead_effects.crew_scale,
-                            std::max({
-                                scales.crew,
-                                scales.pilot,
-                                scales.mission_crew,
-                                scales.command_navigation}));
-                }
-                if (scratch.air_mission_or_combat_hit) {
-                    platform_damage->fire_severity +=
-                        localized_effect_delta(
-                            0.04,
-                            0.04,
-                            resolved_severity,
-                            warhead_effects.fire_scale,
-                            scales.mission_or_combat);
-                }
-                if (scratch.air_fire_suppression_hit) {
-                    platform_damage->survivability_margin -=
-                        localized_effect_delta(
-                            0.03,
-                            0.05,
-                            resolved_severity,
-                            warhead_effects.breach_scale,
-                            scales.fire_suppression);
-                }
-                platform_damage->fire_severity = std::clamp(platform_damage->fire_severity, 0.0, 1.0);
-                platform_damage->flooding_severity = std::clamp(platform_damage->flooding_severity, 0.0, 1.0);
-                platform_damage->ongoing_hull_breach = std::clamp(platform_damage->ongoing_hull_breach, 0.0, 1.0);
+                apply_default_effects_platform_air_consequence_blocks(
+                    scratch,
+                    scales,
+                    resolved_severity,
+                    warhead_effects,
+                    *platform_damage);
             }
 
             return finalize_default_effects_platform_damage(
