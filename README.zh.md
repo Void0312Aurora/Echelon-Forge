@@ -299,6 +299,14 @@ cmo_python -m pytest -q \
 
 - [docs/forward/models/hierarchical_moe_execution_policy.md](docs/forward/models/hierarchical_moe_execution_policy.md)
 
+## 许可
+
+项目代码和维护文档采用 [Apache License 2.0](LICENSE)。
+
+第三方资产和仓库内捆绑的第三方文件保留其各自许可，不会被项目级 Apache-2.0
+重新授权。当前本地 notice 清单见
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
 ## 工作约定
 
 - 优先使用 `.venv` 进行仓库本地验证
