@@ -34,6 +34,8 @@ Echelon Forge 是一个用于空战和飞行任务研究的仿真与强化学习
 - 部分训练线路为冻结基线，其他为活跃实验
 - CPU 运行时仍作为规范的世界步进真值
 - GPU 辅助路径存在，但仍谨慎对待
+- 社区贡献目前采用 issue-first 和 owner-scoped 模式；见
+  [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 命名与包标识
 

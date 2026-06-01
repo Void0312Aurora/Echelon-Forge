@@ -29,6 +29,12 @@ note is still an active implementation authority.
 
 - `plan/`, `task/`, `standards/`, and `manual/` are the maintained entry
   surfaces.
+- Maintained documentation is covered by the repository-level Apache-2.0
+  license unless a file or retained third-party artifact states otherwise.
+  Third-party assets, datasets, source excerpts, and retained input artifacts
+  keep their own rights and license status; see
+  [../LICENSE](../LICENSE) and
+  [../THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
 - The strict bilingual maintenance surface is intentionally narrower than the
   whole docs tree: it focuses on entry navigation, standards/governance,
   operator manuals, and stable plan authority.

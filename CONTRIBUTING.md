@@ -4,6 +4,12 @@
 
 This repository is currently maintained in a conservative, owner-led mode.
 
+This is partly a maintainer-capacity boundary. Large parts of the project have
+been built through rapid, AI-assisted exploratory engineering, and the owner is
+still consolidating implementation knowledge, validation boundaries, and
+GitHub collaboration workflow. The contribution process is therefore kept
+deliberately narrow until the maintained surfaces are easier to review.
+
 - The default assumption is that planning, implementation, and release
   decisions stay with the repository owner.
 - External pull requests are not the primary development path for the project

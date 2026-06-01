@@ -35,6 +35,8 @@ That means:
 - some training lines are frozen baselines, others are active experiments
 - the CPU runtime remains the canonical world-step truth
 - GPU helper paths exist, but are still treated conservatively
+- community contribution is currently issue-first and owner-scoped; see
+  [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Naming And Package Identity
 

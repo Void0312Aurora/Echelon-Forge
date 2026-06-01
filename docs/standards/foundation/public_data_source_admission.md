@@ -25,6 +25,19 @@ The central rule is:
 > and residuals. It must not be cited as official or calibrated authority unless
 > it later passes the relevant authority gate.
 
+## Repository License Boundary
+
+The repository is licensed under Apache-2.0 for project code and maintained
+documentation. That project license does not grant rights to third-party
+inputs.
+
+Public papers, datasets, vendor materials, community code, visualization
+assets, retained source payloads, and generated artifacts that depend on those
+inputs must still record their own source, license, copyright, export,
+redistribution, and attribution status. If an external input cannot be copied,
+redistributed, or used to generate retained outputs under its own terms, the
+repository-level Apache-2.0 license does not cure that gap.
+
 ## Source Tiers
 
 | Tier | Acceptable sources | Allowed use | Limit |
