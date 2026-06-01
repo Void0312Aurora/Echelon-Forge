@@ -41,7 +41,7 @@
 
 - [a2_retained_manifest_integrity.py](../../../../tools/maintenance/a2_retained_manifest_integrity.py)
   默认扫描 candidate package 的 `retained_artifacts/**/manifest.json`；
-- 当前验收输出为 `manifest_count=21`、`missing_total=0`、`sha_mismatch_total=0`、
+- 当前验收输出为 `manifest_count=27`、`missing_total=0`、`sha_mismatch_total=0`、
   `guard_true_total=0`；
 - 该验收只证明 retained manifest 引用和 hash 自洽，不授予任何 `G4/G5` authority。
 
@@ -60,11 +60,17 @@
 | `RES-001` | 窄域 internal signoff evidence 已关闭；仍不构成外部发布权或 benchmark consumption authority |
 | `RES-002` | scoped package identity 已关闭；仍不构成 global clean release identity |
 | `RES-003/004` | Stage B witness geometry / family scope 子范围关闭；真实几何和具体战斗部 truth 继续 open |
-| `RES-005/006` | mechanism execution evidence 已保留但 fail-closed；不得消费为 release evidence |
+| `RES-005/006` | mechanism execution evidence、2026-06-01 retained review packet、candidate/signoff request packet 已保留但 fail-closed；不得消费为 release evidence |
 | `RES-007/008` | Stage B scope/bucket review 通过；不得扩展成 validated near-miss 或 closure physics authority |
 | `RES-009` | Stage C component fragility truth 继续 open |
 | `RES-010/011/012` | Stage B closeout 已有 retained evidence；Stage C release-grade closeout 继续 blocked |
 | `RES-013/014` | Pk 与 deterministic fuze 是 boundary deferred，不在本候选包关闭 |
+
+2026-06-01 第 2 轮只读 evidence sweep 已确认：子项目数据和 retained packets 已存在，
+但 `RES-005/006` 的具体 selected-case / replacement-tolerance signoff 链未闭合；本候选
+包仍停在 `G2 candidate acceptance`，不产生 `G4/G5` authority。
+随后新增的 signoff intake contract 只定义未来外部 reviewer/signoff packet 的 hash-only
+输入形状和 fail-closed checker；默认无外部签收输入，不关闭 residual。
 
 ## 活跃证据入口
 
@@ -74,6 +80,12 @@
 - [tools/maintenance/a2_candidate_vps_bundle.py](../../../../tools/maintenance/a2_candidate_vps_bundle.py)
 - [tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py](../../../../tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py)
 - [mechanism admission fail-closed backlog](mechanism_admission_failclosed_backlog_20260601.zh.md)
+- `retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json`
+- `retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json`
+- `retained_artifacts/res005_tp21_selected_case_candidate_20260601/res005_tp21_selected_case_candidate_packet.json`
+- `retained_artifacts/res006_beco_lineage_tolerance_review_20260601/res006_beco_lineage_tolerance_review_candidate_packet.json`
+- `retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json`
+- `retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json`
 
 ## 验收命令
 

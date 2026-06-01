@@ -1,0 +1,334 @@
+{
+  "admission_decision": {
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_gate": [],
+    "closed_residual_subscopes_by_this_gate": [],
+    "decision": "not_admitted_fail_closed",
+    "fail_closed": true,
+    "narrowly_closes_res005": false,
+    "release_grade_validated": false,
+    "residual_status_after_gate": "open_fail_closed_tp21_selected_debris_outputs_missing",
+    "selected_tp21_case_admitted": false,
+    "status": "blocked"
+  },
+  "authority_guards": {
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "behavior_risks": [
+    "controlled criteria keys can be mistaken for a concrete reviewer-selected TP-21 case",
+    "empty selected-output anchors can be mistaken for admitted evidence",
+    "source-rights candidate policy can be mistaken for release-grade allowed-output signoff",
+    "this review packet does not grant fragment, component, effect, stock, runtime, Pk, or fuze authority"
+  ],
+  "benchmark_consumed_for_release": false,
+  "current_missing_items": [
+    {
+      "item_id": "TP21-SELECTED-CASE-LOCATOR",
+      "missing_reason": "reviewer-selected case locator label is absent",
+      "next_owner_input": "stable reviewer-selected TP-21 case locator label without retaining source prose, tables, figures, or raw values",
+      "owner": "mechanism_admission_owner"
+    },
+    {
+      "item_id": "TP21-SELECTED-OUTPUT-PREIMAGE-SHA256",
+      "missing_reason": "selected output preimage sha256 is absent",
+      "next_owner_input": "sha256 of a redacted selected-case output preimage; the preimage itself must not be retained in this packet",
+      "owner": "mechanism_admission_owner"
+    },
+    {
+      "item_id": "TP21-SELECTED-DEBRIS-OUTPUT-ANCHOR-SET",
+      "missing_reason": "selected debris output hash anchor set is empty",
+      "next_owner_input": "hash-only selected debris output anchor set for the selected case",
+      "owner": "mechanism_admission_owner"
+    },
+    {
+      "item_id": "TP21-INDEPENDENT-REVIEWER-SIGNOFF",
+      "missing_reason": "independent reviewer signoff is absent",
+      "next_owner_input": "independent reviewer signoff id for the selected case, locator label, and preimage hash",
+      "owner": "independent_mechanism_reviewer"
+    },
+    {
+      "item_id": "TP21-ALLOWED-OUTPUT-SIGNOFF",
+      "missing_reason": "source-rights policy remains fail-closed for current selected comparison outputs",
+      "next_owner_input": "allowed-output signoff that admits only hash outputs for the reviewer-selected case",
+      "owner": "source_rights_reviewer"
+    },
+    {
+      "item_id": "TP21-AUTHORITY-BOUNDARY-SIGNOFF",
+      "missing_reason": "authority-boundary signoff is absent",
+      "next_owner_input": "reviewer confirmation that fragment/component/effect/stock/runtime/Pk/fuze authority remains false",
+      "owner": "integration_owner"
+    }
+  ],
+  "decision": {
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_gate": [],
+    "closed_residual_subscopes_by_this_gate": [],
+    "decision": "not_admitted_fail_closed",
+    "fail_closed": true,
+    "narrowly_closes_res005": false,
+    "release_grade_validated": false,
+    "residual_status_after_gate": "open_fail_closed_tp21_selected_debris_outputs_missing",
+    "selected_tp21_case_admitted": false,
+    "status": "blocked"
+  },
+  "hash_only_ref_only_label_only": true,
+  "input_refs": [
+    {
+      "artifact_id": "res005_prior_debris_admission_gate",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
+      "role": "prior_fail_closed_res005_gate_input",
+      "schema_version": "a2.res005_tp21_debris_admission_gate.v1",
+      "sha256": "d0f64487b4d71762e383f3420d81c31d66591c18e341b95996ec979d9505ff2b",
+      "status": "blocked_fail_closed_tp21_debris_admission_gate"
+    },
+    {
+      "artifact_id": "res005_selected_debris_output_anchor_set",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
+      "role": "prior_hash_only_empty_anchor_set_input",
+      "schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",
+      "sha256": "b17f164da8488bcf232d2e72492baa7febf70079a1cab13171d1de5e75c6b638",
+      "status": ""
+    },
+    {
+      "artifact_id": "source_rights_output_policy_gate",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "role": "source_rights_allowed_output_policy_input",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    },
+    {
+      "artifact_id": "residual_register",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
+      "role": "res005_residual_status_ref",
+      "sha256": "4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b"
+    },
+    {
+      "artifact_id": "mechanism_admission_failclosed_backlog",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/mechanism_admission_failclosed_backlog_20260601.zh.md",
+      "role": "tc_a2_bf_003_res005_backlog_ref",
+      "sha256": "17dd13e4de404695aeacc6c394f61be1fab9163df228203d743131d918a7146f"
+    },
+    {
+      "artifact_id": "candidate_acceptance_status",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/candidate_acceptance_status.zh.md",
+      "role": "g2_candidate_acceptance_boundary_ref",
+      "sha256": "f390fb0aca20cc2e1d2e88b8289724171986f9fd9015b8f2d228f12ad8ae2ad3"
+    },
+    {
+      "artifact_id": "task_cluster_execution_status",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/task_cluster_execution_status_20260601.zh.md",
+      "role": "task_cluster_boundary_ref",
+      "sha256": "eb73c728bfd2a68e68bce4d7d5aceed1a4f5d153a72faa675b7aa1e35b7e8a37"
+    },
+    {
+      "artifact_id": "validation_res005_tp21_debris_admission_note",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_res005_tp21_debris_admission_gate_20260531.zh.md",
+      "role": "prior_validation_note_ref",
+      "sha256": "888c2fb234b48dbe460475dbf000804107440d9272ba95996d11175beb645e31"
+    }
+  ],
+  "integration_notes": [
+    "RES-005 remains open and fail-closed because reviewer locator, preimage hash, independent signoff, and allowed-output signoff are missing.",
+    "This packet retains only refs, sha256 hashes, labels, missing-item rows, and authority guards.",
+    "No TP-21 source content, raw selected outputs, or release benchmark consumption is retained by this gate."
+  ],
+  "non_authoritative_guards": {
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "pk_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "owner_inputs_required_next": [
+    "mechanism admission owner supplies reviewer-selected case locator label and selected-output preimage sha256",
+    "independent mechanism reviewer signs off selected case, locator label, and preimage hash",
+    "source-rights reviewer signs off hash-only allowed-output admission for the selected case",
+    "integration owner reruns this gate and updates residual register only if a later gate explicitly closes RES-005"
+  ],
+  "package": {
+    "acceptance_layer": "G2 candidate acceptance",
+    "authority_state": "candidate_non_authoritative_fail_closed",
+    "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+    "residual_layer": "G3 residual read-only",
+    "task_cluster": "TC-A2-BF-003-RES005-TP21"
+  },
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "packet_sha256": "229355642c363bf9089a65aa2d6a4ff02096d022519052e308bef78929a8905b",
+  "prior_debris_gate_summary": {
+    "allowed_output_signoff_present": false,
+    "anchor_set_schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",
+    "anchor_set_status": "empty_fail_closed_no_reviewer_selected_case",
+    "closed_residual_ids_by_prior_gate": [],
+    "controlled_criteria_keys": [
+      "debris_item_class",
+      "debris_mass_bin",
+      "debris_velocity_or_throw_bin",
+      "standoff_or_separation_bin",
+      "target_exposure_or_area_bin",
+      "unit_system",
+      "applicability_limit",
+      "exclusion_reason"
+    ],
+    "controlled_criteria_vocabulary_sha256": "6760351838bd84a24945a5459f53fffc8326edbaf447cb0e2223f7228a2b1969",
+    "current_comparison_outputs_admitted": false,
+    "debris_gate_decision": "not_admitted_fail_closed",
+    "debris_gate_schema_version": "a2.res005_tp21_debris_admission_gate.v1",
+    "debris_gate_status": "blocked_fail_closed_tp21_debris_admission_gate",
+    "independent_reviewer_signoff_present": false,
+    "narrowly_closes_res005": false,
+    "reviewer_case_locator_present": false,
+    "reviewer_case_status": "missing_fail_closed",
+    "selected_debris_output_hash_count": 0,
+    "selected_debris_output_set_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "selected_output_hashes_present": false,
+    "selected_output_preimage_hash_present": false
+  },
+  "raw_selected_outputs_retained": false,
+  "raw_tp21_source_content_retained": false,
+  "required_reviewer_signoff_items": [
+    {
+      "current_status": "missing_fail_closed",
+      "item_id": "TP21-SELECTED-CASE-LOCATOR",
+      "missing_reason": "reviewer-selected case locator label is absent",
+      "owner": "mechanism_admission_owner",
+      "present": false,
+      "required_evidence": "stable reviewer-selected TP-21 case locator label without retaining source prose, tables, figures, or raw values",
+      "retained_form": "label_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "item_id": "TP21-SELECTED-OUTPUT-PREIMAGE-SHA256",
+      "missing_reason": "selected output preimage sha256 is absent",
+      "owner": "mechanism_admission_owner",
+      "present": false,
+      "required_evidence": "sha256 of a redacted selected-case output preimage; the preimage itself must not be retained in this packet",
+      "retained_form": "hash_ref_or_label_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "item_id": "TP21-SELECTED-DEBRIS-OUTPUT-ANCHOR-SET",
+      "missing_reason": "selected debris output hash anchor set is empty",
+      "owner": "mechanism_admission_owner",
+      "present": false,
+      "required_evidence": "hash-only selected debris output anchor set for the selected case",
+      "retained_form": "hash_ref_or_label_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "item_id": "TP21-INDEPENDENT-REVIEWER-SIGNOFF",
+      "missing_reason": "independent reviewer signoff is absent",
+      "owner": "independent_mechanism_reviewer",
+      "present": false,
+      "required_evidence": "independent reviewer signoff id for the selected case, locator label, and preimage hash",
+      "retained_form": "signoff_ref_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "item_id": "TP21-ALLOWED-OUTPUT-SIGNOFF",
+      "missing_reason": "source-rights policy remains fail-closed for current selected comparison outputs",
+      "owner": "source_rights_reviewer",
+      "present": false,
+      "required_evidence": "allowed-output signoff that admits only hash outputs for the reviewer-selected case",
+      "retained_form": "signoff_ref_only"
+    },
+    {
+      "current_status": "missing_fail_closed",
+      "item_id": "TP21-AUTHORITY-BOUNDARY-SIGNOFF",
+      "missing_reason": "authority-boundary signoff is absent",
+      "owner": "integration_owner",
+      "present": false,
+      "required_evidence": "reviewer confirmation that fragment/component/effect/stock/runtime/Pk/fuze authority remains false",
+      "retained_form": "signoff_ref_only"
+    }
+  ],
+  "residual": {
+    "closed_by_this_gate": false,
+    "residual_closed": false,
+    "residual_id": "RES-005",
+    "review_target": "tp21_reviewer_selected_case_admission",
+    "status_after_gate": "open_fail_closed_tp21_selected_debris_outputs_missing",
+    "status_before_gate": "open_fail_closed_tp21_selected_debris_outputs_missing"
+  },
+  "residual_id": "RES-005",
+  "schema": {
+    "name": "res005_tp21_selected_case_admission_review_gate",
+    "version": "v1"
+  },
+  "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
+  "selected_case_evidence_state": {
+    "allowed_output_signoff_present": false,
+    "independent_reviewer_signoff_present": false,
+    "raw_selected_outputs_retained": false,
+    "raw_tp21_source_content_retained": false,
+    "reviewer_selected_case_locator_present": false,
+    "selected_debris_output_hash_count": 0,
+    "selected_debris_output_hashes_retained": false,
+    "selected_output_preimage_sha256_present": false,
+    "source_figures_retained": false,
+    "source_numeric_values_retained": false,
+    "source_tables_retained": false
+  },
+  "source_figures_retained": false,
+  "source_numeric_values_retained": false,
+  "source_payload_body_retained": false,
+  "source_rights_policy_summary": {
+    "allowed_hash_outputs": [
+      "retained_payload_file_sha256",
+      "source_manifest_sha256",
+      "rights_policy_gate_sha256",
+      "future_selected_comparison_output_sha256_only_after_reviewer_admission"
+    ],
+    "current_comparison_outputs_admitted": false,
+    "current_selected_comparison_output_hash_count": 0,
+    "forbidden_consume_outputs": [
+      "source_payloads_as_release_benchmark_inputs",
+      "spreadsheet_or_tool_outputs_as_release_benchmark_without_signoff",
+      "document_examples_as_release_benchmark",
+      "comparison_outputs_without_selected_sha256_and_signoff",
+      "effect_scale_authority",
+      "component_failure_probability_authority",
+      "pk_authority",
+      "deterministic_fuze_authority"
+    ],
+    "forbidden_copy_outputs": [
+      "source_payload_body_or_bulk_content",
+      "document_numeric_tables_or_figures",
+      "spreadsheet_formulas_or_cell_ranges",
+      "spreadsheet_tool_output_tables",
+      "comparison_output_values_without_review_admission",
+      "stock_descriptor_fields",
+      "runtime_authority_fields"
+    ],
+    "policy_status": "release_candidate_fail_closed_policy_frozen",
+    "release_grade_satisfied": false,
+    "schema_version": "a2.source_rights_output_policy_gate.v1",
+    "status": "blocked_release_candidate_rights_supported_policy_fail_closed",
+    "tp21_payload_ref": {
+      "benchmark_consumed_for_release": false,
+      "payload_sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+      "release_consumption_allowed": false,
+      "rights_status": "public_distribution_statement_supported_rights_review_candidate",
+      "source_artifact_label": "TP-21 PDF",
+      "source_id": "VPS-BFM-015"
+    }
+  },
+  "source_tables_retained": false,
+  "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
+}

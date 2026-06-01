@@ -1,0 +1,144 @@
+{
+  "admission_decision": {
+    "allowed_output_signoff_present": false,
+    "benchmark_consumed_for_release": false,
+    "closed_residual_ids_by_this_gate": [],
+    "current_missing_items": [
+      "independent_lineage_review_signoff",
+      "allowed_output_policy_signoff",
+      "numeric_tolerance_policy_signoff",
+      "replacement_anchor_signoff"
+    ],
+    "decision": "res006_remains_blocked_fail_closed",
+    "exact_hash_check_passed": false,
+    "independent_lineage_review_present": false,
+    "raw_selected_values_retained": false,
+    "release_grade_validated": false,
+    "remaining_blockers": [
+      "cached-vs-recalculated selected hashes do not satisfy exact-hash admission",
+      "existing recalculation evidence is local retained evidence, not an independent lineage review",
+      "source rights policy remains fail-closed for selected comparison outputs",
+      "this packet retains hashes only and admits no raw numeric tolerance",
+      "candidate recalculated anchor set is retained but not admitted"
+    ],
+    "replacement_anchor_set_admitted": false,
+    "res006_narrowly_closed": false,
+    "residual_closed": false,
+    "residual_id": "RES-006",
+    "status": "blocked_fail_closed",
+    "tolerance_policy_admitted": false
+  },
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601",
+  "artifacts": [
+    {
+      "artifact_key": "res006_beco_replacement_tolerance_admission_gate",
+      "filename": "res006_beco_replacement_tolerance_admission_gate.json",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json",
+      "schema_version": "a2.res006_beco_replacement_tolerance_admission_gate.v1",
+      "sha256": "7b9d2ab91bff50ed8f39becfebbb15d7abc1baccce205077ab9e191ad44012f9"
+    }
+  ],
+  "authority_guards": {
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "benchmark_consumed_for_release": false,
+  "current_gate_results": {
+    "RES-006": "blocked_fail_closed_replacement_tolerance_admission_review"
+  },
+  "current_missing_items": [
+    "independent_lineage_review_signoff",
+    "allowed_output_policy_signoff",
+    "numeric_tolerance_policy_signoff",
+    "replacement_anchor_signoff"
+  ],
+  "input_refs": [
+    {
+      "artifact_key": "res006_beco_recalculation_admission_gate",
+      "present": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/res006_beco_recalculation_admission_gate.json",
+      "schema_version": "a2.res006_beco_recalculation_admission_gate.v1",
+      "sha256": "d45a56aa6d8be816a60b0e9cef31331c582c90f5efe30b6e25c770feb3ec0e8a",
+      "status": "partial_fail_closed_res006_beco_recalculation_admission"
+    },
+    {
+      "artifact_key": "beco_recalculated_hash_anchor_set",
+      "present": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res006_beco_recalculation_admission_20260531/beco_recalculated_hash_anchor_set.json",
+      "schema_version": "a2.res006_beco_recalculated_hash_anchor_set.v1",
+      "sha256": "2d26a10918223bfb2b229ed9d11fb0d378d473f0c3dd8674917b8dbb995550a5",
+      "status": "candidate_replacement_anchor_set_retained_not_admitted"
+    },
+    {
+      "artifact_key": "mechanism_comparison_hashes",
+      "present": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+      "schema_version": "a2.mechanism_comparison_hashes.v1",
+      "sha256": "5d267029a11a47f281f726d6c58131aea946294a7979d8dcfaa72b27141973d1",
+      "status": "partial_fail_closed_mechanism_comparison_hash_manifest"
+    },
+    {
+      "artifact_key": "source_rights_output_policy_gate",
+      "present": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+      "schema_version": "a2.source_rights_output_policy_gate.v1",
+      "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
+    }
+  ],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "raw_selected_values_retained": false,
+  "required_signoff_items": [
+    {
+      "admitted": false,
+      "current_status": "missing",
+      "fail_closed_reason": "existing recalculation evidence is local retained evidence, not an independent lineage review",
+      "owner_input_needed": "named independent reviewer acceptance of BEC-O recalculation runtime/version lineage and retained hash-only evidence",
+      "required": true,
+      "signed_off": false,
+      "signoff_id": "independent_lineage_review_signoff"
+    },
+    {
+      "admitted": false,
+      "current_status": "missing",
+      "fail_closed_reason": "source rights policy remains fail-closed for selected comparison outputs",
+      "owner_input_needed": "release owner or rights reviewer must explicitly admit selected BEC-O comparison output hashes under the allowed-output policy",
+      "required": true,
+      "signed_off": false,
+      "signoff_id": "allowed_output_policy_signoff"
+    },
+    {
+      "admitted": false,
+      "current_status": "missing",
+      "fail_closed_reason": "this packet retains hashes only and admits no raw numeric tolerance",
+      "owner_input_needed": "release-grade numeric tolerance policy or exact-hash replacement policy for cached-vs-recalculated BEC-O output differences",
+      "required": true,
+      "signed_off": false,
+      "signoff_id": "numeric_tolerance_policy_signoff"
+    },
+    {
+      "admitted": false,
+      "current_status": "missing",
+      "fail_closed_reason": "candidate recalculated anchor set is retained but not admitted",
+      "owner_input_needed": "explicit retained decision promoting or rejecting the recalculated hash anchor set without mutating cached anchors in place",
+      "required": true,
+      "signed_off": false,
+      "signoff_id": "replacement_anchor_signoff"
+    }
+  ],
+  "residual_id": "RES-006",
+  "schema_version": "a2.res006_beco_replacement_tolerance_admission_retained_manifest.v1",
+  "status": "blocked_fail_closed_res006_beco_replacement_tolerance_admission_review"
+}

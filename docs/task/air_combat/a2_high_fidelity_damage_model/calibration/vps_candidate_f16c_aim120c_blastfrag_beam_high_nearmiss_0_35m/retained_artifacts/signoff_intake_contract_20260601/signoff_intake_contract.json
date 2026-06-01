@@ -1,0 +1,173 @@
+{
+  "admission_granted": false,
+  "approval_granted": false,
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601",
+  "authority_guards": {
+    "allowed_output_release_authority_granted": false,
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "source_truth_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "benchmark_consumed_for_release": false,
+  "candidate_signoff_packet_ref": {
+    "present": false,
+    "status": "external_signoff_packet_not_supplied_fail_closed"
+  },
+  "contract_id": "TC-A2-BF-003-SIGNOFF-INTAKE-CONTRACT-20260601",
+  "contract_sha256": "5dbb8db1213e77cc54320121dd316aa07f5b29b0e718b01c5467ad51d16a25aa",
+  "current_check_result": {
+    "candidate_packet_supplied": false,
+    "finding_count": 1,
+    "findings": [
+      {
+        "detail": "no candidate signoff packet was supplied to the intake checker",
+        "effect": "intake_shape_rejected_fail_closed",
+        "finding_id": "external_signoff_packet_not_supplied"
+      }
+    ],
+    "forbidden_key_hits": [],
+    "intake_shape_valid": false,
+    "missing_signoff_ids": [
+      "source_rights_independent_review",
+      "allowed_output_policy_release_grade_review",
+      "tp21_selected_case_hash_only_allowed_output_review",
+      "beco_hash_only_allowed_output_review",
+      "beco_lineage_tolerance_and_replacement_review",
+      "benchmark_consumption_release_decision",
+      "authority_boundary_confirmation"
+    ],
+    "ready_for_separate_reviewer_admission_gate": false,
+    "reviewer_decision_summaries": [],
+    "signoff_decisions_consumed": false,
+    "unexpected_signoff_ids": []
+  },
+  "fail_closed": true,
+  "forbidden_output_policy": {
+    "raw_outputs_retained": false,
+    "raw_source_text_tables_values_formulas_retained": false,
+    "selected_output_preimages_retained": false,
+    "source_payloads_consumed_as_release_benchmarks": false,
+    "temporary_workbook_copy_stdout_or_stderr_retained": false
+  },
+  "input_refs": [
+    {
+      "artifact_key": "source_rights_signoff_request_packet",
+      "present": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "required_for_contract": true,
+      "role": "current_fail_closed_signoff_request_input",
+      "schema_version": "a2.source_rights_signoff_request_packet.v1",
+      "sha256": "39344a247f6548b211206d086d1135989934a2cd4148333045d4c10a52fa23f2",
+      "status": "retained_fail_closed_source_rights_signoff_request_packet"
+    }
+  ],
+  "intake_contract_shape": {
+    "allowed_benchmark_consumption_decisions": [
+      "not_consumed_for_release_by_this_packet",
+      "explicit_release_decision_deferred"
+    ],
+    "allowed_review_decisions": [
+      "approved_for_hash_only_review",
+      "rejected",
+      "blocked_more_info_required"
+    ],
+    "authority_guard_confirmation_fields_must_be_false": [
+      "allowed_output_release_authority_granted",
+      "benchmark_consumption_authority_granted",
+      "blast_mechanism_authority_granted",
+      "component_authority_granted",
+      "component_failure_probability_authority_granted",
+      "deterministic_fuze_authority_granted",
+      "effect_scale_authority_granted",
+      "fragment_mechanism_authority_granted",
+      "fuze_authority_granted",
+      "pk_authority_granted",
+      "replacement_anchor_authority_granted",
+      "runtime_authority_granted",
+      "source_truth_authority_granted",
+      "stock_database_authority_granted",
+      "stock_descriptor_created"
+    ],
+    "contract_effect": "shape_check_only_not_approval_not_admission",
+    "expected_external_schema_version": "a2.external_signoff_intake_packet.v1",
+    "forbidden_packet_keys": [
+      "cell_range",
+      "cell_value",
+      "formula_text",
+      "raw_output_table",
+      "raw_output_value",
+      "raw_selected_output_value",
+      "raw_value",
+      "selected_output_preimage",
+      "selected_output_preimage_body",
+      "source_figures",
+      "source_numeric_values",
+      "source_prose",
+      "source_table_rows",
+      "source_tables",
+      "spreadsheet_formula_text",
+      "stderr",
+      "stdout",
+      "temporary_workbook_copy",
+      "workbook_copy"
+    ],
+    "raw_content_absence_fields_must_be_false": [
+      "tp21_source_prose_tables_figures_or_numeric_values_retained",
+      "tp21_raw_selected_outputs_retained",
+      "tp21_selected_output_preimage_body_retained",
+      "beco_raw_cell_values_or_tool_output_tables_retained",
+      "beco_spreadsheet_formula_text_or_cell_ranges_retained",
+      "beco_temporary_workbook_copy_retained",
+      "stdout_retained",
+      "stderr_retained"
+    ],
+    "required_decision_hash_ref_fields": [
+      "reviewer_ref_sha256",
+      "decision_ref_sha256",
+      "reviewed_input_ref_sha256"
+    ],
+    "required_signoff_ids": [
+      "source_rights_independent_review",
+      "allowed_output_policy_release_grade_review",
+      "tp21_selected_case_hash_only_allowed_output_review",
+      "beco_hash_only_allowed_output_review",
+      "beco_lineage_tolerance_and_replacement_review",
+      "benchmark_consumption_release_decision",
+      "authority_boundary_confirmation"
+    ],
+    "required_top_level_fields": [
+      "schema_version",
+      "package_id",
+      "signoff_packet_id",
+      "source_rights_signoff_request_packet_sha256",
+      "reviewer_decisions",
+      "raw_content_absence",
+      "authority_guard_confirmation",
+      "benchmark_consumption_decision"
+    ]
+  },
+  "integration_notes": [
+    "This contract standardizes future external signoff packet intake only.",
+    "A shape-valid external packet is not approval and does not close RES-005 or RES-006.",
+    "A later admission gate must consume retained hash refs and reviewer decisions explicitly.",
+    "No TP-21/BEC-O raw source text, tables, values, formulas, raw outputs, workbook copies, stdout, or stderr are retained here."
+  ],
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "packet_type": "signoff_intake_schema_and_shape_checker_contract",
+  "release_grade_satisfied": false,
+  "residuals_closed_by_this_contract": [],
+  "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
+  "status": "retained_fail_closed_signoff_intake_contract_no_external_packet"
+}
