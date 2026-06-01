@@ -65,7 +65,7 @@ the service profile intentionally does not define:
 - ground command/support execution vocabulary
 - ground agency roles and authority scopes
 - terrain-masked information-state assumptions
-- future ground mobility, sensing, direct-fire, indirect-fire, sustainment, and
+- later ground mobility, sensing, direct-fire, indirect-fire, sustainment, and
   reporting extensions
 
 ## 2. G0 Baseline Decisions
@@ -200,7 +200,7 @@ Documents in this directory should describe ground-specific semantics, such as:
 - ground command/support authority interpretation
 - terrain-masked sensing and radio-constrained information sharing
 - ground agency roles
-- future ground execution and reporting specialization
+- later ground execution and reporting specialization
 
 ## 8. What Does Not Belong Here
 

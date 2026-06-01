@@ -4,6 +4,10 @@
 这里放的是 naval 平台数据和甲板运作状态，不负责命令解释、tick 推进或
 mission/runtime 编排。
 
+这是维护中的 naval data slice，但不是 N4 tasking、pre-fire/contact evidence
+或完整 naval mission runtime 的 owner。这些 surface 分别位于 command/tasking
+DTO、systems 和 runtime contract。
+
 ## 允许
 
 - 舰艇和潜艇平台性能、尺度、机动包线等纯数据字段。
@@ -14,6 +18,7 @@ mission/runtime 编排。
 
 - 舰艇/潜艇运动积分、海况推进或舰载机调度逻辑；这些属于 `systems/naval`。
 - naval mission command、command link 或 tasking/C2 DTO。
+- engagement evidence、launch request/event 或 diagnostics export。
 - Python binding、facade request/result 或 env glue。
 - 直接拥有 entity lifecycle 或 helo spawn/recovery runtime owner。
 

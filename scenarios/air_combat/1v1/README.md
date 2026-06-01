@@ -8,16 +8,16 @@ The top-level historical smoke scenario remains available at
 
 - `air_combat_1v1_stage0_drone_weapon_employment_v1.json`
   - close/intermediate unarmed `MQ-9_Reaper` target surrogate;
-  - validates weapon-action reachability and terminal `combat_win`.
+  - validates weapon-action reachability and runtime fire-chain behavior; current fixed-fire smoke evidence accepts either `combat_win` or `combat_timeout`.
 - `air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
   - unarmed non-maneuvering `MQ-9_Reaper` target at first BVR-like range;
-  - validates contact persistence and missile time-of-flight behavior.
+  - intended to exercise contact persistence and missile time-of-flight behavior.
 - `air_combat_1v1_stage2_evasive_fighter_no_weapons_v1.json`
   - scripted evasive fighter with no usable missiles;
-  - validates pursuit geometry and launch timing without red fire.
+  - intended to exercise pursuit geometry and launch timing without red fire.
 - `air_combat_1v1_stage3_limited_weapons_fighter_v1.json`
   - scripted fighter with limited missiles and a controlled fire window;
-  - validates bounded reciprocal threat before full peer `1v1`.
+  - intended to exercise bounded reciprocal threat before full peer `1v1`.
 
 The `realism_gradient` blocks are planning metadata and are intentionally kept
 outside the runtime-critical scenario fields.

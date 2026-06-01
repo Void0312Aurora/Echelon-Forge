@@ -1,7 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/visualization_guide.zh.md. Review before treating this file as authoritative. -->
-
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/visualization_guide.md. Review before treating this file as authoritative. -->
-
 # How to View Visualizations Remotely (Web Real-Time)
 
 Since we run on a headless server, we need to use **SSH port forwarding** to forward the web visualization page from the server to your local browser.

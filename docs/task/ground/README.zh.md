@@ -8,15 +8,17 @@
 - 英文主文：`README.md`
 - 中文配套：[README.zh.md](README.zh.md)
 
-本子项目是仓库“第三域”启动规划的入口，面向未来的 ground specialization。
-它的目标是在不新增垂直 runtime 路径的前提下，把地面域接入共享仿真生命周期。
+本子项目是仓库当前早期 ground specialization bootstrap 的规划入口。它的目标是
+在不新增垂直 runtime 路径的前提下，把地面域接入共享仿真生命周期。
 
 ## 当前状态
 
 - 最新状态总结以
   [陆军 / 地面当前进展追踪](ground_current_progress_20260524.zh.md) 为准。
 - `services/army` 已经存在，并且是权威的军种画像边界文档。
-- 当前任务树已经维护专门的 ground 执行特化规划线；runtime 执行仍保持延后。
+- 当前任务树已经维护专门的 ground 执行特化规划线：G0-G4 tasking lifecycle
+  证据与 G6-E native schema 证据已经接受；movement、sensing、terrain、fires、
+  damage、combat 与完整 ground runtime 行为仍保持 held。
 - G0 现已冻结 `ground` 作为维护中的特化名、`platoon` 作为第一批
   tight-loop 战术单元、`move / occupy / support` 作为第一任务族默认值。
 - `army` 与 `land` 是可接受别名，并会规范化为 `ground`；导航通过
@@ -33,7 +35,7 @@
   `tasking-only lifecycle proof through normalized ground TaskOrder ->
   LeaderIntent -> PilotReport status shell`。
 - G4 已验收该有界切片，并封存为 tasking lifecycle baseline。
-- G5 开启 `scenarios/ground/` 下第一版规范 MVP 场景；command delivery、
+- G5 已接受 `scenarios/ground/` 下第一版规范 MVP 场景 shell；command delivery、
   observation/export、movement、sensing、terrain、fires 与 broad facade work
   仍保持 held。
 - G6 开启第一批 realism-gradient MVP 场景。G6-A 记录梯度决策，G6-B
@@ -42,14 +44,14 @@
   `ground_platoon_support_relationship_v1`。
 - G6-C 已接受 route-move boundary guardrails：未知显式 profile hint 现在会
   fail closed，当前 ground 场景必须保持 G0/G1，`G2` route movement 继续
-  held，直到 native ground platform schema 或显式 movement compatibility
-  boundary 被接受。
+  held，直到后续 movement-release vote 接受 native schema 支撑的 movement
+  evidence 或等价 compatibility boundary。
 - G6-D 开启 route-move release decision，并选择 schema-first 路径：第一版
-  `G2` route-move 场景必须等待 runtime-loadable native ground platform schema。
-  当前 `Aircraft` compatibility shell 只保留给 G0/G1。
+  `G2` route-move 场景必须等待 native ground schema 证据和后续
+  movement-release vote。当前 `Aircraft` compatibility shell 只保留给 G0/G1。
 - G6-D1/D2 已以 `preflight-only` 返回：当时 native `Ground` unit
-  type/schema blocker 仍处于打开状态；在 schema package 关闭它之前，
-  movement evidence gates 不能释放 route movement。
+  type/schema blocker 仍处于打开状态。G6-E2/E3 后来只关闭 schema identity；
+  movement evidence 仍需要单独 release vote。
 - G6-E0 开启 native ground platform schema planning package。它定义
   loadable/spawnable native ground entity 的最小实现面和证据门槛，但不释放
   route movement 或 runtime movement behavior。

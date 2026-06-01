@@ -1,13 +1,11 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/tasking/naval/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/tasking/naval` Boundaries
 
-`components/tasking/naval` stores tasking extensions for naval/maritime mission organization. It carries naval-specific semantics such as formation stations, maritime mission roles, fleet coordination, and embarked aviation task organization, rather than shared tasking core or execution layer commands.
+`components/tasking/naval` stores tasking extensions for naval/maritime mission organization. It carries naval-specific semantics such as station type, maritime mission roles, command authority, and embarked aviation task organization, rather than shared tasking core or execution layer commands.
 
 ## Allowed
 
-- Future extension fields for `TaskOrderNaval`, `LeaderIntentNaval`, `PilotReportNaval`.
-- Pure DTO semantics related to ship formations, screen stations, warfare commanders, embarked air operations.
+- Maintained extension fields for `TaskOrderNaval`, `LeaderIntentNaval`, `PilotReportNaval`.
+- Pure DTO semantics related to screen stations, warfare roles, officer-in-tactical-command, and embarked air operations.
 - Naval-side supplements to the shared tasking core in `common/`, without directly translating air terminology to ship terms.
 
 ## Prohibited
@@ -19,11 +17,12 @@
 
 ## Current State
 
-The current directory is still in the first-stage landing zone phase:
+The current directory is in a first-stage maintained DTO phase:
 
 - Shared/joint layer fields should continue to reside in `common/*`.
 - Existing air sortie semantics remain in `air/*`.
-- Naval-specific organization, stations, and embarked aviation mission semantics are reserved here as stable landing points.
+- Naval-specific station and command-authority owner slices are present for `TaskOrder`, `LeaderIntent`, and `PilotReport`.
+- Facade/runtime contracts can transport the naval tasking slice, but mission execution still stays bounded by the lower runtime owner.
 
 This means the directory is already the formal boundary entry point for the current mainline, but not yet proof of a complete naval tasking runtime.
 

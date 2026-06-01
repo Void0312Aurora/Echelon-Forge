@@ -5,23 +5,35 @@
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-本目录是 `flight_dynamics` 真实性主线的导航入口。要判断当前状态，
-优先看各分析文档中的 `2026-05-18` 收口标记，不要再把 `program/`
-或 `archive/` 当作当前参考来源。
+本目录是 `flight_dynamics` 真实性分析收口流的历史/参考导航入口。它记录了
+flight、sensor、weapon、naval 与 C2 分析拆分如何进入当前多域任务树。当前活跃
+工作应从 [../README.zh.md](../README.zh.md) 以及 air combat、naval、ground、
+simulation architecture 等领域入口开始。
 
-## 子项目导航
+若要判断本历史流的状态，优先看各分析文档中的 `2026-05-18` 收口标记，不要再把
+`program/` 或 `archive/` 当作当前参考来源。
+
+## 历史子项目导航
 
 - [flight 子项目](./flight/README.md): 飞行动力学、推进、失速 / 高 AoA 相关分析。
 - [sensor_situation 子项目](./sensor_situation/README.md): 传感器、航迹、数据链态势感知分析。
 - [weapon_guidance 子项目](./weapon_guidance/README.md): 武器链、导引头、制导与近炸 / 毁伤分析。
-- [naval 子项目](./naval/README.md): 海战真实性分析。
+- [naval 子项目](./naval/README.md): 历史海战真实性分析；当前工作应转向活跃 naval task line。
 - [c2_command_chain 子项目](./c2_command_chain/README.md): `MissionCommand / CommandLink / DataLink / ROE / naval command-chain` 冻结分析基线。
 - [program 子目录](./program/README.md): 已失效的主线状态快照入口，仅保留历史留痕。
 
 ## 跨目录关联入口
 
+- [task 根目录](../README.zh.md):
+  当前多域 task-area 导航与生命周期标签。
 - [air_combat 任务目录](../air_combat/README.zh.md):
-  空战 `1v1` 工作线入口。
+  当前战斗与空域工作线入口。
+- [naval 任务目录](../naval/README.md):
+  活跃海军领域任务线。
+- [ground 任务目录](../ground/README.zh.md):
+  早期地面 tasking/native-schema bootstrap 线。
+- [simulation_architecture 任务目录](../simulation_architecture/README.md):
+  共享 runtime、contract、facade 与架构收口线。
 - [runtime 性能任务目录](../performance_runtime/README.zh.md):
   当前 runtime 性能规划入口。
 
@@ -43,4 +55,4 @@
 1. 每个子方向使用一个子项目文件夹，并由该目录下的 `README.md` 作为本地导航入口。
 2. `*_analysis_*` 文档中的 `2026-05-18` 收口标记是当前可信口径。
 3. `program/` 已失效，`archive/` 仅保留历史留痕。
-4. 新方向若继续拆分，应先建新子文件夹和入口页，再补充分析或实施文档。
+4. 不在本目录下新开活跃多域实现流；新工作应通过 task 根目录和当前领域入口承接。

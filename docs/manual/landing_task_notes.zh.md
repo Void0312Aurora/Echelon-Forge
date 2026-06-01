@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/landing_task_notes.md. Review before treating this file as authoritative. -->
-
 # 着陆任务说明
 
 本文档定义了起飞和巡航之后的下一训练阶段的初始着陆任务支架。
@@ -30,14 +28,16 @@
 
 ## 新任务文件
 
+以下路径均为仓库相对路径：
+
 - 训练场景：
-  `/home/void0312/CMO/scenarios/landing/landing_ils_final_train_v1.json`
+  `scenarios/landing/landing_ils_final_train_v1.json`
 - 评估场景：
-  `/home/void0312/CMO/scenarios/landing/landing_ils_final_eval_v1.json`
+  `scenarios/landing/landing_ils_final_eval_v1.json`
 - 维护的训练配置：
-  `/home/void0312/CMO/examples/config/training/frozen/execution/p4_landing_retrain_v1.json`
+  `examples/config/training/frozen/execution/p4_landing_retrain_v1.json`
 - 历史工件来源配置：
-  `/home/void0312/CMO/examples/config/Archive/training/pre_freeze_experiments/p4_landing_full_visual_ils_smoke_v1.json`
+  `examples/config/Archive/training/pre_freeze_experiments/p4_landing_full_visual_ils_smoke_v1.json`
 
 ## 添加的着陆钩子
 

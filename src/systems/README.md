@@ -2,12 +2,18 @@
 
 `systems/` contains ECS system registration and per-tick mutation logic. Code here consumes `components/` and `models/`, and is registered and scheduled by `core/engine`.
 
+This layer is multi-domain aware but not uniformly mature: air/physics execution
+is the deepest path, naval has ship/submarine and embarked-air token systems,
+and ground is limited to terrain/ground-contact primitives rather than a full
+land movement, sensing, fires, or damage runtime.
+
 ## Allowed
 
 - Flecs system/query registration functions.
 - Per-tick update logic for ECS components.
 - Calls into swappable model implementations in `models/`.
 - Use of model interfaces from `core/interfaces`.
+- Bounded naval platform/runtime ticks and shared ground-contact physics primitives.
 
 ## Forbidden
 
@@ -15,6 +21,7 @@
 - Owning world lifecycle, batch runtime, episode controllers, or facades.
 - Python bindings or external API adapters.
 - Reading training configs, scenario files, or directly managing multiple worlds.
+- Native ground-domain runtime loops before the movement/sensing/fires/damage ownership split is defined.
 
 ## Subdirectory Conventions
 
@@ -43,12 +50,12 @@
   - `force_clear_system.h`, `force_system.h`, `ground_contact_system.h`
   - `instrument_system.h`, `leapfrog_system.h`, `movement_system.h`, `rotational_system.h`
 - `combat/`
-  - `damage_system.h`, `guidance_system.h`
+  - `damage_system.h`, `guidance_system.h`, `pilot_weapon_release_system.h`
 - `systems/`
   - `command_link_system.h`, `data_link_system.h`, `ew_system.h`
-  - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `track_manager_system.h`
+  - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `sonar_system.h`, `track_manager_system.h`
 - `naval/`
-  - `ship_motion_system.h`, `submarine_motion_system.h`, `embarked_air_ops_system.h`
+  - `ship_motion_system.h`, `submarine_motion_system.h`, `embarked_air_ops_system.h`, `naval_mission_weapon_release_system.h`
 - `visual/`
   - `visual_system.h`
 

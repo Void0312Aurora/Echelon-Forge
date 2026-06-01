@@ -17,9 +17,9 @@ Maintained configs, tools, and tests should continue to reference canonical scen
 - `scenarios/air_combat/`
   - Early `1v1` air-combat bootstrap fixtures and maintained combat-task smoke scenarios.
 - `scenarios/naval/`
-  - Maintained naval bootstrap fixtures focused on ship spawning, escort geometry, contact management, and future surface-warfare regression coverage.
+  - Maintained naval bootstrap and `N4` pre-fire fixtures covering ship spawning, escort/screen geometry, tasking, contact/report evidence, and threat/ROE visibility without claiming weapon release, damage, or kill rewards for the `N4` lane.
 - `scenarios/ground/`
-  - Maintained ground bootstrap fixtures focused on tasking-chain smoke coverage before real ground platform/runtime behavior exists.
+  - Maintained G0/G1 ground tasking compatibility fixtures. Native ground platform-schema evidence exists outside these scenarios; movement, terrain, sensing, fires, damage, and full ground runtime behavior remain held.
 - `scenarios/landing/`
   - Landing-specific tasks such as ILS final and rollout evaluation.
 - `scenarios/combined/`
@@ -71,11 +71,26 @@ Maintained configs, tools, and tests should continue to reference canonical scen
 - `air_combat/`
   - `air_combat_1v1_headon_sensor_smoke_v1.json`
     - Canonical symmetric `F-16C_Block50 vs F-16C_Block50` `1v1` bootstrap fixture with scenario-level ammo overrides and minimal kill-objective termination.
+  - `1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json`
+    - Stage-0 drone weapon-employment fixture used for fixed-fire/runtime fire-chain validation and the active Stage-0 probe configs.
+  - `1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
+    - Longer-range unarmed target fixture for contact persistence and missile time-of-flight checks.
+  - `1v1/air_combat_1v1_stage2_evasive_fighter_no_weapons_v1.json`
+    - Scripted evasive fighter fixture without reciprocal weapon pressure.
+  - `1v1/air_combat_1v1_stage3_limited_weapons_fighter_v1.json`
+    - Bounded reciprocal-threat fixture before any full peer `1v1` promotion.
 - `naval/`
+  - `ddg51_take1_screen_closing_contact_v1.json`
+    - Contact-geometry variant that preserves the DDG/T-AKE screen tasking while validating a moving surface contact and closest-approach evidence without weapons employment.
   - `ddg51_take1_screen_contact_report_v1.json`
+    - Baseline DDG/T-AKE screen fixture for ship spawning, naval task semantics, surface-contact geometry, and report sharing before weapons employment.
+  - `ddg51_take1_screen_threat_roe_v1.json`
+    - Accepted `N4` pre-fire threat/ROE fixture carrying engagement-authority and assigned-target command state for contract visibility only.
+  - `ddg51_take1_screen_threat_roe_offstation_recovery_v1.json`
+    - Accepted `N4` off-station recovery variant that validates scripted station recovery and fixed original-task reward references while keeping weapons, interception, damage, and kill out of scope.
 - `ground/`
   - `ground_platoon_tasking_smoke_v1.json`
-    - Minimal Army/ground tasking smoke fixture. It uses the current runtime-compatible `Aircraft` spawn shell and validates only the shared loader plus `TaskOrder -> LeaderIntent -> PilotReport` status chain.
+    - Minimal Army/ground tasking smoke fixture. It remains a G0 compatibility-shell scenario and validates only the shared loader plus `TaskOrder -> LeaderIntent -> PilotReport` status chain; native ground schema evidence is tracked separately.
   - `ground_platoon_static_occupy_v1.json`
     - G1 realism-gradient static occupy fixture. It validates Army/ground `TASK_OCCUPY` status semantics while explicitly deferring movement, terrain, sensing, fires, and damage.
   - `ground_platoon_support_relationship_v1.json`

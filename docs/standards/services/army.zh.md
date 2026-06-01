@@ -4,11 +4,13 @@ Language:
 - English canonical: `army.md`
 - Chinese companion: [army.zh.md](army.zh.md)
 
-状态：`2026-05-18`，Army 军种画像层权威版本。
+状态：`2026-06-01`，Army 军种画像层权威版本。
 
-本文档定义仓库在未来进入地面特化之前，应如何解释美国陆军的组织层级与指挥关系。
+本文档定义仓库在早期 ground specialization 已经启动之后，应如何解释美国陆军
+的组织层级与指挥关系，同时避免把 Army 军种画像误当成执行层。
 
-它刻意比完整陆军条令摘要更窄，目标是防止 air-first 的 runtime 假设继续渗入未来的陆战建模。
+它刻意比完整陆军条令摘要更窄，目标是防止 air-first 的 runtime 假设继续渗入
+当前或未来的陆战建模。
 
 ## 现实基础
 
@@ -63,9 +65,10 @@ common 层应保留跨军种共享的骨架：
 
 这一层定义的是解释权，而不是平台执行细节。
 
-### 未来地面特化
+### Ground specialization 边界
 
-未来如果建立 ground specialization，应由其负责当前仓库尚未维护的执行词汇：
+专门的 ground specialization 拥有，或应在成熟过程中逐步拥有，不属于 Army 军种
+画像层的执行词汇：
 
 - maneuver geometry
 - frontage、bounds、routes、battle positions
@@ -73,7 +76,9 @@ common 层应保留跨军种共享的骨架：
 - 保障与机动控制细节
 - 领域专属 observation、action、reporting 扩展
 
-在那之前，`services/army` 应继续扮演边界文档，而不是假想 runtime API。
+当前 ground 线已有 tasking/schema 证据，但 movement、terrain、sensing、fires、
+damage 与 combat 行为仍保持 held。因此，`services/army` 继续扮演边界文档，
+而不是假想 runtime API。
 
 ## Runtime 边界
 
@@ -137,17 +142,22 @@ battalion 级控制仍可存在于场景与 tasking 图景里，但真正的可�
 
 - 战术梯队边界应落在哪里
 - 哪些关系必须在 common core 中存活
-- 哪些内容必须等 dedicated ground specialization 落地后再定义
+- 哪些内容必须等 dedicated ground specialization 明确接受后再定义
 
 ## 与当前仓库合同的关系
 
-当前仓库还没有维护中的 Army 执行层。因此，陆军画像目前主要是面向未来设计的标准化护栏：
+当前仓库已有早期 ground tasking/profile/schema 证据，但还没有维护中的完整
+Army 执行层或 ground-combat runtime。因此，陆军画像仍主要是标准化护栏：
 
-- 共享 tasking/reporting 流应保持 `TaskOrder -> LeaderIntent -> MissionCommand -> Report`
+- 已接受的 ground tasking 状态流当前止于
+  `TaskOrder -> LeaderIntent -> PilotReport`
+- formal ground command delivery 经由 `MissionCommand` 或更窄 command packet
+  的路径，仍属于未来 ground-specialization release
 - common 字段应持续保持对陆战可移植
 - air-specific 的命令细节不应被提升为 Army 基线
 
-也正因如此，即便 ground runtime 尚未存在，`services/army` 仍然必须先写清楚。
+也正因如此，在 ground runtime 行为仍被后续任务 gate 持有时，`services/army`
+仍是边界文档。
 
 ## 相关文档
 
@@ -156,3 +166,4 @@ battalion 级控制仍可存在于场景与 tasking 图景里，但真正的可�
 - [联合命令链与汇报基线](../joint/command_link_and_reporting_baseline.md)
 - [仿真约定](../foundation/conventions.md)
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
+- [Ground 标准总览](../ground/README.zh.md)

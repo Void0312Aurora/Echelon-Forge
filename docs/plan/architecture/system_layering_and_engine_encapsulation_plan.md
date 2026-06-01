@@ -65,8 +65,8 @@ Today the Python runtime path still mixes:
 
 Primary hotspots:
 
-- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
-- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [gym_envs/scenario_loader/](../../../gym_envs/scenario_loader)
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 - [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
 
 That means the current "frontend" does not only consume backend services. It
@@ -494,10 +494,10 @@ The important point is not the exact names. The important point is that:
 
 ### Current code that should move toward frontend or adapter ownership
 
-- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader/](../../../gym_envs/scenario_loader)
   Current mixed role: scenario parsing, runtime state mirror, reward bridge,
   command sync helper.
-- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
   Current mixed role: frontend wrapper plus runtime orchestration details.
 
 ### Current code that should become simulation engine ownership

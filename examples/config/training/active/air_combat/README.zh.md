@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from examples/config/training/active/air_combat/README.md. Review before treating this file as authoritative. -->
-
 # 空战 1v1 训练条目
 
 此目录存放正在维护的 `1v1` 空战执行配置。
@@ -8,10 +6,14 @@
 
 - 该路线的场景配对为：
   - [air_combat_1v1_headon_sensor_smoke_v1.json](../../../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+    - 由 scripted-red `F-16C` smoke 和 8k probe 条目使用。
+  - [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
+    - 由 Stage-0 drone weapon-employment reactive 和 temporal world-batch probe 条目使用。
 - 当前基线为：
   - 蓝方学习者：`F-16C_Block50`
   - 红方对手：场景声明的脚本化 `F-16C_Block50`
   - 策略架构：`HierarchicalMoEExecutionPolicy`
+- Stage-1 到 Stage-3 的 `scenarios/air_combat/1v1` 文件是受维护的课程场景，但本目录目前还没有与它们配对的 active training config。
 
 ## 条目
 

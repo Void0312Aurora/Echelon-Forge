@@ -1,8 +1,8 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/command/naval/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/command/naval` Boundary
 
 `components/command/naval` holds command extensions for naval/maritime execution surfaces. It hosts naval-specific execution intents, such as carrier aircraft launch/recovery, formation station-keeping, and OTH relay control, rather than cross-domain shared command core.
+
+The current slice is maintained but intentionally narrow: it provides `MissionCommandNaval` fields and command codes used by naval systems and contracts. It does not by itself imply a complete naval mission runtime, N4 stack, or campaign-level maritime C2 model.
 
 ## Allowed
 
@@ -21,6 +21,12 @@
 
 - [mission_command_naval.h](mission_command_naval.h)
   - Naval extension fields and command codes for carrier aircraft launch/recovery, OTH relay, station radius/azimuth, etc.
+
+## Held Scope
+
+- Full naval mission/task orchestration remains outside this directory.
+- Contact evidence, launch requests/events, and damage diagnostics are exported through runtime engagement contracts rather than owned here.
+- Ground or amphibious command semantics should not be added here as a shortcut.
 
 ## Dependency Direction
 

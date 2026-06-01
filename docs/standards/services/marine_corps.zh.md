@@ -58,13 +58,13 @@ USMC 画像层负责 Marine 口径的共享骨架解释：
 
 这一层负责军种解释权，不负责执行细节。
 
-### `air`、`naval` 与未来地面特化
+### `air`、`naval` 与 ground specialization
 
 当前各领域执行语义继续放在专门目录中：
 
 - air 执行合同属于 `air/`
 - maritime 执行合同属于 `naval/`
-- 未来地面执行合同应属于专门的 ground 层
+- 超出 shared tasking/schema bootstrap 的 land 执行合同属于专门的 ground 层
 
 因此，Marine profile 的职责是通过 shared fields 协调这些层，而不是重写它们的命令面或传感器面。
 
@@ -77,7 +77,7 @@ USMC 画像层负责 Marine 口径的共享骨架解释：
 - Marine component 级作战框架
 - MEF / MEB / MEU 作为战役组织时的兵力包装
 - 大规模两栖或远征任务组织
-- 尚未被现有 air、naval 或未来 ground 执行合同特化的跨域任务分配
+- 尚未被现有 air、naval 或 ground 执行合同特化的跨域任务分配
 
 这些内容更适合放在：
 
@@ -128,7 +128,7 @@ Marine 标准化最合适的共享锚点是：
 
 - aviation command 语义必须继续通过 `air/`
 - ship、screen、recovery 或 sea-based positioning 语义必须继续通过 `naval/`
-- 未来地面 maneuver 语义应等待 dedicated land layer
+- 后续 ground maneuver 语义应等待 dedicated ground layer
 
 这样才能让 MAGTF 画像保持诚实，避免 `services/` 里再出现第二套平行命令面。
 

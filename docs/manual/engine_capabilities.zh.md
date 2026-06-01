@@ -1,8 +1,13 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/engine_capabilities.md. Review before treating this file as authoritative. -->
+# 当前引擎能力说明
 
-# 当前引擎能力说明（更新版）
+状态：`2026-06-01` 多域维护说明。
 
-你现在拥有的是一个基于 **ECS（flecs）** 的仿真内核，整体仍属于 MVP 级别，但已经包含了“可用于训练”的物理/控制/传感器等基础模块。下面描述以“当前仓库实现”为准。
+Echelon Forge 当前拥有一个基于 **ECS（flecs）** 的仿真内核。air/execution
+路径仍是最成熟的 runtime 与训练表面；naval 已有 pre-fire tasking/contact
+证据以及受限的 weapon-release 和 engagement-event hook。ground 在项目层面已有
+早期 tasking/schema 证据，但维护中的 C++ `src` surface 只到
+setup/type/capability evidence 与 aircraft/terrain ground-contact primitive。
+下面描述以当前仓库实现为准，但不等于声明完整 naval 或 ground combat runtime 已经成熟。
 
 ## 1) 核心能力（现在能做什么）
 
@@ -11,7 +16,9 @@
 - 系统管线有明确顺序：指令链/动作映射/滞后/控制/运动积分/传感器/伤害/EW/后勤等。
 
 ### B. 单位装配（数据库 -> 组件）
-- 支持从 `examples/config/database` 的 JSON 装配单位（飞机/导弹/平台模块等）。
+- 支持从 `examples/config/database` 的 JSON 装配 platform/content definitions，
+  包括 aircraft、ships、weapons、damage inputs、facilities、modules 和早期
+  ground unit schema fixtures。
 - 关键组件包括：`Transform/Velocity/FlightModel/LandingGear/Mass/Propulsion/FuelSystem/...`
 
 ### C. 运动与控制（关键）
@@ -23,7 +30,9 @@
   - 支持两类控制输入：  
     1) **autopilot 目标控制**：目标航向/速度/高度（RL 巡航/航路点任务使用）  
     2) **stick 直接控制**：roll/pitch/throttle/gear（RL 起飞任务使用）
-  - 含地面逻辑：跑道/滑行道速度限制、非铺装/水面判断、滚阻/制动等（用于 crash 判定与地面运动）
+  - 包含 aircraft runway/taxiway ground-contact 逻辑：限速、非铺装/水面检测、
+    滚阻/制动等。它支撑 air/execution 的跑道阶段和 crash 判定，不代表
+    ground-domain movement/sensing/fires runtime 已实现。
 
 ### D. 环境（基础版）
 - 大气：温度/气压/密度/风（ISA 简化）
@@ -31,7 +40,14 @@
 
 ### E. 感知/交战（基础版）
 - 传感器系统：扫描与 track 记忆、接入 `SensorModel`
-- 武器/制导/伤害/EW/数据链：存在基础系统与组件，适合后续扩展战术层训练
+- 武器/制导/伤害/EW/数据链：存在基础系统、组件与 engagement evidence export，
+  适合在有边界的前提下扩展战术层训练。
+- naval 当前以 pre-fire/tasking/contact 为主，并带有受限的 weapon-release 与
+  engagement-event evidence hook；不要由此推断已有完整 naval weapon-outcome
+  authority。
+- ground 当前在 C++ `src` 中以 schema/setup/bootstrap 为主；尚无维护中的 C++
+  ground command/tasking owner，movement、sensing、terrain、fires、damage 与
+  full ground runtime 行为仍保持 held。
 
 ## 2) 关键局限（对“训练学歪”最敏感的部分）
 

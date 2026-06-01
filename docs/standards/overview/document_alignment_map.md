@@ -4,7 +4,7 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-Status: `2026-05-21` authoritative for document ownership and layering.
+Status: `2026-06-01` authoritative for document ownership and layering.
 
 This document clarifies which standards documents are primary, which are
 specialized supplements, and how active task/workflow documents map back to the
@@ -223,10 +223,12 @@ the common core:
 `coordination_mode`, but the Army profile and ground specialization own the
 land-specific meaning of those hooks.
 
-## Mapping Active Flight-Dynamics Work Back To Standards
+## Mapping Historical Flight-Dynamics Work Back To Standards
 
-The active task tree under `docs/task/flight_dynamics/` should be read as an
-execution view, not as the standards ownership map.
+The `docs/task/flight_dynamics/` tree is now a historical/reference realism
+analysis entry, not the active project-planning root. Its subprojects should be
+read as execution-analysis records that map back to standards ownership, not as
+the standards ownership map itself.
 
 Map those workstreams back as follows:
 
@@ -248,8 +250,8 @@ Map those workstreams back as follows:
 - `flight/`
   - aligns to air specialization plus runtime workflow constraints
 
-This means task folders may contain valid analysis, but they should not decide
-where stable shared contracts live.
+This means archived or reference task folders may contain valid analysis, but
+they should not decide where stable shared contracts live.
 
 ## Recommended Maintenance Rule
 

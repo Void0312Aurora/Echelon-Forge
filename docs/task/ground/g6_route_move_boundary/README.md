@@ -29,11 +29,11 @@ This slice accepts guardrails only:
 
 ## Decision
 
-`ground_platoon_flat_route_move_v1` remains held until one of these is accepted:
-
-- a runtime-loadable native ground platform schema; or
-- a documented movement compatibility boundary that states the shell used, the
-  proof allowed, and the proof forbidden.
+`ground_platoon_flat_route_move_v1` remains held. G6-E2/E3 later accepted
+native ground schema evidence, but that closes identity/load/spawn only; a
+separate movement-release vote must still accept movement evidence before a
+G2 route-move scenario can land. A documented movement compatibility boundary
+would also need equivalent evidence and an explicit release vote.
 
 The current accepted state is therefore:
 

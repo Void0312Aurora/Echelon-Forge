@@ -4,6 +4,8 @@
 “多个执行域都可能复用的命令壳、传输语义和共享字段”，而不是当前 air
 执行面特有的控制或回收语义。
 
+本目录由维护中的 air 与 naval command slice 共享。它不是无人认领的 land-domain 行为落点：ground-specific movement、sensing、fires、damage command 语义在 native ground command schema 引入前仍 held。
+
 ## 允许
 
 - `MissionCommand` 的共享 core 字段。
@@ -13,6 +15,8 @@
 ## 禁止
 
 - runway、approach、takeoff、formation 这类明显 air-specific 字段。
+- naval stationing、embarked helo、OTH relay 或 surface-engagement 字段；这些进入 `naval/`。
+- ground movement、sensing、fires 或 damage 字段；这些目前还不是本目录维护面。
 - `TaskOrder`、`LeaderIntent`、`PilotReport` 等 tasking/C2 DTO。
 - 命令投递、延迟、生效时机的 tick 逻辑；这些属于 `systems/`。
 - Python binding 或 facade 适配逻辑。
@@ -26,5 +30,5 @@
 
 ## 依赖方向
 
-本目录只能依赖更底层的值类型与 component 头。`air/` 或未来的 `naval/`
+本目录只能依赖更底层的值类型与 component 头。`air/` 与 `naval/`
 扩展层可以组合这里的 core 结构；这里不应反向依赖具体域。

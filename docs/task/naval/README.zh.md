@@ -1,6 +1,7 @@
 # 海军
 
-状态：海军真实性工作线仍在活跃推进；N4 开火前 bridge 已于 `2026-05-25` 闭合。
+状态：海军真实性工作线仍在活跃推进；N4 开火前 bridge 已于 `2026-05-25`
+闭合，N4 RL action/observation surface 修复已于 `2026-05-27` 落地。
 
 ## 当前状态
 
@@ -10,6 +11,8 @@
   [naval_n4_closure_20260525.zh.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)。
 - 当前 RL 动作面拆分追踪于
   [n5_rl_action_surface_split/README.zh.md](./n5_rl_action_surface_split/README.zh.md)。
+  尽管目录名带 `N5`，它当前是 N4 pre-fire training-entry repair，不是 N5 武器
+  交战释放。
 - 旧的 `2026-05-17` 进度检查点仍保留在归档中，用于追溯阶段性上下文。
 - 该工作线仍然活跃，但当前重点是把已有海军命令链、传感器、runtime 和 RL/tasking 对接继续收口，而不是横向大规模扩功能。
 
@@ -17,7 +20,7 @@
 
 - 当前进展追踪：
   [naval_current_progress_20260524.zh.md](./naval_current_progress_20260524.zh.md)
-- 下一阶段场景扩大化子项目：
+- 已闭合的 N4 场景扩大化子项目：
   [n4_threat_roe_bridge/README.zh.md](./n4_threat_roe_bridge/README.zh.md)
 - N4 闭合：
   [n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)

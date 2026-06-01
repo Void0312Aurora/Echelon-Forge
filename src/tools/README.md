@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/tools/README.md. Review before treating this file as authoritative. -->
-
 # `src/tools` Boundary
 
 `tools/` houses development‑time utilities, diagnostic tools, and experimental verification entry points. Code here may call runtime APIs for probing, but does not constitute a maintained library API or training mainline.

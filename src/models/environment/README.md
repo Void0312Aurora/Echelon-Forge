@@ -1,8 +1,10 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/models/environment/README.md. Review before treating this file as authoritative. -->
-
 # `src/models/environment` Boundary
 
 `models/environment` stores default implementations of environment models and environment snapshots.
+
+Terrain and maritime/environment snapshots here are query models used by the
+engine and systems. They do not constitute land-domain terrain control,
+movement, sensing, fires, or damage runtime.
 
 ## Allowed
 
@@ -14,6 +16,7 @@
 - ECS system registration.
 - Runtime owner or batch runtime.
 - Python binding.
+- Land-domain terrain ownership or ground movement/sensing/fires/damage behavior.
 
 ## Migration Notes
 

@@ -88,7 +88,7 @@ joint 层应该保留组织骨架，而不是军种 doctrine 细节。
 
 - 空军专用的 `runway`、`takeoff`、`landing`、`CAP` 和编队语义
 - 海军专用的 `station`、`screen`、`formation`、参考单元和舰载直升机语义
-- 未来地面专用的机动与支援语义
+- 后续地面专用的机动与支援语义
 
 common 层可以描述一个单元被 support 或 supporting，但不应写死它在空、海、陆中的执行方式。
 
@@ -138,4 +138,3 @@ common 层可以描述一个单元被 support 或 supporting，但不应写死�
 1. `joint/common core`
 2. `service profile`
 3. `platform/task specialization`
-

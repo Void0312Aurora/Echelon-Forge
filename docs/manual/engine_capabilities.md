@@ -1,10 +1,15 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/engine_capabilities.zh.md. Review before treating this file as authoritative. -->
+# Current Engine Capabilities
 
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/engine_capabilities.md. Review before treating this file as authoritative. -->
+Status: `2026-06-01` multi-domain maintenance note.
 
-# Current Engine Capabilities (Updated)
-
-What you now have is a simulation kernel based on **ECS (flecs)**. The overall state is still MVP-level, but it already includes basic modules such as physics/control/sensors that are "usable for training." The description below is based on the "current repository implementation."
+Echelon Forge has a simulation kernel based on **ECS (flecs)**. The air/execution
+path remains the most mature runtime and training surface, while naval has
+maintained pre-fire tasking/contact evidence plus bounded weapon-release and
+engagement-event hooks. Ground has early tasking/schema evidence at the project
+level, but the maintained C++ `src` surface is limited to setup/type/capability
+evidence and aircraft/terrain ground-contact primitives. The description below
+is based on the current repository implementation; it is not a release claim
+for complete naval or ground combat runtime.
 
 ## 1) Core Capabilities (What It Can Do Now)
 
@@ -13,7 +18,9 @@ What you now have is a simulation kernel based on **ECS (flecs)**. The overall s
 - The system pipeline has a clear order: command chain / action mapping / lag / control / motion integration / sensors / damage / EW / logistics, etc.
 
 ### B. Unit Assembly (Database -> Components)
-- Supports assembling units (aircraft/missiles/platform modules, etc.) from JSON in `examples/config/database`.
+- Supports assembling platform/content definitions from JSON in
+  `examples/config/database`, including aircraft, ships, weapons, damage
+  inputs, facilities, modules, and early ground unit schema fixtures.
 - Key components include: `Transform/Velocity/FlightModel/LandingGear/Mass/Propulsion/FuelSystem/...`
 
 ### C. Motion and Control (Key)
@@ -27,7 +34,10 @@ What you now have is a simulation kernel based on **ECS (flecs)**. The overall s
   - Supports two types of control inputs:  
     1) **Autopilot target control**: target heading / speed / altitude (used for RL cruise / waypoint missions)  
     2) **Stick direct control**: roll/pitch/throttle/gear (used for RL takeoff missions)
-  - Includes ground logic: runway / taxiway speed limits, unpaved / water detection, rolling resistance / braking, etc. (used for crash detection and ground motion)
+  - Includes aircraft runway/taxiway ground-contact logic: speed limits,
+    unpaved / water detection, rolling resistance / braking, etc. This supports
+    air/execution runway phases and crash detection; it is not ground-domain
+    movement/sensing/fires runtime support.
 
 ### D. Environment (Basic Version)
 - Atmosphere: temperature / pressure / density / wind (simplified ISA)
@@ -35,7 +45,15 @@ What you now have is a simulation kernel based on **ECS (flecs)**. The overall s
 
 ### E. Perception / Engagement (Basic Version)
 - Sensor system: scanning and track memory, accesses `SensorModel`
-- Weapons / guidance / damage / EW / data link: basic systems and components exist, suitable for subsequent expansion of tactical layer training
+- Weapons / guidance / damage / EW / data link: basic systems, components, and
+  engagement evidence exports exist, suitable for bounded expansion of tactical
+  layer training.
+- Naval support is currently pre-fire/tasking/contact oriented with bounded
+  weapon-release and engagement-event evidence hooks; do not infer complete
+  naval weapon-outcome authority from these entries.
+- Ground support is currently schema/setup/bootstrap oriented in C++ `src`;
+  there is no maintained C++ ground command/tasking owner, and movement,
+  sensing, terrain, fires, damage, and full ground runtime behavior remain held.
 
 ## 2) Key Limitations (The Most Sensitive Part for "Training Going Astray")
 

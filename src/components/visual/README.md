@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/visual/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/visual` Boundary
 
 `components/visual` stores ECS state and data caches related to visual observation.

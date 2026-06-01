@@ -21,6 +21,14 @@ src/interfaces/python -> ef_py
 - 训练时回调、benchmark helper、contract runner 支撑。
 - world model / offline dataset 相关的纯 Python 组件。
 
+## 域状态口径
+
+- air/execution 仍是最成熟的 Python runtime 路径。
+- cooperative/common 是 shared runtime、tasking 与 policy orchestration 的集成主线。
+- active execution training/eval parity 以 runtime-facade / world-batch adapter 为中心；raw `UniversalEnv` 只有在调用方显式启用时才属于 compatibility/diagnostic path。
+- naval 已有受限的 tasking/profile/runtime 路径，包括 N4 stationing 与 contact-evidence plumbing；不要据此解读为完整海上仿真层。
+- ground 在本层目前是早期 tasking/profile/schema bootstrap。movement、sensing、terrain、fires、damage 与完整 ground runtime 仍处于 held 状态，不属于当前 maintained Python path。
+
 ## 禁止
 
 - 把一次性人工诊断脚本直接堆到 `python/` 根目录。
@@ -84,7 +92,7 @@ src/interfaces/python -> ef_py
   - `control/`
     - scripted takeoff / landing / stable-flight 控制器与 wrapper。
   - `tasking/`
-    - leader/tasking bridge、air/naval adapter、common-core profile glue。
+    - leader/tasking bridge、air/naval/ground adapter、common-core profile glue。
   - `runtime/`
     - single-world、world-batch、leader-window、cooperative runtime 与 vec-env 适配。
   - `policy_algo/`
@@ -92,7 +100,7 @@ src/interfaces/python -> ef_py
   - `planning/`
     - coarse route propagation 等规划辅助。
   - `profile/`
-    - `common/air/naval` profile 默认值与推断。
+    - common 以及 air、naval、ground profile 默认值与推断；ground 仍是 bootstrap 级别。
   - `support/`
     - benchmark、nonfinite probe、SB3 vec-env 兼容支撑。
 - `testing/`

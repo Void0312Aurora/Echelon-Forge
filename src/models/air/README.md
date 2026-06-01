@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/models/air/README.md. Review before treating this file as authoritative. -->
-
 # `src/models/air` Boundary
 
 `models/air` holds default model implementations related to aviation and flight control.

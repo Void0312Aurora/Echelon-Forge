@@ -11,7 +11,10 @@
 ## Current Structure
 
 - `runtime/`
-  - Runtime-contract tests grouped by capability domain under `air_combat/`, `core/`, `execution/`, `facade/`, `link/`, `mission/`, `multi_agent/`, `naval/`, and `navigation/`.
+  - Runtime-contract tests grouped by capability domain and shared surface
+    under `air_combat/`, `bindings/`, `core/`, `engagement/`, `execution/`,
+    `facade/`, `ground/`, `link/`, `mission/`, `multi_agent/`, `naval/`, and
+    `navigation/`.
 - `eval/`
   - Maintained CLI-level evaluation regression tests.
 - `training/`
@@ -34,8 +37,8 @@
   - Advisory suite governance metadata, including the draft test-system matrix and focused/local suite manifests.
   - These files do not change CI wiring on their own.
 - `diagnostics/`
-  - Remaining exploratory/debugging scripts that are not yet suitable as stable contracts.
-  - This folder should not host stable regression tests; once a diagnostic becomes deterministic, migrate it back into `runtime/`, `world_batch/`, `scenario/`, `leader/`, or `contracts/`.
+  - Temporary diagnostics/import-order holding area. The active exploratory scripts have been cleaned out; `test_diagnostics_import_order.py` is the only maintained pytest regression currently left here.
+  - This folder should not host stable regression tests long term; once ownership is clear, migrate deterministic checks back into `runtime/`, `world_batch/`, `scenario/`, `leader/`, or `contracts/`.
 - `scenarios/`
   - Reusable scenario fixtures when inline JSON is not practical, for example imported prefab dependencies.
 
@@ -188,6 +191,10 @@ Prefer a standalone Python test only when you truly need:
   - Kernel-driven flight regressions that step `SimulationKernel` directly with scripted pilot inputs.
   - Also hosts simulation guardrails for repeatability, sign consistency, coarse physical plausibility, and small parameter-scan realism checks.
   - Treat stable guardrails as gate candidates and compact realism scans as supplemental or diagnostic until metadata/manifest failure policy says otherwise.
+- `tests/contracts/unit/env/*.json`
+  - Environment helper and leader-training-env contracts that validate env-side setup, randomization, scripted/frozen model guards, and phase/curriculum behavior without living under a full scenario env tree.
+- `tests/contracts/unit/ground/*.json`
+  - Ground profile, common-core, task-order, and support-relationship contracts for the early ground tasking/bootstrap lane.
 - `tests/contracts/unit/scenarios/*.json`
   - Scenario-template and geometry regressions that validate static JSON content without stepping an env.
 - `tests/contracts/unit/training/*.json`
@@ -216,6 +223,10 @@ Prefer a standalone Python test only when you truly need:
   - Common-core baselines now live here alongside legacy air-specific contracts while the directory is being split into common-first families.
 - `tests/contracts/unit/config/`
   - Config resolution contracts.
+- `tests/contracts/unit/env/`
+  - Environment-helper and leader-training-env unit contracts.
+- `tests/contracts/unit/ground/`
+  - Ground-specific profile/tasking/common-core contracts for the early ground lane.
 - `tests/contracts/unit/kernel/`
   - Direct `SimulationKernel` flight regressions for takeoff, ground roll, and stable-flight control laws.
   - Also hosts core simulation guardrails for repeatability, sign consistency, coarse physical plausibility checks, and compact realism parameter scans.

@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from tests/README.md. Review before treating this file as authoritative. -->
-
 # 测试 README
 
 `tests/` 正在围绕一组小型可复用运行程序加上 JSON 契约进行整合。
@@ -13,7 +11,7 @@
 ## 当前结构
 
 - `runtime/`
-  - 按能力域分组的运行时契约测试，位于 `air_combat/`、`core/`、`execution/`、`facade/`、`link/`、`mission/`、`multi_agent/`、`naval/` 和 `navigation/` 下。
+  - 按能力域与共享 surface 分组的运行时契约测试，位于 `air_combat/`、`bindings/`、`core/`、`engagement/`、`execution/`、`facade/`、`ground/`、`link/`、`mission/`、`multi_agent/`、`naval/` 和 `navigation/` 下。
 - `eval/`
   - 维护的 CLI 级别评估回归测试。
 - `training/`
@@ -36,8 +34,8 @@
   - 建议性的 suite 治理元数据，包括测试系统矩阵草案和 focused/local suite manifest。
   - 这些文件本身不会改变 CI wiring。
 - `diagnostics/`
-  - 剩余的探索性/调试脚本，尚未适合作为稳定契约。
-  - 此文件夹不应托管稳定回归测试；一旦诊断脚本变得确定，将其迁移回 `runtime/`、`world_batch/`、`scenario/`、`leader/` 或 `contracts/`。
+  - 临时 diagnostics/import-order holding area。活跃探索脚本已被清理；`test_diagnostics_import_order.py` 是当前唯一仍留在这里的维护态 pytest 回归。
+  - 此文件夹长期不应托管稳定回归测试；ownership 明确后，应将确定性检查迁移回 `runtime/`、`world_batch/`、`scenario/`、`leader/` 或 `contracts/`。
 - `scenarios/`
   - 当内联 JSON 不实用时可复用的场景装置，例如导入的预制依赖项。
 
@@ -186,6 +184,10 @@ Suite tier 含义：
   - 内核驱动的飞行回归，直接使用脚本化飞行员输入步进 `SimulationKernel`。
   - 还包含模拟护栏，用于可重复性、符号一致性、粗略物理合理性以及小型参数扫描真实性检查。
   - 在 metadata/manifest failure policy 明确前，将稳定护栏视为 gate 候选，将紧凑 realism scan 视为 supplemental 或 diagnostic。
+- `tests/contracts/unit/env/*.json`
+  - 环境辅助与 leader-training-env 契约，用于验证 env-side setup、randomization、scripted/frozen model guard、phase 与 curriculum 行为，而不放入完整 scenario env tree。
+- `tests/contracts/unit/ground/*.json`
+  - 早期 ground tasking/bootstrap 线的 ground profile、common-core、task-order 与 support-relationship 契约。
 - `tests/contracts/unit/scenarios/*.json`
   - 场景模板和几何回归，验证静态 JSON 内容，无需步进环境。
 - `tests/contracts/unit/training/*.json`
@@ -214,6 +216,10 @@ Suite tier 含义：
   - 通用核心基线现在与此处遗留的空域特定契约并存，同时该目录正在拆分为以通用优先的系列。
 - `tests/contracts/unit/config/`
   - 配置解析契约。
+- `tests/contracts/unit/env/`
+  - 环境辅助与 leader-training-env 单元契约。
+- `tests/contracts/unit/ground/`
+  - 早期 ground 线的 ground-specific profile/tasking/common-core 契约。
 - `tests/contracts/unit/kernel/`
   - 直接 `SimulationKernel` 飞行回归，用于起飞、地面滑跑和稳定飞行控制律。
   - 还包含核心模拟护栏，用于可重复性、符号一致性、粗略物理合理性检查以及紧凑的现实参数扫描。

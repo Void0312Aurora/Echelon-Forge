@@ -22,7 +22,9 @@ alternate training entrypoints.
 - [config/training/README.md](config/training/README.md)
   - Maintained training config entrypoints and status taxonomy.
 - `config/database/`
-  - Unit, aircraft, and module database inputs used by the runtime/content loader.
+  - Platform/content database inputs used by the runtime/content loader,
+    including aircraft, ships, ground units, weapons, damage definitions,
+    facilities, and modules.
 - `config/diagnostics/`
   - Maintained benchmark and diagnostics config inputs.
 - `config/prefabs/`

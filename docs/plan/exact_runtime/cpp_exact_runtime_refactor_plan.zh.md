@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/exact_runtime/cpp_exact_runtime_refactor_plan.md. Review before treating this file as authoritative. -->
-
 # C++ 精确运行时重构计划
 
 导航：
@@ -37,14 +35,14 @@
 
 相关参考：
 
-- [execution_coarse_grained_route_segments.md](../archive/execution_coarse_grained_route_segments.md)
-- [gpu_exact_world_step_rearchitecture_plan.md](../archive/gpu_exact_world_step_rearchitecture_plan.md)
+- [execution_coarse_grained_route_segments.md](../archive/exact_runtime/execution_coarse_grained_route_segments.md)
+- [gpu_exact_world_step_rearchitecture_plan.md](../archive/exact_runtime/gpu_exact_world_step_rearchitecture_plan.md)
 - [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
 - [system_layering_and_engine_encapsulation_plan.md](../architecture/system_layering_and_engine_encapsulation_plan.md)
 - [architecture_and_performance_research_followup.zh.md](../architecture/architecture_and_performance_research_followup.zh.md)
 - [simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)
 - [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
-- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py)
 
 ## 当前诊断
 
@@ -82,7 +80,7 @@
 
 相关代码：
 
-- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py)
 - [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 - [universal_env.py](../../../gym_envs/universal_env.py)
 
@@ -320,7 +318,7 @@ Python 应停止拥有：
 主要文件：
 
 - 新增 `src/core/mission/execution_episode_state.*`
-- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py)
 - [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
 
 验收标准：
@@ -369,7 +367,7 @@ Python 应停止拥有：
 主要文件：
 
 - 新增 `src/core/mission/execution_episode_controller.*`
-- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py)
 - 在 `tests/runtime/` 下新增测试
 
 验收标准：
@@ -604,7 +602,7 @@ Python 应停止拥有：
 - [world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
 - [world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - [python_module.cpp](../../../src/interfaces/python/python_module.cpp)
-- [scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader/core.py](../../../gym_envs/scenario_loader/core.py)
 - [world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 
 ## 验收标准

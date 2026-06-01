@@ -1,13 +1,16 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/cooperative/README.zh.md. Review before treating this file as authoritative. -->
-
 # `cooperative/`
 
-This directory contains the main documentation for the cooperative training and cooperative execution pipeline.
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
+
+This directory contains the main documentation for the cooperative training and
+cooperative execution pipeline.
 
 Recommended reading order:
 
-1. [multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
-2. [p8_cooperative_execution_pipeline_findings_and_plan.zh.md](p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+1. [multi_agent_cooperative_training_foundation_and_performance_plan.md](multi_agent_cooperative_training_foundation_and_performance_plan.md)
+2. [p8_cooperative_execution_pipeline_findings_and_plan.md](p8_cooperative_execution_pipeline_findings_and_plan.md)
 
 Usage rules:
 

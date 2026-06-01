@@ -47,8 +47,9 @@ Rationale:
 - `ground` keeps room for Army-led land modeling without forcing all future
   land-capable work into a service-specific label.
 - this follows the existing split between `services/navy` and `naval/`, and the
-  standards note that future land execution should live in a dedicated ground
-  specialization rather than in `services/army`.
+  standards note that land execution beyond service-profile interpretation
+  should live in the dedicated ground specialization rather than in
+  `services/army`.
 
 ## 3. Current Repo Position
 
@@ -342,7 +343,7 @@ domain bootstrap should account for the following cross-cutting surfaces:
 ### 9.1 Standards And Doctrine Placement
 
 - service-profile interpretation
-- future ground specialization ownership
+- dedicated ground specialization ownership
 - terminology that must not be borrowed from air/naval semantics
 
 ### 9.2 Capability Composition Mapping

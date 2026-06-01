@@ -1,6 +1,6 @@
 # `src/components/command/air` 边界
 
-`components/command/air` 保存当前航空执行面的 command 扩展。这里承载空中域专用的命令语义，例如航路、回收、跑道处理和低层控制输入解析。
+`components/command/air` 保存成熟航空执行面的 command 扩展。这里承载空中域专用的命令语义，例如航路、回收、跑道处理和低层控制输入解析。
 
 ## 允许
 

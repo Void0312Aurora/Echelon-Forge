@@ -40,7 +40,9 @@ platform schema 工作之前；G6-E0/E1/E2/E3 已接受第一版 native schema e
 
 - `Army` 是 service profile，不适合作为执行语义的长期命名。
 - `ground` 能承接以 Army 为主的陆上建模，同时不把未来所有陆上工作都绑死在军种标签上。
-- 这与现有 `services/navy` 和 `naval/` 的分层一致，也符合 standards 中“未来 land execution 应落在 dedicated ground specialization”这一原则。
+- 这与现有 `services/navy` 和 `naval/` 的分层一致，也符合 standards 中
+  “超出 service-profile interpretation 的 land execution 应落在 dedicated
+  ground specialization”这一原则。
 
 ## 3. 当前仓库位置
 
@@ -117,7 +119,7 @@ blocker；route movement 仍需要后续 G6-D3/G6-F release vote。
 | `G0 边界冻结` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
 | `G1 合同骨架` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
 | `G2 内容与测试种子` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
-| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_preflight_cluster_20260521.md) | accepted |
+| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.zh.md) | accepted |
 | `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
 | `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
 | `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |

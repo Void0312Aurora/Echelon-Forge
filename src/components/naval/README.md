@@ -1,8 +1,10 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/naval/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/naval` Boundary
 
 `components/naval` holds static/slowly-changing platform state components for surface vessels, submarines, and ship-based aviation operations. It stores naval platform data and deck operation status, and is not responsible for command interpretation, tick advancement, or mission/runtime orchestration.
+
+This is a maintained naval data slice, but it is not the owner of N4 tasking,
+pre-fire/contact evidence, or a full naval mission runtime. Those surfaces live
+in command/tasking DTOs, systems, and runtime contracts.
 
 ## Allowed
 
@@ -14,6 +16,7 @@
 
 - Ship/submarine motion integration, sea-state advancement, or aircraft scheduling logic; these belong in `systems/naval`.
 - Naval mission command, command link, or tasking/C2 DTOs.
+- Engagement evidence, launch requests/events, or diagnostics exports.
 - Python bindings, facade request/result, or environment glue.
 - Directly owning entity lifecycle or helo spawn/recovery runtime owner.
 

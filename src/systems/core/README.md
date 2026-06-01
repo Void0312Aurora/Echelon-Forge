@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/systems/core/README.md. Review before treating this file as authoritative. -->
-
 # `src/systems/core` Boundaries
 
 `systems/core` holds general ECS operation systems. It should only contain cross-domain, per-tick basic world mutations.

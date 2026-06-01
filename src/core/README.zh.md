@@ -2,12 +2,15 @@
 
 `core/` 是 C++ 运行时内核层，负责单世界仿真、批量运行时、任务/回合运行时、几何查询和模型接口。它可以编排下层 `systems/`、`models/`、`components/` 和 `content/`，但不承载 Python 绑定或应用层外观契约。
 
+kernel 层是 multi-domain aware，air execution 仍是最成熟路径。naval system 与 contract 位于受控 seam；ground 仅限 setup/type/capability evidence 与 shared aircraft/terrain contact primitive，不是 land-domain runtime。
+
 ## 允许
 
 - `SimulationKernel` 和 `WorldBatchRuntime` 这类运行时所有者。
 - mission、objective、reward、termination、episode controller 相关逻辑。
 - 几何查询与核心模型接口。
 - 面向 facade 的稳定 C++ API 实现底座。
+- 通过下层 public API 对 air、naval 与早期 ground-aware setup 数据做受限编排。
 
 ## 禁止
 
@@ -15,6 +18,7 @@
 - 前端专用 API 命名和语言绑定兼容逻辑。
 - 用 GPU 实验主线替代 CPU 真实路径。
 - 把 component 或 model 的实现直接定义在 `core` 中。
+- 在下层能力存在前宣称拥有 full ground movement、sensing、fires、damage 或 land-domain runtime。
 
 ## 子目录约定
 

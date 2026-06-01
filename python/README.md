@@ -21,6 +21,14 @@ src/interfaces/python -> ef_py
 - Training callbacks, benchmark helpers, and contract runner support.
 - Pure Python components related to world models and offline datasets.
 
+## Domain Posture
+
+- Air/execution remains the most mature Python runtime path.
+- Cooperative/common is the main integration line for shared runtime, tasking, and policy orchestration.
+- Active execution training/eval parity is centered on runtime-facade/world-batch adapters; raw `UniversalEnv` use is compatibility/diagnostic-only unless explicitly enabled by the caller.
+- Naval support is present in scoped tasking/profile/runtime paths, including N4 stationing and contact-evidence plumbing, but should not be read as a complete maritime simulation layer.
+- Ground support in this layer is early tasking/profile/schema bootstrap. Movement, sensing, terrain, fires, damage, and a full ground runtime remain held outside the maintained Python path.
+
 ## Forbidden
 
 - Dropping one-off manual diagnostics scripts directly into the `python/` root.
@@ -84,7 +92,7 @@ src/interfaces/python -> ef_py
   - `control/`
     - Scripted takeoff, landing, and stable-flight controllers and wrappers.
   - `tasking/`
-    - Leader/tasking bridge, air/naval adapters, and common-core profile glue.
+    - Leader/tasking bridge, air/naval/ground adapters, and common-core profile glue.
   - `runtime/`
     - Single-world, world-batch, leader-window, cooperative runtime, and vec-env adapters.
   - `policy_algo/`
@@ -92,7 +100,7 @@ src/interfaces/python -> ef_py
   - `planning/`
     - Planning helpers such as coarse route propagation.
   - `profile/`
-    - Default values and inference for `common/air/naval` profiles.
+    - Default values and inference for common plus air, naval, and ground profiles; ground remains bootstrap-level.
   - `support/`
     - Benchmarking, nonfinite probes, and SB3 vec-env compatibility support.
 - `testing/`

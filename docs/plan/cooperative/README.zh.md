@@ -1,5 +1,10 @@
 # `cooperative/`
 
+语言版本：
+
+- 英文主文：[README.md](README.md)
+- 中文辅文：`README.zh.md`
+
 本目录存放协同训练与协同执行管线主线文档。
 
 推荐阅读顺序：

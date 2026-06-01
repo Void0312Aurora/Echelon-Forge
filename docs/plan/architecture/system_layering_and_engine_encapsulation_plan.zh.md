@@ -58,8 +58,8 @@ English version:
 
 主要热点文件：
 
-- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
-- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [gym_envs/scenario_loader/](../../../gym_envs/scenario_loader)
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
 - [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
 
 这意味着当前所谓“前端”并不只是消费后端服务，它在相当程度上仍然兼任了运行时后端的一部分。
@@ -469,9 +469,9 @@ python/
 
 ### 当前应向前端或适配层归位的代码
 
-- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)
+- [gym_envs/scenario_loader/](../../../gym_envs/scenario_loader)
   当前混合职责：scenario parsing、runtime state mirror、reward bridge、command sync helper。
-- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)
   当前混合职责：frontend wrapper 加 runtime orchestration 细节。
 
 ### 当前应归位为仿真引擎所有权的代码

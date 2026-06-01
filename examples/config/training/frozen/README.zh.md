@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from examples/config/training/frozen/README.md. Review before treating this file as authoritative. -->
-
 # 冻结领导者基线
 
 此目录包含冻结通用核心基座（common-core substrate）下受维护的领导者层训练入口点。

@@ -4,7 +4,7 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-05-18` authoritative for service-profile placement.
+Status: `2026-06-01` authoritative for service-profile placement.
 
 This directory defines service profiles based on publicly available U.S.
 military information. A service profile is not a platform guide and not a full
@@ -23,6 +23,7 @@ Current specialization directories that build on service profiles:
 
 - [Air Platform Specialization](../air/README.md)
 - [Naval Specialization](../naval/README.md)
+- [Ground Specialization](../ground/README.md)
 
 ## What A Service Profile Owns
 
@@ -57,6 +58,7 @@ Those belong in:
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
 - [air/](../air/README.md)
 - [naval/](../naval/README.md)
+- [ground/](../ground/README.md)
 
 ## Unified Conclusion
 
@@ -78,6 +80,8 @@ The current code base already contains a mixed bridge:
   formation contracts
 - emerging naval semantics in `task_group_id`, ship mission commands, and
   command-authority tests
+- early ground tasking/schema semantics in `tasking_profile: ground`, Army
+  aliases, `UnitType::Ground`, and static/support relationship fixtures
 - joint/common seams in `MissionCommand`, `CommandLink`, `DataLink`, and report
   flow
 

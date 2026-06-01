@@ -4,6 +4,19 @@
 checks that support the maintained CPU-mainline runtime and, when explicitly
 requested, the frozen experimental GPU helper line.
 
+Domain posture: diagnostics are still weighted toward air/execution and
+cooperative/common runtime work. Naval entries are scoped to the listed station,
+screen, and contact-evidence paths. Ground-domain movement, sensing, terrain,
+fires, damage, and full runtime diagnostics are not maintained here yet; takeoff
+ground-roll wording means runway-phase air/execution behavior.
+
+Runtime posture: diagnostics that use `WorldBatchRuntime`, `WorldBatchVecEnv`,
+or `CooperativeWorldBatchVecEnv` are aligned with the maintained runtime-facade
+mainline. Diagnostics that instantiate `UniversalEnv` directly are raw-kernel
+compatibility/debug probes and must explicitly opt into
+`runtime_compatibility_enabled=True`; callers that have not plumbed that flag
+should be treated as implementation follow-up, not production acceptance.
+
 These scripts are intentionally separate from top-level entrypoints because
 they usually:
 
@@ -25,16 +38,20 @@ Shared support code for maintained diagnostics now starts to live in:
 - [cooperative_trajectory_base.py](cooperative_trajectory_base.py)
   - Shared cooperative trajectory env/model bootstrap, trace capture, and plotting helpers for maintained cooperative diagnostics.
 
-Current maintained diagnostics:
+Current diagnostics and probes:
 
 - [leader_perf_probe.py](leader_perf_probe.py)
   - Quick leader-layer throughput probe for the maintained `auto`, `subproc`, `shared`, and `dummy` baselines.
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
+- [air_combat_stage0_process_probe.py](air_combat_stage0_process_probe.py)
+  - Scoped air-combat stage-0 process probe for weapon-employment/debug traces on the raw-`UniversalEnv` compatibility path.
+- [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
+  - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene and feature scaling checks.
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - Minimal line-protocol TCP stub for the local `game/` Arma bridge. It acknowledges `begin_session`, consumes `host_frame`, and emits synthetic `proxy_state` payloads for `echelon_bridge.dll`.
 - [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
-  - `UniversalEnv`-backed line-protocol TCP backend for the same Arma bridge. It anchors backend truth to the Arma host-frame position/orientation while stepping authoritative flight state inside Echelon Forge.
+  - `UniversalEnv`-backed line-protocol TCP backend for the same Arma bridge. It anchors backend truth to the Arma host-frame position/orientation while stepping authoritative air/execution state inside Echelon Forge.
 - `spatial_query`
   - Compiled spatial-query vs legacy geometry benchmark.
 - `scenario_compiler`
@@ -51,12 +68,20 @@ Current maintained diagnostics:
   - Visual downsample sweep benchmark.
 - `coarse_route_segments`
   - Coarse route-segment error benchmark.
+
+Some benchmark families include legacy/raw-`UniversalEnv` comparison branches
+alongside maintained runtime-facade measurements. If those branches are needed,
+wire the compatibility flag intentionally instead of treating a raw-env failure
+as a world-batch runtime regression.
+
 - [diagnose_cooperative_trajectory.py](diagnose_cooperative_trajectory.py)
   - Unified cooperative trajectory replay/export CLI. Use `--task takeoff` or `--task takeoff_to_cruise` to emit task-specific PNG + JSON diagnostics from one maintained entrypoint.
 - [diagnose_runway_drift_sweep.py](diagnose_runway_drift_sweep.py)
   - Parameterized takeoff ground-roll drift sweep used to quantify off-runway behavior across seeds, winds, and policy choices.
 - [diagnose_takeoff_to_landing_trajectory.py](diagnose_takeoff_to_landing_trajectory.py)
   - Single-episode trajectory exporter for the continuous takeoff-to-landing task, with PNG + JSON outputs for scripted/model comparisons.
+- [trace_training_nonfinite_source.py](trace_training_nonfinite_source.py)
+  - Focused cooperative training NaN/Inf tracer. It reconstructs the maintained cooperative flow from `train.py`, patches finite-value probes into the loaded policy/algo, and stops with a JSON report.
 
 Recommended maintained entrypoint for multiple benchmarks:
 
@@ -111,8 +136,8 @@ Run one benchmark family through the unified CLI:
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_vec_env \
-  --n-envs 8 --steps 128 --reset-iters 24 --mission-obs-mode nav_v2 --action-mode full
+  --family world_batch_runtime \
+  --world-count 8 --setup-iters 64 --iters 512
 ```
 
 Run the local Arma proxy backend stub:
@@ -143,9 +168,9 @@ Run the env-backed Arma proxy backend with a trained SB3 policy:
 ./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
   --host 127.0.0.1 \
   --port 8765 \
-  --scenario /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
-  --train-config /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
-  --model /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
+  --scenario experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
+  --train-config experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
+  --model experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
   --algo AdaptiveKLPPO \
   --device cpu
 ```
@@ -164,7 +189,7 @@ Show family-specific help:
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_vec_env \
+  --family world_batch_runtime \
   --family-help
 ```
 

@@ -33,10 +33,10 @@ ground platform schema?
 
 G6-D selects the schema-first path.
 
-The first `G2` route-move release must wait for a runtime-loadable native ground
-platform schema. The current `Aircraft` compatibility spawn shell remains valid
-only for G0/G1 tasking, status-chain, static occupy, and support-relationship
-fixtures.
+The first `G2` route-move release must wait for accepted native ground schema
+evidence plus a later movement-release vote. The current `Aircraft`
+compatibility spawn shell remains valid only for G0/G1 tasking, status-chain,
+static occupy, and support-relationship fixtures.
 
 An explicit movement compatibility boundary may still be drafted later, but it
 cannot by itself release a `G2` movement-realism scenario unless it proves the
@@ -58,9 +58,10 @@ Rationale:
 the current database loader and public `UnitType` binding do not accept
 `Ground`, and a probe spawn with `type_name = Ground` returns `0`.
 
-`G6-D2` defined the future movement evidence gates, but those gates cannot be
-used to release `ground_platoon_flat_route_move_v1` until the native schema
-blocker is closed.
+`G6-D2` defined the future movement evidence gates. G6-E2/E3 later closed the
+native schema identity blocker, but those gates still cannot release
+`ground_platoon_flat_route_move_v1` until a separate movement-release vote
+accepts them.
 
 ## Output
 
@@ -99,9 +100,9 @@ G6-D0 is complete when this package records:
 - the finite cluster list, model/reasoning budget, write set, non-goals,
   validation commands, closure gate, dependency relation, and round cap.
 
-No downstream worker may add `ground_platoon_flat_route_move_v1` until the
-native ground platform schema path is accepted or a later compatibility
-boundary is explicitly approved with equivalent evidence gates.
+No downstream worker may add `ground_platoon_flat_route_move_v1` until a later
+movement-release vote consumes the accepted native schema evidence, or an
+explicit compatibility boundary is approved with equivalent evidence gates.
 
 ## Residuals
 

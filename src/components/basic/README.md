@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/basic/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/basic` Boundaries
 
 `components/basic` stores the lowest-level, cross-domain shared ECS components and tags.

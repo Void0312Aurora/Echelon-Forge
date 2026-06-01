@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/gpu/experimental/README.md. Review before treating this file as authoritative. -->
-
 # `src/gpu/experimental` Boundary
 
 `gpu/experimental` holds GPU probes, verification code, and temporary experiments that have not yet entered the mainline. Code here cannot be assumed as the production truth path.

@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/gpu/README.md. Review before treating this file as authoritative. -->
-
 # `src/gpu` Boundary
 
 `gpu/` holds GPU helpers, batch packet runtime, and explicit experimental probes. Currently the default truth path remains the CPU `SimulationKernel::step()`; GPU code must not silently alter the canonical world-step semantics.

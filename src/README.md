@@ -1,7 +1,17 @@
 # `src/` Layer Boundaries
 
-Status: `2026-05-10` layering refactor guardrails.  
+Status: `2026-06-01` multi-domain layering guardrails.
 This document defines the responsibilities of directories under `src/` and the permitted dependency directions. It does not describe a one-off relocation target; it sets boundaries for future splits, renames, and new code.
+
+## Current Domain Posture
+
+The maintained `src/` surface is now multi-domain. Air/execution remains the
+most mature path, while common DTO/contracts are expected to carry data shared
+by air, naval, and early ground-aware setup flows.
+
+- Air: mature command, tasking, mission/episode, physics, observation, and RL-facing execution paths.
+- Naval: maintained platform components, command/tasking owner slices, ship/submarine/embarked-air token runtime, and tasking/engagement evidence surfaces are present. This is not a claim that a complete naval mission runtime exists.
+- Ground: early bootstrap only. `UnitType::Ground` and typed-platform capability evidence exist, and shared terrain assignment plus aircraft/terrain ground-contact primitives are available. These are not a land-domain terrain or movement runtime; ground movement, sensing, terrain ownership, fires, damage, and full ground runtime remain held.
 
 ## Dependency Direction
 
@@ -23,12 +33,12 @@ Lower layers may define data, models, and system logic. Upper layers own composi
 
 ## Directory Responsibilities
 
-- `components/`: ECS components and stable DTO-like data structures.
-- `systems/`: Flecs system registration and per-tick mutation logic.
-- `models/`: replaceable domain model implementations.
-- `content/`: content schemas, unit definitions, and loaders.
+- `components/`: ECS components and stable DTO-like data structures, including the common command/tasking foundation, air/naval slices, and ground-bootstrap-aware setup boundaries.
+- `systems/`: Flecs system registration and per-tick mutation logic, including air/physics systems, naval token runtime, and ground-contact primitives.
+- `models/`: replaceable domain model implementations and unit-factory capability evidence.
+- `content/`: content schemas, unit definitions, and loaders for air, naval, and early ground-aware setup data.
 - `core/`: C++ runtime orchestration, the single-world kernel, batch runtime, and mission/episode runtime.
-- `runtime/`: the maintained application-layer C++ runtime contract, especially the facade.
+- `runtime/`: the maintained application-layer C++ runtime contract, especially the facade and shared DTO contracts.
 - `interfaces/`: language bindings and external interface adapters.
 - `gpu/`: GPU helpers, packet runtime, and explicit experimental probes.
 - `tools/`: development-time and experimental tools; they do not enter the mainline runtime contract.
@@ -39,10 +49,13 @@ Lower layers may define data, models, and system logic. Upper layers own composi
 - [components/command/README.md](components/command/README.md)
 - [components/command/common/README.md](components/command/common/README.md)
 - [components/command/air/README.md](components/command/air/README.md)
+- [components/command/naval/README.md](components/command/naval/README.md)
+- [components/naval/README.md](components/naval/README.md)
 - [components/tasking/README.md](components/tasking/README.md)
 - [components/tasking/common/README.md](components/tasking/common/README.md)
 - [components/tasking/air/README.md](components/tasking/air/README.md)
 - [components/tasking/naval/README.md](components/tasking/naval/README.md)
+- [content/README.md](content/README.md)
 - [core/README.md](core/README.md)
 - [core/engine/README.md](core/engine/README.md)
 - [core/mission/README.md](core/mission/README.md)
@@ -52,6 +65,11 @@ Lower layers may define data, models, and system logic. Upper layers own composi
 - [runtime/README.md](runtime/README.md)
 - [runtime/contracts/README.md](runtime/contracts/README.md)
 - [runtime/facade/README.md](runtime/facade/README.md)
+- [models/README.md](models/README.md)
+- [models/core/README.md](models/core/README.md)
+- [models/systems/README.md](models/systems/README.md)
+- [systems/README.md](systems/README.md)
+- [systems/naval/README.md](systems/naval/README.md)
 - [interfaces/README.md](interfaces/README.md)
 - [interfaces/python/README.md](interfaces/python/README.md)
 - [gpu/README.md](gpu/README.md)

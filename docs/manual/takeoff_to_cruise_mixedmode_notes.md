@@ -1,22 +1,25 @@
 # Takeoff-To-Cruise Mixed-Mode Notes
 
-This document records the current active takeoff-to-cruise mixed-mode task and
-the route-generation fix that restored coherent training behavior.
+This document records the historical P3 takeoff-to-cruise mixed-mode baseline
+and the route-generation fix that restored coherent training behavior. The
+config and scenario paths below are maintained repository inputs where noted;
+experiment directories are local/retained artifacts and are not current
+authority unless a newer task or reference-artifact page promotes them.
 
-## Active Artifacts
+## Artifact References
 
-- Active experiment:
-  `/home/void0312/CMO/experiments_tmp/20260316_p3_takeoff_to_cruise_mixedmode_worldyawroutefix_retrain_v1`
+- Historical/local experiment artifact:
+  `experiments_tmp/20260316_p3_takeoff_to_cruise_mixedmode_worldyawroutefix_retrain_v1`
 - Maintained training config:
-  `/home/void0312/CMO/examples/config/training/frozen/execution/p3_takeoff_to_cruise_retrain_v1.json`
+  `examples/config/training/frozen/execution/p3_takeoff_to_cruise_retrain_v1.json`
 - Historical artifact-provenance config:
-  `/home/void0312/CMO/examples/config/Archive/training/pre_freeze_experiments/p3_takeoff_to_cruise_full_visual_navv2_multileg_smoke_v1.json`
-- Active training scenario:
-  `/home/void0312/CMO/scenarios/combined/takeoff_to_cruise_paramroute_navv2_mixedmode_train_v2.json`
-- Active eval scenario:
-  `/home/void0312/CMO/scenarios/combined/takeoff_to_cruise_paramroute_navv2_mixedmode_eval_v2.json`
-- Archived bridge-only experiment outputs:
-  `/home/void0312/CMO/experiments_tmp/archive_takeoff_to_cruise_bridge_20260316`
+  `examples/config/Archive/training/pre_freeze_experiments/p3_takeoff_to_cruise_full_visual_navv2_multileg_smoke_v1.json`
+- Maintained training scenario:
+  `scenarios/combined/takeoff_to_cruise_paramroute_navv2_mixedmode_train_v2.json`
+- Maintained eval scenario:
+  `scenarios/combined/takeoff_to_cruise_paramroute_navv2_mixedmode_eval_v2.json`
+- Historical/local bridge-only experiment outputs:
+  `experiments_tmp/archive_takeoff_to_cruise_bridge_20260316`
 
 ## Root Cause Fixed On 2026-03-16
 
@@ -35,27 +38,29 @@ Confirmed root cause:
 
 Code fix:
 
-- File:
-  `/home/void0312/CMO/gym_envs/scenario_loader.py`
+- Current implementation entries:
+  `gym_envs/scenario_loader/route_generation.py` and
+  `gym_envs/scenario_loader/core.py`
 - Change:
   dynamically generated route waypoints are now passed through `_rotate_waypoints_inplace(...)` whenever mission heading is configured to rotate with world yaw.
 
 Regression coverage:
 
-- `/home/void0312/CMO/tests/test_route_generator_world_yaw_alignment.py`
-- `/home/void0312/CMO/tests/test_route_generator_rotates_with_world_heading.py`
-- `/home/void0312/CMO/tests/test_route_generator_multileg_eval_distribution.py`
-- `/home/void0312/CMO/tests/test_flyby_sequence_past_fix_guard.py`
+- `tests/world_batch/test_world_batch_runtime.py`
+- `tests/world_batch/test_world_batch_vec_env.py`
+- `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`
+- `tests/scenario/test_scenario_compiler.py`
 
-## Latest Outcome
+## Historical Outcome Captured By This Note
 
 After the route-rotation fix and retraining from the latest mixed-mode checkpoint:
 
 - Seed set `123-126`: `100%` success, `100%` survival, mean reward `14356.41`
 - Seed set `1001-1004`: `100%` success, `100%` survival, mean reward `13987.14`
 
-This is the active bridge baseline until a newer takeoff-to-cruise checkpoint
-explicitly replaces it.
+Treat this as a historical bridge baseline. Newer takeoff-to-cruise work should
+promote its own frozen config, artifact record, or task status before replacing
+the maintained scenario/config references above.
 
 ## Visualization
 

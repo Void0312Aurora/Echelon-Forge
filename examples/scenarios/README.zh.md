@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from examples/scenarios/README.md. Review before treating this file as authoritative. -->
-
 # 示例场景夹具
 
 此目录用于仅作示例的小型场景夹具。

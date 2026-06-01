@@ -1,6 +1,6 @@
 # G5 MVP Scenario
 
-Status: `2026-05-22` opened for the first minimal ground scenario shell.
+Status: `2026-05-22` accepted for the first minimal ground scenario shell.
 
 Language:
 
@@ -12,7 +12,7 @@ Inputs:
 - [G4 runtime slice](../g4_runtime_slice/README.md)
 - [Ground standards overview](../../../standards/ground/README.md)
 - [Ground minimal task structure](../../../standards/ground/minimal_task_structure.md)
-- [Scenarios README](../../../scenarios/README.md)
+- [Scenarios README](../../../../scenarios/README.md)
 
 ## Purpose
 
@@ -52,9 +52,9 @@ Out of scope:
 - formal `P3 CommandDelivery` or `P10 ObservationExport`
 - broad `MissionCommand` expansion
 
-## Gate
+## Acceptance Gate
 
-G5 is mergeable only when all of the following are true:
+G5 is accepted because all of the following are true:
 
 - `scenarios/ground/ground_platoon_tasking_smoke_v1.json` loads through
   `ScenarioLoader` against the standard example database.
@@ -67,8 +67,8 @@ G5 is mergeable only when all of the following are true:
 - The focused test explicitly checks the deferred surfaces so later work cannot
   accidentally treat this smoke fixture as movement, sensing, fires, damage, or
   observation-export evidence.
-- G0-G4 docs are marked as sealed baseline, and G5 is listed as the active MVP
-  scenario slice.
+- G0-G4 docs are marked as sealed baseline, and G5 is listed as the accepted
+  MVP scenario slice.
 
 Validation command:
 

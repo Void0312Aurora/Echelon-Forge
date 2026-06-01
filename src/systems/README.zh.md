@@ -2,12 +2,17 @@
 
 `systems/` 保存 ECS system registration 和每 tick mutation 逻辑。这里的代码消费 `components/` 与 `models/`，并由 `core/engine` 注册和调度。
 
+本层是 multi-domain aware，但成熟度不均：air/physics execution 最深入，naval
+已有舰艇/潜艇和舰载航空 token system，ground 只限 terrain/ground-contact
+primitive，不是 full land movement、sensing、fires 或 damage runtime。
+
 ## 允许
 
 - Flecs system/query 注册函数。
 - 每 tick 对 ECS component 的更新逻辑。
 - 调用 `models/` 中的可替换模型实现。
 - 使用 `core/interfaces` 中的模型接口。
+- 受限的 naval platform/runtime tick 和共享 ground-contact physics primitive。
 
 ## 禁止
 
@@ -15,6 +20,7 @@
 - 拥有 world lifecycle、batch runtime、episode controller 或 facade。
 - Python binding 或外部 API 适配。
 - 读取训练配置、场景文件或直接管理多 world。
+- movement/sensing/fires/damage ownership split 明确前的 native ground-domain runtime loop。
 
 ## 子目录约定
 
@@ -43,12 +49,12 @@
   - `force_clear_system.h`, `force_system.h`, `ground_contact_system.h`
   - `instrument_system.h`, `leapfrog_system.h`, `movement_system.h`, `rotational_system.h`
 - `combat/`
-  - `damage_system.h`, `guidance_system.h`
+  - `damage_system.h`, `guidance_system.h`, `pilot_weapon_release_system.h`
 - `systems/`
   - `command_link_system.h`, `data_link_system.h`, `ew_system.h`
-  - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `track_manager_system.h`
+  - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `sonar_system.h`, `track_manager_system.h`
 - `naval/`
-  - `ship_motion_system.h`, `submarine_motion_system.h`, `embarked_air_ops_system.h`
+  - `ship_motion_system.h`, `submarine_motion_system.h`, `embarked_air_ops_system.h`, `naval_mission_weapon_release_system.h`
 - `visual/`
   - `visual_system.h`
 

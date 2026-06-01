@@ -2,6 +2,8 @@
 
 `components/tasking/common` stores the shared tasking/C2 foundation used across services. It defines joint-layer or generic mission-organization semantics without directly carrying platform-specific air or naval fields.
 
+This is the shared base for the current air and naval tasking slices. Ground-aware setup exists elsewhere, but land movement, sensing, fires, damage, and terrain-control tasking are not maintained common fields yet.
+
 ## Allowed
 
 - Shared enums such as `ServiceProfile`, `TaskFamily`, and `CoordinationMode`.
@@ -11,7 +13,8 @@
 ## Forbidden
 
 - Air-specific fields such as runway, approach, wingman, element, and station-pattern semantics.
-- Future naval-specific fields such as naval stations or warfare-command roles.
+- Naval-specific fields such as naval stations or warfare-command roles.
+- Ground-specific fields such as land movement orders, fire missions, route networks, terrain-control tasks, or damage-state reports.
 - Command-layer objects such as `MissionCommand`, `PilotAction`, and `CommandLink`.
 - Mission transitions, JSON codecs, or reward/termination logic.
 

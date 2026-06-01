@@ -40,15 +40,16 @@
 
 ### 1. 代码体量和职责分布显示 Python 仍然过重
 
-核心文件体量如下：
+代表性文件与包体量如下：
 
-- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py)：`5009` 行
-- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)：`1660` 行
-- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)：`807` 行
-- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp)：`2958` 行
-- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)：`1598` 行
-- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)：`892` 行
-- [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)：`1207` 行
+- [gym_envs/scenario_loader/](../../../gym_envs/scenario_loader)：包内合计约 `9292` 行；[core.py](../../../gym_envs/scenario_loader/core.py) 约 `1220` 行。
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py)：约 `1885` 行。
+- [python/rl/runtime/world_batch/](../../../python/rl/runtime/world_batch)：支撑包合计约 `2589` 行。
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)：约 `449` 行。
+- [src/interfaces/python/](../../../src/interfaces/python)：拆分后的绑定文件合计约 `6682` 行；`python_module.cpp` 现在只是小型模块注册 wrapper。
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp)：engine 拆分后约 `229` 行。
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)：约 `1255` 行。
+- [src/core/mission/episode/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp)：约 `347` 行。
 
 这说明：
 

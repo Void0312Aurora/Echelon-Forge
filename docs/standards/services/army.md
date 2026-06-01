@@ -4,14 +4,15 @@ Language:
 - English canonical: `army.md`
 - Chinese companion: [army.zh.md](army.zh.md)
 
-Status: `2026-05-18` authoritative for Army service-profile placement.
+Status: `2026-06-01` authoritative for Army service-profile placement.
 
 This document defines how the repository should interpret Army organizational
-layers and command relationships before any future ground specialization is
-implemented.
+layers and command relationships now that the early ground specialization has
+started, without treating the Army service profile as the execution layer.
 
 It is intentionally narrower than a full Army doctrine summary. Its purpose is
-to prevent air-first runtime assumptions from leaking into future land modeling.
+to prevent air-first runtime assumptions from leaking into current or future
+land modeling.
 
 ## Real-World Basis
 
@@ -70,10 +71,10 @@ The Army service profile explains the Army reading of that skeleton:
 
 This layer owns interpretation, not platform execution details.
 
-### Future land specialization
+### Ground specialization boundary
 
-A future ground specialization would own the execution vocabulary that does not
-yet exist as a maintained repository contract:
+The dedicated ground specialization owns, or should own as it matures, the
+execution vocabulary that does not belong in the Army service profile:
 
 - maneuver geometry
 - frontage, bounds, routes, and battle positions
@@ -81,8 +82,9 @@ yet exist as a maintained repository contract:
 - sustainment and mobility-control details
 - domain-specific observations, actions, and reporting extensions
 
-Until such a specialization exists, `services/army` should act as a boundary
-document, not as a speculative runtime API.
+The current ground line has accepted tasking/schema evidence, but movement,
+terrain, sensing, fires, damage, and combat behavior remain held. Therefore
+`services/army` remains a boundary document, not a speculative runtime API.
 
 ## Runtime Boundary
 
@@ -151,20 +153,24 @@ state:
 
 - what the tactical echelon boundary should be
 - what relationships must survive in common core
-- what must remain open until a dedicated ground specialization is implemented
+- what must remain open until the dedicated ground specialization explicitly
+  accepts it
 
 ## Relationship To Current Repository Contracts
 
-The current repository does not yet maintain a dedicated Army execution layer.
-That means the Army profile is mainly a standardization guardrail for future
-design:
+The current repository maintains early ground tasking/profile/schema evidence,
+but it does not yet maintain a full Army execution layer or ground-combat
+runtime. That means the Army profile remains a standardization guardrail:
 
-- shared tasking and reporting flow should remain `TaskOrder -> LeaderIntent ->
-  MissionCommand -> Report`
+- the accepted ground tasking status flow currently stops at
+  `TaskOrder -> LeaderIntent -> PilotReport`
+- formal ground command delivery through `MissionCommand` or a narrower
+  command packet remains a future ground-specialization release
 - common fields should remain portable enough for land use
 - air-specific command details should not be promoted into the Army baseline
 
-This is exactly why `services/army` matters before a ground runtime exists.
+This is exactly why `services/army` remains a boundary document while ground
+runtime behavior is still held behind later task gates.
 
 ## Related Documents
 
@@ -173,3 +179,4 @@ This is exactly why `services/army` matters before a ground runtime exists.
 - [Joint Command-Link and Reporting Baseline](../joint/command_link_and_reporting_baseline.md)
 - [Simulation Conventions](../foundation/conventions.md)
 - [Runtime Workflow and Contract Baseline](../bridge/runtime_workflow_and_contract_baseline.md)
+- [Ground Standards Overview](../ground/README.md)

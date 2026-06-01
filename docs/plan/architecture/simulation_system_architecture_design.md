@@ -284,7 +284,7 @@ freeze plan specifies their deterministic merge policy and event ordering at
 barriers.
 
 The active freeze plan for these scheduler semantics is
-[WP2.5 Scheduler Semantics Freeze](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md).
+[WP2.5 Scheduler Semantics Freeze](../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md).
 It freezes event family priority, state-shard versioning, barrier visibility,
 clock-domain merge policy, deterministic replay inputs, and the
 `StageNodeManifest` schema before facade hardening or validation harness work
@@ -544,8 +544,10 @@ capability implementations rather than a new end-to-end runtime path.
 
 Allowed extension families:
 
-- `PlatformFamily`: aircraft, ship, submarine, future ground or space units.
-- `MotionFamily`: aero, ship motion, submarine motion, future ground mobility.
+- `PlatformFamily`: aircraft, ship, submarine, early ground, or future space
+  units.
+- `MotionFamily`: aero, ship motion, submarine motion, and ground mobility
+  once a scoped land-runtime gate promotes it beyond current schema evidence.
 - `SensorFamily`: radar, visual, sonar, EW, passive detection.
 - `LinkFamily`: command link, data link, relay, degraded communication.
 - `LauncherFamily`: rail, cell, pylon, tube, close-in mount, virtual launcher.
@@ -583,14 +585,14 @@ Performance work must preserve the same semantic lifecycle.
   paths.
 - Backend profile taxonomy, parity budgets, resident-state boundaries, and
   capability projection rules are governed by
-  [WP6 backend profile policy](../../task/simulation_architecture/backend_profile_policy_wp6_20260519.md)
+  [WP6 backend profile policy](../../task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md)
   and its registries.
 - The implementation-preparation line after WP6 is
-  [WP7 backend capability materialization](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.md),
+  [WP7 backend capability materialization](../../task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md),
   which materializes registry, projection, promotion-evidence, and
   multi-fidelity entry tasks without promoting candidate backend capabilities;
   its
-  [acceptance review](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.md)
+  [acceptance review](../../task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md)
   accepts the documentation and implementation-preparation plan only.
 - Device-resident state is allowed only behind contracts that can describe
   host-owned state, backend-owned state, partial sync, and observation-only
@@ -685,29 +687,29 @@ This document does not delete the earlier plans. It repositions them:
   remains the historical task line for the `common / air / naval` split.
 - [../../task/simulation_architecture/README.md](../../task/simulation_architecture/README.md)
   is the execution subproject for turning this architecture into scoped work.
-- [../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md](../../task/simulation_architecture/scheduler_semantics_wp25_20260519.md)
+- [../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md](../../task/simulation_architecture/archive/wp25_scheduler_semantics/scheduler_semantics_wp25_20260519.md)
   is the `WP2.5` scheduler semantics freeze inserted between contract freeze
   and facade alignment.
-- [../../task/simulation_architecture/wp4_facade_alignment/facade_alignment_wp4_20260519.md](../../task/simulation_architecture/wp4_facade_alignment/facade_alignment_wp4_20260519.md)
+- [../../task/simulation_architecture/archive/wp4_facade_alignment/facade_alignment_wp4_20260519.md](../../task/simulation_architecture/archive/wp4_facade_alignment/facade_alignment_wp4_20260519.md)
   is the `WP4` facade alignment task family that applies the information-state
   and agent-boundary additions to maintained frontend surfaces.
-- [../../task/simulation_architecture/wp5_validation_harness/validation_harness_wp5_20260519.md](../../task/simulation_architecture/wp5_validation_harness/validation_harness_wp5_20260519.md)
+- [../../task/simulation_architecture/archive/wp5_validation_harness/validation_harness_wp5_20260519.md](../../task/simulation_architecture/archive/wp5_validation_harness/validation_harness_wp5_20260519.md)
   is the `WP5` validation harness task family for design, trace, boundary,
   information/belief leakage, and replay/evidence conformance.
-- [../../task/simulation_architecture/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md](../../task/simulation_architecture/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md)
+- [../../task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md](../../task/simulation_architecture/archive/wp6_backend_profile_policy/backend_profile_policy_wp6_20260519.md)
   is the `WP6` backend profile policy for backend taxonomy, parity budgets,
   resident-state boundaries, and capability projection.
-- [../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.md](../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.md)
+- [../../task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md](../../task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.md)
   records the accepted WP6 publication line.
-- [../../task/simulation_architecture/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md](../../task/simulation_architecture/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md)
+- [../../task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md](../../task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.md)
   is the planned `WP7` materialization line for machine-checkable registry,
   runtime capability projection, promotion evidence gates, and multi-fidelity
   entry conditions after WP6.
-- [../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.md](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.md)
+- [../../task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md](../../task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.md)
   accepts WP7 as a documentation and implementation-preparation line, not as
   promotion of exact GPU, resident-state, shadow, device observation, or
   multi-fidelity support.
-- [../../task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md](../../task/simulation_architecture/wp8_learning_face/learning_face_wp8_20260520.md)
+- [../../task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.md](../../task/simulation_architecture/archive/wp8_learning_face/learning_face_wp8_20260520.md)
   is the separate follow-on task family for the SCAL learning face. It should
   stay outside the simulation/policy/orchestration closure and focus on
   curriculum, evaluation, capability profiling, scenario generation, world-

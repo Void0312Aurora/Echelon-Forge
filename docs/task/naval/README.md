@@ -1,7 +1,8 @@
 # Naval
 
 Status: active naval-realism workline; N4 pre-fire bridge closed on
-`2026-05-25`.
+`2026-05-25`, and the N4 RL action/observation surface repair landed on
+`2026-05-27`.
 
 ## Current Status
 
@@ -15,6 +16,8 @@ Status: active naval-realism workline; N4 pre-fire bridge closed on
   [naval_n4_closure_20260525.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.md).
 - The current RL action-surface split is tracked in
   [n5_rl_action_surface_split/README.md](./n5_rl_action_surface_split/README.md).
+  Despite the folder name, this is an N4 pre-fire training-entry repair, not a
+  release of N5 weapon engagement.
 - The older `2026-05-17` progress checkpoint remains archived for historical
   traceability.
 - The line remains active, but the main focus is closure and stabilization of
@@ -25,7 +28,7 @@ Status: active naval-realism workline; N4 pre-fire bridge closed on
 
 - Current progress tracking:
   [naval_current_progress_20260524.md](./naval_current_progress_20260524.md)
-- Next scenario-expansion subproject:
+- Closed N4 scenario-expansion subproject:
   [n4_threat_roe_bridge/README.md](./n4_threat_roe_bridge/README.md)
 - N4 closure:
   [n4_threat_roe_bridge/naval_n4_closure_20260525.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.md)

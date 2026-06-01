@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/physics/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/physics` Boundaries
 
 `components/physics` saves physical and flight state components, including dynamic state, control law parameters, forces, instruments, and performance data. It should no longer absorb command/tasking concepts.

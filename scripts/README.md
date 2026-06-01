@@ -2,6 +2,8 @@
 
 `scripts/` now keeps only a small set of operator-facing workflow shells that
 still provide value beyond the maintained Python entrypoints in `tools/`.
+The retained scripts are currently air/execution or cooperative/HMoE workflow
+shells, not general multi-domain product entrypoints.
 
 Current retained scripts:
 
@@ -19,6 +21,8 @@ Maintenance guidance:
 
 - New maintained workflows should prefer `tools/` entrypoints plus config files,
   not new shell wrappers in `scripts/`.
+- New naval or ground workflows should land as maintained `tools/` entrypoints
+  before gaining convenience shells here.
 - Retained shell workflows should source
   [tools/maintenance/cmo_env.sh](../tools/maintenance/cmo_env.sh)
   so `.venv` and build-dir detection stay unified.

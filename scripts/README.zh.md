@@ -1,8 +1,7 @@
-<!-- Machine-translated draft generated on 2026-05-18 from scripts/README.md. Review before treating this file as authoritative. -->
-
 # Scripts README
 
 `scripts/` 现在只保留一小部分面向操作人员的工作流脚本，这些脚本在维护的 Python 入口点（位于 `tools/`）之外仍能提供价值。
+当前保留脚本是 air/execution 或 cooperative/HMoE workflow shell，不是通用多域产品入口。
 
 当前保留的脚本：
 
@@ -19,6 +18,7 @@
 维护指南：
 
 - 新维护的工作流应优先使用 `tools/` 入口点加配置文件，而不是在 `scripts/` 中创建新的 shell 包装脚本。
+- 新的 naval 或 ground workflow 应先落为 maintained `tools/` 入口，再考虑在这里增加 convenience shell。
 - 保留的 shell 工作流应引用 [tools/maintenance/cmo_env.sh](../tools/maintenance/cmo_env.sh)，
   以使 `.venv` 和构建目录检测保持一致。
 - 如果某个脚本变得过时或特定于某台机器，请将其归档到 `tools/archive/legacy_scripts/`。

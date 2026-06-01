@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/core/interfaces/README.md. Review before treating this file as authoritative. -->
-
 # `src/core/interfaces` Boundary
 
 `core/interfaces` holds C++ model interfaces and abstract contracts across cores. It defines the boundary between the system and models, and does not provide default implementations.

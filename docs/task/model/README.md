@@ -3,10 +3,13 @@
 Status: active planning line for temporal policy work. On `2026-05-25`, the
 line selected "Path A first, Path C after evidence" as the maintained direction.
 
-This area tracks model-side changes that cut across domains. The immediate
-driver is the `1v1` air-combat weapon-employment line: repeated missile launch
-behavior should be solved by policy temporal context and observable physical
-state, not by growing tactical memory boards inside simulation systems.
+This area tracks model-side changes that cut across domains. The current
+maintained task slice is temporal policy work, not a general replacement for
+the `forward/models/` idea backlog or the `python/world_model/` implementation
+surface. The immediate driver is the `1v1` air-combat weapon-employment line:
+repeated missile launch behavior should be solved by policy temporal context
+and observable physical state, not by growing tactical memory boards inside
+simulation systems.
 
 Current route:
 

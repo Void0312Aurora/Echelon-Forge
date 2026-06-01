@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from examples/config/training/frozen/execution/README.md. Review before treating this file as authoritative. -->
-
 # 冻结执行课程
 
 本目录包含维护的冻结后执行层课程。

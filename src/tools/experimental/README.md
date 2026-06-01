@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/tools/experimental/README.md. Review before treating this file as authoritative. -->
-
 # `src/tools/experimental` Boundary
 
 `tools/experimental` stores experimental C++ probes and one-off tools. Code here is not part of the maintained runtime/tooling surface.

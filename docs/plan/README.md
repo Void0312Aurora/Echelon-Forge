@@ -1,9 +1,7 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/README.zh.md. Review before treating this file as authoritative. -->
-
 # `docs/plan` Documentation Index and Governance Guide
 
-Status: `2026-05-18` Entry correction version.  
-This document only describes the real `docs/plan/` structure currently in the repository, and how these documents are used in the current mainline, avoiding mixing historical discussions, research drafts, and frozen execution baselines.
+Status: `2026-06-01` plan authority and archive-boundary index.
+This document describes the real `docs/plan/` structure currently in the repository and how these documents are used in the current mainline, avoiding mixing historical discussions, research drafts, frozen execution baselines, and retained result artifacts.
 
 Language migration note:
 
@@ -43,13 +41,13 @@ Notes:
    - Architecture main plan, answering "what is the target layering and how should the engine boundary be defined".
 3. [architecture/architecture_and_performance_research_followup.md](architecture/architecture_and_performance_research_followup.md)
    - Route research and performance trade-off explanation, answering "why this layering and how to prioritize subsequent routes".
-4. [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md)
+4. [runtime_facade/runtime_facade_contract_plan.md](runtime_facade/runtime_facade_contract_plan.md)
    - Facade contract basis, answering "what C++ application contract should the upper layer depend on long-term".
 5. [archive/runtime_facade/README.md](archive/runtime_facade/README.md)
    - Archived runtime-facade cleanup and bootstrap record index; use as history only.
-6. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md)
+6. [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.md)
    - Cooperative training foundation and performance analysis main text.
-7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md)
+7. [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.md)
    - P8 cooperative execution pipeline facility review and next steps.
 8. Special documents under `exact_runtime/`
    - Only delve deeper when the task explicitly enters the GPU / exact runtime mainline, and start from `exact_runtime/README.md` rather than assuming every candidate draft still exists.
@@ -72,9 +70,9 @@ for execution history only:
 | [architecture/simulation_system_architecture_design.md](architecture/simulation_system_architecture_design.md) | Strict simulation architecture baseline | Current authority for the canonical lifecycle, extension model, and architecture gates; not a direct task list |
 | [architecture/system_layering_and_engine_encapsulation_plan.md](architecture/system_layering_and_engine_encapsulation_plan.md) | Architecture main plan | Authoritative background for layer direction; not a direct task list |
 | [architecture/architecture_and_performance_research_followup.md](architecture/architecture_and_performance_research_followup.md) | Route research main text | Provides route prioritization and performance judgment; does not directly authorize implementation |
-| [runtime_facade/runtime_facade_contract_plan.zh.md](runtime_facade/runtime_facade_contract_plan.zh.md) | Facade contract basis | Defines interface boundaries and DTOs; does not directly authorize extended implementation |
-| [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.zh.md) | Cooperative training direction basis | Provides facility foundation, risks, and route analysis |
-| [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.zh.md) | Cooperative execution direction basis | Provides current cooperative execution mainline facility review and next steps |
+| [runtime_facade/runtime_facade_contract_plan.md](runtime_facade/runtime_facade_contract_plan.md) | Facade contract basis | Defines interface boundaries and DTOs; does not directly authorize extended implementation |
+| [cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.md](cooperative/multi_agent_cooperative_training_foundation_and_performance_plan.md) | Cooperative training direction basis | Provides facility foundation, risks, and route analysis |
+| [cooperative/p8_cooperative_execution_pipeline_findings_and_plan.md](cooperative/p8_cooperative_execution_pipeline_findings_and_plan.md) | Cooperative execution direction basis | Provides current cooperative execution mainline facility review and next steps |
 
 ### B. Archived or Phase-Based Freeze Records
 
@@ -98,7 +96,7 @@ for execution history only:
 - Earlier speed rearchitecture summary can be found at [docs/Archive/speed_rearchitecture/README.md](../Archive/speed_rearchitecture/README.md).
 - These materials retain traceability value but should not be treated as current implementation authority.
 
-## 4. Execution Rules
+## 5. Execution Rules
 
 1. Only frozen execution documents that clearly specify scope, acceptance criteria, and non-goals can be used directly as implementation basis.
 2. "Drafts", "research", "contracts", "checklists", and "evaluation records" by default only provide direction, arguments, contracts, or results, and do not directly authorize extended implementation.

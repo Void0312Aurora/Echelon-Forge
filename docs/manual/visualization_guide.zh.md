@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/visualization_guide.md. Review before treating this file as authoritative. -->
-
 # 如何远程查看可视化 (Web 实时)
 
 由于我们运行在无头服务器 (Headless Server) 上，需要使用 **SSH 端口转发** 将服务器上的 Web 可视化页面转发到你本地浏览器。

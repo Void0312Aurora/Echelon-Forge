@@ -1,14 +1,20 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/runtime/facade/README.md. Review before treating this file as authoritative. -->
-
 # `src/runtime/facade` Boundaries
 
 `runtime/facade` is a maintained C++ application-layer API. It targets training environments, Python bindings, and future frontend mainlines, providing typed request/result instead of exposing the full details of the underlying world owner.
+
+The facade should describe the platform as multi-domain/common-first rather
+than air-only. It can expose maintained request/result methods for common setup,
+air execution, naval tasking/engagement evidence, and ground-aware typed setup
+evidence. It must not imply that ground movement, sensing, fires, damage, or a
+full ground runtime are available.
 
 ## Allowed
 
 - `RuntimeFacade`.
 - Facade request/result/capability types.
 - Bulk reset, setup, step, command, tasking, episode, and observation operations.
+- Tasking packet and engagement-event exports that carry common, air, and naval evidence contracts.
+- Typed platform setup/capability evidence for early ground-aware admission.
 - Dedicated diagnostics-trace query/export operations.
 - Controlled wrapping of `WorldBatchRuntime` and `ExecutionEpisodeController`.
 - Public header only exposes facade/contracts types; the underlying `WorldBatchRuntime` owner should remain in the implementation.
@@ -20,6 +26,7 @@
 - Blindly copying all low-level APIs of `WorldBatchRuntime` into the facade API.
 - Adding new mainline entry points without designed request/result.
 - Directly including `core/engine/*` in `*_types.h` or facade public headers.
+- Advertising held ground-domain runtime behavior through facade naming or capability flags.
 
 ## Escape Hatch Retirement
 
@@ -41,6 +48,11 @@ When adding long-term APIs, priority should be given to supplementing facade req
 share kernel evidence with engagement export, but the facade must expose a
 dedicated diagnostics query path instead of requiring consumers to piggyback on
 `export_engagement_event_packet()` just to read traces.
+
+Engagement export is also the maintained facade path for N4 pre-fire/contact
+and bounded engagement-evidence DTOs such as track packets, launch
+requests/events, effects, damage, and diagnostics traces. Keep those as
+exported evidence surfaces; do not move engagement ownership into the facade.
 
 ## Split Threshold
 

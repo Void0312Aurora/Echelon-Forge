@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/exact_runtime/gpu_execution_phase4_rollout_hot_path_freeze.md. Review before treating this file as authoritative. -->
-
 # GPU 执行阶段 4C：推出热路径冻结
 
 状态：下一个维护阶段 4 后续任务的已冻结执行计划。
@@ -10,7 +8,7 @@
 相关：
 
 - [gpu_execution_mainline_integration_checklist.md](gpu_execution_mainline_integration_checklist.md)
-- [gpu_execution_runtime_research_and_design.md](../archive/gpu_execution_runtime_research_and_design.md)
+- [gpu_execution_runtime_research_and_design.md](../archive/exact_runtime/gpu_execution_runtime_research_and_design.md)
 - [tools/diagnostics/benchmark.py](../../../tools/diagnostics/benchmark.py)
 
 ## 当前基线

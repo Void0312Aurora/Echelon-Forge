@@ -4,13 +4,14 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-05-21` authoritative for the maintained standards tree.
+Status: `2026-06-01` authoritative for the maintained standards tree.
 
 This directory defines the standardized modeling baseline the project intends to
 use going forward. Its job is not to restate every active implementation task.
 Its job is to tell contributors which concepts belong to the joint/common core,
-which belong to service profiles, which belong to platform or mission
-specializations, and how the current code/runtime should align with that split.
+which belong to service profiles, which belong to domain specializations, which
+cross-domain runtime/bridge/foundation constraints every layer must honor, and
+how the current code/runtime should align with that split.
 
 ## Purpose
 
@@ -23,11 +24,13 @@ The maintained standards tree exists to keep three things from drifting apart:
 The standards tree is therefore the ownership map. Task plans may describe
 current implementation waves, but they should not redefine which layer owns
 `authority_scope`, `task_group_id`, `runway_slot_code`, or `warfare_role_code`.
+Implementation maturity in a task area is useful status context, but it is not
+the standard ownership hierarchy.
 
 ## Tree Structure
 
 Since `2026-03-23`, the standards documentation is no longer organized around
-an "air first, generalize later" line. It now follows:
+an "air first, generalize later" line. Its domain ownership spine now follows:
 
 1. `joint/`
 2. `services/`
@@ -35,7 +38,12 @@ an "air first, generalize later" line. It now follows:
 4. `naval/`
 5. `ground/`
 
-This reflects a deliberate modeling split:
+This spine is read together with the cross-domain standards under `foundation/`
+and `bridge/`, including runtime workflow and contract baselines. Those
+documents constrain every domain; they do not form a separate service or
+platform stack.
+
+The maintained tree therefore reflects a deliberate modeling split:
 
 - `joint/` defines common relationships, authority, tasking, reporting, and
   workflow seams that remain valid across services.
@@ -54,6 +62,32 @@ owns Army service-profile interpretation, while `ground/` owns maintained
 ground specialization semantics. The aliases `army` and `land` normalize to
 the maintained `ground` specialization and do not create a separate `army`
 runtime stack.
+
+## Ownership Hierarchy
+
+Use this hierarchy when deciding where a stable concept belongs:
+
+1. `foundation/` and runtime/bridge constraints define cross-domain rules:
+   coordinate and time conventions, realism gates, public-source admission,
+   scenario/runtime workflow boundaries, DTO alignment, and current testable
+   contracts. They constrain every service and specialization.
+2. `joint/` owns shared semantic objects such as command relationships,
+   authority scopes, task/report identifiers, support relationships, and other
+   names that must mean the same thing across services.
+3. `services/` owns service-profile interpretation: how the Air Force, Army,
+   Navy, and Marine Corps read the shared objects, which echelons or unit
+   forms are admissible, and where service-specific terminology stops before
+   becoming domain mechanics.
+4. `air/`, `naval/`, and `ground/` own domain specialization. They can define
+   platform, mission, environment, and execution semantics that should not be
+   promoted into the common core just because one domain implemented them first.
+
+This is an ownership hierarchy, not a maturity ladder. A mature air-combat or
+flight-dynamics implementation does not make air concepts project-wide common
+core. An early naval or ground bootstrap can still establish the authoritative
+owner for its service/profile and specialization concepts. Missing or partial
+runtime support should be tracked as implementation work, not as a lower
+standard layer.
 
 ## Recommended Reading Order
 
@@ -77,23 +111,34 @@ For new work, read in this order:
 
 ## Relationship to Active Task Plans
 
-The current task tree under `docs/task/` includes implementation workstreams
-such as `flight_dynamics/flight`, `flight_dynamics/sensor_situation`,
-`flight_dynamics/weapon_guidance`, `flight_dynamics/naval`, and
-`flight_dynamics/c2_command_chain`, plus the newer `ground/` third-domain
-bootstrap.
+The current task tree under `docs/task/` contains active or recently active
+execution workstreams for flight dynamics, air combat, common air/naval splits,
+naval realism, ground bootstrap, simulation architecture, runtime/performance,
+model work, and cross-cutting issue tracking.
 
-That task-tree layout is useful for execution, but it is not the ownership map
-for the standardized model. In particular:
+That task-tree layout is useful for execution, backlog ownership, and maturity
+tracking, but it is not the ownership map for the standardized model. A task
+area may be more implemented, less implemented, archived, or newly bootstrapped
+without changing the standards layer that owns its stable concepts. In
+particular:
 
-- `flight`, `sensor`, and `weapon` are mostly implementation realism domains.
-- `c2_command_chain` contains many concepts that belong in `joint/`.
-- `naval` contains concepts split across `services/navy.md` and `naval/`.
-- `ground` contains concepts split across `services/army.md` and `ground/`;
-  the `army` and `land` aliases route through that split rather than through a
-  new runtime stack.
-- the standards tree should absorb the stable shared contracts from those task
-  documents instead of mirroring their folder layout.
+- `flight_dynamics/flight`, `sensor_situation`, `weapon_guidance`, and
+  `air_combat` mostly exercise implementation realism and air specialization;
+  they do not make air the default common core.
+- `flight_dynamics/c2_command_chain`, `simulation_architecture`, and
+  cross-cutting runtime/performance work often produce contracts that belong in
+  `joint/`, `foundation/`, or `bridge/`.
+- `common_air_naval` and naval task plans contain concepts split across shared
+  semantics, `services/navy.md`, and `naval/`.
+- `ground` task plans contain concepts split across shared semantics,
+  `services/army.md`, and `ground/`; the `army` and `land` aliases route
+  through that split rather than through a new runtime stack.
+- model, training, evaluation, and issue-board tasks may depend on standards
+  contracts, but they should cite or pressure the relevant standard owner
+  instead of defining a parallel hierarchy.
+- the standards tree should absorb stable shared contracts from task documents
+  instead of mirroring the task folder layout or the current rollout maturity of
+  each domain.
 
 If a task document and a standards document appear to disagree on ownership, the
 standards tree wins for naming and layering.
@@ -116,7 +161,12 @@ Current key external references include:
 
 Current key repository references include:
 
+- [docs/task/README.md](../task/README.md)
 - [docs/task/flight_dynamics/README.md](../task/flight_dynamics/README.md)
+- [docs/task/air_combat/README.md](../task/air_combat/README.md)
+- [docs/task/naval/README.md](../task/naval/README.md)
+- [docs/task/ground/README.md](../task/ground/README.md)
+- [docs/task/simulation_architecture/README.md](../task/simulation_architecture/README.md)
 - [docs/task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md)
 - [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
 - [src/core/mission/README.md](../../src/core/mission/README.md)
@@ -132,6 +182,10 @@ The maintained standards tree uses three status categories:
   - platform- or domain-specific supplement
 - `Archived`
   - historical path retained for reference only
+
+These categories describe documentation authority and specialization ownership.
+They do not claim that every owned concept is equally implemented in runtime,
+tests, scenarios, models, or UI surfaces.
 
 Current status mapping:
 

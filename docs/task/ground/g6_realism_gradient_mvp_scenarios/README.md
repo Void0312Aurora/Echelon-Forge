@@ -1,8 +1,8 @@
 # G6 Realism Gradient MVP Scenarios
 
-Status: `2026-05-24` opened for the first ground domain realism-gradient MVP
+Status: `2026-05-24` accepted for the first ground domain realism-gradient MVP
 scenario batch. `G6-A Planning Surface` and `G6-B G1 Scenario Implementation`
-are implemented and locally validated.
+are implemented and validated as G1 static occupy/support fixtures.
 
 Language:
 

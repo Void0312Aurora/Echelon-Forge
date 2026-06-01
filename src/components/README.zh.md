@@ -2,6 +2,8 @@
 
 `components/` 只保存 ECS 组件、轻量值类型和稳定的类 DTO 结构体。这里的类型可以被 `systems/`、`core/`、`runtime/facade` 和 `interfaces/python` 读取或绑定，但不应拥有运行时编排逻辑。
 
+当前 component surface 是多域口径，而不是 flight-only：air 仍是最完整的执行面，naval 已有维护中的平台组件与 command/tasking DTO slice，ground 只通过共享类型、terrain、ground-contact primitive 和 typed setup evidence 表达。不要把这些 ground-aware primitive 当作完整陆域 component model。
+
 ## 允许
 
 - 纯数据字段、默认值和轻量枚举。
@@ -20,8 +22,8 @@
 
 - `basic/`：基础实体标签、阵营、位置、环境数据等底层组件。
 - `combat/`：伤害、生命值、武器挂载、评分等战斗状态组件。
-- `physics/`：物理状态、动力学、力、仪表和性能状态。
-- `systems/`：通信、数据链、传感器、电子战、导航、后勤等平台系统状态组件。
+- `physics/`：物理状态、动力学、力、仪表、性能状态和当前 ground-contact primitive。
+- `systems/`：通信、数据链、传感器、声呐、电子战、导航、后勤等平台系统状态组件。
 - `visual/`：视觉传感器输入输出状态。
 - `naval/`：舰艇、潜艇和舰载航空运作的海军平台状态组件。
 - `command/`：目标目录，用于 pilot action、mission command、command link 和 legacy command DTO。
@@ -48,7 +50,7 @@
   - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
   - `action.h` 仅保留兼容 umbrella 入口
 - `systems/`
-  - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `track_management.h`
+  - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `sonar.h`, `track_management.h`
 - `visual/`
   - `visual_sensor.h`
 - `naval/`
@@ -60,7 +62,8 @@
   - `naval/mission_command_naval.h`
 - `tasking/`
   - `task_order.h`, `leader_intent.h`, `pilot_report.h`, `tasking_enums.h`
-  - `common/*`、`air/*`、`naval/*` 为分层后的子域入口
+  - `common/*`、`air/*`、`naval/*` 为维护中的子域入口
+  - 目前还没有 `ground/*` tasking 或 command component 子树；land tasking/native schema 仍是 bootstrap-only。
 
 ## 迁移备注
 

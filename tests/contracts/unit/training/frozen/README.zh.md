@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from tests/contracts/unit/training/frozen/README.md. Review before treating this file as authoritative. -->
-
 # 冻结领导者接受集
 
 此目录包含为冻结通用核心底层维护的领导者层接受规范。

@@ -2,12 +2,20 @@
 
 `core/mission` owns the task runtime needed by the training mainline: mission, objective, reward, termination, and execution episodes. It interprets tasking/command data and produces runtime products, but it does not define low-level components or provide Python bindings.
 
+The current mission layer should be described as multi-domain aware rather than
+air/flight-only. It is still most mature for air execution episodes; naval
+`MissionCommand` fields are carried through bounded codec/state seams, while
+tasking packet transport lives in the engine/runtime contract layers. Full
+naval mission orchestration and full ground runtime behavior remain outside the
+maintained mission scope.
+
 ## Allowed
 
 - Mission runtime, objective runtime, reward runtime, and termination runtime.
 - `ExecutionEpisodeController` and its state import/export.
 - Mission command codecs, episode transitions, and reward breakdown helpers.
 - Pure C++ episode products for `WorldBatchRuntime` or `RuntimeFacade`.
+- Bounded interpretation of the `MissionCommand` compatibility shell and its air/naval owner slices where episode state or codecs need them.
 
 ## Forbidden
 
@@ -15,6 +23,7 @@
 - Implementations of physics integration, sensor scanning, or weapon guidance.
 - Python/nanobind bindings.
 - Training config parsing and UI/API adaptation.
+- Full ground movement/sensing/fires/damage runtime or a native ground mission schema before that owner exists.
 
 ## Current Structure
 

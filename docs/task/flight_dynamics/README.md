@@ -4,23 +4,37 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-This directory is the navigation entrypoint for the `flight_dynamics` realism
-workstream. To determine current state, use the `2026-05-18` closure markers in
-the analysis docs, not `program/` or `archive/`.
+This directory is the archived/reference navigation entrypoint for the
+`flight_dynamics` realism-analysis closure stream. It records the historical
+flight, sensor, weapon, naval, and C2 analysis split that fed the current
+multi-domain task tree. For active work, start from [../README.md](../README.md)
+and the current domain entries for air combat, naval, ground, and simulation
+architecture.
 
-## Subproject Navigation
+To determine the state of this historical stream, use the `2026-05-18` closure
+markers in the analysis docs, not `program/` or `archive/`.
+
+## Historical Subproject Navigation
 
 - [flight](./flight/README.md): flight dynamics, propulsion, stall, and high-AoA analysis.
 - [sensor_situation](./sensor_situation/README.md): sensor, track, and data-link situational-awareness analysis.
 - [weapon_guidance](./weapon_guidance/README.md): weapon chain, seeker, guidance, fuze, and damage analysis.
-- [naval](./naval/README.md): naval realism analysis.
+- [naval](./naval/README.md): historical naval realism analysis that now points forward to the active naval task line.
 - [c2_command_chain](./c2_command_chain/README.md): `MissionCommand / CommandLink / DataLink / ROE / naval command-chain` frozen analysis baseline.
 - [program](./program/README.md): deprecated mainline-status snapshot entry, kept only for history.
 
 ## Cross-Directory Linked Entry Points
 
+- [task root](../README.md):
+  current multi-domain task-area navigation and lifecycle labels.
 - [air_combat task track](../air_combat/README.md):
-  current `1v1` workline entry.
+  current combat and air-domain workline entry.
+- [naval task track](../naval/README.md):
+  active naval domain task line.
+- [ground task track](../ground/README.md):
+  early ground tasking/native-schema bootstrap line.
+- [simulation_architecture task track](../simulation_architecture/README.md):
+  shared runtime, contract, facade, and architecture closure line.
 - [performance_runtime task track](../performance_runtime/README.md):
   current runtime-performance planning entry.
 
@@ -44,5 +58,6 @@ the analysis docs, not `program/` or `archive/`.
 2. `*_analysis_*` docs are authoritative for current state when their closure
    marker says so.
 3. `program/` is deprecated and `archive/` is history only.
-4. When a new direction is split out further, create the subfolder and local
-   README first, then add analysis or implementation docs under it.
+4. Do not open new active multi-domain implementation streams under this
+   directory. Route them through the task root and the current domain-specific
+   entries instead.

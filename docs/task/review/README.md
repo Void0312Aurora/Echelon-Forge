@@ -16,6 +16,7 @@ Status: active review record.
 ## Project Implementation Reviews
 
 - [Project Implementation Review And Action Assessment 2026-06-01](project_implementation_review_20260601.zh.md) (中文)
+- [Documentation System Readiness Review 2026-06-01](documentation_system_readiness_review_20260601.md) ([中文](documentation_system_readiness_review_20260601.zh.md))
 
 ## Domain Reviews
 

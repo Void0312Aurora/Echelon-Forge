@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/core/geometry/README.md. Review before treating this file as authoritative. -->
-
 # `src/core/geometry` Boundaries
 
 `core/geometry` holds the runtime for spatial queries and geometry assistance. It serves simulation, sensor, visual, or mission queries, but does not own the world lifecycle.

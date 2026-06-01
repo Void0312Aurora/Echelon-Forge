@@ -1,6 +1,7 @@
 # 海军当前进展追踪
 
-状态：`2026-05-25` 工作区抽样复核版，并纳入 N4 bridge 验收。
+状态：`2026-05-27` 工作区抽样复核版，纳入 N4 bridge 验收与 N4 RL
+action/observation surface 修复。
 
 本文档是 `docs/task/naval/` 的当前活跃追踪入口，用来承接
 `2026-05-17` 海军进度检查点之后的状态。它重点追踪三件事：
@@ -16,6 +17,9 @@
 - RL/tasking 对接已具备 profile、合同和 batch-sync 通道。
 - 专门面向海军的训练任务已有 N4 smoke/probe entry gates；海军 reward、curriculum、
   evaluation gates 和 learned-policy acceptance 仍待后续完成。
+- `n5_rl_action_surface_split/` 包已经作为 N4 pre-fire training-entry repair
+  落地：`naval_station3` 与 `naval_screen_station_v1` 是 active surface，但 N5
+  武器交战仍保持在独立 launch/reject package 之后。
 
 ## 一、当前结论
 

@@ -1,6 +1,7 @@
 # Naval Current Progress Tracking
 
-Status: `2026-05-25` workspace sampling review with N4 bridge acceptance.
+Status: `2026-05-27` workspace sampling review with N4 bridge acceptance and
+N4 RL action/observation surface repair.
 
 This is the active tracking entry for `docs/task/naval/` after the
 `2026-05-17` naval progress checkpoint. It focuses on infrastructure, naval
@@ -14,6 +15,10 @@ Current positioning:
 - Dedicated naval training tasks now have N4 smoke/probe entry gates; naval
   rewards, curriculum, evaluation gates, and learned-policy acceptance remain
   pending.
+- The `n5_rl_action_surface_split/` package has landed as an N4 pre-fire
+  training-entry repair: `naval_station3` and `naval_screen_station_v1` are
+  active surfaces, but N5 weapon engagement remains held behind a separate
+  launch/reject package.
 
 ## Current Conclusion
 

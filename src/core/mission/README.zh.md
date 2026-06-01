@@ -2,12 +2,15 @@
 
 `core/mission` 负责训练主线所需的任务运行时，包括 mission、objective、reward、termination 和 execution episode。这里解释 tasking/command 数据并产出运行时产物，但不定义底层 component，也不做 Python 绑定。
 
+当前 mission 层应描述为 multi-domain aware，而不是 air/flight-only。它对 air execution episode 最成熟；`MissionCommand` 字段会通过受控的 codec/state seam 承载，而 tasking packet transport 属于 engine/runtime contract 层。完整 naval mission orchestration 与 full ground runtime 行为仍不属于当前维护中的 mission scope。
+
 ## 允许
 
 - mission runtime、objective runtime、reward runtime、termination runtime。
 - `ExecutionEpisodeController` 及其状态导入/导出。
 - mission command codec、episode transition、reward breakdown 辅助逻辑。
 - 面向 `WorldBatchRuntime` 或 `RuntimeFacade` 的纯 C++ episode 产物。
+- 在 episode state 或 codec 需要时，对 `MissionCommand` compatibility shell 及其 air/naval owner slice 做受限解释。
 
 ## 禁止
 
@@ -15,6 +18,7 @@
 - 物理积分、传感器扫描、武器制导实现。
 - Python/nanobind 绑定。
 - 训练配置文件解析和 UI/API 适配。
+- ground owner 存在前的 full ground movement/sensing/fires/damage runtime 或 native ground mission schema。
 
 ## 当前结构
 

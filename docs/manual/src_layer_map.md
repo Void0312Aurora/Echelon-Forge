@@ -1,6 +1,6 @@
 # Code Layer Map
 
-Status: maintenance edition as of `2026-05-18`.
+Status: multi-domain maintenance edition as of `2026-06-01`.
 This document answers three questions:
 
 1. How the current mainline code path connects the C++ runtime to the Python training entry points.
@@ -10,6 +10,14 @@ This document answers three questions:
 If any historical task record, old plan, or archived document conflicts with this map, trust the active README files in the current code tree first, along with the architecture documents under `docs/plan/architecture/` that are still part of the mainline.
 
 ## 1. Current Mainline Overview
+
+The current C++ surface is multi-domain but not evenly mature. Air/execution is
+the deepest maintained path. Naval has platform components, command/tasking
+owner slices, ship/submarine/embarked-air token runtime, weapon-release hooks,
+and engagement evidence exports, but not a complete naval mission runtime.
+Ground is bootstrap/evidence-only: `UnitType::Ground` and typed platform
+capability evidence exist, while land movement, sensing, terrain ownership,
+fires, damage, and full ground runtime remain held.
 
 The maintained dependency direction should be understood as:
 
@@ -84,6 +92,7 @@ Responsibilities:
 
 - ECS components.
 - Command / tasking DTOs.
+- Naval platform state components.
 - Lightweight value types that are bindable and persistable.
 
 Boundary entry points:
@@ -92,6 +101,8 @@ Boundary entry points:
 - [src/components/command/README.md](../../src/components/command/README.md)
 - [src/components/command/common/README.md](../../src/components/command/common/README.md)
 - [src/components/command/air/README.md](../../src/components/command/air/README.md)
+- [src/components/command/naval/README.md](../../src/components/command/naval/README.md)
+- [src/components/naval/README.md](../../src/components/naval/README.md)
 - [src/components/tasking/README.md](../../src/components/tasking/README.md)
 - [src/components/tasking/common/README.md](../../src/components/tasking/common/README.md)
 - [src/components/tasking/air/README.md](../../src/components/tasking/air/README.md)
@@ -101,6 +112,7 @@ Typical questions:
 
 - Where the fields for `MissionCommand`, `PilotAction`, `TaskOrder`, and `LeaderIntent` are defined.
 - Which fields belong to `common` versus `air` / `naval`.
+- Where ship, submarine, and embarked-air operation state is stored.
 
 ### `src/systems/`
 
@@ -109,6 +121,7 @@ Responsibilities:
 - Flecs system registration.
 - Per-tick ECS mutation logic.
 - Physics, combat, platform systems, and visual updates.
+- Bounded naval ship/submarine/embarked-air token runtime and naval weapon-release hooks.
 
 Boundary entry points:
 
@@ -117,12 +130,14 @@ Boundary entry points:
 - [src/systems/physics/README.md](../../src/systems/physics/README.md)
 - [src/systems/combat/README.md](../../src/systems/combat/README.md)
 - [src/systems/systems/README.md](../../src/systems/systems/README.md)
+- [src/systems/naval/README.md](../../src/systems/naval/README.md)
 - [src/systems/visual/README.md](../../src/systems/visual/README.md)
 
 Typical questions:
 
 - How commands enter the runtime and take effect each frame.
 - How aerodynamics, control, instruments, navigation, sensors, and data links advance over time.
+- Where naval motion and token-level embarked-air behavior are advanced.
 
 ### `src/models/`
 
@@ -130,6 +145,7 @@ Responsibilities:
 
 - Default implementations of replaceable domain models.
 - Control / sensor / guidance / effects / unit-factory models.
+- Naval weapon-mount helpers and typed platform capability evidence.
 
 Boundary entry points:
 
@@ -144,13 +160,15 @@ Typical questions:
 
 - Where the default control-law, sensor, guidance, and weapon-effects models live.
 - Whether a behavior belongs to "system logic" or to a replaceable model implementation.
+- Whether ground-related data is only capability evidence or an actual runtime model.
 
 ### `src/content/`
 
 Responsibilities:
 
 - Content schemas, unit definitions, and content loaders.
-- Describing which static content exists, rather than owning runtime behavior.
+- Describing which static content exists, including naval platform definitions
+  and ground-aware setup metadata, rather than owning runtime behavior.
 
 Boundary entry points:
 
@@ -165,6 +183,7 @@ Responsibilities:
 - Mission runtime.
 - Episode controller.
 - Geometry queries.
+- Engine-level transport for maintained command/tasking contracts and typed platform setup.
 
 Boundary entry points:
 
@@ -181,6 +200,7 @@ Typical questions:
 
 - Where ownership of `SimulationKernel` and `WorldBatchRuntime` resides.
 - Where reward / objective / termination / episode-transition logic is computed.
+- Which naval seams are engine/runtime transport or evidence exports rather than mission orchestration.
 
 ### `src/runtime/`
 
@@ -189,6 +209,7 @@ Responsibilities:
 - The maintained C++ application-layer contract.
 - Facade requests / results.
 - The typed runtime API exposed to Python and future frontends.
+- Tasking, observation, engagement, diagnostics, and typed platform setup contracts.
 
 Boundary entry points:
 
@@ -200,6 +221,7 @@ Typical questions:
 
 - What the long-term external C++ runtime surface should be.
 - Why `SimulationKernel` should not be used directly as the upper-layer API.
+- Which facade packets are evidence/export surfaces rather than domain owners.
 
 ### `src/interfaces/`
 
@@ -283,8 +305,9 @@ Implementation entry points:
 
 - [python/scenario_compiler.py](../../python/scenario_compiler.py)
   - Compatibility shim; the main implementation has moved to `python/scenario/compiler/`.
-- [python/scenario_runtime.py](../../python/scenario_runtime.py)
-  - Compatibility shim; the main implementation has moved to `python/scenario/runtime/`.
+- [python/scenario/runtime/](../../python/scenario/runtime)
+  - Main scenario-runtime implementation. The older `python/scenario_runtime.py`
+    shim is not present in the current checkout.
 - [python/testing/scenario_contract_runner.py](../../python/testing/scenario_contract_runner.py)
   - Compatibility shim; the main implementation has moved to `python/testing/contracts/`.
 

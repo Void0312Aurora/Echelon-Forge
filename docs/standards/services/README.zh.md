@@ -4,7 +4,7 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-状态：`2026-05-18`，军种画像层权威入口。
+状态：`2026-06-01`，军种画像层权威入口。
 
 本目录定义基于美军公开资料整理的军种画像。军种画像不是平台手册，也不是完整编制百科，
 它的职责是回答：
@@ -24,6 +24,7 @@ Language:
 
 - [空中平台特化](../air/README.md)
 - [海军特化](../naval/README.md)
+- [Ground 特化](../ground/README.zh.md)
 
 ## 军种画像负责什么
 
@@ -55,6 +56,7 @@ Language:
 - [运行时工作流与合同基线](../bridge/runtime_workflow_and_contract_baseline.md)
 - [air/](../air/README.md)
 - [naval/](../naval/README.md)
+- [ground/](../ground/README.zh.md)
 
 ## 统一结论
 
@@ -72,6 +74,8 @@ Language:
 
 - air-first 的 mission semantics，例如 `mission_command`、route、takeoff、runway、formation
 - 新出现的 naval semantics，例如 `task_group_id`、ship mission command、authority tests
+- 早期 ground tasking/schema semantics，例如 `tasking_profile: ground`、Army
+  别名、`UnitType::Ground` 与 static/support relationship fixtures
 - joint/common seams，例如 `MissionCommand`、`CommandLink`、`DataLink`、report flow
 
 军种画像层的职责，就是在这些概念被提升到 common core 或下沉到 specialization 之前，

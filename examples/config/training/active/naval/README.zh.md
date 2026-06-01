@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-25 from examples/config/training/active/naval/README.md. Review before treating this file as authoritative. -->
-
 # 海军 N4 训练条目
 
 此目录存放已接受 DDG/T-AKE `N4` 威胁/ROE bridge 的维护中 active

@@ -5,14 +5,23 @@
 - `air_combat/`
 - `bindings/`
 - `core/`
+- `engagement/`
 - `execution/`
 - `facade/`
-- `engagement/`
+- `ground/`
 - `link/`
 - `mission/`
 - `multi_agent/`
 - `naval/`
 - `navigation/`
+
+`ground/` currently covers MVP scenario, native platform-schema, and
+realism-gradient bootstrap guardrails; `mission/` also carries the ground
+tasking/lifecycle bridge dispatch tests. Movement, terrain, sensing, fires,
+damage, and full ground runtime behavior remain held. `naval/` includes the
+accepted `N4` pre-fire/tasking/contact reward surface alongside ship database,
+sensor, ASW-helo, station-command, and legacy movement debug checks; `N4`
+training entries still exclude weapon release, damage, and kill rewards.
 
 Keep new runtime regressions in the smallest matching subdomain. Reserve the
 root only for temporary migration helpers.

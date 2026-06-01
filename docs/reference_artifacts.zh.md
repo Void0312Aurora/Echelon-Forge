@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/reference_artifacts.md. Review before treating this file as authoritative. -->
-
 # 参考工件
 
 本文档取代了旧有的分阶段 `active_*_artifacts.md` 笔记。
@@ -57,13 +55,15 @@
 
 ## 起飞
 
+- 维护的冻结执行配置：
+  [p2_takeoff_retrain_v1.json](../examples/config/training/frozen/execution/p2_takeoff_retrain_v1.json)
 - 训练场景：
   [takeoff_stage1_runway45_stresswind.json](../scenarios/takeoff/takeoff_stage1_runway45_stresswind.json)
 
 状态：
 
-- 先前引用的起飞实验输出和训练配置已从工作空间清理。
-- 除非重新引入新的维护配置，否则此行现应仅视为历史记录。
+- 先前引用的起飞实验输出已从工作空间清理。
+- 幸存的维护参考是冻结执行 `p2` 配置，以及 `scenarios/takeoff/` 下的规范起飞场景。
 
 ## 着陆
 
@@ -87,6 +87,8 @@
 
 - 维护的训练配置：
   [p5_continuous_retrain_v1.json](../examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
+- 维护的冷启动/完整航线配置：
+  [p5_continuous_coldstart_retrain_v2.json](../examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json)
 - 历史工件来源配置：
   [p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json](../examples/config/Archive/training/pre_freeze_experiments/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json)
 - 训练场景：
@@ -116,3 +118,74 @@
 
 - 较旧的活跃连续实验目录和模型检查点已从工作空间清理。
 - 维护的参考现在存在于配置/场景层以及上述保留的诊断中。
+
+## 活跃 Cooperative / Combined 主线
+
+- 维护的 active 索引：
+  [examples/config/training/active/README.md](../examples/config/training/active/README.md)
+- 配置族：
+  cooperative cruise、cooperative interval takeoff/departure、cooperative takeoff-to-cruise、cooperative takeoff-cruise-landing，以及 `examples/config/training/active/` 下的 `p4b` cruise-to-landing reopen 条目。
+- 场景族：
+  [scenarios/cruise](../scenarios/README.md)、[scenarios/takeoff](../scenarios/README.md) 和 [scenarios/combined](../scenarios/README.md)。
+
+状态：
+
+- 这些条目是 active forward-moving lanes，不是冻结验收工件。
+- cooperative/HMoE A/B 控制在 active README 中记录；配置没有嵌入统一的 `scenario_path`，因此启动命令仍需要显式提供 scenario。
+
+## 空战 1v1 Active Probes
+
+- 维护的 active 索引：
+  [examples/config/training/active/air_combat/README.md](../examples/config/training/active/air_combat/README.md)
+- scripted-red smoke/probe 场景：
+  [air_combat_1v1_headon_sensor_smoke_v1.json](../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+- Stage-0 drone probe 场景：
+  [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
+- runtime 证据：
+  [test_air_combat_1v1_fixture.py](../tests/runtime/air_combat/test_air_combat_1v1_fixture.py)
+
+状态：
+
+- active `1v1` 配置是 HMoE execution probes 和 smoke entries，不是冻结基线，也不是 self-play 证据。
+- Stage-1 到 Stage-3 的 `scenarios/air_combat/1v1` 文件是受维护的课程场景，但目前没有 active training config 与它们配对。
+
+## 海军 N4 Active Gate
+
+- 维护的 active 索引：
+  [examples/config/training/active/naval/README.md](../examples/config/training/active/naval/README.md)
+- Active configs：
+  `naval_contact_report_threat_roe_smoke_v1.json`、
+  `naval_screen_station_hold_threat_aware_smoke_v1.json` 和
+  `naval_screen_station_recovery_threat_aware_smoke_v1.json`。
+- 场景：
+  [ddg51_take1_screen_threat_roe_v1.json](../scenarios/naval/ddg51_take1_screen_threat_roe_v1.json) 和
+  [ddg51_take1_screen_threat_roe_offstation_recovery_v1.json](../scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json)。
+- 合约：
+  [naval_screen_threat_roe_geometry.json](../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json) 和
+  [naval_screen_threat_roe_offstation_recovery.json](../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json)。
+- eval/test 证据：
+  [test_eval_naval_n4_baseline.py](../tests/eval/test_eval_naval_n4_baseline.py) 和
+  [test_naval_active_training_entries.py](../tests/training/test_naval_active_training_entries.py)。
+
+状态：
+
+- 这只是已接受的 pre-fire/tasking/contact gate。
+- 它不暴露 weapon release、damage、kill rewards，也不声明 trained naval-policy。
+
+## Ground Bootstrap
+
+- 场景夹具：
+  [ground_platoon_tasking_smoke_v1.json](../scenarios/ground/ground_platoon_tasking_smoke_v1.json)、
+  [ground_platoon_static_occupy_v1.json](../scenarios/ground/ground_platoon_static_occupy_v1.json) 和
+  [ground_platoon_support_relationship_v1.json](../scenarios/ground/ground_platoon_support_relationship_v1.json)。
+- native schema 证据：
+  [ground_platoon_mvp.json](../examples/config/database/ground/units/ground_platoon_mvp.json) 和
+  [CAPABILITY_NOTE.md](../examples/config/database/ground/units/CAPABILITY_NOTE.md)。
+- runtime/contract 证据：
+  [tests/runtime/ground](../tests/runtime/ground) 和
+  [tests/contracts/unit/ground](../tests/contracts/unit/ground)。
+
+状态：
+
+- Ground 还不是 active RL training line。
+- 当前证据仅限 tasking/common-core、native platform-schema/bootstrap 和 lifecycle bridge coverage。movement、terrain、sensing、fires、damage 与完整 ground runtime 行为仍保持 held。

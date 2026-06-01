@@ -2,12 +2,18 @@
 
 `core/` is the C++ runtime kernel layer. It owns single-world simulation, batch runtime, mission/episode runtime, geometry queries, and model interfaces. It may orchestrate the lower-level `systems/`, `models/`, `components/`, and `content/` layers, but it does not carry Python bindings or application-layer facade contracts.
 
+The kernel layer is multi-domain aware, with air execution still the most
+mature path. Naval systems and contracts are present at bounded seams; ground is
+limited to setup/type/capability evidence plus shared aircraft/terrain contact
+primitives, not a land-domain runtime.
+
 ## Allowed
 
 - Runtime owners such as `SimulationKernel` and `WorldBatchRuntime`.
 - Mission, objective, reward, termination, and episode controller logic.
 - Geometry queries and core model interfaces.
 - The stable C++ implementation foundation behind facade-facing APIs.
+- Bounded orchestration of air, naval, and early ground-aware setup data through lower-layer public APIs.
 
 ## Forbidden
 
@@ -15,6 +21,7 @@
 - Frontend-specific API naming and language-binding compatibility logic.
 - Replacing the CPU truth path with the GPU experimental mainline.
 - Defining component or model implementations directly inside `core`.
+- Claiming ownership of full ground movement, sensing, fires, damage, or land-domain runtime before those lower layers exist.
 
 ## Subdirectory Conventions
 

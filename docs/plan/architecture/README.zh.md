@@ -13,15 +13,16 @@
 - 维护中的 runtime kernel 按 SCAL 四面组织：semantic、causal、agentic 与 learning-facing architecture。
 - temporal DAG 是更大 graph-of-graphs 模型中的执行投影；该模型还覆盖 semantic、causal、information、agency、evidence 与未来 learning graph。
 - backend acceleration、resident-state 与 shadow 风格工作必须先引用已验收的
-  WP6 backend profile registry 与 parity budget，才能成为维护中的 capability；参见
-  [resident-state 边界规则](../../task/simulation_architecture/wp6_resident_state_boundary_rules_20260519.zh.md)
-  与 [WP6 验收审查](../../task/review/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)。
-- WP6 之后的实现准备线是
-  [WP7 后端能力物化](../../task/simulation_architecture/backend_capability_materialization_wp7_20260519.zh.md)，
-  覆盖可机器检查 registry materialization、保守 runtime capability projection、
-  promotion evidence gate 与 multi-fidelity entry conditions，但不晋级候选能力；
-  其
-  [验收审查](../../task/review/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
+  WP6 backend profile registry 与 parity budget，才能成为维护中的 capability。
+  WP6 证据已经是归档任务历史；参见
+  [resident-state 边界规则](../../task/simulation_architecture/archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)
+  与 [WP6 验收审查](../../task/review/archive/wp-acceptance/wp6_backend_profile_policy_acceptance_review_20260519.zh.md)。
+- WP6 之后的实现准备证据是已归档的
+  [WP7 后端能力物化](../../task/simulation_architecture/archive/wp7_backend_capability_materialization/backend_capability_materialization_wp7_20260519.zh.md)
+  线，覆盖可机器检查 registry materialization、保守 runtime capability
+  projection、promotion evidence gate 与 multi-fidelity entry conditions，但不
+  晋级候选能力；其
+  [验收审查](../../task/review/archive/wp-acceptance/wp7_backend_capability_materialization_acceptance_review_20260519.zh.md)
   只验收文档与实现准备状态，当前 exact GPU、resident-state、shadow、device
   observation 与 multi-fidelity support 仍为 false。
 - 将该定位转成实现工作的活跃任务线是

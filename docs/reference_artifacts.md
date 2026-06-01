@@ -57,13 +57,15 @@ Status:
 
 ## Takeoff
 
+- Maintained frozen execution config:
+  [p2_takeoff_retrain_v1.json](../examples/config/training/frozen/execution/p2_takeoff_retrain_v1.json)
 - Training scenario:
   [takeoff_stage1_runway45_stresswind.json](../scenarios/takeoff/takeoff_stage1_runway45_stresswind.json)
 
 Status:
 
-- The previously referenced takeoff experiment output and training config were cleaned from the workspace.
-- This line should now be treated as historical-only unless a new maintained config is reintroduced.
+- The previously referenced takeoff experiment output was cleaned from the workspace.
+- The surviving maintained reference is the frozen execution `p2` config plus the canonical takeoff scenarios under `scenarios/takeoff/`.
 
 ## Landing
 
@@ -87,6 +89,8 @@ Status:
 
 - Maintained training config:
   [p5_continuous_retrain_v1.json](../examples/config/training/frozen/execution/p5_continuous_retrain_v1.json)
+- Maintained cold-start/full-route config:
+  [p5_continuous_coldstart_retrain_v2.json](../examples/config/training/frozen/execution/p5_continuous_coldstart_retrain_v2.json)
 - Historical artifact-provenance config:
   [p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json](../examples/config/Archive/training/pre_freeze_experiments/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json)
 - Training scenario:
@@ -117,3 +121,74 @@ Status:
 
 - The older active continuous experiment directory and model checkpoint were cleaned from the workspace.
 - The maintained reference now lives at the config/scenario layer plus the retained diagnostics above.
+
+## Active Cooperative / Combined Mainline
+
+- Maintained active index:
+  [examples/config/training/active/README.md](../examples/config/training/active/README.md)
+- Config families:
+  cooperative cruise, cooperative interval takeoff/departure, cooperative takeoff-to-cruise, cooperative takeoff-cruise-landing, and `p4b` cruise-to-landing reopen entries under `examples/config/training/active/`.
+- Scenario families:
+  [scenarios/cruise](../scenarios/README.md), [scenarios/takeoff](../scenarios/README.md), and [scenarios/combined](../scenarios/README.md).
+
+Status:
+
+- These entries are active forward-moving lanes, not frozen acceptance artifacts.
+- The cooperative/HMoE A/B controls are documented in the active README; configs do not embed a universal `scenario_path`, so launch commands still provide the scenario explicitly.
+
+## Air Combat 1v1 Active Probes
+
+- Maintained active index:
+  [examples/config/training/active/air_combat/README.md](../examples/config/training/active/air_combat/README.md)
+- Scripted-red smoke/probe scenario:
+  [air_combat_1v1_headon_sensor_smoke_v1.json](../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+- Stage-0 drone probe scenario:
+  [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
+- Runtime evidence:
+  [test_air_combat_1v1_fixture.py](../tests/runtime/air_combat/test_air_combat_1v1_fixture.py)
+
+Status:
+
+- The active `1v1` configs are HMoE execution probes and smoke entries, not frozen baselines or self-play evidence.
+- Stage-1 through Stage-3 `scenarios/air_combat/1v1` files are maintained curriculum scenarios, but no active training config is paired to them yet.
+
+## Naval N4 Active Gate
+
+- Maintained active index:
+  [examples/config/training/active/naval/README.md](../examples/config/training/active/naval/README.md)
+- Active configs:
+  `naval_contact_report_threat_roe_smoke_v1.json`,
+  `naval_screen_station_hold_threat_aware_smoke_v1.json`, and
+  `naval_screen_station_recovery_threat_aware_smoke_v1.json`.
+- Scenarios:
+  [ddg51_take1_screen_threat_roe_v1.json](../scenarios/naval/ddg51_take1_screen_threat_roe_v1.json) and
+  [ddg51_take1_screen_threat_roe_offstation_recovery_v1.json](../scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json).
+- Contracts:
+  [naval_screen_threat_roe_geometry.json](../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json) and
+  [naval_screen_threat_roe_offstation_recovery.json](../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json).
+- Eval/test evidence:
+  [test_eval_naval_n4_baseline.py](../tests/eval/test_eval_naval_n4_baseline.py) and
+  [test_naval_active_training_entries.py](../tests/training/test_naval_active_training_entries.py).
+
+Status:
+
+- This is an accepted pre-fire/tasking/contact gate only.
+- It does not expose weapon release, damage, kill rewards, or trained naval-policy claims.
+
+## Ground Bootstrap
+
+- Scenario fixtures:
+  [ground_platoon_tasking_smoke_v1.json](../scenarios/ground/ground_platoon_tasking_smoke_v1.json),
+  [ground_platoon_static_occupy_v1.json](../scenarios/ground/ground_platoon_static_occupy_v1.json), and
+  [ground_platoon_support_relationship_v1.json](../scenarios/ground/ground_platoon_support_relationship_v1.json).
+- Native schema evidence:
+  [ground_platoon_mvp.json](../examples/config/database/ground/units/ground_platoon_mvp.json) and
+  [CAPABILITY_NOTE.md](../examples/config/database/ground/units/CAPABILITY_NOTE.md).
+- Runtime/contract evidence:
+  [tests/runtime/ground](../tests/runtime/ground) and
+  [tests/contracts/unit/ground](../tests/contracts/unit/ground).
+
+Status:
+
+- Ground is not an active RL training line yet.
+- Current evidence is limited to tasking/common-core, native platform-schema/bootstrap, and lifecycle bridge coverage. Movement, terrain, sensing, fires, damage, and full ground runtime behavior remain held.

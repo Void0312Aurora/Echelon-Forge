@@ -1,12 +1,14 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/systems/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/systems` Boundaries
 
-`components/systems` holds platform system state components, including communications, data links, electronic warfare, navigation, logistics, sensors, and track management.
+`components/systems` holds platform system state components, including communications, data links, electronic warfare, navigation, logistics, sensors, sonar, and track management.
+
+These state components are multi-domain aware for air/naval platform systems and
+contact evidence. They do not define a full ground sensing, fires, logistics, or
+C2 component model.
 
 ## Allowed
 
-- data link, command link, sensor, EW, navigation, logistics, track management state.
+- comm, data link, sensor, sonar, EW, navigation, logistics, track management state.
 - data that the corresponding `systems/systems` tick logic needs to read and write.
 
 ## Not Allowed
@@ -14,6 +16,7 @@
 - Platform system update/tick/scan/track fusion behavior.
 - mission/tasking DTOs.
 - Python bindings, facades, or batch runtime logic.
+- Native ground-domain platform-system schemas before ownership is defined.
 
 ## Migration Note
 

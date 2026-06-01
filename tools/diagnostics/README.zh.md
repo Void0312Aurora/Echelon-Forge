@@ -1,8 +1,10 @@
-<!-- Machine-translated draft generated on 2026-05-18 from tools/diagnostics/README.md. Review before treating this file as authoritative. -->
-
 # 工具诊断 README
 
 `tools/diagnostics/` 包含面向操作人员的探针、基准测试和矩阵检查，用于支持维护的 CPU 主线运行时，以及在明确要求时支持冻结的实验性 GPU 辅助线。
+
+域状态口径：diagnostics 目前仍主要面向 air/execution 与 cooperative/common runtime 工作。naval 条目只覆盖列出的 station、screen 与 contact-evidence 路径。ground-domain 的 movement、sensing、terrain、fires、damage 与完整 runtime diagnostics 还不是这里的 maintained 能力；takeoff ground-roll 表述指跑道阶段的 air/execution 行为。
+
+运行时口径：使用 `WorldBatchRuntime`、`WorldBatchVecEnv` 或 `CooperativeWorldBatchVecEnv` 的 diagnostics 与 maintained runtime-facade mainline 对齐。直接实例化 `UniversalEnv` 的 diagnostics 是 raw-kernel compatibility/debug probe，必须显式 opt in `runtime_compatibility_enabled=True`；尚未接通该 flag 的调用方应视为实现跟进项，而不是 production acceptance。
 
 这些脚本特意与顶级入口点分离，因为它们通常：
 
@@ -24,16 +26,20 @@
 - [cooperative_trajectory_base.py](cooperative_trajectory_base.py)
   - 用于维护的协同诊断的共享协同轨迹环境/模型引导、轨迹捕获和绘图帮助程序。
 
-当前维护的诊断：
+当前 diagnostics 与 probes：
 
 - [leader_perf_probe.py](leader_perf_probe.py)
   - 针对维护的 `auto`、`subproc`、`shared` 和 `dummy` 基线的快速领导者层吞吐量探针。
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - 自动执行 `visual_downsample` 训练/评估矩阵，用于视觉执行策略，并按因子聚合最终指标。
+- [air_combat_stage0_process_probe.py](air_combat_stage0_process_probe.py)
+  - 受限 air-combat stage-0 process probe，用于 raw `UniversalEnv` compatibility path 上的武器使用/debug trace。
+- [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
+  - cooperative execution 配置的 observation scale sampler，用于数值卫生和特征尺度检查。
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - 面向本地 `game/` Arma bridge 的最小行协议 TCP stub。它确认 `begin_session`，消费 `host_frame`，并为 `echelon_bridge.dll` 产出合成 `proxy_state` 载荷。
 - [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
-  - 面向同一 Arma bridge 的 `UniversalEnv` 真值 TCP 后端。它把后端真值刚体锚定到 Arma host-frame 的位置和朝向上，同时在 Echelon Forge 内真实 step 飞行状态。
+  - 面向同一 Arma bridge 的 `UniversalEnv` 真值 TCP 后端。它把后端真值刚体锚定到 Arma host-frame 的位置和朝向上，同时在 Echelon Forge 内真实 step air/execution 状态。
 - `spatial_query`
   - 编译的空间查询与传统几何基准。
 - `scenario_compiler`
@@ -50,12 +56,17 @@
   - 视觉降采样扫描基准。
 - `coarse_route_segments`
   - 粗略航路段错误基准。
+
+部分 benchmark family 同时包含 legacy/raw `UniversalEnv` 对照分支和 maintained runtime-facade 测量。需要这些分支时，应有意接通 compatibility flag，不要把 raw-env 失败解读成 world-batch runtime 回归。
+
 - [diagnose_cooperative_trajectory.py](diagnose_cooperative_trajectory.py)
   - 统一的协同轨迹重放/导出 CLI。使用 `--task takeoff` 或 `--task takeoff_to_cruise` 从一个维护的入口点输出特定任务的 PNG + JSON 诊断。
 - [diagnose_runway_drift_sweep.py](diagnose_runway_drift_sweep.py)
   - 参数化的起飞地面滑行漂移扫描，用于量化不同种子、风向和政策选择下的偏离跑道行为。
 - [diagnose_takeoff_to_landing_trajectory.py](diagnose_takeoff_to_landing_trajectory.py)
   - 用于连续起飞到着陆任务的单集轨迹导出器，输出 PNG + JSON，以便进行脚本/模型比较。
+- [trace_training_nonfinite_source.py](trace_training_nonfinite_source.py)
+  - 聚焦 cooperative training NaN/Inf 的 tracer。它会按 `train.py` 重建维护中的 cooperative flow，把 finite-value probe 接入已加载的 policy/algo，并以 JSON 报告停止。
 
 推荐的多个基准维护入口点：
 
@@ -110,8 +121,8 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_vec_env \
-  --n-envs 8 --steps 128 --reset-iters 24 --mission-obs-mode nav_v2 --action-mode full
+  --family world_batch_runtime \
+  --world-count 8 --setup-iters 64 --iters 512
 ```
 
 运行本地 Arma proxy backend stub：
@@ -142,9 +153,9 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
 ./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
   --host 127.0.0.1 \
   --port 8765 \
-  --scenario /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
-  --train-config /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
-  --model /home/void0312/Workshop/CMO/experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
+  --scenario experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
+  --train-config experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
+  --model experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
   --algo AdaptiveKLPPO \
   --device cpu
 ```
@@ -162,7 +173,7 @@ ssh -N -L 8765:127.0.0.1:8765 HEI
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_vec_env \
+  --family world_batch_runtime \
   --family-help
 ```
 

@@ -20,6 +20,14 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 - Bridging between the leader decision layer and the execution layer.
 - Lightweight runtime adaptation around the `ef_py` kernel and observation assembly.
 
+## Domain Posture
+
+- The maintained environment path is still strongest for air/execution and cooperative/common training.
+- Maintained production training reaches the runtime through `python.rl.runtime.world_batch_vec_env.WorldBatchVecEnv` for execution and `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv` for cooperative execution.
+- `UniversalEnv` remains a stable import path for single-env compatibility, evaluation, and diagnostics, but its raw `ef_py.SimulationKernel` route is quarantined and requires `runtime_compatibility_enabled=True`.
+- Naval hooks exist where explicitly listed, including station actions, screen behavior, scoped reward surfaces, and N4 contact-evidence plumbing through the runtime path.
+- Ground-domain movement, sensing, terrain, fires, damage, and full runtime behavior are not implemented here. References to takeoff ground roll or runway geometry are air/execution runway-phase logic, not ground-domain support.
+
 ## Forbidden
 
 - Re-implementing C++ kernel truth logic inside env files.
@@ -30,11 +38,11 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## Subdirectory Conventions
 
 - [universal_env.py](universal_env.py)
-  - Stable execution-layer/single-machine env entry point. Shared action/observation/info implementations have moved into `universal_env_parts/`.
+  - Stable single-env import path for compatibility, evaluation, and diagnostics. It is not the default production training backend unless the raw-kernel compatibility flag is explicitly enabled.
 - [universal_env_parts/](universal_env_parts)
   - Main implementation subdomain for `UniversalEnv`, maintaining action, observation, space, and step-info assembly logic.
 - [leader_env.py](leader_env.py)
-  - Environment for the leader decision layer, driving underlying flight through the execution backend.
+  - Environment for the leader decision layer, driving the underlying execution backend.
 - `scenario_loader/`
   - Scenario loading plus mission-state, route, reward, shaping, and transition glue.
 - `leader_env_parts/`
@@ -52,12 +60,14 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 - Root
   - [universal_env.py](universal_env.py)
-    - Stable entry point for the general training environment; the main action/observation/space/info helpers have moved into `universal_env_parts/`.
+    - Stable single-env compatibility/debug entry point. The main action/observation/space/info helpers have moved into `universal_env_parts/`; maintained execution training should normally use the world-batch runtime adapter.
   - [leader_env.py](leader_env.py)
     - Leader training environment, execution backend integration, and decision-interval control.
 - `universal_env_parts/`
   - [actions.py](universal_env_parts/actions.py)
     - Pilot action construction, action normalization, and basic numeric transforms.
+  - [naval_actions.py](universal_env_parts/naval_actions.py)
+    - Scoped naval station-action adaptation for `naval_station3`.
   - [observations.py](universal_env_parts/observations.py)
     - General observation assembly and visual downsampling helpers.
   - [spaces.py](universal_env_parts/spaces.py)
@@ -80,7 +90,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
   - [step_evaluation.py](scenario_loader/step_evaluation.py)
     - Step-level termination, success, and reward decomposition helpers.
   - `behavior_runtime/`
-    - Command chains and post-waypoint transitions.
+    - Command chains, post-waypoint transitions, and scoped naval screen station hold.
   - `execution_runtime/`
     - Main step path, shadow state, and shaping path.
   - `navigation_runtime/`
@@ -88,7 +98,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
   - `preparation_runtime/`
     - Mission, task-order, and waypoint preparation plus randomization.
   - `reward_runtime/`
-    - Shaping inputs, objectives, safety constraints, and compiled reward runtime.
+    - Shaping inputs, objectives, safety constraints, compiled reward runtime, and scoped naval reward surfaces.
   - `spatial_runtime/`
     - Geometry, world transforms, and spatial helpers.
 - `leader_env_parts/`
@@ -125,12 +135,14 @@ If you are looking into:
   - Start with `leader_env_parts/decision_runtime/`
 - "Why does the leader environment use the frozen/scripted execution backend?"
   - Start with `leader_env_parts/execution_runtime/` and [leader_env.py](leader_env.py)
+- "Why does direct `UniversalEnv(...)` construction fail?"
+  - Check whether the caller is intentionally using the quarantined raw-kernel compatibility path and passes `runtime_compatibility_enabled=True`; otherwise prefer the world-batch runtime adapters.
 
 ## Migration Notes
 
 - `scenario_loader/` has already been split by runtime subdomain. New loader logic should go into the corresponding package instead of expanding `core.py` into a grab bag again.
 - `gym_envs/` should use the packaged scenario entry points under `python/scenario/compiler/` and `python/scenario/runtime/`.
 - `python/scenario/diagnostics/` is diagnostics-only and must not become an environment default path.
-- `universal_env.py` remains the stable env entry point, but generic helper implementations should continue to converge into `universal_env_parts/`.
+- `universal_env.py` remains a stable single-env compatibility entry point, but maintained training should keep converging on runtime-facade/world-batch adapters.
 - `leader_env.py` remains the stable entry point, but its implementation should continue to move down into `leader_env_parts/`.
 - If the future design keeps only package entry points instead of root-level single-file env modules, make sure the import paths in `tools/`, `tests/`, and training entry points are migrated together first.

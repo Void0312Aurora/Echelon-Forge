@@ -1,9 +1,9 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/components/command/common/README.md. Review before treating this file as authoritative. -->
-
 # `src/components/command/common` Boundary
 
 `components/command/common` holds cross-domain shared command infrastructure. What is placed here are
 "command shells, transport semantics, and shared fields that multiple execution domains may reuse", rather than the control or recycling semantics specific to the current air execution surface.
+
+This directory is shared by the maintained air and naval command slices. It is not a dumping ground for unowned land-domain behavior: ground-specific movement, sensing, fires, and damage command semantics remain held until a native ground command schema is introduced.
 
 ## Allowed
 
@@ -14,6 +14,8 @@
 ## Forbidden
 
 - Runway, approach, takeoff, formation and other clearly air-specific fields.
+- Naval stationing, embarked helo, OTH relay, or surface-engagement fields; those belong in `naval/`.
+- Ground movement, sensing, fires, or damage fields; those are not maintained here yet.
 - `TaskOrder`, `LeaderIntent`, `PilotReport` and other tasking/C2 DTOs.
 - Tick logic for command delivery, delay, and effective timing; these belong to `systems/`.
 - Python binding or facade adaptation logic.
@@ -27,5 +29,5 @@
 
 ## Dependency Direction
 
-This directory can only depend on lower-level value types and component headers. `air/` or future `naval/`
+This directory can only depend on lower-level value types and component headers. `air/` and `naval/`
 extension layers can compose the core structures here; this directory should not depend on specific domains in reverse.

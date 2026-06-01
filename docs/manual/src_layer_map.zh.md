@@ -1,6 +1,6 @@
 # 代码层地图
 
-状态：`2026-05-18` 维护版。
+状态：`2026-06-01` 多域维护版。
 本文档回答三个问题：
 
 1. 当前主线代码从 C++ 运行时到 Python 训练入口是怎样串起来的。
@@ -10,6 +10,13 @@
 如果某份历史任务记录、旧计划或归档文档与这里冲突，优先相信当前代码树中的活动 README，以及 `docs/plan/architecture/` 下仍作为主线的架构说明。
 
 ## 1. 当前主线总览
+
+当前 C++ surface 已经是多域口径，但成熟度并不均匀。air/execution 是最深的维护中路径。
+naval 已有平台组件、command/tasking owner slice、舰艇/潜艇/舰载航空 token runtime、
+weapon-release hook 和 engagement evidence export，但还不是完整 naval mission runtime。
+ground 仍是 bootstrap/evidence-only：`UnitType::Ground` 与 typed platform capability
+evidence 已存在，land movement、sensing、terrain ownership、fires、damage 和 full ground
+runtime 仍 held。
 
 当前维护中的依赖方向应理解为：
 
@@ -84,6 +91,7 @@ SimulationKernel / WorldBatchRuntime
 
 - ECS 组件。
 - command / tasking DTO。
+- naval platform state component。
 - 可绑定、可持久化的轻量值类型。
 
 边界入口：
@@ -92,6 +100,8 @@ SimulationKernel / WorldBatchRuntime
 - [src/components/command/README.md](../../src/components/command/README.md)
 - [src/components/command/common/README.md](../../src/components/command/common/README.md)
 - [src/components/command/air/README.md](../../src/components/command/air/README.md)
+- [src/components/command/naval/README.md](../../src/components/command/naval/README.md)
+- [src/components/naval/README.md](../../src/components/naval/README.md)
 - [src/components/tasking/README.md](../../src/components/tasking/README.md)
 - [src/components/tasking/common/README.md](../../src/components/tasking/common/README.md)
 - [src/components/tasking/air/README.md](../../src/components/tasking/air/README.md)
@@ -101,6 +111,7 @@ SimulationKernel / WorldBatchRuntime
 
 - `MissionCommand`、`PilotAction`、`TaskOrder`、`LeaderIntent` 的字段定义在哪里。
 - 哪些字段属于 `common`，哪些属于 `air` / `naval`。
+- ship、submarine 和 embarked-air operation state 存在哪里。
 
 ### `src/systems/`
 
@@ -109,6 +120,7 @@ SimulationKernel / WorldBatchRuntime
 - Flecs 系统注册。
 - 每个 tick 的 ECS 变更逻辑。
 - 物理、战斗、平台系统和可视化更新。
+- 受限的 naval ship/submarine/embarked-air token runtime 与 naval weapon-release hook。
 
 边界入口：
 
@@ -117,12 +129,14 @@ SimulationKernel / WorldBatchRuntime
 - [src/systems/physics/README.md](../../src/systems/physics/README.md)
 - [src/systems/combat/README.md](../../src/systems/combat/README.md)
 - [src/systems/systems/README.md](../../src/systems/systems/README.md)
+- [src/systems/naval/README.md](../../src/systems/naval/README.md)
 - [src/systems/visual/README.md](../../src/systems/visual/README.md)
 
 典型问题：
 
 - 命令怎样进入运行时并在每帧生效。
 - 空气动力、控制、仪表、导航、传感器、数据链怎样推进。
+- naval motion 与 token-level embarked-air 行为在哪里推进。
 
 ### `src/models/`
 
@@ -130,6 +144,7 @@ SimulationKernel / WorldBatchRuntime
 
 - 可替换领域模型的默认实现。
 - control / sensor / guidance / effects / unit factory。
+- naval weapon-mount helper 与 typed platform capability evidence。
 
 边界入口：
 
@@ -144,13 +159,15 @@ SimulationKernel / WorldBatchRuntime
 
 - 默认控制律、传感器、制导和武器效果模型在哪里。
 - 某类行为究竟属于“系统逻辑”还是“可替换模型实现”。
+- ground 相关数据只是 capability evidence，还是实际 runtime model。
 
 ### `src/content/`
 
 职责：
 
 - 内容 schema、单位定义和内容加载器。
-- 描述“有哪些静态内容”，而不是拥有运行时行为。
+- 描述“有哪些静态内容”，包括 naval platform definition 与 ground-aware setup metadata，
+  而不是拥有运行时行为。
 
 边界入口：
 
@@ -165,6 +182,7 @@ SimulationKernel / WorldBatchRuntime
 - mission 运行时。
 - episode 控制器。
 - 几何查询。
+- engine-level 的维护中 command/tasking contract transport 与 typed platform setup。
 
 边界入口：
 
@@ -181,6 +199,7 @@ SimulationKernel / WorldBatchRuntime
 
 - `SimulationKernel` 和 `WorldBatchRuntime` 的归属在哪里。
 - reward / objective / termination / episode transition 在哪里计算。
+- 哪些 naval seam 是 engine/runtime transport 或 evidence export，而不是 mission orchestration。
 
 ### `src/runtime/`
 
@@ -189,6 +208,7 @@ SimulationKernel / WorldBatchRuntime
 - 维护中的 C++ 应用层契约。
 - facade request / result。
 - 面向 Python 和未来前端的类型化运行时 API。
+- tasking、observation、engagement、diagnostics 和 typed platform setup contract。
 
 边界入口：
 
@@ -200,6 +220,7 @@ SimulationKernel / WorldBatchRuntime
 
 - 外部长期开依赖的 C++ 运行时表面应该是什么。
 - 为什么不应直接抓取 `SimulationKernel` 作为上层 API。
+- 哪些 facade packet 是 evidence/export surface，而不是 domain owner。
 
 ### `src/interfaces/`
 
@@ -283,8 +304,9 @@ SimulationKernel / WorldBatchRuntime
 
 - [python/scenario_compiler.py](../../python/scenario_compiler.py)
   - 兼容性 shim，主实现已下沉到 `python/scenario/compiler/`。
-- [python/scenario_runtime.py](../../python/scenario_runtime.py)
-  - 兼容性 shim，主实现已下沉到 `python/scenario/runtime/`。
+- [python/scenario/runtime/](../../python/scenario/runtime)
+  - 当前 scenario-runtime 主实现。旧的 `python/scenario_runtime.py` shim 在当前
+    checkout 中不存在。
 - [python/testing/scenario_contract_runner.py](../../python/testing/scenario_contract_runner.py)
   - 兼容性 shim，主实现已下沉到 `python/testing/contracts/`。
 

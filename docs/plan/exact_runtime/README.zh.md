@@ -1,5 +1,10 @@
 # `exact_runtime/`
 
+语言版本：
+
+- 英文主文：[README.md](README.md)
+- 中文辅文：`README.zh.md`
+
 该目录包含精确运行时 / GPU 主线的候选专项计划、检查清单以及阶段冻结记录。
 
 并非所有历史 exact-runtime 草案都还保留在当前活跃目录中。应结合本 README 与 `../archive/exact_runtime/README.md` 判断哪些文档仍活跃、哪些已转为历史记录。

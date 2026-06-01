@@ -5,7 +5,8 @@
 - 英文主文：`README.md`
 - 中文辅文：[README.zh.md](README.zh.md)
 
-Echelon Forge 是一个用于空战和飞行任务研究的仿真与强化学习工作台。
+Echelon Forge 是一个面向空中、海军、地面任务、协同指挥和飞行任务研究的
+多域仿真与强化学习工作台。
 
 该仓库整合了：
 
@@ -14,6 +15,7 @@ Echelon Forge 是一个用于空战和飞行任务研究的仿真与强化学习
 - 场景编译/运行时工具
 - Gymnasium 风格训练环境
 - 批量 rollout 和协作训练基础设施
+- 面向 air、naval、ground 和 combined/cooperative 任务的多域场景、内容和 profile 层
 - 评估、诊断和契约式回归工具
 
 该项目仍在演进中，但维护的主线已支持：
@@ -22,6 +24,8 @@ Echelon Forge 是一个用于空战和飞行任务研究的仿真与强化学习
 - 任务/指令/奖励/终止运行时
 - 起飞、巡航、着陆及组合任务训练线路
 - 协作执行实验
+- 海军 pre-fire 任务、接触与报告夹具
+- 地面 tasking 烟雾夹具和 native platform-schema 证据
 - 活跃的诊断和评估工具
 
 ## 仓库状态
@@ -36,6 +40,20 @@ Echelon Forge 是一个用于空战和飞行任务研究的仿真与强化学习
 - GPU 辅助路径存在，但仍谨慎对待
 - 社区贡献目前采用 issue-first 和 owner-scoped 模式；见
   [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## 领域成熟度快照
+
+本仓库已经是多域项目，但各领域成熟度并不相同。下面的表格是入口地图，不是发布承诺。
+
+| 领域 | 当前状态 | 主要入口 |
+| --- | --- | --- |
+| Air / execution | 最成熟的 runtime 和训练线，也是当前最适合作为 correctness hardening 的基线。 | `scenarios/takeoff/`、`scenarios/cruise/`、`scenarios/landing/`、`examples/config/training/frozen/` |
+| Cooperative / combined | 活跃集成主线，用于验证 multi-agent、leader/execution 和 world-batch 行为。 | `scenarios/combined/`、`python/rl/runtime/cooperative_world_batch_vec_env.py`、`gym_envs/leader_env.py` |
+| Naval | 活跃领域，已有 N4 风格的 pre-fire tasking、contact/reporting、screen/station 与评估 gate；武器/毁伤结果 authority 仍是后续工作。 | `scenarios/naval/`、`docs/task/naval/`、`docs/standards/naval/` |
+| Ground | 早期 tasking/runtime bootstrap。当前 fixture 验证共享 command/status 语义和 native platform-schema 证据，不声明完整地面 movement、sensing、fires 或 damage。 | `scenarios/ground/`、`docs/task/ground/`、`docs/standards/ground/` |
+| Air combat / A2 | 聚焦的战斗与高保真毁伤模型工作线，已有 retained evidence gate。它是一个领域线，不是整个项目身份。 | `scenarios/air_combat/`、`docs/task/air_combat/` |
+| Visualization / game | 探索性的操作员与前端表面；维护路径应以后端仿真 runtime 真值为准。 | `examples/viz/`、`docs/task/viz/`、`docs/task/game/` |
+| Model / world model | 策略/模型侧规划与实验线，包括 temporal HMoE 和世界模型工具。 | `docs/task/model/`、`docs/forward/models/`、`world_model_train.py` |
 
 ## 命名与包标识
 
@@ -181,7 +199,7 @@ interfaces/python
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
 - [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
-- [docs/plan/archive/src_layered_refactor_freeze.zh.md](docs/plan/archive/src_layered_refactor_freeze.zh.md)
+- [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 ## 场景与训练配置
 
@@ -192,6 +210,7 @@ interfaces/python
 - `cruise/`
 - `air_combat/`
 - `naval/`
+- `ground/`
 - `landing/`
 - `combined/`
 - `templates/`
@@ -223,7 +242,7 @@ interfaces/python
 当前根/操作人员入口点：
 
 - `train.py`
-  - 主要执行层和领导层训练入口点。
+  - 主要执行层、协同层和领导层训练入口点。
 - `world_model_train.py`
   - 世界模型训练入口点；仍然是一个大型根脚本，尚未像 `train.py` 那样完全拆分。
 - `evaluate.py`

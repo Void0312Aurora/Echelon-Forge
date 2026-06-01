@@ -162,7 +162,6 @@ common core 里的 `CommandLink` 应负责：
   - 命令投递语义
   - 汇报共享语义
 - `service profile`
-  - 空军、海军或未来地面的解释方式
+  - 空军、海军或早期 ground 的解释方式
 - `platform/task specialization`
   - 实际运动、站位、回收和武器执行
-

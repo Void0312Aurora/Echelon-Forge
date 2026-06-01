@@ -1,42 +1,101 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/task/README.md. Review before treating this file as authoritative. -->
-
 # 任务文档
 
-本目录是面向任务的工作文档的仓库本地导航中心。
+本目录是面向任务的工作文档的仓库本地导航中心。请把这个根入口当作
+task-area 选择器，而不是按时间排列的任务板，也不是单一领域路线图。
+
+项目叙述现在是多域任务导航：air/execution 是当前成熟度最高的领域执行切片；
+cooperative/common 集成是从 common/air/naval 起步的当前 shared-tasking 收敛线；
+naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstrap，
+已有 native platform-schema 证据但没有 full land runtime；viz 和 game 是探索
+展示面；model 是策略/世界模型规划面；`review/` 与 `issues/` 是治理面。较早
+的 `flight_dynamics/` 和 dated `air_combat/` 快照仍是有用记录，但不再是全项目
+中心。
 
 语言说明：
 
 - 当前只有稳定任务导航面在朝着“英文规范 `.md` 为主、中文 `.zh.md` 为辅”的方向发展。
 - `docs/task/**` 下高频变更的 dated task 长文默认按英文主文维护，除非某个更小切片被明确提升到持续双语维护面。
-- 该策略位于 [docs/standards/governance/bilingual_documentation_policy.md](../standards/governance/bilingual_documentation_policy.md)。
-- rollout 计划位于 [docs/plan/documentation_bilingual_migration_plan_20260518.md](../plan/documentation_bilingual_migration_plan_20260518.md)。
+- 该策略位于
+  [docs/standards/governance/bilingual_documentation_policy.zh.md](../standards/governance/bilingual_documentation_policy.zh.md)。
+- rollout 计划位于
+  [docs/plan/documentation_bilingual_migration_plan_20260518.zh.md](../plan/documentation_bilingual_migration_plan_20260518.zh.md)。
 
 此处大部分文件是特定分析、冻结计划、任务板、检查点或收敛过程的带日期快照。如需某个领域的最新上下文，请优先从该领域的 `README.md` 开始；更深层 dated 文档应视为支撑记录，而不是稳定根入口。
 
 如需处理本目录的生命周期收敛与封存，请参见
 [任务文档封存与收敛计划](task_archive_convergence_plan_20260518.zh.md)。
 
-## 领域导航
+## 生命周期标签
 
-- [飞行动力学/](flight_dynamics/README.md)：真实度跟踪任务导航。先从局部 README 进入，再继续查看 `flight/`、`sensor_situation/`、`weapon_guidance/`、`naval/`、`c2_command_chain/` 这些子项目 README。
-- [runtime 性能/](performance_runtime/README.md)：当前真实性冻结后的 runtime 性能推进线。请先从局部 README 查看当前分层规则、任务板来源和活跃入口边界。
-- [可视化/](viz/README.md)：仍在推进的统一入口可视化工作线。请先从局部 README 进入；archive 中的大体量冻结/设计文档主要用于追溯，不再充当根级稳定入口。
-- [海军/](naval/README.md)：仍在推进的海军真实性工作线。请先从局部 README 查看当前如何解释已归档 checkpoint 与 backlog 材料。
-- [审查/](review/README.zh.md)：已归档的架构审查工作线。
-- [空战/](air_combat/README.zh.md)：仍在推进的 `1v1` 空战工作线。请先从局部 README 查看当前状态，再按其中链接进入入口分析、冻结、基线进展、武器链、训练烟雾和失速跟进等历史快照。
-- [game/](game/README.md)：探索性的游戏前端集成工作线。凡是要评估
-  “仿真后端为真值的游戏壳”、本地专用 game 分支，或代理前端实验时，
-  请先从这里进入。
-- [通用空海军/](common_air_naval/README.md)：`common / air / naval` 拆分工作线的收敛入口。局部 README 已区分仍活跃的承接计划和 archive 中被吸收的前置分析。
-- [ground/](ground/README.zh.md)：未来地面域启动规划的入口。在展开专门的
-  ground 实现前，请先从这里对齐命名、范围和新增域必须补上的横向内容。
-- [仿真架构/](simulation_architecture/README.md)：活跃的仿真系统架构工作线。把规范管线设计转化为武器、海军、传感器/航迹、facade 或后端工作前，应先从这里收敛任务。
-- [模型/](model/README.zh.md)：活跃的模型侧规划线，用于时间 HMoE / 序列策略工作。当 RL 行为需要策略记忆而不是环境侧战术记忆板时，请先从这里进入。
-- [Issue 板块/](issues/README.zh.md)：活跃的跨领域问题板块，用于保持领域、
-  runtime、模型、训练与评估工作线之间都应可见的问题。
-- [代码冗余/](code_redundancy/README.zh.md)：已归档的代码冗余工作线。
-- [诊断评估/](diagnostics_eval/README.zh.md)：已归档的诊断/评估收敛记录。
-- [Python 强化学习/](python_rl/README.zh.md)：已归档的 `python/rl` 收敛记录。
+- `active`：有当前入口门、验收门或维护中实现面的实现、集成、审查线。
+- `planning`：广泛 runtime 释放前的范围化路线图或 bootstrap 线。
+- `exploratory`：展示、前端或原型探索线，不能意外变成权威仿真语义。
+- `archived`：已冻结、已替代或只为追溯保留的历史材料。
+- `governance`：跨领域审查、issue 或验收控制面。
+
+## Task-Area 层级
+
+### 执行与集成
+
+- [空域执行 / air execution](air_combat/README.zh.md)：`active` 入口，也是
+  当前成熟度最高的领域执行切片。这里导航维护中的 `execution` / HMoE `1v1`
+  路径、分阶段 `1v1` curriculum，以及空战 damage runtime。链接到的 archive
+  快照只用于追溯；不要把旧空战快照当成全项目中心。
+- [cooperative/common 集成](common_air_naval/README.zh.md)：`active` 的
+  cooperative/common 集成主线，负责 `common / air / naval` 拆分后的跨域收敛。
+  局部 README 会区分仍活跃的承接工作和 archive 中已被替代的前置分析。
+- [仿真架构](simulation_architecture/README.zh.md)：`active` 的仿真系统架构与
+  runtime lifecycle 主干。开始武器、海军、传感器/航迹、facade、backend 或跨域
+  runtime 的大范围工作前，应先从这里收敛任务。
+- [海军](naval/README.zh.md)：`active` 的中高成熟海军工作线。N4 已作为
+  pre-fire threat/ROE bridge 和 active training-entry gate 闭合；limited
+  engagement 仍属于单独 N5 package，不应借此重新打开 N4。
+- [runtime 性能](performance_runtime/README.zh.md)：`planning` 的 runtime 性能线。
+  用于优化排序、benchmark 边界和 hot-path 分析；已归档的旧规划链是参考材料，
+  不是 active execution 入口。
+
+### Bootstrap 与策略规划
+
+- [ground](ground/README.zh.md)：`planning` / 早期 `active` 的 ground tasking 与
+  runtime bootstrap。G0-G4 是已接受的 tasking lifecycle 基线；movement、sensing、
+  terrain、fires、damage 和广泛 runtime 扩展仍明确 held 在后续 gate 之后。
+- [model](model/README.zh.md)：`planning` 的策略/世界模型面，用于时间 HMoE 与
+  sequence-policy 工作。当行为问题需要策略记忆或 world-model planning，而不是
+  环境侧战术记忆板时，请从这里进入。
+
+### 探索展示
+
+- [viz](viz/README.zh.md)：`exploratory` / `active` 的可视化统一入口面。它负责
+  展示、asset registry、loader/session 流程和 runtime inspection 便利性，不是
+  realism 或 world-parameter 权威入口。
+- [game](game/README.zh.md)：`exploratory` 的外部游戏前端集成线。凡是评估
+  simulation-backed gameplay shell、被跟踪的 Arma proxy workspace 边界、
+  本地-only 前端归档规则或 authoritative-backend proxy 实验，请先从这里进入。
+
+### 治理
+
+- [review](review/README.zh.md)：`governance` 的 review 与验收记录面。当前 review
+  和路线图记录从局部 README 进入；局部 archive 保留已完成或已替代的审查快照。
+- [issues](issues/README.zh.md)：`governance` 的跨领域 issue board，用于保持领域、
+  runtime、model、training 与 evaluation 工作线之间都应可见的问题。
+
+### 参考与归档
+
+- [flight_dynamics](flight_dynamics/README.zh.md)：`archived` / reference 的真实性
+  分析导航，用于 flight、sensor/situation、weapon/guidance、naval 与 C2 closure
+  记录。它适合查历史上下文和 closure marker，不是当前项目规划根入口。
+- [code_redundancy](code_redundancy/README.zh.md)：`archived` 的代码冗余工作线。
+- [diagnostics_eval](diagnostics_eval/README.zh.md)：`archived` 的诊断/评估收敛记录。
+- [python_rl](python_rl/README.zh.md)：`archived` 的 `python/rl` 收敛记录。
+
+## 工作规则
+
+1. 先从与当前工作匹配的 task-area 局部 `README` 进入。
+2. 除非局部 README 明确提升，否则更深层 dated 文档应视为证据、closure 记录或
+   支撑计划。
+3. 跨领域任务请通过 `common_air_naval/`、`simulation_architecture/`、`review/`
+   或 `issues/` 收敛，不要继续把旧 air-first 入口扩大成通用入口。
+4. 当某个区域生命周期发生变化，先更新局部 README，再调整这个根导航。
 
 ## 文档类型
 

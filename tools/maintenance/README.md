@@ -3,7 +3,7 @@
 `tools/maintenance/` holds workspace cleanup, audit, and local maintenance
 helpers that are not part of the model/runtime product surface.
 
-Current maintained helpers:
+General maintained helpers:
 
 - [cmo_env.sh](cmo_env.sh)
   - Linux/macOS repository-local environment bootstrap and validation for
@@ -34,6 +34,15 @@ Current maintained helpers:
     hygiene.
   - Keeps candidate data non-authoritative by failing on accidental validation
     pass or runtime authority grants before descriptor review.
+
+Task-specific A2 helpers:
+
+- Tracked `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
+  `a2_retained_manifest_integrity.py` scripts are A2 candidate-package,
+  retained-artifact, provenance, source-rights, and review-gate helpers.
+- These tools are maintenance/governance utilities only. They do not grant
+  runtime authority, do not make A2 retained artifacts product surface, and
+  should stay scoped to the A2 damage-model workflow.
 
 Maintenance guidance:
 

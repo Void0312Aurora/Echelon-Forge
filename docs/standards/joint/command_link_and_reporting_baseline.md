@@ -162,7 +162,6 @@ Use the following split:
   - command delivery semantics
   - report sharing semantics
 - `service profile`
-  - air, naval, or future ground interpretation
+  - air, naval, or early ground interpretation
 - `platform/task specialization`
   - actual motion, stationing, recovery, and weapon execution
-

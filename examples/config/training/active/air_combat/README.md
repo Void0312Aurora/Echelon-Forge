@@ -4,12 +4,16 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
 
 ## Scope
 
-- Scenario pairing for this line is:
+- Scenario pairings for this line are:
   - [air_combat_1v1_headon_sensor_smoke_v1.json](../../../../../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
+    - Used by the scripted-red `F-16C` smoke and 8k probe entries.
+  - [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
+    - Used by the Stage-0 drone weapon-employment reactive and temporal world-batch probe entries.
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
   - Red opponent: scenario-declared scripted `F-16C_Block50`
   - Policy architecture: `HierarchicalMoEExecutionPolicy`
+- Stage-1 through Stage-3 `scenarios/air_combat/1v1` files are maintained curriculum scenarios, but no active training config in this directory is paired to them yet.
 
 ## Entries
 

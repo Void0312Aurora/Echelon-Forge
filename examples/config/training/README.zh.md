@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from examples/config/training/README.md. Review before treating this file as authoritative. -->
-
 # 训练配置说明
 
 本文件夹包含[train.py](../../../train.py)所维护的JSON配置。
@@ -9,7 +7,7 @@
 - `权威 (Authoritative)`
   - 配置系列默认维护的起点。
 - `活跃主线 (Active Mainline)`
-  - 正在进行的配置，定义当前正向推进的训练主线。
+  - 正在进行的配置，定义当前正向推进的训练线路集合。
 - `冻结基线 (Frozen Baseline)`
   - 维护的稳定配置，用于可复现的冻结后训练和验证。
 - `兼容性 (Compatibility)`
@@ -26,7 +24,7 @@
 - [frozen/](frozen/README.md)
   - `冻结基线`维护的冻结后主控和执行层训练入口点。这些不是当前的向前推进训练主线。
 - [active/](active/README.md)
-  - `活跃主线`正在进行的训练入口，包括当前的P8协作巡航线路。
+  - `活跃主线`正在进行的训练入口，覆盖 cooperative flight/combined、air-combat `1v1` 与 naval `N4` smoke/probe 多条线路。
 
 避免在此目录下直接添加临时实验JSON文件。新的维护运行应放在`frozen/`或一个有意命名的活跃子目录中，并附上说明所有权和验收标准的README。
 
@@ -51,7 +49,8 @@
 ## 当前正向线路
 
 - [active/](active/README.md)
-  - 当前正在进行的P8协作巡航训练线路。
+  - 当前正在进行的入口覆盖 cooperative flight/combined routes、air-combat `1v1` HMoE probes 与 naval `N4` pre-fire runtime gates。
+  - ground 尚不是 active RL training line。受维护的 ground 证据仅限 tasking/native-schema bootstrap coverage；movement、terrain、sensing、fires、damage 与完整 ground runtime 行为仍保持 held。
 
 - 协作HMoE控制脚本：
   - [run_hmoe_cooperative_takeoff_to_cruise_control.sh](../../../scripts/run_hmoe_cooperative_takeoff_to_cruise_control.sh)

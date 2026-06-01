@@ -1,7 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/physics_engine_inventory.zh.md. Review before treating this file as authoritative. -->
-
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/physics_engine_inventory.md. Review before treating this file as authoritative. -->
-
 # Physics Engine Inventory (Implemented)
 
 > Goal: Organize the **already existing and actually effective** "physics/flight dynamics" foundations in the repository by module, provide corresponding code entry points, and facilitate future integration with RL training, gradually replacing reward-hacking learning.

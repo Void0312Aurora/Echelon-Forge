@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from scenarios/README.md. Review before treating this file as authoritative. -->
-
 # 场景 README
 
 `scenarios/` 存储规范的使命/场景 JSON 文件，按任务领域分组，而不是将所有变体混合在顶层。
@@ -19,9 +17,9 @@
 - `scenarios/air_combat/`
   - 早期的 `1v1` 空战引导夹具和受维护的作战任务冒烟场景。
 - `scenarios/naval/`
-  - 受维护的海军引导夹具，专注于舰船生成、护航几何、接触管理和未来的水面作战回归覆盖。
+  - 受维护的 naval bootstrap 与 `N4` pre-fire fixtures，覆盖 ship spawning、escort/screen geometry、tasking、contact/report evidence 与 threat/ROE visibility，但不把 weapon release、damage 或 kill rewards 声明为 `N4` lane 的能力。
 - `scenarios/ground/`
-  - 受维护的 ground 启动夹具；在真实 ground platform/runtime 行为存在前，聚焦 tasking-chain smoke 覆盖。
+  - 受维护的 G0/G1 ground tasking compatibility fixtures。native ground platform-schema 证据在这些场景之外单独维护；movement、terrain、sensing、fires、damage 与完整 ground runtime 行为仍保持 held。
 - `scenarios/landing/`
   - 着陆特定任务，如 ILS 进近和滑跑评估。
 - `scenarios/combined/`
@@ -73,11 +71,26 @@
 - `air_combat/`
   - `air_combat_1v1_headon_sensor_smoke_v1.json`
     - 规范对称 `F-16C_Block50 vs F-16C_Block50` `1v1` 引导夹具，具有场景级弹药覆盖和最小击杀目标终止条件。
+  - `1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json`
+    - 阶段零 drone weapon-employment 夹具，用于 fixed-fire/runtime fire-chain 验证和当前 active Stage-0 probe configs。
+  - `1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
+    - 更远距离的非机动无武装目标夹具，用于 contact persistence 与 missile time-of-flight 检查。
+  - `1v1/air_combat_1v1_stage2_evasive_fighter_no_weapons_v1.json`
+    - 没有 reciprocal weapon pressure 的 scripted evasive fighter 夹具。
+  - `1v1/air_combat_1v1_stage3_limited_weapons_fighter_v1.json`
+    - 在任何完整 peer `1v1` 提升前使用的 bounded reciprocal-threat 夹具。
 - `naval/`
+  - `ddg51_take1_screen_closing_contact_v1.json`
+    - contact-geometry 变体，保留 DDG/T-AKE screen tasking，并验证移动 surface contact 与 closest-approach evidence，不涉及 weapons employment。
   - `ddg51_take1_screen_contact_report_v1.json`
+    - DDG/T-AKE screen baseline fixture，用于验证 ship spawning、naval task semantics、surface-contact geometry 与 report sharing，仍处于 weapons employment 之前。
+  - `ddg51_take1_screen_threat_roe_v1.json`
+    - 已接受的 `N4` pre-fire threat/ROE fixture，仅为 contract visibility 携带 engagement-authority 与 assigned-target command state。
+  - `ddg51_take1_screen_threat_roe_offstation_recovery_v1.json`
+    - 已接受的 `N4` off-station recovery 变体，用于验证 scripted station recovery 与固定 original-task reward reference，同时保持 weapons、interception、damage 与 kill out of scope。
 - `ground/`
   - `ground_platoon_tasking_smoke_v1.json`
-    - 最小 Army/ground tasking smoke fixture。它使用当前 runtime 可接收的 `Aircraft` spawn shell，只验证共享 loader 与 `TaskOrder -> LeaderIntent -> PilotReport` status chain。
+    - 最小 Army/ground tasking smoke fixture。它仍是 G0 compatibility-shell 场景，只验证共享 loader 与 `TaskOrder -> LeaderIntent -> PilotReport` status chain；native ground schema 证据另行维护。
   - `ground_platoon_static_occupy_v1.json`
     - G1 realism-gradient static occupy fixture。它验证 Army/ground `TASK_OCCUPY` status 语义，并明确延后 movement、terrain、sensing、fires 与 damage。
   - `ground_platoon_support_relationship_v1.json`

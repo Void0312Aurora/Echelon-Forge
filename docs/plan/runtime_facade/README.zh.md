@@ -1,6 +1,9 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/runtime_facade/README.md. Review before treating this file as authoritative. -->
-
 # `runtime_facade/`
+
+语言版本：
+
+- 英文主文：[README.md](README.md)
+- 中文辅文：`README.zh.md`
 
 此目录包含运行时门面主线的契约和后续清理计划；执行记录已移至 `../archive/runtime_facade/`。
 

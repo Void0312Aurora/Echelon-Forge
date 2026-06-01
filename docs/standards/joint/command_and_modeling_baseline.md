@@ -1,6 +1,6 @@
 # Joint Command and Modeling Baseline
 
-This document defines the joint/common core boundary for command relationship, authority scope, intent/order/report, and the minimum data model that can be shared across air, naval, and future ground profiles.
+This document defines the joint/common core boundary for command relationship, authority scope, intent/order/report, and the minimum data model that can be shared across air, naval, and the early ground profile.
 
 ## 1. What the Joint Layer Means Here
 
@@ -88,7 +88,7 @@ Leave to service profiles:
 
 - Air-specific `runway`, `takeoff`, `landing`, `CAP`, and formation semantics
 - Naval-specific `station`, `screen`, `formation`, `reference entity`, and embarked helicopter semantics
-- Future ground-specific maneuver and support semantics
+- Later ground-specific maneuver and support semantics
 
 The common layer may describe that a unit is supported or supporting, but it should not hardcode how that support is executed in the air, sea, or land domain.
 
@@ -138,4 +138,3 @@ The baseline for future module splits should therefore be:
 1. `joint/common core`
 2. `service profile`
 3. `platform/task specialization`
-

@@ -4,8 +4,9 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Echelon Forge is a simulation and reinforcement-learning workbench for
-air-combat and flight-task research.
+Echelon Forge is a multi-domain simulation and reinforcement-learning
+workbench for air, naval, ground-tasking, cooperative command, and flight-task
+research.
 
 The repository combines:
 
@@ -14,6 +15,8 @@ The repository combines:
 - scenario compilation / runtime utilities
 - Gymnasium-style training environments
 - batch rollout and cooperative training infrastructure
+- multi-domain scenario, content, and profile layers for air, naval, ground,
+  and combined/cooperative tasks
 - evaluation, diagnostics, and contract-style regression tooling
 
 The project is still evolving, but the maintained mainline already supports:
@@ -22,6 +25,8 @@ The project is still evolving, but the maintained mainline already supports:
 - mission / command / reward / termination runtime
 - takeoff, cruise, landing, and combined-task training lines
 - cooperative execution experiments
+- naval pre-fire tasking/contact/reporting fixtures
+- ground tasking smoke fixtures and native platform-schema evidence
 - active diagnostics and evaluation tooling
 
 ## Repository Status
@@ -37,6 +42,21 @@ That means:
 - GPU helper paths exist, but are still treated conservatively
 - community contribution is currently issue-first and owner-scoped; see
   [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Domain Maturity Snapshot
+
+The repository is multi-domain, but the domains are not equally mature. Treat
+the table below as an entry-map, not as a release promise.
+
+| Area | Current status | Primary entrypoints |
+| --- | --- | --- |
+| Air / execution | Most mature runtime and training line; current best baseline for correctness hardening. | `scenarios/takeoff/`, `scenarios/cruise/`, `scenarios/landing/`, `examples/config/training/frozen/` |
+| Cooperative / combined | Active integration line for multi-agent, leader/execution, and world-batch behavior. | `scenarios/combined/`, `python/rl/runtime/cooperative_world_batch_vec_env.py`, `gym_envs/leader_env.py` |
+| Naval | Active domain with maintained N4-style pre-fire tasking, contact/reporting, screen/station, and evaluation gates. Weapon/damage outcome authority is still future work. | `scenarios/naval/`, `docs/task/naval/`, `docs/standards/naval/` |
+| Ground | Early tasking/runtime bootstrap. Current fixtures validate shared command/status semantics and native platform-schema evidence, not full ground movement, sensing, fires, or damage. | `scenarios/ground/`, `docs/task/ground/`, `docs/standards/ground/` |
+| Air combat / A2 | Focused combat and high-fidelity damage-model workline with retained evidence gates. It is one domain line, not the whole project identity. | `scenarios/air_combat/`, `docs/task/air_combat/` |
+| Visualization / game | Exploratory operator and frontend surfaces backed by simulation runtime truth where maintained. | `examples/viz/`, `docs/task/viz/`, `docs/task/game/` |
+| Model / world model | Planning and experimental policy/model work, including temporal HMoE and world-model utilities. | `docs/task/model/`, `docs/forward/models/`, `world_model_train.py` |
 
 ## Naming And Package Identity
 
@@ -203,7 +223,7 @@ See also:
 - [src/README.md](src/README.md)
 - [src/core/README.md](src/core/README.md)
 - [docs/manual/src_layer_map.md](docs/manual/src_layer_map.md)
-- [docs/plan/archive/src_layered_refactor_freeze.zh.md](docs/plan/archive/src_layered_refactor_freeze.zh.md)
+- [docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md](docs/plan/archive/architecture/src_layered_refactor_freeze.zh.md)
 
 ## Scenarios and Training Configs
 
@@ -214,6 +234,7 @@ Maintained scenarios live in [scenarios/](scenarios/README.md), grouped into:
 - `cruise/`
 - `air_combat/`
 - `naval/`
+- `ground/`
 - `landing/`
 - `combined/`
 - `templates/`
@@ -246,7 +267,7 @@ Repository retention policy at a glance:
 Current root/operator entrypoints:
 
 - `train.py`
-  - Main execution-layer and leader-layer training entrypoint.
+  - Main execution-layer, cooperative, and leader-layer training entrypoint.
 - `world_model_train.py`
   - World-model training entrypoint; still a large root script and not yet
     fully split like `train.py`.

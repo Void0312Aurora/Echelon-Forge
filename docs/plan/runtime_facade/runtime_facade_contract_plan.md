@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/runtime_facade/runtime_facade_contract_plan.zh.md. Review before treating this file as authoritative. -->
-
 # Runtime Facade Interface Contract Proposal
 
 Document Navigation:

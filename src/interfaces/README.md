@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/interfaces/README.md. Review before treating this file as authoritative. -->
-
 # `src/interfaces` Boundary
 
 `interfaces/` holds external language, tooling, or integration boundaries. It is responsible for exposing the maintained C++ API and does not own simulation, mission, or model domain logic.

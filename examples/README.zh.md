@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from examples/README.md. Review before treating this file as authoritative. -->
-
 # 示例
 
 `examples/` 现在主要作为维护的输入/配置表面，加上一小套轻量级固定装置和可视化资源。
@@ -20,7 +18,7 @@
 - [config/training/README.md](config/training/README.md)
   - 维护的训练配置入口点和状态分类。
 - `config/database/`
-  - 由运行时/内容加载器使用的单位、飞机和模块数据库输入。
+  - 由 runtime/content loader 使用的 platform/content 数据库输入，包括 aircraft、ships、ground units、weapons、damage definitions、facilities 与 modules。
 - `config/diagnostics/`
   - 维护的基准测试和诊断配置输入。
 - `config/prefabs/`

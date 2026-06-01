@@ -1,20 +1,26 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/models/weapons/README.md. Review before treating this file as authoritative. -->
-
 # `src/models/weapons` Boundary
 
-`models/weapons` holds default model implementations for weapon effects, guidance, and hit detection.
+`models/weapons` holds default model implementations and helpers for weapon
+effects, guidance, hit detection, and naval weapon-mount selection.
+
+The maintained scope is still the shared weapon/effects model layer. Naval
+mount helpers support the current naval pre-fire and bounded
+engagement-evidence path, but this directory does not own a complete naval
+mission runtime or any ground fires/damage runtime.
 
 ## Allowed
 
-- effects model
-- guidance model
-- Purely computational weapon behavior models
+- Effects model.
+- Guidance model.
+- Naval weapon-mount selection helpers.
+- Purely computational weapon behavior models.
 
 ## Forbidden
 
-- ECS system registration
-- combat component definition
-- Python binding or mission episode orchestration
+- ECS system registration.
+- Combat component definition.
+- Python binding or mission episode orchestration.
+- Ground fires or ground damage model ownership before a maintained ground runtime exists.
 
 ## Migration Notes
 

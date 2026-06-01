@@ -66,13 +66,14 @@ The USMC service profile owns the Marine reading of the shared skeleton:
 
 This layer owns service interpretation, not execution mechanics.
 
-### `air`, `naval`, and future ground specialization
+### `air`, `naval`, and ground specialization
 
 Current domain execution semantics continue to live elsewhere:
 
 - air execution contracts belong in `air/`
 - maritime execution contracts belong in `naval/`
-- future land execution contracts should belong in a dedicated ground layer
+- land execution contracts beyond shared tasking/schema bootstrap belong in the
+  dedicated ground layer
 
 The Marine profile should therefore coordinate those layers through shared
 fields rather than redefining their command or sensor surfaces.
@@ -88,7 +89,7 @@ tight-loop runtime in the current repository:
 - MEF / MEB / MEU force packaging when used as campaign organization
 - large-scale amphibious or expeditionary task organization
 - cross-domain task assignment that has not yet been specialized into current
-  air, naval, or future land execution contracts
+  air, naval, or ground execution contracts
 
 These layers belong in:
 
@@ -145,7 +146,7 @@ Examples:
 - aviation command semantics must flow through `air/`
 - ship, screen, recovery, or sea-based positioning semantics must flow through
   `naval/`
-- future ground maneuver semantics should wait for a dedicated land layer
+- later ground maneuver semantics should wait for the dedicated ground layer
 
 That keeps the MAGTF profile honest and prevents a second parallel command
 surface from emerging in `services/`.

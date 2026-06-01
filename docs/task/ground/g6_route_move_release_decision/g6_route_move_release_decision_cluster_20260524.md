@@ -127,8 +127,9 @@ PY
 
 ## D2 Movement Evidence Gate Preflight Result
 
-Status: `preflight-only accepted`; evidence gates are defined, but they cannot
-release a movement scenario until D1's native schema blocker is closed.
+Status: `preflight-only accepted`; evidence gates are defined, but they do not
+release a movement scenario by themselves. G6-E2/E3 later closes D1's native
+schema identity blocker; a separate movement-release vote is still required.
 
 Available evidence hooks:
 

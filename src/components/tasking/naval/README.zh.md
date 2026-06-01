@@ -1,13 +1,13 @@
 # `src/components/tasking/naval` 边界
 
 `components/tasking/naval` 保存舰艇/海上任务组织的 tasking 扩展。这里承载
-编队站位、海上任务角色、舰队协同和舰载航空任务组织这类 naval-specific
+station type、海上任务角色、command authority 和舰载航空任务组织这类 naval-specific
 语义，而不是共享 tasking core 或执行层 command。
 
 ## 允许
 
-- 未来 `TaskOrderNaval`、`LeaderIntentNaval`、`PilotReportNaval` 的扩展字段。
-- 舰艇编队、screen station、warfare commander、embarked air ops 相关的纯 DTO 语义。
+- 维护中的 `TaskOrderNaval`、`LeaderIntentNaval`、`PilotReportNaval` 扩展字段。
+- screen station、warfare role、officer-in-tactical-command、embarked air ops 相关的纯 DTO 语义。
 - 对 `common/` 共享 tasking core 的 naval 侧补充，而不把 air 术语直接平移为 ship。
 
 ## 禁止
@@ -19,11 +19,12 @@
 
 ## 当前状态
 
-当前目录仍处于 first-stage landing zone 阶段：
+当前目录处于 first-stage maintained DTO 阶段：
 
 - 共享/联合层字段应继续落在 `common/*`。
 - 已有 air sortie 语义仍留在 `air/*`。
-- naval-specific 的组织、站位和舰载航空任务语义在这里预留稳定落点。
+- `TaskOrder`、`LeaderIntent`、`PilotReport` 已有 naval-specific station 与 command-authority owner slice。
+- facade/runtime contract 可以传输 naval tasking slice，但 mission execution 仍受下层 runtime owner 边界约束。
 
 这意味着本目录已经是当前主线的正式边界入口，但还不是完整 naval tasking
 runtime 的证明。

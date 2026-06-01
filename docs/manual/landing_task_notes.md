@@ -34,14 +34,16 @@ treated as a sequence rather than a single ground point:
 
 ## New Task Files
 
+Paths below are repository-relative:
+
 - Training scenario:
-  `/home/void0312/CMO/scenarios/landing/landing_ils_final_train_v1.json`
+  `scenarios/landing/landing_ils_final_train_v1.json`
 - Eval scenario:
-  `/home/void0312/CMO/scenarios/landing/landing_ils_final_eval_v1.json`
+  `scenarios/landing/landing_ils_final_eval_v1.json`
 - Maintained training config:
-  `/home/void0312/CMO/examples/config/training/frozen/execution/p4_landing_retrain_v1.json`
+  `examples/config/training/frozen/execution/p4_landing_retrain_v1.json`
 - Historical artifact-provenance config:
-  `/home/void0312/CMO/examples/config/Archive/training/pre_freeze_experiments/p4_landing_full_visual_ils_smoke_v1.json`
+  `examples/config/Archive/training/pre_freeze_experiments/p4_landing_full_visual_ils_smoke_v1.json`
 
 ## Added Landing Hooks
 

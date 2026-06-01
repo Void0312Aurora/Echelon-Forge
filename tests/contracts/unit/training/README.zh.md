@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from tests/contracts/unit/training/README.md. Review before treating this file as authoritative. -->
-
 # 领导者培训合约
 
 已维护的冻结基线验收规范现位于 [frozen](frozen/README.md)。

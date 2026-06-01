@@ -2,6 +2,8 @@
 
 `components/` stores only ECS components, lightweight value types, and stable DTO-like structs. Types here may be read or bound by `systems/`, `core/`, `runtime/facade`, and `interfaces/python`, but they must not own runtime orchestration logic.
 
+The current component surface is multi-domain rather than flight-only: air remains the most complete execution surface, naval has maintained platform plus command/tasking DTO slices, and ground is represented only by shared type/terrain/ground-contact primitives plus typed setup evidence. Do not treat those ground-aware primitives as a complete land-domain component model.
+
 ## Allowed
 
 - Plain data fields, default values, and lightweight enums.
@@ -20,8 +22,8 @@
 
 - `basic/`: foundational components such as entity tags, factions, positions, and environment data.
 - `combat/`: combat-state components such as damage, health, weapon mounts, and scoring.
-- `physics/`: physical state, dynamics, forces, instruments, and performance state.
-- `systems/`: platform-system state components for communications, data links, sensors, electronic warfare, navigation, logistics, and similar areas.
+- `physics/`: physical state, dynamics, forces, instruments, performance state, and current ground-contact primitives.
+- `systems/`: platform-system state components for communications, data links, sensors, sonar, electronic warfare, navigation, logistics, and similar areas.
 - `visual/`: visual-sensor input and output state.
 - `naval/`: naval platform state components for ships, submarines, and embarked air operations.
 - `command/`: target directory for pilot actions, mission commands, command links, and legacy command DTOs.
@@ -48,7 +50,7 @@
   - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
   - `action.h` remains only as a compatibility umbrella
 - `systems/`
-  - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `track_management.h`
+  - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `sonar.h`, `track_management.h`
 - `visual/`
   - `visual_sensor.h`
 - `naval/`
@@ -60,7 +62,8 @@
   - `naval/mission_command_naval.h`
 - `tasking/`
   - `task_order.h`, `leader_intent.h`, `pilot_report.h`, `tasking_enums.h`
-  - `common/*`, `air/*`, and `naval/*` are the entry points for the split subdomains
+  - `common/*`, `air/*`, and `naval/*` are the maintained entry points for the split subdomains
+  - There is no `ground/*` tasking or command component subtree yet; land tasking/native schema work remains bootstrap-only.
 
 ## Migration Notes
 

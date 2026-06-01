@@ -1,10 +1,8 @@
-<!-- Machine-translated draft generated on 2026-05-18 from tools/maintenance/README.md. Review before treating this file as authoritative. -->
-
 # 维护说明
 
 `tools/maintenance/` 文件夹存放仓库清理、审计和本地维护辅助工具，这些工具不属于模型/运行时产品功能范围。
 
-当前维护的辅助工具：
+通用维护辅助工具：
 
 - [cmo_env.sh](cmo_env.sh)
   - Linux/macOS 仓库本地环境引导与验证，针对 `.venv`、`CMO_BUILD_DIR` 和 `PYTHONPATH`。
@@ -20,6 +18,7 @@
   - 审计中英文文档配对覆盖率，并通过兼容 OpenAI 的 API 批量翻译 Markdown 对等文件。
   - 通过在翻译前屏蔽 Markdown 链接目标并在翻译后恢复它们，来保持 Markdown 链接目标不变。
   - 将仓库工作空间绝对路径的文件链接重写为相对 Markdown 目标。
+  - 生成并审计双语 cluster registry，使单边编辑后的 paired docs 可被漂移检查覆盖。
 - [wp_doc_closure_audit.py](wp_doc_closure_audit.py)
   - 审计 simulation-architecture WP task/review closure，包括必需伴生文件、
     acceptance review 链接和 WP 作用域内 Markdown 链接健康度。
@@ -28,6 +27,15 @@
 - [a2_source_admission_audit.py](a2_source_admission_audit.py)
   - 审计 A2 高保真毁伤模型 source ledger、source pin / gap update 和候选 validation manifest 的公开来源准入卫生。
   - 在 descriptor review 前，对意外的 validation pass 或 runtime authority 授权执行失败关闭，保持候选数据非权威。
+
+任务专用 A2 辅助工具：
+
+- 已跟踪的 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和
+  `a2_retained_manifest_integrity.py` 脚本是 A2 candidate package、retained
+  artifact、provenance、source-rights 与 review-gate 辅助工具。
+- 这些工具只属于 maintenance/governance utility。它们不授予 runtime
+  authority，不把 A2 retained artifacts 变成 product surface，并应继续限定在
+  A2 damage-model workflow 内。
 
 维护指南：
 

@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from src/tools/experimental/gpu_phase0/README.md. Review before treating this file as authoritative. -->
-
 # `src/tools/experimental/gpu_phase0` Boundaries
 
 `gpu_phase0` holds early GPU phase-0 probes used to verify the feasibility of GPU helpers such as candidate lists, vision, communication, flight shaping, etc.

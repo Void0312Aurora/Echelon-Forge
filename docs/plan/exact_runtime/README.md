@@ -1,8 +1,11 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/plan/exact_runtime/README.zh.md. Review before treating this file as authoritative. -->
-
 # `exact_runtime/`
 
-This directory holds candidate special plans, checklists, and phase freeze records for the exact runtime / GPU mainline.
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
+
+This directory holds candidate special plans, checklists, and phase freeze
+records for the exact runtime / GPU mainline.
 
 Not every historical exact-runtime draft still lives in this active directory.
 Use this README plus `../archive/exact_runtime/README.md` to determine which

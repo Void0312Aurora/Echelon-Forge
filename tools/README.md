@@ -2,6 +2,13 @@
 
 `tools/` now groups maintained scripts by function instead of keeping every entrypoint at top level.
 
+## Domain Posture
+
+- Most general eval examples here still target air/execution tasks; cooperative/common is covered by the maintained SB3 and leader diagnostics paths.
+- For active training/eval parity, prefer configs that use the runtime-facade/world-batch path. Direct `UniversalEnv` tools are compatibility diagnostics unless they explicitly opt into `runtime_compatibility_enabled`.
+- Naval N4 has a maintained scoped gate in `tools/eval/eval_naval_n4_baseline.py`.
+- Ground tasking/schema bootstrap does not yet have a maintained eval or diagnostic runner in `tools/`; do not infer full ground runtime support from this catalog.
+
 ## Layout
 
 - `tools/eval/`
@@ -18,9 +25,11 @@
 ## Eval
 
 - [eval_task.py](eval/eval_task.py)
-  - Unified task evaluator for `stable_flight`, `takeoff_roll`, `centerline`, and `waypoint_nav` across `world_model` and `scripted` backends.
+  - Air/execution task evaluator for `stable_flight`, `takeoff_roll`, `centerline`, and `waypoint_nav` across `world_model` and `scripted` backends. It is a raw-`UniversalEnv` compatibility path, not a multi-domain acceptance gate.
 - [eval_sb3.py](eval/eval_sb3.py)
-  - Unified SB3 evaluator for `single` and `cooperative` execution policies with mode-specific metrics.
+  - Unified SB3 evaluator for `single` and `cooperative` execution policies with mode-specific metrics. `single` uses WorldBatchRuntime when `runtime.world_batch_vec_env=true`; otherwise it falls back to the raw-`UniversalEnv` compatibility path. `cooperative` uses `CooperativeWorldBatchVecEnv`.
+- [eval_naval_n4_baseline.py](eval/eval_naval_n4_baseline.py)
+  - Scoped N4 naval cooperative gate for stationing, pre-fire ROE hold reward terms, and contact-evidence plumbing. This is not a learned-policy acceptance.
 - [task_eval_driver.py](eval/task_eval_driver.py)
   - Shared implementation for single-agent task metrics and backend adapters.
 - [eval_utils.py](eval/eval_utils.py)
@@ -44,6 +53,12 @@
   - Unified cooperative trajectory replay/export CLI for `takeoff` and `takeoff_to_cruise`.
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - Maintained leader-layer throughput probe for `auto/subproc/shared/dummy`.
+- [air_combat_stage0_process_probe.py](diagnostics/air_combat_stage0_process_probe.py)
+  - Scoped air-combat stage-0 process probe for weapon-employment/debug traces on the compatibility env path.
+- [analyze_cooperative_observation_scales.py](diagnostics/analyze_cooperative_observation_scales.py)
+  - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene, not a training runner.
+- [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
+  - Focused cooperative training NaN/Inf tracer that reconstructs the maintained cooperative flow and stops with a JSON report.
 - [README.md](diagnostics/README.md)
   - Diagnostics catalog and scope notes.
 
@@ -53,6 +68,8 @@
   - Runs one or more JSON contracts from `tests/contracts/`.
 - [run_pytest_suite.py](runners/run_pytest_suite.py)
   - Runs a checked-in pytest suite manifest such as `tests/smoke/ci_smoke_suite.json` and fails early on stale path entries.
+- [run_sim_kernel_contracts.py](runners/run_sim_kernel_contracts.py)
+  - Thin wrapper around the contract-batch runner with the default `sim_kernel` group.
 
 ## Maintenance
 
@@ -64,6 +81,8 @@
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - Audits bilingual coverage and batch-translates Markdown doc peers with an OpenAI-compatible API.
+- A2 `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and `a2_retained_manifest_integrity.py`
+  - Task-specific A2 candidate/retained-artifact governance helpers. They are non-authoritative maintenance gates and are not part of the runtime product surface.
 
 ## Archive
 
@@ -95,16 +114,14 @@ cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/env/mission_obs/mission_obs_nav_v1.json
 ```
 
-Run a scripted eval:
+Run the scoped naval N4 gate:
 
 ```bash
 source tools/maintenance/cmo_env.sh
-cmo_python tools/eval/eval_task.py \
-  --task stable_flight \
-  --backend scripted \
-  --scenario scenarios/stable_flight/stable_flight_stresswind_rewardbalance_v3.json \
-  --episodes 10 \
-  --max_steps 2000
+cmo_python tools/eval/eval_naval_n4_baseline.py \
+  --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json \
+  --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json \
+  --steps 1200
 ```
 
 Audit and dry-run cleanup:
@@ -158,7 +175,7 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 
 ## Maintenance Guidance
 
-- New maintained task eval behavior should extend `tools/eval/eval_task.py` and `tools/eval/task_eval_driver.py`, not add per-task wrapper scripts.
+- New raw-env/task-metric eval behavior should extend `tools/eval/eval_task.py` and `tools/eval/task_eval_driver.py`, with explicit compatibility handling where needed, not add per-task wrapper scripts.
 - New maintained SB3 evaluation behavior should extend `tools/eval/eval_sb3.py` and `tools/eval/sb3_eval_base.py`, not reintroduce split single/cooperative wrappers.
 - Shared eval bootstrap should come from `tools.eval.eval_utils`, not copied setup blocks.
 - JSON-contract entrypoints should prefer `tools/runners/run_scenario_contract.py` over one-off wrappers.

@@ -7,7 +7,7 @@ Status taxonomy used by the training config entry surface:
 - `Authoritative`
   - The default maintained starting point for a config family.
 - `Active Mainline`
-  - Maintained in-progress configs that define the current forward-moving training line.
+  - Maintained in-progress configs that define the current forward-moving training lanes.
 - `Frozen Baseline`
   - Maintained stable configs preserved for reproducible post-freeze training and validation.
 - `Compatibility`
@@ -24,7 +24,7 @@ Status taxonomy used by the training config entry surface:
 - [frozen/](frozen/README.md)
   - `Frozen Baseline` maintained post-freeze leader and execution-layer training entry points. These are not the current forward-moving training mainline.
 - [active/](active/README.md)
-  - `Active Mainline` maintained in-progress training entries, including the current P8 cooperative cruise line.
+  - `Active Mainline` maintained in-progress training entries across the cooperative flight/combined, air-combat `1v1`, and naval `N4` smoke/probe lanes.
 
 Avoid adding ad hoc experiment JSON files directly under this directory. New maintained runs should go under `frozen/` or a deliberately named active subdirectory with a README that explains ownership and acceptance criteria.
 
@@ -46,10 +46,11 @@ Historical configs are retained under [examples/config/Archive/training](../Arch
 - [leader_legacy](../Archive/training/leader_legacy/README.md)
   - Historical `p6_*/p7_*` leader-layer configs.
 
-## Current Forward Line
+## Current Forward Lines
 
 - [active/](active/README.md)
-  - Current in-progress P8 cooperative cruise training line.
+  - Current in-progress entries cover cooperative flight/combined routes, air-combat `1v1` HMoE probes, and naval `N4` pre-fire runtime gates.
+  - Ground is not an active RL training line yet. Maintained ground evidence is limited to tasking/native-schema bootstrap coverage while movement, terrain, sensing, fires, damage, and full ground runtime behavior remain held.
 
 - Cooperative HMoE control script:
   - [run_hmoe_cooperative_takeoff_to_cruise_control.sh](../../../scripts/run_hmoe_cooperative_takeoff_to_cruise_control.sh)

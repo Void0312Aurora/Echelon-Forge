@@ -4,7 +4,7 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-状态：`2026-05-21`，文档归属与分层权威说明。
+状态：`2026-06-01`，文档归属与分层权威说明。
 
 本文档用于明确：
 
@@ -213,9 +213,10 @@ ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，
 `supported_node_id`、`supporting_node_id` 与 `coordination_mode` 这类挂点，
 但这些挂点在陆上场景中的语义由 Army profile 和 ground specialization 解释。
 
-## 将当前 flight_dynamics 工作流映射回标准树
+## 将历史 flight_dynamics 工作流映射回标准树
 
-`docs/task/flight_dynamics/` 当前应被视为执行视图，而不是标准归属图。
+`docs/task/flight_dynamics/` 当前是历史/参考性质的真实性分析入口，不再是活跃的
+全项目规划根。其子项目应被视为可回映到标准树的执行分析记录，而不是标准归属图。
 
 建议按下面方式回映：
 
@@ -234,7 +235,8 @@ ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，
 - `flight/`
   - 对齐到 air specialization 与 runtime workflow 约束
 
-这意味着：任务目录可以提供有效分析，但不负责决定稳定共享合同最终落在哪里。
+这意味着：已归档或参考性质的任务目录可以提供有效分析，但不负责决定稳定共享合同
+最终落在哪里。
 
 ## 维护规则
 

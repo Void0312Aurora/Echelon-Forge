@@ -38,15 +38,16 @@ One-sentence summary:
 
 ### 1. Code Size and Responsibility Distribution Shows Python Still Too Heavy
 
-Core file sizes are as follows:
+Representative file and package sizes are as follows:
 
-- [gym_envs/scenario_loader.py](../../../gym_envs/scenario_loader/core.py): `5009` lines
-- [python/rl/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py): `1660` lines
-- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py): `807` lines
-- [src/interfaces/python/python_module.cpp](../../../src/interfaces/python/python_module.cpp): `2958` lines
-- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp): `1598` lines
-- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp): `892` lines
-- [src/core/mission/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp): `1207` lines
+- [gym_envs/scenario_loader/](../../../gym_envs/scenario_loader): about `9292` lines across the package; [core.py](../../../gym_envs/scenario_loader/core.py) is about `1220` lines.
+- [python/rl/runtime/world_batch_vec_env.py](../../../python/rl/runtime/world_batch_vec_env.py): about `1885` lines.
+- [python/rl/runtime/world_batch/](../../../python/rl/runtime/world_batch): about `2589` lines across the support package.
+- [gym_envs/universal_env.py](../../../gym_envs/universal_env.py): about `449` lines.
+- [src/interfaces/python/](../../../src/interfaces/python): about `6682` lines across the split binding files; `python_module.cpp` is now only the small module registration wrapper.
+- [src/core/engine/simulation_kernel.cpp](../../../src/core/engine/simulation_kernel.cpp): about `229` lines after the engine split.
+- [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp): about `1255` lines.
+- [src/core/mission/episode/execution_episode_controller.cpp](../../../src/core/mission/episode/execution_episode_controller.cpp): about `347` lines.
 
 This indicates:
 

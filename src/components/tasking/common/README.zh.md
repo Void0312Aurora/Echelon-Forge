@@ -2,6 +2,8 @@
 
 `components/tasking/common` 保存跨军种共享的 tasking/C2 基础结构。这里定义联合层或通用任务组织语义，不直接携带空中或海军平台专用字段。
 
+本目录是当前 air 与 naval tasking slice 的共享基础。ground-aware setup 位于其他层，但 land movement、sensing、fires、damage 和 terrain-control tasking 还不是维护中的 common 字段。
+
 ## 允许
 
 - `ServiceProfile`、`TaskFamily`、`CoordinationMode` 等共通枚举。
@@ -11,7 +13,8 @@
 ## 禁止
 
 - runway、approach、wingman、element、station pattern 等空中域专用字段。
-- future naval station、warfare commander 等海军域专用字段。
+- naval station、warfare commander 等海军域专用字段。
+- land movement order、fire mission、route network、terrain-control task 或 damage-state report 等 ground-specific 字段。
 - `MissionCommand`、`PilotAction`、`CommandLink` 等 command 层对象。
 - mission transition、JSON codec、reward/termination 逻辑。
 

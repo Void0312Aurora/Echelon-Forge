@@ -5,7 +5,8 @@ Status: unified-entry refactor workline remains active; local entry converged on
 
 ## Current Status
 
-- The original large design/freeze document is still the primary active record.
+- The original large design/freeze document is still the primary active record,
+  explicitly promoted by this README despite living under `archive/`.
 - The plan already records first usable closure for the unified entry workflow,
   especially `WP-V4` asset registry and `WP-V5` in-app loader/session flow.
 - The follow-on default is no longer "design the architecture again", but
@@ -22,6 +23,8 @@ Status: unified-entry refactor workline remains active; local entry converged on
 - extend asset-registry coverage for more verified naval/air assets
 - clean up runtime exit and repeated session debug flow noise
 - keep visualization convenience separate from realism/world-parameter changes
+- do not treat other files under `archive/` as active unless this README
+  promotes them
 
 The earlier large freeze/design snapshot now lives under
 [archive/README.md](./archive/README.md).

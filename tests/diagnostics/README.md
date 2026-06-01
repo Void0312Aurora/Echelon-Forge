@@ -18,15 +18,14 @@ This folder is intentionally not the home for general-purpose unit/runtime
 tests. If a file starts asserting stable invariants under `pytest`, it should be
 moved back into the main `tests/` tree rather than staying here.
 
-Examples in this folder now include:
-
-- physics trace scripts such as drop/takeoff state tracing
-- aero-state debug dumps
-- gear-damage inspection scripts
-
 At the moment, the active exploratory scripts have been cleaned out of this
-folder. If new diagnostics are added here, they should be temporary and
-explicitly on a path toward either:
+folder. The only maintained file currently left here is
+`test_diagnostics_import_order.py`, a pytest regression for diagnostics/runtime
+import-order behavior. It is stable test evidence, not an exploratory script,
+and should move to a main test domain once import-order ownership is settled.
+
+If new diagnostics are added here, they should be temporary and explicitly on a
+path toward either:
 
 - promotion into `tools/diagnostics/` as a maintained operator-facing tool, or
 - migration into `tests/contracts/` / focused `tests/` once the behavior is stable.

@@ -8,17 +8,19 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-This subproject is the planning entry for the repository's third domain
-bootstrap: a future ground specialization that should extend the shared
-simulation lifecycle without creating a new vertical runtime path.
+This subproject is the planning entry for the repository's current early
+ground specialization bootstrap. It extends the shared simulation lifecycle
+without creating a new vertical runtime path.
 
 ## Current Status
 
 - The latest state summary is
   [ground_current_progress_20260524.md](ground_current_progress_20260524.md).
 - `services/army` already exists as the authoritative service-profile boundary.
-- The task tree now maintains a dedicated ground execution-specialization lane;
-  runtime execution remains deferred.
+- The task tree now maintains a dedicated ground execution-specialization lane:
+  G0-G4 tasking lifecycle evidence and G6-E native schema evidence are
+  accepted, while movement, sensing, terrain, fires, damage, combat, and full
+  ground runtime behavior remain held.
 - G0 now freezes `ground` as the maintained specialization name, `platoon` as
   the first tight-loop tactical unit, and `move / occupy / support` as the first
   task family default.
@@ -38,24 +40,25 @@ simulation lifecycle without creating a new vertical runtime path.
   LeaderIntent -> PilotReport status shell`.
 - G4 accepted that bounded slice and is now sealed as the tasking lifecycle
   baseline.
-- G5 opens the first canonical MVP scenario under `scenarios/ground/` and keeps
-  command delivery, observation/export, movement, sensing, terrain, fires, and
-  broad facade work held.
+- G5 accepts the first canonical MVP scenario shell under `scenarios/ground/`
+  and keeps command delivery, observation/export, movement, sensing, terrain,
+  fires, and broad facade work held.
 - G6 opens the first realism-gradient MVP scenario batch. G6-A records the
   gradient decision, and G6-B adds two G1 compatibility-shell fixtures:
   `ground_platoon_static_occupy_v1` and
   `ground_platoon_support_relationship_v1`.
 - G6-C accepts route-move boundary guardrails: unknown explicit profile hints
   now fail closed, current ground scenarios must stay G0/G1, and `G2` route
-  movement remains held until a native ground platform schema or explicit
-  movement compatibility boundary is accepted.
+  movement remains held until a later movement-release vote accepts native
+  schema-backed movement evidence or an equivalent compatibility boundary.
 - G6-D opens the route-move release decision and selects the schema-first path:
-  the first `G2` route-move scenario must wait for a runtime-loadable native
-  ground platform schema. The current `Aircraft` compatibility shell remains
-  G0/G1 only.
+  the first `G2` route-move scenario must wait for native ground schema
+  evidence plus a later movement-release vote. The current `Aircraft`
+  compatibility shell remains G0/G1 only.
 - G6-D1/D2 preflight returned `preflight-only`: at that time the native
-  `Ground` unit type/schema blocker was still open, and movement evidence gates
-  could not release route movement until a schema package closed it.
+  `Ground` unit type/schema blocker was still open. G6-E2/E3 later closed
+  schema identity only; movement evidence still requires a separate release
+  vote.
 - G6-E0 opens the native ground platform schema planning package. It defines
   the minimum implementation surface and evidence gates for a loadable/spawnable
   native ground entity, but it does not release route movement or runtime

@@ -4,6 +4,13 @@ This directory holds maintained in-progress training configs that are not frozen
 
 Status for this directory is `Active Mainline`.
 
+The active surface is multi-lane:
+
+- Cooperative flight and combined-mission entries live at this directory root.
+- `air_combat/` holds maintained `1v1` HMoE execution probes.
+- `naval/` holds accepted `N4` pre-fire smoke/probe runtime gates.
+- Ground does not have an active RL training entry yet; current ground evidence stays in the database/schema, scenario, runtime, and contract bootstrap lanes while movement, terrain, sensing, fires, damage, and full ground runtime behavior remain held.
+
 ## Cooperative Cruise Line
 
 - [cooperative_cruise_nav_v2_formation_v1.json](cooperative_cruise_nav_v2_formation_v1.json)
@@ -29,6 +36,13 @@ Status for this directory is `Active Mainline`.
   - The landing segment now re-opens a small residual budget over the scripted `landing_ils` baseline so the policy can correct final/rollout errors instead of being hard-clamped to pure scripted landing.
   - Scenario pairing is `scenarios/combined/cooperative_takeoff_to_cruise_landing_continuous_train_v1.json`.
 
+- [cooperative_takeoff_to_cruise_landing_hmoe_v1.json](cooperative_takeoff_to_cruise_landing_hmoe_v1.json)
+  - HMoE counterpart for the same closed-loop cooperative takeoff-cruise-landing route.
+  - Keeps the accepted `nav_v2_cooperative_takeoff_v1` observation boundary and uses the maintained combined scenario pairing.
+
+- [cooperative_takeoff_to_cruise_landing_hmoe_v1_resume_128k_from_32768.json](cooperative_takeoff_to_cruise_landing_hmoe_v1_resume_128k_from_32768.json)
+  - Resume ramp for the closed-loop HMoE line from the `32768`-step checkpoint.
+
 - [cooperative_takeoff_to_cruise_nav_hmoe_v1.json](cooperative_takeoff_to_cruise_nav_hmoe_v1.json)
   - HMoE experiment entry for the same takeoff-to-cruise bridge, using `HierarchicalMoEExecutionPolicy` with a shared backbone, shared action head baseline, and semantically routed residual experts.
   - Keeps the same `nav_v2_cooperative_takeoff_v1` observation contract and still follows the realistic input boundary: only maintained pilot-receivable mission semantics are exposed to the policy.
@@ -42,6 +56,20 @@ Status for this directory is `Active Mainline`.
   - Paired HMoE config for the same fair-control line.
   - Use this pair when you want a stricter shared-vs-HMoE A/B comparison than the earlier exploratory configs.
 
+## P4b Cruise-To-Landing Reopen Line
+
+- [p4b_cruise_to_landing_shared_reopen_v1.json](p4b_cruise_to_landing_shared_reopen_v1.json)
+  - Shared-policy reopen entry for the cruise-to-landing bridge.
+  - Scenario pairing is `scenarios/combined/cruise_to_landing_continuous_train_v1.json`.
+
+- [p4b_cruise_to_landing_hmoe_v1.json](p4b_cruise_to_landing_hmoe_v1.json)
+  - HMoE entry for the cruise-to-landing bridge on the maintained `nav_v2` observation surface.
+  - Scenario pairing is `scenarios/combined/cruise_to_landing_continuous_train_v1.json`.
+
+- [p4b_cruise_to_landing_hmoe_reopen_v1.json](p4b_cruise_to_landing_hmoe_reopen_v1.json)
+  - HMoE reopen entry paired with the shared reopen config for active A/B checks.
+  - Scenario pairing is `scenarios/combined/cruise_to_landing_continuous_train_v1.json`.
+
 ## Air Combat 1v1 Line
 
 - [air_combat/README.md](air_combat/README.md)
@@ -52,13 +80,13 @@ Status for this directory is `Active Mainline`.
 
 - [naval/README.md](naval/README.md)
   - Maintained smoke/probe entries for the accepted DDG/T-AKE `N4` threat/ROE bridge.
-  - These entries are entry/runtime gates only: they pair the accepted naval scenario with the maintained world-batch training path while keeping weapon release, damage, kill rewards, and learned-policy claims out of scope.
+  - These entries are entry/runtime gates only: they pair the accepted naval scenarios and contracts with the maintained compiled execution bootstrap path while keeping weapon release, damage, kill rewards, and learned-policy claims out of scope.
 
 ## Notes
 
-- This is the current forward-moving training line, not a frozen acceptance set.
+- These are current forward-moving training lines, not a frozen acceptance set.
 - Keep the entry realistic: only fields a pilot can receive belong in policy-facing inputs.
-- Do not promote this config into `frozen/` until the cooperative execution path and scenario contract are stable.
+- Do not promote active configs into `frozen/` until the relevant execution path and scenario contract are stable.
 - The cooperative cruise line is an opt-in cooperative benchmark line, alongside the frozen leader/execution baselines.
 - For direct HMoE control experiments on the cooperative takeoff-to-cruise bridge, prefer the `*_shared_fair_v1` and `*_hmoe_fair_v1` pair so non-policy hyperparameters stay aligned.
 - Do not point active configs at `examples/config/Archive/**`; if an older setup is still needed for maintained use, re-express it under `frozen/` or another maintained compatibility location first.

@@ -1,5 +1,3 @@
-<!-- Machine-translated draft generated on 2026-05-18 from docs/manual/physics_engine_inventory.md. Review before treating this file as authoritative. -->
-
 # 物理引擎基础清单（已实现）
 
 > 目标：把仓库里**已经存在且在仿真循环中真实生效**的“物理/飞行动力学”基础按模块梳理出来，并给出对应代码入口，便于后续与 RL 训练对接、逐步替换掉奖励黑客式学习。
