@@ -3151,23 +3151,36 @@ public:
             const WarheadSpatialProjectionProfile warhead_projection = structured_air_target
                 ? make_warhead_spatial_projection_profile(missile.warhead_profile)
                 : WarheadSpatialProjectionProfile{};
-            const double vulnerability_system_scale =
-                structured_air_target && aircraft_vulnerability
-                    ? make_vulnerability_adjustment(
-                          missile.warhead_profile,
-                          aircraft_vulnerability,
-                          local_imp,
-                          closure_mps,
-                          1.0,
-                          true,
-                          nullptr).scale
-                    : 1.0;
-            const double system_severity = structured_air_target
+            const double base_system_severity = structured_air_target
                 ? std::clamp(
-                    severity * warhead_effects.system_damage_scale * vulnerability_system_scale,
+                    severity * warhead_effects.system_damage_scale,
                     0.05,
                     0.95)
                 : severity;
+            const auto resolve_system_severity = [&](
+                double local_spatial_effect_scale,
+                bool direct_hit,
+                const WarheadMechanismLoadEvidence& mechanism_load) {
+                if (!structured_air_target) {
+                    return base_system_severity;
+                }
+                double vulnerability_scale = 1.0;
+                if (aircraft_vulnerability) {
+                    vulnerability_scale =
+                        make_vulnerability_adjustment(
+                            missile.warhead_profile,
+                            aircraft_vulnerability,
+                            local_imp,
+                            closure_mps,
+                            local_spatial_effect_scale,
+                            direct_hit,
+                            &mechanism_load).scale;
+                }
+                return std::clamp(
+                    base_system_severity * vulnerability_scale,
+                    0.05,
+                    0.95);
+            };
             double spatial_effect_scale = 0.0;
             const auto record_warhead_spatial_sample = [&](const WarheadSpatialSample& sample) {
                 sampled_warhead_spatial_sample_count += sample.sample_count;
@@ -3302,9 +3315,14 @@ public:
                                 true,
                                 0.0,
                                 mechanism_load);
+                            const double direct_system_severity =
+                                resolve_system_severity(
+                                    direct_mechanism_scale,
+                                    true,
+                                    mechanism_load);
                             apply_system_effect(
                                 component.system,
-                                system_severity,
+                                direct_system_severity,
                                 direct_mechanism_scale,
                                 component_scale,
                                 true,
@@ -3389,9 +3407,14 @@ public:
                                 : 1.0;
                             sampled_component_threshold_scale =
                                 std::max(sampled_component_threshold_scale, component_scale);
+                            const double direct_system_severity =
+                                resolve_system_severity(
+                                    direct_mechanism_scale,
+                                    true,
+                                    mechanism_load);
                             apply_system_effect(
                                 system,
-                                system_severity,
+                                direct_system_severity,
                                 direct_mechanism_scale,
                                 component_scale,
                                 true,
@@ -3795,7 +3818,14 @@ public:
                         candidate.exposure_scale);
 
                     const double projected_system_severity =
-                        std::clamp(system_severity * candidate.effect_scale, 0.02, 0.95);
+                        std::clamp(
+                            resolve_system_severity(
+                                candidate.effect_scale,
+                                false,
+                                candidate.mechanism_load) *
+                                candidate.effect_scale,
+                            0.02,
+                            0.95);
                     if (!projected_component &&
                         broad_spatial_projection &&
                         !projected_box->components.empty()) {
@@ -3841,7 +3871,11 @@ public:
                             record_mechanism_load(component_candidate.mechanism_load);
 
                             const double component_projected_system_severity = std::clamp(
-                                system_severity * component_candidate.effect_scale,
+                                resolve_system_severity(
+                                    component_candidate.effect_scale,
+                                    false,
+                                    component_candidate.mechanism_load) *
+                                    component_candidate.effect_scale,
                                 0.02,
                                 0.95);
                             const double component_scale =
