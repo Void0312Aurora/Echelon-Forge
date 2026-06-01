@@ -4,6 +4,9 @@ import unittest
 
 from tests.runtime.air_combat.weapon_guidance_realism.aircraft_damage import AircraftDamageRuntimeMixin
 from tests.runtime.air_combat.weapon_guidance_realism.component_damage import ComponentDamageRuntimeMixin
+from tests.runtime.air_combat.weapon_guidance_realism.default_effects_modularization import (
+    DefaultEffectsModularizationRuntimeMixin,
+)
 from tests.runtime.air_combat.weapon_guidance_realism.edge_cases import BoundaryCaseRuntimeMixin
 from tests.runtime.air_combat.weapon_guidance_realism.fuze import FuzeRuntimeMixin
 from tests.runtime.air_combat.weapon_guidance_realism.launch_guidance import LaunchGuidanceRuntimeMixin
@@ -21,6 +24,7 @@ class WeaponGuidanceRealismGuardTests(
     WarheadEffectsRuntimeMixin,
     AircraftDamageRuntimeMixin,
     ComponentDamageRuntimeMixin,
+    DefaultEffectsModularizationRuntimeMixin,
     VulnerabilityAuthorityRuntimeMixin,
     VulnerabilityScaffoldRuntimeMixin,
     MissileDynamicsRuntimeMixin,

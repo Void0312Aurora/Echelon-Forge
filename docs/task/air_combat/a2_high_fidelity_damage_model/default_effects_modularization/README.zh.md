@@ -68,6 +68,7 @@ Out of scope:
 
 - 任务簇计划：[default_effects_modularization_task_clusters_20260601.md](default_effects_modularization_task_clusters_20260601.md)
 - 当前状态：[default_effects_modularization_current_status_20260601.md](default_effects_modularization_current_status_20260601.md)
+- 第一轮验收：[default_effects_modularization_acceptance_20260601.md](default_effects_modularization_acceptance_20260601.md)
 
 ## Outputs And Evidence
 

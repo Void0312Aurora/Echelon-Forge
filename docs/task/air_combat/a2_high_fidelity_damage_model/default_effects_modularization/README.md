@@ -75,6 +75,7 @@ Out of scope:
 
 - Task cluster plan: [default_effects_modularization_task_clusters_20260601.md](default_effects_modularization_task_clusters_20260601.md)
 - Current status: [default_effects_modularization_current_status_20260601.md](default_effects_modularization_current_status_20260601.md)
+- Round-1 acceptance: [default_effects_modularization_acceptance_20260601.md](default_effects_modularization_acceptance_20260601.md)
 
 ## Outputs And Evidence
 
