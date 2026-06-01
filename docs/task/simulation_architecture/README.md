@@ -117,6 +117,10 @@ The active design conclusion is:
 
 ## Work Packages
 
+Closed, frozen, blocked, or superseded packages remain in this table for route
+history, but their task packets live under [archive/](archive/README.md) rather
+than as top-level active subproject directories.
+
 | Work package | Status | Goal | Output |
 |--------------|--------|------|--------|
 | `WP0 Architecture Baseline` | complete | Make the SCAL framing, semantic lifecycle, causal-temporal execution projection, and extension rules explicit | architecture design doc, task subproject entry |
@@ -144,19 +148,19 @@ The active design conclusion is:
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | Align existing CUDA helpers, device-resident output contracts, diagnostics boundaries, and resident-state sync/shard vocabulary without promoting exact GPU or maintained resident-state support by default | [CUDA and resident-state mainline alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.md), [fact ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.md), [device output contract](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.md), [GPU helper diagnostics boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.md), [resident-state sync and shard contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.md), [first CUDA alignment slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.md), [integration handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.md), [dispatch queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.md) |
 | `WP20 Public Capability-Platform Composition` | complete / accepted | Publicize the typed capability-platform setup path through validation-first admission/result contracts and compatibility-preserving materialization while keeping type-name spawning and scenario schema stable | [public capability-platform composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md), [fact ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.md), [public typed spawn contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.md), [runtime setup consume bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.md), [facade/binding surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.md), [compatibility/schema guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.md), [integration handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.md), [dispatch queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.md), [acceptance review](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.md) |
 | `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | Claimed closure attempted to turn accepted counterfactual contracts and selected runtime slices into maintained facade-owned experiment execution, scenario generation, evidence collection, and legacy cleanup, but owner rejected the closure because compatibility layers and incomplete subagent work remained. | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md), [fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.md), [snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.md), [counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.md), [scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.md), [experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.md), [final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.md), [dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.md), [disputed acceptance record](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) |
-| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen; superseded by WP23 | Attempted to force-retire post-WP21 compatibility layers, but the owner stopped the stream after uncontrolled follow-up waves and partial/quarantine evidence drift. Its queue is historical only and must not be dispatched. | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md), [dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
-| `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | Froze WP22, classified current dirty work, forced delete-or-block decisions, recorded TaskOrder and public API exits as blocked, skipped implementation because no deletion-ready surface was identified, and closed as controlled blocked recovery. | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md) |
-| `WP24 TaskOrder Maintained Business Migration` | closed / accepted | Replacement-backed TaskOrder business migration after WP23: maintained contract/export/Python business paths are integrated, the old public TaskOrder whole-shell compatibility surfaces are removed, and the canonical acceptance review is published. | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md), [integration assessment and cleanup close-out](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
-| `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | Focused remediation after the implementation-level closure audit: `TM01-A`, `TM01-C`, and `TM01-D` are complete for the audited maintained-path slice; `TM01-B` recorded the launch-bridge residual that was later closed by TM03, while broader architecture, P7/raw-runtime, and WP24 canonical acceptance closure remain out of scope. | [TM01 entry](tm01_architecture_closure_remediation/README.md), [task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
-| `TM02 WP24 Acceptance Closure` | temporary / closed | Closure lane that published WP24 canonical acceptance review and index sync without reopening implementation scope. | [TM02 entry](tm02_wp24_acceptance_closure/README.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
-| `TM03 Launch Bridge Boundary` | temporary / closed | Bounded architecture lane that closed the two `systems -> SimulationKernel` weapon-release bridges recorded by TM01-B through a narrow `IWeaponReleaseService` seam. | [TM03 entry](tm03_launch_bridge_boundary/README.md), [task clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
+| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen; superseded by WP23 | Attempted to force-retire post-WP21 compatibility layers, but the owner stopped the stream after uncontrolled follow-up waves and partial/quarantine evidence drift. Its queue is historical only and must not be dispatched. | [legacy compatibility retirement](archive/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md), [remaining task clusters](archive/wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md), [dispatch queue](archive/wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md) |
+| `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | Froze WP22, classified current dirty work, forced delete-or-block decisions, recorded TaskOrder and public API exits as blocked, skipped implementation because no deletion-ready surface was identified, and closed as controlled blocked recovery. | [legacy retirement recovery](archive/wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md) |
+| `WP24 TaskOrder Maintained Business Migration` | closed / accepted | Replacement-backed TaskOrder business migration after WP23: maintained contract/export/Python business paths are integrated, the old public TaskOrder whole-shell compatibility surfaces are removed, and the canonical acceptance review is published. | [taskorder maintained business migration](archive/wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md), [integration assessment and cleanup close-out](archive/wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
+| `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | Focused remediation after the implementation-level closure audit: `TM01-A`, `TM01-C`, and `TM01-D` are complete for the audited maintained-path slice; `TM01-B` recorded the launch-bridge residual that was later closed by TM03, while broader architecture, P7/raw-runtime, and WP24 canonical acceptance closure remain out of scope. | [TM01 entry](archive/tm01_architecture_closure_remediation/README.md), [task clusters](archive/tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
+| `TM02 WP24 Acceptance Closure` | temporary / closed | Closure lane that published WP24 canonical acceptance review and index sync without reopening implementation scope. | [TM02 entry](archive/tm02_wp24_acceptance_closure/README.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
+| `TM03 Launch Bridge Boundary` | temporary / closed | Bounded architecture lane that closed the two `systems -> SimulationKernel` weapon-release bridges recorded by TM01-B through a narrow `IWeaponReleaseService` seam. | [TM03 entry](archive/tm03_launch_bridge_boundary/README.md), [task clusters](archive/tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
 
 ## TM03 Launch Bridge Boundary
 
 Output:
 
-- [TM03 Launch Bridge Boundary](tm03_launch_bridge_boundary/README.md)
-- [TM03 Launch Bridge Boundary Task Clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md)
+- [TM03 Launch Bridge Boundary](archive/tm03_launch_bridge_boundary/README.md)
+- [TM03 Launch Bridge Boundary Task Clusters](archive/tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md)
 
 TM03 owned only the narrow launch-bridge residual recorded by TM01-B. It closed
 that residual by adding `IWeaponReleaseService`, removing direct
@@ -168,7 +172,7 @@ launch/fire-control redesign and raw-runtime retirement remain outside TM03.
 
 Output:
 
-- [TM02 WP24 Acceptance Closure](tm02_wp24_acceptance_closure/README.md)
+- [TM02 WP24 Acceptance Closure](archive/tm02_wp24_acceptance_closure/README.md)
 - [WP24 TaskOrder Maintained Business Migration Acceptance Review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md)
 
 TM02 is the serial closure lane for WP24. It published the canonical acceptance
@@ -180,8 +184,8 @@ launch bridge was still outside WP24 and was closed separately by TM03.
 
 Output:
 
-- [TM01 Architecture Closure Remediation](tm01_architecture_closure_remediation/README.md)
-- [TM01 Architecture Closure Task Clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
+- [TM01 Architecture Closure Remediation](archive/tm01_architecture_closure_remediation/README.md)
+- [TM01 Architecture Closure Task Clusters](archive/tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
 
 TM01 is closed for the audited implementation slice only; it is not a new
 architecture WP and does not create canonical WP24 acceptance. `TM01-A` restored
@@ -200,7 +204,7 @@ retirement, and ground runtime completion remain explicitly unclosed.
 
 Output:
 
-- [WP24 TaskOrder Maintained Business Migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md)
+- [WP24 TaskOrder Maintained Business Migration](archive/wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.md)
 
 WP24 is the accepted replacement-backed implementation package opened after WP23
 closed as `blocked`. It is not another recovery wave. The maintained
@@ -212,7 +216,7 @@ accepting them as residuals, and the canonical acceptance review is published.
 
 Output:
 
-- [WP23 Legacy Retirement Recovery And Reset](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md)
+- [WP23 Legacy Retirement Recovery And Reset](archive/wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.md)
 
 WP23 is a reset, not a continuation wave. It froze WP22 queue entries as
 historical evidence and stayed within the strict documentation budget: only the
@@ -241,14 +245,14 @@ WP23 close-out map:
 
 Output:
 
-- [WP22 Legacy Compatibility Retirement And Architecture Hardening](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md)
-- [WP22-A Retirement Fact Ledger And Kill List](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.md)
-- [WP22-B Python Business Bypass Retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.md)
-- [WP22-C Runtime Escape-Hatch And Legacy Mode Closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md)
-- [WP22-D Command DTO And Legacy Surface Retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.md)
-- [WP22-E Structural God-File Decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md)
-- [WP22-F Guardrail And Acceptance Closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.md)
-- [WP22 Subagent Dispatch Queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md)
+- [WP22 Legacy Compatibility Retirement And Architecture Hardening](archive/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md)
+- [WP22-A Retirement Fact Ledger And Kill List](archive/wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.md)
+- [WP22-B Python Business Bypass Retirement](archive/wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.md)
+- [WP22-C Runtime Escape-Hatch And Legacy Mode Closure](archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md)
+- [WP22-D Command DTO And Legacy Surface Retirement](archive/wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.md)
+- [WP22-E Structural God-File Decomposition](archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md)
+- [WP22-F Guardrail And Acceptance Closure](archive/wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.md)
+- [WP22 Subagent Dispatch Queue](archive/wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md)
 
 WP22 is frozen and superseded by WP23. It was opened by the post-WP21
 architecture refactoring audit, but its continuation stream failed the owner's

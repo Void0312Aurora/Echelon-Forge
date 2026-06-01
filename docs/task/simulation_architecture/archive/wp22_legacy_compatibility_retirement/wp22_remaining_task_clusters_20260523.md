@@ -25,7 +25,7 @@ Inputs:
 - [WP22 main plan](legacy_compatibility_retirement_wp22_20260522.md)
 - [WP22 fact ledger](wp22_retirement_fact_ledger_cluster_20260522.md)
 - [WP22 dispatch queue](wp22_subagent_dispatch_queue_20260522.md)
-- [Architecture refactoring audit](../../review/architecture_refactoring_audit_20260522.md)
+- [Architecture refactoring audit](../../../review/architecture_refactoring_audit_20260522.md)
 
 ## Current Blocking Facts
 

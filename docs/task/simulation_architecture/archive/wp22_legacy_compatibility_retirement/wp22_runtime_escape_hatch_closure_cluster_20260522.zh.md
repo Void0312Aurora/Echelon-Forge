@@ -102,7 +102,7 @@ escape hatch 和 diagnostics bindings 仍 live。
 | 字段 | 值 |
 |---|---|
 | `status` | `partial` |
-| `touched files` | `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md`; `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md` |
+| `touched files` | `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md`; `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md` |
 | `commands run` | 历史 packet：早期扫描发现 live runtime escape hatches 与 compatibility surfaces。当前 verification 已在 `loader.sim`、`CMO_EXECUTION_STEP_RUNTIME`、`set_execution_step_runtime_mode(None)` 与 terrain setup 方面覆盖此结果。 |
 | `remaining blockers` | 当前 closure blocker 是公开 compatibility surface：在 replacement APIs 或显式 quarantine guards 存在前，raw facade/world access 不能完全关闭。原 direct GPU binding residual 已转入命名 `WorldBatchRuntime` compatibility helper。 |
 | `integration notes` | 不得把 compatibility residual 当作 pass。Runtime quarantine work 只可在 ready 子集上推进，且不得重新引入 production `loader.sim` 锚点。 |

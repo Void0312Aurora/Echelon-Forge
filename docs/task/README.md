@@ -60,10 +60,14 @@ For lifecycle cleanup across this tree, see the
 - [simulation_architecture/](simulation_architecture/README.md): `active`
   simulation-system architecture and runtime-lifecycle backbone. Start here
   before broad weapon, naval, sensor/track, facade, backend, or cross-domain
-  runtime work.
+  runtime work. Closed temporary architecture lanes now live under its
+  `archive/` index instead of as top-level task entries.
 - [naval/](naval/README.md): `active` medium-high maturity naval workline. N4 is
-  closed as a pre-fire threat/ROE bridge and active training-entry gate; limited
-  engagement remains a separate N5 package, not an excuse to reopen N4.
+  closed as a pre-fire threat/ROE bridge and active training-entry gate; the
+  first RL action/observation repair is retained as an accepted N4 evidence
+  record, while current surface-split work continues in the domain-surface
+  package. Limited engagement remains a separate N5 package, not an excuse to
+  reopen N4.
 - [performance_runtime/](performance_runtime/README.md): `planning`
   runtime-performance line. Use it for optimization ordering, benchmark
   boundaries, and hot-path analysis; archived planning chains are reference
@@ -72,7 +76,7 @@ For lifecycle cleanup across this tree, see the
 ### Bootstrap And Policy Planning
 
 - [ground/](ground/README.md): `planning` / early `active` ground tasking and
-  runtime bootstrap. G0-G4 define the accepted tasking lifecycle baseline, while
+  runtime bootstrap. G0-G6 accepted subprojects are sealed evidence records;
   movement, sensing, terrain, fires, damage, and broad runtime expansion remain
   explicitly held behind later gates.
 - [model/](model/README.md): `planning` policy/world-model surface for temporal
@@ -96,7 +100,8 @@ For lifecycle cleanup across this tree, see the
   local archive holds completed or superseded review snapshots.
 - [issues/](issues/README.md): `governance` cross-cutting issue board for
   problems that should remain visible across domain, runtime, model, training,
-  and evaluation worklines.
+  and evaluation worklines. Closed-but-reusable findings live as retained
+  tracking items rather than active issues.
 
 ### Reference And Archive
 
@@ -120,6 +125,9 @@ For lifecycle cleanup across this tree, see the
    instead of overloading an old air-first entry.
 4. When an area's lifecycle changes, update that local README first, then adjust
    this root navigation.
+5. Completed subprojects should be moved into that area's `archive/` when doing
+   so does not break active gates; otherwise, demote them in the parent README
+   to sealed, retained, or archived records and open follow-on work elsewhere.
 
 ## Document Types
 

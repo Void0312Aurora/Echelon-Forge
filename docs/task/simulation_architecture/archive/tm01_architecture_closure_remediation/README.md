@@ -11,7 +11,7 @@ architecture expansion package.
 
 Governance:
 
-- Follow the [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+- Follow the [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
   for any delegated worker or integration pass.
 - Use the task-cluster packet as the only active dispatch surface for this
   temporary project.

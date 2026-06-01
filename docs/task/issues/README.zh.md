@@ -17,9 +17,14 @@
 
 ## 活跃问题
 
+当前没有从本索引提升为 open blocking item 的跨领域 issue。只有当当前任务、review
+或 acceptance gate 需要主动修复协调时，才把 retained item 重新提升到这里。
+
+## 保留跟踪项
+
 - [RL 策略保持基线漂移](./rl_policy_hold_baseline_drift/README.zh.md)：
-  首次在 N4 海军屏护站位探针中观察到；PPO 更新会把零初始化的保持策略
-  推向稳定非零动作，而零动作仍然是当前测得的最佳基线。
+  N4 确定性保持探针已闭合，但 stochastic-policy acceptance 与 off-station
+  curricula 仍需要这份记录作为可复用证据。
 
 ## 问题记录形态
 

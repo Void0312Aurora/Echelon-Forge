@@ -150,8 +150,8 @@ rg -n "build_platform_capability_bundle_template|resolve_platform_spawn_plan|com
 - `status`：本次 source-verification 与 document-refresh 为 `pass`；
   structural retirement 本身仍然 mixed 且 dependency-gated。
 - `touched files`：
-  `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md`，
-  `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md`
+  `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md`，
+  `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md`
 - `commands run`：
   `git diff --check`；
   `find src/runtime/contracts -maxdepth 1 -name '*.h' -print0 | xargs -0 wc -l | sort -n`；

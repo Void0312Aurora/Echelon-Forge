@@ -11,32 +11,50 @@ Status: active naval-realism workline; N4 pre-fire bridge closed on
   localized weapon-chain skeleton, and support-chain rudiments.
 - The latest state summary is
   [naval_current_progress_20260524.md](./naval_current_progress_20260524.md).
-- The current N4 threat/ROE bridge is closed as a pre-fire scenario and active
-  training-entry gate:
+- The N4 threat/ROE bridge is closed as a pre-fire scenario and active
+  training-entry gate. Its directory is retained as a closure/evidence record
+  because tests and active configs still cite the gate, not because it is open
+  for new dispatch:
   [naval_n4_closure_20260525.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.md).
-- The current RL action-surface split is tracked in
+- The RL action/observation-surface split is implemented and retained as an
+  accepted N4 training-entry repair record:
   [n5_rl_action_surface_split/README.md](./n5_rl_action_surface_split/README.md).
   Despite the folder name, this is an N4 pre-fire training-entry repair, not a
-  release of N5 weapon engagement.
+  release of N5 weapon engagement. New naval surface-split work should continue
+  in the domain-surface split package below.
+- The current domain-surface split is tracked in
+  [naval_domain_surface_split/README.md](./naval_domain_surface_split/README.md).
+  It continues separating maintained naval action, command, observation, and
+  configuration surfaces from air-first compatibility carriers before any N5/N6
+  claim is opened.
 - The older `2026-05-17` progress checkpoint remains archived for historical
   traceability.
 - The line remains active, but the main focus is closure and stabilization of
   the existing naval command, sensor, runtime, and RL/tasking chain rather than
   broad new feature expansion.
 
-## Recommended Reading Order
+## Current Entry Points
 
 - Current progress tracking:
   [naval_current_progress_20260524.md](./naval_current_progress_20260524.md)
-- Closed N4 scenario-expansion subproject:
-  [n4_threat_roe_bridge/README.md](./n4_threat_roe_bridge/README.md)
-- N4 closure:
-  [n4_threat_roe_bridge/naval_n4_closure_20260525.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.md)
-- Current RL action-surface split:
-  [n5_rl_action_surface_split/README.md](./n5_rl_action_surface_split/README.md)
+- Current domain-surface split continuation:
+  [naval_domain_surface_split/README.md](./naval_domain_surface_split/README.md)
 - Archive index:
   [archive/README.md](./archive/README.md)
 - Historical planning/checkpoint material has been moved into the archive.
+
+## Closed / Retained Records
+
+These records are closed or accepted. Keep them visible through this section
+for provenance, tests, and gate checks, but do not use them as new active
+subproject entrypoints.
+
+- Closed N4 scenario-expansion subproject:
+  [n4_threat_roe_bridge/README.md](./n4_threat_roe_bridge/README.md)
+- N4 closure record:
+  [n4_threat_roe_bridge/naval_n4_closure_20260525.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.md)
+- Implemented N4 RL action/observation repair, despite the `N5` directory name:
+  [n5_rl_action_surface_split/README.md](./n5_rl_action_surface_split/README.md)
 
 ## Current Follow-On Focus
 
@@ -49,6 +67,10 @@ Status: active naval-realism workline; N4 pre-fire bridge closed on
   surface rather than the air `takeoff4` training surface
 - keep their policy mission input on `naval_screen_station_v1` rather than the
   air formation-role observation surface
+- continue splitting the remaining air-first compatibility carriers:
+  neutral `PilotAction` transport, flat `MissionCommand` aggregation,
+  Python-owned naval mission observation fallback, and air-labeled backend
+  config names
 - keep limited weapon engagement behind a separate N5 package and opening gate
 - continue moving business-bearing loader-owned raw simulation compatibility
   seams to facade-owned maintained surfaces

@@ -1,8 +1,9 @@
 # N5 RL 动作面拆分
 
-状态：`2026-05-27` 已实现第一段维护中的海军 RL 动作面和观测面切片，并将 active
-active N4 入口提升到单策略槽位 cooperative runtime。它仍然是 `N4`
-开火前训练入口修复，不是 `N5` 武器交战释放。
+状态：`2026-05-27` 已实现，并保留为已接受的 `N4` pre-fire training-entry repair
+记录。它交付了第一段维护中的海军 RL action/observation surface，并将 active N4
+入口提升到单策略槽位 cooperative runtime；它不是 active `N5` weapon-engagement
+release。
 
 语言：
 
@@ -30,6 +31,12 @@ N4 训练入口此前有价值，因为它证明了场景、奖励和维护中�
 本子项目释放一个有限修复：专门的开火前海军动作模式，通过海军 task/command
 链改变站位意图，同时保持低层 pilot-action carrier 为中性；同时增加海军任务观测模式，
 直接命名站位、接触、ROE、报告链和目标来源字段。
+
+## 当前用途
+
+本目录现在是已接受 N4 repair 的闭合 evidence packet。后续若继续拆分 naval action、
+command、observation 或 configuration ownership，应从
+[Naval Domain Surface Split](../naval_domain_surface_split/README.zh.md) 进入，而不是在这里继续追加新的 N5/N6 声明。
 
 ## 输出
 

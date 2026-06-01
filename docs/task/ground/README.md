@@ -73,7 +73,7 @@ without creating a new vertical runtime path.
   inspection. This is schema evidence only; route movement, terrain, sensing,
   fires, damage, and combat remain held.
 
-## Recommended Reading Order
+## Current Entry Points
 
 - Current progress tracking:
   [ground_current_progress_20260524.md](ground_current_progress_20260524.md)
@@ -81,26 +81,6 @@ without creating a new vertical runtime path.
   [ground_domain_bootstrap_plan_20260521.md](ground_domain_bootstrap_plan_20260521.md)
 - Subagent dispatch:
   [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)
-- G0:
-  [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
-- G1:
-  [g1_contract_skeleton/README.md](g1_contract_skeleton/README.md)
-- G2:
-  [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
-- G3:
-  [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
-- G4:
-  [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
-- G5:
-  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
-- G6:
-  [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
-- G6-C:
-  [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
-- G6-D:
-  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
-- G6-E:
-  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
 - Review:
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - Architecture baseline:
@@ -113,6 +93,34 @@ without creating a new vertical runtime path.
   [../../standards/ground/minimal_task_structure.md](../../standards/ground/minimal_task_structure.md)
 - Common/air/naval split carry-over:
   [../common_air_naval/README.md](../common_air_naval/README.md)
+
+## Sealed / Archived Subproject Records
+
+These subproject directories are accepted evidence records, not active dispatch
+surfaces. They remain linked from this index because current movement-release
+planning still consumes their gates, but new work should open a fresh follow-on
+package instead of editing these accepted records in place.
+
+- G0 boundary freeze:
+  [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
+- G1 contract skeleton:
+  [g1_contract_skeleton/README.md](g1_contract_skeleton/README.md)
+- G2 content/test seed:
+  [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
+- G3 execution-surface design:
+  [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
+- G4 tasking runtime slice:
+  [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
+- G5 MVP scenario shell:
+  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
+- G6 realism-gradient static fixtures:
+  [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
+- G6-C route-move boundary guardrails:
+  [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
+- G6-D route-move release decision:
+  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
+- G6-E native ground platform schema evidence:
+  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
 
 ## Sealed Baseline
 
@@ -129,8 +137,8 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
 
 - maintain G0/G5 tasking smoke and G6 G1 static occupy/support fixtures as
   realism-gradient guardrails
-- keep G6-C/G6-D route-move guardrails active before adding any movement
-  scenario
+- keep G6-C/G6-D route-move guardrails in force before adding any movement
+  scenario, without reopening those accepted records
 - use the accepted G6-E2/E3 native schema evidence as input to a later
   route-move release vote
 - keep G1 scenarios scoped to static occupy/support relationship semantics only

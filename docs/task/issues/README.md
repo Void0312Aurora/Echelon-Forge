@@ -20,10 +20,15 @@ whose evidence and repair path should be reusable by other worklines.
 
 ## Active Issues
 
+No cross-cutting issue is currently promoted as an open blocking item from this
+index. Promote a retained item back here only when a current task, review, or
+acceptance gate needs active repair coordination.
+
+## Retained Tracking Items
+
 - [RL Policy Hold-Baseline Drift](./rl_policy_hold_baseline_drift/README.md):
-  first observed in the N4 naval screen-station probe; PPO updates move a
-  zero-initialized hold policy into stable non-zero action commands even though
-  zero action remains the best measured baseline.
+  the deterministic N4 hold probe is closed, but stochastic-policy acceptance
+  and off-station curricula still need this record as reusable evidence.
 
 ## Issue Record Shape
 

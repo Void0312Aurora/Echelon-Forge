@@ -65,7 +65,7 @@
   这仅是 schema 证据；route movement、terrain、sensing、fires、damage 和
   combat 仍保持 held。
 
-## 推荐阅读顺序
+## 当前入口
 
 - 当前进展追踪：
   [ground_current_progress_20260524.zh.md](ground_current_progress_20260524.zh.md)
@@ -73,26 +73,6 @@
   [ground_domain_bootstrap_plan_20260521.zh.md](ground_domain_bootstrap_plan_20260521.zh.md)
 - Subagent 分发：
   [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)
-- G0：
-  [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
-- G1：
-  [g1_contract_skeleton/README.md](g1_contract_skeleton/README.md)
-- G2：
-  [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
-- G3：
-  [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
-- G4：
-  [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
-- G5：
-  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
-- G6：
-  [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
-- G6-C：
-  [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
-- G6-D：
-  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
-- G6-E：
-  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
 - Review：
   [../review/ground_domain_bootstrap_plan_review_20260521.md](../review/ground_domain_bootstrap_plan_review_20260521.md)
 - 架构基线：
@@ -105,6 +85,33 @@
   [../../standards/ground/minimal_task_structure.zh.md](../../standards/ground/minimal_task_structure.zh.md)
 - `common / air / naval` 拆分承接线：
   [../common_air_naval/README.zh.md](../common_air_naval/README.zh.md)
+
+## 已封存 / 归档子项目记录
+
+以下子项目目录是已接受的证据记录，不再是 active dispatch surface。它们仍从本索引链接，
+是因为当前 movement-release 规划仍消费这些 gate；新工作应新开 follow-on package，
+不要在这些已接受记录内继续追加实现任务。
+
+- G0 边界冻结：
+  [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
+- G1 合同骨架：
+  [g1_contract_skeleton/README.md](g1_contract_skeleton/README.md)
+- G2 内容 / 测试种子：
+  [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
+- G3 执行面设计：
+  [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
+- G4 tasking runtime 切片：
+  [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
+- G5 MVP 场景 shell：
+  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
+- G6 realism-gradient 静态 fixture：
+  [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
+- G6-C route-move boundary guardrails：
+  [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
+- G6-D route-move release decision：
+  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
+- G6-E native ground platform schema 证据：
+  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
 
 ## 已封存基线
 
@@ -120,7 +127,7 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
 
 - 维护 G0/G5 tasking smoke 与 G6 G1 static occupy/support fixtures，作为
   realism-gradient guardrails
-- 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效
+- 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效，但不重开这些已接受记录
 - 将已接受的 G6-E2/E3 native schema 证据作为后续 route-move release vote 的输入
 - G1 场景只验证 static occupy/support relationship 语义，不扩张为 ground
   combat/runtime 证明

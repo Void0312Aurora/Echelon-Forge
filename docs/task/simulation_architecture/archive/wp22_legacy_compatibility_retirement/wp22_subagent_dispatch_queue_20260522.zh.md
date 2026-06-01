@@ -42,7 +42,7 @@ DTO/default-factory replacement 与 structural/binding debt 返回完整证据�
 输入：
 
 - [WP22 main plan](legacy_compatibility_retirement_wp22_20260522.zh.md)
-- [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+- [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
 
 ## 队列
 

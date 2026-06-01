@@ -150,6 +150,7 @@ STRUCTURAL_DOC_EN = (
     / "docs"
     / "task"
     / "simulation_architecture"
+    / "archive"
     / "wp22_legacy_compatibility_retirement"
     / "wp22_structural_god_file_decomposition_cluster_20260522.md"
 )
@@ -158,6 +159,7 @@ STRUCTURAL_DOC_ZH = (
     / "docs"
     / "task"
     / "simulation_architecture"
+    / "archive"
     / "wp22_legacy_compatibility_retirement"
     / "wp22_structural_god_file_decomposition_cluster_20260522.zh.md"
 )

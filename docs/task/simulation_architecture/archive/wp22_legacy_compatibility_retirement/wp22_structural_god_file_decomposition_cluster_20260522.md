@@ -165,8 +165,8 @@ Pass only if all of the following are source-backed:
 - `status`: `pass` for this source-verification and documentation-refresh pass;
   structural retirement itself remains mixed and dependency-gated.
 - `touched files`:
-  `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md`,
-  `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md`
+  `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.md`,
+  `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md`
 - `commands run`:
   `git diff --check`;
   `find src/runtime/contracts -maxdepth 1 -name '*.h' -print0 | xargs -0 wc -l | sort -n`;

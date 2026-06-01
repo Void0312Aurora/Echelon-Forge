@@ -9,15 +9,15 @@
 
 输入：
 
-- [WP21 Full Counterfactual Experiment Runtime](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)
-- [WP21-A Fact Ledger And Residual Freeze](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)
-- [WP21-B Snapshot Restore And Worldline Boundary](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)
-- [WP21-C Counterfactual Rollout And Causal Difference](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)
-- [WP21-D Scenario Intervention Generation Runtime](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)
-- [WP21-E Experiment Facade And Evidence Collection](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)
-- [WP21-F Final Cleanup And Acceptance Handoff](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)
-- [WP21 dispatch queue](../../../simulation_architecture/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)
-- [WP22 强制退场补救](../../../simulation_architecture/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)
+- [WP21 Full Counterfactual Experiment Runtime](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)
+- [WP21-A Fact Ledger And Residual Freeze](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)
+- [WP21-B Snapshot Restore And Worldline Boundary](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)
+- [WP21-C Counterfactual Rollout And Causal Difference](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)
+- [WP21-D Scenario Intervention Generation Runtime](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)
+- [WP21-E Experiment Facade And Evidence Collection](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)
+- [WP21-F Final Cleanup And Acceptance Handoff](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)
+- [WP21 dispatch queue](../../../simulation_architecture/archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)
+- [WP22 强制退场补救](../../../simulation_architecture/archive/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)
 
 ## 1. 结论
 

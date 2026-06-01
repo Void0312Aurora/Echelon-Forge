@@ -21,9 +21,9 @@ Inputs:
 - [WP22 legacy compatibility retirement](../wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.md)
 - [WP22 remaining task clusters](../wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.md)
 - [WP22 dispatch queue](../wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.md)
-- [Architecture refactoring audit](../../review/architecture_refactoring_audit_20260522.md)
-- [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
-- [WP Closure Lane Policy](../../../standards/governance/wp_closure_lane_policy.md)
+- [Architecture refactoring audit](../../../review/architecture_refactoring_audit_20260522.md)
+- [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
+- [WP Closure Lane Policy](../../../../standards/governance/wp_closure_lane_policy.md)
 
 ## 1. Stop Order
 

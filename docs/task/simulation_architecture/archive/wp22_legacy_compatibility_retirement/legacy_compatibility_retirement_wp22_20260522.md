@@ -50,15 +50,15 @@ Language:
 
 Inputs:
 
-- [Architecture refactoring audit](../../review/architecture_refactoring_audit_20260522.md)
-- [WP21 full counterfactual experiment runtime](../archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md)
-- [Disputed WP21 acceptance record](../../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
-- [WP16 runtime spine consolidation](../archive/wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md)
-- [WP18 runtime ownership and C++ hot-path consolidation](../archive/wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md)
-- [WP20 public capability-platform composition](../archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md)
-- [Simulation system architecture design](../../../plan/architecture/simulation_system_architecture_design.md)
-- [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
-- [WP Closure Lane Policy](../../../standards/governance/wp_closure_lane_policy.md)
+- [Architecture refactoring audit](../../../review/architecture_refactoring_audit_20260522.md)
+- [WP21 full counterfactual experiment runtime](../wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.md)
+- [Disputed WP21 acceptance record](../../../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md)
+- [WP16 runtime spine consolidation](../wp16_runtime_spine_consolidation/runtime_spine_consolidation_wp16_20260521.md)
+- [WP18 runtime ownership and C++ hot-path consolidation](../wp18_runtime_ownership_cxx_hot_path_consolidation/runtime_ownership_cxx_hot_path_consolidation_wp18_20260521.md)
+- [WP20 public capability-platform composition](../wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.md)
+- [Simulation system architecture design](../../../../plan/architecture/simulation_system_architecture_design.md)
+- [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
+- [WP Closure Lane Policy](../../../../standards/governance/wp_closure_lane_policy.md)
 
 Naming and commit-message note:
 
@@ -220,7 +220,7 @@ Parallel rule:
 
 Worker rule:
 
-- Use the project [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Use the project [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).
 - Workers are not alone in the codebase; they must not revert unrelated edits
   or edits from other workers.
 - Every worker must return touched files, commands run, remaining legacy paths,

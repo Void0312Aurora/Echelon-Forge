@@ -1,9 +1,10 @@
 # N5 RL Action Surface Split
 
-Status: `2026-05-27` implemented for the first maintained naval RL action and
-observation surface slices, with the active N4 entries promoted to the
-single-policy-slot cooperative runtime. This is still an `N4` pre-fire
-training-entry repair, not an `N5` weapon-engagement release.
+Status: `2026-05-27` implemented and retained as an accepted `N4` pre-fire
+training-entry repair record. It delivered the first maintained naval RL action
+and observation surface slices and promoted the active N4 entries to the
+single-policy-slot cooperative runtime. It is not an active `N5`
+weapon-engagement release.
 
 Language:
 
@@ -35,6 +36,14 @@ that changes station-order intent through the naval task/command chain while
 keeping the low-level pilot-action carrier neutral, plus a naval mission
 observation mode that names station, contact, ROE, report-chain, and target
 provenance fields directly.
+
+## Current Use
+
+This directory is now a closed evidence packet for the accepted N4 repair.
+Follow-on work that continues splitting naval action, command, observation, or
+configuration ownership should start from
+[Naval Domain Surface Split](../naval_domain_surface_split/README.md) rather
+than appending new N5/N6 claims here.
 
 ## Output
 

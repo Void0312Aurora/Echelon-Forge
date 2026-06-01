@@ -98,6 +98,7 @@ WP22_COMMAND_RETIREMENT_DOC_EN = (
     / "docs"
     / "task"
     / "simulation_architecture"
+    / "archive"
     / "wp22_legacy_compatibility_retirement"
     / "wp22_command_dto_legacy_surface_retirement_cluster_20260522.md"
 )
@@ -106,6 +107,7 @@ WP22_COMMAND_RETIREMENT_DOC_ZH = (
     / "docs"
     / "task"
     / "simulation_architecture"
+    / "archive"
     / "wp22_legacy_compatibility_retirement"
     / "wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md"
 )

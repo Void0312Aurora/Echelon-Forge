@@ -9,7 +9,7 @@ code.
 
 Governance:
 
-- Follow the [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Follow the [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).
 - Keep the first pass documentation-only unless the task cluster explicitly
   authorizes a code slice.
 - Do not reopen WP24, TM01, or TM02.
@@ -29,7 +29,7 @@ The initial residual was narrow and concrete:
 | `src/systems/naval/naval_mission_weapon_release_system.h` | Includes `core/engine/simulation_kernel.h`, captures `SimulationKernel&`, and calls `fire_naval_weapon_from_mission_command(...)`. | Same boundary issue for naval mission-command release. |
 | `src/core/engine/simulation_kernel_systems.cpp` | Registers both helpers with `*this` at phases 6.58 and 6.59. | The bridge is explicit and centralized, but still couples systems to the core owner. |
 
-The architecture reference is [src/systems/README.md](../../../src/systems/README.md),
+The architecture reference is [src/systems/README.md](../../../../../src/systems/README.md),
 which says `systems/` consumes components/models and is registered by
 `core/engine`.
 

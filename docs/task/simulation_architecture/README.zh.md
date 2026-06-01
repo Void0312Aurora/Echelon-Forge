@@ -90,6 +90,9 @@
 
 ## 工作包
 
+已闭合、已冻结、blocked 或已替代的 package 仍保留在下表中用于路线追溯，但其任务
+packet 已移入 [archive/](archive/README.zh.md)，不再作为顶层 active 子项目目录裸露。
+
 | 工作包 | 状态 | 目标 | 产出 |
 |--------|------|------|------|
 | `WP0 Architecture Baseline` | complete | 明确 SCAL 定位、语义生命周期、因果-时序执行投影与扩展规则 | 架构设计文档、任务子项目入口 |
@@ -117,19 +120,19 @@
 | `WP19 CUDA And Resident-State Mainline Alignment` | complete / accepted | 对齐现有 CUDA helpers、device-resident output contracts、diagnostics boundaries 与 resident-state sync/shard vocabulary，同时默认不晋级 exact GPU 或 maintained resident-state support | [CUDA and resident-state mainline alignment](archive/wp19_cuda_resident_state_alignment/cuda_resident_state_alignment_wp19_20260521.zh.md)、[fact ledger](archive/wp19_cuda_resident_state_alignment/wp19_cuda_resident_state_fact_ledger_cluster_20260521.zh.md)、[device output contract](archive/wp19_cuda_resident_state_alignment/wp19_device_resident_output_contract_cluster_20260521.zh.md)、[GPU helper diagnostics boundary](archive/wp19_cuda_resident_state_alignment/wp19_gpu_helper_diagnostics_boundary_cluster_20260521.zh.md)、[resident-state sync and shard contract](archive/wp19_cuda_resident_state_alignment/wp19_resident_state_sync_shard_contract_cluster_20260521.zh.md)、[first CUDA alignment slice](archive/wp19_cuda_resident_state_alignment/wp19_first_cuda_alignment_slice_cluster_20260521.zh.md)、[integration handoff](archive/wp19_cuda_resident_state_alignment/wp19_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](archive/wp19_cuda_resident_state_alignment/wp19_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp19_cuda_resident_state_alignment_acceptance_review_20260521.zh.md) |
 | `WP20 Public Capability-Platform Composition` | complete / accepted | 通过 validation-first admission/result contracts 与 compatibility-preserving materialization 公开 typed capability-platform setup path，同时保持 type-name spawning 与 scenario schema 稳定 | [public capability-platform composition](archive/wp20_public_capability_platform_composition/public_capability_platform_composition_wp20_20260521.zh.md)、[fact ledger](archive/wp20_public_capability_platform_composition/wp20_public_capability_fact_ledger_cluster_20260521.zh.md)、[public typed spawn contract](archive/wp20_public_capability_platform_composition/wp20_public_typed_platform_spawn_contract_cluster_20260521.zh.md)、[runtime setup consume bridge](archive/wp20_public_capability_platform_composition/wp20_runtime_setup_consume_bridge_cluster_20260521.zh.md)、[facade/binding surface](archive/wp20_public_capability_platform_composition/wp20_facade_binding_public_surface_cluster_20260521.zh.md)、[compatibility/schema guard](archive/wp20_public_capability_platform_composition/wp20_compatibility_schema_guard_cluster_20260521.zh.md)、[integration handoff](archive/wp20_public_capability_platform_composition/wp20_integration_handoff_cluster_20260521.zh.md)、[dispatch queue](archive/wp20_public_capability_platform_composition/wp20_subagent_dispatch_queue_20260521.zh.md)、[验收审查](../review/archive/wp-acceptance/wp20_public_capability_platform_composition_acceptance_review_20260521.zh.md) |
 | `WP21 Full Counterfactual Experiment Runtime` | owner-rejected / superseded by WP22 | claimed closure 试图将已验收 counterfactual contracts 与 selected runtime slices 转为 maintained facade-owned experiment execution、scenario generation、evidence collection 与 legacy cleanup，但 owner 因 compatibility layers 与未闭合 subagent work 仍残留而否决该收口。 | [full counterfactual experiment runtime](archive/wp21_full_counterfactual_experiment_runtime/full_counterfactual_experiment_runtime_wp21_20260521.zh.md)、[fact ledger](archive/wp21_full_counterfactual_experiment_runtime/wp21_fact_ledger_residual_freeze_cluster_20260521.zh.md)、[snapshot/restore boundary](archive/wp21_full_counterfactual_experiment_runtime/wp21_snapshot_restore_worldline_boundary_cluster_20260521.zh.md)、[counterfactual rollout](archive/wp21_full_counterfactual_experiment_runtime/wp21_counterfactual_rollout_causal_difference_cluster_20260521.zh.md)、[scenario generation runtime](archive/wp21_full_counterfactual_experiment_runtime/wp21_scenario_intervention_generation_cluster_20260521.zh.md)、[experiment facade/evidence](archive/wp21_full_counterfactual_experiment_runtime/wp21_experiment_facade_evidence_cluster_20260521.zh.md)、[final cleanup](archive/wp21_full_counterfactual_experiment_runtime/wp21_final_cleanup_acceptance_cluster_20260521.zh.md)、[dispatch queue](archive/wp21_full_counterfactual_experiment_runtime/wp21_subagent_dispatch_queue_20260521.zh.md)、[已争议验收记录](../review/archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md) |
-| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen；由 WP23 取代 | 曾试图强制退场 post-WP21 compatibility layers，但 owner 因 uncontrolled follow-up waves 与 partial/quarantine evidence drift 终止该流。其 queue 只作历史记录，不得再派发。 | [legacy compatibility retirement](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[remaining task clusters](wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.zh.md)、[dispatch queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
-| `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | 冻结 WP22，分类当前 dirty work，强制 delete-or-block decisions，将 TaskOrder 与 public API exits 记录为 blocked；因没有 deletion-ready surface 而跳过 implementation，并以受控 blocked recovery 收口。 | [legacy retirement recovery](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md) |
-| `WP24 TaskOrder Maintained Business Migration` | closed / accepted | WP23 后的 replacement-backed TaskOrder 业务迁移：maintained contract/export/Python business paths 已集成，旧 public TaskOrder whole-shell compatibility surfaces 已删除，canonical acceptance review 已发布。 | [taskorder maintained business migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)、[集成评估与清理收口](wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md)、[验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) |
-| `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | 审计后的有边界整改线：`TM01-A`、`TM01-C`、`TM01-D` 已完成并覆盖本次 maintained-path 切片；`TM01-B` 记录的 launch-bridge residual 已由 TM03 关闭，且更广泛的架构、P7/raw-runtime 与 WP24 canonical acceptance 闭合仍未完成。 | [TM01 entry](tm01_architecture_closure_remediation/README.md)、[task clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
-| `TM02 WP24 Acceptance Closure` | temporary / closed | 已发布 WP24 canonical acceptance review 并同步索引的 closure lane；未重开 implementation scope。 | [TM02 entry](tm02_wp24_acceptance_closure/README.md)、[验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) |
-| `TM03 Launch Bridge Boundary` | temporary / closed | 通过 `IWeaponReleaseService` 窄接口关闭 TM01-B 记录的两个 `systems -> SimulationKernel` weapon-release bridge 的有边界架构 lane。 | [TM03 entry](tm03_launch_bridge_boundary/README.md)、[task clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
+| `WP22 Legacy Compatibility Retirement And Architecture Hardening` | owner-rejected / frozen；由 WP23 取代 | 曾试图强制退场 post-WP21 compatibility layers，但 owner 因 uncontrolled follow-up waves 与 partial/quarantine evidence drift 终止该流。其 queue 只作历史记录，不得再派发。 | [legacy compatibility retirement](archive/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)、[remaining task clusters](archive/wp22_legacy_compatibility_retirement/wp22_remaining_task_clusters_20260523.zh.md)、[dispatch queue](archive/wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md) |
+| `WP23 Legacy Retirement Recovery And Reset` | closed / blocked | 冻结 WP22，分类当前 dirty work，强制 delete-or-block decisions，将 TaskOrder 与 public API exits 记录为 blocked；因没有 deletion-ready surface 而跳过 implementation，并以受控 blocked recovery 收口。 | [legacy retirement recovery](archive/wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md) |
+| `WP24 TaskOrder Maintained Business Migration` | closed / accepted | WP23 后的 replacement-backed TaskOrder 业务迁移：maintained contract/export/Python business paths 已集成，旧 public TaskOrder whole-shell compatibility surfaces 已删除，canonical acceptance review 已发布。 | [taskorder maintained business migration](archive/wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)、[集成评估与清理收口](archive/wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md)、[验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) |
+| `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | 审计后的有边界整改线：`TM01-A`、`TM01-C`、`TM01-D` 已完成并覆盖本次 maintained-path 切片；`TM01-B` 记录的 launch-bridge residual 已由 TM03 关闭，且更广泛的架构、P7/raw-runtime 与 WP24 canonical acceptance 闭合仍未完成。 | [TM01 entry](archive/tm01_architecture_closure_remediation/README.md)、[task clusters](archive/tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
+| `TM02 WP24 Acceptance Closure` | temporary / closed | 已发布 WP24 canonical acceptance review 并同步索引的 closure lane；未重开 implementation scope。 | [TM02 entry](archive/tm02_wp24_acceptance_closure/README.md)、[验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md) |
+| `TM03 Launch Bridge Boundary` | temporary / closed | 通过 `IWeaponReleaseService` 窄接口关闭 TM01-B 记录的两个 `systems -> SimulationKernel` weapon-release bridge 的有边界架构 lane。 | [TM03 entry](archive/tm03_launch_bridge_boundary/README.md)、[task clusters](archive/tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
 
 ## TM03 Launch Bridge Boundary
 
 产出：
 
-- [TM03 Launch Bridge Boundary](tm03_launch_bridge_boundary/README.md)
-- [TM03 Launch Bridge Boundary Task Clusters](tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md)
+- [TM03 Launch Bridge Boundary](archive/tm03_launch_bridge_boundary/README.md)
+- [TM03 Launch Bridge Boundary Task Clusters](archive/tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md)
 
 TM03 只负责 TM01-B 记录下来的窄 launch-bridge residual。它已通过
 `IWeaponReleaseService` 移除两个 release helper header 对 `SimulationKernel` 的直接依赖，
@@ -140,7 +143,7 @@ raw-runtime 退场仍在 TM03 范围之外。
 
 产出：
 
-- [TM02 WP24 Acceptance Closure](tm02_wp24_acceptance_closure/README.md)
+- [TM02 WP24 Acceptance Closure](archive/tm02_wp24_acceptance_closure/README.md)
 - [WP24 TaskOrder Maintained Business Migration 验收审查](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.zh.md)
 
 TM02 是 WP24 的串行 closure lane。它已在 focused validation 后发布 canonical acceptance
@@ -151,8 +154,8 @@ review 并同步索引，同时把 ground runtime expansion 与 public raw-runti
 
 产出：
 
-- [TM01 Architecture Closure Remediation](tm01_architecture_closure_remediation/README.md)
-- [TM01 Architecture Closure Task Clusters](tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
+- [TM01 Architecture Closure Remediation](archive/tm01_architecture_closure_remediation/README.md)
+- [TM01 Architecture Closure Task Clusters](archive/tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md)
 
 TM01 仅对已审计的实现切片关闭；它不是新的 architecture WP，也不会创建 canonical
 WP24 acceptance。`TM01-A` 已恢复聚焦的 ground tasking-shell 验证路径，`TM01-C`
@@ -169,7 +172,7 @@ compatibility 退场、以及完整 ground runtime 仍显式未闭合。
 
 产出：
 
-- [WP24 TaskOrder Maintained Business Migration](wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)
+- [WP24 TaskOrder Maintained Business Migration](archive/wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)
 
 WP24 是 WP23 以 `blocked` 关闭后打开并已验收的 replacement-backed implementation
 package，不是另一轮 recovery wave。maintained contract/export/Python business
@@ -180,7 +183,7 @@ surfaces，而不是把它们作为 residual 接受；canonical acceptance revie
 
 产出：
 
-- [WP23 Legacy Retirement Recovery And Reset](wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md)
+- [WP23 Legacy Retirement Recovery And Reset](archive/wp23_legacy_retirement_recovery/legacy_retirement_recovery_wp23_20260523.zh.md)
 
 WP23 是 reset，不是 continuation wave。它把 WP22 queue entries 冻结为历史证据，并保持
 严格文档预算：只使用 canonical WP23 plan 与中文 companion。它审计 dirty worktree，
@@ -204,14 +207,14 @@ WP23 收口地图：
 
 产出：
 
-- [WP22 Legacy Compatibility Retirement And Architecture Hardening](wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)
-- [WP22-A Retirement Fact Ledger And Kill List](wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.zh.md)
-- [WP22-B Python Business Bypass Retirement](wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.zh.md)
-- [WP22-C Runtime Escape-Hatch And Legacy Mode Closure](wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md)
-- [WP22-D Command DTO And Legacy Surface Retirement](wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md)
-- [WP22-E Structural God-File Decomposition](wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md)
-- [WP22-F Guardrail And Acceptance Closure](wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.zh.md)
-- [WP22 Subagent Dispatch Queue](wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md)
+- [WP22 Legacy Compatibility Retirement And Architecture Hardening](archive/wp22_legacy_compatibility_retirement/legacy_compatibility_retirement_wp22_20260522.zh.md)
+- [WP22-A Retirement Fact Ledger And Kill List](archive/wp22_legacy_compatibility_retirement/wp22_retirement_fact_ledger_cluster_20260522.zh.md)
+- [WP22-B Python Business Bypass Retirement](archive/wp22_legacy_compatibility_retirement/wp22_python_business_bypass_retirement_cluster_20260522.zh.md)
+- [WP22-C Runtime Escape-Hatch And Legacy Mode Closure](archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md)
+- [WP22-D Command DTO And Legacy Surface Retirement](archive/wp22_legacy_compatibility_retirement/wp22_command_dto_legacy_surface_retirement_cluster_20260522.zh.md)
+- [WP22-E Structural God-File Decomposition](archive/wp22_legacy_compatibility_retirement/wp22_structural_god_file_decomposition_cluster_20260522.zh.md)
+- [WP22-F Guardrail And Acceptance Closure](archive/wp22_legacy_compatibility_retirement/wp22_guard_acceptance_closure_cluster_20260522.zh.md)
+- [WP22 Subagent Dispatch Queue](archive/wp22_legacy_compatibility_retirement/wp22_subagent_dispatch_queue_20260522.zh.md)
 
 WP22 已冻结并由 WP23 取代。它由 post-WP21 architecture refactoring audit 打开，但
 continuation stream 因过多 ad-hoc waves 与 partial/quarantine evidence loops 未达到

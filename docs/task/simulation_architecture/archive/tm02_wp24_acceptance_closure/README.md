@@ -8,8 +8,8 @@ residual recorded by TM01.
 
 Governance:
 
-- Follow the [WP Closure Lane Policy](../../../standards/governance/wp_closure_lane_policy.md).
-- Follow the [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+- Follow the [WP Closure Lane Policy](../../../../standards/governance/wp_closure_lane_policy.md).
+- Follow the [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
   if any closure work is delegated.
 - Keep this lane serial and documentation-only unless the closure audit exposes a
   blocking implementation regression.

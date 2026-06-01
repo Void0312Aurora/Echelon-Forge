@@ -21,7 +21,7 @@ R3 已经被收束成有限 replacement cluster；这里只允许下面三个子
 - [WP22 主计划](legacy_compatibility_retirement_wp22_20260522.zh.md)
 - [WP22 事实台账](wp22_retirement_fact_ledger_cluster_20260522.zh.md)
 - [WP22 派发队列](wp22_subagent_dispatch_queue_20260522.zh.md)
-- [架构重构审计](../../review/architecture_refactoring_audit_20260522.md)
+- [架构重构审计](../../../review/architecture_refactoring_audit_20260522.md)
 
 ## 当前阻塞事实
 

@@ -11,11 +11,11 @@
 
 输入：
 
-- [WP24 TaskOrder Maintained Business Migration](../../../simulation_architecture/wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)
-- [WP24 Integration Assessment And Cleanup Close-Out](../../../simulation_architecture/wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md)
-- [WP24 Facade Boundary Closure Task Package](../../../simulation_architecture/wp24_taskorder_maintained_business_migration/wp24_facade_boundary_closure_task_package_20260524.zh.md)
-- [TM01 Architecture Closure Remediation](../../../simulation_architecture/tm01_architecture_closure_remediation/README.md)
-- [TM02 WP24 Acceptance Closure](../../../simulation_architecture/tm02_wp24_acceptance_closure/README.md)
+- [WP24 TaskOrder Maintained Business Migration](../../../simulation_architecture/archive/wp24_taskorder_maintained_business_migration/taskorder_maintained_business_migration_wp24_20260524.zh.md)
+- [WP24 Integration Assessment And Cleanup Close-Out](../../../simulation_architecture/archive/wp24_taskorder_maintained_business_migration/wp24_integration_assessment_and_next_dispatch_20260524.zh.md)
+- [WP24 Facade Boundary Closure Task Package](../../../simulation_architecture/archive/wp24_taskorder_maintained_business_migration/wp24_facade_boundary_closure_task_package_20260524.zh.md)
+- [TM01 Architecture Closure Remediation](../../../simulation_architecture/archive/tm01_architecture_closure_remediation/README.md)
+- [TM02 WP24 Acceptance Closure](../../../simulation_architecture/archive/tm02_wp24_acceptance_closure/README.md)
 
 ## 1. 结论
 

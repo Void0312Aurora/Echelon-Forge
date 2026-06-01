@@ -46,10 +46,13 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
   局部 README 会区分仍活跃的承接工作和 archive 中已被替代的前置分析。
 - [仿真架构](simulation_architecture/README.zh.md)：`active` 的仿真系统架构与
   runtime lifecycle 主干。开始武器、海军、传感器/航迹、facade、backend 或跨域
-  runtime 的大范围工作前，应先从这里收敛任务。
+  runtime 的大范围工作前，应先从这里收敛任务。已闭合的临时架构 lane 现在进入其
+  `archive/` 索引，而不是作为顶层任务入口裸露。
 - [海军](naval/README.zh.md)：`active` 的中高成熟海军工作线。N4 已作为
-  pre-fire threat/ROE bridge 和 active training-entry gate 闭合；limited
-  engagement 仍属于单独 N5 package，不应借此重新打开 N4。
+  pre-fire threat/ROE bridge 和 active training-entry gate 闭合；第一段 RL
+  action/observation repair 保留为已接受的 N4 证据记录，当前 surface-split 工作
+  继续进入 domain-surface package。limited engagement 仍属于单独 N5 package，
+  不应借此重新打开 N4。
 - [runtime 性能](performance_runtime/README.zh.md)：`planning` 的 runtime 性能线。
   用于优化排序、benchmark 边界和 hot-path 分析；已归档的旧规划链是参考材料，
   不是 active execution 入口。
@@ -57,7 +60,7 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
 ### Bootstrap 与策略规划
 
 - [ground](ground/README.zh.md)：`planning` / 早期 `active` 的 ground tasking 与
-  runtime bootstrap。G0-G4 是已接受的 tasking lifecycle 基线；movement、sensing、
+  runtime bootstrap。G0-G6 已接受子项目是封存证据记录；movement、sensing、
   terrain、fires、damage 和广泛 runtime 扩展仍明确 held 在后续 gate 之后。
 - [model](model/README.zh.md)：`planning` 的策略/世界模型面，用于时间 HMoE 与
   sequence-policy 工作。当行为问题需要策略记忆或 world-model planning，而不是
@@ -77,7 +80,8 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
 - [review](review/README.zh.md)：`governance` 的 review 与验收记录面。当前 review
   和路线图记录从局部 README 进入；局部 archive 保留已完成或已替代的审查快照。
 - [issues](issues/README.zh.md)：`governance` 的跨领域 issue board，用于保持领域、
-  runtime、model、training 与 evaluation 工作线之间都应可见的问题。
+  runtime、model、training 与 evaluation 工作线之间都应可见的问题。已闭合但仍可复用的发现
+  作为 retained tracking item 保留，而不是 active issue。
 
 ### 参考与归档
 
@@ -96,6 +100,8 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
 3. 跨领域任务请通过 `common_air_naval/`、`simulation_architecture/`、`review/`
    或 `issues/` 收敛，不要继续把旧 air-first 入口扩大成通用入口。
 4. 当某个区域生命周期发生变化，先更新局部 README，再调整这个根导航。
+5. 已完成子项目如果不破坏 active gate，应移入对应区域的 `archive/`；否则应在父级
+   README 中降级为 sealed、retained 或 archived record，并把后续工作另开 follow-on。
 
 ## 文档类型
 

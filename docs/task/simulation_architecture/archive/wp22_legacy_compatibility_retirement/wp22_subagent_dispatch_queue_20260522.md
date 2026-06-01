@@ -57,7 +57,7 @@ Language:
 Inputs:
 
 - [WP22 main plan](legacy_compatibility_retirement_wp22_20260522.md)
-- [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+- [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
 
 ## Queue
 

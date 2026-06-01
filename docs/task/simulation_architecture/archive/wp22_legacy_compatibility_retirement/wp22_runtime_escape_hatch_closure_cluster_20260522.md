@@ -107,7 +107,7 @@ still explains why `L-002` remains open.
 | Field | Value |
 |---|---|
 | `status` | `partial` |
-| `touched files` | `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md`; `docs/task/simulation_architecture/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md` |
+| `touched files` | `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.md`; `docs/task/simulation_architecture/archive/wp22_legacy_compatibility_retirement/wp22_runtime_escape_hatch_closure_cluster_20260522.zh.md` |
 | `commands run` | Historical packet: earlier scans found live runtime escape hatches and compatibility surfaces. Current verification supersedes this for `loader.sim`, `CMO_EXECUTION_STEP_RUNTIME`, `set_execution_step_runtime_mode(None)`, and terrain setup. |
 | `remaining blockers` | Current closure blocker is the public compatibility surface: raw facade/world access cannot be fully closed until replacement APIs or explicit quarantine guards exist. The former direct GPU binding residual has moved behind the named `WorldBatchRuntime` compatibility helper. |
 | `integration notes` | Do not treat compatibility residuals as pass. Runtime quarantine work may proceed only on the ready subset, and any implementation stream must preserve explicit allowlists without reintroducing production `loader.sim` anchors. |
