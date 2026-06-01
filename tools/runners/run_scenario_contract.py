@@ -12,6 +12,10 @@ def main() -> int:
     if repo_root not in sys.path:
         sys.path.insert(0, repo_root)
 
+    from python.testing.runtime import ensure_repo_imports
+
+    ensure_repo_imports()
+
     from python.testing.scenario_contract_runner import ContractSkipped, run_contract
 
     parser = argparse.ArgumentParser(description="Run a JSON-driven scenario contract check")

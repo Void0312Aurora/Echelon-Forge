@@ -17,6 +17,10 @@
 
 - [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.zh.md) ([English](ground_domain_bootstrap_plan_review_20260521.md))
 
+## 测试系统评估
+
+- [测试系统评估与意图矩阵 2026-06-01](test_system_evaluation_20260601.zh.md)
+
 ## 存在争议的 Closure 记录
 
 - [WP21 Full Counterfactual Experiment Runtime owner-rejected record](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md) ([English](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md))

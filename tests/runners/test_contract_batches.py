@@ -49,11 +49,19 @@ def _resolve_specs(group: str) -> tuple[str, list[str], str]:
     raise ValueError(f"unknown contract batch group: {group}")
 
 
+def _subprocess_pythonpath_parts(repo_root: str) -> list[str]:
+    from python.testing.runtime import iter_build_dirs
+
+    parts = list(iter_build_dirs(repo_root))
+    parts.append(repo_root)
+    return parts
+
+
 def _run_subprocess_specs(spec_paths: list[str]) -> int:
     from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
     repo_root = ensure_repo_imports()
-    pythonpath_parts = [resolve_repo_path("build"), repo_root]
+    pythonpath_parts = _subprocess_pythonpath_parts(repo_root)
     existing_pythonpath = os.environ.get("PYTHONPATH", "")
     if existing_pythonpath:
         pythonpath_parts.append(existing_pythonpath)
@@ -186,6 +194,57 @@ def test_run_direct_specs_uses_legacy_compat_entrypoint(monkeypatch, capsys) -> 
     assert _run_direct_specs(["tests/contracts/example.json"]) == 0
     assert calls == ["tests/contracts/example.json"]
     assert "PASS: tests/contracts/example.json: batch smoke passed" in capsys.readouterr().out
+
+
+def test_runtime_build_dirs_prefers_artifacts_and_linux_order(tmp_path, monkeypatch) -> None:
+    runtime = importlib.import_module("python.testing.runtime")
+    monkeypatch.delenv("CMO_BUILD_DIR", raising=False)
+    monkeypatch.setattr(runtime, "_is_windows", lambda: False)
+
+    for name in ("build-local-win", "build-workshop", "build-gpu", "build", "build-facade-local"):
+        (tmp_path / name).mkdir()
+    (tmp_path / "build-gpu" / "ef_py.cpython-test.so").write_text("", encoding="utf-8")
+
+    assert runtime.build_dirs(str(tmp_path)) == [
+        str(tmp_path / "build-gpu"),
+        str(tmp_path / "build-workshop"),
+        str(tmp_path / "build"),
+        str(tmp_path / "build-facade-local"),
+    ]
+
+
+def test_runtime_build_dirs_keeps_windows_local_priority(tmp_path, monkeypatch) -> None:
+    runtime = importlib.import_module("python.testing.runtime")
+    monkeypatch.delenv("CMO_BUILD_DIR", raising=False)
+    monkeypatch.setattr(runtime, "_is_windows", lambda: True)
+
+    for name in ("build-local-win", "build-workshop"):
+        (tmp_path / name).mkdir()
+    (tmp_path / "build-local-win" / "Release").mkdir()
+    (tmp_path / "build-local-win" / "Release" / "ef_py.cp311-win_amd64.pyd").write_text("", encoding="utf-8")
+    (tmp_path / "build-workshop" / "ef_py.cpython-test.so").write_text("", encoding="utf-8")
+
+    assert runtime.build_dirs(str(tmp_path))[:2] == [
+        str(tmp_path / "build-local-win"),
+        str(tmp_path / "build-workshop"),
+    ]
+
+
+def test_subprocess_pythonpath_uses_runtime_build_order(tmp_path, monkeypatch) -> None:
+    runtime = importlib.import_module("python.testing.runtime")
+    env_build = tmp_path / "custom-build"
+    fallback_build = tmp_path / "build"
+    env_build.mkdir()
+    fallback_build.mkdir()
+    (fallback_build / "ef_py.cpython-test.so").write_text("", encoding="utf-8")
+    monkeypatch.setenv("CMO_BUILD_DIR", str(env_build))
+    monkeypatch.setattr(runtime, "_is_windows", lambda: False)
+
+    assert _subprocess_pythonpath_parts(str(tmp_path)) == [
+        str(fallback_build),
+        str(env_build),
+        str(tmp_path),
+    ]
 
 
 if __name__ == "__main__":

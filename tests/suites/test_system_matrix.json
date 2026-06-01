@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "name": "test_system_matrix",
+  "status": "draft",
+  "intent": "Machine-readable starter matrix for mapping maintained test surfaces to governance tiers without changing CI behavior.",
+  "ci_authority": {
+    "current_ci_suite": "tests/smoke/ci_smoke_suite.json",
+    "runner": "tools/runners/run_pytest_suite.py",
+    "note": "This matrix is advisory metadata only; CI remains bound to the smoke suite until explicitly changed elsewhere."
+  },
+  "tiers": {
+    "smoke": {
+      "meaning": "Fast, high-signal regression coverage allowed to gate CI.",
+      "ci_default": true
+    },
+    "focused": {
+      "meaning": "Small domain-oriented suites for local pre-merge checks and targeted ownership review.",
+      "ci_default": false
+    },
+    "local": {
+      "meaning": "Developer-run suites that may be broader or more environment-sensitive than focused suites.",
+      "ci_default": false
+    },
+    "manual": {
+      "meaning": "Human-invoked checks, diagnostics, or workflows that need judgment or special setup.",
+      "ci_default": false
+    },
+    "nightly": {
+      "meaning": "Candidate long-running or broad regression coverage for scheduled automation after stabilization.",
+      "ci_default": false
+    }
+  },
+  "systems": [
+    {
+      "id": "runtime_facade",
+      "label": "Runtime facade",
+      "recommended_tier": "smoke",
+      "primary_paths": [
+        "tests/architecture/test_runtime_facade_layering.py",
+        "tests/runtime/facade/test_facade_step_evidence_gates.py",
+        "tests/runtime/facade/test_runtime_facade.py"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json",
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Keep facade layering and public step evidence in smoke; broader facade loop variants can stay focused/local."
+    },
+    {
+      "id": "engagement",
+      "label": "Engagement adapters and evidence",
+      "recommended_tier": "smoke",
+      "primary_paths": [
+        "tests/runtime/engagement",
+        "tests/runtime/bindings/test_bindings_engagement_surface.py"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json",
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Directory-level smoke coverage already exists; focused suite keeps a smaller explicit adapter subset."
+    },
+    {
+      "id": "world_batch",
+      "label": "World batch and vec-env adapters",
+      "recommended_tier": "smoke",
+      "primary_paths": [
+        "tests/world_batch/test_world_batch_runtime.py",
+        "tests/world_batch/test_single_world_batch_runtime.py",
+        "tests/world_batch/test_world_batch_vec_env.py"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json",
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Runtime smoke keeps the core batch path; local/focused can expand to single-world and vec-env adapter checks."
+    },
+    {
+      "id": "air_combat",
+      "label": "Air combat runtime",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
+        "tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py",
+        "tests/runtime/air_combat/test_weapon_roe_runtime.py"
+      ],
+      "suite_membership": [
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Keep representative fixture and ROE coverage local/focused until runtime cost and flake profile are reviewed."
+    },
+    {
+      "id": "naval",
+      "label": "Naval runtime and unit contracts",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/runtime/naval/test_naval_ship_database.py",
+        "tests/runtime/naval/test_ship_naval_station_command.py",
+        "tests/runtime/mission/test_naval_mission_command_mapping.py"
+      ],
+      "contract_paths": [
+        "tests/contracts/unit/naval/naval_screen_contact_report_geometry.json",
+        "tests/contracts/unit/naval/task_order_naval_profile_defaults.json"
+      ],
+      "suite_membership": [
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Python runtime checks and JSON contracts are tracked together, but contract execution remains with existing contract runners."
+    },
+    {
+      "id": "ground",
+      "label": "Ground runtime and task-order contracts",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/runtime/ground/test_ground_native_platform_schema.py",
+        "tests/runtime/ground/test_ground_mvp_scenario.py",
+        "tests/architecture/test_ground_realism_gradient_guardrails.py"
+      ],
+      "contract_paths": [
+        "tests/contracts/unit/ground/task_order_ground_minimal_structures.json",
+        "tests/contracts/unit/ground/task_order_ground_profile_defaults.json",
+        "tests/contracts/unit/ground/task_order_ground_support_relationships.json"
+      ],
+      "suite_membership": [
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Start with schema/guardrail coverage before promoting heavier scenario checks."
+    },
+    {
+      "id": "training_config",
+      "label": "Training entry/config/bootstrap",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/training/test_train_bootstrap.py",
+        "tests/training/test_train_entry_cooperative.py",
+        "tests/training/test_cooperative_diagnostics_callback.py"
+      ],
+      "contract_paths": [
+        "tests/contracts/unit/training/takeoff_safe_action_bias.json"
+      ],
+      "suite_membership": [
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Track training bootstrap separately from frozen model contracts so environment-sensitive training checks can remain local."
+    },
+    {
+      "id": "route_generator",
+      "label": "Route generator contracts",
+      "recommended_tier": "local",
+      "contract_paths": [
+        "tests/contracts/route_generator/route_generator_v1.json",
+        "tests/contracts/route_generator/route_generator_waypoint_modes.json",
+        "tests/contracts/route_generator/route_generator_leg_ranges.json",
+        "tests/contracts/route_generator/cooperative_cruise_route_reachability_v1.json"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Contract-only surface; keep under contract runners rather than pytest suite manifests."
+    },
+    {
+      "id": "sim_kernel_throttle_scan",
+      "label": "Simulation kernel throttle scan",
+      "recommended_tier": "local",
+      "contract_paths": [
+        "tests/contracts/unit/kernel/pitch_hold_throttle_scan.json",
+        "tests/contracts/unit/kernel/pitch_hold_speed_scan.json",
+        "tests/contracts/unit/kernel/stable_level_flight.json"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Parameter-scan style checks are matrix-tracked but not added to CI by this change."
+    },
+    {
+      "id": "frozen_training_contracts",
+      "label": "Frozen training contracts",
+      "recommended_tier": "manual",
+      "contract_paths": [
+        "tests/contracts/unit/training/frozen/leader_full_chain_demo_frozen_v1.json",
+        "tests/contracts/unit/training/frozen/leader_full_chain_randomized_frozen_v1.json",
+        "tests/contracts/unit/training/frozen/leader_task_only_generalization_frozen_v1.json",
+        "tests/contracts/unit/training/frozen/leader_task_only_randomized_frozen_v1.json"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Frozen artifact checks are tracked as protected contracts; promotion to nightly should happen only after artifact availability is stable."
+    },
+    {
+      "id": "env_regression",
+      "label": "Environment regression contracts",
+      "recommended_tier": "local",
+      "contract_paths": [
+        "tests/contracts/env/takeoff/departure_soft_shaping_regression.json",
+        "tests/contracts/env/landing/landing_approach_reward_terms_regression.json",
+        "tests/contracts/env/waypoint/waypoint_track_reward_regression.json",
+        "tests/contracts/env/phase/post_waypoint_transition_regression.json"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Documented as local contract coverage; this change does not add env_regression to CI."
+    }
+  ]
+}

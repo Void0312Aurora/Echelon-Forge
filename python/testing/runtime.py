@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 import shutil
+from glob import glob
 from typing import Iterable
 
 
@@ -19,6 +20,33 @@ def _normalize_build_path(base: str, value: str) -> str:
     return os.path.abspath(os.path.join(base, candidate))
 
 
+def _is_windows() -> bool:
+    return os.name == "nt"
+
+
+def _candidate_build_names() -> tuple[str, ...]:
+    if _is_windows():
+        return ("build-local-win", "build-workshop", "build-gpu", "build", "build-facade-local")
+    return ("build-workshop", "build-gpu", "build", "build-facade-local")
+
+
+def _has_ef_py_artifact(path: str) -> bool:
+    search_dirs = [path]
+    if _is_windows():
+        search_dirs.extend(
+            os.path.join(path, config)
+            for config in ("Release", "RelWithDebInfo", "Debug")
+            if os.path.isdir(os.path.join(path, config))
+        )
+
+    patterns = ("ef_py*.pyd", "ef_py*.so", "ef_py")
+    for search_dir in search_dirs:
+        for pattern in patterns:
+            if glob(os.path.join(search_dir, pattern)):
+                return True
+    return False
+
+
 def build_dirs(root: str | None = None) -> list[str]:
     base = root or repo_root()
     candidates: list[str] = []
@@ -27,17 +55,9 @@ def build_dirs(root: str | None = None) -> list[str]:
     if env_build:
         candidates.append(env_build)
 
-    candidates.extend(
-        [
-            os.path.join(base, "build-local-win"),
-            os.path.join(base, "build-workshop"),
-            os.path.join(base, "build-gpu"),
-            os.path.join(base, "build"),
-            os.path.join(base, "build-facade-local"),
-        ]
-    )
+    candidates.extend(os.path.join(base, name) for name in _candidate_build_names())
 
-    out: list[str] = []
+    existing: list[str] = []
     seen: set[str] = set()
     for path in candidates:
         normalized = os.path.abspath(path)
@@ -45,8 +65,10 @@ def build_dirs(root: str | None = None) -> list[str]:
             continue
         seen.add(normalized)
         if os.path.isdir(normalized):
-            out.append(normalized)
-    return out
+            existing.append(normalized)
+    with_artifacts = [path for path in existing if _has_ef_py_artifact(path)]
+    without_artifacts = [path for path in existing if path not in with_artifacts]
+    return with_artifacts + without_artifacts
 
 
 def build_dir(root: str | None = None) -> str:

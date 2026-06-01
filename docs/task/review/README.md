@@ -17,6 +17,10 @@ Status: active review record.
 
 - [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.md) ([中文](ground_domain_bootstrap_plan_review_20260521.zh.md))
 
+## Test System Reviews
+
+- [Test System Evaluation And Intent Matrix 2026-06-01](test_system_evaluation_20260601.zh.md) (中文)
+
 ## Disputed Closure Records
 
 - [WP21 Full Counterfactual Experiment Runtime owner-rejected record](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.md) ([中文](archive/wp-acceptance/wp21_full_counterfactual_experiment_runtime_acceptance_review_20260522.zh.md))

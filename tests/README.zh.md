@@ -32,6 +32,9 @@
   - 多个 Python 测试使用的共享假对象和帮助装置。
 - `contracts/`
   - 用于契约驱动回归的 JSON 规范，按类别分组。
+- `suites/`
+  - 建议性的 suite 治理元数据，包括测试系统矩阵草案和 focused/local suite manifest。
+  - 这些文件本身不会改变 CI wiring。
 - `diagnostics/`
   - 剩余的探索性/调试脚本，尚未适合作为稳定契约。
   - 此文件夹不应托管稳定回归测试；一旦诊断脚本变得确定，将其迁移回 `runtime/`、`world_batch/`、`scenario/`、`leader/` 或 `contracts/`。
@@ -64,11 +67,21 @@
   - 验证生成的航点路线、几何形状、可达性预算、模式循环和世界偏航行为。
 - `scripted_bridge`
   - 验证包装器驱动的脚本基线是否符合场景成功标准。
+- `env_regression`
+  - 验证 `UniversalEnv` 级 reset/step、reward、observation、render、phase、takeoff、landing 和 waypoint 回归。
 - `unit_regression`
   - 验证纯 Python 控制器/配置/加载器/包装器交接逻辑，无需完整场景步进。
   - 还包含参数化的领导者任务泛化检查，这些检查变异 C2 任务输入并验证发出的任务命令行为。
 
 契约执行存在于 [python/testing/contracts/](../python/testing/contracts)，[python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) 仅作为兼容性垫片保留。
+
+## 契约批量失败策略
+
+`tests/runners/test_contract_batches.py` 当前通过已签入路径的 glob 解析批量分组。如果被选中的 glob 为空，或任一被选中的契约失败，批量运行都会以非零退出。也就是说，当前 batch runner 对被选中文件执行的是操作层面的 hard-fail。
+
+这种执行行为不同于契约本身希望表达的语义层级。`gating`、`frozen`、`supplemental`、`diagnostic` 和 `archive` 等层级仍需要 metadata 或 manifest 承接，runner 才能按不同 failure policy 执行。在该层落地前，路径位置和 README 文本只是文档说明；它们不会软化已选 batch 的失败。
+
+对于 `unit/kernel` 契约，当前应明确区分稳定 gate 检查与 diagnostic/supplemental realism scan。`sim_kernel` batch 目前会 glob 全部 `tests/contracts/unit/kernel/*.json`，因此被选中的诊断扫描在操作上仍会 hard-fail。不要把这解读为已校准的验收决策；只有在 metadata/manifest 中明确 ownership 和 failure policy 后，扫描才应提升为 gate。
 
 ## 如何运行
 
@@ -104,12 +117,31 @@ cmo_python tests/runners/test_contract_batches.py --default-group sim_kernel
 cmo_python tools/runners/run_sim_kernel_contracts.py
 ```
 
+`sim_kernel` 默认分组只是 `tests/contracts/unit/kernel/*.json` 的便利包装；它还不是能够区分 gate、supplemental 和 diagnostic 契约的语义 manifest。
+
 运行维护的仓库 smoke 套件：
 
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
 ```
+
+Suite tier 含义：
+
+- `smoke`
+  - 快速、高信号、可以作为 CI gate 的检查。
+- `focused`
+  - 面向具体领域的小型套件，用于本地 pre-merge 检查和目标化 owner review。
+- `local`
+  - 开发者本地运行的套件，可能比 focused 更宽或更依赖环境，包括 env regression 契约覆盖。
+- `manual`
+  - 需要人工判断或特殊设置的人为触发检查、诊断或工作流。
+- `nightly`
+  - 稳定后可考虑进入定时自动化的长耗时或宽覆盖回归候选。
+
+`tests/suites/test_system_matrix.json` 和 `tests/suites/focused_runtime_suite.json`
+只是首批治理 manifest。当前 CI 仍只通过 `tools/runners/run_pytest_suite.py`
+运行 `tests/smoke/ci_smoke_suite.json`。
 
 如果某个 smoke 路径在重构中被移动，先更新已签入的 suite manifest。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。
 
@@ -141,6 +173,8 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.
   - 路线生成和路线几何回归。
 - `tests/contracts/chain/*.json`
   - 命令链和内核同步回归，测试维护的加载器/运行时连接。
+- `tests/contracts/env/*/*.json`
+  - `UniversalEnv` 的 reset/step/reward/observation/render/phase 回归。
 - `tests/contracts/bridges/*.json`
   - 脚本化包装器桥接回归。
 - `tests/contracts/unit/**/*.json`
@@ -151,6 +185,7 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.
 - `tests/contracts/unit/kernel/*.json`
   - 内核驱动的飞行回归，直接使用脚本化飞行员输入步进 `SimulationKernel`。
   - 还包含模拟护栏，用于可重复性、符号一致性、粗略物理合理性以及小型参数扫描真实性检查。
+  - 在 metadata/manifest failure policy 明确前，将稳定护栏视为 gate 候选，将紧凑 realism scan 视为 supplemental 或 diagnostic。
 - `tests/contracts/unit/scenarios/*.json`
   - 场景模板和几何回归，验证静态 JSON 内容，无需步进环境。
 - `tests/contracts/unit/training/*.json`
@@ -168,6 +203,8 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.
   - 命令链和内核同步契约。
 - `tests/contracts/bridges/`
   - 脚本化包装器桥接契约。
+- `tests/contracts/env/`
+  - 按 takeoff、landing、waypoint、phase、render 和 mission observation 等场景面分组的 `UniversalEnv` 回归契约。
 - `tests/contracts/route_generator/`
   - 路线生成几何和预算契约。
 - `tests/contracts/unit/controllers/`
@@ -180,6 +217,7 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.
 - `tests/contracts/unit/kernel/`
   - 直接 `SimulationKernel` 飞行回归，用于起飞、地面滑跑和稳定飞行控制律。
   - 还包含核心模拟护栏，用于可重复性、符号一致性、粗略物理合理性检查以及紧凑的现实参数扫描。
+  - 当前 batch 执行不区分 gate 与 diagnostic 语义；被 `sim_kernel` 选中的契约仍会 hard-fail，直到 metadata/manifest 层落地。
 - `tests/contracts/unit/naval/`
   - 海军特定单元/运行时契约，验证舰船/领域语义，无需依赖单独的环境契约树。
 - `tests/contracts/unit/scenarios/`
