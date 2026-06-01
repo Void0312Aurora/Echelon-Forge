@@ -125,6 +125,26 @@ def _open_residual_ids(path: Path) -> set[str]:
     return residuals
 
 
+def _authority_blocked_residual_ids(path: Path) -> set[str]:
+    residuals: set[str] = set()
+    for line in _read_text(path).splitlines():
+        if not line.startswith("| `RES-"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 7:
+            continue
+        status = cells[-1].strip("`")
+        if (
+            status == "open"
+            or status.startswith("open_")
+            or "authority_blocked" in status
+            or "authority_fail_closed" in status
+            or "authority_boundary_deferred" in status
+        ):
+            residuals.add(cells[0].strip("`"))
+    return residuals
+
+
 def _dedupe_preserve_order(values: list[str]) -> list[str]:
     return list(dict.fromkeys(values))
 
@@ -254,7 +274,7 @@ def _satisfied_conditions(
 
 def _blocking_conditions(
     *,
-    open_residual_ids: set[str],
+    authority_blocked_residual_ids: set[str],
     validation_manifest_status: str,
     baseline_probability_source: str,
     package_provenance_status: str,
@@ -262,7 +282,7 @@ def _blocking_conditions(
     worktree_state: str,
 ) -> list[dict[str, str]]:
     blockers: list[dict[str, str]] = []
-    if "RES-012" in open_residual_ids:
+    if "RES-012" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-001",
@@ -278,7 +298,7 @@ def _blocking_conditions(
                 "summary": "validation manifest still stays at not_run rather than validated/passed",
             }
         )
-    if "RES-009" in open_residual_ids:
+    if "RES-009" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-003",
@@ -290,7 +310,7 @@ def _blocking_conditions(
                 ),
             }
         )
-    if "RES-011" in open_residual_ids:
+    if "RES-011" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-004",
@@ -298,7 +318,7 @@ def _blocking_conditions(
                 "summary": "probability uncertainty coverage and closeout are still missing",
             }
         )
-    if "RES-003" in open_residual_ids:
+    if "RES-003" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-005",
@@ -306,7 +326,10 @@ def _blocking_conditions(
                 "summary": "projected component identity and target-geometry truth remain candidate-only and not independently audited",
             }
         )
-    if "RES-001" in open_residual_ids and package_provenance_status != "release_grade_closed":
+    if (
+        "RES-001" in authority_blocked_residual_ids
+        and package_provenance_status != "release_grade_closed"
+    ):
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-006",
@@ -317,7 +340,10 @@ def _blocking_conditions(
                 ),
             }
         )
-    if "RES-002" in open_residual_ids and worktree_state != "clean_release_candidate":
+    if (
+        "RES-002" in authority_blocked_residual_ids
+        and worktree_state != "clean_release_candidate"
+    ):
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-007",
@@ -325,30 +351,30 @@ def _blocking_conditions(
                 "summary": "surrogate identity remains author-side because the repo is not in a clean release-grade identity state",
             }
         )
-    if "RES-005" in open_residual_ids:
+    if "RES-005" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-008",
                 "residual_id": "RES-005",
-                "summary": "fragment mechanism residual is still open for component-probability release",
+                "summary": "fragment mechanism residual is still authority-blocked for component-probability release",
             }
         )
-    if "RES-006" in open_residual_ids:
+    if "RES-006" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-009",
                 "residual_id": "RES-006",
-                "summary": "blast mechanism residual is still open for component-probability release",
+                "summary": "blast mechanism residual is still authority-blocked for component-probability release",
             }
         )
-    if "RES-008" in open_residual_ids:
+    if "RES-008" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-CP-010",
                 "residual_id": "RES-008",
                 "summary": (
                     "upstream candidate closure-sensitive response is present, but RES-008 "
-                    "remains open, non-authoritative and pending independent review, so "
+                    "remains non-authoritative and retained as a future authority boundary, so "
                     "Stage C cannot outrun the Stage B scope boundary"
                 ),
             }
@@ -416,8 +442,11 @@ def generate_stage_c_component_probability_review_readiness_gate(
     package_provenance_status = _extract_field(pin_text, "package_provenance_status")
     worktree_state = _extract_field(identity_text, "worktree_state")
     open_residual_ids = _open_residual_ids(DOC_REFS["residual_register"])
+    authority_blocked_residual_ids = _authority_blocked_residual_ids(
+        DOC_REFS["residual_register"]
+    )
     blockers = _blocking_conditions(
-        open_residual_ids=open_residual_ids,
+        authority_blocked_residual_ids=authority_blocked_residual_ids,
         validation_manifest_status=validation_manifest_status,
         baseline_probability_source=result_pack_artifact[
             "component_probability_result_summary"
@@ -508,6 +537,8 @@ def generate_stage_c_component_probability_review_readiness_gate(
         "satisfied_conditions": satisfied,
         "blocking_conditions": blockers,
         "blocking_residual_ids": [row["residual_id"] for row in blockers],
+        "open_residual_ids": sorted(open_residual_ids),
+        "authority_blocked_residual_ids": sorted(authority_blocked_residual_ids),
         "explicit_boundaries": [
             "do not treat this gate as independent fragility review",
             "do not treat this gate as stock component-probability authority",
@@ -523,7 +554,7 @@ def generate_stage_c_component_probability_review_readiness_gate(
             (
                 "the gate remains blocked because fragility calibration, "
                 "uncertainty, provenance/identity, geometry/mechanism residuals "
-                "and independent review are still open"
+                "and independent review remain authority-blocked"
             ),
             (
                 "Stage B effect-scale remains on a separate blocked upstream track, "

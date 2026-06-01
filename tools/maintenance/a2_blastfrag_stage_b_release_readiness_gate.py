@@ -115,6 +115,26 @@ def _open_residual_ids(path: Path) -> set[str]:
     return residuals
 
 
+def _authority_blocked_residual_ids(path: Path) -> set[str]:
+    residuals: set[str] = set()
+    for line in _read_text(path).splitlines():
+        if not line.startswith("| `RES-"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 7:
+            continue
+        status = cells[-1].strip("`")
+        if (
+            status == "open"
+            or status.startswith("open_")
+            or "authority_blocked" in status
+            or "authority_fail_closed" in status
+            or "authority_boundary_deferred" in status
+        ):
+            residuals.add(cells[0].strip("`"))
+    return residuals
+
+
 def _artifact_pin_status_counts(text: str) -> dict[str, int]:
     return {
         "acquired_for_candidate": len(
@@ -219,7 +239,7 @@ def _satisfied_conditions(
 
 def _blocking_conditions(
     *,
-    open_residual_ids: set[str],
+    authority_blocked_residual_ids: set[str],
     independent_review_status: str,
     worktree_state: str,
     retained_artifact_pack: dict[str, Any],
@@ -292,7 +312,7 @@ def _blocking_conditions(
             "residual_id": "RES-008",
             "summary": (
                 "candidate closure-sensitive response is present, but RES-008 remains "
-                "open, non-authoritative and pending independent review"
+                "non-authoritative and retained as a future authority boundary"
             ),
         }
     )
@@ -304,36 +324,36 @@ def _blocking_conditions(
                 "summary": "validation manifest still stays at not_run rather than validated/passed",
             }
         )
-    if "RES-012" in open_residual_ids:
+    if "RES-012" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-009",
                 "residual_id": "RES-012",
                 "summary": (
                     "result pack has author-side independence semantics, but "
-                    "independent benchmark/input separation review remains open"
+                    "independent benchmark/input separation review remains authority-blocked"
                 ),
             }
         )
-    if "RES-007" in open_residual_ids:
+    if "RES-007" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-010",
                 "residual_id": "RES-007",
                 "summary": (
                     "near-miss bucket has a passing three-point candidate probe, "
-                    "but bucket sensitivity and independent review remain open"
+                    "but bucket sensitivity and independent review remain authority-blocked"
                 ),
             }
         )
-    if "RES-011" in open_residual_ids:
+    if "RES-011" in authority_blocked_residual_ids:
         blockers.append(
             {
                 "blocker_id": "BLOCK-011",
                 "residual_id": "RES-011",
                 "summary": (
                     "seed-window uncertainty CV passes in the candidate snapshot, "
-                    "but uncertainty coverage and independent closeout remain open"
+                    "but uncertainty coverage and independent closeout remain authority-blocked"
                 ),
             }
         )
@@ -387,9 +407,12 @@ def generate_stage_b_release_readiness_gate(*, repo_root: Path = REPO_ROOT) -> d
     pin_counts = _artifact_pin_status_counts(pin_text)
     package_provenance_status = _extract_field(pin_text, "package_provenance_status")
     open_residual_ids = _open_residual_ids(DOC_REFS["residual_register"])
+    authority_blocked_residual_ids = _authority_blocked_residual_ids(
+        DOC_REFS["residual_register"]
+    )
     stage_b_residual_scope = ["RES-007", "RES-008", "RES-010", "RES-011", "RES-012"]
     blockers = _blocking_conditions(
-        open_residual_ids=open_residual_ids,
+        authority_blocked_residual_ids=authority_blocked_residual_ids,
         independent_review_status=independent_review_status,
         worktree_state=worktree_state,
         retained_artifact_pack=retained_artifact_pack,
@@ -442,6 +465,11 @@ def generate_stage_b_release_readiness_gate(*, repo_root: Path = REPO_ROOT) -> d
             residual_id
             for residual_id in stage_b_residual_scope
             if residual_id in open_residual_ids
+        ],
+        "authority_blocked_stage_b_effect_scale_residual_ids": [
+            residual_id
+            for residual_id in stage_b_residual_scope
+            if residual_id in authority_blocked_residual_ids
         ],
         "retained_artifact_pack_summary": {
             "status": retained_artifact_pack["status"],

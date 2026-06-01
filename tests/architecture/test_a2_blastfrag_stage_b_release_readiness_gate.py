@@ -85,7 +85,8 @@ def test_a2_blastfrag_stage_b_release_readiness_gate_current_repo_is_blocked() -
         "RES-011",
         "RES-012",
     ]
-    assert artifact["open_stage_b_effect_scale_residual_ids"] == [
+    assert artifact["open_stage_b_effect_scale_residual_ids"] == []
+    assert artifact["authority_blocked_stage_b_effect_scale_residual_ids"] == [
         "RES-010",
         "RES-011",
         "RES-012",
@@ -96,10 +97,10 @@ def test_a2_blastfrag_stage_b_release_readiness_gate_current_repo_is_blocked() -
     assert any("clean release-grade identity state" in row["summary"] for row in blockers)
     assert any("externally verified and checksummed" in row["summary"] for row in blockers)
     assert any("candidate closure-sensitive response is present" in row["summary"] for row in blockers)
-    assert any("RES-008 remains open" in row["summary"] for row in blockers)
+    assert any("RES-008 remains non-authoritative" in row["summary"] for row in blockers)
     assert any("validation manifest still stays at not_run" in row["summary"] for row in blockers)
-    assert any("independent benchmark/input separation review remains open" in row["summary"] for row in blockers)
-    assert any("uncertainty coverage and independent closeout remain open" in row["summary"] for row in blockers)
+    assert any("independent benchmark/input separation review remains authority-blocked" in row["summary"] for row in blockers)
+    assert any("uncertainty coverage and independent closeout remain authority-blocked" in row["summary"] for row in blockers)
     assert any("stock runtime authority remains explicitly closed" in row["summary"] for row in blockers)
 
     retained = artifact["retained_artifact_pack_summary"]

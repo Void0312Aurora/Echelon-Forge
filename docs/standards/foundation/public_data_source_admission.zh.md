@@ -4,7 +4,7 @@ Language:
 - English canonical: [public_data_source_admission.md](public_data_source_admission.md)
 - Chinese companion: `public_data_source_admission.zh.md`
 
-状态：`2026-05-28`，公开来源准入与运行时权威门控的 foundation 层权威规则。
+状态：`2026-06-01`，公开来源准入、研究级候选数据和运行时权威门控的 foundation 层权威规则。
 
 本文定义公开数据、论文、标准、报告、生成 benchmark 和 source ledger 如何进入项目。它适用于 air、naval、ground、joint command、sensor、weapon、damage model、visualization 和未来领域。
 
@@ -50,6 +50,28 @@ Language:
 - 采纳后仍未关闭的 residual。
 
 若记录缺少稳定 `source_ref`、权利、scope、provenance 或 residual 状态，可以保留为搜索线索，但不得成为输入来源。
+
+## Research / Candidate Profile 准入
+
+研究级候选模型不等同于工业级或 release-grade authority。若任务明确声明当前目标为
+`research`、`candidate`、`non-authoritative` 或 `authority_opt_in_only`，可以在不等待官方或工业级数据的情况下使用
+`Tier B`、`Tier C`、社区资料、开源配置、多源派生估计或 hash-only restricted references，
+但必须满足以下条件：
+
+- 数据项必须写明 source tier、data class、scope、rights / redistribution note、
+  uncertainty / confidence、cross-check notes 和 replacement rule；
+- `Tier C`、社区和二手来源只能形成 sanity envelope、候选假设、参数区间或派生估计，
+  不能单独成为 calibrated truth；
+- 有版权或再分发限制的资料不得在仓库中复制长段正文、表格、图片或 raw selected values；
+  可保留 locator、hash、短摘要、审阅记录和派生参数；
+- research profile 的 residual 可以标为 `research_closed` 或 `research_out_of_scope`，
+  但若 authority 证据仍缺，必须同时保留 `authority_blocked`、`authority_fail_closed`
+  或 `authority_boundary_deferred` 语义；
+- 任何 runtime descriptor、stock row 或 release-grade claim 仍必须通过任务专属
+  authority gate。
+
+换句话说，研究级高保真允许“先用可追溯、可替换的合理数据把模型跑通并审计起来”；
+它不允许把这些数据写成官方、校准或工业级权威。
 
 ## Artifact 规则
 

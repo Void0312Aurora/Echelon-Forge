@@ -1,0 +1,63 @@
+{
+  "admission_granted": false,
+  "approval_granted": false,
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601",
+  "artifacts": [
+    {
+      "artifact_key": "signoff_admission_preflight_packet",
+      "filename": "signoff_admission_preflight_packet.json",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601/signoff_admission_preflight_packet.json",
+      "schema_version": "a2.blastfrag_signoff_admission_preflight.v1",
+      "sha256": "3c689b628422322ef24866cbd9e4053b10034b01f6c23186295c3d351802ad96"
+    }
+  ],
+  "authority_guards": {
+    "allowed_output_release_authority_granted": false,
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "source_truth_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "benchmark_consumed_for_release": false,
+  "candidate_packet_supplied": false,
+  "fail_closed": true,
+  "input_refs": [
+    {
+      "artifact_key": "signoff_intake_contract",
+      "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+      "present": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
+      "required_for_preflight": true,
+      "role": "current_retained_signoff_intake_contract_input",
+      "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
+      "sha256": "5356f5c48a7a98bc9a03c7da6955a35aa966dbc160b4df7527b7da2be03bd873",
+      "status": "retained_fail_closed_signoff_intake_contract_no_external_packet"
+    }
+  ],
+  "intake_shape_valid": false,
+  "not_admission_gate": true,
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "preflight_blocker_count": 1,
+  "raw_outputs_retained": false,
+  "raw_source_text_tables_values_formulas_retained": false,
+  "ready_for_admission_gate": false,
+  "ready_for_res005_admission_gate": false,
+  "ready_for_res006_admission_gate": false,
+  "release_grade_satisfied": false,
+  "residuals_closed_by_this_preflight": [],
+  "schema_version": "a2.blastfrag_signoff_admission_preflight_retained_manifest.v1",
+  "selected_output_preimages_retained": false,
+  "signoff_decisions_consumed": false,
+  "status": "retained_fail_closed_signoff_admission_preflight_no_external_packet"
+}

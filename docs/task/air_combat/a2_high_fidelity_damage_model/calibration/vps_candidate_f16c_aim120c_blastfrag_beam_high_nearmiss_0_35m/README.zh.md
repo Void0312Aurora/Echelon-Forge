@@ -1,8 +1,22 @@
 # A2 validated_physics_surrogate 候选包总说明
 
-状态：`2026-05-28` 非权威 candidate 文档脚手架。本文档只定义第一份 `validated_physics_surrogate` 候选包的整理范围、交付物和禁用边界；它不是 vulnerability evidence descriptor，不是校准数据，不应被运行时加载，也不授予 Pk 或 deterministic-fuze authority。
+状态：`2026-06-01 / G2 candidate package accepted_non_authoritative`。本文档定义第一份
+`validated_physics_surrogate` 候选包的整理范围、交付物和禁用边界；它不是 vulnerability
+evidence descriptor，不是校准数据，不应被默认运行时加载，也不授予 Pk 或
+deterministic-fuze authority。
 
 候选包 ID：`a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0`
+
+G2 收尾口径：本候选包已作为 `A2 blastfrag candidate evidence package acceptance`
+的非权威候选包通过当前验收。该结论只说明 retained artifacts、source admission、
+candidate bundle、runtime-aligned exercise 和 fail-closed residual 状态可审阅、可复现；
+不允许把本包写成 release-grade descriptor、stock runtime authority、Pk 或 deterministic
+fuze closeout。
+
+当前默认数据路线是 research / candidate profile：底层数据可以来自公开、第三方、社区或
+derived estimate，但必须可替换、可扩展、可追溯，并保留 source tier、uncertainty、
+confidence 和 residual。详见
+[../../research_candidate_data_policy_20260601.zh.md](../../research_candidate_data_policy_20260601.zh.md)。
 
 ## 候选 Scope
 
@@ -58,7 +72,7 @@
 - [surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md](surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md)：本候选包当前 Stage B surrogate 的 author-side 身份快照。它固定代码、输入、命令和当前 retained artifact pack 锚点，但不构成 release-grade validation identity。
 - [target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md](target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md)：本候选包当前 Stage B 使用的目标几何假设表。它明确哪些几何只够支撑 beam witness bookkeeping，哪些 claim 仍被禁止。
 - [warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md](warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md)：本候选包当前 Stage B 使用的战斗部 scope / sensitivity 假设表。它明确 family label、repo toy proxy、third-party sanity 和 rejected data 的边界。
-- [residual_register.zh.md](residual_register.zh.md)：候选残差与阻塞项登记表，初始条目全部保持 open。
+- [residual_register.zh.md](residual_register.zh.md)：候选残差与阻塞项登记表；当前已按 research profile 收口为 `research_closed_authority_retained`，future authority 阻塞继续保留。
 - `tools/maintenance/a2_blastfrag_validation_scaffold.py`：首个可执行的 non-authoritative blast-fragmentation validation scaffold。它输出 fixed-seed toy benchmark、mechanism-load vector，以及与 `a2.vulnerability_evidence.v1` 对齐的 non-authoritative row draft；该 row draft 只保留 gate 字段，不创建 runtime descriptor，不授予 `effect_scale`、`component_failure_probability`、`Pk` 或 `deterministic_fuze` authority。
 - 上述 scaffold 当前已覆盖 `BFM-BM-001..006` 的可执行脚手架层：其中 `BFM-BM-002` 提供非型号化的 Mott/Gurney fragment mass/velocity/energy toy benchmark，`BFM-BM-004` 提供 penetration-margin / domain-rejection toy benchmark，二者都只服务于 candidate validation planning，不构成运行时 authority。
 - `tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py`：把 Stage B `effect_scale` frozen hard gates 对应的当前 fixed-seed scaffold 结果固化成 machine-readable snapshot，用于 review 和 residual 审计；它不会创建 runtime descriptor，也不会绕过独立 review。
@@ -82,7 +96,7 @@
 - `tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py`：把 Stage B / Stage C 的 runtime-aligned authority exercise 抽成独立 maintenance 工具。它先采样 stock `blast_fragmentation` 近失事件，再导出 baseline event summary、baseline component rows，以及仅限 `test_local_authority_exercise_only` 的 effect-scale / component-probability descriptor candidate；它不是 stock 数据库写入工具，不授予默认 authority。
 - `tests/architecture/test_a2_blastfrag_runtime_aligned_authority_pack.py`：固定上述 authority exercise pack 的 package 边界、可复现性与 CLI 输出形状，防止 test-local 演练被误叙述成正式 candidate authority。
 - `tools/maintenance/a2_candidate_vps_bundle.py`：把本目录文档、validation scaffold 和 runtime-aligned authority exercise 汇总成一个 package-level candidate bundle JSON，用于审阅、验收和后续 authority 评审；该 bundle 默认保持 `candidate_non_authoritative`。
-- `tests/architecture/test_a2_candidate_vps_bundle.py`：固定 candidate bundle 的边界、文档完备性、open residual 列表和 CLI 输出形状，防止候选包再次退回模板状态。
+- `tests/architecture/test_a2_candidate_vps_bundle.py`：固定 candidate bundle 的边界、文档完备性、research / authority residual 分类和 CLI 输出形状，防止候选包再次退回模板状态。
 - 当前 candidate bundle 还会汇总 acceptance criteria artifact 的状态、primary release scope 和 required benchmarks，防止 “criteria 已冻结” 与 “authority 已放行” 被混为一谈。
 - 当前 candidate bundle 还会汇总 scope / independence manifest 的状态、boundary probes 和 out-of-scope labels，防止 “scope 已命名” 与 “scope 已验证” 被混为一谈。
 - 当前 candidate bundle 还会汇总 scope boundary probe 的执行摘要，防止 “有 manifest” 与 “probe 已经跑过” 被混为一谈。
@@ -141,7 +155,7 @@ python3 -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guard
 1. source ledger 只能记录来源和保留指针；来源存在本身不构成校准或授权。
 2. model card 可以描述候选 surrogate 的物理假设和输出形状，但不得写成已通过验证。
 3. validation report 在没有完整 benchmark、metrics、criteria、sha256 和审阅记录前，必须保持未通过状态。
-4. residual register 中任何阻塞项未关闭时，不得生成可被运行时消费的 authoritative descriptor。
+4. residual register 中任何 authority-retained 阻塞项未关闭时，不得生成可被运行时消费的 authoritative descriptor。
 5. 生成实验输出或大体量数据时，按 `reference_artifacts.md` 的保留边界记录稳定入口、摘要和外部保留位置，不把易清理的工作区输出当作 canonical source of truth。
 
 ## 参考

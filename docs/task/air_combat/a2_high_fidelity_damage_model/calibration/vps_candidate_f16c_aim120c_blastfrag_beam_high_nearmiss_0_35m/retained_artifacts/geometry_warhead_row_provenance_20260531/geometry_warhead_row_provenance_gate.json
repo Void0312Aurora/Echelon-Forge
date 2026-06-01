@@ -19,104 +19,104 @@
   ],
   "consumed_inputs": [
     {
-      "content_hash": "sha256:f276d010cf84be7430ce4d929c10fcfb9a88180f4b11ca3fdfed04c0c1682de8",
+      "content_hash": "sha256:edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51",
       "exists": true,
       "input_id": "subagent_usage_policy",
       "path": "docs/standards/governance/subagent_usage_policy.md",
       "required": true,
       "role": "governance_boundary",
-      "sha256": "f276d010cf84be7430ce4d929c10fcfb9a88180f4b11ca3fdfed04c0c1682de8",
-      "size_bytes": 9140
+      "sha256": "edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51",
+      "size_bytes": 8935
     },
     {
-      "content_hash": "sha256:8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
+      "content_hash": "sha256:9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d",
       "exists": true,
       "input_id": "residual_register",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
       "required": true,
       "role": "residual_status_source",
-      "sha256": "8ed0bc9c43c0f5806981adbbb01daf562fe1c2a6b8d827165c02945fa928453f",
-      "size_bytes": 9308
+      "sha256": "9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d",
+      "size_bytes": 14266
     },
     {
-      "content_hash": "sha256:ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
+      "content_hash": "sha256:5c651f7482abf7b025f9404d0ad3f4269c31483710ee8f4879f59fe3a3c79d31",
       "exists": true,
       "input_id": "target_geometry_assumptions",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
       "required": true,
       "role": "res_003_assumption_surface",
-      "sha256": "ec9eff5734fa3397c9c8146eacd62a68ada1bff218ccc153a98fdf68d1d22550",
-      "size_bytes": 5285
+      "sha256": "5c651f7482abf7b025f9404d0ad3f4269c31483710ee8f4879f59fe3a3c79d31",
+      "size_bytes": 5222
     },
     {
-      "content_hash": "sha256:505cfc9b7da77635de167fa48beae0a1379139733ab73d8736bc733a0e3cc69b",
+      "content_hash": "sha256:254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
       "exists": true,
       "input_id": "warhead_scope_and_sensitivity",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
       "required": true,
       "role": "res_004_scope_surface",
-      "sha256": "505cfc9b7da77635de167fa48beae0a1379139733ab73d8736bc733a0e3cc69b",
-      "size_bytes": 4780
+      "sha256": "254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
+      "size_bytes": 4716
     },
     {
-      "content_hash": "sha256:6c82c04437feebfcc44acba855a93327f59f9515db19319ec50bea47e6cbbd70",
+      "content_hash": "sha256:a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
       "exists": true,
       "input_id": "artifact_pin_manifest",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
       "required": true,
       "role": "source_pin_boundary",
-      "sha256": "6c82c04437feebfcc44acba855a93327f59f9515db19319ec50bea47e6cbbd70",
-      "size_bytes": 7727
+      "sha256": "a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
+      "size_bytes": 7676
     },
     {
-      "content_hash": "sha256:59a9fc649e6edd31552548a3ff16d58803da95145245c039b86c91f25f66fe84",
+      "content_hash": "sha256:e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
       "exists": true,
       "input_id": "target_geometry_source_ledger",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
       "required": true,
       "role": "res_003_source_ledger",
-      "sha256": "59a9fc649e6edd31552548a3ff16d58803da95145245c039b86c91f25f66fe84",
-      "size_bytes": 15527
+      "sha256": "e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
+      "size_bytes": 15440
     },
     {
-      "content_hash": "sha256:b72415596777b5ee0a6a1e76a14bdd4ba1ab44fed1782746ae86d28693476abb",
+      "content_hash": "sha256:26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
       "exists": true,
       "input_id": "warhead_source_ledger",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
       "required": true,
       "role": "res_004_source_ledger",
-      "sha256": "b72415596777b5ee0a6a1e76a14bdd4ba1ab44fed1782746ae86d28693476abb",
-      "size_bytes": 18844
+      "sha256": "26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
+      "size_bytes": 18747
     },
     {
-      "content_hash": "sha256:f5af245dad0f031f5ea13a399d45b1ab96496a2c32dccc14df11fb3d5cfa64e1",
+      "content_hash": "sha256:e9ef0c1a00fbc55f6b99975ad35e3077e22185c0d759d30cd4ff77e2f1268aca",
       "exists": true,
       "input_id": "mechanism_source_closeout_doc",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
       "required": false,
       "role": "optional_upstream_closeout_doc",
-      "sha256": "f5af245dad0f031f5ea13a399d45b1ab96496a2c32dccc14df11fb3d5cfa64e1",
-      "size_bytes": 6323
+      "sha256": "e9ef0c1a00fbc55f6b99975ad35e3077e22185c0d759d30cd4ff77e2f1268aca",
+      "size_bytes": 6253
     },
     {
-      "content_hash": "sha256:a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
+      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
       "exists": true,
       "input_id": "mechanism_source_closeout_json",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "required": false,
       "role": "optional_upstream_closeout_artifact",
-      "sha256": "a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
-      "size_bytes": 29809
+      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "size_bytes": 29136
     },
     {
-      "content_hash": "sha256:a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
+      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
       "exists": true,
       "input_id": "mechanism_source_closeout_retained_file:docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "required": false,
       "role": "optional_upstream_closeout_retained_artifact",
-      "sha256": "a3d9ceab8220597583a8b9543c9ac03805daae8c6a8ae39f0b8f8c7150f2b0e2",
-      "size_bytes": 29809
+      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "size_bytes": 29136
     }
   ],
   "decision": {
@@ -602,7 +602,7 @@
         "area": "target geometry",
         "blocked_authority": "effect scale / component probability",
         "description": "Stage B witness-geometry bookkeeping 已窄域 closeout；真实 F-16C Block 50 组件几何、材料、遮挡和暴露面积来源仍未审计",
-        "register_status": "open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked",
+        "register_status": "research_closed_stage_b_witness_geometry_bookkeeping_authority_blocked_global_geometry",
         "residual_id": "RES-003"
       },
       "release_grade": false,
@@ -616,7 +616,7 @@
         "area": "warhead scope",
         "blocked_authority": "effect scale / mechanism load",
         "description": "Stage B AIM-120C-class blast-fragmentation family scope 已窄域 closeout；具体 AIM-120C 战斗部真值、质量、破片形态和 fuze 证据仍未关闭",
-        "register_status": "open_stage_b_family_scope_closed_specific_warhead_truth_blocked",
+        "register_status": "research_closed_stage_b_family_scope_authority_blocked_specific_warhead_truth",
         "residual_id": "RES-004"
       },
       "release_grade": false,

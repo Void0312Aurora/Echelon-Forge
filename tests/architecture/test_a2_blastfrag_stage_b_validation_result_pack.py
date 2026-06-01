@@ -81,7 +81,7 @@ def test_a2_blastfrag_stage_b_validation_result_pack_current_repo_is_non_authori
     assert scope_audit["miss_distance_monotonic_pass"] is True
     assert scope_audit["closure_mechanism_response_active"] is True
     assert "candidate closure-sensitive response is present" in scope_audit["closure_limitation_note"]
-    assert "RES-008 remains open" in scope_audit["scope_guard_interpretation"]
+    assert "RES-008 remains non-authoritative" in scope_audit["scope_guard_interpretation"]
 
     independence = artifact["independence_audit"]
     assert [row["benchmark_id"] for row in independence] == [

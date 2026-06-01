@@ -67,7 +67,7 @@
 
 因此当前只允许说：
 
-> `Stage B scope bookkeeping and a first candidate closure-sensitive response are now packaged together with candidate result hashes, but RES-008 remains open and non-authoritative`.
+> `Stage B scope bookkeeping and a first candidate closure-sensitive response are now packaged together with candidate result hashes, but RES-008 remains non-authoritative and retained as a future authority boundary`.
 
 ## 6. 对 residual 的推进含义
 

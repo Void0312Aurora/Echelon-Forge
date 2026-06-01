@@ -3,10 +3,10 @@
   "artifacts": [
     {
       "artifact_id": "geometry_warhead_row_provenance_gate",
-      "content_hash": "sha256:1e92151fd88c592b2b9ce3dada6c1968f451f45e467b0f40915a063a212b0e4a",
+      "content_hash": "sha256:70af8bd0743bd10046eb7a9a0fcb5dc2645881e512ca999fd09106d58cedaf70",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
       "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
-      "sha256": "1e92151fd88c592b2b9ce3dada6c1968f451f45e467b0f40915a063a212b0e4a"
+      "sha256": "70af8bd0743bd10046eb7a9a0fcb5dc2645881e512ca999fd09106d58cedaf70"
     }
   ],
   "authority_guard": {
@@ -31,17 +31,17 @@
       "required": true,
       "role": "governance_boundary",
       "sha256": "edf01bda5c60b329e6b5e5aa17e5c207e0860d3b0c6495b833e95c409b9cca51",
-      "size_bytes": 9140
+      "size_bytes": 8935
     },
     {
-      "content_hash": "sha256:4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
+      "content_hash": "sha256:9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d",
       "exists": true,
       "input_id": "residual_register",
       "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
       "required": true,
       "role": "residual_status_source",
-      "sha256": "4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b",
-      "size_bytes": 9308
+      "sha256": "9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d",
+      "size_bytes": 14266
     },
     {
       "content_hash": "sha256:5c651f7482abf7b025f9404d0ad3f4269c31483710ee8f4879f59fe3a3c79d31",
@@ -51,7 +51,7 @@
       "required": true,
       "role": "res_003_assumption_surface",
       "sha256": "5c651f7482abf7b025f9404d0ad3f4269c31483710ee8f4879f59fe3a3c79d31",
-      "size_bytes": 5285
+      "size_bytes": 5222
     },
     {
       "content_hash": "sha256:254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
@@ -61,7 +61,7 @@
       "required": true,
       "role": "res_004_scope_surface",
       "sha256": "254e6367c738e9c5ff0f152ead39b541bbfd6de562466b87992eaaae9feecf02",
-      "size_bytes": 4780
+      "size_bytes": 4716
     },
     {
       "content_hash": "sha256:a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
@@ -71,7 +71,7 @@
       "required": true,
       "role": "source_pin_boundary",
       "sha256": "a010f3e3c6f01a0086e694ad310853b6205f6b754fe2a59e8542d048ed794adb",
-      "size_bytes": 7727
+      "size_bytes": 7676
     },
     {
       "content_hash": "sha256:e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
@@ -81,7 +81,7 @@
       "required": true,
       "role": "res_003_source_ledger",
       "sha256": "e664e9f05b61018dbb69995ee92d6241da698a5b6cfb53f840687c424e239755",
-      "size_bytes": 15527
+      "size_bytes": 15440
     },
     {
       "content_hash": "sha256:26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
@@ -91,7 +91,7 @@
       "required": true,
       "role": "res_004_source_ledger",
       "sha256": "26623bb9df68924a2e1a285c26a961cd0beb168a3ae3af3e7337e73ce1d48e01",
-      "size_bytes": 18844
+      "size_bytes": 18747
     },
     {
       "content_hash": "sha256:e9ef0c1a00fbc55f6b99975ad35e3077e22185c0d759d30cd4ff77e2f1268aca",
@@ -101,7 +101,7 @@
       "required": false,
       "role": "optional_upstream_closeout_doc",
       "sha256": "e9ef0c1a00fbc55f6b99975ad35e3077e22185c0d759d30cd4ff77e2f1268aca",
-      "size_bytes": 6323
+      "size_bytes": 6253
     },
     {
       "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
@@ -111,7 +111,7 @@
       "required": false,
       "role": "optional_upstream_closeout_artifact",
       "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
-      "size_bytes": 29809
+      "size_bytes": 29136
     },
     {
       "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
@@ -121,7 +121,7 @@
       "required": false,
       "role": "optional_upstream_closeout_retained_artifact",
       "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
-      "size_bytes": 29809
+      "size_bytes": 29136
     }
   ],
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",

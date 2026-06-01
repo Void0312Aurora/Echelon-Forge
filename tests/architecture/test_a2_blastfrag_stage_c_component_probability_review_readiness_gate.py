@@ -126,6 +126,19 @@ def test_a2_blastfrag_stage_c_component_probability_review_readiness_gate_is_blo
         "RES-006",
         "RES-013/014-boundary",
     ]
+    assert artifact["open_residual_ids"] == []
+    assert artifact["authority_blocked_residual_ids"] == [
+        "RES-003",
+        "RES-004",
+        "RES-005",
+        "RES-006",
+        "RES-009",
+        "RES-010",
+        "RES-011",
+        "RES-012",
+        "RES-013",
+        "RES-014",
+    ]
     assert any("independent fragility review" in row["summary"] for row in blockers)
     assert any("validation manifest still stays at not_run" in row["summary"] for row in blockers)
     assert any("synthetic_sigmoid" in row["summary"] for row in blockers)

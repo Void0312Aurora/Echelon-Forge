@@ -273,11 +273,33 @@ def _parse_residual_statuses(path: Path) -> dict[str, str]:
     return statuses
 
 
+def _is_open_residual_status(status: str) -> bool:
+    return status == "open" or status.startswith("open_")
+
+
+def _is_research_closed_residual_status(status: str) -> bool:
+    return (
+        status.startswith("closed_")
+        or status.startswith("research_closed_")
+        or status.startswith("research_out_of_scope_")
+    )
+
+
+def _is_authority_blocker_status(status: str) -> bool:
+    return (
+        _is_open_residual_status(status)
+        or "authority_blocked" in status
+        or "authority_fail_closed" in status
+        or "authority_boundary_deferred" in status
+        or "release_blocked" in status
+    )
+
+
 def _parse_open_residual_ids(path: Path) -> list[str]:
     return [
         residual_id
         for residual_id, status in _parse_residual_statuses(path).items()
-        if status == "open" or status.startswith("open_")
+        if _is_open_residual_status(status)
     ]
 
 
@@ -1022,7 +1044,24 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
     open_residual_ids = [
         residual_id
         for residual_id, status in residual_statuses.items()
-        if status == "open" or status.startswith("open_")
+        if _is_open_residual_status(status)
+    ]
+    research_closed_residual_ids = [
+        residual_id
+        for residual_id, status in residual_statuses.items()
+        if _is_research_closed_residual_status(status)
+    ]
+    research_blocker_residual_ids = [
+        residual_id
+        for residual_id, status in residual_statuses.items()
+        if _is_open_residual_status(status)
+        and "authority" not in status
+        and "boundary" not in status
+    ]
+    authority_blocker_residual_ids = [
+        residual_id
+        for residual_id, status in residual_statuses.items()
+        if _is_authority_blocker_status(status)
     ]
 
     return {
@@ -1055,6 +1094,18 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
         "source_groups": source_groups,
         "residual_statuses": residual_statuses,
         "open_residual_ids": open_residual_ids,
+        "research_profile_status": {
+            "profile": "research_candidate",
+            "status": "research_closed_authority_retained",
+            "research_blocker_residual_ids": research_blocker_residual_ids,
+            "research_closed_residual_ids": research_closed_residual_ids,
+            "authority_blocker_residual_ids": authority_blocker_residual_ids,
+            "research_profile_closed": not research_blocker_residual_ids,
+            "authority_profile_closed": False,
+        },
+        "research_blocker_residual_ids": research_blocker_residual_ids,
+        "research_closed_residual_ids": research_closed_residual_ids,
+        "authority_blocker_residual_ids": authority_blocker_residual_ids,
         "residual_acceptance_gate_summaries": _residual_acceptance_gate_summaries(),
         "validation_manifest_summary": _validation_manifest_summary(
             DOC_REFS["validation_manifest_draft"]

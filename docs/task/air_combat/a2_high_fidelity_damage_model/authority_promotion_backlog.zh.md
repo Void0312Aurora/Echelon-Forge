@@ -1,9 +1,19 @@
 # A2 Authority Promotion Backlog
 
-状态：`2026-06-01 / G4-G5 backlog / non-authoritative`。
+状态：`2026-06-01 / G4-G5 backlog / explicit_opt_in_only / non-authoritative`。
 
 本文只登记未来 authority promotion 和 kill-chain authority 的阻塞条件。它不是当前
 blastfrag candidate 包的未完成清单，也不授予任何 runtime authority。
+
+当前项目默认保留 research / candidate profile，见
+[research_candidate_data_policy_20260601.zh.md](research_candidate_data_policy_20260601.zh.md)。
+因此本文中的 `G4/G5` 不再是默认下一步，也不阻塞当前 research 完成口径。只有用户明确要求
+release-grade authority、stock runtime authority、Pk 或 deterministic fuze 时，才从本文另启任务线。
+
+若只是继续做研究级高保真，应使用
+[g4_g5_research_continuation_20260601.zh.md](g4_g5_research_continuation_20260601.zh.md)。
+该路线可以启动 non-authoritative mechanism-load envelope、component fragility surface 和
+Pk/fuze proxy design，但不得把结果写成 authority promotion。
 
 ## 未来任务簇
 

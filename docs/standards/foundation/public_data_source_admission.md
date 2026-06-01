@@ -4,7 +4,7 @@ Language:
 - English canonical: `foundation/public_data_source_admission.md`
 - Chinese companion: [public_data_source_admission.zh.md](public_data_source_admission.zh.md)
 
-Status: `2026-05-28` authoritative foundation rule for public-source admission and runtime authority gates.
+Status: `2026-06-01` authoritative foundation rule for public-source admission, research candidate data, and runtime authority gates.
 
 This standard defines how public data, papers, standards, reports, generated
 benchmarks, and source ledgers may enter the project. It applies across air,
@@ -72,6 +72,36 @@ Every source ledger row must record:
 
 If a row lacks stable `source_ref`, rights, scope, provenance, or residual
 status, it may be kept as a search lead but must not become an input source.
+
+## Research / Candidate Profile Admission
+
+A research-grade candidate model is not the same thing as industrial or
+release-grade authority. When a task explicitly declares its current target as
+`research`, `candidate`, `non-authoritative`, or `authority_opt_in_only`, it may
+use `Tier B`, `Tier C`, community material, open-source configuration,
+multi-source derived estimates, or hash-only restricted references without
+waiting for official or industrial-grade data, provided that:
+
+- each data item records source tier, data class, scope, rights or
+  redistribution notes, uncertainty or confidence, cross-check notes, and a
+  replacement rule;
+- `Tier C`, community, and secondary sources may form sanity envelopes,
+  candidate hypotheses, parameter ranges, or derived estimates, but cannot
+  independently become calibrated truth;
+- copyrighted or redistribution-limited material is not copied into the
+  repository as long prose, tables, images, or raw selected values; locators,
+  hashes, short summaries, review records, and derived parameters may be
+  retained instead;
+- research-profile residuals may be marked `research_closed` or
+  `research_out_of_scope`, but missing authority evidence must still be retained
+  as `authority_blocked`, `authority_fail_closed`, or
+  `authority_boundary_deferred`;
+- any runtime descriptor, stock row, or release-grade claim still requires the
+  task-specific authority gate to pass.
+
+In short, research high fidelity may first make the model runnable, auditable,
+and replaceable with reasonable traceable data. It must not describe that data
+as official, calibrated, or industrial authority.
 
 ## Artifact Rules
 

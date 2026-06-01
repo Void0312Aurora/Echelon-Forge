@@ -1,14 +1,15 @@
 {
   "admission_granted": false,
   "approval_granted": false,
-  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601",
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601",
   "artifacts": [
     {
-      "artifact_key": "signoff_intake_contract",
-      "filename": "signoff_intake_contract.json",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
-      "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
-      "sha256": "5356f5c48a7a98bc9a03c7da6955a35aa966dbc160b4df7527b7da2be03bd873"
+      "artifact_key": "external_signoff_packet_template",
+      "external_schema_version": "a2.external_signoff_intake_packet.v1",
+      "filename": "external_signoff_packet_template.json",
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601/external_signoff_packet_template.json",
+      "schema_version": "a2.external_signoff_packet_template.v1",
+      "sha256": "7482aba3400f5f37c51c98348e5ff8c61a5cea647958becb1ee655d5a6ea5c5e"
     }
   ],
   "authority_guards": {
@@ -30,25 +31,29 @@
   },
   "authority_guards_all_false": true,
   "benchmark_consumed_for_release": false,
-  "candidate_packet_supplied": false,
-  "fail_closed": true,
-  "finding_count": 1,
   "input_refs": [
     {
       "artifact_key": "source_rights_signoff_request_packet",
       "present": true,
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
-      "required_for_contract": true,
-      "role": "current_fail_closed_signoff_request_input",
+      "required_for_template": true,
+      "role": "current_source_rights_request_hash_pin_for_template_only_packet",
       "schema_version": "a2.source_rights_signoff_request_packet.v1",
       "sha256": "8b58760fae3a0719c316bf280164b64f85f6014c6b666201274c55cbf87c7059",
       "status": "retained_fail_closed_source_rights_signoff_request_packet"
     }
   ],
-  "intake_shape_valid": false,
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
-  "raw_outputs_retained": false,
-  "raw_source_text_tables_values_formulas_retained": false,
+  "raw_content_absence": {
+    "beco_raw_cell_values_or_tool_output_tables_retained": false,
+    "beco_spreadsheet_formula_text_or_cell_ranges_retained": false,
+    "beco_temporary_workbook_copy_retained": false,
+    "stderr_retained": false,
+    "stdout_retained": false,
+    "tp21_raw_selected_outputs_retained": false,
+    "tp21_selected_output_preimage_body_retained": false,
+    "tp21_source_prose_tables_figures_or_numeric_values_retained": false
+  },
   "release_grade_satisfied": false,
   "required_signoff_ids": [
     "source_rights_independent_review",
@@ -59,7 +64,9 @@
     "benchmark_consumption_release_decision",
     "authority_boundary_confirmation"
   ],
-  "schema_version": "a2.blastfrag_signoff_intake_contract_retained_manifest.v1",
+  "retained_manifest_integrity_expected": "clean_for_single_manifest",
+  "schema_version": "a2.external_signoff_packet_template_retained_manifest.v1",
   "signoff_decisions_consumed": false,
-  "status": "retained_fail_closed_signoff_intake_contract_no_external_packet"
+  "status": "retained_external_signoff_packet_template_only_not_approval_not_signoff",
+  "template_only": true
 }

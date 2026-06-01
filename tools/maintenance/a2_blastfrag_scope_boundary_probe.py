@@ -138,7 +138,7 @@ def _closure_probe(*, repo_root: Path) -> dict[str, Any]:
         },
         "limitation_note": (
             "candidate closure-sensitive response is present in closure-sensitive gate fields, "
-            "but RES-008 remains open, non-authoritative and pending independent review"
+            "but RES-008 remains non-authoritative and retained as a future authority boundary"
         ),
     }
 
@@ -192,7 +192,7 @@ def generate_scope_boundary_probe(*, repo_root: Path = REPO_ROOT) -> dict[str, A
             ),
             (
                 "closure probe now shows candidate closure-sensitive response across 700/900/1100 mps; "
-                "RES-008 remains open, non-authoritative and pending independent review"
+                "RES-008 remains non-authoritative and retained as a future authority boundary"
             ),
             (
                 "aspect guard remains beam-only and explicitly rejects head_on, tail_chase, high_off_boresight and direct_hit labels"

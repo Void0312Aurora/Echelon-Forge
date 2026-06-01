@@ -67,10 +67,10 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
         "closed_scoped_identity_non_authoritative"
     )
     assert residual_statuses["RES-003"] == (
-        "open_stage_b_witness_geometry_bookkeeping_closed_global_geometry_blocked"
+        "research_closed_stage_b_witness_geometry_bookkeeping_authority_blocked_global_geometry"
     )
     assert residual_statuses["RES-004"] == (
-        "open_stage_b_family_scope_closed_specific_warhead_truth_blocked"
+        "research_closed_stage_b_family_scope_authority_blocked_specific_warhead_truth"
     )
     assert residual_statuses["RES-007"] == (
         "closed_stage_b_scope_review_only_release_blocked"
@@ -79,24 +79,59 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
         "closed_stage_b_scope_review_only_release_blocked"
     )
     assert residual_statuses["RES-005"] == (
-        "open_fail_closed_tp21_selected_debris_outputs_missing"
+        "research_closed_mechanism_load_envelope_authority_fail_closed_tp21_selected_debris_outputs_missing"
     )
     assert residual_statuses["RES-006"] == (
-        "open_fail_closed_beco_recalculation_not_admitted"
+        "research_closed_mechanism_load_envelope_authority_fail_closed_beco_recalculation_not_admitted"
+    )
+    assert residual_statuses["RES-009"] == (
+        "research_closed_stage_c_candidate_surface_authority_blocked_fragility_truth"
+    )
+    assert residual_statuses["RES-013"] == (
+        "research_out_of_scope_authority_boundary_deferred_pk"
+    )
+    assert residual_statuses["RES-014"] == (
+        "research_out_of_scope_authority_boundary_deferred_deterministic_fuze"
     )
 
     residuals = artifact["open_residual_ids"]
-    assert "RES-001" not in residuals
-    assert "RES-002" not in residuals
-    assert "RES-003" in residuals
-    assert "RES-004" in residuals
-    assert "RES-005" in residuals
-    assert "RES-006" in residuals
-    assert "RES-007" not in residuals
-    assert "RES-008" not in residuals
-    assert "RES-009" in residuals
-    assert "RES-013" in residuals
-    assert "RES-014" in residuals
+    assert residuals == []
+
+    research_profile = artifact["research_profile_status"]
+    assert research_profile["status"] == "research_closed_authority_retained"
+    assert research_profile["research_profile_closed"] is True
+    assert research_profile["authority_profile_closed"] is False
+    assert research_profile["research_blocker_residual_ids"] == []
+    assert research_profile["research_closed_residual_ids"] == [
+        "RES-001",
+        "RES-002",
+        "RES-003",
+        "RES-004",
+        "RES-005",
+        "RES-006",
+        "RES-007",
+        "RES-008",
+        "RES-009",
+        "RES-010",
+        "RES-011",
+        "RES-012",
+        "RES-013",
+        "RES-014",
+    ]
+    assert artifact["authority_blocker_residual_ids"] == [
+        "RES-003",
+        "RES-004",
+        "RES-005",
+        "RES-006",
+        "RES-007",
+        "RES-008",
+        "RES-009",
+        "RES-010",
+        "RES-011",
+        "RES-012",
+        "RES-013",
+        "RES-014",
+    ]
 
     acceptance_gates = artifact["residual_acceptance_gate_summaries"]
     res003_gate = acceptance_gates["res003_target_geometry_closeout"]
@@ -271,7 +306,7 @@ def test_a2_candidate_vps_bundle_current_repo_is_non_authoritative_and_review_re
     assert not probe_summary["closure_probe"]["metrics"]["res008_closed_by_probe"]
     assert probe_summary["closure_probe"]["closure_values_mps"] == [700.0, 900.0, 1100.0]
     assert "candidate closure-sensitive response is present" in probe_summary["closure_probe"]["limitation_note"]
-    assert "RES-008 remains open" in probe_summary["closure_probe"]["limitation_note"]
+    assert "RES-008 remains non-authoritative" in probe_summary["closure_probe"]["limitation_note"]
     assert probe_summary["aspect_guard_probe"]["probe_id"] == "SCP-PROBE-003"
     assert probe_summary["aspect_guard_probe"]["accepted_scope_labels"] == ["beam"]
     assert probe_summary["aspect_guard_probe"]["rejected_scope_labels"] == [

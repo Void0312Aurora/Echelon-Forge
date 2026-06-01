@@ -1,24 +1,26 @@
 # A2 任务簇执行状态 - 2026-06-01
 
-状态：`2026-06-01 / task_cluster_execution_status / G2 candidate acceptance entry / non-authoritative`。
+状态：`2026-06-01 / task_cluster_execution_status / G4 research accepted / non_authoritative`。
 
 本文记录按 [任务粒度与协调总账](task_granularity_and_coordination_20260601.zh.md)
-分发并执行后的当前结果。它只确认 `G1 runtime` 和 `G2 candidate acceptance`
-层级的就绪度，不创建 runtime descriptor，不授予 `effect_scale_authority`、
-`component_failure_probability_authority`、`pk_authority` 或
-`deterministic_fuze_authority`。
+分发并执行后的当前结果。它确认 `G1 runtime`、`G2 candidate acceptance`、
+`G3 residual research closeout` 和当前 `G4 research dispatch` 的就绪度。当前目标是
+research / candidate model；工业级 / release-grade 准入不作为完成条件。
 
 ## 总体结论
 
 新的 A2 子项目包已经可以作为后续任务分发入口使用；`TC-A2-BF-001-HASH`
-已完成 retained manifest hash integrity 收口。当前就绪范围只到：
+已完成 retained manifest hash integrity 收口；`TC-A2-BF-001..004` 已按 `G2`
+收尾为 `accepted_non_authoritative`。当前就绪范围只到：
 
 - `TC-A2-RUNTIME` / `G1 runtime engineering`：工程维护面已通过本轮回归验证；
-- `TC-A2-BF-001..004` / `G2 candidate acceptance`：候选证据包具备可审阅、可复现、
-  fail-closed 的非权威分发和验收入口形状；retained manifest hash integrity 已通过；
+- `TC-A2-BF-001..004` / `G2 candidate acceptance`：候选证据包收尾为可审阅、可复现、
+  fail-closed 的非权威验收结果；retained manifest hash integrity 已通过；
 - `G3 residual`：只作为状态读取层，不作为本轮关闭条件；
-- `TC-A2-AUTH-B`、`TC-A2-AUTH-C`、`TC-A2-KILLCHAIN`：仍为 backlog / deferred，
-  本轮未启动、未验收、未放权。
+- `G4-R-B` / `G4-R-C`：已完成 research dispatch 与串行 integration；`G4-R-B`
+  三件套已完成，`G4-R-C` 的 source scan、surface draft 和 uncertainty / independence
+  audit 已完成并通过 integration acceptance；
+- 工业级 / release-grade 准入：不在当前目标内，只作为防误用 guard 和历史 backlog 保留。
 
 不得把本文中的“就绪”或“通过”上卷为 full A2 kill-chain、stock runtime authority、
 Pk 或 deterministic fuze 完成。
@@ -32,9 +34,9 @@ Pk 或 deterministic fuze 完成。
 | `TC-A2-BF-002` scope / geometry / warhead evidence | `G2 candidate acceptance`；只读 `G3 residual` 状态 | Stage B witness geometry / family-scope retained gate 可复现；真实 geometry/warhead truth 继续 open | 只可分发 review/retained-evidence hygiene，不可扩面到真实 AIM-120C/F-16 truth |
 | `TC-A2-BF-003` mechanism admission evidence | `G2 candidate acceptance`；只读 `G3 residual` 状态 | TP-21 / BEC-O retained/fail-closed 状态和 2026-06-01 review packets 可由 retained manifest 读取 | 若继续推进，必须取得 reviewer/signoff 输入，不能消费为 release evidence |
 | `TC-A2-BF-004` candidate bundle / regression | `G2 candidate acceptance` | candidate bundle CLI 和 regression 提供机器入口；retained manifest checker 通过；top-level authority guard 全 false | 可作为当前 candidate package acceptance 的 G2 分发/验收入口 |
-| `TC-A2-AUTH-B` | `G4 deferred` | 未启动、未验收、未授予 stock runtime authority | 另起 release-grade promotion 任务前，不得复用本轮 G2 结论放权 |
-| `TC-A2-AUTH-C` | `G4 deferred` | 未启动、未验收、未授予 stock runtime authority | 等 effect-scale promotion 或明确前置依赖后再分发 |
-| `TC-A2-KILLCHAIN` | `G5 deferred` | deferred；未授予 Pk 或 deterministic fuze | Pk / deterministic fuze 必须另建证据链 |
+| `G4-R-B` mechanism-load envelope | `G4 research` | source scan、derived envelope draft、validation audit 均完成为 research packet | 按 [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[mechanism-load envelope 分发包](g4_research_mechanism_load_envelope_dispatch_20260601.zh.md)、[source scan](g4_research_mechanism_load_envelope_source_ledger_20260601.zh.md)、[draft](g4_research_mechanism_load_envelope_draft_20260601.zh.md) 和 [audit](g4_research_mechanism_load_envelope_validation_audit_20260601.zh.md) 执行 |
+| `G4-R-C` component fragility surface | `G4 research` | source scan、surface draft、uncertainty / independence audit 均完成为 research packet；integration accepted | 按 [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[component fragility 分发包](g4_research_component_fragility_dispatch_20260601.zh.md)、[source scan](data_collection/component_fragility_vulnerability/g4_r_c_source_scan_20260601.zh.md)、[surface draft](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_component_fragility_surface_draft_20260601.zh.md)、[audit](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md) 和 [G4 integration acceptance](g4_research_integration_acceptance_20260601.zh.md) 执行 |
+| industrial / release-grade admission | out of current research goal | 未启动；不作为当前完成条件 | 只有用户明确要求时才另起准入任务 |
 
 ## 分发记录
 
@@ -69,10 +71,45 @@ Pk 或 deterministic fuze 完成。
   定义未来外部 reviewer/signoff packet 的 hash-only 输入形状、raw-content absence
   要求和 authority guard checker；当前无外部 signoff packet supplied，仍 fail-closed，
   不消费 reviewer 决策，不关闭 `RES-005/006`。
+- `TC-A2-BF-003-SIGNOFF-INTAKE-NEXT` 执行：新增 external signoff packet template、
+  signoff intake valid/invalid fixtures 和 retained signoff admission preflight packet。
+  template 的 placeholder 决策刻意保持 intake-invalid；fixture 只证明 shape contract；
+  preflight 默认无外部 packet supplied，`ready_for_admission_gate=false`。即使未来
+  shape-valid 外部 packet 进入 preflight，也只产生 ready flag，不消费 signoff decision，
+  不关闭 `RES-005/006`。
+- `G4-R-B-DISPATCH` 分发：启动 mechanism-load envelope 的研究级任务拆分；只输出
+  source scan、derived envelope 和 guard audit 工作包，不写型号级真值。
+- `G4-R-B-001-SOURCE-LEDGER-SCAN` 执行：新增
+  [mechanism-load source scan](g4_research_mechanism_load_envelope_source_ledger_20260601.zh.md)，
+  从既有公开来源账本整理 fragment / blast research envelope 的 source proposal。
+- `G4-R-B-002-DERIVED-ENVELOPE-DRAFT` 执行：新增
+  [mechanism-load envelope draft](g4_research_mechanism_load_envelope_draft_20260601.zh.md)，
+  定义 research mechanism-load vector、assumptions、uncertainty 和 replacement rule。
+- `G4-R-B-003-VALIDATION-GUARD-AUDIT` 执行：新增
+  [mechanism-load validation audit](g4_research_mechanism_load_envelope_validation_audit_20260601.zh.md)，
+  确认 G4-R-B 只作为 research-ready mechanism side input。
+- `G4-R-C-DISPATCH` 分发：启动 component fragility surface 的研究级任务拆分；只输出
+  source/data scan、fragility surface draft 和 uncertainty/independence audit 工作包，不写
+  F-16C 全机组件概率真值。
+- `G4-R-C-SCAN` 执行：新增
+  [component fragility source scan](data_collection/component_fragility_vulnerability/g4_r_c_source_scan_20260601.zh.md)，
+  从既有公开来源账本整理 research surface 的 source proposal。
+- `G4-R-C-SURFACE` 执行：新增
+  [component fragility surface draft](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_component_fragility_surface_draft_20260601.zh.md)，
+  只定义 research row shape、curve-family placeholder 和 replacement path。
+- `G4-R-C-AUDIT` 执行：新增
+  [uncertainty / independence audit](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md)，
+  确认 Stage C test-local、synthetic baseline 和 research surface 仍保持分离。
+- `G4-R-INTEGRATION` 主线程整合：新增 [G4 research integration acceptance](g4_research_integration_acceptance_20260601.zh.md)，
+  并把中央入口标记为 `dispatch_closed_non_authoritative`；G4 research 与工业级准入保持拆开。
 
-主线程负责集成与验证，不把 subagent 审阅结果单独作为 authority evidence。
+主线程负责集成与验证，不把 worker packet 单独作为工业级证据。
 
 ## 已执行验证
+
+本节保留此前 Windows 本地维护环境验证记录，并补充本轮当前工作区复核。两组验证都只支持
+`G1/G2` 工程与候选包结论，以及 `G4` 的 research 分发 / integration acceptance；
+不支持工业级 / release-grade 准入。
 
 ```powershell
 cmake --build build-local-win --target ef_core ef_py -j2
@@ -96,9 +133,9 @@ git diff --check
 - bindings / engagement：`52 passed`
 - WP22 structural guardrails：`16 passed`
 - source admission + retained/gate tests：`20 passed`
-- source admission strict：`9 ledgers, 29 candidate docs, 51 calibration docs`
+- source admission strict：`9 ledgers, 29 candidate docs, 53 calibration docs`
 - retained manifest integrity tests：`8 passed`
-- retained manifest integrity checker：`manifest_count=27`, `missing_total=0`,
+- retained manifest integrity checker：`manifest_count=29`, `missing_total=0`,
   `sha_mismatch_total=0`, `guard_true_total=0`
 - RES-005 selected-case review packet tests：`6 passed`
 - RES-006 replacement/tolerance review packet tests：`3 passed`
@@ -106,20 +143,80 @@ git diff --check
 - RES-006 lineage/tolerance packet tests：`3 passed`
 - source-rights signoff request packet tests：`7 passed`
 - signoff intake contract tests：`5 passed`
+- external signoff packet template tests：`4 passed`
+- signoff intake fixture contract tests：`2 passed`
+- signoff admission preflight tests：`4 passed`
 - retained mechanism admission regression tests：`22 passed`
-- retained mechanism admission focused suite：`40 passed`
+- retained mechanism admission focused suite：`50 passed`
 - candidate VPS bundle tests：`2 passed`
 - candidate VPS bundle CLI：exit 0
 - Markdown local link check：`0 missing`
 - old Linux absolute path scan：no matches
 - `git diff --check`：exit 0，仅有 Windows LF/CRLF 提示
 
+本轮当前工作区复核：
+
+```bash
+python -m pytest -q tests/architecture/test_a2_retained_manifest_integrity.py tests/architecture/test_a2_candidate_vps_bundle.py tests/architecture/test_a2_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
+python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_live_engagement_event_capture.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/architecture/test_a2_blastfrag_signoff_admission_preflight.py tests/architecture/test_a2_blastfrag_res006_beco_recalculation_admission_gate.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_candidate_packet.py tests/architecture/test_a2_blastfrag_signoff_intake_fixture_contract.py tests/architecture/test_a2_blastfrag_signoff_intake_contract.py tests/architecture/test_a2_blastfrag_source_rights_signoff_request_packet.py tests/architecture/test_a2_blastfrag_res006_beco_lineage_tolerance_review_packet.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_admission_gate.py tests/architecture/test_a2_blastfrag_external_signoff_packet_template.py tests/architecture/test_a2_blastfrag_res006_beco_replacement_tolerance_admission_gate.py
+python tools/maintenance/a2_retained_manifest_integrity.py
+python tools/maintenance/a2_source_admission_audit.py --strict
+python tools/maintenance/a2_candidate_vps_bundle.py
+```
+
+当前工作区结果：
+
+- A2 candidate/source/manifest/descriptor：`17 passed`；
+- engagement contract / launch adapter / live capture shape：`16 passed`；
+- weapon guidance realism guards：`150 passed`；
+- G2 fail-closed signoff / residual packet focused suite：`44 passed`；
+- retained manifest integrity checker：`manifest_count=29`, `missing_total=0`,
+  `sha_mismatch_total=0`, `guard_true_total=0`；
+- source admission strict：`9 ledgers, 29 candidate docs, 53 calibration docs`；
+- candidate VPS bundle CLI：exit 0；`status=candidate_non_authoritative_bundle`，
+  `effect_scale_authority_in_stock=false`、`component_failure_probability_authority_in_stock=false`、
+  `pk_authority=false`、`deterministic_fuze_authority=false`。
+- G4 research integration focused复核：candidate/source/manifest tests `15 passed`；
+  retained packet focused tests `34 passed`；G4 guard grep no matches；`git diff --check` exit 0。
+
+## G2 收尾后队列状态
+
+同 scope 的 `TC-A2-BF-001..004` 不再需要追加临时收尾 wave。后续只有三类合法入口：
+
+- 当前已按 [G4 research dispatch](g4_research_dispatch_20260601.zh.md) 启动
+  `G4-R-B`、`G4-R-C` 研究分发；`G4-R-B` 三件套和 `G4-R-C` scan/surface/audit
+  已落盘并通过 [G4 integration acceptance](g4_research_integration_acceptance_20260601.zh.md)；
+  `G5-R` 暂未分发；
+- 收到新的外部 reviewer/signoff packet 后，按 signoff intake / preflight / admission gate
+  串行处理 `RES-005/006`，仍只改变 `G3 residual` 状态；
+- 工业级 / release-grade 准入必须由用户明确另起任务，不复用本轮 G2/G4 research 结论。
+
+## G3 台账收尾状态
+
+`G3 residual` 已另行清点为 `research_closed_authority_retained`，见
+[g3_residual_closeout_status_20260601.zh.md](g3_residual_closeout_status_20260601.zh.md)。
+该结论表示 `RES-001..014` 对当前 research profile 不再形成阻塞，且均有明确状态、
+稳定证据入口和不得上卷边界。
+
+当前项目默认转为 research / candidate profile，见
+[research_candidate_data_policy_20260601.zh.md](research_candidate_data_policy_20260601.zh.md)。
+因此下列旧 substantive blockers 已被重标为 research-closed 或 research-out-of-scope；
+它们现在只作为后续可替换 research data surface 的完善目标，或作为未来可选工业级准入的 guard。
+
+当前仍需保持的 substantive blockers：
+
+- `RES-005/006` 对 research profile 已闭合为可替换 mechanism-load envelope 目标；不消费 TP-21 / BEC-O 原始输出；
+- `RES-009/010/011/012` 对 research profile 已闭合为 Stage C candidate surface / uncertainty ledger 目标；
+- `RES-013/014` 对当前 research profile 明确 out-of-scope；G5 proxy 以后再分发。
+
 ## 保持的边界
 
 - `DamageReport.forced_landing`、`flight_control_kill`、`propulsion_kill`、`crew_kill`
   是 runtime consequence/reporting flags，不是 Pk；
-- runtime debug authority state 仍是 diagnostic/debug surface，不是 stock authority grant；
-- runtime-aligned authority exercise 只允许作为 test-local / candidate evidence，不得写入 stock DB；
+- runtime debug guard state 仍是 diagnostic/debug surface，不是 stock 写入许可；
+- runtime-aligned exercise 只允许作为 test-local / candidate evidence，不得写入 stock DB；
 - retained gate JSON 和 manifest 优先于叙事文档；manifest hash mismatch 不得被叙事覆盖；
 - `RES-005/006` 的 fail-closed 状态不能被 retained review packet 或 bundle 通过覆盖；
 - `RES-013/014` 继续是 Pk / deterministic fuze boundary deferred。

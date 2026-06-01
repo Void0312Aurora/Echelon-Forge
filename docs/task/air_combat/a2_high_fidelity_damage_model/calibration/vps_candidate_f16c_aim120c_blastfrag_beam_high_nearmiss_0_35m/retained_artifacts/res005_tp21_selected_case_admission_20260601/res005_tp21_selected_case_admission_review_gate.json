@@ -111,25 +111,25 @@
       "artifact_id": "residual_register",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md",
       "role": "res005_residual_status_ref",
-      "sha256": "4028aa047c1d114e56f1f77e9efb1f6cf19cd45020e2a3f554e091927650ee9b"
+      "sha256": "9b8cf91373e7e38641ed36a4cea1c90ccc741318b843449ffc8e49b4af375c3d"
     },
     {
       "artifact_id": "mechanism_admission_failclosed_backlog",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/mechanism_admission_failclosed_backlog_20260601.zh.md",
       "role": "tc_a2_bf_003_res005_backlog_ref",
-      "sha256": "17dd13e4de404695aeacc6c394f61be1fab9163df228203d743131d918a7146f"
+      "sha256": "4fd020b348542e14308506734b90a223eb84d82c3c9495918bcda84edd070d4b"
     },
     {
       "artifact_id": "candidate_acceptance_status",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/candidate_acceptance_status.zh.md",
       "role": "g2_candidate_acceptance_boundary_ref",
-      "sha256": "f390fb0aca20cc2e1d2e88b8289724171986f9fd9015b8f2d228f12ad8ae2ad3"
+      "sha256": "5493c323ba5a147c75dccd7e253eb5e155bf9fa96af6d2b14cfc8a06627a4fb0"
     },
     {
       "artifact_id": "task_cluster_execution_status",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/task_cluster_execution_status_20260601.zh.md",
       "role": "task_cluster_boundary_ref",
-      "sha256": "eb73c728bfd2a68e68bce4d7d5aceed1a4f5d153a72faa675b7aa1e35b7e8a37"
+      "sha256": "d1967b27e03af71572edb98646cbed9b77bbea8036ad7ee06e07e87f769b1fb2"
     },
     {
       "artifact_id": "validation_res005_tp21_debris_admission_note",
@@ -169,7 +169,7 @@
     "task_cluster": "TC-A2-BF-003-RES005-TP21"
   },
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
-  "packet_sha256": "229355642c363bf9089a65aa2d6a4ff02096d022519052e308bef78929a8905b",
+  "packet_sha256": "1e38bdd3686d5090fe410cfd84cab658e4606022d285cbccfd88aac9cf3eb9dd",
   "prior_debris_gate_summary": {
     "allowed_output_signoff_present": false,
     "anchor_set_schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",

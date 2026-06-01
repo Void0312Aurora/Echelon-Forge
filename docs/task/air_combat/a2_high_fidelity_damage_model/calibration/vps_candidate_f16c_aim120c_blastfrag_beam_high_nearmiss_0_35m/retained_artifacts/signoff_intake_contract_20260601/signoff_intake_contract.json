@@ -26,7 +26,7 @@
     "status": "external_signoff_packet_not_supplied_fail_closed"
   },
   "contract_id": "TC-A2-BF-003-SIGNOFF-INTAKE-CONTRACT-20260601",
-  "contract_sha256": "5dbb8db1213e77cc54320121dd316aa07f5b29b0e718b01c5467ad51d16a25aa",
+  "contract_sha256": "d06bf520de90d89936dccf5c8299e0565ef70bfb54b5e211346fbb6e5f1111dc",
   "current_check_result": {
     "candidate_packet_supplied": false,
     "finding_count": 1,
@@ -69,7 +69,7 @@
       "required_for_contract": true,
       "role": "current_fail_closed_signoff_request_input",
       "schema_version": "a2.source_rights_signoff_request_packet.v1",
-      "sha256": "39344a247f6548b211206d086d1135989934a2cd4148333045d4c10a52fa23f2",
+      "sha256": "8b58760fae3a0719c316bf280164b64f85f6014c6b666201274c55cbf87c7059",
       "status": "retained_fail_closed_source_rights_signoff_request_packet"
     }
   ],

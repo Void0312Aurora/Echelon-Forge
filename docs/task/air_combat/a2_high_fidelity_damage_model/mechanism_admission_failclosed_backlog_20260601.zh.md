@@ -62,6 +62,8 @@ review inputs，但没有关闭 residual：
 | BEC-O lineage/tolerance candidate | `retained_artifacts/res006_beco_lineage_tolerance_review_20260601/res006_beco_lineage_tolerance_review_candidate_packet.json` | cached/recalculated topology 已可审计，仍是 0/9 match 且无 independent lineage、tolerance 或 replacement signoff |
 | source-rights signoff request | `retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json` | 只生成 review request/checklist；`approval_granted=false`、`release_grade_satisfied=false`，policy 继续 fail-closed |
 | signoff intake contract | `retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json` | 只定义未来外部 reviewer/signoff packet 的 hash-only 输入形状和 checker；当前无外部 signoff packet supplied，`approval_granted=false`、`admission_granted=false` |
+| external signoff template | `retained_artifacts/external_signoff_packet_template_20260601/external_signoff_packet_template.json` | reviewer-fillable template；placeholder decisions 刻意不是合法 reviewer decision，填充前会被 intake contract 拒绝 |
+| signoff admission preflight | `retained_artifacts/signoff_admission_preflight_20260601/signoff_admission_preflight_packet.json` | 只把 shape-valid 外部 signoff packet 转成后续 admission gate 的 ready flag；默认无外部 packet supplied，`ready_for_admission_gate=false` |
 
 2026-06-01 第 2 轮只读 evidence sweep 已确认：下一步不是重新获取数据，而是等待或生成外部
 reviewer/signoff 输入。RES005 未找到可复用的 selected-case locator、selected-output
@@ -76,6 +78,9 @@ hash-only topology，不构成 tolerance 或 replacement admission。
 做 shape check：必须 pin 到当前 source-rights signoff request packet，包含七个必需 signoff id，
 只保留 reviewer/decision/input 的 sha256 引用，所有 raw-content absence 与 authority guard
 字段保持 false。shape check 通过也只是进入后续 admission gate 的前置条件，不是 approval。
+本轮新增的 external template 和 preflight 把这条路径补成可操作流程：reviewer 可从 template
+复制后替换 placeholder 决策与 hash refs；fixture 测试保证 raw key 或 authority true 会被拒绝；
+preflight 只报告是否可以尝试 RES005/RES006 admission gate，不消费 reviewer 决策。
 
 ## Backlog Item: `TC-A2-BF-003-RES005-TP21`
 
@@ -127,8 +132,10 @@ selected-case admission artifact；在签收前保持 fail-closed。
 
 在 `RES-005/006` 新 gate 明确通过前，以下结论必须保持不变：
 
-- `RES-005` TP-21 保持 `open_fail_closed_tp21_selected_debris_outputs_missing`；
-- `RES-006` BEC-O 保持 `open_fail_closed_beco_recalculation_not_admitted`；
+- `RES-005` TP-21 对 research profile 已闭合为可替换 mechanism-load envelope 路线，
+  对 authority 保持 `research_closed_mechanism_load_envelope_authority_fail_closed_tp21_selected_debris_outputs_missing`；
+- `RES-006` BEC-O 对 research profile 已闭合为可替换 blast envelope 路线，
+  对 authority 保持 `research_closed_mechanism_load_envelope_authority_fail_closed_beco_recalculation_not_admitted`；
 - TP-21 / BEC-O comparison outputs 不消费为 release evidence；
 - fragment/blast row authority 不授予；
 - stock descriptor、runtime authority、effect-scale、component probability、Pk、deterministic fuze authority 全 false。

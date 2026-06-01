@@ -105,7 +105,7 @@
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
       "role": "selected_case_review_gate_input",
       "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
-      "sha256": "562af9eb69b789d0c28a84473c953475809b5e50685332f1e388578224f013f2",
+      "sha256": "53dcc25f420a33cb1a26f9125eb0fa4d4fd3e740d55e8fc17356ca82b040a03a",
       "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
     }
   ],
@@ -115,7 +115,7 @@
     "filename": "res005_tp21_selected_case_candidate_packet.json",
     "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_candidate_20260601/res005_tp21_selected_case_candidate_packet.json",
     "schema_version": "a2.res005_tp21_selected_case_candidate_packet.v1",
-    "sha256": "597a6373b5e49ed1dfb3b31de140a98b1e181c8c9c048739e6d97520cf26a1e5"
+    "sha256": "f32f143a56839bb6b0bc466a6c695708edc54fd6591dd8a8273d1c8890adf724"
   },
   "schema_version": "a2.res005_tp21_selected_case_candidate_retained_manifest.v1",
   "selected_output_raw_values_retained": false,

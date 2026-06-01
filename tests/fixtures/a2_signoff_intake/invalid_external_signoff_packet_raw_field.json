@@ -1,0 +1,86 @@
+{
+  "authority_guard_confirmation": {
+    "allowed_output_release_authority_granted": false,
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": true,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "source_truth_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "benchmark_consumption_decision": "not_consumed_for_release_by_this_packet",
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "raw_content_absence": {
+    "beco_raw_cell_values_or_tool_output_tables_retained": false,
+    "beco_spreadsheet_formula_text_or_cell_ranges_retained": false,
+    "beco_temporary_workbook_copy_retained": false,
+    "stderr_retained": false,
+    "stdout_retained": false,
+    "tp21_raw_selected_outputs_retained": false,
+    "tp21_selected_output_preimage_body_retained": false,
+    "tp21_source_prose_tables_figures_or_numeric_values_retained": false
+  },
+  "raw_value": null,
+  "reviewer_decisions": [
+    {
+      "decision": "approved_for_hash_only_review",
+      "decision_ref_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reviewed_input_ref_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reviewer_ref_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signoff_id": "source_rights_independent_review"
+    },
+    {
+      "decision": "approved_for_hash_only_review",
+      "decision_ref_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reviewed_input_ref_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reviewer_ref_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signoff_id": "allowed_output_policy_release_grade_review"
+    },
+    {
+      "decision": "approved_for_hash_only_review",
+      "decision_ref_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reviewed_input_ref_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reviewer_ref_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signoff_id": "tp21_selected_case_hash_only_allowed_output_review"
+    },
+    {
+      "decision": "approved_for_hash_only_review",
+      "decision_ref_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reviewed_input_ref_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reviewer_ref_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signoff_id": "beco_hash_only_allowed_output_review"
+    },
+    {
+      "decision": "approved_for_hash_only_review",
+      "decision_ref_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reviewed_input_ref_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reviewer_ref_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signoff_id": "beco_lineage_tolerance_and_replacement_review"
+    },
+    {
+      "decision": "approved_for_hash_only_review",
+      "decision_ref_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reviewed_input_ref_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reviewer_ref_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signoff_id": "benchmark_consumption_release_decision"
+    },
+    {
+      "decision": "approved_for_hash_only_review",
+      "decision_ref_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reviewed_input_ref_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reviewer_ref_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signoff_id": "authority_boundary_confirmation"
+    }
+  ],
+  "schema_version": "a2.external_signoff_intake_packet.v1",
+  "signoff_packet_id": "fixture-invalid-external-raw-field-authority-true",
+  "source_rights_signoff_request_packet_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}

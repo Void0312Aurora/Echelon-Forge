@@ -4,7 +4,7 @@ Language:
 - English canonical: pending, Chinese companion first by request.
 - Chinese companion: `realism_authority_boundary.zh.md`
 
-状态：`2026-05-31`，从 A2 高真实度空战毁伤模型任务文档抽取的通用边界规则。
+状态：`2026-06-01`，从 A2 高真实度空战毁伤模型任务文档抽取的通用边界规则。
 
 本文档把活跃任务文档中已经稳定下来的“真实性声明 / authority / 完成口径”抽取为 foundation 层通用规则。它不新增 runtime descriptor，不授予任何 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority` 或 `deterministic_fuze_authority`，也不替代具体任务文档中的 scope、residual register、validation manifest 或验收记录。
 
@@ -61,7 +61,35 @@ Language:
 
 即使某个窄域已经具备 author-side snapshot、result pack、retained pack 或 review-readiness gate，只要独立评审和 release-grade authority 条件仍未关闭，声明仍必须停留在 candidate / non-authoritative 层。
 
-## 5. 抽取整合不得新增任务承诺
+## 5. Research-grade 高保真可以闭合，但不得冒充 authority
+
+若任务明确把当前目标声明为 `research`、`candidate`、`non-authoritative` 或
+`authority_opt_in_only`，则完成口径可以是“研究级高保真候选模型闭合”，而不是
+“工业级 / release-grade authority 闭合”。
+
+在这种口径下，公开、第三方、社区、开源配置和多源派生估计可以支撑可运行、可复审、
+可替换的模型面。允许的结论包括：
+
+- research model runnable / reviewable；
+- candidate package accepted；
+- residuals closed for research profile；
+- data is traceable, uncertain, scoped and replaceable；
+- authority promotion remains opt-in.
+
+禁止的结论包括：
+
+- calibrated stock authority released；
+- source truth or variant truth established；
+- `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority`
+  或 `deterministic_fuze_authority` 已放行；
+- 社区、第三方或派生估计已经等同于官方或工业级数据。
+
+research residual 可以标为 `research_closed` 或 `research_out_of_scope`。若它仍阻塞未来
+authority，则必须同时保留 `authority_blocked`、`authority_fail_closed` 或
+`authority_boundary_deferred` 语义。这样可以让项目务实推进，同时不牺牲后续替换数据和
+提升 authority 的路径。
+
+## 6. 抽取整合不得新增任务承诺
 
 把活跃任务口径提升到 standards 层时，只能做稳定边界的抽取、去重和归口，不得新增原任务文档没有承诺的能力、验收范围、放行时间表或 authority 结论。
 
@@ -74,4 +102,3 @@ Language:
 - 把下层字段 authority 上卷成场景级 `G6` / `G7` 或全域高真实度声明。
 
 若标准文档与活跃任务文档在具体 scope 或完成状态上看起来不一致，应优先按活跃任务文档的当前 closeout / residual / validation 记录执行，并回到标准文档更新通用规则，而不是用标准文档扩大任务 authority。
-

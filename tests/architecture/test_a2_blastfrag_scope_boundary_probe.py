@@ -68,7 +68,7 @@ def test_a2_blastfrag_scope_boundary_probe_current_repo_is_non_authoritative() -
         closure_probe["rows"][2]["fragment_energy_j_proxy"]
     )
     assert "candidate closure-sensitive response is present" in closure_probe["limitation_note"]
-    assert "RES-008 remains open" in closure_probe["limitation_note"]
+    assert "RES-008 remains non-authoritative" in closure_probe["limitation_note"]
 
     aspect_probe = artifact["aspect_guard_probe"]
     assert aspect_probe["probe_id"] == "SCP-PROBE-003"

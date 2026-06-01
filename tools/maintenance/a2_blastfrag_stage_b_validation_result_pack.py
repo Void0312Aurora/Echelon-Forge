@@ -217,7 +217,7 @@ def generate_stage_b_validation_result_pack(*, repo_root: Path = REPO_ROOT) -> d
             "closure_limitation_note": str(closure_probe["limitation_note"]),
             "scope_guard_interpretation": (
                 "candidate closure-sensitive response is observed in Stage B scope probe; "
-                "RES-008 remains open, non-authoritative and pending independent review"
+                "RES-008 remains non-authoritative and retained as a future authority boundary"
             ),
         },
         "independence_audit": _independence_audit_rows(),

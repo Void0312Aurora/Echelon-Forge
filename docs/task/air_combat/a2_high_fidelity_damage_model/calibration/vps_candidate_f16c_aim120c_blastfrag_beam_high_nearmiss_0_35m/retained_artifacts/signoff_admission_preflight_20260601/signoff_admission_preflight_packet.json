@@ -1,0 +1,148 @@
+{
+  "admission_granted": false,
+  "admission_paths": [
+    {
+      "admission_granted_by_this_preflight": false,
+      "approval_granted_by_this_preflight": false,
+      "gate_family": "tp21_selected_case_admission",
+      "path_id": "RES-005",
+      "ready_for_admission_gate": false,
+      "residual_closed_by_this_preflight": false
+    },
+    {
+      "admission_granted_by_this_preflight": false,
+      "approval_granted_by_this_preflight": false,
+      "gate_family": "beco_replacement_tolerance_admission",
+      "path_id": "RES-006",
+      "ready_for_admission_gate": false,
+      "residual_closed_by_this_preflight": false
+    }
+  ],
+  "approval_granted": false,
+  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601",
+  "authority_guards": {
+    "allowed_output_release_authority_granted": false,
+    "benchmark_consumption_authority_granted": false,
+    "blast_mechanism_authority_granted": false,
+    "component_authority_granted": false,
+    "component_failure_probability_authority_granted": false,
+    "deterministic_fuze_authority_granted": false,
+    "effect_scale_authority_granted": false,
+    "fragment_mechanism_authority_granted": false,
+    "fuze_authority_granted": false,
+    "pk_authority_granted": false,
+    "replacement_anchor_authority_granted": false,
+    "runtime_authority_granted": false,
+    "source_truth_authority_granted": false,
+    "stock_database_authority_granted": false,
+    "stock_descriptor_created": false
+  },
+  "authority_guards_all_false": true,
+  "behavior_risks": [
+    "ready_for_admission_gate can be mistaken for admission; it is only a next-step preflight result",
+    "shape-valid reviewer decisions can be mistaken for consumed approval; this packet keeps signoff_decisions_consumed false",
+    "hash-only refs can be mistaken for permission to disclose raw TP-21/BEC-O content"
+  ],
+  "benchmark_consumed_for_release": false,
+  "candidate_signoff_packet_ref": {
+    "present": false,
+    "status": "external_signoff_packet_not_supplied_fail_closed"
+  },
+  "fail_closed": true,
+  "forbidden_output_policy": {
+    "raw_outputs_retained": false,
+    "raw_source_text_tables_values_formulas_retained": false,
+    "selected_output_preimages_retained": false,
+    "source_payloads_consumed_as_release_benchmarks": false,
+    "temporary_workbook_copy_stdout_or_stderr_retained": false
+  },
+  "input_refs": [
+    {
+      "artifact_key": "signoff_intake_contract",
+      "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+      "present": true,
+      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
+      "required_for_preflight": true,
+      "role": "current_retained_signoff_intake_contract_input",
+      "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
+      "sha256": "5356f5c48a7a98bc9a03c7da6955a35aa966dbc160b4df7527b7da2be03bd873",
+      "status": "retained_fail_closed_signoff_intake_contract_no_external_packet"
+    }
+  ],
+  "integration_notes": [
+    "This preflight only reports whether RES-005/RES-006 admission gate inputs can be attempted.",
+    "A shape-valid signoff packet is not approval and is not consumed by this preflight.",
+    "Later admission gates must explicitly consume retained hash refs and reviewer decisions.",
+    "No TP-21/BEC-O raw source text, tables, values, formulas, raw outputs, workbook copies, stdout, or stderr are retained here."
+  ],
+  "not_admission_gate": true,
+  "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
+  "packet_type": "signoff_admission_preflight_packet_not_admission_gate",
+  "preflight_blocker_count": 1,
+  "preflight_blockers": [
+    {
+      "blocker_id": "external_signoff_packet_not_supplied",
+      "detail": "no external signoff packet was supplied for shape check"
+    }
+  ],
+  "preflight_id": "TC-A2-BF-003-SIGNOFF-INTAKE-NEXT-C-ADMISSION-PREFLIGHT-20260601",
+  "preflight_sha256": "bc315f22e3532fd46cb42a5164036321b3fbcb210c0e746b591b2506e5a2169d",
+  "ready_for_admission_gate": false,
+  "ready_for_res005_admission_gate": false,
+  "ready_for_res006_admission_gate": false,
+  "release_grade_satisfied": false,
+  "residuals_closed_by_this_preflight": [],
+  "schema_version": "a2.blastfrag_signoff_admission_preflight.v1",
+  "shape_check_result": {
+    "candidate_packet_supplied": false,
+    "duplicate_signoff_ids": [],
+    "finding_count": 1,
+    "findings": [
+      {
+        "detail": "no candidate signoff packet was supplied to the intake checker",
+        "effect": "intake_shape_rejected_fail_closed",
+        "finding_id": "external_signoff_packet_not_supplied"
+      }
+    ],
+    "forbidden_key_hits": [],
+    "intake_shape_valid": false,
+    "missing_signoff_ids": [
+      "source_rights_independent_review",
+      "allowed_output_policy_release_grade_review",
+      "tp21_selected_case_hash_only_allowed_output_review",
+      "beco_hash_only_allowed_output_review",
+      "beco_lineage_tolerance_and_replacement_review",
+      "benchmark_consumption_release_decision",
+      "authority_boundary_confirmation"
+    ],
+    "ready_for_separate_reviewer_admission_gate": false,
+    "reviewer_decision_summaries": [],
+    "signoff_decisions_consumed": false,
+    "unexpected_signoff_ids": []
+  },
+  "shape_check_source": "a2_blastfrag_signoff_intake_contract.generate_signoff_intake_contract",
+  "signoff_decisions_consumed": false,
+  "signoff_intake_contract_state": {
+    "authority_guards_all_false": true,
+    "blockers": [],
+    "contract_does_not_grant_approval_or_admission": true,
+    "package_valid": true,
+    "present": true,
+    "required_signoff_ids": [
+      "source_rights_independent_review",
+      "allowed_output_policy_release_grade_review",
+      "tp21_selected_case_hash_only_allowed_output_review",
+      "beco_hash_only_allowed_output_review",
+      "beco_lineage_tolerance_and_replacement_review",
+      "benchmark_consumption_release_decision",
+      "authority_boundary_confirmation"
+    ],
+    "required_signoff_ids_match_current_shape": true,
+    "schema_valid": true,
+    "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
+    "sha256": "5356f5c48a7a98bc9a03c7da6955a35aa966dbc160b4df7527b7da2be03bd873",
+    "status": "retained_fail_closed_signoff_intake_contract_no_external_packet",
+    "usable_for_preflight": true
+  },
+  "status": "retained_fail_closed_signoff_admission_preflight_no_external_packet"
+}
