@@ -52,6 +52,8 @@ FetchContent_MakeAvailable(nlohmann_json)
 # --- Source Groups For Future Target Split ---
 set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel.cpp
+    src/core/engine/simulation_kernel_engagement_event_store.cpp
+    src/core/engine/simulation_kernel_services.cpp
     src/core/engine/simulation_kernel_systems.cpp
     src/core/engine/simulation_kernel_command_api.cpp
     src/core/engine/simulation_kernel_observation_api.cpp

@@ -1,52 +1,41 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
-#include <vector>
 
-#include "runtime/contracts/engagement_contracts.h"
+#include <flecs.h>
 
-struct EngagementDamageStateSnapshot {
-    bool entity_active = false;
-    bool has_health = false;
-    double hp = 0.0;
-    double max_hp = 0.0;
-    bool mission_kill = false;
-    bool mobility_kill = false;
-    bool sensor_kill = false;
-    bool forced_landing = false;
-    bool flight_control_kill = false;
-    bool propulsion_kill = false;
-    bool crew_kill = false;
-    bool has_platform_damage = false;
-    double mission_capability = 1.0;
-    double mobility_capability = 1.0;
-    double sensor_capability = 1.0;
-    double survivability_margin = 1.0;
-    std::string loss_state = "unknown";
-};
+#include "core/engine/engagement_event_types.h"
+#include "core/interfaces/engagement_event_recorder.h"
+#include "core/interfaces/engagement_launch_recorder.h"
 
-struct EngagementEffectsDamageEventRecord {
-    std::uint64_t munition_entity_id = 0;
-    std::uint64_t target_id = 0;
-    EngagementDamageStateSnapshot before{};
-    EngagementDamageStateSnapshot after{};
-    EffectsEvent effects{};
-};
-
-class IEngagementEventRecorder {
+class SimulationKernelEngagementEventStore final
+    : public IEngagementEventRecorder,
+      public IEngagementLaunchRecorder {
 public:
-    virtual ~IEngagementEventRecorder() = default;
+    explicit SimulationKernelEngagementEventStore(flecs::world& ecs);
 
-    virtual EngagementDamageStateSnapshot capture_engagement_damage_state(
+    EngagementDamageStateSnapshot capture_engagement_damage_state(
         std::uint64_t target_id
-    ) const = 0;
+    ) const override;
 
-    virtual std::uint64_t record_effects_damage_event(
+    std::uint64_t record_effects_damage_event(
         EngagementEffectsDamageEventRecord record
-    ) = 0;
+    ) override;
 
-    virtual std::uint64_t record_effects_damage_event(
+    std::uint64_t record_legacy_launch_event(
+        std::uint64_t shooter_id,
+        std::uint64_t target_id,
+        std::uint64_t spawned_munition_id,
+        const std::string& selected_launcher,
+        const std::string& selected_munition,
+        int ammo_delta,
+        double cooldown_delta_s,
+        double event_time_s
+    ) override;
+
+    std::uint64_t record_effects_damage_event(
         std::uint64_t munition_entity_id,
         std::uint64_t target_id,
         const EngagementDamageStateSnapshot& before,
@@ -169,9 +158,20 @@ public:
         const std::string& vulnerability_effect_scale_evidence_provenance = "",
         double mechanism_surface_incidence_cos = 0.0,
         double component_primary_mechanism_surface_incidence_cos = 0.0
-    ) = 0;
-};
+    ) override;
 
-struct EngagementEventRecorderRef {
-    IEngagementEventRecorder* recorder = nullptr;
+    void set_pending_effects_launch_event_id(std::uint64_t launch_event_id) override;
+    RecentEngagementEvents export_recent_events_sorted() const;
+    void clear();
+
+private:
+    void reset_if_event_clock_rewound(double event_time_s);
+
+    flecs::world& ecs_;
+    RecentEngagementEvents recent_engagement_events_;
+    std::uint64_t next_engagement_event_id_ = 1;
+    std::uint64_t pending_effects_launch_event_id_ = 0;
+    double recent_engagement_event_epoch_time_s_ = 0.0;
+    std::int64_t recent_engagement_event_epoch_frame_ = 0;
+    static constexpr std::size_t kMaxRecentEngagementEvents = 64;
 };

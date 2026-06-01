@@ -114,6 +114,11 @@ The active design conclusion is:
     release helpers by introducing `IWeaponReleaseService`; it does not claim
     broader P7 launch/fire-control redesign, raw-runtime retirement, or general
     compatibility cleanup.
+24. `TM04 SimulationKernel Decomposition` is the active bounded lane for the
+    current `SimulationKernel` god-class cleanup: it records the extracted
+    engagement-event store, keeps the release-service adapter residual visible,
+    and requires real responsibility migration before any full decomposition
+    claim.
 
 ## Work Packages
 
@@ -154,6 +159,25 @@ than as top-level active subproject directories.
 | `TM01 Architecture Closure Remediation` | audited-slice closed / residual handed off | Focused remediation after the implementation-level closure audit: `TM01-A`, `TM01-C`, and `TM01-D` are complete for the audited maintained-path slice; `TM01-B` recorded the launch-bridge residual that was later closed by TM03, while broader architecture, P7/raw-runtime, and WP24 canonical acceptance closure remain out of scope. | [TM01 entry](archive/tm01_architecture_closure_remediation/README.md), [task clusters](archive/tm01_architecture_closure_remediation/tm01_architecture_closure_task_clusters_20260524.md) |
 | `TM02 WP24 Acceptance Closure` | temporary / closed | Closure lane that published WP24 canonical acceptance review and index sync without reopening implementation scope. | [TM02 entry](archive/tm02_wp24_acceptance_closure/README.md), [acceptance review](../review/archive/wp-acceptance/wp24_taskorder_maintained_business_migration_acceptance_review_20260525.md) |
 | `TM03 Launch Bridge Boundary` | temporary / closed | Bounded architecture lane that closed the two `systems -> SimulationKernel` weapon-release bridges recorded by TM01-B through a narrow `IWeaponReleaseService` seam. | [TM03 entry](archive/tm03_launch_bridge_boundary/README.md), [task clusters](archive/tm03_launch_bridge_boundary/tm03_launch_bridge_boundary_task_clusters_20260525.md) |
+| `TM04 SimulationKernel Decomposition` | active | Bounded continuation of the current `SimulationKernel` god-class cleanup: move concrete engagement/release/effects responsibilities out of the kernel while preserving public behavior and refusing broad P7/raw-runtime claims. | [TM04 entry](tm04_simulation_kernel_decomposition/README.md), [task clusters](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md) |
+
+## TM04 SimulationKernel Decomposition
+
+Output:
+
+- [TM04 SimulationKernel Decomposition](tm04_simulation_kernel_decomposition/README.md)
+- [TM04 SimulationKernel Decomposition Task Clusters](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_task_clusters_20260601.md)
+- [TM04 Current Status](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_current_status_20260601.md)
+- [TM04 Dispatch Queue](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_dispatch_queue_20260601.md)
+- [TM04 Acceptance Gate](tm04_simulation_kernel_decomposition/tm04_simulation_kernel_decomposition_acceptance_20260601.md)
+
+TM04 is the active decomposition lane for the current `SimulationKernel`
+god-class cleanup. It records the completed engagement-event store extraction
+and header/interface boundary reduction, then keeps the remaining release-service
+and effects DTO work as finite clusters. TM04 must not claim full
+`SimulationKernel` decomposition, P7 launch/fire-control closure, public
+raw-runtime retirement, or broad damage-model maturity until its acceptance gate
+is satisfied.
 
 ## TM03 Launch Bridge Boundary
 

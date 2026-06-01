@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+CMAKE_LISTS = REPO_ROOT / "CMakeLists.txt"
 COUNTERFACTUAL_HEADER = (
     REPO_ROOT
     / "src"
@@ -110,12 +111,54 @@ SIMULATION_KERNEL_SYSTEMS = (
     / "engine"
     / "simulation_kernel_systems.cpp"
 )
+SIMULATION_KERNEL_HEADER = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "engine"
+    / "simulation_kernel.h"
+)
+ENGAGEMENT_EVENT_TYPES = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "engine"
+    / "engagement_event_types.h"
+)
 SIMULATION_KERNEL_CPP = (
     REPO_ROOT
     / "src"
     / "core"
     / "engine"
     / "simulation_kernel.cpp"
+)
+SIMULATION_KERNEL_SERVICES = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "engine"
+    / "simulation_kernel_services.cpp"
+)
+SIMULATION_KERNEL_ENGAGEMENT_EVENT_STORE = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "engine"
+    / "simulation_kernel_engagement_event_store.h"
+)
+SIMULATION_KERNEL_ENGAGEMENT_EVENT_STORE_CPP = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "engine"
+    / "simulation_kernel_engagement_event_store.cpp"
+)
+SIMULATION_KERNEL_DAMAGE_DEBUG_API = (
+    REPO_ROOT
+    / "src"
+    / "core"
+    / "engine"
+    / "simulation_kernel_damage_debug_api.cpp"
 )
 PILOT_WEAPON_RELEASE_SYSTEM = (
     REPO_ROOT
@@ -427,7 +470,14 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     systems_text = _text(SIMULATION_KERNEL_SYSTEMS)
     helper_text = _text(PILOT_WEAPON_RELEASE_SYSTEM)
     naval_helper_text = _text(NAVAL_MISSION_WEAPON_RELEASE_SYSTEM)
+    engagement_event_types_text = _text(ENGAGEMENT_EVENT_TYPES)
+    kernel_header_text = _text(SIMULATION_KERNEL_HEADER)
     kernel_cpp_text = _text(SIMULATION_KERNEL_CPP)
+    kernel_services_text = _text(SIMULATION_KERNEL_SERVICES)
+    engagement_store_text = _text(SIMULATION_KERNEL_ENGAGEMENT_EVENT_STORE)
+    engagement_store_cpp_text = _text(SIMULATION_KERNEL_ENGAGEMENT_EVENT_STORE_CPP)
+    damage_debug_text = _text(SIMULATION_KERNEL_DAMAGE_DEBUG_API)
+    cmake_text = _text(CMAKE_LISTS)
     inline_systems = INLINE_REGISTERED_SYSTEM_PATTERN.findall(systems_text)
     inline_on_update = [name for name, kind in inline_systems if kind == "OnUpdate"]
 
@@ -437,9 +487,62 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
     )
     assert '#include "systems/combat/pilot_weapon_release_system.h"' in systems_text
     assert '#include "systems/naval/naval_mission_weapon_release_system.h"' in systems_text
-    assert "IWeaponReleaseService& weapon_release_service = *this" in systems_text
-    assert "register_pilot_weapon_release_system(ecs, weapon_release_service)" in systems_text
-    assert "register_naval_mission_weapon_release_system(ecs, weapon_release_service)" in systems_text
+    assert "IWeaponReleaseService& weapon_release_service = *this" not in systems_text
+    assert "register_pilot_weapon_release_system(ecs, *weapon_release_service_)" in systems_text
+    assert "register_naval_mission_weapon_release_system(ecs, *weapon_release_service_)" in systems_text
+    assert "ecs.set<EngagementEventRecorderRef>({this})" not in systems_text
+    assert "ecs.set<EngagementEventRecorderRef>({engagement_event_store_.get()})" in systems_text
+    assert "class SimulationKernel :" not in kernel_header_text
+    assert "public IWeaponReleaseService" not in kernel_header_text
+    assert "public IEngagementEventRecorder" not in kernel_header_text
+    assert "std::unique_ptr<IWeaponReleaseService> weapon_release_service_" in kernel_header_text
+    assert (
+        "std::unique_ptr<SimulationKernelEngagementEventStore> engagement_event_store_"
+        in kernel_header_text
+    )
+    assert "RecentEngagementEvents recent_engagement_events_" not in kernel_header_text
+    assert "struct RecentEngagementEvents" not in kernel_header_text
+    assert '#include "core/engine/simulation_kernel_engagement_event_store.h"' not in kernel_header_text
+    assert '#include "core/engine/engagement_event_types.h"' in kernel_header_text
+    assert "struct RecentEngagementEvents" in engagement_event_types_text
+    assert "next_engagement_event_id_" not in kernel_header_text
+    assert "pending_effects_launch_event_id_" not in kernel_header_text
+    assert "record_legacy_launch_event(" not in kernel_header_text
+    assert "record_effects_damage_event(" not in kernel_header_text
+    assert "capture_engagement_damage_state(" not in kernel_header_text
+    assert "public IEngagementEventRecorder" in engagement_store_text
+    assert "public IEngagementLaunchRecorder" in engagement_store_text
+    assert '#include "core/interfaces/engagement_launch_recorder.h"' in engagement_store_text
+    assert "RecentEngagementEvents recent_engagement_events_" in engagement_store_text
+    assert "next_engagement_event_id_" in engagement_store_text
+    assert "pending_effects_launch_event_id_" in engagement_store_text
+    assert "SimulationKernelEngagementEventStore::record_legacy_launch_event(" in engagement_store_cpp_text
+    assert "SimulationKernelEngagementEventStore::record_effects_damage_event(" in engagement_store_cpp_text
+    assert "EngagementEffectsDamageEventRecord record" in engagement_store_text
+    assert "EngagementEffectsDamageEventRecord event_record{}" in _text(
+        REPO_ROOT / "src" / "core" / "engine" / "simulation_kernel_weapon_api.cpp"
+    )
+    assert "SimulationKernelEngagementEventStore::capture_engagement_damage_state(" in engagement_store_cpp_text
+    assert "SimulationKernelEngagementEventStore::" not in damage_debug_text
+    assert "SimulationKernelWeaponReleaseService final : public IWeaponReleaseService" not in kernel_cpp_text
+    assert (
+        "SimulationKernelEngagementEventRecorder final : public IEngagementEventRecorder"
+        not in kernel_cpp_text
+    )
+    assert "SimulationKernelEngagementEventRecorder" not in kernel_services_text
+    assert (
+        "SimulationKernelWeaponReleaseService final : public IWeaponReleaseService"
+        in kernel_services_text
+    )
+    assert (
+        "SimulationKernelEngagementEventRecorder final : public IEngagementEventRecorder"
+        not in kernel_services_text
+    )
+    assert "make_simulation_kernel_weapon_release_service(" in kernel_services_text
+    assert "make_simulation_kernel_weapon_release_service(*this)" in kernel_cpp_text
+    assert "std::make_unique<SimulationKernelEngagementEventStore>(ecs)" in kernel_cpp_text
+    assert "src/core/engine/simulation_kernel_engagement_event_store.cpp" in cmake_text
+    assert "src/core/engine/simulation_kernel_services.cpp" in cmake_text
     assert 'ecs.system<const PilotAction>("PilotWeaponRelease")' not in systems_text
     assert 'query<const MissionCommand, const NavalWeaponSystem>()' not in kernel_cpp_text
 

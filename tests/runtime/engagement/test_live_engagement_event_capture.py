@@ -21,11 +21,20 @@ def _read(path: str) -> str:
 def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -> None:
     header = _read("src/core/engine/simulation_kernel.h")
     observation_api = _read("src/core/engine/simulation_kernel_observation_api.cpp")
+    event_types_header = _read("src/core/engine/engagement_event_types.h")
+    store_header = _read("src/core/engine/simulation_kernel_engagement_event_store.h")
+    store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
 
-    assert "struct RecentEngagementEvents" in header
+    assert "struct RecentEngagementEvents" in event_types_header
     assert "RecentEngagementEvents export_recent_engagement_events() const" in header
-    assert "runtime/contracts/engagement_contracts.h" in header
+    assert "core/engine/engagement_event_types.h" in header
+    assert "core/engine/simulation_kernel_engagement_event_store.h" not in header
+    assert "core/engine/engagement_event_types.h" in store_header
+    assert "core/interfaces/engagement_event_recorder.h" in store_header
+    assert "core/interfaces/engagement_launch_recorder.h" in store_header
+    assert "public IEngagementLaunchRecorder" in store_header
     assert "SimulationKernel::export_recent_engagement_events() const" in observation_api
+    assert "SimulationKernelEngagementEventStore::export_recent_events_sorted() const" in store_impl
 
     getter_body = re.search(
         r"RecentEngagementEvents SimulationKernel::export_recent_engagement_events\(\) const \{(?P<body>.*?)\n\}",
@@ -33,48 +42,64 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
         re.DOTALL,
     )
     assert getter_body is not None
-    assert "std::sort" in getter_body.group("body")
+    assert "engagement_event_store_->export_recent_events_sorted()" in getter_body.group("body")
+    assert "std::sort" not in getter_body.group("body")
     assert "fire_missile" not in getter_body.group("body")
     assert "fire_naval_weapon" not in getter_body.group("body")
     assert "debug_apply_proximity_hit" not in getter_body.group("body")
-    assert "lhs.event_id < rhs.event_id" in getter_body.group("body")
-    assert "lhs.trace_id < rhs.trace_id" in getter_body.group("body")
+    assert "lhs.event_id < rhs.event_id" in store_impl
+    assert "lhs.trace_id < rhs.trace_id" in store_impl
 
 
 def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> None:
+    recorder_header = _read("src/core/interfaces/engagement_event_recorder.h")
     weapon_api = _read("src/core/engine/simulation_kernel_weapon_api.cpp")
     damage_api = _read("src/core/engine/simulation_kernel_damage_debug_api.cpp")
+    store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
 
-    assert "record_legacy_launch_event(" in weapon_api
-    assert "record_effects_damage_event(" in weapon_api
-    assert "record_effects_damage_event(" in damage_api
-    assert "LaunchEvent event{}" in weapon_api
-    assert "EffectsEvent effects{}" in damage_api
-    assert "DamageReport report{}" in damage_api
-    assert "DiagnosticsTrace trace{}" in damage_api
-    assert "pending_effects_launch_event_id_ = launch_event_id" in weapon_api
-    assert "capture_engagement_damage_state(target_id)" in damage_api
+    assert "struct EngagementEffectsDamageEventRecord" in recorder_header
+    assert "record_effects_damage_event(\n        EngagementEffectsDamageEventRecord record" in recorder_header
+    assert "SimulationKernelEngagementEventStore::record_effects_damage_event(\n    EngagementEffectsDamageEventRecord record" in store_impl
+    assert "engagement_event_store_->record_legacy_launch_event(" in weapon_api
+    assert "engagement_event_store_->record_effects_damage_event(" in weapon_api
+    assert "engagement_event_store_->record_effects_damage_event(" in damage_api
+    assert "SimulationKernelEngagementEventStore::record_legacy_launch_event(" in store_impl
+    assert "SimulationKernelEngagementEventStore::record_effects_damage_event(" in store_impl
+    assert "LaunchEvent event{}" in store_impl
+    assert "EffectsEvent effects{}" in store_impl
+    assert "DamageReport report{}" in store_impl
+    assert "DiagnosticsTrace trace{}" in store_impl
+    assert "engagement_event_store_->set_pending_effects_launch_event_id(launch_event_id)" in weapon_api
+    assert "EngagementEffectsDamageEventRecord event_record{}" in weapon_api
+    assert "std::move(event_record)" in weapon_api
+    assert "engagement_event_store_->capture_engagement_damage_state(target_id)" in damage_api
 
 
 def test_recent_event_storage_uses_shared_monotonic_ids_and_queue_aligned_sorted_exports() -> None:
     header = _read("src/core/engine/simulation_kernel.h")
+    store_header = _read("src/core/engine/simulation_kernel_engagement_event_store.h")
     observation_api = _read("src/core/engine/simulation_kernel_observation_api.cpp")
     weapon_api = _read("src/core/engine/simulation_kernel_weapon_api.cpp")
     damage_api = _read("src/core/engine/simulation_kernel_damage_debug_api.cpp")
+    store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
 
-    assert "std::uint64_t next_engagement_event_id_ = 1;" in header
-    assert "static constexpr std::size_t kMaxRecentEngagementEvents = 64;" in header
-    assert "const std::uint64_t event_id = next_engagement_event_id_++;" in weapon_api
-    assert "trace.trace_id = next_engagement_event_id_++;" in weapon_api
-    assert "const std::uint64_t effects_event_id = next_engagement_event_id_++;" in damage_api
-    assert "const std::uint64_t damage_report_id = next_engagement_event_id_++;" in damage_api
-    assert "const std::uint64_t trace_id = next_engagement_event_id_++;" in damage_api
+    assert "std::uint64_t next_engagement_event_id_ = 1;" in store_header
+    assert "static constexpr std::size_t kMaxRecentEngagementEvents = 64;" in store_header
+    assert "next_engagement_event_id_" not in header
+    assert "const std::uint64_t event_id = next_engagement_event_id_++;" in store_impl
+    assert "trace.trace_id = next_engagement_event_id_++;" in store_impl
+    assert "const std::uint64_t effects_event_id = next_engagement_event_id_++;" in store_impl
+    assert "const std::uint64_t damage_report_id = next_engagement_event_id_++;" in store_impl
+    assert "const std::uint64_t trace_id = next_engagement_event_id_++;" in store_impl
     for comparator in (
         "lhs.event_id < rhs.event_id",
         "lhs.report_id < rhs.report_id",
         "lhs.trace_id < rhs.trace_id",
     ):
-        assert comparator in observation_api
+        assert comparator in store_impl
+    assert "export_recent_events_sorted()" in observation_api
+    assert "record_legacy_launch_event(" in weapon_api
+    assert "SimulationKernelEngagementEventStore::" not in damage_api
 
 
 def _engagement_ref(world_index: int, entity_id: int) -> ef_py.EngagementEntityRef:

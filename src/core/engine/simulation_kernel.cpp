@@ -1,4 +1,6 @@
 #include "simulation_kernel.h"
+#include "simulation_kernel_engagement_event_store.h"
+#include "simulation_kernel_services.h"
 
 #include "components/physics/instruments.h"
 #include "core/interfaces/environment_model.h"
@@ -22,7 +24,9 @@ SimulationKernel::SimulationKernel()
       acoustic_model_(make_default_acoustic_model()),
       control_model_(make_default_control_model()),
       guidance_model_(make_default_guidance_model()),
-      environment_model_(make_default_environment_model()) {
+      environment_model_(make_default_environment_model()),
+      weapon_release_service_(make_simulation_kernel_weapon_release_service(*this)),
+      engagement_event_store_(std::make_unique<SimulationKernelEngagementEventStore>(ecs)) {
     register_components_and_systems();
     if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
@@ -131,7 +135,7 @@ void SimulationKernel::set_missile_tuning(const MissileTuning& tuning) {
 }
 
 void SimulationKernel::reset(unsigned int seed) {
-    clear_recent_engagement_events();
+    engagement_event_store_->clear();
 
     // Delete all simulation entities (tagged with SimObject)
     // This is safer than delete_with<Transform> as it won't affect
