@@ -1454,6 +1454,63 @@ class ComponentDamageRuntimeMixin:
         tick_overlay = _aircraft_damage_overlay(sim, target_id)
         self.assertLessEqual(tick_overlay["roll_control"], group_availability + 1.0e-6)
 
+    def test_phase3_component_availability_consequences_flow_into_damage_report(self) -> None:
+        target_name = "F-16C_A2_ComponentConsequenceClosure_Test"
+        overrides = [
+            _make_f16_component_redundancy_override(
+                target_name,
+                redundancy_group=0.0,
+                critical=True,
+            )
+        ]
+        sim = _kernel_with_unit_overrides(overrides)
+        attacker_id, target_id = _spawn_attacker_and_named_target(sim, target_name)
+        profile = _make_warhead_profile("blast_fragmentation", damage=60.0, radius=35.0)
+
+        event = None
+        report = None
+        overlay = None
+        for _ in range(4):
+            ok = sim.debug_apply_profiled_local_proximity_hit(
+                attacker_id,
+                target_id,
+                -0.8,
+                4.1,
+                0.0,
+                profile,
+            )
+            self.assertTrue(bool(ok))
+            self.assertTrue(sim.is_unit_active(target_id))
+            events = sim.export_recent_engagement_events()
+            event = events.effects_events[-1]
+            report = events.damage_reports[-1]
+            overlay = _aircraft_damage_overlay(sim, target_id)
+            if bool(report.flight_control_kill):
+                break
+        else:
+            self.fail("component damage did not produce a flight-control kill report")
+
+        self.assertIsNotNone(event)
+        self.assertIsNotNone(report)
+        self.assertIsNotNone(overlay)
+        group_availability = float(event.component_redundancy_group_availability)
+
+        self.assertEqual(str(event.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(event.component_primary_system), "flight_control")
+        self.assertLess(group_availability, 1.0)
+        self.assertLessEqual(overlay["roll_control"], group_availability + 1.0e-6)
+        self.assertTrue(bool(report.forced_landing))
+        self.assertTrue(bool(report.flight_control_kill))
+        self.assertTrue(bool(report.mobility_kill))
+        self.assertFalse(bool(report.propulsion_kill))
+        self.assertFalse(bool(report.crew_kill))
+        self.assertFalse(bool(report.destroyed))
+        self.assertEqual(str(report.loss_state_to), "mobility_kill")
+        self.assertEqual(bool(report.forced_landing), bool(overlay["forced_landing"]))
+        self.assertEqual(bool(report.flight_control_kill), bool(overlay["flight_control_kill"]))
+        self.assertEqual(bool(report.propulsion_kill), bool(overlay["propulsion_kill"]))
+        self.assertEqual(bool(report.crew_kill), bool(overlay["crew_kill"]))
+
     def test_phase3_component_failure_probability_is_sampled_and_reported(self) -> None:
         wing = (-0.753, 4.0, 0.0)
 
