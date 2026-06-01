@@ -7,6 +7,7 @@ The maintained project entry is the Chinese index:
 - [README.zh.md](README.zh.md)
 - [Task cluster dispatch packet](task_cluster_dispatch_20260601.zh.md)
 - [Task cluster execution status](task_cluster_execution_status_20260601.zh.md)
+- [Default effects modularization task list](default_effects_modularization/README.md)
 
 The previous long English runtime narrative was archived at:
 

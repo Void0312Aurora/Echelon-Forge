@@ -23,3 +23,8 @@ runtime，也不拥有 ground fires/damage runtime。
 ## 迁移备注
 
 系统调度放在 `systems/combat`，状态放在 `components/combat`，模型实现放在本目录。
+
+`detail/default_effects_*_detail.inc` 文件是 `default_effects_model.cpp` 的私有
+实现片段。namespace 级片段用于保持 helper 的本地链接，并把 `on_proximity_hit`
+拆为 direct-hit、spatial-projection、system-effect、air-platform-resolution、
+result-population 与 legacy/fallback 子模块。它们不是独立 API，也不是新的模型入口。

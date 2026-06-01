@@ -25,3 +25,10 @@ mission runtime or any ground fires/damage runtime.
 ## Migration Notes
 
 System scheduling is placed in `systems/combat`, state is placed in `components/combat`, and model implementations are placed in this directory.
+
+`detail/default_effects_*_detail.inc` files are private implementation
+fragments for `default_effects_model.cpp`. Namespace-level fragments keep helper
+linkage local while splitting `on_proximity_hit` into direct-hit,
+spatial-projection, system-effect, air-platform-resolution, result-population,
+and legacy/fallback submodules. They are not standalone APIs or additional
+model entry points.

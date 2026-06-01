@@ -30,6 +30,7 @@ authority promotion 待办。
 | [任务簇分发包](task_cluster_dispatch_20260601.zh.md) | 将 `TC-A2-*` 拆成可交付 subagent / 主线程任务 |
 | [任务簇执行状态](task_cluster_execution_status_20260601.zh.md) | 记录按新任务簇分发和验证后的当前就绪度 |
 | [runtime 状态](runtime_status.zh.md) | 承接 `TC-A2-RUNTIME` / `G1` 的已维护工程面、回归面和非目标 |
+| [Default effects modularization](default_effects_modularization/README.zh.md) | 固化 `default_effects_model.cpp` 结构化拆分、后续 fixture 和收口任务清单 |
 | [candidate 验收状态](candidate_acceptance_status.zh.md) | 承接当前 `TC-A2-BF-001..004` / `G2` 非权威候选包验收，并读取 `G3` residual 状态 |
 | [authority promotion backlog](authority_promotion_backlog.zh.md) | 登记未来 `TC-A2-AUTH-B`、`TC-A2-AUTH-C` 和 `TC-A2-KILLCHAIN` |
 | [窄域 authority 边界](narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md) | 固定当前 weapon-target-scope 和不得越界的 authority 边界 |
