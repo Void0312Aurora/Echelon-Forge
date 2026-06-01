@@ -4,13 +4,21 @@
 
 ## 当前实现（最小可用）
 - CommandLink：指令延迟与丢包率（单位级别）。
-- PendingCommand：指令排队并在指定时间投递。
-- 同时支持 MovementCommand 与 ActionCommand。
+- 延迟投递由 `command_link.h` 中的具体 pending command 组件表示：
+  `PendingMovementCommand`、`PendingActionCommand` 和
+  `PendingMissionCommand`。当前没有通用的 `PendingCommand` 类型。
+- 支持 `MissionCommand` 投递，也保留面向 legacy `MovementCommand` 与
+  `ActionCommand` 表面的维护中兼容桥接。
 
 相关代码入口：
-- 数据结构：`src/components/action.h`
-- 链路系统：`src/systems/command_link_system.h`
-- 投递逻辑：`src/core/simulation_kernel.cpp`
+- 链路状态与 pending command 数据：
+  `src/components/command/command_link.h`
+- legacy movement/action 兼容 DTO：
+  `src/components/command/legacy_command.h`
+- 链路系统：
+  `src/systems/systems/command_link_system.h`
+- 命令 API 排队逻辑：
+  `src/core/engine/simulation_kernel_command_api.cpp`
 
 ## 设计目标
 1) 引入真实的指挥链路限制（延迟/丢包/频宽）。

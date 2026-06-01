@@ -251,6 +251,30 @@ target_link_libraries(ef_gpu_visual_candidate_phase0_probe PRIVATE
     ef_gpu_experiments
 )
 
+# --- Testing ---
+# 5. doctest (C++ unit test framework)
+FetchContent_Declare(
+    doctest
+    GIT_REPOSITORY https://github.com/doctest/doctest.git
+    GIT_TAG        v2.4.11
+)
+FetchContent_MakeAvailable(doctest)
+
+enable_testing()
+
+set(EF_TEST_SOURCES
+    src/tests/test_main.cpp
+    src/tests/test_simulation_kernel_smoke.cpp
+    src/tests/test_components_basic.cpp
+)
+
+add_executable(ef_test ${EF_TEST_SOURCES})
+target_link_libraries(ef_test PRIVATE ef_core ef_gpu_experiments doctest::doctest)
+target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# Single CTest entry that runs all doctest suites
+add_test(NAME ef_test_all COMMAND ef_test)
+
 # Install the extension module
 install(TARGETS ef_py DESTINATION .)
 set_target_properties(ef_py PROPERTIES INSTALL_RPATH "$ORIGIN/lib")

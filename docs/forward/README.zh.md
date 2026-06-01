@@ -13,6 +13,7 @@
 - rl_selfplay.md：强化学习自我对弈路线图。
 - c2_communication.md：指挥链路与C2约束路线图。
 - models/hierarchical_moe_execution_policy.md：执行层分层MoE线路的设计冻结。
+- temp/README.zh.md：临时保留笔记的索引与权威边界。
 
 发布相关的检查清单与依赖可复现性说明，应在真正排期后与对应的任务/
 计划文档放在一起维护。

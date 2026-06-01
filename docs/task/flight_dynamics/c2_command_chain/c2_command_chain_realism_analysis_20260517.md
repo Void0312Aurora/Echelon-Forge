@@ -19,7 +19,7 @@ Related Files:
 - [Command Component README (Boundary Statement)](../../../../src/components/command/README.md)
 - [PilotAction Component](../../../../src/components/command/pilot_action.h)
 - [MovementCommand / ActionCommand / CommandLag](../../../../src/components/command/legacy_command.h)
-- [CommandLink / PendingCommand](../../../../src/components/command/command_link.h)
+- [CommandLink / pending command components](../../../../src/components/command/command_link.h)
 - [CommandLinkSystem (Delivery Scheduling)](../../../../src/systems/systems/command_link_system.h)
 - [CommMessage / CommQueue / CommPacket](../../../../src/components/command/common/comm_message.h)
 - [DataLinkSystem (Track Sharing + Message Distribution)](../../../../src/systems/systems/data_link_system.h)

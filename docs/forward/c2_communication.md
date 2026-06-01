@@ -5,13 +5,21 @@ communication constraints.
 
 ## Current Implementation (Minimum Viable)
 - `CommandLink`: command latency and packet-loss rate at the unit level.
-- `PendingCommand`: queues commands and delivers them at the scheduled time.
-- Supports both `MovementCommand` and `ActionCommand`.
+- Deferred delivery is represented by the concrete pending command components
+  in `command_link.h`: `PendingMovementCommand`, `PendingActionCommand`, and
+  `PendingMissionCommand`. There is no generic `PendingCommand` type.
+- Supports `MissionCommand` delivery plus the maintained compatibility bridge
+  for legacy `MovementCommand` and `ActionCommand` surfaces.
 
 Relevant code entry points:
-- Data structures: `src/components/action.h`
-- Link system: `src/systems/command_link_system.h`
-- Delivery logic: `src/core/simulation_kernel.cpp`
+- Link state and pending command data:
+  `src/components/command/command_link.h`
+- Legacy movement/action compatibility DTOs:
+  `src/components/command/legacy_command.h`
+- Link system:
+  `src/systems/systems/command_link_system.h`
+- Command API queueing:
+  `src/core/engine/simulation_kernel_command_api.cpp`
 
 ## Design Goals
 1) Introduce realistic command-link limits (latency, packet loss, bandwidth).

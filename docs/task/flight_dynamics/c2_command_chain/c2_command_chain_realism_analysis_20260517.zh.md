@@ -17,7 +17,7 @@
 - [Command 组件 README（边界声明）](../../../../src/components/command/README.md)
 - [PilotAction 组件](../../../../src/components/command/pilot_action.h)
 - [MovementCommand / ActionCommand / CommandLag](../../../../src/components/command/legacy_command.h)
-- [CommandLink / PendingCommand](../../../../src/components/command/command_link.h)
+- [CommandLink / pending command 组件](../../../../src/components/command/command_link.h)
 - [CommandLinkSystem（投递调度）](../../../../src/systems/systems/command_link_system.h)
 - [CommMessage / CommQueue / CommPacket](../../../../src/components/command/common/comm_message.h)
 - [DataLinkSystem（航迹共享 + 消息分发）](../../../../src/systems/systems/data_link_system.h)

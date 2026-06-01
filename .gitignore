@@ -58,6 +58,9 @@ docs/temp/
 docs/temp/**
 docs/**/temp/
 docs/**/temp/**
+!docs/**/temp/
+!docs/**/temp/README.md
+!docs/**/temp/README.zh.md
 docs/plan/results/
 docs/plan/results/**
 docs/plan/architecture/review/
@@ -78,6 +81,10 @@ datasets/
 output/
 .playwright-mcp/
 docs/book/
+docs/book/**
+!docs/book/
+!docs/book/README.md
+!docs/book/README.zh.md
 # Local gameplay/frontend workspace. Track source/docs, but keep machine-
 # generated bridge outputs and runtime residue out of version control.
 /game/bridge/build/

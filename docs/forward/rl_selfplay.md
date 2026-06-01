@@ -41,15 +41,14 @@ so the training loop remains controllable and reproducible.
 - Make reward and termination conditions configurable by scenario.
 - Integrate deep networks (PyTorch) and GPU execution.
 
-## Current Implementation Notes
-- The policy pool is implemented: `examples/training/train_self_play.py`
-  supports historical-opponent sampling.
-- Configuration is implemented: training hyperparameters, spawn setup, reward,
-  and termination conditions all come from
-  `examples/training/selfplay_config.json`.
-- Self-play now uses a PyTorch MLP policy and can enable GPU execution in the
-  config.
-- Batched sampling (multi-environment), training-log output (win rate, episode
-  length, etc.), and checkpoint saving are already supported.
-- New evaluation and training-curve scripts are available for visualizing
-  training progress and tactical replay.
+## Current Repository State
+- This is still a forward-looking roadmap, not the maintained self-play entry
+  point.
+- There is no `examples/training/train_self_play.py` or
+  `examples/training/selfplay_config.json` in the current repository.
+- Maintained training entry points and configs live under `train.py`,
+  `python/training/`, and `examples/config/training/`.
+- Air-combat training configs and scripted-opponent fixtures exist, but a
+  standalone historical policy pool and self-play evaluation loop still need to
+  be promoted through `plan/` or `task/` before this document can claim them as
+  implemented.

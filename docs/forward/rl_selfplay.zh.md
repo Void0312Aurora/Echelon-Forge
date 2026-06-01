@@ -38,10 +38,11 @@
 - 将奖励/终止条件配置化（scenario）。
 - 接入深度网络（PyTorch）与 GPU。
 
-## 当前实现说明
-- 策略池已实现：`examples/training/train_self_play.py` 支持历史对手采样。
-- 配置化已实现：训练超参、spawn、奖励、终止条件均来自
+## 当前仓库状态
+- 本文件仍是前瞻路线图，不是维护中的自博弈入口。
+- 当前仓库不存在 `examples/training/train_self_play.py` 或
   `examples/training/selfplay_config.json`。
-- 自博弈已切换到 PyTorch MLP 策略，可在配置中启用 GPU。
-- 已支持批量采样（多环境）、训练日志输出（胜率/回合长度等）以及断点保存。
-- 新增评估脚本与训练曲线脚本，用于可视化训练与战术回放。
+- 维护中的训练入口与配置位于 `train.py`、`python/training/` 和
+  `examples/config/training/`。
+- 空战训练配置与脚本化对手 fixture 已存在，但独立的历史策略池与自博弈评估
+  闭环仍需先通过 `plan/` 或 `task/` 提升，本文档才能把它们声明为已实现。
