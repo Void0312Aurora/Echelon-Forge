@@ -1,0 +1,50 @@
+{
+  "type": "env_regression",
+  "check_kind": "landing_objective_properties",
+  "seed": 0,
+  "include_visual": false,
+  "action_mode": "full",
+  "scenario_inline": {
+    "scenario_name": "landing_objective_properties_regression",
+    "imports": [{"file": "examples/config/prefabs/airbase_large_runway45.json"}],
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 20,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 12.0, "dir_from_deg": 270.0, "shear_mps_per_km": 0.0}
+    },
+    "mission_command": {
+      "command_code": 4,
+      "target_heading": 90.0,
+      "target_altitude": 0.0,
+      "target_speed": 82.0
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [-1200.0, 0.0, 0.5],
+        "vel": [0.0, 0.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [
+      {
+        "type": "conditional",
+        "conditions": [
+          {"property": "on_runway_geom", "op": ">=", "value": 0.5},
+          {"property": "on_ground", "op": ">=", "value": 0.5},
+          {"property": "altitude_agl", "op": "<=", "value": 2.0},
+          {"property": "ground_speed", "op": "<=", "value": 1.0},
+          {"property": "runway_from_threshold_m", "op": ">=", "value": 90.0},
+          {"property": "runway_from_threshold_m", "op": "<=", "value": 1300.0},
+          {"property": "sink_rate_abs_mps", "op": "<=", "value": 3.5}
+        ],
+        "reward": 1500.0
+      }
+    ],
+    "rewards": {"survival": 0.0}
+  }
+}

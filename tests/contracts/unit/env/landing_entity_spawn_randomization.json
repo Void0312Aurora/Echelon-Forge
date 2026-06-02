@@ -1,0 +1,22 @@
+{
+  "type": "unit_regression",
+  "check_kind": "landing_entity_spawn_randomization",
+  "seed": 7,
+  "entity": {
+    "pos": [-9000.0, 200.0, 450.0],
+    "vel": [82.0, 0.0, -1.5],
+    "heading": 90.0,
+    "randomization": {
+      "along_body_m_range": [-100.0, 100.0],
+      "cross_body_m_range": [-50.0, 50.0],
+      "altitude_offset_m_range": [-20.0, 20.0],
+      "heading_offset_deg_range": [-5.0, 5.0],
+      "speed_scale_range": [0.95, 1.05],
+      "speed_offset_mps_range": [-2.0, 2.0],
+      "sink_rate_mps_range": [-2.0, -1.0]
+    }
+  },
+  "altitude_offset_bounds": [-20.0, 20.0],
+  "heading_offset_bounds": [-5.0, 5.0],
+  "sink_rate_bounds": [-2.0, -1.0]
+}

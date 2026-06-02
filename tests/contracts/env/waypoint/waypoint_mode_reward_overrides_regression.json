@@ -1,0 +1,51 @@
+{
+  "type": "env_regression",
+  "check_kind": "waypoint_mode_reward_overrides",
+  "seed": 0,
+  "include_visual": false,
+  "action_mode": "full",
+  "action": [0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  "scenario_inline": {
+    "scenario_name": "waypoint_mode_reward_override_regression",
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 20,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0}
+    },
+    "mission_command": {
+      "command_code": 3,
+      "target_heading": 90.0,
+      "target_altitude": 1200.0,
+      "target_speed": 210.0,
+      "waypoint_mode": "flyby",
+      "waypoint_radius_m": 1000.0,
+      "waypoints": [
+        {"x": 1500.0, "y": 0.0, "z": 1200.0, "waypoint_mode": "flyover", "radius_m": 1000.0}
+      ]
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [0.0, 0.0, 1200.0],
+        "vel": [210.0, 0.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [],
+    "rewards": {
+      "survival": 0.0,
+      "waypoint_progress_weight": 0.0,
+      "waypoint_distance_weight": -0.00004,
+      "waypoint_distance_weight_flyover": -0.001,
+      "waypoint_cross_track_weight": 0.0,
+      "waypoint_proximity_weight": 0.0,
+      "waypoint_proximity_weight_flyover": 2.0,
+      "waypoint_proximity_ref_m_flyover": 2000.0,
+      "waypoint_proximity_power_flyover": 1.0
+    }
+  }
+}

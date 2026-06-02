@@ -9,11 +9,16 @@ dist/
 *.egg-info/
 
 # --- Python ---
-.venv/
-.venv.*/
-env/
-venv/
-ENV/
+/.venv/
+/.venv.*/
+/env/
+/venv/
+/ENV/
+# Contract fixtures named env are tracked assets, not virtual environments.
+!tests/contracts/env/
+!tests/contracts/env/**
+!tests/contracts/unit/env/
+!tests/contracts/unit/env/**
 __pycache__/
 *.pyc
 *.pyo

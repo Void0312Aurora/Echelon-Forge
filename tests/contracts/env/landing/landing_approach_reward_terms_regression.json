@@ -1,0 +1,17 @@
+{
+  "type": "env_regression",
+  "check_kind": "landing_approach_reward_terms",
+  "seed": 0,
+  "include_visual": false,
+  "action_mode": "full",
+  "action": [0.0, 0.0, 0.0, 0.45, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  "scenario_base": "scenarios/landing/landing_ils_final_train_v1.json",
+  "scenario_patch": {
+    "entities": [
+      {
+        "pos": [-9000.0, 450.0, 650.0],
+        "vel": [82.0, 0.0, -2.0]
+      }
+    ]
+  }
+}

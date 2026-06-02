@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-24",
+  "generated_at": "2026-06-02",
   "root": "docs",
   "pairs": [
     {
@@ -169,9 +169,9 @@
       "english": "docs/standards/README.md",
       "chinese": "docs/standards/README.zh.md",
       "source_of_truth": "english",
-      "last_verified": "2026-05-28",
-      "english_hash": "dae016e9cf54a4f2e6cc4b3172c68dddd70ef0d7d25a9007804399f317d48764",
-      "chinese_hash": "33b1b220b0a3b8b046d128e0e7b4fbcfc7ec87fd3b0edbdfd9729f98e24becae"
+      "last_verified": "2026-06-02",
+      "english_hash": "ee0f674bcdcc6004966f706804979a1343030d176476264964d1cf78f871c4d4",
+      "chinese_hash": "4536e13e8850c26055cbc79e0d00d52d3ddae951cccb38221c01c1d3d00a3108"
     },
     {
       "pair_id": "standards/air/README",
@@ -280,6 +280,15 @@
       "last_verified": "2026-05-19",
       "english_hash": "112d081b30cb4c23cd78d30fba1d7651f9b9e6aa4b9393a0c7de68158d108d18",
       "chinese_hash": "1105c310b6955df959b60ee96a372e24491ab6ccf5ff3670c567eed860ecb793"
+    },
+    {
+      "pair_id": "standards/governance/release_and_dependency_policy",
+      "english": "docs/standards/governance/release_and_dependency_policy.md",
+      "chinese": "docs/standards/governance/release_and_dependency_policy.zh.md",
+      "source_of_truth": "english",
+      "last_verified": "2026-06-02",
+      "english_hash": "0a7541d4bacf591dc6293d35dd14e5fa08c09b6947455132b0ca49e4f1803de6",
+      "chinese_hash": "fdbdf38d64c9bbdb8a8f0204aacba00cdf0eb126a1b9abb620a30975f4809c12"
     },
     {
       "pair_id": "standards/governance/subagent_usage_policy",

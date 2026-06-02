@@ -1,0 +1,57 @@
+{
+  "type": "env_regression",
+  "check_kind": "flyby_sequence_past_fix_guard",
+  "include_visual": false,
+  "include_proprio": false,
+  "action_mode": "full",
+  "mission_obs_mode": "nav_v2",
+  "seed": 0,
+  "waypoint_idx": 1,
+  "turn_speed_mps": 210.0,
+  "bank_limit_deg": 30.0,
+  "seq_gate_min_m": 1200.0,
+  "seq_gate_max_m": 3000.0,
+  "seq_gate_base_m": 1200.0,
+  "seq_gate_turn_lead_scale": 0.35,
+  "scenario_inline": {
+    "scenario_name": "flyby_sequence_past_fix_guard_regression",
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 10,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0}
+    },
+    "mission_command": {
+      "command_code": 3,
+      "target_heading": 90.0,
+      "target_altitude": 1200.0,
+      "target_speed": 210.0,
+      "waypoint_mode": "flyby",
+      "waypoint_radius_m": 1200.0,
+      "lnav_bank_limit_deg": 30.0,
+      "waypoints": [
+        {"x": 10000.0, "y": 0.0, "z": 1200.0, "waypoint_mode": "flyby"},
+        {"x": 20000.0, "y": 0.0, "z": 1200.0, "waypoint_mode": "flyby", "radius_m": 1200.0},
+        {"x": 30000.0, "y": 10000.0, "z": 1200.0, "waypoint_mode": "flyover", "radius_m": 800.0}
+      ]
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [37000.0, 1800.0, 1200.0],
+        "vel": [210.0, 0.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [],
+    "rewards": {
+      "survival": 0.0,
+      "waypoint_progress_weight": 0.0,
+      "waypoint_distance_weight": 0.0,
+      "waypoint_cross_track_weight": 0.0
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "type": "env_regression",
+  "check_kind": "landing_short_final_not_offrunway",
+  "seed": 0,
+  "include_visual": false,
+  "action_mode": "full",
+  "action": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  "scenario_inline": {
+    "scenario_name": "landing_short_final_offrunway_guard",
+    "imports": [{"file": "examples/config/prefabs/airbase_large_runway45.json"}],
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 20,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0}
+    },
+    "mission_command": {
+      "command_code": 4,
+      "target_heading": 90.0,
+      "target_altitude": 0.0,
+      "target_speed": 82.0,
+      "landing_mode": "ils_final"
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [-1520.0, 0.0, 4.0],
+        "vel": [82.0, 0.0, -1.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [],
+    "rewards": {
+      "survival": 0.0,
+      "off_runway_penalty": -3.0,
+      "off_runway_terminate_speed": 50.0,
+      "off_runway_terminate_grace_s": 0.0,
+      "off_runway_terminate_penalty": -300.0
+    }
+  }
+}

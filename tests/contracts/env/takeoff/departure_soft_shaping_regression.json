@@ -1,0 +1,111 @@
+{
+  "type": "env_regression",
+  "check_kind": "departure_soft_shaping",
+  "include_visual": false,
+  "include_proprio": false,
+  "action_mode": "full",
+  "mission_obs_mode": "basic",
+  "seed": 0,
+  "scenario_inline": {
+    "scenario_name": "departure_soft_shaping_regression_center",
+    "imports": [{"file": "examples/config/prefabs/airbase_large_runway45.json"}],
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 10,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+      "randomization": {
+        "world_yaw_range": [0.0, 0.0],
+        "rotate_mission_heading_with_world": true
+      }
+    },
+    "mission_command": {
+      "command_code": 2,
+      "target_heading": 90.0,
+      "target_altitude": 220.0,
+      "target_speed": 155.0
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [-1400.0, 0.0, 30.0],
+        "vel": [140.0, 0.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [],
+    "rewards": {
+      "survival": 0.0,
+      "alignment_reward_weight": 0.0,
+      "departure_centerline_max_alt_agl_m": 150.0,
+      "departure_centerline_m_penalty_weight": -1.2,
+      "departure_centerline_m_deadband_m": 3.0,
+      "departure_centerline_m_norm_m": 15.0,
+      "departure_centerline_m_power": 2.0,
+      "departure_centerline_m_clip": 4.0,
+      "departure_centerline_reward_weight": 0.8,
+      "departure_centerline_reward_band_m": 8.0,
+      "departure_track_error_weight": -0.6,
+      "departure_track_error_deadband_deg": 5.0,
+      "departure_track_error_norm_deg": 12.0,
+      "departure_track_error_power": 2.0,
+      "departure_track_error_clip": 3.0,
+      "departure_track_reward_weight": 0.6,
+      "departure_track_reward_band_deg": 12.0
+    }
+  },
+  "comparison_scenario_inline": {
+    "scenario_name": "departure_soft_shaping_regression_drift",
+    "imports": [{"file": "examples/config/prefabs/airbase_large_runway45.json"}],
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 10,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+      "randomization": {
+        "world_yaw_range": [0.0, 0.0],
+        "rotate_mission_heading_with_world": true
+      }
+    },
+    "mission_command": {
+      "command_code": 2,
+      "target_heading": 90.0,
+      "target_altitude": 220.0,
+      "target_speed": 155.0
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [-1400.0, 40.0, 30.0],
+        "vel": [140.0, 0.0, 0.0],
+        "heading": 120.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [],
+    "rewards": {
+      "survival": 0.0,
+      "alignment_reward_weight": 0.0,
+      "departure_centerline_max_alt_agl_m": 150.0,
+      "departure_centerline_m_penalty_weight": -1.2,
+      "departure_centerline_m_deadband_m": 3.0,
+      "departure_centerline_m_norm_m": 15.0,
+      "departure_centerline_m_power": 2.0,
+      "departure_centerline_m_clip": 4.0,
+      "departure_centerline_reward_weight": 0.8,
+      "departure_centerline_reward_band_m": 8.0,
+      "departure_track_error_weight": -0.6,
+      "departure_track_error_deadband_deg": 5.0,
+      "departure_track_error_norm_deg": 12.0,
+      "departure_track_error_power": 2.0,
+      "departure_track_error_clip": 3.0,
+      "departure_track_reward_weight": 0.6,
+      "departure_track_reward_band_deg": 12.0
+    }
+  }
+}

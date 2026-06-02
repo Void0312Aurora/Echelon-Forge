@@ -1,0 +1,6 @@
+{
+  "type": "unit_regression",
+  "check_kind": "takeoff_curriculum_auto_gear_agl",
+  "alt_baro": 500.0,
+  "alt_radar": 0.0
+}

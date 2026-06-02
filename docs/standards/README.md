@@ -231,6 +231,7 @@ Additional maintained supplements:
 
 - [Bilingual Documentation Policy](governance/bilingual_documentation_policy.md)
 - [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
+- [Release And Dependency Policy](governance/release_and_dependency_policy.md)
 - [Subagent Usage Policy](governance/subagent_usage_policy.md)
 - [WP Closure Lane Policy](governance/wp_closure_lane_policy.md)
 - [Document Alignment Map](overview/document_alignment_map.md)

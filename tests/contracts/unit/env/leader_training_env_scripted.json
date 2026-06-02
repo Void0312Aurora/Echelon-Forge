@@ -1,0 +1,32 @@
+{
+  "type": "unit_regression",
+  "check_kind": "leader_training_env",
+  "scenario": "scenarios/combined/takeoff_to_landing_continuous_train_v1.json",
+  "seed": 7,
+  "leader_env": {
+    "decision_interval_steps": 5,
+    "execution_backend": "scripted",
+    "execution_train_config": "examples/config/training/p5_takeoff_to_landing_full_visual_navv2_residual_smoke_v3.json",
+    "scripted_transition_alt_agl_m": 140.0,
+    "heading_bias_limit_deg": 35.0,
+    "altitude_bias_limit_m": 600.0,
+    "speed_bias_limit_mps": 30.0
+  },
+  "action": [0.0, 0.0, 0.0, 0.0],
+  "allowed_command_codes": [1, 2, 3, 4],
+  "expected_reward_term_keys": [
+    "execution_reward",
+    "command_change_penalty",
+    "invalid_phase_penalty",
+    "premature_approach_penalty",
+    "baseline_deviation_penalty",
+    "mode_change_penalty"
+  ],
+  "expected_obs_shapes": {
+    "ownship": [12],
+    "task": [10],
+    "navigation": [10],
+    "terminal": [8],
+    "link": [6]
+  }
+}

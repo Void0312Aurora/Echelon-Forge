@@ -1,0 +1,58 @@
+{
+  "type": "env_regression",
+  "check_kind": "takeoff_departure_constraints",
+  "seed": 0,
+  "include_visual": false,
+  "action_mode": "full",
+  "mission_obs_mode": "basic",
+  "scenario_inline": {
+    "scenario_name": "takeoff_departure_constraint_regression",
+    "imports": [{"file": "examples/config/prefabs/airbase_large_runway45.json"}],
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 10,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0},
+      "randomization": {
+        "world_yaw_range": [0.0, 0.0],
+        "rotate_mission_heading_with_world": true
+      }
+    },
+    "mission_command": {
+      "command_code": 2,
+      "target_heading": 90.0,
+      "target_altitude": 220.0,
+      "target_speed": 155.0
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [-1400.0, 0.0, 120.0],
+        "vel": [0.0, 0.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [
+      {
+        "type": "conditional",
+        "conditions": [
+          {"property": "altitude_agl", "op": ">=", "value": 100.0},
+          {"property": "speed", "op": ">=", "value": 0.0},
+          {"property": "gear", "op": "<=", "value": 1.0},
+          {"property": "heading_error_deg", "op": "<=", "value": 15.0},
+          {"property": "runway_cross_abs_m", "op": "<=", "value": 25.0}
+        ],
+        "reward": 1200.0
+      }
+    ],
+    "rewards": {"survival": 0.0}
+  },
+  "cases": [
+    {"name": "aligned", "spawn_y_m": 0.0, "heading_deg": 90.0, "expect_terminated": true, "expect_reason": "success_objective"},
+    {"name": "cross_track_out_of_limits", "spawn_y_m": 80.0, "heading_deg": 90.0, "expect_terminated": false},
+    {"name": "heading_out_of_limits", "spawn_y_m": 0.0, "heading_deg": 140.0, "expect_terminated": false}
+  ]
+}

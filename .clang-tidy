@@ -1,0 +1,19 @@
+---
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-assert-side-effect,
+  bugprone-dangling-handle,
+  bugprone-sizeof-expression,
+  bugprone-string-constructor,
+  bugprone-use-after-move,
+  performance-move-const-arg,
+  performance-no-automatic-move,
+  performance-unnecessary-copy-initialization,
+  modernize-use-nullptr
+WarningsAsErrors: ""
+HeaderFilterRegex: "(^|.*/)(src|tests)/.*"
+SystemHeaders: false
+FormatStyle: file
+ExtraArgs:
+  - "-std=c++20"

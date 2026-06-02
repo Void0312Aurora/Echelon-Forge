@@ -1,0 +1,42 @@
+{
+  "type": "env_regression",
+  "check_kind": "mission_obs_nav_v2",
+  "seed": 0,
+  "include_visual": false,
+  "mission_obs_mode": "nav_v2",
+  "scenario_inline": {
+    "scenario_name": "mission_obs_nav_v2_regression",
+    "environment": {
+      "time_step": 0.05,
+      "max_steps": 10,
+      "terrain_type": "flat",
+      "wind": {"speed_mps": 0.0, "dir_from_deg": 0.0, "shear_mps_per_km": 0.0}
+    },
+    "mission_command": {
+      "command_code": 3,
+      "target_heading": 90.0,
+      "target_altitude": 1200.0,
+      "target_speed": 210.0,
+      "waypoint_mode": "flyby",
+      "waypoint_radius_m": 1000.0,
+      "lnav_bank_limit_deg": 30.0,
+      "waypoints": [
+        {"x": 10000.0, "y": 0.0, "z": 1200.0, "waypoint_mode": "flyover"},
+        {"x": 20000.0, "y": 10000.0, "z": 1200.0}
+      ]
+    },
+    "entities": [
+      {
+        "name": "Blue_F16",
+        "type": "F-16C_Block50",
+        "side": "Blue",
+        "pos": [0.0, 0.0, 1200.0],
+        "vel": [210.0, 0.0, 0.0],
+        "heading": 90.0,
+        "is_agent": true
+      }
+    ],
+    "objectives": [],
+    "rewards": {"survival": 0.0}
+  }
+}

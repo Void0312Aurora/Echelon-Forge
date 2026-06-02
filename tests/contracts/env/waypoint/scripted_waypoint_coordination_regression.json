@@ -1,0 +1,21 @@
+{
+  "type": "env_regression",
+  "check_kind": "scripted_waypoint_coordination",
+  "scenario": "scenarios/cruise/cruise_waypoints_stresswind_rewardbalance_v1.json",
+  "include_visual": false,
+  "include_proprio": false,
+  "action_mode": "full",
+  "mission_obs_mode": "basic",
+  "seed": 0,
+  "randomization_overrides": {
+    "world_yaw_range": [0.0, 0.0],
+    "wind_speed_range": [0.0, 0.0],
+    "wind_dir_from_range": [270.0, 270.0],
+    "wind_shear_range": [0.0, 0.0]
+  },
+  "rollout_steps": 1800,
+  "beta_index": 6,
+  "yaw_rate_index": 14,
+  "beta_p95_max": 10.0,
+  "yaw_rate_p95_max": 20.0
+}

@@ -203,6 +203,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 
 - [双语文档政策](governance/bilingual_documentation_policy.zh.md)
 - [双语文档簇](governance/bilingual_document_clusters.zh.md)
+- [发布与依赖政策](governance/release_and_dependency_policy.zh.md)
 - [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
 - [WP Closure Lane Policy](governance/wp_closure_lane_policy.zh.md)
 - [文档对齐映射](overview/document_alignment_map.zh.md)

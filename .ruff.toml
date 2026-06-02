@@ -1,0 +1,22 @@
+target-version = "py38"
+line-length = 100
+extend-exclude = [
+  "build",
+  "dist",
+  "experiments",
+  "experiments_tmp",
+  "tools/archive",
+]
+
+[lint]
+select = [
+  "E9",
+  "F821",
+  "F822",
+  "F823",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
