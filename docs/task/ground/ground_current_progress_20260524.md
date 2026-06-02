@@ -140,7 +140,7 @@ Standards and planning:
 - [Ground minimal task structure](../../standards/ground/minimal_task_structure.md)
 - [Ground bootstrap plan](./ground_domain_bootstrap_plan_20260521.md)
 - [Ground defect inventory](../review/ground_domain_defect_inventory_20260522.md)
-- [G6-E native ground platform schema](g6_native_ground_platform_schema/README.md)
+- [G6-E native ground platform schema](archive/g6_native_ground_platform_schema/README.md)
 
 Accepted task phases:
 

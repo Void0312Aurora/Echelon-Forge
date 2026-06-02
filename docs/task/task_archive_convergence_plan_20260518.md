@@ -1,8 +1,13 @@
 # Task Archive and Convergence Plan
 
-Status: `2026-05-18` planning version.
+Status: `2026-06-02` audited lifecycle update; original planning version was
+`2026-05-18`.
 Scope: `docs/task/*`
 Reference pattern: [flight_dynamics archive](./flight_dynamics/archive/README.md)
+
+Audit update: `2026-06-02` read-only subagent lifecycle check completed. A
+follow-up physical archive move reduced selected completed evidence-package
+paths to lightweight pointers.
 
 Positioning:
 
@@ -40,86 +45,142 @@ Positioning:
 - Do not rewrite historical judgments inside archived dated docs. Add a new
   convergence or current-status doc instead.
 
+## 2026-06-02 Subagent Audit Update
+
+Four read-only diagnostics subagents checked the current `docs/task` subproject
+set against the local `README`, status, closure, acceptance, and archive-index
+files. The audit treated maintained `README` files and executable/acceptance
+evidence as higher authority than older dated planning text.
+
+Outcome:
+
+- Already archived in place: `code_redundancy/`, `diagnostics_eval/`, and
+  `python_rl/` now have archived-record root entries plus local `archive/`
+  indexes. No further move is needed.
+- Physically moved to local archive with lightweight pointers left behind:
+  `air_combat/a2_high_fidelity_damage_model/`,
+  `naval/n4_threat_roe_bridge/`, `naval/n5_rl_action_surface_split/`, and the
+  accepted `ground/g0` through `g6` evidence records.
+- Completed or accepted but intentionally retained in place:
+  `model/m1_action_interface_split/` and
+  `issues/rl_policy_hold_baseline_drift/`. These are retained because parent
+  task entries, current gates, or follow-on evidence chains still cite them.
+- Active or mixed, not archive-ready as whole areas: `air_combat/` and
+  `air_combat/a1_1v1_realism_gradient/`, `common_air_naval/`,
+  `flight_dynamics/` and its live analysis subdirs, `viz/`, `game/`,
+  `ground/`, `model/`, `model/m1_temporal_window_hmoe/`,
+  `model/m2_causal_transformer_hmoe/`, `naval/`,
+  `naval/naval_domain_surface_split/`, `performance_runtime/`,
+  `simulation_architecture/`, `review/`, and `issues/`.
+
+Archive decision:
+
+- The selected completed evidence directories now live under their parent
+  `archive/` directories. Their original paths contain brief work statements
+  and pointers to the full archived packet.
+- Future archive work should follow the same shape: first add or update the
+  local archive index, then update parent entry links, and only then replace
+  evidence-package roots with lightweight pointers.
+
 ## Assessment by Area
 
-### Archive Now
+### Archived In Place
 
 - `code_redundancy/`: the
-  [follow-up freeze](./code_redundancy/code_redundancy_followup_freeze_20260516.md)
+  [follow-up freeze](./code_redundancy/archive/code_redundancy_followup_freeze_20260516.md)
   says `WP-A / WP-B / WP-C` are all closed and no active implementation items
-  remain. Future work should start from a new freeze doc.
+  remain. The area now has a root `README` and local `archive/` index; future
+  work should start from a new freeze doc.
 - `diagnostics_eval/`: the
-  [diagnostics modularization](./diagnostics_eval/diagnostics_modularization_20260515.md),
-  [eval entrypoint convergence](./diagnostics_eval/eval_entrypoint_convergence_20260515.md),
+  [diagnostics modularization](./diagnostics_eval/archive/diagnostics_modularization_20260515.md),
+  [eval entrypoint convergence](./diagnostics_eval/archive/eval_entrypoint_convergence_20260515.md),
   and
-  [benchmark CLI convergence](./diagnostics_eval/diagnostics_benchmark_cli_convergence_20260515.md)
-  all mark their phases completed; only incremental cleanup remains.
+  [benchmark CLI convergence](./diagnostics_eval/archive/diagnostics_benchmark_cli_convergence_20260515.md)
+  all mark their phases completed. The area now has a root `README` and local
+  `archive/` index.
 - `python_rl/`: these docs are convergence records for migrations that are
-  already completed or closed. The top-level task index already describes them
-  as trace records rather than the default active plan.
-- `review/`: the
-  [architecture review](./review/architecture_review_20260516.md) is complete
-  and the
-  [follow-up freeze](./review/architecture_review_followup_freeze_20260516.md)
-  records implemented work plus a "later, but out of scope" list that must use
-  a new task sheet.
+  already completed or closed. The area now has a root `README` and local
+  `archive/` index, and the top-level task index describes it as trace records
+  rather than the default active plan.
+- `air_combat/a2_high_fidelity_damage_model/`: the full research/candidate
+  package now lives under
+  [air_combat/archive/a2_high_fidelity_damage_model/](./air_combat/archive/a2_high_fidelity_damage_model/README.md),
+  while the original path is a lightweight pointer.
+- `naval/n4_threat_roe_bridge/` and `naval/n5_rl_action_surface_split/`: the
+  full evidence packets now live under
+  [naval/archive/](./naval/archive/README.md), while the original paths are
+  lightweight pointers.
+- Accepted ground G0-G6 evidence records: the full packets now live under
+  [ground/archive/](./ground/archive/README.md), while the original phase paths
+  are lightweight work statements.
+
+`review/` is no longer treated as a whole-area archive candidate. Its pre-WP
+[architecture review](./review/archive/pre-wp/architecture_review_20260516.md)
+and
+[follow-up freeze](./review/archive/pre-wp/architecture_review_followup_freeze_20260516.md)
+are archived snapshots, while the `review/` root remains an active governance
+record.
 
 ### Converge First, Then Partially Archive
 
-- `air_combat/`: keep the thread active, but stop exposing seven sibling dated
-  docs as peers. The docs show landed first-phase work, but still open gaps
-  around reward, eval, opponent baselines, stall follow-up, and training-signal
-  interpretation. Action: add `README.md` or
-  `air_combat_1v1_current_status_20260518.md`, keep that plus at most one
-  active freeze or status doc, and move the older snapshots into
-  `air_combat/archive/`.
-- `common_air_naval/`: most work packages are completed, but the freeze plan
-  still lists unfinished follow-ons around broader contract migration and
-  naval/runtime/eval expansion. Action: add a convergence entry doc that splits
-  "completed foundation" from "unfinished carry-over", then archive the pure
-  analysis snapshot and any no-longer-primary execution notes.
-- `viz/`: the design plan records first usable closure for `WP-V4` and
-  `WP-V5`, but the area still lacks a clear active `README` or pause-state
-  checkpoint. Action: add one local entry doc before archiving the large
-  freeze/design snapshot.
+- `air_combat/`: convergence entry and archive separation are now in place. The
+  root remains active for the staged `1v1` workline; `a1_1v1_realism_gradient/`
+  is active/planning; `a2_high_fidelity_damage_model/` is a pointer to a sealed
+  archived research/candidate record. Do not archive the whole tree.
+- `common_air_naval/`: convergence entry and archive separation are now in
+  place. The foundation is complete, but broader runtime/tooling,
+  `tests/contracts`, and future naval expansion carry-over remain active.
+- `viz/`: local `README` is now the current entry. It intentionally promotes one
+  plan under `archive/` as the active implementation boundary, so do not move it
+  again without first replacing the promoted entry.
 
 ### Keep Active
 
-- `naval/`: the
-  [progress checkpoint](./naval/naval_progress_checkpoint_20260517.md) and
-  [delegated backlog](./naval/naval_delegated_execution_backlog_20260517.md)
-  still drive next implementation work.
+- `naval/`: N4 and the first RL action/observation repair are closed or
+  accepted and now physically archived with original-path pointers. Current
+  follow-on work stays in `naval/naval_domain_surface_split/`, which is
+  active/planning and explicitly not archive-ready.
 - `performance_runtime/`: explicitly active planning/execution as of
   `2026-05-18`.
-- `flight_dynamics/`: keep the current pattern. It already separates active
-  entry points from archived packages, especially in `program/`,
-  `c2_command_chain/`, and `archive/`.
+- `flight_dynamics/`: keep the current pattern. It is a reference hub with
+  archived implementation packages plus live analysis subdirs where closure
+  markers and unresolved realism issues are still useful.
+- `ground/`: active planning root. G0-G6 records are accepted/sealed evidence
+  and now physically archived with original-path pointers, but movement,
+  sensing, terrain, fires, damage, combat, and full runtime release remain held.
+- `model/`: active planning root. `m1_action_interface_split/` is accepted but
+  retained in the M1 evidence chain; `m1_temporal_window_hmoe/` is still
+  gathering evidence; `m2_causal_transformer_hmoe/` is held.
+- `simulation_architecture/`, `review/`, and `issues/`: active governance or
+  architecture roots with local archives for closed snapshots only.
+- `game/`: active exploratory Arma proxy line, not archive-ready.
 
-## Proposed Waves
+## Current Action State
 
-### Wave 1: Immediate Archive Candidates
+### Wave 1: Complete
 
-1. Add `README.md` and `README.zh.md` to `code_redundancy`,
-   `diagnostics_eval`, `python_rl`, and `review`.
-2. Create local `archive/` subdirectories and move dated docs there without
-   renaming them.
-3. Update `docs/task/README*` to point to the new subproject `README`s instead
-   of directly to dated snapshots.
+1. `code_redundancy`, `diagnostics_eval`, and `python_rl` have root README
+   entries plus local archive indexes.
+2. `review` has a root governance README plus local archive indexes for
+   completed or superseded review snapshots.
+3. `docs/task/README*` points at local task-area READMEs rather than stale
+   dated snapshots for these areas.
 
-### Wave 2: Converge Mixed Areas
+### Wave 2: Complete For Selected Evidence Packages
 
-1. `air_combat`: write one current-status or convergence entry, then archive
-   the sibling snapshots.
-2. `common_air_naval`: write one carry-over status entry, then archive the
-   analysis doc first; archive the freeze plan only after unfinished carry-over
-   items are either moved elsewhere or closed.
-3. `viz`: write a pause-state or current-status entry, then decide whether the
-   freeze plan stays active or moves to archive.
+1. `air_combat`, `common_air_naval`, and `viz` have local README entries and
+   archive separation.
+2. `a2_high_fidelity_damage_model/`, naval N4/N5 evidence packets, and ground
+   G0-G6 phase packets have been moved to local archive directories with
+   lightweight pointers left behind.
+3. Do not move the promoted `viz/archive` plan unless a replacement active
+   entry exists.
 
 ### Wave 3: No Move Now
 
-1. Keep `naval`, `performance_runtime`, `flight_dynamics/program`, and
-   `flight_dynamics/c2_command_chain` on the active path.
+1. Keep `naval`, `ground`, `model`, `performance_runtime`,
+   `simulation_architecture`, `review`, `issues`, `game`, and the
+   `flight_dynamics` reference hub on their current paths.
 2. Continue using `README + current status + archive/` as the default lifecycle
    pattern for new task lines.
 
@@ -137,6 +198,8 @@ Positioning:
 
 ## Immediate Recommendation
 
-- Start with `code_redundancy` and `review` as the safest first wave.
-- Treat `air_combat` as convergence-first rather than full archive.
-- Use `flight_dynamics/archive/` as the template for the rest of `docs/task/`.
+- Do not start an unscoped bulk file-move wave from this document.
+- Treat remaining completed retained records as sealed evidence until their
+  parent README and current gate links can be rewritten safely.
+- Use `flight_dynamics/archive/` as the template for future per-area archive
+  moves.

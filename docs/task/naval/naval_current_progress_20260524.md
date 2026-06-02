@@ -170,7 +170,7 @@ training product. It should not yet be described as a learned naval screen,
 engagement, ASW, or UNREP policy.
 
 N4 RL preflight is now recorded under
-[naval_n4_rl_task_surface_preflight_20260525.md](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md).
+[naval_n4_rl_task_surface_preflight_20260525.md](archive/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md).
 The accepted next RL-compatible task candidates are:
 
 - `naval_contact_report_threat_roe_v1`;
@@ -218,9 +218,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 N4 bridge acceptance:
 
-- [N4 RL task surface preflight](n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md)
-- [N4 integration acceptance](n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md)
-- [N4 closure](n4_threat_roe_bridge/naval_n4_closure_20260525.md)
+- [N4 RL task surface preflight](archive/n4_threat_roe_bridge/naval_n4_rl_task_surface_preflight_20260525.md)
+- [N4 integration acceptance](archive/n4_threat_roe_bridge/naval_n4_integration_acceptance_20260525.md)
+- [N4 closure](archive/n4_threat_roe_bridge/naval_n4_closure_20260525.md)
 
 Docs validation:
 

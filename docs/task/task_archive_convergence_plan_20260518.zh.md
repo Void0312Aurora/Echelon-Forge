@@ -1,8 +1,11 @@
 # 任务文档封存与收敛计划
 
-状态：`2026-05-18` 规划版。
+状态：`2026-06-02` 已审计生命周期更新；原始规划版为 `2026-05-18`。
 范围：`docs/task/*`
 参考模式：[flight_dynamics/archive](./flight_dynamics/archive/README.zh.md)
+
+审计更新：`2026-06-02` 已完成只读 subagent 生命周期核查；后续物理归档行动已把选定的
+completed evidence-package 原路径降为轻量指针。
 
 文档定位：
 
@@ -32,66 +35,124 @@
   作为唯一活跃入口。
 - 历史 dated 文档不改写当时结论；如需更新判断，应新增收敛文档或状态文档。
 
+## 2026-06-02 Subagent 核查更新
+
+本轮由四个只读 diagnostics subagent 按当前 `docs/task` 子项目集合核查局部
+`README`、状态、closure、acceptance 与 archive 索引文件。核查时以维护中的
+`README`、可执行/验收证据优先于较早 dated 规划文本。
+
+核查结论：
+
+- 已在原位归档到位：`code_redundancy/`、`diagnostics_eval/`、`python_rl/`
+  现在都有归档型根入口和本地 `archive/` 索引；无需继续移动。
+- 已物理移动到本地 archive，并在原路径留下轻量指针：
+  `air_combat/a2_high_fidelity_damage_model/`、`naval/n4_threat_roe_bridge/`、
+  `naval/n5_rl_action_surface_split/`、以及已接受的 `ground/g0` 到 `g6` evidence records。
+- 已完成或已接受、但应原位保留：
+  `model/m1_action_interface_split/`、以及
+  `issues/rl_policy_hold_baseline_drift/`。这些目录仍被父级任务入口、当前 gate
+  或后续证据链引用。
+- 仍处于活跃或混合态，不能整区归档：
+  `air_combat/` 与 `air_combat/a1_1v1_realism_gradient/`、`common_air_naval/`、
+  `flight_dynamics/` 及其仍保留活跃分析作用的子目录、`viz/`、`game/`、
+  `ground/`、`model/`、`model/m1_temporal_window_hmoe/`、
+  `model/m2_causal_transformer_hmoe/`、`naval/`、
+  `naval/naval_domain_surface_split/`、`performance_runtime/`、
+  `simulation_architecture/`、`review/` 和 `issues/`。
+
+归档决策：
+
+- 选定的 completed evidence 目录现在位于父级 `archive/` 目录。原路径只保留简短工作说明和
+  指向完整 archived packet 的指针。
+- 后续归档应沿用同一形态：先补或更新本地 archive 索引，再同步父级入口链接，最后再把
+  evidence-package root 替换为轻量指针。
+
 ## 分目录判断
 
-### 可立即封存
+### 已在原位归档
 
 - `code_redundancy/`：
-  [后续冻结计划](./code_redundancy/code_redundancy_followup_freeze_20260516.zh.md)
-  已明确 `WP-A / WP-B / WP-C` 全部收口，且不再保留活动中的实现条目；后续若继续推进，应另起新冻结文档。
+  [后续冻结计划](./code_redundancy/archive/code_redundancy_followup_freeze_20260516.zh.md)
+  已明确 `WP-A / WP-B / WP-C` 全部收口，且不再保留活动中的实现条目。该区域现在已有根级
+  `README` 和本地 `archive/` 索引；后续若继续推进，应另起新冻结文档。
 - `diagnostics_eval/`：
-  [diagnostics 模块化](./diagnostics_eval/diagnostics_modularization_20260515.zh.md)、
-  [eval 入口收敛](./diagnostics_eval/eval_entrypoint_convergence_20260515.zh.md)、
-  [benchmark CLI 收敛](./diagnostics_eval/diagnostics_benchmark_cli_convergence_20260515.zh.md)
-  都已标记阶段完成，当前只剩增量清理。
+  [diagnostics 模块化](./diagnostics_eval/archive/diagnostics_modularization_20260515.zh.md)、
+  [eval 入口收敛](./diagnostics_eval/archive/eval_entrypoint_convergence_20260515.zh.md)、
+  [benchmark CLI 收敛](./diagnostics_eval/archive/diagnostics_benchmark_cli_convergence_20260515.zh.md)
+  都已标记阶段完成。该区域现在已有根级 `README` 和本地 `archive/` 索引。
 - `python_rl/`：
-  现有文档基本都是子域迁移/收敛记录，且状态多为“已完成”“已关闭”；顶层任务索引也已说明它们更像实现追踪记录，而不是默认活跃计划。
-- `review/`：
-  [架构审查](./review/architecture_review_20260516.zh.md) 已完成，
-  [后续冻结计划](./review/architecture_review_followup_freeze_20260516.zh.md)
-  也已经把已执行内容和“后续需另起任务单”的事项区分清楚，适合转入归档入口模式。
+  现有文档基本都是子域迁移/收敛记录，且状态多为“已完成”“已关闭”。该区域现在已有根级
+  `README` 和本地 `archive/` 索引；顶层任务索引也已说明它们更像实现追踪记录，而不是默认活跃计划。
+- `air_combat/a2_high_fidelity_damage_model/`：
+  完整 research/candidate package 现在位于
+  [air_combat/archive/a2_high_fidelity_damage_model/](./air_combat/archive/a2_high_fidelity_damage_model/README.zh.md)，
+  原路径为轻量指针。
+- `naval/n4_threat_roe_bridge/` 与 `naval/n5_rl_action_surface_split/`：
+  完整 evidence packet 现在位于 [naval/archive/](./naval/archive/README.zh.md)，原路径为轻量指针。
+- 已接受的 ground G0-G6 evidence records：
+  完整 packet 现在位于 [ground/archive/](./ground/archive/README.zh.md)，原 phase 路径为轻量工作说明。
+
+`review/` 不再作为整区封存候选处理。它的 pre-WP
+[架构审查](./review/archive/pre-wp/architecture_review_20260516.zh.md) 和
+[后续冻结计划](./review/archive/pre-wp/architecture_review_followup_freeze_20260516.zh.md)
+是已归档快照，但 `review/` 根入口仍是活跃治理记录。
 
 ### 先收敛，再部分封存
 
 - `air_combat/`：
-  不建议整目录立即封存。当前 `1v1` 第一阶段已落地，但奖励、eval、对手基线、失速后续和训练信号解释仍有明确缺口。建议先补
-  `README.md` 或 `air_combat_1v1_current_status_20260518.md`，只保留这一份入口和最多一份活跃状态/冻结文档，再把其余 dated 快照移入 `air_combat/archive/`。
+  收敛入口和 archive 分离现在已就位。根目录仍服务活跃的分阶段 `1v1` 工作线；
+  `a1_1v1_realism_gradient/` 仍为 active/planning；
+  `a2_high_fidelity_damage_model/` 是指向已归档 retained research/candidate record 的指针。
+  不应整树归档。
 - `common_air_naval/`：
-  多数工作包已经完成，但冻结计划中仍保留更广泛的 contract 迁移、naval runtime/eval 扩展等未完成尾项。建议先写一份“基础已完成 / 尾项待承接”的收敛入口文档，再封存纯分析文档以及不再作为主入口的执行记录。
+  收敛入口和 archive 分离现在已就位。基础工作已完成，但更广的 runtime/tooling、
+  `tests/contracts` 和后续 naval 扩展承接仍处于活跃尾项。
 - `viz/`：
-  当前大文档已记录 `WP-V4 / WP-V5` 第一版可用收口，但本目录还缺少一个清晰的 `README` 或暂停状态检查点。建议先补入口文档，再决定是否把这份大型冻结设计稿移入归档。
+  本地 `README` 现在是当前入口。它有意把 `archive/` 下的一份 plan 提升为 active
+  implementation boundary；除非先替换该提升入口，否则不要再次移动。
 
 ### 应保持活跃
 
 - `naval/`：
-  [海战推进检查点](./naval/naval_progress_checkpoint_20260517.zh.md) 和
-  [委派执行积压](./naval/naval_delegated_execution_backlog_20260517.zh.md)
-  仍直接服务下一轮实现。
+  N4 与第一段 RL action/observation repair 已闭合或接受，并已物理归档且原路径保留指针。
+  当前后续工作位于 `naval/naval_domain_surface_split/`，该包仍为 active/planning，且明确不能归档。
 - `performance_runtime/`：
   截至 `2026-05-18` 仍是明确的活跃规划/执行线。
 - `flight_dynamics/`：
-  当前模式应保持不变。它已经把活跃入口与归档实施包分开，尤其是
-  `program/`、`c2_command_chain/` 和 `archive/` 的分层已经可以直接作为其他目录的参考模板。
+  当前模式应保持不变。它是 reference hub，既有已归档实施包，也有仍承担 closure
+  marker 与未解决真实性问题索引作用的分析子目录。
+- `ground/`：
+  活跃规划根入口。G0-G6 是已接受/封存证据，并已物理归档且原路径保留指针；但
+  movement、sensing、terrain、fires、damage、combat 和完整 runtime release 仍 held。
+- `model/`：
+  活跃规划根入口。`m1_action_interface_split/` 已接受但仍保留在 M1 证据链中；
+  `m1_temporal_window_hmoe/` 仍在采集证据；`m2_causal_transformer_hmoe/` 为 held。
+- `simulation_architecture/`、`review/`、`issues/`：
+  仍是活跃架构或治理根入口，只对已闭合快照使用本地 archive。
+- `game/`：
+  活跃探索性 Arma proxy 线，不可归档。
 
-## 分波次执行建议
+## 当前行动状态
 
-### Wave 1：立即封存候选
+### Wave 1：已完成
 
-1. 为 `code_redundancy`、`diagnostics_eval`、`python_rl`、`review` 补
-   `README.md` 与 `README.zh.md`。
-2. 在各自目录下建立 `archive/`，将 dated 文档原名迁入，不做无谓重命名。
-3. 把 `docs/task/README*` 的导航入口从“直链 dated 文档”改为“先进入该子项目 README”。
+1. `code_redundancy`、`diagnostics_eval`、`python_rl` 已有根级 README 和本地
+   archive 索引。
+2. `review` 已有根级治理 README，并为已完成或已替代的 review 快照保留本地
+   archive 索引。
+3. `docs/task/README*` 已对这些区域指向局部 task-area README，而不是过期 dated 快照。
 
-### Wave 2：混合态目录先收敛
+### Wave 2：选定证据包已完成
 
-1. `air_combat`：先写一份当前状态/收敛入口，再归档其余兄弟文档。
-2. `common_air_naval`：先写承接状态文档，先归档 `analysis`，待尾项迁移或关闭后再决定是否封存 `freeze plan`。
-3. `viz`：先补暂停态或当前状态入口，再决定冻结设计稿是否移入归档。
+1. `air_combat`、`common_air_naval`、`viz` 已有局部 README 和 archive 分离。
+2. `a2_high_fidelity_damage_model/`、naval N4/N5 evidence packets、ground G0-G6 phase
+   packets 已移入本地 archive，并在原路径留下轻量指针。
+3. 不要移动被提升的 `viz/archive` plan，除非已有替代 active entry。
 
 ### Wave 3：当前不动结构
 
-1. `naval`、`performance_runtime`、`flight_dynamics/program`、
-   `flight_dynamics/c2_command_chain` 继续保留在活跃路径。
+1. `naval`、`ground`、`model`、`performance_runtime`、`simulation_architecture`、
+   `review`、`issues`、`game` 和 `flight_dynamics` reference hub 继续保留在当前路径。
 2. 后续新任务线默认采用 `README + current status + archive/` 的生命周期模式。
 
 ## 验收标准
@@ -103,6 +164,7 @@
 
 ## 当前建议
 
-- 第一波优先从 `code_redundancy` 和 `review` 开始，风险最低。
-- `air_combat` 按“先收敛、后部分封存”处理，不建议直接整目录冷封。
-- 其余目录优先沿用 `flight_dynamics/archive/` 这一现成模板。
+- 不要从本文档启动无边界的批量文件移动 wave。
+- 剩余 completed retained records 继续作为 sealed evidence 保留，直到父级 README 与当前
+  gate 链接可以安全改写。
+- 后续逐区归档时继续沿用 `flight_dynamics/archive/` 模板。

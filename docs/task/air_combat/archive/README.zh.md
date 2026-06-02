@@ -1,6 +1,7 @@
 # 空战归档
 
 仍处于活跃状态的 `1v1` 空战工作线的历史带日期快照。
+原任务路径已经降为轻量指针的 completed subproject packet 也保存在这里。
 
 当前入口：
 
@@ -8,6 +9,8 @@
 
 ## 索引
 
+- [a2_high_fidelity_damage_model/](a2_high_fidelity_damage_model/README.zh.md)：
+  已封存的高真实度毁伤模型 research/candidate record。
 - [air_combat_1v1_entry_analysis_20260516.zh.md](air_combat_1v1_entry_analysis_20260516.zh.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.zh.md](air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
 - [air_combat_1v1_freeze_plan_20260516.zh.md](air_combat_1v1_freeze_plan_20260516.zh.md)

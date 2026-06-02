@@ -97,9 +97,11 @@ without creating a new vertical runtime path.
 ## Sealed / Archived Subproject Records
 
 These subproject directories are accepted evidence records, not active dispatch
-surfaces. They remain linked from this index because current movement-release
-planning still consumes their gates, but new work should open a fresh follow-on
-package instead of editing these accepted records in place.
+surfaces. Their original paths now contain lightweight work statements, while
+the full packets live in [archive/README.md](archive/README.md). They remain
+linked from this index because current movement-release planning still consumes
+their gates, but new work should open a fresh follow-on package instead of
+editing these accepted records in place.
 
 - G0 boundary freeze:
   [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)

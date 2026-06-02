@@ -16,8 +16,10 @@
 - 第一训练入口应转向
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
   中定义的分阶段课程，而不是历史 smoke fixture。
-- 高真实度毁伤模型已拆出为
-  [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)。
+- 高真实度毁伤模型现在在
+  [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
+  保留轻量指针；完整包位于
+  [archive/a2_high_fidelity_damage_model/](archive/a2_high_fidelity_damage_model/README.zh.md)。
   该线已在 research / candidate profile 下封存归档：structured-aircraft damage/effects
   runtime 进入维护路径，blast-fragmentation 候选包非权威验收通过，G4/G5 research
   packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
@@ -53,6 +55,8 @@
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
 - 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
+  与完整归档
+  [archive/a2_high_fidelity_damage_model/README.zh.md](archive/a2_high_fidelity_damage_model/README.zh.md)
 - 高保真毁伤系统基线：
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 

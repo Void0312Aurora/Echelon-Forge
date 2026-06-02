@@ -112,19 +112,20 @@ blocker；route movement 仍需要后续 G6-D3/G6-F release vote。
 
 ### 4.1 阶段子项目与任务簇
 
-每个阶段都作为独立 task 子项目维护，便于单独分发、review 和关闭，而不把整个 ground bootstrap 任务线一次性放大。
+每个阶段都作为独立 task 子项目维护，便于单独分发、review 和关闭，而不把整个 ground bootstrap 任务线一次性放大。已接受 phase packet
+现在位于 `archive/`；原 phase 路径只保留轻量工作说明。
 
 | 阶段 | 子项目 | 分发任务簇 | 释放状态 |
 |------|--------|------------|----------|
-| `G0 边界冻结` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
-| `G1 合同骨架` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
-| `G2 内容与测试种子` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
-| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.zh.md) | accepted |
-| `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
-| `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
-| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
-| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 以 `preflight-only` 验收；G6-E2/E3 现已关闭 native schema identity；route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 已接受 native schema evidence；route movement 仍保持 held |
+| `G0 边界冻结` | [g0_boundary_freeze/](g0_boundary_freeze/README.zh.md) | [G0 standards alignment cluster](archive/g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
+| `G1 合同骨架` | [g1_contract_skeleton/](g1_contract_skeleton/README.zh.md) | [G1 profile and DTO contract cluster](archive/g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
+| `G2 内容与测试种子` | [g2_content_test_seed/](g2_content_test_seed/README.zh.md) | [G2 content fixture and test cluster](archive/g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
+| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.zh.md) | [G3 execution surface preflight cluster](archive/g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.zh.md) | accepted |
+| `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.zh.md) | [G4 selected runtime slice cluster](archive/g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
+| `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.zh.md) | [G5 MVP scenario cluster](archive/g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
+| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.zh.md) | [G6 realism-gradient MVP scenario cluster](archive/g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.zh.md) | [G6-D route-move release-decision cluster](archive/g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 以 `preflight-only` 验收；G6-E2/E3 现已关闭 native schema identity；route-move implementation held |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.zh.md) | [G6-E native schema cluster](archive/g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 已接受 native schema evidence；route movement 仍保持 held |
 
 当前分发队列是
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)。

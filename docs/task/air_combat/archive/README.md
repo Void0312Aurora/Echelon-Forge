@@ -1,6 +1,8 @@
 # Air Combat Archive
 
 Historical dated snapshots for the still-active `1v1` air-combat workline.
+Completed subproject packets are also stored here when their original task path
+has been reduced to a lightweight pointer.
 
 Current entry:
 
@@ -8,6 +10,8 @@ Current entry:
 
 ## Index
 
+- [a2_high_fidelity_damage_model/](a2_high_fidelity_damage_model/README.md):
+  sealed high-fidelity damage-model research/candidate record.
 - [air_combat_1v1_entry_analysis_20260516.md](air_combat_1v1_entry_analysis_20260516.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.md](air_combat_1v1_f16c_baseline_progress_20260516.md)
 - [air_combat_1v1_freeze_plan_20260516.md](air_combat_1v1_freeze_plan_20260516.md)

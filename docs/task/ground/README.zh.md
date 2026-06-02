@@ -88,30 +88,31 @@
 
 ## 已封存 / 归档子项目记录
 
-以下子项目目录是已接受的证据记录，不再是 active dispatch surface。它们仍从本索引链接，
-是因为当前 movement-release 规划仍消费这些 gate；新工作应新开 follow-on package，
-不要在这些已接受记录内继续追加实现任务。
+以下子项目目录是已接受的证据记录，不再是 active dispatch surface。原路径现在只保留
+轻量工作说明，完整 packet 位于 [archive/README.zh.md](archive/README.zh.md)。它们仍从
+本索引链接，是因为当前 movement-release 规划仍消费这些 gate；新工作应新开
+follow-on package，不要在这些已接受记录内继续追加实现任务。
 
 - G0 边界冻结：
-  [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
+  [g0_boundary_freeze/README.zh.md](g0_boundary_freeze/README.zh.md)
 - G1 合同骨架：
-  [g1_contract_skeleton/README.md](g1_contract_skeleton/README.md)
+  [g1_contract_skeleton/README.zh.md](g1_contract_skeleton/README.zh.md)
 - G2 内容 / 测试种子：
-  [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
+  [g2_content_test_seed/README.zh.md](g2_content_test_seed/README.zh.md)
 - G3 执行面设计：
-  [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
+  [g3_execution_surface_design/README.zh.md](g3_execution_surface_design/README.zh.md)
 - G4 tasking runtime 切片：
-  [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
+  [g4_runtime_slice/README.zh.md](g4_runtime_slice/README.zh.md)
 - G5 MVP 场景 shell：
-  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
+  [g5_mvp_scenario/README.zh.md](g5_mvp_scenario/README.zh.md)
 - G6 realism-gradient 静态 fixture：
-  [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
+  [g6_realism_gradient_mvp_scenarios/README.zh.md](g6_realism_gradient_mvp_scenarios/README.zh.md)
 - G6-C route-move boundary guardrails：
-  [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
+  [g6_route_move_boundary/README.zh.md](g6_route_move_boundary/README.zh.md)
 - G6-D route-move release decision：
-  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
+  [g6_route_move_release_decision/README.zh.md](g6_route_move_release_decision/README.zh.md)
 - G6-E native ground platform schema 证据：
-  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
+  [g6_native_ground_platform_schema/README.zh.md](g6_native_ground_platform_schema/README.zh.md)
 
 ## 已封存基线
 

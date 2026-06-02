@@ -12,7 +12,7 @@ vote。
 启动子代理时使用此队列。主线程拥有集成和最终验收。
 
 详细的 G0 工作包位于
-[g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md](g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md)。
+[archive/g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md](archive/g0_boundary_freeze/g0_subagent_dispatch_packets_20260521.md)。
 
 规则：
 
@@ -83,21 +83,21 @@ flowchart TD
 | `G1-B` | 工作者 | `gpt-5.4`，高 | 实现仅 Python 配置文件的地面解析器/配置文件/适配器切片以及来自 G1-A 的聚焦测试。 | `python/rl/tasking/bridge.py`、`python/rl/tasking/common_core_profile.py`、`python/rl/tasking/ground_adapter.py`、`python/rl/profile/ground_profile.py`、仅聚焦 `tests/leader`。无 C++/运行时/绑定。 |
 | `G2-A` | 工作者 | `gpt-5.4`，高 | 在 G1 之后添加第一个地面夹具根和能力说明。 | 仅 `examples/config/database/ground/**`。 |
 | `G2-B` | 工作者 | `gpt-5.4`，高 | 在 G1 之后添加地面合约规范和聚焦的合约运行器覆盖。 | 仅 `tests/contracts/unit/ground/**` 和一个聚焦的 `tests/leader` 或 `tests/runners` 测试。 |
-| `G2-C` | 主线程集成 | 当前主线程 | 集成 G2 工作者结果、验证、状态文档和 G3 剩余物。 | 仅 `docs/task/ground/g2_content_test_seed/**`、此调度队列、验证。 |
+| `G2-C` | 主线程集成 | 当前主线程 | 集成 G2 工作者结果、验证、状态文档和 G3 剩余物。 | 归档证据位于 `docs/task/ground/archive/g2_content_test_seed/**`；原路径仅保留 pointer README。仅此调度队列与验证。 |
 | `G3-A` | explorer | `gpt-5.4`，high | 预检第一个 G4 切片候选及其 stage/packet map。 | 对 G1/G2/G3 文档与现有 ground profile 证据做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
 | `G3-B` | explorer | `gpt-5.4`，high | 预检第一个 reporting surface 及 environment dependency / deferral map。 | 对 G1/G2/G3 文档与 standards 做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
 | `G3-C` | explorer | `gpt-5.4`，high | 预检 G4 的 write scope、compatibility guards 与 focused test plan。 | 对 G1/G2/G3/G4 文档与 focused tests 做只读 diagnostics。不直接编辑。已于 `2026-05-22` 分发。 |
-| `G3-D` | 主线程集成 | 当前主线程 | 整合 G3-A/B/C，形成 authoritative G3 packet，并记录已验收的 G4 写入范围。 | 仅 `docs/task/ground/g3_execution_surface_design/**`、`docs/task/ground/README*.md` 与 queue sync。 |
+| `G3-D` | 主线程集成 | 当前主线程 | 整合 G3-A/B/C，形成 authoritative G3 packet，并记录已验收的 G4 写入范围。 | 归档证据位于 `docs/task/ground/archive/g3_execution_surface_design/**`；原路径仅保留 pointer README。仅 `docs/task/ground/README*.md` 与 queue sync。 |
 | `G5-A` | 主线程集成 | 当前主线程 | 添加最小规范 MVP 场景与 focused loader/tasking smoke test。 | 仅 `scenarios/ground/**`、`tests/runtime/ground/**`、G5 docs 与导航同步。 |
 | `G5-B` | explorer | `gpt-5.4-mini`，high | 审计 G0-G4 封存状态与 G5 文档验收要求。 | 只读 diagnostics。已于 `2026-05-22` 返回。 |
 | `G5-C` | explorer | `gpt-5.4-mini`，high | 审计 ScenarioLoader 与 tasking-shell 对 MVP 场景的约束。 | 只读 diagnostics。已于 `2026-05-22` 返回。 |
-| `G6-A` | worker | `gpt-5.4`，medium | 已接受：创建 realism-gradient MVP planning surface。 | 仅 `docs/task/ground/g6_realism_gradient_mvp_scenarios/**`。 |
+| `G6-A` | worker | `gpt-5.4`，medium | 已接受：创建 realism-gradient MVP planning surface。 | 归档证据位于 `docs/task/ground/archive/g6_realism_gradient_mvp_scenarios/**`；原路径仅保留 pointer README。 |
 | `G6-B` | worker | `gpt-5.4`，medium | 已接受：添加 G1 static occupy/support relationship 场景和 focused validation。 | 仅 `scenarios/ground/ground_platoon_static_occupy_v1.json`、`scenarios/ground/ground_platoon_support_relationship_v1.json`、`tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py`。 |
-| `G6-C` | 主线程集成 | 当前主线程 | 已接受：route-move boundary guardrails，不释放 movement behavior。 | 仅 `docs/task/ground/g6_route_move_boundary/**`、`python/rl/tasking/bridge.py`、`tests/leader/test_ground_profile_semantics.py`、`tests/architecture/test_ground_realism_gradient_guardrails.py` 与 ground README/queue/progress sync。 |
-| `G6-D0` | 主线程集成 | 当前主线程 | 已接受：开启 route-move release decision，并选择 schema-first 路径。 | 仅 `docs/task/ground/g6_route_move_release_decision/**` 与 ground README/queue/progress/plan sync。 |
+| `G6-C` | 主线程集成 | 当前主线程 | 已接受：route-move boundary guardrails，不释放 movement behavior。 | 归档证据位于 `docs/task/ground/archive/g6_route_move_boundary/**`；原路径仅保留 pointer README。仅 runtime/test 路径与 ground README/queue/progress sync。 |
+| `G6-D0` | 主线程集成 | 当前主线程 | 已接受：开启 route-move release decision，并选择 schema-first 路径。 | 归档证据位于 `docs/task/ground/archive/g6_route_move_release_decision/**`；原路径仅保留 pointer README。仅 ground README/queue/progress/plan sync。 |
 | `G6-D1` | 主线程 diagnostics | 当前主线程 | 已作为 `preflight-only` 接受：native schema path 被缺失的 runtime-loadable ground platform type/schema 阻塞。 | 只读 diagnostics 加 G6-D doc/queue/progress sync。不编辑 scenario、runtime、bindings 或 C++ implementation。 |
 | `G6-D2` | 主线程 diagnostics | 当前主线程 | 已作为 `preflight-only` 接受：movement evidence gates 已定义，但在 native schema 关闭前不能释放 route movement。 | 只读 diagnostics 加 G6-D doc/queue/progress sync。不编辑 platform schema implementation、terrain、sensing、fires、damage 或 combat。 |
-| `G6-E0` | 主线程集成 | 当前主线程 | 已接受：规划最小 native ground platform schema implementation package。 | 仅 `docs/task/ground/g6_native_ground_platform_schema/**` 与 ground README/queue/progress/plan sync。 |
+| `G6-E0` | 主线程集成 | 当前主线程 | 已接受：规划最小 native ground platform schema implementation package。 | 归档证据位于 `docs/task/ground/archive/g6_native_ground_platform_schema/**`；原路径仅保留 pointer README。仅 ground README/queue/progress/plan sync。 |
 | `G6-E1` | 主线程 diagnostics | 当前主线程 | 已接受：source-inventory/design preflight 已选择 native ground identity 与 materialization path。 | 只读 diagnostics 加 G6-E package/queue/progress sync。不编辑 runtime、bindings、content、tests、route movement、terrain、sensing、fires、damage 或 combat。 |
 | `G6-E2` | 主线程 implementation | 当前主线程 | 已接受：使用 `UnitType::Ground` 实现一个 runtime-loadable native `Ground_Platoon_MVP` schema。 | 仅 `src/components/basic/common.h`、`src/content/unit_definition_loader.cpp`、`src/models/core/default_unit_factory.h`、`src/interfaces/python/bindings_core.cpp`、`examples/config/database/ground/units/ground_platoon_mvp.json`、`tests/runtime/ground/test_ground_native_platform_schema.py`。不做 route movement 或 combat behavior。 |
 | `G6-E3` | 主线程集成 | 当前主线程 | 已接受：整合 native schema 证据，并允许后续 route-move release vote 开启。 | 仅 ground docs/queue/progress sync；route movement 仍保持 held。 |

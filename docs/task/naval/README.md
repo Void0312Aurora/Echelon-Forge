@@ -12,13 +12,15 @@ Status: active naval-realism workline; N4 pre-fire bridge closed on
 - The latest state summary is
   [naval_current_progress_20260524.md](./naval_current_progress_20260524.md).
 - The N4 threat/ROE bridge is closed as a pre-fire scenario and active
-  training-entry gate. Its directory is retained as a closure/evidence record
-  because tests and active configs still cite the gate, not because it is open
-  for new dispatch:
-  [naval_n4_closure_20260525.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.md).
+  training-entry gate. Its original task path is now a lightweight pointer, and
+  the full closure/evidence package lives under
+  [archive/n4_threat_roe_bridge/](./archive/n4_threat_roe_bridge/README.md):
+  [naval_n4_closure_20260525.md](./archive/n4_threat_roe_bridge/naval_n4_closure_20260525.md).
 - The RL action/observation-surface split is implemented and retained as an
-  accepted N4 training-entry repair record:
-  [n5_rl_action_surface_split/README.md](./n5_rl_action_surface_split/README.md).
+  accepted N4 training-entry repair record. Its original task path is now a
+  lightweight pointer, and the full packet lives under
+  [archive/n5_rl_action_surface_split/](./archive/n5_rl_action_surface_split/README.md):
+  [naval_n5_rl_action_surface_split_cluster_20260526.md](./archive/n5_rl_action_surface_split/naval_n5_rl_action_surface_split_cluster_20260526.md).
   Despite the folder name, this is an N4 pre-fire training-entry repair, not a
   release of N5 weapon engagement. New naval surface-split work should continue
   in the domain-surface split package below.
@@ -52,9 +54,11 @@ subproject entrypoints.
 - Closed N4 scenario-expansion subproject:
   [n4_threat_roe_bridge/README.md](./n4_threat_roe_bridge/README.md)
 - N4 closure record:
-  [n4_threat_roe_bridge/naval_n4_closure_20260525.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.md)
+  [archive/n4_threat_roe_bridge/naval_n4_closure_20260525.md](./archive/n4_threat_roe_bridge/naval_n4_closure_20260525.md)
 - Implemented N4 RL action/observation repair, despite the `N5` directory name:
   [n5_rl_action_surface_split/README.md](./n5_rl_action_surface_split/README.md)
+  and
+  [archive/n5_rl_action_surface_split/README.md](./archive/n5_rl_action_surface_split/README.md)
 
 ## Current Follow-On Focus
 

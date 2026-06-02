@@ -111,7 +111,7 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 - [Ground 最小任务结构](../../standards/ground/minimal_task_structure.zh.md)
 - [Ground bootstrap plan](./ground_domain_bootstrap_plan_20260521.md)
 - [Ground defect inventory](../review/ground_domain_defect_inventory_20260522.md)
-- [G6-E native ground platform schema](g6_native_ground_platform_schema/README.md)
+- [G6-E native ground platform schema](archive/g6_native_ground_platform_schema/README.md)
 
 已验收阶段：
 

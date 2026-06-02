@@ -7,11 +7,14 @@
 
 - 当前海军线已经从最小接触演示推进到具备海上运动、态势感知、局部武器链骨架和支援链雏形的战术原型。
 - 最新状态总结应以 [海军当前进展追踪](./naval_current_progress_20260524.zh.md) 为准。
-- N4 威胁/ROE bridge 已作为开火前场景与 active training-entry gate 闭合。该目录保留为
-  closure/evidence record，是因为测试与 active config 仍引用这个 gate，而不是因为它仍开放分发：
-  [naval_n4_closure_20260525.zh.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)。
-- RL action/observation surface split 已实现，并保留为已接受的 N4 training-entry repair 记录：
-  [n5_rl_action_surface_split/README.zh.md](./n5_rl_action_surface_split/README.zh.md)。
+- N4 威胁/ROE bridge 已作为开火前场景与 active training-entry gate 闭合。原任务路径现在只保留轻量指针；
+  完整 closure/evidence package 位于
+  [archive/n4_threat_roe_bridge/](./archive/n4_threat_roe_bridge/README.zh.md)：
+  [naval_n4_closure_20260525.zh.md](./archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)。
+- RL action/observation surface split 已实现，并保留为已接受的 N4 training-entry repair 记录。
+  原任务路径现在只保留轻量指针；完整 packet 位于
+  [archive/n5_rl_action_surface_split/](./archive/n5_rl_action_surface_split/README.zh.md)：
+  [naval_n5_rl_action_surface_split_cluster_20260526.zh.md](./archive/n5_rl_action_surface_split/naval_n5_rl_action_surface_split_cluster_20260526.zh.md)。
   尽管目录名带 `N5`，它当前是 N4 pre-fire training-entry repair，不是 N5 武器
   交战释放。新的海军 surface-split 工作应继续进入下面的 domain-surface split package。
 - 当前领域执行面拆分追踪于
@@ -39,9 +42,11 @@
 - 已闭合的 N4 场景扩大化子项目：
   [n4_threat_roe_bridge/README.zh.md](./n4_threat_roe_bridge/README.zh.md)
 - N4 闭合记录：
-  [n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md](./n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)
+  [archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md](./archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)
 - 已实现的 N4 RL action/observation repair，尽管目录名带 `N5`：
   [n5_rl_action_surface_split/README.zh.md](./n5_rl_action_surface_split/README.zh.md)
+  与
+  [archive/n5_rl_action_surface_split/README.zh.md](./archive/n5_rl_action_surface_split/README.zh.md)
 
 ## 当前继续推进重点
 

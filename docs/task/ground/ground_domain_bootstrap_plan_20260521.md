@@ -124,19 +124,21 @@ later G6-D3/G6-F release vote.
 ### 4.1 Phase Subprojects And Task Clusters
 
 Each phase is tracked as a separate task subproject so it can be assigned,
-reviewed, and closed without widening the whole ground bootstrap lane.
+reviewed, and closed without widening the whole ground bootstrap lane. Accepted
+phase packets now live under `archive/`; the original phase paths are
+lightweight work statements.
 
 | Phase | Subproject | Dispatch cluster | Release state |
 |-------|------------|------------------|---------------|
-| `G0 Boundary Freeze` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
-| `G1 Contract Skeleton` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
-| `G2 Content And Test Seed` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
-| `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | accepted |
-| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
-| `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
-| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
-| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 accepted as `preflight-only`; G6-E2/E3 now closes native schema identity; route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 accepted for native schema evidence; route movement remains held |
+| `G0 Boundary Freeze` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](archive/g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
+| `G1 Contract Skeleton` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](archive/g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
+| `G2 Content And Test Seed` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](archive/g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
+| `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](archive/g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | accepted |
+| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](archive/g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
+| `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](archive/g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
+| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](archive/g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](archive/g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 accepted as `preflight-only`; G6-E2/E3 now closes native schema identity; route-move implementation held |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](archive/g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 accepted for native schema evidence; route movement remains held |
 
 The active assignment queue is
 [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).
