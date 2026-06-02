@@ -1,6 +1,6 @@
 # Default Effects Modularization
 
-状态：`2026-06-02 paused / DFM-P3F structure-spatial helper pass / debug early-return snapshot guard pass`。
+状态：`2026-06-02 closed / archived / DFM-P3F structure-spatial helper pass`。
 
 语言：
 
@@ -28,7 +28,7 @@ Inputs:
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| 主翻译单元拆分 | active-pass | `default_effects_model.cpp` 已转为 orchestration 并 include 私有 detail 片段。 | 不证明物理或 vulnerability calibration 权威。 |
+| 主翻译单元拆分 | closed-pass | `default_effects_model.cpp` 已转为 orchestration 并 include 私有 detail 片段。 | 不证明物理或 vulnerability calibration 权威。 |
 | Direct hit helper | pass | `detail/default_effects_direct_hit_detail.inc`；`DFM-P4` runtime fixtures | fixed-RNG direct component 与 protected-system fallback 路径已有 runtime fixture 覆盖，尚非 C++ golden harness。 |
 | Spatial projection helper | pass | `detail/default_effects_spatial_projection_detail.inc` 和共享 candidate helpers；`DFM-P4` runtime fixtures | broad / non-broad near-miss 路径已有 runtime fixture 覆盖。 |
 | System effect helper | pass | `detail/default_effects_system_effect_detail.inc` | 已有 build/runtime guard 覆盖，尚非逐字段 golden 对比。 |
@@ -62,7 +62,7 @@ Out of scope:
 | `P2 Internal Cleanup` | 降低重复公式和 scratch 更新。 | P1 helper 边界编译通过。 | 统一 component-scale 和 warhead-sample helpers。 | pass |
 | `P3 Air Resolution Split` | 在不改公式的前提下压薄 air-platform consequence 内部。 | P2 pass。 | 机制载荷、scale 聚合、platform-only、sensor/avionics、propulsion/fuel、control/hydraulic、crew-role、mission/combat、structure-spatial、fire-zone、finalize 与后续 consequence blocks 有命名 helper。 | pass / DFM-P3F structure-spatial helper pass |
 | `P4 Regression Fixtures` | 为高风险路径补窄行为 fixture。 | P1-P3 构建通过。 | 专用 fixture 或 runtime snapshot 覆盖命名路径。 | direct/spatial/early-return pass |
-| `P5 Closure` | 同步 docs、status、archive 和 residual。 | P4 pass 或明确 held residual。 | acceptance gate 和 current status 更新。 | DFM-P6 pass |
+| `P5 Closure` | 同步 docs、status、archive 和 residual。 | P4 pass 或明确 held residual。 | acceptance gate、current status 和 archive record 更新。 | closed / archived |
 
 ## Task Clusters
 
@@ -70,6 +70,7 @@ Out of scope:
 - 当前状态：[default_effects_modularization_current_status_20260601.md](default_effects_modularization_current_status_20260601.md)
 - 第一轮验收：[default_effects_modularization_acceptance_20260601.md](default_effects_modularization_acceptance_20260601.md)
 - 收口同步：[default_effects_modularization_closure_sync_20260602.md](default_effects_modularization_closure_sync_20260602.md)
+- 归档收口：[archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)
 
 ## Outputs And Evidence
 
@@ -93,8 +94,8 @@ Out of scope:
 
 ## Residuals And Next Steps
 
-- 在继续结构化拆分时保持已接受的 direct、spatial 与 structured air-platform
-  early-return runtime fixtures 为绿。
+- 后续任务若触碰该表面，必须保持已接受的 direct、spatial 与 structured
+  air-platform early-return runtime fixtures 为绿。
 - C++ 单元测试框架只作为后续项目级测试倡议处理。
 - 先前 held 的 aircraft structure-spatial helper extraction 已完成；任何进一步
   air-platform 重构都必须重新建立有限任务簇，并继续保持公式、authority strings
@@ -103,4 +104,4 @@ Out of scope:
 ## Archive
 
 - Archive index：[archive/README.md](archive/README.md)
-- 本子项目尚无历史记录归档。
+- 最终收口：[archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)

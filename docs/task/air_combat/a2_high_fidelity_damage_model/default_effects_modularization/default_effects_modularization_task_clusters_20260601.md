@@ -1,12 +1,13 @@
 # Default Effects Modularization Task Clusters
 
-Status: `2026-06-02 finite task-cluster plan / DFM-P3F structure-spatial helper pass / paused`.
+Status: `2026-06-02 finite task-cluster plan / DFM-P3F structure-spatial helper pass / closed archived`.
 
 Parent subproject:
 
 - [README.md](README.md)
 - [README.zh.md](README.zh.md)
 - [Closure sync](default_effects_modularization_closure_sync_20260602.md)
+- [Archive closeout](archive/default_effects_modularization_closeout_20260602.md)
 
 ## Boundary Decision
 
@@ -34,7 +35,7 @@ authority, deterministic fuze release, or industrial admission.
 | `DFM-P3D` | Ramanujan worker (`019e8441-3a03-7012-8888-30f64fec5927`); Darwin diagnostics (`019e8441-ef53-7fe0-9707-03d9ce2daec1`) | inherited / xhigh | Extract one source-only helper for aircraft pilot, mission-crew, command-navigation, and generic crew fallback consequence blocks. | `src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc` for Ramanujan; diagnostics is read-only | No formula, coefficient, RNG, result field, authority string, public contract, or derive/clamp/apply-to-platform reorder changes. | `git diff --check`; `cmake --build build-local-win --target ef_core -j2`; `cmake --build build-local-win --target ef_py -j2`; `test_weapon_guidance_realism_guards.py -k dfm_p4`; full guard. | Crew-role helper slice passes build plus runtime guard and returns a packet. | Serial after `DFM-P3C` acceptance; do not edit docs or tests in the worker. TM04/TM05 remains unrelated. | 1 | pass / crew-role helper accepted |
 | `DFM-P3E` | Ramanujan worker (`019e8441-3a03-7012-8888-30f64fec5927`); Darwin diagnostics (`019e8441-ef53-7fe0-9707-03d9ce2daec1`) | inherited / xhigh | Extract one source-only helper for the aircraft-side mission/combat consequence block. | `src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc` for Ramanujan; diagnostics is read-only | No formula, coefficient, RNG, result field, authority string, public contract, or derive/clamp/apply-to-platform reorder changes. | `git diff --check`; `cmake --build build-local-win --target ef_core -j2`; `cmake --build build-local-win --target ef_py -j2`; `test_weapon_guidance_realism_guards.py -k dfm_p4`; full guard. | Mission/combat helper slice passes build plus runtime guard and returns a packet. | Serial after `DFM-P3D` acceptance; do not edit docs or tests in the worker. Keep platform-level mission/combat behavior outside this helper. TM04/TM05 remains unrelated. | 1 | pass / mission-combat helper accepted |
 | `DFM-P3F` | main thread | local / xhigh-equivalent review | Verify and accept the aircraft-side structure-spatial consequence helper already present in the current source, then fix the debug early-return validation crash exposed by the accepted fixture. | `src/core/engine/simulation_kernel_damage_debug_api.cpp`; status docs; `src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc` as reviewed evidence | No formula, coefficient, RNG, result field, authority string, public contract, or derive/clamp/apply-to-platform reorder changes. Debug API changes may only use pre-hit target snapshots for event recording. | `git diff --check`; `cmake --build build --target ef_core -j2`; `cmake --build build --target ef_py -j2`; structured early-return fixture; `test_weapon_guidance_realism_guards.py -k dfm_p4`; full guard. | Structure-spatial helper is verified and accepted; debug API no longer reads target components after target destruct. | Serial after `DFM-P3E`; no parallel source worker. | 1 | pass / structure-spatial helper accepted |
-| `DFM-P6` | integration worker | inherited / xhigh | Closure sync: update status, parent links, acceptance/residuals, and archive boundary. | subproject docs, parent A2 README entries, `src/models/weapons/README*` if needed | No authority or public API claim. | `git diff --check`; link/path review; build/test evidence copied from current run. | Acceptance and held residuals are explicit; build/test evidence references the current Windows validation path. | Serial after implementation/test clusters. | 1 | pass |
+| `DFM-P6` | integration worker | inherited / xhigh | Closure sync: update status, parent links, acceptance/residuals, and archive boundary. | subproject docs, parent A2 README entries, `src/models/weapons/README*` if needed | No authority or public API claim. | `git diff --check`; link/path review; build/test evidence copied from current run. | Acceptance and held residuals are explicit; build/test evidence references the current validation path. | Serial after implementation/test clusters. | 1 | pass / archived |
 
 ## Dispatch Rules
 
@@ -92,7 +93,7 @@ Immediate:
 - Keep the accepted structured air-platform early-return fixture as the
   regression floor for platform-loss/destruct early return.
 - Do not send more workers against `DFM-P3`, `DFM-P3B`, `DFM-P3C`,
-  `DFM-P3D`, `DFM-P3E`, or `DFM-P3F`; the current task is paused after commit.
+  `DFM-P3D`, `DFM-P3E`, or `DFM-P3F`; the current task is closed and archived.
 
 Follow-on:
 

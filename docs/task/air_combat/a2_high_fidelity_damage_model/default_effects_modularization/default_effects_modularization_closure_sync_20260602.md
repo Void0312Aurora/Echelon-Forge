@@ -1,12 +1,13 @@
 # Default Effects Modularization Closure Sync
 
-Status: `2026-06-02 DFM-P6 closure sync / DFM-P3F structure-spatial helper pass / paused`.
+Status: `2026-06-02 DFM-P6 closure sync / DFM-P3F structure-spatial helper pass / archived`.
 
 Subproject:
 
 - [README.md](README.md)
 - [Task clusters](default_effects_modularization_task_clusters_20260601.md)
 - [Current status](default_effects_modularization_current_status_20260601.md)
+- [Archive closeout](archive/default_effects_modularization_closeout_20260602.md)
 
 ## Scope Accepted In This Sync
 
@@ -48,7 +49,7 @@ fixture hardening:
 - Darwin returned `pass` for read-only `DFM-P3E` diagnostics and confirmed that
   the aircraft structure-spatial block and platform-level mission/combat
   consequence remained outside the aircraft-only helper.
-- `DFM-P3F` resumed the paused line on the main thread and verified that the
+- `DFM-P3F` resumed the prior held line on the main thread and verified that the
   current source already contains the named
   `apply_default_effects_aircraft_structure_spatial_consequence_block` helper
   for the remaining aircraft-side structure-spatial block.
@@ -64,8 +65,8 @@ fixture hardening:
   current verified state.
 
 This does not promote any wider A2 fidelity authority. `DFM-P3F` is accepted
-for the current implementation budget, and the line is paused with no remaining
-aircraft consequence helper residual held inside this subproject.
+for the current implementation budget, and the line is archived with no
+remaining aircraft consequence helper residual held inside this subproject.
 
 ## Validation
 
@@ -88,8 +89,8 @@ CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtim
 
 ## Residuals
 
-- Pause after `DFM-P3F`; any further source split must open a new finite task
-  row with a fresh validation budget.
+- Archive after `DFM-P3F`; any further source split must open a new finite task
+  row or subproject with a fresh validation budget.
 - Keep the accepted structured platform-loss/destruct early-return fixture as a
   regression guard for future structure-only edits.
 - Keep C++ unit-test framework adoption as a separate project-wide test-system

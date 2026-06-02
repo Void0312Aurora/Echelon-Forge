@@ -1,11 +1,12 @@
 # Default Effects Modularization Current Status
 
-Status: `2026-06-02 paused / DFM-P3F structure-spatial helper pass / debug early-return snapshot guard pass`.
+Status: `2026-06-02 closed / archived / DFM-P3F structure-spatial helper pass`.
 
 Subproject:
 
 - [README.md](README.md)
 - [Task clusters](default_effects_modularization_task_clusters_20260601.md)
+- [Archive closeout](archive/default_effects_modularization_closeout_20260602.md)
 
 ## Changes Since Baseline
 
@@ -67,7 +68,7 @@ Subproject:
 - Darwin returned `pass` for read-only `DFM-P3E` diagnostics and confirmed that
   the aircraft structure-spatial block and platform-level mission/combat
   consequence remain outside the aircraft-only helper.
-- `DFM-P3F` resumed the paused line on the main thread and verified that the
+- `DFM-P3F` resumed the prior held line on the main thread and verified that the
   current source already contains the aircraft structure-spatial consequence
   helper `apply_default_effects_aircraft_structure_spatial_consequence_block`,
   with coefficients, formula inputs, RNG handling, result fields, authority
@@ -76,6 +77,8 @@ Subproject:
   destruct; integration fixed `simulation_kernel_damage_debug_api.cpp` to build
   debug event records from pre-hit target `Transform` and `Velocity` snapshots
   instead of reading components from a destructed Flecs entity.
+- Final archive closeout recorded the bounded structure-cleanup closure and
+  preserved the no-authority-promotion boundary.
 
 ## Maturity Matrix
 
@@ -89,7 +92,7 @@ Subproject:
 | DFM-P5 diagnostics | pass | Lovelace packet reviewed and applied to assertion style. | None for round 1. |
 | DFM-P3F structure-spatial split | pass | Source review found the helper already present; `ef_core`, `ef_py`, `dfm_p4`, and full runtime guard passed after the debug guard fix. | Further air-platform restructuring must be re-scoped as a new finite task. |
 | Debug early-return snapshot guard | pass | Structured platform-loss/destruct fixture now passes on Linux. | Debug API change is limited to event-record snapshots; default effects formulas are unchanged. |
-| DFM-P6 closure sync | pass / updated | [closure sync](default_effects_modularization_closure_sync_20260602.md) | Historical DFM-P6 sync is updated with DFM-P3F evidence; no authority claim added. |
+| DFM-P6 closure sync | pass / archived | [closure sync](default_effects_modularization_closure_sync_20260602.md); [closeout](archive/default_effects_modularization_closeout_20260602.md) | Historical DFM-P6 sync is archived with DFM-P3F evidence; no authority claim added. |
 | C++ test harness | deferred | No project-level C++ unit suite exists. | Separate project-wide initiative needed. |
 
 ## Evidence
@@ -121,10 +124,12 @@ Immediate:
 - Keep the accepted DFM-P3 / DFM-P3B / DFM-P3C / DFM-P3D / DFM-P3E / DFM-P3F platform,
   sensor/avionics, propulsion/fuel, control/hydraulic, crew-role,
   mission/combat, structure-spatial, and fire-zone helpers plus the DFM-P4
-  early-return fixture covered by build and runtime guard verification.
+  early-return fixture covered by build and runtime guard verification when
+  any future task touches this surface.
 - Do not continue the current `DFM-P3`, `DFM-P3B`, `DFM-P3C`, `DFM-P3D`,
   `DFM-P3E`, or `DFM-P3F` rows with more implementation workers; `DFM-P3F`
-  has consumed the previously held structure-spatial split.
+  has consumed the previously held structure-spatial split and this subproject
+  is archived.
 
 Near-term:
 
@@ -140,8 +145,10 @@ Held:
 
 ## Recommended Next Action Order
 
-1. Pause after `DFM-P3F` and commit the accepted DFM changes.
-2. Keep the structured early-return fixture green because it exercises the
+1. Keep this subproject closed and archived.
+2. For any future default-effects work, create a new finite task row or
+   subproject with a fresh write set and validation budget.
+3. Keep the structured early-return fixture green because it exercises the
    debug target snapshot guard.
 
 ## Explicitly Refused Overclaims

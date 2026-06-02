@@ -1,6 +1,6 @@
 # Default Effects Modularization
 
-Status: `2026-06-02 paused / DFM-P3F structure-spatial helper pass / debug early-return snapshot guard pass`.
+Status: `2026-06-02 closed / archived / DFM-P3F structure-spatial helper pass`.
 
 Language:
 
@@ -30,7 +30,7 @@ code-structure and regression task surface for the default effects model.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Main translation unit split | active-pass | `default_effects_model.cpp` now includes private detail fragments and is reduced to orchestration. | This does not prove physics or vulnerability calibration authority. |
+| Main translation unit split | closed-pass | `default_effects_model.cpp` now includes private detail fragments and is reduced to orchestration. | This does not prove physics or vulnerability calibration authority. |
 | Direct hit helper | pass | `detail/default_effects_direct_hit_detail.inc`; `DFM-P4` runtime fixtures | Fixed-RNG direct component and protected-system fallback routes are covered by runtime fixtures, not by a C++ golden harness. |
 | Spatial projection helper | pass | `detail/default_effects_spatial_projection_detail.inc`; `DFM-P4` runtime fixtures | Broad and non-broad near-miss routes are covered by runtime fixtures. |
 | System effect helper | pass | `detail/default_effects_system_effect_detail.inc` | Extracted behavior has build/runtime guard coverage, not line-by-line golden comparison. |
@@ -69,7 +69,7 @@ Out of scope:
 | `P2 Internal Cleanup` | Reduce duplicate formulas and scratch updates. | P1 helper boundaries compile. | Shared component-scale and warhead-sample helpers are used. | pass |
 | `P3 Air Resolution Split` | Thin air-platform consequence internals without formula drift. | P2 pass. | Mechanism-load, scale aggregation, platform-only, sensor/avionics, propulsion/fuel, control/hydraulic, crew-role, mission/combat, structure-spatial, fire-zone, finalize, and future consequence blocks are named helpers. | pass / DFM-P3F structure-spatial helper pass |
 | `P4 Regression Fixtures` | Add narrow behavior fixtures for high-risk paths. | P1-P3 build. | Dedicated fixture or runtime snapshot tests cover named paths. | direct/spatial/early-return pass |
-| `P5 Closure` | Sync docs, status, archive, and residuals. | P4 pass or explicit held residual. | Acceptance gate and current status are updated. | DFM-P6 pass |
+| `P5 Closure` | Sync docs, status, archive, and residuals. | P4 pass or explicit held residual. | Acceptance gate, current status, and archive record are updated. | closed / archived |
 
 ## Task Clusters
 
@@ -77,6 +77,7 @@ Out of scope:
 - Current status: [default_effects_modularization_current_status_20260601.md](default_effects_modularization_current_status_20260601.md)
 - Round-1 acceptance: [default_effects_modularization_acceptance_20260601.md](default_effects_modularization_acceptance_20260601.md)
 - Closure sync: [default_effects_modularization_closure_sync_20260602.md](default_effects_modularization_closure_sync_20260602.md)
+- Archive closeout: [archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)
 
 ## Outputs And Evidence
 
@@ -101,7 +102,7 @@ This subproject can be marked accepted only when:
 ## Residuals And Next Steps
 
 - Keep the accepted direct, spatial, and structured air-platform early-return
-  runtime fixtures green while continuing the structure-only split.
+  runtime fixtures green when future tasks touch this surface.
 - Consider a later C++ unit-test harness only as a separate project-wide testing
   initiative.
 - The previously held aircraft structure-spatial helper extraction is complete;
@@ -111,4 +112,4 @@ This subproject can be marked accepted only when:
 ## Archive
 
 - Archive index: [archive/README.md](archive/README.md)
-- No historical records have been archived for this subproject yet.
+- Final closeout: [archive/default_effects_modularization_closeout_20260602.md](archive/default_effects_modularization_closeout_20260602.md)
