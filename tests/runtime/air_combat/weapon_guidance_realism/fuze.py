@@ -125,6 +125,16 @@ class FuzeRuntimeMixin:
                 if bool(runtime["fuze_delay_armed"]):
                     armed_seen = True
                     self.assertTrue(math.isfinite(float(runtime["fuze_nearest_approach_time_s"])))
+                    min_local_norm = math.sqrt(
+                        float(runtime["proximity_min_local_forward_m"]) ** 2
+                        + float(runtime["proximity_min_local_right_m"]) ** 2
+                        + float(runtime["proximity_min_local_up_m"]) ** 2
+                    )
+                    self.assertAlmostEqual(
+                        min_local_norm,
+                        float(runtime["proximity_min_dist_m"]),
+                        delta=1.0e-3,
+                    )
                     self.assertEqual(str(runtime["fuze_signature_source"]), "target_rcs_aspect")
                     self.assertGreater(float(runtime["fuze_target_signature"]), 0.0)
                     self.assertGreater(float(runtime["fuze_signature_scale"]), 0.0)
@@ -152,6 +162,21 @@ class FuzeRuntimeMixin:
             float(effects.detonation_time_s) - float(effects.nearest_approach_time_s),
             0.08,
             delta=sim.get_time_step() + 1.0e-6,
+        )
+        detonation_local_norm = math.sqrt(
+            float(effects.detonation_local_forward_m) ** 2
+            + float(effects.detonation_local_right_m) ** 2
+            + float(effects.detonation_local_up_m) ** 2
+        )
+        self.assertAlmostEqual(
+            detonation_local_norm,
+            float(effects.miss_distance_m),
+            delta=1.0e-3,
+        )
+        self.assertTrue(
+            bool(effects.direct_hitbox_intersection)
+            or int(effects.projected_hitbox_count) > 0
+            or int(effects.component_hit_count) > 0
         )
 
     def test_fuze_event_records_detonation_attitude_evidence(self) -> None:

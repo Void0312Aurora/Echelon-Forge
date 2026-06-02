@@ -24,6 +24,10 @@ STAGE1_HYBRID_TEMPORAL_CONFIG = (
 STAGE1_HYBRID_SHAPED_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json"
 )
+STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
     REPO_ROOT
@@ -208,6 +212,46 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)
         self.assertEqual(scenario.get("entities", [])[1].get("ammo", {}).get("missiles_remaining"), 0)
 
+    def test_stage1_bvr_hybrid_temporal_shaped_probe_pairs_with_hybrid_shaped_baseline(self) -> None:
+        shaped = _load_json(STAGE1_HYBRID_SHAPED_CONFIG)
+        temporal_shaped = _load_json(STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG)
+
+        for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
+            self.assertEqual(temporal_shaped.get(key), shaped.get(key), key)
+        self.assertEqual(temporal_shaped.get("runtime"), shaped.get("runtime"))
+        self.assertEqual(temporal_shaped.get("early_stop"), shaped.get("early_stop"))
+        self.assertEqual(temporal_shaped.get("diagnostics"), shaped.get("diagnostics"))
+        self.assertEqual(temporal_shaped.get("hmoe"), shaped.get("hmoe"))
+        self.assertEqual(temporal_shaped.get("wrappers"), shaped.get("wrappers"))
+
+        shaped_env = dict(shaped.get("env", {}))
+        temporal_shaped_env = dict(temporal_shaped.get("env", {}))
+        self.assertEqual(int(temporal_shaped_env.pop("temporal_history_len")), 16)
+        self.assertEqual(temporal_shaped_env, shaped_env)
+
+        shaped_hyper = dict(shaped.get("hyperparameters", {}))
+        temporal_shaped_hyper = dict(temporal_shaped.get("hyperparameters", {}))
+        shaped_policy_kwargs = dict(shaped_hyper.pop("policy_kwargs"))
+        temporal_shaped_policy_kwargs = dict(temporal_shaped_hyper.pop("policy_kwargs"))
+        self.assertEqual(temporal_shaped_hyper, shaped_hyper)
+        self.assertEqual(shaped_policy_kwargs.get("hybrid_action_spec"), "air_combat_hybrid_v1")
+        self.assertEqual(temporal_shaped_policy_kwargs.get("hybrid_action_spec"), "air_combat_hybrid_v1")
+        self.assertEqual(shaped_policy_kwargs.get("features_extractor_class"), "TransformerExtractor")
+        self.assertEqual(temporal_shaped_policy_kwargs.get("features_extractor_class"), "TemporalTransformerExtractor")
+        self.assertEqual(
+            temporal_shaped_policy_kwargs.get("family_subexpert_counts"),
+            shaped_policy_kwargs.get("family_subexpert_counts"),
+        )
+        self.assertEqual(temporal_shaped_policy_kwargs.get("net_arch"), shaped_policy_kwargs.get("net_arch"))
+        self.assertEqual(temporal_shaped_policy_kwargs.get("log_std_init"), shaped_policy_kwargs.get("log_std_init"))
+        temporal_extractor = temporal_shaped_policy_kwargs.get("features_extractor_kwargs", {})
+        shaped_extractor = shaped_policy_kwargs.get("features_extractor_kwargs", {})
+        self.assertEqual(int(temporal_extractor.get("features_dim")), int(shaped_extractor.get("features_dim")))
+        self.assertEqual(int(temporal_extractor.get("n_heads")), int(shaped_extractor.get("n_heads")))
+        self.assertEqual(int(temporal_extractor.get("n_layers")), int(shaped_extractor.get("n_layers")))
+        self.assertEqual(int(temporal_extractor.get("temporal_n_heads")), 4)
+        self.assertEqual(int(temporal_extractor.get("temporal_n_layers")), 2)
+
     def test_stage1_bvr_probe_bootstraps_on_current_execution_path(self) -> None:
         entries = [
             ("reactive", STAGE1_CONFIG, STAGE1_SCENARIO),
@@ -215,6 +259,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             ("hybrid", STAGE1_HYBRID_CONFIG, STAGE1_SCENARIO),
             ("hybrid_temporal", STAGE1_HYBRID_TEMPORAL_CONFIG, STAGE1_SCENARIO),
             ("hybrid_shaped", STAGE1_HYBRID_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
+            ("hybrid_temporal_shaped", STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
         ]
         for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
@@ -244,9 +289,9 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             self.assertIn("world_batch_vec_env=True", proc.stdout)
             self.assertIn("World batch runtime:", proc.stdout)
             self.assertIn("Execution reward runtime: requested_backend=compiled effective_backend=compiled", proc.stdout)
-            if label in {"hybrid", "hybrid_temporal", "hybrid_shaped"}:
+            if label in {"hybrid", "hybrid_temporal", "hybrid_shaped", "hybrid_temporal_shaped"}:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
-            if label in {"temporal", "hybrid_temporal"}:
+            if label in {"temporal", "hybrid_temporal", "hybrid_temporal_shaped"}:
                 self.assertIn("temporal_history_len=16", proc.stdout)
             self.assertIn("Error: --test_only requires --resume_path", proc.stdout)
 
