@@ -1,8 +1,8 @@
 # Air Combat
 
 Status: active `1v1` workline; default entry converged on `2026-05-18`;
-`2026-05-25` opened the staged `1v1` realism-gradient curriculum; `2026-06-02`
-opened the C2/ROE release-discipline planning entry.
+`2026-05-25` opened the staged `1v1` realism-gradient curriculum; `2026-06-03`
+accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
 
 ## Current Status
 
@@ -20,12 +20,13 @@ opened the C2/ROE release-discipline planning entry.
 - The first training entry should move to the staged curriculum under
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
   instead of the historical smoke fixture.
-- The repeated-launch issue now routes first through
+- The repeated-launch issue now routes first through the accepted bounded
+  C2/ROE layer in
   [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md):
-  before treating multiple shots as a memory or M2 sequence-policy failure,
-  the S1 line needs policy-visible weapons-control status, target identity,
-  fire authorization, single-shot-then-assess / salvo / reattack permission,
-  and mission-observation constraints.
+  policy-visible weapons-control status, target identity, fire authorization,
+  single-shot-then-assess / salvo / reattack permission, and mission-observation
+  constraints are wired. P4 probes can split authorized release from violation
+  release, but learned-policy weapon employment and M2 release remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -53,9 +54,9 @@ opened the C2/ROE release-discipline planning entry.
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
   weapons
-- build the A3 C2/ROE constraint surface so S1 can distinguish hold, authorized
-  single shot, authorized salvo, reattack permission, and premature second shot
-  instead of explaining repeated fire only through ammo rewards
+- run follow-on learned-policy training/evaluation against the A3 C2/ROE probe
+  config when RL resources are available; do not release M2 from process-probe
+  classification alone
 
 ## Recommended Reading Order
 
@@ -72,7 +73,7 @@ opened the C2/ROE release-discipline planning entry.
   [air_combat_1v1_stall_rootcause_followup_20260516.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.md)
 - Current staged curriculum:
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
-- C2/ROE release-discipline planning:
+- C2/ROE release-discipline accepted layer:
   [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md)
 - High-fidelity damage-model sealed record:
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)

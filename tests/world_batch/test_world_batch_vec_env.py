@@ -32,6 +32,10 @@ from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBu
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
 from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv  # noqa: E402
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
+from python.mission_obs_taxonomy import (  # noqa: E402
+    mission_observation_dim,
+    mission_observation_field_index,
+)
 from tests.support._leader_env_runtime_test_support import CounterDictEnv  # noqa: E402
 
 
@@ -455,6 +459,57 @@ class WorldBatchVecEnvTests(unittest.TestCase):
                 self.assertGreaterEqual(int(infos[0]["episode"]["l"]), 1)
                 self.assertTrue(np.allclose(obs["proprio"], 0.0))
                 self.assertEqual(vec_env.reset_infos, [{}, {}])
+            finally:
+                vec_env.close()
+
+    def test_world_batch_vec_env_uses_air_combat_c2_roe_python_owned_mission_observation(self) -> None:
+        mode = "air_combat_c2_roe_v1"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scenario_data = _inline_vec_env_scenario()
+            scenario_data["mission_command"].update(
+                {
+                    "roe_state": 3,
+                    "wcs_state": 2,
+                    "authorization_to_fire": True,
+                    "engage_order_state": 2,
+                    "shot_policy_state": 1,
+                    "shot_budget_remaining": 1,
+                    "pending_assessment": True,
+                }
+            )
+            scenario_path = f"{tmpdir}/inline_scenario.json"
+            with open(scenario_path, "w", encoding="utf-8") as f:
+                json.dump(scenario_data, f, ensure_ascii=True)
+
+            vec_env = WorldBatchVecEnv(
+                scenario_path=scenario_path,
+                n_envs=2,
+                include_visual=False,
+                include_proprio=False,
+                mission_obs_mode=mode,
+            )
+            try:
+                obs = vec_env.reset()
+                mission = np.asarray(obs["mission"], dtype=np.float32)
+                self.assertEqual(mission.shape, (2, mission_observation_dim(mode)))
+                self.assertTrue(
+                    np.allclose(mission[:, mission_observation_field_index(mode, "roe_state")], 3.0)
+                )
+                self.assertTrue(
+                    np.allclose(mission[:, mission_observation_field_index(mode, "wcs_state")], 2.0)
+                )
+                self.assertTrue(
+                    np.allclose(mission[:, mission_observation_field_index(mode, "authorization_to_fire")], 1.0)
+                )
+                self.assertTrue(
+                    np.allclose(mission[:, mission_observation_field_index(mode, "shot_policy_state")], 1.0)
+                )
+                self.assertTrue(
+                    np.allclose(mission[:, mission_observation_field_index(mode, "shot_budget_remaining")], 1.0)
+                )
+                self.assertTrue(
+                    np.allclose(mission[:, mission_observation_field_index(mode, "pending_assessment")], 1.0)
+                )
             finally:
                 vec_env.close()
 

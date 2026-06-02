@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import atexit
-import fcntl
 import json
 import os
 import random
@@ -12,12 +11,33 @@ from datetime import datetime
 from typing import Any, TextIO
 
 import numpy as np
-import torch
+
+try:
+    import fcntl
+except ModuleNotFoundError:  # pragma: no cover - Windows smoke paths do not expose fcntl
+    fcntl = None
 
 from python.env_config import resolve_env_settings
 
 
 SUPPORTED_AGENT_LAYERS = frozenset({"execution", "leader", "cooperative_execution"})
+_TORCH: Any | None = None
+_TORCH_IMPORT_ERROR: Exception | None = None
+
+
+def _load_torch() -> Any | None:
+    global _TORCH, _TORCH_IMPORT_ERROR
+    if _TORCH is not None:
+        return _TORCH
+    if _TORCH_IMPORT_ERROR is not None:
+        return None
+    try:
+        import torch as torch_module
+    except Exception as exc:  # pragma: no cover - optional dependency boundary
+        _TORCH_IMPORT_ERROR = exc
+        return None
+    _TORCH = torch_module
+    return _TORCH
 
 
 @dataclass
@@ -46,9 +66,13 @@ def apply_global_seed(seed: int) -> None:
     seed = int(seed)
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+    torch_module = _load_torch()
+    if torch_module is None:
+        print("[WARN] PyTorch is not installed; skipping torch seed initialization.")
+        return
+    torch_module.manual_seed(seed)
+    if torch_module.cuda.is_available():
+        torch_module.cuda.manual_seed_all(seed)
 
 
 def acquire_experiment_lock(exp_dir: str) -> TextIO | None:
@@ -62,16 +86,17 @@ def acquire_experiment_lock(exp_dir: str) -> TextIO | None:
     lock_path = os.path.join(exp_dir, ".train.lock")
     os.makedirs(exp_dir, exist_ok=True)
     lock_file = open(lock_path, "a+", encoding="utf-8")
-    try:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        lock_file.seek(0)
-        holder = lock_file.read().strip()
-        print(f"Error: experiment directory is already locked by another training process: {exp_dir}")
-        if holder:
-            print(f"Active lock info: {holder}")
-        lock_file.close()
-        return None
+    if fcntl is not None:
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            lock_file.seek(0)
+            holder = lock_file.read().strip()
+            print(f"Error: experiment directory is already locked by another training process: {exp_dir}")
+            if holder:
+                print(f"Active lock info: {holder}")
+            lock_file.close()
+            return None
 
     lock_info = {
         "pid": os.getpid(),
@@ -91,10 +116,11 @@ def acquire_experiment_lock(exp_dir: str) -> TextIO | None:
             lock_file.flush()
         except Exception:
             pass
-        try:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-        except Exception:
-            pass
+        if fcntl is not None:
+            try:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            except Exception:
+                pass
         try:
             lock_file.close()
         except Exception:
@@ -248,14 +274,29 @@ def _configure_torch_runtime(
     args: argparse.Namespace,
     runtime_cfg: dict[str, Any],
 ) -> tuple[int, int]:
+    torch_module = _load_torch()
     torch_threads = args.torch_threads
     if torch_threads is None:
         torch_threads = runtime_cfg.get("torch_threads")
+    if torch_module is None:
+        if torch_threads is not None:
+            torch_threads = max(1, int(torch_threads))
+        else:
+            torch_threads = -1
+        torch_interop_threads = args.torch_interop_threads
+        if torch_interop_threads is None:
+            torch_interop_threads = runtime_cfg.get("torch_interop_threads")
+        if torch_interop_threads is not None:
+            torch_interop_threads = max(1, int(torch_interop_threads))
+        else:
+            torch_interop_threads = -1
+        return int(torch_threads), int(torch_interop_threads)
+
     if torch_threads is not None:
         torch_threads = max(1, int(torch_threads))
-        torch.set_num_threads(torch_threads)
+        torch_module.set_num_threads(torch_threads)
     else:
-        torch_threads = int(torch.get_num_threads())
+        torch_threads = int(torch_module.get_num_threads())
 
     torch_interop_threads = args.torch_interop_threads
     if torch_interop_threads is None:
@@ -263,12 +304,12 @@ def _configure_torch_runtime(
     if torch_interop_threads is not None:
         torch_interop_threads = max(1, int(torch_interop_threads))
         try:
-            torch.set_num_interop_threads(torch_interop_threads)
+            torch_module.set_num_interop_threads(torch_interop_threads)
         except RuntimeError:
             pass
     else:
         try:
-            torch_interop_threads = int(torch.get_num_interop_threads())
+            torch_interop_threads = int(torch_module.get_num_interop_threads())
         except Exception:
             torch_interop_threads = -1
 

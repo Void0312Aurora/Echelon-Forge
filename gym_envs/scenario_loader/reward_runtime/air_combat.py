@@ -13,10 +13,39 @@ _LOSS_PROGRESS_BONUS_DEFAULTS = {
     "survivability_kill": 250.0,
     "lost": 250.0,
 }
+_C2_ROE_CONTRACT_FIELDS = {
+    "wcs_state",
+    "target_identity_state",
+    "engage_order_state",
+    "shot_policy_state",
+    "shot_budget_remaining",
+    "pending_assessment",
+    "own_missiles_in_flight_count",
+}
+_C2_ROE_REWARD_KEYS = (
+    "air_combat_roe_hold_fire_bonus",
+    "air_combat_roe_hold_fire_violation_penalty",
+    "air_combat_roe_unauthorized_fire_penalty",
+    "air_combat_roe_valid_authorized_release_bonus",
+    "air_combat_roe_authorized_first_release_bonus",
+    "air_combat_roe_pending_assessment_penalty",
+    "air_combat_roe_premature_second_shot_penalty",
+    "air_combat_roe_shot_budget_violation_penalty",
+    "air_combat_roe_authorized_salvo_bonus",
+    "air_combat_roe_authorized_reattack_bonus",
+)
+_C2_ROE_HOLD_ENGAGE_STATES = {3, 4, 5, 6}
 
 
 def _normalized_token(value: Any) -> str:
     return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _as_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(float(value))
+    except Exception:
+        return int(default)
 
 
 def _as_bool(value: Any, default: bool) -> bool:
@@ -119,6 +148,141 @@ def air_combat_release_shaping_enabled(loader: Any) -> bool:
             "air_combat_invalid_fire_penalty",
         )
     )
+
+
+def air_combat_c2_roe_release_discipline_enabled(loader: Any) -> bool:
+    explicit = _cfg_value(loader, "air_combat_c2_roe_release_discipline_enabled", None)
+    if explicit is not None:
+        return _as_bool(explicit, False)
+    return any(abs(_cfg_float(loader, key, 0.0)) > 0.0 for key in _C2_ROE_REWARD_KEYS)
+
+
+def air_combat_c2_roe_state_from_mapping(
+    values: dict[str, Any] | None,
+    *,
+    target_id: int = 0,
+    agent_id: int = 0,
+) -> dict[str, Any]:
+    data = values if isinstance(values, dict) else {}
+    if "c2_roe_contract_present" in data:
+        contract_present = _as_bool(data.get("c2_roe_contract_present"), False)
+    else:
+        contract_present = any(key in data for key in _C2_ROE_CONTRACT_FIELDS)
+
+    roe_state = _as_int(data.get("roe_state", 0), 0)
+    wcs_default = 1 if contract_present else roe_state
+    wcs_state = _as_int(data.get("wcs_state", wcs_default), wcs_default)
+    shot_policy_state = _as_int(data.get("shot_policy_state", 0), 0)
+    engage_order_state = _as_int(data.get("engage_order_state", 0), 0)
+    shot_budget_remaining = max(0, _as_int(data.get("shot_budget_remaining", 0), 0))
+    authorization_to_fire = _as_bool(data.get("authorization_to_fire", False), False)
+    assigned_target_id = _as_int(data.get("assigned_target_id", target_id), int(target_id or 0))
+
+    return {
+        "contract_present": bool(contract_present),
+        "roe_state": int(roe_state),
+        "wcs_state": int(wcs_state),
+        "authorization_to_fire": bool(authorization_to_fire),
+        "engage_order_state": int(engage_order_state),
+        "shot_policy_state": int(shot_policy_state),
+        "shot_budget_remaining": int(shot_budget_remaining),
+        "pending_assessment": _as_bool(data.get("pending_assessment", False), False),
+        "own_missiles_in_flight_count": _as_int(data.get("own_missiles_in_flight_count", 0), 0),
+        "assigned_target_id": int(assigned_target_id),
+        "agent_id": int(agent_id or 0),
+    }
+
+
+def air_combat_c2_roe_state_from_loader(loader: Any) -> dict[str, Any]:
+    mission_cmd = getattr(loader, "mission_cmd", {})
+    mission_cmd = mission_cmd if isinstance(mission_cmd, dict) else {}
+    return air_combat_c2_roe_state_from_mapping(
+        mission_cmd,
+        target_id=int(getattr(loader, "primary_target_id", 0) or 0),
+        agent_id=int(getattr(loader, "agent_id", 0) or 0),
+    )
+
+
+def classify_air_combat_c2_roe_event(
+    state: dict[str, Any] | None,
+    *,
+    released: bool,
+    fire_attempted: bool,
+    previous_release_count: int = 0,
+    release_ordinal: int = 0,
+) -> dict[str, Any]:
+    c2 = state if isinstance(state, dict) else {}
+    contract_present = bool(c2.get("contract_present", False))
+    roe_state = _as_int(c2.get("roe_state", 0), 0)
+    wcs_state = _as_int(c2.get("wcs_state", 1 if contract_present else roe_state), 1 if contract_present else roe_state)
+    shot_policy_state = _as_int(c2.get("shot_policy_state", 0), 0)
+    engage_order_state = _as_int(c2.get("engage_order_state", 0), 0)
+    shot_budget_remaining = max(0, _as_int(c2.get("shot_budget_remaining", 0), 0))
+    pending_assessment = _as_bool(c2.get("pending_assessment", False), False)
+    authorization_to_fire = _as_bool(c2.get("authorization_to_fire", False), False)
+    release_number = max(0, int(previous_release_count or 0)) + max(0, int(release_ordinal or 0))
+
+    event_happened = bool(released or fire_attempted)
+    legacy_fallback_allowed = (not contract_present or wcs_state == 0) and roe_state in {0, 3}
+    hold_order = bool(contract_present and (wcs_state == 1 or shot_policy_state == 0 or engage_order_state in _C2_ROE_HOLD_ENGAGE_STATES))
+    authorized_candidate = bool(authorization_to_fire or legacy_fallback_allowed)
+
+    bucket = "no_fire"
+    if not event_happened:
+        bucket = "hold_fire" if hold_order else "no_fire"
+    elif hold_order:
+        bucket = "hold_fire_violation"
+    elif not authorized_candidate:
+        bucket = "unauthorized_shot"
+    elif contract_present and shot_budget_remaining <= int(release_ordinal or 0):
+        bucket = "shot_budget_violation"
+    elif contract_present and pending_assessment and shot_policy_state != 3:
+        bucket = "pending_assessment_violation"
+    elif contract_present and shot_policy_state == 1 and release_number > 0:
+        bucket = "premature_second_shot"
+    elif contract_present and shot_policy_state == 2:
+        bucket = "authorized_salvo"
+    elif contract_present and shot_policy_state == 3:
+        bucket = "authorized_reattack"
+    elif legacy_fallback_allowed and not contract_present:
+        bucket = "legacy_roe_fallback"
+    elif bool(released):
+        bucket = "valid_authorized_release"
+    else:
+        bucket = "authorized_fire_attempt_no_release"
+
+    authorized_release = bool(released and bucket in {
+        "valid_authorized_release",
+        "authorized_salvo",
+        "authorized_reattack",
+        "legacy_roe_fallback",
+    })
+    violation_release = bool(released and bucket in {
+        "hold_fire_violation",
+        "unauthorized_shot",
+        "shot_budget_violation",
+        "pending_assessment_violation",
+        "premature_second_shot",
+    })
+    return {
+        "bucket": bucket,
+        "released": bool(released),
+        "fire_attempted": bool(fire_attempted),
+        "hold_fire": bool(hold_order),
+        "hold_fire_obeyed": bool((not event_happened) and hold_order),
+        "hold_fire_violation": bool(event_happened and bucket == "hold_fire_violation"),
+        "unauthorized_shot": bool(event_happened and bucket == "unauthorized_shot"),
+        "shot_budget_violation": bool(event_happened and bucket == "shot_budget_violation"),
+        "pending_assessment_violation": bool(event_happened and bucket == "pending_assessment_violation"),
+        "premature_second_shot": bool(event_happened and bucket == "premature_second_shot"),
+        "authorized_release": bool(authorized_release),
+        "violation_release": bool(violation_release),
+        "valid_authorized_release": bool(released and bucket == "valid_authorized_release"),
+        "authorized_first_release": bool(authorized_release and release_number == 0),
+        "authorized_salvo": bool(released and bucket == "authorized_salvo"),
+        "authorized_reattack": bool(released and bucket == "authorized_reattack"),
+        "legacy_roe_fallback": bool(released and bucket == "legacy_roe_fallback"),
+    }
 
 
 def _terminal_damage_states(loader: Any) -> set[str]:
@@ -247,7 +411,106 @@ def _last_fire_attempted(loader: Any) -> bool:
     return bool(values[fire_idx] > 0.5)
 
 
-def _apply_release_shaping(loader: Any, rb: dict[str, float], truth: Any) -> tuple[float, bool]:
+def _add_c2_roe_reward_terms(loader: Any, rb: dict[str, float], classification: dict[str, Any]) -> float:
+    total = 0.0
+    if bool(classification.get("hold_fire_obeyed", False)):
+        total += _add_term(rb, "air_combat_roe_hold_fire_bonus", _cfg_float(loader, "air_combat_roe_hold_fire_bonus", 0.0))
+    if bool(classification.get("hold_fire_violation", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_hold_fire_violation_penalty",
+            _cfg_float(loader, "air_combat_roe_hold_fire_violation_penalty", 0.0),
+        )
+    if bool(classification.get("unauthorized_shot", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_unauthorized_fire_penalty",
+            _cfg_float(loader, "air_combat_roe_unauthorized_fire_penalty", 0.0),
+        )
+    if bool(classification.get("shot_budget_violation", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_shot_budget_violation_penalty",
+            _cfg_float(loader, "air_combat_roe_shot_budget_violation_penalty", 0.0),
+        )
+    if bool(classification.get("pending_assessment_violation", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_pending_assessment_penalty",
+            _cfg_float(loader, "air_combat_roe_pending_assessment_penalty", 0.0),
+        )
+    if bool(classification.get("premature_second_shot", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_premature_second_shot_penalty",
+            _cfg_float(loader, "air_combat_roe_premature_second_shot_penalty", 0.0),
+        )
+    if bool(classification.get("authorized_release", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_valid_authorized_release_bonus",
+            _cfg_float(loader, "air_combat_roe_valid_authorized_release_bonus", 0.0),
+        )
+    if bool(classification.get("authorized_first_release", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_authorized_first_release_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_first_release_bonus", 0.0),
+        )
+    if bool(classification.get("authorized_salvo", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_authorized_salvo_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_salvo_bonus", 0.0),
+        )
+    if bool(classification.get("authorized_reattack", False)):
+        total += _add_term(
+            rb,
+            "air_combat_roe_authorized_reattack_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_reattack_bonus", 0.0),
+        )
+    return total
+
+
+def _apply_c2_roe_release_discipline(
+    loader: Any,
+    rb: dict[str, float],
+    *,
+    release_count: int,
+    previous_release_count: int,
+    fire_attempted: bool,
+) -> float:
+    c2_state = air_combat_c2_roe_state_from_loader(loader)
+    if int(release_count) > 0:
+        total = 0.0
+        for release_ordinal in range(int(release_count)):
+            classification = classify_air_combat_c2_roe_event(
+                c2_state,
+                released=True,
+                fire_attempted=bool(fire_attempted),
+                previous_release_count=int(previous_release_count),
+                release_ordinal=int(release_ordinal),
+            )
+            total += _add_c2_roe_reward_terms(loader, rb, classification)
+        return total
+
+    classification = classify_air_combat_c2_roe_event(
+        c2_state,
+        released=False,
+        fire_attempted=bool(fire_attempted),
+        previous_release_count=int(previous_release_count),
+    )
+    return _add_c2_roe_reward_terms(loader, rb, classification)
+
+
+def _apply_release_shaping(
+    loader: Any,
+    rb: dict[str, float],
+    truth: Any,
+    *,
+    release_shaping_enabled: bool,
+    c2_roe_shaping_enabled: bool,
+) -> tuple[float, bool]:
     current_missiles = _truth_missiles_remaining(truth)
     if current_missiles is None:
         return 0.0, False
@@ -264,25 +527,36 @@ def _apply_release_shaping(loader: Any, rb: dict[str, float], truth: Any) -> tup
     setattr(loader, "_air_combat_reward_prev_missiles", int(current_missiles))
 
     total = 0.0
+    fire_attempted = _last_fire_attempted(loader)
     if release_count > 0:
         previous_release_count = int(getattr(loader, "_air_combat_reward_release_count", 0) or 0)
-        first_release_count = 1 if previous_release_count <= 0 else 0
-        first_release_count = min(first_release_count, int(release_count))
-        repeat_release_count = int(release_count) - int(first_release_count)
+        if bool(release_shaping_enabled):
+            first_release_count = 1 if previous_release_count <= 0 else 0
+            first_release_count = min(first_release_count, int(release_count))
+            repeat_release_count = int(release_count) - int(first_release_count)
 
-        first_bonus = _cfg_float(loader, "air_combat_first_release_bonus", 0.0)
-        release_bonus = _cfg_float(loader, "air_combat_release_bonus", 0.0)
-        repeat_penalty = _cfg_float(loader, "air_combat_repeat_release_penalty", 0.0)
+            first_bonus = _cfg_float(loader, "air_combat_first_release_bonus", 0.0)
+            release_bonus = _cfg_float(loader, "air_combat_release_bonus", 0.0)
+            repeat_penalty = _cfg_float(loader, "air_combat_repeat_release_penalty", 0.0)
 
-        if first_release_count > 0 and first_bonus != 0.0:
-            total += _add_term(rb, "air_combat_first_release_bonus", first_bonus * first_release_count)
-        if release_bonus != 0.0:
-            total += _add_term(rb, "air_combat_release_bonus", release_bonus * int(release_count))
-        if repeat_release_count > 0 and repeat_penalty != 0.0:
-            total += _add_term(
+            if first_release_count > 0 and first_bonus != 0.0:
+                total += _add_term(rb, "air_combat_first_release_bonus", first_bonus * first_release_count)
+            if release_bonus != 0.0:
+                total += _add_term(rb, "air_combat_release_bonus", release_bonus * int(release_count))
+            if repeat_release_count > 0 and repeat_penalty != 0.0:
+                total += _add_term(
+                    rb,
+                    "air_combat_repeat_release_penalty",
+                    repeat_penalty * int(repeat_release_count),
+                )
+
+        if bool(c2_roe_shaping_enabled):
+            total += _apply_c2_roe_release_discipline(
+                loader,
                 rb,
-                "air_combat_repeat_release_penalty",
-                repeat_penalty * int(repeat_release_count),
+                release_count=int(release_count),
+                previous_release_count=int(previous_release_count),
+                fire_attempted=bool(fire_attempted),
             )
 
         setattr(
@@ -292,9 +566,18 @@ def _apply_release_shaping(loader: Any, rb: dict[str, float], truth: Any) -> tup
         )
         return total, True
 
+    previous_release_count = int(getattr(loader, "_air_combat_reward_release_count", 0) or 0)
     invalid_fire_penalty = _cfg_float(loader, "air_combat_invalid_fire_penalty", 0.0)
-    if invalid_fire_penalty != 0.0 and _last_fire_attempted(loader):
+    if bool(release_shaping_enabled) and invalid_fire_penalty != 0.0 and bool(fire_attempted):
         total += _add_term(rb, "air_combat_invalid_fire_penalty", invalid_fire_penalty)
+    if bool(c2_roe_shaping_enabled):
+        total += _apply_c2_roe_release_discipline(
+            loader,
+            rb,
+            release_count=0,
+            previous_release_count=int(previous_release_count),
+            fire_attempted=bool(fire_attempted),
+        )
     return total, False
 
 
@@ -363,8 +646,9 @@ def apply_air_combat_reward_surface(
     _ = truth
     rb = {str(key): float(value) for key, value in dict(reward_breakdown or {}).items()}
     release_shaping_enabled = air_combat_release_shaping_enabled(loader)
+    c2_roe_shaping_enabled = air_combat_c2_roe_release_discipline_enabled(loader)
     damage_shaping_enabled = air_combat_damage_shaping_enabled(loader)
-    if not release_shaping_enabled and not damage_shaping_enabled:
+    if not release_shaping_enabled and not c2_roe_shaping_enabled and not damage_shaping_enabled:
         return float(reward), bool(terminated), bool(truncated), status, rb, None
 
     reports = _recent_damage_reports(sim)
@@ -387,8 +671,14 @@ def apply_air_combat_reward_surface(
     next_reward = float(reward)
     consumed_max_report_id = last_report_id
 
-    if release_shaping_enabled:
-        release_delta, _released = _apply_release_shaping(loader, rb, truth)
+    if release_shaping_enabled or c2_roe_shaping_enabled:
+        release_delta, _released = _apply_release_shaping(
+            loader,
+            rb,
+            truth,
+            release_shaping_enabled=bool(release_shaping_enabled),
+            c2_roe_shaping_enabled=bool(c2_roe_shaping_enabled),
+        )
         next_reward += float(release_delta)
 
     if not damage_shaping_enabled:

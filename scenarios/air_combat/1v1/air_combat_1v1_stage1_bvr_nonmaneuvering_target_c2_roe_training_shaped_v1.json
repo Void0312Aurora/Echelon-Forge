@@ -1,0 +1,155 @@
+{
+  "scenario_name": "Air Combat 1v1 Stage 1 BVR Non-Maneuvering Target C2 ROE Training Shaped V1",
+  "description": "C2/ROE training-shaped Stage 1 air-combat curriculum scenario. Geometry, platforms, ammunition and weapon/damage runtime stay aligned with the canonical Stage 1 BVR non-maneuvering target scenario while mission command fields expose an explicit single-shot-then-assess release-discipline contract.",
+  "realism_gradient": {
+    "domain": "air_combat",
+    "workline": "1v1",
+    "stage": "A1-S1",
+    "stage_name": "bvr_range_expansion_nonmaneuvering_target_c2_roe_training_shaped",
+    "training_goal": "Preserve the Stage 1 fire chain while exposing C2/ROE authorization, target identity, shot policy, and assessment state to the policy.",
+    "engagement_range_m": [20000.0, 40000.0],
+    "realism_scope": [
+      "BVR-like initial separation",
+      "contact persistence",
+      "missile time of flight",
+      "clean target kill termination",
+      "training-only stable-flight and release shaping",
+      "explicit C2/ROE single-shot release-discipline command state"
+    ],
+    "deferred_realism": [
+      "target evasion",
+      "red weapons",
+      "datalink or offboard sensing",
+      "full peer BVR tactics",
+      "classified or calibrated ROE doctrine"
+    ]
+  },
+  "environment": {
+    "time_step": 0.05,
+    "max_steps": 2400,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    }
+  },
+  "mission_command": {
+    "command_code": 2,
+    "target_heading": 0.0,
+    "target_altitude": 7000.0,
+    "target_speed": 230.0,
+    "assigned_target_name": "Red_Target",
+    "roe_state": 2,
+    "wcs_state": 2,
+    "authorization_to_fire": true,
+    "engage_order_state": 2,
+    "target_identity_state": 3,
+    "shot_policy_state": 1,
+    "shot_budget_remaining": 1,
+    "pending_assessment": false,
+    "own_missiles_in_flight_count": 0
+  },
+  "entities": [
+    {
+      "name": "Blue_Fighter",
+      "type": "F-16C_Block50",
+      "side": "Blue",
+      "pos": [0.0, 0.0, 7000.0],
+      "vel": [0.0, 230.0, 0.0],
+      "heading": 0.0,
+      "is_agent": true,
+      "ammo": {
+        "missiles_remaining": 4,
+        "max_missiles": 4
+      },
+      "weapon_cooldown": {
+        "cooldown_s": 0.75,
+        "last_fire_time": -1.0
+      }
+    },
+    {
+      "name": "Red_Target",
+      "type": "MQ-9_Reaper",
+      "side": "Red",
+      "pos": [0.0, 35000.0, 7000.0],
+      "vel": [0.0, -160.0, 0.0],
+      "heading": 180.0,
+      "ammo": {
+        "missiles_remaining": 0,
+        "max_missiles": 0
+      }
+    }
+  ],
+  "objectives": [
+    {
+      "type": "conditional",
+      "reward": 1500.0,
+      "conditions": [
+        {
+          "property": "target_active",
+          "op": "<=",
+          "value": 0.0
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": -1000.0,
+    "heading_error_weight": -0.002,
+    "heading_hold_deadband_deg": 8.0,
+    "heading_hold_bonus": 0.01,
+    "altitude_error_weight": -0.04,
+    "altitude_error_min_alt": 1000.0,
+    "altitude_error_target": 7000.0,
+    "altitude_error_deadband_m": 150.0,
+    "altitude_error_norm_m": 1000.0,
+    "altitude_error_power": 2.0,
+    "altitude_error_clip": 2.0,
+    "altitude_hold_bonus": 0.01,
+    "speed_error_weight": -0.03,
+    "speed_error_min_ias": 60.0,
+    "speed_error_target": 230.0,
+    "speed_error_deadband": 20.0,
+    "speed_error_norm": 60.0,
+    "speed_error_power": 2.0,
+    "speed_error_clip": 2.0,
+    "speed_hold_bonus": 0.01,
+    "roll_abs_weight": -0.02,
+    "roll_abs_deadband_deg": 35.0,
+    "roll_abs_norm_deg": 45.0,
+    "roll_abs_power": 2.0,
+    "pitch_abs_weight": -0.02,
+    "pitch_abs_deadband_deg": 18.0,
+    "pitch_abs_norm_deg": 25.0,
+    "pitch_abs_power": 2.0,
+    "beta_abs_weight": -0.01,
+    "beta_abs_deadband_deg": 8.0,
+    "beta_abs_norm_deg": 12.0,
+    "beta_abs_power": 2.0,
+    "g_deviation_weight": -0.01,
+    "g_deviation_deadband": 0.5,
+    "g_deviation_norm": 1.0,
+    "g_deviation_power": 2.0,
+    "g_deviation_min_alt_agl_m": 1000.0,
+    "alignment_reward_weight": 0.01,
+    "mission_alignment_min_alt": 1000.0,
+    "air_combat_release_shaping_enabled": true,
+    "air_combat_first_release_bonus": 300.0,
+    "air_combat_release_bonus": 0.0,
+    "air_combat_repeat_release_penalty": -150.0,
+    "air_combat_invalid_fire_penalty": -0.05,
+    "air_combat_c2_roe_release_discipline_enabled": true,
+    "air_combat_roe_hold_fire_bonus": 0.01,
+    "air_combat_roe_hold_fire_violation_penalty": -2.0,
+    "air_combat_roe_unauthorized_fire_penalty": -5.0,
+    "air_combat_roe_valid_authorized_release_bonus": 50.0,
+    "air_combat_roe_authorized_first_release_bonus": 100.0,
+    "air_combat_roe_pending_assessment_penalty": -75.0,
+    "air_combat_roe_premature_second_shot_penalty": -150.0,
+    "air_combat_roe_shot_budget_violation_penalty": -150.0,
+    "air_combat_roe_authorized_salvo_bonus": 0.0,
+    "air_combat_roe_authorized_reattack_bonus": 0.0
+  }
+}

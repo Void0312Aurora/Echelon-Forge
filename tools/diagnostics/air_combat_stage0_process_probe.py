@@ -21,6 +21,10 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from gym_envs.universal_env import UniversalEnv
+from gym_envs.scenario_loader.reward_runtime.air_combat import (
+    air_combat_c2_roe_state_from_mapping,
+    classify_air_combat_c2_roe_event,
+)
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 
@@ -135,6 +139,74 @@ def _weapon_select_id(action: np.ndarray, *, action_mode: str) -> int:
     return int(np.clip(float(action[weapon_select_idx]), 0.0, 1.0) * 7.0)
 
 
+def _mission_command_dict(loader) -> dict[str, Any]:
+    mission_cmd = getattr(loader, "mission_cmd", None)
+    return mission_cmd if isinstance(mission_cmd, dict) else {}
+
+
+def _c2_roe_event_columns(
+    state: dict[str, Any],
+    *,
+    release_delta: int,
+    fire_attempted: bool,
+    previous_release_count: int,
+) -> dict[str, Any]:
+    release_delta = max(0, int(release_delta or 0))
+    classifications = []
+    if release_delta > 0:
+        for release_ordinal in range(release_delta):
+            classifications.append(
+                classify_air_combat_c2_roe_event(
+                    state,
+                    released=True,
+                    fire_attempted=bool(fire_attempted),
+                    previous_release_count=int(previous_release_count or 0),
+                    release_ordinal=int(release_ordinal),
+                )
+            )
+    else:
+        classifications.append(
+            classify_air_combat_c2_roe_event(
+                state,
+                released=False,
+                fire_attempted=bool(fire_attempted),
+                previous_release_count=int(previous_release_count or 0),
+            )
+        )
+
+    def count_flag(flag_name: str) -> int:
+        return int(sum(1 for item in classifications if bool(item.get(flag_name, False))))
+
+    violation_release_count = count_flag("violation_release")
+    bucket = str(classifications[0].get("bucket", "no_fire")) if classifications else "no_fire"
+    return {
+        "c2_roe_release_bucket": bucket,
+        "c2_roe_hold_fire": int(any(bool(item.get("hold_fire", False)) for item in classifications)),
+        "c2_roe_hold_fire_obeyed": count_flag("hold_fire_obeyed"),
+        "c2_roe_hold_fire_violation": count_flag("hold_fire_violation"),
+        "c2_roe_unauthorized_shot": count_flag("unauthorized_shot"),
+        "c2_roe_unauthorized_release_count": int(
+            sum(1 for item in classifications if bool(item.get("released", False)) and bool(item.get("unauthorized_shot", False)))
+        ),
+        "c2_roe_authorized_release_count": count_flag("authorized_release"),
+        "c2_roe_valid_authorized_release_count": count_flag("valid_authorized_release"),
+        "c2_roe_violation_release_count": int(violation_release_count),
+        "c2_roe_pending_assessment_violation": count_flag("pending_assessment_violation"),
+        "c2_roe_pending_assessment_release_count": int(
+            sum(
+                1
+                for item in classifications
+                if bool(item.get("released", False)) and bool(item.get("pending_assessment_violation", False))
+            )
+        ),
+        "c2_roe_premature_second_shot": count_flag("premature_second_shot"),
+        "c2_roe_shot_budget_violation": count_flag("shot_budget_violation"),
+        "c2_roe_authorized_salvo_release_count": count_flag("authorized_salvo"),
+        "c2_roe_authorized_reattack_release_count": count_flag("authorized_reattack"),
+        "c2_roe_legacy_fallback_release_count": count_flag("legacy_roe_fallback"),
+    }
+
+
 def _base_action(action_mode: str) -> np.ndarray:
     columns = _action_columns_for_mode(action_mode)
     action_dim = 12 if str(action_mode) == "air_combat_hybrid_v1" else 17
@@ -236,6 +308,7 @@ def _snapshot_row(
     info: dict[str, Any],
     initial_units: set[int],
     prev_missiles: int | None,
+    prev_release_count: int = 0,
 ) -> dict[str, Any]:
     base = _base_env(env)
     sim = base.sim
@@ -252,7 +325,12 @@ def _snapshot_row(
     range_geom = _distance_m(sim, blue_id, target_id) if target_id > 0 else float("nan")
     range_track = _finite_float(getattr(target_track, "range", float("nan"))) if target_track is not None else float("nan")
     reward_terms = info.get("reward_terms", {}) if isinstance(info, dict) else {}
-    release = prev_missiles is not None and missiles_remaining >= 0 and missiles_remaining < int(prev_missiles)
+    release_delta = (
+        max(0, int(prev_missiles) - int(missiles_remaining))
+        if prev_missiles is not None and missiles_remaining >= 0
+        else 0
+    )
+    release = release_delta > 0
     engagement_events = sim.export_recent_engagement_events()
     effects_events = list(getattr(engagement_events, "effects_events", []) or [])
     damage_reports = list(getattr(engagement_events, "damage_reports", []) or [])
@@ -279,6 +357,7 @@ def _snapshot_row(
         "can_fire": int(bool(getattr(truth, "can_fire", False))),
         "missiles_remaining": missiles_remaining,
         "missile_release": int(bool(release)),
+        "missile_release_delta": int(release_delta),
         "spawned_units": int(len(new_units)),
         "target_id": int(target_id),
         "target_active": int(bool(target_active)),
@@ -375,6 +454,33 @@ def _snapshot_row(
         row["action_radar_on"] = int(effective_flat.size > radar_idx and effective_flat[radar_idx] > 0.5)
         row["action_master_arm_on"] = int(effective_flat.size > master_idx and effective_flat[master_idx] > 0.5)
         row["action_fire_weapon_on"] = int(effective_flat.size > fire_idx and effective_flat[fire_idx] > 0.5)
+    mission_cmd = _mission_command_dict(base.loader)
+    c2_state = air_combat_c2_roe_state_from_mapping(
+        mission_cmd,
+        target_id=int(target_id),
+        agent_id=int(blue_id),
+    )
+    row.update(
+        {
+            "c2_roe_contract_present": int(bool(c2_state.get("contract_present", False))),
+            "roe_state": int(c2_state.get("roe_state", 0)),
+            "wcs_state": int(c2_state.get("wcs_state", 0)),
+            "authorization_to_fire": int(bool(c2_state.get("authorization_to_fire", False))),
+            "engage_order_state": int(c2_state.get("engage_order_state", 0)),
+            "shot_policy_state": int(c2_state.get("shot_policy_state", 0)),
+            "shot_budget_remaining": int(c2_state.get("shot_budget_remaining", 0)),
+            "pending_assessment": int(bool(c2_state.get("pending_assessment", False))),
+            "own_missiles_in_flight_count": int(c2_state.get("own_missiles_in_flight_count", 0)),
+        }
+    )
+    row.update(
+        _c2_roe_event_columns(
+            c2_state,
+            release_delta=int(release_delta),
+            fire_attempted=bool(row.get("action_fire_weapon_on", 0)),
+            previous_release_count=int(prev_release_count or 0),
+        )
+    )
     return row
 
 
@@ -427,6 +533,18 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         fire_switch_steps[idx] - fire_switch_steps[idx - 1]
         for idx in range(1, len(fire_switch_steps))
     ]
+    row_by_step = {int(row.get("step", 0)): row for row in rows}
+    authorized_release_count = int(sum(int(row.get("c2_roe_authorized_release_count", 0) or 0) for row in rows))
+    violation_release_count = int(sum(int(row.get("c2_roe_violation_release_count", 0) or 0) for row in rows))
+    unauthorized_release_count = int(sum(int(row.get("c2_roe_unauthorized_release_count", 0) or 0) for row in rows))
+    pending_assessment_release_count = int(
+        sum(int(row.get("c2_roe_pending_assessment_release_count", 0) or 0) for row in rows)
+    )
+    legacy_fallback_release_count = int(
+        sum(int(row.get("c2_roe_legacy_fallback_release_count", 0) or 0) for row in rows)
+    )
+    release_count_total = int(sum(int(row.get("missile_release_delta", row.get("missile_release", 0)) or 0) for row in rows))
+    unknown_release_count = max(0, release_count_total - authorized_release_count - violation_release_count)
 
     def action_stat(name: str, reducer, default: float = float("nan")) -> float:
         key = str(name) if str(name).startswith("effective_action_") else f"action_{name}"
@@ -452,8 +570,12 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "total_reward": float(sum(float(row.get("reward", 0.0)) for row in rows if int(row.get("step", 0)) > 0)),
         "first_contact_step": first_step(lambda row: int(row.get("target_contact", 0)) > 0),
         "first_can_fire_step": first_step(lambda row: int(row.get("can_fire", 0)) > 0),
+        "first_authorized_step": first_step(lambda row: int(row.get("authorization_to_fire", 0)) > 0),
         "first_fire_switch_step": fire_steps[0] if fire_steps else None,
         "first_release_step": first_step(lambda row: int(row.get("missile_release", 0)) > 0),
+        "first_release_after_authorization_step": first_step(
+            lambda row: int(row.get("missile_release", 0)) > 0 and int(row.get("authorization_to_fire", 0)) > 0
+        ),
         "first_effects_event_step": first_step(lambda row: int(row.get("effects_event_count", 0)) > 0),
         "first_damage_report_step": first_step(lambda row: int(row.get("damage_report_count", 0)) > 0),
         "first_damage_progress_step": first_step(
@@ -479,6 +601,24 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "fire_attempt_count": int(len(fire_switch_steps)),
         "fire_switch_count": int(len(fire_switch_steps)),
         "fire_switch_steps": fire_switch_steps,
+        "roe_state_at_fire": [int(row_by_step[step].get("roe_state", 0) or 0) for step in fire_switch_steps if step in row_by_step],
+        "authorization_to_fire_at_fire": [
+            int(row_by_step[step].get("authorization_to_fire", 0) or 0)
+            for step in fire_switch_steps
+            if step in row_by_step
+        ],
+        "fire_under_hold_count": int(sum(int(row.get("c2_roe_hold_fire_violation", 0) or 0) for row in rows)),
+        "hold_fire_step_count": int(sum(1 for row in rows if int(row.get("c2_roe_hold_fire", 0) or 0) > 0)),
+        "hold_fire_obeyed_count": int(sum(int(row.get("c2_roe_hold_fire_obeyed", 0) or 0) for row in rows)),
+        "tight_without_assigned_authorized_target_count": int(
+            sum(
+                1
+                for row in rows
+                if int(row.get("wcs_state", 0) or 0) == 2
+                and int(row.get("authorization_to_fire", 0) or 0) <= 0
+                and int(row.get("action_fire_weapon_on", 0) or 0) > 0
+            )
+        ),
         "invalid_fire_attempt_count": int(len(invalid_fire_attempt_steps)),
         "invalid_fire_attempt_steps": invalid_fire_attempt_steps,
         "invalid_fire_attempt_rate": (
@@ -494,6 +634,34 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "effective_action_fire_weapon_mean": action_stat("effective_action_fire_weapon", np.mean),
         "effective_action_fire_weapon_max": action_stat("effective_action_fire_weapon", np.max),
         "release_count": int(sum(int(row.get("missile_release", 0)) for row in rows)),
+        "authorized_release_count": int(authorized_release_count),
+        "unauthorized_release_count": int(unauthorized_release_count),
+        "valid_authorized_release_count": int(
+            sum(int(row.get("c2_roe_valid_authorized_release_count", 0) or 0) for row in rows)
+        ),
+        "violation_release_count": int(violation_release_count),
+        "release_count_by_authorization_state": {
+            "authorized": int(authorized_release_count),
+            "unauthorized": int(unauthorized_release_count),
+            "violation": int(violation_release_count),
+            "legacy_or_unknown": int(unknown_release_count),
+        },
+        "repeat_release_before_assessment_count": int(
+            sum(int(row.get("c2_roe_premature_second_shot", 0) or 0) for row in rows)
+            + pending_assessment_release_count
+        ),
+        "pending_assessment_after_launch": bool(
+            any(int(row.get("pending_assessment", 0) or 0) > 0 and int(row.get("missile_release", 0) or 0) > 0 for row in rows)
+        ),
+        "pending_assessment_release_count": int(pending_assessment_release_count),
+        "shot_budget_violation_count": int(sum(int(row.get("c2_roe_shot_budget_violation", 0) or 0) for row in rows)),
+        "authorized_salvo_release_count": int(
+            sum(int(row.get("c2_roe_authorized_salvo_release_count", 0) or 0) for row in rows)
+        ),
+        "authorized_reattack_release_count": int(
+            sum(int(row.get("c2_roe_authorized_reattack_release_count", 0) or 0) for row in rows)
+        ),
+        "legacy_roe_fallback_release_count": int(legacy_fallback_release_count),
         "release_steps": release_steps,
         "min_release_interval_steps": min(release_intervals) if release_intervals else None,
         "effects_event_count": int(final.get("effects_event_count", 0)),
@@ -546,6 +714,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             max_steps = int(args.max_steps) if int(args.max_steps) > 0 else int(getattr(base_env, "max_steps", 0) or 1200)
             initial_units = _unit_id_set(base_env.sim)
             prev_missiles = int(getattr(base_env.sim.get_agent_observation(base_env.agent_id), "missiles_remaining", -1))
+            release_count_so_far = 0
             range_gate_fired = False
             ep_rows: list[dict[str, Any]] = []
             initial_row = _snapshot_row(
@@ -559,6 +728,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 info={},
                 initial_units=initial_units,
                 prev_missiles=None,
+                prev_release_count=release_count_so_far,
             )
             rows.append(initial_row)
             ep_rows.append(initial_row)
@@ -599,10 +769,12 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                     info=info if isinstance(info, dict) else {},
                     initial_units=initial_units,
                     prev_missiles=prev_missiles,
+                    prev_release_count=release_count_so_far,
                 )
                 rows.append(row)
                 ep_rows.append(row)
                 prev_missiles = int(row.get("missiles_remaining", prev_missiles))
+                release_count_so_far += int(row.get("missile_release_delta", 0) or 0)
                 if bool(terminated or truncated):
                     break
             episode_summaries.append(_summarize_episode(ep_rows))

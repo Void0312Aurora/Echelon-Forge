@@ -28,6 +28,10 @@ STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json"
 )
+STAGE1_C2_ROE_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_shaped_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
     REPO_ROOT
@@ -35,6 +39,13 @@ STAGE1_SHAPED_SCENARIO = (
     / "air_combat"
     / "1v1"
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json"
+)
+STAGE1_C2_ROE_SCENARIO = (
+    REPO_ROOT
+    / "scenarios"
+    / "air_combat"
+    / "1v1"
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json"
 )
 
 
@@ -212,6 +223,68 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)
         self.assertEqual(scenario.get("entities", [])[1].get("ammo", {}).get("missiles_remaining"), 0)
 
+    def test_stage1_c2_roe_probe_entry_is_discoverable_without_mutating_m1_baselines(self) -> None:
+        c2_roe_configs = sorted(AIR_COMBAT_ACTIVE_DIR.glob("*c2_roe*.json"))
+        c2_roe_scenarios = sorted((REPO_ROOT / "scenarios" / "air_combat" / "1v1").glob("*c2_roe*.json"))
+        self.assertIn(STAGE1_C2_ROE_CONFIG, c2_roe_configs)
+        self.assertIn(STAGE1_C2_ROE_SCENARIO, c2_roe_scenarios)
+
+        cfg = _load_json(STAGE1_C2_ROE_CONFIG)
+        scenario = _load_json(STAGE1_C2_ROE_SCENARIO)
+
+        env = cfg.get("env")
+        self.assertIsInstance(env, dict)
+        self.assertEqual(env.get("mission_obs_mode"), "air_combat_c2_roe_v1")
+        self.assertEqual(env.get("action_mode"), "air_combat_hybrid_v1")
+        self.assertEqual(env.get("step_info_mode"), "terminal")
+        self.assertEqual(env.get("execution_step_runtime_mode"), "compiled")
+        self.assertEqual(env.get("flight_shaping_backend"), "compiled")
+        self.assertTrue(bool(cfg.get("runtime", {}).get("world_batch_vec_env")))
+
+        for baseline_path in (
+            STAGE1_CONFIG,
+            STAGE1_TEMPORAL_CONFIG,
+            STAGE1_HYBRID_CONFIG,
+            STAGE1_HYBRID_TEMPORAL_CONFIG,
+            STAGE1_HYBRID_SHAPED_CONFIG,
+            STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG,
+        ):
+            baseline_env = _load_json(baseline_path).get("env", {})
+            self.assertEqual(baseline_env.get("mission_obs_mode"), "basic", baseline_path.name)
+
+        realism = scenario.get("realism_gradient")
+        self.assertIsInstance(realism, dict)
+        self.assertEqual(realism.get("domain"), "air_combat")
+        self.assertEqual(realism.get("workline"), "1v1")
+        self.assertEqual(realism.get("stage"), "A1-S1")
+        self.assertIn("c2_roe", realism.get("stage_name", ""))
+        self.assertEqual(tuple(realism.get("engagement_range_m", [])), (20000.0, 40000.0))
+
+        mission = scenario.get("mission_command")
+        self.assertIsInstance(mission, dict)
+        self.assertEqual(mission.get("assigned_target_name"), "Red_Target")
+        self.assertEqual(int(mission.get("roe_state")), 2)
+        self.assertEqual(int(mission.get("wcs_state")), 2)
+        self.assertTrue(bool(mission.get("authorization_to_fire")))
+        self.assertEqual(int(mission.get("engage_order_state")), 2)
+        self.assertEqual(int(mission.get("target_identity_state")), 3)
+        self.assertEqual(int(mission.get("shot_policy_state")), 1)
+        self.assertEqual(int(mission.get("shot_budget_remaining")), 1)
+        self.assertFalse(bool(mission.get("pending_assessment")))
+        self.assertEqual(int(mission.get("own_missiles_in_flight_count")), 0)
+
+        rewards = scenario.get("rewards", {})
+        self.assertTrue(bool(rewards.get("air_combat_release_shaping_enabled")))
+        self.assertTrue(bool(rewards.get("air_combat_c2_roe_release_discipline_enabled")))
+        self.assertGreater(float(rewards.get("air_combat_first_release_bonus", 0.0)), 0.0)
+        self.assertLess(float(rewards.get("air_combat_repeat_release_penalty", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_roe_valid_authorized_release_bonus", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_roe_authorized_first_release_bonus", 0.0)), 0.0)
+        self.assertLess(float(rewards.get("air_combat_roe_unauthorized_fire_penalty", 0.0)), 0.0)
+        self.assertLess(float(rewards.get("air_combat_roe_premature_second_shot_penalty", 0.0)), 0.0)
+        self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)
+        self.assertEqual(scenario.get("entities", [])[1].get("ammo", {}).get("missiles_remaining"), 0)
+
     def test_stage1_bvr_hybrid_temporal_shaped_probe_pairs_with_hybrid_shaped_baseline(self) -> None:
         shaped = _load_json(STAGE1_HYBRID_SHAPED_CONFIG)
         temporal_shaped = _load_json(STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG)
@@ -260,6 +333,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             ("hybrid_temporal", STAGE1_HYBRID_TEMPORAL_CONFIG, STAGE1_SCENARIO),
             ("hybrid_shaped", STAGE1_HYBRID_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
             ("hybrid_temporal_shaped", STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
+            ("c2_roe_hybrid_shaped", STAGE1_C2_ROE_CONFIG, STAGE1_C2_ROE_SCENARIO),
         ]
         for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
@@ -289,10 +363,12 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             self.assertIn("world_batch_vec_env=True", proc.stdout)
             self.assertIn("World batch runtime:", proc.stdout)
             self.assertIn("Execution reward runtime: requested_backend=compiled effective_backend=compiled", proc.stdout)
-            if label in {"hybrid", "hybrid_temporal", "hybrid_shaped", "hybrid_temporal_shaped"}:
+            if label in {"hybrid", "hybrid_temporal", "hybrid_shaped", "hybrid_temporal_shaped", "c2_roe_hybrid_shaped"}:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
             if label in {"temporal", "hybrid_temporal", "hybrid_temporal_shaped"}:
                 self.assertIn("temporal_history_len=16", proc.stdout)
+            if label == "c2_roe_hybrid_shaped":
+                self.assertIn("mission_obs_mode=air_combat_c2_roe_v1", proc.stdout)
             self.assertIn("Error: --test_only requires --resume_path", proc.stdout)
 
 

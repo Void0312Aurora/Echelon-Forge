@@ -1,18 +1,13 @@
+from __future__ import annotations
+
 import argparse
 import os
 import sys
 import json
 import math
+from typing import Any
 
 import numpy as np
-import torch
-# Enable TF32 for Ampere+ GPUs (significant speedup and memory savings)
-torch.set_float32_matmul_precision('high')
-
-from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback
 
 # Prefer the locally built `ef_py` extension when present (avoids accidentally using a stale
 # site-packages wheel/so from the venv). `CMO_BUILD_DIR` can pin a specific build tree.
@@ -38,26 +33,111 @@ for _build_dir_name in _BUILD_DIR_NAMES:
 
 # Add local path
 sys.path.insert(0, _REPO_ROOT)
-from gym_envs.universal_env import UniversalEnv
-from python.models.transformer import TemporalTransformerExtractor, TransformerExtractor, TransformerVisualExtractor
-from python.training_callbacks import (
-    CMODiagnosticsCallback,
-    ScenarioCurriculumCallback,
-    RewardPlateauEarlyStopCallback,
-)
 from python.training import (
     build_train_arg_parser,
     prepare_training_bootstrap,
     print_training_bootstrap_summary,
     warn_execution_visual_rollout_memory,
 )
-from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-from python.rl.support.nonfinite_probe import NonFiniteProbeError, NonFiniteTrainingProbe
-from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv
-from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
-from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
-from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
+
+_TRAINING_DEPS_LOADED = False
+
+
+def _require_torch():
+    global torch
+    try:
+        return torch
+    except NameError:
+        import torch as torch_module
+
+        if hasattr(torch_module, "set_float32_matmul_precision"):
+            torch_module.set_float32_matmul_precision("high")
+        torch = torch_module
+        return torch
+
+
+def _load_training_dependencies() -> None:
+    global _TRAINING_DEPS_LOADED
+    global torch
+    global PPO, DummyVecEnv, SubprocVecEnv, make_vec_env, CallbackList, CheckpointCallback
+    global UniversalEnv
+    global TemporalTransformerExtractor, TransformerExtractor, TransformerVisualExtractor
+    global CMODiagnosticsCallback, ScenarioCurriculumCallback, RewardPlateauEarlyStopCallback
+    global HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy, AdaptiveKLPPO
+    global NonFiniteProbeError, NonFiniteTrainingProbe
+    global SharedMemorySubprocVecEnv, CooperativeWorldBatchVecEnv, WorldBatchVecEnv
+    global MultiTimescaleActionWrapper, get_action_wrapper_spec
+
+    if _TRAINING_DEPS_LOADED:
+        return
+
+    import torch as torch_module
+    from stable_baselines3 import PPO as PPO_cls
+    from stable_baselines3.common.callbacks import CallbackList as CallbackList_cls
+    from stable_baselines3.common.callbacks import CheckpointCallback as CheckpointCallback_cls
+    from stable_baselines3.common.env_util import make_vec_env as make_vec_env_fn
+    from stable_baselines3.common.vec_env import DummyVecEnv as DummyVecEnv_cls
+    from stable_baselines3.common.vec_env import SubprocVecEnv as SubprocVecEnv_cls
+
+    if hasattr(torch_module, "set_float32_matmul_precision"):
+        # Enable TF32 for Ampere+ GPUs (significant speedup and memory savings).
+        torch_module.set_float32_matmul_precision("high")
+
+    from gym_envs.universal_env import UniversalEnv as UniversalEnv_cls
+    from python.models.transformer import (
+        TemporalTransformerExtractor as TemporalTransformerExtractor_cls,
+        TransformerExtractor as TransformerExtractor_cls,
+        TransformerVisualExtractor as TransformerVisualExtractor_cls,
+    )
+    from python.training_callbacks import (
+        CMODiagnosticsCallback as CMODiagnosticsCallback_cls,
+        ScenarioCurriculumCallback as ScenarioCurriculumCallback_cls,
+        RewardPlateauEarlyStopCallback as RewardPlateauEarlyStopCallback_cls,
+    )
+    from python.rl.policy_algo.policies import (
+        HierarchicalMoEExecutionPolicy as HierarchicalMoEExecutionPolicy_cls,
+        SquashedMultiInputPolicy as SquashedMultiInputPolicy_cls,
+    )
+    from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO as AdaptiveKLPPO_cls
+    from python.rl.support.nonfinite_probe import (
+        NonFiniteProbeError as NonFiniteProbeError_cls,
+        NonFiniteTrainingProbe as NonFiniteTrainingProbe_cls,
+    )
+    from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv as SharedMemorySubprocVecEnv_cls
+    from python.rl.runtime.cooperative_world_batch_vec_env import (
+        CooperativeWorldBatchVecEnv as CooperativeWorldBatchVecEnv_cls,
+    )
+    from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv as WorldBatchVecEnv_cls
+    from python.rl.control.wrappers import (
+        MultiTimescaleActionWrapper as MultiTimescaleActionWrapper_cls,
+        get_action_wrapper_spec as get_action_wrapper_spec_fn,
+    )
+
+    torch = torch_module
+    PPO = PPO_cls
+    DummyVecEnv = DummyVecEnv_cls
+    SubprocVecEnv = SubprocVecEnv_cls
+    make_vec_env = make_vec_env_fn
+    CallbackList = CallbackList_cls
+    CheckpointCallback = CheckpointCallback_cls
+    UniversalEnv = UniversalEnv_cls
+    TemporalTransformerExtractor = TemporalTransformerExtractor_cls
+    TransformerExtractor = TransformerExtractor_cls
+    TransformerVisualExtractor = TransformerVisualExtractor_cls
+    CMODiagnosticsCallback = CMODiagnosticsCallback_cls
+    ScenarioCurriculumCallback = ScenarioCurriculumCallback_cls
+    RewardPlateauEarlyStopCallback = RewardPlateauEarlyStopCallback_cls
+    HierarchicalMoEExecutionPolicy = HierarchicalMoEExecutionPolicy_cls
+    SquashedMultiInputPolicy = SquashedMultiInputPolicy_cls
+    AdaptiveKLPPO = AdaptiveKLPPO_cls
+    NonFiniteProbeError = NonFiniteProbeError_cls
+    NonFiniteTrainingProbe = NonFiniteTrainingProbe_cls
+    SharedMemorySubprocVecEnv = SharedMemorySubprocVecEnv_cls
+    CooperativeWorldBatchVecEnv = CooperativeWorldBatchVecEnv_cls
+    WorldBatchVecEnv = WorldBatchVecEnv_cls
+    MultiTimescaleActionWrapper = MultiTimescaleActionWrapper_cls
+    get_action_wrapper_spec = get_action_wrapper_spec_fn
+    _TRAINING_DEPS_LOADED = True
 
 def get_policy_kwargs(train_config):
     # Parse policy_kwargs from JSON
@@ -226,7 +306,8 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
         if not has_standard_bias and not has_hmoe_bias:
             return
         squash = bool(getattr(policy, "squash_output", False))
-        with torch.no_grad():
+        torch_module = _require_torch()
+        with torch_module.no_grad():
             if has_standard_bias:
                 _apply_bias_vector(action_net.bias)
                 if action_mode in {"naval_station3", "air_combat_hybrid_v1"}:
@@ -292,7 +373,8 @@ def apply_leader_action_bias(model: PPO):
         if b is None or int(b.shape[0]) < 4:
             return
         squash = bool(getattr(model.policy, "squash_output", False))
-        with torch.no_grad():
+        torch_module = _require_torch()
+        with torch_module.no_grad():
             phase_default = -0.35
             b[0] = float(np.arctanh(np.clip(phase_default, -0.999, 0.999))) if squash else phase_default
             b[1] = 0.0
@@ -374,6 +456,112 @@ def resolve_vec_env_spec(
         return DummyVecEnv, {}, False
     return (SharedMemorySubprocVecEnv if use_shared_memory_vec_env else SubprocVecEnv), {}, False
 
+
+def _resolve_test_only_load_path(args: argparse.Namespace, exp_dir: str) -> str | None:
+    if args.resume_path:
+        return args.resume_path
+    possible_path = os.path.join(exp_dir, "final_model.zip")
+    if os.path.exists(possible_path):
+        return possible_path
+    return None
+
+
+def _count_control_slots_from_scenario(scenario_path: str) -> int:
+    try:
+        with open(scenario_path, "r", encoding="utf-8") as handle:
+            scenario = json.load(handle)
+    except Exception:
+        return 1
+    if not isinstance(scenario, dict):
+        return 1
+
+    roster = scenario.get("cooperative_roster")
+    if isinstance(roster, dict):
+        members = roster.get("members")
+        if isinstance(members, list):
+            count = sum(1 for member in members if isinstance(member, dict) and bool(member.get("is_agent", True)))
+            if count > 0:
+                return int(count)
+
+    entities = scenario.get("entities")
+    if isinstance(entities, list):
+        count = sum(1 for entity in entities if isinstance(entity, dict) and bool(entity.get("is_agent", False)))
+        if count > 0:
+            return int(count)
+    return 1
+
+
+def _effective_auto_backend(requested: Any, *, auto_default: str) -> str:
+    backend = str(requested if requested is not None else "auto").strip().lower() or "auto"
+    return auto_default if backend == "auto" else backend
+
+
+def _print_test_only_preflight_runtime_summary(bootstrap) -> None:
+    runtime_cfg = bootstrap.runtime_cfg
+    env_settings = bootstrap.env_settings
+    if env_settings is None:
+        return
+
+    agent_layer = bootstrap.agent_layer
+    if agent_layer == "execution":
+        use_world_batch_vec_env = bool(runtime_cfg.get("world_batch_vec_env", False))
+        if not use_world_batch_vec_env:
+            return
+        configured_threads = runtime_cfg.get("world_batch_threads", "<default=1>")
+        effective_threads = 1 if configured_threads == "<default=1>" else configured_threads
+        print(
+            "World batch runtime: "
+            f"configured_threads={configured_threads} "
+            f"effective_threads={effective_threads}"
+        )
+        if env_settings["include_visual"]:
+            requested_visual_backend = str(runtime_cfg.get("batch_visual_backend", "auto"))
+            print(
+                "World batch visual runtime: "
+                f"requested_backend={requested_visual_backend} "
+                f"effective_backend={_effective_auto_backend(requested_visual_backend, auto_default='compiled')}"
+            )
+        requested_reward_backend = env_settings.get("flight_shaping_backend") or "auto"
+        print(
+            "Execution reward runtime: "
+            f"requested_backend={requested_reward_backend} "
+            f"effective_backend={_effective_auto_backend(requested_reward_backend, auto_default='legacy')}"
+        )
+        print(
+            "Execution policy observation bridge: "
+            f"enabled={bool(runtime_cfg.get('policy_observation_torch_bridge', True))}"
+        )
+        print(
+            "World batch observation return mode: "
+            f"mode={str(runtime_cfg.get('observation_return_mode', 'copy'))}"
+        )
+        return
+
+    if agent_layer == "cooperative_execution":
+        slots_per_world = _count_control_slots_from_scenario(bootstrap.scenario_path)
+        total_slots = int(bootstrap.n_envs) * int(slots_per_world)
+        print(
+            "Cooperative runtime: "
+            f"worlds={bootstrap.n_envs} "
+            f"slots_per_world={slots_per_world} "
+            f"total_slots={total_slots} "
+            f"world_batch_threads={runtime_cfg.get('world_batch_threads', '<default=1>')}"
+        )
+        requested_observation_backend = str(runtime_cfg.get("batch_observation_backend", "auto"))
+        print(
+            "Cooperative observation runtime: "
+            f"requested_backend={requested_observation_backend} "
+            f"effective_backend={_effective_auto_backend(requested_observation_backend, auto_default='legacy')}"
+        )
+        if env_settings["include_visual"]:
+            requested_visual_backend = str(runtime_cfg.get("batch_visual_backend", "auto"))
+            print(
+                "Cooperative visual runtime: "
+                f"requested_backend={requested_visual_backend} "
+                f"effective_backend={_effective_auto_backend(requested_visual_backend, auto_default='compiled')}"
+            )
+
+
 def main():
     parser = build_train_arg_parser()
     args = parser.parse_args()
@@ -397,6 +585,14 @@ def main():
     LeaderBatchedVecEnv = bootstrap.leader_batched_vec_env_cls
     print_training_bootstrap_summary(bootstrap)
     warn_execution_visual_rollout_memory(bootstrap)
+
+    test_only_load_path = _resolve_test_only_load_path(args, exp_dir) if args.test_only else None
+    if args.test_only and test_only_load_path is None:
+        _print_test_only_preflight_runtime_summary(bootstrap)
+        print("Error: --test_only requires --resume_path or a valid existing run directory with final_model.zip")
+        return
+
+    _load_training_dependencies()
 
     if agent_layer == "execution":
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
@@ -604,17 +800,8 @@ def main():
     
     # Test Mode
     if args.test_only:
-        if not args.resume_path:
-            # Try to find 'final_model.zip' in exp_dir if just run_name provided
-            possible_path = os.path.join(exp_dir, "final_model.zip")
-            if os.path.exists(possible_path):
-                load_path = possible_path
-            else:
-                print("Error: --test_only requires --resume_path or a valid existing run directory with final_model.zip")
-                return
-        else:
-            load_path = args.resume_path
-            
+        load_path = test_only_load_path
+        assert load_path is not None
         print(f"Loading model for testing: {load_path}")
         model = algo_cls.load(load_path, env=vec_env)
         

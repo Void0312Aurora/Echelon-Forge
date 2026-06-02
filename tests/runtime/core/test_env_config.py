@@ -83,6 +83,14 @@ class EnvConfigTests(unittest.TestCase):
         resolved = resolve_env_settings(train_config, _make_args())
         self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
 
+    def test_resolve_env_settings_accepts_air_combat_c2_roe_mission_obs_mode(self) -> None:
+        resolved = resolve_env_settings(
+            {"env": {"mission_obs_mode": "AIR_COMBAT_C2_ROE_V1"}},
+            _make_args(),
+        )
+
+        self.assertEqual(resolved["mission_obs_mode"], "air_combat_c2_roe_v1")
+
     def test_resolve_env_settings_prefers_canonical_backend_over_alias(self) -> None:
         train_config = {
             "env": {

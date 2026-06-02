@@ -226,6 +226,52 @@ def _target_track(truth, target_id: int):
     return None
 
 
+def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None) -> np.ndarray:
+    _ = inst
+    if truth is None:
+        try:
+            truth = loader.get_policy_agent_observation(loader.agent_id)
+        except Exception:
+            truth = None
+    cmd_view = mission_command_view(loader)
+
+    assigned_target_id = int(cmd_view.int_field("assigned_target_id", 0))
+    target_id = assigned_target_id if assigned_target_id > 0 else int(getattr(loader, "primary_target_id", 0) or 0)
+    target_track = _target_track(truth, target_id)
+    target_contact_present = 1.0 if target_track is not None else 0.0
+    track_identity = int(getattr(target_track, "classification", 0) or 0) if target_track is not None else 0
+    target_identity = cmd_view.int_field(
+        "target_identity_state",
+        cmd_view.int_field("threat_state", track_identity),
+    )
+
+    return np.array(
+        [
+            float(cmd_view.int_field("command_code", 0)),
+            float(cmd_view.float_field("target_heading", 0.0)),
+            float(cmd_view.float_field("target_altitude", 0.0)),
+            float(cmd_view.float_field("target_speed", 0.0)),
+            float(cmd_view.int_field("roe_state", 0)),
+            float(cmd_view.int_field("wcs_state", 1)),
+            1.0 if bool(cmd_view.bool_field("authorization_to_fire", False)) else 0.0,
+            float(cmd_view.int_field("engagement_authority_holder_id", 0)),
+            float(cmd_view.int_field("engagement_authority_grantor_id", 0)),
+            float(assigned_target_id),
+            float(cmd_view.int_field("assigned_target_track_id", 0)),
+            float(cmd_view.int_field("assigned_target_source_id", 0)),
+            float(cmd_view.float_field("assigned_target_snapshot_time_s", 0.0)),
+            float(target_identity),
+            float(cmd_view.int_field("engage_order_state", 0)),
+            float(cmd_view.int_field("shot_policy_state", 0)),
+            float(cmd_view.int_field("shot_budget_remaining", 0)),
+            1.0 if bool(cmd_view.bool_field("pending_assessment", False)) else 0.0,
+            float(cmd_view.int_field("own_missiles_in_flight_count", 0)),
+            float(target_contact_present),
+        ],
+        dtype=np.float32,
+    )
+
+
 def _support_entity_ids(loader) -> list[int]:
     agent_id = int(getattr(loader, "agent_id", 0) or 0)
     out: list[int] = []
@@ -377,6 +423,8 @@ def get_python_owned_mission_observation(loader, mode: str, *, truth=None, inst=
     mode_norm = str(mode).strip().lower()
     if mode_norm == "naval_screen_station_v1":
         return _naval_screen_station_vector(loader, truth=truth, inst=inst)
+    if mode_norm == "air_combat_c2_roe_v1":
+        return _air_combat_c2_roe_vector(loader, truth=truth, inst=inst)
     raise ValueError(f"Unknown Python-owned mission observation mode: {mode!r}")
 
 

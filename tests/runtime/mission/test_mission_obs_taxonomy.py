@@ -10,6 +10,7 @@ ensure_repo_imports()
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
 from gym_envs.universal_env import mission_observation_dim as env_mission_observation_dim  # noqa: E402
 from python.mission_obs_taxonomy import (  # noqa: E402
+    AIR_COMBAT_MISSION_OBS_MODES,
     BASE_MISSION_OBS_MODES,
     COOPERATIVE_MISSION_OBS_MODES,
     NAVAL_MISSION_OBS_MODES,
@@ -23,7 +24,12 @@ from python.mission_obs_taxonomy import (  # noqa: E402
 
 class MissionObservationTaxonomyTests(unittest.TestCase):
     def test_shared_taxonomy_matches_runtime_entrypoints(self) -> None:
-        modes = list(BASE_MISSION_OBS_MODES) + list(COOPERATIVE_MISSION_OBS_MODES) + list(NAVAL_MISSION_OBS_MODES)
+        modes = (
+            list(BASE_MISSION_OBS_MODES)
+            + list(COOPERATIVE_MISSION_OBS_MODES)
+            + list(NAVAL_MISSION_OBS_MODES)
+            + list(AIR_COMBAT_MISSION_OBS_MODES)
+        )
         self.assertEqual(
             modes,
             [
@@ -34,6 +40,7 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
                 "nav_v2_formation_role_v1",
                 "nav_v2_cooperative_takeoff_v1",
                 "naval_screen_station_v1",
+                "air_combat_c2_roe_v1",
             ],
         )
 
@@ -153,6 +160,44 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
         self.assertEqual(mission_observation_field_index(mode, "target_contact_present"), 13)
         self.assertEqual(mission_observation_field_index(mode, "roe_state"), 16)
         self.assertEqual(mission_observation_field_index(mode, "reference_relative_slot_code"), 22)
+
+    def test_air_combat_c2_roe_observation_has_release_discipline_fields(self) -> None:
+        mode = "air_combat_c2_roe_v1"
+
+        self.assertTrue(mission_observation_python_owned(mode))
+        self.assertEqual(mission_observation_dim(mode), 20)
+        self.assertEqual(env_mission_observation_dim(mode), 20)
+        self.assertEqual(ScenarioLoader._mission_observation_mode_code(mode), 7)
+        self.assertEqual(ScenarioLoader._python_owned_mission_observation_mode(mode), True)
+        self.assertEqual(
+            mission_observation_field_names(mode),
+            [
+                "command_code",
+                "target_heading_deg",
+                "target_altitude_m",
+                "target_speed_mps",
+                "roe_state",
+                "wcs_state",
+                "authorization_to_fire",
+                "engagement_authority_holder_id",
+                "engagement_authority_grantor_id",
+                "assigned_target_id",
+                "assigned_target_track_id",
+                "assigned_target_source_id",
+                "assigned_target_snapshot_time_s",
+                "target_identity_state",
+                "engage_order_state",
+                "shot_policy_state",
+                "shot_budget_remaining",
+                "pending_assessment",
+                "own_missiles_in_flight_count",
+                "target_contact_present",
+            ],
+        )
+        self.assertEqual(mission_observation_field_index(mode, "roe_state"), 4)
+        self.assertEqual(mission_observation_field_index(mode, "authorization_to_fire"), 6)
+        self.assertEqual(mission_observation_field_index(mode, "shot_policy_state"), 15)
+        self.assertEqual(mission_observation_field_index(mode, "target_contact_present"), 19)
 
 
 if __name__ == "__main__":

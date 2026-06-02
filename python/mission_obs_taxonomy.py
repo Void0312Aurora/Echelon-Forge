@@ -7,6 +7,7 @@ MISSION_OBS_NAV_V2_FORMATION_V1 = "nav_v2_formation_v1"
 MISSION_OBS_NAV_V2_FORMATION_ROLE_V1 = "nav_v2_formation_role_v1"
 MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1 = "nav_v2_cooperative_takeoff_v1"
 MISSION_OBS_NAVAL_SCREEN_STATION_V1 = "naval_screen_station_v1"
+MISSION_OBS_AIR_COMBAT_C2_ROE_V1 = "air_combat_c2_roe_v1"
 
 MISSION_OBS_MODE_CODE_BY_NAME = {
     MISSION_OBS_BASIC: 0,
@@ -16,6 +17,7 @@ MISSION_OBS_MODE_CODE_BY_NAME = {
     MISSION_OBS_NAV_V2_FORMATION_ROLE_V1: 4,
     MISSION_OBS_NAV_V2_COOPERATIVE_TAKEOFF_V1: 5,
     MISSION_OBS_NAVAL_SCREEN_STATION_V1: 6,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1: 7,
 }
 
 _MISSION_OBS_BASIC_FIELDS = [
@@ -94,6 +96,29 @@ _MISSION_OBS_NAVAL_SCREEN_STATION_FIELDS = [
     "reference_relative_slot_code",
 ]
 
+_MISSION_OBS_AIR_COMBAT_C2_ROE_FIELDS = [
+    "command_code",
+    "target_heading_deg",
+    "target_altitude_m",
+    "target_speed_mps",
+    "roe_state",
+    "wcs_state",
+    "authorization_to_fire",
+    "engagement_authority_holder_id",
+    "engagement_authority_grantor_id",
+    "assigned_target_id",
+    "assigned_target_track_id",
+    "assigned_target_source_id",
+    "assigned_target_snapshot_time_s",
+    "target_identity_state",
+    "engage_order_state",
+    "shot_policy_state",
+    "shot_budget_remaining",
+    "pending_assessment",
+    "own_missiles_in_flight_count",
+    "target_contact_present",
+]
+
 MISSION_OBS_FIELD_NAMES_BY_NAME = {
     MISSION_OBS_BASIC: list(_MISSION_OBS_BASIC_FIELDS),
     MISSION_OBS_NAV_V1: list(_MISSION_OBS_BASIC_FIELDS + _MISSION_OBS_NAV_V1_EXTRA_FIELDS),
@@ -115,6 +140,7 @@ MISSION_OBS_FIELD_NAMES_BY_NAME = {
         + _MISSION_OBS_ROLE_EXTRA_FIELDS
     ),
     MISSION_OBS_NAVAL_SCREEN_STATION_V1: list(_MISSION_OBS_NAVAL_SCREEN_STATION_FIELDS),
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1: list(_MISSION_OBS_AIR_COMBAT_C2_ROE_FIELDS),
 }
 
 MISSION_OBS_DIM_BY_NAME = {
@@ -141,7 +167,10 @@ COOPERATIVE_MISSION_OBS_MODES = (
 NAVAL_MISSION_OBS_MODES = (
     MISSION_OBS_NAVAL_SCREEN_STATION_V1,
 )
-PYTHON_OWNED_MISSION_OBS_MODES = frozenset(NAVAL_MISSION_OBS_MODES)
+AIR_COMBAT_MISSION_OBS_MODES = (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+)
+PYTHON_OWNED_MISSION_OBS_MODES = frozenset(NAVAL_MISSION_OBS_MODES + AIR_COMBAT_MISSION_OBS_MODES)
 
 
 def normalize_mission_obs_mode(mode: str | None) -> str:

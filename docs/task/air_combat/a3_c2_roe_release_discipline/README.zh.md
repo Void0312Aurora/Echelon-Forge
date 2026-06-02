@@ -1,7 +1,8 @@
 # A3 C2/ROE 发射纪律
 
-状态：`2026-06-02` planning。本子项目定义空战 C2、ROE 与发射纪律约束层；
-在这层明确前，不再把同一目标多枚导弹问题直接归因为策略记忆失败。
+状态：`2026-06-03`，有边界的 C2/ROE implementation、P4 evidence 与 P5 index
+sync 通过；M2 继续 held。本子项目定义空战 C2、ROE 与发射纪律约束层；在这层明确前，
+不再把同一目标多枚导弹问题直接归因为策略记忆失败。
 
 语言：
 
@@ -43,11 +44,11 @@ A3 要补的是这层缺失的指挥约束。它把公开 C2/ROE 概念收敛为
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| 公开 C2/ROE 术语 | planning | 公开来源扫描记录 WCS、engage/hold/cease/abort、bandit/hostile 和授权链边界。 | 公开来源只支持术语和状态机设计，不支持真实 BVR 战术或导弹发射纪律。 |
-| 现有 runtime 命令字段 | 可用但空战策略未充分消费 | `mission_command` 已有 `authorization_to_fire`、`roe_state`、授权 holder/grantor、分配目标和目标快照字段。 | 这些字段还不是完整的空战发射纪律合同。 |
-| 空战 S1 场景 | 存在缺口 | 当前 S1 `mission_command` 直接 `authorization_to_fire=true`，active 训练配置仍使用 `mission_obs_mode=basic`。 | `basic` 不向策略暴露 ROE、授权、目标分配或 shot policy。 |
+| 公开 C2/ROE 术语 | source scan accepted | 公开来源扫描记录 WCS、engage/hold/cease/abort、bandit/hostile 和授权链边界。 | 公开来源只支持术语和状态机设计，不支持真实 BVR 战术或导弹发射纪律。 |
+| 现有 runtime 命令字段 | 已注册到 A3 合同 | `air_combat_c2_roe_v1` 通过 loader/runtime 路径消费 `authorization_to_fire`、`roe_state`、WCS、engage order、assigned target、shot policy 和 pending assessment。 | 首版是仿真合同，不是完整 C2 层级或数据链模型。 |
+| 空战 S1 场景 | additive A3 probe 可用 | `air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json` 及其 active config 使用 `mission_obs_mode=air_combat_c2_roe_v1` 并启用 C2/ROE reward gate。 | 既有 M1 baseline 条目仍有意保持 `mission_obs_mode=basic`。 |
 | 海军 ROE 先例 | 可借鉴 | `naval_screen_station_v1` 已暴露 `roe_state`、`authorization_to_fire` 和目标字段，并有 ROE hold/authorization 奖励项。 | 海军 screen 逻辑只能指导 wiring 形态，不能定义空战战术。 |
-| M1 证据 | 作为 held 输入 | Hybrid temporal shaped Stage-1 稳定运行，但仍出现重复发射。 | 这不能证明记忆无效；它说明 command/ROE 面仍未定义充分。 |
+| M1 证据 | A3-aware interpretation complete | Hybrid temporal shaped Stage-1 稳定运行但仍出现重复发射；P4 probe 现在能在 C2/ROE 合同下分类授权发射与违规发射。 | 这不证明记忆已解决或无效；在 learned-policy 证据可用前，M2 继续 held。 |
 
 ## Scope
 
@@ -70,16 +71,48 @@ Out of scope:
 - sequence-native PPO、recurrent memory、M2 release、自博弈或 `2v2` 战术。
 - 把环境侧静默吞掉发射动作作为主要修复方式。
 
+## Schema Contract: `air_combat_c2_roe_v1`
+
+状态：`2026-06-03` 首版 C/D 合同。该合同是训练和诊断用仿真状态，不是现实
+ROE、BVR timeline 或平台战术。
+
+字段顺序：
+
+| Field | Value/default | Meaning |
+| --- | --- | --- |
+| `command_code` | existing mission command code | 保留当前任务命令码。 |
+| `target_heading_deg` / `target_altitude_m` / `target_speed_mps` | existing mission target kinematics | 保留 basic mission observation 的目标运动学。 |
+| `roe_state` | raw existing int, default `0` | 现有 mission command ROE 字段，保留 legacy 观测事实。 |
+| `wcs_state` | `1` hold by default | A3 weapons-control status：`0=unspecified/legacy`, `1=hold`, `2=tight`, `3=free`。 |
+| `authorization_to_fire` | `0/1`, default `0` | 显式开火授权。 |
+| `engagement_authority_holder_id` / `engagement_authority_grantor_id` | entity id or `0` | 授权持有者与授权来源。ID 是诊断事实，不做归一化。 |
+| `assigned_target_id` / `assigned_target_track_id` / `assigned_target_source_id` | entity/source id or `0` | 分配目标、track 和来源。 |
+| `assigned_target_snapshot_time_s` | seconds, default `0.0` | 分配目标快照时间。 |
+| `target_identity_state` | default mission `threat_state` or contact classification | `0=unknown`, `1=bogey`, `2=bandit`, `3=hostile`, `4=friendly` 的简化合同值。 |
+| `engage_order_state` | default `0` | `0=none`, `1=commit`, `2=engage`, `3=hold_fire`, `4=cease_fire`, `5=cease_engagement`, `6=abort`。 |
+| `shot_policy_state` | default `0` | `0=weapons_hold`, `1=single_shot_then_assess`, `2=salvo_authorized`, `3=reattack_authorized`。 |
+| `shot_budget_remaining` | default `0` | 当前合同授权剩余发射数；首版由场景/命令显式给出。 |
+| `pending_assessment` | `0/1`, default `0` | 首发后是否等待效果评估或再授权。 |
+| `own_missiles_in_flight_count` | default `0` | 面向同一目标的己方在飞弹计数；首版只消费显式 mission field，后续诊断可接入 runtime 统计。 |
+| `target_contact_present` | derived `0/1` | 当前观测中是否看到分配目标 track。 |
+
+Fail-closed defaults:
+
+- 缺少 `wcs_state` 时按 `hold` 观测。
+- 缺少 `shot_policy_state` 时按 `weapons_hold` 观测。
+- 缺少 `shot_budget_remaining` 时按 `0` 观测。
+- `authorization_to_fire=true` 只表示有开火授权；它不自动表示齐射、再攻击或第二发许可。
+
 ## Phase Plan
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | 冻结公开来源和 authority 边界。 | 用户要求补充 C2/ROE 约束。 | 来源扫描记录可安全事实和不可声明内容。 | active |
-| `P1 Code Surface` | 盘点现有命令、观测、奖励、场景和诊断路径。 | 当前已有空战与海军 ROE 相关代码。 | 切入点地图写明文件、字段、测试和残余。 | active |
-| `P2 Contract` | 定义空战 C2/ROE schema 与状态转换。 | P0/P1 事实接受。 | `air_combat_c2_roe_v1` 字段和值域文档化。 | planned |
-| `P3 Implementation` | 接入观测、奖励、诊断和场景/config probe。 | P2 合同稳定。 | focused tests 通过，S1 C2/ROE probe 可运行。 | planned |
-| `P4 Evidence` | 在 A3 约束下对比 reactive/temporal 行为。 | P3 probe 入口存在。 | 重复发射指标能拆分授权与违规情况。 | planned |
-| `P5 Closure` | 同步文档、残余和 M1/M2 决策。 | P4 证据记录完成。 | A3 被 accepted、held 或带残余缩窄。 | planned |
+| `P0 Boundary` | 冻结公开来源和 authority 边界。 | 用户要求补充 C2/ROE 约束。 | 来源扫描记录可安全事实和不可声明内容。 | pass |
+| `P1 Code Surface` | 盘点现有命令、观测、奖励、场景和诊断路径。 | 当前已有空战与海军 ROE 相关代码。 | 切入点地图写明文件、字段、测试和残余。 | pass |
+| `P2 Contract` | 定义空战 C2/ROE schema 与状态转换。 | P0/P1 事实接受。 | `air_combat_c2_roe_v1` 字段和值域文档化。 | pass |
+| `P3 Implementation` | 接入观测、奖励、诊断和场景/config probe。 | P2 合同稳定。 | focused tests 通过，S1 C2/ROE probe 可运行。 | pass |
+| `P4 Evidence` | 在 A3 约束下对比 reactive/temporal 行为。 | P3 probe 入口存在。 | 重复发射指标能拆分授权与违规情况。 | pass |
+| `P5 Closure` | 同步文档、残余和 M1/M2 决策。 | P4 证据记录完成。 | 有边界的 A3 C2/ROE 层 accepted；M2 继续 held。 | pass |
 
 ## Task Clusters
 
@@ -90,15 +123,20 @@ Out of scope:
 
 ## Outputs And Evidence
 
-计划输出：
+当前输出与证据：
 
 - C2/ROE 术语的公开来源与不可声明内容扫描。
 - 当前 mission-command、观测、release gating、reward、场景、配置和 process probe
   切入点的代码表面扫描。
-- 空战 C2/ROE mission observation 合同。
-- mission observation 字段、场景 round-trip、奖励项和训练入口 bootstrap 的 focused tests。
-- 位于维护路径下的 S1 C2/ROE probe 场景/config 对。
-- 过程探针指标：总发射、无效发射、未授权发射、过早第二发、授权齐射、再攻击发射。
+- 空战 C2/ROE mission observation 合同与 taxonomy 条目。
+- mission observation 字段、场景 round-trip、奖励项、active training entry bootstrap 和
+  world-batch mission observation 的 focused tests。
+- 位于维护路径下的 S1 C2/ROE probe 场景/config 对；既有 M1 baseline config 保持
+  `basic`。
+- 过程探针指标：总发射、无效发射、授权发射、未授权/违规发射、过早第二发、
+  授权齐射、再攻击发射。
+- A3-aware P4 探针证据：
+  [a3_c2_roe_p4_probe_evidence_20260603.zh.md](a3_c2_roe_p4_probe_evidence_20260603.zh.md)
 - M1 证据更新：判断 C2/ROE 可观测后，重复发射是否仍是记忆问题。
 
 ## Acceptance Gate
@@ -119,6 +157,8 @@ Out of scope:
 - 数据链、外部传感器和 friend/no-fire-zone 逻辑是未来扩展，不是 A3 验收条件。
 - 若 A3 约束可观测后仍出现重复未授权开火，再把剩余问题交回 M1/M2 作为策略记忆
   或序列模型问题。
+- 下一项实质工作是在具备 RL 条件时，用 A3 C2/ROE probe config 跑 learned-policy
+  训练/评估；本地 P5 closure 不声明该结果。
 
 ## Archive
 

@@ -17,6 +17,8 @@
   上使用很窄的 stable-flight residual wrapper；雷达、master-arm、fire、weapon-select
   仍由策略直接控制。
 - 修复 process probe，使 model 诊断按 train_config 套用 action wrapper，避免诊断面和训练有效动作通道不一致。
+- 增加 A3 C2/ROE probe 解释层：`air_combat_c2_roe_v1` 现在能让 Stage-1
+  诊断先把重复发射拆成授权 bucket 和违规 bucket，再讨论 M1/M2 记忆证据。
 
 ## 成熟度矩阵
 
@@ -26,6 +28,7 @@
 | Runtime wiring | pass | `UniversalEnv`、`WorldBatchVecEnv` 聚焦测试 | cooperative world-batch 不是当前 active air-combat route。 |
 | HMoE hybrid policy | pass | HMoE forward/evaluate 与 tiny PPO smoke | 连续轴熵沿用 `-log_prob` sampled fallback。 |
 | Active config migration | pass | training-entry tests、JSON bootstrap、32-step train smoke、1000-step load/predict smoke、Stage-1 range-gate diagnostics | learned policy 仍未通过。 |
+| A3 C2/ROE interpretation | pass | [A3 P4 探针证据](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.zh.md) | 它分类 release 行为，但不证明 learned policy 质量。 |
 | Shaped S1 training recovery | partial | 65,536-step shaped run 完成，训练窗口内飞行状态健康且没有 deep-stall/combat-loss 回归 | deterministic policy 仍不发射；stochastic policy 会早发/多发，武器使用尚未验收。 |
 | Action-interface closure | accepted | [m1_action_interface_split_acceptance_20260602.zh.md](m1_action_interface_split_acceptance_20260602.zh.md) | M1 temporal evidence 与 M2 release 仍 held。 |
 
@@ -83,14 +86,16 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
   产生早发/多发（`release_counts=[4,3,2]`），且只有 1 个 episode 产生 damage report。
 - 把 accepted 动作接口证据并回 M1-A4 / M1-A5；M2 sequence-native PPO 仍不得释放。
 - “同一目标已有己方导弹在飞时是否再打一枚”先交由 A3 C2/ROE 定义 shot policy、
-  pending assessment、salvo 和 reattack 授权；本实现不补内核记忆板。
+  pending assessment、salvo 和 reattack 授权。A3 P4 probe 现在显示重复发射可被拆成
+  授权和违规 bucket；本实现不补内核记忆板。
 
 ## 下一步顺序
 
 1. 用 accepted hybrid action interface 作为后续 S1 训练默认候选。
-2. 增加 A3 C2/ROE shaping/curriculum，更直接区分授权单发、授权齐射、再攻击许可、
-   过早第二发和未授权开火。
-3. 在 deterministic learned release 出现后，再比较 reactive/hybrid temporal 的 repeated-release interval。
+2. 使用 A3 C2/ROE probe config 继续跑后续 S1 训练/评估，使 learned-policy release
+   能被评分为授权发射或违规发射。
+3. 在 deterministic learned release 出现后，用 A3-aware 指标比较 reactive/hybrid temporal
+   repeated-release interval。
 
 ## 禁止的过度声明
 

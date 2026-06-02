@@ -13,6 +13,7 @@ M1 对应路径 A。它不是最终正式架构，而是进入路径 C 前的证
 - [时间 HMoE 策略计划](../temporal_hmoe_policy_plan_20260525.zh.md)
 - [空战 1v1 真实度梯度课程](../../air_combat/a1_1v1_realism_gradient/README.zh.md)
 - [A3 C2/ROE 发射纪律](../../air_combat/a3_c2_roe_release_discipline/README.zh.md)
+- [A3 C2/ROE P4 探针证据 - 2026-06-03](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.zh.md)
 - [M1-A4 Stage-1 短程证据 - 2026-06-02](m1_a4_stage1_evidence_20260602.zh.md)
 - [M1-A4 Hybrid Temporal Shaped 对照证据 - 2026-06-02](m1_a4_hybrid_temporal_shaped_pair_20260602.zh.md)
 - 当前空战训练配置：
@@ -110,7 +111,8 @@ M1 可以进入 M2 release vote 的最低证据：
 - reactive 与 temporal 配置使用相同 stage、seed 规则和主要超参；
 - temporal 版本没有引入新的 non-finite、reset 或 world-batch shape 问题；
 - 在 stage-0 固定/训练诊断中，重复发射率、无效发射率或 fire action 稳定性至少一项改善；
-- A3 C2/ROE probe 已把授权齐射、再攻击、过早第二发和未授权开火区分开；
+- A3 C2/ROE P4 probe 已把授权发射、违规重复发射、无效 fire attempt 和 legacy fallback
+  计数面区分开；
 - 改善来自策略可观察历史，而不是环境侧静默拦截重复发射；
 - 若改善只来自新增 command/ROE 约束，而不是 temporal history，M2 release 继续 held；
 - 若无改善，文档记录原因并暂停 M2 实现。
