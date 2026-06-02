@@ -144,13 +144,19 @@ Status:
   [air_combat_1v1_headon_sensor_smoke_v1.json](../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
 - Stage-0 drone probe scenario:
   [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
+- Stage-1 BVR non-maneuvering target probe scenario:
+  [air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json](../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json)
+- Stage-1 active probe config:
+  [air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json](../examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json)
 - Runtime evidence:
   [test_air_combat_1v1_fixture.py](../tests/runtime/air_combat/test_air_combat_1v1_fixture.py)
+- Active-entry evidence:
+  [test_air_combat_active_training_entries.py](../tests/training/test_air_combat_active_training_entries.py)
 
 Status:
 
 - The active `1v1` configs are HMoE execution probes and smoke entries, not frozen baselines or self-play evidence.
-- Stage-1 through Stage-3 `scenarios/air_combat/1v1` files are maintained curriculum scenarios, but no active training config is paired to them yet.
+- Stage-0 and Stage-1 now have active probe configs; Stage-2 and Stage-3 remain maintained curriculum scenarios without paired active training configs.
 
 ## Naval N4 Active Gate
 

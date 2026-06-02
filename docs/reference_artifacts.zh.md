@@ -141,13 +141,19 @@
   [air_combat_1v1_headon_sensor_smoke_v1.json](../scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json)
 - Stage-0 drone probe 场景：
   [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
+- Stage-1 BVR non-maneuvering target probe 场景：
+  [air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json](../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json)
+- Stage-1 active probe config：
+  [air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json](../examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json)
 - runtime 证据：
   [test_air_combat_1v1_fixture.py](../tests/runtime/air_combat/test_air_combat_1v1_fixture.py)
+- active-entry 证据：
+  [test_air_combat_active_training_entries.py](../tests/training/test_air_combat_active_training_entries.py)
 
 状态：
 
 - active `1v1` 配置是 HMoE execution probes 和 smoke entries，不是冻结基线，也不是 self-play 证据。
-- Stage-1 到 Stage-3 的 `scenarios/air_combat/1v1` 文件是受维护的课程场景，但目前没有 active training config 与它们配对。
+- Stage-0 和 Stage-1 现在已有 active probe configs；Stage-2 和 Stage-3 仍是受维护但尚未配对 active training config 的课程场景。
 
 ## 海军 N4 Active Gate
 
