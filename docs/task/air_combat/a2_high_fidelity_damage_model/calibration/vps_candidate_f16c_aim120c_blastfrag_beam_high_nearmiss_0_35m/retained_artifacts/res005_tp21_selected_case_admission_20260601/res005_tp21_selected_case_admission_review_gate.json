@@ -129,7 +129,7 @@
       "artifact_id": "task_cluster_execution_status",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/task_cluster_execution_status_20260601.zh.md",
       "role": "task_cluster_boundary_ref",
-      "sha256": "d1967b27e03af71572edb98646cbed9b77bbea8036ad7ee06e07e87f769b1fb2"
+      "sha256": "a6d2fac212054dec58605b06931d703522f8246d8aa55b56250775985bd9bbea"
     },
     {
       "artifact_id": "validation_res005_tp21_debris_admission_note",
@@ -169,7 +169,7 @@
     "task_cluster": "TC-A2-BF-003-RES005-TP21"
   },
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
-  "packet_sha256": "1e38bdd3686d5090fe410cfd84cab658e4606022d285cbccfd88aac9cf3eb9dd",
+  "packet_sha256": "b0bd7c198e826e627e0bb962726f0ac656f7798ddfdb90fd610b55ee31722574",
   "prior_debris_gate_summary": {
     "allowed_output_signoff_present": false,
     "anchor_set_schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",

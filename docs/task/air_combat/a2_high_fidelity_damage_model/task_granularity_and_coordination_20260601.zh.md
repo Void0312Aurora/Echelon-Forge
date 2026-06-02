@@ -1,6 +1,6 @@
 # A2 高保真空战毁伤模型任务粒度与协调总账
 
-状态：`2026-06-01 / coordination_index / non-authoritative`。
+状态：`2026-06-02 / coordination_index / G5 research accepted / non-authoritative`。
 
 本文只整理任务粒度、命名和当前执行边界，不创建 runtime descriptor，不授予
 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority`
@@ -35,9 +35,11 @@ residual closeout、validation scaffold、独立 review gate 和 stock authority
 | `G3` | residual 状态 | `RES-001..014` 的阻塞项、局部关闭项和边界项 | residual register 有稳定 artifact 引用和明确状态 | 不等于上层任务簇完成 |
 | `G4 research` | 研究级机制载荷 / 脆弱性延续 | non-authoritative mechanism-load envelope、component fragility surface、uncertainty ledger | 数据可追溯、可替换、带 uncertainty / confidence / replacement rule，authority guards 全 false | 不等于 `G4 authority` 或 stock release |
 | `G4 authority` | authority promotion | `effect_scale_authority` / `component_failure_probability_authority` 进入可发布 runtime authority | descriptor、source、validation、scope、rows 和 residual gate 全部满足 | 不等于 Pk 或 fuze |
-| `G5` | kill-chain authority | Pk、deterministic fuze、mission-kill 概率 | 独立证据链存在并另行验收 | 不得由本 candidate 包顺手关闭 |
+| `G5 research` | 研究级 kill-chain proxy | Pk / fuze proxy boundary、event-chain map、uncertainty audit | proxy 数据可追溯、可替换，且明确不是 Pk / deterministic fuze authority | 不等于 `G5 authority`、Pk 或 fuze release |
+| `G5 authority` | kill-chain authority | Pk、deterministic fuze、mission-kill 概率 | 独立证据链存在并另行验收 | 不得由本 candidate 包或 research proxy 顺手关闭 |
 
-在当前 research profile 下，`G1/G2/G3` 是默认完成面；`G4/G5` 是 opt-in backlog，
+在当前 research profile 下，`G1/G2/G3` 是基础完成面；`G4/G5 research` 可以作为
+非权威、可替换数据的延续工作被验收。`G4/G5 authority` 才是 opt-in backlog，
 不是当前项目必须拿工业级数据才能继续的阻塞项。
 
 推荐用语：
@@ -82,7 +84,8 @@ residual closeout、validation scaffold、独立 review gate 和 stock authority
 `research_closed_authority_retained`，含义仅限 `RES-001..014` 对当前 research profile
 不再形成阻塞，且均有明确状态、稳定证据入口和不得上卷边界。完整清点见
 [g3_residual_closeout_status_20260601.zh.md](g3_residual_closeout_status_20260601.zh.md)。
-这不表示所有 authority residual substantive closeout，也不启动 `G4/G5`。
+这不表示所有 authority residual substantive closeout，也不自动要求 `G4/G5 authority`。
+后续 `G4/G5 research` 已按独立 research packet 收口。
 
 同日确认 research-only 决策：当前不再等待工业级或 release-grade 数据作为默认完成条件。
 `RES-*` 中阻塞 authority 的部分继续保留为 authority blocker；阻塞 research data surface 的部分
@@ -98,11 +101,12 @@ residual closeout、validation scaffold、独立 review gate 和 stock authority
 | `TC-A2-BF-002` scope / geometry / warhead evidence | `G2` + `G3` 状态读取 | Stage B scope/witness/family bookkeeping 可接受；真实 geometry/warhead truth 继续 residual | [candidate status](candidate_acceptance_status.zh.md)、[RES-003/004/007/008](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) |
 | `TC-A2-BF-003` mechanism admission evidence | `G2` + `G3` 状态读取 | accepted as retained/fail-closed package evidence；TP-21/BEC-O 不作为 release-consumed evidence | [candidate status](candidate_acceptance_status.zh.md)、[RES-005/006](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) |
 | `TC-A2-BF-004` candidate bundle / regression | `G2` | candidate bundle 可审计，authority guard false | [candidate status](candidate_acceptance_status.zh.md)、[a2_candidate_vps_bundle.py](../../../../tools/maintenance/a2_candidate_vps_bundle.py)、runtime-aligned authority pack |
-| `G4-R-B` mechanism-load envelope | `G4 research` | 已启动分发；只形成 non-authoritative fragment / blast envelope | [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[mechanism-load envelope dispatch](g4_research_mechanism_load_envelope_dispatch_20260601.zh.md) |
-| `G4-R-C` component fragility surface | `G4 research` | 已启动分发；只形成 non-authoritative component fragility surface / uncertainty ledger | [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[component fragility dispatch](g4_research_component_fragility_dispatch_20260601.zh.md) |
+| `G4-R-B` mechanism-load envelope | `G4 research` | 已完成 research packet；只形成 non-authoritative fragment / blast envelope | [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[mechanism-load envelope dispatch](g4_research_mechanism_load_envelope_dispatch_20260601.zh.md) |
+| `G4-R-C` component fragility surface | `G4 research` | 已完成 research packet；只形成 non-authoritative component fragility surface / uncertainty ledger | [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[component fragility dispatch](g4_research_component_fragility_dispatch_20260601.zh.md) |
 | `TC-A2-AUTH-B` effect-scale promotion | `G4 authority` | 尚未启动为 release-grade promotion；不得和当前批次混验收 | [authority backlog](authority_promotion_backlog.zh.md) |
 | `TC-A2-AUTH-C` component_failure_probability promotion | `G4 authority` | Stage C test-local 演练存在，release-grade truth 仍 blocked | [authority backlog](authority_promotion_backlog.zh.md)、[RES-009/010/011/012](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) |
-| `TC-A2-KILLCHAIN` Pk / deterministic fuze | `G5` | boundary deferred | [authority backlog](authority_promotion_backlog.zh.md)、[RES-013/014](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) |
+| `G5-R` Pk / fuze proxy | `G5 research` | 已完成 research packet；只形成 non-authoritative proxy source scan / boundary / event-chain / audit | [G5 research dispatch](g5_research_dispatch_20260602.zh.md)、[G5 integration acceptance](g5_research_integration_acceptance_20260602.zh.md) |
+| `TC-A2-KILLCHAIN` Pk / deterministic fuze | `G5 authority` | boundary deferred | [authority backlog](authority_promotion_backlog.zh.md)、[RES-013/014](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) |
 
 ## 5. 当前 residual 状态如何读
 
@@ -130,6 +134,8 @@ residual closeout、validation scaffold、独立 review gate 和 stock authority
 | `research_candidate_data_policy_20260601.zh.md` | 当前默认 research / candidate 数据策略；定义可替换数据、第三方/社区来源和 authority opt-in 边界 |
 | `g4_g5_research_continuation_20260601.zh.md` | `G4/G5` 的研究级延续入口；允许启动 non-authoritative envelope / fragility / proxy 工作，不启动 authority promotion |
 | `g4_research_dispatch_20260601.zh.md` | 当前 `G4 research` 中央分发包；串行整合 `G4-R-B` 与 `G4-R-C` 分发结果 |
+| `g5_research_dispatch_20260602.zh.md` | 当前 `G5 research` 中央分发包；分发 Pk / fuze proxy source scan、boundary design、event-chain map 和 audit |
+| `g5_research_integration_acceptance_20260602.zh.md` | `G5 research` 串行整合结论；确认 proxy packet accepted 且 guards false |
 | `authority_promotion_backlog.zh.md` | 未来 `TC-A2-AUTH-B/C` 和 `TC-A2-KILLCHAIN`，只登记不混入当前验收 |
 | `narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md` | 窄域 scope 和 authority boundary |
 | `calibration/.../residual_register.zh.md` | residual 状态源 |
@@ -153,7 +159,7 @@ residual closeout、validation scaffold、独立 review gate 和 stock authority
 - `README.zh.md` 已降级为薄入口；
 - `runtime_status.zh.md` 承接 `G1 runtime`；
 - `candidate_acceptance_status.zh.md` 承接当前 `G2 candidate`，并读取 `G3 residual`；
-- `authority_promotion_backlog.zh.md` 承接未来 `G4/G5`；
+- `authority_promotion_backlog.zh.md` 承接未来 `G4/G5 authority`；
 - 旧长叙事、Phase 0 审计和历史状态审计已归档到 `archive/20260601_doc_governance/`。
 
 下一轮治理不应先移动 calibration narrative。`a2_candidate_vps_bundle.py`、release-readiness

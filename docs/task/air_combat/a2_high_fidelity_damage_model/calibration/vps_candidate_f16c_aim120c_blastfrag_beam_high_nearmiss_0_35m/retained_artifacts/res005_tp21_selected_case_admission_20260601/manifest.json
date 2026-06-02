@@ -112,7 +112,7 @@
       "artifact_id": "task_cluster_execution_status",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/task_cluster_execution_status_20260601.zh.md",
       "role": "task_cluster_boundary_ref",
-      "sha256": "d1967b27e03af71572edb98646cbed9b77bbea8036ad7ee06e07e87f769b1fb2"
+      "sha256": "a6d2fac212054dec58605b06931d703522f8246d8aa55b56250775985bd9bbea"
     },
     {
       "artifact_id": "validation_res005_tp21_debris_admission_note",
@@ -128,7 +128,7 @@
     "filename": "res005_tp21_selected_case_admission_review_gate.json",
     "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
     "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
-    "sha256": "53dcc25f420a33cb1a26f9125eb0fa4d4fd3e740d55e8fc17356ca82b040a03a"
+    "sha256": "c381ed778c8ac8353035d63d30ca15c5517e90e2792dadbba19a3e62d6f40bb9"
   },
   "schema_version": "a2.res005_tp21_selected_case_admission_review_retained_manifest.v1",
   "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"

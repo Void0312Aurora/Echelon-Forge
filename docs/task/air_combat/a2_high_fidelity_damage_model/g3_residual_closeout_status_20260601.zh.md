@@ -32,7 +32,7 @@ surface 仍应以可替换估计继续完善。
 - `all authority residuals closed`；
 - `G4 authority promoted`；
 - `effect_scale_authority` 或 `component_failure_probability_authority` 已 release；
-- Pk calibrated 或 deterministic fuze released。
+- Pk calibration claim 或 deterministic fuze authority claim。
 
 ## Residual inventory
 
@@ -84,7 +84,7 @@ python -m pytest -q tests/architecture/test_a2_blastfrag_signoff_admission_prefl
 当前工作区结果：
 
 - retained manifest integrity：`manifest_count=29`、`missing_total=0`、`sha_mismatch_total=0`、`guard_true_total=0`；
-- source admission strict：`9 ledgers, 29 candidate docs, 51 calibration docs`；
+- source admission strict：`9 ledgers, 29 candidate docs, 53 calibration docs`；
 - candidate bundle CLI：exit 0，authority boundary 仍为 stock/effect/component/Pk/fuze 全 false；
 - A2 candidate/source/manifest/descriptor suite：`17 passed`；
 - G2/G3 fail-closed signoff / residual packet focused suite：`44 passed`。

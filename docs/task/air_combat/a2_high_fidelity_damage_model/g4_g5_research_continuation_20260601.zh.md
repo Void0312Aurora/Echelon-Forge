@@ -1,6 +1,6 @@
 # A2 G4/G5 Research Continuation - 2026-06-01
 
-状态：`2026-06-01 / G4 research accepted / G5 deferred / research_only / replaceable_data`。
+状态：`2026-06-02 / G4 research accepted / G5 research accepted / research_only / replaceable_data`。
 
 本文只定义 `G4/G5` 的研究级延续入口。它不启动 release-grade 准入，
 不创建 runtime descriptor，不把 stock / Pk / deterministic fuze 等机器 guard 置真。
@@ -28,20 +28,29 @@ research 口径下，它们不是完成条件。
 - `G4-R-C-AUDIT`: [component fragility uncertainty / independence audit](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md)
 - `G4-R-INTEGRATION`: [G4 research integration acceptance](g4_research_integration_acceptance_20260601.zh.md)
 
+当前 G5 research 分发入口：
+
+- [G5 research dispatch](g5_research_dispatch_20260602.zh.md)
+- `G5-R-A`: [Pk / fuze proxy source scan](data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md)
+- `G5-R-B`: [Pk / fuze proxy boundary design](g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md)
+- `G5-R-C`: [event-chain map](g5_research_event_chain_map_20260602.zh.md)
+- `G5-R-D`: [uncertainty / independence audit](g5_research_uncertainty_independence_audit_20260602.zh.md)
+- `G5-R-INTEGRATION`: [G5 research integration acceptance](g5_research_integration_acceptance_20260602.zh.md)
+
 ## Boundary Decision
 
-接下来可以启动的是 `G4/G5 research lane`。工业级准入不在当前目标内，只保留为
+当前已经启动并收口的是 `G4/G5 research lane`。工业级准入不在当前目标内，只保留为
 防误用边界。
 
 | lane | 研究级目标 | 可用数据 | 不得声称 |
 |---|---|---|---|
 | `G4-R-B` mechanism-load envelope | 为 `RES-005/006` 形成 fragment / blast research load envelope，并让参数、source tier、uncertainty 和 replacement rule 可审计 | Tier A 方法、Tier B 工程公开资料、Tier C/community sanity check、derived estimate、hash-only restricted references | 型号级真值、release-consumed TP-21/BEC-O evidence、stock descriptor |
 | `G4-R-C` component fragility surface | 为 `RES-009..012` 形成 research component fragility surface、uncertainty ledger 和 independent-input note | 公开 LFTE/MSVV 方法、论文、社区/开源 fragility sanity envelope、derived sigmoid / threshold surface | calibrated component probability、aircraft-wide fragility truth、Stage C release-grade closeout |
-| `G5-R` kill-chain proxy | 形成 Pk / fuze proxy 的研究设计，明确哪些变量、事件和不确定性会进入未来 kill-chain | 公开方法、游戏外推禁用清单、社区 sanity envelope、simulation-derived proxy | calibrated Pk、deterministic fuze、mission-kill probability |
+| `G5-R` kill-chain proxy | 形成 Pk / fuze proxy 的研究设计，明确哪些变量、事件和不确定性会进入未来 kill-chain | 公开方法、游戏外推禁用清单、社区 sanity envelope、simulation-derived proxy | Pk calibration claim、deterministic fuze authority、mission-kill probability claim |
 
-## Start Conditions
+## Research Lane Conditions
 
-可以开始 `G4/G5 research lane` 的条件：
+`G4/G5 research lane` 保持可验收状态的条件：
 
 - 当前 candidate bundle 继续输出 `candidate_non_authoritative_bundle`；
 - `research_blocker_residual_ids=[]`；
@@ -52,13 +61,14 @@ research 口径下，它们不是完成条件。
 若未来另行启动工业级准入，仍需独立来源、rights / allowed-output、release-grade
 validation、review record、residual closeout 和 stock gate；这些不属于当前 research lane。
 
-## First Research Work Items
+## Research Work Items
 
 | id | 目标 | 输出 | 验收 |
 |---|---|---|---|
 | `G4-R-B-001..003` | 建立 fragment / blast mechanism-load source scan、derived envelope 和 guard audit | [source scan](g4_research_mechanism_load_envelope_source_ledger_20260601.zh.md)、[envelope draft](g4_research_mechanism_load_envelope_draft_20260601.zh.md)、[validation audit](g4_research_mechanism_load_envelope_validation_audit_20260601.zh.md) | 已完成 research packet，可作为 `G4-R-C` mechanism side input |
 | `G4-R-C-SCAN/SURFACE/AUDIT` | 建立 component fragility source scan、surface draft 和 uncertainty / independence audit | [source scan](data_collection/component_fragility_vulnerability/g4_r_c_source_scan_20260601.zh.md)、[surface draft](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_component_fragility_surface_draft_20260601.zh.md)、[audit](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md) | 已完成核心 research packet，并通过 [G4 integration acceptance](g4_research_integration_acceptance_20260601.zh.md) |
-| `G5-R-001` | 建立 Pk / fuze proxy boundary design | proxy variables、event chain、forbidden claims、data needs | `RES-013/014` 保持 out-of-scope / boundary deferred；不替换 RNG hit gate |
+| `G5-R-A/B` | 建立 Pk / fuze proxy source scan 和 boundary design | [source scan](data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md)、[boundary design](g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md) | 已完成首批 research packet；`RES-013/014` 仍保持 authority deferred；不替换 RNG hit gate |
+| `G5-R-C/D` | 建立 kill-chain event-chain map 和 uncertainty / independence audit | [event-chain map](g5_research_event_chain_map_20260602.zh.md)、[uncertainty audit](g5_research_uncertainty_independence_audit_20260602.zh.md) | 已完成 research packet，并通过 [G5 integration acceptance](g5_research_integration_acceptance_20260602.zh.md)；不写 Pk 或 deterministic fuze truth |
 
 ## Acceptance
 

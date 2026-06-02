@@ -22,6 +22,7 @@
 | `vps_blast_fragmentation_methods` | 首个 blast-fragmentation mechanism-load surrogate 的公开方法和 benchmark 候选 | recovered | `README.zh.md`、`source_ledger.zh.md`、`benchmark_candidate_matrix.zh.md` |
 | `component_fragility_benchmark_methods` | 组件失效/脆弱性 benchmark、schema mapping 和验证方法来源 | recovered | `README.zh.md`、`source_ledger.zh.md`、`schema_mapping_notes.zh.md` |
 | `guidance_evasion_benchmark_methods` | guidance、miss-distance、terminal evasion、seeker/filter benchmark 方法续收集 | recovered | `README.zh.md`、`source_ledger.zh.md`、`benchmark_matrix.zh.md` |
+| `kill_chain_proxy_methods` | G5-R Pk / fuze proxy 的方法来源、拒绝项和可替换输入 | active research packet | `README.zh.md`、`g5_r_source_scan_20260602.zh.md` |
 
 ## Gate 映射
 

@@ -1,13 +1,14 @@
 # A2 Research Candidate Data Policy - 2026-06-01
 
-状态：`2026-06-01 / research_profile_active / non-authoritative / authority_opt_in_only`。
+状态：`2026-06-02 / research_profile_active / G5 research accepted / non-authoritative / authority_opt_in_only`。
 
 本文记录 A2 当前的务实决策：默认目标保留为 research / candidate model，不追求工业级、
 型号级或 release-grade 数据来源。底层数据必须可替换、可扩展、可追溯，并显式标注可信等级。
 
 本文不创建 runtime descriptor，不授予 `effect_scale_authority`、
 `component_failure_probability_authority`、`pk_authority` 或 `deterministic_fuze_authority`。
-未来若要做 `G4/G5`，必须另启 authority 任务线。
+未来若要把 `G4/G5` research 结果提升为工业级或发布级 authority，才需要另启 authority
+任务线。
 
 ## Decision
 
@@ -21,7 +22,8 @@
 - 不把 research data 写成 calibrated stock authority。
 
 这意味着 `G1 runtime`、`G2 candidate package` 和 `G3 residual accounting` 可以作为当前
-research profile 的完成面。`G4/G5` 从默认后续目标降级为 explicit opt-in backlog。
+research profile 的基础完成面；`G4/G5 research` 可按非权威、可替换数据口径继续推进并验收。
+只有 `G4/G5 authority` 从默认后续目标降级为 explicit opt-in backlog。
 
 ## Data classes
 
@@ -57,13 +59,14 @@ research / candidate profile 下，`RES-001..014` 已闭合为 `research_closed_
 | residual role | 含义 |
 |---|---|
 | research blocker | 阻塞当前 research model 的可运行、可解释、可替换数据面；当前为 none |
-| authority blocker | 只阻塞未来 `G4/G5`；不阻塞当前 research profile |
+| authority blocker | 只阻塞未来 `G4/G5 authority`；不阻塞当前 research profile |
 
 当前 `RES-005/006` 对 authority 仍 fail-closed，但在 research profile 下已闭合为
 hash-only / third-party / community / derived estimate 的非权威 mechanism-load envelope 路线。
 当前 `RES-009..012` 对 release-grade component probability 仍 blocked，但在 research
 profile 下已闭合为 Stage C candidate probability surface 和 uncertainty notes 路线。
-`RES-013/014` 仍只属于未来 Pk / deterministic fuze 任务线。
+`RES-013/014` 的 authority 部分仍只属于未来 Pk / deterministic fuze 任务线；当前
+`G5-R` 已闭合为非权威 proxy research packet。
 
 ## Rights boundary
 
@@ -84,23 +87,24 @@ research profile 可视为完成时，需要：
 - 关键参数有 uncertainty / confidence 和 replacement rule；
 - candidate bundle 输出仍为 non-authoritative；
 - authority guards 全 false；
-- 文档明确 G4/G5 为 opt-in，不是当前完成标准。
+- 文档明确 G4/G5 research 与 G4/G5 authority 分离；authority promotion 才是 opt-in，
+  不是当前完成标准。
 
 当前工作区复核：
 
 - retained manifest integrity：`manifest_count=29`、`missing_total=0`、`sha_mismatch_total=0`、`guard_true_total=0`；
-- source admission strict：`9 ledgers, 29 candidate docs, 51 calibration docs`；
+- source admission strict：`9 ledgers, 29 candidate docs, 53 calibration docs`；
 - candidate bundle CLI：exit 0，仍保持 `candidate_non_authoritative` 和 authority guards 全 false；
-- A2 candidate/source/manifest/descriptor suite：`17 passed`；
-- fail-closed signoff / residual packet focused suite：`44 passed`。
+- A2 candidate/source/manifest suite：`15 passed`；
+- fail-closed signoff / residual packet focused suite：`34 passed`。
 
 ## Next work
 
 后续工作优先级：
 
-1. 按 [G4/G5 research continuation](g4_g5_research_continuation_20260601.zh.md)
-   启动 `G4-R-B` research mechanism-load envelope，而不是等待 release-grade signoff；
-2. 启动 `G4-R-C` research component fragility surface 和 uncertainty ledger；
-3. 评估 `G5-R` Pk / fuze proxy design，但保持 out-of-scope / non-authoritative；
-4. 把公开/社区/第三方来源写入可替换 source ledger；
+1. `G4-R-B` research mechanism-load envelope 已完成为 research packet；
+2. `G4-R-C` research component fragility surface 和 uncertainty ledger 已完成为 research packet；
+3. `G5-R` Pk / fuze proxy research packet 已通过
+   [G5 research integration acceptance](g5_research_integration_acceptance_20260602.zh.md)；
+4. 继续把公开/社区/第三方来源写入可替换 source ledger；
 5. 只在用户明确要求时启动 `G4/G5 authority`。

@@ -4,13 +4,14 @@
 
 本文是按 [任务粒度与协调总账](task_granularity_and_coordination_20260601.zh.md)
 分发执行任务的唯一入口。它不重新验证任务簇是否成立，只把已经确定的 `TC-A2-*`
-和 `G4-R-*` research 切片拆成可交付工作包。
+以及 `G4-R-*` / `G5-R-*` research 切片拆成可交付工作包。
 
 ## 分发原则
 
 - 每个任务必须先标注粒度：`G1`、`G2`、`G3`、`G4 research`、`G4 authority`、`G5 research` 或 `G5 authority`；
 - `G2` candidate 包可以被分发执行，但不得写成 `G4/G5` authority；
 - `G4 research` 可以在当前 research profile 下分发，输出可替换、可审计的数据面；
+- `G5 research` 可以在当前 research profile 下分发，输出 Pk / fuze proxy 的边界和事件链；
 - 工业级 / release-grade 准入不作为当前完成条件，只在用户明确要求时另行分发；
 - subagent 不做“再判断任务簇是否成立”的泛审阅，只接收有文件边界和验收输出的执行任务；
 - 不移动 `calibration/**`、`retained_artifacts/**`、`source_pin_update*.zh.md`
@@ -50,6 +51,12 @@
 | 1 / 1 | `G4-R-C-SURFACE` | research surface | inherited main-thread settings；surface draft 不低于 `medium` reasoning | 依赖 `G4-R-C-SCAN` 和 `G4-R-B` mechanism axis；不写 stock row | `calibration/.../g4_r_c_component_fragility_surface_draft_20260601.zh.md` | component fragility research surface 草案已落盘 |
 | 1 / 1 | `G4-R-C-AUDIT` | research validation | inherited main-thread settings；audit 不低于 `medium` reasoning | 依赖 `G4-R-C-SCAN/SURFACE`；不修改 retained artifacts | `calibration/.../g4_r_c_uncertainty_independence_audit_20260601.zh.md` | uncertainty / independence audit 已落盘 |
 | 1 / 1 | `G4-R-INTEGRATION` | research integration | inherited main-thread settings；integration 不低于 `medium` reasoning | 依赖 `G4-R-B` 与 `G4-R-C` packets；串行状态同步 | `g4_research_dispatch_20260601.zh.md`、`g4_research_component_fragility_dispatch_20260601.zh.md`、`g4_research_integration_acceptance_20260601.zh.md`、README/status docs | G4 research 分发已收口为 non-authoritative research packet |
+| 1 / 1 | `G5-R-DISPATCH` | dispatch | inherited main-thread settings；non-trivial documentation 不低于 `medium` reasoning | 依赖 G4 integration accepted；中央入口串行整合 | `g5_research_dispatch_20260602.zh.md` | 分发 Pk / fuze proxy research 工作包 |
+| 1 / 1 | `G5-R-A-SOURCE-SCAN` | research source scan | inherited main-thread settings；source scan 不低于 `medium` reasoning | 可先行；不修改 retained artifacts 或 runtime | `data_collection/kill_chain_proxy_methods/**` | G5 proxy source / method scan 已落盘 |
+| 1 / 1 | `G5-R-B-PROXY-BOUNDARY` | research design | inherited main-thread settings；design 不低于 `medium` reasoning | 依赖 `G5-R-A`；不写 runtime descriptor | `g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md` | Pk / fuze proxy boundary design 已落盘 |
+| 1 / 1 | `G5-R-C-EVENT-CHAIN-MAP` | research design | inherited main-thread settings；event-chain map 不低于 `medium` reasoning | 依赖 `G5-R-B`；不修改 runtime/test | `g5_research_event_chain_map_20260602.zh.md` | G5 proxy event-chain map 已落盘 |
+| 1 / 1 | `G5-R-D-UNCERTAINTY-AUDIT` | research validation | inherited main-thread settings；audit 不低于 `medium` reasoning | 依赖 `G5-R-C`；不修改 retained artifacts | `g5_research_uncertainty_independence_audit_20260602.zh.md` | G5 uncertainty / independence audit 已落盘 |
+| 1 / 1 | `G5-R-INTEGRATION` | research integration | inherited main-thread settings；integration 不低于 `medium` reasoning | 依赖 `G5-R-C/D`；串行状态同步 | `g5_research_integration_acceptance_20260602.zh.md`、README/status docs | G5 research packet accepted；guards false |
 
 ## 当前分发队列与验收状态
 
@@ -76,18 +83,24 @@
 | 19 | `G4-R-B-003-VALIDATION-GUARD-AUDIT` | `G4-R-B` | `G4 research` | pass | 审查 G4-R-B source scan 和 envelope draft | [g4_research_mechanism_load_envelope_validation_audit_20260601.zh.md](g4_research_mechanism_load_envelope_validation_audit_20260601.zh.md) | G4-R-B 可作为 downstream research mechanism side input |
 | 20 | `G4-R-C-SURFACE` | `G4-R-C` | `G4 research` | pass | 起草 component fragility research surface | [calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_component_fragility_surface_draft_20260601.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_component_fragility_surface_draft_20260601.zh.md) | row shape、curve family、uncertainty、replacement rule 已列出；不写概率真值 |
 | 21 | `G4-R-C-AUDIT` | `G4-R-C` | `G4 research` | pass | 审查 G4-R-C uncertainty 与 independence | [calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md) | source/surface/mechanism-axis 分离；Stage C test-local 仍 comparison-only |
+| 22 | `G5-R-DISPATCH` | `G5-R` | `G5 research` | pass | 分发 Pk / fuze proxy source scan、boundary、event-chain map 和 audit | [g5_research_dispatch_20260602.zh.md](g5_research_dispatch_20260602.zh.md) | 只建立 research proxy 工作包；Pk / deterministic fuze authority 不在当前目标内 |
+| 23 | `G5-R-A-SOURCE-SCAN` | `G5-R` | `G5 research` | pass | 整理 Pk / fuze proxy 的第一波方法输入和拒绝项 | [data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md](data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md) | source ids、class、scope、uncertainty/confidence、replacement rule 已列出；不写 Pk 曲线 |
+| 24 | `G5-R-B-PROXY-BOUNDARY` | `G5-R` | `G5 research` | pass | 定义 Pk / fuze proxy 变量、事件链边界和 forbidden claims | [g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md](g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md) | proxy shape 已落盘；不替换 RNG hit gate，不创建 descriptor |
+| 25 | `G5-R-C-EVENT-CHAIN-MAP` | `G5-R` | `G5 research` | pass | 将 terminal geometry、fuze proxy、G4 mechanism、G4 fragility 和 consequence 串成 event-chain map | [g5_research_event_chain_map_20260602.zh.md](g5_research_event_chain_map_20260602.zh.md) | 只允许 research proxy event chain；不写 mission-kill probability |
+| 26 | `G5-R-D-UNCERTAINTY-AUDIT` | `G5-R` | `G5 research` | pass | 审查 G5 proxy 的 uncertainty、independence 和防误用边界 | [g5_research_uncertainty_independence_audit_20260602.zh.md](g5_research_uncertainty_independence_audit_20260602.zh.md) | audit 通过；source/model/scope/result uncertainty 均有边界 |
+| 27 | `G5-R-INTEGRATION` | `G5-R` | `G5 research` | pass | 整合 G5-R source scan、boundary design、event-chain map 和 audit | [g5_research_integration_acceptance_20260602.zh.md](g5_research_integration_acceptance_20260602.zh.md) | `research_packet_accepted`；Pk / deterministic fuze authority 仍 false |
 
 ## 暂不分发
 
 G2 收尾后，`TC-A2-BF-001..004` 同 scope 下不再追加临时收尾 wave。新的默认工作来自
-`G4/G5 research` lane。外部 reviewer/signoff packet 只在进入 fail-closed admission 流程时处理；
+`G4/G5 research` lane；当前已启动 `G5-R` proxy 分发。外部 reviewer/signoff packet 只在进入 fail-closed admission 流程时处理；
 工业级 / release-grade 准入任务必须由用户明确启动。
 
 | 任务簇 | 原因 |
 |---|---|
 | `TC-A2-AUTH-B` | 需要另起 release-grade `effect_scale_authority` promotion，不得混入当前 G2 |
 | `TC-A2-AUTH-C` | 依赖 Stage C fragility truth / review closeout，当前仍 blocked |
-| `TC-A2-KILLCHAIN` | `Pk` 与 deterministic fuze 仍是 boundary deferred，必须另建证据链 |
+| `TC-A2-KILLCHAIN` | `Pk` 与 deterministic fuze authority 仍是 boundary deferred；当前只启动 `G5-R` research proxy，不启动 authority 证据链 |
 
 ## Subagent 投递模板
 

@@ -1,6 +1,6 @@
 # A2 高保真空战毁伤模型
 
-状态：`2026-06-01 / active_index / research_profile_active / G2 accepted_non_authoritative / G4 research accepted / non-authoritative`。
+状态：`2026-06-02 / active_index / research_profile_active / G2 accepted_non_authoritative / G4 research accepted / G5 research accepted / non-authoritative`。
 
 本文是 A2 高保真空战毁伤模型子项目的活跃入口。它只给出当前口径和阅读路径，
 不再承载完整 Phase 叙事、source pin 增量记录、candidate package 明细或
@@ -16,8 +16,8 @@
    不是当前批次验收上限；
 3. `G3 residual research closeout`：`RES-001..014` 已按 research 口径收尾；剩余
    industrial / release-grade 准入不作为当前完成条件；
-4. `G4 research dispatch`：机制载荷包络与组件脆弱性研究面已完成 research-level integration；`G5` 只保留后续
-   research proxy 入口，本轮不分发。
+4. `G4/G5 research`：机制载荷包络、组件脆弱性研究面以及 Pk / fuze proxy
+   均已完成非权威 research packet / integration。
 
 默认目标已收敛为 research / candidate model，而不是工业级或 release-grade 准入。
 底层数据可以来自公开、第三方、社区或 derived estimate，但必须保持可替换、可扩展、
@@ -38,8 +38,8 @@
   engagement 回归在当前工作区通过；
 - machine guards 继续全 false，且不创建 stock runtime descriptor。
 
-不得把该结论写成 `G4 industrial admission completed`、`G5 kill-chain closed`、Pk calibrated 或
-deterministic fuze released。
+不得把该结论写成 `G4 industrial admission completed`、`G5 kill-chain closed`、Pk calibration 或
+deterministic fuze authority。
 
 ## 活跃入口
 
@@ -53,7 +53,7 @@ deterministic fuze released。
 | [candidate 验收状态](candidate_acceptance_status.zh.md) | 承接当前 `TC-A2-BF-001..004` / `G2` 非权威候选包验收，并读取 `G3` residual 状态 |
 | [G3 residual 收尾状态](g3_residual_closeout_status_20260601.zh.md) | 清点 `RES-001..014`，将 G3 台账收尾为当前 research profile 已闭合，并保留防误用边界 |
 | [research candidate 数据策略](research_candidate_data_policy_20260601.zh.md) | 固化当前默认目标为 research / candidate，底层数据可替换、可扩展 |
-| [G4/G5 research continuation](g4_g5_research_continuation_20260601.zh.md) | 定义下一步可启动的 G4/G5 研究级延续；工业级准入不在当前目标内 |
+| [G4/G5 research continuation](g4_g5_research_continuation_20260601.zh.md) | 记录已启动并收口的 G4/G5 research-only 延续；工业级准入不在当前目标内 |
 | [G4 research dispatch](g4_research_dispatch_20260601.zh.md) | `G4 research` 中央分发入口；当前已收口为 `dispatch_closed_non_authoritative` |
 | [G4 research integration acceptance](g4_research_integration_acceptance_20260601.zh.md) | 串行整合 G4-R-B/G4-R-C worker packet、验证结果和非权威边界 |
 | [G4-R-B mechanism-load source scan](g4_research_mechanism_load_envelope_source_ledger_20260601.zh.md) | 第一波 fragment / blast mechanism-load research 来源整理 |
@@ -62,6 +62,12 @@ deterministic fuze released。
 | [G4-R-C component fragility source scan](data_collection/component_fragility_vulnerability/g4_r_c_source_scan_20260601.zh.md) | 第一波 component fragility research 来源整理 |
 | [G4-R-C component fragility surface draft](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_component_fragility_surface_draft_20260601.zh.md) | 研究级 component fragility row shape 与 curve-family placeholders |
 | [G4-R-C uncertainty / independence audit](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md) | 审查 G4-R-C surface 的 uncertainty、independence 和防误用边界 |
+| [G5 research dispatch](g5_research_dispatch_20260602.zh.md) | `G5 research` 中央分发入口；当前已收口为 `research_packet_accepted` |
+| [G5-R source scan](data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md) | 第一波 Pk / fuze proxy 方法来源、拒绝项和 replacement rule |
+| [G5-R proxy boundary design](g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md) | 研究级 kill-chain proxy 变量、事件链边界和 forbidden claims |
+| [G5-R event-chain map](g5_research_event_chain_map_20260602.zh.md) | 串联 terminal geometry、fuze proxy、G4 mechanism、G4 component response 和 consequence surface |
+| [G5-R uncertainty / independence audit](g5_research_uncertainty_independence_audit_20260602.zh.md) | 审查 G5 proxy chain 的不确定性、独立性和防误用边界 |
+| [G5 research integration acceptance](g5_research_integration_acceptance_20260602.zh.md) | 串行整合 G5-R source/boundary/event-chain/audit packet 和验证结果 |
 | [authority promotion backlog](authority_promotion_backlog.zh.md) | 历史/可选的工业级准入 backlog；不作为当前 research 完成条件 |
 | [窄域 authority 边界](narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md) | 固定当前 weapon-target-scope 和防误用边界 |
 | [Vulnerability evidence schema v1](vulnerability_evidence_schema_v1.zh.md) | 记录 descriptor / row 证据形状与当前禁用边界 |

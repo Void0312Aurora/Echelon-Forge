@@ -1,11 +1,11 @@
 # A2 任务簇执行状态 - 2026-06-01
 
-状态：`2026-06-01 / task_cluster_execution_status / G4 research accepted / non_authoritative`。
+状态：`2026-06-02 / task_cluster_execution_status / G5 research accepted / non_authoritative`。
 
 本文记录按 [任务粒度与协调总账](task_granularity_and_coordination_20260601.zh.md)
 分发并执行后的当前结果。它确认 `G1 runtime`、`G2 candidate acceptance`、
-`G3 residual research closeout` 和当前 `G4 research dispatch` 的就绪度。当前目标是
-research / candidate model；工业级 / release-grade 准入不作为完成条件。
+`G3 residual research closeout`、`G4 research integration` 和当前 `G5 research acceptance`
+的就绪度。当前目标是 research / candidate model；工业级 / release-grade 准入不作为完成条件。
 
 ## 总体结论
 
@@ -20,6 +20,8 @@ research / candidate model；工业级 / release-grade 准入不作为完成条�
 - `G4-R-B` / `G4-R-C`：已完成 research dispatch 与串行 integration；`G4-R-B`
   三件套已完成，`G4-R-C` 的 source scan、surface draft 和 uncertainty / independence
   audit 已完成并通过 integration acceptance；
+- `G5-R`：Pk / fuze proxy research packet 已完成 source scan、proxy boundary design、
+  event-chain map、uncertainty / independence audit 和 integration acceptance；
 - 工业级 / release-grade 准入：不在当前目标内，只作为防误用 guard 和历史 backlog 保留。
 
 不得把本文中的“就绪”或“通过”上卷为 full A2 kill-chain、stock runtime authority、
@@ -36,6 +38,7 @@ Pk 或 deterministic fuze 完成。
 | `TC-A2-BF-004` candidate bundle / regression | `G2 candidate acceptance` | candidate bundle CLI 和 regression 提供机器入口；retained manifest checker 通过；top-level authority guard 全 false | 可作为当前 candidate package acceptance 的 G2 分发/验收入口 |
 | `G4-R-B` mechanism-load envelope | `G4 research` | source scan、derived envelope draft、validation audit 均完成为 research packet | 按 [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[mechanism-load envelope 分发包](g4_research_mechanism_load_envelope_dispatch_20260601.zh.md)、[source scan](g4_research_mechanism_load_envelope_source_ledger_20260601.zh.md)、[draft](g4_research_mechanism_load_envelope_draft_20260601.zh.md) 和 [audit](g4_research_mechanism_load_envelope_validation_audit_20260601.zh.md) 执行 |
 | `G4-R-C` component fragility surface | `G4 research` | source scan、surface draft、uncertainty / independence audit 均完成为 research packet；integration accepted | 按 [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[component fragility 分发包](g4_research_component_fragility_dispatch_20260601.zh.md)、[source scan](data_collection/component_fragility_vulnerability/g4_r_c_source_scan_20260601.zh.md)、[surface draft](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_component_fragility_surface_draft_20260601.zh.md)、[audit](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/g4_r_c_uncertainty_independence_audit_20260601.zh.md) 和 [G4 integration acceptance](g4_research_integration_acceptance_20260601.zh.md) 执行 |
+| `G5-R` Pk / fuze proxy | `G5 research` | source scan、proxy boundary design、event-chain map、uncertainty / independence audit 均完成为 research packet；integration accepted | 按 [G5 research dispatch](g5_research_dispatch_20260602.zh.md)、[source scan](data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md)、[proxy boundary design](g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md)、[event-chain map](g5_research_event_chain_map_20260602.zh.md)、[audit](g5_research_uncertainty_independence_audit_20260602.zh.md) 和 [G5 integration acceptance](g5_research_integration_acceptance_20260602.zh.md) 执行 |
 | industrial / release-grade admission | out of current research goal | 未启动；不作为当前完成条件 | 只有用户明确要求时才另起准入任务 |
 
 ## 分发记录
@@ -102,6 +105,27 @@ Pk 或 deterministic fuze 完成。
   确认 Stage C test-local、synthetic baseline 和 research surface 仍保持分离。
 - `G4-R-INTEGRATION` 主线程整合：新增 [G4 research integration acceptance](g4_research_integration_acceptance_20260601.zh.md)，
   并把中央入口标记为 `dispatch_closed_non_authoritative`；G4 research 与工业级准入保持拆开。
+- `G5-R-DISPATCH` 分发：新增 [G5 research dispatch](g5_research_dispatch_20260602.zh.md)，
+  启动 Pk / fuze proxy research lane；只输出 source scan、boundary design、event-chain map
+  和 uncertainty audit 工作包，不写 Pk 或 deterministic fuze truth。
+- `G5-R-A-SOURCE-SCAN` 执行：新增
+  [G5 source scan](data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md)，
+  从既有 G4 research packet、fuze authority package、guidance/miss-distance 方法和 runtime
+  event/report surface 整理 proxy input proposal。
+- `G5-R-B-PROXY-BOUNDARY` 执行：新增
+  [G5 proxy boundary design](g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md)，
+  定义 terminal geometry、fuze proxy、mechanism-load、component response、consequence 和
+  uncertainty 的研究级连接边界。
+- `G5-R-C-EVENT-CHAIN-MAP` 执行：新增
+  [G5 event-chain map](g5_research_event_chain_map_20260602.zh.md)，
+  将 terminal geometry、fuze proxy、G4 mechanism-load、G4 component response 和
+  consequence proxy 串成 research event chain。
+- `G5-R-D-UNCERTAINTY-AUDIT` 执行：新增
+  [G5 uncertainty / independence audit](g5_research_uncertainty_independence_audit_20260602.zh.md)，
+  确认 source/model/scope/result uncertainty 和 non-circularity。
+- `G5-R-INTEGRATION` 主线程整合：新增
+  [G5 research integration acceptance](g5_research_integration_acceptance_20260602.zh.md)，
+  将 G5-R 标记为 `research_packet_accepted`，且 Pk / deterministic fuze authority 仍保持 false。
 
 主线程负责集成与验证，不把 worker packet 单独作为工业级证据。
 
@@ -180,6 +204,11 @@ python tools/maintenance/a2_candidate_vps_bundle.py
   `pk_authority=false`、`deterministic_fuze_authority=false`。
 - G4 research integration focused复核：candidate/source/manifest tests `15 passed`；
   retained packet focused tests `34 passed`；G4 guard grep no matches；`git diff --check` exit 0。
+- G5 research dispatch focused复核：retained manifest integrity `sha_mismatch_total=0`；
+  source admission strict `9 ledgers, 29 candidate docs, 53 calibration docs`；
+  candidate bundle `status=candidate_non_authoritative_bundle`、`pk_authority=false`、
+  `deterministic_fuze_authority=false`；G5 guard grep no matches；candidate/source/manifest tests
+  `15 passed`；retained packet focused tests `34 passed`；`git diff --check` exit 0。
 
 ## G2 收尾后队列状态
 
@@ -188,7 +217,9 @@ python tools/maintenance/a2_candidate_vps_bundle.py
 - 当前已按 [G4 research dispatch](g4_research_dispatch_20260601.zh.md) 启动
   `G4-R-B`、`G4-R-C` 研究分发；`G4-R-B` 三件套和 `G4-R-C` scan/surface/audit
   已落盘并通过 [G4 integration acceptance](g4_research_integration_acceptance_20260601.zh.md)；
-  `G5-R` 暂未分发；
+- 当前已按 [G5 research dispatch](g5_research_dispatch_20260602.zh.md) 完成 `G5-R`
+  research packet；source scan、proxy boundary design、event-chain map、uncertainty audit
+  和 integration acceptance 均已落盘；
 - 收到新的外部 reviewer/signoff packet 后，按 signoff intake / preflight / admission gate
   串行处理 `RES-005/006`，仍只改变 `G3 residual` 状态；
 - 工业级 / release-grade 准入必须由用户明确另起任务，不复用本轮 G2/G4 research 结论。
@@ -209,7 +240,8 @@ python tools/maintenance/a2_candidate_vps_bundle.py
 
 - `RES-005/006` 对 research profile 已闭合为可替换 mechanism-load envelope 目标；不消费 TP-21 / BEC-O 原始输出；
 - `RES-009/010/011/012` 对 research profile 已闭合为 Stage C candidate surface / uncertainty ledger 目标；
-- `RES-013/014` 对当前 research profile 明确 out-of-scope；G5 proxy 以后再分发。
+- `RES-013/014` 对 authority 仍 boundary deferred；当前 `G5-R` research proxy packet
+  已收口，但不关闭 Pk / deterministic fuze authority。
 
 ## 保持的边界
 

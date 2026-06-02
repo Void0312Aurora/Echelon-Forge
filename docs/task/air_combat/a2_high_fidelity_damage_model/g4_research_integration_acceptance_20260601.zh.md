@@ -66,7 +66,9 @@ git diff --check
 - `G4-R-B` 已成为 downstream research mechanism side input；
 - `G4-R-C` 已成为 integration-ready research fragility surface；
 - `RES-005/006` 和 `RES-009..012` 在当前 research profile 下不再阻塞继续建模；
-- `RES-013/014` 仍保留为未来 `G5-R` proxy design，不属于本次闭合；
+- `RES-013/014` 不属于本次 G4 闭合；其 research proxy 已由后续
+  [G5 research integration acceptance](g5_research_integration_acceptance_20260602.zh.md) 收口，
+  authority 部分仍保持 deferred；
 - machine guards 保持 false，工业级准入只作为可选未来边界。
 
 本结论不得写成 full A2 kill-chain complete、industrial admission complete、Pk calibrated
