@@ -467,6 +467,24 @@ void apply_default_effects_aircraft_mission_combat_consequence_block(
     }
 }
 
+void apply_default_effects_aircraft_structure_spatial_consequence_block(
+    const DefaultEffectsScratch& scratch,
+    const DefaultEffectsAirSpatialScales& scales,
+    double resolved_severity,
+    const WarheadEffectProfile& warhead_effects,
+    AircraftDamageState& aircraft_damage
+) {
+    if (scratch.air_structure_spatial_scale > 0.0) {
+        aircraft_damage.structural_integrity -=
+            localized_effect_delta(
+                0.06,
+                0.07,
+                resolved_severity,
+                warhead_effects.structure_scale,
+                scales.structure);
+    }
+}
+
 void apply_default_effects_aircraft_fire_zone_consequence_blocks(
     const DefaultEffectsScratch& scratch,
     const DefaultEffectsAirSpatialScales& scales,
@@ -656,15 +674,12 @@ bool resolve_default_effects_air_platform_consequences(
                         resolved_severity,
                         warhead_effects,
                         *aircraft_damage);
-                    if (scratch.air_structure_spatial_scale > 0.0) {
-                        aircraft_damage->structural_integrity -=
-                            localized_effect_delta(
-                                0.06,
-                                0.07,
-                                resolved_severity,
-                                warhead_effects.structure_scale,
-                                scales.structure);
-                    }
+                    apply_default_effects_aircraft_structure_spatial_consequence_block(
+                        scratch,
+                        scales,
+                        resolved_severity,
+                        warhead_effects,
+                        *aircraft_damage);
                     apply_default_effects_aircraft_fire_zone_consequence_blocks(
                         scratch,
                         scales,
