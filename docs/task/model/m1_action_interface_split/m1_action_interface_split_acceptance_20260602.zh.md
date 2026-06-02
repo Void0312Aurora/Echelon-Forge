@@ -74,7 +74,8 @@ hybrid 短训模型 deterministic probe：
 
 - learned policy 没有通过武器使用验收：短训 deterministic 模型 `fire_attempt_count=0`。
 - 需要后续 shaping/curriculum 或更长训练，让策略稳定产生 intentional fire pulse。
-- 重复发射间隔和“同目标已有己方导弹在飞”的策略记忆问题仍未解决。
+- 重复发射间隔和“同目标已有己方导弹在飞”的问题仍未解决；下一步先交由 A3 C2/ROE
+  定义 shot policy、pending assessment、salvo 和 reattack 授权，再判断是否仍属策略记忆。
 - M2 sequence-native PPO 仍 held，不能由本验收释放。
 
 ## 禁止的能力声明

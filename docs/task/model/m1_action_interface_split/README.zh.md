@@ -12,6 +12,7 @@
 
 - [时间 HMoE 策略计划](../temporal_hmoe_policy_plan_20260525.zh.md)
 - [M1 观测窗口 HMoE 验证](../m1_temporal_window_hmoe/README.zh.md)
+- [A3 C2/ROE 发射纪律](../../air_combat/a3_c2_roe_release_discipline/README.zh.md)
 - [Pilot Action Contract](../../../standards/air/act.md)
 - 当前动作适配：
   [actions.py](../../../../gym_envs/universal_env_parts/actions.py)
@@ -129,7 +130,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop python tools/diagnostic
   质量未验收。
 - 65k shaped hybrid 后续训练已恢复飞行稳定性：deterministic final-model probe 到达
   `combat_timeout` 但不发射，stochastic final-model probe 能发射但仍早发/多发。
-- “同一目标已有己方导弹在飞时是否再打一枚”的战术记忆问题，推迟到后续 policy/memory package。
+- “同一目标已有己方导弹在飞时是否再打一枚”先交由 A3 定义 shot policy、
+  pending assessment、salvo 和 reattack 授权；只有 A3 约束可观测后仍出现未解释的多发，
+  才回到后续 policy/memory package。
 
 ## Archive
 

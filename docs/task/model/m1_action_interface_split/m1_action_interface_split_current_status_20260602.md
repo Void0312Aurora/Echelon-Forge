@@ -93,14 +93,17 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 - Fold the accepted action-interface evidence back into M1-A4 / M1-A5; do not
   release M2 sequence-native PPO before that review.
 - Tactical memory for "one friendly missile already in flight against this
-  target" remains deferred and is not solved by an engine memory board here.
+  target" now routes first through A3 C2/ROE shot policy, pending assessment,
+  salvo authorization and reattack authorization; no engine memory board is
+  added here.
 
 ## Next Actions
 
 1. Use the accepted hybrid action interface as the default candidate for
    follow-on S1 training.
-2. Add weapon-employment shaping/curriculum that rewards range/timing quality
-   and penalizes early or repeated shots more directly.
+2. Add A3 C2/ROE shaping/curriculum to distinguish authorized single shot,
+   authorized salvo, reattack permission, premature second shot and unauthorized
+   fire.
 3. Once deterministic learned release appears, compare reactive/hybrid-temporal
    repeated-release intervals.
 

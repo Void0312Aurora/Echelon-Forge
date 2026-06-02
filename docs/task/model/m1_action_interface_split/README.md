@@ -13,6 +13,7 @@ Inputs:
 
 - [Temporal HMoE Policy Plan](../temporal_hmoe_policy_plan_20260525.md)
 - [M1 Temporal Window HMoE](../m1_temporal_window_hmoe/README.zh.md)
+- [A3 C2/ROE Release Discipline](../../air_combat/a3_c2_roe_release_discipline/README.md)
 - [Pilot Action Contract](../../../standards/air/act.md)
 - Current action adapter:
   [actions.py](../../../../gym_envs/universal_env_parts/actions.py)
@@ -142,8 +143,10 @@ This subproject can be marked accepted only when:
 - The 65k shaped hybrid follow-up restores training flight stability:
   deterministic final-model probe reaches `combat_timeout` with no release, and
   stochastic final-model probes can release but still fire early/repeatedly.
-- Tactical memory for "one missile already in flight against this target" stays
-  deferred to a later policy/memory package.
+- Tactical memory for "one missile already in flight against this target" now
+  routes first through A3 shot policy, pending assessment, salvo authorization,
+  and reattack authorization. Only unexplained repeated fire after those
+  constraints are observable should return to a later policy/memory package.
 
 ## Archive
 

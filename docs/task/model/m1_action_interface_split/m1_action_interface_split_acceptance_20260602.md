@@ -82,7 +82,10 @@ model artifacts.
   deterministic model has `fire_attempt_count=0`.
 - Follow-on shaping/curriculum or longer training is needed before policy can
   produce intentional fire pulses reliably.
-- Repeated-release interval and target-engagement memory remain unsolved.
+- Repeated-release interval and target-engagement memory remain unsolved; the
+  next step routes first through A3 C2/ROE shot policy, pending assessment,
+  salvo authorization and reattack authorization before deciding whether the
+  residual is still policy memory.
 - M2 sequence-native PPO remains held and is not released by this acceptance.
 
 ## Forbidden Claims

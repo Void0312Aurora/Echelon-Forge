@@ -82,12 +82,14 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 - stochastic policy sampling 已恢复 release 可达性，但战术质量不足：同 seed 3 episode probe
   产生早发/多发（`release_counts=[4,3,2]`），且只有 1 个 episode 产生 damage report。
 - 把 accepted 动作接口证据并回 M1-A4 / M1-A5；M2 sequence-native PPO 仍不得释放。
-- “同一目标已有己方导弹在飞时是否再打一枚”的战术记忆问题仍 deferred，不在本实现中补内核记忆板。
+- “同一目标已有己方导弹在飞时是否再打一枚”先交由 A3 C2/ROE 定义 shot policy、
+  pending assessment、salvo 和 reattack 授权；本实现不补内核记忆板。
 
 ## 下一步顺序
 
 1. 用 accepted hybrid action interface 作为后续 S1 训练默认候选。
-2. 增加 weapon-employment shaping/curriculum，更直接奖励射程/时机质量并惩罚早发或重复发射。
+2. 增加 A3 C2/ROE shaping/curriculum，更直接区分授权单发、授权齐射、再攻击许可、
+   过早第二发和未授权开火。
 3. 在 deterministic learned release 出现后，再比较 reactive/hybrid temporal 的 repeated-release interval。
 
 ## 禁止的过度声明
