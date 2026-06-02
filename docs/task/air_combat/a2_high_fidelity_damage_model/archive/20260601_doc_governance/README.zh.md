@@ -3,7 +3,7 @@
 本目录保存 A2 高保真杀伤模型子项目在 `2026-06-01` 文档治理中移出的历史叙事、
 审计快照和中间 review note。
 
-当前活跃入口：
+当前 sealed retained 入口：
 
 - [../../README.zh.md](../../README.zh.md)
 
@@ -22,6 +22,7 @@
 ## 使用规则
 
 - 本目录文件可用于追溯历史判断，但不得作为新的任务分发入口；
-- 若历史文件与 retained artifact manifest、residual register 或活跃入口冲突，以活跃入口和机器证据为准；
+- 若历史文件与 retained artifact manifest、residual register 或 sealed retained 入口冲突，以
+  sealed retained 入口和机器证据为准；
 - 本轮未归档 `data_collection/**/source_pin_update*.zh.md`、`calibration/**/*.zh.md`
   或 `retained_artifacts/**`，因为它们仍受审计脚本和候选包工具读取。

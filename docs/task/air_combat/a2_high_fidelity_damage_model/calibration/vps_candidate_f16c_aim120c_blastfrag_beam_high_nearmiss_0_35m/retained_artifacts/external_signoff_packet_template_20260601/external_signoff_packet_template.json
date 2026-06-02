@@ -166,7 +166,7 @@
         "type": "string"
       },
       "source_rights_signoff_request_packet_sha256": {
-        "const": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37"
+        "const": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6"
       }
     },
     "required": [
@@ -211,7 +211,7 @@
       "decision": "REVIEWER_TO_FILL_ALLOWED_DECISION",
       "decision_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "placeholder_ref_only": true,
-      "reviewed_input_ref_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "reviewed_input_ref_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "reviewer_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "signoff_decisions_consumed": false,
       "signoff_id": "source_rights_independent_review",
@@ -223,7 +223,7 @@
       "decision": "REVIEWER_TO_FILL_ALLOWED_DECISION",
       "decision_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "placeholder_ref_only": true,
-      "reviewed_input_ref_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "reviewed_input_ref_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "reviewer_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "signoff_decisions_consumed": false,
       "signoff_id": "allowed_output_policy_release_grade_review",
@@ -235,7 +235,7 @@
       "decision": "REVIEWER_TO_FILL_ALLOWED_DECISION",
       "decision_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "placeholder_ref_only": true,
-      "reviewed_input_ref_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "reviewed_input_ref_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "reviewer_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "signoff_decisions_consumed": false,
       "signoff_id": "tp21_selected_case_hash_only_allowed_output_review",
@@ -247,7 +247,7 @@
       "decision": "REVIEWER_TO_FILL_ALLOWED_DECISION",
       "decision_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "placeholder_ref_only": true,
-      "reviewed_input_ref_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "reviewed_input_ref_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "reviewer_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "signoff_decisions_consumed": false,
       "signoff_id": "beco_hash_only_allowed_output_review",
@@ -259,7 +259,7 @@
       "decision": "REVIEWER_TO_FILL_ALLOWED_DECISION",
       "decision_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "placeholder_ref_only": true,
-      "reviewed_input_ref_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "reviewed_input_ref_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "reviewer_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "signoff_decisions_consumed": false,
       "signoff_id": "beco_lineage_tolerance_and_replacement_review",
@@ -271,7 +271,7 @@
       "decision": "REVIEWER_TO_FILL_ALLOWED_DECISION",
       "decision_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "placeholder_ref_only": true,
-      "reviewed_input_ref_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "reviewed_input_ref_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "reviewer_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "signoff_decisions_consumed": false,
       "signoff_id": "benchmark_consumption_release_decision",
@@ -283,7 +283,7 @@
       "decision": "REVIEWER_TO_FILL_ALLOWED_DECISION",
       "decision_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "placeholder_ref_only": true,
-      "reviewed_input_ref_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "reviewed_input_ref_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "reviewer_ref_sha256": "REVIEWER_TO_FILL_64_HEX_SHA256",
       "signoff_decisions_consumed": false,
       "signoff_id": "authority_boundary_confirmation",
@@ -306,10 +306,10 @@
     "required_for_template": true,
     "role": "current_source_rights_request_hash_pin_for_template_only_packet",
     "schema_version": "a2.source_rights_signoff_request_packet.v1",
-    "sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+    "sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
     "status": "retained_fail_closed_source_rights_signoff_request_packet"
   },
-  "source_rights_signoff_request_packet_sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+  "source_rights_signoff_request_packet_sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
   "status": "retained_external_signoff_packet_template_only_not_approval_not_signoff",
   "template_only": true,
   "template_schema_version": "a2.external_signoff_packet_template.v1"

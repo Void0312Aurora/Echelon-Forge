@@ -18,8 +18,9 @@
   中定义的分阶段课程，而不是历史 smoke fixture。
 - 高真实度毁伤模型已拆出为
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)。
-  该线的 structured-aircraft damage/effects runtime 已进入维护路径，当前 blast-fragmentation
-  候选包最多只到非权威 candidate 验收；stock authority、Pk 与 deterministic fuze 仍未放行。
+  该线已在 research / candidate profile 下封存归档：structured-aircraft damage/effects
+  runtime 进入维护路径，blast-fragmentation 候选包非权威验收通过，G4/G5 research
+  packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
 
 ## 当前继续推进重点
 
@@ -28,9 +29,8 @@
 - 在最小胜负钩子之上补齐 reward / termination shaping
 - 强化脚本或冻结对手基线
 - 拆分 `combat_loss`、被击落实体失效和终端 crash penalty 的诊断语义
-- 维护高保真空战毁伤模型的 structured-aircraft runtime contract，并按
-  `G1 runtime`、`G2/G3 candidate/residual`、`G4 authority`、`G5 kill-chain`
-  区分后续工作
+- 将 A2 高保真空战毁伤模型作为 sealed retained record 读取；只有用户明确要求时，
+  才另启 `G4/G5 authority` 或新的 research expansion
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
@@ -51,7 +51,7 @@
   [air_combat_1v1_stall_rootcause_followup_20260516.zh.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
 - 当前分阶段课程：
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
-- 高真实度毁伤模型任务：
+- 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
 - 高保真毁伤系统基线：
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)

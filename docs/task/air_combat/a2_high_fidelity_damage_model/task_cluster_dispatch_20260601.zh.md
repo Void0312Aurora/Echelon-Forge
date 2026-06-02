@@ -131,7 +131,7 @@ G2 收尾后，`TC-A2-BF-001..004` 同 scope 下不再追加临时收尾 wave。
 
 验收：
 
-- 明确 `TC-A2-BF-001..004` 是 `G2 candidate acceptance`，且 `G4/G5 deferred`；
+- 明确 `TC-A2-BF-001..004` 是 `G2 candidate acceptance`，且 `G4/G5 authority deferred`；
 - 记录 `RES-005/006` fail-closed 不被覆盖；
 - 记录 `G3 residual` 只读取状态；
 - 若 `TC-A2-BF-001-HASH` 未完成，不能声明 retained manifest 强验收通过。

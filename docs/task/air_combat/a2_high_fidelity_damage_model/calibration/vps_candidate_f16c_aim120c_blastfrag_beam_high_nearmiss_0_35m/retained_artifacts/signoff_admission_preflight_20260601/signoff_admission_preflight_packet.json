@@ -65,7 +65,7 @@
       "required_for_preflight": true,
       "role": "current_retained_signoff_intake_contract_input",
       "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
-      "sha256": "d689f8962dfae6dad51d58afc9a959c9c377b66a3e6f680586c3ba76dcfcfe24",
+      "sha256": "93432c6546d44eee8232f383dcd75d1faa5daf46ba9b0f654fbf4935e607e416",
       "status": "retained_fail_closed_signoff_intake_contract_no_external_packet"
     }
   ],
@@ -86,7 +86,7 @@
     }
   ],
   "preflight_id": "TC-A2-BF-003-SIGNOFF-INTAKE-NEXT-C-ADMISSION-PREFLIGHT-20260601",
-  "preflight_sha256": "56e8abf52fb75c50ab4ea43e683bb8eb8e5b40dcda414919f5053bac0010f0f7",
+  "preflight_sha256": "44528cae48deb1d3051752548a4582f3a685847794e2995548f23b1df75401b0",
   "ready_for_admission_gate": false,
   "ready_for_res005_admission_gate": false,
   "ready_for_res006_admission_gate": false,
@@ -140,7 +140,7 @@
     "required_signoff_ids_match_current_shape": true,
     "schema_valid": true,
     "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
-    "sha256": "d689f8962dfae6dad51d58afc9a959c9c377b66a3e6f680586c3ba76dcfcfe24",
+    "sha256": "93432c6546d44eee8232f383dcd75d1faa5daf46ba9b0f654fbf4935e607e416",
     "status": "retained_fail_closed_signoff_intake_contract_no_external_packet",
     "usable_for_preflight": true
   },

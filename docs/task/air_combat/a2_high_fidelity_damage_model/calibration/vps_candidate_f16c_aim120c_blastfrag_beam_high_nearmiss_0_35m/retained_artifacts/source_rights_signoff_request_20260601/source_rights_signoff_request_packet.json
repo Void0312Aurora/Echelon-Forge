@@ -360,7 +360,7 @@
       "required_for_request_packet": false,
       "role": "optional_current_res005_tp21_hash_only_packet_input",
       "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
-      "sha256": "c381ed778c8ac8353035d63d30ca15c5517e90e2792dadbba19a3e62d6f40bb9",
+      "sha256": "9155ebfeef00c83518eb6ec772f9dd79874a0aaf7bcfdb4bef167e36e67ca84a",
       "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
     },
     {
@@ -380,7 +380,7 @@
     "No TP-21/BEC-O raw source text, tables, values, formulas, raw outputs, workbook copies, stdout, or stderr are retained here."
   ],
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
-  "packet_sha256": "73dcf77dd44027da53a96da5df5de3cde55b244de46e3f322328ac7d896197ff",
+  "packet_sha256": "30f8b1b5a19ed506e0d053fdc49bd27225ea5a01c05cbc5e64cfc505b9d444b3",
   "packet_type": "source_rights_allowed_output_signoff_request_checklist",
   "release_grade_satisfied": false,
   "request_id": "TC-A2-BF-003-RIGHTS-SIGNOFF-REQUEST-20260601",

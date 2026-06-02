@@ -8,7 +8,7 @@
       "filename": "signoff_admission_preflight_packet.json",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601/signoff_admission_preflight_packet.json",
       "schema_version": "a2.blastfrag_signoff_admission_preflight.v1",
-      "sha256": "ce852f1e14d73f2a8c6059dbda191f190c3fce29b1006b4900e6a592801289d8"
+      "sha256": "59999de06e9457a9e6199c4aa924d3444f40a23b11b71a5a0e74763435a4f5e8"
     }
   ],
   "authority_guards": {
@@ -41,7 +41,7 @@
       "required_for_preflight": true,
       "role": "current_retained_signoff_intake_contract_input",
       "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
-      "sha256": "d689f8962dfae6dad51d58afc9a959c9c377b66a3e6f680586c3ba76dcfcfe24",
+      "sha256": "93432c6546d44eee8232f383dcd75d1faa5daf46ba9b0f654fbf4935e607e416",
       "status": "retained_fail_closed_signoff_intake_contract_no_external_packet"
     }
   ],

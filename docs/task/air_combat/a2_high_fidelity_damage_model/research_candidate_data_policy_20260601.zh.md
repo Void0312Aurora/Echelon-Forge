@@ -1,6 +1,6 @@
 # A2 Research Candidate Data Policy - 2026-06-01
 
-状态：`2026-06-02 / research_profile_active / G5 research accepted / non-authoritative / authority_opt_in_only`。
+状态：`2026-06-02 / research_profile_closed / archived_sealed_record / G5 research accepted / non-authoritative / authority_opt_in_only`。
 
 本文记录 A2 当前的务实决策：默认目标保留为 research / candidate model，不追求工业级、
 型号级或 release-grade 数据来源。底层数据必须可替换、可扩展、可追溯，并显式标注可信等级。

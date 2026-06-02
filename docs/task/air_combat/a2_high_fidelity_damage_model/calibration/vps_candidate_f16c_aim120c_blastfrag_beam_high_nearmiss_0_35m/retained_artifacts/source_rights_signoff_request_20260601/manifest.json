@@ -7,7 +7,7 @@
       "filename": "source_rights_signoff_request_packet.json",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
       "schema_version": "a2.source_rights_signoff_request_packet.v1",
-      "sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37"
+      "sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6"
     }
   ],
   "authority_guards": {
@@ -95,7 +95,7 @@
       "required_for_request_packet": false,
       "role": "optional_current_res005_tp21_hash_only_packet_input",
       "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
-      "sha256": "c381ed778c8ac8353035d63d30ca15c5517e90e2792dadbba19a3e62d6f40bb9",
+      "sha256": "9155ebfeef00c83518eb6ec772f9dd79874a0aaf7bcfdb4bef167e36e67ca84a",
       "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
     },
     {

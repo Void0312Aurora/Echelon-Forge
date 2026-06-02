@@ -1,10 +1,11 @@
 # A2 高保真空战毁伤模型
 
-状态：`2026-06-02 / active_index / research_profile_active / G2 accepted_non_authoritative / G4 research accepted / G5 research accepted / non-authoritative`。
+状态：`2026-06-02 / archived_sealed_index / research_profile_closed / G1-G5 research accepted / non-authoritative`。
 
-本文是 A2 高保真空战毁伤模型子项目的活跃入口。它只给出当前口径和阅读路径，
-不再承载完整 Phase 叙事、source pin 增量记录、candidate package 明细或
-工业级准入待办。
+本文是 A2 高保真空战毁伤模型子项目的 sealed retained 入口。该子项目在当前
+research / candidate profile 下已完成并归档；本文只给出封存口径、阅读路径和恢复边界，
+不再作为默认任务分发面，也不再承载完整 Phase 叙事、source pin 增量记录、
+candidate package 明细或工业级准入待办。
 
 ## 当前口径
 
@@ -41,13 +42,13 @@
 不得把该结论写成 `G4 industrial admission completed`、`G5 kill-chain closed`、Pk calibration 或
 deterministic fuze authority。
 
-## 活跃入口
+## 保留入口
 
 | 文件 | 职责 |
 |---|---|
 | [任务粒度与协调总账](task_granularity_and_coordination_20260601.zh.md) | 定义 `G0..G5`、最终任务簇、文件优先级和冲突处理规则 |
-| [任务簇分发包](task_cluster_dispatch_20260601.zh.md) | 将 `TC-A2-*` 拆成可交付 subagent / 主线程任务 |
-| [任务簇执行状态](task_cluster_execution_status_20260601.zh.md) | 记录按新任务簇分发和验证后的当前就绪度 |
+| [任务簇分发包](task_cluster_dispatch_20260601.zh.md) | 已完成任务簇的保留分发记录；不再作为默认新增任务入口 |
+| [任务簇执行状态](task_cluster_execution_status_20260601.zh.md) | 记录按任务簇分发和验证后的归档前就绪度 |
 | [runtime 状态](runtime_status.zh.md) | 承接 `TC-A2-RUNTIME` / `G1` 的已维护工程面、回归面和非目标 |
 | [Default effects modularization](default_effects_modularization/README.zh.md) | 已关闭归档的 `default_effects_model.cpp` 结构化拆分；包含 DFM-P4 fixture、DFM-P6 收口同步、DFM-P3F structure-spatial helper 与 debug early-return snapshot guard |
 | [candidate 验收状态](candidate_acceptance_status.zh.md) | 承接当前 `TC-A2-BF-001..004` / `G2` 非权威候选包验收，并读取 `G3` residual 状态 |
@@ -74,7 +75,7 @@ deterministic fuze authority。
 
 ## 证据源
 
-| 证据面 | 活跃入口 |
+| 证据面 | 保留入口 |
 |---|---|
 | source admission | [data_collection/README.zh.md](data_collection/README.zh.md) 和各 `source_ledger.zh.md` |
 | validation / CI | [validation/a2_validation_ci_matrix_20260528.zh.md](validation/a2_validation_ci_matrix_20260528.zh.md) |
@@ -89,6 +90,14 @@ deterministic fuze authority。
 
 ## 归档
 
+最终 research closeout 记录：
+
+- [archive/20260602_research_closeout/README.zh.md](archive/20260602_research_closeout/README.zh.md)
+
+归档索引：
+
+- [archive/README.zh.md](archive/README.zh.md)
+
 历史 Phase 叙事、旧 README、Phase 0 审计、旧状态审计和中间 review note 已移入
 [archive/20260601_doc_governance/README.zh.md](archive/20260601_doc_governance/README.zh.md)。
 这些文件只作为历史证据，不再作为任务分发入口。
@@ -96,3 +105,9 @@ deterministic fuze authority。
 本轮暂不移动 `data_collection/**/source_pin_update*.zh.md`、
 `guidance_miss_distance/*source_pin_integration*.zh.md`、`calibration/**/*.zh.md` 或
 `retained_artifacts/**`，因为现有审计脚本和候选包工具会读取这些路径和命名。
+
+归档后若要恢复工作，只允许两种路径：
+
+- 用户明确要求工业级 / release-grade / stock / Pk / deterministic fuze authority 时，从
+  [authority promotion backlog](authority_promotion_backlog.zh.md) 另启新任务；
+- 用户明确要求新的 research expansion 时，先更新本 sealed 入口并新建独立 follow-on 记录。

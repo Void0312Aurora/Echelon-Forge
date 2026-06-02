@@ -106,7 +106,7 @@
       "artifact_id": "candidate_acceptance_status",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/candidate_acceptance_status.zh.md",
       "role": "g2_candidate_acceptance_boundary_ref",
-      "sha256": "5493c323ba5a147c75dccd7e253eb5e155bf9fa96af6d2b14cfc8a06627a4fb0"
+      "sha256": "75ce09dad5079a0204855734e9047fe21c2f0c52403570e2a7aee109cf08fac1"
     },
     {
       "artifact_id": "task_cluster_execution_status",
@@ -128,7 +128,7 @@
     "filename": "res005_tp21_selected_case_admission_review_gate.json",
     "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
     "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
-    "sha256": "c381ed778c8ac8353035d63d30ca15c5517e90e2792dadbba19a3e62d6f40bb9"
+    "sha256": "9155ebfeef00c83518eb6ec772f9dd79874a0aaf7bcfdb4bef167e36e67ca84a"
   },
   "schema_version": "a2.res005_tp21_selected_case_admission_review_retained_manifest.v1",
   "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"

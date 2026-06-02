@@ -21,10 +21,11 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
   instead of the historical smoke fixture.
 - The high-fidelity damage-model line now lives under
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md).
-  Its structured-aircraft damage/effects runtime is now on a maintained path,
-  while the current blast-fragmentation package remains non-authoritative
-  candidate evidence. Stock authority, Pk, and deterministic fuze authority are
-  still not released.
+  It is now archived as a sealed research/candidate record: its
+  structured-aircraft damage/effects runtime is on a maintained path, the
+  blast-fragmentation package is accepted as non-authoritative evidence, and
+  G4/G5 research packets are closed. Stock authority, Pk, and deterministic
+  fuze authority are still not released.
 
 ## Active Follow-On Focus
 
@@ -34,9 +35,9 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
 - strengthen scripted or frozen-opponent baselines
 - split diagnostics for `combat_loss`, killed-entity inactive state, and terminal
   crash penalty semantics
-- maintain the high-fidelity air-combat damage runtime contract, and keep future
-  work separated into `G1 runtime`, `G2/G3 candidate/residual`, `G4 authority`,
-  and `G5 kill-chain` layers
+- treat the A2 high-fidelity air-combat damage model as a sealed retained
+  record; only explicit follow-on requests should open `G4/G5 authority` or new
+  research expansion work
 - preserve the non-authoritative boundary of the current blast-fragmentation
   candidate package; test-local descriptor exercises are not stock authority
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
@@ -59,7 +60,7 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
   [air_combat_1v1_stall_rootcause_followup_20260516.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.md)
 - Current staged curriculum:
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
-- High-fidelity damage-model task:
+- High-fidelity damage-model sealed record:
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
 - High-fidelity damage-system baseline:
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)

@@ -66,14 +66,16 @@
   `guard_true_total=0`；
 - 该验收只证明 retained manifest 引用和 hash 自洽，不授予任何 `G4/G5` authority。
 
-## G4/G5 deferred
+## G4/G5 authority deferred
 
 `TC-A2-AUTH-B`、`TC-A2-AUTH-C` 和 `TC-A2-KILLCHAIN` 不由本文关闭；不得从
 `TC-A2-BF-001..004` 推导 stock runtime authority、Pk 或 deterministic fuze。
 
-若下一步只是继续研究级高保真，应使用
-[G4/G5 research continuation](g4_g5_research_continuation_20260601.zh.md)，并保持
-non-authoritative / replaceable data 口径。
+后续 G4/G5 research 已按
+[G4/G5 research continuation](g4_g5_research_continuation_20260601.zh.md) 和
+[G5 research integration acceptance](g5_research_integration_acceptance_20260602.zh.md)
+收口为 non-authoritative / replaceable data 记录。只有 authority promotion 仍保持
+explicit opt-in。
 
 ## 当前工作区复核
 

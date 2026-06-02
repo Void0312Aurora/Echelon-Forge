@@ -171,7 +171,7 @@
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json",
       "role": "selected_case_review_gate_input",
       "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
-      "sha256": "c381ed778c8ac8353035d63d30ca15c5517e90e2792dadbba19a3e62d6f40bb9",
+      "sha256": "9155ebfeef00c83518eb6ec772f9dd79874a0aaf7bcfdb4bef167e36e67ca84a",
       "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
     }
   ],
@@ -199,7 +199,7 @@
     "worker_id": "TC-A2-BF-003-RES005-TP21-CANDIDATE-SELECTION"
   },
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
-  "packet_sha256": "dd561913ab928bf925cde22248f947cb4bf65273e82d6294bd9ec9df81e52b4f",
+  "packet_sha256": "5ebe6fcf00f9a666d884085717fc4a58ab54d99ab90cf435699c6b4606f009bf",
   "present_vs_missing": [
     {
       "current_status": "present",

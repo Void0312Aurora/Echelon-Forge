@@ -9,7 +9,7 @@
       "filename": "external_signoff_packet_template.json",
       "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601/external_signoff_packet_template.json",
       "schema_version": "a2.external_signoff_packet_template.v1",
-      "sha256": "d36a218f5277c934ae2e93b524b586c2ef2266d3c841b684ed6cd83ad78c9a97"
+      "sha256": "d624bba1d1032bed34add492382dc06342781f67d83303403cbfaaafeefea328"
     }
   ],
   "authority_guards": {
@@ -39,7 +39,7 @@
       "required_for_template": true,
       "role": "current_source_rights_request_hash_pin_for_template_only_packet",
       "schema_version": "a2.source_rights_signoff_request_packet.v1",
-      "sha256": "299a3d5877b9c25b91d3aa223fdf341526c0df1a11210dab4f0b63aee656cc37",
+      "sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6",
       "status": "retained_fail_closed_source_rights_signoff_request_packet"
     }
   ],
