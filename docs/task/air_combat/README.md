@@ -1,7 +1,8 @@
 # Air Combat
 
 Status: active `1v1` workline; default entry converged on `2026-05-18`;
-`2026-05-25` opened the staged `1v1` realism-gradient curriculum.
+`2026-05-25` opened the staged `1v1` realism-gradient curriculum; `2026-06-02`
+opened the C2/ROE release-discipline planning entry.
 
 ## Current Status
 
@@ -19,6 +20,12 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
 - The first training entry should move to the staged curriculum under
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
   instead of the historical smoke fixture.
+- The repeated-launch issue now routes first through
+  [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md):
+  before treating multiple shots as a memory or M2 sequence-policy failure,
+  the S1 line needs policy-visible weapons-control status, target identity,
+  fire authorization, single-shot-then-assess / salvo / reattack permission,
+  and mission-observation constraints.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -46,6 +53,9 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
   weapons
+- build the A3 C2/ROE constraint surface so S1 can distinguish hold, authorized
+  single shot, authorized salvo, reattack permission, and premature second shot
+  instead of explaining repeated fire only through ammo rewards
 
 ## Recommended Reading Order
 
@@ -62,6 +72,8 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
   [air_combat_1v1_stall_rootcause_followup_20260516.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.md)
 - Current staged curriculum:
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
+- C2/ROE release-discipline planning:
+  [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md)
 - High-fidelity damage-model sealed record:
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive

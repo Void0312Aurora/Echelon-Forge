@@ -1,7 +1,8 @@
 # 空战
 
 状态：`1v1` 工作线仍在活跃推进；默认入口已于 `2026-05-18` 收敛；
-`2026-05-25` 已开启分阶段 `1v1` 真实度梯度课程。
+`2026-05-25` 已开启分阶段 `1v1` 真实度梯度课程；`2026-06-02`
+新增 C2/ROE 发射纪律规划入口。
 
 ## 当前状态
 
@@ -16,6 +17,11 @@
 - 第一训练入口应转向
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
   中定义的分阶段课程，而不是历史 smoke fixture。
+- 重复发射问题现在先进入
+  [a3_c2_roe_release_discipline/README.zh.md](a3_c2_roe_release_discipline/README.zh.md)：
+  在把多发归因于记忆或 M2 sequence policy 前，先补齐武器控制状态、目标身份、
+  开火授权、single-shot-then-assess / salvo / reattack 许可和策略可观察的
+  mission observation 约束。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -37,6 +43,8 @@
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
+- 构建 A3 C2/ROE 约束面，使 S1 能区分 hold、授权单发、授权齐射、再攻击许可和
+  过早第二发，而不是只用弹药奖励解释多发行为
 
 ## 推荐阅读顺序
 
@@ -53,6 +61,8 @@
   [air_combat_1v1_stall_rootcause_followup_20260516.zh.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.zh.md)
 - 当前分阶段课程：
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
+- C2/ROE 发射纪律规划：
+  [a3_c2_roe_release_discipline/README.zh.md](a3_c2_roe_release_discipline/README.zh.md)
 - 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   与完整归档
