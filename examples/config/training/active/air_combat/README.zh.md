@@ -68,6 +68,11 @@
   - 启用一个很窄的稳定飞行残差 wrapper，只 blend 飞控轴 `[0, 1, 2, 3]`；hybrid 作战命令不锁定、不 snap。
   - 这是检查修复后的动作接口能否恢复 release exploration 的维护入口，再往后才进入更长 M1 evidence run。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
+  - Stage-1 的 M1 hybrid temporal shaped 对照探针。
+  - 与 hybrid shaped 条目使用同一 training-shaped 场景、同一稳定飞行残差 wrapper 和同一低初始探索噪声。
+  - 只额外启用 `temporal_history_len=16` 与 `TemporalTransformerExtractor`，用于重新比较时间窗口是否改善早发、多发和发射间隔。
+
 ## 设计说明
 
 - 这些烟雾测试条目有意设为非可视化。
@@ -78,7 +83,7 @@
   - 因此 HMoE 策略处于活跃状态，但暴露给策略的维护路线语义仍然最小化。
   - 在当前烟雾日志中，这意味着路由停留在导航族/子专家上，这对于链路验证是可接受的，但尚未形成完全差异化的作战路由配置。
 - raw `full`、hybrid 和 temporal 烟雾测试条目有意不启用维护中的脚本化残差动作封装。
-  - shaped hybrid 训练探针是例外：它只把前四个飞控轴和 stable-flight baseline 做残差混合，雷达 / master-arm / fire / weapon-select 仍保持策略直接控制。
+  - shaped hybrid 与 hybrid temporal shaped 训练探针是例外：它们只把前四个飞控轴和 stable-flight baseline 做残差混合，雷达 / master-arm / fire / weapon-select 仍保持策略直接控制。
   - 在首次 `1v1` 烟雾测试中，我们仍希望学习者保留原始动作表面。
 - 这些条目尚未成为验收/冻结基线。
   - 仅在 `1v1` 奖励/终止/评估行为足够稳定（可跨运行比较）之后才进行提升。

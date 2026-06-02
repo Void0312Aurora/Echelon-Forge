@@ -1,7 +1,8 @@
 # M1 观测窗口 HMoE 验证
 
 状态：`2026-06-02` 已进入 M1-A4 证据采集；M1-A4 已有 Stage-0 与 Stage-1
-reactive/temporal probe 入口。
+reactive/temporal probe 入口。`2026-06-02` A3 C2/ROE 发射纪律已作为
+重复发射解释的前置约束层加入。
 
 M1 对应路径 A。它不是最终正式架构，而是进入路径 C 前的证据包：
 用最小侵入方式把近期时间窗口暴露给当前 HMoE PPO，观察空战 stage-0 / stage-1
@@ -11,7 +12,9 @@ M1 对应路径 A。它不是最终正式架构，而是进入路径 C 前的证
 
 - [时间 HMoE 策略计划](../temporal_hmoe_policy_plan_20260525.zh.md)
 - [空战 1v1 真实度梯度课程](../../air_combat/a1_1v1_realism_gradient/README.zh.md)
+- [A3 C2/ROE 发射纪律](../../air_combat/a3_c2_roe_release_discipline/README.zh.md)
 - [M1-A4 Stage-1 短程证据 - 2026-06-02](m1_a4_stage1_evidence_20260602.zh.md)
+- [M1-A4 Hybrid Temporal Shaped 对照证据 - 2026-06-02](m1_a4_hybrid_temporal_shaped_pair_20260602.zh.md)
 - 当前空战训练配置：
   `examples/config/training/active/air_combat/`
 - 当前 PPO/HMoE 代码：
@@ -28,6 +31,11 @@ sequence-native causal Transformer PPO？
 
 M1 不要求解决所有时序建模问题。它只要求证明“给当前 HMoE 可观察的短历史”
 比单帧 reactive HMoE 更适合空战武器使用。
+
+`2026-06-02` 后，重复发射不再直接作为“记忆不足”的单一证据。A3 需要先定义并暴露
+C2/ROE 发射纪律，使 probe 能区分授权齐射、授权再攻击、过早第二发和未授权开火；
+只有在这些 command state 可观测后仍存在未解释的重复发射，才把剩余问题升级为
+M1/M2 的 policy-memory 或 sequence-model 证据。
 
 ## 边界
 
@@ -92,7 +100,7 @@ M1 不允许：
 | `M1-A2 temporal window runtime 实现` | in validation | 实现非视觉 observation history，覆盖单 env、world-batch 与 cooperative 参数兼容。 | env/runtime/observation 相关文件、focused tests | PPO sequence buffer、causal policy | shape/reset/done 测试 | 两条 runtime 路径 shape 稳定 |
 | `M1-A3 TemporalTransformerExtractor 实现` | in validation | 增加可配置 temporal extractor。 | `python/models/**`、注册/配置文件、focused tests | checkpoint 破坏、visual history | extractor forward + non-finite probe | 可用当前 HMoE policy 训练 |
 | `M1-A4 空战 temporal probe` | in evidence | 在 stage-0 / stage-1 对比 reactive 与 temporal HMoE。 | air_combat training config、结果记录 | 正式长训、自博弈、路径 C 实现 | 短程 PPO + 固定诊断 | 形成改善/无改善结论 |
-| `M1-A5 路径 C release vote` | held | 判断是否进入 M2 实现。 | docs/task/model/** | 代码实现 | M1 结果复盘 | 接受、延迟或拒绝 M2 |
+| `M1-A5 路径 C release vote` | held | 在 A3-aware evidence 下判断是否进入 M2 实现。 | docs/task/model/** | 代码实现 | M1 + A3 结果复盘 | 接受、延迟或拒绝 M2 |
 
 ## 验收信号
 
@@ -102,7 +110,9 @@ M1 可以进入 M2 release vote 的最低证据：
 - reactive 与 temporal 配置使用相同 stage、seed 规则和主要超参；
 - temporal 版本没有引入新的 non-finite、reset 或 world-batch shape 问题；
 - 在 stage-0 固定/训练诊断中，重复发射率、无效发射率或 fire action 稳定性至少一项改善；
+- A3 C2/ROE probe 已把授权齐射、再攻击、过早第二发和未授权开火区分开；
 - 改善来自策略可观察历史，而不是环境侧静默拦截重复发射；
+- 若改善只来自新增 command/ROE 约束，而不是 temporal history，M2 release 继续 held；
 - 若无改善，文档记录原因并暂停 M2 实现。
 
 ## 建议验证命令
@@ -138,6 +148,14 @@ bash tools/maintenance/cmo_env.sh python train.py \
 
 二者应使用同一 stage-1 场景：
 `scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
+
+- Stage-1 hybrid shaped 对照：
+  `examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json`
+- Stage-1 hybrid temporal shaped probe：
+  `examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json`
+
+二者应使用同一 training-shaped stage-1 场景：
+`scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json`
 
 ## 退出状态
 

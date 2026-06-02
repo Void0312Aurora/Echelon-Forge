@@ -68,6 +68,11 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Enables a narrow stable-flight residual wrapper only on flight-control axes `[0, 1, 2, 3]`; hybrid combat commands remain unlocked and unsnapped.
   - This is the maintained entry for checking whether the repaired action interface can recover release exploration before moving to longer M1 evidence runs.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
+  - Stage-1 M1 hybrid temporal shaped comparison probe.
+  - Uses the same training-shaped scenario, stable-flight residual wrapper, and low initial exploration noise as the hybrid shaped entry.
+  - Only adds `temporal_history_len=16` plus `TemporalTransformerExtractor` so repeated launches, early launches, and launch intervals can be rechecked under the recovered S1 training surface.
+
 ## Design Notes
 
 - These smoke entries are intentionally non-visual.
@@ -78,7 +83,7 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - So the HMoE policy is active, but the maintained route semantics exposed to the policy are still minimal.
   - In current smoke logs this means routing stays on the navigation family/subexpert, which is acceptable for chain validation but not yet a fully differentiated combat-routing setup.
 - The raw `full`, hybrid, and temporal smoke entries intentionally do not enable the maintained scripted-residual action wrapper.
-  - The shaped hybrid training probe is the exception: it blends only the first four flight-control axes against stable flight and leaves radar / master-arm / fire / weapon-select policy commands untouched.
+  - The shaped hybrid and hybrid temporal shaped training probes are the exceptions: they blend only the first four flight-control axes against stable flight and leave radar / master-arm / fire / weapon-select policy commands untouched.
   - For first `1v1` smoke we still want the learner to retain the raw action surface.
 - These entries are not acceptance/frozen baselines yet.
   - Promote only after `1v1` reward/termination/eval behavior is stable enough to compare across runs.
